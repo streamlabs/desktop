@@ -10,6 +10,7 @@ export type WrappedChat = {
   filtered?: boolean;
   rawName?: string; // ピン留めコメント用にnameを保存
   isModerator?: boolean;
+  isSupporter?: boolean;
 };
 
 export type WrappedChatWithComponent = WrappedChat & { component: ChatComponentType };

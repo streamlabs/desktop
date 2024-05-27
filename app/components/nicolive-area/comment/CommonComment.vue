@@ -25,6 +25,11 @@
             v-tooltip.bottom="moderatorTooltip"
             v-if="chat.isModerator"
           ></i>
+          <i
+            class="icon-supporter"
+            v-tooltip.bottom="supporterTooltip"
+            v-if="chat.isSupporter"
+          ></i>
         </div>
         <div class="comment-body" :title="computedTitle">{{ computedContent }}</div>
       </div>
@@ -116,6 +121,12 @@
     margin-left: 4px;
     font-size: @font-size5;
     color: var(--color-primary);
+}
+
+.icon-supporter {
+    margin-left: 4px;
+    font-size: @font-size5;
+    color: var(--color-secondary);
 }
 
 .comment-body {

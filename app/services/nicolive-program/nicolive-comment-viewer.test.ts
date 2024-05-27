@@ -4,6 +4,7 @@ import { createSetupFunction } from 'util/test-setup';
 import type { MessageResponse } from './MessageServerClient';
 import { FilterRecord } from './ResponseTypes';
 import { NicoliveModeratorsService } from './nicolive-moderators';
+import { sleep } from 'util/sleep';
 
 type NicoliveCommentViewerService =
   import('./nicolive-comment-viewer').NicoliveCommentViewerService;
@@ -26,6 +27,9 @@ const setup = createSetupFunction({
       refreshObserver: new Subject(),
       isModerator: () => false,
       disconnectNdgr() {},
+    },
+    NicoliveSupportersService: {
+      update: () => Promise.resolve([]),
     },
     CustomizationService: {
       state: {
@@ -53,6 +57,9 @@ jest.mock('services/nicolive-program/nicolive-comment-synthesizer', () => ({
 jest.mock('services/nicolive-program/nicolive-moderators', () => ({
   NicoliveModeratorsService: {},
 }));
+jest.mock('services/nicolive-program/nicolive-supporters', () => ({
+  NicoliveSupportersService: {},
+}));
 jest.mock('services/windows', () => ({
   WindowsService: {},
 }));
@@ -69,7 +76,7 @@ afterEach(() => {
   jest.resetModules();
 });
 
-test('接続先情報が来たら接続する', () => {
+test('接続先情報が来たら接続する', async () => {
   const stateChange = new Subject();
   const clientSubject = new Subject();
   jest.doMock('./MessageServerClient', () => ({
@@ -89,6 +96,7 @@ test('接続先情報が来たら接続する', () => {
   expect(clientSubject.observers).toHaveLength(0);
   expect(stateChange.observers).toHaveLength(1);
   stateChange.next({ roomURL: 'https://example.com', roomThreadID: '175622' });
+  await sleep(0);
   expect(clientSubject.observers).toHaveLength(2);
 });
 
@@ -114,7 +122,7 @@ test('接続先情報が欠けていたら接続しない', () => {
   expect(clientSubject.observers).toHaveLength(0);
 });
 
-test('/disconnectが流れてきたらunsubscribeする', () => {
+test('/disconnectが流れてきたらunsubscribeする', async () => {
   const stateChange = new Subject();
   const clientSubject = new Subject();
   jest.doMock('./MessageServerClient', () => {
@@ -139,6 +147,7 @@ test('/disconnectが流れてきたらunsubscribeする', () => {
   expect(clientSubject.observers).toHaveLength(0);
   expect(unsubscribe).toHaveBeenCalledTimes(0);
   stateChange.next({ roomURL: 'https://example.com', roomThreadID: '175622' });
+  await sleep(0);
   expect(clientSubject.observers).toHaveLength(2);
   expect(unsubscribe).toHaveBeenCalledTimes(1);
 
@@ -201,9 +210,10 @@ function connectionSetup() {
   };
 }
 
-test('chatメッセージはstateに保持する', () => {
+test('chatメッセージはstateに保持する', async () => {
   jest.spyOn(Date, 'now').mockImplementation(() => 1582175622000);
   const { instance, clientSubject } = connectionSetup();
+  await sleep(0);
 
   clientSubject.next({
     chat: {
@@ -252,9 +262,10 @@ test('chatメッセージはstateに保持する', () => {
   `);
 });
 
-test('chatメッセージはstateに最新100件保持し、あふれた物がpopoutMessagesに残る', () => {
+test('chatメッセージはstateに最新100件保持し、あふれた物がpopoutMessagesに残る', async () => {
   jest.spyOn(Date, 'now').mockImplementation(() => 1582175622000);
   const { instance, clientSubject } = connectionSetup();
+  await sleep(0);
 
   const retainSize = 100;
   const numberOfSystemMessages = 1; // "サーバーとの接続が終了しました";
@@ -284,9 +295,10 @@ test('chatメッセージはstateに最新100件保持し、あふれた物がpo
   expect(instance.state.popoutMessages[0].value.content).toEqual(chats[0]);
 });
 
-test('接続エラー時にメッセージを表示する', () => {
+test('接続エラー時にメッセージを表示する', async () => {
   jest.spyOn(Date, 'now').mockImplementation(() => 1582175622000);
   const { instance, clientSubject } = connectionSetup();
+  await sleep(0);
 
   const error = new Error('yay');
 
@@ -319,9 +331,10 @@ test('接続エラー時にメッセージを表示する', () => {
                 `);
 });
 
-test('スレッドの参加失敗時にメッセージを表示する', () => {
+test('スレッドの参加失敗時にメッセージを表示する', async () => {
   jest.spyOn(Date, 'now').mockImplementation(() => 1582175622000);
   const { instance, clientSubject } = connectionSetup();
+  await sleep(0);
 
   clientSubject.next({
     thread: {
@@ -356,9 +369,10 @@ test('スレッドの参加失敗時にメッセージを表示する', () => {
     `);
 });
 
-test('スレッドからの追い出し発生時にメッセージを表示する', () => {
+test('スレッドからの追い出し発生時にメッセージを表示する', async () => {
   jest.spyOn(Date, 'now').mockImplementation(() => 1582175622000);
   const { instance, clientSubject } = connectionSetup();
+  await sleep(0);
 
   clientSubject.next({
     leave_thread: {},
@@ -393,6 +407,7 @@ test('スレッドからの追い出し発生時にメッセージを表示す�
 
 test('モデレーターによるSSNG追加・削除がきたらシステムメッセージが追加される', async () => {
   const { clientSubject, instance, refreshObserver } = connectionSetup();
+  await sleep(0);
 
   const tests: {
     event: ObserveType<NicoliveModeratorsService['refreshObserver']>;
@@ -465,6 +480,7 @@ test('モデレーターによるSSNG追加・削除がきたらシステムメ�
 
 test('refreshModeratorsがきたらコメントのモデレーター情報を更新する', async () => {
   const { clientSubject, instance, refreshObserver } = connectionSetup();
+  await sleep(0);
   instance.state.messages = [
     {
       component: 'common',

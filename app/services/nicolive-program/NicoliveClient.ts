@@ -24,6 +24,7 @@ import {
   AddFilterResult,
   AddModerator,
   Moderator,
+  Supporters,
 } from './ResponseTypes';
 const { BrowserWindow } = remote;
 
@@ -790,6 +791,21 @@ export class NicoliveClient {
       {
         headers: NicoliveClient.FrontendIdHeader,
       },
+    );
+  }
+
+  async fetchSupportersList(
+    {
+      limit,
+      offset,
+    }: {
+      limit?: number;
+      offset?: number;
+    } = { limit: 1000, offset: 0 },
+  ): Promise<WrappedResult<Supporters['data']>> {
+    return this.requestAPI<Supporters['data']>(
+      'GET',
+      `${NicoliveClient.live2ApiBaseURL}/api/v1/broadcaster/supporters?limit=${limit}&offset=${offset}`,
     );
   }
 }

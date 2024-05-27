@@ -37,6 +37,7 @@ import { NicoliveCommentSynthesizerService } from './nicolive-comment-synthesize
 import { NicoliveProgramStateService } from './state';
 import { NicoliveModeratorsService } from './nicolive-moderators';
 import { FilterRecord } from './ResponseTypes';
+import { NicoliveSupportersService } from './nicolive-supporters';
 
 function makeEmulatedChat(
   content: string,
@@ -112,6 +113,7 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
   @Inject() private customizationService: CustomizationService;
   @Inject() private windowsService: WindowsService;
   @Inject() private nicoliveModeratorsService: NicoliveModeratorsService;
+  @Inject() private nicoliveSupportersService: NicoliveSupportersService;
 
   static initialState: INicoliveCommentViewerState = {
     messages: [],
@@ -233,7 +235,7 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
   }
 
   lastSubscription: Subscription = null;
-  private onNextConfig({ roomURL, roomThreadID }: MessageServerConfig): void {
+  private async onNextConfig({ roomURL, roomThreadID }: MessageServerConfig): Promise<void> {
     this.unsubscribe();
     this.clearList();
     this.pinComment(null);
@@ -247,16 +249,16 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
     } else {
       this.client = new MessageServerClient({ roomURL, roomThreadID });
     }
-    this.connect();
+    await this.connect();
   }
 
-  refreshConnection() {
+  async refreshConnection() {
     // コメントは切断するがモデレーター通信は維持する
     this.lastSubscription?.unsubscribe();
     this.clearList();
     // 再接続ではピン止めは解除しない
 
-    this.connect();
+    await this.connect();
   }
 
   private unsubscribe() {
@@ -264,7 +266,10 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
     this.nicoliveModeratorsService.disconnectNdgr();
   }
 
-  private connect() {
+  private async connect() {
+    const supporters = new Set(await this.nicoliveSupportersService.update());
+    const isSupporter = (userId: string) => supporters.has(userId);
+
     const closer = new Subject();
     const clientSubject = this.client.connect();
 
@@ -337,6 +342,7 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
               return {
                 ...m,
                 isModerator: this.nicoliveModeratorsService.isModerator(m.value.user_id),
+                isSupporter: isSupporter(m.value.user_id),
               };
             }
             return m;
@@ -347,11 +353,11 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
     this.client.requestLatestMessages();
   }
 
-  showUserInfo(userId: string, userName: string, isPremium: boolean) {
+  showUserInfo(userId: string, userName: string, isPremium: boolean, isSupporter: boolean) {
     this.windowsService.showWindow({
       componentName: 'UserInfo',
       title: 'ユーザー情報',
-      queryParams: { userId, userName, isPremium },
+      queryParams: { userId, userName, isPremium, isSupporter },
       size: {
         width: 360,
         height: 440,

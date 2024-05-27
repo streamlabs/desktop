@@ -19,6 +19,11 @@
               v-tooltip.bottom="moderatorTooltip"
               v-if="isModerator"
             ></i>
+            <i
+              class="icon-supporter"
+              v-tooltip.bottom="supporterTooltip"
+              v-if="isSupporter"
+            ></i>
           </div>
           <div class="user-account">
             <p class="user-id">ID: {{ userId }}</p>
@@ -192,6 +197,12 @@
   margin-left: 4px;
   font-size: @font-size5;
   color: var(--color-primary);
+}
+
+.icon-supporter {
+  margin-left: 4px;
+  font-size: @font-size5;
+  color: var(--color-secondary);
 }
 
 .user-account {

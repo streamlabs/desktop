@@ -71,6 +71,7 @@ export default class UserInfo extends Vue {
   isModerator = false;
 
   moderatorTooltip = 'モデレーター';
+  supporterTooltip = 'サポーター';
   otherMenuTooltip = 'その他メニュー';
 
   mounted() {
@@ -159,6 +160,10 @@ export default class UserInfo extends Vue {
 
   get isPremium() {
     return this.windowsService.getChildWindowQueryParams().isPremium;
+  }
+
+  get isSupporter() {
+    return this.windowsService.getChildWindowQueryParams().isSupporter;
   }
 
   followUser(): void {

@@ -272,3 +272,13 @@ export interface AddModerator {
   };
   data: Moderator;
 }
+
+export interface Supporters {
+  meta: {
+    status: 200;
+  };
+  data: {
+    totalCount: number;
+    supporterIds: string[];
+  };
+}
