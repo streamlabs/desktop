@@ -296,6 +296,20 @@
           "title": "NOT_BROADCASTER",
           "message": "配信していないため、モデレーター情報を取得できませんでした"
         }
+      },
+      "fetchSupporters": {
+        "network_error": {
+          "title": "ネットワークエラーが発生しました",
+          "message": "ネットワークエラーが発生したため、サポーター情報を取得できませんでした。\nネットワーク接続が正常かどうかをご確認ください。"
+        },
+        "400": {
+          "title": "サポーター情報を取得できませんでした",
+          "message": "取得に失敗しました。\n%{additionalMessage}"
+        },
+        "500": {
+          "title": "サポーター情報を取得できませんでした",
+          "message": "取得に失敗しました。\n%{additionalMessage}"
+        }
       }
     },
     "logic": {

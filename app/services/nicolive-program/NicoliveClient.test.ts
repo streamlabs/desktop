@@ -178,6 +178,13 @@ const suites: Suite[] = [
     path: `/unama/api/v2/broadcasters/moderators?userId=${userID}`,
     args: [userID],
   },
+  {
+    name: 'fetchSupporters',
+    method: 'get',
+    base: NicoliveClient.live2ApiBaseURL,
+    path: `/api/v1/broadcaster/supporters?limit=1000&offset=0`,
+    args: [],
+  },
 ];
 
 suites.forEach((suite: Suite) => {
