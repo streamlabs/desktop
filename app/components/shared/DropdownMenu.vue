@@ -1,27 +1,25 @@
 <template>
-  <popper
-    trigger="click"
-    :options="{ placement: (placement || 'bottom-start') }"
-  >
+  <popper trigger="click" :options="{ placement: placement || 'bottom-start' }">
     <div class="popper dropdown-menu">
       <slot></slot>
     </div>
 
     <button slot="reference" class="dropdown-menu__toggle">
-      <span class="scene-name">{{ title }}</span><i :class="icon || 'icon-drop-down-arrow'"/>
+      <span class="scene-name">{{ title }}</span
+      ><i :class="icon || 'icon-drop-down-arrow'" />
     </button>
-
   </popper>
 </template>
 
 <script lang="ts" src="./DropdownMenu.vue.ts"></script>
 
 <style lang="less">
-@import "../../styles/index";
+@import url('../../styles/index');
 
 // 詳細度でライブラリ側の指定を上書きする
 .popper.dropdown-menu {
   .popper-styling;
+
   max-width: 240px;
   max-height: 152px;
   overflow-y: auto;
@@ -29,13 +27,13 @@
 
 .dropdown-menu__toggle {
   display: flex;
-  text-align: left;
   align-items: center;
-  font-size: @font-size4;
-  .semibold;
-  letter-spacing: .7px;
-  color: var(--color-text);
   overflow: hidden;
+  font-size: @font-size4;
+  color: var(--color-text);
+  text-align: left;
+  letter-spacing: 0.7px;
+  .semibold;
 
   i {
     margin-left: 8px;
@@ -45,7 +43,6 @@
 
   &:hover {
     i {
-      
       color: var(--color-text-light);
     }
   }
@@ -54,18 +51,19 @@
     .text-ellipsis;
 
     display: inline-block;
-    color: var(--color-text-light);
     font-size: @font-size4;
+    color: var(--color-text-light);
   }
 }
 
 .dropdown-menu__item {
   .text-ellipsis;
+
   width: 100%;
-  line-height: 32px;
   padding: 0 8px;
-  color: var(--color-text);
   font-size: @font-size2;
+  line-height: 32px;
+  color: var(--color-text);
   text-align: left;
   cursor: pointer;
 
@@ -84,7 +82,4 @@
     border-top: 1px solid var(--color-border-light);
   }
 }
-
 </style>
-
-

@@ -1,11 +1,5 @@
 import { ApiClient } from './api-client';
-import {
-  ScenesService,
-  Scene,
-  TSceneNodeType,
-  SceneItem,
-  SceneItemNode,
-} from 'services/scenes';
+import { ScenesService, Scene, TSceneNodeType, SceneItem, SceneItemNode } from 'services/scenes';
 import { TSourceType } from '../../app/services/sources';
 
 interface ISceneBuilderNode {
@@ -102,9 +96,11 @@ export class SceneBuilder {
 
       const nextLineLevel = nextLine.search(/[^ ]/) / this.offsetSize;
 
-      if (nextLineLevel > currentLineLevel) { // level down
+      if (nextLineLevel > currentLineLevel) {
+        // level down
         foldersStack.push(node);
-      } else if (nextLineLevel < currentLineLevel) { // level up
+      } else if (nextLineLevel < currentLineLevel) {
+        // level up
         let i = currentLineLevel - nextLineLevel;
         while (i--) foldersStack.pop();
       }
@@ -117,8 +113,9 @@ export class SceneBuilder {
     if (!line.trim()) return null;
     const isItem = line.indexOf(':') !== -1;
     if (isItem) {
-      const [fullMatch, name, delemiter, sourceType] =
-        line.match(/([a-zA-Z_ .\-\d]+)(:)([a-zA-Z_ \d]*)/);
+      const [fullMatch, name, delemiter, sourceType] = line.match(
+        /([a-zA-Z_ .\-\d]+)(:)([a-zA-Z_ \d]*)/,
+      );
       return {
         name: name.trim(),
         type: 'item',
@@ -148,9 +145,7 @@ export class SceneBuilder {
   }
 
   getSceneSchema(folderId?: string): ISceneBuilderNode[] {
-    const nodes = folderId ?
-      this.scene.getFolder(folderId).getNodes() :
-      this.scene.getRootNodes();
+    const nodes = folderId ? this.scene.getFolder(folderId).getNodes() : this.scene.getRootNodes();
 
     return nodes.map(sceneNode => {
       if (sceneNode.isFolder()) {

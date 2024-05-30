@@ -2,7 +2,6 @@ import * as Sentry from '@sentry/vue';
 import { Speech } from '../nicolive-comment-synthesizer';
 import { ISpeechSynthesizer } from './ISpeechSynthesizer';
 
-
 export interface INVoiceTalker {
   talk(
     text: string,
@@ -10,13 +9,13 @@ export interface INVoiceTalker {
       speed: number;
       volume: number;
       maxTime: number;
-      phonemeCallback?: (phoneme: string) => void,
+      phonemeCallback?: (phoneme: string) => void;
     },
   ): Promise<() => Promise<{ cancel: () => void; speaking: Promise<void> } | null>>;
 }
 
 export class NVoiceSynthesizer implements ISpeechSynthesizer {
-  constructor(private nVoiceTalker: INVoiceTalker) { }
+  constructor(private nVoiceTalker: INVoiceTalker) {}
 
   speakText(
     speech: Speech,
@@ -57,11 +56,11 @@ export class NVoiceSynthesizer implements ISpeechSynthesizer {
             },
             running: r.speaking,
           };
-        }
+        };
       } catch (error) {
         Sentry.withScope(scope => {
           scope.setLevel('error');
-          scope.setTag('in', 'NVoiceSynthesizer:speakText')
+          scope.setTag('in', 'NVoiceSynthesizer:speakText');
           scope.setExtra('speech', speech);
           scope.setExtra('error', error);
           scope.setFingerprint(['NVoiceSynthesizer', 'speakText', 'error']);

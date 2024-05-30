@@ -1,55 +1,56 @@
 <template>
-<div class="notifications-area" v-if="settings.enabled">
-  <div
-    class="notifications__counter notifications__counter--warning"
-    v-if="unreadCount"
-    v-tooltip="showUnreadNotificationsTooltip"
-    @click="showNotifications">
-    <span class="icon-warning"></span>
-    {{ unreadCount }}
-  </div>
-
-  <div
-    class="notifications__counter"
-    v-if="!unreadCount"
-    @click="showNotifications"
-    v-tooltip="showNotificationsTooltip">
-    <span class="icon-information"></span>
-  </div>
-
-  <div class="notifications__container flex--grow" ref="notificationsContainer">
+  <div class="notifications-area" v-if="settings.enabled">
     <div
-      v-for="notify in notifications"
-      :key="`${notify.message}${notify.date}`"
-      class="notification"
-      v-show="showExtendedNotifications"
-      @click="onNotificationClickHandler(notify.id)"
-      :class="{
-        'info': notify.type == 'INFO',
-        'warning': notify.type == 'WARNING',
-        'has-action': notify.action && !notify.outdated,
-        'outdated': notify.outdated,
-        'success': notify.type == 'SUCCESS',
-      }"
+      class="notifications__counter notifications__counter--warning"
+      v-if="unreadCount"
+      v-tooltip="showUnreadNotificationsTooltip"
+      @click="showNotifications"
     >
-      {{ notify.message }} <span v-if="notify.showTime"> {{ moment(notify.date) }} </span>
+      <span class="icon-warning"></span>
+      {{ unreadCount }}
+    </div>
+
+    <div
+      class="notifications__counter"
+      v-if="!unreadCount"
+      @click="showNotifications"
+      v-tooltip="showNotificationsTooltip"
+    >
+      <span class="icon-information"></span>
+    </div>
+
+    <div class="notifications__container flex--grow" ref="notificationsContainer">
+      <div
+        v-for="notify in notifications"
+        :key="`${notify.message}${notify.date}`"
+        class="notification"
+        v-show="showExtendedNotifications"
+        @click="onNotificationClickHandler(notify.id)"
+        :class="{
+          info: notify.type == 'INFO',
+          warning: notify.type == 'WARNING',
+          'has-action': notify.action && !notify.outdated,
+          outdated: notify.outdated,
+          success: notify.type == 'SUCCESS',
+        }"
+      >
+        {{ notify.message }} <span v-if="notify.showTime"> {{ moment(notify.date) }} </span>
+      </div>
     </div>
   </div>
-
-</div>
 </template>
 
 <script lang="ts" src="./NotificationsArea.vue.ts"></script>
 
 <style lang="less" scoped>
-@import "../styles/index";
+@import url('../styles/index');
 
 .notifications-area {
-  overflow: hidden;
-  min-width: 50px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
+  min-width: 50px;
+  overflow: hidden;
 }
 
 .notifications__container {
@@ -58,32 +59,31 @@
 }
 
 .notification {
-  height: 30px;
+  position: absolute;
   max-width: 100%;
+  height: 30px;
+  overflow: hidden;
   line-height: 30px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  animation: notify-appears 0.3s;
   .padding-left();
   .padding-right();
   .radius();
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  position: absolute;
-  animation: notify-appears 0.3s;
-
 
   &.info {
-    background-color: fade(@text-primary, 15%);
     color: @text-primary;
+    background-color: fade(@text-primary, 15%);
   }
 
   &.warning {
-    background-color: fade(@red, 20%);
     color: @red;
+    background-color: fade(@red, 20%);
   }
 
   &.success {
-    background-color: fade(@accent, 20%);
     color: @accent;
+    background-color: fade(@accent, 20%);
   }
 
   &.has-action {
@@ -96,15 +96,15 @@
 }
 
 .notifications__counter {
-  cursor: pointer;
-  white-space: nowrap;
   margin-right: 10px;
+  white-space: nowrap;
+  cursor: pointer;
 
-  &:before {
-    content: '|';
+  &::before {
     padding-right: 12px;
-    opacity: .5;
     color: @text-primary;
+    content: '|';
+    opacity: 0.5;
   }
 
   .icon-warning {
@@ -121,13 +121,25 @@
 }
 
 @keyframes notify-appears {
-  from {opacity: 0; top: 50px}
-  to {opacity: 1; top: 0 }
+  from {
+    top: 50px;
+    opacity: 0;
+  }
+
+  to {
+    top: 0;
+    opacity: 1;
+  }
 }
 
 @keyframes notify-disappears {
-  from {opacity: 1}
-  to {opacity: 0; display: none}
-}
+  from {
+    opacity: 1;
+  }
 
+  to {
+    display: none;
+    opacity: 0;
+  }
+}
 </style>

@@ -1,9 +1,9 @@
-import { BehaviorSubject } from "rxjs";
-import { Inject, StatefulService, mutation } from "services/core";
-import { IPlatformAuth } from "services/platforms";
-import { UserService } from "services/user";
-import { KonomiTag } from "./NicoliveClient";
-import { NicoliveProgramService } from "./nicolive-program";
+import { BehaviorSubject } from 'rxjs';
+import { Inject, StatefulService, mutation } from 'services/core';
+import { IPlatformAuth } from 'services/platforms';
+import { UserService } from 'services/user';
+import { KonomiTag } from './NicoliveClient';
+import { NicoliveProgramService } from './nicolive-program';
 
 interface IKonomiTagsState {
   loggedIn: {
@@ -19,7 +19,6 @@ export class KonomiTagsService extends StatefulService<IKonomiTagsState> {
   private stateChangeSubject = new BehaviorSubject(this.state);
   stateChange = this.stateChangeSubject.asObservable();
 
-
   static initialState: IKonomiTagsState = {
     loggedIn: null,
   };
@@ -33,7 +32,7 @@ export class KonomiTagsService extends StatefulService<IKonomiTagsState> {
           loggedIn: {
             userId: user.platform.id,
             konomiTags: [],
-          }
+          },
         });
         this.fetch();
       } else {
@@ -49,12 +48,12 @@ export class KonomiTagsService extends StatefulService<IKonomiTagsState> {
 
   fetch() {
     if (this.state.loggedIn) {
-      this.nicoliveProgramService.client.fetchKonomiTags(this.state.loggedIn.userId).then((tags) => {
+      this.nicoliveProgramService.client.fetchKonomiTags(this.state.loggedIn.userId).then(tags => {
         this.setState({
           loggedIn: {
             userId: this.state.loggedIn!.userId,
             konomiTags: tags,
-          }
+          },
         });
       });
     }

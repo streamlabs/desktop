@@ -1,11 +1,10 @@
-import { useSpectron, test, afterAppStart } from '../helpers/spectron';
-import { getClient } from '../helpers/api-client';
-import { ScenesService } from 'services/scenes';
+import { useWebdriver, test, afterAppStart } from '../helpers/webdriver';
+import { getApiClient } from '../helpers/api-client';
+import { ScenesService, Scene, SceneItemNode } from 'services/scenes';
 import { SelectionService } from 'services/selection';
 import { SceneBuilder } from '../helpers/scene-builder';
-import { Scene, SceneItemNode } from 'services/scenes';
 
-useSpectron({ restartAppAfterEachTest: false });
+useWebdriver({ restartAppAfterEachTest: false });
 
 let sceneBuilder: SceneBuilder;
 let scene: Scene;
@@ -14,7 +13,7 @@ let getNodeId: (name: string) => string;
 let selectionService: SelectionService;
 
 afterAppStart(async t => {
-  const client = await getClient();
+  const client = await getApiClient();
   selectionService = client.getResource('SelectionService');
   sceneBuilder = new SceneBuilder(client);
   scene = sceneBuilder.scene;
@@ -23,7 +22,7 @@ afterAppStart(async t => {
 });
 
 test('Selection', async t => {
-  const client = await getClient();
+  const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
   const selection = client.getResource<SelectionService>('SelectionService');
   const scene = scenesService.activeScene;
@@ -68,9 +67,8 @@ test('Selection', async t => {
   t.is(selection.getSize(), numPresetItems + 3);
 });
 
-
 test('Selection actions', async t => {
-  const client = await getClient();
+  const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
   const selection = client.getResource<SelectionService>('SelectionService');
   const scene = scenesService.activeScene;
@@ -86,11 +84,10 @@ test('Selection actions', async t => {
   t.is(color1.visible, false);
   t.is(color2.visible, false);
   t.is(color3.visible, true);
-
 });
 
 test('Invalid selection', async t => {
-  const client = await getClient();
+  const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
   const selection = client.getResource<SelectionService>('SelectionService');
   const anotherScene = scenesService.createScene('Another scene');
@@ -104,8 +101,6 @@ test('Invalid selection', async t => {
   // ids must be only from active scene
   selection.select([colorSource.sceneItemId, colorFromAnotherScene.sceneItemId]);
   t.deepEqual(selection.getIds(), [colorSource.sceneItemId]);
-
-
 });
 
 test('Place after', async t => {
@@ -120,14 +115,15 @@ test('Place after', async t => {
   selectionService.select([getNodeId('Item1'), getNodeId('Folder1')]);
   selectionService.placeAfter(getNodeId('Item4'));
 
-  t.true(sceneBuilder.isEqualTo(`
+  t.true(
+    sceneBuilder.isEqualTo(`
     Item4:
     Item1:
     Folder1
       Item2:
       Item3:
-  `));
-
+  `),
+  );
 });
 
 test('Place after folder with deep nesting', async t => {
@@ -142,16 +138,16 @@ test('Place after folder with deep nesting', async t => {
   selectionService.select(getNodeId('Folder1'));
   selectionService.placeAfter(getNodeId('Item4'));
 
-  t.true(sceneBuilder.isEqualTo(`
+  t.true(
+    sceneBuilder.isEqualTo(`
     Item4:
     Folder1
       Item1:
       Folder2
         Item2:
-  `));
-
+  `),
+  );
 });
-
 
 test('Place before', async t => {
   sceneBuilder.build(`
@@ -165,16 +161,16 @@ test('Place before', async t => {
   selectionService.select([getNodeId('Item2'), getNodeId('Folder1')]);
   selectionService.placeBefore(getNodeId('Item1'));
 
-  t.true(sceneBuilder.isEqualTo(`
+  t.true(
+    sceneBuilder.isEqualTo(`
     Item2:
     Folder1
       Item3:
       Item4:
     Item1:
-  `));
-
+  `),
+  );
 });
-
 
 test('Set parent', async t => {
   sceneBuilder.build(`
@@ -188,13 +184,13 @@ test('Set parent', async t => {
   selectionService.select([getNodeId('Folder2'), getNodeId('Item3')]);
   selectionService.setParent(getNodeId('Folder1'));
 
-  t.true(sceneBuilder.isEqualTo(`
+  t.true(
+    sceneBuilder.isEqualTo(`
     Folder1
       Folder2
         Item1:
         Item2:
       Item3:
-  `));
-
+  `),
+  );
 });
-

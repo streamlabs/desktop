@@ -7,18 +7,18 @@
 <script lang="ts" src="./Onboarding.vue.ts"></script>
 
 <style lang="less">
-@import "../../styles/index";
+@import url('../../styles/index');
 
 .onboarding {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100%;
-  flex-direction: column;
 
   .button--lg {
     width: 300px;
-    padding: 0 0;
+    padding: 0;
     .margin-top(2);
   }
 }
@@ -47,31 +47,32 @@
 }
 
 .onboarding-step--full {
-  width: 100%;
   position: absolute;
-  top: 0px;
-  left: 0;
+  top: 0;
   right: 0;
   bottom: 0;
-  display: inline-block
+  left: 0;
+  display: inline-block;
+  width: 100%;
 }
 
 .onboarding-title {
-  color: @text-primary;
   font-size: 22px;
+  color: @text-primary;
   .margin-bottom(3);
 }
 
 .onboarding-title--sm {
   font-size: 15px;
   .semibold;
+
   color: @white;
 }
 
 .onboarding-desc {
-  color: var(--color-text);
-  margin-bottom: 40px;
   padding: 0 20px;
+  margin-bottom: 40px;
+  color: var(--color-text);
 }
 
 .setup-later {
@@ -94,44 +95,49 @@
 }
 
 .running-setup-container {
+  position: relative;
   width: 100%;
+  height: 270px;
   padding: 30px;
+  margin-bottom: 20px;
   color: @white;
   background-color: @bg-primary;
-  margin-bottom: 20px;
-  height: 270px;
-  position: relative;
   .radius();
 
   &.optimizing {
     .running-setup-row {
-      &:nth-child(1), &:nth-child(6) {
-        color: #BBE380;
+      &:nth-child(1),
+      &:nth-child(6) {
+        color: #bbe380;
       }
 
-      &:nth-child(2), &:nth-child(7) {
-        color: #E98282;
+      &:nth-child(2),
+      &:nth-child(7) {
+        color: #e98282;
       }
 
-      &:nth-child(3), &:nth-child(8) {
-        color: #79D88A;
+      &:nth-child(3),
+      &:nth-child(8) {
+        color: #79d88a;
       }
 
-      &:nth-child(4), &:nth-child(9) {
-        color: #7384CE;
+      &:nth-child(4),
+      &:nth-child(9) {
+        color: #7384ce;
       }
 
-      &:nth-child(5), &:nth-child(10) {
-        color: #B18F6D;
+      &:nth-child(5),
+      &:nth-child(10) {
+        color: #b18f6d;
       }
     }
   }
 }
 
 .running-setup-row {
-  width: 100%;
   display: flex;
   justify-content: space-between;
+  width: 100%;
 }
 
 .running-setup-row--complete {
@@ -145,13 +151,13 @@
 .running-setup__deco {
   position: absolute;
   top: 0;
-  height: 240px;
   width: auto;
+  height: 240px;
   margin: 16px 0;
 
   img {
-    height: 100%;
     width: auto;
+    height: 100%;
   }
 }
 
@@ -162,5 +168,4 @@
 .running-setup__deco--left {
   left: -90px;
 }
-
 </style>

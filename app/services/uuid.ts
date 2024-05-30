@@ -1,7 +1,7 @@
 import { StatefulService } from './core/stateful-service';
 import uuidv4 from 'uuid/v4';
 
-interface IUuidServiceState { }
+interface IUuidServiceState {}
 
 export class UuidService extends StatefulService<IUuidServiceState> {
   localStorageKey = 'InstallationUuidv4';
@@ -18,7 +18,6 @@ export class UuidService extends StatefulService<IUuidServiceState> {
     return this._uuid;
   }
 
-
   private generateUuid(): string {
     return uuidv4();
   }
@@ -34,5 +33,4 @@ export class UuidService extends StatefulService<IUuidServiceState> {
     localStorage.setItem(this.localStorageKey, uuid);
     return uuid;
   }
-
 }

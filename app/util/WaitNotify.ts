@@ -3,7 +3,7 @@ export class WaitNotify {
   private _resolve: (() => void) | null = null;
   wait(): Promise<void> {
     if (!this._promise) {
-      this._promise = new Promise((resolve) => {
+      this._promise = new Promise(resolve => {
         this._resolve = resolve;
       });
     }

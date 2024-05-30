@@ -1,6 +1,12 @@
-import { IObsListInput, IObsTextInputValue, TObsFormData, TObsValue, IObsButtonInputValue } from "components/obs/inputs/ObsInput";
-import { PropertiesManager } from "./properties-manager";
-import { $t } from "services/i18n";
+import {
+  IObsListInput,
+  IObsTextInputValue,
+  TObsFormData,
+  TObsValue,
+  IObsButtonInputValue,
+} from 'components/obs/inputs/ObsInput';
+import { PropertiesManager } from './properties-manager';
+import { $t } from 'services/i18n';
 
 export class CustomCastNdiManager extends PropertiesManager {
   getPropertiesFormData(): TObsFormData {
@@ -15,7 +21,7 @@ export class CustomCastNdiManager extends PropertiesManager {
 
       const re = /.* \(CUSTOMCAST\)/;
       const customCastNdi = ndiSourceNameProp.options.find(option => {
-        return (typeof option.value === 'string') && option.value.match(re);
+        return typeof option.value === 'string' && option.value.match(re);
       });
 
       if (customCastNdi === undefined) {
@@ -40,14 +46,21 @@ export class CustomCastNdiManager extends PropertiesManager {
             info: true,
             url,
           } as IObsButtonInputValue;
-        }
+        };
         return [
-          staticText('custom_cast_ndi_not_found', $t('source-props.custom_cast_ndi_source.custom_cast_ndi_not_found')),
-          staticText('custom_cast_ndi_not_found_2', $t('source-props.custom_cast_ndi_source.custom_cast_ndi_not_found_2')),
+          staticText(
+            'custom_cast_ndi_not_found',
+            $t('source-props.custom_cast_ndi_source.custom_cast_ndi_not_found'),
+          ),
+          staticText(
+            'custom_cast_ndi_not_found_2',
+            $t('source-props.custom_cast_ndi_source.custom_cast_ndi_not_found_2'),
+          ),
           linkButton(
             'network_help_button',
             $t('source-props.custom_cast_ndi_source.network_help_button.name'),
-            $t('source-props.custom_cast_ndi_source.network_help_button.url')),
+            $t('source-props.custom_cast_ndi_source.network_help_button.url'),
+          ),
         ];
       }
 

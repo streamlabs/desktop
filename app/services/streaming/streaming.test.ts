@@ -4,7 +4,7 @@ import { EStreamingState, ERecordingState } from './streaming-api';
 import { createSetupFunction } from 'util/test-setup';
 import { RequestError } from 'util/RequestError';
 
-function noop(..._args: any[]) { }
+function noop(..._args: any[]) {}
 
 jest.mock('services/core/stateful-service');
 jest.mock('services/core/injector');

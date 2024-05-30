@@ -1,5 +1,4 @@
 <template>
-
   <div>
     <!-- title -->
     <div class="flex margin-vertical--10">
@@ -31,39 +30,41 @@
           {{ inputErrors[0].msg }}
         </div>
       </div>
-
     </div>
   </div>
-
 </template>
-
 
 <script lang="ts" src="./VFormGroup.vue.ts"></script>
 
 <style lang="less" scoped>
-  @import "../../../styles/index";
+@import url('../../../styles/index');
 
-  .slots {
-    width: 100%;
+.slots {
+  width: 100%;
+}
+
+.tooltip {
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+  align-self: center;
+  margin-left: 8px;
+  font-size: 16px;
+  line-height: 0;
+  color: @icon;
+}
+
+.input-footer {
+  min-height: 16px;
+  margin-top: 6px;
+  font-size: 11px;
+
+  .whisper {
+    font-style: italic;
   }
 
-  .tooltip {
-    position: relative;
-    margin-left: 8px;
-    font-size: 16px;
-    align-self: center;
-    display: inline-block;
-    z-index: 1;
-    color: @icon;
-    line-height: 0;
+  .input-error {
+    color: @red;
   }
-
-  .input-footer {
-    margin-top: 6px;
-    min-height: 16px;
-    font-size: 11px;
-
-    .whisper { font-style: italic; }
-    .input-error { color: @red; }
-  }
+}
 </style>

@@ -1,4 +1,4 @@
-import * as Sentry from '@sentry/vue'
+import * as Sentry from '@sentry/vue';
 import { StatefulService, mutation } from 'services/core/stateful-service';
 import { ISceneCollectionsManifestEntry } from '.';
 import Vue from 'vue';
@@ -68,7 +68,7 @@ export class SceneCollectionsStateService extends StatefulService<ISceneCollecti
         }
       } catch (backupError) {
         scope.setLevel('error');
-        Sentry.captureException(backupError, scope)
+        Sentry.captureException(backupError, scope);
       }
     }
 

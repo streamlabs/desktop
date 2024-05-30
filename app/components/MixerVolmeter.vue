@@ -1,14 +1,14 @@
 <template>
-<div class="volmeter-container">
-  <canvas class="volmeter" ref="canvas" />
-  <div class="volmeter-spacer" ref="spacer" />
-</div>
+  <div class="volmeter-container">
+    <canvas class="volmeter" ref="canvas" />
+    <div class="volmeter-spacer" ref="spacer" />
+  </div>
 </template>
 
 <script lang="ts" src="./MixerVolmeter.vue.ts"></script>
 
 <style lang="less" scoped>
-@import "../styles/index";
+@import url('../styles/index');
 
 .volmeter {
   position: absolute;
@@ -18,5 +18,4 @@
 .volmeter-spacer {
   margin: 8px 0;
 }
-
 </style>

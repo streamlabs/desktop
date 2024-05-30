@@ -2,7 +2,6 @@ const fs = require('fs');
 const CONFIG = JSON.parse(fs.readFileSync('test/screentest/config.json'));
 const CONFIG_VARIATION = CONFIG.configs;
 
-
 export function getConfig() {
   return JSON.parse(fs.readFileSync('test/screentest/config.json'));
 }

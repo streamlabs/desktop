@@ -53,7 +53,7 @@
 <script lang="ts" src="./StreamingController.vue.ts"></script>
 
 <style lang="less" scoped>
-@import '../styles/index';
+@import url('../styles/index');
 
 .nav-container {
   display: flex;
@@ -70,8 +70,8 @@
 }
 
 .platform-error {
-  background: var(--color-red-dark);
   padding: 4px;
+  background: var(--color-red-dark);
   border-radius: 3px;
 
   i {
@@ -87,21 +87,23 @@
 
   .alert-button {
     height: 18px;
+    padding: 0 8px;
+    margin: 0 5px;
+    font-size: 10px;
     line-height: 12px;
     background: var(--color-red-dark);
-    margin: 0 5px;
-    padding: 0 8px;
-    font-size: 10px;
   }
 }
 
 .elapsed-time {
   .time-styling;
+
   margin-right: auto;
 }
 
 .record-button {
   .bold;
+
   letter-spacing: 0.2px;
 
   span {
@@ -109,24 +111,24 @@
   }
 
   &.active {
-    opacity: 1;
     // animation: pulse 2.5s infinite;
     background: var(--color-red);
-  
+    opacity: 1;
+
     &:hover {
-      opacity: 1;
       background: var(--color-red-hover);
+      opacity: 1;
     }
   }
 }
 
 .replay-button-group {
+  position: relative;
   display: flex;
   width: @item-generic-size;
   height: @item-generic-size;
-  border-radius: 16px;
   overflow: hidden;
-  position: relative;
+  border-radius: 16px;
   .transition;
 
   &.is-replay-start {
@@ -145,10 +147,10 @@
 }
 
 .button--replay-stop {
-  background: var(--color-red-dark);
   position: absolute;
   top: 0;
   right: @item-generic-size;
+  background: var(--color-red-dark);
   border-radius: 0;
 
   i {
@@ -158,10 +160,10 @@
 }
 
 .button--replay-save {
-  display: none;
   position: absolute;
   top: 0;
   right: 0;
+  display: none;
   border-radius: 0;
 
   .is-replay-start & {
@@ -171,13 +173,15 @@
 
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(252, 62, 63, 0.4);
+    box-shadow: 0 0 0 0 rgba(252, 62, 63, 40%);
   }
+
   70% {
-    box-shadow: 0 0 0 6px rgba(0, 0, 0, 0);
+    box-shadow: 0 0 0 6px rgba(0, 0, 0, 0%);
   }
+
   100% {
-    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0%);
   }
 }
 </style>

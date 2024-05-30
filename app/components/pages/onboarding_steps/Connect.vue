@@ -13,7 +13,8 @@
           class="button button--accent button--niconico"
           :disabled="loadingState"
           @click="authPlatform('niconico')"
-          data-test="NiconicoSignup">
+          data-test="NiconicoSignup"
+        >
           {{ $t('onboarding.loginToNiconico') }}
         </button>
       </div>
@@ -22,7 +23,10 @@
         class="link link--skip"
         :disabled="loadingState"
         v-if="!isSecurityUpgrade"
-        data-test="Skip">{{ $t('onboarding.skipConnect')}}</button>
+        data-test="Skip"
+      >
+        {{ $t('onboarding.skipConnect') }}
+      </button>
       <footer>©DWANGO Co.,Ltd.</footer>
     </div>
   </div>
@@ -34,19 +38,20 @@
 .signup-buttons {
   display: flex;
   flex-direction: column;
-  width: 100%;
   align-items: center;
+  width: 100%;
 
   button {
     margin-bottom: 24px;
   }
 }
+
 footer {
   position: fixed;
-  color: var(--color-text-dark);
   bottom: 0;
   width: 100%;
   padding: 16px;
+  color: var(--color-text-dark);
 }
 
 .icon-spin {
@@ -57,6 +62,7 @@ footer {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(359deg);
   }
@@ -64,13 +70,12 @@ footer {
 
 // ログインボタン
 .button--niconico {
-  height: 40px;
   width: 188px;
+  height: 40px;
 }
 
 // スキップリンク
 .link--skip {
   text-decoration: underline;
 }
-
 </style>

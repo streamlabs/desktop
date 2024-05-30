@@ -1,59 +1,62 @@
 <template>
-<div class="slider-container">
-  <vue-slider class="slider"
-    @input="value => updateValue(value)"
-    :value="value"
-    :disabled="disabled"
-    :max="max"
-    :min="min"
-    :interval="interval"
-    :speed="0"
-    :height="4"
-    :dotSize="dotSize"
-    :tooltip="tooltip"
-    tooltip-dir="bottom"
-    :sliderStyle="sliderStyle"
-    :formatter="formatter"
-    ref="slider"
-  />
-  <input
-    v-if="valueBox && !usePercentages"
-    class="slider-input"
-    type="text"
-    :value="value"
-    @change="updateValue(parseFloat($event.target.value))"
-    @keydown="handleKeydown"
-  />
-</div>
+  <div class="slider-container">
+    <vue-slider
+      class="slider"
+      @input="value => updateValue(value)"
+      :value="value"
+      :disabled="disabled"
+      :max="max"
+      :min="min"
+      :interval="interval"
+      :speed="0"
+      :height="4"
+      :dotSize="dotSize"
+      :tooltip="tooltip"
+      tooltip-dir="bottom"
+      :sliderStyle="sliderStyle"
+      :formatter="formatter"
+      ref="slider"
+    />
+    <input
+      v-if="valueBox && !usePercentages"
+      class="slider-input"
+      type="text"
+      :value="value"
+      @change="updateValue(parseFloat($event.target.value))"
+      @keydown="handleKeydown"
+    />
+  </div>
 </template>
 
 <script lang="ts" src="./Slider.vue.ts"></script>
 
 <style lang="less">
-@import "../../styles/index";
+@import url('../../styles/index');
 
 .slider-container {
-  width: 100%;
   display: flex;
-  >.slider {
+  width: 100%;
+
+  > .slider {
     width: 70% !important;
   }
-  >.controls {
+
+  > .controls {
     width: 29.9% !important;
   }
 }
 
 .slider-input {
-  margin-left: 10px;
   width: 60px;
+  margin-left: 10px;
 }
 
 .slider {
-  background: transparent;
-  padding:8px 0 !important;
-  margin: 0;
   flex-grow: 1;
   height: auto;
+  padding: 8px 0 !important;
+  margin: 0;
+  background: transparent;
 }
 
 .vue-slider {
@@ -69,30 +72,30 @@
 }
 
 .vue-slider-dot {
-  &:after {
-    content: '';
-    display: block;
+  &::after {
     position: absolute;
-    left: 5px;
     top: 5px;
+    left: 5px;
+    display: block;
     width: 5px;
     height: 5px;
-    border-radius: 50%;
+    content: '';
     background-color: var(--color-text-dark);
+    border-radius: 50%;
   }
 }
 
 .vue-slider-tooltip {
-  background-color: var(--color-tooltip-bg) !important;
-  border-radius: 4px !important;
-  border: 1px solid var(--color-tooltip-border) !important;
-  color: var(--color-tooltip-text) !important;
-  font-size: @font-size4 !important;
   top: 40px !important;
+  font-size: @font-size4 !important;
+  color: var(--color-tooltip-text) !important;
+  background-color: var(--color-tooltip-bg) !important;
+  border: 1px solid var(--color-tooltip-border) !important;
+  border-radius: 4px !important;
   .transition;
   .shadow;
 
-  &:before {
+  &::before {
     display: none;
   }
 }
@@ -104,6 +107,4 @@
     display: none !important;
   }
 }
-
-
 </style>

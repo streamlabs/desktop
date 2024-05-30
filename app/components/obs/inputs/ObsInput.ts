@@ -33,8 +33,7 @@ export declare type TObsType =
   | 'OBS_PROPERTY_BUTTON'
   | 'OBS_PROPERTY_BITMASK'
   | 'OBS_INPUT_RESOLUTION_LIST'
-  | 'NAIR_PROPERTY_LINK_BUTTON'
-  ;
+  | 'NAIR_PROPERTY_LINK_BUTTON';
 
 /**
  * OBS values that frontend application can change

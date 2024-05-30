@@ -1,48 +1,48 @@
 <template>
-<div class="container">
-  <div
-    v-for="option in metadata.options"
-    :key="option.value"
-    class="image-container radius"
-    :class="[value === option.value ? 'active' : '']"
-    @click="emitInput(option.value)"
-  >
-    <img :src="option.description" >
+  <div class="container">
+    <div
+      v-for="option in metadata.options"
+      :key="option.value"
+      class="image-container radius"
+      :class="[value === option.value ? 'active' : '']"
+      @click="emitInput(option.value)"
+    >
+      <img :src="option.description" />
+    </div>
   </div>
-</div>
 </template>
 
 <script lang="ts" src="./ImagePickerInput.vue.ts"></script>
 
 <style lang="less" scoped>
-@import "../../../styles/index";
+@import url('../../../styles/index');
 
 .container {
-  width: 370px;
   display: flex;
   flex-wrap: wrap;
+  width: 370px;
 }
 
 .image-container {
+  position: relative;
   width: 80px;
   height: 80px;
-  border: 1px solid @day-input-border;
   margin: 2px;
+  border: 1px solid @day-input-border;
   .transition();
-  position: relative;
   .radius();
 
   &:hover {
-    border-color: @teal-light-opac;
     cursor: pointer;
+    border-color: @teal-light-opac;
   }
 
   img {
-    height: 70px;
-    width: auto;
     position: absolute;
     top: 50%;
     left: 50%;
+    width: auto;
+    height: 70px;
     transform: translate(-50%, -50%);
   }
 
@@ -59,6 +59,7 @@
     &:hover {
       border-color: @teal-light-opac;
     }
+
     &.active {
       border-color: @teal-med-opac;
     }

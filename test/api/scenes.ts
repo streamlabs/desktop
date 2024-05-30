@@ -1,15 +1,14 @@
-import { useSpectron, test } from '../helpers/spectron';
-import { getClient } from '../helpers/api-client';
+import { useWebdriver, test } from '../helpers/webdriver';
+import { getApiClient } from '../helpers/api-client';
 import { ScenesService } from 'services/scenes';
-import { sleep } from '../helpers/sleep';
 import { SceneBuilder } from '../helpers/scene-builder';
-import { DefaultSceneName } from '../helpers/spectron/scenes';
+import { DefaultSceneName } from '../helpers/modules/scenes';
 const path = require('path');
 
-useSpectron({ restartAppAfterEachTest: false });
+useWebdriver({ restartAppAfterEachTest: false });
 
 test('The default scene exists', async t => {
-  const client = await getClient();
+  const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
   const scenes = scenesService.getScenes();
 
@@ -17,7 +16,7 @@ test('The default scene exists', async t => {
 });
 
 test('Creating, fetching and removing scenes', async t => {
-  const client = await getClient();
+  const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
   t.is(scenesService.getScenes().length, 2);
   const scenesBefore = scenesService.getScenes().map(s => s.name);
@@ -43,7 +42,7 @@ test('Creating, fetching and removing scenes', async t => {
 });
 
 test('Switching between scenes', async t => {
-  const client = await getClient();
+  const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
   t.is(scenesService.getScenes().length, 2);
 
@@ -63,7 +62,7 @@ test('Switching between scenes', async t => {
 });
 
 test('Creating, fetching and removing scene-items', async t => {
-  const client = await getClient();
+  const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
 
   const scene = scenesService.getSceneByName(DefaultSceneName);
@@ -83,7 +82,7 @@ test('Creating, fetching and removing scene-items', async t => {
 });
 
 test('Scenes events', async t => {
-  const client = await getClient();
+  const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
   let event: Dictionary<any>;
 
@@ -128,7 +127,7 @@ test('Scenes events', async t => {
 });
 
 test('Creating nested scenes', async t => {
-  const client = await getClient();
+  const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
 
   const sceneA = scenesService.createScene('SceneA');
@@ -156,7 +155,7 @@ test('Creating nested scenes', async t => {
 });
 
 test('SceneItem.setSettings()', async t => {
-  const client = await getClient();
+  const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
   const scene = scenesService.activeScene;
 
@@ -189,7 +188,7 @@ test('SceneItem.setSettings()', async t => {
 });
 
 test('SceneItem.resetTransform()', async t => {
-  const client = await getClient();
+  const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
   const scene = scenesService.activeScene;
 
@@ -215,7 +214,7 @@ test('SceneItem.resetTransform()', async t => {
 test('SceneItem.addFile()', async t => {
   const dataDir = path.resolve(__dirname, '..', '..', '..', 'test', 'data', 'sources-files');
 
-  const client = await getClient();
+  const client = await getApiClient();
   const sceneBuilder = new SceneBuilder(client);
   const scenesService = client.getResource<ScenesService>('ScenesService');
   const scene = scenesService.activeScene;

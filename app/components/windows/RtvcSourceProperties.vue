@@ -1,33 +1,48 @@
 <template>
   <div class="modal-layout" id="mainWrapper">
     <div class="tab">
-      <button type="button" class="button--tab" :class="{ 'active': tab == 0 }" @click="onTab(0)">
-        {{ $t('source-props.nair-rtvc-source.nav.voice_setting') }}</button>
-      <button type="button" class="button--tab" :class="{ 'active': tab == 1 }" @click="onTab(1)">
-        {{ $t('source-props.nair-rtvc-source.nav.mic_setting') }}</button>
+      <button type="button" class="button--tab" :class="{ active: tab == 0 }" @click="onTab(0)">
+        {{ $t('source-props.nair-rtvc-source.nav.voice_setting') }}
+      </button>
+      <button type="button" class="button--tab" :class="{ active: tab == 1 }" @click="onTab(1)">
+        {{ $t('source-props.nair-rtvc-source.nav.mic_setting') }}
+      </button>
     </div>
 
     <div v-if="tab == 0" class="content">
       <div class="nav-menu">
-        <div class="nav-menu-heading">{{
-          $t('source-props.nair-rtvc-source.nav.preset_voice') }}</div>
+        <div class="nav-menu-heading">
+          {{ $t('source-props.nair-rtvc-source.nav.preset_voice') }}
+        </div>
         <ul class="nav-menu-child">
-          <li v-for="v in presetList" :key="v.value" class="nav-item" :class="{ active: v.value === currentIndex }">
+          <li
+            v-for="v in presetList"
+            :key="v.value"
+            class="nav-item"
+            :class="{ active: v.value === currentIndex }"
+          >
             <div class="nav-item-content" @click="onSelect(v.value)">
               <div class="icon-wrapper">
                 <div class="icon" :data-label="v.label"></div>
-                <div class="icon-badge" v-show="v.value === currentIndex"><i class="icon-speech-engine"></i></div>
+                <div class="icon-badge" v-show="v.value === currentIndex">
+                  <i class="icon-speech-engine"></i>
+                </div>
               </div>
               <span class="name">{{ v.name }}</span>
             </div>
           </li>
         </ul>
 
-        <div class="nav-menu-heading">{{
-          $t('source-props.nair-rtvc-source.nav.original_voice') }} ({{ manualList.length
-          }}/{{ manualMax }})
-          <button v-if="canAdd" @click="onAdd()" class="indicator"
-            v-tooltip.bottom="$t('source-props.nair-rtvc-source.nav.original_voice_add')">
+        <div class="nav-menu-heading">
+          {{ $t('source-props.nair-rtvc-source.nav.original_voice') }} ({{ manualList.length }}/{{
+            manualMax
+          }})
+          <button
+            v-if="canAdd"
+            @click="onAdd()"
+            class="indicator"
+            v-tooltip.bottom="$t('source-props.nair-rtvc-source.nav.original_voice_add')"
+          >
             <i class="icon-add icon-btn" />
           </button>
           <button v-else class="indicator" disabled>
@@ -35,29 +50,50 @@
           </button>
         </div>
         <ul class="nav-menu-child">
-          <li v-for="v in manualList" :key="v.value" class="nav-item" :class="{ active: v.value === currentIndex }">
+          <li
+            v-for="v in manualList"
+            :key="v.value"
+            class="nav-item"
+            :class="{ active: v.value === currentIndex }"
+          >
             <div class="nav-item-content" @click="onSelect(v.value)">
               <div class="icon-wrapper">
                 <div class="icon" :data-label="v.label"></div>
-                <div class="icon-badge" v-show="v.value === currentIndex"><i class="icon-speech-engine"></i></div>
+                <div class="icon-badge" v-show="v.value === currentIndex">
+                  <i class="icon-speech-engine"></i>
+                </div>
               </div>
               <span class="name">{{ v.name }}</span>
             </div>
-            <popper trigger="click" :options="{ placement: 'bottom-end' }"
-              @show="showPopupMenu = true; currentPopupMenu = $event"
-              @hide="showPopupMenu = false; currentPopupMenu = undefined">
+            <popper
+              trigger="click"
+              :options="{ placement: 'bottom-end' }"
+              @show="
+                showPopupMenu = true;
+                currentPopupMenu = $event;
+              "
+              @hide="
+                showPopupMenu = false;
+                currentPopupMenu = undefined;
+              "
+            >
               <div class="popper">
                 <ul class="popup-menu-list">
                   <li class="popup-menu-item">
                     <button v-if="canAdd" class="link" @click="onCopy(v.value)">
-                      {{ $t('source-props.nair-rtvc-source.nav.copy_voice') }}</button>
+                      {{ $t('source-props.nair-rtvc-source.nav.copy_voice') }}
+                    </button>
                     <button v-else class="link" disabled>
-                      {{ $t('source-props.nair-rtvc-source.nav.copy_voice') }}</button>
+                      {{ $t('source-props.nair-rtvc-source.nav.copy_voice') }}
+                    </button>
                   </li>
                 </ul>
                 <ul class="popup-menu-list">
-                  <li class="popup-menu-item"><button class="link text--red" @click="onDelete(v.value)">
-                      {{ $t('source-props.nair-rtvc-source.nav.remove_voice') }}</button></li>
+                  <li class="popup-menu-item">
+                    <button class="link text--red" @click="onDelete(v.value)">
+                      {{ $t('source-props.nair-rtvc-source.nav.remove_voice') }}
+                    </button>
+                  </li>
                 </ul>
               </div>
               <div class="indicator" :class="{ 'is-show': showPopupMenu }" slot="reference">
@@ -66,7 +102,6 @@
             </popper>
           </li>
         </ul>
-
       </div>
 
       <div class="content-container">
@@ -76,48 +111,73 @@
             <div class="text">
               <p class="name">{{ name }}</p>
               <p class="description">{{ description }}</p>
-              <button class="button button--secondary" @click="playSample(label)"><i class="icon-speaker"></i>{{
-                $t('source-props.nair-rtvc-source.preset.play_sample') }}</button>
+              <button class="button button--secondary" @click="playSample(label)">
+                <i class="icon-speaker"></i
+                >{{ $t('source-props.nair-rtvc-source.preset.play_sample') }}
+              </button>
             </div>
           </div>
           <div class="section">
             <div class="section-heading-wrapper">
-              <div class="section-heading">{{ $t('source-props.nair-rtvc-source.container.voice_setting') }}</div>
+              <div class="section-heading">
+                {{ $t('source-props.nair-rtvc-source.container.voice_setting') }}
+              </div>
             </div>
 
             <div v-if="!isSongMode" class="input-container">
               <div class="input-label">
-                <label>{{ $t('source-props.nair-rtvc-source.pitch_shift.name') }}
-                  <i class="icon-help icon-tooltip"
-                    v-tooltip.bottom="$t('source-props.nair-rtvc-source.preset.description')"></i>
+                <label
+                  >{{ $t('source-props.nair-rtvc-source.pitch_shift.name') }}
+                  <i
+                    class="icon-help icon-tooltip"
+                    v-tooltip.bottom="$t('source-props.nair-rtvc-source.preset.description')"
+                  ></i>
                 </label>
                 <label> {{ pitchShift.toFixed(0) + ' cent' }} </label>
               </div>
               <div class="input-wrapper">
-                <VueSlider class="slider" v-model="pitchShift" :min=-1200 :max=1200 :interval=1 tooltip="none" />
+                <VueSlider
+                  class="slider"
+                  v-model="pitchShift"
+                  :min="-1200"
+                  :max="1200"
+                  :interval="1"
+                  tooltip="none"
+                />
               </div>
             </div>
 
             <div v-if="isSongMode" class="input-container">
               <div class="input-label">
-                <label>{{ $t('source-props.nair-rtvc-source.pitch_shift.name') }}
-                  <i class="icon-help icon-tooltip"
-                    v-tooltip.bottom="$t('source-props.nair-rtvc-source.preset.description')"></i>
+                <label
+                  >{{ $t('source-props.nair-rtvc-source.pitch_shift.name') }}
+                  <i
+                    class="icon-help icon-tooltip"
+                    v-tooltip.bottom="$t('source-props.nair-rtvc-source.preset.description')"
+                  ></i>
                 </label>
                 <label> {{ labelForPitchSong(pitchShiftSong) }} </label>
               </div>
               <div class="input-wrapper">
-                <VueSlider class="slider" v-model="pitchShiftSong" :min=-1200 :max=1200 :interval=1200 tooltip="none" />
+                <VueSlider
+                  class="slider"
+                  v-model="pitchShiftSong"
+                  :min="-1200"
+                  :max="1200"
+                  :interval="1200"
+                  tooltip="none"
+                />
               </div>
             </div>
-
           </div>
         </div>
 
         <div class="section-wrapper" v-else>
           <div class="section">
             <div class="section-heading-wrapper">
-              <div class="section-heading">{{ $t('source-props.nair-rtvc-source.container.voice_name') }}</div>
+              <div class="section-heading">
+                {{ $t('source-props.nair-rtvc-source.container.voice_name') }}
+              </div>
             </div>
             <div class="input-container">
               <div class="input-wrapper">
@@ -128,12 +188,19 @@
 
           <div class="section">
             <div class="section-heading-wrapper">
-              <div class="section-heading">{{ $t('source-props.nair-rtvc-source.container.voice_setting') }}</div>
+              <div class="section-heading">
+                {{ $t('source-props.nair-rtvc-source.container.voice_setting') }}
+              </div>
               <div class="button-wrapper">
-                <button class="button--text" @click="onRandom">{{
-                  $t('source-props.nair-rtvc-source.container.make_random.name') }} </button>
-                <i class="icon-help icon-tooltip"
-                  v-tooltip.bottom="$t('source-props.nair-rtvc-source.container.make_random.description')"></i>
+                <button class="button--text" @click="onRandom">
+                  {{ $t('source-props.nair-rtvc-source.container.make_random.name') }}
+                </button>
+                <i
+                  class="icon-help icon-tooltip"
+                  v-tooltip.bottom="
+                    $t('source-props.nair-rtvc-source.container.make_random.description')
+                  "
+                ></i>
               </div>
             </div>
 
@@ -143,7 +210,14 @@
                   <label>{{ $t('source-props.nair-rtvc-source.pitch_shift.name') }}</label>
                   <label> {{ pitchShift.toFixed(0) + ' cent' }} </label>
                 </div>
-                <VueSlider class="slider" v-model="pitchShift" :min=-1200 :max=1200 :interval=1 tooltip="none" />
+                <VueSlider
+                  class="slider"
+                  v-model="pitchShift"
+                  :min="-1200"
+                  :max="1200"
+                  :interval="1"
+                  tooltip="none"
+                />
               </div>
 
               <div v-if="isSongMode" class="input-wrapper">
@@ -151,34 +225,59 @@
                   <label>{{ $t('source-props.nair-rtvc-source.pitch_shift.name') }}</label>
                   <label> {{ labelForPitchSong(pitchShiftSong) }} </label>
                 </div>
-                <VueSlider class="slider" v-model="pitchShiftSong" :min=-1200 :max=1200 :interval=1200 tooltip="none" />
+                <VueSlider
+                  class="slider"
+                  v-model="pitchShiftSong"
+                  :min="-1200"
+                  :max="1200"
+                  :interval="1200"
+                  tooltip="none"
+                />
               </div>
 
               <div class="input-wrapper">
-                <div class="input-label"><label>{{ $t('source-props.nair-rtvc-source.primary_voice.name') }}</label>
+                <div class="input-label">
+                  <label>{{ $t('source-props.nair-rtvc-source.primary_voice.name') }}</label>
                 </div>
-                <multiselect v-model="primaryVoiceModel" :options="primaryVoiceList" label="description" trackBy="value"
-                  :allow-empty="false" :placeholder="$t('settings.listPlaceholder')" />
+                <multiselect
+                  v-model="primaryVoiceModel"
+                  :options="primaryVoiceList"
+                  label="description"
+                  trackBy="value"
+                  :allow-empty="false"
+                  :placeholder="$t('settings.listPlaceholder')"
+                />
               </div>
               <div class="input-wrapper">
-                <div class="input-label"><label>{{ $t('source-props.nair-rtvc-source.secondary_voice.name') }}</label>
+                <div class="input-label">
+                  <label>{{ $t('source-props.nair-rtvc-source.secondary_voice.name') }}</label>
                 </div>
-                <multiselect v-model="secondaryVoiceModel" :options="secondaryVoiceList" label="description"
-                  trackBy="value" :allow-empty="false" :placeholder="$t('settings.listPlaceholder')" />
+                <multiselect
+                  v-model="secondaryVoiceModel"
+                  :options="secondaryVoiceList"
+                  label="description"
+                  trackBy="value"
+                  :allow-empty="false"
+                  :placeholder="$t('settings.listPlaceholder')"
+                />
               </div>
 
               <div class="input-wrapper" v-if="secondaryVoice >= 0">
                 <div class="input-label">
-                  <label>{{ $t('source-props.nair-rtvc-source.amount.name') }}
-                  </label>
+                  <label>{{ $t('source-props.nair-rtvc-source.amount.name') }} </label>
                   <label> {{ amount.toFixed(0) + '%' }}</label>
                 </div>
-                <VueSlider class="slider" v-model="amount" :min="0" :max="100" :interval="1" tooltip="none" />
+                <VueSlider
+                  class="slider"
+                  v-model="amount"
+                  :min="0"
+                  :max="100"
+                  :interval="1"
+                  tooltip="none"
+                />
               </div>
-
             </div>
           </div>
-
         </div>
       </div>
     </div>
@@ -186,33 +285,53 @@
     <div v-if="tab == 1" class="content">
       <div class="content-container">
         <div class="section">
-
           <div class="input-container">
-            <div class="input-label"><label>{{ $t('source-props.nair-rtvc-source.device.name') }}</label></div>
+            <div class="input-label">
+              <label>{{ $t('source-props.nair-rtvc-source.device.name') }}</label>
+            </div>
             <div class="input-wrapper">
-              <multiselect v-model="deviceModel" :options="deviceList" label="description" trackBy="value"
-                :allow-empty="false" :placeholder="$t('settings.listPlaceholder')" />
+              <multiselect
+                v-model="deviceModel"
+                :options="deviceList"
+                label="description"
+                trackBy="value"
+                :allow-empty="false"
+                :placeholder="$t('settings.listPlaceholder')"
+              />
             </div>
           </div>
 
           <div class="input-container">
             <div class="input-label">
-              <label>{{ $t('source-props.nair-rtvc-source.latency.name') }}
-                <i class="icon-help icon-tooltip wide"
-                  v-tooltip.top="$t('source-props.nair-rtvc-source.latency.description')"></i></label>
+              <label
+                >{{ $t('source-props.nair-rtvc-source.latency.name') }}
+                <i
+                  class="icon-help icon-tooltip wide"
+                  v-tooltip.top="$t('source-props.nair-rtvc-source.latency.description')"
+                ></i
+              ></label>
             </div>
             <div class="input-wrapper">
-              <multiselect v-model="latencyModel" :options="latencyList" label="description" trackBy="value"
-                :allow-empty="false" :placeholder="$t('settings.listPlaceholder')" />
+              <multiselect
+                v-model="latencyModel"
+                :options="latencyList"
+                label="description"
+                trackBy="value"
+                :allow-empty="false"
+                :placeholder="$t('settings.listPlaceholder')"
+              />
             </div>
           </div>
 
           <div class="input-container">
             <div class="input-wrapper">
               <div class="row">
-                <div class="name">{{ $t('source-props.nair-rtvc-source.song.name') }}
-                  <i class="icon-help icon-tooltip wide"
-                    v-tooltip.top="$t('source-props.nair-rtvc-source.song.description')"></i>
+                <div class="name">
+                  {{ $t('source-props.nair-rtvc-source.song.name') }}
+                  <i
+                    class="icon-help icon-tooltip wide"
+                    v-tooltip.top="$t('source-props.nair-rtvc-source.song.description')"
+                  ></i>
                 </div>
                 <div class="value">
                   <input v-model="isSongMode" type="checkbox" class="toggle-button" />
@@ -220,24 +339,22 @@
               </div>
             </div>
           </div>
-
         </div>
-
-
       </div>
     </div>
 
     <div class="modal-layout-controls">
-
       <div class="toggle-wrapper">
         <span class="toggle-label">{{ $t('source-props.nair-rtvc-source.nav.check_voice') }}</span>
         <input v-model="isMonitor" type="checkbox" class="toggle-button" />
       </div>
 
       <button class="button button--secondary" @click="cancel" data-test="Cancel">
-        {{ $t('common.cancel') }} </button>
+        {{ $t('common.cancel') }}
+      </button>
       <button class="button button--primary" @click="done" data-test="Done">
-        {{ $t('common.done') }} </button>
+        {{ $t('common.done') }}
+      </button>
     </div>
   </div>
 </template>
@@ -245,7 +362,7 @@
 <script lang="ts" src="./RtvcSourceProperties.vue.ts"></script>
 
 <style lang="less" scoped>
-@import url("../../styles/index");
+@import url('../../styles/index');
 
 .modal-layout {
   display: flex;
@@ -279,7 +396,6 @@
   }
 }
 
-
 .content {
   display: flex;
   flex-grow: 1;
@@ -299,7 +415,7 @@
   margin: 0;
   overflow-y: scroll;
 
-  .nav-menu+& {
+  .nav-menu + & {
     padding-left: 0;
   }
 
@@ -368,21 +484,29 @@
   }
 
   // 琴詠ニア
-  &[data-label="near"] {
-    background: radial-gradient(100% 100% at 50% 100%, var(--color-white) 0%, var(--color-brand-rtvc-near) 100%);
+  &[data-label='near'] {
+    background: radial-gradient(
+      100% 100% at 50% 100%,
+      var(--color-white) 0%,
+      var(--color-brand-rtvc-near) 100%
+    );
 
     .image {
       top: -6px;
       width: 768px;
       height: 768px;
       background-image: url('../../../media/images/rtvc/near.png');
-      filter: drop-shadow(8px 6px 0 #FF9446);
+      filter: drop-shadow(8px 6px 0 #ff9446);
     }
   }
 
   // ずんだもん
-  &[data-label="zundamon"] {
-    background: radial-gradient(100% 100% at 50% 100%, var(--color-white) 0%, var(--color-brand-rtvc-zundamon) 100%);
+  &[data-label='zundamon'] {
+    background: radial-gradient(
+      100% 100% at 50% 100%,
+      var(--color-white) 0%,
+      var(--color-brand-rtvc-zundamon) 100%
+    );
 
     .image {
       top: -64px;
@@ -390,13 +514,17 @@
       width: 372px;
       height: 644px;
       background-image: url('../../../media/images/rtvc/zundamon.png');
-      filter: drop-shadow(8px 6px 0 #54C003);
+      filter: drop-shadow(8px 6px 0 #54c003);
     }
   }
 
   //春日部つむぎ
-  &[data-label="tsumugi"] {
-    background: radial-gradient(100% 100% at 50% 100%, var(--color-white) 0%, var(--color-brand-rtvc-tsumugi) 100%);
+  &[data-label='tsumugi'] {
+    background: radial-gradient(
+      100% 100% at 50% 100%,
+      var(--color-white) 0%,
+      var(--color-brand-rtvc-tsumugi) 100%
+    );
 
     .image {
       top: -22px;
@@ -405,7 +533,7 @@
       height: 728px;
       margin-left: -45px;
       background-image: url('../../../media/images/rtvc/tsumugi.png');
-      filter: drop-shadow(8px 6px 0 #E1B52B);
+      filter: drop-shadow(8px 6px 0 #e1b52b);
     }
   }
 
@@ -453,7 +581,7 @@
     flex-grow: 1;
   }
 
-  .character-image+& {
+  .character-image + & {
     border-radius: 0 0 4px 4px;
   }
 }
@@ -561,8 +689,12 @@
     }
 
     // 琴詠ニア
-    &[data-label="near"] {
-      background: radial-gradient(100% 100% at 50% 100%, var(--color-white) 0%, var(--color-brand-rtvc-near) 100%);
+    &[data-label='near'] {
+      background: radial-gradient(
+        100% 100% at 50% 100%,
+        var(--color-white) 0%,
+        var(--color-brand-rtvc-near) 100%
+      );
 
       &::before {
         bottom: -112px;
@@ -574,8 +706,12 @@
     }
 
     // ずんだもん
-    &[data-label="zundamon"] {
-      background: radial-gradient(100% 100% at 50% 100%, var(--color-white) 0%, var(--color-brand-rtvc-zundamon) 100%);
+    &[data-label='zundamon'] {
+      background: radial-gradient(
+        100% 100% at 50% 100%,
+        var(--color-white) 0%,
+        var(--color-brand-rtvc-zundamon) 100%
+      );
 
       &::before {
         bottom: -78px;
@@ -587,8 +723,12 @@
     }
 
     //春日部つむぎ
-    &[data-label="tsumugi"] {
-      background: radial-gradient(100% 100% at 50% 100%, var(--color-white) 0%, var(--color-brand-rtvc-tsumugi) 100%);
+    &[data-label='tsumugi'] {
+      background: radial-gradient(
+        100% 100% at 50% 100%,
+        var(--color-white) 0%,
+        var(--color-brand-rtvc-tsumugi) 100%
+      );
 
       &::before {
         bottom: -99px;
@@ -600,24 +740,24 @@
     }
 
     // オリジナルボイス（色は仮置き）
-    &[data-label="manual0"] {
-      background-color: #FF5C00;
+    &[data-label='manual0'] {
+      background-color: #ff5c00;
     }
 
-    &[data-label="manual1"] {
+    &[data-label='manual1'] {
       background-color: #027333;
     }
 
-    &[data-label="manual2"] {
-      background-color: #FFC700;
+    &[data-label='manual2'] {
+      background-color: #ffc700;
     }
 
-    &[data-label="manual3"] {
-      background-color: #F00;
+    &[data-label='manual3'] {
+      background-color: #f00;
     }
 
-    &[data-label="manual4"] {
-      background-color: #0094FF;
+    &[data-label='manual4'] {
+      background-color: #0094ff;
     }
   }
 

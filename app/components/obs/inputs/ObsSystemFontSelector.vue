@@ -13,7 +13,8 @@
           :allow-empty="false"
           track-by="family"
           label="family"
-          @input="setFamily">
+          @input="setFamily"
+        >
           <template slot="option" slot-scope="props">
             <span :style="{ fontFamily: props.option.family }">
               {{ props.option.family }}
@@ -38,10 +39,10 @@
           :allow-empty="false"
           track-by="style"
           label="style"
-          @input="setStyle">
+          @input="setStyle"
+        >
           <template slot="option" slot-scope="props">
-            <span
-              :style="styleForFont(props.option)">
+            <span :style="styleForFont(props.option)">
               {{ props.option.style }}
             </span>
           </template>
@@ -58,10 +59,10 @@
 <script lang="ts" src="./ObsSystemFontSelector.vue.ts"></script>
 
 <style lang="less" scoped>
-@import "../../../styles/index";
+@import url('../../../styles/index');
 
 .multiselect--font {
-  margin-bottom: 0px;
+  margin-bottom: 0;
 }
 
 .FontProperty-presets {
@@ -69,9 +70,9 @@
   top: 0;
   right: 0;
   width: 0;
-  border: 0;
-  background-color: rgba(0,0,0,0);
   cursor: pointer;
+  background-color: rgba(0, 0, 0, 0%);
+  border: 0;
   outline: none;
 }
 </style>

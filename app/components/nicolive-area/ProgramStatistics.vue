@@ -23,7 +23,7 @@
 
 <script lang="ts" src="./ProgramStatistics.vue.ts"></script>
 <style lang="less" scoped>
-@import '../../styles/index';
+@import url('../../styles/index');
 
 .program-statistics {
   display: flex;
@@ -34,18 +34,18 @@
 
 .program-statistics-list {
   display: flex;
+  flex-grow: 1;
   flex-wrap: wrap;
   align-items: center;
-  list-style: none;
-  margin: 0;
   justify-content: space-between;
-  flex-grow: 1;
+  margin: 0;
+  list-style: none;
 }
 
 .program-statistics-item {
   display: flex;
-  align-items: center;
   flex-grow: 1;
+  align-items: center;
 
   &:not(:last-child) {
     margin-right: 16px;
@@ -53,15 +53,15 @@
 }
 
 .program-statistics-icon {
-  font-size: @font-size2;
   margin-right: 8px;
+  font-size: @font-size2;
   color: var(--color-text-dark);
 }
 
 .program-statistics-value {
-  font-size: @font-size2;
   flex-grow: 1;
-  text-align: center;
+  font-size: @font-size2;
   color: var(--color-text);
+  text-align: center;
 }
 </style>

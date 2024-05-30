@@ -4,7 +4,6 @@
       {{ options.title }}
     </div>
     <div class="col-xs-8">
-
       <div class="input-container input-container--no-margin">
         <form-input
           :value="value"
@@ -27,51 +26,51 @@
           {{ inputErrors[0].msg }}
         </div>
       </div>
-
     </div>
   </div>
 </template>
 
-
 <script lang="ts" src="./HFormGroup.vue.ts"></script>
 
 <style lang="less" scoped>
-  @import "../../../styles/index";
+@import url('../../../styles/index');
 
-  .row {
-    .margin-bottom(1);
+.row {
+  .margin-bottom(1);
+}
+
+.input-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.slots {
+  width: 100%;
+}
+
+.tooltip {
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+  align-self: center;
+  margin-left: 8px;
+  font-size: 16px;
+  color: @icon;
+}
+
+.input-footer {
+  min-height: 16px;
+  margin-top: 6px;
+  font-size: 11px;
+
+  .whisper {
+    font-style: italic;
   }
 
-  .input-container {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    justify-content: flex-start;
+  .input-error {
+    color: @red;
   }
-
-
-
-  .slots {
-    width: 100%;
-  }
-
-  .tooltip {
-    position: relative;
-    margin-left: 8px;
-    font-size: 16px;
-    align-self: center;
-    display: inline-block;
-    z-index: 1;
-    color: @icon;
-  }
-
-  .input-footer {
-    margin-top: 6px;
-    min-height: 16px;
-    font-size: 11px;
-
-    .whisper { font-style: italic; }
-    .input-error { color: @red; }
-  }
-
+}
 </style>

@@ -1,5 +1,5 @@
-import { useSpectron, test } from '../helpers/spectron';
-import { sceneExisting } from '../helpers/spectron/scenes';
+import { useWebdriver, test } from '../helpers/webdriver';
+import { sceneExisting } from '../helpers/modules/scenes';
 
 const fs = require('fs');
 const path = require('path');
@@ -17,7 +17,7 @@ function copyFile(src: string, dest: string) {
   });
 }
 
-useSpectron({
+useWebdriver({
   beforeAppStartCb: async t => {
     const dataDir = path.resolve(__dirname, '..', '..', '..', 'test', 'data');
 
@@ -27,14 +27,14 @@ useSpectron({
 
     await copyFile(
       path.join(dataDir, 'scene-collection.json'),
-      path.join(sceneCollectionsPath, '4e467470-923c-43a3-90d2-2be39c8c34ee.json')
+      path.join(sceneCollectionsPath, '4e467470-923c-43a3-90d2-2be39c8c34ee.json'),
     );
 
     await copyFile(
       path.join(dataDir, 'scene-collection-manifest.json'),
-      path.join(sceneCollectionsPath, 'manifest.json')
+      path.join(sceneCollectionsPath, 'manifest.json'),
     );
-  }
+  },
 });
 
 /**
@@ -44,9 +44,9 @@ useSpectron({
  */
 test('Loading an old scene collection', async t => {
   // Make sure we loaded the scenes
-  t.true(await sceneExisting(t, 'Stream Starting Soon'));
-  t.true(await sceneExisting(t, 'Live Screen'));
-  t.true(await sceneExisting(t, 'Intermission'));
-  t.true(await sceneExisting(t, 'Be Right Back'));
-  t.true(await sceneExisting(t, 'Stream Ending Soon'));
+  t.true(await sceneExisting('Stream Starting Soon'));
+  t.true(await sceneExisting('Live Screen'));
+  t.true(await sceneExisting('Intermission'));
+  t.true(await sceneExisting('Be Right Back'));
+  t.true(await sceneExisting('Stream Ending Soon'));
 });

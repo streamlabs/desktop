@@ -95,7 +95,8 @@ type RecordingSettings = {
 
 export class SettingsService
   extends StatefulService<ISettingsState>
-  implements ISettingsServiceApi, ISettingsAccessor {
+  implements ISettingsServiceApi, ISettingsAccessor
+{
   static initialState = {};
 
   static convertFormDataToState(settingsFormData: TSettingsFormData): ISettingsState {
@@ -486,10 +487,10 @@ export class SettingsService
       : (this.findSettingValue(output, 'Audio - Track 1', 'Track1Bitrate') as string);
     const rate_control = !isSimple
       ? (this.findSettingValue(output, 'Streaming', 'rate_control') as
-        | 'CBR'
-        | 'VBR'
-        | 'ABR'
-        | 'CRF')
+          | 'CBR'
+          | 'VBR'
+          | 'ABR'
+          | 'CRF')
       : null;
     const profile = !isSimple
       ? (this.findSettingValue(output, 'Streaming', 'profile') as 'high' | 'main' | 'baseline')
@@ -805,7 +806,7 @@ export class SettingsService
 
     // video_settingsに設定を伝える
     if (categoryName === 'Video') {
-      this.videoSettingsService.refrectLegacy()
+      this.videoSettingsService.refrectLegacy();
     }
   }
 

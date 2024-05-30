@@ -65,19 +65,20 @@
 <script lang="ts" src="./SceneSelector.vue.ts"></script>
 
 <style lang="less" scoped>
-@import '../styles/index';
+@import url('../styles/index');
 
 .scene-collections-wrapper {
   position: relative;
   display: flex;
-  align-items: center;
   flex-grow: 1;
+  align-items: center;
   width: 160px;
   margin-right: 16px;
 }
 
 .input-wrapper--search {
   .radius;
+
   width: calc(100% - 38px); // .settings-link + 余白のサイズを引く
   margin: 8px;
 
@@ -95,6 +96,7 @@
 
 .scene-collections__dropdown {
   .text-ellipsis;
+
   display: flex;
 }
 </style>

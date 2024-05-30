@@ -18,7 +18,7 @@
 <script lang="ts" src="./TextAreaInput.vue.ts"></script>
 
 <style lang="less" scoped>
-@import "../../../styles/index";
+@import url('../../../styles/index');
 
 .night-theme {
   .text-area:focus {
@@ -27,4 +27,3 @@
   }
 }
 </style>
-

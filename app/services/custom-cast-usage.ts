@@ -1,18 +1,16 @@
-import { InitAfter, Inject } from "./core";
-import { StatefulService, mutation } from "./core/stateful-service";
-import { NicoliveProgramService } from "./nicolive-program/nicolive-program";
-import { ScenesService } from "./scenes";
-import { SourcesService } from "./sources";
-
+import { InitAfter, Inject } from './core';
+import { StatefulService, mutation } from './core/stateful-service';
+import { NicoliveProgramService } from './nicolive-program/nicolive-program';
+import { ScenesService } from './scenes';
+import { SourcesService } from './sources';
 
 export interface ICustomcastUsageState {
   isCustomcastUsed: boolean;
   programID: string;
 }
 
-InitAfter('ScenesService')
+InitAfter('ScenesService');
 export class CustomcastUsageService extends StatefulService<ICustomcastUsageState> {
-
   static initialState: ICustomcastUsageState = {
     isCustomcastUsed: false,
     programID: '',
@@ -31,7 +29,7 @@ export class CustomcastUsageService extends StatefulService<ICustomcastUsageStat
       }
     });
 
-    this.scenesService.itemAdded.subscribe((item) => {
+    this.scenesService.itemAdded.subscribe(item => {
       if (this.isCustomcastSourceId(item.sourceId)) {
         this.markCustomcastUsed();
       }
@@ -42,7 +40,6 @@ export class CustomcastUsageService extends StatefulService<ICustomcastUsageStat
     const sourceDetails = this.sourcesService.getSource(sourceId).getComparisonDetails();
     return sourceDetails.propertiesManager === 'custom-cast-ndi';
   }
-
 
   containsCustomcastInActiveScene(): boolean {
     for (const item of this.scenesService.activeScene.getItems()) {

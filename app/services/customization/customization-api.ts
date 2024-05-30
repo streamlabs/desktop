@@ -25,7 +25,7 @@ export interface ICustomizationServiceState {
   experimental: any;
 }
 
-export interface ICustomizationSettings extends ICustomizationServiceState { }
+export interface ICustomizationSettings extends ICustomizationServiceState {}
 
 export interface ICustomizationServiceApi {
   settingsChanged: Observable<Partial<ICustomizationSettings>>;

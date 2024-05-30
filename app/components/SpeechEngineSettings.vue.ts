@@ -38,9 +38,7 @@ export default class SpeechEngineSettings extends Vue {
     this.nicoliveCommentSynthesizerService.maxTime = v;
   }
   get maxTimeCandidates(): number[] {
-    return [
-      3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10,
-    ];
+    return [3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
   }
   get maxTimeDefault(): number {
     return NicoliveCommentSynthesizerService.initialState.maxTime;

@@ -31,7 +31,10 @@ class ObsPathInput extends ObsInput<IObsPathInputValue> {
       options.properties.push('openDirectory');
     }
 
-    const { filePaths } = await electron.remote.dialog.showOpenDialog(electron.remote.getCurrentWindow(), options);
+    const { filePaths } = await electron.remote.dialog.showOpenDialog(
+      electron.remote.getCurrentWindow(),
+      options,
+    );
 
     if (filePaths[0]) {
       this.$refs.input.value = filePaths[0];

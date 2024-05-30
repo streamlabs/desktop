@@ -18,7 +18,8 @@
     "downlevelIteration": true,
     "baseUrl": "../app",
     "skipLibCheck": true,
-    "jsx": "preserve"
+    "jsx": "preserve",
+    "types": ["webdriverio/async"]
   },
   "exclude": ["node_modules"]
 }

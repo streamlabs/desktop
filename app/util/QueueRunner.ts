@@ -1,4 +1,4 @@
-import { WaitNotify } from "./WaitNotify";
+import { WaitNotify } from './WaitNotify';
 
 export type StartFunc = () => Promise<{
   cancel: () => Promise<void>;
@@ -25,11 +25,13 @@ export class QueueRunner {
     setTimeout(() => this._run(), 0);
   }
   private finishNotifier = new WaitNotify();
-  private logCallback: (obj: { state: string, label: string }) => void;
+  private logCallback: (obj: { state: string; label: string }) => void;
 
-  constructor(options: {
-    log?: (obj: { state: string, label: string }) => void;
-  } = {}) {
+  constructor(
+    options: {
+      log?: (obj: { state: string; label: string }) => void;
+    } = {},
+  ) {
     this.logCallback = options.log || undefined;
   }
 
@@ -49,7 +51,7 @@ export class QueueRunner {
           preparing,
           label,
         };
-        preparing.then((start) => {
+        preparing.then(start => {
           if (!start) {
             this.preparing = null;
             this.log('prepared null', label);
@@ -71,8 +73,10 @@ export class QueueRunner {
       const { preparing, label } = this.preparing;
       this.preparing = null;
       let earlyCancel = false;
-      let resolveRunning2: () => void = () => { };
-      const running2 = new Promise<void>((resolve) => { resolveRunning2 = resolve; });
+      let resolveRunning2: () => void = () => {};
+      const running2 = new Promise<void>(resolve => {
+        resolveRunning2 = resolve;
+      });
       running2.then(() => {
         this.log('finished', label);
         this.runningState = null;
@@ -80,7 +84,9 @@ export class QueueRunner {
       });
       this.runningState = {
         cancel: async () => {
-          this.runningState.cancel = async () => { await running2; };
+          this.runningState.cancel = async () => {
+            await running2;
+          };
           earlyCancel = true;
           await running2;
         },
@@ -88,35 +94,39 @@ export class QueueRunner {
         state: 'preparing',
       };
       this.log('preparing', label);
-      preparing.then((start) => {
-        return start ? start() : null;
-      }).then((r) => {
-        if (!r) {
-          this.log('not started', label);
-          resolveRunning2();
-        } else {
-          const { cancel, running } = r;
-          if (earlyCancel) {
-            this.log('early cancel', label);
-            cancel().then(() => {
-              resolveRunning2();
-            });
+      preparing
+        .then(start => {
+          return start ? start() : null;
+        })
+        .then(r => {
+          if (!r) {
+            this.log('not started', label);
+            resolveRunning2();
           } else {
-            this.log('running', label);
-            this.runningState = {
-              cancel: async () => {
-                this.runningState.cancel = async () => { await running2; };
-                await cancel();
-                await running2;
-              },
-              running: running.then(() => {
+            const { cancel, running } = r;
+            if (earlyCancel) {
+              this.log('early cancel', label);
+              cancel().then(() => {
                 resolveRunning2();
-              }),
-              state: 'running',
-            };
+              });
+            } else {
+              this.log('running', label);
+              this.runningState = {
+                cancel: async () => {
+                  this.runningState.cancel = async () => {
+                    await running2;
+                  };
+                  await cancel();
+                  await running2;
+                },
+                running: running.then(() => {
+                  resolveRunning2();
+                }),
+                state: 'running',
+              };
+            }
           }
-        }
-      });
+        });
     }
   }
 
@@ -148,7 +158,7 @@ export class QueueRunner {
   }
 
   /**
-   * 
+   *
    * @param prepare 準備を開始する関数。準備が完了したら、キャンセル関数と実行中のPromiseをobjectで返す。実行を開始しなかったらnullを返す。
    * @param label デバッグ表示用のラベル
    */

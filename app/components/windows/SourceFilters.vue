@@ -1,46 +1,45 @@
 <template>
-  <modal-layout
-    :show-cancel="false"
-    :done-handler="done"
-    :fixedSectionHeight="250"
-    bare-content
-  >
+  <modal-layout :show-cancel="false" :done-handler="done" :fixedSectionHeight="250" bare-content>
     <display slot="fixed" :sourceId="sourceId" />
 
     <div slot="content" class="container" data-test="SourceFilters">
       <NavMenu v-model="selectedFilterName" class="side-menu">
         <div class="controls">
-          <i
-            class="icon-add icon-btn"
-            @click="addFilter"
-            data-test="Add"></i>
+          <i class="icon-add icon-btn" @click="addFilter" data-test="Add"></i>
           <i
             class="icon-delete icon-btn"
             v-if="selectedFilterName"
             @click="removeFilter"
-            data-test="Remove"></i>
+            data-test="Remove"
+          ></i>
         </div>
 
         <sl-vue-tree
-            :value="nodes"
-            ref="slVueTree"
-            @select="makeActive"
-            @drop="handleSort"
-            :allowMultiselect="false"
+          :value="nodes"
+          ref="slVueTree"
+          @select="makeActive"
+          @drop="handleSort"
+          :allowMultiselect="false"
         >
-
           <template slot="title" slot-scope="{ node }">
             <div class="title-container">
               <span class="layer-icon">
-                <i @click="toggleVisibility(node.title)" class="icon-unhide" v-if="node.data.visible"></i>
-                <i @click="toggleVisibility(node.title)" class="icon-hide" v-if="!node.data.visible"></i>
-              </span> &nbsp;
+                <i
+                  @click="toggleVisibility(node.title)"
+                  class="icon-unhide"
+                  v-if="node.data.visible"
+                ></i>
+                <i
+                  @click="toggleVisibility(node.title)"
+                  class="icon-hide"
+                  v-if="!node.data.visible"
+                ></i>
+              </span>
+              &nbsp;
               <span class="item-title" :data-test="node.title">{{ node.title }}</span>
             </div>
           </template>
-
         </sl-vue-tree>
-
       </NavMenu>
 
       <div class="content">
@@ -58,12 +57,12 @@
 <script lang="ts" src="./SourceFilters.vue.ts"></script>
 
 <style lang="less" scoped>
-@import "~sl-vue-tree/dist/sl-vue-tree-dark.css";
+@import url('~sl-vue-tree/dist/sl-vue-tree-dark.css');
 
 .content {
   flex-grow: 1;
-  overflow: auto;
   padding: 16px;
+  overflow: auto;
 }
 
 .container {
@@ -84,7 +83,7 @@
     padding: 0 16px;
     background-color: transparent;
   }
-} 
+}
 
 .controls {
   height: 48px;

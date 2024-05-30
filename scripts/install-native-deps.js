@@ -96,20 +96,7 @@ async function rtvc() {
   sh.rm(zip);
 }
 
-function spectronFix() {
-  const fn = './node_modules/spectron/lib/launcher.js';
-  console.log(`spectron fix ${fn}`);
-  const s = fs.readFileSync(fn, 'utf8');
-  const t = s.replace(
-    'ChildProcess.spawn(executablePath, args)',
-    'ChildProcess.spawn(executablePath, args,{shell:true})',
-  );
-  fs.writeFileSync(fn, t, 'utf8');
-}
-
 async function runScript() {
-  spectronFix();
-
   colors.blue('----Streamlabs Desktop native dependecies installation----');
 
   try {

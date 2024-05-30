@@ -1,41 +1,32 @@
 <template>
-<div id="mainWrapper" class="modal-layout" data-test="ModalLayout">
-  <div
-    class="ModalLayout-fixed"
-    :style="fixedStyle">
-    <slot name="fixed"/>
-  </div>
-  <div class="modal-layout-content" :class="{ bareContent, noScroll }">
-    <slot name="content" v-if="!loading"/>
-    <div class="spinner-container" v-else>
-      <i class="icon-spinner icon-spin modal-layout-spinner"/>
+  <div id="mainWrapper" class="modal-layout" data-test="ModalLayout">
+    <div class="ModalLayout-fixed" :style="fixedStyle">
+      <slot name="fixed" />
+    </div>
+    <div class="modal-layout-content" :class="{ bareContent, noScroll }">
+      <slot name="content" v-if="!loading" />
+      <div class="spinner-container" v-else>
+        <i class="icon-spinner icon-spin modal-layout-spinner" />
+      </div>
+    </div>
+    <div v-if="showControls" class="modal-layout-controls">
+      <button v-if="showCancel" class="button button--secondary" @click="cancel" data-test="Cancel">
+        {{ $t('common.cancel') }}
+      </button>
+      <button class="button button--primary" @click="done" data-test="Done">
+        {{ $t('common.done') }}
+      </button>
+    </div>
+    <div v-if="customControls" class="modal-layout-controls">
+      <slot name="controls" />
     </div>
   </div>
-  <div v-if="showControls" class="modal-layout-controls">
-    <button
-      v-if="showCancel"
-      class="button button--secondary"
-      @click="cancel"
-      data-test="Cancel">
-      {{ $t('common.cancel') }}
-    </button>
-    <button
-      class="button button--primary"
-      @click="done"
-      data-test="Done">
-      {{ $t('common.done') }}
-    </button>
-  </div>
-  <div v-if="customControls" class="modal-layout-controls">
-    <slot name="controls" />
-  </div>
-</div>
 </template>
 
 <script lang="ts" src="./ModalLayout.vue.ts"></script>
 
 <style lang="less" scoped>
-@import url("../styles/index");
+@import url('../styles/index');
 
 .modal-layout {
   display: flex;

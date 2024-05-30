@@ -4,7 +4,7 @@ export type replace_common_field = {
   note?: string;
   replacement: string;
   onlyFor?: EngineId;
-}
+};
 export type replace_regular_expression = replace_common_field & {
   regularExpression: string;
 };

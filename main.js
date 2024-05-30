@@ -30,7 +30,8 @@ console.log(`pjson.name = ${pjson.name}`); // DEBUG
 // Modules and other Requires
 ////////////////////////////////////////////////////////////////////////////////
 const electron = require('electron');
-const { app, BrowserWindow, ipcMain, session, dialog, webContents, shell } = electron;
+const { app, BrowserWindow, ipcMain, session, dialog, webContents, shell, crashReporter } =
+  electron;
 const path = require('path');
 const rimraf = require('rimraf');
 
@@ -96,13 +97,14 @@ try {
 function initialize(crashHandler) {
   const fs = require('fs');
   const { Updater } = require('./updater/Updater.js');
-  //const uuid = require('uuid/v4');
+  const uuid = require('uuid/v4');
   const windowStateKeeper = require('electron-window-state');
   const { URL } = require('url');
 
   const pid = require('process').pid;
 
   app.commandLine.appendSwitch('force-ui-direction', 'ltr');
+  process.env.IPC_UUID = `nair-${uuid()}`;
 
   /* Determine the current release channel we're
    * on based on name. The channel will always be
@@ -358,11 +360,22 @@ function initialize(crashHandler) {
     });
 
     const sentryDsn = `https://${params.key}@${params.organization}.ingest.sentry.io/${params.project}`;
+    const sentryMiniDumpURL = `https://${params.organization}.ingest.sentry.io/api/${params.project}/minidump/?sentry_key=${params.key}`;
 
     console.log(`Sentry DSN: ${sentryDsn}`);
     SentryElectron.init({
       dsn: sentryDsn,
       release: process.env.NAIR_VERSION,
+    });
+
+    crashReporter.start({
+      productName: 'n-air-app',
+      companyName: 'n-air-app',
+      submitURL: sentryMiniDumpURL,
+      extra: {
+        version: process.env.NAIR_VERSION,
+        processType: 'main',
+      },
     });
   }
 
@@ -379,6 +392,7 @@ function initialize(crashHandler) {
       process.env.NAIR_VERSION,
       isDevMode.toString(),
       crashHandlerLogPath,
+      process.IPC_UUID,
     );
     crashHandler.registerProcess(pid, false);
 

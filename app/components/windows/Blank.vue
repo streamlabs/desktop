@@ -1,9 +1,7 @@
 <template>
-<modal-layout
-  :show-controls="false"
-  title="">
+  <modal-layout :show-controls="false" title="">
     <div slot="content"></div>
-</modal-layout>
+  </modal-layout>
 </template>
 
 <script lang="ts" src="./Blank.vue.ts"></script>

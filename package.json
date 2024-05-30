@@ -35,14 +35,10 @@
     "release": "yarn install --cwd bin && node bin/release/mini-release.js",
     "patch-note": "yarn install --cwd bin && node bin/release/generatePatchNote.js",
     "webfont": "yarn install --cwd bin && node bin/generate-webfont.js",
-    "eslint": "eslint app/**/*.ts",
     "test": "node bin/i18n-early-check.js && tsc -p test && ava -v -s",
     "test:unit": "yarn test:unit:app && yarn test:unit:bin",
     "test:unit:app": "jest --silent --config ./jest.config.js",
-    "test:unit:bin": "jest --silent --config ./jest.bin-config.js",
-    "lint:js": "eslint --ext .js,.vue --ignore-path .gitignore .",
-    "lint:style": "stylelint **/*.{vue,css,less} --ignore-path .gitignore .",
-    "lint": "eslint \"{app,guest-api,obs-api,updater}/**/*.ts\" main.js&&yarn lint:js&&yarn lint:style",
+    "test:unit:bin": "yarn install --cwd bin && jest --silent --config ./jest.bin-config.js",
     "clear": "shx rm -rf bundles/media",
     "typedoc": "typedoc --out docs/dist ./app/services --mode modules --theme ./docs/theme --readme ./docs/README.md --ignoreCompilerErrors --excludePrivate --excludeExternals --hideGenerator",
     "compile-tests": "tsc -p test",
@@ -50,7 +46,8 @@
     "version": "git add app/services/patch-notes/notes.ts",
     "postinstall": "node --no-warnings ./scripts/install-native-deps.js",
     "clear:cache": "npx shx rm -rf node_module/.cache dist bundles test-dist",
-    "prettier": "eslint --fix && prettier -w ./app/**/*.{ts,vue,tsx}"
+    "lint": "eslint {app,test}/**/*.{ts,js,vue} && stylelint app/**/*.{vue,css,less}",
+    "format": "prettier -w {app,test}/**/*.{ts,js,vue} && eslint --fix {app,test}/**/*.{ts,js,vue} && stylelint --fix app/**/*.{vue,css,less}"
   },
   "buildProductName": "N Air",
   "ava": {
@@ -58,7 +55,7 @@
       "test-dist/test/e2e/*.js",
       "test-dist/test/api/*.js"
     ],
-    "timeout": "3min"
+    "timeout": "3m"
   },
   "prettier": {
     "singleQuote": true,
@@ -69,11 +66,11 @@
   },
   "lint-staged": {
     "*.{ts,js,vue}": [
-      "eslint --fix",
+      "eslint",
       "git add"
     ],
     "*.{css,less,vue}": [
-      "stylelint --fix",
+      "stylelint",
       "git add"
     ],
     "app/i18n/*/*.json": [
@@ -160,6 +157,7 @@
     "@babel/preset-env": "^7.20.2",
     "@jest-runner/electron": "^v3.0.0",
     "@types/archiver": "^5.3.2",
+    "@types/humps": "^2.0.6",
     "@types/jest": "^26.0.24",
     "@types/lodash": "^4.14.192",
     "@types/node": "^12.14.0",
@@ -167,7 +165,6 @@
     "@types/socket.io-client": "^1.4.31",
     "@types/urijs": "^1.19.19",
     "@types/uuid": "^3.4.10",
-    "@types/webdriverio": "^4.13.0",
     "@types/xml2js": "^0.4.11",
     "@typescript-eslint/eslint-plugin": "^7.7.0",
     "@typescript-eslint/parser": "^7.7.0",
@@ -187,6 +184,7 @@
     "devtron": "1.4.0",
     "electron": "6.1.11",
     "electron-builder": "22.14.13",
+    "electron-chromedriver": "^6.0.0",
     "emojione": "^3.1.7",
     "eslint": "^8.57.0",
     "eslint-config-airbnb-base": "^15.0.0",
@@ -197,6 +195,7 @@
     "eslint-webpack-plugin": "^4.1.0",
     "fetch-mock": "~9.11.0",
     "file-loader": "~3.0.1",
+    "humps": "^2.0.1",
     "husky": "~2.7.0",
     "jest": "^26.6.3",
     "js-yaml": "^3.14.1",
@@ -215,14 +214,15 @@
     "prettier-eslint": "^13.0.0",
     "shelljs": "^0.8.5",
     "shx": "^0.3.4",
-    "spectron": "~8.0.0",
     "style-loader": "^0.23.1",
     "stylelint": "^14.16.1",
     "stylelint-config-prettier": "^9.0.5",
     "stylelint-config-recess-order": "^3.1.0",
     "stylelint-config-standard": "^29.0.0",
     "stylelint-less": "^1.0.6",
+    "tasklist": "^3.1.1",
     "terser-webpack-plugin": "^4.2.3",
+    "tree-kill": "^1.2.2",
     "ts-jest": "^26.5.6",
     "ts-loader": "^9.5.1",
     "typedoc": "^0.9.0",
@@ -230,6 +230,7 @@
     "vue-loader": "15.10.1",
     "vue-svg-loader": "0.12.0",
     "vue-template-compiler": "2.7.14",
+    "webdriverio": "7.30.2",
     "webpack": "^5.91.0",
     "webpack-cli": "^4.10.0",
     "webpack-dev-server": "^4.15.1",

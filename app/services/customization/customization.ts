@@ -17,7 +17,8 @@ import {
  */
 export class CustomizationService
   extends PersistentStatefulService<ICustomizationServiceState>
-  implements ICustomizationServiceApi {
+  implements ICustomizationServiceApi
+{
   static defaultState: ICustomizationServiceState = {
     performanceMode: false,
     studioControlsOpened: true,

@@ -13,10 +13,7 @@ import { Subscription } from 'rxjs';
 import electron from 'electron';
 import Util from 'services/utils';
 
-const PeriodicUpdateSources: TSourceType[] = [
-  'ndi_source',
-  'custom_cast_ndi_source',
-];
+const PeriodicUpdateSources: TSourceType[] = ['ndi_source', 'custom_cast_ndi_source'];
 const PeriodicUpdateInterval = 5000; // in Milliseconds
 @Component({
   components: {
@@ -48,7 +45,10 @@ export default class SourceProperties extends Vue {
   get sourceId() {
     // このビューはoneOffWindow と childWindow どちらからも開かれる可能性があるため
     // どちらか有効な方のクエリパラメータから sourceId を取得する
-    return this.windowsService.getWindowOptions(this.windowId).sourceId || this.windowsService.getChildWindowQueryParams().sourceId;
+    return (
+      this.windowsService.getWindowOptions(this.windowId).sourceId ||
+      this.windowsService.getChildWindowQueryParams().sourceId
+    );
   }
 
   refreshTimer: NodeJS.Timeout = undefined;

@@ -1,54 +1,49 @@
 <template>
-<modal-layout
-  :show-controls="false"
-  no-scroll
->
-
-  <div slot="content" class="table-wrapper section">
-    <table>
-      <thead>
-        <tr>
-          <th class="device">{{ $t('common.name') }}</th>
-          <th class="volume">{{ $t('audio.volumeInPercent') }}</th>
-          <th class="downmix">{{ $t('audio.downmixToMono') }}</th>
-          <th class="syncOffset">{{ $t('audio.syncOffsetInMs') }}</th>
-          <th class="audioMonitor">{{ $t('audio.audioMonitoring') }}</th>
-          <th class="track">{{ $t('audio.tracks') }}</th>
-        </tr>
-      </thead>
-      <tr v-for="audioSource in audioSources" :key="audioSource.sourceId">
-        <td>{{ audioSource.name }}</td>
-        <td
-          v-for="formInput in audioSource.getSettingsForm()"
-          :key="`${audioSource.name}${formInput.name}`"
-          :class="'column-' + formInput.name"
-        >
-          <component
+  <modal-layout :show-controls="false" no-scroll>
+    <div slot="content" class="table-wrapper section">
+      <table>
+        <thead>
+          <tr>
+            <th class="device">{{ $t('common.name') }}</th>
+            <th class="volume">{{ $t('audio.volumeInPercent') }}</th>
+            <th class="downmix">{{ $t('audio.downmixToMono') }}</th>
+            <th class="syncOffset">{{ $t('audio.syncOffsetInMs') }}</th>
+            <th class="audioMonitor">{{ $t('audio.audioMonitoring') }}</th>
+            <th class="track">{{ $t('audio.tracks') }}</th>
+          </tr>
+        </thead>
+        <tr v-for="audioSource in audioSources" :key="audioSource.sourceId">
+          <td>{{ audioSource.name }}</td>
+          <td
+            v-for="formInput in audioSource.getSettingsForm()"
+            :key="`${audioSource.name}${formInput.name}`"
+            :class="'column-' + formInput.name"
+          >
+            <component
               v-if="propertyComponentForType(formInput.type)"
               :is="propertyComponentForType(formInput.type)"
               :value="formInput"
               @input="value => onInputHandler(audioSource, formInput.name, value.value)"
-          />
-        </td>
-      </tr>
-    </table>
-
-  </div>
-
-</modal-layout>
+            />
+          </td>
+        </tr>
+      </table>
+    </div>
+  </modal-layout>
 </template>
 
 <script lang="ts" src="./AdvancedAudio.vue.ts"></script>
 
 <style lang="less" scoped>
-@import "../../styles/index";
+@import url('../../styles/index');
 
 .table-wrapper {
   .radius;
-  overflow: auto;
+
   flex-grow: 1;
-  margin: 0;
   padding: 0;
+  margin: 0;
+  overflow: auto;
 }
 
 table {
@@ -62,8 +57,8 @@ table {
     border-radius: 0;
 
     td {
-      border: none;
       padding: 16px;
+      border: none;
 
       &:last-child {
         padding-right: 16px;
@@ -72,16 +67,25 @@ table {
   }
 }
 
-.volume {}
+.volume {
+}
+
 .device {
   width: 150px;
 }
+
 .downmix {
   width: 120px;
 }
-.syncOffset {}
-.audioMonitor {}
-.track {}
+
+.syncOffset {
+}
+
+.audioMonitor {
+}
+
+.track {
+}
 
 .device,
 .volume,
@@ -101,9 +105,11 @@ td {
 .column-deflection {
   width: 104px;
 }
+
 .column-syncOffset {
   width: 120px;
 }
+
 .column-monitoringType {
   width: 350px;
 }

@@ -1,13 +1,13 @@
 import test from 'ava';
-import { useSpectron } from '../helpers/spectron';
-import { getClient } from '../helpers/api-client';
+import { useWebdriver } from '../helpers/webdriver';
+import { getApiClient } from '../helpers/api-client';
 import { ScenesService } from 'services/scenes';
 import { ISourcesServiceApi } from '../../app/services/sources/sources-api';
 
-useSpectron({ restartAppAfterEachTest: false });
+useWebdriver({ restartAppAfterEachTest: false });
 
 test('Creating, fetching and removing sources', async t => {
-  const client = await getClient();
+  const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
   const sourcesService = client.getResource<ISourcesServiceApi>('SourcesService');
   const scene = scenesService.activeScene;
@@ -22,7 +22,9 @@ test('Creating, fetching and removing sources', async t => {
   t.truthy(sources.find(source => source.name === 'MyColorSource2'));
 
   const colorItem1 = scene.addSource(colorSource1.sourceId);
-  let sceneItemNames = scene.getItems().map(item => item['name'])
+  let sceneItemNames = scene
+    .getItems()
+    .map(item => item['name'])
     .filter(i => !presetSceneItemNames.includes(i));
 
   t.deepEqual(sceneItemNames, ['MyColorSource1', 'MyColorSource2']);
@@ -31,11 +33,14 @@ test('Creating, fetching and removing sources', async t => {
   colorItem2.remove();
   sceneItemNames = scene.getItems().map(item => item['name']);
 
-  t.deepEqual(sceneItemNames.filter(i => !presetSceneItemNames.includes(i)), []);
+  t.deepEqual(
+    sceneItemNames.filter(i => !presetSceneItemNames.includes(i)),
+    [],
+  );
 });
 
 test('Source events', async t => {
-  const client = await getClient();
+  const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
   const sourcesService = client.getResource<ISourcesServiceApi>('SourcesService');
   let event: Dictionary<any>;
@@ -63,5 +68,4 @@ test('Source events', async t => {
   event = await client.fetchNextEvent();
 
   t.is(event.data.name, 'audio3');
-
 });

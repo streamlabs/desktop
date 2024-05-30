@@ -263,7 +263,7 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
 
   // 現状settingsの情報はlegacyにあるのでそれを反映させる
   refrectLegacy(display: TDisplayType = 'horizontal') {
-    const legacySettings = this.contexts[display].legacySettings
+    const legacySettings = this.contexts[display].legacySettings;
     this.contexts[display].video = legacySettings;
 
     Object.keys(legacySettings).forEach((key: any) => {

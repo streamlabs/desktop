@@ -1,7 +1,12 @@
 import { Inject } from 'services/core/injector';
 import { NicoliveCommentLocalFilterService } from 'services/nicolive-program/nicolive-comment-local-filter';
 import { NicoliveCommentSynthesizerService } from 'services/nicolive-program/nicolive-comment-synthesizer';
-import { NicoliveProgramStateService, SynthesizerId, SynthesizerSelector, SynthesizerSelectors } from 'services/nicolive-program/state';
+import {
+  NicoliveProgramStateService,
+  SynthesizerId,
+  SynthesizerSelector,
+  SynthesizerSelectors,
+} from 'services/nicolive-program/state';
 import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
 import VueSlider from 'vue-slider-component';

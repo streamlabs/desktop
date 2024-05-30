@@ -45,14 +45,14 @@ export type OptimizeSettings = {
   simpleUseAdvanced?: boolean;
   targetUsage?: 'quality' | 'balanced' | 'speed'; // for QSV
   encoderPreset?:
-  | 'ultrafast'
-  | 'superfast'
-  | 'veryfast'
-  | 'faster'
-  | 'fast'
-  | 'medium'
-  | 'slow'
-  | 'slower'; // for x264
+    | 'ultrafast'
+    | 'superfast'
+    | 'veryfast'
+    | 'faster'
+    | 'fast'
+    | 'medium'
+    | 'slow'
+    | 'slower'; // for x264
   NVENCPreset?: 'default' | 'mq' | 'hq' | 'hp' | 'll' | 'llhp' | 'llhq'; // for NVENC
   advRateControl?: 'CBR' | 'VBR' | 'ABR' | 'CRF';
   videoBitrate?: number;
@@ -658,7 +658,11 @@ export interface ISettingsAccessor {
     category: string,
     setting: string,
   ): TObsFormData[number] | undefined;
-  findSettingValue(settings: ISettingsSubCategory[], category: string, setting: string): TObsValue | undefined;
+  findSettingValue(
+    settings: ISettingsSubCategory[],
+    category: string,
+    setting: string,
+  ): TObsValue | undefined;
   setSettings(categoryName: string, settingsData: ISettingsSubCategory[]): void;
 }
 

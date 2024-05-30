@@ -11,7 +11,11 @@ on:
       - tsconfig.json
       - webpack.config.js
       - main.js
+      - test-main.js
       - app/**
+      - bin/package.json
+      - bin/yarn.lock
+      - bin/**/*.js
       - media/**
       - nvoice/**
       - obs-api/**
@@ -31,7 +35,11 @@ on:
       - tsconfig.json
       - webpack.config.js
       - main.js
+      - test-main.js
       - app/**
+      - bin/package.json
+      - bin/yarn.lock
+      - bin/**/*.js
       - media/**
       - nvoice/**
       - obs-api/**
@@ -42,8 +50,8 @@ on:
       - .github/workflows/test.yml
 
 jobs:
-  setup:
-    name: setup
+  setup-app:
+    name: setup(app)
     runs-on: windows-2019
     steps:
       - name: Checkout code
@@ -68,9 +76,32 @@ jobs:
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: yarn install --frozen-lockfile --check-files
 
-  unit_test:
-    name: unit tests
-    needs: setup
+  setup-bin:
+    name: setup(bin)
+    runs-on: windows-2019
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: cache node modules(bin)
+        id: cache-node-modules-bin
+        uses: actions/cache@v4
+        with:
+          path: bin/node_modules
+          key: ${{ runner.os }}-node-bin-${{ hashFiles('bin/yarn.lock') }}
+
+      - name: Install dependencies
+        if: steps.cache-node-modules-bin.outputs.cache-hit != 'true'
+        run: yarn install --cwd=bin --frozen-lockfile --check-files
+
+  unit_test-app:
+    name: unit tests(app)
+    needs: setup-app
     runs-on: windows-2019
 
     steps:
@@ -89,12 +120,43 @@ jobs:
           path: node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('yarn.lock', 'scripts/install-native-deps.js', 'scripts/repositories.json') }}
 
-      - name: Run unit tests
-        run: yarn test:unit
+      - name: Run unit tests(app)
+        run: yarn test:unit:app
+
+  unit_test-bin:
+    name: unit tests(bin)
+    needs: [setup-app, setup-bin]
+    runs-on: windows-2019
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: cache node modules
+        id: cache-node-modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('yarn.lock', 'scripts/install-native-deps.js', 'scripts/repositories.json') }}
+
+      - name: cache node modules(bin)
+        id: cache-node-modules-bin
+        uses: actions/cache@v4
+        with:
+          path: bin/node_modules
+          key: ${{ runner.os }}-node-bin-${{ hashFiles('bin/yarn.lock') }}
+
+      - name: Run unit tests(bin)
+        run: yarn test:unit:bin
 
   e2e_test:
     name: e2e tests
-    needs: setup
+    needs: setup-app
     runs-on: windows-2019
     strategy:
       matrix:

@@ -89,7 +89,7 @@
 <script lang="ts" src="./SideNav.vue.ts"></script>
 
 <style lang="less" scoped>
-@import '../styles/index';
+@import url('../styles/index');
 
 .side-nav {
   .dividing-border(right);
@@ -102,12 +102,12 @@
 }
 
 .link {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 48px;
   height: 36px;
-  position: relative;
 
   &.active {
     color: var(--color-text-active);
@@ -116,13 +116,13 @@
 
 .primary-tab {
   display: flex;
-  align-items: center;
   flex-direction: column;
+  align-items: center;
   margin-bottom: auto;
 
   .link {
-    height: 48px;
     position: relative;
+    height: 48px;
 
     i {
       font-size: @font-size6;
@@ -132,20 +132,20 @@
 
 .secondary-tab {
   display: flex;
-  align-items: center;
   flex-direction: column;
+  align-items: center;
 
-  &:before {
-    content: '';
+  &::before {
     width: 18px;
     height: 1px;
-    background-color: var(--color-border-light);
     margin: 8px 0;
+    content: '';
+    background-color: var(--color-border-light);
   }
 
   .link {
-    height: 48px;
     position: relative;
+    height: 48px;
 
     .icon-video {
       font-size: @font-size5;
@@ -158,23 +158,23 @@
 
   .niconico-tab {
     // 新着バッジ
-    &:after {
-      content: '';
-      display: block;
+    &::after {
       position: absolute;
-      right: 8px;
       top: 8px;
-      background-color: var(--color-accent-variant);
-      border-radius: 50%;
-      border: 2px solid var(--color-bg-quaternary);
+      right: 8px;
+      display: block;
       width: 12px;
       height: 12px;
+      content: '';
+      background-color: var(--color-accent-variant);
+      border: 2px solid var(--color-bg-quaternary);
+      border-radius: 50%;
       transform: scale(0);
       .transition;
     }
 
     &.notify-new-comment {
-      &:after {
+      &::after {
         transform: scale(1);
       }
     }
@@ -190,19 +190,19 @@
     height: 36px;
   }
 
-  &:after {
-    content: '';
+  &::after {
     width: 18px;
     height: 1px;
-    background-color: var(--color-border-light);
     margin: 8px 0;
+    content: '';
+    background-color: var(--color-border-light);
   }
 }
 
 .side-nav-profile {
   display: flex;
-  align-items: center;
   flex-direction: column;
+  align-items: center;
   width: 48px;
   margin-bottom: 8px;
 }
@@ -212,17 +212,17 @@
 
   // お知らせ通知
   &.isUnseen {
-    &:after {
-      content: '';
-      display: block;
+    &::after {
       position: absolute;
-      right: -6px;
       top: -6px;
+      right: -6px;
+      display: block;
       width: 12px;
       height: 12px;
+      content: '';
       background-color: var(--color-accent-variant);
-      border-radius: 50%;
       border: 2px solid var(--color-bg-quaternary);
+      border-radius: 50%;
     }
   }
 }

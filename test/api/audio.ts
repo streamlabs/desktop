@@ -1,13 +1,13 @@
-import { useSpectron, test } from '../helpers/spectron';
-import { getClient } from '../helpers/api-client';
+import { useWebdriver, test } from '../helpers/webdriver';
+import { getApiClient } from '../helpers/api-client';
 import { IAudioServiceApi } from 'services/audio';
 import { ScenesService } from 'services/scenes';
 import { ISceneCollectionsServiceApi } from 'services/scene-collections';
 
-useSpectron({ restartAppAfterEachTest: false });
+useWebdriver({ restartAppAfterEachTest: false });
 
 test('The default sources exists', async t => {
-  const client = await getClient();
+  const client = await getApiClient();
   const audioService = client.getResource<IAudioServiceApi>('AudioService');
   const audioSources = audioService.getSourcesForCurrentScene();
 
@@ -18,7 +18,7 @@ test('The default sources exists', async t => {
 });
 
 test('The sources with audio have to be appeared in AudioService', async t => {
-  const client = await getClient();
+  const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
   const audioService = client.getResource<IAudioServiceApi>('AudioService');
 
@@ -33,7 +33,7 @@ test('The sources with audio have to be appeared in AudioService', async t => {
 });
 
 test('The audio sources have to keep settings after application restart', async t => {
-  const client = await getClient();
+  const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
   const audioService = client.getResource<IAudioServiceApi>('AudioService');
   const sceneCollectionsService =
@@ -62,7 +62,7 @@ test('The audio sources have to keep settings after application restart', async 
 });
 
 test('Events are emitted when the audio source is updated', async t => {
-  const client = await getClient();
+  const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
   const audioService = client.getResource<IAudioServiceApi>('AudioService');
 

@@ -53,7 +53,7 @@
 <script lang="ts" src="./Settings.vue.ts"></script>
 
 <style lang="less" scoped>
-@import '../../styles/index';
+@import url('../../styles/index');
 
 .settings {
   display: flex;
@@ -69,15 +69,15 @@
 
 .settings-container {
   flex-grow: 1;
-  margin: 0;
   padding: 16px 8px 0 0;
-  overflow-y: scroll;
+  margin: 0;
   overflow-x: auto;
+  overflow-y: scroll;
 }
 </style>
 
 <style lang="less">
-@import '../../styles/index';
+@import url('../../styles/index');
 
 /*
 配信中に設定ダイアログへ表示するメッセージのstyle
@@ -85,9 +85,9 @@
 */
 .notice-section {
   .notice-message {
-    color: var(--color-accent);
     font-size: @font-size5;
     font-weight: @font-weight-bold;
+    color: var(--color-accent);
     text-align: center;
   }
 

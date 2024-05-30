@@ -6,7 +6,7 @@
           <p class="confirm-message">{{ $t('settings.autoCompact.message') }}</p>
           <BoolInput :value="doNotShowAgain" @input="setDoNotShowAgain" />
         </li>
-      </ul>  
+      </ul>
     </div>
     <div slot="controls">
       <button class="button button--secondary" @click="skip">
@@ -22,25 +22,29 @@
 <script lang="ts" src="./AutoCompactConfirmDialog.vue.ts"></script>
 
 <style lang="less" scoped>
-@import '../../styles/index';
+@import url('../../styles/index');
 
 .input-container {
   flex-direction: column;
 }
+
 .confirm-message {
-  color: var(--color-text);
   margin-bottom: 24px;
+  color: var(--color-text);
   white-space: pre-line;
 }
+
 .confirm-list {
-  list-style: none;
   margin: 0;
+  list-style: none;
 }
+
 .confirm-list-item {
   .radius;
-  color: var(--color-text);
-  margin-bottom: 16px;
+
   padding: 16px 16px 0;
+  margin-bottom: 16px;
+  color: var(--color-text);
   list-style: none;
   background: var(--color-bg-secondary);
 }

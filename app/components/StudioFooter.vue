@@ -20,20 +20,20 @@
 <script lang="ts" src="./StudioFooter.vue.ts"></script>
 
 <style lang="less" scoped>
-@import '../styles/index';
+@import url('../styles/index');
 
 .footer {
   .dividing-border;
 
+  position: relative;
   display: flex;
-  justify-content: space-between;
+  flex: 0 0 auto;
   flex-direction: row;
   align-items: center;
-  position: relative;
-  padding: 0 16px;
+  justify-content: space-between;
   max-width: none;
   height: 64px;
-  flex: 0 0 auto;
+  padding: 0 16px;
   background-color: var(--color-bg-primary);
 
   &.streaming-controller /deep/ .nav-container {

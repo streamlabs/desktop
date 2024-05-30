@@ -31,7 +31,7 @@
 <script lang="ts" src="./Main.vue.ts"></script>
 
 <style lang="less" scoped>
-@import '../../styles/index';
+@import url('../../styles/index');
 
 .main {
   display: flex;
@@ -50,22 +50,23 @@
 }
 
 .main-middle {
-  flex-grow: 1;
   display: flex;
   flex-direction: column;
+  flex-grow: 1;
 }
 
 .main-page-container {
+  position: relative;
+  display: flex;
+
   /* Page always takes up remaining space */
   flex-grow: 1;
-  display: flex;
-  position: relative;
 }
 
 .main-loading {
-  flex-grow: 1;
   display: flex;
   flex-direction: column;
+  flex-grow: 1;
   align-items: center;
   justify-content: center;
 }

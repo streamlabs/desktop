@@ -44,24 +44,25 @@
 <script lang="ts" src="./PerformanceMetrics.vue.ts"></script>
 
 <style lang="less" scoped>
-@import '../styles/index';
+@import url('../styles/index');
 
 .performance-metrics {
   flex-wrap: wrap;
+
   .performance-metric-wrapper {
     &:first-child {
-      &:before {
-        content: '';
+      &::before {
         padding-right: 0;
+        content: '';
       }
     }
   }
 }
 
 .performance-metric-wrapper {
+  position: relative;
   padding-right: 16px;
   white-space: nowrap;
-  position: relative;
 
   &.band_width {
     .icon-warning-circle {
@@ -78,10 +79,10 @@
 
 .performance-metric-icon {
   width: auto;
-  vertical-align: middle;
   margin-right: 8px;
   font-size: @font-size4;
   color: var(--color-text-dark);
+  vertical-align: middle;
 }
 
 .performance-metric__value {
@@ -90,31 +91,31 @@
 }
 
 .icon-warning-circle {
+  position: absolute;
   width: 16px;
   height: 16px;
   color: var(--color-yellow);
-  position: absolute;
 
-  &:before,
-  &:after {
+  &::before,
+  &::after {
     position: absolute;
     top: 0;
-    left: 0;
     top: 50%;
+    left: 0;
     left: 50%;
     transform: translate(-50%, -50%);
   }
 
-  &:before {
+  &::before {
     z-index: @z-index-expand-content;
   }
 
-  &:after {
-    content: '';
+  &::after {
     width: 16px;
     height: 16px;
-    border-radius: 50%;
+    content: '';
     background-color: var(--color-bg-primary);
+    border-radius: 50%;
   }
 }
 </style>

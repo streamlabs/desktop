@@ -18,10 +18,9 @@
         {{ $t('notifications.troubleshooterNotifications') }}
       </h4>
 
-      <GenericForm v-model="troubleshooterFormData"  @input="saveTroubleshooterSettings"/>
+      <GenericForm v-model="troubleshooterFormData" @input="saveTroubleshooterSettings" />
     </div>
   </div>
 </template>
 
 <script lang="ts" src="./NotificationsSettings.vue.ts"></script>
-

@@ -2,16 +2,23 @@
   <modal-layout :show-controls="false" :customControls="true">
     <div class="content" slot="content">
       <div v-if="operation === 'add'">
-        <p class="confirm-title"><span class="text-ellipsis">{{userName}}</span><span class="text-suffix">さんをモデレーターに追加しますか？</span></p>
-        <p class="confirm-description">追加すると視聴中または視聴を開始した追加対象のユーザーに通知されます</p>
-        <a @click="openModeratorHelpPage"
-        class="text-link">
+        <p class="confirm-title">
+          <span class="text-ellipsis">{{ userName }}</span
+          ><span class="text-suffix">さんをモデレーターに追加しますか？</span>
+        </p>
+        <p class="confirm-description">
+          追加すると視聴中または視聴を開始した追加対象のユーザーに通知されます
+        </p>
+        <a @click="openModeratorHelpPage" class="text-link">
           <i class="icon-question"></i>
           <span>モデレーターとは</span>
         </a>
       </div>
       <div v-else-if="operation === 'remove'">
-        <p class="confirm-title"><span class="text-ellipsis">{{userName}}</span><span class="text-suffix">さんをモデレーターから削除しますか？</span></p>
+        <p class="confirm-title">
+          <span class="text-ellipsis">{{ userName }}</span
+          ><span class="text-suffix">さんをモデレーターから削除しますか？</span>
+        </p>
         <p class="confirm-description">削除されたことは削除対象のユーザーに通知されません</p>
       </div>
     </div>
@@ -19,7 +26,12 @@
       <button class="button button--secondary" :disabled="isClosing" @click="cancel">
         {{ $t('common.cancel') }}
       </button>
-      <button class="button button--primary" :class="{'button--alert' : operation === 'remove'}" :disabled="isClosing" @click="ok">
+      <button
+        class="button button--primary"
+        :class="{ 'button--alert': operation === 'remove' }"
+        :disabled="isClosing"
+        @click="ok"
+      >
         {{ operation === 'add' ? '追加する' : operation === 'remove' ? '削除する' : operation }}
       </button>
     </div>
@@ -59,5 +71,4 @@
 .text-suffix {
   flex-shrink: 0;
 }
-
 </style>

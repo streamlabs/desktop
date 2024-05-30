@@ -9,11 +9,19 @@
         <SlideshowIcon slot="media" />
       </add-source-info>
 
-      <add-source-info v-if="inspectedSource === 'ffmpeg_source'" sourceType="ffmpeg_source" key="3">
+      <add-source-info
+        v-if="inspectedSource === 'ffmpeg_source'"
+        sourceType="ffmpeg_source"
+        key="3"
+      >
         <FfmpegSourceIcon slot="media" />
       </add-source-info>
 
-      <add-source-info v-if="inspectedSource === 'window_capture'" sourceType="window_capture" key="4">
+      <add-source-info
+        v-if="inspectedSource === 'window_capture'"
+        sourceType="window_capture"
+        key="4"
+      >
         <WindowCaptureIcon slot="media" />
         <p slot="attention-text" class="attention">
           {{ $t('sources.windowCaptureMessage') }}
@@ -24,7 +32,11 @@
         <MonitorCaptureIcon slot="media" />
       </add-source-info>
 
-      <add-source-info v-if="inspectedSource === 'wasapi_output_capture'" sourceType="wasapi_output_capture" key="6">
+      <add-source-info
+        v-if="inspectedSource === 'wasapi_output_capture'"
+        sourceType="wasapi_output_capture"
+        key="6"
+      >
         <WasapiOutputIcon slot="media" />
       </add-source-info>
 
@@ -32,7 +44,11 @@
         <ColorSourceIcon slot="media" />
       </add-source-info>
 
-      <add-source-info v-if="inspectedSource === 'browser_source'" sourceType="browser_source" key="8">
+      <add-source-info
+        v-if="inspectedSource === 'browser_source'"
+        sourceType="browser_source"
+        key="8"
+      >
         <BrowserSourceIcon slot="media" />
       </add-source-info>
 
@@ -40,7 +56,11 @@
         <TextGdiplusIcon slot="media" />
       </add-source-info>
 
-      <add-source-info v-if="inspectedSource === 'monitor_capture'" sourceType="monitor_capture" key="10">
+      <add-source-info
+        v-if="inspectedSource === 'monitor_capture'"
+        sourceType="monitor_capture"
+        key="10"
+      >
         <DshowInputIcon slot="media" />
       </add-source-info>
 
@@ -51,7 +71,11 @@
         </p>
       </add-source-info>
 
-      <add-source-info v-if="inspectedSource === 'wasapi_input_capture'" sourceType="wasapi_input_capture" key="12">
+      <add-source-info
+        v-if="inspectedSource === 'wasapi_input_capture'"
+        sourceType="wasapi_input_capture"
+        key="12"
+      >
         <WasapiInputCaptureIcon slot="media" />
       </add-source-info>
 
@@ -59,7 +83,11 @@
         <NdiSourceIcon slot="media" />
       </add-source-info>
 
-      <add-source-info v-if="inspectedSource === 'decklink-input'" sourceType="decklink-input" key="14">
+      <add-source-info
+        v-if="inspectedSource === 'decklink-input'"
+        sourceType="decklink-input"
+        key="14"
+      >
         <BlackmagicSourceIcon slot="media" />
       </add-source-info>
 
@@ -71,8 +99,11 @@
         <VLCSourceIcon slot="media" />
       </add-source-info>
 
-      <add-source-info v-if="inspectedSource === 'wasapi_process_output_capture'"
-        sourceType="wasapi_process_output_capture" key="17">
+      <add-source-info
+        v-if="inspectedSource === 'wasapi_process_output_capture'"
+        sourceType="wasapi_process_output_capture"
+        key="17"
+      >
         <AppAudioCaptureSourceIcon slot="media" />
       </add-source-info>
 
@@ -80,11 +111,19 @@
         <CharacterSourceIcon slot="media" />
       </add-source-info>
 
-      <add-source-info v-if="inspectedSource === 'custom_cast_ndi_source'" sourceType="custom_cast_ndi_source" key="19">
+      <add-source-info
+        v-if="inspectedSource === 'custom_cast_ndi_source'"
+        sourceType="custom_cast_ndi_source"
+        key="19"
+      >
         <CharacterSourceIcon slot="media" />
       </add-source-info>
 
-      <add-source-info v-if="inspectedSource === 'custom_cast_ndi_guide'" sourceType="custom_cast_ndi_guide" key="20">
+      <add-source-info
+        v-if="inspectedSource === 'custom_cast_ndi_guide'"
+        sourceType="custom_cast_ndi_guide"
+        key="20"
+      >
         <CharacterSourceIcon slot="media" />
         <p slot="attention-text" class="attention">
           {{ $t('sources.installNdiMessage') }}
@@ -94,7 +133,11 @@
         </p>
       </add-source-info>
 
-      <add-source-info v-if="inspectedSource === 'nair-rtvc-source'" sourceType="nair-rtvc-source" key="21">
+      <add-source-info
+        v-if="inspectedSource === 'nair-rtvc-source'"
+        sourceType="nair-rtvc-source"
+        key="21"
+      >
         <SpeechEngineIcon slot="media" />
       </add-source-info>
 
@@ -115,9 +158,15 @@
       <div class="sources">
         <div class="source-group section">
           <ul class="source-list">
-            <li v-for="source in availableSources" class="source source--standard button--border"
-              :class="{ active: inspectedSource === source.value }" :data-test="`${source.value}`" :key="source.value"
-              @click="inspectSource(source.value)" @dblclick="selectSource(source.value)">
+            <li
+              v-for="source in availableSources"
+              class="source source--standard button--border"
+              :class="{ active: inspectedSource === source.value }"
+              :data-test="`${source.value}`"
+              :key="source.value"
+              @click="inspectSource(source.value)"
+              @dblclick="selectSource(source.value)"
+            >
               {{ $t(`source-props.${source.value}.name`) }}
             </li>
           </ul>
@@ -125,8 +174,12 @@
       </div>
 
       <div class="modal-layout-controls bottom-sticky">
-        <button @click="selectInspectedSource()" class="button button--primary" :disabled="!readyToAdd"
-          data-test="AddSource">
+        <button
+          @click="selectInspectedSource()"
+          class="button button--primary"
+          :disabled="!readyToAdd"
+          data-test="AddSource"
+        >
           {{ $t('sources.addSourceButton') }}
         </button>
       </div>
@@ -189,7 +242,7 @@
 @import url('../../styles/index');
 
 .source-support__list {
-  >h3 {
+  > h3 {
     font-size: @font-size6;
     color: var(--color-text-light);
   }
@@ -241,7 +294,7 @@
     color: var(--color-text-light);
   }
 
-  >div {
+  > div {
     .text-ellipsis;
 
     display: inline-block;

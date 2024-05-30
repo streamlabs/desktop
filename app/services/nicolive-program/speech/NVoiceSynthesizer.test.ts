@@ -4,12 +4,15 @@ import { NVoiceSynthesizer } from './NVoiceSynthesizer';
 
 describe('NVoiceSynthesizer', async () => {
   test('speakText', async () => {
-
-    const cancelMock = jest.fn(async () => { });
+    const cancelMock = jest.fn(async () => {});
     let resolvePrepare: () => void;
-    const preparePromise = new Promise<void>((resolve) => { resolvePrepare = resolve });
+    const preparePromise = new Promise<void>(resolve => {
+      resolvePrepare = resolve;
+    });
     let resolveSpeaking: () => void;
-    const speakingPromise = new Promise<void>((resolve) => { resolveSpeaking = resolve });
+    const speakingPromise = new Promise<void>(resolve => {
+      resolveSpeaking = resolve;
+    });
     const talkMock = jest.fn(async (text, options) => {
       await preparePromise;
       if (text) {
@@ -36,7 +39,7 @@ describe('NVoiceSynthesizer', async () => {
     };
 
     const prepare = synth.speakText(speech, onstart, onend, onPhoneme);
-    const running = prepare().then(start => start ? start() : null);
+    const running = prepare().then(start => (start ? start() : null));
 
     expect(talkMock).toBeCalledTimes(1);
     if (talkMock.mock.calls[0].length > 0) {

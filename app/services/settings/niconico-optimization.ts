@@ -42,7 +42,6 @@ export function getBestSettingsForNiconico(
       break;
   }
 
-
   let encoderSettings: OptimizeSettings = {
     encoder: EncoderType.x264,
     simpleUseAdvanced: true,

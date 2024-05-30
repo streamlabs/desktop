@@ -25,19 +25,25 @@
 <script lang="ts" src="./ObsSliderInput.vue.ts"></script>
 
 <style lang="less" scoped>
-@import "../../../styles/index";
+@import url('../../../styles/index');
 
 .slider-container {
-  height: 45px;
   position: relative;
+  height: 45px;
 }
 
 .slider-label {
   position: absolute;
   bottom: 4px;
-  color: #70A0AF;
-  &.slider-label--left { left: 0 }
-  &.slider-label--right { right: 0 }
+  color: #70a0af;
+
+  &.slider-label--left {
+    left: 0;
+  }
+
+  &.slider-label--right {
+    right: 0;
+  }
 }
 
 .slider-value {
@@ -47,9 +53,9 @@
   width: 45px;
   height: 20px;
   padding: 0 4px;
-  border-radius: 2px;
   text-align: right;
   cursor: default;
   border: none;
+  border-radius: 2px;
 }
 </style>

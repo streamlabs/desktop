@@ -50,7 +50,8 @@ const TCP_PORT = 28194;
  */
 export class TcpServerService
   extends PersistentStatefulService<ITcpServersSettings>
-  implements ITcpServerServiceApi {
+  implements ITcpServerServiceApi
+{
   static defaultState: ITcpServersSettings = {
     token: '',
     namedPipe: {

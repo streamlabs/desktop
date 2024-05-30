@@ -10,16 +10,13 @@ const setup = createSetupFunction({
   injectee: {
     NicoliveProgramStateService: {
       updated: {
-        subscribe() { },
+        subscribe() {},
       },
-      state: {
-      },
-      updateSpeechSynthesizerSettings() { },
+      state: {},
+      updateSpeechSynthesizerSettings() {},
     },
-    NVoiceClientService: {
-    },
-    NVoiceCharacterService: {
-    },
+    NVoiceClientService: {},
+    NVoiceCharacterService: {},
   },
 });
 
@@ -97,13 +94,14 @@ test('makeSpeech', async () => {
   });
 });
 
-
 test.each([
   ['normal', false, false, 0, 0, 1],
   ['cancelBeforeSpeaking', true, false, 1, 0, 1],
   ['NUM_COMMENTS_TO_SKIP', false, true, 0, 1, 1],
-])('queueToSpeech %s cancelBeforeSpeaking:%s filled:%s cancel:%d add:%d',
-  async (name: string,
+])(
+  'queueToSpeech %s cancelBeforeSpeaking:%s filled:%s cancel:%d add:%d',
+  async (
+    name: string,
     cancelBeforeSpeaking: boolean,
     filled: boolean,
     numCancel: number,
@@ -112,20 +110,22 @@ test.each([
   ) => {
     setup();
     const { NicoliveCommentSynthesizerService } = require('./nicolive-comment-synthesizer');
-    const instance = NicoliveCommentSynthesizerService.instance as NicoliveCommentSynthesizerService;
+    const instance =
+      NicoliveCommentSynthesizerService.instance as NicoliveCommentSynthesizerService;
     jest.spyOn(instance, 'state', 'get').mockReturnValue(mockedState);
 
-    (instance.getSynthesizer('nVoice').speakText as jest.Mock)
-      .mockImplementation((speech: Speech, onstart: () => void, onend: () => void) => {
+    (instance.getSynthesizer('nVoice').speakText as jest.Mock).mockImplementation(
+      (speech: Speech, onstart: () => void, onend: () => void) => {
         return async () => async () => {
           onstart();
           onend();
           return {
-            cancel: async () => { },
+            cancel: async () => {},
             running: Promise.resolve(),
           };
-        }
-      });
+        };
+      },
+    );
 
     const queue = instance.queue as jest.Mocked<QueueRunner>;
 
@@ -138,7 +138,9 @@ test.each([
       volume: testVolume,
     };
 
-    Object.defineProperty(queue, 'length', { get: () => filled ? instance.NUM_COMMENTS_TO_SKIP : 0 });
+    Object.defineProperty(queue, 'length', {
+      get: () => (filled ? instance.NUM_COMMENTS_TO_SKIP : 0),
+    });
     expect(queue.cancel).toBeCalledTimes(0);
     expect(queue.add).toBeCalledTimes(0);
     instance.queueToSpeech(speech, onstart, onend, cancelBeforeSpeaking);
@@ -148,4 +150,5 @@ test.each([
     if (numAdd) {
       expect(queue.add).toBeCalledWith(expect.anything(), speech.text);
     }
-  });
+  },
+);

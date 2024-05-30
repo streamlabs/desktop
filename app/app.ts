@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
       window['obs'] = obs;
 
       // Host a new OBS server instance
-      obs.IPC.host(`nair-${uuid()}`);
+      obs.IPC.host(remote.process.env.IPC_UUID);
       obs.NodeObs.SetWorkingDirectory(
         path.join(
           electron.remote.app.getAppPath().replace('app.asar', 'app.asar.unpacked'),

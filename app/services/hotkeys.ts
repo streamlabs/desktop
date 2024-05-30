@@ -141,7 +141,7 @@ const HOTKEY_ACTIONS: Dictionary<IHotkeyAction[]> = {
       isActive: () => {
         const nicolive = getNicoliveProgramService();
         return nicolive.state.isEnding || nicolive.state.status !== 'onAir';
-      }
+      },
     },
   ],
 

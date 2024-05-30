@@ -7,7 +7,7 @@ const setup = createSetupFunction({
     UserService: {},
     StreamingService: {
       streamingStatusChange: {
-        subscribe() { },
+        subscribe() {},
       },
     },
     WindowsService: {},
@@ -82,11 +82,13 @@ test('setupStreamSettingsでストリーム情報がとれた場合', async () =
       name: 'key1',
     }),
   );
-  instance.client.fetchMaxQuality = jest.fn((programId: string) => Promise.resolve({
-    bitrate: 6000,
-    height: 720,
-    fps: 30,
-  }));
+  instance.client.fetchMaxQuality = jest.fn((programId: string) =>
+    Promise.resolve({
+      bitrate: 6000,
+      height: 720,
+      fps: 30,
+    }),
+  );
 
   const result = await instance.setupStreamSettings('lv12345');
   expect(result).toEqual({
@@ -97,7 +99,7 @@ test('setupStreamSettingsでストリーム情報がとれた場合', async () =
       height: 720,
       fps: 30,
     },
-  })
+  });
 
   expect(setSettings).toHaveBeenCalledTimes(1);
   expect(setSettings.mock.calls[0]).toMatchSnapshot();
@@ -134,11 +136,13 @@ test('setupStreamSettingsで番組取得にリトライで成功する場合', a
       name: 'key1',
     }),
   );
-  instance.client.fetchMaxQuality = jest.fn((programId: string) => Promise.resolve({
-    bitrate: 6000,
-    height: 720,
-    fps: 30,
-  }));
+  instance.client.fetchMaxQuality = jest.fn((programId: string) =>
+    Promise.resolve({
+      bitrate: 6000,
+      height: 720,
+      fps: 30,
+    }),
+  );
 
   const result = await instance.setupStreamSettings();
   expect(result).toEqual({

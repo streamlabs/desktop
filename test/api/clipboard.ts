@@ -1,5 +1,5 @@
-import { useSpectron, test, afterAppStart } from '../helpers/spectron';
-import { getClient } from '../helpers/api-client';
+import { useWebdriver, test, afterAppStart } from '../helpers/webdriver';
+import { getApiClient } from '../helpers/api-client';
 import { SceneBuilder } from '../helpers/scene-builder';
 import { SceneItem, SceneItemNode, ScenesService } from 'services/scenes';
 import { SelectionService } from 'services/selection';
@@ -8,7 +8,7 @@ import { ISceneCollectionsServiceApi } from 'services/scene-collections';
 import { ISourcesServiceApi } from 'services/sources';
 import { SourceFiltersService } from 'services/source-filters';
 
-useSpectron({ restartAppAfterEachTest: false });
+useWebdriver({ restartAppAfterEachTest: false });
 
 let sceneBuilder: SceneBuilder;
 let getNode: (name: string) => SceneItemNode;
@@ -21,7 +21,7 @@ let sourcesService: ISourcesServiceApi;
 let scenesService: ScenesService;
 
 afterAppStart(async t => {
-  const client = await getClient();
+  const client = await getApiClient();
   scenesService = client.getResource('ScenesService');
   sourcesService = client.getResource('SourcesService');
   selectionService = client.getResource('SelectionService');
@@ -34,7 +34,6 @@ afterAppStart(async t => {
 });
 
 test('Simple copy/paste', async t => {
-
   sceneBuilder.build(`
     Folder1
     Item1: color_source
@@ -45,20 +44,18 @@ test('Simple copy/paste', async t => {
   clipboardService.copy();
   clipboardService.paste();
 
-  t.true(sceneBuilder.isEqualTo(`
+  t.true(
+    sceneBuilder.isEqualTo(`
     Folder1
     Item2: image
     Folder1
     Item1: color_source
     Item2: image
-  `));
-
-
+  `),
+  );
 });
 
-
 test('Copy/paste folder with items', async t => {
-
   sceneBuilder.build(`
     Folder1
     Folder2
@@ -71,7 +68,8 @@ test('Copy/paste folder with items', async t => {
   clipboardService.copy();
   clipboardService.paste();
 
-  t.true(sceneBuilder.isEqualTo(`
+  t.true(
+    sceneBuilder.isEqualTo(`
     Folder2
       Item1:
       Folder3
@@ -81,11 +79,11 @@ test('Copy/paste folder with items', async t => {
       Item1:
       Folder3
         Item2:
-  `));
+  `),
+  );
 });
 
 test('Copy/paste nodes between scene collections', async t => {
-
   sceneBuilder.build(`
     Folder1
       Item1: color_source
@@ -99,33 +97,34 @@ test('Copy/paste nodes between scene collections', async t => {
 
   clipboardService.paste();
 
-  t.true(sceneBuilder.isEqualTo(`
+  t.true(
+    sceneBuilder.isEqualTo(`
     Folder1
       Item1: color_source
       Item2: image_source
-  `));
+  `),
+  );
 
   const sourcesCount = sourcesService.getSources().length;
 
   clipboardService.paste();
 
-  t.true(sceneBuilder.isEqualTo(`
+  t.true(
+    sceneBuilder.isEqualTo(`
     Folder1
       Item1: color_source
       Item2: image_source
     Folder1
       Item1: color_source
       Item2: image_source
-  `));
+  `),
+  );
 
   // the second paste call must not change the sources count
   t.is(sourcesService.getSources().length, sourcesCount);
-
 });
 
-
 test('Copy/paste filters between scene collections', async t => {
-
   sceneBuilder.build(`
       Item1: image_source
   `);
@@ -133,7 +132,7 @@ test('Copy/paste filters between scene collections', async t => {
   sourceFiltersService.add(
     (getNode('Item1') as SceneItem).sourceId,
     'chroma_key_filter',
-    'MyFilter'
+    'MyFilter',
   );
 
   selectionService.selectAll();
@@ -144,7 +143,6 @@ test('Copy/paste filters between scene collections', async t => {
   sceneBuilder.build(`
       Item1: image_source
   `);
-
 
   const sourceId = (getNode('Item1') as SceneItem).sourceId;
 
@@ -159,12 +157,9 @@ test('Copy/paste filters between scene collections', async t => {
 
   t.is(filter.name, 'MyFilter');
   t.is(filter.type, 'chroma_key_filter');
-
 });
 
-
 test('Copy/paste scenes between scene collections', async t => {
-
   // create a scene with nested scene
 
   await sceneCollectionsService.create({ name: 'Collection1' });
@@ -195,25 +190,30 @@ test('Copy/paste scenes between scene collections', async t => {
 
   clipboardService.paste();
 
-  t.true(sceneBuilder.isEqualTo(`
+  t.true(
+    sceneBuilder.isEqualTo(`
     Scene2: scene
     Folder1
       Item1: color_source
       Item2: image_source
-  `));
+  `),
+  );
 
-  scenesService.getScenes().find(scene => scene.name == 'Scene2').makeActive();
+  scenesService
+    .getScenes()
+    .find(scene => scene.name === 'Scene2')
+    .makeActive();
 
-  t.true(sceneBuilder.isEqualTo(`
+  t.true(
+    sceneBuilder.isEqualTo(`
     Folder2
       Item3: color_source
       Item4: image_source
-  `));
-
+  `),
+  );
 });
 
 test('Copy/paste duplicate sources', async t => {
-
   sceneBuilder.build(`
     Folder1
       Item1: color_source
@@ -226,18 +226,18 @@ test('Copy/paste duplicate sources', async t => {
 
   clipboardService.paste(true);
 
-  t.true(sceneBuilder.isEqualTo(`
+  t.true(
+    sceneBuilder.isEqualTo(`
     Folder1
       Item1: color_source
       Item2: image_source
     Folder1
       Item1: color_source
       Item2: image_source
-  `));
+  `),
+  );
 
   // check that sources also have been duplicated
   selectionService.selectAll();
   t.is(selectionService.getSources().length, sourcesCount * 2);
-
 });
-

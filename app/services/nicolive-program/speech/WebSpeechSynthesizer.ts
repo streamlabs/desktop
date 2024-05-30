@@ -1,7 +1,6 @@
 import { Speech } from '../nicolive-comment-synthesizer';
 import { ISpeechSynthesizer } from './ISpeechSynthesizer';
 
-
 export class WebSpeechSynthesizer implements ISpeechSynthesizer {
   get available(): boolean {
     return window.speechSynthesis !== undefined;
@@ -11,17 +10,13 @@ export class WebSpeechSynthesizer implements ISpeechSynthesizer {
   private speakingResolve: () => void | null = null;
   private speakingCounter: number = 0;
 
-  speakText(
-    speech: Speech,
-    onstart: () => void,
-    onend: () => void,
-  ) {
+  speakText(speech: Speech, onstart: () => void, onend: () => void) {
     return async () => async () => {
       if (!speech || speech.text === '' || !this.available) {
         return null;
       }
       if (!this.speakingPromise) {
-        this.speakingPromise = new Promise((resolve) => {
+        this.speakingPromise = new Promise(resolve => {
           this.speakingResolve = resolve;
         });
       }

@@ -5,6 +5,7 @@
     "builtins",
     "camelcase",
     "cdup",
+    "CHROMEDRIVER",
     "codemirror",
     "CUSTOMCAST",
     "devtron",
@@ -144,9 +145,6 @@
   "css.validate": false,
   "less.validate": false,
   "stylelint.validate": ["css", "less", "vue"],
-  "[vue]": {
-    "editor.defaultFormatter": "Vue.volar"
-  },
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   }

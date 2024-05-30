@@ -1,5 +1,5 @@
-import { sleep } from "util/sleep";
-import { QueueRunner, StartFunc } from "./QueueRunner";
+import { sleep } from 'util/sleep';
+import { QueueRunner, StartFunc } from './QueueRunner';
 
 class Task {
   completePrepare: (skip: boolean) => void;
@@ -7,13 +7,13 @@ class Task {
   prepare: () => Promise<StartFunc | null>;
   state: 'idle' | 'preparing' | 'running' | 'completed' | 'canceled' = 'idle';
 
-  constructor(startCallback: ((task: Task) => void) = undefined) {
-    const prepare = new Promise<boolean>((resolve) => {
-      this.completePrepare = (skip) => {
+  constructor(startCallback: (task: Task) => void = undefined) {
+    const prepare = new Promise<boolean>(resolve => {
+      this.completePrepare = skip => {
         resolve(skip);
       };
     });
-    const run = new Promise<void>((resolve) => {
+    const run = new Promise<void>(resolve => {
       this.completeRun = () => {
         resolve();
         this.state = 'completed';
@@ -23,8 +23,8 @@ class Task {
       this.state = 'preparing';
       if (startCallback) {
         startCallback(this);
-      };
-      return prepare.then((skip) => {
+      }
+      return prepare.then(skip => {
         if (skip) {
           return null;
         } else {

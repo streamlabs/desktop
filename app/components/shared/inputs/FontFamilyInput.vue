@@ -1,17 +1,13 @@
 <template>
-<div class="container">
-  <list-input
-    :value="value"
-    :metadata="listInputMetadata"
-    @input="value => emitInput(value)"
-  />
-</div>
+  <div class="container">
+    <list-input :value="value" :metadata="listInputMetadata" @input="value => emitInput(value)" />
+  </div>
 </template>
 
 <script lang="ts" src="./FontFamilyInput.vue.ts"></script>
 
 <style lang="less" scoped>
-@import "../../../styles/index";
+@import url('../../../styles/index');
 
 .container {
   position: relative;

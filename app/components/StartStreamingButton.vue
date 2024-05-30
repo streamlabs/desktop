@@ -17,7 +17,7 @@
 <script lang="ts" src="./StartStreamingButton.vue.ts"></script>
 
 <style lang="less" scoped>
-@import '../styles/index';
+@import url('../styles/index');
 
 .button--go-live {
   min-width: 120px;
@@ -28,20 +28,20 @@
   }
 
   i {
-    font-size: @font-size6;
     margin: 0;
+    font-size: @font-size6;
   }
 
   .button-label {
-    font-size: @font-size4;
     margin-left: 8px;
+    font-size: @font-size4;
   }
 }
 
 /deep/ .svg-live {
   width: 18px;
   height: 18px;
-  fill: var(--color-text-light);
   vertical-align: middle;
+  fill: var(--color-text-light);
 }
 </style>

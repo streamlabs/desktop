@@ -1,5 +1,5 @@
-import { TExecutionContext, useSpectron, test } from '../helpers/spectron';
-import { getClient } from '../helpers/api-client';
+import { TExecutionContext, useWebdriver, test } from '../helpers/webdriver';
+import { getApiClient } from '../helpers/api-client';
 import {
   IStreamingServiceApi,
   EStreamingState,
@@ -7,7 +7,7 @@ import {
 } from '../../app/services/streaming/streaming-api';
 import { ISettingsServiceApi } from '../../app/services/settings';
 
-useSpectron({ restartAppAfterEachTest: true });
+useWebdriver({ restartAppAfterEachTest: true });
 
 test('Streaming to server via API', async t => {
   const streamingServerURL = process.env.NAIR_TEST_STREAM_SERVER;
@@ -16,14 +16,14 @@ test('Streaming to server via API', async t => {
   if (!(streamingServerURL && streamingKey)) {
     console.warn(
       'テスト用配信情報が不足しています。配信テストをスキップします。\n' +
-      `NAIR_TEST_STREAM_SERVER: ${process.env.NAIR_TEST_STREAM_SERVER}\n` +
-      `NAIR_TEST_STREAM_KEY   : ${process.env.NAIR_TEST_STREAM_KEY}`
+        `NAIR_TEST_STREAM_SERVER: ${process.env.NAIR_TEST_STREAM_SERVER}\n` +
+        `NAIR_TEST_STREAM_KEY   : ${process.env.NAIR_TEST_STREAM_KEY}`,
     );
     t.pass();
     return;
   }
 
-  const client = await getClient();
+  const client = await getApiClient();
   const streamingService = client.getResource<IStreamingServiceApi>('StreamingService');
   const settingsService = client.getResource<ISettingsServiceApi>('SettingsService');
 
@@ -60,7 +60,7 @@ test('Streaming to server via API', async t => {
 });
 
 test('Recording via API', async (t: TExecutionContext) => {
-  const client = await getClient();
+  const client = await getApiClient();
   const streamingService = client.getResource<IStreamingServiceApi>('StreamingService');
   const settingsService = client.getResource<ISettingsServiceApi>('SettingsService');
 

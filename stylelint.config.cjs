@@ -14,14 +14,15 @@ module.exports = {
     'font-family-no-missing-generic-family-keyword': [
       true,
       {
-        ignoreFontFamilies: 'n-air',
+        ignoreFontFamilies: ['n-air', 'Roboto'],
       },
     ],
     'function-no-unknown': [
       true,
       { ignoreFunctions: ['lighten', 'darken', 'fade', 'fadein', 'fadeout'] },
     ],
-    'color-function-notation': 'legacy',
+    'color-function-notation': null,
+    'block-no-empty': null,
   },
   overrides: [
     {

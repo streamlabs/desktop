@@ -28,7 +28,7 @@ export default class AddSource extends Vue {
   sourceAddOptions = this.windowsService.getChildWindowQueryParams()
     .sourceAddOptions as ISourceAddOptions;
 
-  canAddNew = true
+  canAddNew = true;
 
   get nVoiceCharacterType(): NVoiceCharacterType {
     return this.sourceAddOptions.propertiesManagerSettings.nVoiceCharacterType || 'near';
@@ -71,9 +71,10 @@ export default class AddSource extends Vue {
       this.name = this.sourcesService.suggestName(this.sourceType && sourceType.description);
     }
 
-    if (this.sourceType === 'scene') this.canAddNew = false
+    if (this.sourceType === 'scene') this.canAddNew = false;
     // ソースとしては1つだけ登録可能とする
-    if (this.sources.length > 0 && this.sources[0].type === 'nair-rtvc-source') this.canAddNew = false
+    if (this.sources.length > 0 && this.sources[0].type === 'nair-rtvc-source')
+      this.canAddNew = false;
   }
 
   addExisting() {
@@ -101,7 +102,8 @@ export default class AddSource extends Vue {
       };
 
       if (this.sourceAddOptions.propertiesManager === 'nvoice-character') {
-        const type: NVoiceCharacterType = this.sourceAddOptions.propertiesManagerSettings.nVoiceCharacterType || 'near';
+        const type: NVoiceCharacterType =
+          this.sourceAddOptions.propertiesManagerSettings.nVoiceCharacterType || 'near';
         s = this.nVoiceCharacterService.createNVoiceCharacterSource(type, this.name);
       } else {
         s = {
@@ -114,7 +116,7 @@ export default class AddSource extends Vue {
               propertiesManagerSettings: this.sourceAddOptions.propertiesManagerSettings,
             },
           ),
-          options: {}
+          options: {},
         };
       }
 

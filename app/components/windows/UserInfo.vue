@@ -14,16 +14,8 @@
         <div class="user-detail-body">
           <div class="user-name-wrapper">
             <div class="user-name">{{ userName }}</div>
-            <i
-              class="icon-moderator"
-              v-tooltip.bottom="moderatorTooltip"
-              v-if="isModerator"
-            ></i>
-            <i
-              class="icon-supporter"
-              v-tooltip.bottom="supporterTooltip"
-              v-if="isSupporter"
-            ></i>
+            <i class="icon-moderator" v-tooltip.bottom="moderatorTooltip" v-if="isModerator"></i>
+            <i class="icon-supporter" v-tooltip.bottom="supporterTooltip" v-if="isSupporter"></i>
           </div>
           <div class="user-account">
             <p class="user-id">ID: {{ userId }}</p>
@@ -51,7 +43,9 @@
               <ul class="popup-menu-list">
                 <li class="popup-menu-item">
                   <a @click="blockUser" class="link" v-if="!isBlockedUser">配信からブロック</a>
-                  <a @click="unBlockUser" class="link" v-if="isBlockedUser">配信用ブロックから削除</a>
+                  <a @click="unBlockUser" class="link" v-if="isBlockedUser"
+                    >配信用ブロックから削除</a
+                  >
                 </li>
               </ul>
               <ul class="popup-menu-list">
@@ -63,11 +57,18 @@
               <ul class="popup-menu-list">
                 <li class="popup-menu-item">
                   <a @click="addModerator" class="link" v-if="!isModerator">モデレーターに追加</a>
-                  <a @click="removeModerator" class="link text--red" v-if="isModerator">モデレーターから削除</a>
+                  <a @click="removeModerator" class="link text--red" v-if="isModerator"
+                    >モデレーターから削除</a
+                  >
                 </li>
               </ul>
             </div>
-            <div class="button--circle button--secondary" v-tooltip.bottom="otherMenuTooltip" :class="{ 'is-show': showPopupMenu }" slot="reference">
+            <div
+              class="button--circle button--secondary"
+              v-tooltip.bottom="otherMenuTooltip"
+              :class="{ 'is-show': showPopupMenu }"
+              slot="reference"
+            >
               <i class="icon-ellipsis-horizontal"></i>
             </div>
           </popper>
@@ -181,7 +182,7 @@
   width: 64px;
   height: 64px;
   border: 4px solid var(--color-bg-secondary);
-  border-radius: 9999px;;
+  border-radius: 9999px;
 }
 
 .user-name {
@@ -399,5 +400,4 @@
     font-size: @font-size1;
   }
 }
-
 </style>

@@ -1,47 +1,39 @@
 <template>
-<div
-  :class="{ 'FrameRate-container__disabled': !property.enabled }">
-  <label>{{ property.description }}</label>
-  <div>
-    <tabs :tabs="tabs" style="margin-bottom: 10px;">
-      <div slot="simple" class="FrameRate-simple">
-        <select @change="setSimpleValue">
-          <option
-            v-for="(option, index) in simpleOptions"
-            :key="option.name"
-            :value="index"
-            :selected="selectedSimpleOptionIndex === index">
-            {{ option.name }}
-          </option>
-        </select>
-      </div>
-      <div slot="rational" class="row FrameRate-rational">
-        <div class="small-6 column">
-          <label>Numerator</label>
-          <input
-            ref="numerator"
-            type="text"
-            :value="numerator"
-            @change="setRationalValue"/>
-          <label>Denominator</label>
-          <input
-            ref="denominator"
-            type="text"
-            :value="denominator"
-            @change="setRationalValue"/>
+  <div :class="{ 'FrameRate-container__disabled': !property.enabled }">
+    <label>{{ property.description }}</label>
+    <div>
+      <tabs :tabs="tabs" style="margin-bottom: 10px">
+        <div slot="simple" class="FrameRate-simple">
+          <select @change="setSimpleValue">
+            <option
+              v-for="(option, index) in simpleOptions"
+              :key="option.name"
+              :value="index"
+              :selected="selectedSimpleOptionIndex === index"
+            >
+              {{ option.name }}
+            </option>
+          </select>
         </div>
-        <div class="small-6 column">
-          <ul class="FrameRate-rationalStats">
-            <li>FPS: {{ framesPerSecond }}</li>
-            <li>Frame Interval: {{ frameIntervalMilliseconds }}</li>
-            <li>Min FPS: {{ minRational }}</li>
-            <li>Max FPS: {{ maxRational }}</li>
-          </ul>
+        <div slot="rational" class="row FrameRate-rational">
+          <div class="small-6 column">
+            <label>Numerator</label>
+            <input ref="numerator" type="text" :value="numerator" @change="setRationalValue" />
+            <label>Denominator</label>
+            <input ref="denominator" type="text" :value="denominator" @change="setRationalValue" />
+          </div>
+          <div class="small-6 column">
+            <ul class="FrameRate-rationalStats">
+              <li>FPS: {{ framesPerSecond }}</li>
+              <li>Frame Interval: {{ frameIntervalMilliseconds }}</li>
+              <li>Min FPS: {{ minRational }}</li>
+              <li>Max FPS: {{ maxRational }}</li>
+            </ul>
+          </div>
         </div>
-      </div>
-    </tabs>
+      </tabs>
+    </div>
   </div>
-</div>
 </template>
 
 <script>
@@ -51,9 +43,8 @@ import Property from './Property.vue';
 import { SourcesService } from '../../services/sources.ts';
 
 const FrameRateProperty = Property.extend({
-
   components: {
-    Tabs
+    Tabs,
   },
 
   data() {
@@ -64,28 +55,25 @@ const FrameRateProperty = Property.extend({
       tabs: [
         {
           name: 'Simple FPS Values',
-          value: 'simple'
+          value: 'simple',
         },
         {
           name: 'Rational FPS Values',
-          value: 'rational'
-        }
-      ]
+          value: 'rational',
+        },
+      ],
     };
   },
 
   methods: {
     setSimpleValue(event) {
-      const optionIndex = parseInt(event.target.value);
+      const optionIndex = parseInt(event.target.value, 10);
       const option = this.simpleOptions[optionIndex];
 
-      SourcesService.instance.setProperty(
-        this.property,
-        {
-          numerator: option.numerator.toString(),
-          denominator: option.denominator.toString()
-        }
-      );
+      SourcesService.instance.setProperty(this.property, {
+        numerator: option.numerator.toString(),
+        denominator: option.denominator.toString(),
+      });
     },
 
     setRationalValue(event) {
@@ -93,15 +81,12 @@ const FrameRateProperty = Property.extend({
       const denominator = this.$refs.denominator.value;
 
       if (numerator && denominator) {
-        SourcesService.instance.setProperty(
-          this.property,
-          {
-            numerator,
-            denominator
-          }
-        );
+        SourcesService.instance.setProperty(this.property, {
+          numerator,
+          denominator,
+        });
       }
-    }
+    },
   },
 
   computed: {
@@ -127,7 +112,7 @@ const FrameRateProperty = Property.extend({
 
     minRational() {
       if (this.property.value.ranges[0]) {
-        let min = this.property.value.ranges[0].min;
+        const min = this.property.value.ranges[0].min;
 
         return '' + min.numerator + '/' + min.denominator;
       }
@@ -135,7 +120,7 @@ const FrameRateProperty = Property.extend({
 
     maxRational() {
       if (this.property.value.ranges[0]) {
-        let max = this.property.value.ranges[0].max;
+        const max = this.property.value.ranges[0].max;
 
         return '' + max.numerator + '/' + max.denominator;
       }
@@ -143,11 +128,13 @@ const FrameRateProperty = Property.extend({
 
     simpleOptions() {
       // This is the default option
-      let options = [{
-        name: '',
-        numerator: 0,
-        denominator: 0
-      }];
+      let options = [
+        {
+          name: '',
+          numerator: 0,
+          denominator: 0,
+        },
+      ];
 
       if (this.property.value.ranges[0]) {
         options = options.concat(fr.simpleFPSValuesForRanges(this.property.value.ranges));
@@ -159,10 +146,10 @@ const FrameRateProperty = Property.extend({
     selectedSimpleOptionIndex() {
       // 0 is the default option
       let index = 0;
-      let currentInterval = fr.rationalToFrameInterval(this.property.value);
+      const currentInterval = fr.rationalToFrameInterval(this.property.value);
 
       _.each(this.simpleOptions, (option, i) => {
-        let interval = fr.rationalToFrameInterval(option);
+        const interval = fr.rationalToFrameInterval(option);
 
         // TODO: Do a better floating point comparison with EPSILON
         if (interval === currentInterval) {
@@ -171,9 +158,8 @@ const FrameRateProperty = Property.extend({
       });
 
       return index;
-    }
-  }
-
+    },
+  },
 });
 
 FrameRateProperty.obsType = 'OBS_PROPERTY_FRAME_RATE';
@@ -183,8 +169,8 @@ export default FrameRateProperty;
 
 <style lang="less" scoped>
 .FrameRate-container__disabled {
-  opacity: 0.3;
   pointer-events: none;
+  opacity: 0.3;
 }
 
 .FrameRate-simple {
@@ -196,7 +182,7 @@ export default FrameRateProperty;
 }
 
 .FrameRate-rationalStats {
-  list-style-type: none;
   margin: 20px 0;
+  list-style-type: none;
 }
 </style>

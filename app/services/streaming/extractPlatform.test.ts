@@ -1,5 +1,4 @@
-import { extractPlatform } from "./extractPlatform";
-
+import { extractPlatform } from './extractPlatform';
 
 describe('extractPlatform', () => {
   test.each([

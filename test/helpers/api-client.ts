@@ -136,10 +136,12 @@ export class ApiClient {
       try {
         requestBody = JSON.parse(message);
       } catch (e) {
+        // eslint-disable-next-line no-throw-literal
         throw 'Invalid JSON';
       }
     }
 
+    // eslint-disable-next-line no-throw-literal
     if (!requestBody.id) throw 'id is required';
 
     return new Promise((resolve, reject) => {
@@ -161,10 +163,12 @@ export class ApiClient {
       try {
         requestBody = JSON.parse(message);
       } catch (e) {
+        // eslint-disable-next-line no-throw-literal
         throw 'Invalid JSON';
       }
     }
 
+    // eslint-disable-next-line no-throw-literal
     if (!requestBody.id) throw 'id is required';
 
     const rawMessage = `${JSON.stringify(requestBody)}\n`;
@@ -314,7 +318,7 @@ export class ApiClient {
   }
 }
 
-export async function getClient() {
+export async function getApiClient() {
   if (!clientInstance) clientInstance = new ApiClient();
 
   if (clientInstance.getConnectionStatus() === 'disconnected') {

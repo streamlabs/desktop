@@ -1,13 +1,14 @@
-import { useSpectron, test, afterAppStart, focusChild } from '../../helpers/spectron';
-import { getClient } from '../../helpers/api-client';
+import { useWebdriver, test, afterAppStart } from '../../helpers/webdriver';
+import { getApiClient } from '../../helpers/api-client';
 import { ISourcesServiceApi, TSourceType } from '../../../app/services/sources/sources-api';
 import { useScreentest } from '../screenshoter';
 import { ScenesService } from 'services/scenes';
 import { sleep } from '../../helpers/sleep';
+import { focusChild } from '../../helpers/modules/core';
 
 let showSourceProps: (name: string) => void;
 
-useSpectron({ restartAppAfterEachTest: false });
+useWebdriver({ restartAppAfterEachTest: false });
 useScreentest();
 afterAppStart(async t => {
   const types: TSourceType[] = [
@@ -27,7 +28,7 @@ afterAppStart(async t => {
     'ndi_source',
   ];
 
-  const client = await getClient();
+  const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
   const sourcesService = client.getResource<ISourcesServiceApi>('SourcesService');
 
@@ -38,7 +39,7 @@ afterAppStart(async t => {
   showSourceProps = async (name: string) => {
     const sourceId = sourcesService.getSourcesByName(name)[0].sourceId;
     sourcesService.showSourceProperties(sourceId);
-    await focusChild(t);
+    await focusChild();
   };
 });
 

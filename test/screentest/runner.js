@@ -4,13 +4,9 @@ const fs = require('fs');
 
 const CONFIG = JSON.parse(fs.readFileSync('test/screentest/config.json'));
 
-const branches = [
-  'current',
-  CONFIG.baseBranch
-];
+const branches = ['current', CONFIG.baseBranch];
 
 const returnCode = (function main() {
-
   log('use branches', branches);
 
   const dir = CONFIG.dist;
@@ -24,12 +20,8 @@ const returnCode = (function main() {
     currentPath += '/';
   });
 
-
-
   for (const branchName of branches) {
-
     checkoutBranch(branchName);
-
 
     log('project compilation');
     try {
@@ -55,11 +47,9 @@ const returnCode = (function main() {
       err('creating screenshots failed');
       return 1;
     }
-
   }
 
   checkoutBranch(branches[0]);
-
 
   log('comparing screenshots');
   try {
@@ -77,7 +67,6 @@ if (returnCode !== 0) {
 }
 
 checkoutBranch(branches[0]);
-
 
 function log(...args) {
   console.log(...args);
@@ -98,4 +87,3 @@ function checkoutBranch(branchName) {
   }
   fs.writeFileSync(`${CONFIG.dist}/current-branch.txt`, branchName);
 }
-

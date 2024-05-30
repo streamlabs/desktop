@@ -1,41 +1,46 @@
 @charset "UTF-8";
+
 /*
 vendor分離前暫定対応
 ニコニコ生放送最適化設定用style
 */
 
-/*checkbox disabled styleの変更*/
-.section .input-container.disabled .input-wrapper .checkbox label:before {
-    background-color: #91979A;
-    border: #91979A;
+/* checkbox disabled styleの変更 */
+.section .input-container.disabled .input-wrapper .checkbox label::before {
     cursor: default;
-}
-.section .input-container.disabled .input-wrapper .checkbox label:after {
     background-color: #91979A;
     border: #91979A;
+}
+
+.section .input-container.disabled .input-wrapper .checkbox label::after {
     color: #2F3340;
     cursor: default;
+    background-color: #91979A;
+    border: #91979A;
 }
+
 .section .input-container.disabled .input-wrapper .checkbox label > span {
     color: #91979A;
 }
 
-/*checkbox styleの変更*/
-.checkbox label:before {
+/* checkbox styleの変更 */
+.checkbox label::before {
     border: 2px solid #91979A;
 }
-.checkbox input:checked~label:before {
-    background-color: rgba(252,80,53,.2);
+
+.checkbox input:checked~label::before {
+    background-color: rgba(252,80,53,20%);
 }
 
 /* fontアイコンの追加に伴うunicode指定の上書き
 ※vendorからcssスタイル参照していることで設定パネルの調整が複雑なので、twitchalerts.cssの参照を辞める予定 */
 
-/*checkboxのアイコンのunicode指定変更*/
-.checkbox input:checked~label:after {
+/* checkboxのアイコンのunicode指定変更 */
+.checkbox input:checked~label::after {
     content: @n-air--codepoint--check;
 }
-/*select menu の下向き↓のunicode指定変更*/
-.custom-select-trigger:after {
+
+/* select menu の下向き↓のunicode指定変更 */
+.custom-select-trigger::after {
     content: @n-air--codepoint--drop-down-arrow;
 }

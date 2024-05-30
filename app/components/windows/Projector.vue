@@ -1,29 +1,24 @@
 <template>
-<div class="projector-container">
-  <div
-    class="projector-fullscreen"
-    @keydown="exitFullscreen"
-    v-if="fullscreen">
-    <display :source-id="sourceId" />
-  </div>
-  <modal-layout
-    v-else
-    bare-content
-    :showControls="false">
-    <div slot="content" class="projector-windowed">
-      <div class="projector-buttons">
-        <button
-          class="button button--trans"
-          v-for="(display, index) in allDisplays"
-          :key="display.id"
-          @click="enterFullscreen(display)">
-          Fullscreen Display {{ index + 1 }}: {{ display.size.width }}x{{ display.size.height }}
-        </button>
-      </div>
+  <div class="projector-container">
+    <div class="projector-fullscreen" @keydown="exitFullscreen" v-if="fullscreen">
       <display :source-id="sourceId" />
     </div>
-  </modal-layout>
-</div>
+    <modal-layout v-else bare-content :showControls="false">
+      <div slot="content" class="projector-windowed">
+        <div class="projector-buttons">
+          <button
+            class="button button--trans"
+            v-for="(display, index) in allDisplays"
+            :key="display.id"
+            @click="enterFullscreen(display)"
+          >
+            Fullscreen Display {{ index + 1 }}: {{ display.size.width }}x{{ display.size.height }}
+          </button>
+        </div>
+        <display :source-id="sourceId" />
+      </div>
+    </modal-layout>
+  </div>
 </template>
 
 <script lang="ts" src="./Projector.vue.ts"></script>
@@ -34,14 +29,14 @@
 }
 
 .projector-fullscreen {
-  height: 100%;
   display: flex;
+  height: 100%;
 }
 
 .projector-windowed {
-  height: 100%;
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .projector-display {
@@ -50,7 +45,7 @@
 
 .projector-buttons {
   display: flex;
-  justify-content: center;
   flex-wrap: wrap;
+  justify-content: center;
 }
 </style>

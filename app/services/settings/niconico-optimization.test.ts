@@ -1,7 +1,13 @@
-import { TObsFormData, TObsValue } from "components/obs/inputs/ObsInput";
-import { getBestSettingsForNiconico } from "./niconico-optimization";
-import { EncoderType, ISettingsAccessor, OptimizationKey, OptimizeSettings, SettingsKeyAccessor } from "./optimizer";
-import { ISettingsSubCategory } from "./settings-api";
+import { TObsFormData, TObsValue } from 'components/obs/inputs/ObsInput';
+import { getBestSettingsForNiconico } from './niconico-optimization';
+import {
+  EncoderType,
+  ISettingsAccessor,
+  OptimizationKey,
+  OptimizeSettings,
+  SettingsKeyAccessor,
+} from './optimizer';
+import { ISettingsSubCategory } from './settings-api';
 
 jest.mock('./settings-api');
 jest.mock('services/i18n', () => ({
@@ -17,7 +23,7 @@ const outputSettings: ISettingsSubCategory[] = [
         description: 'outputMode',
         value: 'Simple',
       },
-    ]
+    ],
   },
   {
     nameSubCategory: 'Streaming',
@@ -26,14 +32,11 @@ const outputSettings: ISettingsSubCategory[] = [
         name: 'StreamEncoder',
         description: 'StreamEncoder',
         value: 'qsv',
-        options: [
-          { value: 'qsv', description: 'qsv' },
-        ],
+        options: [{ value: 'qsv', description: 'qsv' }],
       },
     ],
-  }
+  },
 ];
-
 
 class MockSettingAccessor implements ISettingsAccessor {
   getSettingsFormData(categoryName: string): ISettingsSubCategory[] {
@@ -42,7 +45,11 @@ class MockSettingAccessor implements ISettingsAccessor {
     }
     return [];
   }
-  findSetting(settings: ISettingsSubCategory[], category: string, setting: string): TObsFormData[number] | undefined {
+  findSetting(
+    settings: ISettingsSubCategory[],
+    category: string,
+    setting: string,
+  ): TObsFormData[number] | undefined {
     for (const subCategory of settings) {
       if (subCategory.nameSubCategory !== category) continue;
       for (const parameter of subCategory.parameters) {
@@ -51,18 +58,20 @@ class MockSettingAccessor implements ISettingsAccessor {
     }
     return undefined;
   }
-  findSettingValue(settings: ISettingsSubCategory[], category: string, setting: string): TObsValue | undefined {
+  findSettingValue(
+    settings: ISettingsSubCategory[],
+    category: string,
+    setting: string,
+  ): TObsValue | undefined {
     return this.findSetting(settings, category, setting)?.value;
   }
-  setSettings(_categoryName: string, _settingsData: ISettingsSubCategory[]): void {
-  }
-
+  setSettings(_categoryName: string, _settingsData: ISettingsSubCategory[]): void {}
 }
 
 test('mock outputSettings', () => {
   const settings = new SettingsKeyAccessor(new MockSettingAccessor());
   expect(settings.hasSpecificValue(OptimizationKey.encoder, EncoderType.qsv)).toBe(true);
-})
+});
 
 describe('getBestSettingsForNiconico', () => {
   const accessor = new SettingsKeyAccessor(new MockSettingAccessor());
@@ -85,10 +94,40 @@ describe('getBestSettingsForNiconico', () => {
   };
 
   test.each([
-    [1000, 288, 30, false, { ...x264Settings, quality: '512x288', audioBitrate: '96', videoBitrate: 1000 - 96 }],
-    [2000, 450, 30, false, { ...x264Settings, quality: '800x450', audioBitrate: '192', videoBitrate: 2000 - 192 }],
-    [4000, 720, 30, false, { ...x264Settings, quality: '1280x720', audioBitrate: '192', videoBitrate: 4000 - 192 }],
-    [6000, 1080, 60, true, { ...qsvSettings, quality: '1920x1080', audioBitrate: '192', videoBitrate: 6000 - 192, fpsCommon: '60' }],
+    [
+      1000,
+      288,
+      30,
+      false,
+      { ...x264Settings, quality: '512x288', audioBitrate: '96', videoBitrate: 1000 - 96 },
+    ],
+    [
+      2000,
+      450,
+      30,
+      false,
+      { ...x264Settings, quality: '800x450', audioBitrate: '192', videoBitrate: 2000 - 192 },
+    ],
+    [
+      4000,
+      720,
+      30,
+      false,
+      { ...x264Settings, quality: '1280x720', audioBitrate: '192', videoBitrate: 4000 - 192 },
+    ],
+    [
+      6000,
+      1080,
+      60,
+      true,
+      {
+        ...qsvSettings,
+        quality: '1920x1080',
+        audioBitrate: '192',
+        videoBitrate: 6000 - 192,
+        fpsCommon: '60',
+      },
+    ],
   ])(
     'bitrate: %p, height: %p, fps: %p, useHardwareEncoder: %p',
     (bitrate, height, fps, useHardwareEncoder, shouldBe) => {
@@ -97,6 +136,6 @@ describe('getBestSettingsForNiconico', () => {
         accessor,
       );
       expect(settings).toEqual(shouldBe);
-    }
+    },
   );
 });

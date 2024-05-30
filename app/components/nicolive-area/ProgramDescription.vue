@@ -1,7 +1,6 @@
 <template>
   <div class="program-description">
-    <div class="program-description-header">
-    </div>
+    <div class="program-description-header"></div>
     <div @click="handleAnchorClick" class="program-description-body">
       <div v-html="programDescription" class="program-description-text"></div>
     </div>
@@ -10,7 +9,7 @@
 
 <script lang="ts" src="./ProgramDescription.vue.ts"></script>
 <style lang="less" scoped>
-@import "../../styles/index";
+@import url('../../styles/index');
 
 .program-description {
   display: flex;
@@ -20,9 +19,9 @@
 }
 
 .program-description-header {
-  flex-shrink: 0;
   display: flex;
   flex-direction: row-reverse;
+  flex-shrink: 0;
   align-items: center;
   width: 100%;
   height: 48px;
@@ -33,8 +32,8 @@
 
 .program-description-body {
   flex-grow: 1;
-  overflow-y: auto;
   overflow-x: hidden;
+  overflow-y: auto;
   background-color: @white;
 
   &::-webkit-scrollbar-track {
@@ -46,7 +45,6 @@
     background-color: @grey;
     border-color: @white;
   }
-
 }
 
 .program-description-text {
@@ -54,5 +52,4 @@
   color: @black;
   overflow-wrap: break-word;
 }
-
 </style>

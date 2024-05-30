@@ -1,45 +1,50 @@
 <template>
-<div class="editable-scene-collection flex flex--center flex--justify-start" @dblclick="makeActive" :class="{ active: isActive }">
-  <span class="editable-scene-collection--name">
-    <div v-if="renaming" class="flex flex--center flex--justify-start">
-      <input
-        ref="rename"
-        class="input--transparent"
-        type="text"
-        @keypress="handleKeypress"
-        v-model="editableName" />
-      <i class="icon-check link" @click.stop="submitRename" />
-      <i class="icon-times" @click.stop="cancelRename" v-if="!needsRename" />
-    </div>
-    <div v-else>
-      {{ collection.name }}
-    </div>
-  </span>
-  <span
-    class="editable-scene-collection--active"
-    v-if="isActive">
-    {{ $t('scenes.activeSceneCollection') }}
-  </span>
-  <span class="editable-scene-collection--modified flex--grow">
-    {{ $t('scenes.sceneCollectionModified', { when: modified }) }}
-  </span>
-  <a class="editable-scene-collection--action link link--underlined">
-    <span @click.stop="startRenaming">{{ $t('common.rename') }}</span>
-  </a>
-  <a v-if="!duplicating" class="editable-scene-collection--action link link--underlined">
-    <span @click.stop="duplicate">{{ $t('common.duplicate') }}</span>
-  </a>
-  <i class="icon-spinner icon-spin" v-else />
-  <a class="editable-scene-collection--action editable-scene-collection--action-delete link link--underlined">
-    <span @click.stop="remove">{{ $t('common.delete') }}</span>
-  </a>
-</div>
+  <div
+    class="editable-scene-collection flex flex--center flex--justify-start"
+    @dblclick="makeActive"
+    :class="{ active: isActive }"
+  >
+    <span class="editable-scene-collection--name">
+      <div v-if="renaming" class="flex flex--center flex--justify-start">
+        <input
+          ref="rename"
+          class="input--transparent"
+          type="text"
+          @keypress="handleKeypress"
+          v-model="editableName"
+        />
+        <i class="icon-check link" @click.stop="submitRename" />
+        <i class="icon-times" @click.stop="cancelRename" v-if="!needsRename" />
+      </div>
+      <div v-else>
+        {{ collection.name }}
+      </div>
+    </span>
+    <span class="editable-scene-collection--active" v-if="isActive">
+      {{ $t('scenes.activeSceneCollection') }}
+    </span>
+    <span class="editable-scene-collection--modified flex--grow">
+      {{ $t('scenes.sceneCollectionModified', { when: modified }) }}
+    </span>
+    <a class="editable-scene-collection--action link link--underlined">
+      <span @click.stop="startRenaming">{{ $t('common.rename') }}</span>
+    </a>
+    <a v-if="!duplicating" class="editable-scene-collection--action link link--underlined">
+      <span @click.stop="duplicate">{{ $t('common.duplicate') }}</span>
+    </a>
+    <i class="icon-spinner icon-spin" v-else />
+    <a
+      class="editable-scene-collection--action editable-scene-collection--action-delete link link--underlined"
+    >
+      <span @click.stop="remove">{{ $t('common.delete') }}</span>
+    </a>
+  </div>
 </template>
 
 <script lang="ts" src="./EditableSceneCollection.vue.ts"></script>
 
 <style lang="less" scoped>
-@import "../styles/index";
+@import url('../styles/index');
 
 .editable-scene-collection {
   height: 40px;
@@ -47,7 +52,10 @@
   font-size: @font-size4;
   cursor: pointer;
 
-  span, a, input, i {
+  span,
+  a,
+  input,
+  i {
     margin-right: 8px;
   }
 
@@ -75,22 +83,22 @@
 }
 
 .editable-scene-collection--action-delete {
-  color:var(--color-red);
+  color: var(--color-red);
 }
 
 .editable-scene-collection--name {
   max-width: 230px;
   color: var(--color-text);
 
-  >div {
-    white-space: nowrap;
+  > div {
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   input {
-    font-size: @font-size4;
     width: 250px;
+    font-size: @font-size4;
     background: transparent;
   }
 }
@@ -108,9 +116,9 @@
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(359deg);
   }
 }
-
 </style>

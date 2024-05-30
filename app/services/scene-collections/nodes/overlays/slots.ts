@@ -13,7 +13,13 @@ import { AudioService } from 'services/audio';
 import * as obs from '../../../../../obs-api';
 import { NVoiceCharacterNode } from './nvoice-character';
 
-type TContent = ImageNode | TextNode | WebcamNode | VideoNode | SceneSourceNode | NVoiceCharacterNode;
+type TContent =
+  | ImageNode
+  | TextNode
+  | WebcamNode
+  | VideoNode
+  | SceneSourceNode
+  | NVoiceCharacterNode;
 
 interface IFilterInfo {
   name: string;

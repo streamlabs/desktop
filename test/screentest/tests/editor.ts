@@ -1,23 +1,20 @@
 import test from 'ava';
-import { useSpectron } from '../../helpers/spectron';
-import { getClient } from '../../helpers/api-client';
+import { useWebdriver } from '../../helpers/webdriver';
+import { getApiClient } from '../../helpers/api-client';
 import { ScenesService } from 'services/scenes';
 import { ISourcesServiceApi } from '../../../app/services/sources/sources-api';
 import { useScreentest } from '../screenshoter';
 
-
-useSpectron({ restartAppAfterEachTest: false });
+useWebdriver({ restartAppAfterEachTest: false });
 useScreentest();
 
-
 test('Editor without sources', async t => {
-  const client = await getClient();
+  const client = await getApiClient();
   t.pass();
 });
 
-
 test('Editor with sources', async t => {
-  const client = await getClient();
+  const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
   const sourcesService = client.getResource<ISourcesServiceApi>('SourcesService');
   const scene = scenesService.activeScene;
@@ -28,9 +25,8 @@ test('Editor with sources', async t => {
   t.pass();
 });
 
-
 test('Editor with the big amount of sources and scenes', async t => {
-  const client = await getClient();
+  const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
 
   let scenesCount = 10;
@@ -41,7 +37,10 @@ test('Editor with the big amount of sources and scenes', async t => {
   }
 
   while (sourcesCount--) {
-    scenesService.activeScene.createAndAddSource(`My source with a long name ${sourcesCount}`, 'color_source');
+    scenesService.activeScene.createAndAddSource(
+      `My source with a long name ${sourcesCount}`,
+      'color_source',
+    );
   }
 
   t.pass();

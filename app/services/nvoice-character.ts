@@ -1,26 +1,26 @@
-import electron from "electron";
+import electron from 'electron';
 import path, { dirname } from 'path';
 import { $t } from 'services/i18n';
-import Vue from "vue";
-import { InitAfter, Inject, mutation, StatefulService } from "./core";
-import { ISceneNodeAddOptions } from "./scenes";
-import { ISourceApi, SourcesService } from "./sources";
-import { NVoiceCharacterManager } from "./sources/properties-managers/nvoice-character-manager";
-import { VideoService } from "./video";
+import Vue from 'vue';
+import { InitAfter, Inject, mutation, StatefulService } from './core';
+import { ISceneNodeAddOptions } from './scenes';
+import { ISourceApi, SourcesService } from './sources';
+import { NVoiceCharacterManager } from './sources/properties-managers/nvoice-character-manager';
+import { VideoService } from './video';
 
 // NVoiceのキャラクターの種類を定義
 export const NVoiceCharacterTypes = ['near'] as const;
-export type NVoiceCharacterType = typeof NVoiceCharacterTypes[number];
+export type NVoiceCharacterType = (typeof NVoiceCharacterTypes)[number];
 
 export interface ICharacterSource {
   sourceId: string;
   type: NVoiceCharacterType;
-};
+}
 
 export interface INVoiceCharacterSourceState {
   characterSources: Dictionary<ICharacterSource>;
   port: number;
-};
+}
 
 @InitAfter('SourcesService')
 export class NVoiceCharacterService extends StatefulService<INVoiceCharacterSourceState> {
@@ -76,7 +76,9 @@ export class NVoiceCharacterService extends StatefulService<INVoiceCharacterSour
       const type = source.getPropertiesManagerSettings().nVoiceCharacterType;
       const url = this.getUrl(type, port);
       // URLを更新する
-      (this.sourcesService.propertiesManagers[sourceId].manager as NVoiceCharacterManager).setNVoiceCharacterType(type);
+      (
+        this.sourcesService.propertiesManagers[sourceId].manager as NVoiceCharacterManager
+      ).setNVoiceCharacterType(type);
     }
   }
 
@@ -84,12 +86,17 @@ export class NVoiceCharacterService extends StatefulService<INVoiceCharacterSour
     const appPath = electron.remote.app.isPackaged
       ? dirname(electron.remote.app.getPath('exe'))
       : electron.remote.app.getAppPath();
-    const url = 'file://' + path.join(appPath, 'nvoice', type, `index.html?port=${port || this.state.port}`);
+    const url =
+      'file://' + path.join(appPath, 'nvoice', type, `index.html?port=${port || this.state.port}`);
     return url;
   }
 
-  createNVoiceCharacterSource(type: NVoiceCharacterType, name?: string): { source: ISourceApi, options: ISceneNodeAddOptions } {
-    const suggestedName = name || this.sourcesService.suggestName($t(`source-props.nvoice_character.${type}.name`));
+  createNVoiceCharacterSource(
+    type: NVoiceCharacterType,
+    name?: string,
+  ): { source: ISourceApi; options: ISceneNodeAddOptions } {
+    const suggestedName =
+      name || this.sourcesService.suggestName($t(`source-props.nvoice_character.${type}.name`));
     const width = 1000 / 4;
     const height = 1800 / 4;
     return {
@@ -110,12 +117,13 @@ export class NVoiceCharacterService extends StatefulService<INVoiceCharacterSour
       ),
       options: {
         initialTransform: {
-          position: { // 右下に配置
+          position: {
+            // 右下に配置
             x: this.videoService.baseWidth - width,
             y: this.videoService.baseHeight - height,
-          }
-        }
-      }
+          },
+        },
+      },
     };
   }
 

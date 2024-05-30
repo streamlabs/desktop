@@ -3,7 +3,7 @@
     <div
       @click="onToggleVisibleHandler"
       class="collapsible-section__title"
-      :class="{'collapsible-section__title--visible' : visible}"
+      :class="{ 'collapsible-section__title--visible': visible }"
     >
       <i class="icon-down"></i>
       <h2>{{ title }}</h2>
@@ -15,7 +15,7 @@
 <script lang="ts" src="./CollapsibleSection.vue.ts"></script>
 
 <style lang="less">
-@import "../../styles/index";
+@import url('../../styles/index');
 
 .collapsible-section__container {
   .padding-bottom(2);
@@ -40,12 +40,14 @@
   h2 {
     color: @day-title;
     .margin--none;
+
     text-transform: capitalize;
   }
 
   .icon-down {
     .transition();
     .margin-right(1);
+
     font-size: 5px;
   }
 }
@@ -53,11 +55,10 @@
 .night-theme {
   .collapsible-section__title {
     background-color: @dark-4;
+
     h2 {
       color: @white;
     }
   }
 }
 </style>
-
-

@@ -3,11 +3,17 @@
     <div class="section">
       <div class="speech-engine-heading" data-type="nVoice">
         <p class="speech-engine-heading-label">N Voice 琴詠ニア</p>
-        <span class="speech-engine-heading-text">ニコニコから生まれた素直な声が特徴の音声合成エンジン</span>
+        <span class="speech-engine-heading-text"
+          >ニコニコから生まれた素直な声が特徴の音声合成エンジン</span
+        >
       </div>
       <div class="input-label section-heading">
         <label>音声設定</label>
-        <button class="button--text section-heading-button" :disabled="!enabled" @click="resetNVoice">
+        <button
+          class="button--text section-heading-button"
+          :disabled="!enabled"
+          @click="resetNVoice"
+        >
           設定リセット
         </button>
       </div>
@@ -42,11 +48,17 @@
     <div class="section">
       <div class="speech-engine-heading" data-type="windows">
         <p class="speech-engine-heading-label">Windowsの音声合成</p>
-        <span class="speech-engine-heading-text">Windowsの設定で選択されている音声合成エンジン</span>
+        <span class="speech-engine-heading-text"
+          >Windowsの設定で選択されている音声合成エンジン</span
+        >
       </div>
       <div class="input-label section-heading">
         <label>音声設定</label>
-        <button class="button--text section-heading-button" :disabled="!enabled" @click="resetWindows">
+        <button
+          class="button--text section-heading-button"
+          :disabled="!enabled"
+          @click="resetWindows"
+        >
           設定リセット
         </button>
       </div>
@@ -81,54 +93,54 @@
 
 <script lang="ts" src="./SpeechEngineSettings.vue.ts"></script>
 <style lang="less" scoped>
-@import '../styles/index';
+@import url('../styles/index');
 
 .speech-engine-heading {
-  margin: -16px -16px 16px;
-  padding: 16px;
-  height: 80px;
-  border-radius: 4px 4px 0 0;
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  position: relative;
+  height: 80px;
+  padding: 16px;
+  margin: -16px -16px 16px;
   overflow: hidden;
+  border-radius: 4px 4px 0 0;
   box-shadow: inset 0 0 0 1px var(--color-border-light);
 
-  &[data-type="windows"] {
-    background: url(../../media/images/windows_bg.png) center no-repeat / 100% auto;
+  &[data-type='windows'] {
+    background: url('../../media/images/windows_bg.png') center no-repeat / 100% auto;
   }
 
-  &[data-type="nVoice"] {
-    background: url(../../media/images/nvoice_bg.png) center no-repeat / 100% auto;
+  &[data-type='nVoice'] {
+    background: url('../../media/images/nvoice_bg.png') center no-repeat / 100% auto;
 
-    &:after {
-      content: '';
+    &::after {
       position: absolute;
       top: -59px;
       right: -46px;
       width: 432px;
       height: 433px;
-      background: url(../../media/images/nvoice.png) no-repeat center/ 100% auto;
-      opacity: .9;
+      content: '';
+      background: url('../../media/images/nvoice.png') no-repeat center/ 100% auto;
       filter: drop-shadow(4px 4px 12px rgba(@black, 0.3));
+      opacity: 0.9;
     }
   }
 }
 
 .speech-engine-heading-label {
+  z-index: 1;
+  margin: 0 0 4px;
   font-size: @font-size4;
   font-weight: @font-weight-bold;
   color: var(--color-text-light);
-  margin: 0 0 4px 0;
-  z-index: 1;
 }
 
 .speech-engine-heading-text {
+  z-index: 1;
   font-size: @font-size2;
   color: var(--color-text-light);
-  text-shadow: 0px 0px 4px rgba(@black, 0.25);
-  z-index: 1;
+  text-shadow: 0 0 4px rgba(@black, 0.25);
 }
 
 .section-heading {
@@ -141,16 +153,16 @@
 }
 
 .row {
-  width: 100%;
   display: flex;
   flex-direction: row;
   align-items: center;
+  width: 100%;
 }
 
 .name {
+  flex-grow: 1;
   font-size: @font-size4;
   color: var(--color-text);
-  flex-grow: 1;
 }
 
 .value {
@@ -167,4 +179,3 @@
   width: 100%;
 }
 </style>
-

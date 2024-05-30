@@ -1,26 +1,27 @@
 <template>
-<div
-  class="studio-editor-display-container noselect"
-  ref="display"
-  @mousedown="handleMouseDown"
-  @mouseup="handleMouseUp"
-  @mousemove="handleMouseMove"
-  @mouseenter="handleMouseEnter"
-  @dblclick="handleMouseDblClick"
+  <div
+    class="studio-editor-display-container noselect"
+    ref="display"
+    @mousedown="handleMouseDown"
+    @mouseup="handleMouseUp"
+    @mousemove="handleMouseMove"
+    @mouseenter="handleMouseEnter"
+    @dblclick="handleMouseDblClick"
   >
-  <display
-    class="studio-editor-display"
-    :drawUI="true"
-    :paddingSize="10"
-    :sourceId="studioMode ? getStudioTransitionName() : void 0"
-    @outputResize="onOutputResize"/>
-</div>
+    <display
+      class="studio-editor-display"
+      :drawUI="true"
+      :paddingSize="10"
+      :sourceId="studioMode ? getStudioTransitionName() : void 0"
+      @outputResize="onOutputResize"
+    />
+  </div>
 </template>
 
 <script lang="ts" src="./StudioEditor.vue.ts"></script>
 
 <style lang="less" scoped>
-@import "../styles/index";
+@import url('../styles/index');
 
 .studio-editor-display-container {
   position: relative;
