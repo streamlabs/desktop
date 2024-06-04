@@ -3,17 +3,22 @@
     <div class="comment-wrapper" :speaking="speaking" @dblclick="$emit('pinned')">
       <div class="comment-number">{{ chat.value.no }}</div>
       <div class="comment-box">
-        <div class="comment-name-box" v-if="computedName" @click.stop="$emit('commentUser')">
+        <div class="comment-name-box" v-if="computedName">
           <img
             class="comment-icon"
             :src="userIconURL"
             :alt="computedName"
             :title="computedName"
             @error.once="userIconURL = defaultUserIconURL"
+            @click.stop="$emit('commentUser')"
           />
-          <div class="comment-name">{{ computedName }}</div>
+          <div class="comment-name" @click.stop="$emit('commentUser')">{{ computedName }}</div>
           <i class="icon-moderator" v-tooltip.bottom="moderatorTooltip" v-if="chat.isModerator"></i>
-          <i class="icon-supporter" v-tooltip.bottom="supporterTooltip" v-if="chat.isSupporter"></i>
+          <i
+            class="icon-creator-support"
+            v-tooltip.bottom="supporterTooltip"
+            v-if="chat.isSupporter"
+          ></i>
         </div>
         <div class="comment-body" :title="computedTitle">{{ computedContent }}</div>
       </div>
@@ -81,7 +86,6 @@
     margin: 0 16px 4px;
     margin-left: 16px;
     pointer-events: all;
-    cursor: pointer;
   }
 }
 
@@ -89,14 +93,17 @@
   width: 24px;
   height: 24px;
   margin-right: 8px;
+  cursor: pointer;
   border-radius: 9999px;
 }
 
 .comment-name {
   font-size: @font-size2;
   color: var(--color-text);
+  cursor: pointer;
 
-  .comment-name-box:hover & {
+  &:hover,
+  .comment-icon:hover + & {
     color: var(--color-text-active);
   }
 }
@@ -107,10 +114,10 @@
   color: var(--color-primary);
 }
 
-.icon-supporter {
+.icon-creator-support {
   margin-left: 4px;
   font-size: @font-size5;
-  color: var(--color-secondary);
+  color: var(--color-primary);
 }
 
 .comment-body {
