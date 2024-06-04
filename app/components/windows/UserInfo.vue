@@ -18,7 +18,7 @@
             <i
               class="icon-creator-support"
               v-tooltip.bottom="supporterTooltip"
-              v-if="chat.isSupporter"
+              v-if="isSupporter"
             ></i>
           </div>
           <div class="user-account">
