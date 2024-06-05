@@ -1,13 +1,15 @@
+import * as FakeTimers from '@sinonjs/fake-timers';
 import { Subject } from 'rxjs';
-import type { ObserveType } from 'util/jest_fn';
+import { jest_fn, type ObserveType } from 'util/jest_fn';
+import { sleep } from 'util/sleep';
 import { createSetupFunction } from 'util/test-setup';
 import type { MessageResponse } from './MessageServerClient';
 import { FilterRecord } from './ResponseTypes';
 import { NicoliveModeratorsService } from './nicolive-moderators';
-import { sleep } from 'util/sleep';
 
 type NicoliveCommentViewerService =
   import('./nicolive-comment-viewer').NicoliveCommentViewerService;
+type NicoliveSupportersService = import('./nicolive-supporters').NicoliveSupportersService;
 
 const setup = createSetupFunction({
   injectee: {
@@ -515,4 +517,58 @@ test('refreshModeratorsがきたらコメントのモデレーター情報を更
 
   expect(instance.state.messages[0].isModerator).toBeTruthy();
   expect(instance.state.messages[1].isModerator).toBeFalsy();
+});
+
+describe('startUpdateSupporters', () => {
+  // jest-runner/electron では jestのfakeTimersが使えないのでsinonのfakeTimersを使う
+  let clock: FakeTimers.InstalledClock;
+  beforeEach(() => {
+    clock = FakeTimers.install();
+  });
+  afterEach(() => {
+    clock.uninstall();
+  });
+
+  const INTERVAL = 100;
+  const closer = new Subject();
+
+  function prepare() {
+    const update = jest_fn<NicoliveSupportersService['update']>();
+    setup({
+      injectee: {
+        NicoliveSupportersService: { update },
+        NicoliveProgramService: { stateChange: new Subject() },
+      },
+    });
+
+    const { NicoliveCommentViewerService } = require('./nicolive-comment-viewer');
+    const instance = NicoliveCommentViewerService.instance as NicoliveCommentViewerService;
+    return { instance, update };
+  }
+
+  test('最初は即時にサポーター情報を更新する', async () => {
+    const { instance, update } = prepare();
+    expect(update).toBeCalledTimes(0);
+    instance.startUpdateSupporters(INTERVAL, closer);
+
+    expect(update).toBeCalledTimes(1);
+    closer.next();
+  });
+
+  test('サポーター情報を定期的に更新する', async () => {
+    const { instance, update } = prepare();
+    instance.startUpdateSupporters(INTERVAL, closer);
+    expect(update).toBeCalledTimes(1);
+
+    clock.tick(INTERVAL);
+    expect(update).toBeCalledTimes(2);
+
+    clock.tick(INTERVAL);
+    expect(update).toBeCalledTimes(3);
+
+    closer.next();
+    // 止めた後は進まなくなる
+    clock.tick(INTERVAL);
+    expect(update).toBeCalledTimes(3);
+  });
 });

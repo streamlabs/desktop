@@ -11,6 +11,7 @@ import {
   map,
   mapTo,
   mergeMap,
+  startWith,
   takeUntil,
   tap,
 } from 'rxjs/operators';
@@ -101,6 +102,7 @@ function calcSSNGTypeName(record: FilterRecord) {
 }
 
 const PING_DEBOUNCE_TIME = 180000; // 無通信切断される環境で切断を避けるためのping送信間隔
+const SUPPORTERS_REFRESH_INTERVAL = 180000; // サポーター情報の更新間隔(3分)
 
 export class NicoliveCommentViewerService extends StatefulService<INicoliveCommentViewerState> {
   private client: IMessageServerClient | null = null;
@@ -266,11 +268,38 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
     this.nicoliveModeratorsService.disconnectNdgr();
   }
 
-  private async connect() {
-    const supporters = new Set(await this.nicoliveSupportersService.update());
+  startUpdateSupporters(
+    interval_ms: number,
+    closer: Subject<unknown>,
+  ): { isSupporter: (userId: string) => boolean } {
+    let supporters = new Set<string>();
     const isSupporter = (userId: string) => supporters.has(userId);
+    interval(interval_ms)
+      .pipe(
+        startWith(0), // 初回はすぐに取得する
+        takeUntil(closer), // closerにメッセージが来たら終了
+      )
+      .subscribe(async () => {
+        supporters = new Set(await this.nicoliveSupportersService.update());
 
+        // サポーター情報が更新されたら既存コメントのサポーター情報も更新する
+        this.SET_STATE({
+          messages: this.items.map(chat => ({
+            ...chat,
+            isSupporter: isSupporter(chat.value.user_id),
+          })),
+        });
+      });
+
+    return { isSupporter };
+  }
+
+  private async connect() {
+    // コメント接続が切断したときにすべて止めるためのSubject
     const closer = new Subject();
+
+    const { isSupporter } = this.startUpdateSupporters(SUPPORTERS_REFRESH_INTERVAL, closer);
+
     const clientSubject = this.client.connect();
 
     const pingSubject = new Subject();
