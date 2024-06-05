@@ -4,7 +4,7 @@ import { Subject } from 'rxjs';
 import { NicoliveFailure, openErrorDialogFromFailure } from './NicoliveFailure';
 
 interface INicoliveSupportersService {
-  // moderator の userId 集合
+  // supporter の userId 集合
   supporterIds: string[];
 }
 
