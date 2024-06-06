@@ -1,3 +1,6 @@
+// @ts-check
+
+/** @type {import('electron-builder').Configuration} */
 const config = {
   appId: 'jp.nicovideo.nair',
   productName: 'N Air',
@@ -42,6 +45,7 @@ const config = {
 };
 
 if (process.env.CERTIFICATE_SUBJECT_NAME) {
+  // @ts-ignore winがnullableなのと、certificateSubjectNameが型宣言上ではpropertyで書き込めないというエラーになるのを回避
   config.win.certificateSubjectName = process.env.CERTIFICATE_SUBJECT_NAME;
 }
 

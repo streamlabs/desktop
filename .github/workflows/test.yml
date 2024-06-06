@@ -67,7 +67,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('yarn.lock', 'scripts/install-native-deps.js', 'scripts/repositories.json') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('yarn.lock', 'scripts/preinstall.js', 'scripts/install-native-deps.js', 'scripts/repositories.json') }}
 
       - name: npm login
         run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> $env:USERPROFILE\.npmrc
@@ -118,7 +118,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('yarn.lock', 'scripts/install-native-deps.js', 'scripts/repositories.json') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('yarn.lock', 'scripts/preinstall.js', 'scripts/install-native-deps.js', 'scripts/repositories.json') }}
 
       - name: Run unit tests(app)
         run: yarn test:unit:app
@@ -142,7 +142,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('yarn.lock', 'scripts/install-native-deps.js', 'scripts/repositories.json') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('yarn.lock', 'scripts/preinstall.js', 'scripts/install-native-deps.js', 'scripts/repositories.json') }}
 
       - name: cache node modules(bin)
         id: cache-node-modules-bin
@@ -178,7 +178,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('yarn.lock', 'scripts/install-native-deps.js', 'scripts/repositories.json') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('yarn.lock', 'scripts/preinstall.js', 'scripts/install-native-deps.js', 'scripts/repositories.json') }}
 
       - name: Compile
         run: yarn compile:ci
