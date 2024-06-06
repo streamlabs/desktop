@@ -184,7 +184,9 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
 
     this.nicoliveCommentFilterService.stateChange.subscribe(() => {
       this.SET_STATE({
-        messages: this.items.map(chat => this.nicoliveCommentFilterService.applyFilter(chat)),
+        messages: this.state.messages.map(chat =>
+          this.nicoliveCommentFilterService.applyFilter(chat),
+        ),
       });
     });
 
@@ -194,7 +196,7 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
           case 'refreshModerators':
             // モデレーター情報が再取得されたら既存コメントのモデレーター情報も更新する
             this.SET_STATE({
-              messages: this.items.map(chat => ({
+              messages: this.state.messages.map(chat => ({
                 ...chat,
                 isModerator: this.nicoliveModeratorsService.isModerator(chat.value.user_id),
               })),
@@ -283,12 +285,14 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
         supporters = new Set(await this.nicoliveSupportersService.update());
 
         // サポーター情報が更新されたら既存コメントのサポーター情報も更新する
-        this.SET_STATE({
-          messages: this.items.map(chat => ({
-            ...chat,
-            isSupporter: isSupporter(chat.value.user_id),
-          })),
-        });
+        if (this.state.messages.length > 0) {
+          this.SET_STATE({
+            messages: this.state.messages.map(chat => ({
+              ...chat,
+              isSupporter: isSupporter(chat.value.user_id),
+            })),
+          });
+        }
       });
 
     return { isSupporter };
