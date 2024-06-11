@@ -18,11 +18,11 @@ export default class LanguageSettings extends Vue {
   private async save(data: TObsFormData) {
     const choice = await electron.remote.dialog.showMessageBox(electron.remote.getCurrentWindow(), {
       type: 'question',
-      buttons: [$t('common.yes'), $t('common.no')],
+      buttons: ['Yes', 'No'],
       title: $t('common.confirm'),
       message: $t('settings.restartConfirm'),
-      noLink: true,
       cancelId: 1,
+      defaultId: 1,
     });
 
     if (choice.response !== 0) return;

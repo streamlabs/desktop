@@ -397,6 +397,7 @@ export default class RtvcSourceProperties extends SourceProperties {
       type: 'warning',
       message: $t('source-props.nair-rtvc-source.nav.remove_confirm'),
       buttons: [$t('common.cancel'), $t('common.remove')],
+      defaultId: 0,
       noLink: true,
     });
     if (!r.response) return;

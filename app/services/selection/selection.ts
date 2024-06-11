@@ -112,7 +112,8 @@ export class SelectionService extends StatefulService<ISelectionState> {
       .showMessageBox(electron.remote.getCurrentWindow(), {
         type: 'warning',
         message: $t('scenes.removeSceneConfirm', { sceneName: name }),
-        buttons: [$t('common.cancel'), $t('common.ok')],
+        buttons: ['Cancel', 'OK'],
+        defaultId: 0,
       })
       .then(({ response: ok }) => {
         if (!ok) return;

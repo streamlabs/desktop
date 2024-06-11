@@ -67,8 +67,7 @@ async function showError(err: Error): Promise<void> {
   await electron.remote.dialog.showMessageBox(electron.remote.getCurrentWindow(), {
     type: 'error',
     message: err.toString(),
-    buttons: [$t('common.close')],
-    noLink: true,
+    buttons: ['close'],
   });
 }
 

@@ -92,12 +92,12 @@ export default class EditableSceneCollection extends Vue {
     electron.remote.dialog
       .showMessageBox(electron.remote.getCurrentWindow(), {
         type: 'warning',
-        buttons: [$t('common.cancel'), $t('common.ok')],
+        buttons: ['Cancel', 'OK'],
         title: $t('scenes.removeSceneCollectionConfirmTitle'),
         message: $t('scenes.removeSceneCollectionConfirm', {
           collectionName: this.collection.name,
         }),
-        noLink: true,
+        defaultId: 0,
       })
       .then(({ response: ok }) => {
         if (!ok) return;
