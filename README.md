@@ -23,13 +23,14 @@ N Air は Streamlabs OBS をベースにした、生放送に便利な機能が�
 
 npm パッケージをインストールし、さまざまなスクリプトを実行するには Node が必要です。
 
-現在の LTS リリース 8.x.x を推奨します：<https://nodejs.org/>
+現在の LTS リリース 20.x.x を推奨します：<https://nodejs.org/>
 
 ### Yarn
 
 各ノードモジュールの正しいバージョンを使用するためには、yarn パッケージマネージャーを使用する必要があります。
 
-インストール方法については、こちらを参照してください：<https://yarnpkg.com/ja/docs/install>
+Corepack が有効なら自動的にインストールされます。
+手動インストール方法については、こちらを参照してください：<https://yarnpkg.com/ja/docs/install>
 
 ### Visual C++コンパイラ
 

@@ -312,6 +312,15 @@ export class SourcesService extends StatefulService<ISourcesState> implements IS
       resolvedSettings[propName] = device.id;
       */
     });
+
+    if (type === 'dshow_input') {
+      if (resolvedSettings.video_device_id === void 0) {
+        const devices = obs.NodeObs.OBS_settings_getVideoDevices();
+        if (devices.length > 0) {
+          resolvedSettings.video_device_id = devices[0].id;
+        }
+      }
+    }
     return resolvedSettings;
   }
 

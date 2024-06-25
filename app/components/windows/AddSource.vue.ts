@@ -29,6 +29,7 @@ export default class AddSource extends Vue {
     .sourceAddOptions as ISourceAddOptions;
 
   canAddNew = true;
+  adding = false;
 
   get nVoiceCharacterType(): NVoiceCharacterType {
     return this.sourceAddOptions.propertiesManagerSettings.nVoiceCharacterType || 'near';
@@ -84,6 +85,7 @@ export default class AddSource extends Vue {
       alert($t('sources.circularReferenceMessage'));
       return;
     }
+    this.adding = true;
     this.scenesService.activeScene.addSource(this.selectedSourceId);
     this.close();
   }
@@ -120,6 +122,7 @@ export default class AddSource extends Vue {
         };
       }
 
+      this.adding = true;
       this.scenesService.activeScene.addSource(s.source.sourceId, s.options);
 
       if (s.source.hasProps()) {

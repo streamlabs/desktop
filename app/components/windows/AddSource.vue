@@ -16,7 +16,12 @@
         </div>
         <div class="row">
           <div class="columns small-12 buttons">
-            <button @click="addNew" class="button button--primary" data-test="AddNewSource">
+            <button
+              @click="addNew"
+              class="button button--primary"
+              data-test="AddNewSource"
+              :disabled="adding"
+            >
               {{ $t('sources.addNewSource') }}
             </button>
           </div>
@@ -58,7 +63,12 @@
 
       <div class="row" v-if="existingSources.length">
         <div class="columns small-12 buttons">
-          <button @click="addExisting" class="button button--primary" data-test="AddExistingSource">
+          <button
+            @click="addExisting"
+            class="button button--primary"
+            data-test="AddExistingSource"
+            :disabled="adding"
+          >
             {{ $t('sources.addExistingSource') }}
           </button>
         </div>

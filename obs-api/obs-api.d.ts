@@ -245,5 +245,5 @@ export const NodeObs: {
   OBS_settings_getListCategories(): string[];
   // OBS_settings_getInputAudioDevices(): { description: string; id: string; }[];
   // OBS_settings_getOutputAudioDevices(): { description: string; id: string; }[];
-  // OBS_settings_getVideoDevices(): { description: string; id: string; }[];
+  OBS_settings_getVideoDevices(): { description: string; id: string }[];
 };

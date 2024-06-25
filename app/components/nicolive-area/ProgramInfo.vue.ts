@@ -116,15 +116,15 @@ export default class ProgramInfo extends Vue {
     return this.hostsService.getCreatorsProgramURL(this.programID);
   }
 
-  get twitterShareURL(): string {
-    const content = this.twitterShareContent();
-    const url = new URL('https://twitter.com/intent/tweet');
+  get xShareURL(): string {
+    const content = this.xShareContent();
+    const url = new URL('https://x.com/intent/tweet');
     url.searchParams.append('text', content.text);
     url.searchParams.append('url', content.url);
     return url.toString();
   }
 
-  private twitterShareContent(): { text: string; url: string } {
+  private xShareContent(): { text: string; url: string } {
     const title = this.nicoliveProgramService.state.title;
     const url = `${this.hostsService.getWatchPageURL(this.programID)}?ref=sharetw`;
     const time = this.nicoliveProgramService.state.startTime;

@@ -13,7 +13,6 @@ export default class ProgramStatistics extends Vue {
   commentTooltip = $t('common.numberOfComments');
   adPointTooltip = $t('common.numberOfadPoint');
   giftPointTooltip = $t('common.numberOfgiftPoint');
-  twitterShareTooltip = $t('common.twitter');
 
   get viewers(): number {
     return this.nicoliveProgramService.state.viewers;

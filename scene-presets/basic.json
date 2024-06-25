@@ -165,7 +165,7 @@
         "name": "アイコン",
         "type": "image_source",
         "settings": {
-          "file": "scene-presets\\basic\\images\\nair-preset-twitter.png",
+          "file": "scene-presets\\basic\\images\\nair-preset-x.png",
           "unload": false
         },
         "volume": 1,
@@ -372,7 +372,7 @@
             },
             {
               "id": "45b1b921-8f8e-44d8-ad22-53c5eb7fe51e",
-              "name": "Twitter",
+              "name": "X",
               "sceneNodeType": "folder",
               "sceneId": "scene_d8929ac0-3632-4225-b0ba-59a67227b388",
               "resourceId": "SceneItemFolder[\"scene_d8929ac0-3632-4225-b0ba-59a67227b388\",\"45b1b921-8f8e-44d8-ad22-53c5eb7fe51e\"]",

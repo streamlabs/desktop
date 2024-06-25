@@ -24,6 +24,7 @@ import * as fs from 'fs';
 import uuid from 'uuid/v4';
 import { assertIsDefined } from 'util/properties-type-guards';
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2';
+import { filter } from 'rxjs/operators';
 
 export type TSceneNode = SceneItem | SceneItemFolder;
 
@@ -180,6 +181,17 @@ export class Scene {
     }
 
     this.scenesService.itemAdded.next(sceneItem.getModel());
+    if (source.type === 'monitor_capture') {
+      const subscription = this.sourcesService.sourceUpdated
+        .pipe(filter(patch => patch.sourceId === sourceId))
+        .subscribe(patch => {
+          // 初期サイズが入った後にfitToScreenする
+          if (patch.width && patch.height) {
+            sceneItem.fitToScreen();
+            subscription.unsubscribe();
+          }
+        });
+    }
     return sceneItem;
   }
 

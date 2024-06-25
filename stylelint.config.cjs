@@ -31,6 +31,7 @@ module.exports = {
     },
     {
       files: ['**/*.less'],
+      ignoreFiles: ['app/styles/custom-icons.less'], // 自動生成のため除外
       customSyntax: 'postcss-less',
     },
   ],
