@@ -1,3 +1,4 @@
+/** @type {import('stylelint').Config} */
 module.exports = {
   plugins: ['stylelint-less'],
   extends: [
