@@ -417,22 +417,41 @@ async function releaseRoutine() {
   const nextVersion = patchNote.version;
   info(`patch-note.txt for ${nextVersion} found`);
 
+  const newVersionContext = getVersionContext(nextVersion);
+  const { channel, environment } = newVersionContext;
+
+  /** @type {import('./configs/type').ReleaseConfig} */
+  // eslint-disable-next-line import/no-dynamic-require
+  const config = require(`./configs/${environment}-${channel}`);
+
   if (getTagCommitId(`v${nextVersion}`)) {
     error(`Tag "v${nextVersion}" has already been released.`);
     info('Generate new patchNote with new version.');
     info('If you want to retry current release, remove the tag and related release commit.');
-    throw new Error(`Tag "${nextVersion}" has already been released.`);
+    if (!(await confirm('Do you want to remove the tag and revert HEAD?', false))) {
+      sh.exit(1);
+    }
+    // remove tag
+    log(`removing tag v${nextVersion} ...`);
+    executeCmd(`git tag -d v${nextVersion}`);
+    // remove tag from remote
+    log(`removing tag v${nextVersion} from remote ...`);
+    executeCmd(`git push ${config.target.remote} :v${nextVersion} || true`); // ignore error
+    // revert last commit
+    log('reverting HEAD ...');
+    executeCmd('git revert --no-edit HEAD');
   }
 
   info('checking current version ...');
   const previousVersion = pjson.version;
   const previousVersionContext = getVersionContext(previousVersion);
 
-  const newVersionContext = getVersionContext(nextVersion);
   if (!isSameVersionContext(previousVersionContext, newVersionContext)) {
     const msg = `previous version ${previousVersion} and releasing version ${nextVersion} have different context.`;
     if (process.env.NAIR_IGNORE_VERSION_CONTEXT_CHECK) {
-      await confirm(`${msg} Are you sure?`, false);
+      if (!(await confirm(`${msg} Are you sure?`, false))) {
+        sh.exit(1);
+      }
     } else {
       error(msg);
       log(
@@ -441,12 +460,6 @@ async function releaseRoutine() {
       throw new Error(msg);
     }
   }
-
-  const { channel, environment } = newVersionContext;
-
-  /** @type {import('./configs/type').ReleaseConfig} */
-  // eslint-disable-next-line import/no-dynamic-require
-  const config = require(`./configs/${environment}-${channel}`);
 
   await runScript({
     patchNote,
