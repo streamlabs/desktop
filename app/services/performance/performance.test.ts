@@ -25,25 +25,21 @@ test('get instance', () => {
 });
 
 test('update', () => {
-  jest.doMock('electron', () => ({
-    default: {
-      remote: {
-        app: {
-          getAppMetrics() {
-            return [
-              {
-                cpu: {
-                  percentCPUUsage: 1,
-                },
-              },
-              {
-                cpu: {
-                  percentCPUUsage: 2,
-                },
-              },
-            ];
+  jest.doMock('@electron/remote', () => ({
+    app: {
+      getAppMetrics() {
+        return [
+          {
+            cpu: {
+              percentCPUUsage: 1,
+            },
           },
-        },
+          {
+            cpu: {
+              percentCPUUsage: 2,
+            },
+          },
+        ];
       },
     },
   }));

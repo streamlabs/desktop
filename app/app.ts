@@ -26,14 +26,14 @@ import ChildWindow from 'components/windows/ChildWindow.vue';
 import OneOffWindow from 'components/windows/OneOffWindow.vue';
 import util from 'util';
 import * as obs from '../obs-api';
-import uuid from 'uuid/v4';
 import path from 'path';
 
 const crashHandler = window['require']('crash-handler');
 
-const { ipcRenderer, remote } = electron;
+const { ipcRenderer } = electron;
 
-const nAirVersion = remote.process.env.NAIR_VERSION;
+import * as remote from '@electron/remote';
+
 const isProduction = process.env.NODE_ENV === 'production';
 
 type SentryParams = {
@@ -59,16 +59,6 @@ if (isProduction) {
   sentryParam = Utils.isUnstable()
     ? { organization: sentryOrg, project: '5372801', key: '819e76e51864453aafd28c6d0473881f' } // crash-reporter-unstable
     : { organization: sentryOrg, project: '1520076', key: 'd965eea4b2254c2b9f38d2346fb8a472' }; // crash-reporter
-
-  electron.crashReporter.start({
-    productName: 'n-air-app',
-    companyName: 'n-air-app',
-    submitURL: getSentryCrashReportUrl(sentryParam),
-    extra: {
-      version: nAirVersion,
-      processType: 'renderer',
-    },
-  });
 }
 
 const SENTRY_SERVER_URL = getSentryCrashReportUrl(sentryParam);
@@ -108,7 +98,7 @@ window.addEventListener('unhandledrejection', e => {
   sendLogMsg('error', e.reason);
 });
 
-if ((isProduction || process.env.NAIR_REPORT_TO_SENTRY) && !electron.remote.process.env.NAIR_IPC) {
+if ((isProduction || process.env.NAIR_REPORT_TO_SENTRY) && !remote.process.env.NAIR_IPC) {
   Sentry.init(
     {
       sampleRate: /* isPreview ? */ 1.0 /* : 0.1 */,
@@ -160,7 +150,7 @@ document.addEventListener('dragenter', event => event.preventDefault());
 document.addEventListener('drop', event => event.preventDefault());
 document.addEventListener('auxclick', event => event.preventDefault());
 
-const locale = electron.remote.app.getLocale();
+const locale = remote.app.getLocale();
 
 export const apiInitErrorResultToMessage = (resultCode: obs.EVideoCodes) => {
   switch (resultCode) {
@@ -186,10 +176,7 @@ export const apiInitErrorResultToMessage = (resultCode: obs.EVideoCodes) => {
 };
 
 const showDialog = (message: string): void => {
-  electron.remote.dialog.showErrorBox(
-    locale === 'ja' ? '初期化エラー' : 'Initialization Error',
-    message,
-  );
+  remote.dialog.showErrorBox(locale === 'ja' ? '初期化エラー' : 'Initialization Error', message);
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -207,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
       obs.IPC.host(remote.process.env.IPC_UUID);
       obs.NodeObs.SetWorkingDirectory(
         path.join(
-          electron.remote.app.getAppPath().replace('app.asar', 'app.asar.unpacked'),
+          remote.app.getAppPath().replace('app.asar', 'app.asar.unpacked'),
           'node_modules',
           'obs-studio-node',
         ),
@@ -221,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const apiResult = obs.NodeObs.OBS_API_initAPI(
         'en-US',
         appService.appDataDirectory,
-        electron.remote.process.env.NAIR_VERSION,
+        remote.process.env.NAIR_VERSION,
         SENTRY_SERVER_URL,
       );
 

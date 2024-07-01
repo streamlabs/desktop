@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import { remote } from 'electron';
+import * as remote from '@electron/remote';
 import { Component, Watch } from 'vue-property-decorator';
 import { Inject } from 'services/core/injector';
 import { $t } from 'services/i18n';

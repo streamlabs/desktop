@@ -5,6 +5,7 @@ import { $t, I18nServiceApi } from 'services/i18n';
 import GenericForm from 'components/obs/inputs/GenericForm.vue';
 import { TObsFormData } from 'components/obs/inputs/ObsInput';
 import electron from 'electron';
+import * as remote from '@electron/remote';
 
 @Component({
   components: { GenericForm },
@@ -16,7 +17,7 @@ export default class LanguageSettings extends Vue {
   settings = this.i18nService.getLocaleFormData();
 
   private async save(data: TObsFormData) {
-    const choice = await electron.remote.dialog.showMessageBox(electron.remote.getCurrentWindow(), {
+    const choice = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
       type: 'question',
       buttons: [$t('common.yes'), $t('common.no')],
       title: $t('common.confirm'),

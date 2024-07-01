@@ -1,6 +1,8 @@
 import { Component, Prop } from 'vue-property-decorator';
 import { IObsPathInputValue, TObsType, ObsInput } from './ObsInput';
 import electron from 'electron';
+import * as remote from '@electron/remote';
+
 // eslint-disable-next-line
 import OpenDialogOptions = Electron.OpenDialogOptions;
 
@@ -31,10 +33,7 @@ class ObsPathInput extends ObsInput<IObsPathInputValue> {
       options.properties.push('openDirectory');
     }
 
-    const { filePaths } = await electron.remote.dialog.showOpenDialog(
-      electron.remote.getCurrentWindow(),
-      options,
-    );
+    const { filePaths } = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), options);
 
     if (filePaths[0]) {
       this.$refs.input.value = filePaths[0];

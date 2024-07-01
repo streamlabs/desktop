@@ -2,12 +2,13 @@ import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
 import { Inject } from 'services/core/injector';
 import { NicoliveProgramService } from 'services/nicolive-program/nicolive-program';
-import { clipboard, remote } from 'electron';
+import { clipboard } from 'electron';
 import { StreamingService } from 'services/streaming';
 import { Subscription } from 'rxjs';
 import Popper from 'vue-popperjs';
 import * as moment from 'moment';
 import { HostsService } from 'services/hosts';
+import * as remote from '@electron/remote';
 
 @Component({
   components: {

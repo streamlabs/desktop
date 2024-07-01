@@ -6,13 +6,11 @@ afterEach(() => {
 
 function prepare(codeExists: string) {
   const showMessageBox = jest.fn().mockImplementation(async (_window, _option) => {});
-  jest.doMock('electron', () => ({
-    remote: {
-      dialog: {
-        showMessageBox,
-      },
-      getCurrentWindow: () => {},
+  jest.doMock('@electron/remote', () => ({
+    dialog: {
+      showMessageBox,
     },
+    getCurrentWindow: () => {},
   }));
   jest.doMock('services/i18n', () => ({
     $t: jest.fn().mockImplementation((key, { fallback } = {}) => {

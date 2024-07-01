@@ -12,6 +12,7 @@ import { UserService } from 'services/user';
 import Utils from 'services/utils';
 import Vue from 'vue';
 import { Component, Prop, Watch } from 'vue-property-decorator';
+import * as remote from '@electron/remote';
 
 @Component({
   components: {
@@ -83,13 +84,11 @@ export default class SideNav extends Vue {
   }
 
   openFeedback() {
-    electron.remote.shell.openExternal('https://secure.nicovideo.jp/form/entry/n_air_feedback');
+    remote.shell.openExternal('https://secure.nicovideo.jp/form/entry/n_air_feedback');
   }
 
   openHelp() {
-    electron.remote.shell.openExternal(
-      'https://qa.nicovideo.jp/faq/show/11857?site_domain=default',
-    );
+    remote.shell.openExternal('https://qa.nicovideo.jp/faq/show/11857?site_domain=default');
   }
 
   get isDevMode() {

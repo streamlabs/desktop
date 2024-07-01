@@ -1,5 +1,5 @@
 import { isAbsolute, relative, basename, dirname, resolve } from 'path';
-import { remote } from 'electron';
+import * as remote from '@electron/remote';
 import { ISourceInfo } from './sources';
 
 function getPresetBasePath() {

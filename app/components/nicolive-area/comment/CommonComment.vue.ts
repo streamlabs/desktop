@@ -1,7 +1,7 @@
 import { Component, Prop } from 'vue-property-decorator';
 import { CommentBase } from './CommentBase';
 import { NicoliveClient } from 'services/nicolive-program/NicoliveClient';
-import { remote } from 'electron';
+import * as remote from '@electron/remote';
 
 @Component({})
 export default class CommonComment extends CommentBase {

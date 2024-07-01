@@ -34,6 +34,7 @@ const { app, BrowserWindow, ipcMain, session, dialog, webContents, shell, crashR
   electron;
 const path = require('path');
 const rimraf = require('rimraf');
+const remote = require('@electron/remote/main');
 
 // We use a special cache directory for running tests
 if (process.env.NAIR_CACHE_DIR) {
@@ -77,6 +78,41 @@ async function showRequiredSystemComponentInstallGuideDialog() {
   app.exit(0);
 }
 
+async function recollectUserSessionCookie() {
+  // electron14->15でcookieがつかない
+  // 設定されるcookieのSameSite指定がないため unspecified となり
+  // 設定が無いためchromeがcookieをつけない(通信ログを見るとフィルタされている)
+  // cookieを直せば通るようなのでそのパッチ処理
+  console.log('recollectUserSessionCookie');
+  try {
+    const cookies = await electron.session.defaultSession.cookies.get({
+      domain: '.nicovideo.jp',
+      name: 'user_session', // 他のキーまでやるとNAIR_UNSTABLE=0で問題があるかもなので一旦必須だけ、状況に応じてで
+    });
+    if (!cookies || !cookies.length) return;
+
+    for (const cookie of cookies) {
+      if (cookie.sameSite === 'no_restriction') {
+        console.log(`no-need change cookie ${cookie.name}`);
+        continue;
+      }
+
+      let d = cookie.domain;
+      if (d[0] === '.') d = d.substring(1);
+
+      cookie.url = `https://${d}`; //nicovideo.jp';
+      cookie.sameSite = 'no_restriction';
+      cookie.httpOnly = true;
+      cookie.secure = true;
+
+      await electron.session.defaultSession.cookies.set(cookie);
+      console.log(`cookie changed ${JSON.stringify(cookie)}`);
+    }
+  } catch (e) {
+    console.log(`cookie error ${e.toString()}`);
+  }
+}
+
 // This ensures that only one copy of our app can run at once.
 const gotTheLock = app.requestSingleInstanceLock();
 
@@ -93,6 +129,8 @@ try {
     showRequiredSystemComponentInstallGuideDialog();
   });
 }
+
+remote.initialize();
 
 function initialize(crashHandler) {
   const fs = require('fs');
@@ -381,6 +419,7 @@ function initialize(crashHandler) {
 
   // eslint-disable-next-line no-inner-declarations
   async function startApp() {
+    await recollectUserSessionCookie();
     const isDevMode = process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test';
     let crashHandlerLogPath = '';
     if (process.env.NODE_ENV !== 'production' || !!process.env.SLOBS_PREVIEW) {
@@ -425,8 +464,14 @@ function initialize(crashHandler) {
             y: mainWindowState.y,
           }
         : {}),
-      webPreferences: { nodeIntegration: true, webviewTag: true },
+      webPreferences: {
+        nodeIntegration: true,
+        webviewTag: true,
+        contextIsolation: false,
+      },
     });
+
+    remote.enable(mainWindow.webContents);
 
     mainWindowState.manage(mainWindow);
 
@@ -492,8 +537,13 @@ function initialize(crashHandler) {
       show: false,
       frame: false,
       backgroundColor: '#17242D', // これいる?
-      webPreferences: { nodeIntegration: true },
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false,
+      },
     });
+
+    remote.enable(childWindow.webContents);
 
     childWindow.removeMenu();
 
@@ -566,15 +616,12 @@ function initialize(crashHandler) {
     });
 
     if (isDevMode) {
-      require('devtron').install();
-
+      // require('devtron').install();
       // Vue dev tools appears to cause strange non-deterministic
       // interference with certain NodeJS APIs, especially asynchronous
       // IO from the renderer process.  Enable at your own risk.
-
       // const devtoolsInstaller = require('electron-devtools-installer');
       // devtoolsInstaller.default(devtoolsInstaller.VUEJS_DEVTOOLS);
-
       // setTimeout(() => {
       //   openDevTools();
       // }, 10 * 1000);
@@ -801,5 +848,20 @@ function initialize(crashHandler) {
       // main window may be destroyed on shutdown
       mainWindow.send('showErrorAlert');
     }
+  });
+
+  ipcMain.on('webContents-enableRemote', (e, id) => {
+    const contents = webContents.fromId(id);
+    if (contents.isDestroyed()) return;
+    remote.enable(contents);
+    e.returnValue = null;
+  });
+
+  ipcMain.on('mainwindow-operation', (e, key, a, b) => {
+    e.returnValue = mainWindow[key](a, b);
+  });
+
+  ipcMain.handle('recollectUserSessionCookie', async () => {
+    await recollectUserSessionCookie();
   });
 }

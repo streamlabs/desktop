@@ -16,6 +16,7 @@ import { Menu } from '../util/menus/Menu';
 import Selector from './Selector.vue';
 import DropdownMenu from './shared/DropdownMenu.vue';
 import HelpTip from './shared/HelpTip.vue';
+import * as remote from '@electron/remote';
 
 @Component({
   components: { Selector, DropdownMenu, HelpTip },
@@ -78,8 +79,8 @@ export default class SceneSelector extends Vue {
 
   removeScene() {
     const name = this.scenesService.activeScene.name;
-    electron.remote.dialog
-      .showMessageBox(electron.remote.getCurrentWindow(), {
+    remote.dialog
+      .showMessageBox(remote.getCurrentWindow(), {
         type: 'warning',
         message: $t('scenes.removeSceneConfirm', { sceneName: name }),
         buttons: [$t('common.cancel'), $t('common.ok')],

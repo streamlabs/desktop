@@ -266,11 +266,13 @@ select {
   box-shadow: inset 0 0 0 1px var(--color-border-light);
 
   [data-type='webSpeech'] & {
-    background: url('../../media/images/windows_bg.png') center no-repeat / 100% auto;
+    background: url('../../media/images/windows_bg.png') center no-repeat;
+    background-size: 100% auto;
   }
 
   [data-type='nVoice'] & {
-    background: url('../../media/images/nvoice_bg.png') center no-repeat / 100% auto;
+    background: url('../../media/images/nvoice_bg.png') center no-repeat;
+    background-size: 100% auto;
 
     &::after {
       position: absolute;
@@ -279,8 +281,9 @@ select {
       width: 414px;
       height: 415px;
       content: '';
-      background: url('../../media/images/nvoice.png') no-repeat center/ 100% auto;
+      background: url('../../media/images/nvoice.png') center no-repeat;
       filter: drop-shadow(4px 4px 12px rgb(@black 0.3));
+      background-size: 100% auto;
       opacity: 0.9;
     }
   }

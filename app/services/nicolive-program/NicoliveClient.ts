@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/vue';
-import { ipcRenderer, remote } from 'electron';
+import { ipcRenderer } from 'electron';
 import { addClipboardMenu } from 'util/addClipboardMenu';
 import { handleErrors } from 'util/requests';
 import {
@@ -25,6 +25,9 @@ import {
   AddModerator,
   Moderator,
 } from './ResponseTypes';
+
+import * as remote from '@electron/remote';
+
 const { BrowserWindow } = remote;
 
 export enum CreateResult {
@@ -219,14 +222,10 @@ export class NicoliveClient {
 
     const { session } = remote.getCurrentWebContents();
     return new Promise((resolve, reject) => {
-      session.cookies.get(
-        { url: 'https://.nicovideo.jp', name: 'user_session' },
-        (err, cookies) => {
-          if (err) return reject(err);
-          if (cookies.length < 1) return reject(new NotLoggedInError());
-          resolve(cookies[0].value);
-        },
-      );
+      session.cookies.get({ url: 'https://.nicovideo.jp', name: 'user_session' }).then(cookies => {
+        if (cookies.length < 1) return reject(new NotLoggedInError());
+        resolve(cookies[0].value);
+      });
     });
   }
 
@@ -532,7 +531,6 @@ export class NicoliveClient {
       webPreferences: {
         nodeIntegration: false,
         nodeIntegrationInWorker: false,
-        nativeWindowOpen: true,
       },
     });
     win.removeMenu();
@@ -605,7 +603,6 @@ export class NicoliveClient {
       webPreferences: {
         nodeIntegration: false,
         nodeIntegrationInWorker: false,
-        nativeWindowOpen: true,
       },
     });
     win.removeMenu();

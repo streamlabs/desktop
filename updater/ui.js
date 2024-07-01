@@ -7,10 +7,11 @@ import electron from 'electron';
 import '../app/app.less';
 import '../app/theme.less';
 import './updater.css';
+import * as remote from '@electron/remote';
 
 Vue.use(VueI18n);
 
-const locale = electron.remote.app.getLocale();
+const locale = remote.app.getLocale();
 const fallbackLocale = 'en-US';
 
 const i18n = new VueI18n({

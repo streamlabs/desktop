@@ -97,7 +97,6 @@
 @import url('../styles/index');
 
 .studio-controls-panel {
-  position: relative;
   display: flex;
   flex-direction: column;
   flex-grow: 1;

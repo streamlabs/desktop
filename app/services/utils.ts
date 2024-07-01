@@ -1,6 +1,7 @@
 import URI from 'urijs';
 import { isEqual } from 'lodash';
 import electron from 'electron';
+import * as remote from '@electron/remote';
 
 export const enum EBit {
   ZERO,
@@ -40,13 +41,13 @@ export default class Utils {
   }
 
   static getMainWindow(): Electron.BrowserWindow {
-    return electron.remote.BrowserWindow.getAllWindows().find(
+    return remote.BrowserWindow.getAllWindows().find(
       win => Utils.getUrlParams(win.webContents.getURL()).windowId === 'main',
     );
   }
 
   static getChildWindow(): Electron.BrowserWindow {
-    return electron.remote.BrowserWindow.getAllWindows().find(
+    return remote.BrowserWindow.getAllWindows().find(
       win => Utils.getUrlParams(win.webContents.getURL()).windowId === 'child',
     );
   }
@@ -56,15 +57,15 @@ export default class Utils {
   }
 
   static isUnstable(): boolean {
-    return !!electron.remote.process.env.NAIR_UNSTABLE;
+    return !!remote.process.env.NAIR_UNSTABLE;
   }
 
   static isPreview(): boolean {
-    return electron.remote.process.env.NAIR_PREVIEW;
+    return !!remote.process.env.NAIR_PREVIEW;
   }
 
   static isIpc(): boolean {
-    return electron.remote.process.env.NAIR_IPC;
+    return !!remote.process.env.NAIR_IPC;
   }
 
   /**

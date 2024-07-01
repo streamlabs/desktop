@@ -3,7 +3,7 @@ import URI from 'urijs';
 import { PersistentStatefulService } from 'services/core/persistent-stateful-service';
 import { Inject } from 'services/core/injector';
 import { mutation } from 'services/core/stateful-service';
-import electron from 'electron';
+import electron, { ipcRenderer } from 'electron';
 import { IncrementalRolloutService } from 'services/incremental-rollout';
 import {
   getPlatformService,
@@ -20,6 +20,7 @@ import uuid from 'uuid/v4';
 import { OnboardingService } from './onboarding';
 import { UuidService } from './uuid';
 import { addClipboardMenu } from 'util/addClipboardMenu';
+import * as remote from '@electron/remote';
 
 // Eventually we will support authing multiple platforms at once
 interface IUserServiceState {
@@ -181,6 +182,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   }
 
   private async login(service: IPlatformService, rawAuth: IPlatformAuth) {
+    await ipcRenderer.invoke(`recollectUserSessionCookie`);
     const isPremium = await service.isPremium(rawAuth.platform.token);
     const auth = { ...rawAuth, platform: { ...rawAuth.platform, isPremium } };
     this.LOGIN(auth);
@@ -203,7 +205,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     this.userLogout.next();
 
     this.LOGOUT();
-    electron.remote.session.defaultSession.clearStorageData({ storages: ['cookies'] });
+    remote.session.defaultSession.clearStorageData({ storages: ['cookies'] });
     this.appService.finishLoading();
     this.setSentryContext();
   }
@@ -224,13 +226,12 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     const service = getPlatformService(platform);
     console.log('startAuth service = ' + JSON.stringify(service));
 
-    const authWindow = new electron.remote.BrowserWindow({
+    const authWindow = new remote.BrowserWindow({
       ...service.authWindowOptions,
       alwaysOnTop: false,
       show: false,
       webPreferences: {
         nodeIntegration: false,
-        nativeWindowOpen: true,
         sandbox: true,
       },
     });

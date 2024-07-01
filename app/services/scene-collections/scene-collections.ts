@@ -34,6 +34,7 @@ import { $t } from 'services/i18n';
 import { TransitionsService, ETransitionType } from 'services/transitions';
 import { SettingsService } from 'services/settings';
 import { DismissablesService, EDismissable } from 'services/dismissables';
+import * as remote from '@electron/remote';
 
 const uuid = window['require']('uuid/v4');
 
@@ -687,7 +688,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   }
 
   private get legacyDirectory() {
-    return path.join(electron.remote.app.getPath('userData'), 'SceneConfigs');
+    return path.join(remote.app.getPath('userData'), 'SceneConfigs');
   }
 
   /**

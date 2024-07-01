@@ -8,10 +8,11 @@ import { IMutation } from 'services/api/jsonrpc';
 import Util from 'services/utils';
 import { InternalApiService } from 'services/api/internal-api';
 import { InternalApiClient } from '../services/api/internal-api-client';
+import * as remote from '@electron/remote';
 
 Vue.use(Vuex);
 
-const { ipcRenderer, remote } = electron;
+const { ipcRenderer } = electron;
 
 const debug = process.env.NODE_ENV !== 'production';
 

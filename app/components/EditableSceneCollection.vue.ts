@@ -5,6 +5,7 @@ import { SceneCollectionsService } from 'services/scene-collections';
 import { Inject } from 'services/core/injector';
 import moment from 'moment';
 import { $t } from 'services/i18n';
+import * as remote from '@electron/remote';
 
 @Component({})
 export default class EditableSceneCollection extends Vue {
@@ -89,8 +90,8 @@ export default class EditableSceneCollection extends Vue {
   }
 
   remove() {
-    electron.remote.dialog
-      .showMessageBox(electron.remote.getCurrentWindow(), {
+    remote.dialog
+      .showMessageBox(remote.getCurrentWindow(), {
         type: 'warning',
         buttons: [$t('common.cancel'), $t('common.ok')],
         title: $t('scenes.removeSceneCollectionConfirmTitle'),

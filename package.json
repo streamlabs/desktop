@@ -83,6 +83,7 @@
     ]
   },
   "dependencies": {
+    "@electron/remote": "2.0.8",
     "@n-air-app/n-voice-package": "^1.0.2",
     "@n-air-app/nicolive-comment-protobuf": "^0.0.3",
     "@sentry/electron": "4.24.0",
@@ -183,9 +184,9 @@
     "cross-env": "~7.0.3",
     "css-loader": "~2.1.1",
     "devtron": "1.4.0",
-    "electron": "6.1.11",
+    "electron": "25.9.3",
     "electron-builder": "22.14.13",
-    "electron-chromedriver": "^6.0.0",
+    "electron-chromedriver": "^25.9.8",
     "emojione": "^3.1.7",
     "eslint": "^8.57.0",
     "eslint-config-airbnb-base": "^15.0.0",

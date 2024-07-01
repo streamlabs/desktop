@@ -12,6 +12,7 @@ import { $t } from 'services/i18n';
 import { Subscription } from 'rxjs';
 import electron from 'electron';
 import Util from 'services/utils';
+import * as remote from '@electron/remote';
 
 const PeriodicUpdateSources: TSourceType[] = ['ndi_source', 'custom_cast_ndi_source'];
 const PeriodicUpdateInterval = 5000; // in Milliseconds
@@ -58,7 +59,7 @@ export default class SourceProperties extends Vue {
     this.initialProperties = cloneDeep(this.properties);
     this.sourceRemovedSub = this.sourcesService.sourceRemoved.subscribe(source => {
       if (source.sourceId === this.sourceId) {
-        electron.remote.getCurrentWindow().close();
+        remote.getCurrentWindow().close();
       }
     });
     this.sourceUpdatedSub = this.sourcesService.sourceUpdated.subscribe(source => {
