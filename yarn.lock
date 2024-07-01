@@ -4793,9 +4793,9 @@ color-name@~1.1.4:
   resolved "https://registry.yarnpkg.com/color-name/-/color-name-1.1.4.tgz#c2a09a87acbde69543de6f63fa3995c826c536a2"
   integrity sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==
 
-"color-picker@https://obs-studio-deployment.s3-us-west-2.amazonaws.com/color-picker-1.3.4-win64.tar.gz":
-  version "1.0.7"
-  resolved "https://obs-studio-deployment.s3-us-west-2.amazonaws.com/color-picker-1.3.4-win64.tar.gz#4a111f1e132a19f4e244b4a6fcf6f75e23b1bbea"
+"color-picker@https://obs-studio-deployment.s3-us-west-2.amazonaws.com/color-picker-1.3.10-win64.tar.gz":
+  version "1.3.10"
+  resolved "https://obs-studio-deployment.s3-us-west-2.amazonaws.com/color-picker-1.3.10-win64.tar.gz#6bb76f42ee9387823b6b85347b9eac2c312abe34"
 
 colord@^2.9.3:
   version "2.9.3"
@@ -5074,9 +5074,9 @@ cosmiconfig@^7.0.0, cosmiconfig@^7.1.0:
     path-type "^4.0.0"
     yaml "^1.10.0"
 
-"crash-handler@https://slobs-crash-handler.s3-us-west-2.amazonaws.com/crash-handler-1.2.17-win64.tar.gz":
-  version "0.0.1"
-  resolved "https://slobs-crash-handler.s3-us-west-2.amazonaws.com/crash-handler-1.2.17-win64.tar.gz#11c01ec75effcc484dd21d8d0821815c1b126c47"
+"crash-handler@https://slobs-crash-handler.s3-us-west-2.amazonaws.com/crash-handler-1.2.21-win64.tar.gz":
+  version "1.2.21"
+  resolved "https://slobs-crash-handler.s3-us-west-2.amazonaws.com/crash-handler-1.2.21-win64.tar.gz#2bc03d85691cf503a234bf144a3a38d7a4ba307f"
   dependencies:
     node-addon-api "^4.1.0"
 
@@ -7057,11 +7057,11 @@ follow-redirects@^1.0.0:
   resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.15.2.tgz#b460864144ba63f2681096f274c4e57026da2c13"
   integrity sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==
 
-"font-manager@https://slobs-font-manager.s3-us-west-2.amazonaws.com/font-manager-1.2.6-win64.tar.gz":
+"font-manager@https://slobs-font-manager.s3-us-west-2.amazonaws.com/font-manager-1.2.9-win64.tar.gz":
   version "1.0.8"
-  resolved "https://slobs-font-manager.s3-us-west-2.amazonaws.com/font-manager-1.2.6-win64.tar.gz#9eb8753cffae0f4685d306da2d1c4a68fb6b39de"
+  resolved "https://slobs-font-manager.s3-us-west-2.amazonaws.com/font-manager-1.2.9-win64.tar.gz#acec1d2e384f2d47c61de9b3878e7aac125b40d9"
   dependencies:
-    node-addon-api "^3.0.0"
+    node-addon-api "^7.0.0"
 
 for-each@^0.3.3:
   version "0.3.3"
@@ -7246,9 +7246,9 @@ g-status@^2.0.2:
     matcher "^1.0.0"
     simple-git "^1.85.0"
 
-"game_overlay@https://obs-studio-deployment.s3-us-west-2.amazonaws.com/game-overlay-0.0.59-win64.tar.gz":
-  version "0.0.1"
-  resolved "https://obs-studio-deployment.s3-us-west-2.amazonaws.com/game-overlay-0.0.59-win64.tar.gz#61db0fb257bbd397ddcbc31d2f5d068dd2a48541"
+"game_overlay@https://obs-studio-deployment.s3-us-west-2.amazonaws.com/game-overlay-0.0.62-win64.tar.gz":
+  version "0.0.62"
+  resolved "https://obs-studio-deployment.s3-us-west-2.amazonaws.com/game-overlay-0.0.62-win64.tar.gz#de3d2fafc397f58e3b54979ca3af2faf1cdac117"
   dependencies:
     node-addon-api "^4.1.0"
 
@@ -10679,20 +10679,15 @@ node-addon-api@^1.6.3:
   resolved "https://registry.yarnpkg.com/node-addon-api/-/node-addon-api-1.7.2.tgz#3df30b95720b53c24e59948b49532b662444f54d"
   integrity sha512-ibPK3iA+vaY1eEjESkQkM0BbCqFOaZMiXRTtdB0u7b4djtY6JnsjvPdUHVMg6xQt3B8fpTTWHI9A+ADjM9frzg==
 
-node-addon-api@^3.0.0, node-addon-api@^3.0.2:
-  version "3.2.1"
-  resolved "https://registry.yarnpkg.com/node-addon-api/-/node-addon-api-3.2.1.tgz#81325e0a2117789c0128dab65e7e38f07ceba161"
-  integrity sha512-mmcei9JghVNDYydghQmeDX8KoAm0FAiYyIcUt/N4nhyAipB17pllZQDOJD2fotxABnt4Mdz+dKTO7eftLg4d0A==
-
 node-addon-api@^4.1.0:
   version "4.3.0"
   resolved "https://registry.yarnpkg.com/node-addon-api/-/node-addon-api-4.3.0.tgz#52a1a0b475193e0928e98e0426a0d1254782b77f"
   integrity sha512-73sE9+3UaLYYFmDsFZnqCInzPyh3MqIwZO9cw58yIqAZhONrrabrYyYe3TuIqtIiOuTXVhsGau8hcrhhwSsDIQ==
 
-node-addon-api@^5.0.0:
-  version "5.1.0"
-  resolved "https://registry.yarnpkg.com/node-addon-api/-/node-addon-api-5.1.0.tgz#49da1ca055e109a23d537e9de43c09cca21eb762"
-  integrity sha512-eh0GgfEkpnoWDq+VY8OyvYhFEzBk6jIYbRKdIlyTiAXIVJ8PyBaKb0rp7oDtoddbdoHWhq8wwr+XZ81F1rpNdA==
+node-addon-api@^7.0.0:
+  version "7.1.0"
+  resolved "https://registry.yarnpkg.com/node-addon-api/-/node-addon-api-7.1.0.tgz#71f609369379c08e251c558527a107107b5e0fdb"
+  integrity sha512-mNcltoe1R8o7STTegSOHdnJNN7s5EUvhoS7ShnTHDyOSd+8H+UdWODq6qSv67PjC8Zc5JRT8+oLAMCr0SIXw7g==
 
 node-dir@^0.1.17:
   version "0.1.17"
@@ -10715,11 +10710,11 @@ node-fetch@~2.6.12:
   dependencies:
     whatwg-url "^5.0.0"
 
-"node-fontinfo@https://slobs-node-fontinfo.s3-us-west-2.amazonaws.com/node-fontinfo-1.1.8-win64.tar.gz":
+"node-fontinfo@https://slobs-node-fontinfo.s3-us-west-2.amazonaws.com/node-fontinfo-1.1.11-win64.tar.gz":
   version "0.0.12"
-  resolved "https://slobs-node-fontinfo.s3-us-west-2.amazonaws.com/node-fontinfo-1.1.8-win64.tar.gz#293965866339cf54e6e7eace8475f9dbb0832ef0"
+  resolved "https://slobs-node-fontinfo.s3-us-west-2.amazonaws.com/node-fontinfo-1.1.11-win64.tar.gz#19103013eec8c99abc4e96e53785614edaadb751"
   dependencies:
-    node-addon-api "^3.0.2"
+    node-addon-api "^7.0.0"
 
 node-forge@^1:
   version "1.3.1"
@@ -10740,11 +10735,11 @@ node-ipc@^9.1.1:
     js-message "1.0.7"
     js-queue "2.0.2"
 
-"node-libuiohook@https://slobs-node-libuiohook.s3-us-west-2.amazonaws.com/node-libuiohook-1.1.13-win64.tar.gz":
+"node-libuiohook@https://slobs-node-libuiohook.s3-us-west-2.amazonaws.com/node-libuiohook-1.1.16-win64.tar.gz":
   version "0.0.9"
-  resolved "https://slobs-node-libuiohook.s3-us-west-2.amazonaws.com/node-libuiohook-1.1.13-win64.tar.gz#71a4574e028e023ba61d5c7c20814000f563f3d3"
+  resolved "https://slobs-node-libuiohook.s3-us-west-2.amazonaws.com/node-libuiohook-1.1.16-win64.tar.gz#c0ab27db153d3348948f2af4de400d065a456d79"
   dependencies:
-    node-addon-api "^5.0.0"
+    node-addon-api "^7.0.0"
 
 node-notifier@^8.0.0:
   version "8.0.2"
@@ -11037,9 +11032,9 @@ object.values@^1.1.7:
     define-properties "^1.2.1"
     es-object-atoms "^1.0.0"
 
-"obs-studio-node@https://s3-us-west-2.amazonaws.com/obsstudionodes3.streamlabs.com/osn-0.23.95-release-win64.tar.gz":
+"obs-studio-node@https://s3-us-west-2.amazonaws.com/obsstudionodes3.streamlabs.com/osn-0.24.38-release-win64.tar.gz":
   version "0.3.99"
-  resolved "https://s3-us-west-2.amazonaws.com/obsstudionodes3.streamlabs.com/osn-0.23.95-release-win64.tar.gz#2e60f1b7840f42ad904db7dcfa36024028665ed5"
+  resolved "https://s3-us-west-2.amazonaws.com/obsstudionodes3.streamlabs.com/osn-0.24.38-release-win64.tar.gz#9bf350bb48ad8249fff39fc024b334e3d8a5fe45"
 
 obuf@^1.0.0, obuf@^1.1.2:
   version "1.1.2"

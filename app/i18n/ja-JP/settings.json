@@ -601,7 +601,7 @@
     },
     "Sources": {
       "name": "ソース",
-      "browserHWAccel": {
+      "BrowserHWAccel": {
         "name": "Webページソース使用時にブラウザのハードウェアアクセラレーションを有効にする"
       }
     },
