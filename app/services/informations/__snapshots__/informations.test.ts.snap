@@ -1,9 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`fetchFeed(private):成功 1`] = `
-Object {
-  "rss": Object {
-    "$": Object {
+{
+  "rss": {
+    "$": {
       "version": "2.0",
       "xmlns:atom": "http://www.w3.org/2005/Atom",
       "xmlns:content": "http://purl.org/rss/1.0/modules/content/",
@@ -12,112 +12,112 @@ Object {
       "xmlns:sy": "http://purl.org/rss/1.0/modules/syndication/",
       "xmlns:wfw": "http://wellformedweb.org/CommentAPI/",
     },
-    "channel": Array [
-      Object {
-        "copyright": Array [
+    "channel": [
+      {
+        "copyright": [
           "Copyright 2019",
         ],
-        "description": Array [
+        "description": [
           "Just another WordPress site",
         ],
-        "docs": Array [
+        "docs": [
           "http://blogs.law.harvard.edu/tech/rss",
         ],
-        "generator": Array [
+        "generator": [
           "https://wordpress.org/?v=4.6",
         ],
-        "item": Array [
-          Object {
-            "category": Array [
+        "item": [
+          {
+            "category": [
               "se_n-air",
             ],
-            "description": Array [
+            "description": [
               "description 1",
             ],
-            "guid": Array [
+            "guid": [
               "",
             ],
-            "link": Array [
+            "link": [
               "https://blog.nicovideo.jp/niconews/103886.html",
             ],
-            "pubDate": Array [
+            "pubDate": [
               "Thu, 14 Mar 2019 15:13:09 +0900",
             ],
-            "title": Array [
+            "title": [
               "【復旧】N Air起動時に回答済みのアンケートが表示される不具合",
             ],
           },
-          Object {
-            "category": Array [
+          {
+            "category": [
               "se_n-air",
             ],
-            "description": Array [
+            "description": [
               "description 2",
             ],
-            "guid": Array [
+            "guid": [
               "",
             ],
-            "link": Array [
+            "link": [
               "https://blog.nicovideo.jp/niconews/100729.html",
             ],
-            "pubDate": Array [
+            "pubDate": [
               "Mon, 04 Feb 2019 17:07:57 +0900",
             ],
-            "title": Array [
+            "title": [
               "【ユーザー生放送】サーバー再起動のお知らせ",
             ],
           },
-          Object {
-            "category": Array [
+          {
+            "category": [
               "se_n-air",
             ],
-            "description": Array [
+            "description": [
               "description 3",
             ],
-            "guid": Array [
+            "guid": [
               "",
             ],
-            "link": Array [
+            "link": [
               "https://blog.nicovideo.jp/niconews/95792.html",
             ],
-            "pubDate": Array [
+            "pubDate": [
               "Fri, 07 Dec 2018 18:52:11 +0900",
             ],
-            "title": Array [
+            "title": [
               "【N Air】［出力モード］を［詳細］にした場合に、映像ビットレートが2500kbps以外に設定できない場合がある不具合",
             ],
           },
-          Object {
-            "category": Array [
+          {
+            "category": [
               "se_n-air",
             ],
-            "description": Array [
+            "description": [
               "description 4",
             ],
-            "guid": Array [
+            "guid": [
               "",
             ],
-            "link": Array [
+            "link": [
               "https://blog.nicovideo.jp/niconews/91225.html",
             ],
-            "pubDate": Array [
+            "pubDate": [
               "Tue, 23 Oct 2018 13:44:02 +0900",
             ],
-            "title": Array [
+            "title": [
               "【N Air】配信設定をニコニコ生放送に自動で最適化する機能を改善しました",
             ],
           },
         ],
-        "language": Array [
+        "language": [
           "ja",
         ],
-        "lastBuildDate": Array [
+        "lastBuildDate": [
           "Thu, 14 Mar 2019 15:13:46 +0900",
         ],
-        "link": Array [
+        "link": [
           "https://blog.nicovideo.jp/niconews/",
         ],
-        "title": Array [
+        "title": [
           "19. N Air – ニコニコインフォ",
         ],
       },
@@ -127,24 +127,24 @@ Object {
 `;
 
 exports[`updateInformations:成功 1`] = `
-Array [
-  Array [
-    Object {
+[
+  [
+    {
       "date": 1552543989000,
       "title": "【復旧】N Air起動時に回答済みのアンケートが表示される不具合",
       "url": "https: //blog.nicovideo.jp/niconews/103886.html",
     },
-    Object {
+    {
       "date": 1549267677000,
       "title": "【ユーザー生放送】サーバー再起動のお知らせ",
       "url": "https://blog.nicovideo.jp/niconews/100729.html",
     },
-    Object {
+    {
       "date": 1544176331000,
       "title": "【N Air】［出力モード］を［詳細］にした場合に、映像ビットレートが2500kbps以外に設定できない場合がある不具合",
       "url": "https: //blog.nicovideo.jp/niconews/95792.html",
     },
-    Object {
+    {
       "date": 1540269842000,
       "title": "【N Air】配信設定をニコニコ生放送に自動で最適化する機能を改善しました",
       "url": "https://blog.nicovideo.jp/niconews/91225.html",

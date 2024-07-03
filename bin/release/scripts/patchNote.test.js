@@ -53,51 +53,51 @@ for (const fixtureSet of channelEnvironmentSets()) {
 
 test('バージョンがパースできる(public stable)', () => {
   expect(parseVersion(fixtures.public.stable)).toMatchInlineSnapshot(`
-                Object {
-                  "channel": undefined,
-                  "date": "20190826",
-                  "internalMark": undefined,
-                  "major": "1",
-                  "minor": "0",
-                  "ord": "2",
-                }
-        `);
+    {
+      "channel": undefined,
+      "date": "20190826",
+      "internalMark": undefined,
+      "major": "1",
+      "minor": "0",
+      "ord": "2",
+    }
+  `);
 });
 test('バージョンがパースできる(public unstable)', () => {
   expect(parseVersion(fixtures.public.unstable)).toMatchInlineSnapshot(`
-                Object {
-                  "channel": "unstable",
-                  "date": "20190826",
-                  "internalMark": undefined,
-                  "major": "1",
-                  "minor": "0",
-                  "ord": "2",
-                }
-        `);
+    {
+      "channel": "unstable",
+      "date": "20190826",
+      "internalMark": undefined,
+      "major": "1",
+      "minor": "0",
+      "ord": "2",
+    }
+  `);
 });
 test('バージョンがパースできる(internal stable)', () => {
   expect(parseVersion(fixtures.internal.stable)).toMatchInlineSnapshot(`
-                Object {
-                  "channel": undefined,
-                  "date": "20190826",
-                  "internalMark": "d",
-                  "major": "1",
-                  "minor": "0",
-                  "ord": "2",
-                }
-        `);
+    {
+      "channel": undefined,
+      "date": "20190826",
+      "internalMark": "d",
+      "major": "1",
+      "minor": "0",
+      "ord": "2",
+    }
+  `);
 });
 test('バージョンがパースできる(internal unstable)', () => {
   expect(parseVersion(fixtures.internal.unstable)).toMatchInlineSnapshot(`
-                Object {
-                  "channel": "unstable",
-                  "date": "20190826",
-                  "internalMark": "d",
-                  "major": "1",
-                  "minor": "0",
-                  "ord": "2",
-                }
-        `);
+    {
+      "channel": "unstable",
+      "date": "20190826",
+      "internalMark": "d",
+      "major": "1",
+      "minor": "0",
+      "ord": "2",
+    }
+  `);
 });
 
 test('stableチャンネルの場合はバージョン中のチャンネル部分があったらエラー', () => {
@@ -110,7 +110,7 @@ test('知らないチャンネルを名乗っていたらエラー', () => {
 
 test('バージョンがパースできる(public stable)', () => {
   expect(getVersionContext(fixtures.public.stable)).toMatchInlineSnapshot(`
-    Object {
+    {
       "channel": "stable",
       "environment": "public",
     }
@@ -118,7 +118,7 @@ test('バージョンがパースできる(public stable)', () => {
 });
 test('バージョンがパースできる(public unstable)', () => {
   expect(getVersionContext(fixtures.public.unstable)).toMatchInlineSnapshot(`
-    Object {
+    {
       "channel": "unstable",
       "environment": "public",
     }
@@ -126,7 +126,7 @@ test('バージョンがパースできる(public unstable)', () => {
 });
 test('バージョンがパースできる(internal stable)', () => {
   expect(getVersionContext(fixtures.internal.stable)).toMatchInlineSnapshot(`
-    Object {
+    {
       "channel": "stable",
       "environment": "internal",
     }
@@ -134,7 +134,7 @@ test('バージョンがパースできる(internal stable)', () => {
 });
 test('バージョンがパースできる(internal unstable)', () => {
   expect(getVersionContext(fixtures.internal.unstable)).toMatchInlineSnapshot(`
-    Object {
+    {
       "channel": "unstable",
       "environment": "internal",
     }

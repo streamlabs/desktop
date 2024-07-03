@@ -222,28 +222,28 @@ test('chatメッセージはstateに保持する', () => {
   expect(clientSubject.thrownError).toBeNull();
 
   expect(instance.state.messages).toMatchInlineSnapshot(`
-    Array [
-      Object {
+    [
+      {
         "component": "common",
         "seqId": 0,
         "type": "normal",
-        "value": Object {
+        "value": {
           "content": "yay",
         },
       },
-      Object {
+      {
         "component": "common",
         "seqId": 1,
         "type": "normal",
-        "value": Object {
+        "value": {
           "content": "foo",
         },
       },
-      Object {
+      {
         "component": "system",
         "seqId": 2,
         "type": "n-air-emulated",
-        "value": Object {
+        "value": {
           "content": "サーバーとの接続が終了しました",
           "date": 1582175622,
         },
@@ -296,27 +296,27 @@ test('接続エラー時にメッセージを表示する', () => {
   clientSubject.complete();
 
   expect(instance.state.messages).toMatchInlineSnapshot(`
-                          Array [
-                            Object {
-                              "component": "system",
-                              "seqId": 0,
-                              "type": "n-air-emulated",
-                              "value": Object {
-                                "content": "エラーが発生しました: yay",
-                                "date": 1582175622,
-                              },
-                            },
-                            Object {
-                              "component": "system",
-                              "seqId": 1,
-                              "type": "n-air-emulated",
-                              "value": Object {
-                                "content": "サーバーとの接続が終了しました",
-                                "date": 1582175622,
-                              },
-                            },
-                          ]
-                `);
+    [
+      {
+        "component": "system",
+        "seqId": 0,
+        "type": "n-air-emulated",
+        "value": {
+          "content": "エラーが発生しました: yay",
+          "date": 1582175622,
+        },
+      },
+      {
+        "component": "system",
+        "seqId": 1,
+        "type": "n-air-emulated",
+        "value": {
+          "content": "サーバーとの接続が終了しました",
+          "date": 1582175622,
+        },
+      },
+    ]
+  `);
 });
 
 test('スレッドの参加失敗時にメッセージを表示する', () => {
@@ -333,27 +333,27 @@ test('スレッドの参加失敗時にメッセージを表示する', () => {
   clientSubject.complete();
 
   expect(instance.state.messages).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "component": "system",
-            "seqId": 0,
-            "type": "n-air-emulated",
-            "value": Object {
-              "content": "コメントの取得に失敗しました",
-              "date": 1582175622,
-            },
-          },
-          Object {
-            "component": "system",
-            "seqId": 1,
-            "type": "n-air-emulated",
-            "value": Object {
-              "content": "サーバーとの接続が終了しました",
-              "date": 1582175622,
-            },
-          },
-        ]
-    `);
+    [
+      {
+        "component": "system",
+        "seqId": 0,
+        "type": "n-air-emulated",
+        "value": {
+          "content": "コメントの取得に失敗しました",
+          "date": 1582175622,
+        },
+      },
+      {
+        "component": "system",
+        "seqId": 1,
+        "type": "n-air-emulated",
+        "value": {
+          "content": "サーバーとの接続が終了しました",
+          "date": 1582175622,
+        },
+      },
+    ]
+  `);
 });
 
 test('スレッドからの追い出し発生時にメッセージを表示する', () => {
@@ -368,27 +368,27 @@ test('スレッドからの追い出し発生時にメッセージを表示す�
   clientSubject.complete();
 
   expect(instance.state.messages).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "component": "system",
-            "seqId": 0,
-            "type": "n-air-emulated",
-            "value": Object {
-              "content": "コメントの取得に失敗しました",
-              "date": 1582175622,
-            },
-          },
-          Object {
-            "component": "system",
-            "seqId": 1,
-            "type": "n-air-emulated",
-            "value": Object {
-              "content": "サーバーとの接続が終了しました",
-              "date": 1582175622,
-            },
-          },
-        ]
-    `);
+    [
+      {
+        "component": "system",
+        "seqId": 0,
+        "type": "n-air-emulated",
+        "value": {
+          "content": "コメントの取得に失敗しました",
+          "date": 1582175622,
+        },
+      },
+      {
+        "component": "system",
+        "seqId": 1,
+        "type": "n-air-emulated",
+        "value": {
+          "content": "サーバーとの接続が終了しました",
+          "date": 1582175622,
+        },
+      },
+    ]
+  `);
 });
 
 test('モデレーターによるSSNG追加・削除がきたらシステムメッセージが追加される', async () => {

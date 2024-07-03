@@ -388,9 +388,10 @@ function initialize(crashHandler) {
   }
 
   if (pjson.env === 'production' || process.env.NAIR_REPORT_TO_SENTRY) {
+    const nAirApp2Org = 'o4507508755791872';
     const params = process.env.NAIR_UNSTABLE
-      ? { organization: 'o170115', project: '1546758', key: '7451aaa71b7640a69ee1d31d6fd9ef78' }
-      : { organization: 'o170115', project: '1246812', key: '35a02d8ebec14fd3aadc9d95894fabcf' };
+      ? { organization: nAirApp2Org, project: '1546758', key: '7451aaa71b7640a69ee1d31d6fd9ef78' }
+      : { organization: nAirApp2Org, project: '1246812', key: '35a02d8ebec14fd3aadc9d95894fabcf' };
 
     process.on('uncaughtException', error => {
       console.log('uncaughtException', error);

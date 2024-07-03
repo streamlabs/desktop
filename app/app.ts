@@ -41,7 +41,7 @@ type SentryParams = {
   key: string;
   project: string;
 };
-const sentryOrg = 'o170115';
+const sentryOrg = 'o4507508755791872';
 
 function getSentryCrashReportUrl(p: SentryParams): string {
   return `https://${p.organization}.ingest.sentry.io/api/${p.project}/minidump/?sentry_key=${p.key}`;

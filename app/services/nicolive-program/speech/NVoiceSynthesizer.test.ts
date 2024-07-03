@@ -2,7 +2,7 @@ import { sleep } from 'util/sleep';
 import { Speech } from '../nicolive-comment-synthesizer';
 import { NVoiceSynthesizer } from './NVoiceSynthesizer';
 
-describe('NVoiceSynthesizer', async () => {
+describe('NVoiceSynthesizer', () => {
   test('speakText', async () => {
     const cancelMock = jest.fn(async () => {});
     let resolvePrepare: () => void;

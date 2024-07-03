@@ -34,7 +34,7 @@ describe('filterEngineId', () => {
   });
 });
 
-describe('ParaphraseDictionary', async () => {
+describe('ParaphraseDictionary', () => {
   const dictionary = new ParaphraseDictionary();
   const synthId = 'webSpeech';
   test('remove URL', () =>

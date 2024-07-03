@@ -1,9 +1,15 @@
-const path = require('path');
+const path = require('node:path');
 
+/** @type {import('@jest/types').Config.InitialOptions} */
 module.exports = {
   preset: 'ts-jest',
-  runner: '@jest-runner/electron',
+  runner: '@kayahr/jest-electron-runner',
   modulePaths: [path.resolve(__dirname, 'app')],
-  testEnvironment: '@jest-runner/electron/environment',
+  testEnvironment: '@kayahr/jest-electron-runner/environment',
+  testEnvironmentOptions: {
+    electron: {
+      options: ['no-sandbox'],
+    },
+  },
   testMatch: ['**/app/**/*.test.ts'],
 };

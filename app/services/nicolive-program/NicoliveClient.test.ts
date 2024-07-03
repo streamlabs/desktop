@@ -89,11 +89,11 @@ test('wrapResultはbodyがJSONでなければSyntaxErrorをwrapして返す', as
   const res = await fetch(dummyURL);
 
   await expect(NicoliveClient.wrapResult(res)).resolves.toMatchInlineSnapshot(`
-Object {
-  "ok": false,
-  "value": [SyntaxError: Unexpected token 'i', "invalid json" is not valid JSON],
-}
-`);
+    {
+      "ok": false,
+      "value": [SyntaxError: Unexpected token 'i', "invalid json" is not valid JSON],
+    }
+  `);
   expect(fetchMock.done()).toBe(true);
 });
 
@@ -254,11 +254,11 @@ test('fetchCommunityはbodyがJSONでなければSyntaxErrorをwrapして返す'
   const result = client.fetchCommunity(communityID);
 
   await expect(result).resolves.toMatchInlineSnapshot(`
-Object {
-  "ok": false,
-  "value": [SyntaxError: Unexpected token 'i', "invalid json" is not valid JSON],
-}
-`);
+    {
+      "ok": false,
+      "value": [SyntaxError: Unexpected token 'i', "invalid json" is not valid JSON],
+    }
+  `);
   expect(fetchMock.done()).toBe(true);
 });
 
