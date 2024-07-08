@@ -1,19 +1,10 @@
 {
   "name": "n-air-app",
-  "description": "Streaming application for niconico",
-  "author": "DWANGO Co.,Ltd.",
-  "license": "GPL-3.0",
-  "//": {
-    "version": "0.11.2"
-  },
   "version": "1.1.20210826-unstable.1",
+  "description": "Streaming application for niconico",
+  "license": "GPL-3.0",
+  "author": "DWANGO Co.,Ltd.",
   "main": "main.js",
-  "engines": {
-    "npm": "please-use-yarn"
-  },
-  "browserslist": [
-    "chrome >= 76"
-  ],
   "scripts": {
     "compile": "yarn clear && webpack-cli --progress --mode development",
     "compile:ci": "yarn clear && webpack-cli --mode development",
@@ -46,22 +37,12 @@
     "version": "git add app/services/patch-notes/notes.ts",
     "clear:cache": "npx shx rm -rf node_module/.cache dist bundles test-dist",
     "lint": "eslint {app,test}/**/*.{ts,js,vue} && stylelint app/**/*.{vue,css,less}",
-    "format": "prettier -w {app,test}/**/*.{ts,js,vue} && eslint --fix {app,test}/**/*.{ts,js,vue} && stylelint --fix app/**/*.{vue,css,less}"
+    "format": "prettier -w {app,test}/**/*.{ts,js,vue} && eslint --fix {app,test}/**/*.{ts,js,vue} && stylelint --fix app/**/*.{vue,css,less} && npx sort-package-json"
   },
-  "buildProductName": "N Air",
-  "ava": {
-    "files": [
-      "test-dist/test/e2e/*.js",
-      "test-dist/test/api/*.js"
-    ],
-    "timeout": "3m"
-  },
-  "prettier": {
-    "singleQuote": true,
-    "printWidth": 100,
-    "endOfLine": "lf",
-    "trailingComma": "all",
-    "arrowParens": "avoid"
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
   },
   "lint-staged": {
     "*.{ts,js,vue}": [
@@ -80,34 +61,52 @@
       "git add app/fonts/n-air.woff app/styles/custom-icons.less"
     ]
   },
+  "browserslist": [
+    "chrome >= 76"
+  ],
+  "prettier": {
+    "arrowParens": "avoid",
+    "endOfLine": "lf",
+    "printWidth": 100,
+    "singleQuote": true,
+    "trailingComma": "all"
+  },
+  "ava": {
+    "files": [
+      "test-dist/test/e2e/*.js",
+      "test-dist/test/api/*.js"
+    ],
+    "timeout": "3m"
+  },
   "dependencies": {
-    "obs-studio-node": "https://github.com/n-air-app/native-deps/releases/download/assets/osn-0.24.38-release-win64_rtvc.tar.gz",
-    "node-libuiohook": "https://github.com/n-air-app/native-deps/releases/download/assets/node-libuiohook-1.1.16-win64.tar.gz",
-    "node-fontinfo": "https://github.com/n-air-app/native-deps/releases/download/assets/node-fontinfo-1.1.11-win64.tar.gz",
-    "font-manager": "https://github.com/n-air-app/native-deps/releases/download/assets/font-manager-1.2.9-win64.tar.gz",
-    "crash-handler": "https://github.com/n-air-app/native-deps/releases/download/assets/crash-handler-1.2.21-win64.tar.gz",
-    "game_overlay": "https://github.com/n-air-app/native-deps/releases/download/assets/game-overlay-0.0.62-win64.tar.gz",
-    "color-picker": "https://github.com/n-air-app/native-deps/releases/download/assets/color-picker-1.3.10-win64.tar.gz",
     "@electron/remote": "2.0.8",
     "@n-air-app/n-voice-package": "^1.0.2",
     "@n-air-app/nicolive-comment-protobuf": "^0.0.3",
     "@sentry/electron": "4.24.0",
     "@sentry/vue": "7.112.0",
+    "@sentry/webpack-plugin": "^2.20.1",
     "archiver": "^5.3.1",
     "autoprefixer": "^10.4.14",
     "aws-sdk": "^2.344.0",
     "base64-js": "^1.5.1",
+    "color-picker": "https://github.com/n-air-app/native-deps/releases/download/assets/color-picker-1.3.10-win64.tar.gz",
+    "crash-handler": "https://github.com/n-air-app/native-deps/releases/download/assets/crash-handler-1.2.21-win64.tar.gz",
     "css-element-queries": "~1.2.1",
     "electron-devtools-installer": "3.2.0",
     "electron-log": "3.0.4",
     "electron-updater": "4.3.8",
     "electron-window-state": "5.0.3",
+    "font-manager": "https://github.com/n-air-app/native-deps/releases/download/assets/font-manager-1.2.9-win64.tar.gz",
     "fuse.js": "~3.6.1",
+    "game_overlay": "https://github.com/n-air-app/native-deps/releases/download/assets/game-overlay-0.0.62-win64.tar.gz",
     "iconv-lite": "^0.6.3",
     "lodash": "^4.17.21",
     "lodash-decorators": "^4.5.0",
     "long": "^5.2.3",
     "moment": "^2.29.4",
+    "node-fontinfo": "https://github.com/n-air-app/native-deps/releases/download/assets/node-fontinfo-1.1.11-win64.tar.gz",
+    "node-libuiohook": "https://github.com/n-air-app/native-deps/releases/download/assets/node-libuiohook-1.1.16-win64.tar.gz",
+    "obs-studio-node": "https://github.com/n-air-app/native-deps/releases/download/assets/osn-0.24.38-release-win64_rtvc.tar.gz",
     "postcss-loader": "4.3.0",
     "progress": "~2.0.3",
     "protobufjs": "^7.2.6",
@@ -237,10 +236,9 @@
     "webpack-manifest-plugin": "^4.1.1",
     "webpack-merge": "^5.10.0"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
+  "engines": {
+    "npm": "please-use-yarn"
   },
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+  "buildProductName": "N Air"
 }

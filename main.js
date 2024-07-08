@@ -347,7 +347,9 @@ function initialize(crashHandler) {
   });
 
   // Windows
+  /** @type import('electron').BrowserWindow */
   let mainWindow;
+  /** @type import('electron').BrowserWindow */
   let childWindow;
 
   // Somewhat annoyingly, this is needed so that the child window
@@ -378,7 +380,7 @@ function initialize(crashHandler) {
     dialog.showErrorBox(
       '予期せぬエラー',
       '予期しないエラーが発生したため、アプリケーションをシャットダウンします。ご不便をおかけして申し訳ありません。\n' +
-        'この件に関する情報はデバッグ目的で送信されました。不具合を解決するためにご協力いただきありがとうございます。',
+      'この件に関する情報はデバッグ目的で送信されました。不具合を解決するためにご協力いただきありがとうございます。',
     );
 
     // ダイアログが閉じたら終了
@@ -387,35 +389,31 @@ function initialize(crashHandler) {
     });
   }
 
-  if (pjson.env === 'production' || process.env.NAIR_REPORT_TO_SENTRY) {
-    const nAirApp2Org = 'o4507508755791872';
-    const params = process.env.NAIR_UNSTABLE
-      ? { organization: nAirApp2Org, project: '1546758', key: '7451aaa71b7640a69ee1d31d6fd9ef78' }
-      : { organization: nAirApp2Org, project: '1246812', key: '35a02d8ebec14fd3aadc9d95894fabcf' };
+  const sentryDefs = require('./bundles/sentry-defs');
 
+  if (pjson.env === 'production' || process.env.NAIR_REPORT_TO_SENTRY) {
     process.on('uncaughtException', error => {
       console.log('uncaughtException', error);
       handleFinishedReport();
     });
 
-    const sentryDsn = `https://${params.key}@${params.organization}.ingest.sentry.io/${params.project}`;
-    const sentryMiniDumpURL = `https://${params.organization}.ingest.sentry.io/api/${params.project}/minidump/?sentry_key=${params.key}`;
-
-    console.log(`Sentry DSN: ${sentryDsn}`);
+    console.log(`Sentry DSN: ${sentryDefs.DSN}`);
     SentryElectron.init({
-      dsn: sentryDsn,
+      dsn: sentryDefs.DSN,
       release: process.env.NAIR_VERSION,
     });
 
     crashReporter.start({
       productName: 'n-air-app',
       companyName: 'n-air-app',
-      submitURL: sentryMiniDumpURL,
+      submitURL: sentryDefs.MINIDUMP_URL,
       extra: {
         version: process.env.NAIR_VERSION,
         processType: 'main',
       },
     });
+  } else {
+    console.log('Sentry disabled, SENTRY_DSN = ', sentryDefs.DSN);
   }
 
   // eslint-disable-next-line no-inner-declarations
@@ -461,9 +459,9 @@ function initialize(crashHandler) {
       title: process.env.NAIR_PRODUCT_NAME,
       ...(mainWindowIsVisible
         ? {
-            x: mainWindowState.x,
-            y: mainWindowState.y,
-          }
+          x: mainWindowState.x,
+          y: mainWindowState.y,
+        }
         : {}),
       webPreferences: {
         nodeIntegration: true,

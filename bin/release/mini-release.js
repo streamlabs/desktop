@@ -462,7 +462,7 @@ async function releaseRoutine() {
     skipBuild: false,
     enableUploadToS3: true,
     enableUploadToGitHub: true,
-    enableUploadToSentry: true,
+    enableUploadToSentry: false, //@sentry/webpack-plugin を使うため不要
   });
 }
 

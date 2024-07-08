@@ -36,33 +36,6 @@ import * as remote from '@electron/remote';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-type SentryParams = {
-  organization: string;
-  key: string;
-  project: string;
-};
-const sentryOrg = 'o4507508755791872';
-
-function getSentryCrashReportUrl(p: SentryParams): string {
-  return `https://${p.organization}.ingest.sentry.io/api/${p.project}/minidump/?sentry_key=${p.key}`;
-}
-
-// This is the development DSN
-let sentryParam: SentryParams = {
-  organization: sentryOrg,
-  project: '1262580',
-  key: '1cb5cdf6a93c466dad570861b8c82b61',
-};
-
-if (isProduction) {
-  // This is the production DSN
-  sentryParam = Utils.isUnstable()
-    ? { organization: sentryOrg, project: '5372801', key: '819e76e51864453aafd28c6d0473881f' } // crash-reporter-unstable
-    : { organization: sentryOrg, project: '1520076', key: 'd965eea4b2254c2b9f38d2346fb8a472' }; // crash-reporter
-}
-
-const SENTRY_SERVER_URL = getSentryCrashReportUrl(sentryParam);
-
 const windowId = Utils.getWindowId();
 
 function wrapLogFn(fn: string) {
@@ -209,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'en-US',
         appService.appDataDirectory,
         remote.process.env.NAIR_VERSION,
-        SENTRY_SERVER_URL,
+        SENTRY_MINIDUMP_URL,
       );
 
       if (apiResult !== obs.EVideoCodes.Success) {
