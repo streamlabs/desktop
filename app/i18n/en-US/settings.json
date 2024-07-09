@@ -310,6 +310,15 @@
       "RecSplitFile": {
         "name": null
       },
+      "RecSplitFileType": {
+        "Time": null,
+        "Size": null,
+        "Manual": null
+      },
+      "RecSplitFileTime": { "name": null },
+      "RecSplitFileResetTimestamps": {
+        "name": null
+      },
 
       "MuxerCustom": {
         "name": "@:settings.Output.Recording.RecMuxerCustom.name"
