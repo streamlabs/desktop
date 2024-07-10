@@ -246,11 +246,6 @@ async function runScript({
     info('Compiling assets...');
     executeCmd('yarn compile:production');
 
-    info('Injecting Sentry...');
-    executeCmd(`cp main.js bundles/`);
-    const bundles = path.resolve('.', 'bundles');
-    injectForSentry(bundles);
-
     info('Making the package...');
     executeCmd(`yarn package:${releaseEnvironment}-${releaseChannel}`);
   }

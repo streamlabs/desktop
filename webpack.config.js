@@ -48,7 +48,7 @@ module.exports = function (env, argv) {
       project: SENTRY_PROJECT,
       authToken: process.env.SENTRY_AUTH_TOKEN,
       release: {
-        version: JSON.stringify(package.version),
+        name: package.version,
       },
       // disable: true, // DEBUG
     }),
@@ -66,191 +66,194 @@ module.exports = function (env, argv) {
     }, // if problem, clean node_modules/.cache
   };
 
-  return [{
-    ...common,
-    output: {
-      path: `${__dirname}/bundles`,
-      filename: '[name].js',
-      publicPath: '/bundles/',
-      libraryTarget: 'commonjs2',
-    },
-
-    entry: {
-      'sentry-defs': './sentry-defs.js'
-    },
-    plugins: [definePlugin],
-    target: 'electron25-main',
-  }, {
-    ...common,
-
-    output: {
-      path: `${__dirname}/bundles`,
-      filename: '[name].js',
-      publicPath: '/bundles/',
-    },
-
-    entry: {
-      renderer: './app/app.ts',
-      updater: './updater/ui.js',
-    },
-
-    devServer: {
-      static: {
-        directory: __dirname,
-        publicPath: '/',
+  return [
+    {
+      ...common,
+      output: {
+        path: `${__dirname}/bundles`,
+        filename: '[name].js',
+        publicPath: '/bundles/',
+        libraryTarget: 'commonjs2',
       },
-      proxy: {
-        '/account': {
-          target: 'https://account.nicovideo.jp',
-          changeOrigin: true,
-          pathRewrite: { '^/account': '' },
-        },
-        '/oauth': {
-          target: 'https://oauth.nicovideo.jp',
-          changeOrigin: true,
-          pathRewrite: { '^/oauth': '' },
-        },
-        '/blog': {
-          target: 'https://blog.nicovideo.jp',
-          changeOrigin: true,
-          pathRewrite: { '^/blog': '' },
-        },
+
+      entry: {
+        'sentry-defs': './sentry-defs.js',
       },
+      plugins: [definePlugin],
+      target: 'electron25-main',
     },
+    {
+      ...common,
 
-    devtool: 'source-map',
+      output: {
+        path: `${__dirname}/bundles`,
+        filename: '[name].js',
+        publicPath: '/bundles/',
+      },
 
-    target: 'electron25-renderer',
+      entry: {
+        renderer: './app/app.ts',
+        updater: './updater/ui.js',
+      },
 
-    resolve: {
-      extensions: ['.js', '.ts', '.tsx'],
-      modules: [path.resolve(__dirname, 'app'), 'node_modules'],
-    },
-
-    // We want to dynamically require native addons
-    externals: {
-      'font-manager': 'require("font-manager")',
-
-      // Not actually a native addons, but for one reason or another
-      // we don't want them compiled in our webpack bundle.
-      'aws-sdk': 'require("aws-sdk")',
-      asar: 'require("asar")',
-      'node-fontinfo': 'require("node-fontinfo")',
-      'socket.io-client': 'require("socket.io-client")',
-      rimraf: 'require("rimraf")',
-
-      'utf-8-validate': 'require("utf-8-validate")',
-      bufferutil: 'require("bufferutil")',
-    },
-
-    module: {
-      rules: [
-        {
-          test: /\.vue$/,
-          loader: 'vue-loader',
-          options: {
-            esModule: true,
-            transformToRequire: {
-              video: 'src',
-              source: 'src',
-            },
+      devServer: {
+        static: {
+          directory: __dirname,
+          publicPath: '/',
+        },
+        proxy: {
+          '/account': {
+            target: 'https://account.nicovideo.jp',
+            changeOrigin: true,
+            pathRewrite: { '^/account': '' },
+          },
+          '/oauth': {
+            target: 'https://oauth.nicovideo.jp',
+            changeOrigin: true,
+            pathRewrite: { '^/oauth': '' },
+          },
+          '/blog': {
+            target: 'https://blog.nicovideo.jp',
+            changeOrigin: true,
+            pathRewrite: { '^/blog': '' },
           },
         },
-        {
-          test: /\.ts$/,
-          loader: 'ts-loader',
-          exclude: /node_modules|vue\/src/,
-        },
-        {
-          test: /\.tsx$/,
-          exclude: /node_modules|vue\/src/,
-          use: ['babel-loader', { loader: 'ts-loader' }],
-        },
-        {
-          test: /\.js$/,
-          loader: 'babel-loader',
-          exclude: [/node_modules/, path.join(__dirname, 'bin')],
-        },
-        {
-          test: /\.css$/,
-          use: [
-            'style-loader',
-            {
-              loader: 'css-loader',
-              options: {
-                importLoaders: 1,
+      },
+
+      devtool: 'source-map',
+
+      target: 'electron25-renderer',
+
+      resolve: {
+        extensions: ['.js', '.ts', '.tsx'],
+        modules: [path.resolve(__dirname, 'app'), 'node_modules'],
+      },
+
+      // We want to dynamically require native addons
+      externals: {
+        'font-manager': 'require("font-manager")',
+
+        // Not actually a native addons, but for one reason or another
+        // we don't want them compiled in our webpack bundle.
+        'aws-sdk': 'require("aws-sdk")',
+        asar: 'require("asar")',
+        'node-fontinfo': 'require("node-fontinfo")',
+        'socket.io-client': 'require("socket.io-client")',
+        rimraf: 'require("rimraf")',
+
+        'utf-8-validate': 'require("utf-8-validate")',
+        bufferutil: 'require("bufferutil")',
+      },
+
+      module: {
+        rules: [
+          {
+            test: /\.vue$/,
+            loader: 'vue-loader',
+            options: {
+              esModule: true,
+              transformToRequire: {
+                video: 'src',
+                source: 'src',
               },
             },
-            {
-              loader: 'postcss-loader',
-              options: {
-                postcssOptions: {
-                  plugins: [require('autoprefixer')({ grid: true })],
+          },
+          {
+            test: /\.ts$/,
+            loader: 'ts-loader',
+            exclude: /node_modules|vue\/src/,
+          },
+          {
+            test: /\.tsx$/,
+            exclude: /node_modules|vue\/src/,
+            use: ['babel-loader', { loader: 'ts-loader' }],
+          },
+          {
+            test: /\.js$/,
+            loader: 'babel-loader',
+            exclude: [/node_modules/, path.join(__dirname, 'bin')],
+          },
+          {
+            test: /\.css$/,
+            use: [
+              'style-loader',
+              {
+                loader: 'css-loader',
+                options: {
+                  importLoaders: 1,
                 },
               },
-            },
-          ],
-        },
-        {
-          test: /\.less$/,
-          use: [
-            'style-loader',
-            {
-              loader: 'css-loader',
-              options: {
-                importLoaders: 1,
-              },
-            },
-            {
-              loader: 'postcss-loader',
-              options: {
-                postcssOptions: {
-                  plugins: [require('autoprefixer')({ grid: true })],
+              {
+                loader: 'postcss-loader',
+                options: {
+                  postcssOptions: {
+                    plugins: [require('autoprefixer')({ grid: true })],
+                  },
                 },
               },
+            ],
+          },
+          {
+            test: /\.less$/,
+            use: [
+              'style-loader',
+              {
+                loader: 'css-loader',
+                options: {
+                  importLoaders: 1,
+                },
+              },
+              {
+                loader: 'postcss-loader',
+                options: {
+                  postcssOptions: {
+                    plugins: [require('autoprefixer')({ grid: true })],
+                  },
+                },
+              },
+              'less-loader',
+            ],
+          },
+          {
+            test: /\.(png|jpe?g|gif|mp4|mp3|ico|wav|webm)(\?.*)?$/,
+            loader: 'file-loader',
+            options: {
+              name: '[name]-[hash].[ext]',
+              outputPath: 'media/',
+              publicPath: 'bundles/media/',
             },
-            'less-loader',
-          ],
-        },
-        {
-          test: /\.(png|jpe?g|gif|mp4|mp3|ico|wav|webm)(\?.*)?$/,
-          loader: 'file-loader',
-          options: {
-            name: '[name]-[hash].[ext]',
-            outputPath: 'media/',
-            publicPath: 'bundles/media/',
           },
-        },
-        // Handles custom fonts. Currently used for icons.
-        {
-          test: /\.woff$/,
-          loader: 'file-loader',
-          options: {
-            name: '[name].[ext]',
-            outputPath: 'fonts/',
-            publicPath: 'bundles/fonts/',
+          // Handles custom fonts. Currently used for icons.
+          {
+            test: /\.woff$/,
+            loader: 'file-loader',
+            options: {
+              name: '[name].[ext]',
+              outputPath: 'fonts/',
+              publicPath: 'bundles/fonts/',
+            },
           },
-        },
-        {
-          test: /\.svg$/,
-          use: ['vue-svg-loader'],
-        },
-      ],
-    },
-
-    optimization: {
-      splitChunks: {
-        chunks: chunk => chunk.name === 'renderer',
-        name: 'vendors~renderer',
+          {
+            test: /\.svg$/,
+            use: ['vue-svg-loader'],
+          },
+        ],
       },
-      chunkIds: 'named',
-      minimizer: [new TerserPlugin({ sourceMap: true, terserOptions: { mangle: false } })],
-    },
 
-    plugins,
+      optimization: {
+        splitChunks: {
+          chunks: chunk => chunk.name === 'renderer',
+          name: 'vendors~renderer',
+        },
+        chunkIds: 'named',
+        minimizer: [new TerserPlugin({ sourceMap: true, terserOptions: { mangle: false } })],
+      },
 
-    stats: {
-      warningsFilter: ["Can't resolve 'osx-temperature-sensor'"],
+      plugins,
+
+      stats: {
+        warningsFilter: ["Can't resolve 'osx-temperature-sensor'"],
+      },
     },
-  }];
+  ];
 };
