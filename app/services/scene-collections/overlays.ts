@@ -21,6 +21,7 @@ import { SelectionService } from 'services/selection';
 import uuid from 'uuid/v4';
 import { SceneSourceNode } from './nodes/overlays/scene';
 import { NVoiceCharacterNode } from './nodes/overlays/nvoice-character';
+import * as remote from '@electron/remote';
 
 const NODE_TYPES = {
   RootNode,
@@ -132,6 +133,6 @@ export class OverlaysPersistenceService extends Service {
   }
 
   get overlaysDirectory() {
-    return path.join(electron.remote.app.getPath('userData'), 'Overlays');
+    return path.join(remote.app.getPath('userData'), 'Overlays');
   }
 }

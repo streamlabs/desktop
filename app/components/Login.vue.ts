@@ -8,6 +8,8 @@ import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
 import HelpTip from './shared/HelpTip.vue';
 
+import * as remote from '@electron/remote';
+
 @Component({ components: { HelpTip } })
 export default class Login extends Vue {
   @Inject() userService: UserService;
@@ -55,7 +57,7 @@ export default class Login extends Vue {
   }
 
   openUserPage() {
-    electron.remote.shell.openExternal(this.userPageURL);
+    remote.shell.openExternal(this.userPageURL);
   }
 
   get loginHelpTipDismissable() {

@@ -6,6 +6,9 @@ jest.mock('services/i18n', () => ({
   $t: (x: any) => x,
 }));
 jest.mock('util/menus/Menu', () => ({}));
+jest.mock('@electron/remote', () => ({
+  BrowserWindow: jest.fn(),
+}));
 
 afterEach(() => {
   fetchMock.reset();
@@ -86,11 +89,11 @@ test('wrapResultはbodyがJSONでなければSyntaxErrorをwrapして返す', as
   const res = await fetch(dummyURL);
 
   await expect(NicoliveClient.wrapResult(res)).resolves.toMatchInlineSnapshot(`
-Object {
-  "ok": false,
-  "value": [SyntaxError: Unexpected token i in JSON at position 0],
-}
-`);
+    {
+      "ok": false,
+      "value": [SyntaxError: Unexpected token 'i', "invalid json" is not valid JSON],
+    }
+  `);
   expect(fetchMock.done()).toBe(true);
 });
 
@@ -258,11 +261,11 @@ test('fetchCommunityはbodyがJSONでなければSyntaxErrorをwrapして返す'
   const result = client.fetchCommunity(communityID);
 
   await expect(result).resolves.toMatchInlineSnapshot(`
-Object {
-  "ok": false,
-  "value": [SyntaxError: Unexpected token i in JSON at position 0],
-}
-`);
+    {
+      "ok": false,
+      "value": [SyntaxError: Unexpected token 'i', "invalid json" is not valid JSON],
+    }
+  `);
   expect(fetchMock.done()).toBe(true);
 });
 
@@ -308,13 +311,13 @@ function setupMock() {
     browserWindow: null,
     openExternal,
   };
-  jest.doMock('electron', () => ({
-    remote: {
-      BrowserWindow,
-      shell: {
-        openExternal,
-      },
+  jest.doMock('@electron/remote', () => ({
+    BrowserWindow,
+    shell: {
+      openExternal,
     },
+  }));
+  jest.doMock('electron', () => ({
     ipcRenderer: {
       send() {},
     },

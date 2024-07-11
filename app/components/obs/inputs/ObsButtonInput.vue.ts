@@ -1,6 +1,7 @@
 import electron from 'electron';
 import { Component, Prop } from 'vue-property-decorator';
 import { IObsButtonInputValue, ObsInput, TObsType } from './ObsInput';
+import * as remote from '@electron/remote';
 
 @Component
 class ObsButtonInput extends ObsInput<IObsButtonInputValue> {
@@ -13,7 +14,7 @@ class ObsButtonInput extends ObsInput<IObsButtonInputValue> {
   handleClick() {
     if (this.value.type === 'NAIR_PROPERTY_LINK_BUTTON') {
       // リンクボタンをクリックしたら、ブラウザでリンクを直接開く
-      electron.remote.shell.openExternal(this.value.url);
+      remote.shell.openExternal(this.value.url);
       return;
     }
     this.emitInput({ ...this.value, value: true });

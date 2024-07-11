@@ -25,6 +25,7 @@ import { Subject } from 'rxjs';
 import Utils from '../utils';
 import { Source } from '../sources';
 import { CenteringAxis } from 'util/ScalableRectangle';
+import * as remote from '@electron/remote';
 
 /**
  * represents selection of active scene and provide shortcuts
@@ -108,8 +109,8 @@ export class SelectionService extends StatefulService<ISelectionState> {
     const last = this.getLastSelected();
     if (!last) return;
     const name = last.name;
-    electron.remote.dialog
-      .showMessageBox(electron.remote.getCurrentWindow(), {
+    remote.dialog
+      .showMessageBox(remote.getCurrentWindow(), {
         type: 'warning',
         message: $t('scenes.removeSceneConfirm', { sceneName: name }),
         buttons: [$t('common.cancel'), $t('common.ok')],

@@ -34,6 +34,7 @@ const { app, BrowserWindow, ipcMain, session, dialog, webContents, shell, crashR
   electron;
 const path = require('path');
 const rimraf = require('rimraf');
+const remote = require('@electron/remote/main');
 
 // We use a special cache directory for running tests
 if (process.env.NAIR_CACHE_DIR) {
@@ -77,6 +78,41 @@ async function showRequiredSystemComponentInstallGuideDialog() {
   app.exit(0);
 }
 
+async function recollectUserSessionCookie() {
+  // electron14->15でcookieがつかない
+  // 設定されるcookieのSameSite指定がないため unspecified となり
+  // 設定が無いためchromeがcookieをつけない(通信ログを見るとフィルタされている)
+  // cookieを直せば通るようなのでそのパッチ処理
+  console.log('recollectUserSessionCookie');
+  try {
+    const cookies = await electron.session.defaultSession.cookies.get({
+      domain: '.nicovideo.jp',
+      name: 'user_session', // 他のキーまでやるとNAIR_UNSTABLE=0で問題があるかもなので一旦必須だけ、状況に応じてで
+    });
+    if (!cookies || !cookies.length) return;
+
+    for (const cookie of cookies) {
+      if (cookie.sameSite === 'no_restriction') {
+        console.log(`no-need change cookie ${cookie.name}`);
+        continue;
+      }
+
+      let d = cookie.domain;
+      if (d[0] === '.') d = d.substring(1);
+
+      cookie.url = `https://${d}`; //nicovideo.jp';
+      cookie.sameSite = 'no_restriction';
+      cookie.httpOnly = true;
+      cookie.secure = true;
+
+      await electron.session.defaultSession.cookies.set(cookie);
+      console.log(`cookie changed ${JSON.stringify(cookie)}`);
+    }
+  } catch (e) {
+    console.log(`cookie error ${e.toString()}`);
+  }
+}
+
 // This ensures that only one copy of our app can run at once.
 const gotTheLock = app.requestSingleInstanceLock();
 
@@ -93,6 +129,8 @@ try {
     showRequiredSystemComponentInstallGuideDialog();
   });
 }
+
+remote.initialize();
 
 function initialize(crashHandler) {
   const fs = require('fs');
@@ -309,7 +347,9 @@ function initialize(crashHandler) {
   });
 
   // Windows
+  /** @type import('electron').BrowserWindow */
   let mainWindow;
+  /** @type import('electron').BrowserWindow */
   let childWindow;
 
   // Somewhat annoyingly, this is needed so that the child window
@@ -349,52 +389,52 @@ function initialize(crashHandler) {
     });
   }
 
-  if (pjson.env === 'production' || process.env.NAIR_REPORT_TO_SENTRY) {
-    const params = process.env.NAIR_UNSTABLE
-      ? { organization: 'o170115', project: '1546758', key: '7451aaa71b7640a69ee1d31d6fd9ef78' }
-      : { organization: 'o170115', project: '1246812', key: '35a02d8ebec14fd3aadc9d95894fabcf' };
+  const sentryDefs = require('./bundles/sentry-defs');
 
+  if (pjson.env === 'production' || process.env.NAIR_REPORT_TO_SENTRY) {
     process.on('uncaughtException', error => {
       console.log('uncaughtException', error);
       handleFinishedReport();
     });
 
-    const sentryDsn = `https://${params.key}@${params.organization}.ingest.sentry.io/${params.project}`;
-    const sentryMiniDumpURL = `https://${params.organization}.ingest.sentry.io/api/${params.project}/minidump/?sentry_key=${params.key}`;
-
-    console.log(`Sentry DSN: ${sentryDsn}`);
+    console.log(`Sentry DSN: ${sentryDefs.DSN}`);
     SentryElectron.init({
-      dsn: sentryDsn,
+      dsn: sentryDefs.DSN,
       release: process.env.NAIR_VERSION,
     });
 
     crashReporter.start({
       productName: 'n-air-app',
       companyName: 'n-air-app',
-      submitURL: sentryMiniDumpURL,
+      submitURL: sentryDefs.MINIDUMP_URL,
       extra: {
         version: process.env.NAIR_VERSION,
         processType: 'main',
       },
     });
+  } else {
+    console.log('Sentry disabled, SENTRY_DSN = ', sentryDefs.DSN);
   }
 
   // eslint-disable-next-line no-inner-declarations
   async function startApp() {
+    await recollectUserSessionCookie();
     const isDevMode = process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test';
     let crashHandlerLogPath = '';
     if (process.env.NODE_ENV !== 'production' || !!process.env.SLOBS_PREVIEW) {
       crashHandlerLogPath = app.getPath('userData');
     }
 
-    crashHandler.startCrashHandler(
-      app.getAppPath(),
-      process.env.NAIR_VERSION,
-      isDevMode.toString(),
-      crashHandlerLogPath,
-      process.IPC_UUID,
-    );
-    crashHandler.registerProcess(pid, false);
+    if (!process.env.DEV_SERVER) {
+      crashHandler.startCrashHandler(
+        app.getAppPath(),
+        process.env.NAIR_VERSION,
+        isDevMode.toString(),
+        crashHandlerLogPath,
+        process.IPC_UUID,
+      );
+      crashHandler.registerProcess(pid, false);
+    }
 
     const mainWindowState = windowStateKeeper({
       defaultWidth: 1600,
@@ -425,8 +465,14 @@ function initialize(crashHandler) {
             y: mainWindowState.y,
           }
         : {}),
-      webPreferences: { nodeIntegration: true, webviewTag: true },
+      webPreferences: {
+        nodeIntegration: true,
+        webviewTag: true,
+        contextIsolation: false,
+      },
     });
+
+    remote.enable(mainWindow.webContents);
 
     mainWindowState.manage(mainWindow);
 
@@ -438,11 +484,16 @@ function initialize(crashHandler) {
     const LOAD_DELAY = 2000;
     setTimeout(
       () => {
-        if (process.env.NAIR_PRODUCTION_DEBUG || process.env.DEV_SERVER) openDevTools();
+        if (process.env.NAIR_PRODUCTION_DEBUG) openDevTools();
         mainWindow.loadURL(`${global.indexUrl}?windowId=main`);
       },
       isDevMode ? LOAD_DELAY : 0,
     );
+    if (process.env.DEV_SERVER) {
+      mainWindow.webContents.on('did-finish-load', () => {
+        openDevTools();
+      });
+    }
 
     mainWindow.on('close', e => {
       if (!shutdownStarted) {
@@ -492,8 +543,13 @@ function initialize(crashHandler) {
       show: false,
       frame: false,
       backgroundColor: '#17242D', // これいる?
-      webPreferences: { nodeIntegration: true },
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false,
+      },
     });
+
+    remote.enable(childWindow.webContents);
 
     childWindow.removeMenu();
 
@@ -508,7 +564,7 @@ function initialize(crashHandler) {
       }
     });
 
-    if (isDevMode || process.env.NAIR_PRODUCTION_DEBUG) {
+    if (!process.env.DEV_SERVER && (isDevMode || process.env.NAIR_PRODUCTION_DEBUG)) {
       console.log('installing vue devtools extension...');
       const { default: installExtension, VUEJS_DEVTOOLS } = require('electron-devtools-installer');
       installExtension(VUEJS_DEVTOOLS)
@@ -566,15 +622,12 @@ function initialize(crashHandler) {
     });
 
     if (isDevMode) {
-      require('devtron').install();
-
+      // require('devtron').install();
       // Vue dev tools appears to cause strange non-deterministic
       // interference with certain NodeJS APIs, especially asynchronous
       // IO from the renderer process.  Enable at your own risk.
-
       // const devtoolsInstaller = require('electron-devtools-installer');
       // devtoolsInstaller.default(devtoolsInstaller.VUEJS_DEVTOOLS);
-
       // setTimeout(() => {
       //   openDevTools();
       // }, 10 * 1000);
@@ -801,5 +854,20 @@ function initialize(crashHandler) {
       // main window may be destroyed on shutdown
       mainWindow.send('showErrorAlert');
     }
+  });
+
+  ipcMain.on('webContents-enableRemote', (e, id) => {
+    const contents = webContents.fromId(id);
+    if (contents.isDestroyed()) return;
+    remote.enable(contents);
+    e.returnValue = null;
+  });
+
+  ipcMain.on('mainwindow-operation', (e, key, a, b) => {
+    e.returnValue = mainWindow[key](a, b);
+  });
+
+  ipcMain.handle('recollectUserSessionCookie', async () => {
+    await recollectUserSessionCookie();
   });
 }

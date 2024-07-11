@@ -4,6 +4,7 @@ import fs from 'fs';
 import https from 'https';
 import electron from 'electron';
 import { EFontStyle } from 'obs-studio-node';
+import * as remote from '@electron/remote';
 
 export interface IFamilyWithStyle {
   family: IFontFamily;
@@ -118,7 +119,7 @@ export class FontLibraryService extends Service {
   }
 
   private get fontsDirectory() {
-    return path.join(electron.remote.app.getPath('userData'), 'Fonts');
+    return path.join(remote.app.getPath('userData'), 'Fonts');
   }
 
   // Create a local font library path from a filename

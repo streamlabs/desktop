@@ -26,6 +26,7 @@ export class ProjectorService extends Service {
         width: 640,
         height: 400,
       },
+      resizable: true,
     });
   }
 }

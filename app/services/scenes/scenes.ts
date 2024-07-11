@@ -202,7 +202,7 @@ export class ScenesService extends StatefulService<IScenesState> {
         .reverse()
         .forEach(item => {
           const newItem = newScene.addSource(item.sourceId);
-          newItem.setSettings(item.getSettings());
+          if (newItem) newItem.setSettings(item.getSettings());
         });
     }
 

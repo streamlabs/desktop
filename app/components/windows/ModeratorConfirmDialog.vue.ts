@@ -5,7 +5,7 @@ import { WindowsService } from 'services/windows';
 import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
 import ModalLayout from '../ModalLayout.vue';
-import { remote } from 'electron';
+import * as remote from '@electron/remote';
 
 @Component({
   components: {

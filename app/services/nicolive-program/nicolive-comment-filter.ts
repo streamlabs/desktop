@@ -8,6 +8,7 @@ import { map, distinctUntilChanged } from 'rxjs/operators';
 import { NicoliveFailure } from './NicoliveFailure';
 import { WrappedChat } from './WrappedChat';
 import { Subject } from 'rxjs';
+import { isFakeMode } from 'util/fakeMode';
 
 interface INicoliveCommentFilterState {
   filters: FilterRecord[];
@@ -94,7 +95,7 @@ export class NicoliveCommentFilterService extends StatefulService<INicoliveComme
   }
 
   async deleteFilters(ids: number[]) {
-    if (process.env.DEV_SERVER) {
+    if (isFakeMode()) {
       return;
     }
 

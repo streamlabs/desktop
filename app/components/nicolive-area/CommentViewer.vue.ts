@@ -1,4 +1,4 @@
-import { clipboard, remote } from 'electron';
+import { clipboard } from 'electron';
 import { Inject } from 'services/core/injector';
 import { CustomizationService } from 'services/customization';
 import { ChatMessage } from 'services/nicolive-program/ChatMessage';
@@ -28,6 +28,7 @@ import {
 } from 'services/nicolive-program/NicoliveFailure';
 import { NicoliveModeratorsService } from 'services/nicolive-program/nicolive-moderators';
 import { HostsService } from 'services/hosts';
+import * as remote from '@electron/remote';
 
 const componentMap: { [type in ChatComponentType]: Vue.Component } = {
   common: CommonComment,

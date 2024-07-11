@@ -238,7 +238,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: fit-content;
+  width: 100%;
   padding: 8px;
   pointer-events: none;
   transform: translate(-50%, -50%);

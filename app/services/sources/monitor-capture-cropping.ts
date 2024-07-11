@@ -5,6 +5,7 @@ import { ISourcesServiceApi } from 'services/sources';
 import { StatefulService, mutation } from '../core/stateful-service';
 import { ScalableRectangle, ResizeBoxPoint } from 'util/ScalableRectangle';
 import { SceneItem } from '../scenes';
+import * as remote from '@electron/remote';
 
 interface IMonitorCaptureCroppingServiceState {
   sceneId: string | null;
@@ -44,7 +45,7 @@ export class MonitorCaptureCroppingService extends StatefulService<IMonitorCaptu
   }
 
   init() {
-    const screen = electron.remote.screen;
+    const screen = remote.screen;
     screen.on('display-added', () => this.endCropping());
     screen.on('display-metrics-changed', () => this.endCropping());
     screen.on('display-removed', () => this.endCropping());
@@ -59,7 +60,7 @@ export class MonitorCaptureCroppingService extends StatefulService<IMonitorCaptu
 
     const source = this.sourcesService.getSource(sourceId);
     const targetDisplayId = source.getSettings().monitor;
-    const displays = electron.remote.screen.getAllDisplays();
+    const displays = remote.screen.getAllDisplays();
     const display = displays[targetDisplayId];
     if (!display) {
       console.error('クロップ対象のソースが指定するモニタが存在しません');
@@ -111,7 +112,7 @@ export class MonitorCaptureCroppingService extends StatefulService<IMonitorCaptu
 
     const source = sceneItem.getSource();
     const targetDisplayId = source.getSettings().monitor;
-    const displays = electron.remote.screen.getAllDisplays();
+    const displays = remote.screen.getAllDisplays();
     const display = displays[targetDisplayId];
     if (!display) {
       console.error('クロップ対象のソースが指定するモニタが存在しません');

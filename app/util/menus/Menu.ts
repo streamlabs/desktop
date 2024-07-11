@@ -1,7 +1,7 @@
 // An abstraction on electron Menus
 
 import electron from 'electron';
-const { remote } = electron;
+import * as remote from '@electron/remote';
 
 export class Menu {
   menu: Electron.Menu;

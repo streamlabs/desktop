@@ -3,7 +3,7 @@
  * Also it skips the tests that should be run on an different CI agent in a parallel execution mode
  */
 
-import avaTest, { TestInterface } from 'ava';
+import avaTest, { TestFn } from 'ava';
 import { ITestContext } from './index';
 import { uniq } from 'lodash';
 const fs = require('fs');
@@ -56,7 +56,7 @@ const testTimings: Record<string, number> = (() => {
  * overridden version of the ava.test() function
  */
 // @ts-ignore typescript upgrade
-export const testFn: TestInterface<ITestContext> = new Proxy(avaTest, {
+export const testFn: TestFn<ITestContext> = new Proxy(avaTest, {
   apply: (target, thisArg, args) => {
     const testName = args[0];
     if (!isTestEligibleToRun(testName)) {

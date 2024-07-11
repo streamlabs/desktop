@@ -31,7 +31,7 @@ import VLCSourceIcon from '../../../media/images/play.svg';
 import SpeechEngineIcon from '../../../media/images/speech-engine.svg';
 import { NVoiceCharacterType, NVoiceCharacterTypes } from 'services/nvoice-character';
 import { omit } from 'lodash';
-import { remote } from 'electron';
+import * as remote from '@electron/remote';
 
 type TInspectableSource = TSourceType | NVoiceCharacterType;
 

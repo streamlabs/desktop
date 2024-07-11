@@ -1,7 +1,7 @@
 <template>
   <div class="program-info">
-    <div class="community-icon" :class="{ 'is-onAir': isOnAir }">
-      <img :src="communitySymbol" class="community-thumbnail" :alt="communityName" />
+    <div class="user-icon" :class="{ 'is-onAir': isOnAir }">
+      <img :src="userIcon" class="user-thumbnail" :alt="userName" />
     </div>
     <div class="program-info-description">
       <h1 class="program-title">
@@ -14,21 +14,6 @@
           {{ programTitle }}
         </a>
       </h1>
-      <h2 class="community-name">
-        <i
-          v-if="programIsMemberOnly"
-          class="icon-lock"
-          v-tooltip.bottom="programIsMemberOnlyTooltip"
-        ></i>
-        <a
-          :href="communityPageURL"
-          @click.prevent="openInDefaultBrowser($event)"
-          class="community-name-link link"
-          v-tooltip.bottom="communityName"
-        >
-          {{ communityName }}
-        </a>
-      </h2>
     </div>
     <popper
       trigger="click"
@@ -100,7 +85,7 @@
 .program-title {
   display: flex;
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: 0;
 }
 
 .program-title-link {
@@ -116,26 +101,7 @@
   margin-left: 16px;
 }
 
-.community-name {
-  display: flex;
-  align-items: center;
-  margin: 0;
-
-  .icon-lock {
-    margin-right: 8px;
-    font-size: @font-size1;
-    color: var(--color-text);
-  }
-}
-
-.community-name-link {
-  .text-ellipsis;
-
-  display: inline-block;
-  font-size: @font-size2;
-}
-
-.community-icon {
+.user-icon {
   position: relative;
   flex-shrink: 0;
   width: 40px;
@@ -144,7 +110,7 @@
   border: 2px solid var(--color-border-accent);
   border-radius: 50%;
 
-  .community-thumbnail {
+  .user-thumbnail {
     position: absolute;
     top: 50%;
     left: 50%;

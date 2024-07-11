@@ -55,6 +55,9 @@ beforeEach(() => {
   jest.mock('services/i18n', () => ({
     $t: (x: any) => x,
   }));
+  jest.mock('@electron/remote', () => ({
+    BrowserWindow: jest.fn(),
+  }));
 });
 
 afterEach(() => {

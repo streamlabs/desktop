@@ -5,6 +5,7 @@ import Util from 'services/utils';
 import { notes } from './notes';
 import { NavigationService } from 'services/navigation';
 import { Inject } from 'services/core/injector';
+import * as remote from '@electron/remote';
 
 interface IPatchNotesState {
   lastVersionSeen: string;
@@ -47,7 +48,7 @@ export class PatchNotesService extends PersistentStatefulService<IPatchNotesStat
     if (Util.isPreview()) return;
     if (Util.isIpc()) return;
 
-    const currentVersion = electron.remote.process.env.NAIR_VERSION;
+    const currentVersion = remote.process.env.NAIR_VERSION;
 
     // If the notes don't match the current version, we shouldn't
     // show them.

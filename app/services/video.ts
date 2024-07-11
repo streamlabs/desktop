@@ -10,8 +10,7 @@ import { Subscription } from 'rxjs';
 import { SelectionService } from 'services/selection';
 import { VideoSettingsService } from './settings-v2';
 import { InitAfter } from 'services/core';
-
-const { remote } = electron;
+import * as remote from '@electron/remote';
 
 const DISPLAY_ELEMENT_POLLING_INTERVAL = 500;
 

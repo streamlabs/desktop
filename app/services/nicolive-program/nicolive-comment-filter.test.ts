@@ -24,6 +24,10 @@ jest.mock('services/i18n', () => ({}));
 
 jest.mock('util/menus/Menu', () => ({}));
 
+jest.mock('@electron/remote', () => ({
+  BrowserWindow: jest.fn(),
+}));
+
 beforeEach(() => {
   jest.doMock('services/core/stateful-service');
   jest.doMock('services/core/injector');

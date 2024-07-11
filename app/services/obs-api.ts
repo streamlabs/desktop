@@ -3,7 +3,8 @@
 
 import { Service } from './core/service';
 import electron from 'electron';
-const { ipcRenderer, remote } = electron;
+const { ipcRenderer } = electron;
+import * as remote from '@electron/remote';
 export * from '../../obs-api';
 
 let idCounter = 0;

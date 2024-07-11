@@ -26,6 +26,7 @@ import {
   openErrorDialogFromFailure,
 } from 'services/nicolive-program/NicoliveFailure';
 import Popper from 'vue-popperjs';
+import * as remote from '@electron/remote';
 
 const componentMap: { [type in ChatComponentType]: Vue.Component } = {
   common: CommonComment,
@@ -272,10 +273,10 @@ export default class UserInfo extends Vue {
   }
 
   openUserPage() {
-    electron.remote.shell.openExternal(this.hostsService.getUserPageURL(this.userId));
+    remote.shell.openExternal(this.hostsService.getUserPageURL(this.userId));
   }
   copyUserId() {
-    electron.remote.clipboard.writeText(this.userId);
+    remote.clipboard.writeText(this.userId);
   }
 
   currentTab = 'konomi';

@@ -10,8 +10,8 @@
       "cwd": "${workspaceRoot}",
       "env": {
         "NAIR_UNSTABLE": "1",
-        "SLOBS_PRODUCTION_DEBUG": "true"
-      },
+        "NAIR_PRODUCTION_DEBUG": "true"
+      }
     },
     {
       "type": "chrome",

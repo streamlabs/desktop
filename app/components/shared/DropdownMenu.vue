@@ -20,7 +20,7 @@
 .popper.dropdown-menu {
   .popper-styling;
 
-  max-width: 240px;
+  width: 100%;
   max-height: 152px;
   overflow-y: auto;
 }
@@ -28,6 +28,7 @@
 .dropdown-menu__toggle {
   display: flex;
   align-items: center;
+  width: 100%;
   overflow: hidden;
   font-size: @font-size4;
   color: var(--color-text);

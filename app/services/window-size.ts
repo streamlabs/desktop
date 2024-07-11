@@ -1,4 +1,4 @@
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, ipcRenderer } from 'electron';
 import { BehaviorSubject } from 'rxjs';
 import { Inject } from './core/injector';
 import { mutation, StatefulService } from './core/stateful-service';
@@ -34,6 +34,21 @@ type BackupSizeInfo = {
   backupHeight: number;
   maximized: boolean;
 };
+
+const MWOpKey = 'mainwindow-operation';
+class MainWindowOperation {
+  getPosition = (): number[] => ipcRenderer.sendSync(MWOpKey, 'getPosition');
+  setPosition = (a: number, b: number) => ipcRenderer.sendSync(MWOpKey, 'setPosition', a, b);
+  getSize = (): number[] => ipcRenderer.sendSync(MWOpKey, 'getSize');
+  setSize = (a: number, b: number) => ipcRenderer.sendSync(MWOpKey, 'setSize', a, b);
+  getMinimumSize = (): number[] => ipcRenderer.sendSync(MWOpKey, 'getMinimumSize');
+  setMinimumSize = (a: number, b: number) => ipcRenderer.sendSync(MWOpKey, 'setMinimumSize', a, b);
+  setMaximumSize = (a: number, b: number) => ipcRenderer.sendSync(MWOpKey, 'setMaximumSize', a, b);
+  isMaximized = (): boolean => ipcRenderer.sendSync(MWOpKey, 'isMaximized');
+  maximize = () => ipcRenderer.sendSync(MWOpKey, 'maximize');
+  unmaximize = () => ipcRenderer.sendSync(MWOpKey, 'unmaximize');
+  setMaximizable = (a: boolean) => ipcRenderer.sendSync(MWOpKey, 'setMaximizable', a);
+}
 
 export class WindowSizeService extends StatefulService<IWindowSizeState> {
   @Inject() windowsService: WindowsService;
@@ -125,7 +140,7 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
     const nextPanelState = WindowSizeService.getPanelState(nextState);
     if (nextPanelState !== null && prevPanelState !== nextPanelState) {
       const newSize = WindowSizeService.updateWindowSize(
-        this.windowsService.getWindow('main'),
+        new MainWindowOperation(),
         prevPanelState,
         nextPanelState,
         {
@@ -156,7 +171,7 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
   };
 
   static updateWindowSize(
-    win: BrowserWindow,
+    win: MainWindowOperation,
     prevState: PanelState,
     nextState: PanelState,
     sizeState: BackupSizeInfo | undefined,
@@ -236,7 +251,7 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
     }
 
     win.setMinimumSize(nextMinWidth, minHeight);
-    win.setMaximumSize(nextMaxWidth, 0);
+    win.setMaximumSize(nextMaxWidth, 16384); // 0では作用しなくなったので変更
     if (nextWidth !== width || nextHeight !== height) {
       win.setSize(nextWidth, nextHeight);
     }

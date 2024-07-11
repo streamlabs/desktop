@@ -7,6 +7,7 @@ import path from 'path';
 import electron from 'electron';
 import { FileManagerService } from 'services/file-manager';
 import { Inject } from 'services/core/injector';
+import * as remote from '@electron/remote';
 
 interface ISceneCollectionsManifest {
   activeId: string;
@@ -198,7 +199,7 @@ export class SceneCollectionsStateService extends StatefulService<ISceneCollecti
   }
 
   get collectionsDirectory() {
-    return path.join(electron.remote.app.getPath('userData'), 'SceneCollections');
+    return path.join(remote.app.getPath('userData'), 'SceneCollections');
   }
 
   getCollectionFilePath(id: string) {

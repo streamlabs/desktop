@@ -18,6 +18,7 @@ import Studio from '../pages/Studio.vue';
 import SideNav from '../SideNav.vue';
 import StudioFooter from '../StudioFooter.vue';
 import TitleBar from '../TitleBar.vue';
+import * as remote from '@electron/remote';
 
 @Component({
   components: {
@@ -40,7 +41,7 @@ export default class Main extends Vue {
   @Inject() scenesService: ScenesService;
 
   mounted() {
-    electron.remote.getCurrentWindow().show();
+    remote.getCurrentWindow().show();
     WindowSizeService.instance; // manage compact mode
   }
 

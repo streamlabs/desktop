@@ -310,6 +310,16 @@
       "RecSplitFile": {
         "name": "自動ファイル分割"
       },
+      "RecSplitFileType": {
+        "Time": "時間による分割",
+        "Size": "サイズによる分割",
+        "Manual": "手動"
+      },
+      "RecSplitFileTime": { "name": "分割する時間(分)" },
+      "RecSplitFileResetTimestamps": {
+        "name": "各分割ファイルの先頭でタイムスタンプをリセットする"
+      },
+
       "MuxerCustom": {
         "name": "@:settings.Output.Recording.RecMuxerCustom.name"
       },

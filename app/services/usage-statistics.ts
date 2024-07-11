@@ -7,6 +7,7 @@ import { SynthesizerSelector } from './nicolive-program/state';
 import { UuidService } from './uuid';
 import { EncoderType } from './settings/optimizer';
 import { UserService } from './user';
+import * as remote from '@electron/remote';
 
 function randomCharacters(len: number): string {
   const buf = randomBytes(len);
@@ -113,7 +114,7 @@ export class UsageStatisticsService extends Service {
   @Inject() hostsService: HostsService;
   @Inject() uuidService: UuidService;
 
-  version = electron.remote.process.env.NAIR_VERSION;
+  version = remote.process.env.NAIR_VERSION;
 
   init() {}
 
