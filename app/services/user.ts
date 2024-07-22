@@ -21,6 +21,7 @@ import { OnboardingService } from './onboarding';
 import { UuidService } from './uuid';
 import { addClipboardMenu } from 'util/addClipboardMenu';
 import * as remote from '@electron/remote';
+import { FakeUserAuth, isFakeMode } from 'util/fakeMode';
 
 // Eventually we will support authing multiple platforms at once
 interface IUserServiceState {
@@ -225,6 +226,13 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   }) {
     const service = getPlatformService(platform);
     console.log('startAuth service = ' + JSON.stringify(service));
+    if (isFakeMode()) {
+      this.login(service, FakeUserAuth).then(() => {
+        onAuthFinish();
+        onAuthClose();
+      });
+      return;
+    }
 
     const authWindow = new remote.BrowserWindow({
       ...service.authWindowOptions,

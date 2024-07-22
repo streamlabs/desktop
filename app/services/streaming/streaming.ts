@@ -559,6 +559,8 @@ export class StreamingService
   startReplayBuffer() {
     if (this.state.replayBufferStatus !== EReplayBufferState.Offline) return;
 
+    this.windowsService.closeChildWindow();
+
     try {
       Sentry.addBreadcrumb({
         category: 'obs',

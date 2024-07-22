@@ -380,7 +380,7 @@ function initialize(crashHandler) {
     dialog.showErrorBox(
       '予期せぬエラー',
       '予期しないエラーが発生したため、アプリケーションをシャットダウンします。ご不便をおかけして申し訳ありません。\n' +
-      'この件に関する情報はデバッグ目的で送信されました。不具合を解決するためにご協力いただきありがとうございます。',
+        'この件に関する情報はデバッグ目的で送信されました。不具合を解決するためにご協力いただきありがとうございます。',
     );
 
     // ダイアログが閉じたら終了
@@ -425,14 +425,16 @@ function initialize(crashHandler) {
       crashHandlerLogPath = app.getPath('userData');
     }
 
-    crashHandler.startCrashHandler(
-      app.getAppPath(),
-      process.env.NAIR_VERSION,
-      isDevMode.toString(),
-      crashHandlerLogPath,
-      process.IPC_UUID,
-    );
-    crashHandler.registerProcess(pid, false);
+    if (!process.env.DEV_SERVER) {
+      crashHandler.startCrashHandler(
+        app.getAppPath(),
+        process.env.NAIR_VERSION,
+        isDevMode.toString(),
+        crashHandlerLogPath,
+        process.IPC_UUID,
+      );
+      crashHandler.registerProcess(pid, false);
+    }
 
     const mainWindowState = windowStateKeeper({
       defaultWidth: 1600,
@@ -459,9 +461,9 @@ function initialize(crashHandler) {
       title: process.env.NAIR_PRODUCT_NAME,
       ...(mainWindowIsVisible
         ? {
-          x: mainWindowState.x,
-          y: mainWindowState.y,
-        }
+            x: mainWindowState.x,
+            y: mainWindowState.y,
+          }
         : {}),
       webPreferences: {
         nodeIntegration: true,
@@ -482,11 +484,16 @@ function initialize(crashHandler) {
     const LOAD_DELAY = 2000;
     setTimeout(
       () => {
-        if (process.env.NAIR_PRODUCTION_DEBUG || process.env.DEV_SERVER) openDevTools();
+        if (process.env.NAIR_PRODUCTION_DEBUG) openDevTools();
         mainWindow.loadURL(`${global.indexUrl}?windowId=main`);
       },
       isDevMode ? LOAD_DELAY : 0,
     );
+    if (process.env.DEV_SERVER) {
+      mainWindow.webContents.on('did-finish-load', () => {
+        openDevTools();
+      });
+    }
 
     mainWindow.on('close', e => {
       if (!shutdownStarted) {
@@ -557,7 +564,7 @@ function initialize(crashHandler) {
       }
     });
 
-    if (isDevMode || process.env.NAIR_PRODUCTION_DEBUG) {
+    if (!process.env.DEV_SERVER && (isDevMode || process.env.NAIR_PRODUCTION_DEBUG)) {
       console.log('installing vue devtools extension...');
       const { default: installExtension, VUEJS_DEVTOOLS } = require('electron-devtools-installer');
       installExtension(VUEJS_DEVTOOLS)

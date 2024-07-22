@@ -37,6 +37,7 @@ import { NicoliveCommentSynthesizerService } from './nicolive-comment-synthesize
 import { NicoliveProgramStateService } from './state';
 import { NicoliveModeratorsService } from './nicolive-moderators';
 import { FilterRecord } from './ResponseTypes';
+import { isFakeMode } from 'util/fakeMode';
 
 function makeEmulatedChat(
   content: string,
@@ -241,7 +242,7 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
     // 予約番組は30分前にならないとURLが来ない
     if (!roomURL || !roomThreadID) return;
 
-    if (process.env.DEV_SERVER) {
+    if (isFakeMode()) {
       // yarn dev 時はダミーでコメントを5秒ごとに出し続ける
       this.client = new DummyMessageServerClient();
     } else {
