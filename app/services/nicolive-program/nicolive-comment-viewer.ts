@@ -48,6 +48,7 @@ import {
   isStateMessage,
 } from './ChatMessage/util';
 import { MessageResponse } from './ChatMessage';
+import { method } from 'lodash';
 
 function makeEmulatedChat(
   content: string,
@@ -447,7 +448,82 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
     }
   }
 
+  async restApiSend(item: WrappedMessageWithComponent) {
+    if (!(item.type === 'normal' || item.type === 'operator')) return;
+
+    const value = item.value;
+    if (!value || !value.content) return;
+
+    const restApi = this.nicoliveProgramStateService.state.restApi;
+    if (!restApi || !restApi.method) return;
+
+    const param: { [name: string]: string } = {
+      id: item.value.id ?? new Date().toISOString(),
+      comment: item.value.content ?? 'no', //new Date().toDateString(),
+      isOwner: item.type === 'operator' ? 'true' : 'false',
+    };
+
+    const url = encodeURI(restApi.url.replace(/%(\w+)%/g, (m, p) => param[p] ?? ''));
+    const method = restApi.method.toUpperCase();
+    const arg: { [name: string]: any } = {};
+    arg.method = method;
+    if (method === 'POST' || method === 'PUT') {
+      arg.headers = { 'Content-Type': 'application/json' };
+      arg.body = restApi.body.replace(/%(\w+)%/g, (m, p) => param[p] ?? '');
+    }
+
+    const response = await fetch(url, arg);
+    console.log(response);
+    const result = await response.json();
+    console.log(result);
+
+    //     // value{content,id?,date name?
+    //     // seqId
+
+    //     //        value.value;
+    //     const data = `
+    // {"service": {
+    //   "id": "c1194546-fd8f-41ac-b630-a4729f06896b",
+    //   "name": "nair",
+    //   "write": false,
+    //   "speech": false,
+    //   "persist": false
+    //  },
+    //  "comment": {
+    //   "id": "%id%",
+    //   "userId": "unique-user-id",
+    //   "name": "nair",
+    //   "badges": [],
+    //   "profileImage": "",
+    //   "comment": "%comment%",
+    //   "hasGift": false,
+    //   "isOwner": %isOwner%,
+    //   "timestamp": 0
+    // }}`;
+
+    //     // "service": {"id": "c1194546-fd8f-41ac-b630-a4729f06896b"},
+    //     // "comment": {"id": "%id%",  "comment": "%comment%"}
+    //     // }`;
+
+    //     const b = data.replace(/%(\w+)%/g, (m, p) => param[p] ?? '');
+    //     console.log(b);
+
+    //     const response = await fetch('http://localhost:11180/api/comments', {
+    //       method: 'POST',
+    //       headers: { 'Content-Type': 'application/json' },
+    //       body: b,
+    //     });
+    //     console.log(response);
+    //     console.log(await response.json());
+  }
+
   private onMessage(values: WrappedMessageWithComponent[]) {
+    console.log('--on message');
+    console.log(values);
+    console.log(JSON.stringify(values, null, 2));
+
+    values.forEach(a => this.restApiSend(a));
+
     const maxQueueToSpeak = 3; // 直近3件つづ読み上げ対象にする
     const recentSeconds = 60;
 

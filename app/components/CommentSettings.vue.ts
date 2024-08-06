@@ -137,4 +137,23 @@ export default class CommentSettings extends Vue {
   set showAnonymous(v: boolean) {
     this.nicoliveCommentLocalFilterService.showAnonymous = v;
   }
+
+  get restApiMethod() {
+    return this.nicoliveProgramStateService.state.restApi.method;
+  }
+  set restApiMethod(method: string) {
+    this.nicoliveProgramStateService.updateRestApi({ method });
+  }
+  get restApiUrl() {
+    return this.nicoliveProgramStateService.state.restApi.url;
+  }
+  set restApiUrl(url: string) {
+    this.nicoliveProgramStateService.updateRestApi({ url });
+  }
+  get restApiBody() {
+    return this.nicoliveProgramStateService.state.restApi.body;
+  }
+  set restApiBody(body: string) {
+    this.nicoliveProgramStateService.updateRestApi({ body });
+  }
 }

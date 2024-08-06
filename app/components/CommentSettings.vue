@@ -188,6 +188,10 @@
         </div>
       </div>
     </div>
+
+    method <input type="text" v-model="restApiMethod" /><br />
+    url <input type="text" v-model="restApiUrl" /><br />
+    body(json) <textarea rows="5" v-model="restApiBody"></textarea><br />
   </div>
 </template>
 

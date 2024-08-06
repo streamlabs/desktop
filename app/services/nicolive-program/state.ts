@@ -26,12 +26,19 @@ type NameplateHintState = {
   commentNo: number;
 };
 
+type RestApiState = {
+  method: string;
+  url: string;
+  body: string;
+};
+
 interface IState {
   autoExtensionEnabled: boolean;
   panelOpened: boolean;
   speechSynthesizerSettings?: SpeechSynthesizerSettingsState;
   nameplateHint?: NameplateHintState;
   nameplateEnabled: boolean;
+  restApi: RestApiState;
 }
 
 /**
@@ -42,6 +49,7 @@ export class NicoliveProgramStateService extends PersistentStatefulService<IStat
     autoExtensionEnabled: false,
     panelOpened: true,
     nameplateEnabled: true,
+    restApi: { method: '', url: '', body: '' },
   };
 
   private subject: Subject<IState> = new BehaviorSubject<IState>(this.state);
@@ -65,6 +73,11 @@ export class NicoliveProgramStateService extends PersistentStatefulService<IStat
 
   updateNameplateEnabled(newState?: boolean): void {
     this.setState({ nameplateEnabled: newState });
+  }
+
+  updateRestApi(a: Partial<RestApiState>) {
+    const ra = { ...this.state.restApi, ...a };
+    this.setState({ restApi: ra });
   }
 
   private setState(nextState: Partial<IState>): void {
