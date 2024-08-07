@@ -5,8 +5,9 @@ import { MessageResponse } from './ChatMessage';
 import type { IMessageServerClient } from './MessageServerClient';
 import { NdgrFetchError } from './NdgrFetchError';
 import { FilterRecord } from './ResponseTypes';
-import { isWrappedChat, WrappedChatWithComponent } from './WrappedChat';
+import { WrappedChatWithComponent } from './WrappedChat';
 import { NicoliveModeratorsService } from './nicolive-moderators';
+import type { NicoliveProgramStateService } from './state';
 
 type NicoliveCommentViewerService =
   import('./nicolive-comment-viewer').NicoliveCommentViewerService;
@@ -38,6 +39,13 @@ const setup = createSetupFunction({
     NicoliveProgramService: {
       hidePlaceholder() {},
     },
+    NicoliveProgramStateService: {
+      state: {
+        httpRelation: {
+          method: '',
+        },
+      } as NicoliveProgramStateService['state'],
+    },
   },
 });
 
@@ -61,6 +69,9 @@ jest.mock('services/windows', () => ({
 }));
 jest.mock('services/customization', () => ({
   CustomizationService: {},
+}));
+jest.mock('services/nicolive-program/state', () => ({
+  NicoliveProgramStateService: {},
 }));
 
 beforeEach(() => {
