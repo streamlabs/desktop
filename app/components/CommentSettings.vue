@@ -189,9 +189,27 @@
       </div>
     </div>
 
-    method <input type="text" v-model="restApiMethod" /><br />
-    url <input type="text" v-model="restApiUrl" /><br />
-    body(json) <textarea rows="5" v-model="restApiBody"></textarea><br />
+    <div class="section">
+      <div class="input-label section-heading">
+        <label>HTTP連携設定</label>
+      </div>
+      <div>
+        method
+        <multiselect
+          v-model="httpRelationMethodModel"
+          :options="httpRelationMethodList"
+          label="description"
+          trackBy="value"
+          :allow-empty="false"
+        />
+        <div>url <input type="text" v-model="httpRelationUrl" /></div>
+        <div>body(json) <textarea rows="3" v-model="httpRelationBody"></textarea></div>
+        <div>
+          <button class="button button--secondary" @click="testHttpRelation()">テスト</button>
+          詳細は<a href="https://github.com/n-air-app/n-air-app" target="_blank">こちら</a>を参照
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 

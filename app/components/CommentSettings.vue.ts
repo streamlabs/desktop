@@ -11,6 +11,7 @@ import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
 import VueSlider from 'vue-slider-component';
 import Multiselect from 'vue-multiselect';
+import HttpRelation from 'services/nicolive-program/httpRelation';
 
 @Component({
   components: {
@@ -138,22 +139,36 @@ export default class CommentSettings extends Vue {
     this.nicoliveCommentLocalFilterService.showAnonymous = v;
   }
 
-  get restApiMethod() {
-    return this.nicoliveProgramStateService.state.restApi.method;
+  get httpRelationMethodModel() {
+    const value = this.nicoliveProgramStateService.state.httpRelation.method;
+    const vk = this.httpRelationMethodList.find(a => a.value === value);
+    return vk ?? this.httpRelationMethodList[0];
   }
-  set restApiMethod(method: string) {
-    this.nicoliveProgramStateService.updateRestApi({ method });
+
+  set httpRelationMethodModel(p: { value: string; description: string }) {
+    this.nicoliveProgramStateService.updateHttpRelation({ method: p.value });
   }
-  get restApiUrl() {
-    return this.nicoliveProgramStateService.state.restApi.url;
+  get httpRelationUrl() {
+    return this.nicoliveProgramStateService.state.httpRelation.url;
   }
-  set restApiUrl(url: string) {
-    this.nicoliveProgramStateService.updateRestApi({ url });
+  set httpRelationUrl(url: string) {
+    this.nicoliveProgramStateService.updateHttpRelation({ url });
   }
-  get restApiBody() {
-    return this.nicoliveProgramStateService.state.restApi.body;
+  get httpRelationBody() {
+    return this.nicoliveProgramStateService.state.httpRelation.body;
   }
-  set restApiBody(body: string) {
-    this.nicoliveProgramStateService.updateRestApi({ body });
+  set httpRelationBody(body: string) {
+    this.nicoliveProgramStateService.updateHttpRelation({ body });
+  }
+
+  httpRelationMethodList = [
+    { value: '', description: '---' },
+    { value: 'GET', description: 'GET' },
+    { value: 'POST', description: 'POST' },
+    { value: 'PUT', description: 'PUT' },
+  ];
+
+  testHttpRelation() {
+    HttpRelation.sendTest(this.nicoliveProgramStateService.state.httpRelation);
   }
 }
