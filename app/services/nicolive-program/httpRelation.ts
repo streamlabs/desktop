@@ -52,6 +52,8 @@ export default class HttpRelation {
     }
 
     const response = await fetch(url, arg);
-    const result = await response.json();
+    if (!response.ok) {
+      console.warn(`Failed to send chat: ${response.status} ${response.statusText}`);
+    }
   }
 }
