@@ -496,7 +496,7 @@ export class NicoliveClient {
         } else if (!NicoliveClient.isAllowedURL(url)) {
           Sentry.withScope(scope => {
             scope.setLevel('warning');
-            scope.setExtra('url', url);
+            scope.setTag('url', url);
             scope.setFingerprint(['createProgram', 'did-navigate', url]);
             Sentry.captureMessage('createProgram did-navigate to unexpected URL');
           });
@@ -570,7 +570,7 @@ export class NicoliveClient {
         } else if (!NicoliveClient.isAllowedURL(url)) {
           Sentry.withScope(scope => {
             scope.setLevel('warning');
-            scope.setExtra('url', url);
+            scope.setTag('url', url);
             scope.setTag('programID', programID);
             scope.setFingerprint(['editProgram', 'did-navigate', url]);
             Sentry.captureMessage('editProgram did-navigate to unexpected URL');
