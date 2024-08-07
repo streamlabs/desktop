@@ -194,14 +194,15 @@
         <label>HTTP連携設定</label>
       </div>
       <div>
-        method
-        <multiselect
-          v-model="httpRelationMethodModel"
-          :options="httpRelationMethodList"
-          label="description"
-          trackBy="value"
-          :allow-empty="false"
-        />
+        <div>
+          method
+          <select v-model="httpRelationMethod">
+            <option value="">---</option>
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+            <option value="PUT">PUT</option>
+          </select>
+        </div>
         <div>url <input type="text" v-model="httpRelationUrl" /></div>
         <div>body(json) <textarea rows="3" v-model="httpRelationBody"></textarea></div>
         <div>
@@ -218,7 +219,10 @@
 @import url('../styles/index');
 
 select {
-  margin: 0;
+  font-size: @font-size4;
+  color: var(--color-text);
+  background: var(--color-input-bg);
+  border-radius: 4px;
 }
 
 .section-heading {

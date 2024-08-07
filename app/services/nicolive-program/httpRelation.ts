@@ -19,7 +19,7 @@ export default class HttpRelation {
       comment: item.value.content ?? '---',
       isOwner: item.type === 'operator' ? 'true' : 'false',
       userId: item.value.user_id ?? '-',
-      name: item.value.name ?? '774',
+      name: item.value.name ?? '',
     };
 
     await this.send(param, httpRelation);
@@ -31,16 +31,12 @@ export default class HttpRelation {
       comment: 'テストコメントです',
       isOwner: 'false',
       userId: '-',
-      name: '774',
+      name: 'test',
     };
     await this.send(param, httpRelation);
   }
 
   private static async send(param: SendParam, httpRelation: HttpRelationState) {
-    console.log(httpRelation);
-    console.log(JSON.stringify(httpRelation));
-    console.log(param);
-
     if (!httpRelation || !httpRelation.method) return;
 
     const url = httpRelation.url.replace(/{(\w+)}/g, (m, p: keyof SendParam) =>
@@ -55,11 +51,7 @@ export default class HttpRelation {
       arg.body = httpRelation.body.replace(/{(\w+)}/g, (m, p: keyof SendParam) => param[p] ?? '');
     }
 
-    console.log(url);
-    console.log(arg);
     const response = await fetch(url, arg);
-    console.log(response);
     const result = await response.json();
-    console.log(result);
   }
 }

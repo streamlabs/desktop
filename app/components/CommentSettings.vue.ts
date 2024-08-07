@@ -139,14 +139,11 @@ export default class CommentSettings extends Vue {
     this.nicoliveCommentLocalFilterService.showAnonymous = v;
   }
 
-  get httpRelationMethodModel() {
-    const value = this.nicoliveProgramStateService.state.httpRelation.method;
-    const vk = this.httpRelationMethodList.find(a => a.value === value);
-    return vk ?? this.httpRelationMethodList[0];
+  get httpRelationMethod() {
+    return this.nicoliveProgramStateService.state.httpRelation.method;
   }
-
-  set httpRelationMethodModel(p: { value: string; description: string }) {
-    this.nicoliveProgramStateService.updateHttpRelation({ method: p.value });
+  set httpRelationMethod(method: string) {
+    this.nicoliveProgramStateService.updateHttpRelation({ method });
   }
   get httpRelationUrl() {
     return this.nicoliveProgramStateService.state.httpRelation.url;
@@ -160,13 +157,6 @@ export default class CommentSettings extends Vue {
   set httpRelationBody(body: string) {
     this.nicoliveProgramStateService.updateHttpRelation({ body });
   }
-
-  httpRelationMethodList = [
-    { value: '', description: '---' },
-    { value: 'GET', description: 'GET' },
-    { value: 'POST', description: 'POST' },
-    { value: 'PUT', description: 'PUT' },
-  ];
 
   testHttpRelation() {
     HttpRelation.sendTest(this.nicoliveProgramStateService.state.httpRelation);
