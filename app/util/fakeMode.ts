@@ -5,6 +5,10 @@ export function isFakeMode(): boolean {
   return !!process.env.DEV_SERVER || !!process.env.NAIR_FAKE_PROGRAM;
 }
 
+export const FakeModeConfig = {
+  dummyComment: true,
+};
+
 export const FakeUserAuth: IPlatformAuth = {
   apiToken: 'fake',
   platform: {

@@ -13,6 +13,7 @@ export const chatComponentTypeMap: {
   system: 'system',
   info: 'system',
   unknown: 'system',
+  gameUpdate: 'system',
   'n-air-emulated': 'system',
   // コンポーネントに届く前にフィルタされて表示されないが念のため対応させておく
   invisible: 'system',

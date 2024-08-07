@@ -3,7 +3,12 @@ import { Inject } from 'services/core/injector';
 import { CustomizationService } from 'services/customization';
 import { ChatMessage } from 'services/nicolive-program/ChatMessage';
 import { ChatComponentType } from 'services/nicolive-program/ChatMessage/ChatComponentType';
-import { WrappedChat, WrappedChatWithComponent } from 'services/nicolive-program/WrappedChat';
+import {
+  WrappedChat,
+  WrappedChatWithComponent,
+  WrappedMessage,
+  WrappedMessageWithComponent,
+} from 'services/nicolive-program/WrappedChat';
 import { getContentWithFilter } from 'services/nicolive-program/getContentWithFilter';
 import { NicoliveCommentFilterService } from 'services/nicolive-program/nicolive-comment-filter';
 import { NicoliveCommentViewerService } from 'services/nicolive-program/nicolive-comment-viewer';
@@ -97,10 +102,10 @@ export default class CommentViewer extends Vue {
     scrollEl.scrollTop = scrollEl.scrollHeight;
   }
 
-  pin(item: WrappedChatWithComponent | null): void {
+  pin(item: WrappedMessageWithComponent | null): void {
     if (!item || item.type === 'normal') {
       this.nicoliveCommentViewerService.pinComment(null);
-      if (item) {
+      if (item && item.type === 'normal') {
         this.$nextTick(() => {
           this.nicoliveCommentViewerService.pinComment(
             item && {
@@ -116,7 +121,7 @@ export default class CommentViewer extends Vue {
     }
   }
 
-  get pinnedItem(): WrappedChat | null {
+  get pinnedItem(): WrappedMessage | null {
     const item = this.pinnedComment;
     return (
       item && {
@@ -132,7 +137,7 @@ export default class CommentViewer extends Vue {
     );
   }
 
-  getDisplayName(item: WrappedChat): string {
+  getDisplayName(item: WrappedMessage): string {
     return getDisplayName(item);
   }
 
@@ -173,8 +178,8 @@ export default class CommentViewer extends Vue {
     };
   }
 
-  commentMenuTarget: WrappedChatWithComponent | null = null;
-  showCommentMenu(item: WrappedChatWithComponent) {
+  commentMenuTarget: WrappedMessageWithComponent | null = null;
+  showCommentMenu(item: WrappedMessageWithComponent) {
     if (!(item.type === 'normal' || item.type === 'operator')) {
       return;
     }
@@ -220,7 +225,7 @@ export default class CommentViewer extends Vue {
             .addFilter({
               type: 'user',
               body: item.value.user_id,
-              messageId: `${item.value.no}`,
+              messageId: `${item.value.id}`,
               memo: item.value.content,
             })
             .catch(e => {

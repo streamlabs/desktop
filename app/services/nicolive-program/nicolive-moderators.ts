@@ -14,7 +14,7 @@ import { NicoliveProgramService } from './nicolive-program';
 interface INicoliveModeratorsService {
   // moderator の userId 集合
   moderatorsCache: string[];
-  roomURL: string;
+  viewUri: string;
 }
 
 export class NicoliveModeratorsService extends StatefulService<INicoliveModeratorsService> {
@@ -28,7 +28,7 @@ export class NicoliveModeratorsService extends StatefulService<INicoliveModerato
 
   static initialState: INicoliveModeratorsService = {
     moderatorsCache: [],
-    roomURL: '',
+    viewUri: '',
   };
 
   private stateChangeSubject = new Subject<typeof this.state>();
@@ -45,19 +45,16 @@ export class NicoliveModeratorsService extends StatefulService<INicoliveModerato
 
     this.nicoliveProgramService.stateChange
       .pipe(
-        map(({ roomURL, roomThreadID, moderatorViewUri }) => ({
-          roomURL,
-          roomThreadID,
+        map(({ viewUri, moderatorViewUri }) => ({
+          viewUri,
           moderatorViewUri,
         })),
-        distinctUntilChanged(
-          (prev, curr) => prev.roomURL === curr.roomURL && prev.roomThreadID === curr.roomThreadID,
-        ),
+        distinctUntilChanged((prev, curr) => prev.viewUri === curr.viewUri),
       )
       .subscribe(state => {
-        if (state.roomURL !== this.state.roomURL) {
-          this.setState({ roomURL: state.roomURL, moderatorsCache: [] });
-          if (state.roomURL) {
+        if (state.viewUri !== this.state.viewUri) {
+          this.setState({ viewUri: state.viewUri, moderatorsCache: [] });
+          if (state.viewUri) {
             this.fetchModerators()
               .then(() => {
                 const url = state.moderatorViewUri || process.env.NDGR_SERVER;
@@ -73,7 +70,7 @@ export class NicoliveModeratorsService extends StatefulService<INicoliveModerato
                 }
               });
           } else {
-            this.patchState({ roomURL: '' });
+            this.patchState({ viewUri: '' });
           }
         }
       });

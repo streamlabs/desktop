@@ -60,7 +60,13 @@ export class PatchNotesService extends PersistentStatefulService<IPatchNotesStat
     this.SET_LAST_VERSION_SEEN(currentVersion);
 
     // Only show the actual patch notes if they weren't onboarded
-    if (!onboarded) this.navigationService.navigate('PatchNotes');
+    if (!onboarded) {
+      // ここですぐ遷移してしまうと起動時の studio の vue-sliderの非同期処理が途中なため例外が発生する。
+      // それを回避するため setTimeoutで遅延させる
+      setTimeout(() => {
+        this.navigationService.navigate('PatchNotes');
+      }, 0);
+    }
   }
 
   get notes() {

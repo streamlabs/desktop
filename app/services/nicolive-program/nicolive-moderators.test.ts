@@ -117,8 +117,7 @@ describe('NicoliveModeratorsService', () => {
     expect(fetchModerators).toHaveBeenCalledTimes(0);
     expect(connect).toHaveBeenCalledTimes(0);
     const next: ObserveType<typeof stateChange> = {
-      roomURL: 'https://example.com',
-      roomThreadID: '175622',
+      viewUri: 'https://example.com',
       moderatorViewUri: 'https://example.com',
     };
     stateChange.next(next);

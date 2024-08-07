@@ -1,7 +1,7 @@
 import { QueueRunner } from 'util/QueueRunner';
 import { createSetupFunction } from 'util/test-setup';
 import type { ICommentSynthesizerState, Speech } from './nicolive-comment-synthesizer';
-import { WrappedChat } from './WrappedChat';
+import { isWrappedChat, WrappedChat, WrappedMessage } from './WrappedChat';
 
 type NicoliveCommentSynthesizerService =
   import('./nicolive-comment-synthesizer').NicoliveCommentSynthesizerService;
@@ -54,6 +54,28 @@ const mockedState: ICommentSynthesizerState = {
   },
 };
 
+test('makeSpeechText', async () => {
+  setup();
+  const { NicoliveCommentSynthesizerService } = require('./nicolive-comment-synthesizer');
+  const instance = NicoliveCommentSynthesizerService.instance as NicoliveCommentSynthesizerService;
+  expect(
+    instance.makeSpeechText({ type: 'normal', value: { content: 'test' }, seqId: 1 }, 'webSpeech'),
+  ).toBe('test');
+
+  const gift: WrappedMessage = {
+    type: 'gift',
+    value: {
+      advertiserName: 'advertiserName',
+      point: 100,
+      itemName: 'itemName',
+    },
+    seqId: 1,
+  } as const;
+  expect(instance.makeSpeechText(gift, 'webSpeech')).toBe(
+    `${gift.value.advertiserName}さんが「${gift.value.itemName}（${gift.value.point}pt）」を贈りました`,
+  );
+});
+
 test('makeSpeech', async () => {
   setup();
   const { NicoliveCommentSynthesizerService } = require('./nicolive-comment-synthesizer');
@@ -64,7 +86,9 @@ test('makeSpeech', async () => {
   // 辞書変換しない
   jest
     .spyOn(instance, 'makeSpeechText')
-    .mockImplementation((chat: WrappedChat) => chat.value.content);
+    .mockImplementation(
+      (chat: WrappedMessage) => (isWrappedChat(chat) && chat.value.content) || '',
+    );
 
   const makeChat = (s: string): WrappedChat => ({
     type: 'normal',

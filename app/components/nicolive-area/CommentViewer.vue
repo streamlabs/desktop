@@ -32,7 +32,7 @@
           :getFormattedLiveTime="getFormattedLiveTime"
           :commentMenuOpened="commentMenuTarget === item"
           :speaking="speakingSeqId === item.seqId"
-          :nameplateHint="item.value.no === nameplateHintNo"
+          :nameplateHint="nameplateHintNo && item.value.no === nameplateHintNo"
           @pinned="pin(item)"
           @commentMenu="showCommentMenu(item)"
           @commentUser="showUserInfo(item)"

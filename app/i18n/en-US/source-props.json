@@ -475,6 +475,14 @@
     "song": {
       "name": "Enable song mode",
       "description": "Enable if you want to song"
+    },
+    "value": {
+      "male": "male",
+      "female": "female",
+      "low": "low",
+      "high": "high",
+      "normal": "normal",
+      "none": "none"
     }
   },
   "vlc_source": {

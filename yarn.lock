@@ -1592,12 +1592,12 @@
     rollup-plugin-typescript2 "^0.34.1"
     typescript "^4.9.5"
 
-"@n-air-app/nicolive-comment-protobuf@^0.0.3":
-  version "0.0.3"
-  resolved "https://npm.pkg.github.com/download/@n-air-app/nicolive-comment-protobuf/0.0.3/47edab01a8904d6a25618c61556829527da1ced1#47edab01a8904d6a25618c61556829527da1ced1"
-  integrity sha512-wZ4UUQbkGvo7rMxnnHG8iXSKqOENBxANJ5Pe3B9Zz62XqpbSkUFRAv8T6CqDD3L+MbpwjeH/meCyFbVU8okwew==
+"@n-air-app/nicolive-comment-protobuf@2024.801.103927":
+  version "2024.801.103927"
+  resolved "https://npm.pkg.github.com/download/@n-air-app/nicolive-comment-protobuf/2024.801.103927/d7f86b60c812cbeb5f84a8ea4ade0344ddfc1183#d7f86b60c812cbeb5f84a8ea4ade0344ddfc1183"
+  integrity sha512-YHxejvH/dYsuGxV2dbbLrduXhvb32fUEEYm8vX9eN1Q1TqR9GVLaeCuNzIkSmRfW+IZBCfLOGixT98Xw2P+vnA==
   dependencies:
-    protobufjs "^7.2.6"
+    protobufjs "^7.3.2"
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
@@ -10513,7 +10513,7 @@ property-expr@^1.5.0:
   resolved "https://registry.yarnpkg.com/property-expr/-/property-expr-1.5.1.tgz#22e8706894a0c8e28d58735804f6ba3a3673314f"
   integrity sha512-CGuc0VUTGthpJXL36ydB6jnbyOf/rAHFvmVrJlH+Rg0DqqLFQGAP6hIaxD/G0OAmBJPhXDHuEJigrp0e0wFV6g==
 
-protobufjs@^7.2.6:
+protobufjs@^7.3.2:
   version "7.3.2"
   resolved "https://registry.yarnpkg.com/protobufjs/-/protobufjs-7.3.2.tgz#60f3b7624968868f6f739430cfbc8c9370e26df4"
   integrity sha512-RXyHaACeqXeqAKGLDl68rQKbmObRsTIn4TYVUUug1KfS47YWCo5MacGITEryugIgZqORCvJWEk4l449POg5Txg==

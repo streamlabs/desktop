@@ -3,8 +3,11 @@ import { Subject } from 'rxjs';
 import { jest_fn, type ObserveType } from 'util/jest_fn';
 import { sleep } from 'util/sleep';
 import { createSetupFunction } from 'util/test-setup';
-import type { MessageResponse } from './MessageServerClient';
+import { MessageResponse } from './ChatMessage';
+import type { IMessageServerClient } from './MessageServerClient';
+import { NdgrFetchError } from './NdgrFetchError';
 import { FilterRecord } from './ResponseTypes';
+import { WrappedChatWithComponent } from './WrappedChat';
 import { NicoliveModeratorsService } from './nicolive-moderators';
 
 type NicoliveCommentViewerService =
@@ -80,14 +83,13 @@ afterEach(() => {
 
 test('接続先情報が来たら接続する', async () => {
   const stateChange = new Subject();
-  const clientSubject = new Subject();
-  jest.doMock('./MessageServerClient', () => ({
-    ...(jest.requireActual('./MessageServerClient') as {}),
-    MessageServerClient: class MessageServerClient {
+  const clientSubject = new Subject<MessageResponse>();
+  jest.doMock('./NdgrCommentReceiver', () => ({
+    ...(jest.requireActual('./NdgrCommentReceiver') as {}),
+    NdgrCommentReceiver: class NdgrCommentReceiver {
       connect() {
         return clientSubject;
       }
-      requestLatestMessages() {}
     },
   }));
   setup({ injectee: { NicoliveProgramService: { stateChange } } });
@@ -97,20 +99,18 @@ test('接続先情報が来たら接続する', async () => {
 
   expect(clientSubject.observers).toHaveLength(0);
   expect(stateChange.observers).toHaveLength(1);
-  stateChange.next({ roomURL: 'https://example.com', roomThreadID: '175622' });
-  await sleep(0);
-  expect(clientSubject.observers).toHaveLength(2);
+  stateChange.next({ viewUri: 'https://example.com' });
+  expect(clientSubject.observers).toHaveLength(1);
 });
 
 test('接続先情報が欠けていたら接続しない', () => {
   const stateChange = new Subject();
-  const clientSubject = new Subject();
-  jest.doMock('./MessageServerClient', () => ({
-    MessageServerClient: class MessageServerClient {
+  const clientSubject = new Subject<MessageResponse>();
+  jest.doMock('./NdgrCommentReceiver', () => ({
+    NdgrCommentReceiver: class NdgrCommentReceiver {
       connect() {
         return clientSubject;
       }
-      requestLatestMessages() {}
     },
   }));
   setup({ injectee: { NicoliveProgramService: { stateChange } } });
@@ -120,21 +120,20 @@ test('接続先情報が欠けていたら接続しない', () => {
 
   expect(clientSubject.observers).toHaveLength(0);
   expect(stateChange.observers).toHaveLength(1);
-  stateChange.next({ roomURL: 'https://example.com' });
+  stateChange.next({ viewUri: '' });
   expect(clientSubject.observers).toHaveLength(0);
 });
 
-test('/disconnectが流れてきたらunsubscribeする', async () => {
+test('status=endedが流れてきたらunsubscribeする', () => {
   const stateChange = new Subject();
-  const clientSubject = new Subject();
-  jest.doMock('./MessageServerClient', () => {
+  const clientSubject = new Subject<MessageResponse>();
+  jest.doMock('./NdgrCommentReceiver', () => {
     return {
-      ...(jest.requireActual('./MessageServerClient') as {}),
-      MessageServerClient: class MessageServerClient {
+      ...(jest.requireActual('./NdgrCommentReceiver') as {}),
+      NdgrCommentReceiver: class NdgrCommentReceiver {
         connect() {
           return clientSubject;
         }
-        requestLatestMessages() {}
       },
     };
   });
@@ -148,16 +147,11 @@ test('/disconnectが流れてきたらunsubscribeする', async () => {
 
   expect(clientSubject.observers).toHaveLength(0);
   expect(unsubscribe).toHaveBeenCalledTimes(0);
-  stateChange.next({ roomURL: 'https://example.com', roomThreadID: '175622' });
-  await sleep(0);
-  expect(clientSubject.observers).toHaveLength(2);
+  stateChange.next({ viewUri: 'https://example.com' });
+  expect(clientSubject.observers).toHaveLength(1);
   expect(unsubscribe).toHaveBeenCalledTimes(1);
 
-  // 通常コメントではunsubscribeしない
-  clientSubject.next({ chat: { premium: 1, content: '/disconnect' } });
-  expect(unsubscribe).toHaveBeenCalledTimes(1);
-
-  clientSubject.next({ chat: { premium: 2, content: '/disconnect' } });
+  clientSubject.next({ state: { state: 'ended' } });
   expect(unsubscribe).toHaveBeenCalledTimes(2);
 });
 
@@ -168,13 +162,13 @@ function connectionSetup() {
   const stateChange = new Subject();
   const clientSubject = new Subject<MessageResponse>();
   const refreshObserver = new Subject<ObserveType<NicoliveModeratorsService['refreshObserver']>>();
-  jest.doMock('./MessageServerClient', () => ({
-    ...(jest.requireActual('./MessageServerClient') as {}),
-    MessageServerClient: class MessageServerClient {
+  jest.doMock('./NdgrCommentReceiver', () => ({
+    ...(jest.requireActual('./NdgrCommentReceiver') as {}),
+    NdgrCommentReceiver: class NdgrCommentReceiver implements IMessageServerClient {
       connect() {
         return clientSubject;
       }
-      requestLatestMessages() {}
+      close() {}
     },
   }));
   setup({
@@ -203,7 +197,7 @@ function connectionSetup() {
   const { NicoliveCommentViewerService } = require('./nicolive-comment-viewer');
   const instance = NicoliveCommentViewerService.instance as NicoliveCommentViewerService;
 
-  stateChange.next({ roomURL: 'https://example.com', roomThreadID: '175622' });
+  stateChange.next({ viewUri: 'https://example.com' });
 
   return {
     instance,
@@ -289,12 +283,20 @@ test('chatメッセージはstateに最新100件保持し、あふれた物がpo
   clientSubject.complete();
 
   expect(instance.state.messages.length).toEqual(retainSize);
-  expect(instance.state.messages[0].value.content).toEqual(chats[overflow]);
-  expect(instance.state.messages[retainSize - numberOfSystemMessages - 1].value.content).toEqual(
-    chats[chats.length - 1],
-  );
+  expect(instance.state.messages[0].type).toEqual('normal');
+  if (instance.state.messages[0].type === 'normal') {
+    expect(instance.state.messages[0].value.content).toEqual(chats[overflow]);
+  }
+  const last = instance.state.messages[retainSize - numberOfSystemMessages - 1];
+  expect(last.type).toEqual('normal');
+  if (last.type === 'normal') {
+    expect(last.value.content).toEqual(chats[chats.length - 1]);
+  }
   expect(instance.state.popoutMessages.length).toEqual(overflow);
-  expect(instance.state.popoutMessages[0].value.content).toEqual(chats[0]);
+  expect(instance.state.popoutMessages[0].type).toEqual('normal');
+  if (instance.state.popoutMessages[0].type === 'normal') {
+    expect(instance.state.popoutMessages[0].value.content).toEqual(chats[0]);
+  }
 });
 
 test('接続エラー時にメッセージを表示する', async () => {
@@ -338,47 +340,10 @@ test('スレッドの参加失敗時にメッセージを表示する', async ()
   const { instance, clientSubject } = connectionSetup();
   await sleep(0);
 
-  clientSubject.next({
-    thread: {
-      resultcode: 1,
-    },
-  });
-
-  // bufferTime tweaks
-  clientSubject.complete();
-
-  expect(instance.state.messages).toMatchInlineSnapshot(`
-    [
-      {
-        "component": "system",
-        "seqId": 0,
-        "type": "n-air-emulated",
-        "value": {
-          "content": "コメントの取得に失敗しました",
-          "date": 1582175622,
-        },
-      },
-      {
-        "component": "system",
-        "seqId": 1,
-        "type": "n-air-emulated",
-        "value": {
-          "content": "サーバーとの接続が終了しました",
-          "date": 1582175622,
-        },
-      },
-    ]
-  `);
-});
-
-test('スレッドからの追い出し発生時にメッセージを表示する', async () => {
-  jest.spyOn(Date, 'now').mockImplementation(() => 1582175622000);
-  const { instance, clientSubject } = connectionSetup();
-  await sleep(0);
-
-  clientSubject.next({
-    leave_thread: {},
-  });
+  const e = new NdgrFetchError(404, 'yay');
+  expect(e instanceof NdgrFetchError).toBeTruthy();
+  expect(e.name).toBe('NdgrFetchError');
+  clientSubject.error(new NdgrFetchError(404, 'yay'));
 
   // bufferTime tweaks
   clientSubject.complete();
@@ -476,7 +441,11 @@ test('モデレーターによるSSNG追加・削除がきたらシステムメ�
 
   expect(instance.state.messages.length).toEqual(tests.length + 1);
   for (const [i, test] of tests.entries()) {
-    expect(instance.state.messages[i].value.content).toEqual(test.message);
+    const message = instance.state.messages[i];
+    expect(message.type).toEqual('n-air-emulated');
+    if (message.type === 'n-air-emulated') {
+      expect(message.value.content).toEqual(test.message);
+    }
   }
 });
 
@@ -504,9 +473,13 @@ test('refreshModeratorsがきたらコメントのモデレーター情報を更
         user_id: NOT_MODERATOR_ID,
       },
     },
-  ];
-  expect(instance.state.messages[0].isModerator).toBeFalsy();
-  expect(instance.state.messages[1].isModerator).toBeTruthy();
+  ] as WrappedChatWithComponent[];
+
+  {
+    const messages = instance.state.messages as WrappedChatWithComponent[];
+    expect(messages[0].isModerator).toBeFalsy();
+    expect(messages[1].isModerator).toBeTruthy();
+  }
 
   refreshObserver.next({
     event: 'refreshModerators',
@@ -515,8 +488,11 @@ test('refreshModeratorsがきたらコメントのモデレーター情報を更
   // bufferTime tweaks
   clientSubject.complete();
 
-  expect(instance.state.messages[0].isModerator).toBeTruthy();
-  expect(instance.state.messages[1].isModerator).toBeFalsy();
+  {
+    const messages = instance.state.messages as WrappedChatWithComponent[];
+    expect(messages[0].isModerator).toBeTruthy();
+    expect(messages[1].isModerator).toBeFalsy();
+  }
 });
 
 describe('startUpdateSupporters', () => {
@@ -548,27 +524,27 @@ describe('startUpdateSupporters', () => {
 
   test('最初は即時にサポーター情報を更新する', async () => {
     const { instance, update } = prepare();
-    expect(update).toBeCalledTimes(0);
+    expect(update).toHaveBeenCalledTimes(0);
     instance.startUpdateSupporters(INTERVAL, closer);
 
-    expect(update).toBeCalledTimes(1);
+    expect(update).toHaveBeenCalledTimes(1);
     closer.next();
   });
 
   test('サポーター情報を定期的に更新する', async () => {
     const { instance, update } = prepare();
     instance.startUpdateSupporters(INTERVAL, closer);
-    expect(update).toBeCalledTimes(1);
+    expect(update).toHaveBeenCalledTimes(1);
 
     clock.tick(INTERVAL);
-    expect(update).toBeCalledTimes(2);
+    expect(update).toHaveBeenCalledTimes(2);
 
     clock.tick(INTERVAL);
-    expect(update).toBeCalledTimes(3);
+    expect(update).toHaveBeenCalledTimes(3);
 
     closer.next();
     // 止めた後は進まなくなる
     clock.tick(INTERVAL);
-    expect(update).toBeCalledTimes(3);
+    expect(update).toHaveBeenCalledTimes(3);
   });
 });

@@ -1,55 +1,43 @@
+import { NotificationType } from '../ChatMessage';
 import { classify } from './classifier';
 
-function make(content: string) {
-  return { premium: 0b11, content };
-}
-
 test('通常コメント', () => {
-  expect(classify({ content: 'comment' })).toBe('normal');
+  expect(classify({ chat: { content: 'comment' } })).toBe('normal');
 });
 
 test('プレミアム会員の通常コメント', () => {
-  expect(classify({ premium: 1, content: 'comment' })).toBe('normal');
+  expect(classify({ chat: { premium: 1, content: 'comment' } })).toBe('normal');
 });
 
 test('放送者コメント', () => {
-  expect(classify(make('comment'))).toBe('operator');
-});
-
-test('固定表示の放送者コメント', () => {
-  expect(classify(make('/perm comment'))).toBe('operator');
+  expect(classify({ operator: { content: 'comment' } })).toBe('operator');
 });
 
 test('ニコニ広告', () => {
-  expect(classify(make('/nicoad ...args'))).toBe('nicoad');
+  expect(classify({ nicoad: { v0: {} } })).toBe('nicoad');
+  expect(classify({ nicoad: { v1: {} } })).toBe('nicoad');
 });
 
 test('ギフト', () => {
-  expect(classify(make('/gift ...args'))).toBe('gift');
+  expect(classify({ gift: {} })).toBe('gift');
 });
 
 test('エモーション', () => {
-  expect(classify(make('/emotion ...args'))).toBe('emotion');
+  expect(classify({ notification: { type: 'emotion', message: 'args' } })).toBe('emotion');
 });
 
-test('info', () => {
-  expect(classify(make('/info 1 ...args'))).toBe('info');
-  expect(classify(make('/info 2 ...args'))).toBe('invisible');
-  expect(classify(make('/info 3 ...args'))).toBe('info');
-  expect(classify(make('/info 4 ...args'))).toBe('info');
-  expect(classify(make('/info 5 ...args'))).toBe('info');
-  expect(classify(make('/info 6 ...args'))).toBe('info');
-});
+test.each<NotificationType>(['programExtended', 'rankingIn', 'rankingUpdated', 'visited'])(
+  'info: %s',
+  type => {
+    expect(classify({ notification: { type, message: '' } })).toBe('info');
+  },
+);
 
-test('system', () => {
-  expect(classify(make('/spi ...args'))).toBe('system');
-  expect(classify(make('/quote ...args'))).toBe('system');
-  expect(classify(make('/cruise ...args'))).toBe('system');
+test.each<NotificationType>(['ichiba', 'quote', 'cruise'])(`system: %s`, type => {
+  expect(classify({ notification: { type, message: '' } })).toBe('system');
 });
 
 test('invisible', () => {
-  expect(classify(make('/disconnect'))).toBe('invisible');
-  expect(classify(make('/vote'))).toBe('invisible');
-  expect(classify(make('/coe'))).toBe('invisible');
-  expect(classify(make('/uadpoint'))).toBe('invisible');
+  expect(classify({ state: { state: 'ended' } })).toBe('invisible');
+  expect(classify({ signal: 'flushed' })).toBe('invisible');
 });

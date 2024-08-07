@@ -65,10 +65,6 @@ export class HostsService extends Service {
     return `https://www.nicovideo.jp/user/${userId}`;
   }
 
-  getCommunityPageURL(communityID: string): string {
-    return `https://com.nicovideo.jp/community/${communityID}`;
-  }
-
   getContentTreeURL(programID: string): string {
     return `https://commons.nicovideo.jp/tree/${programID}`;
   }

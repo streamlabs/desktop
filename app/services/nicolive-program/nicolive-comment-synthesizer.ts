@@ -11,7 +11,7 @@ import { ISpeechSynthesizer } from './speech/ISpeechSynthesizer';
 import { NVoiceSynthesizer } from './speech/NVoiceSynthesizer';
 import { WebSpeechSynthesizer } from './speech/WebSpeechSynthesizer';
 import { NicoliveProgramStateService, SynthesizerId, SynthesizerSelector } from './state';
-import { WrappedChat } from './WrappedChat';
+import { WrappedMessage } from './WrappedChat';
 
 export type Speech = {
   text: string;
@@ -108,18 +108,21 @@ export class NicoliveCommentSynthesizerService extends StatefulService<ICommentS
 
   private dictionary = new ParaphraseDictionary();
 
-  makeSpeechText(chat: WrappedChat, engine: SynthesizerId): string {
-    if (!chat.value || !chat.value.content) {
+  makeSpeechText(chat: WrappedMessage, engine: SynthesizerId): string {
+    if (!chat.value) {
       return '';
     }
     const text = getDisplayText(AddComponent(chat));
+    if (!text) {
+      return '';
+    }
 
     const converted = this.dictionary.process(text, engine);
 
     return converted;
   }
 
-  private selectSpeechSynthesizer(chat: WrappedChat): SynthesizerSelector {
+  private selectSpeechSynthesizer(chat: WrappedMessage): SynthesizerSelector {
     switch (chat.type) {
       case 'normal':
         return this.state.selector.normal;
@@ -130,7 +133,7 @@ export class NicoliveCommentSynthesizerService extends StatefulService<ICommentS
     }
   }
 
-  makeSpeech(chat: WrappedChat, synthId?: SynthesizerSelector): Speech | null {
+  makeSpeech(chat: WrappedMessage, synthId?: SynthesizerSelector): Speech | null {
     const synthesizer = synthId || this.selectSpeechSynthesizer(chat);
     if (synthesizer === 'ignore') {
       return null;

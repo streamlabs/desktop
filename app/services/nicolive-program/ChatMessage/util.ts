@@ -1,27 +1,19 @@
-import { ChatMessage } from '../ChatMessage';
-
-function checkPremiumBit(premiumBit: number | undefined, checkBit: number): boolean {
-  return premiumBit !== undefined && Boolean(premiumBit & checkBit);
-}
+import {
+  ChatMessage,
+  GameUpdateMessage,
+  GiftMessage,
+  MessageResponse,
+  NicoadMessage,
+  NicoadMessageV0,
+  NicoadMessageV1,
+  NotificationMessage,
+  OperatorMessage,
+  SignalMessage,
+  StateMessage,
+} from '../ChatMessage';
 
 export function isPremium(chat: ChatMessage): boolean {
-  return checkPremiumBit(chat.premium, 0b1);
-}
-
-export function isOperator(chat: ChatMessage): boolean {
-  return checkPremiumBit(chat.premium, 0b10) || checkPremiumBit(chat.premium, 0b100);
-}
-
-function isCommandContent(chat: ChatMessage): boolean {
-  return Boolean(chat.content?.startsWith('/'));
-}
-
-export function isOperatorCommand(chat: ChatMessage): boolean {
-  return isOperator(chat) && isCommandContent(chat);
-}
-
-export function isOperatorComment(chat: ChatMessage): boolean {
-  return isOperator(chat) && !isCommandContent(chat);
+  return !!chat.premium;
 }
 
 export function isAnonymous(chat: ChatMessage): boolean {
@@ -32,106 +24,46 @@ export function getScore(chat: ChatMessage): number {
   return chat.score ?? 0;
 }
 
-export function parseCommandName(chat: ChatMessage): string {
-  const matched = (chat.content ?? '').match(/^\/(\S+)\s*/);
-  return matched && matched[1] ? matched[1] : '';
+export function isChatMessage(msg: MessageResponse): msg is { chat: ChatMessage } {
+  return msg.hasOwnProperty('chat');
 }
 
-export function parseCommandArgument(chat: ChatMessage): string {
-  const matched = (chat.content ?? '').match(/^\/\S+\s+(.+)/);
-  return matched && matched[1] ? matched[1] : '';
+export function isOperatorMessage(msg: MessageResponse): msg is { operator: OperatorMessage } {
+  return msg.hasOwnProperty('operator');
 }
 
-export function parseJsonContent(chat: ChatMessage): { commandName: string; value: any } | null {
-  const content = chat.content ?? '';
-  const matched = content.match(/(\S+)\s+(.+)/);
-  if (matched && matched.length > 2) {
-    const [, commandName, maybeJsonArg] = matched;
-    try {
-      const parsed = JSON.parse(maybeJsonArg);
-      if (typeof parsed === 'object') {
-        return {
-          commandName,
-          value: parsed,
-        };
-      }
-    } catch (err) {}
-  }
-  return null;
+export function isNotificationMessage(
+  msg: MessageResponse,
+): msg is { notification: NotificationMessage } {
+  return msg.hasOwnProperty('notification');
 }
 
-enum ParseState {
-  init,
-  reading,
-  readingEsc,
-  quoted,
-  quotedEsc,
+export function isGiftMessage(msg: MessageResponse): msg is { gift: GiftMessage } {
+  return msg.hasOwnProperty('gift');
 }
 
-const SPACES = [' ', '\t'];
+export function isNicoadMessage(msg: MessageResponse): msg is { nicoad: NicoadMessage } {
+  return msg.hasOwnProperty('nicoad');
+}
 
-export function parseContent(chat: ChatMessage): { commandName: string; values: string[] } {
-  const content = chat.content ?? '';
-  const values = [];
-  let currentStr = '';
+export function isNicoadMessageV0(msg: NicoadMessage): msg is NicoadMessageV0 {
+  return msg.hasOwnProperty('v0');
+}
 
-  let state: ParseState = ParseState.init;
+export function isNicoadMessageV1(msg: NicoadMessage): msg is NicoadMessageV1 {
+  return msg.hasOwnProperty('v1');
+}
 
-  for (const char of content) {
-    switch (state) {
-      case ParseState.init:
-        if (SPACES.includes(char)) {
-          state = ParseState.init;
-        } else if (char === '"') {
-          state = ParseState.quoted;
-        } else if (char === '\\') {
-          state = ParseState.readingEsc;
-        } else {
-          state = ParseState.reading;
-          currentStr += char;
-        }
-        break;
-      case ParseState.reading:
-        if (SPACES.includes(char)) {
-          values.push(currentStr);
-          currentStr = '';
-          state = ParseState.init;
-        } else if (char === '\\') {
-          state = ParseState.readingEsc;
-        } else {
-          currentStr += char;
-        }
-        break;
-      case ParseState.readingEsc:
-        currentStr += char;
-        state = ParseState.reading;
-        break;
-      case ParseState.quoted:
-        if (char === '"') {
-          values.push(currentStr);
-          currentStr = '';
-          state = ParseState.init;
-        } else if (char === '\\') {
-          state = ParseState.quotedEsc;
-        } else {
-          currentStr += char;
-        }
-        break;
-      case ParseState.quotedEsc:
-        currentStr += char;
-        state = ParseState.quoted;
-        break;
-    }
-  }
+export function isGameUpdateMessage(
+  msg: MessageResponse,
+): msg is { gameUpdate: GameUpdateMessage } {
+  return msg.hasOwnProperty('gameUpdate');
+}
 
-  if (currentStr.length > 0) {
-    values.push(currentStr);
-  }
+export function isStateMessage(msg: MessageResponse): msg is { state: StateMessage } {
+  return msg.hasOwnProperty('state');
+}
 
-  const commandName = values[0].startsWith('/') ? values.shift() : '';
-
-  return {
-    commandName,
-    values,
-  };
+export function isSignalMessage(msg: MessageResponse): msg is { signal: SignalMessage } {
+  return msg.hasOwnProperty('signal');
 }

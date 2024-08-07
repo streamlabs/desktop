@@ -1,16 +1,5 @@
 import { ChatMessage } from '../ChatMessage';
-import {
-  isPremium,
-  isOperator,
-  isOperatorCommand,
-  isOperatorComment,
-  isAnonymous,
-  getScore,
-  parseCommandName,
-  parseCommandArgument,
-  parseJsonContent,
-  parseContent,
-} from './util';
+import { isPremium, isAnonymous, getScore } from './util';
 
 const mockBase = {
   content: 'yay',
@@ -46,32 +35,6 @@ test('isPremium', () => {
   expect(isPremium(standardWithoutPremium)).toBe(false);
 });
 
-test('isOperator', () => {
-  expect(isOperator(yugi)).toBe(true);
-  expect(isOperator(staff)).toBe(true);
-  expect(isOperator(yugiAndStaff)).toBe(true);
-  expect(isOperator(operatorCommand)).toBe(true);
-  expect(isOperator(operatorComment)).toBe(true);
-
-  expect(isOperator(standard)).toBe(false);
-  expect(isOperator(standardWithoutPremium)).toBe(false);
-  expect(isOperator(premium)).toBe(false);
-});
-
-test('isOperatorCommand', () => {
-  expect(isOperatorCommand(operatorCommand)).toBe(true);
-
-  expect(isOperatorCommand(operatorComment)).toBe(false);
-  expect(isOperatorCommand(nonOperatorChat)).toBe(false);
-});
-
-test('isOperatorComment', () => {
-  expect(isOperatorComment(operatorComment)).toBe(true);
-
-  expect(isOperatorComment(operatorCommand)).toBe(false);
-  expect(isOperatorComment(nonOperatorChat)).toBe(false);
-});
-
 test('isAnonymous', () => {
   expect(isAnonymous(anonymous)).toBe(true);
 
@@ -82,44 +45,4 @@ test('getScore', () => {
   expect(getScore(scored)).toBe(-500);
   expect(getScore(anonymous)).toBe(0);
   expect(getScore(nonOperatorChat)).toBe(0);
-});
-
-test('parseCommandName', () => {
-  expect(parseCommandName(standard)).toBe('');
-  expect(parseCommandName(operatorCommand)).toBe('vote');
-});
-
-test('parseCommandArgument', () => {
-  expect(parseCommandArgument(standard)).toBe('');
-  expect(parseCommandArgument(operatorCommand)).toBe('stop');
-});
-
-test('parseJsonContent', () => {
-  expect(parseJsonContent(standard)).toBeNull;
-  expect(parseJsonContent(jsonContent)).toEqual({ commandName: '/type', value: { value: true } });
-});
-
-test('parseContent', () => {
-  expect(parseContent(operatorCommand)).toEqual({ commandName: '/vote', values: ['stop'] });
-  expect(parseContent(textContent)).toEqual({
-    commandName: '/type',
-    values: ['some', 'message', 'values'],
-  });
-  expect(
-    parseContent({
-      content: '[header] "quo ted" [trailer]',
-    }).values,
-  ).toEqual(['[header]', 'quo ted', '[trailer]']);
-
-  expect(
-    parseContent({
-      content: '[header] \\"esc aped [trailer]',
-    }).values,
-  ).toEqual(['[header]', '"esc', 'aped', '[trailer]']);
-
-  expect(
-    parseContent({
-      content: '[header] "\\"esc aped value" [trailer]',
-    }).values,
-  ).toEqual(['[header]', '"esc aped value', '[trailer]']);
 });

@@ -98,7 +98,7 @@ N Air はオープンソースであり、どなたでも開発に参加でき�
 ## バグ報告
 
 - フィードバックへのリンク
-  - <https://secure.nicovideo.jp/form/entry/n_air_feedback>
+  - <https://form.nicovideo.jp/forms/n_air_feedback>
 - issue
   - <https://github.com/n-air-app/n-air-app/issues>
 

@@ -35,7 +35,7 @@ export interface ProgramInfo {
   };
   data: {
     /** 番組の状態 */
-    status: 'test' | 'onAir' | 'end';
+    status: 'test' | 'onAir' | 'end' | 'reserved';
     /** 番組の配信者に関係する情報 */
     socialGroup:
       | {
@@ -62,16 +62,8 @@ export interface ProgramInfo {
         };
     /** コメントのルーム */
     rooms: {
-      /** 部屋ID */
-      id: number;
-      /** 部屋名 */
-      name: string;
-      /** コメントサーバーの接続先(WebSocket) */
-      webSocketUri: string;
-      /** コメントサーバーの接続先(XmlSocket) */
-      xmlSocketUri: string;
-      /** スレッドID */
-      threadId: string;
+      /** コメントサーバーの接続先(Ndgr) View URL */
+      viewUri: string;
     }[];
     /** 番組タイトル */
     title: string;
@@ -157,34 +149,6 @@ export interface NicoadStatistics {
       text: string;
       url: string;
     }[];
-  };
-}
-
-export interface Community {
-  // 使用しそうなものだけ雑に抜粋
-  id: string; // eg. '1'
-  global_id: string; // eg. 'co123'
-  name: string;
-  description: string;
-  public: 'open' | 'closed';
-  icon: {
-    id: number;
-    url: {
-      size_128x128: string;
-      size_64x64: string;
-    };
-  };
-}
-
-export interface Communities {
-  meta: {
-    status: 200;
-  };
-  data: {
-    communities: {
-      total: number;
-      communities: Community[];
-    };
   };
 }
 

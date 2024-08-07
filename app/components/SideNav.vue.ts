@@ -84,7 +84,7 @@ export default class SideNav extends Vue {
   }
 
   openFeedback() {
-    remote.shell.openExternal('https://secure.nicovideo.jp/form/entry/n_air_feedback');
+    remote.shell.openExternal('https://form.nicovideo.jp/forms/n_air_feedback');
   }
 
   openHelp() {
