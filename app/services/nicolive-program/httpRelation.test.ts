@@ -19,29 +19,49 @@ describe('HttpRelation', () => {
     seqId: 0,
   };
 
-  test.each([
+  test.each<['POST' | 'PUT' | 'GET', string, string, string, string]>([
+    [
+      'GET',
+      '/api/sendChat?comment={comment}&isOwner={isOwner}&userId={userId}&name={name}',
+      '',
+      '/api/sendChat?comment=Hello%2C%20world!&isOwner=true&userId=user123&name=name',
+      '',
+    ],
     [
       'POST',
       '/api/sendChat',
       '{ "id": "{id}", "comment": "{comment}", "isOwner": "{isOwner}", "userId": "{userId}", "name": "{name}" }',
+      '/api/sendChat',
       '{ "id": "123", "comment": "Hello, world!", "isOwner": "true", "userId": "user123", "name": "name" }',
     ],
-  ])(`sendChat with %s method`, async (method, url, body, expectedBody) => {
+    ['PUT', '/api/sendChat/{id}', '{comment}', '/api/sendChat/123', 'Hello, world!'],
+  ])(`sendChat with %s method`, async (method, url, body, expectedUrl, expectedBody) => {
     const mockState: HttpRelationState = {
       method,
       url,
       body,
     };
 
-    fetchMock.post('/api/sendChat', { status: 200, body: '' });
+    switch (method) {
+      case 'POST':
+        fetchMock.post(expectedUrl, 200);
+        break;
+      case 'PUT':
+        fetchMock.put(expectedUrl, 200);
+        break;
+      case 'GET':
+        fetchMock.get(expectedUrl, 200);
+        break;
+    }
 
     await HttpRelation.sendChat(mockChat, mockState);
 
-    expect(fetchMock.called('/api/sendChat')).toBe(true);
-    const [_, options] = fetchMock.lastCall('/api/sendChat');
+    expect(fetchMock.called(expectedUrl)).toBe(true);
+    const [_, options] = fetchMock.lastCall(expectedUrl);
     expect(options.method).toBe(method);
-    const requestBody = options.body.toString();
-
-    expect(requestBody).toEqual(expectedBody);
+    if (method !== 'GET') {
+      const requestBody = options.body.toString();
+      expect(requestBody).toEqual(expectedBody);
+    }
   });
 });
