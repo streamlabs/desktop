@@ -42,10 +42,8 @@ export default class HttpRelation {
     const url = httpRelation.url.replace(/{(\w+)}/g, (m, p: keyof SendParam) =>
       encodeURIComponent(param[p] ?? ''),
     );
-    const method = httpRelation.method.toString();
-    const arg: { [name: string]: any } = {
-      method,
-    };
+    const method = httpRelation.method;
+    const arg: { [name: string]: any } = { method };
     if (method === 'POST' || method === 'PUT') {
       arg.headers = { 'Content-Type': 'application/json' };
       arg.body = httpRelation.body.replace(/{(\w+)}/g, (m, p: keyof SendParam) => param[p] ?? '');

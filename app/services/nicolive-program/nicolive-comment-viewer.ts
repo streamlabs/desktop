@@ -451,8 +451,8 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
 
   private onMessage(values: WrappedMessageWithComponent[]) {
     // send to http relation
-    const httpRelation = this.nicoliveProgramStateService.state.httpRelation;
-    if (httpRelation.method) {
+    const httpRelation = this.nicoliveProgramService.stateService.state.httpRelation;
+    if (httpRelation && httpRelation.method) {
       values.forEach(a => {
         if (a.type === 'normal' || a.type === 'operator') HttpRelation.sendChat(a, httpRelation);
       });
