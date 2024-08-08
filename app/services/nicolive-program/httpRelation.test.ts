@@ -19,7 +19,7 @@ describe('HttpRelation', () => {
     seqId: 0,
   };
 
-  test.each<['POST' | 'PUT' | 'GET', string, string, string, string]>([
+  test.each<['POST' | 'PUT' | 'GET' | '', string, string, string, string]>([
     [
       'GET',
       '/api/sendChat?comment={comment}&isOwner={isOwner}&userId={userId}&name={name}',
@@ -35,6 +35,7 @@ describe('HttpRelation', () => {
       '{ "id": "123", "comment": "Hello, world!", "isOwner": "true", "userId": "user123", "name": "name" }',
     ],
     ['PUT', '/api/sendChat/{id}', '{comment}', '/api/sendChat/123', 'Hello, world!'],
+    ['', '/api/sendChat/{id}', '{comment}', '/api/sendChat/123', 'Hello, world!'],
   ])(`sendChat with %s method`, async (method, url, body, expectedUrl, expectedBody) => {
     const mockState: HttpRelationState = {
       method,
@@ -55,13 +56,16 @@ describe('HttpRelation', () => {
     }
 
     await HttpRelation.sendChat(mockChat, mockState);
-
-    expect(fetchMock.called(expectedUrl)).toBe(true);
-    const [_, options] = fetchMock.lastCall(expectedUrl);
-    expect(options.method).toBe(method);
-    if (method !== 'GET') {
-      const requestBody = options.body.toString();
-      expect(requestBody).toEqual(expectedBody);
+    if (method === '') {
+      expect(fetchMock.called()).toBe(false);
+    } else {
+      expect(fetchMock.called(expectedUrl)).toBe(true);
+      const [_, options] = fetchMock.lastCall(expectedUrl);
+      expect(options.method).toBe(method);
+      if (method !== 'GET') {
+        const requestBody = options.body.toString();
+        expect(requestBody).toEqual(expectedBody);
+      }
     }
   });
 });
