@@ -451,17 +451,18 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
 
   private onMessage(values: WrappedMessageWithComponent[]) {
     // send to http relation
-    const httpRelation = this.nicoliveProgramService.stateService.state.httpRelation;
+    const httpRelation = this.nicoliveProgramStateService.state.httpRelation;
     if (httpRelation && httpRelation.method) {
       values.forEach(a => {
-        if (a.type === 'normal' || a.type === 'operator') HttpRelation.sendChat(a, httpRelation);
+        if (a.type === 'normal' || a.type === 'operator')
+          HttpRelation.sendChat(a, httpRelation).then();
       });
     }
 
     const maxQueueToSpeak = 3; // 直近3件つづ読み上げ対象にする
     const recentSeconds = 60;
 
-    if (this.nicoliveProgramService.stateService.state.nameplateHint === undefined) {
+    if (this.nicoliveProgramStateService.state.nameplateHint === undefined) {
       const firstCommentWithName = values.find(
         c => isWrappedChat(c) && !!c.value.name && c.value.no,
       );

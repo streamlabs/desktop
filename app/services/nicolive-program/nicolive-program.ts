@@ -54,7 +54,7 @@ export enum PanelState {
 }
 
 export class NicoliveProgramService extends StatefulService<INicoliveProgramState> {
-  @Inject('NicoliveProgramStateService') stateService: NicoliveProgramStateService;
+  @Inject('NicoliveProgramStateService') private stateService: NicoliveProgramStateService;
   @Inject()
   userService: UserService;
 

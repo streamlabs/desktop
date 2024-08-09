@@ -159,7 +159,7 @@ export default class CommentViewer extends Vue {
   }
 
   get nameplateHintNo(): number | undefined {
-    const nameplateHint = this.nicoliveProgramService.stateService.state.nameplateHint;
+    const nameplateHint = this.nicoliveProgramStateService.state.nameplateHint;
     if (!nameplateHint) return undefined;
     if (nameplateHint.programID !== this.nicoliveProgramService.state.programID) return undefined;
     return nameplateHint.commentNo;
