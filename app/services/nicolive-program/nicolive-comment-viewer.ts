@@ -450,8 +450,6 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
   }
 
   private onMessage(values: WrappedMessageWithComponent[]) {
-    console.log('onMessage', values); // DEBUG
-
     // send to http relation
     const httpRelation = this.nicoliveProgramService.stateService.state.httpRelation;
     if (httpRelation && httpRelation.method) {
