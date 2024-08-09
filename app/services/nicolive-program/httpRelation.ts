@@ -8,6 +8,8 @@ type SendParam = {
   isOwner: string;
   userId: string;
   name: string;
+  isPremium: string;
+  isAnonymous: string;
 };
 
 export default class HttpRelation {
@@ -20,6 +22,8 @@ export default class HttpRelation {
       isOwner: item.type === 'operator' ? 'true' : 'false',
       userId: item.value.user_id ?? '-',
       name: item.value.name ?? '',
+      isPremium: item.value.premium ? 'true' : 'false',
+      isAnonymous: item.value.anonymity ? 'true' : 'false',
     };
 
     await this.send(param, httpRelation);
@@ -32,6 +36,8 @@ export default class HttpRelation {
       isOwner: 'false',
       userId: '-',
       name: 'test',
+      isPremium: 'true',
+      isAnonymous: 'false',
     };
     await this.send(param, httpRelation);
   }

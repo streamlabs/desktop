@@ -14,29 +14,52 @@ describe('HttpRelation', () => {
       content: 'Hello, world!',
       user_id: 'user123',
       name: 'name',
+      anonymity: 0,
+      premium: 1,
     },
     type: 'operator',
     seqId: 0,
   };
 
   test.each<['POST' | 'PUT' | 'GET' | '', string, string, string, string]>([
+    // test all parameters
+    ...[
+      ['id', '123'],
+      ['comment', 'Hello, world!', 'Hello%2C%20world!'],
+      ['isOwner', 'true'],
+      ['userId', 'user123'],
+      ['name', 'name'],
+      ['isPremium', 'true'],
+      ['isAnonymous', 'false'],
+      ['invalid', ''], // invalid parameter
+    ].map(([key, value, queryValue]): ['POST', string, string, string, string] => [
+      'POST',
+      `/api/sendChat/{${key}}`,
+      `{${key}}`,
+      `/api/sendChat/${queryValue ?? value}`,
+      value,
+    ]),
+
+    // test methods
     [
       'GET',
-      '/api/sendChat?comment={comment}&isOwner={isOwner}&userId={userId}&name={name}',
+      '/api/sendChat?comment={comment}&userId={userId}',
       '',
-      '/api/sendChat?comment=Hello%2C%20world!&isOwner=true&userId=user123&name=name',
+      '/api/sendChat?comment=Hello%2C%20world!&userId=user123',
       '',
     ],
     [
       'POST',
       '/api/sendChat',
-      '{ "id": "{id}", "comment": "{comment}", "isOwner": "{isOwner}", "userId": "{userId}", "name": "{name}" }',
+      '{ "comment": "{comment}", "userId": "{userId}" }',
       '/api/sendChat',
-      '{ "id": "123", "comment": "Hello, world!", "isOwner": "true", "userId": "user123", "name": "name" }',
+      '{ "comment": "Hello, world!", "userId": "user123" }',
     ],
     ['PUT', '/api/sendChat/{id}', '{comment}', '/api/sendChat/123', 'Hello, world!'],
+
+    // test empty method
     ['', '/api/sendChat/{id}', '{comment}', '/api/sendChat/123', 'Hello, world!'],
-  ])(`sendChat with %s method`, async (method, url, body, expectedUrl, expectedBody) => {
+  ])(`sendChat with %s %s %s`, async (method, url, body, expectedUrl, expectedBody) => {
     const mockState: HttpRelationState = {
       method,
       url,
@@ -59,8 +82,9 @@ describe('HttpRelation', () => {
     if (method === '') {
       expect(fetchMock.called()).toBe(false);
     } else {
-      expect(fetchMock.called(expectedUrl)).toBe(true);
-      const [_, options] = fetchMock.lastCall(expectedUrl);
+      expect(fetchMock.called()).toBe(true);
+      const [url, options] = fetchMock.lastCall();
+      expect(url).toBe(expectedUrl);
       expect(options.method).toBe(method);
       if (method !== 'GET') {
         const requestBody = options.body.toString();
