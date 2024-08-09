@@ -16,14 +16,17 @@ export default class HttpRelation {
   static async sendChat(item: WrappedChat, httpRelation: HttpRelationState): Promise<string> {
     const value = item.value;
     if (!value || !value.content) return 'Error no-value';
+
+    const bool2string = (b: any) => (b ? 'true' : 'false');
+
     const param: SendParam = {
       id: item.value.id ?? uuid(),
       comment: item.value.content ?? '---',
-      isOwner: item.type === 'operator' ? 'true' : 'false',
+      isOwner: bool2string(item.type === 'operator'),
       userId: item.value.user_id ?? '-',
       name: item.value.name ?? '',
-      isPremium: item.value.premium ? 'true' : 'false',
-      isAnonymous: item.value.anonymity ? 'true' : 'false',
+      isPremium: bool2string(item.value.premium),
+      isAnonymous: bool2string(item.value.anonymity),
     };
 
     return await this.send(param, httpRelation);
