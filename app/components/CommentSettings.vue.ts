@@ -12,6 +12,7 @@ import { Component } from 'vue-property-decorator';
 import VueSlider from 'vue-slider-component';
 import Multiselect from 'vue-multiselect';
 import HttpRelation from 'services/nicolive-program/httpRelation';
+import * as remote from '@electron/remote';
 
 @Component({
   components: {
@@ -159,6 +160,10 @@ export default class CommentSettings extends Vue {
   }
 
   testHttpRelation() {
-    HttpRelation.sendTest(this.nicoliveProgramStateService.state.httpRelation);
+    HttpRelation.sendTest(this.nicoliveProgramStateService.state.httpRelation).then();
+  }
+
+  showHttpRelationPage() {
+    remote.shell.openExternal('https://github.com/n-air-app/n-air-app/wiki/http_relation');
   }
 }

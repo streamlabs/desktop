@@ -159,7 +159,7 @@
           </multiselect>
         </div>
       </div>
-      <div class="input-container">
+      <div class="section">
         <div class="input-wrapper">
           <div class="row input-heading">
             <label for="operator-select">放送者コメント</label>
@@ -193,9 +193,9 @@
       <div class="input-label section-heading">
         <label>HTTP連携設定</label>
       </div>
-      <div>
-        <div>
-          method
+      <div class="input-container">
+        <div class="input-wrapper">
+          Method
           <select v-model="httpRelationMethod">
             <option value="">---</option>
             <option value="GET">GET</option>
@@ -203,11 +203,13 @@
             <option value="PUT">PUT</option>
           </select>
         </div>
-        <div>url <input type="text" v-model="httpRelationUrl" /></div>
-        <div>body(json) <textarea rows="3" v-model="httpRelationBody"></textarea></div>
-        <div>
+        <div class="input-wrapper">URL <input type="text" v-model="httpRelationUrl" /></div>
+        <div class="input-wrapper">
+          Body<textarea rows="3" v-model="httpRelationBody"></textarea>
+        </div>
+        <div class="input-wrapper">
           <button class="button button--secondary" @click="testHttpRelation()">テスト</button>
-          詳細は<a href="https://github.com/n-air-app/n-air-app" target="_blank">こちら</a>を参照
+          詳細は<a @click="showHttpRelationPage()">こちら</a>を参照してください
         </div>
       </div>
     </div>
@@ -222,7 +224,12 @@ select {
   font-size: @font-size4;
   color: var(--color-text);
   background: var(--color-input-bg);
-  border-radius: 4px;
+  border: 1px solid var(--color-border-light);
+
+  &:focus {
+    border-color: var(--color-border-accent);
+    outline: none;
+  }
 }
 
 .section-heading {
