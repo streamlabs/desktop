@@ -159,7 +159,7 @@
           </multiselect>
         </div>
       </div>
-      <div class="section">
+      <div class="input-container">
         <div class="input-wrapper">
           <div class="row input-heading">
             <label for="operator-select">放送者コメント</label>
