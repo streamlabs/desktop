@@ -15,7 +15,10 @@ function getNicoadComment(chat: WrappedMessage): string {
     const nicoad = chat.value;
     if (isNicoadMessageV0(nicoad)) {
       if (nicoad.v0.latest) {
-        return nicoad.v0.latest.message ?? '';
+        const latest = nicoad.v0.latest;
+        const advertiser = latest.advertiser;
+        const message = latest.message ? `「${latest.message}」` : '';
+        return `提供：${advertiser}さん${message}（${latest.point}pt）`;
       }
     } else if (isNicoadMessageV1(nicoad)) {
       return nicoad.v1.message ?? '';
