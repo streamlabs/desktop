@@ -105,7 +105,7 @@ export class NdgrClient {
               try: this.options.maxRetry - retryRemain,
               label: this.options.label,
             });
-            scope.setFingerprint(['ndgr-fetch-error']);
+            scope.setFingerprint(['ndgr-fetch-error', this.options.label]);
             Sentry.captureMessage(`Failed to fetch(${uri}): ${error}`);
           });
         }
