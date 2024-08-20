@@ -95,7 +95,7 @@ export class NdgrClient {
         break;
       } catch (error) {
         if (retryRemain === 0) {
-          throw new NdgrFetchError(error as Error, uri);
+          throw new NdgrFetchError(error as Error, uri, this.options.label);
         } else {
           Sentry.withScope(scope => {
             scope.setLevel('warning');
@@ -112,7 +112,7 @@ export class NdgrClient {
         await sleep(this.options.retryInterval);
       }
     }
-    if (!response.ok) throw new NdgrFetchError(response.status, uri);
+    if (!response.ok) throw new NdgrFetchError(response.status, uri, this.options.label);
     return response;
   }
 

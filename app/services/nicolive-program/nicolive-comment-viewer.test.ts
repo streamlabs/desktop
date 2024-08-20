@@ -327,10 +327,10 @@ test('スレッドの参加失敗時にメッセージを表示する', () => {
   jest.spyOn(Date, 'now').mockImplementation(() => 1582175622000);
   const { instance, clientSubject } = connectionSetup();
 
-  const e = new NdgrFetchError(404, 'yay');
+  const e = new NdgrFetchError(404, 'yay', 'test');
   expect(e instanceof NdgrFetchError).toBeTruthy();
   expect(e.name).toBe('NdgrFetchError');
-  clientSubject.error(new NdgrFetchError(404, 'yay'));
+  clientSubject.error(new NdgrFetchError(404, 'yay', 'test'));
 
   // bufferTime tweaks
   clientSubject.complete();

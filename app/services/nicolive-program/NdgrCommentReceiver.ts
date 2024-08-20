@@ -310,7 +310,6 @@ export class NdgrCommentReceiver implements IMessageServerClient {
       },
     });
     this.ndgrClient.connect('now', NUM_BACKWARD_COMMENTS).catch(err => {
-      console.warn('Failed to connect to ndgr', err);
       this.messageSubject.error(err);
     });
     return this.messageSubject.asObservable();

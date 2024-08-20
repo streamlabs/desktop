@@ -1,6 +1,6 @@
 export class NdgrFetchError extends Error {
-  constructor(public status: number | Error, public uri: string) {
-    super(`Failed to fetch(${uri}): ${status}`);
+  constructor(public status: number | Error, public uri: string, public label: string) {
+    super(`Failed to fetch[${label}](${uri}): ${status}`);
 
     this.name = new.target.name;
     Object.setPrototypeOf(this, new.target.prototype);

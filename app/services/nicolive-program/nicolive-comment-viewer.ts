@@ -358,7 +358,7 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
           }
         }),
         catchError(err => {
-          console.error(err);
+          console.info(err);
           if (isNdgrFetchError(err)) {
             Sentry.withScope(scope => {
               scope.setTags({

@@ -10,6 +10,7 @@ import { NicoliveClient, isOk } from './NicoliveClient';
 import { NicoliveFailure, openErrorDialogFromFailure } from './NicoliveFailure';
 import { FilterRecord } from './ResponseTypes';
 import { NicoliveProgramService } from './nicolive-program';
+import { isNdgrFetchError } from './NdgrFetchError';
 
 interface INicoliveModeratorsService {
   // moderator の userId 集合
@@ -200,7 +201,21 @@ export class NicoliveModeratorsService extends StatefulService<INicoliveModerato
       },
       complete: () => console.log('Message stream completed'),
     });
-    await this.ndgrClient.connect();
+    await this.ndgrClient.connect().catch(err => {
+      console.info('Failed to connect moderator stream:', err);
+      Sentry.withScope(scope => {
+        scope.setFingerprint(['NicoliveModeratorsService', 'NdgrClient', 'connectError']);
+        scope.setTag('ndgr.type', 'moderator');
+        if (isNdgrFetchError(err)) {
+          scope.setTags({
+            uri: err.uri,
+            label: err.label,
+            status: `${err.status}`,
+          });
+        }
+        scope.captureException(err);
+      });
+    });
   }
 
   disconnectNdgr() {
