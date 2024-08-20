@@ -87,7 +87,7 @@ export class NdgrClient {
     }
   }
 
-  private async fetch(uri: string): Promise<Response> {
+  private async fetchWithHandling(uri: string): Promise<Response> {
     let response: Response;
     for (let retryRemain = this.options.maxRetry; retryRemain >= 0; retryRemain--) {
       try {
@@ -127,7 +127,7 @@ export class NdgrClient {
     let length = 0;
 
     while (length < want) {
-      const resp = await this.fetch(fetchUri);
+      const resp = await this.fetchWithHandling(fetchUri);
       const body = await resp.arrayBuffer();
       const packed = dwango.nicolive.chat.service.edge.PackedSegment.decode(new Uint8Array(body));
       buf.unshift(packed.messages);
@@ -160,7 +160,7 @@ export class NdgrClient {
     decoder: (reader: Reader) => T,
   ): AsyncGenerator<T, void, undefined> {
     let unread = new Uint8Array();
-    const response = await this.fetch(uri);
+    const response = await this.fetchWithHandling(uri);
     const reader = response.body.getReader();
     while (true) {
       const { done, value } = await reader.read();
