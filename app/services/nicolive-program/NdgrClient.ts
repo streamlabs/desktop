@@ -51,9 +51,10 @@ export class NdgrClient {
     options: { label?: string; maxRetry?: number; retryInterval?: number } | string = {},
   ) {
     if (typeof options === 'string') {
-      options = { label: options };
+      this.options.label = options;
+    } else {
+      this.options = { ...this.options, ...options };
     }
-    this.options = { ...this.options, ...options };
     this.messages = new Subject();
   }
 
