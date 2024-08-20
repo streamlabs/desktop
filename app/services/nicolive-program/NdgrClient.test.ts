@@ -8,6 +8,8 @@ const MESSAGES_URL = 'http://example.com/messages';
 const PREV_MESSAGES_URL = 'http://example.com/prev';
 const BACKWARD1_MESSAGES_URL = 'http://example.com/backward1';
 const BACKWARD2_MESSAGES_URL = 'http://example.com/backward2';
+const NETWORK_ERROR_URL = 'http://example.com/network-error';
+const HTTP_ERROR_URL = 'http://example.com/http-error';
 
 // protobufjs は class 要素を objectに変換しようとすると toJSONメソッドが呼ばれるが、
 // その変換ルールがデフォルトで Long と enum が Stringになってしまうので、Number に戻してアプリと挙動を合わせる
@@ -119,7 +121,11 @@ describe('NdgrClient', () => {
   // Date.now() を固定する
   const now = Date.now();
   jest.spyOn(Date, 'now').mockReturnValue(now);
-  const ENTRY_URL_WITH_TIMESTAMP = `${ENTRY_URL}?at=now`;
+
+  const withTimestamp = (url: string) => `${url}?at=now`;
+  const ENTRY_URL_WITH_TIMESTAMP = withTimestamp(ENTRY_URL);
+  const NETWORK_ERROR_URL_WITH_TIMESTAMP = withTimestamp(NETWORK_ERROR_URL);
+  const HTTP_ERROR_URL_WITH_TIMESTAMP = withTimestamp(HTTP_ERROR_URL);
 
   const fetchMock = jest_fn<typeof fetch>()
     .mockName('fetch')
@@ -181,6 +187,11 @@ describe('NdgrClient', () => {
                 { headers },
               ),
             );
+
+          case NETWORK_ERROR_URL_WITH_TIMESTAMP:
+            return Promise.reject(new TypeError('Network Error'));
+          case HTTP_ERROR_URL_WITH_TIMESTAMP:
+            return Promise.resolve(new Response('Not Found', { status: 404 }));
         }
       }
       return Promise.reject(new Error(`Unknown URL: ${input}`));
@@ -244,5 +255,21 @@ describe('NdgrClient', () => {
     }
     target.dispose();
     expect(onCompleted).toHaveBeenCalledTimes(1);
+  });
+
+  it('should throw an NdgrFetchError when fetch throws an errors', async () => {
+    expect.assertions(1);
+    const target = new NdgrClient(NETWORK_ERROR_URL);
+    await expect(target.connect()).rejects.toThrow(
+      `Failed to fetch(${NETWORK_ERROR_URL_WITH_TIMESTAMP}): TypeError: Network Error`,
+    );
+  });
+
+  it('should throw an NdgrFetchError when fetch returns a failed response', async () => {
+    expect.assertions(1);
+    const target = new NdgrClient(HTTP_ERROR_URL);
+    await expect(target.connect()).rejects.toThrow(
+      `Failed to fetch(${HTTP_ERROR_URL_WITH_TIMESTAMP}): 404`,
+    );
   });
 });

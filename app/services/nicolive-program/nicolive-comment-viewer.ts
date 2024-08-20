@@ -363,7 +363,8 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
             Sentry.withScope(scope => {
               scope.setTags({
                 type: 'NdgrFetchError',
-                status: err.status,
+                uri: err.uri,
+                status: `${err.status}`,
               });
               scope.setFingerprint([
                 'NicoliveCommentViewerService.connect',

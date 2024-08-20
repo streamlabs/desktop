@@ -1,5 +1,5 @@
 export class NdgrFetchError extends Error {
-  constructor(public status: number, public uri: string) {
+  constructor(public status: number | Error, public uri: string) {
     super(`Failed to fetch(${uri}): ${status}`);
 
     this.name = new.target.name;
