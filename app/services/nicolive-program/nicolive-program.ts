@@ -126,6 +126,7 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
     this.refreshStatisticsPolling(this.state, nextState);
     this.refreshProgramStatusTimer(this.state, nextState);
     this.refreshAutoExtensionTimer(this.state, nextState);
+    this.refreshSentryProgramInfo(this.state, nextState);
     this.SET_STATE(nextState);
     this.stateChangeSubject.next(nextState);
   }
@@ -541,6 +542,16 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
     if (prev && !next) {
       clearTimeout(this.autoExtensionTimer);
       console.log('自動延長タイマーが解除されました');
+    }
+  }
+
+  private refreshSentryProgramInfo(
+    prevState: INicoliveProgramState,
+    nextState: INicoliveProgramState,
+  ) {
+    if (prevState.programID !== nextState.programID) {
+      const scope = Sentry.getCurrentScope();
+      scope.setTag('nicolive.programID', nextState.programID);
     }
   }
 
