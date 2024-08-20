@@ -35,10 +35,21 @@ export function convertSSNGType(
   }
 }
 
+type NdgrClientOptions = {
+  label: string;
+  maxRetry: number;
+  retryInterval: number;
+};
+
 export class NdgrClient {
   private isDisposed: boolean = false;
   public messages: Subject<dwango.nicolive.chat.service.edge.ChunkedMessage>;
-  private options = { label: 'ndgr', maxRetry: 3, retryInterval: 1000 };
+
+  private options: NdgrClientOptions = {
+    label: 'ndgr',
+    maxRetry: 3,
+    retryInterval: 1000,
+  };
 
   /**
    * @param uri 接続するURI
@@ -46,10 +57,7 @@ export class NdgrClient {
    * @param options.maxRetry fetch errorのリトライ回数
    * @param options.retryInterval fetch errorのリトライ間隔(ms)
    */
-  constructor(
-    private uri: string,
-    options: { label?: string; maxRetry?: number; retryInterval?: number } | string = {},
-  ) {
+  constructor(private uri: string, options: Partial<NdgrClientOptions> | string = {}) {
     if (typeof options === 'string') {
       this.options.label = options;
     } else {
