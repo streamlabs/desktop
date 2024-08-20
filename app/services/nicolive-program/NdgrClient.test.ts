@@ -258,18 +258,21 @@ describe('NdgrClient', () => {
   });
 
   it('should throw an NdgrFetchError when fetch throws an errors', async () => {
-    expect.assertions(1);
-    const target = new NdgrClient(NETWORK_ERROR_URL);
+    expect.assertions(2);
+    const MAX_RETRY = 3;
+    const target = new NdgrClient(NETWORK_ERROR_URL, { retryInterval: 0, maxRetry: MAX_RETRY });
     await expect(target.connect()).rejects.toThrow(
       `Failed to fetch(${NETWORK_ERROR_URL_WITH_TIMESTAMP}): TypeError: Network Error`,
     );
+    expect(fetchMock).toHaveBeenCalledTimes(MAX_RETRY + 1);
   });
 
   it('should throw an NdgrFetchError when fetch returns a failed response', async () => {
-    expect.assertions(1);
+    expect.assertions(2);
     const target = new NdgrClient(HTTP_ERROR_URL);
     await expect(target.connect()).rejects.toThrow(
       `Failed to fetch(${HTTP_ERROR_URL_WITH_TIMESTAMP}): 404`,
     );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

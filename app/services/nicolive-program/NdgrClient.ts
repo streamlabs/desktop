@@ -5,6 +5,7 @@ import { Subject } from 'rxjs';
 import { FilterType } from './ResponseTypes';
 import { NdgrFetchError } from './NdgrFetchError';
 import { sleep } from 'util/sleep';
+import * as Sentry from '@sentry/vue';
 
 const BACKWARD_SEGMENT_INTERVAL = 7; // in ms
 
@@ -37,12 +38,22 @@ export function convertSSNGType(
 export class NdgrClient {
   private isDisposed: boolean = false;
   public messages: Subject<dwango.nicolive.chat.service.edge.ChunkedMessage>;
+  private options = { label: 'ndgr', maxRetry: 3, retryInterval: 1000 };
 
   /**
    * @param uri 接続するURI
-   * @param label デバッグログ識別用ラベル
+   * @param options.label デバッグログ識別用ラベル
+   * @param options.maxRetry fetch errorのリトライ回数
+   * @param options.retryInterval fetch errorのリトライ間隔(ms)
    */
-  constructor(private uri: string, private label = 'ndgr') {
+  constructor(
+    private uri: string,
+    options: { label?: string; maxRetry?: number; retryInterval?: number } | string = {},
+  ) {
+    if (typeof options === 'string') {
+      options = { label: options };
+    }
+    this.options = { ...this.options, ...options };
     this.messages = new Subject();
   }
 
@@ -78,10 +89,28 @@ export class NdgrClient {
 
   private async fetch(uri: string): Promise<Response> {
     let response: Response;
-    try {
-      response = await fetch(uri);
-    } catch (error) {
-      throw new NdgrFetchError(error as Error, uri);
+    for (let retryRemain = this.options.maxRetry; retryRemain >= 0; retryRemain--) {
+      try {
+        response = await fetch(uri);
+        break;
+      } catch (error) {
+        if (retryRemain === 0) {
+          throw new NdgrFetchError(error as Error, uri);
+        } else {
+          Sentry.withScope(scope => {
+            scope.setLevel('warning');
+            scope.setTags({
+              category: 'ndgr',
+              uri,
+              try: this.options.maxRetry - retryRemain,
+              label: this.options.label,
+            });
+            scope.setFingerprint(['ndgr-fetch-error']);
+            Sentry.captureMessage(`Failed to fetch(${uri}): ${error}`);
+          });
+        }
+        await sleep(this.options.retryInterval);
+      }
     }
     if (!response.ok) throw new NdgrFetchError(response.status, uri);
     return response;
