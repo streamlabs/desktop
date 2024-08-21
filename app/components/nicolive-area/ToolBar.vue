@@ -14,7 +14,10 @@
       <popper
         trigger="click"
         :options="{ placement: 'bottom-end' }"
-        @show="showPopupMenu = true"
+        @show="
+          showPopupMenu = true;
+          popper1 = $event;
+        "
         @hide="showPopupMenu = false"
       >
         <div class="popper">
@@ -92,7 +95,10 @@
         <popper
           trigger="click"
           :options="{ placement: 'bottom-end' }"
-          @show="showButtonSelector = true"
+          @show="
+            showButtonSelector = true;
+            popper2 = $event;
+          "
           @hide="showButtonSelector = false"
         >
           <div class="popper">

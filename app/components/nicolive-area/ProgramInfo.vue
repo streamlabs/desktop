@@ -18,7 +18,10 @@
     <popper
       trigger="click"
       :options="{ placement: 'bottom-end' }"
-      @show="showPopupMenu = true"
+      @show="
+        showPopupMenu = true;
+        popper = $event;
+      "
       @hide="showPopupMenu = false"
     >
       <div class="popper">

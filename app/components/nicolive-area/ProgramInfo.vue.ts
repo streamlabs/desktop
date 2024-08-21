@@ -26,6 +26,7 @@ export default class ProgramInfo extends Vue {
   private subscription: Subscription = null;
 
   showPopupMenu: boolean = false;
+  popper: PopperEvent;
 
   get isOnAir(): boolean {
     return this.nicoliveProgramService.state.status === 'onAir';
@@ -76,6 +77,7 @@ export default class ProgramInfo extends Vue {
   }
 
   openInDefaultBrowser(event: MouseEvent): void {
+    this.popper?.doClose();
     const href = (event.currentTarget as HTMLAnchorElement).href;
     const url = new URL(href);
     if (/^https?/.test(url.protocol)) {
@@ -88,6 +90,7 @@ export default class ProgramInfo extends Vue {
   }
 
   async editProgram() {
+    this.popper?.doClose();
     try {
       return await this.nicoliveProgramService.editProgram();
     } catch (e) {
@@ -147,6 +150,7 @@ export default class ProgramInfo extends Vue {
   hasProgramUrlCopied: boolean = false;
   clearTimer: number = 0;
   copyProgramURL() {
+    this.popper?.doClose();
     if (this.isFetching) throw new Error('fetchProgram is running');
     clipboard.writeText(
       this.hostsService.getWatchPageURL(this.nicoliveProgramService.state.programID),
