@@ -5,6 +5,7 @@ import { Subject } from 'rxjs';
 import { FilterType } from './ResponseTypes';
 import { NdgrFetchError } from './NdgrFetchError';
 import { sleep } from 'util/sleep';
+import * as Sentry from '@sentry/vue';
 
 const BACKWARD_SEGMENT_INTERVAL = 7; // in ms
 
@@ -34,15 +35,34 @@ export function convertSSNGType(
   }
 }
 
+type NdgrClientOptions = {
+  label: string;
+  maxRetry: number;
+  retryInterval: number;
+};
+
 export class NdgrClient {
   private isDisposed: boolean = false;
   public messages: Subject<dwango.nicolive.chat.service.edge.ChunkedMessage>;
 
+  private options: NdgrClientOptions = {
+    label: 'ndgr',
+    maxRetry: 3,
+    retryInterval: 1000,
+  };
+
   /**
    * @param uri 接続するURI
-   * @param label デバッグログ識別用ラベル
+   * @param options.label デバッグログ識別用ラベル
+   * @param options.maxRetry fetch errorのリトライ回数
+   * @param options.retryInterval fetch errorのリトライ間隔(ms)
    */
-  constructor(private uri: string, private label = 'ndgr') {
+  constructor(private uri: string, options: Partial<NdgrClientOptions> | string = {}) {
+    if (typeof options === 'string') {
+      this.options.label = options;
+    } else {
+      this.options = { ...this.options, ...options };
+    }
     this.messages = new Subject();
   }
 
@@ -76,6 +96,35 @@ export class NdgrClient {
     }
   }
 
+  private async fetchWithHandling(uri: string): Promise<Response> {
+    let response: Response;
+    for (let retryRemain = this.options.maxRetry; retryRemain >= 0; retryRemain--) {
+      try {
+        response = await fetch(uri);
+        break;
+      } catch (error) {
+        if (retryRemain === 0 || !`${error}`.includes('network error')) {
+          throw new NdgrFetchError(error as Error, uri, this.options.label);
+        } else {
+          Sentry.withScope(scope => {
+            scope.setLevel('warning');
+            scope.setTags({
+              category: 'ndgr',
+              uri,
+              try: this.options.maxRetry - retryRemain,
+              label: this.options.label,
+            });
+            scope.setFingerprint(['ndgr-fetch-error', this.options.label]);
+            Sentry.captureMessage(`Failed to fetch(${uri}): ${error}`);
+          });
+        }
+        await sleep(this.options.retryInterval);
+      }
+    }
+    if (!response.ok) throw new NdgrFetchError(response.status, uri, this.options.label);
+    return response;
+  }
+
   private async pullBackwards(
     fetchUri: string,
     want: number,
@@ -87,8 +136,7 @@ export class NdgrClient {
     let length = 0;
 
     while (length < want) {
-      const resp = await fetch(fetchUri);
-      if (!resp.ok) throw new NdgrFetchError(resp.status, fetchUri);
+      const resp = await this.fetchWithHandling(fetchUri);
       const body = await resp.arrayBuffer();
       const packed = dwango.nicolive.chat.service.edge.PackedSegment.decode(new Uint8Array(body));
       buf.unshift(packed.messages);
@@ -121,8 +169,7 @@ export class NdgrClient {
     decoder: (reader: Reader) => T,
   ): AsyncGenerator<T, void, undefined> {
     let unread = new Uint8Array();
-    const response = await fetch(uri);
-    if (!response.ok) throw new NdgrFetchError(response.status, uri);
+    const response = await this.fetchWithHandling(uri);
     const reader = response.body.getReader();
     while (true) {
       const { done, value } = await reader.read();
