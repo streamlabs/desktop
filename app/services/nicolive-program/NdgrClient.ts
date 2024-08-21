@@ -103,7 +103,7 @@ export class NdgrClient {
         response = await fetch(uri);
         break;
       } catch (error) {
-        if (retryRemain === 0) {
+        if (retryRemain === 0 || !`${error}`.includes('network error')) {
           throw new NdgrFetchError(error as Error, uri, this.options.label);
         } else {
           Sentry.withScope(scope => {

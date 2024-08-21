@@ -189,7 +189,7 @@ describe('NdgrClient', () => {
             );
 
           case NETWORK_ERROR_URL_WITH_TIMESTAMP:
-            return Promise.reject(new TypeError('Network Error'));
+            return Promise.reject(new TypeError('network error'));
           case HTTP_ERROR_URL_WITH_TIMESTAMP:
             return Promise.resolve(new Response('Not Found', { status: 404 }));
         }
@@ -266,7 +266,7 @@ describe('NdgrClient', () => {
       maxRetry: MAX_RETRY,
     });
     await expect(target.connect()).rejects.toThrow(
-      `Failed to fetch[label](${NETWORK_ERROR_URL_WITH_TIMESTAMP}): TypeError: Network Error`,
+      `Failed to fetch[label](${NETWORK_ERROR_URL_WITH_TIMESTAMP}): TypeError: network error`,
     );
     expect(fetchMock).toHaveBeenCalledTimes(MAX_RETRY + 1);
   });
