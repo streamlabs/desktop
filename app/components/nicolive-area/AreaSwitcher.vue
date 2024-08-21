@@ -4,7 +4,7 @@
       <slot :name="activeContent.slotName" />
     </div>
     <div class="header" v-if="!isCompactMode">
-      <popper trigger="click" :options="{ placement: 'bottom-start' }">
+      <popper trigger="click" :options="{ placement: 'bottom-start' }" @show="popper = $event">
         <div class="popper">
           <ul class="popup-menu-list">
             <li
