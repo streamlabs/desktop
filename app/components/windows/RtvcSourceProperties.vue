@@ -66,7 +66,6 @@
               <span class="name">{{ v.name }}</span>
             </div>
             <popper
-              ref="ppp"
               trigger="click"
               :options="{ placement: 'bottom-end' }"
               @show="

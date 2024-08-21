@@ -5,7 +5,7 @@ import Vue from 'vue';
 import Popper from 'vue-popperjs';
 import { Component, Prop } from 'vue-property-decorator';
 
-interface IArea {
+export interface IArea {
   name: string;
   slotName: string;
   defaultSelected?: boolean;
