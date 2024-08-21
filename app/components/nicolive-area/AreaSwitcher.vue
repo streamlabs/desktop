@@ -12,7 +12,10 @@
               :class="{ active: content.slotName === activeContent.slotName }"
               :key="content.slotName"
               v-for="content in contents"
-              @click="select(content.slotName)"
+              @click="
+                select(content.slotName);
+                popper.doClose();
+              "
             >
               <p class="item-name">{{ content.name }}</p>
               <p class="item-text">{{ content.text }}</p>

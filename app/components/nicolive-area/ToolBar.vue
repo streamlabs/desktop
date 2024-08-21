@@ -28,7 +28,10 @@
                 ><input
                   type="checkbox"
                   :checked="autoExtensionEnabled"
-                  @click="toggleAutoExtension"
+                  @click="
+                    toggleAutoExtension();
+                    popper1.doClose();
+                  "
                   class="toggle-button"
                 />
               </div>
@@ -36,7 +39,10 @@
             <li class="popup-menu-item">
               <button
                 class="manual-extension link"
-                @click="extendProgram"
+                @click="
+                  extendProgram();
+                  popper1.doClose();
+                "
                 :disabled="
                   autoExtensionEnabled ||
                   isExtending ||
@@ -106,7 +112,10 @@
               <li class="item">
                 <button
                   :class="{ 'button-selector': true, current: selectedButton === 'start' }"
-                  @click="selectButton('start')"
+                  @click="
+                    selectButton('start');
+                    popper2.doClose();
+                  "
                 >
                   <span class="item-name">番組開始</span>
                   <span class="item-text">番組を開始して視聴者に公開します</span>
@@ -115,7 +124,10 @@
               <li class="item">
                 <button
                   :class="{ 'button-selector': true, current: selectedButton === 'end' }"
-                  @click="selectButton('end')"
+                  @click="
+                    selectButton('end');
+                    popper2.doClose();
+                  "
                 >
                   <span class="item-name">番組終了</span>
                   <span class="item-text">番組を視聴者に公開せず終了します</span>

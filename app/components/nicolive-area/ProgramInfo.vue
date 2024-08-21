@@ -28,12 +28,23 @@
         <div class="popup-menu-head">{{ programTitle }}</div>
         <ul class="popup-menu-list">
           <li class="popup-menu-item">
-            <a @click.prevent="openInDefaultBrowser($event)" :href="watchPageURL" class="link"
+            <a
+              @click.prevent="
+                openInDefaultBrowser($event);
+                popper.doClose();
+              "
+              :href="watchPageURL"
+              class="link"
               ><i class="icon-browser"></i>番組ページを開く</a
             >
           </li>
           <li class="popup-menu-item">
-            <a @click="copyProgramURL" class="link"
+            <a
+              @click="
+                copyProgramURL();
+                popper.doClose();
+              "
+              class="link"
               ><i :class="hasProgramUrlCopied ? 'icon-check' : 'icon-clipboard-copy'"></i
               >番組URLをコピーする</a
             >
@@ -41,22 +52,47 @@
         </ul>
         <ul class="popup-menu-list">
           <li class="popup-menu-item">
-            <a @click="editProgram" class="link"><i class="icon-edit"></i>番組を編集する</a>
+            <a
+              @click="
+                editProgram();
+                popper.doClose();
+              "
+              class="link"
+              ><i class="icon-edit"></i>番組を編集する</a
+            >
           </li>
         </ul>
         <ul class="popup-menu-list">
           <li class="popup-menu-item">
-            <a @click.prevent="openInDefaultBrowser($event)" :href="xShareURL" class="link"
+            <a
+              @click.prevent="
+                openInDefaultBrowser($event);
+                popper.doClose();
+              "
+              :href="xShareURL"
+              class="link"
               ><i class="icon-x"></i>Xでポストする</a
             >
           </li>
           <li class="popup-menu-item">
-            <a @click.prevent="openInDefaultBrowser($event)" :href="contentTreeURL" class="link"
+            <a
+              @click.prevent="
+                openInDefaultBrowser($event);
+                popper.doClose();
+              "
+              :href="contentTreeURL"
+              class="link"
               ><i class="icon-contents-tree"></i>コンテンツツリーを見る</a
             >
           </li>
           <li class="popup-menu-item">
-            <a @click.prevent="openInDefaultBrowser($event)" :href="creatorsProgramURL" class="link"
+            <a
+              @click.prevent="
+                openInDefaultBrowser($event);
+                popper.doClose();
+              "
+              :href="creatorsProgramURL"
+              class="link"
               ><i class="icon-creator-promotion-program"></i>この番組で収入を得る</a
             >
           </li>

@@ -39,27 +39,78 @@
             <div class="popper">
               <ul class="popup-menu-list">
                 <li class="popup-menu-item">
-                  <a @click="copyUserId" class="link">ユーザーIDをコピー</a>
+                  <a
+                    @click="
+                      copyUserId();
+                      popper.doClose();
+                    "
+                    class="link"
+                    >ユーザーIDをコピー</a
+                  >
                 </li>
               </ul>
               <ul class="popup-menu-list">
                 <li class="popup-menu-item">
-                  <a @click="blockUser" class="link" v-if="!isBlockedUser">配信からブロック</a>
-                  <a @click="unBlockUser" class="link" v-if="isBlockedUser"
+                  <a
+                    @click="
+                      blockUser();
+                      popper.doClose();
+                    "
+                    class="link"
+                    v-if="!isBlockedUser"
+                    >配信からブロック</a
+                  >
+                  <a
+                    @click="
+                      unBlockUser();
+                      popper.doClose();
+                    "
+                    class="link"
+                    v-if="isBlockedUser"
                     >配信用ブロックから削除</a
                   >
                 </li>
               </ul>
               <ul class="popup-menu-list">
                 <li class="popup-menu-item">
-                  <a @click="unFollowUser" class="link" v-if="isFollowing">フォローを解除</a>
-                  <a @click="followUser" class="link" v-if="!isFollowing">ユーザーをフォロー</a>
+                  <a
+                    @click="
+                      unFollowUser();
+                      popper.doClose();
+                    "
+                    class="link"
+                    v-if="isFollowing"
+                    >フォローを解除</a
+                  >
+                  <a
+                    @click="
+                      followUser();
+                      popper.doClose();
+                    "
+                    class="link"
+                    v-if="!isFollowing"
+                    >ユーザーをフォロー</a
+                  >
                 </li>
               </ul>
               <ul class="popup-menu-list">
                 <li class="popup-menu-item">
-                  <a @click="addModerator" class="link" v-if="!isModerator">モデレーターに追加</a>
-                  <a @click="removeModerator" class="link text--red" v-if="isModerator"
+                  <a
+                    @click="
+                      addModerator();
+                      popper.doClose();
+                    "
+                    class="link"
+                    v-if="!isModerator"
+                    >モデレーターに追加</a
+                  >
+                  <a
+                    @click="
+                      removeModerator();
+                      popper.doClose();
+                    "
+                    class="link text--red"
+                    v-if="isModerator"
                     >モデレーターから削除</a
                   >
                 </li>

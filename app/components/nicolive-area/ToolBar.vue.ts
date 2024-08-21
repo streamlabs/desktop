@@ -32,7 +32,6 @@ export default class ToolBar extends Vue {
   popper2: PopperEvent;
 
   selectButton(button: 'start' | 'end') {
-    this.popper2?.doClose();
     this.selectedButton = button;
   }
 
@@ -82,7 +81,6 @@ export default class ToolBar extends Vue {
     return this.nicoliveProgramService.state.isExtending;
   }
   async extendProgram() {
-    this.popper1?.doClose();
     if (this.isExtending) throw new Error('extendProgram is running');
     try {
       return await this.nicoliveProgramService.extendProgram();
@@ -96,7 +94,6 @@ export default class ToolBar extends Vue {
   }
 
   toggleAutoExtension() {
-    this.popper1?.doClose();
     this.nicoliveProgramService.toggleAutoExtension();
   }
 

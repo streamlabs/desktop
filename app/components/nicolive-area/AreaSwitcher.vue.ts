@@ -36,7 +36,6 @@ export default class AreaSwitcher extends Vue {
   }
 
   select(slotName: string) {
-    this.popper?.doClose();
     this.selectedContent = this.contents.find(c => c.slotName === slotName)!;
   }
 }

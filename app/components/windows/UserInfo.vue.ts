@@ -162,21 +162,18 @@ export default class UserInfo extends Vue {
   }
 
   followUser(): void {
-    this.popper?.doClose();
     this.nicoliveProgramService.client.followUser(this.userId).then(() => {
       this.isFollowing = true;
     });
   }
 
   unFollowUser(): void {
-    this.popper?.doClose();
     this.nicoliveProgramService.client.unFollowUser(this.userId).then(() => {
       this.isFollowing = false;
     });
   }
 
   async blockUser() {
-    this.popper?.doClose();
     await this.nicoliveCommentFilterService
       .addFilter({
         type: 'user',
@@ -189,7 +186,6 @@ export default class UserInfo extends Vue {
       });
   }
   async unBlockUser() {
-    this.popper?.doClose();
     const filterRecord = this.nicoliveCommentFilterService.state.filters.find(
       filter => filter.type === 'user' && filter.body === this.userId,
     );
@@ -206,7 +202,6 @@ export default class UserInfo extends Vue {
   }
 
   async addModerator() {
-    this.popper?.doClose();
     return this.nicoliveModeratorsService.addModeratorWithConfirm({
       userId: this.userId,
       userName: this.userName,
@@ -214,7 +209,6 @@ export default class UserInfo extends Vue {
   }
 
   async removeModerator() {
-    this.popper?.doClose();
     return this.nicoliveModeratorsService.removeModeratorWithConfirm({
       userId: this.userId,
       userName: this.userName,
@@ -270,10 +264,8 @@ export default class UserInfo extends Vue {
 
   openUserPage() {
     remote.shell.openExternal(this.hostsService.getUserPageURL(this.userId));
-    this.popper?.doClose();
   }
   copyUserId() {
-    this.popper?.doClose();
     remote.clipboard.writeText(this.userId);
   }
 
