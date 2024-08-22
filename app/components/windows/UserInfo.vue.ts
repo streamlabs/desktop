@@ -64,6 +64,7 @@ export default class UserInfo extends Vue {
   private cleanup: () => void = undefined;
   isLatestVisible = true;
   showPopupMenu = false;
+  popper: PopperEvent;
 
   isBlockedUser = false;
   isFollowing = false;

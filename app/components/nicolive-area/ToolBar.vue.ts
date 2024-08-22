@@ -28,6 +28,9 @@ export default class ToolBar extends Vue {
   selectedButton: 'start' | 'end' = 'start';
   showButtonSelector: boolean = false;
 
+  popper1: PopperEvent;
+  popper2: PopperEvent;
+
   selectButton(button: 'start' | 'end') {
     this.selectedButton = button;
   }

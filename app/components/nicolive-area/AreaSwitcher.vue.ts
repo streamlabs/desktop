@@ -1,13 +1,15 @@
+import { PascalizedProperty } from 'humps';
 import { Inject } from 'services/core/injector';
 import { CustomizationService } from 'services/customization';
 import Vue from 'vue';
 import Popper from 'vue-popperjs';
 import { Component, Prop } from 'vue-property-decorator';
 
-interface IArea {
+export interface IArea {
   name: string;
   slotName: string;
   defaultSelected?: boolean;
+  text: string;
 }
 
 @Component({
@@ -19,6 +21,8 @@ export default class AreaSwitcher extends Vue {
 
   @Inject()
   private customizationService: CustomizationService;
+
+  popper: PopperEvent;
 
   get isCompactMode(): boolean {
     return this.customizationService.state.compactMode;
