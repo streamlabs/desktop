@@ -424,11 +424,12 @@ async function releaseRoutine() {
   // eslint-disable-next-line import/no-dynamic-require
   const config = require(`./configs/${environment}-${channel}`);
 
-  if (getTagCommitId(`v${nextVersion}`)) {
-    error(`Tag "v${nextVersion}" has already been released.`);
+  const tagCommitId = getTagCommitId(`v${nextVersion}`);
+  if (tagCommitId) {
+    error(`Tag "v${nextVersion}" has already been released: commit ${tagCommitId}.`);
     info('Generate new patchNote with new version.');
     info('If you want to retry current release, remove the tag and related release commit.');
-    if (!(await confirm('Do you want to remove the tag and revert HEAD?', false))) {
+    if (!(await confirm(`Do you want to remove the tag and revert ${tagCommitId}?`, false))) {
       sh.exit(1);
     }
     // remove tag
@@ -438,8 +439,8 @@ async function releaseRoutine() {
     log(`removing tag v${nextVersion} from remote ...`);
     executeCmd(`git push ${config.target.remote} :v${nextVersion} || true`); // ignore error
     // revert last commit
-    log('reverting HEAD ...');
-    executeCmd('git revert --no-edit HEAD');
+    log(`reverting ${tagCommitId} ...`);
+    executeCmd(`git revert --no-edit ${tagCommitId}`);
   }
 
   info('checking current version ...');
