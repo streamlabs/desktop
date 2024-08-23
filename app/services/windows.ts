@@ -138,8 +138,14 @@ export class WindowsService extends StatefulService<IWindowsState> {
   init() {
     const windows = BrowserWindow.getAllWindows();
 
-    this.windows.main = windows[0];
-    this.windows.child = windows[1];
+    // main の後に child を作成しているのでidは昇順になるが、getAllWindowsの返す順序は保証されていない
+    if (windows[0].id < windows[1].id) {
+      this.windows.main = windows[0];
+      this.windows.child = windows[1];
+    } else {
+      this.windows.main = windows[1];
+      this.windows.child = windows[0];
+    }
 
     this.updateScaleFactor('main');
     this.updateScaleFactor('child');
@@ -162,7 +168,12 @@ export class WindowsService extends StatefulService<IWindowsState> {
         });
         return;
       }
-      this.UPDATE_SCALE_FACTOR(windowId, currentDisplay.scaleFactor);
+      if (currentDisplay.scaleFactor !== this.state[windowId].scaleFactor) {
+        console.log(
+          `${windowId} currentDisplay.scaleFactor ${this.state[windowId].scaleFactor} -> ${currentDisplay.scaleFactor}`,
+        );
+        this.UPDATE_SCALE_FACTOR(windowId, currentDisplay.scaleFactor);
+      }
     }
   }
 
