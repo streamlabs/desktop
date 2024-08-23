@@ -136,16 +136,10 @@ export class WindowsService extends StatefulService<IWindowsState> {
   private windows: Dictionary<Electron.BrowserWindow> = {};
 
   init() {
-    const windows = BrowserWindow.getAllWindows();
+    const windowIds = ipcRenderer.sendSync('getWindowIds');
 
-    // main の後に child を作成しているのでidは昇順になるが、getAllWindowsの返す順序は保証されていない
-    if (windows[0].id < windows[1].id) {
-      this.windows.main = windows[0];
-      this.windows.child = windows[1];
-    } else {
-      this.windows.main = windows[1];
-      this.windows.child = windows[0];
-    }
+    this.windows.main = BrowserWindow.fromId(windowIds.main);
+    this.windows.child = BrowserWindow.fromId(windowIds.child);
 
     this.updateScaleFactor('main');
     this.updateScaleFactor('child');
