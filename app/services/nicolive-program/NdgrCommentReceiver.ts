@@ -120,15 +120,15 @@ function convertSimpleNotificationToMessageResponse(
   common: CommonComponent,
   notification: dwango.nicolive.chat.data.ISimpleNotification,
 ): MessageResponse | undefined {
-  const key = Object.keys(notification)[0] as NotificationType;
+  const key = Object.keys(notification)[0] as keyof dwango.nicolive.chat.data.ISimpleNotification;
+  let type = key as NotificationType;
   if (!NotificationTypeTable.includes(key)) {
-    console.warn('Unknown simpleNotification type', notification);
-    return undefined;
+    type = 'unknown';
   }
   return {
     notification: {
       ...common,
-      type: key,
+      type,
       message: notification[key],
     },
   };
