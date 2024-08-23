@@ -190,6 +190,19 @@ describe('convertChunkedMessageToMessageResponse', () => {
       expected: { notification: { date, date_usec, type: 'cruise', message: 'cruise' } },
     },
     {
+      title: 'unknownNewNotification', // あり得ない値
+      msg: {
+        message: {
+          simpleNotification: {
+            unknownNewNotification: 'unknownNewNotification',
+          } as dwango.nicolive.chat.data.ISimpleNotification,
+        },
+      },
+      expected: {
+        notification: { date, date_usec, type: 'unknown', message: 'unknownNewNotification' },
+      },
+    },
+    {
       title: 'gift',
       msg: {
         message: {

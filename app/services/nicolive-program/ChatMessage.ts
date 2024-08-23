@@ -37,7 +37,7 @@ export const NotificationTypeTable = [
   'visited',
 ] as const;
 
-export type NotificationType = (typeof NotificationTypeTable)[number];
+export type NotificationType = (typeof NotificationTypeTable)[number] | 'unknown';
 export type NotificationMessage = DateComponent & {
   type: NotificationType;
   message: string;
