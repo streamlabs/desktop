@@ -141,6 +141,8 @@ export class WindowsService extends StatefulService<IWindowsState> {
     this.windows.main = windows[0];
     this.windows.child = windows[1];
 
+    this.windows.main.webContents.setBackgroundThrottling(false);
+
     this.updateScaleFactor('main');
     this.updateScaleFactor('child');
     this.windows.main.on('move', () => this.updateScaleFactor('main'));
