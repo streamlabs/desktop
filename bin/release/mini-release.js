@@ -424,25 +424,6 @@ async function releaseRoutine() {
   // eslint-disable-next-line import/no-dynamic-require
   const config = require(`./configs/${environment}-${channel}`);
 
-  const tagCommitId = getTagCommitId(`v${nextVersion}`);
-  if (tagCommitId) {
-    error(`Tag "v${nextVersion}" has already been released: commit ${tagCommitId}.`);
-    info('Generate new patchNote with new version.');
-    info('If you want to retry current release, remove the tag and related release commit.');
-    if (!(await confirm(`Do you want to remove the tag and revert ${tagCommitId}?`, false))) {
-      sh.exit(1);
-    }
-    // revert last commit
-    log(`reverting ${tagCommitId} ...`);
-    executeCmd(`git revert --no-edit ${tagCommitId}`);
-    // remove tag
-    log(`removing tag v${nextVersion} ...`);
-    executeCmd(`git tag -d v${nextVersion}`);
-    // remove tag from remote
-    log(`removing tag v${nextVersion} from remote ...`);
-    executeCmd(`git push ${config.target.remote} :v${nextVersion} || true`); // ignore error
-  }
-
   info('checking current version ...');
   const previousVersion = pjson.version;
   const previousVersionContext = getVersionContext(previousVersion);
@@ -460,6 +441,25 @@ async function releaseRoutine() {
       );
       throw new Error(msg);
     }
+  }
+
+  const tagCommitId = getTagCommitId(`v${nextVersion}`);
+  if (tagCommitId) {
+    error(`Tag "v${nextVersion}" has already been released: commit ${tagCommitId}.`);
+    info('Generate new patchNote with new version.');
+    info('If you want to retry current release, remove the tag and related release commit.');
+    if (!(await confirm(`Do you want to remove the tag and revert ${tagCommitId}?`, false))) {
+      sh.exit(1);
+    }
+    // revert last commit
+    log(`reverting ${tagCommitId} ...`);
+    executeCmd(`git revert --no-edit ${tagCommitId}`);
+    // remove tag
+    log(`removing tag v${nextVersion} ...`);
+    executeCmd(`git tag -d v${nextVersion}`);
+    // remove tag from remote
+    log(`removing tag v${nextVersion} from remote ...`);
+    executeCmd(`git push ${config.target.remote} :v${nextVersion} || true`); // ignore error
   }
 
   await runScript({
