@@ -432,15 +432,15 @@ async function releaseRoutine() {
     if (!(await confirm(`Do you want to remove the tag and revert ${tagCommitId}?`, false))) {
       sh.exit(1);
     }
+    // revert last commit
+    log(`reverting ${tagCommitId} ...`);
+    executeCmd(`git revert --no-edit ${tagCommitId}`);
     // remove tag
     log(`removing tag v${nextVersion} ...`);
     executeCmd(`git tag -d v${nextVersion}`);
     // remove tag from remote
     log(`removing tag v${nextVersion} from remote ...`);
     executeCmd(`git push ${config.target.remote} :v${nextVersion} || true`); // ignore error
-    // revert last commit
-    log(`reverting ${tagCommitId} ...`);
-    executeCmd(`git revert --no-edit ${tagCommitId}`);
   }
 
   info('checking current version ...');
