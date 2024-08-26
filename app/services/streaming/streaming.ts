@@ -31,6 +31,8 @@ import { CustomcastUsageService } from '../custom-cast-usage';
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
 import { RtvcStateService } from '../../services/rtvcStateService';
 import * as remote from '@electron/remote';
+import HttpRelation from 'services/nicolive-program/httpRelation';
+import { NicoliveProgramStateService } from 'services/nicolive-program/state';
 
 enum EOBSOutputType {
   Streaming = 'streaming',
@@ -71,6 +73,7 @@ export class StreamingService
   @Inject() private videoSettingsService: VideoSettingsService;
   @Inject() private customcastUsageService: CustomcastUsageService;
   @Inject() private rtvcStateService: RtvcStateService;
+  @Inject() private nicoliveProgramStateService: NicoliveProgramStateService;
 
   streamingStatusChange = new Subject<EStreamingState>();
   recordingStatusChange = new Subject<ERecordingState>();
@@ -726,6 +729,11 @@ export class StreamingService
     this.actionLog('stream_end', streamingTrackId);
     this.customcastUsageService.stopStreaming();
     this.rtvcStateService.stopStreaming();
+
+    HttpRelation.sendLog(
+      this.nicoliveProgramService.state.programID,
+      this.nicoliveProgramStateService.state.httpRelation,
+    );
   }
 
   private actionLog(eventType: 'stream_start' | 'stream_end', streamingTrackId: string) {

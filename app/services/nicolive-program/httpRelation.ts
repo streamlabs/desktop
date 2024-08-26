@@ -69,4 +69,23 @@ export default class HttpRelation {
       return msg;
     }
   }
+
+  static async sendLog(programID: string, httpRelation: HttpRelationState) {
+    try {
+      if (!programID || !httpRelation) return;
+      const url = 'https://dcdn.cdn.nicovideo.jp/shared_httpd/log.gif';
+      const params = new URLSearchParams();
+      params.append('frontend_id', '134');
+      params.append('id', 'http_relation');
+      params.append('content_id', programID);
+      const u = httpRelation.method !== '' ? httpRelation.url : '';
+      params.append('url', u);
+
+      await fetch(`${url}?${params}`, {
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'include',
+      });
+    } catch (e) {}
+  }
 }
