@@ -732,6 +732,7 @@ export class StreamingService
 
     HttpRelation.sendLog(
       this.nicoliveProgramService.state.programID,
+      this.usageStatisticsService.uuidService.uuid,
       this.nicoliveProgramStateService.state.httpRelation,
     );
   }

@@ -70,7 +70,7 @@ export default class HttpRelation {
     }
   }
 
-  static async sendLog(programID: string, httpRelation: HttpRelationState) {
+  static async sendLog(programID: string, uuid: string, httpRelation: HttpRelationState) {
     try {
       if (!programID || !httpRelation) return;
       const url = 'https://dcdn.cdn.nicovideo.jp/shared_httpd/log.gif';
@@ -78,8 +78,9 @@ export default class HttpRelation {
       params.append('frontend_id', '134');
       params.append('id', 'http_relation');
       params.append('content_id', programID);
-      const u = httpRelation.method !== '' ? httpRelation.url : '';
-      params.append('url', u);
+      params.append('uuid', uuid);
+      params.append('method', httpRelation.method);
+      params.append('url', httpRelation.url);
 
       await fetch(`${url}?${params}`, {
         method: 'GET',
