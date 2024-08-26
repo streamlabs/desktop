@@ -140,6 +140,13 @@ export default class CommentSettings extends Vue {
     this.nicoliveCommentLocalFilterService.showAnonymous = v;
   }
 
+  httpRelationMethods = [
+    { value: '', text: '---' },
+    { value: 'GET', text: 'GET' },
+    { value: 'POST', text: 'POST' },
+    { value: 'PUT', text: 'PUT' },
+  ];
+
   get httpRelationMethod() {
     return this.nicoliveProgramStateService.state.httpRelation.method;
   }

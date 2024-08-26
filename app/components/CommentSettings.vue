@@ -197,10 +197,13 @@
         <div class="input-wrapper">
           Method
           <select v-model="httpRelationMethod">
-            <option value="">---</option>
-            <option value="GET">GET</option>
-            <option value="POST">POST</option>
-            <option value="PUT">PUT</option>
+            <option
+              v-for="item of httpRelationMethods"
+              :value="item.value"
+              style="background-color: black"
+            >
+              {{ item.text }}
+            </option>
           </select>
         </div>
         <div class="input-wrapper">URL <input type="text" v-model="httpRelationUrl" /></div>
