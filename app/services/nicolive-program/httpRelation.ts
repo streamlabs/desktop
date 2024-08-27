@@ -90,7 +90,12 @@ export default class HttpRelation {
     const arg: { [name: string]: any } = { method };
     if (method === 'POST' || method === 'PUT') {
       arg.headers = { 'Content-Type': 'application/json' };
-      arg.body = httpRelation.body.replace(/{(\w+)}/g, (m, p: keyof SendParam) => param[p] ?? '');
+      arg.body = httpRelation.body.replace(/{(\w+)}/g, (m, p: keyof SendParam) => {
+        const value = param[p];
+        if (value === undefined) return '';
+        // escape double quote
+        return value.replace(/"/g, '\\"');
+      });
     }
     console.log('sendChat', url, arg); // DEBUG
 

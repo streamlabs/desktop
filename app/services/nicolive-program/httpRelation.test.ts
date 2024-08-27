@@ -10,18 +10,20 @@ describe('HttpRelation', () => {
     fetchMock.restore();
   });
 
-  const msgChat: WrappedChatWithComponent = AddComponent({
-    value: {
-      id: '123',
-      content: 'Hello, world!',
-      user_id: 'user123',
-      name: 'name',
-      anonymity: 0,
-      premium: 1,
-    },
-    type: 'operator',
-    seqId: 0,
-  });
+  const makeChat: (content: string) => WrappedChatWithComponent = content =>
+    AddComponent({
+      value: {
+        id: '123',
+        content,
+        user_id: 'user123',
+        name: 'name',
+        anonymity: 0,
+        premium: 1,
+      },
+      type: 'operator',
+      seqId: 0,
+    });
+  const msgChat = makeChat('Hello, world!');
 
   test.each<['POST' | 'PUT' | 'GET' | '', string, string, string, string]>([
     // test all parameters
@@ -126,18 +128,7 @@ describe('HttpRelation', () => {
   });
 
   test('sendChat with empty message', async () => {
-    const msgEmpty: WrappedChatWithComponent = AddComponent({
-      value: {
-        id: '123',
-        content: '', // empty
-        user_id: 'user123',
-        name: 'name',
-        anonymity: 0,
-        premium: 1,
-      },
-      type: 'operator',
-      seqId: 0,
-    });
+    const msgEmpty = makeChat('');
 
     const mockState: HttpRelationState = {
       method: 'POST',
@@ -148,5 +139,21 @@ describe('HttpRelation', () => {
     const result = await HttpRelation.sendChat(msgEmpty, mockState);
     expect(fetchMock.called()).toBe(false);
     expect(result).toEqual({ error: 'no-content' });
+  });
+
+  test('escape duble quote', async () => {
+    const msgQuote = makeChat('Hello, "world"!');
+    const mockState: HttpRelationState = {
+      method: 'POST',
+      url: '/api/',
+      body: '"{comment}"',
+    };
+    fetchMock.post(mockState.url, 200);
+    await HttpRelation.sendChat(msgQuote, mockState);
+    expect(fetchMock.called()).toBe(true);
+    const [url, options] = fetchMock.lastCall();
+    expect(url).toBe(mockState.url);
+    expect(options.method).toBe(mockState.method);
+    expect(options.body.toString()).toEqual('"Hello, \\"world\\"!"');
   });
 });
