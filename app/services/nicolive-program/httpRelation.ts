@@ -28,36 +28,35 @@ export default class HttpRelation {
     item: WrappedMessageWithComponent,
     httpRelation: HttpRelationState,
   ): Promise<HttpRelationResult> {
-    if (!item.value) return { error: 'no-value' };
+    if (!item.value || !item.type) return { error: 'no-value' };
 
     const bool2string = (b: any) => (b ? 'true' : 'false');
 
-    let param: SendParam;
+    const param: SendParam = {
+      id: '',
+      comment: '',
+      isOwner: '',
+      userId: '',
+      name: '',
+      isPremium: '',
+      isAnonymous: '',
+      type: item.type,
+    };
+
     if (isWrappedChat(item)) {
       if (!item.value.content) return { error: 'no-content' };
-      param = {
-        id: item.value.id ?? uuid(),
-        comment: item.value.content,
-        isOwner: bool2string(item.type === 'operator'),
-        userId: item.value.user_id ?? '-',
-        name: item.value.name ?? '',
-        isPremium: bool2string(item.value.premium),
-        isAnonymous: bool2string(item.value.anonymity),
-        type: item.type,
-      };
+      param.id = item.value.id ?? uuid();
+      param.comment = item.value.content;
+      param.isOwner = bool2string(item.type === 'operator');
+      param.userId = item.value.user_id ?? '-';
+      param.name = item.value.name ?? '';
+      param.isPremium = bool2string(item.value.premium);
+      param.isAnonymous = bool2string(item.value.anonymity);
     } else {
       const comment = getDisplayText(item);
       if (!comment) return { error: 'no-comment' };
-      param = {
-        id: '',
-        comment,
-        isOwner: '',
-        userId: '',
-        name: '',
-        isPremium: '',
-        isAnonymous: '',
-        type: item.type,
-      };
+      param.id = uuid();
+      param.comment = comment;
     }
 
     return await this.send(param, httpRelation);
@@ -90,14 +89,11 @@ export default class HttpRelation {
     const arg: { [name: string]: any } = { method };
     if (method === 'POST' || method === 'PUT') {
       arg.headers = { 'Content-Type': 'application/json' };
-      arg.body = httpRelation.body.replace(/{(\w+)}/g, (m, p: keyof SendParam) => {
-        const value = param[p];
-        if (value === undefined) return '';
-        // escape double quote
-        return value.replace(/"/g, '\\"');
-      });
+      arg.body = httpRelation.body.replace(/{(\w+)}/g, (m, p: keyof SendParam) =>
+        (param[p] ?? '').replace(/"/g, '\\"'),
+      );
     }
-    console.log('sendChat', url, arg); // DEBUG
+    //console.log('sendChat', url, arg); // DEBUG
 
     try {
       const response = await fetch(url, arg);

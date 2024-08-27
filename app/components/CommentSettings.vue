@@ -203,6 +203,7 @@
             label="text"
             trackBy="value"
             :allow-empty="false"
+            :placeholder="$t('settings.listPlaceholder')"
           >
           </multiselect>
         </div>
