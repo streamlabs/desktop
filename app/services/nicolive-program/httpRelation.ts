@@ -1,6 +1,8 @@
+import uuid from 'uuid';
+import { ChatMessageType } from './ChatMessage/classifier';
+import { getDisplayText } from './ChatMessage/displaytext';
 import { HttpRelationState } from './state';
-import { WrappedChat } from './WrappedChat';
-import uuid from 'uuid/v4';
+import { isWrappedChat, WrappedMessageWithComponent } from './WrappedChat';
 
 type SendParam = {
   id: string;
@@ -10,29 +12,58 @@ type SendParam = {
   name: string;
   isPremium: string;
   isAnonymous: string;
+  type: ChatMessageType;
 };
 
+export type HttpRelationResult =
+  | {
+      error: string;
+    }
+  | {
+      result: string;
+    };
+
 export default class HttpRelation {
-  static async sendChat(item: WrappedChat, httpRelation: HttpRelationState): Promise<string> {
-    const value = item.value;
-    if (!value || !value.content) return 'Error no-value';
+  static async sendChat(
+    item: WrappedMessageWithComponent,
+    httpRelation: HttpRelationState,
+  ): Promise<HttpRelationResult> {
+    if (!item.value) return { error: 'no-value' };
 
     const bool2string = (b: any) => (b ? 'true' : 'false');
 
-    const param: SendParam = {
-      id: item.value.id ?? uuid(),
-      comment: item.value.content ?? '---',
-      isOwner: bool2string(item.type === 'operator'),
-      userId: item.value.user_id ?? '-',
-      name: item.value.name ?? '',
-      isPremium: bool2string(item.value.premium),
-      isAnonymous: bool2string(item.value.anonymity),
-    };
+    let param: SendParam;
+    if (isWrappedChat(item)) {
+      if (!item.value.content) return { error: 'no-content' };
+      param = {
+        id: item.value.id ?? uuid(),
+        comment: item.value.content,
+        isOwner: bool2string(item.type === 'operator'),
+        userId: item.value.user_id ?? '-',
+        name: item.value.name ?? '',
+        isPremium: bool2string(item.value.premium),
+        isAnonymous: bool2string(item.value.anonymity),
+        type: item.type,
+      };
+    } else {
+      const comment = getDisplayText(item);
+      if (!comment) return { error: 'no-comment' };
+      param = {
+        id: '',
+        comment,
+        isOwner: '',
+        userId: '',
+        name: '',
+        isPremium: '',
+        isAnonymous: '',
+        type: item.type,
+      };
+    }
 
     return await this.send(param, httpRelation);
   }
 
-  static async sendTest(httpRelation: HttpRelationState): Promise<string> {
+  static async sendTest(httpRelation: HttpRelationState): Promise<HttpRelationResult> {
     const param: SendParam = {
       id: uuid(),
       comment: 'テストコメントです',
@@ -41,12 +72,16 @@ export default class HttpRelation {
       name: 'test',
       isPremium: 'true',
       isAnonymous: 'false',
+      type: 'normal',
     };
     return await this.send(param, httpRelation);
   }
 
-  private static async send(param: SendParam, httpRelation: HttpRelationState): Promise<string> {
-    if (!httpRelation || !httpRelation.method) return 'Error no-settings';
+  private static async send(
+    param: SendParam,
+    httpRelation: HttpRelationState,
+  ): Promise<HttpRelationResult> {
+    if (!httpRelation || !httpRelation.method) return { error: 'no-settings' };
 
     const url = httpRelation.url.replace(/{(\w+)}/g, (m, p: keyof SendParam) =>
       encodeURIComponent(param[p] ?? ''),
@@ -57,16 +92,16 @@ export default class HttpRelation {
       arg.headers = { 'Content-Type': 'application/json' };
       arg.body = httpRelation.body.replace(/{(\w+)}/g, (m, p: keyof SendParam) => param[p] ?? '');
     }
+    console.log('sendChat', url, arg); // DEBUG
 
     try {
       const response = await fetch(url, arg);
-      if (!response.ok)
-        throw new Error(`Failed to send chat: ${response.status} ${response.statusText}`);
-      return await response.text();
+      if (!response.ok) {
+        return { error: `status=${response.status}` };
+      }
+      return { result: await response.text() };
     } catch (e) {
-      const msg = 'Error ' + e.toString();
-      console.warn(msg);
-      return msg;
+      return { error: e.toString() };
     }
   }
 

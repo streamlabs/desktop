@@ -453,10 +453,11 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
     // send to http relation
     const httpRelation = this.nicoliveProgramStateService.state.httpRelation;
     if (httpRelation && httpRelation.method) {
-      values.forEach(a => {
-        if (a.type === 'normal' || a.type === 'operator')
-          HttpRelation.sendChat(a, httpRelation).then();
-      });
+      values
+        .filter(c => this.filterFn(c))
+        .forEach(a => {
+          HttpRelation.sendChat(a, httpRelation);
+        });
     }
 
     const maxQueueToSpeak = 3; // 直近3件つづ読み上げ対象にする
