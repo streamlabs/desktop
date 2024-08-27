@@ -23,7 +23,7 @@ export type HttpRelationResult =
       result: string;
     };
 
-export default class HttpRelation {
+export class HttpRelation {
   static async sendChat(
     item: WrappedMessageWithComponent,
     httpRelation: HttpRelationState,

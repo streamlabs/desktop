@@ -49,7 +49,7 @@ import {
 } from './ChatMessage/util';
 import { MessageResponse } from './ChatMessage';
 
-import HttpRelation from './httpRelation';
+import { HttpRelation } from './httpRelation';
 
 function makeEmulatedChat(
   content: string,
