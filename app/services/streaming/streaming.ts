@@ -1,5 +1,4 @@
 import * as Sentry from '@sentry/vue';
-import * as electron from 'electron';
 import moment from 'moment';
 import { Subject } from 'rxjs';
 import { Inject } from 'services/core/injector';
@@ -28,10 +27,10 @@ import {
 } from './streaming-api';
 import { CustomcastUsageService } from '../custom-cast-usage';
 
-import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
+import { VideoSettingsService } from 'services/settings-v2/video';
 import { RtvcStateService } from '../../services/rtvcStateService';
 import * as remote from '@electron/remote';
-import HttpRelation from 'services/nicolive-program/httpRelation';
+import { HttpRelation } from 'services/nicolive-program/httpRelation';
 import { NicoliveProgramStateService } from 'services/nicolive-program/state';
 
 enum EOBSOutputType {
