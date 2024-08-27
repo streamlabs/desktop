@@ -2,6 +2,20 @@
   <div class="container">
     <div class="header" v-if="!isCompactMode">
       <i
+        class="icon-reload icon-btn"
+        v-tooltip.bottom="commentReloadTooltip"
+        @click="refreshConnection"
+      ></i>
+      <i
+        class="icon-btn"
+        :class="speakingEnabled ? 'icon-speaker' : 'icon-mute'"
+        v-tooltip.bottom="
+          speakingEnabled ? commentSynthesizerOnTooltip : commentSynthesizerOffTooltip
+        "
+        @click="speakingEnabled = !speakingEnabled"
+      ></i>
+      <div class="divider"></div>
+      <i
         class="icon-ng icon-btn"
         v-tooltip.bottom="filterTooltip"
         @click="isFilterOpened = true"
@@ -60,26 +74,10 @@
         <button
           type="button"
           @click="scrollToLatest"
-          class="scroll-to-latest button--tertiary"
+          class="button--circle button--tertiary"
           v-if="!isLatestVisible && items.length > 0"
         >
-          <i class="icon-down-arrow"></i>最新のコメントへ移動
-        </button>
-        <button
-          class="button--circle button--tertiary"
-          v-tooltip.bottom="commentReloadTooltip"
-          @click="refreshConnection"
-        >
-          <i class="icon-reload"></i>
-        </button>
-        <button
-          class="button--circle button--tertiary"
-          v-tooltip.bottom="
-            speakingEnabled ? commentSynthesizerOnTooltip : commentSynthesizerOffTooltip
-          "
-          @click="speakingEnabled = !speakingEnabled"
-        >
-          <i :class="speakingEnabled ? 'icon-speaker' : 'icon-mute'"></i>
+          <i class="icon-down-arrow"></i>
         </button>
       </div>
       <div class="created-notice" v-if="showPlaceholder">
@@ -114,17 +112,17 @@
   display: flex;
   flex-shrink: 0;
   align-items: center;
+  justify-content: flex-end;
   width: 100%;
   height: 48px;
   padding: 4px 16px;
   border-bottom: 1px solid var(--color-border-light);
 
-  > .icon-btn {
+  .divider {
+    width: 1px;
+    height: 14px;
     margin-left: 16px;
-
-    &:first-child {
-      margin-left: auto;
-    }
+    background-color: var(--color-border-light);
   }
 }
 

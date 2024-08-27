@@ -173,10 +173,10 @@
             <button
               type="button"
               @click="scrollToLatest"
-              class="scroll-to-latest button--tertiary"
+              class="button--circle button--tertiary"
               v-if="!isLatestVisible && comments.length > 0"
             >
-              <i class="icon-down-arrow"></i>最新のコメントへ移動
+              <i class="icon-down-arrow"></i>
             </button>
           </div>
         </div>
