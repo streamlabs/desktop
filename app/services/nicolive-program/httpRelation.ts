@@ -55,7 +55,6 @@ export default class HttpRelation {
     } else {
       const comment = getDisplayText(item);
       if (!comment) return { error: 'no-comment' };
-      param.id = uuid();
       param.comment = comment;
     }
 
