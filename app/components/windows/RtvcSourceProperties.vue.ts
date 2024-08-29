@@ -70,7 +70,7 @@ export default class RtvcSourceProperties extends SourceProperties {
   canAdd = false;
 
   showPopupMenu = false;
-  currentPopupMenu: any = undefined;
+  popper: PopperEvent;
 
   primaryVoiceModel: IObsListOption<number> = { description: '', value: 0 };
   secondaryVoiceModel: IObsListOption<number> = { description: '', value: 0 };
@@ -405,9 +405,8 @@ export default class RtvcSourceProperties extends SourceProperties {
   }
 
   closePopupMenu() {
-    if (!this.currentPopupMenu) return;
-    this.currentPopupMenu.doClose();
-    this.currentPopupMenu = undefined;
+    this.popper?.doClose();
+    this.popper = undefined;
   }
 
   async onDelete(index: string) {

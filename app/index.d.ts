@@ -68,3 +68,7 @@ declare module 'emojione';
 // defined in webpack.config.js
 declare const SENTRY_DSN: string;
 declare const SENTRY_MINIDUMP_URL: string;
+
+interface PopperEvent {
+  doClose(): void;
+}

@@ -37,6 +37,10 @@ test.each<NotificationType>(['ichiba', 'quote', 'cruise'])(`system: %s`, type =>
   expect(classify({ notification: { type, message: '' } })).toBe('system');
 });
 
+it('system: from unknown notification', () => {
+  expect(classify({ notification: { type: 'unknown', message: '' } })).toBe('system');
+});
+
 test('invisible', () => {
   expect(classify({ state: { state: 'ended' } })).toBe('invisible');
   expect(classify({ signal: 'flushed' })).toBe('invisible');
