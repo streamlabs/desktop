@@ -205,6 +205,14 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
                   isWrappedChat(chat) &&
                   this.nicoliveModeratorsService.isModerator(chat.value.user_id),
               })),
+              pinnedMessage: this.state.pinnedMessage
+                ? {
+                    ...this.state.pinnedMessage,
+                    isModerator: this.nicoliveModeratorsService.isModerator(
+                      this.state.pinnedMessage.value.user_id,
+                    ),
+                  }
+                : null,
             });
             break;
 
