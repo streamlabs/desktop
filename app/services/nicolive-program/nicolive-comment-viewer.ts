@@ -303,6 +303,12 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
                 return chat;
               }
             }),
+            pinnedMessage: this.state.pinnedMessage
+              ? {
+                  ...this.state.pinnedMessage,
+                  isSupporter: isSupporter(this.state.pinnedMessage.value.user_id),
+                }
+              : null,
           });
         }
       });
