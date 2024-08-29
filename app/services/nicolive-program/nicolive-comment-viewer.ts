@@ -186,6 +186,7 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
       .subscribe(state => this.onNextConfig(state));
 
     this.nicoliveCommentFilterService.stateChange.subscribe(() => {
+      // updateMessagesはPinまで更新してしまうが、ここではpinは更新しない
       this.SET_STATE({
         messages: this.state.messages.map(chat =>
           this.nicoliveCommentFilterService.applyFilter(chat),
@@ -198,22 +199,10 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
         switch (event.event) {
           case 'refreshModerators':
             // モデレーター情報が再取得されたら既存コメントのモデレーター情報も更新する
-            this.SET_STATE({
-              messages: this.state.messages.map(chat => ({
-                ...chat,
-                isModerator:
-                  isWrappedChat(chat) &&
-                  this.nicoliveModeratorsService.isModerator(chat.value.user_id),
-              })),
-              pinnedMessage: this.state.pinnedMessage
-                ? {
-                    ...this.state.pinnedMessage,
-                    isModerator: this.nicoliveModeratorsService.isModerator(
-                      this.state.pinnedMessage.value.user_id,
-                    ),
-                  }
-                : null,
-            });
+            this.updateMessages(chat => ({
+              ...chat,
+              isModerator: this.nicoliveModeratorsService.isModerator(chat.value.user_id),
+            }));
             break;
 
           case 'addSSNG':
@@ -284,6 +273,18 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
     this.nicoliveModeratorsService.disconnectNdgr();
   }
 
+  private updateMessages(updater: (chat: WrappedChatWithComponent) => WrappedChatWithComponent) {
+    this.SET_STATE({
+      messages: this.state.messages.map(chat => {
+        if (isWrappedChat(chat)) {
+          return updater(chat);
+        }
+        return chat;
+      }),
+      pinnedMessage: this.state.pinnedMessage ? updater(this.state.pinnedMessage) : null,
+    });
+  }
+
   startUpdateSupporters(
     interval_ms: number,
     closer: Subject<unknown>,
@@ -300,24 +301,10 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
 
         // サポーター情報が更新されたら既存コメントのサポーター情報も更新する
         if (this.state.messages.length > 0) {
-          this.SET_STATE({
-            messages: this.state.messages.map(chat => {
-              if (isWrappedChat(chat)) {
-                return {
-                  ...chat,
-                  isSupporter: isSupporter(chat.value.user_id),
-                };
-              } else {
-                return chat;
-              }
-            }),
-            pinnedMessage: this.state.pinnedMessage
-              ? {
-                  ...this.state.pinnedMessage,
-                  isSupporter: isSupporter(this.state.pinnedMessage.value.user_id),
-                }
-              : null,
-          });
+          this.updateMessages(chat => ({
+            ...chat,
+            isSupporter: isSupporter(chat.value.user_id),
+          }));
         }
       });
 
