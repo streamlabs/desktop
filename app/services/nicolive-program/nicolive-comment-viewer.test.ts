@@ -162,6 +162,9 @@ function connectionSetup() {
   const stateChange = new Subject();
   const clientSubject = new Subject<MessageResponse>();
   const refreshObserver = new Subject<ObserveType<NicoliveModeratorsService['refreshObserver']>>();
+  const moderatorsStateChange = new Subject<
+    ObserveType<NicoliveModeratorsService['stateChange']>
+  >();
   jest.doMock('./NdgrCommentReceiver', () => ({
     ...(jest.requireActual('./NdgrCommentReceiver') as {}),
     NdgrCommentReceiver: class NdgrCommentReceiver implements IMessageServerClient {
@@ -182,8 +185,9 @@ function connectionSetup() {
       },
       NicoliveModeratorsService: {
         refreshObserver,
+        stateChange: moderatorsStateChange,
         isModerator: (userId: string) => {
-          return userId === '123';
+          return userId === MODERATOR_ID;
         },
       },
       NicoliveCommentFilterService: {
@@ -203,6 +207,7 @@ function connectionSetup() {
     instance,
     clientSubject,
     refreshObserver,
+    moderatorsStateChange,
   };
 }
 
@@ -449,8 +454,8 @@ test('モデレーターによるSSNG追加・削除がきたらシステムメ�
   }
 });
 
-test('refreshModeratorsがきたらコメントのモデレーター情報を更新する', async () => {
-  const { clientSubject, instance, refreshObserver } = connectionSetup();
+test('moderator.stateChange がきたらコメントのモデレーター情報を更新する', async () => {
+  const { clientSubject, instance, moderatorsStateChange } = connectionSetup();
   await sleep(0);
   instance.state.messages = [
     {
@@ -474,15 +479,27 @@ test('refreshModeratorsがきたらコメントのモデレーター情報を更
       },
     },
   ] as WrappedChatWithComponent[];
+  instance.state.pinnedMessage = {
+    component: 'common',
+    isModerator: true,
+    seqId: 2,
+    type: 'normal',
+    value: {
+      content: 'yay',
+      user_id: NOT_MODERATOR_ID,
+    },
+  };
 
   {
     const messages = instance.state.messages as WrappedChatWithComponent[];
     expect(messages[0].isModerator).toBeFalsy();
     expect(messages[1].isModerator).toBeTruthy();
+    expect(instance.state.pinnedMessage?.isModerator).toBeTruthy();
   }
 
-  refreshObserver.next({
-    event: 'refreshModerators',
+  moderatorsStateChange.next({
+    moderatorsCache: [MODERATOR_ID],
+    viewUri: 'https://example.com',
   });
 
   // bufferTime tweaks
@@ -493,6 +510,7 @@ test('refreshModeratorsがきたらコメントのモデレーター情報を更
     expect(messages[0].isModerator).toBeTruthy();
     expect(messages[1].isModerator).toBeFalsy();
   }
+  expect(instance.state.pinnedMessage?.isModerator).toBeFalsy();
 });
 
 describe('startUpdateSupporters', () => {

@@ -35,7 +35,6 @@ export class NicoliveModeratorsService extends StatefulService<INicoliveModerato
   private stateChangeSubject = new Subject<typeof this.state>();
   stateChange = this.stateChangeSubject.asObservable();
   private refreshSubject = new Subject<
-    | { event: 'refreshModerators' }
     | { event: 'addSSNG'; record: FilterRecord }
     | { event: 'removeSSNG'; record: { ssngId: number; userId?: number; userName?: string } }
   >();
@@ -232,7 +231,6 @@ export class NicoliveModeratorsService extends StatefulService<INicoliveModerato
       throw NicoliveFailure.fromClientError('fetchModerators', result);
     }
     this.setModeratorsCache(result.value.map(moderator => moderator.userId).map(String));
-    this.refreshSubject.next({ event: 'refreshModerators' });
   }
 
   isModerator(userId: string): boolean {

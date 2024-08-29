@@ -194,17 +194,19 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
       });
     });
 
+    // モデレーターが変化したらコメントを更新する
+    this.nicoliveModeratorsService.stateChange.subscribe({
+      next: () => {
+        this.updateMessages(chat => ({
+          ...chat,
+          isModerator: this.nicoliveModeratorsService.isModerator(chat.value.user_id),
+        }));
+      },
+    });
+
     this.nicoliveModeratorsService.refreshObserver.subscribe({
       next: event => {
         switch (event.event) {
-          case 'refreshModerators':
-            // モデレーター情報が再取得されたら既存コメントのモデレーター情報も更新する
-            this.updateMessages(chat => ({
-              ...chat,
-              isModerator: this.nicoliveModeratorsService.isModerator(chat.value.user_id),
-            }));
-            break;
-
           case 'addSSNG':
             {
               this.nicoliveCommentFilterService.addFilterCache(event.record);
