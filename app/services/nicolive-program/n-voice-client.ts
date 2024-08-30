@@ -68,8 +68,7 @@ async function showError(err: Error): Promise<void> {
   await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
     type: 'error',
     message: err.toString(),
-    buttons: [$t('common.close')],
-    noLink: true,
+    buttons: ['close'],
   });
 }
 

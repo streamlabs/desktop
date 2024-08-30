@@ -417,10 +417,12 @@ export default class RtvcSourceProperties extends SourceProperties {
     const r = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
       type: 'warning',
       message: $t('source-props.nair-rtvc-source.nav.remove_confirm'),
-      buttons: [$t('common.cancel'), $t('common.remove')],
+      buttons: [$t('common.remove'), $t('common.cancel')],
+      defaultId: 1,
+      cancelId: 1,
       noLink: true,
     });
-    if (!r.response) return;
+    if (r.response) return;
 
     this.state.manuals.splice(idx, 1);
     this.updateManualList();
