@@ -10,6 +10,7 @@ import { I18nServiceApi } from './i18n-api';
 import * as obs from '../../../obs-api';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as remote from '@electron/remote';
 
 interface II18nState {
   locale: string;
@@ -86,7 +87,7 @@ export class I18nService extends PersistentStatefulService<II18nState> implement
     // if locale is not set than use electron's one
     let locale = this.state.locale;
     if (!locale) {
-      const electronLocale = electron.remote.app.getLocale();
+      const electronLocale = remote.app.getLocale();
       const langDescription = LANG_CODE_MAP[electronLocale];
       locale = langDescription ? langDescription.locale : 'en-US';
     }
@@ -95,7 +96,7 @@ export class I18nService extends PersistentStatefulService<II18nState> implement
     if (!this.loadedDictionaries[locale]) {
       await this.loadDictionary(locale).catch(e => {
         console.error(e);
-        electron.remote.dialog.showErrorBox(
+        remote.dialog.showErrorBox(
           'N Air - Error',
           `${locale}向けの辞書ファイル読み込みに失敗しました。\n` +
             `Failed to read the dictionary file for ${locale}.\n` +
@@ -109,7 +110,7 @@ export class I18nService extends PersistentStatefulService<II18nState> implement
     if (!this.loadedDictionaries[fallbackLocale]) {
       await this.loadDictionary(fallbackLocale).catch(e => {
         console.error(e);
-        electron.remote.dialog.showErrorBox(
+        remote.dialog.showErrorBox(
           'N Air - Error',
           `${fallbackLocale}向けの辞書ファイル読み込みに失敗しました。\n` +
             `Failed to read the dictionary file for ${fallbackLocale}.\n` +
@@ -174,7 +175,7 @@ export class I18nService extends PersistentStatefulService<II18nState> implement
   }
 
   private getI18nPath() {
-    return path.join(electron.remote.app.getAppPath(), 'app/i18n');
+    return path.join(remote.app.getAppPath(), 'app/i18n');
   }
 
   private async loadDictionary(locale: string): Promise<Dictionary<string>> {

@@ -98,5 +98,6 @@
   .text-ellipsis;
 
   display: flex;
+  width: 100%;
 }
 </style>

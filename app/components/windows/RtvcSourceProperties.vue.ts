@@ -17,6 +17,7 @@ import {
 } from 'services/rtvcStateService';
 import electron from 'electron';
 import { $t } from 'services/i18n';
+import * as remote from '@electron/remote';
 
 // for set param
 type SetParamKey =
@@ -69,7 +70,7 @@ export default class RtvcSourceProperties extends SourceProperties {
   canAdd = false;
 
   showPopupMenu = false;
-  currentPopupMenu: any = undefined;
+  popper: PopperEvent;
 
   primaryVoiceModel: IObsListOption<number> = { description: '', value: 0 };
   secondaryVoiceModel: IObsListOption<number> = { description: '', value: 0 };
@@ -99,12 +100,33 @@ export default class RtvcSourceProperties extends SourceProperties {
   // 101 zundamon
   // 103 kasukabe_tsumugi
 
+  get jvsList() {
+    if ($t('source-props.nair-rtvc-source.value.male') === '男性') return jvsListBase; // 同じなので変更不要
+
+    const mapping: { [name: string]: string } = {
+      男性: $t('source-props.nair-rtvc-source.value.male'),
+      女性: $t('source-props.nair-rtvc-source.value.female'),
+      高め: $t('source-props.nair-rtvc-source.value.high'),
+      低め: $t('source-props.nair-rtvc-source.value.low'),
+      普通: $t('source-props.nair-rtvc-source.value.normal'),
+    };
+
+    const pattern = new RegExp(`(${Object.keys(mapping).join('|')})`, 'g');
+    return jvsListBase.map(a => {
+      a.description = a.description.replace(pattern, (m, p: string) => mapping[p]);
+      return a;
+    });
+  }
+
   get primaryVoiceList() {
-    return jvsList;
+    return this.jvsList;
   }
 
   get secondaryVoiceList() {
-    return [{ description: 'なし', value: -1 }, ...jvsList];
+    return [
+      { description: $t('source-props.nair-rtvc-source.value.none'), value: -1 },
+      ...this.jvsList,
+    ];
   }
 
   get deviceList() {
@@ -246,10 +268,10 @@ export default class RtvcSourceProperties extends SourceProperties {
   setParam(key: SetParamKey, value: any) {
     const p = this.indexToNum(this.currentIndex);
     if (p.isManual) {
-      this.state.manuals[p.idx][key] = value;
+      (this.state.manuals[p.idx] as any)[key] = value;
       return;
     }
-    this.state.presets[p.idx][key] = value;
+    (this.state.presets[p.idx] as any)[key] = value;
   }
 
   // -- sources in/out
@@ -383,9 +405,8 @@ export default class RtvcSourceProperties extends SourceProperties {
   }
 
   closePopupMenu() {
-    if (!this.currentPopupMenu) return;
-    this.currentPopupMenu.doClose();
-    this.currentPopupMenu = undefined;
+    this.popper?.doClose();
+    this.popper = undefined;
   }
 
   async onDelete(index: string) {
@@ -393,7 +414,7 @@ export default class RtvcSourceProperties extends SourceProperties {
     const idx = this.getManualIndexNum(index);
     if (idx < 0) return;
 
-    const r = await electron.remote.dialog.showMessageBox(electron.remote.getCurrentWindow(), {
+    const r = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
       type: 'warning',
       message: $t('source-props.nair-rtvc-source.nav.remove_confirm'),
       buttons: [$t('common.cancel'), $t('common.remove')],
@@ -444,7 +465,7 @@ export default class RtvcSourceProperties extends SourceProperties {
   }
 }
 
-const jvsList = [
+const jvsListBase = [
   { description: '男性/低め/1  jvs006', value: 5 },
   { description: '男性/低め/2  jvs021', value: 20 },
   { description: '男性/低め/3  jvs042', value: 41 },

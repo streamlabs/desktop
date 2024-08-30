@@ -30,6 +30,7 @@ import { CustomcastUsageService } from '../custom-cast-usage';
 
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
 import { RtvcStateService } from '../../services/rtvcStateService';
+import * as remote from '@electron/remote';
 
 enum EOBSOutputType {
   Streaming = 'streaming',
@@ -148,8 +149,8 @@ export class StreamingService
       message: 'showNotBroadcastingMessageBox',
     });
     return new Promise(resolve => {
-      electron.remote.dialog
-        .showMessageBox(electron.remote.getCurrentWindow(), {
+      remote.dialog
+        .showMessageBox(remote.getCurrentWindow(), {
           title: $t('streaming.notBroadcasting'),
           type: 'warning',
           message: $t('streaming.notBroadcastingMessage'),
@@ -293,8 +294,8 @@ export class StreamingService
         }
 
         return new Promise(resolve => {
-          electron.remote.dialog
-            .showMessageBox(electron.remote.getCurrentWindow(), {
+          remote.dialog
+            .showMessageBox(remote.getCurrentWindow(), {
               type: 'warning',
               message,
               buttons: ['Close'],
@@ -315,7 +316,7 @@ export class StreamingService
 
       if (shouldConfirm && !confirm(confirmText)) return;
 
-      this.powerSaveId = electron.remote.powerSaveBlocker.start('prevent-display-sleep');
+      this.powerSaveId = remote.powerSaveBlocker.start('prevent-display-sleep');
       try {
         Sentry.addBreadcrumb({
           category: 'obs',
@@ -347,7 +348,7 @@ export class StreamingService
       if (shouldConfirm && !confirm(confirmText)) return;
 
       if (this.powerSaveId) {
-        electron.remote.powerSaveBlocker.stop(this.powerSaveId);
+        remote.powerSaveBlocker.stop(this.powerSaveId);
       }
 
       try {
@@ -448,8 +449,8 @@ export class StreamingService
         Sentry.captureException(new Error('StreamingSetting.quality is undefined'));
       });
       return new Promise(resolve => {
-        electron.remote.dialog
-          .showMessageBox(electron.remote.getCurrentWindow(), {
+        remote.dialog
+          .showMessageBox(remote.getCurrentWindow(), {
             title: $t('streaming.bitrateFetchingError.title'),
             type: 'warning',
             message: $t('streaming.bitrateFetchingError.message'),
@@ -554,6 +555,8 @@ export class StreamingService
 
   startReplayBuffer() {
     if (this.state.replayBufferStatus !== EReplayBufferState.Offline) return;
+
+    this.windowsService.closeChildWindow();
 
     try {
       Sentry.addBreadcrumb({
@@ -892,7 +895,7 @@ export class StreamingService
       this.outputErrorOpen = true;
       (async () => {
         try {
-          await electron.remote.dialog.showMessageBox(Utils.getMainWindow(), {
+          await remote.dialog.showMessageBox(Utils.getMainWindow(), {
             buttons: ['OK'],
             title,
             type: 'error',

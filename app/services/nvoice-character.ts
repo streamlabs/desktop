@@ -7,6 +7,7 @@ import { ISceneNodeAddOptions } from './scenes';
 import { ISourceApi, SourcesService } from './sources';
 import { NVoiceCharacterManager } from './sources/properties-managers/nvoice-character-manager';
 import { VideoService } from './video';
+import * as remote from '@electron/remote';
 
 // NVoiceのキャラクターの種類を定義
 export const NVoiceCharacterTypes = ['near'] as const;
@@ -83,9 +84,9 @@ export class NVoiceCharacterService extends StatefulService<INVoiceCharacterSour
   }
 
   getUrl(type: NVoiceCharacterType, port?: number): string {
-    const appPath = electron.remote.app.isPackaged
-      ? dirname(electron.remote.app.getPath('exe'))
-      : electron.remote.app.getAppPath();
+    const appPath = remote.app.isPackaged
+      ? dirname(remote.app.getPath('exe'))
+      : remote.app.getAppPath();
     const url =
       'file://' + path.join(appPath, 'nvoice', type, `index.html?port=${port || this.state.port}`);
     return url;

@@ -2,7 +2,7 @@ import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
 import { Inject } from 'services/core/injector';
 import { NicoliveProgramService } from 'services/nicolive-program/nicolive-program';
-import { remote } from 'electron';
+import * as remote from '@electron/remote';
 import { apply as applyAutoLink } from 'util/autoLink';
 
 @Component({})

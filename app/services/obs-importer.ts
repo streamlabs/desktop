@@ -13,6 +13,7 @@ import { SceneCollectionsService } from 'services/scene-collections';
 import * as obs from '../../obs-api';
 import { SettingsService } from 'services/settings';
 import defaultTo from 'lodash/defaultTo';
+import * as remote from '@electron/remote';
 
 interface Source {
   name?: string;
@@ -346,7 +347,7 @@ export class ObsImporterService extends Service {
       if (file === 'basic.ini' || file === 'streamEncoder.json' || file === 'recordEncoder.json') {
         const obsFilePath = path.join(profileDirectory, file);
 
-        const appData = electron.remote.app.getPath('userData');
+        const appData = remote.app.getPath('userData');
         const currentFilePath = path.join(appData, file);
 
         const readData = fs.readFileSync(obsFilePath);
@@ -379,7 +380,7 @@ export class ObsImporterService extends Service {
   }
 
   get OBSconfigFileDirectory() {
-    return path.join(electron.remote.app.getPath('appData'), 'obs-studio');
+    return path.join(remote.app.getPath('appData'), 'obs-studio');
   }
 
   get sceneCollectionsDirectory() {

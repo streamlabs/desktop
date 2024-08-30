@@ -2,12 +2,14 @@ import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
 import { Inject } from 'services/core/injector';
 import { NicoliveProgramService } from 'services/nicolive-program/nicolive-program';
-import { clipboard, remote } from 'electron';
+import { clipboard } from 'electron';
 import { StreamingService } from 'services/streaming';
 import { Subscription } from 'rxjs';
 import Popper from 'vue-popperjs';
 import * as moment from 'moment';
 import { HostsService } from 'services/hosts';
+import * as remote from '@electron/remote';
+import { UserService } from 'services/user';
 
 @Component({
   components: {
@@ -19,13 +21,12 @@ export default class ProgramInfo extends Vue {
   nicoliveProgramService: NicoliveProgramService;
   @Inject() streamingService: StreamingService;
   @Inject() hostsService: HostsService;
-
-  // TODO: 後でまとめる
-  programIsMemberOnlyTooltip = 'コミュニティ限定放送';
+  @Inject() userService: UserService;
 
   private subscription: Subscription = null;
 
   showPopupMenu: boolean = false;
+  popper: PopperEvent;
 
   get isOnAir(): boolean {
     return this.nicoliveProgramService.state.status === 'onAir';
@@ -60,20 +61,12 @@ export default class ProgramInfo extends Vue {
     return this.nicoliveProgramService.state.title;
   }
 
-  get programIsMemberOnly(): boolean {
-    return this.nicoliveProgramService.state.isMemberOnly;
+  get userName(): string {
+    return this.userService.username;
   }
 
-  get communityID(): string {
-    return this.nicoliveProgramService.state.communityID;
-  }
-
-  get communityName(): string {
-    return this.nicoliveProgramService.state.communityName;
-  }
-
-  get communitySymbol(): string {
-    return this.nicoliveProgramService.state.communitySymbol;
+  get userIcon(): string {
+    return this.userService.userIcon;
   }
 
   get autoExtensionEnabled() {
@@ -95,10 +88,6 @@ export default class ProgramInfo extends Vue {
     return this.hostsService.getWatchPageURL(this.programID);
   }
 
-  get communityPageURL(): string {
-    return this.hostsService.getCommunityPageURL(this.communityID);
-  }
-
   async editProgram() {
     try {
       return await this.nicoliveProgramService.editProgram();
@@ -116,15 +105,15 @@ export default class ProgramInfo extends Vue {
     return this.hostsService.getCreatorsProgramURL(this.programID);
   }
 
-  get twitterShareURL(): string {
-    const content = this.twitterShareContent();
-    const url = new URL('https://twitter.com/intent/tweet');
+  get xShareURL(): string {
+    const content = this.xShareContent();
+    const url = new URL('https://x.com/intent/tweet');
     url.searchParams.append('text', content.text);
     url.searchParams.append('url', content.url);
     return url.toString();
   }
 
-  private twitterShareContent(): { text: string; url: string } {
+  private xShareContent(): { text: string; url: string } {
     const title = this.nicoliveProgramService.state.title;
     const url = `${this.hostsService.getWatchPageURL(this.programID)}?ref=sharetw`;
     const time = this.nicoliveProgramService.state.startTime;

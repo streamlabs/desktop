@@ -10,7 +10,10 @@
         <popper
           trigger="click"
           :options="{ placement: 'bottom' }"
-          @show="showPopupMenu = true"
+          @show="
+            showPopupMenu = true;
+            popper = $event;
+          "
           @hide="showPopupMenu = false"
         >
           <div class="popper">
@@ -18,21 +21,30 @@
               <li
                 class="popup-menu-item"
                 :class="{ active: currentFilterBy === 'all' }"
-                @click="currentFilterBy = 'all'"
+                @click="
+                  currentFilterBy = 'all';
+                  popper.doClose();
+                "
               >
                 <span>すべて</span>
               </li>
               <li
                 class="popup-menu-item"
                 :class="{ active: currentFilterBy === 'broadcaster' }"
-                @click="currentFilterBy = 'broadcaster'"
+                @click="
+                  currentFilterBy = 'broadcaster';
+                  popper.doClose();
+                "
               >
                 <span>放送者が登録</span>
               </li>
               <li
                 class="popup-menu-item"
                 :class="{ active: currentFilterBy === 'moderator' }"
-                @click="currentFilterBy = 'moderator'"
+                @click="
+                  currentFilterBy = 'moderator';
+                  popper.doClose();
+                "
               >
                 <span>モデレーターが登録</span>
               </li>

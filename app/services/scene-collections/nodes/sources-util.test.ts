@@ -1,6 +1,7 @@
 import { convertPresetPath, revertPresetPath } from './sources-util';
 
 jest.mock('electron', () => ({}));
+jest.mock('@electron/remote', () => ({}));
 jest.mock('./sources', () => ({}));
 
 const DUMMY_BASE_PATH = 'c:\\Users\\user';

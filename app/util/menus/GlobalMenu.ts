@@ -1,6 +1,6 @@
 import { Menu } from './Menu';
 import { $t } from 'services/i18n';
-import { remote } from 'electron';
+import * as remote from '@electron/remote';
 
 export function setupGlobalContextMenuForEditableElement() {
   const win = remote.getCurrentWindow();

@@ -1,7 +1,7 @@
 <template>
   <div class="program-info">
-    <div class="community-icon" :class="{ 'is-onAir': isOnAir }">
-      <img :src="communitySymbol" class="community-thumbnail" :alt="communityName" />
+    <div class="user-icon" :class="{ 'is-onAir': isOnAir }">
+      <img :src="userIcon" class="user-thumbnail" :alt="userName" />
     </div>
     <div class="program-info-description">
       <h1 class="program-title">
@@ -14,38 +14,37 @@
           {{ programTitle }}
         </a>
       </h1>
-      <h2 class="community-name">
-        <i
-          v-if="programIsMemberOnly"
-          class="icon-lock"
-          v-tooltip.bottom="programIsMemberOnlyTooltip"
-        ></i>
-        <a
-          :href="communityPageURL"
-          @click.prevent="openInDefaultBrowser($event)"
-          class="community-name-link link"
-          v-tooltip.bottom="communityName"
-        >
-          {{ communityName }}
-        </a>
-      </h2>
     </div>
     <popper
       trigger="click"
       :options="{ placement: 'bottom-end' }"
-      @show="showPopupMenu = true"
+      @show="
+        showPopupMenu = true;
+        popper = $event;
+      "
       @hide="showPopupMenu = false"
     >
       <div class="popper">
         <div class="popup-menu-head">{{ programTitle }}</div>
         <ul class="popup-menu-list">
           <li class="popup-menu-item">
-            <a @click.prevent="openInDefaultBrowser($event)" :href="watchPageURL" class="link"
+            <a
+              @click.prevent="
+                openInDefaultBrowser($event);
+                popper.doClose();
+              "
+              :href="watchPageURL"
+              class="link"
               ><i class="icon-browser"></i>番組ページを開く</a
             >
           </li>
           <li class="popup-menu-item">
-            <a @click="copyProgramURL" class="link"
+            <a
+              @click="
+                copyProgramURL();
+                popper.doClose();
+              "
+              class="link"
               ><i :class="hasProgramUrlCopied ? 'icon-check' : 'icon-clipboard-copy'"></i
               >番組URLをコピーする</a
             >
@@ -53,22 +52,47 @@
         </ul>
         <ul class="popup-menu-list">
           <li class="popup-menu-item">
-            <a @click="editProgram" class="link"><i class="icon-edit"></i>番組を編集する</a>
+            <a
+              @click="
+                editProgram();
+                popper.doClose();
+              "
+              class="link"
+              ><i class="icon-edit"></i>番組を編集する</a
+            >
           </li>
         </ul>
         <ul class="popup-menu-list">
           <li class="popup-menu-item">
-            <a @click.prevent="openInDefaultBrowser($event)" :href="twitterShareURL" class="link"
-              ><i class="icon-twitter"></i>ツイートする</a
+            <a
+              @click.prevent="
+                openInDefaultBrowser($event);
+                popper.doClose();
+              "
+              :href="xShareURL"
+              class="link"
+              ><i class="icon-x"></i>Xでポストする</a
             >
           </li>
           <li class="popup-menu-item">
-            <a @click.prevent="openInDefaultBrowser($event)" :href="contentTreeURL" class="link"
+            <a
+              @click.prevent="
+                openInDefaultBrowser($event);
+                popper.doClose();
+              "
+              :href="contentTreeURL"
+              class="link"
               ><i class="icon-contents-tree"></i>コンテンツツリーを見る</a
             >
           </li>
           <li class="popup-menu-item">
-            <a @click.prevent="openInDefaultBrowser($event)" :href="creatorsProgramURL" class="link"
+            <a
+              @click.prevent="
+                openInDefaultBrowser($event);
+                popper.doClose();
+              "
+              :href="creatorsProgramURL"
+              class="link"
               ><i class="icon-creator-promotion-program"></i>この番組で収入を得る</a
             >
           </li>
@@ -100,7 +124,7 @@
 .program-title {
   display: flex;
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: 0;
 }
 
 .program-title-link {
@@ -116,26 +140,7 @@
   margin-left: 16px;
 }
 
-.community-name {
-  display: flex;
-  align-items: center;
-  margin: 0;
-
-  .icon-lock {
-    margin-right: 8px;
-    font-size: @font-size1;
-    color: var(--color-text);
-  }
-}
-
-.community-name-link {
-  .text-ellipsis;
-
-  display: inline-block;
-  font-size: @font-size2;
-}
-
-.community-icon {
+.user-icon {
   position: relative;
   flex-shrink: 0;
   width: 40px;
@@ -144,7 +149,7 @@
   border: 2px solid var(--color-border-accent);
   border-radius: 50%;
 
-  .community-thumbnail {
+  .user-thumbnail {
     position: absolute;
     top: 50%;
     left: 50%;

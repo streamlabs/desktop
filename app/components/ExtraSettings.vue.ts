@@ -13,6 +13,7 @@ import { AppService } from 'services/app';
 import { $t } from 'services/i18n';
 import { UuidService } from 'services/uuid';
 import ClipBoardCopy from '../../media/images/clipboard-copy.svg';
+import * as remote from '@electron/remote';
 
 @Component({
   components: {
@@ -114,7 +115,7 @@ export default class ExtraSettings extends Vue {
   }
 
   showCacheDir() {
-    electron.remote.shell.openItem(electron.remote.app.getPath('userData'));
+    remote.shell.openPath(remote.app.getPath('userData'));
   }
 
   deleteCacheDir() {

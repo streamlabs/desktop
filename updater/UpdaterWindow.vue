@@ -85,7 +85,7 @@
 </template>
 
 <script>
-const { remote, ipcRenderer } = window.require('electron');
+const { ipcRenderer } = window.require('electron');
 export default {
   data() {
     return {

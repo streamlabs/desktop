@@ -1,6 +1,5 @@
 import { createSetupFunction } from 'util/test-setup';
 import { Subject } from 'rxjs';
-import { WrappedChat } from './WrappedChat';
 type NicoliveCommentFilterService =
   import('./nicolive-comment-filter').NicoliveCommentFilterService;
 
@@ -23,6 +22,10 @@ jest.mock('services/nicolive-program/nicolive-program', () => ({
 jest.mock('services/i18n', () => ({}));
 
 jest.mock('util/menus/Menu', () => ({}));
+
+jest.mock('@electron/remote', () => ({
+  BrowserWindow: jest.fn(),
+}));
 
 beforeEach(() => {
   jest.doMock('services/core/stateful-service');
@@ -217,7 +220,7 @@ test('applyFilter', async () => {
     { seqId: 4, type: 'operator', value: { user_id: 'user needle' } },
   ] as const;
 
-  const after = chats.map(c => instance.applyFilter<WrappedChat>(c));
+  const after = chats.map(c => instance.applyFilter(c));
 
   expect(after[0].filtered).toBe(true);
   expect(after[1].filtered).toBe(true);

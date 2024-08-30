@@ -7,6 +7,7 @@ import { StreamingService } from 'services/streaming';
 import Utils from 'services/utils';
 import { $t } from 'services/i18n';
 import { CompactModeService } from 'services/compact-mode';
+import * as remote from '@electron/remote';
 
 @Component({
   components: {},
@@ -19,7 +20,7 @@ export default class TitleBar extends Vue {
   @Prop() title: string;
 
   get isMinimizable() {
-    return electron.remote.getCurrentWindow().isMinimizable();
+    return remote.getCurrentWindow().isMinimizable();
   }
 
   get isUnstable() {
@@ -31,11 +32,11 @@ export default class TitleBar extends Vue {
   }
 
   minimize() {
-    electron.remote.getCurrentWindow().minimize();
+    remote.getCurrentWindow().minimize();
   }
 
   maximize() {
-    const win = electron.remote.getCurrentWindow();
+    const win = remote.getCurrentWindow();
 
     if (win.isMaximized()) {
       win.unmaximize();
@@ -49,7 +50,7 @@ export default class TitleBar extends Vue {
       if (!confirm($t('streaming.endStreamInStreamingConfirm'))) return;
     }
 
-    electron.remote.getCurrentWindow().close();
+    remote.getCurrentWindow().close();
   }
 
   get isStreaming() {

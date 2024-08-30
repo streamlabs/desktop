@@ -26,8 +26,6 @@ on:
       - .github/workflows/test.yml
 
   pull_request:
-    branches:
-      - n-air_development
     paths:
       - package.json
       - yarn.lock

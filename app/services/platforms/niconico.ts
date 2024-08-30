@@ -10,6 +10,7 @@ import { parseString } from 'xml2js';
 import { StreamingService, EStreamingState } from 'services/streaming';
 import { WindowsService } from 'services/windows';
 import { NicoliveClient } from 'services/nicolive-program/NicoliveClient';
+import { FakeUserAuth, isFakeMode } from 'util/fakeMode';
 
 export type INiconicoProgramSelection = {
   info: LiveProgramInfo;
@@ -35,7 +36,7 @@ type Program = {
 };
 
 type SocialGroup = {
-  type: 'community' | 'channel';
+  tfakeype: 'community' | 'channel';
   id: string;
   name: string;
   thumbnailUrl: string;
@@ -62,6 +63,9 @@ export class NiconicoService extends Service implements IPlatformService {
   client: NicoliveClient = new NicoliveClient();
 
   async getUserId(): Promise<string> {
+    if (isFakeMode()) {
+      return FakeUserAuth.platform.id; // dummy user ID
+    }
     const url = `${this.hostsService.niconicoAccount}/api/public/v1/user/id.json`;
     const request = new Request(url, { credentials: 'same-origin' });
 
@@ -83,6 +87,9 @@ export class NiconicoService extends Service implements IPlatformService {
   }
 
   async isPremium(token: string): Promise<boolean> {
+    if (isFakeMode()) {
+      return true;
+    }
     const url = `${this.hostsService.niconicoOAuth}/v1/user/premium.json`;
     const headers = authorizedHeaders(token);
     const request = new Request(this.hostsService.replaceHost(url), { headers });
@@ -92,6 +99,9 @@ export class NiconicoService extends Service implements IPlatformService {
   }
 
   async logout(): Promise<void> {
+    if (isFakeMode()) {
+      return;
+    }
     const url = `${this.hostsService.niconicoAccount}/logout`;
     const request = new Request(this.hostsService.replaceHost(url), { credentials: 'same-origin' });
     const response = await fetch(request);

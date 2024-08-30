@@ -9,6 +9,7 @@ import electron from 'electron';
 import Util from 'services/utils';
 import { $t } from 'services/i18n';
 import { Subscription } from 'rxjs';
+import * as remote from '@electron/remote';
 
 @Component({
   components: {
@@ -35,7 +36,7 @@ export default class Projector extends Vue {
   mounted() {
     this.sourcesSubscription = this.sourcesService.sourceRemoved.subscribe(source => {
       if (source.sourceId === this.sourceId) {
-        electron.remote.getCurrentWindow().close();
+        remote.getCurrentWindow().close();
       }
     });
   }
@@ -49,11 +50,11 @@ export default class Projector extends Vue {
   }
 
   get allDisplays() {
-    return electron.remote.screen.getAllDisplays();
+    return remote.screen.getAllDisplays();
   }
 
   enterFullscreen(display: electron.Display) {
-    const currentWindow = electron.remote.getCurrentWindow();
+    const currentWindow = remote.getCurrentWindow();
     this.windowsService.setOneOffFullscreen(this.windowId, true);
     this.oldBounds = currentWindow.getBounds();
     currentWindow.setPosition(display.bounds.x, display.bounds.y);
@@ -65,7 +66,7 @@ export default class Projector extends Vue {
     if (e.code !== 'Escape') return;
     document.removeEventListener('keydown', this.exitFullscreen);
     this.windowsService.setOneOffFullscreen(this.windowId, false);
-    const currentWindow = electron.remote.getCurrentWindow();
+    const currentWindow = remote.getCurrentWindow();
     currentWindow.setFullScreen(false);
     currentWindow.setBounds(this.oldBounds);
   }

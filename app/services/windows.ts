@@ -35,8 +35,9 @@ import { Subject } from 'rxjs';
 import ExecuteInCurrentWindow from '../util/execute-in-current-window';
 import BrowserSourceInteraction from 'components/windows/BrowserSourceInteraction';
 import UserInfo from 'components/windows/UserInfo.vue';
+import * as remote from '@electron/remote';
 
-const { ipcRenderer, remote } = electron;
+const { ipcRenderer } = electron;
 const BrowserWindow = remote.BrowserWindow;
 const uuid = window['require']('uuid/v4');
 
@@ -135,10 +136,12 @@ export class WindowsService extends StatefulService<IWindowsState> {
   private windows: Dictionary<Electron.BrowserWindow> = {};
 
   init() {
-    const windows = BrowserWindow.getAllWindows();
+    const windowIds = ipcRenderer.sendSync('getWindowIds');
 
-    this.windows.main = windows[0];
-    this.windows.child = windows[1];
+    this.windows.main = BrowserWindow.fromId(windowIds.main);
+    this.windows.child = BrowserWindow.fromId(windowIds.child);
+
+    this.windows.main.webContents.setBackgroundThrottling(false);
 
     this.updateScaleFactor('main');
     this.updateScaleFactor('child');
@@ -150,7 +153,7 @@ export class WindowsService extends StatefulService<IWindowsState> {
     const window = this.windows[windowId];
     if (window) {
       const bounds = window.getBounds();
-      const currentDisplay = electron.remote.screen.getDisplayMatching(bounds);
+      const currentDisplay = remote.screen.getDisplayMatching(bounds);
       if (!currentDisplay) {
         Sentry.withScope(scope => {
           scope.setExtra('windowId', windowId);
@@ -161,7 +164,12 @@ export class WindowsService extends StatefulService<IWindowsState> {
         });
         return;
       }
-      this.UPDATE_SCALE_FACTOR(windowId, currentDisplay.scaleFactor);
+      if (currentDisplay.scaleFactor !== this.state[windowId].scaleFactor) {
+        console.log(
+          `${windowId} currentDisplay.scaleFactor ${this.state[windowId].scaleFactor} -> ${currentDisplay.scaleFactor}`,
+        );
+        this.UPDATE_SCALE_FACTOR(windowId, currentDisplay.scaleFactor);
+      }
     }
   }
 
@@ -243,8 +251,10 @@ export class WindowsService extends StatefulService<IWindowsState> {
       transparent: options.transparent,
       resizable: options.resizable,
       alwaysOnTop: options.alwaysOnTop,
-      webPreferences: { nodeIntegration: true, webviewTag: true },
+      webPreferences: { nodeIntegration: true, webviewTag: true, contextIsolation: false },
     }));
+
+    electron.ipcRenderer.sendSync('webContents-enableRemote', newWindow.webContents.id);
 
     newWindow.setMenu(null);
     newWindow.on('closed', () => {

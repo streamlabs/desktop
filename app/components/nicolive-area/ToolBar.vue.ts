@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import { remote } from 'electron';
+import * as remote from '@electron/remote';
 import { Component, Watch } from 'vue-property-decorator';
 import { Inject } from 'services/core/injector';
 import { $t } from 'services/i18n';
@@ -27,6 +27,9 @@ export default class ToolBar extends Vue {
   showPopupMenu: boolean = false;
   selectedButton: 'start' | 'end' = 'start';
   showButtonSelector: boolean = false;
+
+  popper1: PopperEvent;
+  popper2: PopperEvent;
 
   selectButton(button: 'start' | 'end') {
     this.selectedButton = button;

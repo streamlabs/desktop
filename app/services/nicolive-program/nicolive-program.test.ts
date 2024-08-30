@@ -1,13 +1,20 @@
 import { createSetupFunction } from 'util/test-setup';
-import { WrappedResult } from './NicoliveClient';
-import { Community } from './ResponseTypes';
+import { ProgramInfo } from './ResponseTypes';
 import { MAX_PROGRAM_DURATION_SECONDS } from './nicolive-constants';
 
 type NicoliveProgramService = import('./nicolive-program').NicoliveProgramService;
 
-const rooms = [{ id: 0, name: 'arena', webSocketUri: 'https://example.com/lv1', threadId: 'hoge' }];
+const rooms: ProgramInfo['data']['rooms'] = [{ viewUri: 'https://example.com/lv1' }];
 
-const schedules = {
+const schedules: Dictionary<{
+  nicoliveProgramId: string;
+  socialGroupId: string;
+  status: ProgramInfo['data']['status'];
+  vposBaseAt: number;
+  onAirBeginAt: number;
+  onAirEndAt: number;
+  rooms: ProgramInfo['data']['rooms'];
+}> = {
   ch: {
     nicoliveProgramId: 'lv1',
     socialGroupId: 'ch1',
@@ -64,7 +71,7 @@ const schedules = {
   },
 };
 
-const programs = {
+const programs: Dictionary<Partial<ProgramInfo['data']>> = {
   test: {
     status: schedules.test.status,
     title: '番組タイトル',
@@ -120,6 +127,9 @@ jest.mock('services/i18n', () => ({
   $t: (x: any) => x,
 }));
 jest.mock('util/menus/Menu', () => ({}));
+jest.mock('@electron/remote', () => ({
+  BrowserWindow: jest.fn(),
+}));
 
 beforeEach(() => {
   jest.doMock('services/core/stateful-service');
@@ -224,24 +234,24 @@ test('fetchProgramで結果が空ならエラー', async () => {
   expect(instance.client.fetchProgramSchedules).toHaveBeenCalledTimes(1);
   expect((instance as any).setState).toHaveBeenCalledTimes(3);
   expect((instance as any).setState.mock.calls).toMatchInlineSnapshot(`
-            Array [
-              Array [
-                Object {
-                  "isFetching": true,
-                },
-              ],
-              Array [
-                Object {
-                  "status": "end",
-                },
-              ],
-              Array [
-                Object {
-                  "isFetching": false,
-                },
-              ],
-            ]
-      `);
+    [
+      [
+        {
+          "isFetching": true,
+        },
+      ],
+      [
+        {
+          "status": "end",
+        },
+      ],
+      [
+        {
+          "isFetching": false,
+        },
+      ],
+    ]
+  `);
 });
 
 test('fetchProgram:testのときはshowPlaceholderをtrueにする', async () => {
@@ -253,48 +263,39 @@ test('fetchProgram:testのときはshowPlaceholderをtrueにする', async () =>
     .fn()
     .mockResolvedValue({ ok: true, value: [schedules.test] });
   instance.client.fetchProgram = jest.fn().mockResolvedValue({ ok: true, value: programs.test });
-  instance.client.fetchCommunity = jest.fn().mockResolvedValue({
-    ok: true,
-    value: { name: 'community.name', icon: { url: { size_64x64: 'symbol url' } } },
-  } as WrappedResult<Community>);
 
   (instance as any).setState = jest.fn();
 
   await expect(instance.fetchProgram()).resolves.toBeUndefined();
   expect(instance.client.fetchProgramSchedules).toHaveBeenCalledTimes(1);
   expect(instance.client.fetchProgram).toHaveBeenCalledTimes(1);
-  expect(instance.client.fetchCommunity).toHaveBeenCalledTimes(1);
   expect((instance as any).setState.mock.calls).toMatchInlineSnapshot(`
-    Array [
-      Array [
-        Object {
+    [
+      [
+        {
           "isFetching": true,
         },
       ],
-      Array [
-        Object {
-          "communityID": "co1",
-          "communityName": "community.name",
-          "communitySymbol": "symbol url",
+      [
+        {
           "description": "番組詳細情報",
           "endTime": 150,
           "isMemberOnly": true,
           "programID": "lv1",
-          "roomThreadID": "hoge",
-          "roomURL": "https://example.com/lv1",
           "startTime": 100,
           "status": "test",
           "title": "番組タイトル",
+          "viewUri": "https://example.com/lv1",
           "vposBaseTime": 50,
         },
       ],
-      Array [
-        Object {
+      [
+        {
           "showPlaceholder": true,
         },
       ],
-      Array [
-        Object {
+      [
+        {
           "isFetching": false,
         },
       ],
@@ -311,10 +312,6 @@ test('fetchProgram:成功', async () => {
     .fn()
     .mockResolvedValue({ ok: true, value: [schedules.onAir] });
   instance.client.fetchProgram = jest.fn().mockResolvedValue({ ok: true, value: programs.onAir });
-  instance.client.fetchCommunity = jest.fn().mockResolvedValue({
-    ok: true,
-    value: { name: 'community.name', icon: { url: { size_64x64: 'symbol url' } } },
-  } as WrappedResult<Community>);
 
   // TODO: StatefulServiceのモックをVue非依存にする
   (instance as any).setState = jest.fn();
@@ -322,33 +319,28 @@ test('fetchProgram:成功', async () => {
   await expect(instance.fetchProgram()).resolves.toBeUndefined();
   expect(instance.client.fetchProgramSchedules).toHaveBeenCalledTimes(1);
   expect(instance.client.fetchProgram).toHaveBeenCalledTimes(1);
-  expect(instance.client.fetchCommunity).toHaveBeenCalledTimes(1);
   expect((instance as any).setState.mock.calls).toMatchInlineSnapshot(`
-    Array [
-      Array [
-        Object {
+    [
+      [
+        {
           "isFetching": true,
         },
       ],
-      Array [
-        Object {
-          "communityID": "co1",
-          "communityName": "community.name",
-          "communitySymbol": "symbol url",
+      [
+        {
           "description": "番組詳細情報",
           "endTime": 150,
           "isMemberOnly": true,
           "programID": "lv1",
-          "roomThreadID": "hoge",
-          "roomURL": "https://example.com/lv1",
           "startTime": 100,
           "status": "onAir",
           "title": "番組タイトル",
+          "viewUri": "https://example.com/lv1",
           "vposBaseTime": 50,
         },
       ],
-      Array [
-        Object {
+      [
+        {
           "isFetching": false,
         },
       ],
@@ -369,10 +361,6 @@ test('fetchProgramで番組があったが取りに行ったらエラー', async
     ok: false,
     value,
   });
-  instance.client.fetchCommunity = jest.fn().mockResolvedValue({
-    ok: true,
-    value: { name: 'community.name', thumbnailUrl: { small: 'symbol url' } },
-  });
 
   (instance as any).setState = jest.fn();
 
@@ -387,7 +375,6 @@ test('fetchProgramで番組があったが取りに行ったらエラー', async
                         `);
   expect(instance.client.fetchProgramSchedules).toHaveBeenCalledTimes(1);
   expect(instance.client.fetchProgram).toHaveBeenCalledTimes(1);
-  expect(instance.client.fetchCommunity).toHaveBeenCalledTimes(1);
   expect((instance as any).setState).toHaveBeenCalledTimes(2);
 });
 
@@ -404,40 +391,34 @@ test('fetchProgramでコミュ情報がエラーでも番組があったら先�
     ok: true,
     value: programs.onAir,
   });
-  instance.client.fetchCommunity = jest.fn().mockResolvedValue({ ok: false, value });
 
   (instance as any).setState = jest.fn();
 
   await expect(instance.fetchProgram()).resolves.toBeUndefined();
   expect(instance.client.fetchProgramSchedules).toHaveBeenCalledTimes(1);
   expect(instance.client.fetchProgram).toHaveBeenCalledTimes(1);
-  expect(instance.client.fetchCommunity).toHaveBeenCalledTimes(1);
   expect((instance as any).setState.mock.calls).toMatchInlineSnapshot(`
-    Array [
-      Array [
-        Object {
+    [
+      [
+        {
           "isFetching": true,
         },
       ],
-      Array [
-        Object {
-          "communityID": "co1",
-          "communityName": "(コミュニティの取得に失敗しました)",
-          "communitySymbol": "",
+      [
+        {
           "description": "番組詳細情報",
           "endTime": 150,
           "isMemberOnly": true,
           "programID": "lv1",
-          "roomThreadID": "hoge",
-          "roomURL": "https://example.com/lv1",
           "startTime": 100,
           "status": "onAir",
           "title": "番組タイトル",
+          "viewUri": "https://example.com/lv1",
           "vposBaseTime": 50,
         },
       ],
-      Array [
-        Object {
+      [
+        {
           "isFetching": false,
         },
       ],
@@ -459,19 +440,18 @@ test('refreshProgram:成功', async () => {
   expect(instance.client.fetchProgram).toHaveBeenCalledWith('lv1');
   expect((instance as any).setState).toHaveBeenCalledTimes(1);
   expect((instance as any).setState.mock.calls[0]).toMatchInlineSnapshot(`
-            Array [
-              Object {
-                "description": "番組詳細情報",
-                "endTime": 150,
-                "isMemberOnly": true,
-                "roomThreadID": "hoge",
-                "roomURL": "https://example.com/lv1",
-                "startTime": 100,
-                "status": "onAir",
-                "title": "番組タイトル",
-              },
-            ]
-      `);
+    [
+      {
+        "description": "番組詳細情報",
+        "endTime": 150,
+        "isMemberOnly": true,
+        "startTime": 100,
+        "status": "onAir",
+        "title": "番組タイトル",
+        "viewUri": "https://example.com/lv1",
+      },
+    ]
+  `);
 });
 
 test('refreshProgram:失敗', async () => {
@@ -511,25 +491,25 @@ test('endProgram:成功', async () => {
   expect(instance.client.endProgram).toHaveBeenCalledWith('lv1');
   expect((instance as any).setState).toHaveBeenCalledTimes(3);
   expect((instance as any).setState.mock.calls).toMatchInlineSnapshot(`
-            Array [
-              Array [
-                Object {
-                  "isEnding": true,
-                },
-              ],
-              Array [
-                Object {
-                  "endTime": 125,
-                  "status": "end",
-                },
-              ],
-              Array [
-                Object {
-                  "isEnding": false,
-                },
-              ],
-            ]
-      `);
+    [
+      [
+        {
+          "isEnding": true,
+        },
+      ],
+      [
+        {
+          "endTime": 125,
+          "status": "end",
+        },
+      ],
+      [
+        {
+          "isEnding": false,
+        },
+      ],
+    ]
+  `);
 });
 
 test('endProgram:失敗', async () => {
@@ -570,24 +550,24 @@ test('extendProgram:成功', async () => {
   expect(instance.client.extendProgram).toHaveBeenCalledWith('lv1');
   expect((instance as any).setState).toHaveBeenCalledTimes(3);
   expect((instance as any).setState.mock.calls).toMatchInlineSnapshot(`
-            Array [
-              Array [
-                Object {
-                  "isExtending": true,
-                },
-              ],
-              Array [
-                Object {
-                  "endTime": 125,
-                },
-              ],
-              Array [
-                Object {
-                  "isExtending": false,
-                },
-              ],
-            ]
-      `);
+    [
+      [
+        {
+          "isExtending": true,
+        },
+      ],
+      [
+        {
+          "endTime": 125,
+        },
+      ],
+      [
+        {
+          "isExtending": false,
+        },
+      ],
+    ]
+  `);
 });
 
 test('extendProgram:失敗', async () => {
@@ -749,21 +729,21 @@ test('updateStatistics', async () => {
   expect(instance.client.fetchNicoadStatistics).toHaveBeenCalledWith('lv1');
   expect((instance as any).setState).toHaveBeenCalledTimes(2);
   expect((instance as any).setState.mock.calls).toMatchInlineSnapshot(`
-            Array [
-              Array [
-                Object {
-                  "comments": 456,
-                  "viewers": 123,
-                },
-              ],
-              Array [
-                Object {
-                  "adPoint": 175,
-                  "giftPoint": 345,
-                },
-              ],
-            ]
-      `);
+    [
+      [
+        {
+          "comments": 456,
+          "viewers": 123,
+        },
+      ],
+      [
+        {
+          "adPoint": 175,
+          "giftPoint": 345,
+        },
+      ],
+    ]
+  `);
 });
 
 test('updateStatistics:APIがエラーでも無視', async () => {

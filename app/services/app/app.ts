@@ -25,6 +25,8 @@ import { CrashReporterService } from 'services/crash-reporter';
 import * as obs from '../../../obs-api';
 import { RunInLoadingMode } from './app-decorators';
 import Utils from 'services/utils';
+import * as remote from '@electron/remote';
+import { NicoliveClient } from 'services/nicolive-program/NicoliveClient';
 
 interface IAppState {
   loading: boolean;
@@ -47,11 +49,11 @@ export class AppService extends StatefulService<IAppState> {
 
   static initialState: IAppState = {
     loading: true,
-    argv: electron.remote.process.argv,
+    argv: remote.process.argv,
     errorAlert: false,
   };
 
-  readonly appDataDirectory = electron.remote.app.getPath('userData');
+  readonly appDataDirectory = remote.app.getPath('userData');
 
   @Inject() transitionsService: TransitionsService;
   @Inject() sourcesService: SourcesService;
@@ -134,6 +136,7 @@ export class AppService extends StatefulService<IAppState> {
       // this.platformAppsService.unloadAllApps(); 未実装
       // await this.usageStatisticsService.flushEvents(); 未実装
       this.windowsService.closeAllOneOffs(); // intead .shutdown(); window.child.close is 'Object has been destroyed' in this time
+      NicoliveClient.closeOpenWindows();
       this.ipcServerService.stopListening();
       // await this.userService.flushUserSession(); 未実装
       await this.sceneCollectionsService.deinitialize();
@@ -217,15 +220,15 @@ export class AppService extends StatefulService<IAppState> {
   }
 
   relaunch({ clearCacheDir }: { clearCacheDir?: boolean } = {}) {
-    const originalArgs: string[] = electron.remote.process.argv.slice(1);
+    const originalArgs: string[] = remote.process.argv.slice(1);
 
     // キャッシュクリアしたいときだけつくようにする
     const args = clearCacheDir
       ? originalArgs.concat('--clearCacheDir')
       : originalArgs.filter(x => x !== '--clearCacheDir');
 
-    electron.remote.app.relaunch({ args });
-    electron.remote.app.quit();
+    remote.app.relaunch({ args });
+    remote.app.quit();
   }
 
   startLoading() {

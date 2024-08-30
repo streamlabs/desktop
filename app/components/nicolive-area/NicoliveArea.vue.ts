@@ -10,7 +10,7 @@ import ProgramInfo from './ProgramInfo.vue';
 import ProgramStatistics from './ProgramStatistics.vue';
 import ToolBar from './ToolBar.vue';
 import ControlsArrow from '../../../media/images/controls-arrow-vertical.svg';
-import AreaSwitcher from './AreaSwitcher.vue';
+import AreaSwitcher, { IArea } from './AreaSwitcher.vue';
 import PerformanceMetrics from '../PerformanceMetrics.vue';
 import {
   NicoliveFailure,
@@ -42,7 +42,7 @@ export default class NicolivePanelRoot extends Vue {
     this.nicoliveProgramService.hidePlaceholder();
   }
 
-  get contents() {
+  get contents(): IArea[] {
     return [
       {
         name: 'コメント',

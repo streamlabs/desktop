@@ -1,21 +1,21 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`setupStreamSettingsでストリーム情報がとれた場合 1`] = `
-Array [
+[
   "Stream",
-  Array [
-    Object {
+  [
+    {
       "nameSubCategory": "Untitled",
-      "parameters": Array [
-        Object {
+      "parameters": [
+        {
           "name": "service",
           "value": "niconico ニコニコ生放送",
         },
-        Object {
+        {
           "name": "server",
           "value": "url1",
         },
-        Object {
+        {
           "name": "key",
           "value": "key1",
         },
@@ -26,21 +26,21 @@ Array [
 `;
 
 exports[`setupStreamSettingsで番組取得にリトライで成功する場合 1`] = `
-Array [
+[
   "Stream",
-  Array [
-    Object {
+  [
+    {
       "nameSubCategory": "Untitled",
-      "parameters": Array [
-        Object {
+      "parameters": [
+        {
           "name": "service",
           "value": "niconico ニコニコ生放送",
         },
-        Object {
+        {
           "name": "server",
           "value": "url1",
         },
-        Object {
+        {
           "name": "key",
           "value": "key1",
         },

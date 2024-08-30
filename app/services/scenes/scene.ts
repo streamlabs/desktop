@@ -147,7 +147,7 @@ export class Scene {
     return this.addSource(source.sourceId, options);
   }
 
-  addSource(sourceId: string, options: ISceneNodeAddOptions = {}): SceneItem {
+  addSource(sourceId: string, options: ISceneNodeAddOptions = {}): SceneItem | null {
     const source = this.sourcesService.getSource(sourceId);
     if (!source) throw new Error(`Source ${sourceId} not found`);
 
@@ -423,7 +423,7 @@ export class Scene {
 
     // 同一scene上では1つだけ
     if (source.type === 'nair-rtvc-source') {
-      for (const s of this.scenesService.activeScene.items) {
+      for (const s of this.items) {
         if (this.sourcesService.getSourceById(s.sourceId).type === 'nair-rtvc-source') return false;
       }
     }

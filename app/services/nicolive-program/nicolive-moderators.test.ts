@@ -27,6 +27,9 @@ const setup = createSetupFunction({
 
 jest.mock('services/nicolive-program/nicolive-program', () => ({ NicoliveProgramService: {} }));
 jest.mock('util/menus/Menu', () => ({}));
+jest.mock('@electron/remote', () => ({
+  BrowserWindow: jest.fn(),
+}));
 
 beforeEach(() => {
   jest.doMock('services/core/stateful-service');
@@ -114,8 +117,7 @@ describe('NicoliveModeratorsService', () => {
     expect(fetchModerators).toHaveBeenCalledTimes(0);
     expect(connect).toHaveBeenCalledTimes(0);
     const next: ObserveType<typeof stateChange> = {
-      roomURL: 'https://example.com',
-      roomThreadID: '175622',
+      viewUri: 'https://example.com',
       moderatorViewUri: 'https://example.com',
     };
     stateChange.next(next);

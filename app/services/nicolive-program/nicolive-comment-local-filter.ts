@@ -1,7 +1,7 @@
 import { PersistentStatefulService } from 'services/core/persistent-stateful-service';
 import { mutation } from 'services/core/stateful-service';
 import { isAnonymous, getScore } from './ChatMessage/util';
-import { WrappedChat } from './WrappedChat';
+import { WrappedMessage } from './WrappedChat';
 
 export type NGSharingLevel = 'none' | 'low' | 'mid' | 'high';
 
@@ -45,7 +45,7 @@ export class NicoliveCommentLocalFilterService extends PersistentStatefulService
 
   get filterFn() {
     const threshold = LEVEL_TABLE[this.state.level];
-    return (message: WrappedChat): boolean => {
+    return (message: WrappedMessage): boolean => {
       if (message.type !== 'normal') return true;
 
       const ngSharingOk = threshold < getScore(message.value);

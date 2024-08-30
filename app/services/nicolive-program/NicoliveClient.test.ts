@@ -1,11 +1,13 @@
 import * as fetchMock from 'fetch-mock';
-import { NicoliveClient, parseMaxQuality, WrappedResult } from './NicoliveClient';
-import { Communities, Community } from './ResponseTypes';
+import { NicoliveClient, parseMaxQuality } from './NicoliveClient';
 
 jest.mock('services/i18n', () => ({
   $t: (x: any) => x,
 }));
 jest.mock('util/menus/Menu', () => ({}));
+jest.mock('@electron/remote', () => ({
+  BrowserWindow: jest.fn(),
+}));
 
 afterEach(() => {
   fetchMock.reset();
@@ -37,7 +39,6 @@ test('constructor', () => {
 
 // 実際には叩かないのでなんでもよい
 const programID = 'lv1';
-const communityID = 'co1';
 const userID = 2;
 
 const dummyURL = 'https://example.com';
@@ -86,11 +87,11 @@ test('wrapResultはbodyがJSONでなければSyntaxErrorをwrapして返す', as
   const res = await fetch(dummyURL);
 
   await expect(NicoliveClient.wrapResult(res)).resolves.toMatchInlineSnapshot(`
-Object {
-  "ok": false,
-  "value": [SyntaxError: Unexpected token i in JSON at position 0],
-}
-`);
+    {
+      "ok": false,
+      "value": [SyntaxError: Unexpected token 'i', "invalid json" is not valid JSON],
+    }
+  `);
   expect(fetchMock.done()).toBe(true);
 });
 
@@ -195,70 +196,6 @@ suites.forEach((suite: Suite) => {
   });
 });
 
-const dummyCommunities: Communities = {
-  meta: {
-    status: 200,
-  },
-  data: {
-    communities: {
-      total: 1,
-      communities: [
-        {
-          global_id: communityID,
-          id: communityID.replace(/^co/, ''),
-          name: 'name',
-          description: 'description',
-          public: 'open',
-          icon: {
-            id: 1,
-            url: {
-              size_64x64: 'url',
-              size_128x128: 'url',
-            },
-          },
-        },
-      ],
-    },
-  },
-};
-
-test('fetchCommunityはコミュをひとつだけ返す', async () => {
-  const client = new NicoliveClient();
-
-  fetchMock.get(
-    `${NicoliveClient.communityBaseURL}/api/v2/communities.json?ids=${communityID.replace(
-      /^co/,
-      '',
-    )}`,
-    dummyCommunities,
-  );
-  const result = (await client.fetchCommunity(communityID)) as WrappedResult<Community>;
-
-  expect(result).toEqual({ ok: true, value: dummyCommunities.data.communities.communities[0] });
-  expect(fetchMock.done()).toBe(true);
-});
-
-test('fetchCommunityはbodyがJSONでなければSyntaxErrorをwrapして返す', async () => {
-  const client = new NicoliveClient();
-
-  fetchMock.get(
-    `${NicoliveClient.communityBaseURL}/api/v2/communities.json?ids=${communityID.replace(
-      /^co/,
-      '',
-    )}`,
-    'invalid json',
-  );
-  const result = client.fetchCommunity(communityID);
-
-  await expect(result).resolves.toMatchInlineSnapshot(`
-Object {
-  "ok": false,
-  "value": [SyntaxError: Unexpected token i in JSON at position 0],
-}
-`);
-  expect(fetchMock.done()).toBe(true);
-});
-
 function setupMock() {
   class BrowserWindow {
     url: string = '';
@@ -301,13 +238,13 @@ function setupMock() {
     browserWindow: null,
     openExternal,
   };
-  jest.doMock('electron', () => ({
-    remote: {
-      BrowserWindow,
-      shell: {
-        openExternal,
-      },
+  jest.doMock('@electron/remote', () => ({
+    BrowserWindow,
+    shell: {
+      openExternal,
     },
+  }));
+  jest.doMock('electron', () => ({
     ipcRenderer: {
       send() {},
     },

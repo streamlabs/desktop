@@ -64,3 +64,11 @@ declare module 'emojione';
 // webpack still checks the module existence
 
 // declare module '*';
+
+// defined in webpack.config.js
+declare const SENTRY_DSN: string;
+declare const SENTRY_MINIDUMP_URL: string;
+
+interface PopperEvent {
+  doClose(): void;
+}

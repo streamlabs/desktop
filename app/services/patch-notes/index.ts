@@ -5,6 +5,7 @@ import Util from 'services/utils';
 import { notes } from './notes';
 import { NavigationService } from 'services/navigation';
 import { Inject } from 'services/core/injector';
+import * as remote from '@electron/remote';
 
 interface IPatchNotesState {
   lastVersionSeen: string;
@@ -47,7 +48,7 @@ export class PatchNotesService extends PersistentStatefulService<IPatchNotesStat
     if (Util.isPreview()) return;
     if (Util.isIpc()) return;
 
-    const currentVersion = electron.remote.process.env.NAIR_VERSION;
+    const currentVersion = remote.process.env.NAIR_VERSION;
 
     // If the notes don't match the current version, we shouldn't
     // show them.
@@ -59,7 +60,13 @@ export class PatchNotesService extends PersistentStatefulService<IPatchNotesStat
     this.SET_LAST_VERSION_SEEN(currentVersion);
 
     // Only show the actual patch notes if they weren't onboarded
-    if (!onboarded) this.navigationService.navigate('PatchNotes');
+    if (!onboarded) {
+      // ここですぐ遷移してしまうと起動時の studio の vue-sliderの非同期処理が途中なため例外が発生する。
+      // それを回避するため setTimeoutで遅延させる
+      setTimeout(() => {
+        this.navigationService.navigate('PatchNotes');
+      }, 0);
+    }
   }
 
   get notes() {

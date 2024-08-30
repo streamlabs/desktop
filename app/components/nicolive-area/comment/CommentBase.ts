@@ -1,9 +1,9 @@
-import Vue from 'vue';
-import { Component, Prop } from 'vue-property-decorator';
-import { WrappedChatWithComponent } from 'services/nicolive-program/WrappedChat';
 import { ChatMessage } from 'services/nicolive-program/ChatMessage';
 import { getDisplayText } from 'services/nicolive-program/ChatMessage/displaytext';
 import { getDisplayName } from 'services/nicolive-program/ChatMessage/getDisplayName';
+import { WrappedChatWithComponent } from 'services/nicolive-program/WrappedChat';
+import Vue from 'vue';
+import { Component, Prop } from 'vue-property-decorator';
 
 @Component({})
 export class CommentBase extends Vue {

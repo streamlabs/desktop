@@ -4,11 +4,10 @@ import { Inject } from 'services/core';
 import { ChatMessage } from 'services/nicolive-program/ChatMessage';
 import { ChatComponentType } from 'services/nicolive-program/ChatMessage/ChatComponentType';
 import { KonomiTag, NicoliveClient } from 'services/nicolive-program/NicoliveClient';
-import { WrappedChat, WrappedChatWithComponent } from 'services/nicolive-program/WrappedChat';
+import { isWrappedChat, WrappedChatWithComponent } from 'services/nicolive-program/WrappedChat';
 import { KonomiTagsService } from 'services/nicolive-program/konomi-tags';
 import { NicoliveCommentViewerService } from 'services/nicolive-program/nicolive-comment-viewer';
 import { NicoliveProgramService } from 'services/nicolive-program/nicolive-program';
-import { getDisplayName } from 'services/nicolive-program/ChatMessage/getDisplayName';
 import { NicoliveModeratorsService } from 'services/nicolive-program/nicolive-moderators';
 import { NicoliveCommentFilterService } from 'services/nicolive-program/nicolive-comment-filter';
 import { WindowsService } from 'services/windows';
@@ -20,12 +19,12 @@ import EmotionComment from '../nicolive-area/comment/EmotionComment.vue';
 import GiftComment from '../nicolive-area/comment/GiftComment.vue';
 import NicoadComment from '../nicolive-area/comment/NicoadComment.vue';
 import SystemMessage from '../nicolive-area/comment/SystemMessage.vue';
-import electron from 'electron';
 import {
   NicoliveFailure,
   openErrorDialogFromFailure,
 } from 'services/nicolive-program/NicoliveFailure';
 import Popper from 'vue-popperjs';
+import * as remote from '@electron/remote';
 
 const componentMap: { [type in ChatComponentType]: Vue.Component } = {
   common: CommonComment,
@@ -65,6 +64,7 @@ export default class UserInfo extends Vue {
   private cleanup: () => void = undefined;
   isLatestVisible = true;
   showPopupMenu = false;
+  popper: PopperEvent;
 
   isBlockedUser = false;
   isFollowing = false;
@@ -243,18 +243,14 @@ export default class UserInfo extends Vue {
 
   get comments(): WrappedChatWithComponent[] {
     const comments = this.nicoliveCommentViewerService.items.filter(item => {
-      return item.value.user_id === this.userId;
-    });
+      return isWrappedChat(item) && item.value.user_id === this.userId;
+    }) as WrappedChatWithComponent[];
     return comments;
   }
 
   scrollToLatest() {
     const scrollEl = this.$refs.scroll as HTMLElement;
     scrollEl.scrollTop = scrollEl.scrollHeight;
-  }
-
-  getDisplayName(chat: WrappedChat): string {
-    return getDisplayName(chat);
   }
 
   // getterにして関数を返さないと全コメントに対してrerenderが走る
@@ -267,10 +263,10 @@ export default class UserInfo extends Vue {
   }
 
   openUserPage() {
-    electron.remote.shell.openExternal(this.hostsService.getUserPageURL(this.userId));
+    remote.shell.openExternal(this.hostsService.getUserPageURL(this.userId));
   }
   copyUserId() {
-    electron.remote.clipboard.writeText(this.userId);
+    remote.clipboard.writeText(this.userId);
   }
 
   currentTab = 'konomi';

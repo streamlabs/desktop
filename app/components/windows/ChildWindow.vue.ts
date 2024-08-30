@@ -4,6 +4,7 @@ import { Component, Watch } from 'vue-property-decorator';
 import { Inject } from 'services/core/injector';
 import { getComponents, IWindowOptions, WindowsService } from 'services/windows';
 import TitleBar from '../TitleBar.vue';
+import * as remote from '@electron/remote';
 
 @Component({
   components: {
@@ -38,7 +39,7 @@ export default class ChildWindow extends Vue {
   }
 
   private setWindowTitle() {
-    electron.remote.getCurrentWindow().setTitle(this.currentComponent.title);
+    remote.getCurrentWindow().setTitle(this.currentComponent.title);
   }
 
   private onWindowUpdatedHandler(options: IWindowOptions) {

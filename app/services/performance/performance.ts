@@ -7,6 +7,7 @@ import { Inject } from 'services/core/injector';
 import electron from 'electron';
 import * as obs from '../../../obs-api';
 import * as Sentry from '@sentry/vue';
+import * as remote from '@electron/remote';
 
 interface IPerformanceState {
   CPU: number;
@@ -89,7 +90,7 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
       this.droppedFramesDetected.next(stats.percentageDroppedFrames / 100);
     }
 
-    const am = electron.remote.app.getAppMetrics();
+    const am = remote.app.getAppMetrics();
 
     stats.CPU += am
       .map(proc => {
