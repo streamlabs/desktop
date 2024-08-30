@@ -19,9 +19,10 @@ export default class LanguageSettings extends Vue {
   private async save(data: TObsFormData) {
     const choice = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
       type: 'question',
-      buttons: ['Yes', 'No'],
+      buttons: [$t('common.yes'), $t('common.no')],
       title: $t('common.confirm'),
       message: $t('settings.restartConfirm'),
+      noLink: true,
       cancelId: 1,
       defaultId: 1,
     });
