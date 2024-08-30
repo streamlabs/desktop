@@ -15,6 +15,11 @@
           <div class="user-name-wrapper">
             <div class="user-name">{{ userName }}</div>
             <i class="icon-moderator" v-tooltip.bottom="moderatorTooltip" v-if="isModerator"></i>
+            <i
+              class="icon-creator-support"
+              v-tooltip.bottom="supporterTooltip"
+              v-if="isSupporter"
+            ></i>
           </div>
           <div class="user-account">
             <p class="user-id">ID: {{ userId }}</p>
@@ -248,6 +253,12 @@
 }
 
 .icon-moderator {
+  margin-left: 4px;
+  font-size: @font-size5;
+  color: var(--color-primary);
+}
+
+.icon-creator-support {
   margin-left: 4px;
   font-size: @font-size5;
   color: var(--color-primary);

@@ -296,6 +296,20 @@
           "title": "NOT_BROADCASTER",
           "message": "Unable to retrieve moderator information because there are no previous streams."
         }
+      },
+      "fetchSupporters": {
+        "network_error": {
+          "title": "A network error has occurred",
+          "message": "Unable to retrieve supporter information due to a network error.\nCheck the health of your Internet connection."
+        },
+        "400": {
+          "title": "Unable to retrieve supporter information",
+          "message": "%{additionalMessage}"
+        },
+        "500": {
+          "title": "Unable to retrieve supporter information",
+          "message": "%{additionalMessage}"
+        }
       }
     },
     "logic": {
