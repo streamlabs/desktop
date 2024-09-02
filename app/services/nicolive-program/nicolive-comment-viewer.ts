@@ -450,18 +450,28 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
   }
 
   private onMessage(values: WrappedMessageWithComponent[]) {
+    const maxQueueToSpeak = 3; // 直近3件つづ読み上げ対象にする
+    const recentSeconds = 60;
+
+    const nowSeconds = Date.now() / 1000;
+
+    const valuesForSpeech = values.filter(c => {
+      if (!this.filterFn(c)) {
+        return false;
+      }
+      if (!c.value || !c.value.date) {
+        return false;
+      }
+      return c.value.date > nowSeconds - recentSeconds;
+    });
+
     // send to http relation
     const httpRelation = this.nicoliveProgramStateService.state.httpRelation;
     if (httpRelation && httpRelation.method) {
-      values
-        .filter(c => this.filterFn(c))
-        .forEach(a => {
-          HttpRelation.sendChat(a, httpRelation);
-        });
+      valuesForSpeech.forEach(a => {
+        HttpRelation.sendChat(a, httpRelation);
+      });
     }
-
-    const maxQueueToSpeak = 3; // 直近3件つづ読み上げ対象にする
-    const recentSeconds = 60;
 
     if (this.nicoliveProgramStateService.state.nameplateHint === undefined) {
       const firstCommentWithName = values.find(
@@ -472,23 +482,7 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
       }
     }
 
-    const nowSeconds = Date.now() / 1000;
-    this.queueToSpeech(
-      values
-        .filter(c => {
-          if (!this.filterFn(c)) {
-            return false;
-          }
-          if (!c.value || !c.value.date) {
-            return false;
-          }
-          if (c.value.date < nowSeconds - recentSeconds) {
-            return false;
-          }
-          return true;
-        })
-        .slice(-maxQueueToSpeak),
-    );
+    this.queueToSpeech(valuesForSpeech.slice(-maxQueueToSpeak));
 
     const maxRetain = 100; // 最新からこの件数を一覧に保持する
     const concatMessages = this.state.messages.concat(values);
