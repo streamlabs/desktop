@@ -156,8 +156,7 @@ export class StreamingService
           title: $t('streaming.notBroadcasting'),
           type: 'warning',
           message: $t('streaming.notBroadcastingMessage'),
-          buttons: [$t('common.close')],
-          noLink: true,
+          buttons: ['Close'],
         })
         .then(({ response: done }) => resolve(done));
     });
@@ -301,8 +300,7 @@ export class StreamingService
             .showMessageBox(remote.getCurrentWindow(), {
               type: 'warning',
               message,
-              buttons: [$t('common.close')],
-              noLink: true,
+              buttons: ['Close'],
             })
             .then(({ response: done }) => resolve(done));
         });
@@ -458,8 +456,7 @@ export class StreamingService
             title: $t('streaming.bitrateFetchingError.title'),
             type: 'warning',
             message: $t('streaming.bitrateFetchingError.message'),
-            buttons: [$t('common.close')],
-            noLink: true,
+            buttons: ['Close'],
           })
           .then(({ response: done }) => resolve(done));
       });

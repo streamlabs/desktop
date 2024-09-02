@@ -39,6 +39,8 @@ export function classify(chat: MessageResponse) {
         return 'info' as const;
       case 'visited':
         return 'info' as const;
+      case 'unknown':
+        return 'system' as const;
     }
   }
   if (isGiftMessage(chat)) return 'gift' as const;

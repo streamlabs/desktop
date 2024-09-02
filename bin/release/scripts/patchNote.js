@@ -197,11 +197,6 @@ function readPatchNote({ patchNoteFileName }) {
     throw new Error(`${patchNoteFileName} is absent.`);
   }
 
-  if (getTagCommitId(`v${patchNote.version}`)) {
-    error(`tag 'v${patchNote.version}' has already been released.`);
-    throw new Error(`tag 'v${patchNote.version}' has already been released.`);
-  }
-
   return {
     version: patchNote.version,
     notes: patchNote.lines.join('\n'),

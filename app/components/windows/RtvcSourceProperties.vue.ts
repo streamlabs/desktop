@@ -70,7 +70,7 @@ export default class RtvcSourceProperties extends SourceProperties {
   canAdd = false;
 
   showPopupMenu = false;
-  currentPopupMenu: any = undefined;
+  popper: PopperEvent;
 
   primaryVoiceModel: IObsListOption<number> = { description: '', value: 0 };
   secondaryVoiceModel: IObsListOption<number> = { description: '', value: 0 };
@@ -405,9 +405,8 @@ export default class RtvcSourceProperties extends SourceProperties {
   }
 
   closePopupMenu() {
-    if (!this.currentPopupMenu) return;
-    this.currentPopupMenu.doClose();
-    this.currentPopupMenu = undefined;
+    this.popper?.doClose();
+    this.popper = undefined;
   }
 
   async onDelete(index: string) {
@@ -418,10 +417,12 @@ export default class RtvcSourceProperties extends SourceProperties {
     const r = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
       type: 'warning',
       message: $t('source-props.nair-rtvc-source.nav.remove_confirm'),
-      buttons: [$t('common.cancel'), $t('common.remove')],
+      buttons: [$t('common.remove'), $t('common.cancel')],
+      defaultId: 1,
+      cancelId: 1,
       noLink: true,
     });
-    if (!r.response) return;
+    if (r.response) return;
 
     this.state.manuals.splice(idx, 1);
     this.updateManualList();

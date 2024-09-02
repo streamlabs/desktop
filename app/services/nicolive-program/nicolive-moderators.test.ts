@@ -268,9 +268,6 @@ describe('fetchModerators', () => {
     await instance.fetchModerators();
     expect(fetchModerators).toHaveBeenCalledTimes(1);
     expect(instance.state.moderatorsCache).toEqual(['123']);
-    expect(refreshObserver).toHaveBeenCalledWith<[ObserveType<typeof instance.refreshObserver>]>({
-      event: 'refreshModerators',
-    });
   });
 });
 

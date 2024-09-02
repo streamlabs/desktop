@@ -113,10 +113,13 @@ export class SelectionService extends StatefulService<ISelectionState> {
       .showMessageBox(remote.getCurrentWindow(), {
         type: 'warning',
         message: $t('scenes.removeSceneConfirm', { sceneName: name }),
-        buttons: [$t('common.cancel'), $t('common.ok')],
+        buttons: [$t('common.ok'), $t('common.cancel')],
+        noLink: true,
+        cancelId: 1,
+        defaultId: 1,
       })
-      .then(({ response: ok }) => {
-        if (!ok) return;
+      .then(({ response: cancel }) => {
+        if (cancel) return;
         return this.getSelection().remove.call(this);
       });
   }

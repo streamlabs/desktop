@@ -130,15 +130,15 @@ function convertSimpleNotificationToMessageResponse(
   common: CommonComponent,
   notification: dwango.nicolive.chat.data.ISimpleNotification,
 ): MessageResponse | undefined {
-  const key = Object.keys(notification)[0] as NotificationType;
+  const key = Object.keys(notification)[0] as keyof dwango.nicolive.chat.data.ISimpleNotification;
+  let type = key as NotificationType;
   if (!NotificationTypeTable.includes(key)) {
-    console.warn('Unknown simpleNotification type', notification);
-    return undefined;
+    type = 'unknown';
   }
   return {
     notification: {
       ...common,
-      type: key,
+      type,
       message: notification[key],
     },
   };
@@ -320,7 +320,6 @@ export class NdgrCommentReceiver implements IMessageServerClient {
       },
     });
     this.ndgrClient.connect('now', NUM_BACKWARD_COMMENTS).catch(err => {
-      console.warn('Failed to connect to ndgr', err);
       this.messageSubject.error(err);
     });
     return this.messageSubject.asObservable();

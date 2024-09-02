@@ -18,7 +18,7 @@ function error(msg) {
 
 function executeCmd(cmd, options) {
   log(`Executing: ${cmd}`);
-  const result = sh.exec(cmd, options);
+  const result = /** @type {sh.ExecOutputReturnValue} */ (sh.exec(cmd, options));
 
   if (result.code !== 0) {
     error(`Command Failed >>> ${cmd}`);

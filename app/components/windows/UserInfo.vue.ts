@@ -64,12 +64,14 @@ export default class UserInfo extends Vue {
   private cleanup: () => void = undefined;
   isLatestVisible = true;
   showPopupMenu = false;
+  popper: PopperEvent;
 
   isBlockedUser = false;
   isFollowing = false;
   isModerator = false;
 
   moderatorTooltip = 'モデレーター';
+  supporterTooltip = 'サポーター';
   otherMenuTooltip = 'その他メニュー';
 
   mounted() {
@@ -158,6 +160,10 @@ export default class UserInfo extends Vue {
 
   get isPremium() {
     return this.windowsService.getChildWindowQueryParams().isPremium;
+  }
+
+  get isSupporter() {
+    return this.windowsService.getChildWindowQueryParams().isSupporter;
   }
 
   followUser(): void {

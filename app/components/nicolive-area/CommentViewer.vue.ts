@@ -165,8 +165,8 @@ export default class CommentViewer extends Vue {
     return nameplateHint.commentNo;
   }
 
-  refreshConnection() {
-    this.nicoliveCommentViewerService.refreshConnection();
+  async refreshConnection() {
+    await this.nicoliveCommentViewerService.refreshConnection();
   }
 
   // getterにして関数を返さないと全コメントに対してrerenderが走る
@@ -292,6 +292,7 @@ export default class CommentViewer extends Vue {
       item.value.user_id,
       item.value.name,
       (item.value.premium & 1) !== 0,
+      item.isSupporter,
     );
   }
 

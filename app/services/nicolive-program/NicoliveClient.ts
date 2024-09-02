@@ -22,6 +22,7 @@ import {
   AddFilterResult,
   AddModerator,
   Moderator,
+  Supporters,
 } from './ResponseTypes';
 
 import * as remote from '@electron/remote';
@@ -120,12 +121,12 @@ function isValidUserFollowStatusResponse(response: any): response is UserFollowS
 }
 
 export class NicoliveClient {
-  static live2BaseURL = 'https://live2.nicovideo.jp';
-  static live2ApiBaseURL = 'https://api.live2.nicovideo.jp';
-  static publicBaseURL = 'https://public.api.nicovideo.jp';
-  static nicoadBaseURL = 'https://api.nicoad.nicovideo.jp';
-  static userFollowBaseURL = 'https://user-follow-api.nicovideo.jp';
-  static userIconBaseURL = 'https://secure-dcdn.cdn.nimg.jp/nicoaccount/usericon/';
+  static live2BaseURL = 'https://live2.nicovideo.jp' as const;
+  static live2ApiBaseURL = 'https://api.live2.nicovideo.jp' as const;
+  static publicBaseURL = 'https://public.api.nicovideo.jp' as const;
+  static nicoadBaseURL = 'https://api.nicoad.nicovideo.jp' as const;
+  static userFollowBaseURL = 'https://user-follow-api.nicovideo.jp' as const;
+  static userIconBaseURL = 'https://secure-dcdn.cdn.nimg.jp/nicoaccount/usericon/' as const;
 
   private static FrontendIdHeader = {
     'x-frontend-id': '134',
@@ -730,6 +731,21 @@ export class NicoliveClient {
       {
         headers: NicoliveClient.FrontendIdHeader,
       },
+    );
+  }
+
+  async fetchSupporters(
+    {
+      limit,
+      offset,
+    }: {
+      limit?: number;
+      offset?: number;
+    } = { limit: 1000, offset: 0 },
+  ): Promise<WrappedResult<Supporters['data']>> {
+    return this.requestAPI<Supporters['data']>(
+      'GET',
+      `${NicoliveClient.live2ApiBaseURL}/api/v1/broadcaster/supporters?limit=${limit}&offset=${offset}`,
     );
   }
 }
