@@ -209,7 +209,7 @@
           >
           </multiselect>
         </div>
-        <div class="input-wrapper" :hidden="httpRelationMethod.value === ''">
+        <div class="input-wrapper" v-if="httpRelationMethod.value !== ''">
           <div class="input-label">
             <label>URL</label>
           </div>
@@ -217,14 +217,14 @@
         </div>
         <div
           class="input-wrapper"
-          :hidden="httpRelationMethod.value === '' || httpRelationMethod.value === 'GET'"
+          v-if="httpRelationMethod.value !== '' && httpRelationMethod.value !== 'GET'"
         >
           <div class="input-label">
             <label>Body</label>
           </div>
           <textarea rows="3" v-model="httpRelationBody"></textarea>
         </div>
-        <div class="input-wrapper" :hidden="httpRelationMethod.value === ''">
+        <div class="input-wrapper" v-if="httpRelationMethod.value !== ''">
           <button class="button button--secondary" @click="testHttpRelation()">テスト</button>
         </div>
         <div class="input-wrapper">
