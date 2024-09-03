@@ -26,6 +26,7 @@ export default class ProgramInfo extends Vue {
   private subscription: Subscription = null;
 
   showPopupMenu: boolean = false;
+  popper: PopperEvent;
 
   get isOnAir(): boolean {
     return this.nicoliveProgramService.state.status === 'onAir';

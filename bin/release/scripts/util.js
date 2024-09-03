@@ -4,7 +4,11 @@ const sh = require('shelljs');
 const { executeCmd, error } = require('./prompt');
 
 function getTagCommitId(tag) {
-  return executeCmd(`git rev-parse -q --verify "refs/tags/${tag}" || cat /dev/null`, { silent: true }).stdout;
+  const line = executeCmd(`git rev-parse -q --verify "refs/tags/${tag}" || cat /dev/null`, {
+    silent: true,
+  }).stdout;
+  // 末尾の改行を除去する
+  return line.replace(/\n$/, '');
 }
 
 function checkEnv(varName) {

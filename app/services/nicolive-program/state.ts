@@ -26,12 +26,19 @@ type NameplateHintState = {
   commentNo: number;
 };
 
+export type HttpRelationState = {
+  method: string;
+  url: string;
+  body: string;
+};
+
 interface IState {
   autoExtensionEnabled: boolean;
   panelOpened: boolean;
   speechSynthesizerSettings?: SpeechSynthesizerSettingsState;
   nameplateHint?: NameplateHintState;
   nameplateEnabled: boolean;
+  httpRelation: HttpRelationState;
 }
 
 /**
@@ -42,6 +49,7 @@ export class NicoliveProgramStateService extends PersistentStatefulService<IStat
     autoExtensionEnabled: false,
     panelOpened: true,
     nameplateEnabled: true,
+    httpRelation: { method: '', url: '', body: '' },
   };
 
   private subject: Subject<IState> = new BehaviorSubject<IState>(this.state);
@@ -65,6 +73,11 @@ export class NicoliveProgramStateService extends PersistentStatefulService<IStat
 
   updateNameplateEnabled(newState?: boolean): void {
     this.setState({ nameplateEnabled: newState });
+  }
+
+  updateHttpRelation(a: Partial<HttpRelationState>) {
+    const ra = { ...this.state.httpRelation, ...a };
+    this.setState({ httpRelation: ra });
   }
 
   private setState(nextState: Partial<IState>): void {

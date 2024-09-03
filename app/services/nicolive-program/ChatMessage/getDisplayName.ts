@@ -1,6 +1,9 @@
-import { WrappedChat } from '../WrappedChat';
+import { isWrappedChat, WrappedMessage } from '../WrappedChat';
 
-export function getDisplayName(chat: WrappedChat): string {
+export function getDisplayName(chat: WrappedMessage): string {
+  if (!isWrappedChat(chat)) {
+    return '';
+  }
   if (chat.filtered) {
     return undefined;
   }

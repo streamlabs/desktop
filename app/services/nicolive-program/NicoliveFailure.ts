@@ -50,8 +50,7 @@ async function openErrorDialog({
         type: 'warning',
         title,
         message,
-        buttons: [$t('common.close')],
-        noLink: true,
+        buttons: ['Close'],
       })
       .then(() => resolve());
   });

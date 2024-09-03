@@ -70,11 +70,11 @@
               :options="{ placement: 'bottom-end' }"
               @show="
                 showPopupMenu = true;
-                currentPopupMenu = $event;
+                popper = $event;
               "
               @hide="
                 showPopupMenu = false;
-                currentPopupMenu = undefined;
+                popper = undefined;
               "
             >
               <div class="popper">

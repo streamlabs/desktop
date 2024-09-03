@@ -2,7 +2,13 @@ import { mutation } from './core/stateful-service';
 import { PersistentStatefulService } from './core/persistent-stateful-service';
 import { SourcesService, ISourceApi } from './sources';
 import { TObsValue } from 'components/obs/inputs/ObsInput';
-import { RtvcEventLog } from 'services/usage-statistics';
+import {
+  RtvcEventLog,
+  RtvcParamManual,
+  RtvcParamManualKeys,
+  RtvcParamPreset,
+  RtvcParamPresetKeys,
+} from 'services/usage-statistics';
 
 // for source properties
 export type SourcePropKey =
@@ -96,23 +102,6 @@ export interface CommonParam {
 
 interface IRtvcState {
   value: any;
-}
-
-interface RtvcActiveLog {
-  used: boolean;
-  latency: number;
-  param: {
-    [name: string]:
-      | { pitchShift: number }
-      | {
-          name: string;
-          pitchShift: number;
-          pitchShiftSong: number;
-          amount: number;
-          primaryVoice: number;
-          secondaryVoice: number;
-        };
-  };
 }
 
 export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
@@ -295,10 +284,10 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
     const { isManual, idx } = this.indexToNum(state, index);
     if (isManual) {
       const p = state.manuals[idx];
-      const key = `manual${idx}`;
-      if (!this.eventLog.param[key]) this.eventLog.param[key] = {};
-
-      const s = this.eventLog.param[key];
+      const key = `manual${idx}` as RtvcParamManualKeys;
+      const param = this.eventLog.param as RtvcParamManual;
+      if (!param[key]) param[key] = { name: '', amount: 0, primary_voice: 0, secondary_voice: -1 };
+      const s = param[key];
       s.name = p.name;
       if (!this.isSongMode) s.pitch_shift = p.pitchShift;
       if (this.isSongMode) s.pitch_shift_song = p.pitchShiftSong;
@@ -307,10 +296,11 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
       s.secondary_voice = p.secondaryVoice;
     } else {
       const p = state.presets[idx];
-      const key = `preset${idx}`;
-      if (!this.eventLog.param[key]) this.eventLog.param[key] = {};
+      const key = `preset${idx}` as RtvcParamPresetKeys;
+      const param = this.eventLog.param as RtvcParamPreset;
+      if (!param[key]) param[key] = {};
 
-      const s = this.eventLog.param[key];
+      const s = param[key];
       if (!this.isSongMode) s.pitch_shift = p.pitchShift;
       if (this.isSongMode) s.pitch_shift_song = p.pitchShiftSong;
     }

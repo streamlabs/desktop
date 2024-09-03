@@ -26,6 +26,7 @@ import * as obs from '../../../obs-api';
 import { RunInLoadingMode } from './app-decorators';
 import Utils from 'services/utils';
 import * as remote from '@electron/remote';
+import { NicoliveClient } from 'services/nicolive-program/NicoliveClient';
 
 interface IAppState {
   loading: boolean;
@@ -135,6 +136,7 @@ export class AppService extends StatefulService<IAppState> {
       // this.platformAppsService.unloadAllApps(); 未実装
       // await this.usageStatisticsService.flushEvents(); 未実装
       this.windowsService.closeAllOneOffs(); // intead .shutdown(); window.child.close is 'Object has been destroyed' in this time
+      NicoliveClient.closeOpenWindows();
       this.ipcServerService.stopListening();
       // await this.userService.flushUserSession(); 未実装
       await this.sceneCollectionsService.deinitialize();

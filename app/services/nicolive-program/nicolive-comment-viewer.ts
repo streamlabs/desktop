@@ -1,16 +1,17 @@
+import * as Sentry from '@sentry/vue';
 import { EMPTY, Observable, Subject, Subscription, interval, merge, of } from 'rxjs';
 import {
   bufferTime,
   catchError,
-  debounceTime,
   distinctUntilChanged,
   endWith,
   filter,
   finalize,
   groupBy,
+  ignoreElements,
   map,
-  mapTo,
   mergeMap,
+  startWith,
   takeUntil,
   tap,
 } from 'rxjs/operators';
@@ -20,24 +21,37 @@ import { CustomizationService } from 'services/customization';
 import { NicoliveCommentFilterService } from 'services/nicolive-program/nicolive-comment-filter';
 import { NicoliveProgramService } from 'services/nicolive-program/nicolive-program';
 import { WindowsService } from 'services/windows';
+import { FakeModeConfig, isFakeMode } from 'util/fakeMode';
 import { AddComponent } from './ChatMessage/ChatComponentType';
 import { classify } from './ChatMessage/classifier';
-import { isOperatorCommand } from './ChatMessage/util';
-import {
-  IMessageServerClient,
-  MessageResponse,
-  MessageServerClient,
-  MessageServerConfig,
-  isChatMessage,
-  isThreadMessage,
-} from './MessageServerClient';
-import { WrappedChat, WrappedChatWithComponent } from './WrappedChat';
+import { IMessageServerClient, MessageServerConfig } from './MessageServerClient';
+import { NdgrCommentReceiver } from './NdgrCommentReceiver';
 import { NicoliveCommentLocalFilterService } from './nicolive-comment-local-filter';
 import { NicoliveCommentSynthesizerService } from './nicolive-comment-synthesizer';
-import { NicoliveProgramStateService } from './state';
 import { NicoliveModeratorsService } from './nicolive-moderators';
 import { FilterRecord } from './ResponseTypes';
-import { isFakeMode } from 'util/fakeMode';
+import { NicoliveSupportersService } from './nicolive-supporters';
+import { NicoliveProgramStateService } from './state';
+import {
+  WrappedChat,
+  WrappedChatWithComponent,
+  WrappedMessage,
+  WrappedMessageWithComponent,
+  isWrappedChat,
+} from './WrappedChat';
+import { isNdgrFetchError } from './NdgrFetchError';
+import {
+  isChatMessage,
+  isGameUpdateMessage,
+  isGiftMessage,
+  isNicoadMessage,
+  isNotificationMessage,
+  isOperatorMessage,
+  isStateMessage,
+} from './ChatMessage/util';
+import { MessageResponse } from './ChatMessage';
+
+import { HttpRelation } from './httpRelation';
 
 function makeEmulatedChat(
   content: string,
@@ -64,22 +78,16 @@ class DummyMessageServerClient implements IMessageServerClient {
   close(): void {
     // do nothing
   }
-  requestLatestMessages(): void {
-    // do nothing
-  }
-  ping(): void {
-    // do nothing
-  }
 }
 
 interface INicoliveCommentViewerState {
   /** 表示対象のコメント */
-  messages: WrappedChatWithComponent[];
+  messages: WrappedMessageWithComponent[];
   /**
    * 直前の更新で表示対象から押し出されたコメント
    * ローカルフィルターとスクロール位置維持のために実体を持っている
    */
-  popoutMessages: WrappedChatWithComponent[];
+  popoutMessages: WrappedMessageWithComponent[];
   pinnedMessage: WrappedChatWithComponent | null;
   speakingSeqId: number | null;
 }
@@ -99,8 +107,7 @@ function calcSSNGTypeName(record: FilterRecord) {
     command: 'コマンド',
   }[record.type];
 }
-
-const PING_DEBOUNCE_TIME = 180000; // 無通信切断される環境で切断を避けるためのping送信間隔
+const SUPPORTERS_REFRESH_INTERVAL = 180000; // サポーター情報の更新間隔(3分)
 
 export class NicoliveCommentViewerService extends StatefulService<INicoliveCommentViewerState> {
   private client: IMessageServerClient | null = null;
@@ -113,6 +120,7 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
   @Inject() private customizationService: CustomizationService;
   @Inject() private windowsService: WindowsService;
   @Inject() private nicoliveModeratorsService: NicoliveModeratorsService;
+  @Inject() private nicoliveSupportersService: NicoliveSupportersService;
 
   static initialState: INicoliveCommentViewerState = {
     messages: [],
@@ -136,14 +144,17 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
   }
 
   get filterFn() {
-    return (chat: WrappedChatWithComponent) =>
+    return (chat: WrappedMessageWithComponent) =>
       chat.type !== 'invisible' && this.nicoliveCommentLocalFilterService.filterFn(chat);
   }
 
   // なふだがoff なら名前を消す
-  get filterNameplate(): (chat: WrappedChatWithComponent) => WrappedChatWithComponent {
+  get filterNameplate(): (chat: WrappedMessageWithComponent) => WrappedMessageWithComponent {
     if (!this.nicoliveProgramStateService.state.nameplateEnabled) {
       return chat => {
+        if (!isWrappedChat(chat)) {
+          return chat;
+        }
         return {
           ...chat,
           value: {
@@ -169,35 +180,35 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
     super.init();
     this.nicoliveProgramService.stateChange
       .pipe(
-        map(({ roomURL, roomThreadID }) => ({
-          roomURL,
-          roomThreadID,
+        map(({ viewUri }) => ({
+          viewUri,
         })),
-        distinctUntilChanged(
-          (prev, curr) => prev.roomURL === curr.roomURL && prev.roomThreadID === curr.roomThreadID,
-        ),
+        distinctUntilChanged((prev, curr) => prev.viewUri === curr.viewUri),
       )
       .subscribe(state => this.onNextConfig(state));
 
     this.nicoliveCommentFilterService.stateChange.subscribe(() => {
+      // updateMessagesはPinまで更新してしまうが、ここではpinは更新しない
       this.SET_STATE({
-        messages: this.items.map(chat => this.nicoliveCommentFilterService.applyFilter(chat)),
+        messages: this.state.messages.map(chat =>
+          this.nicoliveCommentFilterService.applyFilter(chat),
+        ),
       });
+    });
+
+    // モデレーターが変化したらコメントを更新する
+    this.nicoliveModeratorsService.stateChange.subscribe({
+      next: () => {
+        this.updateMessages(chat => ({
+          ...chat,
+          isModerator: this.nicoliveModeratorsService.isModerator(chat.value.user_id),
+        }));
+      },
     });
 
     this.nicoliveModeratorsService.refreshObserver.subscribe({
       next: event => {
         switch (event.event) {
-          case 'refreshModerators':
-            // モデレーター情報が再取得されたら既存コメントのモデレーター情報も更新する
-            this.SET_STATE({
-              messages: this.items.map(chat => ({
-                ...chat,
-                isModerator: this.nicoliveModeratorsService.isModerator(chat.value.user_id),
-              })),
-            });
-            break;
-
           case 'addSSNG':
             {
               this.nicoliveCommentFilterService.addFilterCache(event.record);
@@ -234,30 +245,31 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
   }
 
   lastSubscription: Subscription = null;
-  private onNextConfig({ roomURL, roomThreadID }: MessageServerConfig): void {
+  nextConfigLoaded: Subject<void> = new Subject();
+  private onNextConfig({ viewUri }: MessageServerConfig): void {
     this.unsubscribe();
     this.clearList();
     this.pinComment(null);
 
     // 予約番組は30分前にならないとURLが来ない
-    if (!roomURL || !roomThreadID) return;
+    if (!viewUri) return;
 
-    if (isFakeMode()) {
+    if (isFakeMode() && FakeModeConfig.dummyComment) {
       // yarn dev 時はダミーでコメントを5秒ごとに出し続ける
       this.client = new DummyMessageServerClient();
     } else {
-      this.client = new MessageServerClient({ roomURL, roomThreadID });
+      this.client = new NdgrCommentReceiver(viewUri);
     }
     this.connect();
   }
 
-  refreshConnection() {
+  async refreshConnection() {
     // コメントは切断するがモデレーター通信は維持する
     this.lastSubscription?.unsubscribe();
     this.clearList();
     // 再接続ではピン止めは解除しない
 
-    this.connect();
+    await this.connect();
   }
 
   private unsubscribe() {
@@ -265,65 +277,165 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
     this.nicoliveModeratorsService.disconnectNdgr();
   }
 
-  private connect() {
-    const closer = new Subject();
-    const clientSubject = this.client.connect();
+  private updateMessages(updater: (chat: WrappedChatWithComponent) => WrappedChatWithComponent) {
+    this.SET_STATE({
+      messages: this.state.messages.map(chat => {
+        if (isWrappedChat(chat)) {
+          return updater(chat);
+        }
+        return chat;
+      }),
+      pinnedMessage: this.state.pinnedMessage ? updater(this.state.pinnedMessage) : null,
+    });
+  }
 
-    const pingSubject = new Subject();
-    merge(pingSubject, clientSubject)
-      .pipe(debounceTime(PING_DEBOUNCE_TIME), takeUntil(closer))
-      .subscribe({
-        next: () => {
-          this.client.ping();
-          pingSubject.next();
-        },
-        error: () => {}, // こちらはエラー処理はしなくてよい(下でやる)
+  startUpdateSupporters(
+    interval_ms: number,
+    closer: Subject<unknown>,
+  ): { isSupporter: (userId: string) => boolean } {
+    let supporters = new Set<string>();
+    const isSupporter = (userId: string) => supporters.has(userId);
+    interval(interval_ms)
+      .pipe(
+        startWith(0), // 初回はすぐに取得する
+        takeUntil(closer), // closerにメッセージが来たら終了
+      )
+      .subscribe(async () => {
+        supporters = new Set(await this.nicoliveSupportersService.update());
+
+        // サポーター情報が更新されたら既存コメントのサポーター情報も更新する
+        if (this.state.messages.length > 0) {
+          this.updateMessages(chat => ({
+            ...chat,
+            isSupporter: isSupporter(chat.value.user_id),
+          }));
+        }
       });
+
+    return { isSupporter };
+  }
+
+  private connect() {
+    // コメント接続が切断したときにすべて止めるためのSubject
+    const closer = new Subject();
+
+    const { isSupporter } = this.startUpdateSupporters(SUPPORTERS_REFRESH_INTERVAL, closer);
+
+    const clientSubject = this.client.connect();
 
     this.lastSubscription = merge(
       clientSubject.pipe(
         groupBy(msg => Object.keys(msg)[0]),
-        mergeMap((group$): Observable<Pick<WrappedChat, 'type' | 'value'>> => {
+        mergeMap((group$): Observable<Pick<WrappedMessage, 'type' | 'value'>> => {
           switch (group$.key) {
             case 'chat':
               return group$.pipe(
                 filter(isChatMessage),
                 map(({ chat }) => ({
-                  type: classify(chat),
+                  type: 'normal' as const,
                   value: chat,
                 })),
               );
-            case 'thread':
+
+            case 'operator':
               return group$.pipe(
-                filter(isThreadMessage),
-                filter(msg => (msg.thread.resultcode ?? 0) !== 0),
-                mapTo(makeEmulatedChat('コメントの取得に失敗しました')),
+                filter(isOperatorMessage),
+                map(({ operator }) => ({
+                  type: 'operator' as const,
+                  value: operator,
+                })),
               );
-            case 'leave_thread':
-              return group$.pipe(mapTo(makeEmulatedChat('コメントの取得に失敗しました')));
+
+            case 'notification':
+              return group$.pipe(
+                filter(isNotificationMessage),
+                map(({ notification }) => ({
+                  type: classify({ notification }),
+                  value: {
+                    date: notification.date,
+                    date_usec: notification.date_usec,
+                    content: notification.message,
+                  },
+                })),
+              );
+
+            case 'gift':
+              return group$.pipe(
+                filter(isGiftMessage),
+                map(({ gift }) => ({
+                  type: 'gift' as const,
+                  value: gift,
+                })),
+              );
+
+            case 'nicoad':
+              return group$.pipe(
+                filter(isNicoadMessage),
+                map(({ nicoad }) => ({
+                  type: 'nicoad' as const,
+                  value: nicoad,
+                })),
+              );
+
+            case 'gameUpdate':
+              return group$.pipe(
+                filter(isGameUpdateMessage),
+                map(({ gameUpdate }) => ({
+                  type: 'gameUpdate' as const,
+                  value: gameUpdate,
+                })),
+              );
+
+            case 'state':
+              return group$.pipe(
+                filter(isStateMessage),
+                tap(({ state }) => {
+                  if (state.state === 'ended') {
+                    // completeが発生しないのでサーバーとの接続終了メッセージは出ない
+                    // `/disconnect` の代わりのメッセージは出さない仕様なので問題ない
+                    this.unsubscribe();
+                  }
+                }),
+                ignoreElements(),
+              );
+
+            case 'signal':
+              // flush は無視
+              return EMPTY;
             default:
               return EMPTY;
           }
         }),
         catchError(err => {
-          if (err instanceof CloseEvent) {
-            this.client.close();
-            return EMPTY;
+          console.info(err);
+          if (isNdgrFetchError(err)) {
+            Sentry.withScope(scope => {
+              scope.setTags({
+                type: 'NdgrFetchError',
+                uri: err.uri,
+                status: `${err.status}`,
+              });
+              scope.setFingerprint([
+                'NicoliveCommentViewerService.connect',
+                'NdgrFetchError',
+                `${err.status}`,
+              ]);
+              Sentry.captureException(err);
+            });
+            return of(makeEmulatedChat('コメントの取得に失敗しました'));
+          } else {
+            Sentry.withScope(scope => {
+              scope.setFingerprint(['NicoliveCommentViewerService.connect', err.message]);
+              Sentry.captureException(err);
+            });
+            return of(makeEmulatedChat(`エラーが発生しました: ${err.message}`));
           }
-          console.error(err);
-          return of(makeEmulatedChat(`エラーが発生しました: ${err.message}`));
         }),
         endWith(makeEmulatedChat('サーバーとの接続が終了しました')),
         finalize(() => {
+          this.client.close();
           // コメント接続が終了したらモデレーター情報の監視も終了する
           closer.next();
-        }),
-        tap(v => {
-          if (isOperatorCommand(v.value) && v.value.content === '/disconnect') {
-            // completeが発生しないのでサーバーとの接続終了メッセージは出ない
-            // `/disconnect` の代わりのメッセージは出さない仕様なので問題ない
-            this.unsubscribe();
-          }
         }),
       ),
       this.systemMessages.pipe(takeUntil(closer)),
@@ -334,25 +446,25 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
         filter(arr => arr.length > 0),
         map(arr =>
           arr.map(m => {
-            if (m.type === 'normal' && m.value.user_id) {
+            if (isWrappedChat(m) && m.type === 'normal' && m.value.user_id) {
               return {
                 ...m,
                 isModerator: this.nicoliveModeratorsService.isModerator(m.value.user_id),
+                isSupporter: isSupporter(m.value.user_id),
               };
             }
             return m;
           }),
         ),
       )
-      .subscribe(values => this.onMessage(values.map(c => AddComponent(c))));
-    this.client.requestLatestMessages();
+      .subscribe(values => this.onMessage(values.map(c => AddComponent(c as WrappedMessage))));
   }
 
-  showUserInfo(userId: string, userName: string, isPremium: boolean) {
+  showUserInfo(userId: string, userName: string, isPremium: boolean, isSupporter: boolean) {
     this.windowsService.showWindow({
       componentName: 'UserInfo',
       title: 'ユーザー情報',
-      queryParams: { userId, userName, isPremium },
+      queryParams: { userId, userName, isPremium, isSupporter },
       size: {
         width: 360,
         height: 440,
@@ -360,7 +472,7 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
     });
   }
 
-  private queueToSpeech(values: WrappedChatWithComponent[]) {
+  private queueToSpeech(values: WrappedMessageWithComponent[]) {
     if (!this.nicoliveCommentSynthesizerService.enabled) {
       return;
     }
@@ -386,34 +498,40 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
     }
   }
 
-  private onMessage(values: WrappedChatWithComponent[]) {
+  private onMessage(values: WrappedMessageWithComponent[]) {
     const maxQueueToSpeak = 3; // 直近3件つづ読み上げ対象にする
     const recentSeconds = 60;
 
-    if (this.nicoliveProgramService.stateService.state.nameplateHint === undefined) {
-      const firstCommentWithName = values.find(c => !!c.value.name && c.value.no);
-      if (firstCommentWithName) {
+    const nowSeconds = Date.now() / 1000;
+
+    const valuesForSpeech = values.filter(c => {
+      if (!this.filterFn(c)) {
+        return false;
+      }
+      if (!c.value || !c.value.date) {
+        return false;
+      }
+      return c.value.date > nowSeconds - recentSeconds;
+    });
+
+    // send to http relation
+    const httpRelation = this.nicoliveProgramStateService.state.httpRelation;
+    if (httpRelation && httpRelation.method) {
+      valuesForSpeech.forEach(a => {
+        HttpRelation.sendChat(a, httpRelation);
+      });
+    }
+
+    if (this.nicoliveProgramStateService.state.nameplateHint === undefined) {
+      const firstCommentWithName = values.find(
+        c => isWrappedChat(c) && !!c.value.name && c.value.no,
+      );
+      if (firstCommentWithName && isWrappedChat(firstCommentWithName)) {
         this.nicoliveProgramService.checkNameplateHint(firstCommentWithName.value.no);
       }
     }
 
-    const nowSeconds = Date.now() / 1000;
-    this.queueToSpeech(
-      values
-        .filter(c => {
-          if (!this.filterFn(c)) {
-            return false;
-          }
-          if (!c.value || !c.value.date) {
-            return false;
-          }
-          if (c.value.date < nowSeconds - recentSeconds) {
-            return false;
-          }
-          return true;
-        })
-        .slice(-maxQueueToSpeak),
-    );
+    this.queueToSpeech(valuesForSpeech.slice(-maxQueueToSpeak));
 
     const maxRetain = 100; // 最新からこの件数を一覧に保持する
     const concatMessages = this.state.messages.concat(values);

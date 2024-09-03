@@ -136,10 +136,12 @@ export class WindowsService extends StatefulService<IWindowsState> {
   private windows: Dictionary<Electron.BrowserWindow> = {};
 
   init() {
-    const windows = BrowserWindow.getAllWindows();
+    const windowIds = ipcRenderer.sendSync('getWindowIds');
 
-    this.windows.main = windows[0];
-    this.windows.child = windows[1];
+    this.windows.main = BrowserWindow.fromId(windowIds.main);
+    this.windows.child = BrowserWindow.fromId(windowIds.child);
+
+    this.windows.main.webContents.setBackgroundThrottling(false);
 
     this.updateScaleFactor('main');
     this.updateScaleFactor('child');
@@ -162,7 +164,12 @@ export class WindowsService extends StatefulService<IWindowsState> {
         });
         return;
       }
-      this.UPDATE_SCALE_FACTOR(windowId, currentDisplay.scaleFactor);
+      if (currentDisplay.scaleFactor !== this.state[windowId].scaleFactor) {
+        console.log(
+          `${windowId} currentDisplay.scaleFactor ${this.state[windowId].scaleFactor} -> ${currentDisplay.scaleFactor}`,
+        );
+        this.UPDATE_SCALE_FACTOR(windowId, currentDisplay.scaleFactor);
+      }
     }
   }
 

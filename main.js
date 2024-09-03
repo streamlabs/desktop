@@ -870,4 +870,11 @@ function initialize(crashHandler) {
   ipcMain.handle('recollectUserSessionCookie', async () => {
     await recollectUserSessionCookie();
   });
+
+  ipcMain.on('getWindowIds', e => {
+    e.returnValue = {
+      main: mainWindow.id,
+      child: childWindow.id,
+    };
+  });
 }

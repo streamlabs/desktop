@@ -93,15 +93,17 @@ export default class EditableSceneCollection extends Vue {
     remote.dialog
       .showMessageBox(remote.getCurrentWindow(), {
         type: 'warning',
-        buttons: [$t('common.cancel'), $t('common.ok')],
+        buttons: [$t('common.ok'), $t('common.cancel')],
         title: $t('scenes.removeSceneCollectionConfirmTitle'),
         message: $t('scenes.removeSceneCollectionConfirm', {
           collectionName: this.collection.name,
         }),
         noLink: true,
+        defaultId: 1,
+        cancelId: 1,
       })
-      .then(({ response: ok }) => {
-        if (!ok) return;
+      .then(({ response: cancel }) => {
+        if (cancel) return;
         this.sceneCollectionsService.delete(this.collectionId);
       });
   }

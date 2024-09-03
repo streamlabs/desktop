@@ -24,6 +24,7 @@ export default class LanguageSettings extends Vue {
       message: $t('settings.restartConfirm'),
       noLink: true,
       cancelId: 1,
+      defaultId: 1,
     });
 
     if (choice.response !== 0) return;

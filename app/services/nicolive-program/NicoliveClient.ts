@@ -5,8 +5,6 @@ import { handleErrors } from 'util/requests';
 import {
   BroadcastStreamData,
   CommonErrorResponse,
-  Communities,
-  Community,
   Extension,
   FilterRecord,
   Filters,
@@ -24,6 +22,7 @@ import {
   AddFilterResult,
   AddModerator,
   Moderator,
+  Supporters,
 } from './ResponseTypes';
 
 import * as remote from '@electron/remote';
@@ -122,17 +121,36 @@ function isValidUserFollowStatusResponse(response: any): response is UserFollowS
 }
 
 export class NicoliveClient {
-  static live2BaseURL = 'https://live2.nicovideo.jp';
-  static live2ApiBaseURL = 'https://api.live2.nicovideo.jp';
-  static publicBaseURL = 'https://public.api.nicovideo.jp';
-  static nicoadBaseURL = 'https://api.nicoad.nicovideo.jp';
-  static communityBaseURL = 'https://com.nicovideo.jp';
-  static userFollowBaseURL = 'https://user-follow-api.nicovideo.jp';
-  static userIconBaseURL = 'https://secure-dcdn.cdn.nimg.jp/nicoaccount/usericon/';
+  static live2BaseURL = 'https://live2.nicovideo.jp' as const;
+  static live2ApiBaseURL = 'https://api.live2.nicovideo.jp' as const;
+  static publicBaseURL = 'https://public.api.nicovideo.jp' as const;
+  static nicoadBaseURL = 'https://api.nicoad.nicovideo.jp' as const;
+  static userFollowBaseURL = 'https://user-follow-api.nicovideo.jp' as const;
+  static userIconBaseURL = 'https://secure-dcdn.cdn.nimg.jp/nicoaccount/usericon/' as const;
 
   private static FrontendIdHeader = {
     'x-frontend-id': '134',
   } as const;
+
+  private static OpenWindows: { [key: string]: Electron.BrowserWindow | null } = {};
+
+  static registerWindow(key: 'createProgram' | 'editProgram', win: Electron.BrowserWindow) {
+    if (NicoliveClient.OpenWindows[key]) {
+      throw new Error(`NicoliveClient.registerWindow: Window already exists: ${key}`);
+    }
+    NicoliveClient.OpenWindows[key] = win;
+    win.on('close', () => {
+      NicoliveClient.OpenWindows[key] = null;
+    });
+  }
+  static closeOpenWindows() {
+    for (const key in NicoliveClient.OpenWindows) {
+      const win = NicoliveClient.OpenWindows[key];
+      if (win) {
+        win.close();
+      }
+    }
+  }
 
   /**
    *
@@ -310,12 +328,12 @@ export class NicoliveClient {
   /** 運営コメントを送信 */
   async sendOperatorComment(
     programID: string,
-    { text, isPermanent }: { text: string; isPermanent?: boolean },
+    { text, isPermCommand }: { text: string; isPermCommand?: boolean },
   ): Promise<WrappedResult<void>> {
     return this.requestAPI<void>(
       'PUT',
       `${NicoliveClient.live2BaseURL}/watch/${programID}/operator_comment`,
-      NicoliveClient.jsonBody({ text, isPermanent }),
+      NicoliveClient.jsonBody({ text, isPermCommand }),
     );
   }
 
@@ -382,82 +400,6 @@ export class NicoliveClient {
   static defaultUserIconURL = `${NicoliveClient.userIconBaseURL}defaults/blank.jpg`;
 
   // 関心が別だが他の場所におく程の理由もないのでここにおく
-  /** コミュニティ情報を取得 */
-  async fetchCommunity(
-    communityId: string,
-    headers?: HeaderSeed,
-  ): Promise<WrappedResult<Community>> {
-    const url = new URL(`${NicoliveClient.communityBaseURL}/api/v2/communities.json`);
-    const communityNo = communityId.replace(/^co/, '');
-    const params = {
-      ids: communityNo,
-    };
-    for (const [key, value] of Object.entries(params)) {
-      url.searchParams.append(key, value);
-    }
-
-    let res = null;
-    try {
-      res = await fetch(
-        url,
-        NicoliveClient.createRequest('GET', {
-          headers: {
-            ...headers,
-            ...NicoliveClient.FrontendIdHeader,
-          },
-        }),
-      );
-    } catch (err) {
-      return NicoliveClient.wrapFetchError(err as Error);
-    }
-
-    const body = await res.text();
-    let obj: any = null;
-    try {
-      obj = JSON.parse(body);
-    } catch (e) {
-      // bodyがJSONになってない異常失敗
-
-      // breadcrumbsに載るようにログ
-      console.warn('non-json body', body);
-      return {
-        ok: false,
-        value: e as Error,
-      };
-    }
-
-    if (res.ok) {
-      const data = obj.data as Communities['data'];
-      const communities = data.communities?.communities || [];
-
-      const community = communities.find(c => c.global_id === communityId);
-      if (community) {
-        // 正常成功
-        return {
-          ok: true,
-          value: community,
-        };
-      } else {
-        // community not found
-        return {
-          ok: false,
-          value: {
-            meta: {
-              status: 404,
-              errorCode: 'NOT_FOUND',
-              errorMessage: `community ${communityId} not found`,
-            },
-          } as CommonErrorResponse,
-        };
-      }
-    }
-
-    // 正常失敗
-    return {
-      ok: false,
-      value: obj as CommonErrorResponse,
-    };
-  }
   /*
    * 放送可能なユーザー番組IDを取得する
    * 放送可能な番組がない場合はundefinedを返す
@@ -533,6 +475,7 @@ export class NicoliveClient {
         nodeIntegrationInWorker: false,
       },
     });
+    NicoliveClient.registerWindow('createProgram', win);
     win.removeMenu();
     Sentry.addBreadcrumb({
       category: 'createProgram.open',
@@ -554,7 +497,7 @@ export class NicoliveClient {
         } else if (!NicoliveClient.isAllowedURL(url)) {
           Sentry.withScope(scope => {
             scope.setLevel('warning');
-            scope.setExtra('url', url);
+            scope.setTag('url', url);
             scope.setFingerprint(['createProgram', 'did-navigate', url]);
             Sentry.captureMessage('createProgram did-navigate to unexpected URL');
           });
@@ -605,6 +548,7 @@ export class NicoliveClient {
         nodeIntegrationInWorker: false,
       },
     });
+    NicoliveClient.registerWindow('editProgram', win);
     win.removeMenu();
     this.editProgramWindow = win;
     this.editProgramId = programID;
@@ -627,7 +571,7 @@ export class NicoliveClient {
         } else if (!NicoliveClient.isAllowedURL(url)) {
           Sentry.withScope(scope => {
             scope.setLevel('warning');
-            scope.setExtra('url', url);
+            scope.setTag('url', url);
             scope.setTag('programID', programID);
             scope.setFingerprint(['editProgram', 'did-navigate', url]);
             Sentry.captureMessage('editProgram did-navigate to unexpected URL');
@@ -787,6 +731,21 @@ export class NicoliveClient {
       {
         headers: NicoliveClient.FrontendIdHeader,
       },
+    );
+  }
+
+  async fetchSupporters(
+    {
+      limit,
+      offset,
+    }: {
+      limit?: number;
+      offset?: number;
+    } = { limit: 1000, offset: 0 },
+  ): Promise<WrappedResult<Supporters['data']>> {
+    return this.requestAPI<Supporters['data']>(
+      'GET',
+      `${NicoliveClient.live2ApiBaseURL}/api/v1/broadcaster/supporters?limit=${limit}&offset=${offset}`,
     );
   }
 }

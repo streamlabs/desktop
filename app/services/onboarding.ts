@@ -114,7 +114,10 @@ export class OnboardingService extends StatefulService<IOnboardingServiceState> 
     this.RESET_COMPLETED_STEPS();
     this.SET_OPTIONS(actualOptions);
     this.SET_CURRENT_STEP('Connect');
-    this.navigationService.navigate('Onboarding');
+    // Studioの初期化が終わってから遷移する
+    setTimeout(() => {
+      this.navigationService.navigate('Onboarding');
+    }, 0);
   }
 
   // Ends the onboarding process

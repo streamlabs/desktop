@@ -6,7 +6,7 @@ import { NicoliveProgramService } from 'services/nicolive-program/nicolive-progr
 import { NicoliveProgramStateService } from 'services/nicolive-program/state';
 import { map, distinctUntilChanged } from 'rxjs/operators';
 import { NicoliveFailure } from './NicoliveFailure';
-import { WrappedChat } from './WrappedChat';
+import { WrappedMessage } from './WrappedChat';
 import { Subject } from 'rxjs';
 import { isFakeMode } from 'util/fakeMode';
 
@@ -27,7 +27,7 @@ export class NicoliveCommentFilterService extends StatefulService<INicoliveComme
   private stateChangeSubject = new Subject<INicoliveCommentFilterState>();
   stateChange = this.stateChangeSubject.asObservable();
 
-  applyFilter<T extends WrappedChat>(wrapped: T) {
+  applyFilter<T extends WrappedMessage>(wrapped: T): T & { filtered?: boolean } {
     if (wrapped.type === 'normal') {
       for (const record of this.state.filters) {
         if (
@@ -38,8 +38,8 @@ export class NicoliveCommentFilterService extends StatefulService<INicoliveComme
           return { ...wrapped, filtered: true };
         }
       }
+      if (wrapped.filtered) return { ...wrapped, filtered: false };
     }
-    if (wrapped.filtered) return { ...wrapped, filtered: false };
     return wrapped;
   }
 

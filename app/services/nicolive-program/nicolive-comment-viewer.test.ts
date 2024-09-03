@@ -1,12 +1,27 @@
+import * as FakeTimers from '@sinonjs/fake-timers';
 import { Subject } from 'rxjs';
-import type { ObserveType } from 'util/jest_fn';
+import { jest_fn, type ObserveType } from 'util/jest_fn';
+import { sleep } from 'util/sleep';
 import { createSetupFunction } from 'util/test-setup';
-import type { MessageResponse } from './MessageServerClient';
+import { MessageResponse } from './ChatMessage';
+import type { IMessageServerClient } from './MessageServerClient';
+import { NdgrFetchError } from './NdgrFetchError';
 import { FilterRecord } from './ResponseTypes';
+import {
+  isWrappedChat,
+  WrappedChatWithComponent,
+  WrappedMessage,
+  WrappedMessageWithComponent,
+} from './WrappedChat';
 import { NicoliveModeratorsService } from './nicolive-moderators';
+import type { HttpRelationState, NicoliveProgramStateService } from './state';
+import { getDisplayText } from './ChatMessage/displaytext';
+import { AddComponent } from './ChatMessage/ChatComponentType';
+import { Speech } from './nicolive-comment-synthesizer';
 
 type NicoliveCommentViewerService =
   import('./nicolive-comment-viewer').NicoliveCommentViewerService;
+type NicoliveSupportersService = import('./nicolive-supporters').NicoliveSupportersService;
 
 const setup = createSetupFunction({
   injectee: {
@@ -27,6 +42,9 @@ const setup = createSetupFunction({
       isModerator: () => false,
       disconnectNdgr() {},
     },
+    NicoliveSupportersService: {
+      update: () => Promise.resolve([]),
+    },
     CustomizationService: {
       state: {
         compactModeNewComment: true,
@@ -34,6 +52,13 @@ const setup = createSetupFunction({
     },
     NicoliveProgramService: {
       hidePlaceholder() {},
+    },
+    NicoliveProgramStateService: {
+      state: {
+        httpRelation: {
+          method: '',
+        },
+      } as NicoliveProgramStateService['state'],
     },
   },
 });
@@ -53,11 +78,28 @@ jest.mock('services/nicolive-program/nicolive-comment-synthesizer', () => ({
 jest.mock('services/nicolive-program/nicolive-moderators', () => ({
   NicoliveModeratorsService: {},
 }));
+jest.mock('services/nicolive-program/nicolive-supporters', () => ({
+  NicoliveSupportersService: {},
+}));
 jest.mock('services/windows', () => ({
   WindowsService: {},
 }));
 jest.mock('services/customization', () => ({
   CustomizationService: {},
+}));
+jest.mock('services/nicolive-program/state', () => ({
+  NicoliveProgramStateService: {},
+}));
+
+const sendChatMock = jest_fn<
+  (chat: WrappedMessageWithComponent, state: HttpRelationState) => Promise<Object>
+>()
+  .mockName('HttpRelation.sendChat')
+  .mockResolvedValue({ result: '' });
+jest.mock('services/nicolive-program/httpRelation', () => ({
+  HttpRelation: {
+    sendChat: sendChatMock,
+  },
 }));
 
 beforeEach(() => {
@@ -69,16 +111,15 @@ afterEach(() => {
   jest.resetModules();
 });
 
-test('接続先情報が来たら接続する', () => {
+test('接続先情報が来たら接続する', async () => {
   const stateChange = new Subject();
-  const clientSubject = new Subject();
-  jest.doMock('./MessageServerClient', () => ({
-    ...(jest.requireActual('./MessageServerClient') as {}),
-    MessageServerClient: class MessageServerClient {
+  const clientSubject = new Subject<MessageResponse>();
+  jest.doMock('./NdgrCommentReceiver', () => ({
+    ...(jest.requireActual('./NdgrCommentReceiver') as {}),
+    NdgrCommentReceiver: class NdgrCommentReceiver {
       connect() {
         return clientSubject;
       }
-      requestLatestMessages() {}
     },
   }));
   setup({ injectee: { NicoliveProgramService: { stateChange } } });
@@ -88,19 +129,18 @@ test('接続先情報が来たら接続する', () => {
 
   expect(clientSubject.observers).toHaveLength(0);
   expect(stateChange.observers).toHaveLength(1);
-  stateChange.next({ roomURL: 'https://example.com', roomThreadID: '175622' });
-  expect(clientSubject.observers).toHaveLength(2);
+  stateChange.next({ viewUri: 'https://example.com' });
+  expect(clientSubject.observers).toHaveLength(1);
 });
 
 test('接続先情報が欠けていたら接続しない', () => {
   const stateChange = new Subject();
-  const clientSubject = new Subject();
-  jest.doMock('./MessageServerClient', () => ({
-    MessageServerClient: class MessageServerClient {
+  const clientSubject = new Subject<MessageResponse>();
+  jest.doMock('./NdgrCommentReceiver', () => ({
+    NdgrCommentReceiver: class NdgrCommentReceiver {
       connect() {
         return clientSubject;
       }
-      requestLatestMessages() {}
     },
   }));
   setup({ injectee: { NicoliveProgramService: { stateChange } } });
@@ -110,21 +150,20 @@ test('接続先情報が欠けていたら接続しない', () => {
 
   expect(clientSubject.observers).toHaveLength(0);
   expect(stateChange.observers).toHaveLength(1);
-  stateChange.next({ roomURL: 'https://example.com' });
+  stateChange.next({ viewUri: '' });
   expect(clientSubject.observers).toHaveLength(0);
 });
 
-test('/disconnectが流れてきたらunsubscribeする', () => {
+test('status=endedが流れてきたらunsubscribeする', () => {
   const stateChange = new Subject();
-  const clientSubject = new Subject();
-  jest.doMock('./MessageServerClient', () => {
+  const clientSubject = new Subject<MessageResponse>();
+  jest.doMock('./NdgrCommentReceiver', () => {
     return {
-      ...(jest.requireActual('./MessageServerClient') as {}),
-      MessageServerClient: class MessageServerClient {
+      ...(jest.requireActual('./NdgrCommentReceiver') as {}),
+      NdgrCommentReceiver: class NdgrCommentReceiver {
         connect() {
           return clientSubject;
         }
-        requestLatestMessages() {}
       },
     };
   });
@@ -138,32 +177,33 @@ test('/disconnectが流れてきたらunsubscribeする', () => {
 
   expect(clientSubject.observers).toHaveLength(0);
   expect(unsubscribe).toHaveBeenCalledTimes(0);
-  stateChange.next({ roomURL: 'https://example.com', roomThreadID: '175622' });
-  expect(clientSubject.observers).toHaveLength(2);
+  stateChange.next({ viewUri: 'https://example.com' });
+  expect(clientSubject.observers).toHaveLength(1);
   expect(unsubscribe).toHaveBeenCalledTimes(1);
 
-  // 通常コメントではunsubscribeしない
-  clientSubject.next({ chat: { premium: 1, content: '/disconnect' } });
-  expect(unsubscribe).toHaveBeenCalledTimes(1);
-
-  clientSubject.next({ chat: { premium: 2, content: '/disconnect' } });
+  clientSubject.next({ state: { state: 'ended' } });
   expect(unsubscribe).toHaveBeenCalledTimes(2);
 });
 
 const MODERATOR_ID = '123';
 const NOT_MODERATOR_ID = '456';
 
-function connectionSetup() {
+function connectionSetup(options: { speechEnabled?: boolean; httpRelationEnabled?: boolean } = {}) {
   const stateChange = new Subject();
   const clientSubject = new Subject<MessageResponse>();
   const refreshObserver = new Subject<ObserveType<NicoliveModeratorsService['refreshObserver']>>();
-  jest.doMock('./MessageServerClient', () => ({
-    ...(jest.requireActual('./MessageServerClient') as {}),
-    MessageServerClient: class MessageServerClient {
+  const moderatorsStateChange = new Subject<
+    ObserveType<NicoliveModeratorsService['stateChange']>
+  >();
+  const queueToSpeech = jest_fn<(speech: Speech) => void>().mockName('queueToSpeech');
+
+  jest.doMock('./NdgrCommentReceiver', () => ({
+    ...(jest.requireActual('./NdgrCommentReceiver') as {}),
+    NdgrCommentReceiver: class NdgrCommentReceiver implements IMessageServerClient {
       connect() {
         return clientSubject;
       }
-      requestLatestMessages() {}
+      close() {}
     },
   }));
   setup({
@@ -177,8 +217,9 @@ function connectionSetup() {
       },
       NicoliveModeratorsService: {
         refreshObserver,
+        stateChange: moderatorsStateChange,
         isModerator: (userId: string) => {
-          return userId === '123';
+          return userId === MODERATOR_ID;
         },
       },
       NicoliveCommentFilterService: {
@@ -186,24 +227,46 @@ function connectionSetup() {
         findFilterCache: () => ({ type: 'word', body: 'abc' } as FilterRecord),
         deleteFiltersCache: () => {},
       },
+      NicoliveCommentLocalFilterService: {
+        filterFn: (msg: WrappedMessage) => (isWrappedChat(msg) ? msg.value.content !== 'NG' : true),
+      },
+      NicoliveCommentSynthesizerService: {
+        makeSpeech: (chat: WrappedMessage): Speech => ({
+          text: getDisplayText(AddComponent(chat)),
+          synthesizer: 'nVoice',
+          rate: 1,
+        }),
+        queueToSpeech,
+        enabled: !!options.speechEnabled,
+      },
+      NicoliveProgramStateService: {
+        state: {
+          httpRelation: {
+            method: options.httpRelationEnabled ? 'POST' : '',
+          },
+        } as NicoliveProgramStateService['state'],
+      },
     },
   });
 
   const { NicoliveCommentViewerService } = require('./nicolive-comment-viewer');
   const instance = NicoliveCommentViewerService.instance as NicoliveCommentViewerService;
 
-  stateChange.next({ roomURL: 'https://example.com', roomThreadID: '175622' });
+  stateChange.next({ viewUri: 'https://example.com' });
 
   return {
     instance,
     clientSubject,
     refreshObserver,
+    moderatorsStateChange,
+    queueToSpeech,
   };
 }
 
-test('chatメッセージはstateに保持する', () => {
+test('chatメッセージはstateに保持する', async () => {
   jest.spyOn(Date, 'now').mockImplementation(() => 1582175622000);
   const { instance, clientSubject } = connectionSetup();
+  await sleep(0);
 
   clientSubject.next({
     chat: {
@@ -252,9 +315,10 @@ test('chatメッセージはstateに保持する', () => {
   `);
 });
 
-test('chatメッセージはstateに最新100件保持し、あふれた物がpopoutMessagesに残る', () => {
+test('chatメッセージはstateに最新100件保持し、あふれた物がpopoutMessagesに残る', async () => {
   jest.spyOn(Date, 'now').mockImplementation(() => 1582175622000);
   const { instance, clientSubject } = connectionSetup();
+  await sleep(0);
 
   const retainSize = 100;
   const numberOfSystemMessages = 1; // "サーバーとの接続が終了しました";
@@ -276,17 +340,26 @@ test('chatメッセージはstateに最新100件保持し、あふれた物がpo
   clientSubject.complete();
 
   expect(instance.state.messages.length).toEqual(retainSize);
-  expect(instance.state.messages[0].value.content).toEqual(chats[overflow]);
-  expect(instance.state.messages[retainSize - numberOfSystemMessages - 1].value.content).toEqual(
-    chats[chats.length - 1],
-  );
+  expect(instance.state.messages[0].type).toEqual('normal');
+  if (instance.state.messages[0].type === 'normal') {
+    expect(instance.state.messages[0].value.content).toEqual(chats[overflow]);
+  }
+  const last = instance.state.messages[retainSize - numberOfSystemMessages - 1];
+  expect(last.type).toEqual('normal');
+  if (last.type === 'normal') {
+    expect(last.value.content).toEqual(chats[chats.length - 1]);
+  }
   expect(instance.state.popoutMessages.length).toEqual(overflow);
-  expect(instance.state.popoutMessages[0].value.content).toEqual(chats[0]);
+  expect(instance.state.popoutMessages[0].type).toEqual('normal');
+  if (instance.state.popoutMessages[0].type === 'normal') {
+    expect(instance.state.popoutMessages[0].value.content).toEqual(chats[0]);
+  }
 });
 
-test('接続エラー時にメッセージを表示する', () => {
+test('接続エラー時にメッセージを表示する', async () => {
   jest.spyOn(Date, 'now').mockImplementation(() => 1582175622000);
   const { instance, clientSubject } = connectionSetup();
+  await sleep(0);
 
   const error = new Error('yay');
 
@@ -319,50 +392,15 @@ test('接続エラー時にメッセージを表示する', () => {
   `);
 });
 
-test('スレッドの参加失敗時にメッセージを表示する', () => {
+test('スレッドの参加失敗時にメッセージを表示する', async () => {
   jest.spyOn(Date, 'now').mockImplementation(() => 1582175622000);
   const { instance, clientSubject } = connectionSetup();
+  await sleep(0);
 
-  clientSubject.next({
-    thread: {
-      resultcode: 1,
-    },
-  });
-
-  // bufferTime tweaks
-  clientSubject.complete();
-
-  expect(instance.state.messages).toMatchInlineSnapshot(`
-    [
-      {
-        "component": "system",
-        "seqId": 0,
-        "type": "n-air-emulated",
-        "value": {
-          "content": "コメントの取得に失敗しました",
-          "date": 1582175622,
-        },
-      },
-      {
-        "component": "system",
-        "seqId": 1,
-        "type": "n-air-emulated",
-        "value": {
-          "content": "サーバーとの接続が終了しました",
-          "date": 1582175622,
-        },
-      },
-    ]
-  `);
-});
-
-test('スレッドからの追い出し発生時にメッセージを表示する', () => {
-  jest.spyOn(Date, 'now').mockImplementation(() => 1582175622000);
-  const { instance, clientSubject } = connectionSetup();
-
-  clientSubject.next({
-    leave_thread: {},
-  });
+  const e = new NdgrFetchError(404, 'yay', 'test');
+  expect(e instanceof NdgrFetchError).toBeTruthy();
+  expect(e.name).toBe('NdgrFetchError');
+  clientSubject.error(new NdgrFetchError(404, 'yay', 'test'));
 
   // bufferTime tweaks
   clientSubject.complete();
@@ -393,6 +431,7 @@ test('スレッドからの追い出し発生時にメッセージを表示す�
 
 test('モデレーターによるSSNG追加・削除がきたらシステムメッセージが追加される', async () => {
   const { clientSubject, instance, refreshObserver } = connectionSetup();
+  await sleep(0);
 
   const tests: {
     event: ObserveType<NicoliveModeratorsService['refreshObserver']>;
@@ -459,12 +498,17 @@ test('モデレーターによるSSNG追加・削除がきたらシステムメ�
 
   expect(instance.state.messages.length).toEqual(tests.length + 1);
   for (const [i, test] of tests.entries()) {
-    expect(instance.state.messages[i].value.content).toEqual(test.message);
+    const message = instance.state.messages[i];
+    expect(message.type).toEqual('n-air-emulated');
+    if (message.type === 'n-air-emulated') {
+      expect(message.value.content).toEqual(test.message);
+    }
   }
 });
 
-test('refreshModeratorsがきたらコメントのモデレーター情報を更新する', async () => {
-  const { clientSubject, instance, refreshObserver } = connectionSetup();
+test('moderator.stateChange がきたらコメントのモデレーター情報を更新する', async () => {
+  const { clientSubject, instance, moderatorsStateChange } = connectionSetup();
+  await sleep(0);
   instance.state.messages = [
     {
       component: 'common',
@@ -486,17 +530,175 @@ test('refreshModeratorsがきたらコメントのモデレーター情報を更
         user_id: NOT_MODERATOR_ID,
       },
     },
-  ];
-  expect(instance.state.messages[0].isModerator).toBeFalsy();
-  expect(instance.state.messages[1].isModerator).toBeTruthy();
+  ] as WrappedChatWithComponent[];
+  instance.state.pinnedMessage = {
+    component: 'common',
+    isModerator: true,
+    seqId: 2,
+    type: 'normal',
+    value: {
+      content: 'yay',
+      user_id: NOT_MODERATOR_ID,
+    },
+  };
 
-  refreshObserver.next({
-    event: 'refreshModerators',
+  {
+    const messages = instance.state.messages as WrappedChatWithComponent[];
+    expect(messages[0].isModerator).toBeFalsy();
+    expect(messages[1].isModerator).toBeTruthy();
+    expect(instance.state.pinnedMessage?.isModerator).toBeTruthy();
+  }
+
+  moderatorsStateChange.next({
+    moderatorsCache: [MODERATOR_ID],
+    viewUri: 'https://example.com',
   });
 
   // bufferTime tweaks
   clientSubject.complete();
 
-  expect(instance.state.messages[0].isModerator).toBeTruthy();
-  expect(instance.state.messages[1].isModerator).toBeFalsy();
+  {
+    const messages = instance.state.messages as WrappedChatWithComponent[];
+    expect(messages[0].isModerator).toBeTruthy();
+    expect(messages[1].isModerator).toBeFalsy();
+  }
+  expect(instance.state.pinnedMessage?.isModerator).toBeFalsy();
+});
+
+describe('startUpdateSupporters', () => {
+  // jest-runner/electron では jestのfakeTimersが使えないのでsinonのfakeTimersを使う
+  let clock: FakeTimers.InstalledClock;
+  beforeEach(() => {
+    clock = FakeTimers.install();
+  });
+  afterEach(() => {
+    clock.uninstall();
+  });
+
+  const INTERVAL = 100;
+  const closer = new Subject();
+
+  function prepare() {
+    const update = jest_fn<NicoliveSupportersService['update']>();
+    setup({
+      injectee: {
+        NicoliveSupportersService: { update },
+        NicoliveProgramService: { stateChange: new Subject() },
+      },
+    });
+
+    const { NicoliveCommentViewerService } = require('./nicolive-comment-viewer');
+    const instance = NicoliveCommentViewerService.instance as NicoliveCommentViewerService;
+    return { instance, update };
+  }
+
+  test('最初は即時にサポーター情報を更新する', async () => {
+    const { instance, update } = prepare();
+    expect(update).toHaveBeenCalledTimes(0);
+    instance.startUpdateSupporters(INTERVAL, closer);
+
+    expect(update).toHaveBeenCalledTimes(1);
+    closer.next();
+  });
+
+  test('サポーター情報を定期的に更新する', async () => {
+    const { instance, update } = prepare();
+    instance.startUpdateSupporters(INTERVAL, closer);
+    expect(update).toHaveBeenCalledTimes(1);
+
+    clock.tick(INTERVAL);
+    expect(update).toHaveBeenCalledTimes(2);
+
+    clock.tick(INTERVAL);
+    expect(update).toHaveBeenCalledTimes(3);
+
+    closer.next();
+    // 止めた後は進まなくなる
+    clock.tick(INTERVAL);
+    expect(update).toHaveBeenCalledTimes(3);
+  });
+});
+
+test('NGにかかるコメントは読み上げない', async () => {
+  const { clientSubject, queueToSpeech } = connectionSetup({ speechEnabled: true });
+  const NOW_SEC = 600;
+  jest.spyOn(Date, 'now').mockImplementation(() => NOW_SEC * 1000);
+
+  ['OK', 'NG'].forEach(content => {
+    clientSubject.next({
+      chat: {
+        content,
+        date: NOW_SEC,
+      },
+    });
+  });
+
+  // bufferTime tweaks
+  clientSubject.complete();
+
+  expect(queueToSpeech.mock.calls.map(([speech]) => speech.text)).toEqual([
+    'OK',
+    'サーバーとの接続が終了しました',
+  ]);
+});
+
+test('コメント読み上げ時に古いコメントは読み上げない', async () => {
+  const { clientSubject, queueToSpeech } = connectionSetup({ speechEnabled: true });
+  const DROP_THRESHOLD_SEC = 60;
+  const NOW_SEC = 600;
+
+  jest.spyOn(Date, 'now').mockImplementation(() => NOW_SEC * 1000);
+
+  clientSubject.next({
+    chat: {
+      content: 'old',
+      date: NOW_SEC - DROP_THRESHOLD_SEC,
+    },
+  });
+  clientSubject.next({
+    chat: {
+      content: 'new',
+      date: NOW_SEC - DROP_THRESHOLD_SEC + 1,
+    },
+  });
+
+  // bufferTime tweaks
+  clientSubject.complete();
+
+  expect(queueToSpeech.mock.calls.map(([speech]) => speech.text)).toEqual([
+    'new',
+    'サーバーとの接続が終了しました',
+  ]);
+});
+
+test('HTTP連携: コメント送信', async () => {
+  const { clientSubject, queueToSpeech } = connectionSetup({ httpRelationEnabled: true });
+  const NOW_SEC = 600;
+  const DROP_THRESHOLD_SEC = 60;
+
+  jest.spyOn(Date, 'now').mockImplementation(() => NOW_SEC * 1000);
+
+  ['old', 'NG'].forEach(content => {
+    clientSubject.next({
+      chat: {
+        content,
+        date: NOW_SEC - DROP_THRESHOLD_SEC,
+      },
+    });
+  });
+  ['new', 'NG'].forEach(content => {
+    clientSubject.next({
+      chat: {
+        content,
+        date: NOW_SEC - DROP_THRESHOLD_SEC + 1,
+      },
+    });
+  });
+
+  // bufferTime tweaks
+  clientSubject.complete();
+
+  expect(
+    sendChatMock.mock.calls.map(([msg]) => (isWrappedChat(msg) ? msg.value.content : 'not chat')),
+  ).toEqual(['new', 'サーバーとの接続が終了しました']);
 });

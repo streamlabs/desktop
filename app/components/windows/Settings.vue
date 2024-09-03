@@ -109,6 +109,10 @@
       label {
         margin-bottom: 12px;
       }
+
+      button {
+        margin: 0 0 12px auto;
+      }
     }
   }
 }

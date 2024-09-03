@@ -10,11 +10,12 @@ import { NicoliveClient, isOk } from './NicoliveClient';
 import { NicoliveFailure, openErrorDialogFromFailure } from './NicoliveFailure';
 import { FilterRecord } from './ResponseTypes';
 import { NicoliveProgramService } from './nicolive-program';
+import { isNdgrFetchError } from './NdgrFetchError';
 
 interface INicoliveModeratorsService {
   // moderator の userId 集合
   moderatorsCache: string[];
-  roomURL: string;
+  viewUri: string;
 }
 
 export class NicoliveModeratorsService extends StatefulService<INicoliveModeratorsService> {
@@ -28,13 +29,12 @@ export class NicoliveModeratorsService extends StatefulService<INicoliveModerato
 
   static initialState: INicoliveModeratorsService = {
     moderatorsCache: [],
-    roomURL: '',
+    viewUri: '',
   };
 
   private stateChangeSubject = new Subject<typeof this.state>();
   stateChange = this.stateChangeSubject.asObservable();
   private refreshSubject = new Subject<
-    | { event: 'refreshModerators' }
     | { event: 'addSSNG'; record: FilterRecord }
     | { event: 'removeSSNG'; record: { ssngId: number; userId?: number; userName?: string } }
   >();
@@ -45,19 +45,16 @@ export class NicoliveModeratorsService extends StatefulService<INicoliveModerato
 
     this.nicoliveProgramService.stateChange
       .pipe(
-        map(({ roomURL, roomThreadID, moderatorViewUri }) => ({
-          roomURL,
-          roomThreadID,
+        map(({ viewUri, moderatorViewUri }) => ({
+          viewUri,
           moderatorViewUri,
         })),
-        distinctUntilChanged(
-          (prev, curr) => prev.roomURL === curr.roomURL && prev.roomThreadID === curr.roomThreadID,
-        ),
+        distinctUntilChanged((prev, curr) => prev.viewUri === curr.viewUri),
       )
       .subscribe(state => {
-        if (state.roomURL !== this.state.roomURL) {
-          this.setState({ roomURL: state.roomURL, moderatorsCache: [] });
-          if (state.roomURL) {
+        if (state.viewUri !== this.state.viewUri) {
+          this.setState({ viewUri: state.viewUri, moderatorsCache: [] });
+          if (state.viewUri) {
             this.fetchModerators()
               .then(() => {
                 const url = state.moderatorViewUri || process.env.NDGR_SERVER;
@@ -73,7 +70,7 @@ export class NicoliveModeratorsService extends StatefulService<INicoliveModerato
                 }
               });
           } else {
-            this.patchState({ roomURL: '' });
+            this.patchState({ viewUri: '' });
           }
         }
       });
@@ -203,7 +200,21 @@ export class NicoliveModeratorsService extends StatefulService<INicoliveModerato
       },
       complete: () => console.log('Message stream completed'),
     });
-    await this.ndgrClient.connect();
+    await this.ndgrClient.connect().catch(err => {
+      console.info('Failed to connect moderator stream:', err);
+      Sentry.withScope(scope => {
+        scope.setFingerprint(['NicoliveModeratorsService', 'NdgrClient', 'connectError']);
+        scope.setTag('ndgr.type', 'moderator');
+        if (isNdgrFetchError(err)) {
+          scope.setTags({
+            uri: err.uri,
+            label: err.label,
+            status: `${err.status}`,
+          });
+        }
+        scope.captureException(err);
+      });
+    });
   }
 
   disconnectNdgr() {
@@ -220,7 +231,6 @@ export class NicoliveModeratorsService extends StatefulService<INicoliveModerato
       throw NicoliveFailure.fromClientError('fetchModerators', result);
     }
     this.setModeratorsCache(result.value.map(moderator => moderator.userId).map(String));
-    this.refreshSubject.next({ event: 'refreshModerators' });
   }
 
   isModerator(userId: string): boolean {

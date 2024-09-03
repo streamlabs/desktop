@@ -10,7 +10,6 @@ import Display from 'components/shared/Display.vue';
 import GenericForm from 'components/obs/inputs/GenericForm.vue';
 import { $t } from 'services/i18n';
 import { Subscription } from 'rxjs';
-import electron from 'electron';
 import Util from 'services/utils';
 import * as remote from '@electron/remote';
 
@@ -52,7 +51,7 @@ export default class SourceProperties extends Vue {
     );
   }
 
-  refreshTimer: NodeJS.Timeout = undefined;
+  refreshTimer: number = undefined;
 
   mounted() {
     this.properties = this.source ? this.source.getPropertiesFormData() : [];
@@ -69,7 +68,7 @@ export default class SourceProperties extends Vue {
     });
 
     if (PeriodicUpdateSources.includes(this.source.type)) {
-      this.refreshTimer = setInterval(() => {
+      this.refreshTimer = window.setInterval(() => {
         const source = this.sourcesService.getSource(this.sourceId);
         // 任意の値を同内容で上書き更新すると、OBS側でリスト選択の選択肢が最新の値に更新される
         source.setPropertiesFormData([this.properties[0]]);
@@ -80,7 +79,7 @@ export default class SourceProperties extends Vue {
 
   destroyed() {
     if (this.refreshTimer) {
-      clearInterval(this.refreshTimer);
+      window.clearInterval(this.refreshTimer);
     }
     this.sourceRemovedSub.unsubscribe();
     this.sourceUpdatedSub.unsubscribe();

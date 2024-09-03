@@ -1,5 +1,4 @@
 import * as Sentry from '@sentry/vue';
-import * as electron from 'electron';
 import moment from 'moment';
 import { Subject } from 'rxjs';
 import { Inject } from 'services/core/injector';
@@ -28,9 +27,11 @@ import {
 } from './streaming-api';
 import { CustomcastUsageService } from '../custom-cast-usage';
 
-import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
+import { VideoSettingsService } from 'services/settings-v2/video';
 import { RtvcStateService } from '../../services/rtvcStateService';
 import * as remote from '@electron/remote';
+import { HttpRelation } from 'services/nicolive-program/httpRelation';
+import { NicoliveProgramStateService } from 'services/nicolive-program/state';
 
 enum EOBSOutputType {
   Streaming = 'streaming',
@@ -71,6 +72,7 @@ export class StreamingService
   @Inject() private videoSettingsService: VideoSettingsService;
   @Inject() private customcastUsageService: CustomcastUsageService;
   @Inject() private rtvcStateService: RtvcStateService;
+  @Inject() private nicoliveProgramStateService: NicoliveProgramStateService;
 
   streamingStatusChange = new Subject<EStreamingState>();
   recordingStatusChange = new Subject<ERecordingState>();
@@ -154,8 +156,7 @@ export class StreamingService
           title: $t('streaming.notBroadcasting'),
           type: 'warning',
           message: $t('streaming.notBroadcastingMessage'),
-          buttons: [$t('common.close')],
-          noLink: true,
+          buttons: ['Close'],
         })
         .then(({ response: done }) => resolve(done));
     });
@@ -299,8 +300,7 @@ export class StreamingService
             .showMessageBox(remote.getCurrentWindow(), {
               type: 'warning',
               message,
-              buttons: [$t('common.close')],
-              noLink: true,
+              buttons: ['Close'],
             })
             .then(({ response: done }) => resolve(done));
         });
@@ -456,8 +456,7 @@ export class StreamingService
             title: $t('streaming.bitrateFetchingError.title'),
             type: 'warning',
             message: $t('streaming.bitrateFetchingError.message'),
-            buttons: [$t('common.close')],
-            noLink: true,
+            buttons: ['Close'],
           })
           .then(({ response: done }) => resolve(done));
       });
@@ -726,6 +725,12 @@ export class StreamingService
     this.actionLog('stream_end', streamingTrackId);
     this.customcastUsageService.stopStreaming();
     this.rtvcStateService.stopStreaming();
+
+    HttpRelation.sendLog(
+      this.nicoliveProgramService.state.programID,
+      this.usageStatisticsService.uuidService.uuid,
+      this.nicoliveProgramStateService.state.httpRelation,
+    );
   }
 
   private actionLog(eventType: 'stream_start' | 'stream_end', streamingTrackId: string) {

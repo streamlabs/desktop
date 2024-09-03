@@ -15,6 +15,11 @@
           <div class="user-name-wrapper">
             <div class="user-name">{{ userName }}</div>
             <i class="icon-moderator" v-tooltip.bottom="moderatorTooltip" v-if="isModerator"></i>
+            <i
+              class="icon-creator-support"
+              v-tooltip.bottom="supporterTooltip"
+              v-if="isSupporter"
+            ></i>
           </div>
           <div class="user-account">
             <p class="user-id">ID: {{ userId }}</p>
@@ -30,33 +35,87 @@
           <popper
             trigger="click"
             :options="{ placement: 'bottom-end' }"
-            @show="showPopupMenu = true"
+            @show="
+              showPopupMenu = true;
+              popper = $event;
+            "
             @hide="showPopupMenu = false"
           >
             <div class="popper">
               <ul class="popup-menu-list">
                 <li class="popup-menu-item">
-                  <a @click="copyUserId" class="link">ユーザーIDをコピー</a>
+                  <a
+                    @click="
+                      copyUserId();
+                      popper.doClose();
+                    "
+                    class="link"
+                    >ユーザーIDをコピー</a
+                  >
                 </li>
               </ul>
               <ul class="popup-menu-list">
                 <li class="popup-menu-item">
-                  <a @click="blockUser" class="link" v-if="!isBlockedUser">配信からブロック</a>
-                  <a @click="unBlockUser" class="link" v-if="isBlockedUser"
+                  <a
+                    @click="
+                      blockUser();
+                      popper.doClose();
+                    "
+                    class="link"
+                    v-if="!isBlockedUser"
+                    >配信からブロック</a
+                  >
+                  <a
+                    @click="
+                      unBlockUser();
+                      popper.doClose();
+                    "
+                    class="link"
+                    v-if="isBlockedUser"
                     >配信用ブロックから削除</a
                   >
                 </li>
               </ul>
               <ul class="popup-menu-list">
                 <li class="popup-menu-item">
-                  <a @click="unFollowUser" class="link" v-if="isFollowing">フォローを解除</a>
-                  <a @click="followUser" class="link" v-if="!isFollowing">ユーザーをフォロー</a>
+                  <a
+                    @click="
+                      unFollowUser();
+                      popper.doClose();
+                    "
+                    class="link"
+                    v-if="isFollowing"
+                    >フォローを解除</a
+                  >
+                  <a
+                    @click="
+                      followUser();
+                      popper.doClose();
+                    "
+                    class="link"
+                    v-if="!isFollowing"
+                    >ユーザーをフォロー</a
+                  >
                 </li>
               </ul>
               <ul class="popup-menu-list">
                 <li class="popup-menu-item">
-                  <a @click="addModerator" class="link" v-if="!isModerator">モデレーターに追加</a>
-                  <a @click="removeModerator" class="link text--red" v-if="isModerator"
+                  <a
+                    @click="
+                      addModerator();
+                      popper.doClose();
+                    "
+                    class="link"
+                    v-if="!isModerator"
+                    >モデレーターに追加</a
+                  >
+                  <a
+                    @click="
+                      removeModerator();
+                      popper.doClose();
+                    "
+                    class="link text--red"
+                    v-if="isModerator"
                     >モデレーターから削除</a
                   >
                 </li>
@@ -119,10 +178,10 @@
             <button
               type="button"
               @click="scrollToLatest"
-              class="scroll-to-latest button--tertiary"
+              class="button--circle button--tertiary"
               v-if="!isLatestVisible && comments.length > 0"
             >
-              <i class="icon-down-arrow"></i>最新のコメントへ移動
+              <i class="icon-down-arrow"></i>
             </button>
           </div>
         </div>
@@ -194,6 +253,12 @@
 }
 
 .icon-moderator {
+  margin-left: 4px;
+  font-size: @font-size5;
+  color: var(--color-primary);
+}
+
+.icon-creator-support {
   margin-left: 4px;
   font-size: @font-size5;
   color: var(--color-primary);

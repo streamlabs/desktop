@@ -17,27 +17,30 @@ function randomCharacters(len: number): string {
     .join('');
 }
 
+export type RtvcParamPresetKeys = 'preset0' | 'preset1' | 'preset2';
+export type RtvcParamPreset = {
+  [name in RtvcParamPresetKeys]: {
+    pitch_shift?: number;
+    pitch_shift_song?: number;
+  };
+};
+
+export type RtvcParamManualKeys = 'manual0' | 'manual1' | 'manual2' | 'manual3' | 'manual4';
+export type RtvcParamManual = {
+  [name in RtvcParamManualKeys]: {
+    name: string;
+    pitch_shift?: number;
+    pitch_shift_song?: number;
+    amount: number;
+    primary_voice: number;
+    secondary_voice: number;
+  };
+};
+
 export type RtvcEventLog = {
   used?: boolean;
   latency?: number;
-  param?:
-    | {
-        [name in 'preset0' | 'preset1' | 'preset2']: {
-          pitch_shift?: number;
-          pitch_shift_song?: number;
-        };
-      }
-    | {
-        [name in 'manual0' | 'manual1' | 'manual2' | 'manual3' | 'manual4']: {
-          name: string;
-          pitch_shift?: number;
-          pitch_shift_song?: number;
-          amount: number;
-          primary_voice: number;
-          secondary_voice: number;
-        };
-      }
-    | Record<string, never>;
+  param?: RtvcParamPreset | RtvcParamManual | Record<string, never>;
 };
 
 export type TUsageEvent =
@@ -129,41 +132,45 @@ export class UsageStatisticsService extends Service {
    * @param event the event type to record
    * @param metadata arbitrary data to store with the event (must be serializable)
    */
-  recordEvent(event: TUsageEvent) {
+  async recordEvent(event: TUsageEvent) {
     console.log('recordEvent', event);
-    if (event.event === 'boot') {
-      const headers = new Headers();
-      headers.append('Content-Type', 'application/json');
-      const body = JSON.stringify({
-        ...event,
-        uuid: this.uuidService.uuid, // inject UUID
-        user_id: this.userService.isLoggedIn() ? this.userService.platformId : null,
-      });
-
-      const request = new Request(`${this.hostsService.statistics}/boot`, {
-        headers,
-        method: 'POST',
-        body,
-      });
-
-      console.log('send boot log', request.url, body);
-      return fetch(request);
-    } else if (event.event === 'stream_start' || event.event === 'stream_end') {
-      console.log('send action log', `${this.hostsService.statistics}/action`);
-      const headers = new Headers();
-      headers.append('Content-Type', 'application/json');
-
-      const request = new Request(`${this.hostsService.statistics}/action`, {
-        headers,
-        method: 'POST',
-        body: JSON.stringify({
+    try {
+      if (event.event === 'boot') {
+        const headers = new Headers();
+        headers.append('Content-Type', 'application/json');
+        const body = JSON.stringify({
           ...event,
           uuid: this.uuidService.uuid, // inject UUID
           user_id: this.userService.isLoggedIn() ? this.userService.platformId : null,
-        }),
-      });
+        });
 
-      return fetch(request);
+        const request = new Request(`${this.hostsService.statistics}/boot`, {
+          headers,
+          method: 'POST',
+          body,
+        });
+
+        console.log('send boot log', request.url, body);
+        return await fetch(request);
+      } else if (event.event === 'stream_start' || event.event === 'stream_end') {
+        console.log('send action log', `${this.hostsService.statistics}/action`);
+        const headers = new Headers();
+        headers.append('Content-Type', 'application/json');
+
+        const request = new Request(`${this.hostsService.statistics}/action`, {
+          headers,
+          method: 'POST',
+          body: JSON.stringify({
+            ...event,
+            uuid: this.uuidService.uuid, // inject UUID
+            user_id: this.userService.isLoggedIn() ? this.userService.platformId : null,
+          }),
+        });
+
+        return await fetch(request);
+      }
+    } catch (err) {
+      console.error(err);
     }
   }
 }
