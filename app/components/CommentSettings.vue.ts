@@ -11,6 +11,13 @@ import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
 import VueSlider from 'vue-slider-component';
 import Multiselect from 'vue-multiselect';
+import { HttpRelation } from 'services/nicolive-program/httpRelation';
+import * as remote from '@electron/remote';
+
+type MethodObject = {
+  text: string;
+  value: string;
+};
 
 @Component({
   components: {
@@ -136,5 +143,41 @@ export default class CommentSettings extends Vue {
 
   set showAnonymous(v: boolean) {
     this.nicoliveCommentLocalFilterService.showAnonymous = v;
+  }
+
+  httpRelationMethods: MethodObject[] = [
+    { value: '', text: '---' },
+    { value: 'GET', text: 'GET' },
+    { value: 'POST', text: 'POST' },
+    { value: 'PUT', text: 'PUT' },
+  ];
+
+  get httpRelationMethod(): MethodObject {
+    const value = this.nicoliveProgramStateService.state.httpRelation.method;
+    const obj = this.httpRelationMethods.find(a => a.value === value);
+    return obj ?? this.httpRelationMethods[0];
+  }
+  set httpRelationMethod(method: MethodObject) {
+    this.nicoliveProgramStateService.updateHttpRelation({ method: method.value });
+  }
+  get httpRelationUrl(): string {
+    return this.nicoliveProgramStateService.state.httpRelation.url;
+  }
+  set httpRelationUrl(url: string) {
+    this.nicoliveProgramStateService.updateHttpRelation({ url });
+  }
+  get httpRelationBody(): string {
+    return this.nicoliveProgramStateService.state.httpRelation.body;
+  }
+  set httpRelationBody(body: string) {
+    this.nicoliveProgramStateService.updateHttpRelation({ body });
+  }
+
+  testHttpRelation() {
+    HttpRelation.sendTest(this.nicoliveProgramStateService.state.httpRelation).then();
+  }
+
+  showHttpRelationPage() {
+    remote.shell.openExternal('https://github.com/n-air-app/n-air-app/wiki/http_relation');
   }
 }

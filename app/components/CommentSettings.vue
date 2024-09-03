@@ -104,8 +104,8 @@
         </button>
       </div>
       <div class="input-container">
-        <div class="input-wrapper">
-          <div class="row input-heading">
+        <div class="input-wrapper voice">
+          <div class="row input-label">
             <label for="system-select">システムメッセージ</label>
             <button
               class="button button--secondary"
@@ -117,6 +117,7 @@
             </button>
           </div>
           <multiselect
+            class="voice"
             id="system-select"
             v-model="system"
             :options="synthIds"
@@ -132,8 +133,8 @@
         </div>
       </div>
       <div class="input-container">
-        <div class="input-wrapper">
-          <div class="row input-heading">
+        <div class="input-wrapper voice">
+          <div class="row input-label">
             <label for="normal-select">視聴者コメント</label>
             <button
               class="button button--secondary"
@@ -160,8 +161,8 @@
         </div>
       </div>
       <div class="input-container">
-        <div class="input-wrapper">
-          <div class="row input-heading">
+        <div class="input-wrapper voice">
+          <div class="row input-label">
             <label for="operator-select">放送者コメント</label>
             <button
               class="button button--secondary"
@@ -188,16 +189,55 @@
         </div>
       </div>
     </div>
+
+    <div class="section">
+      <div class="input-label section-heading">
+        <label>HTTP連携設定</label>
+      </div>
+      <div class="input-container">
+        <div class="input-wrapper">
+          <div class="input-label">
+            <label>Method</label>
+          </div>
+          <multiselect
+            v-model="httpRelationMethod"
+            :options="httpRelationMethods"
+            label="text"
+            trackBy="value"
+            :allow-empty="false"
+            :placeholder="$t('settings.listPlaceholder')"
+          >
+          </multiselect>
+        </div>
+        <div class="input-wrapper" v-if="httpRelationMethod.value !== ''">
+          <div class="input-label">
+            <label>URL</label>
+          </div>
+          <input type="text" v-model="httpRelationUrl" />
+        </div>
+        <div
+          class="input-wrapper"
+          v-if="httpRelationMethod.value !== '' && httpRelationMethod.value !== 'GET'"
+        >
+          <div class="input-label">
+            <label>Body</label>
+          </div>
+          <textarea rows="3" v-model="httpRelationBody"></textarea>
+        </div>
+        <div class="input-wrapper" v-if="httpRelationMethod.value !== ''">
+          <button class="button button--secondary" @click="testHttpRelation()">テスト</button>
+        </div>
+        <div class="input-wrapper">
+          詳細は<a @click="showHttpRelationPage()">こちら</a>を参照してください
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script lang="ts" src="./CommentSettings.vue.ts"></script>
 <style lang="less" scoped>
 @import url('../styles/index');
-
-select {
-  margin: 0;
-}
 
 .section-heading {
   display: flex;
@@ -254,23 +294,25 @@ select {
   }
 }
 
-.multiselect {
-  height: 64px;
-  margin-bottom: 8px;
-}
+.voice {
+  .multiselect {
+    height: 64px;
+    margin-bottom: 8px;
+  }
 
-& /deep/ .multiselect__tags {
-  position: relative;
-  height: 100%;
-  overflow: hidden;
-  box-shadow: inset 0 0 0 1px var(--color-border-light);
+  & /deep/ .multiselect__tags {
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px var(--color-border-light);
+  }
 
-  [data-type='webSpeech'] & {
+  & /deep/ [data-type='webSpeech'] .multiselect__tags {
     background: url('../../media/images/windows_bg.png') center no-repeat;
     background-size: 100% auto;
   }
 
-  [data-type='nVoice'] & {
+  & /deep/ [data-type='nVoice'] .multiselect__tags {
     background: url('../../media/images/nvoice_bg.png') center no-repeat;
     background-size: 100% auto;
 
@@ -287,31 +329,35 @@ select {
       opacity: 0.9;
     }
   }
-}
 
-& /deep/ .multiselect__select {
-  line-height: 64px;
+  & /deep/ .multiselect__select {
+    line-height: 64px;
 
-  &::before {
-    right: 16px;
+    &::before {
+      right: 16px;
+      color: var(--color-text-light);
+    }
+  }
+
+  & /deep/ .multiselect__input {
+    height: 64px;
+    padding: 0 16px;
     color: var(--color-text-light);
+    text-shadow: 0 0 4px rgb(@black 0.25);
+    background: transparent;
+    border: none;
+
+    &:hover {
+      border-color: var(--color-border-light);
+    }
+
+    &:focus {
+      background: var(--color-input-bg);
+    }
   }
-}
 
-& /deep/ .multiselect__input {
-  height: 64px;
-  padding: 0 16px;
-  color: var(--color-text-light);
-  text-shadow: 0 0 4px rgb(@black 0.25);
-  background: transparent;
-  border: none;
-
-  &:hover {
-    border-color: var(--color-border-light);
+  & /deep/ .multiselect__content {
+    top: 8px;
   }
-}
-
-& /deep/ .multiselect__content {
-  top: 8px;
 }
 </style>

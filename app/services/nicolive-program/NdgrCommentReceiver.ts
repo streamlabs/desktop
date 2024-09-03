@@ -98,17 +98,27 @@ function convertChatToMessageResponse(
   chat: dwango.nicolive.chat.data.IChat,
   id: string,
 ): MessageResponse {
-  const user_id = chat.rawUserId ? chat.rawUserId.toString() : chat.hashedUserId;
+  const { user_id, anonymity } = (() => {
+    if (chat.hashedUserId) {
+      return { anonymity: 1, user_id: chat.hashedUserId };
+    }
+    if (chat.rawUserId) {
+      return { anonymity: 0, user_id: chat.rawUserId.toString() };
+    }
+    return { anonymity: 0, user_id: '' };
+  })();
+
   return {
     chat: {
       ...common,
-      id,
+      ...(id ? { id } : {}),
       ...(chat.content ? { content: chat.content } : {}),
       ...(chat.no !== undefined ? { no: chat.no } : {}),
       ...(chat.accountStatus === dwango.nicolive.chat.data.Chat.AccountStatus.Premium
         ? { premium: 1 }
         : {}),
       ...(user_id ? { user_id } : {}),
+      ...(anonymity ? { anonymity } : {}),
       ...(chat.vpos !== undefined ? { vpos: chat.vpos } : {}),
       ...(chat.name ? { name: chat.name } : {}),
       ...(chat.modifier ? { mail: convertModifierToMail(chat.modifier) } : {}),
