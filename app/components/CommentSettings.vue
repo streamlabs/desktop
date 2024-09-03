@@ -209,20 +209,25 @@
           >
           </multiselect>
         </div>
-        <div class="input-wrapper">
+        <div class="input-wrapper" :hidden="httpRelationMethod.value === ''">
           <div class="input-label">
             <label>URL</label>
           </div>
           <input type="text" v-model="httpRelationUrl" />
         </div>
-        <div class="input-wrapper">
+        <div
+          class="input-wrapper"
+          :hidden="httpRelationMethod.value === '' || httpRelationMethod.value === 'GET'"
+        >
           <div class="input-label">
             <label>Body</label>
           </div>
           <textarea rows="3" v-model="httpRelationBody"></textarea>
         </div>
-        <div class="input-wrapper">
+        <div class="input-wrapper" :hidden="httpRelationMethod.value === ''">
           <button class="button button--secondary" @click="testHttpRelation()">テスト</button>
+        </div>
+        <div class="input-wrapper">
           詳細は<a @click="showHttpRelationPage()">こちら</a>を参照してください
         </div>
       </div>
