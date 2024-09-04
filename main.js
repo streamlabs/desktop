@@ -26,6 +26,15 @@ process.env.NAIR_PRODUCT_NAME = pjson.buildProductName;
 
 console.log(`pjson.name = ${pjson.name}`); // DEBUG
 
+function getObsStudioNodeVersion() {
+  const osnVersionMatch = pjson.dependencies['obs-studio-node'].match(/\bosn-(\d+\.\d+\.\d+)/);
+  if (osnVersionMatch && osnVersionMatch.length > 1) {
+    return osnVersionMatch[1];
+  }
+  return null;
+}
+const osnVersion = getObsStudioNodeVersion();
+
 ////////////////////////////////////////////////////////////////////////////////
 // Modules and other Requires
 ////////////////////////////////////////////////////////////////////////////////
@@ -317,6 +326,7 @@ function initialize(crashHandler) {
   console.log('=================================');
   console.log('N Air');
   console.log(`Version: ${process.env.NAIR_VERSION}`);
+  console.log(`obs-studio-node version: ${osnVersion}`);
   console.log(`OS: ${os.platform()} ${os.release()}`);
   console.log(`Arch: ${process.arch}`);
   console.log(`CPU: ${cpus[0].model}`);
@@ -402,6 +412,9 @@ function initialize(crashHandler) {
       dsn: sentryDefs.DSN,
       release: process.env.NAIR_VERSION,
     });
+    if (osnVersion) {
+      SentryElectron.getCurrentScope().setTag('obs-studio-node', osnVersion);
+    }
 
     crashReporter.start({
       productName: 'n-air-app',
