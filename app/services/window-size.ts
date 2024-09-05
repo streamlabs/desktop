@@ -7,6 +7,7 @@ import { NavigationService } from './navigation';
 import { NicoliveProgramStateService } from './nicolive-program/state';
 import { UserService } from './user';
 import { WindowsService } from './windows';
+import { compact } from 'lodash';
 
 interface IWindowSizeState {
   panelOpened: boolean | null; // 初期化前はnull、永続化された値の読み出し後に値が入る
@@ -92,9 +93,8 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
       next: compact => {
         if ('compactMode' in compact) {
           this.setState({ isCompact: compact.compactMode });
-          // setState isCompactの後でないと正しい計算にならないため、分ける
-          this.updateAlwaysOnTop();
-        } else if ('compactAlwaysOnTop' in compact) {
+        }
+        if ('compactAlwaysOnTop' in compact) {
           this.updateAlwaysOnTop();
         }
       },
@@ -123,6 +123,9 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
     this.refreshWindowSize(this.state, nextState);
     this.SET_STATE(nextState);
     this.stateChangeSubject.next(nextState);
+    if ('isCompact' in partialState) {
+      this.updateAlwaysOnTop();
+    }
   }
 
   @mutation()
