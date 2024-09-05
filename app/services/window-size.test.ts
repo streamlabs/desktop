@@ -1,9 +1,7 @@
 import { createSetupFunction } from 'util/test-setup';
 import { Subject, BehaviorSubject } from 'rxjs';
 
-type WindowSizeService = import('./window-size').WindowSizeService;
 type PanelState = import('./window-size').PanelState;
-type TWindowSizeService = import('./window-size').WindowSizeService;
 
 const setup = createSetupFunction({
   state: {},
@@ -199,6 +197,9 @@ describe('refreshWindowSize', () => {
       // inject spy
       WindowSizeService.updateWindowSize = updateWindowSize;
 
+      const sendSync = jest.fn().mockName('sendSync');
+      jest.spyOn(require('electron').ipcRenderer, 'sendSync').mockImplementation(sendSync);
+
       // kick getter
       WindowSizeService.instance;
 
@@ -392,6 +393,7 @@ describe('updateWindowSize', () => {
         maximize: jest.fn(),
         unmaximize: jest.fn(),
         setMaximizable: jest.fn(),
+        setAlwaysOnTop: jest.fn(),
       };
 
       const nextSize = WindowSizeService.updateWindowSize(win, suite.prev, suite.next, {
