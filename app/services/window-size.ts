@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcRenderer } from 'electron';
+import { ipcRenderer } from 'electron';
 import { BehaviorSubject } from 'rxjs';
 import { Inject } from './core/injector';
 import { mutation, StatefulService } from './core/stateful-service';
@@ -7,7 +7,6 @@ import { NavigationService } from './navigation';
 import { NicoliveProgramStateService } from './nicolive-program/state';
 import { UserService } from './user';
 import { WindowsService } from './windows';
-import { compact } from 'lodash';
 
 interface IWindowSizeState {
   panelOpened: boolean | null; // 初期化前はnull、永続化された値の読み出し後に値が入る
