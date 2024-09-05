@@ -13,6 +13,7 @@ interface IWindowSizeState {
   isLoggedIn: boolean | null; // 初期化前はnull、永続化された値の読み出し後に値が入る
   isCompact: boolean | null;
   isNavigating: boolean;
+  isAlwaysOnTop: boolean;
 }
 
 const STUDIO_WIDTH = 800;
@@ -48,6 +49,8 @@ class MainWindowOperation {
   maximize = () => ipcRenderer.sendSync(MWOpKey, 'maximize');
   unmaximize = () => ipcRenderer.sendSync(MWOpKey, 'unmaximize');
   setMaximizable = (a: boolean) => ipcRenderer.sendSync(MWOpKey, 'setMaximizable', a);
+  setAlwaysOnTop = (a: boolean) => ipcRenderer.sendSync(MWOpKey, 'setAlwaysOnTop', a);
+  isAlwaysOnTop = (): boolean => ipcRenderer.sendSync(MWOpKey, 'isAlwaysOnTop');
 }
 
 export class WindowSizeService extends StatefulService<IWindowSizeState> {
@@ -62,6 +65,7 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
     isLoggedIn: null,
     isCompact: null,
     isNavigating: false,
+    isAlwaysOnTop: false,
   };
 
   private stateChangeSubject = new BehaviorSubject(this.state);
@@ -88,6 +92,10 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
       next: compact => {
         if ('compactMode' in compact) {
           this.setState({ isCompact: compact.compactMode });
+          // setState isCompactの後でないと正しい計算にならないため、分ける
+          this.updateAlwaysOnTop();
+        } else if ('compactAlwaysOnTop' in compact) {
+          this.updateAlwaysOnTop();
         }
       },
     });
@@ -101,6 +109,12 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
       isLoggedIn: this.userService.isLoggedIn(),
       isCompact: this.customizationService.state.compactMode,
       isNavigating: this.navigationService.state.currentPage !== 'Studio',
+    });
+  }
+
+  private updateAlwaysOnTop() {
+    this.setState({
+      isAlwaysOnTop: this.state.isCompact && this.customizationService.state.compactAlwaysOnTop,
     });
   }
 
@@ -138,27 +152,28 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
   refreshWindowSize(prevState: IWindowSizeState, nextState: IWindowSizeState): void {
     const prevPanelState = WindowSizeService.getPanelState(prevState);
     const nextPanelState = WindowSizeService.getPanelState(nextState);
-    if (nextPanelState !== null && prevPanelState !== nextPanelState) {
-      const newSize = WindowSizeService.updateWindowSize(
-        new MainWindowOperation(),
-        prevPanelState,
-        nextPanelState,
-        {
+    if (nextPanelState !== null) {
+      const win = new MainWindowOperation();
+      if (prevPanelState !== nextPanelState) {
+        const newSize = WindowSizeService.updateWindowSize(win, prevPanelState, nextPanelState, {
           widthOffset: this.customizationService.state.fullModeWidthOffset,
           backupX: this.customizationService.state.compactBackupPositionX,
           backupY: this.customizationService.state.compactBackupPositionY,
           backupHeight: this.customizationService.state.compactBackupHeight,
           maximized: this.customizationService.state.compactMaximized,
-        },
-      );
-      if (prevPanelState && newSize !== undefined) {
-        this.customizationService.setFullModeWidthOffset({
-          fullModeWidthOffset: newSize.widthOffset,
-          compactBackupPositionX: newSize.backupX,
-          compactBackupPositionY: newSize.backupY,
-          compactBackupHeight: newSize.backupHeight,
-          compactMaximized: newSize.maximized,
         });
+        if (prevPanelState && newSize !== undefined) {
+          this.customizationService.setFullModeWidthOffset({
+            fullModeWidthOffset: newSize.widthOffset,
+            compactBackupPositionX: newSize.backupX,
+            compactBackupPositionY: newSize.backupY,
+            compactBackupHeight: newSize.backupHeight,
+            compactMaximized: newSize.maximized,
+          });
+        }
+      }
+      if (prevState.isAlwaysOnTop !== nextState.isAlwaysOnTop) {
+        win.setAlwaysOnTop(nextState.isAlwaysOnTop);
       }
     }
   }

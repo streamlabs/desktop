@@ -673,6 +673,7 @@
     "setting": "配信中に自動でコンパクトモードに切り替える",
     "showDialog": "コンパクトモード自動化設定ダイアログを表示する"
   },
+  "compactAlwaysOnTop": "コンパクトモード時に常に最前面に表示する",
   "synthId": {
     "webSpeech": "Windowsの音声合成",
     "nVoice": "N Voice 琴詠ニア",
