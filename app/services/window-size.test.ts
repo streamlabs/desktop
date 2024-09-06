@@ -1,7 +1,9 @@
 import { createSetupFunction } from 'util/test-setup';
 import { Subject, BehaviorSubject } from 'rxjs';
+import { type ICustomizationSettings } from './customization';
 
 type PanelState = import('./window-size').PanelState;
+type WindowSizeServiceType = import('./window-size').WindowSizeService;
 
 const setup = createSetupFunction({
   state: {},
@@ -407,4 +409,88 @@ describe('updateWindowSize', () => {
       expect(win.setMaximizable).toHaveBeenCalledWith(suite.next !== 'COMPACT');
     });
   }
+});
+
+describe('isAlwaysOnTop', () => {
+  // customizationService.state.compactMode と customizationService.state.compactAlwaysOnTop の組み合わせを列挙し、
+  // 両方true のときにのみ、 WindowsSizeService.state.isAlwaysOnTop が true になる(それ以外はfalse)
+  // 初期化時と、変化時のパターンをテストする
+
+  const inputPatterns = [false, true].flatMap(compactMode =>
+    [false, true].map(
+      compactAlwaysOnTop =>
+        [
+          compactMode,
+          compactAlwaysOnTop,
+          compactMode && compactAlwaysOnTop, // expected isAlwaysOnTop
+        ] as [boolean, boolean, boolean],
+    ),
+  );
+
+  const combinations: [boolean, boolean, boolean, boolean, boolean, boolean][] =
+    inputPatterns.flatMap(inits => {
+      const [compactMode, compactAlwaysOnTop, expected] = inits;
+      // init と next で一致しないものについてテストする
+      return inputPatterns
+        .filter(([nextCompactMode, nextCompactAlwaysOnTop]) => {
+          return nextCompactMode !== compactMode || nextCompactAlwaysOnTop !== compactAlwaysOnTop;
+        })
+        .map(
+          ([nextCompactMode, nextCompactAlwaysOnTop, nextExpected]) =>
+            [
+              compactMode,
+              compactAlwaysOnTop,
+              expected,
+              nextCompactMode,
+              nextCompactAlwaysOnTop,
+              nextExpected,
+            ] as [boolean, boolean, boolean, boolean, boolean, boolean],
+        );
+    });
+
+  test.each(combinations)(
+    '[compactMode, compactAlwaysOnTop, expected]: init(%p, %p, %p) -> next(%p, %p, %p)',
+    (
+      initCompactMode,
+      initCompactAlwaysOnTop,
+      initExpected,
+      nextCompactMode,
+      nextCompactAlwaysOnTop,
+      nextExpected,
+    ) => {
+      const settingsChanged = new Subject<Partial<ICustomizationSettings>>();
+      setup({
+        injectee: {
+          CustomizationService: {
+            state: {
+              compactMode: initCompactMode,
+              compactAlwaysOnTop: initCompactAlwaysOnTop,
+            } as ICustomizationSettings,
+            settingsChanged,
+            setFullModeWidthOffset() {},
+          },
+        },
+      });
+
+      const { WindowSizeService } = require('./window-size');
+      const instance = WindowSizeService.instance as WindowSizeServiceType;
+
+      expect(instance.state.isCompact).toBe(initCompactMode);
+      expect(instance.state.isAlwaysOnTop).toBe(initExpected);
+
+      const nextState = (next: Partial<ICustomizationSettings>) => {
+        instance.customizationService.state = { ...instance.customizationService.state, ...next };
+        settingsChanged.next(next);
+      };
+
+      if (initCompactMode !== nextCompactMode) {
+        nextState({ compactMode: nextCompactMode });
+        expect(instance.state.isCompact).toBe(nextCompactMode);
+      }
+      if (initCompactAlwaysOnTop !== nextCompactAlwaysOnTop) {
+        nextState({ compactAlwaysOnTop: nextCompactAlwaysOnTop });
+      }
+      expect(instance.state.isAlwaysOnTop).toBe(nextExpected);
+    },
+  );
 });

@@ -6,7 +6,6 @@ import { CustomizationService } from './customization/customization';
 import { NavigationService } from './navigation';
 import { NicoliveProgramStateService } from './nicolive-program/state';
 import { UserService } from './user';
-import { WindowsService } from './windows';
 
 interface IWindowSizeState {
   panelOpened: boolean | null; // 初期化前はnull、永続化された値の読み出し後に値が入る
@@ -54,7 +53,6 @@ class MainWindowOperation {
 }
 
 export class WindowSizeService extends StatefulService<IWindowSizeState> {
-  @Inject() windowsService: WindowsService;
   @Inject() customizationService: CustomizationService;
   @Inject() userService: UserService;
   @Inject() nicoliveProgramStateService: NicoliveProgramStateService;
@@ -121,10 +119,10 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
     const nextState = { ...this.state, ...partialState };
     this.refreshWindowSize(this.state, nextState);
     this.SET_STATE(nextState);
-    this.stateChangeSubject.next(nextState);
     if ('isCompact' in partialState) {
       this.updateAlwaysOnTop();
     }
+    this.stateChangeSubject.next(nextState);
   }
 
   @mutation()
