@@ -53,22 +53,22 @@
             <i class="icon-studio-mode" />
           </a>
         </div>
-        <div class="side-nav-item feedback-button">
-          <a @click="openFeedback" class="link" :title="$t('common.feedback')">
-            <i class="icon-feedback" />
-          </a>
-        </div>
-        <div class="side-nav-item help-button">
-          <a @click="openHelp" class="link" :title="$t('common.help')">
-            <i class="icon-help" />
-          </a>
-        </div>
-        <div class="side-nav-item information-button">
-          <a @click="openInformations" class="link" :title="$t('informations.title')">
-            <i class="icon-notification" :class="{ isUnseen: hasUnseenInformation }" />
-          </a>
-        </div>
       </template>
+      <div class="side-nav-item feedback-button">
+        <a @click="openFeedback" class="link" :title="$t('common.feedback')">
+          <i class="icon-feedback" />
+        </a>
+      </div>
+      <div class="side-nav-item help-button">
+        <a @click="openHelp" class="link" :title="$t('common.help')">
+          <i class="icon-help" />
+        </a>
+      </div>
+      <div class="side-nav-item information-button">
+        <a @click="openInformations" class="link" :title="$t('informations.title')">
+          <i class="icon-notification" :class="{ isUnseen: hasUnseenInformation }" />
+        </a>
+      </div>
       <div class="side-nav-item">
         <a
           @click="openSettingsWindow"
