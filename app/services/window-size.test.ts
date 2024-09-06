@@ -1,10 +1,12 @@
+import { BehaviorSubject, Subject } from 'rxjs';
 import { createSetupFunction } from 'util/test-setup';
-import { Subject, BehaviorSubject } from 'rxjs';
 import { type ICustomizationSettings } from './customization';
 import { type IState } from './nicolive-program/state';
-
-type PanelState = import('./window-size').PanelState;
-type WindowSizeServiceType = import('./window-size').WindowSizeService;
+import {
+  type MainWindowOperation,
+  type PanelState,
+  type WindowSizeService as WindowSizeServiceType,
+} from './window-size';
 
 const setup = createSetupFunction({
   state: {},
@@ -386,54 +388,67 @@ describe('updateWindowSize', () => {
 });
 
 describe('isAlwaysOnTop', () => {
-  // customizationService.state.compactMode と customizationService.state.compactAlwaysOnTop の組み合わせを列挙し、
-  // 両方true のときにのみ、 WindowsSizeService.state.isAlwaysOnTop が true になる(それ以外はfalse)
+  // programStateService.state.panelOpened, customizationService.state.compactMode と customizationService.state.compactAlwaysOnTop の組み合わせを列挙し、
+  // panelOpened !== null && compactMode && compactAlwaysOnTop のときにのみ、
+  // WindowsSizeService.state.isAlwaysOnTop が true になる(それ以外はfalse)
   // 初期化時と、変化時のパターンをテストする
 
-  const inputPatterns = [false, true].flatMap(compactMode =>
-    [false, true].map(
-      compactAlwaysOnTop =>
-        [
-          compactMode,
-          compactAlwaysOnTop,
-          compactMode && compactAlwaysOnTop, // expected isAlwaysOnTop
-        ] as [boolean, boolean, boolean],
+  type InputTuple = [null | boolean, boolean, boolean, boolean];
+  const inputPatterns = [null, true].flatMap(panelOpened =>
+    [false, true].flatMap(compactMode =>
+      [false, true].map(
+        compactAlwaysOnTop =>
+          [
+            panelOpened,
+            compactMode,
+            compactAlwaysOnTop,
+            panelOpened !== null && compactMode && compactAlwaysOnTop, // expected isAlwaysOnTop
+          ] as InputTuple,
+      ),
     ),
   );
 
-  const combinations: [boolean, boolean, boolean, boolean, boolean, boolean][] =
-    inputPatterns.flatMap(inits => {
-      const [compactMode, compactAlwaysOnTop, expected] = inits;
-      // init と next で一致しないものについてテストする
-      return inputPatterns
-        .filter(([nextCompactMode, nextCompactAlwaysOnTop]) => {
-          return nextCompactMode !== compactMode || nextCompactAlwaysOnTop !== compactAlwaysOnTop;
-        })
-        .map(
-          ([nextCompactMode, nextCompactAlwaysOnTop, nextExpected]) =>
-            [
-              compactMode,
-              compactAlwaysOnTop,
-              expected,
-              nextCompactMode,
-              nextCompactAlwaysOnTop,
-              nextExpected,
-            ] as [boolean, boolean, boolean, boolean, boolean, boolean],
+  type CombinationTuple = [...InputTuple, ...InputTuple];
+  const combinations: CombinationTuple[] = inputPatterns.flatMap(inits => {
+    const [panelOpened, compactMode, compactAlwaysOnTop, expected] = inits;
+    // init と next で一致しないものについてテストする
+    return inputPatterns
+      .filter(([nextPanelOpened, nextCompactMode, nextCompactAlwaysOnTop]) => {
+        return (
+          nextPanelOpened !== panelOpened ||
+          nextCompactMode !== compactMode ||
+          nextCompactAlwaysOnTop !== compactAlwaysOnTop
         );
-    });
+      })
+      .map(
+        ([nextPanelOpened, nextCompactMode, nextCompactAlwaysOnTop, nextExpected]) =>
+          [
+            panelOpened,
+            compactMode,
+            compactAlwaysOnTop,
+            expected,
+            nextPanelOpened,
+            nextCompactMode,
+            nextCompactAlwaysOnTop,
+            nextExpected,
+          ] as CombinationTuple,
+      );
+  });
 
   test.each(combinations)(
-    '[compactMode, compactAlwaysOnTop, expected]: init(%p, %p, %p) -> next(%p, %p, %p)',
+    '[panelOpened, compactMode, compactAlwaysOnTop, expected]: init(%p, %p, %p, %p) -> next(%p, %p, %p, %p)',
     (
+      initPanelOpened,
       initCompactMode,
       initCompactAlwaysOnTop,
       initExpected,
+      nextPanelOpened,
       nextCompactMode,
       nextCompactAlwaysOnTop,
       nextExpected,
     ) => {
       const programState: Partial<IState> = {
-        panelOpened: true,
+        panelOpened: initPanelOpened,
       };
       const programStateSubject = new BehaviorSubject(programState);
 
@@ -455,19 +470,8 @@ describe('isAlwaysOnTop', () => {
         },
       });
 
-      jest
-        .spyOn(require('electron').ipcRenderer, 'sendSync')
-        .mockImplementation((_, command: string) => {
-          switch (command) {
-            case 'getMinimumSize':
-            case 'getSize':
-              return [800, 600];
-          }
-        });
-
       const { WindowSizeService } = require('./window-size');
-      const instance = WindowSizeService.instance as WindowSizeServiceType;
-      instance.mainWindowOperation = {
+      WindowSizeService.mainWindowOperation = {
         getPosition: () => [0, 0],
         setPosition() {},
         getSize: () => [800, 600],
@@ -481,7 +485,8 @@ describe('isAlwaysOnTop', () => {
         setMaximizable() {},
         setAlwaysOnTop: jest.fn,
         isAlwaysOnTop: () => false,
-      };
+      } as MainWindowOperation;
+      const instance = WindowSizeService.instance as WindowSizeServiceType;
 
       expect(instance.state.isCompact).toBe(initCompactMode);
       expect(instance.state.isAlwaysOnTop).toBe(initExpected);
@@ -491,6 +496,14 @@ describe('isAlwaysOnTop', () => {
         settingsChanged.next(next);
       };
 
+      if (initPanelOpened !== nextPanelOpened) {
+        instance.nicoliveProgramStateService.state = {
+          ...instance.nicoliveProgramStateService.state,
+          panelOpened: nextPanelOpened,
+        };
+        programStateSubject.next({ panelOpened: nextPanelOpened });
+        expect(instance.state.panelOpened).toBe(nextPanelOpened);
+      }
       if (initCompactMode !== nextCompactMode) {
         nextState({ compactMode: nextCompactMode });
         expect(instance.state.isCompact).toBe(nextCompactMode);

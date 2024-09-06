@@ -36,7 +36,7 @@ type BackupSizeInfo = {
 };
 
 const MWOpKey = 'mainwindow-operation';
-class MainWindowOperation {
+export class MainWindowOperation {
   getPosition = (): number[] => ipcRenderer.sendSync(MWOpKey, 'getPosition');
   setPosition = (a: number, b: number) => ipcRenderer.sendSync(MWOpKey, 'setPosition', a, b);
   getSize = (): number[] => ipcRenderer.sendSync(MWOpKey, 'getSize');
@@ -146,7 +146,7 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
     if (!isLoggedIn) return PanelState.INACTIVE;
     return panelOpened ? PanelState.OPENED : PanelState.CLOSED;
   }
-  mainWindowOperation = new MainWindowOperation();
+  static mainWindowOperation = new MainWindowOperation();
 
   /** パネルが出る幅の分だけ画面の最小幅を拡張する */
   refreshWindowSize(prevState: IWindowSizeState, nextState: IWindowSizeState): void {
@@ -155,7 +155,7 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
     if (nextPanelState !== null) {
       if (prevPanelState !== nextPanelState) {
         const newSize = WindowSizeService.updateWindowSize(
-          this.mainWindowOperation,
+          WindowSizeService.mainWindowOperation,
           prevPanelState,
           nextPanelState,
           {
@@ -177,7 +177,7 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
         }
       }
       if (prevState.isAlwaysOnTop !== nextState.isAlwaysOnTop) {
-        this.mainWindowOperation.setAlwaysOnTop(nextState.isAlwaysOnTop);
+        WindowSizeService.mainWindowOperation.setAlwaysOnTop(nextState.isAlwaysOnTop);
       }
     }
   }
