@@ -14,19 +14,6 @@ const setup = createSetupFunction({
         subscribe() {},
       },
     },
-    WindowsService: {
-      getWindow() {
-        return {
-          getMinimumSize: () => [800, 600],
-          setMinimumSize: () => {},
-          setMaximumSize: () => {},
-          getSize: () => [800, 600],
-          setSize: () => {},
-          isMaximized: () => false,
-          setMaximizable: () => {},
-        };
-      },
-    },
     UserService: {
       userLoginState: {
         subscribe() {},
@@ -49,7 +36,6 @@ const setup = createSetupFunction({
   },
 });
 
-jest.mock('services/windows', () => ({ WindowsService: {} }));
 jest.mock('services/user', () => ({ UserService: {} }));
 jest.mock('services/nicolive-program/state', () => ({ NicoliveProgramStateService: {} }));
 
@@ -173,19 +159,6 @@ describe('refreshWindowSize', () => {
           NicoliveProgramStateService: {
             state: {},
             updated,
-          },
-          WindowsService: {
-            getWindow() {
-              return {
-                getMinimumSize: () => [800, 600],
-                setMinimumSize,
-                setMaximumSize,
-                getSize: () => [800, 600],
-                setSize,
-                isMaximized: () => false,
-                setMaximizable: () => {},
-              };
-            },
           },
           NavigationService: {
             navigated: new Subject(),
