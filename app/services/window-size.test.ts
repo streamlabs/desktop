@@ -1,6 +1,7 @@
 import { createSetupFunction } from 'util/test-setup';
 import { Subject, BehaviorSubject } from 'rxjs';
 import { type ICustomizationSettings } from './customization';
+import { type IState } from './nicolive-program/state';
 
 type PanelState = import('./window-size').PanelState;
 type WindowSizeServiceType = import('./window-size').WindowSizeService;
@@ -431,22 +432,56 @@ describe('isAlwaysOnTop', () => {
       nextCompactAlwaysOnTop,
       nextExpected,
     ) => {
+      const programState: Partial<IState> = {
+        panelOpened: true,
+      };
+      const programStateSubject = new BehaviorSubject(programState);
+
       const settingsChanged = new Subject<Partial<ICustomizationSettings>>();
       setup({
         injectee: {
+          NicoliveProgramStateService: {
+            state: programState,
+            updated: programStateSubject.asObservable(),
+          },
           CustomizationService: {
             state: {
               compactMode: initCompactMode,
               compactAlwaysOnTop: initCompactAlwaysOnTop,
-            } as ICustomizationSettings,
+            } as Partial<ICustomizationSettings>,
             settingsChanged,
             setFullModeWidthOffset() {},
           },
         },
       });
 
+      jest
+        .spyOn(require('electron').ipcRenderer, 'sendSync')
+        .mockImplementation((_, command: string) => {
+          switch (command) {
+            case 'getMinimumSize':
+            case 'getSize':
+              return [800, 600];
+          }
+        });
+
       const { WindowSizeService } = require('./window-size');
       const instance = WindowSizeService.instance as WindowSizeServiceType;
+      instance.mainWindowOperation = {
+        getPosition: () => [0, 0],
+        setPosition() {},
+        getSize: () => [800, 600],
+        setSize() {},
+        getMinimumSize: () => [800, 600],
+        setMinimumSize() {},
+        setMaximumSize() {},
+        isMaximized: () => false,
+        maximize() {},
+        unmaximize() {},
+        setMaximizable() {},
+        setAlwaysOnTop: jest.fn,
+        isAlwaysOnTop: () => false,
+      };
 
       expect(instance.state.isCompact).toBe(initCompactMode);
       expect(instance.state.isAlwaysOnTop).toBe(initExpected);

@@ -92,7 +92,7 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
           this.setState({ isCompact: compact.compactMode });
         }
         if ('compactAlwaysOnTop' in compact) {
-          this.updateAlwaysOnTop();
+          this.setState({ isAlwaysOnTop: this.getAlwaysOnTop(this.state) });
         }
       },
     });
@@ -109,19 +109,18 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
     });
   }
 
-  private updateAlwaysOnTop() {
-    this.setState({
-      isAlwaysOnTop: this.state.isCompact && this.customizationService.state.compactAlwaysOnTop,
-    });
+  private getAlwaysOnTop(nextState: IWindowSizeState): boolean {
+    return (
+      WindowSizeService.getPanelState(nextState) === PanelState.COMPACT &&
+      this.customizationService.state.compactAlwaysOnTop
+    );
   }
 
   private setState(partialState: Partial<IWindowSizeState>) {
     const nextState = { ...this.state, ...partialState };
+    nextState.isAlwaysOnTop = this.getAlwaysOnTop(nextState);
     this.refreshWindowSize(this.state, nextState);
     this.SET_STATE(nextState);
-    if ('isCompact' in partialState) {
-      this.updateAlwaysOnTop();
-    }
     this.stateChangeSubject.next(nextState);
   }
 
@@ -147,21 +146,26 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
     if (!isLoggedIn) return PanelState.INACTIVE;
     return panelOpened ? PanelState.OPENED : PanelState.CLOSED;
   }
+  mainWindowOperation = new MainWindowOperation();
 
   /** パネルが出る幅の分だけ画面の最小幅を拡張する */
   refreshWindowSize(prevState: IWindowSizeState, nextState: IWindowSizeState): void {
     const prevPanelState = WindowSizeService.getPanelState(prevState);
     const nextPanelState = WindowSizeService.getPanelState(nextState);
     if (nextPanelState !== null) {
-      const win = new MainWindowOperation();
       if (prevPanelState !== nextPanelState) {
-        const newSize = WindowSizeService.updateWindowSize(win, prevPanelState, nextPanelState, {
-          widthOffset: this.customizationService.state.fullModeWidthOffset,
-          backupX: this.customizationService.state.compactBackupPositionX,
-          backupY: this.customizationService.state.compactBackupPositionY,
-          backupHeight: this.customizationService.state.compactBackupHeight,
-          maximized: this.customizationService.state.compactMaximized,
-        });
+        const newSize = WindowSizeService.updateWindowSize(
+          this.mainWindowOperation,
+          prevPanelState,
+          nextPanelState,
+          {
+            widthOffset: this.customizationService.state.fullModeWidthOffset,
+            backupX: this.customizationService.state.compactBackupPositionX,
+            backupY: this.customizationService.state.compactBackupPositionY,
+            backupHeight: this.customizationService.state.compactBackupHeight,
+            maximized: this.customizationService.state.compactMaximized,
+          },
+        );
         if (prevPanelState && newSize !== undefined) {
           this.customizationService.setFullModeWidthOffset({
             fullModeWidthOffset: newSize.widthOffset,
@@ -173,7 +177,7 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
         }
       }
       if (prevState.isAlwaysOnTop !== nextState.isAlwaysOnTop) {
-        win.setAlwaysOnTop(nextState.isAlwaysOnTop);
+        this.mainWindowOperation.setAlwaysOnTop(nextState.isAlwaysOnTop);
       }
     }
   }
