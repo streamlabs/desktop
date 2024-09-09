@@ -4,6 +4,7 @@
 # planners
 /app/i18n/ @yushinakatani @Shunsuke-Yanazawa @kazuki-yoneda
 replace_rules.json @yushinakatani @Shunsuke-Yanazawa @kazuki-yoneda
+/.github/CODEOWNERS @yushinakatani @Shunsuke-Yanazawa @kazuki-yoneda
 
 # designers
 *.vue @yusukess @kechino
