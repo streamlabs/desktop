@@ -1,9 +1,12 @@
+import { BehaviorSubject, Subject } from 'rxjs';
 import { createSetupFunction } from 'util/test-setup';
-import { Subject, BehaviorSubject } from 'rxjs';
-
-type WindowSizeService = import('./window-size').WindowSizeService;
-type PanelState = import('./window-size').PanelState;
-type TWindowSizeService = import('./window-size').WindowSizeService;
+import { type ICustomizationSettings } from './customization';
+import { type IState } from './nicolive-program/state';
+import {
+  type MainWindowOperation,
+  type PanelState,
+  type WindowSizeService as WindowSizeServiceType,
+} from './window-size';
 
 const setup = createSetupFunction({
   state: {},
@@ -12,19 +15,6 @@ const setup = createSetupFunction({
       state: {},
       updated: {
         subscribe() {},
-      },
-    },
-    WindowsService: {
-      getWindow() {
-        return {
-          getMinimumSize: () => [800, 600],
-          setMinimumSize: () => {},
-          setMaximumSize: () => {},
-          getSize: () => [800, 600],
-          setSize: () => {},
-          isMaximized: () => false,
-          setMaximizable: () => {},
-        };
       },
     },
     UserService: {
@@ -49,7 +39,6 @@ const setup = createSetupFunction({
   },
 });
 
-jest.mock('services/windows', () => ({ WindowsService: {} }));
 jest.mock('services/user', () => ({ UserService: {} }));
 jest.mock('services/nicolive-program/state', () => ({ NicoliveProgramStateService: {} }));
 
@@ -174,19 +163,6 @@ describe('refreshWindowSize', () => {
             state: {},
             updated,
           },
-          WindowsService: {
-            getWindow() {
-              return {
-                getMinimumSize: () => [800, 600],
-                setMinimumSize,
-                setMaximumSize,
-                getSize: () => [800, 600],
-                setSize,
-                isMaximized: () => false,
-                setMaximizable: () => {},
-              };
-            },
-          },
           NavigationService: {
             navigated: new Subject(),
             state: { currentPage: 'Studio' },
@@ -198,6 +174,9 @@ describe('refreshWindowSize', () => {
       const updateWindowSize = jest.fn();
       // inject spy
       WindowSizeService.updateWindowSize = updateWindowSize;
+
+      const sendSync = jest.fn().mockName('sendSync');
+      jest.spyOn(require('electron').ipcRenderer, 'sendSync').mockImplementation(sendSync);
 
       // kick getter
       WindowSizeService.instance;
@@ -392,6 +371,7 @@ describe('updateWindowSize', () => {
         maximize: jest.fn(),
         unmaximize: jest.fn(),
         setMaximizable: jest.fn(),
+        setAlwaysOnTop: jest.fn(),
       };
 
       const nextSize = WindowSizeService.updateWindowSize(win, suite.prev, suite.next, {
@@ -405,4 +385,133 @@ describe('updateWindowSize', () => {
       expect(win.setMaximizable).toHaveBeenCalledWith(suite.next !== 'COMPACT');
     });
   }
+});
+
+describe('isAlwaysOnTop', () => {
+  // programStateService.state.panelOpened, customizationService.state.compactMode と customizationService.state.compactAlwaysOnTop の組み合わせを列挙し、
+  // panelOpened !== null && compactMode && compactAlwaysOnTop のときにのみ、
+  // WindowsSizeService.state.isAlwaysOnTop が true になる(それ以外はfalse)
+  // 初期化時と、変化時のパターンをテストする
+
+  type InputTuple = [null | boolean, boolean, boolean, boolean];
+  const inputPatterns = [null, true].flatMap(panelOpened =>
+    [false, true].flatMap(compactMode =>
+      [false, true].map(
+        compactAlwaysOnTop =>
+          [
+            panelOpened,
+            compactMode,
+            compactAlwaysOnTop,
+            panelOpened !== null && compactMode && compactAlwaysOnTop, // expected isAlwaysOnTop
+          ] as InputTuple,
+      ),
+    ),
+  );
+
+  type CombinationTuple = [...InputTuple, ...InputTuple];
+  const combinations: CombinationTuple[] = inputPatterns.flatMap(inits => {
+    const [panelOpened, compactMode, compactAlwaysOnTop, expected] = inits;
+    // init と next で一致しないものについてテストする
+    return inputPatterns
+      .filter(([nextPanelOpened, nextCompactMode, nextCompactAlwaysOnTop]) => {
+        return (
+          nextPanelOpened !== panelOpened ||
+          nextCompactMode !== compactMode ||
+          nextCompactAlwaysOnTop !== compactAlwaysOnTop
+        );
+      })
+      .map(
+        ([nextPanelOpened, nextCompactMode, nextCompactAlwaysOnTop, nextExpected]) =>
+          [
+            panelOpened,
+            compactMode,
+            compactAlwaysOnTop,
+            expected,
+            nextPanelOpened,
+            nextCompactMode,
+            nextCompactAlwaysOnTop,
+            nextExpected,
+          ] as CombinationTuple,
+      );
+  });
+
+  test.each(combinations)(
+    '[panelOpened, compactMode, compactAlwaysOnTop, expected]: init(%p, %p, %p, %p) -> next(%p, %p, %p, %p)',
+    (
+      initPanelOpened,
+      initCompactMode,
+      initCompactAlwaysOnTop,
+      initExpected,
+      nextPanelOpened,
+      nextCompactMode,
+      nextCompactAlwaysOnTop,
+      nextExpected,
+    ) => {
+      const programState: Partial<IState> = {
+        panelOpened: initPanelOpened,
+      };
+      const programStateSubject = new BehaviorSubject(programState);
+
+      const settingsChanged = new Subject<Partial<ICustomizationSettings>>();
+      setup({
+        injectee: {
+          NicoliveProgramStateService: {
+            state: programState,
+            updated: programStateSubject.asObservable(),
+          },
+          CustomizationService: {
+            state: {
+              compactMode: initCompactMode,
+              compactAlwaysOnTop: initCompactAlwaysOnTop,
+            } as Partial<ICustomizationSettings>,
+            settingsChanged,
+            setFullModeWidthOffset() {},
+          },
+        },
+      });
+
+      const { WindowSizeService } = require('./window-size');
+      WindowSizeService.mainWindowOperation = {
+        getPosition: () => [0, 0],
+        setPosition() {},
+        getSize: () => [800, 600],
+        setSize() {},
+        getMinimumSize: () => [800, 600],
+        setMinimumSize() {},
+        setMaximumSize() {},
+        isMaximized: () => false,
+        maximize() {},
+        unmaximize() {},
+        setMaximizable() {},
+        setAlwaysOnTop: jest.fn,
+        isAlwaysOnTop: () => false,
+      } as MainWindowOperation;
+      const instance = WindowSizeService.instance as WindowSizeServiceType;
+
+      expect(instance.state.isCompact).toBe(initCompactMode);
+      expect(instance.state.isAlwaysOnTop).toBe(initExpected);
+
+      const nextState = (next: Partial<ICustomizationSettings>) => {
+        instance.customizationService.state = { ...instance.customizationService.state, ...next };
+        settingsChanged.next(next);
+      };
+
+      if (initPanelOpened !== nextPanelOpened) {
+        instance.nicoliveProgramStateService.state = {
+          ...instance.nicoliveProgramStateService.state,
+          panelOpened: nextPanelOpened,
+        };
+        programStateSubject.next({ panelOpened: nextPanelOpened });
+        expect(instance.state.panelOpened).toBe(nextPanelOpened);
+      }
+      if (initCompactMode !== nextCompactMode) {
+        nextState({ compactMode: nextCompactMode });
+        expect(instance.state.isCompact).toBe(nextCompactMode);
+      }
+      if (initCompactAlwaysOnTop !== nextCompactAlwaysOnTop) {
+        nextState({ compactAlwaysOnTop: nextCompactAlwaysOnTop });
+      }
+      expect(instance.state.isAlwaysOnTop).toBe(nextExpected);
+    },
+  );
 });

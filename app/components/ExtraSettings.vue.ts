@@ -114,6 +114,17 @@ export default class ExtraSettings extends Vue {
     this.customizationService.setShowAutoCompactDialog(model.value);
   }
 
+  get compactAlwaysOnTopModel(): IObsInput<boolean> {
+    return {
+      name: 'compact_mode_always_on_top',
+      description: $t('settings.compactAlwaysOnTop'),
+      value: this.customizationService.state.compactAlwaysOnTop,
+    };
+  }
+  setCompactAlwaysOnTop(model: IObsInput<boolean>) {
+    this.customizationService.setCompactAlwaysOnTop(model.value);
+  }
+
   showCacheDir() {
     remote.shell.openPath(remote.app.getPath('userData'));
   }

@@ -673,6 +673,7 @@
     "setting": "Automatically switch to the compact mode in streaming",
     "showDialog": "Show the Compact Mode Automation Settings dialog."
   },
+  "compactAlwaysOnTop": "Always on top in compact mode",
   "synthId": {
     "webSpeech": "Windows SpeechSynthesizer",
     "nVoice": "N Voice / KOTOYOMI Near",
