@@ -250,6 +250,7 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
   }
 
   private onProgramEnd() {
+    // addSystemMessage だと番組終了によるコメント通信切断後だと流れないため、onMessageで直接追加する
     this.onMessage([{ ...AddComponent(makeEmulatedChat('番組が終了しました')), seqId: -1 }]);
   }
 
