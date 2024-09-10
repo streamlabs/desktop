@@ -187,6 +187,16 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
       )
       .subscribe(state => this.onNextConfig(state));
 
+    // 番組終了時にメッセージを追加する
+    this.nicoliveProgramService.stateChange
+      .pipe(
+        distinctUntilChanged((prev, curr) => prev.status === curr.status),
+        filter(({ status }) => status === 'end'),
+      )
+      .subscribe(() => {
+        this.onProgramEnd();
+      });
+
     this.nicoliveCommentFilterService.stateChange.subscribe(() => {
       // updateMessagesはPinまで更新してしまうが、ここではpinは更新しない
       this.SET_STATE({
@@ -239,6 +249,10 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
     });
   }
 
+  private onProgramEnd() {
+    this.onMessage([{ ...AddComponent(makeEmulatedChat('番組が終了しました')), seqId: -1 }]);
+  }
+
   private systemMessages = new Subject<Pick<WrappedChat, 'type' | 'value' | 'isModerator'>>();
   addSystemMessage(message: Pick<WrappedChat, 'type' | 'value' | 'isModerator'>) {
     this.systemMessages.next(message);
@@ -269,7 +283,7 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
     this.clearList();
     // 再接続ではピン止めは解除しない
 
-    await this.connect();
+    this.connect();
   }
 
   private unsubscribe() {

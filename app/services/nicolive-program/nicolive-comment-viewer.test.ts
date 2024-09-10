@@ -128,7 +128,7 @@ test('接続先情報が来たら接続する', async () => {
   const instance = NicoliveCommentViewerService.instance as NicoliveCommentViewerService;
 
   expect(clientSubject.observers).toHaveLength(0);
-  expect(stateChange.observers).toHaveLength(1);
+  expect(stateChange.observers).toHaveLength(2);
   stateChange.next({ viewUri: 'https://example.com' });
   expect(clientSubject.observers).toHaveLength(1);
 });
@@ -149,7 +149,7 @@ test('接続先情報が欠けていたら接続しない', () => {
   const instance = NicoliveCommentViewerService.instance as NicoliveCommentViewerService;
 
   expect(clientSubject.observers).toHaveLength(0);
-  expect(stateChange.observers).toHaveLength(1);
+  expect(stateChange.observers).toHaveLength(2);
   stateChange.next({ viewUri: '' });
   expect(clientSubject.observers).toHaveLength(0);
 });
