@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/vue';
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import { Subject } from 'rxjs';
 import { Inject } from 'services/core/injector';
 import { mutation, StatefulService } from 'services/core/stateful-service';
@@ -660,7 +660,7 @@ export class StreamingService
       this.state.streamingStatus === EStreamingState.Starting ||
       this.state.streamingStatus === EStreamingState.Ending
     ) {
-      const elapsedTime = moment().unix() - this.streamingStateChangeTime.unix();
+      const elapsedTime = DateTime.now().toSeconds() - this.streamingStateChangeTime.toSeconds();
       return Math.max(this.delaySeconds - elapsedTime, 0);
     }
 
@@ -676,7 +676,7 @@ export class StreamingService
   }
 
   get streamingStateChangeTime() {
-    return moment(this.state.streamingStatusTime);
+    return DateTime.fromISO(this.state.streamingStatusTime);
   }
 
   private sendReconnectingNotification() {
@@ -701,14 +701,9 @@ export class StreamingService
     this.notificationsService.markAsRead(notice.id);
   }
 
-  private formattedDurationSince(timestamp: moment.Moment) {
-    const duration = moment.duration(moment().diff(timestamp));
-    const seconds = duration.seconds().toString().padStart(2, '0');
-    const minutes = duration.minutes().toString().padStart(2, '0');
-    const dayHours = duration.days() * 24;
-    const hours = (dayHours + duration.hours()).toString().padStart(2, '0');
-
-    return `${hours}:${minutes}:${seconds}`;
+  private formattedDurationSince(timestamp: DateTime) {
+    const duration = DateTime.now().diff(timestamp);
+    return duration.shiftTo('hours', 'minutes', 'seconds').toFormat('hh:mm:ss');
   }
 
   private logStreamStart() {
@@ -835,25 +830,31 @@ export class StreamingService
         this.clearReconnectingNotification();
       }
     } else if (info.type === EOBSOutputType.Recording) {
-      const nextState: ERecordingState = {
-        [EOBSOutputSignal.Start]: ERecordingState.Recording,
-        [EOBSOutputSignal.Starting]: ERecordingState.Starting,
-        [EOBSOutputSignal.Stop]: ERecordingState.Offline,
-        [EOBSOutputSignal.Stopping]: ERecordingState.Stopping,
-      }[info.signal as any];
+      const nextState = (
+        {
+          [EOBSOutputSignal.Start]: ERecordingState.Recording,
+          [EOBSOutputSignal.Starting]: ERecordingState.Starting,
+          [EOBSOutputSignal.Stop]: ERecordingState.Offline,
+          [EOBSOutputSignal.Stopping]: ERecordingState.Stopping,
+        } as { [key: string]: ERecordingState }
+      )[info.signal];
 
       if (nextState) {
         this.SET_RECORDING_STATUS(nextState, time);
         this.recordingStatusChange.next(nextState);
       }
     } else if (info.type === EOBSOutputType.ReplayBuffer) {
-      const nextState: EReplayBufferState = {
-        [EOBSOutputSignal.Start]: EReplayBufferState.Running,
-        [EOBSOutputSignal.Stopping]: EReplayBufferState.Stopping,
-        [EOBSOutputSignal.Stop]: EReplayBufferState.Offline,
-        [EOBSOutputSignal.Wrote]: EReplayBufferState.Running,
-        [EOBSOutputSignal.WriteError]: EReplayBufferState.Running,
-      }[info.signal as any];
+      const nextState: EReplayBufferState = (
+        {
+          [EOBSOutputSignal.Start]: EReplayBufferState.Running,
+          [EOBSOutputSignal.Stopping]: EReplayBufferState.Stopping,
+          [EOBSOutputSignal.Stop]: EReplayBufferState.Offline,
+          [EOBSOutputSignal.Wrote]: EReplayBufferState.Running,
+          [EOBSOutputSignal.WriteError]: EReplayBufferState.Running,
+          [EOBSOutputSignal.Reconnect]: EReplayBufferState.Running,
+          [EOBSOutputSignal.ReconnectSuccess]: EReplayBufferState.Running,
+        } as { [key: string]: EReplayBufferState }
+      )[info.signal];
 
       if (nextState) {
         this.SET_REPLAY_BUFFER_STATUS(nextState, time);

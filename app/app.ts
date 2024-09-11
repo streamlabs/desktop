@@ -18,7 +18,7 @@ import { init as sentryVueInit } from '@sentry/vue';
 import VTooltip from 'v-tooltip';
 import Toasted from 'vue-toasted';
 import VueI18n from 'vue-i18n';
-import moment from 'moment';
+import { Settings } from 'luxon';
 import { setupGlobalContextMenuForEditableElement } from 'util/menus/GlobalMenu';
 import VModal from 'vue-js-modal';
 import VeeValidate from 'vee-validate';
@@ -38,7 +38,9 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 const windowId = Utils.getWindowId();
 
-function wrapLogFn(fn: string) {
+const logFunctions = ['log', 'info', 'warn', 'error'] as const;
+
+function wrapLogFn(fn: (typeof logFunctions)[number]) {
   const old: Function = console[fn];
   console[fn] = (...args: any[]) => {
     old.apply(console, args);
@@ -61,7 +63,7 @@ function sendLogMsg(level: string, ...args: any[]) {
   ipcRenderer.send('logmsg', { level, sender: windowId, message: serialized });
 }
 
-['log', 'info', 'warn', 'error'].forEach(wrapLogFn);
+logFunctions.forEach(wrapLogFn);
 
 window.addEventListener('error', e => {
   sendLogMsg('error', e.error);
@@ -161,6 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const appService: AppService = AppService.instance;
 
       // This is used for debugging
+      // @ts-ignore
       window['obs'] = obs;
 
       // Host a new OBS server instance
@@ -239,8 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     I18nService.setVuei18nInstance(i18n);
 
-    const momentLocale = i18nService.state.locale.split('-')[0];
-    moment.locale(momentLocale);
+    Settings.defaultLocale = i18nService.state.locale.split('-')[0];
 
     // create a root Vue component
     const windowId = Utils.getCurrentUrlParams().windowId;
