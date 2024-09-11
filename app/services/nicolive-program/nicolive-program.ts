@@ -452,7 +452,7 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
   }
 
   static TIMER_PADDING_SECONDS = 3;
-  static REFRESH_TARGET_TIME_TABLE = {
+  static REFRESH_TARGET_TIME_TABLE: { [state: string]: 'startTime' | 'endTime' } = {
     reserved: 'startTime',
     test: 'startTime',
     onAir: 'endTime',

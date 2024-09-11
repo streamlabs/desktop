@@ -37,7 +37,7 @@
           :class="{
             row: true,
             name: getDisplayName(item),
-            hint: item.value.no === nameplateHintNo,
+            hint:hasNamePlateHint(item),
           }"
           v-for="item of items"
           :key="item.seqId"
@@ -46,7 +46,7 @@
           :getFormattedLiveTime="getFormattedLiveTime"
           :commentMenuOpened="commentMenuTarget === item"
           :speaking="speakingSeqId === item.seqId"
-          :nameplateHint="nameplateHintNo && item.value.no === nameplateHintNo"
+          :nameplateHint="hasNamePlateHint(item)"
           @pinned="pin(item)"
           @commentMenu="showCommentMenu(item)"
           @commentUser="showUserInfo(item)"
