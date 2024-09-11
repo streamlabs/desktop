@@ -168,7 +168,8 @@ test('status=endedが流れてきたらunsubscribeする', () => {
     };
   });
   jest.spyOn(window, 'setTimeout').mockImplementation(callback => callback() as any);
-  setup({ injectee: { NicoliveProgramService: { stateChange } } });
+  const refreshProgram = jest.fn().mockName('refreshProgram');
+  setup({ injectee: { NicoliveProgramService: { stateChange, refreshProgram } } });
 
   const { NicoliveCommentViewerService } = require('./nicolive-comment-viewer');
   const instance = NicoliveCommentViewerService.instance as NicoliveCommentViewerService;
@@ -181,8 +182,13 @@ test('status=endedが流れてきたらunsubscribeする', () => {
   expect(clientSubject.observers).toHaveLength(1);
   expect(unsubscribe).toHaveBeenCalledTimes(1);
 
+  expect(refreshProgram).toHaveBeenCalledTimes(0);
+
   clientSubject.next({ state: { state: 'ended' } });
   expect(unsubscribe).toHaveBeenCalledTimes(2);
+
+  // ended が来たら refreshProgramも呼ばれる
+  expect(refreshProgram).toHaveBeenCalledTimes(1);
 });
 
 const MODERATOR_ID = '123';
