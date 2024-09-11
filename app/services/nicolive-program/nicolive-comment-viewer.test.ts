@@ -154,7 +154,7 @@ test('接続先情報が欠けていたら接続しない', () => {
   expect(clientSubject.observers).toHaveLength(0);
 });
 
-test('status=endedが流れてきたらunsubscribeする', () => {
+test('status=endedが流れてきたらunsubscribeし、refreshProgramも呼ぶ', () => {
   const stateChange = new Subject();
   const clientSubject = new Subject<MessageResponse>();
   jest.doMock('./NdgrCommentReceiver', () => {
