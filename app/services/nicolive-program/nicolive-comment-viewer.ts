@@ -410,6 +410,8 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
                     // completeが発生しないのでサーバーとの接続終了メッセージは出ない
                     // `/disconnect` の代わりのメッセージは出さない仕様なので問題ない
                     this.unsubscribe();
+                    // 番組情報を更新する
+                    this.nicoliveProgramService.refreshProgram();
                   }
                 }),
                 ignoreElements(),
