@@ -47,6 +47,7 @@ interface HeaderSeed {
 type SucceededResult<T> = {
   ok: true;
   value: T;
+  serverDate?: number;
 };
 
 export type FailedResult = {
@@ -212,6 +213,7 @@ export class NicoliveClient {
       return {
         ok: true,
         value: obj.data as ResultType,
+        serverDate: parseServerDate(res.headers.get('Date')),
       };
     }
 
@@ -748,4 +750,32 @@ export class NicoliveClient {
       `${NicoliveClient.live2ApiBaseURL}/api/v1/broadcaster/supporters?limit=${limit}&offset=${offset}`,
     );
   }
+}
+
+export function parseServerDate(dateHeader: string): number {
+  if (dateHeader !== null) {
+    try {
+      return new Date(dateHeader).valueOf();
+    } catch (error) {
+      // parse error は無視する
+      console.log('parseServerDate error', { dateHeader, error });
+    }
+  }
+  return undefined;
+}
+
+/**
+ * レスポンスに含まれる Date から得たサーバー時刻とクライアントの時計の差を秒精度で計算する(クライアントが進んでいると正の値)
+ * @param response サーバーから得たDateのパース済みの値(Date.valueOf()相当)
+ * @param rawNow 研鑽の基準とする、クライアントの時刻
+ * @returns
+ */
+export function calcServerClockOffset(
+  response: { serverDate?: number },
+  rawNow = Date.now(),
+): number {
+  if (response.serverDate === undefined) return 0;
+  const offset = Math.floor(rawNow / 1000) - Math.floor(response.serverDate / 1000);
+  console.log('Server clock offset:', offset, 'seconds'); // DEBUG
+  return offset;
 }
