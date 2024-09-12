@@ -83,7 +83,7 @@ export default class SourceSelector extends Vue {
       case 'custom-cast-ndi':
         return sourceIconMap['custom_cast_ndi_source'];
       default:
-        return sourceIconMap[sourceDetails.type] || 'icon-file';
+        return (sourceIconMap as Dictionary<string>)[sourceDetails.type] || 'icon-file';
     }
   }
 

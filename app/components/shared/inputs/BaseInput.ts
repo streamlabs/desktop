@@ -22,6 +22,7 @@ export class BaseInput<TValueType, TMetadataType extends IInputMetadata> extends
 
   emitInput(eventData: TValueType, event?: any) {
     this.$emit('input', eventData, event);
+    // @ts-expect-error ts7053
     if (this.$parent['emitInput']) this.$parent['emitInput'](eventData, event);
   }
 
@@ -34,7 +35,8 @@ export class BaseInput<TValueType, TMetadataType extends IInputMetadata> extends
    */
   get validate() {
     const validations = this.getValidations();
-    Object.keys(validations).forEach(key => {
+    Object.keys(validations).forEach(k => {
+      const key = k as keyof typeof validations;
       // VeeValidate recognizes undefined values as valid constraints
       // so just remove it
       if (validations[key] === void 0) delete validations[key];

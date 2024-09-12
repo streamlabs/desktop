@@ -14,7 +14,7 @@ import { TransitionsService } from 'services/transitions';
 import { CustomizationService } from 'services/customization';
 
 interface IResizeRegion {
-  name: string;
+  name: 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
   x: number;
   y: number;
   width: number;

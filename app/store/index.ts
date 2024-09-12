@@ -91,7 +91,7 @@ plugins.push((store: Store<any>) => {
 let store: Store<any> = null;
 
 export function createStore(): Promise<Store<any>> {
-  const statefulServiceModules = {};
+  const statefulServiceModules: Dictionary<any> = {};
   const servicesManager: ServicesManager = ServicesManager.instance;
   const statefulServices = servicesManager.getStatefulServicesAndMutators();
   Object.keys(statefulServices).forEach(serviceName => {

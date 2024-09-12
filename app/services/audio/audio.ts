@@ -224,21 +224,26 @@ export class AudioService extends StatefulService<IAudioSourcesState> implements
     // Fader is ignored by this method.  Use setFader instead
     const newPatch = omit(patch, 'fader');
 
-    Object.keys(newPatch).forEach(name => {
-      const value = newPatch[name];
-      if (value === void 0) return;
+    Object.keys(newPatch).forEach(n => {
+      const name = n as keyof typeof newPatch;
+      if (newPatch[name] === void 0) return;
 
       if (name === 'syncOffset') {
+        const value = newPatch[name];
         obsInput.syncOffset = AudioService.msToTimeSpec(value);
       } else if (name === 'forceMono') {
+        const value = newPatch[name];
         if (this.getSource(sourceId).forceMono !== value) {
           value
             ? (obsInput.flags = obsInput.flags | obs.ESourceFlags.ForceMono)
             : (obsInput.flags -= obs.ESourceFlags.ForceMono);
         }
       } else if (name === 'muted') {
+        const value = newPatch[name];
         this.sourcesService.setMuted(sourceId, value);
       } else {
+        const value = newPatch[name];
+        // @ts-expect-error
         obsInput[name] = value;
       }
     });

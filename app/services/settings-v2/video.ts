@@ -267,7 +267,7 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
     this.contexts[display].video = legacySettings;
 
     Object.keys(legacySettings).forEach((key: any) => {
-      this.SET_VIDEO_SETTING(key, legacySettings[key], 'horizontal');
+      this.SET_VIDEO_SETTING(key, legacySettings[key as keyof typeof legacySettings], 'horizontal');
     });
   }
 

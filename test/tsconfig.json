@@ -12,7 +12,6 @@
     "experimentalDecorators": true,
     "noImplicitThis": true,
     "removeComments": true,
-    "suppressImplicitAnyIndexErrors": true,
     "strictNullChecks": false,
     "emitDecoratorMetadata": true,
     "downlevelIteration": true,

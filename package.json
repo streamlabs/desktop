@@ -228,7 +228,7 @@
     "ts-jest": "^29.1.5",
     "ts-loader": "^9.5.1",
     "typedoc": "^0.9.0",
-    "typescript": "^4.9.5",
+    "typescript": "5.0.4",
     "vue-loader": "15.10.1",
     "vue-svg-loader": "0.12.0",
     "vue-template-compiler": "2.7.14",

@@ -420,7 +420,9 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
     const transition = this.state.transitions.find(tran => tran.id === id);
 
     if (transition) {
-      Object.keys(patch).forEach(key => {
+      Object.keys(patch).forEach(k => {
+        const key = k as keyof ITransition;
+        // @ts-expect-error ts2332
         transition[key] = patch[key];
       });
     }
@@ -454,7 +456,8 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
     const connection = this.state.connections.find(conn => conn.id === id);
 
     if (connection) {
-      Object.keys(patch).forEach(key => {
+      Object.keys(patch).forEach(k => {
+        const key = k as keyof ITransitionConnection;
         connection[key] = patch[key];
       });
     }

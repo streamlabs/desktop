@@ -121,7 +121,7 @@ export class ProfanityFilterService extends Service {
     Object.keys(this.leetReplace).forEach(letter => {
       badWordsStrings = badWordsStrings.replace(
         new RegExp(/([^\\])/.source + letter, 'gi'),
-        '$1' + this.leetReplace[letter],
+        '$1' + this.leetReplace[letter as keyof typeof this.leetReplace],
       );
     });
 

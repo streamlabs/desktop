@@ -6,7 +6,7 @@ import { Subject } from 'rxjs';
 
 const singleton = Symbol('singleton');
 const singletonEnforcer = Symbol('singletonEnforcer');
-const instances: Service[] = [];
+const instances: Dictionary<Service> = {};
 
 export abstract class Service {
   static isSingleton = true;
@@ -26,6 +26,7 @@ export abstract class Service {
   serviceName = this.constructor.name;
 
   static get instance() {
+    // @ts-expect-error ts7053
     const instance = !this.hasInstance ? Service.createInstance(this) : this[singleton];
     return this.proxyFn ? this.proxyFn(instance) : instance;
   }

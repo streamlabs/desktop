@@ -73,6 +73,7 @@ export class ExternalApiService extends RpcApi {
   init() {
     // initialize all singletons
     Object.keys(this.resources).forEach(resourceName => {
+      // @ts-expect-error
       const Resource = this.resources[resourceName];
       if (Resource.isSingleton) this.instances[resourceName] = new Resource();
     });
@@ -91,6 +92,7 @@ export class ExternalApiService extends RpcApi {
     const helperName = resourceId.split('[')[0];
     const constructorArgsStr = resourceId.substr(helperName.length);
     const constructorArgs = constructorArgsStr ? JSON.parse(constructorArgsStr) : void 0;
+    // @ts-expect-error ts7053
     const Helper = this.resources[helperName];
     if (Helper) {
       return this.applyFallbackProxy(new (Helper as any)(...constructorArgs));

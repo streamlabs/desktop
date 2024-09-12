@@ -902,7 +902,8 @@ export class Optimizer {
     expect: OptimizeSettings,
   ): IterableIterator<OptimizeSettings> {
     // 最適化の必要な値を抽出する
-    for (const key of Object.getOwnPropertyNames(expect)) {
+    for (const k of Object.getOwnPropertyNames(expect)) {
+      const key = k as keyof OptimizeSettings;
       if (current[key] !== expect[key]) {
         yield { [key]: expect[key] };
       }

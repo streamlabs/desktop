@@ -47,7 +47,7 @@ const LANG_CODE_MAP = {
   sk: { lang: 'Slovak', locale: 'sk-SK' },
   th: { lang: 'Thai', locale: 'th-TH' },
   tr: { lang: 'Turkish', locale: 'tr-TR' },
-  'zh-CN': { lang: 'Chinese (Simplified)' },
+  'zh-CN': { lang: 'Chinese (Simplified)', locale: 'zh-CN' },
 };
 
 export class I18nService extends PersistentStatefulService<II18nState> implements I18nServiceApi {
@@ -88,7 +88,7 @@ export class I18nService extends PersistentStatefulService<II18nState> implement
     let locale = this.state.locale;
     if (!locale) {
       const electronLocale = remote.app.getLocale();
-      const langDescription = LANG_CODE_MAP[electronLocale];
+      const langDescription = LANG_CODE_MAP[electronLocale as keyof typeof LANG_CODE_MAP];
       locale = langDescription ? langDescription.locale : 'en-US';
     }
 

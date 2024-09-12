@@ -14,7 +14,7 @@ export default class Utils {
       Object.defineProperty(target, propName, {
         configurable: true,
         get() {
-          return source[propName];
+          return (source as Dictionary<any>)[propName];
         },
       });
     });
@@ -116,8 +116,9 @@ export default class Utils {
 
   static getChangedParams<T>(obj: T, patch: T): Partial<T> {
     const result: Dictionary<any> = {};
-    Object.keys(patch).forEach(key => {
-      if (!isEqual(obj[key], patch[key])) result[key] = patch[key];
+    Object.keys(patch).forEach(k => {
+      const key = k as keyof T;
+      if (!isEqual(obj[key], patch[key])) result[k] = patch[key];
     });
     return result as Partial<T>;
   }
@@ -127,12 +128,13 @@ export default class Utils {
 
     if (obj == null) return patch;
 
-    Object.keys(patch).forEach(key => {
+    Object.keys(patch).forEach(k => {
+      const key = k as keyof T;
       if (!isEqual(obj[key], patch[key])) {
         if (patch[key] && typeof patch[key] === 'object' && !Array.isArray(patch[key])) {
-          result[key] = this.getDeepChangedParams(obj[key], patch[key]);
+          result[k] = this.getDeepChangedParams(obj[key], patch[key]);
         } else {
-          result[key] = patch[key];
+          result[k] = patch[key];
         }
       }
     });

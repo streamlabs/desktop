@@ -35,11 +35,15 @@ export class DismissablesService extends PersistentStatefulService<IDismissables
   }
 
   dismissAll() {
-    Object.keys(EDismissable).forEach(key => this.dismiss(EDismissable[key]));
+    Object.keys(EDismissable).forEach(key =>
+      this.dismiss(EDismissable[key as keyof typeof EDismissable]),
+    );
   }
 
   resetAll() {
-    Object.keys(EDismissable).forEach(key => this.reset(EDismissable[key]));
+    Object.keys(EDismissable).forEach(key =>
+      this.dismiss(EDismissable[key as keyof typeof EDismissable]),
+    );
   }
 
   @mutation()

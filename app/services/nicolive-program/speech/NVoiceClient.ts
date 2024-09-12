@@ -242,6 +242,7 @@ function loadLabelFile(filename: string): Label[] {
 
 class NVoiceEngineError extends Error {
   constructor(public code: string) {
+    // @ts-expect-error ts7015 code は数字の文字列
     const title = ErrorCodes[code];
     super(`${code}: ${title}`);
 
