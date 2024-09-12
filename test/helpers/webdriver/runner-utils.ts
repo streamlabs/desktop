@@ -42,7 +42,7 @@ const testTimings: Record<string, number> = (() => {
     const records: { name: string; time: number }[] = JSON.parse(
       fs.readFileSync(TESTS_TIMINGS_PATH, 'utf-8'),
     );
-    const result = {};
+    const result: Record<string, number> = {};
 
     // convert the list to the map where key is a test name
     records.forEach(r => (result[r.name] = r.time));

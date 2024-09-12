@@ -21,7 +21,12 @@ export class ApiClient {
   private socket: any;
   private resolveConnection: Function;
   private rejectConnection: Function;
-  private requests = {};
+  private requests: Dictionary<{
+    resolve: (value: unknown) => void;
+    reject: (reason?: any) => void;
+    body: IJsonRpcRequest;
+    completed: boolean;
+  }> = {};
   private subscriptions: Dictionary<Subject<any>> = {};
   private connectionStatus: TConnectionStatus = 'disconnected';
 
@@ -237,7 +242,10 @@ export class ApiClient {
     );
   }
 
-  getResource<TResourceType>(resourceId: string, resourceModel = {}): TResourceType {
+  getResource<TResourceType>(
+    resourceId: string,
+    resourceModel: Dictionary<any> = {},
+  ): TResourceType {
     const handleRequest = (resourceId: string, property: string, ...args: any[]): any => {
       const result = this.requestSync(resourceId, property as string, ...args);
 
@@ -341,7 +349,7 @@ class ApiEventWatcher {
     // start watching for events
     this.subscriptions = this.eventNames.map(eventName => {
       const [resourceId, prop] = eventName.split('.');
-      const observable = this.apiClient.getResource(resourceId)[prop] as Observable<any>;
+      const observable = this.apiClient.getResource<Dictionary<Observable<any>>>(resourceId)[prop];
       return observable.subscribe(() => void 0);
     });
 

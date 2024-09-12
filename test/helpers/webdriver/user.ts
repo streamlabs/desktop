@@ -21,7 +21,8 @@ export async function logIn(t: TExecutionContext, isOnboardingTest = false): Pro
   };
 
   let canAuth = true;
-  Object.keys(authInfo).forEach(key => {
+  Object.keys(authInfo).forEach(k => {
+    const key = k as keyof typeof authInfo;
     authInfo[key] = env[key];
     if (!authInfo[key]) {
       console.warn(`Setup env.${key} to run this test`);
