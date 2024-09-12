@@ -776,7 +776,5 @@ export function calcServerClockOffset(
   rawNow = Date.now(),
 ): number {
   if (response.serverDate === undefined) return 0;
-  const offset = Math.floor(rawNow / 1000) - Math.floor(response.serverDate / 1000);
-  console.log('Server clock offset:', offset, 'seconds'); // DEBUG
-  return offset;
+  return Math.floor(rawNow / 1000) - Math.floor(response.serverDate / 1000);
 }

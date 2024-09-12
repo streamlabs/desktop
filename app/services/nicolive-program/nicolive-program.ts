@@ -52,7 +52,7 @@ interface INicoliveProgramState extends ProgramState {
   isEnding: boolean;
 
   // 永続化しない情報だが、ProgramStateにもたせたいためここに置く
-  serverClockOffset?: number; // in seconds
+  serverClockOffsetSec?: number; // in seconds
 }
 
 export enum PanelState {
@@ -146,8 +146,8 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
   }
 
   // corrected clock in milliseconds
-  public correctedNow(rawNow = Date.now()): number {
-    return rawNow - (this.state.serverClockOffset ?? 0) * 1000;
+  public correctedNowMs(rawNow = Date.now()): number {
+    return rawNow - (this.state.serverClockOffsetSec ?? 0) * 1000;
   }
 
   /**
@@ -247,7 +247,7 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
         endTime: now + 60 * 60,
         isMemberOnly: true,
         viewUri: 'viewUri',
-        serverClockOffset: 0,
+        serverClockOffsetSec: 0,
       });
       return;
     }
@@ -290,7 +290,7 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
         isMemberOnly: program.isMemberOnly,
         viewUri: room ? room.viewUri : '',
         ...(program.moderatorViewUri ? { moderatorViewUri: program.moderatorViewUri } : {}),
-        serverClockOffset: calcServerClockOffset(programResponse),
+        serverClockOffsetSec: calcServerClockOffset(programResponse),
       });
       if (program.status === 'test') {
         this.showPlaceholder();
@@ -321,7 +321,7 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
       endTime: program.endAt,
       isMemberOnly: program.isMemberOnly,
       viewUri: room ? room.viewUri : '',
-      serverClockOffset: calcServerClockOffset(programResponse),
+      serverClockOffsetSec: calcServerClockOffset(programResponse),
     });
   }
 
@@ -482,7 +482,7 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
     const programUpdated = prevState.programID !== nextState.programID;
     const statusUpdated = prevState.status !== nextState.status;
 
-    const now = this.correctedNow();
+    const now = this.correctedNowMs();
 
     /** 放送状態が変化しなかった前提で、放送状態が次に変化するであろう時刻 */
     const prevTargetTime: number =

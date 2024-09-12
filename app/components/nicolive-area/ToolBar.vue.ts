@@ -121,7 +121,7 @@ export default class ToolBar extends Vue {
 
   currentTime: number = NaN;
   updateCurrentTime() {
-    this.currentTime = Math.floor(this.nicoliveProgramService.correctedNow() / 1000);
+    this.currentTime = Math.floor(this.nicoliveProgramService.correctedNowMs() / 1000);
   }
 
   get programCurrentTime(): number {
