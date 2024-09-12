@@ -48,7 +48,7 @@ interface HeaderSeed {
 type SucceededResult<T> = {
   ok: true;
   value: T;
-  serverDate?: number;
+  serverDateMs?: number;
 };
 
 export type FailedResult = {
@@ -214,7 +214,7 @@ export class NicoliveClient {
       return {
         ok: true,
         value: obj.data as ResultType,
-        serverDate: parseServerDate(res.headers.get('Date')),
+        serverDateMs: parseServerDateMs(res.headers.get('Date')),
       };
     }
 
@@ -753,7 +753,7 @@ export class NicoliveClient {
   }
 }
 
-export function parseServerDate(dateHeader: string): number {
+export function parseServerDateMs(dateHeader: string): number {
   if (dateHeader !== null) {
     try {
       return DateTime.fromHTTP(dateHeader).toMillis();
@@ -769,12 +769,12 @@ export function parseServerDate(dateHeader: string): number {
  * レスポンスに含まれる Date から得たサーバー時刻とクライアントの時計の差を秒精度で計算する(クライアントが進んでいると正の値)
  * @param response サーバーから得たDateのパース済みの値(Date.valueOf()相当)
  * @param rawNow 研鑽の基準とする、クライアントの時刻
- * @returns
+ * @returns 秒
  */
-export function calcServerClockOffset(
-  response: { serverDate?: number },
+export function calcServerClockOffsetSec(
+  response: { serverDateMs?: number },
   rawNow = Date.now(),
 ): number {
-  if (response.serverDate === undefined) return 0;
-  return Math.floor(rawNow / 1000) - Math.floor(response.serverDate / 1000);
+  if (response.serverDateMs === undefined) return 0;
+  return Math.floor(rawNow / 1000) - Math.floor(response.serverDateMs / 1000);
 }

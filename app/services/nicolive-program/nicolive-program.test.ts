@@ -1,7 +1,7 @@
 import { createSetupFunction } from 'util/test-setup';
 import { ProgramInfo } from './ResponseTypes';
 import { MAX_PROGRAM_DURATION_SECONDS } from './nicolive-constants';
-import { calcServerClockOffset, type NicoliveClient } from './NicoliveClient';
+import { calcServerClockOffsetSec, type NicoliveClient } from './NicoliveClient';
 import { jest_fn } from 'util/jest_fn';
 
 type NicoliveProgramService = import('./nicolive-program').NicoliveProgramService;
@@ -1219,9 +1219,9 @@ test('serverClockOffsetSec に基づいて correctedNowMs が計算される', a
       status: 'end',
       rooms: [],
     } as ProgramInfo['data'],
-    serverDate: SERVER_NOW,
+    serverDateMs: SERVER_NOW,
   });
-  expect(calcServerClockOffset({ serverDate: SERVER_NOW }, CLIENT_NOW)).toBe(OFFSET);
+  expect(calcServerClockOffsetSec({ serverDateMs: SERVER_NOW }, CLIENT_NOW)).toBe(OFFSET);
 
   await instance.refreshProgram();
   expect(instance.client.fetchProgram).toHaveBeenCalledTimes(1);

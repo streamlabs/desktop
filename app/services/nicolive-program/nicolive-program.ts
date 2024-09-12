@@ -4,7 +4,7 @@ import { Inject } from 'services/core/injector';
 import { mutation, StatefulService } from 'services/core/stateful-service';
 import { UserService } from 'services/user';
 import {
-  calcServerClockOffset,
+  calcServerClockOffsetSec,
   CreateResult,
   EditResult,
   isOk,
@@ -290,7 +290,7 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
         isMemberOnly: program.isMemberOnly,
         viewUri: room ? room.viewUri : '',
         ...(program.moderatorViewUri ? { moderatorViewUri: program.moderatorViewUri } : {}),
-        serverClockOffsetSec: calcServerClockOffset(programResponse),
+        serverClockOffsetSec: calcServerClockOffsetSec(programResponse),
       });
       if (program.status === 'test') {
         this.showPlaceholder();
@@ -321,7 +321,7 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
       endTime: program.endAt,
       isMemberOnly: program.isMemberOnly,
       viewUri: room ? room.viewUri : '',
-      serverClockOffsetSec: calcServerClockOffset(programResponse),
+      serverClockOffsetSec: calcServerClockOffsetSec(programResponse),
     });
   }
 
