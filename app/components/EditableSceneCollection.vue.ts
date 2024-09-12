@@ -3,7 +3,7 @@ import Vue from 'vue';
 import { Component, Prop, Watch } from 'vue-property-decorator';
 import { SceneCollectionsService } from 'services/scene-collections';
 import { Inject } from 'services/core/injector';
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import { $t } from 'services/i18n';
 import * as remote from '@electron/remote';
 
@@ -39,7 +39,7 @@ export default class EditableSceneCollection extends Vue {
   }
 
   get modified() {
-    return moment(this.collection.modified).fromNow();
+    return DateTime.fromISO(this.collection.modified).toRelative();
   }
 
   get isActive() {

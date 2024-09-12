@@ -83,6 +83,6 @@ export interface ISceneCollectionsManifestEntry {
   name: string;
   serverId?: number;
   deleted: boolean;
-  modified: string;
+  modified: string; // Date ISOString
   needsRename: boolean;
 }

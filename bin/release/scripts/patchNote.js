@@ -1,7 +1,7 @@
 // @ts-check
 
 const fs = require('fs');
-const moment = require('moment');
+const { DateTime } = require('luxon');
 const { info, error, executeCmd } = require('./prompt');
 const { getTagCommitId } = require('./util');
 
@@ -60,7 +60,7 @@ function validateVersionContext({ versionTag, releaseEnvironment, releaseChannel
 function generateNewVersion({ previousVersion, now = Date.now() }) {
   const { major, minor, date, channel, ord, internalMark } = parseVersion(previousVersion);
 
-  const today = moment(now).format('YYYYMMDD');
+  const today = DateTime.fromMillis(now).toFormat('yyyyMMdd');
   const newOrd = date === today ? parseInt(ord, 10) + 1 : 1;
   const channelPrefix = channel ? `${channel}.` : '';
   return `${major}.${minor}.${today}-${channelPrefix}${newOrd}${internalMark || ''}`;

@@ -11,6 +11,7 @@ import AddSource from 'components/windows/AddSource.vue';
 import RenameSource from 'components/windows/RenameSource.vue';
 import NameScene from 'components/windows/NameScene.vue';
 import NameFolder from 'components/windows/NameFolder.vue';
+import NameSceneCollection from 'components/windows/NameSceneCollection.vue';
 import SourceProperties from 'components/windows/SourceProperties.vue';
 import RtvcSourceProperties from 'components/windows/RtvcSourceProperties.vue';
 import SourceFilters from 'components/windows/SourceFilters.vue';
@@ -53,6 +54,7 @@ export function getComponents() {
     AddSource,
     NameScene,
     NameFolder,
+    NameSceneCollection,
     SourceProperties,
     RtvcSourceProperties,
     SourceFilters,
@@ -75,7 +77,7 @@ export function getComponents() {
 }
 
 export interface IWindowOptions {
-  componentName: string;
+  componentName: keyof ReturnType<typeof getComponents> | '';
   queryParams?: Dictionary<any>;
   size?: {
     x?: number;
@@ -129,7 +131,7 @@ export class WindowsService extends StatefulService<IWindowsState> {
 
   // This is a list of components that are registered to be
   // top level components in new child windows.
-  components = getComponents();
+  components = getComponents() as { [key: string]: Vue.Component };
 
   windowUpdated = new Subject<{ windowId: string; options: IWindowOptions }>();
   windowDestroyed = new Subject<string>();
