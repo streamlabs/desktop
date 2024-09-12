@@ -1,6 +1,8 @@
 import { createSetupFunction } from 'util/test-setup';
 import { ProgramInfo } from './ResponseTypes';
 import { MAX_PROGRAM_DURATION_SECONDS } from './nicolive-constants';
+import { calcServerClockOffset, type NicoliveClient } from './NicoliveClient';
+import { jest_fn } from 'util/jest_fn';
 
 type NicoliveProgramService = import('./nicolive-program').NicoliveProgramService;
 
@@ -1197,4 +1199,33 @@ describe('refreshAutoExtensionTimer', () => {
       }
     });
   }
+});
+
+test('serverClockOffsetSec に基づいて correctedNowMs が計算される', async () => {
+  setup();
+  const instance = require('./nicolive-program').NicoliveProgramService
+    .instance as NicoliveProgramService;
+
+  const SERVER_NOW = 0;
+  const OFFSET = 5; // clientが5秒進んでいる
+  const CLIENT_NOW = SERVER_NOW + OFFSET * 1000;
+  jest.spyOn(Date, 'now').mockImplementation(jest.fn().mockReturnValue(CLIENT_NOW));
+  jest.spyOn(window, 'setTimeout').mockImplementation(jest.fn());
+  jest.spyOn(window, 'clearTimeout').mockImplementation(jest.fn());
+
+  instance.client.fetchProgram = jest_fn<NicoliveClient['fetchProgram']>().mockResolvedValue({
+    ok: true,
+    value: {
+      status: 'end',
+      rooms: [],
+    } as ProgramInfo['data'],
+    serverDate: SERVER_NOW,
+  });
+  expect(calcServerClockOffset({ serverDate: SERVER_NOW }, CLIENT_NOW)).toBe(OFFSET);
+
+  await instance.refreshProgram();
+  expect(instance.client.fetchProgram).toHaveBeenCalledTimes(1);
+
+  expect(instance.state.serverClockOffsetSec).toBe(OFFSET);
+  expect(instance.correctedNowMs(CLIENT_NOW)).toBe(SERVER_NOW);
 });
