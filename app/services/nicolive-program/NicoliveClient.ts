@@ -26,6 +26,7 @@ import {
 } from './ResponseTypes';
 
 import * as remote from '@electron/remote';
+import { DateTime } from 'luxon';
 
 const { BrowserWindow } = remote;
 
@@ -755,7 +756,7 @@ export class NicoliveClient {
 export function parseServerDate(dateHeader: string): number {
   if (dateHeader !== null) {
     try {
-      return new Date(dateHeader).valueOf();
+      return DateTime.fromHTTP(dateHeader).toMillis();
     } catch (error) {
       // parse error は無視する
       console.log('parseServerDate error', { dateHeader, error });
