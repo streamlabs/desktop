@@ -38,7 +38,7 @@ export class ServicesManager extends Service {
   init() {
     // this helps to debug services from the console
     if (Utils.isDevMode()) {
-      // @ts-ignore
+      // @ts-expect-error ts7015 consoleデバッグ用
       window['sm'] = this;
     }
 

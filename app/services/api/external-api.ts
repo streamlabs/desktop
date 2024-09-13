@@ -73,7 +73,7 @@ export class ExternalApiService extends RpcApi {
   init() {
     // initialize all singletons
     Object.keys(this.resources).forEach(resourceName => {
-      // @ts-expect-error
+      // @ts-expect-error ts7053
       const Resource = this.resources[resourceName];
       if (Resource.isSingleton) this.instances[resourceName] = new Resource();
     });

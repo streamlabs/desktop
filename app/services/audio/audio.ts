@@ -243,7 +243,7 @@ export class AudioService extends StatefulService<IAudioSourcesState> implements
         this.sourcesService.setMuted(sourceId, value);
       } else {
         const value = newPatch[name];
-        // @ts-expect-error
+        // @ts-expect-error ts7053 obs.IInputのpropertyに宣言が無いキーを扱うため
         obsInput[name] = value;
       }
     });
