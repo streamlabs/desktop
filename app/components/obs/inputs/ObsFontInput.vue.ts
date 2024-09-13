@@ -41,8 +41,7 @@ class ObsFontInput extends ObsInput<IObsInput<IObsFont>> {
   }
 
   setFontType(e: Event) {
-    // @ts-expect-error ts7053
-    this.isGoogleFont = e.target['checked'];
+    this.isGoogleFont = (e.target as HTMLInputElement)['checked'];
   }
 }
 
