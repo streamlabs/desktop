@@ -9,6 +9,7 @@ import { SceneCollectionsService } from 'services/scene-collections';
 import { $t } from 'services/i18n';
 import { DefaultManager } from 'services/sources/properties-managers/default-manager';
 import { Subject } from 'rxjs';
+import { getKeys } from 'util/getKeys';
 
 export enum ETransitionType {
   Cut = 'cut_transition',
@@ -420,8 +421,7 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
     const transition = this.state.transitions.find(tran => tran.id === id);
 
     if (transition) {
-      Object.keys(patch).forEach(k => {
-        const key = k as keyof ITransition;
+      getKeys(patch).forEach(key => {
         // @ts-expect-error ts2332
         transition[key] = patch[key];
       });
@@ -456,8 +456,7 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
     const connection = this.state.connections.find(conn => conn.id === id);
 
     if (connection) {
-      Object.keys(patch).forEach(k => {
-        const key = k as keyof ITransitionConnection;
+      getKeys(patch).forEach(key => {
         connection[key] = patch[key];
       });
     }

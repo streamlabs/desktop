@@ -25,6 +25,7 @@ import {
 import { $t } from 'services/i18n';
 import uuid from 'uuid/v4';
 import { omit } from 'lodash';
+import { getKeys } from 'util/getKeys';
 
 export enum E_AUDIO_CHANNELS {
   OUTPUT_1 = 1,
@@ -224,8 +225,7 @@ export class AudioService extends StatefulService<IAudioSourcesState> implements
     // Fader is ignored by this method.  Use setFader instead
     const newPatch = omit(patch, 'fader');
 
-    Object.keys(newPatch).forEach(n => {
-      const name = n as keyof typeof newPatch;
+    getKeys(newPatch).forEach(name => {
       if (newPatch[name] === void 0) return;
 
       if (name === 'syncOffset') {

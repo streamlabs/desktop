@@ -8,6 +8,7 @@ import electron from 'electron';
 import * as obs from '../../../obs-api';
 import * as Sentry from '@sentry/vue';
 import * as remote from '@electron/remote';
+import { getKeys } from 'util/getKeys';
 
 interface IPerformanceState {
   CPU: number;
@@ -40,8 +41,8 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
 
   @mutation()
   SET_PERFORMANCE_STATS(stats: Partial<IPerformanceState>) {
-    Object.keys(stats).forEach(stat => {
-      Vue.set(this.state, stat, stats[stat as keyof IPerformanceState]);
+    getKeys(stats).forEach(stat => {
+      Vue.set(this.state, stat, stats[stat]);
     });
   }
 

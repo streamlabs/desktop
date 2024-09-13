@@ -31,6 +31,7 @@ import { InitAfter } from 'services/core';
 import { RtvcStateService } from '../../services/rtvcStateService';
 import * as Sentry from '@sentry/vue';
 import { IPCWrapper } from 'services/ipc-wrapper';
+import { getKeys } from 'util/getKeys';
 
 const AudioFlag = obs.ESourceOutputFlags.Audio;
 const VideoFlag = obs.ESourceOutputFlags.Video;
@@ -253,7 +254,7 @@ export class SourcesService extends StatefulService<ISourcesState> implements IS
     ext = ext.toLowerCase();
     const filename = path.split('\\').splice(-1)[0];
 
-    const types = Object.keys(SUPPORTED_EXT) as (keyof typeof SUPPORTED_EXT)[];
+    const types = getKeys(SUPPORTED_EXT);
     for (const type of types) {
       if (!(SUPPORTED_EXT[type] as readonly string[]).includes(ext)) continue;
       let settings: Dictionary<TObsValue>;

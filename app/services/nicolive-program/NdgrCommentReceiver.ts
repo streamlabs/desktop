@@ -3,6 +3,7 @@ import { Observable, Subject, Subscription } from 'rxjs';
 import { IMessageServerClient } from './MessageServerClient';
 import { NdgrClient, toNumber } from './NdgrClient';
 import { MessageResponse, NotificationType, NotificationTypeTable } from './ChatMessage';
+import { getKeys } from 'util/getKeys';
 
 const NUM_BACKWARD_COMMENTS = 100;
 
@@ -130,7 +131,7 @@ function convertSimpleNotificationToMessageResponse(
   common: CommonComponent,
   notification: dwango.nicolive.chat.data.ISimpleNotification,
 ): MessageResponse | undefined {
-  const key = Object.keys(notification)[0] as keyof dwango.nicolive.chat.data.ISimpleNotification;
+  const key = getKeys(notification)[0];
   let type = key as NotificationType;
   if (!NotificationTypeTable.includes(key)) {
     type = 'unknown';

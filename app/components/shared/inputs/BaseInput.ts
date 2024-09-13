@@ -3,6 +3,7 @@ import { cloneDeep } from 'lodash';
 import { Component, Prop } from 'vue-property-decorator';
 import uuid from 'uuid/v4';
 import { IInputMetadata } from './index';
+import { getKeys } from 'util/getKeys';
 
 export class BaseInput<TValueType, TMetadataType extends IInputMetadata> extends Vue {
   @Prop()
@@ -35,8 +36,7 @@ export class BaseInput<TValueType, TMetadataType extends IInputMetadata> extends
    */
   get validate() {
     const validations = this.getValidations();
-    Object.keys(validations).forEach(k => {
-      const key = k as keyof typeof validations;
+    getKeys(validations).forEach(key => {
       // VeeValidate recognizes undefined values as valid constraints
       // so just remove it
       if (validations[key] === void 0) delete validations[key];
