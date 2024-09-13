@@ -1,6 +1,7 @@
 import { ArrayNode } from './array-node';
 import { HotkeysService, IHotkey, Hotkey } from '../../hotkeys';
 import { Inject } from '../../core/injector';
+import { getKeys } from 'util/getKeys';
 
 interface IContext {
   sceneId?: string;
@@ -30,7 +31,7 @@ export class HotkeysNode extends ArrayNode<IHotkey, IContext, Hotkey> {
 
   saveItem(hotkey: Hotkey, context: IContext): Promise<IHotkey> {
     const hotkeyObj = hotkey.getModel();
-    Object.keys(context).forEach(key => delete hotkeyObj[key]);
+    getKeys(context).forEach(key => delete hotkeyObj[key]);
     return Promise.resolve(hotkeyObj);
   }
 

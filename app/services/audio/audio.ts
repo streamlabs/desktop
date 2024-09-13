@@ -25,6 +25,7 @@ import {
 import { $t } from 'services/i18n';
 import uuid from 'uuid/v4';
 import { omit } from 'lodash';
+import { getKeys } from 'util/getKeys';
 
 export enum E_AUDIO_CHANNELS {
   OUTPUT_1 = 1,
@@ -224,21 +225,25 @@ export class AudioService extends StatefulService<IAudioSourcesState> implements
     // Fader is ignored by this method.  Use setFader instead
     const newPatch = omit(patch, 'fader');
 
-    Object.keys(newPatch).forEach(name => {
-      const value = newPatch[name];
-      if (value === void 0) return;
+    getKeys(newPatch).forEach(name => {
+      if (newPatch[name] === void 0) return;
 
       if (name === 'syncOffset') {
+        const value = newPatch[name];
         obsInput.syncOffset = AudioService.msToTimeSpec(value);
       } else if (name === 'forceMono') {
+        const value = newPatch[name];
         if (this.getSource(sourceId).forceMono !== value) {
           value
             ? (obsInput.flags = obsInput.flags | obs.ESourceFlags.ForceMono)
             : (obsInput.flags -= obs.ESourceFlags.ForceMono);
         }
       } else if (name === 'muted') {
+        const value = newPatch[name];
         this.sourcesService.setMuted(sourceId, value);
       } else {
+        const value = newPatch[name];
+        // @ts-expect-error ts7053 obs.IInputのpropertyに宣言が無いキーを扱うため
         obsInput[name] = value;
       }
     });

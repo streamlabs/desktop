@@ -1,7 +1,7 @@
 import URI from 'urijs';
 import { isEqual } from 'lodash';
-import electron from 'electron';
 import * as remote from '@electron/remote';
+import { getKeys } from 'util/getKeys';
 
 export const enum EBit {
   ZERO,
@@ -14,7 +14,7 @@ export default class Utils {
       Object.defineProperty(target, propName, {
         configurable: true,
         get() {
-          return source[propName];
+          return (source as Dictionary<any>)[propName];
         },
       });
     });
@@ -115,28 +115,29 @@ export default class Utils {
   }
 
   static getChangedParams<T>(obj: T, patch: T): Partial<T> {
-    const result: Dictionary<any> = {};
-    Object.keys(patch).forEach(key => {
+    const result: Partial<T> = {};
+    getKeys(patch).forEach(key => {
       if (!isEqual(obj[key], patch[key])) result[key] = patch[key];
     });
-    return result as Partial<T>;
+    return result;
   }
 
   static getDeepChangedParams<T>(obj: T, patch: T): Partial<T> {
-    const result: Dictionary<any> = {};
+    const result: Partial<T> = {};
 
     if (obj == null) return patch;
 
-    Object.keys(patch).forEach(key => {
+    getKeys(patch).forEach(key => {
       if (!isEqual(obj[key], patch[key])) {
         if (patch[key] && typeof patch[key] === 'object' && !Array.isArray(patch[key])) {
+          // @ts-expect-error ts2322 再帰的に子要素もPartialなのだが型解決が難しい
           result[key] = this.getDeepChangedParams(obj[key], patch[key]);
         } else {
           result[key] = patch[key];
         }
       }
     });
-    return result as Partial<T>;
+    return result;
   }
 
   /**

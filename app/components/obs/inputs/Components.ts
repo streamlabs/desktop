@@ -7,6 +7,7 @@ const inputComponents = comps as any as { [key: string]: typeof TsxComponent };
 
 export function propertyComponentForType(type: TObsType): typeof TsxComponent {
   const componentName = Object.keys(inputComponents).find(name => {
+    // @ts-expect-error ts7053
     const componentObsType = inputComponents[name]['obsType'];
     return Array.isArray(componentObsType)
       ? componentObsType.includes(type)

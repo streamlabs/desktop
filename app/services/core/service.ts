@@ -6,9 +6,11 @@ import { Subject } from 'rxjs';
 
 const singleton = Symbol('singleton');
 const singletonEnforcer = Symbol('singletonEnforcer');
-const instances: Service[] = [];
+const instances: Dictionary<Service> = {};
 
 export abstract class Service {
+  static [singleton]: Service;
+
   static isSingleton = true;
 
   /**

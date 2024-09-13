@@ -56,7 +56,7 @@ export class RootNode extends Node<ISchema, {}> {
 
   migrate(version: number) {
     if (version === 1) {
-      this.data.transitions = this.data['transition'];
+      this.data.transitions = (this.data as Dictionary<any>)['transition'];
     }
   }
 }

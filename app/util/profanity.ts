@@ -1,4 +1,5 @@
 import { Service } from '../services/core/service';
+import { getKeys } from './getKeys';
 
 interface IProfanityFilterOptions {
   useDefaultRegex?: boolean;
@@ -118,7 +119,7 @@ export class ProfanityFilterService extends Service {
     });
     let badWordsStrings = badWordsStringsArray.join('|');
 
-    Object.keys(this.leetReplace).forEach(letter => {
+    getKeys(this.leetReplace).forEach(letter => {
       badWordsStrings = badWordsStrings.replace(
         new RegExp(/([^\\])/.source + letter, 'gi'),
         '$1' + this.leetReplace[letter],

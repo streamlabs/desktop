@@ -5,6 +5,7 @@ import GenericFormGroups from 'components/obs/inputs/GenericFormGroups.vue';
 import ObsTextInput from 'components/obs/inputs/ObsTextInput.vue';
 import { ITcpServerServiceApi, ITcpServersSettings } from '../services/api/tcp-server';
 import { ISettingsSubCategory } from '../services/settings';
+import { TObsValue } from './obs/inputs/ObsInput';
 
 @Component({
   components: { GenericFormGroups, ObsTextInput },
@@ -39,7 +40,7 @@ export default class ApiSettings extends Vue {
   }
 
   save(settingsData: ISettingsSubCategory[]) {
-    const settings: Partial<ITcpServersSettings> = {};
+    const settings: Dictionary<Dictionary<TObsValue>> = {};
     settingsData.forEach(subCategory => {
       subCategory.parameters.forEach(parameter => {
         if (!settings[subCategory.codeSubCategory]) settings[subCategory.codeSubCategory] = {};

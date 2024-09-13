@@ -134,7 +134,7 @@ export abstract class StatefulService<TState extends object> extends Service {
  */
 export function getModule(ModuleContainer: any): Module<any, any> {
   const prototypeMutations = (<any>ModuleContainer.prototype).mutations;
-  const mutations = {};
+  const mutations: Dictionary<any> = {};
 
   // filter inherited mutations
   for (const mutationName in prototypeMutations) {

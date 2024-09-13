@@ -8,7 +8,6 @@
     "isolatedModules": false,
     "experimentalDecorators": true,
     "removeComments": true,
-    "suppressImplicitAnyIndexErrors": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "outDir": "bundles/ts",

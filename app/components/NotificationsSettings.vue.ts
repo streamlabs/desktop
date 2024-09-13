@@ -3,7 +3,7 @@ import { Component } from 'vue-property-decorator';
 import { Inject } from '../services/core/injector';
 import GenericForm from 'components/obs/inputs/GenericForm.vue';
 import { INotificationsServiceApi, INotificationsSettings } from 'services/notifications';
-import { TObsFormData } from 'components/obs/inputs/ObsInput';
+import { TObsFormData, TObsValue } from 'components/obs/inputs/ObsInput';
 import { ITroubleshooterServiceApi, ITroubleshooterSettings } from 'services/troubleshooter';
 
 @Component({
@@ -21,7 +21,7 @@ export default class NotificationsSettings extends Vue {
   }
 
   saveNotificationsSettings(formData: TObsFormData) {
-    const settings: Partial<INotificationsSettings> = {};
+    const settings: Dictionary<TObsValue> = {};
     formData.forEach(formInput => {
       settings[formInput.name] = formInput.value;
     });
@@ -30,7 +30,7 @@ export default class NotificationsSettings extends Vue {
   }
 
   saveTroubleshooterSettings(formData: TObsFormData) {
-    const settings: Partial<ITroubleshooterSettings> = {};
+    const settings: Dictionary<TObsValue> = {};
     formData.forEach(formInput => {
       settings[formInput.name] = formInput.value;
     });

@@ -48,6 +48,7 @@ export class ProtocolLinksService extends Service {
     };
 
     if (this.handlers[info.base]) {
+      // @ts-expect-error ts7053
       this[this.handlers[info.base]](info);
     }
   }

@@ -89,13 +89,14 @@ export class TransitionsNode extends Node<ISchema, {}> {
     // Migrate from version 1 schemas, where we only had a single global
     // transition and no support for connections.
     if (version === 1) {
+      const data: Dictionary<any> = this.data;
       const transition: ITransition = {
         id: null,
         name: 'Global Transition',
-        type: this.data['type'],
-        duration: this.data['duration'],
-        settings: this.data['settings'],
-        propertiesManagerSettings: this.data['propertiesManagerSettings'],
+        type: data['type'],
+        duration: data['duration'],
+        settings: data['settings'],
+        propertiesManagerSettings: data['propertiesManagerSettings'],
       };
       this.data.transitions = [transition];
       this.data.connections = [];

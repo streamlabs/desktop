@@ -41,7 +41,7 @@ class ObsFontInput extends ObsInput<IObsInput<IObsFont>> {
   }
 
   setFontType(e: Event) {
-    this.isGoogleFont = e.target['checked'];
+    this.isGoogleFont = (e.target as HTMLInputElement)['checked'];
   }
 }
 

@@ -40,7 +40,7 @@ export class InternalApiClient {
     if (!availableServices.includes(service.constructor.name)) return service;
 
     return new Proxy(service, {
-      get: (target, property, receiver) => {
+      get: (target: { [key: string | symbol]: any }, property, receiver) => {
         if (!target[property]) return target[property];
 
         if (target[property]._isHelper) {
@@ -127,7 +127,7 @@ export class InternalApiClient {
         if (typeof target[property] === 'function') return handler;
         if (target[property] instanceof Observable) return handler();
       },
-    });
+    }) as Service;
   }
 
   getResource(resourceId: string) {
