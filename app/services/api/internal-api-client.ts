@@ -40,30 +40,23 @@ export class InternalApiClient {
     if (!availableServices.includes(service.constructor.name)) return service;
 
     return new Proxy(service, {
-      get: (target, property, receiver) => {
-        // @ts-expect-error ts7053
+      get: (target: { [key: string | symbol]: any }, property, receiver) => {
         if (!target[property]) return target[property];
 
-        // @ts-expect-error ts7053
         if (target[property]._isHelper) {
-          // @ts-expect-error ts7053
           return this.applyIpcProxy(target[property]);
         }
 
         if (Reflect.getMetadata('executeInCurrentWindow', target, property as string)) {
-          // @ts-expect-error ts7053
           return target[property];
         }
 
-        // @ts-expect-error ts7053
         if (typeof target[property] !== 'function' && !(target[property] instanceof Observable)) {
-          // @ts-expect-error ts7053
           return target[property];
         }
 
         const serviceName = target.constructor.name;
         const methodName = property;
-        // @ts-expect-error ts7053
         const isHelper = target['_isHelper'];
 
         const handler = (...args: any[]) => {
@@ -81,7 +74,6 @@ export class InternalApiClient {
           const response: IJsonRpcResponse<any> = electron.ipcRenderer.sendSync(
             'services-request',
             this.jsonrpc.createRequestWithOptions(
-              // @ts-expect-error ts7053
               isHelper ? target['_resourceId'] : serviceName,
               methodName as string,
               { compactMode: true, fetchMutations: true },
@@ -132,12 +124,10 @@ export class InternalApiClient {
           return result;
         };
 
-        // @ts-expect-error ts7053
         if (typeof target[property] === 'function') return handler;
-        // @ts-expect-error ts7053
         if (target[property] instanceof Observable) return handler();
       },
-    });
+    }) as Service;
   }
 
   getResource(resourceId: string) {
