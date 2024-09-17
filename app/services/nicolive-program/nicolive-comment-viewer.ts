@@ -517,58 +517,54 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
   }
 
   private onMessage(values: WrappedMessageWithComponent[]) {
-    try {
-      const maxQueueToSpeak = 3; // 直近3件つづ読み上げ対象にする
-      const recentSeconds = 60;
+    const maxQueueToSpeak = 3; // 直近3件つづ読み上げ対象にする
+    const recentSeconds = 60;
 
-      const nowSeconds = Date.now() / 1000;
+    const nowSeconds = Date.now() / 1000;
 
-      const valuesForSpeech = values.filter(c => {
-        if (!this.filterFn(c)) {
-          return false;
-        }
-        if (!c.value || !c.value.date) {
-          return false;
-        }
-        return c.value.date > nowSeconds - recentSeconds;
+    const valuesForSpeech = values.filter(c => {
+      if (!this.filterFn(c)) {
+        return false;
+      }
+      if (!c.value || !c.value.date) {
+        return false;
+      }
+      return c.value.date > nowSeconds - recentSeconds;
+    });
+
+    // send to http relation
+    const httpRelation = this.nicoliveProgramStateService.state.httpRelation;
+    if (httpRelation && httpRelation.method) {
+      valuesForSpeech.forEach(a => {
+        HttpRelation.sendChat(a, httpRelation);
       });
+    }
 
-      // send to http relation
-      const httpRelation = this.nicoliveProgramStateService.state.httpRelation;
-      if (httpRelation && httpRelation.method) {
-        valuesForSpeech.forEach(a => {
-          HttpRelation.sendChat(a, httpRelation);
-        });
+    if (this.nicoliveProgramStateService.state.nameplateHint === undefined) {
+      const firstCommentWithName = values.find(
+        c => isWrappedChat(c) && !!c.value.name && c.value.no,
+      );
+      if (firstCommentWithName && isWrappedChat(firstCommentWithName)) {
+        this.nicoliveProgramService.checkNameplateHint(firstCommentWithName.value.no);
       }
+    }
 
-      if (this.nicoliveProgramStateService.state.nameplateHint === undefined) {
-        const firstCommentWithName = values.find(
-          c => isWrappedChat(c) && !!c.value.name && c.value.no,
-        );
-        if (firstCommentWithName && isWrappedChat(firstCommentWithName)) {
-          this.nicoliveProgramService.checkNameplateHint(firstCommentWithName.value.no);
-        }
-      }
+    this.queueToSpeech(valuesForSpeech.slice(-maxQueueToSpeak));
 
-      this.queueToSpeech(valuesForSpeech.slice(-maxQueueToSpeak));
-
-      const maxRetain = 100; // 最新からこの件数を一覧に保持する
-      const concatMessages = this.state.messages.concat(values);
-      const popoutMessages = concatMessages.slice(0, -maxRetain);
-      const messages = concatMessages.slice(-maxRetain);
-      const firstCommentArrived = this.state.messages.length === 0 && messages.length > 0;
-      this.SET_STATE({
-        messages,
-        popoutMessages,
-      });
-      if (!this.customizationService.state.compactModeNewComment) {
-        this.customizationService.setCompactModeNewComment(true);
-      }
-      if (firstCommentArrived) {
-        this.nicoliveProgramService.hidePlaceholder();
-      }
-    } catch (e) {
-      console.warn(e);
+    const maxRetain = 100; // 最新からこの件数を一覧に保持する
+    const concatMessages = this.state.messages.concat(values);
+    const popoutMessages = concatMessages.slice(0, -maxRetain);
+    const messages = concatMessages.slice(-maxRetain);
+    const firstCommentArrived = this.state.messages.length === 0 && messages.length > 0;
+    this.SET_STATE({
+      messages,
+      popoutMessages,
+    });
+    if (!this.customizationService.state.compactModeNewComment) {
+      this.customizationService.setCompactModeNewComment(true);
+    }
+    if (firstCommentArrived) {
+      this.nicoliveProgramService.hidePlaceholder();
     }
   }
 
