@@ -161,7 +161,8 @@ jobs:
         directory:
           - 'e2e/[^s]*.js'
           - 'e2e/s*.js'
-          - 'api/*.js'
+          - 'api/[^s]*.js'
+          - 'api/s*.js'
 
     steps:
       - name: Checkout code
