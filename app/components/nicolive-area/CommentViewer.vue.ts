@@ -318,6 +318,7 @@ export default class CommentViewer extends Vue {
     this.cleanup = () => {
       io.unobserve(sentinelEl);
     };
+    this.scrollToLatest();
   }
 
   beforeDestroy() {
