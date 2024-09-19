@@ -138,7 +138,6 @@ module.exports = function (env, argv) {
         'aws-sdk': 'require("aws-sdk")',
         asar: 'require("asar")',
         'node-fontinfo': 'require("node-fontinfo")',
-        'socket.io-client': 'require("socket.io-client")',
         rimraf: 'require("rimraf")',
 
         'utf-8-validate': 'require("utf-8-validate")',
