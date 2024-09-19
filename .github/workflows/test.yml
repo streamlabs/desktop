@@ -39,7 +39,6 @@ jobs:
               - 'media/**'
               - 'nvoice/**'
               - 'obs-api/**'
-              - 'scripts/**'
               - 'test/**'
               - 'updater/**'
               - 'vendor/**'
