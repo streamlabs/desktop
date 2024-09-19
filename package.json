@@ -115,7 +115,7 @@
     "rxjs": "~6.5.2",
     "semver": "^7.5.4",
     "sl-vue-tree": "https://github.com/stream-labs/sl-vue-tree",
-    "socket.io": "^4.7.5",
+    "socket.io": "4.7.5",
     "sockjs": "~0.3.19",
     "sockjs-client": "~1.6.1",
     "systeminformation": "~4.34.23",
