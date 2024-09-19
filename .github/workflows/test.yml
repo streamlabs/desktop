@@ -194,6 +194,7 @@ jobs:
         run: yarn test --fail-fast test-dist/test/${{ matrix.directory }}
 
   test-summary:
+    # 注意: needs に setupも入れないと、setupで失敗すると後段のresultが `skipped` になってしまい、すりぬけてしまう
     needs: [setup-app, setup-bin, unit_test-app, unit_test-bin, e2e_test]
     if: always()
     steps:
