@@ -43,16 +43,14 @@ jobs:
               - 'test/**'
               - 'updater/**'
               - 'vendor/**'
-  #              - '.github/workflows/test.yml'
+              - '.github/workflows/test.yml'
+
   setup-app:
     name: setup(app)
     needs: changes
     if: ${{ needs.changes.outputs.code == 'true' }}
     runs-on: windows-2019
     steps:
-      - name: fail test
-        run: exit 1
-
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -81,9 +79,6 @@ jobs:
     if: ${{ needs.changes.outputs.code == 'true' }}
     runs-on: windows-2019
     steps:
-      - name: fail test
-        run: exit 1
-
       - name: Checkout code
         uses: actions/checkout@v4
 
