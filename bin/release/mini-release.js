@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const OctoKit = require('@octokit/rest');
+const { Octokit } = require('@octokit/rest');
 const sh = require('shelljs');
 const colors = require('colors/safe');
 const yaml = require('js-yaml');
@@ -300,7 +300,7 @@ async function runScript({
   // upload to the github directly via GitHub API...
 
   if (enableUploadToGitHub) {
-    const octokit = new OctoKit({
+    const octokit = new Octokit({
       baseUrl: target.host,
       auth: `token ${upload.githubToken}`,
     });
@@ -317,6 +317,11 @@ async function runScript({
       prerelease: releaseChannel !== 'stable',
     };
 
+    /**
+     * @type { import('@octokit/rest').RestEndpointMethodTypes["repos"]["createRelease"]["response"] |
+     *  import('@octokit/rest').RestEndpointMethodTypes["repos"]["updateRelease"]["response"]
+     * }
+     */
     let result = await octokit.repos.createRelease({
       ...releaseParams,
       draft: true,
@@ -324,6 +329,9 @@ async function runScript({
 
     await uploadToGithub({
       octokit,
+      owner: releaseParams.owner,
+      repo: releaseParams.repo,
+      release_id: result.data.id,
       url: result.data.upload_url,
       pathname: latestYmlFilePath,
       contentType: 'application/json',
@@ -331,6 +339,9 @@ async function runScript({
 
     await uploadToGithub({
       octokit,
+      owner: releaseParams.owner,
+      repo: releaseParams.repo,
+      release_id: result.data.id,
       url: result.data.upload_url,
       pathname: blockmapFilePath,
       contentType: 'application/octet-stream',
@@ -338,6 +349,9 @@ async function runScript({
 
     await uploadToGithub({
       octokit,
+      owner: releaseParams.owner,
+      repo: releaseParams.repo,
+      release_id: result.data.id,
       url: result.data.upload_url,
       pathname: binaryFilePath,
       contentType: 'application/octet-stream',
