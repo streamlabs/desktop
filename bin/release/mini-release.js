@@ -245,11 +245,13 @@ async function runScript({
   info('Checking artifacts...');
   const distDir = path.resolve('.', 'dist');
   const latestYmlFilePath = path.join(distDir, 'latest.yml');
-  const parsedLatestYml = yaml.safeLoad(fs.readFileSync(latestYmlFilePath, 'utf-8'));
+  const parsedLatestYml = /** @type {{releaseNotes: string, path: string}} */ (
+    yaml.load(fs.readFileSync(latestYmlFilePath, 'utf-8'))
+  );
 
   // add releaseNotes into latest.yml
   parsedLatestYml.releaseNotes = patchNote.notes;
-  fs.writeFileSync(latestYmlFilePath, yaml.safeDump(parsedLatestYml));
+  fs.writeFileSync(latestYmlFilePath, yaml.dump(parsedLatestYml));
 
   const binaryFile = parsedLatestYml.path;
   const binaryFilePath = path.join(distDir, binaryFile);

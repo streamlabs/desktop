@@ -15,7 +15,7 @@
     "colors": "^1.4.0",
     "iconv-lite": "^0.4.23",
     "inquirer": "^6.0.0",
-    "js-yaml": "^3.10.0",
+    "js-yaml": "^4.1.0",
     "progress": "^2.0.0",
     "semver": "^7.6.3",
     "shelljs": "^0.8.5",
