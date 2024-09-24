@@ -397,6 +397,7 @@ async function releaseRoutine() {
   checkEnv('SENTRY_AUTH_TOKEN');
   checkEnv('AWS_ACCESS_KEY_ID');
   checkEnv('AWS_SECRET_ACCESS_KEY');
+  checkEnv('AWS_REGION');
 
   const baseDir = executeCmd('git rev-parse --show-cdup', { silent: true }).stdout.trim();
   const patchNoteFileName = `${baseDir}patch-note.txt`;
