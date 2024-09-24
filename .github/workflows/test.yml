@@ -14,7 +14,8 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
-      code: ${{ steps.filter.outputs.code }}
+      app: ${{ steps.filter.outputs.common == 'true' || steps.filter.outputs.app == 'true' }}
+      bin: ${{ steps.filter.outputs.common == 'true' || steps.filter.outputs.bin == 'true' }}
     steps:
       - name: Checkout if push
         uses: actions/checkout@v4
@@ -24,30 +25,32 @@ jobs:
         id: filter
         with:
           filters: |
-            code:
+            common:
               - 'package.json'
               - 'yarn.lock'
+              - '.github/workflows/test.yml'
+            app:
               - 'installer.nsh'
               - 'tsconfig.json'
               - 'webpack.config.js'
               - 'main.js'
               - 'test-main.js'
               - 'app/**'
-              - 'bin/package.json'
-              - 'bin/yarn.lock'
-              - 'bin/**/*.js'
               - 'media/**'
               - 'nvoice/**'
               - 'obs-api/**'
               - 'test/**'
               - 'updater/**'
               - 'vendor/**'
-              - '.github/workflows/test.yml'
+            bin:
+              - 'bin/package.json'
+              - 'bin/yarn.lock'
+              - 'bin/**/*.js'
 
   setup-app:
     name: setup(app)
     needs: changes
-    if: ${{ needs.changes.outputs.code == 'true' }}
+    if: ${{ needs.changes.outputs.app == 'true' || needs.changes.outputs.bin == 'true' }}
     runs-on: windows-2019
     steps:
       - name: Checkout code
@@ -75,7 +78,7 @@ jobs:
   setup-bin:
     name: setup(bin)
     needs: changes
-    if: ${{ needs.changes.outputs.code == 'true' }}
+    if: ${{ needs.changes.outputs.bin == 'true' }}
     runs-on: windows-2019
     steps:
       - name: Checkout code
@@ -100,7 +103,7 @@ jobs:
   unit_test-app:
     name: unit tests(app)
     needs: [changes, setup-app]
-    if: ${{ needs.changes.outputs.code == 'true' }}
+    if: ${{ needs.changes.outputs.app == 'true' }}
     runs-on: windows-2019
 
     steps:
@@ -125,7 +128,7 @@ jobs:
   unit_test-bin:
     name: unit tests(bin)
     needs: [changes, setup-app, setup-bin]
-    if: ${{ needs.changes.outputs.code == 'true' }}
+    if: ${{ needs.changes.outputs.bin == 'true' }}
     runs-on: windows-2019
 
     steps:
@@ -168,17 +171,17 @@ jobs:
 
     steps:
       - name: Checkout code
-        if: ${{ needs.changes.outputs.code == 'true' }}
+        if: ${{ needs.changes.outputs.app == 'true' }}
         uses: actions/checkout@v4
 
       - name: Set up Node.js
-        if: ${{ needs.changes.outputs.code == 'true' }}
+        if: ${{ needs.changes.outputs.app == 'true' }}
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
       - name: cache node modules
-        if: ${{ needs.changes.outputs.code == 'true' }}
+        if: ${{ needs.changes.outputs.app == 'true' }}
         id: cache-node-modules
         uses: actions/cache@v4
         with:
@@ -186,11 +189,11 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('yarn.lock', 'scripts/preinstall.js', 'scripts/install-native-deps.js', 'scripts/repositories.json') }}
 
       - name: Compile
-        if: ${{ needs.changes.outputs.code == 'true' }}
+        if: ${{ needs.changes.outputs.app == 'true' }}
         run: yarn compile:ci
 
       - name: Run e2e tests
-        if: ${{ needs.changes.outputs.code == 'true' }}
+        if: ${{ needs.changes.outputs.app == 'true' }}
         run: yarn test --fail-fast test-dist/test/${{ matrix.directory }}
 
   test-summary:
