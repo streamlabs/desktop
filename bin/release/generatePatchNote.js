@@ -1,7 +1,7 @@
 // @ts-check
 
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 const { Octokit } = require('@octokit/rest');
 const sh = require('shelljs');
 const colors = require('colors/safe');
@@ -16,7 +16,10 @@ const {
   collectPullRequestMerges,
 } = require('./scripts/patchNote');
 
-const pjson = JSON.parse(fs.readFileSync(path.resolve('./package.json'), 'utf-8'));
+const projectRoot = path.resolve(__dirname, '..', '..');
+sh.cd(projectRoot);
+
+const pjson = JSON.parse(fs.readFileSync(path.resolve(projectRoot, 'package.json'), 'utf-8'));
 
 async function generateRoutine({ githubTokenForReadPullRequest }) {
   info(colors.magenta('|------------------------------|'));
@@ -140,13 +143,11 @@ async function generateRoutine({ githubTokenForReadPullRequest }) {
   info('next step -> `yarn release`');
 }
 
-if (!module.parent) {
-  checkEnv('NAIR_GITHUB_TOKEN');
+checkEnv('NAIR_GITHUB_TOKEN');
 
-  generateRoutine({
-    githubTokenForReadPullRequest: process.env.NAIR_GITHUB_TOKEN,
-  }).catch(e => {
-    error(e);
-    sh.exit(1);
-  });
-}
+generateRoutine({
+  githubTokenForReadPullRequest: process.env.NAIR_GITHUB_TOKEN,
+}).catch(e => {
+  error(e);
+  sh.exit(1);
+});

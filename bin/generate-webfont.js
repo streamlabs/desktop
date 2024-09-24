@@ -1,7 +1,8 @@
-const fs = require('fs');
-const path = require('path');
-const { promisify } = require('util');
+const fs = require('node:fs');
+const path = require('node:path');
+const { promisify } = require('node:util');
 const webfont = require('webfont').default;
+const sh = require('shelljs');
 
 const writeFile = promisify(fs.writeFile);
 
@@ -23,5 +24,7 @@ async function main() {
     writeFile(path.join('app', 'styles', 'custom-icons.less'), result.template),
   ]);
 }
+
+sh.cd(path.resolve(__dirname, '..'));
 
 main().catch(console.error);

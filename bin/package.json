@@ -4,6 +4,11 @@
   "author": "General Workings, Inc.",
   "license": "GPL-3.0",
   "version": "0.0.1",
+  "scripts": {
+    "release": "node release/mini-release.js",
+    "patch-note": "node release/generatePatchNote.js",
+    "webfont": "node generate-webfont.js"
+  },
   "dependencies": {
     "@octokit/rest": "^20.1.1",
     "luxon": "^3.5.0",

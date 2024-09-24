@@ -3,8 +3,8 @@
  * All-in-one interactive N Air release script.
  */
 
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 const { Octokit } = require('@octokit/rest');
 const sh = require('shelljs');
 const colors = require('colors/safe');
@@ -465,6 +465,8 @@ async function releaseRoutine() {
     enableUploadToGitHub: true,
   });
 }
+
+sh.cd(path.resolve(__dirname, '..'));
 
 if (SLACK_TEST) {
   postReleaseToSlack({
