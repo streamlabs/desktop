@@ -12,7 +12,6 @@
   "devDependencies": {
     "7zip-bin": "^2.2.7",
     "aws-sdk": "^2.157.0",
-    "cmake-js": "^3.5.0",
     "colors": "^1.1.2",
     "iconv-lite": "^0.4.23",
     "inquirer": "^6.0.0",
