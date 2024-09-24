@@ -20,7 +20,10 @@ const {
 } = require('./scripts/patchNote');
 const { uploadS3File, uploadToGithub } = require('./scripts/uploadArtifacts');
 
-const pjson = JSON.parse(fs.readFileSync(path.resolve('./package.json'), 'utf-8'));
+const projectRoot = path.resolve(__dirname, '..', '..');
+sh.cd(projectRoot);
+
+const pjson = JSON.parse(fs.readFileSync(path.resolve(projectRoot, 'package.json'), 'utf-8'));
 
 const SLACK_TEST = false; // for debug
 
@@ -465,8 +468,6 @@ async function releaseRoutine() {
     enableUploadToGitHub: true,
   });
 }
-
-sh.cd(path.resolve(__dirname, '..'));
 
 if (SLACK_TEST) {
   postReleaseToSlack({
