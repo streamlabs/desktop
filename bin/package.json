@@ -18,7 +18,7 @@
     "js-yaml": "^3.10.0",
     "progress": "^2.0.0",
     "semver": "^5.4.1",
-    "shelljs": "^0.8.4",
+    "shelljs": "^0.8.5",
     "webfont": "^11.2.26"
   }
 }
