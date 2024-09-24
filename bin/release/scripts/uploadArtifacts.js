@@ -79,27 +79,7 @@ async function uploadToGithub({
   throw new Error('reached to a retry limit');
 }
 
-function getSentryCli() {
-  return path.resolve('bin', 'node_modules/.bin/sentry-cli');
-}
-
-function injectForSentry(artifactPath) {
-  const sentryCli = getSentryCli();
-  executeCmd(`${sentryCli} sourcemaps inject ${artifactPath}`);
-}
-
-function uploadToSentry(org, project, release, artifactPath) {
-  const sentryCli = getSentryCli();
-  executeCmd(`${sentryCli} releases -o ${org} -p ${project} new ${release}`);
-  executeCmd(
-    `${sentryCli} sourcemaps -o ${org} -p ${project} --release=${release} upload ${artifactPath}`,
-  );
-  executeCmd(`${sentryCli} releases -o ${org} -p ${project} finalize ${release}`);
-}
-
 module.exports = {
   uploadS3File,
   uploadToGithub,
-  uploadToSentry,
-  injectForSentry,
 };

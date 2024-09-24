@@ -18,12 +18,7 @@ const {
   updateNotesTs,
   readPatchNote,
 } = require('./scripts/patchNote');
-const {
-  uploadS3File,
-  uploadToGithub,
-  uploadToSentry,
-  injectForSentry,
-} = require('./scripts/uploadArtifacts');
+const { uploadS3File, uploadToGithub } = require('./scripts/uploadArtifacts');
 
 const pjson = JSON.parse(fs.readFileSync(path.resolve('./package.json'), 'utf-8'));
 
@@ -114,9 +109,6 @@ async function postReleaseToSlack({ version, environment, channel, link, notes }
  * @param {string} param0.target.repository
  * @param {string} param0.target.remote
  * @param {string} param0.target.branch
- * @param {object} param0.sentry
- * @param {string} param0.sentry.organization
- * @param {string} param0.sentry.project
  * @param {object} param0.upload
  * @param {string} param0.upload.githubToken
  * @param {string} param0.upload.s3BucketName
@@ -128,13 +120,11 @@ async function postReleaseToSlack({ version, environment, channel, link, notes }
  * @param {boolean} param0.skipBuild
  * @param {boolean} param0.enableUploadToS3
  * @param {boolean} param0.enableUploadToGitHub
- * @param {boolean} param0.enableUploadToSentry
  */
 async function runScript({
   releaseEnvironment,
   releaseChannel,
   target,
-  sentry,
   upload,
   patchNote,
 
@@ -143,7 +133,6 @@ async function runScript({
 
   enableUploadToS3,
   enableUploadToGitHub,
-  enableUploadToSentry,
 }) {
   const newVersion = patchNote.version;
   const newTag = `v${newVersion}`;
@@ -164,9 +153,6 @@ async function runScript({
   log('   repository:', colors.cyan(target.repository));
   log('       remote:', colors.cyan(target.remote));
   log('       branch:', colors.cyan(target.branch));
-  log('sentry:');
-  log(' organization:', colors.cyan(sentry.organization));
-  log('      project:', colors.cyan(sentry.project));
   log('upload:');
   log('   githubHost:', colors.cyan(target.host));
   log('  githubToken:', colors.cyan(upload.githubToken));
@@ -381,16 +367,6 @@ async function runScript({
     info('uploading to GitHub: SKIP');
   }
 
-  if (enableUploadToSentry) {
-    info('uploading to sentry...');
-    // executeCmd(`cp main.js bundles/`);
-    const bundles = path.resolve('.', 'bundles');
-    // injectForSentry(bundles);
-    uploadToSentry(sentry.organization, sentry.project, newVersion, bundles);
-  } else {
-    info('uploading to sentry: SKIP');
-  }
-
   // done.
 }
 
@@ -471,7 +447,6 @@ async function releaseRoutine() {
     skipBuild: false,
     enableUploadToS3: true,
     enableUploadToGitHub: true,
-    enableUploadToSentry: false, //@sentry/webpack-plugin を使うため不要
   });
 }
 

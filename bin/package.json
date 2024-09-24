@@ -6,7 +6,6 @@
   "version": "0.0.1",
   "dependencies": {
     "@octokit/rest": "^16.28.1",
-    "@sentry/cli": "^2.30.2",
     "luxon": "^3.5.0",
     "node-fetch": "2"
   },
