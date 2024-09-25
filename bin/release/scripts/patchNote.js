@@ -97,6 +97,16 @@ function gitLog(previousVersion) {
   return executeCmd(`git log --oneline --merges v${previousVersion}..`, { silent: true }).stdout;
 }
 
+/**
+ *
+ * @param {Object} param0
+ * @param {import('@octokit/rest').Octokit} param0.octokit
+ * @param {string} param0.owner
+ * @param {string} param0.repo
+ * @param {*} previousVersion
+ * @param {*} param2
+ * @returns
+ */
 async function collectPullRequestMerges({ octokit, owner, repo }, previousVersion, { addAuthor }) {
   const merges = gitLog(previousVersion);
 
@@ -108,7 +118,7 @@ async function collectPullRequestMerges({ octokit, owner, repo }, previousVersio
     }
     const pullNumber = parseInt(pr[1], 10);
     promises.push(
-      octokit.pullRequests.get({ owner, repo, pull_number: pullNumber }).catch(e => {
+      octokit.pulls.get({ owner, repo, pull_number: pullNumber }).catch(e => {
         info(e);
         return { data: {} };
       }),

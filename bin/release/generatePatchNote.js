@@ -1,22 +1,12 @@
 // @ts-check
 
-const fs = require('fs');
-const path = require('path');
-const OctoKit = require('@octokit/rest');
+const fs = require('node:fs');
+const path = require('node:path');
+const { Octokit } = require('@octokit/rest');
 const sh = require('shelljs');
 const colors = require('colors/safe');
-const {
-  log,
-  info,
-  error,
-  input,
-  confirm,
-  executeCmd,
-} = require('./scripts/prompt');
-const {
-  checkEnv,
-  getTagCommitId,
-} = require('./scripts/util');
+const { log, info, error, input, confirm, executeCmd } = require('./scripts/prompt');
+const { checkEnv, getTagCommitId } = require('./scripts/util');
 const {
   getVersionContext,
   isSameVersionContext,
@@ -26,7 +16,10 @@ const {
   collectPullRequestMerges,
 } = require('./scripts/patchNote');
 
-const pjson = JSON.parse(fs.readFileSync(path.resolve('./package.json'), 'utf-8'));
+const projectRoot = path.resolve(__dirname, '..', '..');
+sh.cd(projectRoot);
+
+const pjson = JSON.parse(fs.readFileSync(path.resolve(projectRoot, 'package.json'), 'utf-8'));
 
 async function generateRoutine({ githubTokenForReadPullRequest }) {
   info(colors.magenta('|------------------------------|'));
@@ -48,7 +41,7 @@ async function generateRoutine({ githubTokenForReadPullRequest }) {
     info(`patch-note.txt for ${previousPatchNote.version} found`);
     info(`current version: ${previousVersion}`);
 
-    if (!await confirm('overwrite?', false)) {
+    if (!(await confirm('overwrite?', false))) {
       sh.exit(1);
     }
   } else {
@@ -69,7 +62,12 @@ async function generateRoutine({ githubTokenForReadPullRequest }) {
   info('checking current branch...');
   const currentBranch = executeCmd('git rev-parse --abbrev-ref HEAD').stdout.trim();
   if (currentBranch !== config.target.branch) {
-    if (!(await confirm(`current branch '${currentBranch}' is not '${config.target.branch}'. continue?`, false))) {
+    if (
+      !(await confirm(
+        `current branch '${currentBranch}' is not '${config.target.branch}'. continue?`,
+        false,
+      ))
+    ) {
       sh.exit(1);
     }
   }
@@ -84,7 +82,8 @@ async function generateRoutine({ githubTokenForReadPullRequest }) {
   const newVersionContext = getVersionContext(newVersion);
   if (!isSameVersionContext(previousVersionContext, newVersionContext)) {
     log('version', colors.cyan(previousVersion), ' -> ', colors.cyan(newVersion));
-    const environmentIsMatched = previousVersionContext.environment === newVersionContext.environment;
+    const environmentIsMatched =
+      previousVersionContext.environment === newVersionContext.environment;
     const channelIsMatched = previousVersionContext.channel === newVersionContext.channel;
     const colorize = flag => (flag ? colors.red : colors.cyan);
     log(
@@ -92,17 +91,17 @@ async function generateRoutine({ githubTokenForReadPullRequest }) {
       colorize(!environmentIsMatched)(environmentIsMatched ? 'matched  ' : 'unmatched'),
       colorize(previousVersionContext.environment === 'public')(previousVersionContext.environment),
       '->',
-      colorize(newVersionContext.environment === 'public')(newVersionContext.environment)
+      colorize(newVersionContext.environment === 'public')(newVersionContext.environment),
     );
     log(
       'channel    :',
       colorize(!channelIsMatched)(channelIsMatched ? 'matched  ' : 'unmatched'),
       colorize(previousVersionContext.channel === 'stable')(previousVersionContext.channel),
       '->',
-      colorize(newVersionContext.channel === 'stable')(newVersionContext.channel)
+      colorize(newVersionContext.channel === 'stable')(newVersionContext.channel),
     );
 
-    if (!await confirm('Version contexts are not matched. Are you sure?', false)) {
+    if (!(await confirm('Version contexts are not matched. Are you sure?', false))) {
       sh.exit(0);
     }
   }
@@ -114,7 +113,7 @@ async function generateRoutine({ githubTokenForReadPullRequest }) {
 
   const prMerges = await collectPullRequestMerges(
     {
-      octokit: new OctoKit({
+      octokit: new Octokit({
         baseUrl: 'https://api.github.com',
         auth: `token ${githubTokenForReadPullRequest}`,
       }),
@@ -124,12 +123,15 @@ async function generateRoutine({ githubTokenForReadPullRequest }) {
     previousVersion,
     {
       addAuthor: !(environment === 'public' && channel === 'stable'),
-    }
+    },
   );
 
-  const directCommits = executeCmd(`git log --no-merges --first-parent --pretty=format:"%s (%t)" v${previousVersion}..`, {
-    silent: true,
-  }).stdout;
+  const directCommits = executeCmd(
+    `git log --no-merges --first-parent --pretty=format:"%s (%t)" v${previousVersion}..`,
+    {
+      silent: true,
+    },
+  ).stdout;
   const directCommitsNotes = directCommits ? `\nDirect Commits:\n${directCommits}` : '';
   const newNotes = `${prMerges}${directCommitsNotes}`;
 
@@ -141,13 +143,11 @@ async function generateRoutine({ githubTokenForReadPullRequest }) {
   info('next step -> `yarn release`');
 }
 
-if (!module.parent) {
-  checkEnv('NAIR_GITHUB_TOKEN');
+checkEnv('NAIR_GITHUB_TOKEN');
 
-  generateRoutine({
-    githubTokenForReadPullRequest: process.env.NAIR_GITHUB_TOKEN
-  }).catch(e => {
-    error(e);
-    sh.exit(1);
-  });
-}
+generateRoutine({
+  githubTokenForReadPullRequest: process.env.NAIR_GITHUB_TOKEN,
+}).catch(e => {
+  error(e);
+  sh.exit(1);
+});

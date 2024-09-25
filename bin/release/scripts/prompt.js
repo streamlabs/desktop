@@ -2,16 +2,25 @@
 
 const sh = require('shelljs');
 const colors = require('colors/safe');
-const inq = require('inquirer');
+const inq = require('@inquirer/prompts');
 
+/**
+ * @param {string[]} msg
+ */
 function log(...msg) {
   sh.echo(...msg);
 }
 
+/**
+ * @param {string} msg
+ */
 function info(msg) {
   sh.echo(colors.magenta(msg));
 }
 
+/**
+ * @param {string} msg
+ */
 function error(msg) {
   sh.echo(colors.red(`ERROR: ${msg}`));
 }
@@ -29,26 +38,31 @@ function executeCmd(cmd, options) {
   return result;
 }
 
+/**
+ * @param {string} msg
+ * @returns {Promise<boolean>}
+ */
 async function confirm(msg, defaultValue = true) {
-  const result = await inq.prompt({
-    type: 'confirm',
-    name: 'conf',
+  const result = await inq.confirm({
     message: msg,
     default: defaultValue,
   });
 
-  return result.conf;
+  return result;
 }
 
+/**
+ * @param {string} message
+ * @param {string} defaultValue
+ * @returns {Promise<string>}
+ */
 async function input(message, defaultValue) {
-  const result = await inq.prompt({
-    type: 'input',
-    name: 'value',
+  const result = await inq.input({
     message,
     default: defaultValue,
   });
 
-  return result.value;
+  return result;
 }
 
 module.exports = {
