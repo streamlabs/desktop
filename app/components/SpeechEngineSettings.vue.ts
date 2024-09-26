@@ -19,9 +19,9 @@ export default class SpeechEngineSettings extends Vue {
     this.$emit('close');
   }
 
-  async testSpeechPlay(synthId: SynthesizerId) {
+  testSpeechPlay(synthId: SynthesizerId) {
     const service = this.nicoliveCommentSynthesizerService;
-    await service.startTestSpeech('これは読み上げ設定のテスト音声です', synthId);
+    service.startTestSpeech('これは読み上げ設定のテスト音声です', synthId);
   }
 
   get enabled(): boolean {

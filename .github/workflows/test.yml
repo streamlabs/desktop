@@ -4,52 +4,55 @@ on:
   push:
     branches:
       - n-air_development
-    paths:
-      - package.json
-      - yarn.lock
-      - installer.nsh
-      - tsconfig.json
-      - webpack.config.js
-      - main.js
-      - test-main.js
-      - app/**
-      - bin/package.json
-      - bin/yarn.lock
-      - bin/**/*.js
-      - media/**
-      - nvoice/**
-      - obs-api/**
-      - scripts/**
-      - test/**
-      - updater/**
-      - vendor/**
-      - .github/workflows/test.yml
 
   pull_request:
-    paths:
-      - package.json
-      - yarn.lock
-      - installer.nsh
-      - tsconfig.json
-      - webpack.config.js
-      - main.js
-      - test-main.js
-      - app/**
-      - bin/package.json
-      - bin/yarn.lock
-      - bin/**/*.js
-      - media/**
-      - nvoice/**
-      - obs-api/**
-      - scripts/**
-      - test/**
-      - updater/**
-      - vendor/**
-      - .github/workflows/test.yml
 
 jobs:
+  changes:
+    runs-on: windows-2019
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      app: ${{ steps.filter.outputs.common == 'true' || steps.filter.outputs.app == 'true' }}
+      bin: ${{ steps.filter.outputs.common == 'true' || steps.filter.outputs.bin == 'true' }}
+    steps:
+      - name: Checkout if push
+        uses: actions/checkout@v4
+        if: ${{ github.event_name == 'push' }}
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            common:
+              - 'package.json'
+              - 'yarn.lock'
+              - '.github/workflows/test.yml'
+            app:
+              - 'installer.nsh'
+              - 'tsconfig.json'
+              - 'webpack.config.js'
+              - 'main.js'
+              - 'test-main.js'
+              - 'app/**'
+              - 'media/**'
+              - 'nvoice/**'
+              - 'obs-api/**'
+              - 'test/**'
+              - 'updater/**'
+              - 'vendor/**'
+              - 'jest.config.js'
+            bin:
+              - 'bin/package.json'
+              - 'bin/yarn.lock'
+              - 'bin/**/*.js'
+              - 'jest.bin-config.js'
+
   setup-app:
     name: setup(app)
+    needs: changes
+    if: ${{ needs.changes.outputs.app == 'true' || needs.changes.outputs.bin == 'true' }}
     runs-on: windows-2019
     steps:
       - name: Checkout code
@@ -76,6 +79,8 @@ jobs:
 
   setup-bin:
     name: setup(bin)
+    needs: changes
+    if: ${{ needs.changes.outputs.bin == 'true' }}
     runs-on: windows-2019
     steps:
       - name: Checkout code
@@ -99,7 +104,8 @@ jobs:
 
   unit_test-app:
     name: unit tests(app)
-    needs: setup-app
+    needs: [changes, setup-app]
+    if: ${{ needs.changes.outputs.app == 'true' }}
     runs-on: windows-2019
 
     steps:
@@ -123,7 +129,8 @@ jobs:
 
   unit_test-bin:
     name: unit tests(bin)
-    needs: [setup-app, setup-bin]
+    needs: [changes, setup-app, setup-bin]
+    if: ${{ needs.changes.outputs.bin == 'true' }}
     runs-on: windows-2019
 
     steps:
@@ -154,25 +161,29 @@ jobs:
 
   e2e_test:
     name: e2e tests
-    needs: setup-app
+    needs: [changes, setup-app]
     runs-on: windows-2019
     strategy:
       matrix:
         directory:
           - 'e2e/[^s]*.js'
           - 'e2e/s*.js'
-          - 'api/*.js'
+          - 'api/[^s]*.js'
+          - 'api/s*.js'
 
     steps:
       - name: Checkout code
+        if: ${{ needs.changes.outputs.app == 'true' }}
         uses: actions/checkout@v4
 
       - name: Set up Node.js
+        if: ${{ needs.changes.outputs.app == 'true' }}
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
       - name: cache node modules
+        if: ${{ needs.changes.outputs.app == 'true' }}
         id: cache-node-modules
         uses: actions/cache@v4
         with:
@@ -180,7 +191,27 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('yarn.lock', 'scripts/preinstall.js', 'scripts/install-native-deps.js', 'scripts/repositories.json') }}
 
       - name: Compile
+        if: ${{ needs.changes.outputs.app == 'true' }}
         run: yarn compile:ci
 
       - name: Run e2e tests
+        if: ${{ needs.changes.outputs.app == 'true' }}
         run: yarn test --fail-fast test-dist/test/${{ matrix.directory }}
+
+  test-summary:
+    # 注意: needs に setupも入れないと、setupで失敗すると後段のresultが `skipped` になってしまい、すりぬけてしまう
+    needs: [setup-app, setup-bin, unit_test-app, unit_test-bin, e2e_test]
+    if: always()
+    steps:
+      - name: test-summary
+        run: |
+          echo '${{ toJson(needs) }}'
+          RESULT=${{ !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
+          echo RESULT=$RESULT
+          if [[ $RESULT == true ]]; then
+            echo "All tests passed"
+          else
+            echo "Some tests failed"
+            exit 1
+          fi
+    runs-on: ubuntu-latest
