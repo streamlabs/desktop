@@ -199,6 +199,7 @@ export class NicoliveCommentSynthesizerService extends StatefulService<ICommentS
 
     const toPlay = speech.synthesizer;
     const toPlaySynth = this.getSynthesizer(toPlay);
+    if (toPlaySynth === null) return;
 
     if (cancelBeforeSpeaking) {
       this.queue.cancel();
