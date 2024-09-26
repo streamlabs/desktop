@@ -426,14 +426,10 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
           }
         }),
         catchError(err => {
-          console.info(err);
+          console.info('Failed to connect comment stream', err);
           if (isNdgrFetchError(err)) {
             Sentry.withScope(scope => {
-              scope.setTags({
-                type: 'NdgrFetchError',
-                uri: err.uri,
-                status: `${err.status}`,
-              });
+              scope.setTags(err.getTagsForSentry());
               scope.setFingerprint([
                 'NicoliveCommentViewerService.connect',
                 'NdgrFetchError',

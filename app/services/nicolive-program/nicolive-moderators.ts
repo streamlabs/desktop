@@ -204,13 +204,8 @@ export class NicoliveModeratorsService extends StatefulService<INicoliveModerato
       console.info('Failed to connect moderator stream:', err);
       Sentry.withScope(scope => {
         scope.setFingerprint(['NicoliveModeratorsService', 'NdgrClient', 'connectError']);
-        scope.setTag('ndgr.type', 'moderator');
         if (isNdgrFetchError(err)) {
-          scope.setTags({
-            uri: err.uri,
-            label: err.label,
-            status: `${err.status}`,
-          });
+          scope.setTags(err.getTagsForSentry());
         }
         scope.captureException(err);
       });
