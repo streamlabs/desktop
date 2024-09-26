@@ -20,26 +20,13 @@ import { StatefulService, mutation } from 'services/core/stateful-service';
 import { CustomizationService } from 'services/customization';
 import { NicoliveCommentFilterService } from 'services/nicolive-program/nicolive-comment-filter';
 import { NicoliveProgramService } from 'services/nicolive-program/nicolive-program';
+import Utils from 'services/utils';
 import { WindowsService } from 'services/windows';
 import { FakeModeConfig, isFakeMode } from 'util/fakeMode';
+import { MessageResponse } from './ChatMessage';
 import { AddComponent } from './ChatMessage/ChatComponentType';
 import { classify } from './ChatMessage/classifier';
-import { IMessageServerClient, MessageServerConfig } from './MessageServerClient';
-import { NdgrCommentReceiver } from './NdgrCommentReceiver';
-import { NicoliveCommentLocalFilterService } from './nicolive-comment-local-filter';
-import { NicoliveCommentSynthesizerService } from './nicolive-comment-synthesizer';
-import { NicoliveModeratorsService } from './nicolive-moderators';
-import { FilterRecord } from './ResponseTypes';
-import { NicoliveSupportersService } from './nicolive-supporters';
-import { NicoliveProgramStateService } from './state';
-import {
-  WrappedChat,
-  WrappedChatWithComponent,
-  WrappedMessage,
-  WrappedMessageWithComponent,
-  isWrappedChat,
-} from './WrappedChat';
-import { isNdgrFetchError } from './NdgrFetchError';
+import { getDisplayText } from './ChatMessage/displaytext';
 import {
   isChatMessage,
   isGameUpdateMessage,
@@ -49,9 +36,23 @@ import {
   isOperatorMessage,
   isStateMessage,
 } from './ChatMessage/util';
-import { MessageResponse } from './ChatMessage';
-
 import { HttpRelation } from './httpRelation';
+import { IMessageServerClient, MessageServerConfig } from './MessageServerClient';
+import { NdgrCommentReceiver } from './NdgrCommentReceiver';
+import { isNdgrFetchError } from './NdgrFetchError';
+import { NicoliveCommentLocalFilterService } from './nicolive-comment-local-filter';
+import { NicoliveCommentSynthesizerService } from './nicolive-comment-synthesizer';
+import { NicoliveModeratorsService } from './nicolive-moderators';
+import { NicoliveSupportersService } from './nicolive-supporters';
+import { FilterRecord } from './ResponseTypes';
+import { NicoliveProgramStateService } from './state';
+import {
+  WrappedChat,
+  WrappedChatWithComponent,
+  WrappedMessage,
+  WrappedMessageWithComponent,
+  isWrappedChat,
+} from './WrappedChat';
 
 function makeEmulatedChat(
   content: string,
@@ -568,7 +569,24 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
         this.nicoliveProgramService.hidePlaceholder();
       }
     } catch (e) {
-      console.warn(e);
+      // ここで例外が飛んでしまうとコメントの受信が止まるので、ログだけ残して続行する
+      if (Utils.isDevMode()) {
+        console.warn(e);
+      }
+      Sentry.captureException(new Error('Unhandled exception in onMessage', { cause: e }), {
+        tags: {
+          error: 'Unhandled exception in onMessage',
+        },
+        extra: {
+          values: values.map(v => {
+            try {
+              return getDisplayText(v);
+            } catch (e) {
+              return `getDisplayText error: ${e}`;
+            }
+          }),
+        },
+      });
     }
   }
 

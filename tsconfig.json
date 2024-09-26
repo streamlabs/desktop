@@ -2,7 +2,7 @@
   "compileOnSave": false,
   "compilerOptions": {
     "target": "es5",
-    "lib": ["dom", "es7", "es2017", "ES2020"],
+    "lib": ["dom", "es7", "es2017", "ES2020", "ES2022"],
     "module": "es2015",
     "moduleResolution": "node",
     "isolatedModules": false,
