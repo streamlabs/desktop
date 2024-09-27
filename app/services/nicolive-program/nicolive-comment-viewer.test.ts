@@ -403,10 +403,10 @@ test('スレッドの参加失敗時にメッセージを表示する', async ()
   const { instance, clientSubject } = connectionSetup();
   await sleep(0);
 
-  const e = new NdgrFetchError(404, 'yay', 'test');
+  const e = new NdgrFetchError(404, 'yay', 'test', 'head');
   expect(e instanceof NdgrFetchError).toBeTruthy();
   expect(e.name).toBe('NdgrFetchError');
-  clientSubject.error(new NdgrFetchError(404, 'yay', 'test'));
+  clientSubject.error(new NdgrFetchError(404, 'yay', 'test', 'head'));
 
   // bufferTime tweaks
   clientSubject.complete();

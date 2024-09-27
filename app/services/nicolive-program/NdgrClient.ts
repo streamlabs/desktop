@@ -69,11 +69,25 @@ export class NdgrClient {
   public async connect(from_unix_time?: number | 'now', numBackward = 0): Promise<void> {
     let next: number | Long | string = from_unix_time ?? 'now';
     let initPhase = true;
+
+    Sentry.addBreadcrumb({
+      category: 'ndgr-connect',
+      data: {
+        uri: this.uri,
+        from_unix_time,
+        numBackward,
+      },
+      message: this.options.label,
+      level: 'info',
+    });
+
     while (next && !this.isDisposed) {
       const fetchUri = `${this.uri}?at=${next}`;
       next = null;
-      for await (const entry of this.retrieve(fetchUri, reader =>
-        dwango.nicolive.chat.service.edge.ChunkedEntry.decodeDelimited(reader),
+      for await (const entry of this.retrieve(
+        fetchUri,
+        reader => dwango.nicolive.chat.service.edge.ChunkedEntry.decodeDelimited(reader),
+        'head',
       )) {
         if (entry.backward != null) {
           if (initPhase && numBackward > 0) {
@@ -84,11 +98,11 @@ export class NdgrClient {
           }
         } else if (entry.previous != null) {
           if (initPhase) {
-            await this.retrieveMessages(entry.previous.uri);
+            await this.retrieveMessages(entry.previous.uri, 'previous');
           }
         } else if (entry.segment != null) {
           initPhase = false;
-          await this.retrieveMessages(entry.segment.uri);
+          await this.retrieveMessages(entry.segment.uri, 'segment');
         } else if (entry.next != null) {
           next = entry.next.at;
         }
@@ -96,7 +110,10 @@ export class NdgrClient {
     }
   }
 
-  private async fetchWithHandling(uri: string): Promise<Response> {
+  private async fetchWithHandling(
+    uri: string,
+    phase: 'head' | 'backwards' | 'previous' | 'segment',
+  ): Promise<Response> {
     let response: Response;
     for (let retryRemain = this.options.maxRetry; retryRemain >= 0; retryRemain--) {
       try {
@@ -104,24 +121,24 @@ export class NdgrClient {
         break;
       } catch (error) {
         if (retryRemain === 0 || !`${error}`.includes('network error')) {
-          throw new NdgrFetchError(error as Error, uri, this.options.label);
+          throw new NdgrFetchError(error as Error, uri, this.options.label, phase);
         } else {
-          Sentry.withScope(scope => {
-            scope.setLevel('warning');
-            scope.setTags({
-              category: 'ndgr',
+          Sentry.addBreadcrumb({
+            category: 'ndgr-network-error',
+            data: {
               uri,
+              type: this.options.label,
+              phase,
               try: this.options.maxRetry - retryRemain,
-              label: this.options.label,
-            });
-            scope.setFingerprint(['ndgr-fetch-error', this.options.label]);
-            Sentry.captureMessage(`Failed to fetch(${uri}): ${error}`);
+            },
+            message: `[${this.options.label}:${phase}]: ${error}`,
+            level: 'warning',
           });
         }
         await sleep(this.options.retryInterval);
       }
     }
-    if (!response.ok) throw new NdgrFetchError(response.status, uri, this.options.label);
+    if (!response.ok) throw new NdgrFetchError(response.status, uri, this.options.label, phase);
     return response;
   }
 
@@ -136,7 +153,7 @@ export class NdgrClient {
     let length = 0;
 
     while (length < want) {
-      const resp = await this.fetchWithHandling(fetchUri);
+      const resp = await this.fetchWithHandling(fetchUri, 'backwards');
       const body = await resp.arrayBuffer();
       const packed = dwango.nicolive.chat.service.edge.PackedSegment.decode(new Uint8Array(body));
       buf.unshift(packed.messages);
@@ -152,9 +169,11 @@ export class NdgrClient {
     return result;
   }
 
-  private async retrieveMessages(uri: string): Promise<void> {
-    for await (const msg of this.retrieve(uri, reader =>
-      dwango.nicolive.chat.service.edge.ChunkedMessage.decodeDelimited(reader),
+  private async retrieveMessages(uri: string, phase: 'previous' | 'segment'): Promise<void> {
+    for await (const msg of this.retrieve(
+      uri,
+      reader => dwango.nicolive.chat.service.edge.ChunkedMessage.decodeDelimited(reader),
+      phase,
     )) {
       if (this.isDisposed) return;
       this.messages.next(msg);
@@ -167,9 +186,10 @@ export class NdgrClient {
   private async *retrieve<T>(
     uri: string,
     decoder: (reader: Reader) => T,
+    phase: 'head' | 'previous' | 'segment',
   ): AsyncGenerator<T, void, undefined> {
     let unread = new Uint8Array();
-    const response = await this.fetchWithHandling(uri);
+    const response = await this.fetchWithHandling(uri, phase);
     const reader = response.body.getReader();
     while (true) {
       const { done, value } = await reader.read();
