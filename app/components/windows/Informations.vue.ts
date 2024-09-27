@@ -5,7 +5,7 @@ import { WindowsService } from 'services/windows';
 import { InformationsService } from 'services/informations';
 import ModalLayout from 'components/ModalLayout.vue';
 import { shell } from 'electron';
-import moment from 'moment';
+import { DateTime } from 'luxon';
 
 const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
 
@@ -34,7 +34,7 @@ export default class Informations extends Vue {
   }
 
   format(unixtime: number) {
-    return moment(unixtime).format('YYYY-MM-DD');
+    return DateTime.fromMillis(unixtime).toFormat('yyyy-MM-dd');
   }
 
   shouldShowNewLabel(unixtime: number) {

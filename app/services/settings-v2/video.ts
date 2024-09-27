@@ -4,6 +4,7 @@ import { mutation, StatefulService } from '../core/stateful-service';
 import { IVideoInfo, EScaleType, EFPSType, IVideo, VideoFactory, Video } from '../../../obs-api';
 import { SettingsService } from 'services/settings';
 import { Subject } from 'rxjs';
+import { getKeys } from 'util/getKeys';
 
 /**
  * Display Types
@@ -266,7 +267,7 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
     const legacySettings = this.contexts[display].legacySettings;
     this.contexts[display].video = legacySettings;
 
-    Object.keys(legacySettings).forEach((key: any) => {
+    getKeys(legacySettings).forEach(key => {
       this.SET_VIDEO_SETTING(key, legacySettings[key], 'horizontal');
     });
   }

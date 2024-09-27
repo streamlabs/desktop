@@ -3,6 +3,7 @@ import { cloneDeep } from 'lodash';
 import { Component, Prop } from 'vue-property-decorator';
 import uuid from 'uuid/v4';
 import { IInputMetadata } from './index';
+import { getKeys } from 'util/getKeys';
 
 export class BaseInput<TValueType, TMetadataType extends IInputMetadata> extends Vue {
   @Prop()
@@ -22,6 +23,7 @@ export class BaseInput<TValueType, TMetadataType extends IInputMetadata> extends
 
   emitInput(eventData: TValueType, event?: any) {
     this.$emit('input', eventData, event);
+    // @ts-expect-error ts7053
     if (this.$parent['emitInput']) this.$parent['emitInput'](eventData, event);
   }
 
@@ -34,7 +36,7 @@ export class BaseInput<TValueType, TMetadataType extends IInputMetadata> extends
    */
   get validate() {
     const validations = this.getValidations();
-    Object.keys(validations).forEach(key => {
+    getKeys(validations).forEach(key => {
       // VeeValidate recognizes undefined values as valid constraints
       // so just remove it
       if (validations[key] === void 0) delete validations[key];

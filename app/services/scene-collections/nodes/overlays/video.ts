@@ -47,7 +47,7 @@ export class VideoNode extends Node<ISchema, IContext> {
 
   async load(context: IContext) {
     const filePath = path.join(context.assetsPath, this.data.filename);
-    const settings = { ...this.data.settings };
+    const settings: Dictionary<any> = { ...this.data.settings };
     settings['local_file'] = filePath;
     context.sceneItem.getObsInput().update(settings);
 

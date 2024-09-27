@@ -290,5 +290,6 @@ function getInputControllerForType<
   TReturnType extends new (...args: any) => BaseInputController<any>,
 >(type: string): TReturnType {
   const controllerName = pascalize(type) + 'InputController';
+  // @ts-expect-error ts7053
   return inputControllers[controllerName];
 }

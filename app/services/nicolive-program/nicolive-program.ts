@@ -3,7 +3,13 @@ import { BehaviorSubject } from 'rxjs';
 import { Inject } from 'services/core/injector';
 import { mutation, StatefulService } from 'services/core/stateful-service';
 import { UserService } from 'services/user';
-import { CreateResult, EditResult, isOk, NicoliveClient } from './NicoliveClient';
+import {
+  calcServerClockOffsetSec,
+  CreateResult,
+  EditResult,
+  isOk,
+  NicoliveClient,
+} from './NicoliveClient';
 import { NicoliveFailure, openErrorDialogFromFailure } from './NicoliveFailure';
 import { ProgramSchedules } from './ResponseTypes';
 import { NicoliveProgramStateService } from './state';
@@ -44,6 +50,9 @@ interface INicoliveProgramState extends ProgramState {
   isExtending: boolean;
   isStarting: boolean;
   isEnding: boolean;
+
+  // 永続化しない情報だが、ProgramStateにもたせたいためここに置く
+  serverClockOffsetSec?: number; // in seconds
 }
 
 export enum PanelState {
@@ -134,6 +143,11 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
   @mutation()
   private SET_STATE(nextState: INicoliveProgramState): void {
     this.state = nextState;
+  }
+
+  // corrected clock in milliseconds
+  public correctedNowMs(rawNow = Date.now()): number {
+    return rawNow - (this.state.serverClockOffsetSec ?? 0) * 1000;
   }
 
   /**
@@ -233,6 +247,7 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
         endTime: now + 60 * 60,
         isMemberOnly: true,
         viewUri: 'viewUri',
+        serverClockOffsetSec: 0,
       });
       return;
     }
@@ -275,6 +290,7 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
         isMemberOnly: program.isMemberOnly,
         viewUri: room ? room.viewUri : '',
         ...(program.moderatorViewUri ? { moderatorViewUri: program.moderatorViewUri } : {}),
+        serverClockOffsetSec: calcServerClockOffsetSec(programResponse),
       });
       if (program.status === 'test') {
         this.showPlaceholder();
@@ -305,6 +321,7 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
       endTime: program.endAt,
       isMemberOnly: program.isMemberOnly,
       viewUri: room ? room.viewUri : '',
+      serverClockOffsetSec: calcServerClockOffsetSec(programResponse),
     });
   }
 
@@ -451,8 +468,8 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
     }
   }
 
-  static TIMER_PADDING_SECONDS = 3;
-  static REFRESH_TARGET_TIME_TABLE = {
+  static TIMER_PADDING_SECONDS = 3 as const;
+  static REFRESH_TARGET_TIME_TABLE: { [state: string]: 'startTime' | 'endTime' } = {
     reserved: 'startTime',
     test: 'startTime',
     onAir: 'endTime',
@@ -465,13 +482,14 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
     const programUpdated = prevState.programID !== nextState.programID;
     const statusUpdated = prevState.status !== nextState.status;
 
+    const now = this.correctedNowMs();
+
     /** 放送状態が変化しなかった前提で、放送状態が次に変化するであろう時刻 */
     const prevTargetTime: number =
       prevState[NicoliveProgramService.REFRESH_TARGET_TIME_TABLE[nextState.status]];
     /*: 予約番組で現在時刻が開始時刻より30分以上前なら、30分を切ったときに再取得するための補正項 */
     const readyTimeTermIfReserved =
-      nextState.status === 'reserved' &&
-      nextState.startTime - Math.floor(Date.now() / 1000) > 30 * 60
+      nextState.status === 'reserved' && nextState.startTime - Math.floor(now / 1000) > 30 * 60
         ? -30 * 60
         : 0;
     const nextTargetTime: number =
@@ -490,7 +508,6 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
         targetTimeUpdated ||
         nextState.status === 'reserved') // 予約中は30分前境界を越えたときに status が 'reserved' のまま変わらないためタイマーを再設定できていなかったので雑に予約中なら毎回設定する
     ) {
-      const now = Date.now();
       const waitTime = (nextTargetTime + NicoliveProgramService.TIMER_PADDING_SECONDS) * 1000 - now;
 
       // 次に放送状態が変化する予定の時刻（より少し後）に放送情報を更新するタイマーを仕込む

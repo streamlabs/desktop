@@ -38,6 +38,7 @@ export class CustomizationService
     compactMaximized: false,
     autoCompactMode: false,
     showAutoCompactDialog: true,
+    compactAlwaysOnTop: false,
 
     experimental: {
       // put experimental features here
@@ -135,6 +136,10 @@ export class CustomizationService
 
   setShowAutoCompactDialog(show: boolean) {
     this.setSettings({ showAutoCompactDialog: show });
+  }
+
+  setCompactAlwaysOnTop(compactAlwaysOnTop: boolean) {
+    this.setSettings({ compactAlwaysOnTop });
   }
 
   setFullModeWidthOffset(state: {

@@ -2,7 +2,7 @@
   "compilerOptions": {
     "outDir": "../test-dist",
     "target": "es5",
-    "lib": ["dom", "es7", "es2017", "ES2020"],
+    "lib": ["dom", "es7", "es2017", "ES2020", "ES2022"],
     "module": "commonjs",
     "sourceMap": true,
     "allowJs": true,
@@ -12,7 +12,6 @@
     "experimentalDecorators": true,
     "noImplicitThis": true,
     "removeComments": true,
-    "suppressImplicitAnyIndexErrors": true,
     "strictNullChecks": false,
     "emitDecoratorMetadata": true,
     "downlevelIteration": true,

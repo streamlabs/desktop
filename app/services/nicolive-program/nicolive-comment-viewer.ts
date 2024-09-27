@@ -20,26 +20,13 @@ import { StatefulService, mutation } from 'services/core/stateful-service';
 import { CustomizationService } from 'services/customization';
 import { NicoliveCommentFilterService } from 'services/nicolive-program/nicolive-comment-filter';
 import { NicoliveProgramService } from 'services/nicolive-program/nicolive-program';
+import Utils from 'services/utils';
 import { WindowsService } from 'services/windows';
 import { FakeModeConfig, isFakeMode } from 'util/fakeMode';
+import { MessageResponse } from './ChatMessage';
 import { AddComponent } from './ChatMessage/ChatComponentType';
 import { classify } from './ChatMessage/classifier';
-import { IMessageServerClient, MessageServerConfig } from './MessageServerClient';
-import { NdgrCommentReceiver } from './NdgrCommentReceiver';
-import { NicoliveCommentLocalFilterService } from './nicolive-comment-local-filter';
-import { NicoliveCommentSynthesizerService } from './nicolive-comment-synthesizer';
-import { NicoliveModeratorsService } from './nicolive-moderators';
-import { FilterRecord } from './ResponseTypes';
-import { NicoliveSupportersService } from './nicolive-supporters';
-import { NicoliveProgramStateService } from './state';
-import {
-  WrappedChat,
-  WrappedChatWithComponent,
-  WrappedMessage,
-  WrappedMessageWithComponent,
-  isWrappedChat,
-} from './WrappedChat';
-import { isNdgrFetchError } from './NdgrFetchError';
+import { getDisplayText } from './ChatMessage/displaytext';
 import {
   isChatMessage,
   isGameUpdateMessage,
@@ -49,9 +36,23 @@ import {
   isOperatorMessage,
   isStateMessage,
 } from './ChatMessage/util';
-import { MessageResponse } from './ChatMessage';
-
 import { HttpRelation } from './httpRelation';
+import { IMessageServerClient, MessageServerConfig } from './MessageServerClient';
+import { NdgrCommentReceiver } from './NdgrCommentReceiver';
+import { isNdgrFetchError } from './NdgrFetchError';
+import { NicoliveCommentLocalFilterService } from './nicolive-comment-local-filter';
+import { NicoliveCommentSynthesizerService } from './nicolive-comment-synthesizer';
+import { NicoliveModeratorsService } from './nicolive-moderators';
+import { NicoliveSupportersService } from './nicolive-supporters';
+import { FilterRecord } from './ResponseTypes';
+import { NicoliveProgramStateService } from './state';
+import {
+  WrappedChat,
+  WrappedChatWithComponent,
+  WrappedMessage,
+  WrappedMessageWithComponent,
+  isWrappedChat,
+} from './WrappedChat';
 
 function makeEmulatedChat(
   content: string,
@@ -187,6 +188,16 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
       )
       .subscribe(state => this.onNextConfig(state));
 
+    // 番組終了時にメッセージを追加する
+    this.nicoliveProgramService.stateChange
+      .pipe(
+        distinctUntilChanged((prev, curr) => prev.status === curr.status),
+        filter(({ status }) => status === 'end'),
+      )
+      .subscribe(() => {
+        this.onProgramEnd();
+      });
+
     this.nicoliveCommentFilterService.stateChange.subscribe(() => {
       // updateMessagesはPinまで更新してしまうが、ここではpinは更新しない
       this.SET_STATE({
@@ -239,6 +250,11 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
     });
   }
 
+  private onProgramEnd() {
+    // addSystemMessage だと番組終了によるコメント通信切断後だと流れないため、onMessageで直接追加する
+    this.onMessage([{ ...AddComponent(makeEmulatedChat('番組が終了しました')), seqId: -1 }]);
+  }
+
   private systemMessages = new Subject<Pick<WrappedChat, 'type' | 'value' | 'isModerator'>>();
   addSystemMessage(message: Pick<WrappedChat, 'type' | 'value' | 'isModerator'>) {
     this.systemMessages.next(message);
@@ -248,11 +264,12 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
   nextConfigLoaded: Subject<void> = new Subject();
   private onNextConfig({ viewUri }: MessageServerConfig): void {
     this.unsubscribe();
-    this.clearList();
-    this.pinComment(null);
 
     // 予約番組は30分前にならないとURLが来ない
     if (!viewUri) return;
+
+    this.clearList();
+    this.pinComment(null);
 
     if (isFakeMode() && FakeModeConfig.dummyComment) {
       // yarn dev 時はダミーでコメントを5秒ごとに出し続ける
@@ -269,7 +286,7 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
     this.clearList();
     // 再接続ではピン止めは解除しない
 
-    await this.connect();
+    this.connect();
   }
 
   private unsubscribe() {
@@ -394,6 +411,8 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
                     // completeが発生しないのでサーバーとの接続終了メッセージは出ない
                     // `/disconnect` の代わりのメッセージは出さない仕様なので問題ない
                     this.unsubscribe();
+                    // 番組情報を更新する
+                    this.nicoliveProgramService.refreshProgram();
                   }
                 }),
                 ignoreElements(),
@@ -407,14 +426,10 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
           }
         }),
         catchError(err => {
-          console.info(err);
+          console.info('Failed to connect comment stream', err);
           if (isNdgrFetchError(err)) {
             Sentry.withScope(scope => {
-              scope.setTags({
-                type: 'NdgrFetchError',
-                uri: err.uri,
-                status: `${err.status}`,
-              });
+              scope.setTags(err.getTagsForSentry());
               scope.setFingerprint([
                 'NicoliveCommentViewerService.connect',
                 'NdgrFetchError',
@@ -499,54 +514,75 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
   }
 
   private onMessage(values: WrappedMessageWithComponent[]) {
-    const maxQueueToSpeak = 3; // 直近3件つづ読み上げ対象にする
-    const recentSeconds = 60;
+    try {
+      const maxQueueToSpeak = 3; // 直近3件つづ読み上げ対象にする
+      const recentSeconds = 60;
 
-    const nowSeconds = Date.now() / 1000;
+      const nowSeconds = Date.now() / 1000;
 
-    const valuesForSpeech = values.filter(c => {
-      if (!this.filterFn(c)) {
-        return false;
-      }
-      if (!c.value || !c.value.date) {
-        return false;
-      }
-      return c.value.date > nowSeconds - recentSeconds;
-    });
-
-    // send to http relation
-    const httpRelation = this.nicoliveProgramStateService.state.httpRelation;
-    if (httpRelation && httpRelation.method) {
-      valuesForSpeech.forEach(a => {
-        HttpRelation.sendChat(a, httpRelation);
+      const valuesForSpeech = values.filter(c => {
+        if (!this.filterFn(c)) {
+          return false;
+        }
+        if (!c.value || !c.value.date) {
+          return false;
+        }
+        return c.value.date > nowSeconds - recentSeconds;
       });
-    }
 
-    if (this.nicoliveProgramStateService.state.nameplateHint === undefined) {
-      const firstCommentWithName = values.find(
-        c => isWrappedChat(c) && !!c.value.name && c.value.no,
-      );
-      if (firstCommentWithName && isWrappedChat(firstCommentWithName)) {
-        this.nicoliveProgramService.checkNameplateHint(firstCommentWithName.value.no);
+      // send to http relation
+      const httpRelation = this.nicoliveProgramStateService.state.httpRelation;
+      if (httpRelation && httpRelation.method) {
+        valuesForSpeech.forEach(a => {
+          HttpRelation.sendChat(a, httpRelation);
+        });
       }
-    }
 
-    this.queueToSpeech(valuesForSpeech.slice(-maxQueueToSpeak));
+      if (this.nicoliveProgramStateService.state.nameplateHint === undefined) {
+        const firstCommentWithName = values.find(
+          c => isWrappedChat(c) && !!c.value.name && c.value.no,
+        );
+        if (firstCommentWithName && isWrappedChat(firstCommentWithName)) {
+          this.nicoliveProgramService.checkNameplateHint(firstCommentWithName.value.no);
+        }
+      }
 
-    const maxRetain = 100; // 最新からこの件数を一覧に保持する
-    const concatMessages = this.state.messages.concat(values);
-    const popoutMessages = concatMessages.slice(0, -maxRetain);
-    const messages = concatMessages.slice(-maxRetain);
-    const firstCommentArrived = this.state.messages.length === 0 && messages.length > 0;
-    this.SET_STATE({
-      messages,
-      popoutMessages,
-    });
-    if (!this.customizationService.state.compactModeNewComment) {
-      this.customizationService.setCompactModeNewComment(true);
-    }
-    if (firstCommentArrived) {
-      this.nicoliveProgramService.hidePlaceholder();
+      this.queueToSpeech(valuesForSpeech.slice(-maxQueueToSpeak));
+
+      const maxRetain = 100; // 最新からこの件数を一覧に保持する
+      const concatMessages = this.state.messages.concat(values);
+      const popoutMessages = concatMessages.slice(0, -maxRetain);
+      const messages = concatMessages.slice(-maxRetain);
+      const firstCommentArrived = this.state.messages.length === 0 && messages.length > 0;
+      this.SET_STATE({
+        messages,
+        popoutMessages,
+      });
+      if (!this.customizationService.state.compactModeNewComment) {
+        this.customizationService.setCompactModeNewComment(true);
+      }
+      if (firstCommentArrived) {
+        this.nicoliveProgramService.hidePlaceholder();
+      }
+    } catch (e) {
+      // ここで例外が飛んでしまうとコメントの受信が止まるので、ログだけ残して続行する
+      if (Utils.isDevMode()) {
+        console.warn(e);
+      }
+      Sentry.captureException(new Error('Unhandled exception in onMessage', { cause: e }), {
+        tags: {
+          error: 'Unhandled exception in onMessage',
+        },
+        extra: {
+          values: values.map(v => {
+            try {
+              return getDisplayText(v);
+            } catch (e) {
+              return `getDisplayText error: ${e}`;
+            }
+          }),
+        },
+      });
     }
   }
 

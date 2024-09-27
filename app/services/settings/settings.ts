@@ -104,7 +104,9 @@ export class SettingsService
     for (const groupName in settingsFormData) {
       settingsFormData[groupName].forEach(subGroup => {
         subGroup.parameters.forEach(parameter => {
+          // @ts-expect-error ts7053
           settingsState[groupName] = settingsState[groupName] || {};
+          // @ts-expect-error ts7053
           settingsState[groupName][parameter.name] = parameter.value;
         });
       });
@@ -132,7 +134,7 @@ export class SettingsService
 
   loadSettingsIntoStore() {
     // load configuration from nodeObs to state
-    const settingsFormData = {};
+    const settingsFormData: Dictionary<any> = {};
     this.getCategories().forEach(categoryName => {
       settingsFormData[categoryName] = this.getSettingsFormData(categoryName);
     });

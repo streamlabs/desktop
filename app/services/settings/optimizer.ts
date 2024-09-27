@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/vue';
 import { IObsInput, IObsListInput, TObsFormData, TObsValue } from 'components/obs/inputs/ObsInput';
 import { $t } from 'services/i18n';
 import { ISettingsSubCategory } from './settings-api';
+import { getKeys } from 'util/getKeys';
 
 export enum EncoderType {
   x264 = 'obs_x264',
@@ -902,7 +903,7 @@ export class Optimizer {
     expect: OptimizeSettings,
   ): IterableIterator<OptimizeSettings> {
     // 最適化の必要な値を抽出する
-    for (const key of Object.getOwnPropertyNames(expect)) {
+    for (const key of getKeys(expect)) {
       if (current[key] !== expect[key]) {
         yield { [key]: expect[key] };
       }

@@ -1,6 +1,8 @@
 import { createSetupFunction } from 'util/test-setup';
 import { ProgramInfo } from './ResponseTypes';
 import { MAX_PROGRAM_DURATION_SECONDS } from './nicolive-constants';
+import { calcServerClockOffsetSec, type NicoliveClient } from './NicoliveClient';
+import { jest_fn } from 'util/jest_fn';
 
 type NicoliveProgramService = import('./nicolive-program').NicoliveProgramService;
 
@@ -282,6 +284,7 @@ test('fetchProgram:testのときはshowPlaceholderをtrueにする', async () =>
           "endTime": 150,
           "isMemberOnly": true,
           "programID": "lv1",
+          "serverClockOffsetSec": 0,
           "startTime": 100,
           "status": "test",
           "title": "番組タイトル",
@@ -332,6 +335,7 @@ test('fetchProgram:成功', async () => {
           "endTime": 150,
           "isMemberOnly": true,
           "programID": "lv1",
+          "serverClockOffsetSec": 0,
           "startTime": 100,
           "status": "onAir",
           "title": "番組タイトル",
@@ -410,6 +414,7 @@ test('fetchProgramでコミュ情報がエラーでも番組があったら先�
           "endTime": 150,
           "isMemberOnly": true,
           "programID": "lv1",
+          "serverClockOffsetSec": 0,
           "startTime": 100,
           "status": "onAir",
           "title": "番組タイトル",
@@ -445,6 +450,7 @@ test('refreshProgram:成功', async () => {
         "description": "番組詳細情報",
         "endTime": 150,
         "isMemberOnly": true,
+        "serverClockOffsetSec": 0,
         "startTime": 100,
         "status": "onAir",
         "title": "番組タイトル",
@@ -1193,4 +1199,33 @@ describe('refreshAutoExtensionTimer', () => {
       }
     });
   }
+});
+
+test('serverClockOffsetSec に基づいて correctedNowMs が計算される', async () => {
+  setup();
+  const instance = require('./nicolive-program').NicoliveProgramService
+    .instance as NicoliveProgramService;
+
+  const SERVER_NOW = 0;
+  const OFFSET = 5; // clientが5秒進んでいる
+  const CLIENT_NOW = SERVER_NOW + OFFSET * 1000;
+  jest.spyOn(Date, 'now').mockImplementation(jest.fn().mockReturnValue(CLIENT_NOW));
+  jest.spyOn(window, 'setTimeout').mockImplementation(jest.fn());
+  jest.spyOn(window, 'clearTimeout').mockImplementation(jest.fn());
+
+  instance.client.fetchProgram = jest_fn<NicoliveClient['fetchProgram']>().mockResolvedValue({
+    ok: true,
+    value: {
+      status: 'end',
+      rooms: [],
+    } as ProgramInfo['data'],
+    serverDateMs: SERVER_NOW,
+  });
+  expect(calcServerClockOffsetSec({ serverDateMs: SERVER_NOW }, CLIENT_NOW)).toBe(OFFSET);
+
+  await instance.refreshProgram();
+  expect(instance.client.fetchProgram).toHaveBeenCalledTimes(1);
+
+  expect(instance.state.serverClockOffsetSec).toBe(OFFSET);
+  expect(instance.correctedNowMs(CLIENT_NOW)).toBe(SERVER_NOW);
 });

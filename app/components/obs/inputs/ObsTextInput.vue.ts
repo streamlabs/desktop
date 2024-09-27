@@ -16,7 +16,7 @@ class ObsTextInput extends ObsInput<IObsInput<string>> {
   }
 
   onInputHandler(event: Event) {
-    this.emitInput({ ...this.value, value: event.target['value'] });
+    this.emitInput({ ...this.value, value: (event.target as HTMLInputElement)['value'] });
   }
 }
 

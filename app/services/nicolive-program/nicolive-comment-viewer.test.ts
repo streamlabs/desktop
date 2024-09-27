@@ -128,7 +128,7 @@ test('接続先情報が来たら接続する', async () => {
   const instance = NicoliveCommentViewerService.instance as NicoliveCommentViewerService;
 
   expect(clientSubject.observers).toHaveLength(0);
-  expect(stateChange.observers).toHaveLength(1);
+  expect(stateChange.observers).toHaveLength(2);
   stateChange.next({ viewUri: 'https://example.com' });
   expect(clientSubject.observers).toHaveLength(1);
 });
@@ -149,12 +149,12 @@ test('接続先情報が欠けていたら接続しない', () => {
   const instance = NicoliveCommentViewerService.instance as NicoliveCommentViewerService;
 
   expect(clientSubject.observers).toHaveLength(0);
-  expect(stateChange.observers).toHaveLength(1);
+  expect(stateChange.observers).toHaveLength(2);
   stateChange.next({ viewUri: '' });
   expect(clientSubject.observers).toHaveLength(0);
 });
 
-test('status=endedが流れてきたらunsubscribeする', () => {
+test('status=endedが流れてきたらunsubscribeし、refreshProgramも呼ぶ', () => {
   const stateChange = new Subject();
   const clientSubject = new Subject<MessageResponse>();
   jest.doMock('./NdgrCommentReceiver', () => {
@@ -168,7 +168,8 @@ test('status=endedが流れてきたらunsubscribeする', () => {
     };
   });
   jest.spyOn(window, 'setTimeout').mockImplementation(callback => callback() as any);
-  setup({ injectee: { NicoliveProgramService: { stateChange } } });
+  const refreshProgram = jest.fn().mockName('refreshProgram');
+  setup({ injectee: { NicoliveProgramService: { stateChange, refreshProgram } } });
 
   const { NicoliveCommentViewerService } = require('./nicolive-comment-viewer');
   const instance = NicoliveCommentViewerService.instance as NicoliveCommentViewerService;
@@ -181,8 +182,13 @@ test('status=endedが流れてきたらunsubscribeする', () => {
   expect(clientSubject.observers).toHaveLength(1);
   expect(unsubscribe).toHaveBeenCalledTimes(1);
 
+  expect(refreshProgram).toHaveBeenCalledTimes(0);
+
   clientSubject.next({ state: { state: 'ended' } });
   expect(unsubscribe).toHaveBeenCalledTimes(2);
+
+  // ended が来たら refreshProgramも呼ばれる
+  expect(refreshProgram).toHaveBeenCalledTimes(1);
 });
 
 const MODERATOR_ID = '123';
@@ -397,10 +403,10 @@ test('スレッドの参加失敗時にメッセージを表示する', async ()
   const { instance, clientSubject } = connectionSetup();
   await sleep(0);
 
-  const e = new NdgrFetchError(404, 'yay', 'test');
+  const e = new NdgrFetchError(404, 'yay', 'test', 'head');
   expect(e instanceof NdgrFetchError).toBeTruthy();
   expect(e.name).toBe('NdgrFetchError');
-  clientSubject.error(new NdgrFetchError(404, 'yay', 'test'));
+  clientSubject.error(new NdgrFetchError(404, 'yay', 'test', 'head'));
 
   // bufferTime tweaks
   clientSubject.complete();

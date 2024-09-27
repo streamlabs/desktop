@@ -7,7 +7,7 @@ import { StatefulService, mutation } from 'services/core/stateful-service';
 import * as obs from '../../../obs-api';
 import { Inject } from 'services/core/injector';
 import namingHelpers from 'util/NamingHelpers';
-import { WindowsService } from 'services/windows';
+import { IWindowOptions, WindowsService } from 'services/windows';
 import { DefaultManager } from './properties-managers/default-manager';
 import { NVoiceCharacterManager } from './properties-managers/nvoice-character-manager';
 import { CustomCastNdiManager } from './properties-managers/custom-cast-ndi-manager';
@@ -31,6 +31,7 @@ import { InitAfter } from 'services/core';
 import { RtvcStateService } from '../../services/rtvcStateService';
 import * as Sentry from '@sentry/vue';
 import { IPCWrapper } from 'services/ipc-wrapper';
+import { getKeys } from 'util/getKeys';
 
 const AudioFlag = obs.ESourceOutputFlags.Audio;
 const VideoFlag = obs.ESourceOutputFlags.Video;
@@ -247,15 +248,15 @@ export class SourcesService extends StatefulService<ISourcesState> implements IS
       ],
       browser_source: ['html'],
       text_gdiplus: ['txt'],
-    };
+    } as const;
     let ext = path.split('.').splice(-1)[0];
     if (!ext) return null;
     ext = ext.toLowerCase();
     const filename = path.split('\\').splice(-1)[0];
 
-    const types = Object.keys(SUPPORTED_EXT);
+    const types = getKeys(SUPPORTED_EXT);
     for (const type of types) {
-      if (!SUPPORTED_EXT[type].includes(ext)) continue;
+      if (!(SUPPORTED_EXT[type] as readonly string[]).includes(ext)) continue;
       let settings: Dictionary<TObsValue>;
       if (type === 'image_source') {
         settings = { file: path };
@@ -592,7 +593,7 @@ export class SourcesService extends StatefulService<ISourcesState> implements IS
       return;
     }
 
-    const config = {
+    const config: Partial<IWindowOptions> = {
       componentName: 'SourceProperties',
       title: $t('sources.propertyWindowTitle', { sourceName: source.name }),
       queryParams: { sourceId },

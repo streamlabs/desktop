@@ -64,7 +64,7 @@ export class ExternalApiService extends RpcApi {
    * List of all API resources
    * @see RpcApi.getResource()
    */
-  private resources = { ...apiResources };
+  private resources: Dictionary<any> = { ...apiResources };
   /**
    * Instances of singleton resources
    */

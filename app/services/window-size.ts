@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcRenderer } from 'electron';
+import { ipcRenderer } from 'electron';
 import { BehaviorSubject } from 'rxjs';
 import { Inject } from './core/injector';
 import { mutation, StatefulService } from './core/stateful-service';
@@ -6,13 +6,13 @@ import { CustomizationService } from './customization/customization';
 import { NavigationService } from './navigation';
 import { NicoliveProgramStateService } from './nicolive-program/state';
 import { UserService } from './user';
-import { WindowsService } from './windows';
 
 interface IWindowSizeState {
   panelOpened: boolean | null; // 初期化前はnull、永続化された値の読み出し後に値が入る
   isLoggedIn: boolean | null; // 初期化前はnull、永続化された値の読み出し後に値が入る
   isCompact: boolean | null;
   isNavigating: boolean;
+  isAlwaysOnTop: boolean;
 }
 
 const STUDIO_WIDTH = 800;
@@ -36,7 +36,7 @@ type BackupSizeInfo = {
 };
 
 const MWOpKey = 'mainwindow-operation';
-class MainWindowOperation {
+export class MainWindowOperation {
   getPosition = (): number[] => ipcRenderer.sendSync(MWOpKey, 'getPosition');
   setPosition = (a: number, b: number) => ipcRenderer.sendSync(MWOpKey, 'setPosition', a, b);
   getSize = (): number[] => ipcRenderer.sendSync(MWOpKey, 'getSize');
@@ -48,10 +48,11 @@ class MainWindowOperation {
   maximize = () => ipcRenderer.sendSync(MWOpKey, 'maximize');
   unmaximize = () => ipcRenderer.sendSync(MWOpKey, 'unmaximize');
   setMaximizable = (a: boolean) => ipcRenderer.sendSync(MWOpKey, 'setMaximizable', a);
+  setAlwaysOnTop = (a: boolean) => ipcRenderer.sendSync(MWOpKey, 'setAlwaysOnTop', a);
+  isAlwaysOnTop = (): boolean => ipcRenderer.sendSync(MWOpKey, 'isAlwaysOnTop');
 }
 
 export class WindowSizeService extends StatefulService<IWindowSizeState> {
-  @Inject() windowsService: WindowsService;
   @Inject() customizationService: CustomizationService;
   @Inject() userService: UserService;
   @Inject() nicoliveProgramStateService: NicoliveProgramStateService;
@@ -62,6 +63,7 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
     isLoggedIn: null,
     isCompact: null,
     isNavigating: false,
+    isAlwaysOnTop: false,
   };
 
   private stateChangeSubject = new BehaviorSubject(this.state);
@@ -89,6 +91,9 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
         if ('compactMode' in compact) {
           this.setState({ isCompact: compact.compactMode });
         }
+        if ('compactAlwaysOnTop' in compact) {
+          this.setState({ isAlwaysOnTop: this.getAlwaysOnTop(this.state) });
+        }
       },
     });
 
@@ -104,8 +109,16 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
     });
   }
 
+  private getAlwaysOnTop(nextState: IWindowSizeState): boolean {
+    return (
+      WindowSizeService.getPanelState(nextState) === PanelState.COMPACT &&
+      this.customizationService.state.compactAlwaysOnTop
+    );
+  }
+
   private setState(partialState: Partial<IWindowSizeState>) {
     const nextState = { ...this.state, ...partialState };
+    nextState.isAlwaysOnTop = this.getAlwaysOnTop(nextState);
     this.refreshWindowSize(this.state, nextState);
     this.SET_STATE(nextState);
     this.stateChangeSubject.next(nextState);
@@ -133,32 +146,38 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
     if (!isLoggedIn) return PanelState.INACTIVE;
     return panelOpened ? PanelState.OPENED : PanelState.CLOSED;
   }
+  static mainWindowOperation = new MainWindowOperation();
 
   /** パネルが出る幅の分だけ画面の最小幅を拡張する */
   refreshWindowSize(prevState: IWindowSizeState, nextState: IWindowSizeState): void {
     const prevPanelState = WindowSizeService.getPanelState(prevState);
     const nextPanelState = WindowSizeService.getPanelState(nextState);
-    if (nextPanelState !== null && prevPanelState !== nextPanelState) {
-      const newSize = WindowSizeService.updateWindowSize(
-        new MainWindowOperation(),
-        prevPanelState,
-        nextPanelState,
-        {
-          widthOffset: this.customizationService.state.fullModeWidthOffset,
-          backupX: this.customizationService.state.compactBackupPositionX,
-          backupY: this.customizationService.state.compactBackupPositionY,
-          backupHeight: this.customizationService.state.compactBackupHeight,
-          maximized: this.customizationService.state.compactMaximized,
-        },
-      );
-      if (prevPanelState && newSize !== undefined) {
-        this.customizationService.setFullModeWidthOffset({
-          fullModeWidthOffset: newSize.widthOffset,
-          compactBackupPositionX: newSize.backupX,
-          compactBackupPositionY: newSize.backupY,
-          compactBackupHeight: newSize.backupHeight,
-          compactMaximized: newSize.maximized,
-        });
+    if (nextPanelState !== null) {
+      if (prevPanelState !== nextPanelState) {
+        const newSize = WindowSizeService.updateWindowSize(
+          WindowSizeService.mainWindowOperation,
+          prevPanelState,
+          nextPanelState,
+          {
+            widthOffset: this.customizationService.state.fullModeWidthOffset,
+            backupX: this.customizationService.state.compactBackupPositionX,
+            backupY: this.customizationService.state.compactBackupPositionY,
+            backupHeight: this.customizationService.state.compactBackupHeight,
+            maximized: this.customizationService.state.compactMaximized,
+          },
+        );
+        if (prevPanelState && newSize !== undefined) {
+          this.customizationService.setFullModeWidthOffset({
+            fullModeWidthOffset: newSize.widthOffset,
+            compactBackupPositionX: newSize.backupX,
+            compactBackupPositionY: newSize.backupY,
+            compactBackupHeight: newSize.backupHeight,
+            compactMaximized: newSize.maximized,
+          });
+        }
+      }
+      if (prevState.isAlwaysOnTop !== nextState.isAlwaysOnTop) {
+        WindowSizeService.mainWindowOperation.setAlwaysOnTop(nextState.isAlwaysOnTop);
       }
     }
   }

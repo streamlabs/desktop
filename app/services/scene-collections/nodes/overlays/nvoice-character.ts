@@ -28,7 +28,7 @@ export class NVoiceCharacterNode extends Node<ISchema, IContext> {
     context.sceneItem.source.replacePropertiesManager('nvoice-character', {});
 
     // Make sure we don't override the url setting
-    delete this.data.settings['url'];
+    delete (this.data.settings as Dictionary<any>)['url'];
     context.sceneItem.getSource().updateSettings(this.data.settings);
   }
 }

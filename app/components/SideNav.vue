@@ -41,8 +41,8 @@
       </div>
     </div>
 
-    <template v-if="!isCompactMode">
-      <div class="bottom-tools">
+    <div class="bottom-tools">
+      <template v-if="!isCompactMode">
         <div class="side-nav-item">
           <a
             @click="studioMode"
@@ -53,33 +53,33 @@
             <i class="icon-studio-mode" />
           </a>
         </div>
-        <div class="side-nav-item feedback-button">
-          <a @click="openFeedback" class="link" :title="$t('common.feedback')">
-            <i class="icon-feedback" />
-          </a>
-        </div>
-        <div class="side-nav-item help-button">
-          <a @click="openHelp" class="link" :title="$t('common.help')">
-            <i class="icon-help" />
-          </a>
-        </div>
-        <div class="side-nav-item information-button">
-          <a @click="openInformations" class="link" :title="$t('informations.title')">
-            <i class="icon-notification" :class="{ isUnseen: hasUnseenInformation }" />
-          </a>
-        </div>
-        <div class="side-nav-item">
-          <a
-            @click="openSettingsWindow"
-            class="link"
-            data-test="OpenSettings"
-            :title="$t('common.settings')"
-          >
-            <i class="icon-settings" />
-          </a>
-        </div>
+      </template>
+      <div class="side-nav-item feedback-button">
+        <a @click="openFeedback" class="link" :title="$t('common.feedback')">
+          <i class="icon-feedback" />
+        </a>
       </div>
-    </template>
+      <div class="side-nav-item help-button">
+        <a @click="openHelp" class="link" :title="$t('common.help')">
+          <i class="icon-help" />
+        </a>
+      </div>
+      <div class="side-nav-item information-button">
+        <a @click="openInformations" class="link" :title="$t('informations.title')">
+          <i class="icon-notification" :class="{ isUnseen: hasUnseenInformation }" />
+        </a>
+      </div>
+      <div class="side-nav-item">
+        <a
+          @click="openSettingsWindow"
+          class="link"
+          data-test="OpenSettings"
+          :title="$t('common.settings')"
+        >
+          <i class="icon-settings" />
+        </a>
+      </div>
+    </div>
     <div class="side-nav-profile">
       <login />
     </div>

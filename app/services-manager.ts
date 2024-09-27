@@ -38,6 +38,7 @@ export class ServicesManager extends Service {
   init() {
     // this helps to debug services from the console
     if (Utils.isDevMode()) {
+      // @ts-expect-error ts7015 consoleデバッグ用
       window['sm'] = this;
     }
 
@@ -71,7 +72,7 @@ export class ServicesManager extends Service {
   }
 
   getStatefulServicesAndMutators(): Dictionary<typeof StatefulService> {
-    const statefulServices = {};
+    const statefulServices: Dictionary<any> = {};
     Object.keys(this.services).forEach(serviceName => {
       const ServiceClass = this.services[serviceName];
       const isStatefulService = ServiceClass['initialState'];

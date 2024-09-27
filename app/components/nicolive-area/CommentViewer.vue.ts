@@ -4,7 +4,7 @@ import { CustomizationService } from 'services/customization';
 import { ChatMessage } from 'services/nicolive-program/ChatMessage';
 import { ChatComponentType } from 'services/nicolive-program/ChatMessage/ChatComponentType';
 import {
-  WrappedChat,
+  isWrappedChat,
   WrappedChatWithComponent,
   WrappedMessage,
   WrappedMessageWithComponent,
@@ -93,7 +93,7 @@ export default class CommentViewer extends Vue {
 
   isLatestVisible = true;
 
-  get pinnedComment(): WrappedChat | null {
+  get pinnedComment(): WrappedChatWithComponent | null {
     return this.nicoliveCommentViewerService.state.pinnedMessage;
   }
 
@@ -139,6 +139,10 @@ export default class CommentViewer extends Vue {
 
   getDisplayName(item: WrappedMessage): string {
     return getDisplayName(item);
+  }
+
+  hasNamePlateHint(item: WrappedMessage): boolean {
+    return this.nameplateHintNo && isWrappedChat(item) && this.nameplateHintNo === item.value.no;
   }
 
   componentMap = componentMap;
@@ -287,13 +291,15 @@ export default class CommentViewer extends Vue {
     menu.popup();
   }
 
-  showUserInfo(item: WrappedChatWithComponent) {
-    this.nicoliveCommentViewerService.showUserInfo(
-      item.value.user_id,
-      item.value.name,
-      (item.value.premium & 1) !== 0,
-      item.isSupporter,
-    );
+  showUserInfo(item: WrappedMessageWithComponent) {
+    if (isWrappedChat(item)) {
+      this.nicoliveCommentViewerService.showUserInfo(
+        item.value.user_id,
+        item.value.name,
+        (item.value.premium & 1) !== 0,
+        item.isSupporter,
+      );
+    }
   }
 
   private cleanup: () => void = undefined;
@@ -312,6 +318,7 @@ export default class CommentViewer extends Vue {
     this.cleanup = () => {
       io.unobserve(sentinelEl);
     };
+    this.scrollToLatest();
   }
 
   beforeDestroy() {

@@ -3,9 +3,9 @@
  * All-in-one interactive N Air release script.
  */
 
-const fs = require('fs');
-const path = require('path');
-const OctoKit = require('@octokit/rest');
+const fs = require('node:fs');
+const path = require('node:path');
+const { Octokit } = require('@octokit/rest');
 const sh = require('shelljs');
 const colors = require('colors/safe');
 const yaml = require('js-yaml');
@@ -18,14 +18,12 @@ const {
   updateNotesTs,
   readPatchNote,
 } = require('./scripts/patchNote');
-const {
-  uploadS3File,
-  uploadToGithub,
-  uploadToSentry,
-  injectForSentry,
-} = require('./scripts/uploadArtifacts');
+const { uploadS3File, uploadToGithub } = require('./scripts/uploadArtifacts');
 
-const pjson = JSON.parse(fs.readFileSync(path.resolve('./package.json'), 'utf-8'));
+const projectRoot = path.resolve(__dirname, '..', '..');
+sh.cd(projectRoot);
+
+const pjson = JSON.parse(fs.readFileSync(path.resolve(projectRoot, 'package.json'), 'utf-8'));
 
 const SLACK_TEST = false; // for debug
 
@@ -114,9 +112,6 @@ async function postReleaseToSlack({ version, environment, channel, link, notes }
  * @param {string} param0.target.repository
  * @param {string} param0.target.remote
  * @param {string} param0.target.branch
- * @param {object} param0.sentry
- * @param {string} param0.sentry.organization
- * @param {string} param0.sentry.project
  * @param {object} param0.upload
  * @param {string} param0.upload.githubToken
  * @param {string} param0.upload.s3BucketName
@@ -128,13 +123,11 @@ async function postReleaseToSlack({ version, environment, channel, link, notes }
  * @param {boolean} param0.skipBuild
  * @param {boolean} param0.enableUploadToS3
  * @param {boolean} param0.enableUploadToGitHub
- * @param {boolean} param0.enableUploadToSentry
  */
 async function runScript({
   releaseEnvironment,
   releaseChannel,
   target,
-  sentry,
   upload,
   patchNote,
 
@@ -143,7 +136,6 @@ async function runScript({
 
   enableUploadToS3,
   enableUploadToGitHub,
-  enableUploadToSentry,
 }) {
   const newVersion = patchNote.version;
   const newTag = `v${newVersion}`;
@@ -164,9 +156,6 @@ async function runScript({
   log('   repository:', colors.cyan(target.repository));
   log('       remote:', colors.cyan(target.remote));
   log('       branch:', colors.cyan(target.branch));
-  log('sentry:');
-  log(' organization:', colors.cyan(sentry.organization));
-  log('      project:', colors.cyan(sentry.project));
   log('upload:');
   log('   githubHost:', colors.cyan(target.host));
   log('  githubToken:', colors.cyan(upload.githubToken));
@@ -259,11 +248,13 @@ async function runScript({
   info('Checking artifacts...');
   const distDir = path.resolve('.', 'dist');
   const latestYmlFilePath = path.join(distDir, 'latest.yml');
-  const parsedLatestYml = yaml.safeLoad(fs.readFileSync(latestYmlFilePath, 'utf-8'));
+  const parsedLatestYml = /** @type {{releaseNotes: string, path: string}} */ (
+    yaml.load(fs.readFileSync(latestYmlFilePath, 'utf-8'))
+  );
 
   // add releaseNotes into latest.yml
   parsedLatestYml.releaseNotes = patchNote.notes;
-  fs.writeFileSync(latestYmlFilePath, yaml.safeDump(parsedLatestYml));
+  fs.writeFileSync(latestYmlFilePath, yaml.dump(parsedLatestYml));
 
   const binaryFile = parsedLatestYml.path;
   const binaryFilePath = path.join(distDir, binaryFile);
@@ -312,7 +303,7 @@ async function runScript({
   // upload to the github directly via GitHub API...
 
   if (enableUploadToGitHub) {
-    const octokit = new OctoKit({
+    const octokit = new Octokit({
       baseUrl: target.host,
       auth: `token ${upload.githubToken}`,
     });
@@ -329,6 +320,11 @@ async function runScript({
       prerelease: releaseChannel !== 'stable',
     };
 
+    /**
+     * @type { import('@octokit/rest').RestEndpointMethodTypes["repos"]["createRelease"]["response"] |
+     *  import('@octokit/rest').RestEndpointMethodTypes["repos"]["updateRelease"]["response"]
+     * }
+     */
     let result = await octokit.repos.createRelease({
       ...releaseParams,
       draft: true,
@@ -336,6 +332,9 @@ async function runScript({
 
     await uploadToGithub({
       octokit,
+      owner: releaseParams.owner,
+      repo: releaseParams.repo,
+      release_id: result.data.id,
       url: result.data.upload_url,
       pathname: latestYmlFilePath,
       contentType: 'application/json',
@@ -343,6 +342,9 @@ async function runScript({
 
     await uploadToGithub({
       octokit,
+      owner: releaseParams.owner,
+      repo: releaseParams.repo,
+      release_id: result.data.id,
       url: result.data.upload_url,
       pathname: blockmapFilePath,
       contentType: 'application/octet-stream',
@@ -350,6 +352,9 @@ async function runScript({
 
     await uploadToGithub({
       octokit,
+      owner: releaseParams.owner,
+      repo: releaseParams.repo,
+      release_id: result.data.id,
       url: result.data.upload_url,
       pathname: binaryFilePath,
       contentType: 'application/octet-stream',
@@ -381,16 +386,6 @@ async function runScript({
     info('uploading to GitHub: SKIP');
   }
 
-  if (enableUploadToSentry) {
-    info('uploading to sentry...');
-    // executeCmd(`cp main.js bundles/`);
-    const bundles = path.resolve('.', 'bundles');
-    // injectForSentry(bundles);
-    uploadToSentry(sentry.organization, sentry.project, newVersion, bundles);
-  } else {
-    info('uploading to sentry: SKIP');
-  }
-
   // done.
 }
 
@@ -402,6 +397,7 @@ async function releaseRoutine() {
   checkEnv('SENTRY_AUTH_TOKEN');
   checkEnv('AWS_ACCESS_KEY_ID');
   checkEnv('AWS_SECRET_ACCESS_KEY');
+  checkEnv('AWS_REGION');
 
   const baseDir = executeCmd('git rev-parse --show-cdup', { silent: true }).stdout.trim();
   const patchNoteFileName = `${baseDir}patch-note.txt`;
@@ -471,7 +467,6 @@ async function releaseRoutine() {
     skipBuild: false,
     enableUploadToS3: true,
     enableUploadToGitHub: true,
-    enableUploadToSentry: false, //@sentry/webpack-plugin を使うため不要
   });
 }
 

@@ -6,7 +6,7 @@ import { clipboard } from 'electron';
 import { StreamingService } from 'services/streaming';
 import { Subscription } from 'rxjs';
 import Popper from 'vue-popperjs';
-import * as moment from 'moment';
+import { DateTime } from 'luxon';
 import { HostsService } from 'services/hosts';
 import * as remote from '@electron/remote';
 import { UserService } from 'services/user';
@@ -117,7 +117,7 @@ export default class ProgramInfo extends Vue {
     const title = this.nicoliveProgramService.state.title;
     const url = `${this.hostsService.getWatchPageURL(this.programID)}?ref=sharetw`;
     const time = this.nicoliveProgramService.state.startTime;
-    const formattedTime = moment.unix(time).format('YYYY/MM/DD HH:mm');
+    const formattedTime = DateTime.fromSeconds(time).toFormat('yyyy/MM/dd HH:mm');
 
     if (this.programStatus === 'reserved' || this.programStatus === 'test') {
       return {

@@ -65,12 +65,24 @@ interface IOBSConfigTransition {
   id: string;
 }
 
+interface IOBSAudioSourceConfigJSON {
+  id: TSourceType;
+  muted: boolean;
+  volume: number;
+}
+
 interface IOBSConfigJSON {
   sources: IOBSConfigSource[];
   current_scene: string;
   scene_order: { name: string }[];
   transitions: IOBSConfigTransition[];
   transition_duration: number;
+
+  DesktopAudioDevice1?: IOBSAudioSourceConfigJSON;
+  DesktopAudioDevice2?: IOBSAudioSourceConfigJSON;
+  AuxAudioDevice1?: IOBSAudioSourceConfigJSON;
+  AuxAudioDevice2?: IOBSAudioSourceConfigJSON;
+  AuxAudioDevice3?: IOBSAudioSourceConfigJSON;
 }
 
 export class ObsImporterService extends Service {
@@ -308,7 +320,7 @@ export class ObsImporterService extends Service {
       'AuxAudioDevice1',
       'AuxAudioDevice2',
       'AuxAudioDevice3',
-    ];
+    ] as const;
     channelNames.forEach((channelName, i) => {
       const audioSource = configJSON[channelName];
       if (audioSource) {

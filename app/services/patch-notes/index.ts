@@ -29,6 +29,7 @@ export class PatchNotesService extends PersistentStatefulService<IPatchNotesStat
 
     if (Util.isDevMode()) {
       // Useful for previewing patch notes in dev mode
+      // @ts-expect-error ts7015 consoleデバッグ用
       window['showPatchNotes'] = () => {
         this.navigationService.navigate('PatchNotes');
       };

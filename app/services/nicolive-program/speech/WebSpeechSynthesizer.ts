@@ -1,5 +1,7 @@
+import Utils from 'services/utils';
 import { Speech } from '../nicolive-comment-synthesizer';
 import { ISpeechSynthesizer } from './ISpeechSynthesizer';
+import * as Sentry from '@sentry/vue';
 
 export class WebSpeechSynthesizer implements ISpeechSynthesizer {
   get available(): boolean {
@@ -27,6 +29,27 @@ export class WebSpeechSynthesizer implements ISpeechSynthesizer {
       uttr.volume = speech.volume || 1;
       uttr.onstart = onstart;
       uttr.onend = () => {
+        if (--this.speakingCounter === 0) {
+          this.speakingResolve();
+          this.speakingPromise = null;
+          this.speakingResolve = null;
+        }
+        onend();
+      };
+      uttr.onerror = e => {
+        Sentry.captureEvent({
+          message: 'speechSynthesis.onerror',
+          level: ['interrupted', 'canceled'].includes(e.error) ? 'info' : 'warning',
+          tags: {
+            error: e.error,
+          },
+          extra: {
+            speech,
+          },
+        });
+        if (Utils.isDevMode()) {
+          console.warn('speechSynthesis.onerror', e.error);
+        }
         if (--this.speakingCounter === 0) {
           this.speakingResolve();
           this.speakingPromise = null;

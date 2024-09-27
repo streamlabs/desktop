@@ -4,6 +4,7 @@ import { testSourceExists, selectTestSource, clickRemoveSource } from '../module
 import { getApiClient } from '../api-client';
 import { UserService } from 'services/user';
 import { IPlatformAuth } from 'services/platforms';
+import { getKeys } from 'util/getKeys';
 
 export async function logOut(t: TExecutionContext) {
   await focusMain();
@@ -21,7 +22,7 @@ export async function logIn(t: TExecutionContext, isOnboardingTest = false): Pro
   };
 
   let canAuth = true;
-  Object.keys(authInfo).forEach(key => {
+  getKeys(authInfo).forEach(key => {
     authInfo[key] = env[key];
     if (!authInfo[key]) {
       console.warn(`Setup env.${key} to run this test`);

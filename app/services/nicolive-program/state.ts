@@ -32,7 +32,7 @@ export type HttpRelationState = {
   body: string;
 };
 
-interface IState {
+export interface IState {
   autoExtensionEnabled: boolean;
   panelOpened: boolean;
   speechSynthesizerSettings?: SpeechSynthesizerSettingsState;

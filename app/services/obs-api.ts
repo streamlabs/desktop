@@ -8,7 +8,7 @@ import * as remote from '@electron/remote';
 export * from '../../obs-api';
 
 let idCounter = 0;
-const callbacks = {};
+const callbacks: Dictionary<any> = {};
 
 // Behaves just like the node-obs library, but proxies
 // all methods via the main process

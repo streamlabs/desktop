@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import { Component } from 'vue-property-decorator';
 import { Inject } from '../../services/core/injector';
 import ModalLayout from '../ModalLayout.vue';
@@ -41,6 +41,6 @@ export default class Notifications extends Vue {
   }
 
   moment(time: number): string {
-    return moment(time).fromNow();
+    return DateTime.fromMillis(time).toRelative();
   }
 }

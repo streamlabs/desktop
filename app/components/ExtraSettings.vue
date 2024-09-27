@@ -25,6 +25,7 @@
       </div>
       <ObsBoolInput :value="autoCompactModel" @input="setAutoCompact" />
       <ObsBoolInput :value="showAutoCompactDialogModel" @input="setShowAutoCompactDialog" />
+      <ObsBoolInput :value="compactAlwaysOnTopModel" @input="setCompactAlwaysOnTop" />
     </div>
 
     <div class="section">

@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import { Component } from 'vue-property-decorator';
 import { Inject } from 'services/core/injector';
 import { ENotificationType, NotificationsService, INotification } from 'services/notifications';
@@ -70,7 +70,7 @@ export default class NotificationsArea extends Vue {
   }
 
   moment(time: number): string {
-    return moment(time).fromNow();
+    return DateTime.fromMillis(time).toRelative();
   }
 
   private checkQueue() {

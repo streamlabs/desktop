@@ -22,6 +22,7 @@ export interface ICustomizationServiceState {
   compactMaximized: boolean;
   autoCompactMode: boolean;
   showAutoCompactDialog: boolean;
+  compactAlwaysOnTop: boolean;
   experimental: any;
 }
 

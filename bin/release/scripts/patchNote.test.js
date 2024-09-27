@@ -16,8 +16,8 @@ const fixtures = {
     unstable: '1.0.20190826-unstable.2d',
   },
 };
-const TODAY = new Date('2019-08-26');
-const TOMORROW = new Date('2019-08-27');
+const TODAY = new Date('2019-08-26').valueOf();
+const TOMORROW = new Date('2019-08-27').valueOf();
 
 function* channelEnvironmentSets() {
   for (const releaseEnvironment of ['public', 'internal']) {

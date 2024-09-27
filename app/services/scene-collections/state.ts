@@ -4,10 +4,10 @@ import { ISceneCollectionsManifestEntry } from '.';
 import Vue from 'vue';
 import fs from 'fs';
 import path from 'path';
-import electron from 'electron';
 import { FileManagerService } from 'services/file-manager';
 import { Inject } from 'services/core/injector';
 import * as remote from '@electron/remote';
+import { getKeys } from 'util/getKeys';
 
 interface ISceneCollectionsManifest {
   activeId: string;
@@ -260,7 +260,7 @@ export class SceneCollectionsStateService extends StatefulService<ISceneCollecti
 
   @mutation()
   LOAD_STATE(state: ISceneCollectionsManifest) {
-    Object.keys(state).forEach(key => {
+    getKeys(state).forEach(key => {
       Vue.set(this.state, key, state[key]);
     });
   }
