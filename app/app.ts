@@ -215,6 +215,12 @@ document.addEventListener('DOMContentLoaded', () => {
     await i18nService.load(); // load translations from a disk
     const notFoundKeys = new Set<string>();
 
+    // preset ignore keys
+    for (let i = 1; i <= 102; i++) {
+      notFoundKeys.add(`source-props.nair-rtvc-source['primary_voice']['${i}']`);
+      notFoundKeys.add(`source-props.nair-rtvc-source['secondary_voice']['${i}']`);
+    }
+
     const i18n = new VueI18n({
       locale: i18nService.state.locale,
       fallbackLocale: i18nService.getFallbackLocale(),
