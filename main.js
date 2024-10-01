@@ -896,7 +896,15 @@ function initialize(crashHandler) {
     if (process.env.NODE_ENV !== 'production') {
       // dev 実行でのみ読み込む
       if (fs.existsSync(I18N_NOT_FOUND_KEYS_FILE)) {
-        return fs.readFileSync(I18N_NOT_FOUND_KEYS_FILE, 'utf-8').split('\n').filter(Boolean);
+        const keys = fs
+          .readFileSync(I18N_NOT_FOUND_KEYS_FILE, 'utf-8')
+          .split('\n')
+          .map(l => l.trimEnd())
+          .filter(Boolean);
+        console.log(`file ${I18N_NOT_FOUND_KEYS_FILE} loaded: ${keys.length} keys`);
+        return keys;
+      } else {
+        console.warn(`file ${I18N_NOT_FOUND_KEYS_FILE} not found`);
       }
     }
     return [];
