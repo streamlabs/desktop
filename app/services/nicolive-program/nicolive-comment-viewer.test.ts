@@ -683,28 +683,26 @@ test('コメント読み上げ時に古いコメントは読み上げない', as
 });
 
 test('HTTP連携: コメント送信', async () => {
-  const { clientSubject, queueToSpeech } = connectionSetup({ httpRelationEnabled: true });
+  const { clientSubject } = connectionSetup({ httpRelationEnabled: true });
   const NOW_SEC = 600;
   const DROP_THRESHOLD_SEC = 60;
 
   jest.spyOn(Date, 'now').mockImplementation(() => NOW_SEC * 1000);
 
-  ['old', 'NG'].forEach(content => {
-    clientSubject.next({
-      chat: {
-        content,
-        date: NOW_SEC - DROP_THRESHOLD_SEC,
-      },
-    });
-  });
-  ['new', 'NG'].forEach(content => {
-    clientSubject.next({
-      chat: {
-        content,
-        date: NOW_SEC - DROP_THRESHOLD_SEC + 1,
-      },
-    });
-  });
+  [
+    { date: NOW_SEC - DROP_THRESHOLD_SEC, comment: 'old' },
+    { date: NOW_SEC - DROP_THRESHOLD_SEC + 1, comment: 'new' },
+  ].forEach(({ date, comment }) =>
+    [comment, 'NG', NG_WORD].forEach(content => {
+      clientSubject.next({
+        chat: {
+          content,
+          date,
+          user_id: '1', // anything not empty
+        },
+      });
+    }),
+  );
 
   // bufferTime tweaks
   clientSubject.complete();
@@ -721,7 +719,7 @@ test('NGワードにかかるコメントが来たら ##このコメントは表
   clientSubject.next({
     chat: {
       content: NG_WORD,
-      user_id: '123',
+      user_id: '123', // anything not empty
     },
   });
 
