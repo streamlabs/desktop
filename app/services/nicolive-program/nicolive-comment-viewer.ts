@@ -462,11 +462,11 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
         map(arr =>
           arr.map(m => {
             if (isWrappedChat(m) && m.type === 'normal' && m.value.user_id) {
-              return {
+              return this.nicoliveCommentFilterService.applyFilter({
                 ...m,
                 isModerator: this.nicoliveModeratorsService.isModerator(m.value.user_id),
                 isSupporter: isSupporter(m.value.user_id),
-              };
+              });
             }
             return m;
           }),
