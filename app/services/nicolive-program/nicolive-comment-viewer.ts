@@ -462,11 +462,11 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
         map(arr =>
           arr.map(m => {
             if (isWrappedChat(m) && m.type === 'normal' && m.value.user_id) {
-              return {
+              return this.nicoliveCommentFilterService.applyFilter({
                 ...m,
                 isModerator: this.nicoliveModeratorsService.isModerator(m.value.user_id),
                 isSupporter: isSupporter(m.value.user_id),
-              };
+              });
             }
             return m;
           }),
@@ -521,10 +521,13 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
       const nowSeconds = Date.now() / 1000;
 
       const valuesForSpeech = values.filter(c => {
-        if (!this.filterFn(c)) {
+        if (!c.value || !c.value.date) {
           return false;
         }
-        if (!c.value || !c.value.date) {
+        if (isWrappedChat(c) && c.filtered) {
+          return false;
+        }
+        if (!this.filterFn(c)) {
           return false;
         }
         return c.value.date > nowSeconds - recentSeconds;

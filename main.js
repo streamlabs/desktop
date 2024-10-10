@@ -142,7 +142,7 @@ try {
 remote.initialize();
 
 function initialize(crashHandler) {
-  const fs = require('fs');
+  const fs = require('node:fs');
   const { Updater } = require('./updater/Updater.js');
   const uuid = require('uuid/v4');
   const windowStateKeeper = require('electron-window-state');
@@ -889,5 +889,32 @@ function initialize(crashHandler) {
       main: mainWindow.id,
       child: childWindow.id,
     };
+  });
+
+  const I18N_NOT_FOUND_KEYS_FILE = 'i18n-not-found-keys.txt'; // in current directory
+  ipcMain.handle('loadI18nNotFoundKeys', async () => {
+    if (process.env.NODE_ENV !== 'production') {
+      // dev 実行でのみ読み込む
+      if (fs.existsSync(I18N_NOT_FOUND_KEYS_FILE)) {
+        const keys = fs
+          .readFileSync(I18N_NOT_FOUND_KEYS_FILE, 'utf-8')
+          .split('\n')
+          .map(l => l.trimEnd())
+          .filter(Boolean);
+        console.log(`file ${I18N_NOT_FOUND_KEYS_FILE} loaded: ${keys.length} keys`);
+        return keys;
+      } else {
+        console.warn(`file ${I18N_NOT_FOUND_KEYS_FILE} not found`);
+      }
+    }
+    return [];
+  });
+  ipcMain.handle('appendI18nNotFoundKeys', async (_e, /** string[] | string */ keys) => {
+    if (process.env.NODE_ENV !== 'production') {
+      if (!Array.isArray(keys)) {
+        keys = [keys];
+      }
+      fs.appendFileSync(I18N_NOT_FOUND_KEYS_FILE, keys.flatMap(line => [line, '\n']).join(''));
+    }
   });
 }

@@ -215,6 +215,12 @@ document.addEventListener('DOMContentLoaded', () => {
     await i18nService.load(); // load translations from a disk
     const notFoundKeys = new Set<string>();
 
+    // load notFoundKeys from file
+    if (!isProduction) {
+      const keys: string[] = await ipcRenderer.invoke('loadI18nNotFoundKeys');
+      keys.forEach(key => notFoundKeys.add(key));
+    }
+
     const i18n = new VueI18n({
       locale: i18nService.state.locale,
       fallbackLocale: i18nService.getFallbackLocale(),
@@ -229,6 +235,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!notFoundKeys.has(key)) {
               notFoundKeys.add(key);
               console.warn(`i18n missing key - ${key}: (フォールバックなし)`);
+              if (process.env.NAIR_UPDATE_I18N_NOT_FOUND_KEYS) {
+                ipcRenderer.invoke('appendI18nNotFoundKeys', key);
+              }
             }
           }
           return values[0].fallback;

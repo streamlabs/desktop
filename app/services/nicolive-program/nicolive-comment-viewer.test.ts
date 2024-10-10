@@ -194,6 +194,8 @@ test('status=endedが流れてきたらunsubscribeし、refreshProgramも呼ぶ'
 const MODERATOR_ID = '123';
 const NOT_MODERATOR_ID = '456';
 
+const NG_WORD = 'abc';
+
 function connectionSetup(options: { speechEnabled?: boolean; httpRelationEnabled?: boolean } = {}) {
   const stateChange = new Subject();
   const clientSubject = new Subject<MessageResponse>();
@@ -230,8 +232,11 @@ function connectionSetup(options: { speechEnabled?: boolean; httpRelationEnabled
       },
       NicoliveCommentFilterService: {
         addFilterCache: () => {},
-        findFilterCache: () => ({ type: 'word', body: 'abc' } as FilterRecord),
+        findFilterCache: () => ({ type: 'word', body: NG_WORD } as FilterRecord),
         deleteFiltersCache: () => {},
+        applyFilter: (msg: WrappedMessage) => {
+          return { ...msg, filtered: isWrappedChat(msg) && msg.value.content === NG_WORD };
+        },
       },
       NicoliveCommentLocalFilterService: {
         filterFn: (msg: WrappedMessage) => (isWrappedChat(msg) ? msg.value.content !== 'NG' : true),
@@ -449,7 +454,7 @@ test('モデレーターによるSSNG追加・削除がきたらシステムメ�
         record: {
           id: 1,
           type: 'word',
-          body: 'abc',
+          body: NG_WORD,
           userId: parseInt(MODERATOR_ID, 10),
           userName: 'test',
         },
@@ -678,28 +683,26 @@ test('コメント読み上げ時に古いコメントは読み上げない', as
 });
 
 test('HTTP連携: コメント送信', async () => {
-  const { clientSubject, queueToSpeech } = connectionSetup({ httpRelationEnabled: true });
+  const { clientSubject } = connectionSetup({ httpRelationEnabled: true });
   const NOW_SEC = 600;
   const DROP_THRESHOLD_SEC = 60;
 
   jest.spyOn(Date, 'now').mockImplementation(() => NOW_SEC * 1000);
 
-  ['old', 'NG'].forEach(content => {
-    clientSubject.next({
-      chat: {
-        content,
-        date: NOW_SEC - DROP_THRESHOLD_SEC,
-      },
-    });
-  });
-  ['new', 'NG'].forEach(content => {
-    clientSubject.next({
-      chat: {
-        content,
-        date: NOW_SEC - DROP_THRESHOLD_SEC + 1,
-      },
-    });
-  });
+  [
+    { date: NOW_SEC - DROP_THRESHOLD_SEC, comment: 'old' },
+    { date: NOW_SEC - DROP_THRESHOLD_SEC + 1, comment: 'new' },
+  ].forEach(({ date, comment }) =>
+    [comment, 'NG', NG_WORD].forEach(content => {
+      clientSubject.next({
+        chat: {
+          content,
+          date,
+          user_id: '1', // anything not empty
+        },
+      });
+    }),
+  );
 
   // bufferTime tweaks
   clientSubject.complete();
@@ -707,4 +710,22 @@ test('HTTP連携: コメント送信', async () => {
   expect(
     sendChatMock.mock.calls.map(([msg]) => (isWrappedChat(msg) ? msg.value.content : 'not chat')),
   ).toEqual(['new', 'サーバーとの接続が終了しました']);
+});
+
+test('NGワードにかかるコメントが来たら ##このコメントは表示されません## になる', async () => {
+  const { clientSubject, instance } = connectionSetup();
+  await sleep(0);
+
+  clientSubject.next({
+    chat: {
+      content: NG_WORD,
+      user_id: '123', // anything not empty
+    },
+  });
+
+  // bufferTime tweaks
+  clientSubject.complete();
+
+  expect(instance.state.messages.length).toEqual(2);
+  expect(getDisplayText(instance.state.messages[0])).toEqual('##このコメントは表示されません##');
 });
