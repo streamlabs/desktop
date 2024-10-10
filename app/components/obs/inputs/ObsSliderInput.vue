@@ -29,7 +29,7 @@
 
 .slider-container {
   position: relative;
-  height: 45px;
+  height: auto;
 }
 
 .slider-label {

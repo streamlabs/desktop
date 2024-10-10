@@ -79,25 +79,35 @@
         </div>
       </tabs>
       <modal name="transition-settings" :height="550">
-        <div class="transition-settings-modal">
-          <transition-settings :transition-id="inspectedTransition" />
-          <button
-            class="button button--primary transition-done"
-            @click="dismissModal('transition-settings')"
-          >
-            {{ $t('common.done') }}
-          </button>
+        <div class="modal-layout transition-settings-modal">
+          <div class="modal-layout-content">
+            <div class="settings-container">
+              <div class="section">
+                <transition-settings :transition-id="inspectedTransition" />
+              </div>
+            </div>
+          </div>
+          <div class="modal-layout-controls">
+            <button class="button button--primary" @click="dismissModal('transition-settings')">
+              {{ $t('common.done') }}
+            </button>
+          </div>
         </div>
       </modal>
       <modal name="connection-settings" :height="550">
-        <div class="connection-settings-modal">
-          <connection-settings :connection-id="inspectedConnection" />
-          <button
-            class="button button--primary transition-done"
-            @click="dismissModal('connection-settings')"
-          >
-            {{ $t('common.done') }}
-          </button>
+        <div class="modal-layout connection-settings-modal">
+          <div class="modal-layout-content">
+            <div class="settings-container">
+              <div class="section">
+                <connection-settings :connection-id="inspectedConnection" />
+              </div>
+            </div>
+          </div>
+          <div class="modal-layout-controls">
+            <button class="button button--primary" @click="dismissModal('connection-settings')">
+              {{ $t('common.done') }}
+            </button>
+          </div>
         </div>
       </modal>
     </div>
@@ -124,18 +134,16 @@
   text-align: center;
 }
 
-.transition-settings-modal {
-  padding: 20px;
-}
-
-.connection-settings-modal {
-  padding: 20px;
-}
-
 .transition-tab {
   flex-grow: 1;
   padding: 16px;
   .flex__column;
+
+  .button {
+    flex-shrink: 0;
+    margin-bottom: 16px;
+    margin-left: auto;
+  }
 }
 
 .transition-default {
@@ -165,13 +173,6 @@
   color: @accent;
 }
 
-.button {
-  height: @item-generic-size;
-  margin-bottom: 16px;
-  margin-left: auto;
-  line-height: @item-generic-size;
-}
-
 .transition-done {
   position: absolute;
   right: 16px;
@@ -194,5 +195,55 @@ th,
 td {
   padding: 8px 16px;
   text-align: left;
+}
+
+.modal-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--color-bg-quinary);
+}
+
+.modal-layout-content {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  height: 100%;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.modal-layout-controls {
+  .dividing-border(top);
+
+  z-index: @z-index-default-content;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: flex-end;
+  text-align: right;
+  background-color: var(--color-bg-primary);
+
+  div {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  &:not(:empty) {
+    padding: 16px;
+  }
+
+  .button {
+    margin-left: 12px;
+  }
+}
+
+.settings-container {
+  flex-grow: 1;
+  padding: 16px 8px 0 16px;
+  margin: 0;
+  overflow-x: auto;
+  overflow-y: scroll;
 }
 </style>
