@@ -4,7 +4,7 @@
       <button
         v-for="tab in tabs"
         :key="tab.value"
-        class="tab-button"
+        class="button--tab"
         :class="{ active: tab.value === value }"
         @click="showTab(tab.value)"
       >
@@ -29,12 +29,18 @@
 }
 
 .tabs {
-  position: relative;
-  box-sizing: border-box;
   display: flex;
-  width: 100%;
-  height: 54px;
+  flex-shrink: 0;
+  align-items: center;
+  height: 40px;
   padding: 0 16px;
+  border-bottom: 1px solid var(--color-border-light);
+
+  > button {
+    flex-basis: 0;
+    flex-grow: 1;
+    height: 100%;
+  }
 }
 
 .tab-content {
