@@ -298,6 +298,7 @@
         "ffmpeg_nvenc": "@:settings.Output.Streaming.Encoder.ffmpeg_nvenc",
         "jim_nvenc": "@:settings.Output.Streaming.Encoder.jim_nvenc"
       },
+      "RecAEncoder": { "name": "音声エンコーダー" },
       "RecRescale": {
         "name": "@:settings.Output.Streaming.Rescale.name"
       },
@@ -611,7 +612,7 @@
     },
     "Sources": {
       "name": "ソース",
-      "browserHWAccel": {
+      "BrowserHWAccel": {
         "name": "Webページソース使用時にブラウザのハードウェアアクセラレーションを有効にする"
       }
     },

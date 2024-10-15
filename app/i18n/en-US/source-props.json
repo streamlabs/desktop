@@ -223,6 +223,9 @@
     },
     "monitor": {
       "name": "Monitor"
+    },
+    "monitor_id": {
+      "Auto": null
     }
   },
   "window_capture": {

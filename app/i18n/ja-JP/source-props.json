@@ -223,6 +223,9 @@
     },
     "monitor": {
       "name": "画面"
+    },
+    "monitor_id": {
+      "Auto": "自動"
     }
   },
   "window_capture": {
