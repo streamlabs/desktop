@@ -24,7 +24,7 @@ export enum OptimizationKey {
   simpleUseAdvanced = 'simpleUseAdvanced',
   targetUsage = 'targetUsage',
   encoderPreset = 'encoderPreset',
-  NVENCPreset = 'NVENCPreset',
+  NVENCPreset2 = 'NVENCPreset2',
   advRateControl = 'advRateControl',
   videoBitrate = 'videoBitrate',
   advKeyframeInterval = 'advKeyframeInterval',
@@ -54,7 +54,7 @@ export type OptimizeSettings = {
     | 'medium'
     | 'slow'
     | 'slower'; // for x264
-  NVENCPreset?: 'default' | 'mq' | 'hq' | 'hp' | 'll' | 'llhp' | 'llhq'; // for NVENC
+  NVENCPreset2?: 'p1' | 'p2' | 'p3' | 'p4' | 'p5' | 'p6' | 'p7'; // for NVENC
   advRateControl?: 'CBR' | 'VBR' | 'ABR' | 'CRF';
   videoBitrate?: number;
   advKeyframeInterval?: number;
@@ -223,7 +223,7 @@ export const AllKeyDescriptions: KeyDescription[] = [
                   // 'gpu' // int 0
                   // 'bf' // int 2 // B-フレーム
                   {
-                    key: OptimizationKey.NVENCPreset,
+                    key: OptimizationKey.NVENCPreset2,
                     category: CategoryName.output,
                     subCategory: 'Streaming',
                     setting: 'preset',
@@ -370,10 +370,10 @@ export const AllKeyDescriptions: KeyDescription[] = [
                         values: [true],
                         params: [
                           {
-                            key: OptimizationKey.NVENCPreset,
+                            key: OptimizationKey.NVENCPreset2,
                             category: CategoryName.output,
                             subCategory: 'Streaming',
-                            setting: 'NVENCPreset',
+                            setting: 'NVENCPreset2',
                             lookupValueName: true,
                           },
                         ],

@@ -52,7 +52,7 @@ export function getBestSettingsForNiconico(
       encoderSettings = {
         encoder: EncoderType.nvencNew,
         simpleUseAdvanced: true,
-        NVENCPreset: 'llhq',
+        NVENCPreset2: 'p3',
       };
     } else if (
       settings.hasSpecificValue(OptimizationKey.encoder, EncoderType.nvenc) ||
@@ -61,7 +61,7 @@ export function getBestSettingsForNiconico(
       encoderSettings = {
         encoder: EncoderType.nvenc,
         simpleUseAdvanced: true,
-        NVENCPreset: 'llhq',
+        NVENCPreset2: 'p3',
       };
     } else if (
       settings.hasSpecificValue(OptimizationKey.encoder, EncoderType.qsv) ||
