@@ -11,7 +11,7 @@ import { NicoliveProgramService } from 'services/nicolive-program/nicolive-progr
 import { isOk, NicoliveClient } from 'services/nicolive-program/NicoliveClient';
 import { ENotificationType, INotification, NotificationsService } from 'services/notifications';
 import { SettingsService } from 'services/settings';
-import { EncoderType, OptimizedSettings } from 'services/settings/optimizer';
+import { EncoderFamily, OptimizedSettings } from 'services/settings/optimizer';
 import { TUsageEvent, UsageStatisticsService } from 'services/usage-statistics';
 import { UserService } from 'services/user';
 import { WindowsService } from 'services/windows';
@@ -755,7 +755,7 @@ export class StreamingService
             }
           : undefined,
       encoder: {
-        encoder_type: settings.encoder as unknown as EncoderType,
+        encoder_type: settings.encoder as unknown as EncoderFamily,
         preset: settings.preset,
       },
       auto_optimize: {

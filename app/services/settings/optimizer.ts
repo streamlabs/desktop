@@ -4,11 +4,11 @@ import { $t } from 'services/i18n';
 import { ISettingsSubCategory } from './settings-api';
 import { getKeys } from 'util/getKeys';
 
-export enum EncoderType {
+export enum EncoderFamily {
   x264 = 'obs_x264',
   nvenc = 'nvenc',
   nvencNew = 'jim_nvenc',
-  amd = 'amd_amf_h264',
+  amd = 'amd',
   qsv = 'qsv',
   advancedQsv = 'obs_qsv11',
   advancedNvenc = 'ffmpeg_nvenc',
@@ -42,7 +42,7 @@ export type OptimizeSettings = {
   advColorSpace?: '601' | '709';
   fpsType?: 'Common FPS Values' | 'Integer FPS Value' | 'Fractional FPS Value';
   fpsCommon?: string;
-  encoder?: EncoderType;
+  encoder?: EncoderFamily;
   simpleUseAdvanced?: boolean;
   targetUsage?: 'quality' | 'balanced' | 'speed'; // for QSV
   encoderPreset?:

@@ -1,7 +1,7 @@
 import { TObsFormData, TObsValue } from 'components/obs/inputs/ObsInput';
 import { getBestSettingsForNiconico } from './niconico-optimization';
 import {
-  EncoderType,
+  EncoderFamily,
   ISettingsAccessor,
   OptimizationKey,
   OptimizeSettings,
@@ -70,7 +70,7 @@ class MockSettingAccessor implements ISettingsAccessor {
 
 test('mock outputSettings', () => {
   const settings = new SettingsKeyAccessor(new MockSettingAccessor());
-  expect(settings.hasSpecificValue(OptimizationKey.encoder, EncoderType.qsv)).toBe(true);
+  expect(settings.hasSpecificValue(OptimizationKey.encoder, EncoderFamily.qsv)).toBe(true);
 });
 
 describe('getBestSettingsForNiconico', () => {
@@ -84,12 +84,12 @@ describe('getBestSettingsForNiconico', () => {
   };
   const x264Settings: Partial<OptimizeSettings> = {
     ...commonSettings,
-    encoder: EncoderType.x264,
+    encoder: EncoderFamily.x264,
     encoderPreset: 'ultrafast',
   };
   const qsvSettings: Partial<OptimizeSettings> = {
     ...commonSettings,
-    encoder: EncoderType.qsv,
+    encoder: EncoderFamily.qsv,
     targetUsage: 'speed',
   };
 
