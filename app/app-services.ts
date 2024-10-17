@@ -70,7 +70,6 @@ export { RtvcStateService } from 'services/rtvcStateService';
 export { IncrementalRolloutService } from 'services/incremental-rollout';
 export { CrashReporterService } from 'services/crash-reporter';
 export { PatchNotesService } from 'services/patch-notes';
-export { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
 export { StreamingService } from 'services/streaming';
 
 export { VideoSettingsService } from 'services/settings-v2';
