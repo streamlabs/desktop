@@ -148,15 +148,15 @@
         "balanced": "@:settings.Output.Streaming.target_usage.balanced",
         "speed": "@:settings.Output.Streaming.target_usage.speed"
       },
-      "NVENCPreset": {
+      "NVENCPreset2": {
         "name": "エンコーダープリセット",
-        "default": "規定",
-        "mq": "最高品質",
-        "hq": "高品質",
-        "hp": "高性能",
-        "ll": "低遅延",
-        "llhq": "低遅延高品質",
-        "llhp": "低遅延高性能"
+        "p1": "P1: 最高速(最低品質)",
+        "p2": "P2: 高速(より低品質)",
+        "p3": "P3: 高速(低品質)",
+        "p4": "P4: 標準(中品質)",
+        "p5": "P5: 低速(高品質)",
+        "p6": "P6: 低速(より高品質)",
+        "p7": "P7: 最低速(最高品質)"
       },
       "x264Settings": {
         "name": "エンコーダーのカスタム設定"

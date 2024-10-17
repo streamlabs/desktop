@@ -148,15 +148,15 @@
         "balanced": "@:settings.Output.Streaming.target_usage.balanced",
         "speed": "@:settings.Output.Streaming.target_usage.speed"
       },
-      "NVENCPreset": {
+      "NVENCPreset2": {
         "name": null,
-        "default": null,
-        "mq": null,
-        "hq": null,
-        "hp": null,
-        "ll": null,
-        "llhq": null,
-        "llhp": null
+        "p1": null,
+        "p2": null,
+        "p3": null,
+        "p4": null,
+        "p5": null,
+        "p6": null,
+        "p7": null
       },
       "x264Settings": {
         "name": null
