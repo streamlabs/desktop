@@ -5,7 +5,7 @@ import { Service } from './core/service';
 import { HostsService } from './hosts';
 import { SynthesizerSelector } from './nicolive-program/state';
 import { UuidService } from './uuid';
-import { EncoderType } from './settings/optimizer';
+import { EncoderFamily } from './settings/optimizer';
 import { UserService } from './user';
 import * as remote from '@electron/remote';
 
@@ -64,7 +64,7 @@ export type TUsageEvent =
         sample_rate: 44100 | 48000;
       };
       encoder: {
-        encoder_type: EncoderType;
+        encoder_type: EncoderFamily;
         preset: string;
       };
       auto_optimize: {

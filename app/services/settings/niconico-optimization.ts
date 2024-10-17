@@ -1,4 +1,4 @@
-import { OptimizeSettings, SettingsKeyAccessor, OptimizationKey, EncoderType } from './optimizer';
+import { OptimizeSettings, SettingsKeyAccessor, OptimizationKey, EncoderFamily } from './optimizer';
 
 /**
  * niconicoに最適な設定値を返す。
@@ -43,32 +43,37 @@ export function getBestSettingsForNiconico(
   }
 
   let encoderSettings: OptimizeSettings = {
-    encoder: EncoderType.x264,
+    encoder: EncoderFamily.x264,
     simpleUseAdvanced: true,
     encoderPreset: 'ultrafast',
   };
   if (!('useHardwareEncoder' in options) || options.useHardwareEncoder) {
-    if (settings.hasSpecificValue(OptimizationKey.encoder, EncoderType.nvencNew)) {
+    if (settings.hasSpecificValue(OptimizationKey.encoder, EncoderFamily.nvencNew)) {
       encoderSettings = {
-        encoder: EncoderType.nvencNew,
+        encoder: EncoderFamily.nvencNew,
         simpleUseAdvanced: true,
         NVENCPreset2: 'p3',
       };
     } else if (
-      settings.hasSpecificValue(OptimizationKey.encoder, EncoderType.nvenc) ||
-      settings.hasSpecificValue(OptimizationKey.encoder, EncoderType.advancedNvenc)
+      settings.hasSpecificValue(OptimizationKey.encoder, EncoderFamily.nvenc) ||
+      settings.hasSpecificValue(OptimizationKey.encoder, EncoderFamily.advancedNvenc)
     ) {
       encoderSettings = {
-        encoder: EncoderType.nvenc,
+        encoder: EncoderFamily.nvenc,
         simpleUseAdvanced: true,
         NVENCPreset2: 'p3',
       };
+    } else if (settings.hasSpecificValue(OptimizationKey.encoder, EncoderFamily.amd)) {
+      encoderSettings = {
+        encoder: EncoderFamily.amd,
+        simpleUseAdvanced: true,
+      };
     } else if (
-      settings.hasSpecificValue(OptimizationKey.encoder, EncoderType.qsv) ||
-      settings.hasSpecificValue(OptimizationKey.encoder, EncoderType.advancedQsv)
+      settings.hasSpecificValue(OptimizationKey.encoder, EncoderFamily.qsv) ||
+      settings.hasSpecificValue(OptimizationKey.encoder, EncoderFamily.advancedQsv)
     ) {
       encoderSettings = {
-        encoder: EncoderType.qsv,
+        encoder: EncoderFamily.qsv,
         simpleUseAdvanced: true,
         targetUsage: 'speed',
       };
