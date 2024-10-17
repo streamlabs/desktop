@@ -17,7 +17,6 @@ import { WindowsService } from 'services/windows';
 import { UserService } from 'services/user';
 import Utils from '../utils';
 import { AppService } from 'services/app';
-import { VideoEncodingOptimizationService, IOutputSettings } from '../video-encoding-optimizations';
 import { ISettingsSubCategory, ISettingsServiceApi } from './settings-api';
 import { $t } from 'services/i18n';
 import fs from 'fs';
@@ -27,7 +26,6 @@ import {
   OptimizedSettings,
   SettingsKeyAccessor,
   Optimizer,
-  OptimizationKey,
 } from './optimizer';
 import { getBestSettingsForNiconico } from './niconico-optimization';
 import { TcpServerService } from 'services/api/tcp-server';
@@ -122,9 +120,6 @@ export class SettingsService
   @Inject() private tcpServerService: TcpServerService;
 
   @Inject() private userService: UserService;
-
-  @Inject()
-  private videoEncodingOptimizationService: VideoEncodingOptimizationService;
 
   @Inject() videoSettingsService: VideoSettingsService;
 
@@ -260,39 +255,6 @@ export class SettingsService
           });
         }
       }
-    }
-
-    // We hide the encoder preset and settings if the optimized ones are in used
-    if (
-      categoryName === 'Output' &&
-      this.videoEncodingOptimizationService.getIsUsingEncodingOptimizations()
-    ) {
-      const outputSettings: IOutputSettings =
-        this.videoEncodingOptimizationService.getCurrentOutputSettings();
-
-      const indexSubCategory = settings.indexOf(
-        settings.find((category: any) => {
-          return category.nameSubCategory === 'Streaming';
-        }),
-      );
-
-      const parameters = settings[indexSubCategory].parameters;
-
-      // Setting preset visibility
-      const indexPreset = parameters.indexOf(
-        parameters.find((parameter: any) => {
-          return parameter.name === outputSettings.presetField;
-        }),
-      );
-      settings[indexSubCategory].parameters[indexPreset].visible = false;
-
-      // Setting encoder settings value
-      const indexX264Settings = parameters.indexOf(
-        parameters.find((parameter: any) => {
-          return parameter.name === outputSettings.encoderSettingsField;
-        }),
-      );
-      settings[indexSubCategory].parameters[indexX264Settings].visible = false;
     }
 
     if (categoryName === 'Output') {
