@@ -177,6 +177,7 @@ export default {
   flex-direction: column;
   height: 100%;
   margin: 0;
+  overflow: hidden;
   font-size: @font-size5;
   color: var(--color-text-light);
   text-align: center;
@@ -204,6 +205,7 @@ export default {
   flex-direction: column;
   flex-grow: 1;
   padding: 0;
+  overflow: hidden;
 }
 
 .label {
