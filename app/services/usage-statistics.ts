@@ -1,5 +1,6 @@
 import * as remote from '@electron/remote';
 import { randomBytes } from 'crypto';
+import { isFakeMode } from 'util/fakeMode';
 import { Inject } from './core/injector';
 import { Service } from './core/service';
 import { HostsService } from './hosts';
@@ -142,6 +143,9 @@ export class UsageStatisticsService extends Service {
    */
   async recordEvent(event: TUsageEvent) {
     console.log('recordEvent', event);
+    if (isFakeMode()) {
+      return;
+    }
     try {
       if (event.event === 'boot') {
         const headers = new Headers();

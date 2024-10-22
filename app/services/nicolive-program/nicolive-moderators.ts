@@ -5,6 +5,7 @@ import { distinctUntilChanged, map } from 'rxjs/operators';
 import { Inject } from 'services/core/injector';
 import { StatefulService, mutation } from 'services/core/stateful-service';
 import { WindowsService } from 'services/windows';
+import { isFakeMode } from 'util/fakeMode';
 import { NdgrClient, convertSSNGType, toISO8601, toNumber } from './NdgrClient';
 import { isNdgrFetchError } from './NdgrFetchError';
 import { NicoliveClient, isOk } from './NicoliveClient';
@@ -221,6 +222,10 @@ export class NicoliveModeratorsService extends StatefulService<INicoliveModerato
   }
 
   async fetchModerators() {
+    if (isFakeMode()) {
+      this.setModeratorsCache([]);
+      return;
+    }
     const result = await this.client.fetchModerators();
     if (!isOk(result)) {
       throw NicoliveFailure.fromClientError('fetchModerators', result);

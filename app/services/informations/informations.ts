@@ -3,6 +3,7 @@ import { StatefulService, mutation } from 'services/core/stateful-service';
 import { HostsService } from 'services/hosts';
 import { $t } from 'services/i18n';
 import { WindowsService } from 'services/windows';
+import { isFakeMode } from 'util/fakeMode';
 import { handleErrors } from 'util/requests';
 import { parseString } from 'xml2js';
 import { InformationsStateService } from './state';
@@ -90,6 +91,7 @@ export class InformationsService extends StatefulService<IInformationsState> {
   }
 
   async updateInformations() {
+    if (isFakeMode()) return;
     this.SET_HAS_ERROR(false);
     try {
       const feedResult = await this.fetchFeed();
