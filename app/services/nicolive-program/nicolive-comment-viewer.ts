@@ -597,6 +597,26 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
     this.SET_STATE({ pinnedMessage });
   }
 
+  async deleteComment(commentId: string): Promise<void> {
+    await this.nicoliveProgramService.deleteCommentRaw(commentId);
+
+    // コメント一覧のコメントを削除に変更する
+    this.updateMessages(chat => {
+      if (isWrappedChat(chat) && chat.value.id === commentId) {
+        return {
+          ...chat,
+          isDeleted: true,
+        };
+      }
+      return chat;
+    });
+
+    // ピン止めコメントが削除されたらピン止めを解除する
+    if (this.state.pinnedMessage?.value.id === commentId) {
+      this.pinComment(null);
+    }
+  }
+
   @mutation()
   private SET_STATE(nextState: Partial<INicoliveCommentViewerState>) {
     this.state = { ...this.state, ...nextState };

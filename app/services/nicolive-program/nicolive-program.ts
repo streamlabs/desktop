@@ -627,4 +627,15 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
       this.stateService.updateNameplateHint({ programID: this.state.programID, commentNo });
     }
   }
+
+  async deleteCommentRaw(commentId: string): Promise<void> {
+    if (isFakeMode()) {
+      return;
+    }
+
+    const result = await this.client.deleteComment(this.state.programID, commentId);
+    if (!isOk(result)) {
+      throw NicoliveFailure.fromClientError('deleteComment', result);
+    }
+  }
 }

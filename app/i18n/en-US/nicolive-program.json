@@ -310,6 +310,40 @@
           "title": "Unable to retrieve supporter information",
           "message": "%{additionalMessage}"
         }
+      },
+      "deleteComment": {
+        "400": {
+          "title": "Failed to delete a comment",
+          "message": "Failed to delete a comment.\n%{additionalMessage}"
+        },
+        "500": {
+          "title": "Failed to delete a comment",
+          "message": "Failed to delete a comment.\n%{additionalMessage}"
+        },
+        "NOT_FOUND": {
+          "title": "NOT_FOUND",
+          "message": "Specified comment not found."
+        },
+        "AUTHENTICATION_FAILED": {
+          "title": "AUTHENTICATION_FAILED",
+          "message": "You are not logged in."
+        },
+        "AUTHORIZATION_FAILED": {
+          "title": "AUTHORIZATION_FAILED",
+          "message": "Unable to delete a comment because you are not the broadcaster."
+        },
+        "FORBIDDEN": {
+          "title": "FORBIDDEN",
+          "message": "Unable to delete a comment because the program is too old."
+        },
+        "BAD_REQUEST": {
+          "title": "BAD_REQUEST",
+          "message": "Failed to delete a comment(Bad Request)."
+        },
+        "SERVICE_ERROR": {
+          "title": "SERVICE_ERROR",
+          "message": "Failed to delete a comment(Service Error)."
+        }
       }
     },
     "logic": {

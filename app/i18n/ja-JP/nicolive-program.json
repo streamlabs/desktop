@@ -310,6 +310,40 @@
           "title": "サポーター情報を取得できませんでした",
           "message": "取得に失敗しました。\n%{additionalMessage}"
         }
+      },
+      "deleteComment": {
+        "400": {
+          "title": "コメントを削除できませんでした",
+          "message": "削除に失敗しました。\n%{additionalMessage}"
+        },
+        "500": {
+          "title": "コメントを削除できませんでした",
+          "message": "削除に失敗しました。\n%{additionalMessage}"
+        },
+        "NOT_FOUND": {
+          "title": "NOT_FOUND",
+          "message": "コメントが見つかりませんでした"
+        },
+        "AUTHENTICATION_FAILED": {
+          "title": "AUTHENTICATION_FAILED",
+          "message": "ログインしていません"
+        },
+        "AUTHORIZATION_FAILED": {
+          "title": "AUTHORIZATION_FAILED",
+          "message": "放送者でないため、コメントを削除する権限がありません"
+        },
+        "FORBIDDEN": {
+          "title": "FORBIDDEN",
+          "message": "番組が古すぎるため、コメントを削除できませんでした"
+        },
+        "BAD_REQUEST": {
+          "title": "BAD_REQUEST",
+          "message": "コメントを削除できませんでした(不正なリクエスト)"
+        },
+        "SERVICE_ERROR": {
+          "title": "SERVICE_ERROR",
+          "message": "コメントを削除できませんでした(サービスエラー)"
+        }
       }
     },
     "logic": {

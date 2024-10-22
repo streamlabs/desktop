@@ -20,7 +20,9 @@
             v-if="chat.isSupporter"
           ></i>
         </div>
-        <div class="comment-body" :title="computedTitle">{{ computedContent }}</div>
+        <div class="comment-body" :title="computedTitle">
+          {{ computedContent }} {{ chat.isDeleted ? '(削除)' : '' }}
+        </div>
       </div>
       <div class="comment-misc" @click.stop="$emit('commentMenu')">
         <i class="icon-btn icon-ellipsis-vertical"></i>

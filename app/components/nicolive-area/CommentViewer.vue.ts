@@ -208,6 +208,20 @@ export default class CommentViewer extends Vue {
         type: 'separator',
       });
 
+      if (!item.isDeleted) {
+        menu.append({
+          id: 'Delete a comment',
+          label: 'コメントを削除する',
+          click: () => {
+            this.nicoliveCommentViewerService.deleteComment(item.value.id).catch(e => {
+              console.log('delete comment failed', e); // DEBUG
+              if (e instanceof NicoliveFailure) {
+                openErrorDialogFromFailure(e);
+              }
+            });
+          },
+        });
+      }
       menu.append({
         id: 'Ban comment content',
         label: 'コメントを配信からブロック',
@@ -270,13 +284,15 @@ export default class CommentViewer extends Vue {
           type: 'separator',
         });
       }
-      menu.append({
-        id: 'Pin the comment',
-        label: 'コメントをピン留め',
-        click: () => {
-          this.pin(item);
-        },
-      });
+      if (!item.isDeleted) {
+        menu.append({
+          id: 'Pin the comment',
+          label: 'コメントをピン留め',
+          click: () => {
+            this.pin(item);
+          },
+        });
+      }
     }
 
     // コンテキストメニューが出るとホバー判定が消えるので、外観を維持するために注目している要素を保持しておく

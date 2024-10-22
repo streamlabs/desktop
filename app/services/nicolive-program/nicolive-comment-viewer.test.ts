@@ -222,6 +222,7 @@ function connectionSetup(options: { speechEnabled?: boolean; httpRelationEnabled
           state: {},
         },
         checkNameplateHint: () => {},
+        deleteCommentRaw: () => Promise.resolve(),
       },
       NicoliveModeratorsService: {
         refreshObserver,
@@ -728,4 +729,37 @@ test('NGワードにかかるコメントが来たら ##このコメントは表
 
   expect(instance.state.messages.length).toEqual(2);
   expect(getDisplayText(instance.state.messages[0])).toEqual('##このコメントは表示されません##');
+});
+
+test('コメントを削除すると当該コメントの isDeletedがtrueになり、ピン留めされていたら解除される', async () => {
+  const { clientSubject, instance } = connectionSetup();
+  await sleep(0);
+
+  const ID = '1';
+
+  clientSubject.next({
+    chat: {
+      id: ID,
+      content: 'yay',
+      user_id: '123', // anything not empty
+    },
+  });
+
+  // bufferTime tweaks
+  clientSubject.complete();
+
+  if (!isWrappedChat(instance.state.messages[0])) {
+    throw new Error('invalid state');
+  }
+
+  expect(instance.state.messages.length).toEqual(2);
+  expect(instance.state.messages[0].isDeleted).toBeFalsy();
+  expect(instance.state.pinnedMessage).toBeNull();
+  instance.pinComment(instance.state.messages[0]);
+  expect(instance.state.pinnedMessage).not.toBeNull();
+
+  await instance.deleteComment(ID);
+
+  expect(instance.state.messages[0].isDeleted).toBeTruthy();
+  expect(instance.state.pinnedMessage).toBeNull();
 });
