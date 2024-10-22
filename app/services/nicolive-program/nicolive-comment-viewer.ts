@@ -72,7 +72,7 @@ class DummyMessageServerClient implements IMessageServerClient {
   connect(): Observable<MessageResponse> {
     return interval(5000).pipe(
       map(res => ({
-        chat: makeEmulatedChat(`${res}`).value,
+        chat: { ...makeEmulatedChat(`${res}`).value, id: `${res}` },
       })),
     );
   }
@@ -590,7 +590,37 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
   }
 
   private clearList() {
-    this.SET_STATE({ messages: [], popoutMessages: [] });
+    this.SET_STATE({
+      messages: isFakeMode()
+        ? [
+            // DEBUG
+            {
+              component: 'common',
+              type: 'normal',
+              value: {
+                content: '生存コメント',
+                user_id: '1',
+                name: '名前1',
+                date: Math.floor(Date.now() / 1000),
+              },
+              seqId: -2,
+            },
+            {
+              component: 'common',
+              type: 'normal',
+              value: {
+                content: '削除コメント',
+                user_id: '2',
+                name: '名前2',
+                date: Math.floor(Date.now() / 1000),
+              },
+              seqId: -1,
+              isDeleted: true,
+            },
+          ]
+        : [],
+      popoutMessages: [],
+    });
   }
 
   pinComment(pinnedMessage: WrappedChatWithComponent | null) {
