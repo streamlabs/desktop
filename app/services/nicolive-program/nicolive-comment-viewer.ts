@@ -628,6 +628,10 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
   }
 
   async deleteComment(commentId: string): Promise<void> {
+    if (!commentId) {
+      throw new Error('deleteComment: commentId is required');
+    }
+
     await this.nicoliveProgramService.deleteCommentRaw(commentId);
 
     // コメント一覧のコメントを削除に変更する
