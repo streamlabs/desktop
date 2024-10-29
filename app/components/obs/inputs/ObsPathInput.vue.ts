@@ -1,6 +1,5 @@
 import { Component, Prop } from 'vue-property-decorator';
 import { IObsPathInputValue, TObsType, ObsInput } from './ObsInput';
-import electron from 'electron';
 import * as remote from '@electron/remote';
 
 // eslint-disable-next-line

@@ -1,4 +1,3 @@
-import electron from 'electron';
 import path, { dirname } from 'path';
 import { $t } from 'services/i18n';
 import Vue from 'vue';

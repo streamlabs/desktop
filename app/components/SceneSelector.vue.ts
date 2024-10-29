@@ -1,4 +1,3 @@
-import electron from 'electron';
 import Fuse from 'fuse.js';
 import { AppService } from 'services/app';
 import { CompactModeService } from 'services/compact-mode';

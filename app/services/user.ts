@@ -3,7 +3,7 @@ import URI from 'urijs';
 import { PersistentStatefulService } from 'services/core/persistent-stateful-service';
 import { Inject } from 'services/core/injector';
 import { mutation } from 'services/core/stateful-service';
-import electron, { ipcRenderer } from 'electron';
+import { ipcRenderer } from 'electron';
 import { IncrementalRolloutService } from 'services/incremental-rollout';
 import {
   getPlatformService,

@@ -4,7 +4,6 @@ import { Subject } from 'rxjs';
 import { StatefulService, mutation } from 'services/core/stateful-service';
 import { CustomizationService } from 'services/customization';
 import { Inject } from 'services/core/injector';
-import electron from 'electron';
 import * as obs from '../../../obs-api';
 import * as Sentry from '@sentry/vue';
 import * as remote from '@electron/remote';

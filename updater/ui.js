@@ -3,7 +3,6 @@
 import Vue from 'vue';
 import VueI18n from 'vue-i18n';
 import UpdaterWindow from './UpdaterWindow.vue';
-import electron from 'electron';
 import '../app/app.less';
 import '../app/theme.less';
 import './updater.css';

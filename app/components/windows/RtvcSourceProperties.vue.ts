@@ -15,7 +15,6 @@ import {
   SourcePropKey,
   PitchShiftModeValue,
 } from 'services/rtvcStateService';
-import electron from 'electron';
 import { $t } from 'services/i18n';
 import * as remote from '@electron/remote';
 

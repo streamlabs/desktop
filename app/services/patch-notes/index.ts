@@ -1,6 +1,5 @@
 import { PersistentStatefulService } from 'services/core/persistent-stateful-service';
 import { mutation } from 'services/core/stateful-service';
-import electron from 'electron';
 import Util from 'services/utils';
 import { notes } from './notes';
 import { NavigationService } from 'services/navigation';

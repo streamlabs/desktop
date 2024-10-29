@@ -4,7 +4,6 @@ import { WindowsService } from 'services/windows';
 import { CustomizationService } from 'services/customization';
 import { Inject } from 'services/core/injector';
 import { AppService } from 'services/app';
-import electron from 'electron';
 
 @Component({})
 export default class ModalLayout extends Vue {

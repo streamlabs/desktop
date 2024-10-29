@@ -1,6 +1,5 @@
 import * as Sentry from '@sentry/vue';
 import { uniq } from 'lodash';
-import electron from 'electron';
 import { mutation, StatefulService, ServiceHelper } from 'services/core';
 import {
   ScenesService,

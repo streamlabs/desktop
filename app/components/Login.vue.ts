@@ -1,4 +1,3 @@
-import electron from 'electron';
 import { CompactModeService } from 'services/compact-mode';
 import { Inject } from 'services/core/injector';
 import { DismissablesService, EDismissable } from 'services/dismissables';

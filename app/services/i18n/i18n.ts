@@ -1,4 +1,3 @@
-import * as electron from 'electron';
 import VueI18n from 'vue-i18n';
 import { PersistentStatefulService } from 'services/core/persistent-stateful-service';
 import { mutation } from 'services/core/stateful-service';

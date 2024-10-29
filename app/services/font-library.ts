@@ -2,7 +2,6 @@ import { Service } from './core/service';
 import path from 'path';
 import fs from 'fs';
 import https from 'https';
-import electron from 'electron';
 import { EFontStyle } from 'obs-studio-node';
 import * as remote from '@electron/remote';
 

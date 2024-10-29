@@ -5,7 +5,6 @@ import { VideoService } from 'services/video';
 import { WindowsService } from 'services/windows';
 import { ScalableRectangle } from 'util/ScalableRectangle';
 import { SelectionService } from 'services/selection';
-import electron from 'electron';
 
 /*
  * An edge looks like:
