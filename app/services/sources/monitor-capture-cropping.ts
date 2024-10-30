@@ -1,4 +1,4 @@
-import electron, { BrowserWindow } from 'electron';
+import { BrowserWindow } from 'electron';
 import { Inject } from 'services/core/injector';
 import { WindowsService } from 'services/windows';
 import { ISourceApi, ISourcesServiceApi } from 'services/sources';

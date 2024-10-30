@@ -11,7 +11,6 @@ import { CustomizationService } from 'services/customization';
 import { SelectionService } from 'services/selection/selection';
 import { ProjectorService } from 'services/projector';
 import { AudioService } from 'services/audio';
-import electron from 'electron';
 import { $t } from 'services/i18n';
 import { MonitorCaptureCroppingService } from 'services/sources/monitor-capture-cropping';
 

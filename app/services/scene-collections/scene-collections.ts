@@ -9,7 +9,6 @@ import { TransitionsNode } from './nodes/transitions';
 import { HotkeysNode } from './nodes/hotkeys';
 import { SceneFiltersNode } from './nodes/scene-filters';
 import path from 'path';
-import electron from 'electron';
 import fs from 'fs';
 import { parse } from './parse';
 import { ScenesService, Scene } from 'services/scenes';

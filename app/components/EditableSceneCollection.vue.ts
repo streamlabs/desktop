@@ -1,4 +1,3 @@
-import electron from 'electron';
 import Vue from 'vue';
 import { Component, Prop, Watch } from 'vue-property-decorator';
 import { SceneCollectionsService } from 'services/scene-collections';

@@ -1,7 +1,6 @@
 // N Voice Client Service
 
 import * as Sentry from '@sentry/vue';
-import electron from 'electron';
 import { join } from 'path';
 import { StatefulService } from 'services/core/stateful-service';
 import { $t } from 'services/i18n';

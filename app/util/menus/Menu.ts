@@ -1,6 +1,5 @@
 // An abstraction on electron Menus
 
-import electron from 'electron';
 import * as remote from '@electron/remote';
 
 export class Menu {

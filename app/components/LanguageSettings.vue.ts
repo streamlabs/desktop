@@ -4,7 +4,6 @@ import { Inject } from 'services/core/injector';
 import { $t, I18nServiceApi } from 'services/i18n';
 import GenericForm from 'components/obs/inputs/GenericForm.vue';
 import { TObsFormData } from 'components/obs/inputs/ObsInput';
-import electron from 'electron';
 import * as remote from '@electron/remote';
 
 @Component({

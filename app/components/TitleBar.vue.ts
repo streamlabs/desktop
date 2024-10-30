@@ -1,6 +1,5 @@
 import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
-import electron from 'electron';
 import { CustomizationService } from 'services/customization';
 import { Inject } from 'services/core/injector';
 import { StreamingService } from 'services/streaming';

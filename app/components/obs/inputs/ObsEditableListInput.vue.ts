@@ -1,5 +1,4 @@
 import _ from 'lodash';
-import electron from 'electron';
 import Selector from '../../Selector.vue';
 import { Component, Prop } from 'vue-property-decorator';
 import { IObsEditableListInputValue, ObsInput, TObsType } from './ObsInput';

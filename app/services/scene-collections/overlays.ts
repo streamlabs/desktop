@@ -9,7 +9,6 @@ import { VideoNode } from './nodes/overlays/video';
 import { TransitionNode } from './nodes/overlays/transition';
 import { parse } from './parse';
 import { Inject } from '../core/injector';
-import electron from 'electron';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';

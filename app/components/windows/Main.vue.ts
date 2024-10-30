@@ -1,5 +1,4 @@
 import * as Sentry from '@sentry/vue';
-import electron from 'electron';
 import { AppService } from 'services/app';
 import { CompactModeService } from 'services/compact-mode';
 import { Inject } from 'services/core/injector';

@@ -1,5 +1,4 @@
 import Vue from 'vue';
-import electron from 'electron';
 import { Component, Watch } from 'vue-property-decorator';
 import { Inject } from 'services/core/injector';
 import { getComponents, IWindowOptions, WindowsService } from 'services/windows';
