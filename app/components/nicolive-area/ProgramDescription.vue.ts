@@ -1,9 +1,9 @@
-import Vue from 'vue';
-import { Component } from 'vue-property-decorator';
+import * as remote from '@electron/remote';
 import { Inject } from 'services/core/injector';
 import { NicoliveProgramService } from 'services/nicolive-program/nicolive-program';
-import * as remote from '@electron/remote';
 import { apply as applyAutoLink } from 'util/autoLink';
+import Vue from 'vue';
+import { Component } from 'vue-property-decorator';
 
 @Component({})
 export default class ProgramDescription extends Vue {

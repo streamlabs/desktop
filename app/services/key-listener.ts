@@ -4,8 +4,8 @@
 // the module is required properly and to define
 // a typed interface around it.
 
-import { Service } from './core/service';
 import * as remote from '@electron/remote';
+import { Service } from './core/service';
 
 export type TKeyEventType = 'registerKeydown' | 'registerKeyup';
 

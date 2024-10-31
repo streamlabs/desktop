@@ -1,10 +1,10 @@
-import Vue from 'vue';
-import { Component } from 'vue-property-decorator';
-import { Inject } from 'services/core/injector';
-import { $t, I18nServiceApi } from 'services/i18n';
+import * as remote from '@electron/remote';
 import GenericForm from 'components/obs/inputs/GenericForm.vue';
 import { TObsFormData } from 'components/obs/inputs/ObsInput';
-import * as remote from '@electron/remote';
+import { Inject } from 'services/core/injector';
+import { $t, I18nServiceApi } from 'services/i18n';
+import Vue from 'vue';
+import { Component } from 'vue-property-decorator';
 
 @Component({
   components: { GenericForm },

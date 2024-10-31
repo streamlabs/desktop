@@ -1,13 +1,13 @@
-import Vue from 'vue';
-import { Component, Prop, Watch } from 'vue-property-decorator';
-import { StreamingService, EStreamingState } from 'services/streaming';
+import { CompactModeService } from 'services/compact-mode';
 import { Inject } from 'services/core/injector';
+import { $t } from 'services/i18n';
 import { NavigationService } from 'services/navigation';
 import { SettingsService } from 'services/settings';
-import { WindowsService } from '../services/windows';
-import { $t } from 'services/i18n';
+import { EStreamingState, StreamingService } from 'services/streaming';
+import Vue from 'vue';
+import { Component, Prop, Watch } from 'vue-property-decorator';
 import StartStreamingIcon from '../../media/images/start-streaming-icon.svg';
-import { CompactModeService } from 'services/compact-mode';
+import { WindowsService } from '../services/windows';
 
 @Component({
   components: {

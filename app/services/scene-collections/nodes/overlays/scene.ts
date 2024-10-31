@@ -1,5 +1,5 @@
-import { Node } from '../node';
 import { SceneItem } from 'services/scenes';
+import { Node } from '../node';
 
 interface ISceneNodeSchema {
   sceneId: string;

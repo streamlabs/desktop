@@ -1,19 +1,19 @@
-import { Node } from './node';
-import { HotkeysNode } from './hotkeys';
-import {
-  SourcesService,
-  TSourceType,
-  TPropertiesManager,
-  isNoAudioPropertiesManagerType,
-} from 'services/sources';
-import { FontLibraryService } from 'services/font-library';
-import { AudioService } from 'services/audio';
-import { Inject } from '../../core/injector';
-import * as obs from '../../../../obs-api';
 import * as fi from 'node-fontinfo';
+import { AudioService } from 'services/audio';
+import { FontLibraryService } from 'services/font-library';
 import { $t } from 'services/i18n';
 import { ScenesService } from 'services/scenes';
-import { unapplyPathConvertForPreset, applyPathConvertForPreset } from './sources-util';
+import {
+  SourcesService,
+  TPropertiesManager,
+  TSourceType,
+  isNoAudioPropertiesManagerType,
+} from 'services/sources';
+import * as obs from '../../../../obs-api';
+import { Inject } from '../../core/injector';
+import { HotkeysNode } from './hotkeys';
+import { Node } from './node';
+import { applyPathConvertForPreset, unapplyPathConvertForPreset } from './sources-util';
 
 interface ISchema {
   items: ISourceInfo[];

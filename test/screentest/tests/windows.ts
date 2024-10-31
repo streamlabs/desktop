@@ -1,10 +1,10 @@
 import test from 'ava';
-import { useWebdriver } from '../../helpers/webdriver';
-import { getApiClient } from '../../helpers/api-client';
-import { ISourcesServiceApi } from '../../../app/services/sources/sources-api';
-import { useScreentest } from '../screenshoter';
-import { ISettingsServiceApi } from '../../../app/services/settings';
 import { ScenesService } from 'services/scenes';
+import { ISettingsServiceApi } from '../../../app/services/settings';
+import { ISourcesServiceApi } from '../../../app/services/sources/sources-api';
+import { getApiClient } from '../../helpers/api-client';
+import { useWebdriver } from '../../helpers/webdriver';
+import { useScreentest } from '../screenshoter';
 
 useWebdriver({ restartAppAfterEachTest: false });
 useScreentest({ window: 'child' });

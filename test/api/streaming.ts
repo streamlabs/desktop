@@ -1,11 +1,11 @@
-import { TExecutionContext, useWebdriver, test } from '../helpers/webdriver';
-import { getApiClient } from '../helpers/api-client';
-import {
-  IStreamingServiceApi,
-  EStreamingState,
-  ERecordingState,
-} from '../../app/services/streaming/streaming-api';
 import { ISettingsServiceApi } from '../../app/services/settings';
+import {
+  ERecordingState,
+  EStreamingState,
+  IStreamingServiceApi,
+} from '../../app/services/streaming/streaming-api';
+import { getApiClient } from '../helpers/api-client';
+import { test, TExecutionContext, useWebdriver } from '../helpers/webdriver';
 
 useWebdriver({ restartAppAfterEachTest: true });
 

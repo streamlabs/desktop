@@ -1,17 +1,17 @@
+import Display from 'components/shared/Display.vue';
+import _ from 'lodash';
+import { Inject } from 'services/core/injector';
+import { CustomizationService } from 'services/customization';
+import { Scene, SceneItem, ScenesService, TSceneNode } from 'services/scenes';
+import { SelectionService } from 'services/selection/selection';
+import { TransitionsService } from 'services/transitions';
+import { VideoService } from 'services/video';
+import { WindowsService } from 'services/windows';
+import { DragHandler } from 'util/DragHandler';
+import { EditMenu } from 'util/menus/EditMenu';
+import { ResizeBoxPoint, ScalableRectangle } from 'util/ScalableRectangle';
 import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
-import _ from 'lodash';
-import { DragHandler } from 'util/DragHandler';
-import { Inject } from 'services/core/injector';
-import { ScenesService, SceneItem, Scene, TSceneNode } from 'services/scenes';
-import { VideoService } from 'services/video';
-import { EditMenu } from 'util/menus/EditMenu';
-import { ScalableRectangle, ResizeBoxPoint } from 'util/ScalableRectangle';
-import { WindowsService } from 'services/windows';
-import { SelectionService } from 'services/selection/selection';
-import Display from 'components/shared/Display.vue';
-import { TransitionsService } from 'services/transitions';
-import { CustomizationService } from 'services/customization';
 
 interface IResizeRegion {
   name: 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';

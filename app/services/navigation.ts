@@ -1,5 +1,5 @@
-import { StatefulService, mutation } from './core/stateful-service';
 import { Subject } from 'rxjs';
+import { StatefulService, mutation } from './core/stateful-service';
 
 type TAppPage = 'Studio' | 'Onboarding' | 'PatchNotes';
 

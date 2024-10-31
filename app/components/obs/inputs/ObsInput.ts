@@ -1,16 +1,16 @@
 import _ from 'lodash';
+import { $t } from 'services/i18n/index';
 import Vue from 'vue';
 import { Prop } from 'vue-property-decorator';
 import * as obs from '../../../../obs-api';
 import {
-  isListProperty,
   isEditableListProperty,
-  isNumberProperty,
-  isTextProperty,
   isFontProperty,
+  isListProperty,
+  isNumberProperty,
   isPathProperty,
+  isTextProperty,
 } from '../../../util/properties-type-guards';
-import { $t } from 'services/i18n/index';
 
 /**
  * all possible OBS properties types

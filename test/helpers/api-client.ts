@@ -1,7 +1,7 @@
-import { IJsonRpcEvent, IJsonRpcRequest } from '../../app/services/api/jsonrpc';
+import { isEqual } from 'lodash';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
-import { isEqual } from 'lodash';
+import { IJsonRpcEvent, IJsonRpcRequest } from '../../app/services/api/jsonrpc';
 
 const net = require('net');
 const snp = require('node-win32-np');

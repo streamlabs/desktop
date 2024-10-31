@@ -1,5 +1,5 @@
-import Vue from 'vue';
 import _ from 'lodash';
+import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
 import draggable from 'vuedraggable';
 

@@ -1,8 +1,8 @@
-import Vue from 'vue';
-import { Component, Prop } from 'vue-property-decorator';
+import { CompactModeService } from 'services/compact-mode';
 import { Inject } from 'services/core/injector';
 import { DismissablesService, EDismissable } from 'services/dismissables';
-import { CompactModeService } from 'services/compact-mode';
+import Vue from 'vue';
+import { Component, Prop } from 'vue-property-decorator';
 
 @Component({})
 export default class HelpTip extends Vue {

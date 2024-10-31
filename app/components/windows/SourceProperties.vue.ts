@@ -1,17 +1,17 @@
-import Vue from 'vue';
-import cloneDeep from 'lodash/cloneDeep';
-import { Component } from 'vue-property-decorator';
-import { Inject } from 'services/core/injector';
-import { TObsFormData } from 'components/obs/inputs/ObsInput';
-import { WindowsService } from 'services/windows';
-import { ISourcesServiceApi, TSourceType } from 'services/sources';
-import ModalLayout from 'components/ModalLayout.vue';
-import Display from 'components/shared/Display.vue';
-import GenericForm from 'components/obs/inputs/GenericForm.vue';
-import { $t } from 'services/i18n';
-import { Subscription } from 'rxjs';
-import Util from 'services/utils';
 import * as remote from '@electron/remote';
+import ModalLayout from 'components/ModalLayout.vue';
+import GenericForm from 'components/obs/inputs/GenericForm.vue';
+import { TObsFormData } from 'components/obs/inputs/ObsInput';
+import Display from 'components/shared/Display.vue';
+import cloneDeep from 'lodash/cloneDeep';
+import { Subscription } from 'rxjs';
+import { Inject } from 'services/core/injector';
+import { $t } from 'services/i18n';
+import { ISourcesServiceApi, TSourceType } from 'services/sources';
+import Util from 'services/utils';
+import { WindowsService } from 'services/windows';
+import Vue from 'vue';
+import { Component } from 'vue-property-decorator';
 
 const PeriodicUpdateSources: TSourceType[] = ['ndi_source', 'custom_cast_ndi_source'];
 const PeriodicUpdateInterval = 5000; // in Milliseconds

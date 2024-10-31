@@ -1,14 +1,14 @@
+import Display from 'components/shared/Display.vue';
+import StudioControls from 'components/StudioControls.vue';
+import StudioEditor from 'components/StudioEditor.vue';
+import StudioModeControls from 'components/StudioModeControls.vue';
+import { CompactModeService } from 'services/compact-mode';
+import { Inject } from 'services/core/injector';
+import { CustomizationService } from 'services/customization';
+import { ScenesService } from 'services/scenes';
+import { TransitionsService } from 'services/transitions';
 import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
-import { CustomizationService } from 'services/customization';
-import StudioEditor from 'components/StudioEditor.vue';
-import StudioControls from 'components/StudioControls.vue';
-import { Inject } from 'services/core/injector';
-import { TransitionsService } from 'services/transitions';
-import Display from 'components/shared/Display.vue';
-import StudioModeControls from 'components/StudioModeControls.vue';
-import { ScenesService } from 'services/scenes';
-import { CompactModeService } from 'services/compact-mode';
 
 @Component({
   components: {

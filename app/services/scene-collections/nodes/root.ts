@@ -1,10 +1,10 @@
-import { Node } from './node';
-import { SourcesNode } from './sources';
-import { ScenesNode } from './scenes';
-import { TransitionsNode } from './transitions';
-import { HotkeysNode } from './hotkeys';
 import { Inject } from 'services/core';
 import { VideoService } from 'services/video';
+import { HotkeysNode } from './hotkeys';
+import { Node } from './node';
+import { ScenesNode } from './scenes';
+import { SourcesNode } from './sources';
+import { TransitionsNode } from './transitions';
 
 import { VideoSettingsService } from 'services/settings-v2/video';
 

@@ -1,12 +1,12 @@
+import { $t } from 'services/i18n';
+import { ISceneItemNode, ScenesService, TSceneNode } from 'services/scenes';
+import { SelectionService } from 'services/selection/selection';
+import { SourcesService } from 'services/sources';
+import SlVueTree, { ICursorPosition, ISlTreeNode, ISlTreeNodeModel } from 'sl-vue-tree';
 import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
 import { Inject } from '../services/core/injector';
-import { SourcesService } from 'services/sources';
-import { ScenesService, ISceneItemNode, TSceneNode } from 'services/scenes';
-import { SelectionService } from 'services/selection/selection';
 import { EditMenu } from '../util/menus/EditMenu';
-import SlVueTree, { ISlTreeNode, ISlTreeNodeModel, ICursorPosition } from 'sl-vue-tree';
-import { $t } from 'services/i18n';
 
 const sourceIconMap = {
   ffmpeg_source: 'icon-media',

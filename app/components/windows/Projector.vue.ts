@@ -1,15 +1,14 @@
-import Vue from 'vue';
-import { Component } from 'vue-property-decorator';
+import * as remote from '@electron/remote';
 import ModalLayout from 'components/ModalLayout.vue';
 import Display from 'components/shared/Display.vue';
-import { Inject } from 'services/core/injector';
-import { WindowsService } from 'services/windows';
-import { ISourcesServiceApi } from 'services/sources';
 import electron from 'electron';
-import Util from 'services/utils';
-import { $t } from 'services/i18n';
 import { Subscription } from 'rxjs';
-import * as remote from '@electron/remote';
+import { Inject } from 'services/core/injector';
+import { ISourcesServiceApi } from 'services/sources';
+import Util from 'services/utils';
+import { WindowsService } from 'services/windows';
+import Vue from 'vue';
+import { Component } from 'vue-property-decorator';
 
 @Component({
   components: {

@@ -1,8 +1,8 @@
-import Vue from 'vue';
-import VueSlider from 'vue-slider-component';
-import { Component, Prop } from 'vue-property-decorator';
 import ResizeSensor from 'css-element-queries/src/ResizeSensor';
 import { debounce } from 'lodash-decorators';
+import Vue from 'vue';
+import { Component, Prop } from 'vue-property-decorator';
+import VueSlider from 'vue-slider-component';
 
 @Component({
   components: { VueSlider },

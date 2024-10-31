@@ -1,15 +1,15 @@
+import * as remote from '@electron/remote';
+import { Subscription } from 'rxjs';
+import { InitAfter } from 'services/core';
+import { SelectionService } from 'services/selection';
+import * as obs from '../../obs-api';
+import { ScalableRectangle } from '../util/ScalableRectangle';
+import { Inject } from './core/injector';
 import { Service } from './core/service';
 import { SettingsService } from './settings';
-import * as obs from '../../obs-api';
-import { Inject } from './core/injector';
+import { VideoSettingsService } from './settings-v2';
 import Utils from './utils';
 import { WindowsService } from './windows';
-import { ScalableRectangle } from '../util/ScalableRectangle';
-import { Subscription } from 'rxjs';
-import { SelectionService } from 'services/selection';
-import { VideoSettingsService } from './settings-v2';
-import { InitAfter } from 'services/core';
-import * as remote from '@electron/remote';
 
 const DISPLAY_ELEMENT_POLLING_INTERVAL = 500;
 

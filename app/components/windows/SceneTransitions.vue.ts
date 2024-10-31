@@ -1,15 +1,15 @@
-import Vue from 'vue';
-import { Component } from 'vue-property-decorator';
-import { Inject } from 'services/core/injector';
-import { TransitionsService, ETransitionType } from 'services/transitions';
-import { WindowsService } from 'services/windows';
-import ModalLayout from 'components/ModalLayout.vue';
-import TransitionSettings from 'components/TransitionSettings.vue';
-import { $t } from 'services/i18n';
-import Tabs, { ITab } from 'components/Tabs.vue';
-import { ScenesService } from 'services/scenes';
 import ConnectionSettings from 'components/ConnectionSettings.vue';
+import ModalLayout from 'components/ModalLayout.vue';
+import Tabs, { ITab } from 'components/Tabs.vue';
+import TransitionSettings from 'components/TransitionSettings.vue';
+import { Inject } from 'services/core/injector';
+import { $t } from 'services/i18n';
+import { ScenesService } from 'services/scenes';
+import { ETransitionType, TransitionsService } from 'services/transitions';
+import { WindowsService } from 'services/windows';
+import Vue from 'vue';
 import VModal from 'vue-js-modal';
+import { Component } from 'vue-property-decorator';
 
 Vue.use(VModal);
 

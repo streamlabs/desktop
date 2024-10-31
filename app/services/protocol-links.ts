@@ -1,8 +1,8 @@
-import { Service } from 'services/core/service';
 import electron from 'electron';
-import { URL, URLSearchParams } from 'url';
 import { Inject } from 'services/core/injector';
+import { Service } from 'services/core/service';
 import { NavigationService } from 'services/navigation';
+import { URL, URLSearchParams } from 'url';
 
 function protocolHandler(base: string) {
   return (target: any, methodName: string, descriptor: PropertyDescriptor) => {

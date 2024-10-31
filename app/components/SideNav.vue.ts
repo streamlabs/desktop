@@ -1,3 +1,4 @@
+import * as remote from '@electron/remote';
 import Login from 'components/Login.vue';
 import StreamingStatus from 'components/StreamingStatus.vue';
 import electron from 'electron';
@@ -11,8 +12,7 @@ import { TransitionsService } from 'services/transitions';
 import { UserService } from 'services/user';
 import Utils from 'services/utils';
 import Vue from 'vue';
-import { Component, Prop, Watch } from 'vue-property-decorator';
-import * as remote from '@electron/remote';
+import { Component, Prop } from 'vue-property-decorator';
 
 @Component({
   components: {

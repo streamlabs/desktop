@@ -1,6 +1,6 @@
-import { ObsInput } from './ObsInput';
-import { Component, Prop } from 'vue-property-decorator';
 import { Multiselect } from 'vue-multiselect';
+import { Component, Prop } from 'vue-property-decorator';
+import { ObsInput } from './ObsInput';
 
 @Component({ components: { Multiselect } })
 export default class ObsFontSizeSelector extends ObsInput<number> {

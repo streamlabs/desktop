@@ -1,11 +1,11 @@
-import { Component } from 'vue-property-decorator';
-import Vue from 'vue';
+import { Subject } from 'rxjs';
 import uuid from 'uuid';
+import Vue from 'vue';
+import { Component } from 'vue-property-decorator';
 // @ts-expect-error
 import { ErrorField } from 'vee-validate';
 import { BaseInput } from './BaseInput';
 import { IInputMetadata } from './index';
-import { Subject } from 'rxjs';
 
 /**
  * VeeValidate doesn't support slots https://github.com/baianat/vee-validate/issues/325

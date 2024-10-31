@@ -1,12 +1,12 @@
 import {
+  IObsButtonInputValue,
   IObsListInput,
   IObsTextInputValue,
   TObsFormData,
   TObsValue,
-  IObsButtonInputValue,
 } from 'components/obs/inputs/ObsInput';
-import { PropertiesManager } from './properties-manager';
 import { $t } from 'services/i18n';
+import { PropertiesManager } from './properties-manager';
 
 export class CustomCastNdiManager extends PropertiesManager {
   getPropertiesFormData(): TObsFormData {

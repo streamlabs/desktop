@@ -1,6 +1,6 @@
-import { Component, Prop, Watch } from 'vue-property-decorator';
-import { ObsInput, TObsType, IObsBitmaskInput } from './ObsInput';
+import { Component, Prop } from 'vue-property-decorator';
 import { EBit, default as Utils } from '../../../services/utils';
+import { IObsBitmaskInput, ObsInput, TObsType } from './ObsInput';
 
 @Component
 class ObsBitMaskInput extends ObsInput<IObsBitmaskInput> {

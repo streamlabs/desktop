@@ -1,8 +1,8 @@
-import { Menu } from './Menu';
 import { Inject } from 'services/core/injector';
 import { $t } from 'services/i18n';
-import { SelectionService } from 'services/selection';
 import { EBlendingMethod } from 'services/scenes';
+import { SelectionService } from 'services/selection';
+import { Menu } from './Menu';
 
 export class BlendingMethodMenu extends Menu {
   @Inject() private selectionService: SelectionService;

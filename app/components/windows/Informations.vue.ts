@@ -1,11 +1,11 @@
-import Vue from 'vue';
-import { Component } from 'vue-property-decorator';
-import { Inject } from 'services/core/injector';
-import { WindowsService } from 'services/windows';
-import { InformationsService } from 'services/informations';
 import ModalLayout from 'components/ModalLayout.vue';
 import { shell } from 'electron';
 import { DateTime } from 'luxon';
+import { Inject } from 'services/core/injector';
+import { InformationsService } from 'services/informations';
+import { WindowsService } from 'services/windows';
+import Vue from 'vue';
+import { Component } from 'vue-property-decorator';
 
 const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
 

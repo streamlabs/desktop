@@ -1,10 +1,10 @@
-import { Prop } from 'vue-property-decorator';
+import ValidatedForm from 'components/shared/inputs/ValidatedForm.vue';
 import Vue from 'vue';
+import { Prop } from 'vue-property-decorator';
 // @ts-expect-error
 import { ErrorField } from 'vee-validate';
-import { EInputType, IInputMetadata } from './index';
 import { BaseInput } from './BaseInput';
-import ValidatedForm from 'components/shared/inputs/ValidatedForm.vue';
+import { EInputType, IInputMetadata } from './index';
 
 /**
  * Base class for input-component layouts

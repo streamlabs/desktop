@@ -1,9 +1,11 @@
+import { IObsInput, TObsFormData } from 'components/obs/inputs/ObsInput';
+import { Subject } from 'rxjs';
+import { InternalApiService } from 'services/api/internal-api';
+import { PersistentStatefulService } from 'services/core/persistent-stateful-service';
+import { $t } from 'services/i18n';
+import { WindowsService } from 'services/windows';
 import { Inject } from '../core/injector';
 import { mutation } from '../core/stateful-service';
-import { PersistentStatefulService } from 'services/core/persistent-stateful-service';
-import { Subject } from 'rxjs';
-import { WindowsService } from 'services/windows';
-import { IObsInput, TObsFormData } from 'components/obs/inputs/ObsInput';
 import {
   ENotificationType,
   INotification,
@@ -11,8 +13,6 @@ import {
   INotificationsServiceApi,
   INotificationsSettings,
 } from './notifications-api';
-import { $t } from 'services/i18n';
-import { InternalApiService } from 'services/api/internal-api';
 
 interface INotificationsState {
   settings: INotificationsSettings;

@@ -1,11 +1,11 @@
+import * as inputComponents from 'components/obs/inputs';
+import GenericForm from 'components/obs/inputs/GenericForm.vue';
+import { IObsInput, IObsListInput, TObsFormData } from 'components/obs/inputs/ObsInput';
+import { Inject } from 'services/core/injector';
+import { $t } from 'services/i18n';
+import { ETransitionType, TransitionsService } from 'services/transitions';
 import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
-import { Inject } from 'services/core/injector';
-import { TransitionsService, ETransitionType } from 'services/transitions';
-import * as inputComponents from 'components/obs/inputs';
-import { TObsFormData, IObsListInput, IObsInput } from 'components/obs/inputs/ObsInput';
-import GenericForm from 'components/obs/inputs/GenericForm.vue';
-import { $t } from 'services/i18n';
 
 @Component({
   components: {

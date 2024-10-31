@@ -1,5 +1,5 @@
-import { RpcApi } from './rpc-api';
 import { IJsonRpcRequest, IJsonRpcResponse } from 'services/api/jsonrpc';
+import { RpcApi } from './rpc-api';
 
 /**
  * Internal SLOBS API for usage inside SLOBS itself

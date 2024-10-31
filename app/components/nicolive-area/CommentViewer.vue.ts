@@ -1,8 +1,15 @@
+import * as remote from '@electron/remote';
 import { clipboard } from 'electron';
 import { Inject } from 'services/core/injector';
 import { CustomizationService } from 'services/customization';
+import { HostsService } from 'services/hosts';
 import { ChatMessage } from 'services/nicolive-program/ChatMessage';
 import { ChatComponentType } from 'services/nicolive-program/ChatMessage/ChatComponentType';
+import { getDisplayName } from 'services/nicolive-program/ChatMessage/getDisplayName';
+import {
+  NicoliveFailure,
+  openErrorDialogFromFailure,
+} from 'services/nicolive-program/NicoliveFailure';
 import {
   isWrappedChat,
   WrappedChatWithComponent,
@@ -12,6 +19,7 @@ import {
 import { getContentWithFilter } from 'services/nicolive-program/getContentWithFilter';
 import { NicoliveCommentFilterService } from 'services/nicolive-program/nicolive-comment-filter';
 import { NicoliveCommentViewerService } from 'services/nicolive-program/nicolive-comment-viewer';
+import { NicoliveModeratorsService } from 'services/nicolive-program/nicolive-moderators';
 import { NicoliveProgramService } from 'services/nicolive-program/nicolive-program';
 import { NicoliveProgramStateService } from 'services/nicolive-program/state';
 import { ISettingsServiceApi } from 'services/settings';
@@ -26,14 +34,6 @@ import EmotionComment from './comment/EmotionComment.vue';
 import GiftComment from './comment/GiftComment.vue';
 import NicoadComment from './comment/NicoadComment.vue';
 import SystemMessage from './comment/SystemMessage.vue';
-import { getDisplayName } from 'services/nicolive-program/ChatMessage/getDisplayName';
-import {
-  NicoliveFailure,
-  openErrorDialogFromFailure,
-} from 'services/nicolive-program/NicoliveFailure';
-import { NicoliveModeratorsService } from 'services/nicolive-program/nicolive-moderators';
-import { HostsService } from 'services/hosts';
-import * as remote from '@electron/remote';
 
 const componentMap: { [type in ChatComponentType]: Vue.Component } = {
   common: CommonComment,

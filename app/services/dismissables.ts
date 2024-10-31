@@ -1,7 +1,7 @@
 import { PersistentStatefulService } from 'services/core/persistent-stateful-service';
-import { mutation } from './core/stateful-service';
-import Vue from 'vue';
 import { getKeys } from 'util/getKeys';
+import Vue from 'vue';
+import { mutation } from './core/stateful-service';
 
 export enum EDismissable {
   SceneCollectionsHelpTip = 'scene_collections_help_tip',

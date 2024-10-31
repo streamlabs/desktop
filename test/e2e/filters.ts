@@ -1,7 +1,7 @@
-import { useWebdriver, test } from '../helpers/webdriver/index';
+import { focusChild } from '../helpers/modules/core';
 import { addFilter, openFiltersWindow, removeFilter } from '../helpers/modules/filters';
 import { addSource } from '../helpers/modules/sources';
-import { focusChild } from '../helpers/modules/core';
+import { test, useWebdriver } from '../helpers/webdriver/index';
 
 useWebdriver({ restartAppAfterEachTest: false });
 

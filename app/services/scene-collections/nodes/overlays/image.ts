@@ -1,8 +1,8 @@
-import { Node } from '../node';
-import { SceneItem } from '../../../scenes';
+import fs from 'fs';
 import { uniqueId } from 'lodash';
 import path from 'path';
-import fs from 'fs';
+import { SceneItem } from '../../../scenes';
+import { Node } from '../node';
 
 interface ISchema {
   filename: string;

@@ -1,21 +1,21 @@
-import electron from 'electron';
 import { execSync } from 'child_process';
+import electron from 'electron';
 import { mutation, StatefulService } from 'services/core/stateful-service';
+import { SceneCollectionsService } from 'services/scene-collections';
 import {
-  ScenesService,
   ISceneItem,
   ISceneItemFolder,
-  SceneItem,
-  SceneItemFolder,
   ISceneItemSettings,
   Scene,
+  SceneItem,
+  SceneItemFolder,
+  ScenesService,
 } from 'services/scenes';
-import { ISource, Source, SourcesService, TPropertiesManager } from 'services/sources';
-import { shortcut } from 'services/shortcuts';
-import { Inject } from '../core/injector';
-import { ISourceFilter, SourceFiltersService } from 'services/source-filters';
 import { SelectionService } from 'services/selection';
-import { SceneCollectionsService } from 'services/scene-collections';
+import { shortcut } from 'services/shortcuts';
+import { ISourceFilter, SourceFiltersService } from 'services/source-filters';
+import { ISource, Source, SourcesService, TPropertiesManager } from 'services/sources';
+import { Inject } from '../core/injector';
 import { IClipboardServiceApi } from './clipboard-api';
 const { clipboard } = electron;
 

@@ -1,13 +1,13 @@
-import { PropertiesManager } from './properties-manager';
-import { Inject } from 'services/core/injector';
-import { TObsFormData, IObsListInput, TObsValue } from 'components/obs/inputs/ObsInput';
-import * as fi from 'node-fontinfo';
-import { FontLibraryService } from 'services/font-library';
-import { EFontStyle } from 'obs-studio-node';
+import { IObsListInput, TObsFormData, TObsValue } from 'components/obs/inputs/ObsInput';
 import fs from 'fs';
+import * as fi from 'node-fontinfo';
+import { EFontStyle } from 'obs-studio-node';
 import path from 'path';
-import { UserService } from 'services/user';
+import { Inject } from 'services/core/injector';
 import { CustomizationService } from 'services/customization';
+import { FontLibraryService } from 'services/font-library';
+import { UserService } from 'services/user';
+import { PropertiesManager } from './properties-manager';
 
 export interface IDefaultManagerSettings {
   mediaBackup?: {

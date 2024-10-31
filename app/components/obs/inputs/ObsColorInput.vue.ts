@@ -1,9 +1,9 @@
 import _ from 'lodash';
-import { Component, Watch, Prop } from 'vue-property-decorator';
 import { debounce } from 'lodash-decorators';
-import { TObsType, IObsInput, ObsInput } from './ObsInput';
-import Utils from '../../../services/utils';
 import VueColor from 'vue-color';
+import { Component, Prop } from 'vue-property-decorator';
+import Utils from '../../../services/utils';
+import { IObsInput, ObsInput, TObsType } from './ObsInput';
 
 interface IColor {
   r: number;

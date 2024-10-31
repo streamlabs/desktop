@@ -1,20 +1,20 @@
-import Vue from 'vue';
 import { without } from 'lodash';
 import { Subject } from 'rxjs';
+import { InitAfter } from 'services/core';
+import { Inject } from 'services/core/injector';
 import { mutation, StatefulService } from 'services/core/stateful-service';
+import { $t } from 'services/i18n';
+import { TDisplayType } from 'services/settings-v2/video';
+import { ISource, ISourceAddOptions, SourcesService } from 'services/sources';
 import { TransitionsService } from 'services/transitions';
 import { WindowsService } from 'services/windows';
-import { Scene, SceneItem, EScaleType, EBlendingMode, EBlendingMethod } from './index';
-import { ISource, SourcesService, ISourceAddOptions } from 'services/sources';
-import { Inject } from 'services/core/injector';
-import { IVideo, SceneFactory } from '../../../obs-api';
-import * as obs from '../../../obs-api';
-import { $t } from 'services/i18n';
 import namingHelpers from 'util/NamingHelpers';
 import uuid from 'uuid/v4';
-import { TDisplayType } from 'services/settings-v2/video';
-import { InitAfter } from 'services/core';
+import Vue from 'vue';
+import * as obs from '../../../obs-api';
+import { IVideo } from '../../../obs-api';
 import { RtvcStateService } from '../../services/rtvcStateService';
+import { EBlendingMethod, EBlendingMode, EScaleType, Scene, SceneItem } from './index';
 
 export type TSceneNodeModel = ISceneItem | ISceneItemFolder;
 

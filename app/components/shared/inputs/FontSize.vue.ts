@@ -1,9 +1,9 @@
+import { metadata } from 'components/shared/inputs';
 import Component from 'vue-class-component';
 import { Prop } from 'vue-property-decorator';
 import { BaseInput } from './BaseInput';
 import SliderInput from './SliderInput.vue';
 import { IInputMetadata } from './index';
-import { metadata } from 'components/shared/inputs';
 
 @Component({
   components: {

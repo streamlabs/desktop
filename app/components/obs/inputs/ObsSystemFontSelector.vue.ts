@@ -1,10 +1,10 @@
-import _ from 'lodash';
-import { Component, Watch, Prop } from 'vue-property-decorator';
-import { IObsInput, ObsInput, IObsFont } from './ObsInput';
-import { Multiselect } from 'vue-multiselect';
-import ObsFontSizeSelector from './ObsFontSizeSelector.vue';
 import fontManager from 'font-manager';
+import _ from 'lodash';
 import { EFontStyle } from 'obs-studio-node';
+import { Multiselect } from 'vue-multiselect';
+import { Component, Prop, Watch } from 'vue-property-decorator';
+import ObsFontSizeSelector from './ObsFontSizeSelector.vue';
+import { IObsFont, IObsInput, ObsInput } from './ObsInput';
 
 /**
  * @tutorial https://github.com/devongovett/font-manager

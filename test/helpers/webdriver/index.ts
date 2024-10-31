@@ -1,17 +1,17 @@
 /// <reference path="../../../app/index.d.ts" />
-import avaTest, { ExecutionContext } from 'ava';
-import { DismissablesService } from 'services/dismissables';
-import { sleep } from '../sleep';
-import { remote, RemoteOptions } from 'webdriverio';
+import { ExecutionContext } from 'ava';
 import * as ChildProcess from 'child_process';
-import { closeWindow, focusChild, focusMain, waitForLoader } from '../modules/core';
-import {
-  killElectronInstances,
-  waitForElectronInstancesExist,
-  testFn,
-  initializeTasks,
-} from './runner-utils';
+import { DismissablesService } from 'services/dismissables';
+import { remote, RemoteOptions } from 'webdriverio';
 import { getApiClient } from '../api-client';
+import { closeWindow, focusChild, focusMain, waitForLoader } from '../modules/core';
+import { sleep } from '../sleep';
+import {
+  initializeTasks,
+  killElectronInstances,
+  testFn,
+  waitForElectronInstancesExist,
+} from './runner-utils';
 export const test = testFn; // the overridden "test" function
 
 const CHROMEDRIVER_PORT = 4444;

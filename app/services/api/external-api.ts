@@ -1,6 +1,6 @@
-import { RpcApi } from './rpc-api';
 import { getResource, Inject } from 'services/core/injector';
 import { InternalApiService } from './internal-api';
+import { RpcApi } from './rpc-api';
 // import * as apiResources from './external-api/resources';
 import { Service } from 'services/core/service';
 import * as traverse from 'traverse';

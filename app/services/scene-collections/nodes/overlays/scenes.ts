@@ -1,7 +1,7 @@
-import { ArrayNode } from '../array-node';
-import { ScenesService, Scene } from '../../../scenes';
-import { IFolderSchema, SlotsNode, TSlotSchema } from './slots';
 import uuid from 'uuid';
+import { Scene, ScenesService } from '../../../scenes';
+import { ArrayNode } from '../array-node';
+import { IFolderSchema, SlotsNode, TSlotSchema } from './slots';
 
 interface ISchema {
   name: string;

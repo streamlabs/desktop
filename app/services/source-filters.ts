@@ -1,23 +1,22 @@
 import * as Sentry from '@sentry/vue';
-import { Service } from './core/service';
 import {
+  IObsListInput,
+  IObsListOption,
   TObsFormData,
+  TObsValue,
   getPropertiesFormData,
   setPropertiesFormData,
-  IObsListOption,
-  TObsValue,
-  IObsListInput,
 } from 'components/obs/inputs/ObsInput';
+import { Service } from './core/service';
 
+import { EOrderMovement } from 'obs-studio-node';
+import { $t } from 'services/i18n';
+import * as obs from '../../obs-api';
+import namingHelpers from '../util/NamingHelpers';
+import { InitAfter } from './core';
 import { Inject } from './core/injector';
 import { SourcesService } from './sources';
 import { WindowsService } from './windows';
-import * as obs from '../../obs-api';
-import namingHelpers from '../util/NamingHelpers';
-import { $t } from 'services/i18n';
-import { EOrderMovement } from 'obs-studio-node';
-import { TcpServerService } from './api/tcp-server';
-import { InitAfter } from './core';
 
 export type TSourceFilterType =
   | 'mask_filter'

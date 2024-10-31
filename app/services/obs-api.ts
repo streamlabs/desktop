@@ -1,8 +1,8 @@
 // This class provides the "glue" between the node-obs module
 // and the Vue app. This class is intended to be a singleton.
 
-import { Service } from './core/service';
 import electron from 'electron';
+import { Service } from './core/service';
 const { ipcRenderer } = electron;
 export * from '../../obs-api';
 

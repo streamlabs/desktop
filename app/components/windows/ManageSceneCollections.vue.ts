@@ -1,11 +1,11 @@
-import Vue from 'vue';
-import { Component } from 'vue-property-decorator';
+import EditableSceneCollection from 'components/EditableSceneCollection.vue';
 import ModalLayout from 'components/ModalLayout.vue';
-import { WindowsService } from 'services/windows';
+import Fuse from 'fuse.js';
 import { Inject } from 'services/core/injector';
 import { SceneCollectionsService } from 'services/scene-collections';
-import EditableSceneCollection from 'components/EditableSceneCollection.vue';
-import Fuse from 'fuse.js';
+import { WindowsService } from 'services/windows';
+import Vue from 'vue';
+import { Component } from 'vue-property-decorator';
 
 @Component({
   components: {

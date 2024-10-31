@@ -1,28 +1,28 @@
-import { merge } from 'lodash';
-import { mutation, ServiceHelper, Inject } from '../core';
-import Utils from '../utils';
-import { SourcesService, TSourceType, ISource } from 'services/sources';
-import { VideoService } from 'services/video';
-import { ScalableRectangle, CenteringAxis } from 'util/ScalableRectangle';
 import { TObsFormData } from 'components/obs/inputs/ObsInput';
+import { merge } from 'lodash';
+import { ISource, SourcesService, TSourceType } from 'services/sources';
+import { VideoService } from 'services/video';
+import { CenteringAxis, ScalableRectangle } from 'util/ScalableRectangle';
 import * as obs from '../../../obs-api';
+import { Inject, mutation, ServiceHelper } from '../core';
+import Utils from '../utils';
 
+import { TDisplayType, VideoSettingsService } from 'services/settings-v2';
+import { assertIsDefined } from 'util/properties-type-guards';
 import {
   IPartialSettings,
   IPartialTransform,
-  ISceneItemSettings,
-  ITransform,
-  ScenesService,
-  Scene,
   ISceneItem,
   ISceneItemInfo,
+  ISceneItemSettings,
+  ITransform,
+  Scene,
+  ScenesService,
 } from './index';
 import { SceneItemNode } from './scene-node';
 import { TSceneNodeType } from './scenes';
-import { assertIsDefined } from 'util/properties-type-guards';
-import { VideoSettingsService, TDisplayType } from 'services/settings-v2';
 
-export { EScaleType, EBlendingMode, EBlendingMethod } from '../../../obs-api';
+export { EBlendingMethod, EBlendingMode, EScaleType } from '../../../obs-api';
 
 /**
  * A SceneItem is a source that contains

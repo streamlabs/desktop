@@ -3,6 +3,8 @@ import { BehaviorSubject } from 'rxjs';
 import { Inject } from 'services/core/injector';
 import { mutation, StatefulService } from 'services/core/stateful-service';
 import { UserService } from 'services/user';
+import { isFakeMode } from 'util/fakeMode';
+import { MAX_PROGRAM_DURATION_SECONDS } from './nicolive-constants';
 import {
   calcServerClockOffsetSec,
   CreateResult,
@@ -13,8 +15,6 @@ import {
 import { NicoliveFailure, openErrorDialogFromFailure } from './NicoliveFailure';
 import { ProgramSchedules } from './ResponseTypes';
 import { NicoliveProgramStateService } from './state';
-import { MAX_PROGRAM_DURATION_SECONDS } from './nicolive-constants';
-import { isFakeMode } from 'util/fakeMode';
 
 type Schedules = ProgramSchedules['data'];
 type Schedule = Schedules[0];

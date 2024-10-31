@@ -1,11 +1,11 @@
 import { dwango, google } from '@n-air-app/nicolive-comment-protobuf';
+import * as Sentry from '@sentry/vue';
 import Long from 'long';
 import { Reader } from 'protobufjs/minimal';
 import { Subject } from 'rxjs';
-import { FilterType } from './ResponseTypes';
-import { NdgrFetchError } from './NdgrFetchError';
 import { sleep } from 'util/sleep';
-import * as Sentry from '@sentry/vue';
+import { NdgrFetchError } from './NdgrFetchError';
+import { FilterType } from './ResponseTypes';
 
 const BACKWARD_SEGMENT_INTERVAL = 7; // in ms
 

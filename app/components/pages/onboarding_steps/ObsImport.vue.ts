@@ -1,13 +1,13 @@
-import Vue from 'vue';
-import { Component } from 'vue-property-decorator';
-import { Inject } from '../../../services/core/injector';
-import { OnboardingService } from '../../../services/onboarding';
-import { Multiselect } from 'vue-multiselect';
-import { ObsImporterService } from '../../../services/obs-importer';
 import { defer } from 'lodash';
-import { SceneCollectionsService } from 'services/scene-collections';
 import { $t } from 'services/i18n';
+import { SceneCollectionsService } from 'services/scene-collections';
+import Vue from 'vue';
+import { Multiselect } from 'vue-multiselect';
+import { Component } from 'vue-property-decorator';
 import NAirObsLogo from '../../../../media/images/n-air-obs-logo.svg';
+import { Inject } from '../../../services/core/injector';
+import { ObsImporterService } from '../../../services/obs-importer';
+import { OnboardingService } from '../../../services/onboarding';
 
 @Component({
   components: {

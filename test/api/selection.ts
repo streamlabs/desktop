@@ -1,8 +1,8 @@
-import { useWebdriver, test, afterAppStart } from '../helpers/webdriver';
-import { getApiClient } from '../helpers/api-client';
-import { ScenesService, Scene, SceneItemNode } from 'services/scenes';
+import { Scene, SceneItemNode, ScenesService } from 'services/scenes';
 import { SelectionService } from 'services/selection';
+import { getApiClient } from '../helpers/api-client';
 import { SceneBuilder } from '../helpers/scene-builder';
+import { afterAppStart, test, useWebdriver } from '../helpers/webdriver';
 
 useWebdriver({ restartAppAfterEachTest: false });
 

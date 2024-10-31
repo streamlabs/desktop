@@ -1,14 +1,13 @@
-import Vue from 'vue';
-import Vuex, { Store } from 'vuex';
-import each from 'lodash/each';
+import * as remote from '@electron/remote';
 import electron from 'electron';
-import { getModule, StatefulService } from '../services/core/stateful-service';
-import { ServicesManager } from '../services-manager';
+import each from 'lodash/each';
+import { InternalApiService } from 'services/api/internal-api';
 import { IMutation } from 'services/api/jsonrpc';
 import Util from 'services/utils';
-import { InternalApiService } from 'services/api/internal-api';
-import { InternalApiClient } from '../services/api/internal-api-client';
-import * as remote from '@electron/remote';
+import Vue from 'vue';
+import Vuex, { Store } from 'vuex';
+import { ServicesManager } from '../services-manager';
+import { getModule, StatefulService } from '../services/core/stateful-service';
 
 Vue.use(Vuex);
 

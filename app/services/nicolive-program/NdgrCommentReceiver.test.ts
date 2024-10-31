@@ -1,10 +1,10 @@
+import { dwango } from '@n-air-app/nicolive-comment-protobuf';
 import { MessageResponse } from './ChatMessage';
 import { isChatMessage } from './ChatMessage/util';
 import {
   convertChunkedResponseToMessageResponse,
   convertModifierToMail,
 } from './NdgrCommentReceiver';
-import { dwango } from '@n-air-app/nicolive-comment-protobuf';
 
 // convertModifierToMail の test
 describe('convertModifierToMail', () => {

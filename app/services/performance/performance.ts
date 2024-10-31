@@ -1,13 +1,13 @@
-import Vue from 'vue';
 import { Subject } from 'rxjs';
+import Vue from 'vue';
 
+import * as remote from '@electron/remote';
+import * as Sentry from '@sentry/vue';
+import { Inject } from 'services/core/injector';
 import { StatefulService, mutation } from 'services/core/stateful-service';
 import { CustomizationService } from 'services/customization';
-import { Inject } from 'services/core/injector';
-import * as obs from '../../../obs-api';
-import * as Sentry from '@sentry/vue';
-import * as remote from '@electron/remote';
 import { getKeys } from 'util/getKeys';
+import * as obs from '../../../obs-api';
 
 interface IPerformanceState {
   CPU: number;

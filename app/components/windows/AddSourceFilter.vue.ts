@@ -1,12 +1,12 @@
 import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
 import { Inject } from '../../services/core/injector';
-import { WindowsService } from '../../services/windows';
 import { SourceFiltersService } from '../../services/source-filters';
+import { WindowsService } from '../../services/windows';
 
 import * as inputComponents from 'components/obs/inputs';
-import ModalLayout from '../ModalLayout.vue';
 import { $t } from 'services/i18n';
+import ModalLayout from '../ModalLayout.vue';
 
 @Component({
   components: { ModalLayout, ...inputComponents },

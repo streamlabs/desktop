@@ -6,11 +6,11 @@ import { Inject } from 'services/core/injector';
 import { StatefulService, mutation } from 'services/core/stateful-service';
 import { WindowsService } from 'services/windows';
 import { NdgrClient, convertSSNGType, toISO8601, toNumber } from './NdgrClient';
+import { isNdgrFetchError } from './NdgrFetchError';
 import { NicoliveClient, isOk } from './NicoliveClient';
 import { NicoliveFailure, openErrorDialogFromFailure } from './NicoliveFailure';
 import { FilterRecord } from './ResponseTypes';
 import { NicoliveProgramService } from './nicolive-program';
-import { isNdgrFetchError } from './NdgrFetchError';
 
 interface INicoliveModeratorsService {
   // moderator の userId 集合

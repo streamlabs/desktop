@@ -1,7 +1,4 @@
-import uuid from 'uuid/v4';
 import 'reflect-metadata';
-import { Service } from '../core/service';
-import traverse from 'traverse';
 import { Observable, Subject, Subscription } from 'rxjs';
 import {
   E_JSON_RPC_ERROR,
@@ -11,7 +8,10 @@ import {
   IMutation,
   JsonrpcService,
 } from 'services/api/jsonrpc';
+import traverse from 'traverse';
+import uuid from 'uuid/v4';
 import { ServicesManager } from '../../services-manager';
+import { Service } from '../core/service';
 
 export interface ISerializable {
   // really wish to have something like

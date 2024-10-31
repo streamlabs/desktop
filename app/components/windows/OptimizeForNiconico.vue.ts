@@ -1,15 +1,15 @@
+import BoolInput from 'components/obs/inputs/ObsBoolInput.vue';
+import { IObsInput } from 'components/obs/inputs/ObsInput';
+import { Inject } from 'services/core/injector';
+import { OptimizedSettings } from 'services/settings/optimizer';
 import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
-import { Inject } from 'services/core/injector';
-import ModalLayout from '../ModalLayout.vue';
-import BoolInput from 'components/obs/inputs/ObsBoolInput.vue';
 import { CustomizationService } from '../../services/customization';
-import { IObsInput } from 'components/obs/inputs/ObsInput';
+import { $t } from '../../services/i18n';
+import { SettingsService } from '../../services/settings';
 import { StreamingService } from '../../services/streaming';
 import { WindowsService } from '../../services/windows';
-import { SettingsService } from '../../services/settings';
-import { $t } from '../../services/i18n';
-import { OptimizedSettings } from 'services/settings/optimizer';
+import ModalLayout from '../ModalLayout.vue';
 import { CategoryIcons } from './CategoryIcons';
 
 @Component({

@@ -1,21 +1,21 @@
 /**
  * abstract class for representing scene's folders and items
  */
+import { IVideo } from 'obs-studio-node';
+import { SelectionService } from 'services/selection';
+import { TDisplayType } from 'services/settings-v2';
+import { assertIsDefined } from 'util/properties-type-guards';
 import { ServiceHelper, mutation } from '../core';
-import { TSceneNodeType } from './scenes';
 import { Inject } from '../core/injector';
 import {
-  ScenesService,
-  Scene,
   ISceneItemNode,
-  SceneItemFolder,
+  Scene,
   SceneItem,
+  SceneItemFolder,
+  ScenesService,
   TSceneNode,
 } from './index';
-import { SelectionService } from 'services/selection';
-import { assertIsDefined } from 'util/properties-type-guards';
-import { IVideo } from 'obs-studio-node';
-import { TDisplayType } from 'services/settings-v2';
+import { TSceneNodeType } from './scenes';
 
 export function isFolder(node: SceneItemNode): node is SceneItemFolder {
   return node.sceneNodeType === 'folder';

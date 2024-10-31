@@ -1,9 +1,9 @@
-import { Node } from '../node';
-import { TransitionsService, ETransitionType } from 'services/transitions';
-import { Inject } from 'services/core/injector';
+import fs from 'fs';
 import { uniqueId } from 'lodash';
 import path from 'path';
-import fs from 'fs';
+import { Inject } from 'services/core/injector';
+import { ETransitionType, TransitionsService } from 'services/transitions';
+import { Node } from '../node';
 
 interface ISchema {
   type: ETransitionType;

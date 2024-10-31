@@ -1,6 +1,6 @@
+import * as remote from '@electron/remote';
 import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
-import * as remote from '@electron/remote';
 
 @Component({
   components: {},

@@ -3,7 +3,6 @@ import { DateTime } from 'luxon';
 import { Subject } from 'rxjs';
 import { Inject } from 'services/core/injector';
 import { mutation, StatefulService } from 'services/core/stateful-service';
-import Utils from 'services/utils';
 import { CustomizationService } from 'services/customization';
 import { $t } from 'services/i18n';
 import { NicoliveCommentSynthesizerService } from 'services/nicolive-program/nicolive-comment-synthesizer';
@@ -14,8 +13,10 @@ import { SettingsService } from 'services/settings';
 import { EncoderFamily, OptimizedSettings } from 'services/settings/optimizer';
 import { TUsageEvent, UsageStatisticsService } from 'services/usage-statistics';
 import { UserService } from 'services/user';
+import Utils from 'services/utils';
 import { WindowsService } from 'services/windows';
 import * as obs from '../../../obs-api';
+import { CustomcastUsageService } from '../custom-cast-usage';
 import { IStreamingSetting } from '../platforms';
 import { extractPlatform } from './extractPlatform';
 import {
@@ -25,13 +26,12 @@ import {
   IStreamingServiceApi,
   IStreamingServiceState,
 } from './streaming-api';
-import { CustomcastUsageService } from '../custom-cast-usage';
 
-import { VideoSettingsService } from 'services/settings-v2/video';
-import { RtvcStateService } from '../../services/rtvcStateService';
 import * as remote from '@electron/remote';
 import { HttpRelation } from 'services/nicolive-program/httpRelation';
 import { NicoliveProgramStateService } from 'services/nicolive-program/state';
+import { VideoSettingsService } from 'services/settings-v2/video';
+import { RtvcStateService } from '../../services/rtvcStateService';
 
 enum EOBSOutputType {
   Streaming = 'streaming',

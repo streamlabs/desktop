@@ -1,6 +1,6 @@
+import * as fetchMock from 'fetch-mock';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import * as fetchMock from 'fetch-mock';
 import { createSetupFunction } from 'util/test-setup';
 const xmlFeed = readFileSync(resolve(__dirname, './__fixtures__/feed.xml'), 'utf8');
 const parsedFeed = require('./__fixtures__/parsedFeed.json');

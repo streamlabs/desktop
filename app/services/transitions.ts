@@ -1,15 +1,15 @@
-import { mutation, StatefulService } from 'services/core/stateful-service';
-import * as obs from '../../obs-api';
-import { Inject } from 'services/core/injector';
-import { IObsListOption, TObsValue, TObsFormData } from 'components/obs/inputs/ObsInput';
-import { WindowsService } from 'services/windows';
-import { ScenesService } from 'services/scenes';
-import uuid from 'uuid/v4';
-import { SceneCollectionsService } from 'services/scene-collections';
-import { $t } from 'services/i18n';
-import { DefaultManager } from 'services/sources/properties-managers/default-manager';
+import { IObsListOption, TObsFormData, TObsValue } from 'components/obs/inputs/ObsInput';
 import { Subject } from 'rxjs';
+import { Inject } from 'services/core/injector';
+import { mutation, StatefulService } from 'services/core/stateful-service';
+import { $t } from 'services/i18n';
+import { SceneCollectionsService } from 'services/scene-collections';
+import { ScenesService } from 'services/scenes';
+import { DefaultManager } from 'services/sources/properties-managers/default-manager';
+import { WindowsService } from 'services/windows';
 import { getKeys } from 'util/getKeys';
+import uuid from 'uuid/v4';
+import * as obs from '../../obs-api';
 
 export enum ETransitionType {
   Cut = 'cut_transition',

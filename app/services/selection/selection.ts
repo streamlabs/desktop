@@ -1,30 +1,30 @@
+import * as remote from '@electron/remote';
 import * as Sentry from '@sentry/vue';
 import { uniq } from 'lodash';
-import { mutation, StatefulService, ServiceHelper } from 'services/core';
-import {
-  ScenesService,
-  TSceneNodeModel,
-  Scene,
-  SceneItemFolder,
-  SceneItem,
-  TSceneNode,
-  ISceneItem,
-  ISceneItemSettings,
-  ISceneItemNode,
-  IPartialTransform,
-  EScaleType,
-  EBlendingMode,
-  EBlendingMethod,
-} from 'services/scenes';
+import { Subject } from 'rxjs';
+import { mutation, ServiceHelper, StatefulService } from 'services/core';
 import { $t } from 'services/i18n';
+import {
+  EBlendingMethod,
+  EBlendingMode,
+  EScaleType,
+  IPartialTransform,
+  ISceneItem,
+  ISceneItemNode,
+  ISceneItemSettings,
+  Scene,
+  SceneItem,
+  SceneItemFolder,
+  ScenesService,
+  TSceneNode,
+  TSceneNodeModel,
+} from 'services/scenes';
+import { CenteringAxis } from 'util/ScalableRectangle';
 import { Inject } from '../core/injector';
 import { shortcut } from '../shortcuts';
-import { ISelectionState, TNodesList } from './index';
-import { Subject } from 'rxjs';
-import Utils from '../utils';
 import { Source } from '../sources';
-import { CenteringAxis } from 'util/ScalableRectangle';
-import * as remote from '@electron/remote';
+import Utils from '../utils';
+import { ISelectionState, TNodesList } from './index';
 
 /**
  * represents selection of active scene and provide shortcuts

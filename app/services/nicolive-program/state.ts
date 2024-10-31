@@ -1,7 +1,6 @@
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { PersistentStatefulService } from 'services/core/persistent-stateful-service';
 import { mutation } from '../core/stateful-service';
-import { Subject, BehaviorSubject, Observable } from 'rxjs';
-import { $t } from 'services/i18n';
 
 export const SynthesizerIds = ['webSpeech', 'nVoice'] as const;
 export type SynthesizerId = (typeof SynthesizerIds)[number];

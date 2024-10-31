@@ -1,5 +1,5 @@
-import { Component, Prop } from 'vue-property-decorator';
 import VueColor from 'vue-color';
+import { Component, Prop } from 'vue-property-decorator';
 import { BaseInput } from './BaseInput';
 import { IInputMetadata } from './index';
 

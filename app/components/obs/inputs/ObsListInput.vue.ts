@@ -1,7 +1,6 @@
-import { Component, Prop } from 'vue-property-decorator';
-import { TObsType, IObsListInput, IObsListOption, ObsInput, TObsValue } from './ObsInput';
 import { Multiselect } from 'vue-multiselect';
-import { $t } from '../../../services/i18n';
+import { Component, Prop } from 'vue-property-decorator';
+import { IObsListInput, IObsListOption, ObsInput, TObsType, TObsValue } from './ObsInput';
 
 @Component({
   components: { Multiselect },

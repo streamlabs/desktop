@@ -1,9 +1,9 @@
-import { ArrayNode } from './array-node';
-import { SceneItemsNode } from './scene-items';
-import { ScenesService, Scene } from '../../scenes';
+import { Scene, ScenesService } from '../../scenes';
 import { SourcesService } from '../../sources';
+import { ArrayNode } from './array-node';
 import { HotkeysNode } from './hotkeys';
 import { SceneFiltersNode } from './scene-filters';
+import { SceneItemsNode } from './scene-items';
 
 export interface ISceneSchema {
   id: string;

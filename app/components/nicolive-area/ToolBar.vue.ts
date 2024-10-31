@@ -1,6 +1,4 @@
-import Vue from 'vue';
 import * as remote from '@electron/remote';
-import { Component, Watch } from 'vue-property-decorator';
 import { Inject } from 'services/core/injector';
 import { $t } from 'services/i18n';
 import { NicoliveProgramService } from 'services/nicolive-program/nicolive-program';
@@ -8,8 +6,10 @@ import {
   NicoliveFailure,
   openErrorDialogFromFailure,
 } from 'services/nicolive-program/NicoliveFailure';
-import Popper from 'vue-popperjs';
 import { StreamingService } from 'services/streaming';
+import Vue from 'vue';
+import Popper from 'vue-popperjs';
+import { Component, Watch } from 'vue-property-decorator';
 
 @Component({
   components: { Popper },

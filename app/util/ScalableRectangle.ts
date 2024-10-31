@@ -1,4 +1,4 @@
-import { get, set, invert } from 'lodash';
+import { get, invert, set } from 'lodash';
 
 // This class is used for simplifying math that deals
 // with rectangles that can be scaled, including

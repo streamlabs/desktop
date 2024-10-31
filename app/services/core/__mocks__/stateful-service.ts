@@ -1,5 +1,5 @@
-import { Service } from '../service';
 import { merge } from 'lodash';
+import { Service } from '../service';
 
 export function mutation() {
   return function (x: any) {

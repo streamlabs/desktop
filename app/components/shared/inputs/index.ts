@@ -1,6 +1,6 @@
-import * as inputs from './inputs';
-import { Validator } from 'vee-validate';
 import { $t } from 'services/i18n';
+import { Validator } from 'vee-validate';
+import * as inputs from './inputs';
 
 export const inputComponents = inputs;
 

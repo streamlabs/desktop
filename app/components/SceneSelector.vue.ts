@@ -1,3 +1,4 @@
+import * as remote from '@electron/remote';
 import Fuse from 'fuse.js';
 import { AppService } from 'services/app';
 import { CompactModeService } from 'services/compact-mode';
@@ -15,7 +16,6 @@ import { Menu } from '../util/menus/Menu';
 import Selector from './Selector.vue';
 import DropdownMenu from './shared/DropdownMenu.vue';
 import HelpTip from './shared/HelpTip.vue';
-import * as remote from '@electron/remote';
 
 @Component({
   components: { Selector, DropdownMenu, HelpTip },

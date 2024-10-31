@@ -1,18 +1,18 @@
-import { TExecutionContext, test, useWebdriver } from '../helpers/webdriver/index';
-import { addSource, sourceIsExisting } from '../helpers/modules/sources';
-import {
-  addScene,
-  clickRemoveScene,
-  selectScene,
-  openRenameWindow,
-  openDuplicateWindow,
-  sceneIsExisting,
-  DefaultSceneName,
-} from '../helpers/modules/scenes';
+import { SceneCollectionsService } from 'services/scene-collections';
 import { getApiClient } from '../helpers/api-client';
 import { click, focusMain, waitForDisplayed } from '../helpers/modules/core';
-import { SceneCollectionsService } from 'services/scene-collections';
 import { setInputValue } from '../helpers/modules/forms/form';
+import {
+  DefaultSceneName,
+  addScene,
+  clickRemoveScene,
+  openDuplicateWindow,
+  openRenameWindow,
+  sceneIsExisting,
+  selectScene,
+} from '../helpers/modules/scenes';
+import { addSource, sourceIsExisting } from '../helpers/modules/sources';
+import { TExecutionContext, test, useWebdriver } from '../helpers/webdriver/index';
 
 useWebdriver();
 

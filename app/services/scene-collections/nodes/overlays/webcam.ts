@@ -1,10 +1,10 @@
-import { Node } from '../node';
-import { SceneItem } from '../../../scenes';
-import { VideoService } from '../../../video';
-import { SourcesService } from '../../../sources';
 import { sortBy } from 'lodash';
 import { IListProperty } from '../../../../../obs-api';
 import { ScalableRectangle } from '../../../../util/ScalableRectangle';
+import { SceneItem } from '../../../scenes';
+import { SourcesService } from '../../../sources';
+import { VideoService } from '../../../video';
+import { Node } from '../node';
 
 interface ISchema {
   width: number;

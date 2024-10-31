@@ -1,9 +1,9 @@
-import Vue from 'vue';
 import { DateTime } from 'luxon';
-import { Component } from 'vue-property-decorator';
 import { Inject } from 'services/core/injector';
-import { ENotificationType, NotificationsService, INotification } from 'services/notifications';
 import { $t } from 'services/i18n';
+import { ENotificationType, INotification, NotificationsService } from 'services/notifications';
+import Vue from 'vue';
+import { Component } from 'vue-property-decorator';
 const notificationAudio = require('../../media/sound/ding.wav');
 const QUEUE_TIME = 5000;
 

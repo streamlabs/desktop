@@ -1,22 +1,22 @@
-import { Component, Watch } from 'vue-property-decorator';
+import * as remote from '@electron/remote';
+import { IObsListInput, IObsListOption, TObsValue } from 'components/obs/inputs/ObsInput';
 import { Inject } from 'services/core/injector';
-import { AudioService } from '../../services/audio';
+import { $t } from 'services/i18n';
+import {
+  PitchShiftModeValue,
+  PresetValues,
+  RtvcStateService,
+  SourcePropKey,
+  StateParam,
+} from 'services/rtvcStateService';
 import { ScenesService } from 'services/scenes';
-import VueSlider from 'vue-slider-component';
 import Multiselect from 'vue-multiselect';
 import Popper from 'vue-popperjs';
-import SourceProperties from './SourceProperties.vue';
+import { Component, Watch } from 'vue-property-decorator';
+import VueSlider from 'vue-slider-component';
 import * as obs from '../../../obs-api';
-import { IObsListInput, IObsListOption, TObsValue } from 'components/obs/inputs/ObsInput';
-import {
-  RtvcStateService,
-  PresetValues,
-  StateParam,
-  SourcePropKey,
-  PitchShiftModeValue,
-} from 'services/rtvcStateService';
-import { $t } from 'services/i18n';
-import * as remote from '@electron/remote';
+import { AudioService } from '../../services/audio';
+import SourceProperties from './SourceProperties.vue';
 
 // for set param
 type SetParamKey =

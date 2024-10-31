@@ -1,19 +1,19 @@
-import Vue from 'vue';
-import electron from 'electron';
-import { Component } from 'vue-property-decorator';
-import { Inject } from 'services/core/injector';
-import ObsBoolInput from 'components/obs/inputs/ObsBoolInput.vue';
-import { CustomizationService } from 'services/customization';
-import { IObsInput } from 'components/obs/inputs/ObsInput';
-import { OnboardingService } from 'services/onboarding';
-import { WindowsService } from 'services/windows';
-import { UserService } from 'services/user';
-import { StreamingService } from 'services/streaming';
-import { AppService } from 'services/app';
-import { $t } from 'services/i18n';
-import { UuidService } from 'services/uuid';
-import ClipBoardCopy from '../../media/images/clipboard-copy.svg';
 import * as remote from '@electron/remote';
+import ObsBoolInput from 'components/obs/inputs/ObsBoolInput.vue';
+import { IObsInput } from 'components/obs/inputs/ObsInput';
+import electron from 'electron';
+import { AppService } from 'services/app';
+import { Inject } from 'services/core/injector';
+import { CustomizationService } from 'services/customization';
+import { $t } from 'services/i18n';
+import { OnboardingService } from 'services/onboarding';
+import { StreamingService } from 'services/streaming';
+import { UserService } from 'services/user';
+import { UuidService } from 'services/uuid';
+import { WindowsService } from 'services/windows';
+import Vue from 'vue';
+import { Component } from 'vue-property-decorator';
+import ClipBoardCopy from '../../media/images/clipboard-copy.svg';
 
 @Component({
   components: {

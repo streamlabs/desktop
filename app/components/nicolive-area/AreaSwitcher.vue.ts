@@ -1,4 +1,3 @@
-import { PascalizedProperty } from 'humps';
 import { Inject } from 'services/core/injector';
 import { CustomizationService } from 'services/customization';
 import Vue from 'vue';

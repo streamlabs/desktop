@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/vue';
-import { Service } from 'services/core/service';
-import path from 'path';
 import fs from 'fs';
+import path from 'path';
+import { Service } from 'services/core/service';
 
 interface IFile {
   data: string;

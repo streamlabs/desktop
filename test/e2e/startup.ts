@@ -1,5 +1,5 @@
-import { TExecutionContext, test, useWebdriver } from '../helpers/webdriver/index';
 import { focusChild, focusMain, getFocusedWindowId } from '../helpers/modules/core';
+import { TExecutionContext, test, useWebdriver } from '../helpers/webdriver/index';
 
 useWebdriver();
 

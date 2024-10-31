@@ -1,9 +1,9 @@
-import Vue from 'vue';
-import { Component, Prop, Watch } from 'vue-property-decorator';
 import { Inject } from 'services/core/injector';
-import { VideoService, Display as OBSDisplay } from 'services/video';
+import { Display as OBSDisplay, VideoService } from 'services/video';
 import { WindowsService } from 'services/windows';
 import uuid from 'uuid/v4';
+import Vue from 'vue';
+import { Component, Prop, Watch } from 'vue-property-decorator';
 
 @Component({})
 export default class Display extends Vue {

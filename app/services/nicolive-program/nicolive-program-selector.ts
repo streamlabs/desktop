@@ -1,7 +1,7 @@
 import { StatefulService, mutation } from 'services/core/stateful-service';
 import { FailedResult, NicoliveClient, isOk } from './NicoliveClient';
-import { OnairChannelData } from './ResponseTypes';
 import { NicoliveFailure, openErrorDialogFromFailure } from './NicoliveFailure';
+import { OnairChannelData } from './ResponseTypes';
 
 /**
  * 配信する番組種別
