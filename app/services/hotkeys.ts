@@ -1,11 +1,11 @@
-import { StreamingService } from 'services/streaming';
-import { ScenesService } from 'services/scenes';
-import { isNoAudioPropertiesManagerType, SourcesService } from 'services/sources';
-import { TransitionsService } from 'services/transitions';
-import { KeyListenerService } from 'services/key-listener';
-import { StatefulService, mutation, ServiceHelper, Inject } from './core';
 import { defer, mapValues } from 'lodash';
 import { $t } from 'services/i18n';
+import { KeyListenerService } from 'services/key-listener';
+import { ScenesService } from 'services/scenes';
+import { isNoAudioPropertiesManagerType, SourcesService } from 'services/sources';
+import { StreamingService } from 'services/streaming';
+import { TransitionsService } from 'services/transitions';
+import { Inject, mutation, ServiceHelper, StatefulService } from './core';
 import { NicoliveProgramService } from './nicolive-program/nicolive-program';
 
 function getScenesService(): ScenesService {

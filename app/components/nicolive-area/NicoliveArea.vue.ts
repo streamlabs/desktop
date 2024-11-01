@@ -1,22 +1,22 @@
-import Vue from 'vue';
-import { Component } from 'vue-property-decorator';
 import { Inject } from 'services/core/injector';
 import { NicoliveProgramService } from 'services/nicolive-program/nicolive-program';
+import Vue from 'vue';
+import { Component } from 'vue-property-decorator';
 
-import ProgramDescription from './ProgramDescription.vue';
-import CommentViewer from './CommentViewer.vue';
-import CommentFilter from './CommentFilter.vue';
-import ProgramInfo from './ProgramInfo.vue';
-import ProgramStatistics from './ProgramStatistics.vue';
-import ToolBar from './ToolBar.vue';
-import ControlsArrow from '../../../media/images/controls-arrow-vertical.svg';
-import AreaSwitcher, { IArea } from './AreaSwitcher.vue';
-import PerformanceMetrics from '../PerformanceMetrics.vue';
+import { CustomizationService } from 'services/customization';
 import {
   NicoliveFailure,
   openErrorDialogFromFailure,
 } from 'services/nicolive-program/NicoliveFailure';
-import { CustomizationService } from 'services/customization';
+import ControlsArrow from '../../../media/images/controls-arrow-vertical.svg';
+import PerformanceMetrics from '../PerformanceMetrics.vue';
+import AreaSwitcher, { IArea } from './AreaSwitcher.vue';
+import CommentFilter from './CommentFilter.vue';
+import CommentViewer from './CommentViewer.vue';
+import ProgramDescription from './ProgramDescription.vue';
+import ProgramInfo from './ProgramInfo.vue';
+import ProgramStatistics from './ProgramStatistics.vue';
+import ToolBar from './ToolBar.vue';
 
 const CREATED_NOTICE_DURATION = 5000; // 番組作成通知の表示時間(ミリ秒)
 

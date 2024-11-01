@@ -1,22 +1,22 @@
-import { Inject } from '../../services/core/injector';
-import { Menu } from './Menu';
-import { Source, SourcesService } from '../../services/sources';
-import { ScenesService } from '../../services/scenes';
-import { ClipboardService } from '../../services/clipboard';
-import { SourceTransformMenu } from './SourceTransformMenu';
-import { GroupMenu } from './GroupMenu';
-import { DeinterlaceMenu } from './DeinterlaceMenu';
-import { SourceFiltersService } from '../../services/source-filters';
-import { CustomizationService } from 'services/customization';
-import { SelectionService } from 'services/selection/selection';
-import { ProjectorService } from 'services/projector';
 import { AudioService } from 'services/audio';
+import { CustomizationService } from 'services/customization';
 import { $t } from 'services/i18n';
+import { ProjectorService } from 'services/projector';
+import { SelectionService } from 'services/selection/selection';
 import { MonitorCaptureCroppingService } from 'services/sources/monitor-capture-cropping';
+import { ClipboardService } from '../../services/clipboard';
+import { Inject } from '../../services/core/injector';
+import { ScenesService } from '../../services/scenes';
+import { SourceFiltersService } from '../../services/source-filters';
+import { Source, SourcesService } from '../../services/sources';
+import { DeinterlaceMenu } from './DeinterlaceMenu';
+import { GroupMenu } from './GroupMenu';
+import { Menu } from './Menu';
+import { SourceTransformMenu } from './SourceTransformMenu';
 
-import { ScaleFilteringMenu } from './ScaleFilteringMenu';
-import { BlendingModeMenu } from './BlendingModeMenu';
 import { BlendingMethodMenu } from './BlendingMethodMenu';
+import { BlendingModeMenu } from './BlendingModeMenu';
+import { ScaleFilteringMenu } from './ScaleFilteringMenu';
 
 interface IEditMenuOptions {
   selectedSourceId?: string;

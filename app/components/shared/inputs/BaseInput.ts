@@ -1,9 +1,9 @@
-import Vue from 'vue';
 import { cloneDeep } from 'lodash';
-import { Component, Prop } from 'vue-property-decorator';
-import uuid from 'uuid/v4';
-import { IInputMetadata } from './index';
 import { getKeys } from 'util/getKeys';
+import uuid from 'uuid/v4';
+import Vue from 'vue';
+import { Prop } from 'vue-property-decorator';
+import { IInputMetadata } from './index';
 
 export class BaseInput<TValueType, TMetadataType extends IInputMetadata> extends Vue {
   @Prop()

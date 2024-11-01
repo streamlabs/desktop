@@ -1,5 +1,5 @@
-import { Node } from './node';
 import { compact } from 'lodash';
+import { Node } from './node';
 
 interface IArraySchema<TSchema> {
   items: TSchema[];

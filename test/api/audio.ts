@@ -1,8 +1,8 @@
-import { useWebdriver, test } from '../helpers/webdriver';
-import { getApiClient } from '../helpers/api-client';
 import { IAudioServiceApi } from 'services/audio';
-import { ScenesService } from 'services/scenes';
 import { ISceneCollectionsServiceApi } from 'services/scene-collections';
+import { ScenesService } from 'services/scenes';
+import { getApiClient } from '../helpers/api-client';
+import { test, useWebdriver } from '../helpers/webdriver';
 
 useWebdriver({ restartAppAfterEachTest: false });
 

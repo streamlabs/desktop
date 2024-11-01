@@ -1,5 +1,5 @@
-import { useWebdriver, test } from '../helpers/webdriver';
 import { sceneExisting } from '../helpers/modules/scenes';
+import { test, useWebdriver } from '../helpers/webdriver';
 
 const fs = require('fs');
 const path = require('path');

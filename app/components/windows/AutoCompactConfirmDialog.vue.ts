@@ -1,12 +1,12 @@
+import BoolInput from 'components/obs/inputs/ObsBoolInput.vue';
+import { IObsInput } from 'components/obs/inputs/ObsInput';
+import { Inject } from 'services/core/injector';
 import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
-import { Inject } from 'services/core/injector';
-import ModalLayout from '../ModalLayout.vue';
-import BoolInput from 'components/obs/inputs/ObsBoolInput.vue';
 import { CustomizationService } from '../../services/customization';
-import { IObsInput } from 'components/obs/inputs/ObsInput';
-import { WindowsService } from '../../services/windows';
 import { $t } from '../../services/i18n';
+import { WindowsService } from '../../services/windows';
+import ModalLayout from '../ModalLayout.vue';
 
 @Component({
   components: {

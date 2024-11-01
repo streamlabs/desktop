@@ -1,10 +1,10 @@
 import 'reflect-metadata';
+import { ObserveList, StatefulService } from 'services/core';
 import { Service } from 'services/core/service';
 import Utils from 'services/utils';
-import { ObserveList, StatefulService } from 'services/core';
 
-import * as appServices from './app-services';
 import { InternalApiClient } from 'services/api/internal-api-client';
+import * as appServices from './app-services';
 
 /**
  * This service is initializing in all application windows

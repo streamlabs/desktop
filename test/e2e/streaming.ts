@@ -1,6 +1,6 @@
-import { test, useWebdriver } from '../helpers/webdriver/index';
-import { setFormInput } from '../helpers/webdriver/forms';
 import { click, focusChild, focusMain } from '../helpers/modules/core';
+import { setFormInput } from '../helpers/webdriver/forms';
+import { test, useWebdriver } from '../helpers/webdriver/index';
 
 useWebdriver();
 

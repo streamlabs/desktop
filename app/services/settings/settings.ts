@@ -1,35 +1,35 @@
 import * as Sentry from '@sentry/vue';
-import cloneDeep from 'lodash/cloneDeep';
-import { StatefulService, mutation } from 'services/core/stateful-service';
 import {
-  obsValuesToInputValues,
-  inputValuesToObsValues,
-  TObsValue,
-  TObsFormData,
-  IObsListInput,
   IObsInput,
+  IObsListInput,
+  TObsFormData,
+  TObsValue,
+  inputValuesToObsValues,
+  obsValuesToInputValues,
 } from 'components/obs/inputs/ObsInput';
-import * as obs from '../../../obs-api';
-import { SourcesService } from 'services/sources';
-import { Inject } from '../core/injector';
-import { AudioService, E_AUDIO_CHANNELS } from 'services/audio';
-import { WindowsService } from 'services/windows';
-import { UserService } from 'services/user';
-import Utils from '../utils';
-import { AppService } from 'services/app';
-import { ISettingsSubCategory, ISettingsServiceApi } from './settings-api';
-import { $t } from 'services/i18n';
 import fs from 'fs';
+import cloneDeep from 'lodash/cloneDeep';
+import { TcpServerService } from 'services/api/tcp-server';
+import { AppService } from 'services/app';
+import { AudioService, E_AUDIO_CHANNELS } from 'services/audio';
+import { StatefulService, mutation } from 'services/core/stateful-service';
+import { $t } from 'services/i18n';
+import { SourcesService } from 'services/sources';
+import { UserService } from 'services/user';
+import { WindowsService } from 'services/windows';
+import * as obs from '../../../obs-api';
+import { Inject } from '../core/injector';
+import { VideoSettingsService } from '../settings-v2';
+import Utils from '../utils';
+import { getBestSettingsForNiconico } from './niconico-optimization';
 import {
   ISettingsAccessor,
   OptimizeSettings,
   OptimizedSettings,
-  SettingsKeyAccessor,
   Optimizer,
+  SettingsKeyAccessor,
 } from './optimizer';
-import { getBestSettingsForNiconico } from './niconico-optimization';
-import { TcpServerService } from 'services/api/tcp-server';
-import { VideoSettingsService } from '../settings-v2';
+import { ISettingsServiceApi, ISettingsSubCategory } from './settings-api';
 
 export interface ISettingsState {
   General: {

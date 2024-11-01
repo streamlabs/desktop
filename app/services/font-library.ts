@@ -1,9 +1,8 @@
-import { Service } from './core/service';
-import path from 'path';
+import * as remote from '@electron/remote';
 import fs from 'fs';
 import https from 'https';
-import { EFontStyle } from 'obs-studio-node';
-import * as remote from '@electron/remote';
+import path from 'path';
+import { Service } from './core/service';
 
 export interface IFamilyWithStyle {
   family: IFontFamily;

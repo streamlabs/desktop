@@ -1,16 +1,16 @@
-import { ScenesService, Scene } from './index';
-import { merge, uniq } from 'lodash';
+import { merge } from 'lodash';
+import { Inject } from 'services/core/injector';
+import { ISceneHierarchy, isFolder, isItem, SceneItem, TSceneNode } from 'services/scenes';
+import { Selection, SelectionService } from 'services/selection';
 import { mutation, ServiceHelper } from '../core';
 import Utils from '../utils';
-import { Inject } from 'services/core/injector';
-import { Selection, SelectionService } from 'services/selection';
-import { SceneItem, ISceneHierarchy, TSceneNode, isFolder, isItem } from 'services/scenes';
+import { Scene, ScenesService } from './index';
 import { TSceneNodeType } from './scenes';
 
-import { SceneItemNode } from './scene-node';
-import { ISceneItemFolder } from '.';
-import { assertIsDefined } from 'util/properties-type-guards';
 import { TDisplayType } from 'services/settings-v2';
+import { assertIsDefined } from 'util/properties-type-guards';
+import { ISceneItemFolder } from '.';
+import { SceneItemNode } from './scene-node';
 
 @ServiceHelper()
 export class SceneItemFolder extends SceneItemNode {

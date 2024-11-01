@@ -4,8 +4,8 @@
  */
 
 import avaTest, { TestFn } from 'ava';
-import { ITestContext } from './index';
 import { uniq } from 'lodash';
+import { ITestContext } from './index';
 const fs = require('fs');
 const fetch = require('node-fetch');
 const tasklist = require('tasklist');

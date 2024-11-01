@@ -1,5 +1,3 @@
-import { mutation, StatefulService } from './core/stateful-service';
-import * as obs from '../../obs-api';
 import {
   getPropertiesFormData,
   IObsListOption,
@@ -7,9 +5,11 @@ import {
   TObsFormData,
   TObsValue,
 } from 'components/obs/inputs/ObsInput';
-import { Inject } from './core/injector';
-import { WindowsService } from './windows';
 import { $t } from 'services/i18n';
+import * as obs from '../../obs-api';
+import { Inject } from './core/injector';
+import { mutation, StatefulService } from './core/stateful-service';
+import { WindowsService } from './windows';
 
 interface ISceneTransitionsState {
   availableTransitions: IObsListOption<string>[];

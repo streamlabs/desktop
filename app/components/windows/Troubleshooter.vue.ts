@@ -1,12 +1,12 @@
-import Vue from 'vue';
 import { DateTime } from 'luxon';
+import { INotification, INotificationsServiceApi } from 'services/notifications';
+import { ISettingsServiceApi } from 'services/settings';
+import { TIssueCode } from 'services/troubleshooter';
+import { WindowsService } from 'services/windows';
+import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
 import { Inject } from '../../services/core/injector';
 import ModalLayout from '../ModalLayout.vue';
-import { TIssueCode } from 'services/troubleshooter';
-import { INotificationsServiceApi, INotification } from 'services/notifications';
-import { ISettingsServiceApi } from 'services/settings';
-import { WindowsService } from 'services/windows';
 
 @Component({
   components: { ModalLayout },

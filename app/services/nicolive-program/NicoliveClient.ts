@@ -3,11 +3,15 @@ import { ipcRenderer } from 'electron';
 import { addClipboardMenu } from 'util/addClipboardMenu';
 import { handleErrors } from 'util/requests';
 import {
+  AddFilterRecord,
+  AddFilterResult,
+  AddModerator,
   BroadcastStreamData,
   CommonErrorResponse,
   Extension,
   FilterRecord,
   Filters,
+  Moderator,
   NicoadStatistics,
   OnairChannelData,
   OnairChannelProgramData,
@@ -16,13 +20,9 @@ import {
   ProgramSchedules,
   Segment,
   Statistics,
-  UserFollowStatus,
-  UserFollow,
-  AddFilterRecord,
-  AddFilterResult,
-  AddModerator,
-  Moderator,
   Supporters,
+  UserFollow,
+  UserFollowStatus,
 } from './ResponseTypes';
 
 import * as remote from '@electron/remote';

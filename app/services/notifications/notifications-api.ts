@@ -1,7 +1,7 @@
-import { TIssueCode } from 'services/troubleshooter';
-import { IJsonRpcRequest } from 'services/api/jsonrpc';
-import { Observable } from 'rxjs';
 import { TObsFormData } from 'components/obs/inputs/ObsInput';
+import { Observable } from 'rxjs';
+import { IJsonRpcRequest } from 'services/api/jsonrpc';
+import { TIssueCode } from 'services/troubleshooter';
 
 export enum ENotificationType {
   INFO = 'INFO',

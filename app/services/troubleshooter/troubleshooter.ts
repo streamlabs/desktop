@@ -1,14 +1,14 @@
-import { mutation } from '../core/stateful-service';
-import { PersistentStatefulService } from 'services/core/persistent-stateful-service';
 import { IObsInput, IObsNumberInputValue, TObsFormData } from 'components/obs/inputs/ObsInput';
+import { PersistentStatefulService } from 'services/core/persistent-stateful-service';
+import { $t } from 'services/i18n';
+import { WindowsService } from 'services/windows';
+import { Inject } from '../core/injector';
+import { mutation } from '../core/stateful-service';
 import {
   ITroubleshooterServiceApi,
   ITroubleshooterSettings,
   TIssueCode,
 } from './troubleshooter-api';
-import { WindowsService } from 'services/windows';
-import { Inject } from '../core/injector';
-import { $t } from 'services/i18n';
 
 interface ITroubleshooterState {
   settings: ITroubleshooterSettings;

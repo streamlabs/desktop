@@ -8,25 +8,25 @@ window['eval'] = global.eval = () => {
 import 'reflect-metadata';
 import Vue from 'vue';
 
-import { createStore } from './store';
-import { WindowsService } from './services/windows';
-import { AppService } from './services/app';
-import Utils from './services/utils';
-import electron from 'electron';
 import * as Sentry from '@sentry/electron/renderer';
 import { init as sentryVueInit } from '@sentry/vue';
-import VTooltip from 'v-tooltip';
-import Toasted from 'vue-toasted';
-import VueI18n from 'vue-i18n';
-import { Settings } from 'luxon';
-import { setupGlobalContextMenuForEditableElement } from 'util/menus/GlobalMenu';
-import VModal from 'vue-js-modal';
-import VeeValidate from 'vee-validate';
 import ChildWindow from 'components/windows/ChildWindow.vue';
 import OneOffWindow from 'components/windows/OneOffWindow.vue';
-import util from 'util';
-import * as obs from '../obs-api';
+import electron from 'electron';
+import { Settings } from 'luxon';
 import path from 'path';
+import util from 'util';
+import { setupGlobalContextMenuForEditableElement } from 'util/menus/GlobalMenu';
+import VTooltip from 'v-tooltip';
+import VeeValidate from 'vee-validate';
+import VueI18n from 'vue-i18n';
+import VModal from 'vue-js-modal';
+import Toasted from 'vue-toasted';
+import * as obs from '../obs-api';
+import { AppService } from './services/app';
+import Utils from './services/utils';
+import { WindowsService } from './services/windows';
+import { createStore } from './store';
 
 const crashHandler = window['require']('crash-handler');
 

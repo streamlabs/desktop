@@ -1,6 +1,6 @@
-import { createSetupFunction } from 'util/test-setup';
 import { Subject } from 'rxjs';
-import { NicoliveProgramSelectorService, TStep, TProviderType } from './nicolive-program-selector';
+import { createSetupFunction } from 'util/test-setup';
+import { NicoliveProgramSelectorService, TProviderType, TStep } from './nicolive-program-selector';
 import { OnairChannelData, OnairChannelProgramData } from './ResponseTypes';
 
 const setup = createSetupFunction({

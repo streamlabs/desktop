@@ -1,16 +1,16 @@
-import { Service } from 'services/core/service';
-import { IPlatformService, IStreamingSetting } from '.';
-import { HostsService } from 'services/hosts';
-import { SettingsService } from 'services/settings';
 import { Inject } from 'services/core/injector';
-import { sleep } from 'util/sleep';
-import { handleErrors, requiresToken, authorizedHeaders } from 'util/requests';
-import { UserService } from 'services/user';
-import { parseString } from 'xml2js';
-import { StreamingService, EStreamingState } from 'services/streaming';
-import { WindowsService } from 'services/windows';
+import { Service } from 'services/core/service';
+import { HostsService } from 'services/hosts';
 import { NicoliveClient } from 'services/nicolive-program/NicoliveClient';
+import { SettingsService } from 'services/settings';
+import { EStreamingState, StreamingService } from 'services/streaming';
+import { UserService } from 'services/user';
+import { WindowsService } from 'services/windows';
 import { FakeUserAuth, isFakeMode } from 'util/fakeMode';
+import { authorizedHeaders, handleErrors } from 'util/requests';
+import { sleep } from 'util/sleep';
+import { parseString } from 'xml2js';
+import { IPlatformService, IStreamingSetting } from '.';
 
 export type INiconicoProgramSelection = {
   info: LiveProgramInfo;

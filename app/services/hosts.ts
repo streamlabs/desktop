@@ -1,5 +1,5 @@
-import { Service } from './core/service';
 import Utils from 'services/utils';
+import { Service } from './core/service';
 
 // Hands out hostnames to the rest of the app. Eventually
 // we should allow overriding this value. But for now we

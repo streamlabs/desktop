@@ -1,13 +1,12 @@
+import * as remote from '@electron/remote';
 import { randomBytes } from 'crypto';
-import electron from 'electron';
 import { Inject } from './core/injector';
 import { Service } from './core/service';
 import { HostsService } from './hosts';
 import { SynthesizerSelector } from './nicolive-program/state';
-import { UuidService } from './uuid';
 import { EncoderFamily } from './settings/optimizer';
 import { UserService } from './user';
-import * as remote from '@electron/remote';
+import { UuidService } from './uuid';
 
 function randomCharacters(len: number): string {
   const buf = randomBytes(len);

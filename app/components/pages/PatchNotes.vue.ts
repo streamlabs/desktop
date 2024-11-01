@@ -1,8 +1,8 @@
-import Vue from 'vue';
-import { Component } from 'vue-property-decorator';
-import { PatchNotesService } from 'services/patch-notes';
 import { Inject } from 'services/core/injector';
 import { NavigationService } from 'services/navigation';
+import { PatchNotesService } from 'services/patch-notes';
+import Vue from 'vue';
+import { Component } from 'vue-property-decorator';
 
 @Component({})
 export default class Dashboard extends Vue {

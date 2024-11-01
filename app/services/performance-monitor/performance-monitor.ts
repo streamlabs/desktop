@@ -1,13 +1,13 @@
-import { StatefulService, mutation, Service, Inject } from '../core';
-import * as obs from '../../../obs-api';
-import { NotificationsService, ENotificationType } from 'services/notifications';
-import { ServicesManager } from '../../services-manager';
-import { PerformanceService } from 'services/performance';
 import { Subscription } from 'rxjs';
-import { JsonrpcService } from '../api/jsonrpc/jsonrpc';
-import { TroubleshooterService, TIssueCode } from 'services/troubleshooter';
 import { $t } from 'services/i18n';
+import { ENotificationType, NotificationsService } from 'services/notifications';
+import { PerformanceService } from 'services/performance';
 import { VideoSettingsService } from 'services/settings-v2';
+import { TIssueCode, TroubleshooterService } from 'services/troubleshooter';
+import * as obs from '../../../obs-api';
+import { ServicesManager } from '../../services-manager';
+import { JsonrpcService } from '../api/jsonrpc/jsonrpc';
+import { Inject, mutation, Service, StatefulService } from '../core';
 
 const INTERVAL = 2 * 60 * 1000;
 

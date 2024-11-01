@@ -1,39 +1,39 @@
-import * as Sentry from '@sentry/vue';
-import { Service } from 'services/core/service';
-import { Inject } from 'services/core/injector';
-import { RootNode } from './nodes/root';
-import { SourcesNode, ISourceInfo } from './nodes/sources';
-import { ScenesNode, ISceneSchema } from './nodes/scenes';
-import { SceneItemsNode, ISceneItemInfo } from './nodes/scene-items';
-import { TransitionsNode } from './nodes/transitions';
-import { HotkeysNode } from './nodes/hotkeys';
-import { SceneFiltersNode } from './nodes/scene-filters';
-import path from 'path';
-import fs from 'fs';
-import { parse } from './parse';
-import { ScenesService, Scene } from 'services/scenes';
-import { SourcesService } from 'services/sources';
-import { E_AUDIO_CHANNELS } from 'services/audio';
-import { AppService } from 'services/app';
-import { HotkeysService } from 'services/hotkeys';
-import namingHelpers from '../../util/NamingHelpers';
-import { WindowsService } from 'services/windows';
-import { UserService } from 'services/user';
-import { TcpServerService } from 'services/api/tcp-server';
-import { OverlaysPersistenceService, IDownloadProgress } from './overlays';
-import {
-  ISceneCollectionsManifestEntry,
-  ISceneCollectionSchema,
-  ISceneCollectionsServiceApi,
-  ISceneCollectionCreateOptions,
-} from '.';
-import { SceneCollectionsStateService, ScenePresetId } from './state';
-import { Subject } from 'rxjs';
-import { $t } from 'services/i18n';
-import { TransitionsService, ETransitionType } from 'services/transitions';
-import { SettingsService } from 'services/settings';
-import { DismissablesService, EDismissable } from 'services/dismissables';
 import * as remote from '@electron/remote';
+import * as Sentry from '@sentry/vue';
+import fs from 'fs';
+import path from 'path';
+import { Subject } from 'rxjs';
+import { TcpServerService } from 'services/api/tcp-server';
+import { AppService } from 'services/app';
+import { E_AUDIO_CHANNELS } from 'services/audio';
+import { Inject } from 'services/core/injector';
+import { Service } from 'services/core/service';
+import { DismissablesService, EDismissable } from 'services/dismissables';
+import { HotkeysService } from 'services/hotkeys';
+import { $t } from 'services/i18n';
+import { ScenesService } from 'services/scenes';
+import { SettingsService } from 'services/settings';
+import { SourcesService } from 'services/sources';
+import { TransitionsService } from 'services/transitions';
+import { UserService } from 'services/user';
+import { WindowsService } from 'services/windows';
+import {
+  ISceneCollectionCreateOptions,
+  ISceneCollectionSchema,
+  ISceneCollectionsManifestEntry,
+  ISceneCollectionsServiceApi,
+} from '.';
+import namingHelpers from '../../util/NamingHelpers';
+import { HotkeysNode } from './nodes/hotkeys';
+import { RootNode } from './nodes/root';
+import { SceneFiltersNode } from './nodes/scene-filters';
+import { ISceneItemInfo, SceneItemsNode } from './nodes/scene-items';
+import { ISceneSchema, ScenesNode } from './nodes/scenes';
+import { ISourceInfo, SourcesNode } from './nodes/sources';
+import { TransitionsNode } from './nodes/transitions';
+import { IDownloadProgress, OverlaysPersistenceService } from './overlays';
+import { parse } from './parse';
+import { SceneCollectionsStateService, ScenePresetId } from './state';
 
 const uuid = window['require']('uuid/v4');
 

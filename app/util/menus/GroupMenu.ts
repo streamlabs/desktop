@@ -1,9 +1,8 @@
-import { uniq } from 'lodash';
-import { Menu } from './Menu';
+import { $t } from 'services/i18n';
 import { ScenesService } from 'services/scenes';
 import { SelectionService } from 'services/selection';
 import { Inject } from '../../services/core/injector';
-import { $t } from 'services/i18n';
+import { Menu } from './Menu';
 
 export class GroupMenu extends Menu {
   @Inject() private scenesService: ScenesService;

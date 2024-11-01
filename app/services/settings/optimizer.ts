@@ -1,8 +1,8 @@
 import * as Sentry from '@sentry/vue';
 import { IObsInput, IObsListInput, TObsFormData, TObsValue } from 'components/obs/inputs/ObsInput';
 import { $t } from 'services/i18n';
-import { ISettingsSubCategory } from './settings-api';
 import { getKeys } from 'util/getKeys';
+import { ISettingsSubCategory } from './settings-api';
 
 export enum EncoderFamily {
   x264 = 'obs_x264',

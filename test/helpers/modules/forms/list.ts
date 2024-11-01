@@ -1,6 +1,6 @@
-import { BaseInputController, TFiledSetterFn } from './base';
-import { click, getClient, select } from '../core';
 import { sleep } from '../../sleep';
+import { click, getClient, select } from '../core';
+import { BaseInputController, TFiledSetterFn } from './base';
 
 export class ListInputController<TValue> extends BaseInputController<TValue> {
   async setValue(value: TValue) {

@@ -1,6 +1,6 @@
-import { ApiClient } from './api-client';
-import { ScenesService, Scene, TSceneNodeType, SceneItem, SceneItemNode } from 'services/scenes';
+import { Scene, SceneItem, SceneItemNode, ScenesService, TSceneNodeType } from 'services/scenes';
 import { TSourceType } from '../../app/services/sources';
+import { ApiClient } from './api-client';
 
 interface ISceneBuilderNode {
   name: string;

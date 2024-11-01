@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
-import { StreamingService, EStreamingState } from '../services/streaming';
 import { Inject } from '../services/core/injector';
+import { EStreamingState, StreamingService } from '../services/streaming';
 
 @Component({})
 export default class StreamingStatus extends Vue {

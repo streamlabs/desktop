@@ -1,7 +1,6 @@
-import Vue from 'vue';
+import TsxComponent from 'components/tsx-component';
 import * as comps from './index';
 import { TObsType } from './ObsInput';
-import TsxComponent from 'components/tsx-component';
 
 const inputComponents = comps as any as { [key: string]: typeof TsxComponent };
 

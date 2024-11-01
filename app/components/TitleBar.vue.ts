@@ -1,12 +1,12 @@
-import Vue from 'vue';
-import { Component, Prop } from 'vue-property-decorator';
-import { CustomizationService } from 'services/customization';
+import * as remote from '@electron/remote';
+import { CompactModeService } from 'services/compact-mode';
 import { Inject } from 'services/core/injector';
+import { CustomizationService } from 'services/customization';
+import { $t } from 'services/i18n';
 import { StreamingService } from 'services/streaming';
 import Utils from 'services/utils';
-import { $t } from 'services/i18n';
-import { CompactModeService } from 'services/compact-mode';
-import * as remote from '@electron/remote';
+import Vue from 'vue';
+import { Component, Prop } from 'vue-property-decorator';
 
 @Component({
   components: {},

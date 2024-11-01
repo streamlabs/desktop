@@ -1,5 +1,5 @@
-import { createSetupFunction } from 'util/test-setup';
 import { Subject } from 'rxjs';
+import { createSetupFunction } from 'util/test-setup';
 type NicoliveCommentFilterService =
   import('./nicolive-comment-filter').NicoliveCommentFilterService;
 

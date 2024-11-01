@@ -1,6 +1,3 @@
-import { mutation } from './core/stateful-service';
-import { PersistentStatefulService } from './core/persistent-stateful-service';
-import { SourcesService, ISourceApi } from './sources';
 import { TObsValue } from 'components/obs/inputs/ObsInput';
 import {
   RtvcEventLog,
@@ -9,6 +6,9 @@ import {
   RtvcParamPreset,
   RtvcParamPresetKeys,
 } from 'services/usage-statistics';
+import { PersistentStatefulService } from './core/persistent-stateful-service';
+import { mutation } from './core/stateful-service';
+import { ISourceApi, SourcesService } from './sources';
 
 // for source properties
 export type SourcePropKey =

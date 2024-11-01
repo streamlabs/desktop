@@ -1,10 +1,10 @@
+import * as remote from '@electron/remote';
+import { Inject } from 'services/core/injector';
 import { PersistentStatefulService } from 'services/core/persistent-stateful-service';
 import { mutation } from 'services/core/stateful-service';
+import { NavigationService } from 'services/navigation';
 import Util from 'services/utils';
 import { notes } from './notes';
-import { NavigationService } from 'services/navigation';
-import { Inject } from 'services/core/injector';
-import * as remote from '@electron/remote';
 
 interface IPatchNotesState {
   lastVersionSeen: string;

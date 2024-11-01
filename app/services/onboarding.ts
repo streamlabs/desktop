@@ -1,7 +1,7 @@
+import { Inject } from './core/injector';
 import { StatefulService, mutation } from './core/stateful-service';
 import { NavigationService } from './navigation';
 import { UserService } from './user';
-import { Inject } from './core/injector';
 
 type TOnboardingStep = 'Connect' | 'ObsImport';
 

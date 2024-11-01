@@ -1,4 +1,4 @@
-import { merge, isFunction } from 'lodash';
+import { isFunction, merge } from 'lodash';
 
 interface Table {
   [serviceName: string]: any;

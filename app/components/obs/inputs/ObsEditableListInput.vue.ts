@@ -1,10 +1,10 @@
-import _ from 'lodash';
-import Selector from '../../Selector.vue';
-import { Component, Prop } from 'vue-property-decorator';
-import { IObsEditableListInputValue, ObsInput, TObsType } from './ObsInput';
-import { Menu } from '../../../util/menus/Menu';
-import { $t } from '../../../services/i18n';
 import * as remote from '@electron/remote';
+import _ from 'lodash';
+import { Component, Prop } from 'vue-property-decorator';
+import { $t } from '../../../services/i18n';
+import { Menu } from '../../../util/menus/Menu';
+import Selector from '../../Selector.vue';
+import { IObsEditableListInputValue, ObsInput, TObsType } from './ObsInput';
 
 interface ISelectorSortEventData {
   change: any;

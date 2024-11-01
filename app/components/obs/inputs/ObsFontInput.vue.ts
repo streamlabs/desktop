@@ -1,6 +1,6 @@
 import { Component, Prop } from 'vue-property-decorator';
-import { ObsInput, IObsInput, TObsType, IObsFont, IGoogleFont } from './ObsInput';
 import GoogleFontSelector from './ObsGoogleFontSelector.vue';
+import { IGoogleFont, IObsFont, IObsInput, ObsInput, TObsType } from './ObsInput';
 import ObsSystemFontSelector from './ObsSystemFontSelector.vue';
 
 @Component({

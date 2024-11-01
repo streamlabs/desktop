@@ -1,8 +1,8 @@
+import { jest_fn } from 'util/jest_fn';
 import { createSetupFunction } from 'util/test-setup';
-import { ProgramInfo } from './ResponseTypes';
 import { MAX_PROGRAM_DURATION_SECONDS } from './nicolive-constants';
 import { calcServerClockOffsetSec, type NicoliveClient } from './NicoliveClient';
-import { jest_fn } from 'util/jest_fn';
+import { ProgramInfo } from './ResponseTypes';
 
 type NicoliveProgramService = import('./nicolive-program').NicoliveProgramService;
 

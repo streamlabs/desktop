@@ -1,6 +1,6 @@
+import { Subject } from 'rxjs';
 import { StatefulService, mutation } from 'services/core';
 import { NicoliveClient, isOk } from './NicoliveClient';
-import { Subject } from 'rxjs';
 import { NicoliveFailure, openErrorDialogFromFailure } from './NicoliveFailure';
 
 interface INicoliveSupportersService {

@@ -1,11 +1,11 @@
-import { Service } from 'services/core/service';
-import { StreamingService, EStreamingState } from 'services/streaming';
-import { Inject } from 'services/core/injector';
-import { Subscription } from 'rxjs';
-import path from 'path';
-import fs from 'fs';
-import { UsageStatisticsService } from 'services/usage-statistics';
 import * as remote from '@electron/remote';
+import fs from 'fs';
+import path from 'path';
+import { Subscription } from 'rxjs';
+import { Inject } from 'services/core/injector';
+import { Service } from 'services/core/service';
+import { EStreamingState, StreamingService } from 'services/streaming';
+import { UsageStatisticsService } from 'services/usage-statistics';
 
 /**
  * If we start up and the app is in anything other than the

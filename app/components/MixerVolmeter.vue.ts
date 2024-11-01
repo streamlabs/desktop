@@ -1,9 +1,9 @@
-import Vue from 'vue';
-import { Component, Prop } from 'vue-property-decorator';
 import { Subscription } from 'rxjs';
 import { AudioSource } from 'services/audio';
 import { Inject } from 'services/core/injector';
 import { CustomizationService } from 'services/customization';
+import Vue from 'vue';
+import { Component, Prop } from 'vue-property-decorator';
 
 // Configuration
 const CHANNEL_HEIGHT = 4;

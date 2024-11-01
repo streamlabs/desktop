@@ -1,10 +1,10 @@
-import { SettingsService } from 'services/settings';
 import { Inject } from 'services/core/injector';
-import { ScenesService, SceneItem } from 'services/scenes';
+import { SceneItem, ScenesService } from 'services/scenes';
+import { SelectionService } from 'services/selection';
+import { SettingsService } from 'services/settings';
 import { VideoService } from 'services/video';
 import { WindowsService } from 'services/windows';
 import { ScalableRectangle } from 'util/ScalableRectangle';
-import { SelectionService } from 'services/selection';
 
 /*
  * An edge looks like:

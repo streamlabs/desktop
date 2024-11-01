@@ -1,4 +1,6 @@
+import * as remote from '@electron/remote';
 import { Inject } from 'services/core/injector';
+import { HttpRelation } from 'services/nicolive-program/httpRelation';
 import { NicoliveCommentLocalFilterService } from 'services/nicolive-program/nicolive-comment-local-filter';
 import { NicoliveCommentSynthesizerService } from 'services/nicolive-program/nicolive-comment-synthesizer';
 import {
@@ -8,11 +10,9 @@ import {
   SynthesizerSelectors,
 } from 'services/nicolive-program/state';
 import Vue from 'vue';
+import Multiselect from 'vue-multiselect';
 import { Component } from 'vue-property-decorator';
 import VueSlider from 'vue-slider-component';
-import Multiselect from 'vue-multiselect';
-import { HttpRelation } from 'services/nicolive-program/httpRelation';
-import * as remote from '@electron/remote';
 
 type MethodObject = {
   text: string;

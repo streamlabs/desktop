@@ -1,7 +1,7 @@
 // Scene helper functions
-import { click, focusChild, focusMain, getClient } from './core';
 import { contextMenuClick } from '../webdriver/context-menu';
 import { dialogDismiss } from '../webdriver/dialog';
+import { click, focusChild, focusMain, getClient } from './core';
 
 export const DefaultSceneName = 'シーン';
 export const PresetSceneName = 'プリセット';

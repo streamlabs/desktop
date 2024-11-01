@@ -1,5 +1,5 @@
-import * as sharedInputComponents from 'components/shared/inputs/inputs';
 import { EInputType, IInputMetadata } from 'components/shared/inputs';
+import * as sharedInputComponents from 'components/shared/inputs/inputs';
 import { Component, Prop } from 'vue-property-decorator';
 import { BaseInput } from './BaseInput';
 

@@ -1,7 +1,7 @@
-import { Component, Prop } from 'vue-property-decorator';
 import { Multiselect } from 'vue-multiselect';
-import { IListMetadata, IListOption } from './index';
+import { Component, Prop } from 'vue-property-decorator';
 import { BaseInput } from './BaseInput';
+import { IListMetadata, IListOption } from './index';
 
 interface IMultiselectListOption {
   description: string;

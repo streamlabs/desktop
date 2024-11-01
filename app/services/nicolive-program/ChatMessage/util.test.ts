@@ -1,5 +1,5 @@
 import { ChatMessage } from '../ChatMessage';
-import { isPremium, isAnonymous, getScore } from './util';
+import { getScore, isAnonymous, isPremium } from './util';
 
 const mockBase = {
   content: 'yay',

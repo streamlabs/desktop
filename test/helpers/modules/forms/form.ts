@@ -1,9 +1,9 @@
-import * as inputControllers from './inputs';
-import { BaseInputController, TFiledSetterFn } from './base';
 import { pascalize } from 'humps';
-import { difference, keyBy, isEqual, mapValues } from 'lodash';
-import { getClient, waitForDisplayed } from '../core';
+import { difference, isEqual, keyBy, mapValues } from 'lodash';
 import { sleep } from '../../sleep';
+import { getClient, waitForDisplayed } from '../core';
+import { BaseInputController, TFiledSetterFn } from './base';
+import * as inputControllers from './inputs';
 
 const DEFAULT_FORM_SELECTOR = 'body';
 export type TFormData = Record<string, unknown>;

@@ -4,6 +4,8 @@ import { jest_fn, type ObserveType } from 'util/jest_fn';
 import { sleep } from 'util/sleep';
 import { createSetupFunction } from 'util/test-setup';
 import { MessageResponse } from './ChatMessage';
+import { AddComponent } from './ChatMessage/ChatComponentType';
+import { getDisplayText } from './ChatMessage/displaytext';
 import type { IMessageServerClient } from './MessageServerClient';
 import { NdgrFetchError } from './NdgrFetchError';
 import { FilterRecord } from './ResponseTypes';
@@ -13,11 +15,9 @@ import {
   WrappedMessage,
   WrappedMessageWithComponent,
 } from './WrappedChat';
+import { Speech } from './nicolive-comment-synthesizer';
 import { NicoliveModeratorsService } from './nicolive-moderators';
 import type { HttpRelationState, NicoliveProgramStateService } from './state';
-import { getDisplayText } from './ChatMessage/displaytext';
-import { AddComponent } from './ChatMessage/ChatComponentType';
-import { Speech } from './nicolive-comment-synthesizer';
 
 type NicoliveCommentViewerService =
   import('./nicolive-comment-viewer').NicoliveCommentViewerService;

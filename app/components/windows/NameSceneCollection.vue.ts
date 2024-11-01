@@ -1,10 +1,10 @@
+import { $t } from 'services/i18n';
+import { SceneCollectionsService } from 'services/scene-collections';
 import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
 import { Inject } from '../../services/core/injector';
-import ModalLayout from '../ModalLayout.vue';
 import { WindowsService } from '../../services/windows';
-import { SceneCollectionsService } from 'services/scene-collections';
-import { $t } from 'services/i18n';
+import ModalLayout from '../ModalLayout.vue';
 
 interface INameSceneCollectionOptions {
   rename?: string;

@@ -1,4 +1,4 @@
-import { OptimizeSettings, SettingsKeyAccessor, OptimizationKey, EncoderFamily } from './optimizer';
+import { EncoderFamily, OptimizationKey, OptimizeSettings, SettingsKeyAccessor } from './optimizer';
 
 /**
  * niconicoに最適な設定値を返す。

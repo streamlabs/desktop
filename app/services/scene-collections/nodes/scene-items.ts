@@ -1,9 +1,9 @@
-import { Node } from './node';
-import { ScenesService, EBlendingMethod, EBlendingMode, EScaleType } from '../../scenes';
-import { Scene } from '../../scenes/scene';
-import { HotkeysNode } from './hotkeys';
-import { SourcesService } from '../../sources';
 import { Inject } from '../../core/injector';
+import { EBlendingMethod, EBlendingMode, EScaleType, ScenesService } from '../../scenes';
+import { Scene } from '../../scenes/scene';
+import { SourcesService } from '../../sources';
+import { HotkeysNode } from './hotkeys';
+import { Node } from './node';
 
 interface ISchema {
   items: TSceneNodeInfo[];

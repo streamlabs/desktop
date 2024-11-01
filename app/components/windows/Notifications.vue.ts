@@ -1,9 +1,9 @@
-import Vue from 'vue';
 import { DateTime } from 'luxon';
+import { INotification, INotificationsServiceApi } from 'services/notifications';
+import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
 import { Inject } from '../../services/core/injector';
 import ModalLayout from '../ModalLayout.vue';
-import { INotification, INotificationsServiceApi } from 'services/notifications';
 
 @Component({
   components: { ModalLayout },

@@ -1,7 +1,7 @@
 import Vue from 'vue';
-import GenericForm from './GenericForm.vue';
 import { Component, Prop } from 'vue-property-decorator';
 import { ISettingsSubCategory } from '../../../services/settings';
+import GenericForm from './GenericForm.vue';
 
 @Component({
   components: { GenericForm },

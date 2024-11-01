@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
-import { IObsInput, TObsValue } from './ObsInput';
 import { propertyComponentForType } from './Components';
+import { IObsInput, TObsValue } from './ObsInput';
 
 @Component({})
 export default class GenericForm extends Vue {

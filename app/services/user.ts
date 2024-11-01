@@ -1,27 +1,27 @@
-import Vue from 'vue';
-import URI from 'urijs';
-import { PersistentStatefulService } from 'services/core/persistent-stateful-service';
-import { Inject } from 'services/core/injector';
-import { mutation } from 'services/core/stateful-service';
+import * as remote from '@electron/remote';
+import * as Sentry from '@sentry/vue';
 import { ipcRenderer } from 'electron';
+import { merge, Observable, Subject } from 'rxjs';
+import { AppService } from 'services/app';
+import { Inject } from 'services/core/injector';
+import { PersistentStatefulService } from 'services/core/persistent-stateful-service';
+import { mutation } from 'services/core/stateful-service';
 import { IncrementalRolloutService } from 'services/incremental-rollout';
+import { SceneCollectionsService } from 'services/scene-collections';
+import URI from 'urijs';
+import { addClipboardMenu } from 'util/addClipboardMenu';
+import { FakeUserAuth, isFakeMode } from 'util/fakeMode';
+import uuid from 'uuid/v4';
+import Vue from 'vue';
+import { OnboardingService } from './onboarding';
 import {
   getPlatformService,
   IPlatformAuth,
-  TPlatform,
   IPlatformService,
   IStreamingSetting,
+  TPlatform,
 } from './platforms';
-import * as Sentry from '@sentry/vue';
-import { AppService } from 'services/app';
-import { SceneCollectionsService } from 'services/scene-collections';
-import { Subject, Observable, merge } from 'rxjs';
-import uuid from 'uuid/v4';
-import { OnboardingService } from './onboarding';
 import { UuidService } from './uuid';
-import { addClipboardMenu } from 'util/addClipboardMenu';
-import * as remote from '@electron/remote';
-import { FakeUserAuth, isFakeMode } from 'util/fakeMode';
 
 // Eventually we will support authing multiple platforms at once
 interface IUserServiceState {

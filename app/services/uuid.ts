@@ -1,5 +1,5 @@
-import { StatefulService } from './core/stateful-service';
 import uuidv4 from 'uuid/v4';
+import { StatefulService } from './core/stateful-service';
 
 interface IUuidServiceState {}
 

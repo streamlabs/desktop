@@ -1,12 +1,12 @@
-import { BrowserWindow } from 'electron';
-import { Inject } from 'services/core/injector';
-import { WindowsService } from 'services/windows';
-import { ISourceApi, ISourcesServiceApi } from 'services/sources';
-import { StatefulService, mutation } from '../core/stateful-service';
-import { ScalableRectangle, ResizeBoxPoint } from 'util/ScalableRectangle';
-import { SceneItem } from '../scenes';
 import * as remote from '@electron/remote';
 import * as Sentry from '@sentry/vue';
+import { BrowserWindow } from 'electron';
+import { Inject } from 'services/core/injector';
+import { ISourceApi, ISourcesServiceApi } from 'services/sources';
+import { WindowsService } from 'services/windows';
+import { ResizeBoxPoint, ScalableRectangle } from 'util/ScalableRectangle';
+import { StatefulService, mutation } from '../core/stateful-service';
+import { SceneItem } from '../scenes';
 
 interface IMonitorCaptureCroppingServiceState {
   sceneId: string | null;

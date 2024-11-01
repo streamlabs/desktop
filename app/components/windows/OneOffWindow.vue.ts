@@ -1,8 +1,8 @@
-import Vue from 'vue';
-import { Component, Watch } from 'vue-property-decorator';
 import { Inject } from 'services/core/injector';
-import { getComponents, WindowsService } from 'services/windows';
 import Util from 'services/utils';
+import { getComponents, WindowsService } from 'services/windows';
+import Vue from 'vue';
+import { Component } from 'vue-property-decorator';
 import TitleBar from '../TitleBar.vue';
 
 @Component({

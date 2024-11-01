@@ -1,6 +1,6 @@
 import { ChatMessage, GiftMessage, NicoadMessage } from './ChatMessage';
-import { ChatMessageType } from './ChatMessage/classifier';
 import { ChatComponentType } from './ChatMessage/ChatComponentType';
+import { ChatMessageType } from './ChatMessage/classifier';
 
 /**
  * ピン留め、モデレーターフラグ保持などが可能なタイプのメッセージ(ChatMessage)を type, seqIdをつけてラップする

@@ -1,14 +1,14 @@
-import Vue from 'vue';
-import { Component, Watch } from 'vue-property-decorator';
 import { Inject } from 'services/core/injector';
 import { NicoliveCommentFilterService } from 'services/nicolive-program/nicolive-comment-filter';
-import { FilterType, FilterRecord } from 'services/nicolive-program/ResponseTypes';
-import Banner from '../shared/banner.vue';
-import Popper from 'vue-popperjs';
 import {
   NicoliveFailure,
   openErrorDialogFromFailure,
 } from 'services/nicolive-program/NicoliveFailure';
+import { FilterRecord, FilterType } from 'services/nicolive-program/ResponseTypes';
+import Vue from 'vue';
+import Popper from 'vue-popperjs';
+import { Component, Watch } from 'vue-property-decorator';
+import Banner from '../shared/banner.vue';
 
 function isHash(item: FilterRecord): boolean {
   if (item.type !== 'user') return false;

@@ -1,11 +1,3 @@
-import Vue from 'vue';
-import { Subject, Subscription, Observable } from 'rxjs';
-import { mutation, StatefulService, ServiceHelper, InitAfter, Inject } from 'services/core';
-import { SourcesService, ISource, Source, isNoAudioPropertiesManagerType } from 'services/sources';
-import { ScenesService } from 'services/scenes';
-import * as obs from '../../../obs-api';
-import Utils from 'services/utils';
-import { WindowsService } from 'services/windows';
 import {
   IObsBitmaskInput,
   IObsInput,
@@ -13,6 +5,18 @@ import {
   IObsNumberInputValue,
   TObsFormData,
 } from 'components/obs/inputs/ObsInput';
+import { omit } from 'lodash';
+import { Observable, Subject, Subscription } from 'rxjs';
+import { InitAfter, Inject, mutation, ServiceHelper, StatefulService } from 'services/core';
+import { $t } from 'services/i18n';
+import { ScenesService } from 'services/scenes';
+import { isNoAudioPropertiesManagerType, ISource, Source, SourcesService } from 'services/sources';
+import Utils from 'services/utils';
+import { WindowsService } from 'services/windows';
+import { getKeys } from 'util/getKeys';
+import uuid from 'uuid/v4';
+import Vue from 'vue';
+import * as obs from '../../../obs-api';
 import {
   IAudioDevice,
   IAudioServiceApi,
@@ -22,10 +26,6 @@ import {
   IFader,
   IVolmeter,
 } from './audio-api';
-import { $t } from 'services/i18n';
-import uuid from 'uuid/v4';
-import { omit } from 'lodash';
-import { getKeys } from 'util/getKeys';
 
 export enum E_AUDIO_CHANNELS {
   OUTPUT_1 = 1,

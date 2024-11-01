@@ -1,10 +1,10 @@
-import { focusMain } from '../modules/core';
-import { TExecutionContext } from './index';
-import { testSourceExists, selectTestSource, clickRemoveSource } from '../modules/sources';
-import { getApiClient } from '../api-client';
-import { UserService } from 'services/user';
 import { IPlatformAuth } from 'services/platforms';
+import { UserService } from 'services/user';
 import { getKeys } from 'util/getKeys';
+import { getApiClient } from '../api-client';
+import { focusMain } from '../modules/core';
+import { clickRemoveSource, selectTestSource, testSourceExists } from '../modules/sources';
+import { TExecutionContext } from './index';
 
 export async function logOut(t: TExecutionContext) {
   await focusMain();

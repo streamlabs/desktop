@@ -1,6 +1,5 @@
 import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
-import { compact } from 'lodash';
 import { Hotkey, IBinding } from '../../services/hotkeys';
 
 /**

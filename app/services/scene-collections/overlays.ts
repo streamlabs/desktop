@@ -1,26 +1,26 @@
-import { Service } from '../core/service';
-import { RootNode } from './nodes/overlays/root';
-import { ScenesNode } from './nodes/overlays/scenes';
-import { SlotsNode } from './nodes/overlays/slots';
-import { ImageNode } from './nodes/overlays/image';
-import { TextNode } from './nodes/overlays/text';
-import { WebcamNode } from './nodes/overlays/webcam';
-import { VideoNode } from './nodes/overlays/video';
-import { TransitionNode } from './nodes/overlays/transition';
-import { parse } from './parse';
-import { Inject } from '../core/injector';
+import * as remote from '@electron/remote';
+import archiver from 'archiver';
 import fs from 'fs';
+import https from 'https';
 import os from 'os';
 import path from 'path';
-import unzip from 'unzip-stream';
-import archiver from 'archiver';
-import https from 'https';
 import { ScenesService } from 'services/scenes';
 import { SelectionService } from 'services/selection';
+import unzip from 'unzip-stream';
 import uuid from 'uuid/v4';
-import { SceneSourceNode } from './nodes/overlays/scene';
+import { Inject } from '../core/injector';
+import { Service } from '../core/service';
+import { ImageNode } from './nodes/overlays/image';
 import { NVoiceCharacterNode } from './nodes/overlays/nvoice-character';
-import * as remote from '@electron/remote';
+import { RootNode } from './nodes/overlays/root';
+import { SceneSourceNode } from './nodes/overlays/scene';
+import { ScenesNode } from './nodes/overlays/scenes';
+import { SlotsNode } from './nodes/overlays/slots';
+import { TextNode } from './nodes/overlays/text';
+import { TransitionNode } from './nodes/overlays/transition';
+import { VideoNode } from './nodes/overlays/video';
+import { WebcamNode } from './nodes/overlays/webcam';
+import { parse } from './parse';
 
 const NODE_TYPES = {
   RootNode,

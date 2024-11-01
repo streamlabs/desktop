@@ -1,5 +1,5 @@
-import { mutation } from '../core/stateful-service';
 import { PersistentStatefulService } from 'services/core/persistent-stateful-service';
+import { mutation } from '../core/stateful-service';
 
 interface IInformationsLastOpen {
   /** 最後にインフォ一覧を開いた時刻のミリ秒単位unixtime */

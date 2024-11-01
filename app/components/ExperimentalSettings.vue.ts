@@ -1,9 +1,9 @@
-import Vue from 'vue';
-import { Component } from 'vue-property-decorator';
-import { Inject } from '../services/core/injector';
 import GenericForm from 'components/obs/inputs/GenericForm.vue';
 import { TObsFormData, TObsValue } from 'components/obs/inputs/ObsInput';
 import { ICustomizationServiceApi } from 'services/customization';
+import Vue from 'vue';
+import { Component } from 'vue-property-decorator';
+import { Inject } from '../services/core/injector';
 
 @Component({
   components: { GenericForm },

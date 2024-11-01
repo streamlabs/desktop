@@ -1,3 +1,4 @@
+import * as remote from '@electron/remote';
 import path, { dirname } from 'path';
 import { $t } from 'services/i18n';
 import Vue from 'vue';
@@ -6,7 +7,6 @@ import { ISceneNodeAddOptions } from './scenes';
 import { ISourceApi, SourcesService } from './sources';
 import { NVoiceCharacterManager } from './sources/properties-managers/nvoice-character-manager';
 import { VideoService } from './video';
-import * as remote from '@electron/remote';
 
 // NVoiceのキャラクターの種類を定義
 export const NVoiceCharacterTypes = ['near'] as const;

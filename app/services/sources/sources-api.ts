@@ -1,10 +1,10 @@
-import { IPropertyManager } from './properties-managers/properties-manager';
 import { IObsListOption, TObsFormData } from 'components/obs/inputs/ObsInput';
 import { Observable } from 'rxjs';
-import { IAudioSource } from '../audio';
-import * as obs from '../../../obs-api';
 import { NVoiceCharacterType } from 'services/nvoice-character';
 import { IPartialTransform } from 'services/scenes';
+import * as obs from '../../../obs-api';
+import { IAudioSource } from '../audio';
+import { IPropertyManager } from './properties-managers/properties-manager';
 
 export interface ISource extends IResource {
   sourceId: string;

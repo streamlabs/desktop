@@ -1,18 +1,18 @@
-import { Service } from 'services/core/service';
+import * as remote from '@electron/remote';
 import fs from 'fs';
+import defaultTo from 'lodash/defaultTo';
 import path from 'path';
-import { ScenesService } from 'services/scenes';
-import { SourcesService } from 'services/sources';
-import { TPropertiesManager, TSourceType } from 'services/sources/sources-api';
-import { SourceFiltersService, TSourceFilterType } from 'services/source-filters';
-import { TransitionsService, ETransitionType } from 'services/transitions';
 import { AudioService } from 'services/audio';
 import { Inject } from 'services/core/injector';
+import { Service } from 'services/core/service';
 import { SceneCollectionsService } from 'services/scene-collections';
-import * as obs from '../../obs-api';
+import { ScenesService } from 'services/scenes';
 import { SettingsService } from 'services/settings';
-import defaultTo from 'lodash/defaultTo';
-import * as remote from '@electron/remote';
+import { SourceFiltersService, TSourceFilterType } from 'services/source-filters';
+import { SourcesService } from 'services/sources';
+import { TPropertiesManager, TSourceType } from 'services/sources/sources-api';
+import { ETransitionType, TransitionsService } from 'services/transitions';
+import * as obs from '../../obs-api';
 
 interface Source {
   name?: string;

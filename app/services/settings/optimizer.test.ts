@@ -1,14 +1,13 @@
 import {
-  OptimizeSettings,
-  filterKeyDescriptions,
   AllKeyDescriptions,
-  OptimizationKey,
   CategoryName,
   EncoderFamily,
-  SettingsKeyAccessor,
-  ISettingsAccessor,
+  filterKeyDescriptions,
   iterateKeyDescriptions,
+  OptimizationKey,
   Optimizer,
+  OptimizeSettings,
+  SettingsKeyAccessor,
 } from './optimizer';
 type ISettingsSubCategory = import('./settings-api').ISettingsSubCategory;
 jest.mock('./settings-api');

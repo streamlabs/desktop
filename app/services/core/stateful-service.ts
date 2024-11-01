@@ -1,7 +1,7 @@
 import Vue from 'vue';
-import { Store, Module } from 'vuex';
-import { Service } from './service';
+import { Module, Store } from 'vuex';
 import Utils from '../utils';
+import { Service } from './service';
 
 export function mutation(options = { unsafe: false }) {
   return function (target: any, methodName: string, descriptor: PropertyDescriptor) {

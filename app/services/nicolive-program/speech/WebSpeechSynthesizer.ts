@@ -1,7 +1,7 @@
+import * as Sentry from '@sentry/vue';
 import Utils from 'services/utils';
 import { Speech } from '../nicolive-comment-synthesizer';
 import { ISpeechSynthesizer } from './ISpeechSynthesizer';
-import * as Sentry from '@sentry/vue';
 
 export class WebSpeechSynthesizer implements ISpeechSynthesizer {
   get available(): boolean {

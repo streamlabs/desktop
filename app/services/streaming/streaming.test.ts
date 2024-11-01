@@ -1,8 +1,8 @@
-import { EStreamingState, ERecordingState } from './streaming-api';
+import { ERecordingState, EStreamingState } from './streaming-api';
 
-import { createSetupFunction } from 'util/test-setup';
-import { RequestError } from 'util/RequestError';
 import * as remote from '@electron/remote';
+import { RequestError } from 'util/RequestError';
+import { createSetupFunction } from 'util/test-setup';
 
 function noop(..._args: any[]) {}
 

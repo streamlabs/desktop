@@ -1,7 +1,7 @@
-import Vue from 'vue';
-import { Component, Prop } from 'vue-property-decorator';
 import { Inject } from 'services/core/injector';
 import { TransitionsService } from 'services/transitions';
+import Vue from 'vue';
+import { Component, Prop } from 'vue-property-decorator';
 
 @Component({})
 export default class Studio extends Vue {

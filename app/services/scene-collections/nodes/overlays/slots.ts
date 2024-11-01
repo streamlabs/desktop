@@ -1,17 +1,17 @@
-import { ArrayNode } from '../array-node';
-import { SceneItem, Scene, TSceneNode, TSceneNodeType, ScenesService } from 'services/scenes';
-import { VideoService } from 'services/video';
-import { SourcesService } from 'services/sources';
-import { SourceFiltersService, TSourceFilterType } from 'services/source-filters';
-import { Inject } from 'services/core/injector';
-import { ImageNode } from './image';
-import { TextNode } from './text';
-import { WebcamNode } from './webcam';
-import { VideoNode } from './video';
-import { SceneSourceNode } from './scene';
 import { AudioService } from 'services/audio';
+import { Inject } from 'services/core/injector';
+import { Scene, SceneItem, ScenesService, TSceneNode } from 'services/scenes';
+import { SourceFiltersService, TSourceFilterType } from 'services/source-filters';
+import { SourcesService } from 'services/sources';
+import { VideoService } from 'services/video';
 import * as obs from '../../../../../obs-api';
+import { ArrayNode } from '../array-node';
+import { ImageNode } from './image';
 import { NVoiceCharacterNode } from './nvoice-character';
+import { SceneSourceNode } from './scene';
+import { TextNode } from './text';
+import { VideoNode } from './video';
+import { WebcamNode } from './webcam';
 
 type TContent =
   | ImageNode

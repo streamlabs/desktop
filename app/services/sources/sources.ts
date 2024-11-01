@@ -1,37 +1,37 @@
-import * as fs from 'fs';
-import Vue from 'vue';
-import { Subject } from 'rxjs';
-import cloneDeep from 'lodash/cloneDeep';
+import * as Sentry from '@sentry/vue';
 import { IObsListOption, TObsValue } from 'components/obs/inputs/ObsInput';
-import { StatefulService, mutation } from 'services/core/stateful-service';
-import * as obs from '../../../obs-api';
+import * as fs from 'fs';
+import cloneDeep from 'lodash/cloneDeep';
+import { Subject } from 'rxjs';
+import { InitAfter } from 'services/core';
 import { Inject } from 'services/core/injector';
-import namingHelpers from 'util/NamingHelpers';
+import { StatefulService, mutation } from 'services/core/stateful-service';
+import { $t } from 'services/i18n';
+import { IPCWrapper } from 'services/ipc-wrapper';
+import { NVoiceCharacterTypes } from 'services/nvoice-character';
+import { ISceneItem, ScenesService } from 'services/scenes';
+import { UserService } from 'services/user';
 import { IWindowOptions, WindowsService } from 'services/windows';
-import { DefaultManager } from './properties-managers/default-manager';
-import { NVoiceCharacterManager } from './properties-managers/nvoice-character-manager';
-import { CustomCastNdiManager } from './properties-managers/custom-cast-ndi-manager';
-import { ScenesService, ISceneItem } from 'services/scenes';
+import { getKeys } from 'util/getKeys';
+import namingHelpers from 'util/NamingHelpers';
+import uuid from 'uuid/v4';
+import Vue from 'vue';
+import * as obs from '../../../obs-api';
+import { RtvcStateService } from '../../services/rtvcStateService';
+import { AudioService } from '../audio';
 import {
   IActivePropertyManager,
   ISource,
   ISourceAddOptions,
   ISourcesServiceApi,
   ISourcesState,
-  TSourceType,
   Source,
   TPropertiesManager,
+  TSourceType,
 } from './index';
-import { $t } from 'services/i18n';
-import { AudioService } from '../audio';
-import uuid from 'uuid/v4';
-import { UserService } from 'services/user';
-import { NVoiceCharacterTypes } from 'services/nvoice-character';
-import { InitAfter } from 'services/core';
-import { RtvcStateService } from '../../services/rtvcStateService';
-import * as Sentry from '@sentry/vue';
-import { IPCWrapper } from 'services/ipc-wrapper';
-import { getKeys } from 'util/getKeys';
+import { CustomCastNdiManager } from './properties-managers/custom-cast-ndi-manager';
+import { DefaultManager } from './properties-managers/default-manager';
+import { NVoiceCharacterManager } from './properties-managers/nvoice-character-manager';
 
 const AudioFlag = obs.ESourceOutputFlags.Audio;
 const VideoFlag = obs.ESourceOutputFlags.Video;

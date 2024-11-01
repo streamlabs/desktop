@@ -1,22 +1,22 @@
-import Vue from 'vue';
-import { Component } from 'vue-property-decorator';
 import { Inject } from 'services/core/injector';
-import ModalLayout from '../ModalLayout.vue';
-import NavMenu from '../shared/NavMenu.vue';
-import NavItem from '../shared/NavItem.vue';
-import Step from '../nicolive-program-selector/Step.vue';
-import { WindowsService } from '../../services/windows';
+import { $t } from 'services/i18n';
 import {
+  providerTypes as _providerTypes,
+  selectionSteps as _selectionSteps,
+  steps as _steps,
   NicoliveProgramSelectorService,
   TProviderType,
-  TStep,
-  providerTypes as _providerTypes,
-  steps as _steps,
-  selectionSteps as _selectionSteps,
   TSelectionStep,
+  TStep,
 } from 'services/nicolive-program/nicolive-program-selector';
 import { StreamingService } from 'services/streaming';
-import { $t } from 'services/i18n';
+import Vue from 'vue';
+import { Component } from 'vue-property-decorator';
+import { WindowsService } from '../../services/windows';
+import ModalLayout from '../ModalLayout.vue';
+import Step from '../nicolive-program-selector/Step.vue';
+import NavItem from '../shared/NavItem.vue';
+import NavMenu from '../shared/NavMenu.vue';
 
 @Component({
   components: {

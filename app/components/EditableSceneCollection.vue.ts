@@ -1,10 +1,10 @@
+import * as remote from '@electron/remote';
+import { DateTime } from 'luxon';
+import { Inject } from 'services/core/injector';
+import { $t } from 'services/i18n';
+import { SceneCollectionsService } from 'services/scene-collections';
 import Vue from 'vue';
 import { Component, Prop, Watch } from 'vue-property-decorator';
-import { SceneCollectionsService } from 'services/scene-collections';
-import { Inject } from 'services/core/injector';
-import { DateTime } from 'luxon';
-import { $t } from 'services/i18n';
-import * as remote from '@electron/remote';
 
 @Component({})
 export default class EditableSceneCollection extends Vue {

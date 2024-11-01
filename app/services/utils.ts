@@ -1,6 +1,6 @@
-import URI from 'urijs';
-import { isEqual } from 'lodash';
 import * as remote from '@electron/remote';
+import { isEqual } from 'lodash';
+import URI from 'urijs';
 import { getKeys } from 'util/getKeys';
 
 export const enum EBit {

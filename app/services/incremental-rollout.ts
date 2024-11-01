@@ -1,9 +1,8 @@
 import { Inject } from 'services/core/injector';
-import { handleErrors, authorizedHeaders } from 'util/requests';
 import { mutation, StatefulService } from 'services/core/stateful-service';
 import { UserService } from 'services/user';
-import { HostsService } from './hosts';
 import Utils from 'services/utils';
+import { HostsService } from './hosts';
 
 export enum EAvailableFeatures {
   chatbot = 'slobs--chatbot',

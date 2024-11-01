@@ -1,6 +1,6 @@
+import * as remote from '@electron/remote';
 import { Component, Prop } from 'vue-property-decorator';
 import { IObsButtonInputValue, ObsInput, TObsType } from './ObsInput';
-import * as remote from '@electron/remote';
 
 @Component
 class ObsButtonInput extends ObsInput<IObsButtonInputValue> {

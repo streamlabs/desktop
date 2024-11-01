@@ -1,8 +1,8 @@
+import { Inject } from 'services/core/injector';
 import { Service } from 'services/core/service';
 import { ISettingsSubCategory, SettingsService } from 'services/settings';
-import { Inject } from 'services/core/injector';
-import { Dictionary } from 'vuex';
 import { VideoSettingsService } from 'services/settings-v2/video';
+import { Dictionary } from 'vuex';
 /**
  * list of encoders for simple mode
  */

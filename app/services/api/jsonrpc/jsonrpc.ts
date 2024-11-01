@@ -1,12 +1,12 @@
 import { Service } from 'services/core/service';
+import uuid from 'uuid/v4';
 import {
   E_JSON_RPC_ERROR,
-  IJsonRpcResponse,
-  IJsonRpcRequest,
   IJsonRpcEvent,
+  IJsonRpcRequest,
+  IJsonRpcResponse,
   IJsonrpcServiceApi,
 } from './jsonrpc-api';
-import uuid from 'uuid/v4';
 
 export class JsonrpcService extends Service implements IJsonrpcServiceApi {
   static createError(

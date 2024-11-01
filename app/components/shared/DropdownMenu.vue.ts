@@ -1,6 +1,6 @@
 import Vue from 'vue';
-import { Component, Prop } from 'vue-property-decorator';
 import Popper from 'vue-popperjs';
+import { Component, Prop } from 'vue-property-decorator';
 
 @Component({
   components: { Popper },

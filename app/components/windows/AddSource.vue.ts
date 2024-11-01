@@ -1,14 +1,14 @@
-import Vue from 'vue';
-import { Component } from 'vue-property-decorator';
-import { Inject } from 'services/core/injector';
-import { WindowsService } from 'services/windows';
-import { ScenesService } from 'services/scenes';
-import { ISourcesServiceApi, TSourceType, ISourceApi, ISourceAddOptions } from 'services/sources';
 import ModalLayout from 'components/ModalLayout.vue';
 import Selector from 'components/Selector.vue';
 import Display from 'components/shared/Display.vue';
+import { Inject } from 'services/core/injector';
 import { $t } from 'services/i18n';
 import { NVoiceCharacterService, NVoiceCharacterType } from 'services/nvoice-character';
+import { ScenesService } from 'services/scenes';
+import { ISourceAddOptions, ISourceApi, ISourcesServiceApi, TSourceType } from 'services/sources';
+import { WindowsService } from 'services/windows';
+import Vue from 'vue';
+import { Component } from 'vue-property-decorator';
 
 @Component({
   components: { ModalLayout, Selector, Display },

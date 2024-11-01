@@ -1,8 +1,8 @@
-import { useWebdriver, test } from '../helpers/webdriver';
-import { getApiClient } from '../helpers/api-client';
 import { ScenesService } from 'services/scenes';
-import { SceneBuilder } from '../helpers/scene-builder';
+import { getApiClient } from '../helpers/api-client';
 import { DefaultSceneName } from '../helpers/modules/scenes';
+import { SceneBuilder } from '../helpers/scene-builder';
+import { test, useWebdriver } from '../helpers/webdriver';
 const path = require('path');
 
 useWebdriver({ restartAppAfterEachTest: false });

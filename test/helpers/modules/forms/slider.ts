@@ -1,6 +1,5 @@
-import { BaseInputController } from './base';
-import { sleep } from '../../sleep';
 import { getClient } from '../core';
+import { BaseInputController } from './base';
 
 export class SliderInputController extends BaseInputController<number> {
   async setValue(value: number) {

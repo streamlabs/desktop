@@ -1,8 +1,8 @@
 // Source helper functions
-import { rightClickSource } from './sources';
 import { contextMenuClick } from '../webdriver/context-menu';
 import { setFormDropdown, setFormInput } from '../webdriver/forms';
 import { click, focusChild, focusMain } from './core';
+import { rightClickSource } from './sources';
 
 export async function openFiltersWindow(sourceName: string) {
   await focusMain();

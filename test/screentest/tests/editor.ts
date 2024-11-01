@@ -1,8 +1,8 @@
 import test from 'ava';
-import { useWebdriver } from '../../helpers/webdriver';
-import { getApiClient } from '../../helpers/api-client';
 import { ScenesService } from 'services/scenes';
 import { ISourcesServiceApi } from '../../../app/services/sources/sources-api';
+import { getApiClient } from '../../helpers/api-client';
+import { useWebdriver } from '../../helpers/webdriver';
 import { useScreentest } from '../screenshoter';
 
 useWebdriver({ restartAppAfterEachTest: false });

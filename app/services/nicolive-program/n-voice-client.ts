@@ -1,13 +1,12 @@
 // N Voice Client Service
 
+import * as remote from '@electron/remote';
 import * as Sentry from '@sentry/vue';
 import { join } from 'path';
 import { StatefulService } from 'services/core/stateful-service';
-import { $t } from 'services/i18n';
 import { sleep } from 'util/sleep';
 import { getNVoicePath, NVoiceClient } from './speech/NVoiceClient';
 import { INVoiceTalker } from './speech/NVoiceSynthesizer';
-import * as remote from '@electron/remote';
 
 /** play audio from Buffer as wave file.
  * @return .cancel function to stop playing.

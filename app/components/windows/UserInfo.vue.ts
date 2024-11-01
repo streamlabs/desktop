@@ -1,30 +1,30 @@
+import * as remote from '@electron/remote';
 import ModalLayout from 'components/ModalLayout.vue';
 import { Subscription } from 'rxjs';
 import { Inject } from 'services/core';
+import { HostsService } from 'services/hosts';
 import { ChatMessage } from 'services/nicolive-program/ChatMessage';
 import { ChatComponentType } from 'services/nicolive-program/ChatMessage/ChatComponentType';
 import { KonomiTag, NicoliveClient } from 'services/nicolive-program/NicoliveClient';
+import {
+  NicoliveFailure,
+  openErrorDialogFromFailure,
+} from 'services/nicolive-program/NicoliveFailure';
 import { isWrappedChat, WrappedChatWithComponent } from 'services/nicolive-program/WrappedChat';
 import { KonomiTagsService } from 'services/nicolive-program/konomi-tags';
-import { NicoliveCommentViewerService } from 'services/nicolive-program/nicolive-comment-viewer';
-import { NicoliveProgramService } from 'services/nicolive-program/nicolive-program';
-import { NicoliveModeratorsService } from 'services/nicolive-program/nicolive-moderators';
 import { NicoliveCommentFilterService } from 'services/nicolive-program/nicolive-comment-filter';
+import { NicoliveCommentViewerService } from 'services/nicolive-program/nicolive-comment-viewer';
+import { NicoliveModeratorsService } from 'services/nicolive-program/nicolive-moderators';
+import { NicoliveProgramService } from 'services/nicolive-program/nicolive-program';
 import { WindowsService } from 'services/windows';
-import { HostsService } from 'services/hosts';
 import Vue from 'vue';
+import Popper from 'vue-popperjs';
 import { Component } from 'vue-property-decorator';
 import CommonComment from '../nicolive-area/comment/CommonComment.vue';
 import EmotionComment from '../nicolive-area/comment/EmotionComment.vue';
 import GiftComment from '../nicolive-area/comment/GiftComment.vue';
 import NicoadComment from '../nicolive-area/comment/NicoadComment.vue';
 import SystemMessage from '../nicolive-area/comment/SystemMessage.vue';
-import {
-  NicoliveFailure,
-  openErrorDialogFromFailure,
-} from 'services/nicolive-program/NicoliveFailure';
-import Popper from 'vue-popperjs';
-import * as remote from '@electron/remote';
 
 const componentMap: { [type in ChatComponentType]: Vue.Component } = {
   common: CommonComment,

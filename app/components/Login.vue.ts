@@ -4,7 +4,7 @@ import { DismissablesService, EDismissable } from 'services/dismissables';
 import { $t } from 'services/i18n';
 import { UserService } from 'services/user';
 import Vue from 'vue';
-import { Component, Prop } from 'vue-property-decorator';
+import { Component } from 'vue-property-decorator';
 import HelpTip from './shared/HelpTip.vue';
 
 import * as remote from '@electron/remote';

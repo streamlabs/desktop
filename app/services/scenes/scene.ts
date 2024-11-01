@@ -1,30 +1,30 @@
-import { ServiceHelper, mutation } from 'services/core';
-import { ScenesService } from './scenes';
-import { Source, SourcesService, TSourceType } from 'services/sources';
-import {
-  ISceneItem,
-  SceneItem,
-  IScene,
-  ISceneNodeAddOptions,
-  ISceneItemInfo,
-  ISceneItemFolder,
-  SceneItemFolder,
-  ISceneItemNode,
-  EScaleType,
-  EBlendingMode,
-  EBlendingMethod,
-} from './index';
-import Utils from 'services/utils';
-import * as obs from '../../../obs-api';
-import { Inject } from 'services/core/injector';
-import { SelectionService, Selection, TNodesList } from 'services/selection';
-import { uniqBy } from 'lodash';
-import { TSceneNodeInfo } from 'services/scene-collections/nodes/scene-items';
 import * as fs from 'fs';
-import uuid from 'uuid/v4';
-import { assertIsDefined } from 'util/properties-type-guards';
-import { VideoSettingsService, TDisplayType } from 'services/settings-v2';
+import { uniqBy } from 'lodash';
 import { filter } from 'rxjs/operators';
+import { ServiceHelper, mutation } from 'services/core';
+import { Inject } from 'services/core/injector';
+import { TSceneNodeInfo } from 'services/scene-collections/nodes/scene-items';
+import { Selection, SelectionService, TNodesList } from 'services/selection';
+import { TDisplayType, VideoSettingsService } from 'services/settings-v2';
+import { Source, SourcesService, TSourceType } from 'services/sources';
+import Utils from 'services/utils';
+import { assertIsDefined } from 'util/properties-type-guards';
+import uuid from 'uuid/v4';
+import * as obs from '../../../obs-api';
+import {
+  EBlendingMethod,
+  EBlendingMode,
+  EScaleType,
+  IScene,
+  ISceneItem,
+  ISceneItemFolder,
+  ISceneItemInfo,
+  ISceneItemNode,
+  ISceneNodeAddOptions,
+  SceneItem,
+  SceneItemFolder,
+} from './index';
+import { ScenesService } from './scenes';
 
 export type TSceneNode = SceneItem | SceneItemFolder;
 

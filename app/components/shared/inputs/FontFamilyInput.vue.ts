@@ -1,5 +1,4 @@
 import { Component, Prop } from 'vue-property-decorator';
-import { Multiselect } from 'vue-multiselect';
 import { BaseInput } from './BaseInput';
 import ListInput from './ListInput.vue';
 import { IInputMetadata } from './index';

@@ -1,9 +1,9 @@
-import VueSlider from 'vue-slider-component';
 import { throttle } from 'lodash-decorators';
 import { Component, Prop } from 'vue-property-decorator';
-import { BaseInput } from './BaseInput';
-import { CustomizationService } from '../../../services/customization';
+import VueSlider from 'vue-slider-component';
 import { Inject } from '../../../services/core/injector';
+import { CustomizationService } from '../../../services/customization';
+import { BaseInput } from './BaseInput';
 import { ISliderMetadata } from './index';
 
 @Component({

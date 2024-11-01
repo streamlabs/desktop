@@ -1,6 +1,6 @@
 import * as input from 'components/obs/inputs/ObsInput';
-import * as obs from '../../../../obs-api';
 import { compact } from 'lodash';
+import * as obs from '../../../../obs-api';
 
 /**
  * This is the interface that the rest of the app uses

@@ -1,10 +1,10 @@
-import { useWebdriver, test, afterAppStart } from '../../helpers/webdriver';
-import { getApiClient } from '../../helpers/api-client';
-import { ISourcesServiceApi, TSourceType } from '../../../app/services/sources/sources-api';
-import { useScreentest } from '../screenshoter';
 import { ScenesService } from 'services/scenes';
-import { sleep } from '../../helpers/sleep';
+import { ISourcesServiceApi, TSourceType } from '../../../app/services/sources/sources-api';
+import { getApiClient } from '../../helpers/api-client';
 import { focusChild } from '../../helpers/modules/core';
+import { sleep } from '../../helpers/sleep';
+import { afterAppStart, test, useWebdriver } from '../../helpers/webdriver';
+import { useScreentest } from '../screenshoter';
 
 let showSourceProps: (name: string) => void;
 

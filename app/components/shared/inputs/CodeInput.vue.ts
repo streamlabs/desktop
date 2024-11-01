@@ -1,10 +1,10 @@
-import { Component, Prop } from 'vue-property-decorator';
-import { codemirror } from 'vue-codemirror';
-import { BaseInput } from './BaseInput';
-import 'codemirror/mode/javascript/javascript.js';
+import 'codemirror/keymap/sublime';
 import 'codemirror/mode/css/css.js';
 import 'codemirror/mode/htmlmixed/htmlmixed.js';
-import 'codemirror/keymap/sublime';
+import 'codemirror/mode/javascript/javascript.js';
+import { codemirror } from 'vue-codemirror';
+import { Component, Prop } from 'vue-property-decorator';
+import { BaseInput } from './BaseInput';
 import { IInputMetadata } from './index';
 
 @Component({

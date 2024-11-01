@@ -1,16 +1,16 @@
-import Vue from 'vue';
-import { Component, Watch } from 'vue-property-decorator';
-import SlVueTree, { ISlTreeNodeModel, ICursorPosition } from 'sl-vue-tree';
 import { Inject } from 'services/core/injector';
-import { WindowsService } from 'services/windows';
 import { SourceFiltersService } from 'services/source-filters';
 import { ISourcesServiceApi } from 'services/sources';
+import { WindowsService } from 'services/windows';
+import SlVueTree, { ICursorPosition, ISlTreeNodeModel } from 'sl-vue-tree';
+import Vue from 'vue';
+import { Component, Watch } from 'vue-property-decorator';
 
 import ModalLayout from 'components/ModalLayout.vue';
-import NavMenu from 'components/shared/NavMenu.vue';
-import NavItem from 'components/shared/NavItem.vue';
-import Display from 'components/shared/Display.vue';
 import GenericForm from 'components/obs/inputs/GenericForm.vue';
+import Display from 'components/shared/Display.vue';
+import NavItem from 'components/shared/NavItem.vue';
+import NavMenu from 'components/shared/NavMenu.vue';
 
 interface IFilterNodeData {
   visible: boolean;

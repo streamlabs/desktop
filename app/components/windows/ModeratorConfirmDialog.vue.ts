@@ -1,3 +1,4 @@
+import * as remote from '@electron/remote';
 import { Inject } from 'services/core/injector';
 import { NicoliveModeratorsService } from 'services/nicolive-program/nicolive-moderators';
 import Util from 'services/utils';
@@ -5,7 +6,6 @@ import { WindowsService } from 'services/windows';
 import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
 import ModalLayout from '../ModalLayout.vue';
-import * as remote from '@electron/remote';
 
 @Component({
   components: {

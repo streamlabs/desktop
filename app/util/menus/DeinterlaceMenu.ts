@@ -1,10 +1,10 @@
-import { Menu } from './Menu';
+import { EDeinterlaceFieldOrder, EDeinterlaceMode } from 'obs-studio-node';
+import { $t } from 'services/i18n';
 import { ScenesService } from 'services/scenes';
 import { SelectionService } from 'services/selection';
-import { Inject } from '../../services/core/injector';
-import { $t } from 'services/i18n';
 import { Source } from 'services/sources';
-import { EDeinterlaceMode, EDeinterlaceFieldOrder } from 'obs-studio-node';
+import { Inject } from '../../services/core/injector';
+import { Menu } from './Menu';
 
 export class DeinterlaceMenu extends Menu {
   @Inject() private scenesService: ScenesService;

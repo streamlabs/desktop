@@ -1,19 +1,19 @@
+import { TObsFormData } from 'components/obs/inputs/ObsInput';
+import { cloneDeep, isEqual } from 'lodash';
+import { ScenesService } from 'services/scenes';
+import Utils from 'services/utils';
+import { assertIsDefined } from 'util/properties-type-guards';
+import * as obs from '../../../obs-api';
+import { Inject, mutation, ServiceHelper } from '../core';
 import {
-  ISourceApi,
-  TSourceType,
   ISource,
-  SourcesService,
-  TPropertiesManager,
+  ISourceApi,
   ISourceComparison,
   PROPERTIES_MANAGER_TYPES,
+  SourcesService,
+  TPropertiesManager,
+  TSourceType,
 } from './index';
-import { mutation, ServiceHelper, Inject } from '../core';
-import { ScenesService } from 'services/scenes';
-import { TObsFormData } from 'components/obs/inputs/ObsInput';
-import Utils from 'services/utils';
-import * as obs from '../../../obs-api';
-import { cloneDeep, isEqual } from 'lodash';
-import { assertIsDefined } from 'util/properties-type-guards';
 
 @ServiceHelper()
 export class Source implements ISourceApi {

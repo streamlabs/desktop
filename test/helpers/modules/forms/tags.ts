@@ -1,6 +1,6 @@
-import { BaseInputController } from './base';
-import { clickIfDisplayed, select } from '../core';
 import { sleep } from '../../sleep';
+import { clickIfDisplayed, select } from '../core';
+import { BaseInputController } from './base';
 
 export class TagsInputController extends BaseInputController<(string | number)[]> {
   async setValue(values: (string | number)[]) {

@@ -1,11 +1,11 @@
-import Vue from 'vue';
-import { Component, Prop } from 'vue-property-decorator';
-import { Inject } from 'services/core/injector';
-import { TransitionsService } from 'services/transitions';
 import * as inputComponents from 'components/obs/inputs';
 import { IObsListInput } from 'components/obs/inputs/ObsInput';
-import { ScenesService } from 'services/scenes';
+import { Inject } from 'services/core/injector';
 import { $t } from 'services/i18n';
+import { ScenesService } from 'services/scenes';
+import { TransitionsService } from 'services/transitions';
+import Vue from 'vue';
+import { Component, Prop } from 'vue-property-decorator';
 
 @Component({
   components: {

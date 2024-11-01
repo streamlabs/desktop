@@ -1,9 +1,9 @@
+import { AppService } from 'services/app';
+import { Inject } from 'services/core/injector';
+import { CustomizationService } from 'services/customization';
+import { WindowsService } from 'services/windows';
 import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
-import { WindowsService } from 'services/windows';
-import { CustomizationService } from 'services/customization';
-import { Inject } from 'services/core/injector';
-import { AppService } from 'services/app';
 
 @Component({})
 export default class ModalLayout extends Vue {
