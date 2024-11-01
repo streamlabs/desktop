@@ -1,5 +1,8 @@
+import * as remote from '@electron/remote';
 import ModalLayout from 'components/ModalLayout.vue';
+import { omit } from 'lodash';
 import { Inject } from 'services/core/injector';
+import { NVoiceCharacterType, NVoiceCharacterTypes } from 'services/nvoice-character';
 import { ScenesService } from 'services/scenes';
 import { SourcesService, TPropertiesManager, TSourceType } from 'services/sources';
 import { UserService } from 'services/user';
@@ -8,19 +11,14 @@ import Vue from 'vue';
 import { Component } from 'vue-property-decorator';
 import AddFileIcon from '../../../media/images/add-file-icon.svg';
 import AddSceneIcon from '../../../media/images/add-scene-icon.svg';
+import AppAudioCaptureSourceIcon from '../../../media/images/app-speaker.svg';
+import BlackmagicSourceIcon from '../../../media/images/blackmagic-icon.svg';
 import BrowserSourceIcon from '../../../media/images/browser-source-icon.svg';
+import CharacterSourceIcon from '../../../media/images/character-source-icon.svg';
 import ColorSourceIcon from '../../../media/images/color-source-icon.svg';
 import DshowInputIcon from '../../../media/images/display-icon.svg';
 import FfmpegSourceIcon from '../../../media/images/ffmpeg-source-icon.svg';
 import GameCaptureIcon from '../../../media/images/game-capture-icon.svg';
-import AddSourceInfo from './AddSourceInfo.vue';
-// eslint-disable-next-line import/no-duplicates
-import * as remote from '@electron/remote';
-import { omit } from 'lodash';
-import { NVoiceCharacterType, NVoiceCharacterTypes } from 'services/nvoice-character';
-import AppAudioCaptureSourceIcon from '../../../media/images/app-speaker.svg';
-import BlackmagicSourceIcon from '../../../media/images/blackmagic-icon.svg';
-import CharacterSourceIcon from '../../../media/images/character-source-icon.svg';
 import MonitorCaptureIcon from '../../../media/images/monitor-capture-icon.svg';
 import NdiSourceIcon from '../../../media/images/ndi-icon.svg';
 import VLCSourceIcon from '../../../media/images/play.svg';
@@ -28,12 +26,12 @@ import {
   default as ImageSourceIcon,
   default as SlideshowIcon,
 } from '../../../media/images/slideshow-icon.svg';
+import SpeechEngineIcon from '../../../media/images/speech-engine.svg';
 import TextGdiplusIcon from '../../../media/images/text-gdiplus-icon.svg';
 import WasapiInputCaptureIcon from '../../../media/images/wasapi-input-icon.svg';
-import WindowCaptureIcon from '../../../media/images/window-capture-icon.svg';
-// eslint-disable-next-line import/no-duplicates
-import SpeechEngineIcon from '../../../media/images/speech-engine.svg';
 import WasapiOutputIcon from '../../../media/images/wasapi-output-icon.svg';
+import WindowCaptureIcon from '../../../media/images/window-capture-icon.svg';
+import AddSourceInfo from './AddSourceInfo.vue';
 
 type TInspectableSource = TSourceType | NVoiceCharacterType;
 
