@@ -268,17 +268,37 @@ textarea {
 .multiselect {
   width: 100%;
   min-height: @item-generic-size;
+  padding: 4px 4px 4px 8px;
+  margin-bottom: 0;
+  font-size: @font-size4;
+  color: var(--color-text);
+  background: var(--color-input-bg);
+  border: 1px solid var(--color-border-light);
+  border-radius: 4px;
+
+  &::placeholder {
+    color: var(--color-text-dark);
+  }
+
+  &:hover {
+    border-color: var(--color-border-accent);
+  }
+
+  &:focus {
+    background: var(--color-input-bg);
+    border-color: var(--color-border-accent);
+    box-shadow: none;
+  }
 }
 
 .multiselect__select {
   position: relative;
-  top: 0;
+  top: 2px;
   right: 0;
   z-index: 10;
   width: auto;
   height: auto;
-  padding: 0;
-  line-height: @item-generic-size;
+  //  line-height: @item-generic-size;
 
   &::before {
     position: absolute;
@@ -292,16 +312,18 @@ textarea {
 }
 
 .multiselect__tags {
-  height: 0;
-  min-height: 0;
-  padding: 0;
-  border: none;
-  .radius;
+  // height: 0;
+  // min-height: 0;
+  // padding: 0;
+  // border: none;
+  // .radius;
+  width: calc(100% - 20px);
 
   input[type='text'] {
     width: 100%;
     padding-right: 32px;
     cursor: pointer;
+    border: none;
   }
 }
 
@@ -321,7 +343,8 @@ textarea {
   .shadow;
 
   position: absolute;
-  top: 40px;
+  //top: 40px;
+  top: 8px;
   z-index: @z-index-expand-content;
   width: 100%;
   max-height: 264px;
