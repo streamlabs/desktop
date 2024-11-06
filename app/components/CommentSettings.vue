@@ -356,6 +356,7 @@
   }
 
   & /deep/ .multiselect__single {
+    height: 64px;
     padding: 0 16px;
     line-height: 64px;
     color: var(--color-text-light);

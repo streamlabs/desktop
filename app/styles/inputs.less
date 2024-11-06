@@ -6,6 +6,7 @@ textarea {
   margin-bottom: 0;
   font-size: @font-size4;
   color: var(--color-text);
+  cursor: pointer;
   background: var(--color-input-bg);
   border: 1px solid var(--color-border-light);
   border-radius: 4px;
@@ -269,7 +270,16 @@ textarea {
   position: relative;
   width: 100%;
   min-height: @item-generic-size;
-  border-color: var(--color-border-accent);
+  cursor: pointer;
+  background: var(--color-input-bg);
+  border: 1px solid var(--color-border-light);
+  .radius;
+  .transition;
+
+  &:hover,
+  &:focus {
+    border-color: var(--color-border-accent);
+  }
 }
 
 .multiselect__select {
@@ -305,15 +315,17 @@ textarea {
   position: static !important;
   width: 100% !important;
   padding: 0 32px 0 8px !important;
-  cursor: pointer;
+  background-color: transparent !important;
+  border: none !important;
 
-  .multiselect__tags & {
+  &::placeholder {
+    color: transparent !important;
+  }
+
+  .multiselect--active &,
+  .multiselect__tags:has(.multiselect__single:empty) & {
     &::placeholder {
-      color: transparent;
-
-      .multiselect--active & {
-        color: inherit;
-      }
+      color: var(--color-text-dark) !important;
     }
   }
 }
@@ -327,10 +339,6 @@ textarea {
   font-size: 14px;
   line-height: 32px;
   color: var(--color-text);
-
-  .multiselect--active & {
-    display: none;
-  }
 }
 
 .multiselect__input,
