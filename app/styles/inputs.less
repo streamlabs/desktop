@@ -266,6 +266,7 @@ textarea {
 }
 
 .multiselect {
+  position: relative;
   width: 100%;
   min-height: @item-generic-size;
   border-color: var(--color-border-accent);
@@ -301,6 +302,7 @@ textarea {
 }
 
 .multiselect__input {
+  position: static !important;
   width: 100% !important;
   padding: 0 32px 0 8px !important;
   cursor: pointer;
@@ -318,7 +320,10 @@ textarea {
 
 .multiselect__single {
   position: absolute;
-  padding: 0 8px;
+  top: 0;
+  height: 32px;
+  padding: 0 32px 0 8px;
+  overflow: hidden;
   font-size: 14px;
   line-height: 32px;
   color: var(--color-text);
