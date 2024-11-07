@@ -104,88 +104,92 @@
         </button>
       </div>
       <div class="input-container">
-        <div class="input-wrapper voice">
-          <div class="row input-label">
-            <label for="system-select">システムメッセージ</label>
-            <button
-              class="button button--secondary"
-              :disabled="!enabled"
-              @click="testSpeechPlay(system)"
-            >
-              <i class="icon-speaker"></i>
-              読み上げテスト
-            </button>
-          </div>
-          <multiselect
-            class="voice"
-            id="system-select"
-            v-model="system"
-            :options="synthIds"
-            :allow-empty="false"
-            :custom-label="synthName"
-            :placeholder="$t('settings.listPlaceholder')"
-            :data-type="system"
-          >
-            <template slot="option" slot-scope="o">
-              {{ synthName(o.option) }}<span v-if="o.option == systemDefault">（既定）</span>
-            </template>
-          </multiselect>
+        <div v-if="voicevoxInformation" style="width: 100%; background-color: gray">
+          voicevox information
+          <a @click="showVoicevoxPage()">help</a>
+          <button class="button" @click="closeVoicevoxInformation()">close</button>
         </div>
-      </div>
-      <div class="input-container">
-        <div class="input-wrapper voice">
-          <div class="row input-label">
-            <label for="normal-select">視聴者コメント</label>
-            <button
-              class="button button--secondary"
-              :disabled="!enabled"
-              @click="testSpeechPlay(normal)"
-            >
-              <i class="icon-speaker"></i>
-              読み上げテスト
-            </button>
-          </div>
-          <multiselect
-            id="normal-select"
-            v-model="normal"
-            :options="synthIds"
-            :allow-empty="false"
-            :custom-label="synthName"
-            :placeholder="$t('settings.listPlaceholder')"
-            :data-type="normal"
-          >
-            <template slot="option" slot-scope="o">
-              {{ synthName(o.option) }}<span v-if="o.option == normalDefault">（既定）</span>
-            </template>
-          </multiselect>
+
+        <div v-if="isUseVoicevox && !isExistVoicevox" style="width: 100%; background-color: brown">
+          voicevox error. please execute voicevox and reload.
+          <button class="button" @click="reloadVoicevox">reload</button>
         </div>
-      </div>
-      <div class="input-container">
-        <div class="input-wrapper voice">
-          <div class="row input-label">
-            <label for="operator-select">放送者コメント</label>
-            <button
-              class="button button--secondary"
-              :disabled="!enabled"
-              @click="testSpeechPlay(operator)"
-            >
-              <i class="icon-speaker"></i>
-              読み上げテスト
-            </button>
+
+        <div class="input-wrapper">
+          <!-- system -->
+          <div style="padding-top: 16px">
+            <span>システムメッセージ</span>
+            <div style="display: flex; gap: 8px; align-items: center">
+              <IconListSelect style="flex: 1" v-model="system" :options="synthesizers" />
+              <IconListSelect
+                v-if="system.id == 'voicevox'"
+                style="flex: 1"
+                :disabled="!isExistVoicevox"
+                v-model="voicevoxSystemItem"
+                :options="voicevoxItems"
+              />
+              <button
+                :disabled="!isTestable(system.id)"
+                class="button button--secondary"
+                @click="testSpeechPlay(system.id, 'system')"
+              >
+                <i class="icon-speaker"></i>
+              </button>
+            </div>
+            <div v-if="system.id == 'voicevox' && !isExistVoicevox">
+              <span style="width: 100%; background-color: brown">not found voicevox</span>
+            </div>
           </div>
-          <multiselect
-            id="operator-select"
-            v-model="operator"
-            :options="synthIds"
-            :allow-empty="false"
-            :custom-label="synthName"
-            :placeholder="$t('settings.listPlaceholder')"
-            :data-type="operator"
-          >
-            <template slot="option" slot-scope="o">
-              {{ synthName(o.option) }}<span v-if="o.option == operatorDefault">（既定）</span>
-            </template>
-          </multiselect>
+          <!--normal -->
+          <div style="padding-top: 16px">
+            <span>視聴者コメント</span>
+            <div style="display: flex; gap: 8px; align-items: center">
+              <IconListSelect style="flex: 1" v-model="normal" :options="synthesizers" />
+              <IconListSelect
+                v-if="normal.id == 'voicevox'"
+                style="flex: 1"
+                :disabled="!isExistVoicevox"
+                v-model="voicevoxNormalItem"
+                :options="voicevoxItems"
+              />
+              <button
+                :disabled="!isTestable(normal.id)"
+                class="button button--secondary"
+                @click="testSpeechPlay(normal.id, 'normal')"
+              >
+                <i class="icon-speaker"></i>
+              </button>
+            </div>
+            <div v-if="normal.id == 'voicevox' && !isExistVoicevox">
+              <span style="width: 100%; background-color: brown">not found voicevox</span>
+            </div>
+          </div>
+
+          <!-- operator -->
+          <div style="padding-top: 16px">
+            <span>放送者コメント</span>
+            <div style="display: flex; gap: 8px; align-items: center">
+              <IconListSelect style="flex: 1" v-model="operator" :options="synthesizers" />
+              <IconListSelect
+                v-if="operator.id == 'voicevox'"
+                style="flex: 1"
+                :disabled="!isExistVoicevox"
+                v-model="voicevoxOperatorItem"
+                :options="voicevoxItems"
+              />
+              <button
+                :disabled="!isTestable(operator.id)"
+                class="button button--secondary"
+                @click="testSpeechPlay(operator.id, 'operator')"
+              >
+                <i class="icon-speaker"></i>
+              </button>
+            </div>
+            <div v-if="operator.id == 'voicevox' && !isExistVoicevox">
+              <span style="width: 100%; background-color: brown">not found voicevox</span>
+            </div>
+          </div>
+          <!-- end -->
         </div>
       </div>
     </div>
@@ -205,10 +209,14 @@
             label="text"
             trackBy="value"
             :allow-empty="false"
+            :searchable="false"
             :placeholder="$t('settings.listPlaceholder')"
           >
           </multiselect>
         </div>
+
+        <div class="input-wrapper"></div>
+
         <div class="input-wrapper" v-if="httpRelationMethod.value !== ''">
           <div class="input-label">
             <label>URL</label>
