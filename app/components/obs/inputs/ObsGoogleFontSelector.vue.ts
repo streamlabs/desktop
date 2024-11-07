@@ -51,12 +51,13 @@ export default class GoogleFontSelector extends ObsInput<IGoogleFont> {
 
   actualStyle: number = 0;
 
-  loading = true;
+  // Disambiguate from `loading` which it would conflict with prop being passed/inherited to this
+  isLoading = true;
 
   created() {
-    this.loading = true;
+    this.isLoading = true;
     this.fontLibraryService.getManifest().then(manifest => {
-      this.loading = false;
+      this.isLoading = false;
       this.fontFamilies = manifest.families.map(family => family.name);
 
       if (this.value.path) this.updateSelectionFromPath();
@@ -81,7 +82,7 @@ export default class GoogleFontSelector extends ObsInput<IGoogleFont> {
   }
 
   setFamily(familyName: string) {
-    this.loading = true;
+    this.isLoading = true;
     this.selectedFamily = familyName;
 
     this.fontLibraryService.findFamily(familyName).then(family => {
@@ -93,7 +94,7 @@ export default class GoogleFontSelector extends ObsInput<IGoogleFont> {
   }
 
   setStyle(styleName: string) {
-    this.loading = true;
+    this.isLoading = true;
     this.selectedStyle = styleName;
 
     this.fontLibraryService.findStyle(this.selectedFamily, styleName).then(style => {
@@ -114,7 +115,7 @@ export default class GoogleFontSelector extends ObsInput<IGoogleFont> {
         this.value.flags = this.actualStyle;
 
         this.emitInput({ ...this.value, path: fontPath });
-        this.loading = false;
+        this.isLoading = false;
       });
     });
   }
