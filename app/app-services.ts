@@ -2,74 +2,67 @@
  * All services must be registered in this file
  */
 
-// OFFLINE SERVICES
-export { AppService } from 'services/app';
-export { InternalApiService } from 'services/api/internal-api';
 export { ExternalApiService } from 'services/api/external-api';
-export { SourcesService, Source } from 'services/sources';
-export { Scene, SceneItem, SceneItemFolder, SceneItemNode, ScenesService } from 'services/scenes';
-export { ObsImporterService } from 'services/obs-importer';
-export { ClipboardService } from 'services/clipboard';
+export { InternalApiService } from 'services/api/internal-api';
+export { IpcServerService } from 'services/api/ipc-server';
+export { JsonrpcService } from 'services/api/jsonrpc';
+export { TcpServerService } from 'services/api/tcp-server';
+export { AppService } from 'services/app';
 export { AudioService, AudioSource } from 'services/audio';
+export { ClipboardService } from 'services/clipboard';
+export { CustomizationService } from 'services/customization';
+export { DismissablesService } from 'services/dismissables';
+export { FileManagerService } from 'services/file-manager';
+export { FontLibraryService } from 'services/font-library';
 export { HostsService } from 'services/hosts';
 export { Hotkey, HotkeysService } from 'services/hotkeys';
+export { I18nService } from 'services/i18n';
 export { KeyListenerService } from 'services/key-listener';
-export { ShortcutsService } from 'services/shortcuts';
-export { CustomizationService } from 'services/customization';
-export { NotificationsService } from 'services/notifications';
-export { OnboardingService } from 'services/onboarding';
 export { NavigationService } from 'services/navigation';
+export { NotificationsService } from 'services/notifications';
+export { NVoiceCharacterService } from 'services/nvoice-character';
+export { ObsImporterService } from 'services/obs-importer';
+export { OnboardingService } from 'services/onboarding';
 export { PerformanceService } from 'services/performance';
 export { PerformanceMonitorService } from 'services/performance-monitor';
-export { SettingsService, OutputSettingsService } from 'services/settings';
+export { ProjectorService } from 'services/projector';
+export { ProtocolLinksService } from 'services/protocol-links';
+export { SceneCollectionsService } from 'services/scene-collections';
+export { OverlaysPersistenceService } from 'services/scene-collections/overlays';
+export { SceneCollectionsStateService } from 'services/scene-collections/state';
+export { Scene, SceneItem, SceneItemFolder, SceneItemNode, ScenesService } from 'services/scenes';
+export { Selection, SelectionService } from 'services/selection';
+export { OutputSettingsService, SettingsService } from 'services/settings';
+export { ShortcutsService } from 'services/shortcuts';
+export { SourceFiltersService } from 'services/source-filters';
+export { Source, SourcesService } from 'services/sources';
+export { TransitionsService } from 'services/transitions';
+export { TroubleshooterService } from 'services/troubleshooter';
 export { VideoService } from 'services/video';
 export { WindowSizeService } from 'services/window-size';
 export { WindowsService } from 'services/windows';
-export { TransitionsService } from 'services/transitions';
-export { FontLibraryService } from 'services/font-library';
-export { SourceFiltersService } from 'services/source-filters';
-export { TcpServerService } from 'services/api/tcp-server';
-export { IpcServerService } from 'services/api/ipc-server';
-export { JsonrpcService } from 'services/api/jsonrpc';
-export { DismissablesService } from 'services/dismissables';
-export { SceneCollectionsService } from 'services/scene-collections';
-export { TroubleshooterService } from 'services/troubleshooter';
-export { Selection, SelectionService } from 'services/selection';
-export { OverlaysPersistenceService } from 'services/scene-collections/overlays';
-export { SceneCollectionsStateService } from 'services/scene-collections/state';
-export { FileManagerService } from 'services/file-manager';
-export { ProtocolLinksService } from 'services/protocol-links';
-export { ProjectorService } from 'services/projector';
-export { I18nService } from 'services/i18n';
-export { NVoiceCharacterService } from 'services/nvoice-character';
-
-// ONLINE SERVICES
-export { UserService } from './services/user';
 export { UsageStatisticsService } from './services/usage-statistics';
-
-// nicolive
+export { UserService } from './services/user';
 export { CompactModeService } from 'services/compact-mode';
-export { UuidService } from 'services/uuid';
-export { MonitorCaptureCroppingService } from 'services/sources/monitor-capture-cropping';
+export { CustomcastUsageService } from 'services/custom-cast-usage';
 export { InformationsService } from 'services/informations';
 export { InformationsStateService } from 'services/informations/state';
-export { NicoliveProgramService } from 'services/nicolive-program/nicolive-program';
-export { NicoliveProgramStateService } from 'services/nicolive-program/state';
-export { NicoliveProgramSelectorService } from 'services/nicolive-program/nicolive-program-selector';
-export { NicoliveCommentViewerService } from 'services/nicolive-program/nicolive-comment-viewer';
+export { KonomiTagsService } from 'services/nicolive-program/konomi-tags';
+export { NVoiceClientService } from 'services/nicolive-program/n-voice-client';
 export { NicoliveCommentFilterService } from 'services/nicolive-program/nicolive-comment-filter';
 export { NicoliveCommentLocalFilterService } from 'services/nicolive-program/nicolive-comment-local-filter';
 export { NicoliveCommentSynthesizerService } from 'services/nicolive-program/nicolive-comment-synthesizer';
+export { NicoliveCommentViewerService } from 'services/nicolive-program/nicolive-comment-viewer';
 export { NicoliveModeratorsService } from 'services/nicolive-program/nicolive-moderators';
+export { NicoliveProgramService } from 'services/nicolive-program/nicolive-program';
+export { NicoliveProgramSelectorService } from 'services/nicolive-program/nicolive-program-selector';
 export { NicoliveSupportersService } from 'services/nicolive-program/nicolive-supporters';
-export { NVoiceClientService } from 'services/nicolive-program/n-voice-client';
-export { KonomiTagsService } from 'services/nicolive-program/konomi-tags';
-export { CustomcastUsageService } from 'services/custom-cast-usage';
+export { NicoliveProgramStateService } from 'services/nicolive-program/state';
 export { RtvcStateService } from 'services/rtvcStateService';
-
-export { IncrementalRolloutService } from 'services/incremental-rollout';
+export { MonitorCaptureCroppingService } from 'services/sources/monitor-capture-cropping';
+export { UuidService } from 'services/uuid';
 export { CrashReporterService } from 'services/crash-reporter';
+export { IncrementalRolloutService } from 'services/incremental-rollout';
 export { PatchNotesService } from 'services/patch-notes';
 export { StreamingService } from 'services/streaming';
-
 export { VideoSettingsService } from 'services/settings-v2';
