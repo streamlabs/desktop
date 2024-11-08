@@ -95,8 +95,9 @@ export default class CommentSettings extends Vue {
   }
   get rateCandidates(): number[] {
     return [
-      0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.5, 1.75, 2, 3, 4, 5, 6, 7,
-      8, 9, 10,
+      //0.1, 0.2,
+      0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.5, 1.75, 2, 3,
+      // 4, 5, 6, 7, 8, 9, 10,
     ];
   }
   get rateDefault(): number {
@@ -140,21 +141,21 @@ export default class CommentSettings extends Vue {
   }
   set normal(s: SynthesizerItem) {
     this.nicoliveCommentSynthesizerService.normal = s.id;
-    this.checkAndReloadVoicevoxList();
+    this.startVoicevoxChecker();
   }
   get operator(): SynthesizerItem {
     return this.getSynthesizerItem(this.nicoliveCommentSynthesizerService.operator);
   }
   set operator(s: SynthesizerItem) {
     this.nicoliveCommentSynthesizerService.operator = s.id;
-    this.checkAndReloadVoicevoxList();
+    this.startVoicevoxChecker();
   }
   get system(): SynthesizerItem {
     return this.getSynthesizerItem(this.nicoliveCommentSynthesizerService.system);
   }
   set system(s: SynthesizerItem) {
     this.nicoliveCommentSynthesizerService.system = s.id;
-    this.checkAndReloadVoicevoxList();
+    this.startVoicevoxChecker();
   }
 
   isTestable(id: SynthesizerSelector) {
@@ -289,12 +290,10 @@ export default class CommentSettings extends Vue {
         this.nicoliveCommentSynthesizerService.voicevoxOperator.id,
       );
 
-      console.log(JSON.stringify(list));
       this.isLoadingVoicevox = false;
     } catch (e) {
       this.isExistVoicevox = false;
       this.isLoadingVoicevox = false;
-      console.log(e);
     }
   }
 
@@ -320,11 +319,7 @@ export default class CommentSettings extends Vue {
         if (id === undefined || !icon) continue;
         this.voicevoxIcons[id] = icon;
       }
-    } catch (e) {
-      console.log(e);
-    }
-
-    console.log(JSON.stringify(this.voicevoxIcons));
+    } catch (e) {}
 
     return this.voicevoxIcons[id] ?? '';
   }
@@ -342,14 +337,6 @@ export default class CommentSettings extends Vue {
     this.voicevoxChecker = undefined;
   }
 
-  checkAndReloadVoicevoxList() {
-    this.startVoicevoxChecker();
-  }
-
-  showVoicevoxPage() {
-    remote.shell.openExternal('https://github.com/n-air-app/n-air-app/wiki/http_relation');
-  }
-
   get voicevoxInformation(): boolean {
     return this.nicoliveProgramStateService.state.voicevoxInformation;
   }
@@ -360,5 +347,9 @@ export default class CommentSettings extends Vue {
 
   closeVoicevoxInformation() {
     this.voicevoxInformation = false;
+  }
+
+  showVoicevoxPage() {
+    remote.shell.openExternal('https://n-air-app.nicovideo.jp/');
   }
 }

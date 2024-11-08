@@ -9,14 +9,14 @@ import { ParaphraseDictionary } from './ParaphraseDictionary';
 import { PhonemeServer } from './PhonemeServer';
 import { ISpeechSynthesizer } from './speech/ISpeechSynthesizer';
 import { NVoiceSynthesizer } from './speech/NVoiceSynthesizer';
+import { VoicevoxSynthesizer } from './speech/VoicevoxSynthesizer';
 import { WebSpeechSynthesizer } from './speech/WebSpeechSynthesizer';
 import { NicoliveProgramStateService, SynthesizerId, SynthesizerSelector } from './state';
 import { WrappedMessage } from './WrappedChat';
-import { VoicevoxSynthesizer } from './speech/VoicevoxSynthesizer';
 
 export interface VoicevoxParam {
   id: string;
-  speed?: number;
+  //speed?: number;
 }
 
 export type Speech = {

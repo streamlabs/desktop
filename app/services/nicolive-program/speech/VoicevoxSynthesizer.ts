@@ -10,22 +10,16 @@ export class VoicevoxSynthesizer implements ISpeechSynthesizer {
 
   async output(speech: Speech) {
     try {
-      console.log('vox 1');
       const id = speech.voicevox?.id ?? '1';
-      // POSTなのに・・
+      // POSTだがqueryで
       const r1 = await fetch(
         `${VoicevoxURL}/audio_query?speaker=${id}&text=${encodeURIComponent(speech.text)}`,
         { method: 'POST' },
       );
 
       const r2 = await r1.json();
-      console.log('vox 2');
-      console.log(JSON.stringify(r2));
-      if (speech.voicevox?.speed) {
-        r2.speedScale = speech.voicevox.speed;
-        console.log(`speed ${speech.voicevox.speed}`);
-      }
-      // todo もしくはrateもってくる
+      r2.speedScale = speech.rate;
+      r2.volumeScale = speech.volume;
 
       const r3 = await fetch(`${VoicevoxURL}/synthesis?speaker=${id}`, {
         method: 'POST',
@@ -36,14 +30,11 @@ export class VoicevoxSynthesizer implements ISpeechSynthesizer {
       const r4 = await r3.blob();
       const url = URL.createObjectURL(r4);
 
-      console.log('vox 3');
-
       const audio = new Audio(url);
       await audio.play();
       URL.revokeObjectURL(url);
-      console.log('vox 4');
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
   }
 
