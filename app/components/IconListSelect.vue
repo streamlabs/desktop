@@ -6,6 +6,7 @@
     :searchable="false"
     :placeholder="$t('settings.listPlaceholder')"
     :disabled="disabled"
+    :loading="loading"
   >
     <template slot="singleLabel" slot-scope="p">
       <div class="voption">

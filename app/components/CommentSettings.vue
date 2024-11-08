@@ -110,7 +110,10 @@
           <button class="button" @click="closeVoicevoxInformation()">close</button>
         </div>
 
-        <div v-if="isUseVoicevox && !isExistVoicevox" style="width: 100%; background-color: brown">
+        <div
+          v-if="isUseVoicevox && !isExistVoicevox && !isLoadingVoicevox"
+          style="width: 100%; background-color: brown"
+        >
           voicevox error. please execute voicevox and reload.
           <button class="button" @click="reloadVoicevox">reload</button>
         </div>
@@ -124,9 +127,10 @@
               <IconListSelect
                 v-if="system.id == 'voicevox'"
                 style="flex: 1"
-                :disabled="!isExistVoicevox"
                 v-model="voicevoxSystemItem"
                 :options="voicevoxItems"
+                :disabled="!isExistVoicevox"
+                :loading="isLoadingVoicevox"
               />
               <button
                 :disabled="!isTestable(system.id)"
@@ -148,9 +152,10 @@
               <IconListSelect
                 v-if="normal.id == 'voicevox'"
                 style="flex: 1"
-                :disabled="!isExistVoicevox"
                 v-model="voicevoxNormalItem"
                 :options="voicevoxItems"
+                :disabled="!isExistVoicevox"
+                :loading="isLoadingVoicevox"
               />
               <button
                 :disabled="!isTestable(normal.id)"
@@ -173,9 +178,10 @@
               <IconListSelect
                 v-if="operator.id == 'voicevox'"
                 style="flex: 1"
-                :disabled="!isExistVoicevox"
                 v-model="voicevoxOperatorItem"
                 :options="voicevoxItems"
+                :disabled="!isExistVoicevox"
+                :loading="isLoadingVoicevox"
               />
               <button
                 :disabled="!isTestable(operator.id)"

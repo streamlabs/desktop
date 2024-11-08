@@ -17,6 +17,7 @@ export default class IconListSelect extends Vue {
   @Prop({ type: Object, default: null }) value: Item | null;
   @Prop({ type: Array, required: true }) options: Item[];
   @Prop({ type: Boolean, default: false }) disabled: boolean;
+  @Prop({ type: Boolean, default: false }) loading: boolean;
 
   get model(): Item | null {
     return this.value;

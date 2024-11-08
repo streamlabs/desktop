@@ -236,6 +236,7 @@ export default class CommentSettings extends Vue {
   // ---------------------------------------
 
   isExistVoicevox = false;
+  isLoadingVoicevox = true;
   voicevoxItems: VoicevoxItem[] = [];
   voicevoxNormalItem: VoicevoxItem = { id: '', name: '' };
   voicevoxSystemItem: VoicevoxItem = { id: '', name: '' };
@@ -291,8 +292,10 @@ export default class CommentSettings extends Vue {
       );
 
       console.log(JSON.stringify(list));
+      this.isLoadingVoicevox = false;
     } catch (e) {
       this.isExistVoicevox = false;
+      this.isLoadingVoicevox = false;
       console.log(e);
     }
   }
