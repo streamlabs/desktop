@@ -223,7 +223,7 @@ module.exports = function (env, argv) {
             test: /\.(png|jpe?g|gif|mp4|mp3|ico|wav|webm)(\?.*)?$/,
             loader: 'file-loader',
             options: {
-              name: '[name].[ext]',
+              name: '[name]-[hash].[ext]',
               outputPath: 'media/',
               publicPath: 'bundles/media/',
             },

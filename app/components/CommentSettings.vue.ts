@@ -49,10 +49,22 @@ export default class CommentSettings extends Vue {
   private nicoliveProgramStateService: NicoliveProgramStateService;
 
   synthesizers: SynthesizerItem[] = [
-    { id: 'webSpeech', name: 'Windowsの音声合成', icon: 'bundles/media/tsumugi.png' },
-    { id: 'nVoice', name: 'N Voice 琴読ニア', icon: 'bundles/media/near.png' },
-    { id: 'voicevox', name: 'VOICEVOX', icon: 'bundles/media/zundamon.png' },
-    { id: 'ignore', name: '読み上げない', icon: 'bundles/media/tsumugi.png' },
+    {
+      id: 'webSpeech',
+      name: 'Windowsの音声合成',
+      icon: require('../../media/images/listicon_windows.png'),
+    },
+    {
+      id: 'nVoice',
+      name: 'N Voice 琴読ニア',
+      icon: require('../../media/images/listicon_nvoice.png'),
+    },
+    { id: 'voicevox', name: 'VOICEVOX', icon: require('../../media/images/listicon_voicevox.png') },
+    {
+      id: 'ignore',
+      name: '読み上げない',
+      icon: require('../../media/images/listicon_none.png'),
+    },
   ];
 
   close() {
