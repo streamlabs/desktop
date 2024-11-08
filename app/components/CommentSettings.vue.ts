@@ -59,15 +59,18 @@ export default class CommentSettings extends Vue {
     this.$emit('close');
   }
 
+  mounted() {
+    this.startVoicevoxChecker();
+  }
+
+  beforeDestroy() {
+    this.stopVoicevoxChecker();
+  }
+
   async testSpeechPlay(synthId: SynthesizerSelector, type?: string) {
     const service = this.nicoliveCommentSynthesizerService;
     if (synthId === 'ignore') return;
     service.startTestSpeech('これは読み上げ設定のテスト音声です', synthId, type);
-  }
-
-  mounted() {
-    this.checkAndReloadVoicevoxList();
-    this.voicevoxInformation = this.nicoliveProgramStateService.state.voicevoxInformation;
   }
 
   get enabled(): boolean {
@@ -161,18 +164,6 @@ export default class CommentSettings extends Vue {
     return true;
   }
 
-  get isUseVoicevox(): boolean {
-    return (
-      this.nicoliveCommentSynthesizerService.normal === 'voicevox' ||
-      this.nicoliveCommentSynthesizerService.operator === 'voicevox' ||
-      this.nicoliveCommentSynthesizerService.system === 'voicevox'
-    );
-  }
-
-  checkAndReloadVoicevoxList() {
-    if (this.isUseVoicevox) this.readVoicevoxList();
-  }
-
   resetAssignment() {
     this.normal = this.getSynthesizerItem(
       NicoliveCommentSynthesizerService.initialState.selector.normal,
@@ -184,7 +175,6 @@ export default class CommentSettings extends Vue {
       NicoliveCommentSynthesizerService.initialState.selector.system,
     );
     this.voicevoxInformation = true; // for test
-    this.nicoliveProgramStateService.updateVoicevoxInformation(true); // for test
   }
 
   get showAnonymous() {
@@ -235,6 +225,7 @@ export default class CommentSettings extends Vue {
 
   // ---------------------------------------
 
+  voicevoxChecker?: number = undefined;
   isExistVoicevox = false;
   isLoadingVoicevox = true;
   voicevoxItems: VoicevoxItem[] = [];
@@ -243,7 +234,14 @@ export default class CommentSettings extends Vue {
   voicevoxOperatorItem: VoicevoxItem = { id: '', name: '' };
 
   voicevoxIcons: { [id: string]: string } = {};
-  voicevoxInformation = false;
+
+  get isUseVoicevox(): boolean {
+    return (
+      this.nicoliveCommentSynthesizerService.normal === 'voicevox' ||
+      this.nicoliveCommentSynthesizerService.operator === 'voicevox' ||
+      this.nicoliveCommentSynthesizerService.system === 'voicevox'
+    );
+  }
 
   @Watch('voicevoxNormalItem')
   onChangevoicevoxForNormal() {
@@ -331,16 +329,36 @@ export default class CommentSettings extends Vue {
     return this.voicevoxIcons[id] ?? '';
   }
 
+  startVoicevoxChecker() {
+    if (!this.isUseVoicevox || this.isExistVoicevox) return;
+    this.readVoicevoxList();
+    if (this.voicevoxChecker !== undefined) return;
+    this.voicevoxChecker = window.setInterval(() => this.readVoicevoxList(), 3000);
+  }
+
+  stopVoicevoxChecker() {
+    if (this.voicevoxChecker === undefined) return;
+    window.clearInterval(this.voicevoxChecker);
+    this.voicevoxChecker = undefined;
+  }
+
+  checkAndReloadVoicevoxList() {
+    this.startVoicevoxChecker();
+  }
+
   showVoicevoxPage() {
     remote.shell.openExternal('https://github.com/n-air-app/n-air-app/wiki/http_relation');
   }
 
-  closeVoicevoxInformation() {
-    this.voicevoxInformation = false;
-    this.nicoliveProgramStateService.updateVoicevoxInformation(false);
+  get voicevoxInformation(): boolean {
+    return this.nicoliveProgramStateService.state.voicevoxInformation;
   }
 
-  reloadVoicevox() {
-    this.readVoicevoxList();
+  set voicevoxInformation(a: boolean) {
+    this.nicoliveProgramStateService.updateVoicevoxInformation(a);
+  }
+
+  closeVoicevoxInformation() {
+    this.voicevoxInformation = false;
   }
 }

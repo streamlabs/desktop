@@ -25,6 +25,7 @@ export class VoicevoxSynthesizer implements ISpeechSynthesizer {
         r2.speedScale = speech.voicevox.speed;
         console.log(`speed ${speech.voicevox.speed}`);
       }
+      // todo もしくはrateもってくる
 
       const r3 = await fetch(`${VoicevoxURL}/synthesis?speaker=${id}`, {
         method: 'POST',

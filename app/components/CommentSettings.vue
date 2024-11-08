@@ -95,18 +95,12 @@
     <div class="section">
       <div class="input-label section-heading">
         <label>振り分け設定</label>
-        <button
-          class="button--text section-heading-button"
-          :disabled="!enabled"
-          @click="resetAssignment"
-        >
-          設定リセット
-        </button>
       </div>
       <div class="input-container">
         <div v-if="voicevoxInformation" style="width: 100%; background-color: gray">
-          voicevox information
-          <a @click="showVoicevoxPage()">help</a>
+          voicevox information N Air上でVOICEVOXの音声が選択できるようになりました<br />
+          VOICEVOXを起動して、好きなキャラクターに読み上げてもらおう<br />
+          <a @click="showVoicevoxPage()">VOICEVOXで音声を読み上げるには</a>
           <button class="button" @click="closeVoicevoxInformation()">close</button>
         </div>
 
@@ -114,8 +108,10 @@
           v-if="isUseVoicevox && !isExistVoicevox && !isLoadingVoicevox"
           style="width: 100%; background-color: brown"
         >
-          voicevox error. please execute voicevox and reload.
-          <button class="button" @click="reloadVoicevox">reload</button>
+          VOICEVOXを起動してください。<br />
+          <a @click="showVoicevoxPage()">VOICEVOXで音声を読み上げるには</a>
+
+          <button class="button" @click="readVoicevoxList">reload</button>
         </div>
 
         <div class="input-wrapper">
@@ -196,6 +192,7 @@
             </div>
           </div>
           <!-- end -->
+          <button class="button" :disabled="!enabled" @click="resetAssignment">設定リセット</button>
         </div>
       </div>
     </div>
