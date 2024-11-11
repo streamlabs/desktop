@@ -330,23 +330,32 @@ textarea {
   }
 }
 
-.multiselect__single {
+.multiselect__single,
+.multiselect__placeholder {
   position: absolute;
   top: 0;
-  height: 32px;
+  height: @item-generic-size;
   padding: 0 32px 0 8px;
   overflow: hidden;
-  font-size: 14px;
+  font-size: @font-size4;
   line-height: 32px;
-  color: var(--color-text);
 }
 
 .multiselect__input,
 .multiselect__single {
+  color: var(--color-text);
+
   &:hover,
   &:focus {
     border-color: var(--color-border-accent);
   }
+}
+
+.multiselect__placeholder {
+  margin-bottom: 0;
+  color: var(--color-text-dark);
+  cursor: pointer;
+  border-radius: 4px;
 }
 
 .multiselect__content-wrapper {
