@@ -85,10 +85,10 @@ export default class CommentSettings extends Vue {
     service.startTestSpeech('これは読み上げ設定のテスト音声です', synthId, type);
   }
 
-  get enabled(): boolean {
+  get synthesizerEnabled(): boolean {
     return this.nicoliveCommentSynthesizerService.enabled;
   }
-  set enabled(e: boolean) {
+  set synthesizerEnabled(e: boolean) {
     this.nicoliveCommentSynthesizerService.enabled = e;
   }
 
@@ -337,7 +337,11 @@ export default class CommentSettings extends Vue {
   }
 
   startVoicevoxChecker() {
-    if (!this.isUseVoicevox || this.isExistVoicevox) return;
+    if (!this.isUseVoicevox) {
+      this.stopVoicevoxChecker();
+      return;
+    }
+    if (this.isExistVoicevox) return;
     this.readVoicevoxList();
     if (this.voicevoxChecker !== undefined) return;
     this.voicevoxChecker = window.setInterval(() => this.readVoicevoxList(), 3000);
@@ -361,7 +365,7 @@ export default class CommentSettings extends Vue {
     this.voicevoxInformation = false;
   }
 
-  showVoicevoxPage() {
+  showVoicevoxInformation() {
     remote.shell.openExternal('https://n-air-app.nicovideo.jp/');
   }
 }
