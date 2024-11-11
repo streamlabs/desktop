@@ -24,7 +24,7 @@
           <div class="row">
             <div class="name">コメントを読み上げる</div>
             <div class="value">
-              <input type="checkbox" v-model="enabled" class="toggle-button" />
+              <input type="checkbox" v-model="synthesizerEnabled" class="toggle-button" />
             </div>
           </div>
         </div>
@@ -45,12 +45,12 @@
         </div>
       </div>
     </div>
-    <div class="section">
+    <div class="section" v-if="synthesizerEnabled">
       <div class="input-label section-heading">
         <label>音声設定</label>
         <button
           class="button--text section-heading-button"
-          :disabled="!enabled"
+          :disabled="!synthesizerEnabled"
           @click="resetVoice"
         >
           設定リセット
@@ -64,7 +64,7 @@
           </div>
           <VueSlider
             class="slider"
-            :disabled="!enabled"
+            :disabled="!synthesizerEnabled"
             :data="rateCandidates"
             :height="4"
             v-model="rate"
@@ -81,7 +81,7 @@
           </div>
           <VueSlider
             class="slider"
-            :disabled="!enabled"
+            :disabled="!synthesizerEnabled"
             :data="volumeCandidates"
             :height="4"
             :max="1"
@@ -92,100 +92,102 @@
         </div>
       </div>
     </div>
-    <div class="section">
+    <div class="section" v-if="synthesizerEnabled">
       <div class="input-label section-heading">
         <label>振り分け設定</label>
-        <button
-          class="button--text section-heading-button"
-          :disabled="!enabled"
-          @click="resetAssignment"
+      </div>
+      <div class="input-container">
+        <div v-if="voicevoxInformation" style="width: 100%; background-color: gray">
+          <div>voicevox information N Air上でVOICEVOXの音声が選択できるようになりました</div>
+          <div>VOICEVOXを起動して、好きなキャラクターに読み上げてもらおう</div>
+          <div>
+            <a @click="showVoicevoxInformation()">VOICEVOXで音声を読み上げるには</a>
+          </div>
+          <button class="button" @click="closeVoicevoxInformation()">close</button>
+        </div>
+
+        <div
+          v-if="isUseVoicevox && !isExistVoicevox && !isLoadingVoicevox"
+          style="width: 100%; background-color: brown"
         >
-          設定リセット
-        </button>
-      </div>
-      <div class="input-container">
-        <div class="input-wrapper voice">
-          <div class="row input-label">
-            <label for="system-select">システムメッセージ</label>
-            <button
-              class="button button--secondary"
-              :disabled="!enabled"
-              @click="testSpeechPlay(system)"
-            >
-              <i class="icon-speaker"></i>
-              読み上げテスト
-            </button>
-          </div>
-          <multiselect
-            class="voice"
-            id="system-select"
-            v-model="system"
-            :options="synthIds"
-            :allow-empty="false"
-            :custom-label="synthName"
-            :placeholder="$t('settings.listPlaceholder')"
-            :data-type="system"
-          >
-            <template slot="option" slot-scope="o">
-              {{ synthName(o.option) }}<span v-if="o.option == systemDefault">（既定）</span>
-            </template>
-          </multiselect>
+          <div>VOICEVOXを起動してください。</div>
+          <div><a @click="showVoicevoxInformation()">VOICEVOXで音声を読み上げるには</a></div>
+          <button class="button" @click="readVoicevoxList">reload</button>
         </div>
-      </div>
-      <div class="input-container">
-        <div class="input-wrapper voice">
-          <div class="row input-label">
-            <label for="normal-select">視聴者コメント</label>
-            <button
-              class="button button--secondary"
-              :disabled="!enabled"
-              @click="testSpeechPlay(normal)"
-            >
-              <i class="icon-speaker"></i>
-              読み上げテスト
-            </button>
+
+        <div class="input-wrapper">
+          <!-- system -->
+          <div style="padding-top: 16px">
+            <span :class="{ label_error: system.id == 'voicevox' && !isExistVoicevox }">
+              システムメッセージ
+            </span>
+            <div style="display: flex; gap: 8px; align-items: center">
+              <IconListSelect style="flex: 1" v-model="system" :options="synthesizers" />
+              <IconListSelect
+                v-if="system.id == 'voicevox'"
+                style="flex: 1"
+                v-model="voicevoxSystemItem"
+                :options="voicevoxItems"
+                :disabled="!isExistVoicevox"
+              />
+              <button
+                :disabled="!isTestable(system.id)"
+                class="button button--secondary"
+                @click="testSpeechPlay(system.id, 'system')"
+              >
+                <i class="icon-speaker"></i>
+              </button>
+            </div>
           </div>
-          <multiselect
-            id="normal-select"
-            v-model="normal"
-            :options="synthIds"
-            :allow-empty="false"
-            :custom-label="synthName"
-            :placeholder="$t('settings.listPlaceholder')"
-            :data-type="normal"
-          >
-            <template slot="option" slot-scope="o">
-              {{ synthName(o.option) }}<span v-if="o.option == normalDefault">（既定）</span>
-            </template>
-          </multiselect>
-        </div>
-      </div>
-      <div class="input-container">
-        <div class="input-wrapper voice">
-          <div class="row input-label">
-            <label for="operator-select">放送者コメント</label>
-            <button
-              class="button button--secondary"
-              :disabled="!enabled"
-              @click="testSpeechPlay(operator)"
-            >
-              <i class="icon-speaker"></i>
-              読み上げテスト
-            </button>
+          <!--normal -->
+          <div style="padding-top: 16px">
+            <span :class="{ label_error: normal.id == 'voicevox' && !isExistVoicevox }">
+              視聴者コメント
+            </span>
+            <div style="display: flex; gap: 8px; align-items: center">
+              <IconListSelect style="flex: 1" v-model="normal" :options="synthesizers" />
+              <IconListSelect
+                v-if="normal.id == 'voicevox'"
+                style="flex: 1"
+                v-model="voicevoxNormalItem"
+                :options="voicevoxItems"
+                :disabled="!isExistVoicevox"
+              />
+              <button
+                :disabled="!isTestable(normal.id)"
+                class="button button--secondary"
+                @click="testSpeechPlay(normal.id, 'normal')"
+              >
+                <i class="icon-speaker"></i>
+              </button>
+            </div>
           </div>
-          <multiselect
-            id="operator-select"
-            v-model="operator"
-            :options="synthIds"
-            :allow-empty="false"
-            :custom-label="synthName"
-            :placeholder="$t('settings.listPlaceholder')"
-            :data-type="operator"
-          >
-            <template slot="option" slot-scope="o">
-              {{ synthName(o.option) }}<span v-if="o.option == operatorDefault">（既定）</span>
-            </template>
-          </multiselect>
+
+          <!-- operator -->
+          <div style="padding-top: 16px">
+            <span :class="{ label_error: operator.id == 'voicevox' && !isExistVoicevox }">
+              放送者コメント
+            </span>
+            <div style="display: flex; gap: 8px; align-items: center">
+              <IconListSelect style="flex: 1" v-model="operator" :options="synthesizers" />
+              <IconListSelect
+                v-if="operator.id == 'voicevox'"
+                style="flex: 1"
+                v-model="voicevoxOperatorItem"
+                :options="voicevoxItems"
+                :disabled="!isExistVoicevox"
+              />
+              <button
+                :disabled="!isTestable(operator.id)"
+                class="button button--secondary"
+                @click="testSpeechPlay(operator.id, 'operator')"
+              >
+                <i class="icon-speaker"></i>
+              </button>
+            </div>
+          </div>
+          <!-- end -->
+          <button class="button" @click="resetAssignment">設定リセット</button>
         </div>
       </div>
     </div>
@@ -205,10 +207,14 @@
             label="text"
             trackBy="value"
             :allow-empty="false"
+            :searchable="false"
             :placeholder="$t('settings.listPlaceholder')"
           >
           </multiselect>
         </div>
+
+        <div class="input-wrapper"></div>
+
         <div class="input-wrapper" v-if="httpRelationMethod.value !== ''">
           <div class="input-label">
             <label>URL</label>
@@ -294,76 +300,7 @@
   }
 }
 
-.voice {
-  .multiselect {
-    height: 64px;
-    margin-bottom: 8px;
-  }
-
-  & /deep/ .multiselect__tags {
-    position: relative;
-    height: 100%;
-    overflow: hidden;
-    box-shadow: inset 0 0 0 1px var(--color-border-light);
-  }
-
-  & /deep/ [data-type='webSpeech'] .multiselect__tags {
-    background: url('../../media/images/windows_bg.png') center no-repeat;
-    background-size: 100% auto;
-  }
-
-  & /deep/ [data-type='nVoice'] .multiselect__tags {
-    background: url('../../media/images/nvoice_bg.png') center no-repeat;
-    background-size: 100% auto;
-
-    &::after {
-      position: absolute;
-      top: -64px;
-      right: -37px;
-      width: 414px;
-      height: 415px;
-      content: '';
-      background: url('../../media/images/nvoice.png') center no-repeat;
-      filter: drop-shadow(4px 4px 12px rgb(@black 0.3));
-      background-size: 100% auto;
-      opacity: 0.9;
-    }
-  }
-
-  & /deep/ .multiselect__select {
-    line-height: 64px;
-
-    &::before {
-      right: 16px;
-      color: var(--color-text-light);
-    }
-  }
-
-  & /deep/ .multiselect__input {
-    height: 64px;
-    padding: 0 16px !important;
-    text-shadow: 0 0 4px rgb(@black 0.25);
-    background: transparent;
-    border: none;
-
-    &:hover {
-      border-color: var(--color-border-light);
-    }
-
-    &:focus {
-      background: var(--color-input-bg);
-    }
-  }
-
-  & /deep/ .multiselect__single {
-    height: 64px;
-    padding: 0 16px;
-    line-height: 64px;
-    color: var(--color-text-light);
-  }
-
-  & /deep/ .multiselect__content {
-    top: 8px;
-  }
+.label_error {
+  color: var(--color-error);
 }
 </style>

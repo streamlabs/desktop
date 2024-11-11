@@ -2,7 +2,7 @@ import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { PersistentStatefulService } from 'services/core/persistent-stateful-service';
 import { mutation } from '../core/stateful-service';
 
-export const SynthesizerIds = ['webSpeech', 'nVoice'] as const;
+export const SynthesizerIds = ['webSpeech', 'nVoice', 'voicevox'] as const;
 export type SynthesizerId = (typeof SynthesizerIds)[number];
 export const SynthesizerSelectors = [...SynthesizerIds, 'ignore'] as const;
 export type SynthesizerSelector = (typeof SynthesizerSelectors)[number];
@@ -38,6 +38,7 @@ export interface IState {
   nameplateHint?: NameplateHintState;
   nameplateEnabled: boolean;
   httpRelation: HttpRelationState;
+  voicevoxInformation: boolean;
 }
 
 /**
@@ -49,6 +50,7 @@ export class NicoliveProgramStateService extends PersistentStatefulService<IStat
     panelOpened: true,
     nameplateEnabled: true,
     httpRelation: { method: '', url: '', body: '' },
+    voicevoxInformation: false,
   };
 
   private subject: Subject<IState> = new BehaviorSubject<IState>(this.state);
@@ -77,6 +79,10 @@ export class NicoliveProgramStateService extends PersistentStatefulService<IStat
   updateHttpRelation(a: Partial<HttpRelationState>) {
     const ra = { ...this.state.httpRelation, ...a };
     this.setState({ httpRelation: ra });
+  }
+
+  updateVoicevoxInformation(voicevoxInformation: boolean) {
+    this.setState({ voicevoxInformation });
   }
 
   private setState(nextState: Partial<IState>): void {
