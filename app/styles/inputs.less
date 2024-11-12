@@ -6,6 +6,7 @@ textarea {
   margin-bottom: 0;
   font-size: @font-size4;
   color: var(--color-text);
+  cursor: pointer;
   background: var(--color-input-bg);
   border: 1px solid var(--color-border-light);
   border-radius: 4px;
@@ -266,8 +267,19 @@ textarea {
 }
 
 .multiselect {
+  position: relative;
   width: 100%;
   min-height: @item-generic-size;
+  cursor: pointer;
+  background: var(--color-input-bg);
+  border: 1px solid var(--color-border-light);
+  .radius;
+  .transition;
+
+  &:hover,
+  &:focus {
+    border-color: var(--color-border-accent);
+  }
 }
 
 .multiselect__select {
@@ -297,20 +309,53 @@ textarea {
   padding: 0;
   border: none;
   .radius;
+}
 
-  input[type='text'] {
-    width: 100%;
-    padding-right: 32px;
-    cursor: pointer;
+.multiselect__input {
+  position: static !important;
+  width: 100% !important;
+  padding: 0 32px 0 8px !important;
+  background-color: transparent !important;
+  border: none !important;
+
+  &::placeholder {
+    color: transparent !important;
   }
+
+  .multiselect--active &,
+  .multiselect__tags:has(.multiselect__single:empty) & {
+    &::placeholder {
+      color: var(--color-text-dark) !important;
+    }
+  }
+}
+
+.multiselect__single,
+.multiselect__placeholder {
+  position: absolute;
+  top: 0;
+  height: @item-generic-size;
+  padding: 0 32px 0 8px;
+  overflow: hidden;
+  font-size: @font-size4;
+  line-height: 32px;
 }
 
 .multiselect__input,
 .multiselect__single {
+  color: var(--color-text);
+
   &:hover,
   &:focus {
     border-color: var(--color-border-accent);
   }
+}
+
+.multiselect__placeholder {
+  margin-bottom: 0;
+  color: var(--color-text-dark);
+  cursor: pointer;
+  border-radius: 4px;
 }
 
 .multiselect__content-wrapper {
