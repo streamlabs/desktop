@@ -14,6 +14,7 @@
             :options="fontFamilies"
             :disabled="isLoading"
             @input="setFamily"
+            :searchable="true"
           >
           </multiselect>
         </div>
