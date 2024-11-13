@@ -32,6 +32,7 @@
             :allow-empty="false"
             :disabled="isLoading"
             @input="setStyle"
+            :searchable="false"
           >
           </multiselect>
           <template slot="noResult">

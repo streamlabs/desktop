@@ -10,6 +10,7 @@
       label="description"
       :allow-empty="options.allowEmpty"
       @input="onInputHandler"
+      :searchable="false"
     >
     </multiselect>
     <div v-if="selectedOption && selectedOption.description" class="description">

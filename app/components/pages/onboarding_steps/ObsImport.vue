@@ -21,6 +21,7 @@
             :options="profiles"
             :allow-empty="false"
             :show-labels="false"
+            :searchable="false"
           >
           </multiselect>
         </div>
@@ -65,6 +66,7 @@ label {
   display: flex;
   flex-direction: column;
   flex-wrap: wrap;
+  gap: 16px;
   align-items: center;
   justify-content: center;
 }

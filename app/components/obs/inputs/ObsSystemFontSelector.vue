@@ -40,6 +40,7 @@
           track-by="style"
           label="style"
           @input="setStyle"
+          :searchable="false"
         >
           <template slot="option" slot-scope="props">
             <span :style="styleForFont(props.option)">
