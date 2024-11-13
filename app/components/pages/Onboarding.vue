@@ -58,8 +58,8 @@
 
 .onboarding-title {
   font-size: 22px;
-  color: @text-primary;
-  .margin-bottom(3);
+  color: var(--color-text-light);
+  .margin-bottom(2);
 }
 
 .onboarding-title--sm {

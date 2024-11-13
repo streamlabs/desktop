@@ -335,6 +335,7 @@ textarea {
 .multiselect__placeholder {
   position: absolute;
   top: 0;
+  left: 0;
   height: @item-generic-size;
   padding: 0 32px 0 8px;
   overflow: hidden;
@@ -350,10 +351,6 @@ textarea {
   &:focus {
     border-color: var(--color-border-accent);
   }
-}
-
-.multiselect__single {
-  padding: 0 8px;
 }
 
 .multiselect__placeholder {
@@ -395,7 +392,9 @@ textarea {
   min-height: 0;
   padding: 0 8px;
   line-height: @item-generic-size;
+  text-align: left;
   cursor: pointer;
+
   .transition;
 
   &::after {
