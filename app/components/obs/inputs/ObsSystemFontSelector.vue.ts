@@ -2,7 +2,7 @@ import fontManager from 'font-manager';
 import _ from 'lodash';
 import { EFontStyle } from 'obs-studio-node';
 import { Multiselect } from 'vue-multiselect';
-import { Component, Prop, Watch } from 'vue-property-decorator';
+import { Component, Prop } from 'vue-property-decorator';
 import ObsFontSizeSelector from './ObsFontSizeSelector.vue';
 import { IObsFont, IObsInput, ObsInput } from './ObsInput';
 
@@ -124,37 +124,6 @@ export default class ObsSystemFontSelector extends ObsInput<IObsInput<IObsFont>>
     if (fontObj.flags === void 0) fontObj.flags = this.getFlagsFromFont(this.$refs.font.value);
 
     this.emitInput({ ...this.value, value: fontObj });
-  }
-
-  restyleSelects() {
-    this.restyleSelect(this.$refs.family);
-    this.restyleSelect(this.$refs.font);
-  }
-
-  // This is a hack to make the vue-multiselect components
-  // show the currently selected value in the appropriate font
-  restyleSelect(select: any) {
-    if (!this.selectedFont) return;
-
-    const input = select.$refs.search;
-    input.style['font-family'] = this.selectedFont.family;
-
-    if (this.selectedFont.italic) {
-      input.style['font-style'] = 'italic';
-    } else {
-      input.style['font-style'] = 'normal';
-    }
-
-    input.style['font-weight'] = this.selectedFont.weight;
-  }
-
-  mounted() {
-    this.restyleSelects();
-  }
-
-  @Watch('selectedFont')
-  selectedFontChangeHandler() {
-    this.restyleSelects();
   }
 
   get selectedFamily() {

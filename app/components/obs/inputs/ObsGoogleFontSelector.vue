@@ -14,6 +14,7 @@
             :options="fontFamilies"
             :disabled="isLoading"
             @input="setFamily"
+            :searchable="true"
           >
           </multiselect>
         </div>
@@ -32,6 +33,7 @@
             :allow-empty="false"
             :disabled="isLoading"
             @input="setStyle"
+            :searchable="false"
           >
           </multiselect>
           <template slot="noResult">

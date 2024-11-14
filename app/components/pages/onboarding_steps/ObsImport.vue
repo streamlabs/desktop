@@ -4,14 +4,16 @@
       <div class="onboarding-title">{{ title }}</div>
       <div class="onboarding-desc">{{ description }}</div>
       <div v-if="status === 'done'">
-        <button class="button button--action button--lg" @click="next">
+        <button class="button button--primary" @click="next">
           {{ $t('common.continue') }}
         </button>
       </div>
       <div v-if="status === 'importing'">
         <i class="importing-spinner icon-spinner icon-spin" />
       </div>
-      <NAirObsLogo />
+      <div v-if="status !== 'done'">
+        <NAirObsLogo />
+      </div>
       <div class="obs-import-contents" v-if="status === 'initial'">
         <div v-if="profiles.length > 1">
           <span class="profile-select__title">{{ $t('onboarding.selectObsProfile') }}</span>
@@ -21,15 +23,18 @@
             :options="profiles"
             :allow-empty="false"
             :show-labels="false"
+            :searchable="false"
           >
           </multiselect>
         </div>
-        <button class="button button--niconico" @click="startImport" data-test="Import">
-          {{ $t('onboarding.importFromObs') }}
-        </button>
-        <button class="button button--skip" @click="startFresh" data-test="Skip">
-          {{ $t('onboarding.skipImport') }}
-        </button>
+        <div class="button-wrapper">
+          <button class="button button--primary" @click="startImport" data-test="Import">
+            {{ $t('onboarding.importFromObs') }}
+          </button>
+          <button class="link link--skip" @click="startFresh" data-test="Skip">
+            {{ $t('onboarding.skipImport') }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -54,7 +59,7 @@ label {
 
 .profile-select__title {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
 }
 
 .importing-spinner {
@@ -65,22 +70,36 @@ label {
   display: flex;
   flex-direction: column;
   flex-wrap: wrap;
+  gap: 32px;
   align-items: center;
   justify-content: center;
+  margin-top: 24px;
 }
 
 .import-obs-image {
   width: 512px;
-  margin: 20px 0;
-}
-
-button {
-  width: 256px;
-  margin-bottom: 24px;
+  margin: 16px 0;
 }
 
 .icon-spin {
   animation: icon-spin 2s infinite linear;
+}
+
+.button-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: center;
+}
+
+.button {
+  min-width: 188px;
+  height: 40px;
+}
+
+// スキップリンク
+.link--skip {
+  text-decoration: underline;
 }
 
 @keyframes icon-spin {
