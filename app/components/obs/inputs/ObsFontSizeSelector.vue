@@ -11,6 +11,7 @@
         :close-on-select="true"
         :allow-empty="false"
         @input="setFontSizePreset"
+        :searchable="false"
       >
         <template slot="option" slot-scope="props">
           <span>

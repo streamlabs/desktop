@@ -22,6 +22,7 @@
         label="description"
         @input="onInputHandler"
         @search-change="onSearchChange"
+        :searchable="false"
       >
         <template slot="option" slot-scope="props">
           <span :data-test="`${props.option.value}`">

@@ -14,6 +14,7 @@
           track-by="family"
           label="family"
           @input="setFamily"
+          :searchable="true"
         >
           <template slot="option" slot-scope="props">
             <span :style="{ fontFamily: props.option.family }">
@@ -40,6 +41,7 @@
           track-by="style"
           label="style"
           @input="setStyle"
+          :searchable="false"
         >
           <template slot="option" slot-scope="props">
             <span :style="styleForFont(props.option)">

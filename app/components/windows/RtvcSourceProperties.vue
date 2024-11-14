@@ -246,6 +246,7 @@
                   trackBy="value"
                   :allow-empty="false"
                   :placeholder="$t('settings.listPlaceholder')"
+                  :searchable="false"
                 />
               </div>
               <div class="input-wrapper">
@@ -259,6 +260,7 @@
                   trackBy="value"
                   :allow-empty="false"
                   :placeholder="$t('settings.listPlaceholder')"
+                  :searchable="false"
                 />
               </div>
 
@@ -297,6 +299,7 @@
                 trackBy="value"
                 :allow-empty="false"
                 :placeholder="$t('settings.listPlaceholder')"
+                :searchable="false"
               />
             </div>
           </div>
@@ -319,6 +322,7 @@
                 trackBy="value"
                 :allow-empty="false"
                 :placeholder="$t('settings.listPlaceholder')"
+                :searchable="false"
               />
             </div>
           </div>
