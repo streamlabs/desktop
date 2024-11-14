@@ -152,10 +152,4 @@ export default class ObsSystemFontSelector extends ObsInput<IObsInput<IObsFont>>
       'family',
     );
   }
-
-  // リストに可読できないフォントでのスタイル設定をノーマライズする。可読判断はつかないのである程度で
-  readbleFamily(a: string): string {
-    if (['Webdings', 'Wingdings', 'Marlett'].includes(a)) return 'Arial';
-    return a;
-  }
 }

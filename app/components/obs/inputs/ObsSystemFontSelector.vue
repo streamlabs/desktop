@@ -17,7 +17,7 @@
           :searchable="true"
         >
           <template slot="option" slot-scope="props">
-            <span :style="{ fontFamily: readbleFamily(props.option.family) }">
+            <span :style="{ fontFamily: props.option.family }">
               {{ props.option.family }}
             </span>
           </template>
