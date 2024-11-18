@@ -50,6 +50,55 @@ LangString failed_download 1041 "警告: Microsoft から最新の Visual C++ �
   !insertMacro registerProtocol "n-air-app"
 !macroend
 
+!include "MUI2.nsh"
+!include "nsDialogs.nsh"
+
+Var Dialog
+Var CheckBox
+var /GLOBAL CheckBoxState
+
+!macro customUninstallPage
+  UninstPage custom un.removeAppDataPage un.removeAppDataPageLeave
+
+  Function un.removeAppDataPage
+    nsDialogs::Create 1018
+    Pop $Dialog
+
+    ; 既にアンインストールは完了してしまっているためキャンセルボタンは無効化する
+    GetDlgItem $0 $HWNDPARENT 2
+    EnableWindow $0 0
+
+    ${NSD_CreateCheckbox} 10u 50u 200u 12u "アプリデータを削除する"
+    Pop $CheckBox
+    ${NSD_SetState} $CheckBox 0
+    ${If} $CheckBoxState == ${BST_CHECKED}
+      ${NSD_SetState} $CheckBox ${BST_CHECKED}
+    ${EndIf}
+
+    nsDialogs::Show
+  FunctionEnd
+
+  Function un.removeAppDataPageLeave
+    ${NSD_GetState} $CheckBox $CheckBoxState
+    ${If} $CheckBoxState == ${BST_CHECKED}
+        ; change APPDATA ProgramData to Roming
+        SetShellVarContext current
+        ; RMDir /r "$APPDATA\${APP_PACKAGE_NAME}"
+        ; DEBUG
+        MessageBox MB_OK "RMDir /r $APPDATA\${APP_PACKAGE_NAME}"
+    ${EndIf}
+  FunctionEnd
+
+  ; MUI_UNPAGE_FINISHの戻るボタンを無効化する
+  !define MUI_PAGE_CUSTOMFUNCTION_SHOW un.disableBack
+  Function un.disableBack
+    Push $0
+    GetDlgItem $0 $HWNDPARENT 3
+    EnableWindow $0 0
+    Pop $0
+  FunctionEnd
+!macroend
+
 !macro customUninstall
   !insertMacro unregisterProtocol "n-air-app"
 !macroend
