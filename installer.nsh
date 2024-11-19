@@ -55,6 +55,7 @@ LangString failed_download 1041 "警告: Microsoft から最新の Visual C++ �
 
 Var Dialog
 Var CheckBox
+Var Label
 var /GLOBAL CheckBoxState
 
 !macro customUninstallPage
@@ -76,6 +77,7 @@ var /GLOBAL CheckBoxState
     ${EndIf}
 
     ${NSD_CreateLabel} 20u 54u 190u 36u "N Air上で設定したデータを完全に削除します。$\nアプリが起動できなくなってしまった場合は、アプリデータの削除をした上で再インストールをお試しください。"
+    Pop $Label
 
     nsDialogs::Show
   FunctionEnd
