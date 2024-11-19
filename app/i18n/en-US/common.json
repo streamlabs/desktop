@@ -71,6 +71,8 @@
   },
   "loginHelpTipTitle": "Login",
   "loginHelpTipContent": "Click here to log in to niconico",
+  "endStreamHelpTipTitle": "番組は放送中です(要翻訳)",
+  "endStreamHelpTipContent": "配信を開始するか、番組を終了する場合は番組終了ボタンを押してください(要翻訳)",
   "fieldIsRequired": "The field is required",
   "fieldMustBeLarger": "The field value must be %{value} or larger",
   "fieldMustBeLess": "The field value must be %{value} or less",

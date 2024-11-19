@@ -7,6 +7,7 @@ export enum EDismissable {
   SceneCollectionsHelpTip = 'scene_collections_help_tip',
   ScenePresetHelpTip = 'scene_preset_help_tip',
   LoginHelpTip = 'login_help_tip',
+  EndStreamHelpTip = 'end_stream_help_tip',
 }
 
 const InitiallyDismissed = new Set<EDismissable>([EDismissable.ScenePresetHelpTip]);

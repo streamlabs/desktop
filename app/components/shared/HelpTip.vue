@@ -35,6 +35,11 @@
     bottom: 2px;
     left: 44px;
   }
+
+  &[data-mode='streaming'] {
+    top: -100px;
+    right: 0;
+  }
 }
 
 .help-tip__arrow {

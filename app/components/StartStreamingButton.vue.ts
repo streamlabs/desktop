@@ -8,10 +8,14 @@ import Vue from 'vue';
 import { Component, Prop, Watch } from 'vue-property-decorator';
 import StartStreamingIcon from '../../media/images/start-streaming-icon.svg';
 import { WindowsService } from '../services/windows';
+import { EDismissable } from 'services/dismissables';
+import { NicoliveProgramService } from 'services/nicolive-program/nicolive-program';
+import HelpTip from './shared/HelpTip.vue';
 
 @Component({
   components: {
     StartStreamingIcon,
+    HelpTip,
   },
 })
 export default class StartStreamingButton extends Vue {
@@ -20,6 +24,7 @@ export default class StartStreamingButton extends Vue {
   @Inject() settingsService: SettingsService;
   @Inject() windowsService: WindowsService;
   @Inject() compactModeService: CompactModeService;
+  @Inject() nicoliveProgramService: NicoliveProgramService;
 
   @Prop() disabled: boolean;
 
@@ -106,4 +111,20 @@ export default class StartStreamingButton extends Vue {
 
   goLiveTooltip = $t('streaming.goLiveTooltip');
   endStreamTooltip = $t('streaming.endStreamTooltip');
+
+  get endStreamHelpTipDismissable() {
+    return EDismissable.EndStreamHelpTip;
+  }
+  get showEndStreamHelpTip(): boolean {
+    if (this.streamingStatus === EStreamingState.Offline) {
+      // ニコ生番組が放送中で、配信は停止している
+      if (
+        this.nicoliveProgramService.state.status === 'onAir' ||
+        this.nicoliveProgramService.state.status === 'test'
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

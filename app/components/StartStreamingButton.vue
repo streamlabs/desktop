@@ -1,17 +1,31 @@
 <template>
-  <button
-    class="button button--go-live"
-    :class="{ 'button--soft-warning': isStreaming, 'is-compactMode': isCompactMode }"
-    :disabled="isDisabled"
-    @click="toggleStreaming"
-    v-tooltip.left="isStreaming ? endStreamTooltip : goLiveTooltip"
-    data-test="StartStreamingButton"
-    :data-test-status="streamingStatus"
-  >
-    <StartStreamingIcon v-if="isStreaming" />
-    <i v-if="!isStreaming" class="icon-live" />
-    <span class="button-label" v-if="!isCompactMode">{{ getStreamButtonLabel() }}</span>
-  </button>
+  <div>
+    <button
+      class="button button--go-live"
+      :class="{ 'button--soft-warning': isStreaming, 'is-compactMode': isCompactMode }"
+      :disabled="isDisabled"
+      @click="toggleStreaming"
+      v-tooltip.left="isStreaming ? endStreamTooltip : goLiveTooltip"
+      data-test="StartStreamingButton"
+      :data-test-status="streamingStatus"
+    >
+      <StartStreamingIcon v-if="isStreaming" />
+      <i v-if="!isStreaming" class="icon-live" />
+      <span class="button-label" v-if="!isCompactMode">{{ getStreamButtonLabel() }}</span>
+      <help-tip
+        :dismissable-key="endStreamHelpTipDismissable"
+        mode="streaming"
+        v-if="showEndStreamHelpTip"
+      >
+        <div slot="title">
+          {{ $t('common.endStreamHelpTipTitle') }}
+        </div>
+        <div slot="content">
+          {{ $t('common.endStreamHelpTipContent') }}
+        </div>
+      </help-tip>
+    </button>
+  </div>
 </template>
 
 <script lang="ts" src="./StartStreamingButton.vue.ts"></script>
@@ -43,5 +57,9 @@
   height: 18px;
   vertical-align: middle;
   fill: var(--color-text-light);
+}
+
+.help_tip_content {
+  position: relative;
 }
 </style>

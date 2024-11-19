@@ -71,6 +71,8 @@
   },
   "loginHelpTipTitle": "ログイン",
   "loginHelpTipContent": "ニコニコへのログインはこちら",
+  "endStreamHelpTipTitle": "番組は放送中です",
+  "endStreamHelpTipContent": "配信を開始するか、番組を終了する場合は番組終了ボタンを押してください",
   "fieldIsRequired": "このフィールドは必須です",
   "fieldMustBeLarger": "%{value} 以上を指定してください",
   "fieldMustBeLess": "%{value} 以上を指定してください",
