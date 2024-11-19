@@ -83,9 +83,7 @@ var /GLOBAL CheckBoxState
     ${If} $CheckBoxState == ${BST_CHECKED}
         ; change APPDATA ProgramData to Roming
         SetShellVarContext current
-        ; RMDir /r "$APPDATA\${APP_PACKAGE_NAME}"
-        ; DEBUG
-        MessageBox MB_OK "RMDir /r $APPDATA\${APP_PACKAGE_NAME}"
+        RMDir /r "$APPDATA\${APP_PACKAGE_NAME}"
     ${EndIf}
   FunctionEnd
 
