@@ -68,12 +68,14 @@ var /GLOBAL CheckBoxState
     GetDlgItem $0 $HWNDPARENT 2
     EnableWindow $0 0
 
-    ${NSD_CreateCheckbox} 10u 50u 200u 12u "アプリデータを削除する"
+    ${NSD_CreateCheckbox} 10u 40u 200u 12u "アプリデータを削除する"
     Pop $CheckBox
     ${NSD_SetState} $CheckBox 0
     ${If} $CheckBoxState == ${BST_CHECKED}
       ${NSD_SetState} $CheckBox ${BST_CHECKED}
     ${EndIf}
+
+    ${NSD_CreateLabel} 20u 54u 190u 36u "N Air上で設定したデータを完全に削除します。$\nアプリが起動できなくなってしまった場合は、アプリデータの削除をした上で再インストールをお試しください。"
 
     nsDialogs::Show
   FunctionEnd
