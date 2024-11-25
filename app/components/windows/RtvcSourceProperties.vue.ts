@@ -4,7 +4,6 @@ import { Inject } from 'services/core/injector';
 import { $t } from 'services/i18n';
 import {
   PitchShiftModeValue,
-  PresetValues,
   RtvcStateService,
   SourcePropKey,
   StateParam,
@@ -79,15 +78,15 @@ export default class RtvcSourceProperties extends SourceProperties {
   audio = new Audio();
 
   get presetList() {
-    return PresetValues.map(a => ({ value: a.index, name: a.name, label: a.label }));
+    return this.rtvcStateService.getPresets();
   }
 
-  manualList: { value: string; name: string; label: string }[] = [];
+  manualList: { index: string; name: string; label: string }[] = [];
 
   updateManualList() {
     // add,delに反応しないのでコード側から変更指示
     this.manualList = this.state.manuals.map((a, idx) => ({
-      value: `manual/${idx}`,
+      index: `manual/${idx}`,
       name: a.name,
       label: `manual${idx}`,
     }));
@@ -270,6 +269,9 @@ export default class RtvcSourceProperties extends SourceProperties {
       (this.state.manuals[p.idx] as any)[key] = value;
       return;
     }
+
+    // preset用のkey判断
+    if (!['pitchShift', 'pitchShiftSong'].includes(key)) return;
     (this.state.presets[p.idx] as any)[key] = value;
   }
 
@@ -312,7 +314,6 @@ export default class RtvcSourceProperties extends SourceProperties {
   created() {
     // SourceProperties.mountedで取得するが、リストなど間に合わないので先にこれだけ。該当ソースの各パラメタはpropertiesを見れば分かる
     this.properties = this.source ? this.source.getPropertiesFormData() : [];
-
     const audio = this.audioService.getSource(this.sourceId);
     if (audio) {
       const m = audio.monitoringType;

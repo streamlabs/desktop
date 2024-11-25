@@ -603,8 +603,10 @@ export class SourcesService extends StatefulService<ISourcesState> implements IS
       },
     };
 
-    if (source.type === 'nair-rtvc-source') config.componentName = 'RtvcSourceProperties';
-
+    if (source.type === 'nair-rtvc-source') {
+      config.componentName = 'RtvcSourceProperties';
+      config.size.height = 820;
+    }
     this.windowsService.showWindow(config);
   }
 

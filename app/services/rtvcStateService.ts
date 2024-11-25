@@ -1,4 +1,4 @@
-import { TObsValue } from 'components/obs/inputs/ObsInput';
+import { IObsListInput, TObsValue } from 'components/obs/inputs/ObsInput';
 import {
   RtvcEventLog,
   RtvcParamManual,
@@ -29,7 +29,19 @@ export const enum PitchShiftModeValue {
   talk = 1,
 }
 
-export const PresetValues = [
+export interface RtvcPreset {
+  index: string;
+  name: string;
+  pitchShift: number;
+  pitchShiftSong: number;
+  primaryVoice: number;
+  secondaryVoice: number;
+  amount: number;
+  label: string;
+  description: string;
+}
+
+const RtvcPresets: RtvcPreset[] = [
   {
     index: 'preset/0',
     name: '琴詠ニア',
@@ -63,6 +75,8 @@ export const PresetValues = [
     label: 'tsumugi',
     description: '元気な明るい声',
   },
+  // name,descriptionなどはpropertyから取れないのでこちらで記述しておきます
+  // primaryVoiceは100から順番通りで
 ];
 
 // RtvcStateService保持用
@@ -105,7 +119,8 @@ interface IRtvcState {
 }
 
 export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
-  isSongMode = false;
+  private isSongMode = false;
+  private presets = RtvcPresets;
 
   setState(v: StateParam) {
     this.SET_STATE(v);
@@ -163,7 +178,8 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
     const r = { ...this.state.value } as StateParam;
 
     if (!r.presets) r.presets = [];
-    while (r.presets.length < PresetValues.length)
+    // 不足時修正
+    while (r.presets.length < this.presets.length)
       r.presets.push({ pitchShift: 0, pitchShiftSong: 0 });
 
     // defaults
@@ -206,8 +222,7 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
     const num = Number(s[1]);
     if (s[0] === 'manual' && num >= 0 && num < state.manuals.length)
       return { isManual: true, idx: num };
-    if (s[0] === 'preset' && num >= 0 && num < PresetValues.length)
-      return { isManual: false, idx: num };
+    if (s[0] === 'preset') return { isManual: false, idx: num };
 
     return def;
   }
@@ -228,7 +243,18 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
       };
     }
 
-    const v = PresetValues[p.idx];
+    // PreserValuesが不十分な時にリストで補完（動的リストはSourceがあるときしか取れないので)
+    let v = {
+      name: '',
+      label: '',
+      description: '',
+      amount: 0,
+      primaryVoice: p.idx + 100,
+      secondaryVoice: -1,
+    };
+    if (p.idx < this.presets.length) v = this.presets[p.idx];
+    if (p.idx < RtvcPresets.length) v = RtvcPresets[p.idx];
+
     const m = state.presets[p.idx];
 
     return {
@@ -295,7 +321,8 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
       s.primary_voice = p.primaryVoice;
       s.secondary_voice = p.secondaryVoice;
     } else {
-      const p = state.presets[idx];
+      const p =
+        idx < state.presets.length ? state.presets[idx] : { pitchShift: 0, pitchShiftSong: 0 };
       const key = `preset${idx}` as RtvcParamPresetKeys;
       const param = this.eventLog.param as RtvcParamPreset;
       if (!param[key]) param[key] = {};
@@ -308,6 +335,7 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
 
   didAddSource(source: ISourceApi) {
     const props = source.getPropertiesFormData();
+    this.fixPresets(source);
     const p = props.find(a => a.name === 'latency');
     if (p) this.eventLog.latency = p.value as number;
     this.isSouceActive = true;
@@ -325,4 +353,36 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
   }
 
   stopStreaming() {}
+
+  getPresets(): RtvcPreset[] {
+    return this.presets;
+  }
+
+  // vvfxにあるpresetと定義済みpresetがずれている場合の対処(基本ずれない)
+  fixPresets(source: ISourceApi) {
+    const list = RtvcPresets;
+    const props = source.getPropertiesFormData();
+    const p = props.find(a => a.name === 'primary_voice') as IObsListInput<any>;
+    if (!p || !p.options) return;
+
+    p.options.forEach(item => {
+      const value = item.value;
+      if (value < 100) return;
+      const f = list.find(a => value === a.primaryVoice);
+      if (f) return;
+
+      list.push({
+        index: `preset/${list.length}`,
+        name: item.description,
+        pitchShift: 0,
+        pitchShiftSong: 0,
+        primaryVoice: value,
+        secondaryVoice: -1,
+        amount: 0,
+        label: item.description,
+        description: item.description,
+      });
+    });
+    this.presets = list;
+  }
 }

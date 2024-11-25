@@ -17,14 +17,14 @@
         <ul class="nav-menu-child">
           <li
             v-for="v in presetList"
-            :key="v.value"
+            :key="v.index"
             class="nav-item"
-            :class="{ active: v.value === currentIndex }"
+            :class="{ active: v.index === currentIndex }"
           >
-            <div class="nav-item-content" @click="onSelect(v.value)">
+            <div class="nav-item-content" @click="onSelect(v.index)">
               <div class="icon-wrapper">
                 <div class="icon" :data-label="v.label"></div>
-                <div class="icon-badge" v-show="v.value === currentIndex">
+                <div class="icon-badge" v-show="v.index === currentIndex">
                   <i class="icon-speech-engine"></i>
                 </div>
               </div>
@@ -52,14 +52,14 @@
         <ul class="nav-menu-child">
           <li
             v-for="v in manualList"
-            :key="v.value"
+            :key="v.index"
             class="nav-item"
-            :class="{ active: v.value === currentIndex }"
+            :class="{ active: v.index === currentIndex }"
           >
-            <div class="nav-item-content" @click="onSelect(v.value)">
+            <div class="nav-item-content" @click="onSelect(v.index)">
               <div class="icon-wrapper">
                 <div class="icon" :data-label="v.label"></div>
-                <div class="icon-badge" v-show="v.value === currentIndex">
+                <div class="icon-badge" v-show="v.index === currentIndex">
                   <i class="icon-speech-engine"></i>
                 </div>
               </div>
@@ -80,7 +80,7 @@
               <div class="popper">
                 <ul class="popup-menu-list">
                   <li class="popup-menu-item">
-                    <button v-if="canAdd" class="link" @click="onCopy(v.value)">
+                    <button v-if="canAdd" class="link" @click="onCopy(v.index)">
                       {{ $t('source-props.nair-rtvc-source.nav.copy_voice') }}
                     </button>
                     <button v-else class="link" disabled>
@@ -90,7 +90,7 @@
                 </ul>
                 <ul class="popup-menu-list">
                   <li class="popup-menu-item">
-                    <button class="link text--red" @click="onDelete(v.value)">
+                    <button class="link text--red" @click="onDelete(v.index)">
                       {{ $t('source-props.nair-rtvc-source.nav.remove_voice') }}
                     </button>
                   </li>

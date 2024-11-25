@@ -10225,9 +10225,9 @@ object.values@^1.1.0, object.values@^1.1.7:
     define-properties "^1.2.1"
     es-object-atoms "^1.0.0"
 
-"obs-studio-node@https://github.com/n-air-app/native-deps/releases/download/assets/osn-0.24.38-release-win64_rtvc.tar.gz":
+"obs-studio-node@file:./osn-0.24.38-release-win64_rtvc_241122.tar.gz":
   version "0.3.99"
-  resolved "https://github.com/n-air-app/native-deps/releases/download/assets/osn-0.24.38-release-win64_rtvc.tar.gz#2f71dbb517ab96c3ced4d3acb4c1841d927b0b5e"
+  resolved "file:./osn-0.24.38-release-win64_rtvc_241122.tar.gz#a54dfc0f3336107c2e1ddcf949c7a315655c46c5"
 
 obuf@^1.0.0, obuf@^1.1.2, obuf@~1.1.2:
   version "1.1.2"
