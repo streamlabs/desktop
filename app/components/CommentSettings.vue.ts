@@ -63,7 +63,7 @@ export default class CommentSettings extends Vue {
     {
       id: 'ignore',
       name: '読み上げない',
-      icon: require('../../media/images/listicon_none.png'),
+      icon: '',
     },
   ];
 

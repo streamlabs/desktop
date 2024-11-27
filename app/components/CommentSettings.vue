@@ -97,31 +97,36 @@
         <label>振り分け設定</label>
       </div>
       <div class="input-container">
-        <div v-if="voicevoxInformation" style="width: 100%; background-color: gray">
-          <div>voicevox information N Air上でVOICEVOXの音声が選択できるようになりました</div>
+        <div v-if="voicevoxInformation" class="comment_info_panel">
+          <div style="font-weight: bold">N Air上でVOICEVOXの音声が選択できるようになりました</div>
           <div>VOICEVOXを起動して、好きなキャラクターに読み上げてもらおう</div>
           <div>
             <a @click="showVoicevoxInformation()">VOICEVOXで音声を読み上げるには</a>
           </div>
-          <button class="button" @click="closeVoicevoxInformation()">close</button>
+          <div style="position: absolute; top: 16px; right: 8px">
+            <i class="icon-close icon-btn" @click="closeVoicevoxInformation"></i>
+          </div>
         </div>
 
         <div
           v-if="isUseVoicevox && !isExistVoicevox && !isLoadingVoicevox"
-          style="width: 100%; background-color: brown"
+          class="comment_error_panel"
         >
-          <div>VOICEVOXを起動してください。</div>
-          <div><a @click="showVoicevoxInformation()">VOICEVOXで音声を読み上げるには</a></div>
-          <button class="button" @click="readVoicevoxList">reload</button>
+          <div style="font-weight: bold; color: #f27a7a">VOICEVOXを起動してください</div>
+          <div>
+            <a @click="showVoicevoxInformation()">VOICEVOXで音声を読み上げるには</a>
+          </div>
         </div>
 
         <div class="input-wrapper">
           <!-- system -->
-          <div style="padding-top: 16px">
-            <span :class="{ label_error: system.id == 'voicevox' && !isExistVoicevox }">
-              システムメッセージ
-            </span>
-            <div style="display: flex; gap: 8px; align-items: center">
+          <div class="comment_panel">
+            <div class="comment_label">
+              <span :class="{ comment_label_error: system.id == 'voicevox' && !isExistVoicevox }">
+                システムメッセージ
+              </span>
+            </div>
+            <div class="comment_list">
               <IconListSelect style="flex: 1" v-model="system" :options="synthesizers" />
               <IconListSelect
                 v-if="system.id == 'voicevox'"
@@ -131,8 +136,8 @@
                 :disabled="!isExistVoicevox"
               />
               <button
+                class="flat_button"
                 :disabled="!isTestable(system.id)"
-                class="button button--secondary"
                 @click="testSpeechPlay(system.id, 'system')"
               >
                 <i class="icon-speaker"></i>
@@ -140,11 +145,13 @@
             </div>
           </div>
           <!--normal -->
-          <div style="padding-top: 16px">
-            <span :class="{ label_error: normal.id == 'voicevox' && !isExistVoicevox }">
-              視聴者コメント
-            </span>
-            <div style="display: flex; gap: 8px; align-items: center">
+          <div class="comment_panel">
+            <div class="comment_label">
+              <span :class="{ comment_label_error: normal.id == 'voicevox' && !isExistVoicevox }">
+                視聴者コメント
+              </span>
+            </div>
+            <div class="comment_list">
               <IconListSelect style="flex: 1" v-model="normal" :options="synthesizers" />
               <IconListSelect
                 v-if="normal.id == 'voicevox'"
@@ -154,8 +161,8 @@
                 :disabled="!isExistVoicevox"
               />
               <button
+                class="flat_button"
                 :disabled="!isTestable(normal.id)"
-                class="button button--secondary"
                 @click="testSpeechPlay(normal.id, 'normal')"
               >
                 <i class="icon-speaker"></i>
@@ -164,11 +171,13 @@
           </div>
 
           <!-- operator -->
-          <div style="padding-top: 16px">
-            <span :class="{ label_error: operator.id == 'voicevox' && !isExistVoicevox }">
-              放送者コメント
-            </span>
-            <div style="display: flex; gap: 8px; align-items: center">
+          <div class="comment_panel">
+            <div class="comment_label">
+              <span :class="{ comment_label_error: operator.id == 'voicevox' && !isExistVoicevox }">
+                放送者コメント
+              </span>
+            </div>
+            <div class="comment_list">
               <IconListSelect style="flex: 1" v-model="operator" :options="synthesizers" />
               <IconListSelect
                 v-if="operator.id == 'voicevox'"
@@ -178,8 +187,8 @@
                 :disabled="!isExistVoicevox"
               />
               <button
+                class="flat_button"
                 :disabled="!isTestable(operator.id)"
-                class="button button--secondary"
                 @click="testSpeechPlay(operator.id, 'operator')"
               >
                 <i class="icon-speaker"></i>
@@ -187,7 +196,9 @@
             </div>
           </div>
           <!-- end -->
-          <button class="button" @click="resetAssignment">設定リセット</button>
+          <div class="comment_panel">
+            <button @click="resetAssignment" class="flat_button">設定リセット</button>
+          </div>
         </div>
       </div>
     </div>
@@ -300,7 +311,54 @@
   }
 }
 
-.label_error {
-  color: var(--color-error);
+.flat_button {
+  padding: 10px;
+  background-color: var(--color-bg-primary);
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+.comment_info_panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  padding: 16px;
+  margin: 8px 0;
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-border-light);
+  border-radius: 4px;
+}
+
+.comment_error_panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  padding: 16px;
+  margin: 8px 0;
+  background-color: #f27a7a24;
+  border-radius: 4px;
+}
+
+.comment_panel {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.comment_label {
+  padding: 8px 0;
+}
+
+.comment_label_error {
+  color: #f27a7a;
+}
+
+.comment_list {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 </style>
