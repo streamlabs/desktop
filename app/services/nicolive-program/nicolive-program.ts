@@ -35,6 +35,7 @@ type ProgramState = {
   giftPoint: number;
   showPlaceholder: boolean;
   moderatorViewUri?: string;
+  password?: string;
 };
 
 interface INicoliveProgramState extends ProgramState {
@@ -233,6 +234,20 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
     return result;
   }
 
+  async fetchProgramPassword(nicoliveProgramId: string): Promise<string | undefined> {
+    const programPassword = await this.client.fetchProgramPassword(nicoliveProgramId);
+    if (
+      !programPassword.ok &&
+      'meta' in programPassword.value &&
+      programPassword.value.meta.errorCode !== 'NOT_PASSWORD_PROGRAM'
+    ) {
+      if (!isOk(programPassword)) {
+        throw NicoliveFailure.fromClientError('fetchProgramPassword', programPassword);
+      }
+    }
+    return programPassword.ok ? programPassword.value.password : undefined;
+  }
+
   async fetchProgram(): Promise<void> {
     this.setState({ isFetching: true });
     if (isFakeMode()) {
@@ -275,6 +290,8 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
         throw NicoliveFailure.fromClientError('fetchProgram', programResponse);
       }
 
+      const password: string = await this.fetchProgramPassword(nicoliveProgramId);
+
       const program = programResponse.value;
 
       const room = program.rooms.length > 0 ? program.rooms[0] : undefined;
@@ -291,6 +308,7 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
         viewUri: room ? room.viewUri : '',
         ...(program.moderatorViewUri ? { moderatorViewUri: program.moderatorViewUri } : {}),
         serverClockOffsetSec: calcServerClockOffsetSec(programResponse),
+        ...(password ? { password } : {}),
       });
       if (program.status === 'test') {
         this.showPlaceholder();

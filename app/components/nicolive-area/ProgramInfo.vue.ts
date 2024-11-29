@@ -147,11 +147,7 @@ export default class ProgramInfo extends Vue {
 
   hasProgramUrlCopied: boolean = false;
   clearTimer: number = 0;
-  copyProgramURL() {
-    if (this.isFetching) throw new Error('fetchProgram is running');
-    clipboard.writeText(
-      this.hostsService.getWatchPageURL(this.nicoliveProgramService.state.programID),
-    );
+  indicateProgramUrlCopied() {
     this.hasProgramUrlCopied = true;
     window.clearTimeout(this.clearTimer);
 
@@ -159,5 +155,20 @@ export default class ProgramInfo extends Vue {
       this.hasProgramUrlCopied = false;
       this.clearTimer = null;
     }, 1000);
+  }
+
+  copyProgramURL() {
+    if (this.isFetching) throw new Error('fetchProgram is running');
+    clipboard.writeText(
+      this.hostsService.getWatchPageURL(this.nicoliveProgramService.state.programID),
+    );
+    this.indicateProgramUrlCopied();
+  }
+  get existsProgramPassword(): boolean {
+    return !!this.nicoliveProgramService.state.password;
+  }
+  copyProgramPassword() {
+    if (this.isFetching) throw new Error('fetchProgram is running');
+    clipboard.writeText(this.nicoliveProgramService.state.password);
   }
 }
