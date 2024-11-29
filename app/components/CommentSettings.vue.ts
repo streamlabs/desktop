@@ -258,18 +258,15 @@ export default class CommentSettings extends Vue {
 
   @Watch('voicevoxNormalItem')
   onChangevoicevoxForNormal() {
-    const id = this.voicevoxNormalItem.id;
-    this.nicoliveCommentSynthesizerService.voicevoxNormal = { id };
+    this.nicoliveCommentSynthesizerService.voicevoxNormal = this.voicevoxNormalItem;
   }
   @Watch('voicevoxSystemItem')
   onChangevoicevoxForSystem() {
-    const id = this.voicevoxSystemItem.id;
-    this.nicoliveCommentSynthesizerService.voicevoxSystem = { id };
+    this.nicoliveCommentSynthesizerService.voicevoxSystem = this.voicevoxSystemItem;
   }
   @Watch('voicevoxOperatorItem')
   onChangevoicevoxForOperator() {
-    const id = this.voicevoxOperatorItem.id;
-    this.nicoliveCommentSynthesizerService.voicevoxOperator = { id };
+    this.nicoliveCommentSynthesizerService.voicevoxOperator = this.voicevoxOperatorItem;
   }
 
   async readVoicevoxList() {

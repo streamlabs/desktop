@@ -16,7 +16,7 @@ import { WrappedMessage } from './WrappedChat';
 
 export interface VoicevoxParam {
   id: string;
-  //speed?: number;
+  name: string;
 }
 
 export type Speech = {
@@ -64,7 +64,11 @@ export class NicoliveCommentSynthesizerService extends StatefulService<ICommentS
       operator: 'nVoice',
       system: 'webSpeech',
     },
-    voicevox: { normal: { id: '' }, operator: { id: '' }, system: { id: '' } },
+    voicevox: {
+      normal: { id: '', name: '' },
+      operator: { id: '', name: '' },
+      system: { id: '', name: '' },
+    },
   };
 
   // この数すでにキューに溜まっている場合は破棄してから追加する

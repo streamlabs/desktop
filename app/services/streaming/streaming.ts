@@ -731,6 +731,8 @@ export class StreamingService
   private actionLog(eventType: 'stream_start' | 'stream_end', streamingTrackId: string) {
     const settings = this.settingsService.getStreamEncoderSettings();
 
+    const voicevoxFilter = (src: string, value: string) => (src === 'voicevox' ? value : '');
+
     const event: TUsageEvent = {
       event: eventType,
       platform: extractPlatform(settings.streamingURL),
@@ -772,6 +774,20 @@ export class StreamingService
           normal: this.nicoliveCommentSynthesizerService.normal,
           operator: this.nicoliveCommentSynthesizerService.operator,
           system: this.nicoliveCommentSynthesizerService.system,
+        },
+        voicevox: {
+          normal: voicevoxFilter(
+            this.nicoliveCommentSynthesizerService.normal,
+            this.nicoliveCommentSynthesizerService.voicevoxNormal.name,
+          ),
+          operator: voicevoxFilter(
+            this.nicoliveCommentSynthesizerService.operator,
+            this.nicoliveCommentSynthesizerService.voicevoxOperator.name,
+          ),
+          system: voicevoxFilter(
+            this.nicoliveCommentSynthesizerService.system,
+            this.nicoliveCommentSynthesizerService.voicevoxSystem.name,
+          ),
         },
       },
       compact_mode: {
