@@ -145,19 +145,17 @@ export default class ProgramInfo extends Vue {
     return this.nicoliveProgramService.state.isFetching;
   }
 
-  hasProgramUrlCopied: boolean = false;
-  clearTimer: number = 0;
   copyProgramURL() {
     if (this.isFetching) throw new Error('fetchProgram is running');
     clipboard.writeText(
       this.hostsService.getWatchPageURL(this.nicoliveProgramService.state.programID),
     );
-    this.hasProgramUrlCopied = true;
-    window.clearTimeout(this.clearTimer);
-
-    this.clearTimer = window.setTimeout(() => {
-      this.hasProgramUrlCopied = false;
-      this.clearTimer = null;
-    }, 1000);
+  }
+  get existsProgramPassword(): boolean {
+    return !!this.nicoliveProgramService.state.password;
+  }
+  copyProgramPassword() {
+    if (this.isFetching) throw new Error('fetchProgram is running');
+    clipboard.writeText(this.nicoliveProgramService.state.password);
   }
 }

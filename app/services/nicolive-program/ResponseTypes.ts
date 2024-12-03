@@ -246,3 +246,10 @@ export interface Supporters {
     supporterIds: string[];
   };
 }
+
+export interface ProgramPassword {
+  meta: {
+    status: 200;
+  };
+  data: { password: string };
+}

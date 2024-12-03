@@ -17,6 +17,7 @@ import {
   OnairChannelProgramData,
   OnairUserProgramData,
   ProgramInfo,
+  ProgramPassword,
   ProgramSchedules,
   Segment,
   Statistics,
@@ -749,6 +750,13 @@ export class NicoliveClient {
     return this.requestAPI<Supporters['data']>(
       'GET',
       `${NicoliveClient.live2ApiBaseURL}/api/v1/broadcaster/supporters?limit=${limit}&offset=${offset}`,
+    );
+  }
+
+  async fetchProgramPassword(programID: string): Promise<WrappedResult<ProgramPassword['data']>> {
+    return this.requestAPI<ProgramPassword['data']>(
+      'GET',
+      `${NicoliveClient.live2BaseURL}/unama/api/v4/programs/${programID}/password`,
     );
   }
 }
