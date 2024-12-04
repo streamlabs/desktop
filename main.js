@@ -698,6 +698,7 @@ function initialize(crashHandler) {
         childWindow.show();
         childWindow.restore();
         childWindow.setMinimumSize(windowOptions.size.width, windowOptions.size.height);
+        childWindow.setResizable(windowOptions.resizable !== false);
 
         if (windowOptions.center) {
           childWindow.setBounds({

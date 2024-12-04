@@ -5,7 +5,11 @@
     </div>
     <div class="titlebar-actions">
       <i v-if="isMinimizable" class="link icon-minimize titlebar-action" @click="minimize" />
-      <i class="link icon-maximize titlebar-action" @click="maximize" v-if="!isCompactMode" />
+      <i
+        class="link icon-maximize titlebar-action"
+        @click="maximize"
+        v-if="!isCompactMode && resizable !== false"
+      />
       <i class="link icon-close-square titlebar-action" data-test="titlebar-close" @click="close" />
     </div>
   </div>

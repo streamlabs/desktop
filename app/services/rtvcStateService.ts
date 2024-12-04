@@ -39,6 +39,7 @@ export interface RtvcPreset {
   amount: number;
   label: string;
   description: string;
+  image?: string;
 }
 
 const RtvcPresets: RtvcPreset[] = [
@@ -52,6 +53,7 @@ const RtvcPresets: RtvcPreset[] = [
     amount: 0,
     label: 'near',
     description: '滑らかで無機質な声',
+    image: require('../../media/images/voice_images/voice_character_01.png'),
   },
   {
     index: 'preset/1',
@@ -63,6 +65,7 @@ const RtvcPresets: RtvcPreset[] = [
     amount: 0,
     label: 'zundamon',
     description: '子供っぽい明るい声',
+    image: require('../../media/images/voice_images/voice_character_02.png'),
   },
   {
     index: 'preset/2',
@@ -74,7 +77,93 @@ const RtvcPresets: RtvcPreset[] = [
     amount: 0,
     label: 'tsumugi',
     description: '元気な明るい声',
+    image: require('../../media/images/voice_images/voice_character_03.png'),
   },
+  {
+    index: 'preset/3',
+    name: '東北ずんこ',
+    pitchShift: 0,
+    pitchShiftSong: 0,
+    primaryVoice: 103,
+    secondaryVoice: -1,
+    amount: 0,
+    label: 'tohoku_zunko',
+    description: 'tohoku_zunko',
+    image: require('../../media/images/voice_images/voice_character_04.png'),
+  },
+  {
+    index: 'preset/4',
+    name: '東北イタコ',
+    pitchShift: 0,
+    pitchShiftSong: 0,
+    primaryVoice: 104,
+    secondaryVoice: -1,
+    amount: 0,
+    label: 'tohoku_itako',
+    description: 'tohoku_itako',
+    image: require('../../media/images/voice_images/voice_character_05.png'),
+  },
+  {
+    index: 'preset/5',
+    name: '東北きりたん',
+    pitchShift: 0,
+    pitchShiftSong: 0,
+    primaryVoice: 105,
+    secondaryVoice: -1,
+    amount: 0,
+    label: 'tohoku_kiritan',
+    description: 'tohoku_kiritan',
+    image: require('../../media/images/voice_images/voice_character_06.png'),
+  },
+  {
+    index: 'preset/6',
+    name: '四国めたん',
+    pitchShift: 0,
+    pitchShiftSong: 0,
+    primaryVoice: 106,
+    secondaryVoice: -1,
+    amount: 0,
+    label: 'shikoku_metan',
+    description: 'shikoku_metan',
+    image: require('../../media/images/voice_images/voice_character_07.png'),
+  },
+  {
+    index: 'preset/7',
+    name: '九州そら',
+    pitchShift: 0,
+    pitchShiftSong: 0,
+    primaryVoice: 107,
+    secondaryVoice: -1,
+    amount: 0,
+    label: 'kyushu_sora',
+    description: 'kyushu_sora',
+    image: require('../../media/images/voice_images/voice_character_08.png'),
+  },
+  {
+    index: 'preset/8',
+    name: '中国うさぎ',
+    pitchShift: 0,
+    pitchShiftSong: 0,
+    primaryVoice: 108,
+    secondaryVoice: -1,
+    amount: 0,
+    label: 'chugoku_usagi',
+    description: 'chugoku_usagi',
+    image: require('../../media/images/voice_images/voice_character_09.png'),
+  },
+  {
+    index: 'preset/9',
+    name: '大江戸ちゃんこ',
+    pitchShift: 0,
+    pitchShiftSong: 0,
+    primaryVoice: 109,
+    secondaryVoice: -1,
+    amount: 0,
+    label: 'oedo_chanko',
+    description: 'oedo_chanko',
+    image: require('../../media/images/voice_images/voice_character_10.png'),
+  },
+
   // name,descriptionなどはpropertyから取れないのでこちらで記述しておきます
   // primaryVoiceは100から順番通りで
 ];
@@ -106,6 +195,7 @@ export interface CommonParam {
   name: string;
   label: string;
   description: string;
+  image?: string;
 
   pitchShift: number;
   pitchShiftSong: number;
@@ -121,6 +211,14 @@ interface IRtvcState {
 export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
   private isSongMode = false;
   private presets = RtvcPresets;
+
+  manualImages = [
+    require('../../media/images/voice_images/voice_original_01.png'),
+    require('../../media/images/voice_images/voice_original_02.png'),
+    require('../../media/images/voice_images/voice_original_03.png'),
+    require('../../media/images/voice_images/voice_original_04.png'),
+    require('../../media/images/voice_images/voice_original_05.png'),
+  ];
 
   setState(v: StateParam) {
     this.SET_STATE(v);
@@ -213,22 +311,21 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
     return r;
   }
 
-  indexToNum(state: StateParam, index: string): { isManual: boolean; idx: number } {
+  indexToNum(index: string): { isManual: boolean; idx: number } {
     const def = { isManual: false, idx: 0 };
 
     if (!index || typeof index !== 'string') return def;
     const s = index.split('/');
     if (s.length !== 2) return def;
     const num = Number(s[1]);
-    if (s[0] === 'manual' && num >= 0 && num < state.manuals.length)
-      return { isManual: true, idx: num };
+    if (s[0] === 'manual') return { isManual: true, idx: num };
     if (s[0] === 'preset') return { isManual: false, idx: num };
 
     return def;
   }
 
   stateToCommonParam(state: StateParam, index: string): CommonParam {
-    const p = this.indexToNum(state, index);
+    const p = this.indexToNum(index);
     if (p.isManual) {
       const v = state.manuals[p.idx];
       return {
@@ -240,17 +337,21 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
         amount: v.amount,
         primaryVoice: v.primaryVoice,
         secondaryVoice: v.secondaryVoice,
+        image: this.manualImages[p.idx],
       };
     }
 
     // PreserValuesが不十分な時にリストで補完（動的リストはSourceがあるときしか取れないので)
-    let v = {
+    let v: RtvcPreset = {
+      index: '',
       name: '',
       label: '',
       description: '',
       amount: 0,
       primaryVoice: p.idx + 100,
       secondaryVoice: -1,
+      pitchShift: 0,
+      pitchShiftSong: 0,
     };
     if (p.idx < this.presets.length) v = this.presets[p.idx];
     if (p.idx < RtvcPresets.length) v = RtvcPresets[p.idx];
@@ -266,6 +367,7 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
       amount: v.amount,
       primaryVoice: v.primaryVoice,
       secondaryVoice: v.secondaryVoice,
+      image: v.image,
     };
   }
 
@@ -307,7 +409,7 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
 
     const state = this.getState();
     const index = state.currentIndex;
-    const { isManual, idx } = this.indexToNum(state, index);
+    const { isManual, idx } = this.indexToNum(index);
     if (isManual) {
       const p = state.manuals[idx];
       const key = `manual${idx}` as RtvcParamManualKeys;

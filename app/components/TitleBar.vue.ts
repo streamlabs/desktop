@@ -17,6 +17,7 @@ export default class TitleBar extends Vue {
   @Inject() compactModeService: CompactModeService;
 
   @Prop() title: string;
+  @Prop() resizable: boolean;
 
   get isMinimizable() {
     return remote.getCurrentWindow().isMinimizable();

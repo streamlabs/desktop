@@ -53,6 +53,7 @@ export default class RtvcSourceProperties extends SourceProperties {
   name = '';
   label = '';
   description = '';
+  image = '';
   device: Extract<TObsValue, number> = 0;
   latency: Extract<TObsValue, number> = 0;
 
@@ -66,6 +67,7 @@ export default class RtvcSourceProperties extends SourceProperties {
 
   tab = 0;
   canAdd = false;
+  canDelete = false;
 
   showPopupMenu = false;
   popper: PopperEvent;
@@ -81,7 +83,7 @@ export default class RtvcSourceProperties extends SourceProperties {
     return this.rtvcStateService.getPresets();
   }
 
-  manualList: { index: string; name: string; label: string }[] = [];
+  manualList: { index: string; name: string; label: string; image: string }[] = [];
 
   updateManualList() {
     // add,delに反応しないのでコード側から変更指示
@@ -89,8 +91,10 @@ export default class RtvcSourceProperties extends SourceProperties {
       index: `manual/${idx}`,
       name: a.name,
       label: `manual${idx}`,
+      image: this.rtvcStateService.manualImages[idx],
     }));
     this.canAdd = this.manualList.length < this.manualMax;
+    this.canDelete = this.manualList.length > 1;
   }
 
   // preset voices
@@ -147,6 +151,7 @@ export default class RtvcSourceProperties extends SourceProperties {
     this.name = p.name;
     this.label = p.label;
     this.description = p.description;
+    this.image = p.image;
 
     this.pitchShift = p.pitchShift;
     this.pitchShiftSong = p.pitchShiftSong;
@@ -254,7 +259,7 @@ export default class RtvcSourceProperties extends SourceProperties {
   // --  param in/out
 
   indexToNum(index: string): { isManual: boolean; idx: number } {
-    return this.rtvcStateService.indexToNum(this.state, index);
+    return this.rtvcStateService.indexToNum(index);
   }
 
   getManualIndexNum(index: string): number {
@@ -426,8 +431,11 @@ export default class RtvcSourceProperties extends SourceProperties {
 
     this.state.manuals.splice(idx, 1);
     this.updateManualList();
-    if (index !== this.currentIndex) return;
-    this.currentIndex = 'preset/0';
+
+    const c = this.getManualIndexNum(this.currentIndex);
+    if (c < 0 || c < idx) return;
+    const n = Math.max(c - 1, 0);
+    this.currentIndex = `manual/${n}`;
   }
 
   onCopy(index: string) {
