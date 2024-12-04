@@ -504,7 +504,7 @@ function initialize(crashHandler) {
     );
     if (process.env.DEV_SERVER) {
       mainWindow.webContents.on('did-finish-load', () => {
-        openDevTools();
+        setTimeout(() => openDevTools(), 3000);
       });
     }
 
