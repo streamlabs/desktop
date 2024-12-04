@@ -107,23 +107,26 @@ module.exports = function (env, argv) {
           directory: __dirname,
           publicPath: '/',
         },
-        proxy: {
-          '/account': {
+        proxy: [
+          {
+            context: ['/account'],
             target: 'https://account.nicovideo.jp',
             changeOrigin: true,
             pathRewrite: { '^/account': '' },
           },
-          '/oauth': {
+          {
+            context: ['/oauth'],
             target: 'https://oauth.nicovideo.jp',
             changeOrigin: true,
             pathRewrite: { '^/oauth': '' },
           },
-          '/blog': {
+          {
+            context: ['/blog'],
             target: 'https://blog.nicovideo.jp',
             changeOrigin: true,
             pathRewrite: { '^/blog': '' },
           },
-        },
+        ],
       },
 
       devtool: 'source-map',

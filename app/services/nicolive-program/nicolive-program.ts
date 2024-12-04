@@ -306,7 +306,9 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
         endTime: program.endAt,
         isMemberOnly: program.isMemberOnly,
         viewUri: room ? room.viewUri : '',
-        ...(program.moderatorViewUri ? { moderatorViewUri: program.moderatorViewUri } : {}),
+        ...(program.moderatorViewUri && !isFakeMode()
+          ? { moderatorViewUri: program.moderatorViewUri }
+          : {}),
         serverClockOffsetSec: calcServerClockOffsetSec(programResponse),
         ...(password ? { password } : {}),
       });
