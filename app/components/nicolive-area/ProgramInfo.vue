@@ -45,8 +45,17 @@
                 popper.doClose();
               "
               class="link"
-              ><i :class="hasProgramUrlCopied ? 'icon-check' : 'icon-clipboard-copy'"></i
-              >番組URLをコピーする</a
+              ><i class="icon-clipboard-copy"></i>番組URLをコピーする</a
+            >
+          </li>
+          <li class="popup-menu-item" v-if="existsProgramPassword">
+            <a
+              @click="
+                copyProgramPassword();
+                popper.doClose();
+              "
+              class="link"
+              ><i class="icon-clipboard-copy"></i>番組の合い言葉をコピーする</a
             >
           </li>
         </ul>
