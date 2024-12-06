@@ -97,11 +97,6 @@ export default class RtvcSourceProperties extends SourceProperties {
     this.canDelete = this.manualList.length > 1;
   }
 
-  // preset voices
-  // 100 kotoyomi_nia
-  // 101 zundamon
-  // 103 kasukabe_tsumugi
-
   get jvsList() {
     if ($t('source-props.nair-rtvc-source.value.male') === '男性') return jvsListBase; // 同じなので変更不要
 
@@ -459,14 +454,18 @@ export default class RtvcSourceProperties extends SourceProperties {
     this.currentIndex = newIndex;
   }
 
-  playSample(label: string) {
-    const assets: { [name: string]: string } = {
-      near: require('../../../media/sound/rtvc_sample_near.mp3'),
-      zundamon: require('../../../media/sound/rtvc_sample_zundamon.mp3'),
-      tsumugi: require('../../../media/sound/rtvc_sample_tsumugi.mp3'),
-    };
+  playSample() {
+    const assets: string[] = [
+      require('../../../media/sound/rtvc_sample_near.mp3'),
+      require('../../../media/sound/rtvc_sample_zundamon.mp3'),
+      require('../../../media/sound/rtvc_sample_tsumugi.mp3'),
+      //... to 10 sample
+    ];
 
-    const asset = assets[label];
+    const idx = this.indexToNum(this.currentIndex);
+    if (idx.isManual || idx.idx < 0 || idx.idx >= assets.length) return;
+
+    const asset = assets[idx.idx];
     if (!asset) return;
     this.audio.pause();
     this.audio.src = asset;

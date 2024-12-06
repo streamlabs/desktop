@@ -18,8 +18,7 @@
         <div class="main-inner">
           <!-- presets -->
           <div class="main-header">
-            キャラクターボイス
-            <!-- {{ $t('source-props.nair-rtvc-source.nav.preset_voice') }} -->
+            {{ $t('source-props.nair-rtvc-source.nav.preset_voice') }}
           </div>
           <div class="main-list">
             <div
@@ -29,10 +28,10 @@
               :class="{ active: v.index === currentIndex }"
             >
               <div class="cell-content" @click="onSelect(v.index)">
-                <div class="icon-wrapper">
-                  <img class="icon" :src="v.image" />
+                <div class="cellicon-wrapper">
+                  <img class="cellicon" :src="v.image" />
                 </div>
-                <span class="icon-label">{{ v.name }}</span>
+                <span class="cellicon-label">{{ v.name }}</span>
               </div>
             </div>
           </div>
@@ -41,10 +40,6 @@
           <div class="main-header">
             {{ $t('source-props.nair-rtvc-source.nav.original_voice') }}
           </div>
-          <!-- ({{ manualList.length }}/{{
-              manualMax
-            }}) -->
-
           <div class="main-list">
             <div
               v-for="v in manualList"
@@ -53,10 +48,10 @@
               :class="{ active: v.index === currentIndex }"
             >
               <div class="cell-content" @click="onSelect(v.index)">
-                <div class="icon-wrapper">
-                  <img class="icon" :src="v.image" />
+                <div class="cellicon-wrapper">
+                  <img class="cellicon" :src="v.image" />
                 </div>
-                <span class="icon-label">{{ v.name }}</span>
+                <span class="cellicon-label">{{ v.name }}</span>
               </div>
 
               <popper
@@ -100,29 +95,27 @@
 
             <div class="main-cell" v-if="canAdd">
               <div class="cell-content" @click="onAdd()">
-                <div class="icon-wrapper">
+                <div class="cellicon-wrapper">
                   <img
-                    class="icon"
+                    class="cellicon"
                     src="../../../media/images/voice_images/voice_original_add.png"
                   />
                 </div>
-                <span class="icon-label">ボイス作成</span>
+                <span class="cellicon-label">
+                  {{ $t('source-props.nair-rtvc-source.nav.add_voice') }}
+                </span>
               </div>
             </div>
           </div>
         </div>
 
         <div class="content-detail">
-          <!--  -->
+          <!-- detail top -->
           <div class="detail-top">
-            <img class="image" :src="image" />
+            <img class="image" :src="image" @click="playSample()" />
             <div class="frame-labels" v-if="isPreset">
               <p class="name">{{ name }}</p>
               <p class="description">{{ description }}</p>
-              <!-- <button class="button button--secondary" @click="playSample(label)">
-                <i class="icon-speaker"></i
-                >{{ $t('source-props.nair-rtvc-source.preset.play_sample') }}
-              </button> -->
             </div>
             <div class="frame-nameinput" v-else>
               <div class="input-wrapper">
@@ -131,11 +124,13 @@
             </div>
           </div>
 
-          <!--  -->
+          <!-- detail bottom -->
           <div class="detail-bottom">
             <div>
               <div class="labels">
-                <span class="header">音声設定</span>
+                <span class="header">
+                  {{ $t('source-props.nair-rtvc-source.nav.voice_setting') }}</span
+                >
                 <span v-if="!isPreset"
                   ><button class="button--text" @click="onRandom">
                     {{ $t('source-props.nair-rtvc-source.container.make_random.name') }}
@@ -459,11 +454,11 @@
   height: 125px;
   margin: 8px;
 
-  .icon-wrapper {
+  .cellicon-wrapper {
     position: relative;
     flex-shrink: 0;
 
-    .icon-badge {
+    .cellicon-badge {
       position: absolute;
       right: -6px;
       bottom: -6px;
@@ -490,12 +485,12 @@
     }
   }
 
-  .icon {
+  .cellicon {
     width: 96px;
     height: 96px;
   }
 
-  .icon-label {
+  .cellicon-label {
     margin-top: 8px;
     font-weight: bold;
     text-align: center;
