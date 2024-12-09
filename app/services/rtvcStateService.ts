@@ -88,7 +88,7 @@ const RtvcPresets: RtvcPreset[] = [
     secondaryVoice: -1,
     amount: 0,
     label: 'tohoku_zunko',
-    description: 'tohoku_zunko',
+    description: 'ほんわかしたかわいらしい声',
     image: require('../../media/images/voice_images/voice_character_04.png'),
   },
   {
@@ -100,7 +100,7 @@ const RtvcPresets: RtvcPreset[] = [
     secondaryVoice: -1,
     amount: 0,
     label: 'tohoku_itako',
-    description: 'tohoku_itako',
+    description: '落ち着いた大人っぽい声',
     image: require('../../media/images/voice_images/voice_character_05.png'),
   },
   {
@@ -112,7 +112,7 @@ const RtvcPresets: RtvcPreset[] = [
     secondaryVoice: -1,
     amount: 0,
     label: 'tohoku_kiritan',
-    description: 'tohoku_kiritan',
+    description: '落ち着いていながらも可愛らしい声',
     image: require('../../media/images/voice_images/voice_character_06.png'),
   },
   {
@@ -124,7 +124,7 @@ const RtvcPresets: RtvcPreset[] = [
     secondaryVoice: -1,
     amount: 0,
     label: 'shikoku_metan',
-    description: 'shikoku_metan',
+    description: '落ち着いた心地よい声',
     image: require('../../media/images/voice_images/voice_character_07.png'),
   },
   {
@@ -136,7 +136,7 @@ const RtvcPresets: RtvcPreset[] = [
     secondaryVoice: -1,
     amount: 0,
     label: 'kyushu_sora',
-    description: 'kyushu_sora',
+    description: 'ふんわりまったりした声',
     image: require('../../media/images/voice_images/voice_character_08.png'),
   },
   {
@@ -148,7 +148,7 @@ const RtvcPresets: RtvcPreset[] = [
     secondaryVoice: -1,
     amount: 0,
     label: 'chugoku_usagi',
-    description: 'chugoku_usagi',
+    description: 'はかなげで繊細な声',
     image: require('../../media/images/voice_images/voice_character_09.png'),
   },
   {
@@ -160,7 +160,7 @@ const RtvcPresets: RtvcPreset[] = [
     secondaryVoice: -1,
     amount: 0,
     label: 'oedo_chanko',
-    description: 'oedo_chanko',
+    description: '幼さもあるかわいらしい声',
     image: require('../../media/images/voice_images/voice_character_10.png'),
   },
 
@@ -176,6 +176,7 @@ interface ManualParam {
   amount: number;
   primaryVoice: number;
   secondaryVoice: number;
+  imgidx: number;
 }
 
 interface PresetParam {
@@ -296,13 +297,14 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
       a.pitchShiftSong = numFix(a.pitchShiftSong, 0);
     });
 
-    r.manuals.forEach(a => {
+    r.manuals.forEach((a, idx) => {
       if (!a.name) a.name = 'none';
       a.pitchShift = numFix(a.pitchShift, 0);
       a.pitchShiftSong = numFix(a.pitchShiftSong, 0);
       a.amount = numFix(a.amount, 0);
       a.primaryVoice = numFix(a.primaryVoice, 0);
       a.secondaryVoice = numFix(a.secondaryVoice, -1);
+      a.imgidx = a.imgidx ?? idx;
     });
 
     if (!r.scenes) r.scenes = {};
@@ -337,7 +339,7 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
         amount: v.amount,
         primaryVoice: v.primaryVoice,
         secondaryVoice: v.secondaryVoice,
-        image: this.manualImages[p.idx],
+        image: this.manualImages[v.imgidx ?? p.idx],
       };
     }
 

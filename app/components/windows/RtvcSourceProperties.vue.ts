@@ -91,7 +91,7 @@ export default class RtvcSourceProperties extends SourceProperties {
       index: `manual/${idx}`,
       name: a.name,
       label: `manual${idx}`,
-      image: this.rtvcStateService.manualImages[idx],
+      image: this.rtvcStateService.manualImages[a.imgidx],
     }));
     this.canAdd = this.manualList.length < this.manualMax;
     this.canDelete = this.manualList.length > 1;
@@ -389,6 +389,13 @@ export default class RtvcSourceProperties extends SourceProperties {
     this.currentIndex = index;
   }
 
+  findNewManualImgidx() {
+    for (let i = 0; i < this.rtvcStateService.manualImages.length; i++) {
+      if (!this.state.manuals.find(a => a.imgidx === i)) return i;
+    }
+    return 0;
+  }
+
   onAdd() {
     if (this.state.manuals.length >= this.manualMax) return;
     const index = `manual/${this.state.manuals.length}`;
@@ -399,6 +406,7 @@ export default class RtvcSourceProperties extends SourceProperties {
       amount: 0,
       primaryVoice: 0,
       secondaryVoice: -1,
+      imgidx: this.findNewManualImgidx(),
     });
     this.updateManualList();
     this.currentIndex = index;
@@ -448,6 +456,7 @@ export default class RtvcSourceProperties extends SourceProperties {
       amount: v.amount,
       primaryVoice: v.primaryVoice,
       secondaryVoice: v.secondaryVoice,
+      imgidx: this.findNewManualImgidx(),
     });
 
     this.updateManualList();
@@ -456,10 +465,16 @@ export default class RtvcSourceProperties extends SourceProperties {
 
   playSample() {
     const assets: string[] = [
-      require('../../../media/sound/rtvc_sample_near.mp3'),
-      require('../../../media/sound/rtvc_sample_zundamon.mp3'),
-      require('../../../media/sound/rtvc_sample_tsumugi.mp3'),
-      //... to 10 sample
+      require('../../../media/sound/rtvc/near.mp3'),
+      require('../../../media/sound/rtvc/zundamon.mp3'),
+      require('../../../media/sound/rtvc/tsumugi.mp3'),
+      require('../../../media/sound/rtvc/tohoku_zunko.mp3'),
+      require('../../../media/sound/rtvc/tohoku_itako.mp3'),
+      require('../../../media/sound/rtvc/tohoku_kiritan.mp3'),
+      require('../../../media/sound/rtvc/shikoku_metan.mp3'),
+      require('../../../media/sound/rtvc/kyushu_sora.mp3'),
+      require('../../../media/sound/rtvc/chugoku_usagi.mp3'),
+      require('../../../media/sound/rtvc/oedo_chanko.mp3'),
     ];
 
     const idx = this.indexToNum(this.currentIndex);
