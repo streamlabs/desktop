@@ -373,9 +373,7 @@ function initialize(crashHandler) {
 
   // eslint-disable-next-line no-inner-declarations
   function openDevTools() {
-    if (childWindow.isVisible()) {
-      childWindow.webContents.openDevTools({ mode: 'undocked' });
-    }
+    childWindow.webContents.openDevTools({ mode: 'undocked' });
     mainWindow.webContents.openDevTools({ mode: 'undocked' });
   }
 
