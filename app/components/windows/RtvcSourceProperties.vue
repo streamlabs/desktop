@@ -198,6 +198,7 @@
                 :allow-empty="false"
                 :placeholder="$t('settings.listPlaceholder')"
                 :searchable="false"
+                class="short"
               />
             </div>
             <!-- secondary -->
@@ -213,6 +214,7 @@
                 :allow-empty="false"
                 :placeholder="$t('settings.listPlaceholder')"
                 :searchable="false"
+                class="short"
               />
             </div>
             <!-- amount -->
@@ -564,6 +566,12 @@
     display: flex;
     justify-content: space-between;
     color: var(--color-text);
+  }
+}
+
+.short {
+  /deep/ .multiselect__content {
+    max-height: 104px;
   }
 }
 
