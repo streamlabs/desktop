@@ -1,5 +1,7 @@
 import { Subject } from 'rxjs';
 import { StatefulService, mutation } from './core/stateful-service';
+import * as Sentry from '@sentry/vue';
+import Utils from './utils';
 
 type TAppPage = 'Studio' | 'Onboarding' | 'PatchNotes';
 
@@ -16,14 +18,36 @@ export class NavigationService extends StatefulService<INavigationState> {
 
   navigated = new Subject<INavigationState>();
 
+  init(): void {
+    super.init();
+    this.logNavigation();
+  }
+
   navigate(page: TAppPage, params: Dictionary<string> = {}) {
     this.NAVIGATE(page, params);
     this.navigated.next(this.state);
+  }
+
+  logNavigation() {
+    const { currentPage, params } = this.state;
+    Sentry.addBreadcrumb({
+      category: 'navigate',
+      message: currentPage,
+      data: {
+        params,
+      },
+    });
+    const scope = Sentry.getCurrentScope();
+    scope.setTag('navigation', currentPage);
+    if (Utils.isDevMode()) {
+      console.log('navigate', currentPage, params);
+    }
   }
 
   @mutation()
   private NAVIGATE(page: TAppPage, params: Dictionary<string>) {
     this.state.currentPage = page;
     this.state.params = params;
+    this.logNavigation();
   }
 }

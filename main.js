@@ -502,11 +502,6 @@ function initialize(crashHandler) {
       },
       isDevMode ? LOAD_DELAY : 0,
     );
-    if (process.env.DEV_SERVER) {
-      mainWindow.webContents.on('did-finish-load', () => {
-        openDevTools();
-      });
-    }
 
     mainWindow.on('close', e => {
       if (!shutdownStarted) {
