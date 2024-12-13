@@ -2,6 +2,7 @@ import { Subject } from 'rxjs';
 import { StatefulService, mutation } from 'services/core';
 import { NicoliveClient, isOk } from './NicoliveClient';
 import { NicoliveFailure, openErrorDialogFromFailure } from './NicoliveFailure';
+import { isFakeMode } from 'util/fakeMode';
 
 interface INicoliveSupportersService {
   // supporter の userId 集合
@@ -17,6 +18,9 @@ export class NicoliveSupportersService extends StatefulService<INicoliveSupporte
   private stateChangeSubject = new Subject<typeof this.state>();
 
   async update(): Promise<string[]> {
+    if (isFakeMode()) {
+      return [];
+    }
     const limit = 1000;
     const supporterIds: string[] = [];
 
