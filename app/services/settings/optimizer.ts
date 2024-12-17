@@ -682,7 +682,6 @@ export class SettingsKeyAccessor {
 
   private getCategory(category: CategoryName, reload: boolean = false): ISettingsSubCategory[] {
     if (reload || !this.categoryCache.has(category)) {
-      console.log(`getCategory: ${category}`);
       this.categoryCache.set(category, this.accessor.getSettingsFormData(category));
     }
     return this.categoryCache.get(category);
@@ -741,7 +740,6 @@ export class SettingsKeyAccessor {
    * 値を1つ設定する
    */
   setValue(item: KeyDescription, value: TObsValue) {
-    console.log(`setValue: ${item.category}/${item.key}: ${value}`);
     const setting = this.findSetting(item);
     if (setting) {
       if (setting.value !== value) {

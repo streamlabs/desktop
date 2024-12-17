@@ -591,6 +591,7 @@ export class SettingsService
     Sentry.withScope(scope => {
       scope.setLevel('error');
       scope.setTag('optimizeForNiconico', 'failed');
+      scope.setExtra('best', best);
       scope.setFingerprint(['optimizeForNiconico', 'failed']);
       Sentry.captureMessage('optimizeForNiconico: 最適化リトライ満了したが設定できなかった');
     });
