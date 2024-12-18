@@ -816,7 +816,14 @@ export class SettingsKeyAccessor {
     );
   }
 
-  *getSettings(keyDescriptions: KeyDescription[]): IterableIterator<[OptimizationKey, any]> {
+  *getSettings(
+    keyDescriptions: KeyDescription[],
+  ): IterableIterator<
+    [
+      OptimizationKey,
+      (IObsInput<TObsValue> | IObsListInput<TObsValue>) & { options?: { value: any }[] },
+    ]
+  > {
     yield* this.traverseKeyDescriptions(
       keyDescriptions,
       (item: KeyDescription): [OptimizationKey, any] => {
@@ -825,7 +832,10 @@ export class SettingsKeyAccessor {
       },
     );
   }
-  getSetting(key: OptimizationKey, keyDescriptions: KeyDescription[]): any {
+  getSetting(
+    key: OptimizationKey,
+    keyDescriptions: KeyDescription[] = AllKeyDescriptions,
+  ): (IObsInput<TObsValue> | IObsListInput<TObsValue>) & { options?: { value: any }[] } {
     for (const kv of this.getSettings(keyDescriptions)) {
       if (kv[0] === key) {
         return kv[1];

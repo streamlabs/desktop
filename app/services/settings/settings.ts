@@ -24,6 +24,7 @@ import Utils from '../utils';
 import { getBestSettingsForNiconico } from './niconico-optimization';
 import {
   ISettingsAccessor,
+  OptimizationKey,
   OptimizeSettings,
   OptimizedSettings,
   Optimizer,
@@ -578,15 +579,21 @@ export class SettingsService
         }
         return;
       }
+
+      const encoder = accessor.getSetting(OptimizationKey.encoder);
       Sentry.withScope(scope => {
         scope.setLevel('warning');
         scope.setTag('optimizeForNiconico', 'partial');
         scope.setTag('retry', `${retry}`);
         scope.setFingerprint(['optimizeForNiconico', 'partial']);
         scope.setExtra('delta', delta);
+        if (encoder && encoder.options) {
+          scope.setExtra('encoder.options', encoder.options);
+        }
         Sentry.captureMessage(`optimizeForNiconico: optimization setting is not set perfectly`);
       });
     }
+
     // send to Sentry
     Sentry.withScope(scope => {
       scope.setLevel('error');
