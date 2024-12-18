@@ -1,8 +1,11 @@
+import * as Sentry from '@sentry/electron/renderer';
 import electron from 'electron';
 import { Inject } from 'services/core/injector';
 import { Service } from 'services/core/service';
 import { NavigationService } from 'services/navigation';
 import { URL, URLSearchParams } from 'url';
+import { SettingsService } from './settings';
+import Utils from './utils';
 
 function protocolHandler(base: string) {
   return (target: any, methodName: string, descriptor: PropertyDescriptor) => {
@@ -23,6 +26,7 @@ interface IProtocolLinkInfo {
 
 export class ProtocolLinksService extends Service {
   @Inject() navigationService: NavigationService;
+  @Inject() settingsService: SettingsService;
 
   // Maps base URL components to handler function names
   private handlers: Dictionary<string>;
@@ -47,9 +51,25 @@ export class ProtocolLinksService extends Service {
       query: parsed.searchParams,
     };
 
+    if (Utils.isDevMode()) {
+      console.log('Handling protocol link', info);
+    }
+    Sentry.addBreadcrumb({
+      category: 'protocol-link',
+      message: 'Handling protocol link',
+      data: info,
+    });
+
     if (this.handlers[info.base]) {
       // @ts-expect-error ts7053
       this[this.handlers[info.base]](info);
     }
+  }
+
+  @protocolHandler('settings')
+  private openSettings(info: IProtocolLinkInfo) {
+    const category = info.path.replace('/', '');
+
+    this.settingsService.showSettings(category);
   }
 }
