@@ -111,6 +111,7 @@ if ((isProduction || process.env.NAIR_REPORT_TO_SENTRY) && !remote.process.env.N
 
 require('./app.less');
 require('./theme.less');
+require('./theme2.less');
 
 // Initiates tooltips and sets their parent wrapper
 Vue.use(VTooltip);
@@ -280,8 +281,4 @@ if (Utils.isDevMode()) {
   window.addEventListener('keyup', ev => {
     if (ev.key === 'F12') electron.ipcRenderer.send('openDevTools');
   });
-}
-
-if (process.env.DEV_SERVER) {
-  electron.ipcRenderer.send('openDevTools');
 }

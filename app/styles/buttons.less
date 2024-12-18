@@ -387,3 +387,173 @@ button {
     }
   }
 }
+
+// デザインシステム適用版
+
+//　button
+.basic-button {
+  &[data-size='sm'] {
+    --font-size: var(--font-size-xs);
+    --height: var(--button-height-sm);
+    --padding: var(--button-padding-sm);
+  }
+
+  &[data-size='md'] {
+    --font-size: var(--font-size-sm);
+    --height: var(--button-height-md);
+    --padding: var(--button-padding-md);
+  }
+
+  &[data-size='lg'] {
+    --font-size: var(--font-size-lg);
+    --height: var(--button-height-lg);
+    --padding: var(--button-padding-lg);
+  }
+
+  &[data-radius='sm'] {
+    --radius: var(--radius-sm);
+  }
+
+  &[data-radius='lg'] {
+    --radius: var(--radius-lg);
+  }
+
+  &[data-color='primary'] {
+    --color-base: var(--color-button-primary);
+  }
+
+  &[data-color='secondary'] {
+    --color-base: var(--color-object-emphasis-high);
+  }
+
+  &[data-variant='filled'] {
+    --color-text: var(--white);
+    --color-border: transparent;
+    --color-bg: var(--color-base);
+    --color-bg-hover: color-mix(in srgb, var(--color-base) 80%, transparent);
+  }
+
+  &[data-variant='light'] {
+    --color-text: var(--color-base);
+    --color-border: transparent;
+    --color-bg: color-mix(in srgb, var(--color-base) 16%, transparent);
+    --color-bg-hover: color-mix(in srgb, var(--color-object-emphasis-high) 20%, transparent);
+  }
+
+  &[data-variant='sabtle'] {
+    --color-text: var(--color-base);
+    --color-border: transparent;
+    --color-bg: transparent;
+    --color-bg-hover: color-mix(in srgb, var(--color-base) 20%, transparent);
+  }
+
+  &[data-variant='outline'] {
+    --color-text: var(--color-base);
+    --color-border: var(--color-base);
+    --color-bg: transparent;
+    --color-bg-hover: color-mix(in srgb, var(--color-base) 5%, transparent);
+  }
+
+  height: var(--height);
+  padding-inline: var(--padding);
+  font-size: var(--font-size);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+
+  .transition;
+
+  &:disabled {
+    opacity: var(--opacity-disabled);
+  }
+
+  &:not(:disabled):hover {
+    background-color: var(--color-bg-hover);
+  }
+}
+
+// action-icon用
+.action-icon {
+  &[data-size='sm'] {
+    --size: var(--action-icon-size-sm);
+  }
+
+  &[data-size='md'] {
+    --size: var(--action-icon-size-md);
+  }
+
+  &[data-size='lg'] {
+    --size: var(--action-icon-size-lg);
+  }
+
+  &[data-radius='sm'] {
+    --radius: var(--radius-sm);
+  }
+
+  &[data-radius='lg'] {
+    --radius: var(--radius-lg);
+  }
+
+  &[data-color='secondary'] {
+    --color-base: var(--color-object-emphasis-medium);
+    --color-base-active: var(--color-object-accent-primary);
+  }
+
+  &[data-variant='filled'] {
+    --color-text: var(--color-object-emphasis-high);
+    --color-text-active: var(--color-object-emphasis-inverse);
+    --color-bg: var(--color-base);
+    --color-bg-hover: color-mix(in srgb, var(--color-base) 80%, transparent);
+    --color-bg-active: var(--color-base-active);
+    --color-border: transparent;
+    --color-border-active: transparent;
+  }
+
+  &[data-variant='light'] {
+    --color-text: var(--color-object-emphasis-high);
+    --color-text-active: var(--color-base-active);
+    --color-bg: color-mix(in srgb, var(--color-base) 16%, transparent);
+    --color-bg-hover: color-mix(in srgb, var(--color-base) 20%, transparent);
+    --color-bg-active: color-mix(in srgb, var(--color-base-active) 20%, transparent);
+    --color-border: transparent;
+    --color-border-active: transparent;
+  }
+
+  &[data-variant='sabtle'] {
+    --color-text: var(--color-object-emphasis-high);
+    --color-text-active: var(--color-base-active);
+    --color-bg: transparent;
+    --color-bg-hover: color-mix(in srgb, var(--color-base) 20%, transparent);
+    --color-bg-active: color-mix(in srgb, var(--color-base-active) 20%, transparent);
+    --color-border: transparent;
+    --color-border-active: transparent;
+  }
+
+  &[data-variant='outline'] {
+    --color-text: var(--color-object-emphasis-high);
+    --color-text-active: var(--color-base-active);
+    --color-bg: transparent;
+    --color-bg-hover: color-mix(in srgb, var(--color-text) 5%, transparent);
+    --color-bg-active: color-mix(in srgb, var(--color-base-active) 20%, transparent);
+    --color-border: var(--color-base);
+    --color-border-active: var(--color-base-active);
+  }
+
+  width: var(--size);
+  height: var(--size);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+
+  .transition;
+
+  &:disabled {
+    opacity: var(--opacity-disabled);
+  }
+
+  &:not(:disabled):hover {
+    background-color: var(--color-bg-hover);
+  }
+}

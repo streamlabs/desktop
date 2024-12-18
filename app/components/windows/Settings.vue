@@ -107,7 +107,7 @@
 
     .input-label {
       label {
-        margin-bottom: 12px;
+        margin-bottom: 8px;
       }
 
       button {
