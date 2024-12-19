@@ -648,6 +648,15 @@ function initialize(crashHandler) {
   app.setAsDefaultProtocolClient('n-air-app');
 
   app.on('second-instance', (event, argv, cwd) => {
+    console.log('second-instance', argv, cwd);
+    SentryElectron.addBreadcrumb({
+      category: 'app',
+      message: 'second-instance',
+      data: {
+        argv,
+        cwd,
+      },
+    });
     // Check for protocol links in the argv of the other process
     argv.forEach(arg => {
       if (arg.match(/^n-air-app:\/\//)) {
