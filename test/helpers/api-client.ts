@@ -343,7 +343,7 @@ export async function getApiClient() {
 class ApiEventWatcher {
   receivedEvents: IJsonRpcEvent[] = [];
   private subscriptions: Subscription[];
-  private eventReceived = new Subject();
+  private eventReceived = new Subject<void>();
 
   constructor(private apiClient: ApiClient, private eventNames: string[]) {
     // start watching for events
