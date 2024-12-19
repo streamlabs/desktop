@@ -308,7 +308,7 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
 
   startUpdateSupporters(
     interval_ms: number,
-    closer: Subject<unknown>,
+    closer: Subject<void>,
   ): { isSupporter: (userId: string) => boolean } {
     let supporters = new Set<string>();
     const isSupporter = (userId: string) => supporters.has(userId);
@@ -334,7 +334,7 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
 
   private connect() {
     // コメント接続が切断したときにすべて止めるためのSubject
-    const closer = new Subject();
+    const closer = new Subject<void>();
 
     const { isSupporter } = this.startUpdateSupporters(SUPPORTERS_REFRESH_INTERVAL, closer);
 
