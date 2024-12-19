@@ -282,3 +282,7 @@ if (Utils.isDevMode()) {
     if (ev.key === 'F12') electron.ipcRenderer.send('openDevTools');
   });
 }
+
+if (process.env.DEV_SERVER) {
+  electron.ipcRenderer.send('openDevTools');
+}
