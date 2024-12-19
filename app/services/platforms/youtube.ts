@@ -28,6 +28,7 @@ import { UsageStatisticsService } from 'app-services';
 interface IYoutubeServiceState extends IPlatformState {
   liveStreamingEnabled: boolean;
   streamId: string;
+  verticalStreamKey: string;
   broadcastStatus: TBroadcastLifecycleStatus | '';
   settings: IYoutubeStartStreamOptions;
   categories: IYoutubeCategory[];
@@ -189,6 +190,7 @@ export class YoutubeService
     ...BasePlatformService.initialState,
     liveStreamingEnabled: true,
     streamId: '',
+    verticalStreamKey: '',
     broadcastStatus: '',
     categories: [],
     settings: {
@@ -298,6 +300,34 @@ export class YoutubeService
       });
     }
 
+    // const setupVertical = this.horizontalStreamStarted.subscribe(async () => {
+    //   // create vertical
+    //   const verticalBroadcast = await this.createBroadcast(ytSettings);
+    //   const verticalStream = await this.createLiveStream(verticalBroadcast.snippet.title);
+    //   await this.updateCategory(verticalBroadcast.id, ytSettings.categoryId!);
+
+    //   const verticalStreamKey = verticalStream.cdn.ingestionInfo.streamName;
+
+    //   const destinations = this.streamingService.views.customDestinations;
+
+    //   const dest = {
+    //     name: `${ytSettings.title}-vert`,
+    //     streamKey: verticalStreamKey,
+    //     url: 'rtmp://a.rtmp.youtube.com/live2',
+    //     enabled: true,
+    //     display: 'vertical' as TDisplayType,
+    //     mode: 'portrait' as TOutputOrientation,
+    //   };
+
+    //   destinations.push(dest);
+
+    //   this.SET_VERTICAL_STREAM_KEY(verticalStreamKey);
+    //   this.streamSettingsService.setGoLiveSettings({ customDestinations: destinations });
+
+    //   console.log('beforeGoLive this.state.verticalStreamKey', this.state.verticalStreamKey);
+    //   setupVertical.unsubscribe();
+    // });
+
     // create a LiveStream object and bind it with current LiveBroadcast
     let stream: IYoutubeLiveStream;
     if (!broadcast.contentDetails.boundStreamId) {
@@ -318,11 +348,40 @@ export class YoutubeService
         {
           platform: 'youtube',
           key: streamKey,
-          streamType: 'rtmp_common',
+          streamType: 'rtmp_custom',
           server: 'rtmp://a.rtmp.youtube.com/live2',
         },
-        context,
+        'horizontal',
+        // context,
       );
+
+      console.log('creating vertical');
+
+      // create vertical
+      const verticalBroadcast = await this.createBroadcast(ytSettings);
+      const verticalStream = await this.createLiveStream(verticalBroadcast.snippet.title);
+      await this.updateCategory(verticalBroadcast.id, ytSettings.categoryId!);
+
+      const verticalStreamKey = verticalStream.cdn.ingestionInfo.streamName;
+
+      const destinations = this.streamingService.views.customDestinations;
+
+      const dest = {
+        name: `${ytSettings.title}-vert`,
+        streamKey: verticalStreamKey,
+        url: 'rtmp://a.rtmp.youtube.com/live2',
+        enabled: true,
+        display: 'vertical' as TDisplayType,
+        mode: 'portrait' as TOutputOrientation,
+      };
+
+      destinations.push(dest);
+
+      this.SET_VERTICAL_STREAM_KEY(verticalStreamKey);
+      this.streamSettingsService.setGoLiveSettings({ customDestinations: destinations });
+
+      console.log('beforeGoLive this.state.verticalStreamKey', this.state.verticalStreamKey);
+      // this.horizontalStreamStarted.next();
     }
 
     this.UPDATE_STREAM_SETTINGS({ ...ytSettings, broadcastId: broadcast.id });
@@ -330,6 +389,16 @@ export class YoutubeService
     this.SET_STREAM_KEY(streamKey);
 
     this.setPlatformContext('youtube');
+  }
+
+  async afterStopStream() {
+    const destinations = this.streamingService.views.customDestinations.filter(
+      dest => dest.streamKey !== this.state.verticalStreamKey,
+    );
+
+    this.SET_VERTICAL_STREAM_KEY('');
+    this.streamSettingsService.setGoLiveSettings({ customDestinations: destinations });
+    console.log('afterStopStream this.state.verticalStreamKey', this.state.verticalStreamKey);
   }
 
   /**
@@ -827,6 +896,11 @@ export class YoutubeService
   @mutation()
   private SET_STREAM_ID(streamId: string) {
     this.state.streamId = streamId;
+  }
+
+  @mutation()
+  private SET_VERTICAL_STREAM_KEY(verticalStreamKey: string) {
+    this.state.verticalStreamKey = verticalStreamKey;
   }
 
   @mutation()
