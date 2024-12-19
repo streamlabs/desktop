@@ -23,7 +23,9 @@
   </multiselect>
 </template>
 
-<style scoped>
+<style lang="less" scoped>
+@import url('../styles/index');
+
 .voption {
   display: flex;
   align-items: center;
@@ -32,6 +34,12 @@
 .voption img {
   height: 24px;
   margin-right: 8px;
+}
+
+.voption span {
+  height: 100%;
+
+  .text-ellipsis;
 }
 </style>
 <script lang="ts" src="./IconListSelect.vue.ts"></script>
@@ -48,6 +56,7 @@
 
 /deep/ .multiselect__single,
 .multiselect__placeholder {
+  width: 100%;
   height: @item-height;
   line-height: @item-height;
 }
