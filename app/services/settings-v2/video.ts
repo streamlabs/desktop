@@ -55,7 +55,7 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
     //  vertical: null as IVideoInfo,
   };
 
-  establishedContext = new Subject();
+  establishedContext = new Subject<void>();
 
   init() {
     this.establishVideoContext();
