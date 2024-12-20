@@ -392,6 +392,10 @@
 
   .multiselect {
     flex-grow: 1;
+
+    & + .multiselect {
+      flex-grow: 1.4;
+    }
   }
 
   .action-icon {
