@@ -24,11 +24,13 @@ import { IVideo } from 'obs-studio-node';
 import pick from 'lodash/pick';
 import { TOutputOrientation } from 'services/restream';
 import { UsageStatisticsService } from 'app-services';
+import { ICustomStreamDestination } from 'services/settings/streaming';
 
 interface IYoutubeServiceState extends IPlatformState {
   liveStreamingEnabled: boolean;
   streamId: string;
   verticalStreamKey: string;
+  verticalBroadcast: IYoutubeLiveBroadcast;
   broadcastStatus: TBroadcastLifecycleStatus | '';
   settings: IYoutubeStartStreamOptions;
   categories: IYoutubeCategory[];
@@ -191,6 +193,7 @@ export class YoutubeService
     liveStreamingEnabled: true,
     streamId: '',
     verticalStreamKey: '',
+    verticalBroadcast: {} as IYoutubeLiveBroadcast,
     broadcastStatus: '',
     categories: [],
     settings: {
@@ -280,6 +283,101 @@ export class YoutubeService
     this.state.liveStreamingEnabled = enabled;
   }
 
+  async createVertical(settings: IGoLiveSettings): Promise<ICustomStreamDestination> {
+    // {
+    //   id: string;
+    //   snippet: {
+    //     isDefaultStream: boolean;
+    //   };
+    //   cdn: {
+    //     ingestionInfo: {
+    //       /**
+    //        * streamName is actually a secret stream key
+    //        */
+    //       streamName: string;
+    //       ingestionAddress: string;
+    //     };
+    //     resolution: string;
+    //     frameRate: string;
+    //   };
+    //   status: {
+    //     streamStatus: TStreamStatus;
+    //   };
+    // }
+
+    const ytSettings = getDefined(settings.platforms.youtube);
+    const title = `${ytSettings.title}-vert`;
+
+    // OG:
+    // if (!streamToScheduledBroadcast) {
+    //   broadcast = await this.createBroadcast(ytSettings);
+    // } else {
+    //   assertIsDefined(ytSettings.broadcastId);
+    //   await this.updateBroadcast(ytSettings.broadcastId, ytSettings);
+    //   broadcast = await this.fetchBroadcast(ytSettings.broadcastId);
+    // }
+    // NOW:
+    const verticalBroadcast = await this.createBroadcast({ ...ytSettings, title });
+    console.log('verticalBroadcast', JSON.stringify(verticalBroadcast, null, 2));
+
+    // OG:
+    // let stream: IYoutubeLiveStream;
+    // if (!broadcast.contentDetails.boundStreamId) {
+    //   stream = await this.createLiveStream(broadcast.snippet.title);
+    //   await this.bindStreamToBroadcast(broadcast.id, stream.id);
+    // } else {
+    //   stream = await this.fetchLiveStream(broadcast.contentDetails.boundStreamId);
+    // }
+    // NOW:
+    const verticalStream = await this.createLiveStream(verticalBroadcast.snippet.title);
+    const verticalBoundBroadcast = await this.bindStreamToBroadcast(
+      verticalBroadcast.id,
+      verticalStream.id,
+    );
+    console.log('verticalStream', JSON.stringify(verticalStream, null, 2));
+    console.log('verticalBoundBroadcast', JSON.stringify(verticalBoundBroadcast, null, 2));
+
+    await this.updateCategory(verticalBroadcast.id, ytSettings.categoryId!);
+
+    const verticalStreamKey = verticalStream.cdn.ingestionInfo.streamName;
+    this.SET_VERTICAL_STREAM_KEY(verticalStreamKey);
+    this.SET_VERTICAL_BROADCAST(verticalBoundBroadcast);
+    console.log('createVertical this.state.verticalStreamKey', this.state.verticalStreamKey);
+    console.log('createVertical verticalBroadcast', verticalBoundBroadcast);
+
+    // JUST TO CHECK:
+    const liveBroadcast = await this.fetchLiveStream(
+      this.state.verticalBroadcast.contentDetails.boundStreamId,
+    );
+    console.log('fetched vertical', JSON.stringify(liveBroadcast, null, 2));
+
+    return {
+      name: title,
+      streamKey: verticalStreamKey,
+      url: 'rtmps://a.rtmps.youtube.com/live2',
+      enabled: true,
+      display: 'vertical' as TDisplayType,
+      mode: 'portrait' as TOutputOrientation,
+    };
+  }
+
+  async logStreams() {
+    console.log('this.state.settings.broadcastId', this.state.settings.broadcastId);
+    console.log(
+      'this.state.verticalBroadcast.contentDetails.boundStreamId',
+      this.state.verticalBroadcast.contentDetails.boundStreamId,
+    );
+
+    const horizontal = await this.fetchLiveStream(this.state.settings.broadcastId);
+    const vertical = await this.fetchLiveStream(
+      this.state.verticalBroadcast.contentDetails.boundStreamId,
+    );
+    console.log('horizontal', JSON.stringify(horizontal, null, 2));
+    console.log('vertical', JSON.stringify(vertical, null, 2));
+
+    return true;
+  }
+
   async beforeGoLive(settings: IGoLiveSettings, context?: TDisplayType) {
     const ytSettings = getDefined(settings.platforms.youtube);
 
@@ -289,6 +387,7 @@ export class YoutubeService
     let broadcast: IYoutubeLiveBroadcast;
     if (!streamToScheduledBroadcast) {
       broadcast = await this.createBroadcast(ytSettings);
+      console.log('horizontal broadcast', JSON.stringify(broadcast, null, 2));
     } else {
       assertIsDefined(ytSettings.broadcastId);
       await this.updateBroadcast(ytSettings.broadcastId, ytSettings);
@@ -300,42 +399,17 @@ export class YoutubeService
       });
     }
 
-    // const setupVertical = this.horizontalStreamStarted.subscribe(async () => {
-    //   // create vertical
-    //   const verticalBroadcast = await this.createBroadcast(ytSettings);
-    //   const verticalStream = await this.createLiveStream(verticalBroadcast.snippet.title);
-    //   await this.updateCategory(verticalBroadcast.id, ytSettings.categoryId!);
-
-    //   const verticalStreamKey = verticalStream.cdn.ingestionInfo.streamName;
-
-    //   const destinations = this.streamingService.views.customDestinations;
-
-    //   const dest = {
-    //     name: `${ytSettings.title}-vert`,
-    //     streamKey: verticalStreamKey,
-    //     url: 'rtmp://a.rtmp.youtube.com/live2',
-    //     enabled: true,
-    //     display: 'vertical' as TDisplayType,
-    //     mode: 'portrait' as TOutputOrientation,
-    //   };
-
-    //   destinations.push(dest);
-
-    //   this.SET_VERTICAL_STREAM_KEY(verticalStreamKey);
-    //   this.streamSettingsService.setGoLiveSettings({ customDestinations: destinations });
-
-    //   console.log('beforeGoLive this.state.verticalStreamKey', this.state.verticalStreamKey);
-    //   setupVertical.unsubscribe();
-    // });
-
     // create a LiveStream object and bind it with current LiveBroadcast
     let stream: IYoutubeLiveStream;
     if (!broadcast.contentDetails.boundStreamId) {
       stream = await this.createLiveStream(broadcast.snippet.title);
-      await this.bindStreamToBroadcast(broadcast.id, stream.id);
+      const b = await this.bindStreamToBroadcast(broadcast.id, stream.id);
+      console.log('b', JSON.stringify(b, null, 2));
     } else {
       stream = await this.fetchLiveStream(broadcast.contentDetails.boundStreamId);
     }
+
+    console.log('horizontal stream', JSON.stringify(stream, null, 2));
 
     // set the category
     await this.updateCategory(broadcast.id, ytSettings.categoryId!);
@@ -355,32 +429,32 @@ export class YoutubeService
         // context,
       );
 
-      console.log('creating vertical');
+      // console.log('creating vertical');
 
-      // create vertical
-      const verticalBroadcast = await this.createBroadcast(ytSettings);
-      const verticalStream = await this.createLiveStream(verticalBroadcast.snippet.title);
-      await this.updateCategory(verticalBroadcast.id, ytSettings.categoryId!);
+      // // create vertical
+      // const verticalBroadcast = await this.createBroadcast(ytSettings);
+      // const verticalStream = await this.createLiveStream(verticalBroadcast.snippet.title);
+      // await this.updateCategory(verticalBroadcast.id, ytSettings.categoryId!);
 
-      const verticalStreamKey = verticalStream.cdn.ingestionInfo.streamName;
+      // const verticalStreamKey = verticalStream.cdn.ingestionInfo.streamName;
 
-      const destinations = this.streamingService.views.customDestinations;
+      // const destinations = this.streamingService.views.customDestinations;
 
-      const dest = {
-        name: `${ytSettings.title}-vert`,
-        streamKey: verticalStreamKey,
-        url: 'rtmp://a.rtmp.youtube.com/live2',
-        enabled: true,
-        display: 'vertical' as TDisplayType,
-        mode: 'portrait' as TOutputOrientation,
-      };
+      // const dest = {
+      //   name: `${ytSettings.title}-vert`,
+      //   streamKey: verticalStreamKey,
+      //   url: 'rtmp://a.rtmp.youtube.com/live2',
+      //   enabled: true,
+      //   display: 'vertical' as TDisplayType,
+      //   mode: 'portrait' as TOutputOrientation,
+      // };
 
-      destinations.push(dest);
+      // destinations.push(dest);
 
-      this.SET_VERTICAL_STREAM_KEY(verticalStreamKey);
-      this.streamSettingsService.setGoLiveSettings({ customDestinations: destinations });
+      // this.SET_VERTICAL_STREAM_KEY(verticalStreamKey);
+      // this.streamSettingsService.setGoLiveSettings({ customDestinations: destinations });
 
-      console.log('beforeGoLive this.state.verticalStreamKey', this.state.verticalStreamKey);
+      // console.log('beforeGoLive this.state.verticalStreamKey', this.state.verticalStreamKey);
       // this.horizontalStreamStarted.next();
     }
 
@@ -396,6 +470,7 @@ export class YoutubeService
       dest => dest.streamKey !== this.state.verticalStreamKey,
     );
 
+    this.SET_VERTICAL_BROADCAST({} as IYoutubeLiveBroadcast);
     this.SET_VERTICAL_STREAM_KEY('');
     this.streamSettingsService.setGoLiveSettings({ customDestinations: destinations });
     console.log('afterStopStream this.state.verticalStreamKey', this.state.verticalStreamKey);
@@ -901,6 +976,11 @@ export class YoutubeService
   @mutation()
   private SET_VERTICAL_STREAM_KEY(verticalStreamKey: string) {
     this.state.verticalStreamKey = verticalStreamKey;
+  }
+
+  @mutation()
+  private SET_VERTICAL_BROADCAST(broadcast: IYoutubeLiveBroadcast) {
+    this.state.verticalBroadcast = broadcast;
   }
 
   @mutation()
