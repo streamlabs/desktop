@@ -118,5 +118,9 @@ td {
 & /deep/ .input-wrapper {
   display: flex;
   margin-bottom: 0;
+
+  .multiselect {
+    flex-grow: 1;
+  }
 }
 </style>
