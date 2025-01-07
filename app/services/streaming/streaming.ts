@@ -306,13 +306,28 @@ export class StreamingService
     // setup youtube vertical
     if (this.views.enabledPlatforms.includes('youtube')) {
       const ytvert = await this.youtubeService.createVertical(settings);
+      console.log('ytvert', ytvert);
 
       this.videoSettingsService.validateVideoContext('vertical');
 
       ytvert.video = this.videoSettingsService.contexts.vertical;
       console.log('ytvert.video', JSON.stringify(ytvert.video, null, 2));
 
-      settings.customDestinations.push(ytvert);
+      //settings.customDestinations.push(ytvert);
+      this.streamSettingsService.setSettings(
+        {
+          goLiveSettings: {
+            platforms: {
+              youtube: settings.platforms.youtube,
+            },
+            advancedMode: settings.advancedMode,
+          },
+          platform: 'youtube',
+          key: ytvert.streamKey,
+          server: ytvert.url,
+        },
+        'vertical',
+      );
     }
 
     // save enabled platforms to reuse setting with the next app start
