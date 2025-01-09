@@ -1,6 +1,17 @@
 import Vue from 'vue';
 import { mutation, StatefulService } from 'services/core/stateful-service';
-import { EOutputCode, Global, NodeObs } from '../../../obs-api';
+import {
+  EOutputCode,
+  Global,
+  NodeObs,
+  SimpleStreamingFactory,
+  ServiceFactory,
+  VideoEncoderFactory,
+  AudioEncoderFactory,
+  DelayFactory,
+  ReconnectFactory,
+  NetworkFactory,
+} from '../../../obs-api';
 import { Inject } from 'services/core/injector';
 import moment from 'moment';
 import padStart from 'lodash/padStart';
@@ -115,6 +126,9 @@ export class StreamingService
   streamingStateChange = new Subject<void>();
 
   powerSaveId: number;
+
+  // TODO
+  extraOutputs: any[] = [];
 
   private resolveStartStreaming: Function = () => {};
   private rejectStartStreaming: Function = () => {};
@@ -306,28 +320,14 @@ export class StreamingService
     // setup youtube vertical
     if (this.views.enabledPlatforms.includes('youtube')) {
       const ytvert = await this.youtubeService.createVertical(settings);
-      console.log('ytvert', ytvert);
+      //console.log('ytvert', ytvert);
 
       this.videoSettingsService.validateVideoContext('vertical');
 
       ytvert.video = this.videoSettingsService.contexts.vertical;
-      console.log('ytvert.video', JSON.stringify(ytvert.video, null, 2));
+      //console.log('ytvert.video', JSON.stringify(ytvert.video, null, 2));
 
-      //settings.customDestinations.push(ytvert);
-      this.streamSettingsService.setSettings(
-        {
-          goLiveSettings: {
-            platforms: {
-              youtube: settings.platforms.youtube,
-            },
-            advancedMode: settings.advancedMode,
-          },
-          platform: 'youtube',
-          key: ytvert.streamKey,
-          server: ytvert.url,
-        },
-        'vertical',
-      );
+      this.extraOutputs.push(ytvert);
     }
 
     // save enabled platforms to reuse setting with the next app start
@@ -950,6 +950,7 @@ export class StreamingService
     // start streaming
     if (this.views.isDualOutputMode || this.views.enabledPlatforms.includes('youtube')) {
       // start dual output
+      const { extraOutputs } = this;
       console.log(
         'start streaming this.views.settings',
         JSON.stringify(this.views.settings, null, 2),
@@ -961,17 +962,70 @@ export class StreamingService
       NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
       NodeObs.OBS_service_setVideoInfo(verticalContext, 'vertical');
 
+      extraOutputs.forEach(output => {
+        console.log('creating extra output for ', output.name);
+        try {
+          const stream = SimpleStreamingFactory.create();
+          console.log('created simple factory');
+          stream.enforceServiceBitrate = false;
+          stream.enableTwitchVOD = false;
+
+          const context = this.videoSettingsService.contexts[output.display];
+          console.log('setting context to ', context);
+          stream.video = context;
+
+          // TODO: how to fetch encoders from the other streams
+          stream.videoEncoder = VideoEncoderFactory.create('obs_x264', 'video-encoder');
+          stream.audioEncoder = AudioEncoderFactory.create();
+
+          // TODO: are all this necessary
+          stream.delay = DelayFactory.create();
+          stream.reconnect = ReconnectFactory.create();
+          stream.network = NetworkFactory.create();
+
+          const service = ServiceFactory.create('rtmp_common', output.name, {
+            key: output.streamKey,
+            server: output.url,
+            username: '',
+            password: '',
+            use_auth: false,
+            streamType: 'rtmp_custom',
+          });
+          NodeObs.OBS_service_setVideoInfo(context, service.name);
+          stream.service = service;
+
+          output.stream = stream;
+
+          // TODO: are we handling signals, or do we need to
+        } catch (e: unknown) {
+          console.error(e);
+        }
+      });
+
       const signalChanged = this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
         if (signalInfo.service === 'default') {
           if (signalInfo.code !== 0) {
             NodeObs.OBS_service_stopStreaming(true, 'horizontal');
             NodeObs.OBS_service_stopStreaming(true, 'vertical');
+
+            extraOutputs.forEach(output => {
+              console.log('destroying stream for ', output.name);
+              output.stream?.stop();
+            });
+
+            this.extraOutputs = [];
           }
 
           if (signalInfo.signal === EOBSOutputSignal.Start) {
             console.log('starting vertical');
 
             NodeObs.OBS_service_startStreaming('vertical');
+
+            extraOutputs.forEach(output => {
+              console.log('starting stream for ', output.name);
+              output.stream?.start();
+            });
+
             signalChanged.unsubscribe();
 
             this.youtubeService.logStreams();
