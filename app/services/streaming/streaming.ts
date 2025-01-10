@@ -962,8 +962,8 @@ export class StreamingService
       const horizontalContext = this.videoSettingsService.contexts.horizontal;
       const verticalContext = this.videoSettingsService.contexts.vertical;
 
-      NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
-      NodeObs.OBS_service_setVideoInfo(verticalContext, 'vertical');
+      //NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
+      //NodeObs.OBS_service_setVideoInfo(verticalContext, 'vertical');
 
       extraOutputs.forEach(output => {
         console.log('creating extra output for ', output.name);
@@ -975,17 +975,9 @@ export class StreamingService
 
           const context = this.videoSettingsService.contexts[output.display];
           console.log('setting context to ', context);
-          stream.video = context;
 
           // TODO: how to fetch encoders from the other streams
           stream.videoEncoder = VideoEncoderFactory.create('obs_x264', 'video-encoder');
-          stream.audioEncoder = AudioEncoderFactory.create();
-
-          // TODO: are all this necessary
-          stream.delay = DelayFactory.create();
-          stream.reconnect = ReconnectFactory.create();
-          stream.network = NetworkFactory.create();
-
           const service = ServiceFactory.create('rtmp_common', output.name, {
             key: output.streamKey,
             server: output.url,
@@ -997,6 +989,13 @@ export class StreamingService
           // NodeObs.OBS_service_setVideoInfo(context, service.name);
           stream.service = service;
 
+          // TODO: are all this necessary
+          stream.delay = DelayFactory.create();
+          stream.reconnect = ReconnectFactory.create();
+          stream.network = NetworkFactory.create();
+          stream.video = context;
+          stream.audioEncoder = AudioEncoderFactory.create();
+
           output.stream = stream;
 
           // TODO: are we handling signals, or do we need to
@@ -1005,11 +1004,16 @@ export class StreamingService
         }
       });
 
+      extraOutputs.forEach(output => {
+        console.log('starting stream for ', output.name);
+        output.stream?.start();
+      });
+
       const signalChanged = this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
         if (signalInfo.service === 'default') {
           if (signalInfo.code !== 0) {
-            NodeObs.OBS_service_stopStreaming(true, 'horizontal');
-            NodeObs.OBS_service_stopStreaming(true, 'vertical');
+            //   NodeObs.OBS_service_stopStreaming(true, 'horizontal');
+            //  NodeObs.OBS_service_stopStreaming(true, 'vertical');
 
             try {
               extraOutputs.forEach(output => {
@@ -1024,14 +1028,9 @@ export class StreamingService
           }
 
           if (signalInfo.signal === EOBSOutputSignal.Start) {
-            console.log('starting vertical');
+            //console.log('starting vertical');
 
-            NodeObs.OBS_service_startStreaming('vertical');
-
-            extraOutputs.forEach(output => {
-              console.log('starting stream for ', output.name);
-              output.stream?.start();
-            });
+            //NodeObs.OBS_service_startStreaming('vertical');
 
             signalChanged.unsubscribe();
 
@@ -1040,9 +1039,9 @@ export class StreamingService
         }
       });
 
-      console.log('starting horizontal');
+      //console.log('starting horizontal');
 
-      NodeObs.OBS_service_startStreaming('horizontal');
+      //NodeObs.OBS_service_startStreaming('horizontal');
       // sleep for 1 second to allow the first stream to start
       await new Promise(resolve => setTimeout(resolve, 1000));
     } else {
