@@ -682,7 +682,6 @@ export class SettingsKeyAccessor {
 
   private getCategory(category: CategoryName, reload: boolean = false): ISettingsSubCategory[] {
     if (reload || !this.categoryCache.has(category)) {
-      console.log(`getCategory: ${category}`);
       this.categoryCache.set(category, this.accessor.getSettingsFormData(category));
     }
     return this.categoryCache.get(category);
@@ -741,7 +740,6 @@ export class SettingsKeyAccessor {
    * 値を1つ設定する
    */
   setValue(item: KeyDescription, value: TObsValue) {
-    console.log(`setValue: ${item.category}/${item.key}: ${value}`);
     const setting = this.findSetting(item);
     if (setting) {
       if (setting.value !== value) {
@@ -818,7 +816,14 @@ export class SettingsKeyAccessor {
     );
   }
 
-  *getSettings(keyDescriptions: KeyDescription[]): IterableIterator<[OptimizationKey, any]> {
+  *getSettings(
+    keyDescriptions: KeyDescription[],
+  ): IterableIterator<
+    [
+      OptimizationKey,
+      (IObsInput<TObsValue> | IObsListInput<TObsValue>) & { options?: { value: any }[] },
+    ]
+  > {
     yield* this.traverseKeyDescriptions(
       keyDescriptions,
       (item: KeyDescription): [OptimizationKey, any] => {
@@ -827,7 +832,10 @@ export class SettingsKeyAccessor {
       },
     );
   }
-  getSetting(key: OptimizationKey, keyDescriptions: KeyDescription[]): any {
+  getSetting(
+    key: OptimizationKey,
+    keyDescriptions: KeyDescription[] = AllKeyDescriptions,
+  ): (IObsInput<TObsValue> | IObsListInput<TObsValue>) & { options?: { value: any }[] } {
     for (const kv of this.getSettings(keyDescriptions)) {
       if (kv[0] === key) {
         return kv[1];
