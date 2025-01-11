@@ -318,7 +318,10 @@ export class StreamingService
     });
 
     // setup youtube vertical
-    if (this.views.enabledPlatforms.includes('youtube')) {
+    if (
+      this.views.enabledPlatforms.includes('youtube') &&
+      this.views.getPlatformSettings('youtube').hasExtraOutputs
+    ) {
       // TODO: this needs to fail gracefully, failing to create stream
       // (for example due to rate limits), leaves streaming window in
       // infinite load and other streams won't start.
@@ -953,18 +956,14 @@ export class StreamingService
     // start streaming
     if (this.views.isDualOutputMode || this.views.enabledPlatforms.includes('youtube')) {
       // start dual output
-      const { extraOutputs } = this;
-      console.log(
-        'start streaming this.views.settings',
-        JSON.stringify(this.views.settings, null, 2),
-      );
 
       const horizontalContext = this.videoSettingsService.contexts.horizontal;
       const verticalContext = this.videoSettingsService.contexts.vertical;
 
-      //NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
-      //NodeObs.OBS_service_setVideoInfo(verticalContext, 'vertical');
+      NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
+      NodeObs.OBS_service_setVideoInfo(verticalContext, 'vertical');
 
+      const { extraOutputs } = this;
       extraOutputs.forEach(output => {
         console.log('creating extra output for ', output.name);
         try {
@@ -975,9 +974,12 @@ export class StreamingService
 
           const context = this.videoSettingsService.contexts[output.display];
           console.log('setting context to ', context);
+          stream.video = context;
 
           // TODO: how to fetch encoders from the other streams
           stream.videoEncoder = VideoEncoderFactory.create('obs_x264', 'video-encoder');
+          stream.audioEncoder = AudioEncoderFactory.create();
+
           const service = ServiceFactory.create('rtmp_common', output.name, {
             key: output.streamKey,
             server: output.url,
@@ -986,16 +988,15 @@ export class StreamingService
             use_auth: false,
             streamType: 'rtmp_custom',
           });
-          // NodeObs.OBS_service_setVideoInfo(context, service.name);
+
           stream.service = service;
 
           // TODO: are all this necessary
           stream.delay = DelayFactory.create();
           stream.reconnect = ReconnectFactory.create();
           stream.network = NetworkFactory.create();
-          stream.video = context;
-          stream.audioEncoder = AudioEncoderFactory.create();
 
+          stream.signalHandler = this.handleOBSOutputSignal;
           output.stream = stream;
 
           // TODO: are we handling signals, or do we need to
@@ -1004,16 +1005,11 @@ export class StreamingService
         }
       });
 
-      extraOutputs.forEach(output => {
-        console.log('starting stream for ', output.name);
-        output.stream?.start();
-      });
-
       const signalChanged = this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
         if (signalInfo.service === 'default') {
           if (signalInfo.code !== 0) {
-            //   NodeObs.OBS_service_stopStreaming(true, 'horizontal');
-            //  NodeObs.OBS_service_stopStreaming(true, 'vertical');
+            NodeObs.OBS_service_stopStreaming(true, 'horizontal');
+            NodeObs.OBS_service_stopStreaming(true, 'vertical');
 
             try {
               extraOutputs.forEach(output => {
@@ -1028,20 +1024,23 @@ export class StreamingService
           }
 
           if (signalInfo.signal === EOBSOutputSignal.Start) {
-            //console.log('starting vertical');
+            console.log('starting vertical');
 
-            //NodeObs.OBS_service_startStreaming('vertical');
+            NodeObs.OBS_service_startStreaming('vertical');
+
+            extraOutputs.forEach(output => {
+              console.log('starting stream for ', output.name);
+              output.stream?.start();
+            });
 
             signalChanged.unsubscribe();
-
-            this.youtubeService.logStreams();
           }
         }
       });
 
-      //console.log('starting horizontal');
+      console.log('starting horizontal');
 
-      //NodeObs.OBS_service_startStreaming('horizontal');
+      NodeObs.OBS_service_startStreaming('horizontal');
       // sleep for 1 second to allow the first stream to start
       await new Promise(resolve => setTimeout(resolve, 1000));
     } else {

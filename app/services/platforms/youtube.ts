@@ -45,6 +45,8 @@ export interface IYoutubeStartStreamOptions extends IExtraBroadcastSettings {
   privacyStatus?: 'private' | 'public' | 'unlisted';
   scheduledStartTime?: number;
   mode?: TOutputOrientation;
+  /** Use extra output to stream a vertical context to a separate broadcast */
+  hasExtraOutputs?: boolean;
 }
 
 /**
@@ -359,23 +361,6 @@ export class YoutubeService
       display: 'vertical' as TDisplayType,
       mode: 'portrait' as TOutputOrientation,
     };
-  }
-
-  async logStreams() {
-    //console.log('this.state.settings.broadcastId', this.state.settings.broadcastId);
-    //console.log(
-    //  'this.state.verticalBroadcast.contentDetails.boundStreamId',
-    //this.state.verticalBroadcast.contentDetails.boundStreamId,
-    //);
-
-    const horizontal = await this.fetchLiveStream(this.state.settings.broadcastId);
-    const vertical = await this.fetchLiveStream(
-      this.state.verticalBroadcast.contentDetails.boundStreamId,
-    );
-    //console.log('horizontal', JSON.stringify(horizontal, null, 2));
-    //console.log('vertical', JSON.stringify(vertical, null, 2));
-
-    return true;
   }
 
   async beforeGoLive(settings: IGoLiveSettings, context?: TDisplayType) {

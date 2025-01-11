@@ -9,7 +9,6 @@ interface IDisplaySelectorProps {
   title: string;
   index: number;
   platform: TPlatform | null;
-  label: string;
   className?: string;
   style?: CSSProperties;
 }
@@ -24,6 +23,9 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
 
   const setting = p.platform ? platforms[p.platform] : customDestinations[p.index];
 
+  // TODO: better validation
+  const hasExtraOutputs = p.platform === 'youtube';
+
   const displays = [
     {
       label: $t('Horizontal'),
@@ -35,24 +37,39 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     },
   ];
 
+  if (hasExtraOutputs) {
+    // TODO: TS doesn't infer types on filter(id) so we're mutating array here
+    displays.push({
+      label: $t('Both'),
+      value: 'both',
+    });
+  }
+
+  const onChange = (val: TDisplayType | 'both') => {
+    if (p.platform) {
+      const display: TDisplayType =
+        // Use horizontal display, vertical stream will be created separately
+        hasExtraOutputs && val === 'both' ? 'horizontal' : (val as TDisplayType);
+      updatePlatform(p.platform, { display, hasExtraOutputs: val === 'both' });
+    } else {
+      updateCustomDestinationDisplay(p.index, val as TDisplayType);
+    }
+  };
+
+  // TODO: Fake accessor, improve, if nothing else fix type
+  const value = (setting as any)?.hasExtraOutputs ? 'both' : setting?.display;
+
   return (
     <RadioInput
+      nolabel
       data-test="display-input"
       id={`${p.platform}-display-input`}
       direction="horizontal"
-      label={p.label}
-      labelAlign="left"
-      labelCol={{ offset: 0 }}
-      colon
       gapsize={0}
       defaultValue="horizontal"
       options={displays}
-      onChange={(val: TDisplayType) =>
-        p.platform
-          ? updatePlatform(p.platform, { display: val })
-          : updateCustomDestinationDisplay(p.index, val)
-      }
-      value={setting?.display ?? 'horizontal'}
+      onChange={onChange}
+      value={value ?? 'horizontal'}
       className={p?.className}
       style={p?.style}
     />
