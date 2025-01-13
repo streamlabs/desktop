@@ -344,8 +344,6 @@ export class StreamingService
       // }
     }
 
-    debugger;
-
     // setup youtube vertical
     if (
       this.views.isDualOutputMode &&
