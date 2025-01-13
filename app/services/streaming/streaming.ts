@@ -319,6 +319,7 @@ export class StreamingService
 
     // setup youtube vertical
     if (
+      this.views.isDualOutputMode &&
       this.views.enabledPlatforms.includes('youtube') &&
       this.views.getPlatformSettings('youtube').hasExtraOutputs
     ) {
@@ -954,7 +955,7 @@ export class StreamingService
     this.powerSaveId = remote.powerSaveBlocker.start('prevent-display-sleep');
 
     // start streaming
-    if (this.views.isDualOutputMode || this.views.enabledPlatforms.includes('youtube')) {
+    if (this.views.isDualOutputMode) {
       // start dual output
 
       const horizontalContext = this.videoSettingsService.contexts.horizontal;
@@ -1135,7 +1136,7 @@ export class StreamingService
         remote.powerSaveBlocker.stop(this.powerSaveId);
       }
 
-      if (this.views.isDualOutputMode || this.views.enabledPlatforms.includes('youtube')) {
+      if (this.views.isDualOutputMode) {
         const signalChanged = this.signalInfoChanged.subscribe(
           (signalInfo: IOBSOutputSignalInfo) => {
             console.log('stopping vertical');
@@ -1183,7 +1184,7 @@ export class StreamingService
     }
 
     if (this.state.streamingStatus === EStreamingState.Ending) {
-      if (this.views.isDualOutputMode || this.views.enabledPlatforms.includes('youtube')) {
+      if (this.views.isDualOutputMode) {
         NodeObs.OBS_service_stopStreaming(true, 'horizontal');
         NodeObs.OBS_service_stopStreaming(true, 'vertical');
 
