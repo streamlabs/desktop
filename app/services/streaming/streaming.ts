@@ -316,27 +316,6 @@ export class StreamingService
       destination.video = this.videoSettingsService.contexts[display];
       destination.mode = this.views.getDisplayContextName(display);
     });
-
-    // setup youtube vertical
-    if (
-      this.views.isDualOutputMode &&
-      this.views.enabledPlatforms.includes('youtube') &&
-      this.views.getPlatformSettings('youtube').hasExtraOutputs
-    ) {
-      // TODO: this needs to fail gracefully, failing to create stream
-      // (for example due to rate limits), leaves streaming window in
-      // infinite load and other streams won't start.
-      const ytvert = await this.youtubeService.createVertical(settings);
-      //console.log('ytvert', ytvert);
-
-      this.videoSettingsService.validateVideoContext('vertical');
-
-      ytvert.video = this.videoSettingsService.contexts.vertical;
-      //console.log('ytvert.video', JSON.stringify(ytvert.video, null, 2));
-
-      this.extraOutputs.push(ytvert);
-    }
-
     // save enabled platforms to reuse setting with the next app start
     this.streamSettingsService.setSettings({ goLiveSettings: settings });
 
@@ -363,6 +342,28 @@ export class StreamingService
       //     yt.video = this.videoSettingsService.contexts[yt.display];
       //   }
       // }
+    }
+
+    debugger;
+
+    // setup youtube vertical
+    if (
+      this.views.isDualOutputMode &&
+      this.views.enabledPlatforms.includes('youtube') &&
+      this.views.getPlatformSettings('youtube').hasExtraOutputs
+    ) {
+      // TODO: this needs to fail gracefully, failing to create stream
+      // (for example due to rate limits), leaves streaming window in
+      // infinite load and other streams won't start.
+      const ytvert = await this.youtubeService.createVertical(settings);
+      //console.log('ytvert', ytvert);
+
+      this.videoSettingsService.validateVideoContext('vertical');
+
+      ytvert.video = this.videoSettingsService.contexts.vertical;
+      //console.log('ytvert.video', JSON.stringify(ytvert.video, null, 2));
+
+      this.extraOutputs.push(ytvert);
     }
 
     /**
