@@ -587,7 +587,7 @@ describe('startUpdateSupporters', () => {
   });
 
   const INTERVAL = 100;
-  const closer = new Subject();
+  const closer = new Subject<void>();
 
   function prepare() {
     const update = jest_fn<NicoliveSupportersService['update']>();
