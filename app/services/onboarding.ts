@@ -1,3 +1,4 @@
+import { Subject } from 'rxjs';
 import { Inject } from './core/injector';
 import { StatefulService, mutation } from './core/stateful-service';
 import { NavigationService } from './navigation';
@@ -53,6 +54,8 @@ export class OnboardingService extends StatefulService<IOnboardingServiceState> 
   };
 
   localStorageKey = 'UserHasBeenOnboarded';
+
+  completed = new Subject<void>();
 
   @Inject() navigationService: NavigationService;
   @Inject() userService: UserService;
@@ -124,6 +127,7 @@ export class OnboardingService extends StatefulService<IOnboardingServiceState> 
   finish() {
     localStorage.setItem(this.localStorageKey, 'true');
     this.navigationService.navigate('Studio');
+    this.completed.next();
   }
 
   private goToNextStep(step: TOnboardingStep) {
@@ -141,21 +145,27 @@ export class OnboardingService extends StatefulService<IOnboardingServiceState> 
     }
   }
 
-  startOnboardingIfRequired() {
+  startOnboardingIfRequired(): boolean {
     if (localStorage.getItem(this.localStorageKey)) {
-      this.forceLoginForSecurityUpgradeIfRequired();
-      return false;
+      const started = this.forceLoginForSecurityUpgradeIfRequired();
+      if (!started) {
+        this.completed.next();
+      }
+
+      return started;
     }
 
     this.start();
     return true;
   }
 
-  forceLoginForSecurityUpgradeIfRequired() {
-    if (!this.userService.isLoggedIn()) return;
+  forceLoginForSecurityUpgradeIfRequired(): boolean {
+    if (!this.userService.isLoggedIn()) return false;
 
     if (!this.userService.apiToken) {
       this.start({ isLogin: true, isSecurityUpgrade: true });
+      return true;
     }
+    return false;
   }
 }
