@@ -353,6 +353,7 @@ export class StreamingService
       // TODO: this needs to fail gracefully, failing to create stream
       // (for example due to rate limits), leaves streaming window in
       // infinite load and other streams won't start.
+      // It is also blocking.
       const ytvert = await this.youtubeService.createVertical(settings);
       //console.log('ytvert', ytvert);
 
