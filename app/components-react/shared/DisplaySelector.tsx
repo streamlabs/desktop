@@ -46,6 +46,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
   }
 
   const onChange = (val: TDisplayType | 'both') => {
+    console.log('DiplaySelector onChange:', val);
     if (p.platform) {
       const display: TDisplayType =
         // Use horizontal display, vertical stream will be created separately
@@ -56,8 +57,11 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     }
   };
 
-  // TODO: Fake accessor, improve, if nothing else fix type
-  const value = (setting as any)?.hasExtraOutputs ? 'both' : setting?.display;
+  // TODO: Fake accessor, improve, if nothing else, fix type
+  const value =
+    setting?.display === 'horizontal' && (setting as any)?.hasExtraOutputs
+      ? 'both'
+      : setting?.display;
 
   return (
     <RadioInput

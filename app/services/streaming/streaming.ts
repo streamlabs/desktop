@@ -1007,6 +1007,7 @@ export class StreamingService
       });
 
       const signalChanged = this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
+        console.log('on signal changed', signalInfo.service, signalInfo.code);
         if (signalInfo.service === 'default') {
           if (signalInfo.code !== 0) {
             NodeObs.OBS_service_stopStreaming(true, 'horizontal');
@@ -1015,6 +1016,8 @@ export class StreamingService
             extraOutputs.forEach(output => {
               console.log('destroying stream for ', output.name);
               output.stream?.stop();
+
+              SimpleStreamingFactory.destroy(output.stream);
             });
 
             this.extraOutputs = [];
@@ -1136,6 +1139,7 @@ export class StreamingService
         const signalChanged = this.signalInfoChanged.subscribe(
           (signalInfo: IOBSOutputSignalInfo) => {
             console.log('stopping vertical');
+            console.log('on signal changed 2', signalInfo.service, signalInfo.signal);
 
             if (
               signalInfo.service === 'default' &&
@@ -1146,6 +1150,7 @@ export class StreamingService
               this.extraOutputs.forEach(output => {
                 console.log('stopping stream for ', output.name);
                 output.stream?.stop();
+                SimpleStreamingFactory.destroy(output.stream);
               });
               this.extraOutputs = [];
               NodeObs.OBS_service_stopStreaming(false, 'vertical');
@@ -1182,6 +1187,7 @@ export class StreamingService
     }
 
     if (this.state.streamingStatus === EStreamingState.Ending) {
+      console.log('on streamingStatus ending');
       if (this.views.isDualOutputMode) {
         NodeObs.OBS_service_stopStreaming(true, 'horizontal');
         NodeObs.OBS_service_stopStreaming(true, 'vertical');
