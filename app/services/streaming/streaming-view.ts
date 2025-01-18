@@ -162,13 +162,12 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns if the user can or should use the restream service
    */
   get isMultiplatformMode(): boolean {
-    return false;
-    // if (this.isDualOutputMode) return false;
-    // return (
-    //   this.protectedModeEnabled &&
-    //   (this.enabledPlatforms.length > 1 ||
-    //     this.settings.customDestinations.filter(dest => dest.enabled).length > 0)
-    // );
+    if (this.isDualOutputMode) return false;
+    return (
+      this.protectedModeEnabled &&
+      (this.enabledPlatforms.length > 1 ||
+        this.settings.customDestinations.filter(dest => dest.enabled).length > 0)
+    );
   }
 
   /**
