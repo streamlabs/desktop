@@ -37,7 +37,7 @@
                   <span class="cellicon-label">{{ v.name }}</span>
                 </div>
 
-                <div class="indicator" :class="{ 'is-show': showPopupMenu }" slot="reference">
+                <div class="indicator" slot="reference">
                   <i class="icon-speaker" v-tooltip.bottom="`サンプルボイスを再生`"></i>
                 </div>
               </div>
