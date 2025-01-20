@@ -246,7 +246,7 @@
 .user-name {
   font-size: @font-size4;
   font-weight: @font-weight-bold;
-  line-height: @font-line-height-normal;
+  line-height: @font-line-height-md;
   color: var(--color-text-light);
   text-align: center;
   .text-ellipsis;
@@ -272,14 +272,14 @@
 .user-id {
   margin: 0;
   font-size: @font-size2;
-  line-height: @font-line-height-tight;
+  line-height: @font-line-height-sm;
   color: var(--color-text);
 }
 
 .user-type {
   margin: 0 0 0 8px;
   font-size: @font-size2;
-  line-height: @font-line-height-tight;
+  line-height: @font-line-height-sm;
   color: var(--color-text);
 
   &.is-premium {

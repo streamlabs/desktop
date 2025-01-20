@@ -6,107 +6,117 @@
           class="icon-speech-engine nav-icon"
           :class="{ 'nav-icon-active': tab == 0 }"
           @click="onTab(0)"
+          v-tooltip.bottom="`ボイス設定`"
         ></i>
         <i
           class="icon-settings nav-icon"
           :class="{ 'nav-icon-active': tab == 1 }"
           @click="onTab(1)"
+          v-tooltip.bottom="`共通設定`"
         ></i>
       </div>
 
       <div v-if="tab == 0" class="content-main">
         <div class="main-inner">
           <!-- presets -->
-          <div class="main-header">
-            {{ $t('source-props.nair-rtvc-source.nav.preset_voice') }}
-          </div>
-          <div class="main-list">
-            <div
-              v-for="v in presetList"
-              :key="v.index"
-              class="main-cell"
-              :class="{ active: v.index === currentIndex }"
-            >
-              <div class="cell-content" @click="onSelect(v.index)">
-                <div class="cellicon-wrapper">
-                  <img class="cellicon" :src="v.image" />
+          <section class="main-section">
+            <div class="main-header">
+              {{ $t('source-props.nair-rtvc-source.nav.preset_voice') }}
+            </div>
+            <div class="main-list">
+              <div
+                v-for="v in presetList"
+                :key="v.index"
+                class="main-cell"
+                :class="{ active: v.index === currentIndex }"
+              >
+                <div class="cell-content" @click="onSelect(v.index)">
+                  <div class="cellicon-wrapper">
+                    <img class="cellicon" :src="v.image" />
+                  </div>
+                  <span class="cellicon-label">{{ v.name }}</span>
                 </div>
-                <span class="cellicon-label">{{ v.name }}</span>
+
+                <div class="indicator" :class="{ 'is-show': showPopupMenu }" slot="reference">
+                  <i class="icon-speaker" v-tooltip.bottom="`サンプルボイスを再生`"></i>
+                </div>
               </div>
             </div>
-          </div>
+          </section>
 
           <!-- manuals -->
-          <div class="main-header">
-            {{ $t('source-props.nair-rtvc-source.nav.original_voice') }}
-          </div>
-          <div class="main-list">
-            <div
-              v-for="v in manualList"
-              :key="v.index"
-              class="main-cell"
-              :class="{ active: v.index === currentIndex }"
-            >
-              <div class="cell-content" @click="onSelect(v.index)">
-                <div class="cellicon-wrapper">
-                  <img class="cellicon" :src="v.image" />
-                </div>
-                <span class="cellicon-label">{{ v.name }}</span>
-              </div>
-
-              <popper
-                trigger="click"
-                :options="{ placement: 'bottom-end' }"
-                @show="
-                  showPopupMenu = true;
-                  popper = $event;
-                "
-                @hide="
-                  showPopupMenu = false;
-                  popper = undefined;
-                "
+          <section class="main-section">
+            <div class="main-header">
+              {{ $t('source-props.nair-rtvc-source.nav.original_voice') }}
+            </div>
+            <div class="main-list">
+              <div
+                v-for="v in manualList"
+                :key="v.index"
+                class="main-cell"
+                :class="{ active: v.index === currentIndex }"
               >
-                <div class="popper">
-                  <ul class="popup-menu-list">
-                    <li class="popup-menu-item">
-                      <button :disabled="!canAdd" class="link" @click="onCopy(v.index)">
-                        {{ $t('source-props.nair-rtvc-source.nav.copy_voice') }}
-                      </button>
-                    </li>
-                  </ul>
-                  <ul class="popup-menu-list">
-                    <li class="popup-menu-item">
-                      <button
-                        :disabled="!canDelete"
-                        class="link"
-                        :class="{ 'text--red': canDelete }"
-                        @click="onDelete(v.index)"
-                      >
-                        {{ $t('source-props.nair-rtvc-source.nav.remove_voice') }}
-                      </button>
-                    </li>
-                  </ul>
+                <div class="cell-content" @click="onSelect(v.index)">
+                  <div class="cellicon-wrapper">
+                    <img class="cellicon" :src="v.image" />
+                  </div>
+                  <span class="cellicon-label">{{ v.name }}</span>
                 </div>
-                <div class="indicator" :class="{ 'is-show': showPopupMenu }" slot="reference">
-                  <i class="icon-ellipsis-vertical"></i>
-                </div>
-              </popper>
-            </div>
 
-            <div class="main-cell" v-if="canAdd">
-              <div class="cell-content" @click="onAdd()">
-                <div class="cellicon-wrapper">
-                  <img
-                    class="cellicon"
-                    src="../../../media/images/voice_images/voice_original_add.png"
-                  />
+                <popper
+                  trigger="click"
+                  :options="{ placement: 'bottom-end' }"
+                  @show="
+                    showPopupMenu = true;
+                    popper = $event;
+                  "
+                  @hide="
+                    showPopupMenu = false;
+                    popper = undefined;
+                  "
+                >
+                  <div class="popper">
+                    <ul class="popup-menu-list">
+                      <li class="popup-menu-item">
+                        <button :disabled="!canAdd" class="link" @click="onCopy(v.index)">
+                          {{ $t('source-props.nair-rtvc-source.nav.copy_voice') }}
+                        </button>
+                      </li>
+                    </ul>
+                    <ul class="popup-menu-list">
+                      <li class="popup-menu-item">
+                        <button
+                          :disabled="!canDelete"
+                          class="link"
+                          :class="{ 'text--red': canDelete }"
+                          @click="onDelete(v.index)"
+                        >
+                          {{ $t('source-props.nair-rtvc-source.nav.remove_voice') }}
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                  <div class="indicator" :class="{ 'is-show': showPopupMenu }" slot="reference">
+                    <i class="icon-ellipsis-vertical" v-tooltip.bottom="`メニューを開く`"></i>
+                  </div>
+                </popper>
+              </div>
+
+              <div class="main-cell" v-if="canAdd">
+                <div class="cell-content" @click="onAdd()">
+                  <div class="cellicon-wrapper">
+                    <img
+                      class="cellicon"
+                      src="../../../media/images/voice_images/voice_original_add.png"
+                    />
+                  </div>
+                  <span class="cellicon-label">
+                    {{ $t('source-props.nair-rtvc-source.nav.add_voice') }}
+                  </span>
                 </div>
-                <span class="cellicon-label">
-                  {{ $t('source-props.nair-rtvc-source.nav.add_voice') }}
-                </span>
               </div>
             </div>
-          </div>
+          </section>
         </div>
 
         <div class="content-detail">
@@ -118,19 +128,15 @@
               <p class="description">{{ description }}</p>
             </div>
             <div class="frame-nameinput" v-else>
-              <div class="input-wrapper">
-                <input type="text" v-model="name" />
-              </div>
+              <input type="text" v-model="name" />
             </div>
           </div>
 
           <!-- detail bottom -->
           <div class="detail-bottom">
             <div>
-              <div class="labels">
-                <span class="header">
-                  {{ $t('source-props.nair-rtvc-source.nav.voice_setting') }}</span
-                >
+              <div class="header">
+                {{ $t('source-props.nair-rtvc-source.nav.voice_setting') }}
                 <span v-if="!isPreset"
                   ><button class="button--text" @click="onRandom">
                     {{ $t('source-props.nair-rtvc-source.container.make_random.name') }}
@@ -240,6 +246,7 @@
       <div v-if="tab == 1" class="content">
         <div class="content-container">
           <div class="section">
+            <div class="input-label"><label>共通設定</label></div>
             <div class="input-container">
               <div class="input-label">
                 <label>{{ $t('source-props.nair-rtvc-source.device.name') }}</label>
@@ -321,6 +328,8 @@
 <style lang="less" scoped>
 @import url('../../styles/index');
 
+// TODO:カラーはテーマ定義後差し替え
+
 .modal-layout {
   display: flex;
   flex-direction: column;
@@ -365,14 +374,21 @@
 
   display: flex;
   flex-direction: column;
+  gap: 8px;
   align-items: center;
-  min-width: 68px;
+  padding: 8px;
   background-color: var(--color-bg-quaternary);
 
   .nav-icon {
-    padding: 16px;
-    margin: 8px;
+    padding: 8px;
+    font-size: @font-size5;
+    cursor: pointer;
     border-radius: 4px;
+    .transition;
+
+    &:not(.nav-icon-active):hover {
+      color: var(--color-text-light);
+    }
   }
 
   .nav-icon-active {
@@ -388,22 +404,33 @@
   .main-inner {
     display: flex;
     flex-direction: column;
+    gap: 32px;
     width: 100%;
-    margin: 8px;
+    padding: 24px;
+    background-color: var(--color-bg-secondary);
   }
 }
 
 .content-detail {
   min-width: 248px;
   overflow: hidden;
-  border-left: 1px solid var(--color-border-dark);
+  background-color: var(--color-bg-secondary);
+  border-left: 1px solid var(--color-border-light);
 }
 
 //---------------------------
 
+.main-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .main-header {
-  margin-top: 24px;
+  font-size: @font-size4;
   font-weight: bold;
+  line-height: @font-line-height-sm;
+  color: var(--color-text-light);
 }
 
 .main-list {
@@ -411,7 +438,6 @@
   flex-direction: row;
   flex-wrap: wrap;
   gap: 24px;
-  margin: 8px;
 }
 
 .main-cell {
@@ -419,8 +445,6 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 96px;
-  height: 130px;
 
   .popper {
     .popper-styling();
@@ -430,20 +454,30 @@
 
   .indicator {
     position: absolute;
-    top: 68px;
+    top: 64px;
     right: 0;
-    display: none;
+    display: flex;
     align-items: center;
     justify-content: center;
     width: 32px;
     height: 32px;
-    color: black;
-    background: white;
+    color: var(--color-black);
+    pointer-events: none;
+    cursor: pointer;
+    background: var(--color-white);
     border-radius: 32px;
+    box-shadow: @shadow;
+    opacity: 0;
+    .transition;
+
+    &:hover {
+      color: var(--color-text-dark);
+    }
   }
 
   &:hover .indicator {
-    display: flex;
+    pointer-events: auto;
+    opacity: 1;
   }
 }
 
@@ -451,10 +485,9 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  gap: 8px;
   align-items: center;
-  width: 100px;
-  height: 125px;
-  margin: 8px;
+  cursor: pointer;
 
   .cellicon-wrapper {
     position: relative;
@@ -482,7 +515,7 @@
       width: 108px;
       height: 108px;
       content: '';
-      border: 4px solid var(--color-text-active);
+      border: 3px solid var(--color-text-active);
       border-radius: 10000px;
     }
   }
@@ -493,9 +526,15 @@
   }
 
   .cellicon-label {
-    margin-top: 8px;
+    font-size: @font-size4;
     font-weight: bold;
+    line-height: @font-line-height-md;
     text-align: center;
+    .transition;
+
+    .main-cell:not(.active):hover & {
+      color: var(--color-text-light);
+    }
   }
 
   .active & {
@@ -506,28 +545,27 @@
 //---------------------------
 
 .detail-top {
-  position: relative;
-  height: 256px;
-  background-image: url('../../../media/images/rtvc/voice_image_back.png');
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  border-bottom: 1px solid var(--color-border-light);
 
   .image {
-    position: absolute;
-    top: 26px;
-    left: 54px;
-    width: 140px;
-    height: 140px;
+    width: 144px;
+    height: 144px;
+    border: 2px solid #fff;
+    border-radius: 10000px;
   }
 
   .frame-labels {
-    position: absolute;
-    top: 192px;
     width: 100%;
     text-align: center;
   }
 
   .frame-nameinput {
-    position: absolute;
-    top: 192px;
     display: flex;
     flex-direction: row;
     justify-content: center;
@@ -537,15 +575,17 @@
 
   .name {
     margin: 0;
-    font-size: 16px;
+    font-size: @font-size5;
     font-weight: bold;
-    color: var(--color-text);
+    line-height: @font-line-height-xs;
+    color: var(--color-text-light);
     text-align: center;
   }
 
   .description {
-    margin: 0;
-    font-size: 12px;
+    margin: 8px 0 0;
+    font-size: @font-size2;
+    line-height: @font-line-height-sm;
     color: var(--color-text);
     text-align: center;
   }
@@ -559,12 +599,15 @@
   color: var(--color-text);
 
   .header {
-    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    color: var(--color-text-light);
   }
 
   .labels {
     display: flex;
     justify-content: space-between;
+    margin-bottom: 8px;
     color: var(--color-text);
   }
 }
@@ -587,9 +630,10 @@
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  padding: 16px 8px 0 16px;
+  padding: 8px 0 0 8px;
   margin: 0;
   overflow-y: scroll;
+  background-color: var(--color-bg-secondary);
 
   .content-inner {
     display: flex;
@@ -625,5 +669,24 @@
 
 .toggle-wrapper {
   margin-right: auto;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+}
+
+.name {
+  flex-grow: 1;
+  font-size: @font-size4;
+  color: var(--color-text);
+}
+
+.value {
+  display: flex;
+  align-items: center;
+  color: var(--color-text);
 }
 </style>
