@@ -344,27 +344,6 @@ export class StreamingService
       // }
     }
 
-    // setup youtube vertical
-    if (
-      this.views.isDualOutputMode &&
-      this.views.enabledPlatforms.includes('youtube') &&
-      this.views.getPlatformSettings('youtube').hasExtraOutputs
-    ) {
-      // TODO: this needs to fail gracefully, failing to create stream
-      // (for example due to rate limits), leaves streaming window in
-      // infinite load and other streams won't start.
-      // It is also blocking.
-      const ytvert = await this.youtubeService.createVertical(settings);
-      //console.log('ytvert', ytvert);
-
-      this.videoSettingsService.validateVideoContext('vertical');
-
-      ytvert.video = this.videoSettingsService.contexts.vertical;
-      //console.log('ytvert.video', JSON.stringify(ytvert.video, null, 2));
-
-      this.extraOutputs.push(ytvert);
-    }
-
     /**
      * SET MULTISTREAM SETTINGS
      */
@@ -440,6 +419,24 @@ export class StreamingService
       const shouldMultistreamDisplay = this.views.getShouldMultistreamDisplay(settings);
 
       const destinationDisplays = this.views.activeDisplayDestinations;
+
+      // setup youtube vertical
+      if (
+        this.views.isDualOutputMode &&
+        this.views.enabledPlatforms.includes('youtube') &&
+        this.views.getPlatformSettings('youtube').hasExtraOutputs
+      ) {
+        // This really belongs as a YT check
+        await this.runCheck('setupDualOutput', async () => {
+          // TODO: this needs to fail gracefully, failing to create stream
+          // (for example due to rate limits), leaves streaming window in
+          // infinite load and other streams won't start.
+          const ytVertical = await this.youtubeService.createVertical(settings);
+
+          this.videoSettingsService.validateVideoContext('vertical');
+          this.extraOutputs.push(ytVertical);
+        });
+      }
 
       for (const display in shouldMultistreamDisplay) {
         const key = display as keyof typeof shouldMultistreamDisplay;
