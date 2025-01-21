@@ -424,7 +424,13 @@ export class StreamingService
       if (
         this.views.isDualOutputMode &&
         this.views.enabledPlatforms.includes('youtube') &&
-        this.views.getPlatformSettings('youtube').hasExtraOutputs
+        this.views.getPlatformSettings('youtube').hasExtraOutputs &&
+        /*
+         * Super safe so we don't ever bypass validation due to the toggles
+         * or `hasExtraOutputs` not being reset.
+         * TODO: might not cover free TikTok, but probably by design
+         */
+        (this.userService.views.isPrime || this.views.enabledPlatforms.length === 1)
       ) {
         // This really belongs as a YT check
         await this.runCheck('setupDualOutput', async () => {

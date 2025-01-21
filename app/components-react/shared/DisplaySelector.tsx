@@ -19,12 +19,16 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     platforms,
     updateCustomDestinationDisplay,
     updatePlatform,
+    isPrime,
+    enabledPlatforms,
   } = useGoLiveSettings();
 
   const setting = p.platform ? platforms[p.platform] : customDestinations[p.index];
 
-  // TODO: better validation
-  const hasExtraOutputs = p.platform === 'youtube';
+  // If the user has Ultra, add extra output for YT, if not, check that we only have
+  // a single platform enabled, hopefully YouTube.
+  // Might need better validation.
+  const hasExtraOutputs = p.platform === 'youtube' && (isPrime || enabledPlatforms.length === 1);
 
   const displays = [
     {
