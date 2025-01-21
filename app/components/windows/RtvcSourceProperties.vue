@@ -6,13 +6,13 @@
           class="icon-speech-engine nav-icon"
           :class="{ 'nav-icon-active': tab == 0 }"
           @click="onTab(0)"
-          v-tooltip.bottom="`ボイス設定`"
+          v-tooltip.bottom="$t('source-props.nair-rtvc-source.nav.voice_setting')"
         ></i>
         <i
           class="icon-settings nav-icon"
           :class="{ 'nav-icon-active': tab == 1 }"
           @click="onTab(1)"
-          v-tooltip.bottom="`共通設定`"
+          v-tooltip.bottom="$t('source-props.nair-rtvc-source.nav.common_setting')"
         ></i>
       </div>
 
@@ -38,7 +38,11 @@
                 </div>
 
                 <div class="indicator" slot="reference">
-                  <i class="icon-speaker" v-tooltip.bottom="`サンプルボイスを再生`"></i>
+                  <i
+                    class="icon-speaker"
+                    v-tooltip.bottom="$t('source-props.nair-rtvc-source.nav.play_sample')"
+                    @click="playSample(v.index)"
+                  ></i>
                 </div>
               </div>
             </div>
@@ -97,7 +101,10 @@
                     </ul>
                   </div>
                   <div class="indicator" :class="{ 'is-show': showPopupMenu }" slot="reference">
-                    <i class="icon-ellipsis-vertical" v-tooltip.bottom="`メニューを開く`"></i>
+                    <i
+                      class="icon-ellipsis-vertical"
+                      v-tooltip.bottom="$t('source-props.nair-rtvc-source.nav.open_menu')"
+                    ></i>
                   </div>
                 </popper>
               </div>
@@ -122,7 +129,7 @@
         <div class="content-detail">
           <!-- detail top -->
           <div class="detail-top">
-            <img class="image" :src="image" @click="playSample()" />
+            <img class="image" :src="image" @click="playSample(currentIndex)" />
             <div class="frame-labels" v-if="isPreset">
               <p class="name">{{ name }}</p>
               <p class="description">{{ description }}</p>
@@ -246,7 +253,9 @@
       <div v-if="tab == 1" class="content">
         <div class="content-container">
           <div class="section">
-            <div class="input-label"><label>共通設定</label></div>
+            <div class="input-label">
+              <label>{{ $t('source-props.nair-rtvc-source.nav.common_setting') }}</label>
+            </div>
             <div class="input-container">
               <div class="input-label">
                 <label>{{ $t('source-props.nair-rtvc-source.device.name') }}</label>

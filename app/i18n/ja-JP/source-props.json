@@ -417,8 +417,8 @@
     "name": "ボイスチェンジャー",
     "description": "自分の声を変換します。\n琴詠ニア、ずんだもん、春日部つむぎや100種類の声をブレンドした自分だけの声になれます。",
     "nav": {
-      "voice_setting": "音声設定",
-      "mic_setting": "共通設定 (マイク・歌モードなど)",
+      "voice_setting": "ボイス設定",
+      "common_setting": "共通設定",
       "preset_voice": "キャラクターボイス",
       "original_voice": "オリジナルボイス",
       "remove_voice": "ボイスを削除",
@@ -427,7 +427,9 @@
       "original_voice_add": "オリジナルボイスを追加",
       "remove_confirm": "削除しますか？",
       "original": "オリジナル",
-      "add_voice": "ボイス作成"
+      "add_voice": "ボイス作成",
+      "play_sample": "サンプルボイスを再生",
+      "open_menu": "メニューを開く"
     },
     "container": {
       "voice_name": "名前",

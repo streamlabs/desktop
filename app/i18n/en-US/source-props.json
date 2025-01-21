@@ -417,8 +417,8 @@
     "name": "Voice Changer",
     "description": "Converts your own voice. You can blend 100 different voices to become your own original voice, or become the voice of \"Kotoyomi Near\", \"Zundamon\", or \"Kasukabe Tsumugi\".",
     "nav": {
-      "voice_setting": "Settings",
-      "mic_setting": "Common (mic,song,latency)",
+      "voice_setting": "Voice settings",
+      "common_setting": "Common settings",
       "preset_voice": "Characters",
       "original_voice": "Originals",
       "remove_voice": "Remove",
@@ -427,7 +427,9 @@
       "original_voice_add": "Add new voice",
       "remove_confirm": "Remove?",
       "original": "Original",
-      "add_voice": "Add voice"
+      "add_voice": "Add voice",
+      "play_sample": "Play sample",
+      "open_menu": "Open menu"
     },
     "container": {
       "voice_name": "Name",

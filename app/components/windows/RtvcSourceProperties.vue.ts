@@ -463,7 +463,7 @@ export default class RtvcSourceProperties extends SourceProperties {
     this.currentIndex = newIndex;
   }
 
-  playSample() {
+  playSample(index: string) {
     const assets: string[] = [
       require('../../../media/sound/rtvc/near.mp3'),
       require('../../../media/sound/rtvc/zundamon.mp3'),
@@ -477,7 +477,7 @@ export default class RtvcSourceProperties extends SourceProperties {
       require('../../../media/sound/rtvc/oedo_chanko.mp3'),
     ];
 
-    const idx = this.indexToNum(this.currentIndex);
+    const idx = this.indexToNum(index);
     if (idx.isManual || idx.idx < 0 || idx.idx >= assets.length) return;
 
     const asset = assets[idx.idx];
