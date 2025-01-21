@@ -51,14 +51,14 @@
   display: flex;
   margin-bottom: 16px;
   font-size: @font-size5;
-  line-height: @font-line-height-normal;
+  line-height: @font-line-height-md;
   color: var(--color-text-light);
 }
 
 .confirm-description {
   margin-bottom: 8px;
   font-size: @font-size4;
-  line-height: @font-line-height-normal;
+  line-height: @font-line-height-md;
   color: var(--color-text);
 }
 
