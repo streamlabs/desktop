@@ -1006,11 +1006,18 @@ export class StreamingService
           // TODO: are we handling signals, or do we need to
         } catch (e: unknown) {
           console.error(e);
+          throw e;
         }
       });
 
+      // Do not start vertical stream if YT is the only platform and
+      // is assigned to "both" outputs. We create vertical broadcast
+      // separately.
+      const shouldStartVertical = this.views.enabledPlatforms.length > 1;
+
       const signalChanged = this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
         console.log('on signal changed', signalInfo.service, signalInfo.code);
+
         if (signalInfo.service === 'default') {
           if (signalInfo.code !== 0) {
             NodeObs.OBS_service_stopStreaming(true, 'horizontal');
@@ -1027,9 +1034,11 @@ export class StreamingService
           }
 
           if (signalInfo.signal === EOBSOutputSignal.Start) {
-            console.log('starting vertical');
+            if (shouldStartVertical) {
+              console.log('starting vertical');
 
-            NodeObs.OBS_service_startStreaming('vertical');
+              NodeObs.OBS_service_startStreaming('vertical');
+            }
 
             extraOutputs.forEach(output => {
               console.log('starting stream for ', output.name);
@@ -1041,9 +1050,17 @@ export class StreamingService
         }
       });
 
-      console.log('starting horizontal');
+      if (shouldStartVertical) {
+        // Confusing as we're indeed starting the horizontal stream here, but
+        // "start video transmission" does not ever resolve presumably because
+        // it assumes the vertical stream was starting too.
+        console.log('starting horizontal');
 
-      NodeObs.OBS_service_startStreaming('horizontal');
+        NodeObs.OBS_service_startStreaming('horizontal');
+      } else {
+        console.log('skipped creating vertical stream (done separately)');
+        NodeObs.OBS_service_startStreaming();
+      }
       // sleep for 1 second to allow the first stream to start
       await new Promise(resolve => setTimeout(resolve, 1000));
     } else {
@@ -1384,8 +1401,13 @@ export class StreamingService
   private handleOBSOutputSignal(info: IOBSOutputSignalInfo) {
     console.debug('OBS Output signal: ', info);
 
+    const singlePlatformUsingDualOutput =
+      this.views.isDualOutputMode && this.views.enabledPlatforms.length === 1;
+
     const shouldResolve =
-      !this.views.isDualOutputMode || (this.views.isDualOutputMode && info.service === 'vertical');
+      !this.views.isDualOutputMode ||
+      (this.views.isDualOutputMode &&
+        (info.service === 'vertical' || singlePlatformUsingDualOutput));
 
     const time = new Date().toISOString();
 
