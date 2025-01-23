@@ -469,24 +469,11 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
     const p = props.find(a => a.name === 'primary_voice') as IObsListInput<any>;
     if (!p || !p.options) return;
 
-    p.options.forEach(item => {
-      const value = item.value;
-      if (value < 100) return;
-      const f = list.find(a => value === a.primaryVoice);
-      if (f) return;
+    if (p.options.length !== list.length + 100) {
+      console.warn('!!! rtvc preset list is not match. DLL(rtvc.vvfx) version is wrong !!!!');
+      list.length = p.options.length - 100;
+    }
 
-      list.push({
-        index: `preset/${list.length}`,
-        name: item.description,
-        pitchShift: 0,
-        pitchShiftSong: 0,
-        primaryVoice: value,
-        secondaryVoice: -1,
-        amount: 0,
-        label: item.description,
-        description: item.description,
-      });
-    });
     this.presets = list;
   }
 }
