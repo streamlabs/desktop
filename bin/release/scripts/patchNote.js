@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const { DateTime } = require('luxon');
-const { info, error, executeCmd } = require('./prompt');
+const { info, error, executeCmd } = require('./log');
 const { getTagCommitId } = require('./util');
 
 // previous tag should be following rule:

@@ -10,7 +10,8 @@ const sh = require('shelljs');
 const colors = require('colors/safe');
 const yaml = require('js-yaml');
 const fetch = require('node-fetch');
-const { log, info, error, executeCmd, confirm } = require('./scripts/prompt');
+const { log, info, error, executeCmd } = require('./scripts/log');
+const { confirm } = require('./scripts/prompt');
 const { checkEnv, getTagCommitId } = require('./scripts/util');
 const {
   getVersionContext,
