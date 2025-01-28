@@ -21,6 +21,7 @@ export class CustomizationService
 {
   static defaultState: ICustomizationServiceState = {
     performanceMode: false,
+    studioMode: false,
     studioControlsOpened: true,
     optimizeForNiconico: true,
     showOptimizationDialogForNiconico: true,
@@ -150,6 +151,13 @@ export class CustomizationService
     compactMaximized: boolean;
   }) {
     this.setSettings(state);
+  }
+
+  getStudioMode(): boolean {
+    return this.state.studioMode;
+  }
+  setStudioMode(studioMode: boolean) {
+    this.setSettings({ studioMode });
   }
 
   getSettingsFormData(): TObsFormData {

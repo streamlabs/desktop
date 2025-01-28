@@ -6,6 +6,7 @@ export type TCompactModeStudioController = 'scenes' | 'mixer';
 
 export interface ICustomizationServiceState {
   performanceMode: boolean;
+  studioMode: boolean;
   studioControlsOpened: boolean;
   optimizeForNiconico: boolean;
   showOptimizationDialogForNiconico: boolean;
