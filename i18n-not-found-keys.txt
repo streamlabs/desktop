@@ -471,3 +471,6 @@ settings.Output['Streaming']['latency']['low']
 settings.Output['Streaming']['latency']['normal']
 settings.Output['Streaming']['bframes'].name
 settings.Output['Streaming']['enhancements'].name
+settings.Output['Streaming']['Encoder']['h264_texture_amf']
+settings.Output['Recording']['RecEncoder']['h264_texture_amf']
+settings.Output['Recording']['RecEncoder']['h265_texture_amf']
