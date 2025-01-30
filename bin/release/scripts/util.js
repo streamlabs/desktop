@@ -1,7 +1,7 @@
 // @ts-check
 
 const sh = require('shelljs');
-const { executeCmd, error } = require('./prompt');
+const { executeCmd, error } = require('./log');
 
 function getTagCommitId(tag) {
   const line = executeCmd(`git rev-parse -q --verify "refs/tags/${tag}" || cat /dev/null`, {

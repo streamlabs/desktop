@@ -5,7 +5,8 @@ const path = require('node:path');
 const { Octokit } = require('@octokit/rest');
 const sh = require('shelljs');
 const colors = require('colors/safe');
-const { log, info, error, input, confirm, executeCmd } = require('./scripts/prompt');
+const { log, info, error, executeCmd } = require('./scripts/log');
+const { input, confirm } = require('./scripts/prompt');
 const { checkEnv, getTagCommitId } = require('./scripts/util');
 const {
   getVersionContext,
