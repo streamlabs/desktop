@@ -113,14 +113,4 @@ td {
 .column-monitoringType {
   width: 350px;
 }
-
-// TODO: 暫定対応
-& /deep/ .input-wrapper {
-  display: flex;
-  margin-bottom: 0;
-
-  .multiselect {
-    flex-grow: 1;
-  }
-}
 </style>

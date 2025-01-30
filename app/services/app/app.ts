@@ -1,10 +1,12 @@
 import * as remote from '@electron/remote';
 import electron from 'electron';
+import { Subscription } from 'rxjs';
 import { IpcServerService } from 'services/api/ipc-server';
 import { TcpServerService } from 'services/api/tcp-server';
 import { Inject } from 'services/core/injector';
 import { mutation, StatefulService } from 'services/core/stateful-service';
 import { CrashReporterService } from 'services/crash-reporter';
+import { CustomizationService } from 'services/customization';
 import { FileManagerService } from 'services/file-manager';
 import { HotkeysService } from 'services/hotkeys';
 import { InformationsService } from 'services/informations';
@@ -67,6 +69,7 @@ export class AppService extends StatefulService<IAppState> {
   @Inject() private protocolLinksService: ProtocolLinksService;
   @Inject() private informationsService: InformationsService;
   @Inject() private crashReporterService: CrashReporterService;
+  @Inject() private customizationService: CustomizationService;
   private loadingPromises: Dictionary<Promise<any>> = {};
 
   readonly pid = require('process').pid;
@@ -97,6 +100,7 @@ export class AppService extends StatefulService<IAppState> {
 
     await this.sceneCollectionsService.initialize();
 
+    this.startMonitoringStudioMode();
     const onboarded = this.onboardingService.startOnboardingIfRequired();
 
     electron.ipcRenderer.on('shutdown', () => {
@@ -139,6 +143,7 @@ export class AppService extends StatefulService<IAppState> {
       NicoliveClient.closeOpenWindows();
       this.ipcServerService.stopListening();
       // await this.userService.flushUserSession(); 未実装
+      this.stopMonitoringStudioMode();
       await this.sceneCollectionsService.deinitialize();
       this.performanceMonitorService.stop(); // instead this.performanceService.stop();
       this.transitionsService.shutdown();
@@ -151,6 +156,37 @@ export class AppService extends StatefulService<IAppState> {
       this.crashReporterService.endShutdown();
       electron.ipcRenderer.send('shutdownComplete');
     }, 300);
+  }
+
+  private studioModeSubscription: Subscription;
+  /**
+   * Customization Settingsの永続設定から Studio Modeを設定し、以後 Studio Mode の変化を監視して永続化する
+   *
+   * @note (シーン初期化中に強制解除されてしまうため)シーン初期化後に実行すること。
+   * また、startOnboardingIfRequired()の中からcompletedが発火することがあるため、その前に実行すること
+   */
+  startMonitoringStudioMode() {
+    this.onboardingService.completed.subscribe(() => {
+      if (this.customizationService.getStudioMode()) {
+        this.transitionsService.enableStudioMode();
+      }
+      this.studioModeSubscription = this.transitionsService.studioModeChanged.subscribe(
+        isStudioMode => {
+          this.customizationService.setStudioMode(isStudioMode);
+        },
+      );
+    });
+  }
+  /**
+   * スタジオモード監視を終了する
+   *
+   * @note シーンクリーンアップ時にスタジオモードが強制解除されてしまうため、その前に実行すること
+   */
+  stopMonitoringStudioMode() {
+    if (this.studioModeSubscription) {
+      this.studioModeSubscription.unsubscribe();
+      this.studioModeSubscription = null;
+    }
   }
 
   /**

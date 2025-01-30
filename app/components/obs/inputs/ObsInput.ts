@@ -253,6 +253,13 @@ export function obsValuesToInputValues(
       if (obsProp.subType === 'OBS_NUMBER_SLIDER') {
         prop.type = 'OBS_PROPERTY_SLIDER';
       }
+    } else if (obsProp.type === 'OBS_PROPERTY_BITMASK') {
+      prop = {
+        ...prop,
+        value: Number(prop.value),
+        showDescription: true,
+        size: 6,
+      } as IObsBitmaskInput;
     } else if (obsProp.type === 'OBS_PROPERTY_PATH') {
       if (valueObject && valueObject.type === 'OBS_PATH_FILE') {
         prop = {

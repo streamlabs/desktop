@@ -25,6 +25,7 @@ export class NavigationService extends StatefulService<INavigationState> {
 
   navigate(page: TAppPage, params: Dictionary<string> = {}) {
     this.NAVIGATE(page, params);
+    this.logNavigation();
     this.navigated.next(this.state);
   }
 
@@ -48,6 +49,5 @@ export class NavigationService extends StatefulService<INavigationState> {
   private NAVIGATE(page: TAppPage, params: Dictionary<string>) {
     this.state.currentPage = page;
     this.state.params = params;
-    this.logNavigation();
   }
 }
