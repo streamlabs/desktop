@@ -363,6 +363,6 @@ export default class CommentSettings extends Vue {
   }
 
   showVoicevoxInformation() {
-    remote.shell.openExternal('https://n-air-app.nicovideo.jp/');
+    remote.shell.openExternal('https://qa.nicovideo.jp/faq/show/23961?site_domain=default');
   }
 }
