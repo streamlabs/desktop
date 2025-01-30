@@ -54,6 +54,7 @@ export interface IObsInput<TValueType> {
   type?: TObsType;
   category?: string;
   subCategory?: string;
+  i18nKey?: string;
 }
 
 export declare type TObsFormData = (IObsInput<TObsValue> | IObsListInput<TObsValue>)[];
@@ -194,6 +195,7 @@ export function obsValuesToInputValues(
     prop.description = $t(`settings.${category}['${subCategory}']['${prop.name}'].name`, {
       fallback: prop.description,
     });
+    prop.i18nKey = `settings.${category}['${subCategory}']['${prop.name}'].name`;
     prop.value = obsValue;
     prop.masked = !!obsProp.masked;
     prop.enabled = !!obsProp.enabled;

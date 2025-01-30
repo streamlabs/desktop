@@ -250,6 +250,9 @@
       },
       "x264opts": {
         "name": "@:settings.Output.Streaming.x264Settings.name"
+      },
+      "bframes": {
+        "name": "Bフレーム"
       }
     },
     "Recording": {
@@ -269,7 +272,7 @@
       },
       "RecType": {
         "name": "録画形式",
-        "Standard": null,
+        "Standard": "標準",
         "Custom Output (FFmpeg)": null
       },
       "FileNameWithoutSpace": {
@@ -389,36 +392,54 @@
       "name": "音声トラック1",
       "Track1Bitrate": {
         "name": "@:settings.audioBitrate"
+      },
+      "Track1Name": {
+        "name": "名称"
       }
     },
     "Audio - Track 2": {
       "name": "音声トラック2",
       "Track2Bitrate": {
         "name": "@:settings.audioBitrate"
+      },
+      "Track2Name": {
+        "name": "名称"
       }
     },
     "Audio - Track 3": {
       "name": "音声トラック3",
       "Track3Bitrate": {
         "name": "@:settings.audioBitrate"
+      },
+      "Track3Name": {
+        "name": "名称"
       }
     },
     "Audio - Track 4": {
       "name": "音声トラック4",
       "Track4Bitrate": {
         "name": "@:settings.audioBitrate"
+      },
+      "Track4Name": {
+        "name": "名称"
       }
     },
     "Audio - Track 5": {
       "name": "音声トラック5",
       "Track5Bitrate": {
         "name": "@:settings.audioBitrate"
+      },
+      "Track5Name": {
+        "name": "名称"
       }
     },
     "Audio - Track 6": {
       "name": "音声トラック6",
       "Track6Bitrate": {
         "name": "@:settings.audioBitrate"
+      },
+      "Track6Name": {
+        "name": "名称"
       }
     },
     "Replay Buffer": {

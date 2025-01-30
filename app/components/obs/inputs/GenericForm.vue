@@ -7,6 +7,7 @@
         :value="value[inputIndex]"
         :data-test-category="category"
         :data-test-subCategory="subCategory"
+        :data-test-i18nkey="parameter.i18nKey"
         @input="value => onInputHandler(value, inputIndex)"
       />
     </div>
