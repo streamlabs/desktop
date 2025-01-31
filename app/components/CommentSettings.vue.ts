@@ -187,7 +187,7 @@ export default class CommentSettings extends Vue {
     this.system = this.getSynthesizerItem(
       NicoliveCommentSynthesizerService.initialState.selector.system,
     );
-    this.voicevoxInformation = true; // for test
+    this.voicevoxInformation = true;
   }
 
   get showAnonymous() {

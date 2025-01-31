@@ -50,7 +50,7 @@ export class NicoliveProgramStateService extends PersistentStatefulService<IStat
     panelOpened: true,
     nameplateEnabled: true,
     httpRelation: { method: '', url: '', body: '' },
-    voicevoxInformation: false,
+    voicevoxInformation: true,
   };
 
   private subject: Subject<IState> = new BehaviorSubject<IState>(this.state);
