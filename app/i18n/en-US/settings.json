@@ -250,6 +250,9 @@
       },
       "x264opts": {
         "name": "@:settings.Output.Streaming.x264Settings.name"
+      },
+      "bframes": {
+        "name": null
       }
     },
     "Recording": {
@@ -389,36 +392,54 @@
       "name": "Audio - Track 1",
       "Track1Bitrate": {
         "name": "@:settings.audioBitrate"
+      },
+      "Track1Name": {
+        "name": null
       }
     },
     "Audio - Track 2": {
       "name": "Audio - Track 2",
       "Track2Bitrate": {
         "name": "@:settings.audioBitrate"
+      },
+      "Track2Name": {
+        "name": null
       }
     },
     "Audio - Track 3": {
       "name": "Audio - Track 3",
       "Track3Bitrate": {
         "name": "@:settings.audioBitrate"
+      },
+      "Track3Name": {
+        "name": null
       }
     },
     "Audio - Track 4": {
       "name": "Audio - Track 4",
       "Track4Bitrate": {
         "name": "@:settings.audioBitrate"
+      },
+      "Track4Name": {
+        "name": null
       }
     },
     "Audio - Track 5": {
       "name": "Audio - Track 5",
       "Track5Bitrate": {
         "name": "@:settings.audioBitrate"
+      },
+      "Track5Name": {
+        "name": null
       }
     },
     "Audio - Track 6": {
       "name": "Audio - Track 6",
       "Track6Bitrate": {
         "name": "@:settings.audioBitrate"
+      },
+      "Track6Name": {
+        "name": null
       }
     },
     "Replay Buffer": {
