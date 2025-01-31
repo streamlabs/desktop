@@ -67,7 +67,6 @@ export default class RtvcSourceProperties extends SourceProperties {
 
   tab = 0;
   canAdd = false;
-  canDelete = false;
 
   showPopupMenu = false;
   popper: PopperEvent;
@@ -94,7 +93,6 @@ export default class RtvcSourceProperties extends SourceProperties {
       image: this.rtvcStateService.manualImages[a.imgidx],
     }));
     this.canAdd = this.manualList.length < this.manualMax;
-    this.canDelete = this.manualList.length > 1;
   }
 
   get jvsList() {
@@ -398,12 +396,18 @@ export default class RtvcSourceProperties extends SourceProperties {
 
   onAdd() {
     if (this.state.manuals.length >= this.manualMax) return;
+    let newNum = 1;
+    this.manualList.forEach(a => {
+      const m = a.name.match(/(\d+)$/);
+      if (m) newNum = Math.max(newNum, parseInt(m[1], 10) + 1);
+    });
+
     const index = `manual/${this.state.manuals.length}`;
     this.state.manuals.push({
-      name: `オリジナル${this.state.manuals.length + 1}`,
+      name: `オリジナル${newNum}`,
       pitchShift: 0,
       pitchShiftSong: 0,
-      amount: 0,
+      amount: 50,
       primaryVoice: 0,
       secondaryVoice: -1,
       imgidx: this.findNewManualImgidx(),
@@ -415,6 +419,10 @@ export default class RtvcSourceProperties extends SourceProperties {
   closePopupMenu() {
     this.popper?.doClose();
     this.popper = undefined;
+  }
+
+  canDelete(index: string): boolean {
+    return this.manualList.length > 1 && this.currentIndex !== index;
   }
 
   async onDelete(index: string) {

@@ -52,7 +52,7 @@ const RtvcPresets: RtvcPreset[] = [
     secondaryVoice: -1,
     amount: 0,
     label: 'near',
-    description: '滑らかで無機質な声',
+    description: '滑らかで素直な声',
     image: require('../../media/images/voice_images/voice_character_01.png'),
   },
   {
@@ -301,7 +301,7 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
       if (!a.name) a.name = 'none';
       a.pitchShift = numFix(a.pitchShift, 0);
       a.pitchShiftSong = numFix(a.pitchShiftSong, 0);
-      a.amount = numFix(a.amount, 0);
+      a.amount = numFix(a.amount, 50);
       a.primaryVoice = numFix(a.primaryVoice, 0);
       a.secondaryVoice = numFix(a.secondaryVoice, -1);
       a.imgidx = a.imgidx ?? idx;

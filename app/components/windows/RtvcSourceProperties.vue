@@ -52,6 +52,7 @@
           <section class="main-section">
             <div class="main-header">
               {{ $t('source-props.nair-rtvc-source.nav.original_voice') }}
+              &nbsp; ({{ manualList.length }}/{{ manualMax }})
             </div>
             <div class="main-list">
               <div
@@ -90,9 +91,9 @@
                     <ul class="popup-menu-list">
                       <li class="popup-menu-item">
                         <button
-                          :disabled="!canDelete"
+                          :disabled="!canDelete(v.index)"
                           class="link"
-                          :class="{ 'text--red': canDelete }"
+                          :class="{ 'text--red': canDelete(v.index) }"
                           @click="onDelete(v.index)"
                         >
                           {{ $t('source-props.nair-rtvc-source.nav.remove_voice') }}
@@ -117,7 +118,7 @@
                       src="../../../media/images/voice_images/voice_original_add.png"
                     />
                   </div>
-                  <span class="cellicon-label">
+                  <span class="cellicon-label" style="font-weight: normal">
                     {{ $t('source-props.nair-rtvc-source.nav.add_voice') }}
                   </span>
                 </div>
@@ -443,10 +444,9 @@
 }
 
 .main-list {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 24px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 24px 0;
 }
 
 .main-cell {
@@ -454,6 +454,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 116px;
 
   .popper {
     .popper-styling();
@@ -535,10 +536,14 @@
   }
 
   .cellicon-label {
+    max-width: 116px;
+    max-height: 60px;
+    overflow: hidden;
     font-size: @font-size4;
     font-weight: bold;
     line-height: @font-line-height-md;
     text-align: center;
+    text-overflow: ellipsis;
     .transition;
 
     .main-cell:not(.active):hover & {
