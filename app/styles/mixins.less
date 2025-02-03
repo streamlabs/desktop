@@ -320,6 +320,13 @@
   white-space: nowrap;
 }
 
+.paragraph-ellipsis(@rows: 2) {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: @rows;
+}
+
 .dividing-border(@direction: top) {
   border-@{direction}: 1px solid var(--color-border-dark);
 }

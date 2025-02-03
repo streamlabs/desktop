@@ -118,7 +118,7 @@
                       src="../../../media/images/voice_images/voice_original_add.png"
                     />
                   </div>
-                  <span class="cellicon-label" style="font-weight: normal">
+                  <span class="cellicon-label add-label">
                     {{ $t('source-props.nair-rtvc-source.nav.add_voice') }}
                   </span>
                 </div>
@@ -344,12 +344,14 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden;
   background-color: var(--color-bg-quinary);
 
   .modal-contents {
     display: flex;
     flex-direction: row;
     flex-grow: 1;
+    height: calc(100% - 48px); // フッターを除いた高さ
   }
 
   .modal-controls {
@@ -410,20 +412,21 @@
 .content-main {
   display: flex;
   flex-direction: row;
+  width: 100%;
 
   .main-inner {
     display: flex;
     flex-direction: column;
     gap: 32px;
     width: 100%;
-    padding: 24px;
+    padding: 24px 24px 0;
+    overflow: auto;
     background-color: var(--color-bg-secondary);
   }
 }
 
 .content-detail {
   min-width: 248px;
-  overflow: hidden;
   background-color: var(--color-bg-secondary);
   border-left: 1px solid var(--color-border-light);
 }
@@ -446,7 +449,7 @@
 .main-list {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 24px 0;
+  gap: 24px 16px;
 }
 
 .main-cell {
@@ -454,7 +457,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 116px;
+  width: 104px;
 
   .popper {
     .popper-styling();
@@ -538,16 +541,19 @@
   .cellicon-label {
     max-width: 116px;
     max-height: 60px;
-    overflow: hidden;
     font-size: @font-size4;
     font-weight: bold;
     line-height: @font-line-height-md;
     text-align: center;
-    text-overflow: ellipsis;
+    .paragraph-ellipsis(3);
     .transition;
 
     .main-cell:not(.active):hover & {
       color: var(--color-text-light);
+    }
+
+    &.add-label {
+      font-weight: normal;
     }
   }
 
@@ -561,15 +567,15 @@
 .detail-top {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
   align-items: center;
   justify-content: center;
   padding: 24px;
   border-bottom: 1px solid var(--color-border-light);
 
   .image {
-    width: 144px;
-    height: 144px;
+    width: 128px;
+    height: 128px;
     border: 2px solid #fff;
     border-radius: 10000px;
   }
