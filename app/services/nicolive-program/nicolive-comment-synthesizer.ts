@@ -12,7 +12,7 @@ import { NVoiceSynthesizer } from './speech/NVoiceSynthesizer';
 import { VoicevoxSynthesizer } from './speech/VoicevoxSynthesizer';
 import { WebSpeechSynthesizer } from './speech/WebSpeechSynthesizer';
 import { NicoliveProgramStateService, SynthesizerId, SynthesizerSelector } from './state';
-import { WrappedMessage } from './WrappedChat';
+import { WrappedChat, WrappedMessage } from './WrappedChat';
 
 export interface VoicevoxParam {
   id: string;
@@ -190,10 +190,14 @@ export class NicoliveCommentSynthesizerService extends StatefulService<ICommentS
     return speech;
   }
 
-  makeSimpleTextSpeech(text: string, synthId?: SynthesizerId, type?: string): Speech | null {
+  makeSimpleTextSpeech(
+    text: string,
+    synthId: SynthesizerId,
+    type: WrappedChat['type'],
+  ): Speech | null {
     return this.makeSpeech(
       {
-        type: (type ?? 'normal') as any,
+        type,
         value: {
           content: text,
         },
@@ -213,7 +217,7 @@ export class NicoliveCommentSynthesizerService extends StatefulService<ICommentS
     );
   }
 
-  startTestSpeech(text: string, synthId: SynthesizerId, type?: string) {
+  startTestSpeech(text: string, synthId: SynthesizerId, type: WrappedChat['type']) {
     const speech = this.makeSimpleTextSpeech(text, synthId, type);
     if (!speech) return;
     this.startSpeakingSimple(speech);

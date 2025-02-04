@@ -9,12 +9,12 @@ import {
   SynthesizerSelector,
   SynthesizerSelectors,
 } from 'services/nicolive-program/state';
+import { WrappedChat } from 'services/nicolive-program/WrappedChat';
 import Vue from 'vue';
 import Multiselect from 'vue-multiselect';
 import { Component, Watch } from 'vue-property-decorator';
 import VueSlider from 'vue-slider-component';
 import IconListSelect from './IconListSelect.vue';
-
 type MethodObject = {
   text: string;
   value: string;
@@ -79,7 +79,7 @@ export default class CommentSettings extends Vue {
     this.stopVoicevoxChecker();
   }
 
-  async testSpeechPlay(synthId: SynthesizerSelector, type?: string) {
+  async testSpeechPlay(synthId: SynthesizerSelector, type: WrappedChat['type']) {
     const service = this.nicoliveCommentSynthesizerService;
     if (synthId === 'ignore') return;
     service.startTestSpeech('これは読み上げ設定のテスト音声です', synthId, type);
@@ -274,8 +274,13 @@ export default class CommentSettings extends Vue {
 
     try {
       const list: VoicevoxItem[] = [];
-      const json = await (await fetch(`${VoicevoxURL}/speakers`)).json();
+      const json = (await (await fetch(`${VoicevoxURL}/speakers`)).json()) as {
+        name: string;
+        speaker_uuid: string;
+        styles: { id: string; name: string; type: string }[];
+      }[];
       this.isExistVoicevox = true;
+
       for (const item of json) {
         const name = item['name'];
         const uuid = item['speaker_uuid'];
@@ -319,16 +324,19 @@ export default class CommentSettings extends Vue {
       uuid = item.uuid;
     }
     try {
-      const json = await (
+      const json = (await (
         await fetch(`${VoicevoxURL}/speaker_info?resource_format=url&speaker_uuid=${uuid}`)
-      ).json();
+      ).json()) as { style_infos: { id: string; icon: string }[] };
+
       for (const info of json.style_infos) {
         const id = info['id'];
         const icon = info['icon'];
         if (id === undefined || !icon) continue;
         this.voicevoxIcons[id] = icon;
       }
-    } catch (e) {}
+    } catch (e) {
+      // 想定外の形式の場合における例外排除
+    }
 
     return this.voicevoxIcons[id] ?? '';
   }

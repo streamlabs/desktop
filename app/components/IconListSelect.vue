@@ -10,13 +10,13 @@
   >
     <template slot="singleLabel" slot-scope="p">
       <div class="voption">
-        <img :src="p.option.icon" />
+        <img :src="p.option.icon" alt="" />
         <span>{{ p.option.name }}</span>
       </div>
     </template>
     <template slot="option" slot-scope="p">
       <div class="voption">
-        <img :src="p.option.icon" />
+        <img :src="p.option.icon" alt="" />
         <span>{{ p.option.name }}</span>
       </div>
     </template>

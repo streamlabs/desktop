@@ -2,7 +2,7 @@
   <div class="setting-section">
     <div class="section">
       <div class="speech-engine-heading">
-        <img src="../../media/images/listicon_nvoice.png" class="image" />
+        <img src="../../media/images/listicon_nvoice.png" class="image" alt="" />
         <div class="text">
           <p class="speech-engine-heading-label">N Voice 琴詠ニア</p>
           <span class="speech-engine-heading-text"
@@ -59,7 +59,7 @@
     </div>
     <div class="section">
       <div class="speech-engine-heading">
-        <img src="../../media/images/listicon_windows.png" class="image" />
+        <img src="../../media/images/listicon_windows.png" class="image" alt="" />
         <div class="text">
           <p class="speech-engine-heading-label">Windowsの音声合成</p>
           <span class="speech-engine-heading-text"
