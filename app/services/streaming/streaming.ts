@@ -778,15 +778,15 @@ export class StreamingService
         voicevox: {
           normal: voicevoxFilter(
             this.nicoliveCommentSynthesizerService.normal,
-            this.nicoliveCommentSynthesizerService.voicevoxNormal.name,
+            this.nicoliveCommentSynthesizerService.voicevoxNormal?.name ?? '',
           ),
           operator: voicevoxFilter(
             this.nicoliveCommentSynthesizerService.operator,
-            this.nicoliveCommentSynthesizerService.voicevoxOperator.name,
+            this.nicoliveCommentSynthesizerService.voicevoxOperator?.name ?? '',
           ),
           system: voicevoxFilter(
             this.nicoliveCommentSynthesizerService.system,
-            this.nicoliveCommentSynthesizerService.voicevoxSystem.name,
+            this.nicoliveCommentSynthesizerService.voicevoxSystem?.name ?? '',
           ),
         },
       },
