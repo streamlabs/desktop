@@ -174,9 +174,17 @@ export class NicoliveCommentSynthesizerService extends StatefulService<ICommentS
     };
 
     if (synthesizer === 'voicevox') {
-      if (chat.type === 'normal') speech.voicevox = this.state.voicevox.normal;
-      else if (chat.type === 'operator') speech.voicevox = this.state.voicevox.operator;
-      else if (chat.type === 'system') speech.voicevox = this.state.voicevox.system;
+      switch (chat.type) {
+        case 'normal':
+          speech.voicevox = this.state.voicevox.normal;
+          break;
+        case 'operator':
+          speech.voicevox = this.state.voicevox.operator;
+          break;
+        default:
+          speech.voicevox = this.state.voicevox.system;
+          break;
+      }
     }
 
     return speech;
