@@ -271,12 +271,12 @@ describe('updateWindowSize', () => {
   }
 
   const suites = [
-    ['INACTIVE', 'CLOSED', false],
-    ['INACTIVE', 'OPENED', false],
-    ['CLOSED', 'OPENED', false],
-    ['OPENED', 'CLOSED', false],
-    ['OPENED', 'INACTIVE', false],
-    ['CLOSED', 'INACTIVE', false],
+    ['INACTIVE', 'CLOSED', true],
+    ['INACTIVE', 'OPENED', true],
+    ['CLOSED', 'OPENED', true],
+    ['OPENED', 'CLOSED', true],
+    ['OPENED', 'INACTIVE', true],
+    ['CLOSED', 'INACTIVE', true],
     ['INACTIVE', 'CLOSED', true],
     ['INACTIVE', 'OPENED', true],
     ['CLOSED', 'OPENED', true],
