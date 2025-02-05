@@ -1,12 +1,13 @@
 // This is the entry point into the updater app
 
+import * as remote from '@electron/remote';
 import Vue from 'vue';
 import VueI18n from 'vue-i18n';
-import UpdaterWindow from './UpdaterWindow.vue';
 import '../app/app.less';
 import '../app/theme.less';
+import '../app/theme2.less';
 import './updater.css';
-import * as remote from '@electron/remote';
+import UpdaterWindow from './UpdaterWindow.vue';
 
 Vue.use(VueI18n);
 

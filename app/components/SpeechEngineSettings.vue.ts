@@ -20,7 +20,7 @@ export default class SpeechEngineSettings extends Vue {
 
   testSpeechPlay(synthId: SynthesizerId) {
     const service = this.nicoliveCommentSynthesizerService;
-    service.startTestSpeech('これは読み上げ設定のテスト音声です', synthId);
+    service.startTestSpeech('これは読み上げ設定のテスト音声です', synthId, 'normal');
   }
 
   get enabled(): boolean {
