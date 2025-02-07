@@ -57,23 +57,7 @@ export default class StudioEditor extends Vue {
     display: HTMLDivElement;
   };
 
-  get sourceId(): string {
-    return this.studioMode ? this.getStudioTransitionName() : void 0;
-  }
-
   onOutputResize(region: IRectangle) {
-    const sourceId = this.sourceId;
-    const info = {
-      sourceId,
-      region,
-      studioMode: this.studioMode,
-      square: region.width === region.height,
-    };
-    if (info.square) {
-      console.error('onOutputResize', info); // DEBUG
-    } else {
-      console.log('onOutputResize', info); // DEBUG
-    }
     this.renderedWidth = region.width;
     this.renderedHeight = region.height;
     this.renderedOffsetX = region.x;

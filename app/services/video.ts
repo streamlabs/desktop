@@ -51,7 +51,6 @@ export class Display {
   displayDestroyed: boolean;
 
   constructor(public name: string, options: IDisplayOptions = {}) {
-    console.log(`Display(${name}).constructor`, { options }); // DEBUG
     this.sourceId = options.sourceId;
     this.electronWindowId = remote.getCurrentWindow().id;
 
@@ -111,11 +110,6 @@ export class Display {
         rect.width !== this.currentPosition.width ||
         rect.height !== this.currentPosition.height
       ) {
-        console.log(`Display(${this.name}).trackElement`, {
-          sourceId: this.sourceId,
-          rect,
-          currentPosition: this.currentPosition,
-        }); // DEBUG
         this.move(rect.x, rect.y);
         this.resize(rect.width, rect.height);
       }
@@ -167,10 +161,6 @@ export class Display {
 
   onOutputResize(cb: (region: IRectangle) => void) {
     this.outputRegionCallbacks.push(cb);
-    console.log(
-      `Display(${this.name}).onOutputResize outputRegionCallbacks.length`,
-      this.outputRegionCallbacks.length,
-    ); // DEBUG
   }
 
   async refreshOutputRegion() {
@@ -185,16 +175,6 @@ export class Display {
       ...position,
       ...size,
     };
-    const info = {
-      sourceId: this.sourceId,
-      outputRegion: this.outputRegion,
-      square: size.width === size.height,
-    };
-    if (info.square) {
-      console.error(`Display(${this.name}).outputRegion square`, info); // DEBUG
-    } else {
-      console.log(`Display(${this.name}).outputRegion`, info); // DEBUG
-    }
 
     this.outputRegionCallbacks.forEach(cb => {
       cb(this.outputRegion);
