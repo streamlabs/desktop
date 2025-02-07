@@ -12,7 +12,7 @@
 @bold: 700;
 
 // opacity
-@opacity-disabled: .26;
+@opacity-disabled: 0.26;
 
 // Text aligns
 @left: left;
@@ -30,3 +30,170 @@
 @titlebar-height: 32px;
 @studio-display-padding: 16px;
 @item-generic-size: 32px; // 汎用的な要素のサイズ
+
+/*
+ デザインシステム（v1）用トークン
+*/
+:root {
+  // primitive Colors
+  --white: #fff;
+  --black: #000;
+
+  //red
+  --red-10: #fde8e8;
+  --red-30: #fad1d1;
+  --red-50: #f8baba;
+  --red-100: #f6a3a3;
+  --red-200: #f27a7a;
+  --red-300: #ee5252;
+  --red-400: #ea2929;
+  --red-500: #e60000;
+  --red-600: #c60000;
+  --red-700: #a60000;
+  --red-800: #850000;
+  --red-900: #650000;
+  --red-950: #450000;
+  --red-970: #250000;
+  --red-990: #120000;
+
+  //orange
+  --orange-10: #fff1ef;
+  --orange-30: #fedcd7;
+  --orange-50: #fecec6;
+  --orange-100: #fec0b6;
+  --orange-200: #fda496;
+  --orange-300: #fd8876;
+  --orange-400: #fc6c55;
+  --orange-500: #ff5136;
+  --orange-600: #d9452e;
+  --orange-700: #b53a26;
+  --orange-800: #922e1f;
+  --orange-900: #6f2317;
+  --orange-950: #4c1810;
+  --orange-970: #280d08;
+  --orange-990: #140604;
+
+  //cyan
+  --cyan-10: #f7fdff;
+  --cyan-30: #ecfbfe;
+  --cyan-50: #e4f9fd;
+  --cyan-100: #dcf7fd;
+  --cyan-200: #cdf4fc;
+  --cyan-300: #bdf1fb;
+  --cyan-400: #aeedfa;
+  --cyan-500: #9eeaf9;
+  --cyan-600: #88c9d6;
+  --cyan-700: #72a8b3;
+  --cyan-800: #4797a5;
+  --cyan-900: #247d90;
+  --cyan-950: #185562;
+  --cyan-970: #0d2c34;
+  --cyan-990: #07181a;
+
+  //slate
+  --slate-10: #eff0f1;
+  --slate-30: #d7d8db;
+  --slate-50: #c8c9cd;
+  --slate-100: #b8babf;
+  --slate-200: #989ba2;
+  --slate-300: #787c85;
+  --slate-400: #595d69;
+  --slate-500: #393e4c;
+  --slate-600: #313541;
+  --slate-700: #292d37;
+  --slate-800: #21242c;
+  --slate-900: #191b21;
+  --slate-950: #111317;
+  --slate-970: #090a0c;
+  --slate-990: #050506;
+
+  //white-alpha
+  --white-alpha-5: color-mix(in srgb, var(--white) 5%, transparent);
+  --white-alpha-10: color-mix(in srgb, var(--white) 10%, transparent);
+  --white-alpha-15: color-mix(in srgb, var(--white) 15%, transparent);
+  --white-alpha-20: color-mix(in srgb, var(--white) 20%, transparent);
+  --white-alpha-25: color-mix(in srgb, var(--white) 25%, transparent);
+  --white-alpha-30: color-mix(in srgb, var(--white) 30%, transparent);
+  --white-alpha-35: color-mix(in srgb, var(--white) 35%, transparent);
+  --white-alpha-40: color-mix(in srgb, var(--white) 40%, transparent);
+  --white-alpha-45: color-mix(in srgb, var(--white) 45%, transparent);
+  --white-alpha-50: color-mix(in srgb, var(--white) 50%, transparent);
+  --white-alpha-60: color-mix(in srgb, var(--white) 60%, transparent);
+  --white-alpha-70: color-mix(in srgb, var(--white) 70%, transparent);
+  --white-alpha-80: color-mix(in srgb, var(--white) 80%, transparent);
+  --white-alpha-90: color-mix(in srgb, var(--white) 90%, transparent);
+  --white-alpha-95: color-mix(in srgb, var(--white) 95%, transparent);
+
+  //black-alpha
+  --black-alpha-5: color-mix(in srgb, var(--black) 5%, transparent);
+  --black-alpha-10: color-mix(in srgb, var(--black) 10%, transparent);
+  --black-alpha-15: color-mix(in srgb, var(--black) 15%, transparent);
+  --black-alpha-20: color-mix(in srgb, var(--black) 20%, transparent);
+  --black-alpha-25: color-mix(in srgb, var(--black) 25%, transparent);
+  --black-alpha-30: color-mix(in srgb, var(--black) 30%, transparent);
+  --black-alpha-35: color-mix(in srgb, var(--black) 35%, transparent);
+  --black-alpha-40: color-mix(in srgb, var(--black) 40%, transparent);
+  --black-alpha-45: color-mix(in srgb, var(--black) 45%, transparent);
+  --black-alpha-50: color-mix(in srgb, var(--black) 50%, transparent);
+  --black-alpha-60: color-mix(in srgb, var(--black) 60%, transparent);
+  --black-alpha-70: color-mix(in srgb, var(--black) 70%, transparent);
+  --black-alpha-80: color-mix(in srgb, var(--black) 80%, transparent);
+  --black-alpha-90: color-mix(in srgb, var(--black) 90%, transparent);
+  --black-alpha-95: color-mix(in srgb, var(--black) 95%, transparent);
+
+  //slate-alpha
+  --slate-alpha-5: color-mix(in srgb, var(--slate-500) 5%, transparent);
+  --slate-alpha-10: color-mix(in srgb, var(--slate-500) 10%, transparent);
+  --slate-alpha-15: color-mix(in srgb, var(--slate-500) 15%, transparent);
+  --slate-alpha-20: color-mix(in srgb, var(--slate-500) 20%, transparent);
+  --slate-alpha-25: color-mix(in srgb, var(--slate-500) 25%, transparent);
+  --slate-alpha-30: color-mix(in srgb, var(--slate-500) 30%, transparent);
+  --slate-alpha-35: color-mix(in srgb, var(--slate-500) 35%, transparent);
+  --slate-alpha-40: color-mix(in srgb, var(--slate-500) 40%, transparent);
+  --slate-alpha-45: color-mix(in srgb, var(--slate-500) 45%, transparent);
+  --slate-alpha-50: color-mix(in srgb, var(--slate-500) 50%, transparent);
+  --slate-alpha-60: color-mix(in srgb, var(--slate-500) 60%, transparent);
+  --slate-alpha-70: color-mix(in srgb, var(--slate-500) 70%, transparent);
+  --slate-alpha-80: color-mix(in srgb, var(--slate-500) 80%, transparent);
+  --slate-alpha-90: color-mix(in srgb, var(--slate-500) 90%, transparent);
+  --slate-alpha-95: color-mix(in srgb, var(--slate-500) 95%, transparent);
+
+  // font-size
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+
+  // spacing
+  --spacing-xs: 4px;
+  --spacing-sm: calc(var(--spacing-xs) * 2);
+  --spacing-md: calc(var(--spacing-xs) * 3);
+  --spacing-lg: calc(var(--spacing-xs) * 4);
+  --spacing-xl: calc(var(--spacing-xs) * 6);
+  --spacing-2xl: calc(var(--spacing-xs) * 8);
+  --spacing-3xl: calc(var(--spacing-xs) * 10);
+
+  // radius
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-xl: 10000px;
+
+  // opacity
+  --opacity-disabled: 0.3;
+
+  // action-icon
+  --action-icon-size-sm: 28px;
+  --action-icon-size-md: 32px;
+  --action-icon-size-lg: 36px;
+
+  // button
+  --button-height-sm: 20px;
+  --button-height-md: 36px;
+  --button-height-lg: 48px;
+  --button-padding-sm: var(--spacing-md);
+  --button-padding-md: var(--spacing-lg);
+  --button-padding-lg: var(--spacing-xl);
+}

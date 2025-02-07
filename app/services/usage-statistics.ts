@@ -85,6 +85,11 @@ export type TUsageEvent =
           operator: SynthesizerSelector;
           system: SynthesizerSelector;
         };
+        voicevox: {
+          normal: string;
+          operator: string;
+          system: string;
+        };
       };
       compact_mode: {
         auto_compact_mode: boolean;

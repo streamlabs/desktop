@@ -47,8 +47,12 @@
   flex-direction: column;
   padding: 16px 16px 8px;
   margin-bottom: 16px;
-  background-color: var(--color-bg-secondary);
+  background-color: var(--color-background);
   border-radius: 4px;
+
+  .section {
+    border: 1px solid var(--color-border-emphasis-low);
+  }
 
   .section-heading-wrapper {
     display: flex;
@@ -58,14 +62,14 @@
     .section-heading {
       margin-right: auto;
       line-height: 1.5;
-      color: var(--color-text-light);
+      color: var(--color-object-emphasis-high);
     }
   }
 
   p,
   label {
     font-size: @font-size4;
-    color: var(--color-text);
+    color: var(--color-object-emphasis-medium);
   }
 
   p {
@@ -76,7 +80,9 @@
     text-decoration: none;
   }
 
-  .button {
+  .button,
+  .basic-button {
+    align-self: flex-start;
     margin-bottom: 16px;
   }
 }

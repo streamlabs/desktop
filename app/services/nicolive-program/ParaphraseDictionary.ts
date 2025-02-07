@@ -1,4 +1,4 @@
-type EngineId = 'webSpeech' | 'nVoice';
+type EngineId = 'webSpeech' | 'nVoice' | 'voicevox';
 
 export type replace_common_field = {
   note?: string;

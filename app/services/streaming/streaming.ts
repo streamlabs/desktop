@@ -29,7 +29,7 @@ import {
 
 import * as remote from '@electron/remote';
 import { HttpRelation } from 'services/nicolive-program/httpRelation';
-import { NicoliveProgramStateService } from 'services/nicolive-program/state';
+import { NicoliveProgramStateService, SynthesizerSelector } from 'services/nicolive-program/state';
 import { VideoSettingsService } from 'services/settings-v2/video';
 import { RtvcStateService } from '../../services/rtvcStateService';
 
@@ -731,6 +731,9 @@ export class StreamingService
   private actionLog(eventType: 'stream_start' | 'stream_end', streamingTrackId: string) {
     const settings = this.settingsService.getStreamEncoderSettings();
 
+    const voicevoxFilter = (src: SynthesizerSelector, value: string) =>
+      src === 'voicevox' ? value : '';
+
     const event: TUsageEvent = {
       event: eventType,
       platform: extractPlatform(settings.streamingURL),
@@ -772,6 +775,20 @@ export class StreamingService
           normal: this.nicoliveCommentSynthesizerService.normal,
           operator: this.nicoliveCommentSynthesizerService.operator,
           system: this.nicoliveCommentSynthesizerService.system,
+        },
+        voicevox: {
+          normal: voicevoxFilter(
+            this.nicoliveCommentSynthesizerService.normal,
+            this.nicoliveCommentSynthesizerService.voicevoxNormal?.name ?? '',
+          ),
+          operator: voicevoxFilter(
+            this.nicoliveCommentSynthesizerService.operator,
+            this.nicoliveCommentSynthesizerService.voicevoxOperator?.name ?? '',
+          ),
+          system: voicevoxFilter(
+            this.nicoliveCommentSynthesizerService.system,
+            this.nicoliveCommentSynthesizerService.voicevoxSystem?.name ?? '',
+          ),
         },
       },
       compact_mode: {

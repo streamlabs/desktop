@@ -267,19 +267,34 @@ textarea {
 }
 
 .multiselect {
+  --color-border: var(--color-border-light);
+  --color-border-hover: var(--color-border-accent);
+  --color-bg: var(--color-input-bg);
+
+  &[data-variant='default'] {
+    --color-border: var(--color-border-emphasis-low);
+    --color-border-hover: var(--color-border-emphasis-medium);
+    --color-bg: transparent;
+  }
+
+  &[data-variant='filled'] {
+    --color-border: transparent;
+    --color-border-hover: var(--color-border-emphasis-medium);
+    --color-bg: var(--color-surface-secondary);
+  }
+
   position: relative;
-  width: 100%;
   min-height: @item-generic-size;
   cursor: pointer;
-  background: var(--color-input-bg);
-  border: 1px solid var(--color-border-light);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
   outline: none;
   .radius;
   .transition;
 
-  &:hover,
-  &:focus {
-    border-color: var(--color-border-accent);
+  &:not(.multiselect--disabled):hover,
+  &:not(.multiselect--disabled):focus {
+    border-color: var(--color-border-hover);
   }
 }
 
@@ -426,7 +441,8 @@ textarea {
 }
 
 .multiselect--disabled {
-  opacity: @opacity-disabled;
+  cursor: not-allowed;
+  opacity: var(--opacity-disabled);
 
   &:focus {
     outline: none;
