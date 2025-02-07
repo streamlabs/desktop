@@ -11,6 +11,7 @@ import { VideoSettingsService } from './settings-v2';
 import Utils from './utils';
 import { WindowsService } from './windows';
 
+const DISPLAY_ELEMENT_INITIAL_DELAY = 50;
 const DISPLAY_ELEMENT_POLLING_INTERVAL = 500;
 
 export interface IDisplayOptions {
@@ -29,6 +30,7 @@ export class Display {
   outputRegion: IRectangle;
   isDestroyed = false;
 
+  trackingInitialTimeout: ReturnType<typeof setTimeout>;
   trackingInterval: number;
   currentPosition: IRectangle = {
     x: 0,
@@ -114,7 +116,10 @@ export class Display {
       }
     };
 
-    trackingFun();
+    this.trackingInitialTimeout = setTimeout(() => {
+      trackingFun();
+      this.trackingInitialTimeout = null;
+    }, DISPLAY_ELEMENT_INITIAL_DELAY); // ここで実行するとまだOBS側の状態が整っていないので初回の位置がずれるため、延期する
     this.trackingInterval = window.setInterval(trackingFun, DISPLAY_ELEMENT_POLLING_INTERVAL);
   }
 
@@ -144,6 +149,7 @@ export class Display {
 
   remoteClose() {
     this.outputRegionCallbacks = [];
+    if (this.trackingInitialTimeout) clearTimeout(this.trackingInitialTimeout);
     if (this.trackingInterval) clearInterval(this.trackingInterval);
     if (this.selectionSubscription) this.selectionSubscription.unsubscribe();
     if (!this.displayDestroyed) {
@@ -163,12 +169,12 @@ export class Display {
   }
 
   async refreshOutputRegion() {
-    const position = await this.videoService.getOBSDisplayPreviewOffset(this.name);
+    const position = this.videoService.getOBSDisplayPreviewOffset(this.name);
 
     // This can happen while we were async fetching the offset
     if (this.displayDestroyed) return;
 
-    const size = await this.videoService.getOBSDisplayPreviewSize(this.name);
+    const size = this.videoService.getOBSDisplayPreviewSize(this.name);
 
     this.outputRegion = {
       ...position,
