@@ -101,13 +101,10 @@ export class Display {
   trackElement(element: HTMLElement) {
     if (this.trackingInterval) clearInterval(this.trackingInterval);
 
-    let retry = false;
-
     const trackingFun = () => {
       const rect = this.getScaledRectangle(element.getBoundingClientRect());
 
       if (
-        retry ||
         rect.x !== this.currentPosition.x ||
         rect.y !== this.currentPosition.y ||
         rect.width !== this.currentPosition.width ||
@@ -120,20 +117,10 @@ export class Display {
         }); // DEBUG
         this.move(rect.x, rect.y);
         this.resize(rect.width, rect.height);
-
-        // 変更後のサイズを確認してリトライする
-        const size = this.videoService.getOBSDisplayPreviewSize(this.name);
-        const invalid = size.width === size.height; // これでいいのか? シーンのサイズが正方形が正しいときに誤爆するかも
-        if (invalid) {
-          console.log(`Display(${this.name}).trackElement retry`); // DEBUG
-          retry = true;
-        } else {
-          retry = false;
-        }
       }
     };
 
-    trackingFun();
+    // trackingFun(); // ここで実行するとまだOBS側の状態が整っていないので、初回の位置がずれるため、延期する
     this.trackingInterval = window.setInterval(trackingFun, DISPLAY_ELEMENT_POLLING_INTERVAL);
   }
 
