@@ -11,6 +11,7 @@ import { VideoSettingsService } from './settings-v2';
 import Utils from './utils';
 import { WindowsService } from './windows';
 
+const DISPLAY_ELEMENT_INITIAL_DELAY = 50;
 const DISPLAY_ELEMENT_POLLING_INTERVAL = 500;
 
 export interface IDisplayOptions {
@@ -120,7 +121,7 @@ export class Display {
       }
     };
 
-    // trackingFun(); // ここで実行するとまだOBS側の状態が整っていないので、初回の位置がずれるため、延期する
+    setTimeout(trackingFun, DISPLAY_ELEMENT_INITIAL_DELAY); // ここで実行するとまだOBS側の状態が整っていないので初回の位置がずれるため、延期する
     this.trackingInterval = window.setInterval(trackingFun, DISPLAY_ELEMENT_POLLING_INTERVAL);
   }
 
