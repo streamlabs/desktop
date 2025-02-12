@@ -37,11 +37,10 @@
                   <span class="cellicon-label">{{ v.name }}</span>
                 </div>
 
-                <div class="indicator" slot="reference">
+                <div class="indicator" slot="reference" @click="playSample(v.index)">
                   <i
                     class="icon-speaker"
                     v-tooltip.bottom="$t('source-props.nair-rtvc-source.nav.play_sample')"
-                    @click="playSample(v.index)"
                   ></i>
                 </div>
               </div>
@@ -536,6 +535,7 @@
   .cellicon {
     width: 96px;
     height: 96px;
+    -webkit-user-drag: none;
   }
 
   .cellicon-label {
@@ -578,6 +578,7 @@
     height: 128px;
     border: 2px solid #fff;
     border-radius: 10000px;
+    -webkit-user-drag: none;
   }
 
   .frame-labels {
