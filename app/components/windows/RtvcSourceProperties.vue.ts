@@ -198,6 +198,7 @@ export default class RtvcSourceProperties extends SourceProperties {
 
   @Watch('secondaryVoiceModel')
   onChangeSecondaryVoice() {
+    if (this.secondaryVoice === -1) this.amount = 50;
     this.secondaryVoice = this.secondaryVoiceModel.value;
     this.setParam('secondaryVoice', this.secondaryVoice);
     this.setSourcePropertyValue('secondary_voice', this.secondaryVoice);
