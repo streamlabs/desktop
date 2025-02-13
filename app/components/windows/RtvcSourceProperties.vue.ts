@@ -3,6 +3,7 @@ import { IObsListInput, IObsListOption, TObsValue } from 'components/obs/inputs/
 import { Inject } from 'services/core/injector';
 import { $t } from 'services/i18n';
 import {
+  AmountDefault,
   PitchShiftModeValue,
   RtvcStateService,
   SourcePropKey,
@@ -198,7 +199,7 @@ export default class RtvcSourceProperties extends SourceProperties {
 
   @Watch('secondaryVoiceModel')
   onChangeSecondaryVoice() {
-    if (this.secondaryVoice === -1) this.amount = 50;
+    if (this.secondaryVoice === -1) this.amount = AmountDefault;
     this.secondaryVoice = this.secondaryVoiceModel.value;
     this.setParam('secondaryVoice', this.secondaryVoice);
     this.setSourcePropertyValue('secondary_voice', this.secondaryVoice);
@@ -369,7 +370,7 @@ export default class RtvcSourceProperties extends SourceProperties {
     const index1 = Math.floor(Math.random() * list1.length);
     this.secondaryVoiceModel = list1[index1];
 
-    this.amount = Math.floor(Math.random() * 50);
+    this.amount = Math.floor(Math.random() * AmountDefault);
   }
 
   onTab(a: number) {
@@ -407,7 +408,7 @@ export default class RtvcSourceProperties extends SourceProperties {
       name: `オリジナル${newNum}`,
       pitchShift: 0,
       pitchShiftSong: 0,
-      amount: 50,
+      amount: AmountDefault,
       primaryVoice: 0,
       secondaryVoice: -1,
       imageNum: this.findNewManualImageNum(),

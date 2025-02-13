@@ -205,6 +205,8 @@ export interface CommonParam {
   secondaryVoice: number;
 }
 
+export const AmountDefault = 50; // manual>secondary voice>amountのデフォルト値 50%
+
 interface IRtvcState {
   value: any;
 }
@@ -301,7 +303,7 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
       if (!a.name) a.name = 'none';
       a.pitchShift = numFix(a.pitchShift, 0);
       a.pitchShiftSong = numFix(a.pitchShiftSong, 0);
-      a.amount = numFix(a.amount, 50);
+      a.amount = numFix(a.amount, AmountDefault);
       a.primaryVoice = numFix(a.primaryVoice, 0);
       a.secondaryVoice = numFix(a.secondaryVoice, -1);
       a.imageNum = a.imageNum ?? n;
