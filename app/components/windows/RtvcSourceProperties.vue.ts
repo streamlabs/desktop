@@ -86,11 +86,11 @@ export default class RtvcSourceProperties extends SourceProperties {
 
   updateManualList() {
     // add,delに反応しないのでコード側から変更指示
-    this.manualList = this.state.manuals.map((a, idx) => ({
-      index: `manual/${idx}`,
+    this.manualList = this.state.manuals.map((a, num) => ({
+      index: `manual/${num}`,
       name: a.name,
-      label: `manual${idx}`,
-      image: this.rtvcStateService.manualImages[a.imgidx],
+      label: `manual${num}`,
+      image: this.rtvcStateService.manualImages[a.imageNum],
     }));
     this.canAdd = this.manualList.length < this.manualMax;
   }
@@ -167,8 +167,8 @@ export default class RtvcSourceProperties extends SourceProperties {
   @Watch('name')
   onChangeName() {
     this.setParam('name', this.name);
-    const idx = this.getManualIndexNum(this.currentIndex);
-    if (idx >= 0) this.manualList[idx].name = this.name; // 画面反映
+    const num = this.getManualIndexNum(this.currentIndex);
+    if (num >= 0) this.manualList[num].name = this.name; // 画面反映
   }
 
   @Watch('pitchShift')
@@ -252,26 +252,26 @@ export default class RtvcSourceProperties extends SourceProperties {
 
   // --  param in/out
 
-  indexToNum(index: string): { isManual: boolean; idx: number } {
-    return this.rtvcStateService.indexToNum(index);
+  indexToModeNum(index: string): { isManual: boolean; num: number } {
+    return this.rtvcStateService.indexToModeNum(index);
   }
 
   getManualIndexNum(index: string): number {
-    const r = this.indexToNum(index);
-    if (r.isManual) return r.idx;
+    const r = this.indexToModeNum(index);
+    if (r.isManual) return r.num;
     return -1;
   }
 
   setParam(key: SetParamKey, value: any) {
-    const p = this.indexToNum(this.currentIndex);
+    const p = this.indexToModeNum(this.currentIndex);
     if (p.isManual) {
-      (this.state.manuals[p.idx] as any)[key] = value;
+      (this.state.manuals[p.num] as any)[key] = value;
       return;
     }
 
     // preset用のkey判断
     if (!['pitchShift', 'pitchShiftSong'].includes(key)) return;
-    (this.state.presets[p.idx] as any)[key] = value;
+    (this.state.presets[p.num] as any)[key] = value;
   }
 
   // -- sources in/out
@@ -362,18 +362,18 @@ export default class RtvcSourceProperties extends SourceProperties {
 
   onRandom() {
     const list0 = this.primaryVoiceList;
-    const idx0 = Math.floor(Math.random() * list0.length);
-    this.primaryVoiceModel = list0[idx0];
+    const index0 = Math.floor(Math.random() * list0.length);
+    this.primaryVoiceModel = list0[index0];
 
     const list1 = this.primaryVoiceList;
-    const idx1 = Math.floor(Math.random() * list1.length);
-    this.secondaryVoiceModel = list1[idx1];
+    const index1 = Math.floor(Math.random() * list1.length);
+    this.secondaryVoiceModel = list1[index1];
 
     this.amount = Math.floor(Math.random() * 50);
   }
 
-  onTab(idx: number) {
-    this.tab = idx;
+  onTab(a: number) {
+    this.tab = a;
   }
 
   done() {
@@ -388,20 +388,19 @@ export default class RtvcSourceProperties extends SourceProperties {
     this.currentIndex = index;
   }
 
-  findNewManualImgidx() {
+  findNewManualImageNum() {
     for (let i = 0; i < this.rtvcStateService.manualImages.length; i++) {
-      if (!this.state.manuals.find(a => a.imgidx === i)) return i;
+      if (!this.state.manuals.find(a => a.imageNum === i)) return i;
     }
     return 0;
   }
 
   onAdd() {
     if (this.state.manuals.length >= this.manualMax) return;
-    let newNum = 1;
-    this.manualList.forEach(a => {
+    const newNum = this.manualList.reduce((v, a) => {
       const m = a.name.match(/(\d+)$/);
-      if (m) newNum = Math.max(newNum, parseInt(m[1], 10) + 1);
-    });
+      return m ? Math.max(v, parseInt(m[1], 10) + 1) : v;
+    }, 1);
 
     const index = `manual/${this.state.manuals.length}`;
     this.state.manuals.push({
@@ -411,7 +410,7 @@ export default class RtvcSourceProperties extends SourceProperties {
       amount: 50,
       primaryVoice: 0,
       secondaryVoice: -1,
-      imgidx: this.findNewManualImgidx(),
+      imageNum: this.findNewManualImageNum(),
     });
     this.updateManualList();
     this.currentIndex = index;
@@ -428,8 +427,8 @@ export default class RtvcSourceProperties extends SourceProperties {
 
   async onDelete(index: string) {
     this.closePopupMenu();
-    const idx = this.getManualIndexNum(index);
-    if (idx < 0) return;
+    const num = this.getManualIndexNum(index);
+    if (num < 0) return;
 
     const r = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
       type: 'warning',
@@ -441,21 +440,23 @@ export default class RtvcSourceProperties extends SourceProperties {
     });
     if (r.response) return;
 
-    this.state.manuals.splice(idx, 1);
+    // 指定されたindexを削除
+    this.state.manuals.splice(num, 1);
     this.updateManualList();
 
-    const c = this.getManualIndexNum(this.currentIndex);
-    if (c < 0 || c < idx) return;
-    const n = Math.max(c - 1, 0);
+    // currentIndexがmanualで削除対象より後なら消した分によりズレが生じているのでcurrentIndexを変更
+    const currentNum = this.getManualIndexNum(this.currentIndex);
+    if (currentNum < 0 || currentNum < num) return;
+    const n = Math.max(currentNum - 1, 0);
     this.currentIndex = `manual/${n}`;
   }
 
   onCopy(index: string) {
     this.closePopupMenu();
     if (this.state.manuals.length >= this.manualMax) return;
-    const idx = this.getManualIndexNum(index);
-    if (idx < 0) return;
-    const v = this.state.manuals[idx];
+    const num = this.getManualIndexNum(index);
+    if (num < 0) return;
+    const v = this.state.manuals[num];
     const newIndex = `manual/${this.state.manuals.length}`;
 
     this.state.manuals.push({
@@ -465,7 +466,7 @@ export default class RtvcSourceProperties extends SourceProperties {
       amount: v.amount,
       primaryVoice: v.primaryVoice,
       secondaryVoice: v.secondaryVoice,
-      imgidx: this.findNewManualImgidx(),
+      imageNum: this.findNewManualImageNum(),
     });
 
     this.updateManualList();
@@ -486,10 +487,10 @@ export default class RtvcSourceProperties extends SourceProperties {
       require('../../../media/sound/rtvc/oedo_chanko.mp3'),
     ];
 
-    const idx = this.indexToNum(index);
-    if (idx.isManual || idx.idx < 0 || idx.idx >= assets.length) return;
+    const num = this.indexToModeNum(index);
+    if (num.isManual || num.num < 0 || num.num >= assets.length) return;
 
-    const asset = assets[idx.idx];
+    const asset = assets[num.num];
     if (!asset) return;
     this.audio.pause();
     this.audio.src = asset;

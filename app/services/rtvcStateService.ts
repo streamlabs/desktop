@@ -176,7 +176,7 @@ interface ManualParam {
   amount: number;
   primaryVoice: number;
   secondaryVoice: number;
-  imgidx: number;
+  imageNum: number;
 }
 
 interface PresetParam {
@@ -297,14 +297,14 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
       a.pitchShiftSong = numFix(a.pitchShiftSong, 0);
     });
 
-    r.manuals.forEach((a, idx) => {
+    r.manuals.forEach((a, n) => {
       if (!a.name) a.name = 'none';
       a.pitchShift = numFix(a.pitchShift, 0);
       a.pitchShiftSong = numFix(a.pitchShiftSong, 0);
       a.amount = numFix(a.amount, 50);
       a.primaryVoice = numFix(a.primaryVoice, 0);
       a.secondaryVoice = numFix(a.secondaryVoice, -1);
-      a.imgidx = a.imgidx ?? idx;
+      a.imageNum = a.imageNum ?? n;
     });
 
     if (!r.scenes) r.scenes = {};
@@ -313,23 +313,23 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
     return r;
   }
 
-  indexToNum(index: string): { isManual: boolean; idx: number } {
-    const def = { isManual: false, idx: 0 };
+  indexToModeNum(index: string): { isManual: boolean; num: number } {
+    const def = { isManual: false, num: 0 };
 
     if (!index || typeof index !== 'string') return def;
     const s = index.split('/');
     if (s.length !== 2) return def;
     const num = Number(s[1]);
-    if (s[0] === 'manual') return { isManual: true, idx: num };
-    if (s[0] === 'preset') return { isManual: false, idx: num };
+    if (s[0] === 'manual') return { isManual: true, num };
+    if (s[0] === 'preset') return { isManual: false, num };
 
     return def;
   }
 
   stateToCommonParam(state: StateParam, index: string): CommonParam {
-    const p = this.indexToNum(index);
+    const p = this.indexToModeNum(index);
     if (p.isManual) {
-      const v = state.manuals[p.idx];
+      const v = state.manuals[p.num];
       return {
         name: v.name,
         label: '',
@@ -339,7 +339,7 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
         amount: v.amount,
         primaryVoice: v.primaryVoice,
         secondaryVoice: v.secondaryVoice,
-        image: this.manualImages[v.imgidx ?? p.idx],
+        image: this.manualImages[v.imageNum ?? p.num],
       };
     }
 
@@ -350,15 +350,15 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
       label: '',
       description: '',
       amount: 0,
-      primaryVoice: p.idx + 100,
+      primaryVoice: p.num + 100,
       secondaryVoice: -1,
       pitchShift: 0,
       pitchShiftSong: 0,
     };
-    if (p.idx < this.presets.length) v = this.presets[p.idx];
-    if (p.idx < RtvcPresets.length) v = RtvcPresets[p.idx];
+    if (p.num < this.presets.length) v = this.presets[p.num];
+    if (p.num < RtvcPresets.length) v = RtvcPresets[p.num];
 
-    const m = state.presets[p.idx];
+    const m = state.presets[p.num];
 
     return {
       name: v.name,
@@ -382,11 +382,11 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
 
     const state = this.getState();
     if (!state.scenes || !state.scenes[sceneId]) return;
-    const idx = state.scenes[sceneId];
-    if (state.currentIndex === idx) return; // no change
-    const p = this.stateToCommonParam(state, idx);
+    const index = state.scenes[sceneId];
+    if (state.currentIndex === index) return; // no change
+    const p = this.stateToCommonParam(state, index);
     this.setSourcePropertiesByCommonParam(source, p);
-    state.currentIndex = idx;
+    state.currentIndex = index;
     this.setState(state);
 
     this.modifyEventLog();
@@ -411,10 +411,10 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
 
     const state = this.getState();
     const index = state.currentIndex;
-    const { isManual, idx } = this.indexToNum(index);
+    const { isManual, num } = this.indexToModeNum(index);
     if (isManual) {
-      const p = state.manuals[idx];
-      const key = `manual${idx}` as RtvcParamManualKeys;
+      const p = state.manuals[num];
+      const key = `manual${num}` as RtvcParamManualKeys;
       const param = this.eventLog.param as RtvcParamManual;
       if (!param[key]) param[key] = { name: '', amount: 0, primary_voice: 0, secondary_voice: -1 };
       const s = param[key];
@@ -426,8 +426,8 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
       s.secondary_voice = p.secondaryVoice;
     } else {
       const p =
-        idx < state.presets.length ? state.presets[idx] : { pitchShift: 0, pitchShiftSong: 0 };
-      const key = `preset${idx}` as RtvcParamPresetKeys;
+        num < state.presets.length ? state.presets[num] : { pitchShift: 0, pitchShiftSong: 0 };
+      const key = `preset${num}` as RtvcParamPresetKeys;
       const param = this.eventLog.param as RtvcParamPreset;
       if (!param[key]) param[key] = {};
 
