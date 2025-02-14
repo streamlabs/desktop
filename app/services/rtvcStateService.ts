@@ -328,10 +328,30 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
     return def;
   }
 
-  stateToCommonParam(state: StateParam, index: string): CommonParam {
-    const p = this.indexToModeNum(index);
-    if (p.isManual) {
-      const v = state.manuals[p.num];
+  stateParamToCommonParam(param: StateParam, index: string): CommonParam {
+    const { isManual, num } = this.indexToModeNum(index);
+
+    if (
+      num < 0 ||
+      (isManual && num >= param.manuals.length) ||
+      (!isManual && (num >= this.presets.length || num >= RtvcPresets.length))
+    ) {
+      // 想定外の場合のデフォルト値
+      return {
+        name: 'none',
+        label: '',
+        description: '',
+        pitchShift: 0,
+        pitchShiftSong: 0,
+        amount: AmountDefault,
+        primaryVoice: 0,
+        secondaryVoice: -1,
+        image: '',
+      };
+    }
+
+    if (isManual) {
+      const v = param.manuals[num];
       return {
         name: v.name,
         label: '',
@@ -341,27 +361,12 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
         amount: v.amount,
         primaryVoice: v.primaryVoice,
         secondaryVoice: v.secondaryVoice,
-        image: this.manualImages[v.imageNum ?? p.num],
+        image: this.manualImages[v.imageNum ?? num],
       };
     }
 
-    // PreserValuesが不十分な時にリストで補完（動的リストはSourceがあるときしか取れないので)
-    let v: RtvcPreset = {
-      index: '',
-      name: '',
-      label: '',
-      description: '',
-      amount: 0,
-      primaryVoice: p.num + 100,
-      secondaryVoice: -1,
-      pitchShift: 0,
-      pitchShiftSong: 0,
-    };
-    if (p.num < this.presets.length) v = this.presets[p.num];
-    if (p.num < RtvcPresets.length) v = RtvcPresets[p.num];
-
-    const m = state.presets[p.num];
-
+    const v = RtvcPresets[num];
+    const m = param.presets[num];
     return {
       name: v.name,
       label: v.label,
@@ -386,7 +391,7 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
     if (!state.scenes || !state.scenes[sceneId]) return;
     const index = state.scenes[sceneId];
     if (state.currentIndex === index) return; // no change
-    const p = this.stateToCommonParam(state, index);
+    const p = this.stateParamToCommonParam(state, index);
     this.setSourcePropertiesByCommonParam(source, p);
     state.currentIndex = index;
     this.setState(state);

@@ -45,7 +45,7 @@ export default class RtvcSourceProperties extends SourceProperties {
   initialMonitoringType: obs.EMonitoringType;
   currentMonitoringType: obs.EMonitoringType;
 
-  state: StateParam;
+  draftState: StateParam;
 
   currentIndex = 'preset/0';
   isMonitor = false;
@@ -87,7 +87,7 @@ export default class RtvcSourceProperties extends SourceProperties {
 
   updateManualList() {
     // add,delに反応しないのでコード側から変更指示
-    this.manualList = this.state.manuals.map((a, num) => ({
+    this.manualList = this.draftState.manuals.map((a, num) => ({
       index: `manual/${num}`,
       name: a.name,
       label: `manual${num}`,
@@ -140,7 +140,7 @@ export default class RtvcSourceProperties extends SourceProperties {
 
   @Watch('currentIndex')
   onChangeIndex() {
-    const p = this.rtvcStateService.stateToCommonParam(this.state, this.currentIndex);
+    const p = this.rtvcStateService.stateParamToCommonParam(this.draftState, this.currentIndex);
 
     this.name = p.name;
     this.label = p.label;
@@ -236,7 +236,7 @@ export default class RtvcSourceProperties extends SourceProperties {
       this.isSongMode ? PitchShiftModeValue.song : PitchShiftModeValue.talk,
     );
     // 値入れ直し
-    const p = this.rtvcStateService.stateToCommonParam(this.state, this.currentIndex);
+    const p = this.rtvcStateService.stateParamToCommonParam(this.draftState, this.currentIndex);
     this.rtvcStateService.setSourcePropertiesByCommonParam(this.source, p);
   }
 
@@ -266,13 +266,13 @@ export default class RtvcSourceProperties extends SourceProperties {
   setParam(key: SetParamKey, value: any) {
     const p = this.indexToModeNum(this.currentIndex);
     if (p.isManual) {
-      (this.state.manuals[p.num] as any)[key] = value;
+      (this.draftState.manuals[p.num] as any)[key] = value;
       return;
     }
 
     // preset用のkey判断
     if (!['pitchShift', 'pitchShiftSong'].includes(key)) return;
-    (this.state.presets[p.num] as any)[key] = value;
+    (this.draftState.presets[p.num] as any)[key] = value;
   }
 
   // -- sources in/out
@@ -299,13 +299,13 @@ export default class RtvcSourceProperties extends SourceProperties {
   // --- update
 
   update() {
-    this.state.currentIndex = this.currentIndex;
-    const scenes = this.state.scenes ?? {};
+    this.draftState.currentIndex = this.currentIndex;
+    const scenes = this.draftState.scenes ?? {};
     const sceneId = this.scenesService.activeScene.id;
     if (sceneId) scenes[sceneId] = this.currentIndex;
-    this.state.scenes = scenes;
-    this.state.tab = this.tab;
-    this.rtvcStateService.setState(this.state);
+    this.draftState.scenes = scenes;
+    this.draftState.tab = this.tab;
+    this.rtvcStateService.setState(this.draftState);
     this.rtvcStateService.modifyEventLog();
   }
 
@@ -327,19 +327,19 @@ export default class RtvcSourceProperties extends SourceProperties {
       this.setSourcePropertyValue('latency', 13);
     }
 
-    this.state = this.rtvcStateService.getState();
+    this.draftState = this.rtvcStateService.getState();
 
     this.device = this.getSourcePropertyValue('device') as number;
     this.latency = this.getSourcePropertyValue('latency') as number;
 
     this.updateManualList();
 
-    this.currentIndex = this.state.currentIndex;
+    this.currentIndex = this.draftState.currentIndex;
     this.onChangeIndex();
 
     this.isSongMode =
       (this.getSourcePropertyValue('pitch_shift_mode') as number) === PitchShiftModeValue.song;
-    this.tab = this.state.tab ?? 0;
+    this.tab = this.draftState.tab ?? 0;
   }
 
   // 右上xではOKという感じらしい
@@ -391,20 +391,20 @@ export default class RtvcSourceProperties extends SourceProperties {
 
   findNewManualImageNum() {
     for (let i = 0; i < this.rtvcStateService.manualImages.length; i++) {
-      if (!this.state.manuals.find(a => a.imageNum === i)) return i;
+      if (!this.draftState.manuals.find(a => a.imageNum === i)) return i;
     }
     return 0;
   }
 
   onAdd() {
-    if (this.state.manuals.length >= this.manualMax) return;
+    if (this.draftState.manuals.length >= this.manualMax) return;
     const newNum = this.manualList.reduce((v, a) => {
       const m = a.name.match(/(\d+)$/);
       return m ? Math.max(v, parseInt(m[1], 10) + 1) : v;
     }, 1);
 
-    const index = `manual/${this.state.manuals.length}`;
-    this.state.manuals.push({
+    const index = `manual/${this.draftState.manuals.length}`;
+    this.draftState.manuals.push({
       name: `オリジナル${newNum}`,
       pitchShift: 0,
       pitchShiftSong: 0,
@@ -442,7 +442,7 @@ export default class RtvcSourceProperties extends SourceProperties {
     if (r.response) return;
 
     // 指定されたindexを削除
-    this.state.manuals.splice(num, 1);
+    this.draftState.manuals.splice(num, 1);
     this.updateManualList();
 
     // currentIndexがmanualで削除対象より後なら消した分によりズレが生じているのでcurrentIndexを変更
@@ -454,13 +454,13 @@ export default class RtvcSourceProperties extends SourceProperties {
 
   onCopy(index: string) {
     this.closePopupMenu();
-    if (this.state.manuals.length >= this.manualMax) return;
+    if (this.draftState.manuals.length >= this.manualMax) return;
     const num = this.getManualIndexNum(index);
     if (num < 0) return;
-    const v = this.state.manuals[num];
-    const newIndex = `manual/${this.state.manuals.length}`;
+    const v = this.draftState.manuals[num];
+    const newIndex = `manual/${this.draftState.manuals.length}`;
 
-    this.state.manuals.push({
+    this.draftState.manuals.push({
       name: `${v.name}のコピー`,
       pitchShift: v.pitchShift,
       pitchShiftSong: v.pitchShiftSong,
