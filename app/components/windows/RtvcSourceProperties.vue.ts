@@ -3,8 +3,8 @@ import { IObsListInput, IObsListOption, TObsValue } from 'components/obs/inputs/
 import { Inject } from 'services/core/injector';
 import { $t } from 'services/i18n';
 import {
+  AmountDefault,
   PitchShiftModeValue,
-  PresetValues,
   RtvcStateService,
   SourcePropKey,
   StateParam,
@@ -45,7 +45,7 @@ export default class RtvcSourceProperties extends SourceProperties {
   initialMonitoringType: obs.EMonitoringType;
   currentMonitoringType: obs.EMonitoringType;
 
-  state: StateParam;
+  draftState: StateParam;
 
   currentIndex = 'preset/0';
   isMonitor = false;
@@ -54,6 +54,7 @@ export default class RtvcSourceProperties extends SourceProperties {
   name = '';
   label = '';
   description = '';
+  image = '';
   device: Extract<TObsValue, number> = 0;
   latency: Extract<TObsValue, number> = 0;
 
@@ -79,25 +80,21 @@ export default class RtvcSourceProperties extends SourceProperties {
   audio = new Audio();
 
   get presetList() {
-    return PresetValues.map(a => ({ value: a.index, name: a.name, label: a.label }));
+    return this.rtvcStateService.getPresets();
   }
 
-  manualList: { value: string; name: string; label: string }[] = [];
+  manualList: { index: string; name: string; label: string; image: string }[] = [];
 
   updateManualList() {
     // add,delに反応しないのでコード側から変更指示
-    this.manualList = this.state.manuals.map((a, idx) => ({
-      value: `manual/${idx}`,
+    this.manualList = this.draftState.manuals.map((a, num) => ({
+      index: `manual/${num}`,
       name: a.name,
-      label: `manual${idx}`,
+      label: `manual${num}`,
+      image: this.rtvcStateService.manualImages[a.imageNum],
     }));
     this.canAdd = this.manualList.length < this.manualMax;
   }
-
-  // preset voices
-  // 100 kotoyomi_nia
-  // 101 zundamon
-  // 103 kasukabe_tsumugi
 
   get jvsList() {
     if ($t('source-props.nair-rtvc-source.value.male') === '男性') return jvsListBase; // 同じなので変更不要
@@ -143,11 +140,12 @@ export default class RtvcSourceProperties extends SourceProperties {
 
   @Watch('currentIndex')
   onChangeIndex() {
-    const p = this.rtvcStateService.stateToCommonParam(this.state, this.currentIndex);
+    const p = this.rtvcStateService.stateParamToCommonParam(this.draftState, this.currentIndex);
 
     this.name = p.name;
     this.label = p.label;
     this.description = p.description;
+    this.image = p.image;
 
     this.pitchShift = p.pitchShift;
     this.pitchShiftSong = p.pitchShiftSong;
@@ -170,8 +168,8 @@ export default class RtvcSourceProperties extends SourceProperties {
   @Watch('name')
   onChangeName() {
     this.setParam('name', this.name);
-    const idx = this.getManualIndexNum(this.currentIndex);
-    if (idx >= 0) this.manualList[idx].name = this.name; // 画面反映
+    const num = this.getManualIndexNum(this.currentIndex);
+    if (num >= 0) this.manualList[num].name = this.name; // 画面反映
   }
 
   @Watch('pitchShift')
@@ -201,6 +199,7 @@ export default class RtvcSourceProperties extends SourceProperties {
 
   @Watch('secondaryVoiceModel')
   onChangeSecondaryVoice() {
+    if (this.secondaryVoice === -1) this.amount = AmountDefault;
     this.secondaryVoice = this.secondaryVoiceModel.value;
     this.setParam('secondaryVoice', this.secondaryVoice);
     this.setSourcePropertyValue('secondary_voice', this.secondaryVoice);
@@ -237,7 +236,7 @@ export default class RtvcSourceProperties extends SourceProperties {
       this.isSongMode ? PitchShiftModeValue.song : PitchShiftModeValue.talk,
     );
     // 値入れ直し
-    const p = this.rtvcStateService.stateToCommonParam(this.state, this.currentIndex);
+    const p = this.rtvcStateService.stateParamToCommonParam(this.draftState, this.currentIndex);
     this.rtvcStateService.setSourcePropertiesByCommonParam(this.source, p);
   }
 
@@ -254,23 +253,26 @@ export default class RtvcSourceProperties extends SourceProperties {
 
   // --  param in/out
 
-  indexToNum(index: string): { isManual: boolean; idx: number } {
-    return this.rtvcStateService.indexToNum(this.state, index);
+  indexToModeNum(index: string): { isManual: boolean; num: number } {
+    return this.rtvcStateService.indexToModeNum(index);
   }
 
   getManualIndexNum(index: string): number {
-    const r = this.indexToNum(index);
-    if (r.isManual) return r.idx;
+    const r = this.indexToModeNum(index);
+    if (r.isManual) return r.num;
     return -1;
   }
 
   setParam(key: SetParamKey, value: any) {
-    const p = this.indexToNum(this.currentIndex);
+    const p = this.indexToModeNum(this.currentIndex);
     if (p.isManual) {
-      (this.state.manuals[p.idx] as any)[key] = value;
+      (this.draftState.manuals[p.num] as any)[key] = value;
       return;
     }
-    (this.state.presets[p.idx] as any)[key] = value;
+
+    // preset用のkey判断
+    if (!['pitchShift', 'pitchShiftSong'].includes(key)) return;
+    (this.draftState.presets[p.num] as any)[key] = value;
   }
 
   // -- sources in/out
@@ -297,13 +299,13 @@ export default class RtvcSourceProperties extends SourceProperties {
   // --- update
 
   update() {
-    this.state.currentIndex = this.currentIndex;
-    const scenes = this.state.scenes ?? {};
+    this.draftState.currentIndex = this.currentIndex;
+    const scenes = this.draftState.scenes ?? {};
     const sceneId = this.scenesService.activeScene.id;
     if (sceneId) scenes[sceneId] = this.currentIndex;
-    this.state.scenes = scenes;
-    this.state.tab = this.tab;
-    this.rtvcStateService.setState(this.state);
+    this.draftState.scenes = scenes;
+    this.draftState.tab = this.tab;
+    this.rtvcStateService.setState(this.draftState);
     this.rtvcStateService.modifyEventLog();
   }
 
@@ -312,7 +314,6 @@ export default class RtvcSourceProperties extends SourceProperties {
   created() {
     // SourceProperties.mountedで取得するが、リストなど間に合わないので先にこれだけ。該当ソースの各パラメタはpropertiesを見れば分かる
     this.properties = this.source ? this.source.getPropertiesFormData() : [];
-
     const audio = this.audioService.getSource(this.sourceId);
     if (audio) {
       const m = audio.monitoringType;
@@ -326,19 +327,19 @@ export default class RtvcSourceProperties extends SourceProperties {
       this.setSourcePropertyValue('latency', 13);
     }
 
-    this.state = this.rtvcStateService.getState();
+    this.draftState = this.rtvcStateService.getState();
 
     this.device = this.getSourcePropertyValue('device') as number;
     this.latency = this.getSourcePropertyValue('latency') as number;
 
     this.updateManualList();
 
-    this.currentIndex = this.state.currentIndex;
+    this.currentIndex = this.draftState.currentIndex;
     this.onChangeIndex();
 
     this.isSongMode =
       (this.getSourcePropertyValue('pitch_shift_mode') as number) === PitchShiftModeValue.song;
-    this.tab = this.state.tab ?? 0;
+    this.tab = this.draftState.tab ?? 0;
   }
 
   // 右上xではOKという感じらしい
@@ -362,18 +363,18 @@ export default class RtvcSourceProperties extends SourceProperties {
 
   onRandom() {
     const list0 = this.primaryVoiceList;
-    const idx0 = Math.floor(Math.random() * list0.length);
-    this.primaryVoiceModel = list0[idx0];
+    const index0 = Math.floor(Math.random() * list0.length);
+    this.primaryVoiceModel = list0[index0];
 
     const list1 = this.primaryVoiceList;
-    const idx1 = Math.floor(Math.random() * list1.length);
-    this.secondaryVoiceModel = list1[idx1];
+    const index1 = Math.floor(Math.random() * list1.length);
+    this.secondaryVoiceModel = list1[index1];
 
-    this.amount = Math.floor(Math.random() * 50);
+    this.amount = Math.floor(Math.random() * AmountDefault);
   }
 
-  onTab(idx: number) {
-    this.tab = idx;
+  onTab(a: number) {
+    this.tab = a;
   }
 
   done() {
@@ -388,16 +389,29 @@ export default class RtvcSourceProperties extends SourceProperties {
     this.currentIndex = index;
   }
 
+  findNewManualImageNum() {
+    for (let i = 0; i < this.rtvcStateService.manualImages.length; i++) {
+      if (!this.draftState.manuals.find(a => a.imageNum === i)) return i;
+    }
+    return 0;
+  }
+
   onAdd() {
-    if (this.state.manuals.length >= this.manualMax) return;
-    const index = `manual/${this.state.manuals.length}`;
-    this.state.manuals.push({
-      name: `オリジナル${this.state.manuals.length + 1}`,
+    if (this.draftState.manuals.length >= this.manualMax) return;
+    const newNum = this.manualList.reduce((v, a) => {
+      const m = a.name.match(/(\d+)$/);
+      return m ? Math.max(v, parseInt(m[1], 10) + 1) : v;
+    }, 1);
+
+    const index = `manual/${this.draftState.manuals.length}`;
+    this.draftState.manuals.push({
+      name: `オリジナル${newNum}`,
       pitchShift: 0,
       pitchShiftSong: 0,
-      amount: 0,
+      amount: AmountDefault,
       primaryVoice: 0,
       secondaryVoice: -1,
+      imageNum: this.findNewManualImageNum(),
     });
     this.updateManualList();
     this.currentIndex = index;
@@ -408,10 +422,14 @@ export default class RtvcSourceProperties extends SourceProperties {
     this.popper = undefined;
   }
 
+  canDelete(index: string): boolean {
+    return this.manualList.length > 1 && this.currentIndex !== index;
+  }
+
   async onDelete(index: string) {
     this.closePopupMenu();
-    const idx = this.getManualIndexNum(index);
-    if (idx < 0) return;
+    const num = this.getManualIndexNum(index);
+    if (num < 0) return;
 
     const r = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
       type: 'warning',
@@ -423,41 +441,57 @@ export default class RtvcSourceProperties extends SourceProperties {
     });
     if (r.response) return;
 
-    this.state.manuals.splice(idx, 1);
+    // 指定されたindexを削除
+    this.draftState.manuals.splice(num, 1);
     this.updateManualList();
-    if (index !== this.currentIndex) return;
-    this.currentIndex = 'preset/0';
+
+    // currentIndexがmanualで削除対象より後なら消した分によりズレが生じているのでcurrentIndexを変更
+    const currentNum = this.getManualIndexNum(this.currentIndex);
+    if (currentNum < 0 || currentNum < num) return;
+    const n = Math.max(currentNum - 1, 0);
+    this.currentIndex = `manual/${n}`;
   }
 
   onCopy(index: string) {
     this.closePopupMenu();
-    if (this.state.manuals.length >= this.manualMax) return;
-    const idx = this.getManualIndexNum(index);
-    if (idx < 0) return;
-    const v = this.state.manuals[idx];
-    const newIndex = `manual/${this.state.manuals.length}`;
+    if (this.draftState.manuals.length >= this.manualMax) return;
+    const num = this.getManualIndexNum(index);
+    if (num < 0) return;
+    const v = this.draftState.manuals[num];
+    const newIndex = `manual/${this.draftState.manuals.length}`;
 
-    this.state.manuals.push({
+    this.draftState.manuals.push({
       name: `${v.name}のコピー`,
       pitchShift: v.pitchShift,
       pitchShiftSong: v.pitchShiftSong,
       amount: v.amount,
       primaryVoice: v.primaryVoice,
       secondaryVoice: v.secondaryVoice,
+      imageNum: this.findNewManualImageNum(),
     });
 
     this.updateManualList();
     this.currentIndex = newIndex;
   }
 
-  playSample(label: string) {
-    const assets: { [name: string]: string } = {
-      near: require('../../../media/sound/rtvc_sample_near.mp3'),
-      zundamon: require('../../../media/sound/rtvc_sample_zundamon.mp3'),
-      tsumugi: require('../../../media/sound/rtvc_sample_tsumugi.mp3'),
-    };
+  playSample(index: string) {
+    const assets: string[] = [
+      require('../../../media/sound/rtvc/near.mp3'),
+      require('../../../media/sound/rtvc/zundamon.mp3'),
+      require('../../../media/sound/rtvc/tsumugi.mp3'),
+      require('../../../media/sound/rtvc/tohoku_zunko.mp3'),
+      require('../../../media/sound/rtvc/tohoku_itako.mp3'),
+      require('../../../media/sound/rtvc/tohoku_kiritan.mp3'),
+      require('../../../media/sound/rtvc/shikoku_metan.mp3'),
+      require('../../../media/sound/rtvc/kyushu_sora.mp3'),
+      require('../../../media/sound/rtvc/chugoku_usagi.mp3'),
+      require('../../../media/sound/rtvc/oedo_chanko.mp3'),
+    ];
 
-    const asset = assets[label];
+    const num = this.indexToModeNum(index);
+    if (num.isManual || num.num < 0 || num.num >= assets.length) return;
+
+    const asset = assets[num.num];
     if (!asset) return;
     this.audio.pause();
     this.audio.src = asset;

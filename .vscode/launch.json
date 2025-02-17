@@ -9,6 +9,8 @@
       "runtimeArgs": [".", "--remote-debugging-port=9222"],
       "cwd": "${workspaceRoot}",
       "env": {
+        "ELECTRON_ENABLE_LOGGING": "true",
+        "ELECTRON_ENABLE_STACK_DUMPING": "true",
         "NAIR_UNSTABLE": "1",
         "NAIR_PRODUCTION_DEBUG": "true"
       }

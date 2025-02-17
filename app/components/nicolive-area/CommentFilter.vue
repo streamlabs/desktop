@@ -310,7 +310,7 @@
 
 .item-body {
   font-size: @font-size4;
-  line-height: @font-line-height-normal;
+  line-height: @font-line-height-md;
   color: var(--color-text);
   word-break: break-all;
 }
@@ -319,7 +319,7 @@
   flex-shrink: 0;
   margin-top: 4px;
   font-size: @font-size2;
-  line-height: @font-line-height-normal;
+  line-height: @font-line-height-md;
   color: var(--color-text-dark);
 
   &:empty {

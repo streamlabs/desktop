@@ -1,6 +1,10 @@
 <template>
   <div style="height: 100%">
-    <title-bar :title="options.title" class="child-window-titlebar" />
+    <title-bar
+      :title="options.title"
+      :resizable="options.resizable"
+      class="child-window-titlebar"
+    />
     <div class="blank-slate">
       <div class="spinner-spacer" />
       <i class="fa fa-spinner fa-pulse" />
