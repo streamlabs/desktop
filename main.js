@@ -122,6 +122,54 @@ async function recollectUserSessionCookie() {
   }
 }
 
+class WindowCleanupWaiter {
+  /** @type {Map<number, { resolve: () => void, promise: Promise<void> }>}
+   */
+  _waitCleanupWindows = new Map();
+
+  /**
+   *
+   * @param {number} windowId
+   * @param {boolean} enable
+   */
+  async set(windowId, enable) {
+    if (!enable) {
+      if (this._waitCleanupWindows.has(windowId)) {
+        const { resolve } = this._waitCleanupWindows.get(windowId);
+        resolve();
+        this._waitCleanupWindows.delete(windowId);
+      }
+    } else {
+      if (!this._waitCleanupWindows.has(windowId)) {
+        let resolve;
+        const promise = new Promise(resolve_ => {
+          resolve = resolve_;
+        });
+        this._waitCleanupWindows.set(windowId, { resolve, promise });
+      }
+    }
+  }
+
+  /**
+   *
+   * @param {number} windowId
+   * @returns
+   */
+  async wait(windowId) {
+    if (this._waitCleanupWindows.has(windowId)) {
+      // ウィンドウのクリーンアップを待つが、タイムアウトでも打ち切る
+      const CLEANUP_TIMEOUT = 3000;
+      await Promise.race([
+        this._waitCleanupWindows.get(windowId).promise,
+        new Promise(resolve => {
+          setTimeout(resolve, CLEANUP_TIMEOUT);
+        }),
+      ]);
+      return;
+    }
+  }
+}
+
 // This ensures that only one copy of our app can run at once.
 const gotTheLock = app.requestSingleInstanceLock();
 
@@ -504,7 +552,6 @@ function initialize(crashHandler) {
     mainWindow.on('close', e => {
       if (!shutdownStarted) {
         shutdownStarted = true;
-        childWindow.destroy();
         mainWindow.send('shutdown');
 
         // We give the main window 10 seconds to acknowledge a request
@@ -720,6 +767,30 @@ function initialize(crashHandler) {
 
       childWindow.focus();
     }
+  });
+
+  const windowCleanupWaiter = new WindowCleanupWaiter();
+  ipcMain.handle('require-wait-window-cleanup', async (_event, windowId, enable) => {
+    switch (windowId) {
+      case 'main':
+        windowId = mainWindow.id;
+        break;
+      case 'child':
+        windowId = childWindow.id;
+        break;
+    }
+    await windowCleanupWaiter.set(windowId, enable);
+  });
+  ipcMain.handle('wait-window-cleanup', async (_event, windowId) => {
+    switch (windowId) {
+      case 'main':
+        windowId = mainWindow.id;
+        break;
+      case 'child':
+        windowId = childWindow.id;
+        break;
+    }
+    await windowCleanupWaiter.wait(windowId);
   });
 
   ipcMain.on('window-closeChildWindow', event => {
