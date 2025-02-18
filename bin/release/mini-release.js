@@ -9,7 +9,6 @@ const { Octokit } = require('@octokit/rest');
 const sh = require('shelljs');
 const colors = require('colors/safe');
 const yaml = require('js-yaml');
-const fetch = require('node-fetch');
 const { log, info, error, executeCmd } = require('./scripts/log');
 const { confirm } = require('./scripts/prompt');
 const { checkEnv, getTagCommitId } = require('./scripts/util');
