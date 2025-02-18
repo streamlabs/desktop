@@ -66,7 +66,7 @@ export function getBestSettingsForNiconico(
     } else if (settings.hasSpecificValue(OptimizationKey.encoder, EncoderFamily.amd)) {
       encoderSettings = {
         encoder: EncoderFamily.amd,
-        simpleUseAdvanced: true,
+        simpleUseAdvanced: false,
       };
     } else if (
       settings.hasSpecificValue(OptimizationKey.encoder, EncoderFamily.qsv) ||
