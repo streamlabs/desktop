@@ -11,6 +11,7 @@ import {
   DelayFactory,
   ReconnectFactory,
   NetworkFactory,
+  ISimpleStreaming,
 } from '../../../obs-api';
 import { Inject } from 'services/core/injector';
 import moment from 'moment';
@@ -94,6 +95,17 @@ export interface IOBSOutputSignalInfo {
   service: string; // 'default' | 'vertical'
 }
 
+/**
+ * Output descriptor for extra outputs (e.g YouTube vertical)
+ */
+interface IExtraOutput {
+  name: string;
+  display: TDisplayType;
+  stream?: ISimpleStreaming;
+  url: string;
+  streamKey: string;
+}
+
 export class StreamingService
   extends StatefulService<IStreamingServiceState>
   implements IStreamingServiceApi {
@@ -127,8 +139,7 @@ export class StreamingService
 
   powerSaveId: number;
 
-  // TODO
-  extraOutputs: any[] = [];
+  extraOutputs: IExtraOutput[] = [];
 
   private resolveStartStreaming: Function = () => {};
   private rejectStartStreaming: Function = () => {};
@@ -334,14 +345,6 @@ export class StreamingService
 
     for (const platform of platforms) {
       await this.setPlatformSettings(platform, settings, unattendedMode);
-
-      // if (platform === 'youtube') {
-      //   const yt = settings.customDestinations[settings.customDestinations.length - 1];
-
-      //   if (yt) {
-      //     yt.video = this.videoSettingsService.contexts[yt.display];
-      //   }
-      // }
     }
 
     /**
@@ -432,15 +435,33 @@ export class StreamingService
          */
         (this.userService.views.isPrime || this.views.enabledPlatforms.length === 1)
       ) {
-        // This really belongs as a YT check
+        // This might belong as a YT check
         await this.runCheck('setupDualOutput', async () => {
           // TODO: this needs to fail gracefully, failing to create stream
           // (for example due to rate limits), leaves streaming window in
           // infinite load and other streams won't start.
-          const ytVertical = await this.youtubeService.createVertical(settings);
+          // We need to discuss whether continuing is ok, with some sort of
+          // notification.
+          try {
+            const { name, streamKey, url } = await this.youtubeService.createVertical(settings);
 
-          this.videoSettingsService.validateVideoContext('vertical');
-          this.extraOutputs.push(ytVertical);
+            this.videoSettingsService.validateVideoContext('vertical');
+
+            this.extraOutputs.push({
+              name,
+              streamKey,
+              url,
+              display: 'vertical',
+            });
+          } catch (e: unknown) {
+            const error = this.handleTypedStreamError(
+              e,
+              'DUAL_OUTPUT_SETUP_FAILED',
+              'Failed to setup dual output due to YouTube vertical stream creation failure',
+            );
+            this.setError(error);
+            return;
+          }
         });
       }
 
