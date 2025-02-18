@@ -11,8 +11,7 @@
   },
   "dependencies": {
     "@octokit/rest": "^20.1.1",
-    "luxon": "^3.5.0",
-    "node-fetch": "^3.3.2"
+    "luxon": "^3.5.0"
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "^3.657.0",
