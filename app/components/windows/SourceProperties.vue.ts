@@ -5,6 +5,7 @@ import { TObsFormData } from 'components/obs/inputs/ObsInput';
 import Display from 'components/shared/Display.vue';
 import cloneDeep from 'lodash/cloneDeep';
 import { Subscription } from 'rxjs';
+import { AppService } from 'services/app';
 import { Inject } from 'services/core/injector';
 import { $t } from 'services/i18n';
 import { ISourcesServiceApi, TSourceType } from 'services/sources';
@@ -29,6 +30,8 @@ export default class SourceProperties extends Vue {
   @Inject()
   windowsService: WindowsService;
 
+  @Inject() private appService: AppService;
+
   // @ts-expect-error: ts2729: use before initialization
   source = this.sourcesService.getSource(this.sourceId);
   properties: TObsFormData = [];
@@ -49,6 +52,10 @@ export default class SourceProperties extends Vue {
       this.windowsService.getWindowOptions(this.windowId).sourceId ||
       this.windowsService.getChildWindowQueryParams().sourceId
     );
+  }
+  /** アプリシャットダウン中なら true。ウィンドウが開いた状態で終了したときに分岐するときに見る */
+  get isShuttingDown(): boolean {
+    return this.appService.state.shuttingDown;
   }
 
   refreshTimer: number = undefined;
@@ -75,6 +82,7 @@ export default class SourceProperties extends Vue {
         this.refresh();
       }, PeriodicUpdateInterval);
     }
+    this.windowsService.requireWaitWindowCleanup(this.windowId, true);
   }
 
   destroyed() {
@@ -83,6 +91,7 @@ export default class SourceProperties extends Vue {
     }
     this.sourceRemovedSub.unsubscribe();
     this.sourceUpdatedSub.unsubscribe();
+    this.windowsService.requireWaitWindowCleanup(this.windowId, false);
   }
 
   get propertiesManagerUI() {

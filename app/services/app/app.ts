@@ -32,6 +32,7 @@ import { RunInLoadingMode } from './app-decorators';
 
 interface IAppState {
   loading: boolean;
+  shuttingDown: boolean;
   argv: string[];
   errorAlert: boolean;
 }
@@ -51,6 +52,7 @@ export class AppService extends StatefulService<IAppState> {
 
   static initialState: IAppState = {
     loading: true,
+    shuttingDown: false,
     argv: remote.process.argv,
     errorAlert: false,
   };
@@ -136,10 +138,16 @@ export class AppService extends StatefulService<IAppState> {
       obs.NodeObs.InitShutdownSequence();
       this.crashReporterService.beginShutdown();
       // this.shutdownStarted.next(); 未実装
+      this.START_SHUTDOWN();
       // this.keyListenerService.shutdown(); 未実装
       // this.platformAppsService.unloadAllApps(); 未実装
       // await this.usageStatisticsService.flushEvents(); 未実装
-      this.windowsService.closeAllOneOffs(); // intead .shutdown(); window.child.close is 'Object has been destroyed' in this time
+
+      if (this.windowsService.isChildWindowShown()) {
+        // 安全に子ウィンドウを閉じ、クリーンアップを待つ
+        await this.windowsService.closeChildWindow();
+      }
+      await this.windowsService.closeAllOneOffs(); // instead .shutdown(); window.child.close is 'Object has been destroyed' in this time
       NicoliveClient.closeOpenWindows();
       this.ipcServerService.stopListening();
       // await this.userService.flushUserSession(); 未実装
@@ -283,6 +291,11 @@ export class AppService extends StatefulService<IAppState> {
   @mutation()
   private FINISH_LOADING() {
     this.state.loading = false;
+  }
+
+  @mutation()
+  private START_SHUTDOWN() {
+    this.state.shuttingDown = true;
   }
 
   @mutation()

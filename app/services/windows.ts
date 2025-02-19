@@ -182,14 +182,35 @@ export class WindowsService extends StatefulService<IWindowsState> {
 
     // Don't center the window if it's the same component
     // This prevents "snapping" behavior when navigating settings
-    if (options.componentName !== this.state.child.componentName) options.center = true;
+    if (options.componentName !== this.state.child.componentName) {
+      options.center = true;
+
+      // デフォルトではアプリ終了時にウィンドウクリーンアップを待たない
+      this.requireWaitWindowCleanup('child', false);
+    }
 
     ipcRenderer.send('window-showChildWindow', options);
     this.updateChildWindowOptions(options);
   }
 
-  closeChildWindow() {
+  isChildWindowShown(): boolean {
+    return this.state.child.isShown;
+  }
+
+  // マウント時に enable: true で呼んでおくと、destroy完了時に enable: false を呼ぶまで待ってからウィンドウが閉じられるようになる
+  async requireWaitWindowCleanup(windowId: string, enable: boolean) {
+    return ipcRenderer.invoke('require-wait-window-cleanup', windowId, enable);
+  }
+  async waitWindowCleanup(windowId: string) {
+    return ipcRenderer.invoke('wait-window-cleanup', windowId);
+  }
+
+  // 子ウィンドウを閉じる。クリーンアップ完了を待つときは await すること
+  closeChildWindow(): Promise<void> {
     const windowOptions = this.state.child;
+    if (!windowOptions.isShown) {
+      return;
+    }
 
     // show previous window if `preservePrevWindow` flag is true
     if (windowOptions.preservePrevWindow && windowOptions.prevWindowOptions) {
@@ -210,6 +231,8 @@ export class WindowsService extends StatefulService<IWindowsState> {
     // Refocus the main window
     ipcRenderer.send('window-focusMain');
     ipcRenderer.send('window-closeChildWindow');
+
+    return this.waitWindowCleanup('child');
   }
 
   closeMainWindow() {
@@ -322,10 +345,13 @@ export class WindowsService extends StatefulService<IWindowsState> {
     return Promise.all(closingPromises);
   }
 
-  closeOneOffWindow(windowId: string): Promise<void> {
-    if (!this.windows[windowId] || this.windows[windowId].isDestroyed()) return Promise.resolve();
-    return new Promise(resolve => {
+  async closeOneOffWindow(windowId: string): Promise<void> {
+    if (!this.windows[windowId] || this.windows[windowId].isDestroyed()) return;
+    return new Promise(async resolve => {
       this.windows[windowId].on('closed', resolve);
+      this.windows[windowId].close();
+      await this.waitWindowCleanup(windowId);
+      // 念のため destroy も残す
       this.windows[windowId].destroy();
     });
   }
