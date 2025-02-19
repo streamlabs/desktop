@@ -16,7 +16,12 @@ import {
 import { Inject } from 'services/core/injector';
 import moment from 'moment';
 import padStart from 'lodash/padStart';
-import { IOutputSettings, OutputSettingsService } from 'services/settings';
+import {
+  EEncoderFamily,
+  IOutputSettings,
+  IStreamingEncoderSettings,
+  OutputSettingsService,
+} from 'services/settings';
 import { WindowsService } from 'services/windows';
 import { Subject } from 'rxjs';
 import {
@@ -104,6 +109,8 @@ interface IExtraOutput {
   stream?: ISimpleStreaming;
   url: string;
   streamKey: string;
+  encoder: EEncoderFamily;
+  encoderSettings: IStreamingEncoderSettings;
 }
 
 export class StreamingService
@@ -447,11 +454,14 @@ export class StreamingService
 
             this.videoSettingsService.validateVideoContext('vertical');
 
+            const encoderSettings = this.outputSettingsService.getSettings();
             this.extraOutputs.push({
               name,
               streamKey,
               url,
               display: 'vertical',
+              encoder: encoderSettings.streaming.encoder,
+              encoderSettings: encoderSettings.streaming,
             });
           } catch (e: unknown) {
             const error = this.handleTypedStreamError(
@@ -1002,7 +1012,11 @@ export class StreamingService
           stream.video = context;
 
           // TODO: how to fetch encoders from the other streams
-          stream.videoEncoder = VideoEncoderFactory.create('obs_x264', 'video-encoder');
+          stream.videoEncoder = VideoEncoderFactory.create(
+            output.encoder,
+            'video-encoder',
+            output.encoderSettings,
+          );
           stream.audioEncoder = AudioEncoderFactory.create();
 
           const service = ServiceFactory.create('rtmp_common', output.name, {
