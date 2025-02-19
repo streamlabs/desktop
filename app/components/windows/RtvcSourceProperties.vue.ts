@@ -350,7 +350,7 @@ export default class RtvcSourceProperties extends SourceProperties {
     if (this.initialMonitoringType !== this.currentMonitoringType)
       this.audioService.setSettings(this.sourceId, { monitoringType: this.initialMonitoringType });
 
-    if (this.canceled || this.isShuttingDown) {
+    if (this.canceled) {
       this.source.setPropertiesFormData(this.initialProperties);
       return;
     }
