@@ -416,6 +416,14 @@ async function releaseRoutine() {
   const newVersionContext = getVersionContext(nextVersion);
   const { channel, environment } = newVersionContext;
 
+  if (environment === 'public') {
+    // patchNote.notes: 複数行テキストが一つの文字列になっている。行頭に '開発:' があったらその行を除去する
+    patchNote.notes = patchNote.notes
+      .split('\n')
+      .filter(line => !line.startsWith('開発:'))
+      .join('\n');
+  }
+
   /** @type {import('./configs/type').ReleaseConfig} */
   // eslint-disable-next-line import/no-dynamic-require
   const config = require(`./configs/${environment}-${channel}`);
