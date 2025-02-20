@@ -455,6 +455,7 @@ export class StreamingService
             this.videoSettingsService.validateVideoContext('vertical');
 
             const encoderSettings = this.outputSettingsService.getSettings();
+            console.log('encoder', encoderSettings.streaming.encoder);
             this.extraOutputs.push({
               name,
               streamKey,
@@ -1013,7 +1014,8 @@ export class StreamingService
 
           // TODO: how to fetch encoders from the other streams
           stream.videoEncoder = VideoEncoderFactory.create(
-            output.encoder,
+            // OBS encoder method returns x264 but the actual encoder is obs_x264
+            output.encoder === 'x264' ? 'obs_x264' : output.encoder,
             'video-encoder',
             output.encoderSettings,
           );
