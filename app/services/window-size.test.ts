@@ -271,29 +271,30 @@ describe('updateWindowSize', () => {
   }
 
   const suites = [
-    ['INACTIVE', 'CLOSED', false],
-    ['INACTIVE', 'OPENED', false],
-    ['CLOSED', 'OPENED', false],
-    ['OPENED', 'CLOSED', false],
-    ['OPENED', 'INACTIVE', false],
-    ['CLOSED', 'INACTIVE', false],
-    ['INACTIVE', 'CLOSED', true],
-    ['INACTIVE', 'OPENED', true],
-    ['CLOSED', 'OPENED', true],
-    ['OPENED', 'CLOSED', true],
-    ['OPENED', 'INACTIVE', true],
-    ['CLOSED', 'INACTIVE', true],
-  ].map(([prev, next, isMaximized]) => ({
+    ['INACTIVE', 'CLOSED', false, true],
+    ['INACTIVE', 'OPENED', false, true],
+    ['CLOSED', 'OPENED', false, true],
+    ['OPENED', 'CLOSED', false, false],
+    ['OPENED', 'INACTIVE', false, false],
+    ['CLOSED', 'INACTIVE', false, false],
+    ['INACTIVE', 'CLOSED', true, false],
+    ['INACTIVE', 'OPENED', true, false],
+    ['CLOSED', 'OPENED', true, false],
+    ['OPENED', 'CLOSED', true, false],
+    ['OPENED', 'INACTIVE', true, false],
+    ['CLOSED', 'INACTIVE', true, false],
+  ].map(([prev, next, isMaximized, called]) => ({
     prev: prev as PanelState,
     next: next as PanelState,
     isMaximized: isMaximized as boolean,
+    called: called as boolean,
   }));
-  const WIDTH_DIFF = 32;
+  const WIDTH_DIFF = 0;
 
   for (const suite of suites) {
     test(`${stateName[suite.prev]}→${stateName[suite.next]} ${
       suite.isMaximized ? '最大化中は幅が変わらない' : '変化量を維持して幅を更新する'
-    }`, () => {
+    } setSize_called:${suite.called ? 'yes' : 'no'}`, () => {
       setup();
       const { WindowSizeService } = require('./window-size');
       const { WINDOW_MIN_WIDTH } = WindowSizeService;
@@ -317,7 +318,7 @@ describe('updateWindowSize', () => {
         BASE_HEIGHT,
       );
 
-      if (suite.isMaximized) {
+      if (!suite.called) {
         expect(win.setSize).toHaveBeenCalledTimes(0);
       } else {
         expect(win.setSize).toHaveBeenCalledTimes(1);
