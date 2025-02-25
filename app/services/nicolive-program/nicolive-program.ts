@@ -156,6 +156,10 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
     return rawNow - (this.state.serverClockOffsetSec ?? 0) * 1000;
   }
 
+  public restartOneCommeRelation() {
+    this.oneCommeRelation.update(this.state.status);
+  }
+
   /**
    * 番組スケジュールから表示すべき番組を選ぶ
    * 1. テスト中または放送中の番組があればその番組を返す

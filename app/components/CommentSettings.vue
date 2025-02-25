@@ -218,6 +218,23 @@
 
     <div class="section">
       <div class="input-label section-heading">
+        <label>わんコメ連携設定</label>
+      </div>
+      <div class="input-container">
+        <div class="input-wrapper">
+          <div class="row">
+            <div class="name">連携する</div>
+            <div class="value">
+              <input type="checkbox" v-model="useOneComme" class="toggle-button" />
+            </div>
+          </div>
+        </div>
+        <div class="input-wrapper">疎通テスト要るかなぁ</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="input-label section-heading">
         <label>HTTP連携設定</label>
       </div>
       <div class="input-container">

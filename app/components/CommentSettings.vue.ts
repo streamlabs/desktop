@@ -3,6 +3,7 @@ import { Inject } from 'services/core/injector';
 import { HttpRelation } from 'services/nicolive-program/httpRelation';
 import { NicoliveCommentLocalFilterService } from 'services/nicolive-program/nicolive-comment-local-filter';
 import { NicoliveCommentSynthesizerService } from 'services/nicolive-program/nicolive-comment-synthesizer';
+import { NicoliveProgramService } from 'services/nicolive-program/nicolive-program';
 import { VoicevoxURL } from 'services/nicolive-program/speech/VoicevoxSynthesizer';
 import {
   NicoliveProgramStateService,
@@ -15,6 +16,7 @@ import Multiselect from 'vue-multiselect';
 import { Component, Watch } from 'vue-property-decorator';
 import VueSlider from 'vue-slider-component';
 import IconListSelect from './IconListSelect.vue';
+
 type MethodObject = {
   text: string;
   value: string;
@@ -47,6 +49,8 @@ export default class CommentSettings extends Vue {
   private nicoliveCommentLocalFilterService: NicoliveCommentLocalFilterService;
   @Inject()
   private nicoliveProgramStateService: NicoliveProgramStateService;
+  @Inject()
+  private nicoliveProgramService: NicoliveProgramService;
 
   synthesizers: SynthesizerItem[] = [
     {
@@ -195,6 +199,17 @@ export default class CommentSettings extends Vue {
 
   set showAnonymous(v: boolean) {
     this.nicoliveCommentLocalFilterService.showAnonymous = v;
+  }
+
+  //-----------------------------------------
+
+  get useOneComme(): boolean {
+    return this.nicoliveProgramStateService.state.onecommeRelation.use;
+  }
+
+  set useOneComme(use: boolean) {
+    this.nicoliveProgramStateService.updateOneCommeRelation({ use });
+    if (use) this.nicoliveProgramService.restartOneCommeRelation();
   }
 
   //-----------------------------------------

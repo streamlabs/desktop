@@ -10,8 +10,12 @@ interface OneCommeBody {
   enabled?: boolean;
 }
 
-const OneCommeServiceURL = 'http://localhost:11180/api/services';
+const OneCommeURL = 'http://localhost:11180/api/';
 const NicoLiveBaseURL = 'https://live.nicovideo.jp/watch/';
+
+async function fetchJSON<T>(input: string, init?: RequestInit): Promise<T> {
+  return await (await fetch(input, init)).json();
+}
 
 export class OneCommeRelation {
   @Inject() nicoliveProgramStateService: NicoliveProgramStateService; // 設定値の予定
@@ -21,21 +25,22 @@ export class OneCommeRelation {
 
   async upsert(enabled: boolean): Promise<boolean> {
     try {
+      if (!this.nicoliveProgramStateService.state.onecommeRelation.use) return false;
       const programID = this.nicoliveProgramService.state.programID;
-      if (!programID) return;
+      if (!programID) return false;
 
       // 既存設定があればそれを使う
       if (!this.oneCommeID) {
-        const list = (await (await fetch(OneCommeServiceURL)).json()) as OneCommeBody[];
+        const list = (await fetchJSON(`${OneCommeURL}services`)) as OneCommeBody[];
 
-        if (Array.isArray(list) && list.length > 0) {
-          const item = list.find(item => item.url && item.url.startsWith(NicoLiveBaseURL));
+        if (Array.isArray(list)) {
+          const item = list.find(item => item.url && item.url.startsWith(NicoLiveBaseURL)); //もしくはID固定からの取得
           if (item && item.id) this.oneCommeID = item.id;
         }
       }
 
       // 更新/作成
-      const sendURL = OneCommeServiceURL + (this.oneCommeID ? `/${this.oneCommeID}` : '');
+      const sendURL = `${OneCommeURL}services` + (this.oneCommeID ? `/${this.oneCommeID}` : '');
       const body: OneCommeBody = {
         id: this.oneCommeID ? this.oneCommeID : uuid(),
         url: `${NicoLiveBaseURL}${programID}`,
@@ -49,7 +54,7 @@ export class OneCommeRelation {
         body: JSON.stringify(body),
       };
 
-      const result = (await (await fetch(sendURL, arg)).json()) as OneCommeBody;
+      const result = (await fetchJSON(sendURL, arg)) as OneCommeBody;
       if (result && result.id) this.oneCommeID = result.id;
       return true;
     } catch (e) {
@@ -61,5 +66,15 @@ export class OneCommeRelation {
   update(state?: string) {
     if (!state) return;
     this.upsert(state === 'onAir');
+  }
+
+  static async connectionTest(): Promise<boolean> {
+    try {
+      const result = await fetchJSON(`${OneCommeURL}info`);
+      if (!result) return false;
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 }
