@@ -21,6 +21,7 @@ import {
   IOutputSettings,
   IStreamingEncoderSettings,
   OutputSettingsService,
+  simpleEncoderToAdvancedEncoder,
 } from 'services/settings';
 import { WindowsService } from 'services/windows';
 import { Subject } from 'rxjs';
@@ -998,21 +999,30 @@ export class StreamingService
         console.log('creating extra output for ', output.name);
         try {
           const stream = SimpleStreamingFactory.create();
-          console.log('created simple factory');
           stream.enforceServiceBitrate = false;
           stream.enableTwitchVOD = false;
 
           const context = this.videoSettingsService.contexts[output.display];
-          console.log('setting context to ', context);
           stream.video = context;
+
+          /* Since encoders differ from `obsEncoderToEncoderFamily`, whos
+           * value is ultimately passed down, try to fetch from mappings first
+           * e.g OBS encoder method returns x264 but the actual encoder is obs_x264
+           * same for qsv (quicksync)
+           */
+          const encoder = simpleEncoderToAdvancedEncoder(output.encoder) || output.encoder;
 
           // TODO: how to fetch encoders from the other streams
           stream.videoEncoder = VideoEncoderFactory.create(
-            // OBS encoder method returns x264 but the actual encoder is obs_x264
-            output.encoder === 'x264' ? 'obs_x264' : output.encoder,
+            encoder,
             'video-encoder',
             output.encoderSettings,
           );
+
+          if (stream.videoEncoder.lastError) {
+            console.log('Error creating encoder', encoder, stream.videoEncoder.lastError);
+            throw new Error(stream.videoEncoder.lastError);
+          }
           stream.audioEncoder = AudioEncoderFactory.create();
 
           const service = ServiceFactory.create('rtmp_common', output.name, {
