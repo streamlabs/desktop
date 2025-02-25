@@ -16,6 +16,8 @@ import { NicoliveFailure, openErrorDialogFromFailure } from './NicoliveFailure';
 import { ProgramSchedules } from './ResponseTypes';
 import { NicoliveProgramStateService } from './state';
 
+import { OneCommeRelation } from './OneCommeRelation';
+
 type Schedules = ProgramSchedules['data'];
 type Schedule = Schedules[0];
 
@@ -72,6 +74,8 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
   stateChange = this.stateChangeSubject.asObservable();
 
   client: NicoliveClient = new NicoliveClient();
+
+  oneCommeRelation = new OneCommeRelation(); // NicoliveProgramServiceに寄生する
 
   static programInitialState: ProgramState = {
     programID: '',
@@ -139,6 +143,7 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
     this.refreshSentryProgramInfo(this.state, nextState);
     this.SET_STATE(nextState);
     this.stateChangeSubject.next(nextState);
+    this.oneCommeRelation.update(partialState.status);
   }
 
   @mutation()
