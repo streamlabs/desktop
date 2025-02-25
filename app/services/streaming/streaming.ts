@@ -442,20 +442,14 @@ export class StreamingService
          */
         (this.userService.views.isPrime || this.views.enabledPlatforms.length === 1)
       ) {
-        // This might belong as a YT check
-        await this.runCheck('setupDualOutput', async () => {
-          // TODO: this needs to fail gracefully, failing to create stream
-          // (for example due to rate limits), leaves streaming window in
-          // infinite load and other streams won't start.
-          // We need to discuss whether continuing is ok, with some sort of
-          // notification.
-          try {
-            const { name, streamKey, url } = await this.youtubeService.createVertical(settings);
-
+        try {
+          // This might belong as a YT check
+          await this.runCheck('setupDualOutput', async () => {
             this.videoSettingsService.validateVideoContext('vertical');
-
+            const { name, streamKey, url } = await this.youtubeService.createVertical(settings);
             const encoderSettings = this.outputSettingsService.getSettings();
-            console.log('encoder', encoderSettings.streaming.encoder);
+            console.log('YT vert encoder', encoderSettings.streaming.encoder);
+
             this.extraOutputs.push({
               name,
               streamKey,
@@ -464,16 +458,16 @@ export class StreamingService
               encoder: encoderSettings.streaming.encoder,
               encoderSettings: encoderSettings.streaming,
             });
-          } catch (e: unknown) {
-            const error = this.handleTypedStreamError(
-              e,
-              'DUAL_OUTPUT_SETUP_FAILED',
-              'Failed to setup dual output due to YouTube vertical stream creation failure',
-            );
-            this.setError(error);
-            return;
-          }
-        });
+          });
+        } catch (e: unknown) {
+          const error = this.handleTypedStreamError(
+            e,
+            'DUAL_OUTPUT_SETUP_FAILED',
+            'Failed to setup dual output due to YouTube vertical stream creation failure',
+          );
+          this.setError(error);
+          return;
+        }
       }
 
       for (const display in shouldMultistreamDisplay) {
