@@ -348,9 +348,9 @@ export class YoutubeService
     //console.log('createVertical verticalBroadcast', verticalBoundBroadcast);
 
     // JUST TO CHECK:
-    const liveBroadcast = await this.fetchLiveStream(
-      this.state.verticalBroadcast.contentDetails.boundStreamId,
-    );
+    //const liveBroadcast = await this.fetchLiveStream(
+    //  this.state.verticalBroadcast.contentDetails.boundStreamId,
+    //);
     // console.log('fetched vertical', JSON.stringify(liveBroadcast, null, 2));
 
     return {
