@@ -143,7 +143,7 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
     this.refreshSentryProgramInfo(this.state, nextState);
     this.SET_STATE(nextState);
     this.stateChangeSubject.next(nextState);
-    this.oneCommeRelation.update(partialState.status);
+    this.oneCommeRelation.update();
   }
 
   @mutation()
@@ -157,7 +157,7 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
   }
 
   public restartOneCommeRelation() {
-    this.oneCommeRelation.update(this.state.status);
+    this.oneCommeRelation.update({ force: true });
   }
 
   /**

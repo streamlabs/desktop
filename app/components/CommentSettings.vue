@@ -229,7 +229,6 @@
             </div>
           </div>
         </div>
-        <div class="input-wrapper">疎通テスト要るかなぁ</div>
       </div>
     </div>
 
