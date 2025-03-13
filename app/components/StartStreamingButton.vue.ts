@@ -118,10 +118,7 @@ export default class StartStreamingButton extends Vue {
   get showEndStreamHelpTip(): boolean {
     if (this.streamingStatus === EStreamingState.Offline) {
       // ニコ生番組が放送中で、配信は停止している
-      if (
-        this.nicoliveProgramService.state.status === 'onAir' ||
-        this.nicoliveProgramService.state.status === 'test'
-      ) {
+      if (this.nicoliveProgramService.state.status === 'onAir') {
         return true;
       }
     }
