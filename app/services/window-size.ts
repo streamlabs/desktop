@@ -21,10 +21,10 @@ const NICOLIVE_PANEL_WIDTH = 400;
 const PANEL_DIVIDER_WIDTH = 24;
 
 export enum PanelState {
-  INACTIVE = 'INACTIVE',
-  OPENED = 'OPENED',
-  CLOSED = 'CLOSED',
-  COMPACT = 'COMPACT',
+  INACTIVE = 'INACTIVE', // not login
+  OPENED = 'OPENED', // logined and panel opened
+  CLOSED = 'CLOSED', // logined and panel closed
+  COMPACT = 'COMPACT', // compact mode
 }
 
 type BackupSizeInfo = {
@@ -235,10 +235,7 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
       if (!win.isMaximized()) {
         // コンパクトモード以外だったときは現在の幅と最小幅の差を保存する
         if (prevState !== PanelState.COMPACT) {
-          nextBackupSize.widthOffset = Math.max(
-            0,
-            width - WindowSizeService.WINDOW_MIN_WIDTH[prevState],
-          );
+          nextBackupSize.widthOffset = width;
         }
 
         // コンパクトモードになるときはパネルサイズを強制する
@@ -246,7 +243,7 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
           nextWidth = nextMinWidth;
           nextMaximize = false;
         } else {
-          nextWidth = nextMinWidth + nextBackupSize.widthOffset;
+          nextWidth = Math.max(nextBackupSize.widthOffset, nextMinWidth);
           nextMaximize = nextBackupSize.maximized;
         }
       }

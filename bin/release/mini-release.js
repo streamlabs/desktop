@@ -9,7 +9,6 @@ const { Octokit } = require('@octokit/rest');
 const sh = require('shelljs');
 const colors = require('colors/safe');
 const yaml = require('js-yaml');
-const fetch = require('node-fetch');
 const { log, info, error, executeCmd } = require('./scripts/log');
 const { confirm } = require('./scripts/prompt');
 const { checkEnv, getTagCommitId } = require('./scripts/util');
@@ -416,6 +415,14 @@ async function releaseRoutine() {
 
   const newVersionContext = getVersionContext(nextVersion);
   const { channel, environment } = newVersionContext;
+
+  if (environment === 'public') {
+    // patchNote.notes: 複数行テキストが一つの文字列になっている。行頭に '開発:' があったらその行を除去する
+    patchNote.notes = patchNote.notes
+      .split('\n')
+      .filter(line => !line.startsWith('開発:'))
+      .join('\n');
+  }
 
   /** @type {import('./configs/type').ReleaseConfig} */
   // eslint-disable-next-line import/no-dynamic-require

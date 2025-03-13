@@ -135,6 +135,9 @@ async function collectPullRequestMerges({ octokit, owner, repo }, previousVersio
     if (line.startsWith('修正:')) {
       return 2;
     }
+    if (line.startsWith('開発:')) {
+      return 999; // 開発は最後に
+    }
     return 3;
   }
 

@@ -1,4 +1,4 @@
-import { TObsValue } from 'components/obs/inputs/ObsInput';
+import { IObsListInput, TObsValue } from 'components/obs/inputs/ObsInput';
 import {
   RtvcEventLog,
   RtvcParamManual,
@@ -29,7 +29,20 @@ export const enum PitchShiftModeValue {
   talk = 1,
 }
 
-export const PresetValues = [
+export interface RtvcPreset {
+  index: string;
+  name: string;
+  pitchShift: number;
+  pitchShiftSong: number;
+  primaryVoice: number;
+  secondaryVoice: number;
+  amount: number;
+  label: string;
+  description: string;
+  image?: string;
+}
+
+const RtvcPresets: RtvcPreset[] = [
   {
     index: 'preset/0',
     name: '琴詠ニア',
@@ -39,7 +52,8 @@ export const PresetValues = [
     secondaryVoice: -1,
     amount: 0,
     label: 'near',
-    description: '滑らかで無機質な声',
+    description: '滑らかで素直な声',
+    image: require('../../media/images/voice_images/voice_character_01.png'),
   },
   {
     index: 'preset/1',
@@ -51,6 +65,7 @@ export const PresetValues = [
     amount: 0,
     label: 'zundamon',
     description: '子供っぽい明るい声',
+    image: require('../../media/images/voice_images/voice_character_02.png'),
   },
   {
     index: 'preset/2',
@@ -62,7 +77,95 @@ export const PresetValues = [
     amount: 0,
     label: 'tsumugi',
     description: '元気な明るい声',
+    image: require('../../media/images/voice_images/voice_character_03.png'),
   },
+  {
+    index: 'preset/3',
+    name: '東北ずんこ',
+    pitchShift: 0,
+    pitchShiftSong: 0,
+    primaryVoice: 103,
+    secondaryVoice: -1,
+    amount: 0,
+    label: 'tohoku_zunko',
+    description: 'ほんわかしたかわいらしい声',
+    image: require('../../media/images/voice_images/voice_character_04.png'),
+  },
+  {
+    index: 'preset/4',
+    name: '東北イタコ',
+    pitchShift: 0,
+    pitchShiftSong: 0,
+    primaryVoice: 104,
+    secondaryVoice: -1,
+    amount: 0,
+    label: 'tohoku_itako',
+    description: '落ち着いた大人っぽい声',
+    image: require('../../media/images/voice_images/voice_character_05.png'),
+  },
+  {
+    index: 'preset/5',
+    name: '東北きりたん',
+    pitchShift: 0,
+    pitchShiftSong: 0,
+    primaryVoice: 105,
+    secondaryVoice: -1,
+    amount: 0,
+    label: 'tohoku_kiritan',
+    description: '落ち着いていながらも可愛らしい声',
+    image: require('../../media/images/voice_images/voice_character_06.png'),
+  },
+  {
+    index: 'preset/6',
+    name: '四国めたん',
+    pitchShift: 0,
+    pitchShiftSong: 0,
+    primaryVoice: 106,
+    secondaryVoice: -1,
+    amount: 0,
+    label: 'shikoku_metan',
+    description: '落ち着いた心地よい声',
+    image: require('../../media/images/voice_images/voice_character_07.png'),
+  },
+  {
+    index: 'preset/7',
+    name: '九州そら',
+    pitchShift: 0,
+    pitchShiftSong: 0,
+    primaryVoice: 107,
+    secondaryVoice: -1,
+    amount: 0,
+    label: 'kyushu_sora',
+    description: 'ふんわりまったりした声',
+    image: require('../../media/images/voice_images/voice_character_08.png'),
+  },
+  {
+    index: 'preset/8',
+    name: '中国うさぎ',
+    pitchShift: 0,
+    pitchShiftSong: 0,
+    primaryVoice: 108,
+    secondaryVoice: -1,
+    amount: 0,
+    label: 'chugoku_usagi',
+    description: 'はかなげで繊細な声',
+    image: require('../../media/images/voice_images/voice_character_09.png'),
+  },
+  {
+    index: 'preset/9',
+    name: '大江戸ちゃんこ',
+    pitchShift: 0,
+    pitchShiftSong: 0,
+    primaryVoice: 109,
+    secondaryVoice: -1,
+    amount: 0,
+    label: 'oedo_chanko',
+    description: '幼さもあるかわいらしい声',
+    image: require('../../media/images/voice_images/voice_character_10.png'),
+  },
+
+  // name,descriptionなどはpropertyから取れないのでこちらで記述しておきます
+  // primaryVoiceは100から順番通りで
 ];
 
 // RtvcStateService保持用
@@ -73,6 +176,7 @@ interface ManualParam {
   amount: number;
   primaryVoice: number;
   secondaryVoice: number;
+  imageNum: number;
 }
 
 interface PresetParam {
@@ -92,6 +196,7 @@ export interface CommonParam {
   name: string;
   label: string;
   description: string;
+  image?: string;
 
   pitchShift: number;
   pitchShiftSong: number;
@@ -100,12 +205,23 @@ export interface CommonParam {
   secondaryVoice: number;
 }
 
+export const AmountDefault = 50; // manual>secondary voice>amountのデフォルト値 50%
+
 interface IRtvcState {
   value: any;
 }
 
 export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
-  isSongMode = false;
+  private isSongMode = false;
+  private presets = RtvcPresets;
+
+  manualImages = [
+    require('../../media/images/voice_images/voice_original_01.png'),
+    require('../../media/images/voice_images/voice_original_02.png'),
+    require('../../media/images/voice_images/voice_original_03.png'),
+    require('../../media/images/voice_images/voice_original_04.png'),
+    require('../../media/images/voice_images/voice_original_05.png'),
+  ];
 
   setState(v: StateParam) {
     this.SET_STATE(v);
@@ -163,7 +279,8 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
     const r = { ...this.state.value } as StateParam;
 
     if (!r.presets) r.presets = [];
-    while (r.presets.length < PresetValues.length)
+    // 不足時修正
+    while (r.presets.length < this.presets.length)
       r.presets.push({ pitchShift: 0, pitchShiftSong: 0 });
 
     // defaults
@@ -182,13 +299,14 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
       a.pitchShiftSong = numFix(a.pitchShiftSong, 0);
     });
 
-    r.manuals.forEach(a => {
+    r.manuals.forEach((a, n) => {
       if (!a.name) a.name = 'none';
       a.pitchShift = numFix(a.pitchShift, 0);
       a.pitchShiftSong = numFix(a.pitchShiftSong, 0);
-      a.amount = numFix(a.amount, 0);
+      a.amount = numFix(a.amount, AmountDefault);
       a.primaryVoice = numFix(a.primaryVoice, 0);
       a.secondaryVoice = numFix(a.secondaryVoice, -1);
+      a.imageNum = a.imageNum ?? n;
     });
 
     if (!r.scenes) r.scenes = {};
@@ -197,25 +315,43 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
     return r;
   }
 
-  indexToNum(state: StateParam, index: string): { isManual: boolean; idx: number } {
-    const def = { isManual: false, idx: 0 };
+  indexToModeNum(index: string): { isManual: boolean; num: number } {
+    const def = { isManual: false, num: 0 };
 
     if (!index || typeof index !== 'string') return def;
     const s = index.split('/');
     if (s.length !== 2) return def;
     const num = Number(s[1]);
-    if (s[0] === 'manual' && num >= 0 && num < state.manuals.length)
-      return { isManual: true, idx: num };
-    if (s[0] === 'preset' && num >= 0 && num < PresetValues.length)
-      return { isManual: false, idx: num };
+    if (s[0] === 'manual') return { isManual: true, num };
+    if (s[0] === 'preset') return { isManual: false, num };
 
     return def;
   }
 
-  stateToCommonParam(state: StateParam, index: string): CommonParam {
-    const p = this.indexToNum(state, index);
-    if (p.isManual) {
-      const v = state.manuals[p.idx];
+  stateParamToCommonParam(param: StateParam, index: string): CommonParam {
+    const { isManual, num } = this.indexToModeNum(index);
+
+    if (
+      num < 0 ||
+      (isManual && num >= param.manuals.length) ||
+      (!isManual && (num >= this.presets.length || num >= RtvcPresets.length))
+    ) {
+      // 想定外の場合のデフォルト値
+      return {
+        name: 'none',
+        label: '',
+        description: '',
+        pitchShift: 0,
+        pitchShiftSong: 0,
+        amount: AmountDefault,
+        primaryVoice: 0,
+        secondaryVoice: -1,
+        image: '',
+      };
+    }
+
+    if (isManual) {
+      const v = param.manuals[num];
       return {
         name: v.name,
         label: '',
@@ -225,12 +361,12 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
         amount: v.amount,
         primaryVoice: v.primaryVoice,
         secondaryVoice: v.secondaryVoice,
+        image: this.manualImages[v.imageNum ?? num],
       };
     }
 
-    const v = PresetValues[p.idx];
-    const m = state.presets[p.idx];
-
+    const v = RtvcPresets[num];
+    const m = param.presets[num];
     return {
       name: v.name,
       label: v.label,
@@ -240,6 +376,7 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
       amount: v.amount,
       primaryVoice: v.primaryVoice,
       secondaryVoice: v.secondaryVoice,
+      image: v.image,
     };
   }
 
@@ -252,11 +389,11 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
 
     const state = this.getState();
     if (!state.scenes || !state.scenes[sceneId]) return;
-    const idx = state.scenes[sceneId];
-    if (state.currentIndex === idx) return; // no change
-    const p = this.stateToCommonParam(state, idx);
+    const index = state.scenes[sceneId];
+    if (state.currentIndex === index) return; // no change
+    const p = this.stateParamToCommonParam(state, index);
     this.setSourcePropertiesByCommonParam(source, p);
-    state.currentIndex = idx;
+    state.currentIndex = index;
     this.setState(state);
 
     this.modifyEventLog();
@@ -281,10 +418,10 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
 
     const state = this.getState();
     const index = state.currentIndex;
-    const { isManual, idx } = this.indexToNum(state, index);
+    const { isManual, num } = this.indexToModeNum(index);
     if (isManual) {
-      const p = state.manuals[idx];
-      const key = `manual${idx}` as RtvcParamManualKeys;
+      const p = state.manuals[num];
+      const key = `manual${num}` as RtvcParamManualKeys;
       const param = this.eventLog.param as RtvcParamManual;
       if (!param[key]) param[key] = { name: '', amount: 0, primary_voice: 0, secondary_voice: -1 };
       const s = param[key];
@@ -295,8 +432,9 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
       s.primary_voice = p.primaryVoice;
       s.secondary_voice = p.secondaryVoice;
     } else {
-      const p = state.presets[idx];
-      const key = `preset${idx}` as RtvcParamPresetKeys;
+      const p =
+        num < state.presets.length ? state.presets[num] : { pitchShift: 0, pitchShiftSong: 0 };
+      const key = `preset${num}` as RtvcParamPresetKeys;
       const param = this.eventLog.param as RtvcParamPreset;
       if (!param[key]) param[key] = {};
 
@@ -308,6 +446,7 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
 
   didAddSource(source: ISourceApi) {
     const props = source.getPropertiesFormData();
+    this.fixPresets(source);
     const p = props.find(a => a.name === 'latency');
     if (p) this.eventLog.latency = p.value as number;
     this.isSouceActive = true;
@@ -325,4 +464,23 @@ export class RtvcStateService extends PersistentStatefulService<IRtvcState> {
   }
 
   stopStreaming() {}
+
+  getPresets(): RtvcPreset[] {
+    return this.presets;
+  }
+
+  // vvfxにあるpresetと定義済みpresetがずれている場合の対処(基本ずれない)
+  fixPresets(source: ISourceApi) {
+    const list = RtvcPresets;
+    const props = source.getPropertiesFormData();
+    const p = props.find(a => a.name === 'primary_voice') as IObsListInput<any>;
+    if (!p || !p.options) return;
+
+    if (p.options.length !== list.length + 100) {
+      console.warn('!!! rtvc preset list is not match. DLL(rtvc.vvfx) version is wrong !!!!');
+      list.length = p.options.length - 100;
+    }
+
+    this.presets = list;
+  }
 }

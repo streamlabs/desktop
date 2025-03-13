@@ -104,7 +104,7 @@
     "luxon": "^3.5.0",
     "node-fontinfo": "https://github.com/n-air-app/native-deps/releases/download/assets/node-fontinfo-1.1.11-win64.tar.gz",
     "node-libuiohook": "https://github.com/n-air-app/native-deps/releases/download/assets/node-libuiohook-1.1.16-win64.tar.gz",
-    "obs-studio-node": "https://github.com/n-air-app/native-deps/releases/download/assets/osn-0.24.38-release-win64_rtvc.tar.gz",
+    "obs-studio-node": "https://github.com/n-air-app/native-deps/releases/download/assets/osn-0.24.38-release-win64_rtvc1.tar.gz",
     "postcss-loader": "4.3.0",
     "progress": "~2.0.3",
     "protobufjs": "^7.3.2",

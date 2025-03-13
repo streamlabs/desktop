@@ -11,13 +11,12 @@
   },
   "dependencies": {
     "@octokit/rest": "^20.1.1",
-    "luxon": "^3.5.0",
-    "node-fetch": "2"
+    "luxon": "^3.5.0"
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "^3.657.0",
     "@aws-sdk/lib-storage": "^3.657.0",
-    "@inquirer/prompts": "^6.0.1",
+    "@inquirer/prompts": "^7.3.2",
     "colors": "^1.4.0",
     "iconv-lite": "^0.6.3",
     "js-yaml": "^4.1.0",
