@@ -229,6 +229,14 @@
             </div>
           </div>
         </div>
+        <div class="banner" data-type="error" v-if="isOneCommeError">
+          <div class="banner-body">
+            わんコメに接続できませんでした。わんコメを起動して確認してください
+          </div>
+        </div>
+        <div class="input-wrapper">
+          詳細は<a @click="showOneCommeInfo()">こちら</a>を参照してください
+        </div>
       </div>
     </div>
 

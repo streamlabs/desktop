@@ -790,6 +790,9 @@ export class StreamingService
             this.nicoliveCommentSynthesizerService.voicevoxSystem?.name ?? '',
           ),
         },
+        onecomme: {
+          used: this.nicoliveProgramStateService.state.onecommeRelation.use,
+        },
       },
       compact_mode: {
         auto_compact_mode: this.customizationService.state.autoCompactMode,

@@ -53,33 +53,32 @@ export class OneCommeRelation {
       if (!result) return false;
       return true;
     } catch (e) {
-      console.warn(e);
       return false;
     }
   }
 
-  async update({ force }: { force: boolean } = { force: false }): Promise<void> {
-    if (!this.nicoliveProgramStateService.state.onecommeRelation.use) return;
+  async update({ force }: { force: boolean } = { force: false }): Promise<boolean> {
+    if (!this.nicoliveProgramStateService.state.onecommeRelation.use) return false;
     const programID = this.nicoliveProgramService.state.programID;
-    if (!programID) return;
+    if (!programID) return false;
 
     if (force) this.previousState = '';
     const state = this.nicoliveProgramService.state.status;
-    if (!state || state === this.previousState) return;
+    if (!state || state === this.previousState) return false;
     this.previousState = state;
     //  status: 'reserved' | 'test' | 'onAir' | 'end';
 
     const data: OneCommeServiceData = {
       id: OneCommeServiceFixID,
       url: `${NicoLiveBaseURL}${programID}`,
-      enabled: state === 'onAir',
+      enabled: state === 'onAir' || state === 'test',
       name: '#N_Air',
     };
 
-    await this.sendService(data);
+    return await this.sendService(data);
   }
 
-  static async connectionTest(): Promise<boolean> {
+  async testConnection(): Promise<boolean> {
     try {
       const result = await fetchJSON(`${OneCommeAPI}info`);
       if (!result) return false;

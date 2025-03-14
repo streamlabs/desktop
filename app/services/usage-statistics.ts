@@ -90,6 +90,9 @@ export type TUsageEvent =
           operator: string;
           system: string;
         };
+        onecomme: {
+          used: boolean;
+        };
       };
       compact_mode: {
         auto_compact_mode: boolean;

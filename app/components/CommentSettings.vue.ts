@@ -77,6 +77,7 @@ export default class CommentSettings extends Vue {
 
   mounted() {
     this.startVoicevoxChecker();
+    this.initOneComme();
   }
 
   beforeDestroy() {
@@ -203,13 +204,31 @@ export default class CommentSettings extends Vue {
 
   //-----------------------------------------
 
-  get useOneComme(): boolean {
-    return this.nicoliveProgramStateService.state.onecommeRelation.use;
+  useOneComme = false;
+  isOneCommeError = false;
+
+  initOneComme() {
+    this.useOneComme = this.nicoliveProgramStateService.state.onecommeRelation.use;
   }
 
-  set useOneComme(use: boolean) {
+  @Watch('useOneComme')
+  async onUseOneCommeChanged() {
+    const use = this.useOneComme;
+    if (use === this.nicoliveProgramStateService.state.onecommeRelation.use) return;
+    if (use) {
+      if (!(await this.nicoliveProgramService.oneCommeRelation.testConnection())) {
+        this.useOneComme = false; // 代入するとこのメソッドがコールされるので注意
+        this.isOneCommeError = true;
+        return;
+      }
+      this.isOneCommeError = false;
+    }
     this.nicoliveProgramStateService.updateOneCommeRelation({ use });
-    if (use) this.nicoliveProgramService.restartOneCommeRelation();
+    if (use) this.nicoliveProgramService.oneCommeRelation.update({ force: true });
+  }
+
+  showOneCommeInfo() {
+    remote.shell.openExternal('https://n-air-app.nicovideo.jp/');
   }
 
   //-----------------------------------------
