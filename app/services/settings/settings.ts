@@ -241,10 +241,6 @@ class SettingsViews extends ViewHandler<ISettingsServiceState> {
 
     return null;
   }
-
-  get virtualWebcamSettings() {
-    return this.state['Virtual Webcam'].formData;
-  }
 }
 
 export class SettingsService extends StatefulService<ISettingsServiceState> {
@@ -351,6 +347,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     this.getCategories().forEach((categoryName: keyof ISettingsServiceState) => {
       settingsFormData[categoryName] = this.fetchSettingsFromObs(categoryName);
     });
+
     this.SET_SETTINGS(settingsFormData);
   }
 

@@ -444,8 +444,14 @@ export class SourcesService extends StatefulService<ISourcesState> {
         const deviceOption = (deviceProp as IObsListInput<string>).options.find(
           opt => opt.value === deviceProp.value,
         );
-
-        if (deviceOption) {
+        if (!deviceOption) {
+          const updateSettings = source.getSettings();
+          updateSettings['device_id'] = 'default';
+          source.updateSettings(updateSettings);
+          this.usageStatisticsService.recordAnalyticsEvent('MicrophoneUse', {
+            device: 'Default',
+          });
+        } else {
           this.usageStatisticsService.recordAnalyticsEvent('MicrophoneUse', {
             device: deviceOption.description,
           });

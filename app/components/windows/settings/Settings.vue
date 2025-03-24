@@ -94,7 +94,6 @@
           <installed-apps v-if="page === 'Installed Apps'" />
           <overlay-settings v-if="page === 'Scene Collections'" />
           <notifications-settings v-if="page === 'Notifications'" />
-          <virtual-webcam-settings v-if="page === 'Virtual Webcam'" />
           <ObsSettings v-if="shouldShowReactPage" :componentProps="{ page: page }" />
           <GenericFormGroups
             v-if="shouldShowVuePage"
