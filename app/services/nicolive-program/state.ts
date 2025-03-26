@@ -33,6 +33,7 @@ export type HttpRelationState = {
 
 export type OneCommeRelationState = {
   use: boolean;
+  removeComment: boolean;
 };
 
 export interface IState {
@@ -56,7 +57,7 @@ export class NicoliveProgramStateService extends PersistentStatefulService<IStat
     nameplateEnabled: true,
     httpRelation: { method: '', url: '', body: '' },
     voicevoxInformation: true,
-    onecommeRelation: { use: false },
+    onecommeRelation: { use: false, removeComment: true },
   };
 
   private subject: Subject<IState> = new BehaviorSubject<IState>(this.state);
@@ -91,8 +92,9 @@ export class NicoliveProgramStateService extends PersistentStatefulService<IStat
     this.setState({ voicevoxInformation });
   }
 
-  updateOneCommeRelation(newState?: OneCommeRelationState): void {
-    this.setState({ onecommeRelation: newState });
+  updateOneCommeRelation(newState?: Partial<OneCommeRelationState>): void {
+    const n = { ...this.state.onecommeRelation, ...newState };
+    this.setState({ onecommeRelation: n });
   }
 
   private setState(nextState: Partial<IState>): void {

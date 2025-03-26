@@ -205,10 +205,12 @@ export default class CommentSettings extends Vue {
   //-----------------------------------------
 
   useOneComme = false;
+  removeComment = true;
   isOneCommeError = false;
 
   initOneComme() {
     this.useOneComme = this.nicoliveProgramStateService.state.onecommeRelation.use;
+    this.removeComment = this.nicoliveProgramStateService.state.onecommeRelation.removeComment;
   }
 
   @Watch('useOneComme')
@@ -225,6 +227,12 @@ export default class CommentSettings extends Vue {
     }
     this.nicoliveProgramStateService.updateOneCommeRelation({ use });
     if (use) this.nicoliveProgramService.oneCommeRelation.update({ force: true });
+  }
+
+  @Watch('removeComment')
+  onRemoveCommentChanged() {
+    const removeComment = this.removeComment;
+    this.nicoliveProgramStateService.updateOneCommeRelation({ removeComment });
   }
 
   showOneCommeInfo() {

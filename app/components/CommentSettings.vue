@@ -229,6 +229,14 @@
             </div>
           </div>
         </div>
+        <div class="input-wrapper" v-if="useOneComme">
+          <div class="row">
+            <div class="name">番組作成時に既存コメントを削除する</div>
+            <div class="value">
+              <input type="checkbox" v-model="removeComment" class="toggle-button" />
+            </div>
+          </div>
+        </div>
         <div class="banner" data-type="error" v-if="isOneCommeError">
           <div class="banner-body">
             わんコメに接続できませんでした。わんコメを起動して確認してください

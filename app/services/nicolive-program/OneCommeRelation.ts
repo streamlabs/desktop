@@ -24,20 +24,17 @@ export class OneCommeRelation {
 
   previousState = '';
 
-  async sendService(data: OneCommeServiceData): Promise<boolean> {
+  async sendService(data: OneCommeServiceData, removeComment: boolean = true): Promise<boolean> {
     try {
       // 既存設定があればそれを使う
-      let exist = false;
-      const list = (await fetchJSON(`${OneCommeAPI}services`)) as OneCommeServiceData[];
-      if (Array.isArray(list)) {
-        const item = list.find(item => item.id === OneCommeServiceFixID);
-        if (item) {
-          exist = true;
-          if (item.url !== data.url) {
-            // 番組が異なる場合は既存コメント削除
-            await fetch(`${OneCommeAPI}comments`, { method: 'DELETE' });
-          }
-        }
+      const item = (await fetchJSON(
+        `${OneCommeAPI}services/${OneCommeServiceFixID}`,
+      )) as OneCommeServiceData;
+      const exist = item && item.id === OneCommeServiceFixID;
+
+      // 番組が異なる場合は既存コメント削除
+      if (removeComment && exist && item.url !== data.url) {
+        await fetch(`${OneCommeAPI}comments`, { method: 'DELETE' });
       }
 
       // 更新/作成
@@ -75,7 +72,8 @@ export class OneCommeRelation {
       name: '#N_Air',
     };
 
-    return await this.sendService(data);
+    const removeComment = this.nicoliveProgramStateService.state.onecommeRelation.removeComment;
+    return await this.sendService(data, removeComment);
   }
 
   async testConnection(): Promise<boolean> {
