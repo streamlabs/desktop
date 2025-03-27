@@ -151,10 +151,6 @@ export default class SceneSelector extends Vue {
     return EDismissable.SceneCollectionsHelpTip;
   }
 
-  get scenePresetHelpTipDismissable() {
-    return EDismissable.ScenePresetHelpTip;
-  }
-
   get isCompactMode(): boolean {
     return this.compactModeService.isCompactMode;
   }

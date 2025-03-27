@@ -59,18 +59,18 @@
           <i class="icon-feedback" />
         </a>
       </div>
-      <div class="side-nav-item help-button help_tip_content">
-        <a @click="openHelp" class="link" :title="$t('common.help')">
+      <div class="side-nav-item help-button">
+        <a @click="openHelp" class="link help_tip_content" :title="$t('common.help')">
           <i class="icon-help" />
+          <help-tip :dismissable-key="InitialHelpTipDismissable" mode="login">
+            <div slot="title">
+              {{ $t('common.initialHelpTipTitle') }}
+            </div>
+            <div slot="content">
+              {{ $t('common.initialHelpTipContent') }}
+            </div>
+          </help-tip>
         </a>
-        <help-tip :dismissable-key="InitialHelpTipDismissable" mode="login">
-          <div slot="title">
-            {{ $t('common.initialHelpTipTitle') }}
-          </div>
-          <div slot="content">
-            {{ $t('common.initialHelpTipContent') }}
-          </div>
-        </help-tip>
       </div>
       <div class="side-nav-item information-button">
         <a @click="openInformations" class="link" :title="$t('informations.title')">

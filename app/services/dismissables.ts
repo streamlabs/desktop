@@ -5,12 +5,11 @@ import { mutation } from './core/stateful-service';
 
 export enum EDismissable {
   SceneCollectionsHelpTip = 'scene_collections_help_tip',
-  ScenePresetHelpTip = 'scene_preset_help_tip',
   LoginHelpTip = 'login_help_tip',
   InitialHelpTip = 'initial_help_tip',
 }
 
-const InitiallyDismissed = new Set<EDismissable>([EDismissable.ScenePresetHelpTip]);
+const InitiallyDismissed = new Set<EDismissable>([]);
 
 interface IDismissablesServiceState {
   [key: string]: boolean;

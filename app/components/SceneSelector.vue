@@ -50,15 +50,6 @@
         {{ $t('scenes.sceneCollectionSelectionDescription') }}
       </div>
     </help-tip>
-
-    <help-tip :dismissable-key="scenePresetHelpTipDismissable">
-      <div slot="title">
-        {{ $t('scenes.scenePreset') }}
-      </div>
-      <div slot="content">
-        {{ $t('scenes.scenePresetDescription') }}
-      </div>
-    </help-tip>
   </div>
 </template>
 

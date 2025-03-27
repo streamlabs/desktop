@@ -12,7 +12,6 @@
   "defaultTitle": "",
   "manageAll": "シーンコレクションの管理",
   "sceneCollectionSelectionDescription": "こちらはシーンコレクションがある場所です。 タイトルをクリックすると、表示および管理できるメニューがプルダウン表示されます。",
-  "scenePresetDescription": "サンプルとなるソースを追加しています。自由に編集して、自分だけの放送をコーディネートしてみましょう！",
   "removeSceneCollectionConfirmTitle": "シーンコレクションを削除する",
   "removeSceneCollectionConfirm": "本当に%{collectionName}を削除してもよろしいですか？",
   "createSceneProjector": "シーンプロジェクターを作成する",

@@ -12,7 +12,6 @@
   "defaultTitle": "Output",
   "manageAll": "Manage All",
   "sceneCollectionSelectionDescription": "This is where your Scene Collections live. Clicking the title will dropdown a menu where you can view & manage.",
-  "scenePresetDescription": "There are sample sources added. Coordinate your own broadcast by editing them freely!",
   "removeSceneCollectionConfirmTitle": "Remove Scene Collection",
   "removeSceneCollectionConfirm": "Are you sure you want to remove %{collectionName}?",
   "createSceneProjector": "Create Scene Projector",
