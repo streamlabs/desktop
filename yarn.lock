@@ -2917,15 +2917,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/semver@npm:^7.1.0":
-  version: 7.3.1
-  resolution: "@types/semver@npm:7.3.1"
-  dependencies:
-    "@types/node": "*"
-  checksum: 7ba2b17c4cbe9c1dac8efb120a29b12e4c81972a6872c7f84f08ba382ef6ca28fc24650b9de818144c60e58ad7c6842236a94cf3d6ba89c35f7de8d8a566b8b2
-  languageName: node
-  linkType: hard
-
 "@types/socket.io-client@npm:1.4.32":
   version: 1.4.32
   resolution: "@types/socket.io-client@npm:1.4.32"
@@ -4824,16 +4815,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"builder-util-runtime@npm:8.7.0":
-  version: 8.7.0
-  resolution: "builder-util-runtime@npm:8.7.0"
-  dependencies:
-    debug: ^4.1.1
-    sax: ^1.2.4
-  checksum: 535bb31cac21ef7485973706912f76229288c73a6d980cd51288018fc392593e85d848c014523b72150b5db79488608b0896dc011567aa4d00296f14002d7e3e
-  languageName: node
-  linkType: hard
-
 "builder-util-runtime@npm:8.9.1":
   version: 8.9.1
   resolution: "builder-util-runtime@npm:8.9.1"
@@ -4841,6 +4822,16 @@ __metadata:
     debug: ^4.3.2
     sax: ^1.2.4
   checksum: c319a9bce54b08ac93ad34d5d6ac4c4d0400435f9bddee247a67f54e637a4fc1b262b9709c58fed861c7b05243f0c232b6a8c7c3b92863530d544e6e3c15e5ec
+  languageName: node
+  linkType: hard
+
+"builder-util-runtime@npm:9.2.5":
+  version: 9.2.5
+  resolution: "builder-util-runtime@npm:9.2.5"
+  dependencies:
+    debug: ^4.3.4
+    sax: ^1.2.4
+  checksum: 5853457a10c3dbbe9eb7f7e55dc0a4e7bb77a70659039f961c43c8e8ddd3f07374b445eec1ab2bbaf4e8248635c49122b2e3df30456e85eff06e5260219ed470
   languageName: node
   linkType: hard
 
@@ -6468,18 +6459,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron-updater@npm:^4.2.0":
-  version: 4.3.1
-  resolution: "electron-updater@npm:4.3.1"
+"electron-updater@npm:^6.3.0":
+  version: 6.3.1
+  resolution: "electron-updater@npm:6.3.1"
   dependencies:
-    "@types/semver": ^7.1.0
-    builder-util-runtime: 8.7.0
-    fs-extra: ^9.0.0
-    js-yaml: ^3.13.1
-    lazy-val: ^1.0.4
+    builder-util-runtime: 9.2.5
+    fs-extra: ^10.1.0
+    js-yaml: ^4.1.0
+    lazy-val: ^1.0.5
+    lodash.escaperegexp: ^4.1.2
     lodash.isequal: ^4.5.0
-    semver: ^7.1.3
-  checksum: 3b8d0f95097c3e1e414efd795cb07a37b2f476b929a7109dbb44b4542b19ee84deaa82a830ddcbdde10808b34ca390b7906b127ce525399c2f81af7bed7d23c5
+    semver: ^7.3.8
+    tiny-typed-emitter: ^2.1.0
+  checksum: 372ab8164f846d21b07cbfd87c0953433ec72a74494a94b93fdb6d2407e1242ee24905d200513cc0dc8138af2dadc815f31536e652c6abc4c113512704cced25
   languageName: node
   linkType: hard
 
@@ -7463,6 +7455,17 @@ __metadata:
     jsonfile: ^6.0.1
     universalify: ^2.0.0
   checksum: 5285a3d8f34b917cf2b66af8c231a40c1623626e9d701a20051d3337be16c6d7cac94441c8b3732d47a92a2a027886ca93c69b6a4ae6aee3c89650d2a8880c0a
+  languageName: node
+  linkType: hard
+
+"fs-extra@npm:^10.1.0":
+  version: 10.1.0
+  resolution: "fs-extra@npm:10.1.0"
+  dependencies:
+    graceful-fs: ^4.2.0
+    jsonfile: ^6.0.1
+    universalify: ^2.0.0
+  checksum: dc94ab37096f813cc3ca12f0f1b5ad6744dfed9ed21e953d72530d103cea193c2f81584a39e9dee1bea36de5ee66805678c0dddc048e8af1427ac19c00fffc50
   languageName: node
   linkType: hard
 
@@ -9441,6 +9444,13 @@ __metadata:
   version: 4.5.0
   resolution: "lodash.difference@npm:4.5.0"
   checksum: ecee276aa578f300e79350805a14a51be8d1f12b3c1389a19996d8ab516f814211a5f65c68331571ecdad96522b863ccc484b55504ce8c9947212a29f8857d5a
+  languageName: node
+  linkType: hard
+
+"lodash.escaperegexp@npm:^4.1.2":
+  version: 4.1.2
+  resolution: "lodash.escaperegexp@npm:4.1.2"
+  checksum: 6d99452b1cfd6073175a9b741a9b09ece159eac463f86f02ea3bee2e2092923fce812c8d2bf446309cc52d1d61bf9af51c8118b0d7421388e6cead7bd3798f0f
   languageName: node
   linkType: hard
 
@@ -12883,7 +12893,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:^7.1.3, semver@npm:^7.2.1, semver@npm:^7.3.2, semver@npm:^7.3.4, semver@npm:^7.3.5, semver@npm:^7.3.8":
+"semver@npm:^7.2.1, semver@npm:^7.3.2, semver@npm:^7.3.4, semver@npm:^7.3.5, semver@npm:^7.3.8":
   version: 7.5.4
   resolution: "semver@npm:7.5.4"
   dependencies:
@@ -13189,7 +13199,7 @@ __metadata:
     electron-chromedriver: 29.3.3
     electron-devtools-installer: 3.1.1
     electron-react-devtools: ^0.5.3
-    electron-updater: ^4.2.0
+    electron-updater: ^6.3.0
     electron-window-state: 5.0.3
     eslint: 7.15.0
     eslint-config-airbnb-base: 14.1.0
@@ -14152,6 +14162,13 @@ __metadata:
   version: 1.1.0
   resolution: "tiny-invariant@npm:1.1.0"
   checksum: 27d29bbb9e1d1d86e25766711c28ad91af6d67c87d561167077ac7fbce5212b97bbfe875e70bc369808e075748c825864c9b61f0e9f8652275ec86bcf4dcc924
+  languageName: node
+  linkType: hard
+
+"tiny-typed-emitter@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "tiny-typed-emitter@npm:2.1.0"
+  checksum: 709bca410054e08df4dc29d5ea0916328bb2900d60245c6a743068ea223887d9fd2c945b6070eb20336275a557a36c2808e5c87d2ed4b60633458632be4a3e10
   languageName: node
   linkType: hard
 
