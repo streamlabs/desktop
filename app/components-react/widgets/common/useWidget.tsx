@@ -94,13 +94,46 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
     const widget = this.widget;
     this.setBrowserSourceProps(widget.getSource()!.getPropertiesFormData());
 
-    // create a temporary preview-source for the Display component
-    if (this.state.shouldCreatePreviewSource) {
-      const previewSource = widget.createPreviewSource();
-      this.state.previewSourceId = previewSource.sourceId;
-    }
+    /* FIXME: we need a more robust way of handling these `onUnload` invocations,
+     *
+     * These are supposed to fire for any window that gets closed, not just
+     * the window that is displaying this component, that includes one-off windows.
+     * As a result, we destroyed the preview source when a child window such as
+     * the one in Custom Code editor gets created, that resulted in an infinite
+     * load state since we try to cleanup again on widget's destroy.
+     *
+     * We would ideally:
+     * a) get rid of these types of handlers
+     * or b) make sure we're using the windowId given to the listener to
+     * check whether we should proceed or not, like in this case.
+     *
+     * More importanlty, this module's `init` gets called on CustomCode since
+     * that uses `injectChild`, all of the init logic of this module is
+     * executed, including this `onUnload` handler.
+     * While this is the minimum viable fix for the issue with code editor,
+     * we should revisit this logic entirely. At best, we're wasting compute
+     * time and network requests.
+     */
+    /* Reaching into slap internals to check if we're on the instance
+     * that used `injectChild`
+     */
+    if ((this as any).__provider?.options?.parentScope) {
+      // Do not create preview sources on child injected modules
+      // Empty since we don't need to cleanup
+      this.cancelUnload = () => {};
+    } else {
+      // create a temporary preview-source for the Display component
+      if (this.state.shouldCreatePreviewSource) {
+        const previewSource = widget.createPreviewSource();
+        this.state.previewSourceId = previewSource.sourceId;
+      }
 
-    this.cancelUnload = onUnload(() => this.widget.destroyPreviewSource());
+      this.cancelUnload = () => {
+        if (this.state.previewSourceId) {
+          this.widget.destroyPreviewSource();
+        }
+      };
+    }
 
     // load settings from the server to the store
     this.state.type = widget.type;
@@ -262,7 +295,7 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
     ]);
 
     this.setStaticConfig(staticConfig);
-    if (staticConfig) {
+    if (staticConfig?.data?.custom_code) {
       // I miss lenses
       const makeLenses = (type: 'html' | 'css' | 'js') => {
         const prop = `custom_${type}`;
@@ -420,9 +453,7 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
   }
 
   private setStaticConfig(resp: unknown) {
-    this.state.mutate(state => {
-      state.staticConfig = resp;
-    });
+    this.state.setStaticConfig(resp);
   }
 }
 

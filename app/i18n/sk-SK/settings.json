@@ -109,6 +109,7 @@
   "Pipe Name": "Pipe Name",
   "Websockets": "Websockets",
   "Enabled": "Enabled",
+  "Disabled": "Disabled",
   "Allow Remote Connections": "Allow Remote Connections",
   "Port": "Port",
   "Audio - Track 1": "Zvuk - stopa 1",
@@ -119,7 +120,7 @@
   "Audio - Track 6": "Zvuk - stopa 6",
   "Stream Key": "Stream Key",
   "You can not change these settings when you're live": "You can not change these settings when you're live",
-  "This feature is intended for overlay designers to export their work for our Theme Store. Not all sources will be exported, use at your own risk.": "This feature is intended for overlay designers to export their work for our Theme Store. Not all sources will be exported, use at your own risk.",
+  "This feature is intended for overlay designers to export their work for our Overlay Library. Not all sources will be exported, use at your own risk.": "This feature is intended for overlay designers to export their work for our Overlay Library. Not all sources will be exported, use at your own risk.",
   "Change the look of Streamlabs Desktop with Ultra": "Change the look of Streamlabs Desktop with Ultra",
   "Virtual Webcam": "Virtual Webcam",
   "unlinked": "unlinked",
@@ -251,5 +252,14 @@
   "%{fieldName} must be greater than 0": "%{fieldName} must be greater than 0",
   "Markers": "Markers",
   "Manage Dual Output": "Manage Dual Output",
-  "Auto optimizer disabled for dual output scenes": "Auto optimizer disabled for dual output scenes"
+  "Auto optimizer disabled for dual output scenes": "Auto optimizer disabled for dual output scenes",
+  "Scene Collection": "Scene Collection",
+  "High": "High",
+  "Above High": "Above High",
+  "Normal": "Normal",
+  "Below Normal": "Below Normal",
+  "Idle": "Idle",
+  "Please connect platforms directly from Streamlabs Desktop instead of adding Streamlabs Multistream as a custom destination": "Please connect platforms directly from Streamlabs Desktop instead of adding Streamlabs Multistream as a custom destination",
+  "Audio Encoder": "Audio Encoder",
+  "Additional Settings": "Additional Settings"
 }

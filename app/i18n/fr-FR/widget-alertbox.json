@@ -126,7 +126,7 @@
   "Plays an alert when a viewer likes your stream": "Lance une alerte lorsqu’un spectateur aime votre stream",
   "How many seconds to show this alert before hiding it": "Le nombre de secondes avant de cacher l'alerte",
   "When a donation alert shows up, this will be the format of the message.": "Lorsqu'une alerte de don apparaîtra, ce sera sous ce format.",
-  "Available Tokens: ": "Clés disponibles: ",
+  "Available Tokens: ": "Jetons disponibles: ",
   "The name of the donator": "Nom du donateur",
   "Looking for the old AlertBox settings?": "Vous cherchez les anciens paramètres de la fenêtre d'alerte?",
   "Need to set up tipping?": "Vous souhaitez créer un système de pourboires?",

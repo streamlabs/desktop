@@ -22,7 +22,7 @@ interface IUsageApiData {
   data: string;
 }
 
-type TAnalyticsEvent =
+export type TAnalyticsEvent =
   | 'PlatformLogin'
   | 'SocialShare'
   | 'Heartbeat'
@@ -35,6 +35,7 @@ type TAnalyticsEvent =
   | 'Shown'
   | 'AppStart'
   | 'Highlighter'
+  | 'AIHighlighter'
   | 'Hardware'
   | 'WebcamUse'
   | 'MicrophoneUse'
@@ -45,7 +46,8 @@ type TAnalyticsEvent =
   | 'StreamCustomDestinations'
   | 'TikTokLiveAccess'
   | 'TwitchCredentialsAlert'
-  | 'TikTokApplyPrompt';
+  | 'TikTokApplyPrompt'
+  | 'ScheduleStream';
 
 interface IAnalyticsEvent {
   product: string;

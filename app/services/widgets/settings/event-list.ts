@@ -95,7 +95,7 @@ export class EventListService extends WidgetSettingsService<IEventListData> {
   eventsByPlatform(): { key: string; title: string }[] {
     const platform = this.userService.platform.type as Exclude<
       TPlatform,
-      'tiktok' | 'twitter' | 'instagram'
+      'tiktok' | 'twitter' | 'instagram' | 'kick'
     >;
     return {
       twitch: [

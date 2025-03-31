@@ -143,9 +143,7 @@ export class SceneItemsNode extends Node<ISchema, {}> {
     // but if the scene item already has a display assigned, skip it
     if (this.dualOutputService.views.hasNodeMap(context.scene.id)) {
       // nodes must be assigned to a context, so if it doesn't exist, establish it
-      if (!this.videoSettingsService.contexts.vertical) {
-        this.videoSettingsService.establishVideoContext('vertical');
-      }
+      this.videoSettingsService.validateVideoContext();
 
       const nodeMap = this.dualOutputService.views.sceneNodeMaps[context.scene.id];
 
@@ -178,8 +176,13 @@ export class SceneItemsNode extends Node<ISchema, {}> {
 
     const promises: Promise<void>[] = [];
 
+    const sources = this.sourcesService.state.sources;
+
     this.data.items.forEach(item => {
       if (item.sceneNodeType === 'folder') return;
+      // prevent loading hotkeys for sources that failed to create obs inputs
+      if (!sources[item.sourceId]) return;
+
       const hotkeys = item.hotkeys;
       if (hotkeys) promises.push(hotkeys.load({ sceneItemId: item.id }));
     });

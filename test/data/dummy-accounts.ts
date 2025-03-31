@@ -3,7 +3,7 @@ import { ITestUser } from '../helpers/webdriver/user';
 import { TPlatform } from 'services/platforms';
 
 // update this list for platforms that use dummy user accounts for tests
-const platforms = ['twitter', 'instagram', 'tiktok'] as const;
+const platforms = ['twitter', 'instagram', 'tiktok', 'kick'] as const;
 type DummyUserPlatforms = typeof platforms;
 export type TTestDummyUserPlatforms = DummyUserPlatforms[number];
 
@@ -105,7 +105,7 @@ export const instagramUser1: IDummyTestUser = {
 };
 
 /**
- * Twitter
+ * X (Twitter)
  */
 
 export const twitterUser1: IDummyTestUser = {
@@ -120,6 +120,24 @@ export const twitterUser1: IDummyTestUser = {
   ingest: 'rtmps://twitterIngestUrl:443/rtmp/',
   streamKey: 'twitterStreamKey1',
   widgetToken: 'twitterWidgetToken1',
+};
+
+/**
+ * Kick
+ */
+
+export const kickUser1: IDummyTestUser = {
+  email: 'kickUser1@email.com',
+  workerId: 'kickWorkerId1',
+  updated: 'kickUpdatedId1',
+  username: 'kickUser1',
+  type: 'kick',
+  id: 'kickId1',
+  token: 'kickToken1',
+  apiToken: 'kickApiToken1',
+  ingest: 'rtmps://kickIngestUrl:443/rtmp/',
+  streamKey: 'kickStreamKey1',
+  widgetToken: 'kickWidgetToken1',
 };
 
 /**
@@ -145,6 +163,8 @@ export function getDummyUser(
   if (platform === 'instagram') return instagramUser1;
 
   if (platform === 'twitter') return twitterUser1;
+
+  if (platform === 'kick') return kickUser1;
 
   if (platform === 'tiktok') {
     switch (tikTokLiveScope) {

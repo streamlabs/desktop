@@ -1,6 +1,6 @@
 {
   "Overlay, Widget, and Site Themes": "오버레이, 위젯, 사이트 테마",
-  "Fully customize your stream and your website to represent your brand; or pick from thousands of our pre-made themes. Either way, your stream will look amazing and it's all included with Ultra.": "나만의 브랜드를 보여줄 수 있도록 스트리밍과 웹사이트를 완전히 커스텀하세요. 또는 사전 제작된 수천 개의 테마 중 선택하셔도 됩니다. 어느 것을 선택하셔도 Ultra에 포함된 기능으로 멋진 스트리밍을 만들 수 있습니다.",
+  "Fully customize your stream and your website to represent your brand; or pick from thousands of our pre-made overlays. Either way, your stream will look amazing and it's all included with Ultra.": "나만의 브랜드를 보여줄 수 있도록 스트리밍과 웹사이트를 완전히 커스터마이징하십시오. 또는 사전 제작된 수천 개의 오버레이 중 선택하셔도 됩니다. 어느 것을 선택하셔도 Ultra에 포함된 기능으로 멋진 스트리밍을 만들 수 있습니다.",
   "View Themes": "테마 보기",
   "Every App is FREE": "모든 앱 무료",
   "We've curated a list of diverse and feature rich applications to give you more control, automation, better analytics, and new ways to interact with your audience.": "다양한 기능을 가진 풍성한 애플리케이션 목록을 큐레이팅했습니다. 컨트롤, 자동화뿐만 아니라 더욱 향상된 분석을 이용하고 시청자와 소통할 수 있는 새로운 방법을 발견해보세요.",
@@ -71,5 +71,8 @@
   "1 Hour Videos + 250GB Storage + More": "1시간 비디오 + 250GB 스토리지 + 추가 기능",
   "Highest Profit Margins": "최고의 이윤",
   "%{monthlyPrice}/mo or %{yearlyPrice}/year": "%{monthlyPrice}/월 또는 %{yearlyPrice}/연",
-  "Text-based editing of VOD content": "Text-based editing of VOD content"
+  "Text-based editing of VOD content": "VOD 콘텐츠의 텍스트 기반 편집",
+  "Polish your videos with text-based and AI powered Podcast Editor": "텍스트 기반 및 AI 기반 Podcast Editor로 동영상 편집",
+  "Turn your videos into mobile-friendly short-form TikToks, Reels, and Shorts with Cross Clip": "Cross Clip을 사용하여 동영상을 모바일 친화적인 숏폼 TikTok, 릴스 및 쇼츠로 전환",
+  "Edit video professionally from your browser with Video Editor": "Video Editor를 사용하여 브라우저에서 프로 수준으로 동영상 편집"
 }

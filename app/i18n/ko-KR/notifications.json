@@ -25,7 +25,7 @@
   "Show in folder": "폴더에 표시",
   "Recordings": "녹화",
   "Marker %{label} added at %{timestamp}": "%{timestamp}에 마커 %{label} 추가 완료",
-  "File is too large to upload": "File is too large to upload",
-  "File type %{extension} is not supported": "File type %{extension} is not supported",
-  "Upload already in progress": "Upload already in progress"
+  "File is too large to upload": "파일이 너무 커서 업로드할 수 없음",
+  "File type %{extension} is not supported": "파일 형식 %{extension}은(는) 지원되지 않음",
+  "Upload already in progress": "이미 업로드 진행 중"
 }

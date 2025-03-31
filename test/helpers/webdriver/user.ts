@@ -113,6 +113,7 @@ export async function logIn(
   features?: ITestUserFeatures, // if not set, pick a random user's account from user-pool
   waitForUI = true,
   isOnboardingTest = false,
+  isNewUser = false,
 ): Promise<ITestUser | IDummyTestUser> {
   if (user) throw new Error('User already logged in');
 
@@ -122,7 +123,7 @@ export async function logIn(
     throw new Error('Setup env variable SLOBS_TEST_USER_POOL_TOKEN to run this test');
   }
 
-  await loginWithAuthInfo(t, user, waitForUI, isOnboardingTest);
+  await loginWithAuthInfo(t, user, waitForUI, isOnboardingTest, isNewUser);
   return user;
 }
 
@@ -164,6 +165,7 @@ export async function loginWithAuthInfo(
   userInfo: ITestUser | IDummyTestUser,
   waitForUI = true,
   isOnboardingTest = false,
+  isNewUser = false,
 ) {
   const authInfo = {
     widgetToken: user.widgetToken,
@@ -182,7 +184,9 @@ export async function loginWithAuthInfo(
   };
   await focusWindow('worker');
   const api = await getApiClient();
-  await api.getResource<UserService>('UserService').testingFakeAuth(authInfo, isOnboardingTest);
+  await api
+    .getResource<UserService>('UserService')
+    .testingFakeAuth(authInfo, isOnboardingTest, isNewUser);
   await focusMain();
   if (!waitForUI) return true;
   return await isLoggedIn(t);
@@ -232,14 +236,20 @@ export async function withPoolUser(user: ITestUser, fn: () => Promise<void>) {
  *   // ...
  * }
  */
-export const withUser = (platform?: TPlatform, features?: ITestUserFeatures) => async (
+export const withUser = (
+  platform?: TPlatform,
+  features?: ITestUserFeatures,
+  waitForUI = true,
+  isOnboardingTest = false,
+  isNewUser = false,
+) => async (
   t: ExecutionContext<ITestContext>,
   implementation: (
     t: ExecutionContext<ITestContext>,
     user: ITestUser | IDummyTestUser,
   ) => Promise<void>,
 ) => {
-  const user = await logIn(t, platform, features);
+  const user = await logIn(t, platform, features, waitForUI, isOnboardingTest, isNewUser);
 
   try {
     await implementation(t, user);

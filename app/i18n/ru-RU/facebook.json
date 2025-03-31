@@ -34,5 +34,8 @@
   "Only Me": "Только для меня",
   "Do not change privacy settings": "Не изменять настройки конфиденциальности",
   "Install %{overlayName}": "Установить %{overlayName}",
-  "Please note that while you can schedule streams to Facebook, some will not appear on this calendar due to API limitations": "Обратите внимание, что, несмотря на возможность планирования трансляций для Facebook, некоторые из них не будут отображаться в этом календаре ввиду ограничений API."
+  "Please note that while you can schedule streams to Facebook, some will not appear on this calendar due to API limitations": "Обратите внимание, что, несмотря на возможность планирования трансляций для Facebook, некоторые из них не будут отображаться в этом календаре ввиду ограничений API.",
+  "Your account is not eligible to stream on Facebook. Click to learn more.": "Ваша учетная запись не имеет права на проведение трансляций через Facebook. Щелкните, чтобы узнать больше",
+  "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers": "Вы не имеете права начинать трансляцию: вашему профилю должно быть не менее 60 дней, а у вашей страницы должно быть не менее 100 подписчиков",
+  "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers. Click the notification to learn more.": "Вы не имеете права начинать трансляцию: вашему профилю должно быть не менее 60 дней, а у вашей страницы должно быть не менее 100 подписчиков. Нажмите на уведомление, чтобы узнать больше."
 }

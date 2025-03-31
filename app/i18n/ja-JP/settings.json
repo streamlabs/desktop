@@ -109,6 +109,7 @@
   "Pipe Name": "パイプ名",
   "Websockets": "Websocket",
   "Enabled": "有効",
+  "Disabled": "無効",
   "Allow Remote Connections": "リモート接続を許可",
   "Port": "ポート",
   "Audio - Track 1": "オーディオ - トラック 1",
@@ -119,7 +120,7 @@
   "Audio - Track 6": "オーディオ - トラック 6",
   "Stream Key": "ストリームキー",
   "You can not change these settings when you're live": "ライブ中はこれらの設定を変更できません",
-  "This feature is intended for overlay designers to export their work for our Theme Store. Not all sources will be exported, use at your own risk.": "この機能は、オーバーレイ デザイナーが、当社のテーマストア向けに自分の作品をエクスポートすることを目的としています。すべてのソースがエクスポートされる訳ではありません。自己責任でご利用ください。",
+  "This feature is intended for overlay designers to export their work for our Overlay Library. Not all sources will be exported, use at your own risk.": "この機能は、オーバーレイ デザイナーが、当社のオーバーレイライブラリに自分の作品をエクスポートすることを目的としています。すべてのソースがエクスポートされる訳ではありません。自己責任でご利用ください。",
   "Change the look of Streamlabs Desktop with Ultra": "Ultra で Streamlabs Desktop の外観を変更する",
   "Virtual Webcam": "仮想ウェブカメラ",
   "unlinked": "リンクされていません",
@@ -251,5 +252,14 @@
   "%{fieldName} must be greater than 0": "%{fieldName} は 0 より大きい数字にしてください",
   "Markers": "マーカー",
   "Manage Dual Output": "Dual Output の管理",
-  "Auto optimizer disabled for dual output scenes": "Dual Output シーンでは、自動オプティマイザーが無効になっています"
+  "Auto optimizer disabled for dual output scenes": "Dual Output シーンでは、自動オプティマイザーが無効になっています",
+  "Scene Collection": "シーンコレクション",
+  "High": "高",
+  "Above High": "最高以上",
+  "Normal": "標準",
+  "Below Normal": "標準以下",
+  "Idle": "アイドル",
+  "Please connect platforms directly from Streamlabs Desktop instead of adding Streamlabs Multistream as a custom destination": "Streamlabs Multistreamをカスタム宛先として追加する代わりに、Streamlabs Desktopから直接プラットフォームを接続してください",
+  "Audio Encoder": "オーディオエンコーダー",
+  "Additional Settings": "追加設定"
 }

@@ -109,6 +109,7 @@
   "Pipe Name": "Nome do Pipe",
   "Websockets": "Websockets",
   "Enabled": "Habilitado",
+  "Disabled": "Desativado",
   "Allow Remote Connections": "Permitir Conexões remotas",
   "Port": "Porta",
   "Audio - Track 1": "Áudio - Faixa 1",
@@ -119,7 +120,7 @@
   "Audio - Track 6": "Áudio - Faixa 6",
   "Stream Key": "Chave de transmissão",
   "You can not change these settings when you're live": "Você não pode alterar essas configurações enquanto estiver ao vivo",
-  "This feature is intended for overlay designers to export their work for our Theme Store. Not all sources will be exported, use at your own risk.": "Este recurso é destinado para que designers de overlay possam exportar seu trabalho para a Loja de temas. Nem todos os recursos serão exportados, use por sua conta e risco.",
+  "This feature is intended for overlay designers to export their work for our Overlay Library. Not all sources will be exported, use at your own risk.": "Esse recurso destina-se a designers de sobreposição para que exportem seu trabalho para a nossa biblioteca de sobreposição. Nem todos os recursos serão exportados, use por sua conta e risco.",
   "Change the look of Streamlabs Desktop with Ultra": "Mude o visual do Streamlabs Desktop com Ultra",
   "Virtual Webcam": "Webcam virtual",
   "unlinked": "desvinculado",
@@ -251,5 +252,14 @@
   "%{fieldName} must be greater than 0": "%{fieldName} deve ser maior que 0",
   "Markers": "Marcadores",
   "Manage Dual Output": "Gerenciar Dual Output",
-  "Auto optimizer disabled for dual output scenes": "Otimizador automático desativado para cenas de Dual Output"
+  "Auto optimizer disabled for dual output scenes": "Otimizador automático desativado para cenas de Dual Output",
+  "Scene Collection": "Coleção de cenas",
+  "High": "Alta",
+  "Above High": "Acima de alto",
+  "Normal": "Normal",
+  "Below Normal": "Abaixo do normal",
+  "Idle": "Inativo",
+  "Please connect platforms directly from Streamlabs Desktop instead of adding Streamlabs Multistream as a custom destination": "Conecte as plataformas diretamente do Streamlabs Desktop em vez de adicionar o Streamlabs Multistream como um destino personalizado",
+  "Audio Encoder": "Codificador de áudio",
+  "Additional Settings": "Configurações adicionais"
 }

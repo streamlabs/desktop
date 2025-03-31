@@ -298,8 +298,8 @@ export class SceneItem extends SceneItemNode {
     const display = customSceneItem?.display ?? this?.display ?? 'horizontal';
 
     // guarantee vertical context exists to prevent null errors
-    if (display === 'vertical' && !this.videoSettingsService.contexts.vertical) {
-      this.videoSettingsService.establishVideoContext('vertical');
+    if (display === 'vertical') {
+      this.videoSettingsService.validateVideoContext('vertical');
     }
     const context = this.videoSettingsService.contexts[display];
 

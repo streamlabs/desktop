@@ -5,6 +5,7 @@ import { IYoutubeStartStreamOptions } from '../../../../services/platforms/youtu
 import { IFacebookStartStreamOptions } from '../../../../services/platforms/facebook';
 import { ITikTokStartStreamOptions } from '../../../../services/platforms/tiktok';
 import { ITrovoStartStreamOptions } from '../../../../services/platforms/trovo';
+import { IKickStartStreamOptions } from '../../../../services/platforms/kick';
 
 export type TLayoutMode = 'singlePlatform' | 'multiplatformAdvanced' | 'multiplatformSimple';
 
@@ -36,6 +37,7 @@ export interface IPlatformSettings extends Partial<Record<TPlatform, any>> {
   facebook?: IFacebookStartStreamOptions;
   tiktok?: ITikTokStartStreamOptions;
   trovo?: ITrovoStartStreamOptions;
+  kick?: IKickStartStreamOptions;
 }
 
 export interface IPlatformComponentParams<T extends TPlatform> {
@@ -44,4 +46,5 @@ export interface IPlatformComponentParams<T extends TPlatform> {
   layoutMode: TLayoutMode;
   isUpdateMode?: boolean;
   isScheduleMode?: boolean;
+  enabledPlatformsCount?: number;
 }

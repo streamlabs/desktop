@@ -20,7 +20,7 @@ export function TikTokEditStreamInfo(p: IPlatformComponentParams<'tiktok'>) {
   const { TikTokService } = Services;
   const ttSettings = p.value;
   const approved = TikTokService.scope === 'approved';
-  const denied = TikTokService.scope === 'denied' && !TikTokService.promptReapply;
+  const denied = TikTokService.scope === 'denied';
   const controls = TikTokService.audienceControls;
 
   function updateSettings(patch: Partial<ITikTokStartStreamOptions>) {
@@ -139,8 +139,8 @@ function TikTokInfo() {
 
 function TikTokButtons(p: { denied: boolean }) {
   const status = Services.TikTokService.promptApply ? 'prompted' : 'not-prompted';
-  const component = p.denied ? 'ReapplyButton' : 'ApplyButton';
-  const text = p.denied
+  const component = Services.TikTokService.promptReapply ? 'ReapplyButton' : 'ApplyButton';
+  const text = Services.TikTokService.promptReapply
     ? $t('Reapply for TikTok Live Permission')
     : $t('Apply for TikTok Live Permission');
 

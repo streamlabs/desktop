@@ -8,5 +8,18 @@
   "Unlink Twitter": "Отвязать Twitter",
   "Tweet & Go Live": "Твитнуть и начать трансляцию",
   "Could not connect to Twitter": "Не удалось подключиться к Twitter",
-  "Use Streamlabs URL": "Использовать ссылку на Streamlabs"
+  "Use Streamlabs URL": "Использовать ссылку на Streamlabs",
+  "X (Twitter) Chat Type": "Тип чата X (Twitter)",
+  "Disabled": "Выключено",
+  "Chat will be disabled": "Чат будет отключен",
+  "Everyone": "Все",
+  "All viewers will be able to chat": "Общаться смогут все зрители",
+  "Verified Only": "Только подтвержденные",
+  "Only verified viewers will be able to chat": "Общаться смогут только подтвержденные зрители",
+  "Followed Only": "Только для тех, за кем вы следите",
+  "Only accounts you follow will be able to chat": "Общаться смогут только те пользователи, за которыми вы следите",
+  "Subscriber Only": "Только подписчики",
+  "Only viewers that subscribe to you will be able to chat": "Общаться смогут только те зрители, которые подписаны на вас",
+  "You need X premium account to go live on X.": "Чтобы начать трансляцию на платформе X, вам нужна премиальная учетная запись X.",
+  "You need X premium account to go live on X. Click to learn more": "Чтобы начать трансляцию на платформе X, вам нужна премиальная учетная запись X. Нажмите, чтобы узнать больше"
 }

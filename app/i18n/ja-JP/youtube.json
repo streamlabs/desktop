@@ -39,6 +39,5 @@
   "DVR controls enable the viewer to control the video playback experience by pausing, rewinding, or fast forwarding content": "DVR コントロールによって、視聴者は、動画再生をコントロールできます（コンテンツの一時停止、巻き戻し、または早送りなど）",
   "Auto-start is disabled for your broadcast. You should manually publish your stream from Youtube Studio": "ブロードキャストでは自動開始は無効になっています。YouTube Studio から手動でストリームを公開する必要があります",
   "Made for kids": "子供向けストリーム",
-  "Features like personalized ads and live chat won't be available on live streams made for kids.": "パーソナライズされた広告やライブチャットなどの機能は、子供向けに作られたライブストリームでは利用できません。",
-  "Try our new thumbnail editor": "新しいサムネイルエディタをお試しください"
+  "Features like personalized ads and live chat won't be available on live streams made for kids.": "パーソナライズされた広告やライブチャットなどの機能は、子供向けに作られたライブストリームでは利用できません。"
 }

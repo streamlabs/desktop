@@ -5,7 +5,13 @@ import { $t } from 'services/i18n';
 import { Services } from 'components-react/service-provider';
 import { injectState, useModule, mutation } from 'slap';
 import { ExtraPlatformConnect } from './ExtraPlatformConnect';
-import { EPlatform, EPlatformCallResult, TPlatform, platformLabels } from 'services/platforms';
+import {
+  EPlatform,
+  EPlatformCallResult,
+  TPlatform,
+  externalAuthPlatforms,
+  platformLabels,
+} from 'services/platforms';
 import * as remote from '@electron/remote';
 import { OnboardingModule } from './Onboarding';
 import { EAuthProcessState } from 'services/user';
@@ -63,7 +69,7 @@ export function Connect() {
   // streamlabs and trovo are added separarely on markup below
   const platforms = RecordingModeService.views.isRecordingModeEnabled
     ? ['youtube']
-    : ['twitch', 'youtube', 'facebook', 'twitter', 'tiktok'];
+    : ['twitch', 'youtube', 'tiktok', 'kick', 'facebook', 'twitter'];
 
   const shouldAddTrovo = !RecordingModeService.views.isRecordingModeEnabled;
 
@@ -132,7 +138,9 @@ export function Connect() {
                     loading={loading}
                     onClick={() => authPlatform(platform, afterLogin)}
                     key={platform}
-                    logoSize={['twitter', 'tiktok', 'youtube'].includes(platform) ? 15 : undefined}
+                    logoSize={
+                      ['twitter', 'tiktok', 'youtube', 'kick'].includes(platform) ? 15 : undefined
+                    }
                   >
                     <Translate
                       message={$t('Log in with <span>%{platform}</span>', {
@@ -147,7 +155,7 @@ export function Connect() {
               <div className={styles.extraPlatformsContainer}>
                 {shouldAddTrovo && (
                   <PlatformIconButton
-                    datatest={`platform-icon-button-${EPlatform.Trovo}`}
+                    name={EPlatform.Trovo}
                     platform={EPlatform.Trovo}
                     disabled={loading || authInProgress}
                     loading={loading}
@@ -159,7 +167,7 @@ export function Connect() {
                 )}
                 {extraPlatforms.map(platform => (
                   <PlatformIconButton
-                    datatest={`platform-icon-button-${platform.value}`}
+                    name={platform.value}
                     key={platform.value}
                     logo={platform.image}
                     disabled={loading || authInProgress}
@@ -263,7 +271,7 @@ export class LoginModule {
 
     const result = await this.UserService.startAuth(
       platform,
-      ['youtube', 'twitch', 'twitter', 'tiktok'].includes(platform) ? 'external' : 'internal',
+      externalAuthPlatforms.includes(platform) ? 'external' : 'internal',
       merge,
     );
 

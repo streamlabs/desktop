@@ -24,5 +24,11 @@
   "Previous Slide": "前のスライダー",
   "Toggle Performance Mode": "パフォーマンスモードを切り替え",
   "Skip Alert": "警告をスキップする",
-  "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop.": "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop."
+  "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop.": "Macでホットキーを使用するには、[システム設定] > [セキュリティ] > [アクセシビリティ]を選択し、Streamlabs Desktopをオンに切り替えます。",
+  "Start Virtual Camera": "仮想カメラを開始",
+  "Stop Virtual Camera": "仮想カメラを停止",
+  "This scene has not been converted to Dual Output. Please make the scene active to add vertical sources.": "このシーンはDual Outputに変換されていません。縦方向のソースを追加するには、シーンを有効にしてください。",
+  "Learn more here": "詳細はこちら",
+  "<color>Pro tip:</color> set Markers in Hotkeys settings to timestamp your recordings. <link>Set up here</link>": "<color>役立つヒント：</color>ホットキーの設定でマーカーを設定すると、録画にタイムスタンプを追加できます。<link>セットアップはこちら</link>",
+  "Markers": "マーカー"
 }

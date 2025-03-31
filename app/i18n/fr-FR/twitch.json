@@ -3,5 +3,15 @@
   "Twitch Tags": "Tags Twitch",
   "You need to re-login to access Twitch tags": "Vous devez vous reconnecter pour accéder aux tags Twitch",
   "Do not include special characters or spaces in your tag": "N’incluez pas de caractères spéciaux ou d’espaces dans votre tag.",
-  "For example: \"Speedrunning\" or \"FirstPlaythrough\"": "Par exemple: \"Speedrunning\" ou \"FirstPlaythrough\"."
+  "For example: \"Speedrunning\" or \"FirstPlaythrough\"": "Par exemple: \"Speedrunning\" ou \"FirstPlaythrough\".",
+  "Your Twitch access token has expired. Please log in with Twitch to continue.": "Ton jeton d'accès à Twitch a expiré. Connecte-toi à Twitch pour continuer.",
+  "While updating your Twitch channel info, some tags were removed due to moderation rules: %{tags}": "Lors de la mise à jour des infos de ta chaîne Twitch, certains libellés ont été supprimés en raison des règles de modération : %{tags}",
+  "Content Classification": "Classification du contenu",
+  "Content classification": "Classification du contenu",
+  "Stream features branded content": "Le stream propose du contenu de marque",
+  "Twitch Studio Import": "Import Twitch Studio",
+  "Import from Twitch Studio": "Importer depuis Twitch Studio",
+  "Import your scenes and sources from Twitch Studio.": "Importe tes scènes et tes sources depuis Twitch Studio.",
+  "Importing Your Existing Settings From Twitch Studio": "Importer tes paramètres existants depuis Twitch Studio",
+  "Importing from Twitch Studio is an experimental feature under active development. Some source types are unable to be imported, and not all settings will be carried over.": "L'importation depuis Twitch Studio est une fonctionnalité expérimentale en cours de développement. Certains types de sources ne peuvent pas être importés, et tous les paramètres ne seront pas transmis."
 }

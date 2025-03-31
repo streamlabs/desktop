@@ -150,8 +150,8 @@ export function getWidgetsConfig(
       dataFetchUrl: `https://${host}/api/v5/slobs/widget/emote-wall`,
       settingsSaveUrl: `https://${host}/api/v5/slobs/widget/emote-wall`,
       settingsUpdateEvent: 'emoteWallSettingsUpdate',
-      customCodeAllowed: true,
-      customFieldsAllowed: true,
+      customCodeAllowed: false,
+      customFieldsAllowed: false,
     },
 
     // TODO:

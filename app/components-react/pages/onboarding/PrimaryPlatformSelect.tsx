@@ -22,7 +22,7 @@ export function PrimaryPlatformSelect() {
     isPrime: UserService.state.isPrime,
   }));
   const { loading, authInProgress, authPlatform, finishSLAuth } = useModule(LoginModule);
-  const platforms = ['twitch', 'youtube', 'facebook', 'twitter', 'tiktok', 'trovo'];
+  const platforms = ['twitch', 'youtube', 'tiktok', 'kick', 'facebook', 'twitter', 'trovo'];
   const platformOptions = [
     {
       value: 'twitch',
@@ -53,6 +53,11 @@ export function PrimaryPlatformSelect() {
       value: 'tiktok',
       label: 'TikTok',
       image: <PlatformLogo platform="tiktok" size={14} />,
+    },
+    {
+      value: 'kick',
+      label: 'Kick',
+      image: <PlatformLogo platform="kick" size={14} />,
     },
   ].filter(opt => {
     return linkedPlatforms.includes(opt.value as TPlatform);

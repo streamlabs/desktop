@@ -34,5 +34,8 @@
   "Only Me": "只有我",
   "Do not change privacy settings": "不要更改隐私设置",
   "Install %{overlayName}": "安装 %{overlayName}",
-  "Please note that while you can schedule streams to Facebook, some will not appear on this calendar due to API limitations": "请注意，虽然您可以安排直播至 Facebook，但由于 API 限制，有些直播不会出现在此日程中"
+  "Please note that while you can schedule streams to Facebook, some will not appear on this calendar due to API limitations": "请注意，虽然您可以安排直播至 Facebook，但由于 API 限制，有些直播不会出现在此日程中",
+  "Your account is not eligible to stream on Facebook. Click to learn more.": "您的帐户不符合在 Facebook 上直播的资格。点击了解更多",
+  "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers": "您没有上线资格，您的个人资料至少应存在 60 天，并且您的页面至少要有 100 名关注者",
+  "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers. Click the notification to learn more.": "您没有上线资格，您的个人资料至少应存在 60 天，并且您的页面至少要有 100 名关注者。点击通知了解更多。"
 }

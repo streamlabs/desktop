@@ -60,7 +60,9 @@ export async function addSource(
   await clickAddSource();
   await focusChild();
 
-  await waitForDisplayed('span=Essential Sources');
+  await waitForDisplayed('[data-testid=essential-sources]');
+  // to ensure async rendering of panels don't cause issues
+  await waitForDisplayed('[data-testid=widget-sources]');
   await click(`[data-name="${type}"]`);
 
   await clickButton('Add Source');

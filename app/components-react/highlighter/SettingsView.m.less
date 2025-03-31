@@ -1,0 +1,110 @@
+@import '../../styles/index';
+
+.settings-view-root {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+
+  :global(.ant-modal-wrap),
+  :global(.ant-modal-mask) {
+    position: absolute;
+  }
+
+  :global(.os-content-glue) {
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
+.inner-scroll-wrapper {
+  display: flex;
+  background-color: var(--section);
+  padding: 56px;
+  border-radius: 24px;
+  gap: 24px;
+}
+
+.headerbar-tag {
+  margin: 0;
+  margin-left: 4px;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: var(--section);
+}
+.card-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  max-width: 700px;
+  // min-width: 500px;
+  width: 100%;
+}
+
+.highlighter-card {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: relative;
+  background-color: var(--border);
+  padding: 40px;
+  border-radius: 16px;
+  border: solid 2px #2b5bd7;
+}
+
+.recommended-corner {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  border-radius: 16px 0 9px 0;
+  padding: 8px;
+  padding-bottom: 5px;
+  background-color: #2b5bd7;
+  color: white;
+  height: fit-content;
+}
+
+.manual-card {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: relative;
+  // background-color: #2b383f;
+  // padding: 40px;
+  border-radius: 10px;
+}
+
+.card-header-title {
+  margin: 0;
+  font-size: 20px;
+}
+
+.setting-section {
+  background-color: var(--border);
+  h3 {
+  }
+
+  padding: 24px;
+  border-radius: 16px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.image {
+  display: flex;
+  align-items: center;
+  padding-left: 24px;
+  width: 100%;
+  background-image: url('https://slobs-cdn.streamlabs.com/media/highlighter-image.png');
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.card-headerbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

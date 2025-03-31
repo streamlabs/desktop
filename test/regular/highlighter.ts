@@ -33,12 +33,12 @@ test('Highlighter save and export', async t => {
   await stopStream();
 
   await focusMain();
+  await clickButton('All Clips');
   await clickButton('Export');
   const fileName = 'MyTestVideo.mp4';
   const exportLocation = path.resolve(recordingDir, fileName);
   await fillForm({ exportLocation });
-  const $exportBtn = await (await select('.ant-modal-content')).$('span=Export');
-  await click($exportBtn);
+  await clickButton('Export Horizontal');
   await waitForDisplayed('h1=Upload To', { timeout: 60000 });
   t.true(fs.existsSync(exportLocation), 'The video file should exist');
 });

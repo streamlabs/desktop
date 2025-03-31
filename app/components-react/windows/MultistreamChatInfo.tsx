@@ -57,6 +57,12 @@ export default function MultistreamChatInfo() {
       read: false,
       write: false,
     },
+    {
+      icon: 'kick',
+      name: $t('Kick'),
+      read: true,
+      write: false,
+    },
   ];
 
   return (

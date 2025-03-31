@@ -15,6 +15,7 @@ interface IMessageLayoutProps {
    */
   message?: string;
   type?: 'error' | 'success' | 'info' | 'warning';
+  details?: string;
   hasButton?: boolean;
   closable?: boolean;
   onClose?: () => void;
@@ -36,8 +37,8 @@ export default function MessageLayout(p: IMessageLayoutProps & HTMLAttributes<un
   if (!shouldShow) return <></>;
 
   const error = p.error;
-  const details = error?.details;
-  const type = error ? 'error' : p.type;
+  const details = error?.details ?? p?.details;
+  const type = p?.type ?? 'error';
   const message = p.message || error?.message || (p.error && errorTypes[p.error.type]?.message);
   const hasButton = p.hasButton;
 
@@ -62,19 +63,17 @@ export default function MessageLayout(p: IMessageLayoutProps & HTMLAttributes<un
         <div>{p.children}</div>
         <div className={cx({ [styles.ctaBtn]: hasButton })}>
           {details && !isErrorDetailsShown && (
-            <p style={{ textAlign: 'right' }}>
-              <a className={styles.link} onClick={() => setDetailsShown(true)}>
-                {$t('Show details')}
-              </a>
-            </p>
+            <a className={styles.link} onClick={() => setDetailsShown(true)}>
+              {$t('Show details')}
+            </a>
           )}
           {details && isErrorDetailsShown && (
-            <p className={styles.details}>
+            <div className={styles.details}>
               {details}
               <br />
               <br />
               {error?.status} {error?.statusText} {error?.url}
-            </p>
+            </div>
           )}
         </div>
       </div>

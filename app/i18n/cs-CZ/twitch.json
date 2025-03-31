@@ -3,5 +3,15 @@
   "Twitch Tags": "Tagy Twitch",
   "You need to re-login to access Twitch tags": "Pro přístup k tagům Twitch je třeba se znovu přihlásit",
   "Do not include special characters or spaces in your tag": "Nepřidávejte do tagů speciální znaky nebo mezery",
-  "For example: \"Speedrunning\" or \"FirstPlaythrough\"": "Například: „Speedrunning“ nebo „FirstPlaythrough“"
+  "For example: \"Speedrunning\" or \"FirstPlaythrough\"": "Například: „Speedrunning“ nebo „FirstPlaythrough“",
+  "Your Twitch access token has expired. Please log in with Twitch to continue.": "Platnost vašeho přístupového tokenu Twitch vypršela. Pokračujte přihlášením pomocí Twitch.",
+  "While updating your Twitch channel info, some tags were removed due to moderation rules: %{tags}": "Při aktualizaci informací o vašem kanálu Twitch byly některé značky odstraněny kvůli pravidlům moderování: %{tags}",
+  "Content Classification": "Klasifikace obsahu",
+  "Content classification": "Klasifikace obsahu",
+  "Stream features branded content": "Stream obsahuje značkový obsah",
+  "Twitch Studio Import": "Import z Twitch Studio",
+  "Import from Twitch Studio": "Import ze služby Twitch Studio",
+  "Import your scenes and sources from Twitch Studio.": "Importujte scény a zdroje ze služby Twitch Studio.",
+  "Importing Your Existing Settings From Twitch Studio": "Import stávajících nastavení ze služby Twitch Studio",
+  "Importing from Twitch Studio is an experimental feature under active development. Some source types are unable to be imported, and not all settings will be carried over.": "Import ze služby Twitch Studio je experimentální funkce, která se aktivně vyvíjí. Některé typy zdrojů nelze importovat a ne všechna nastavení se přenesou."
 }

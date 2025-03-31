@@ -116,6 +116,7 @@ interface ILinkedPlatformsResponse {
   youtube_account?: ILinkedPlatform;
   tiktok_account?: ILinkedPlatform;
   trovo_account?: ILinkedPlatform;
+  kick_account?: ILinkedPlatform;
   streamlabs_account?: ILinkedPlatform;
   twitter_account?: ILinkedPlatform;
   user_id: number;
@@ -464,11 +465,22 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
             ? $t('Successfully merged account')
             : $t('Successfully unlinked account');
 
+        // if the account was successfully merged, hide the connect page in the main window
+        if (
+          event.type === 'account_merged' &&
+          this.navigationService.state.currentPage === 'PlatformMerge'
+        ) {
+          this.navigationService.navigate('Studio');
+        }
+
+        await this.showStreamSettingsIfNeeded();
+
         this.windowsService.actions.setWindowOnTop('all');
         this.refreshedLinkedAccounts.next({ success: true, message });
       }
 
       if (event.type === 'account_merge_error') {
+        await this.showStreamSettingsIfNeeded();
         this.windowsService.actions.setWindowOnTop('all');
         this.refreshedLinkedAccounts.next({ success: false, message: $t('Account merge error') });
       }
@@ -484,6 +496,31 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     });
   }
 
+  /*
+   * Since we're displaying the child window in all cases, it might've
+   * been closed when we get this event, so no component was rendered into
+   * it and instead shows an empty blank window with a loading spinner.
+   * It could also never been created (or a component rendered into it
+   * at least), both cases resulted in that invalid state.
+   *
+   * If the child window is closed, and we get one of these user events,
+   * (refer to callers), show Settings -> Stream which in our case should
+   * displays user accounts.
+   */
+  async showStreamSettingsIfNeeded() {
+    if (this.windowsService.state.child && !this.windowsService.state.child.isShown) {
+      this.settingsService.showSettings('Stream');
+      /* TODO: added a sleep here so on first child window create
+       * we still get to see messages (i.e Stream settings).
+       * Otherwise subscriber is called late, since this is a normal
+       * subject.
+       * TODO: should we convert to `BehaviorSubject` or whatever was
+       * it the one that replays events for new subscribers?
+       */
+      await Utils.sleep(500);
+    }
+  }
+
   get views() {
     return new UserViews(this.state);
   }
@@ -493,10 +530,21 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
    * to do this because Twitch adds a captcha when we try to
    * actually log in from integration tests.
    */
-  async testingFakeAuth(auth: IUserAuth, isOnboardingTest: boolean) {
+  async testingFakeAuth(
+    auth: IUserAuth,
+    isOnboardingTest: boolean = false,
+    isNewUser: boolean = false,
+  ) {
+    if (!Utils.isTestMode()) return;
+
     const service = getPlatformService(auth.primaryPlatform);
     this.streamSettingsService.resetStreamSettings();
     await this.login(service, auth);
+
+    if (isNewUser) {
+      this.sceneCollectionsService.newUserFirstLogin = true;
+    }
+
     if (!isOnboardingTest) this.onboardingService.finish();
   }
 
@@ -714,6 +762,17 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       this.UNLINK_PLATFORM('trovo');
     }
 
+    if (linkedPlatforms.kick_account) {
+      this.UPDATE_PLATFORM({
+        type: 'kick',
+        username: linkedPlatforms.kick_account.platform_name,
+        id: linkedPlatforms.kick_account.platform_id,
+        token: linkedPlatforms.kick_account.access_token,
+      });
+    } else if (this.state.auth.primaryPlatform !== 'kick') {
+      this.UNLINK_PLATFORM('kick');
+    }
+
     if (linkedPlatforms.streamlabs_account) {
       this.SET_SLID({
         id: linkedPlatforms.streamlabs_account.platform_id,
@@ -766,7 +825,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       cc_expires_in_days?: number;
     }>(request)
       .then(response => this.validatePrimeStatus(response))
-      .catch(() => null);
+      .catch((e: unknown) => null);
   }
 
   validatePrimeStatus(response: {
@@ -1244,9 +1303,9 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
         hasRelogged: true,
       };
 
-      // TODO: index
-      // @ts-ignore
-      this.UPDATE_PLATFORM(auth.platforms[auth.primaryPlatform]);
+      this.UPDATE_PLATFORM(
+        (auth.platforms as Record<TPlatform, IPlatformAuth>)[auth.primaryPlatform],
+      );
       return EPlatformCallResult.Success;
     }
 

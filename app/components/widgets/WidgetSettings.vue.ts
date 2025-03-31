@@ -59,6 +59,7 @@ export default class WidgetSettings<
       this.requestState = 'success';
       this.afterFetch();
     } catch (e: unknown) {
+      console.error('Something failed on widget settings fetch', e);
       this.requestState = 'fail';
     }
   }

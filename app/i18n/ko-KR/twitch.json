@@ -3,5 +3,15 @@
   "Twitch Tags": "Twitch 태그",
   "You need to re-login to access Twitch tags": "Twitch 태그를 이용하려면 다시 로그인",
   "Do not include special characters or spaces in your tag": "태그에 특수문자 또는 띄어쓰기 사용 불가",
-  "For example: \"Speedrunning\" or \"FirstPlaythrough\"": "예시: \"Speedrunning\" 또는 \"FirstPlaythrough\""
+  "For example: \"Speedrunning\" or \"FirstPlaythrough\"": "예시: \"Speedrunning\" 또는 \"FirstPlaythrough\"",
+  "Your Twitch access token has expired. Please log in with Twitch to continue.": "Twitch 액세스 토큰이 만료되었습니다. 계속하려면 Twitch로 로그인하세요.",
+  "While updating your Twitch channel info, some tags were removed due to moderation rules: %{tags}": "Twitch 채널 정보를 업데이트하는 동안 모더레이션 규칙에 따라 일부 태그가 삭제되었습니다: %{tags}",
+  "Content Classification": "콘텐츠 분류",
+  "Content classification": "콘텐츠 분류",
+  "Stream features branded content": "스트림 기능 브랜드 콘텐츠",
+  "Twitch Studio Import": "Twitch Studio 가져오기",
+  "Import from Twitch Studio": "Twitch Studio에서 가져오기",
+  "Import your scenes and sources from Twitch Studio.": "Twitch Studio에서 장면과 소스를 가져옵니다.",
+  "Importing Your Existing Settings From Twitch Studio": "Twitch Studio에서 기존 설정 가져오기",
+  "Importing from Twitch Studio is an experimental feature under active development. Some source types are unable to be imported, and not all settings will be carried over.": "Twitch Studio에서 가져오기는 현재 개발 중인 실험적인 기능입니다. 일부 소스 유형은 가져올 수 없으며 모든 설정이 이어지지 않습니다."
 }

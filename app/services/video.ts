@@ -212,11 +212,11 @@ export class Display {
 
   existingWindow = false;
 
-  resize(width: number, height: number) {
+  async resize(width: number, height: number) {
     this.currentPosition.width = width;
     this.currentPosition.height = height;
     this.videoService.actions.resizeOBSDisplay(this.name, width, height);
-    if (this.outputRegionCallbacks.length) this.refreshOutputRegion();
+    if (this.outputRegionCallbacks.length) await this.refreshOutputRegion();
 
     // On mac, resizing the display is not enough, we also have to
     // recreate the window and IOSurface for the new size

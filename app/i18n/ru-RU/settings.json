@@ -109,6 +109,7 @@
   "Pipe Name": "Название канала",
   "Websockets": "Каналы WebSocket",
   "Enabled": "Включено",
+  "Disabled": "Выключено",
   "Allow Remote Connections": "Разрешить удаленные подключения",
   "Port": "Порт",
   "Audio - Track 1": "Звуковая дорожка 1",
@@ -119,7 +120,7 @@
   "Audio - Track 6": "Звуковая дорожка 6",
   "Stream Key": "Ключ трансляции",
   "You can not change these settings when you're live": "Эти настройки нельзя изменить во время трансляции",
-  "This feature is intended for overlay designers to export their work for our Theme Store. Not all sources will be exported, use at your own risk.": "Эта функция предназначена для дизайнеров оверлеев и позволяет экспортировать их работы для нашего магазина тем. Будут экспортированы не все источники: используйте на свой собственный риск.",
+  "This feature is intended for overlay designers to export their work for our Overlay Library. Not all sources will be exported, use at your own risk.": "Эта функция предназначена для дизайнеров наложений и позволяет экспортировать их работы для нашей библиотеки наложений. Будут экспортированы не все источники: используйте на свой собственный риск.",
   "Change the look of Streamlabs Desktop with Ultra": "Изменить вид Streamlabs Desktop с помощью Ultra",
   "Virtual Webcam": "Виртуальная веб-камера",
   "unlinked": "без привязки",
@@ -251,5 +252,14 @@
   "%{fieldName} must be greater than 0": "%{fieldName} должен быть больше нуля",
   "Markers": "Маркеры",
   "Manage Dual Output": "Управление Dual Output",
-  "Auto optimizer disabled for dual output scenes": "Автоматическая оптимизация отключена для сцен Dual Output"
+  "Auto optimizer disabled for dual output scenes": "Автоматическая оптимизация отключена для сцен Dual Output",
+  "Scene Collection": "Коллекция сцен",
+  "High": "Высокий",
+  "Above High": "Выше среднего",
+  "Normal": "Стандартный",
+  "Below Normal": "Ниже среднего",
+  "Idle": "Простой",
+  "Please connect platforms directly from Streamlabs Desktop instead of adding Streamlabs Multistream as a custom destination": "Не добавляйте многопоточную трансляцию Streamlabs в качестве пользовательского назначения, вместо этого подключайте платформы непосредственно из Streamlabs Desktop",
+  "Audio Encoder": "Аудиокодер",
+  "Additional Settings": "Дополнительные настройки"
 }

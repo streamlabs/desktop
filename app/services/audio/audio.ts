@@ -11,7 +11,6 @@ import { IAudioSource, IAudioSourceApi, IAudioSourcesState, IFader, IVolmeter } 
 import { EDeviceType, HardwareService, IDevice } from 'services/hardware';
 import { $t } from 'services/i18n';
 import { ipcMain, ipcRenderer } from 'electron';
-import without from 'lodash/without';
 import { ViewHandler } from 'services/core';
 
 export enum E_AUDIO_CHANNELS {
@@ -25,15 +24,20 @@ export enum E_AUDIO_CHANNELS {
 interface IAudioSourceData {
   fader?: obs.IFader;
   volmeter?: obs.IVolmeter;
-  callbackInfo?: obs.ICallbackData;
   stream?: Observable<IVolmeter>;
-  timeoutId?: number;
   isControlledViaObs?: boolean;
 }
 
 interface IVolmeterMessageChannel {
   id: string;
   port: MessagePort;
+}
+
+interface IObsVolmeterCallbackInfo {
+  sourceName: string;
+  magnitude: number[];
+  peak: number[];
+  inputPeak: number[];
 }
 
 class AudioViews extends ViewHandler<IAudioSourcesState> {
@@ -76,7 +80,6 @@ export class AudioService extends StatefulService<IAudioSourcesState> {
   sourceData: Dictionary<IAudioSourceData> = {};
 
   @Inject() private sourcesService: SourcesService;
-  @Inject() private scenesService: ScenesService;
   @Inject() private windowsService: WindowsService;
   @Inject() private hardwareService: HardwareService;
 
@@ -85,6 +88,10 @@ export class AudioService extends StatefulService<IAudioSourcesState> {
   }
 
   protected init() {
+    obs.NodeObs.RegisterVolmeterCallback((objs: IObsVolmeterCallbackInfo[]) =>
+      this.handleVolmeterCallback(objs),
+    );
+
     this.sourcesService.sourceAdded.subscribe(sourceModel => {
       const source = this.sourcesService.views.getSource(sourceModel.sourceId);
       if (!source.audio) return;
@@ -266,6 +273,19 @@ export class AudioService extends StatefulService<IAudioSourcesState> {
     this.audioSourceUpdated.next(this.state.audioSources[sourceId]);
   }
 
+  private handleVolmeterCallback(objs: IObsVolmeterCallbackInfo[]) {
+    objs.forEach(info => {
+      const source = this.views.getSource(info.sourceName);
+      // A source we don't care about
+      if (!source) {
+        return;
+      }
+
+      const volmeter: IVolmeter = info;
+      this.sendVolmeterData(info.sourceName, volmeter);
+    });
+  }
+
   private createAudioSource(source: Source) {
     this.sourceData[source.sourceId] = {};
 
@@ -277,45 +297,7 @@ export class AudioService extends StatefulService<IAudioSourcesState> {
     obsFader.attach(source.getObsInput());
     this.sourceData[source.sourceId].fader = obsFader;
 
-    this.initVolmeterStream(source.sourceId);
     this.ADD_AUDIO_SOURCE(this.generateAudioSourceData(source.sourceId));
-  }
-
-  private initVolmeterStream(sourceId: string) {
-    let gotEvent = false;
-    let lastVolmeterValue: IVolmeter;
-    this.sourceData[sourceId].callbackInfo = this.sourceData[sourceId].volmeter.addCallback(
-      (magnitude: number[], peak: number[], inputPeak: number[]) => {
-        const volmeter: IVolmeter = { magnitude, peak, inputPeak };
-
-        this.sendVolmeterData(sourceId, volmeter);
-        lastVolmeterValue = volmeter;
-        gotEvent = true;
-      },
-    );
-
-    /* This is useful for media sources since the volmeter will abruptly stop
-     * sending events in the case of hiding the source. It might be better
-     * to eventually just hide the mixer item as well though */
-    const volmeterCheck = () => {
-      if (!this.sourceData[sourceId]) return;
-
-      if (!gotEvent && lastVolmeterValue) {
-        const channelsCount = lastVolmeterValue.peak.length;
-        const channelsValue = Array(channelsCount).fill(-60);
-        this.sendVolmeterData(sourceId, {
-          ...lastVolmeterValue,
-          magnitude: channelsValue,
-          peak: channelsValue,
-          inputPeak: channelsValue,
-        });
-      }
-
-      gotEvent = false;
-      this.sourceData[sourceId].timeoutId = window.setTimeout(volmeterCheck, 100);
-    };
-
-    volmeterCheck();
   }
 
   private sendVolmeterData(sourceId: string, data: IVolmeter) {
@@ -327,10 +309,8 @@ export class AudioService extends StatefulService<IAudioSourcesState> {
   private removeAudioSource(sourceId: string) {
     this.sourceData[sourceId].fader.detach();
     this.sourceData[sourceId].fader.destroy();
-    this.sourceData[sourceId].volmeter.removeCallback(this.sourceData[sourceId].callbackInfo);
     this.sourceData[sourceId].volmeter.detach();
     this.sourceData[sourceId].volmeter.destroy();
-    if (this.sourceData[sourceId].timeoutId) clearTimeout(this.sourceData[sourceId].timeoutId);
     delete this.sourceData[sourceId];
     this.REMOVE_AUDIO_SOURCE(sourceId);
   }

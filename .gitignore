@@ -31,3 +31,4 @@ license_en.txt
 !.yarn/sdks
 !.yarn/versions
 chromedriver.log
+shared-resources/ai-highlighter/*

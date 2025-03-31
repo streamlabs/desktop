@@ -9,5 +9,14 @@
   "You've merged a Streamlabs ID to your account, please log back in to ensure you have the right credentials.": "Streamlabs ID를 계정에 병합했습니다. 올바른 인증 정보를 보유하려면 다시 로그인하세요.",
   "Enable Live Streaming?": "라이브 스트리밍을 활성화할까요?",
   "Streamlabs is currently in recording mode, which hides live streaming features. Would you like to enable live streaming features? You can disable them again in General settings.": "Streamlabs가 현재 녹화 모드이기 때문에 라이브 스트리밍 기능이 감춰졌습니다. 라이브 스트리밍 기능을 활성화할까요? 일반 설정에서 다시 비활성화할 수 있습니다.",
-  "Enable Streaming": "스트리밍 활성화"
+  "Enable Streaming": "스트리밍 활성화",
+  "This account is already linked to another Streamlabs Account. Please use a different account.": "이 계정은 이미 다른 Streamlabs 계정에 연결되어 있습니다. 다른 계정을 사용하십시오.",
+  "Successfully unlinked account": "성공적으로 계정을 연결 해제했습니다",
+  "Successfully merged account": "성공적으로 계정을 병합했습니다",
+  "Account merge error": "계정 병합 오류",
+  "Error Code: %{code}": "오류 코드: %{code}",
+  "Unknown error, please contact support": "알 수 없는 오류, 지원팀에 문의하십시오",
+  "Custom Destination": "사용자 지정 대상",
+  "This app is currently popped out in another window.": "이 앱은 현재 다른 창에 팝업되어 있습니다.",
+  "Error granting chat permissions.": "채팅 권한을 부여하는 동안 오류가 발생했습니다."
 }

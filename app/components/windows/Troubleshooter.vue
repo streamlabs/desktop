@@ -105,6 +105,51 @@
           </li>
         </ul>
       </div>
+
+      <div v-if="issue.code === 'HIGH_CPU_USAGE'">
+        <h4>
+          <span class="fa fa-warning"></span>
+          {{ issue.message.split(':')[0] }}
+        </h4>
+        <p>
+          {{ $t('Streamlabs has detected high CPU usage in Dual Output mode') }}
+          {{ moment(issue.date) }}.<br />
+        </p>
+        <h4>{{ $t('What does this mean?') }}</h4>
+        <p>
+          {{ $t('System resource overuse.') }}
+          {{
+            $t(
+              'To mitigate hide one of outputs or right click in editor to enable Performance Mode.',
+            )
+          }}
+          {{
+            $t(
+              'This problem could also be due to high CPU usage from other applications or unsuitable encoder settings.',
+            )
+          }}
+          {{ $t('When this happens, Streamlabs does not have any resources left over.') }}
+        </p>
+        <h4>
+          {{ $t('What can I do?') }}
+        </h4>
+
+        <ul>
+          <li>{{ $t('Enable performance mode in the Editor context menu') }}</li>
+          <li>{{ $t("Hide one or both of the displays in Editor's Scene section") }}</li>
+          <li>
+            {{
+              $t(
+                "Ensure that you don't have any other applications open that are heavy on your CPU",
+              )
+            }}
+          </li>
+        </ul>
+
+        <button class="button button--action" @click="enablePerformanceMode">
+          {{ $t('Enable Performance Mode') }}
+        </button>
+      </div>
     </div>
   </modal-layout>
 </template>

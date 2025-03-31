@@ -7,9 +7,11 @@ import { IStreamError } from './stream-error';
 import { ICustomStreamDestination } from '../settings/streaming';
 import { ITikTokStartStreamOptions } from '../platforms/tiktok';
 import { ITrovoStartStreamOptions } from '../platforms/trovo';
-import { IVideo } from 'obs-studio-node';
+import { IKickStartStreamOptions } from 'services/platforms/kick';
 import { ITwitterStartStreamOptions } from 'services/platforms/twitter';
 import { IInstagramStartStreamOptions } from 'services/platforms/instagram';
+import { IVideo } from 'obs-studio-node';
+import { TDisplayType } from 'services/settings-v2';
 
 export enum EStreamingState {
   Offline = 'offline',
@@ -51,6 +53,7 @@ export interface IStreamInfo {
     facebook: TGoLiveChecklistItemState;
     tiktok: TGoLiveChecklistItemState;
     trovo: TGoLiveChecklistItemState;
+    kick: TGoLiveChecklistItemState;
     twitter: TGoLiveChecklistItemState;
     instagram: TGoLiveChecklistItemState;
     setupMultistream: TGoLiveChecklistItemState;
@@ -68,6 +71,7 @@ export interface IStreamSettings {
     facebook?: IPlatformFlags & IFacebookStartStreamOptions;
     tiktok?: IPlatformFlags & ITikTokStartStreamOptions;
     trovo?: IPlatformFlags & ITrovoStartStreamOptions;
+    kick?: IPlatformFlags & IKickStartStreamOptions;
     twitter?: IPlatformFlags & ITwitterStartStreamOptions;
     instagram?: IPlatformFlags & IInstagramStartStreamOptions;
   };
@@ -87,6 +91,7 @@ export interface IGoLiveSettings extends IStreamSettings {
 export interface IPlatformFlags {
   enabled: boolean;
   useCustomFields: boolean;
+  display?: TDisplayType;
   video?: IVideo;
 }
 

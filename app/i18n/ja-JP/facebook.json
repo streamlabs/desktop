@@ -34,5 +34,8 @@
   "Only Me": "自分のみ",
   "Do not change privacy settings": "プライバシー設定を変更しない",
   "Install %{overlayName}": "%{overlayName} をインストール",
-  "Please note that while you can schedule streams to Facebook, some will not appear on this calendar due to API limitations": "Facebook へのストリームをスケジュールできますが、API の制限により、一部はこのカレンダーに表示されません"
+  "Please note that while you can schedule streams to Facebook, some will not appear on this calendar due to API limitations": "Facebook へのストリームをスケジュールできますが、API の制限により、一部はこのカレンダーに表示されません",
+  "Your account is not eligible to stream on Facebook. Click to learn more.": "あなたのアカウントはFacebookでストリーミングできません。クリックして詳細をご覧ください",
+  "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers": "「ライブ配信を開始する」を行うには、プロフィールが作成されてから少なくとも60日経過しており、あなたのページに少なくとも100人のフォロワーがいる必要があります",
+  "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers. Click the notification to learn more.": "「ライブ配信を開始する」を行うには、プロフィールが作成されてから少なくとも60日経過しており、あなたのページに少なくとも100人のフォロワーがいる必要があります。通知をクリックして詳細をご覧ください。"
 }

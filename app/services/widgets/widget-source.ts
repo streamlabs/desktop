@@ -76,7 +76,7 @@ export class WidgetSource implements IWidgetSource {
 
   destroyPreviewSource() {
     this.widgetsService.stopSyncPreviewSource(this.previewSourceId);
-    this.sourcesService.views.getSource(this.previewSourceId).remove();
+    this.sourcesService.views.getSource(this.previewSourceId)?.remove();
     this.SET_PREVIEW_SOURCE_ID('');
   }
 

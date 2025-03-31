@@ -26,5 +26,7 @@
   "Disable Message Animations": "Üzenet animációk kikapcsolása",
   "Hide Characters": "Karakterek elrejtése",
   "Hide Common Chat Bots": "Általános chat Botok elrejtése",
-  "Hide commands starting with `!`": "\"!\" jellel kezdődő parancsok elrejtése"
+  "Hide commands starting with `!`": "\"!\" jellel kezdődő parancsok elrejtése",
+  "Chat Notifications": "Chat Notifications",
+  "Trigger a sound to notify you when there is new chat activity": "Trigger a sound to notify you when there is new chat activity"
 }

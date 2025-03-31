@@ -26,5 +26,7 @@
   "Disable Message Animations": "Отключить анимацию сообщений",
   "Hide Characters": "Скрыть символы",
   "Hide Common Chat Bots": "Скрыть распространенные чат-боты",
-  "Hide commands starting with `!`": "Скрыть команды, начинающиеся с «!»"
+  "Hide commands starting with `!`": "Скрыть команды, начинающиеся с «!»",
+  "Chat Notifications": "Оповещения чата",
+  "Trigger a sound to notify you when there is new chat activity": "Включите звук, чтобы уведомить вас о новой активности в чате."
 }

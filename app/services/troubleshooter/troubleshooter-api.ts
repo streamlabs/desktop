@@ -7,9 +7,11 @@ export interface ITroubleshooterSettings {
   laggedThreshold: number;
   droppedEnabled: boolean;
   droppedThreshold: number;
+  dualOutputCpuEnabled: boolean;
+  dualOutputCpuThreshold: number;
 }
 
-export type TIssueCode = 'FRAMES_LAGGED' | 'FRAMES_SKIPPED' | 'FRAMES_DROPPED';
+export type TIssueCode = 'FRAMES_LAGGED' | 'FRAMES_SKIPPED' | 'FRAMES_DROPPED' | 'HIGH_CPU_USAGE';
 
 export interface ITroubleshooterServiceApi {
   getSettings(): ITroubleshooterSettings;

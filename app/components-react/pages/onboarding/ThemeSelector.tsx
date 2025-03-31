@@ -108,7 +108,7 @@ export function ThemeSelector() {
       <h1 className={commonStyles.titleContainer}>{$t('Add your first theme')}</h1>
 
       <div className={commonStyles.subtitleContainer}>
-        {$t('Try you first theme now, browse hundreds of more themes later on.')}
+        {$t('Try your first theme now, browse hundreds of more themes later on.')}
       </div>
 
       <div>

@@ -3,7 +3,7 @@ import { Tooltip as AntdTooltip } from 'antd';
 import styles from './Tooltip.m.less';
 import cx from 'classnames';
 
-type TTipPosition =
+export type TTipPosition =
   | 'topLeft'
   | 'top'
   | 'topRight'

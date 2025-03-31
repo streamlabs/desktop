@@ -109,6 +109,7 @@
   "Pipe Name": "管道名稱",
   "Websockets": "Websocket",
   "Enabled": "已啟用",
+  "Disabled": "已停用",
   "Allow Remote Connections": "允許遠端連線",
   "Port": "連接埠",
   "Audio - Track 1": "音訊 - 音軌 1",
@@ -119,7 +120,7 @@
   "Audio - Track 6": "音訊 - 音軌 6",
   "Stream Key": "直播金鑰",
   "You can not change these settings when you're live": "直播時不能變更這些設定",
-  "This feature is intended for overlay designers to export their work for our Theme Store. Not all sources will be exported, use at your own risk.": "此功能的用途是讓疊層設計者匯出其作品供我們的主題商店使用。並非所有的來源都能匯出，使用時需自行承擔風險。",
+  "This feature is intended for overlay designers to export their work for our Overlay Library. Not all sources will be exported, use at your own risk.": "此功能的用途是讓疊層設計者匯出其作品，供我們的疊層庫使用。並非所有的來源都能匯出，使用時需自行承擔風險。",
   "Change the look of Streamlabs Desktop with Ultra": "使用 Ultra 變更 Streamlabs Desktop 的外觀",
   "Virtual Webcam": "虛擬網路攝影機",
   "unlinked": "已取消連結",
@@ -251,5 +252,14 @@
   "%{fieldName} must be greater than 0": "%{fieldName} 必須大於 0",
   "Markers": "標記",
   "Manage Dual Output": "管理 Dual Output",
-  "Auto optimizer disabled for dual output scenes": "對 Dual Output 場景停用自動最佳化"
+  "Auto optimizer disabled for dual output scenes": "對 Dual Output 場景停用自動最佳化",
+  "Scene Collection": "場景組合",
+  "High": "高",
+  "Above High": "高於高處",
+  "Normal": "正常",
+  "Below Normal": "低於正常",
+  "Idle": "閒置",
+  "Please connect platforms directly from Streamlabs Desktop instead of adding Streamlabs Multistream as a custom destination": "請直接從 Streamlabs Desktop 連接平台，而不是將 Streamlabs 多平台直播新增為自訂目的地",
+  "Audio Encoder": "音訊編碼器",
+  "Additional Settings": "其他設定"
 }

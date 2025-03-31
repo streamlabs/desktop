@@ -11,7 +11,6 @@ import { authorizedHeaders, jfetch } from 'util/requests';
 import { platformAuthorizedRequest } from './utils';
 import { CustomizationService } from 'services/customization';
 import { IGoLiveSettings } from 'services/streaming';
-import { WindowsService } from 'services/windows';
 import { I18nService } from 'services/i18n';
 import { throwStreamError } from 'services/streaming/stream-error';
 import { BasePlatformService } from './base-platform';
@@ -24,6 +23,7 @@ import * as remote from '@electron/remote';
 import { IVideo } from 'obs-studio-node';
 import pick from 'lodash/pick';
 import { TOutputOrientation } from 'services/restream';
+import { UsageStatisticsService } from 'app-services';
 
 interface IYoutubeServiceState extends IPlatformState {
   liveStreamingEnabled: boolean;
@@ -170,7 +170,7 @@ export class YoutubeService
   extends BasePlatformService<IYoutubeServiceState>
   implements IPlatformService {
   @Inject() private customizationService: CustomizationService;
-  @Inject() private windowsService: WindowsService;
+  @Inject() private usageStatisticsService: UsageStatisticsService;
   @Inject() private i18nService: I18nService;
 
   @lazyModule(YoutubeUploader) uploader: YoutubeUploader;
@@ -291,6 +291,11 @@ export class YoutubeService
       assertIsDefined(ytSettings.broadcastId);
       await this.updateBroadcast(ytSettings.broadcastId, ytSettings);
       broadcast = await this.fetchBroadcast(ytSettings.broadcastId);
+      this.usageStatisticsService.actions.recordAnalyticsEvent('ScheduleStream', {
+        type: 'StreamToSchedule',
+        platform: 'youtube',
+        streamId: broadcast.id,
+      });
     }
 
     // create a LiveStream object and bind it with current LiveBroadcast

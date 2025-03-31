@@ -263,6 +263,14 @@ export class WidgetsService
   }
 
   stopSyncPreviewSource(previewSourceId: string) {
+    if (!this.previewSourceWatchers[previewSourceId]) {
+      console.warn(
+        'Trying to destroy preview source',
+        previewSourceId,
+        'which is not on the watcher list, perhaps called twice?',
+      );
+      return;
+    }
     this.previewSourceWatchers[previewSourceId].unsubscribe();
     delete this.previewSourceWatchers[previewSourceId];
   }

@@ -24,6 +24,7 @@ export interface IEnv {
   // Allows joining as a guest instead of a host for guest cam
   SLD_GUEST_CAM_HASH: string;
   CI: boolean;
+  HIGHLIGHTER_ENV: 'production' | 'staging' | 'local';
 }
 
 export default class Utils {
@@ -93,8 +94,25 @@ export default class Utils {
     );
   }
 
+  static get isProduction() {
+    return Utils.env.NODE_ENV === 'production';
+  }
+
   static isDevMode() {
     return Utils.env.NODE_ENV !== 'production';
+  }
+
+  static getHighlighterEnvironment(): 'production' | 'staging' | 'local' {
+    // need to use this remote thing because main process is being spawned as
+    // subprocess of updater process in the release build
+    if (remote.process.argv.includes('--bundle-qa')) {
+      return 'staging';
+    }
+
+    if (process.env.HIGHLIGHTER_ENV !== 'staging' && process.env.HIGHLIGHTER_ENV !== 'local') {
+      return 'production';
+    }
+    return process.env.HIGHLIGHTER_ENV as 'production' | 'staging' | 'local';
   }
 
   static isTestMode() {

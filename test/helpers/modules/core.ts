@@ -73,6 +73,14 @@ export async function clickCheckbox(dataName: string) {
   await $checkbox.click();
 }
 
+export async function selectAsyncAlert(title: string) {
+  await (await getClient().$('span.ant-modal-confirm-title')).waitForExist();
+  const alert = await select('span.ant-modal-confirm-title');
+  if ((await alert.getText()) === title) {
+    return alert;
+  }
+}
+
 // OTHER SHORTCUTS
 
 export async function hoverElement(selector: string, duration?: number) {

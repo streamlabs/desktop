@@ -109,6 +109,7 @@
   "Pipe Name": "Kanal İsmi",
   "Websockets": "Websocket",
   "Enabled": "Etkin",
+  "Disabled": "Etkin Değil",
   "Allow Remote Connections": "Uzaktan Bağlantılara İzin Ver",
   "Port": "Bağlantı noktası",
   "Audio - Track 1": "Ses - Parça 1",
@@ -119,7 +120,7 @@
   "Audio - Track 6": "Ses - Parça 6",
   "Stream Key": "Yayın Anahtarı",
   "You can not change these settings when you're live": "Canlı yayındayken bu ayarları değiştiremezsiniz",
-  "This feature is intended for overlay designers to export their work for our Theme Store. Not all sources will be exported, use at your own risk.": "Bu özelliğin amacı, katman tasarımcılarının çalışmalarını Tema Mağazamıza aktarmalarıdır. Bütün kaynaklar dışarı aktarılmaz; riski göz önünde bulundurarak kullanın.",
+  "This feature is intended for overlay designers to export their work for our Overlay Library. Not all sources will be exported, use at your own risk.": "Bu özelliğin amacı, katman tasarımcılarının çalışmalarını Katman Kütüphanemize aktarmalarıdır. Bütün kaynaklar dışarı aktarılmaz; riski göz önünde bulundurarak kullanın.",
   "Change the look of Streamlabs Desktop with Ultra": "Ultra ile Streamlabs Desktop’ın görünümünü değiştirin",
   "Virtual Webcam": "Sanal Web Kamerası",
   "unlinked": "ayrıştırılmış",
@@ -251,5 +252,14 @@
   "%{fieldName} must be greater than 0": "%{fieldName}, 0’dan büyük olmalıdır",
   "Markers": "İşaretler",
   "Manage Dual Output": "Dual Output’u Yönet",
-  "Auto optimizer disabled for dual output scenes": "Otomatik optimizasyon Dual Output sahneleri için devre dışı bırakıldı"
+  "Auto optimizer disabled for dual output scenes": "Otomatik optimizasyon Dual Output sahneleri için devre dışı bırakıldı",
+  "Scene Collection": "Sahne Koleksiyonu",
+  "High": "Yüksek",
+  "Above High": "Yükseğin Üstünde",
+  "Normal": "Normal",
+  "Below Normal": "Normalin Altında",
+  "Idle": "Beklemede",
+  "Please connect platforms directly from Streamlabs Desktop instead of adding Streamlabs Multistream as a custom destination": "Lütfen Streamlabs Multistream'i özel bir hedef olarak eklemek yerine platformları doğrudan Streamlabs Desktop'tan bağlayın",
+  "Audio Encoder": "Ses Kodlayıcı",
+  "Additional Settings": "Ek Ayarlar"
 }

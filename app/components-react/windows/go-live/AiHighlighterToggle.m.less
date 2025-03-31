@@ -1,0 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap');
+@import '../../../styles/index';
+@paddingLeft: 24px;
+@paddingTop: 20px;
+@paddingRight: 24px;
+@paddingBottom: 20px;
+
+.ai-highlighter-box {
+  background-color: #000;
+  display: flex;
+  flex-direction: column;
+  max-width: 66.666666667%;
+  justify-content: space-between;
+  width: 100%;
+  border: 2px solid var(--Day-Colors-Dark-Blue, #2b5bd7);
+  padding: @paddingTop 0 @paddingBottom 0;
+  align-items: center;
+  border-radius: 16px;
+}
+
+.headline-wrapper {
+  padding-left: @paddingLeft;
+  padding-right: @paddingRight;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  align-items: center;
+}
+
+.image {
+  width: 182px;
+  display: grid;
+  place-content: center;
+  background-image: url(https://slobs-cdn.streamlabs.com/media/highlighter-image.png);
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+.toggle-text-wrapper {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+}
+.beta-tag {
+  padding: 4px;
+  border-radius: 4px;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  padding-left: 6px;
+  padding-right: 6px;
+  width: fit-content;
+  margin-bottom: 8px;
+  background-color: #2b5bd7;
+}
+
+.expanded-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+  width: 100%;
+  height: 210px;
+}

@@ -22,6 +22,7 @@ interface ISavedGoLiveSettings {
     youtube?: IPlatformFlags;
     trovo?: IPlatformFlags;
     tiktok?: IPlatformFlags;
+    kick?: IPlatformFlags;
   };
   customDestinations?: ICustomStreamDestination[];
   advancedMode: boolean;
@@ -77,7 +78,7 @@ interface IStreamSettings extends IStreamSettingsState {
   key: string;
   server: string;
   service: string;
-  streamType: 'rtmp_common' | 'rtmp_custom';
+  streamType: 'rtmp_common' | 'rtmp_custom' | 'whip_custom';
   warnBeforeStartingStream: boolean;
   recordWhenStreaming: boolean;
   replayBufferWhileStreaming: boolean;
@@ -97,6 +98,7 @@ const platformToServiceNameMap: { [key in TPlatform]: string } = {
   tiktok: 'Custom',
   twitter: 'Custom',
   instagram: 'Custom',
+  kick: 'Custom',
 };
 
 /**
@@ -175,7 +177,7 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
 
     // We need to refresh the data in case there are additional fields
     const mustUpdateObsSettings = Object.keys(patch).find(key =>
-      ['platform', 'key', 'server'].includes(key),
+      ['platform', 'key', 'server', 'bearer_token'].includes(key),
     );
 
     if (!mustUpdateObsSettings) return;

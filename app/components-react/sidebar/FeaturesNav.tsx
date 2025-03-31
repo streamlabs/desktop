@@ -20,6 +20,7 @@ import MenuItem from 'components-react/shared/MenuItem';
 import AppsNav from './AppsNav';
 import EditorTabs from './EditorTabs';
 import cx from 'classnames';
+import Utils from 'services/utils';
 
 export default function FeaturesNav() {
   function toggleStudioMode() {
@@ -260,7 +261,15 @@ function FeaturesNavItem(p: {
   handleNavigation: (menuItem: IMenuItem, key?: string) => void;
   className?: string;
 }) {
-  const { SideNavService, TransitionsService, DualOutputService } = Services;
+  const {
+    SideNavService,
+    TransitionsService,
+    DualOutputService,
+    IncrementalRolloutService,
+  } = Services;
+  const aiHighlighterFeatureEnabled = IncrementalRolloutService.views.featureIsEnabled(
+    EAvailableFeatures.aiHighlighter,
+  );
   const { isSubMenuItem, menuItem, handleNavigation, className } = p;
 
   const { currentMenuItem, isOpen, studioMode, dualOutputMode } = useVuex(() => ({
@@ -290,6 +299,7 @@ function FeaturesNavItem(p: {
       className: styles.toggleError,
     });
   }
+  const highlighterEnvironment = useMemo(Utils.getHighlighterEnvironment, []);
 
   return (
     <MenuItem
@@ -312,7 +322,16 @@ function FeaturesNavItem(p: {
         }
       }}
     >
-      {title}
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        {title}
+        {menuItem.key === EMenuItemKey.Highlighter && aiHighlighterFeatureEnabled && (
+          <div className={styles.betaTag}>
+            <p style={{ margin: 0 }}>
+              {highlighterEnvironment === 'production' ? 'beta' : highlighterEnvironment}
+            </p>
+          </div>
+        )}
+      </div>
     </MenuItem>
   );
 }
