@@ -78,7 +78,7 @@ export function ImportStreamModal({ close, videoPath }: { close: () => void; vid
     <>
       <div className={styles.manualUploadWrapper}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <h2 style={{ fontWeight: 600, margin: 0 }}>{$t('Import Fortnite Stream')}</h2>{' '}
+          <h2 style={{ fontWeight: 600, margin: 0 }}>{$t('Import Game Recording')}</h2>{' '}
           <div>
             <Button type="text" onClick={close}>
               <i className="icon-close" style={{ margin: 0 }}></i>
@@ -90,7 +90,7 @@ export function ImportStreamModal({ close, videoPath }: { close: () => void; vid
           className={styles.customInput}
           value={inputValue}
           name="name"
-          placeholder={$t('Set a title for your stream')}
+          placeholder={$t('Set a title for your recording')}
           onChange={handleInputChange}
           style={{ width: '100%', color: 'black', border: 'none' }}
           rules={[{ validator: specialCharacterValidator }]}
@@ -105,12 +105,32 @@ export function ImportStreamModal({ close, videoPath }: { close: () => void; vid
             e.preventDefault();
             setDraggingOver(true);
           }}
+          onDrop={e => {
+            console.log(e.dataTransfer.files);
+
+            const extensions = SUPPORTED_FILE_TYPES.map(e => `.${e}`);
+            const files: string[] = [];
+            let fi = e.dataTransfer.files.length;
+            while (fi--) {
+              const file = e.dataTransfer.files.item(fi)?.path;
+              if (file) files.push(file);
+            }
+            const filtered = files.filter(f => extensions.includes(path.parse(f).ext));
+            if (filtered.length) {
+              setFilePath(filtered[0]);
+              setDraggingOver(false);
+            }
+
+            e.preventDefault();
+            e.stopPropagation();
+          }}
           onDragLeave={() => setDraggingOver(false)}
           className={styles.videoPreview}
           style={
             {
-              '--border-style': videoPath ? 'solid' : 'dashed',
-              '--border-color': draggingOver ? 'var(--teal)' : '#ffffff29',
+              '--border-style': filePath ? 'solid' : 'dashed',
+              '--border-color': draggingOver ? 'var(--teal)' : 'var(--midtone)',
+              cursor: 'pointer',
             } as React.CSSProperties
           }
         >
@@ -118,30 +138,34 @@ export function ImportStreamModal({ close, videoPath }: { close: () => void; vid
             <video src={filePath} controls></video>
           ) : (
             <div
-              onDrop={(e: React.DragEvent<HTMLDivElement>) => {
-                const extensions = SUPPORTED_FILE_TYPES.map(e => `.${e}`);
-                const files: string[] = [];
-                let fi = e.dataTransfer.files.length;
-                while (fi--) {
-                  const file = e.dataTransfer.files.item(fi)?.path;
-                  if (file) files.push(file);
-                }
-                const filtered = files.filter(f => extensions.includes(path.parse(f).ext));
-                if (filtered.length) {
-                  setFilePath(filtered[0]);
-                }
-
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-              style={{ display: 'grid', placeItems: 'center', opacity: 0.3, cursor: 'pointer' }}
+              onDrop={(e: React.DragEvent<HTMLDivElement>) => {}}
+              style={{ display: 'grid', placeItems: 'center' }}
             >
-              <i className="fa fa-plus"></i>
-              <h3>Drag and drop stream or click to select</h3>
+              <i
+                className="fa fa-plus"
+                style={{ color: draggingOver ? 'var(--teal)' : 'inherit' }}
+              ></i>
+              <h3
+                style={{
+                  fontWeight: 400,
+                  marginTop: '12px',
+                  color: draggingOver ? 'var(--teal)' : 'inherit',
+                }}
+              >
+                Drag and drop game recording <br />
+                or click to select
+              </h3>
             </div>
           )}
         </div>
         <Form>
+          <p
+            style={{
+              marginBottom: '8px',
+            }}
+          >
+            Select game played in recording
+          </p>
           <ListInput
             onSelect={(val, opts) => {
               onSelect(opts.value);
@@ -177,16 +201,15 @@ export function ImportStreamModal({ close, videoPath }: { close: () => void; vid
             allowClear
           />
         </Form>
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between' }}>
-          <Button
-            disabled={!game}
-            style={{ width: '100%' }}
-            type="primary"
-            onClick={() => startAiDetection(inputValue, game!, filePath ? [filePath] : undefined)}
-          >
-            {$t('Select video to start import')}
-          </Button>
-        </div>
+        <Button
+          disabled={!game}
+          size="large"
+          style={{ width: '100%', marginTop: '4px' }}
+          type="primary"
+          onClick={() => startAiDetection(inputValue, game!, filePath ? [filePath] : undefined)}
+        >
+          {filePath ? $t('Import video') : $t('Select video and start import')}
+        </Button>
       </div>
     </>
   );
