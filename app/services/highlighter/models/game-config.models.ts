@@ -127,7 +127,7 @@ export const FORTNITE_CONFIG: IGameConfig = {
 
 const WARZONE_CONFIG: IGameConfig = {
   name: EGame.WARZONE,
-  label: 'Call of duty: Warzone',
+  label: 'Call of Duty: Warzone',
   gameModes: '',
   thumbnail: 'unset',
   inputTypeMap: {

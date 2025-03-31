@@ -42,11 +42,11 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
 
   // Below is only used because useVueX doesnt work as expected
   // there probably is a better way to do this
-  const currentStreams = useRef<{ id: string; date: string }[]>();
+  const currentStreams = useRef<{ id: string; date: string; game: string }[]>();
   const highlightedStreams = useVuex(() => {
     const newStreamIds = [
       ...HighlighterService.views.highlightedStreams.map(stream => {
-        return { id: stream.id, date: stream.date };
+        return { id: stream.id, date: stream.date, game: stream.game };
       }),
     ];
 
@@ -165,7 +165,9 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
               onClick={() => !aiDetectionInProgress && setShowModal({ type: 'upload' })}
             >
               <FortniteIcon />
-              {$t('Select your Fortnite recording')}
+              <FortniteIcon />
+              <FortniteIcon />
+              {$t('Select your game recording')}
               <Button disabled={aiDetectionInProgress === true}>{$t('Import')}</Button>
             </div>
           )}
@@ -198,7 +200,7 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
                           HighlighterService.actions.cancelHighlightGeneration(stream.id);
                         }}
                         emitShowRequirements={() => {
-                          setShowModal({ type: 'requirements', game: 'fortnite' });
+                          setShowModal({ type: 'requirements', game: stream.game });
                         }}
                       />
                     ))}
@@ -238,7 +240,7 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
         {showModal?.type === 'remove' && (
           <RemoveStream close={closeModal} streamId={showModal.id} />
         )}
-        {showModal?.type === 'requirements' && <EducationCarousel />}
+        {showModal?.type === 'requirements' && <EducationCarousel game={showModal.game} />}
       </Modal>
     </div>
   );
@@ -276,7 +278,7 @@ function RemoveStream(p: { streamId: string | undefined; close: () => void }) {
   );
 }
 
-export function groupStreamsByTimePeriod(streams: { id: string; date: string }[]) {
+export function groupStreamsByTimePeriod(streams: { id: string; date: string; game: string }[]) {
   const now = moment();
   const groups: { [key: string]: typeof streams } = {
     Today: [],
