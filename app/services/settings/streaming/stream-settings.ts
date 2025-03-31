@@ -16,14 +16,7 @@ import { DualOutputService } from 'services/dual-output';
 import { TOutputOrientation } from 'services/restream';
 
 interface ISavedGoLiveSettings {
-  platforms: {
-    twitch?: IPlatformFlags;
-    facebook?: IPlatformFlags;
-    youtube?: IPlatformFlags;
-    trovo?: IPlatformFlags;
-    tiktok?: IPlatformFlags;
-    kick?: IPlatformFlags;
-  };
+  platforms: Partial<Record<TPlatform, IPlatformFlags>>;
   customDestinations?: ICustomStreamDestination[];
   advancedMode: boolean;
 }
