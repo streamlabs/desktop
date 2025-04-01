@@ -13,12 +13,20 @@ import styles from './StreamView.m.less';
 import { supportedGames } from 'services/highlighter/models/game-config.models';
 import path from 'path';
 
-export function ImportStreamModal({ close, videoPath }: { close: () => void; videoPath?: string }) {
+export function ImportStreamModal({
+  close,
+  videoPath,
+  selectedGame,
+}: {
+  close: () => void;
+  videoPath?: string;
+  selectedGame?: EGame;
+}) {
   const { HighlighterService } = Services;
   const [inputValue, setInputValue] = useState<string>('');
   const [filePath, setFilePath] = useState<string | undefined>(videoPath);
   const [draggingOver, setDraggingOver] = useState<boolean>(false);
-  const [game, setGame] = useState<EGame | null>(null);
+  const [game, setGame] = useState<EGame | null>(selectedGame || null);
   const gameOptions = supportedGames;
 
   function handleInputChange(value: string) {
@@ -150,6 +158,7 @@ export function ImportStreamModal({ close, videoPath }: { close: () => void; vid
                   fontWeight: 400,
                   marginTop: '12px',
                   color: draggingOver ? 'var(--teal)' : 'inherit',
+                  textAlign: 'center',
                 }}
               >
                 Drag and drop game recording <br />
@@ -175,6 +184,7 @@ export function ImportStreamModal({ close, videoPath }: { close: () => void; vid
             }}
             placeholder={$t('Start typing to search')}
             options={gameOptions}
+            defaultValue={game}
             showSearch
             optionRender={option => (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

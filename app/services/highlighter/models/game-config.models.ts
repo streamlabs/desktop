@@ -105,7 +105,7 @@ export const FORTNITE_CONFIG: IGameConfig = {
   name: EGame.FORTNITE,
   label: 'Fortnite',
   gameModes: 'Battle Royale, Zero Build, Reload, OG',
-  thumbnail: 'https://static-cdn.jtvnw.net/ttv-boxart/33214-52x72.jpg',
+  thumbnail: `https://cdn.streamlabs.com/static/imgs/game-thumbnails/${EGame.FORTNITE}.png`,
   inputTypeMap: {
     ...COMMON_TYPES,
     ['deploy']: {
@@ -129,7 +129,7 @@ const WARZONE_CONFIG: IGameConfig = {
   name: EGame.WARZONE,
   label: 'Call of Duty: Warzone',
   gameModes: '',
-  thumbnail: 'unset',
+  thumbnail: `https://cdn.streamlabs.com/static/imgs/game-thumbnails/${EGame.WARZONE}.png`,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -139,7 +139,7 @@ const MARVEL_RIVALS_CONFIG: IGameConfig = {
   name: EGame.MARVEL_RIVALS,
   label: 'Marvel Rivals',
   gameModes: '',
-  thumbnail: 'unset',
+  thumbnail: 'https://cdn.streamlabs.com/static/imgs/game-thumbnails/marvel-rivals.png',
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -149,7 +149,7 @@ const WAR_THUNDER_CONFIG: IGameConfig = {
   name: EGame.WAR_THUNDER,
   label: 'War Thunder',
   gameModes: '',
-  thumbnail: 'unset',
+  thumbnail: 'https://cdn.streamlabs.com/static/imgs/game-thumbnails/war-thunder.png',
   inputTypeMap: {
     ...COMMON_TYPES,
   },
