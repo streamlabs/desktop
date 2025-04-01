@@ -460,28 +460,12 @@ export class ScenesService extends StatefulService<IScenesState> {
 
     const sceneItem = scene.createAndAddSource(sourceName, sourceType, settings);
 
-    const createVerticalNode = () => {
+    if (this.dualOutputService.views.hasSceneNodeMaps) {
       this.dualOutputService.createPartnerNode(sceneItem);
       /* For some reason dragging items after enabling dual output makes them
        * duplicate, associate selection on switch to mitigate this issue
        */
       this.selectionService.associateSelectionWithDisplay('vertical');
-    };
-
-    if (this.dualOutputService.state.dualOutputMode) {
-      createVerticalNode();
-    } else {
-      // Schedule vertical node to be created if the user toggles on dual output in the same session
-      this.dualOutputService.dualOutputModeChanged
-        .pipe(
-          // If we switch collections before we enable dual output drop it
-          // we don't wanna create nodes on inactive scene collections
-          takeUntil(this.sceneCollectionsService.collectionWillSwitch),
-          filter(gotEnabled => !!gotEnabled),
-          take(1),
-          tap(createVerticalNode),
-        )
-        .subscribe();
     }
 
     return sceneItem.sceneItemId;

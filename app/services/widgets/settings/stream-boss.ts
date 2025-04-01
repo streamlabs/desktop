@@ -169,7 +169,7 @@ export class StreamBossService extends BaseGoalService<IStreamBossData, IStreamB
   multipliersByPlatform(): { key: string; title: string; isInteger: boolean }[] {
     const platform = this.userService.platform.type as Exclude<
       TPlatform,
-      'tiktok' | 'twitter' | 'instagram'
+      'tiktok' | 'twitter' | 'instagram' | 'kick'
     >;
     return {
       twitch: [

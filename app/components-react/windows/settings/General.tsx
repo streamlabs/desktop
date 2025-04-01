@@ -99,6 +99,8 @@ function ExtraSettings() {
   }
 
   function importFromObs() {
+    // TODO: there's no check that OBS is installed like in Onboarding
+    OnboardingService.actions.setImport('obs');
     OnboardingService.actions.start({ isImport: true });
     WindowsService.actions.closeChildWindow();
   }

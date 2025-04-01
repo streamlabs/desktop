@@ -51,8 +51,8 @@ function SourcesShowcaseModal() {
             mode="horizontal"
             style={{ marginBottom: '16px' }}
           >
-            <Menu.Item key="all">{$t('All')}</Menu.Item>
-            <Menu.Item key="general">{$t('General')}</Menu.Item>
+            <Menu.Item key="all">{$t('All Sources')}</Menu.Item>
+            <Menu.Item key="general">{$t('Media Categories')}</Menu.Item>
             <Menu.Item key="widgets">{$t('Widgets')}</Menu.Item>
             {availableAppSources.length > 0 && <Menu.Item key="apps">{$t('Apps')}</Menu.Item>}
           </Menu>

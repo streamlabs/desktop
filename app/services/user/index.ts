@@ -116,6 +116,7 @@ interface ILinkedPlatformsResponse {
   youtube_account?: ILinkedPlatform;
   tiktok_account?: ILinkedPlatform;
   trovo_account?: ILinkedPlatform;
+  kick_account?: ILinkedPlatform;
   streamlabs_account?: ILinkedPlatform;
   twitter_account?: ILinkedPlatform;
   user_id: number;
@@ -464,6 +465,14 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
             ? $t('Successfully merged account')
             : $t('Successfully unlinked account');
 
+        // if the account was successfully merged, hide the connect page in the main window
+        if (
+          event.type === 'account_merged' &&
+          this.navigationService.state.currentPage === 'PlatformMerge'
+        ) {
+          this.navigationService.navigate('Studio');
+        }
+
         await this.showStreamSettingsIfNeeded();
 
         this.windowsService.actions.setWindowOnTop('all');
@@ -751,6 +760,17 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       });
     } else if (this.state.auth.primaryPlatform !== 'trovo') {
       this.UNLINK_PLATFORM('trovo');
+    }
+
+    if (linkedPlatforms.kick_account) {
+      this.UPDATE_PLATFORM({
+        type: 'kick',
+        username: linkedPlatforms.kick_account.platform_name,
+        id: linkedPlatforms.kick_account.platform_id,
+        token: linkedPlatforms.kick_account.access_token,
+      });
+    } else if (this.state.auth.primaryPlatform !== 'kick') {
+      this.UNLINK_PLATFORM('kick');
     }
 
     if (linkedPlatforms.streamlabs_account) {
@@ -1283,7 +1303,9 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
         hasRelogged: true,
       };
 
-      this.UPDATE_PLATFORM(auth.platforms[auth.primaryPlatform]);
+      this.UPDATE_PLATFORM(
+        (auth.platforms as Record<TPlatform, IPlatformAuth>)[auth.primaryPlatform],
+      );
       return EPlatformCallResult.Success;
     }
 

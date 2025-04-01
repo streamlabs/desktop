@@ -2,7 +2,12 @@ import React, { useMemo, useState } from 'react';
 import { $t } from '../../../services/i18n';
 import { ICustomStreamDestination } from '../../../services/settings/streaming';
 import { EStreamingState } from '../../../services/streaming';
-import { EPlatformCallResult, getPlatformService, TPlatform } from '../../../services/platforms';
+import {
+  EPlatformCallResult,
+  externalAuthPlatforms,
+  getPlatformService,
+  TPlatform,
+} from '../../../services/platforms';
 import cloneDeep from 'lodash/cloneDeep';
 import namingHelpers from '../../../util/NamingHelpers';
 import { Services } from '../../service-provider';
@@ -217,9 +222,7 @@ class StreamSettingsModule {
   }
 
   async platformMergeInline(platform: TPlatform) {
-    const mode = ['youtube', 'twitch', 'twitter', 'tiktok'].includes(platform)
-      ? 'external'
-      : 'internal';
+    const mode = externalAuthPlatforms.includes(platform) ? 'external' : 'internal';
 
     await Services.UserService.actions.return.startAuth(platform, mode, true).then(res => {
       Services.WindowsService.actions.setWindowOnTop('child');
@@ -288,7 +291,7 @@ export function StreamSettings() {
   } = useModule(StreamSettingsModule);
 
   return (
-    <div>
+    <div className={css.section}>
       {/* account info */}
       {protectedModeEnabled && (
         <div>
@@ -472,7 +475,7 @@ function Platform(p: { platform: TPlatform }) {
         style={{
           backgroundColor: `var(--${platform})`,
           borderColor: 'transparent',
-          color: ['trovo', 'instagram'].includes(platform) ? 'black' : 'inherit',
+          color: ['trovo', 'instagram', 'kick'].includes(platform) ? 'black' : 'inherit',
         }}
       >
         {$t('Connect')}

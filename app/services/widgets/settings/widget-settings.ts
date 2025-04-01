@@ -140,7 +140,7 @@ export abstract class WidgetSettingsService<TWidgetData extends IWidgetData>
 
     // TODO: type
     const { staticConfig }: any = this.state;
-    if (staticConfig) {
+    if (staticConfig?.data?.custom_code) {
       // These seem only used to restore defaults
       data.custom_defaults = staticConfig.data?.custom_code;
       // If we have a default for custom code and the fields are empty in the

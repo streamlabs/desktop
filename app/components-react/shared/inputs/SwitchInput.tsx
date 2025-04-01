@@ -15,6 +15,7 @@ export type TSwitchInputProps = TSlobsInputProps<
     style?: React.CSSProperties;
     name?: string;
     size?: 'small' | 'default';
+    nolabel?: boolean;
   },
   boolean,
   SwitchProps,
@@ -29,7 +30,7 @@ export const SwitchInput = InputComponent((p: TSwitchInputProps) => {
    * The horizontal styling shifts the label to follow the switch.
    */
   return wrapperAttrs?.layout === 'horizontal' ? (
-    <InputWrapper {...{ wrapperAttrs, nowrap: true }}>
+    <InputWrapper {...{ wrapperAttrs, nowrap: true, nolabel: p.nolabel }}>
       <Form.Item colon={false} aria-label={p.label} style={p.style}>
         <Switch
           checked={inputAttrs.value}
@@ -39,7 +40,7 @@ export const SwitchInput = InputComponent((p: TSwitchInputProps) => {
           className={cx(styles.horizontal, styles.horizontalItem)}
           checkedChildren={<i className="check-mark" />}
         />
-        {p.label}
+        {!p.nolabel && p.label}
       </Form.Item>
     </InputWrapper>
   ) : (

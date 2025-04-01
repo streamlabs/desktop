@@ -35,6 +35,7 @@ export default function PlatformLogo(p: IProps & HTMLAttributes<unknown>) {
       twitter: 'twitter',
       streamlabs: 'icon-streamlabs',
       instagram: 'instagram',
+      kick: 'kick',
     }[p.platform];
   }
   const size = p.size && (sizeMap[p.size] ?? p.size);

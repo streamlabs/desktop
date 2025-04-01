@@ -267,7 +267,7 @@ function FeaturesNavItem(p: {
     DualOutputService,
     IncrementalRolloutService,
   } = Services;
-  const aiHighlighterEnabled = IncrementalRolloutService.views.featureIsEnabled(
+  const aiHighlighterFeatureEnabled = IncrementalRolloutService.views.featureIsEnabled(
     EAvailableFeatures.aiHighlighter,
   );
   const { isSubMenuItem, menuItem, handleNavigation, className } = p;
@@ -324,7 +324,7 @@ function FeaturesNavItem(p: {
     >
       <div style={{ display: 'flex', alignItems: 'center' }}>
         {title}
-        {menuItem.key === EMenuItemKey.Highlighter && aiHighlighterEnabled && (
+        {menuItem.key === EMenuItemKey.Highlighter && aiHighlighterFeatureEnabled && (
           <div className={styles.betaTag}>
             <p style={{ margin: 0 }}>
               {highlighterEnvironment === 'production' ? 'beta' : highlighterEnvironment}

@@ -15,6 +15,7 @@ export default function SourceTag(p: {
   appSourceId?: string;
   essential?: boolean;
   excludeWrap?: boolean;
+  hideShortDescription?: boolean;
 }) {
   const { inspectSource, selectInspectedSource, store } = useSourceShowcaseSettings();
 
@@ -39,7 +40,7 @@ export default function SourceTag(p: {
   return (
     <Col span={8}>
       <div
-        className={cx(styles.sourceTag, {
+        className={cx('source-tag', styles.sourceTag, {
           [styles.active]: active(),
           [styles.essential]: p.essential,
           [styles.excludeWrap]: p.excludeWrap,
@@ -48,13 +49,21 @@ export default function SourceTag(p: {
         onDoubleClick={() => selectInspectedSource()}
         data-name={displayData?.name || p.name}
       >
-        <div className={styles.iconWrapper}>
-          {displayData?.icon && <i className={displayData?.icon} />}
+        <div style={{ display: 'flex', flexDirection: 'row' }}>
+          <div className={styles.iconWrapper}>
+            {displayData?.icon && <i className={displayData?.icon} />}
+          </div>
+          <div className={styles.displayName}>{displayData?.name || p.name}</div>
         </div>
-        <div className={styles.displayName}>
-          {displayData?.name || p.name}
-          {p.essential && <div style={{ opacity: '0.5' }}>{displayData?.shortDesc}</div>}
-        </div>
+        {displayData?.shortDesc && !p.hideShortDescription && (
+          <div
+            style={{
+              opacity: '0.5',
+            }}
+          >
+            {displayData?.shortDesc}
+          </div>
+        )}
       </div>
     </Col>
   );

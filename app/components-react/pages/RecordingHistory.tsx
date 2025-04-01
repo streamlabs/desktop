@@ -17,8 +17,9 @@ import uuid from 'uuid/v4';
 import { EMenuItemKey } from 'services/side-nav';
 import { $i } from 'services/utils';
 import { IRecordingEntry } from 'services/recording-mode';
-import { EAiDetectionState, EHighlighterView } from 'services/highlighter';
 import { EAvailableFeatures } from 'services/incremental-rollout';
+import { EAiDetectionState, EGame } from 'services/highlighter/models/ai-highlighter.models';
+import { EHighlighterView } from 'services/highlighter/models/highlighter.models';
 
 interface IRecordingHistoryStore {
   showSLIDModal: boolean;
@@ -62,6 +63,10 @@ class RecordingHistoryController {
     return this.HighlighterService.views.highlightedStreams.some(
       stream => stream.state.type === EAiDetectionState.IN_PROGRESS,
     );
+  }
+
+  get highlighterVersion() {
+    return this.HighlighterService.views.highlighterVersion;
   }
 
   get uploadOptions() {
@@ -133,8 +138,8 @@ class RecordingHistoryController {
     }
     if (platform === 'highlighter') {
       if (this.aiDetectionInProgress) return;
-      this.HighlighterService.actions.flow(recording.filename, {
-        game: 'forntnite',
+      this.HighlighterService.actions.detectAndClipAiHighlights(recording.filename, {
+        game: EGame.FORTNITE,
         id: 'rec_' + uuid(),
       });
       this.NavigationService.actions.navigate(
@@ -200,15 +205,23 @@ export default function RecordingHistoryPage() {
 export function RecordingHistory() {
   const controller = useController(RecordingHistoryCtx);
   const { formattedTimestamp, showFile, handleSelect, postError } = controller;
-  const aiHighlighterEnabled = Services.IncrementalRolloutService.views.featureIsEnabled(
+  const aiHighlighterFeatureEnabled = Services.IncrementalRolloutService.views.featureIsEnabled(
     EAvailableFeatures.aiHighlighter,
   );
-  const { uploadInfo, uploadOptions, recordings, hasSLID, aiDetectionInProgress } = useVuex(() => ({
+  const {
+    uploadInfo,
+    uploadOptions,
+    recordings,
+    hasSLID,
+    aiDetectionInProgress,
+    highlighterVersion,
+  } = useVuex(() => ({
     recordings: controller.recordings,
     aiDetectionInProgress: controller.aiDetectionInProgress,
     uploadOptions: controller.uploadOptions,
     uploadInfo: controller.uploadInfo,
     hasSLID: controller.hasSLID,
+    highlighterVersion: controller.highlighterVersion,
   }));
 
   useEffect(() => {
@@ -231,7 +244,10 @@ export function RecordingHistory() {
       <span className={styles.actionGroup}>
         {uploadOptions
           .map(option => {
-            if (option.value === 'highlighter' && !aiHighlighterEnabled) {
+            if (
+              option.value === 'highlighter' &&
+              (!aiHighlighterFeatureEnabled || highlighterVersion === '')
+            ) {
               return null;
             }
             return (

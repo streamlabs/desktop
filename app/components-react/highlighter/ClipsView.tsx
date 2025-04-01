@@ -2,7 +2,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import * as remote from '@electron/remote';
 import { Services } from 'components-react/service-provider';
 import styles from './ClipsView.m.less';
-import { EHighlighterView, IAiClip, IViewState, TClip } from 'services/highlighter';
+import {
+  EHighlighterView,
+  IAiClip,
+  IViewState,
+  TClip,
+} from 'services/highlighter/models/highlighter.models';
 import ClipPreview, { formatSecondsToHMS } from 'components-react/highlighter/ClipPreview';
 import { ReactSortable } from 'react-sortablejs';
 import Scrollable from 'components-react/shared/Scrollable';
@@ -15,7 +20,7 @@ import {
 } from './utils';
 import ClipsViewModal from './ClipsViewModal';
 import { useVuex } from 'components-react/hooks';
-import { Button } from 'antd';
+import { Button, Tooltip } from 'antd';
 import { SUPPORTED_FILE_TYPES } from 'services/highlighter/constants';
 import { $t } from 'services/i18n';
 import path from 'path';
@@ -38,7 +43,7 @@ export default function ClipsView({
   emitSetView: (data: IViewState) => void;
 }) {
   const { HighlighterService, UsageStatisticsService, IncrementalRolloutService } = Services;
-  const aiHighlighterEnabled = IncrementalRolloutService.views.featureIsEnabled(
+  const aiHighlighterFeatureEnabled = IncrementalRolloutService.views.featureIsEnabled(
     EAvailableFeatures.aiHighlighter,
   );
   const clipsAmount = useVuex(() => HighlighterService.views.clips.length);
@@ -46,7 +51,7 @@ export default function ClipsView({
     ordered: { id: string }[];
     orderedFiltered: { id: string }[];
   }>({ ordered: [], orderedFiltered: [] });
-
+  const game = HighlighterService.getGameByStreamId(props.id);
   const [activeFilter, setActiveFilter] = useState('all'); // Currently not using the setActiveFilter option
 
   const [clipsLoaded, setClipsLoaded] = useState<boolean>(false);
@@ -58,6 +63,8 @@ export default function ClipsView({
   const getClips = useCallback(() => {
     return HighlighterService.getClips(HighlighterService.views.clips, props.id);
   }, [props.id]);
+
+  const noClipsToExport = getClips().some(clip => clip.enabled) === false;
 
   useEffect(() => {
     setClipsLoaded(false);
@@ -151,6 +158,12 @@ export default function ClipsView({
 
   const containerRef = useOptimizedHover();
 
+  function shareFeedback() {
+    remote.shell.openExternal(
+      'https://support.streamlabs.com/hc/en-us/requests/new?ticket_form_id=31967205905051',
+    );
+  }
+
   function getClipsView(
     streamId: string | undefined,
     sortedList: { id: string }[],
@@ -163,34 +176,66 @@ export default function ClipsView({
         onDrop={event => onDrop(event, streamId)}
       >
         <div className={styles.container}>
-          <header className={styles.header}>
-            <button
-              className={styles.backButton}
-              onClick={() =>
-                emitSetView(
-                  streamId
-                    ? { view: EHighlighterView.STREAM }
-                    : { view: EHighlighterView.SETTINGS },
-                )
-              }
-            >
-              <i className="icon-back" />
-            </button>
-            <h1
-              className={styles.title}
-              onClick={() =>
-                emitSetView(
-                  streamId
-                    ? { view: EHighlighterView.STREAM }
-                    : { view: EHighlighterView.SETTINGS },
-                )
-              }
-            >
-              {props.streamTitle ?? $t('All highlight clips')}
-            </h1>
-          </header>
+          <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between' }}>
+            <header className={styles.header}>
+              <button
+                className={styles.backButton}
+                onClick={() =>
+                  emitSetView(
+                    streamId
+                      ? { view: EHighlighterView.STREAM }
+                      : { view: EHighlighterView.SETTINGS },
+                  )
+                }
+              >
+                <i className="icon-back" />
+              </button>
+              <h1
+                className={styles.title}
+                onClick={() =>
+                  emitSetView(
+                    streamId
+                      ? { view: EHighlighterView.STREAM }
+                      : { view: EHighlighterView.SETTINGS },
+                  )
+                }
+              >
+                {props.streamTitle ?? $t('All highlight clips')}
+              </h1>
+            </header>
+            <div style={{ padding: '20px', display: 'flex', gap: '8px' }}>
+              <Button
+                type="text"
+                icon={<i className="icon-community" style={{ marginRight: 8 }} />}
+                onClick={shareFeedback}
+              >
+                {$t('Share feedback')}
+              </Button>
+              <Tooltip
+                title={
+                  noClipsToExport ? $t('Select at least one clip to preview your video') : null
+                }
+                placement="bottom"
+              >
+                <Button disabled={noClipsToExport} onClick={() => setModal({ modal: 'preview' })}>
+                  {$t('Preview')}
+                </Button>
+              </Tooltip>
+              <Tooltip
+                title={noClipsToExport ? $t('Select at least one clip to export your video') : null}
+                placement="bottom"
+              >
+                <Button
+                  disabled={noClipsToExport}
+                  type="primary"
+                  onClick={() => setModal({ modal: 'export' })}
+                >
+                  {$t('Export')}
+                </Button>
+              </Tooltip>
+            </div>
+          </div>
           {sortedList.length === 0 ? (
-            /** Better empty state will come with ai PR */
             <div style={{ padding: '20px' }}>
               {$t('No clips found')}
               <br />
@@ -215,7 +260,7 @@ export default function ClipsView({
                       }}
                     />
                     {streamId &&
-                      aiHighlighterEnabled &&
+                      aiHighlighterFeatureEnabled &&
                       HighlighterService.getClips(HighlighterService.views.clips, props.id)
                         .filter(clip => clip.source === 'AiClip')
                         .every(clip => (clip as IAiClip).aiInfo.metadata?.round) && (
@@ -241,6 +286,7 @@ export default function ClipsView({
                           }}
                           combinedClipsDuration={getCombinedClipsDuration(getClips())}
                           roundDetails={HighlighterService.getRoundDetails(getClips())}
+                          game={game}
                         />
                       )}
                   </div>
@@ -265,6 +311,9 @@ export default function ClipsView({
                               }}
                               emitShowRemove={() => {
                                 setModal({ modal: 'remove', inspectedPathId: id });
+                              }}
+                              emitOpenFileInLocation={() => {
+                                remote.shell.showItemInFolder(clip.path);
                               }}
                               streamId={streamId}
                             />

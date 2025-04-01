@@ -2,7 +2,11 @@ import { useVuex } from 'components-react/hooks';
 import React, { useRef, useState } from 'react';
 import { Services } from 'components-react/service-provider';
 import styles from './StreamView.m.less';
-import { EHighlighterView, IViewState, StreamInfoForAiHighlighter } from 'services/highlighter';
+import {
+  EHighlighterView,
+  IStreamInfoForAiHighlighter,
+  IViewState,
+} from 'services/highlighter/models/highlighter.models';
 import isEqual from 'lodash/isEqual';
 import { Modal, Button, Alert } from 'antd';
 import ExportModal from 'components-react/highlighter/ExportModal';
@@ -16,12 +20,15 @@ import path from 'path';
 import PreviewModal from './PreviewModal';
 import moment from 'moment';
 import { TextInput } from 'components-react/shared/inputs';
+import EducationCarousel from './EducationCarousel';
+import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 
 type TModalStreamView =
   | { type: 'export'; id: string | undefined }
   | { type: 'preview'; id: string | undefined }
   | { type: 'upload' }
   | { type: 'remove'; id: string | undefined }
+  | { type: 'requirements'; game: string }
   | null;
 
 export default function StreamView({ emitSetView }: { emitSetView: (data: IViewState) => void }) {
@@ -30,6 +37,7 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
     exportInfo: HighlighterService.views.exportInfo,
     error: HighlighterService.views.error,
     uploadInfo: HighlighterService.views.uploadInfo,
+    highlighterVersion: HighlighterService.views.highlighterVersion,
   }));
 
   // Below is only used because useVueX doesnt work as expected
@@ -67,27 +75,10 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
   });
 
   const [showModal, rawSetShowModal] = useState<TModalStreamView | null>(null);
-  const [modalWidth, setModalWidth] = useState('700px');
   const [clipsOfStreamAreLoading, setClipsOfStreamAreLoading] = useState<string | null>(null);
 
-  // This is kind of weird, but ensures that modals stay the right
-  // size while the closing animation is played. This is why modal
-  // width has its own state. This makes sure we always set the right
-  // size whenever displaying a modal.
   function setShowModal(modal: TModalStreamView | null) {
     rawSetShowModal(modal);
-
-    if (modal && modal.type) {
-      setModalWidth(
-        {
-          trim: '60%',
-          preview: '700px',
-          export: '700px',
-          remove: '400px',
-          upload: '400px',
-        }[modal.type],
-      );
-    }
   }
 
   async function previewVideo(id: string) {
@@ -134,10 +125,10 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
 
     async function startAiDetection(title: string) {
       if (/[\\/:"*?<>|]+/g.test(title)) return;
-      const streamInfo: StreamInfoForAiHighlighter = {
+      const streamInfo: IStreamInfoForAiHighlighter = {
         id: 'manual_' + uuid(),
         title,
-        game: 'Fortnite',
+        game: EGame.FORTNITE,
       };
 
       let filePath: string[] | undefined = [];
@@ -145,7 +136,7 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
       try {
         filePath = await importStreamFromDevice();
         if (filePath && filePath.length > 0) {
-          HighlighterService.actions.flow(filePath[0], streamInfo);
+          HighlighterService.actions.detectAndClipAiHighlights(filePath[0], streamInfo);
           close();
         } else {
           // No file selected
@@ -205,6 +196,8 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
   }
 
   function onDrop(e: React.DragEvent<HTMLDivElement>) {
+    if (v.highlighterVersion === '') return;
+
     const extensions = SUPPORTED_FILE_TYPES.map(e => `.${e}`);
     const files: string[] = [];
     let fi = e.dataTransfer.files.length;
@@ -215,11 +208,11 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
 
     const filtered = files.filter(f => extensions.includes(path.parse(f).ext));
     if (filtered.length) {
-      const StreamInfoForAiHighlighter: StreamInfoForAiHighlighter = {
+      const StreamInfoForAiHighlighter: IStreamInfoForAiHighlighter = {
         id: 'manual_' + uuid(),
-        game: 'Fortnite',
+        game: EGame.FORTNITE,
       };
-      HighlighterService.actions.flow(filtered[0], StreamInfoForAiHighlighter);
+      HighlighterService.actions.detectAndClipAiHighlights(filtered[0], StreamInfoForAiHighlighter);
     }
 
     e.preventDefault();
@@ -237,18 +230,20 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
           <h1 style={{ margin: 0 }}>{$t('My Stream Highlights')}</h1>
         </div>
         <div style={{ display: 'flex', gap: '16px' }}>
-          <div
-            className={styles.uploadWrapper}
-            style={{
-              opacity: aiDetectionInProgress ? '0.7' : '1',
-              cursor: aiDetectionInProgress ? 'not-allowed' : 'pointer',
-            }}
-            onClick={() => !aiDetectionInProgress && setShowModal({ type: 'upload' })}
-          >
-            <FortniteIcon />
-            {$t('Select your Fortnite recording')}
-            <Button disabled={aiDetectionInProgress === true}>{$t('Import')}</Button>
-          </div>
+          {v.highlighterVersion !== '' && (
+            <div
+              className={styles.uploadWrapper}
+              style={{
+                opacity: aiDetectionInProgress ? '0.7' : '1',
+                cursor: aiDetectionInProgress ? 'not-allowed' : 'pointer',
+              }}
+              onClick={() => !aiDetectionInProgress && setShowModal({ type: 'upload' })}
+            >
+              <FortniteIcon />
+              {$t('Select your Fortnite recording')}
+              <Button disabled={aiDetectionInProgress === true}>{$t('Import')}</Button>
+            </div>
+          )}
           <Button onClick={() => emitSetView({ view: EHighlighterView.SETTINGS })}>
             {$t('Settings')}
           </Button>
@@ -277,6 +272,9 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
                         emitCancelHighlightGeneration={() => {
                           HighlighterService.actions.cancelHighlightGeneration(stream.id);
                         }}
+                        emitShowRequirements={() => {
+                          setShowModal({ type: 'requirements', game: 'fortnite' });
+                        }}
                       />
                     ))}
                   </div>
@@ -290,21 +288,32 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
         getContainer={`.${styles.streamViewRoot}`}
         onCancel={closeModal}
         footer={null}
-        width={modalWidth}
+        width={showModal?.type === 'preview' ? 700 : 'fit-content'}
         closable={false}
         visible={!!showModal}
         destroyOnClose={true}
         keyboard={false}
       >
         {!!v.error && <Alert message={v.error} type="error" showIcon />}
-        {showModal?.type === 'upload' && <ImportStreamModal close={closeModal} />}
+        {showModal?.type === 'upload' && v.highlighterVersion !== '' && (
+          <ImportStreamModal close={closeModal} />
+        )}
         {showModal?.type === 'export' && <ExportModal close={closeModal} streamId={showModal.id} />}
         {showModal?.type === 'preview' && (
-          <PreviewModal close={closeModal} streamId={showModal.id} />
+          <PreviewModal
+            close={closeModal}
+            streamId={showModal.id}
+            emitSetShowModal={modal => {
+              if (modal === 'export') {
+                rawSetShowModal({ type: 'export', id: showModal.id });
+              }
+            }}
+          />
         )}
         {showModal?.type === 'remove' && (
           <RemoveStream close={closeModal} streamId={showModal.id} />
         )}
+        {showModal?.type === 'requirements' && <EducationCarousel />}
       </Modal>
     </div>
   );

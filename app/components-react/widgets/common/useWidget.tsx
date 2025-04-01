@@ -293,7 +293,7 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
     ]);
 
     this.setStaticConfig(staticConfig);
-    if (staticConfig) {
+    if (staticConfig?.data?.custom_code) {
       // I miss lenses
       const makeLenses = (type: 'html' | 'css' | 'js') => {
         const prop = `custom_${type}`;
@@ -451,9 +451,7 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
   }
 
   private setStaticConfig(resp: unknown) {
-    this.state.mutate(state => {
-      state.staticConfig = resp;
-    });
+    this.state.setStaticConfig(resp);
   }
 }
 

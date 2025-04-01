@@ -6,8 +6,12 @@ import crypto from 'crypto';
 import { pipeline } from 'stream/promises';
 import { importExtractZip } from 'util/slow-imports';
 import { spawn } from 'child_process';
-import { FFMPEG_EXE } from '../constants';
-import Utils from '../../utils';
+import {
+  AI_HIGHLIGHTER_BUILDS_URL_PRODUCTION,
+  AI_HIGHLIGHTER_BUILDS_URL_STAGING,
+  FFMPEG_EXE,
+} from './constants';
+import Utils from '../utils';
 import * as remote from '@electron/remote';
 
 interface IAIHighlighterManifest {
@@ -27,7 +31,12 @@ interface IAIHighlighterManifest {
  * the paths to the highlighter binary and manifest.
  */
 export class AiHighlighterUpdater {
-  private basepath: string;
+  public static basepath: string = path.join(
+    remote.app.getPath('userData'),
+    '..',
+    'streamlabs-highlighter',
+  );
+
   private manifestPath: string;
   private manifest: IAIHighlighterManifest | null;
   private isCurrentlyUpdating: boolean = false;
@@ -36,24 +45,23 @@ export class AiHighlighterUpdater {
   public currentUpdate: Promise<void> | null = null;
 
   constructor() {
-    this.basepath = path.join(remote.app.getPath('userData'), 'ai-highlighter');
-    this.manifestPath = path.resolve(this.basepath, 'manifest.json');
+    this.manifestPath = path.resolve(AiHighlighterUpdater.basepath, 'manifest.json');
   }
 
   /**
    * Spawn the AI Highlighter process that would process the video
    */
-  static startHighlighterProcess(videoUri: string, milestonesPath?: string) {
+  static startHighlighterProcess(videoUri: string, userId: string, milestonesPath?: string) {
     const runHighlighterFromRepository = Utils.getHighlighterEnvironment() === 'local';
 
     if (runHighlighterFromRepository) {
       // this is for highlighter development
       // to run this you have to install the highlighter repository next to desktop
-      return AiHighlighterUpdater.startHighlighterFromRepository(videoUri, milestonesPath);
+      return AiHighlighterUpdater.startHighlighterFromRepository(videoUri, userId, milestonesPath);
     }
 
     const highlighterBinaryPath = path.resolve(
-      path.join(remote.app.getPath('userData'), 'ai-highlighter'),
+      path.join(remote.app.getPath('userData'), '..', 'streamlabs-highlighter'),
       'bin',
       'app.exe',
     );
@@ -63,11 +71,17 @@ export class AiHighlighterUpdater {
       command.push('--milestones_file');
       command.push(milestonesPath);
     }
+    command.push('--use_sentry');
+    command.push('--user_id', userId);
 
     return spawn(highlighterBinaryPath, command);
   }
 
-  private static startHighlighterFromRepository(videoUri: string, milestonesPath: string) {
+  private static startHighlighterFromRepository(
+    videoUri: string,
+    userId: string,
+    milestonesPath?: string,
+  ) {
     const rootPath = '../highlighter-api/';
     const command = [
       'run',
@@ -78,6 +92,8 @@ export class AiHighlighterUpdater {
       FFMPEG_EXE,
       '--loglevel',
       'debug',
+      '--user_id',
+      userId,
     ];
 
     if (milestonesPath) {
@@ -109,9 +125,10 @@ export class AiHighlighterUpdater {
    */
   private getManifestUrl(): string {
     if (Utils.getHighlighterEnvironment() === 'staging') {
-      return 'https://cdn-highlighter-builds.streamlabs.com/staging/manifest_win_x86_64.json';
+      const cacheBuster = Math.floor(Date.now() / 1000);
+      return `${AI_HIGHLIGHTER_BUILDS_URL_STAGING}?t=${cacheBuster}`;
     } else {
-      return 'https://cdn-highlighter-builds.streamlabs.com/manifest_win_x86_64.json';
+      return AI_HIGHLIGHTER_BUILDS_URL_PRODUCTION;
     }
   }
   /**
@@ -119,7 +136,7 @@ export class AiHighlighterUpdater {
    */
   public async isNewVersionAvailable(): Promise<boolean> {
     // check if updater checked version in current session already
-    if (this.versionChecked) {
+    if (this.versionChecked || Utils.getHighlighterEnvironment() === 'local') {
       return false;
     }
 
@@ -141,7 +158,10 @@ export class AiHighlighterUpdater {
       await fs.readFile(this.manifestPath, 'utf-8'),
     ) as IAIHighlighterManifest;
 
-    if (newManifest.version !== currentManifest.version) {
+    if (
+      newManifest.version !== currentManifest.version ||
+      newManifest.timestamp > currentManifest.timestamp
+    ) {
       console.log(
         `new highlighter version available. ${currentManifest.version} -> ${newManifest.version}`,
       );
@@ -155,7 +175,7 @@ export class AiHighlighterUpdater {
   /**
    * Update highlighter to the latest version
    */
-  public async update(progressCallback?: (progress: IDownloadProgress) => void): Promise<void> {
+  public async update(progressCallback: (progress: IDownloadProgress) => void): Promise<void> {
     // if (Utils.isDevMode()) {
     //   console.log('skipping update in dev mode');
     //   return;
@@ -169,16 +189,26 @@ export class AiHighlighterUpdater {
     }
   }
 
+  /**
+   * Uninstall highlighter and all its dependencies
+   */
+  public async uninstall(): Promise<void> {
+    if (existsSync(AiHighlighterUpdater.basepath)) {
+      console.log('uninstalling AI Highlighter...');
+      await fs.rm(AiHighlighterUpdater.basepath, { recursive: true });
+    }
+  }
+
   private async performUpdate(progressCallback: (progress: IDownloadProgress) => void) {
     if (!this.manifest) {
       throw new Error('Manifest not found, cannot update');
     }
 
-    if (!existsSync(this.basepath)) {
-      await fs.mkdir(this.basepath);
+    if (!existsSync(AiHighlighterUpdater.basepath)) {
+      await fs.mkdir(AiHighlighterUpdater.basepath);
     }
 
-    const zipPath = path.resolve(this.basepath, 'ai-highlighter.zip');
+    const zipPath = path.resolve(AiHighlighterUpdater.basepath, 'ai-highlighter.zip');
     console.log('downloading new version of AI Highlighter...');
 
     // in case if some leftover zip file exists for incomplete update
@@ -197,7 +227,7 @@ export class AiHighlighterUpdater {
     }
 
     console.log('unzipping archive...');
-    const unzipPath = path.resolve(this.basepath, 'bin-' + this.manifest.version);
+    const unzipPath = path.resolve(AiHighlighterUpdater.basepath, 'bin-' + this.manifest.version);
     // delete leftover unzipped files in case something happened before
     if (existsSync(unzipPath)) {
       await fs.rm(unzipPath, { recursive: true });
@@ -209,13 +239,17 @@ export class AiHighlighterUpdater {
     console.log('unzip complete');
 
     // swap with the new version
-    const binPath = path.resolve(this.basepath, 'bin');
+    const binPath = path.resolve(AiHighlighterUpdater.basepath, 'bin');
     const outdateVersionPresent = existsSync(binPath);
 
-    // backup the ouotdated version in case something goes bad
+    // backup the outdated version in case something goes bad
     if (outdateVersionPresent) {
       console.log('backing up outdated version...');
-      await fs.rename(binPath, path.resolve(this.basepath, 'bin.bkp'));
+      const backupPath = path.resolve(AiHighlighterUpdater.basepath, 'bin.bkp');
+      if (existsSync(backupPath)) {
+        await fs.rm(backupPath, { recursive: true });
+      }
+      await fs.rename(binPath, backupPath);
     }
     console.log('swapping new version...');
     await fs.rename(unzipPath, binPath);
@@ -223,7 +257,7 @@ export class AiHighlighterUpdater {
     // cleanup
     console.log('cleaning up...');
     if (outdateVersionPresent) {
-      await fs.rm(path.resolve(this.basepath, 'bin.bkp'), { recursive: true });
+      await fs.rm(path.resolve(AiHighlighterUpdater.basepath, 'bin.bkp'), { recursive: true });
     }
 
     console.log('updating manifest...');

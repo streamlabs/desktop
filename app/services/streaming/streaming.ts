@@ -55,7 +55,7 @@ import { MarkersService } from 'services/markers';
 import { byOS, OS } from 'util/operating-systems';
 import { DualOutputService } from 'services/dual-output';
 import { capitalize } from 'lodash';
-import { TikTokService } from 'services/platforms/tiktok';
+import { YoutubeService } from 'app-services';
 
 enum EOBSOutputType {
   Streaming = 'streaming',
@@ -100,7 +100,7 @@ export class StreamingService
   @Inject() private videoSettingsService: VideoSettingsService;
   @Inject() private markersService: MarkersService;
   @Inject() private dualOutputService: DualOutputService;
-  @Inject() private tikTokService: TikTokService;
+  @Inject() private youtubeService: YoutubeService;
 
   streamingStatusChange = new Subject<EStreamingState>();
   recordingStatusChange = new Subject<ERecordingState>();
@@ -140,6 +140,7 @@ export class StreamingService
         facebook: 'not-started',
         tiktok: 'not-started',
         trovo: 'not-started',
+        kick: 'not-started',
         twitter: 'not-started',
         instagram: 'not-started',
         setupMultistream: 'not-started',
@@ -260,34 +261,6 @@ export class StreamingService
   }
 
   /**
-   * set platform stream settings
-   */
-  async handleSetupPlatform(
-    platform: TPlatform,
-    settings: IGoLiveSettings,
-    unattendedMode: boolean,
-    assignContext: boolean = false,
-  ) {
-    const service = getPlatformService(platform);
-    try {
-      // don't update settings for twitch in unattendedMode
-      const settingsForPlatform =
-        !assignContext && platform === 'twitch' && unattendedMode ? undefined : settings;
-
-      if (assignContext) {
-        const display = settings.platforms[platform]?.display;
-        await this.runCheck(platform, () => service.beforeGoLive(settingsForPlatform, display));
-      } else {
-        await this.runCheck(platform, () =>
-          service.beforeGoLive(settingsForPlatform, 'horizontal'),
-        );
-      }
-    } catch (e: unknown) {
-      this.handleSetupPlatformError(e, platform);
-    }
-  }
-
-  /**
    * Make a transition to Live
    */
   async goLive(newSettings?: IGoLiveSettings) {
@@ -382,6 +355,9 @@ export class StreamingService
           await this.restreamService.beforeGoLive();
         });
       } catch (e: unknown) {
+        // Handle rendering a prompt for enabling permissions to generate a stream key for Kick
+        if (this.state.info.error?.type === 'KICK_STREAM_KEY_MISSING') return;
+
         const error = this.handleTypedStreamError(
           e,
           'RESTREAM_SETUP_FAILED',
@@ -515,6 +491,9 @@ export class StreamingService
       }
     }
 
+    // Handle rendering a prompt for enabling permissions to generate a stream key for Kick
+    if (this.state.info.error?.type === 'KICK_STREAM_KEY_MISSING') return;
+
     // apply optimized settings
     const optimizer = this.videoEncodingOptimizationService;
     if (optimizer.state.useOptimizedProfile && settings.optimizedProfile) {
@@ -591,6 +570,7 @@ export class StreamingService
           ? 'SETTINGS_UPDATE_FAILED'
           : e.type || 'UNKNOWN_ERROR';
       this.setError(e, platform);
+      console.log('handleSetupPlatformError e', e);
     } else {
       this.setError('SETTINGS_UPDATE_FAILED', platform);
     }
@@ -698,29 +678,40 @@ export class StreamingService
   }
 
   handleTypedStreamError(
-    e: unknown,
+    e: StreamError | unknown,
     type: TStreamErrorType,
     message: string,
   ): StreamError | TStreamErrorType {
-    console.error(message, e as any);
-
     // restream errors returns an object with key value pairs for error details
-    if (e instanceof StreamError && type.split('_').includes('RESTREAM')) {
-      const messages: string[] = [];
-      const details: string[] = [];
+    const messages: string[] = [message];
+    const details: string[] = [];
+
+    const defaultMessage =
+      this.state.info.error?.message ??
+      $t(
+        'One of destinations might have incomplete permissions. Reconnect the destinations in settings and try again.',
+      );
+
+    if (e && typeof e === 'object' && type.split('_').includes('RESTREAM')) {
+      details.push(defaultMessage);
 
       Object.entries(e).forEach(([key, value]: [string, string]) => {
         const name = capitalize(key.replace(/([A-Z])/g, ' $1'));
         // only show the error message for the stream key and server url to the user for security purposes
         if (['streamKey', 'serverUrl'].includes(key)) {
-          messages.push(`${name}: ${value}`);
+          messages.push($t('Missing server url or stream key'));
         } else {
-          details.push(`${name}: ${value}`);
+          messages.push(`${name}: ${value}`);
         }
       });
 
-      e.message = messages.join('. ');
-      e.details = details.join('.');
+      const status = this.state.info.error?.status ?? 400;
+
+      return createStreamError(
+        type,
+        { status, statusText: messages.join('. ') },
+        details.join('\n'),
+      );
     }
 
     return e instanceof StreamError ? { ...e, type } : type;
@@ -780,7 +771,7 @@ export class StreamingService
       this.streamErrorUserMessage = messages.user;
       this.streamErrorReportMessage = messages.report;
 
-      this.SET_ERROR(errorTypeOrError);
+      this.SET_ERROR(errorTypeOrError, platform);
     } else {
       // an error type has been passed as a first arg
       const errorType = errorTypeOrError as TStreamErrorType;
@@ -791,7 +782,7 @@ export class StreamingService
       this.streamErrorUserMessage = messages.user;
       this.streamErrorReportMessage = messages.report;
 
-      this.SET_ERROR(error);
+      this.SET_ERROR(error, platform);
     }
 
     const error = this.state.info.error;
@@ -813,12 +804,12 @@ export class StreamingService
     }
   }
 
-  resetStreamInfo() {
-    this.RESET_STREAM_INFO();
-  }
-
   @mutation()
-  private SET_ERROR(error: IStreamError) {
+  private SET_ERROR(error: IStreamError, platform?: TPlatform) {
+    if (platform) {
+      error.platform = platform;
+    }
+
     this.state.info.error = error;
   }
 
@@ -962,8 +953,13 @@ export class StreamingService
     }
 
     const replayWhenStreaming = this.streamSettingsService.settings.replayBufferWhileStreaming;
+    const isReplayBufferEnabled = this.outputSettingsService.getSettings().replayBuffer.enabled;
 
-    if (replayWhenStreaming && this.state.replayBufferStatus === EReplayBufferState.Offline) {
+    if (
+      replayWhenStreaming &&
+      isReplayBufferEnabled &&
+      this.state.replayBufferStatus === EReplayBufferState.Offline
+    ) {
       this.startReplayBuffer();
     }
 
@@ -1314,6 +1310,11 @@ export class StreamingService
             ]
           : ['custom_rtmp'];
 
+        if (eventMetadata.platforms.includes('youtube')) {
+          eventMetadata.streamId = this.youtubeService.state.streamId;
+          eventMetadata.broadcastId = this.youtubeService.state.settings?.broadcastId;
+        }
+
         this.usageStatisticsService.recordEvent('stream_start', eventMetadata);
         this.usageStatisticsService.recordAnalyticsEvent('StreamingStatus', {
           code: info.code,
@@ -1583,6 +1584,11 @@ export class StreamingService
       });
     } else {
       data.platforms = ['custom_rtmp'];
+    }
+
+    if (data.platforms.includes('youtube')) {
+      data.streamId = this.youtubeService.state.streamId;
+      data.broadcastId = this.youtubeService.state.settings?.broadcastId;
     }
 
     this.recordGoals(data.duration);

@@ -1,7 +1,7 @@
 import createTransition from './create-transition';
 import transitions from 'gl-transitions';
 import { Texture2D } from './texture-2d';
-import { IExportOptions } from '.';
+import { IExportOptions } from '../models/rendering.models';
 
 export class Transitioner {
   private canvas = document.createElement('canvas');

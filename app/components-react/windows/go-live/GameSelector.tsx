@@ -22,6 +22,7 @@ export default function GameSelector(p: TProps) {
   const isTwitch = platform === 'twitch';
   const isTrovo = platform === 'trovo';
   const isTikTok = platform === 'tiktok';
+  const isKick = platform === 'kick';
 
   if (isTrovo) {
     selectedGameName = Services.TrovoService.state.channelInfo.gameName;
@@ -29,6 +30,10 @@ export default function GameSelector(p: TProps) {
 
   if (isTikTok) {
     selectedGameName = Services.TikTokService.state.gameName;
+  }
+
+  if (isKick) {
+    selectedGameName = Services.KickService.state.gameName;
   }
 
   const { isSearching, setIsSearching, games, setGames } = useModule(() => {
@@ -60,8 +65,8 @@ export default function GameSelector(p: TProps) {
   }, []);
 
   async function loadImageForSelectedGame() {
-    // game images available for Twitch and Trovo only
-    if (!['twitch', 'trovo'].includes(platform)) return;
+    // game images available for Twitch, Trovo, and Kick only
+    if (!['twitch', 'trovo', 'kick'].includes(platform)) return;
     if (!selectedGameName) return;
     const game = await platformService.fetchGame(selectedGameName);
     if (!game || game.name !== selectedGameName) return;
@@ -74,7 +79,7 @@ export default function GameSelector(p: TProps) {
     if (searchString.length < 2 && platform !== 'tiktok') return;
     const games =
       (await fetchGames(searchString))?.map(g => ({
-        value: ['trovo', 'tiktok'].includes(platform) ? g.id : g.name,
+        value: ['trovo', 'tiktok', 'kick'].includes(platform) ? g.id : g.name,
         label: g.name,
         image: g?.image,
       })) ?? [];
@@ -104,6 +109,7 @@ export default function GameSelector(p: TProps) {
     facebook: $t('Facebook Game'),
     trovo: $t('Trovo Category'),
     tiktok: $t('TikTok Category'),
+    kick: $t('Kick Category'),
   }[platform as string];
 
   const filterOption = (input: string, option?: { label: string; value: string }) => {
@@ -133,8 +139,8 @@ export default function GameSelector(p: TProps) {
       }}
       filterOption={filterOption}
       debounce={500}
-      required={isTwitch || isTrovo}
-      hasImage={isTwitch || isTrovo}
+      required={isTwitch || isTrovo || isKick}
+      hasImage={isTwitch || isTrovo || isKick}
       onBeforeSearch={onBeforeSearchHandler}
       imageSize={platformService.gameImageSize}
       loading={isSearching}

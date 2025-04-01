@@ -22,6 +22,7 @@ interface ISavedGoLiveSettings {
     youtube?: IPlatformFlags;
     trovo?: IPlatformFlags;
     tiktok?: IPlatformFlags;
+    kick?: IPlatformFlags;
   };
   customDestinations?: ICustomStreamDestination[];
   advancedMode: boolean;
@@ -97,6 +98,7 @@ const platformToServiceNameMap: { [key in TPlatform]: string } = {
   tiktok: 'Custom',
   twitter: 'Custom',
   instagram: 'Custom',
+  kick: 'Custom',
 };
 
 /**

@@ -6,9 +6,9 @@ import {
   SCRUB_HEIGHT,
   SCRUB_SPRITE_DIRECTORY,
   SCRUB_WIDTH,
-} from './constants';
+} from '../constants';
 import { FrameReadError } from './errors';
-import { IExportOptions } from '.';
+import { IExportOptions } from '../models/rendering.models';
 
 export class FrameSource {
   writeBuffer = Buffer.allocUnsafe(this.options.width * this.options.height * 4);

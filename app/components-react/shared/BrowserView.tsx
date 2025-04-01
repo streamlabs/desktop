@@ -8,6 +8,7 @@ import Spinner from 'components-react/shared/Spinner';
 import { Services } from 'components-react/service-provider';
 import electron from 'electron';
 import { onUnload } from 'util/unload';
+import { Button } from 'antd';
 
 interface BrowserViewProps {
   src: string;
@@ -18,6 +19,7 @@ interface BrowserViewProps {
   onReady?: (view: any) => void;
   className?: string;
   style?: React.CSSProperties;
+  emitUrlChange?: (url: string) => void;
 }
 
 export default function BrowserView(p: BrowserViewProps) {
@@ -52,17 +54,26 @@ export default function BrowserView(p: BrowserViewProps) {
 
   const browserView = useRef<Electron.BrowserView | null>(null);
 
+  function urlChange(_: any, url: string) {
+    if (p.emitUrlChange) {
+      p.emitUrlChange(url);
+    }
+  }
+
   useEffect(() => {
     browserView.current = new remote.BrowserView(options);
+    const webContents = browserView.current.webContents;
 
     if (p.enableGuestApi) {
-      electron.ipcRenderer.sendSync('webContents-enableRemote', browserView.current.webContents.id);
+      electron.ipcRenderer.sendSync('webContents-enableRemote', webContents.id);
     }
 
     if (p.onReady) p.onReady(browserView.current);
     if (p.setLocale) I18nService.setBrowserViewLocale(browserView.current);
 
-    browserView.current.webContents.on('did-finish-load', () => setLoading(false));
+    webContents.on('did-finish-load', () => setLoading(false));
+    webContents.on('did-navigate', urlChange);
+    webContents.on('did-navigate-in-page', urlChange);
     remote.getCurrentWindow().addBrowserView(browserView.current);
 
     const shutdownSubscription = AppService.shutdownStarted.subscribe(destroyBrowserView);
@@ -70,6 +81,8 @@ export default function BrowserView(p: BrowserViewProps) {
     const cancelUnload = onUnload(() => destroyBrowserView());
 
     return () => {
+      webContents.removeListener('did-navigate', urlChange);
+      webContents.removeListener('did-navigate-in-page', urlChange);
       cancelUnload();
       destroyBrowserView();
       shutdownSubscription.unsubscribe();
@@ -167,6 +180,13 @@ export default function BrowserView(p: BrowserViewProps) {
         <Spinner visible pageLoader />
       </div>
     );
+  }
+
+  function getCurrentUrl() {
+    if (!browserView.current) {
+      return '';
+    }
+    return browserView.current.webContents.getURL();
   }
 
   return <div style={{ height: '100%', ...p.style }} ref={sizeContainer} className={p.className} />;

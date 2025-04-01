@@ -1,19 +1,19 @@
 import React from 'react';
 import {
-  EAiDetectionState,
   EHighlighterView,
   IHighlightedStream,
   IViewState,
-  StreamInfoForAiHighlighter,
   TClip,
-} from 'services/highlighter';
+} from 'services/highlighter/models/highlighter.models';
 import styles from './StreamCard.m.less';
 import { Button } from 'antd';
 import { Services } from 'components-react/service-provider';
 import { isAiClip } from './utils';
 import { useVuex } from 'components-react/hooks';
-import { InputEmojiSection } from './InputEmojiSection';
 import { $t } from 'services/i18n';
+import { EAiDetectionState } from 'services/highlighter/models/ai-highlighter.models';
+import * as remote from '@electron/remote';
+import StreamCardInfo from './StreamCardInfo';
 
 export default function StreamCard({
   streamId,
@@ -23,6 +23,7 @@ export default function StreamCard({
   emitExportVideo,
   emitRemoveStream,
   emitCancelHighlightGeneration,
+  emitShowRequirements,
 }: {
   streamId: string;
   clipsOfStreamAreLoading: string | null;
@@ -31,6 +32,7 @@ export default function StreamCard({
   emitExportVideo: () => void;
   emitRemoveStream: () => void;
   emitCancelHighlightGeneration: () => void;
+  emitShowRequirements: () => void;
 }) {
   const { HighlighterService } = Services;
   const clips = useVuex(() =>
@@ -50,10 +52,79 @@ export default function StreamCard({
     return <></>;
   }
 
+  const game = HighlighterService.getGameByStreamId(streamId);
+
+  function shareFeedback() {
+    remote.shell.openExternal(
+      'https://support.streamlabs.com/hc/en-us/requests/new?ticket_form_id=31967205905051',
+    );
+  }
+
   function showStreamClips() {
     if (stream?.state.type !== EAiDetectionState.IN_PROGRESS) {
       emitSetView({ view: EHighlighterView.CLIPS, id: stream?.id });
     }
+  }
+
+  if (stream.state.type === EAiDetectionState.FINISHED && clips.length === 0) {
+    return (
+      <div className={styles.streamCard}>
+        {' '}
+        <Button
+          size="large"
+          className={styles.deleteButton}
+          onClick={e => {
+            emitRemoveStream();
+            e.stopPropagation();
+          }}
+          style={{ backgroundColor: '#00000040', border: 'none', position: 'absolute' }}
+        >
+          <i className="icon-trash" />
+        </Button>
+        <div className={styles.requirements}>
+          <div style={{ display: 'flex', flexDirection: 'column', width: '280px' }}>
+            <h2>{$t('No clips found')}</h2>
+            <p style={{ marginBottom: '8px' }}>
+              {$t('Please make sure all the requirements are met:')}
+            </p>
+            <ul style={{ marginBottom: 0, marginLeft: '-28px' }}>
+              <li>{$t('Game is supported (Currently Fortnite only)')}</li>
+              <li>{$t('Game language is English')}</li>
+              <li>{$t('Map and Stats area is fully visible')}</li>
+              <li>{$t('Game in fullscreen in your stream')}</li>
+              <li>{$t('Game mode is supported (Battle Royale, Reload, Zero Build, OG)')}</li>
+            </ul>
+            <a onClick={emitShowRequirements} style={{ marginBottom: '14px' }}>
+              {$t('Show details')}
+            </a>
+            <p>{$t('All requirements met but no luck?')}</p>
+
+            <a onClick={shareFeedback}>
+              {$t('Take a screenshot of your stream and share it here')}
+            </a>
+          </div>
+        </div>
+        <div className={styles.streaminfoWrapper}>
+          <div
+            className={styles.titleRotatedClipsWrapper}
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+          >
+            <div className={styles.titleDateWrapper}>
+              <h2 className={styles.streamcardTitle}>{stream.title}</h2>
+              <p style={{ margin: 0, fontSize: '12px' }}>{new Date(stream.date).toDateString()}</p>
+            </div>
+            <Button
+              size="large"
+              className={styles.cancelButton}
+              onClick={shareFeedback}
+              icon={<i className="icon-community" style={{ marginRight: '8px' }} />}
+            >
+              {$t('Share feedback')}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -81,14 +152,7 @@ export default function StreamCard({
         </div>
         <h3 className={styles.emojiWrapper}>
           {stream.state.type === EAiDetectionState.FINISHED ? (
-            <InputEmojiSection
-              clips={clips}
-              includeRounds={true}
-              includeDeploy={false}
-              showCount={true}
-              showDescription={true}
-              showDeathPlacement={false}
-            />
+            <StreamCardInfo clips={clips} game={game} />
           ) : (
             <div style={{ height: '22px' }}> </div>
           )}
@@ -185,21 +249,29 @@ function ActionBar({
         <Button
           size="large"
           type="primary"
-          icon={
-            clipsOfStreamAreLoading !== stream.id ? (
-              <i className="icon-download" style={{ marginRight: '4px' }} />
-            ) : undefined
-          }
           onClick={e => {
             emitExportVideo();
             e.stopPropagation();
           }}
+          style={{ display: 'grid', gridTemplateAreas: 'stack' }}
         >
-          {clipsOfStreamAreLoading === stream.id ? (
-            <div className={styles.loader}></div>
-          ) : (
-            <> {$t('Export highlight reel')}</>
-          )}
+          <div
+            style={{
+              visibility: clipsOfStreamAreLoading === stream.id ? 'visible' : 'hidden',
+              gridArea: 'stack',
+            }}
+          >
+            <i className="fa fa-spinner fa-pulse" />
+          </div>
+          <span
+            style={{
+              visibility: clipsOfStreamAreLoading !== stream.id ? 'visible' : 'hidden',
+              gridArea: 'stack',
+            }}
+          >
+            <i className="icon-download" style={{ marginRight: '4px' }} />
+            {$t('Export highlight reel')}
+          </span>
         </Button>
       </div>
     );
@@ -255,7 +327,7 @@ export function Thumbnail({
 }) {
   function getThumbnailText(state: EAiDetectionState): JSX.Element | string {
     if (clipsOfStreamAreLoading === stream?.id) {
-      return <div className={styles.loader}></div>;
+      return <i className="fa fa-spinner fa-pulse" />;
     }
 
     if (clips.length > 0) {
@@ -306,7 +378,6 @@ export function Thumbnail({
           clips.find(clip => clip?.streamInfo?.[stream.id]?.orderPosition === 0)?.scrubSprite ||
           clips.find(clip => clip.scrubSprite)?.scrubSprite
         }
-        alt=""
       />
       <div className={styles.centeredOverlayItem}>
         <div

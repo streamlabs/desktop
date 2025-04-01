@@ -1,27 +1,23 @@
 import React, { useRef, useMemo } from 'react';
 import { $t } from 'services/i18n';
 import { TPlatform, platformLabels } from 'services/platforms';
-import { useGoLiveSettings } from '../useGoLiveSettings';
+import { useGoLiveSettings } from './useGoLiveSettings';
 import { Select } from 'antd';
 import PlatformLogo from 'components-react/shared/PlatformLogo';
 import { Services } from 'components-react/service-provider';
-import styles from '../GoLive.m.less';
+import styles from './GoLive.m.less';
 import { ICustomStreamDestination } from 'services/settings/streaming';
 import cx from 'classnames';
 
 const { Option } = Select;
 
-interface IPlatformSelectorProps {
+interface IDestinationSelectorProps {
   showSwitcher: (platform: TPlatform) => void;
   switchDestination: (index: number) => void;
   togglePlatform: (platform: TPlatform) => void;
 }
 
-/**
- * Render platform selector
- */
-
-export default function DualOutputPlatformSelector(p: IPlatformSelectorProps) {
+export default function DestinationSelector(p: IDestinationSelectorProps) {
   const {
     linkedPlatforms,
     shouldAddTikTok,
@@ -91,7 +87,7 @@ export default function DualOutputPlatformSelector(p: IPlatformSelectorProps) {
 
   return (
     <Select
-      data-test="do-platform-selector"
+      data-test="destination-selector"
       defaultValue={defaultLabel[0]}
       className={cx(styles.platformsSelector, { [styles.dualOutputSelector]: isDualOutputMode })}
       onChange={(option: { value: string; label: React.ReactNode }) => {

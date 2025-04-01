@@ -11,7 +11,7 @@ import Form from 'components-react/shared/inputs/Form';
 import Scrollable from 'components-react/shared/Scrollable';
 import styles from './SettingsView.m.less';
 import { $t } from 'services/i18n';
-import { EHighlighterView, IViewState } from 'services/highlighter';
+import { EHighlighterView, IViewState } from 'services/highlighter/models/highlighter.models';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export default function SettingsView({
@@ -28,7 +28,7 @@ export default function SettingsView({
     HighlighterService,
     IncrementalRolloutService,
   } = Services;
-  const aiHighlighterEnabled = IncrementalRolloutService.views.featureIsEnabled(
+  const aiHighlighterFeatureEnabled = IncrementalRolloutService.views.featureIsEnabled(
     EAvailableFeatures.aiHighlighter,
   );
   const [hotkey, setHotkey] = useState<IHotkey | null>(null);
@@ -38,6 +38,7 @@ export default function SettingsView({
     settingsValues: SettingsService.views.values,
     isStreaming: StreamingService.isStreaming,
     useAiHighlighter: HighlighterService.views.useAiHighlighter,
+    highlighterVersion: HighlighterService.views.highlighterVersion,
   }));
 
   const correctlyConfigured =
@@ -124,7 +125,7 @@ export default function SettingsView({
           </p>
         </div>
         <div style={{ display: 'flex', gap: '16px' }}>
-          {aiHighlighterEnabled && (
+          {aiHighlighterFeatureEnabled && (
             <Button type="primary" onClick={() => emitSetView({ view: EHighlighterView.STREAM })}>
               {$t('Stream Highlights')}
             </Button>
@@ -139,7 +140,7 @@ export default function SettingsView({
       <Scrollable style={{ flexGrow: 1, padding: '20px 20px 20px 20px', width: '100%' }}>
         <div className={styles.innerScrollWrapper}>
           <div className={styles.cardWrapper}>
-            {aiHighlighterEnabled && (
+            {aiHighlighterFeatureEnabled && (
               <div className={styles.highlighterCard}>
                 <div className={styles.cardHeaderbarWrapper}>
                   <div className={styles.cardHeaderbar}>
@@ -152,21 +153,42 @@ export default function SettingsView({
                 <p style={{ margin: 0 }}>
                   {$t(
                     'Automatically capture the best moments from your livestream and turn them into a highlight video.',
+                  )}{' '}
+                  {v.highlighterVersion !== '' && (
+                    <span>
+                      {$t(
+                        'The AI Highlighter App can be managed in the Apps Manager tab or in Settings > Installed apps.',
+                      )}
+                    </span>
                   )}
                 </p>
 
-                <SwitchInput
-                  style={{ margin: 0, marginLeft: '-10px' }}
-                  size="default"
-                  value={v.useAiHighlighter}
-                  onChange={toggleUseAiHighlighter}
-                />
+                {v.highlighterVersion !== '' ? (
+                  <SwitchInput
+                    style={{ margin: 0, marginLeft: '-10px' }}
+                    size="default"
+                    value={v.useAiHighlighter}
+                    onChange={toggleUseAiHighlighter}
+                  />
+                ) : (
+                  <Button
+                    style={{ width: 'fit-content' }}
+                    type="primary"
+                    onClick={() => {
+                      HighlighterService.actions.installAiHighlighter(true, 'Highlighter-tab');
+                    }}
+                  >
+                    {$t('Install AI Highlighter App')}
+                  </Button>
+                )}
                 <div className={styles.recommendedCorner}>{$t('Recommended')}</div>
               </div>
             )}
             <div className={styles.manualCard}>
               <h3 className={styles.cardHeaderTitle}>
-                {aiHighlighterEnabled ? 'Or use the manual highlighter ' : 'Manual highlighter'}
+                {aiHighlighterFeatureEnabled
+                  ? $t('Or, use the built-in manual highlighter')
+                  : $t('Built-in manual highlighter')}
               </h3>
               <p>
                 {$t(

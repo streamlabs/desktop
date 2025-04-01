@@ -1,13 +1,14 @@
 @import '../../styles/index';
 
 .stream-card {
+  position: relative;
   overflow: hidden;
   background: var(--border);
   display: flex;
   flex-direction: column;
   border-radius: 10px;
   gap: 16px;
-  height: fit-content;
+  height: 412px;
   width: 422px;
   cursor: pointer;
 }
@@ -95,24 +96,6 @@
   z-index: 1;
 }
 
-.loader {
-  border: 2px solid #f3f3f3; /* Light grey */
-  border-top: 2px solid #3e3e3e; /* Blue */
-  border-radius: 50%;
-  width: 16px;
-  height: 16px;
-  animation: spin 2s linear infinite;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
 .delete-button {
   display: flex;
   top: 8px;
@@ -137,7 +120,8 @@
 
 .streamcard-title {
   margin: 0;
-  width: 275px;
+  width: 100%;
+  max-width: 250px;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
@@ -180,4 +164,28 @@
   display: flex;
   gap: 4px;
   justify-content: space-between;
+}
+
+.requirements {
+  font-size: 12px;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #ffffff10;
+
+  p {
+    margin: 0;
+  }
+
+  a {
+    font-weight: 400;
+    text-decoration: underline;
+    opacity: 0.4;
+  }
+  a:hover {
+    opacity: 0.6;
+    text-decoration: underline;
+  }
 }
