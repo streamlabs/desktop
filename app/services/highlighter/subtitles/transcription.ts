@@ -166,8 +166,7 @@ export class Transcription {
           pauseStartIndex != null &&
           (word.hasSubtitlebreak === true ||
             word.hasSubtitlebreak === null ||
-            word.hasSubtitlebreak === undefined) &&
-          !isCustomLength
+            word.hasSubtitlebreak === undefined)
         ) {
           // long pause
           pushSubtitle(startIndex, pauseStartIndex - 1, index + 1, word.mediaIndex);
@@ -179,10 +178,9 @@ export class Transcription {
             word.hasSubtitlebreak === null ||
             word.hasSubtitlebreak === undefined) &&
           (characterCount + this.words[index + 1]?.text?.length > charactersPerRow ||
-            ((word.isEndOfSentence || breakOnComma
+            (word.isEndOfSentence || breakOnComma
               ? word.hasPunctuationAndComma
-              : word.hasPunctuation) &&
-              !isCustomLength) ||
+              : word.hasPunctuation) ||
             word.hasSubtitlebreak)
         ) {
           // maximum of characters was reached

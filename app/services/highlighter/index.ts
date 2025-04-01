@@ -1029,6 +1029,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     };
 
     startRendering(
+      String(this.userService.state.userId) || this.userService.getLocalUserId(),
       {
         isPreview: preview,
         renderingClips,
@@ -1300,7 +1301,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
       const highlighterResponse = await getHighlightClips(
         filePath,
-        this.userService.getLocalUserId(),
+        String(this.userService.state.userId) || this.userService.getLocalUserId(),
         renderHighlights,
         setStreamInfo.abortController!.signal,
         (progress: number) => {

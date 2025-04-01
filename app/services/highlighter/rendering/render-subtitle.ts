@@ -1,6 +1,12 @@
 import sharp from 'sharp';
 import fs from 'fs-extra';
-import { IResolution } from '../subtitles/svg-creator';
+import { IResolution, SvgCreator } from '../subtitles/svg-creator';
+import { getTranscription } from '../ai-highlighter-utils';
+import { SubtitleMode } from '../subtitles/subtitle-mode';
+import { IExportOptions } from '../models/rendering.models';
+import path from 'path';
+
+export const SUBTITLE_PER_SECOND = 3;
 
 export async function svgToPng(svgText: string, resolution: IResolution, outputPath: string) {
   try {
@@ -23,10 +29,90 @@ export async function svgToPng(svgText: string, resolution: IResolution, outputP
       .png()
       .toBuffer();
 
-    console.log('Write svg to ', outputPath);
     await fs.writeFile(outputPath, buffer);
-    console.log('Done');
   } catch (error: unknown) {
     console.error('Error creating PNG from SVG', error);
+  }
+}
+
+export async function createSubtitles(
+  mediaPath: string,
+  userId: string,
+  parsed: path.ParsedPath,
+  exportOptions: IExportOptions,
+  totalDuration: number,
+  totalFrames: number,
+) {
+  const subtitleDirectory = path.join(parsed.dir, 'temp_subtitles');
+
+  if (!fs.existsSync(subtitleDirectory)) {
+    fs.mkdirSync(subtitleDirectory, { recursive: true });
+  }
+
+  const exportResolution = { width: exportOptions.width, height: exportOptions.height };
+  const svgCreator = new SvgCreator(
+    { width: exportOptions.width, height: exportOptions.height },
+    { fontSize: 20, fontFamily: 'Arial', fontColor: 'white', isBold: false, isItalic: false },
+  );
+
+  const transcription = await getTranscription(mediaPath, userId, totalDuration);
+  console.log(transcription.words);
+
+  const subtitleClips = transcription.generateSubtitleClips(
+    SubtitleMode.static,
+    exportOptions.width / exportOptions.height,
+    20,
+  );
+  console.log('Subtitle clips', subtitleClips);
+
+  // Create subtitles
+  let subtitleCounter = 0;
+
+  const subtitleEveryNFrames = Math.floor(exportOptions.fps / SUBTITLE_PER_SECOND);
+
+  const subtitlesToProcess = [];
+  for (let frameIndex = 0; frameIndex < totalFrames; frameIndex += subtitleEveryNFrames) {
+    // Find the appropriate subtitle clip for this frame
+    const timeInSeconds = frameIndex / exportOptions.fps;
+    const subtitleClip = subtitleClips.clips.find(
+      clip => timeInSeconds >= clip.startTimeInEdit && timeInSeconds <= clip.endTimeInEdit,
+    );
+
+    if (subtitleClip) {
+      subtitlesToProcess.push(subtitleClip.text);
+    } else {
+      subtitlesToProcess.push('');
+    }
+  }
+  console.log(subtitlesToProcess);
+
+  // // Pre-calculate all needed subtitles to avoid redundant processing
+  // const uniqueClips = new Map();
+  // for (const { subtitleClip } of framesToProcess) {
+  //   const key = subtitleClip.text;
+  //   if (!uniqueClips.has(key)) {
+  //     uniqueClips.set(key, subtitleClip);
+  //   }
+  // }
+
+  for (const subtitleText of subtitlesToProcess) {
+    const svgString = svgCreator.getSvgWithText([subtitleText], 0);
+    const pngPath = path.join(
+      subtitleDirectory,
+      `/subtitles_${String(subtitleCounter).padStart(4, '0')}.png`,
+    );
+    await svgToPng(svgString, exportResolution, pngPath);
+    subtitleCounter++;
+  }
+  return subtitleDirectory;
+}
+
+export function cleanupSubtitleDirectory(exportOptions: IExportOptions) {
+  if (exportOptions.subtitles?.directory) {
+    try {
+      fs.removeSync(exportOptions.subtitles.directory);
+    } catch (error: unknown) {
+      console.error('Failed to clean up subtitle directory', error);
+    }
   }
 }

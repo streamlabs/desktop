@@ -22,8 +22,9 @@ import { Word } from '../subtitles/word';
 import { Transcription } from '../subtitles/transcription';
 import { SubtitleMode } from '../subtitles/subtitle-mode';
 import { SvgCreator } from '../subtitles/svg-creator';
-import { svgToPng } from './render-subtitle';
+import { cleanupSubtitleDirectory, createSubtitles, svgToPng } from './render-subtitle';
 import fs from 'fs-extra';
+import { getTranscription } from '../ai-highlighter-utils';
 export interface IRenderingConfig {
   renderingClips: RenderingClip[];
   isPreview: boolean;
@@ -36,6 +37,7 @@ export interface IRenderingConfig {
   streamId: string | undefined;
 }
 export async function startRendering(
+  userId: string,
   renderingConfig: IRenderingConfig,
   handleFrame: (currentFrame: number) => void,
   setExportInfo: (partialExportInfo: Partial<IExportInfo>) => void,
@@ -81,7 +83,14 @@ export async function startRendering(
     exportOptions.subtitles = { enabled: true };
     // Create subtitles before audio is mixed in
     if (exportOptions.subtitles?.enabled) {
-      const subtitleDirectory = await createSubtitlePngs(parsed, exportOptions, totalDuration);
+      const subtitleDirectory = await createSubtitles(
+        audioConcat,
+        userId,
+        parsed,
+        exportOptions,
+        totalDuration,
+        totalFramesAfterTransitions,
+      );
       exportOptions.subtitles.directory = subtitleDirectory;
     }
     // create transcriptions
@@ -252,59 +261,4 @@ export async function startRendering(
     if (fader) await fader.cleanup();
     if (mixer) await mixer.cleanup();
   }
-}
-const text =
-  "Don't even think I helped out a stroke. He made, you know, a few birdies coming in and and we held on for a one stroke victory.";
-let i = 0;
-const testWords = text
-  .split(' ')
-  .map(word => new Word().fromTranscriptionService(word, i++, i + 1, null, null));
-
-function cleanupSubtitleDirectory(exportOptions: IExportOptions) {
-  if (exportOptions.subtitles?.directory) {
-    try {
-      fs.removeSync(exportOptions.subtitles.directory);
-    } catch (error) {
-      console.error('Failed to clean up subtitle directory', error);
-    }
-  }
-}
-
-async function createSubtitlePngs(
-  parsed: path.ParsedPath,
-  exportOptions: IExportOptions,
-  totalDuration: number,
-) {
-  const subtitleDirectory = path.join(parsed.dir, 'temp_subtitles');
-
-  if (!fs.existsSync(subtitleDirectory)) {
-    fs.mkdirSync(subtitleDirectory, { recursive: true });
-  }
-  const exportResolution = { width: exportOptions.width, height: exportOptions.height };
-  const transcription = new Transcription();
-  transcription.words = testWords;
-  transcription.generatePauses(totalDuration);
-  const subtitleClips = transcription.generateSubtitleClips(
-    SubtitleMode.static,
-    exportOptions.width / exportOptions.height,
-    20,
-  );
-
-  const svgCreator = new SvgCreator(
-    { width: exportOptions.width, height: exportOptions.height },
-    { fontSize: 20, fontFamily: 'Arial', fontColor: 'white', isBold: false, isItalic: false },
-  );
-  let subtitleCounter = 0;
-  for (const subtitleClip of subtitleClips.clips) {
-    const svgString = svgCreator.getSvgWithText([subtitleClip.text], 0);
-    console.log(svgString);
-
-    const pngPath = path.join(
-      subtitleDirectory,
-      `/subtitles_${String(subtitleCounter).padStart(4, '0')}.png`,
-    );
-    await svgToPng(svgString, exportResolution, pngPath);
-    subtitleCounter++;
-  }
-  return subtitleDirectory;
 }
