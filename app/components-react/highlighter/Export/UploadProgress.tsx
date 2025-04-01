@@ -36,7 +36,7 @@ export default function UploadProgress({
   }));
 
   if (uploadInfo === undefined) {
-    return <div>Something went wrong. Please contact support if the issue persists</div>;
+    return <div>{$t('Something went wrong. Please contact support if the issue persists')}</div>;
   }
 
   return (
