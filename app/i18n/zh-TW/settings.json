@@ -141,6 +141,9 @@
   "Virtual Webcam allows you to display your scenes from Streamlabs Desktop in video conferencing software. Streamlabs Desktop will appear as a Webcam that can be selected in most video conferencing apps.": "虛擬網路攝影機讓您可以在視訊會議軟體中從 Streamlabs Desktop 顯示您的場景。Streamlabs Desktop 會顯示為可以在大部分視訊會議應用程式中選取的網路攝影機。",
   "Uninstalling Virtual Webcam will remove it as a device option in other applications.": "解除安裝虛擬網路攝影機會移除其在其他應用程式作為裝置的選項。",
   "Uninstall Virtual Webcam": "解除安裝虛擬網路攝影機",
+  "Output type": "Output type",
+  "Output selection": "Output selection",
+  "Program (default)": "Program (default)",
   "Use custom resolution": "使用自訂解析度",
   "Enable Designer Mode": "啟用設計師模式",
   "Get Support": "取得支援",
@@ -261,5 +264,6 @@
   "Idle": "閒置",
   "Please connect platforms directly from Streamlabs Desktop instead of adding Streamlabs Multistream as a custom destination": "請直接從 Streamlabs Desktop 連接平台，而不是將 Streamlabs 多平台直播新增為自訂目的地",
   "Audio Encoder": "音訊編碼器",
-  "Additional Settings": "其他設定"
+  "Additional Settings": "其他設定",
+  "Bearer Token": "Bearer Token"
 }
