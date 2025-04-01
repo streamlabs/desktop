@@ -18,13 +18,7 @@ import { $t } from '../../i18n';
 import * as Sentry from '@sentry/browser';
 import { sample } from 'lodash';
 import { TAnalyticsEvent } from '../../usage-statistics';
-import { Word } from '../subtitles/word';
-import { Transcription } from '../subtitles/transcription';
-import { SubtitleMode } from '../subtitles/subtitle-mode';
-import { SvgCreator } from '../subtitles/svg-creator';
 import { cleanupSubtitleDirectory, createSubtitles, svgToPng } from './render-subtitle';
-import fs from 'fs-extra';
-import { getTranscription } from '../ai-highlighter-utils';
 export interface IRenderingConfig {
   renderingClips: RenderingClip[];
   isPreview: boolean;

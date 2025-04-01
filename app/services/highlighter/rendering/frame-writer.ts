@@ -98,22 +98,28 @@ export class FrameWriter {
       console.log('ffmpeg:', data.toString());
     });
   }
-  //  "subtitles='C\:\\\\Users\\\\jan\\\\Videos\\\\color.srt'"
-  private addVideoFilters(args: string[], addSubtitleFilter: boolean) {
-    // args.push(
-    //   '-filter_complex',
-    //   '[0:v][1:v]overlay=0:0[final];[final]format=yuv420p,fade=type=out:duration=1:start_time=4',
-    // );
-    const subtitleFilter = addSubtitleFilter ? '[0:v][1:v]overlay=0:0[final];' : '';
-    const fadeFilter = `${subtitleFilter}[final]format=yuv420p,fade=type=out:duration=${FADE_OUT_DURATION}:start_time=${Math.max(
+  private addVideoFilters(args: string[], subtitlesEnabled: boolean) {
+    const webcamEnabled = !!this.options.complexFilter;
+
+    const firstInput = webcamEnabled ? '[final]' : '[0:v]';
+    const output = subtitlesEnabled ? '[subtitled]' : '[final]';
+    const subtitleFilter = subtitlesEnabled ? `${firstInput}[1:v]overlay=0:0[subtitled];` : '';
+
+    const fadeFilter = `format=yuv420p,fade=type=out:duration=${FADE_OUT_DURATION}:start_time=${Math.max(
       this.duration - (FADE_OUT_DURATION + 0.2),
       0,
     )}`;
-    if (this.options.complexFilter) {
-      args.push('-vf', this.options.complexFilter + `[final]${fadeFilter}`);
-    } else {
-      args.push('-filter_complex', fadeFilter);
+    args.push('-filter_complex');
+    let combinedFilter = '';
+    if (webcamEnabled) {
+      combinedFilter += this.options.complexFilter;
     }
+
+    if (subtitlesEnabled) {
+      combinedFilter += subtitleFilter;
+    }
+    combinedFilter += output + fadeFilter;
+    args.push(combinedFilter);
   }
 
   private addAudioFilters(args: string[]) {

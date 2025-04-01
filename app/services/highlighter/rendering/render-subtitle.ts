@@ -49,11 +49,17 @@ export async function createSubtitles(
     fs.mkdirSync(subtitleDirectory, { recursive: true });
   }
 
-  const exportResolution = { width: exportOptions.width, height: exportOptions.height };
-  const svgCreator = new SvgCreator(
-    { width: exportOptions.width, height: exportOptions.height },
-    { fontSize: 20, fontFamily: 'Arial', fontColor: 'white', isBold: false, isItalic: false },
-  );
+  const exportResolution = exportOptions.complexFilter
+    ? { width: exportOptions.height, height: exportOptions.width }
+    : { width: exportOptions.width, height: exportOptions.height };
+  console.log('Export resolution', exportResolution);
+  const svgCreator = new SvgCreator(exportResolution, {
+    fontSize: 20,
+    fontFamily: 'Arial',
+    fontColor: 'white',
+    isBold: false,
+    isItalic: false,
+  });
 
   const transcription = await getTranscription(mediaPath, userId, totalDuration);
   console.log(transcription.words);
