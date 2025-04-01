@@ -77,15 +77,20 @@ export async function startRendering(
     exportOptions.subtitles = { enabled: true };
     // Create subtitles before audio is mixed in
     if (exportOptions.subtitles?.enabled) {
-      const subtitleDirectory = await createSubtitles(
-        audioConcat,
-        userId,
-        parsed,
-        exportOptions,
-        totalDuration,
-        totalFramesAfterTransitions,
-      );
-      exportOptions.subtitles.directory = subtitleDirectory;
+      try {
+        const subtitleDirectory = await createSubtitles(
+          audioConcat,
+          userId,
+          parsed,
+          exportOptions,
+          totalDuration,
+          totalFramesAfterTransitions,
+        );
+        exportOptions.subtitles.directory = subtitleDirectory;
+      } catch (error: unknown) {
+        console.error('Error creating subtitles', error);
+        exportOptions.subtitles = { enabled: false };
+      }
     }
     // create transcriptions
 

@@ -42,7 +42,7 @@ export class FrameWriter {
       // '0:v:0',
     ];
     if (this.options.subtitles || true) {
-      console.log('adding subtitles');
+      console.log('adding subtitle input');
       await this.addSubtitleInput(args, this.options);
     }
     this.addAudioFilters(args);

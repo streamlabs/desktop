@@ -5,6 +5,8 @@ import { getTranscription } from '../ai-highlighter-utils';
 import { SubtitleMode } from '../subtitles/subtitle-mode';
 import { IExportOptions } from '../models/rendering.models';
 import path from 'path';
+import { FontLoader } from '../subtitles/font-loader';
+import { FONT_CACHE_DIRECTORY } from '../constants';
 
 export const SUBTITLE_PER_SECOND = 3;
 
@@ -52,25 +54,40 @@ export async function createSubtitles(
   const exportResolution = exportOptions.complexFilter
     ? { width: exportOptions.height, height: exportOptions.width }
     : { width: exportOptions.width, height: exportOptions.height };
-  console.log('Export resolution', exportResolution);
+  const fontFamily = 'Montserrat';
   const svgCreator = new SvgCreator(exportResolution, {
-    fontSize: 20,
-    fontFamily: 'Arial',
+    fontSize: 46,
+    fontFamily,
     fontColor: 'white',
-    isBold: false,
+    isBold: true,
     isItalic: false,
   });
 
+  // Load custom font
+  try {
+    console.log('Loading custom font:', fontFamily);
+    const fontLoader = FontLoader.getInstance();
+    console.log(FONT_CACHE_DIRECTORY);
+    const fontBase64 = await fontLoader.loadGoogleFont(fontFamily);
+    if (fontBase64) {
+      console.log('Custom font loaded successfully');
+
+      await svgCreator.setCustomFont(fontBase64);
+    } else {
+      console.log('Custom font loading failed, using default font');
+    }
+  } catch (error: unknown) {
+    console.error('Error loading custom font:', error);
+    // Continue with system fonts if custom font fails
+  }
+
   const transcription = await getTranscription(mediaPath, userId, totalDuration);
-  console.log(transcription.words);
 
   const subtitleClips = transcription.generateSubtitleClips(
     SubtitleMode.static,
     exportOptions.width / exportOptions.height,
     20,
   );
-  console.log('Subtitle clips', subtitleClips);
-
   // Create subtitles
   let subtitleCounter = 0;
 
@@ -90,16 +107,6 @@ export async function createSubtitles(
       subtitlesToProcess.push('');
     }
   }
-  console.log(subtitlesToProcess);
-
-  // // Pre-calculate all needed subtitles to avoid redundant processing
-  // const uniqueClips = new Map();
-  // for (const { subtitleClip } of framesToProcess) {
-  //   const key = subtitleClip.text;
-  //   if (!uniqueClips.has(key)) {
-  //     uniqueClips.set(key, subtitleClip);
-  //   }
-  // }
 
   for (const subtitleText of subtitlesToProcess) {
     const svgString = svgCreator.getSvgWithText([subtitleText], 0);

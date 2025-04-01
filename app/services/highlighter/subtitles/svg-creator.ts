@@ -6,16 +6,19 @@ export interface ITextStyle {
   fontSize: number;
   fontFamily: string;
   fontColor: string;
-  isBold: boolean;
-  isItalic: boolean;
+  strokeColor?: string;
+  isBold?: boolean;
+  isItalic?: boolean;
 }
 export class SvgCreator {
   private lines: string[];
   private fontFamily: string;
   private fontSize: number;
   private fontColor: string;
+  private strokeColor: string;
   private isBold: boolean;
   private isItalic: boolean;
+  private fontBase64: string;
 
   private backgroundColor: string;
   private backgroundAlpha: number;
@@ -48,6 +51,7 @@ export class SvgCreator {
     this.svgType = 'Subtitle';
     this.resolution = resolution;
     this.subtitleHeightPositionFactor = this.calculateSubtitleHeightFactor(resolution);
+    this.fontBase64 = null;
 
     if (textElementOptions) {
       this.isBold = textElementOptions.isBold;
@@ -55,6 +59,7 @@ export class SvgCreator {
       this.fontSize = textElementOptions.fontSize;
       this.fontFamily = textElementOptions.fontFamily;
       this.fontColor = textElementOptions.fontColor;
+      this.strokeColor = textElementOptions.strokeColor;
       //   this.backgroundColor = textElementOptions.backgroundColor;
       //   this.backgroundAlpha = textElementOptions.backgroundColor === 'transparent' ? 0 : 1;
       //   this.backgroundBorderRadius = 2 * textElementOptions.scale;
@@ -72,7 +77,9 @@ export class SvgCreator {
       //   }
     }
   }
-
+  public async setCustomFont(fontBase64: string): Promise<void> {
+    this.fontBase64 = fontBase64;
+  }
   public static getProgressSquare(color: string) {
     return `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect width="100" height="100" fill="${color}"/>
@@ -104,7 +111,10 @@ export class SvgCreator {
   }
 
   private get svgSkeleton(): string {
-    return `<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="${this.resolution.width}" height="${this.resolution.height}" version="1.0">
+    return `<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="${
+      this.resolution.width
+    }" height="${this.resolution.height}" version="1.0">
+        ${this.fontBase64 ? this.getFontFaceStyle() : ''}
         <g transform="translate(${this.x} ${this.y})">
         
         ${this.background}
@@ -208,7 +218,11 @@ export class SvgCreator {
         text-anchor:middle;
         fill:${fontColor || '#ffffff'};
         fill-opacity:${alpha};
-        stroke-opacity:0;
+        
+        stroke:${this.strokeColor || 'none'};
+        stroke-opacity: ${this.strokeColor ? 1 : 0};
+        stroke-width:${this.strokeColor ? 1 : 0}px;
+
         font-family: '${this.fontFamily || 'Sans-Serif'}';
         font-style: ${this.isItalic ? 'italic' : 'normal'};
         font-weight: ${this.isBold ? 'bold' : 'normal'};
@@ -284,5 +298,26 @@ export class SvgCreator {
     } catch (error: unknown) {
       return false;
     }
+  }
+
+  private getFontFaceStyle(): string {
+    if (!this.fontBase64) return '';
+
+    return `<defs>
+      <style>
+        @font-face {
+          font-family: '${this.fontFamily}';
+          src: url('${this.fontBase64}') format('woff2');
+          font-weight: normal;
+          font-style: normal;
+        }
+        @font-face {
+          font-family: '${this.fontFamily}';
+          src: url('${this.fontBase64}') format('woff2');
+          font-weight: bold;
+          font-style: normal;
+        }
+      </style>
+    </defs>`;
   }
 }
