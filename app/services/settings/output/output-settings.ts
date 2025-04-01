@@ -49,6 +49,8 @@ enum EFileFormat {
   mkv = 'mkv',
   ts = 'ts',
   m3u8 = 'm3u8',
+  mpegts = 'mpegts',
+  hls = 'hls',
 }
 
 export const QUALITY_ORDER = [

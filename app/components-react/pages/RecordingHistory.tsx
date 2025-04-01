@@ -225,14 +225,21 @@ export function RecordingHistory() {
   }));
 
   useEffect(() => {
+    let isMounted = true;
+
     if (
       uploadInfo.error &&
       typeof uploadInfo.error === 'string' &&
-      // We don't want to surface unexpected TS errors to the user
       !/TypeError/.test(uploadInfo.error)
     ) {
-      postError(uploadInfo.error);
+      if (isMounted) {
+        postError(uploadInfo.error);
+      }
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [uploadInfo.error]);
 
   function openMarkersSettings() {
@@ -293,7 +300,11 @@ export function RecordingHistory() {
             <div className={styles.recording} key={recording.timestamp}>
               <span style={{ marginRight: '8px' }}>{formattedTimestamp(recording.timestamp)}</span>
               <Tooltip title={$t('Show in folder')}>
-                <span onClick={() => showFile(recording.filename)} className={styles.filename}>
+                <span
+                  data-test="filename"
+                  onClick={() => showFile(recording.filename)}
+                  className={styles.filename}
+                >
                   {recording.filename}
                 </span>
               </Tooltip>
