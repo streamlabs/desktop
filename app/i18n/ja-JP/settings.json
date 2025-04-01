@@ -667,6 +667,8 @@
   "confirmStreamTitleAndGameBeforeGoingLive": "ライブになる前にストリームのタイトルとゲームを確認して下さい。",
   "clearCacheConfirm": "警告: すべてのシーン、ソース、設定を抹消します。この操作は元に戻せません。",
   "restartConfirm": "N Airを再起動します。よろしいですか？",
+  "deleteCookiesAndRestart": "(ログイン状態が保存されない場合)クッキーを削除して再起動",
+  "deleteCookiesConfirm": "警告: 起動の度にログアウトしている問題の解消のため、クッキーを削除します。一旦ログアウトします",
   "itemNotFoundMessage": "要素が見つかりませんでした。 検索する語句を変更してみてください。",
   "desktopAudioDevice": "デスクトップ音声デバイス",
   "micAuxDevice": "マイク",
