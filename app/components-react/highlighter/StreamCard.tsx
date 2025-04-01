@@ -378,7 +378,6 @@ export function Thumbnail({
           clips.find(clip => clip?.streamInfo?.[stream.id]?.orderPosition === 0)?.scrubSprite ||
           clips.find(clip => clip.scrubSprite)?.scrubSprite
         }
-        alt=""
       />
       <div className={styles.centeredOverlayItem}>
         <div

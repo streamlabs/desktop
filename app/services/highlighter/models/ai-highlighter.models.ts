@@ -1,3 +1,8 @@
+export type TOrientation = EOrientation.HORIZONTAL | EOrientation.VERTICAL;
+export enum EOrientation {
+  HORIZONTAL = 'horizontal',
+  VERTICAL = 'vertical',
+}
 export interface IGameConfig {
   name: EGame;
   inputTypeMap: Record<string, IEventInfo | IDefaultEventInfo>;
@@ -25,8 +30,6 @@ export enum EGame {
   FORTNITE = 'fortnite',
   UNSET = 'unset',
 }
-
-export type TOrientation = 'horizontal' | 'vertical';
 
 export enum EHighlighterInputTypes {
   KILL = 'kill',

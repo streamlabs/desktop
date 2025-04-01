@@ -427,20 +427,12 @@ export class SourcesService extends StatefulService<ISourcesState> {
       type: managerType,
     };
 
-    // Needs to happen after properties manager creation, otherwise we can't fetch props
-    if (type === 'wasapi_input_capture') {
+    //function to check for missing device, return device description (display name)
+    function checkForDefaultDevice(): string {
       const props = source.getPropertiesFormData();
       const deviceProp = props.find(p => p.name === 'device_id');
 
-      if (deviceProp && deviceProp.value === 'default') {
-        const defaultDeviceNameProp = props.find(p => p.name === 'device_name');
-
-        if (defaultDeviceNameProp) {
-          this.usageStatisticsService.recordAnalyticsEvent('MicrophoneUse', {
-            device: defaultDeviceNameProp.description,
-          });
-        }
-      } else if (deviceProp && deviceProp.type === 'OBS_PROPERTY_LIST') {
+      if (deviceProp && deviceProp.type === 'OBS_PROPERTY_LIST') {
         const deviceOption = (deviceProp as IObsListInput<string>).options.find(
           opt => opt.value === deviceProp.value,
         );
@@ -448,15 +440,20 @@ export class SourcesService extends StatefulService<ISourcesState> {
           const updateSettings = source.getSettings();
           updateSettings['device_id'] = 'default';
           source.updateSettings(updateSettings);
-          this.usageStatisticsService.recordAnalyticsEvent('MicrophoneUse', {
-            device: 'Default',
-          });
-        } else {
-          this.usageStatisticsService.recordAnalyticsEvent('MicrophoneUse', {
-            device: deviceOption.description,
-          });
+          return 'Default';
         }
+        return deviceOption.description;
       }
+      return 'Default';
+    }
+
+    // Needs to happen after properties manager creation, otherwise we can't fetch props
+    if (type === 'wasapi_input_capture') {
+      this.usageStatisticsService.recordAnalyticsEvent('MicrophoneUse', {
+        device: checkForDefaultDevice(),
+      });
+    } else if (type === 'wasapi_output_capture') {
+      checkForDefaultDevice();
     }
 
     this.sourceAdded.next(source.state);

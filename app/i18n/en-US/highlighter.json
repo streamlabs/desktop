@@ -170,5 +170,7 @@
   "• Game mode is supported (Battle Royale, Reload, Zero Build, OG)": "• Game mode is supported (Battle Royale, Reload, Zero Build, OG)",
   "Show details": "Show details",
   "All requirements met but no luck?": "All requirements met but no luck?",
-  "Take a screenshot of your stream and share it here": "Take a screenshot of your stream and share it here"
+  "Take a screenshot of your stream and share it here": "Take a screenshot of your stream and share it here",
+  "Exporting video...": "Exporting video...",
+  "%{clipsAmount} clips": "%{clipsAmount} clips"
 }

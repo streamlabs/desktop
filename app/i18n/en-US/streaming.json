@@ -289,6 +289,8 @@
   "Issues": "Issues",
   "Multistream Error": "Multistream Error",
   "One of destinations might have incomplete permissions. Reconnect the destinations in settings and try again.": "One of destinations might have incomplete permissions. Reconnect the destinations in settings and try again.",
+  "Enhanced broadcasting": "Enhanced broadcasting",
+  "Enhanced broadcasting automatically optimizes your settings to encode and send multiple video qualities to Twitch. Selecting this option will send basic information about your computer and software setup.": "Enhanced broadcasting automatically optimizes your settings to encode and send multiple video qualities to Twitch. Selecting this option will send basic information about your computer and software setup.",
   "Failed Checks": "Failed Checks",
   "Video Transmission": "Video Transmission",
   "Optimized Settings": "Optimized Settings",
