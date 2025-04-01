@@ -35,6 +35,7 @@
         <experimental-settings v-if="categoryName === 'Experimental'" />
         <comment-settings v-if="categoryName === 'Comment'" />
         <speech-engine-settings v-if="categoryName === 'SpeechEngine'" />
+        <sub-stream-settings v-if="categoryName === 'SubStream'" />
         <GenericFormGroups
           v-if="
             !['Hotkeys', 'API', 'Notifications', 'Appearance', 'Experimental'].includes(

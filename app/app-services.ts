@@ -58,6 +58,7 @@ export { SourceFiltersService } from 'services/source-filters';
 export { Source, SourcesService } from 'services/sources';
 export { MonitorCaptureCroppingService } from 'services/sources/monitor-capture-cropping';
 export { StreamingService } from 'services/streaming';
+export { SubStreamService } from 'services/substream/SubStreamService';
 export { TransitionsService } from 'services/transitions';
 export { TroubleshooterService } from 'services/troubleshooter';
 export { UuidService } from 'services/uuid';
