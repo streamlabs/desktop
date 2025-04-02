@@ -101,11 +101,9 @@ function SchedulerCalendar() {
    * So delegate the click event to the root div
    */
   function onCalendarClick(event: MouseEvent) {
-    // TODO: index
-    // @ts-ignore
-    const $td = event.target!['closest']('td');
+    const $td = (event.target as HTMLTableElement)!['closest']('td');
     if (!$td) return;
-    $td.querySelector('[data-role="day"]')!['click']();
+    ($td.querySelector('[data-role="day"]') as HTMLDivElement)!['click']();
   }
 
   // define the date boundaries

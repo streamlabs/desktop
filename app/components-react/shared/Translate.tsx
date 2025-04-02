@@ -59,7 +59,7 @@ export default function Translate(p: {
     return <span>{s.xmlNodes.map(renderXmlNode)}</span>;
   }
 
-  function renderXmlNode(xmlNode: ChildNode, ind: number) {
+  function renderXmlNode(xmlNode: ChildNode & { tagName: string }, ind: number) {
     // don't handle script nodes
     if (xmlNode.nodeName === 'script') {
       throw new Error('XSS injection detected');
@@ -71,8 +71,6 @@ export default function Translate(p: {
     }
 
     // render slots if found
-    // TODO: index
-    // @ts-ignore
     const slotName = camelize(xmlNode['tagName']);
     const namedReactNode = s.namedReactNodes[slotName];
     if (namedReactNode) {

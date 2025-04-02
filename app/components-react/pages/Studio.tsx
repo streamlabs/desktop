@@ -1,10 +1,10 @@
 import React, { ReactNode, FunctionComponent, useMemo } from 'react';
-import { ELayoutElement, IVec2Array } from 'services/layout';
+import { ELayoutElement, IVec2Array, TLayoutSlot } from 'services/layout';
 import * as elements from 'components-react/editor/elements';
 import * as layouts from 'components-react/editor/layouts';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
-import { ILayoutProps, TSlot } from 'components-react/editor/layouts/hooks';
+import { ILayoutProps } from 'components-react/editor/layouts/hooks';
 
 export default function Studio(p: { onTotalWidth: (width: Number) => void }) {
   const { LayoutService } = Services;
@@ -26,7 +26,7 @@ export default function Studio(p: { onTotalWidth: (width: Number) => void }) {
   const Layout = (layouts as Dictionary<FunctionComponent<ILayoutProps>>)[layout];
 
   const { children, childrenMins } = useMemo(() => {
-    const children: Partial<Record<TSlot, ReactNode>> = {};
+    const children: Partial<Record<TLayoutSlot, ReactNode>> = {};
     const childrenMins: Dictionary<IVec2> = {};
     elementsToRender.forEach((el: ELayoutElement) => {
       const componentName = LayoutService.views.elementComponent(el);

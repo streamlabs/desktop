@@ -71,7 +71,7 @@ export interface ICustomizationServiceState {
   enableAnnouncements: boolean;
 }
 
-class PinnedStatistics extends RealmObject {
+class PinnedStatistics extends RealmObject implements IPinnedStatistics {
   cpu: boolean;
   fps: boolean;
   droppedFrames: boolean;

@@ -5,7 +5,7 @@ import css from './PlatformLogo.m.less';
 import { Services } from 'components-react/service-provider';
 import { useRealmObject } from 'components-react/hooks/realm';
 
-export const sizeMap = {
+export const sizeMap: Dictionary<number> = {
   small: 14,
   medium: 40,
 };
@@ -38,8 +38,6 @@ export default function PlatformLogo(p: IProps & HTMLAttributes<unknown>) {
       kick: 'kick',
     }[p.platform];
   }
-  // TODO: index
-  // @ts-ignore
   const size = p.size && (sizeMap[p.size] ?? p.size);
   const sizeStyle = size
     ? {
