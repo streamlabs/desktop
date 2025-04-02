@@ -1,8 +1,9 @@
 import React from 'react';
 import cx from 'classnames';
-import useLayout, { ILayoutProps, TSlot } from './hooks';
+import useLayout, { ILayoutProps } from './hooks';
 import ResizeBar from 'components-react/root/ResizeBar';
 import styles from './Layouts.m.less';
+import { TLayoutSlot } from 'services/layout';
 
 export function Pyramid(p: ILayoutProps) {
   const { mins, bars, resizes, calculateMax, setBar, componentRef } = useLayout(
@@ -28,7 +29,7 @@ export function Pyramid(p: ILayoutProps) {
           className={styles.segmented}
           style={{ height: `${resizes.bar1 * 100}%`, padding: '0 8px' }}
         >
-          {['2', '3'].map((slot: TSlot) => (
+          {['2', '3'].map((slot: TLayoutSlot) => (
             <div className={cx(styles.cell, 'no-top-padding')} key={slot}>
               {p.children?.[slot] || <></>}
             </div>

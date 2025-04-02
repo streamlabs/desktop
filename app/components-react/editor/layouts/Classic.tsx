@@ -1,8 +1,9 @@
 import React from 'react';
 import cx from 'classnames';
-import useLayout, { ILayoutProps, TSlot } from './hooks';
+import useLayout, { ILayoutProps } from './hooks';
 import ResizeBar from 'components-react/root/ResizeBar';
 import styles from './Layouts.m.less';
+import { TLayoutSlot } from 'services/layout';
 
 export function Classic(p: ILayoutProps) {
   const { mins, bars, resizes, calculateMax, setBar, componentRef } = useLayout(
@@ -28,7 +29,7 @@ export function Classic(p: ILayoutProps) {
           className={styles.segmented}
           style={{ height: `${resizes.bar1 * 100}%`, padding: '8px' }}
         >
-          {['2', '3', '4'].map((slot: TSlot) => (
+          {['2', '3', '4'].map((slot: TLayoutSlot) => (
             <div key={slot} className={cx(styles.cell, 'no-top-padding')}>
               {p.children?.[slot] || <></>}
             </div>

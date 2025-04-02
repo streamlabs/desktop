@@ -14,13 +14,15 @@ export { ELayout, ELayoutElement };
 
 export interface IVec2Array extends Array<IVec2Array | IVec2> {}
 
-export type LayoutSlot = '1' | '2' | '3' | '4' | '5' | '6';
+export type TLayoutSlot = '1' | '2' | '3' | '4' | '5' | '6';
+
+export type TSlottedElements = Partial<Record<ELayoutElement, { slot: TLayoutSlot; src?: string }>>;
 
 interface ILayoutState {
   name: string;
   icon: string;
   currentLayout: ELayout;
-  slottedElements: { [Element in ELayoutElement]?: { slot: LayoutSlot; src?: string } };
+  slottedElements: TSlottedElements;
   resizes: { bar1: number; bar2: number };
 }
 interface ILayoutServiceState {
@@ -211,7 +213,7 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
     this.checkUsage();
   }
 
-  setSlots(slottedElements: { [key in ELayoutElement]?: { slot: LayoutSlot } }) {
+  setSlots(slottedElements: { [key in ELayoutElement]?: { slot: TLayoutSlot } }) {
     this.SET_SLOTS(slottedElements);
   }
 
@@ -238,7 +240,7 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
   }
 
   @mutation()
-  SET_SLOTS(slottedElements: { [key in ELayoutElement]?: { slot: LayoutSlot } }) {
+  SET_SLOTS(slottedElements: { [key in ELayoutElement]?: { slot: TLayoutSlot } }) {
     // This is necessary because of the reversed data model of this service's state,
     // combined with the way persistent stateful service does a deep merge of default
     // state. If we don't explicitly set elements contained in the default state to null

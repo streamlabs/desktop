@@ -1,8 +1,9 @@
 import React from 'react';
 import cx from 'classnames';
-import useLayout, { ILayoutProps, TSlot } from './hooks';
+import useLayout, { ILayoutProps } from './hooks';
 import ResizeBar from 'components-react/root/ResizeBar';
 import styles from './Layouts.m.less';
+import { TLayoutSlot } from 'services/layout';
 
 export function Triplets(p: ILayoutProps) {
   const { mins, bars, resizes, calculateMax, setBar, componentRef } = useLayout(
@@ -29,7 +30,7 @@ export function Triplets(p: ILayoutProps) {
           className={styles.stacked}
           style={{ width: `${100 - (resizes.bar1 + resizes.bar2) * 100}%` }}
         >
-          {['1', '4'].map((slot: TSlot) => (
+          {['1', '4'].map((slot: TLayoutSlot) => (
             <div key={slot} className={styles.cell}>
               {p.children?.[slot] || <></>}
             </div>
@@ -37,7 +38,7 @@ export function Triplets(p: ILayoutProps) {
         </div>
       </ResizeBar>
       <div className={styles.stacked} style={{ width: `${resizes.bar1 * 100}%` }}>
-        {['2', '5'].map((slot: TSlot) => (
+        {['2', '5'].map((slot: TLayoutSlot) => (
           <div key={slot} className={styles.cell}>
             {p.children?.[slot] || <></>}
           </div>
@@ -52,7 +53,7 @@ export function Triplets(p: ILayoutProps) {
         transformScale={1}
       >
         <div className={styles.stacked} style={{ width: `${resizes.bar2 * 100}%` }}>
-          {['3', '6'].map((slot: TSlot) => (
+          {['3', '6'].map((slot: TLayoutSlot) => (
             <div key={slot} className={styles.cell}>
               {p.children?.[slot] || <></>}
             </div>
