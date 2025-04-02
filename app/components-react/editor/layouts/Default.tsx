@@ -1,10 +1,10 @@
 import React from 'react';
 import cx from 'classnames';
-import useLayout, { LayoutProps } from './hooks';
+import useLayout, { ILayoutProps, TSlot } from './hooks';
 import ResizeBar from 'components-react/root/ResizeBar';
 import styles from './Layouts.m.less';
 
-export function Default(p: React.PropsWithChildren<LayoutProps>) {
+export function Default(p: ILayoutProps) {
   const { mins, bars, resizes, calculateMax, setBar, componentRef } = useLayout(
     [['1'], ['2'], ['3', '4', '5']],
     false,
@@ -18,11 +18,7 @@ export function Default(p: React.PropsWithChildren<LayoutProps>) {
         className={styles.cell}
         style={{ height: `${100 - (resizes.bar1 + resizes.bar2!) * 100}%` }}
       >
-        {
-          // TODO: index
-          // @ts-ignore
-          p.children?.['1'] || <></>
-        }
+        {p.children?.['1'] || <></>}
       </div>
       <ResizeBar
         position="top"
@@ -36,11 +32,7 @@ export function Default(p: React.PropsWithChildren<LayoutProps>) {
           style={{ height: `${resizes.bar1 * 100}%` }}
           className={cx(styles.cell, 'no-top-padding')}
         >
-          {
-            // TODO: index
-            // @ts-ignore
-            p.children?.['2'] || <></>
-          }
+          {p.children?.['2'] || <></>}
         </div>
       </ResizeBar>
       <ResizeBar
@@ -54,13 +46,9 @@ export function Default(p: React.PropsWithChildren<LayoutProps>) {
           className={styles.segmented}
           style={{ height: `${resizes.bar2! * 100}%`, padding: '0 8px' }}
         >
-          {['3', '4', '5'].map(slot => (
+          {['3', '4', '5'].map((slot: TSlot) => (
             <div key={slot} className={cx(styles.cell, 'no-top-padding')}>
-              {
-                // TODO: index
-                // @ts-ignore
-                p.children?.[slot] || <></>
-              }
+              {p.children?.[slot] || <></>}
             </div>
           ))}
         </div>

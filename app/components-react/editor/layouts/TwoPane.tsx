@@ -1,10 +1,10 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import cx from 'classnames';
-import useLayout, { LayoutProps } from './hooks';
+import useLayout, { ILayoutProps } from './hooks';
 import ResizeBar from 'components-react/root/ResizeBar';
 import styles from './Layouts.m.less';
 
-export function TwoPane(p: React.PropsWithChildren<LayoutProps>) {
+export function TwoPane(p: ILayoutProps) {
   const { mins, bars, resizes, calculateMax, setBar, componentRef } = useLayout(
     [['2'], ['5'], ['1', ['3', '4']]],
     true,
@@ -25,36 +25,16 @@ export function TwoPane(p: React.PropsWithChildren<LayoutProps>) {
           style={{ width: `${100 - (resizes.bar1 + resizes.bar2) * 100}%` }}
           className={styles.cell}
         >
-          {
-            // TODO: index
-            // @ts-ignore
-            p.children?.['2'] || <></>
-          }
+          {p.children?.['2'] || <></>}
         </div>
       </ResizeBar>
       <div className={styles.rows} style={{ width: `${resizes.bar1 * 100}%`, paddingTop: '16px' }}>
         <div style={{ height: '100%' }} className={styles.cell}>
-          {
-            // TODO: index
-            // @ts-ignore
-            p.children?.['1'] || <></>
-          }
+          {p.children?.['1'] || <></>}
         </div>
         <div className={styles.segmented}>
-          <div className={styles.cell}>
-            {
-              // TODO: index
-              // @ts-ignore
-              p.children?.['3'] || <></>
-            }
-          </div>
-          <div className={styles.cell}>
-            {
-              // TODO: index
-              // @ts-ignore
-              p.children?.['4'] || <></>
-            }
-          </div>
+          <div className={styles.cell}>{p.children?.['3'] || <></>}</div>
+          <div className={styles.cell}>{p.children?.['4'] || <></>}</div>
         </div>
       </div>
       <ResizeBar
@@ -66,11 +46,7 @@ export function TwoPane(p: React.PropsWithChildren<LayoutProps>) {
         transformScale={1}
       >
         <div style={{ width: `${resizes.bar2 * 100}%` }} className={styles.cell}>
-          {
-            // TODO: index
-            // @ts-ignore
-            p.children?.['5'] || <></>
-          }
+          {p.children?.['5'] || <></>}
         </div>
       </ResizeBar>
     </div>

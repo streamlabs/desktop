@@ -14,6 +14,11 @@ export interface IResizeMins {
   bar2: number | null;
 }
 
+export type TSlot = '1' | '2' | '3' | '4' | '5' | '6';
+export interface ILayoutProps extends React.PropsWithChildren<LayoutProps> {
+  children: React.ReactNode & Record<TSlot, React.ReactNode>;
+}
+
 export interface ILayoutSlotArray extends Array<ILayoutSlotArray | LayoutSlot> {}
 
 /**

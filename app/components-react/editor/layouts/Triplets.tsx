@@ -1,10 +1,10 @@
 import React from 'react';
 import cx from 'classnames';
-import useLayout, { LayoutProps } from './hooks';
+import useLayout, { ILayoutProps, TSlot } from './hooks';
 import ResizeBar from 'components-react/root/ResizeBar';
 import styles from './Layouts.m.less';
 
-export function Triplets(p: React.PropsWithChildren<LayoutProps>) {
+export function Triplets(p: ILayoutProps) {
   const { mins, bars, resizes, calculateMax, setBar, componentRef } = useLayout(
     [
       ['1', '4'],
@@ -29,25 +29,17 @@ export function Triplets(p: React.PropsWithChildren<LayoutProps>) {
           className={styles.stacked}
           style={{ width: `${100 - (resizes.bar1 + resizes.bar2) * 100}%` }}
         >
-          {['1', '4'].map(slot => (
+          {['1', '4'].map((slot: TSlot) => (
             <div key={slot} className={styles.cell}>
-              {
-                // TODO: index
-                // @ts-ignore
-                p.children?.[slot] || <></>
-              }
+              {p.children?.[slot] || <></>}
             </div>
           ))}
         </div>
       </ResizeBar>
       <div className={styles.stacked} style={{ width: `${resizes.bar1 * 100}%` }}>
-        {['2', '5'].map(slot => (
+        {['2', '5'].map((slot: TSlot) => (
           <div key={slot} className={styles.cell}>
-            {
-              // TODO: index
-              // @ts-ignore
-              p.children?.[slot] || <></>
-            }
+            {p.children?.[slot] || <></>}
           </div>
         ))}
       </div>
@@ -60,13 +52,9 @@ export function Triplets(p: React.PropsWithChildren<LayoutProps>) {
         transformScale={1}
       >
         <div className={styles.stacked} style={{ width: `${resizes.bar2 * 100}%` }}>
-          {['3', '6'].map(slot => (
+          {['3', '6'].map((slot: TSlot) => (
             <div key={slot} className={styles.cell}>
-              {
-                // TODO: index
-                // @ts-ignore
-                p.children?.[slot] || <></>
-              }
+              {p.children?.[slot] || <></>}
             </div>
           ))}
         </div>
