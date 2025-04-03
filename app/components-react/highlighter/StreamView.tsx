@@ -75,28 +75,10 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
   });
 
   const [showModal, rawSetShowModal] = useState<TModalStreamView | null>(null);
-  const [modalWidth, setModalWidth] = useState('700px');
   const [clipsOfStreamAreLoading, setClipsOfStreamAreLoading] = useState<string | null>(null);
 
-  // This is kind of weird, but ensures that modals stay the right
-  // size while the closing animation is played. This is why modal
-  // width has its own state. This makes sure we always set the right
-  // size whenever displaying a modal.
   function setShowModal(modal: TModalStreamView | null) {
     rawSetShowModal(modal);
-
-    if (modal && modal.type) {
-      setModalWidth(
-        {
-          trim: '60%',
-          preview: '700px',
-          export: '700px',
-          remove: '400px',
-          upload: '400px',
-          requirements: '400px',
-        }[modal.type],
-      );
-    }
   }
 
   async function previewVideo(id: string) {
@@ -306,7 +288,7 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
         getContainer={`.${styles.streamViewRoot}`}
         onCancel={closeModal}
         footer={null}
-        width={modalWidth}
+        width={showModal?.type === 'preview' ? 700 : 'fit-content'}
         closable={false}
         visible={!!showModal}
         destroyOnClose={true}

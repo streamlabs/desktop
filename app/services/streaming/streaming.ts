@@ -953,8 +953,13 @@ export class StreamingService
     }
 
     const replayWhenStreaming = this.streamSettingsService.settings.replayBufferWhileStreaming;
+    const isReplayBufferEnabled = this.outputSettingsService.getSettings().replayBuffer.enabled;
 
-    if (replayWhenStreaming && this.state.replayBufferStatus === EReplayBufferState.Offline) {
+    if (
+      replayWhenStreaming &&
+      isReplayBufferEnabled &&
+      this.state.replayBufferStatus === EReplayBufferState.Offline
+    ) {
       this.startReplayBuffer();
     }
 
@@ -1370,7 +1375,6 @@ export class StreamingService
         });
         this.recordingModeService.actions.addRecordingEntry(parsedFilename);
         this.markersService.actions.exportCsv(parsedFilename);
-        this.recordingModeService.addRecordingEntry(parsedFilename);
         this.latestRecordingPath.next(filename);
         // Wrote signals come after Offline, so we return early here
         // to not falsely set our state out of Offline

@@ -64,6 +64,7 @@ import {
   IHighlight,
   IHighlighterMilestone,
   IInput,
+  EOrientation,
   EGame,
 } from './models/ai-highlighter.models';
 import { HighlighterViews } from './highlighter-views';
@@ -111,8 +112,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       exported: false,
       error: null,
       fps: 30,
-      resolution: 720,
-      preset: 'ultrafast',
+      resolution: 1080,
+      preset: 'fast',
     },
     upload: {
       uploading: false,
@@ -965,7 +966,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   async export(
     preview = false,
     streamId: string | undefined = undefined,
-    orientation: TOrientation = 'horizontal',
+    orientation: TOrientation = EOrientation.HORIZONTAL,
   ) {
     this.resetRenderingClips();
     await this.loadClips(streamId);

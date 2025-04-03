@@ -62,6 +62,7 @@ export { VideoSettingsService } from 'services/settings-v2/video';
 export { SettingsManagerService } from 'services/settings-manager';
 export { MarkersService } from 'services/markers';
 export { RealmService } from 'services/realm';
+import { VirtualWebcamService } from 'services/virtual-webcam';
 
 // ONLINE SERVICES
 export { UserService } from './services/user';
@@ -291,4 +292,5 @@ export const AppServices = {
   RealmService,
   RemoteControlService,
   UrlService,
+  VirtualWebcamService,
 };

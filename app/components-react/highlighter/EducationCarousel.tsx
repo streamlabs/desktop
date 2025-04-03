@@ -119,28 +119,24 @@ const SupportedGameModes = () => (
         <div className={styles.gameModeImageWrapper}>
           <img
             src="https://cdn.streamlabs.com/static/imgs/carousel-images/battle-royale.png"
-            alt=""
             className={styles.gameModeImage}
           />
         </div>
         <div className={styles.gameModeImageWrapper}>
           <img
             src="https://cdn.streamlabs.com/static/imgs/carousel-images/zero-build.png"
-            alt=""
             className={styles.gameModeImage}
           />
         </div>
         <div className={styles.gameModeImageWrapper}>
           <img
             src="https://cdn.streamlabs.com/static/imgs/carousel-images/reload.png"
-            alt=""
             className={styles.gameModeImage}
           />
         </div>
         <div className={styles.gameModeImageWrapper}>
           <img
             src="https://cdn.streamlabs.com/static/imgs/carousel-images/og.png"
-            alt=""
             className={styles.gameModeImage}
           />
         </div>
@@ -163,7 +159,6 @@ const Overlay = () => (
           </div>
           <img
             src="https://cdn.streamlabs.com/static/imgs/carousel-images/correct.png"
-            alt=""
             className={styles.gameModeImage}
           />
         </div>
@@ -176,7 +171,6 @@ const Overlay = () => (
               </div>
               <img
                 src="https://cdn.streamlabs.com/static/imgs/carousel-images/false-map.png"
-                alt=""
                 className={styles.gameModeImage}
               />
             </div>{' '}
@@ -187,7 +181,6 @@ const Overlay = () => (
               </div>
               <img
                 src="https://cdn.streamlabs.com/static/imgs/carousel-images/false-overlay.png"
-                alt=""
                 className={styles.gameModeImage}
               />
             </div>

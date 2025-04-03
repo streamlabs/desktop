@@ -4,8 +4,8 @@
       "name": "obs-studio-node",
       "url": "https://s3-us-west-2.amazonaws.com/obsstudionodes3.streamlabs.com/",
       "archive": "osn-[VERSION]-release-[OS][ARCH].tar.gz",
-      "version": "0.25.15",
-      "mac_version": "0.25.15",
+      "version": "0.25.17",
+      "mac_version": "0.25.17",
       "win64": true,
       "osx": true
     },

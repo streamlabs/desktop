@@ -241,10 +241,6 @@ class SettingsViews extends ViewHandler<ISettingsServiceState> {
 
     return null;
   }
-
-  get virtualWebcamSettings() {
-    return this.state['Virtual Webcam'].formData;
-  }
 }
 
 export class SettingsService extends StatefulService<ISettingsServiceState> {
@@ -351,6 +347,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     this.getCategories().forEach((categoryName: keyof ISettingsServiceState) => {
       settingsFormData[categoryName] = this.fetchSettingsFromObs(categoryName);
     });
+
     this.SET_SETTINGS(settingsFormData);
   }
 
@@ -688,6 +685,14 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
           'Your stream encoder has been reset to Software (x264). This can be caused by out of date graphics drivers. Please update your graphics drivers to continue using hardware encoding.',
       });
     }
+  }
+
+  isEnhancedBroadcasting() {
+    return obs.NodeObs.OBS_settings_isEnhancedBroadcasting();
+  }
+
+  setEnhancedBroadcasting(enable: boolean) {
+    obs.NodeObs.OBS_settings_setEnhancedBroadcasting(enable);
   }
 
   @mutation()

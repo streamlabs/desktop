@@ -48,7 +48,7 @@ export default function ClipsViewModal({
         {
           trim: '60%',
           preview: '700px',
-          export: '700px',
+          export: 'fit-content',
           remove: '400px',
         }[modal],
       );
