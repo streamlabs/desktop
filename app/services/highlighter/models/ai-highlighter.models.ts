@@ -3,11 +3,19 @@ export enum EOrientation {
   HORIZONTAL = 'horizontal',
   VERTICAL = 'vertical',
 }
+
+export enum EGameState {
+  INTERNAL = 'internal',
+  LIVE = 'live',
+  BETA_LIVE = 'beta_live',
+}
+
 export interface IGameConfig {
   name: EGame;
   label: string;
   gameModes: string;
   thumbnail: string;
+  state: EGameState;
   inputTypeMap: Record<string, IEventInfo | IDefaultEventInfo>;
 }
 

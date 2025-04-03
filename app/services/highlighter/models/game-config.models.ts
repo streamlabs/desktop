@@ -5,7 +5,9 @@ import {
   EGame,
   IEventInfo,
   IDefaultEventInfo,
+  EGameState,
 } from './ai-highlighter.models';
+import Utils from 'services/utils';
 
 export const TERMS = {
   ELIMINATION: { singular: 'elimination', plural: 'eliminations' },
@@ -106,6 +108,7 @@ export const FORTNITE_CONFIG: IGameConfig = {
   label: 'Fortnite',
   gameModes: 'Battle Royale, Zero Build, Reload, OG',
   thumbnail: `https://cdn.streamlabs.com/static/imgs/game-thumbnails/${EGame.FORTNITE}.png`,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
     ['deploy']: {
@@ -130,6 +133,7 @@ const WARZONE_CONFIG: IGameConfig = {
   label: 'Call of Duty: Warzone',
   gameModes: '',
   thumbnail: `https://cdn.streamlabs.com/static/imgs/game-thumbnails/${EGame.WARZONE}.png`,
+  state: EGameState.INTERNAL,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -140,6 +144,7 @@ const MARVEL_RIVALS_CONFIG: IGameConfig = {
   label: 'Marvel Rivals',
   gameModes: '',
   thumbnail: 'https://cdn.streamlabs.com/static/imgs/game-thumbnails/marvel-rivals.png',
+  state: EGameState.INTERNAL,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -150,6 +155,7 @@ const WAR_THUNDER_CONFIG: IGameConfig = {
   label: 'War Thunder',
   gameModes: '',
   thumbnail: 'https://cdn.streamlabs.com/static/imgs/game-thumbnails/war-thunder.png',
+  state: EGameState.INTERNAL,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -160,6 +166,7 @@ const UNSET_CONFIG: IGameConfig = {
   label: 'unset',
   gameModes: 'unset',
   thumbnail: 'unset',
+  state: EGameState.INTERNAL,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -176,6 +183,13 @@ const GAME_CONFIGS: Record<EGame, IGameConfig> = {
 
 export const supportedGames = Object.entries(GAME_CONFIGS)
   .filter(([gameKey]) => gameKey !== EGame.UNSET)
+  .filter(([gameKey, gameConfig]) => {
+    if (Utils.getHighlighterEnvironment() === 'production') {
+      return gameConfig.state !== EGameState.INTERNAL;
+    } else {
+      return true;
+    }
+  })
   .map(([gameKey, gameConfig]) => {
     return {
       value: gameKey as EGame,
