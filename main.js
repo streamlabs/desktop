@@ -45,6 +45,21 @@ const path = require('path');
 const rimraf = require('rimraf');
 const remote = require('@electron/remote/main');
 
+function rimrafWithRetry(rmPath) {
+  const MAX_RETRIES = 3;
+  for (let t = MAX_RETRIES; t > 0; t--) {
+    try {
+      rimraf.sync(rmPath);
+    } catch (e) {
+      console.error(`failed to delete '${rmPath}: `, e);
+      if (!t) {
+        // Sentry未初期化のため送信できない
+        dialog.showErrorBox('ファイルの削除に失敗しました', `Failed to delete '${rmPath}'.\n${e}`);
+      }
+    }
+  }
+}
+
 // We use a special cache directory for running tests
 if (process.env.NAIR_CACHE_DIR) {
   app.setPath('appData', process.env.NAIR_CACHE_DIR);
@@ -56,7 +71,7 @@ if (process.env.NAIR_CACHE_DIR) {
 if (process.argv.includes('--clearCacheDir')) {
   const rmPath = app.getPath('userData');
   console.log('clear cache directory!: ', rmPath);
-  rimraf.sync(rmPath);
+  rimrafWithRetry(rmPath);
 }
 
 function getCookieFiles() {
@@ -74,7 +89,7 @@ async function clearCookies() {
   console.log('clear cookies: ', files);
   for (const file of files) {
     try {
-      rimraf.sync(file);
+      rimrafWithRetry(file);
     } catch (e) {
       console.error('failed to delete cookie file', file, e);
     }
@@ -242,7 +257,7 @@ function initialize(crashHandler) {
 
   // workaround for  https://github.com/electron/electron/issues/19468, https://github.com/electron/electron/issues/19978
   // (Electron 6 to 8 does not launch in Win10 dark mode with DevTool extensions installed)
-  rimraf.sync(path.join(app.getPath('userData'), 'DevTools Extensions'));
+  rimrafWithRetry(path.join(app.getPath('userData'), 'DevTools Extensions'));
 
   const util = require('util');
   const logFile = path.join(app.getPath('userData'), 'app.log');
