@@ -3,7 +3,7 @@ import { Collapse } from 'antd';
 import cx from 'classnames';
 import { IHotkey } from 'services/hotkeys';
 import Hotkey from './Hotkey';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayType } from 'services/video';
 import Tabs from 'components-react/shared/Tabs';
 import { $t } from 'services/i18n';
 

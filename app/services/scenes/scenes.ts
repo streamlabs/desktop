@@ -15,7 +15,7 @@ import namingHelpers from 'util/NamingHelpers';
 import uuid from 'uuid/v4';
 import { DualOutputService } from 'services/dual-output';
 import { SceneCollectionsService } from 'services/scene-collections';
-import { TDisplayType } from 'services/settings-v2/video';
+import { TDisplayType } from 'services/video';
 import { ExecuteInWorkerProcess, InitAfter, ViewHandler } from 'services/core';
 
 export type TSceneNodeModel = ISceneItem | ISceneItemFolder;

@@ -1,6 +1,6 @@
 import { Node } from '../node';
 import { SceneItem } from '../../../scenes';
-import { VideoSettingsService } from '../../../settings-v2/video';
+import { VideoService } from 'services/video';
 import { SourcesService } from '../../../sources';
 import sortBy from 'lodash/sortBy';
 import { IListProperty } from '../../../../../obs-api';
@@ -31,7 +31,7 @@ interface IResolution {
 export class WebcamNode extends Node<ISchema, IContext> {
   schemaVersion = 1;
 
-  videoSettingsService: VideoSettingsService = VideoSettingsService.instance;
+  videoService: VideoService = VideoService.instance;
   sourcesService: SourcesService = SourcesService.instance;
   @Inject() private defaultHardwareService: DefaultHardwareService;
 
@@ -39,14 +39,14 @@ export class WebcamNode extends Node<ISchema, IContext> {
     const rect = new ScalableRectangle(context.sceneItem.rectangle);
 
     this.data = {
-      width: rect.scaledWidth / this.videoSettingsService.baseWidth,
-      height: rect.scaledHeight / this.videoSettingsService.baseHeight,
+      width: rect.scaledWidth / this.videoService.baseWidth,
+      height: rect.scaledHeight / this.videoService.baseHeight,
     };
   }
 
   async load(context: IContext) {
-    const targetWidth = this.data.width * this.videoSettingsService.baseWidth;
-    const targetHeight = this.data.height * this.videoSettingsService.baseHeight;
+    const targetWidth = this.data.width * this.videoService.baseWidth;
+    const targetHeight = this.data.height * this.videoService.baseHeight;
     const targetAspect = targetWidth / targetHeight;
     const input = context.sceneItem.getObsInput();
     let resolution: IResolution;
@@ -108,8 +108,8 @@ export class WebcamNode extends Node<ISchema, IContext> {
   // This selects the video device and picks the best resolution.
   // It should not be performed if context.existing is true
   performInitialSetup(item: SceneItem) {
-    const targetWidth = this.data.width * this.videoSettingsService.baseWidth;
-    const targetHeight = this.data.height * this.videoSettingsService.baseHeight;
+    const targetWidth = this.data.width * this.videoService.baseWidth;
+    const targetHeight = this.data.height * this.videoService.baseHeight;
     const targetAspect = targetWidth / targetHeight;
     const input = item.getObsInput();
 

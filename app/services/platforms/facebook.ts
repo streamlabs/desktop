@@ -13,7 +13,7 @@ import { throwStreamError } from 'services/streaming/stream-error';
 import { BasePlatformService } from './base-platform';
 import { WindowsService } from '../windows';
 import { assertIsDefined, getDefined } from '../../util/properties-type-guards';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayType } from 'services/video';
 import { TOutputOrientation } from 'services/restream';
 import { ENotificationType, NotificationsService } from '../notifications';
 import { $t } from '../i18n';

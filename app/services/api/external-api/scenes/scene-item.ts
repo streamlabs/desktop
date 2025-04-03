@@ -12,7 +12,7 @@ import { getExternalNodeModel, ISceneNodeModel, SceneNode } from './scene-node';
 import Utils from '../../../utils';
 import { ServiceHelper } from '../../../core';
 import { IVideo } from 'obs-studio-node';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayType } from 'services/video';
 
 /**
  * Serialized representation of {@link SceneItem}.

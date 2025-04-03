@@ -1,7 +1,7 @@
 import { SettingsService } from 'services/settings';
 import { Inject } from 'services/core/injector';
 import { SceneItem } from 'services/scenes';
-import { VideoSettingsService } from 'services/settings-v2';
+import { VideoService } from 'services/video';
 import { WindowsService } from 'services/windows';
 import { DualOutputService } from 'services/dual-output';
 import { ScalableRectangle } from 'util/ScalableRectangle';
@@ -58,7 +58,7 @@ interface IDragHandlerOptions {
 // Encapsulates logic for dragging sources in the overlay editor
 export class DragHandler {
   @Inject() private settingsService: SettingsService;
-  @Inject() private videoSettingsService: VideoSettingsService;
+  @Inject() private videoService: VideoService;
   @Inject() private windowsService: WindowsService;
   @Inject() private selectionService: SelectionService;
   @Inject() private editorCommandsService: EditorCommandsService;
@@ -102,7 +102,7 @@ export class DragHandler {
     this.centerSnapping = this.settingsService.views.values.General.CenterSnapping;
 
     // Load some attributes about the video canvas
-    const baseRes = this.videoSettingsService.baseResolutions[startEvent.display];
+    const baseRes = this.videoService.baseResolutions[startEvent.display];
     this.baseWidth = baseRes.baseWidth;
     this.baseHeight = baseRes.baseHeight;
 
@@ -281,8 +281,8 @@ export class DragHandler {
   }
 
   private pageSpaceToCanvasSpace(vec: IVec2, display = 'horizontal') {
-    const baseWidth = this.videoSettingsService.baseResolutions[display].baseWidth;
-    const baseHeight = this.videoSettingsService.baseResolutions[display].baseHeight;
+    const baseWidth = this.videoService.baseResolutions[display].baseWidth;
+    const baseHeight = this.videoService.baseResolutions[display].baseHeight;
     return {
       x: (vec.x * this.scaleFactor * baseWidth) / this.displaySize.x,
       y: (vec.y * this.scaleFactor * baseHeight) / this.displaySize.y,

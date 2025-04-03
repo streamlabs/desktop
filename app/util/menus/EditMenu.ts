@@ -13,7 +13,7 @@ import { ProjectorService } from 'services/projector';
 import { $t } from 'services/i18n';
 import { EditorCommandsService } from 'services/editor-commands';
 import { StreamingService } from 'services/streaming';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayType } from 'services/video';
 import * as remote from '@electron/remote';
 import { ProjectorMenu } from './ProjectorMenu';
 import { FiltersMenu } from './FiltersMenu';
