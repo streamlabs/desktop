@@ -54,32 +54,14 @@ export async function createSubtitles(
   const exportResolution = exportOptions.complexFilter
     ? { width: exportOptions.height, height: exportOptions.width }
     : { width: exportOptions.width, height: exportOptions.height };
-  const fontFamily = 'Montserrat';
   const svgCreator = new SvgCreator(exportResolution, {
     fontSize: 46,
-    fontFamily,
+    fontFamily: 'Impact',
     fontColor: 'white',
+    strokeColor: 'black',
+    strokeWidth: 6,
     isBold: true,
-    isItalic: false,
   });
-
-  // Load custom font
-  try {
-    console.log('Loading custom font:', fontFamily);
-    const fontLoader = FontLoader.getInstance();
-    console.log(FONT_CACHE_DIRECTORY);
-    const fontBase64 = await fontLoader.loadGoogleFont(fontFamily);
-    if (fontBase64) {
-      console.log('Custom font loaded successfully');
-
-      await svgCreator.setCustomFont(fontBase64);
-    } else {
-      console.log('Custom font loading failed, using default font');
-    }
-  } catch (error: unknown) {
-    console.error('Error loading custom font:', error);
-    // Continue with system fonts if custom font fails
-  }
 
   const transcription = await getTranscription(mediaPath, userId, totalDuration);
 

@@ -7,18 +7,14 @@ export interface ITextStyle {
   fontFamily: string;
   fontColor: string;
   strokeColor?: string;
+  strokeWidth?: number;
   isBold?: boolean;
   isItalic?: boolean;
 }
 export class SvgCreator {
   private lines: string[];
-  private fontFamily: string;
-  private fontSize: number;
-  private fontColor: string;
-  private strokeColor: string;
-  private isBold: boolean;
-  private isItalic: boolean;
-  private fontBase64: string;
+
+  private textStyle: ITextStyle;
 
   private backgroundColor: string;
   private backgroundAlpha: number;
@@ -41,51 +37,23 @@ export class SvgCreator {
   private backgroundWidth: number;
   private rtlLanguage = false;
 
-  constructor(
-    resolution: IResolution,
-    textElementOptions?: ITextStyle,
-    scaleBackground?: boolean,
-    rightToLeftLanguage = false,
-  ) {
-    this.rtlLanguage = rightToLeftLanguage;
+  constructor(resolution: IResolution, textElementOptions?: ITextStyle) {
     this.svgType = 'Subtitle';
     this.resolution = resolution;
     this.subtitleHeightPositionFactor = this.calculateSubtitleHeightFactor(resolution);
-    this.fontBase64 = null;
 
     if (textElementOptions) {
-      this.isBold = textElementOptions.isBold;
-      this.isItalic = textElementOptions.isItalic;
-      this.fontSize = textElementOptions.fontSize;
-      this.fontFamily = textElementOptions.fontFamily;
-      this.fontColor = textElementOptions.fontColor;
-      this.strokeColor = textElementOptions.strokeColor;
-      //   this.backgroundColor = textElementOptions.backgroundColor;
-      //   this.backgroundAlpha = textElementOptions.backgroundColor === 'transparent' ? 0 : 1;
-      //   this.backgroundBorderRadius = 2 * textElementOptions.scale;
-      //   this.lineWidth = textElementOptions.width * textElementOptions.scale;
-      //   this.x = textElementOptions.x;
-      //   this.y = textElementOptions.y;
-      //   this.rectHeight = textElementOptions.height * textElementOptions.scale;
-      //   this.lineHeight = textElementOptions.fontSize * textElementOptions.scale;
-      //   this.scale = textElementOptions.scale;
-      //   this.rotation = textElementOptions.rotation;
-      //   if (!scaleBackground) {
-      //     this.backgroundWidth = textElementOptions.width;
-      //   } else {
-      //     this.backgroundWidth = this.lineWidth;
-      //   }
+      this.textStyle = textElementOptions;
     }
   }
-  public async setCustomFont(fontBase64: string): Promise<void> {
-    this.fontBase64 = fontBase64;
-  }
+
   public static getProgressSquare(color: string) {
     return `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect width="100" height="100" fill="${color}"/>
         </svg>
         `;
   }
+
   public getSvgWithText(lines: string[], lineWidth: number): string {
     this.lines = [];
     this.lines = lines;
@@ -104,21 +72,20 @@ export class SvgCreator {
       this.x = this.resolution.width * 0.5;
       this.y = this.resolution.height * 0.8;
       const lineHeightFactor = 1.7;
-      this.lineHeight = this.fontSize * lineHeightFactor - this.fontSize / 4;
-      this.rectHeight = lines.length * this.fontSize * lineHeightFactor + this.fontSize / 3;
+      this.lineHeight = this.textStyle.fontSize * lineHeightFactor - this.textStyle.fontSize / 4;
+      this.rectHeight =
+        lines.length * this.textStyle.fontSize * lineHeightFactor + this.textStyle.fontSize / 3;
     }
     return this.svgSkeleton;
   }
 
   private get svgSkeleton(): string {
-    return `<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="${
-      this.resolution.width
-    }" height="${this.resolution.height}" version="1.0">
-        ${this.fontBase64 ? this.getFontFaceStyle() : ''}
+    return `<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="${this.resolution.width}" height="${this.resolution.height}" version="1.0">
+
         <g transform="translate(${this.x} ${this.y})">
         
         ${this.background}
-        ${this.textStyle}
+        ${this.textStyleELement}
         ${this.tspans}
         </text></g></svg>
         `;
@@ -199,14 +166,14 @@ export class SvgCreator {
     });
     return tspans;
   }
-  private get textStyle(): string {
+  private get textStyleELement(): string {
     let svgRotation = '';
     if (this.svgType === 'CanvasText' && this.rotation) {
       svgRotation = `transform="rotate(${this.rotation} ${this.lineWidth / 2} ${
         this.rectHeight / 2
       })"`;
     }
-    let fontColor = this.fontColor;
+    let fontColor = this.textStyle.fontColor;
     let alpha = 1;
     if (fontColor.includes('rgba')) {
       const transformedColor = SvgCreator.transformRgba(fontColor);
@@ -219,15 +186,16 @@ export class SvgCreator {
         fill:${fontColor || '#ffffff'};
         fill-opacity:${alpha};
         
-        stroke:${this.strokeColor || 'none'};
-        stroke-opacity: ${this.strokeColor ? 1 : 0};
-        stroke-width:${this.strokeColor ? 1 : 0}px;
+        paint-order: stroke fill;
+        stroke:${this.textStyle.strokeColor || 'none'};
+        stroke-opacity: ${this.textStyle.strokeColor ? 1 : 0};
+        stroke-width:${this.textStyle.strokeWidth ?? 0}px;
 
-        font-family: '${this.fontFamily || 'Sans-Serif'}';
-        font-style: ${this.isItalic ? 'italic' : 'normal'};
-        font-weight: ${this.isBold ? 'bold' : 'normal'};
+        font-family: '${this.textStyle.fontFamily || 'Sans-Serif'}';
+        font-style: ${this.textStyle.isItalic ? 'italic' : 'normal'};
+        font-weight: ${this.textStyle.isBold ? 'bold' : 'normal'};
         font-variant:normal;
-        font-size:${this.fontSize}px;
+        font-size:${this.textStyle.fontSize}px;
         " x="0" y="0" 
         ${svgRotation}>
         `;
@@ -298,26 +266,5 @@ export class SvgCreator {
     } catch (error: unknown) {
       return false;
     }
-  }
-
-  private getFontFaceStyle(): string {
-    if (!this.fontBase64) return '';
-
-    return `<defs>
-      <style>
-        @font-face {
-          font-family: '${this.fontFamily}';
-          src: url('${this.fontBase64}') format('woff2');
-          font-weight: normal;
-          font-style: normal;
-        }
-        @font-face {
-          font-family: '${this.fontFamily}';
-          src: url('${this.fontBase64}') format('woff2');
-          font-weight: bold;
-          font-style: normal;
-        }
-      </style>
-    </defs>`;
   }
 }
