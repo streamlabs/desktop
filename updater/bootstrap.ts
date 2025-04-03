@@ -33,6 +33,7 @@ interface IUpdateInfo {
   tempDir: string;
   cacheDir: string;
   versionFileName: string;
+  details: string;
 }
 
 /**
@@ -80,6 +81,11 @@ interface ILatestVersionInfo {
    * specific eligibility for this release.
    */
   restricted?: boolean;
+
+  /**
+   * What's included in the latest available version.
+   */
+  details: string;
 }
 
 /**
@@ -358,6 +364,8 @@ async function entry(info: IUpdateInfo) {
     '--app-dir',
     `"${info.appDir}"`,
     '--force-temp',
+    '--details',
+    `"${info.details}"`,
   ];
 
   info.waitPids.forEach(pid => {
