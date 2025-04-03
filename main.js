@@ -365,7 +365,7 @@ async function startApp() {
   ipcMain.on('getWorkerWindowId', event => {
     if (workerWindow.isDestroyed()) {
       // prevent potential race-condition issues on app close
-      // https://github.com/stream-labs/desktop/pull/4239
+      // https://github.com/streamlabs/desktop/pull/4239
       return;
     }
     event.returnValue = workerWindow.webContents.id;
