@@ -100,7 +100,7 @@ export default class WidgetSettings<
       this.requestState = 'success';
     } catch (e: unknown) {
       const errorMessage =
-        e && e['message'] ? e['message'] : $t('Save failed, something went wrong.');
+        (e as { message?: string }).message || $t('Save failed, something went wrong.');
       this.dataUpdatedHandler(this.lastSuccessfullySavedWData);
       this.requestState = 'fail';
       this.failHandler(errorMessage);

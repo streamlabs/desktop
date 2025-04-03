@@ -825,7 +825,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       cc_expires_in_days?: number;
     }>(request)
       .then(response => this.validatePrimeStatus(response))
-      .catch(() => null);
+      .catch((e: unknown) => null);
   }
 
   validatePrimeStatus(response: {

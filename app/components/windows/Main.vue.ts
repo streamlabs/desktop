@@ -40,7 +40,7 @@ import { IModalOptions, WindowsService } from 'services/windows';
 import ResizeBar from 'components/shared/ResizeBar.vue';
 import { getPlatformService } from 'services/platforms';
 import ModalWrapper from '../shared/modals/ModalWrapper';
-import antdThemes from 'styles/antd/index';
+import antdThemes, { Theme } from 'styles/antd/index';
 
 @Component({
   components: {
@@ -82,6 +82,9 @@ export default class Main extends Vue {
     renderFn: null,
   };
 
+  theme: Theme = 'night-theme';
+  minEditorWidth = 500;
+
   created() {
     window.addEventListener('resize', this.windowSizeHandler);
   }
@@ -108,7 +111,7 @@ export default class Main extends Vue {
   }
 
   @Watch('theme')
-  updateAntd(newTheme: string, oldTheme: string) {
+  updateAntd(newTheme: Theme, oldTheme: Theme) {
     antdThemes[oldTheme].unuse();
     antdThemes[newTheme].use();
   }
@@ -130,8 +133,6 @@ export default class Main extends Vue {
     this.unbind();
   }
 
-  minEditorWidth = 500;
-
   get title() {
     return this.windowsService.state.main.title;
   }
@@ -143,8 +144,6 @@ export default class Main extends Vue {
   get params() {
     return this.navigationService.state.params;
   }
-
-  theme = 'night-theme';
 
   get applicationLoading() {
     return this.appService.state.loading;

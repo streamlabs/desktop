@@ -14,7 +14,6 @@
     "noImplicitAny": true,
     "noImplicitThis": true,
     "removeComments": true,
-    "suppressImplicitAnyIndexErrors": true,
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "allowJs": false,
@@ -42,10 +41,17 @@
       "vue-tsx-support"
     ]
   },
-  "include": ["./app/**/*"],
-  "exclude": ["./app/components-react/**/*", "**/node_modules/@realm/fetch/dist/types/types.d.ts"],
+  "include": [
+    "./app/**/*"
+  ],
+  "exclude": [
+    "./app/components-react/**/*",
+    "**/node_modules/@realm/fetch/dist/types/types.d.ts"
+  ],
   "typedocOptions": {
-    "entryPoints": ["src/index.ts"],
+    "entryPoints": [
+      "src/index.ts"
+    ],
     "out": "docs"
   }
 }

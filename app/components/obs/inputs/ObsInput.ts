@@ -449,7 +449,7 @@ export function setPropertiesFormData(
 
     if (property.type === 'OBS_PROPERTY_FONT') {
       settings['custom_font'] = (property.value as IObsFont).path;
-      delete settings[property.name]['path'];
+      delete (settings[property.name] as IObsFont).path;
     }
   });
 

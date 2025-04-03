@@ -155,6 +155,8 @@ export function getModule(ModuleContainer: any): Module<any, any> {
   for (const mutationName in prototypeMutations) {
     const serviceName = mutationName.split('.')[0];
     if (serviceName !== (ModuleContainer._isHelperFor ?? ModuleContainer.name)) continue;
+    // TODO: index
+    // @ts-ignore
     mutations[mutationName] = prototypeMutations[mutationName];
   }
 
@@ -187,6 +189,8 @@ export abstract class ViewHandler<TState extends object> {
     service: TService,
   ): InstanceType<TService>['views'] {
     // TODO: Working around circular reference
+    // TODO: index
+    // @ts-ignore
     return window['servicesManager'].getResource(service.name).views;
   }
 }
