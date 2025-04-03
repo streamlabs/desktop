@@ -21,7 +21,8 @@ export default function SupportedGames({ emitClick }: { emitClick?: (game: EGame
           <img src={game.image} alt={game.label} />
         </div>
       ))}
-      {/* <Tooltip title="More games">
+      {/* Coming with next PR
+      <Tooltip title="More games">
         <div
           className={styles.thumbnail}
           style={{

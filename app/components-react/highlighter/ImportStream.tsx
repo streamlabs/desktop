@@ -154,15 +154,12 @@ export function ImportStreamModal({
                 style={{ color: draggingOver ? 'var(--teal)' : 'inherit' }}
               ></i>
               <h3
+                className={styles.dragAndDrop}
                 style={{
-                  fontWeight: 400,
-                  marginTop: '12px',
                   color: draggingOver ? 'var(--teal)' : 'inherit',
-                  textAlign: 'center',
                 }}
               >
-                Drag and drop game recording <br />
-                or click to select
+                {$t('Drag and drop game recording or click to select')}
               </h3>
             </div>
           )}
@@ -173,7 +170,7 @@ export function ImportStreamModal({
               marginBottom: '8px',
             }}
           >
-            Select game played in recording
+            {$t('Select game played in recording')}
           </p>
           <ListInput
             onSelect={(val, opts) => {

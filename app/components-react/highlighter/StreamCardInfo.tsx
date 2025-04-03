@@ -3,6 +3,7 @@ import { IAiClip, isAiClip, TClip } from 'services/highlighter/models/highlighte
 import { getConfigByGame, getEventConfig } from 'services/highlighter/models/game-config.models';
 import React from 'react';
 import Tooltip from 'components-react/shared/Tooltip';
+import { $t } from 'services/i18n';
 
 interface EventDisplay {
   emoji: string;
@@ -102,7 +103,7 @@ export default function StreamCardInfo({
             </React.Fragment>
           ))
         ) : (
-          <span>No events found</span>
+          <span>{$t('No events found')}</span>
         )}
       </div>
     </Tooltip>

@@ -162,8 +162,6 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
               <div onClick={e => e.stopPropagation()}>
                 <SupportedGames
                   emitClick={game => {
-                    console.log('game', game);
-
                     !aiDetectionInProgress && setShowModal({ type: 'upload', game });
                   }}
                 />
