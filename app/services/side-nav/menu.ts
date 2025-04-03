@@ -293,6 +293,8 @@ export class SideNavService extends PersistentStatefulService<ISideNavServiceSta
         menuItems: this.state[ENavName.BottomNav].menuItems.map((menuItem: IMenuItem) => {
           if (menuItem.key === EMenuItemKey.Dashboard) {
             return {
+              // TODO: index
+              // @ts-ignore
               ...this.state[ENavName.BottomNav].menuItems[EMenuItemKey.Dashboard],
               isExpanded: true,
             };

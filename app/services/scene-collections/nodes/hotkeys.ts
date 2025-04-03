@@ -33,6 +33,8 @@ export class HotkeysNode extends ArrayNode<IHotkey, IContext, Hotkey> {
 
   saveItem(hotkey: Hotkey, context: IContext): Promise<IHotkey> {
     const hotkeyObj = hotkey.getModel();
+    // TODO: index
+    // @ts-ignore
     Object.keys(context).forEach(key => delete hotkeyObj[key]);
     return Promise.resolve(hotkeyObj);
   }

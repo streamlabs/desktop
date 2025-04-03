@@ -61,6 +61,8 @@ function getActionProxy<T extends Service>(
       return (...args: unknown[]) => {
         return new Promise<unknown>((resolve, reject) => {
           try {
+            // TODO: index
+            // @ts-ignore
             const result: unknown = (target[key] as Function).apply(target, args);
             isReturn ? resolve(result) : resolve(undefined);
           } catch (e: unknown) {
@@ -90,11 +92,17 @@ export abstract class Service {
   serviceName = this.constructor.name;
 
   static get instance() {
+    // TODO: index
+    // @ts-ignore
     const instance = !this.hasInstance ? Service.createInstance(this) : this[singleton];
 
     if (this.proxyFn) {
+      // TODO: index
+      // @ts-ignore
       if (!proxies[this.name]) proxies[this.name] = this.proxyFn(instance);
 
+      // TODO: index
+      // @ts-ignore
       return proxies[this.name];
     } else {
       return instance;
@@ -102,6 +110,8 @@ export abstract class Service {
   }
 
   static get hasInstance(): boolean {
+    // TODO: index
+    // @ts-ignore
     return !!instances[this.name];
   }
 

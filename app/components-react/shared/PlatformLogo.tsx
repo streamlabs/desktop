@@ -5,7 +5,7 @@ import css from './PlatformLogo.m.less';
 import { Services } from 'components-react/service-provider';
 import { useRealmObject } from 'components-react/hooks/realm';
 
-export const sizeMap = {
+export const sizeMap: Dictionary<number> = {
   small: 14,
   medium: 40,
 };
