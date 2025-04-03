@@ -449,7 +449,6 @@ export class StreamingService
             this.videoSettingsService.validateVideoContext('vertical');
             const { name, streamKey, url } = await this.youtubeService.createVertical(settings);
             const encoderSettings = this.outputSettingsService.getSettings();
-            console.log('YT vert encoder', encoderSettings.streaming.encoder);
 
             this.extraOutputs.push({
               name,
@@ -532,7 +531,6 @@ export class StreamingService
                   },
                   display as TDisplayType,
                 );
-                console.log('set up custom destination', destination);
               } else {
                 console.error('Custom destination not found');
               }
@@ -1057,15 +1055,12 @@ export class StreamingService
       const shouldStartVertical = this.views.enabledPlatforms.length > 1;
 
       const signalChanged = this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
-        console.log('on signal changed', signalInfo.service, signalInfo.code);
-
         if (signalInfo.service === 'default') {
           if (signalInfo.code !== 0) {
             NodeObs.OBS_service_stopStreaming(true, 'horizontal');
             NodeObs.OBS_service_stopStreaming(true, 'vertical');
 
             extraOutputs.forEach(output => {
-              console.log('destroying stream for ', output.name);
               output.stream?.stop();
 
               SimpleStreamingFactory.destroy(output.stream);
@@ -1076,13 +1071,10 @@ export class StreamingService
 
           if (signalInfo.signal === EOBSOutputSignal.Start) {
             if (shouldStartVertical) {
-              console.log('starting vertical');
-
               NodeObs.OBS_service_startStreaming('vertical');
             }
 
             extraOutputs.forEach(output => {
-              console.log('starting stream for ', output.name);
               output.stream?.start();
             });
 
@@ -1095,11 +1087,8 @@ export class StreamingService
         // Confusing as we're indeed starting the horizontal stream here, but
         // "start video transmission" does not ever resolve presumably because
         // it assumes the vertical stream was starting too.
-        console.log('starting horizontal');
-
         NodeObs.OBS_service_startStreaming('horizontal');
       } else {
-        console.log('skipped creating vertical stream (done separately)');
         NodeObs.OBS_service_startStreaming();
       }
       // sleep for 1 second to allow the first stream to start
@@ -1199,9 +1188,6 @@ export class StreamingService
       if (this.views.isDualOutputMode) {
         const signalChanged = this.signalInfoChanged.subscribe(
           (signalInfo: IOBSOutputSignalInfo) => {
-            console.log('stopping vertical');
-            console.log('on signal changed 2', signalInfo.service, signalInfo.signal);
-
             if (
               signalInfo.service === 'default' &&
               signalInfo.signal === EOBSOutputSignal.Deactivate
@@ -1209,7 +1195,6 @@ export class StreamingService
               // TODO: these are probably too much but DO does it this way on
               // several signal states, so we follow suit
               this.extraOutputs.forEach(output => {
-                console.log('stopping stream for ', output.name);
                 output.stream?.stop();
                 SimpleStreamingFactory.destroy(output.stream);
               });
@@ -1219,7 +1204,6 @@ export class StreamingService
             }
           },
         );
-        console.log('stopping horizontal');
 
         NodeObs.OBS_service_stopStreaming(false, 'horizontal');
         // sleep for 1 second to allow the first stream to stop
@@ -1248,7 +1232,6 @@ export class StreamingService
     }
 
     if (this.state.streamingStatus === EStreamingState.Ending) {
-      console.log('on streamingStatus ending');
       if (this.views.isDualOutputMode) {
         NodeObs.OBS_service_stopStreaming(true, 'horizontal');
         NodeObs.OBS_service_stopStreaming(true, 'vertical');
@@ -1440,8 +1423,6 @@ export class StreamingService
   private streamErrorReportMessage = '';
 
   private handleOBSOutputSignal(info: IOBSOutputSignalInfo) {
-    console.debug('OBS Output signal: ', info);
-
     const singlePlatformUsingDualOutput =
       this.views.isDualOutputMode && this.views.enabledPlatforms.length === 1;
 
