@@ -16,7 +16,14 @@ import { DualOutputService } from 'services/dual-output';
 import { TOutputOrientation } from 'services/restream';
 
 interface ISavedGoLiveSettings {
-  platforms: Partial<Record<TPlatform, IPlatformFlags>>;
+  platforms: {
+    twitch?: IPlatformFlags;
+    facebook?: IPlatformFlags;
+    youtube?: IPlatformFlags;
+    trovo?: IPlatformFlags;
+    tiktok?: IPlatformFlags;
+    kick?: IPlatformFlags;
+  };
   customDestinations?: ICustomStreamDestination[];
   advancedMode: boolean;
 }
@@ -205,8 +212,6 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
       const pickedFields: (keyof IPlatformFlags)[] = ['enabled', 'useCustomFields'];
       const platforms: Dictionary<IPlatformFlags> = {};
       Object.keys(settingsPatch.platforms).map(platform => {
-        // TODO: index
-        // @ts-ignore
         const platformSettings = pick(settingsPatch.platforms![platform], pickedFields);
 
         if (this.dualOutputService.views.dualOutputMode) {
@@ -374,8 +379,6 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
   @mutation()
   private SET_LOCAL_STORAGE_SETTINGS(settings: Partial<IStreamSettingsState>) {
     Object.keys(settings).forEach(prop => {
-      // TODO: index
-      // @ts-ignore
       Vue.set(this.state, prop, settings[prop]);
     });
   }

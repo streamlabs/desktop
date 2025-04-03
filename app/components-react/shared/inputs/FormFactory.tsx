@@ -92,8 +92,6 @@ function FormInput(p: {
 
   if (!type) return <></>;
 
-  // TODO: index
-  // @ts-ignore
   const Input = componentTable[type];
   let handleChange = p.onChange(p.id);
   if (type === 'checkboxGroup') handleChange = p.onChange;

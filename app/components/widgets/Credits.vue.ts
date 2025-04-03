@@ -24,8 +24,6 @@ export default class Credits extends WidgetSettings<ICreditsData, CreditsService
   }
 
   optionIterable(map: Dictionary<string>) {
-    // TODO: index
-    // @ts-ignore
     return Object.keys(map).filter(option => this.wData.settings[option] != null);
   }
 

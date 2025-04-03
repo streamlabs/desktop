@@ -77,8 +77,6 @@ export class AlertBoxModule extends WidgetModule<IAlertBoxState> {
     // define onChange handler
     statePatch => this.updateSettings(statePatch),
     // pull additional metadata like tooltip, label, min, max, etc...
-    // TODO: index
-    // @ts-ignore
     fieldName => this.generalMetadata[fieldName],
   );
 
@@ -101,8 +99,6 @@ export class AlertBoxModule extends WidgetModule<IAlertBoxState> {
       },
       // pull additional metadata like tooltip, label, min, max, etc...
       fieldName => ({
-        // TODO: index
-        // @ts-ignore
         ...this.variationsMetadata[alertType as any][fieldName],
         hidden: hiddenFields.includes(fieldName as string),
       }),
@@ -121,8 +117,6 @@ export class AlertBoxModule extends WidgetModule<IAlertBoxState> {
    */
   get enabledAlerts() {
     return Object.keys(this.widgetData.variations).filter(
-      // TODO: index
-      // @ts-ignore
       alertType => this.widgetData.variations[alertType].default.enabled,
     );
   }
@@ -159,8 +153,6 @@ export class AlertBoxModule extends WidgetModule<IAlertBoxState> {
 
     // sanitize general settings
     Object.keys(settings).forEach(key => {
-      // TODO: index
-      // @ts-ignore
       settings[key] = this.sanitizeValue(settings[key], key, this.generalMetadata[key]);
     });
 
@@ -214,8 +206,6 @@ export class AlertBoxModule extends WidgetModule<IAlertBoxState> {
           value = this.sanitizeValue(
             value,
             targetKey,
-            // TODO: index
-            // @ts-ignore
             this.variationsMetadata[alertEvent.type][targetKey],
           );
 
@@ -319,8 +309,6 @@ export class AlertBoxModule extends WidgetModule<IAlertBoxState> {
     // flatten settings by adding prefixes
     const settingsPatch = {} as any;
     Object.keys(variationPatch).forEach(key => {
-      // TODO: index
-      // @ts-ignore
       settingsPatch[`${apiKey}_${key}`] = variationPatch[key];
     });
 
@@ -345,8 +333,6 @@ export class AlertBoxModule extends WidgetModule<IAlertBoxState> {
 
   get selectedAlert(): TAlertType | null {
     const selectedTab = this.state.selectedTab;
-    // TODO: index
-    // @ts-ignore
     if (this.eventsConfig[selectedTab]) {
       return selectedTab as TAlertType;
     }
@@ -556,8 +542,6 @@ function getVariationsMetadata() {
 
   // mix common and specific metadata and return it
   Object.keys(specificMetadata).forEach(alertType => {
-    // TODO: index
-    // @ts-ignore
     specificMetadata[alertType] = { ...commonMetadata, ...specificMetadata[alertType] };
   });
   return specificMetadata as {

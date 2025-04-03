@@ -429,7 +429,5 @@ export function getInputComponentByType(
   const name = Object.keys(InputComponents).find(componentName => {
     return componentName.split('Input')[0].toLowerCase() === type;
   });
-  // TODO: index
-  // @ts-ignore
   return name ? InputComponents[name] : null;
 }

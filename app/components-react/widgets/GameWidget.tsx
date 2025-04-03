@@ -70,8 +70,6 @@ function gameOption(key: string) {
     'chat-word': $t('Chat Word'),
   };
 
-  // TODO: index
-  // @ts-ignore
   return { label: optionTable[key], value: key };
 }
 

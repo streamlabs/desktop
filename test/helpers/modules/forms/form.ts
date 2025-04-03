@@ -230,13 +230,9 @@ export async function fillForm(...args: unknown[]): Promise<unknown> {
   if (typeof args[0] === 'string') {
     const formName = args[0];
     const formData = args[1] as TFormData;
-    // TODO: fake hook
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     return useForm(formName).fillForm(formData);
   } else {
     const formData = args[0] as TFormData;
-    // TODO: fake hook
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     return useForm().fillForm(formData);
   }
 }
@@ -250,13 +246,9 @@ export async function readFields(...args: unknown[]): Promise<TFormData> {
   if (typeof args[0] === 'string') {
     const formName = args[0];
     const formData = args[1] as TFormData;
-    // TODO: fake hook
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     return useForm(formName).readFields();
   } else {
     const formData = args[0] as TFormData;
-    // TODO: fake hook
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     return useForm().readFields();
   }
 }
@@ -278,13 +270,9 @@ export async function assertFormContains(
 export async function assertFormContains(...args: any[]): Promise<unknown> {
   if (typeof args[0] === 'string') {
     const [formName, formData, indexKey, valueKey] = args;
-    // TODO: fake hook
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     return useForm(formName).assertFormContains(formData, indexKey, valueKey);
   } else {
     const [formData, indexKey, valueKey] = args;
-    // TODO: fake hook
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     return useForm().assertFormContains(formData, indexKey, valueKey);
   }
 }
@@ -296,7 +284,5 @@ function getInputControllerForType<
   TReturnType extends new (...args: any) => BaseInputController<any>
 >(type: string): TReturnType {
   const controllerName = pascalize(type) + 'InputController';
-  // TODO: index
-  // @ts-ignore
   return inputControllers[controllerName];
 }

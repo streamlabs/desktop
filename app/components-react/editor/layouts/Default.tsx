@@ -1,11 +1,10 @@
 import React from 'react';
 import cx from 'classnames';
-import useLayout, { ILayoutProps } from './hooks';
+import useLayout, { LayoutProps } from './hooks';
 import ResizeBar from 'components-react/root/ResizeBar';
 import styles from './Layouts.m.less';
-import { TLayoutSlot } from 'services/layout';
 
-export function Default(p: ILayoutProps) {
+export function Default(p: React.PropsWithChildren<LayoutProps>) {
   const { mins, bars, resizes, calculateMax, setBar, componentRef } = useLayout(
     [['1'], ['2'], ['3', '4', '5']],
     false,
@@ -47,7 +46,7 @@ export function Default(p: ILayoutProps) {
           className={styles.segmented}
           style={{ height: `${resizes.bar2! * 100}%`, padding: '0 8px' }}
         >
-          {['3', '4', '5'].map((slot: TLayoutSlot) => (
+          {['3', '4', '5'].map(slot => (
             <div key={slot} className={cx(styles.cell, 'no-top-padding')}>
               {p.children?.[slot] || <></>}
             </div>

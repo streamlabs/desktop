@@ -102,16 +102,8 @@ export const ListInput = InputComponent(<T extends any>(p: TListInputProps<T>) =
         getPopupContainer={getPopupContainer}
         data-value={inputAttrs.value}
         data-selected-option-label={selectedOption?.label}
-        data-show-search={
-          // TODO: index
-          // @ts-ignore
-          !!inputAttrs['showSearch']
-        }
-        data-loading={
-          // TODO: index
-          // @ts-ignore
-          !!inputAttrs['loading']
-        }
+        data-show-search={!!inputAttrs['showSearch']}
+        data-loading={!!inputAttrs['loading']}
       >
         {options && options.map((opt, ind) => renderOption(opt, ind, p))}
       </Select>

@@ -10,8 +10,6 @@ import VFormGroup from 'components/shared/inputs/VFormGroup.vue';
 import { $t } from 'services/i18n';
 import ValidatedForm from 'components/shared/inputs/ValidatedForm';
 
-type Position = '1' | '2';
-
 @Component({
   components: {
     WidgetEditor,
@@ -33,7 +31,7 @@ export default class SponsorBanner extends WidgetSettings<
   showDurationTooltip = $t('The amount of time the widget will appear.');
   animationTooltip = $t('These are the animations that are used to show your banner.');
 
-  get positions(): Position[] {
+  get positions() {
     if (!this.loaded) return ['1'];
     return this.wData.settings.placement_options === 'double' ? ['1', '2'] : ['1'];
   }
@@ -53,14 +51,14 @@ export default class SponsorBanner extends WidgetSettings<
     return decodeURIComponent(href.split(/[\\/]/).pop());
   }
 
-  addImage(placement: Position) {
+  addImage(placement: string) {
     this.wData.settings[`placement_${placement}_images`].push({
       href: $t('No Image'),
       duration: 10,
     });
   }
 
-  removeImage(href: string, placement: Position) {
+  removeImage(href: string, placement: string) {
     this.wData.settings[`placement_${placement}_images`] = this.wData.settings[
       `placement_${placement}_images`
     ].filter((image: { href: string }) => image.href !== href);

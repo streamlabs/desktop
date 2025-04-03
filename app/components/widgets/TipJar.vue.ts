@@ -70,7 +70,7 @@ export default class TipJar extends WidgetSettings<ITipJarData, TipJarService> {
     ];
   }
 
-  titleFromKey(key: keyof typeof nameMap) {
+  titleFromKey(key: string) {
     return nameMap()[key];
   }
 
@@ -85,11 +85,8 @@ export default class TipJar extends WidgetSettings<ITipJarData, TipJarService> {
   }
 
   get mediaGalleryInputs() {
-    if (!Object.keys(mediaGalleryInputs).includes(this.platform)) {
-      return [];
-    }
-
-    return mediaGalleryInputs[this.platform as keyof typeof mediaGalleryInputs];
+    if (!mediaGalleryInputs[this.platform]) return [];
+    return mediaGalleryInputs[this.platform];
   }
 
   afterFetch() {

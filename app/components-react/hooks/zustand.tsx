@@ -87,8 +87,6 @@ export function useController<T>(ControllerCtx: Context<T>): NonNullable<T> {
       if (actionName === 'constructor') continue;
       if (!(controller as any)[actionName]?.bind) continue;
       // Run initialize actions if they exist
-      // TODO: index
-      // @ts-ignore
       if (actionName === 'init') controller[actionName]();
       actions[actionName] = (controller as any)[actionName].bind(controller);
     }

@@ -61,6 +61,4 @@ function getAntdValue(value?: number) {
 }
 
 // tell the Form to convert a timestamp value to a Moment value when call `Form.setFieldsValue`
-// TODO: index
-// @ts-ignore
 TimeInput['getAntdValue'] = getAntdValue;

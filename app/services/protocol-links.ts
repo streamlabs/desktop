@@ -77,8 +77,6 @@ export class ProtocolLinksService extends Service {
     };
 
     if (this.handlers[info.base]) {
-      // TODO: index
-      // @ts-ignore
       this[this.handlers[info.base]](info);
     }
   }
@@ -97,8 +95,6 @@ export class ProtocolLinksService extends Service {
         install,
       });
       const menuItem =
-        // TODO: index
-        // @ts-ignore
         ProtocolLinkKeyMap[parts[1]] ?? this.sideNavService.views.isOpen
           ? ESideNavKey.Scene
           : ESideNavKey.Themes;

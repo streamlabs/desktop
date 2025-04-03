@@ -22,17 +22,11 @@ export class StreamlabelsManager extends DefaultManager {
   init() {
     super.init();
     this.subscription = this.streamlabelsService.output.subscribe(output => {
-      // TODO: index
-      // @ts-ignore
       if (output[this.settings.statname] !== this.oldOutput) {
-        // TODO: index
-        // @ts-ignore
         this.oldOutput = output[this.settings.statname];
 
         this.obsSource.update({
           ...this.obsSource.settings,
-          // TODO: index
-          // @ts-ignore
           text: this.normalizeText(output[this.settings.statname]),
           read_from_file: false,
         });
@@ -66,11 +60,7 @@ export class StreamlabelsManager extends DefaultManager {
 
     if (this.userService.platform) {
       if (this.userService.platform.type === 'youtube') {
-        // TODO: index
-        // @ts-ignore
         if (youtubeKeys[settings.statname]) {
-          // TODO: index
-          // @ts-ignore
           settings.statname = youtubeKeys[settings.statname];
         }
       }
@@ -87,8 +77,6 @@ export class StreamlabelsManager extends DefaultManager {
   applySettings(settings: Dictionary<any>) {
     if (settings.statname !== this.settings.statname) {
       this.obsSource.update({
-        // TODO: index
-        // @ts-ignore
         text: this.normalizeText(this.streamlabelsService.output.getValue()[settings.statname]),
       });
     }

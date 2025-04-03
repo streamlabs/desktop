@@ -52,16 +52,12 @@ export default function EditTransform() {
   function setPos(dir: string) {
     return async (value: number) => {
       if (await invalidForm()) return;
-      // TODO: index
-      // @ts-ignore
       const delta = Number(value) - Math.round(rect[dir]);
 
       EditorCommandsService.actions.executeCommand('MoveItemsCommand', selection, {
         [dir]: delta,
       });
 
-      // TODO: index
-      // @ts-ignore
       const newValue = rect[dir] + delta;
       setRect({ ...rect, [dir]: newValue });
     };
@@ -70,11 +66,7 @@ export default function EditTransform() {
   function setScale(dir: string) {
     return async (value: number) => {
       if (await invalidForm()) return;
-      // TODO: index
-      // @ts-ignore
       if (Number(value) === rect[dir]) return;
-      // TODO: index
-      // @ts-ignore
       const scale = Number(value) / rect[dir];
       const scaleX = dir === 'width' ? scale : 1;
       const scaleY = dir === 'height' ? scale : 1;

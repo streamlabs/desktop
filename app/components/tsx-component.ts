@@ -3,7 +3,7 @@ import Vue from 'vue';
 export function createProps<TProps extends new () => any>(
   propsClass: TProps,
 ): Dictionary<{ default: any }> {
-  const propsObj: Dictionary<{ default: TProps }> = {};
+  const propsObj = {};
   const props = new propsClass();
   Object.keys(props).forEach((key: string) => {
     propsObj[key] = { default: props[key] };

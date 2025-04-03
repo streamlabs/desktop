@@ -74,8 +74,6 @@ export default function SourceGrid(p: { activeTab: string }) {
       Object.keys(WidgetType)
         .filter((type: string) => isNaN(Number(type)) && type !== 'SubscriberGoal')
         .filter((type: string) => {
-          // TODO: index
-          // @ts-ignore
           const widgetPlatforms = WidgetDisplayData(primaryPlatform)[WidgetType[type]]?.platforms;
           if (!widgetPlatforms) return true;
           return linkedPlatforms?.some(
@@ -86,8 +84,6 @@ export default function SourceGrid(p: { activeTab: string }) {
           // show only supported widgets
           const whitelist = primaryPlatformService?.widgetsWhitelist;
           if (!whitelist) return true;
-          // TODO: index
-          // @ts-ignore
           return whitelist.includes(WidgetType[type]);
         }),
     [],
@@ -140,8 +136,6 @@ export default function SourceGrid(p: { activeTab: string }) {
       .sort(customOrder(essentialSourcesOrder, s => s.value));
 
     const essentialWidgets = iterableWidgetTypes.filter(type =>
-      // TODO: index
-      // @ts-ignore
       [WidgetType.AlertBox, WidgetType.ChatBox].includes(WidgetType[type]),
     );
     return { essentialDefaults, essentialWidgets };
@@ -218,8 +212,6 @@ export default function SourceGrid(p: { activeTab: string }) {
   };
 
   const byWidgetGroup = (group: string) => (widget: string) => {
-    // TODO: index
-    // @ts-ignore
     const displayData = widgetDisplayData[WidgetType[widget]];
     if (!displayData) {
       return true;
@@ -312,8 +304,6 @@ export default function SourceGrid(p: { activeTab: string }) {
       <>
         {widgetsInGroup(
           'essential',
-          // TODO: index
-          // @ts-ignore
           customOrder(essentialWidgetsOrder, x => WidgetType[x]),
         )}
         <SourceTag

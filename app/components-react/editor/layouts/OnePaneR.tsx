@@ -1,10 +1,10 @@
 import React from 'react';
 import cx from 'classnames';
-import useLayout, { ILayoutProps } from './hooks';
+import useLayout, { LayoutProps } from './hooks';
 import ResizeBar from 'components-react/root/ResizeBar';
 import styles from './Layouts.m.less';
 
-export function OnePaneR(p: ILayoutProps) {
+export function OnePaneR(p: React.PropsWithChildren<LayoutProps>) {
   const { mins, bars, resizes, calculateMax, setBar, componentRef } = useLayout(
     [['1', ['3', '4', '5']], ['2']],
     true,

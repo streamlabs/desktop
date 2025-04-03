@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { TLayoutSlot, IVec2Array } from 'services/layout';
+import { LayoutSlot, IVec2Array } from 'services/layout';
 import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
 
@@ -14,11 +14,7 @@ export interface IResizeMins {
   bar2: number | null;
 }
 
-export interface ILayoutProps extends React.PropsWithChildren<LayoutProps> {
-  children: Partial<Record<TLayoutSlot, React.ReactNode>>;
-}
-
-export interface ILayoutSlotArray extends Array<ILayoutSlotArray | TLayoutSlot> {}
+export interface ILayoutSlotArray extends Array<ILayoutSlotArray | LayoutSlot> {}
 
 /**
  * Just a note on some of the more unique params
@@ -100,7 +96,7 @@ export default function useLayout(
     });
   }
 
-  function minsFromSlot(slot: TLayoutSlot) {
+  function minsFromSlot(slot: LayoutSlot) {
     // If there is no component slotted we return no minimum
     if (!childrenMins || !childrenMins[slot]) return { x: 0, y: 0 };
     return childrenMins[slot];

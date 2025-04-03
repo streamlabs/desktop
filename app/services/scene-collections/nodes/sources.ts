@@ -16,10 +16,22 @@ import { ScenesService } from 'services/scenes';
 import defaultTo from 'lodash/defaultTo';
 import { byOS, OS } from 'util/operating-systems';
 import { UsageStatisticsService } from 'services/usage-statistics';
-import { EFilterDisplayType, ISourceFilter, SourceFiltersService } from 'services/source-filters';
+import {
+  EFilterDisplayType,
+  SourceFiltersService,
+  TSourceFilterType,
+} from 'services/source-filters';
 
 interface ISchema {
   items: ISourceInfo[];
+}
+
+interface IFilterInfo {
+  name: string;
+  type: TSourceFilterType;
+  settings: obs.ISettings;
+  enabled?: boolean;
+  displayType?: EFilterDisplayType;
 }
 
 export interface ISourceInfo {
@@ -39,7 +51,7 @@ export interface ISourceInfo {
   deinterlaceFieldOrder?: EDeinterlaceFieldOrder;
 
   filters: {
-    items: ISourceFilter[];
+    items: IFilterInfo[];
   };
   hotkeys?: HotkeysNode;
   channel?: number;
@@ -103,7 +115,6 @@ export class SourcesNode extends Node<ISchema, {}> {
                 type: f.type,
                 settings: filterInput.settings,
                 enabled: f.visible,
-                visible: f.visible,
                 displayType: f.displayType,
               };
             });
@@ -225,7 +236,7 @@ export class SourcesNode extends Node<ISchema, {}> {
     // call will be a different length than the `supportedSources` and `sourceCreateData`
     // arrays. Because the array index is not a reliable unique identifier between, these
     // three arrays, create an object to reference the item data
-    const sourceData: Dictionary<ISourceInfo> = {};
+    const sourceData = {};
 
     // This shit is complicated, IPC sucks
     const sourceCreateData = supportedSources.map(source => {
@@ -245,9 +256,7 @@ export class SourcesNode extends Node<ISchema, {}> {
           if (
             filter.name === '__PRESET' &&
             !supportedPresets.includes(
-              this.sourceFiltersService.views.parsePresetValue(
-                filter.settings.image_path as string,
-              ),
+              this.sourceFiltersService.views.parsePresetValue(filter.settings.image_path),
             )
           ) {
             return false;
@@ -275,25 +284,23 @@ export class SourcesNode extends Node<ISchema, {}> {
             name: filter.name,
             type: filter.type,
             settings: filter.settings,
-            visible: filter.enabled === void 0 ? true : filter.enabled,
             enabled: filter.enabled === void 0 ? true : filter.enabled,
             displayType,
           };
         });
 
-      const sourceDataFilters = filters.map((f: ISourceFilter) => {
+      const sourceDataFilters = filters.map((f: IFilterInfo) => {
         return {
           name: f.name,
           type: f.type,
-          visible: f.visible,
-          enabled: f.visible,
+          visible: f.enabled,
           settings: f.settings,
           displayType: f.displayType,
         };
       });
 
       // add data to the reference object
-      sourceData[source.id] = { ...source, filters: { items: sourceDataFilters } };
+      sourceData[source.id] = { ...source, filters: sourceDataFilters };
 
       return {
         name: source.id,
@@ -372,7 +379,7 @@ export class SourcesNode extends Node<ISchema, {}> {
         promises.push(sourceInfo.hotkeys.load({ sourceId: sourceInfo.id }));
       }
 
-      this.sourceFiltersService.loadFilterData(sourceInfo.id, sourceInfo.filters.items);
+      this.sourceFiltersService.loadFilterData(sourceInfo.id, sourceInfo.filters);
     });
 
     return new Promise(resolve => {

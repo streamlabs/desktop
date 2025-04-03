@@ -14,15 +14,13 @@ export { ELayout, ELayoutElement };
 
 export interface IVec2Array extends Array<IVec2Array | IVec2> {}
 
-export type TLayoutSlot = '1' | '2' | '3' | '4' | '5' | '6';
-
-export type TSlottedElements = Partial<Record<ELayoutElement, { slot: TLayoutSlot; src?: string }>>;
+export type LayoutSlot = '1' | '2' | '3' | '4' | '5' | '6';
 
 interface ILayoutState {
   name: string;
   icon: string;
   currentLayout: ELayout;
-  slottedElements: TSlottedElements;
+  slottedElements: { [Element in ELayoutElement]?: { slot: LayoutSlot; src?: string } };
   resizes: { bar1: number; bar2: number };
 }
 interface ILayoutServiceState {
@@ -43,8 +41,6 @@ class LayoutViews extends ViewHandler<ILayoutServiceState> {
 
   get elementsToRender() {
     return Object.keys(this.currentTab.slottedElements).filter(
-      // TODO: index
-      // @ts-ignore
       key => this.currentTab.slottedElements[key].slot,
     );
   }
@@ -103,8 +99,6 @@ class LayoutViews extends ViewHandler<ILayoutServiceState> {
 
   aggregateMinimum(orientation: 'x' | 'y', slots: IVec2Array) {
     const minimums = slots.map(mins => {
-      // TODO: index
-      // @ts-ignore
       if (mins) return mins[orientation];
       return 10;
     });
@@ -179,17 +173,9 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
     const slottedElements = {};
     if (this.state.currentTab !== 'default') return;
     Object.keys(this.state.tabs.default.slottedElements).forEach(el => {
-      // TODO: index
-      // @ts-ignore
       if (typeof this.state.tabs.default.slottedElements[el] === 'string') {
-        // TODO: index
-        // @ts-ignore
         slottedElements[el] = { slot: this.state.tabs.default.slottedElements[el] };
-        // TODO: index
-        // @ts-ignore
       } else if (this.state.tabs.default.slottedElements[el]) {
-        // TODO: index
-        // @ts-ignore
         slottedElements[el] = this.state.tabs.default.slottedElements[el];
       }
     });
@@ -213,7 +199,7 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
     this.checkUsage();
   }
 
-  setSlots(slottedElements: { [key in ELayoutElement]?: { slot: TLayoutSlot } }) {
+  setSlots(slottedElements: { [key in ELayoutElement]?: { slot: LayoutSlot } }) {
     this.SET_SLOTS(slottedElements);
   }
 
@@ -240,7 +226,7 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
   }
 
   @mutation()
-  SET_SLOTS(slottedElements: { [key in ELayoutElement]?: { slot: TLayoutSlot } }) {
+  SET_SLOTS(slottedElements: { [key in ELayoutElement]?: { slot: LayoutSlot } }) {
     // This is necessary because of the reversed data model of this service's state,
     // combined with the way persistent stateful service does a deep merge of default
     // state. If we don't explicitly set elements contained in the default state to null
@@ -248,11 +234,7 @@ export class LayoutService extends PersistentStatefulService<ILayoutServiceState
     if (LayoutService.defaultState.tabs[this.state.currentTab]) {
       Object.keys(LayoutService.defaultState.tabs[this.state.currentTab].slottedElements).forEach(
         el => {
-          // TODO: index
-          // @ts-ignore
           if (!slottedElements[el]) {
-            // TODO: index
-            // @ts-ignore
             slottedElements[el] = { slot: null };
           }
         },
