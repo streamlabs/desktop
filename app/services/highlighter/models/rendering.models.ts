@@ -32,7 +32,7 @@ export interface IExportInfo {
   cancelRequested: boolean;
   file: string;
   previewFile: string;
-
+  transcriptionInProgress: boolean;
   /**
    * Whether the export finished successfully.
    * Will be set to false whenever something changes

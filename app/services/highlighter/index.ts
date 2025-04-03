@@ -106,6 +106,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       exporting: false,
       currentFrame: 0,
       totalFrames: 0,
+      transcriptionInProgress: false,
       step: EExportStep.AudioMix,
       cancelRequested: false,
       file: '',

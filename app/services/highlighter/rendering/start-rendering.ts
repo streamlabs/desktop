@@ -78,6 +78,9 @@ export async function startRendering(
     // Create subtitles before audio is mixed in
     if (exportOptions.subtitles?.enabled) {
       try {
+        setExportInfo({
+          transcriptionInProgress: true,
+        });
         const subtitleDirectory = await createSubtitles(
           audioConcat,
           userId,
@@ -90,6 +93,10 @@ export async function startRendering(
       } catch (error: unknown) {
         console.error('Error creating subtitles', error);
         exportOptions.subtitles = { enabled: false };
+      } finally {
+        setExportInfo({
+          transcriptionInProgress: false,
+        });
       }
     }
     // create transcriptions
