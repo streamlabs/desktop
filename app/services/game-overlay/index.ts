@@ -176,7 +176,7 @@ export class GameOverlayService extends PersistentStatefulService<GameOverlaySta
   assignCommonWindowOptions() {
     const [containerX, containerY] = this.getWindowContainerStartingPosition();
     this.commonWindowOptions = {
-      backgroundColor: this.customizationService.themeBackground,
+      backgroundColor: JSON.stringify(this.customizationService.themeBackground),
       show: false,
       frame: false,
       width: 300,

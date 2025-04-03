@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import cx from 'classnames';
 import Utils from 'services/utils';
 import urlLib from 'url';
 import BrowserView from 'components-react/shared/BrowserView';
@@ -10,7 +11,10 @@ import { EMenuItemKey } from 'services/side-nav';
 import { $t } from 'services/i18n';
 import styles from './PlatformAppStore.m.less';
 
-export default function PlatformAppStore(p: { params: { appId?: string; type?: string } }) {
+export default function PlatformAppStore(p: {
+  params: { appId?: string; type?: string };
+  className?: string;
+}) {
   const {
     UserService,
     PlatformAppsService,
@@ -85,7 +89,7 @@ export default function PlatformAppStore(p: { params: { appId?: string; type?: s
   return (
     <>
       <BrowserView
-        className={styles.browserView}
+        className={cx(styles.browserView, p.className)}
         style={{
           height: `calc(100% - ${
             currentUrl.includes('installed-apps') &&
@@ -93,6 +97,11 @@ export default function PlatformAppStore(p: { params: { appId?: string; type?: s
               ? '72'
               : '0'
           }px)`,
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
         }}
         src={platformAppsUrl}
         onReady={onBrowserViewReady}
