@@ -2,7 +2,17 @@ import { Component, Prop } from 'vue-property-decorator';
 import { BaseInput } from './BaseInput';
 import { INumberMetadata } from './index';
 
-@Component({})
+@Component({
+  watch: {
+    value(value) {
+      // TODO: This is a poor pattern. This component should not cache the
+      // displayValue and should instead compute it based on value to retain
+      // full reactivity with the underlying data
+      // @ts-ignore
+      this.displayValue = this.value == null ? this.defaultDisplayValue : String(this.value);
+    },
+  },
+})
 export default class NumberInput extends BaseInput<number | string, INumberMetadata> {
   @Prop()
   readonly value: number | string; // the string type is for empty field
@@ -33,7 +43,7 @@ export default class NumberInput extends BaseInput<number | string, INumberMetad
 
   private updateValue(value: string) {
     const formattedValue = String(isNaN(parseInt(value, 10)) ? 0 : parseInt(value, 10));
-    this.displayValue = value == null ? this.defaultDisplayValue : formattedValue;
+    this.displayValue = formattedValue;
     this.emitInput(formattedValue);
   }
 

@@ -40,8 +40,6 @@ export class Consumer extends MediasoupEntity {
     this.transportCreated = true;
     const turnConfig = await this.guestCamService.getTurnConfig();
 
-    // TODO: index
-    // @ts-ignore
     event.data['iceServers'] = [turnConfig];
 
     this.makeObsRequest('func_create_receive_transport', event.data);

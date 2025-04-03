@@ -73,8 +73,8 @@ export default class EventFilterMenu extends TsxComponent<{}> {
   get renderGeneralFilters() {
     return (
       <div class={styles.generalFilters}>
-        {Object.entries(this.mainFilters).map(([name, filter]) => (
-          <div>{this.renderBooleanInput(name, filter)}</div>
+        {Object.keys(this.mainFilters).map(filter => (
+          <div>{this.renderBooleanInput(filter, this.mainFilters[filter])}</div>
         ))}
       </div>
     );
@@ -85,9 +85,9 @@ export default class EventFilterMenu extends TsxComponent<{}> {
       <div class={styles.halfWidth}>
         <div>{this.renderBooleanInput('subscription', this.subFilters['subscription'], true)}</div>
         {this.subsEnabled &&
-          Object.entries(this.subFilters)
-            .filter(([name]) => name !== 'subscription')
-            .map(([name, filter]) => <div>{this.renderBooleanInput(name, filter)}</div>)}
+          Object.keys(this.subFilters)
+            .filter(filter => filter !== 'subscription')
+            .map(filter => <div>{this.renderBooleanInput(filter, this.subFilters[filter])}</div>)}
       </div>
     );
   }
@@ -98,14 +98,16 @@ export default class EventFilterMenu extends TsxComponent<{}> {
         <div>{this.renderBooleanInput('resub', this.resubFilters['resub'], true)}</div>
         <div class={styles.resubOptions}>
           {this.resubsEnabled &&
-            Object.entries(this.resubFilters)
+            Object.keys(this.resubFilters)
               .filter(
-                ([name]) =>
-                  !/months/.test(name) &&
-                  name !== 'resub' &&
-                  name !== 'filter_subscription_minimum_enabled',
+                key =>
+                  !/months/.test(key) &&
+                  key !== 'resub' &&
+                  key !== 'filter_subscription_minimum_enabled',
               )
-              .map(([name, filter]) => <div>{this.renderBooleanInput(name, filter)}</div>)}
+              .map(filter => (
+                <div>{this.renderBooleanInput(filter, this.resubFilters[filter])}</div>
+              ))}
         </div>
         {this.renderResubMonthsFilter}
       </div>

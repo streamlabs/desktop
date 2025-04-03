@@ -30,8 +30,6 @@ export default function SourceTag(p: {
   const { platform } = useVuex(() => ({ platform: UserService.views.platform?.type }));
 
   const displayData =
-    // TODO: index
-    // @ts-ignore
     WidgetDisplayData(platform)[WidgetType[p.type]] || SourceDisplayData()[p.type];
 
   function active() {

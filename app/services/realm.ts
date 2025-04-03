@@ -28,8 +28,6 @@ export class RealmObject {
    * Serializable id string as hex
    */
   get idString() {
-    // TODO: index
-    // @ts-ignore
     return this.realmModel['_id'].toHexString();
   }
 
@@ -99,8 +97,6 @@ export class RealmObject {
   bindProps(target: Object, bindings: Dictionary<string>) {
     const setProps = () => {
       Object.keys(bindings).forEach(key => {
-        // TODO: index
-        // @ts-ignore
         target[key] = this[bindings[key]];
       });
     };
@@ -123,17 +119,11 @@ export class RealmObject {
       if (!patch.hasOwnProperty(key)) return;
       if (key === '__proto__' || key === 'constructor') return;
 
-      // TODO: index
-      // @ts-ignore
       const val = this[key];
 
       if (val instanceof RealmObject) {
-        // TODO: index
-        // @ts-ignore
         val.deepPatch(patch[key]);
       } else {
-        // TODO: index
-        // @ts-ignore
         this[key] = patch[key];
       }
     });
@@ -143,17 +133,11 @@ export class RealmObject {
     const obj = {};
 
     Object.keys(this.schema.properties).forEach(key => {
-      // TODO: index
-      // @ts-ignore
       const val = this[key];
 
       if (val instanceof RealmObject) {
-        // TODO: index
-        // @ts-ignore
         obj[key] = val.toObject();
       } else {
-        // TODO: index
-        // @ts-ignore
         obj[key] = val;
       }
     });
@@ -277,27 +261,17 @@ export class RealmObject {
     Object.keys(initObject).forEach(k => {
       const descriptor = Object.getOwnPropertyDescriptor(initObject, k);
 
-      // TODO: index
-      // @ts-ignore
       if (typeof initObject[k] === 'function' || descriptor.get) {
         Object.defineProperty(klass.prototype, k, descriptor);
       } else {
-        // TODO: index
-        // @ts-ignore
         const t = typeof initObject[k];
 
         // All else are schema properties
         if (t === 'number') {
-          // TODO: index
-          // @ts-ignore
           propMap[k] = { type: 'double', default: initObject[k] };
         } else if (t === 'boolean') {
-          // TODO: index
-          // @ts-ignore
           propMap[k] = { type: 'bool', default: initObject[k] };
         } else if (t === 'string') {
-          // TODO: index
-          // @ts-ignore
           propMap[k] = { type: 'string', default: initObject[k] };
         }
 
@@ -378,11 +352,7 @@ export class RealmService extends Service {
 
   static registerObject(obj: typeof Realm.Object, klass: typeof RealmObject, persist = false) {
     persist ? this.persistentSchemas.push(obj) : this.ephemeralSchemas.push(obj);
-    // TODO: index
-    // @ts-ignore
     this.databaseMappings[obj['schema']['name']] = persist ? 'persistent' : 'ephemeral';
-    // TODO: index
-    // @ts-ignore
     this.registeredClasses[obj['schema']['name']] = klass;
   }
 

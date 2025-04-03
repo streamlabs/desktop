@@ -211,8 +211,6 @@ export class FormMonkey {
 
       this.log(`got: ${value}`);
       const key = returnTitlesInsteadValues ? input.title : input.name;
-      // TODO: index
-      // @ts-ignore
       formData[key] = value;
     }
 

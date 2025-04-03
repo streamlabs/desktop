@@ -50,11 +50,7 @@ export function ObsSettingsSection(
  */
 function getPageComponent(page: string) {
   const componentName = Object.keys(pageComponents).find(componentName => {
-    // TODO: index
-    // @ts-ignore
     return pageComponents[componentName].page === page;
   });
-  // TODO: index
-  // @ts-ignore
   return componentName ? pageComponents[componentName] : null;
 }

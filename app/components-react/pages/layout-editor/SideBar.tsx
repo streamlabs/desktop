@@ -24,12 +24,12 @@ export default function SideBar() {
       <div>
         <div className={styles.title}>{$t('Layouts')}</div>
         <Scrollable className={styles.layouts}>
-          {Object.values(ELayout).map(layout => (
+          {Object.keys(ELayout).map(layout => (
             <img
               key={layout}
               className={currentLayout === layout ? styles.active : ''}
-              onClick={() => setCurrentLayout(layout)}
-              src={layoutImage(layout)}
+              onClick={() => setCurrentLayout(ELayout[layout])}
+              src={layoutImage(ELayout[layout])}
             />
           ))}
         </Scrollable>

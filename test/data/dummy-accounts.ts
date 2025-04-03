@@ -79,7 +79,7 @@ export const tikTokUserRelog: IDummyTestUser = {
   tikTokLiveScope: 'relog',
 };
 
-export const tikTokUsers: Partial<Record<TTikTokLiveScopeTypes, IDummyTestUser>> = {
+export const tikTokUsers = {
   approved: tikTokUserApproved,
   denied: tikTokUserNotApproved,
   legacy: tikTokUserLegacy,

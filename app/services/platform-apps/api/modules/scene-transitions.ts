@@ -278,15 +278,9 @@ export class SceneTransitionsModule extends Module {
     const settings = {};
 
     Object.keys(options).forEach(key => {
-      // TODO: index
-      // @ts-ignore
       const val = options[key];
 
-      // TODO: index
-      // @ts-ignore
       if (obsKeyMapping[key]) {
-        // TODO: index
-        // @ts-ignore
         settings[obsKeyMapping[key]] = obsValueMapping[key] ? obsValueMapping[key](val) : val;
       }
     });

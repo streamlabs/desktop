@@ -579,8 +579,6 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
 
     if (transition) {
       Object.keys(patch).forEach(key => {
-        // TODO: index
-        // @ts-ignore
         transition[key] = patch[key];
       });
     }
@@ -615,8 +613,6 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
 
     if (connection) {
       Object.keys(patch).forEach(key => {
-        // TODO: index
-        // @ts-ignore
         connection[key] = patch[key];
       });
     }

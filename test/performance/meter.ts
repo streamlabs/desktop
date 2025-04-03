@@ -82,10 +82,8 @@ class Meter {
 
   writeReportToFile(testName: string, path: string) {
     let reportText = `# ${testName}`;
-    const { recordedEvents } = this;
-
-    Object.keys(recordedEvents).forEach((eventName: keyof typeof recordedEvents) => {
-      const values = recordedEvents[eventName].values;
+    Object.keys(this.recordedEvents).forEach(eventName => {
+      const values = this.recordedEvents[eventName].values;
       const average = values.reduce((v1: number, v2: number) => v1 + v2) / values.length;
       const min = Math.min(...values);
       const max = Math.max(...values);

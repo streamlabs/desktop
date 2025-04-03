@@ -37,7 +37,5 @@ function useLayout(p: TInputWrapperProps) {
   const contextLayout = context?.layout;
   const wrapperLayout = p.layout;
   const layout = wrapperLayout || contextLayout || 'inline';
-  // TODO: index
-  // @ts-ignore
   return layoutPresets[layout] || {};
 }

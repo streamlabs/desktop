@@ -99,7 +99,7 @@ export default function HotkeyBinding(p: {
 
     event.preventDefault();
 
-    const code: Record<number, string> = {
+    const code = {
       1: 'MiddleMouseButton',
       3: 'X1MouseButton',
       4: 'X2MouseButton',

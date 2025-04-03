@@ -67,8 +67,6 @@ export interface ISourceFilter {
   visible: boolean;
   settings: Dictionary<TObsValue>;
   displayType: EFilterDisplayType;
-  // old value of how we stored visible
-  enabled?: boolean;
 }
 
 export interface ISourceFilterIdentifier {

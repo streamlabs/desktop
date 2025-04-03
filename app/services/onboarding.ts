@@ -18,7 +18,7 @@ export type { IThemeMetadata } from './onboarding/theme-metadata';
 import { TwitchStudioImporterService } from './ts-importer';
 import { DualOutputService } from 'services/dual-output';
 
-export enum EOnboardingSteps {
+enum EOnboardingSteps {
   MacPermissions = 'MacPermissions',
   StreamingOrRecording = 'StreamingOrRecording',
   Connect = 'Connect',
@@ -34,7 +34,7 @@ export enum EOnboardingSteps {
 
 const isMac = () => process.platform === OS.Mac;
 
-export const ONBOARDING_STEPS = (): Record<EOnboardingSteps, IOnboardingStep> => ({
+export const ONBOARDING_STEPS = () => ({
   [EOnboardingSteps.MacPermissions]: {
     component: 'MacPermissions' as const,
     hideButton: true,
@@ -299,8 +299,6 @@ export class OnboardingService extends StatefulService<IOnboardingServiceState> 
   }
 
   themeUrl(id: number) {
-    // TODO: index
-    // @ts-ignore
     return this.themeMetadata[id];
   }
 

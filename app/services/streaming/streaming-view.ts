@@ -133,8 +133,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return (
       this.settings.customDestinations
         .filter(dest => dest.enabled)
-        // FIXME: index, but also split is a function?
-        // @ts-ignore
         .map(dest => dest.url.split[2]) || []
     );
   }
@@ -318,8 +316,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   get savedSettings(): IGoLiveSettings {
     const destinations = {} as IGoLiveSettings['platforms'];
     this.linkedPlatforms.forEach(platform => {
-      // TODO: index
-      // @ts-ignore
       destinations[platform as string] = this.getSavedPlatformSettings(platform);
     });
 
@@ -377,11 +373,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     destinationsWithCommonSettings.forEach(platform => {
       const destSettings = getDefined(platforms[platform]);
       Object.keys(commonFields).forEach(fieldName => {
-        // TODO: index
-        // @ts-ignore
         if (commonFields[fieldName] || !destSettings[fieldName]) return;
-        // TODO: index
-        // @ts-ignore
         commonFields[fieldName] = destSettings[fieldName];
       });
     });
@@ -390,11 +382,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     destinationWithCustomSettings.forEach(platform => {
       const destSettings = getDefined(platforms[platform]);
       Object.keys(commonFields).forEach(fieldName => {
-        // TODO: index
-        // @ts-ignore
         if (commonFields[fieldName] || !destSettings[fieldName]) return;
-        // TODO: index
-        // @ts-ignore
         commonFields[fieldName] = destSettings[fieldName];
       });
     });
@@ -405,14 +393,8 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     const commonFields = this.getCommonFields(platforms);
     const result = {} as IGoLiveSettings['platforms'];
     Object.keys(platforms).forEach(platform => {
-      // TODO: index
-      // @ts-ignore
       result[platform] = platforms[platform];
-      // TODO: index
-      // @ts-ignore
       result[platform].title = platforms[platform].title || commonFields.title;
-      // TODO: index
-      // @ts-ignore
       result[platform].description = platforms[platform].description || commonFields.description;
     });
     return result;
@@ -491,8 +473,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    */
   hasFailedChecks(): boolean {
     return !!Object.keys(this.info.checklist).find(
-      // TODO: index
-      // @ts-ignore
       check => this.info.checklist[check] === 'failed',
     );
   }
@@ -502,8 +482,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    */
   hasPendingChecks(): boolean {
     return !!Object.keys(this.info.checklist).find(
-      // TODO: index
-      // @ts-ignore
       check => this.info.checklist[check] === 'pending',
     );
   }
@@ -525,8 +503,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   private getSavedPlatformSettings(platform: TPlatform) {
     const service = getPlatformService(platform);
     const savedDestinations = this.streamSettingsView.state.goLiveSettings?.platforms;
-    // TODO: index
-    // @ts-ignore
     const { enabled, useCustomFields } = (savedDestinations && savedDestinations[platform]) || {
       enabled: false,
       useCustomFields: false,
@@ -534,19 +510,11 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     const settings = cloneDeep(service.state.settings);
 
     // don't reuse broadcastId and thumbnail for Youtube
-    // TODO: index
-    // @ts-ignore
     if (settings && settings['broadcastId']) settings['broadcastId'] = '';
-    // TODO: index
-    // @ts-ignore
     if (settings && settings['thumbnail']) settings['thumbnail'] = '';
 
     // don't reuse liveVideoId for Facebook
-    // TODO: index
-    // @ts-ignore
     if (platform === 'facebook' && settings && settings['liveVideoId']) {
-      // TODO: index
-      // @ts-ignore
       settings['liveVideoId'] = '';
     }
 
