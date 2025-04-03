@@ -8,7 +8,7 @@ export default function SupportedGames({ emitClick }: { emitClick?: (game: EGame
   const rotation = ['4.654deg', '-3.9deg', '5.24deg', '-2.58deg'];
   return (
     <div style={{ display: 'flex' }}>
-      {supportedGames.map((game, index) => (
+      {supportedGames.slice(0, 4).map((game, index) => (
         <div
           onClick={e => emitClick && emitClick(game.value)}
           className={styles.thumbnail}
