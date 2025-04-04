@@ -4,7 +4,6 @@ import {
   TFPS,
   TResolution,
   TPreset,
-  ISubtitleOptions,
   ISubtitleStyle,
 } from 'services/highlighter/models/rendering.models';
 import { Services } from 'components-react/service-provider';
@@ -26,42 +25,41 @@ import styles from './ExportModal.m.less';
 import { getCombinedClipsDuration } from './utils';
 import { formatSecondsToHMS } from './ClipPreview';
 import cx from 'classnames';
-import { ISubtitleConfig } from 'services/highlighter/subtitles/subtitle-mode';
+import { SubtitleStyles } from 'services/highlighter/subtitles/subtitle-styles';
 
 type TSetting = { name: string; fps: TFPS; resolution: TResolution; preset: TPreset };
+
+interface ISubtitleItem {
+  name: string;
+  enabled: boolean;
+  style?: ISubtitleStyle;
+}
 const settings: TSetting[] = [
   { name: 'Standard', fps: 30, resolution: 1080, preset: 'fast' },
   { name: 'Best', fps: 60, resolution: 1080, preset: 'slow' },
   { name: 'Custom', fps: 30, resolution: 720, preset: 'ultrafast' },
 ];
 
-const subtitleSettings: ISubtitleOptions[] = [
+const subtitleItems: ISubtitleItem[] = [
   {
     name: 'No subtitles',
     enabled: false,
     style: undefined,
   },
   {
-    name: 'On',
+    name: 'Default',
     enabled: true,
-    style: {
-      fontSize: 32,
-      fontFamily: 'Impact',
-      fontColor: '#ffffff',
-      strokeColor: '#000000',
-      strokeWidth: 5,
-    },
+    style: SubtitleStyles.default,
   },
   {
-    name: 'On',
+    name: 'Thick',
     enabled: true,
-    style: {
-      fontSize: 32,
-      fontFamily: 'Impact',
-      fontColor: '#00ff00',
-      strokeColor: '#ff00ff',
-      strokeWidth: 3,
-    },
+    style: SubtitleStyles.thick,
+  },
+  {
+    name: 'Flashy',
+    enabled: true,
+    style: SubtitleStyles.flashy,
   },
 ];
 class ExportController {
@@ -110,8 +108,8 @@ class ExportController {
     this.service.actions.setPreset(value as TPreset);
   }
 
-  setSubtitles(subtitleOptions: ISubtitleOptions) {
-    this.service.actions.setSubtitles(subtitleOptions);
+  setSubtitles(subtitleItem: ISubtitleItem) {
+    this.service.actions.setSubtitleStyle(subtitleItem.style);
   }
 
   setExport(exportFile: string) {
@@ -237,7 +235,7 @@ function ExportFlow({
     };
   }
 
-  const [currentSubtitleSettings, setSubtitleSettings] = useState<ISubtitleOptions>({
+  const [currentSubtitleItem, setSubtitleItem] = useState<ISubtitleItem>({
     name: 'Off',
     enabled: false,
     style: undefined,
@@ -356,14 +354,14 @@ function ExportFlow({
                   />
                 </div>
               )}
-              {currentSubtitleSettings.enabled && (
+              {currentSubtitleItem?.style && (
                 <div className={styles.subtitlePreview}>
                   <SubtitlePreview
-                    fontSize={currentSubtitleSettings.style.fontSize}
-                    fontFamily={currentSubtitleSettings.style.fontFamily}
-                    fontColor={currentSubtitleSettings.style.fontColor}
-                    strokeColor={currentSubtitleSettings.style.strokeColor}
-                    strokeWidth={currentSubtitleSettings.style.strokeWidth}
+                    fontSize={currentSubtitleItem.style.fontSize}
+                    fontFamily={currentSubtitleItem.style.fontFamily}
+                    fontColor={currentSubtitleItem.style.fontColor}
+                    strokeColor={currentSubtitleItem.style.strokeColor}
+                    strokeWidth={currentSubtitleItem.style.strokeWidth}
                   />
                 </div>
               )}
@@ -396,10 +394,10 @@ function ExportFlow({
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <SubtitleDropdownWrapper
-                  initialSetting={currentSubtitleSettings}
+                  initialSetting={currentSubtitleItem}
                   disabled={isExporting}
                   emitSettings={setting => {
-                    setSubtitleSettings(setting);
+                    setSubtitleItem(setting);
                     setSubtitles(setting);
                   }}
                 />
@@ -564,45 +562,47 @@ function PlatformSelect({
 }
 
 function SubtitleDropdownWrapper({
-  initialSetting,
+  initialSetting: initialItem,
   disabled,
   emitSettings,
 }: {
-  initialSetting: ISubtitleOptions;
+  initialSetting: ISubtitleItem;
   disabled: boolean;
-  emitSettings: (settings: ISubtitleOptions) => void;
+  emitSettings: (item: ISubtitleItem) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [currentSetting, setSetting] = useState<ISubtitleOptions>(initialSetting);
+  const [currentSetting, setSetting] = useState<ISubtitleItem>(initialItem);
 
   return (
     <div style={{ width: '72px' }} className={`${disabled ? styles.isDisabled : ''}`}>
       <Dropdown
         overlay={
           <div className={styles.innerItemWrapper} style={{ width: 'fit-content' }}>
-            {subtitleSettings.map(setting => {
+            {subtitleItems.map(item => {
               return (
                 <div
                   className={`${styles.innerDropdownItem} ${
-                    setting.name === currentSetting.name ? styles.active : ''
+                    item.name === currentSetting.name ? styles.active : ''
                   }`}
                   onClick={() => {
-                    setSetting(setting);
-                    emitSettings(setting);
+                    setSetting(item);
+                    emitSettings(item);
                     setIsOpen(false);
                   }}
-                  key={setting.name}
+                  key={item.name}
                 >
-                  {setting.enabled === false ? (
-                    <div className={styles.dropdownText}>{setting.name} </div>
+                  {item.enabled === false ? (
+                    <div className={styles.dropdownText}>{item.name} </div>
                   ) : (
-                    <SubtitlePreview
-                      fontSize={setting.style.fontSize}
-                      fontFamily={setting.style.fontFamily}
-                      fontColor={setting.style.fontColor}
-                      strokeColor={setting.style.strokeColor}
-                      strokeWidth={setting.style.strokeWidth}
-                    />
+                    item.style && (
+                      <SubtitlePreview
+                        fontSize={item.style.fontSize}
+                        fontFamily={item.style.fontFamily}
+                        fontColor={item.style.fontColor}
+                        strokeColor={item.style.strokeColor}
+                        strokeWidth={item.style.strokeWidth}
+                      />
+                    )
                   )}
                 </div>
               );
@@ -749,17 +749,17 @@ export const SubtitlePreview = (style: ISubtitleStyle, inVideo: boolean) => {
           fontFamily={style.fontFamily}
           fontStyle={style.isItalic ? 'italic' : 'normal'}
           fontWeight={style.isBold ? 'bold' : 'normal'}
-          fontSize={style.fontSize}
+          fill={style.fontColor}
+          fontSize="24" //{style.fontSize}
           textAnchor="middle"
           dominantBaseline="middle"
           paintOrder="stroke fill"
-          strokeWidth={style.strokeWidth}
-          stroke={style.strokeColor}
-          fill={style.fontColor}
+          strokeWidth={(style.strokeWidth ?? 0) + 'px'}
+          stroke={style.strokeColor || 'none'}
           x={WIDTH / 2}
           y={HEIGHT / 2}
         >
-          Auto subtitles
+          {(style.strokeWidth ?? 0) + 'px'}
         </text>
       </svg>
     </div>

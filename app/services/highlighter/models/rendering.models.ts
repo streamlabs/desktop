@@ -5,24 +5,15 @@ export type TFPS = 30 | 60;
 export type TResolution = 720 | 1080;
 export type TPreset = 'ultrafast' | 'fast' | 'slow';
 
-export interface ISubtitleRenderingOptions {
-  enabled: boolean;
-  directory?: string;
-}
-
 export interface ISubtitleStyle extends ITextStyle {}
 
-// @jan: also saw that you created a subtitle config. should we use the config instead? Not sure what the plan is.
-export type ISubtitleOptions =
-  | { name: string; enabled: true; style: ISubtitleStyle }
-  | { name: string; enabled: false; style: undefined };
 export interface IExportOptions {
   fps: TFPS;
   width: number;
   height: number;
   preset: TPreset;
   complexFilter?: string;
-  subtitles?: ISubtitleRenderingOptions;
+  subtitleStyle?: ISubtitleStyle;
 }
 
 // types for highlighter video operations
@@ -50,7 +41,7 @@ export interface IExportInfo {
   fps: TFPS;
   resolution: TResolution;
   preset: TPreset;
-  subtitles: ISubtitleOptions;
+  subtitleStyle: ISubtitleStyle | null;
 }
 
 // Capitalization is not consistent because it matches with the

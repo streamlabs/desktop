@@ -54,14 +54,7 @@ export async function createSubtitles(
   const exportResolution = exportOptions.complexFilter
     ? { width: exportOptions.height, height: exportOptions.width }
     : { width: exportOptions.width, height: exportOptions.height };
-  const svgCreator = new SvgCreator(exportResolution, {
-    fontSize: 46,
-    fontFamily: 'Impact',
-    fontColor: 'white',
-    strokeColor: 'black',
-    strokeWidth: 6,
-    isBold: true,
-  });
+  const svgCreator = new SvgCreator(exportResolution, exportOptions.subtitleStyle);
 
   const transcription = await getTranscription(mediaPath, userId, totalDuration);
 
@@ -102,10 +95,10 @@ export async function createSubtitles(
   return subtitleDirectory;
 }
 
-export function cleanupSubtitleDirectory(exportOptions: IExportOptions) {
-  if (exportOptions.subtitles?.directory) {
+export function cleanupSubtitleDirectory(directory: string) {
+  if (directory) {
     try {
-      fs.removeSync(exportOptions.subtitles.directory);
+      fs.removeSync(directory);
     } catch (error: unknown) {
       console.error('Failed to clean up subtitle directory', error);
     }

@@ -50,7 +50,7 @@ import {
   IAudioInfo,
   IExportInfo,
   IExportOptions,
-  ISubtitleOptions,
+  ISubtitleStyle,
   ITransitionInfo,
   IVideoInfo,
   TFPS,
@@ -75,6 +75,7 @@ import { reduce } from 'lodash';
 import { extractDateTimeFromPath, fileExists } from './file-utils';
 import { addVerticalFilterToExportOptions } from './vertical-export';
 import Utils from '../utils';
+import { SubtitleStyles } from './subtitles/subtitle-styles';
 
 @InitAfter('StreamingService')
 export class HighlighterService extends PersistentStatefulService<IHighlighterState> {
@@ -117,15 +118,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       fps: 30,
       resolution: 1080,
       preset: 'fast',
-      subtitles: {
-        name: 'Default',
-        enabled: true,
-        style: {
-          fontColor: '#FFFFFF',
-          fontSize: 24,
-          fontFamily: 'Arial',
-        },
-      },
+      subtitleStyle: SubtitleStyles['default'],
     },
     upload: {
       uploading: false,
@@ -550,8 +543,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     this.SET_EXPORT_INFO({ preset });
   }
 
-  setSubtitles(subtitleOptions: ISubtitleOptions) {
-    this.SET_EXPORT_INFO({ subtitles: subtitleOptions });
+  setSubtitleStyle(subtitleStyle?: ISubtitleStyle) {
+    this.SET_EXPORT_INFO({ subtitleStyle: subtitleStyle || null });
   }
 
   dismissError() {
@@ -1077,7 +1070,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           height: this.views.exportInfo.resolution === 720 ? 720 : 1080,
           fps: this.views.exportInfo.fps,
           preset: this.views.exportInfo.preset,
-          subtitles: { enabled: this.views.exportInfo.subtitles.enabled }, // @Jan: We need to map te styles here properly from IExportInfo to IExportoptions or merge both
+          subtitleStyle: this.views.exportInfo.subtitleStyle,
         };
 
     if (orientation === 'vertical') {

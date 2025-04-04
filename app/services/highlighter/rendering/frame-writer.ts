@@ -12,6 +12,7 @@ export class FrameWriter {
     public readonly audioInput: string,
     public readonly duration: number,
     public readonly options: IExportOptions,
+    public readonly subtitleDirectory: string | null,
   ) {}
 
   private ffmpeg: execa.ExecaChildProcess<Buffer | string>;
@@ -41,12 +42,11 @@ export class FrameWriter {
       // '-map',
       // '0:v:0',
     ];
-    if (this.options.subtitles?.enabled) {
-      console.log('adding subtitle input');
-      await this.addSubtitleInput(args, this.options);
+    if (this.options.subtitleStyle && this.subtitleDirectory) {
+      await this.addSubtitleInput(args, this.subtitleDirectory);
     }
-    this.addAudioFilters(args, this.options.subtitles?.enabled);
-    this.addVideoFilters(args, this.options.subtitles?.enabled);
+    this.addAudioFilters(args, !!this.options.subtitleStyle);
+    this.addVideoFilters(args, !!this.options.subtitleStyle);
 
     args.push(
       ...[
@@ -141,8 +141,7 @@ export class FrameWriter {
       )}`,
     );
   }
-  private async addSubtitleInput(args: string[], exportOptions: IExportOptions) {
-    const subtitleDirectory = exportOptions.subtitles.directory;
+  private async addSubtitleInput(args: string[], subtitleDirectory: string) {
     args.push(
       '-framerate',
       String(SUBTITLE_PER_SECOND),

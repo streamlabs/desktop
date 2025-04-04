@@ -49,6 +49,7 @@ export async function startRendering(
 
   let fader: AudioCrossfader | null = null;
   let mixer: AudioMixer | null = null;
+  let subtitleDirectory: string | null = null;
   try {
     // Estimate the total number of frames to set up export info
     const totalFrames = renderingClips.reduce((count: number, clip) => {
@@ -75,12 +76,12 @@ export async function startRendering(
     await fader.export();
 
     // Create subtitles before audio is mixed in
-    if (exportOptions.subtitles?.enabled) {
+    if (exportOptions.subtitleStyle) {
       try {
         setExportInfo({
           transcriptionInProgress: true,
         });
-        const subtitleDirectory = await createSubtitles(
+        subtitleDirectory = await createSubtitles(
           audioConcat,
           userId,
           parsed,
@@ -88,10 +89,9 @@ export async function startRendering(
           totalDuration,
           totalFramesAfterTransitions,
         );
-        exportOptions.subtitles.directory = subtitleDirectory;
       } catch (error: unknown) {
         console.error('Error creating subtitles', error);
-        exportOptions.subtitles = { enabled: false };
+        exportOptions.subtitleStyle = null;
       } finally {
         setExportInfo({
           transcriptionInProgress: false,
@@ -133,6 +133,7 @@ export async function startRendering(
       audioMix,
       totalFramesAfterTransitions / exportOptions.fps,
       exportOptions,
+      subtitleDirectory,
     );
 
     while (true) {
@@ -262,7 +263,7 @@ export async function startRendering(
       exported: !exportInfo.cancelRequested && !isPreview && !exportInfo.error,
     });
     // Clean up subtitle directory if it was created
-    cleanupSubtitleDirectory(exportOptions);
+    cleanupSubtitleDirectory(subtitleDirectory);
     if (fader) await fader.cleanup();
     if (mixer) await mixer.cleanup();
   }
