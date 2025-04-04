@@ -1,4 +1,5 @@
 import { $t } from '../../i18n';
+import { ITextStyle } from '../subtitles/svg-creator';
 
 export type TFPS = 30 | 60;
 export type TResolution = 720 | 1080;
@@ -9,6 +10,12 @@ export interface ISubtitleRenderingOptions {
   directory?: string;
 }
 
+export interface ISubtitleStyle extends ITextStyle {}
+
+// @jan: also saw that you created a subtitle config. should we use the config instead? Not sure what the plan is.
+export type ISubtitleOptions =
+  | { name: string; enabled: true; style: ISubtitleStyle }
+  | { name: string; enabled: false; style: undefined };
 export interface IExportOptions {
   fps: TFPS;
   width: number;
@@ -43,6 +50,7 @@ export interface IExportInfo {
   fps: TFPS;
   resolution: TResolution;
   preset: TPreset;
+  subtitles: ISubtitleOptions;
 }
 
 // Capitalization is not consistent because it matches with the
