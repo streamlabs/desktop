@@ -69,6 +69,8 @@
     "niconico": "Tab related to niconico program",
     "studio": "Tab related to streaming"
   },
+  "initialHelpTipTitle": "First-time Users",
+  "initialHelpTipContent": "Learn how to use N Air here.",
   "loginHelpTipTitle": "Login",
   "loginHelpTipContent": "Click here to log in to niconico",
   "fieldIsRequired": "The field is required",
