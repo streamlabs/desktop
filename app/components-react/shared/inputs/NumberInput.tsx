@@ -5,11 +5,16 @@ import InputWrapper from './InputWrapper';
 import { InputNumberProps } from 'antd/lib/input-number';
 
 // select which features from the antd lib we are going to use
-const ANT_NUMBER_FEATURES = ['min', 'max', 'step'] as const;
+export const ANT_NUMBER_FEATURES = ['min', 'max', 'step'] as const;
 
-type TProps = TSlobsInputProps<{}, number, InputNumberProps, ValuesOf<typeof ANT_NUMBER_FEATURES>>;
+export type TNumberInputProps = TSlobsInputProps<
+  {},
+  number,
+  InputNumberProps,
+  ValuesOf<typeof ANT_NUMBER_FEATURES>
+>;
 
-export const NumberInput = React.memo((p: TProps) => {
+export const NumberInput = React.memo((p: TNumberInputProps) => {
   const { inputAttrs, wrapperAttrs, originalOnChange } = useTextInput<typeof p, number>(
     'number',
     p,

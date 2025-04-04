@@ -32,6 +32,7 @@ export interface ICustomListProps<TValue> {
   onBeforeSearch?: (searchStr: string) => unknown;
   options?: IListOption<TValue>[];
   description?: string;
+  nolabel?: boolean;
 }
 
 // define a type for the component's props
@@ -87,7 +88,11 @@ export const ListInput = InputComponent(<T extends any>(p: TListInputProps<T>) =
   const selectedOption = options?.find(opt => opt.value === p.value);
 
   return (
-    <InputWrapper {...wrapperAttrs} extra={p?.description ?? selectedOption?.description}>
+    <InputWrapper
+      {...wrapperAttrs}
+      extra={p?.description ?? selectedOption?.description}
+      nolabel={p?.nolabel}
+    >
       <Select
         ref={$inputRef}
         {...omit(inputAttrs, 'onChange')}
