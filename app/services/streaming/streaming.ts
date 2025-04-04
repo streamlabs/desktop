@@ -435,7 +435,7 @@ export class StreamingService
       if (
         this.views.isDualOutputMode &&
         this.views.enabledPlatforms.includes('youtube') &&
-        this.views.getPlatformSettings('youtube').hasExtraOutputs &&
+        this.views.getPlatformSettings('youtube')?.hasExtraOutputs &&
         /*
          * Super safe so we don't ever bypass validation due to the toggles
          * or `hasExtraOutputs` not being reset.
@@ -452,8 +452,9 @@ export class StreamingService
 
             this.extraOutputs.push({
               name,
-              streamKey,
               url,
+              // TODO: ICustomStreamDestination's streamKey is optional
+              streamKey: streamKey as string,
               display: 'vertical',
               encoder: encoderSettings.streaming.encoder,
               encoderSettings: encoderSettings.streaming,
@@ -1061,9 +1062,10 @@ export class StreamingService
             NodeObs.OBS_service_stopStreaming(true, 'vertical');
 
             extraOutputs.forEach(output => {
-              output.stream?.stop();
-
-              SimpleStreamingFactory.destroy(output.stream);
+              if (output.stream) {
+                output.stream.stop();
+                SimpleStreamingFactory.destroy(output.stream);
+              }
             });
 
             this.extraOutputs = [];
@@ -1195,8 +1197,10 @@ export class StreamingService
               // TODO: these are probably too much but DO does it this way on
               // several signal states, so we follow suit
               this.extraOutputs.forEach(output => {
-                output.stream?.stop();
-                SimpleStreamingFactory.destroy(output.stream);
+                if (output.stream) {
+                  output.stream.stop();
+                  SimpleStreamingFactory.destroy(output.stream);
+                }
               });
               this.extraOutputs = [];
               NodeObs.OBS_service_stopStreaming(false, 'vertical');
