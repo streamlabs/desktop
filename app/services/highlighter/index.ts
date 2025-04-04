@@ -50,6 +50,7 @@ import {
   IAudioInfo,
   IExportInfo,
   IExportOptions,
+  ISubtitleOptions,
   ITransitionInfo,
   IVideoInfo,
   TFPS,
@@ -116,6 +117,15 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       fps: 30,
       resolution: 1080,
       preset: 'fast',
+      subtitles: {
+        name: 'Default',
+        enabled: true,
+        style: {
+          fontColor: '#FFFFFF',
+          fontSize: 24,
+          fontFamily: 'Arial',
+        },
+      },
     },
     upload: {
       uploading: false,
@@ -538,6 +548,10 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
   setPreset(preset: TPreset) {
     this.SET_EXPORT_INFO({ preset });
+  }
+
+  setSubtitles(subtitleOptions: ISubtitleOptions) {
+    this.SET_EXPORT_INFO({ subtitles: subtitleOptions });
   }
 
   dismissError() {
@@ -1063,6 +1077,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           height: this.views.exportInfo.resolution === 720 ? 720 : 1080,
           fps: this.views.exportInfo.fps,
           preset: this.views.exportInfo.preset,
+          subtitles: { enabled: this.views.exportInfo.subtitles.enabled }, // @Jan: We need to map te styles here properly from IExportInfo to IExportoptions or merge both
         };
 
     if (orientation === 'vertical') {

@@ -4,6 +4,8 @@ import {
   TFPS,
   TResolution,
   TPreset,
+  ISubtitleOptions,
+  ISubtitleStyle,
 } from 'services/highlighter/models/rendering.models';
 import { Services } from 'components-react/service-provider';
 import { FileInput, TextInput, ListInput } from 'components-react/shared/inputs';
@@ -24,12 +26,43 @@ import styles from './ExportModal.m.less';
 import { getCombinedClipsDuration } from './utils';
 import { formatSecondsToHMS } from './ClipPreview';
 import cx from 'classnames';
+import { ISubtitleConfig } from 'services/highlighter/subtitles/subtitle-mode';
 
 type TSetting = { name: string; fps: TFPS; resolution: TResolution; preset: TPreset };
 const settings: TSetting[] = [
   { name: 'Standard', fps: 30, resolution: 1080, preset: 'fast' },
   { name: 'Best', fps: 60, resolution: 1080, preset: 'slow' },
   { name: 'Custom', fps: 30, resolution: 720, preset: 'ultrafast' },
+];
+
+const subtitleSettings: ISubtitleOptions[] = [
+  {
+    name: 'No subtitles',
+    enabled: false,
+    style: undefined,
+  },
+  {
+    name: 'On',
+    enabled: true,
+    style: {
+      fontSize: 32,
+      fontFamily: 'Impact',
+      fontColor: '#ffffff',
+      strokeColor: '#000000',
+      strokeWidth: 5,
+    },
+  },
+  {
+    name: 'On',
+    enabled: true,
+    style: {
+      fontSize: 32,
+      fontFamily: 'Impact',
+      fontColor: '#00ff00',
+      strokeColor: '#ff00ff',
+      strokeWidth: 3,
+    },
+  },
 ];
 class ExportController {
   get service() {
@@ -75,6 +108,10 @@ class ExportController {
 
   setPreset(value: string) {
     this.service.actions.setPreset(value as TPreset);
+  }
+
+  setSubtitles(subtitleOptions: ISubtitleOptions) {
+    this.service.actions.setSubtitles(subtitleOptions);
   }
 
   setExport(exportFile: string) {
@@ -167,6 +204,7 @@ function ExportFlow({
     setResolution,
     setFps,
     setPreset,
+    setSubtitles,
     fileExists,
     setExport,
     exportCurrentFile,
@@ -198,6 +236,12 @@ function ExportFlow({
       preset: initialSetting.preset,
     };
   }
+
+  const [currentSubtitleSettings, setSubtitleSettings] = useState<ISubtitleOptions>({
+    name: 'Off',
+    enabled: false,
+    style: undefined,
+  });
 
   const [currentSetting, setSetting] = useState<TSetting>(
     settingMatcher({
@@ -312,6 +356,17 @@ function ExportFlow({
                   />
                 </div>
               )}
+              {currentSubtitleSettings.enabled && (
+                <div className={styles.subtitlePreview}>
+                  <SubtitlePreview
+                    fontSize={currentSubtitleSettings.style.fontSize}
+                    fontFamily={currentSubtitleSettings.style.fontFamily}
+                    fontColor={currentSubtitleSettings.style.fontColor}
+                    strokeColor={currentSubtitleSettings.style.strokeColor}
+                    strokeWidth={currentSubtitleSettings.style.strokeWidth}
+                  />
+                </div>
+              )}
               <img
                 src={getClipThumbnail(streamId)}
                 style={
@@ -339,11 +394,21 @@ function ExportFlow({
                   {clipsDuration} | {$t('%{clipsAmount} clips', { clipsAmount })}
                 </p>
               </div>
-              <OrientationToggle
-                initialState={currentFormat}
-                disabled={isExporting}
-                emitState={format => setCurrentFormat(format)}
-              />
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <SubtitleDropdownWrapper
+                  initialSetting={currentSubtitleSettings}
+                  disabled={isExporting}
+                  emitSettings={setting => {
+                    setSubtitleSettings(setting);
+                    setSubtitles(setting);
+                  }}
+                />
+                <OrientationToggle
+                  initialState={currentFormat}
+                  disabled={isExporting}
+                  emitState={format => setCurrentFormat(format)}
+                />
+              </div>
             </div>
 
             <div
@@ -498,6 +563,75 @@ function PlatformSelect({
   );
 }
 
+function SubtitleDropdownWrapper({
+  initialSetting,
+  disabled,
+  emitSettings,
+}: {
+  initialSetting: ISubtitleOptions;
+  disabled: boolean;
+  emitSettings: (settings: ISubtitleOptions) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentSetting, setSetting] = useState<ISubtitleOptions>(initialSetting);
+
+  return (
+    <div style={{ width: '72px' }} className={`${disabled ? styles.isDisabled : ''}`}>
+      <Dropdown
+        overlay={
+          <div className={styles.innerItemWrapper} style={{ width: 'fit-content' }}>
+            {subtitleSettings.map(setting => {
+              return (
+                <div
+                  className={`${styles.innerDropdownItem} ${
+                    setting.name === currentSetting.name ? styles.active : ''
+                  }`}
+                  onClick={() => {
+                    setSetting(setting);
+                    emitSettings(setting);
+                    setIsOpen(false);
+                  }}
+                  key={setting.name}
+                >
+                  {setting.enabled === false ? (
+                    <div className={styles.dropdownText}>{setting.name} </div>
+                  ) : (
+                    <SubtitlePreview
+                      fontSize={setting.style.fontSize}
+                      fontFamily={setting.style.fontFamily}
+                      fontColor={setting.style.fontColor}
+                      strokeColor={setting.style.strokeColor}
+                      strokeWidth={setting.style.strokeWidth}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        }
+        trigger={['click']}
+        visible={isOpen}
+        onVisibleChange={setIsOpen}
+        placement="bottomCenter"
+      >
+        <div
+          className={styles.innerDropdownWrapper}
+          style={{ paddingLeft: '4px' }}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <div
+            className={styles.dropdownText}
+            style={{ opacity: currentSetting.enabled ? 1 : 0.3 }}
+          >
+            <SubtitleIcon />
+          </div>
+          <i className="icon-down" style={{ opacity: 0.7 }}></i>
+        </div>
+      </Dropdown>
+    </div>
+  );
+}
+
 function CustomDropdownWrapper({
   initialSetting,
   disabled,
@@ -555,7 +689,7 @@ function CustomDropdownWrapper({
               </>
             )}
           </div>
-          <i className="icon-down"></i>
+          <i className="icon-down" style={{ opacity: 0.7 }}></i>
         </div>
       </Dropdown>
     </div>
@@ -598,3 +732,106 @@ function OrientationToggle({
     </div>
   );
 }
+
+export const SubtitlePreview = (style: ISubtitleStyle, inVideo: boolean) => {
+  const WIDTH = 250;
+  const HEIGHT = inVideo ? 60 : 250;
+  return (
+    <div>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={WIDTH}
+        height={HEIGHT}
+        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+      >
+        {/* <rect width="100%" height="100%" fill="#FF5733" /> */}
+        <text
+          fontFamily={style.fontFamily}
+          fontStyle={style.isItalic ? 'italic' : 'normal'}
+          fontWeight={style.isBold ? 'bold' : 'normal'}
+          fontSize={style.fontSize}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          paintOrder="stroke fill"
+          strokeWidth={style.strokeWidth}
+          stroke={style.strokeColor}
+          fill={style.fontColor}
+          x={WIDTH / 2}
+          y={HEIGHT / 2}
+        >
+          Auto subtitles
+        </text>
+      </svg>
+    </div>
+  );
+};
+
+export const SubtitleIcon = () => (
+  <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="7" y="7" width="18" height="18" rx="2" stroke="white" stroke-width="2" />
+    <g filter="url(#filter0_d_3248_34353)">
+      <path d="M14 21H18" stroke="white" stroke-width="2" stroke-linecap="round" />
+    </g>
+    <g filter="url(#filter1_d_3248_34353)">
+      <path d="M12 17H20" stroke="white" stroke-width="2" stroke-linecap="round" />
+    </g>
+    <defs>
+      <filter
+        id="filter0_d_3248_34353"
+        x="9"
+        y="20"
+        width="14"
+        height="10"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB"
+      >
+        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
+        <feOffset dy="4" />
+        <feGaussianBlur stdDeviation="2" />
+        <feComposite in2="hardAlpha" operator="out" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
+        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_3248_34353" />
+        <feBlend
+          mode="normal"
+          in="SourceGraphic"
+          in2="effect1_dropShadow_3248_34353"
+          result="shape"
+        />
+      </filter>
+      <filter
+        id="filter1_d_3248_34353"
+        x="7"
+        y="16"
+        width="18"
+        height="10"
+        filterUnits="userSpaceOnUse"
+        color-interpolation-filters="sRGB"
+      >
+        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
+        <feOffset dy="4" />
+        <feGaussianBlur stdDeviation="2" />
+        <feComposite in2="hardAlpha" operator="out" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
+        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_3248_34353" />
+        <feBlend
+          mode="normal"
+          in="SourceGraphic"
+          in2="effect1_dropShadow_3248_34353"
+          result="shape"
+        />
+      </filter>
+    </defs>
+  </svg>
+);
