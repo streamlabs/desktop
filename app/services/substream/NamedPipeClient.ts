@@ -61,7 +61,7 @@ export class NamedPipeClient {
   // id はリクエスト ID
   // res は関数の戻り値
 
-  async call(fn: string, arg: any): Promise<any> {
+  async call(fn: string, arg: { [name: string]: any } = {}): Promise<{ [name: string]: any }> {
     await this.open();
 
     return new Promise((resolve, reject) => {

@@ -5,12 +5,9 @@
         <label>設定</label>
       </div>
       <div class="input-container">
-        <div class="input-wrapper">url <input type="text" v-model="url" /></div>
-        <div class="input-wrapper">key <input type="text" v-model="key" /></div>
+        <div class="input-wrapper">stream url <input type="text" v-model="url" /></div>
+        <div class="input-wrapper">stream key <input type="text" v-model="key" /></div>
 
-        <div class="input-wrapper">
-          video bitrate <input type="number" v-model="videoBitrate" />
-        </div>
         <div class="input-wrapper">
           video codec
           <multiselect
@@ -23,10 +20,10 @@
           >
           </multiselect>
         </div>
-
         <div class="input-wrapper">
-          audio bitrate <input type="number" v-model="audioBitrate" />
+          video bitrate (kbps)<input type="number" v-model="videoBitrate" min="200" max="100000" />
         </div>
+
         <div class="input-wrapper">
           audio codec
           <multiselect
@@ -38,6 +35,9 @@
             :searchable="false"
           >
           </multiselect>
+        </div>
+        <div class="input-wrapper">
+          audio bitrate (kbps)<input type="number" v-model="audioBitrate" min="64" max="320" />
         </div>
 
         <div class="input-wrapper">
