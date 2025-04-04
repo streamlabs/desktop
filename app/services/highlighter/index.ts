@@ -193,7 +193,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       ];
     } else {
       const newUpload: IUploadInfo = {
-        platform,
         uploading: false,
         uploadedBytes: 0,
         totalBytes: 0,
