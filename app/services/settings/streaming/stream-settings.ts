@@ -140,6 +140,7 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
    */
   setSettings(patch: Partial<IStreamSettings>, context?: TDisplayType) {
     const streamName = !context || context === 'horizontal' ? 'Stream' : 'StreamSecond';
+    console.log('on set settings', streamName, patch);
     // save settings to localStorage
     const localStorageSettings: (keyof IStreamSettingsState)[] = [
       'protectedModeEnabled',
@@ -262,6 +263,7 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
 
   setObsStreamSettings(formData: ISettingsSubCategory[], context?: number) {
     const streamName = !context || context === 0 ? 'Stream' : 'StreamSecond';
+    console.log('on setObsStreamSettings', streamName, formData);
     this.settingsService.setSettings(streamName, formData);
   }
 
