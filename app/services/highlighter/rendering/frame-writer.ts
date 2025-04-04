@@ -41,12 +41,12 @@ export class FrameWriter {
       // '-map',
       // '0:v:0',
     ];
-    if (this.options.subtitles || true) {
+    if (this.options.subtitles?.enabled) {
       console.log('adding subtitle input');
       await this.addSubtitleInput(args, this.options);
     }
-    this.addAudioFilters(args);
-    this.addVideoFilters(args, true); //!!this.options.subtitles
+    this.addAudioFilters(args, this.options.subtitles?.enabled);
+    this.addVideoFilters(args, this.options.subtitles?.enabled);
 
     args.push(
       ...[
@@ -98,36 +98,42 @@ export class FrameWriter {
       console.log('ffmpeg:', data.toString());
     });
   }
-  private addVideoFilters(args: string[], subtitlesEnabled: boolean) {
+  private addVideoFilters(args: string[], subtitlesEnabled = false) {
     const webcamEnabled = !!this.options.complexFilter;
 
     const firstInput = webcamEnabled ? '[final]' : '[0:v]';
     const output = subtitlesEnabled ? '[subtitled]' : '[final]';
-    const subtitleFilter = subtitlesEnabled ? `${firstInput}[1:v]overlay=0:0[subtitled];` : '';
 
     const fadeFilter = `format=yuv420p,fade=type=out:duration=${FADE_OUT_DURATION}:start_time=${Math.max(
       this.duration - (FADE_OUT_DURATION + 0.2),
       0,
     )}`;
     args.push('-filter_complex');
+
+    if (!webcamEnabled && !subtitlesEnabled) {
+      args.push(fadeFilter);
+      return;
+    }
+
     let combinedFilter = '';
     if (webcamEnabled) {
       combinedFilter += this.options.complexFilter;
     }
 
     if (subtitlesEnabled) {
-      combinedFilter += subtitleFilter;
+      combinedFilter += `${firstInput}[1:v]overlay=0:0[subtitled];`;
     }
+
     combinedFilter += output + fadeFilter;
     args.push(combinedFilter);
   }
 
-  private addAudioFilters(args: string[]) {
+  private addAudioFilters(args: string[], subtitlesEnabled = false) {
     args.push(
       '-i',
       this.audioInput,
       '-map',
-      '2:a:0',
+      subtitlesEnabled ? '2:a:0' : '1:a:0',
       '-af',
       `afade=type=out:duration=${FADE_OUT_DURATION}:start_time=${Math.max(
         this.duration - (FADE_OUT_DURATION + 0.2),

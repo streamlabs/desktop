@@ -74,7 +74,6 @@ export async function startRendering(
     fader = new AudioCrossfader(audioConcat, renderingClips, transitionDuration);
     await fader.export();
 
-    exportOptions.subtitles = { enabled: true };
     // Create subtitles before audio is mixed in
     if (exportOptions.subtitles?.enabled) {
       try {
