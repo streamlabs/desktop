@@ -187,6 +187,8 @@
   "Set Dual Output Settings": "Set Dual Output Settings",
   "Mode:": "Mode:",
   "Horizontal": "Horizontal",
+  "Vertical": "Vertical",
+  "Both": "Both",
   "You can select which one to stream with in the Go Live window.": "You can select which one to stream with in the Go Live window.",
   "Video Output Orientation": "Video Output Orientation",
   "Show horizontal display.": "Show horizontal display.",
