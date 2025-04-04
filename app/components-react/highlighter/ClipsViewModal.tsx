@@ -6,7 +6,7 @@ import { TClip } from 'services/highlighter/models/highlighter.models';
 import styles from './ClipsView.m.less';
 import ClipTrimmer from 'components-react/highlighter/ClipTrimmer';
 import { Modal, Alert, Button } from 'antd';
-import ExportModal from 'components-react/highlighter/ExportModal';
+import ExportModal from 'components-react/highlighter/Export/ExportModal';
 import { $t } from 'services/i18n';
 import PreviewModal from './PreviewModal';
 
@@ -57,7 +57,7 @@ export default function ClipsViewModal({
   function closeModal() {
     // Do not allow closing export modal while export/upload operations are in progress
     if (v.exportInfo.exporting) return;
-    if (v.uploadInfo.uploading) return;
+    if (v.uploadInfo.some(u => u.uploading)) return;
 
     setInspectedClip(null);
     setShowModal(null);

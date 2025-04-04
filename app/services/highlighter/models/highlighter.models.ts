@@ -16,7 +16,7 @@ export interface IHighlighterState {
   video: IVideoInfo;
   audio: IAudioInfo;
   export: IExportInfo;
-  upload: IUploadInfo;
+  uploads: IUploadInfo[];
   dismissedTutorial: boolean;
   error: string;
   useAiHighlighter: boolean;
@@ -119,7 +119,15 @@ interface ISettingsViewState {
 
 export type IViewState = TClipsViewState | IStreamViewState | ISettingsViewState;
 
+export enum EUploadPlatform {
+  YOUTUBE = 'youtube',
+  CROSSCLIP = 'crossclip',
+  TYPESTUDIO = 'typestudio',
+  VIDEOEDITOR = 'videoeditor',
+}
+
 export interface IUploadInfo {
+  platform: EUploadPlatform;
   uploading: boolean;
   uploadedBytes: number;
   totalBytes: number;
