@@ -368,6 +368,10 @@ export class AudioSource implements IAudioSourceApi {
     return { ...this.source.state, ...this.audioSourceState };
   }
 
+  isGlobal() {
+    return this.source.channel !== void 0;
+  }
+
   get monitoringOptions() {
     return [
       { value: obs.EMonitoringType.None, label: $t('Monitor Off') },
