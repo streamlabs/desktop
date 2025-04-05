@@ -6,8 +6,8 @@ import InputWrapper from 'components-react/shared/inputs/InputWrapper';
 import { $t } from 'services/i18n';
 import { AnchorPositions, AnchorPoint } from 'util/ScalableRectangle';
 import { useVuex } from 'components-react/hooks';
-import { NumberInput } from 'components-react/shared/inputs';
 import Form, { useForm } from 'components-react/shared/inputs/Form';
+import { NumberInput, RotateInput } from 'components-react/shared/inputs';
 
 const dirMap = (dir: string) =>
   ({
@@ -21,9 +21,14 @@ export default function EditTransform() {
   const { SelectionService, WindowsService, EditorCommandsService, SourcesService } = Services;
 
   const { selection } = useVuex(() => ({ selection: SelectionService.views.globalSelection }));
+
+  /* Since we're not (and shouldn't be) deep watching `selection`,
+  /* `selection...#transform` is not reactive when rotation completes
+   */
+  const { transform } = useVuex(() => ({ transform: selection.getItems()[0].transform }));
+
   // // We only care about the attributes of the rectangle not the functionality
   const [rect, setRect] = useState({ ...selection.getBoundingRect() });
-  const transform = selection.getItems()[0].transform;
   const form = useForm();
 
   useEffect(() => {
@@ -83,8 +88,8 @@ export default function EditTransform() {
     };
   }
 
-  function rotate(deg: number) {
-    EditorCommandsService.actions.executeCommand('RotateItemsCommand', selection, deg);
+  function rotate(deg: number, isDelta = true) {
+    EditorCommandsService.actions.executeCommand('RotateItemsCommand', selection, deg, isDelta);
   }
 
   function reset() {
@@ -111,7 +116,7 @@ export default function EditTransform() {
           rect={rect}
           handleInput={setScale}
         />
-        <RotateInput handleInput={rotate} />
+        <RotateInput value={transform.rotation} handleInput={rotate} />
         <CropInput transform={transform} handleInput={setCrop} />
       </Form>
     </ModalLayout>
@@ -141,23 +146,6 @@ function CoordinateInput(p: {
           </div>
         ))}
       </div>
-    </InputWrapper>
-  );
-}
-
-function RotateInput(p: { handleInput: (val: number) => void }) {
-  return (
-    <InputWrapper label={$t('Rotation')}>
-      <button className="button button--default" onClick={() => p.handleInput(90)}>
-        {$t('Rotate 90 Degrees CW')}
-      </button>
-      <button
-        className="button button--default"
-        style={{ marginLeft: '8px' }}
-        onClick={() => p.handleInput(-90)}
-      >
-        {$t('Rotate 90 Degrees CCW')}
-      </button>
     </InputWrapper>
   );
 }
