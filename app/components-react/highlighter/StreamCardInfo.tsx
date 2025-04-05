@@ -3,6 +3,7 @@ import { IAiClip, isAiClip, TClip } from 'services/highlighter/models/highlighte
 import { getConfigByGame, getEventConfig } from 'services/highlighter/models/game-config.models';
 import React from 'react';
 import Tooltip from 'components-react/shared/Tooltip';
+import { $t } from 'services/i18n';
 
 interface EventDisplay {
   emoji: string;
@@ -79,34 +80,32 @@ export default function StreamCardInfo({
     .sort((a, b) => a.orderPosition - b.orderPosition);
 
   return (
-    <div style={{ width: '100%' }}>
-      <Tooltip
-        title={stringsToShow
-          .map(item => `${item.emoji} ${item.count} ${item.description}`)
-          .join(' | ')}
+    <Tooltip
+      title={stringsToShow
+        .map(item => `${item.emoji} ${item.count} ${item.description}`)
+        .join(' | ')}
+    >
+      <div
+        className="stream-card-info"
+        style={{
+          display: 'block',
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
+          textOverflow: 'ellipsis',
+        }}
       >
-        <div
-          className="stream-card-info"
-          style={{
-            display: 'block',
-            overflow: 'hidden',
-            whiteSpace: 'nowrap',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {stringsToShow.length > 0 ? (
-            stringsToShow.map((item, index) => (
-              <React.Fragment key={index}>
-                <span style={{ marginRight: '10px' }}>
-                  {item.emoji} {item.count} {item.description}
-                </span>
-              </React.Fragment>
-            ))
-          ) : (
-            <span>No events found</span>
-          )}
-        </div>
-      </Tooltip>
-    </div>
+        {stringsToShow.length > 0 ? (
+          stringsToShow.map((item, index) => (
+            <React.Fragment key={index}>
+              <span style={{ marginRight: '10px' }}>
+                {item.emoji} {item.count} {item.description}
+              </span>
+            </React.Fragment>
+          ))
+        ) : (
+          <span>{$t('No events found')}</span>
+        )}
+      </div>
+    </Tooltip>
   );
 }

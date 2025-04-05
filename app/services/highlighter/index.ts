@@ -1056,11 +1056,11 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     const exportOptions: IExportOptions = preview
       ? { width: 1280 / 4, height: 720 / 4, fps: 30, preset: 'ultrafast' }
       : {
-          width: this.views.exportInfo.resolution === 720 ? 1280 : 1920,
-          height: this.views.exportInfo.resolution === 720 ? 720 : 1080,
-          fps: this.views.exportInfo.fps,
-          preset: this.views.exportInfo.preset,
-        };
+        width: this.views.exportInfo.resolution === 720 ? 1280 : 1920,
+        height: this.views.exportInfo.resolution === 720 ? 720 : 1080,
+        fps: this.views.exportInfo.fps,
+        preset: this.views.exportInfo.preset,
+      };
 
     if (orientation === 'vertical') {
       // adds complex filter and flips width and height
@@ -1310,6 +1310,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         (milestone: IHighlighterMilestone) => {
           this.streamMilestones?.milestones?.push(milestone);
         },
+        streamInfo.game === 'unset' ? null : streamInfo.game,
       );
 
       this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {

@@ -172,5 +172,8 @@
   "All requirements met but no luck?": "All requirements met but no luck?",
   "Take a screenshot of your stream and share it here": "Take a screenshot of your stream and share it here",
   "Exporting video...": "Exporting video...",
-  "%{clipsAmount} clips": "%{clipsAmount} clips"
+  "%{clipsAmount} clips": "%{clipsAmount} clips",
+  "Drag and drop game recording or click to select": "Drag and drop game recording or click to select",
+  "Select game played in recording": "Select game played in recording",
+  "No events found": "No events found"
 }
