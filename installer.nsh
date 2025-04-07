@@ -45,5 +45,6 @@ Function un.LeaveUnWelcome
   ${If} $0 <> 0
     RMDir /r "$PROFILE\\AppData\\Roaming\\slobs-client"
     RMDir /r "$PROFILE\\AppData\\Roaming\\slobs-plugins"
+    RMDir /r "$PROFILE\\AppData\\Roaming\\streamlabs-highlighter"
   ${EndIf}
 FunctionEnd
