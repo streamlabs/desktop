@@ -1162,15 +1162,18 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     downloadNow: boolean = false,
     location: 'Highlighter-tab' | 'Go-live-flow',
   ) {
+    const oldVersion = this.aiHighlighterUpdater?.version || undefined;
+
     this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
       type: 'Installation',
       location,
+      oldVersion,
     });
 
     this.setAiHighlighter(true);
     if (downloadNow) {
       await this.aiHighlighterUpdater.isNewVersionAvailable();
-      this.startUpdater();
+      await this.startUpdater(location, oldVersion);
     } else {
       // Only for go live view to immediately show the toggle. For other flows, the updater will set the version
       this.SET_HIGHLIGHTER_VERSION('0.0.0');
@@ -1187,16 +1190,32 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   /**
    * Start updater process
    */
-  async startUpdater() {
+  async startUpdater(location: 'Highlighter-tab' | 'Go-live-flow', oldVersion: string) {
     try {
       this.SET_UPDATER_STATE(true);
+      this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+        type: 'UpdateStarted',
+        newVersion: this.aiHighlighterUpdater.version,
+        oldVersion,
+        location,
+      });
+
       this.SET_HIGHLIGHTER_VERSION(this.aiHighlighterUpdater.version || '');
       await this.aiHighlighterUpdater.update(progress => this.updateProgress(progress));
+
+      this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+        type: 'UpdateCompleted',
+        newVersion: this.aiHighlighterUpdater.version,
+        oldVersion,
+        location,
+      });
     } catch (e: unknown) {
       console.error('Error updating AI Highlighter:', e);
-      this.usageStatisticsService.recordAnalyticsEvent('Highlighter', {
+      this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
         type: 'UpdateError',
         newVersion: this.aiHighlighterUpdater.version,
+        oldVersion,
+        location,
       });
     } finally {
       this.SET_UPDATER_STATE(false);
@@ -1244,7 +1263,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     if (this.aiHighlighterUpdater.updateInProgress) {
       await this.aiHighlighterUpdater.currentUpdate;
     } else if (await this.aiHighlighterUpdater.isNewVersionAvailable()) {
-      await this.startUpdater();
+      await this.startUpdater('');
     }
 
     const fallbackTitle = 'awesome-stream';
