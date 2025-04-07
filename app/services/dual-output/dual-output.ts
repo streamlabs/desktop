@@ -45,13 +45,9 @@ enum EOutputDisplayType {
   Vertical = 'vertical',
 }
 
-export type TDisplayPlatforms = {
-  [Display in EOutputDisplayType]: TPlatform[];
-};
+export type TDisplayPlatforms = Record<EOutputDisplayType, TPlatform[]>;
 
-export type TDisplayDestinations = {
-  [Display in EOutputDisplayType]: string[];
-};
+export type TDisplayDestinations = Record<EOutputDisplayType, string[]>;
 
 class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
   @Inject() private scenesService: ScenesService;
