@@ -8,7 +8,7 @@ import { useVuex } from 'components-react/hooks';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { Button, Carousel } from 'antd';
 import EducationCarousel from 'components-react/highlighter/EducationCarousel';
-import { supportedGames } from 'services/highlighter/models/game-config.models';
+import { isGameSupported } from 'services/highlighter/models/game-config.models';
 
 export default function AiHighlighterToggle({
   game,
@@ -29,16 +29,12 @@ export default function AiHighlighterToggle({
   const [gameIsSupported, setGameIsSupported] = useState(false);
 
   useEffect(() => {
-    setGameIsSupported(gameCheck(game));
-  }, [game]);
-
-  function gameCheck(game: string | undefined) {
-    if (game && supportedGames.some(supportedGame => supportedGame.label === game)) {
-      return true;
+    const supportedGame = isGameSupported(game);
+    setGameIsSupported(supportedGame);
+    if (supportedGame) {
+      setIsExpanded(true);
     }
-
-    return false;
-  }
+  }, [game]);
 
   function getInitialExpandedState() {
     if (gameIsSupported) {
@@ -53,15 +49,6 @@ export default function AiHighlighterToggle({
   }
   const initialExpandedState = getInitialExpandedState();
   const [isExpanded, setIsExpanded] = useState(initialExpandedState);
-
-  useEffect(() => {
-    if (gameIsSupported) {
-      setIsExpanded(true);
-    }
-    if (!gameIsSupported && game !== undefined && useHighlighter) {
-      HighlighterService.actions.setAiHighlighter(false);
-    }
-  }, [game]);
 
   return (
     <div>

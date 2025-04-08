@@ -13,20 +13,26 @@ import styles from './StreamView.m.less';
 import { supportedGames } from 'services/highlighter/models/game-config.models';
 import path from 'path';
 
+export type TOpenedFrom = 'after-stream' | 'manual-import' | 'recordings-tab';
+
 export function ImportStreamModal({
   close,
+  openedFrom,
   videoPath,
   selectedGame,
+  streamInfo,
 }: {
   close: () => void;
+  openedFrom: TOpenedFrom;
   videoPath?: string;
   selectedGame?: EGame;
+  streamInfo?: IStreamInfoForAiHighlighter;
 }) {
-  const { HighlighterService } = Services;
-  const [inputValue, setInputValue] = useState<string>('');
+  const { HighlighterService, UsageStatisticsService } = Services;
+  const [inputValue, setInputValue] = useState<string>(streamInfo?.title || '');
   const [filePath, setFilePath] = useState<string | undefined>(videoPath);
   const [draggingOver, setDraggingOver] = useState<boolean>(false);
-  const [game, setGame] = useState<EGame | null>(selectedGame || null);
+  const [game, setGame] = useState<EGame | null>(streamInfo?.game || selectedGame || null);
   const gameOptions = supportedGames;
 
   function handleInputChange(value: string) {
@@ -56,10 +62,26 @@ export function ImportStreamModal({
     }
   }
 
-  async function startAiDetection(title: string, game: EGame, filePath: string[] | undefined) {
+  function closeModal(trackAsCanceled: boolean) {
+    if (trackAsCanceled) {
+      UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+        type: 'DetectionModalCanceled',
+        openedFrom,
+        streamId: streamInfo?.id,
+      });
+    }
+    close();
+  }
+
+  async function startAiDetection(
+    title: string,
+    game: EGame,
+    filePath: string[] | undefined,
+    id?: string,
+  ) {
     if (/[\\/:"*?<>|]+/g.test(title)) return;
     const streamInfo: IStreamInfoForAiHighlighter = {
-      id: 'manual_' + uuid(),
+      id: id ?? 'manual_' + uuid(),
       title,
       game,
     };
@@ -67,14 +89,24 @@ export function ImportStreamModal({
     try {
       if (game && filePath && filePath.length > 0) {
         HighlighterService.actions.detectAndClipAiHighlights(filePath[0], streamInfo);
-        close();
+        UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+          type: 'DetectionInModalStarted',
+          openedFrom,
+          streamId: id,
+        });
+        closeModal(false);
         return;
       }
 
       filePath = await importStreamFromDevice();
       if (filePath && filePath.length > 0) {
         HighlighterService.actions.detectAndClipAiHighlights(filePath[0], streamInfo);
-        close();
+        UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+          type: 'DetectionInModalStarted',
+          openedFrom,
+          streamId: id,
+        });
+        closeModal(false);
       } else {
         // No file selected
       }
@@ -86,9 +118,11 @@ export function ImportStreamModal({
     <>
       <div className={styles.manualUploadWrapper}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <h2 style={{ fontWeight: 600, margin: 0 }}>{$t('Import Game Recording')}</h2>{' '}
+          <h2 style={{ fontWeight: 600, margin: 0 }}>
+            {openedFrom === 'after-stream' ? 'Ai Highlighter' : `${$t('Import Game Recording')}`}
+          </h2>{' '}
           <div>
-            <Button type="text" onClick={close}>
+            <Button type="text" onClick={() => closeModal(true)}>
               <i className="icon-close" style={{ margin: 0 }}></i>
             </Button>
           </div>
@@ -208,15 +242,29 @@ export function ImportStreamModal({
             allowClear
           />
         </Form>
-        <Button
-          disabled={!game}
-          size="large"
-          style={{ width: '100%', marginTop: '4px' }}
-          type="primary"
-          onClick={() => startAiDetection(inputValue, game!, filePath ? [filePath] : undefined)}
-        >
-          {filePath ? $t('Import video') : $t('Select video and start import')}
-        </Button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {openedFrom === 'after-stream' && (
+            <Button
+              size="large"
+              style={{ width: '100%', marginTop: '4px' }}
+              type="default"
+              onClick={() => closeModal(true)}
+            >
+              {$t('Cancel')}
+            </Button>
+          )}
+          <Button
+            disabled={!game}
+            size="large"
+            style={{ width: '100%', marginTop: '4px' }}
+            type="primary"
+            onClick={() =>
+              startAiDetection(inputValue, game!, filePath ? [filePath] : undefined, streamInfo?.id)
+            }
+          >
+            {filePath ? $t('Find game highlights') : $t('Select video and start import')}
+          </Button>
+        </div>
       </div>
     </>
   );

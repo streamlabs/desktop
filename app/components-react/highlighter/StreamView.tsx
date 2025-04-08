@@ -1,5 +1,5 @@
 import { useVuex } from 'components-react/hooks';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import styles from './StreamView.m.less';
 import { Services } from 'components-react/service-provider';
 import {
@@ -21,18 +21,34 @@ import moment from 'moment';
 import { TextInput } from 'components-react/shared/inputs';
 import EducationCarousel from './EducationCarousel';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
-import { ImportStreamModal } from './ImportStream';
+import { ImportStreamModal, TOpenedFrom } from './ImportStream';
 import SupportedGames from './supportedGames/SupportedGames';
 
 type TModalStreamView =
   | { type: 'export'; id: string | undefined }
   | { type: 'preview'; id: string | undefined }
-  | { type: 'upload'; path?: string; game?: EGame }
+  | {
+      type: 'upload';
+      path?: string;
+      game?: EGame;
+      streamInfo?: IStreamInfoForAiHighlighter;
+      openedFrom: TOpenedFrom;
+    }
   | { type: 'remove'; id: string | undefined }
   | { type: 'requirements'; game: string }
   | null;
 
-export default function StreamView({ emitSetView }: { emitSetView: (data: IViewState) => void }) {
+export default function StreamView({
+  emitSetView,
+  recordingPath,
+  streamInfo,
+  source,
+}: {
+  emitSetView: (data: IViewState) => void;
+  recordingPath?: string;
+  streamInfo?: IStreamInfoForAiHighlighter;
+  source?: TOpenedFrom;
+}) {
   const { HighlighterService, HotkeysService, UsageStatisticsService } = Services;
   const v = useVuex(() => ({
     exportInfo: HighlighterService.views.exportInfo,
@@ -40,6 +56,17 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
     uploadInfo: HighlighterService.views.uploadInfo,
     highlighterVersion: HighlighterService.views.highlighterVersion,
   }));
+
+  useEffect(() => {
+    if (recordingPath && source) {
+      setShowModal({
+        type: 'upload',
+        path: recordingPath,
+        streamInfo,
+        openedFrom: source,
+      });
+    }
+  }, []);
 
   // Below is only used because useVueX doesnt work as expected
   // there probably is a better way to do this
@@ -132,7 +159,7 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
 
     const filtered = files.filter(f => extensions.includes(path.parse(f).ext));
     if (filtered.length && !aiDetectionInProgress) {
-      setShowModal({ type: 'upload', path: filtered[0] });
+      setShowModal({ type: 'upload', path: filtered[0], openedFrom: 'manual-import' });
     }
 
     e.preventDefault();
@@ -157,12 +184,16 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
                 opacity: aiDetectionInProgress ? '0.7' : '1',
                 cursor: aiDetectionInProgress ? 'not-allowed' : 'pointer',
               }}
-              onClick={() => !aiDetectionInProgress && setShowModal({ type: 'upload' })}
+              onClick={() =>
+                !aiDetectionInProgress &&
+                setShowModal({ type: 'upload', openedFrom: 'manual-import' })
+              }
             >
               <div onClick={e => e.stopPropagation()}>
                 <SupportedGames
                   emitClick={game => {
-                    !aiDetectionInProgress && setShowModal({ type: 'upload', game });
+                    !aiDetectionInProgress &&
+                      setShowModal({ type: 'upload', game, openedFrom: 'manual-import' });
                   }}
                 />
               </div>
@@ -212,7 +243,17 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
 
       <Modal
         getContainer={`.${styles.streamViewRoot}`}
-        onCancel={closeModal}
+        onCancel={() => {
+          if (showModal?.type === 'upload') {
+            UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+              type: 'DetectionModalCanceled',
+              openedFrom: showModal.openedFrom,
+              streamId: streamInfo?.id,
+            });
+          }
+
+          closeModal();
+        }}
         footer={null}
         width={showModal?.type === 'preview' ? 700 : 'fit-content'}
         closable={false}
@@ -226,6 +267,8 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
             close={closeModal}
             videoPath={showModal.path}
             selectedGame={showModal.game}
+            streamInfo={showModal.streamInfo}
+            openedFrom={showModal.openedFrom}
           />
         )}
         {showModal?.type === 'export' && <ExportModal close={closeModal} streamId={showModal.id} />}

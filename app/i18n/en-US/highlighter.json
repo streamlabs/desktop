@@ -175,5 +175,6 @@
   "%{clipsAmount} clips": "%{clipsAmount} clips",
   "Drag and drop game recording or click to select": "Drag and drop game recording or click to select",
   "Select game played in recording": "Select game played in recording",
-  "No events found": "No events found"
+  "No events found": "No events found",
+  "Find game highlights": "Find game highlights"
 }

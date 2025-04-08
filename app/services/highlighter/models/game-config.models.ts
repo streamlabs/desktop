@@ -259,3 +259,10 @@ export function getEventConfig(game: EGame, eventType: string): IEventInfo | IDe
     contextEvent: false,
   };
 }
+
+export function isGameSupported(game: string | undefined) {
+  if (game && supportedGames.some(supportedGame => supportedGame.label === game)) {
+    return true;
+  }
+  return false;
+}

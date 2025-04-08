@@ -73,6 +73,7 @@ import { cutHighlightClips, getVideoDuration } from './cut-highlight-clips';
 import { reduce } from 'lodash';
 import { extractDateTimeFromPath, fileExists } from './file-utils';
 import { addVerticalFilterToExportOptions } from './vertical-export';
+import { isGameSupported } from './models/game-config.models';
 
 @InitAfter('StreamingService')
 export class HighlighterService extends PersistentStatefulService<IHighlighterState> {
@@ -387,26 +388,22 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         }
 
         if (this.views.useAiHighlighter === false) {
-          console.log('HighlighterService: Game:', this.streamingService.views.game);
-          // console.log('Highlighter not enabled or not Fortnite');
           return;
         }
 
-        // console.log('recording Alreadyt running?:', this.streamingService.views.isRecording);
-        this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
-          type: 'AiRecordingStarted',
-        });
-
-        if (this.streamingService.views.isRecording) {
-          // console.log('Recording is already running');
-        } else {
-          this.streamingService.actions.toggleRecording();
+        if (!isGameSupported(this.streamingService.views.game)) {
+          return;
         }
 
+        // TODO: At some point we need sth like string to enum
         let game = EGame.UNSET;
-        switch (this.streamingService.views.game) {
+        switch (this.streamingService.views.game.toLowerCase()) {
           case EGame.FORTNITE:
             game = EGame.FORTNITE;
+            break;
+
+          case EGame.VALORANT:
+            game = EGame.VALORANT;
             break;
 
           default:
@@ -419,6 +416,19 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           title: this.streamingService.views.settings.platforms.twitch?.title,
           game,
         };
+
+        // console.log('recording Alreadyt running?:', this.streamingService.views.isRecording);
+        this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+          type: 'AiRecordingStarted',
+          streamId: streamInfo?.id,
+        });
+
+        if (this.streamingService.views.isRecording) {
+          // console.log('Recording is already running');
+        } else {
+          this.streamingService.actions.toggleRecording();
+        }
+
         aiRecordingInProgress = true;
         aiRecordingStartTime = moment();
       }
@@ -458,6 +468,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
         this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
           type: 'AiRecordingFinished',
+          streamId: streamInfo?.id,
         });
         this.streamingService.actions.toggleRecording();
 
@@ -479,6 +490,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
             type: 'AiRecordingExists',
             duration,
+            streamId: streamInfo?.id,
           });
         })
         .catch(error => {
@@ -486,11 +498,11 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         });
 
       aiRecordingInProgress = false;
-      this.detectAndClipAiHighlights(path, streamInfo, true);
+      //   this.detectAndClipAiHighlights(path, streamInfo, true);
 
       this.navigationService.actions.navigate(
         'Highlighter',
-        { view: 'stream' },
+        { view: 'stream', recordingPath: path, streamInfo, source: 'after-stream' },
         EMenuItemKey.Highlighter,
       );
     });
@@ -1056,11 +1068,11 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     const exportOptions: IExportOptions = preview
       ? { width: 1280 / 4, height: 720 / 4, fps: 30, preset: 'ultrafast' }
       : {
-        width: this.views.exportInfo.resolution === 720 ? 1280 : 1920,
-        height: this.views.exportInfo.resolution === 720 ? 720 : 1080,
-        fps: this.views.exportInfo.fps,
-        preset: this.views.exportInfo.preset,
-      };
+          width: this.views.exportInfo.resolution === 720 ? 1280 : 1920,
+          height: this.views.exportInfo.resolution === 720 ? 720 : 1080,
+          fps: this.views.exportInfo.fps,
+          preset: this.views.exportInfo.preset,
+        };
 
     if (orientation === 'vertical') {
       // adds complex filter and flips width and height
@@ -1316,7 +1328,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
         type: 'Detection',
         clips: highlighterResponse.length,
-        game: 'Fortnite', // hardcode for now
+        game: setStreamInfo.game,
         streamId: this.streamMilestones?.streamId,
       });
       console.log('✅ Final HighlighterData', highlighterResponse);
@@ -1326,7 +1338,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
           type: 'DetectionCanceled',
           reason: EAiDetectionState.CANCELED_BY_USER,
-          game: 'Fortnite',
+          game: setStreamInfo.game,
+          streamId: this.streamMilestones?.streamId,
         });
       } else {
         console.error('Error in highlight generation:', error);
@@ -1334,8 +1347,9 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
           type: 'DetectionFailed',
           reason: EAiDetectionState.ERROR,
-          game: 'Fortnite',
+          game: setStreamInfo.game,
           error_code: (error as { code?: number })?.code ?? 1,
+          streamId: this.streamMilestones?.streamId,
         });
       }
     } finally {
