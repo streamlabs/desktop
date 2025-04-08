@@ -25,11 +25,9 @@ export default function Highlighter(props: {
   const aiHighlighterFeatureEnabled = IncrementalRolloutService.views.featureIsEnabled(
     EAvailableFeatures.aiHighlighter,
   );
+
   const v = useVuex(() => ({
     useAiHighlighter: HighlighterService.views.useAiHighlighter,
-    isUpdaterRunning: HighlighterService.views.isUpdaterRunning,
-    highlighterVersion: HighlighterService.views.highlighterVersion,
-    progress: HighlighterService.views.updaterProgress,
     clipsAmount: HighlighterService.views.clips.length,
     streamAmount: HighlighterService.views.highlightedStreams.length,
   }));
@@ -67,13 +65,7 @@ export default function Highlighter(props: {
     UsageStatisticsService.recordShown('HighlighterTab', viewState.view);
   }, [viewState]);
 
-  const updaterModal = (
-    <UpdateModal
-      version={v.highlighterVersion}
-      progress={v.progress}
-      isVisible={v.isUpdaterRunning}
-    />
-  );
+  const updaterModal = <UpdateModal />;
 
   switch (viewState.view) {
     case EHighlighterView.STREAM:
