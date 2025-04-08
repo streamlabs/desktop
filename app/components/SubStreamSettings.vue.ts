@@ -26,6 +26,11 @@ export default class SubStreamSettings extends Vue {
   sync: boolean = SubStreamService.defaultState.sync;
 
   status: string = '';
+  showKey: boolean = false;
+  showUrlTips: boolean = false;
+
+  defaultYoutubeUrl: string = 'rtmp://a.rtmp.youtube.com/live2';
+  defaultTwitchUrl: string = 'rtmp://live-tyo.twitch.tv/app';
 
   @Watch('url')
   onStreamUrlChange() {
@@ -70,18 +75,26 @@ export default class SubStreamSettings extends Vue {
     this.sync = this.subStreamService.state.sync;
 
     const r = await this.subStreamService.enumEncoderTypes();
-    this.videoCodecs = r['encoders']['video'].map(v => ({ id: v.id, name: `${v.name} (${v.id})` }));
+    if (r['encoders']) {
+      this.videoCodecs = r['encoders']['video'].map(v => ({
+        id: v.id,
+        name: `${v.name} [${v.id}]`,
+      }));
 
-    this.videoCodec = this.videoCodecs.find(
-      v => v.id === this.subStreamService.state.videoCodec,
-    ) ?? { id: 'obs_x264', name: 'obs_x264' };
+      this.videoCodec = this.videoCodecs.find(
+        v => v.id === this.subStreamService.state.videoCodec,
+      ) ?? { id: 'obs_x264', name: 'obs_x264' };
 
-    this.audioCodecs = r['encoders']['audio'].map(v => ({ id: v.id, name: `${v.name} (${v.id})` }));
-    this.audioCodec = this.audioCodecs.find(
-      v => v.id === this.subStreamService.state.videoCodec,
-    ) ?? { id: 'ffmpeg_aac', name: 'ffmpeg_aac' };
+      this.audioCodecs = r['encoders']['audio'].map(v => ({
+        id: v.id,
+        name: `${v.name} [${v.id}]`,
+      }));
+      this.audioCodec = this.audioCodecs.find(
+        v => v.id === this.subStreamService.state.videoCodec,
+      ) ?? { id: 'ffmpeg_aac', name: 'ffmpeg_aac' };
 
-    this.startChecker();
+      this.startChecker();
+    }
   }
 
   beforeDestroy() {
@@ -92,7 +105,37 @@ export default class SubStreamSettings extends Vue {
 
   async checkStatus() {
     const r = await this.subStreamService.status();
-    this.status = JSON.stringify(r, null, 2);
+    console.log(JSON.stringify(r, null, 2));
+
+    const error = r['error'] as string;
+    const status = r['status'] as string;
+    const frames = r['frames'] as number;
+    const dropped = r['dropped'] as number;
+
+    if (status === undefined) {
+      this.status = 'エラー: 接続されていません';
+      return;
+    }
+
+    const statusMap: { [name: string]: string } = {
+      starting: '開始中..',
+      started: '開始',
+      stopping: '停止中..',
+      stopped: '停止',
+      reconnect: '再接続',
+      reconnected: '再接続',
+      deactive: '停止',
+    };
+
+    let s = '';
+    if (error) s += `エラー: ${error}\n`;
+    if (status) s += `ステータス: ${statusMap[status] ?? status}\n`;
+    if (frames) s += `送出フレーム数: ${frames} `;
+    if (frames) s += `ドロップ数: ${dropped} `;
+
+    if (!status) s = '停止中';
+
+    this.status = s;
   }
 
   startChecker() {

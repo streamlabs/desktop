@@ -32,7 +32,7 @@ import { HttpRelation } from 'services/nicolive-program/httpRelation';
 import { NicoliveProgramStateService, SynthesizerSelector } from 'services/nicolive-program/state';
 import { VideoSettingsService } from 'services/settings-v2/video';
 import { RtvcStateService } from '../../services/rtvcStateService';
-
+import { SubStreamService } from '../substream/SubStreamService';
 enum EOBSOutputType {
   Streaming = 'streaming',
   Recording = 'recording',
@@ -73,6 +73,7 @@ export class StreamingService
   @Inject() private customcastUsageService: CustomcastUsageService;
   @Inject() private rtvcStateService: RtvcStateService;
   @Inject() private nicoliveProgramStateService: NicoliveProgramStateService;
+  @Inject() private subStreamService: SubStreamService;
 
   streamingStatusChange = new Subject<EStreamingState>();
   recordingStatusChange = new Subject<ERecordingState>();
@@ -328,6 +329,7 @@ export class StreamingService
         const horizontalContext = this.videoSettingsService.contexts.horizontal;
         obs.NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
         obs.NodeObs.OBS_service_startStreaming();
+        this.subStreamService.syncStart();
       } catch (e) {
         Sentry.withScope(scope => {
           scope.setLevel('error');
@@ -360,6 +362,7 @@ export class StreamingService
           message: `OBS_service_stopStreaming(false) from ${this.state.streamingStatus}`,
         });
         obs.NodeObs.OBS_service_stopStreaming(false);
+        this.subStreamService.syncStop();
       } catch (e) {
         Sentry.withScope(scope => {
           scope.setLevel('error');

@@ -8,5 +8,5 @@ export const CategoryIcons: Dictionary<string> = {
   Advanced: 'icon-details-setting',
   Comment: 'icon-comment-setting',
   SpeechEngine: 'icon-speech-engine',
-  SubStream: 'icon-sub-stream',
+  SubStream: 'icon-output',
 };

@@ -61,7 +61,7 @@ export class NamedPipeClient {
   // id はリクエスト ID
   // res は関数の戻り値
 
-  async call(fn: string, arg: { [name: string]: any } = {}): Promise<{ [name: string]: any }> {
+  async callEx(fn: string, arg: { [name: string]: any } = {}): Promise<{ [name: string]: any }> {
     await this.open();
 
     return new Promise((resolve, reject) => {
@@ -76,5 +76,13 @@ export class NamedPipeClient {
       this.client.write(JSON.stringify({ id, fn, arg }));
       //      console.log('np-send:', JSON.stringify({ id, fn, arg }));
     });
+  }
+
+  async call(fn: string, arg: { [name: string]: any } = {}): Promise<{ [name: string]: any }> {
+    try {
+      return await this.callEx(fn, arg);
+    } catch (err) {
+      return {};
+    }
   }
 }

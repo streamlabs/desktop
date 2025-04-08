@@ -56,6 +56,8 @@ export class SubStreamService extends PersistentStatefulService<ISubStreamState>
   async start() {
     if (!this.state) this.setState(SubStreamService.defaultState);
 
+    if (!this.state.url.startsWith('rtmp') || !this.state.key) return;
+
     const bitRange = (a: any, min: number, max: number): number =>
       Math.max(min, Math.min(Math.floor(Number(a)), max));
 
@@ -109,5 +111,15 @@ export class SubStreamService extends PersistentStatefulService<ISubStreamState>
   async status(): Promise<{ [name: string]: any }> {
     const result = await this.client.call('status');
     return result;
+  }
+
+  // ------
+  async syncStart() {
+    if (!this.state.sync) return;
+    await this.start();
+  }
+  async syncStop() {
+    if (!this.state.sync) return;
+    await this.stop();
   }
 }

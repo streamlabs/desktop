@@ -650,6 +650,10 @@
   "SpeechEngine": {
     "name": "音声エンジン"
   },
+  "SubStream": {
+    "name": "サブ配信"
+  },
+
   "listPlaceholder": "選択してください",
   "resolutionPlaceholder": "選択するか、値を入力してください",
   "addFiles": "ファイルを追加する",
