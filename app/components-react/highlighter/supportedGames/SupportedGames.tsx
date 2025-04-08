@@ -10,6 +10,7 @@ export default function SupportedGames({ emitClick }: { emitClick?: (game: EGame
     <div style={{ display: 'flex' }}>
       {supportedGames.slice(0, 4).map((game, index) => (
         <div
+          key={game.value + index}
           onClick={e => emitClick && emitClick(game.value)}
           className={styles.thumbnail}
           style={

@@ -163,11 +163,11 @@
   "Game not fullscreen": "Game not fullscreen",
   "No clips found.": "No clips found.",
   "Please make sure all the requirements are met:": "Please make sure all the requirements are met:",
-  "• Game is supported (Currently Fortnite only)": "• Game is supported (Currently Fortnite only)",
-  "• Game language is set to English": "• Game language is set to English",
-  "• Map and Stats area is fully visible": "• Map and Stats area is fully visible",
-  "• Game is fullscreen in your stream": "• Game is fullscreen in your stream",
-  "• Game mode is supported (Battle Royale, Reload, Zero Build, OG)": "• Game mode is supported (Battle Royale, Reload, Zero Build, OG)",
+  "Game is supported (Currently Fortnite only)": "Game is supported (Currently Fortnite only)",
+  "Game language is set to English": "Game language is set to English",
+  "Map and Stats area is fully visible": "Map and Stats area is fully visible",
+  "Game is fullscreen in your stream": "Game is fullscreen in your stream",
+  "Game mode is supported (Battle Royale, Reload, Zero Build, OG)": "Game mode is supported (Battle Royale, Reload, Zero Build, OG)",
   "Show details": "Show details",
   "All requirements met but no luck?": "All requirements met but no luck?",
   "Take a screenshot of your stream and share it here": "Take a screenshot of your stream and share it here",
@@ -176,5 +176,10 @@
   "Drag and drop game recording or click to select": "Drag and drop game recording or click to select",
   "Select game played in recording": "Select game played in recording",
   "No events found": "No events found",
-  "Find game highlights": "Find game highlights"
+  "Find game highlights": "Find game highlights",
+  "Select your game recording": "Select your game recording",
+  "Game language is English": "Game language is English",
+  "Import Game Recording": "Import Game Recording",
+  "Set a title for your recording": "Set a title for your recording",
+  "Select video and start import": "Select video and start import"
 }
