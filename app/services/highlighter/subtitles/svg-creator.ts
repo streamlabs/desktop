@@ -189,7 +189,7 @@ export class SvgCreator {
         paint-order: stroke fill;
         stroke:${this.textStyle.strokeColor || 'none'};
         stroke-opacity: ${this.textStyle.strokeColor ? 1 : 0};
-        stroke-width:${this.textStyle.strokeWidth ?? 0}px;
+        stroke-width:${this.textStyle.strokeWidth ?? 0};
 
         font-family: '${this.textStyle.fontFamily || 'Sans-Serif'}';
         font-style: ${this.textStyle.isItalic ? 'italic' : 'normal'};

@@ -356,13 +356,7 @@ function ExportFlow({
               )}
               {currentSubtitleItem?.style && (
                 <div className={styles.subtitlePreview}>
-                  <SubtitlePreview
-                    fontSize={currentSubtitleItem.style.fontSize}
-                    fontFamily={currentSubtitleItem.style.fontFamily}
-                    fontColor={currentSubtitleItem.style.fontColor}
-                    strokeColor={currentSubtitleItem.style.strokeColor}
-                    strokeWidth={currentSubtitleItem.style.strokeWidth}
-                  />
+                  currentSubtitleItem.style && <SubtitlePreview {...currentSubtitleItem.style} />
                 </div>
               )}
               <img
@@ -594,15 +588,7 @@ function SubtitleDropdownWrapper({
                   {item.enabled === false ? (
                     <div className={styles.dropdownText}>{item.name} </div>
                   ) : (
-                    item.style && (
-                      <SubtitlePreview
-                        fontSize={item.style.fontSize}
-                        fontFamily={item.style.fontFamily}
-                        fontColor={item.style.fontColor}
-                        strokeColor={item.style.strokeColor}
-                        strokeWidth={item.style.strokeWidth}
-                      />
-                    )
+                    item.style && <SubtitlePreview {...item.style} />
                   )}
                 </div>
               );
@@ -733,7 +719,7 @@ function OrientationToggle({
   );
 }
 
-export const SubtitlePreview = (style: ISubtitleStyle, inVideo: boolean) => {
+export const SubtitlePreview = (style: ISubtitleStyle, inVideo?: boolean) => {
   const WIDTH = 250;
   const HEIGHT = inVideo ? 60 : 250;
   return (
@@ -754,12 +740,13 @@ export const SubtitlePreview = (style: ISubtitleStyle, inVideo: boolean) => {
           textAnchor="middle"
           dominantBaseline="middle"
           paintOrder="stroke fill"
-          strokeWidth={(style.strokeWidth ?? 0) + 'px'}
+          strokeWidth={style.strokeWidth ?? 0}
           stroke={style.strokeColor || 'none'}
+          strokeOpacity={style.strokeColor ? 1 : 0}
           x={WIDTH / 2}
           y={HEIGHT / 2}
         >
-          {(style.strokeWidth ?? 0) + 'px'}
+          Auto subtitles
         </text>
       </svg>
     </div>
@@ -768,12 +755,12 @@ export const SubtitlePreview = (style: ISubtitleStyle, inVideo: boolean) => {
 
 export const SubtitleIcon = () => (
   <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="7" y="7" width="18" height="18" rx="2" stroke="white" stroke-width="2" />
+    <rect x="7" y="7" width="18" height="18" rx="2" stroke="white" strokeWidth="2" />
     <g filter="url(#filter0_d_3248_34353)">
-      <path d="M14 21H18" stroke="white" stroke-width="2" stroke-linecap="round" />
+      <path d="M14 21H18" stroke="white" strokeWidth="2" strokeLinecap="round" />
     </g>
     <g filter="url(#filter1_d_3248_34353)">
-      <path d="M12 17H20" stroke="white" stroke-width="2" stroke-linecap="round" />
+      <path d="M12 17H20" stroke="white" strokeWidth="2" strokeLinecap="round" />
     </g>
     <defs>
       <filter
@@ -783,9 +770,9 @@ export const SubtitleIcon = () => (
         width="14"
         height="10"
         filterUnits="userSpaceOnUse"
-        color-interpolation-filters="sRGB"
+        colorInterpolationFilters="sRGB"
       >
-        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feFlood floodOpacity="0" result="BackgroundImageFix" />
         <feColorMatrix
           in="SourceAlpha"
           type="matrix"
@@ -811,9 +798,9 @@ export const SubtitleIcon = () => (
         width="18"
         height="10"
         filterUnits="userSpaceOnUse"
-        color-interpolation-filters="sRGB"
+        colorInterpolationFilters="sRGB"
       >
-        <feFlood flood-opacity="0" result="BackgroundImageFix" />
+        <feFlood floodOpacity="0" result="BackgroundImageFix" />
         <feColorMatrix
           in="SourceAlpha"
           type="matrix"
