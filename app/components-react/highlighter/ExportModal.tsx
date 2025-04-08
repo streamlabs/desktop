@@ -26,6 +26,7 @@ import { getCombinedClipsDuration } from './utils';
 import { formatSecondsToHMS } from './ClipPreview';
 import cx from 'classnames';
 import { SubtitleStyles } from 'services/highlighter/subtitles/subtitle-styles';
+import Utils from 'services/utils';
 
 type TSetting = { name: string; fps: TFPS; resolution: TResolution; preset: TPreset };
 
@@ -57,9 +58,14 @@ const subtitleItems: ISubtitleItem[] = [
     style: SubtitleStyles.thick,
   },
   {
-    name: 'Flashy',
+    name: 'FlashyA',
     enabled: true,
-    style: SubtitleStyles.flashy,
+    style: SubtitleStyles.flashyA,
+  },
+  {
+    name: 'FlashyB',
+    enabled: true,
+    style: SubtitleStyles.yellow,
   },
 ];
 class ExportController {
@@ -217,6 +223,8 @@ function ExportFlow({
   const clipsAmount = getClips(streamId).length;
   const clipsDuration = formatSecondsToHMS(getDuration(streamId));
 
+  const showSubtitleSettings = ['staging', 'local'].includes(Utils.getHighlighterEnvironment());
+
   function settingMatcher(initialSetting: TSetting) {
     const matchingSetting = settings.find(
       setting =>
@@ -356,7 +364,7 @@ function ExportFlow({
               )}
               {currentSubtitleItem?.style && (
                 <div className={styles.subtitlePreview}>
-                  currentSubtitleItem.style && <SubtitlePreview {...currentSubtitleItem.style} />
+                  <SubtitlePreview {...currentSubtitleItem.style} />
                 </div>
               )}
               <img
@@ -387,14 +395,17 @@ function ExportFlow({
                 </p>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <SubtitleDropdownWrapper
-                  initialSetting={currentSubtitleItem}
-                  disabled={isExporting}
-                  emitSettings={setting => {
-                    setSubtitleItem(setting);
-                    setSubtitles(setting);
-                  }}
-                />
+                {showSubtitleSettings && (
+                  <SubtitleDropdownWrapper
+                    initialSetting={currentSubtitleItem}
+                    disabled={isExporting}
+                    emitSettings={setting => {
+                      setSubtitleItem(setting);
+                      setSubtitles(setting);
+                    }}
+                  />
+                )}
+
                 <OrientationToggle
                   initialState={currentFormat}
                   disabled={isExporting}
