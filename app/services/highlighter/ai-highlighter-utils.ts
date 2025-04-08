@@ -178,7 +178,7 @@ export class ProgressTracker {
   preInterval: NodeJS.Timeout;
   postInterval: NodeJS.Timeout;
   postStarted = false;
-  constructor(onChange = (progress: number) => { }) {
+  constructor(onChange = (progress: number) => {}) {
     this.startPreTimer();
     this.onChangeCallback = onChange;
   }
