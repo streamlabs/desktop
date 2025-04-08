@@ -177,6 +177,7 @@ function ExportModal({ close, streamId }: { close: () => void; streamId: string 
     return (
       <ExportFlow
         isExporting={exportInfo.exporting}
+        isTranscribing={exportInfo.transcriptionInProgress}
         close={close}
         streamId={streamId}
         videoName={videoName}
@@ -190,12 +191,14 @@ function ExportModal({ close, streamId }: { close: () => void; streamId: string 
 function ExportFlow({
   close,
   isExporting,
+  isTranscribing,
   streamId,
   videoName,
   onVideoNameChange,
 }: {
   close: () => void;
   isExporting: boolean;
+  isTranscribing: boolean;
   streamId: string | undefined;
   videoName: string;
   onVideoNameChange: (name: string) => void;
@@ -341,27 +344,37 @@ function ExportFlow({
                   : { aspectRatio: '9/16' }
               }
             >
-              {isExporting && (
-                <div className={styles.progressItem}>
-                  <h1>
-                    {Math.round((exportInfo.currentFrame / exportInfo.totalFrames) * 100) || 0}%
-                  </h1>
-                  <p>
-                    {exportInfo.cancelRequested ? (
-                      <span>{$t('Canceling...')}</span>
-                    ) : (
-                      <span>{$t('Exporting video...')}</span>
-                    )}
-                  </p>
-                  <Progress
-                    style={{ width: '100%' }}
-                    percent={Math.round((exportInfo.currentFrame / exportInfo.totalFrames) * 100)}
-                    trailColor="var(--section)"
-                    status={exportInfo.cancelRequested ? 'exception' : 'normal'}
-                    showInfo={false}
-                  />
-                </div>
-              )}
+              {isExporting &&
+                (isTranscribing ? (
+                  <div className={styles.progressItem}>
+                    <div className={styles.loadingSpinner}>
+                      <i className="fa fa-spinner fa-spin" style={{ fontSize: '24px' }} />
+                    </div>
+                    <p>
+                      <span>{$t('Transcribing...')} </span>
+                    </p>
+                  </div>
+                ) : (
+                  <div className={styles.progressItem}>
+                    <h1>
+                      {Math.round((exportInfo.currentFrame / exportInfo.totalFrames) * 100) || 0}%
+                    </h1>
+                    <p>
+                      {exportInfo.cancelRequested ? (
+                        <span>{$t('Canceling...')}</span>
+                      ) : (
+                        <span>{$t('Exporting video...')}</span>
+                      )}
+                    </p>
+                    <Progress
+                      style={{ width: '100%' }}
+                      percent={Math.round((exportInfo.currentFrame / exportInfo.totalFrames) * 100)}
+                      trailColor="var(--section)"
+                      status={exportInfo.cancelRequested ? 'exception' : 'normal'}
+                      showInfo={false}
+                    />
+                  </div>
+                ))}
               {currentSubtitleItem?.style && (
                 <div className={styles.subtitlePreview}>
                   <SubtitlePreview {...currentSubtitleItem.style} />
