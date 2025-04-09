@@ -117,7 +117,7 @@ export default function AiHighlighterToggle({
                     />
                   ) : (
                     <Button
-                      style={{ width: 'fit-content' }}
+                      style={{ width: 'fit-content', marginLeft: '18px' }}
                       size="small"
                       type="primary"
                       onClick={() => {
