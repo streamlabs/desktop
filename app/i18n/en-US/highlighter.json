@@ -172,5 +172,15 @@
   "All requirements met but no luck?": "All requirements met but no luck?",
   "Take a screenshot of your stream and share it here": "Take a screenshot of your stream and share it here",
   "Exporting video...": "Exporting video...",
-  "%{clipsAmount} clips": "%{clipsAmount} clips"
+  "%{clipsAmount} clips": "%{clipsAmount} clips",
+  "Open": "Open",
+  "Sign in with Streamlabs ID": "Sign in with Streamlabs ID",
+  "You cannot use special characters in this field": "You cannot use special characters in this field",
+  "Manually create vertical version for social media": "Manually create vertical version for social media",
+  "Full fletched video editing, collaboration and more": "Full fletched video editing, collaboration and more",
+  "Subtitles, transcripts, translations and more": "Subtitles, transcripts, translations and more",
+  "Edit in Cross Clip": "Edit in Cross Clip",
+  "Edit in Video Editor": "Edit in Video Editor",
+  "Edit in Podcast Editor": "Edit in Podcast Editor",
+  "Something went wrong. Please contact support if the issue persists": "Something went wrong. Please contact support if the issue persists"
 }
