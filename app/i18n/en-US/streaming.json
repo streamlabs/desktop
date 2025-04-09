@@ -193,6 +193,8 @@
   "Show vertical display.": "Show vertical display.",
   "Hide horizontal display.": "Hide horizontal display.",
   "Hide vertical display.": "Hide vertical display.",
+  "Toggle horizontal display.": "Toggle horizontal display.",
+  "Toggle vertical display.": "Toggle vertical display.",
   "Upgrade your stream with premium themes with <ultra>Streamlabs Ultra</ultra>.": "Upgrade your stream with premium themes with <ultra>Streamlabs Ultra</ultra>.",
   "You cannot change these settings when you're live.": "You cannot change these settings when you're live.",
   "<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform.": "<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform.",

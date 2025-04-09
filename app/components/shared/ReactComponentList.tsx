@@ -546,3 +546,11 @@ export class GLVolmeters extends ReactComponent {}
   },
 })
 export class MultistreamChatInfo extends ReactComponent {}
+
+@Component({
+  props: {
+    name: { default: 'DisplayToggle' },
+    wrapperStyles: { default: () => ({ height: '100%' }) },
+  },
+})
+export class DisplayToggle extends ReactComponent {}
