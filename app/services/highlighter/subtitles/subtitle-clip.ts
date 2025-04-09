@@ -41,7 +41,6 @@ export class SubtitleClip extends ClipElement {
       }
     }
 
-    // console.log('🚀 ~ dynamicSubtitleClips', dynamicSubtitleClips);
     return dynamicSubtitleClips;
   }
 

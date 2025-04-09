@@ -119,9 +119,7 @@ export function getHighlightClips(
               milestoneUpdate?.(aiHighlighterMessage.json as IHighlighterMilestone);
               break;
             default:
-              // console.log('\n\n');
-              // console.log('Unrecognized message type:', aiHighlighterMessage);
-              // console.log('\n\n');
+              // ('Unrecognized message type:', aiHighlighterMessage);
               break;
           }
         }
@@ -286,9 +284,7 @@ export function getTranscription(
             }
 
             default:
-              // console.log('\n\n');
-              // console.log('Unrecognized message type:', aiHighlighterMessage);
-              // console.log('\n\n');
+              // ('Unrecognized message type:', aiHighlighterMessage);
               break;
           }
         }

@@ -205,11 +205,6 @@ export class Transcription {
     if (subtitleMode === SubtitleMode.dynamic) {
       subtitleClips.convertToDynamicSubtitles();
     }
-    // subtitleClips.forEach((sc) => {
-    //     console.log(`[${sc.startIndex}-${sc.endIndex}]`, sc.startTimeInEdit, sc.endTimeInEdit, sc.text);
-    // });
-    // console.log(this.words);
-
     return subtitleClips;
   }
 
@@ -515,7 +510,7 @@ export class Transcription {
         if (pauseWords) {
           newTranscription.words = newTranscription.words.concat(pauseWords);
         } else {
-          // console.log('no Pause');
+          // No Pause
         }
       }
       if (!skipPausesAfter) {
@@ -610,7 +605,6 @@ export class Transcription {
       }
 
       const pauseTime = roundTime(secondWord.startTimeInEdit - firstWord.endTimeInEdit);
-      // console.log('pausetime', pauseTime);
 
       if (pauseTime > 0) {
         const pauseCount = Math.ceil(pauseTime / this.singlePauseLength);
@@ -624,7 +618,6 @@ export class Transcription {
               ? this.singlePauseLength
               : roundTime(pauseTime - i * this.singlePauseLength);
 
-          // console.log(leftPauseTime);
 
           pauseWords.push(
             new Word().initPauseWord(
@@ -647,7 +640,6 @@ export class Transcription {
    * Checks the sentence for the most dominant speaker and set this one for the whole sentence
    */
   updateSentenceSpeaker() {
-    // console.log(this.words);
     const sentences: Word[][] = this.getSentencesArray();
     const newWords: Word[] = [];
     for (const sentence of sentences) {
@@ -667,7 +659,6 @@ export class Transcription {
       });
     }
     this.words = newWords;
-    // console.log(newSentences.map((sentence) => sentence.words));
   }
 
   /**

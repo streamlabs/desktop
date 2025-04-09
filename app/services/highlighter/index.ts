@@ -118,7 +118,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       fps: 30,
       resolution: 1080,
       preset: 'fast',
-      subtitleStyle: SubtitleStyles['basic'],
+      subtitleStyle: null,
     },
     upload: {
       uploading: false,
