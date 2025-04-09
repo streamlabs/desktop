@@ -6,7 +6,7 @@ import { $t } from 'services/i18n';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import styles from './RecordingHistory.m.less';
 import AutoProgressBar from 'components-react/shared/AutoProgressBar';
-import { GetSLID } from 'components-react/highlighter/StorageUpload';
+import { GetSLID } from 'components-react/highlighter/Export/StorageUpload';
 import { ENotificationType } from 'services/notifications';
 import Scrollable from 'components-react/shared/Scrollable';
 import { Services } from '../service-provider';

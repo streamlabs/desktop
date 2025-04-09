@@ -9,7 +9,7 @@ import {
 } from 'services/highlighter/models/highlighter.models';
 import isEqual from 'lodash/isEqual';
 import { Modal, Button, Alert } from 'antd';
-import ExportModal from 'components-react/highlighter/ExportModal';
+import ExportModal from 'components-react/highlighter/Export/ExportModal';
 import { SUPPORTED_FILE_TYPES } from 'services/highlighter/constants';
 import Scrollable from 'components-react/shared/Scrollable';
 import { $t } from 'services/i18n';
@@ -188,7 +188,7 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
   function closeModal() {
     // Do not allow closing export modal while export/upload operations are in progress
     if (v.exportInfo.exporting) return;
-    if (v.uploadInfo.uploading) return;
+    if (v.uploadInfo.some(u => u.uploading)) return;
 
     setShowModal(null);
 
