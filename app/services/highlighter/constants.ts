@@ -20,11 +20,6 @@ export const SCRUB_WIDTH = 320;
 export const SCRUB_HEIGHT = 180;
 export const SCRUB_FRAMES = 20;
 export const SCRUB_SPRITE_DIRECTORY = path.join(remote.app.getPath('userData'), 'highlighter');
-export const FONT_CACHE_DIRECTORY = path.join(
-  remote.app.getPath('userData'),
-  'highlighter',
-  'fonts',
-);
 
 export const FADE_OUT_DURATION = 1;
 

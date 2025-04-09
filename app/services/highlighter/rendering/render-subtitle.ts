@@ -5,8 +5,6 @@ import { getTranscription } from '../ai-highlighter-utils';
 import { SubtitleMode } from '../subtitles/subtitle-mode';
 import { IExportOptions } from '../models/rendering.models';
 import path from 'path';
-import { FontLoader } from '../subtitles/font-loader';
-import { FONT_CACHE_DIRECTORY } from '../constants';
 
 export const SUBTITLE_PER_SECOND = 3;
 

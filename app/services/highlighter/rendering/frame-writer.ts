@@ -72,7 +72,6 @@ export class FrameWriter {
         this.outputPath,
       ],
     );
-    console.log(args.join(' '));
 
     /* eslint-enable */
     this.ffmpeg = execa(FFMPEG_EXE, args, {
