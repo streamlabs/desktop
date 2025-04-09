@@ -218,10 +218,10 @@ export class AvatarUpdater {
     });
   }
 
-  public async startAvatarProcess(
+  public startAvatarProcess(
     pixelStreamingUrl: string = 'ws://127.0.0.1:1339',
     renderOffscreen: boolean = false,
-  ): Promise<ChildProcess> {
+  ): ChildProcess {
     const executablePath = path.resolve(AvatarUpdater.basepath, 'StreamlabsAIAvatar.exe');
 
     if (!existsSync(executablePath)) {

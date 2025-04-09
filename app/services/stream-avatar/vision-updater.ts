@@ -57,7 +57,7 @@ export class VisionUpdater {
   /**
    * Spawn the Vision process server
    */
-  static startVisionProcess(port: number = 8000) {
+  startVisionProcess(port: number = 8000) {
     const runVisionFromRepository = VisionUpdater.getEnvironment() === 'local';
 
     if (runVisionFromRepository) {
