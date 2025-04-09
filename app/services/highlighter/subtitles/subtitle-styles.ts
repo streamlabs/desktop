@@ -1,9 +1,9 @@
 import { ISubtitleStyle } from '../models/rendering.models';
 
-export type SubtitleStyleName = 'default' | 'thick' | 'flashyA' | 'yellow';
+export type SubtitleStyleName = 'basic' | 'thick' | 'flashyA' | 'yellow';
 
 export const SubtitleStyles: { [name in SubtitleStyleName]: ISubtitleStyle } = {
-  default: {
+  basic: {
     fontColor: '#FFFFFF',
     fontSize: 48,
     fontFamily: 'Arial',

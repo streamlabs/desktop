@@ -27,6 +27,7 @@ import { formatSecondsToHMS } from './ClipPreview';
 import cx from 'classnames';
 import { SubtitleStyles } from 'services/highlighter/subtitles/subtitle-styles';
 import Utils from 'services/utils';
+import { isDeepEqual } from 'slap';
 
 type TSetting = { name: string; fps: TFPS; resolution: TResolution; preset: TPreset };
 
@@ -48,9 +49,9 @@ const subtitleItems: ISubtitleItem[] = [
     style: undefined,
   },
   {
-    name: 'Default',
+    name: 'Basic',
     enabled: true,
-    style: SubtitleStyles.default,
+    style: SubtitleStyles.basic,
   },
   {
     name: 'Thick',
@@ -68,6 +69,7 @@ const subtitleItems: ISubtitleItem[] = [
     style: SubtitleStyles.yellow,
   },
 ];
+
 class ExportController {
   get service() {
     return Services.HighlighterService;
@@ -116,6 +118,10 @@ class ExportController {
 
   setSubtitles(subtitleItem: ISubtitleItem) {
     this.service.actions.setSubtitleStyle(subtitleItem.style);
+  }
+
+  getSubtitleStyle() {
+    return this.service.views.exportInfo.subtitleStyle;
   }
 
   setExport(exportFile: string) {
@@ -212,6 +218,7 @@ function ExportFlow({
     setFps,
     setPreset,
     setSubtitles,
+    getSubtitleStyle,
     fileExists,
     setExport,
     exportCurrentFile,
@@ -246,11 +253,9 @@ function ExportFlow({
     };
   }
 
-  const [currentSubtitleItem, setSubtitleItem] = useState<ISubtitleItem>({
-    name: 'Off',
-    enabled: false,
-    style: undefined,
-  });
+  const [currentSubtitleItem, setSubtitleItem] = useState<ISubtitleItem>(
+    findSubtitleItem(getSubtitleStyle()) || subtitleItems[0],
+  );
 
   const [currentSetting, setSetting] = useState<TSetting>(
     settingMatcher({
@@ -263,6 +268,15 @@ function ExportFlow({
 
   // Video name and export file are kept in sync
   const [exportFile, setExportFile] = useState<string>(getExportFileFromVideoName(videoName));
+
+  function findSubtitleItem(subtitleStyle: ISubtitleStyle | null) {
+    if (!subtitleStyle) return subtitleItems[0];
+
+    for (const item of subtitleItems) {
+      const isMatching = isDeepEqual(item.style, subtitleStyle, 0, 2);
+      if (isMatching) return item;
+    }
+  }
 
   function getExportFileFromVideoName(videoName: string) {
     const parsed = path.parse(exportInfo.file);

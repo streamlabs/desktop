@@ -118,7 +118,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       fps: 30,
       resolution: 1080,
       preset: 'fast',
-      subtitleStyle: SubtitleStyles['default'],
+      subtitleStyle: SubtitleStyles['basic'],
     },
     upload: {
       uploading: false,
@@ -141,7 +141,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   aiHighlighterFeatureEnabled = false;
   streamMilestones: IStreamMilestones | null = null;
 
-  static filter(state: IHighlighterState) {
+  static filter(state: IHighlighterState): IHighlighterState {
     return {
       ...this.defaultState,
       clips: state.clips,
@@ -151,6 +151,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       transition: state.transition,
       useAiHighlighter: state.useAiHighlighter,
       highlighterVersion: state.highlighterVersion,
+      export: { ...this.defaultState.export, subtitleStyle: state.export.subtitleStyle },
     };
   }
 
