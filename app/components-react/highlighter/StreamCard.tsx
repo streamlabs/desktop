@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
   EHighlighterView,
   IHighlightedStream,
@@ -217,6 +217,17 @@ function ActionBar({
     }
   }
 
+  const [thumbsDownClicked, setThumbsDownClicked] = useState(false);
+
+  const clickThumbsDown = () => {
+    if (thumbsDownClicked) {
+      return;
+    }
+
+    console.log('thumbs down clicked for stream', stream.id);
+    setThumbsDownClicked(true);
+  };
+
   // In Progress
   if (stream?.state.type === EAiDetectionState.IN_PROGRESS) {
     return (
@@ -250,6 +261,18 @@ function ActionBar({
   if (stream && clips.length > 0) {
     return (
       <div className={styles.buttonBarWrapper}>
+        <Button
+          style={{
+            display: thumbsDownClicked ? 'none' : 'auto',
+          }}
+          icon={<i className="icon-thumbs-down" style={{ fontSize: '14px' }} />}
+          size="large"
+          onClick={e => {
+            clickThumbsDown();
+            e.stopPropagation();
+          }}
+        />
+
         <Button
           icon={<i className="icon-edit" style={{ marginRight: '4px' }} />}
           size="large"
