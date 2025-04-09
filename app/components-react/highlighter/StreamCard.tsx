@@ -6,7 +6,7 @@ import {
   TClip,
 } from 'services/highlighter/models/highlighter.models';
 import styles from './StreamCard.m.less';
-import { Button, Tooltip } from 'antd';
+import { Button, Tooltip, message } from 'antd';
 import { Services } from 'components-react/service-provider';
 import { isAiClip } from './utils';
 import { useVuex } from 'components-react/hooks';
@@ -206,6 +206,7 @@ function ActionBar({
   emitRestartAiDetection: () => void;
   emitSetView: (data: IViewState) => void;
 }): JSX.Element {
+  const { UsageStatisticsService } = Services;
   function getFailedText(state: EAiDetectionState): string {
     switch (state) {
       case EAiDetectionState.ERROR:
@@ -217,15 +218,29 @@ function ActionBar({
     }
   }
 
-  const [thumbsDownClicked, setThumbsDownClicked] = useState(false);
+  const [thumbsDownVisible, setThumbsDownVisible] = useState(true);
 
   const clickThumbsDown = () => {
-    if (thumbsDownClicked) {
-      return;
-    }
+    message.success('Thanks for your feedback!');
+    setThumbsDownVisible(false);
 
-    console.log('thumbs down clicked for stream', stream.id);
-    setThumbsDownClicked(true);
+    UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+      type: 'ThumbsDown',
+      streamId: stream?.id,
+      game: stream?.game,
+      clips: clips?.length,
+    });
+  };
+
+  const clickThumbsUp = () => {
+    setThumbsDownVisible(false);
+
+    UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+      type: 'ThumbsUp',
+      streamId: stream?.id,
+      game: stream?.game,
+      clips: clips?.length,
+    });
   };
 
   // In Progress
@@ -261,17 +276,16 @@ function ActionBar({
   if (stream && clips.length > 0) {
     return (
       <div className={styles.buttonBarWrapper}>
-        <Button
-          style={{
-            display: thumbsDownClicked ? 'none' : 'auto',
-          }}
-          icon={<i className="icon-thumbs-down" style={{ fontSize: '14px' }} />}
-          size="large"
-          onClick={e => {
-            clickThumbsDown();
-            e.stopPropagation();
-          }}
-        />
+        {thumbsDownVisible && (
+          <Button
+            icon={<i className="icon-thumbs-down" style={{ fontSize: '14px' }} />}
+            size="large"
+            onClick={e => {
+              clickThumbsDown();
+              e.stopPropagation();
+            }}
+          />
+        )}
 
         <Button
           icon={<i className="icon-edit" style={{ marginRight: '4px' }} />}
@@ -287,6 +301,7 @@ function ActionBar({
           type="primary"
           onClick={e => {
             emitExportVideo();
+            clickThumbsUp();
             e.stopPropagation();
           }}
           style={{ display: 'grid', gridTemplateAreas: 'stack' }}
