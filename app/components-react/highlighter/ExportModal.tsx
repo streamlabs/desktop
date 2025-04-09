@@ -233,7 +233,10 @@ function ExportFlow({
   const clipsAmount = getClips(streamId).length;
   const clipsDuration = formatSecondsToHMS(getDuration(streamId));
 
-  const showSubtitleSettings = ['staging', 'local'].includes(Utils.getHighlighterEnvironment());
+  const showSubtitleSettings = useMemo(
+    () => ['staging', 'local'].includes(Utils.getHighlighterEnvironment()),
+    [],
+  );
 
   function settingMatcher(initialSetting: TSetting) {
     const matchingSetting = settings.find(
