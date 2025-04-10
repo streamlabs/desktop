@@ -59,7 +59,7 @@ export class HostsService extends Service {
     return `${this.nicoLiveWeb}/watch/${programID}`;
   }
   getMyPageURL(): string {
-    return `${this.nicoLiveWeb}/my`;
+    return `https://garage.nicovideo.jp/niconico-garage/live/history`;
   }
   getUserPageURL(userId: string): string {
     return `https://www.nicovideo.jp/user/${userId}`;
