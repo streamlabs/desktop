@@ -22,9 +22,16 @@ export class HighlighterViews extends ViewHandler<IHighlighterState> {
   }
 
   /**
-   * Returns wether or not the AiHighlighter should be used
+   * Returns highlighted streams as an array (for backward compatibility)
    */
   get highlightedStreams() {
+    return Object.values(this.state.highlightedStreams);
+  }
+
+  /**
+   * Returns highlighted streams as a dictionary for faster lookups
+   */
+  get highlightedStreamsDictionary() {
     return this.state.highlightedStreams;
   }
 

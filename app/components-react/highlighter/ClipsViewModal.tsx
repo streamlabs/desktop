@@ -21,6 +21,8 @@ export default function ClipsViewModal({
   onClose: () => void;
   deleteClip: (clipPath: string, streamId: string | undefined) => void;
 }) {
+  console.log('rerender clipView modal');
+
   const { HighlighterService } = Services;
   const v = useVuex(() => ({
     exportInfo: HighlighterService.views.exportInfo,

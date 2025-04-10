@@ -120,7 +120,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     dismissedTutorial: false,
     error: '',
     useAiHighlighter: false,
-    highlightedStreams: [],
+    highlightedStreams: {},
     updaterProgress: 0,
     isUpdaterRunning: false,
     highlighterVersion: '',
@@ -255,23 +255,17 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
   @mutation()
   ADD_HIGHLIGHTED_STREAM(streamInfo: IHighlightedStream) {
-    // Vue.set(this.state, 'highlightedStreams', streamInfo);
-    this.state.highlightedStreams.push(streamInfo);
+    Vue.set(this.state.highlightedStreams, streamInfo.id, streamInfo);
   }
 
   @mutation()
   UPDATE_HIGHLIGHTED_STREAM(updatedStreamInfo: IHighlightedStream) {
-    const keepAsIs = this.state.highlightedStreams.filter(
-      stream => stream.id !== updatedStreamInfo.id,
-    );
-    this.state.highlightedStreams = [...keepAsIs, updatedStreamInfo];
+    Vue.set(this.state.highlightedStreams, updatedStreamInfo.id, updatedStreamInfo);
   }
 
   @mutation()
   REMOVE_HIGHLIGHTED_STREAM(id: string) {
-    this.state.highlightedStreams = this.state.highlightedStreams.filter(
-      stream => stream.id !== id,
-    );
+    Vue.delete(this.state.highlightedStreams, id);
   }
 
   @mutation()
@@ -293,8 +287,48 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     return new HighlighterViews(this.state);
   }
 
+  private async migrateHighlightedStreamsToDictionary() {
+    try {
+      // Check if current state exists and contains an array
+      if (
+        this.state &&
+        this.state.highlightedStreams &&
+        Array.isArray(this.state.highlightedStreams) &&
+        this.state.highlightedStreams.length > 0
+      ) {
+        console.log('Migrating highlighted streams from array to dictionary structure');
+
+        // Convert array to dictionary
+        const streamsDict = this.state.highlightedStreams.reduce((dict, stream) => {
+          if (stream && stream.id) {
+            dict[stream.id] = stream;
+          }
+          return dict;
+        }, {} as Dictionary<IHighlightedStream>);
+
+        // Update the state directly
+        this.state.highlightedStreams = streamsDict;
+      } else if (
+        this.state &&
+        this.state.highlightedStreams &&
+        !Array.isArray(this.state.highlightedStreams)
+      ) {
+        // Already migrated, nothing to do
+        console.log('Highlighted streams already in dictionary format');
+      } else {
+        // Initialize as empty object if not already set
+        this.state.highlightedStreams = {};
+      }
+    } catch (error: unknown) {
+      console.error('Error during highlightedStreams migration:', error);
+      // Ensure we have a valid state even if migration fails
+      this.state.highlightedStreams = this.state.highlightedStreams || {};
+    }
+  }
+
   async init() {
     super.init();
+    await this.migrateHighlightedStreamsToDictionary();
 
     this.incrementalRolloutService.featuresReady.then(async () => {
       this.aiHighlighterFeatureEnabled = this.incrementalRolloutService.views.featureIsEnabled(
@@ -721,7 +755,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   getGameByStreamId(streamId?: string): EGame {
     if (!streamId) return EGame.UNSET;
 
-    const game = this.views.highlightedStreams.find(s => s.id === streamId)?.game;
+    const game = this.views.highlightedStreamsDictionary[streamId]?.game;
     if (!game) return EGame.UNSET;
 
     const lowercaseGame = game.toLowerCase();
@@ -1212,7 +1246,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   }
 
   cancelHighlightGeneration(streamId: string): void {
-    const stream = this.views.highlightedStreams.find(s => s.id === streamId);
+    const stream = this.views.highlightedStreamsDictionary[streamId];
     if (stream && stream.abortController) {
       console.log('cancelHighlightGeneration', streamId);
       stream.abortController.abort();

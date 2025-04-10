@@ -34,6 +34,8 @@ export default function StreamCard({
   emitCancelHighlightGeneration: () => void;
   emitShowRequirements: () => void;
 }) {
+  console.log('streamcard');
+
   const { HighlighterService } = Services;
   const clips = useVuex(() =>
     HighlighterService.views.clips
@@ -45,9 +47,7 @@ export default function StreamCard({
         return clip;
       }),
   );
-  const stream = useVuex(() =>
-    HighlighterService.views.highlightedStreams.find(s => s.id === streamId),
-  );
+  const stream = useVuex(() => HighlighterService.views.highlightedStreamsDictionary[streamId]);
   if (!stream) {
     return <></>;
   }

@@ -1,5 +1,5 @@
 import { useVuex } from 'components-react/hooks';
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Services } from 'components-react/service-provider';
 import styles from './StreamView.m.less';
 import {
@@ -32,6 +32,8 @@ type TModalStreamView =
   | null;
 
 export default function StreamView({ emitSetView }: { emitSetView: (data: IViewState) => void }) {
+  console.log('rerender streamview');
+
   const { HighlighterService, HotkeysService, UsageStatisticsService } = Services;
   const v = useVuex(() => ({
     exportInfo: HighlighterService.views.exportInfo,
@@ -42,21 +44,17 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
 
   // Below is only used because useVueX doesnt work as expected
   // there probably is a better way to do this
-  const currentStreams = useRef<{ id: string; date: string }[]>();
-  const highlightedStreams = useVuex(() => {
-    const newStreamIds = [
-      ...HighlighterService.views.highlightedStreams.map(stream => {
-        return { id: stream.id, date: stream.date };
-      }),
-    ];
-
-    if (currentStreams.current === undefined || !isEqual(currentStreams.current, newStreamIds)) {
-      currentStreams.current = newStreamIds;
-    }
-    return currentStreams.current.sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-    );
+  const highlightedStreamsAmount = useVuex(() => {
+    return HighlighterService.views.highlightedStreams.length;
   });
+
+  const highlightedStreams = useMemo(() => {
+    return HighlighterService.views.highlightedStreams
+      .map(stream => {
+        return { id: stream.id, date: stream.date };
+      })
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [highlightedStreamsAmount]);
 
   const currentAiDetectionState = useRef<boolean>();
 

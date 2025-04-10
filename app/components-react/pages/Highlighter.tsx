@@ -9,6 +9,8 @@ import UpdateModal from 'components-react/highlighter/UpdateModal';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export default function Highlighter(props: { params?: { view: string } }) {
+  console.log('main rerender');
+
   const { HighlighterService, IncrementalRolloutService, UsageStatisticsService } = Services;
   const aiHighlighterFeatureEnabled = IncrementalRolloutService.views.featureIsEnabled(
     EAvailableFeatures.aiHighlighter,
@@ -86,9 +88,9 @@ export default function Highlighter(props: { params?: { view: string } }) {
             }}
             props={{
               id: viewState.id,
-              streamTitle: HighlighterService.views.highlightedStreams.find(
-                s => s.id === viewState.id,
-              )?.title,
+              streamTitle: viewState.id
+                ? HighlighterService.views.highlightedStreamsDictionary[viewState.id]?.title
+                : '',
             }}
           />
         </>

@@ -180,8 +180,22 @@ function ExportFlow({
 
   const [currentFormat, setCurrentFormat] = useState<TOrientation>(EOrientation.HORIZONTAL);
 
-  const clipsAmount = getClips(streamId).length;
-  const clipsDuration = formatSecondsToHMS(getDuration(streamId));
+  // Create refs to store the calculated values
+  const clipsMeta = useRef({
+    amount: 0,
+    duration: '',
+    thumbnail: '',
+  });
+
+  // Calculate values once on component mount
+  useEffect(() => {
+    const clips = getClips(streamId);
+    clipsMeta.current = {
+      amount: clips.length,
+      duration: formatSecondsToHMS(getDuration(streamId)),
+      thumbnail: getClipThumbnail(streamId) || '',
+    };
+  }, [streamId]);
 
   function settingMatcher(initialSetting: TSetting) {
     const matchingSetting = settings.find(
@@ -315,7 +329,7 @@ function ExportFlow({
                 </div>
               )}
               <img
-                src={getClipThumbnail(streamId)}
+                src={clipsMeta.current.thumbnail}
                 style={
                   currentFormat === EOrientation.HORIZONTAL
                     ? { objectPosition: 'left' }
@@ -338,7 +352,8 @@ function ExportFlow({
                     marginLeft: '8px',
                   }}
                 >
-                  {clipsDuration} | {$t('%{clipsAmount} clips', { clipsAmount })}
+                  {clipsMeta.current.duration} |{' '}
+                  {$t('%{clipsAmount} clips', { clipsAmount: clipsMeta.current.amount })}
                 </p>
               </div>
               <OrientationToggle
