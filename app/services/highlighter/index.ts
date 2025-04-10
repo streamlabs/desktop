@@ -1326,7 +1326,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         (milestone: IHighlighterMilestone) => {
           this.streamMilestones?.milestones?.push(milestone);
         },
-        streamInfo.game === 'unset' ? null : streamInfo.game,
+        streamInfo.game === 'unset' ? undefined : streamInfo.game,
       );
 
       this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
