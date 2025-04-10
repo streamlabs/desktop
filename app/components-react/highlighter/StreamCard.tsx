@@ -206,7 +206,7 @@ function ActionBar({
   emitRestartAiDetection: () => void;
   emitSetView: (data: IViewState) => void;
 }): JSX.Element {
-  const { UsageStatisticsService } = Services;
+  const { UsageStatisticsService, HighlighterService } = Services;
   function getFailedText(state: EAiDetectionState): string {
     switch (state) {
       case EAiDetectionState.ERROR:
@@ -218,11 +218,14 @@ function ActionBar({
     }
   }
 
-  const [thumbsDownVisible, setThumbsDownVisible] = useState(true);
+  const [thumbsDownVisible, setThumbsDownVisible] = useState(!stream?.feedbackLeft);
 
   const clickThumbsDown = () => {
     message.success('Thanks for your feedback!');
     setThumbsDownVisible(false);
+
+    stream.feedbackLeft = true;
+    HighlighterService.updateStream(stream);
 
     UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
       type: 'ThumbsDown',
@@ -233,7 +236,14 @@ function ActionBar({
   };
 
   const clickThumbsUp = () => {
+    if (stream?.feedbackLeft) {
+      return;
+    }
+
     setThumbsDownVisible(false);
+
+    stream.feedbackLeft = true;
+    HighlighterService.updateStream(stream);
 
     UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
       type: 'ThumbsUp',
