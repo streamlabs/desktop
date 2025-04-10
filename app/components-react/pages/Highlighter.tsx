@@ -18,9 +18,10 @@ export default function Highlighter(props: { params?: { view: string } }) {
     isUpdaterRunning: HighlighterService.views.isUpdaterRunning,
     highlighterVersion: HighlighterService.views.highlighterVersion,
     progress: HighlighterService.views.updaterProgress,
-    clipsAmount: HighlighterService.views.clips.length,
-    streamAmount: HighlighterService.views.highlightedStreams.length,
   }));
+
+  const clipsAmount = HighlighterService.views.clips.length;
+  const streamAmount = HighlighterService.views.highlightedStreams.length;
 
   let initialViewState: IViewState;
 
@@ -28,9 +29,9 @@ export default function Highlighter(props: { params?: { view: string } }) {
     const view =
       props.params?.view === 'settings' ? EHighlighterView.SETTINGS : EHighlighterView.STREAM;
     initialViewState = { view };
-  } else if (v.streamAmount > 0 && v.clipsAmount > 0 && aiHighlighterFeatureEnabled) {
+  } else if (streamAmount > 0 && clipsAmount > 0 && aiHighlighterFeatureEnabled) {
     initialViewState = { view: EHighlighterView.STREAM };
-  } else if (v.clipsAmount > 0) {
+  } else if (clipsAmount > 0) {
     initialViewState = { view: EHighlighterView.CLIPS, id: undefined };
   } else {
     initialViewState = { view: EHighlighterView.SETTINGS };
