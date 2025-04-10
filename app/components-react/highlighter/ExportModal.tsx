@@ -394,7 +394,11 @@ function ExportFlow({
                 ))}
               {currentSubtitleItem?.style && (
                 <div className={styles.subtitlePreview}>
-                  <SubtitlePreview {...currentSubtitleItem.style} />
+                  <SubtitlePreview
+                    svgStyle={currentSubtitleItem.style}
+                    orientation={currentFormat}
+                    inPreview={true}
+                  />
                 </div>
               )}
               <img
@@ -629,7 +633,7 @@ function SubtitleDropdownWrapper({
                   {item.enabled === false ? (
                     <div className={styles.dropdownText}>{item.name} </div>
                   ) : (
-                    item.style && <SubtitlePreview {...item.style} />
+                    item.style && <SubtitlePreview svgStyle={item.style} />
                   )}
                 </div>
               );
@@ -760,9 +764,20 @@ function OrientationToggle({
   );
 }
 
-export const SubtitlePreview = (style: ISubtitleStyle, inVideo?: boolean) => {
+function SubtitlePreview({
+  svgStyle,
+  inPreview,
+  orientation,
+}: {
+  svgStyle: ISubtitleStyle;
+  inPreview?: boolean;
+  orientation?: TOrientation;
+}) {
   const WIDTH = 250;
-  const HEIGHT = inVideo ? 60 : 250;
+  const HEIGHT = 60;
+  const formattedFontSize = orientation === 'horizontal' ? 22 : 14;
+  const fontSize = inPreview ? formattedFontSize : 24;
+
   return (
     <div>
       <svg
@@ -773,17 +788,17 @@ export const SubtitlePreview = (style: ISubtitleStyle, inVideo?: boolean) => {
       >
         {/* <rect width="100%" height="100%" fill="#FF5733" /> */}
         <text
-          fontFamily={style.fontFamily}
-          fontStyle={style.isItalic ? 'italic' : 'normal'}
-          fontWeight={style.isBold ? 'bold' : 'normal'}
-          fill={style.fontColor}
-          fontSize="24" //{style.fontSize}
+          fontFamily={svgStyle.fontFamily}
+          fontStyle={svgStyle.isItalic ? 'italic' : 'normal'}
+          fontWeight={svgStyle.isBold ? 'bold' : 'normal'}
+          fill={svgStyle.fontColor}
+          fontSize={fontSize}
           textAnchor="middle"
           dominantBaseline="middle"
           paintOrder="stroke fill"
-          strokeWidth={style.strokeWidth ?? 0}
-          stroke={style.strokeColor || 'none'}
-          strokeOpacity={style.strokeColor ? 1 : 0}
+          strokeWidth={svgStyle.strokeWidth ?? 0}
+          stroke={svgStyle.strokeColor || 'none'}
+          strokeOpacity={svgStyle.strokeColor ? 1 : 0}
           x={WIDTH / 2}
           y={HEIGHT / 2}
         >
@@ -792,7 +807,7 @@ export const SubtitlePreview = (style: ISubtitleStyle, inVideo?: boolean) => {
       </svg>
     </div>
   );
-};
+}
 
 export const SubtitleIcon = () => (
   <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
