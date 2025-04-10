@@ -221,6 +221,10 @@ function ActionBar({
   const [thumbsDownVisible, setThumbsDownVisible] = useState(!stream?.feedbackLeft);
 
   const clickThumbsDown = () => {
+    if (stream?.feedbackLeft) {
+      return;
+    }
+
     message.success('Thanks for your feedback!');
     setThumbsDownVisible(false);
 
