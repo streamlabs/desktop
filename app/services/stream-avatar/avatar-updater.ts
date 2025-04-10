@@ -57,24 +57,42 @@ export class AvatarUpdater {
       await fs.mkdir(AvatarUpdater.basepath, { recursive: true });
     }
 
+    const filesToUpdate: { filePath: string; relativePath: string; fileInfo: IAvatarFileManifest }[] = [];
+    let totalBytes = 0;
+
     for (const [relativePath, fileInfo] of Object.entries(this.manifest.files)) {
-      // Normalize relativePath to remove leading backslashes
       const normalizedPath = relativePath.replace(/^\\+/, '');
       const filePath = path.join(AvatarUpdater.basepath, normalizedPath);
 
-      console.log(`Processing file: ${normalizedPath}`);
-      console.log(`File path: ${filePath}`);
+      console.log(`Checking file: ${normalizedPath}`);
 
-      // Ensure subfolders exist
       const folderPath = path.dirname(filePath);
       if (!existsSync(folderPath)) {
         await fs.mkdir(folderPath, { recursive: true });
       }
 
       if (!(await this.isFileUpToDate(filePath, fileInfo))) {
-        console.log(`Updating file: ${normalizedPath}`);
-        await this.downloadAndUpdateFile(filePath, normalizedPath, fileInfo, progressCallback);
+        console.log(`File needs update: ${normalizedPath}`);
+        filesToUpdate.push({ filePath, relativePath: normalizedPath, fileInfo });
+        totalBytes += fileInfo.size;
       }
+    }
+
+    const downloadedSoFar: Record<string, number> = {};
+
+    for (const { filePath, relativePath, fileInfo } of filesToUpdate) {
+      downloadedSoFar[relativePath] = 0;
+      console.log(`Updating file: ${relativePath}`);
+      await this.downloadAndUpdateFile(filePath, relativePath, fileInfo, (progress) => {
+        downloadedSoFar[relativePath] = progress.downloadedBytes;
+        const downloadedBytes = Object.values(downloadedSoFar).reduce((sum, bytes) => sum + bytes, 0);
+
+        progressCallback({
+          percent: (downloadedBytes / totalBytes),
+          totalBytes,
+          downloadedBytes,
+        });
+      });
     }
 
     console.log('All files are up to date.');
