@@ -1,23 +1,33 @@
 import SettingsView from 'components-react/highlighter/SettingsView';
 import { useVuex } from 'components-react/hooks';
 import React, { useEffect, useState } from 'react';
-import { EHighlighterView, IViewState } from 'services/highlighter/models/highlighter.models';
+import {
+  EHighlighterView,
+  IStreamInfoForAiHighlighter,
+  IViewState,
+} from 'services/highlighter/models/highlighter.models';
 import { Services } from 'components-react/service-provider';
 import StreamView from 'components-react/highlighter/StreamView';
 import ClipsView from 'components-react/highlighter/ClipsView';
 import UpdateModal from 'components-react/highlighter/UpdateModal';
 import { EAvailableFeatures } from 'services/incremental-rollout';
+import { TOpenedFrom } from 'components-react/highlighter/ImportStream';
 
-export default function Highlighter(props: { params?: { view: string } }) {
+export default function Highlighter(props: {
+  params?: {
+    view: string;
+    recordingPath?: string;
+    streamInfo?: IStreamInfoForAiHighlighter;
+    source?: TOpenedFrom;
+  };
+}) {
   const { HighlighterService, IncrementalRolloutService, UsageStatisticsService } = Services;
   const aiHighlighterFeatureEnabled = IncrementalRolloutService.views.featureIsEnabled(
     EAvailableFeatures.aiHighlighter,
   );
+
   const v = useVuex(() => ({
     useAiHighlighter: HighlighterService.views.useAiHighlighter,
-    isUpdaterRunning: HighlighterService.views.isUpdaterRunning,
-    highlighterVersion: HighlighterService.views.highlighterVersion,
-    progress: HighlighterService.views.updaterProgress,
     clipsAmount: HighlighterService.views.clips.length,
     streamAmount: HighlighterService.views.highlightedStreams.length,
   }));
@@ -55,13 +65,7 @@ export default function Highlighter(props: { params?: { view: string } }) {
     UsageStatisticsService.recordShown('HighlighterTab', viewState.view);
   }, [viewState]);
 
-  const updaterModal = (
-    <UpdateModal
-      version={v.highlighterVersion}
-      progress={v.progress}
-      isVisible={v.isUpdaterRunning}
-    />
-  );
+  const updaterModal = <UpdateModal />;
 
   switch (viewState.view) {
     case EHighlighterView.STREAM:
@@ -69,6 +73,9 @@ export default function Highlighter(props: { params?: { view: string } }) {
         <>
           {aiHighlighterFeatureEnabled && updaterModal}
           <StreamView
+            streamInfo={props.params?.streamInfo}
+            recordingPath={props.params?.recordingPath}
+            source={props.params?.source}
             emitSetView={data => {
               setViewFromEmit(data);
             }}

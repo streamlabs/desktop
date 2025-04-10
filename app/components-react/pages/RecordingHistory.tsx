@@ -138,13 +138,14 @@ class RecordingHistoryController {
     }
     if (platform === 'highlighter') {
       if (this.aiDetectionInProgress) return;
-      this.HighlighterService.actions.detectAndClipAiHighlights(recording.filename, {
-        game: EGame.FORTNITE,
-        id: 'rec_' + uuid(),
-      });
       this.NavigationService.actions.navigate(
         'Highlighter',
-        { view: EHighlighterView.STREAM },
+        {
+          view: EHighlighterView.STREAM,
+          recordingPath: recording.filename,
+          streamInfo: { id: 'rec_' + uuid() },
+          source: 'recordings-tab',
+        },
         EMenuItemKey.Highlighter,
       );
       return;

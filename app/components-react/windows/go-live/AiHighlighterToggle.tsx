@@ -8,6 +8,7 @@ import { useVuex } from 'components-react/hooks';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { Button, Carousel } from 'antd';
 import EducationCarousel from 'components-react/highlighter/EducationCarousel';
+import { isGameSupported } from 'services/highlighter/models/game-config.models';
 
 export default function AiHighlighterToggle({
   game,
@@ -25,8 +26,18 @@ export default function AiHighlighterToggle({
     };
   });
 
+  const [gameIsSupported, setGameIsSupported] = useState(false);
+
+  useEffect(() => {
+    const supportedGame = isGameSupported(game);
+    setGameIsSupported(supportedGame);
+    if (supportedGame) {
+      setIsExpanded(true);
+    }
+  }, [game]);
+
   function getInitialExpandedState() {
-    if (game === 'Fortnite') {
+    if (gameIsSupported) {
       return true;
     } else {
       if (useHighlighter) {
@@ -39,18 +50,9 @@ export default function AiHighlighterToggle({
   const initialExpandedState = getInitialExpandedState();
   const [isExpanded, setIsExpanded] = useState(initialExpandedState);
 
-  useEffect(() => {
-    if (game === 'Fortnite') {
-      setIsExpanded(true);
-    }
-    if (game !== 'Fortnite' && game !== undefined && useHighlighter) {
-      HighlighterService.actions.setAiHighlighter(false);
-    }
-  }, [game]);
-
   return (
     <div>
-      {game === undefined || game === 'Fortnite' ? (
+      {gameIsSupported ? (
         <div
           key={'aiSelector'}
           style={{
@@ -67,13 +69,10 @@ export default function AiHighlighterToggle({
             <div className={styles.headlineWrapper} onClick={() => setIsExpanded(!isExpanded)}>
               <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 300, color: '#BDC2C4' }}>
                 {!useHighlighter ? (
-                  <>
-                    {' '}
-                    Streaming <span style={{ fontWeight: 700 }}>Fortnite</span>? Try AI Highlighter!{' '}
-                  </>
+                  <>Try AI Highlighter to generate game highlight reels of your stream</>
                 ) : (
                   <>
-                    <span style={{ fontWeight: 700 }}>Ai Highlighter requirements</span>
+                    <span style={{ fontWeight: 700 }}>AI Highlighter requirements</span>
                   </>
                 )}
               </h3>
@@ -106,7 +105,7 @@ export default function AiHighlighterToggle({
                       <div className={styles.image}></div>
                     </div>
                   ) : (
-                    <EducationCarousel />
+                    <EducationCarousel game={game!} />
                   )}
 
                   {highlighterVersion !== '' ? (
@@ -118,7 +117,7 @@ export default function AiHighlighterToggle({
                     />
                   ) : (
                     <Button
-                      style={{ width: 'fit-content' }}
+                      style={{ width: 'fit-content', marginLeft: '18px' }}
                       size="small"
                       type="primary"
                       onClick={() => {
