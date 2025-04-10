@@ -13,7 +13,7 @@ import { platformAuthorizedRequest } from './utils';
 import { IGoLiveSettings } from '../streaming';
 import { TOutputOrientation } from 'services/restream';
 import { IVideo } from 'obs-studio-node';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayType } from 'services/video';
 import { I18nService } from 'services/i18n';
 import { getDefined } from 'util/properties-type-guards';
 import { WindowsService } from 'services/windows';

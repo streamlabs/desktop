@@ -8,7 +8,7 @@ import { TTwitchOAuthScope } from './twitch/index';
 import { IGoLiveSettings } from 'services/streaming';
 import { WidgetType } from '../widgets';
 import { ITrovoStartStreamOptions, TrovoService } from './trovo';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayType } from 'services/video';
 import { $t } from 'services/i18n';
 import { KickService, IKickStartStreamOptions } from './kick';
 

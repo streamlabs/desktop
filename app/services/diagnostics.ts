@@ -25,14 +25,14 @@ import {
   RecordingModeService,
   StreamSettingsService,
   TransitionsService,
-  VideoSettingsService,
+  VideoService,
 } from 'app-services';
 import * as remote from '@electron/remote';
 import { AppService } from 'services/app';
 import fs from 'fs';
 import path from 'path';
 import { platformList, TPlatform } from './platforms';
-import { TDisplayType } from './settings-v2';
+import { TDisplayType } from 'services/video';
 
 interface IStreamDiagnosticInfo {
   startTime: number;
@@ -158,7 +158,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
   @Inject() appService: AppService;
   @Inject() dualOutputService: DualOutputService;
   @Inject() streamSettingsService: StreamSettingsService;
-  @Inject() videoSettingsService: VideoSettingsService;
+  @Inject() videoService: VideoService;
 
   get cacheDir() {
     return this.appService.appDataDirectory;
@@ -558,13 +558,13 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
 
     // get settings for all active displays
     displays.forEach((display: TDisplayType) => {
-      const setting = this.videoSettingsService.formatVideoSettings(display, true);
+      const setting = this.videoService.formatVideoSettings(display, true);
       const maxHeight = display === 'horizontal' ? 1080 : 1280;
       const minHeight = 720;
 
       if (!setting) return;
 
-      const outputRes = this.videoSettingsService.outputResolutions[display];
+      const outputRes = this.videoService.outputResolutions[display];
       const outputAspect = outputRes.outputWidth / outputRes.outputHeight;
 
       if (outputAspect < 16 / 9.1 || outputAspect > 16 / 8.9) {
@@ -582,7 +582,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
         fpsObj['Denominator'] = setting.fpsDen;
       }
 
-      const baseRes = this.videoSettingsService.baseResolutions[display];
+      const baseRes = this.videoService.baseResolutions[display];
       const baseAspect = baseRes.baseWidth / baseRes.baseHeight;
 
       if (baseAspect < 16 / 9.1 || baseAspect > 16 / 8.9) {

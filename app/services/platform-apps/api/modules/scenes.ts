@@ -14,7 +14,7 @@ import {
   TSceneNode,
   EBlendingMethod,
 } from 'services/scenes';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayType } from 'services/video';
 import { IVideo } from 'obs-studio-node';
 import { Inject } from 'services/core/injector';
 import { Subject } from 'rxjs';
