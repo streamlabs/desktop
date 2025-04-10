@@ -258,7 +258,6 @@ export class AvatarUpdater {
 
     const process = spawn(executablePath, args, {
       cwd: AvatarUpdater.basepath,
-      detached: true,
       stdio: 'ignore',
     });
 
