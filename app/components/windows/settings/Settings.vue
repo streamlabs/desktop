@@ -34,7 +34,7 @@
           >
             <div :style="{ display: 'flex' }" @click="dismiss(category)">
               {{ $t(category) }}
-              <NewBadge
+              <DismissableBadge
                 v-if="
                   dismissables[category] &&
                   dismissablesService.views.shouldShow(dismissables[category])

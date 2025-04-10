@@ -20,7 +20,7 @@ import Scrollable from 'components/shared/Scrollable';
 import {
   ObsSettings,
   PlatformLogo,
-  NewBadge,
+  DismissableBadge,
   UltraIcon,
   InstalledApps,
   Hotkeys,
@@ -46,7 +46,7 @@ import Utils from '../../../services/utils';
     Scrollable,
     PlatformLogo,
     ObsSettings,
-    NewBadge,
+    DismissableBadge,
     UltraIcon,
   },
 })

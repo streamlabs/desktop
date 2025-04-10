@@ -1375,7 +1375,6 @@ export class StreamingService
         });
         this.recordingModeService.actions.addRecordingEntry(parsedFilename);
         this.markersService.actions.exportCsv(parsedFilename);
-        this.recordingModeService.addRecordingEntry(parsedFilename);
         this.latestRecordingPath.next(filename);
         // Wrote signals come after Offline, so we return early here
         // to not falsely set our state out of Offline

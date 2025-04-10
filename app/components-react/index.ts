@@ -56,7 +56,7 @@ import PlatformAppMainPage from './pages/PlatformAppMainPage';
 import PlatformAppPageView from './shared/PlatformAppPageView';
 import PlatformAppPopOut from './windows/PlatformAppPopOut';
 import RecentEventsWindow from './windows/RecentEvents';
-import NewBadge from './shared/NewBadge';
+import DismissableBadge from './shared/DismissableBadge';
 import RecordingHistory from './pages/RecordingHistory';
 import UltraIcon from './shared/UltraIcon';
 import EditTransform from './windows/EditTransform';
@@ -124,7 +124,7 @@ export const components = {
   PlatformAppMainPage,
   PlatformAppPageView,
   PlatformAppPopOut,
-  NewBadge,
+  DismissableBadge,
   UltraIcon,
   EditTransform,
   InstalledApps,

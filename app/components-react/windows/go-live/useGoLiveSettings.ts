@@ -49,6 +49,12 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
    * Update top level settings
    */
   updateSettings(patch: Partial<IGoLiveSettingsState>) {
+    if (patch.platforms?.twitch) {
+      Services.SettingsService.actions.setEnhancedBroadcasting(
+        patch.platforms.twitch.isEnhancedBroadcasting,
+      );
+    }
+
     const newSettings = { ...this.state, ...patch };
     // we should re-calculate common fields before applying new settings
     const platforms = this.getViewFromState(newSettings).applyCommonFields(newSettings.platforms);

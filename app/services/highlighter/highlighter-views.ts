@@ -50,7 +50,7 @@ export class HighlighterViews extends ViewHandler<IHighlighterState> {
   }
 
   get uploadInfo() {
-    return this.state.upload;
+    return this.state.uploads;
   }
 
   get transition() {
