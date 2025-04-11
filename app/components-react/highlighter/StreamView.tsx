@@ -8,7 +8,7 @@ import {
   IViewState,
 } from 'services/highlighter/models/highlighter.models';
 import isEqual from 'lodash/isEqual';
-import { Modal, Button, Alert } from 'antd';
+import { Modal, Button, Alert, Input } from 'antd';
 import ExportModal from 'components-react/highlighter/ExportModal';
 import { SUPPORTED_FILE_TYPES } from 'services/highlighter/constants';
 import Scrollable from 'components-react/shared/Scrollable';
@@ -36,6 +36,7 @@ type TModalStreamView =
     }
   | { type: 'remove'; id: string | undefined }
   | { type: 'requirements'; game: string }
+  | { type: 'feedback'; game?: string; id: string | undefined; clipsLength?: number }
   | null;
 
 export default function StreamView({
@@ -166,6 +167,36 @@ export default function StreamView({
     e.stopPropagation();
   }
 
+  const { TextArea } = Input;
+  const [feedback, setFeedback] = useState('');
+
+  const leaveFeedback = () => {
+    if (showModal?.type !== 'feedback') return;
+    if (!feedback || feedback.length > 140) {
+      return;
+    }
+
+    UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+      type: 'ThumbsDownFeedback',
+      streamId: showModal?.id,
+      game: showModal?.game,
+      clips: showModal?.clipsLength,
+      feedback,
+    });
+
+    closeModal();
+  };
+
+  const getModalWidth = () => {
+    if (showModal?.type === 'preview') {
+      return 700;
+    }
+    if (showModal?.type === 'feedback') {
+      return 400;
+    }
+    return 'fit-content';
+  };
+
   return (
     <div
       style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}
@@ -232,6 +263,14 @@ export default function StreamView({
                         emitShowRequirements={() => {
                           setShowModal({ type: 'requirements', game: stream.game });
                         }}
+                        emitFeedbackForm={clipsLength =>
+                          setShowModal({
+                            type: 'feedback',
+                            id: stream.id,
+                            game: stream.game,
+                            clipsLength,
+                          })
+                        }
                       />
                     ))}
                   </div>
@@ -255,7 +294,7 @@ export default function StreamView({
           closeModal();
         }}
         footer={null}
-        width={showModal?.type === 'preview' ? 700 : 'fit-content'}
+        width={getModalWidth()}
         closable={false}
         visible={!!showModal}
         destroyOnClose={true}
@@ -282,6 +321,26 @@ export default function StreamView({
               }
             }}
           />
+        )}
+        {showModal?.type === 'feedback' && (
+          <div>
+            <TextArea
+              rows={4}
+              maxLength={140}
+              showCount
+              placeholder={$t('Highlights not working? Let us know how we can improve.')}
+              onChange={e => setFeedback(e.target.value)}
+            />
+            <Button
+              size="large"
+              type="primary"
+              style={{ marginTop: '14px' }}
+              disabled={!feedback}
+              onClick={leaveFeedback}
+            >
+              {$t('Submit')}
+            </Button>
+          </div>
         )}
         {showModal?.type === 'remove' && (
           <RemoveStream close={closeModal} streamId={showModal.id} />

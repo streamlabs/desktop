@@ -6,7 +6,8 @@ import {
   TClip,
 } from 'services/highlighter/models/highlighter.models';
 import styles from './StreamCard.m.less';
-import { Button, Tooltip, message } from 'antd';
+import clipStyles from './ClipsView.m.less';
+import { Button, Tooltip, Modal, Input } from 'antd';
 import { Services } from 'components-react/service-provider';
 import { isAiClip } from './utils';
 import { useVuex } from 'components-react/hooks';
@@ -25,6 +26,7 @@ export default function StreamCard({
   emitRemoveStream,
   emitCancelHighlightGeneration,
   emitShowRequirements,
+  emitFeedbackForm,
 }: {
   streamId: string;
   clipsOfStreamAreLoading: string | null;
@@ -34,6 +36,7 @@ export default function StreamCard({
   emitRemoveStream: () => void;
   emitCancelHighlightGeneration: () => void;
   emitShowRequirements: () => void;
+  emitFeedbackForm: (clipsLength: number) => void;
 }) {
   const { HighlighterService } = Services;
   const clips = useVuex(() =>
@@ -175,6 +178,7 @@ export default function StreamCard({
           clips={clips}
           emitCancelHighlightGeneration={emitCancelHighlightGeneration}
           emitExportVideo={emitExportVideo}
+          emitFeedbackForm={emitFeedbackForm}
           emitShowStreamClips={showStreamClips}
           clipsOfStreamAreLoading={clipsOfStreamAreLoading}
           emitRestartAiDetection={() => {
@@ -196,6 +200,7 @@ function ActionBar({
   emitShowStreamClips,
   emitRestartAiDetection,
   emitSetView,
+  emitFeedbackForm,
 }: {
   stream: IHighlightedStream;
   clips: TClip[];
@@ -205,6 +210,7 @@ function ActionBar({
   emitShowStreamClips: () => void;
   emitRestartAiDetection: () => void;
   emitSetView: (data: IViewState) => void;
+  emitFeedbackForm: (clipsLength: number) => void;
 }): JSX.Element {
   const { UsageStatisticsService, HighlighterService } = Services;
   function getFailedText(state: EAiDetectionState): string {
@@ -225,7 +231,6 @@ function ActionBar({
       return;
     }
 
-    message.success('Thanks for your feedback!');
     setThumbsDownVisible(false);
 
     stream.feedbackLeft = true;
@@ -237,6 +242,8 @@ function ActionBar({
       game: stream?.game,
       clips: clips?.length,
     });
+
+    emitFeedbackForm(clips.length);
   };
 
   const clickThumbsUp = () => {
