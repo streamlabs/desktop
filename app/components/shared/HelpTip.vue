@@ -44,8 +44,8 @@
   }
 
   &[data-mode='streaming'] {
-    top: -72px;
     right: -12px;
+    bottom: 62px;
     max-width: 260px;
     color: var(--color-surface-accent-primary-light);
   }
@@ -111,6 +111,7 @@
   font-size: var(--font-size-sm);
   font-weight: bold;
   line-height: var(--line-height-sm);
+  text-align: left;
 }
 
 .help-tip__body {
