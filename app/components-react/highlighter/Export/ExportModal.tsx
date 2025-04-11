@@ -23,7 +23,7 @@ import { SCRUB_HEIGHT, SCRUB_WIDTH, SCRUB_FRAMES } from 'services/highlighter/co
 import styles from './ExportModal.m.less';
 import { getCombinedClipsDuration } from '../utils';
 import { formatSecondsToHMS } from '../ClipPreview';
-import { set } from 'lodash';
+import { get, set } from 'lodash';
 import PlatformSelect from './Platform';
 import cx from 'classnames';
 
@@ -53,9 +53,7 @@ class ExportController {
   getClips(streamId?: string) {
     return this.service.getClips(this.service.views.clips, streamId).filter(clip => clip.enabled);
   }
-  getClipThumbnail(streamId?: string) {
-    return this.getClips(streamId).find(clip => clip.enabled)?.scrubSprite;
-  }
+
   getDuration(streamId?: string) {
     return getCombinedClipsDuration(this.getClips(streamId));
   }
@@ -175,25 +173,17 @@ function ExportFlow({
     getStreamTitle,
     getClips,
     getDuration,
-    getClipThumbnail,
   } = useController(ExportModalCtx);
 
   const [currentFormat, setCurrentFormat] = useState<TOrientation>(EOrientation.HORIZONTAL);
 
-  // Create refs to store the calculated values
-  const clipsMeta = useRef({
-    amount: 0,
-    duration: '',
-    thumbnail: '',
-  });
-
-  // Calculate values once on component mount
-  useEffect(() => {
+  const { amount, duration, thumbnail } = useMemo(() => {
     const clips = getClips(streamId);
-    clipsMeta.current = {
+
+    return {
       amount: clips.length,
-      duration: formatSecondsToHMS(getDuration(streamId)),
-      thumbnail: getClipThumbnail(streamId) || '',
+      duration: formatSecondsToHMS(getCombinedClipsDuration(clips)),
+      thumbnail: clips.find(clip => clip.enabled)?.scrubSprite,
     };
   }, [streamId]);
 
@@ -329,7 +319,7 @@ function ExportFlow({
                 </div>
               )}
               <img
-                src={clipsMeta.current.thumbnail}
+                src={thumbnail}
                 style={
                   currentFormat === EOrientation.HORIZONTAL
                     ? { objectPosition: 'left' }
@@ -352,8 +342,7 @@ function ExportFlow({
                     marginLeft: '8px',
                   }}
                 >
-                  {clipsMeta.current.duration} |{' '}
-                  {$t('%{clipsAmount} clips', { clipsAmount: clipsMeta.current.amount })}
+                  {duration} | {$t('%{clipsAmount} clips', { clipsAmount: amount })}
                 </p>
               </div>
               <OrientationToggle
