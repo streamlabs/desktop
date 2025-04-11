@@ -43,7 +43,7 @@ import * as remote from '@electron/remote';
 import { GuestCamNode } from './nodes/guest-cam';
 import { DualOutputService } from 'services/dual-output';
 import { NodeMapNode } from './nodes/node-map';
-import { VideoSettingsService } from 'services/settings-v2';
+import { VideoService } from 'services/video';
 import { WidgetsService, WidgetType } from 'services/widgets';
 
 const uuid = window['require']('uuid/v4');
@@ -93,7 +93,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   @Inject() transitionsService: TransitionsService;
   @Inject() streamingService: StreamingService;
   @Inject() dualOutputService: DualOutputService;
-  @Inject() videoSettingsService: VideoSettingsService;
+  @Inject() videoService: VideoService;
   @Inject() private defaultHardwareService: DefaultHardwareService;
   @Inject() private widgetsService: WidgetsService;
 
@@ -1246,7 +1246,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    */
 
   initNodeMaps(sceneNodeMap?: { [sceneId: string]: Dictionary<string> }) {
-    this.videoSettingsService.validateVideoContext();
+    this.videoService.validateVideoContext();
 
     if (!this.activeCollection) return;
 

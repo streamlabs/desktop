@@ -14,7 +14,7 @@ import { IGoLiveSettings } from 'services/streaming';
 import { I18nService } from 'services/i18n';
 import { throwStreamError } from 'services/streaming/stream-error';
 import { BasePlatformService } from './base-platform';
-import { TDisplayType } from 'services/settings-v2/video';
+import { TDisplayType } from 'services/video';
 import { assertIsDefined, getDefined } from 'util/properties-type-guards';
 import Utils from '../utils';
 import { YoutubeUploader } from './youtube/uploader';

@@ -11,7 +11,7 @@ import { IKickStartStreamOptions } from 'services/platforms/kick';
 import { ITwitterStartStreamOptions } from 'services/platforms/twitter';
 import { IInstagramStartStreamOptions } from 'services/platforms/instagram';
 import { IVideo } from 'obs-studio-node';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayType } from 'services/video';
 
 export enum EStreamingState {
   Offline = 'offline',

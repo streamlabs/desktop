@@ -11,7 +11,7 @@ import {
 } from '.';
 import { BasePlatformService } from './base-platform';
 import { IGoLiveSettings } from 'services/streaming';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayType } from 'services/video';
 import { WidgetType } from 'services/widgets';
 import { InheritMutations, mutation } from 'services/core';
 import Utils from 'services/utils';

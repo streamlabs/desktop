@@ -20,7 +20,7 @@ import { StreamError, throwStreamError, TStreamErrorType } from 'services/stream
 import { BasePlatformService } from './base-platform';
 import Utils from '../utils';
 import { IVideo } from 'obs-studio-node';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayType } from 'services/video';
 import { TOutputOrientation } from 'services/restream';
 import {
   ITwitchContentClassificationLabelsRootResponse,

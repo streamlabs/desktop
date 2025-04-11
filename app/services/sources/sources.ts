@@ -37,7 +37,7 @@ import { IconLibraryManager } from './properties-managers/icon-library-manager';
 import { assertIsDefined } from 'util/properties-type-guards';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import { SourceFiltersService } from 'services/source-filters';
-import { VideoSettingsService } from 'services/settings-v2';
+import { VideoService } from 'services/video';
 import { CustomizationService } from '../customization';
 import { EAvailableFeatures, IncrementalRolloutService } from '../incremental-rollout';
 import { EMonitoringType, EDeinterlaceMode, EDeinterlaceFieldOrder } from '../../../obs-api';
@@ -168,7 +168,7 @@ class SourcesViews extends ViewHandler<ISourcesState> {
   }
 }
 
-@InitAfter('VideoSettingsService')
+@InitAfter('VideoService')
 export class SourcesService extends StatefulService<ISourcesState> {
   static initialState = {
     sources: {},
@@ -190,7 +190,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
   @Inject() private defaultHardwareService: DefaultHardwareService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
   @Inject() private sourceFiltersService: SourceFiltersService;
-  @Inject() private videoSettingsService: VideoSettingsService;
+  @Inject() private videoService: VideoService;
   @Inject() private customizationService: CustomizationService;
   @Inject() private incrementalRolloutService: IncrementalRolloutService;
   @Inject() private guestCamService: GuestCamService;
@@ -363,10 +363,10 @@ export class SourcesService extends StatefulService<ISourcesState> {
     const type: TSourceType = obsInput.id as TSourceType;
     const managerType = options.propertiesManager || 'default';
     const width = options?.display
-      ? this.videoSettingsService.baseResolutions[options?.display].baseWidth
+      ? this.videoService.baseResolutions[options?.display].baseWidth
       : obsInput.width;
     const height = options?.display
-      ? this.videoSettingsService.baseResolutions[options?.display].baseHeight
+      ? this.videoService.baseResolutions[options?.display].baseHeight
       : obsInput.height;
 
     this.ADD_SOURCE({
