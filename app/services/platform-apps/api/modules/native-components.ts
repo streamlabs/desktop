@@ -51,7 +51,7 @@ export class NativeComponentsModule extends Module {
   }
 
   @apiMethod()
-  startAvatarProcess(renderOffscreen?: boolean) {
+  startAvatarProcess(ctx: IApiContext, renderOffscreen?: boolean) {
     if (this.avatarProc && this.avatarProc.exitCode != null) {
       this.avatarProc.kill();
     }
