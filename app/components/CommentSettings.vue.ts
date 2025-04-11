@@ -219,7 +219,6 @@ export default class CommentSettings extends Vue {
     if (use === this.nicoliveProgramStateService.state.onecommeRelation.use) return;
     if (use) {
       if (!(await this.nicoliveProgramService.oneCommeRelation.testConnection())) {
-        this.useOneComme = false; // 代入するとこのメソッドがコールされるので注意
         this.isOneCommeError = true;
         return;
       }
@@ -236,7 +235,7 @@ export default class CommentSettings extends Vue {
   }
 
   showOneCommeInfo() {
-    remote.shell.openExternal('https://n-air-app.nicovideo.jp/');
+    remote.shell.openExternal('https://onecomme.com/docs/about');
   }
 
   //-----------------------------------------

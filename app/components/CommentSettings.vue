@@ -218,12 +218,12 @@
 
     <div class="section">
       <div class="input-label section-heading">
-        <label>わんコメ連携設定</label>
+        <label>わんコメ連携</label>
       </div>
       <div class="input-container">
         <div class="input-wrapper">
           <div class="row">
-            <div class="name">連携する</div>
+            <div class="name">わんコメに自動で番組情報を反映する</div>
             <div class="value">
               <input type="checkbox" v-model="useOneComme" class="toggle-button" />
             </div>
@@ -242,8 +242,9 @@
             わんコメに接続できませんでした。わんコメを起動して確認してください
           </div>
         </div>
-        <div class="input-wrapper">
-          詳細は<a @click="showOneCommeInfo()">こちら</a>を参照してください
+        <div class="onecomme-description">
+          「わんコメ」とは、映像上にリスト形式でコメントを表示したり、コメントに応じて特別な演出を表示させたりといったことができるソフトウェアです。機能利用時のイメージやできることの詳細は
+          <a @click="showOneCommeInfo()">公式ホームページ（外部サイト）</a>をご覧ください。
         </div>
       </div>
     </div>
@@ -433,5 +434,10 @@
   .action-icon {
     flex-shrink: 0;
   }
+}
+
+.onecomme-description {
+  width: 100%;
+  font-size: @font-size3;
 }
 </style>
