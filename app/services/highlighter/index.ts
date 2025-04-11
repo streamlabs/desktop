@@ -995,7 +995,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     });
 
     let renderingClips: RenderingClip[] = await this.generateRenderingClips(streamId, orientation);
-    const exportOptions: IExportOptions = this.generateExportOptions(
+    const exportOptions: IExportOptions = await this.generateExportOptions(
       renderingClips,
       preview,
       orientation,
@@ -1052,7 +1052,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     );
   }
 
-  private generateExportOptions(
+  private async generateExportOptions(
     renderingClips: RenderingClip[],
     preview: boolean,
     orientation: string,
@@ -1068,7 +1068,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
     if (orientation === 'vertical') {
       // adds complex filter and flips width and height
-      addVerticalFilterToExportOptions(this.views.clips, renderingClips, exportOptions);
+      await addVerticalFilterToExportOptions(this.views.clips, renderingClips, exportOptions);
     }
     return exportOptions;
   }
