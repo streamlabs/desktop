@@ -244,10 +244,10 @@ export class AvatarUpdater {
   }
 
   public startAvatarProcess(
-    pixelStreamingUrl: string = 'ws://127.0.0.1:1339',
     renderOffscreen: boolean = false,
   ): ChildProcess {
     const executablePath = path.resolve(AvatarUpdater.basepath, 'StreamlabsAIAvatar.exe');
+    const pixelStreamingUrl: string = 'ws://127.0.0.1:1339';
 
     if (!existsSync(executablePath)) {
       throw new Error('Avatar UE5 executable not found. Please ensure it is installed.');
