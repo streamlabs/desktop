@@ -150,7 +150,7 @@
       <div class="input-container">
         <div class="input-wrapper">
           <div class="row">
-            <div class="name">配信開始終了にあわせる</div>
+            <div class="name">配信開始/終了にあわせる</div>
             <div class="value">
               <input type="checkbox" v-model="sync" class="toggle-button" />
             </div>

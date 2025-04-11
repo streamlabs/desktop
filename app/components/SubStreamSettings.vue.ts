@@ -118,13 +118,13 @@ export default class SubStreamSettings extends Vue {
     }
 
     const statusMap: { [name: string]: string } = {
-      starting: '開始中..',
-      started: '開始',
+      starting: '配信開始中..',
+      started: '配信中',
       stopping: '停止中..',
-      stopped: '停止',
-      reconnect: '再接続',
+      stopped: '停止中',
+      reconnect: '再接続...',
       reconnected: '再接続',
-      deactive: '停止',
+      deactive: '停止中',
     };
 
     let s = '';
