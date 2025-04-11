@@ -4,6 +4,7 @@ import StreamingStatus from 'components/StreamingStatus.vue';
 import electron from 'electron';
 import { CompactModeService } from 'services/compact-mode';
 import { Inject } from 'services/core/injector';
+import { EDismissable } from 'services/dismissables';
 import { EAvailableFeatures, IncrementalRolloutService } from 'services/incremental-rollout';
 import { InformationsService } from 'services/informations';
 import { NavigationService } from 'services/navigation';
@@ -13,10 +14,12 @@ import { UserService } from 'services/user';
 import Utils from 'services/utils';
 import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
+import HelpTip from './shared/HelpTip.vue';
 
 @Component({
   components: {
     Login,
+    HelpTip,
     StreamingStatus,
   },
 })
@@ -85,6 +88,10 @@ export default class SideNav extends Vue {
 
   openFeedback() {
     remote.shell.openExternal('https://form.nicovideo.jp/forms/n_air_feedback');
+  }
+
+  get InitialHelpTipDismissable() {
+    return EDismissable.InitialHelpTip;
   }
 
   openHelp() {
