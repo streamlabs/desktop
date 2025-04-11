@@ -78,7 +78,7 @@
     display: block;
     font-size: @font-size2;
     color: var(--color-text);
-    transform: rotate(-90deg);
+    transform: rotate(90deg);
   }
 
   &:hover {
@@ -89,7 +89,7 @@
 
   &.nicolive-area--opened {
     > i {
-      transform: rotate(90deg);
+      transform: rotate(-90deg);
     }
   }
 }
