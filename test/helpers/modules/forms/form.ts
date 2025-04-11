@@ -57,6 +57,9 @@ export function useForm(name?: string) {
 
   /**
    * Fill the form with a given values
+   * @remark When using the form, the `form` element's `data-name` attribute is the selector for the form.
+   * When filling the form, the element's `data-name` attribute is the key and the value is the `value` attribute.
+   * The `data-name` attribute serves as the selector.
    */
   async function fillForm(formData: TFormData) {
     // traverse form and fill inputs
@@ -156,6 +159,11 @@ export function useForm(name?: string) {
     return input;
   }
 
+  async function getInputListValues(name: string): Promise<{ label: string; value: string }[]> {
+    const input = (await getInput(name)) as inputControllers.ListInputController<string>;
+    return await input.getOptions();
+  }
+
   /**
    * Check if form contains expected data
    * Throws an exception if not
@@ -205,7 +213,15 @@ export function useForm(name?: string) {
     }
   }
 
-  return { readForm, readFields, fillForm, assertFormContains, assertInputOptions, getInput };
+  return {
+    readForm,
+    readFields,
+    fillForm,
+    assertFormContains,
+    assertInputOptions,
+    getInput,
+    getInputListValues,
+  };
 }
 
 export async function setInputValue(selector: string, value: string) {
