@@ -57,24 +57,42 @@ export class AvatarUpdater {
       await fs.mkdir(AvatarUpdater.basepath, { recursive: true });
     }
 
+    const filesToUpdate: { filePath: string; relativePath: string; fileInfo: IAvatarFileManifest }[] = [];
+    let totalBytes = 0;
+
     for (const [relativePath, fileInfo] of Object.entries(this.manifest.files)) {
-      // Normalize relativePath to remove leading backslashes
       const normalizedPath = relativePath.replace(/^\\+/, '');
       const filePath = path.join(AvatarUpdater.basepath, normalizedPath);
 
-      console.log(`Processing file: ${normalizedPath}`);
-      console.log(`File path: ${filePath}`);
+      console.log(`Checking file: ${normalizedPath}`);
 
-      // Ensure subfolders exist
       const folderPath = path.dirname(filePath);
       if (!existsSync(folderPath)) {
         await fs.mkdir(folderPath, { recursive: true });
       }
 
       if (!(await this.isFileUpToDate(filePath, fileInfo))) {
-        console.log(`Updating file: ${normalizedPath}`);
-        await this.downloadAndUpdateFile(filePath, normalizedPath, fileInfo, progressCallback);
+        console.log(`File needs update: ${normalizedPath}`);
+        filesToUpdate.push({ filePath, relativePath: normalizedPath, fileInfo });
+        totalBytes += fileInfo.size;
       }
+    }
+
+    const downloadedSoFar: Record<string, number> = {};
+
+    for (const { filePath, relativePath, fileInfo } of filesToUpdate) {
+      downloadedSoFar[relativePath] = 0;
+      console.log(`Updating file: ${relativePath}`);
+      await this.downloadAndUpdateFile(filePath, relativePath, fileInfo, (progress) => {
+        downloadedSoFar[relativePath] = progress.downloadedBytes;
+        const downloadedBytes = Object.values(downloadedSoFar).reduce((sum, bytes) => sum + bytes, 0);
+
+        progressCallback({
+          percent: (downloadedBytes / totalBytes),
+          totalBytes,
+          downloadedBytes,
+        });
+      });
     }
 
     console.log('All files are up to date.');
@@ -148,11 +166,12 @@ export class AvatarUpdater {
   }
 
   private getManifestUrl(): string {
+    const cacheBuster = Math.floor(Date.now() / 1000);
+
     if (AvatarUpdater.getEnvironment() === 'staging') {
-      const cacheBuster = Math.floor(Date.now() / 1000);
       return `https://cdn-avatar-builds.streamlabs.com/staging/manifest.json?t=${cacheBuster}`;
     } else {
-      return 'https://cdn-avatar-builds.streamlabs.com/production/manifest.json';
+      return `https://cdn-avatar-builds.streamlabs.com/production/manifest.json`;
     }
   }
 
@@ -164,7 +183,13 @@ export class AvatarUpdater {
     this.versionChecked = true;
     console.log('Checking for Streamlabs Avatar updates...');
     const manifestUrl = this.getManifestUrl();
-    const newManifest = JSON.parse(await jfetch<string>(new Request(manifestUrl)));
+    const newManifest = JSON.parse(await jfetch<string>(new Request(manifestUrl, {
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+      },
+      cache: 'no-store'
+    })));
     this.manifest = newManifest;
 
     if (!existsSync(this.manifestPath)) {
@@ -219,10 +244,10 @@ export class AvatarUpdater {
   }
 
   public startAvatarProcess(
-    pixelStreamingUrl: string = 'ws://127.0.0.1:1339',
     renderOffscreen: boolean = false,
   ): ChildProcess {
     const executablePath = path.resolve(AvatarUpdater.basepath, 'StreamlabsAIAvatar.exe');
+    const pixelStreamingUrl: string = 'ws://127.0.0.1:1339';
 
     if (!existsSync(executablePath)) {
       throw new Error('Avatar UE5 executable not found. Please ensure it is installed.');
@@ -240,7 +265,6 @@ export class AvatarUpdater {
 
     const process = spawn(executablePath, args, {
       cwd: AvatarUpdater.basepath,
-      detached: true,
       stdio: 'ignore',
     });
 
