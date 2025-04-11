@@ -166,11 +166,12 @@ export class AvatarUpdater {
   }
 
   private getManifestUrl(): string {
+    const cacheBuster = Math.floor(Date.now() / 1000);
+
     if (AvatarUpdater.getEnvironment() === 'staging') {
-      const cacheBuster = Math.floor(Date.now() / 1000);
       return `https://cdn-avatar-builds.streamlabs.com/staging/manifest.json?t=${cacheBuster}`;
     } else {
-      return 'https://cdn-avatar-builds.streamlabs.com/production/manifest.json';
+      return `https://cdn-avatar-builds.streamlabs.com/production/manifest.json`;
     }
   }
 
@@ -182,7 +183,13 @@ export class AvatarUpdater {
     this.versionChecked = true;
     console.log('Checking for Streamlabs Avatar updates...');
     const manifestUrl = this.getManifestUrl();
-    const newManifest = JSON.parse(await jfetch<string>(new Request(manifestUrl)));
+    const newManifest = JSON.parse(await jfetch<string>(new Request(manifestUrl, {
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+      },
+      cache: 'no-store'
+    })));
     this.manifest = newManifest;
 
     if (!existsSync(this.manifestPath)) {
