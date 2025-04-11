@@ -1,6 +1,6 @@
 import { Service } from 'services/core/service';
 import { ISettingsSubCategory, SettingsService } from 'services/settings';
-import { VideoSettingsService } from 'services/settings-v2/video';
+import { VideoService } from 'services/video';
 import { HighlighterService } from 'services/highlighter';
 import { Inject } from 'services/core/injector';
 import { Dictionary } from 'vuex';
@@ -185,7 +185,7 @@ export function obsEncoderToEncoderFamily(
 export class OutputSettingsService extends Service {
   @Inject() private settingsService: SettingsService;
   @Inject() private audioService: AudioService;
-  @Inject() private videoSettingsService: VideoSettingsService;
+  @Inject() private videoService: VideoService;
   @Inject() private highlighterService: HighlighterService;
 
   /**
@@ -378,8 +378,8 @@ export class OutputSettingsService extends Service {
 
     if (settingsPatch.inputResolution) {
       const [width, height] = settingsPatch.inputResolution.split('x');
-      this.videoSettingsService.setVideoSetting('baseWidth', Number(width));
-      this.videoSettingsService.setVideoSetting('baseHeight', Number(height));
+      this.videoService.setVideoSetting('baseWidth', Number(width));
+      this.videoService.setVideoSetting('baseHeight', Number(height));
     }
 
     if (settingsPatch.streaming) {
