@@ -13,7 +13,7 @@ import Utils from 'services/utils';
 import DualOutputToggle from '../../shared/DualOutputToggle';
 import { ObsSettingsSection } from './ObsSettings';
 import { useRealmObject } from 'components-react/hooks/realm';
-import uniq from 'lodash/uniq';
+import uniqBy from 'lodash/uniqBy';
 
 const CANVAS_RES_OPTIONS = [
   { label: '1920x1080', value: '1920x1080' },
@@ -134,7 +134,7 @@ export function VideoSettings() {
             .concat(VERTICAL_CANVAS_OPTIONS)
             .concat([{ label: $t('Custom'), value: 'custom' }]);
 
-    return uniq(options);
+    return uniqBy(options, 'value');
   }, [display, monitorResolutions]);
 
   const outputResOptions = useMemo(() => {
@@ -148,7 +148,7 @@ export function VideoSettings() {
             .concat(VERTICAL_OUTPUT_RES_OPTIONS)
             .concat([{ label: $t('Custom'), value: 'custom' }]);
 
-    return uniq(options);
+    return uniqBy(options, 'value');
   }, [display, videoSettings]);
 
   function updateSettings(key: string, val: string | number | EFPSType | EScaleType) {
