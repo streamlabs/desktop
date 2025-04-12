@@ -9,8 +9,30 @@ import { Services } from 'components-react/service-provider';
 import { Menu } from 'util/menus/Menu';
 import { $t } from 'services/i18n';
 import { useRealmObject } from 'components-react/hooks/realm';
+import { getDefined } from 'util/properties-type-guards';
 
 const mins = { x: 150, y: 120 };
+
+export function getVisibleAudioSourcesIds() {
+  const { ScenesService, AudioService } = Services;
+  const activeScene = getDefined(ScenesService.views.activeScene);
+
+  // Get sources ids for visible scene items
+  // using the Set to avoid duplicates and improve performance
+  const visibleSourcesIds = new Set(
+    activeScene.items.filter(item => item.visible).map(item => item.sourceId),
+  );
+
+  return AudioService.views.sourcesForCurrentScene
+    .filter(source => {
+      return (
+        !source.mixerHidden &&
+        source.isControlledViaObs &&
+        (visibleSourcesIds.has(source.sourceId) || source.isGlobal())
+      );
+    })
+    .map(source => source.sourceId);
+}
 
 export function Mixer() {
   const { EditorCommandsService, AudioService, CustomizationService } = Services;
@@ -26,11 +48,7 @@ export function Mixer() {
   }, []);
 
   const performanceMode = useRealmObject(CustomizationService.state).performanceMode;
-  const { audioSourceIds } = useVuex(() => ({
-    audioSourceIds: AudioService.views.sourcesForCurrentScene
-      .filter(source => !source.mixerHidden && source.isControlledViaObs)
-      .map(source => source.sourceId),
-  }));
+  const audioSourceIds = useVuex(getVisibleAudioSourcesIds);
 
   function showAdvancedSettings() {
     AudioService.actions.showAdvancedSettings();

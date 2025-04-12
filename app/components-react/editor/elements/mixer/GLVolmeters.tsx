@@ -7,6 +7,7 @@ import vShaderSrc from 'util/webgl/shaders/volmeter.vert';
 import fShaderSrc from 'util/webgl/shaders/volmeter.frag';
 import { Services } from 'components-react/service-provider';
 import { assertIsDefined, getDefined } from 'util/properties-type-guards';
+import { getVisibleAudioSourcesIds } from '../Mixer';
 
 // Configuration
 const CHANNEL_HEIGHT = 3;
@@ -134,9 +135,10 @@ class GLVolmetersController {
 
   // TODO: refactor into a single source of truth between Mixer and Volmeters
   get audioSources() {
-    return this.audioService.views.sourcesForCurrentScene.filter(source => {
-      return !source.mixerHidden && source.isControlledViaObs;
-    });
+    const vidibleSourceIds = getVisibleAudioSourcesIds();
+    return this.audioService.views.sourcesForCurrentScene.filter(source =>
+      vidibleSourceIds.includes(source.sourceId),
+    );
   }
 
   /**
