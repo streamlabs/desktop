@@ -25,7 +25,7 @@ import { getAlertsConfig, TAlertType } from './alerts-config';
 import { getWidgetsConfig } from './widgets-config';
 import { WidgetDisplayData } from '.';
 import { DualOutputService } from 'services/dual-output';
-import { TDisplayType, VideoService } from 'services/video';
+import { TDisplayType, VideoSettingsService } from 'services/settings-v2';
 import { IncrementalRolloutService } from 'app-services';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 
@@ -84,7 +84,7 @@ export class WidgetsService
   @Inject() hostsService: HostsService;
   @Inject() editorCommandsService: EditorCommandsService;
   @Inject() dualOutputService: DualOutputService;
-  @Inject() videoService: VideoService;
+  @Inject() videoSettingsService: VideoSettingsService;
   @Inject() incrementalRolloutService: IncrementalRolloutService;
 
   widgetDisplayData = WidgetDisplayData(); // cache widget display data
@@ -151,8 +151,8 @@ export class WidgetsService
     });
 
     rect.withAnchor(widgetTransform.anchor, () => {
-      rect.x = widgetTransform.x * this.videoService.baseResolutions.horizontal.baseWidth;
-      rect.y = widgetTransform.y * this.videoService.baseResolutions.horizontal.baseHeight;
+      rect.x = widgetTransform.x * this.videoSettingsService.baseResolutions.horizontal.baseWidth;
+      rect.y = widgetTransform.y * this.videoSettingsService.baseResolutions.horizontal.baseHeight;
     });
 
     const item = this.editorCommandsService.executeCommand(
@@ -345,11 +345,18 @@ export class WidgetsService
       settings,
       name: source.name,
       type: source.getPropertiesManagerSettings().widgetType,
-      x: widgetItem.transform.position.x / this.videoService.baseResolutions.horizontal.baseWidth,
-      y: widgetItem.transform.position.y / this.videoService.baseResolutions.horizontal.baseHeight,
-      scaleX: widgetItem.transform.scale.x / this.videoService.baseResolutions.horizontal.baseWidth,
+      x:
+        widgetItem.transform.position.x /
+        this.videoSettingsService.baseResolutions.horizontal.baseWidth,
+      y:
+        widgetItem.transform.position.y /
+        this.videoSettingsService.baseResolutions.horizontal.baseHeight,
+      scaleX:
+        widgetItem.transform.scale.x /
+        this.videoSettingsService.baseResolutions.horizontal.baseWidth,
       scaleY:
-        widgetItem.transform.scale.y / this.videoService.baseResolutions.horizontal.baseHeight,
+        widgetItem.transform.scale.y /
+        this.videoSettingsService.baseResolutions.horizontal.baseHeight,
     };
   }
 
@@ -400,8 +407,8 @@ export class WidgetsService
     this.createWidgetFromJSON(
       widget,
       widgetItem,
-      this.videoService.baseResolutions.horizontal.baseWidth,
-      this.videoService.baseResolutions.horizontal.baseHeight,
+      this.videoSettingsService.baseResolutions.horizontal.baseWidth,
+      this.videoSettingsService.baseResolutions.horizontal.baseHeight,
       'horizontal',
     );
 
@@ -418,8 +425,8 @@ export class WidgetsService
         this.createWidgetFromJSON(
           widget,
           verticalSceneItem,
-          this.videoService.baseResolutions.horizontal.baseWidth,
-          this.videoService.baseResolutions.horizontal.baseHeight,
+          this.videoSettingsService.baseResolutions.horizontal.baseWidth,
+          this.videoSettingsService.baseResolutions.horizontal.baseHeight,
           'vertical',
         );
       });
