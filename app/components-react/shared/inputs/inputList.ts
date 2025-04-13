@@ -22,3 +22,4 @@ export { CardInput } from './CardInput';
 export { AutocompleteInput } from './AutocompleteInput';
 export { RadioInput } from './RadioInput';
 export { CheckboxGroup } from './CheckboxGroup';
+export { RotateInput } from './RotateInput';

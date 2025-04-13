@@ -5,7 +5,7 @@ import InputWrapper from './InputWrapper';
 import { InputNumberProps } from 'antd/lib/input-number';
 
 // select which features from the antd lib we are going to use
-const ANT_NUMBER_FEATURES = ['min', 'max', 'step'] as const;
+const ANT_NUMBER_FEATURES = ['min', 'max', 'step', 'precision'] as const;
 
 type TProps = TSlobsInputProps<{}, number, InputNumberProps, ValuesOf<typeof ANT_NUMBER_FEATURES>>;
 

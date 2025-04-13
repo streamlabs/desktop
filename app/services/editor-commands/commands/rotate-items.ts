@@ -3,7 +3,7 @@ import { Selection } from 'services/selection';
 import { $t } from 'services/i18n';
 
 export class RotateItemsCommand extends ModifyTransformCommand {
-  constructor(selection: Selection, private degrees: number) {
+  constructor(selection: Selection, private degrees: number, private isDelta = true) {
     super(selection);
   }
 
@@ -12,6 +12,6 @@ export class RotateItemsCommand extends ModifyTransformCommand {
   }
 
   modifyTransform() {
-    this.selection.rotate(this.degrees);
+    this.selection.rotate(this.degrees, this.isDelta);
   }
 }

@@ -431,10 +431,13 @@ export class SceneItem extends SceneItemNode {
     this.setRect(rect);
   }
 
-  rotate(deltaRotation: number) {
-    this.preservePosition(() => {
-      this.setTransform({ rotation: this.transform.rotation + deltaRotation });
+  rotate(rotation: number, isRotationDelta = true) {
+    const setTransform = this.setTransform.bind(this, {
+      rotation: isRotationDelta ? this.transform.rotation + rotation : rotation,
     });
+
+    // Relative is the old system with buttons (90deg only) so we use the old preservePosition logic on it
+    return isRotationDelta ? this.preservePosition(setTransform) : setTransform();
   }
 
   getItemIndex(): number {
