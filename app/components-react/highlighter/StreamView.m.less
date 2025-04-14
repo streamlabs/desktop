@@ -70,6 +70,13 @@
       margin: 0;
     }
   }
+
+  video {
+    display: block;
+    max-width: calc(@sectionWidth - @padding * 2);
+    max-height: calc(@sectionHeight - @padding * 2);
+    border-radius: 8px;
+  }
 }
 .video-wrapper {
   display: flex;
@@ -108,13 +115,6 @@
   position: absolute;
   width: 100%;
   height: 100%;
-}
-
-video {
-  display: block;
-  max-width: calc(@sectionWidth - @padding * 2);
-  max-height: calc(@sectionHeight - @padding * 2);
-  border-radius: 8px;
 }
 
 .custom-input {
