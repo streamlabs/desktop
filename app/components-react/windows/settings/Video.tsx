@@ -13,7 +13,7 @@ import Utils from 'services/utils';
 import DualOutputToggle from '../../shared/DualOutputToggle';
 import { ObsSettingsSection } from './ObsSettings';
 import { useRealmObject } from 'components-react/hooks/realm';
-import uniq from 'lodash/uniq';
+import uniqBy from 'lodash/uniqBy';
 
 const CANVAS_RES_OPTIONS = [
   { label: '1920x1080', value: '1920x1080' },
@@ -94,6 +94,14 @@ export function VideoSettings() {
     setOutputRes(outputRes);
     setCustomOutputRes(videoSettings[display].outputRes);
     setFPSType(videoSettings[display].values.fpsType);
+    if (fpsType === EFPSType.Integer) {
+      setIntegerFPS(videoSettings[display].values.fpsInt.toString());
+    } else if (fpsType === EFPSType.Common) {
+      setCommonFPS(videoSettings[display].values.fpsCom);
+    } else if (fpsType === EFPSType.Fractional) {
+      setFPS('fpsNum', videoSettings[display].values.fpsNum.toString());
+      setFPS('fpsDen', videoSettings[display].values.fpsDen.toString());
+    }
   }, [display]);
 
   const values: Dictionary<TInputValue> = {
@@ -134,7 +142,7 @@ export function VideoSettings() {
             .concat(VERTICAL_CANVAS_OPTIONS)
             .concat([{ label: $t('Custom'), value: 'custom' }]);
 
-    return uniq(options);
+    return uniqBy(options, 'value');
   }, [display, monitorResolutions]);
 
   const outputResOptions = useMemo(() => {
@@ -148,7 +156,7 @@ export function VideoSettings() {
             .concat(VERTICAL_OUTPUT_RES_OPTIONS)
             .concat([{ label: $t('Custom'), value: 'custom' }]);
 
-    return uniq(options);
+    return uniqBy(options, 'value');
   }, [display, videoSettings]);
 
   function updateSettings(key: string, val: string | number | EFPSType | EScaleType) {
@@ -171,6 +179,12 @@ export function VideoSettings() {
     }
 
     VideoService.actions.updateVideoSettings({ [key]: val }, display);
+
+    // Sync FPS settings with other display in Dual Output
+    if (dualOutputMode && /fps/.test(key)) {
+      const otherDisplay = display === 'horizontal' ? 'vertical' : 'horizontal';
+      VideoService.actions.updateVideoSettings({ [key]: val }, otherDisplay);
+    }
   }
 
   function onChange(key: keyof IVideoInfo) {
@@ -232,12 +246,6 @@ export function VideoSettings() {
     }
   }
 
-  /**
-   * Sets the FPS type
-   * @remark set the same FPS type for both displays
-   * If there is a vertical context, update it as well.
-   * Otherwise, update the vertical display persisted settings.
-   */
   function setFPSTypeData(value: EFPSType) {
     setFPSType(value);
     updateSettings('fpsType', value);
@@ -245,12 +253,6 @@ export function VideoSettings() {
     updateSettings('fpsDen', 1);
   }
 
-  /**
-   * Sets Common FPS
-   * @remark set the same Common FPS for both displays
-   * If there is a vertical context, update it as well.
-   * Otherwise, update the vertical display persisted settings.
-   */
   function setCommonFPS(value: string) {
     const [fpsNum, fpsDen] = value.split('-');
 
@@ -258,12 +260,6 @@ export function VideoSettings() {
     updateSettings('fpsDen', Number(fpsDen));
   }
 
-  /**
-   * Sets Integer FPS
-   * @remark set the same Integer FPS for both displays
-   * If there is a vertical context, update it as well.
-   * Otherwise, update the vertical display persisted settings.
-   */
   function setIntegerFPS(value: string) {
     updateSettings('fpsInt', Number(value));
     if (Number(value) > 0 && Number(value) < 1001) {
@@ -272,12 +268,6 @@ export function VideoSettings() {
     }
   }
 
-  /**
-   * Sets FPS
-   * @remark Set the same FPS for both displays.
-   * If there is a vertical context, update it as well.
-   * Otherwise, update the vertical display persisted settings.
-   */
   function setFPS(key: 'fpsNum' | 'fpsDen', value: string) {
     if (
       !invalidFps(videoSettings[display].video.fpsNum, videoSettings[display].video.fpsDen) &&
