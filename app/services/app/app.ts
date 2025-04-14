@@ -201,6 +201,7 @@ export class AppService extends StatefulService<IAppState> {
       this.videoService.shutdown();
       await this.fileManagerService.flushAll();
       obs.NodeObs.RemoveSourceCallback();
+      obs.NodeObs.RemoveTransitionCallback();
       obs.NodeObs.RemoveVolmeterCallback();
       obs.NodeObs.OBS_service_removeCallback();
       obs.IPC.disconnect();
