@@ -13,7 +13,7 @@ import { JsonrpcService } from './api/jsonrpc';
 import { TroubleshooterService, TIssueCode } from 'services/troubleshooter';
 import { $t } from 'services/i18n';
 import { StreamingService, EStreamingState } from 'services/streaming';
-import { VideoSettingsService } from 'services/settings-v2/video';
+import { VideoService } from 'services/video';
 import { DualOutputService } from 'services/dual-output';
 import { UsageStatisticsService } from './usage-statistics';
 
@@ -113,7 +113,7 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
   @Inject() private troubleshooterService: TroubleshooterService;
   @Inject() private streamingService: StreamingService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
-  @Inject() private videoSettingsService: VideoSettingsService;
+  @Inject() private videoService: VideoService;
   @Inject() private dualOutputService: DualOutputService;
 
   static initialState: IPerformanceState = {
@@ -202,10 +202,10 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
    * Capture some analytics for the entire duration of a stream
    */
   startStreamQualityMonitoring() {
-    this.streamStartSkippedFrames = this.videoSettingsService.contexts.horizontal.skippedFrames;
+    this.streamStartSkippedFrames = this.videoService.contexts.horizontal.skippedFrames;
     this.streamStartLaggedFrames = obs.Global.laggedFrames;
     this.streamStartRenderedFrames = obs.Global.totalFrames;
-    this.streamStartEncodedFrames = this.videoSettingsService.contexts.horizontal.encodedFrames;
+    this.streamStartEncodedFrames = this.videoService.contexts.horizontal.encodedFrames;
     this.streamStartTime = new Date();
     this.historicalCPU = [];
   }
@@ -216,10 +216,8 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
         (obs.Global.totalFrames - this.streamStartRenderedFrames)) *
       100;
     const streamSkipped =
-      ((this.videoSettingsService.contexts.horizontal.skippedFrames -
-        this.streamStartSkippedFrames) /
-        (this.videoSettingsService.contexts.horizontal.encodedFrames -
-          this.streamStartEncodedFrames)) *
+      ((this.videoService.contexts.horizontal.skippedFrames - this.streamStartSkippedFrames) /
+        (this.videoService.contexts.horizontal.encodedFrames - this.streamStartEncodedFrames)) *
       100;
     const streamDropped = this.state.percentageDroppedFrames;
     const streamDuration = new Date().getTime() - this.streamStartTime.getTime();
@@ -244,8 +242,8 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
     const currentStats: IMonitorState = {
       framesLagged: obs.Global.laggedFrames,
       framesRendered: obs.Global.totalFrames,
-      framesSkipped: this.videoSettingsService.contexts.horizontal.skippedFrames,
-      framesEncoded: this.videoSettingsService.contexts.horizontal.encodedFrames,
+      framesSkipped: this.videoService.contexts.horizontal.skippedFrames,
+      framesEncoded: this.videoService.contexts.horizontal.encodedFrames,
     };
 
     const nextStats = this.nextStats(currentStats);

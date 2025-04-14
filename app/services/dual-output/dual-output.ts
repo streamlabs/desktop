@@ -1,7 +1,6 @@
 import { PersistentStatefulService, InitAfter, Inject, ViewHandler, mutation } from 'services/core';
-import { verticalDisplayData } from '../settings-v2/default-settings-data';
 import { ScenesService, SceneItem, TSceneNode } from 'services/scenes';
-import { TDisplayType, VideoSettingsService } from 'services/settings-v2/video';
+import { TDisplayType, VideoService } from 'services/video';
 import { TPlatform } from 'services/platforms';
 import { EPlaceType } from 'services/editor-commands/commands/reorder-nodes';
 import { EditorCommandsService } from 'services/editor-commands';
@@ -17,18 +16,12 @@ import { UserService } from 'services/user';
 import { SelectionService, Selection } from 'services/selection';
 import { StreamingService } from 'services/streaming';
 import { SettingsService } from 'services/settings';
-import { SourcesService, TSourceType } from 'services/sources';
-import { WidgetsService, WidgetType } from 'services/widgets';
 import { RunInLoadingMode } from 'services/app/app-decorators';
 import compact from 'lodash/compact';
 import invert from 'lodash/invert';
 import forEachRight from 'lodash/forEachRight';
-import { byOS, OS } from 'util/operating-systems';
-import { DefaultHardwareService } from 'services/hardware/default-hardware';
 
 interface IDisplayVideoSettings {
-  horizontal: IVideoInfo;
-  vertical: IVideoInfo;
   activeDisplays: {
     horizontal: boolean;
     vertical: boolean;
@@ -55,7 +48,7 @@ export type TDisplayDestinations = {
 
 class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
   @Inject() private scenesService: ScenesService;
-  @Inject() private videoSettingsService: VideoSettingsService;
+  @Inject() private videoService: VideoService;
   @Inject() private sceneCollectionsService: SceneCollectionsService;
   @Inject() private streamingService: StreamingService;
 
@@ -172,7 +165,7 @@ class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
 
   getPlatformContext(platform: TPlatform) {
     const display = this.getPlatformDisplay(platform);
-    return this.videoSettingsService.state[display];
+    return this.videoService.state[display];
   }
 
   getPlatformMode(platform: TPlatform): TOutputOrientation {
@@ -283,7 +276,7 @@ class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
 @InitAfter('ScenesService')
 export class DualOutputService extends PersistentStatefulService<IDualOutputServiceState> {
   @Inject() private scenesService: ScenesService;
-  @Inject() private videoSettingsService: VideoSettingsService;
+  @Inject() private videoService: VideoService;
   @Inject() private editorCommandsService: EditorCommandsService;
   @Inject() private sceneCollectionsService: SceneCollectionsService;
   @Inject() private streamSettingsService: StreamSettingsService;
@@ -295,8 +288,6 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
   static defaultState: IDualOutputServiceState = {
     dualOutputMode: false,
     videoSettings: {
-      horizontal: null,
-      vertical: verticalDisplayData, // get settings for horizontal display from obs directly
       activeDisplays: {
         horizontal: true,
         vertical: false,
@@ -448,7 +439,7 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     this.SET_IS_LOADING(true);
 
     // establish vertical context if it doesn't exist
-    this.videoSettingsService.validateVideoContext();
+    this.videoService.validateVideoContext();
 
     try {
       // convert all scenes in the single output collection to dual output
@@ -585,7 +576,7 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
   validateDualOutputCollection() {
     this.SET_IS_LOADING(true);
     // establish vertical context if it doesn't exist
-    this.videoSettingsService.validateVideoContext();
+    this.videoService.validateVideoContext();
 
     try {
       this.scenesService.views.scenes.forEach(scene => {
@@ -697,7 +688,7 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
       verticalNodeId,
       horizontalNode.sourceId,
     ) as SceneItem;
-    const context = this.videoSettingsService.contexts[newPartner.display];
+    const context = this.videoService.contexts[newPartner.display];
     newPartner.setSettings({ ...settings, output: context });
     newPartner.setVisibility(visible);
 
@@ -762,7 +753,7 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
 
   assignNodeContext(node: TSceneNode, display: TDisplayType) {
     if (node.isItem()) {
-      const context = this.videoSettingsService.contexts[display];
+      const context = this.videoService.contexts[display];
       if (!context) return null;
       node.setSettings({ output: context, display });
     } else {
@@ -804,18 +795,6 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     this.SET_DISPLAY_ACTIVE(status, display);
   }
 
-  /**
-   * Update Video Settings
-   */
-
-  setVideoSetting(setting: Partial<IVideoInfo>, display?: TDisplayType) {
-    this.SET_VIDEO_SETTING(setting, display);
-  }
-
-  updateVideoSettings(settings: IVideoInfo, display: TDisplayType = 'horizontal') {
-    this.UPDATE_VIDEO_SETTING(settings, display);
-  }
-
   setIsLoading(status: boolean) {
     this.SET_IS_LOADING(status);
   }
@@ -834,19 +813,6 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
       ...this.state.videoSettings.activeDisplays,
       [display]: status,
     };
-  }
-
-  @mutation()
-  private SET_VIDEO_SETTING(setting: Partial<IVideoInfo>, display: TDisplayType = 'vertical') {
-    this.state.videoSettings[display] = {
-      ...this.state.videoSettings[display],
-      ...setting,
-    };
-  }
-
-  @mutation()
-  private UPDATE_VIDEO_SETTING(setting: IVideoInfo, display: TDisplayType = 'vertical') {
-    this.state.videoSettings[display] = { ...setting };
   }
 
   @mutation()
