@@ -331,15 +331,17 @@ export default function StreamView({
               placeholder={$t('Highlights not working? Let us know how we can improve.')}
               onChange={e => setFeedback(e.target.value)}
             />
-            <Button
-              size="large"
-              type="primary"
-              style={{ marginTop: '14px' }}
-              disabled={!feedback}
-              onClick={leaveFeedback}
-            >
-              {$t('Submit')}
-            </Button>
+            <div style={{ textAlign: 'right', marginTop: '24px' }}>
+              <Button
+                size="large"
+                type="primary"
+                style={{ marginTop: '14px' }}
+                disabled={!feedback}
+                onClick={leaveFeedback}
+              >
+                {$t('Submit')}
+              </Button>
+            </div>
           </div>
         )}
         {showModal?.type === 'remove' && (
