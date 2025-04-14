@@ -5,15 +5,16 @@ import { ListInput, TextInput } from 'components-react/shared/inputs';
 import * as remote from '@electron/remote';
 import { SUPPORTED_FILE_TYPES } from 'services/highlighter/constants';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
-import { IStreamInfoForAiHighlighter } from 'services/highlighter/models/highlighter.models';
+import {
+  IStreamInfoForAiHighlighter,
+  TOpenedFrom,
+} from 'services/highlighter/models/highlighter.models';
 import { $t } from 'services/i18n';
 import uuid from 'uuid';
 import React, { useRef, useState } from 'react';
 import styles from './StreamView.m.less';
 import { supportedGames } from 'services/highlighter/models/game-config.models';
 import path from 'path';
-
-export type TOpenedFrom = 'after-stream' | 'manual-import' | 'recordings-tab';
 
 export function ImportStreamModal({
   close,
@@ -32,7 +33,9 @@ export function ImportStreamModal({
   const [inputValue, setInputValue] = useState<string>(streamInfo?.title || '');
   const [filePath, setFilePath] = useState<string | undefined>(videoPath);
   const [draggingOver, setDraggingOver] = useState<boolean>(false);
-  const [game, setGame] = useState<EGame | null>(streamInfo?.game || selectedGame || null);
+  const [game, setGame] = useState<EGame | null>(
+    (streamInfo?.game !== EGame.UNSET ? streamInfo?.game : selectedGame) || selectedGame || null,
+  );
   const gameOptions = supportedGames;
 
   function handleInputChange(value: string) {

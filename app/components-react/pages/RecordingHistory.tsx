@@ -19,7 +19,10 @@ import { $i } from 'services/utils';
 import { IRecordingEntry } from 'services/recording-mode';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 import { EAiDetectionState, EGame } from 'services/highlighter/models/ai-highlighter.models';
-import { EHighlighterView } from 'services/highlighter/models/highlighter.models';
+import {
+  EHighlighterView,
+  ITempRecordingInfo,
+} from 'services/highlighter/models/highlighter.models';
 
 interface IRecordingHistoryStore {
   showSLIDModal: boolean;
@@ -138,13 +141,18 @@ class RecordingHistoryController {
     }
     if (platform === 'highlighter') {
       if (this.aiDetectionInProgress) return;
+
+      const tempRecordingInfo: ITempRecordingInfo = {
+        recordingPath: recording.filename,
+        streamInfo: { id: 'rec_' + uuid(), game: EGame.UNSET },
+        source: 'recordings-tab',
+      };
+      this.HighlighterService.setTempRecordingInfo(tempRecordingInfo);
+
       this.NavigationService.actions.navigate(
         'Highlighter',
         {
           view: EHighlighterView.STREAM,
-          recordingPath: recording.filename,
-          streamInfo: { id: 'rec_' + uuid() },
-          source: 'recordings-tab',
         },
         EMenuItemKey.Highlighter,
       );

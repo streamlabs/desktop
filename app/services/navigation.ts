@@ -23,7 +23,7 @@ export type TAppPage =
 
 interface INavigationState {
   currentPage: TAppPage;
-  params: Dictionary<any>;
+  params: Dictionary<string | boolean>;
 }
 
 export class NavigationService extends StatefulService<INavigationState> {
@@ -37,7 +37,7 @@ export class NavigationService extends StatefulService<INavigationState> {
 
   navigate(
     page: TAppPage,
-    params: Dictionary<any> = {},
+    params: Dictionary<string | boolean> = {},
     setMenuItem: EMenuItemKey | undefined = undefined,
   ) {
     if (setMenuItem) {
@@ -53,7 +53,7 @@ export class NavigationService extends StatefulService<INavigationState> {
   }
 
   @mutation()
-  private NAVIGATE(page: TAppPage, params: Dictionary<any>) {
+  private NAVIGATE(page: TAppPage, params: Dictionary<string | boolean>) {
     this.state.currentPage = page;
     this.state.params = params;
   }

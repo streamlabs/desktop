@@ -6,6 +6,7 @@ import {
   EHighlighterView,
   IStreamInfoForAiHighlighter,
   IViewState,
+  TOpenedFrom,
 } from 'services/highlighter/models/highlighter.models';
 import isEqual from 'lodash/isEqual';
 import { Modal, Button, Alert } from 'antd';
@@ -21,7 +22,7 @@ import moment from 'moment';
 import { TextInput } from 'components-react/shared/inputs';
 import EducationCarousel from './EducationCarousel';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
-import { ImportStreamModal, TOpenedFrom } from './ImportStream';
+import { ImportStreamModal } from './ImportStream';
 import SupportedGames from './supportedGames/SupportedGames';
 
 type TModalStreamView =
@@ -38,17 +39,7 @@ type TModalStreamView =
   | { type: 'requirements'; game: string }
   | null;
 
-export default function StreamView({
-  emitSetView,
-  recordingPath,
-  streamInfo,
-  source,
-}: {
-  emitSetView: (data: IViewState) => void;
-  recordingPath?: string;
-  streamInfo?: IStreamInfoForAiHighlighter;
-  source?: TOpenedFrom;
-}) {
+export default function StreamView({ emitSetView }: { emitSetView: (data: IViewState) => void }) {
   const { HighlighterService, HotkeysService, UsageStatisticsService } = Services;
   const v = useVuex(() => ({
     exportInfo: HighlighterService.views.exportInfo,
@@ -58,12 +49,15 @@ export default function StreamView({
   }));
 
   useEffect(() => {
-    if (recordingPath && source) {
+    const recordingInfo = { ...HighlighterService.views.tempRecordingInfo };
+    HighlighterService.setTempRecordingInfo({});
+
+    if (recordingInfo.recordingPath && recordingInfo.source) {
       setShowModal({
         type: 'upload',
-        path: recordingPath,
-        streamInfo,
-        openedFrom: source,
+        path: recordingInfo.recordingPath,
+        streamInfo: recordingInfo.streamInfo,
+        openedFrom: recordingInfo.source,
       });
     }
   }, []);
@@ -248,7 +242,7 @@ export default function StreamView({
             UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
               type: 'DetectionModalCanceled',
               openedFrom: showModal.openedFrom,
-              streamId: streamInfo?.id,
+              streamId: showModal.streamInfo?.id,
             });
           }
 

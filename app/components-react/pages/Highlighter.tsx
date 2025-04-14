@@ -5,20 +5,17 @@ import {
   EHighlighterView,
   IStreamInfoForAiHighlighter,
   IViewState,
+  TOpenedFrom,
 } from 'services/highlighter/models/highlighter.models';
 import { Services } from 'components-react/service-provider';
 import StreamView from 'components-react/highlighter/StreamView';
 import ClipsView from 'components-react/highlighter/ClipsView';
 import UpdateModal from 'components-react/highlighter/UpdateModal';
 import { EAvailableFeatures } from 'services/incremental-rollout';
-import { TOpenedFrom } from 'components-react/highlighter/ImportStream';
 
 export default function Highlighter(props: {
   params?: {
     view: string;
-    recordingPath?: string;
-    streamInfo?: IStreamInfoForAiHighlighter;
-    source?: TOpenedFrom;
   };
 }) {
   const { HighlighterService, IncrementalRolloutService, UsageStatisticsService } = Services;
@@ -73,9 +70,6 @@ export default function Highlighter(props: {
         <>
           {aiHighlighterFeatureEnabled && updaterModal}
           <StreamView
-            streamInfo={props.params?.streamInfo}
-            recordingPath={props.params?.recordingPath}
-            source={props.params?.source}
             emitSetView={data => {
               setViewFromEmit(data);
             }}

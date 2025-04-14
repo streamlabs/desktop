@@ -45,6 +45,8 @@ import {
   IUploadInfo,
   TClip,
   TStreamInfo,
+  EHighlighterView,
+  ITempRecordingInfo,
 } from './models/highlighter.models';
 import {
   EExportStep,
@@ -125,6 +127,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     updaterProgress: 0,
     isUpdaterRunning: false,
     highlighterVersion: '',
+    tempRecordingInfo: {},
   };
 
   aiHighlighterUpdater: AiHighlighterUpdater;
@@ -288,6 +291,11 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   @mutation()
   SET_HIGHLIGHTER_VERSION(version: string) {
     this.state.highlighterVersion = version;
+  }
+
+  @mutation()
+  SET_TEMP_RECORDING_INFO(tempRecordingInfo: ITempRecordingInfo) {
+    this.state.tempRecordingInfo = tempRecordingInfo;
   }
 
   get views() {
@@ -495,9 +503,19 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
       aiRecordingInProgress = false;
 
+      const tempRecordingInfo: ITempRecordingInfo = {
+        recordingPath: path,
+        streamInfo,
+        source: 'after-stream',
+      };
+
+      this.setTempRecordingInfo(tempRecordingInfo);
+
       this.navigationService.actions.navigate(
         'Highlighter',
-        { view: 'stream', recordingPath: path, streamInfo, source: 'after-stream' },
+        {
+          view: EHighlighterView.STREAM,
+        },
         EMenuItemKey.Highlighter,
       );
     });
@@ -1189,6 +1207,10 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     this.SET_HIGHLIGHTER_VERSION('');
 
     await this.aiHighlighterUpdater?.uninstall();
+  }
+
+  setTempRecordingInfo(tempRecordingInfo: ITempRecordingInfo) {
+    this.SET_TEMP_RECORDING_INFO(tempRecordingInfo);
   }
 
   /**
