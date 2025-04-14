@@ -1,5 +1,9 @@
 @import '../../styles/index';
 
+@sectionWidth: 424px;
+@sectionHeight: @sectionWidth;
+@padding: 16px;
+
 .stream-view-root {
   position: relative;
 
@@ -35,14 +39,16 @@
   }
 }
 
+// Upload
 .upload-wrapper {
+  height: 62px;
   display: flex;
-  padding: 16px;
-  padding-left: 22px;
-  margin-top: -17px; //1px bcs of border
+  padding-left: 14px;
+  padding-right: 14px;
+  margin-top: -16px; //1px bcs of border
   align-items: center;
   gap: 16px;
-  border-radius: 8px;
+  border-radius: 12px;
   border: 1px dashed var(--Day-Colors-Dark-4, #4f5e65);
 }
 
@@ -52,12 +58,72 @@
   flex-direction: column;
   gap: 16px;
   padding: 8px;
+
+  :global {
+    /* Hide labels */
+    .ant-form-item-label,
+    [class*='ant-col'] .ant-form-item-label {
+      display: none !important;
+    }
+
+    .ant-form-item {
+      margin: 0;
+    }
+  }
+
+  video {
+    display: block;
+    max-width: calc(@sectionWidth - @padding * 2);
+    max-height: calc(@sectionHeight - @padding * 2);
+    border-radius: 8px;
+  }
 }
-.title-input-wrapper {
-  width: 100%;
+.video-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  height: @sectionHeight;
+  width: @sectionWidth;
+  padding: @padding;
+  // background-color: var(--dropdown-alt-bg);
+  background-color: #232d3530;
+  border-radius: 22px;
+  margin-top: 8px;
+}
+
+.video-preview {
+  position: relative;
+  display: grid;
+  place-content: center;
+  max-height: 100%;
+  border-radius: 8px;
+  width: fit-content;
+  height: fit-content;
+  min-width: 392px;
+  min-height: 220px;
+  background-color: #ffffff0a;
+  cursor: 'pointer';
+}
+
+.video-preview::before {
+  content: '';
+  border-style: var(--border-style);
+  border-width: 1px;
+  border-color: var(--border-color);
+  border-radius: 8px;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.custom-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background-color: transparent;
+  padding: 0;
+  color: inherit;
 }
 
 .streamcards-wrapper {
@@ -73,4 +139,10 @@
   padding-bottom: 10px;
   font-size: 18px;
   font-weight: bold;
+}
+
+.drag-and-drop {
+  font-weight: 400;
+  margin-top: 12px;
+  text-align: center;
 }

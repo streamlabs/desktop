@@ -4,6 +4,7 @@ import { AiHighlighterUpdater } from './ai-highlighter-updater';
 import { duration } from 'moment';
 import kill from 'tree-kill';
 import {
+  EGame,
   IHighlight,
   IHighlighterMessage,
   IHighlighterMilestone,
@@ -65,6 +66,7 @@ export function getHighlightClips(
   progressUpdate?: (progress: number) => void,
   milestonesPath?: string,
   milestoneUpdate?: (milestone: IHighlighterMilestone) => void,
+  game?: EGame,
 ): Promise<IHighlight[]> {
   return new Promise((resolve, reject) => {
     console.log(`Get highlight clips for ${videoUri}`);
@@ -76,6 +78,7 @@ export function getHighlightClips(
       videoUri,
       userId,
       milestonesPath,
+      game,
     );
     const messageBuffer = new MessageBufferHandler();
 
