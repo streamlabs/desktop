@@ -399,20 +399,15 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           return;
         }
 
-        // TODO: At some point we need sth like string to enum
-        let game = EGame.UNSET;
-        switch (this.streamingService.views.game.toLowerCase()) {
-          case EGame.FORTNITE:
-            game = EGame.FORTNITE;
-            break;
+        let game;
+        const normalizedGameName = this.streamingService.views.game
+          .toLowerCase()
+          .replace(/ /g, '_');
 
-          case EGame.VALORANT:
-            game = EGame.VALORANT;
-            break;
-
-          default:
-            game = EGame.UNSET;
-            break;
+        if (Object.values(EGame).includes(normalizedGameName as EGame)) {
+          game = normalizedGameName as EGame;
+        } else {
+          game = EGame.UNSET;
         }
 
         streamInfo = {
@@ -421,15 +416,12 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           game,
         };
 
-        // console.log('recording Alreadyt running?:', this.streamingService.views.isRecording);
         this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
           type: 'AiRecordingStarted',
           streamId: streamInfo?.id,
         });
 
-        if (this.streamingService.views.isRecording) {
-          // console.log('Recording is already running');
-        } else {
+        if (this.streamingService.views.isRecording === false) {
           this.streamingService.actions.toggleRecording();
         }
 
@@ -502,7 +494,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         });
 
       aiRecordingInProgress = false;
-      //   this.detectAndClipAiHighlights(path, streamInfo, true);
 
       this.navigationService.actions.navigate(
         'Highlighter',

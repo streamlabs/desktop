@@ -163,7 +163,7 @@ const WAR_THUNDER_CONFIG: IGameConfig = {
 
 const VALORANT_CONFIG: IGameConfig = {
   name: EGame.VALORANT,
-  label: 'Valorant',
+  label: 'VALORANT',
   gameModes: '',
   thumbnail: '',
   state: EGameState.INTERNAL,
@@ -261,7 +261,10 @@ export function getEventConfig(game: EGame, eventType: string): IEventInfo | IDe
 }
 
 export function isGameSupported(game: string | undefined) {
-  if (game && supportedGames.some(supportedGame => supportedGame.label === game)) {
+  if (
+    game &&
+    supportedGames.some(supportedGame => supportedGame.label.toLowerCase() === game.toLowerCase())
+  ) {
     return true;
   }
   return false;

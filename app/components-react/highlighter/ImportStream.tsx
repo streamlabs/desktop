@@ -43,13 +43,10 @@ export function ImportStreamModal({
     setGame(game as EGame);
   }
 
-  function specialCharacterValidator(rule: unknown, value: string, callback: Function) {
-    if (/[\\/:"*?<>|]+/g.test(value)) {
-      callback($t('You cannot use special characters in this field'));
-    } else {
-      callback();
-    }
-  }
+  const specialCharacterValidator = {
+    pattern: /[\\/:"*?<>|]+/g,
+    message: $t('You cannot use special characters in this field'),
+  };
 
   async function importStreamFromDevice() {
     const selections = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
@@ -135,7 +132,7 @@ export function ImportStreamModal({
           placeholder={$t('Set a title for your recording')}
           onChange={handleInputChange}
           style={{ width: '100%', color: 'black', border: 'none' }}
-          rules={[{ validator: specialCharacterValidator }]}
+          rules={[specialCharacterValidator]}
           nowrap
         />
         <div
@@ -148,8 +145,6 @@ export function ImportStreamModal({
             setDraggingOver(true);
           }}
           onDrop={e => {
-            console.log(e.dataTransfer.files);
-
             const extensions = SUPPORTED_FILE_TYPES.map(e => `.${e}`);
             const files: string[] = [];
             let fi = e.dataTransfer.files.length;
@@ -228,9 +223,6 @@ export function ImportStreamModal({
                       height: '24px',
                       objectFit: 'cover',
                       borderRadius: '2px',
-                    }}
-                    onError={e => {
-                      (e.target as HTMLImageElement).style.display = 'none';
                     }}
                   />
                 )}

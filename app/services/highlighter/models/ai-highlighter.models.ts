@@ -12,7 +12,7 @@ export enum EGameState {
 
 export interface IGameConfig {
   name: EGame;
-  label: string;
+  label: string; // Must be same as twitch
   gameModes: string;
   thumbnail: string;
   state: EGameState;
@@ -37,6 +37,7 @@ export interface IDefaultEventInfo extends IEventInfo {
   aliases?: string[];
 }
 
+// space -> underscore
 export enum EGame {
   FORTNITE = 'fortnite',
   WARZONE = 'warzone',

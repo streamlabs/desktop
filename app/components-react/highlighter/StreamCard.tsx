@@ -89,11 +89,11 @@ export default function StreamCard({
               {$t('Please make sure all the requirements are met:')}
             </p>
             <ul style={{ marginBottom: 0, marginLeft: '-28px' }}>
-              <li>{$t('Game is supported (Currently Fortnite only)')}</li>
+              <li>{$t('Game is supported')}</li>
               <li>{$t('Game language is English')}</li>
               <li>{$t('Map and Stats area is fully visible')}</li>
               <li>{$t('Game is fullscreen in your stream')}</li>
-              <li>{$t('Game mode is supported (Battle Royale, Reload, Zero Build, OG)')}</li>
+              <li>{$t('Game mode is supported')}</li>
             </ul>
             <a onClick={emitShowRequirements} style={{ marginBottom: '14px' }}>
               {$t('Show details')}

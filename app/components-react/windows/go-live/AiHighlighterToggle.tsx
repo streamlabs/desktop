@@ -9,6 +9,7 @@ import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { Button, Carousel } from 'antd';
 import EducationCarousel from 'components-react/highlighter/EducationCarousel';
 import { isGameSupported } from 'services/highlighter/models/game-config.models';
+import { $t } from 'services/i18n';
 
 export default function AiHighlighterToggle({
   game,
@@ -69,10 +70,10 @@ export default function AiHighlighterToggle({
             <div className={styles.headlineWrapper} onClick={() => setIsExpanded(!isExpanded)}>
               <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 300, color: '#BDC2C4' }}>
                 {!useHighlighter ? (
-                  <>Try AI Highlighter to generate game highlight reels of your stream</>
+                  <>{$t('Try AI Highlighter to generate game highlight reels of your stream')}</>
                 ) : (
                   <>
-                    <span style={{ fontWeight: 700 }}>AI Highlighter requirements</span>
+                    <span style={{ fontWeight: 700 }}>{$t('AI Highlighter requirements')}</span>
                   </>
                 )}
               </h3>
@@ -97,10 +98,9 @@ export default function AiHighlighterToggle({
                     >
                       <div>
                         <h2 style={{ fontSize: '16px', fontWeight: 600 }}>
-                          Auto-create
-                          <br /> highlights
+                          {$t('Auto-create highlights')}
                         </h2>
-                        <div className={styles.betaTag}>Beta</div>
+                        <div className={styles.betaTag}>{$t('Beta')}</div>
                       </div>
                       <div className={styles.image}></div>
                     </div>
@@ -124,7 +124,7 @@ export default function AiHighlighterToggle({
                         HighlighterService.installAiHighlighter(false, 'Go-live-flow');
                       }}
                     >
-                      Install AI Highlighter
+                      {$t('Install AI Highlighter')}
                     </Button>
                   )}
                 </div>
