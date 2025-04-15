@@ -2,7 +2,7 @@ import React from 'react';
 import { useModule, injectState } from 'slap';
 import { Services } from '../../service-provider';
 import { ISettingsSubCategory } from '../../../services/settings';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayType } from 'services/video';
 
 /**
  * A module for components in the SettingsWindow
