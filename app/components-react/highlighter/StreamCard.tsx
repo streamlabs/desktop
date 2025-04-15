@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   EHighlighterView,
   IHighlightedStream,
@@ -14,41 +14,39 @@ import { $t } from 'services/i18n';
 import { EAiDetectionState } from 'services/highlighter/models/ai-highlighter.models';
 import * as remote from '@electron/remote';
 import StreamCardInfo from './StreamCardInfo';
+import StreamCardModal, { TModalStreamCard } from './StreamCardModal';
 import { supportedGames } from 'services/highlighter/models/game-config.models';
 
 export default function StreamCard({
   streamId,
-  clipsOfStreamAreLoading,
   emitSetView,
-  emitGeneratePreview,
-  emitExportVideo,
-  emitRemoveStream,
-  emitCancelHighlightGeneration,
-  emitShowRequirements,
 }: {
   streamId: string;
-  clipsOfStreamAreLoading: string | null;
   emitSetView: (data: IViewState) => void;
-  emitGeneratePreview: () => void;
-  emitExportVideo: () => void;
-  emitRemoveStream: () => void;
-  emitCancelHighlightGeneration: () => void;
-  emitShowRequirements: () => void;
 }) {
-  console.log('streamcard');
+  console.log('streamcard', streamId);
+
+  const [modal, setModal] = useState<TModalStreamCard | null>(null);
+  const [clipsOfStreamAreLoading, setClipsOfStreamAreLoading] = useState<string | null>(null);
 
   const { HighlighterService } = Services;
-  const clips = useVuex(() =>
-    HighlighterService.views.clips
+  const clips = useMemo(() => {
+    return HighlighterService.views.clips
       .filter(c => c.streamInfo?.[streamId])
       .map(clip => {
         if (isAiClip(clip) && (clip.aiInfo as any).moments) {
           clip.aiInfo.inputs = (clip.aiInfo as any).moments;
         }
         return clip;
-      }),
-  );
+      });
+  }, [
+    HighlighterService.views.clips.filter(clips => clips.streamInfo?.[streamId] && clips.enabled)
+      .length,
+    streamId,
+  ]);
+
   const stream = useVuex(() => HighlighterService.views.highlightedStreamsDictionary[streamId]);
+
   if (!stream) {
     return <></>;
   }
@@ -67,15 +65,44 @@ export default function StreamCard({
     }
   }
 
+  async function previewVideo(id: string) {
+    setClipsOfStreamAreLoading(id);
+
+    try {
+      await HighlighterService.actions.return.loadClips(id);
+      setClipsOfStreamAreLoading(null);
+      setModal('preview');
+    } catch (error: unknown) {
+      console.error('Error loading clips for preview export', error);
+      setClipsOfStreamAreLoading(null);
+    }
+  }
+
+  async function exportVideo(id: string) {
+    setClipsOfStreamAreLoading(id);
+
+    try {
+      await HighlighterService.actions.return.loadClips(id);
+      setClipsOfStreamAreLoading(null);
+      setModal('export');
+    } catch (error: unknown) {
+      console.error('Error loading clips for export', error);
+      setClipsOfStreamAreLoading(null);
+    }
+  }
+
+  function cancelHighlightGeneration() {
+    HighlighterService.actions.cancelHighlightGeneration(stream.id);
+  }
+
   if (stream.state.type === EAiDetectionState.FINISHED && clips.length === 0) {
     return (
       <div className={styles.streamCard}>
-        {' '}
         <Button
           size="large"
           className={styles.deleteButton}
           onClick={e => {
-            emitRemoveStream();
+            setModal('remove');
             e.stopPropagation();
           }}
           style={{ backgroundColor: '#00000040', border: 'none', position: 'absolute' }}
@@ -95,7 +122,7 @@ export default function StreamCard({
               <li>{$t('Game is fullscreen in your stream')}</li>
               <li>{$t('Game mode is supported')}</li>
             </ul>
-            <a onClick={emitShowRequirements} style={{ marginBottom: '14px' }}>
+            <a onClick={() => setModal('requirements')} style={{ marginBottom: '14px' }}>
               {$t('Show details')}
             </a>
             <p>{$t('All requirements met but no luck?')}</p>
@@ -131,59 +158,64 @@ export default function StreamCard({
   const gameThumbnail = supportedGames?.find(game => game.value === stream.game)?.image;
 
   return (
-    <div
-      className={styles.streamCard}
-      onClick={() => {
-        showStreamClips();
-      }}
-    >
-      <Thumbnail
-        clips={clips}
-        clipsOfStreamAreLoading={clipsOfStreamAreLoading}
-        stream={stream}
-        emitGeneratePreview={emitGeneratePreview}
-        emitCancelHighlightGeneration={emitCancelHighlightGeneration}
-        emitRemoveStream={emitRemoveStream}
-      />
-      <div className={styles.streaminfoWrapper}>
-        <div className={styles.titleRotatedClipsWrapper}>
-          <div className={styles.titleDateWrapper}>
-            <h2 className={styles.streamcardTitle}>{stream.title}</h2>
-            <p style={{ margin: 0, fontSize: '12px' }}>{new Date(stream.date).toDateString()}</p>
-          </div>
-          <RotatedClips clips={clips} />
-        </div>
-        <h3 className={styles.emojiWrapper}>
-          {stream.state.type === EAiDetectionState.FINISHED ? (
-            <div style={{ display: 'flex', width: '100%', gap: '12px' }}>
-              {gameThumbnail && (
-                <Tooltip title={supportedGames.find(game => game.value === stream.game)?.label}>
-                  <img className={styles.supportedGameIcon} src={gameThumbnail} alt={stream.game} />
-                </Tooltip>
-              )}
-              {/* calculation needed for text ellipsis overflow */}
-              <div style={{ width: 'calc(100% - 22px - 12px)' }}>
-                <StreamCardInfo clips={clips} game={game} />
-              </div>
-            </div>
-          ) : (
-            <div style={{ height: '22px' }}> </div>
-          )}
-        </h3>
-        <ActionBar
-          stream={stream}
-          clips={clips}
-          emitCancelHighlightGeneration={emitCancelHighlightGeneration}
-          emitExportVideo={emitExportVideo}
-          emitShowStreamClips={showStreamClips}
-          clipsOfStreamAreLoading={clipsOfStreamAreLoading}
-          emitRestartAiDetection={() => {
-            HighlighterService.actions.restartAiDetection(stream.path, stream);
+    <>
+      {modal && (
+        <StreamCardModal
+          streamId={streamId}
+          modal={modal}
+          onClose={() => {
+            setModal(null);
           }}
-          emitSetView={emitSetView}
         />
+      )}
+      <div
+        className={styles.streamCard}
+        onClick={() => {
+          showStreamClips();
+        }}
+      >
+        <Thumbnail
+          clips={clips}
+          clipsOfStreamAreLoading={clipsOfStreamAreLoading}
+          stream={stream}
+          emitGeneratePreview={() => {
+            previewVideo(streamId);
+          }}
+          emitCancelHighlightGeneration={cancelHighlightGeneration}
+          emitRemoveStream={() => {
+            setModal('remove');
+          }}
+        />
+        <div className={styles.streaminfoWrapper}>
+          <div className={styles.titleRotatedClipsWrapper}>
+            <div className={styles.titleDateWrapper}>
+              <h2 className={styles.streamcardTitle}>{stream.title}</h2>
+              <p style={{ margin: 0, fontSize: '12px' }}>{new Date(stream.date).toDateString()}</p>
+            </div>
+            <RotatedClips clips={clips} />
+          </div>
+          <h3 className={styles.emojiWrapper}>
+            {stream.state.type === EAiDetectionState.FINISHED ? (
+              <StreamCardInfo clips={clips} game={game} />
+            ) : (
+              <div style={{ height: '22px' }}> </div>
+            )}
+          </h3>
+          <ActionBar
+            stream={stream}
+            clips={clips}
+            emitCancelHighlightGeneration={cancelHighlightGeneration}
+            emitExportVideo={() => setModal('export')}
+            emitShowStreamClips={showStreamClips}
+            clipsOfStreamAreLoading={clipsOfStreamAreLoading}
+            emitRestartAiDetection={() => {
+              HighlighterService.actions.restartAiDetection(stream.path, stream);
+            }}
+            emitSetView={emitSetView}
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

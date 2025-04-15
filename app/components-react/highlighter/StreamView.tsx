@@ -2,6 +2,7 @@ import { useVuex } from 'components-react/hooks';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Services } from 'components-react/service-provider';
 import styles from './StreamView.m.less';
+import * as remote from '@electron/remote';
 import {
   EHighlighterView,
   IStreamInfoForAiHighlighter,
@@ -25,19 +26,13 @@ import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import { ImportStreamModal } from './ImportStream';
 import SupportedGames from './supportedGames/SupportedGames';
 
-type TModalStreamView =
-  | { type: 'export'; id: string | undefined }
-  | { type: 'preview'; id: string | undefined }
-  | {
-      type: 'upload';
-      path?: string;
-      game?: EGame;
-      streamInfo?: IStreamInfoForAiHighlighter;
-      openedFrom: TOpenedFrom;
-    }
-  | { type: 'remove'; id: string | undefined }
-  | { type: 'requirements'; game: string }
-  | null;
+type TModalStreamView = {
+  type: 'upload';
+  path?: string;
+  game?: EGame;
+  streamInfo?: IStreamInfoForAiHighlighter;
+  openedFrom: TOpenedFrom;
+} | null;
 
 export default function StreamView({ emitSetView }: { emitSetView: (data: IViewState) => void }) {
   console.log('rerender streamview');
@@ -95,36 +90,9 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
   });
 
   const [showModal, rawSetShowModal] = useState<TModalStreamView | null>(null);
-  const [clipsOfStreamAreLoading, setClipsOfStreamAreLoading] = useState<string | null>(null);
 
   function setShowModal(modal: TModalStreamView | null) {
     rawSetShowModal(modal);
-  }
-
-  async function previewVideo(id: string) {
-    setClipsOfStreamAreLoading(id);
-
-    try {
-      await HighlighterService.actions.return.loadClips(id);
-      setClipsOfStreamAreLoading(null);
-      rawSetShowModal({ type: 'preview', id });
-    } catch (error: unknown) {
-      console.error('Error loading clips for preview export', error);
-      setClipsOfStreamAreLoading(null);
-    }
-  }
-
-  async function exportVideo(id: string) {
-    setClipsOfStreamAreLoading(id);
-
-    try {
-      await HighlighterService.actions.return.loadClips(id);
-      setClipsOfStreamAreLoading(null);
-      rawSetShowModal({ type: 'export', id });
-    } catch (error: unknown) {
-      console.error('Error loading clips for export', error);
-      setClipsOfStreamAreLoading(null);
-    }
   }
 
   function closeModal() {
@@ -214,16 +182,6 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
                         key={stream.id}
                         streamId={stream.id}
                         emitSetView={data => emitSetView(data)}
-                        emitGeneratePreview={() => previewVideo(stream.id)}
-                        emitExportVideo={() => exportVideo(stream.id)}
-                        emitRemoveStream={() => setShowModal({ type: 'remove', id: stream.id })}
-                        clipsOfStreamAreLoading={clipsOfStreamAreLoading}
-                        emitCancelHighlightGeneration={() => {
-                          HighlighterService.actions.cancelHighlightGeneration(stream.id);
-                        }}
-                        emitShowRequirements={() => {
-                          setShowModal({ type: 'requirements', game: stream.game });
-                        }}
                       />
                     ))}
                   </div>
@@ -247,7 +205,7 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
           closeModal();
         }}
         footer={null}
-        width={showModal?.type === 'preview' ? 700 : 'fit-content'}
+        width={'fit-content'}
         closable={false}
         visible={!!showModal}
         destroyOnClose={true}
@@ -263,60 +221,12 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
             openedFrom={showModal.openedFrom}
           />
         )}
-        {showModal?.type === 'export' && <ExportModal close={closeModal} streamId={showModal.id} />}
-        {showModal?.type === 'preview' && (
-          <PreviewModal
-            close={closeModal}
-            streamId={showModal.id}
-            emitSetShowModal={modal => {
-              if (modal === 'export') {
-                rawSetShowModal({ type: 'export', id: showModal.id });
-              }
-            }}
-          />
-        )}
-        {showModal?.type === 'remove' && (
-          <RemoveStream close={closeModal} streamId={showModal.id} />
-        )}
-        {showModal?.type === 'requirements' && <EducationCarousel game={showModal.game} />}
       </Modal>
     </div>
   );
 }
 
-function RemoveStream(p: { streamId: string | undefined; close: () => void }) {
-  const { HighlighterService } = Services;
-
-  return (
-    <div style={{ textAlign: 'center' }}>
-      <h2>{$t('Delete highlighted stream?')} </h2>
-      <p>
-        {$t(
-          'Are you sure you want to delete this stream and all its associated clips? This action cannot be undone.',
-        )}
-      </p>
-      <Button style={{ marginRight: 8 }} onClick={p.close}>
-        {$t('Cancel')}
-      </Button>
-      <Button
-        type="primary"
-        danger
-        onClick={() => {
-          if (p.streamId === undefined) {
-            console.error('Cant remove stream, missing id');
-            return;
-          }
-          HighlighterService.actions.removeStream(p.streamId);
-          p.close();
-        }}
-      >
-        {'Delete'}
-      </Button>
-    </div>
-  );
-}
-
-export function groupStreamsByTimePeriod(streams: { id: string; date: string; game: string }[]) {
+export function groupStreamsByTimePeriod(streams: { id: string; date: string }[]) {
   const now = moment();
   const groups: { [key: string]: typeof streams } = {
     Today: [],

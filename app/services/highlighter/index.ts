@@ -1405,6 +1405,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       }
     } finally {
       setStreamInfo.abortController = undefined;
+
       this.updateStream(setStreamInfo);
       // stopProgressUpdates();
     }

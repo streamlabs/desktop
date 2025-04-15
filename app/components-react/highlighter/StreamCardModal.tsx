@@ -21,7 +21,7 @@ export default function StreamCardModal({
   modal: TModalStreamCard | null;
   onClose: () => void;
 }) {
-  console.log('rerender clipView modal', modal);
+  console.log('rerender streamCard modal', modal);
 
   const { HighlighterService } = Services;
   const v = useVuex(() => ({

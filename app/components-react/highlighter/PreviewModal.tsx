@@ -10,7 +10,7 @@ import { Button } from 'antd';
 import { TModalClipsView } from './ClipsView';
 import { CheckboxInput } from 'components-react/shared/inputs';
 import { formatSecondsToHMS } from './ClipPreview';
-import { duration } from 'moment';
+import { TModalStreamCard } from './StreamCardModal';
 
 interface IPlaylist {
   src: string;
@@ -371,7 +371,6 @@ export default function PreviewModal({
           <Button
             type="primary"
             onClick={() => {
-              close();
               emitSetShowModal('export');
             }}
           >
