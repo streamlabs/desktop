@@ -795,6 +795,7 @@ function initialize(crashHandler) {
 
   ipcMain.on('window-closeChildWindow', event => {
     // never close the child window, hide it instead
+    if (childWindow.isDestroyed()) return;
     childWindow.hide();
   });
 
