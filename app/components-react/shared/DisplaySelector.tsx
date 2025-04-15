@@ -1,9 +1,10 @@
 import React, { CSSProperties } from 'react';
 import { $t } from 'services/i18n';
 import { RadioInput } from './inputs';
-import { TDisplayType } from 'services/settings-v2';
-import { TPlatform } from 'services/platforms';
+import { TDisplayType } from 'services/video';
+import { platformLabels, TPlatform } from 'services/platforms';
 import { useGoLiveSettings } from 'components-react/windows/go-live/useGoLiveSettings';
+import { ICustomStreamDestination } from 'services/settings/streaming';
 
 interface IDisplaySelectorProps {
   title: string;
@@ -23,6 +24,9 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
   } = useGoLiveSettings();
 
   const setting = p.platform ? platforms[p.platform] : customDestinations[p.index];
+  const label = p.platform
+    ? platformLabels(p.platform)
+    : (setting as ICustomStreamDestination).name;
 
   const displays = [
     {
@@ -40,7 +44,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       data-test="display-input"
       id={`${p.platform}-display-input`}
       direction="horizontal"
-      label={p.label}
+      label={label}
       labelAlign="left"
       labelCol={{ offset: 0 }}
       colon

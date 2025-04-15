@@ -6,7 +6,7 @@ import { throwStreamError } from '../streaming/stream-error';
 import { platformAuthorizedRequest } from './utils';
 import { IGoLiveSettings } from '../streaming';
 import Utils from '../utils';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayType } from 'services/video';
 import { ENotificationType, NotificationsService } from '../notifications';
 import { JsonrpcService } from '../api/jsonrpc';
 import * as remote from '@electron/remote';
