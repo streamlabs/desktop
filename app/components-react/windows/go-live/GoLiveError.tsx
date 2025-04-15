@@ -4,11 +4,20 @@ import { Services } from '../../service-provider';
 import { IStreamError } from '../../../services/streaming/stream-error';
 import MessageLayout from './MessageLayout';
 import { assertIsDefined } from '../../../util/properties-type-guards';
-import { getPlatformService, TPlatform } from '../../../services/platforms';
+import {
+  EPlatform,
+  getPlatformService,
+  platformLabels,
+  platformList,
+  TPlatform,
+} from '../../../services/platforms';
 import { $t } from '../../../services/i18n';
 import Translate from '../../shared/Translate';
 import css from './GoLiveError.m.less';
 import * as remote from '@electron/remote';
+import { ENotificationType } from 'services/notifications';
+import { useGoLiveSettings } from './useGoLiveSettings';
+import cloneDeep from 'lodash/cloneDeep';
 
 /**
  * Shows an error and troubleshooting suggestions
@@ -21,10 +30,18 @@ export default function GoLiveError() {
     NavigationService,
     WindowsService,
     MagicLinkService,
+    NotificationsService,
   } = Services;
 
   // take an error from the global state
-  const { error } = useVuex(() => ({ error: StreamingService.state.info.error }), false);
+  const { error, lastNotification } = useVuex(
+    () => ({
+      error: StreamingService.state.info.error,
+      lastNotification: NotificationsService.views.lastNotification,
+    }),
+    false,
+  );
+  const { goLive, updatePlatform } = useGoLiveSettings();
 
   function render() {
     if (!error) return null;
@@ -59,6 +76,10 @@ export default function GoLiveError() {
         return renderFacebookNotEligibleForStreamingError();
       case 'KICK_SCOPE_OUTDATED':
         return renderRemergeError(error);
+      case 'KICK_START_STREAM_FAILED':
+        return handlePlatformRequestError(error, $t('Failed to start stream on Kick.'));
+      case 'KICK_STREAM_KEY_MISSING':
+        return renderKickStreamKeyMissingError(error);
       case 'MACHINE_LOCKED':
         return renderMachineLockedError(error);
       default:
@@ -198,11 +219,75 @@ export default function GoLiveError() {
   }
 
   function renderRestreamError(error: IStreamError) {
+    // a little janky, but this is to prevent duplicate notifications for the same error on rerender
+    if (!lastNotification || !lastNotification.message.startsWith($t('Multistream Error'))) {
+      NotificationsService.actions.push({
+        message: `${$t('Multistream Error')}: ${error.details}`,
+        type: ENotificationType.WARNING,
+        lifeTime: 5000,
+      });
+    }
+
+    async function skipSettingsUpdateAndGoLive() {
+      // clear error
+      StreamingService.actions.resetError();
+
+      // disable failed platforms
+      Object.entries(cloneDeep(StreamingService.views.checklist)).forEach(
+        ([key, value]: [string, string]) => {
+          if (value === 'failed' && platformList.includes(key as EPlatform)) {
+            updatePlatform(key as TPlatform, { enabled: false });
+
+            // notify the user that the platform has been toggled off
+            NotificationsService.actions.push({
+              message: $t(
+                '%{platform} Setup Error: Toggling off %{platform} to bypass and go live.',
+                {
+                  platform: platformLabels(key as TPlatform),
+                },
+              ),
+              type: ENotificationType.WARNING,
+              lifeTime: 5000,
+            });
+          }
+        },
+      );
+
+      StreamingService.actions.resetInfo();
+
+      await goLive();
+    }
+
+    const details =
+      !error.details || error.details === ''
+        ? [
+            $t(
+              'One of destinations might have incomplete permissions. Reconnect the destinations in settings and try again.',
+            ),
+          ]
+        : error.details.split('\n');
+
     return (
-      <MessageLayout error={error}>
-        {$t(
-          'Please try again. If the issue persists, you can stream directly to a single platform instead.',
+      <MessageLayout
+        error={error}
+        hasButton={true}
+        message={$t(
+          'Please try again. If the issue persists, you can stream directly to a single platform instead or click the button below to bypass and go live.',
         )}
+      >
+        {`${$t('Issues')}:`}
+        <ul>
+          {details.map((detail: string, index: number) => (
+            <li key={`detail-${index}`}>{detail}</li>
+          ))}
+        </ul>
+        <button
+          className="button button--warn"
+          style={{ marginTop: '8px' }}
+          onClick={skipSettingsUpdateAndGoLive}
+        >
+          {$t('Bypass and Go Live')}
+        </button>
       </MessageLayout>
     );
   }
@@ -290,6 +375,43 @@ export default function GoLiveError() {
         {$t(
           "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers. Click the notification to learn more.",
         )}
+      </MessageLayout>
+    );
+  }
+
+  function renderKickStreamKeyMissingError(error: IStreamError) {
+    function openKickSettings() {
+      remote.shell.openExternal('https://kick.com/settings/stream');
+    }
+    return (
+      <MessageLayout error={error} type="info" message={error.message}>
+        <div>
+          {$t(
+            'Permissions to generate stream key for Kick are missing. In order to go live on Kick, you must first generate a stream key on Kick to be available for Streamlabs Desktop. Please follow these steps:',
+          )}
+          <br />
+          <ol>
+            <li>{$t('Login to Kick')}</li>
+            <li>
+              <Translate
+                message={$t('Go to: <link></link>')}
+                renderSlots={{
+                  link: () => (
+                    <a style={{ textDecoration: 'underline' }} onClick={openKickSettings}>
+                      {'https://kick.com/settings/stream'}
+                    </a>
+                  ),
+                }}
+              ></Translate>
+            </li>
+            {/* prettier-ignore */}
+            <li>{$t('Click on the \"eye\" icon to see your stream key')}</li>
+            <li>{$t('Put in 2FA')}</li>
+          </ol>
+          {$t(
+            'After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.',
+          )}
+        </div>
       </MessageLayout>
     );
   }

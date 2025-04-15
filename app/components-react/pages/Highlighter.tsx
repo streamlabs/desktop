@@ -1,7 +1,7 @@
 import SettingsView from 'components-react/highlighter/SettingsView';
 import { useVuex } from 'components-react/hooks';
 import React, { useEffect, useState } from 'react';
-import { EHighlighterView, IViewState } from 'services/highlighter';
+import { EHighlighterView, IViewState } from 'services/highlighter/models/highlighter.models';
 import { Services } from 'components-react/service-provider';
 import StreamView from 'components-react/highlighter/StreamView';
 import ClipsView from 'components-react/highlighter/ClipsView';
@@ -9,7 +9,7 @@ import UpdateModal from 'components-react/highlighter/UpdateModal';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export default function Highlighter(props: { params?: { view: string } }) {
-  const { HighlighterService, IncrementalRolloutService } = Services;
+  const { HighlighterService, IncrementalRolloutService, UsageStatisticsService } = Services;
   const aiHighlighterFeatureEnabled = IncrementalRolloutService.views.featureIsEnabled(
     EAvailableFeatures.aiHighlighter,
   );
@@ -50,6 +50,11 @@ export default function Highlighter(props: { params?: { view: string } }) {
   }, []);
 
   const [viewState, setViewState] = useState<IViewState>(initialViewState);
+
+  useEffect(() => {
+    UsageStatisticsService.recordShown('HighlighterTab', viewState.view);
+  }, [viewState]);
+
   const updaterModal = (
     <UpdateModal
       version={v.highlighterVersion}

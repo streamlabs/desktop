@@ -152,8 +152,9 @@ class SettingsViews extends ViewHandler<ISettingsServiceState> {
     for (const groupName in this.state) {
       this.state[groupName].formData.forEach(subGroup => {
         subGroup.parameters.forEach(parameter => {
-          settingsValues[groupName] = settingsValues[groupName] || {};
-          settingsValues[groupName][parameter.name] = parameter.value;
+          (settingsValues as any)[groupName] =
+            settingsValues[groupName as keyof ISettingsValues] || {};
+          (settingsValues as any)[groupName][parameter.name] = parameter.value;
         });
       });
     }
@@ -240,10 +241,6 @@ class SettingsViews extends ViewHandler<ISettingsServiceState> {
 
     return null;
   }
-
-  get virtualWebcamSettings() {
-    return this.state['Virtual Webcam'].formData;
-  }
 }
 
 export class SettingsService extends StatefulService<ISettingsServiceState> {
@@ -283,7 +280,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     }
   }
 
-  private fetchSettingsFromObs(categoryName: string): ISettingsCategory {
+  private fetchSettingsFromObs(categoryName: keyof ISettingsServiceState): ISettingsCategory {
     const settingsMetadata = obs.NodeObs.OBS_settings_getSettings(categoryName);
     let settings = settingsMetadata.data;
     if (!settings) settings = [];
@@ -346,10 +343,11 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
    */
   loadSettingsIntoStore() {
     // load configuration from nodeObs to state
-    const settingsFormData = {};
-    this.getCategories().forEach(categoryName => {
+    const settingsFormData = {} as ISettingsServiceState;
+    this.getCategories().forEach((categoryName: keyof ISettingsServiceState) => {
       settingsFormData[categoryName] = this.fetchSettingsFromObs(categoryName);
     });
+
     this.SET_SETTINGS(settingsFormData);
   }
 
@@ -485,7 +483,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
    * Set an individual setting value
    * @remark When setting video settings, use the v2 video settings service.
    */
-  setSettingValue(category: string, name: string, value: TObsValue) {
+  setSettingValue(category: keyof ISettingsServiceState, name: string, value: TObsValue) {
     const newSettings = this.patchSetting(this.fetchSettingsFromObs(category).formData, name, {
       value,
     });
@@ -571,7 +569,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
    * @param forceApplyCategory - name of property to force apply settings.
    */
   setSettings(
-    categoryName: string,
+    categoryName: keyof ISettingsServiceState,
     settingsData: ISettingsSubCategory[],
     forceApplyCategory?: string,
   ) {
@@ -606,7 +604,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     // This function represents a cleaner API we would like to have
     // in the future.
 
-    Object.keys(patch).forEach(categoryName => {
+    Object.keys(patch).forEach((categoryName: keyof ISettingsValues) => {
       const category: Dictionary<any> = patch[categoryName];
       const formSubCategories = this.fetchSettingsFromObs(categoryName).formData;
 
@@ -687,6 +685,14 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
           'Your stream encoder has been reset to Software (x264). This can be caused by out of date graphics drivers. Please update your graphics drivers to continue using hardware encoding.',
       });
     }
+  }
+
+  isEnhancedBroadcasting() {
+    return obs.NodeObs.OBS_settings_isEnhancedBroadcasting();
+  }
+
+  setEnhancedBroadcasting(enable: boolean) {
+    obs.NodeObs.OBS_settings_setEnhancedBroadcasting(enable);
   }
 
   @mutation()

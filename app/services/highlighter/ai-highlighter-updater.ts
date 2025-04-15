@@ -6,8 +6,12 @@ import crypto from 'crypto';
 import { pipeline } from 'stream/promises';
 import { importExtractZip } from 'util/slow-imports';
 import { spawn } from 'child_process';
-import { FFMPEG_EXE } from '../constants';
-import Utils from '../../utils';
+import {
+  AI_HIGHLIGHTER_BUILDS_URL_PRODUCTION,
+  AI_HIGHLIGHTER_BUILDS_URL_STAGING,
+  FFMPEG_EXE,
+} from './constants';
+import Utils from '../utils';
 import * as remote from '@electron/remote';
 
 interface IAIHighlighterManifest {
@@ -47,13 +51,13 @@ export class AiHighlighterUpdater {
   /**
    * Spawn the AI Highlighter process that would process the video
    */
-  static startHighlighterProcess(videoUri: string, milestonesPath?: string) {
+  static startHighlighterProcess(videoUri: string, userId: string, milestonesPath?: string) {
     const runHighlighterFromRepository = Utils.getHighlighterEnvironment() === 'local';
 
     if (runHighlighterFromRepository) {
       // this is for highlighter development
       // to run this you have to install the highlighter repository next to desktop
-      return AiHighlighterUpdater.startHighlighterFromRepository(videoUri, milestonesPath);
+      return AiHighlighterUpdater.startHighlighterFromRepository(videoUri, userId, milestonesPath);
     }
 
     const highlighterBinaryPath = path.resolve(
@@ -67,11 +71,17 @@ export class AiHighlighterUpdater {
       command.push('--milestones_file');
       command.push(milestonesPath);
     }
+    command.push('--use_sentry');
+    command.push('--user_id', userId);
 
     return spawn(highlighterBinaryPath, command);
   }
 
-  private static startHighlighterFromRepository(videoUri: string, milestonesPath: string) {
+  private static startHighlighterFromRepository(
+    videoUri: string,
+    userId: string,
+    milestonesPath?: string,
+  ) {
     const rootPath = '../highlighter-api/';
     const command = [
       'run',
@@ -82,6 +92,8 @@ export class AiHighlighterUpdater {
       FFMPEG_EXE,
       '--loglevel',
       'debug',
+      '--user_id',
+      userId,
     ];
 
     if (milestonesPath) {
@@ -114,9 +126,9 @@ export class AiHighlighterUpdater {
   private getManifestUrl(): string {
     if (Utils.getHighlighterEnvironment() === 'staging') {
       const cacheBuster = Math.floor(Date.now() / 1000);
-      return `https://cdn-highlighter-builds.streamlabs.com/staging/manifest_win_x86_64.json?t=${cacheBuster}`;
+      return `${AI_HIGHLIGHTER_BUILDS_URL_STAGING}?t=${cacheBuster}`;
     } else {
-      return 'https://cdn-highlighter-builds.streamlabs.com/production/manifest_win_x86_64.json';
+      return AI_HIGHLIGHTER_BUILDS_URL_PRODUCTION;
     }
   }
   /**
@@ -124,7 +136,7 @@ export class AiHighlighterUpdater {
    */
   public async isNewVersionAvailable(): Promise<boolean> {
     // check if updater checked version in current session already
-    if (this.versionChecked) {
+    if (this.versionChecked || Utils.getHighlighterEnvironment() === 'local') {
       return false;
     }
 
@@ -163,7 +175,7 @@ export class AiHighlighterUpdater {
   /**
    * Update highlighter to the latest version
    */
-  public async update(progressCallback?: (progress: IDownloadProgress) => void): Promise<void> {
+  public async update(progressCallback: (progress: IDownloadProgress) => void): Promise<void> {
     // if (Utils.isDevMode()) {
     //   console.log('skipping update in dev mode');
     //   return;
@@ -230,10 +242,14 @@ export class AiHighlighterUpdater {
     const binPath = path.resolve(AiHighlighterUpdater.basepath, 'bin');
     const outdateVersionPresent = existsSync(binPath);
 
-    // backup the ouotdated version in case something goes bad
+    // backup the outdated version in case something goes bad
     if (outdateVersionPresent) {
       console.log('backing up outdated version...');
-      await fs.rename(binPath, path.resolve(AiHighlighterUpdater.basepath, 'bin.bkp'));
+      const backupPath = path.resolve(AiHighlighterUpdater.basepath, 'bin.bkp');
+      if (existsSync(backupPath)) {
+        await fs.rm(backupPath, { recursive: true });
+      }
+      await fs.rename(binPath, backupPath);
     }
     console.log('swapping new version...');
     await fs.rename(unzipPath, binPath);

@@ -1,7 +1,7 @@
 import execa from 'execa';
 import fs from 'fs';
-import { FFMPEG_EXE } from './constants';
-import { RenderingClip } from './clip';
+import { FFMPEG_EXE } from '../constants';
+import { RenderingClip } from './rendering-clip';
 import { AudioMixError } from './errors';
 
 export class AudioCrossfader {

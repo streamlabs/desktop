@@ -5,15 +5,12 @@ import { Services } from 'components-react/service-provider';
 import { useGoLiveSettings } from './useGoLiveSettings';
 import { $t } from 'services/i18n';
 import { Row, Col } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
 import { Section } from './Section';
 import PlatformSettings from './PlatformSettings';
 import TwitterInput from './Twitter';
 import OptimizedProfileSwitcher from './OptimizedProfileSwitcher';
 import Spinner from 'components-react/shared/Spinner';
 import GoLiveError from './GoLiveError';
-import UserSettingsUltra from './dual-output/UserSettingsUltra';
-import UserSettingsNonUltra from './dual-output/UserSettingsNonUltra';
 import PrimaryChatSwitcher from './PrimaryChatSwitcher';
 import ColorSpaceWarnings from './ColorSpaceWarnings';
 import DualOutputToggle from 'components-react/shared/DualOutputToggle';
@@ -21,21 +18,18 @@ import { DestinationSwitchers } from './DestinationSwitchers';
 import AddDestinationButton from 'components-react/shared/AddDestinationButton';
 import cx from 'classnames';
 
-const PlusIcon = PlusOutlined as Function;
-
 /**
  * Renders settings for starting the stream
  * - Platform switchers
  * - Settings for each platform
  * - Extras settings
  **/
-export default function DualOutputGoLiveSettings() {
+export default function GoLiveSettings() {
   const {
     isAdvancedMode,
     protectedModeEnabled,
     error,
     isLoading,
-    isPrime,
     isDualOutputMode,
     canAddDestinations,
     canUseOptimizedProfile,
@@ -45,7 +39,6 @@ export default function DualOutputGoLiveSettings() {
     enabledPlatforms,
     primaryChat,
     recommendedColorSpaceWarnings,
-    addDestination,
     setPrimaryChat,
   } = useGoLiveSettings().extend(module => {
     const { UserService, VideoEncodingOptimizationService, SettingsService } = Services;
@@ -57,12 +50,7 @@ export default function DualOutputGoLiveSettings() {
         return linkedPlatforms.length + customDestinations.length < 8;
       },
 
-      // in single output mode, only show destination switcher when tiktok has not been linked
-      // users can always stream to tiktok
-      showSelector:
-        !UserService.views.isPrime &&
-        !module.isDualOutputMode &&
-        !module.isPlatformLinked('tiktok'),
+      showSelector: !UserService.views.isPrime && module.isDualOutputMode,
 
       isPrime: UserService.views.isPrime,
 
@@ -86,12 +74,9 @@ export default function DualOutputGoLiveSettings() {
 
   const shouldShowSettings = !error && !isLoading;
   const shouldShowLeftCol = isDualOutputMode ? true : protectedModeEnabled;
-  const shouldShowAddDestButton = canAddDestinations && isPrime;
+  const shouldShowAddDestButton = canAddDestinations;
 
   const shouldShowPrimaryChatSwitcher = hasMultiplePlatforms;
-
-  // TODO: make sure this doesn't jank the UI
-  const leftPaneHeight = shouldShowPrimaryChatSwitcher ? '81%' : '100%';
 
   return (
     <Row gutter={16} className={styles.settingsRow}>
@@ -101,18 +86,19 @@ export default function DualOutputGoLiveSettings() {
           span={8}
           className={cx(styles.leftColumn, { [styles.columnPadding]: !isDualOutputMode })}
         >
-          {isDualOutputMode ? (
-            <Scrollable style={{ height: leftPaneHeight }}>
-              {isPrime && <UserSettingsUltra />}
-              {!isPrime && <UserSettingsNonUltra />}
-            </Scrollable>
-          ) : (
-            <SingleOutputSettings
-              showSelector={showSelector}
-              addDestination={addDestination}
-              shouldShowAddDestButton={shouldShowAddDestButton}
+          <Scrollable style={{ height: '81%' }}>
+            <DualOutputToggle
+              className={cx(styles.dualOutputToggle, styles.columnPadding)}
+              type="single"
+              lightShadow
             />
-          )}
+            {/*DESTINATION SWITCHERS*/}
+            <DestinationSwitchers />
+
+            {/*ADD DESTINATION BUTTON*/}
+            {shouldShowAddDestButton && !showSelector && <AddDestinationButton />}
+          </Scrollable>
+
           {shouldShowPrimaryChatSwitcher && (
             <PrimaryChatSwitcher
               className={styles.columnPadding}
@@ -125,7 +111,10 @@ export default function DualOutputGoLiveSettings() {
       )}
 
       {/*RIGHT COLUMN*/}
-      <Col span={shouldShowLeftCol ? 16 : 24} className={styles.rightColumn}>
+      <Col
+        span={shouldShowLeftCol ? 16 : 24}
+        className={cx(styles.rightColumn, !shouldShowLeftCol && styles.destinationMode)}
+      >
         <Spinner visible={isLoading} relative />
         <GoLiveError />
         {shouldShowSettings && (
@@ -146,35 +135,5 @@ export default function DualOutputGoLiveSettings() {
         )}
       </Col>
     </Row>
-  );
-}
-
-function SingleOutputSettings(p: {
-  showSelector: boolean;
-  addDestination: () => void;
-  shouldShowAddDestButton: boolean;
-}) {
-  return (
-    <Scrollable style={{ height: '81%' }} snapToWindowEdge>
-      <DualOutputToggle
-        className={cx(styles.dualOutputToggle, styles.columnPadding)}
-        type="single"
-        lightShadow
-      />
-      {/*DESTINATION SWITCHERS*/}
-      <DestinationSwitchers showSelector={p.showSelector} />
-
-      {/*ADD DESTINATION BUTTON*/}
-      {p.shouldShowAddDestButton ? (
-        <div className={styles.columnPadding}>
-          <a className={styles.addDestinationBtn} onClick={p.addDestination}>
-            <PlusIcon style={{ paddingLeft: '17px', fontSize: '24px' }} />
-            <span style={{ flex: 1 }}>{$t('Add Destination')}</span>
-          </a>
-        </div>
-      ) : (
-        <AddDestinationButton />
-      )}
-    </Scrollable>
   );
 }

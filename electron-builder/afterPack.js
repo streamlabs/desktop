@@ -1,6 +1,7 @@
 const cp = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 
 function signAndCheck(identity, filePath) {
   console.log(`Signing: ${filePath}`);
@@ -50,9 +51,7 @@ function signBinaries(identity, directory) {
   }
 }
 
-exports.default = async function(context) {
-  if (process.platform !== 'darwin') return;
-
+function afterPackMac() {
   console.log('Updating dependency paths');
   cp.execSync(
     `install_name_tool -change ./node_modules/node-libuiohook/libuiohook.1.dylib @executable_path/../Resources/app.asar.unpacked/node_modules/node-libuiohook/libuiohook.1.dylib \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Resources/app.asar.unpacked/node_modules/node-libuiohook/node_libuiohook.node\"`,
@@ -72,4 +71,22 @@ exports.default = async function(context) {
     context.packager.config.mac.identity,
     `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Resources/app.asar.unpacked`,
   );
+}
+
+function afterPackWin() {
+  if (process.env.SLOBS_NO_SIGN) return;
+
+  // Ensure an empty signing manifest file
+  const signingPath = path.join(os.tmpdir(), 'sldesktopsigning');
+  fs.writeFileSync(signingPath, '', { flag: 'w' });
+}
+
+exports.default = async function(context) {
+  if (process.platform === 'darwin') {
+    afterPackMac();
+  }
+
+  if (process.platform === 'win32') {
+    afterPackWin();
+  }
 };

@@ -1,4 +1,4 @@
-import { IExportOptions } from '.';
+import { IExportOptions } from '../models/rendering.models';
 
 /**
  * Performs 2d compositing on a frame.

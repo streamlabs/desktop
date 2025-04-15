@@ -2,7 +2,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import * as remote from '@electron/remote';
 import { Services } from 'components-react/service-provider';
 import styles from './ClipsView.m.less';
-import { EHighlighterView, IAiClip, IViewState, TClip } from 'services/highlighter';
+import {
+  EHighlighterView,
+  IAiClip,
+  IViewState,
+  TClip,
+} from 'services/highlighter/models/highlighter.models';
 import ClipPreview, { formatSecondsToHMS } from 'components-react/highlighter/ClipPreview';
 import { ReactSortable } from 'react-sortablejs';
 import Scrollable from 'components-react/shared/Scrollable';
@@ -46,7 +51,7 @@ export default function ClipsView({
     ordered: { id: string }[];
     orderedFiltered: { id: string }[];
   }>({ ordered: [], orderedFiltered: [] });
-
+  const game = HighlighterService.getGameByStreamId(props.id);
   const [activeFilter, setActiveFilter] = useState('all'); // Currently not using the setActiveFilter option
 
   const [clipsLoaded, setClipsLoaded] = useState<boolean>(false);
@@ -281,6 +286,7 @@ export default function ClipsView({
                           }}
                           combinedClipsDuration={getCombinedClipsDuration(getClips())}
                           roundDetails={HighlighterService.getRoundDetails(getClips())}
+                          game={game}
                         />
                       )}
                   </div>
@@ -305,6 +311,9 @@ export default function ClipsView({
                               }}
                               emitShowRemove={() => {
                                 setModal({ modal: 'remove', inspectedPathId: id });
+                              }}
+                              emitOpenFileInLocation={() => {
+                                remote.shell.showItemInFolder(clip.path);
                               }}
                               streamId={streamId}
                             />

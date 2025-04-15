@@ -2,16 +2,14 @@ import React, { CSSProperties } from 'react';
 import { $t } from 'services/i18n';
 import { RadioInput } from './inputs';
 import { TDisplayType } from 'services/settings-v2';
-import { platformLabels, TPlatform } from 'services/platforms';
+import { TPlatform } from 'services/platforms';
 import { useGoLiveSettings } from 'components-react/windows/go-live/useGoLiveSettings';
-import { ICustomStreamDestination } from 'services/settings/streaming';
 
 interface IDisplaySelectorProps {
   title: string;
   index: number;
   platform: TPlatform | null;
-  nolabel?: boolean;
-  nomargin?: boolean;
+  label: string;
   className?: string;
   style?: CSSProperties;
 }
@@ -25,9 +23,6 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
   } = useGoLiveSettings();
 
   const setting = p.platform ? platforms[p.platform] : customDestinations[p.index];
-  const label = p.platform
-    ? platformLabels(p.platform)
-    : (setting as ICustomStreamDestination).name;
 
   const displays = [
     {
@@ -43,14 +38,13 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
   return (
     <RadioInput
       data-test="display-input"
-      id={`${p.platform ?? p.index}-display-input`}
+      id={`${p.platform}-display-input`}
       direction="horizontal"
-      label={label}
-      nolabel={p?.nolabel ?? undefined}
-      nomargin={p?.nomargin ?? undefined}
+      label={p.label}
       labelAlign="left"
       labelCol={{ offset: 0 }}
       colon
+      gapsize={0}
       defaultValue="horizontal"
       options={displays}
       onChange={(val: TDisplayType) =>

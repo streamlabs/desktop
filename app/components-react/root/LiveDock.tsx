@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import * as remote from '@electron/remote';
 import cx from 'classnames';
 import Animation from 'rc-animate';
-import { Menu } from 'antd';
+import { Button, Menu } from 'antd';
 import pick from 'lodash/pick';
 import { initStore, useController } from 'components-react/hooks/zustand';
 import { EStreamingState } from 'services/streaming';
@@ -346,12 +346,6 @@ function LiveDock(p: { onLeft: boolean }) {
 
   const chat = useMemo(() => {
     const primaryChat = Services.UserService.state.auth!.primaryPlatform;
-    const showTiktokInfo =
-      visibleChat === 'tiktok' || (visibleChat === 'default' && primaryChat === 'tiktok');
-
-    if (showTiktokInfo) {
-      return <TikTokChatInfo />;
-    }
 
     const showInstagramInfo = primaryChat === 'instagram';
     if (showInstagramInfo) {

@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import { EAuthProcessState } from 'services/user';
 import { $t } from 'services/i18n';
-import { EPlatformCallResult, getPlatformService, TPlatform } from '../../services/platforms';
+import {
+  EPlatformCallResult,
+  externalAuthPlatforms,
+  getPlatformService,
+  TPlatform,
+} from '../../services/platforms';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
 import { alertAsync } from 'components-react/modals';
@@ -38,9 +43,7 @@ export default function PlatformMerge(p: IPlatformMergeProps) {
 
   async function mergePlatform() {
     if (!platform) return;
-    const mode = ['youtube', 'twitch', 'twitter', 'tiktok'].includes(platform)
-      ? 'external'
-      : 'internal';
+    const mode = externalAuthPlatforms.includes(platform) ? 'external' : 'internal';
     await UserService.actions.return
       .startAuth(platform, mode, true)
       .then(res => {

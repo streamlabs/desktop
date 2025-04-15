@@ -1,50 +1,42 @@
 import { test, useWebdriver } from '../../helpers/webdriver';
-import { setFormDropdown } from '../../helpers/webdriver/forms';
-import { focusChild, focusMain } from '../../helpers/modules/core';
+import { clickCheckbox, getNumElements, select } from '../../helpers/modules/core';
+import { showSettingsWindow } from '../../helpers/modules/settings/settings';
+import { useForm } from '../../helpers/modules/forms';
+import { ListInputController } from '../../helpers/modules/forms/list';
 
+// not a react hook
+// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
 
 test('Populates simple output mode settings', async t => {
-  const { app } = t.context;
+  await showSettingsWindow('Output');
+  const { fillForm } = useForm('Mode');
 
-  await focusMain();
-  await (await app.client.$('.side-nav .icon-settings')).click();
-
-  await focusChild();
-  await (await app.client.$('li=Output')).click();
-
-  await setFormDropdown('Output Mode', 'Simple');
+  await fillForm({ Mode: 'Simple' });
 
   // Video Bitrate
-  const videoBitrate = await (
-    await app.client.$(
-      // TODO: this selector is too brittle, but unfortunately we don't have control over this
-      '.input-label + .input-body .number-input input',
-    )
-  ).getValue();
-  t.is(parseInt(videoBitrate, 10), 2500);
+  const videoBitrate = await (await select('[data-title="Video Bitrate"]')).getValue();
+  t.is(parseInt(videoBitrate, 10), 2500, 'Video Bitrate is correct default');
+
+  const { getInput, getInputListValues, assertFormContains } = useForm('Streaming');
 
   // Audio Bitrates dropdown
-  const audioBitrates = await app.client.execute(() => {
-    return Array.from(
-      document.querySelectorAll('div[data-name=ABitrate] ul li span span'),
-    ).map(el => parseInt(el.textContent, 10));
-  });
+  const audioBitrates: { label: string; value: string }[] = await getInputListValues('ABitrate');
 
-  t.true(audioBitrates.length > 0, 'Audio bitrates exists');
+  audioBitrates.forEach(async (el: { label: string; value: string }) => {
+    const text = el.value;
+    t.true(parseInt(text, 10) > 0, 'Audio bitrate option is a number');
+  });
+  t.true((await getNumElements('div[data-option-list="ABitrate"')) > 0, 'Audio bitrates exist');
 
   // Test that we can switch encoders and all options are present
-  for (const encoder of [
-    'Software (x264)', // CI doesn't have hardware support
-  ]) {
-    await t.notThrowsAsync(
-      setFormDropdown('Encoder', encoder),
-      `${encoder} was not found as an option`,
-    );
-  }
+  const encoders: ListInputController<{ label: string; value: string }> = await getInput(
+    'StreamEncoder',
+  );
+  t.true((await encoders.getOptions()).length > 0, 'Encoders exist');
+
+  assertFormContains({ StreamEncoder: 'Software (x264)' });
 
   // We can enable replay buffer
-  await t.notThrowsAsync(
-    async () => await (await app.client.$('label=Enable Replay Buffer')).click(),
-  );
+  await clickCheckbox('RecRB');
 });

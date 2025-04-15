@@ -1,39 +1,67 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Services } from 'components-react/service-provider';
 import { $t } from 'services/i18n';
-import { TClip } from 'services/highlighter';
-import { sortClipsByOrder } from './utils';
+import { TClip } from 'services/highlighter/models/highlighter.models';
+import { sortClipsByOrder, getCombinedClipsDuration } from './utils';
 import MiniClipPreview from './MiniClipPreview';
 import { PauseButton, PlayButton } from './StreamCard';
 import styles from './PreviewModal.m.less';
+import { Button } from 'antd';
+import { TModalClipsView } from './ClipsView';
+import { CheckboxInput } from 'components-react/shared/inputs';
+import { formatSecondsToHMS } from './ClipPreview';
+import { duration } from 'moment';
+
+interface IPlaylist {
+  src: string;
+  path: string;
+  start: number;
+  end: number;
+  type: string;
+  enabled: boolean;
+  duration: number;
+}
+
 export default function PreviewModal({
   close,
   streamId,
+  emitSetShowModal,
 }: {
   close: () => void;
   streamId: string | undefined;
+  emitSetShowModal: (modal: TModalClipsView | null) => void;
 }) {
-  if (streamId === undefined) {
-    close();
-    console.error('streamId is required');
-  }
-  const { HighlighterService } = Services;
+  const { HighlighterService, UsageStatisticsService } = Services;
   const clips = HighlighterService.getClips(HighlighterService.views.clips, streamId);
   const { intro, outro } = HighlighterService.views.video;
   const audioSettings = HighlighterService.views.audio;
-  const [currentClipIndex, setCurrentClipIndex] = useState(0);
-  const currentClipIndexRef = useRef(0);
-  const sortedClips = [...sortClipsByOrder(clips, streamId).filter(c => c.enabled)];
+  const sortedClips = [...sortClipsByOrder(clips, streamId)];
+  const initialIndex = getInitialIndex(intro.duration, sortedClips);
+  const [currentClipIndex, setCurrentClipIndex] = useState(initialIndex);
+  const currentClipIndexRef = useRef(initialIndex);
+  const [showDisabled, setShowDisabled] = useState(true);
 
-  const playlist = [
-    ...(intro.duration
+  useEffect(() => {
+    UsageStatisticsService.recordShown('ClipsPreview', streamId);
+  }, []);
+
+  function getInitialIndex(introDuration: number | null, sortedClips: TClip[]): number {
+    if (introDuration) return 0;
+    const firstEnabledIndex = sortedClips.findIndex(clip => clip.enabled);
+    return firstEnabledIndex === -1 ? 0 : firstEnabledIndex;
+  }
+
+  const playlist: IPlaylist[] = [
+    ...(intro.duration && intro.path
       ? [
           {
             src: intro.path,
             path: intro.path,
             start: 0,
-            end: intro.duration!,
+            end: intro.duration,
             type: 'video/mp4',
+            enabled: true,
+            duration: intro.duration,
           },
         ]
       : []),
@@ -43,6 +71,8 @@ export default function PreviewModal({
       start: clip.startTrim,
       end: clip.duration! - clip.endTrim,
       type: 'video/mp4',
+      enabled: clip.enabled,
+      duration: clip.duration! - clip.endTrim - clip.startTrim,
     })),
     ...(outro.duration && outro.path
       ? [
@@ -50,8 +80,10 @@ export default function PreviewModal({
             src: outro.path,
             path: outro.path,
             start: 0,
-            end: outro.duration!,
+            end: outro.duration,
             type: 'video/mp4',
+            enabled: true,
+            duration: outro.duration,
           },
         ]
       : []),
@@ -66,31 +98,36 @@ export default function PreviewModal({
     return Math.abs(a - b) <= tolerance;
   }
 
+  const findNextEnabledClipIndex = (currentIndex: number): number => {
+    const enabledIndices = playlist
+      .map((clip, index) => (clip.enabled ? index : -1))
+      .filter(index => index !== -1);
+
+    if (enabledIndices.length === 0) return currentIndex;
+
+    // Find next enabled index after current
+    const nextIndex = enabledIndices.find(index => index > currentIndex);
+    return nextIndex ?? enabledIndices[0]; // Wrap around if at end
+  };
+
+  const nextClip = () => {
+    if (!isChangingClip.current) {
+      isChangingClip.current = true;
+
+      setCurrentClipIndex(prevIndex => {
+        const newIndex = findNextEnabledClipIndex(prevIndex);
+
+        playAudio(newIndex, true);
+
+        return newIndex;
+      });
+    }
+  };
+
   useEffect(() => {
     if (!videoPlayer.current) {
       return;
     }
-    //Pause gets also triggered when the video ends. We dont want to change the clip in that case
-    const nextClip = () => {
-      if (!isChangingClip.current) {
-        isChangingClip.current = true;
-
-        setCurrentClipIndex(prevIndex => {
-          const newIndex = (prevIndex + 1) % playlist.length;
-
-          videoPlayer.current!.src = playlist[currentClipIndex].src;
-          videoPlayer.current!.load();
-
-          playAudio(newIndex, newIndex === prevIndex + 1);
-
-          return newIndex;
-        });
-
-        setTimeout(() => {
-          isChangingClip.current = false;
-        }, 500);
-      }
-    };
 
     const handleEnded = () => {
       nextClip();
@@ -137,7 +174,7 @@ export default function PreviewModal({
         audio.current = null;
       }
     };
-  }, [playlist.length, videoPlayer.current]);
+  }, [playlist.filter(clip => clip.enabled).length, videoPlayer.current]);
 
   useEffect(() => {
     currentClipIndexRef.current = currentClipIndex;
@@ -147,7 +184,7 @@ export default function PreviewModal({
     videoPlayer.current!.src = playlist[currentClipIndex].src;
     videoPlayer.current!.load();
     videoPlayer.current!.play().catch(e => console.error('Error playing video:', e));
-
+    isChangingClip.current = false;
     // currently its done by querying DOM, don't want to store a giant array of refs
     // that wont be used otherwise
     document.getElementById('preview-' + currentClipIndex)?.scrollIntoView({
@@ -184,10 +221,6 @@ export default function PreviewModal({
       return;
     }
     setCurrentClipIndex(index);
-
-    const clip = playlist[index];
-    videoPlayer.current!.src = clip.src;
-    videoPlayer.current!.load();
 
     playAudio(index);
   }
@@ -239,7 +272,7 @@ export default function PreviewModal({
       <div style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9' }}>
         <video onClick={togglePlay} ref={videoPlayer} className={styles.videoPlayer} />
       </div>
-      <div style={{ display: 'flex', marginTop: '16px' }}>
+      <div style={{ display: 'flex', marginTop: '16px', minHeight: '50px' }}>
         <div style={{ cursor: 'pointer' }} onClick={() => togglePlay()}>
           {playPauseButton()}
         </div>
@@ -249,7 +282,12 @@ export default function PreviewModal({
               let content;
               if (path === intro.path || path === outro.path) {
                 content = (
-                  <div style={{ height: '34px' }}>
+                  <div
+                    style={{ height: '34px', borderRadius: '6px', overflow: 'hidden' }}
+                    onClick={() => {
+                      jumpToClip(index);
+                    }}
+                  >
                     <video
                       id={'preview-' + index}
                       style={{ height: '100%' }}
@@ -262,7 +300,25 @@ export default function PreviewModal({
                   </div>
                 );
               } else {
-                content = <MiniClipPreview clipId={path}></MiniClipPreview>;
+                content = (
+                  <MiniClipPreview
+                    clipId={path}
+                    showDisabled={showDisabled}
+                    clipStateChanged={(clipId, newState) => {
+                      playlist[index].enabled = newState;
+                      if (playlist[index].path === playlist[currentClipIndex].path) {
+                        if (newState === true) return;
+                        // If user don't want that clip and disables, jump to next clip
+
+                        const nextEnabledClipIndex = findNextEnabledClipIndex(index);
+                        jumpToClip(nextEnabledClipIndex);
+                      }
+                    }}
+                    emitPlayClip={() => {
+                      jumpToClip(index);
+                    }}
+                  ></MiniClipPreview>
+                );
               }
 
               return (
@@ -270,8 +326,9 @@ export default function PreviewModal({
                   key={'preview-mini' + index}
                   id={'preview-' + index}
                   className={styles.timelineItem}
-                  onClick={() => {
-                    jumpToClip(index);
+                  style={{
+                    outline: index === currentClipIndex ? '1px solid var(--teal-hover)' : 'unset',
+                    outlineOffset: '-2px',
                   }}
                 >
                   {content}
@@ -279,6 +336,45 @@ export default function PreviewModal({
               );
             })}
           </div>
+        </div>
+      </div>
+      <div className={styles.actionWrapper}>
+        <div className={styles.videoDurationWrapper}>
+          <span>0m 0s</span>
+
+          <span>
+            {formatSecondsToHMS(
+              getCombinedClipsDuration(
+                // Duration is calculated when initialising the playlist
+                playlist.map(clip => {
+                  return {
+                    duration: clip.enabled ? clip.duration : 0,
+                    path: clip.path,
+                    startTrim: 0,
+                    endTrim: 0,
+                  } as TClip;
+                }),
+              ),
+            )}
+          </span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+          <CheckboxInput
+            label={'Show disabled clips'}
+            value={showDisabled}
+            onChange={() => {
+              setShowDisabled(!showDisabled);
+            }}
+          />
+          <Button
+            type="primary"
+            onClick={() => {
+              close();
+              emitSetShowModal('export');
+            }}
+          >
+            {$t('Export')}
+          </Button>
         </div>
       </div>
     </div>

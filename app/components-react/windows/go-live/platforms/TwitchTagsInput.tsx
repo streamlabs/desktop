@@ -28,7 +28,11 @@ export function TwitchTagsInput(p: TTwitchTagsInputProps) {
   }
 
   function specialCharacterValidator(rule: unknown, values: string[], callback: Function) {
-    if (values.some(tag => !/^[a-zA-Z0-9]*$/.test(tag))) {
+    /*
+     * Allow letters, numbers, accent marks, disallow special characters.
+     * https://help.twitch.tv/s/article/guide-to-tags?language=en_US
+     */
+    if (values.some(tag => !/^[\p{L}\p{N}\p{M}]+$/u.test(tag))) {
       callback($t('Do not include special characters or spaces in your tag'));
     } else {
       callback();

@@ -1,6 +1,6 @@
 import execa from 'execa';
 import fs from 'fs';
-import { FFMPEG_EXE } from './constants';
+import { FFMPEG_EXE } from '../constants';
 import { AudioMixError } from './errors';
 
 interface IAudioInput {

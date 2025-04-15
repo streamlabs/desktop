@@ -23,7 +23,6 @@ const args = process.argv.slice(2);
 
 console.log(process.env);
 
-
 (async function main() {
   // prepare the dist dir
   rimraf.sync(CONFIG.dist);
@@ -94,7 +93,6 @@ async function updateCheckAndUploadScreenshots() {
     console.error('No results found for screentest');
   }
 
-
   // create a conclusion
   let conclusion = '';
   let title = '';
@@ -131,7 +129,7 @@ async function updateCheckAndUploadScreenshots() {
       head_sha: commitSHA,
       conclusion,
       completed_at: new Date().toISOString(),
-      details_url: screenshotsUrl || 'https://github.com/stream-labs/streamlabs-obs',
+      details_url: screenshotsUrl || 'https://github.com/streamlabs/desktop',
       output: {
         title,
         summary,

@@ -1,14 +1,9 @@
 @import '../../styles/index.less';
 
 .add-destination-group {
-  width: 100%;
   gap: 15px;
-  padding: 0px 15px 15px 15px;
-
-  &.ultra-btn-group {
-    width: calc(100% - 6px);
-    margin: 15px 3px;
-  }
+  margin: 15px 0px;
+  padding-bottom: 15px;
 
   :global(.ant-space-item) {
     width: 100%;
@@ -18,54 +13,70 @@
     width: 100%;
   }
 
-  button.add-destination-btn {
-    width: 100%;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    position: relative;
-    margin: auto;
-
-    &:global(.ant-btn) {
-      display: flex;
-      font-weight: 500;
-      padding: 20px 10px;
-      background: var(--dropdown-bg);
-
-      &:hover {
-        transition: 0.3s !important;
-      }
-
-      &.default {
-        min-height: 58px;
-        transition: box-shadow 0.3s;
-        border: 1px solid var(--dropdown-bg);
-        border-radius: 4px;
-
-        &:hover {
-          box-shadow: 0 0 50px rgba(255, 255, 255, 0.1) inset;
-        }
-      }
-    }
-
-    i.add-destination-icon {
-      font-size: 18px;
-      margin-right: 10px;
-    }
-
-    .btn-text {
-      display: flex;
-      align-items: center;
-    }
-
-    &.ultra-btn {
-      justify-content: space-between;
-
-      .ultra-icon {
-        height: 15px;
-        width: 15px;
-      }
-    }
+  &.ultra-btn-group {
+    margin: 15px 3px;
   }
+}
+
+button.add-destination-btn {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  margin: auto;
+  margin-bottom: 15px;
+  background-color: var(--background);
+
+  &:hover {
+    transition: 0.3s !important;
+    box-shadow: 0 0 50px rgba(255, 255, 255, 0.1) inset;
+  }
+
+  .add-destination-icon {
+    font-size: 18px;
+    margin-right: 10px;
+  }
+
+  .btn-text {
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+  }
+
+  .btn-text:hover {
+    font-weight: 500;
+  }
+}
+
+.default-output-btn:extend(button.add-destination-btn) {
+  border: 1px dashed var(--border) !important;
+  min-height: 58px;
+  transition: border 0.3s, box-shadow 0.3s !important;
+  margin: 0px 15px 15px 15px !important;
+  width: calc(100% - 30px) !important;
+  background-color: var(--dark-background) !important;
+  font-weight: 500;
+
+  &:hover {
+    border: 1px solid var(--button) !important;
+  }
+}
+
+.ultra-btn:extend(button.add-destination-btn) {
+  margin: 0px 15px !important;
+  width: calc(100% - 30px) !important;
+  font-weight: 500;
+
+  .ultra-icon {
+    height: 15px;
+    width: 15px;
+  }
+}
+
+.dual-output-ultra-btn:extend(.ultra-btn) {
+  margin: 0px !important;
+  width: 100% !important;
 }

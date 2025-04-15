@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { LegacyRef, RefObject, forwardRef, useMemo, useRef, useState } from 'react';
 import { ISettingsSubCategory } from '../../services/settings';
 import {
   IObsInput,
@@ -12,27 +12,29 @@ import {
   IObsBitmaskInput,
   IObsListOption,
 } from '../../components/obs/inputs/ObsInput';
-import Form, { useForm, useFormContext } from '../shared/inputs/Form';
+import Form, { useFormContext } from '../shared/inputs/Form';
 import {
   CheckboxInput,
   ColorInput,
   FileInput,
   ListInput,
-  NumberInput,
   SliderInput,
   TextAreaInput,
-  TextInput,
   TInputLayout,
+  useTextInput,
 } from '../shared/inputs';
 import { IObsFormType } from '../windows/settings/ObsSettings';
+import { showFileDialog } from '../shared/inputs/FileInput';
 import cloneDeep from 'lodash/cloneDeep';
-import { Button, Collapse } from 'antd';
+import { Button, Collapse, Input, InputNumber } from 'antd';
 import InputWrapper from '../shared/inputs/InputWrapper';
 import { $t, $translateIfExist, $translateIfExistWithCheck } from '../../services/i18n';
 import Utils from 'services/utils';
 import cx from 'classnames';
 import * as obs from '../../../obs-api';
 import Tabs from 'components-react/shared/Tabs';
+import { ANT_NUMBER_FEATURES, TNumberInputProps } from 'components-react/shared/inputs/NumberInput';
+import { ANT_INPUT_FEATURES, TTextInputProps } from 'components-react/shared/inputs/TextInput';
 interface IExtraInputProps {
   debounce?: number;
 }
@@ -43,12 +45,15 @@ export interface IObsFormProps {
   layout?: TInputLayout;
   style?: React.CSSProperties;
   extraProps?: Record<string, IExtraInputProps>;
+  name?: string;
 }
 
 /**
  * Renders a form with OBS inputs
  */
 export function ObsForm(p: IObsFormProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
   function onInputHandler(value: IObsInput<TObsValue>, index: number) {
     const newValue = cloneDeep(p.value);
     newValue.splice(index, 1, value);
@@ -56,10 +61,13 @@ export function ObsForm(p: IObsFormProps) {
     p.onChange(newValue, index);
   }
 
+  const name = p?.name || p.value[0]?.name;
+
   return (
-    <Form layout={p.layout || 'vertical'} style={p.style}>
+    <Form layout={p.layout || 'vertical'} style={p.style} name={name}>
       {p.value.map((inputData, inputIndex) => (
         <ObsInput
+          ref={inputRef}
           value={inputData}
           key={inputData.name}
           inputIndex={inputIndex}
@@ -81,7 +89,7 @@ interface IObsInputProps {
 /**
  * Renders a single OBS input
  */
-function ObsInput(p: IObsInputProps) {
+const ObsInput = forwardRef<{}, IObsInputProps>((p, ref) => {
   const formContext = useFormContext();
   const layout = formContext?.layout;
   if (!p.value.visible) return <></>;
@@ -109,29 +117,55 @@ function ObsInput(p: IObsInputProps) {
 
   switch (type) {
     case 'OBS_PROPERTY_DOUBLE':
-      return <NumberInput {...inputProps} />;
+      return <ObsNumberInput {...inputProps} ref={ref} data-name={p.value.name} />;
     case 'OBS_PROPERTY_INT':
       // eslint-disable-next-line no-case-declarations
       const intVal = p.value as IObsNumberInputValue;
 
-      return <NumberInput {...inputProps} step={1} min={intVal.minVal} max={intVal.maxVal} />;
+      return (
+        <ObsNumberInput
+          {...inputProps}
+          step={1}
+          min={intVal.minVal}
+          max={intVal.maxVal}
+          ref={ref}
+          data-name={p.value.name}
+        />
+      );
     case 'OBS_PROPERTY_EDIT_TEXT':
     case 'OBS_PROPERTY_TEXT':
       // eslint-disable-next-line no-case-declarations
       const textVal = p.value as IObsTextInputValue;
 
       if (textVal.multiline) {
-        return <TextAreaInput {...inputProps} debounce={300} />;
+        return <TextAreaInput {...inputProps} debounce={300} data-name={p.value.name} />;
       } else if (textVal.infoField) {
-        const style = {};
-        if (textVal.infoType === obs.ETextInfoType.Warning) {
-          Object.assign(style, { color: 'var(--info)' });
-        } else if (textVal.infoType === obs.ETextInfoType.Error) {
-          Object.assign(style, { color: 'var(--warning)' });
+        const infoField = (textVal.infoField as unknown) as obs.ETextInfoType;
+        switch (textVal.infoField) {
+          case infoField === obs.ETextInfoType.Warning:
+            return (
+              <InputWrapper style={{ color: 'var(--info)' }} data-name={p.value.name}>
+                {textVal.description}
+              </InputWrapper>
+            );
+          case infoField === obs.ETextInfoType.Error:
+            return (
+              <InputWrapper style={{ color: 'var(--warning)' }} data-name={p.value.name}>
+                {textVal.description}
+              </InputWrapper>
+            );
+          default:
+            return <InputWrapper data-name={p.value.name}>{textVal.description}</InputWrapper>;
         }
-        return <InputWrapper style={style}>{textVal.description}</InputWrapper>;
       } else {
-        return <TextInput {...inputProps} isPassword={inputProps.masked} />;
+        return (
+          <ObsTextInput
+            {...inputProps}
+            isPassword={inputProps.masked}
+            ref={ref}
+            data-name={p.value.name}
+          />
+        );
       }
     case 'OBS_PROPERTY_LIST':
       // eslint-disable-next-line no-case-declarations
@@ -147,7 +181,19 @@ function ObsInput(p: IObsInputProps) {
           originalLabel: opt.description,
         };
       });
-      return <ListInput {...inputProps} options={options} allowClear={false} />;
+
+      return (
+        <ListInput
+          {...inputProps}
+          options={options}
+          allowClear={false}
+          nolabel={p.value.description === ''}
+          style={{
+            marginBottom: (p.value as IObsListInput<unknown>)?.subType === '' ? '8px' : '24px',
+          }}
+          data-name={p.value.name}
+        />
+      );
 
     case 'OBS_INPUT_RESOLUTION_LIST':
       // eslint-disable-next-line no-case-declarations
@@ -167,19 +213,27 @@ function ObsInput(p: IObsInputProps) {
         };
       });
 
-      return <ObsInputResolutionField inputProps={inputProps} options={resolutions} />;
+      return (
+        <ObsInputListCustomResolutionInput
+          inputProps={inputProps}
+          options={resolutions}
+          data-name={p.value.name}
+        />
+      );
 
     case 'OBS_PROPERTY_BUTTON':
       return (
         <InputWrapper>
-          <Button onClick={() => inputProps.onChange(true)}>{inputProps.label}</Button>
+          <Button onClick={() => inputProps.onChange(true)} data-name={p.value.name}>
+            {inputProps.label}
+          </Button>
         </InputWrapper>
       );
 
     case 'OBS_PROPERTY_BOOL':
       return (
         <InputWrapper style={{ marginBottom: '8px' }} nowrap={layout === 'vertical'}>
-          <CheckboxInput {...inputProps} />
+          <CheckboxInput {...inputProps} data-name={p.value.name} />
         </InputWrapper>
       );
 
@@ -198,6 +252,7 @@ function ObsInput(p: IObsInputProps) {
           onChange={(v: any) => {
             inputProps.onChange(Utils.rgbaToInt(v.r, v.g, v.b, Math.round(v.a * 255)));
           }}
+          data-name={p.value.name}
         />
       );
 
@@ -215,47 +270,73 @@ function ObsInput(p: IObsInputProps) {
           hasNumberInput={true}
           debounce={500}
           tooltipPlacement="right"
+          data-name={p.value.name}
         />
       );
 
     case 'OBS_PROPERTY_BITMASK':
       // eslint-disable-next-line no-case-declarations
-      const flags = Utils.numberToBinnaryArray(
-        (p.value as IObsBitmaskInput).value,
-        (p.value as IObsBitmaskInput).size,
-      ).reverse();
+      const flagsVal = p.value as IObsBitmaskInput;
+      // eslint-disable-next-line no-case-declarations
+      const flags = Utils.numberToBinnaryArray(flagsVal.value, flagsVal.size).reverse();
 
       return (
-        <div>
+        <InputWrapper label={flagsVal.description} data-name={p.value.name}>
           {flags.map((flag, index) => (
             <Button
               key={`flag-${index}`}
-              onChange={(v: any) =>
-                inputProps.onChange(Utils.binnaryArrayToNumber(flags.reverse()))
-              }
-              color={flag === 1 ? 'primary' : 'default'}
+              onClick={() => {
+                const newFlags = Array(flagsVal.size).fill(0);
+                newFlags.splice(index, 1, 1);
+                inputProps.onChange(Utils.binnaryArrayToNumber(newFlags.reverse()));
+              }}
               style={{
                 marginRight: '5px',
                 backgroundColor: flag === 1 ? 'var(--primary)' : 'var(--dark-background)',
-                // color: flag === 1 ? 'var(--dark-background)' : 'var(--section)',
-                // borderColor: flag === 1 ? 'var(--dark-background)' : 'var(--section)',
-                padding: '5px',
+                color: flag === 1 ? 'var(--action-button-text)' : 'var(--icon)',
+                borderColor: flag === 1 ? 'var(--primary)' : 'var(--icon)',
+                padding: '10px',
                 lineHeight: 0.75,
               }}
             >
               {index}
             </Button>
           ))}
-        </div>
+        </InputWrapper>
       );
 
     case 'OBS_PROPERTY_PATH':
-      return <FileInput {...inputProps} directory={true} />;
+      return (
+        <ObsTextInput
+          {...inputProps}
+          style={{ marginBottom: '8px' }}
+          addonAfter={
+            <Button onClick={() => showFileDialog({ ...inputProps, directory: true })}>
+              {$t('Browse')}
+            </Button>
+          }
+        />
+      );
+
+    case 'OBS_PROPERTY_UINT':
+      // eslint-disable-next-line no-case-declarations
+      const uintVal = p.value as IObsNumberInputValue;
+
+      return (
+        <ObsNumberInput
+          {...inputProps}
+          step={1}
+          min={uintVal.minVal}
+          max={uintVal.maxVal}
+          ref={ref}
+          data-name={p.value.name}
+        />
+      );
 
     default:
       return <span style={{ color: 'red' }}>Unknown input type {type}</span>;
   }
-}
+});
 
 interface IObsFormGroupProps {
   categoryName?: string;
@@ -278,7 +359,7 @@ export function ObsFormGroup(p: IObsFormGroupProps) {
   const type = p.type || 'default';
 
   return (
-    <div className="form-groups">
+    <div className="form-groups" style={{ paddingBottom: '12px' }}>
       {type === 'default' &&
         sections.map((sectionProps, ind) => (
           <div className="section" key={`${sectionProps.nameSubCategory}${ind}`}>
@@ -296,67 +377,59 @@ export function ObsFormGroup(p: IObsFormGroupProps) {
 
       {type === 'tabs' && <ObsTabbedFormGroup sections={sections} onChange={onChangeHandler} />}
 
-      {type === 'collapsible' &&
-        sections.map((sectionProps, ind) => (
-          <div className="section" key={`${sectionProps.nameSubCategory}${ind}`}>
-            {sectionProps.nameSubCategory === 'Untitled' ? (
-              <div className="section-content">
-                <ObsForm
-                  value={sectionProps.parameters}
-                  onChange={formData => onChangeHandler(formData, ind)}
-                />
-              </div>
-            ) : (
-              <ObsCollapsibleFormItem
-                key={`${sectionProps.nameSubCategory}${ind}`}
-                section={sectionProps}
-                onChange={formData => onChangeHandler(formData, ind)}
-              />
-            )}
-          </div>
-        ))}
+      {type === 'collapsible' && (
+        <ObsCollapsibleFormGroup sections={sections} onChange={onChangeHandler} />
+      )}
     </div>
   );
 }
 
-interface IObsTabbedFormGroupProps {
+export interface IObsSectionedFormGroupProps {
   sections: ISettingsSubCategory[];
   onChange: (formData: TObsFormData, ind: number) => unknown;
 }
 
-export function ObsTabbedFormGroup(p: IObsTabbedFormGroupProps) {
-  const tabs = useMemo(() => {
-    // combine all audio tracks into one tab
-    const filtered = p.sections
-      .filter(sectionProps => sectionProps.nameSubCategory !== 'Untitled')
-      .filter(sectionProps => !sectionProps.nameSubCategory.startsWith('Audio - Track'))
-      .map(sectionProps => sectionProps.nameSubCategory);
+export function ObsCollapsibleFormGroup(p: IObsSectionedFormGroupProps) {
+  return (
+    <>
+      {p.sections.map((sectionProps, ind) => (
+        <div
+          className="section"
+          key={`${sectionProps.nameSubCategory}${ind}`}
+          style={{ padding: sectionProps.nameSubCategory !== 'Untitled' ? '4px' : '16px' }}
+        >
+          {sectionProps.nameSubCategory === 'Untitled' ? (
+            <div className="section-content">
+              <ObsForm
+                value={sectionProps.parameters}
+                onChange={formData => p.onChange(formData, ind)}
+              />
+            </div>
+          ) : (
+            <ObsCollapsibleFormItem
+              key={`${sectionProps.nameSubCategory}${ind}`}
+              name={sectionProps.nameSubCategory}
+              section={sectionProps}
+              onChange={formData => p.onChange(formData, ind)}
+            />
+          )}
+        </div>
+      ))}
+    </>
+  );
+}
 
-    filtered.splice(2, 0, 'Audio');
-    return filtered;
-  }, [p.sections]);
-
+/**
+ * Renders the obs form within tabs
+ * @remark - The tab names are passed in from the parent component because the names of the tabs
+ * may not be the same as the names of the sections.
+ */
+export function ObsTabbedFormGroup(p: IObsSectionedFormGroupProps) {
+  const tabs = p.sections.map(sectionProps => sectionProps.nameSubCategory);
   const [currentTab, setCurrentTab] = useState(p.sections[1].nameSubCategory);
 
-  const [customResolution, setCustomResolution] = useState('');
   return (
-    <div className="section" key="tabbed-section">
-      <Form layout="vertical" style={{ marginBottom: '24px' }}>
-        <TextInput
-          value={customResolution}
-          onChange={val => setCustomResolution(val)}
-          label="testing"
-          rules={[
-            {
-              message: $t('The resolution must be in the format [width]x[height] (i.e. 1920x1080)'),
-              pattern: /^[0-9]+x[0-9]+$/,
-            },
-          ]}
-          uncontrolled={false}
-          name="testing"
-        />
-      </Form>
-
+    <div className="section" key="tabbed-section" style={{ marginBottom: '24px' }}>
       {p.sections.map((sectionProps, ind) => (
         <div className="section-content" key={`${sectionProps.nameSubCategory}${ind}`}>
           {sectionProps.nameSubCategory === 'Untitled' && (
@@ -371,13 +444,7 @@ export function ObsTabbedFormGroup(p: IObsTabbedFormGroupProps) {
 
           {sectionProps.nameSubCategory === currentTab && (
             <ObsForm
-              value={sectionProps.parameters}
-              onChange={formData => p.onChange(formData, ind)}
-            />
-          )}
-
-          {currentTab === 'Audio' && sectionProps.nameSubCategory.startsWith('Audio - Track') && (
-            <ObsForm
+              name={sectionProps.nameSubCategory}
               value={sectionProps.parameters}
               onChange={formData => p.onChange(formData, ind)}
             />
@@ -388,23 +455,25 @@ export function ObsTabbedFormGroup(p: IObsTabbedFormGroupProps) {
   );
 }
 
-interface IObsCollapsibleFormGroupProps {
+interface IObsCollapsibleFormItemProps {
   section: ISettingsSubCategory;
+  name: string;
   onChange: (formData: TObsFormData, ind: number) => unknown;
 }
 
 const { Panel } = Collapse;
 
-export function ObsCollapsibleFormItem(p: IObsCollapsibleFormGroupProps) {
+export function ObsCollapsibleFormItem(p: IObsCollapsibleFormItemProps) {
   const [expanded, setExpanded] = useState(true);
 
   return (
     <Collapse
       className={cx('section-content', 'section-content--collapse')}
       onChange={() => setExpanded(!expanded)}
+      defaultActiveKey={[`${p.section.nameSubCategory}`]}
       expandIcon={({ isActive }) => (
         <i
-          className={cx('fa', 'section-title-icon', {
+          className={cx('fa', 'section-title__icon', {
             'fa-minus': isActive,
             'fa-plus': !isActive,
           })}
@@ -417,75 +486,138 @@ export function ObsCollapsibleFormItem(p: IObsCollapsibleFormGroupProps) {
         header={p.section.nameSubCategory}
         key={`${p.section.nameSubCategory}`}
       >
-        <ObsForm value={p.section.parameters} onChange={p.onChange} />
+        <ObsForm name={p.name} value={p.section.parameters} onChange={p.onChange} />
       </Panel>
     </Collapse>
   );
 }
 
-interface IObsInputResolutionFieldProps {
+interface IObsInputListCustomResolutionInputProps {
   inputProps: any;
   options?: Omit<IObsListOption<unknown>, 'description'>[];
 }
 
-function ObsInputResolutionField(p: IObsInputResolutionFieldProps) {
-  const [custom, setCustom] = useState(false);
-  const [customResolution, setCustomResolution] = useState(p.inputProps.value);
+const ObsInputListCustomResolutionInput = forwardRef<{}, IObsInputListCustomResolutionInputProps>(
+  (p, ref) => {
+    const [custom, setCustom] = useState(false);
+    const [customResolution, setCustomResolution] = useState(p.inputProps.value);
 
-  // const form = useForm();
+    const formContext = useFormContext();
 
-  function onChange(val: string) {
-    // form.validateFields();
-    setCustomResolution(val);
+    function onChange(val: string) {
+      formContext?.antForm.validateFields();
+      setCustomResolution(val);
 
-    if (custom && /^[0-9]+x[0-9]+$/.test(customResolution)) {
-      p.inputProps.onChange(customResolution);
-    }
-  }
-
-  function onClick() {
-    // form.validateFields();
-    const isValid = /^[0-9]+x[0-9]+$/.test(customResolution);
-    if (custom && !isValid) return;
-
-    if (custom && isValid) {
-      p.inputProps.onChange(customResolution);
-      setCustomResolution('');
+      if (custom && /^[0-9]+x[0-9]+$/.test(customResolution)) {
+        p.inputProps.onChange(customResolution);
+      }
     }
 
-    setCustom(!custom);
+    function onClick() {
+      formContext?.antForm.validateFields();
+      const isValid = /^[0-9]+x[0-9]+$/.test(customResolution);
+      if (custom && !isValid) return;
+
+      if (custom && isValid) {
+        p.inputProps.onChange(customResolution);
+        setCustomResolution('');
+      }
+
+      setCustom(!custom);
+    }
+
+    return (
+      <>
+        {custom ? (
+          <ObsTextInput
+            {...p.inputProps}
+            value={customResolution}
+            onChange={val => onChange(val)}
+            label={p.inputProps.label}
+            validateTrigger="onBlur"
+            rules={[
+              {
+                message: $t(
+                  'The resolution must be in the format [width]x[height] (i.e. 1920x1080)',
+                ),
+                pattern: /^[0-9]+x[0-9]+$/,
+              },
+            ]}
+            uncontrolled={false}
+            name={p.inputProps.name}
+            ref={ref}
+          />
+        ) : (
+          <ListInput {...p.inputProps} allowClear={false} options={p.options} />
+        )}
+
+        <Button
+          type={custom ? 'primary' : 'default'}
+          onClick={onClick}
+          style={{ marginBottom: '24px' }}
+        >
+          {custom ? $t('Apply Primary') : $t('Use Custom')}
+        </Button>
+      </>
+    );
+  },
+);
+
+/**
+ * @remark Note: The following is a copy of the shared component `NumberInput` but with the reference forwarded.
+ * This is to allow form validation to work correctly.
+ */
+const ObsNumberInput = forwardRef((p: TNumberInputProps, ref) => {
+  const { inputAttrs, wrapperAttrs, originalOnChange } = useTextInput<typeof p, number>(
+    'number',
+    p,
+    ANT_NUMBER_FEATURES,
+  );
+
+  function onChangeHandler(val: number | string) {
+    // don't emit onChange if the value is out of range
+    if (typeof val !== 'number') return;
+    if (typeof p.max === 'number' && val > p.max) return;
+    if (typeof p.min === 'number' && val < p.min) return;
+    originalOnChange(val);
   }
+
+  const rules = p.rules ? p.rules[0] : {};
 
   return (
-    <>
-      {custom ? (
-        <TextInput
-          {...p.inputProps}
-          value={customResolution}
-          onChange={val => onChange(val)}
-          label={p.inputProps.label}
-          validateTrigger="onBlur"
-          rules={[
-            {
-              message: $t('The resolution must be in the format [width]x[height] (i.e. 1920x1080)'),
-              pattern: /^[0-9]+x[0-9]+$/,
-            },
-          ]}
-          uncontrolled={false}
-          name={p.inputProps.name}
-        />
-      ) : (
-        <ListInput
-          {...p.inputProps}
-          allowClear={false}
-          options={p.options}
-          placeholder={$t('Select Option')}
-        />
-      )}
-
-      <Button type={custom ? 'primary' : 'default'} onClick={onClick}>
-        {custom ? $t('Apply Primary') : $t('Custom')}
-      </Button>
-    </>
+    <InputWrapper
+      {...wrapperAttrs}
+      rules={[{ ...rules, type: 'number' }]}
+      style={{ width: '100%' }}
+    >
+      <InputNumber
+        {...inputAttrs}
+        onChange={onChangeHandler}
+        defaultValue={p.defaultValue}
+        ref={ref as RefObject<HTMLInputElement>}
+        style={{ width: '100%' }}
+      />
+    </InputWrapper>
   );
-}
+});
+
+/**
+ * @remark Note: The following is a copy of the shared component `TextInput` but with the reference forwarded.
+ * This is to allow form validation to work correctly.
+ */
+const ObsTextInput = forwardRef<{}, TTextInputProps>((p, ref) => {
+  const { inputAttrs, wrapperAttrs } = useTextInput('text', p, ANT_INPUT_FEATURES);
+  const textInputAttrs = {
+    ...inputAttrs,
+    onFocus: p.onFocus,
+    onKeyDown: p.onKeyDown,
+    onMouseDown: p.onMouseDown,
+    ref: p.inputRef,
+    prefix: p.prefix,
+  };
+  return (
+    <InputWrapper {...wrapperAttrs} style={{ width: '100%' }}>
+      <Input {...textInputAttrs} ref={ref as LegacyRef<Input>} />
+    </InputWrapper>
+  );
+});

@@ -12,8 +12,13 @@ import * as remote from '@electron/remote';
 import VideoPreview from './VideoPreview';
 import UploadProgress from './UploadProgress';
 
-export default function YoutubeUpload(props: { defaultTitle: string; close: () => void }) {
+export default function YoutubeUpload(props: {
+  defaultTitle: string;
+  close: () => void;
+  streamId: string | undefined;
+}) {
   const [title, setTitle] = useState(props.defaultTitle);
+  const streamId = props.streamId;
   const [description, setDescription] = useState('');
   const [privacy, setPrivacy] = useState('private');
   const [urlCopied, setUrlCopied] = useState(false);
@@ -107,11 +112,14 @@ export default function YoutubeUpload(props: { defaultTitle: string; close: () =
               type="primary"
               onClick={() => {
                 UsageStatisticsService.actions.recordFeatureUsage('HighlighterUpload');
-                HighlighterService.actions.uploadYoutube({
-                  title,
-                  description,
-                  privacyStatus: privacy as TPrivacyStatus,
-                });
+                HighlighterService.actions.uploadYoutube(
+                  {
+                    title,
+                    description,
+                    privacyStatus: privacy as TPrivacyStatus,
+                  },
+                  streamId,
+                );
               }}
             >
               {$t('Publish')}

@@ -1,6 +1,6 @@
 import execa from 'execa';
-import { IExportOptions } from '.';
-import { FADE_OUT_DURATION, FFMPEG_EXE } from './constants';
+import { IExportOptions } from '../models/rendering.models';
+import { FADE_OUT_DURATION, FFMPEG_EXE } from '../constants';
 import { FrameWriteError } from './errors';
 
 export class FrameWriter {

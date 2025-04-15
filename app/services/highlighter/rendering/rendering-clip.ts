@@ -1,10 +1,10 @@
 import execa from 'execa';
 import { FrameSource } from './frame-source';
 import { AudioSource } from './audio-source';
-import { FFPROBE_EXE, SCRUB_SPRITE_DIRECTORY } from './constants';
+import { FFPROBE_EXE, SCRUB_SPRITE_DIRECTORY } from '../constants';
 import fs from 'fs';
-import { IExportOptions } from '.';
 import path from 'path';
+import { IExportOptions } from '../models/rendering.models';
 
 export class RenderingClip {
   frameSource: FrameSource;

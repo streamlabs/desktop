@@ -111,9 +111,15 @@ export enum ETikTokErrorTypes {
 }
 
 export interface ITikTokStartStreamResponse {
-  key: string;
-  rtmp: string;
   id: string;
+  rtmp: string;
+  key: string;
+  chat_url?: string | null;
+  broadcast_id?: string | null;
+  channel_name?: string | null;
+  platform_id?: string | null;
+  region?: string | null;
+  chat_id?: string | null;
 }
 
 export interface ITikTokEndStreamResponse {

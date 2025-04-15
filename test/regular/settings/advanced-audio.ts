@@ -4,8 +4,9 @@ import { getApiClient } from '../../helpers/api-client';
 import { click, closeWindow, focusChild, focusMain } from '../../helpers/modules/core';
 import { useForm } from '../../helpers/modules/forms';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
-import { setFormDropdown } from '../../helpers/webdriver/forms';
 
+// not a react hook
+// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
 
 async function clickAdvancedAudio(t: TExecutionContext) {
@@ -29,7 +30,8 @@ const DEFAULT_DETAIL_SETTINGS = {
 
 test('Change Advanced Audio Settings', async t => {
   await showSettingsWindow('Output');
-  await setFormDropdown('Output Mode', 'Advanced');
+  const { fillForm } = useForm('Mode');
+  await fillForm({ Mode: 'Advanced' });
   await closeWindow('child');
   await focusMain();
 

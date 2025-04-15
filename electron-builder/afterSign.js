@@ -1,7 +1,10 @@
 const { notarize } = require('@electron/notarize');
 const fs = require('fs');
+const cp = require('child_process');
+const path = require('path');
+const os = require('os');
 
-exports.default = async function notarizing(context) {
+async function notarizeMac() {
   if (process.env.SLOBS_NO_NOTARIZE) return;
   if (process.platform !== 'darwin') return;
 
@@ -25,4 +28,27 @@ exports.default = async function notarizing(context) {
   });
 
   console.log('Notarization finished.');
+}
+
+async function afterPackWin() {
+  if (process.env.SLOBS_NO_SIGN) return;
+
+  const signingPath = path.join(os.tmpdir(), 'sldesktopsigning');
+
+  if (fs.existsSync(signingPath)) {
+    cp.execSync(`logisign client --client logitech-cpg-sign-client --app streamlabs --filelist ${signingPath}`, { stdio: 'inherit' });
+    fs.unlinkSync(signingPath);
+  } else {
+    throw new Error('EXPECTED TO SIGN BINARIES BUT SIGNING MANIFEST IS MISSING');
+  }
+}
+
+exports.default = async function afterSign(context) {
+  if (process.platform === 'darwin') {
+    await notarizeMac();
+  }
+
+  if (process.platform === 'win32') {
+    await afterPackWin();
+  }
 };

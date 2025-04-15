@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import execa from 'execa';
-import { FFMPEG_EXE } from './constants';
+import { FFMPEG_EXE } from '../constants';
 import { AudioReadError } from './errors';
 
 /**
@@ -23,14 +23,22 @@ export class AudioSource {
   async extract() {
     /* eslint-disable */
     const args = [
-      '-ss', this.startTrim.toString(),
-      '-i', this.sourcePath,
-      '-t', (this.duration - this.startTrim - this.endTrim).toString(),
-      '-sample_fmt', 's32',
-      '-ar', '48000',
-      '-map', 'a:0',
-      '-c:a', 'flac',
-      '-filter:a', 'apad',
+      '-ss',
+      this.startTrim.toString(),
+      '-i',
+      this.sourcePath,
+      '-t',
+      (this.duration - this.startTrim - this.endTrim).toString(),
+      '-sample_fmt',
+      's32',
+      '-ar',
+      '48000',
+      '-map',
+      'a:0',
+      '-c:a',
+      'flac',
+      '-filter:a',
+      'apad',
       '-y',
       this.outPath,
     ];

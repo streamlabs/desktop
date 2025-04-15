@@ -39,6 +39,8 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
   const defaultProps = { layoutMode: 'singlePlatform' as TLayoutMode };
   const p: IProps = { ...defaultProps, ...rawProps };
 
+  const { HighlighterService } = Services;
+
   function updatePlatform(patch: Partial<ICommonPlatformSettings>) {
     const platformSettings = p.value;
     p.onChange({ ...platformSettings, ...patch });
@@ -90,6 +92,10 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
     maxCharacters = 140;
   }
 
+  if (!enabledPlatforms.includes('twitch') && HighlighterService.views.useAiHighlighter) {
+    HighlighterService.actions.setAiHighlighter(false);
+  }
+
   const titleTooltip = useMemo(() => {
     if (enabledPlatforms.includes('tiktok')) {
       return $t('Only 32 characters of your title will display on TikTok');
@@ -137,11 +143,11 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
               />
             )}
 
-            {aiHighlighterFeatureEnabled &&
+            {/* {aiHighlighterFeatureEnabled &&
               enabledPlatforms &&
               !enabledPlatforms.includes('twitch') && (
                 <AiHighlighterToggle game={undefined} cardIsExpanded={false} />
-              )}
+              )} */}
           </div>
         )}
       </Animate>

@@ -10,6 +10,7 @@ import { HostsService } from 'services/hosts';
 import { Inject } from 'services/core/injector';
 import { authorizedHeaders, jfetch } from 'util/requests';
 import { UserService } from 'services/user';
+import { SettingsService } from 'services/settings';
 import { TTwitchOAuthScope, TwitchTagsService } from './twitch/index';
 import { platformAuthorizedRequest } from './utils';
 import { CustomizationService } from 'services/customization';
@@ -36,6 +37,7 @@ export interface ITwitchStartStreamOptions {
   mode?: TOutputOrientation;
   contentClassificationLabels: string[];
   isBrandedContent: boolean;
+  isEnhancedBroadcasting: boolean;
 }
 
 export interface ITwitchChannelInfo extends ITwitchStartStreamOptions {
@@ -81,6 +83,7 @@ export class TwitchService
   @Inject() twitchTagsService: TwitchTagsService;
   @Inject() twitchContentClassificationService: TwitchContentClassificationService;
   @Inject() notificationsService: NotificationsService;
+  @Inject() settingsService: SettingsService;
 
   static initialState: ITwitchServiceState = {
     ...BasePlatformService.initialState,
@@ -94,6 +97,7 @@ export class TwitchService
       tags: [],
       contentClassificationLabels: [],
       isBrandedContent: false,
+      isEnhancedBroadcasting: false,
     },
   };
 
@@ -302,11 +306,13 @@ export class TwitchService
       ? this.twitchTagsService.views.tags
       : [];
     this.SET_PREPOPULATED(true);
+
     this.SET_STREAM_SETTINGS({
       tags,
       title: channelInfo.title,
       game: channelInfo.game,
       isBrandedContent: channelInfo.is_branded_content,
+      isEnhancedBroadcasting: this.settingsService.isEnhancedBroadcasting(),
       contentClassificationLabels: channelInfo.content_classification_labels,
     });
   }

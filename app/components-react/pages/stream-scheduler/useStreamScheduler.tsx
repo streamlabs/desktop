@@ -333,6 +333,11 @@ export class StreamSchedulerController {
         return;
       }
       this.setEvent(video.id, convertFBLiveVideoToEvent({ ...video, ...fbOptions }));
+      Services.UsageStatisticsService.actions.recordAnalyticsEvent('ScheduleStream', {
+        type: 'EditStream',
+        platform: selectedPlatform,
+        streamId: video.id,
+      });
     }
     this.closeModal();
   }
@@ -367,6 +372,11 @@ export class StreamSchedulerController {
       } as IFacebookLiveVideoExtended);
     }
     this.addEvent(event);
+    Services.UsageStatisticsService.actions.recordAnalyticsEvent('ScheduleStream', {
+      type: 'NewStream',
+      platform: selectedPlatform,
+      streamId: event.id,
+    });
     this.closeModal();
   }
 

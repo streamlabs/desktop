@@ -2,12 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Button, Select, Checkbox, Typography } from 'antd';
 import { DownOutlined, RobotOutlined } from '@ant-design/icons';
 import { IFilterOptions } from './utils';
-import { IInput } from 'services/highlighter';
-import { getPlacementFromInputs } from './InputEmojiSection';
-import { EHighlighterInputTypes } from 'services/highlighter/ai-highlighter/ai-highlighter';
 import styles from './HighlightGenerator.m.less';
 import { formatSecondsToHMS } from './ClipPreview';
 import { $t } from 'services/i18n';
+import { EGame, IInput } from 'services/highlighter/models/ai-highlighter.models';
+import Translate from 'components-react/shared/Translate';
+import { getConfigByGame, getEventConfig } from 'services/highlighter/models/game-config.models';
 const { Option } = Select;
 
 const selectStyles = {
@@ -27,10 +27,12 @@ const checkboxStyles = {
 
 export default function HighlightGenerator({
   combinedClipsDuration,
+  game,
   roundDetails,
   emitSetFilter,
 }: {
   combinedClipsDuration: number; // Maximum duration the highlight reel can be long - only used to restrict the targetDuration options
+  game: EGame;
   roundDetails: {
     round: number;
     inputs: IInput[];
@@ -39,8 +41,6 @@ export default function HighlightGenerator({
   }[];
   emitSetFilter: (filter: IFilterOptions) => void;
 }) {
-  // console.log('reHIGHUI');
-
   const [selectedRounds, setSelectedRounds] = useState<number[]>([0]);
   const [filterType, setFilterType] = useState<'duration' | 'hypescore'>('duration');
   const [targetDuration, setTargetDuration] = useState(combinedClipsDuration + 100);
@@ -70,36 +70,40 @@ export default function HighlightGenerator({
     });
   }, [selectedRounds, filterType, targetDuration]);
 
-  function roundDropdownDetails(roundDetails: {
-    round: number;
-    inputs: IInput[];
-    duration: number;
-    hypeScore: number;
-  }) {
-    const combinedKillAndKnocked = roundDetails.inputs.reduce((count, input) => {
-      if (
-        input.type === EHighlighterInputTypes.KILL ||
-        input.type === EHighlighterInputTypes.KNOCKED
-      ) {
-        return count + 1;
+  function roundDropdownDetails(
+    roundDetails: {
+      round: number;
+      inputs: IInput[];
+      duration: number;
+      hypeScore: number;
+    },
+    game: EGame,
+  ) {
+    const eventTypeCounts: Record<string, number> = {};
+
+    roundDetails.inputs.forEach(input => {
+      const inputTypes = getEventConfig(game, input.type);
+
+      if (inputTypes?.includeInDropdown) {
+        if (eventTypeCounts[input.type]) {
+          eventTypeCounts[input.type] += 1;
+        } else {
+          eventTypeCounts[input.type] = 1;
+        }
       }
-      return count;
-    }, 0);
-    const won = roundDetails.inputs.some(input => input.type === EHighlighterInputTypes.VICTORY);
-    let rank = null;
-    if (!won) {
-      rank = getPlacementFromInputs(roundDetails.inputs);
-    }
+    });
+
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <div style={{ fontWeight: 'bold' }}>Round {roundDetails.round} </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-          <div className={styles.infoTag}>{combinedKillAndKnocked} 🔫</div>
-          {won ? (
-            <div className={styles.infoTag}>1st 🏆</div>
-          ) : (
-            <div className={styles.infoTag}>{`${rank ? '#' + rank : ''} 🪦`}</div>
-          )}
+          {Object.entries(eventTypeCounts).map(([type, count]) => (
+            <div className={styles.infoTag}>
+              {count}
+              {getEventConfig(game, type).emoji}
+            </div>
+          ))}
+
           <div className={styles.infoTag}>{`${roundDetails.hypeScore} 🔥`}</div>
           <div className={styles.infoTag}>{`${formatSecondsToHMS(roundDetails.duration)}`}</div>
         </div>
@@ -108,68 +112,90 @@ export default function HighlightGenerator({
   }
 
   return (
-    <div className={styles.wrapper}>
-      <h3 style={{ color: '#FFFFFF', margin: 0, fontWeight: 400 }}>
-        🤖 {$t('Create highlight video of')}
-      </h3>
-      <Select
-        style={selectStyles}
-        mode="multiple"
-        value={selectedRounds}
-        maxTagCount={2}
-        suffixIcon={<DownOutlined style={{ color: '#FFFFFF', fontSize: '12px' }} />}
-        tagRender={({ value }) => (
-          <span className={styles.tag}>{value === 0 ? 'All Rounds' : `Round ${value}`}</span>
+    <h3
+      className={styles.wrapper}
+      style={{
+        color: '#FFFFFF',
+        margin: 0,
+        fontWeight: 400,
+      }}
+    >
+      🤖{' '}
+      <Translate
+        message={$t(
+          'Create highlight video of <roundSelect></roundSelect> with a duration of <minutesSelect></minutesSelect>',
         )}
-        dropdownStyle={dropdownStyles}
-      >
-        <div key="all-rounds" className={styles.option}>
-          <Checkbox
-            style={checkboxStyles}
-            checked={selectedRounds.includes(0)}
-            onChange={e => {
-              setSelectedRounds(e.target.checked ? [0] : []);
-            }}
-          >
-            {$t('All rounds')}
-          </Checkbox>
-        </div>
-        {roundDetails.map(roundDetails => (
-          <div key={'in-wrapper-round' + roundDetails.round} className={styles.option}>
-            <Checkbox
-              style={checkboxStyles}
-              checked={selectedRounds.includes(roundDetails.round)}
-              onChange={e => {
-                if (e.target.checked) {
-                  const newSelection = [...selectedRounds.filter(r => r !== 0), roundDetails.round];
-                  setSelectedRounds(newSelection);
-                } else {
-                  const newSelection = selectedRounds.filter(r => r !== roundDetails.round);
-                  setSelectedRounds(newSelection.length === 0 ? [0] : newSelection);
-                }
-              }}
+        renderSlots={{
+          roundSelect: () => (
+            <Select
+              style={selectStyles}
+              mode="multiple"
+              value={selectedRounds}
+              maxTagCount={2}
+              suffixIcon={<DownOutlined style={{ color: '#FFFFFF', fontSize: '12px' }} />}
+              tagRender={({ value }) => (
+                <span className={styles.tag}>
+                  {value === 0
+                    ? $t('All Rounds')
+                    : $t('Round %{roundNumber}', { roundNumber: value })}
+                </span>
+              )}
+              dropdownStyle={dropdownStyles}
             >
-              {roundDropdownDetails(roundDetails)}
-            </Checkbox>
-          </div>
-        ))}
-      </Select>
-      <h3 style={{ color: '#FFFFFF', margin: 0, fontWeight: 400 }}> {$t('with a duration of')}</h3>
-      <Select
-        style={{ width: '116px' }}
-        value={targetDuration}
-        onChange={value => setTargetDuration(value)}
-        dropdownStyle={dropdownStyles}
-      >
-        {filteredOptions.map(option => (
-          <Option key={option.value} value={option.value} className={styles.option}>
-            {option.label}
-          </Option>
-        ))}
-        <Option value={combinedClipsDuration + 100} className={styles.option}>
-          {$t('unlimited')}
-        </Option>
-      </Select>
+              <div key="all-rounds" className={styles.option}>
+                <Checkbox
+                  style={checkboxStyles}
+                  checked={selectedRounds.includes(0)}
+                  onChange={e => {
+                    setSelectedRounds(e.target.checked ? [0] : []);
+                  }}
+                >
+                  {$t('All Rounds')}
+                </Checkbox>
+              </div>
+              {roundDetails.map(roundDetails => (
+                <div key={'in-wrapper-round' + roundDetails.round} className={styles.option}>
+                  <Checkbox
+                    style={checkboxStyles}
+                    checked={selectedRounds.includes(roundDetails.round)}
+                    onChange={e => {
+                      if (e.target.checked) {
+                        const newSelection = [
+                          ...selectedRounds.filter(r => r !== 0),
+                          roundDetails.round,
+                        ];
+                        setSelectedRounds(newSelection);
+                      } else {
+                        const newSelection = selectedRounds.filter(r => r !== roundDetails.round);
+                        setSelectedRounds(newSelection.length === 0 ? [0] : newSelection);
+                      }
+                    }}
+                  >
+                    {roundDropdownDetails(roundDetails, game)}
+                  </Checkbox>
+                </div>
+              ))}
+            </Select>
+          ),
+          minutesSelect: () => (
+            <Select
+              style={{ width: '116px' }}
+              value={targetDuration}
+              onChange={value => setTargetDuration(value)}
+              dropdownStyle={dropdownStyles}
+            >
+              {filteredOptions.map(option => (
+                <Option key={option.value} value={option.value} className={styles.option}>
+                  {option.label}
+                </Option>
+              ))}
+              <Option value={combinedClipsDuration + 100} className={styles.option}>
+                {$t('unlimited')}
+              </Option>
+            </Select>
+          ),
+        }}
+      ></Translate>
       <Button
         type="text"
         onClick={() => {
@@ -180,6 +206,6 @@ export default function HighlightGenerator({
         icon={<span style={{ color: '#666666', fontSize: '20px' }}>&times;</span>}
         className={styles.resetButton}
       />
-    </div>
+    </h3>
   );
 }

@@ -428,5 +428,8 @@
   "New Tips": "New Tips",
   "All-Time Top Tipper": "All-Time Top Tipper",
   "Weekly Top Tipper": "Weekly Top Tipper",
-  "And more": "And more"
+  "And more": "And more",
+  "The Virtual Webcam plugin needs to be updated before it can be started. This requires administrator privileges.": "The Virtual Webcam plugin needs to be updated before it can be started. This requires administrator privileges.",
+  "Virtual camera output selection": "Virtual camera output selection",
+  "Virtual camera output type": "Virtual camera output type"
 }

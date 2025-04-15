@@ -1,63 +1,14 @@
 import * as child from 'child_process';
 import EventEmitter from 'events';
-import { AiHighlighterUpdater } from './updater';
+import { AiHighlighterUpdater } from './ai-highlighter-updater';
 import { duration } from 'moment';
-import { ICoordinates } from '..';
 import kill from 'tree-kill';
-
-export enum EHighlighterInputTypes {
-  KILL = 'kill',
-  KNOCKED = 'knocked',
-  GAME_SEQUENCE = 'game_sequence',
-  GAME_START = 'start_game',
-  GAME_END = 'end_game',
-  VOICE_ACTIVITY = 'voice_activity',
-  DEATH = 'death',
-  VICTORY = 'victory',
-  DEPLOY = 'deploy',
-  META_DURATION = 'meta_duration',
-  LOW_HEALTH = 'low_health',
-  PLAYER_KNOCKED = 'player_knocked',
-}
-export type DeathMetadata = {
-  place: number;
-};
-export interface IHighlighterInput {
-  start_time: number;
-  end_time?: number;
-  type: EHighlighterInputTypes;
-  origin: string;
-  metadata?: DeathMetadata | any;
-}
-export interface IHighlight {
-  start_time: number;
-  end_time: number;
-  input_types: EHighlighterInputTypes[];
-  inputs: IHighlighterInput[];
-  score: number;
-  metadata: { round: number; webcam_coordinates: ICoordinates };
-}
-
-export type EHighlighterMessageTypes =
-  | 'progress'
-  | 'inputs'
-  | 'inputs_partial'
-  | 'highlights'
-  | 'milestone';
-
-export interface IHighlighterMessage {
-  type: EHighlighterMessageTypes;
-  json: {};
-}
-interface IHighlighterProgressMessage {
-  progress: number;
-}
-
-export interface IHighlighterMilestone {
-  name: string;
-  weight: number;
-  data: IHighlighterMessage[] | null;
-}
+import {
+  IHighlight,
+  IHighlighterMessage,
+  IHighlighterMilestone,
+  IHighlighterProgressMessage,
+} from './models/ai-highlighter.models';
 
 const START_TOKEN = '>>>>';
 const END_TOKEN = '<<<<';
@@ -108,6 +59,7 @@ class MessageBufferHandler {
 
 export function getHighlightClips(
   videoUri: string,
+  userId: string,
   renderHighlights: (highlightClips: IHighlight[]) => void,
   cancelSignal: AbortSignal,
   progressUpdate?: (progress: number) => void,
@@ -122,6 +74,7 @@ export function getHighlightClips(
 
     const childProcess: child.ChildProcess = AiHighlighterUpdater.startHighlighterProcess(
       videoUri,
+      userId,
       milestonesPath,
     );
     const messageBuffer = new MessageBufferHandler();
@@ -183,7 +136,11 @@ export function getHighlightClips(
 
     childProcess.on('exit', (code, signal) => {
       messageBuffer.clear();
-      reject(new Error(`Child process exited with code ${code} and signal ${signal}`));
+      reject({
+        message: `Child process exited with code ${code} and signal ${signal}`,
+        signal,
+        code,
+      });
     });
   });
 }

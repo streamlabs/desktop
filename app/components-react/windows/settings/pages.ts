@@ -10,7 +10,7 @@ export * from './Advanced';
 // 'Notifications',
 export * from './Appearance';
 export * from './RemoteControl';
-// 'VirtualWebcam',
+export * from './VirtualWebcam';
 export * from './GameOverlay';
 export * from './Support';
 export * from './Experimental';

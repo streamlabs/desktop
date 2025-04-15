@@ -16,7 +16,9 @@ export function ObsSettings(p: { page: string }) {
   setPage(p.page);
   const PageComponent = getPageComponent(p.page);
 
-  const showTabs = ['Output', 'Audio', 'Advanced'].includes(p.page);
+  // TODO: Comment in when switched to new API
+  // const showTabs = ['Output', 'Audio', 'Advanced'].includes(p.page);
+  const showTabs = false;
   return (
     <div className={css.obsSettingsWindow}>
       {showTabs && <Tabs onChange={setDisplay} />}

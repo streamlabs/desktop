@@ -270,21 +270,20 @@ export default class Main extends Vue {
   }
 
   windowSizeHandler() {
+    clearTimeout(this.windowResizeTimeout);
     if (!this.windowsService.state.main.hideStyleBlockers) {
       this.onResizeStartHandler();
     }
     this.windowWidth = window.innerWidth;
-
-    clearTimeout(this.windowResizeTimeout);
 
     this.hasLiveDock = this.windowWidth >= 1070;
     if (this.page === 'Studio') {
       this.hasLiveDock = this.windowWidth >= this.minEditorWidth + 100;
     }
     this.windowResizeTimeout = window.setTimeout(() => {
-      this.windowsService.actions.updateStyleBlockers('main', false);
       this.updateLiveDockContraints();
       this.updateWidth();
+      this.windowsService.actions.updateStyleBlockers('main', false);
     }, 200);
   }
 

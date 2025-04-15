@@ -80,7 +80,6 @@ export class AudioService extends StatefulService<IAudioSourcesState> {
   sourceData: Dictionary<IAudioSourceData> = {};
 
   @Inject() private sourcesService: SourcesService;
-  @Inject() private scenesService: ScenesService;
   @Inject() private windowsService: WindowsService;
   @Inject() private hardwareService: HardwareService;
 

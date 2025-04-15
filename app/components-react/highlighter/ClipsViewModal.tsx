@@ -2,7 +2,7 @@ import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
 import React, { useEffect, useState } from 'react';
 import { TModalClipsView } from './ClipsView';
-import { TClip } from 'services/highlighter';
+import { TClip } from 'services/highlighter/models/highlighter.models';
 import styles from './ClipsView.m.less';
 import ClipTrimmer from 'components-react/highlighter/ClipTrimmer';
 import { Modal, Alert, Button } from 'antd';
@@ -48,7 +48,7 @@ export default function ClipsViewModal({
         {
           trim: '60%',
           preview: '700px',
-          export: '700px',
+          export: 'fit-content',
           remove: '400px',
         }[modal],
       );
@@ -79,7 +79,15 @@ export default function ClipsViewModal({
       {!!v.error && <Alert message={v.error} type="error" showIcon />}
       {inspectedClip && showModal === 'trim' && <ClipTrimmer clip={inspectedClip} />}
       {showModal === 'export' && <ExportModal close={closeModal} streamId={streamId} />}
-      {showModal === 'preview' && <PreviewModal close={closeModal} streamId={streamId} />}
+      {showModal === 'preview' && (
+        <PreviewModal
+          close={closeModal}
+          streamId={streamId}
+          emitSetShowModal={modal => {
+            setShowModal(modal);
+          }}
+        />
+      )}
       {inspectedClip && showModal === 'remove' && (
         <RemoveClip
           close={closeModal}

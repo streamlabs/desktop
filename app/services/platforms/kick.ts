@@ -8,7 +8,7 @@ import {
   TPlatformCapability,
 } from './index';
 import { authorizedHeaders, jfetch } from '../../util/requests';
-import { throwStreamError } from '../streaming/stream-error';
+import { StreamError, throwStreamError } from '../streaming/stream-error';
 import { platformAuthorizedRequest } from './utils';
 import { IGoLiveSettings } from '../streaming';
 import { TOutputOrientation } from 'services/restream';
@@ -18,12 +18,6 @@ import { I18nService } from 'services/i18n';
 import { getDefined } from 'util/properties-type-guards';
 import { WindowsService } from 'services/windows';
 import { DiagnosticsService } from 'services/diagnostics';
-
-interface IKickGame {
-  id: number;
-  name: string;
-  thumbnail: string;
-}
 
 interface IKickStartStreamResponse {
   id?: string;
@@ -141,33 +135,26 @@ export class KickService
     const kickSettings = getDefined(goLiveSettings.platforms.kick);
     const context = display ?? kickSettings?.display;
 
-    try {
-      const streamInfo = await this.startStream(
-        goLiveSettings.platforms.kick ?? this.state.settings,
+    const streamInfo = await this.startStream(goLiveSettings.platforms.kick ?? this.state.settings);
+
+    this.SET_INGEST(streamInfo.rtmp);
+    this.SET_STREAM_KEY(streamInfo.key);
+    this.SET_CHAT_URL(streamInfo.chat_url);
+    this.SET_PLATFORM_ID(streamInfo.platform_id);
+
+    if (!this.streamingService.views.isMultiplatformMode) {
+      this.streamSettingsService.setSettings(
+        {
+          streamType: 'rtmp_custom',
+          key: streamInfo.key,
+          server: streamInfo.rtmp,
+        },
+        context,
       );
-
-      this.SET_INGEST(streamInfo.rtmp);
-      this.SET_STREAM_KEY(streamInfo.key);
-      this.SET_CHAT_URL(streamInfo.chat_url);
-      this.SET_PLATFORM_ID(streamInfo.platform_id);
-
-      if (!this.streamingService.views.isMultiplatformMode) {
-        this.streamSettingsService.setSettings(
-          {
-            streamType: 'rtmp_custom',
-            key: streamInfo.key,
-            server: streamInfo.rtmp,
-          },
-          context,
-        );
-      }
-
-      this.SET_STREAM_SETTINGS(kickSettings);
-      this.setPlatformContext('kick');
-    } catch (e: unknown) {
-      console.error('Error starting stream: ', e);
-      throwStreamError('PLATFORM_REQUEST_FAILED', e as any);
     }
+
+    this.SET_STREAM_SETTINGS(kickSettings);
+    this.setPlatformContext('kick');
   }
 
   async afterStopStream(): Promise<void> {
@@ -229,21 +216,44 @@ export class KickService
     const body = new FormData();
     body.append('title', opts.title);
 
-    if (opts.game !== '') {
-      body.append('category', opts.game);
-    }
+    const game = opts.game === '' ? '15' : opts.game;
+    body.append('category', game);
 
     const request = new Request(url, { headers, method: 'POST', body });
 
     return jfetch<IKickStartStreamResponse>(request)
       .then(resp => {
+        if (!resp.key) {
+          throwStreamError(
+            'KICK_STREAM_KEY_MISSING',
+            {
+              status: 418,
+              statusText: 'Kick stream key not generated',
+              platform: 'kick',
+            },
+            'Kick failed to start stream due to missing stream key',
+          );
+        }
+
+        if (!resp.rtmp) {
+          throwStreamError(
+            'KICK_START_STREAM_FAILED',
+            {
+              status: 418,
+              statusText: 'Kick server url not generated',
+              platform: 'kick',
+            },
+            'Kick stream failed to start due to missing server url',
+          );
+        }
+
         if (resp.channel_name) {
           this.SET_CHANNEL_NAME(resp.channel_name);
         }
         this.SET_STREAM_SETTINGS(opts);
         return resp;
       })
-      .catch((e: IKickError | unknown) => {
+      .catch((e: IKickError | StreamError | string | unknown) => {
         console.error('Error starting Kick stream: ', e);
 
         const defaultError = {
@@ -253,11 +263,30 @@ export class KickService
 
         if (!e) throwStreamError('PLATFORM_REQUEST_FAILED', defaultError);
 
+        // check if the error is a stream error
+        if (typeof e === 'object' && e.hasOwnProperty('type')) {
+          const error = e as StreamError;
+          throwStreamError(error.type, error, error.message);
+        }
+
         // check if the error is an IKickError
-        if (typeof e === 'object' && e.hasOwnProperty('success')) {
+        if (typeof e === 'object' && e.hasOwnProperty('result')) {
           const error = e as IKickError;
+
+          if (error.result && error.result.data.code === 401) {
+            const message = error.statusText !== '' ? error.statusText : error.result.data.message;
+            throwStreamError(
+              'KICK_SCOPE_OUTDATED',
+              {
+                status: error.status,
+                statusText: message,
+              },
+              error.result.data.message,
+            );
+          }
+
           throwStreamError(
-            'PLATFORM_REQUEST_FAILED',
+            'KICK_START_STREAM_FAILED',
             {
               ...error,
               status: error.status,
@@ -267,7 +296,7 @@ export class KickService
           );
         }
 
-        throwStreamError('PLATFORM_REQUEST_FAILED', e as any, defaultError.statusText);
+        throwStreamError('PLATFORM_REQUEST_FAILED', e);
       });
   }
 
@@ -292,20 +321,16 @@ export class KickService
       .catch(e => {
         console.warn('Error fetching Kick info: ', e);
 
-        if (e.hasOwnProperty('result')) {
-          if (e.result.data.code === 401) {
-            const message = e.statusText !== '' ? e.statusText : e.result.data.message;
-            throwStreamError(
-              'KICK_SCOPE_OUTDATED',
-              {
-                status: e.status,
-                statusText: message,
-              },
-              e.result.data.message,
-            );
-          }
-
-          throwStreamError('PLATFORM_REQUEST_FAILED', e);
+        if (e.result && e.result.data.code === 401) {
+          const message = e.statusText !== '' ? e.statusText : e.result.data.message;
+          throwStreamError(
+            'KICK_SCOPE_OUTDATED',
+            {
+              status: e.status,
+              statusText: message,
+            },
+            e.result.data.message,
+          );
         }
       });
   }
@@ -376,9 +401,7 @@ export class KickService
 
     const params = new URLSearchParams();
     params.append('title', settings.title);
-    if (settings.game !== '') {
-      params.append('category', settings.game);
-    }
+    params.append('category', settings.game);
 
     const request = new Request(url, { headers, method: 'PUT', body: params.toString() });
 

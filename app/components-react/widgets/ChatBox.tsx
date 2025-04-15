@@ -94,7 +94,7 @@ export class ChatBoxModule extends WidgetModule<IChatBoxState> {
         label: $t('Text Color'),
         tooltip: $t('A hex code for the base text color.'),
       }),
-      text_size: metadata.fontSize({ label: $t('Font Size'), min: 10, max: 80 }),
+      text_size: metadata.fontSize({ label: $t('Font Size'), min: 12, max: 80 }),
       background_color: metadata.color({
         label: $t('Background Color'),
         tooltip: $t(

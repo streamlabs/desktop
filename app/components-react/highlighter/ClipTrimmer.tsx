@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, RefObject } from 'react';
-import { TClip } from 'services/highlighter';
+import { TClip } from 'services/highlighter/models/highlighter.models';
 import { SCRUB_FRAMES, SCRUB_HEIGHT, SCRUB_WIDTH } from 'services/highlighter/constants';
 import { Services } from 'components-react/service-provider';
 import times from 'lodash/times';

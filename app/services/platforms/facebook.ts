@@ -19,6 +19,7 @@ import { ENotificationType, NotificationsService } from '../notifications';
 import { $t } from '../i18n';
 import { Service } from '../core';
 import { JsonrpcService } from '../api/jsonrpc';
+import { UsageStatisticsService } from 'app-services';
 
 interface IFacebookPage {
   access_token: string;
@@ -151,6 +152,7 @@ export class FacebookService
   @Inject() private windowsService: WindowsService;
   @Inject() private notificationsService: NotificationsService;
   @Inject() private jsonrpcService: JsonrpcService;
+  @Inject() private usageStatisticsService: UsageStatisticsService;
 
   readonly platform = 'facebook';
   readonly displayName = 'Facebook';
@@ -261,6 +263,11 @@ export class FacebookService
         fbOptions as IFacebookUpdateVideoOptions,
         true,
       );
+      this.usageStatisticsService.actions.recordAnalyticsEvent('ScheduleStream', {
+        type: 'StreamToSchedule',
+        platform: 'facebook',
+        streamId: liveVideo.id,
+      });
     } else {
       // create new video and go live
       liveVideo = await this.createLiveVideo(fbOptions);
