@@ -1154,6 +1154,21 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   // AI-HIGHLIGHTER logic
   // =================================================================================================
 
+  /**
+   * Check if a given version is before the current version
+   * @param version - The version to check
+   * @returns True if the given version is before the current version, false otherwise
+   */
+  public isHighlighterVersionAfter(checkVersion: string): boolean {
+    if (!this.state.highlighterVersion) {
+      return false;
+    }
+
+    // Split versions into components (e.g., "1.2.3" -> [1, 2, 3])
+    const currentVersion = this.state.highlighterVersion;
+    return currentVersion > checkVersion;
+  }
+
   setAiHighlighter(state: boolean) {
     this.SET_USE_AI_HIGHLIGHTER(state);
     this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {

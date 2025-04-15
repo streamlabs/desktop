@@ -146,6 +146,9 @@ class ExportController {
   async fileExists(exportFile: string) {
     return await fileExists(exportFile);
   }
+  isHighlighterAfterVersion(version: string) {
+    return this.service.isHighlighterVersionAfter(version);
+  }
 }
 
 export const ExportModalCtx = React.createContext<ExportController | null>(null);
@@ -209,7 +212,7 @@ function ExportFlow({
   videoName: string;
   onVideoNameChange: (name: string) => void;
 }) {
-  const { UsageStatisticsService } = Services;
+  const { UsageStatisticsService, HighlighterService } = Services;
   const {
     exportInfo,
     cancelExport,
@@ -226,6 +229,7 @@ function ExportFlow({
     getClips,
     getDuration,
     getClipThumbnail,
+    isHighlighterAfterVersion,
   } = useController(ExportModalCtx);
 
   const [currentFormat, setCurrentFormat] = useState<TOrientation>(EOrientation.HORIZONTAL);
@@ -234,7 +238,9 @@ function ExportFlow({
   const clipsDuration = formatSecondsToHMS(getDuration(streamId));
 
   const showSubtitleSettings = useMemo(
-    () => ['staging', 'local'].includes(Utils.getHighlighterEnvironment()),
+    () =>
+      ['staging', 'local'].includes(Utils.getHighlighterEnvironment()) &&
+      isHighlighterAfterVersion('0.0.53'),
     [],
   );
 
