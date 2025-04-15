@@ -89,8 +89,9 @@ export default class SubStreamSettings extends Vue {
         id: v.id,
         name: `${v.name} [${v.id}]`,
       }));
+
       this.audioCodec = this.audioCodecs.find(
-        v => v.id === this.subStreamService.state.videoCodec,
+        v => v.id === this.subStreamService.state.audioCodec,
       ) ?? { id: 'ffmpeg_aac', name: 'ffmpeg_aac' };
 
       this.startChecker();
@@ -105,7 +106,7 @@ export default class SubStreamSettings extends Vue {
 
   async checkStatus() {
     const r = await this.subStreamService.status();
-    console.log(JSON.stringify(r, null, 2));
+    // console.log(JSON.stringify(r, null, 2)); // Removed debug log
 
     const error = r['error'] as string;
     const status = r['status'] as string;
@@ -127,15 +128,13 @@ export default class SubStreamSettings extends Vue {
       deactive: '停止中',
     };
 
-    let s = '';
-    if (error) s += `エラー: ${error}\n`;
-    if (status) s += `ステータス: ${statusMap[status] ?? status}\n`;
-    if (frames) s += `送出フレーム数: ${frames} `;
-    if (frames) s += `ドロップ数: ${dropped} `;
+    const statusParts: string[] = [];
+    if (error) statusParts.push(`エラー: ${error}`);
+    if (status) statusParts.push(`ステータス: ${statusMap[status] ?? status}`);
+    if (frames !== undefined) statusParts.push(`送出フレーム数: ${frames}`);
+    if (dropped !== undefined) statusParts.push(`ドロップ数: ${dropped}`);
 
-    if (!status) s = '停止中';
-
-    this.status = s;
+    this.status = statusParts.length > 0 ? statusParts.join('\n') : '停止中';
   }
 
   startChecker() {

@@ -6,23 +6,22 @@
           <label>
             <div>
               ストリーム URL
-              <button style="margin: 0" @click="showUrlTips = !showUrlTips">
+              <button class="help-button" @click="showUrlTips = !showUrlTips">
                 <i class="icon-help icon-tooltip" title="配信先のURLを指定します"></i>
               </button>
             </div>
           </label>
-          <div v-if="showUrlTips" style="margin-left: 16px">
+          <div v-if="showUrlTips" class="url-tips">
             <div>各サービスから提供されているストリーム URL を指定してください</div>
             <div>
               YouTube &nbsp;
               {{ defaultYoutubeUrl }}
               <button
-                style="margin: 0"
+                class="set-url-button basic-button"
                 data-size="sm"
                 data-radius="sm"
                 data-color="secondary"
                 data-variant="light"
-                class="basic-button"
                 @click="url = defaultYoutubeUrl"
               >
                 セット
@@ -32,12 +31,11 @@
               Twitch &nbsp;
               {{ defaultTwitchUrl }}
               <button
-                style="margin: 0"
+                class="set-url-button basic-button"
                 data-size="sm"
                 data-radius="sm"
                 data-color="secondary"
                 data-variant="light"
-                class="basic-button"
                 @click="url = defaultTwitchUrl"
               >
                 セット
@@ -58,15 +56,15 @@
           </label>
         </div>
         <div class="input-wrapper">
-          <div style="display: flex; gap: 8px">
+          <div class="key-input-wrapper">
             <input :type="showKey ? 'text' : 'password'" v-model="key" />
             <button
-              style="width: 80px; height: 32px; margin: 0"
+              class="toggle-key-button basic-button"
+              style="margin: 0"
               data-size="sm"
               data-radius="sm"
               data-color="secondary"
               data-variant="light"
-              class="basic-button"
               @click="showKey = !showKey"
             >
               {{ showKey ? '非表示' : '表示' }}
@@ -156,43 +154,40 @@
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="input-container">
-        <div style="display: flex; gap: 8px">
-          <button
-            style="margin: 0"
-            data-size="md"
-            data-radius="sm"
-            data-color="secondary"
-            data-variant="light"
-            class="basic-button"
-            @click="start()"
-          >
-            開始
-          </button>
-          <button
-            style="margin: 0"
-            data-size="md"
-            data-radius="sm"
-            data-color="secondary"
-            data-variant="light"
-            class="basic-button"
-            @click="stop()"
-          >
-            停止
-          </button>
+        <div class="input-container">
+          <div class="action-buttons">
+            <button
+              class="control-button basic-button"
+              data-size="md"
+              data-radius="sm"
+              data-color="secondary"
+              data-variant="light"
+              @click="start()"
+            >
+              開始
+            </button>
+            <button
+              class="control-button basic-button"
+              data-size="md"
+              data-radius="sm"
+              data-color="secondary"
+              data-variant="light"
+              @click="stop()"
+            >
+              停止
+            </button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="section">
       <div style="white-space: pre-wrap">{{ status }}</div>
     </div>
   </div>
 </template>
 
 <script lang="ts" src="./SubStreamSettings.vue.ts"></script>
+
 <style lang="less" scoped>
 @import url('../styles/index');
 
@@ -213,5 +208,47 @@
   display: flex;
   align-items: center;
   color: var(--color-text);
+}
+
+.help-button {
+  padding: 0;
+  margin: 0 !important;
+  vertical-align: middle;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.url-tips {
+  margin-bottom: 8px;
+  margin-left: 16px;
+  font-size: @font-size3;
+  color: var(--color-text-sub);
+}
+
+.set-url-button {
+  height: 18px;
+  margin: 0 !important;
+}
+
+.key-input-wrapper {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.toggle-key-button {
+  width: 80px;
+  height: 32px;
+  margin: 0;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.control-button {
+  margin: 0;
 }
 </style>
