@@ -8,6 +8,7 @@
       v-model="typeModel"
       :metadata="{
         title: $t('Type'),
+        ['data-name']: 'Type',
         type: 'list',
         name: 'type',
         options: typeOptions,
@@ -21,6 +22,7 @@
         type: 'number',
         isInteger: true,
         title: $t('Duration'),
+        ['data-name']: 'Duration',
         name: 'duration',
         fullWidth: true,
       }"

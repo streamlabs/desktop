@@ -38,7 +38,7 @@ test.skip('Changing transition options', async t => {
   await click('.icon-edit');
 
   t.true(
-    await form.includesByTitles({
+    await form.includes({
       Type: transitionType,
       Duration: transitionDuration,
     }),
