@@ -50,7 +50,7 @@ export class HighlighterViews extends ViewHandler<IHighlighterState> {
   }
 
   get uploadInfo() {
-    return this.state.upload;
+    return this.state.uploads;
   }
 
   get transition() {
@@ -91,6 +91,10 @@ export class HighlighterViews extends ViewHandler<IHighlighterState> {
 
   get updaterProgress() {
     return this.state.updaterProgress;
+  }
+
+  get tempRecordingInfo() {
+    return this.state.tempRecordingInfo;
   }
 
   /**

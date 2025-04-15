@@ -5,7 +5,7 @@ import isEqual from 'lodash/isEqual';
 import cloneDeep from 'lodash/cloneDeep';
 import { TObsFormData } from 'components/obs/inputs/ObsInput';
 import { EditSourcePropertiesCommand } from './edit-source-properties';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayType } from 'services/video';
 
 export abstract class ModifyTransformCommand extends CombinableCommand {
   startTransforms: Dictionary<ITransform> = {};

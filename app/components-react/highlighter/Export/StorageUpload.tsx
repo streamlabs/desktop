@@ -9,48 +9,103 @@ import UploadProgress from './UploadProgress';
 import styles from './ExportModal.m.less';
 import VideoPreview from './VideoPreview';
 import { EPlatformCallResult } from 'services/platforms';
+import { EUploadPlatform } from 'services/highlighter/models/highlighter.models';
+import { ModalLayout } from 'components-react/shared/ModalLayout';
+import { has } from 'lodash';
+import { Modal } from 'antd';
 
-export default function StorageUpload(p: { onClose: () => void; platform: string }) {
+export default function StorageUpload(p: { onClose: () => void; platform: EUploadPlatform }) {
   const { UserService, HighlighterService, SharedStorageService } = Services;
 
   const { uploadInfo, hasSLID } = useVuex(() => ({
-    uploadInfo: HighlighterService.views.uploadInfo,
+    uploadInfo: HighlighterService.getUploadInfo(HighlighterService.views.uploadInfo, p.platform),
     hasSLID: !!UserService.views.auth?.slid?.id,
   }));
 
+  const [showSlidLoginModal, setShowSlidLoginModal] = React.useState(false);
+
   function uploadStorage() {
-    HighlighterService.actions.uploadStorage(p.platform);
+    // First check if there is an existing upload for another platform
+    const existingUpload = HighlighterService.views.state.uploads.find(
+      upload =>
+        [
+          EUploadPlatform.CROSSCLIP,
+          EUploadPlatform.TYPESTUDIO,
+          EUploadPlatform.VIDEOEDITOR,
+        ].includes(upload.platform) && upload.videoId,
+    );
+
+    if (existingUpload?.videoId) {
+      HighlighterService.SET_UPLOAD_INFO({
+        platform: p.platform,
+        videoId: existingUpload.videoId,
+      });
+    } else {
+      HighlighterService.actions.uploadStorage(p.platform);
+    }
   }
 
   useEffect(() => {
-    if (uploadInfo.videoId) {
+    if (uploadInfo?.videoId) {
       remote.shell.openExternal(
         SharedStorageService.views.getPlatformLink(p.platform, uploadInfo.videoId),
       );
-      HighlighterService.actions.clearUpload();
       p.onClose();
     }
-  }, [uploadInfo.videoId]);
+  }, [uploadInfo?.videoId]);
 
   // Clear all errors when this component unmounts
   useEffect(() => {
     return () => HighlighterService.actions.dismissError();
   }, []);
 
-  if (!hasSLID) return <GetSLID />;
-  if (uploadInfo.uploading) return <UploadProgress />;
+  if (uploadInfo?.uploading && uploadInfo.platform === p.platform) {
+    return <UploadProgress platform={p.platform} dense />;
+  }
   return (
-    <div className={styles.crossclipContainer}>
-      <VideoPreview />
-      {!uploadInfo.videoId && (
+    <>
+      <Modal
+        visible={showSlidLoginModal}
+        onCancel={() => setShowSlidLoginModal(false)}
+        closable={true}
+        destroyOnClose={true}
+        footer={null}
+        title={$t('Sign in with Streamlabs ID')}
+        width={400}
+      >
+        <GetSLID onLogin={uploadStorage} />
+      </Modal>
+
+      {uploadInfo?.videoId ? (
         <button
-          className={cx('button button--action', styles.uploadButton)}
-          onClick={uploadStorage}
+          className={styles.uploadButton}
+          onClick={() => {
+            if (!uploadInfo.videoId) {
+              return;
+            }
+            remote.shell.openExternal(
+              SharedStorageService.views.getPlatformLink(p.platform, uploadInfo.videoId),
+            );
+          }}
+        >
+          {$t('Open')}
+        </button>
+      ) : (
+        <button
+          disabled={uploadInfo?.uploading}
+          className={styles.uploadButton}
+          onClick={() => {
+            if (!hasSLID) {
+              setShowSlidLoginModal(true);
+            } else {
+              uploadStorage();
+            }
+          }}
         >
           {$t('Upload')}
         </button>
       )}
-    </div>
+    </>
   );
 }
 

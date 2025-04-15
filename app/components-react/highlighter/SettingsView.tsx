@@ -13,6 +13,7 @@ import styles from './SettingsView.m.less';
 import { $t } from 'services/i18n';
 import { EHighlighterView, IViewState } from 'services/highlighter/models/highlighter.models';
 import { EAvailableFeatures } from 'services/incremental-rollout';
+import SupportedGames from './supportedGames/SupportedGames';
 
 export default function SettingsView({
   emitSetView,
@@ -144,9 +145,12 @@ export default function SettingsView({
               <div className={styles.highlighterCard}>
                 <div className={styles.cardHeaderbarWrapper}>
                   <div className={styles.cardHeaderbar}>
-                    <i style={{ margin: 0, fontSize: '20px' }} className="icon-highlighter"></i>
-                    <h3 style={{ margin: 0, fontSize: '20px' }}> {$t('AI Highlighter')}</h3>
-                    <p className={styles.headerbarTag}>{$t('For Fortnite streams (Beta)')}</p>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <i style={{ margin: 0, fontSize: '20px' }} className="icon-highlighter"></i>
+                      <h3 style={{ margin: 0, fontSize: '20px' }}> {$t('AI Highlighter')}</h3>
+                      <p className={styles.headerbarTag}>{$t('Beta')}</p>
+                    </div>
+                    <SupportedGames />
                   </div>
                 </div>
 

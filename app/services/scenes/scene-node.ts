@@ -14,7 +14,7 @@ import {
 import { SelectionService } from 'services/selection';
 import { assertIsDefined } from 'util/properties-type-guards';
 import { IVideo } from 'obs-studio-node';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayType } from 'services/video';
 
 export function isFolder(node: SceneItemNode): node is SceneItemFolder {
   return node.sceneNodeType === 'folder';

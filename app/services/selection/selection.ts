@@ -20,7 +20,7 @@ import { Rect } from 'util/rect';
 import { AnchorPoint, AnchorPositions, CenteringAxis } from 'util/ScalableRectangle';
 import { ISelectionState, TNodesList } from './index';
 import { DualOutputService } from 'services/dual-output';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayType } from 'services/video';
 
 /**
  * Helper for working with multiple sceneItems

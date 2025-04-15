@@ -51,13 +51,23 @@ export class AiHighlighterUpdater {
   /**
    * Spawn the AI Highlighter process that would process the video
    */
-  static startHighlighterProcess(videoUri: string, userId: string, milestonesPath?: string) {
+  static startHighlighterProcess(
+    videoUri: string,
+    userId: string,
+    milestonesPath?: string,
+    game?: string,
+  ) {
     const runHighlighterFromRepository = Utils.getHighlighterEnvironment() === 'local';
 
     if (runHighlighterFromRepository) {
       // this is for highlighter development
       // to run this you have to install the highlighter repository next to desktop
-      return AiHighlighterUpdater.startHighlighterFromRepository(videoUri, userId, milestonesPath);
+      return AiHighlighterUpdater.startHighlighterFromRepository(
+        videoUri,
+        userId,
+        milestonesPath,
+        game,
+      );
     }
 
     const highlighterBinaryPath = path.resolve(
@@ -71,6 +81,10 @@ export class AiHighlighterUpdater {
       command.push('--milestones_file');
       command.push(milestonesPath);
     }
+    if (game) {
+      command.push('--game');
+      command.push(game);
+    }
     command.push('--use_sentry');
     command.push('--user_id', userId);
 
@@ -81,6 +95,7 @@ export class AiHighlighterUpdater {
     videoUri: string,
     userId: string,
     milestonesPath?: string,
+    game?: string,
   ) {
     const rootPath = '../highlighter-api/';
     const command = [
@@ -99,6 +114,11 @@ export class AiHighlighterUpdater {
     if (milestonesPath) {
       command.push('--milestones_file');
       command.push(milestonesPath);
+    }
+
+    if (game) {
+      command.push('--game');
+      command.push(game);
     }
 
     return spawn('poetry', command, {

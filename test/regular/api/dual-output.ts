@@ -2,7 +2,7 @@ import { DualOutputService } from 'services/dual-output';
 import { getApiClient } from '../../helpers/api-client';
 import { test, useWebdriver, TExecutionContext } from '../../helpers/webdriver';
 import { ScenesService, Scene, SceneItem } from 'services/scenes';
-import { VideoSettingsService } from 'services/settings-v2/video';
+import { VideoService } from 'services/video';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -53,7 +53,7 @@ function confirmVerticalSceneItem(
 test('Convert single output collection to dual output', async (t: TExecutionContext) => {
   const client = await getApiClient();
   const scenesService = client.getResource<ScenesService>('ScenesService');
-  const videoSettingsService = client.getResource<VideoSettingsService>('VideoSettingsService');
+  const videoService = client.getResource<VideoService>('VideoService');
   const dualOutputService = client.getResource<DualOutputService>('DualOutputService');
   const scene = scenesService.createScene('Scene1');
   scene.createAndAddSource('Item1', 'color_source');
@@ -61,7 +61,7 @@ test('Convert single output collection to dual output', async (t: TExecutionCont
   scene.createAndAddSource('Item3', 'color_source');
 
   // single output
-  const horizontalContext = videoSettingsService.contexts.horizontal;
+  const horizontalContext = videoService.contexts.horizontal;
   scene.getItems().forEach(sceneItem => {
     t.is(sceneItem?.display, 'horizontal');
     t.deepEqual(sceneItem?.output, horizontalContext);
@@ -77,7 +77,7 @@ test('Convert single output collection to dual output', async (t: TExecutionCont
   t.not(sceneNodeMaps, null, 'Dual output scene collection has node maps.');
 
   const nodeMap = sceneNodeMaps[scene.id];
-  const verticalContext = videoSettingsService.contexts.vertical;
+  const verticalContext = videoService.contexts.vertical;
   const sceneItems = scene.getItems();
 
   // confirm dual output collection length is double the single output collection length

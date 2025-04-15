@@ -6,7 +6,7 @@ import cx from 'classnames';
 import Display from 'components-react/shared/Display';
 import { $t } from 'services/i18n';
 import { ERenderingMode } from '../../../obs-api';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayType } from 'services/video';
 import AutoProgressBar from 'components-react/shared/AutoProgressBar';
 import { useSubscription } from 'components-react/hooks/useSubscription';
 import { message } from 'antd';

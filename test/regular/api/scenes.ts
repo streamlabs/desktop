@@ -2,7 +2,7 @@ import { useWebdriver, test } from '../../helpers/webdriver';
 import { getApiClient } from '../../helpers/api-client';
 import { SceneBuilder } from '../../helpers/scene-builder';
 import { ScenesService } from '../../../app/services/api/external-api/scenes';
-import { VideoSettingsService, DualOutputService } from 'app-services';
+import { VideoService, DualOutputService } from 'app-services';
 
 const path = require('path');
 

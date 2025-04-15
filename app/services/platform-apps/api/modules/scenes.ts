@@ -14,7 +14,7 @@ import {
   TSceneNode,
   EBlendingMethod,
 } from 'services/scenes';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayType } from 'services/video';
 import { IVideo } from 'obs-studio-node';
 import { Inject } from 'services/core/injector';
 import { Subject } from 'rxjs';
@@ -90,6 +90,15 @@ export class ScenesModule extends Module {
     this.scenesService.sceneRemoved.subscribe(sceneData => {
       this.sceneRemoved.next(sceneData.id);
     });
+    this.scenesService.itemAdded.subscribe(itemData => {
+      this.sceneItemAdded.next(this.serializeNode(itemData as TSceneNode));
+    });
+    this.scenesService.itemUpdated.subscribe(itemData => {
+      this.sceneItemUpdated.next(this.serializeNode(itemData as TSceneNode));
+    });
+    this.scenesService.itemRemoved.subscribe(itemData => {
+      this.sceneItemRemoved.next(itemData.id);
+    });
   }
 
   @apiEvent()
@@ -100,6 +109,15 @@ export class ScenesModule extends Module {
 
   @apiEvent()
   sceneRemoved = new Subject<string>();
+
+  @apiEvent()
+  sceneItemAdded = new Subject<ISceneItem | ISceneItemFolder>();
+
+  @apiEvent()
+  sceneItemUpdated = new Subject<ISceneItem | ISceneItemFolder>();
+
+  @apiEvent()
+  sceneItemRemoved = new Subject<string>();
 
   // TODO Events for scene items
 
