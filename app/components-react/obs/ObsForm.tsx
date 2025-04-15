@@ -103,6 +103,7 @@ function ObsInput(p: IObsInputProps) {
     uncontrolled: false,
     masked: p.value.masked,
     disabled: !p.value.enabled,
+    ['data-name']: p.value.name,
     ...extraProps,
   };
 
@@ -122,10 +123,10 @@ function ObsInput(p: IObsInputProps) {
       if (textVal.multiline) {
         return <TextAreaInput {...inputProps} debounce={300} />;
       } else if (textVal.infoField) {
-        let style = {};
-        if (textVal.infoType == obs.ETextInfoType.Warning) {
+        const style = {};
+        if (textVal.infoType === obs.ETextInfoType.Warning) {
           Object.assign(style, { color: 'var(--info)' });
-        } else if (textVal.infoType == obs.ETextInfoType.Error) {
+        } else if (textVal.infoType === obs.ETextInfoType.Error) {
           Object.assign(style, { color: 'var(--warning)' });
         }
         return <InputWrapper style={style}>{textVal.description}</InputWrapper>;
