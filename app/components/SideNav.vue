@@ -63,12 +63,8 @@
         <a @click="openHelp" class="link help_tip_content" :title="$t('common.help')">
           <i class="icon-help" />
           <help-tip :dismissable-key="InitialHelpTipDismissable" mode="login">
-            <div slot="title">
-              {{ $t('common.initialHelpTipTitle') }}
-            </div>
-            <div slot="content">
-              {{ $t('common.initialHelpTipContent') }}
-            </div>
+            <div slot="title" v-text="$t('common.initialHelpTipTitle')"></div>
+            <div slot="content" v-text="$t('common.initialHelpTipContent')"></div>
           </help-tip>
         </a>
       </div>

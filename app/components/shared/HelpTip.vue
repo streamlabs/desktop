@@ -118,5 +118,6 @@
   font-size: var(--font-size-xs);
   line-height: var(--line-height-md);
   text-align: left;
+  white-space: pre-line;
 }
 </style>

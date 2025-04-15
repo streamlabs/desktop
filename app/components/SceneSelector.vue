@@ -43,12 +43,8 @@
     />
 
     <help-tip :dismissable-key="helpTipDismissable">
-      <div slot="title">
-        {{ $t('scenes.sceneCollections') }}
-      </div>
-      <div slot="content">
-        {{ $t('scenes.sceneCollectionSelectionDescription') }}
-      </div>
+      <div slot="title" v-text="$t('scenes.sceneCollections')"></div>
+      <div slot="content" v-text="$t('scenes.sceneCollectionSelectionDescription')"></div>
     </help-tip>
   </div>
 </template>

@@ -17,12 +17,8 @@
         mode="streaming"
         v-if="showEndStreamHelpTip"
       >
-        <div slot="title">
-          {{ $t('common.endStreamHelpTipTitle') }}
-        </div>
-        <div slot="content">
-          {{ $t('common.endStreamHelpTipContent') }}
-        </div>
+        <div slot="title" v-text="$t('common.endStreamHelpTipTitle')"></div>
+        <div slot="content" v-text="$t('common.endStreamHelpTipContent')"></div>
       </help-tip>
     </button>
   </div>
