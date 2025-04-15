@@ -24,7 +24,7 @@ test.skip('Changing transition options', async t => {
   await focusChild();
   await (await app.client.$('.icon-edit')).click();
   const form = new FormMonkey(t);
-  await form.fillByTitles({
+  await form.fill({
     Type: transitionType,
     Duration: transitionDuration,
   });
@@ -80,11 +80,14 @@ test('Changing connections', async t => {
   await (await app.client.$('button=Connections')).click();
   await (await app.client.$('button=Add Connection')).click();
   const form = new FormMonkey(t);
-  await form.fillByTitles({
-    'Beginning Scene': connectionBegin,
-    'Scene Transition': connectionTransition,
-    'Ending Scene': connectionEnd,
-  });
+  await form.fill(
+    {
+      BeginningScene: connectionBegin,
+      SceneTransition: connectionTransition,
+      EndingScene: connectionEnd,
+    },
+    true,
+  );
   await (await t.context.app.client.$('button=Done')).click();
   await focusMain();
   await clickSceneTransitions();
@@ -94,11 +97,14 @@ test('Changing connections', async t => {
   await (await app.client.$('.icon-edit')).click();
 
   t.true(
-    await form.includesByTitles({
-      'Beginning Scene': connectionBegin,
-      'Scene Transition': connectionTransition,
-      'Ending Scene': connectionEnd,
-    }),
+    await form.includes(
+      {
+        BeginningScene: connectionBegin,
+        SceneTransition: connectionTransition,
+        EndingScene: connectionEnd,
+      },
+      true,
+    ),
   );
 });
 

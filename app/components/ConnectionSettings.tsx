@@ -77,6 +77,7 @@ export default class SceneTransitions extends TsxComponent<SceneTransitionProps>
         <VFormGroup
           value={this.fromSceneModel}
           onInput={this.setFromSceneModel}
+          data-name="BeginningScene"
           metadata={metadata.list({
             title: $t('Beginning Scene'),
             name: 'from',
@@ -86,6 +87,7 @@ export default class SceneTransitions extends TsxComponent<SceneTransitionProps>
         <VFormGroup
           value={this.transitionModel}
           onInput={this.setTransitionModel}
+          data-name="SceneTransition"
           metadata={metadata.list({
             title: $t('Scene Transition'),
             name: 'transition',
@@ -95,6 +97,7 @@ export default class SceneTransitions extends TsxComponent<SceneTransitionProps>
         <VFormGroup
           value={this.toSceneModel}
           onInput={this.setToSceneModel}
+          data-name="EndingScene"
           metadata={metadata.list({
             title: $t('Ending Scene'),
             name: 'to',

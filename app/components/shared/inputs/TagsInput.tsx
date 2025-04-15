@@ -148,7 +148,7 @@ export default class TagsInput extends BaseInput<
               );
             },
             option: (props: { option: IListOption<IOptionData> }) => (
-              <div data-option-title={props.option.title} data-option-value={props.option.value}>
+              <div data-option-name={props.option.title} data-option-value={props.option.value}>
                 {this.$scopedSlots.item ? this.$scopedSlots.item(props) : props.option.title}
               </div>
             ),

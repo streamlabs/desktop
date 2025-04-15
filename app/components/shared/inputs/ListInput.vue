@@ -5,7 +5,7 @@
     data-type="list"
     :data-name="options.name"
     :data-value="currentMultiselectValue ? currentMultiselectValue.value : ''"
-    :data-option-title="currentMultiselectValue ? currentMultiselectValue.title : ''"
+    :data-option-name="currentMultiselectValue ? currentMultiselectValue.title : ''"
     :data-loading="options.loading"
     :class="{ 'full-width': options.fullWidth, disabled: options.disabled }"
     :data-internal-search="options.internalSearch"
@@ -37,7 +37,7 @@
         slot="option"
         slot-scope="itemProps"
         :data-option-value="itemProps.option.value"
-        :data-option-title="itemProps.option.title"
+        :data-option-name="itemProps.option.title"
       >
         <slot name="item" :option="itemProps.option">
           <img
