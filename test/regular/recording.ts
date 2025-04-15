@@ -41,7 +41,7 @@ async function createRecordingFiles(advanced: boolean = false): Promise<number> 
         await clickButton('Recording');
       }
 
-      await setFormDropdown('Recording Format', format);
+      await setFormDropdown('RecFormat', format);
       await sleep(500);
       await clickButton('Done');
     });
@@ -117,7 +117,7 @@ test('Recording', async t => {
   // Note: The recording path for Simple Recording should have persisted from before
   await sleep(2000);
   await showSettingsWindow('Output', async () => {
-    await setFormDropdown('Output Mode', 'Simple');
+    await setFormDropdown('Mode', 'Simple');
     await clickButton('Done');
   });
 

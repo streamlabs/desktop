@@ -44,7 +44,7 @@ export abstract class BaseInputController<TValue> {
 
   async getTitle() {
     const $el = await this.getElement();
-    return $el.getAttribute('data-title');
+    return $el.getAttribute('data-name');
   }
 
   async waitForLoading() {

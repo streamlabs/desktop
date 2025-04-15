@@ -210,7 +210,6 @@ export function useInput<
   const dataAttrs = {
     'data-type': type,
     'data-name': name,
-    'data-title': label,
     'data-id': inputId,
   };
 
@@ -425,9 +424,9 @@ export function InputComponent<T extends Function>(f: T): T {
 
 export function getInputComponentByType(
   type: TInputType,
-): JSX.Element & { getAntdValue?: (value: unknown) => unknown } {
+): (JSX.Element & { getAntdValue?: (value: unknown) => unknown }) | null {
   const name = Object.keys(InputComponents).find(componentName => {
     return componentName.split('Input')[0].toLowerCase() === type;
   });
-  return name ? InputComponents[name] : null;
+  return name ? InputComponents[name as keyof typeof InputComponent] : null;
 }

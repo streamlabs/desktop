@@ -4,7 +4,6 @@
     data-role="input"
     data-type="list"
     :data-name="options.name"
-    :data-title="options.title"
     :data-value="currentMultiselectValue ? currentMultiselectValue.value : ''"
     :data-option-title="currentMultiselectValue ? currentMultiselectValue.title : ''"
     :data-loading="options.loading"

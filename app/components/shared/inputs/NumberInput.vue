@@ -4,7 +4,6 @@
     data-role="input"
     data-type="number"
     :data-name="options.name"
-    :data-title="options.title"
     :class="{ 'full-width': options.fullWidth, disabled: options.disabled }"
   >
     <input

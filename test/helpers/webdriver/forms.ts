@@ -36,8 +36,8 @@ export async function clickFormInput(t: TExecutionContext, label: string, index 
 }
 
 export async function setFormDropdown(label: string, value: string, index = 0) {
-  await waitForDisplayed(`[data-title="${label}"]`);
-  const $el = await select(`[data-title="${label}"]`);
+  await waitForDisplayed(`[data-name="${label}"]`);
+  const $el = await select(`[data-name="${label}"]`);
   $el.click();
   const option = await select(`div=${value}`);
   await option.click();

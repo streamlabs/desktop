@@ -39,11 +39,11 @@ async function recordHighlight(
 async function toggleReplayBuffer(advanced: boolean = false) {
   await showSettingsWindow('Output', async () => {
     if (advanced) {
-      await setFormDropdown('Output Mode', 'Advanced');
+      await setFormDropdown('Mode', 'Advanced');
       await clickButton('Replay Buffer');
       await click(await select('div[data-name="RecRB"]'));
     } else {
-      await setFormDropdown('Output Mode', 'Simple');
+      await setFormDropdown('Mode', 'Simple');
       await click('label=Enable Replay Buffer');
     }
 

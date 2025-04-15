@@ -15,7 +15,7 @@ test('Populates simple output mode settings', async t => {
   await fillForm({ Mode: 'Simple' });
 
   // Video Bitrate
-  const videoBitrate = await (await select('[data-title="Video Bitrate"]')).getValue();
+  const videoBitrate = await (await select('[data-name="Video Bitrate"]')).getValue();
   t.is(parseInt(videoBitrate, 10), 2500, 'Video Bitrate is correct default');
 
   const { getInput, getInputListValues, assertFormContains } = useForm('Streaming');
