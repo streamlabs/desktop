@@ -29,7 +29,7 @@ export default function PreviewModal({
 }: {
   close: () => void;
   streamId: string | undefined;
-  emitSetShowModal: (modal: TModalClipsView | null) => void;
+  emitSetShowModal: (modal: 'export' | null) => void;
 }) {
   console.log('rerender');
 
