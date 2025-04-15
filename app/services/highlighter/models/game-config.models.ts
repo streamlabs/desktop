@@ -5,7 +5,9 @@ import {
   EGame,
   IEventInfo,
   IDefaultEventInfo,
+  EGameState,
 } from './ai-highlighter.models';
+import Utils from 'services/utils';
 
 export const TERMS = {
   ELIMINATION: { singular: 'elimination', plural: 'eliminations' },
@@ -103,6 +105,10 @@ const COMMON_TYPES: Record<string, IDefaultEventInfo> = {
 
 export const FORTNITE_CONFIG: IGameConfig = {
   name: EGame.FORTNITE,
+  label: 'Fortnite',
+  gameModes: 'Battle Royale, Zero Build, Reload, OG',
+  thumbnail: `https://cdn.streamlabs.com/static/imgs/game-thumbnails/${EGame.FORTNITE}.png`,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
     ['deploy']: {
@@ -122,17 +128,88 @@ export const FORTNITE_CONFIG: IGameConfig = {
   },
 };
 
-const UNSET_CONFIG: IGameConfig = {
-  name: EGame.UNSET,
+const WARZONE_CONFIG: IGameConfig = {
+  name: EGame.WARZONE,
+  label: 'Call of Duty: Warzone',
+  gameModes: '',
+  thumbnail: `https://cdn.streamlabs.com/static/imgs/game-thumbnails/${EGame.WARZONE}.png`,
+  state: EGameState.INTERNAL,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
 };
 
+const MARVEL_RIVALS_CONFIG: IGameConfig = {
+  name: EGame.MARVEL_RIVALS,
+  label: 'Marvel Rivals',
+  gameModes: '',
+  thumbnail: 'https://cdn.streamlabs.com/static/imgs/game-thumbnails/marvel-rivals.png',
+  state: EGameState.INTERNAL,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+};
+
+const WAR_THUNDER_CONFIG: IGameConfig = {
+  name: EGame.WAR_THUNDER,
+  label: 'War Thunder',
+  gameModes: '',
+  thumbnail: 'https://cdn.streamlabs.com/static/imgs/game-thumbnails/war-thunder.png',
+  state: EGameState.INTERNAL,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+};
+
+const VALORANT_CONFIG: IGameConfig = {
+  name: EGame.VALORANT,
+  label: 'VALORANT',
+  gameModes: '',
+  thumbnail: '',
+  state: EGameState.INTERNAL,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+};
+
+const UNSET_CONFIG: IGameConfig = {
+  name: EGame.UNSET,
+  label: 'unset',
+  gameModes: 'unset',
+  thumbnail: 'unset',
+  state: EGameState.INTERNAL,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+};
+
+// Each game must have a config like and the config must be added here.
 const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.FORTNITE]: FORTNITE_CONFIG,
+  [EGame.WARZONE]: WARZONE_CONFIG,
+  [EGame.MARVEL_RIVALS]: MARVEL_RIVALS_CONFIG,
+  [EGame.WAR_THUNDER]: WAR_THUNDER_CONFIG,
+  [EGame.VALORANT]: VALORANT_CONFIG,
   [EGame.UNSET]: UNSET_CONFIG,
 };
+
+export const supportedGames = Object.entries(GAME_CONFIGS)
+  .filter(([gameKey]) => gameKey !== EGame.UNSET)
+  .filter(([gameKey, gameConfig]) => {
+    if (Utils.getHighlighterEnvironment() === 'production') {
+      return gameConfig.state !== EGameState.INTERNAL;
+    } else {
+      return true;
+    }
+  })
+  .map(([gameKey, gameConfig]) => {
+    return {
+      value: gameKey as EGame,
+      label: gameConfig.label,
+      description: gameConfig.gameModes,
+      image: gameConfig.thumbnail,
+    };
+  });
 
 export function getConfigByGame(game: EGame | string): IGameConfig {
   const lowercaseGame = game.toLowerCase() as EGame;
@@ -181,4 +258,14 @@ export function getEventConfig(game: EGame, eventType: string): IEventInfo | IDe
     includeInDropdown: false,
     contextEvent: false,
   };
+}
+
+export function isGameSupported(game: string | undefined) {
+  if (
+    game &&
+    supportedGames.some(supportedGame => supportedGame.label.toLowerCase() === game.toLowerCase())
+  ) {
+    return true;
+  }
+  return false;
 }
