@@ -184,6 +184,8 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
       (e: electron.Event, am: electron.ProcessMetric[]) => {
         const stats: IPerformanceState = obs.NodeObs.OBS_API_getPerformanceStatistics();
 
+        // TODO: I don't think getPerformanceStatistics uses the new API
+        // for video settings so hacking them in from the frontend
         const videoStats = this.videoService.state.horizontal.video;
         stats.frameRate = videoStats.fpsNum / videoStats.fpsDen;
 
