@@ -159,7 +159,7 @@ function ExportFlow({
   videoName: string;
   onVideoNameChange: (name: string) => void;
 }) {
-  const { UsageStatisticsService } = Services;
+  const { UsageStatisticsService, HighlighterService } = Services;
   const {
     exportInfo,
     cancelExport,
@@ -240,6 +240,24 @@ function ExportFlow({
 
     setExport(exportFile);
     exportCurrentFile(streamId, orientation);
+
+    const streamInfo = HighlighterService.views.highlightedStreams.find(
+      stream => stream.id === streamId,
+    );
+
+    if (streamInfo && !streamInfo.feedbackLeft) {
+      streamInfo.feedbackLeft = true;
+      HighlighterService.updateStream(streamInfo);
+
+      const clips = getClips(streamId);
+
+      UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+        type: 'ThumbsUp',
+        streamId: streamInfo?.id,
+        game: streamInfo?.game,
+        clips: clips?.length,
+      });
+    }
   }
 
   return (

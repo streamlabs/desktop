@@ -246,24 +246,6 @@ function ActionBar({
     emitFeedbackForm(clips.length);
   };
 
-  const clickThumbsUp = () => {
-    if (stream?.feedbackLeft) {
-      return;
-    }
-
-    setThumbsDownVisible(false);
-
-    stream.feedbackLeft = true;
-    HighlighterService.updateStream(stream);
-
-    UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
-      type: 'ThumbsUp',
-      streamId: stream?.id,
-      game: stream?.game,
-      clips: clips?.length,
-    });
-  };
-
   // In Progress
   if (stream?.state.type === EAiDetectionState.IN_PROGRESS) {
     return (
@@ -322,7 +304,7 @@ function ActionBar({
           type="primary"
           onClick={e => {
             emitExportVideo();
-            clickThumbsUp();
+            setThumbsDownVisible(false);
             e.stopPropagation();
           }}
           style={{ display: 'grid', gridTemplateAreas: 'stack' }}
