@@ -184,6 +184,9 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
       (e: electron.Event, am: electron.ProcessMetric[]) => {
         const stats: IPerformanceState = obs.NodeObs.OBS_API_getPerformanceStatistics();
 
+        const videoStats = this.videoService.state.horizontal.video;
+        stats.frameRate = videoStats.fpsNum / videoStats.fpsDen;
+
         stats.CPU += am
           .map(proc => {
             return proc.cpu.percentCPUUsage;
