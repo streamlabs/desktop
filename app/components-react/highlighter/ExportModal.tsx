@@ -374,7 +374,7 @@ function ExportFlow({
                       <i className="fa fa-spinner fa-spin" style={{ fontSize: '24px' }} />
                     </div>
                     <p>
-                      <span>{$t('Transcribing...')} </span>
+                      <span>{$t('Generating subtitles...')} </span>
                     </p>
                   </div>
                 ) : (
@@ -629,6 +629,7 @@ function SubtitleDropdownWrapper({
                   className={`${styles.innerDropdownItem} ${
                     item.name === currentSetting.name ? styles.active : ''
                   }`}
+                  style={{ display: 'flex', justifyContent: 'center' }}
                   onClick={() => {
                     setSetting(item);
                     emitSettings(item);
@@ -637,7 +638,7 @@ function SubtitleDropdownWrapper({
                   key={item.name}
                 >
                   {item.enabled === false ? (
-                    <div className={styles.dropdownText}>{item.name} </div>
+                    <div className={styles.dropdownText}>{item.name}</div>
                   ) : (
                     item.style && <SubtitlePreview svgStyle={item.style} />
                   )}
