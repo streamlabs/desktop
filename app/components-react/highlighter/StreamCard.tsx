@@ -55,7 +55,7 @@ export default function StreamCard({
       // Waiting 3 seconds solves that. Obviously not the best way
       timeout = setTimeout(() => {
         setClipsLoaded(true);
-      }, 3000);
+      }, clips.length * 1000);
     }
     prevStateRef.current = stream.state.type;
 
