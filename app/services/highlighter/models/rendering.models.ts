@@ -6,6 +6,10 @@ export type TResolution = 720 | 1080;
 export type TPreset = 'ultrafast' | 'fast' | 'slow';
 
 export interface ISubtitleStyle extends ITextStyle {}
+export interface IResolution {
+  width: number;
+  height: number;
+}
 
 export interface IExportOptions {
   fps: TFPS;

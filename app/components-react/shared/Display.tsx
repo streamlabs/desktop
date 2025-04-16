@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useVuex } from '../hooks';
 import { Services } from '../service-provider';
 import { Display as OBSDisplay } from '../../services/video';
-import { TDisplayType } from 'services/settings-v2/video';
+import { TDisplayType } from 'services/video';
 import uuid from 'uuid/v4';
 import { useRealmObject } from 'components-react/hooks/realm';
 interface DisplayProps {
@@ -18,7 +18,7 @@ interface DisplayProps {
 }
 
 export default function Display(props: DisplayProps) {
-  const { CustomizationService, VideoSettingsService } = Services;
+  const { CustomizationService, VideoService } = Services;
 
   const p = {
     paddingSize: 0,
@@ -30,7 +30,7 @@ export default function Display(props: DisplayProps) {
   };
 
   const v = useVuex(() => {
-    const videoSettings = VideoSettingsService.baseResolutions[p.type];
+    const videoSettings = VideoService.baseResolutions[p.type];
 
     return {
       baseResolution: `${videoSettings?.baseWidth}x${videoSettings?.baseHeight}`,

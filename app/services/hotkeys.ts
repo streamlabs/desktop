@@ -15,7 +15,7 @@ import { CustomizationService } from './customization';
 import { RecentEventsService } from './recent-events';
 import { UsageStatisticsService } from './usage-statistics';
 import { getOS, OS } from 'util/operating-systems';
-import { TDisplayType } from './settings-v2';
+import { TDisplayType } from './video';
 import { VirtualWebcamService } from 'app-services';
 
 function getScenesService(): ScenesService {

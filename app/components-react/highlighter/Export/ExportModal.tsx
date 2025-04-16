@@ -17,13 +17,15 @@ import { confirmAsync } from 'components-react/modals';
 import { $t } from 'services/i18n';
 import StorageUpload from './StorageUpload';
 import { useVuex } from 'components-react/hooks';
-import { initStore, useController } from '../hooks/zustand';
+import { initStore, useController } from '../../hooks/zustand';
 import { EOrientation, TOrientation } from 'services/highlighter/models/ai-highlighter.models';
 import { fileExists } from 'services/highlighter/file-utils';
 import { SCRUB_HEIGHT, SCRUB_WIDTH, SCRUB_FRAMES } from 'services/highlighter/constants';
 import styles from './ExportModal.m.less';
-import { getCombinedClipsDuration } from './utils';
-import { formatSecondsToHMS } from './ClipPreview';
+import { getCombinedClipsDuration } from '../utils';
+import { formatSecondsToHMS } from '../ClipPreview';
+import { set } from 'lodash';
+import PlatformSelect from './Platform';
 import cx from 'classnames';
 import { SubtitleStyles } from 'services/highlighter/subtitles/subtitle-styles';
 import Utils from 'services/utils';
@@ -320,7 +322,7 @@ function ExportFlow({
 
   return (
     <Form>
-      <div className={styles.modalWrapper}>
+      <div className={styles.exportWrapper}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <h2 style={{ fontWeight: 600, margin: 0 }}>{$t('Export')}</h2>{' '}
           <div>
@@ -555,53 +557,6 @@ function ExportFlow({
           </div>{' '}
         </div>
       </div>
-    </Form>
-  );
-}
-
-function PlatformSelect({
-  onClose,
-  videoName,
-  streamId,
-}: {
-  onClose: () => void;
-  videoName: string;
-  streamId: string | undefined;
-}) {
-  const { store, clearUpload, getStreamTitle } = useController(ExportModalCtx);
-  const { UserService } = Services;
-  const { isYoutubeLinked } = useVuex(() => ({
-    isYoutubeLinked: !!UserService.state.auth?.platforms.youtube,
-  }));
-  const [platform, setPlatform] = useState(() => (isYoutubeLinked ? 'youtube' : 'crossclip'));
-
-  async function handlePlatformSelect(val: string) {
-    if (platform === 'youtube') await clearUpload();
-    setPlatform(val);
-  }
-
-  const platformOptions = [
-    { label: 'YouTube', value: 'youtube' },
-    { label: 'Cross Clip', value: 'crossclip' },
-    { label: 'Podcast Editor', value: 'typestudio' },
-    { label: 'Video Editor', value: 'videoeditor' },
-  ];
-
-  return (
-    <Form>
-      <h1 style={{ display: 'inline', marginRight: '16px', position: 'relative', top: '3px' }}>
-        {$t('Upload To')}
-      </h1>
-      <ListInput
-        value={platform}
-        onChange={handlePlatformSelect}
-        nowrap
-        options={platformOptions}
-      />
-      {platform === 'youtube' && (
-        <YoutubeUpload defaultTitle={videoName} close={onClose} streamId={streamId} />
-      )}
-      {platform !== 'youtube' && <StorageUpload onClose={onClose} platform={platform} />}
     </Form>
   );
 }

@@ -3,7 +3,7 @@ import { EBlendingMethod, EBlendingMode, EScaleType, Scene, ScenesService } from
 import { HotkeysNode } from './hotkeys';
 import { SourcesService } from '../../sources';
 import { Inject } from '../../core/injector';
-import { TDisplayType, VideoSettingsService } from 'services/settings-v2';
+import { TDisplayType, VideoService } from 'services/video';
 import { DualOutputService } from 'services/dual-output';
 
 interface ISchema {
@@ -59,8 +59,8 @@ export class SceneItemsNode extends Node<ISchema, {}> {
   @Inject('DualOutputService')
   dualOutputService: DualOutputService;
 
-  @Inject('VideoSettingsService')
-  videoSettingsService: VideoSettingsService;
+  @Inject('VideoService')
+  videoService: VideoService;
 
   getItems(context: IContext) {
     return context.scene.getNodes().slice().reverse();
@@ -143,7 +143,7 @@ export class SceneItemsNode extends Node<ISchema, {}> {
     // but if the scene item already has a display assigned, skip it
     if (this.dualOutputService.views.hasNodeMap(context.scene.id)) {
       // nodes must be assigned to a context, so if it doesn't exist, establish it
-      this.videoSettingsService.validateVideoContext();
+      this.videoService.validateVideoContext();
 
       const nodeMap = this.dualOutputService.views.sceneNodeMaps[context.scene.id];
 

@@ -34,6 +34,7 @@ import { IncrementalRolloutService } from 'app-services';
 
 import { EAvailableFeatures } from 'services/incremental-rollout';
 import {
+  EUploadPlatform,
   IAiClip,
   IHighlightedStream,
   IHighlighterState,
@@ -44,6 +45,8 @@ import {
   IUploadInfo,
   TClip,
   TStreamInfo,
+  EHighlighterView,
+  ITempRecordingInfo,
 } from './models/highlighter.models';
 import {
   EExportStep,
@@ -76,6 +79,7 @@ import { extractDateTimeFromPath, fileExists } from './file-utils';
 import { addVerticalFilterToExportOptions } from './vertical-export';
 import Utils from '../utils';
 import { SubtitleStyles } from './subtitles/subtitle-styles';
+import { isGameSupported } from './models/game-config.models';
 
 @InitAfter('StreamingService')
 export class HighlighterService extends PersistentStatefulService<IHighlighterState> {
@@ -120,14 +124,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       preset: 'fast',
       subtitleStyle: null,
     },
-    upload: {
-      uploading: false,
-      uploadedBytes: 0,
-      totalBytes: 0,
-      cancelRequested: false,
-      videoId: null,
-      error: false,
-    },
+    uploads: [],
     dismissedTutorial: false,
     error: '',
     useAiHighlighter: false,
@@ -135,6 +132,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     updaterProgress: 0,
     isUpdaterRunning: false,
     highlighterVersion: '',
+    tempRecordingInfo: {},
   };
 
   aiHighlighterUpdater: AiHighlighterUpdater;
@@ -193,23 +191,33 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   }
 
   @mutation()
-  SET_UPLOAD_INFO(uploadInfo: Partial<IUploadInfo>) {
-    this.state.upload = {
-      ...this.state.upload,
-      ...uploadInfo,
-    };
+  SET_UPLOAD_INFO(uploadInfo: Partial<IUploadInfo> & { platform: EUploadPlatform }) {
+    const platform = uploadInfo.platform;
+    const existingIndex = this.state.uploads.findIndex(u => u.platform === platform);
+
+    if (existingIndex !== -1) {
+      this.state.uploads = [
+        ...this.state.uploads.slice(0, existingIndex),
+        { ...this.state.uploads[existingIndex], ...uploadInfo },
+        ...this.state.uploads.slice(existingIndex + 1),
+      ];
+    } else {
+      const newUpload: IUploadInfo = {
+        uploading: false,
+        uploadedBytes: 0,
+        totalBytes: 0,
+        cancelRequested: false,
+        videoId: null,
+        error: false,
+        ...uploadInfo,
+      };
+      this.state.uploads.push(newUpload);
+    }
   }
 
   @mutation()
   CLEAR_UPLOAD() {
-    this.state.upload = {
-      uploading: false,
-      uploadedBytes: 0,
-      totalBytes: 0,
-      cancelRequested: false,
-      videoId: null,
-      error: false,
-    };
+    this.state.uploads = [];
   }
 
   @mutation()
@@ -289,6 +297,11 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   @mutation()
   SET_HIGHLIGHTER_VERSION(version: string) {
     this.state.highlighterVersion = version;
+  }
+
+  @mutation()
+  SET_TEMP_RECORDING_INFO(tempRecordingInfo: ITempRecordingInfo) {
+    this.state.tempRecordingInfo = tempRecordingInfo;
   }
 
   get views() {
@@ -393,31 +406,22 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         }
 
         if (this.views.useAiHighlighter === false) {
-          console.log('HighlighterService: Game:', this.streamingService.views.game);
-          // console.log('Highlighter not enabled or not Fortnite');
           return;
         }
 
-        // console.log('recording Alreadyt running?:', this.streamingService.views.isRecording);
-        this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
-          type: 'AiRecordingStarted',
-        });
-
-        if (this.streamingService.views.isRecording) {
-          // console.log('Recording is already running');
-        } else {
-          this.streamingService.actions.toggleRecording();
+        if (!isGameSupported(this.streamingService.views.game)) {
+          return;
         }
 
-        let game = EGame.UNSET;
-        switch (this.streamingService.views.game) {
-          case EGame.FORTNITE:
-            game = EGame.FORTNITE;
-            break;
+        let game;
+        const normalizedGameName = this.streamingService.views.game
+          .toLowerCase()
+          .replace(/ /g, '_');
 
-          default:
-            game = EGame.UNSET;
-            break;
+        if (Object.values(EGame).includes(normalizedGameName as EGame)) {
+          game = normalizedGameName as EGame;
+        } else {
+          game = EGame.UNSET;
         }
 
         streamInfo = {
@@ -425,6 +429,16 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           title: this.streamingService.views.settings.platforms.twitch?.title,
           game,
         };
+
+        this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+          type: 'AiRecordingStarted',
+          streamId: streamInfo?.id,
+        });
+
+        if (this.streamingService.views.isRecording === false) {
+          this.streamingService.actions.toggleRecording();
+        }
+
         aiRecordingInProgress = true;
         aiRecordingStartTime = moment();
       }
@@ -464,6 +478,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
         this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
           type: 'AiRecordingFinished',
+          streamId: streamInfo?.id,
         });
         this.streamingService.actions.toggleRecording();
 
@@ -485,6 +500,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
             type: 'AiRecordingExists',
             duration,
+            streamId: streamInfo?.id,
           });
         })
         .catch(error => {
@@ -492,11 +508,20 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         });
 
       aiRecordingInProgress = false;
-      this.detectAndClipAiHighlights(path, streamInfo, true);
+
+      const tempRecordingInfo: ITempRecordingInfo = {
+        recordingPath: path,
+        streamInfo,
+        source: 'after-stream',
+      };
+
+      this.setTempRecordingInfo(tempRecordingInfo);
 
       this.navigationService.actions.navigate(
         'Highlighter',
-        { view: 'stream' },
+        {
+          view: EHighlighterView.STREAM,
+        },
         EMenuItemKey.Highlighter,
       );
     });
@@ -550,7 +575,9 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
   dismissError() {
     if (this.state.export.error) this.SET_EXPORT_INFO({ error: null });
-    if (this.state.upload.error) this.SET_UPLOAD_INFO({ error: false });
+    this.state.uploads
+      .filter(u => u.error)
+      .forEach(u => this.SET_UPLOAD_INFO({ error: false, platform: u.platform }));
     if (this.state.error) this.SET_ERROR('');
   }
 
@@ -999,7 +1026,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     });
 
     let renderingClips: RenderingClip[] = await this.generateRenderingClips(streamId, orientation);
-    const exportOptions: IExportOptions = this.generateExportOptions(
+    const exportOptions: IExportOptions = await this.generateExportOptions(
       renderingClips,
       preview,
       orientation,
@@ -1055,11 +1082,9 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       setExportInfo,
       recordAnalyticsEvent,
     );
-
-    this.SET_UPLOAD_INFO({ videoId: null });
   }
 
-  private generateExportOptions(
+  private async generateExportOptions(
     renderingClips: RenderingClip[],
     preview: boolean,
     orientation: string,
@@ -1076,7 +1101,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
     if (orientation === 'vertical') {
       // adds complex filter and flips width and height
-      addVerticalFilterToExportOptions(this.views.clips, renderingClips, exportOptions);
+      await addVerticalFilterToExportOptions(this.views.clips, renderingClips, exportOptions);
     }
     return exportOptions;
   }
@@ -1211,6 +1236,10 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     await this.aiHighlighterUpdater?.uninstall();
   }
 
+  setTempRecordingInfo(tempRecordingInfo: ITempRecordingInfo) {
+    this.SET_TEMP_RECORDING_INFO(tempRecordingInfo);
+  }
+
   /**
    * Start updater process
    */
@@ -1337,12 +1366,13 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         (milestone: IHighlighterMilestone) => {
           this.streamMilestones?.milestones?.push(milestone);
         },
+        streamInfo.game === 'unset' ? undefined : streamInfo.game,
       );
 
       this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
         type: 'Detection',
         clips: highlighterResponse.length,
-        game: 'Fortnite', // hardcode for now
+        game: setStreamInfo.game,
         streamId: this.streamMilestones?.streamId,
       });
       console.log('✅ Final HighlighterData', highlighterResponse);
@@ -1352,7 +1382,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
           type: 'DetectionCanceled',
           reason: EAiDetectionState.CANCELED_BY_USER,
-          game: 'Fortnite',
+          game: setStreamInfo.game,
+          streamId: this.streamMilestones?.streamId,
         });
       } else {
         console.error('Error in highlight generation:', error);
@@ -1360,8 +1391,9 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
           type: 'DetectionFailed',
           reason: EAiDetectionState.ERROR,
-          game: 'Fortnite',
+          game: setStreamInfo.game,
           error_code: (error as { code?: number })?.code ?? 1,
+          streamId: this.streamMilestones?.streamId,
         });
       }
     } finally {
@@ -1435,13 +1467,20 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   // UPLOAD logic
   // =================================================================================================
 
+  getUploadInfo(uploadInfo: IUploadInfo[], platform: EUploadPlatform): IUploadInfo | undefined {
+    return uploadInfo.find(u => u.platform === platform);
+  }
+
   cancelFunction: (() => void) | null = null;
   /**
    * Will cancel the currently in progress upload
    */
-  cancelUpload() {
-    if (this.cancelFunction && this.views.uploadInfo.uploading) {
-      this.SET_UPLOAD_INFO({ cancelRequested: true });
+  cancelUpload(platform: EUploadPlatform) {
+    if (
+      this.cancelFunction &&
+      this.views.uploadInfo.find(u => u.platform === platform && u.uploading)
+    ) {
+      this.SET_UPLOAD_INFO({ cancelRequested: true, platform });
       this.cancelFunction();
     }
   }
@@ -1459,11 +1498,16 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       throw new Error('Cannot upload when export is not complete');
     }
 
-    if (this.views.uploadInfo.uploading) {
+    if (this.views.uploadInfo.some(u => u.uploading)) {
       throw new Error('Cannot start a new upload when uploading is in progress');
     }
 
-    this.SET_UPLOAD_INFO({ uploading: true, cancelRequested: false, error: false });
+    this.SET_UPLOAD_INFO({
+      platform: EUploadPlatform.YOUTUBE,
+      uploading: true,
+      cancelRequested: false,
+      error: false,
+    });
 
     const yt = getPlatformService('youtube') as YoutubeService;
 
@@ -1472,6 +1516,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       options,
       progress => {
         this.SET_UPLOAD_INFO({
+          platform: EUploadPlatform.YOUTUBE,
           uploadedBytes: progress.uploadedBytes,
           totalBytes: progress.totalBytes,
         });
@@ -1484,7 +1529,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     try {
       result = await complete;
     } catch (e: unknown) {
-      if (this.views.uploadInfo.cancelRequested) {
+      if (this.views.uploadInfo.some(u => u.cancelRequested)) {
         console.log('The upload was canceled');
       } else {
         Sentry.withScope(scope => {
@@ -1492,7 +1537,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           console.error('Got error uploading YT video', e);
         });
 
-        this.SET_UPLOAD_INFO({ error: true });
+        this.SET_UPLOAD_INFO({ platform: EUploadPlatform.YOUTUBE, error: true });
         this.usageStatisticsService.recordAnalyticsEvent(
           this.views.useAiHighlighter ? 'AIHighlighter' : 'Highlighter',
           {
@@ -1504,6 +1549,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
     this.cancelFunction = null;
     this.SET_UPLOAD_INFO({
+      platform: EUploadPlatform.YOUTUBE,
       uploading: false,
       cancelRequested: false,
       videoId: result ? result.id : null,
@@ -1525,19 +1571,20 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     }
   }
 
-  async uploadStorage(platform: string) {
-    this.SET_UPLOAD_INFO({ uploading: true, cancelRequested: false, error: false });
+  async uploadStorage(platform: EUploadPlatform) {
+    this.SET_UPLOAD_INFO({ platform, uploading: true, cancelRequested: false, error: false });
 
     const { cancel, complete, size } = await this.sharedStorageService.actions.return.uploadFile(
       this.views.exportInfo.file,
       progress => {
         this.SET_UPLOAD_INFO({
+          platform,
           uploadedBytes: progress.uploadedBytes,
           totalBytes: progress.totalBytes,
         });
       },
       error => {
-        this.SET_UPLOAD_INFO({ error: true });
+        this.SET_UPLOAD_INFO({ platform, error: true });
         console.error(error);
       },
     );
@@ -1547,10 +1594,10 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       const result = await complete;
       id = result.id;
     } catch (e: unknown) {
-      if (this.views.uploadInfo.cancelRequested) {
+      if (this.views.uploadInfo.some(u => u.cancelRequested)) {
         console.log('The upload was canceled');
       } else {
-        this.SET_UPLOAD_INFO({ uploading: false, error: true });
+        this.SET_UPLOAD_INFO({ platform, uploading: false, error: true });
         this.usageStatisticsService.recordAnalyticsEvent('Highlighter', {
           type: 'UploadStorageError',
           fileSize: size,
@@ -1559,7 +1606,12 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       }
     }
     this.cancelFunction = null;
-    this.SET_UPLOAD_INFO({ uploading: false, cancelRequested: false, videoId: id || null });
+    this.SET_UPLOAD_INFO({
+      platform,
+      uploading: false,
+      cancelRequested: false,
+      videoId: id || null,
+    });
 
     if (id) {
       this.usageStatisticsService.recordAnalyticsEvent('Highlighter', {

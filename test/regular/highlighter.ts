@@ -39,6 +39,6 @@ test('Highlighter save and export', async t => {
   const exportLocation = path.resolve(recordingDir, fileName);
   await fillForm({ exportLocation });
   await clickButton('Export Horizontal');
-  await waitForDisplayed('h1=Upload To', { timeout: 60000 });
+  await waitForDisplayed('h2=Publish to', { timeout: 60000 });
   t.true(fs.existsSync(exportLocation), 'The video file should exist');
 });
