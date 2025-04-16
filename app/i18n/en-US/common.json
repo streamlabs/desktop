@@ -73,6 +73,8 @@
   "initialHelpTipContent": "Learn how to use N Air here.",
   "loginHelpTipTitle": "Login",
   "loginHelpTipContent": "Click here to log in to niconico",
+  "endStreamHelpTipTitle": "Stream Not Started",
+  "endStreamHelpTipContent": "The program is live, but video and audio are not being sent.\nClick [GO LIVE] to begin.",
   "fieldIsRequired": "The field is required",
   "fieldMustBeLarger": "The field value must be %{value} or larger",
   "fieldMustBeLess": "The field value must be %{value} or less",

@@ -6,6 +6,7 @@ import { mutation } from './core/stateful-service';
 export enum EDismissable {
   SceneCollectionsHelpTip = 'scene_collections_help_tip',
   LoginHelpTip = 'login_help_tip',
+  EndStreamHelpTip = 'end_stream_help_tip',
   InitialHelpTip = 'initial_help_tip',
 }
 

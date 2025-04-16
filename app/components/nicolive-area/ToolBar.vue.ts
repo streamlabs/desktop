@@ -160,23 +160,28 @@ export default class ToolBar extends Vue {
   async startProgram() {
     if (this.isStarting) throw new Error('startProgram is running');
     try {
-      await this.nicoliveProgramService.startProgram();
-
       // もし配信開始してなかったら確認する
+      let startStreaming = false;
       if (!this.streamingService.isStreaming) {
         // TODO: 翻訳
-        const startStreaming = await remote.dialog
+        const selectedId = await remote.dialog
           .showMessageBox(remote.getCurrentWindow(), {
             type: 'warning',
             message: $t('program-info.start-streaming-confirmation'),
-            buttons: [$t('streaming.goLive'), $t('program-info.later')],
+            buttons: [$t('streaming.goLive'), $t('program-info.later'), $t('common.cancel')],
             noLink: true,
+            cancelId: 2,
           })
-          .then(value => value.response === 0);
-        if (startStreaming) {
-          // 開始
-          await this.streamingService.toggleStreamingAsync();
+          .then(value => value.response);
+        if (selectedId === 2) {
+          return;
         }
+        startStreaming = selectedId === 0;
+      }
+      await this.nicoliveProgramService.startProgram();
+      if (startStreaming) {
+        // 開始
+        await this.streamingService.toggleStreamingAsync();
       }
     } catch (caught) {
       if (caught instanceof NicoliveFailure) {
