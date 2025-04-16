@@ -2,9 +2,9 @@
 * @koizuka @taroc-dw @matsuyuki-a @asaday
 
 # planners
-/app/i18n/ @yushinakatani @kazuki-yoneda
-replace_rules.json @yushinakatani @kazuki-yoneda
-/.github/CODEOWNERS @yushinakatani @kazuki-yoneda
+/app/i18n/ @yushinakatani
+replace_rules.json @yushinakatani
+/.github/CODEOWNERS @yushinakatani
 
 # designers
 *.vue @yusukess @kechino
