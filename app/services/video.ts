@@ -425,7 +425,7 @@ export class VideoSettingsState extends RealmObject {
     });
 
     // migrate vertical video settings
-    const persistedVerticalSettings = this.fetchPersistentStatefulSettings('vertical');
+    const persistedVerticalSettings = this.fetchPersistentStatefulSettings('vertical') || {};
     const verticalSettings = {
       ...horizontalSettings,
       baseWidth: 720,
