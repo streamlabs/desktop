@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   EHighlighterView,
   IHighlightedStream,
@@ -39,20 +39,40 @@ export default function StreamCard({
         }
         return clip;
       });
-  }, [
-    HighlighterService.views.clips.filter(clips => clips.streamInfo?.[streamId] && clips.enabled)
-      .length,
-    streamId,
-  ]);
+  }, [HighlighterService.views.clips.filter(clips => clips.streamInfo?.[streamId]), streamId]);
 
   const stream = useVuex(() => HighlighterService.views.highlightedStreamsDictionary[streamId]);
+
+  const [thumbnailsLoaded, setClipsLoaded] = useState<boolean>(false);
+  const prevStateRef = useRef<EAiDetectionState | null>(null);
+  useEffect(() => {
+    let timeout: NodeJS.Timeout | null = null;
+    if (
+      prevStateRef.current === EAiDetectionState.IN_PROGRESS &&
+      stream.state.type === EAiDetectionState.FINISHED &&
+      !thumbnailsLoaded
+    ) {
+      // This is a workaround.
+      // Sometimes it takes longer to to generate the thumbnails. Event tho the path and file is already there, the image can't be loaded
+      // Waiting 3 seconds solves that. Obviously not the best way
+      timeout = setTimeout(() => {
+        setClipsLoaded(true);
+      }, 3000);
+    }
+    prevStateRef.current = stream.state.type;
+
+    return () => {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+    };
+  }, [streamId, stream]);
 
   if (!stream) {
     return <></>;
   }
 
   const game = HighlighterService.getGameByStreamId(streamId);
-
   function shareFeedback() {
     remote.shell.openExternal(
       'https://support.streamlabs.com/hc/en-us/requests/new?ticket_form_id=31967205905051',
@@ -154,8 +174,6 @@ export default function StreamCard({
       </div>
     );
   }
-
-  const gameThumbnail = supportedGames?.find(game => game.value === stream.game)?.image;
 
   return (
     <>
@@ -411,7 +429,6 @@ export function Thumbnail({
       >
         <i className="icon-trash" />
       </Button>
-
       <img
         onClick={e => {
           if (stream.state.type !== EAiDetectionState.IN_PROGRESS) {
