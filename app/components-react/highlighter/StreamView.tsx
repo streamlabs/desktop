@@ -35,8 +35,6 @@ type TModalStreamView = {
 } | null;
 
 export default function StreamView({ emitSetView }: { emitSetView: (data: IViewState) => void }) {
-  console.log('rerender streamview');
-
   const { HighlighterService, HotkeysService, UsageStatisticsService } = Services;
   const v = useVuex(() => ({
     error: HighlighterService.views.error,

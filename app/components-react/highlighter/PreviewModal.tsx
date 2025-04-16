@@ -31,8 +31,6 @@ export default function PreviewModal({
   streamId: string | undefined;
   emitSetShowModal: (modal: 'export' | null) => void;
 }) {
-  console.log('rerender');
-
   const { HighlighterService, UsageStatisticsService } = Services;
   const clips = HighlighterService.getClips(HighlighterService.views.clips, streamId);
   const { intro, outro } = HighlighterService.views.video;

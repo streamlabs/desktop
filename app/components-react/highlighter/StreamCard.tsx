@@ -24,8 +24,6 @@ export default function StreamCard({
   streamId: string;
   emitSetView: (data: IViewState) => void;
 }) {
-  console.log('streamcard', streamId);
-
   const [modal, setModal] = useState<TModalStreamCard | null>(null);
   const [clipsOfStreamAreLoading, setClipsOfStreamAreLoading] = useState<string | null>(null);
 

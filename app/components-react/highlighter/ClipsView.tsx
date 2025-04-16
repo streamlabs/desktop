@@ -42,8 +42,6 @@ export default function ClipsView({
   props: IClipsViewProps;
   emitSetView: (data: IViewState) => void;
 }) {
-  console.log('rerender clips view');
-
   const { HighlighterService, UsageStatisticsService, IncrementalRolloutService } = Services;
   const aiHighlighterFeatureEnabled = IncrementalRolloutService.views.featureIsEnabled(
     EAvailableFeatures.aiHighlighter,
