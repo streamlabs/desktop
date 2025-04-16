@@ -270,6 +270,14 @@ export class VideoSettingsState extends RealmObject {
     },
   };
 
+  fetchPersistentStatefulSettings(display: TDisplayType) {
+    const settings = JSON.parse(
+      localStorage.getItem('PersistentStatefulService-DualOutputService'),
+    );
+
+    return settings?.videoSettings[display];
+  }
+
   /**
    * Fetch Video settings and format for the new API
    * @remark Primarily used to migrate legacy settings when creating the realm
@@ -309,7 +317,15 @@ export class VideoSettingsState extends RealmObject {
       console.warn('Error fetching video settings from video factory', e);
     }
 
-    // as a fallback, try to fetch video settings from the old API
+    // as a fallback, try to fetch settings persisted in old state
+    try {
+      videoSettings = this.fetchPersistentStatefulSettings('horizontal');
+      return videoSettings;
+    } catch (e: unknown) {
+      console.warn('Error fetching persisted state settings', e);
+    }
+
+    // as a second fallback, try to fetch video settings from the old API
     try {
       const oldAPISettings = obs.NodeObs.OBS_settings_getSettings('Video')?.data[0]?.parameters;
 
@@ -353,7 +369,7 @@ export class VideoSettingsState extends RealmObject {
 
       return videoSettings;
     } catch (e: unknown) {
-      console.warn('Error fetching video settings from video factory', e);
+      console.warn('Error fetching video settings from legacy OBS API', e);
     }
 
     // as a last resort, fetch settings from the local settings file
@@ -409,12 +425,14 @@ export class VideoSettingsState extends RealmObject {
     });
 
     // migrate vertical video settings
+    const persistedVerticalSettings = this.fetchPersistentStatefulSettings('vertical') || {};
     const verticalSettings = {
       ...horizontalSettings,
       baseWidth: 720,
       baseHeight: 1280,
       outputWidth: 720,
       outputHeight: 1280,
+      ...persistedVerticalSettings,
     };
 
     // migrate vertical settings to realm
