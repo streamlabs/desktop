@@ -144,48 +144,24 @@ class VideoInfo extends RealmObject implements obs.IVideoInfo {
     },
   };
 
-  get videoInfo() {
-    return {
-      fpsNum: this.fpsNum,
-      fpsDen: this.fpsDen,
-      baseWidth: this.baseWidth,
-      baseHeight: this.baseHeight,
-      outputWidth: this.outputWidth,
-      outputHeight: this.outputHeight,
-      outputFormat: this.outputFormat,
-      colorspace: this.colorspace,
-      range: this.range,
-      scaleType: this.scaleType,
-      fpsType: this.fpsType,
-    };
-  }
-
   get baseRes() {
-    const base = `${this.baseWidth}x${this.baseHeight}`;
-    return { label: base, value: base };
+    return `${this.baseWidth}x${this.baseHeight}`;
   }
 
   get outputRes() {
-    const output = `${this.outputWidth}x${this.outputHeight}`;
-    return { label: output, value: output };
+    return `${this.outputWidth}x${this.outputHeight}`;
   }
 
   get values() {
-    const scaleType = {
-      label: scaleTypeNames[this.scaleType as TScaleTypeNames],
-      value: this.scaleType,
-    };
-
-    const fpsType = {
-      label: fpsTypeNames[this.fpsType as TFpsTypeNames],
-      value: this.fpsType,
-    };
-
     return {
       baseRes: this.baseRes,
       outputRes: this.outputRes,
-      scaleType,
-      fpsType,
+      fpsNum: this.fpsNum,
+      fpsDen: this.fpsDen,
+      scaleType: this.scaleType,
+      fpsType: this.fpsType,
+      fpsCom: `${this.fpsNum}-${this.fpsDen}`,
+      fpsInt: this.fpsNum,
     };
   }
 }
@@ -203,10 +179,6 @@ class VideoContextSetting extends RealmObject {
       isActive: { type: 'bool', default: true },
     },
   };
-
-  get videoInfo(): obs.IVideoInfo {
-    return this.video.videoInfo;
-  }
 
   get baseWidth() {
     return this.video.baseWidth;
@@ -230,21 +202,6 @@ class VideoContextSetting extends RealmObject {
 
   get outputRes() {
     return `${this.outputWidth}x${this.outputHeight}`;
-  }
-
-  get values(): IVideoSettingFormatted {
-    const settings = this.video;
-
-    return {
-      baseRes: `${settings.baseWidth}x${settings.baseHeight}`,
-      outputRes: `${settings.outputWidth}x${settings.outputHeight}`,
-      scaleType: settings.scaleType,
-      fpsType: settings.fpsType,
-      fpsCom: `${settings.fpsNum}-${settings.fpsDen}`,
-      fpsNum: settings.fpsNum,
-      fpsDen: settings.fpsDen,
-      fpsInt: settings.fpsNum,
-    };
   }
 }
 
@@ -504,19 +461,19 @@ export class VideoSettingsState extends RealmObject {
 
     return {
       horizontal: {
-        baseWidth: this.horizontal.videoInfo.baseWidth,
-        baseHeight: this.horizontal.videoInfo.baseHeight,
+        baseWidth: this.horizontal.video.baseWidth,
+        baseHeight: this.horizontal.video.baseHeight,
       },
       vertical: {
-        baseWidth: this.vertical.videoInfo.baseWidth,
-        baseHeight: this.vertical.videoInfo.baseHeight,
+        baseWidth: this.vertical.video.baseWidth,
+        baseHeight: this.vertical.video.baseHeight,
       },
     };
   }
   get videoInfo(): Dictionary<obs.IVideoInfo> {
     return {
-      horizontal: this.horizontal.videoInfo,
-      vertical: this.vertical.videoInfo,
+      horizontal: this.horizontal.video,
+      vertical: this.vertical.video,
     };
   }
 
@@ -544,20 +501,20 @@ export class VideoSettingsState extends RealmObject {
 
     return {
       horizontal: {
-        outputWidth: this.horizontal.videoInfo.outputWidth,
-        outputHeight: this.horizontal.videoInfo.outputHeight,
+        outputWidth: this.horizontal.video.outputWidth,
+        outputHeight: this.horizontal.video.outputHeight,
       },
       vertical: {
-        outputWidth: this.vertical.videoInfo.outputWidth,
-        outputHeight: this.vertical.videoInfo.outputHeight,
+        outputWidth: this.vertical.video.outputWidth,
+        outputHeight: this.vertical.video.outputHeight,
       },
     };
   }
 
   get values(): Dictionary<IVideoSettingFormatted> {
     return {
-      horizontal: this.horizontal.values,
-      vertical: this.vertical.values,
+      horizontal: this.horizontal.video.values,
+      vertical: this.vertical.video.values,
     };
   }
 }
@@ -1293,22 +1250,6 @@ export class VideoService extends Service {
    */
   updateVideoSettings(patch: Partial<obs.IVideoInfo>, display: TDisplayType = 'horizontal') {
     this.setSettings({ video: { ...patch } }, display);
-  }
-
-  /**
-   * Update a single video setting
-   * @remark Primarily used for the video settings form
-   * @param key - property name of setting
-   * @param value - new value for setting
-   * @param display - context to apply setting
-   */
-  setVideoSetting(
-    key: keyof obs.IVideoInfo,
-    value: IVideoInfoValue,
-    display: TDisplayType = 'horizontal',
-  ) {
-    const setting = { [key]: value };
-    this.setSettings({ video: { ...setting } }, display);
   }
 
   /**
