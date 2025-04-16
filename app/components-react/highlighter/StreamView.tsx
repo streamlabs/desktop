@@ -39,7 +39,6 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
 
   const { HighlighterService, HotkeysService, UsageStatisticsService } = Services;
   const v = useVuex(() => ({
-    exportInfo: HighlighterService.views.exportInfo,
     error: HighlighterService.views.error,
     uploadInfo: HighlighterService.views.uploadInfo,
     highlighterVersion: HighlighterService.views.highlighterVersion,
@@ -97,7 +96,6 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
 
   function closeModal() {
     // Do not allow closing export modal while export/upload operations are in progress
-    if (v.exportInfo.exporting) return;
     if (v.uploadInfo.some(u => u.uploading)) return;
 
     setShowModal(null);
