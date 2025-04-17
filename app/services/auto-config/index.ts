@@ -128,7 +128,7 @@ export class AutoConfigService extends Service {
       obs.NodeObs.TerminateAutoConfig();
 
       // apply optimized settings to the video contexts
-      // this.videoService.migrateAutoConfigSettings();
+      this.videoService.migrateAutoConfigSettings();
     }
   }
 
@@ -140,7 +140,7 @@ export class AutoConfigService extends Service {
         obs.NodeObs.TerminateAutoConfig();
 
         // apply optimized settings to the video contexts
-        // this.videoService.migrateAutoConfigSettings();
+        this.videoService.migrateAutoConfigSettings();
         debounce(() => this.configProgress.next({ ...progress, event: 'done' }), 1000)();
       }
     }

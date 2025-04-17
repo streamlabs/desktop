@@ -270,14 +270,6 @@ export class VideoSettingsState extends RealmObject {
     },
   };
 
-  fetchPersistentStatefulSettings(display: TDisplayType) {
-    const settings = JSON.parse(
-      localStorage.getItem('PersistentStatefulService-DualOutputService'),
-    );
-
-    return settings?.videoSettings[display];
-  }
-
   /**
    * Fetch Video settings and format for the new API
    * @remark Primarily used to migrate legacy settings when creating the realm
@@ -317,15 +309,7 @@ export class VideoSettingsState extends RealmObject {
       console.warn('Error fetching video settings from video factory', e);
     }
 
-    // as a fallback, try to fetch settings persisted in old state
-    try {
-      videoSettings = this.fetchPersistentStatefulSettings('horizontal');
-      return videoSettings;
-    } catch (e: unknown) {
-      console.warn('Error fetching persisted state settings', e);
-    }
-
-    // as a second fallback, try to fetch video settings from the old API
+    // as a fallback, try to fetch video settings from the old API
     try {
       const oldAPISettings = obs.NodeObs.OBS_settings_getSettings('Video')?.data[0]?.parameters;
 
@@ -369,7 +353,7 @@ export class VideoSettingsState extends RealmObject {
 
       return videoSettings;
     } catch (e: unknown) {
-      console.warn('Error fetching video settings from legacy OBS API', e);
+      console.warn('Error fetching video settings from video factory', e);
     }
 
     // as a last resort, fetch settings from the local settings file
@@ -425,14 +409,12 @@ export class VideoSettingsState extends RealmObject {
     });
 
     // migrate vertical video settings
-    const persistedVerticalSettings = this.fetchPersistentStatefulSettings('vertical') || {};
     const verticalSettings = {
       ...horizontalSettings,
       baseWidth: 720,
       baseHeight: 1280,
       outputWidth: 720,
       outputHeight: 1280,
-      ...persistedVerticalSettings,
     };
 
     // migrate vertical settings to realm
@@ -1050,6 +1032,56 @@ export class VideoService extends Service {
     this.contexts[display].video = this.videoInfo[display];
     this.contexts[display].legacySettings = this.videoInfo[display];
   }
+
+  /**
+   * Migrate optimized settings to vertical context
+   */
+  migrateAutoConfigSettings() {
+    // load optimized settings onto horizontal context
+    // const settings =
+    //   this.contexts.horizontal?.legacySettings ??
+    //   this.contexts.horizontal?.video ??
+    //   this.state.horizontal.video;
+    // const updatedSettings = {
+    //   ...settings,
+    //   baseWidth: this.state.vertical.video.baseWidth,
+    //   baseHeight: this.state.vertical.video.baseHeight,
+    //   outputWidth: this.state.vertical.video.outputWidth,
+    //   outputHeight: this.state.vertical.video.outputHeight,
+    // };
+    // // this.updateVideoSettings(updatedSettings, 'vertical');
+    // if (this.contexts?.vertical) {
+    //   // update the Video settings property to the horizontal context dimensions
+    //   const base = `${settings.baseWidth}x${settings.baseHeight}`;
+    //   const output = `${settings.outputWidth}x${settings.outputHeight}`;
+    // }
+  }
+
+  /**
+   * Confirm video setting dimensions in settings
+   * @remarks Primarily used with the optimizer to ensure the horizontal context dimensions
+   * are the dimensions in the settings
+   */
+  // confirmVideoSettingDimensions() {
+  //   const [baseWidth, baseHeight] = this.settingsService.views.values.Video.Base.split('x');
+  //   const [outputWidth, outputHeight] = this.settingsService.views.values.Video.Output.split('x');
+
+  //   if (
+  //     Number(baseWidth) !== this.state.horizontal.video.baseWidth ||
+  //     Number(baseHeight) !== this.state.horizontal.video.baseHeight
+  //   ) {
+  //     const base = `${this.state.horizontal.video.baseWidth}x${this.state.horizontal.video.baseHeight}`;
+  //     this.settingsService.setSettingValue('Video', 'Base', base);
+  //   }
+
+  //   if (
+  //     Number(outputWidth) !== this.state.horizontal.video.outputWidth ||
+  //     Number(outputHeight) !== this.state.horizontal.video.outputHeight
+  //   ) {
+  //     const output = `${this.state.horizontal.video.outputWidth}x${this.state.horizontal.video.outputHeight}`;
+  //     this.settingsService.setSettingValue('Video', 'Output', output);
+  //   }
+  // }
 
   get settingsFormData() {
     return [
