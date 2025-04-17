@@ -218,10 +218,8 @@ export class TwitchStudioImporterService extends StatefulService<{
   }
 
   setupVideo(config: ITSConfig) {
-    this.videoService.actions.updateVideoSettings({
-      baseWidth: config.graphics.canvasWidth,
-      baseHeight: config.graphics.canvasHeight,
-    });
+    this.videoService.setVideoSetting('baseWidth', config.graphics.canvasWidth);
+    this.videoService.setVideoSetting('baseHeight', config.graphics.canvasHeight);
   }
 
   async importScenes(config: ITSConfig) {
