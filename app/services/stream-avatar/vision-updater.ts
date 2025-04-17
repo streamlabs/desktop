@@ -6,6 +6,7 @@ import { pipeline } from 'stream/promises';
 import { importExtractZip } from 'util/slow-imports';
 import { spawn } from 'child_process';
 import * as remote from '@electron/remote';
+import { OutputStreamHandler } from 'services/platform-apps/api/modules/native-components';
 
 interface IVisionManifest {
   version: string;
@@ -154,10 +155,13 @@ export class VisionUpdater {
   /**
    * Update streamlabs vision to the latest version
    */
-  public async update(progressCallback: (progress: IDownloadProgress) => void): Promise<void> {
+  public async update(
+    progressCallback: (progress: IDownloadProgress) => void,
+    outputHandler?: OutputStreamHandler,
+  ): Promise<void> {
     try {
       this.isCurrentlyUpdating = true;
-      this.currentUpdate = this.performUpdate(progressCallback);
+      this.currentUpdate = this.performUpdate(progressCallback, outputHandler);
       await this.currentUpdate;
     } finally {
       this.isCurrentlyUpdating = false;
@@ -174,12 +178,17 @@ export class VisionUpdater {
     }
   }
 
-  private async performUpdate(progressCallback: (progress: IDownloadProgress) => void) {
+  private async performUpdate(
+    progressCallback: (progress: IDownloadProgress) => void,
+    outputHandler?: OutputStreamHandler,
+  ) {
     if (!this.manifest) {
+      outputHandler?.('stderr', 'No manifest available. Please check for updates first.');
       throw new Error('Manifest not found, cannot update');
     }
 
     if (!existsSync(VisionUpdater.basepath)) {
+      console.log('creating directory for streamlabs vision...');
       await fs.mkdir(VisionUpdater.basepath);
     }
 
@@ -201,6 +210,7 @@ export class VisionUpdater {
       throw new Error('Checksum verification failed');
     }
 
+    outputHandler?.('stdout', 'unzipping archive...');
     console.log('unzipping archive...');
     const unzipPath = path.resolve(VisionUpdater.basepath, 'bin-' + this.manifest.version);
     // delete leftover unzipped files in case something happened before
@@ -211,6 +221,7 @@ export class VisionUpdater {
     // unzip archive and delete the zip after
     await this.unzip(zipPath, unzipPath);
     await fs.rm(zipPath);
+    outputHandler?.('stdout', 'unzipping complete');
     console.log('unzip complete');
 
     // swap with the new version
@@ -230,6 +241,7 @@ export class VisionUpdater {
     await fs.rename(unzipPath, binPath);
 
     // cleanup
+    outputHandler?.('stdout', 'cleaning up...');
     console.log('cleaning up...');
     if (outdateVersionPresent) {
       await fs.rm(path.resolve(VisionUpdater.basepath, 'bin.bkp'), { recursive: true });
