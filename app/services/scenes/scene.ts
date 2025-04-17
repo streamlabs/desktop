@@ -23,7 +23,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import uuid from 'uuid/v4';
 import { assertIsDefined } from 'util/properties-type-guards';
-import { VideoSettingsService, TDisplayType } from 'services/settings-v2';
+import { VideoService, TDisplayType } from 'services/video';
 import { DualOutputService } from 'services/dual-output';
 import { SceneCollectionsService } from 'services/scene-collections';
 
@@ -45,7 +45,7 @@ export class Scene {
   @Inject() private scenesService: ScenesService;
   @Inject() private sourcesService: SourcesService;
   @Inject() private selectionService: SelectionService;
-  @Inject() private videoSettingsService: VideoSettingsService;
+  @Inject() private videoService: VideoService;
   @Inject() private dualOutputService: DualOutputService;
   @Inject() private sceneCollectionsService: SceneCollectionsService;
 
@@ -230,8 +230,7 @@ export class Scene {
 
     const display = options?.display ?? 'horizontal';
     // assign context to scene item
-    const context =
-      this.videoSettingsService.contexts[display] ?? this.videoSettingsService.contexts.horizontal;
+    const context = this.videoService.contexts[display] ?? this.videoService.contexts.horizontal;
 
     this.ADD_SOURCE_TO_SCENE(
       sceneItemId,

@@ -11,7 +11,7 @@ import { Selection } from './selection';
 import { ViewHandler } from 'services/core';
 import { GlobalSelection } from './global-selection';
 import { DualOutputService } from 'app-services';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayType } from 'services/video';
 
 export { Selection, GlobalSelection };
 

@@ -29,7 +29,7 @@ import {
   NotificationsService,
 } from 'services/notifications';
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
-import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
+import { VideoService, TDisplayType } from 'services/video';
 import { StreamSettingsService } from '../settings/streaming';
 import { RestreamService, TOutputOrientation } from 'services/restream';
 import Utils from 'services/utils';
@@ -97,7 +97,7 @@ export class StreamingService
   @Inject() private hostsService: HostsService;
   @Inject() private growService: GrowService;
   @Inject() private recordingModeService: RecordingModeService;
-  @Inject() private videoSettingsService: VideoSettingsService;
+  @Inject() private videoService: VideoService;
   @Inject() private markersService: MarkersService;
   @Inject() private dualOutputService: DualOutputService;
   @Inject() private youtubeService: YoutubeService;
@@ -299,7 +299,7 @@ export class StreamingService
       // preserve user's dual output display setting but correctly go live to custom destinations in single output mode
       const display = this.views.isDualOutputMode ? destination.display : 'horizontal';
 
-      destination.video = this.videoSettingsService.contexts[display];
+      destination.video = this.videoService.contexts[display];
       destination.mode = this.views.getDisplayContextName(display);
     });
 
@@ -915,8 +915,8 @@ export class StreamingService
     if (this.views.isDualOutputMode) {
       // start dual output
 
-      const horizontalContext = this.videoSettingsService.contexts.horizontal;
-      const verticalContext = this.videoSettingsService.contexts.vertical;
+      const horizontalContext = this.videoService.contexts.horizontal;
+      const verticalContext = this.videoService.contexts.vertical;
 
       NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
       NodeObs.OBS_service_setVideoInfo(verticalContext, 'vertical');
@@ -940,7 +940,7 @@ export class StreamingService
       await new Promise(resolve => setTimeout(resolve, 1000));
     } else {
       // start single output
-      const horizontalContext = this.videoSettingsService.contexts.horizontal;
+      const horizontalContext = this.videoService.contexts.horizontal;
       NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
 
       NodeObs.OBS_service_startStreaming();

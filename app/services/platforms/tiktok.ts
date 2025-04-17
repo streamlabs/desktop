@@ -20,7 +20,7 @@ import { getOS } from 'util/operating-systems';
 import { IGoLiveSettings } from '../streaming';
 import { TOutputOrientation } from 'services/restream';
 import { IVideo } from 'obs-studio-node';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayType } from 'services/video';
 import {
   ETikTokErrorTypes,
   ETikTokLiveScopeReason,

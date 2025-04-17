@@ -6,7 +6,7 @@ import { Subject } from 'rxjs';
 import { IWindowOptions, WindowsService } from 'services/windows';
 import { Inject } from 'services/core/injector';
 import { EApiPermissions } from './api/modules/module';
-import { VideoSettingsService } from 'services/settings-v2/video';
+import { VideoService } from 'services/video';
 import { DevServer } from './dev-server';
 import { HostsService } from 'services/hosts';
 import { authorizedHeaders, handleResponse, jfetch } from 'util/requests';
@@ -170,7 +170,7 @@ class PlatformAppsViews extends ViewHandler<IPlatformAppServiceState> {
 @InitAfter('UserService')
 export class PlatformAppsService extends StatefulService<IPlatformAppServiceState> {
   @Inject() windowsService: WindowsService;
-  @Inject() videoSettingsService: VideoSettingsService;
+  @Inject() videoService: VideoService;
   @Inject() hostsService: HostsService;
   @Inject() userService: UserService;
   @Inject() navigationService: NavigationService;
@@ -601,8 +601,8 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
       }
       if (source.initialSize.type === ESourceSizeType.Relative) {
         return {
-          width: source.initialSize.width * this.videoSettingsService.baseWidth,
-          height: source.initialSize.height * this.videoSettingsService.baseHeight,
+          width: source.initialSize.width * this.videoService.baseWidth,
+          height: source.initialSize.height * this.videoService.baseHeight,
         };
       }
     }

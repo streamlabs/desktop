@@ -1,6 +1,6 @@
 import { ArrayNode } from '../array-node';
 import { SceneItem, Scene, TSceneNode, ScenesService } from 'services/scenes';
-import { VideoSettingsService } from 'services/settings-v2/video';
+import { VideoService, TDisplayType } from 'services/video';
 import { SourcesService, TSourceType } from 'services/sources';
 import { SourceFiltersService, TSourceFilterType } from 'services/source-filters';
 import { Inject } from 'services/core/injector';
@@ -18,7 +18,6 @@ import { WidgetType } from '../../../widgets';
 import { byOS, OS, getOS } from 'util/operating-systems';
 import { GameCaptureNode } from './game-capture';
 import { Node } from '../node';
-import { TDisplayType } from 'services/settings-v2';
 
 type TContent =
   | ImageNode
@@ -81,7 +80,7 @@ interface IContext {
 export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
   schemaVersion = 1;
 
-  @Inject() videoSettingsService: VideoSettingsService;
+  @Inject() videoService: VideoService;
   @Inject() sourceFiltersService: SourceFiltersService;
   @Inject() sourcesService: SourcesService;
   @Inject() scenesService: ScenesService;
@@ -106,10 +105,10 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
       id: sceneNode.id,
       sceneNodeType: 'item',
       name: sceneNode.name,
-      x: sceneNode.transform.position.x / this.videoSettingsService.baseWidth,
-      y: sceneNode.transform.position.y / this.videoSettingsService.baseHeight,
-      scaleX: sceneNode.transform.scale.x / this.videoSettingsService.baseWidth,
-      scaleY: sceneNode.transform.scale.y / this.videoSettingsService.baseHeight,
+      x: sceneNode.transform.position.x / this.videoService.baseWidth,
+      y: sceneNode.transform.position.y / this.videoService.baseHeight,
+      scaleX: sceneNode.transform.scale.x / this.videoService.baseWidth,
+      scaleY: sceneNode.transform.scale.y / this.videoService.baseHeight,
       crop: sceneNode.transform.crop,
       rotation: sceneNode.transform.rotation,
       visible: sceneNode.visible,
@@ -272,8 +271,8 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
 
         // Adjust scales by the ratio of the exported base resolution to
         // the users current base resolution
-        obj.scaleX *= obj.content.data.width / this.videoSettingsService.baseWidth;
-        obj.scaleY *= obj.content.data.height / this.videoSettingsService.baseHeight;
+        obj.scaleX *= obj.content.data.width / this.videoService.baseWidth;
+        obj.scaleY *= obj.content.data.height / this.videoService.baseHeight;
       } else {
         // We will not load this source at all on mac
         return;
@@ -335,8 +334,8 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
 
       // Adjust scales by the ratio of the exported base resolution to
       // the users current base resolution
-      obj.scaleX *= obj.content.data.width / this.videoSettingsService.baseWidth;
-      obj.scaleY *= obj.content.data.height / this.videoSettingsService.baseHeight;
+      obj.scaleX *= obj.content.data.width / this.videoService.baseWidth;
+      obj.scaleY *= obj.content.data.height / this.videoService.baseHeight;
     }
 
     this.adjustTransform(sceneItem, obj);
@@ -372,8 +371,8 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
     if (item.type === 'game_capture') {
       item.setTransform({
         position: {
-          x: obj.x * this.videoSettingsService.baseWidth,
-          y: obj.y * this.videoSettingsService.baseHeight,
+          x: obj.x * this.videoService.baseWidth,
+          y: obj.y * this.videoService.baseHeight,
         },
         crop: obj.crop,
         rotation: obj.rotation,
@@ -381,12 +380,12 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
     } else {
       item.setTransform({
         position: {
-          x: obj.x * this.videoSettingsService.baseWidth,
-          y: obj.y * this.videoSettingsService.baseHeight,
+          x: obj.x * this.videoService.baseWidth,
+          y: obj.y * this.videoService.baseHeight,
         },
         scale: {
-          x: obj.scaleX * this.videoSettingsService.baseWidth,
-          y: obj.scaleY * this.videoSettingsService.baseHeight,
+          x: obj.scaleX * this.videoService.baseWidth,
+          y: obj.scaleY * this.videoService.baseHeight,
         },
         crop: obj.crop,
         rotation: obj.rotation,

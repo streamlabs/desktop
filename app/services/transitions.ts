@@ -5,7 +5,6 @@ import { TObsValue, TObsFormData } from 'components/obs/inputs/ObsInput';
 import { IListOption } from 'components/shared/inputs';
 import { WindowsService } from 'services/windows';
 import { ScenesService } from 'services/scenes';
-import { Scene } from 'services/scenes/scene';
 import uuid from 'uuid/v4';
 import { SceneCollectionsService } from 'services/scene-collections';
 import { $t } from 'services/i18n';
@@ -15,9 +14,9 @@ import { isUrl } from '../util/requests';
 import { getOS, OS } from 'util/operating-systems';
 import { UsageStatisticsService } from './usage-statistics';
 import { SourcesService } from 'services/sources';
-import { VideoSettingsService } from './settings-v2';
 import { DualOutputService } from './dual-output';
 import { NotificationsService, ENotificationType } from './notifications';
+import { VideoService } from 'services/video';
 
 export const TRANSITION_DURATION_MAX = 2_000_000_000;
 
@@ -118,7 +117,7 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
   @Inject() sceneCollectionsService: SceneCollectionsService;
   @Inject() usageStatisticsService: UsageStatisticsService;
   @Inject() sourcesService: SourcesService;
-  @Inject() videoSettingsService: VideoSettingsService;
+  @Inject() videoService: VideoService;
   @Inject() dualOutputService: DualOutputService;
   @Inject() notificationsService: NotificationsService;
 
@@ -168,11 +167,7 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
       this.disableStudioMode();
     });
 
-    // a video context must be initialized before loading the scene transition
-    const establishedContext = this.videoSettingsService.establishedContext.subscribe(() => {
-      if (!this.studioModeTransition) this.createStudioModeTransition();
-      establishedContext.unsubscribe();
-    });
+    if (!this.studioModeTransition) this.createStudioModeTransition();
   }
 
   enableStudioMode() {

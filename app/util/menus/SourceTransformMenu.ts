@@ -5,7 +5,7 @@ import { $t } from 'services/i18n';
 import { EditorCommandsService } from 'services/editor-commands';
 import { ECenteringType } from 'services/editor-commands/commands/center-items';
 import { EFlipAxis } from 'services/editor-commands/commands/flip-items';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayType } from 'services/video';
 
 export class SourceTransformMenu extends Menu {
   @Inject() private selectionService: SelectionService;

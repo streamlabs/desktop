@@ -14,7 +14,7 @@ import { Expensive } from 'services/api/external-api-limits';
 import { EditorService } from '../../../editor';
 import { map } from 'rxjs/operators';
 import { SelectionService } from 'services/selection';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayType } from 'services/video';
 
 /**
  * API for scenes management. Contains operations like scene creation, switching

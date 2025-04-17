@@ -1,7 +1,7 @@
 import { ModifyTransformCommand } from './modify-transform';
 import { Selection } from 'services/selection';
 import { $t } from 'services/i18n';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayType } from 'services/video';
 
 export class ResizeItemsCommand extends ModifyTransformCommand {
   constructor(
