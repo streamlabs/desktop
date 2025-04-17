@@ -4,7 +4,7 @@ import { WidgetType } from 'services/widgets';
 import { Observable } from 'rxjs';
 import { IAudioSource } from 'services/audio';
 import { EDeinterlaceFieldOrder, EDeinterlaceMode } from 'obs-studio-node';
-import { TDisplayType } from 'services/video';
+import { TDisplayType } from 'services/settings-v2';
 
 export interface ISource {
   sourceId: string;
