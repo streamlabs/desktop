@@ -93,6 +93,10 @@ export class HighlighterViews extends ViewHandler<IHighlighterState> {
     return this.state.updaterProgress;
   }
 
+  get tempRecordingInfo() {
+    return this.state.tempRecordingInfo;
+  }
+
   /**
    * Takes a filepath to a video and returns a file:// url with a random
    * component to prevent the browser from caching it and missing changes.

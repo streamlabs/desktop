@@ -7,8 +7,14 @@ import {
 import { ITransitionInfo, IAudioInfo, IExportInfo, IVideoInfo } from './rendering.models';
 
 export type TClip = IAiClip | IReplayBufferClip | IManualClip;
-
+export interface ITempRecordingInfo {
+  recordingPath?: string;
+  streamInfo?: IStreamInfoForAiHighlighter;
+  source?: TOpenedFrom;
+}
 export const isAiClip = (clip: TClip): clip is IAiClip => clip.source === 'AiClip';
+
+export type TOpenedFrom = 'after-stream' | 'manual-import' | 'recordings-tab';
 
 export interface IHighlighterState {
   clips: Dictionary<TClip>;
@@ -24,6 +30,7 @@ export interface IHighlighterState {
   updaterProgress: number;
   isUpdaterRunning: boolean;
   highlighterVersion: string;
+  tempRecordingInfo: ITempRecordingInfo;
 }
 
 // CLIP
