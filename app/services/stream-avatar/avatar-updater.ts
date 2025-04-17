@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import { pipeline } from 'stream/promises';
 import * as remote from '@electron/remote';
 import { spawn, exec, ChildProcess } from 'child_process';
+import { OutputStreamHandler } from 'services/platform-apps/api/modules/native-components';
 
 interface IAvatarManifest {
   version: string;
@@ -48,22 +49,32 @@ export class AvatarUpdater {
     return process.env.AVATAR_ENV as 'production' | 'staging' | 'local';
   }
 
-  public async performUpdate(progressCallback: (progress: IDownloadProgress) => void): Promise<void> {
+  public async performUpdate(
+    progressCallback: (progress: IDownloadProgress) => void,
+    outputHandler?: OutputStreamHandler,
+  ): Promise<void> {
     if (!this.manifest) {
+      outputHandler?.('stderr', 'No manifest available. Please check for updates first.');
       throw new Error('No manifest available. Please check for updates first.');
     }
 
     if (!existsSync(AvatarUpdater.basepath)) {
+      outputHandler?.('stderr', 'Creating basepath directory...');
       await fs.mkdir(AvatarUpdater.basepath, { recursive: true });
     }
 
-    const filesToUpdate: { filePath: string; relativePath: string; fileInfo: IAvatarFileManifest }[] = [];
+    const filesToUpdate: {
+      filePath: string;
+      relativePath: string;
+      fileInfo: IAvatarFileManifest;
+    }[] = [];
     let totalBytes = 0;
 
     for (const [relativePath, fileInfo] of Object.entries(this.manifest.files)) {
       const normalizedPath = relativePath.replace(/^\\+/, '');
       const filePath = path.join(AvatarUpdater.basepath, normalizedPath);
 
+      outputHandler?.('stdout', `Checking file: ${normalizedPath}`);
       console.log(`Checking file: ${normalizedPath}`);
 
       const folderPath = path.dirname(filePath);
@@ -73,6 +84,7 @@ export class AvatarUpdater {
 
       if (!(await this.isFileUpToDate(filePath, fileInfo))) {
         console.log(`File needs update: ${normalizedPath}`);
+        outputHandler?.('stdout', `File needs update: ${normalizedPath}`);
         filesToUpdate.push({ filePath, relativePath: normalizedPath, fileInfo });
         totalBytes += fileInfo.size;
       }
@@ -83,12 +95,16 @@ export class AvatarUpdater {
     for (const { filePath, relativePath, fileInfo } of filesToUpdate) {
       downloadedSoFar[relativePath] = 0;
       console.log(`Updating file: ${relativePath}`);
-      await this.downloadAndUpdateFile(filePath, relativePath, fileInfo, (progress) => {
+      outputHandler?.('stdout', `Updating file: ${relativePath}`);
+      await this.downloadAndUpdateFile(filePath, relativePath, fileInfo, progress => {
         downloadedSoFar[relativePath] = progress.downloadedBytes;
-        const downloadedBytes = Object.values(downloadedSoFar).reduce((sum, bytes) => sum + bytes, 0);
+        const downloadedBytes = Object.values(downloadedSoFar).reduce(
+          (sum, bytes) => sum + bytes,
+          0,
+        );
 
         progressCallback({
-          percent: (downloadedBytes / totalBytes),
+          percent: downloadedBytes / totalBytes,
           totalBytes,
           downloadedBytes,
         });
@@ -96,9 +112,12 @@ export class AvatarUpdater {
     }
 
     console.log('All files are up to date.');
+    outputHandler?.('stdout', 'All files are up to date.');
     console.log('Updating manifest...');
+    outputHandler?.('stdout', 'Updating manifest...');
     await fs.writeFile(this.manifestPath, JSON.stringify(this.manifest));
     console.log('Update complete.');
+    outputHandler?.('stdout', 'Update complete.');
   }
 
   private async downloadAndUpdateFile(
@@ -126,7 +145,9 @@ export class AvatarUpdater {
     // Verify the checksum
     const checksum = await this.sha256(tempFilePath);
     if (checksum !== fileInfo.hash) {
-      throw new Error(`Checksum verification failed for ${filePath} | ${fileInfo.hash} | ${checksum}`);
+      throw new Error(
+        `Checksum verification failed for ${filePath} | ${fileInfo.hash} | ${checksum}`,
+      );
     }
 
     // Replace the old file with the new one
@@ -183,13 +204,17 @@ export class AvatarUpdater {
     this.versionChecked = true;
     console.log('Checking for Streamlabs Avatar updates...');
     const manifestUrl = this.getManifestUrl();
-    const newManifest = JSON.parse(await jfetch<string>(new Request(manifestUrl, {
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-      },
-      cache: 'no-store'
-    })));
+    const newManifest = JSON.parse(
+      await jfetch<string>(
+        new Request(manifestUrl, {
+          headers: {
+            'Cache-Control': 'no-cache',
+            Pragma: 'no-cache',
+          },
+          cache: 'no-store',
+        }),
+      ),
+    );
     this.manifest = newManifest;
 
     if (!existsSync(this.manifestPath)) {
@@ -215,10 +240,13 @@ export class AvatarUpdater {
     return false;
   }
 
-  public async update(progressCallback: (progress: IDownloadProgress) => void): Promise<void> {
+  public async update(
+    progressCallback: (progress: IDownloadProgress) => void,
+    outputHandler?: OutputStreamHandler,
+  ): Promise<void> {
     try {
       this.isCurrentlyUpdating = true;
-      this.currentUpdate = this.performUpdate(progressCallback);
+      this.currentUpdate = this.performUpdate(progressCallback, outputHandler);
       await this.currentUpdate;
     } finally {
       this.isCurrentlyUpdating = false;
@@ -237,16 +265,14 @@ export class AvatarUpdater {
     const stream = createReadStream(file);
 
     return new Promise((resolve, reject) => {
-      stream.on('data', (chunk) => hash.update(chunk));
+      stream.on('data', chunk => hash.update(chunk));
       stream.on('end', () => resolve(hash.digest('hex')));
-      stream.on('error', (err) => reject(err));
+      stream.on('error', err => reject(err));
     });
   }
 
-  public startAvatarProcess(
-    renderOffscreen: boolean = false,
-  ): ChildProcess {
-    const executablePath = path.resolve(AvatarUpdater.basepath, 'StreamlabsAIAvatar.exe');
+  public startAvatarProcess(renderOffscreen: boolean = false): ChildProcess {
+    const executablePath = path.resolve(AvatarUpdater.basepath, './StreamlabsAIAvatar/Binaries/Win64/StreamlabsAIAvatar-Win64-Shipping.exe');
     const pixelStreamingUrl: string = 'ws://127.0.0.1:1339';
 
     if (!existsSync(executablePath)) {
