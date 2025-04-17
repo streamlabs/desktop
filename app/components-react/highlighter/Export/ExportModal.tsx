@@ -23,7 +23,7 @@ import { SCRUB_HEIGHT, SCRUB_WIDTH, SCRUB_FRAMES } from 'services/highlighter/co
 import styles from './ExportModal.m.less';
 import { getCombinedClipsDuration } from '../utils';
 import { formatSecondsToHMS } from '../ClipPreview';
-import { set } from 'lodash';
+import { get, set } from 'lodash';
 import PlatformSelect from './Platform';
 import cx from 'classnames';
 
@@ -53,9 +53,7 @@ class ExportController {
   getClips(streamId?: string) {
     return this.service.getClips(this.service.views.clips, streamId).filter(clip => clip.enabled);
   }
-  getClipThumbnail(streamId?: string) {
-    return this.getClips(streamId).find(clip => clip.enabled)?.scrubSprite;
-  }
+
   getDuration(streamId?: string) {
     return getCombinedClipsDuration(this.getClips(streamId));
   }
@@ -175,13 +173,19 @@ function ExportFlow({
     getStreamTitle,
     getClips,
     getDuration,
-    getClipThumbnail,
   } = useController(ExportModalCtx);
 
   const [currentFormat, setCurrentFormat] = useState<TOrientation>(EOrientation.HORIZONTAL);
 
-  const clipsAmount = getClips(streamId).length;
-  const clipsDuration = formatSecondsToHMS(getDuration(streamId));
+  const { amount, duration, thumbnail } = useMemo(() => {
+    const clips = getClips(streamId);
+
+    return {
+      amount: clips.length,
+      duration: formatSecondsToHMS(getCombinedClipsDuration(clips)),
+      thumbnail: clips.find(clip => clip.enabled)?.scrubSprite,
+    };
+  }, [streamId]);
 
   function settingMatcher(initialSetting: TSetting) {
     const matchingSetting = settings.find(
@@ -315,7 +319,7 @@ function ExportFlow({
                 </div>
               )}
               <img
-                src={getClipThumbnail(streamId)}
+                src={thumbnail}
                 style={
                   currentFormat === EOrientation.HORIZONTAL
                     ? { objectPosition: 'left' }
@@ -338,7 +342,7 @@ function ExportFlow({
                     marginLeft: '8px',
                   }}
                 >
-                  {clipsDuration} | {$t('%{clipsAmount} clips', { clipsAmount })}
+                  {duration} | {$t('%{clipsAmount} clips', { clipsAmount: amount })}
                 </p>
               </div>
               <OrientationToggle
