@@ -1,7 +1,7 @@
 import { Node } from '../node';
 import { SceneItem } from 'services/scenes';
 import { Inject } from 'services/core';
-import { VideoService } from 'services/video';
+import { VideoSettingsService } from 'services/settings-v2/video';
 
 interface ISceneNodeSchema {
   sceneId: string;
@@ -17,13 +17,14 @@ interface IContext {
 export class SceneSourceNode extends Node<ISceneNodeSchema, IContext> {
   schemaVersion = 2;
 
-  @Inject() videoService: VideoService;
+  @Inject() videoSettingsService: VideoSettingsService;
 
   async save(context: IContext) {
     this.data = {
       sceneId: context.sceneItem.sourceId,
-      width: this.videoService.baseResolutions[context.sceneItem.display ?? 'horizontal'].baseWidth,
-      height: this.videoService.baseResolutions[context.sceneItem.display ?? 'horizontal']
+      width: this.videoSettingsService.baseResolutions[context.sceneItem.display ?? 'horizontal']
+        .baseWidth,
+      height: this.videoSettingsService.baseResolutions[context.sceneItem.display ?? 'horizontal']
         .baseHeight,
     };
   }

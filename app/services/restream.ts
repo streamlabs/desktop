@@ -14,7 +14,7 @@ import { TikTokService } from './platforms/tiktok';
 import { TrovoService } from './platforms/trovo';
 import { KickService } from './platforms/kick';
 import * as remote from '@electron/remote';
-import { VideoService, TDisplayType } from './video';
+import { VideoSettingsService, TDisplayType } from './settings-v2/video';
 import { DualOutputService } from './dual-output';
 import { TwitterPlatformService } from './platforms/twitter';
 import { InstagramService } from './platforms/instagram';
@@ -58,7 +58,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
   @Inject() trovoService: TrovoService;
   @Inject() kickService: KickService;
   @Inject() instagramService: InstagramService;
-  @Inject() videoService: VideoService;
+  @Inject() videoSettingsService: VideoSettingsService;
   @Inject() dualOutputService: DualOutputService;
   @Inject('TwitterPlatformService') twitterService: TwitterPlatformService;
   @Inject() platformAppsService: PlatformAppsService;
