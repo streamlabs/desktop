@@ -172,6 +172,17 @@ const VALORANT_CONFIG: IGameConfig = {
   },
 };
 
+const COUNTER_STRIKE_2_CONFIG: IGameConfig = {
+  name: EGame.COUNTER_STRIKE_2,
+  label: 'Counter-Strike 2',
+  gameModes: '',
+  thumbnail: '',
+  state: EGameState.INTERNAL,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+};
+
 const UNSET_CONFIG: IGameConfig = {
   name: EGame.UNSET,
   label: 'unset',
@@ -190,6 +201,7 @@ const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.MARVEL_RIVALS]: MARVEL_RIVALS_CONFIG,
   [EGame.WAR_THUNDER]: WAR_THUNDER_CONFIG,
   [EGame.VALORANT]: VALORANT_CONFIG,
+  [EGame.COUNTER_STRIKE_2]: COUNTER_STRIKE_2_CONFIG,
   [EGame.UNSET]: UNSET_CONFIG,
 };
 

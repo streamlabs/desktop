@@ -44,6 +44,7 @@ export enum EGame {
   MARVEL_RIVALS = 'marvel_rivals',
   WAR_THUNDER = 'war_thunder',
   VALORANT = 'valorant',
+  COUNTER_STRIKE_2 = 'counter_strike_2',
   UNSET = 'unset',
 }
 
