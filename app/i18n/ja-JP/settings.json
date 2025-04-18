@@ -661,7 +661,7 @@
   "cacheIdCopy": "コピーする",
   "cacheManagement": "キャッシュ管理",
   "noticeWhileStreaming": "現在配信中のため、一部の設定は変更できません。",
-  "noticeForStreaming": "ニコニコにログインしている場合、{br}これらの項目はニコニコ生放送用に自動で設定されます。",
+  "noticeForStreaming": "URL／ストリームキーは自動設定されます{br}N Airでログイン中のニコニコアカウントに合わせて、配信開始時に自動で設定されます。{br}手動で入力する必要はありません。",
   "showCacheDirectory": "キャッシュディレクトリーを表示",
   "deleteCacheAndRestart": "キャッシュを削除して再起動",
   "confirmStreamTitleAndGameBeforeGoingLive": "ライブになる前にストリームのタイトルとゲームを確認して下さい。",
