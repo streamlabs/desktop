@@ -16,12 +16,8 @@
     >
       <i class="icon-log-in"></i>
       <help-tip :dismissable-key="loginHelpTipDismissable" mode="login">
-        <div slot="title">
-          {{ $t('common.loginHelpTipTitle') }}
-        </div>
-        <div slot="content">
-          {{ $t('common.loginHelpTipContent') }}
-        </div>
+        <div slot="title" v-text="$t('common.loginHelpTipTitle')"></div>
+        <div slot="content" v-text="$t('common.loginHelpTipContent')"></div>
       </help-tip>
     </a>
   </div>

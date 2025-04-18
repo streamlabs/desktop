@@ -13,6 +13,7 @@ import { TcpServerService } from 'services/api/tcp-server';
 import { AppService } from 'services/app';
 import { AudioService, E_AUDIO_CHANNELS } from 'services/audio';
 import { StatefulService, mutation } from 'services/core/stateful-service';
+import { DismissablesService, EDismissable } from 'services/dismissables';
 import { $t } from 'services/i18n';
 import { SourcesService } from 'services/sources';
 import { UserService } from 'services/user';
@@ -123,6 +124,7 @@ export class SettingsService
   @Inject() private userService: UserService;
 
   @Inject() videoSettingsService: VideoSettingsService;
+  @Inject() private dismissablesService: DismissablesService;
 
   init() {
     this.loadSettingsIntoStore();
@@ -214,7 +216,7 @@ export class SettingsService
       );
     }
 
-    if (categoryName === 'Developer') return this.tcpServerService.getApiSettingsFormData();
+    if (categoryName === 'Developer') return this.getDeveloperSettingsFormData();
 
     if (categoryName === 'Audio') return this.getAudioSettingsFormData(settings[0]);
 
@@ -753,6 +755,7 @@ export class SettingsService
 
   setSettings(categoryName: string, settingsData: ISettingsSubCategory[]) {
     if (categoryName === 'Audio') this.setAudioSettings([settingsData.pop()]);
+    if (categoryName === 'Developer') return this.setDeveloperSettings(settingsData);
 
     const dataToSave: {
       nameSubCategory: string;
@@ -810,6 +813,43 @@ export class SettingsService
         }
       }
     });
+  }
+
+  private getDeveloperSettingsFormData(): ISettingsSubCategory[] {
+    return [
+      // ...this.tcpServerService.getApiSettingsFormData(), // 機能していないためコメントアウト
+      {
+        nameSubCategory: 'Dismissables',
+        codeSubCategory: 'Dismissables',
+        parameters: Object.values(EDismissable).map(
+          key =>
+            <IObsInput<boolean>>{
+              value: this.dismissablesService.shouldShow(key),
+              name: key,
+              description: key,
+              type: 'OBS_PROPERTY_BOOL',
+              visible: true,
+              enabled: true,
+            },
+        ),
+      },
+    ];
+  }
+
+  private setDeveloperSettings(settingsData: ISettingsSubCategory[]) {
+    for (const setting of settingsData) {
+      if (setting.nameSubCategory === 'Dismissables') {
+        for (const item of setting.parameters) {
+          const name = item.name as EDismissable;
+          if (item.value) {
+            this.dismissablesService.reset(name);
+          } else {
+            this.dismissablesService.dismiss(name);
+          }
+        }
+      }
+    }
+    return;
   }
 
   @mutation()

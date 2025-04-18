@@ -69,8 +69,12 @@
     "niconico": "ニコニコ生放送番組関連タブ",
     "studio": "配信関連タブ"
   },
+  "initialHelpTipTitle": "初めての方へ",
+  "initialHelpTipContent": "N Airの使用方法はこちら",
   "loginHelpTipTitle": "ログイン",
   "loginHelpTipContent": "ニコニコへのログインはこちら",
+  "endStreamHelpTipTitle": "配信が開始されていません",
+  "endStreamHelpTipContent": "番組は視聴者に公開されていますが、映像・音声が届いていません。\n［配信開始］ボタンを押して、配信を開始してください。",
   "fieldIsRequired": "このフィールドは必須です",
   "fieldMustBeLarger": "%{value} 以上を指定してください",
   "fieldMustBeLess": "%{value} 以上を指定してください",

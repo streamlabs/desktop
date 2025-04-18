@@ -172,8 +172,6 @@ export class SceneCollectionsService extends Service implements ISceneCollection
 
     this.finishLoadingOperation();
 
-    // activate tips for preset scene collection
-    this.dismissablesService.reset(EDismissable.ScenePresetHelpTip);
     // dismiss initial scene collections help tip if not yet(since its position is overlapped)
     this.dismissablesService.dismiss(EDismissable.SceneCollectionsHelpTip);
   }
@@ -645,9 +643,6 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     await this.saveCurrentApplicationStateAs(id);
     this.stateService.ADD_COLLECTION(id, name, new Date().toISOString());
     this.collectionAdded.next(this.collections.find(coll => coll.id === id));
-
-    // コレクションが増えたら scene preset help tipを消す
-    this.dismissablesService.dismiss(EDismissable.ScenePresetHelpTip);
   }
 
   /**

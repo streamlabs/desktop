@@ -43,21 +43,8 @@
     />
 
     <help-tip :dismissable-key="helpTipDismissable">
-      <div slot="title">
-        {{ $t('scenes.sceneCollections') }}
-      </div>
-      <div slot="content">
-        {{ $t('scenes.sceneCollectionSelectionDescription') }}
-      </div>
-    </help-tip>
-
-    <help-tip :dismissable-key="scenePresetHelpTipDismissable">
-      <div slot="title">
-        {{ $t('scenes.scenePreset') }}
-      </div>
-      <div slot="content">
-        {{ $t('scenes.scenePresetDescription') }}
-      </div>
+      <div slot="title" v-text="$t('scenes.sceneCollections')"></div>
+      <div slot="content" v-text="$t('scenes.sceneCollectionSelectionDescription')"></div>
     </help-tip>
   </div>
 </template>

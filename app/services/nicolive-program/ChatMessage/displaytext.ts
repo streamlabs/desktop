@@ -18,7 +18,7 @@ function getNicoadComment(chat: WrappedMessage): string {
         const latest = nicoad.v0.latest;
         const advertiser = latest.advertiser;
         const message = latest.message ? `「${latest.message}」` : '';
-        return `提供：${advertiser}さん${message}（${latest.point}pt）`;
+        return `提供：${advertiser}さん${message}（${latest.point ?? 0}pt）`;
       }
     } else if (isNicoadMessageV1(nicoad)) {
       return nicoad.v1.message ?? '';
@@ -34,7 +34,9 @@ function getGiftComment(chat: WrappedMessage): string {
   const gift = chat.value;
   const { advertiserName, point, itemName, contributionRank } = gift;
   const contributionMessage = contributionRank ? `【ギフト貢献第${contributionRank}位】 ` : '';
-  return `${contributionMessage}${advertiserName}さんが「${itemName}（${point}pt）」を贈りました`;
+  return `${contributionMessage}${advertiserName}さんが「${itemName}（${
+    point ?? 0
+  }pt）」を贈りました`;
 }
 
 function getEmotionComment(chat: WrappedMessage): string {
