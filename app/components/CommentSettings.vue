@@ -231,7 +231,7 @@
         </div>
         <div class="input-wrapper" v-if="useOneComme">
           <div class="row">
-            <div class="name">番組作成時に既存コメントを削除する</div>
+            <div class="name">番組作成時にわんコメに残っているコメントをクリアする</div>
             <div class="value">
               <input type="checkbox" v-model="removeComment" class="toggle-button" />
             </div>
