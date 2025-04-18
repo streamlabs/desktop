@@ -667,6 +667,8 @@
   "confirmStreamTitleAndGameBeforeGoingLive": "Confirm stream title and game before going live",
   "clearCacheConfirm": "WARNING! You will lose all scenes, sources, and settings. This cannot be undone!",
   "restartConfirm": "This action will restart the application. Continue?",
+  "deleteCookiesAndRestart": "(If the login state is not saved) Delete cookies and restart",
+  "deleteCookiesConfirm": "Warning: Cookies will be deleted (if you are logged in, you will be logged out). If you are experiencing an issue where you are logged out every time the app starts, this may help resolve it.",
   "itemNotFoundMessage": "No elements found. Consider changing the search query.",
   "desktopAudioDevice": "Desktop Audio Device",
   "micAuxDevice": "Mic / Auxiliary Device",

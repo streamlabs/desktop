@@ -131,7 +131,13 @@ export default class ExtraSettings extends Vue {
 
   deleteCacheDir() {
     if (confirm($t('settings.clearCacheConfirm'))) {
-      this.appService.relaunch({ clearCacheDir: true });
+      this.appService.relaunch({ clearCacheDir: 'all' });
+    }
+  }
+
+  deleteCookies() {
+    if (confirm($t('settings.deleteCookiesConfirm'))) {
+      this.appService.relaunch({ clearCacheDir: 'cookie' });
     }
   }
 

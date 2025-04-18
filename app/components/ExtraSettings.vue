@@ -58,6 +58,9 @@
           {{ $t('settings.cacheIdCopy') }}
         </button>
       </div>
+      <a class="button button--secondary" @click="deleteCookies">
+        {{ $t('settings.deleteCookiesAndRestart') }}
+      </a>
     </div>
 
     <div class="section">

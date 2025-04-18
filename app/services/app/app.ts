@@ -263,13 +263,19 @@ export class AppService extends StatefulService<IAppState> {
     return returningValue;
   }
 
-  relaunch({ clearCacheDir }: { clearCacheDir?: boolean } = {}) {
+  relaunch({ clearCacheDir }: { clearCacheDir?: 'all' | 'cookie' } = {}) {
     const originalArgs: string[] = remote.process.argv.slice(1);
 
+    const args = originalArgs.filter(x => !['--clearCacheDir', '--clearCookies'].includes(x));
     // キャッシュクリアしたいときだけつくようにする
-    const args = clearCacheDir
-      ? originalArgs.concat('--clearCacheDir')
-      : originalArgs.filter(x => x !== '--clearCacheDir');
+    switch (clearCacheDir) {
+      case 'cookie':
+        args.push('--clearCookies');
+        break;
+      case 'all':
+        args.push('--clearCacheDir');
+        break;
+    }
 
     remote.app.relaunch({ args });
     remote.app.quit();
