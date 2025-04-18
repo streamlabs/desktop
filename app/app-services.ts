@@ -62,6 +62,7 @@ export { VideoSettingsService } from 'services/settings-v2/video';
 export { SettingsManagerService } from 'services/settings-manager';
 export { MarkersService } from 'services/markers';
 export { RealmService } from 'services/realm';
+export { StreamAvatarService } from 'services/stream-avatar/stream-avatar-service';
 
 // ONLINE SERVICES
 export { UserService } from './services/user';

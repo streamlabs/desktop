@@ -272,7 +272,7 @@ export class AvatarUpdater {
   }
 
   public startAvatarProcess(renderOffscreen: boolean = false): ChildProcess {
-    const executablePath = path.resolve(AvatarUpdater.basepath, './StreamlabsAIAvatar/Binaries/Win64/StreamlabsAIAvatar-Win64-Shipping.exe');
+    const executablePath = path.resolve(AvatarUpdater.basepath, './StreamlabsAIAvatar.exe');
     const pixelStreamingUrl: string = 'ws://127.0.0.1:1339';
 
     if (!existsSync(executablePath)) {
@@ -291,7 +291,6 @@ export class AvatarUpdater {
 
     const process = spawn(executablePath, args, {
       cwd: AvatarUpdater.basepath,
-      stdio: 'ignore',
     });
 
     console.log('Avatar UE5 process started with arguments:', args.join(' '));
