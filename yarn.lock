@@ -1276,12 +1276,7 @@
   optionalDependencies:
     global-agent "^3.0.0"
 
-"@electron/remote@2.0.8":
-  version "2.0.8"
-  resolved "https://registry.yarnpkg.com/@electron/remote/-/remote-2.0.8.tgz#85ff321f0490222993207106e2f720273bb1a5c3"
-  integrity sha512-P10v3+iFCIvEPeYzTWWGwwHmqWnjoh8RYnbtZAb3RlQefy4guagzIwcWtfftABIfm6JJTNQf4WPSKWZOpLmHXw==
-
-"@electron/remote@^2.1.2":
+"@electron/remote@2.1.2", "@electron/remote@^2.1.2":
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/@electron/remote/-/remote-2.1.2.tgz#52a97c8faa5b769155b649ef262f2f8c851776e6"
   integrity sha512-EPwNx+nhdrTBxyCqXt/pftoQg/ybtWDW3DUWHafejvnB1ZGGfMpv6e15D8KeempocjXe78T7WreyGGb3mlZxdA==
@@ -2771,7 +2766,7 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-12.20.55.tgz#c329cbd434c42164f846b909bd6f85b5537f6240"
   integrity sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ==
 
-"@types/node@^18.0.0", "@types/node@^18.11.18", "@types/node@^18.14.6":
+"@types/node@^18.0.0", "@types/node@^18.14.6":
   version "18.19.39"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-18.19.39.tgz#c316340a5b4adca3aee9dcbf05de385978590593"
   integrity sha512-nPwTRDKUctxw3di5b4TfT3I0sWDiWoPQCZjXhvdkINntwr8lcoVCKsTgnXeRubKIlfnV+eN/HYk6Jb40tbcEAQ==
@@ -5886,10 +5881,10 @@ electron-builder@22.14.13:
     update-notifier "^5.1.0"
     yargs "^17.0.1"
 
-electron-chromedriver@^25.9.8:
-  version "25.9.8"
-  resolved "https://registry.yarnpkg.com/electron-chromedriver/-/electron-chromedriver-25.9.8.tgz#21e8f0a71b48561477282d16cd3691c262a488be"
-  integrity sha512-oxMtl3BGoaNoTDCpHoAy1ZDMq4undQnN6oD/kYMdjK8y9i+WR631tyr0ppHY/P3IaVXemsXWrmkLpCyfXgFBIA==
+electron-chromedriver@29.3.3:
+  version "29.3.3"
+  resolved "https://registry.yarnpkg.com/electron-chromedriver/-/electron-chromedriver-29.3.3.tgz#ee348f6349d3eb45e50c61340dbad7a02f24468b"
+  integrity sha512-R6WzSUItEoDeGtGHCr6stwMhbxz5YQi81JJUcNcMnRmSrCz6Lb5MbTxLLrxhzKnCXxhJy28ci1oa6HbakvgVtw==
   dependencies:
     "@electron/get" "^2.0.1"
     extract-zip "^2.0.0"
@@ -5975,13 +5970,13 @@ electron-window-state@5.0.3:
     jsonfile "^4.0.0"
     mkdirp "^0.5.1"
 
-electron@25.9.3:
-  version "25.9.3"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-25.9.3.tgz#cdd53a30fb914adadcfbd34124237fb38b1c07d0"
-  integrity sha512-dacaHg/PuwVcFRgPDCM5j7UDzqGJWOsbBRdS5wPKLNS/ejPeccIjuNUT1cqcrpvCJKAFW8swHWg9kdizNSEDHQ==
+electron@29.3.1:
+  version "29.3.1"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-29.3.1.tgz#87c82b2cd2c326f78f036499377a5448bea5d4bb"
+  integrity sha512-auge1/6RVqgUd6TgIq88wKdUCJi2cjESi3jy7d+6X4JzvBGprKBqMJ8JSSFpu/Px1YJrFUKAxfy6SC+TQf1uLw==
   dependencies:
     "@electron/get" "^2.0.0"
-    "@types/node" "^18.11.18"
+    "@types/node" "^20.9.0"
     extract-zip "^2.0.1"
 
 electron@^31.0.1:
