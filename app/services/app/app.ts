@@ -44,6 +44,7 @@ import { DualOutputService } from 'services/dual-output';
 import { OS, getOS } from 'util/operating-systems';
 import * as remote from '@electron/remote';
 import { RealmService } from 'services/realm';
+import { StreamAvatarService } from 'services/stream-avatar/stream-avatar-service';
 
 interface IAppState {
   loading: boolean;
@@ -96,6 +97,7 @@ export class AppService extends StatefulService<IAppState> {
   @Inject() private videoSettingsService: VideoSettingsService;
   @Inject() private dualOutputService: DualOutputService;
   @Inject() private realmService: RealmService;
+  @Inject() private streamAvatarService: StreamAvatarService;
 
   static initialState: IAppState = {
     loading: true,
@@ -185,9 +187,10 @@ export class AppService extends StatefulService<IAppState> {
     this.START_LOADING();
     this.loadingChanged.next(true);
     this.tcpServerService.stopListening();
-
     window.setTimeout(async () => {
       obs.NodeObs.InitShutdownSequence();
+      this.streamAvatarService.stopAvatarProcess();
+      this.streamAvatarService.stopVisionProcess();
       this.crashReporterService.beginShutdown();
       this.shutdownStarted.next();
       this.keyListenerService.shutdown();

@@ -1,8 +1,7 @@
-import { AvatarUpdater } from 'services/stream-avatar/avatar-updater';
 import { EApiPermissions, IApiContext, Module, apiMethod } from './module';
-import { VisionUpdater } from 'services/stream-avatar/vision-updater';
 import { IDownloadProgress } from 'util/requests';
-import { ChildProcess } from 'child_process';
+import { Inject } from 'services';
+import { StreamAvatarService } from 'services/stream-avatar/stream-avatar-service';
 
 export type OutputStreamHandler = (type: 'stdout' | 'stderr', data: string) => void;
 
@@ -12,12 +11,11 @@ export class NativeComponentsModule extends Module {
 
   requiresHighlyPrivileged = true;
 
-  avatarUpdater = new AvatarUpdater();
-  visionUpdater = new VisionUpdater();
+  @Inject() streamAvatarService: StreamAvatarService;
 
   @apiMethod()
-  async isAvatarUpdateAvailable(proc: ChildProcess) {
-    return await this.avatarUpdater.isNewVersionAvailable();
+  async isAvatarUpdateAvailable() {
+    return await this.streamAvatarService.isAvatarUpdateAvailable();
   }
 
   @apiMethod()
@@ -26,12 +24,12 @@ export class NativeComponentsModule extends Module {
     progressCb: (progress: IDownloadProgress) => void,
     handler?: OutputStreamHandler,
   ) {
-    return await this.avatarUpdater.update(progressCb, handler);
+    return await this.streamAvatarService.updateAvatar(progressCb, handler);
   }
 
   @apiMethod()
   async isVisionUpdateAvailable() {
-    return await this.visionUpdater.isNewVersionAvailable();
+    return await this.streamAvatarService.isVisionUpdateAvailable();
   }
 
   @apiMethod()
@@ -40,44 +38,17 @@ export class NativeComponentsModule extends Module {
     progressCb: (progress: IDownloadProgress) => void,
     handler?: OutputStreamHandler,
   ) {
-    return await this.visionUpdater.update(progressCb, handler);
-  }
-
-  visionProc: ChildProcess;
-  avatarProc: ChildProcess;
-
-  attachOutputHandler(proc: ChildProcess, handler?: OutputStreamHandler) {
-    if (!handler) {
-      return;
-    }
-
-    if (proc.stdout) {
-      proc.stdout.on('data', (data: Buffer) => {
-        handler('stdout', data.toString());
-      });
-    }
-    if (proc.stderr) {
-      proc.stderr.on('data', (data: Buffer) => {
-        handler('stderr', data.toString());
-      });
-    }
-
-    return proc;
+    return await this.streamAvatarService.updateVision(progressCb, handler);
   }
 
   @apiMethod()
   startVisionProcess(ctx: IApiContext, handler?: OutputStreamHandler) {
-    if (this.visionProc && this.visionProc.exitCode != null) {
-      this.visionProc.kill();
-    }
-
-    this.visionProc = this.visionUpdater.startVisionProcess();
-    this.attachOutputHandler(this.visionProc, handler);
+    this.streamAvatarService.startVisionProcess(handler);
   }
 
   @apiMethod()
   stopVisionProcess() {
-    if (this.visionProc) this.visionProc.kill();
+    this.streamAvatarService.stopVisionProcess();
   }
 
   @apiMethod()
@@ -86,17 +57,11 @@ export class NativeComponentsModule extends Module {
     renderOffscreen?: boolean,
     handler?: (type: 'stdout' | 'stderr', data: string) => void,
   ) {
-    if (this.avatarProc && this.avatarProc.exitCode != null) {
-      this.avatarProc.kill();
-    }
-
-    this.avatarProc = this.avatarUpdater.startAvatarProcess(renderOffscreen);
-
-    this.attachOutputHandler(this.avatarProc, handler);
+    this.streamAvatarService.startAvatarProcess(renderOffscreen, handler);
   }
 
   @apiMethod()
   stopAvatarProcess() {
-    if (this.avatarProc) this.avatarProc.kill();
+    this.streamAvatarService.stopAvatarProcess();
   }
 }
