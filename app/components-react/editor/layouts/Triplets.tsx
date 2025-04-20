@@ -17,7 +17,7 @@ export function Triplets(p: React.PropsWithChildren<LayoutProps>) {
   );
 
   return (
-    <div className={cx(styles.columns, styles.sidePadded)} ref={componentRef}>
+    <div className={cx(styles.columns, styles.sidePadded, p.className)} ref={componentRef}>
       <ResizeBar
         position="left"
         value={bars.bar1}
