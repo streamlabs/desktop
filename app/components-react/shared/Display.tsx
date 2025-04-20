@@ -47,15 +47,14 @@ export default function Display(props: DisplayProps) {
 
   function refreshOutputRegion() {
     if (!obsDisplay.current) return;
-    const [width, height] = v.baseResolution.split('x');
-    obsDisplay.current.resize(Number(width), Number(height));
+    obsDisplay.current.refreshOutputRegion();
   }
 
   function onClickHandler(event: React.MouseEvent) {
     p.clickHandler(event);
   }
 
-  async function createDisplay() {
+  function createDisplay() {
     const displayId = uuid();
     obsDisplay.current = new OBSDisplay(displayId, {
       sourceId: p.sourceId,
@@ -64,7 +63,6 @@ export default function Display(props: DisplayProps) {
       renderingMode: p.renderingMode,
       type: p.type,
     });
-    await refreshOutputRegion();
     obsDisplay.current.setShoulddrawUI(p.drawUI);
     obsDisplay.current.onOutputResize(region => p.onOutputResize(region));
     if (displayEl.current) obsDisplay.current.trackElement(displayEl.current);
