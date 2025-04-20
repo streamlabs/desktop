@@ -61,7 +61,6 @@ export default class TextInput extends BaseInput<string, ITextMetadata> {
         data-role="input"
         data-type="text"
         data-name={this.options.name}
-        data-title={this.options.title}
       >
         {this.options.icon && <i class={`fa fa-${this.options.icon}`} />}
         <input

@@ -281,6 +281,7 @@
   "Copy %{platform} link": "Copy %{platform} link",
   "Copied to clipboard": "Copied to clipboard",
   "Twitch Followers": "Twitch Followers",
+  "Encoder Preset (higher = less CPU)": "Encoder Preset (higher = less CPU)",
   "Connect your %{platform} account": "Connect your %{platform} account",
   "Connect your %{platform} account to stream to %{platform}.": "Connect your %{platform} account to stream to %{platform}.",
   "Connect your %{platform} account to stream to %{platform}. Try streaming to %{platform} and another platform at the same time for free in dual output mode, or multistream with ultra.": "Connect your %{platform} account to stream to %{platform}. Try streaming to %{platform} and another platform at the same time for free in dual output mode, or multistream with ultra.",

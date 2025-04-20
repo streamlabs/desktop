@@ -75,7 +75,7 @@ export class FormMonkey {
     const $el = await this.client.$(selector);
     await $el.waitForDisplayed();
     const type = await $el.getAttribute('data-type');
-    const title = await $el.getAttribute('data-title');
+    const title = await $el.getAttribute('data-name');
     const loadingAttr = await $el.getAttribute('data-loading');
     const loading = loadingAttr === 'true';
     return { name, type, selector, loading, title };
@@ -84,7 +84,7 @@ export class FormMonkey {
   /**
    * fill the form with values
    */
-  async fill(formData: Dictionary<any>, useTitleAsValue = false) {
+  async fill(formData: Dictionary<any>, useLabelAsValue = false) {
     this.log('fill form with data', formData);
     await this.waitForLoading();
 
@@ -93,7 +93,7 @@ export class FormMonkey {
     const inputKeys = Object.keys(formData);
 
     for (const inputKey of inputKeys) {
-      const inputName = useTitleAsValue ? await this.getInputNameByTitle(inputKey) : inputKey;
+      const inputName = inputKey;
       const input = await this.getInput(inputName);
       if (!input.name) {
         // skip no-name fields
@@ -121,10 +121,10 @@ export class FormMonkey {
             await this.setToggleValue(input.selector, value);
             break;
           case 'list':
-            await this.setListValue(input.selector, value, useTitleAsValue);
+            await this.setListValue(input.selector, value, useLabelAsValue);
             break;
           case 'fontFamily':
-            await this.setListValue(`${input.selector} [data-type="list"]`, value, useTitleAsValue);
+            await this.setListValue(`${input.selector} [data-type="list"]`, value, useLabelAsValue);
             break;
           case 'color':
             await this.setColorValue(input.selector, value);
@@ -156,19 +156,12 @@ export class FormMonkey {
   }
 
   /**
-   * a shortcut for .fill(data, useTitleAsValue = true)
-   */
-  async fillByTitles(formData: Dictionary<any>) {
-    return await this.fill(formData, true);
-  }
-
-  /**
    * returns all input values from the form
    */
-  async read(returnTitlesInsteadValues = false): Promise<Dictionary<any>> {
+  async read(labelsAsValues?: boolean): Promise<Dictionary<any>> {
     await this.waitForLoading();
     const inputs = await this.getInputs();
-    const formData = {};
+    const formData: Dictionary<string | number | boolean> = {};
 
     for (const input of inputs) {
       let value;
@@ -193,7 +186,7 @@ export class FormMonkey {
           // eslint-disable-next-line no-case-declarations
           const selector =
             input.type === 'list' ? input.selector : `${input.selector} [data-type="list"]`;
-          value = returnTitlesInsteadValues
+          value = labelsAsValues
             ? await this.getListSelectedTitle(selector)
             : await this.getListValue(selector);
           break;
@@ -210,23 +203,18 @@ export class FormMonkey {
       }
 
       this.log(`got: ${value}`);
-      const key = returnTitlesInsteadValues ? input.title : input.name;
-      formData[key] = value;
+      formData[input.name] = value;
     }
 
     return formData;
   }
 
-  async includes(expectedData: Dictionary<any>, useTitleInsteadName = false): Promise<boolean> {
-    const formData = await this.read(useTitleInsteadName);
+  async includes(expectedData: Dictionary<any>, labelsAsValues?: boolean): Promise<boolean> {
+    const formData = await this.read(labelsAsValues);
     this.log('check form includes expected data:');
     this.log(formData);
     this.log(expectedData);
     return isMatch(formData, expectedData);
-  }
-
-  async includesByTitles(expectedData: Dictionary<any>) {
-    return this.includes(expectedData, true);
   }
 
   async setTextValue(selector: string, value: string) {
@@ -247,7 +235,7 @@ export class FormMonkey {
   async setListValue(
     selector: string,
     valueSetter: string | FNValueSetter,
-    useTitleAsValue = false,
+    useLabelAsValue = false,
   ) {
     const $input = await this.client.$(selector);
 
@@ -266,8 +254,8 @@ export class FormMonkey {
       await $input.getAttribute('data-internal-search'),
     );
 
-    const optionSelector = useTitleAsValue
-      ? `${selector} .multiselect__element [data-option-title="${value}"]`
+    const optionSelector = useLabelAsValue
+      ? `${selector} .multiselect__element [data-option-name="${value}"]`
       : `${selector} .multiselect__element [data-option-value="${value}"]`;
     const $options = await this.client.$(optionSelector);
 
@@ -321,7 +309,7 @@ export class FormMonkey {
     const $el = await this.client.$(selector);
     return {
       value: await $el.getAttribute('data-value'),
-      title: await $el.getAttribute('data-option-title'),
+      title: await $el.getAttribute('data-option-name'),
     };
   }
 
@@ -335,7 +323,7 @@ export class FormMonkey {
     const values: { value: string; title: string }[] = [];
     for (const $el of $optionsEls) {
       const value = await $el.getAttribute('data-option-value');
-      const title = await $el.getAttribute('data-option-title');
+      const title = await $el.getAttribute('data-option-name');
       values.push({ value, title });
     }
     return values;
@@ -604,7 +592,7 @@ export function selectTitle(optionTitle: string): FNValueSetter {
     await form.waitForLoading(input.name);
 
     // click on the first option
-    await click( `${input.selector} .multiselect__element`);
+    await click(`${input.selector} .multiselect__element`);
   };
 }
 
