@@ -475,10 +475,6 @@ class VideoSettingsModule {
       message.error({
         content: $t('Cannot toggle Dual Output while live.'),
       });
-    } else if (Services.TransitionsService.views.studioMode) {
-      message.error({
-        content: $t('Cannot toggle Dual Output while in Studio Mode.'),
-      });
     } else {
       // show warning message if selective recording is active
       if (
