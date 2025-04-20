@@ -315,6 +315,8 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
 
   validateVideoContext(display: TDisplayType = 'vertical') {
     if (!this.contexts[display]) {
+      console.log('establishing video context ', display);
+
       this.establishVideoContext(display);
     }
   }
