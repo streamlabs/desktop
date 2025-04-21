@@ -991,7 +991,16 @@ export class StreamingService
       const verticalContext = this.videoSettingsService.contexts.vertical;
 
       NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
-      NodeObs.OBS_service_setVideoInfo(verticalContext, 'vertical');
+      const ytSettings = this.views.getPlatformSettings('youtube');
+      if (
+        this.views.enabledPlatforms.length > 1 &&
+        ytSettings?.enabled &&
+        ytSettings.hasExtraOutputs
+      ) {
+        NodeObs.OBS_service_setVideoInfo(horizontalContext, 'vertical');
+      } else {
+        NodeObs.OBS_service_setVideoInfo(verticalContext, 'vertical');
+      }
 
       const { extraOutputs } = this;
       extraOutputs.forEach(output => {
