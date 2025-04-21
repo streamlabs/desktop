@@ -160,5 +160,17 @@
   "stylelint.validate": ["css", "less", "vue"],
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
-  }
+  },
+
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "text": "日本語で書いてください"
+    }
+  ],
+  "github.copilot.chat.pullRequestDescriptionGeneration.instructions": [
+    {
+      "text": "日本語で書いてください。\n\n以下の形式で記載してください。\n\n# このpull requestが解決する内容\n# 動作確認手順\n# 関連するIssue（あれば）"
+    }
+  ],
+  "githubPullRequests.createDefaultBaseBranch": "createdFromBranch"
 }
