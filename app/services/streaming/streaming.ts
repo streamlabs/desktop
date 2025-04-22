@@ -1023,9 +1023,12 @@ export class StreamingService
           // TODO: how to fetch encoders from the other streams
           stream.videoEncoder = VideoEncoderFactory.create(
             encoder,
-            'video-encoder',
+            `video-encoder-${output.name}`,
             output.encoderSettings,
           );
+
+          // Workaround encoder settings not being respected in backend till next OSN release
+          stream.videoEncoder.update(output.encoderSettings);
 
           if (stream.videoEncoder.lastError) {
             console.log('Error creating encoder', encoder, stream.videoEncoder.lastError);
