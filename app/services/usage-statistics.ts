@@ -92,6 +92,7 @@ export type TUsageEvent =
         };
         onecomme: {
           used: boolean;
+          removeComment: boolean;
         };
       };
       compact_mode: {

@@ -216,13 +216,12 @@ export default class CommentSettings extends Vue {
   @Watch('useOneComme')
   async onUseOneCommeChanged() {
     const use = this.useOneComme;
+    this.isOneCommeError = false;
     if (use === this.nicoliveProgramStateService.state.onecommeRelation.use) return;
     if (use) {
       if (!(await this.nicoliveProgramService.oneCommeRelation.testConnection())) {
         this.isOneCommeError = true;
-        return;
       }
-      this.isOneCommeError = false;
     }
     this.nicoliveProgramStateService.updateOneCommeRelation({ use });
     if (use) this.nicoliveProgramService.oneCommeRelation.update({ force: true });

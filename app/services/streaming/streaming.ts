@@ -792,6 +792,7 @@ export class StreamingService
         },
         onecomme: {
           used: this.nicoliveProgramStateService.state.onecommeRelation.use,
+          removeComment: this.nicoliveProgramStateService.state.onecommeRelation.removeComment,
         },
       },
       compact_mode: {
