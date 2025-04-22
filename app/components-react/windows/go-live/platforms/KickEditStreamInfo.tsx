@@ -30,8 +30,7 @@ export const KickEditStreamInfo = InputComponent((p: IPlatformComponentParams<'k
             onChange={updateSettings}
           />
         }
-        requiredFields={<div key={'empty-kick'} />}
-        optionalFields={<GameSelector key="optional" platform={'kick'} {...bind.game} />}
+        requiredFields={<GameSelector key="required" platform={'kick'} {...bind.game} />}
       />
     </Form>
   );

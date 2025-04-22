@@ -280,5 +280,20 @@
   "Copy stream link": "Copy stream link",
   "Copy %{platform} link": "Copy %{platform} link",
   "Copied to clipboard": "Copied to clipboard",
-  "Twitch Followers": "Twitch Followers"
+  "Twitch Followers": "Twitch Followers",
+  "Connect your %{platform} account": "Connect your %{platform} account",
+  "Connect your %{platform} account to stream to %{platform}.": "Connect your %{platform} account to stream to %{platform}.",
+  "Connect your %{platform} account to stream to %{platform}. Try streaming to %{platform} and another platform at the same time for free in dual output mode, or multistream with ultra.": "Connect your %{platform} account to stream to %{platform}. Try streaming to %{platform} and another platform at the same time for free in dual output mode, or multistream with ultra.",
+  "Bypass and Go Live": "Bypass and Go Live",
+  "Please try again. If the issue persists, you can stream directly to a single platform instead or click the button below to bypass and go live.": "Please try again. If the issue persists, you can stream directly to a single platform instead or click the button below to bypass and go live.",
+  "Issues": "Issues",
+  "Multistream Error": "Multistream Error",
+  "One of destinations might have incomplete permissions. Reconnect the destinations in settings and try again.": "One of destinations might have incomplete permissions. Reconnect the destinations in settings and try again.",
+  "Enhanced broadcasting": "Enhanced broadcasting",
+  "Enhanced broadcasting automatically optimizes your settings to encode and send multiple video qualities to Twitch. Selecting this option will send basic information about your computer and software setup.": "Enhanced broadcasting automatically optimizes your settings to encode and send multiple video qualities to Twitch. Selecting this option will send basic information about your computer and software setup.",
+  "Failed Checks": "Failed Checks",
+  "Video Transmission": "Video Transmission",
+  "Optimized Settings": "Optimized Settings",
+  "%{platform} Setup Error: Toggling off %{platform} to bypass and go live.": "%{platform} Setup Error: Toggling off %{platform} to bypass and go live.",
+  "Recording Audio Encoder": "Recording Audio Encoder"
 }

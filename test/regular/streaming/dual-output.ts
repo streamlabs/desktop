@@ -1,4 +1,5 @@
 import {
+  addCustomDestination,
   clickGoLive,
   prepareToGoLive,
   submit,
@@ -8,9 +9,9 @@ import {
   clickIfDisplayed,
   focusChild,
   focusMain,
+  getNumElements,
   isDisplayed,
   selectAsyncAlert,
-  waitForDisplayed,
 } from '../../helpers/modules/core';
 import { logIn } from '../../helpers/modules/user';
 import { toggleDisplay, toggleDualOutputMode } from '../../helpers/modules/dual-output';
@@ -20,7 +21,7 @@ import {
   TExecutionContext,
   useWebdriver,
 } from '../../helpers/webdriver';
-import { withUser } from '../../helpers/webdriver/user';
+import { getUser, withUser } from '../../helpers/webdriver/user';
 import { SceneBuilder } from '../../helpers/scene-builder';
 import { getApiClient } from '../../helpers/api-client';
 
@@ -107,7 +108,14 @@ test(
     await clickGoLive();
     await waitForSettingsWindowLoaded();
 
-    await waitForDisplayed('[data-test=non-ultra-switcher]');
+    // check that the selector is displayed
+    t.true(await isDisplayed('[data-test=destination-selector]'), 'Destination selector exists');
+
+    // check that the platform switcher and close icon do not exist
+    t.false(await isDisplayed('.platform-switch'), 'Platform switch does not exist');
+    t.false(await isDisplayed('.platform-close'), 'Platform close icon does not exist');
+    t.false(await isDisplayed('.destination-switch'), 'Destination switch does not exist');
+    t.false(await isDisplayed('.destination-close'), 'Destination close icon does not exist');
 
     // cannot use dual output mode with only one platform linked
     await submit();
@@ -125,15 +133,60 @@ test(
 
 test(
   'Dual Output Go Live Ultra',
-  withUser('twitch', { multistream: true }),
+  withUser('twitch', { prime: true, multistream: true }),
   async (t: TExecutionContext) => {
-    // test going live with ultra
-    await toggleDualOutputMode();
+    const user = getUser();
+    await addCustomDestination('MyCustomDest', 'rtmp://live.twitch.tv/app/', user.streamKey);
+    await addCustomDestination('MyCustomDest2', 'rtmp://live.twitch.tv/app/', user.streamKey);
     await prepareToGoLive();
+
+    // confirm single output go live platform settings
     await clickGoLive();
     await waitForSettingsWindowLoaded();
 
-    await waitForDisplayed('[data-test=ultra-switcher]');
+    t.true(await isDisplayed('.single-output-card'), 'Single output card exists');
+    t.false(await isDisplayed('.dual-output-card'), 'Dual output card does not exist');
+    const numSoPlatforms = await getNumElements('.platform-switch');
+    t.true(numSoPlatforms > 1, 'Multiple platform switches exist');
+    const numSoDestinations = await getNumElements('.destination-switch');
+    t.true(numSoDestinations > 1, 'Custom destination switches exist');
+    t.true(
+      await isDisplayed('[data-test=default-add-destination]'),
+      'Default add destination button exists',
+    );
+    t.false(
+      await isDisplayed('[data-test=destination-selector]'),
+      'Destination selector does not exist',
+    );
+    t.false(await isDisplayed('.platform-close'), 'Platform close icon does not exist');
+
+    // confirm dual output go live platform settings
+    await toggleDualOutputMode(true);
+    await prepareToGoLive();
+    await clickGoLive();
+
+    await isDisplayed('.dual-output-card');
+    t.true(await isDisplayed('.dual-output-card'), 'Dual output card exists');
+    t.false(await isDisplayed('.single-output-card'), 'Single output card does not exist');
+    const numDoPlatforms = await getNumElements('.platform-switch');
+    t.true(
+      numSoPlatforms === numDoPlatforms,
+      'Same number of platform switches exist for both single and dual output modes.',
+    );
+    const numDoDestinations = await getNumElements('.destination-switch');
+    t.true(
+      numSoDestinations === numDoDestinations,
+      'Same number of destination switches exist for both single and dual output modes.',
+    );
+    t.true(
+      await isDisplayed('[data-test=default-add-destination]'),
+      'Default add destination button exists',
+    );
+    t.false(
+      await isDisplayed('[data-test=destination-selector]'),
+      'Destination selector does not exist',
+    );
+    t.false(await isDisplayed('.platform-close'), 'Platform close icon does not exist');
 
     // cannot use dual output mode with all platforms assigned to one display
     await submit();

@@ -7,7 +7,12 @@ import InputWrapper from './InputWrapper';
 import { $t } from '../../../services/i18n';
 
 type TFileInputProps = TSlobsInputProps<
-  { directory?: boolean; filters?: Electron.FileFilter[]; save?: boolean },
+  {
+    directory?: boolean;
+    filters?: Electron.FileFilter[];
+    save?: boolean;
+    buttonContent?: React.ReactNode;
+  },
   string,
   InputProps
 >;
@@ -53,9 +58,13 @@ export const FileInput = InputComponent((p: TFileInputProps) => {
       <Input
         {...inputAttrs}
         onChange={val => inputAttrs?.onChange(val.target.value)}
-        disabled
         value={p.value}
-        addonAfter={<Button onClick={showFileDialog}>{$t('Browse')}</Button>}
+        disabled
+        addonAfter={
+          <Button style={p.buttonContent ? { borderRadius: '4px' } : {}} onClick={showFileDialog}>
+            {p.buttonContent || $t('Browse')}
+          </Button>
+        }
       />
     </InputWrapper>
   );

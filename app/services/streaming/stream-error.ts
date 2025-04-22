@@ -132,6 +132,26 @@ export const errorTypes = {
       return $t('unlink and re-merge Kick account, then restart Desktop');
     },
   },
+  KICK_START_STREAM_FAILED: {
+    get message() {
+      return $t('Failed to start Kick stream. Please check permissions with Kick and try again');
+    },
+    get action() {
+      return $t(
+        'Kick request most likely failed due to incorrect or missing permissions. Unlink and re-merge Kick account, then restart Desktop. If that fails, refer to Kick support',
+      );
+    },
+  },
+  KICK_STREAM_KEY_MISSING: {
+    get message() {
+      return $t('Kick stream key failed to generate due to missing permissions');
+    },
+    get action() {
+      return $t(
+        'confirm that a stream key has been generated with 2FA on Kick for use with Streamlabs Desktop and if not ask the user to manually generate one',
+      );
+    },
+  },
   PRIME_REQUIRED: {
     get message() {
       return $t('This feature is for Ultra members only');
@@ -190,6 +210,7 @@ export interface IRejectedRequest {
   url?: string;
   status?: number;
   statusText?: string;
+  platform?: TPlatform;
 }
 
 export interface IStreamError extends IRejectedRequest {
@@ -311,7 +332,7 @@ export function formatStreamErrorMessage(
       messages.user.push(details);
     }
 
-    message = error.message.replace(/\s*\.$/, '');
+    message = error.message.replace(/\.*$/, '');
     // trim trailing periods so that the message joins correctly
     const errorMessage = (error as any)?.action ? `${message}, ${(error as any).action}` : message;
 

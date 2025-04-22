@@ -50,6 +50,7 @@ interface ITikTokServiceState extends IPlatformState {
   gameName: string;
   dateDenied?: string | null;
   audienceControlsInfo: ITikTokAudienceControls;
+  chatUrl: string;
 }
 
 interface ITikTokStartStreamSettings {
@@ -104,6 +105,7 @@ export class TikTokService
     username: '',
     gameName: '',
     audienceControlsInfo: { disable: true, audienceType: '0', types: [] },
+    chatUrl: '',
   };
 
   @Inject() windowsService: WindowsService;
@@ -214,6 +216,10 @@ export class TikTokService
       if (!streamInfo?.id) {
         await this.handleOpenLiveManager();
         throwStreamError('TIKTOK_GENERATE_CREDENTIALS_FAILED');
+      }
+
+      if (streamInfo?.chat_url) {
+        this.SET_CHAT_URL(streamInfo.chat_url);
       }
 
       ttSettings.serverUrl = streamInfo.rtmp;
@@ -468,6 +474,10 @@ export class TikTokService
         return EPlatformCallResult.TikTokStreamScopeMissing;
       }
 
+      if (status?.info.chatUrl) {
+        this.SET_CHAT_URL(status.info.chatUrl);
+      }
+
       // clear any leftover server url or stream key
       if (this.state.settings?.serverUrl || this.state.settings?.streamKey) {
         await this.putChannelInfo({
@@ -537,9 +547,9 @@ export class TikTokService
         games.push(this.defaultGame);
         return games;
       })
-      .catch(e => {
+      .catch((e: unknown) => {
         console.error('Error fetching TikTok categories: ', e);
-        return [];
+        return [] as IGame[];
       });
   }
 
@@ -613,7 +623,7 @@ export class TikTokService
   }
 
   get chatUrl(): string {
-    return '';
+    return `${this.state.chatUrl}?lang=${this.locale}`;
   }
 
   // url for the live monitor
@@ -851,5 +861,10 @@ export class TikTokService
   @mutation()
   protected SET_AUDIENCE_CONTROLS(audienceControlsInfo: ITikTokAudienceControls) {
     this.state.audienceControlsInfo = audienceControlsInfo;
+  }
+
+  @mutation()
+  protected SET_CHAT_URL(chatUrl: string) {
+    this.state.chatUrl = chatUrl;
   }
 }

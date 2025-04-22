@@ -21,6 +21,10 @@ interface INotificationsState {
 }
 
 class NotificationsViews extends ViewHandler<INotificationsState> {
+  get lastNotification(): INotification | null {
+    return this.state.notifications ? this.state.notifications[0] : null;
+  }
+
   getNotification(id: number): INotification {
     return this.state.notifications.find(notify => notify.id === id);
   }

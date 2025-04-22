@@ -13056,16 +13056,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sl-vue-tree@https://github.com/stream-labs/sl-vue-tree.git":
+"sl-vue-tree@https://github.com/streamlabs/sl-vue-tree.git":
   version: 1.8.3
-  resolution: "sl-vue-tree@https://github.com/stream-labs/sl-vue-tree.git#commit=30627b72cdac4755e82816a2bf00737a7c5806e4"
+  resolution: "sl-vue-tree@https://github.com/streamlabs/sl-vue-tree.git#commit=30627b72cdac4755e82816a2bf00737a7c5806e4"
   checksum: c2a8378beed3f9367b84779c9ae7123f773871865b005fce9f0bf4c58ba806f4cfc18992a979952f4a2a99179086687c6fd198a77e0146ec3c5181ccfacd6e6f
   languageName: node
   linkType: hard
 
-"slap@git+https://github.com/stream-labs/slap.git#v0.1.83":
+"slap@git+https://github.com/streamlabs/slap.git#v0.1.83":
   version: 0.1.83
-  resolution: "slap@https://github.com/stream-labs/slap.git#commit=17549e49d3235081bc474a3a49831e79e95e5ea6"
+  resolution: "slap@https://github.com/streamlabs/slap.git#commit=17549e49d3235081bc474a3a49831e79e95e5ea6"
   dependencies:
     immer: ^9.0.12
     react: ^17.0.2
@@ -13249,8 +13249,8 @@ __metadata:
     serve-handler: 5.0.7
     shelljs: 0.8.5
     signtool: 1.0.0
-    sl-vue-tree: "https://github.com/stream-labs/sl-vue-tree.git"
-    slap: "git+https://github.com/stream-labs/slap.git#v0.1.83"
+    sl-vue-tree: "https://github.com/streamlabs/sl-vue-tree.git"
+    slap: "git+https://github.com/streamlabs/slap.git#v0.1.83"
     socket.io-client: 2.3.1
     sockjs: 0.3.20
     sockjs-client: 1.6.1

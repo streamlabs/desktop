@@ -5,7 +5,13 @@ import { $t } from 'services/i18n';
 import { Services } from 'components-react/service-provider';
 import { injectState, useModule, mutation } from 'slap';
 import { ExtraPlatformConnect } from './ExtraPlatformConnect';
-import { EPlatform, EPlatformCallResult, TPlatform, platformLabels } from 'services/platforms';
+import {
+  EPlatform,
+  EPlatformCallResult,
+  TPlatform,
+  externalAuthPlatforms,
+  platformLabels,
+} from 'services/platforms';
 import * as remote from '@electron/remote';
 import { OnboardingModule } from './Onboarding';
 import { EAuthProcessState } from 'services/user';
@@ -265,9 +271,7 @@ export class LoginModule {
 
     const result = await this.UserService.startAuth(
       platform,
-      ['youtube', 'twitch', 'twitter', 'tiktok', 'kick'].includes(platform)
-        ? 'external'
-        : 'internal',
+      externalAuthPlatforms.includes(platform) ? 'external' : 'internal',
       merge,
     );
 

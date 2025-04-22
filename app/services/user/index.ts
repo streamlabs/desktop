@@ -465,6 +465,14 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
             ? $t('Successfully merged account')
             : $t('Successfully unlinked account');
 
+        // if the account was successfully merged, hide the connect page in the main window
+        if (
+          event.type === 'account_merged' &&
+          this.navigationService.state.currentPage === 'PlatformMerge'
+        ) {
+          this.navigationService.navigate('Studio');
+        }
+
         await this.showStreamSettingsIfNeeded();
 
         this.windowsService.actions.setWindowOnTop('all');

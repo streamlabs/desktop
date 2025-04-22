@@ -55,7 +55,7 @@ export default function Display(props: DisplayProps) {
     p.clickHandler(event);
   }
 
-  function createDisplay() {
+  async function createDisplay() {
     const displayId = uuid();
     obsDisplay.current = new OBSDisplay(displayId, {
       sourceId: p.sourceId,
@@ -64,6 +64,7 @@ export default function Display(props: DisplayProps) {
       renderingMode: p.renderingMode,
       type: p.type,
     });
+    await refreshOutputRegion();
     obsDisplay.current.setShoulddrawUI(p.drawUI);
     obsDisplay.current.onOutputResize(region => p.onOutputResize(region));
     if (displayEl.current) obsDisplay.current.trackElement(displayEl.current);

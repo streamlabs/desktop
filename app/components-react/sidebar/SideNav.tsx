@@ -53,13 +53,18 @@ export default function SideNav() {
   const siderMinWidth: number = 50;
   const siderMaxWidth: number = 200;
 
+  // We need to ignore resizeObserver entries for vertical resizing
+  let lastHeight = 0;
+
   const resizeObserver = new ResizeObserver((entries: ResizeObserverEntry[]) => {
     entries.forEach((entry: ResizeObserverEntry) => {
       const width = Math.floor(entry?.contentRect?.width);
+      const height = Math.floor(entry?.contentRect?.height);
 
-      if (width === siderMinWidth || width === siderMaxWidth) {
+      if (lastHeight === height && (width === siderMinWidth || width === siderMaxWidth)) {
         updateStyleBlockers('main', false);
       }
+      lastHeight = height;
     });
   });
 

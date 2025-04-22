@@ -302,3 +302,5 @@ export function getPlatformService(platform: TPlatform): IPlatformService {
 export interface IPlatformRequest extends RequestInit {
   url: string;
 }
+
+export const externalAuthPlatforms = ['youtube', 'twitch', 'twitter', 'tiktok', 'kick'];
