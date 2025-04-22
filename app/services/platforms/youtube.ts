@@ -324,7 +324,7 @@ export class YoutubeService
     this.SET_VERTICAL_BROADCAST(verticalBoundBroadcast);
 
     return {
-      name: title,
+      name: 'yt-vert',
       streamKey: verticalStreamKey,
       url: 'rtmps://a.rtmps.youtube.com/live2',
       enabled: true,
