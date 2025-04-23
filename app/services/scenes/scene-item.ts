@@ -2,7 +2,7 @@ import merge from 'lodash/merge';
 import { mutation, Inject } from 'services';
 import Utils from '../utils';
 import { SourcesService, TSourceType, ISource } from 'services/sources';
-import { VideoService, TDisplayType } from 'services/video';
+import { VideoService } from 'services/video';
 import {
   ScalableRectangle,
   CenteringAxis,
@@ -28,6 +28,7 @@ import { Rect } from '../../util/rect';
 import { TSceneNodeType } from './scenes';
 import { ServiceHelper, ExecuteInWorkerProcess } from 'services/core';
 import { assertIsDefined } from '../../util/properties-type-guards';
+import { VideoSettingsService, TDisplayType } from 'services/settings-v2';
 
 /**
  * A SceneItem is a source that contains
@@ -92,6 +93,7 @@ export class SceneItem extends SceneItemNode {
   @Inject() protected scenesService: ScenesService;
   @Inject() private sourcesService: SourcesService;
   @Inject() private videoService: VideoService;
+  @Inject() private videoSettingsService: VideoSettingsService;
 
   constructor(sceneId: string, sceneItemId: string, sourceId: string) {
     super();
@@ -106,7 +108,9 @@ export class SceneItem extends SceneItemNode {
     Utils.applyProxy(this, this.state);
 
     if (this.type === 'scene') {
-      const baseResolutions = this.videoService.baseResolutions[this.display ?? 'horizontal'];
+      const baseResolutions = this.videoSettingsService.baseResolutions[
+        this.display ?? 'horizontal'
+      ];
       assertIsDefined(baseResolutions);
 
       this.baseWidth = baseResolutions.baseWidth ?? this.width;
@@ -295,9 +299,9 @@ export class SceneItem extends SceneItemNode {
 
     // guarantee vertical context exists to prevent null errors
     if (display === 'vertical') {
-      this.videoService.validateVideoContext('vertical');
+      this.videoSettingsService.validateVideoContext('vertical');
     }
-    const context = this.videoService.contexts[display];
+    const context = this.videoSettingsService.contexts[display];
 
     const obsSceneItem = this.getObsSceneItem();
     obsSceneItem.video = context as obs.IVideo;
