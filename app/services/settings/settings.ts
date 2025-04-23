@@ -31,7 +31,7 @@ import {
   Optimizer,
   SettingsKeyAccessor,
 } from './optimizer';
-import { ISettingsServiceApi, ISettingsSubCategory } from './settings-api';
+import { Category, ISettingsServiceApi, ISettingsSubCategory } from './settings-api';
 
 export interface ISettingsState {
   General: {
@@ -153,7 +153,7 @@ export class SettingsService
     }
   }
 
-  showSettings(categoryName?: string) {
+  showSettings(categoryName?: Category) {
     this.windowsService.showWindow({
       componentName: 'Settings',
       title: $t('common.settings'),
@@ -169,25 +169,24 @@ export class SettingsService
     return Utils.isDevMode() || this.appService.state.argv.includes('--adv-settings');
   }
 
-  getCategories(): string[] {
-    let categories: string[] = obs.NodeObs.OBS_settings_getListCategories();
-
-    // 0.23.74で追加された分の非表示
-    categories = categories.filter(a => a !== 'StreamSecond');
+  getCategories(): Category[] {
+    const categories: Category[] = (
+      obs.NodeObs.OBS_settings_getListCategories() as Category[]
+    ).filter(a => a !== 'StreamSecond'); // obs-studio-node 0.23.74で追加された分の非表示
 
     if (this.userService.isLoggedIn()) {
-      categories = categories.concat(['Comment', 'SpeechEngine']);
+      categories.push('Comment', 'SpeechEngine');
     }
 
     if (Utils.isDevMode()) {
-      categories = categories.concat('Developer');
+      categories.push('Developer');
     }
-    // if (this.advancedSettingEnabled()) categories = categories.concat(['Experimental']);
+    // if (this.advancedSettingEnabled()) categories.push('Experimental');
 
     return categories;
   }
 
-  getSettingsFormData(categoryName: string): ISettingsSubCategory[] {
+  getSettingsFormData(categoryName: Category): ISettingsSubCategory[] {
     let settings = obs.NodeObs.OBS_settings_getSettings(categoryName)
       .data as ISettingsSubCategory[];
     if (!settings) settings = [];
@@ -666,7 +665,7 @@ export class SettingsService
     return settingsFormData;
   }
 
-  setSettingValue(category: string, name: string, value: TObsValue) {
+  setSettingValue(category: Category, name: string, value: TObsValue) {
     const newSettings = this.patchSetting(this.getSettingsFormData(category), name, { value });
     this.setSettings(category, newSettings);
   }
@@ -753,7 +752,7 @@ export class SettingsService
     ];
   }
 
-  setSettings(categoryName: string, settingsData: ISettingsSubCategory[]) {
+  setSettings(categoryName: Category, settingsData: ISettingsSubCategory[]) {
     if (categoryName === 'Audio') this.setAudioSettings([settingsData.pop()]);
     if (categoryName === 'Developer') return this.setDeveloperSettings(settingsData);
 

@@ -8,7 +8,7 @@ import Vue from 'vue';
 import { Component, Watch } from 'vue-property-decorator';
 import { Inject } from '../../services/core/injector';
 import { CustomizationService } from '../../services/customization';
-import { ISettingsServiceApi, ISettingsSubCategory } from '../../services/settings';
+import { Category, ISettingsServiceApi, ISettingsSubCategory } from '../../services/settings';
 import { StreamingService } from '../../services/streaming';
 import { UserService } from '../../services/user';
 import { WindowsService } from '../../services/windows';
@@ -46,7 +46,7 @@ export default class Settings extends Vue {
 
   $refs: { settingsContainer: HTMLElement };
 
-  categoryName: string = 'General';
+  categoryName: Category = 'General';
   settingsData: ISettingsSubCategory[] = [];
   // @ts-expect-error: ts2729: use before initialization
   categoryNames = this.settingsService.getCategories();
@@ -93,7 +93,7 @@ export default class Settings extends Vue {
   }
 
   @Watch('categoryName')
-  onCategoryNameChangedHandler(categoryName: string) {
+  onCategoryNameChangedHandler(categoryName: Category) {
     this.settingsData = this.settingsService.getSettingsFormData(categoryName);
     this.$refs.settingsContainer.scrollTop = 0;
   }
