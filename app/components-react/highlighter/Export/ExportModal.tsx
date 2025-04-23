@@ -223,12 +223,10 @@ function ExportFlow({
     async function initializeSettings() {
       try {
         const resolution = await getClipResolution(streamId);
-        console.log('Detected resolution:', resolution);
-
         let setting: TSetting;
-        if (resolution?.height === 720) {
+        if (resolution?.height === 720 && exportInfo.resolution !== 720) {
           setting = settings.find(s => s.resolution === 720) || settings[settings.length - 1];
-        } else if (resolution?.height === 1080) {
+        } else if (resolution?.height === 1080 && exportInfo.resolution !== 1080) {
           setting = settings.find(s => s.resolution === 1080) || settings[settings.length - 1];
         } else {
           setting = settingMatcher({
@@ -241,7 +239,7 @@ function ExportFlow({
 
         setSetting(setting);
       } catch (error: unknown) {
-        console.error('Failed to detect resolution', error);
+        console.error('Failed to detect clip resolution, setting default. Error: ', error);
         setSetting(
           settingMatcher({
             name: 'from default',
