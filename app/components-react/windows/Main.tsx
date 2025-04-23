@@ -112,7 +112,8 @@ class MainController {
       this.isLoggedIn &&
       !this.isOnboarding &&
       this.store.hasLiveDock &&
-      getPlatformService(this.userService.platform?.type)?.liveDockEnabled &&
+      this.userService.platform &&
+      getPlatformService(this.userService.platform.type).liveDockEnabled &&
       !this.showLoadingSpinner
     );
   }
