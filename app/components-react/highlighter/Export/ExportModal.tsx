@@ -146,15 +146,13 @@ function ExportModal({ close, streamId }: { close: () => void; streamId: string 
 
   if (!exportInfo.exported || exportInfo.exporting || exportInfo.error) {
     return (
-      <>
-        <ExportFlow
-          isExporting={exportInfo.exporting}
-          close={close}
-          streamId={streamId}
-          videoName={videoName}
-          onVideoNameChange={setVideoName}
-        />
-      </>
+      <ExportFlow
+        isExporting={exportInfo.exporting}
+        close={close}
+        streamId={streamId}
+        videoName={videoName}
+        onVideoNameChange={setVideoName}
+      />
     );
   }
   return <PlatformSelect onClose={close} videoName={videoName} streamId={streamId} />;
