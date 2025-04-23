@@ -286,8 +286,7 @@ export const platformLabels = (platform: TPlatform | string) =>
     [EPlatform.Kick]: $t('Kick'),
   }[platform]);
 
-export function getPlatformService(platform?: TPlatform): IPlatformService | undefined {
-  if (!platform) return;
+export function getPlatformService(platform: TPlatform): IPlatformService {
   return {
     twitch: TwitchService.instance,
     youtube: YoutubeService.instance,
