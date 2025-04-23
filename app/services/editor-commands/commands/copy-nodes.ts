@@ -5,7 +5,7 @@ import { ScenesService, TSceneNode } from 'services/scenes';
 import compact from 'lodash/compact';
 import { $t } from 'services/i18n';
 import { DualOutputService } from 'services/dual-output';
-import { TDisplayType, VideoService } from 'services/video';
+import { TDisplayType, VideoSettingsService } from 'services/settings-v2';
 import { EditorService } from 'services/editor';
 import { SceneCollectionsService } from 'services/scene-collections';
 import { cloneDeep } from 'lodash';
@@ -28,7 +28,7 @@ import { cloneDeep } from 'lodash';
 export class CopyNodesCommand extends Command {
   @Inject() scenesService: ScenesService;
   @Inject() dualOutputService: DualOutputService;
-  @Inject() videoService: VideoService;
+  @Inject() videoSettingsService: VideoSettingsService;
   @Inject() editorService: EditorService;
   @Inject() sceneCollectionsService: SceneCollectionsService;
 

@@ -1,18 +1,18 @@
 import { Fallback, Singleton } from 'services/api/external-api';
 import { Inject } from 'services/core/injector';
-import { VideoService as InternalVideoSettingsService } from 'services/video';
+import { VideoSettingsService as InternalVideoSettingsService } from 'services/settings-v2';
 import { IVideo } from '../../../../../obs-api';
 
 @Singleton()
-export class VideoService {
+export class VideoSettingsService {
   @Fallback()
   @Inject()
-  private videoService!: InternalVideoSettingsService;
+  private videoSettingsService!: InternalVideoSettingsService;
 
   /*
    * Returns video contexts
    */
   get contexts(): Dictionary<IVideo> {
-    return this.videoService.contexts;
+    return this.videoSettingsService.contexts;
   }
 }

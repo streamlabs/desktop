@@ -14,7 +14,7 @@ import { mutation } from './core';
 import { byOS, OS } from 'util/operating-systems';
 import { TcpServerService } from './api/tcp-server';
 import { Subject } from 'rxjs';
-import { TDisplayType, VideoService } from './video';
+import { TDisplayType, VideoSettingsService } from './settings-v2';
 
 /**
  * Examine scene items props
@@ -63,7 +63,7 @@ export class EditorService extends StatefulService<IEditorServiceState> {
   @Inject() private customizationService: CustomizationService;
   @Inject() private editorCommandsService: EditorCommandsService;
   @Inject() private tcpServerService: TcpServerService;
-  @Inject() private videoService: VideoService;
+  @Inject() private videoSettingsService: VideoSettingsService;
 
   /**
    * emit this event when drag or resize have been finished
@@ -683,7 +683,7 @@ export class EditorService extends StatefulService<IEditorServiceState> {
   }
 
   get baseResolutions() {
-    return this.videoService.baseResolutions;
+    return this.videoSettingsService.baseResolutions;
   }
   // Using a computed property since it is cached
   get resizeRegions(): IResizeRegion[] {

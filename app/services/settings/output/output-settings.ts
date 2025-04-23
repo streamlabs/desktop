@@ -1,6 +1,6 @@
 import { Service } from 'services/core/service';
 import { ISettingsSubCategory, SettingsService } from 'services/settings';
-import { VideoService } from 'services/video';
+import { VideoSettingsService } from 'services/settings-v2/video';
 import { HighlighterService } from 'services/highlighter';
 import { Inject } from 'services/core/injector';
 import { Dictionary } from 'vuex';
@@ -156,7 +156,7 @@ export const encoderFieldsMap = {
   [EEncoderFamily.amd]: { preset: 'QualityPreset' },
 };
 
-function simpleEncoderToAdvancedEncoder(encoder: EEncoderFamily) {
+export function simpleEncoderToAdvancedEncoder(encoder: EEncoderFamily) {
   return simpleEncoderToAnvancedEncoderMap[encoder];
 }
 
@@ -185,7 +185,7 @@ export function obsEncoderToEncoderFamily(
 export class OutputSettingsService extends Service {
   @Inject() private settingsService: SettingsService;
   @Inject() private audioService: AudioService;
-  @Inject() private videoService: VideoService;
+  @Inject() private videoSettingsService: VideoSettingsService;
   @Inject() private highlighterService: HighlighterService;
 
   /**
@@ -378,10 +378,8 @@ export class OutputSettingsService extends Service {
 
     if (settingsPatch.inputResolution) {
       const [width, height] = settingsPatch.inputResolution.split('x');
-      this.videoService.updateVideoSettings({
-        baseWidth: Number(width),
-        baseHeight: Number(height),
-      });
+      this.videoSettingsService.setVideoSetting('baseWidth', Number(width));
+      this.videoSettingsService.setVideoSetting('baseHeight', Number(height));
     }
 
     if (settingsPatch.streaming) {
