@@ -10,7 +10,7 @@ import { TSceneNodeType } from './scenes';
 import { ServiceHelper } from 'services/core';
 import compact from 'lodash/compact';
 import { assertIsDefined } from '../../util/properties-type-guards';
-import { TDisplayType } from 'services/video';
+import { TDisplayType } from 'services/settings-v2';
 
 @ServiceHelper('ScenesService')
 export class SceneItemFolder extends SceneItemNode {
