@@ -4,7 +4,7 @@ import styles from './EducationCarousel.m.less';
 import { $t, I18nService } from 'services/i18n';
 import * as remote from '@electron/remote';
 
-export default function EducationCarousel() {
+export default function EducationCarousel({ game }: { game: string }) {
   const i18nService = I18nService.instance as I18nService;
   const localeOptions = i18nService.state.localeList;
   const currentLocale = i18nService.state.locale;
@@ -17,7 +17,7 @@ export default function EducationCarousel() {
     <div className={styles.carouselWrapper}>
       <Carousel arrows={true} dots={true} autoplay={false} autoplaySpeed={3000}>
         <Overlay />
-        <SupportedGameModes />
+        {game === 'Fortnite' && <SupportedGameModes />}
         {currentLocale !== 'en-US' && <Language falseLanguage={falseLanguage} />}
       </Carousel>
     </div>
@@ -119,28 +119,24 @@ const SupportedGameModes = () => (
         <div className={styles.gameModeImageWrapper}>
           <img
             src="https://cdn.streamlabs.com/static/imgs/carousel-images/battle-royale.png"
-            alt=""
             className={styles.gameModeImage}
           />
         </div>
         <div className={styles.gameModeImageWrapper}>
           <img
             src="https://cdn.streamlabs.com/static/imgs/carousel-images/zero-build.png"
-            alt=""
             className={styles.gameModeImage}
           />
         </div>
         <div className={styles.gameModeImageWrapper}>
           <img
             src="https://cdn.streamlabs.com/static/imgs/carousel-images/reload.png"
-            alt=""
             className={styles.gameModeImage}
           />
         </div>
         <div className={styles.gameModeImageWrapper}>
           <img
             src="https://cdn.streamlabs.com/static/imgs/carousel-images/og.png"
-            alt=""
             className={styles.gameModeImage}
           />
         </div>
@@ -163,7 +159,6 @@ const Overlay = () => (
           </div>
           <img
             src="https://cdn.streamlabs.com/static/imgs/carousel-images/correct.png"
-            alt=""
             className={styles.gameModeImage}
           />
         </div>
@@ -176,7 +171,6 @@ const Overlay = () => (
               </div>
               <img
                 src="https://cdn.streamlabs.com/static/imgs/carousel-images/false-map.png"
-                alt=""
                 className={styles.gameModeImage}
               />
             </div>{' '}
@@ -187,7 +181,6 @@ const Overlay = () => (
               </div>
               <img
                 src="https://cdn.streamlabs.com/static/imgs/carousel-images/false-overlay.png"
-                alt=""
                 className={styles.gameModeImage}
               />
             </div>

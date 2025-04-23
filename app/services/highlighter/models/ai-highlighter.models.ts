@@ -1,5 +1,21 @@
+export type TOrientation = EOrientation.HORIZONTAL | EOrientation.VERTICAL;
+export enum EOrientation {
+  HORIZONTAL = 'horizontal',
+  VERTICAL = 'vertical',
+}
+
+export enum EGameState {
+  INTERNAL = 'internal',
+  LIVE = 'live',
+  BETA_LIVE = 'beta_live',
+}
+
 export interface IGameConfig {
   name: EGame;
+  label: string; // Must be same as twitch
+  gameModes: string;
+  thumbnail: string;
+  state: EGameState;
   inputTypeMap: Record<string, IEventInfo | IDefaultEventInfo>;
 }
 
@@ -21,12 +37,15 @@ export interface IDefaultEventInfo extends IEventInfo {
   aliases?: string[];
 }
 
+// space -> underscore
 export enum EGame {
   FORTNITE = 'fortnite',
+  WARZONE = 'warzone',
+  MARVEL_RIVALS = 'marvel_rivals',
+  WAR_THUNDER = 'war_thunder',
+  VALORANT = 'valorant',
   UNSET = 'unset',
 }
-
-export type TOrientation = 'horizontal' | 'vertical';
 
 export enum EHighlighterInputTypes {
   KILL = 'kill',

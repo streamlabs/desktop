@@ -687,6 +687,14 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     }
   }
 
+  isEnhancedBroadcasting() {
+    return obs.NodeObs.OBS_settings_isEnhancedBroadcasting();
+  }
+
+  setEnhancedBroadcasting(enable: boolean) {
+    obs.NodeObs.OBS_settings_setEnhancedBroadcasting(enable);
+  }
+
   @mutation()
   SET_SETTINGS(settingsData: ISettingsServiceState) {
     this.state = Object.assign({}, this.state, settingsData);

@@ -17,6 +17,7 @@ export enum EDismissable {
   LoginPrompt = 'login_prompt',
   TikTokRejected = 'tiktok_rejected',
   TikTokEligible = 'tiktok_eligible',
+  EnhancedBroadcasting = 'enhanced_broadcasting',
 }
 
 interface IDismissablesServiceState {

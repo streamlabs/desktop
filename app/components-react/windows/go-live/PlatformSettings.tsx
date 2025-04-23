@@ -61,6 +61,9 @@ export default function PlatformSettings() {
       get value() {
         return getDefined(settings.platforms[platform]);
       },
+      get enabledPlatformsCount() {
+        return enabledPlatforms.length;
+      },
       onChange(newSettings) {
         updatePlatform(platform, newSettings);
       },
