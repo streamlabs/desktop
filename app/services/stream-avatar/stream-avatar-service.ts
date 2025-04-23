@@ -58,12 +58,12 @@ export class StreamAvatarService extends Service {
         return proc;
     }
 
-    startVisionProcess(handler?: OutputStreamHandler) {
+    startVisionProcess(handler?: OutputStreamHandler, port = 8000) {
         if (this.visionProc && this.visionProc.exitCode != null) {
             this.visionProc.kill();
         }
 
-        this.visionProc = this.visionUpdater.startVisionProcess();
+        this.visionProc = this.visionUpdater.startVisionProcess(port);
         this.attachOutputHandler(this.visionProc, handler);
     }
 

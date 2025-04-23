@@ -42,8 +42,8 @@ export class NativeComponentsModule extends Module {
   }
 
   @apiMethod()
-  startVisionProcess(ctx: IApiContext, handler?: OutputStreamHandler) {
-    this.streamAvatarService.startVisionProcess(handler);
+  startVisionProcess(ctx: IApiContext, handler?: OutputStreamHandler, port = 8000) {
+    this.streamAvatarService.startVisionProcess(handler, port);
   }
 
   @apiMethod()
