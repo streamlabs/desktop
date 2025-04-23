@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/vue';
 import { IObsInput, IObsListInput, TObsFormData, TObsValue } from 'components/obs/inputs/ObsInput';
 import { $t } from 'services/i18n';
 import { getKeys } from 'util/getKeys';
-import { Category, ISettingsSubCategory } from './settings-api';
+import { ISettingsSubCategory, SettingsCategory } from './settings-api';
 
 export enum EncoderFamily {
   x264 = 'obs_x264',
@@ -67,7 +67,7 @@ export type OptimizeSettings = {
 
 export type KeyDescription = {
   key: OptimizationKey;
-  category: Category;
+  category: SettingsCategory;
   subCategory: string;
   setting: string;
   label?: string;
@@ -431,7 +431,7 @@ export interface OptimizedSettings {
   current: OptimizeSettings;
   delta: OptimizeSettings;
   info: [
-    Category,
+    SettingsCategory,
     {
       key: string;
       name: string;
@@ -464,7 +464,7 @@ function i18nPath(top: string, ...args: string[]): string {
 
 class OptKeyProperty {
   key: OptimizationKey;
-  category: Category;
+  category: SettingsCategory;
   subCategory: string;
   setting: string;
 
@@ -646,7 +646,7 @@ function validateKeyDescriptions(params: KeyDescription[]) {
 validateKeyDescriptions(AllKeyDescriptions);
 
 export interface ISettingsAccessor {
-  getSettingsFormData(categoryName: Category): ISettingsSubCategory[];
+  getSettingsFormData(categoryName: SettingsCategory): ISettingsSubCategory[];
   findSetting(
     settings: ISettingsSubCategory[],
     category: string,
@@ -657,7 +657,7 @@ export interface ISettingsAccessor {
     category: string,
     setting: string,
   ): TObsValue | undefined;
-  setSettings(categoryName: Category, settingsData: ISettingsSubCategory[]): void;
+  setSettings(categoryName: SettingsCategory, settingsData: ISettingsSubCategory[]): void;
 }
 
 /**
@@ -670,24 +670,24 @@ export class SettingsKeyAccessor {
     this.accessor = accessor;
   }
 
-  private categoryCache = new Map<Category, ISettingsSubCategory[]>();
-  private modifiedCategories = new Set<Category>();
+  private categoryCache = new Map<SettingsCategory, ISettingsSubCategory[]>();
+  private modifiedCategories = new Set<SettingsCategory>();
 
-  private getCategory(category: Category, reload: boolean = false): ISettingsSubCategory[] {
+  private getCategory(category: SettingsCategory, reload: boolean = false): ISettingsSubCategory[] {
     if (reload || !this.categoryCache.has(category)) {
       this.categoryCache.set(category, this.accessor.getSettingsFormData(category));
     }
     return this.categoryCache.get(category);
   }
 
-  private updateCategory(category: Category) {
+  private updateCategory(category: SettingsCategory) {
     if (this.categoryCache.has(category)) {
       console.log(`updateCategory: ${category}`);
       this.accessor.setSettings(category, this.getCategory(category));
     }
   }
 
-  writeBackCategory(category: Category) {
+  writeBackCategory(category: SettingsCategory) {
     if (this.modifiedCategories.has(category)) {
       this.updateCategory(category);
       this.modifiedCategories.delete(category);
@@ -701,7 +701,7 @@ export class SettingsKeyAccessor {
     this.modifiedCategories.clear();
   }
 
-  private forgetCategoryCache(category: Category) {
+  private forgetCategoryCache(category: SettingsCategory) {
     if (this.categoryCache.has(category)) {
       this.categoryCache.delete(category);
       if (this.modifiedCategories.has(category)) {
@@ -927,8 +927,8 @@ export class Optimizer {
   optimizeInfo(
     current: OptimizeSettings,
     optimized: OptimizeSettings,
-  ): [Category, OptimizeItem[]][] {
-    const map = new Map<Category, OptimizeItem[]>();
+  ): [SettingsCategory, OptimizeItem[]][] {
+    const map = new Map<SettingsCategory, OptimizeItem[]>();
     const merged = Object.assign({}, current, optimized);
     for (const keyDescription of iterateKeyDescriptions(merged, this.keyDescriptions)) {
       const opt = new OptKeyProperty(keyDescription);

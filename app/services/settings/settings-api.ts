@@ -6,7 +6,7 @@ export interface ISettingsSubCategory {
   parameters: TObsFormData;
 }
 
-export type Category =
+export type SettingsCategory =
   | 'General'
   | 'Stream'
   | 'Output'
@@ -25,8 +25,8 @@ export type Category =
   | 'StreamSecond';
 
 export interface ISettingsServiceApi {
-  getCategories(): Category[];
-  getSettingsFormData(categoryName: Category): ISettingsSubCategory[];
-  setSettings(categoryName: Category, settingsData: ISettingsSubCategory[]): void;
-  showSettings(categoryName?: Category): void;
+  getCategories(): SettingsCategory[];
+  getSettingsFormData(categoryName: SettingsCategory): ISettingsSubCategory[];
+  setSettings(categoryName: SettingsCategory, settingsData: ISettingsSubCategory[]): void;
+  showSettings(categoryName?: SettingsCategory): void;
 }

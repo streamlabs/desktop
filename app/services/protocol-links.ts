@@ -4,7 +4,7 @@ import { Inject } from 'services/core/injector';
 import { Service } from 'services/core/service';
 import { NavigationService } from 'services/navigation';
 import { URL, URLSearchParams } from 'url';
-import { Category, SettingsService } from './settings';
+import { SettingsCategory, SettingsService } from './settings';
 import Utils from './utils';
 
 function protocolHandler(base: string) {
@@ -68,7 +68,7 @@ export class ProtocolLinksService extends Service {
 
   @protocolHandler('settings')
   private openSettings(info: IProtocolLinkInfo) {
-    const category = info.path.replace('/', '') as Category;
+    const category = info.path.replace('/', '') as SettingsCategory;
 
     this.settingsService.showSettings(category);
   }

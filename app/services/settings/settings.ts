@@ -31,7 +31,7 @@ import {
   Optimizer,
   SettingsKeyAccessor,
 } from './optimizer';
-import { Category, ISettingsServiceApi, ISettingsSubCategory } from './settings-api';
+import { ISettingsServiceApi, ISettingsSubCategory, SettingsCategory } from './settings-api';
 
 export interface ISettingsState {
   General: {
@@ -153,7 +153,7 @@ export class SettingsService
     }
   }
 
-  showSettings(categoryName?: Category) {
+  showSettings(categoryName?: SettingsCategory) {
     this.windowsService.showWindow({
       componentName: 'Settings',
       title: $t('common.settings'),
@@ -169,9 +169,9 @@ export class SettingsService
     return Utils.isDevMode() || this.appService.state.argv.includes('--adv-settings');
   }
 
-  getCategories(): Category[] {
-    const categories: Category[] = (
-      obs.NodeObs.OBS_settings_getListCategories() as Category[]
+  getCategories(): SettingsCategory[] {
+    const categories: SettingsCategory[] = (
+      obs.NodeObs.OBS_settings_getListCategories() as SettingsCategory[]
     ).filter(a => a !== 'StreamSecond'); // obs-studio-node 0.23.74で追加された分の非表示
 
     if (this.userService.isLoggedIn()) {
@@ -186,7 +186,7 @@ export class SettingsService
     return categories;
   }
 
-  getSettingsFormData(categoryName: Category): ISettingsSubCategory[] {
+  getSettingsFormData(categoryName: SettingsCategory): ISettingsSubCategory[] {
     let settings = obs.NodeObs.OBS_settings_getSettings(categoryName)
       .data as ISettingsSubCategory[];
     if (!settings) settings = [];
@@ -665,7 +665,7 @@ export class SettingsService
     return settingsFormData;
   }
 
-  setSettingValue(category: Category, name: string, value: TObsValue) {
+  setSettingValue(category: SettingsCategory, name: string, value: TObsValue) {
     const newSettings = this.patchSetting(this.getSettingsFormData(category), name, { value });
     this.setSettings(category, newSettings);
   }
@@ -752,7 +752,7 @@ export class SettingsService
     ];
   }
 
-  setSettings(categoryName: Category, settingsData: ISettingsSubCategory[]) {
+  setSettings(categoryName: SettingsCategory, settingsData: ISettingsSubCategory[]) {
     if (categoryName === 'Audio') this.setAudioSettings([settingsData.pop()]);
     if (categoryName === 'Developer') return this.setDeveloperSettings(settingsData);
 
