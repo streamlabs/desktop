@@ -144,15 +144,17 @@ function ExportModal({ close, streamId }: { close: () => void; streamId: string 
   // Clear all errors when this component unmounts
   useEffect(() => unmount, []);
 
-  if (!exportInfo.exported || exportInfo.exporting) {
+  if (!exportInfo.exported || exportInfo.exporting || exportInfo.error) {
     return (
-      <ExportFlow
-        isExporting={exportInfo.exporting}
-        close={close}
-        streamId={streamId}
-        videoName={videoName}
-        onVideoNameChange={setVideoName}
-      />
+      <>
+        <ExportFlow
+          isExporting={exportInfo.exporting}
+          close={close}
+          streamId={streamId}
+          videoName={videoName}
+          onVideoNameChange={setVideoName}
+        />
+      </>
     );
   }
   return <PlatformSelect onClose={close} videoName={videoName} streamId={streamId} />;
@@ -330,7 +332,6 @@ function ExportFlow({
                 buttonContent={<i className="icon-edit" />}
               />
             </div>
-
             <div
               className={cx(styles.thumbnail, isExporting && styles.thumbnailInProgress)}
               style={
@@ -369,7 +370,6 @@ function ExportFlow({
                 }
               />
             </div>
-
             <div className={styles.clipInfoWrapper}>
               <div
                 className={cx(isExporting && styles.isDisabled)}
@@ -393,7 +393,6 @@ function ExportFlow({
                 emitState={format => setCurrentFormat(format)}
               />
             </div>
-
             <div
               style={{
                 display: 'flex',
@@ -466,10 +465,8 @@ function ExportFlow({
                 </div>
               </div>
             )}
-
             {exportInfo.error && (
               <Alert
-                style={{ marginBottom: 24 }}
                 message={exportInfo.error}
                 type="error"
                 closable
