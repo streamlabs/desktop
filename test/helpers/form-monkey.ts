@@ -230,13 +230,13 @@ export class FormMonkey {
   }
 
   async setTextValue(selector: string, value: string) {
-    const $input = await this.client.$(`${selector} input, ${selector} textarea`);
+    const $input = await this.client.$(`${selector}, ${selector}`);
     await $input.clearValue();
     await $input.setValue(value);
   }
 
   async getTextValue(selector: string): Promise<string> {
-    const $input = await this.client.$(`${selector} input`);
+    const $input = await this.client.$(`${selector}`);
     return $input.getValue();
   }
 
@@ -273,7 +273,7 @@ export class FormMonkey {
 
     if (hasInternalSearch) {
       // the list input has a static list of options
-      const $multiselect = await this.client.$(`${selector} .multiselect`);
+      const $multiselect = await this.client.$(`${selector}`);
       await $multiselect.click();
       await $options.click();
     } else {
@@ -352,7 +352,7 @@ export class FormMonkey {
   }
 
   async setBoolValue(selector: string, value: boolean) {
-    const $checkbox = await this.client.$(`${selector} input`);
+    const $checkbox = await this.client.$(`${selector}`);
 
     // click to change the checkbox state
     await $checkbox.click();
@@ -364,7 +364,7 @@ export class FormMonkey {
   }
 
   async getBoolValue(selector: string): Promise<boolean> {
-    const $checkbox = await this.client.$(`${selector} input`);
+    const $checkbox = await this.client.$(`${selector}`);
     return await $checkbox.isSelected();
   }
 
@@ -604,7 +604,7 @@ export function selectTitle(optionTitle: string): FNValueSetter {
     await form.waitForLoading(input.name);
 
     // click on the first option
-    await click( `${input.selector} .multiselect__element`);
+    await click(`${input.selector} .multiselect__element`);
   };
 }
 
