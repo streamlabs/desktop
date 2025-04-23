@@ -1189,7 +1189,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       return false;
     }
 
-    // Split versions into components (e.g., "1.2.3" -> [1, 2, 3])
     const currentVersion = this.state.highlighterVersion;
     return currentVersion > checkVersion;
   }
