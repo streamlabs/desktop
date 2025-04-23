@@ -62,11 +62,8 @@ export default function StudioEditor() {
       if (timeoutHandles[notificationType])
         return;
 
-      console.info('notificationType', notificationType);
-
       timeoutHandles[notificationType] = setTimeout(() => {
         timeoutHandles[notificationType] = undefined;
-        console.info('boooooooooooooooooooooooooo - notificationType: ', notificationType);
       }, 5 * 60 * 1000)
 
       let message = "";
@@ -87,7 +84,6 @@ export default function StudioEditor() {
         'showNotifications',
       );
 
-      console.info('---------------------------------');
       NotificationsService.actions.push({
         type: ENotificationType.WARNING,
         message,
