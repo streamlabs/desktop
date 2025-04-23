@@ -30,6 +30,7 @@ const base = {
   nsis: {
     license: 'AGREEMENT',
     oneClick: false,
+    warningsAsErrors: false,
     perMachine: true,
     allowToChangeInstallationDirectory: true,
     include: 'installer.nsh',
