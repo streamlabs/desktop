@@ -86,7 +86,7 @@ module.exports = function (env, argv) {
         'sentry-defs': './sentry-defs.js',
       },
       plugins: [definePlugin],
-      target: 'electron25-main',
+      target: 'electron29-main',
     },
     {
       ...common,
@@ -131,7 +131,7 @@ module.exports = function (env, argv) {
 
       devtool: 'source-map',
 
-      target: 'electron25-renderer',
+      target: 'electron29-renderer',
 
       resolve: {
         extensions: ['.js', '.ts', '.tsx'],
