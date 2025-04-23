@@ -194,5 +194,9 @@
   "Try AI Highlighter to generate game highlight reels of your stream": "Try AI Highlighter to generate game highlight reels of your stream",
   "AI Highlighter requirements": "AI Highlighter requirements",
   "Auto-create highlights": "Auto-create highlights",
-  "Install AI Highlighter": "Install AI Highlighter"
+  "Install AI Highlighter": "Install AI Highlighter",
+  "Delete all selected clips": "Delete all selected clips",
+  "Delete": "Delete",
+  "%{clipsAmountToDelete} clips selected for deletion": "%{clipsAmountToDelete} clips selected for deletion",
+  "Delete clips": "Delete clips"
 }
