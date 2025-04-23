@@ -52,12 +52,12 @@ export default function StreamCard({
     ) {
       // This is a workaround.
       // Sometimes it takes longer to to generate the thumbnails. Event tho the path and file is already there, the image can't be loaded
-      // Waiting 3 seconds solves that. Obviously not the best way
+      // Waiting 3 seconds and then render again solves that. Obviously not the best way
       timeout = setTimeout(() => {
         setClipsLoaded(true);
       }, clips.length * 1000);
     }
-    prevStateRef.current = stream.state.type;
+    prevStateRef.current = stream?.state?.type || null;
 
     return () => {
       if (timeout) {
