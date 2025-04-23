@@ -1,6 +1,5 @@
 import {
   AllKeyDescriptions,
-  CategoryName,
   EncoderFamily,
   filterKeyDescriptions,
   iterateKeyDescriptions,
@@ -23,7 +22,7 @@ test('filterKeyDescriptions', () => {
   expect(simpleOnly).toEqual([
     {
       key: OptimizationKey.outputMode,
-      category: CategoryName.output,
+      category: 'Output',
       subCategory: 'Untitled',
       setting: 'Mode',
       lookupValueName: true,
