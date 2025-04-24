@@ -2,6 +2,9 @@ import { Inject } from 'services/core/injector';
 import { NicoliveProgramService } from 'services/nicolive-program/nicolive-program';
 import { NicoliveProgramStateService } from 'services/nicolive-program/state';
 
+/**
+ * OneCommeサービスとのやり取りに使用するデータ構造
+ */
 interface OneCommeServiceData {
   id?: string;
   name?: string;
@@ -9,78 +12,123 @@ interface OneCommeServiceData {
   enabled?: boolean;
 }
 
-const OneCommeAPI = 'http://localhost:11180/api/';
+// APIエンドポイント関連の定数
+const OneCommeAPIURL = 'http://localhost:11180/api/';
 const NicoLiveBaseURL = 'https://live.nicovideo.jp/watch/';
-
 const OneCommeServiceFixID = '25252525-N-AIR-FIXED';
 
+/**
+ * 指定URLからJSONデータを取得する汎用ヘルパー関数
+ */
 async function fetchJSON<T>(input: string, init?: RequestInit): Promise<T> {
-  return await (await fetch(input, init)).json();
+  try {
+    return (await fetch(input, init)).json();
+  } catch (e) {
+    throw new Error(`Failed to fetch JSON ${input} ${init?.method}`);
+  }
 }
 
+/**
+ * ニコニコ生放送とOneCommeサービスを連携するクラス
+ */
 export class OneCommeRelation {
   @Inject() nicoliveProgramStateService: NicoliveProgramStateService;
   @Inject() nicoliveProgramService: NicoliveProgramService;
 
+  // 前回の放送状態を記録
   previousState = '';
 
-  async sendService(data: OneCommeServiceData, removeComment: boolean = true): Promise<boolean> {
+  /**
+   * OneCommeサービスにデータを送信する
+   * @param data 送信するサービスデータ
+   * @param removeComment コメント削除を行うかどうか
+   * @return 処理成功時はtrue、失敗時はfalse
+   */
+  private async sendService(data: OneCommeServiceData, removeComment = true): Promise<boolean> {
+    const makeRequest = (method: string, sendData: OneCommeServiceData) => {
+      return {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sendData),
+      };
+    };
+
     try {
-      // 既存設定があればそれを使う
-      const item = (await fetchJSON(
-        `${OneCommeAPI}services/${OneCommeServiceFixID}`,
-      )) as OneCommeServiceData;
+      const url = `${OneCommeAPIURL}services/${OneCommeServiceFixID}`;
+
+      // 既存のサービス設定を取得
+      const item = await fetchJSON<OneCommeServiceData>(url);
       const exist = item && item.id === OneCommeServiceFixID;
 
-      // 番組が異なる場合は既存コメント削除
-      if (removeComment && exist && item.url !== data.url) {
-        await fetch(`${OneCommeAPI}comments`, { method: 'DELETE' });
+      // 番組が異なる場合の処理
+      if (exist && item.url !== data.url) {
+        // 再接続してもらうために一旦接続を切る
+        if (item.enabled) {
+          await fetchJSON(url, makeRequest('PUT', { enabled: false }));
+        }
+        // 設定に従って既存コメントを削除
+        if (removeComment) {
+          await fetch(`${OneCommeAPIURL}comments`, { method: 'DELETE' });
+        }
       }
 
-      // 更新/作成
-      const sendURL = `${OneCommeAPI}services` + (exist ? `/${OneCommeServiceFixID}` : '');
-
-      const arg = {
-        method: exist ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      };
-
-      const result = (await fetchJSON(sendURL, arg)) as OneCommeServiceData;
-      if (!result) return false;
-      return true;
+      // 新規登録または更新
+      const result = await fetchJSON<OneCommeServiceData>(
+        exist ? url : OneCommeAPIURL,
+        makeRequest(exist ? 'PUT' : 'POST', data),
+      );
+      return !!result;
     } catch (e) {
+      console.error('OneCommeRelation sendService error', e);
       return false;
     }
   }
 
-  async update({ force }: { force: boolean } = { force: false }): Promise<boolean> {
+  /**
+   * 放送状態に基づいてOneCommeサービスを更新する
+   * @param options 更新オプション
+   * @return 処理成功時はtrue、失敗時はfalse
+   */
+  async update({ force = false } = {}): Promise<boolean> {
+    // OneComme連携が無効な場合は処理しない
     if (!this.nicoliveProgramStateService.state.onecommeRelation.use) return false;
+
+    // 放送IDがない場合は処理しない
     const programID = this.nicoliveProgramService.state.programID;
     if (!programID) return false;
 
+    // 強制更新の場合は前回状態をリセット
     if (force) this.previousState = '';
+
+    // 状態が変化していない場合は処理しない
     const state = this.nicoliveProgramService.state.status;
     if (!state || state === this.previousState) return false;
-    this.previousState = state;
-    //  status: 'reserved' | 'test' | 'onAir' | 'end';
 
+    // 現在の状態を記録
+    this.previousState = state;
+    // 放送状態: 'reserved'(予約) | 'test'(テスト配信) | 'onAir'(本配信) | 'end'(終了)
+
+    // OneCommeに送信するデータを準備
     const data: OneCommeServiceData = {
       id: OneCommeServiceFixID,
       url: `${NicoLiveBaseURL}${programID}`,
-      enabled: state === 'onAir' || state === 'test',
+      enabled: state === 'onAir' || state === 'test', // テスト配信と本配信時のみ有効化
       name: '#N_Air',
     };
 
+    // ユーザー設定に従ってコメント削除処理を行うかどうか
     const removeComment = this.nicoliveProgramStateService.state.onecommeRelation.removeComment;
-    return await this.sendService(data, removeComment);
+    return this.sendService(data, removeComment);
   }
 
+  /**
+   * OneComme APIへの接続テストを実行する
+   * @return 接続成功時はtrue、失敗時はfalse
+   */
   async testConnection(): Promise<boolean> {
     try {
-      const result = await fetchJSON(`${OneCommeAPI}info`);
-      if (!result) return false;
-      return true;
+      const result = await fetchJSON(`${OneCommeAPIURL}info`);
+      return !!result;
     } catch (e) {
       return false;
     }
