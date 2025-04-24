@@ -26,11 +26,13 @@ import { formatSecondsToHMS } from '../ClipPreview';
 import { get, set } from 'lodash';
 import PlatformSelect from './Platform';
 import cx from 'classnames';
+import { getVideoResolution } from 'services/highlighter/cut-highlight-clips';
 
 type TSetting = { name: string; fps: TFPS; resolution: TResolution; preset: TPreset };
 const settings: TSetting[] = [
   { name: 'Standard', fps: 30, resolution: 1080, preset: 'fast' },
   { name: 'Best', fps: 60, resolution: 1080, preset: 'slow' },
+  { name: 'Fast', fps: 30, resolution: 720, preset: 'ultrafast' },
   { name: 'Custom', fps: 30, resolution: 720, preset: 'ultrafast' },
 ];
 class ExportController {
@@ -56,6 +58,14 @@ class ExportController {
 
   getDuration(streamId?: string) {
     return getCombinedClipsDuration(this.getClips(streamId));
+  }
+
+  async getClipResolution(streamId?: string) {
+    const firstClipPath = this.getClips(streamId).find(clip => clip.enabled)?.path;
+    if (!firstClipPath) {
+      return undefined;
+    }
+    return await getVideoResolution(firstClipPath);
   }
 
   dismissError() {
@@ -132,7 +142,7 @@ function ExportModal({ close, streamId }: { close: () => void; streamId: string 
   // Clear all errors when this component unmounts
   useEffect(() => unmount, []);
 
-  if (!exportInfo.exported || exportInfo.exporting) {
+  if (!exportInfo.exported || exportInfo.exporting || exportInfo.error) {
     return (
       <ExportFlow
         isExporting={exportInfo.exporting}
@@ -159,7 +169,7 @@ function ExportFlow({
   videoName: string;
   onVideoNameChange: (name: string) => void;
 }) {
-  const { UsageStatisticsService } = Services;
+  const { UsageStatisticsService, HighlighterService } = Services;
   const {
     exportInfo,
     cancelExport,
@@ -173,6 +183,7 @@ function ExportFlow({
     getStreamTitle,
     getClips,
     getDuration,
+    getClipResolution,
   } = useController(ExportModalCtx);
 
   const [currentFormat, setCurrentFormat] = useState<TOrientation>(EOrientation.HORIZONTAL);
@@ -205,14 +216,47 @@ function ExportFlow({
     };
   }
 
-  const [currentSetting, setSetting] = useState<TSetting>(
-    settingMatcher({
-      name: 'from default',
-      fps: exportInfo.fps,
-      resolution: exportInfo.resolution,
-      preset: exportInfo.preset,
-    }),
-  );
+  const [currentSetting, setSetting] = useState<TSetting | null>(null);
+  const [isLoadingResolution, setIsLoadingResolution] = useState(true);
+
+  useEffect(() => {
+    setIsLoadingResolution(true);
+
+    async function initializeSettings() {
+      try {
+        const resolution = await getClipResolution(streamId);
+        let setting: TSetting;
+        if (resolution?.height === 720 && exportInfo.resolution !== 720) {
+          setting = settings.find(s => s.resolution === 720) || settings[settings.length - 1];
+        } else if (resolution?.height === 1080 && exportInfo.resolution !== 1080) {
+          setting = settings.find(s => s.resolution === 1080) || settings[settings.length - 1];
+        } else {
+          setting = settingMatcher({
+            name: 'from default',
+            fps: exportInfo.fps,
+            resolution: exportInfo.resolution,
+            preset: exportInfo.preset,
+          });
+        }
+
+        setSetting(setting);
+      } catch (error: unknown) {
+        console.error('Failed to detect clip resolution, setting default. Error: ', error);
+        setSetting(
+          settingMatcher({
+            name: 'from default',
+            fps: exportInfo.fps,
+            resolution: exportInfo.resolution,
+            preset: exportInfo.preset,
+          }),
+        );
+      } finally {
+        setIsLoadingResolution(false);
+      }
+    }
+
+    initializeSettings();
+  }, [streamId]);
 
   // Video name and export file are kept in sync
   const [exportFile, setExportFile] = useState<string>(getExportFileFromVideoName(videoName));
@@ -246,6 +290,24 @@ function ExportFlow({
 
     setExport(exportFile);
     exportCurrentFile(streamId, orientation);
+
+    const streamInfo = HighlighterService.views.highlightedStreams.find(
+      stream => stream.id === streamId,
+    );
+
+    if (streamInfo && !streamInfo.feedbackLeft) {
+      streamInfo.feedbackLeft = true;
+      HighlighterService.updateStream(streamInfo);
+
+      const clips = getClips(streamId);
+
+      UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+        type: 'ThumbsUp',
+        streamId: streamInfo?.id,
+        game: streamInfo?.game,
+        clips: clips?.length,
+      });
+    }
   }
 
   return (
@@ -288,7 +350,6 @@ function ExportFlow({
                 buttonContent={<i className="icon-edit" />}
               />
             </div>
-
             <div
               className={cx(styles.thumbnail, isExporting && styles.thumbnailInProgress)}
               style={
@@ -327,7 +388,6 @@ function ExportFlow({
                 }
               />
             </div>
-
             <div className={styles.clipInfoWrapper}>
               <div
                 className={cx(isExporting && styles.isDisabled)}
@@ -351,27 +411,33 @@ function ExportFlow({
                 emitState={format => setCurrentFormat(format)}
               />
             </div>
-
             <div
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
               }}
             >
-              <CustomDropdownWrapper
-                initialSetting={currentSetting}
-                disabled={isExporting}
-                emitSettings={setting => {
-                  setSetting(setting);
-                  if (setting.name !== 'Custom') {
-                    setFps(setting.fps.toString());
-                    setResolution(setting.resolution.toString());
-                    setPreset(setting.preset);
-                  }
-                }}
-              />
+              {isLoadingResolution ? (
+                <div className={styles.innerDropdownWrapper}>
+                  <div className={styles.dropdownText}>Loading settings...</div>
+                  <i className="icon-down"></i>
+                </div>
+              ) : (
+                <CustomDropdownWrapper
+                  initialSetting={currentSetting!}
+                  disabled={isExporting || isLoadingResolution}
+                  emitSettings={setting => {
+                    setSetting(setting);
+                    if (setting.name !== 'Custom') {
+                      setFps(setting.fps.toString());
+                      setResolution(setting.resolution.toString());
+                      setPreset(setting.preset);
+                    }
+                  }}
+                />
+              )}
             </div>
-            {currentSetting.name === 'Custom' && (
+            {currentSetting?.name === 'Custom' && (
               <div className={`${styles.customSection} ${isExporting ? styles.isDisabled : ''}`}>
                 <div className={styles.customItemWrapper}>
                   <p>{$t('Resolution')}</p>
@@ -417,10 +483,8 @@ function ExportFlow({
                 </div>
               </div>
             )}
-
             {exportInfo.error && (
               <Alert
-                style={{ marginBottom: 24 }}
                 message={exportInfo.error}
                 type="error"
                 closable

@@ -5,12 +5,21 @@ import { TModalClipsView } from './ClipsView';
 import { TClip } from 'services/highlighter/models/highlighter.models';
 import styles from './StreamView.m.less';
 import ClipTrimmer from 'components-react/highlighter/ClipTrimmer';
-import { Modal, Alert, Button } from 'antd';
+import { Modal, Alert, Button, Input } from 'antd';
 import ExportModal from 'components-react/highlighter/Export/ExportModal';
 import { $t } from 'services/i18n';
 import PreviewModal from './PreviewModal';
+import TextArea from 'antd/lib/input/TextArea';
+import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 
-export type TModalStreamCard = 'export' | 'preview' | 'remove' | 'requirements' | null;
+export type TModalStreamCard =
+  | 'export'
+  | 'preview'
+  | 'remove'
+  | 'requirements'
+  | 'feedback'
+  // | { type: 'feedback'; game?: string; id: string | undefined; clipsLength?: number }
+  | null;
 
 export default function StreamCardModal({
   streamId,
@@ -51,6 +60,7 @@ export default function StreamCardModal({
           export: 'fit-content',
           remove: '400px',
           requirements: 'fit-content',
+          feedback: '700px',
         }[modal],
       );
     }
@@ -88,6 +98,7 @@ export default function StreamCardModal({
         />
       )}
       {showModal === 'remove' && <RemoveStream close={closeModal} streamId={streamId} />}
+      {showModal === 'feedback' && <Feedback streamId={streamId} close={closeModal} />}
     </Modal>
   );
 }
@@ -120,6 +131,55 @@ function RemoveStream(p: { streamId: string | undefined; close: () => void }) {
       >
         {'Delete'}
       </Button>
+    </div>
+  );
+}
+
+function Feedback(p: { streamId: string | undefined; close: () => void }) {
+  const { UsageStatisticsService, HighlighterService } = Services;
+
+  const game = HighlighterService.getGameByStreamId(p.streamId);
+  const clipAmount = HighlighterService.getClips(HighlighterService.views.clips, p.streamId).length;
+
+  const { TextArea } = Input;
+  const [feedback, setFeedback] = useState('');
+
+  const leaveFeedback = () => {
+    if (!feedback || feedback.length > 140) {
+      return;
+    }
+
+    UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+      type: 'ThumbsDownFeedback',
+      streamId: p.streamId,
+      game,
+      clips: clipAmount,
+      feedback,
+    });
+
+    close();
+  };
+
+  return (
+    <div>
+      <TextArea
+        rows={4}
+        maxLength={140}
+        showCount
+        placeholder={$t('Highlights not working? Let us know how we can improve.')}
+        onChange={e => setFeedback(e.target.value)}
+      />
+      <div style={{ textAlign: 'right', marginTop: '24px' }}>
+        <Button
+          size="large"
+          type="primary"
+          style={{ marginTop: '14px' }}
+          disabled={!feedback}
+          onClick={leaveFeedback}
+        >
+          {$t('Submit')}
+        </Button>
+      </div>
     </div>
   );
 }

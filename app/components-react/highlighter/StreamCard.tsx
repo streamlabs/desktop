@@ -228,6 +228,9 @@ export default function StreamCard({
               HighlighterService.actions.restartAiDetection(stream.path, stream);
             }}
             emitSetView={emitSetView}
+            emitFeedbackForm={() => {
+              setModal('feedback');
+            }}
           />
         </div>
       </div>
@@ -244,6 +247,7 @@ function ActionBar({
   emitShowStreamClips,
   emitRestartAiDetection,
   emitSetView,
+  emitFeedbackForm,
 }: {
   stream: IHighlightedStream;
   clips: TClip[];
@@ -253,7 +257,10 @@ function ActionBar({
   emitShowStreamClips: () => void;
   emitRestartAiDetection: () => void;
   emitSetView: (data: IViewState) => void;
+  emitFeedbackForm: (clipsLength: number) => void;
 }): JSX.Element {
+  const { UsageStatisticsService, HighlighterService } = Services;
+
   function getFailedText(state: EAiDetectionState): string {
     switch (state) {
       case EAiDetectionState.ERROR:
@@ -264,6 +271,28 @@ function ActionBar({
         return '';
     }
   }
+
+  const [thumbsDownVisible, setThumbsDownVisible] = useState(!stream?.feedbackLeft);
+
+  const clickThumbsDown = () => {
+    if (stream?.feedbackLeft) {
+      return;
+    }
+
+    setThumbsDownVisible(false);
+
+    stream.feedbackLeft = true;
+    HighlighterService.updateStream(stream);
+
+    UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+      type: 'ThumbsDown',
+      streamId: stream?.id,
+      game: stream?.game,
+      clips: clips?.length,
+    });
+
+    emitFeedbackForm(clips.length);
+  };
 
   // In Progress
   if (stream?.state.type === EAiDetectionState.IN_PROGRESS) {
@@ -298,6 +327,16 @@ function ActionBar({
   if (stream && clips.length > 0) {
     return (
       <div className={styles.buttonBarWrapper}>
+        {thumbsDownVisible && (
+          <Button
+            icon={<i className="icon-thumbs-down" style={{ fontSize: '14px' }} />}
+            size="large"
+            onClick={e => {
+              clickThumbsDown();
+              e.stopPropagation();
+            }}
+          />
+        )}
         <Button
           icon={<i className="icon-edit" style={{ marginRight: '4px' }} />}
           size="large"
@@ -312,6 +351,7 @@ function ActionBar({
           type="primary"
           onClick={e => {
             emitExportVideo();
+            setThumbsDownVisible(false);
             e.stopPropagation();
           }}
           style={{ display: 'grid', gridTemplateAreas: 'stack' }}

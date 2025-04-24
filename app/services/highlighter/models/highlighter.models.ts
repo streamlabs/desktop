@@ -103,6 +103,7 @@ export interface IHighlightedStream {
   };
   abortController?: AbortController;
   path: string;
+  feedbackLeft?: boolean;
 }
 
 // VIEW
