@@ -19,6 +19,8 @@ export class TwitchModule extends Module {
   @Inject() twitchService: TwitchService;
   @Inject() userService: UserService;
 
+  private twitchChatSocket?: WebSocket;
+
   @apiMethod()
   hasSendChatScope() {
     return this.twitchService.state.hasChatWritePermission;
@@ -35,59 +37,69 @@ export class TwitchModule extends Module {
   }
 
   @apiMethod()
-  subscribeToChat() {
+  subscribeToChat(ctx: IApiContext, channel?: string) {
     const TWITCH_IRC_URL = "wss://irc-ws.chat.twitch.tv";
-    const BOT_USERNAME = "StreamCoach"; // Replace with your bot's username
-    const OAUTH_TOKEN = `oauth:${this.userService.state.auth.platforms.twitch.token}`; // Replace with your Twitch OAuth token (format: oauth:token)
-    const CHANNEL = "AvaActually"; // Replace with the channel you want to join
-    
-    const connectToTwitchChat = () => {
-      const ws = new WebSocket(TWITCH_IRC_URL);
-    
-      ws.onopen = () => {
-        console.log("Connected to Twitch IRC");
-    
-        // Authenticate
-        ws.send(`PASS ${OAUTH_TOKEN}`);
-        ws.send(`NICK ${BOT_USERNAME}`);
-    
-        // Join the channel
-        ws.send(`JOIN #${CHANNEL}`);
-      };
-    
-      ws.onmessage = (event) => {
-        const message = event.data as string;
-    
-        // Ping-Pong to keep the connection alive
-        if (message.startsWith("PING")) {
-          ws.send("PONG :tmi.twitch.tv");
-          return;
-        }
-    
-        // Parse chat messages
-        const chatMessageRegex = /:(?<username>\w+)!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :(?<message>.+)/;
-        const match = message.match(chatMessageRegex);
-    
-        if (match && match.groups) {
-          const { username, message: chatMessage } = match.groups;
-          console.log(`[${username}]: ${chatMessage}`);
+    const BOT_USERNAME = "StreamCoach";
+    const OAUTH_TOKEN = `oauth:${this.userService.state.auth.platforms.twitch.token}`;
+    const CHANNEL = channel || this.userService.state.auth.platforms.twitch.username;
 
-          this.onChat.next({ username, message: chatMessage });
-        }
-      };
-    
-      ws.onclose = () => {
-        console.log("Disconnected from Twitch IRC");
-      };
-    
-      ws.onerror = (error) => {
-        console.error("WebSocket error:", error);
-      };
+    // If a connection already exists and is open, do nothing
+    if (this.twitchChatSocket && this.twitchChatSocket.readyState === WebSocket.OPEN) {
+      console.log("Twitch chat is already connected.");
+      return;
+    }
+
+    // If a connection exists but is not open, close it first
+    if (this.twitchChatSocket && this.twitchChatSocket.readyState !== WebSocket.CLOSED) {
+      this.twitchChatSocket.close();
+    }
+
+    const ws = new WebSocket(TWITCH_IRC_URL);
+    this.twitchChatSocket = ws;
+
+    ws.onopen = () => {
+      console.log("Connected to Twitch IRC");
+      ws.send(`PASS ${OAUTH_TOKEN}`);
+      ws.send(`NICK ${BOT_USERNAME}`);
+      ws.send(`JOIN #${CHANNEL}`);
     };
-    
-    // Run the function to connect
-    connectToTwitchChat();
-    
+
+    ws.onmessage = (event) => {
+      const message = event.data as string;
+
+      if (message.startsWith("PING")) {
+        ws.send("PONG :tmi.twitch.tv");
+        return;
+      }
+
+      const chatMessageRegex = /:(?<username>\w+)!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :(?<message>.+)/;
+      const match = message.match(chatMessageRegex);
+
+      if (match && match.groups) {
+        const { username, message: chatMessage } = match.groups;
+        console.log(`[${username}]: ${chatMessage}`);
+        this.onChat.next({ username, message: chatMessage });
+      }
+    };
+
+    ws.onclose = () => {
+      console.log("Disconnected from Twitch IRC");
+      if (this.twitchChatSocket === ws) {
+        this.twitchChatSocket = undefined;
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error("WebSocket error:", error);
+    };
+  }
+
+  @apiMethod()
+  unsubscribeFromChat() {
+    if (this.twitchChatSocket) {
+      this.twitchChatSocket.close();
+      this.twitchChatSocket = undefined;
+    }
   }
 
   @apiEvent()
