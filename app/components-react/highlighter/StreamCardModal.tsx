@@ -11,6 +11,7 @@ import { $t } from 'services/i18n';
 import PreviewModal from './PreviewModal';
 import TextArea from 'antd/lib/input/TextArea';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
+import EducationCarousel from './EducationCarousel';
 
 export type TModalStreamCard =
   | 'export'
@@ -24,14 +25,14 @@ export type TModalStreamCard =
 export default function StreamCardModal({
   streamId,
   modal,
+  game,
   onClose,
 }: {
   streamId: string | undefined;
   modal: TModalStreamCard | null;
+  game: EGame;
   onClose: () => void;
 }) {
-  console.log('rerender streamCard modal', modal);
-
   const { HighlighterService } = Services;
   const v = useVuex(() => ({
     exportInfo: HighlighterService.views.exportInfo,
@@ -49,8 +50,6 @@ export default function StreamCardModal({
 
   function setShowModal(modal: TModalStreamCard | null) {
     rawSetShowModal(modal);
-    console.log('set modal', modal);
-
     if (modal) {
       setModalWidth(
         {
@@ -96,7 +95,8 @@ export default function StreamCardModal({
         />
       )}
       {showModal === 'remove' && <RemoveStream close={closeModal} streamId={streamId} />}
-      {showModal === 'feedback' && <Feedback streamId={streamId} close={closeModal} />}
+      {showModal === 'feedback' && <Feedback streamId={streamId} close={closeModal} game={game} />}
+      {showModal === 'requirements' && <EducationCarousel game={game} />}
     </Modal>
   );
 }
@@ -133,7 +133,7 @@ function RemoveStream(p: { streamId: string | undefined; close: () => void }) {
   );
 }
 
-function Feedback(p: { streamId: string | undefined; close: () => void }) {
+function Feedback(p: { streamId: string | undefined; game: EGame; close: () => void }) {
   const { UsageStatisticsService, HighlighterService } = Services;
 
   const { TextArea } = Input;
@@ -144,14 +144,13 @@ function Feedback(p: { streamId: string | undefined; close: () => void }) {
       return;
     }
 
-    const game = HighlighterService.getGameByStreamId(p.streamId);
     const clipAmount = HighlighterService.getClips(HighlighterService.views.clips, p.streamId)
       .length;
 
     UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
       type: 'ThumbsDownFeedback',
       streamId: p.streamId,
-      game,
+      game: p.game,
       clips: clipAmount,
       feedback,
     });

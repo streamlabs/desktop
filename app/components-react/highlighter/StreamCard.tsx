@@ -56,12 +56,10 @@ export default function StreamCard({
       timeout = setTimeout(() => {
         setClipsLoaded(true);
       }, clips.length * 1000);
-      console.log('ccreatetimeout', timeout);
     }
     prevStateRef.current = stream?.state?.type || null;
 
     return () => {
-      console.log('clearTimeout', timeout);
       if (timeout) {
         clearTimeout(timeout);
       }
@@ -117,61 +115,79 @@ export default function StreamCard({
 
   if (stream.state.type === EAiDetectionState.FINISHED && clips.length === 0) {
     return (
-      <div className={styles.streamCard}>
-        <Button
-          size="large"
-          className={styles.deleteButton}
-          onClick={e => {
-            setModal('remove');
-            e.stopPropagation();
-          }}
-          style={{ backgroundColor: '#00000040', border: 'none', position: 'absolute' }}
-        >
-          <i className="icon-trash" />
-        </Button>
-        <div className={styles.requirements}>
-          <div style={{ display: 'flex', flexDirection: 'column', width: '280px' }}>
-            <h2>{$t('No clips found')}</h2>
-            <p style={{ marginBottom: '8px' }}>
-              {$t('Please make sure all the requirements are met:')}
-            </p>
-            <ul style={{ marginBottom: 0, marginLeft: '-28px' }}>
-              <li>{$t('Game is supported')}</li>
-              <li>{$t('Game language is English')}</li>
-              <li>{$t('Map and Stats area is fully visible')}</li>
-              <li>{$t('Game is fullscreen in your stream')}</li>
-              <li>{$t('Game mode is supported')}</li>
-            </ul>
-            <a onClick={() => setModal('requirements')} style={{ marginBottom: '14px' }}>
-              {$t('Show details')}
-            </a>
-            <p>{$t('All requirements met but no luck?')}</p>
-
-            <a onClick={shareFeedback}>
-              {$t('Take a screenshot of your stream and share it here')}
-            </a>
-          </div>
-        </div>
-        <div className={styles.streaminfoWrapper}>
-          <div
-            className={styles.titleRotatedClipsWrapper}
-            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+      <>
+        {modal && (
+          <StreamCardModal
+            streamId={streamId}
+            modal={modal}
+            onClose={() => {
+              setModal(null);
+            }}
+            game={game}
+          />
+        )}
+        <div className={styles.streamCard}>
+          <Button
+            size="large"
+            className={styles.deleteButton}
+            onClick={e => {
+              setModal('remove');
+              e.stopPropagation();
+            }}
+            style={{ backgroundColor: '#00000040', border: 'none', position: 'absolute' }}
           >
-            <div className={styles.titleDateWrapper}>
-              <h2 className={styles.streamcardTitle}>{stream.title}</h2>
-              <p style={{ margin: 0, fontSize: '12px' }}>{new Date(stream.date).toDateString()}</p>
+            <i className="icon-trash" />
+          </Button>
+          <div className={styles.requirements}>
+            <div style={{ display: 'flex', flexDirection: 'column', width: '280px' }}>
+              <h2>{$t('No clips found')}</h2>
+              <p style={{ marginBottom: '8px' }}>
+                {$t('Please make sure all the requirements are met:')}
+              </p>
+              <ul style={{ marginBottom: 0, marginLeft: '-28px' }}>
+                <li>{$t('Game is supported')}</li>
+                <li>{$t('Game language is English')}</li>
+                <li>{$t('Map and Stats area is fully visible')}</li>
+                <li>{$t('Game is fullscreen in your stream')}</li>
+                <li>{$t('Game mode is supported')}</li>
+              </ul>
+              <a onClick={() => setModal('requirements')} style={{ marginBottom: '14px' }}>
+                {$t('Show details')}
+              </a>
+              <p>{$t('All requirements met but no luck?')}</p>
+
+              <a onClick={shareFeedback}>
+                {$t('Take a screenshot of your stream and share it here')}
+              </a>
             </div>
-            <Button
-              size="large"
-              className={styles.cancelButton}
-              onClick={shareFeedback}
-              icon={<i className="icon-community" style={{ marginRight: '8px' }} />}
+          </div>
+          <div className={styles.streaminfoWrapper}>
+            <div
+              className={styles.titleRotatedClipsWrapper}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
             >
-              {$t('Share feedback')}
-            </Button>
+              <div className={styles.titleDateWrapper}>
+                <h2 className={styles.streamcardTitle}>{stream.title}</h2>
+                <p style={{ margin: 0, fontSize: '12px' }}>
+                  {new Date(stream.date).toDateString()}
+                </p>
+              </div>
+              <Button
+                size="large"
+                className={styles.cancelButton}
+                onClick={shareFeedback}
+                icon={<i className="icon-community" style={{ marginRight: '8px' }} />}
+              >
+                {$t('Share feedback')}
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -184,6 +200,7 @@ export default function StreamCard({
           onClose={() => {
             setModal(null);
           }}
+          game={game}
         />
       )}
       <div

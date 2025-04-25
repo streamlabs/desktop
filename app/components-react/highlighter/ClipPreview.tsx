@@ -20,8 +20,6 @@ export default function ClipPreview(props: {
   emitOpenFileInLocation: () => void;
   game: EGame;
 }) {
-  console.log('rerender clip preview');
-
   const { HighlighterService } = Services;
   const v = useVuex(() => ({
     clip: HighlighterService.views.clipsDictionary[props.clipId] as TClip,
