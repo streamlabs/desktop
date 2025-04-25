@@ -38,13 +38,11 @@ export default function StreamCardModal({
     uploadInfo: HighlighterService.views.uploadInfo,
     error: HighlighterService.views.error,
   }));
-  const [showModal, rawSetShowModal] = useState<TModalStreamCard | null>('export');
+  const [showModal, rawSetShowModal] = useState<TModalStreamCard | null>(null);
   const [modalWidth, setModalWidth] = useState('700px');
 
   useEffect(() => {
     if (modal) {
-      console.log('setShowModal', modal);
-
       setShowModal(modal);
     }
   }, [modal]);
@@ -138,9 +136,6 @@ function RemoveStream(p: { streamId: string | undefined; close: () => void }) {
 function Feedback(p: { streamId: string | undefined; close: () => void }) {
   const { UsageStatisticsService, HighlighterService } = Services;
 
-  const game = HighlighterService.getGameByStreamId(p.streamId);
-  const clipAmount = HighlighterService.getClips(HighlighterService.views.clips, p.streamId).length;
-
   const { TextArea } = Input;
   const [feedback, setFeedback] = useState('');
 
@@ -148,6 +143,10 @@ function Feedback(p: { streamId: string | undefined; close: () => void }) {
     if (!feedback || feedback.length > 140) {
       return;
     }
+
+    const game = HighlighterService.getGameByStreamId(p.streamId);
+    const clipAmount = HighlighterService.getClips(HighlighterService.views.clips, p.streamId)
+      .length;
 
     UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
       type: 'ThumbsDownFeedback',
@@ -157,7 +156,7 @@ function Feedback(p: { streamId: string | undefined; close: () => void }) {
       feedback,
     });
 
-    close();
+    p.close();
   };
 
   return (

@@ -56,10 +56,12 @@ export default function StreamCard({
       timeout = setTimeout(() => {
         setClipsLoaded(true);
       }, clips.length * 1000);
+      console.log('ccreatetimeout', timeout);
     }
     prevStateRef.current = stream?.state?.type || null;
 
     return () => {
+      console.log('clearTimeout', timeout);
       if (timeout) {
         clearTimeout(timeout);
       }
@@ -221,7 +223,7 @@ export default function StreamCard({
             stream={stream}
             clips={clips}
             emitCancelHighlightGeneration={cancelHighlightGeneration}
-            emitExportVideo={() => setModal('export')}
+            emitExportVideo={() => exportVideo(streamId)}
             emitShowStreamClips={showStreamClips}
             clipsOfStreamAreLoading={clipsOfStreamAreLoading}
             emitRestartAiDetection={() => {

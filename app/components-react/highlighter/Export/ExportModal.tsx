@@ -219,42 +219,41 @@ function ExportFlow({
   const [currentSetting, setSetting] = useState<TSetting | null>(null);
   const [isLoadingResolution, setIsLoadingResolution] = useState(true);
 
+  async function initializeSettings() {
+    try {
+      const resolution = await getClipResolution(streamId);
+      let setting: TSetting;
+      if (resolution?.height === 720 && exportInfo.resolution !== 720) {
+        setting = settings.find(s => s.resolution === 720) || settings[settings.length - 1];
+      } else if (resolution?.height === 1080 && exportInfo.resolution !== 1080) {
+        setting = settings.find(s => s.resolution === 1080) || settings[settings.length - 1];
+      } else {
+        setting = settingMatcher({
+          name: 'from default',
+          fps: exportInfo.fps,
+          resolution: exportInfo.resolution,
+          preset: exportInfo.preset,
+        });
+      }
+
+      setSetting(setting);
+    } catch (error: unknown) {
+      console.error('Failed to detect clip resolution, setting default. Error: ', error);
+      setSetting(
+        settingMatcher({
+          name: 'from default',
+          fps: exportInfo.fps,
+          resolution: exportInfo.resolution,
+          preset: exportInfo.preset,
+        }),
+      );
+    } finally {
+      setIsLoadingResolution(false);
+    }
+  }
+
   useEffect(() => {
     setIsLoadingResolution(true);
-
-    async function initializeSettings() {
-      try {
-        const resolution = await getClipResolution(streamId);
-        let setting: TSetting;
-        if (resolution?.height === 720 && exportInfo.resolution !== 720) {
-          setting = settings.find(s => s.resolution === 720) || settings[settings.length - 1];
-        } else if (resolution?.height === 1080 && exportInfo.resolution !== 1080) {
-          setting = settings.find(s => s.resolution === 1080) || settings[settings.length - 1];
-        } else {
-          setting = settingMatcher({
-            name: 'from default',
-            fps: exportInfo.fps,
-            resolution: exportInfo.resolution,
-            preset: exportInfo.preset,
-          });
-        }
-
-        setSetting(setting);
-      } catch (error: unknown) {
-        console.error('Failed to detect clip resolution, setting default. Error: ', error);
-        setSetting(
-          settingMatcher({
-            name: 'from default',
-            fps: exportInfo.fps,
-            resolution: exportInfo.resolution,
-            preset: exportInfo.preset,
-          }),
-        );
-      } finally {
-        setIsLoadingResolution(false);
-      }
-    }
-
     initializeSettings();
   }, [streamId]);
 
