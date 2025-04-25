@@ -1103,6 +1103,15 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
       );
     }
 
+    /* accessing streamingService directly results in type errors
+     * which it was probably done to restrict the API
+     * don't feel too happy about hacking it
+     */
+    const streamingPlatforms = (this.streamingService as any)?.views?.settings?.platforms || [];
+    const platformsUsingExtraOutputs = Object.keys(streamingPlatforms).filter(p => {
+      return streamingPlatforms[p].hasExtraOutputs;
+    });
+
     return new Section('Dual Output', {
       'Dual Output Active': this.dualOutputService.views.dualOutputMode,
       'Dual Output Scene Collection Active': this.dualOutputService.views.hasNodeMap(),
@@ -1115,6 +1124,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
         'Vertical Platforms': this.formatTargets(platforms.vertical),
         'Horizontal Custom Destinations': this.formatTargets(destinations.horizontal),
         'Vertical Custom Destinations': this.formatTargets(destinations.vertical),
+        'Platforms Using Extra Outputs': platformsUsingExtraOutputs,
       },
       'Horizontal Uses Multistream': restreamHorizontal,
       'Vertical Uses Multistream': restreamVertical,
