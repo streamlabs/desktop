@@ -692,6 +692,14 @@ export class StreamingService
     if (settings.platforms.instagram?.enabled) {
       this.usageStatisticsService.recordFeatureUsage('StreamToInstagram');
     }
+
+    /* YouTube is our only "extra output" so we're making a special case for
+     * it for tracking, in the future, we'd rather track extraOutputs from
+     * StreamingService themselves
+     */
+    if (settings.platforms.youtube?.enabled && settings.platforms.youtube?.hasExtraOutputs) {
+      this.usageStatisticsService.recordFeatureUsage('StreamToYouTubeBothOutputs');
+    }
   }
 
   /**
