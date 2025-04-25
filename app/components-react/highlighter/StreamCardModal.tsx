@@ -13,14 +13,7 @@ import TextArea from 'antd/lib/input/TextArea';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import EducationCarousel from './EducationCarousel';
 
-export type TModalStreamCard =
-  | 'export'
-  | 'preview'
-  | 'remove'
-  | 'requirements'
-  | 'feedback'
-  // | { type: 'feedback'; game?: string; id: string | undefined; clipsLength?: number }
-  | null;
+export type TModalStreamCard = 'export' | 'preview' | 'remove' | 'requirements' | 'feedback' | null;
 
 export default function StreamCardModal({
   streamId,

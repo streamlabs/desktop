@@ -23,7 +23,6 @@ import { SCRUB_HEIGHT, SCRUB_WIDTH, SCRUB_FRAMES } from 'services/highlighter/co
 import styles from './ExportModal.m.less';
 import { getCombinedClipsDuration } from '../utils';
 import { formatSecondsToHMS } from '../ClipPreview';
-import { get, set } from 'lodash';
 import PlatformSelect from './Platform';
 import cx from 'classnames';
 import { getVideoResolution } from 'services/highlighter/cut-highlight-clips';

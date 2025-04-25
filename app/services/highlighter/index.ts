@@ -306,9 +306,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         Array.isArray(this.state.highlightedStreams) &&
         this.state.highlightedStreams.length > 0
       ) {
-        console.log('Migrating highlighted streams from array to dictionary structure');
+        console.info('Migrating highlighted streams from array to dictionary structure');
 
-        // Convert array to dictionary
         const streamsDict = this.state.highlightedStreams.reduce((dict, stream) => {
           if (stream && stream.id) {
             dict[stream.id] = stream;
@@ -316,7 +315,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           return dict;
         }, {} as Dictionary<IHighlightedStream>);
 
-        // Update the state directly
         this.state.highlightedStreams = streamsDict;
       } else if (
         this.state &&
@@ -324,14 +322,11 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         !Array.isArray(this.state.highlightedStreams)
       ) {
         // Already migrated, nothing to do
-        console.log('Highlighted streams already in dictionary format');
       } else {
-        // Initialize as empty object if not already set
         this.state.highlightedStreams = {};
       }
     } catch (error: unknown) {
       console.error('Error during highlightedStreams migration:', error);
-      // Ensure we have a valid state even if migration fails
       this.state.highlightedStreams = this.state.highlightedStreams || {};
     }
   }
