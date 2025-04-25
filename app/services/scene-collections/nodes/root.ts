@@ -9,6 +9,7 @@ import { VideoService } from 'services/video';
 import { StreamingService } from 'services/streaming';
 import { OS } from 'util/operating-systems';
 import { GuestCamNode } from './guest-cam';
+import { VideoSettingsService } from 'services/settings-v2/video';
 import { DualOutputService } from 'services/dual-output';
 import { SettingsService } from 'services/settings';
 import { SceneCollectionsService } from '../scene-collections';
@@ -56,6 +57,7 @@ export class RootNode extends Node<ISchema, {}> {
 
   @Inject() videoService: VideoService;
   @Inject() streamingService: StreamingService;
+  @Inject() videoSettingsService: VideoSettingsService;
   @Inject() dualOutputService: DualOutputService;
   @Inject() settingsService: SettingsService;
   @Inject() sceneCollectionsService: SceneCollectionsService;
@@ -82,8 +84,8 @@ export class RootNode extends Node<ISchema, {}> {
       hotkeys,
       guestCam,
       nodeMap,
-      baseResolution: this.videoService.baseResolutions?.horizontal,
-      baseResolutions: this.videoService.baseResolutions,
+      baseResolution: this.videoSettingsService.baseResolutions?.horizontal,
+      baseResolutions: this.videoSettingsService.baseResolutions,
       selectiveRecording: this.streamingService.state.selectiveRecording,
       dualOutputMode: this.dualOutputService.views.dualOutputMode,
       operatingSystem: process.platform as OS,
@@ -95,24 +97,51 @@ export class RootNode extends Node<ISchema, {}> {
    * This if/else prevents an error by guaranteeing a video context exists.
    */
   async load(): Promise<void> {
-    this.videoService.setBaseResolution(this.data.baseResolutions);
-    this.streamingService.setSelectiveRecording(!!this.data.selectiveRecording);
-    this.streamingService.setDualOutputMode(this.data.dualOutputMode);
+    if (!this.videoSettingsService.contexts.horizontal) {
+      const establishedContext = this.videoSettingsService.establishedContext.subscribe(
+        async () => {
+          this.videoService.setBaseResolution(this.data.baseResolutions);
+          this.streamingService.setSelectiveRecording(!!this.data.selectiveRecording);
+          this.streamingService.setDualOutputMode(this.data.dualOutputMode);
 
-    if (this.data.nodeMap) {
-      await this.data.nodeMap.load();
-    }
+          await this.data.transitions.load();
+          await this.data.sources.load({});
+          await this.data.scenes.load({});
 
-    await this.data.transitions.load();
-    await this.data.sources.load({});
-    await this.data.scenes.load({});
+          if (this.data.nodeMap) {
+            await this.data.nodeMap.load();
+          }
 
-    if (this.data.hotkeys) {
-      await this.data.hotkeys.load({});
-    }
+          if (this.data.hotkeys) {
+            await this.data.hotkeys.load({});
+          }
 
-    if (this.data.guestCam) {
-      await this.data.guestCam.load();
+          if (this.data.guestCam) {
+            await this.data.guestCam.load();
+          }
+          establishedContext.unsubscribe();
+        },
+      );
+    } else {
+      this.videoService.setBaseResolution(this.data.baseResolutions);
+      this.streamingService.setSelectiveRecording(!!this.data.selectiveRecording);
+      this.streamingService.setDualOutputMode(this.data.dualOutputMode);
+
+      if (this.data.nodeMap) {
+        await this.data.nodeMap.load();
+      }
+
+      await this.data.transitions.load();
+      await this.data.sources.load({});
+      await this.data.scenes.load({});
+
+      if (this.data.hotkeys) {
+        await this.data.hotkeys.load({});
+      }
+
+      if (this.data.guestCam) {
+        await this.data.guestCam.load();
+      }
     }
   }
 
@@ -124,11 +153,11 @@ export class RootNode extends Node<ISchema, {}> {
 
     // Added baseResolution in version 3
     if (version < 3) {
-      this.data.baseResolution = this.videoService.baseResolution;
+      this.data.baseResolution = this.videoSettingsService.baseResolution;
     }
     // Added multiple displays with individual base resolutions in version 4
     if (version < 4) {
-      this.data.baseResolutions = this.videoService.baseResolutions;
+      this.data.baseResolutions = this.videoSettingsService.baseResolutions;
     }
   }
 }

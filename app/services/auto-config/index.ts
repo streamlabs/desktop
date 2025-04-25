@@ -7,7 +7,7 @@ import { StreamSettingsService } from 'services/settings/streaming';
 import { getPlatformService } from 'services/platforms';
 import { TwitchService } from 'services/platforms/twitch';
 import { YoutubeService } from 'app-services';
-import { VideoService } from 'services/video';
+import { VideoSettingsService } from 'services/settings-v2/video';
 import { UserService } from 'services/user';
 
 export type TConfigEvent = 'starting_step' | 'progress' | 'stopping_step' | 'error' | 'done';
@@ -26,7 +26,7 @@ export interface IConfigProgress {
 
 export class AutoConfigService extends Service {
   @Inject() streamSettingsService: StreamSettingsService;
-  @Inject() videoService: VideoService;
+  @Inject() videoSettingsService: VideoSettingsService;
   @Inject() userService: UserService;
 
   configProgress = new Subject<IConfigProgress>();
@@ -74,8 +74,8 @@ export class AutoConfigService extends Service {
     //  * the base width/height and output width/height. So before running the optimizer,
     //  * confirm that horizontal base width/height and output width/height are on the Video property.
     //  */
-    // if (this.videoService.contexts?.vertical) {
-    //   this.videoService.confirmVideoSettingDimensions();
+    // if (this.videoSettingsService.contexts?.vertical) {
+    //   this.videoSettingsService.confirmVideoSettingDimensions();
     // }
 
     // obs.NodeObs.InitializeAutoConfig(
@@ -128,7 +128,7 @@ export class AutoConfigService extends Service {
       obs.NodeObs.TerminateAutoConfig();
 
       // apply optimized settings to the video contexts
-      this.videoService.migrateAutoConfigSettings();
+      this.videoSettingsService.migrateAutoConfigSettings();
     }
   }
 
@@ -140,7 +140,7 @@ export class AutoConfigService extends Service {
         obs.NodeObs.TerminateAutoConfig();
 
         // apply optimized settings to the video contexts
-        this.videoService.migrateAutoConfigSettings();
+        this.videoSettingsService.migrateAutoConfigSettings();
         debounce(() => this.configProgress.next({ ...progress, event: 'done' }), 1000)();
       }
     }

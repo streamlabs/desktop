@@ -16,7 +16,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import difference from 'lodash/difference';
 import { Services } from '../../components-react/service-provider';
 import { getDefined } from '../../util/properties-type-guards';
-import { TDisplayType } from 'services/video';
+import { TDisplayType } from 'services/settings-v2';
 
 /**
  * The stream info view is responsible for keeping
@@ -242,6 +242,13 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
   getCanStreamDualOutput(settings?: IGoLiveSettings): boolean {
     const platforms = settings?.platforms || this.settings.platforms;
+    // If any platform is configured as "Both" for outputs we technically should satisfy
+    // this requirement and ignore the warning
+    // TODO: fix types
+    if (Object.values(platforms).some(platform => (platform as any).hasExtraOutputs)) {
+      return true;
+    }
+
     const customDestinations = settings?.customDestinations || this.customDestinations;
 
     const platformDisplays = { horizontal: [] as TPlatform[], vertical: [] as TPlatform[] };

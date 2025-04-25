@@ -14,7 +14,7 @@ import { DualOutputService } from 'services/dual-output';
 import { IFacebookStartStreamOptions } from './facebook';
 import { StreamSettingsService } from '../settings/streaming';
 import * as remote from '@electron/remote';
-import { VideoService } from 'services/video';
+import { VideoSettingsService } from 'services/settings-v2/video';
 
 const VIEWER_COUNT_UPDATE_INTERVAL = 60 * 1000;
 
@@ -35,7 +35,7 @@ export abstract class BasePlatformService<T extends IPlatformState> extends Stat
   @Inject() protected hostsService: HostsService;
   @Inject() protected streamSettingsService: StreamSettingsService;
   @Inject() protected dualOutputService: DualOutputService;
-  @Inject() protected videoService: VideoService;
+  @Inject() protected videoSettingsService: VideoSettingsService;
 
   abstract readonly platform: TPlatform;
 

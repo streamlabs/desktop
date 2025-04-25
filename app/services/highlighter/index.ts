@@ -80,6 +80,7 @@ import { addVerticalFilterToExportOptions } from './vertical-export';
 import Utils from '../utils';
 import { SubtitleStyles } from './subtitles/subtitle-styles';
 import { isGameSupported } from './models/game-config.models';
+import Utils from 'services/utils';
 
 @InitAfter('StreamingService')
 export class HighlighterService extends PersistentStatefulService<IHighlighterState> {
@@ -791,14 +792,14 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     });
   }
 
-  removeClip(path: string, streamId: string | undefined) {
-    const clip: TClip = this.state.clips[path];
+  async removeClip(removePath: string, streamId: string | undefined, deleteClipFromSystem = true) {
+    const clip: TClip = this.state.clips[removePath];
     if (!clip) {
-      console.warn(`Clip not found for path: ${path}`);
+      console.warn(`Clip not found for path: ${removePath}`);
       return;
     }
     if (
-      fileExists(path) &&
+      fileExists(removePath) &&
       streamId &&
       clip.streamInfo &&
       Object.keys(clip.streamInfo).length > 1
@@ -811,9 +812,53 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         streamInfo: updatedStreamInfo,
       });
     } else {
-      this.REMOVE_CLIP(path);
+      this.REMOVE_CLIP(removePath);
       this.removeScrubFile(clip.scrubSprite);
-      delete this.renderingClips[path];
+      delete this.renderingClips[removePath];
+
+      if (deleteClipFromSystem) {
+        try {
+          await fs.unlink(removePath);
+
+          // Check if the containing folder is empty, if yes, delete
+          const folderPath = path.dirname(removePath);
+          const files = await fs.readdir(folderPath);
+          if (files.length === 0) {
+            await fs.rmdir(folderPath);
+          }
+
+          if (this.getClips(this.views.clips, streamId).length === 0) {
+            if (streamId) {
+              this.navigationService.actions.navigate(
+                'Highlighter',
+                {
+                  view: EHighlighterView.STREAM,
+                },
+                EMenuItemKey.Highlighter,
+              );
+            } else {
+              this.navigationService.actions.navigate(
+                'Highlighter',
+                {
+                  view: EHighlighterView.SETTINGS,
+                },
+                EMenuItemKey.Highlighter,
+              );
+            }
+          }
+        } catch (error: unknown) {
+          console.error('Error deleting clip or folder:', error);
+          if (error instanceof Error && (error as any).code === 'EBUSY') {
+            await remote.dialog.showMessageBox(Utils.getMainWindow(), {
+              title: $t('Deletion info'),
+              type: 'info',
+              message: $t(
+                'At least one clip could not be deleted from your system. Please delete it manually.',
+              ),
+            });
+          }
+        }
+      }
     }
 
     if (clip.streamInfo !== undefined || streamId !== undefined) {
@@ -956,13 +1001,13 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     this.UPDATE_HIGHLIGHTED_STREAM(streamInfo);
   }
 
-  removeStream(streamId: string) {
+  removeStream(streamId: string, deleteClipsFromSystem = true) {
     this.REMOVE_HIGHLIGHTED_STREAM(streamId);
 
     //Remove clips from stream
     const clipsToRemove = this.getClips(this.views.clips, streamId);
     clipsToRemove.forEach(clip => {
-      this.removeClip(clip.path, streamId);
+      this.removeClip(clip.path, streamId, deleteClipsFromSystem);
     });
   }
 
