@@ -138,6 +138,16 @@ const WARZONE_CONFIG: IGameConfig = {
     ...COMMON_TYPES,
   },
 };
+const BLACK_OPS_6_CONFIG: IGameConfig = {
+  name: EGame.BLACK_OPS_6,
+  label: 'Call of Duty: Black Ops 6',
+  gameModes: '',
+  thumbnail: 'https://cdn.streamlabs.com/static/imgs/game-thumbnails/call-of-duty-black-ops-6.png',
+  state: EGameState.INTERNAL,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+};
 
 const MARVEL_RIVALS_CONFIG: IGameConfig = {
   name: EGame.MARVEL_RIVALS,
@@ -187,6 +197,7 @@ const UNSET_CONFIG: IGameConfig = {
 const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.FORTNITE]: FORTNITE_CONFIG,
   [EGame.WARZONE]: WARZONE_CONFIG,
+  [EGame.BLACK_OPS_6]: BLACK_OPS_6_CONFIG,
   [EGame.MARVEL_RIVALS]: MARVEL_RIVALS_CONFIG,
   [EGame.WAR_THUNDER]: WAR_THUNDER_CONFIG,
   [EGame.VALORANT]: VALORANT_CONFIG,
