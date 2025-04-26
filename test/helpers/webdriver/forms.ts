@@ -35,13 +35,10 @@ export async function clickFormInput(t: TExecutionContext, label: string, index 
   await $input.click();
 }
 
-export async function setFormDropdown(label: string, value: string, index = 0) {
-  await waitForDisplayed('label');
-  const $multiselect = await getClient().$$(`[data-name="${label}"]`)[index];
-  await $multiselect.click();
-
-  const $li = await (await getClient().$('[role=listbox]')).$(`div=${value}`);
-  await $li.click();
+export async function setFormDropdown(label: string, value: string) {
+  await waitForDisplayed(`[data-title="${label}"]`);
+  const $multiselect = await (await getClient().$(`[data-title="${label}"]`)).$('input');
+  $multiselect.setValue(value);
 }
 
 // Percent is a value between 0 and 1
