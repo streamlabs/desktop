@@ -8,6 +8,7 @@ import {
   showSettingsWindow,
 } from '../helpers/modules/settings/settings';
 import {
+  click,
   clickButton,
   clickWhenDisplayed,
   focusMain,
@@ -37,10 +38,7 @@ async function createRecordingFiles(advanced: boolean = false): Promise<number> 
   // Record 0.5s video in every format
   for (const format of formats) {
     await showSettingsWindow('Output', async () => {
-      if (advanced) {
-        await clickButton('Recording');
-      }
-
+      await click('[data-name="Recording-Section"]');
       await setFormDropdown('Recording Format', format);
       await sleep(500);
       await clickButton('Done');
