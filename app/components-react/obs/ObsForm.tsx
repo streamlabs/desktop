@@ -398,6 +398,7 @@ export function ObsCollapsibleFormItem(p: IObsCollapsibleFormGroupProps) {
             'fa-minus': isActive,
             'fa-plus': !isActive,
           })}
+          data-name={`${p.section.nameSubCategory}-Section`}
         />
       )}
       bordered={false}
