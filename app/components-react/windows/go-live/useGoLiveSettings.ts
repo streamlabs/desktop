@@ -62,16 +62,44 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
     Object.assign(this.state, { ...newSettings, platforms, customDestinations });
   }
   /**
-   * Update settings for a specific platforms
+   * Update settings for a specific platform
    */
   updatePlatform(platform: TPlatform, patch: Partial<IGoLiveSettings['platforms'][TPlatform]>) {
+    // TODO: find or create an observer for platform enabling/disabling behavior
+    const isDisablingPlatform =
+      Object.prototype.hasOwnProperty.call(patch, 'enabled') && patch?.enabled === false;
+
+    const hasExtraOutputs = Services.DualOutputService.views.hasExtraOutput(platform);
+
     const updated = {
       platforms: {
         ...this.state.platforms,
-        [platform]: { ...this.state.platforms[platform], ...patch },
+        [platform]: {
+          ...this.state.platforms[platform],
+          ...this.updateDisplayIfNeeded(patch, isDisablingPlatform, hasExtraOutputs),
+        },
       },
     };
     this.updateSettings(updated);
+
+    /*
+     * Reset display and extra outputs when disabling a platform, go live checks aren't enough.
+     * When disabling a platform, the extra output state remains true since its display
+     * `onChange` selector isn't triggered.
+     * Coupled with some bugs we've seen with go live settings persistence, this
+     * is the most practical place we've found to handle.
+     */
+    if (isDisablingPlatform) {
+      Services.DualOutputService.actions.removeExtraOutputPlatform(platform);
+    }
+  }
+
+  private updateDisplayIfNeeded(
+    patch: Partial<IGoLiveSettings['platforms'][TPlatform]>,
+    isDisablingPlatform: boolean,
+    hasExtraOutputs: boolean,
+  ) {
+    return isDisablingPlatform && hasExtraOutputs ? { ...patch, display: 'vertical' } : patch;
   }
 
   switchPlatforms(enabledPlatforms: TPlatform[]) {
@@ -397,6 +425,24 @@ export class GoLiveSettingsModule {
 
   get recommendedColorSpaceWarnings() {
     return Services.SettingsService.views.recommendedColorSpaceWarnings;
+  }
+
+  /**
+   * Add or remove a platform from Dual Output's extra output list
+   * according to display.
+   * If display is set to `both` it would add it, otherwise would remove it
+   * from the list if present.
+   */
+  updateShouldUseExtraOutput(platform: TPlatform, display: TDisplayType | 'both') {
+    if (display === 'both') {
+      Services.DualOutputService.actions.return.addExtraOutputPlatform(platform);
+    } else {
+      Services.DualOutputService.actions.return.removeExtraOutputPlatform(platform);
+    }
+  }
+
+  hasExtraOutput(platform: TPlatform) {
+    return Services.DualOutputService.views.hasExtraOutput(platform);
   }
 }
 
