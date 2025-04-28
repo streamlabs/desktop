@@ -104,11 +104,11 @@ export class VisionUpdater {
    * Get the path to the streamlabs vision binary
    */
   private getManifestUrl(): string {
+    const cacheBuster = Math.floor(Date.now() / 1000);
     if (VisionUpdater.getEnvironment() === 'staging') {
-      const cacheBuster = Math.floor(Date.now() / 1000);
-      return `$https://cdn-vision-builds.streamlabs.com/staging/manifest_win_x86_64.json?t=${cacheBuster}`;
+      return `https://cdn-vision-builds.streamlabs.com/staging/manifest_win_x86_64.json?t=${cacheBuster}`;
     } else {
-      return 'https://cdn-vision-builds.streamlabs.com/production/manifest_win_x86_64.json';
+      return `https://cdn-vision-builds.streamlabs.com/production/manifest_win_x86_64.json?t=${cacheBuster}`;
     }
   }
   /**
