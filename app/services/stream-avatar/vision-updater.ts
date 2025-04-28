@@ -201,7 +201,7 @@ export class VisionUpdater {
     }
 
     // download the new version
-    await downloadFile(this.manifest.url, zipPath, progressCallback);
+    await downloadFile(`${this.manifest.url}?t=${this.manifest.checksum}`, zipPath, progressCallback);
     console.log('download complete');
 
     // verify the checksum
