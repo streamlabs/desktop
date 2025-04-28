@@ -99,7 +99,7 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
     isDisablingPlatform: boolean,
     hasExtraOutputs: boolean,
   ) {
-    return isDisablingPlatform && hasExtraOutputs ? { ...patch, display: 'vertical' } : patch;
+    return isDisablingPlatform && hasExtraOutputs ? { ...patch, display: 'horizontal' } : patch;
   }
 
   switchPlatforms(enabledPlatforms: TPlatform[]) {

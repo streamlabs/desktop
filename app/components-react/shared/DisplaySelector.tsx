@@ -74,7 +74,9 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
   };
 
   // TODO: Fake accessor, improve, if nothing else, fix type
-  const value = setting?.display === 'horizontal' && hasExtraOutput ? 'both' : setting?.display;
+  // display can be undefined on first window load
+  const isDefaultDisplay = setting?.display === 'horizontal' || setting?.display === undefined;
+  const value = isDefaultDisplay && hasExtraOutput ? 'both' : setting?.display;
 
   return (
     <RadioInput
