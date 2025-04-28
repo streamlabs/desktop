@@ -218,7 +218,7 @@ const STATS_TO_MAP = () => [
 ];
 
 function StreamPulse(p: { analytics: IDashboardAnalytics }) {
-  const stats = p.analytics.stats || {};
+  const stats: Dictionary<string> = p.analytics.stats || {};
   return (
     <div className={styles.streamPulse}>
       <h2>{$t('Stream Pulse')}</h2>

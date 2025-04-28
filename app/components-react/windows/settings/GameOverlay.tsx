@@ -54,10 +54,24 @@ export function GameOverlay() {
     return (
       <div>
         {windows.map(win => (
-          <React.Fragment key={titles[win]}>
+          <React.Fragment
+            key={
+              // TODO: index
+              // @ts-ignore
+              titles[win]
+            }
+          >
             <SwitchInput
-              label={titles[win]}
-              value={windowProperties[win].enabled}
+              label={
+                // TODO: index
+                // @ts-ignore
+                titles[win]
+              }
+              value={
+                // TODO: index
+                // @ts-ignore
+                windowProperties[win].enabled
+              }
               onInput={() => GameOverlayService.actions.toggleWindowEnabled(win)}
             />
           </React.Fragment>

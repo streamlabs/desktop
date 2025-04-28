@@ -130,6 +130,7 @@ class FacebookEditStreamInfoModule {
   }
 
   getDestinationOptions(): IListOption<TDestinationType>[] {
+    // not sure if the best idea, but we decided to always show "Timeline" option
     const options: IListOption<TDestinationType>[] = [
       {
         value: 'me' as TDestinationType,
@@ -141,10 +142,7 @@ class FacebookEditStreamInfoModule {
         label: $t('Share to a Page You Manage'),
         image: 'https://slobs-cdn.streamlabs.com/media/fb-page.png',
       },
-    ].filter(opt => {
-      if (opt.value === 'me' && !this.canStreamToTimeline) return false;
-      return true;
-    });
+    ];
     return options;
   }
 

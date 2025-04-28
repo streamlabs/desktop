@@ -246,12 +246,12 @@ export class AudioService extends StatefulService<IAudioSourcesState> {
     // Fader is ignored by this method.  Use setFader instead
     const newPatch = omit(patch, 'fader');
 
-    Object.keys(newPatch).forEach(name => {
+    Object.keys(newPatch).forEach((name: keyof typeof newPatch) => {
       const value = newPatch[name];
       if (value === void 0) return;
 
       if (name === 'syncOffset') {
-        obsInput.syncOffset = AudioService.msToTimeSpec(value);
+        obsInput.syncOffset = AudioService.msToTimeSpec(value as typeof newPatch['syncOffset']);
       } else if (name === 'forceMono') {
         if (this.views.getSource(sourceId).forceMono !== value) {
           value
@@ -259,8 +259,10 @@ export class AudioService extends StatefulService<IAudioSourcesState> {
             : (obsInput.flags -= obs.ESourceFlags.ForceMono);
         }
       } else if (name === 'muted') {
-        this.sourcesService.setMuted(sourceId, value);
+        this.sourcesService.setMuted(sourceId, value as typeof newPatch['muted']);
       } else {
+        // TODO: index
+        // @ts-ignore
         obsInput[name] = value;
       }
     });

@@ -937,7 +937,11 @@ export class GuestCamService extends StatefulService<IGuestCamServiceState> {
   sendWebRTCRequest(data: Object) {
     return new Promise(resolve => {
       this.socket.emit('webrtc', data, (result: Object) => {
+        // TODO: index
+        // @ts-ignore
         if (result && result['error']) {
+          // TODO: index
+          // @ts-ignore
           this.error(`Got error response from request ${data['type']}`);
         }
 
@@ -1093,6 +1097,8 @@ export class GuestCamService extends StatefulService<IGuestCamServiceState> {
   private UPDATE_GUEST(streamId: string, patch: Partial<IGuest>) {
     const guest = this.state.guests.find(g => g.remoteProducer.streamId === streamId);
     Object.keys(patch).forEach(key => {
+      // TODO: index
+      // @ts-ignore
       Vue.set(guest, key, patch[key]);
     });
   }

@@ -1667,6 +1667,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.13.10":
+  version: 7.25.6
+  resolution: "@babel/runtime@npm:7.25.6"
+  dependencies:
+    regenerator-runtime: ^0.14.0
+  checksum: ee1a69d3ac7802803f5ee6a96e652b78b8addc28c6a38c725a4ad7d61a059d9e6cb9f6550ed2f63cce67a1bd82e0b1ef66a1079d895be6bfb536a5cfbd9ccc32
+  languageName: node
+  linkType: hard
+
 "@babel/runtime@npm:^7.15.4":
   version: 7.16.5
   resolution: "@babel/runtime@npm:7.16.5"
@@ -2548,12 +2557,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/codemirror@npm:5.60.4":
-  version: 5.60.4
-  resolution: "@types/codemirror@npm:5.60.4"
+"@types/codemirror@npm:5.60.10":
+  version: 5.60.10
+  resolution: "@types/codemirror@npm:5.60.10"
   dependencies:
     "@types/tern": "*"
-  checksum: 542be5cfef8b36defdaba0b4a0c200d8ba8566d7a6a3b7dcef5f11a59a2232aa402d040df5037a0ada8d4aedc99398854d4efef826625f161ab3425d34742a1e
+  checksum: c5977db03939f2a208f0ec7958be70b4fb205dd3f3122b2175ff28287a5424da95f9030b2838c61d37e6278ec53795861dec12439967c1e1da885b2b2a65b299
   languageName: node
   linkType: hard
 
@@ -11048,7 +11057,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"popper.js@npm:^1.14.3, popper.js@npm:^1.16.0":
+"popper.js@npm:^1.14.3, popper.js@npm:^1.16.1":
   version: 1.16.1
   resolution: "popper.js@npm:1.16.1"
   checksum: c56ae5001ec50a77ee297a8061a0221d99d25c7348d2e6bcd3e45a0d0f32a1fd81bca29d46cb0d4bdf13efb77685bd6a0ce93f9eb3c608311a461f945fffedbe
@@ -12419,6 +12428,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"regenerator-runtime@npm:^0.14.0":
+  version: 0.14.1
+  resolution: "regenerator-runtime@npm:0.14.1"
+  checksum: 9f57c93277b5585d3c83b0cf76be47b473ae8c6d9142a46ce8b0291a04bb2cf902059f0f8445dcabb3fb7378e5fe4bb4ea1e008876343d42e46d3b484534ce38
+  languageName: node
+  linkType: hard
+
 "regenerator-transform@npm:^0.15.2":
   version: 0.15.2
   resolution: "regenerator-transform@npm:0.15.2"
@@ -13140,7 +13156,7 @@ __metadata:
     "@sentry/integrations": 5.21.4
     "@types/archiver": 2.1.3
     "@types/classnames": 2.2.11
-    "@types/codemirror": 5.60.4
+    "@types/codemirror": 5.60.10
     "@types/extract-zip": 1.6.2
     "@types/fs-extra": 8.1.1
     "@types/humps": 1.1.3
@@ -13268,11 +13284,11 @@ __metadata:
     ts-loader: 8.4.0
     ts-node: ^10.7.0
     typedoc: 0.24.8
-    typescript: 4.9.5
+    typescript: 5.6.2
     urijs: 1.19.11
     uuid: ^3.0.1
     v-selectpage: 2.0.2
-    v-tooltip: v2.0.3
+    v-tooltip: v2.1.3
     vee-validate: 2.2.0
     vue: 2.6.9
     vue-color: 2.7.0
@@ -14443,13 +14459,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:4.9.5":
-  version: 4.9.5
-  resolution: "typescript@npm:4.9.5"
+"typescript@npm:5.6.2":
+  version: 5.6.2
+  resolution: "typescript@npm:5.6.2"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: ee000bc26848147ad423b581bd250075662a354d84f0e06eb76d3b892328d8d4440b7487b5a83e851b12b255f55d71835b008a66cbf8f255a11e4400159237db
+  checksum: 48777e1dabd9044519f56cd012b0296e3b72bafe12b7e8e34222751d45c67e0eba5387ecdaa6c14a53871a29361127798df6dc8d1d35643a0a47cb0b1c65a33a
   languageName: node
   linkType: hard
 
@@ -14463,13 +14479,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@4.9.5#~builtin<compat/typescript>":
-  version: 4.9.5
-  resolution: "typescript@patch:typescript@npm%3A4.9.5#~builtin<compat/typescript>::version=4.9.5&hash=493e53"
+"typescript@patch:typescript@5.6.2#~builtin<compat/typescript>":
+  version: 5.6.2
+  resolution: "typescript@patch:typescript@npm%3A5.6.2#~builtin<compat/typescript>::version=5.6.2&hash=493e53"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 2eee5c37cad4390385db5db5a8e81470e42e8f1401b0358d7390095d6f681b410f2c4a0c496c6ff9ebd775423c7785cdace7bcdad76c7bee283df3d9718c0f20
+  checksum: c084ee1ab865f108c787e6233a5f63c126c482c0c8e87ec998ac5288a2ad54b603e1ea8b8b272355823b833eb31b9fabb99e8c6152283e1cb47e3a76bd6faf6c
   languageName: node
   linkType: hard
 
@@ -14784,14 +14800,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"v-tooltip@npm:v2.0.3":
-  version: 2.0.3
-  resolution: "v-tooltip@npm:2.0.3"
+"v-tooltip@npm:v2.1.3":
+  version: 2.1.3
+  resolution: "v-tooltip@npm:2.1.3"
   dependencies:
-    lodash: ^4.17.15
-    popper.js: ^1.16.0
-    vue-resize: ^0.4.5
-  checksum: 6abc121aeea9130f34354f72efedc98802989a866f2854f0338d52e0adc1f9e27066c79ec6ba40bae3dc5acb80877458825e14501a85f0abd628e04489d49343
+    "@babel/runtime": ^7.13.10
+    lodash: ^4.17.21
+    popper.js: ^1.16.1
+    vue-resize: ^1.0.1
+  checksum: 1f3f0010f7d7566dee3e5b8c2bc7bfa9709371681e48d8bbe368ddb9ff670c8fdfdd228f93eec092450dca8379c87b7b6e738dcfd7fa7a05fb9f1dd92c5a0eb1
   languageName: node
   linkType: hard
 
@@ -14966,12 +14983,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vue-resize@npm:^0.4.5":
-  version: 0.4.5
-  resolution: "vue-resize@npm:0.4.5"
+"vue-resize@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "vue-resize@npm:1.0.1"
+  dependencies:
+    "@babel/runtime": ^7.13.10
   peerDependencies:
-    vue: ^2.3.0
-  checksum: 045de8640feb6c48a684f844b13d2981b7365917f407500a729af722c01da424f78ec3107284d90dbd1ba566b196f46f5d6c903cd7c1e6141683710ab1fa4ab2
+    vue: ^2.6.0
+  checksum: 20bca05940addef049c3ba6e416c372891d6fc6a77cffeeafbf10b6325379db827c7286f497387ababfdc72127052baa3d0a38e678a0e4b20739f615b2ca47af
   languageName: node
   linkType: hard
 

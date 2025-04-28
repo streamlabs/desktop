@@ -141,6 +141,9 @@
   "Virtual Webcam allows you to display your scenes from Streamlabs Desktop in video conferencing software. Streamlabs Desktop will appear as a Webcam that can be selected in most video conferencing apps.": "가상 웹캠은 화상 회의 소프트웨어에서 Streamlabs Desktop 장면을 표시하게 해줍니다. Streamlabs Desktop이 대부분의 화상 회의 앱에서 선택할 수 있는 웹캠으로 표시됩니다.",
   "Uninstalling Virtual Webcam will remove it as a device option in other applications.": "가상 웹캠을 삭제하면 다른 애플리케이션의 장치 옵션이 제거됩니다.",
   "Uninstall Virtual Webcam": "가상 웹캠 제거",
+  "Output type": "Output type",
+  "Output selection": "Output selection",
+  "Program (default)": "Program (default)",
   "Use custom resolution": "커스텀 해상도 사용",
   "Enable Designer Mode": "디자이너 모드 활성화",
   "Get Support": "지원받기",
@@ -261,5 +264,6 @@
   "Idle": "유휴",
   "Please connect platforms directly from Streamlabs Desktop instead of adding Streamlabs Multistream as a custom destination": "Streamlabs 멀티스트림을 사용자 지정 대상으로 추가하는 대신 Streamlabs Desktop에서 직접 플랫폼을 연결하십시오",
   "Audio Encoder": "오디오 인코더",
-  "Additional Settings": "추가 설정"
+  "Additional Settings": "추가 설정",
+  "Bearer Token": "Bearer Token"
 }

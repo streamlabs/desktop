@@ -8,7 +8,7 @@ import { TitleBar } from 'components/shared/ReactComponentList';
 import { AppService } from 'services/app';
 import styles from './ChildWindow.m.less';
 import ModalWrapper from '../shared/modals/ModalWrapper';
-import antdThemes from 'styles/antd/index';
+import antdThemes, { Theme } from 'styles/antd/index';
 
 @Component({})
 export default class ChildWindow extends Vue {
@@ -21,6 +21,8 @@ export default class ChildWindow extends Vue {
   private modalOptions: IModalOptions = { renderFn: null };
 
   unbind: () => void;
+
+  theme: Theme = 'night-theme';
 
   mounted() {
     this.unbind = this.customizationService.state.bindProps(this, {
@@ -46,8 +48,6 @@ export default class ChildWindow extends Vue {
     return this.windowsService.state.child;
   }
 
-  theme = 'night-theme';
-
   get currentComponent() {
     return this.components[this.components.length - 1];
   }
@@ -61,7 +61,7 @@ export default class ChildWindow extends Vue {
   }
 
   @Watch('theme')
-  updateAntd(newTheme: string, oldTheme: string) {
+  updateAntd(newTheme: Theme, oldTheme: Theme) {
     antdThemes[oldTheme].unuse();
     antdThemes[newTheme].use();
   }
@@ -152,6 +152,8 @@ export default class ChildWindow extends Vue {
         <ModalWrapper renderFn={this.modalOptions?.renderFn} />
 
         {this.componentsToRender.map((comp, index) => {
+          // TODO: index
+          // @ts-ignore
           const ChildWindowComponent = getComponents()[comp.componentName];
           return (
             <ChildWindowComponent key={`${comp.componentName}-${index}`} vShow={comp.isShown} />
