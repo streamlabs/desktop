@@ -233,7 +233,7 @@ export class Display {
         );
         nwr.connectIOSurface(this.name, surface);
 
-        if (this.existingWindow && this.outputRegionCallbacks.length) {
+        if (this.outputRegionCallbacks.length) {
           await this.refreshOutputRegion();
         }
       } catch (ex)
