@@ -284,7 +284,7 @@ class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
   /**
    * List of platforms that use extra outputs via the new streaming API
    */
-  get extraOutputPlaforms() {
+  get extraOutputPlatforms() {
     return this.state.extraOutputPlatforms;
   }
 
