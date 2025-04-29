@@ -236,8 +236,7 @@ export class Display {
         if (this.outputRegionCallbacks.length) {
           await this.refreshOutputRegion();
         }
-      } catch (ex)
-      {
+      } catch (ex: unknown) {
         console.log(`Error encountered creating iosurface: ${ex}`);
       }
       this.existingWindow = true;
