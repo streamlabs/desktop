@@ -13,7 +13,7 @@ import { $t } from 'services/i18n';
 import uuid from 'uuid';
 import React, { useRef, useState } from 'react';
 import styles from './StreamView.m.less';
-import { supportedGames } from 'services/highlighter/models/game-config.models';
+import { getConfigByGame, supportedGames } from 'services/highlighter/models/game-config.models';
 import path from 'path';
 
 export function ImportStreamModal({
@@ -37,6 +37,7 @@ export function ImportStreamModal({
     (streamInfo?.game !== EGame.UNSET ? streamInfo?.game : selectedGame) || selectedGame || null,
   );
   const gameOptions = supportedGames;
+  const gameConfig = getConfigByGame(game || EGame.UNSET);
 
   function handleInputChange(value: string) {
     setInputValue(value);
@@ -116,149 +117,180 @@ export function ImportStreamModal({
   }
   return (
     <>
-      <div className={styles.manualUploadWrapper}>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <h2 style={{ fontWeight: 600, margin: 0 }}>
-            {openedFrom === 'after-stream' ? 'Ai Highlighter' : `${$t('Import Game Recording')}`}
-          </h2>{' '}
-          <div>
-            <Button type="text" onClick={() => closeModal(true)}>
-              <i className="icon-close" style={{ margin: 0 }}></i>
-            </Button>
-          </div>
-        </div>
-
-        <TextInput
-          className={styles.customInput}
-          value={inputValue}
-          name="name"
-          placeholder={$t('Set a title for your recording')}
-          onChange={handleInputChange}
-          style={{ width: '100%', color: 'black', border: 'none' }}
-          rules={[specialCharacterValidator]}
-          nowrap
-        />
-        <div
-          onClick={async () => {
-            const path = await importStreamFromDevice();
-            setFilePath(path ? path[0] : undefined);
-          }}
-          onDragOver={e => {
-            e.preventDefault();
-            setDraggingOver(true);
-          }}
-          onDrop={e => {
-            const extensions = SUPPORTED_FILE_TYPES.map(e => `.${e}`);
-            const files: string[] = [];
-            let fi = e.dataTransfer.files.length;
-            while (fi--) {
-              const file = e.dataTransfer.files.item(fi)?.path;
-              if (file) files.push(file);
-            }
-            const filtered = files.filter(f => extensions.includes(path.parse(f).ext));
-            if (filtered.length) {
-              setFilePath(filtered[0]);
-              setDraggingOver(false);
-            }
-
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-          onDragLeave={() => setDraggingOver(false)}
-          className={styles.videoPreview}
-          style={
-            {
-              '--border-style': filePath ? 'solid' : 'dashed',
-              '--border-color': draggingOver ? 'var(--teal)' : 'var(--midtone)',
-              cursor: 'pointer',
-            } as React.CSSProperties
-          }
-        >
-          {filePath ? (
-            <video src={filePath} controls></video>
-          ) : (
-            <div
-              onDrop={(e: React.DragEvent<HTMLDivElement>) => {}}
-              style={{ display: 'grid', placeItems: 'center' }}
-            >
-              <i
-                className="fa fa-plus"
-                style={{ color: draggingOver ? 'var(--teal)' : 'inherit' }}
-              ></i>
-              <h3
-                className={styles.dragAndDrop}
-                style={{
-                  color: draggingOver ? 'var(--teal)' : 'inherit',
-                }}
-              >
-                {$t('Drag and drop game recording or click to select')}
-              </h3>
-            </div>
-          )}
-        </div>
-        <Form>
-          <p
+      <div className={styles.hypeWrapper}>
+        <div className={styles.hypeContent}>
+          <img
+            className={styles.artworkImage}
+            src={gameConfig?.importModalConfig?.artwork}
+            alt=""
+          />
+          <div className={styles.overlay}>overlay</div>
+          <div
+            className={styles.coloredBlob}
             style={{
-              marginBottom: '8px',
+              backgroundColor: `${gameConfig?.importModalConfig?.accentColor}`,
             }}
           >
-            {$t('Select game played in recording')}
-          </p>
-          <ListInput
-            onSelect={(val, opts) => {
-              onSelect(opts.value);
+            contenit
+          </div>
+          <h2 className={styles.hypeContentHeadline} style={{ fontWeight: 600, margin: 0 }}>
+            Turn your gameplays into epic highlight reels
+          </h2>
+          <h2 className={styles.hypeContentSubheadline} style={{ fontWeight: 600, margin: 0 }}>
+            Dominate, showcase, inspire!
+          </h2>
+        </div>
+
+        <div className={styles.manualUploadWrapper}>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <h2 style={{ fontWeight: 600, margin: 0 }}>
+              {openedFrom === 'after-stream' ? 'Ai Highlighter' : `${$t('Import Game Recording')}`}
+            </h2>{' '}
+            <div>
+              <Button type="text" onClick={() => closeModal(true)}>
+                <i className="icon-close" style={{ margin: 0 }}></i>
+              </Button>
+            </div>
+          </div>
+
+          <TextInput
+            className={styles.customInput}
+            value={inputValue}
+            name="name"
+            placeholder={$t('Set a title for your recording')}
+            onChange={handleInputChange}
+            style={{ width: '100%', color: 'black', border: 'none' }}
+            rules={[specialCharacterValidator]}
+            nowrap
+          />
+          <div
+            onClick={async () => {
+              const path = await importStreamFromDevice();
+              setFilePath(path ? path[0] : undefined);
             }}
-            onChange={value => {
-              setGame(value || null);
+            onDragOver={e => {
+              e.preventDefault();
+              setDraggingOver(true);
             }}
-            placeholder={$t('Start typing to search')}
-            options={gameOptions}
-            defaultValue={game}
-            showSearch
-            optionRender={option => (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {option.image && (
-                  <img
-                    src={typeof option.image === 'string' ? option.image : undefined}
-                    alt={option.label}
-                    style={{
-                      width: '24px',
-                      height: '24px',
-                      objectFit: 'cover',
-                      borderRadius: '2px',
-                    }}
-                  />
-                )}
-                <span>{option.label}</span>
-                <span style={{ fontSize: '12px', opacity: '0.5' }}>{option.description}</span>
+            onDrop={e => {
+              const extensions = SUPPORTED_FILE_TYPES.map(e => `.${e}`);
+              const files: string[] = [];
+              let fi = e.dataTransfer.files.length;
+              while (fi--) {
+                const file = e.dataTransfer.files.item(fi)?.path;
+                if (file) files.push(file);
+              }
+              const filtered = files.filter(f => extensions.includes(path.parse(f).ext));
+              if (filtered.length) {
+                setFilePath(filtered[0]);
+                setDraggingOver(false);
+              }
+
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            onDragLeave={() => setDraggingOver(false)}
+            className={styles.videoPreview}
+            style={
+              {
+                '--border-style': filePath ? 'solid' : 'dashed',
+                '--border-color': draggingOver ? 'var(--teal)' : 'var(--midtone)',
+                cursor: 'pointer',
+              } as React.CSSProperties
+            }
+          >
+            {filePath ? (
+              <video src={filePath} controls></video>
+            ) : (
+              <div
+                onDrop={(e: React.DragEvent<HTMLDivElement>) => {}}
+                style={{ display: 'grid', placeItems: 'center' }}
+              >
+                <i
+                  className="fa fa-plus"
+                  style={{ color: draggingOver ? 'var(--teal)' : 'inherit' }}
+                ></i>
+                <h3
+                  className={styles.dragAndDrop}
+                  style={{
+                    color: draggingOver ? 'var(--teal)' : 'inherit',
+                  }}
+                >
+                  {$t('Drag and drop game recording or click to select')}
+                </h3>
               </div>
             )}
-            debounce={500}
-            allowClear
-          />
-        </Form>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {openedFrom === 'after-stream' && (
+          </div>
+          <Form>
+            <p
+              style={{
+                marginBottom: '8px',
+              }}
+            >
+              {$t('Select game played in recording')}
+            </p>
+            <ListInput
+              onSelect={(val, opts) => {
+                onSelect(opts.value);
+              }}
+              onChange={value => {
+                setGame(value || null);
+              }}
+              placeholder={$t('Start typing to search')}
+              options={gameOptions}
+              defaultValue={game}
+              showSearch
+              optionRender={option => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {option.image && (
+                    <img
+                      src={typeof option.image === 'string' ? option.image : undefined}
+                      alt={option.label}
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        objectFit: 'cover',
+                        borderRadius: '2px',
+                      }}
+                    />
+                  )}
+                  <span>{option.label}</span>
+                  <span style={{ fontSize: '12px', opacity: '0.5' }}>{option.description}</span>
+                </div>
+              )}
+              debounce={500}
+              allowClear
+            />
+          </Form>
+
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {openedFrom === 'after-stream' && (
+              <Button
+                size="large"
+                style={{ width: '100%', marginTop: '4px' }}
+                type="default"
+                onClick={() => closeModal(true)}
+              >
+                {$t('Cancel')}
+              </Button>
+            )}
             <Button
+              disabled={!game}
               size="large"
               style={{ width: '100%', marginTop: '4px' }}
-              type="default"
-              onClick={() => closeModal(true)}
+              type="primary"
+              onClick={() =>
+                startAiDetection(
+                  inputValue,
+                  game!,
+                  filePath ? [filePath] : undefined,
+                  streamInfo?.id,
+                )
+              }
             >
-              {$t('Cancel')}
+              {filePath ? $t('Find game highlights') : $t('Select video and start import')}
             </Button>
-          )}
-          <Button
-            disabled={!game}
-            size="large"
-            style={{ width: '100%', marginTop: '4px' }}
-            type="primary"
-            onClick={() =>
-              startAiDetection(inputValue, game!, filePath ? [filePath] : undefined, streamInfo?.id)
-            }
-          >
-            {filePath ? $t('Find game highlights') : $t('Select video and start import')}
-          </Button>
+          </div>
         </div>
       </div>
     </>

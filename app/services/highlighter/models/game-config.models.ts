@@ -109,6 +109,12 @@ export const FORTNITE_CONFIG: IGameConfig = {
   gameModes: 'Battle Royale, Zero Build, Reload, OG',
   thumbnail: `https://cdn.streamlabs.com/static/imgs/game-thumbnails/${EGame.FORTNITE}.png`,
   state: EGameState.LIVE,
+  importModalConfig: {
+    backgroundColor: '#1A242C',
+    accentColor: '#14B2DF',
+    artwork:
+      'https://cdn2.unrealengine.com/fortnite-reload-slurp-rush-header-1900x600-c2f10a8002e9.jpg',
+  },
   inputTypeMap: {
     ...COMMON_TYPES,
     ['deploy']: {
@@ -137,6 +143,7 @@ const WARZONE_CONFIG: IGameConfig = {
   inputTypeMap: {
     ...COMMON_TYPES,
   },
+  importModalConfig: undefined,
 };
 const BLACK_OPS_6_CONFIG: IGameConfig = {
   name: EGame.BLACK_OPS_6,
@@ -146,6 +153,11 @@ const BLACK_OPS_6_CONFIG: IGameConfig = {
   state: EGameState.INTERNAL,
   inputTypeMap: {
     ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#00ff00',
+    artwork: 'https://4kwallpapers.com/images/walls/thumbs_3t/17118.jpg',
+    backgroundColor: 'black',
   },
 };
 
@@ -158,6 +170,7 @@ const MARVEL_RIVALS_CONFIG: IGameConfig = {
   inputTypeMap: {
     ...COMMON_TYPES,
   },
+  importModalConfig: undefined,
 };
 
 const WAR_THUNDER_CONFIG: IGameConfig = {
@@ -169,6 +182,7 @@ const WAR_THUNDER_CONFIG: IGameConfig = {
   inputTypeMap: {
     ...COMMON_TYPES,
   },
+  importModalConfig: undefined,
 };
 
 const VALORANT_CONFIG: IGameConfig = {
@@ -180,6 +194,7 @@ const VALORANT_CONFIG: IGameConfig = {
   inputTypeMap: {
     ...COMMON_TYPES,
   },
+  importModalConfig: undefined,
 };
 
 const COUNTER_STRIKE_2_CONFIG: IGameConfig = {
@@ -191,6 +206,7 @@ const COUNTER_STRIKE_2_CONFIG: IGameConfig = {
   inputTypeMap: {
     ...COMMON_TYPES,
   },
+  importModalConfig: undefined,
 };
 
 const UNSET_CONFIG: IGameConfig = {
@@ -202,6 +218,7 @@ const UNSET_CONFIG: IGameConfig = {
   inputTypeMap: {
     ...COMMON_TYPES,
   },
+  importModalConfig: undefined,
 };
 
 // Each game must have a config like and the config must be added here.

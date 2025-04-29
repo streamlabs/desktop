@@ -10,6 +10,11 @@ export enum EGameState {
   BETA_LIVE = 'beta_live',
 }
 
+interface IImportModalConfig {
+  backgroundColor: string;
+  accentColor: string;
+  artwork: string;
+}
 export interface IGameConfig {
   name: EGame;
   label: string; // Must be same as twitch
@@ -17,6 +22,7 @@ export interface IGameConfig {
   thumbnail: string;
   state: EGameState;
   inputTypeMap: Record<string, IEventInfo | IDefaultEventInfo>;
+  importModalConfig: undefined | IImportModalConfig;
 }
 
 export interface TypeWording {
