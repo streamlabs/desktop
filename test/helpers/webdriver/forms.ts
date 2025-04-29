@@ -2,6 +2,7 @@
 
 import { TExecutionContext } from './index';
 import { getClient, waitForDisplayed } from '../modules/core';
+import { useForm } from '../modules/forms';
 
 export async function setFormInput(label: string, value: string, index = 0) {
   const $el = (await getClient().$$(`label=${label}`))[index];
@@ -36,9 +37,9 @@ export async function clickFormInput(t: TExecutionContext, label: string, index 
 }
 
 export async function setFormDropdown(label: string, value: string) {
-  await waitForDisplayed(`[data-title="${label}"]`);
-  const $multiselect = await (await getClient().$(`[data-title="${label}"]`)).$('input');
-  $multiselect.setValue(value);
+  const { getInput } = useForm();
+  const $input = await getInput(label);
+  await $input.setDisplayValue(value);
 }
 
 // Percent is a value between 0 and 1

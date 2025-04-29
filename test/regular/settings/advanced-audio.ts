@@ -5,6 +5,7 @@ import { click, closeWindow, focusChild, focusMain } from '../../helpers/modules
 import { useForm } from '../../helpers/modules/forms';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
 import { setFormDropdown } from '../../helpers/webdriver/forms';
+import { sleep } from '../../helpers/sleep';
 
 useWebdriver();
 
@@ -29,7 +30,8 @@ const DEFAULT_DETAIL_SETTINGS = {
 
 test('Change Advanced Audio Settings', async t => {
   await showSettingsWindow('Output');
-  await setFormDropdown('Output Mode', 'Advanced');
+  await setFormDropdown('Mode', 'Advanced');
+  await sleep(5000);
   await closeWindow('child');
   await focusMain();
 

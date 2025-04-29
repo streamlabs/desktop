@@ -40,7 +40,7 @@ export async function setTemporaryRecordingPath(
 
   if (advanced) {
     await showSettingsWindow('Output', async () => {
-      await setFormDropdown('Output Mode', 'Advanced');
+      await setFormDropdown('Mode', 'Advanced');
       await click('[data-name="Recording-Section"]');
       await setInputValue('[data-name="RecFilePath"]', tmpDir);
     });
