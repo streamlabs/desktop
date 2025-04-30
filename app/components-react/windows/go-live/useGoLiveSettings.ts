@@ -444,6 +444,16 @@ export class GoLiveSettingsModule {
   hasExtraOutput(platform: TPlatform) {
     return Services.DualOutputService.views.hasExtraOutput(platform);
   }
+
+  /* Go live window has no persistence until we go live or toggle a platform on/off
+   * As a result we don't get the latest state in any of its views.
+   * This makes changing display immediate and is only used in `DisplaySelector`
+   * to keep the rest of the code as before, but we might need to revisit that.
+   */
+  updatePlatformDisplayAndSaveSettings(platform: TPlatform, display: TDisplayType) {
+    this.state.updatePlatform(platform, { display });
+    this.save(this.state.settings);
+  }
 }
 
 export function useGoLiveSettings() {
