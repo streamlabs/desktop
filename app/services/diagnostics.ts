@@ -1062,9 +1062,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
      * don't feel too happy about hacking it
      */
     const streamingPlatforms = (this.streamingService as any)?.views?.settings?.platforms || [];
-    const platformsUsingExtraOutputs = Object.keys(streamingPlatforms).filter(p => {
-      return streamingPlatforms[p].hasExtraOutputs;
-    });
+    const platformsUsingExtraOutputs = this.dualOutputService.views.extraOutputPlatforms;
 
     return new Section('Dual Output', {
       'Dual Output Active': this.dualOutputService.views.dualOutputMode,
