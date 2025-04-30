@@ -16,7 +16,7 @@
     "watch": "yarn clear && yarn compile:updater && yarn webpack-cli --watch --progress --config ./webpack.dev.config.js",
     "watch:strictnulls": "yarn clear && yarn compile:updater && cross-env SLOBS_STRICT_NULLS=true yarn webpack-cli --watch --progress --config ./webpack.dev.config.js",
     "watch:app": "yarn clear && yarn webpack-cli --watch --progress --config ./webpack.dev-app.config.js",
-    "watch:highlighter": "cross-env HIGHLIGHTER_ENV=local yarn watch",
+    "watch:highlighter": "cross-env HIGHLIGHTER_ENV=staging yarn watch",
     "start": "electron .",
     "clear-plugins": "rimraf plugins",
     "package": "yarn generate-agreement && rimraf dist && electron-builder build -w --x64 --config electron-builder/base.config.js",

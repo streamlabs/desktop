@@ -110,10 +110,9 @@ export const FORTNITE_CONFIG: IGameConfig = {
   thumbnail: `https://cdn.streamlabs.com/static/imgs/game-thumbnails/${EGame.FORTNITE}.png`,
   state: EGameState.LIVE,
   importModalConfig: {
-    backgroundColor: '#1A242C',
-    accentColor: '#14B2DF',
-    artwork:
-      'https://cdn2.unrealengine.com/fortnite-reload-slurp-rush-header-1900x600-c2f10a8002e9.jpg',
+    backgroundColor: '#1C1D45',
+    accentColor: '#DC8FF2',
+    artwork: 'https://i.ibb.co/5XcCjnRt/fortnite.png',
   },
   inputTypeMap: {
     ...COMMON_TYPES,
@@ -155,9 +154,9 @@ const BLACK_OPS_6_CONFIG: IGameConfig = {
     ...COMMON_TYPES,
   },
   importModalConfig: {
-    accentColor: '#00ff00',
-    artwork: 'https://4kwallpapers.com/images/walls/thumbs_3t/17118.jpg',
-    backgroundColor: 'black',
+    accentColor: '#FEA41E',
+    artwork: 'https://i.ibb.co/b56wknbH/black-ops-6.png',
+    backgroundColor: '#151B1A',
   },
 };
 
@@ -251,7 +250,10 @@ export const supportedGames = Object.entries(GAME_CONFIGS)
     };
   });
 
-export function getConfigByGame(game: EGame | string): IGameConfig {
+export function getConfigByGame(game: EGame | undefined): IGameConfig | undefined {
+  if (!game) {
+    return undefined;
+  }
   const lowercaseGame = game.toLowerCase() as EGame;
   return GAME_CONFIGS[lowercaseGame] || UNSET_CONFIG;
 }

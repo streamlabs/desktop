@@ -11,7 +11,7 @@ import {
 } from 'services/highlighter/models/highlighter.models';
 import { $t } from 'services/i18n';
 import uuid from 'uuid';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import styles from './StreamView.m.less';
 import { getConfigByGame, supportedGames } from 'services/highlighter/models/game-config.models';
 import path from 'path';
@@ -33,11 +33,13 @@ export function ImportStreamModal({
   const [inputValue, setInputValue] = useState<string>(streamInfo?.title || '');
   const [filePath, setFilePath] = useState<string | undefined>(videoPath);
   const [draggingOver, setDraggingOver] = useState<boolean>(false);
-  const [game, setGame] = useState<EGame | null>(
-    (streamInfo?.game !== EGame.UNSET ? streamInfo?.game : selectedGame) || selectedGame || null,
+  const [game, setGame] = useState<EGame | undefined>(
+    (streamInfo?.game !== EGame.UNSET ? streamInfo?.game : selectedGame) ||
+      selectedGame ||
+      undefined,
   );
   const gameOptions = supportedGames;
-  const gameConfig = getConfigByGame(game || EGame.UNSET);
+  const gameConfig = getConfigByGame(game);
 
   function handleInputChange(value: string) {
     setInputValue(value);
@@ -73,7 +75,6 @@ export function ImportStreamModal({
     }
     close();
   }
-
   async function startAiDetection(
     title: string,
     game: EGame,
@@ -115,13 +116,34 @@ export function ImportStreamModal({
       console.error('Error importing file from device', error);
     }
   }
+  const [artwork, setArtwork] = useState<string | undefined>(
+    gameConfig?.importModalConfig?.artwork,
+  );
+  const [isAnimating, setIsAnimating] = useState(false);
+  useEffect(() => {
+    if (gameConfig?.importModalConfig?.artwork !== artwork) {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setArtwork(gameConfig?.importModalConfig?.artwork);
+        setIsAnimating(false);
+      }, 200); // Match the duration of the CSS animation
+    }
+  }, [gameConfig?.importModalConfig?.artwork]);
   return (
     <>
-      <div className={styles.hypeWrapper}>
+      <div
+        className={styles.hypeWrapper}
+        style={{
+          backgroundColor: gameConfig?.importModalConfig?.backgroundColor || 'var(--section)',
+          clipPath: gameConfig
+            ? 'inset(0px 0px 0px 0px round 13px)'
+            : 'inset(158px 471px 158px 471px round 13px)',
+        }}
+      >
         <div className={styles.hypeContent}>
           <img
-            className={styles.artworkImage}
-            src={gameConfig?.importModalConfig?.artwork}
+            className={`${styles.artworkImage} ${isAnimating ? styles.fadeOut : styles.fadeIn}`}
+            src={artwork}
             alt=""
           />
           <div className={styles.overlay}>overlay</div>
@@ -130,18 +152,41 @@ export function ImportStreamModal({
             style={{
               backgroundColor: `${gameConfig?.importModalConfig?.accentColor}`,
             }}
-          >
-            contenit
-          </div>
-          <h2 className={styles.hypeContentHeadline} style={{ fontWeight: 600, margin: 0 }}>
-            Turn your gameplays into epic highlight reels
-          </h2>
-          <h2 className={styles.hypeContentSubheadline} style={{ fontWeight: 600, margin: 0 }}>
-            Dominate, showcase, inspire!
-          </h2>
-        </div>
+          ></div>
+          <div
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              display: 'grid',
 
-        <div className={styles.manualUploadWrapper}>
+              gridTemplateColumns: '1fr 400px 1fr',
+              top: '0',
+              left: '0',
+            }}
+          >
+            <div
+              style={{
+                position: 'relative',
+                display: 'flex',
+                flexDirection: 'column',
+                paddingLeft: '12%',
+                alignSelf: 'center',
+              }}
+            >
+              <h2 className={styles.hypeContentHeadline}>
+                Turn your gameplays into epic highlight reels
+              </h2>
+              <h2 className={styles.hypeContentSubheadline}>Dominate, showcase, inspire!</h2>
+            </div>
+            <div></div>
+            <div></div>
+          </div>
+        </div>
+        <div
+          className={styles.manualUploadWrapper}
+          style={{ borderColor: `${gameConfig?.importModalConfig?.accentColor}40` }}
+        >
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <h2 style={{ fontWeight: 600, margin: 0 }}>
               {openedFrom === 'after-stream' ? 'Ai Highlighter' : `${$t('Import Game Recording')}`}
@@ -274,10 +319,16 @@ export function ImportStreamModal({
                 {$t('Cancel')}
               </Button>
             )}
+
             <Button
               disabled={!game}
               size="large"
-              style={{ width: '100%', marginTop: '4px' }}
+              style={{
+                width: '100%',
+                marginTop: '4px',
+                backgroundColor: gameConfig?.importModalConfig?.accentColor,
+                borderColor: gameConfig?.importModalConfig?.backgroundColor,
+              }}
               type="primary"
               onClick={() =>
                 startAiDetection(

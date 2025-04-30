@@ -46,6 +46,9 @@
   :global(.ant-modal-content) {
     border-radius: 24px;
     border: 1px solid var(--Day-Colors-Dark-4, #4f5e65);
+    border: none;
+    background-color: transparent;
+    box-shadow: none;
   }
 }
 
@@ -66,36 +69,47 @@
   position: relative;
   width: 80vw;
   height: 80vh;
+  clip-path: inset(158px 471px 158px 471px round 13px);
   display: grid;
   border-radius: 24px;
   overflow: hidden;
-  border: 1px solid var(--Day-Colors-Dark-4, #4f5e65);
+  transition: clip-path 0.25s ease, background-color 0.3s ease;
 }
 .hype-content-headline {
   font-family: 'Luckiest Guy', serif;
-  position: absolute;
-  top: 120px;
-  left: 50px;
   font-size: 57px;
   margin: 0px;
-  width: 521px;
+  width: 85%;
   line-height: 53px;
   rotate: -4deg;
 }
-.colored-blob {
-  width: 100%;
-  height: 50px;
-  background-color: #ff0000;
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  border-radius: 50%;
-  filter: blur(24px);
-  animation: blob-animation 8s infinite;
-  animation-timing-function: ease-in-out;
+
+.hype-content-subheadline {
+  font-family: 'Luckiest Guy', serif;
+  font-size: 24px;
+  margin: 0px;
+  margin-top: 12px;
+  width: 85%;
+  line-height: 22px;
+  rotate: -4deg;
 }
 
-@keyframes blob-animation {
+.colored-blob {
+  width: 130%;
+  position: absolute;
+  height: 50%;
+  bottom: -50px;
+  left: 0px;
+  border-radius: 120%;
+  opacity: 0.2;
+  rotate: -20deg;
+  filter: blur(74px);
+  animation: blobAnimation 8s infinite;
+  animation-timing-function: ease-in-out;
+  transition: background-color 0.3s ease;
+}
+
+@keyframes blobAnimation {
   0% {
     transform: scale(1);
   }
@@ -107,7 +121,65 @@
   }
 }
 
+.glowButton {
+  position: relative;
+  display: inline-block;
+  padding: 1px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  overflow: hidden;
+  z-index: 1;
+  transition: background 0.3s ease;
+
+  &:hover {
+    background: #333;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -441%;
+    left: -449%;
+    width: 1000%;
+    height: 1000%;
+    background: conic-gradient(
+      from 0deg,
+      var(--accentColor),
+      var(--backgroundColor),
+      var(--backgroundColor),
+      var(--backgroundColor),
+      var(--backgroundColor)
+    );
+    z-index: -1;
+    animation: rotateGlow 3s linear infinite;
+    filter: blur(10px);
+  }
+}
+.glowButtonInner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  background-color: var(--backgroundColor);
+  justify-content: center;
+  align-items: center;
+  border-radius: 3px;
+}
+
+@keyframes rotateGlow {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 .overlay {
+  display: none;
   position: absolute;
   width: 50%;
   height: 100%;
@@ -116,22 +188,10 @@
   left: 0px;
 }
 
-.hype-content-subheadline {
-  font-family: 'Luckiest Guy', serif;
-  position: absolute;
-  top: 350px;
-  left: 50px;
-  font-size: 27px;
-  margin: 0px;
-  width: 521px;
-  line-height: 53px;
-  rotate: -4deg;
-}
-
 .manual-upload-wrapper {
   background-color: var(--section);
   border-radius: 12px;
-  border: 1px dashed var(--Day-Colors-Dark-4, #4f5e65);
+  border: 1px solid var(--Day-Colors-Dark-4, #4f5e65);
   width: 441px;
   display: flex;
   flex-direction: column;
@@ -165,14 +225,23 @@
 
 .hype-content {
   display: flex;
-  justify-content: center;
+  justify-content: end;
   align-items: center;
   overflow: hidden;
 }
 .artwork-image {
   flex-shrink: 0;
-  min-width: 100%;
   min-height: 100%;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.fadeIn {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.fadeOut {
+  opacity: 0;
+  transform: translateX(900px);
 }
 .video-wrapper {
   display: flex;
