@@ -16,6 +16,7 @@ import {
 } from '../helpers/modules/core';
 import { logIn } from '../helpers/webdriver/user';
 import { sleep } from '../helpers/sleep';
+import { useForm } from '../helpers/modules/forms';
 
 const path = require('path');
 
@@ -86,9 +87,15 @@ test('OBS Importer', async t => {
   await (await client.$('.side-nav .icon-settings')).click();
   await focusChild();
   await (await client.$('li=Output')).click();
-  const form = new FormMonkey(t);
-  await form.setInputValue(await form.getInputSelectorByTitle('Video Bitrate'), '5000');
-  await form.setInputValue(await form.getInputSelectorByTitle('Encoder'), 'Software (x264)');
+  await click('[data-name="Streaming-Section"]');
+  const { assertFormContains } = useForm();
+  await assertFormContains(
+    {
+      'Video Bitrate': '5000',
+      Encoder: 'Software (x264)',
+    },
+    'title',
+  );
 
   // check that widgets have been migrated
   await focusMain();

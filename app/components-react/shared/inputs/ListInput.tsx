@@ -145,8 +145,6 @@ export function renderOption<T>(
     }
   })();
 
-  console.log(attrs);
-
   return (
     <Select.Option {...attrs} labelrender={labelEl}>
       {children}
