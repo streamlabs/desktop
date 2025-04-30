@@ -139,7 +139,7 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
         if (
           this.streamingService.views.enabledPlatforms.length > 1 &&
           ytSettings?.enabled &&
-          ytSettings.hasExtraOutputs
+          this.dualOutputService.views.hasExtraOutput('youtube')
         ) {
           return 'StreamSecond';
         }
