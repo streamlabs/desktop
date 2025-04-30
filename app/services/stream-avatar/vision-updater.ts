@@ -73,13 +73,13 @@ export class VisionUpdater {
       'vision.exe',
     );
 
-    const command: string[] = [];
+    const command: string[] = ['--port', port.toString()];
     return spawn(visionBinaryPath, command);
   }
 
   private static startVisionFromLocalRepository(port: number) {
     const rootPath = '../streamlabs-vision/';
-    const command = ['run', 'python', `${rootPath}/streamlabs_vision/main.py`];
+    const command = ['run', 'python', `${rootPath}/streamlabs_vision/main.py`, '--port', port.toString()];
 
     return spawn('poetry', command, {
       cwd: rootPath,
