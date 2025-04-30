@@ -45,8 +45,6 @@ export interface IYoutubeStartStreamOptions extends IExtraBroadcastSettings {
   privacyStatus?: 'private' | 'public' | 'unlisted';
   scheduledStartTime?: number;
   mode?: TOutputOrientation;
-  /** Use extra output to stream a vertical context to a separate broadcast */
-  hasExtraOutputs?: boolean;
 }
 
 /**
