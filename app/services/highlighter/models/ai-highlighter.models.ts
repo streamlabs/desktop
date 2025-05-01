@@ -52,6 +52,7 @@ export enum EGame {
   WAR_THUNDER = 'war_thunder',
   VALORANT = 'valorant',
   COUNTER_STRIKE_2 = 'counter_strike_2',
+  APEX_LEGENDS = 'apex_legends',
   UNSET = 'unset',
 }
 

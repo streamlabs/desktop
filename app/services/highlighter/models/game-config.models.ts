@@ -208,6 +208,18 @@ const COUNTER_STRIKE_2_CONFIG: IGameConfig = {
   importModalConfig: undefined,
 };
 
+const APEX_LEGENDS_CONFIG: IGameConfig = {
+  name: EGame.APEX_LEGENDS,
+  label: 'Apex Legends',
+  gameModes: '',
+  thumbnail: '',
+  state: EGameState.INTERNAL,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: undefined,
+};
+
 const UNSET_CONFIG: IGameConfig = {
   name: EGame.UNSET,
   label: 'unset',
@@ -229,6 +241,7 @@ const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.WAR_THUNDER]: WAR_THUNDER_CONFIG,
   [EGame.VALORANT]: VALORANT_CONFIG,
   [EGame.COUNTER_STRIKE_2]: COUNTER_STRIKE_2_CONFIG,
+  [EGame.APEX_LEGENDS]: APEX_LEGENDS_CONFIG,
   [EGame.UNSET]: UNSET_CONFIG,
 };
 
