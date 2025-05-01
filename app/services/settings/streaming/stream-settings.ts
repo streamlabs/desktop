@@ -139,8 +139,13 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
         if (
           this.streamingService.views.enabledPlatforms.length > 1 &&
           ytSettings?.enabled &&
-          this.dualOutputService.views.hasExtraOutput('youtube')
+          this.dualOutputService.views.hasExtraOutput('youtube') &&
+          !(
+            this.streamingService.views.activeDisplayPlatforms.vertical.length ||
+            this.streamingService.views.activeDisplayDestinations.vertical.length
+          )
         ) {
+          console.log('overrode youtube');
           return 'StreamSecond';
         }
       }
@@ -218,7 +223,7 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
     // transform IGoLiveSettings to ISavedGoLiveSettings
     const patch: Partial<ISavedGoLiveSettings> = settingsPatch;
     if (settingsPatch.platforms) {
-      const pickedFields: (keyof IPlatformFlags)[] = ['enabled', 'useCustomFields'];
+      const pickedFields: (keyof IPlatformFlags)[] = ['enabled', 'useCustomFields', 'display'];
       const platforms: Dictionary<IPlatformFlags> = {};
       Object.keys(settingsPatch.platforms).map(platform => {
         // TODO: index

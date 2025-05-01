@@ -19,8 +19,8 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
   const {
     customDestinations,
     platforms,
+    updatePlatformDisplayAndSaveSettings,
     updateCustomDestinationDisplay,
-    updatePlatform,
     isPrime,
     enabledPlatforms,
     updateShouldUseExtraOutput,
@@ -64,7 +64,8 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       const display: TDisplayType =
         // Use horizontal display, vertical stream will be created separately
         supportsExtraOutputs && val === 'both' ? 'horizontal' : (val as TDisplayType);
-      updatePlatform(p.platform, { display });
+
+      updatePlatformDisplayAndSaveSettings(p.platform, display);
 
       // Add or remove the platform from the Dual Output's extra output platforms list
       updateShouldUseExtraOutput(p.platform, val);

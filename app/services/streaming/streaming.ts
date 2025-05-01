@@ -1002,11 +1002,20 @@ export class StreamingService
 
       NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
       const ytSettings = this.views.getPlatformSettings('youtube');
+      /*
+       * HACK: this needs to be addressed and is the result of the old
+       * streaming API *requiring* you to have both horizontal and vertical
+       * outputs to initialize streaming.
+       */
       // TODO: this can probably be more generic now
       if (
         this.views.enabledPlatforms.length > 1 &&
         ytSettings?.enabled &&
-        this.dualOutputService.views.hasExtraOutput('youtube')
+        this.dualOutputService.views.hasExtraOutput('youtube') &&
+        !(
+          this.views.activeDisplayPlatforms.vertical.length ||
+          this.views.activeDisplayDestinations.vertical.length
+        )
       ) {
         NodeObs.OBS_service_setVideoInfo(horizontalContext, 'vertical');
       } else {
