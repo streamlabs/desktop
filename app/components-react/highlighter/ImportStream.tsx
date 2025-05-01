@@ -175,7 +175,7 @@ export function ImportStreamModal({
               }}
             >
               <h2 className={styles.hypeContentHeadline}>
-                Turn your gameplays into epic highlight reels
+                Turn your gameplay into epic highlight reels
               </h2>
               <h2 className={styles.hypeContentSubheadline}>Dominate, showcase, inspire!</h2>
             </div>
