@@ -8,7 +8,7 @@ import invert from 'lodash/invert';
 import cloneDeep from 'lodash/cloneDeep';
 import { TwitchService } from 'services/platforms/twitch';
 import { PlatformAppsService } from 'services/platform-apps';
-import { IGoLiveSettings, IPlatformFlags } from 'services/streaming';
+import { IGoLiveSettings, IPlatformFlags, StreamingService } from 'services/streaming';
 import { TDisplayType } from 'services/settings-v2/video';
 import Vue from 'vue';
 import { IVideo } from 'obs-studio-node';
@@ -111,6 +111,7 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
   @Inject() private platformAppsService: PlatformAppsService;
   @Inject() private streamSettingsService: StreamSettingsService;
   @Inject() private dualOutputService: DualOutputService;
+  @Inject() private streamingService: StreamingService;
 
   static defaultState: IStreamSettingsState = {
     protectedModeEnabled: true,
@@ -139,7 +140,27 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
    * setup all stream-settings via single object
    */
   setSettings(patch: Partial<IStreamSettings>, context?: TDisplayType) {
-    const streamName = !context || context === 'horizontal' ? 'Stream' : 'StreamSecond';
+    const streamName = (() => {
+      if (patch.platform === 'youtube' && context === 'horizontal') {
+        const ytSettings = this.streamingService.views.getPlatformSettings('youtube');
+        if (
+          this.streamingService.views.enabledPlatforms.length > 1 &&
+          ytSettings?.enabled &&
+          this.dualOutputService.views.hasExtraOutput('youtube') &&
+          !(
+            this.streamingService.views.activeDisplayPlatforms.vertical.length ||
+            this.streamingService.views.activeDisplayDestinations.vertical.length
+          )
+        ) {
+          console.log('overrode youtube');
+          return 'StreamSecond';
+        }
+      }
+
+      return !context || context === 'horizontal' ? 'Stream' : 'StreamSecond';
+    })();
+
+    console.log('on set settings', streamName, patch);
     // save settings to localStorage
     const localStorageSettings: (keyof IStreamSettingsState)[] = [
       'protectedModeEnabled',
@@ -209,7 +230,7 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
     // transform IGoLiveSettings to ISavedGoLiveSettings
     const patch: Partial<ISavedGoLiveSettings> = settingsPatch;
     if (settingsPatch.platforms) {
-      const pickedFields: (keyof IPlatformFlags)[] = ['enabled', 'useCustomFields'];
+      const pickedFields: (keyof IPlatformFlags)[] = ['enabled', 'useCustomFields', 'display'];
       const platforms: Dictionary<IPlatformFlags> = {};
       Object.keys(settingsPatch.platforms).map(platform => {
         const platformSettings = pick(settingsPatch.platforms![platform], pickedFields);
@@ -262,6 +283,7 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
 
   setObsStreamSettings(formData: ISettingsSubCategory[], context?: number) {
     const streamName = !context || context === 0 ? 'Stream' : 'StreamSecond';
+    console.log('on setObsStreamSettings', streamName, formData);
     this.settingsService.setSettings(streamName, formData);
   }
 

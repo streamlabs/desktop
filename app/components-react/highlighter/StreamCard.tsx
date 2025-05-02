@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   EHighlighterView,
   IHighlightedStream,
@@ -6,7 +6,7 @@ import {
   TClip,
 } from 'services/highlighter/models/highlighter.models';
 import styles from './StreamCard.m.less';
-import { Button } from 'antd';
+import { Button, Tooltip } from 'antd';
 import { Services } from 'components-react/service-provider';
 import { isAiClip } from './utils';
 import { useVuex } from 'components-react/hooks';
@@ -14,6 +14,7 @@ import { $t } from 'services/i18n';
 import { EAiDetectionState } from 'services/highlighter/models/ai-highlighter.models';
 import * as remote from '@electron/remote';
 import StreamCardInfo from './StreamCardInfo';
+import { supportedGames } from 'services/highlighter/models/game-config.models';
 
 export default function StreamCard({
   streamId,
@@ -24,6 +25,7 @@ export default function StreamCard({
   emitRemoveStream,
   emitCancelHighlightGeneration,
   emitShowRequirements,
+  emitFeedbackForm,
 }: {
   streamId: string;
   clipsOfStreamAreLoading: string | null;
@@ -33,6 +35,7 @@ export default function StreamCard({
   emitRemoveStream: () => void;
   emitCancelHighlightGeneration: () => void;
   emitShowRequirements: () => void;
+  emitFeedbackForm: (clipsLength: number) => void;
 }) {
   const { HighlighterService } = Services;
   const clips = useVuex(() =>
@@ -88,11 +91,11 @@ export default function StreamCard({
               {$t('Please make sure all the requirements are met:')}
             </p>
             <ul style={{ marginBottom: 0, marginLeft: '-28px' }}>
-              <li>{$t('Game is supported (Currently Fortnite only)')}</li>
+              <li>{$t('Game is supported')}</li>
               <li>{$t('Game language is English')}</li>
               <li>{$t('Map and Stats area is fully visible')}</li>
-              <li>{$t('Game in fullscreen in your stream')}</li>
-              <li>{$t('Game mode is supported (Battle Royale, Reload, Zero Build, OG)')}</li>
+              <li>{$t('Game is fullscreen in your stream')}</li>
+              <li>{$t('Game mode is supported')}</li>
             </ul>
             <a onClick={emitShowRequirements} style={{ marginBottom: '14px' }}>
               {$t('Show details')}
@@ -127,6 +130,8 @@ export default function StreamCard({
     );
   }
 
+  const gameThumbnail = supportedGames?.find(game => game.value === stream.game)?.image;
+
   return (
     <div
       className={styles.streamCard}
@@ -152,7 +157,17 @@ export default function StreamCard({
         </div>
         <h3 className={styles.emojiWrapper}>
           {stream.state.type === EAiDetectionState.FINISHED ? (
-            <StreamCardInfo clips={clips} game={game} />
+            <div style={{ display: 'flex', width: '100%', gap: '12px' }}>
+              {gameThumbnail && (
+                <Tooltip title={supportedGames.find(game => game.value === stream.game)?.label}>
+                  <img className={styles.supportedGameIcon} src={gameThumbnail} alt={stream.game} />
+                </Tooltip>
+              )}
+              {/* calculation needed for text ellipsis overflow */}
+              <div style={{ width: 'calc(100% - 22px - 12px)' }}>
+                <StreamCardInfo clips={clips} game={game} />
+              </div>
+            </div>
           ) : (
             <div style={{ height: '22px' }}> </div>
           )}
@@ -164,6 +179,7 @@ export default function StreamCard({
           emitExportVideo={emitExportVideo}
           emitShowStreamClips={showStreamClips}
           clipsOfStreamAreLoading={clipsOfStreamAreLoading}
+          emitFeedbackForm={emitFeedbackForm}
           emitRestartAiDetection={() => {
             HighlighterService.actions.restartAiDetection(stream.path, stream);
           }}
@@ -183,6 +199,7 @@ function ActionBar({
   emitShowStreamClips,
   emitRestartAiDetection,
   emitSetView,
+  emitFeedbackForm,
 }: {
   stream: IHighlightedStream;
   clips: TClip[];
@@ -192,7 +209,10 @@ function ActionBar({
   emitShowStreamClips: () => void;
   emitRestartAiDetection: () => void;
   emitSetView: (data: IViewState) => void;
+  emitFeedbackForm: (clipsLength: number) => void;
 }): JSX.Element {
+  const { UsageStatisticsService, HighlighterService } = Services;
+
   function getFailedText(state: EAiDetectionState): string {
     switch (state) {
       case EAiDetectionState.ERROR:
@@ -203,6 +223,28 @@ function ActionBar({
         return '';
     }
   }
+
+  const [thumbsDownVisible, setThumbsDownVisible] = useState(!stream?.feedbackLeft);
+
+  const clickThumbsDown = () => {
+    if (stream?.feedbackLeft) {
+      return;
+    }
+
+    setThumbsDownVisible(false);
+
+    stream.feedbackLeft = true;
+    HighlighterService.updateStream(stream);
+
+    UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+      type: 'ThumbsDown',
+      streamId: stream?.id,
+      game: stream?.game,
+      clips: clips?.length,
+    });
+
+    emitFeedbackForm(clips.length);
+  };
 
   // In Progress
   if (stream?.state.type === EAiDetectionState.IN_PROGRESS) {
@@ -237,6 +279,16 @@ function ActionBar({
   if (stream && clips.length > 0) {
     return (
       <div className={styles.buttonBarWrapper}>
+        {thumbsDownVisible && (
+          <Button
+            icon={<i className="icon-thumbs-down" style={{ fontSize: '14px' }} />}
+            size="large"
+            onClick={e => {
+              clickThumbsDown();
+              e.stopPropagation();
+            }}
+          />
+        )}
         <Button
           icon={<i className="icon-edit" style={{ marginRight: '4px' }} />}
           size="large"
@@ -251,6 +303,7 @@ function ActionBar({
           type="primary"
           onClick={e => {
             emitExportVideo();
+            setThumbsDownVisible(false);
             e.stopPropagation();
           }}
           style={{ display: 'grid', gridTemplateAreas: 'stack' }}
@@ -366,6 +419,7 @@ export function Thumbnail({
       >
         <i className="icon-trash" />
       </Button>
+
       <img
         onClick={e => {
           if (stream.state.type !== EAiDetectionState.IN_PROGRESS) {

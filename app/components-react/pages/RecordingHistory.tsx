@@ -6,7 +6,7 @@ import { $t } from 'services/i18n';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import styles from './RecordingHistory.m.less';
 import AutoProgressBar from 'components-react/shared/AutoProgressBar';
-import { GetSLID } from 'components-react/highlighter/StorageUpload';
+import { GetSLID } from 'components-react/highlighter/Export/StorageUpload';
 import { ENotificationType } from 'services/notifications';
 import Scrollable from 'components-react/shared/Scrollable';
 import { Services } from '../service-provider';
@@ -19,7 +19,10 @@ import { $i } from 'services/utils';
 import { IRecordingEntry } from 'services/recording-mode';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 import { EAiDetectionState, EGame } from 'services/highlighter/models/ai-highlighter.models';
-import { EHighlighterView } from 'services/highlighter/models/highlighter.models';
+import {
+  EHighlighterView,
+  ITempRecordingInfo,
+} from 'services/highlighter/models/highlighter.models';
 
 interface IRecordingHistoryStore {
   showSLIDModal: boolean;
@@ -72,7 +75,7 @@ class RecordingHistoryController {
   get uploadOptions() {
     const opts = [
       {
-        label: `${$t('Get highlights (Fortnite only)')}`,
+        label: `${$t('Get highlights')}`,
         value: 'highlighter',
         icon: 'icon-highlighter',
       },
@@ -138,13 +141,19 @@ class RecordingHistoryController {
     }
     if (platform === 'highlighter') {
       if (this.aiDetectionInProgress) return;
-      this.HighlighterService.actions.detectAndClipAiHighlights(recording.filename, {
-        game: EGame.FORTNITE,
-        id: 'rec_' + uuid(),
-      });
+
+      const tempRecordingInfo: ITempRecordingInfo = {
+        recordingPath: recording.filename,
+        streamInfo: { id: 'rec_' + uuid(), game: EGame.UNSET },
+        source: 'recordings-tab',
+      };
+      this.HighlighterService.setTempRecordingInfo(tempRecordingInfo);
+
       this.NavigationService.actions.navigate(
         'Highlighter',
-        { view: EHighlighterView.STREAM },
+        {
+          view: EHighlighterView.STREAM,
+        },
         EMenuItemKey.Highlighter,
       );
       return;
@@ -225,14 +234,21 @@ export function RecordingHistory() {
   }));
 
   useEffect(() => {
+    let isMounted = true;
+
     if (
       uploadInfo.error &&
       typeof uploadInfo.error === 'string' &&
-      // We don't want to surface unexpected TS errors to the user
       !/TypeError/.test(uploadInfo.error)
     ) {
-      postError(uploadInfo.error);
+      if (isMounted) {
+        postError(uploadInfo.error);
+      }
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [uploadInfo.error]);
 
   function openMarkersSettings() {
@@ -293,7 +309,11 @@ export function RecordingHistory() {
             <div className={styles.recording} key={recording.timestamp}>
               <span style={{ marginRight: '8px' }}>{formattedTimestamp(recording.timestamp)}</span>
               <Tooltip title={$t('Show in folder')}>
-                <span onClick={() => showFile(recording.filename)} className={styles.filename}>
+                <span
+                  data-test="filename"
+                  onClick={() => showFile(recording.filename)}
+                  className={styles.filename}
+                >
                   {recording.filename}
                 </span>
               </Tooltip>

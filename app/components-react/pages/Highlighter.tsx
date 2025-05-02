@@ -1,23 +1,30 @@
 import SettingsView from 'components-react/highlighter/SettingsView';
 import { useVuex } from 'components-react/hooks';
 import React, { useEffect, useState } from 'react';
-import { EHighlighterView, IViewState } from 'services/highlighter/models/highlighter.models';
+import {
+  EHighlighterView,
+  IStreamInfoForAiHighlighter,
+  IViewState,
+  TOpenedFrom,
+} from 'services/highlighter/models/highlighter.models';
 import { Services } from 'components-react/service-provider';
 import StreamView from 'components-react/highlighter/StreamView';
 import ClipsView from 'components-react/highlighter/ClipsView';
 import UpdateModal from 'components-react/highlighter/UpdateModal';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 
-export default function Highlighter(props: { params?: { view: string } }) {
+export default function Highlighter(props: {
+  params?: {
+    view: string;
+  };
+}) {
   const { HighlighterService, IncrementalRolloutService, UsageStatisticsService } = Services;
   const aiHighlighterFeatureEnabled = IncrementalRolloutService.views.featureIsEnabled(
     EAvailableFeatures.aiHighlighter,
   );
+
   const v = useVuex(() => ({
     useAiHighlighter: HighlighterService.views.useAiHighlighter,
-    isUpdaterRunning: HighlighterService.views.isUpdaterRunning,
-    highlighterVersion: HighlighterService.views.highlighterVersion,
-    progress: HighlighterService.views.updaterProgress,
     clipsAmount: HighlighterService.views.clips.length,
     streamAmount: HighlighterService.views.highlightedStreams.length,
   }));
@@ -55,13 +62,7 @@ export default function Highlighter(props: { params?: { view: string } }) {
     UsageStatisticsService.recordShown('HighlighterTab', viewState.view);
   }, [viewState]);
 
-  const updaterModal = (
-    <UpdateModal
-      version={v.highlighterVersion}
-      progress={v.progress}
-      isVisible={v.isUpdaterRunning}
-    />
-  );
+  const updaterModal = <UpdateModal />;
 
   switch (viewState.view) {
     case EHighlighterView.STREAM:

@@ -6,9 +6,10 @@ import { TClip } from 'services/highlighter/models/highlighter.models';
 import styles from './ClipsView.m.less';
 import ClipTrimmer from 'components-react/highlighter/ClipTrimmer';
 import { Modal, Alert, Button } from 'antd';
-import ExportModal from 'components-react/highlighter/ExportModal';
+import ExportModal from 'components-react/highlighter/Export/ExportModal';
 import { $t } from 'services/i18n';
 import PreviewModal from './PreviewModal';
+import RemoveModal from './RemoveModal';
 
 export default function ClipsViewModal({
   streamId,
@@ -49,7 +50,7 @@ export default function ClipsViewModal({
           trim: '60%',
           preview: '700px',
           export: 'fit-content',
-          remove: '400px',
+          remove: '280px',
         }[modal],
       );
     }
@@ -57,7 +58,7 @@ export default function ClipsViewModal({
   function closeModal() {
     // Do not allow closing export modal while export/upload operations are in progress
     if (v.exportInfo.exporting) return;
-    if (v.uploadInfo.uploading) return;
+    if (v.uploadInfo.some(u => u.uploading)) return;
 
     setInspectedClip(null);
     setShowModal(null);
@@ -89,47 +90,15 @@ export default function ClipsViewModal({
         />
       )}
       {inspectedClip && showModal === 'remove' && (
-        <RemoveClip
+        <RemoveModal
+          key={`remove-${inspectedClip.path}`}
           close={closeModal}
           clip={inspectedClip}
           streamId={streamId}
           deleteClip={deleteClip}
+          removeType={'clip'}
         />
       )}
     </Modal>
-  );
-}
-
-function RemoveClip(p: {
-  clip: TClip;
-  streamId: string | undefined;
-  close: () => void;
-  deleteClip: (clipPath: string, streamId: string | undefined) => void;
-}) {
-  const { HighlighterService } = Services;
-
-  return (
-    <div style={{ textAlign: 'center' }}>
-      <h2>{$t('Remove the clip?')}</h2>
-      <p>
-        {$t(
-          'Are you sure you want to remove the clip? You will need to manually import it again to reverse this action.',
-        )}
-      </p>
-      <Button style={{ marginRight: 8 }} onClick={p.close}>
-        {$t('Cancel')}
-      </Button>
-      <Button
-        type="primary"
-        danger
-        onClick={() => {
-          HighlighterService.actions.removeClip(p.clip.path, p.streamId);
-          p.deleteClip(p.clip.path, p.streamId);
-          p.close();
-        }}
-      >
-        {$t('Remove')}
-      </Button>
-    </div>
   );
 }
