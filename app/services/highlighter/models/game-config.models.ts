@@ -220,6 +220,18 @@ const APEX_LEGENDS_CONFIG: IGameConfig = {
   importModalConfig: undefined,
 };
 
+const PUBG_CONFIG: IGameConfig = {
+  name: EGame.PUBG,
+  label: 'PUBG',
+  gameModes: '',
+  thumbnail: '',
+  state: EGameState.INTERNAL,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: undefined,
+};
+
 const UNSET_CONFIG: IGameConfig = {
   name: EGame.UNSET,
   label: 'unset',
@@ -242,6 +254,7 @@ const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.VALORANT]: VALORANT_CONFIG,
   [EGame.COUNTER_STRIKE_2]: COUNTER_STRIKE_2_CONFIG,
   [EGame.APEX_LEGENDS]: APEX_LEGENDS_CONFIG,
+  [EGame.PUBG]: PUBG_CONFIG,
   [EGame.UNSET]: UNSET_CONFIG,
 };
 
