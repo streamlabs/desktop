@@ -6,6 +6,7 @@ import {
   IPlatformService,
   IPlatformState,
   TPlatformCapability,
+  TLiveDockFeature,
 } from './index';
 import { authorizedHeaders, jfetch } from '../../util/requests';
 import { StreamError, throwStreamError } from '../streaming/stream-error';
@@ -121,6 +122,11 @@ export class KickService
   readonly platform = 'kick';
   readonly displayName = 'Kick';
   readonly capabilities = new Set<TPlatformCapability>(['title', 'chat', 'game']);
+  readonly liveDockFeatures = new Set<TLiveDockFeature>([
+    'view-stream',
+    'refresh-chat',
+    'chat-streaming',
+  ]);
 
   authWindowOptions: Electron.BrowserWindowConstructorOptions = {
     width: 600,

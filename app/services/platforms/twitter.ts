@@ -1,6 +1,12 @@
 import { InheritMutations, Inject, mutation, Service } from '../core';
 import { BasePlatformService } from './base-platform';
-import { IPlatformRequest, IPlatformService, IPlatformState, TPlatformCapability } from './index';
+import {
+  IPlatformRequest,
+  IPlatformService,
+  IPlatformState,
+  TPlatformCapability,
+  TLiveDockFeature,
+} from './index';
 import { authorizedHeaders, jfetch } from '../../util/requests';
 import { throwStreamError } from '../streaming/stream-error';
 import { platformAuthorizedRequest } from './utils';
@@ -49,6 +55,10 @@ export class TwitterPlatformService
   };
 
   readonly capabilities = new Set<TPlatformCapability>(['title', 'viewerCount']);
+  readonly liveDockFeatures = new Set<TLiveDockFeature>([
+    'refresh-chat-streaming',
+    'chat-streaming',
+  ]);
   readonly apiBase = 'https://api.x.com/2';
   readonly domain = 'https://x.com';
   readonly platform = 'twitter';

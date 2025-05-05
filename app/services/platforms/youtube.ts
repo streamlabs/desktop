@@ -5,6 +5,7 @@ import {
   EPlatformCallResult,
   IPlatformRequest,
   IPlatformState,
+  TLiveDockFeature,
 } from '.';
 import { Inject } from 'services/core/injector';
 import { authorizedHeaders, jfetch } from 'util/requests';
@@ -186,6 +187,12 @@ export class YoutubeService
     'streamlabels',
     'themes',
     'viewerCount',
+  ]);
+  readonly liveDockFeatures = new Set<TLiveDockFeature>([
+    'view-stream',
+    'dashboard',
+    'refresh-chat-streaming',
+    'chat-streaming',
   ]);
 
   static initialState: IYoutubeServiceState = {
