@@ -13,7 +13,7 @@ import {
   stopReplayBuffer,
 } from '../helpers/modules/replay-buffer';
 import { ExecutionContext } from 'ava';
-import { setFormDropdown } from '../helpers/webdriver/forms';
+import { useForm } from '../helpers/modules/forms';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -38,16 +38,17 @@ async function recordHighlight(
 
 async function toggleReplayBuffer(advanced: boolean = false) {
   await showSettingsWindow('Output', async () => {
+    const { setDropdownInputValue } = useForm('Recording');
+
     if (advanced) {
-      await setFormDropdown('Output Mode', 'Advanced');
+      await setDropdownInputValue('Mode', 'Advanced');
       await clickButton('Replay Buffer');
       await click(await select('div[data-name="RecRB"]'));
     } else {
-      await setFormDropdown('Output Mode', 'Simple');
+      await setDropdownInputValue('Mode', 'Simple');
       await click('label=Enable Replay Buffer');
     }
 
-    await sleep(3000);
     await clickButton('Done');
     await focusMain();
   });

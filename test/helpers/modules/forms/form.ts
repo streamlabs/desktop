@@ -95,6 +95,17 @@ export function useForm(name?: string) {
   }
 
   /**
+   * Select an option in a select component (aka a dropdown)
+   * @remark This is essentially a shorthand for `fillForm({ [name]: value })` specifically for dropdowns
+   * so that it is easier to determine how to set the value of the dropdown when writing tests
+   * @param name - property name of the dropdown option
+   * @param value - value of the dropdown option
+   */
+  async function setDropdownInputValue(name: string, value: string) {
+    await fillForm({ [name]: value });
+  }
+
+  /**
    * Apply a callback for each input element in the form
    * Returns an array of callback results
    *
@@ -217,6 +228,7 @@ export function useForm(name?: string) {
     readForm,
     readFields,
     fillForm,
+    setDropdownInputValue,
     assertFormContains,
     assertInputOptions,
     getInput,

@@ -1,7 +1,7 @@
 // Tools for dealing with forms in webdriver
 
 import { TExecutionContext } from './index';
-import { getClient, waitForDisplayed, select } from '../modules/core';
+import { getClient } from '../modules/core';
 
 export async function setFormInput(label: string, value: string, index = 0) {
   const $el = (await getClient().$$(`label=${label}`))[index];
@@ -33,14 +33,6 @@ export async function clickFormInput(t: TExecutionContext, label: string, index 
   const $input = await (await $el.$('../..')).$('input');
 
   await $input.click();
-}
-
-export async function setFormDropdown(label: string, value: string, index = 0) {
-  await waitForDisplayed(`[data-title="${label}"]`);
-  const $el = await select(`[data-title="${label}"]`);
-  $el.click();
-  const option = await select(`div=${value}`);
-  await option.click();
 }
 
 // Percent is a value between 0 and 1
