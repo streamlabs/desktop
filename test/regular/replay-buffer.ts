@@ -6,7 +6,13 @@ import {
   setTemporaryRecordingPath,
   showSettingsWindow,
 } from '../helpers/modules/settings/settings';
-import { click, clickButton, focusMain, isDisplayed, select } from '../helpers/modules/core';
+import {
+  clickButton,
+  clickCheckbox,
+  clickTab,
+  focusMain,
+  isDisplayed,
+} from '../helpers/modules/core';
 import {
   saveReplayBuffer,
   startReplayBuffer,
@@ -38,17 +44,16 @@ async function recordHighlight(
 
 async function toggleReplayBuffer(advanced: boolean = false) {
   await showSettingsWindow('Output', async () => {
-    const { setDropdownInputValue } = useForm('Recording');
+    const { setDropdownInputValue } = useForm('Mode');
 
     if (advanced) {
       await setDropdownInputValue('Mode', 'Advanced');
-      await clickButton('Replay Buffer');
-      await click(await select('div[data-name="RecRB"]'));
+      await clickTab('Replay Buffer');
     } else {
       await setDropdownInputValue('Mode', 'Simple');
-      await click('label=Enable Replay Buffer');
     }
 
+    await clickCheckbox('RecRB');
     await clickButton('Done');
     await focusMain();
   });
