@@ -91,10 +91,12 @@ export class ScenesModule extends Module {
       this.sceneRemoved.next(sceneData.id);
     });
     this.scenesService.itemAdded.subscribe(itemData => {
-      this.sceneItemAdded.next(this.serializeNode(itemData as TSceneNode));
+      const item = this.scenesService.views.getSceneItem(itemData.id);
+      this.sceneItemAdded.next(this.serializeNode(item));
     });
     this.scenesService.itemUpdated.subscribe(itemData => {
-      this.sceneItemUpdated.next(this.serializeNode(itemData as TSceneNode));
+      const item = this.scenesService.views.getSceneItem(itemData.id);
+      this.sceneItemUpdated.next(this.serializeNode(item));
     });
     this.scenesService.itemRemoved.subscribe(itemData => {
       this.sceneItemRemoved.next(itemData.id);
@@ -236,8 +238,7 @@ export class ScenesModule extends Module {
         childrenIds: node.childrenIds,
         display: node?.display,
       } as ISceneItemFolder;
-    }
-    if (node.isItem()) {
+    } else if (node.isItem()) {
       return {
         id: node.id,
         type: ESceneNodeType.SceneItem,
