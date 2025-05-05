@@ -672,6 +672,7 @@ export class YoutubeService
     // TODO: this should be done in parallel with the above once we're confident enough
     // TODO: verticalBroadcast is never cleared, we're relying on `extraOutputs`
     if (
+      params.title &&
       this.dualOutputService.views.dualOutputMode &&
       this.dualOutputService.views.hasExtraOutput('youtube') &&
       this.state.verticalBroadcast?.id
