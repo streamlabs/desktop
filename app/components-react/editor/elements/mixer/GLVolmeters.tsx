@@ -361,7 +361,9 @@ class GLVolmetersController {
     this.gl.clearColor(bg.r / 255, bg.g / 255, bg.b / 255, 1);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
-    if (this.canvasWidth < 0 || this.canvasHeight < 0 || !this.sourcesOrder) return;
+    if (this.canvasWidth < 0 || this.canvasHeight < 0 || !this.sourcesOrder) {
+      return;
+    }
 
     this.gl.viewport(0, 0, this.canvasWidth, this.canvasHeight);
 

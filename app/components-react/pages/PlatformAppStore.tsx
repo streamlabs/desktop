@@ -86,17 +86,18 @@ export default function PlatformAppStore(p: {
   }
 
   if (!platformAppsUrl) return <></>;
+
+  const heightDiff =
+    currentUrl.includes('installed-apps') && HighlighterService.views.highlighterVersion !== ''
+      ? '72'
+      : '0';
+
   return (
     <>
       <BrowserView
         className={cx(styles.browserView, p.className)}
         style={{
-          height: `calc(100% - ${
-            currentUrl.includes('installed-apps') &&
-            HighlighterService.views.highlighterVersion !== ''
-              ? '72'
-              : '0'
-          }px)`,
+          height: `calc(100% - ${heightDiff}px)`,
           position: 'absolute',
           top: 0,
           right: 0,
