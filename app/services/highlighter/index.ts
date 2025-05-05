@@ -124,7 +124,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     dismissedTutorial: false,
     error: '',
     useAiHighlighter: false,
-    highlightedStreams: {},
+    highlightedStreams: [],
+    highlightedStreamsDictionary: {},
     updaterProgress: 0,
     isUpdaterRunning: false,
     highlighterVersion: '',
@@ -140,6 +141,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       ...this.defaultState,
       clips: state.clips,
       highlightedStreams: state.highlightedStreams,
+      highlightedStreamsDictionary: state.highlightedStreamsDictionary,
       video: state.video,
       audio: state.audio,
       transition: state.transition,
@@ -260,17 +262,17 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
   @mutation()
   ADD_HIGHLIGHTED_STREAM(streamInfo: IHighlightedStream) {
-    Vue.set(this.state.highlightedStreams, streamInfo.id, streamInfo);
+    Vue.set(this.state.highlightedStreamsDictionary, streamInfo.id, streamInfo);
   }
 
   @mutation()
   UPDATE_HIGHLIGHTED_STREAM(updatedStreamInfo: IHighlightedStream) {
-    Vue.set(this.state.highlightedStreams, updatedStreamInfo.id, updatedStreamInfo);
+    Vue.set(this.state.highlightedStreamsDictionary, updatedStreamInfo.id, updatedStreamInfo);
   }
 
   @mutation()
   REMOVE_HIGHLIGHTED_STREAM(id: string) {
-    Vue.delete(this.state.highlightedStreams, id);
+    Vue.delete(this.state.highlightedStreamsDictionary, id);
   }
 
   @mutation()
@@ -304,10 +306,12 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         this.state &&
         this.state.highlightedStreams &&
         Array.isArray(this.state.highlightedStreams) &&
-        this.state.highlightedStreams.length > 0
+        this.state.highlightedStreams.length > 0 &&
+        Object.keys(this.state.highlightedStreamsDictionary).length === 0
       ) {
         console.info('Migrating highlighted streams from array to dictionary structure');
 
+        // Convert the array to a dictionary
         const streamsDict = this.state.highlightedStreams.reduce((dict, stream) => {
           if (stream && stream.id) {
             dict[stream.id] = stream;
@@ -315,19 +319,13 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           return dict;
         }, {} as Dictionary<IHighlightedStream>);
 
-        this.state.highlightedStreams = streamsDict;
-      } else if (
-        this.state &&
-        this.state.highlightedStreams &&
-        !Array.isArray(this.state.highlightedStreams)
-      ) {
-        // Already migrated, nothing to do
+        this.state.highlightedStreamsDictionary = streamsDict;
       } else {
-        this.state.highlightedStreams = {};
+        // Already migrated, nothing to do
       }
     } catch (error: unknown) {
       console.error('Error during highlightedStreams migration:', error);
-      this.state.highlightedStreams = this.state.highlightedStreams || {};
+      this.state.highlightedStreamsDictionary = this.state.highlightedStreamsDictionary || {};
     }
   }
 

@@ -25,14 +25,14 @@ export class HighlighterViews extends ViewHandler<IHighlighterState> {
    * Returns highlighted streams as an array (for backward compatibility)
    */
   get highlightedStreams() {
-    return Object.values(this.state.highlightedStreams);
+    return Object.values(this.state.highlightedStreamsDictionary);
   }
 
   /**
    * Returns highlighted streams as a dictionary for faster lookups
    */
   get highlightedStreamsDictionary() {
-    return this.state.highlightedStreams;
+    return this.state.highlightedStreamsDictionary;
   }
 
   /**
