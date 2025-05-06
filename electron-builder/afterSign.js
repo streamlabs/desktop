@@ -4,7 +4,7 @@ const cp = require('child_process');
 const path = require('path');
 const os = require('os');
 
-async function notarizeMac() {
+async function notarizeMac(context) {
   if (process.env.SLOBS_NO_NOTARIZE) return;
   if (process.platform !== 'darwin') return;
 
@@ -45,7 +45,7 @@ async function afterPackWin() {
 
 exports.default = async function afterSign(context) {
   if (process.platform === 'darwin') {
-    await notarizeMac();
+    await notarizeMac(context);
   }
 
   if (process.platform === 'win32') {
