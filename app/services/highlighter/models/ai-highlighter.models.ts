@@ -14,6 +14,8 @@ interface IImportModalConfig {
   backgroundColor: string;
   accentColor: string;
   artwork: string;
+  verticalExampleVideo?: string;
+  horizontalExampleVideo?: string;
 }
 export interface IGameConfig {
   name: EGame;
