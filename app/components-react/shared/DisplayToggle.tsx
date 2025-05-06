@@ -7,7 +7,6 @@ import { useVuex } from 'components-react/hooks';
 import { $t } from 'services/i18n';
 import styles from './DisplayToggle.m.less';
 import { TDisplayType } from 'services/settings-v2';
-import { active } from 'sortablejs';
 
 interface IDisplayToggle {
   className?: string;
@@ -17,6 +16,7 @@ interface IDisplayToggle {
   placement?: TTipPosition;
   iconSize?: number;
   onClick?: () => void;
+  disabled?: boolean;
 }
 
 export const DisplayToggle = forwardRef((p: IDisplayToggle, ref) => {
@@ -52,6 +52,12 @@ export const DisplayToggle = forwardRef((p: IDisplayToggle, ref) => {
     return v.verticalActive && !v.selectiveRecording;
   }, [v.verticalActive, controlled, v.selectiveRecording, p.display]);
 
+  const verticalDisabled = useMemo(() => {
+    if (p?.disabled) return true;
+    if (controlled) return false;
+    return v.selectiveRecording;
+  }, [v.selectiveRecording]);
+
   const horizontalTooltip = useMemo(() => {
     if (controlled) {
       return $t('Toggle horizontal display.');
@@ -61,17 +67,16 @@ export const DisplayToggle = forwardRef((p: IDisplayToggle, ref) => {
   }, [horizontalActive, controlled]);
 
   const verticalTooltip = useMemo(() => {
+    if (verticalDisabled) {
+      return $t('Toggle Dual Output mode for vertical recording.');
+    }
+
     if (controlled) {
       return $t('Toggle vertical display.');
     }
 
     return verticalActive ? $t('Hide vertical display.') : $t('Show vertical display.');
   }, [v.verticalActive, controlled]);
-
-  const verticalDisabled = useMemo(() => {
-    if (controlled) return false;
-    return v.selectiveRecording;
-  }, [v.selectiveRecording]);
 
   function showToggleDisplayErrorMessage() {
     message.error({
@@ -114,10 +119,16 @@ export const DisplayToggle = forwardRef((p: IDisplayToggle, ref) => {
         title={horizontalTooltip}
         className={styles.displayToggle}
         placement={placement}
+        disabled={p?.disabled}
       >
         <i
           id="horizontal-display-toggle"
-          onClick={() => {
+          onClick={e => {
+            if (p?.disabled) {
+              e.stopPropagation();
+              return;
+            }
+
             if (!controlled && v.isMidStreamMode) {
               showToggleDisplayErrorMessage();
             } else if (!controlled && v.studioMode && v.verticalActive) {
@@ -138,11 +149,15 @@ export const DisplayToggle = forwardRef((p: IDisplayToggle, ref) => {
         title={verticalTooltip}
         className={styles.displayToggle}
         placement={placement}
-        disabled={verticalDisabled}
       >
         <i
           id="vertical-display-toggle"
-          onClick={() => {
+          onClick={e => {
+            if (verticalDisabled) {
+              e.stopPropagation();
+              return;
+            }
+
             if (!controlled && v.isMidStreamMode) {
               showToggleDisplayErrorMessage();
             } else if (!controlled && v.studioMode && v.horizontalActive) {
@@ -155,7 +170,7 @@ export const DisplayToggle = forwardRef((p: IDisplayToggle, ref) => {
           }}
           className={cx('icon-phone-case icon-button icon-button--lg', {
             [styles.active]: verticalActive,
-            [styles.disabled]: v.selectiveRecording,
+            [styles.disabled]: verticalDisabled,
           })}
           style={{ fontSize: `${iconSize}px` }}
         />

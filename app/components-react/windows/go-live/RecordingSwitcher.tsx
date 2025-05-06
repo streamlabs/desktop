@@ -13,6 +13,7 @@ interface IRecordingSettingsProps {
 }
 export default function RecordingSwitcher(p: IRecordingSettingsProps) {
   const v = useVuex(() => ({
+    isDualOutputMode: Services.DualOutputService.views.dualOutputMode,
     recordWhenStreaming: Services.StreamSettingsService.views.settings.recordWhenStreaming,
   }));
 
@@ -32,9 +33,10 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
         style={{ marginRight: '10px' }}
         label={$t('Record Stream in')}
         layout="horizontal"
+        checked
       />
 
-      <DisplayToggle className={styles.recordingDisplay} />
+      <DisplayToggle className={styles.recordingDisplay} disabled={!v.isDualOutputMode} />
       {$t('format')}
     </div>
   );
