@@ -67,7 +67,7 @@ export const DisplayToggle = forwardRef((p: IDisplayToggle, ref) => {
   }, [horizontalActive, controlled]);
 
   const verticalTooltip = useMemo(() => {
-    if (verticalDisabled) {
+    if (p?.disabled) {
       return $t('Toggle Dual Output mode for vertical recording.');
     }
 
