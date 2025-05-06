@@ -267,6 +267,22 @@ const PUBG_CONFIG: IGameConfig = {
   },
 };
 
+const RAINBOW_SIX_SIEGE: IGameConfig = {
+  name: EGame.RAINBOW_SIX_SIEGE,
+  label: "Tom Clancy's Rainbow Six Siege",
+  gameModes: '',
+  thumbnail: null,
+  state: EGameState.INTERNAL,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#b3bac5',
+    artwork: `${heroPath}${EGame.RAINBOW_SIX_SIEGE}.png`,
+    backgroundColor: '#e04f3c',
+  },
+};
+
 const UNSET_CONFIG: IGameConfig = {
   name: EGame.UNSET,
   label: 'unset',
@@ -290,6 +306,7 @@ const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.COUNTER_STRIKE_2]: COUNTER_STRIKE_2_CONFIG,
   [EGame.APEX_LEGENDS]: APEX_LEGENDS_CONFIG,
   [EGame.PUBG]: PUBG_CONFIG,
+  [EGame.RAINBOW_SIX_SIEGE]: RAINBOW_SIX_SIEGE,
   [EGame.UNSET]: UNSET_CONFIG,
 };
 
