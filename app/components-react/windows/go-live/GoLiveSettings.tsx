@@ -4,7 +4,7 @@ import Scrollable from 'components-react/shared/Scrollable';
 import { Services } from 'components-react/service-provider';
 import { useGoLiveSettings } from './useGoLiveSettings';
 import { $t } from 'services/i18n';
-import { Row, Col } from 'antd';
+import { Row, Col, Divider } from 'antd';
 import { Section } from './Section';
 import PlatformSettings from './PlatformSettings';
 import TwitterInput from './Twitter';
@@ -17,7 +17,7 @@ import DualOutputToggle from 'components-react/shared/DualOutputToggle';
 import { DestinationSwitchers } from './DestinationSwitchers';
 import AddDestinationButton from 'components-react/shared/AddDestinationButton';
 import cx from 'classnames';
-import RecordingSettings from './RecordingSettings';
+import RecordingSwitcher from './RecordingSwitcher';
 
 /**
  * Renders settings for starting the stream
@@ -78,7 +78,9 @@ export default function GoLiveSettings() {
   const shouldShowAddDestButton = canAddDestinations;
 
   const shouldShowPrimaryChatSwitcher = hasMultiplePlatforms;
-  const shouldShowRecordingSettings = isDualOutputMode;
+  // TODO WIP: row heights for left column
+  const topRowHeight = isDualOutputMode ? 60 : 75;
+  const bottomRowHeight = 100 - topRowHeight;
 
   return (
     <Row gutter={16} className={styles.settingsRow}>
@@ -88,7 +90,7 @@ export default function GoLiveSettings() {
           span={8}
           className={cx(styles.leftColumn, { [styles.columnPadding]: !isDualOutputMode })}
         >
-          <Scrollable style={{ height: '65%' }}>
+          <Scrollable style={{ height: `${topRowHeight}%` }}>
             <DualOutputToggle
               className={cx(styles.dualOutputToggle, styles.columnPadding)}
               type="single"
@@ -101,16 +103,21 @@ export default function GoLiveSettings() {
             {shouldShowAddDestButton && !showSelector && <AddDestinationButton />}
           </Scrollable>
 
-          {shouldShowPrimaryChatSwitcher && (
-            <PrimaryChatSwitcher
-              className={styles.columnPadding}
-              enabledPlatforms={enabledPlatforms}
-              onSetPrimaryChat={setPrimaryChat}
-              primaryChat={primaryChat}
-            />
-          )}
+          <Divider style={{ margin: '0px' }} />
+          <Scrollable style={{ height: `${bottomRowHeight}%` }}>
+            <div className={styles.columnPadding}>
+              {shouldShowPrimaryChatSwitcher && (
+                <PrimaryChatSwitcher
+                  enabledPlatforms={enabledPlatforms}
+                  onSetPrimaryChat={setPrimaryChat}
+                  primaryChat={primaryChat}
+                  divider={false}
+                />
+              )}
 
-          {shouldShowRecordingSettings && <RecordingSettings />}
+              <RecordingSwitcher />
+            </div>
+          </Scrollable>
         </Col>
       )}
 

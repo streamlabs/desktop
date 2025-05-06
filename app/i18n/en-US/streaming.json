@@ -297,5 +297,6 @@
   "Video Transmission": "Video Transmission",
   "Optimized Settings": "Optimized Settings",
   "%{platform} Setup Error: Toggling off %{platform} to bypass and go live.": "%{platform} Setup Error: Toggling off %{platform} to bypass and go live.",
-  "Recording Audio Encoder": "Recording Audio Encoder"
+  "Recording Audio Encoder": "Recording Audio Encoder",
+  "Record Stream": "Record Stream"
 }

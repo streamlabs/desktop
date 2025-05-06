@@ -1,31 +1,27 @@
-@import './GoLive.m.less';
-
-.stream-options {
-  display: flex;
-  flex-direction: column;
-  align-self: flex-end;
-  width: 100%;
-}
-
-.settings-row {
-  width: 100%;
-  margin: 0px !important;
-  padding: 15px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  align-self: flex-end;
-
-  :global(.ant-col) {
-    padding: 0px;
-  }
-}
-
-.switcher-label {
-  flex-grow: 1;
-}
+@import '../../../styles/index.less';
 
 .recording-switcher {
+  .radius();
+
+  background: var(--dropdown-bg);
+}
+
+.recording-toggle-container {
+  display: flex;
+  padding: 15px;
+}
+
+.recording-icon {
+  color: var(--red);
+  font-size: 18px;
+  margin: 3px 10px 0px 0px;
+}
+
+.recording-label {
+  flex: 1;
+}
+
+.recording-toggle {
   justify-self: flex-end;
   color: var(--background);
 
@@ -63,5 +59,27 @@
 
   &:global(.ant-row.ant-form-item) {
     margin-bottom: 0px !important;
+  }
+}
+
+.card-divider {
+  &:global(.ant-divider) {
+    margin: 0px !important;
+    border-top: 1px solid var(--icon);
+  }
+}
+
+.recording-display {
+  padding: 12px 15px;
+  margin-bottom: 0px;
+
+  &:global(.ant-form-item) {
+    padding: 12px 15px;
+    margin-bottom: 0px;
+  }
+
+  // TODO WIP: alignment for label and radio buttons
+  &:global(.ant-form-item-label) {
+    text-align: left;
   }
 }
