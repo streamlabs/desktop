@@ -17,6 +17,7 @@ import DualOutputToggle from 'components-react/shared/DualOutputToggle';
 import { DestinationSwitchers } from './DestinationSwitchers';
 import AddDestinationButton from 'components-react/shared/AddDestinationButton';
 import cx from 'classnames';
+import RecordingSettings from './RecordingSettings';
 
 /**
  * Renders settings for starting the stream
@@ -77,6 +78,7 @@ export default function GoLiveSettings() {
   const shouldShowAddDestButton = canAddDestinations;
 
   const shouldShowPrimaryChatSwitcher = hasMultiplePlatforms;
+  const shouldShowRecordingSettings = isDualOutputMode;
 
   return (
     <Row gutter={16} className={styles.settingsRow}>
@@ -86,7 +88,7 @@ export default function GoLiveSettings() {
           span={8}
           className={cx(styles.leftColumn, { [styles.columnPadding]: !isDualOutputMode })}
         >
-          <Scrollable style={{ height: '81%' }}>
+          <Scrollable style={{ height: '65%' }}>
             <DualOutputToggle
               className={cx(styles.dualOutputToggle, styles.columnPadding)}
               type="single"
@@ -107,6 +109,8 @@ export default function GoLiveSettings() {
               primaryChat={primaryChat}
             />
           )}
+
+          {shouldShowRecordingSettings && <RecordingSettings />}
         </Col>
       )}
 

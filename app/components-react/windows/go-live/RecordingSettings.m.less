@@ -1,0 +1,67 @@
+@import './GoLive.m.less';
+
+.stream-options {
+  display: flex;
+  flex-direction: column;
+  align-self: flex-end;
+  width: 100%;
+}
+
+.settings-row {
+  width: 100%;
+  margin: 0px !important;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  align-self: flex-end;
+
+  :global(.ant-col) {
+    padding: 0px;
+  }
+}
+
+.switcher-label {
+  flex-grow: 1;
+}
+
+.recording-switcher {
+  justify-self: flex-end;
+  color: var(--background);
+
+  :global(.ant-form-item-label) {
+    display: none;
+  }
+
+  :global(.ant-form-item-control-input) {
+    min-height: unset;
+  }
+
+  :global(.ant-switch-small) {
+    min-width: 36px;
+    height: 21px;
+    line-height: 21px;
+  }
+
+  :global(.ant-switch-small .ant-switch-handle) {
+    width: 15px;
+    height: 15px;
+    top: 3px;
+    left: 3px;
+  }
+
+  :global(.ant-switch-small.ant-switch-checked .ant-switch-handle) {
+    left: calc(100% - 15px - 3px) !important;
+  }
+
+  :global(.ant-switch-inner i) {
+    color: var(--background);
+    display: flex;
+    align-self: center;
+    padding-right: 2px;
+  }
+
+  &:global(.ant-row.ant-form-item) {
+    margin-bottom: 0px !important;
+  }
+}
