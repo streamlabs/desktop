@@ -172,59 +172,58 @@ export function ImportStreamModal({
                 </h2>
                 <h2 className={styles.hypeContentSubheadline}>Dominate, showcase, inspire!</h2>
               </div>
-              <div style={{ position: 'relative' }}>
-                <div className={styles.plattformIcon} style={{ top: '42px', left: '160px' }}>
-                  <YouTubeLogo />
-                </div>
-                <div className={styles.plattformIcon} style={{ top: '182px', left: '32px' }}>
-                  <DiscordLogo />
-                </div>
+              {gameConfig?.importModalConfig?.horizontalExampleVideo &&
+                gameConfig?.importModalConfig?.verticalExampleVideo && (
+                  <div style={{ position: 'relative' }}>
+                    <div className={styles.plattformIcon} style={{ top: '42px', left: '160px' }}>
+                      <YouTubeLogo />
+                    </div>
+                    <div className={styles.plattformIcon} style={{ top: '182px', left: '32px' }}>
+                      <DiscordLogo />
+                    </div>
 
-                <div className={styles.plattformIcon} style={{ top: '123px', left: '290px' }}>
-                  <TikTokLogo />
-                </div>
+                    <div className={styles.plattformIcon} style={{ top: '123px', left: '290px' }}>
+                      <TikTokLogo />
+                    </div>
 
-                <div className={styles.plattformIcon} style={{ top: '283px', left: '153px' }}>
-                  <InstagramLogo />
-                </div>
-                <div
-                  className={styles.horizontalVideo}
-                  style={{
-                    backgroundColor: gameConfig?.importModalConfig?.backgroundColor,
-                    borderColor: gameConfig?.importModalConfig?.accentColor,
-                    boxShadow: `0px 0px 42px -4px ${gameConfig?.importModalConfig?.accentColor}20`,
-                  }}
-                >
-                  {gameConfig?.importModalConfig?.horizontalExampleVideo && (
-                    <video
-                      muted
-                      autoPlay
-                      loop
-                      style={{ width: '100%' }}
-                      src={gameConfig.importModalConfig.horizontalExampleVideo}
-                    ></video>
-                  )}
-                </div>
-                <div
-                  className={styles.verticalVideo}
-                  style={{
-                    backgroundColor: gameConfig?.importModalConfig?.backgroundColor,
-                    borderColor: gameConfig?.importModalConfig?.accentColor,
-                    boxShadow: `0px 0px 42px -4px ${gameConfig?.importModalConfig?.accentColor}20`,
-                  }}
-                >
-                  {' '}
-                  {gameConfig?.importModalConfig?.verticalExampleVideo && (
-                    <video
-                      muted
-                      autoPlay
-                      loop
-                      style={{ height: '100%' }}
-                      src={gameConfig.importModalConfig.verticalExampleVideo}
-                    ></video>
-                  )}
-                </div>
-              </div>
+                    <div className={styles.plattformIcon} style={{ top: '283px', left: '153px' }}>
+                      <InstagramLogo />
+                    </div>
+                    <div
+                      className={styles.horizontalVideo}
+                      style={{
+                        backgroundColor: gameConfig?.importModalConfig?.backgroundColor,
+                        borderColor: gameConfig?.importModalConfig?.accentColor,
+                        boxShadow: `0px 0px 42px -4px ${gameConfig?.importModalConfig?.accentColor}30`,
+                      }}
+                    >
+                      <video
+                        muted
+                        autoPlay
+                        loop
+                        style={{ width: '100%' }}
+                        src={gameConfig.importModalConfig.horizontalExampleVideo}
+                      ></video>
+                    </div>
+                    <div
+                      className={styles.verticalVideo}
+                      style={{
+                        backgroundColor: gameConfig?.importModalConfig?.backgroundColor,
+                        borderColor: gameConfig?.importModalConfig?.accentColor,
+                        boxShadow: `0px 0px 42px -4px ${gameConfig?.importModalConfig?.accentColor}30`,
+                      }}
+                    >
+                      {' '}
+                      <video
+                        muted
+                        autoPlay
+                        loop
+                        style={{ height: '100%' }}
+                        src={gameConfig.importModalConfig.verticalExampleVideo}
+                      ></video>
+                    </div>
+                  </div>
+                )}
             </div>
             <div></div>
             <div></div>
