@@ -50,6 +50,7 @@ export default class MainWindow extends TsxComponent {
               className={cx(styles.mainLoading, this.theme, {
                 [styles.initialLoading]: !this.uiReady,
               })}
+              data-name="main-loading"
             >
               <Loader componentProps={{ className: this.theme }} />
             </div>
