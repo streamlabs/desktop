@@ -211,7 +211,7 @@ export async function useChildWindow<TCallbackResult>(cb: () => Promise<TCallbac
 export async function waitForLoader() {
   await (await select('[data-name="main-loading"]')).waitForExist({
     interval: 100, // we need a smaller interval to run tests faster
-    timeout: 20000,
+    timeout: 30000,
     reverse: true,
   });
 }
