@@ -1,85 +1,52 @@
 @import '../../../styles/index.less';
 
 .recording-switcher {
-  .radius();
-
-  background: var(--dropdown-bg);
-}
-
-.recording-toggle-container {
-  display: flex;
-  padding: 15px;
-}
-
-.recording-icon {
-  color: var(--red);
-  font-size: 18px;
-  margin: 3px 10px 0px 0px;
-}
-
-.recording-label {
   flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 }
 
 .recording-toggle {
-  justify-self: flex-end;
-  color: var(--background);
+  font-weight: bold;
 
-  :global(.ant-form-item-label) {
-    display: none;
-  }
+  // :global(.ant-form-item-label) {
+  //   display: none;
+  // }
 
-  :global(.ant-form-item-control-input) {
-    min-height: unset;
-  }
+  // :global(.ant-form-item-control-input) {
+  //   min-height: unset;
+  // }
 
-  :global(.ant-switch-small) {
-    min-width: 36px;
-    height: 21px;
-    line-height: 21px;
-  }
+  // :global(.ant-switch-small) {
+  //   min-width: 36px;
+  //   height: 21px;
+  //   line-height: 21px;
+  // }
 
-  :global(.ant-switch-small .ant-switch-handle) {
-    width: 15px;
-    height: 15px;
-    top: 3px;
-    left: 3px;
-  }
+  // :global(.ant-switch-small .ant-switch-handle) {
+  //   width: 15px;
+  //   height: 15px;
+  //   top: 3px;
+  //   left: 3px;
+  // }
 
-  :global(.ant-switch-small.ant-switch-checked .ant-switch-handle) {
-    left: calc(100% - 15px - 3px) !important;
-  }
+  // :global(.ant-switch-small.ant-switch-checked .ant-switch-handle) {
+  //   left: calc(100% - 15px - 3px) !important;
+  // }
 
-  :global(.ant-switch-inner i) {
-    color: var(--background);
-    display: flex;
-    align-self: center;
-    padding-right: 2px;
-  }
+  // :global(.ant-switch-inner i) {
+  //   color: var(--background);
+  //   display: flex;
+  //   align-self: center;
+  //   padding-right: 2px;
+  // }
 
-  &:global(.ant-row.ant-form-item) {
-    margin-bottom: 0px !important;
-  }
-}
-
-.card-divider {
-  &:global(.ant-divider) {
-    margin: 0px !important;
-    border-top: 1px solid var(--icon);
-  }
+  // &:global(.ant-row.ant-form-item) {
+  //   margin-bottom: 0px !important;
+  // }
 }
 
 .recording-display {
-  padding: 12px 15px;
-  margin-bottom: 0px;
-
-  &:global(.ant-form-item) {
-    padding: 12px 15px;
-    margin-bottom: 0px;
-  }
-
-  // TODO WIP: alignment for label and radio buttons
-  &:global(.ant-form-item-label) {
-    text-align: left;
-  }
+  margin-right: 10px;
 }

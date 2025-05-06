@@ -13,7 +13,6 @@ interface IPrimaryChatSwitcherProps {
   style?: React.CSSProperties;
   className?: string | undefined;
   layout?: 'vertical' | 'horizontal';
-  divider?: boolean;
 }
 
 export default function PrimaryChatSwitcher({
@@ -23,7 +22,6 @@ export default function PrimaryChatSwitcher({
   style = {},
   layout = 'vertical',
   className = undefined,
-  divider = true,
 }: IPrimaryChatSwitcherProps) {
   const primaryChatOptions = useMemo(
     () =>
@@ -39,7 +37,7 @@ export default function PrimaryChatSwitcher({
 
   return (
     <div data-test="primary-chat-switcher" style={style} className={className}>
-      {divider && <Divider style={{ marginBottom: '8px' }} />}
+      <Divider style={{ marginBottom: '8px' }} />
       <Form layout={layout}>
         <ListInput
           name="primaryChat"

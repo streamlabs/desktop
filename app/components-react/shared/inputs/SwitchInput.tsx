@@ -38,7 +38,7 @@ export const SwitchInput = InputComponent((p: TSwitchInputProps) => {
           {...inputAttrs}
           ref={p.inputRef}
           className={cx(styles.horizontal, styles.horizontalItem)}
-          checkedChildren={<i className="check-mark" />}
+          checkedChildren={<i className="icon-check-mark" />}
         />
         {!p.nolabel && p.label}
       </Form.Item>

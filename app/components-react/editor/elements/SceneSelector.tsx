@@ -1,7 +1,6 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef } from 'react';
 import cx from 'classnames';
-import { Dropdown, Tooltip as AntdTooltip, Tree, message } from 'antd';
-import Tooltip from 'components-react/shared/Tooltip';
+import { Dropdown, Tooltip, Tree } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import * as remote from '@electron/remote';
 import { Menu } from 'util/menus/Menu';
@@ -10,6 +9,7 @@ import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
 import HelpTip from 'components-react/shared/HelpTip';
 import Scrollable from 'components-react/shared/Scrollable';
+import { DisplayToggle } from 'components-react/shared/DisplayToggle';
 import { useTree, IOnDropInfo } from 'components-react/hooks/useTree';
 import { $t } from 'services/i18n';
 import { EDismissable } from 'services/dismissables';
@@ -17,7 +17,6 @@ import { ERenderingMode } from '../../../../obs-api';
 import styles from './SceneSelector.m.less';
 import useBaseElement from './hooks';
 import { IScene } from 'services/scenes';
-import { ISceneCollectionsManifestEntry } from 'services/scene-collections';
 
 function SceneSelector() {
   const {
@@ -32,9 +31,6 @@ function SceneSelector() {
   } = Services;
 
   const v = useVuex(() => ({
-    isHorizontal: DualOutputService.views.activeDisplays.horizontal,
-    isVertical: DualOutputService.views.activeDisplays.vertical,
-    toggleDisplay: DualOutputService.actions.toggleDisplay,
     studioMode: TransitionsService.views.studioMode,
     isMidStreamMode: StreamingService.views.isMidStreamMode,
     showDualOutput: DualOutputService.views.dualOutputMode,
@@ -56,16 +52,6 @@ function SceneSelector() {
     activeCollection: SceneCollectionsService.activeCollection,
     collections: SceneCollectionsService.collections,
   }));
-
-  const horizontalTooltip = useMemo(
-    () => (v.isHorizontal ? $t('Hide horizontal display.') : $t('Show horizontal display.')),
-    [v.isHorizontal],
-  );
-
-  const verticalTooltip = useMemo(
-    () => (v.isVertical ? $t('Hide vertical display.') : $t('Show vertical display.')),
-    [v.isVertical],
-  );
 
   function showContextMenu(info: { event: React.MouseEvent }) {
     info.event.preventDefault();
@@ -147,27 +133,6 @@ function SceneSelector() {
     setShowDropdown(false);
   }
 
-  function showStudioModeErrorMessage() {
-    message.error({
-      content: $t('Cannot toggle dual output in Studio Mode.'),
-      className: styles.toggleError,
-    });
-  }
-
-  function showToggleDisplayErrorMessage() {
-    message.error({
-      content: $t('Cannot change displays while live.'),
-      className: styles.toggleError,
-    });
-  }
-
-  function showSelectiveRecordingMessage() {
-    message.error({
-      content: $t('Selective Recording can only be used with horizontal sources.'),
-      className: styles.toggleError,
-    });
-  }
-
   const DropdownMenu = (
     <div className={cx(styles.dropdownContainer, 'react')}>
       <div className={styles.dropdownItem} onClick={manageCollections} style={{ marginTop: '6px' }}>
@@ -215,67 +180,15 @@ function SceneSelector() {
             <span className={styles.activeScene}>{activeCollection?.name}</span>
           </span>
         </Dropdown>
-        <AntdTooltip title={$t('Add a new Scene.')} placement="bottomLeft">
+        <Tooltip title={$t('Add a new Scene.')} placement="bottomLeft">
           <i className="icon-add-circle icon-button icon-button--lg" onClick={addScene} />
-        </AntdTooltip>
+        </Tooltip>
 
-        {v.showDualOutput && (
-          <Tooltip
-            id="toggle-horizontal-tooltip"
-            title={horizontalTooltip}
-            className={styles.displayToggle}
-            placement="bottomRight"
-          >
-            <i
-              id="horizontal-display-toggle"
-              onClick={() => {
-                if (v.isMidStreamMode) {
-                  showToggleDisplayErrorMessage();
-                } else if (v.studioMode && v.isVertical) {
-                  showStudioModeErrorMessage();
-                } else {
-                  v.toggleDisplay(!v.isHorizontal, 'horizontal');
-                }
-              }}
-              className={cx('icon-desktop icon-button icon-button--lg', {
-                active: v.isHorizontal,
-              })}
-            />
-          </Tooltip>
-        )}
+        {v.showDualOutput && <DisplayToggle className={styles.editorDisplayToggle} />}
 
-        {v.showDualOutput && (
-          <Tooltip
-            id="toggle-vertical-tooltip"
-            title={verticalTooltip}
-            className={styles.displayToggle}
-            placement="bottomRight"
-            disabled={v.selectiveRecording}
-          >
-            <i
-              id="vertical-display-toggle"
-              onClick={() => {
-                if (v.isMidStreamMode) {
-                  showToggleDisplayErrorMessage();
-                } else if (v.studioMode && v.isHorizontal) {
-                  showStudioModeErrorMessage();
-                } else if (v.selectiveRecording) {
-                  showSelectiveRecordingMessage();
-                } else {
-                  v.toggleDisplay(!v.isVertical, 'vertical');
-                }
-              }}
-              className={cx('icon-phone-case icon-button icon-button--lg', {
-                active: v.isVertical && !v.selectiveRecording,
-                disabled: v.selectiveRecording,
-              })}
-            />
-          </Tooltip>
-        )}
-
-        <AntdTooltip title={$t('Edit Scene Transitions.')} placement="bottomRight">
+        <Tooltip title={$t('Edit Scene Transitions.')} placement="bottomRight">
           <i className="icon-transition icon-button icon-button--lg" onClick={showTransitions} />
-        </AntdTooltip>
+        </Tooltip>
       </div>
       <Scrollable style={{ height: '100%' }} className={styles.scenesContainer}>
         <Tree
@@ -306,9 +219,9 @@ function TreeNode(p: { scene: IScene; removeScene: (scene: IScene) => void }) {
   return (
     <div className={styles.sourceTitleContainer} data-name={p.scene.name} data-role="scene">
       <span className={styles.sourceTitle}>{p.scene.name}</span>
-      <AntdTooltip title={$t('Remove Scene.')} placement="left">
+      <Tooltip title={$t('Remove Scene.')} placement="left">
         <i onClick={() => p.removeScene(p.scene)} className="icon-trash" />
-      </AntdTooltip>
+      </Tooltip>
     </div>
   );
 }
