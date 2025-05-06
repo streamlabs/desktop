@@ -72,9 +72,6 @@ class AudioViews extends ViewHandler<IAudioSourcesState> {
 export enum AudioNotificationType {
   YouAreMuted,
   NoSignalFromAudioInput,
-
-  // This should be the last element
-  ElementsCount,
 }
 
 @InitAfter('SourcesService')

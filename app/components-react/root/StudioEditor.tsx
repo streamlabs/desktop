@@ -56,7 +56,7 @@ export default function StudioEditor() {
   }, [v.showHorizontalDisplay, v.showVerticalDisplay, v.studioMode]);
 
   useEffect(() => {
-    const timeoutHandles = new Array<NodeJS.Timeout | undefined>(AudioNotificationType.ElementsCount).fill(undefined);
+    const timeoutHandles: { [key: number]: NodeJS.Timeout | undefined; } = {};
 
     const subscription = AudioService.audioNotificationUpdated.subscribe((notificationType) => {
       if (timeoutHandles[notificationType])
@@ -94,7 +94,7 @@ export default function StudioEditor() {
 
     return () => {
       subscription.unsubscribe();
-      timeoutHandles.forEach(v => clearTimeout(v));
+      Object.values(timeoutHandles).forEach(v => clearTimeout(v));
     }
   }, []);
 
