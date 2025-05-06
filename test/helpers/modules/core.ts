@@ -214,4 +214,6 @@ export async function waitForLoader() {
     timeout: 30000,
     reverse: true,
   });
+  // Wait for titlebar to show up since there is some lag in loading react components into vue
+  await (await select('[data-name="title-bar"]')).waitForExist({ timeout: 10000 });
 }

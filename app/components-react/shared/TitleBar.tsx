@@ -67,6 +67,7 @@ export default function TitleBar(props: { windowId: string; className?: string }
           [styles['titlebar-mac']]: isMac,
           [styles.titlebarError]: errorState,
         })}
+        data-name="title-bar"
       >
         {!primeTheme && !isMac && (
           <img className={styles.titlebarIcon} src={require('../../../media/images/icon.ico')} />
