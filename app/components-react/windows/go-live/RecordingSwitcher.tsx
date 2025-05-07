@@ -20,7 +20,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
   return (
     <div style={p?.style} className={cx(p?.className, styles.recordingSwitcher)}>
       <SwitchInput
-        data-name="go-live-recording-toggle"
+        name="recording-toggle"
         value={v.recordWhenStreaming}
         onChange={val =>
           Services.SettingsService.actions.setSettingValue('General', 'RecordWhenStreaming', val)

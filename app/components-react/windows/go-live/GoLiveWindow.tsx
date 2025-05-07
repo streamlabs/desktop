@@ -139,7 +139,7 @@ function ModalFooter() {
 
   return (
     <Form layout={'inline'}>
-      <RecordingSwitcher />
+      {!isDualOutputMode && <RecordingSwitcher />}
       {/* TODO handle prompt apply banner */}
       {/* {promptApply && <GoLiveBanner />} */}
       {/* CLOSE BUTTON */}
