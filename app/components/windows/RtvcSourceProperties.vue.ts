@@ -299,6 +299,7 @@ export default class RtvcSourceProperties extends SourceProperties {
   // --- update
 
   update() {
+    if (!this.draftState) return;
     this.draftState.currentIndex = this.currentIndex;
     const scenes = this.draftState.scenes ?? {};
     const sceneId = this.scenesService.activeScene.id;

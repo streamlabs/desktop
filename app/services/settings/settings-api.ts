@@ -6,9 +6,27 @@ export interface ISettingsSubCategory {
   parameters: TObsFormData;
 }
 
+export type SettingsCategory =
+  | 'General'
+  | 'Stream'
+  | 'Output'
+  | 'Audio'
+  | 'Video'
+  | 'Hotkeys'
+  | 'Advanced'
+  | 'Comment'
+  | 'SpeechEngine'
+  | 'Developer'
+  | 'Scene Collections'
+  | 'API'
+  | 'Notifications'
+  | 'Appearance'
+  | 'Experimental'
+  | 'StreamSecond';
+
 export interface ISettingsServiceApi {
-  getCategories(): string[];
-  getSettingsFormData(categoryName: string): ISettingsSubCategory[];
-  setSettings(categoryName: string, settingsData: ISettingsSubCategory[]): void;
-  showSettings(categoryName?: string): void;
+  getCategories(): SettingsCategory[];
+  getSettingsFormData(categoryName: SettingsCategory): ISettingsSubCategory[];
+  setSettings(categoryName: SettingsCategory, settingsData: ISettingsSubCategory[]): void;
+  showSettings(categoryName?: SettingsCategory): void;
 }
