@@ -1,9 +1,11 @@
+import { sleep } from '../../util/sleep';
 import { PersistentStatefulService } from '../core/persistent-stateful-service';
 import { mutation } from '../core/stateful-service';
 import { NamedPipeClient } from './NamedPipeClient';
 
 type Primitive = string | number | boolean;
 
+/** サブストリームの設定状態を表すインターフェース */
 interface ISubStreamState {
   url: string;
   key: string;
@@ -14,6 +16,7 @@ interface ISubStreamState {
   sync: boolean;
 }
 
+/** エンコーダータイプの列挙結果を表すインターフェース */
 interface EnumEncoderTypesResult {
   encoders: {
     video: { id: string; name: string }[];
@@ -21,6 +24,7 @@ interface EnumEncoderTypesResult {
   };
 }
 
+/** ストリーム開始パラメータを表すインターフェース */
 export interface StartParam {
   videoId: string;
   audioId: string;
@@ -30,6 +34,7 @@ export interface StartParam {
   audio: { bitrate: number; [name: string]: Primitive };
 }
 
+/** サブストリームの状態値を表す型 */
 export declare type SubStreamStatusValue =
   | 'stopped'
   | 'stopping'
@@ -39,10 +44,13 @@ export declare type SubStreamStatusValue =
   | 'reconnected'
   | 'deactive';
 
+/** サブストリームのステータスを表すインターフェース */
 export interface SubStreamStatus {
   active: boolean;
   status: SubStreamStatusValue;
   error: string;
+  busy: boolean;
+  streaming: boolean;
   duration?: number;
   connectTime?: number;
   bytes?: number;
@@ -51,6 +59,10 @@ export interface SubStreamStatus {
   dropped?: number;
 }
 
+/**
+ * サブストリーム配信機能を管理するサービスクラス
+ * 名前付きパイプを使用して外部プロセスと通信し、サブストリームの制御を行う
+ */
 export class SubStreamService extends PersistentStatefulService<ISubStreamState> {
   client = new NamedPipeClient('\\\\.\\pipe\\NAirSubstream');
 
@@ -64,6 +76,8 @@ export class SubStreamService extends PersistentStatefulService<ISubStreamState>
     sync: false,
   };
 
+  doingCommand = false; // コマンド実行中フラグ
+
   @mutation()
   private SET_STATE(nextState: ISubStreamState) {
     this.state = nextState;
@@ -74,6 +88,10 @@ export class SubStreamService extends PersistentStatefulService<ISubStreamState>
     this.SET_STATE(nextState);
   }
 
+  /**
+   * サブストリームの配信を開始する
+   * 設定されたURLとキーを使用して配信を開始する
+   */
   async start(): Promise<void> {
     if (!this.state) this.setState(SubStreamService.defaultState);
     if (!this.state.url.startsWith('rtmp') || !this.state.key) return;
@@ -116,51 +134,71 @@ export class SubStreamService extends PersistentStatefulService<ISubStreamState>
       },
     };
 
-    if (!(await this.waitForReady(['started', 'starting']))) return;
-    await this.client.call('start', param);
+    // コマンドの連続実行防止
+    if (this.doingCommand) return;
+    this.doingCommand = true;
+    if (await this.waitForReady(false)) await this.client.call('start', param);
+    this.doingCommand = false;
   }
 
+  /**
+   * サブストリームの配信を停止する
+   */
   async stop(): Promise<void> {
-    if (!(await this.waitForReady(['stopped', 'stopping']))) return;
-    await this.client.call('stop');
+    // 連投防止
+    if (this.doingCommand) return;
+    this.doingCommand = true;
+    if (await this.waitForReady(true)) await this.client.call('stop');
+    this.doingCommand = false;
   }
 
+  /**
+   * 利用可能なエンコーダータイプの一覧を取得する
+   */
   async enumEncoderTypes(): Promise<EnumEncoderTypesResult> {
     const encoderTypes = (await this.client.call('enumEncoderTypes')) as EnumEncoderTypesResult;
     return encoderTypes;
   }
 
+  /**
+   * 現在のストリームステータスを取得する
+   */
   async status(): Promise<SubStreamStatus> {
     const streamStatus = await this.client.call('status');
-    //console.log('status:', streamStatus);
+    console.log('status:', JSON.stringify(streamStatus));
     return streamStatus as SubStreamStatus;
   }
 
-  async waitForReady(skipStates: SubStreamStatusValue[] = []): Promise<boolean> {
-    const initialStatus = await this.status();
-    if (skipStates.includes(initialStatus.status)) return false;
-
-    const maxWaitTime = 30000; // 30秒
-    const pollingInterval = 500;
-    const timeoutAt = Date.now() + maxWaitTime;
+  /**
+   * サブストリームが準備完了状態になるまで待機する
+   * @param streaming 待機する状態（true: ストリーミング中、false: 停止中）
+   * @returns 指定された状態になったかどうか
+   */
+  private async waitForReady(streaming: boolean): Promise<boolean> {
+    const timeoutAt = Date.now() + 30000; // 30秒タイムアウト
+    let status = await this.status();
 
     while (Date.now() < timeoutAt) {
-      const currentStatus = await this.status();
-      if (!['starting', 'stopping', 'reconnect'].includes(currentStatus.status)) return true;
-      await new Promise(resolve => {
-        setTimeout(resolve, pollingInterval);
-      });
+      if (status && !status.busy) return status.streaming === streaming;
+      await sleep(500); // 500ms待機
+      status = await this.status();
     }
-
     return false;
   }
 
-  // ------
+  /**
+   * 同期設定が有効な場合にサブストリーム配信を開始する
+   * メインストリームと同期して使用される
+   */
   async syncStart() {
     if (!this.state.sync) return;
     await this.start();
   }
 
+  /**
+   * 同期設定が有効な場合にサブストリーム配信を停止する
+   * メインストリームと同期して使用される
+   */
   async syncStop() {
     if (!this.state.sync) return;
     await this.stop();
