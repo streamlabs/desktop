@@ -5,7 +5,7 @@ const path = require('path');
 function signAndCheck(identity, filePath) {
   console.log(`Signing: ${filePath}`);
 
-  cp.execSync(`codesign -fs "Developer ID Application: ${identity}" "${filePath}"`);
+  cp.execSync(`codesign -fs "${identity}" "${filePath}"`);
 
   // All files need to be writable for update to succeed on mac
   console.log(`Checking Writable: ${filePath}`);
