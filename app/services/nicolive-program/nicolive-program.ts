@@ -13,10 +13,9 @@ import {
   NicoliveClient,
 } from './NicoliveClient';
 import { NicoliveFailure, openErrorDialogFromFailure } from './NicoliveFailure';
+import { OneCommeRelation } from './OneCommeRelation';
 import { ProgramSchedules } from './ResponseTypes';
 import { NicoliveProgramStateService } from './state';
-
-import { OneCommeRelation } from './OneCommeRelation';
 
 type Schedules = ProgramSchedules['data'];
 type Schedule = Schedules[0];
