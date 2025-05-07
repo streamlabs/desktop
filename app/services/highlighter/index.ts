@@ -309,8 +309,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         this.state.highlightedStreams.length > 0 &&
         Object.keys(this.state.highlightedStreamsDictionary).length === 0
       ) {
-        console.info('Migrating highlighted streams from array to dictionary structure');
-
         // Convert the array to a dictionary
         const streamsDict = this.state.highlightedStreams.reduce((dict, stream) => {
           if (stream && stream.id) {
@@ -1311,7 +1309,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   cancelHighlightGeneration(streamId: string): void {
     const stream = this.views.highlightedStreamsDictionary[streamId];
     if (stream && stream.abortController) {
-      console.log('cancelHighlightGeneration', streamId);
       stream.abortController.abort();
     }
   }
