@@ -31,7 +31,8 @@ export declare type TObsType =
   | 'OBS_PROPERTY_EDITABLE_LIST'
   | 'OBS_PROPERTY_BUTTON'
   | 'OBS_PROPERTY_BITMASK'
-  | 'OBS_INPUT_RESOLUTION_LIST';
+  | 'OBS_INPUT_RESOLUTION_LIST'
+  | 'OBS_PROPERTY_UNIT';
 
 /**
  * OBS values that frontend application can change
@@ -51,6 +52,7 @@ export interface IObsInput<TValueType> {
   visible?: boolean;
   masked?: boolean;
   type: TObsType;
+  subType?: TObsType | string;
 }
 
 export declare type TObsFormData = (IObsInput<TObsValue> | IObsListInput<TObsValue>)[];
