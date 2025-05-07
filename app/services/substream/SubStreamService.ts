@@ -30,6 +30,27 @@ export interface StartParam {
   audio: { bitrate: number; [name: string]: Primitive };
 }
 
+export declare type SubStreamStatusValue =
+  | 'stopped'
+  | 'stopping'
+  | 'started'
+  | 'starting'
+  | 'reconnect'
+  | 'reconnected'
+  | 'deactive';
+
+export interface SubStreamStatus {
+  active: boolean;
+  status: SubStreamStatusValue;
+  error: string;
+  duration?: number;
+  connectTime?: number;
+  bytes?: number;
+  frames?: number;
+  congestion?: number;
+  dropped?: number;
+}
+
 export class SubStreamService extends PersistentStatefulService<ISubStreamState> {
   client = new NamedPipeClient('\\\\.\\pipe\\NAirSubstream');
 
@@ -53,13 +74,12 @@ export class SubStreamService extends PersistentStatefulService<ISubStreamState>
     this.SET_STATE(nextState);
   }
 
-  async start() {
+  async start(): Promise<void> {
     if (!this.state) this.setState(SubStreamService.defaultState);
-
     if (!this.state.url.startsWith('rtmp') || !this.state.key) return;
 
-    const bitRange = (a: any, min: number, max: number): number =>
-      Math.max(min, Math.min(Math.floor(Number(a)), max));
+    const bitRange = (value: any, min: number, max: number): number =>
+      Math.max(min, Math.min(Math.floor(Number(value)), max));
 
     const param: StartParam = {
       videoId: this.state.videoCodec, //'obs_x264',
@@ -96,21 +116,43 @@ export class SubStreamService extends PersistentStatefulService<ISubStreamState>
       },
     };
 
+    if (!(await this.waitForReady(['started', 'starting']))) return;
     await this.client.call('start', param);
   }
 
-  async stop() {
+  async stop(): Promise<void> {
+    if (!(await this.waitForReady(['stopped', 'stopping']))) return;
     await this.client.call('stop');
   }
 
   async enumEncoderTypes(): Promise<EnumEncoderTypesResult> {
-    const result = (await this.client.call('enumEncoderTypes')) as EnumEncoderTypesResult;
-    return result;
+    const encoderTypes = (await this.client.call('enumEncoderTypes')) as EnumEncoderTypesResult;
+    return encoderTypes;
   }
 
-  async status(): Promise<{ [name: string]: any }> {
-    const result = await this.client.call('status');
-    return result;
+  async status(): Promise<SubStreamStatus> {
+    const streamStatus = await this.client.call('status');
+    //console.log('status:', streamStatus);
+    return streamStatus as SubStreamStatus;
+  }
+
+  async waitForReady(skipStates: SubStreamStatusValue[] = []): Promise<boolean> {
+    const initialStatus = await this.status();
+    if (skipStates.includes(initialStatus.status)) return false;
+
+    const maxWaitTime = 30000; // 30秒
+    const pollingInterval = 500;
+    const timeoutAt = Date.now() + maxWaitTime;
+
+    while (Date.now() < timeoutAt) {
+      const currentStatus = await this.status();
+      if (!['starting', 'stopping', 'reconnect'].includes(currentStatus.status)) return true;
+      await new Promise(resolve => {
+        setTimeout(resolve, pollingInterval);
+      });
+    }
+
+    return false;
   }
 
   // ------
@@ -118,6 +160,7 @@ export class SubStreamService extends PersistentStatefulService<ISubStreamState>
     if (!this.state.sync) return;
     await this.start();
   }
+
   async syncStop() {
     if (!this.state.sync) return;
     await this.stop();

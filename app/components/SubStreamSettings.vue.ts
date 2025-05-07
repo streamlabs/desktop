@@ -29,6 +29,8 @@ export default class SubStreamSettings extends Vue {
   showKey: boolean = false;
   showUrlTips: boolean = false;
 
+  checker?: number = undefined;
+
   defaultYoutubeUrl: string = 'rtmp://a.rtmp.youtube.com/live2';
   defaultTwitchUrl: string = 'rtmp://live-tyo.twitch.tv/app';
 
@@ -75,8 +77,8 @@ export default class SubStreamSettings extends Vue {
     this.sync = this.subStreamService.state.sync;
 
     const r = await this.subStreamService.enumEncoderTypes();
-    if (r['encoders']) {
-      this.videoCodecs = r['encoders']['video'].map(v => ({
+    if (r.encoders) {
+      this.videoCodecs = r.encoders.video.map(v => ({
         id: v.id,
         name: `${v.name} [${v.id}]`,
       }));
@@ -85,7 +87,7 @@ export default class SubStreamSettings extends Vue {
         v => v.id === this.subStreamService.state.videoCodec,
       ) ?? { id: 'obs_x264', name: 'obs_x264' };
 
-      this.audioCodecs = r['encoders']['audio'].map(v => ({
+      this.audioCodecs = r.encoders.audio.map(v => ({
         id: v.id,
         name: `${v.name} [${v.id}]`,
       }));
@@ -102,18 +104,11 @@ export default class SubStreamSettings extends Vue {
     this.stopChecker();
   }
 
-  checker?: number = undefined;
-
   async checkStatus() {
     const r = await this.subStreamService.status();
     // console.log(JSON.stringify(r, null, 2)); // Removed debug log
 
-    const error = r['error'] as string;
-    const status = r['status'] as string;
-    const frames = r['frames'] as number;
-    const dropped = r['dropped'] as number;
-
-    if (status === undefined) {
+    if (r.status === undefined) {
       this.status = 'エラー: 接続されていません';
       return;
     }
@@ -129,22 +124,22 @@ export default class SubStreamSettings extends Vue {
     };
 
     const statusParts: string[] = [];
-    if (error) statusParts.push(`エラー: ${error}`);
-    if (status) statusParts.push(`ステータス: ${statusMap[status] ?? status}`);
-    if (frames !== undefined) statusParts.push(`送出フレーム数: ${frames}`);
-    if (dropped !== undefined) statusParts.push(`ドロップ数: ${dropped}`);
+    if (r.error) statusParts.push(`エラー: ${r.error}`);
+    statusParts.push(`ステータス: ${statusMap[r.status] ?? r.status}`);
+    if (r.frames) statusParts.push(`送出フレーム数: ${r.frames}`);
+    if (r.dropped) statusParts.push(`ドロップ数: ${r.dropped}`);
 
     this.status = statusParts.length > 0 ? statusParts.join('\n') : '停止中';
   }
 
   startChecker() {
     this.checkStatus();
-    if (this.checker !== undefined) return;
+    if (this.checker) return;
     this.checker = window.setInterval(() => this.checkStatus(), 1000);
   }
 
   stopChecker() {
-    if (this.checker === undefined) return;
+    if (!this.checker) return;
     window.clearInterval(this.checker);
     this.checker = undefined;
   }
