@@ -33,7 +33,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
         style={{ marginRight: '10px' }}
         label={$t('Record Stream in')}
         layout="horizontal"
-        checked
+        checkmark
       />
 
       <DisplayToggle className={styles.recordingDisplay} disabled={!v.isDualOutputMode} />

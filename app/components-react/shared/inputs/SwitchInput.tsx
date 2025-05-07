@@ -16,7 +16,7 @@ export type TSwitchInputProps = TSlobsInputProps<
     name?: string;
     size?: 'small' | 'default';
     nolabel?: boolean;
-    checked?: boolean;
+    checkmark?: boolean;
   },
   boolean,
   SwitchProps,
@@ -38,8 +38,10 @@ export const SwitchInput = InputComponent((p: TSwitchInputProps) => {
           size={size}
           {...inputAttrs}
           ref={p.inputRef}
-          className={cx(styles.horizontal, styles.horizontalItem)}
-          checkedChildren={p?.checked ? <i className="icon-check-mark" /> : undefined}
+          className={cx(styles.horizontal, styles.horizontalItem, {
+            [styles.checkmark]: p?.checkmark,
+          })}
+          checkedChildren={p?.checkmark ? <i className="icon-check-mark" /> : undefined}
         />
         {!p.nolabel && p.label}
       </Form.Item>
