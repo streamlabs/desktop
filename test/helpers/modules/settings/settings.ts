@@ -1,9 +1,9 @@
-import { click, clickButton, focusChild, useChildWindow, useMainWindow } from '../core';
+import { click, clickButton, clickTab, focusChild, useChildWindow, useMainWindow } from '../core';
 import { mkdtemp } from 'fs-extra';
 import { tmpdir } from 'os';
 import * as path from 'path';
 import { setInputValue } from '../forms/base';
-import { setFormDropdown } from '../../webdriver/forms';
+import { useForm } from '../forms';
 
 /**
  * Open the settings window with a given category selected
@@ -40,16 +40,18 @@ export async function setTemporaryRecordingPath(
 
   if (advanced) {
     await showSettingsWindow('Output', async () => {
-      await setFormDropdown('Output Mode', 'Advanced');
-      await clickButton('Recording');
-      await setInputValue('[data-name="RecFilePath"] input', tmpDir);
+      const { setDropdownInputValue } = useForm('Mode');
+      await setDropdownInputValue('Mode', 'Advanced');
+      await clickTab('Recording');
+      await setInputValue('input[data-name="RecFilePath"]', tmpDir);
     });
   } else {
     await showSettingsWindow('Output', async () => {
-      await setInputValue('[data-name="FilePath"] input', tmpDir);
-      await clickButton('Done');
+      await setInputValue('input[data-name="FilePath"]', tmpDir);
     });
   }
+
+  await clickButton('Done');
   return tmpDir;
 }
 
