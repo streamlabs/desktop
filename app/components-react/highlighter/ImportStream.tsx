@@ -398,7 +398,7 @@ export function ImportStreamModal({
   );
 }
 
-function YouTubeLogo() {
+export function YouTubeLogo() {
   return (
     <svg width="35" height="28" viewBox="0 0 35 28" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect
@@ -419,7 +419,7 @@ function YouTubeLogo() {
   );
 }
 
-function DiscordLogo() {
+export function DiscordLogo() {
   return (
     <svg width="29" height="29" viewBox="0 0 29 29" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect
@@ -439,7 +439,7 @@ function DiscordLogo() {
   );
 }
 
-function TikTokLogo() {
+export function TikTokLogo() {
   return (
     <svg width="30" height="34" viewBox="0 0 30 34" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
@@ -458,7 +458,7 @@ function TikTokLogo() {
   );
 }
 
-function InstagramLogo() {
+export function InstagramLogo() {
   return (
     <svg width="31" height="31" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path

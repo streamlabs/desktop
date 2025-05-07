@@ -8,8 +8,16 @@ import { useVuex } from 'components-react/hooks';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { Button, Carousel } from 'antd';
 import EducationCarousel from 'components-react/highlighter/EducationCarousel';
-import { isGameSupported } from 'services/highlighter/models/game-config.models';
+import { getConfigByGame, isGameSupported } from 'services/highlighter/models/game-config.models';
 import { $t } from 'services/i18n';
+import { set } from 'lodash';
+import { EGame } from 'services/highlighter/models/ai-highlighter.models';
+import {
+  DiscordLogo,
+  InstagramLogo,
+  TikTokLogo,
+  YouTubeLogo,
+} from 'components-react/highlighter/ImportStream';
 
 export default function AiHighlighterToggle({
   game,
@@ -28,12 +36,16 @@ export default function AiHighlighterToggle({
   });
 
   const [gameIsSupported, setGameIsSupported] = useState(false);
+  const [gameConfig, setGameConfig] = useState<any>(null);
 
   useEffect(() => {
     const supportedGame = isGameSupported(game);
-    setGameIsSupported(supportedGame);
+    setGameIsSupported(!!supportedGame);
     if (supportedGame) {
       setIsExpanded(true);
+      setGameConfig(getConfigByGame(supportedGame));
+    } else {
+      setGameConfig(null);
     }
   }, [game]);
 
@@ -61,56 +73,53 @@ export default function AiHighlighterToggle({
             display: 'flex',
             justifyContent: 'flex-end',
             flexFlow: 'rowWrap',
-            width: '100%',
+            width: 'width: 100%',
+            backgroundColor: 'var(--dark-background)',
+            borderRadius: '8px',
+            // backgroundColor: isExpanded
+            //   ? `${gameConfig?.importModalConfig?.backgroundColor}`
+            //   : 'var(--dark-background)',
+            // transition: 'background-color 150ms ease, height 150ms ease',
           }}
         >
           <div style={{ flexGrow: 0, backgroundColor: 'red' }}></div>
 
           <div className={styles.aiHighlighterBox}>
-            <div className={styles.headlineWrapper} onClick={() => setIsExpanded(!isExpanded)}>
-              <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 300, color: '#BDC2C4' }}>
-                {!useHighlighter ? (
-                  <>{$t('Try AI Highlighter to generate game highlight reels of your stream')}</>
-                ) : (
-                  <>
-                    <span style={{ fontWeight: 700 }}>{$t('AI Highlighter requirements')}</span>
-                  </>
-                )}
-              </h3>
-              {isExpanded ? (
-                <UpOutlined style={{ color: '#BDC2C4' }} />
-              ) : (
-                <DownOutlined style={{ color: '#BDC2C4' }} />
-              )}
-            </div>
-            {isExpanded && (
-              <>
-                <div className={styles.expandedWrapper}>
-                  {!useHighlighter ? (
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        paddingRight: '32px',
-                        paddingLeft: '32px',
-                        height: '100%',
-                      }}
-                    >
-                      <div>
-                        <h2 style={{ fontSize: '16px', fontWeight: 600 }}>
-                          {$t('Auto-create highlights')}
-                        </h2>
-                        <div className={styles.betaTag}>{$t('Beta')}</div>
-                      </div>
-                      <div className={styles.image}></div>
-                    </div>
-                  ) : (
-                    <EducationCarousel game={game!} />
-                  )}
+            <div
+              className={styles.coloredBlob}
+              style={{
+                backgroundColor: `${gameConfig?.importModalConfig?.accentColor}`,
+                opacity: isExpanded ? 0.5 : 1,
+                filter: isExpanded ? 'blur(74px)' : 'blur(44px)',
+              }}
+            ></div>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                width: '100%',
+                position: 'absolute',
+                top: '8px',
+              }}
+            >
+              <div className={styles.headlineWrapper}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <h3
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    style={{
+                      margin: 0,
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: 'white',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {$t('Get stream highlights!')}
+                  </h3>
 
                   {highlighterVersion !== '' ? (
                     <SwitchInput
-                      style={{ width: '80px', margin: 0 }}
+                      style={{ width: '80px', margin: 0, marginTop: '-2px' }}
                       value={useHighlighter}
                       label=""
                       onChange={() => HighlighterService.actions.toggleAiHighlighter()}
@@ -127,6 +136,120 @@ export default function AiHighlighterToggle({
                       {$t('Install AI Highlighter')}
                     </Button>
                   )}
+                </div>
+                <div onClick={() => setIsExpanded(!isExpanded)} style={{ cursor: 'pointer' }}>
+                  {isExpanded ? (
+                    <UpOutlined style={{ color: '#BDC2C4' }} />
+                  ) : (
+                    <DownOutlined style={{ color: '#BDC2C4' }} />
+                  )}
+                </div>
+              </div>
+              <div className={styles.headlineWrapper}>
+                <h2 style={{ fontSize: '14px', fontWeight: 300 }}>
+                  {$t('Auto-generate game highlight reels of your stream')}
+                </h2>
+                <div
+                  className={styles.betaTag}
+                  style={{ backgroundColor: `${gameConfig?.importModalConfig?.accentColor}` }}
+                >
+                  {$t('Beta')}
+                </div>
+              </div>
+            </div>
+            {isExpanded && (
+              <>
+                <div className={styles.expandedWrapper}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      paddingLeft: '25px',
+                      height: '100%',
+                    }}
+                  >
+                    {!useHighlighter ? (
+                      <div style={{ paddingTop: '88px', display: 'flex' }}>
+                        {gameConfig?.importModalConfig?.horizontalExampleVideo &&
+                        gameConfig?.importModalConfig?.verticalExampleVideo ? (
+                          <>
+                            <div
+                              className={styles.plattformIcon}
+                              style={{ top: '84px', left: '120px' }}
+                            >
+                              <YouTubeLogo />
+                            </div>
+                            <div
+                              className={styles.plattformIcon}
+                              style={{ top: '181px', left: '32px' }}
+                            >
+                              <DiscordLogo />
+                            </div>
+
+                            <div
+                              className={styles.plattformIcon}
+                              style={{ top: '85px', left: '250px' }}
+                            >
+                              <TikTokLogo />
+                            </div>
+
+                            <div
+                              className={styles.plattformIcon}
+                              style={{ top: '187px', left: '153px' }}
+                            >
+                              <InstagramLogo />
+                            </div>
+                            <div
+                              className={styles.horizontalVideo}
+                              style={{
+                                backgroundColor: gameConfig?.importModalConfig?.backgroundColor,
+                                borderColor: gameConfig?.importModalConfig?.accentColor,
+                                boxShadow: `0px 0px 42px -4px ${gameConfig?.importModalConfig?.accentColor}30`,
+                              }}
+                            >
+                              <video
+                                muted
+                                autoPlay
+                                loop
+                                style={{ width: '100%' }}
+                                src={gameConfig.importModalConfig.horizontalExampleVideo}
+                              ></video>
+                            </div>
+                            <div
+                              className={styles.verticalVideo}
+                              style={{
+                                backgroundColor: gameConfig?.importModalConfig?.backgroundColor,
+                                borderColor: gameConfig?.importModalConfig?.accentColor,
+                                boxShadow: `0px 0px 42px -4px ${gameConfig?.importModalConfig?.accentColor}30`,
+                              }}
+                            >
+                              {' '}
+                              <video
+                                muted
+                                autoPlay
+                                loop
+                                style={{ height: '100%' }}
+                                src={gameConfig.importModalConfig.verticalExampleVideo}
+                              ></video>
+                            </div>
+                          </>
+                        ) : (
+                          <div className={styles.image}></div>
+                        )}
+                      </div>
+                    ) : (
+                      <div style={{ paddingTop: '88px', display: 'flex' }}>
+                        game language must be english game must be fullscreen game mode must be
+                        supported
+                        {/* <EducationCarousel game={game!} /> */}
+                      </div>
+                    )}
+                    <img
+                      className={`${styles.artworkImage}`}
+                      src={gameConfig?.importModalConfig?.artwork}
+                      alt=""
+                    />
+                  </div>
                 </div>
               </>
             )}
