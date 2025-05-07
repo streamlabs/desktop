@@ -65,6 +65,11 @@ function afterPackMac(context) {
     `cp -R ./node_modules/obs-studio-node/Frameworks \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Resources/app.asar.unpacked/node_modules/\"`,
   );
 
+  // Apple requires that Library/SystemExtensions are located at Contents/Library top level
+  cp.execSync(
+    `cp -R ./node_modules/obs-studio-node/Library \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/\"`,
+  );
+
   if (process.env.SLOBS_NO_SIGN) return;
 
   signBinaries(
