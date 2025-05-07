@@ -184,7 +184,9 @@ function SceneSelector() {
           <i className="icon-add-circle icon-button icon-button--lg" onClick={addScene} />
         </Tooltip>
 
-        {v.showDualOutput && <DisplayToggle className={styles.editorDisplayToggle} />}
+        {v.showDualOutput && (
+          <DisplayToggle name="editor-displays" className={styles.editorDisplayToggle} />
+        )}
 
         <Tooltip title={$t('Edit Scene Transitions.')} placement="bottomRight">
           <i className="icon-transition icon-button icon-button--lg" onClick={showTransitions} />

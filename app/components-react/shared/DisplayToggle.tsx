@@ -9,6 +9,7 @@ import styles from './DisplayToggle.m.less';
 import { TDisplayType } from 'services/settings-v2';
 
 interface IDisplayToggle {
+  name?: string;
   className?: string;
   style?: CSSProperties;
   display?: TDisplayType;
@@ -67,10 +68,6 @@ export const DisplayToggle = forwardRef((p: IDisplayToggle, ref) => {
   }, [horizontalActive, controlled]);
 
   const verticalTooltip = useMemo(() => {
-    if (p?.disabled) {
-      return $t('Toggle Dual Output mode for vertical recording.');
-    }
-
     if (controlled) {
       return $t('Toggle vertical display.');
     }
@@ -110,6 +107,7 @@ export const DisplayToggle = forwardRef((p: IDisplayToggle, ref) => {
 
   return (
     <div
+      data-name={p?.name}
       className={cx(p?.className, styles.displayToggleContainer)}
       style={p.style}
       ref={ref as React.LegacyRef<HTMLDivElement>}

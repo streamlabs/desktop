@@ -18,26 +18,26 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
   }));
 
   return (
-    <div
-      data-test="go-live-recording-toggle"
-      style={p?.style}
-      className={cx(p?.className, styles.recordingSwitcher)}
-    >
+    <div style={p?.style} className={cx(p?.className, styles.recordingSwitcher)}>
       <SwitchInput
+        data-name="go-live-recording-toggle"
         value={v.recordWhenStreaming}
         onChange={val =>
           Services.SettingsService.actions.setSettingValue('General', 'RecordWhenStreaming', val)
         }
         uncontrolled
-        className={styles.recordingToggle}
         style={{ marginRight: '10px' }}
-        label={$t('Record Stream in')}
+        label={v.isDualOutputMode ? $t('Record Stream in') : $t('Record Stream')}
         layout="horizontal"
         checkmark
       />
 
-      <DisplayToggle className={styles.recordingDisplay} disabled={!v.isDualOutputMode} />
-      {$t('format')}
+      {v.isDualOutputMode && (
+        <>
+          <DisplayToggle name="recording-displays" className={styles.recordingDisplay} />
+          {$t('format')}
+        </>
+      )}
     </div>
   );
 }

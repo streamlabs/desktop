@@ -299,5 +299,6 @@
   "%{platform} Setup Error: Toggling off %{platform} to bypass and go live.": "%{platform} Setup Error: Toggling off %{platform} to bypass and go live.",
   "Recording Audio Encoder": "Recording Audio Encoder",
   "Record Stream in": "Record Stream in",
-  "format": "format"
+  "format": "format",
+  "Record Stream": "Record Stream"
 }
