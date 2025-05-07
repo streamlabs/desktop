@@ -125,6 +125,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     error: '',
     useAiHighlighter: false,
     highlightedStreams: [],
+    highlightedStreamsDictionary: {},
     updaterProgress: 0,
     isUpdaterRunning: false,
     highlighterVersion: '',
@@ -140,6 +141,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       ...this.defaultState,
       clips: state.clips,
       highlightedStreams: state.highlightedStreams,
+      highlightedStreamsDictionary: state.highlightedStreamsDictionary,
       video: state.video,
       audio: state.audio,
       transition: state.transition,
@@ -260,23 +262,17 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
   @mutation()
   ADD_HIGHLIGHTED_STREAM(streamInfo: IHighlightedStream) {
-    // Vue.set(this.state, 'highlightedStreams', streamInfo);
-    this.state.highlightedStreams.push(streamInfo);
+    Vue.set(this.state.highlightedStreamsDictionary, streamInfo.id, streamInfo);
   }
 
   @mutation()
   UPDATE_HIGHLIGHTED_STREAM(updatedStreamInfo: IHighlightedStream) {
-    const keepAsIs = this.state.highlightedStreams.filter(
-      stream => stream.id !== updatedStreamInfo.id,
-    );
-    this.state.highlightedStreams = [...keepAsIs, updatedStreamInfo];
+    Vue.set(this.state.highlightedStreamsDictionary, updatedStreamInfo.id, updatedStreamInfo);
   }
 
   @mutation()
   REMOVE_HIGHLIGHTED_STREAM(id: string) {
-    this.state.highlightedStreams = this.state.highlightedStreams.filter(
-      stream => stream.id !== id,
-    );
+    Vue.delete(this.state.highlightedStreamsDictionary, id);
   }
 
   @mutation()
@@ -303,8 +299,37 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     return new HighlighterViews(this.state);
   }
 
+  private async migrateHighlightedStreamsToDictionary() {
+    try {
+      // Check if current state exists and contains an array
+      if (
+        this.state &&
+        this.state.highlightedStreams &&
+        Array.isArray(this.state.highlightedStreams) &&
+        this.state.highlightedStreams.length > 0 &&
+        Object.keys(this.state.highlightedStreamsDictionary).length === 0
+      ) {
+        // Convert the array to a dictionary
+        const streamsDict = this.state.highlightedStreams.reduce((dict, stream) => {
+          if (stream && stream.id) {
+            dict[stream.id] = stream;
+          }
+          return dict;
+        }, {} as Dictionary<IHighlightedStream>);
+
+        this.state.highlightedStreamsDictionary = streamsDict;
+      } else {
+        // Already migrated, nothing to do
+      }
+    } catch (error: unknown) {
+      console.error('Error during highlightedStreams migration:', error);
+      this.state.highlightedStreamsDictionary = this.state.highlightedStreamsDictionary || {};
+    }
+  }
+
   async init() {
     super.init();
+    await this.migrateHighlightedStreamsToDictionary();
 
     this.incrementalRolloutService.featuresReady.then(async () => {
       this.aiHighlighterFeatureEnabled = this.incrementalRolloutService.views.featureIsEnabled(
@@ -743,7 +768,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   getGameByStreamId(streamId?: string): EGame {
     if (!streamId) return EGame.UNSET;
 
-    const game = this.views.highlightedStreams.find(s => s.id === streamId)?.game;
+    const game = this.views.highlightedStreamsDictionary[streamId]?.game;
     if (!game) return EGame.UNSET;
 
     const lowercaseGame = game.toLowerCase();
@@ -1282,9 +1307,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   }
 
   cancelHighlightGeneration(streamId: string): void {
-    const stream = this.views.highlightedStreams.find(s => s.id === streamId);
+    const stream = this.views.highlightedStreamsDictionary[streamId];
     if (stream && stream.abortController) {
-      console.log('cancelHighlightGeneration', streamId);
       stream.abortController.abort();
     }
   }
@@ -1416,6 +1440,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       }
     } finally {
       setStreamInfo.abortController = undefined;
+
       this.updateStream(setStreamInfo);
       // stopProgressUpdates();
     }
