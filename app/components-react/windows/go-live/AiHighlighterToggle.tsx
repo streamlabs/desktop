@@ -169,7 +169,7 @@ export default function AiHighlighterToggle({
                     }}
                   >
                     {!useHighlighter ? (
-                      <div style={{ paddingTop: '88px', display: 'flex' }}>
+                      <div style={{ paddingTop: '88px', width: '100%', display: 'flex' }}>
                         {gameConfig?.importModalConfig?.horizontalExampleVideo &&
                         gameConfig?.importModalConfig?.verticalExampleVideo ? (
                           <>
@@ -238,9 +238,11 @@ export default function AiHighlighterToggle({
                         )}
                       </div>
                     ) : (
-                      <div style={{ paddingTop: '88px', display: 'flex' }}>
-                        game language must be english game must be fullscreen game mode must be
-                        supported
+                      <div className={styles.educationSection}>
+                        ⚠️ {$t('Game language must be English')} <br /> ⚠️
+                        {$t('Game must be fullscreen')} <br /> ⚠️
+                        {$t('Game mode must be supported')}
+                        {(gameConfig?.gameModes && ': ', gameConfig?.gameModes)}
                         {/* <EducationCarousel game={game!} /> */}
                       </div>
                     )}

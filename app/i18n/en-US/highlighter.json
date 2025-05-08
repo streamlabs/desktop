@@ -199,5 +199,9 @@
   "Delete": "Delete",
   "%{clipsAmountToDelete} clips selected for deletion": "%{clipsAmountToDelete} clips selected for deletion",
   "Delete clips": "Delete clips",
-  "Highlights not working? Let us know how we can improve.": "Highlights not working? Let us know how we can improve."
+  "Highlights not working? Let us know how we can improve.": "Highlights not working? Let us know how we can improve.",
+  "Game must be fullscreen": "Game must be fullscreen",
+  "Game mode must be supported": "Game mode must be supported",
+  "Auto-generate game highlight reels of your stream": "Auto-generate game highlight reels of your stream",
+  "Get stream highlights!": "Get stream highlights!"
 }

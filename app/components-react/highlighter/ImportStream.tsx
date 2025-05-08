@@ -410,8 +410,8 @@ export function YouTubeLogo() {
         fill="white"
       />
       <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
+        fillRule="evenodd"
+        clipRule="evenodd"
         d="M7.35408 26.1424C15.208 25.1663 22.9461 23.7506 30.637 21.883C32.1247 21.5045 33.2901 19.9448 33.1854 18.4049C32.7769 13.2709 31.8611 8.26517 30.4255 3.31908C29.9783 1.84181 28.3361 0.795762 26.8108 0.968515C18.9569 1.9447 11.2187 3.36034 3.52791 5.22796C2.04019 5.60643 0.874717 7.16612 0.979506 8.70603C1.38796 13.84 2.30373 18.8458 3.73937 23.7919C4.18655 25.2692 5.82873 26.3152 7.35408 26.1424ZM22.0544 12.2913L13.1618 9.52437L14.7174 18.0273L22.0544 12.2913Z"
         fill="#EA3223"
       />
@@ -482,10 +482,10 @@ export function InstagramLogo() {
           gradientUnits="userSpaceOnUse"
           gradientTransform="translate(12.6596 31.0525) rotate(-102.571) scale(25.4115 23.6411)"
         >
-          <stop stop-color="#FFDD55" />
-          <stop offset="0.1" stop-color="#FFDD55" />
-          <stop offset="0.5" stop-color="#FF543E" />
-          <stop offset="1" stop-color="#C837AB" />
+          <stop stopColor="#FFDD55" />
+          <stop offset="0.1" stopColor="#FFDD55" />
+          <stop offset="0.5" stopColor="#FF543E" />
+          <stop offset="1" stopColor="#C837AB" />
         </radialGradient>
         <radialGradient
           id="paint1_radial_3326_22115"
@@ -495,9 +495,9 @@ export function InstagramLogo() {
           gradientUnits="userSpaceOnUse"
           gradientTransform="translate(-3.79108 8.32046) rotate(66.1069) scale(11.3591 46.8348)"
         >
-          <stop stop-color="#3771C8" />
-          <stop offset="0.128" stop-color="#3771C8" />
-          <stop offset="1" stop-color="#6600FF" stop-opacity="0" />
+          <stop stopColor="#3771C8" />
+          <stop offset="0.128" stopColor="#3771C8" />
+          <stop offset="1" stopColor="#6600FF" stopOpacity="0" />
         </radialGradient>
       </defs>
     </svg>

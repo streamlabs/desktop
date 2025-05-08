@@ -105,6 +105,7 @@ const COMMON_TYPES: Record<string, IDefaultEventInfo> = {
 
 const thumbnailPath = 'https://cdn.streamlabs.com/static/imgs/game-thumbnails/';
 const heroPath = 'https://cdn.streamlabs.com/static/imgs/hero-images/';
+const exampleVideoPath = 'https://slobs-cdn.streamlabs.com/media/example-videos/';
 
 export const FORTNITE_CONFIG: IGameConfig = {
   name: EGame.FORTNITE,
@@ -115,11 +116,9 @@ export const FORTNITE_CONFIG: IGameConfig = {
   importModalConfig: {
     backgroundColor: '#1C1D45',
     accentColor: '#DC8FF2',
-    artwork: 'https://i.ibb.co/5XcCjnRt/fortnite.png',
-    horizontalExampleVideo:
-      'https://media.cleanshot.cloud/media/14014/bjR3J2ZWAvCGYPENn4pynzbxvpGtiNe4DkIOnwPS.mp4?Expires=1746541606&Signature=sTKvRQBNZcrzNRHNVT0plZIwqZJcMVNX4WPAv9xpgJymlw3PQO5bEw7jIs~z7tdGp--TJAZ3UhjW9lfQs0F4AbJcBI2AzBJGWbRdU36jUvwKbOYL~USaNpOZnv5NcUIjRZYWJdHfXazzyXN6laGm6qJetcDAFiZ~nh7B87l8iKOoqPSZz8zsEOTuN~gJdEI-chRtht9CjlkFOg5b7dy3xp5PY0~yJzSjMrsvXAtrBqKv~3CC4sizitv0HGPAINeooMcRkgEqwTrpzxYRZ7QzzwcJTM9kzmGb0ZZNnwWXGJXKHCXg9VcwH3Ra7fZSR5XvOOzX7auhtIBxy6Wrn18Cug__&Key-Pair-Id=K269JMAT9ZF4GZ',
-    verticalExampleVideo:
-      'https://media.cleanshot.cloud/media/14014/UwvLxSv9YaRj8c1LG7ITzUdfrFHai9LQWxoGxkj7.mp4?Expires=1746541636&Signature=GkYOvzjnFxZiJhUeYqcZo6pZJEAMk7RLPZJI-UqQJxxe8ekoaQ1auZ9V~W8Ka8rqhlkX6eJUqapq-HbH17QV-uwPhMw5VzTJfCRJZaD7ybigny1-F6khjaPPORdSZ1OgpuPmxLIk619-2jDk0bBxGlTllGG~Y3kzd~uNGDporwYF0V04xySrVPnqMyKEQ9WksK~p~sjY636Lt6sXGjWqmpHoe6t~ZzvoJZa0FX22q0dzCMqDjc-S792OU6CT5UrD~PVl2OGxF2eOAg-U7sHoubTUBJ87IZqvrsA8ZaKn85CXePrbRXo3M-rFPlXQYCXI~lqtMM7KAaY1zLFWm4lBfQ__&Key-Pair-Id=K269JMAT9ZF4GZ',
+    artwork: `${heroPath}${EGame.FORTNITE}.png`,
+    horizontalExampleVideo: `${exampleVideoPath}${EGame.FORTNITE}-horizontal.mp4`,
+    verticalExampleVideo: `${exampleVideoPath}${EGame.FORTNITE}-vertical.mp4`,
   },
   inputTypeMap: {
     ...COMMON_TYPES,
@@ -153,6 +152,8 @@ const WARZONE_CONFIG: IGameConfig = {
     accentColor: '#2BAC74',
     artwork: `${heroPath}${EGame.WARZONE}.png`,
     backgroundColor: '#0A311C',
+    horizontalExampleVideo: `${exampleVideoPath}${EGame.WARZONE}-horizontal.mp4`,
+    verticalExampleVideo: `${exampleVideoPath}${EGame.WARZONE}-vertical.mp4`,
   },
 };
 const BLACK_OPS_6_CONFIG: IGameConfig = {
@@ -168,6 +169,8 @@ const BLACK_OPS_6_CONFIG: IGameConfig = {
     accentColor: '#FEA41E',
     artwork: `${heroPath}${EGame.BLACK_OPS_6}.png`,
     backgroundColor: '#151B1A',
+    horizontalExampleVideo: `${exampleVideoPath}${EGame.BLACK_OPS_6}-horizontal.mp4`,
+    verticalExampleVideo: `${exampleVideoPath}${EGame.BLACK_OPS_6}-vertical.mp4`,
   },
 };
 
@@ -184,6 +187,8 @@ const MARVEL_RIVALS_CONFIG: IGameConfig = {
     accentColor: '#42BBC1',
     artwork: `${heroPath}${EGame.MARVEL_RIVALS}.png`,
     backgroundColor: '#5258AD',
+    horizontalExampleVideo: `${exampleVideoPath}${EGame.MARVEL_RIVALS}-horizontal.mp4`,
+    verticalExampleVideo: `${exampleVideoPath}${EGame.MARVEL_RIVALS}-vertical.mp4`,
   },
 };
 
@@ -200,6 +205,8 @@ const WAR_THUNDER_CONFIG: IGameConfig = {
     accentColor: '#EC2D19',
     artwork: `${heroPath}${EGame.WAR_THUNDER}.png`,
     backgroundColor: '#A18474',
+    horizontalExampleVideo: `${exampleVideoPath}${EGame.WAR_THUNDER}-horizontal.mp4`,
+    verticalExampleVideo: `${exampleVideoPath}${EGame.WAR_THUNDER}-vertical.mp4`,
   },
 };
 
@@ -381,11 +388,11 @@ export function getEventConfig(game: EGame, eventType: string): IEventInfo | IDe
 }
 
 export function isGameSupported(game: string | undefined) {
-  if (
-    game &&
-    supportedGames.some(supportedGame => supportedGame.label.toLowerCase() === game.toLowerCase())
-  ) {
-    return true;
+  const gameValue = supportedGames.find(
+    supportedGame => supportedGame.label.toLowerCase() === game?.toLowerCase(),
+  )?.value;
+  if (game && gameValue) {
+    return gameValue;
   }
   return false;
 }
