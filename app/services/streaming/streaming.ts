@@ -435,10 +435,9 @@ export class StreamingService
       if (
         this.views.isDualOutputMode &&
         this.views.enabledPlatforms.includes('youtube') &&
-        this.views.getPlatformSettings('youtube')?.hasExtraOutputs &&
+        this.dualOutputService.views.hasExtraOutput('youtube') &&
         /*
          * Super safe so we don't ever bypass validation due to the toggles
-         * or `hasExtraOutputs` not being reset.
          * TODO: might not cover free TikTok, but probably by design
          */
         (this.userService.views.isPrime || this.views.enabledPlatforms.length === 1)
@@ -697,7 +696,10 @@ export class StreamingService
      * it for tracking, in the future, we'd rather track extraOutputs from
      * StreamingService themselves
      */
-    if (settings.platforms.youtube?.enabled && settings.platforms.youtube?.hasExtraOutputs) {
+    if (
+      settings.platforms.youtube?.enabled &&
+      this.dualOutputService.views.hasExtraOutput('youtube')
+    ) {
       this.usageStatisticsService.recordFeatureUsage('StreamToYouTubeBothOutputs');
     }
   }
@@ -1000,10 +1002,20 @@ export class StreamingService
 
       NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
       const ytSettings = this.views.getPlatformSettings('youtube');
+      /*
+       * HACK: this needs to be addressed and is the result of the old
+       * streaming API *requiring* you to have both horizontal and vertical
+       * outputs to initialize streaming.
+       */
+      // TODO: this can probably be more generic now
       if (
         this.views.enabledPlatforms.length > 1 &&
         ytSettings?.enabled &&
-        ytSettings.hasExtraOutputs
+        this.dualOutputService.views.hasExtraOutput('youtube') &&
+        !(
+          this.views.activeDisplayPlatforms.vertical.length ||
+          this.views.activeDisplayDestinations.vertical.length
+        )
       ) {
         NodeObs.OBS_service_setVideoInfo(horizontalContext, 'vertical');
       } else {

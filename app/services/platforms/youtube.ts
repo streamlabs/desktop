@@ -45,8 +45,6 @@ export interface IYoutubeStartStreamOptions extends IExtraBroadcastSettings {
   privacyStatus?: 'private' | 'public' | 'unlisted';
   scheduledStartTime?: number;
   mode?: TOutputOrientation;
-  /** Use extra output to stream a vertical context to a separate broadcast */
-  hasExtraOutputs?: boolean;
 }
 
 /**
@@ -169,6 +167,9 @@ type TBroadcastLifecycleStatus =
   | 'revoked'
   | 'testStarting'
   | 'testing';
+
+const VERTICAL_STREAM_TITLE_SUFFIX = ' (Portrait)';
+const makeVerticalTitle = (orig: string) => `${orig}${VERTICAL_STREAM_TITLE_SUFFIX}`;
 
 @InheritMutations()
 export class YoutubeService
@@ -308,7 +309,7 @@ export class YoutubeService
     // }
 
     const ytSettings = getDefined(settings.platforms.youtube);
-    const title = `${ytSettings.title}-vert`;
+    const title = makeVerticalTitle(ytSettings.title);
 
     const verticalBroadcast = await this.createBroadcast({ ...ytSettings, title });
     const verticalStream = await this.createLiveStream(verticalBroadcast.snippet.title);
@@ -667,6 +668,29 @@ export class YoutubeService
 
     // upload thumbnail
     if (params.thumbnail) await this.uploadThumbnail(params.thumbnail, broadcast.id);
+
+    // TODO: this should be done in parallel with the above once we're confident enough
+    // TODO: verticalBroadcast is never cleared, we're relying on `extraOutputs`
+    if (
+      params.title &&
+      this.dualOutputService.views.dualOutputMode &&
+      this.dualOutputService.views.hasExtraOutput('youtube') &&
+      this.state.verticalBroadcast?.id
+    ) {
+      await this.requestYoutube<IYoutubeLiveBroadcast>({
+        method: 'PUT',
+        url: `${this.apiBase}/liveBroadcasts?part=snippet`,
+        body: JSON.stringify({
+          id: this.state.verticalBroadcast.id,
+          snippet: {
+            // reuses description and scheduledStartTime from horiz broadcast
+            ...snippet,
+            title: makeVerticalTitle(params.title),
+          },
+        }),
+      });
+    }
+
     return broadcast;
   }
 

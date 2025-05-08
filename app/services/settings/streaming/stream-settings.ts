@@ -146,7 +146,11 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
         if (
           this.streamingService.views.enabledPlatforms.length > 1 &&
           ytSettings?.enabled &&
-          ytSettings.hasExtraOutputs
+          this.dualOutputService.views.hasExtraOutput('youtube') &&
+          !(
+            this.streamingService.views.activeDisplayPlatforms.vertical.length ||
+            this.streamingService.views.activeDisplayDestinations.vertical.length
+          )
         ) {
           return 'StreamSecond';
         }
@@ -155,7 +159,6 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
       return !context || context === 'horizontal' ? 'Stream' : 'StreamSecond';
     })();
 
-    console.log('on set settings', streamName, patch);
     // save settings to localStorage
     const localStorageSettings: (keyof IStreamSettingsState)[] = [
       'protectedModeEnabled',
@@ -225,7 +228,7 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
     // transform IGoLiveSettings to ISavedGoLiveSettings
     const patch: Partial<ISavedGoLiveSettings> = settingsPatch;
     if (settingsPatch.platforms) {
-      const pickedFields: (keyof IPlatformFlags)[] = ['enabled', 'useCustomFields'];
+      const pickedFields: (keyof IPlatformFlags)[] = ['enabled', 'useCustomFields', 'display'];
       const platforms: Dictionary<IPlatformFlags> = {};
       Object.keys(settingsPatch.platforms).map(platform => {
         const platformSettings = pick(settingsPatch.platforms![platform], pickedFields);
@@ -278,7 +281,6 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
 
   setObsStreamSettings(formData: ISettingsSubCategory[], context?: number) {
     const streamName = !context || context === 0 ? 'Stream' : 'StreamSecond';
-    console.log('on setObsStreamSettings', streamName, formData);
     this.settingsService.setSettings(streamName, formData);
   }
 
