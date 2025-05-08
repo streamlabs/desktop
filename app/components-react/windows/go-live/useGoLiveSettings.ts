@@ -1,6 +1,5 @@
 import { IGoLiveSettings, StreamInfoView } from '../../../services/streaming';
 import { TPlatform } from '../../../services/platforms';
-import { TDisplayDestinations } from 'services/dual-output';
 import { ICustomStreamDestination } from 'services/settings/streaming';
 import { Services } from '../../service-provider';
 import cloneDeep from 'lodash/cloneDeep';
@@ -201,6 +200,10 @@ export class GoLiveSettingsModule {
         windowParams as IGoLiveSettings['prepopulateOptions'],
       );
     }
+
+    // determine if TikTok apply notification should be shown
+    Services.TikTokService.actions.handleApplyPrompt();
+
     await this.prepopulate();
   }
 

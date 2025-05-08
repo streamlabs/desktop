@@ -41,6 +41,7 @@ import { UsageStatisticsService } from 'services/usage-statistics';
 import { DiagnosticsService } from 'services/diagnostics';
 import { ENotificationType, NotificationsService } from 'services/notifications';
 import { JsonrpcService } from '../api/jsonrpc';
+import { DismissablesService, EDismissable } from 'services/dismissables';
 
 interface ITikTokServiceState extends IPlatformState {
   settings: ITikTokStartStreamSettings;
@@ -113,6 +114,7 @@ export class TikTokService
   @Inject() private usageStatisticsService: UsageStatisticsService;
   @Inject() private notificationsService: NotificationsService;
   @Inject() private jsonrpcService: JsonrpcService;
+  @Inject() private dismissablesService: DismissablesService;
 
   readonly apiBase = 'https://open.tiktokapis.com/v2';
   readonly platform = 'tiktok';
@@ -687,7 +689,7 @@ export class TikTokService
     // and have streamed at least once in the past 30 days
     const createdAt = new Date(this.userService.state.createdAt);
     const today = new Date(Date.now());
-    const dateDiff = (createdAt.getTime() - today.getTime()) / (1000 * 3600 * 24);
+    const dateDiff = (today.getTime() - createdAt.getTime()) / (1000 * 3600 * 24);
     const isOldAccount = dateDiff >= 30;
     const hasRecentlyStreamed = this.diagnosticsService.hasRecentlyStreamed;
 
@@ -712,6 +714,34 @@ export class TikTokService
     if (this.denied && deniedDateDiff >= 30) return true;
 
     return false;
+  }
+
+  handleApplyPrompt() {
+    if (!this.promptApply && !this.promptReapply) return;
+
+    const message = this.promptApply
+      ? $t('You may be eligible for TikTok Live Access. Apply here.')
+      : $t('Reapply for TikTok Live Permission. Reapply here.');
+
+    this.notificationsService.actions.push({
+      type: ENotificationType.SUCCESS,
+      lifeTime: 10000,
+      message,
+      action: this.jsonrpcService.createRequest(
+        Service.getResourceId(this),
+        'pushApplyNotification',
+      ),
+    });
+  }
+
+  pushApplyNotification() {
+    const dismissable = this.promptApply ? EDismissable.TikTokEligible : EDismissable.TikTokReapply;
+
+    remote.shell.openExternal(this.applicationUrl);
+    this.dismissablesService.actions.dismiss(dismissable);
+    this.usageStatisticsService.recordAnalyticsEvent('TikTokApplyPrompt', {
+      component: 'Notifications',
+    });
   }
 
   convertScope(scope: number, applicationStatus?: string): TTikTokLiveScopeTypes {
