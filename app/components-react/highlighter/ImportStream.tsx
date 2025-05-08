@@ -184,7 +184,7 @@ export function ImportStreamModal({
                       <DiscordLogo />
                     </div>
 
-                    <div className={styles.plattformIcon} style={{ top: '123px', left: '290px' }}>
+                    <div className={styles.plattformIcon} style={{ top: '243px', left: '290px' }}>
                       <TikTokLogo />
                     </div>
 
