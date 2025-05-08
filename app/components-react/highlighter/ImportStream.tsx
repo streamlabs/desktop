@@ -153,18 +153,7 @@ export function ImportStreamModal({
               backgroundColor: `${gameConfig?.importModalConfig?.accentColor}`,
             }}
           ></div>
-          <div
-            style={{
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              display: 'grid',
-
-              gridTemplateColumns: '1fr 400px 1fr',
-              top: '0',
-              left: '0',
-            }}
-          >
+          <div className={styles.contentDivider}>
             <div className={styles.leftWrapper}>
               <div className={styles.headerWrapper}>
                 <h2 className={styles.hypeContentHeadline}>
@@ -343,12 +332,7 @@ export function ImportStreamModal({
                     <img
                       src={typeof option.image === 'string' ? option.image : undefined}
                       alt={option.label}
-                      style={{
-                        width: '24px',
-                        height: '24px',
-                        objectFit: 'cover',
-                        borderRadius: '2px',
-                      }}
+                      className={styles.listImage}
                     />
                   )}
                   <span>{option.label}</span>

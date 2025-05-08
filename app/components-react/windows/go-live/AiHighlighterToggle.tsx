@@ -93,27 +93,10 @@ export default function AiHighlighterToggle({
                 filter: isExpanded ? 'blur(74px)' : 'blur(44px)',
               }}
             ></div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                width: '100%',
-                position: 'absolute',
-                top: '8px',
-              }}
-            >
+            <div className={styles.header}>
               <div className={styles.headlineWrapper}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <h3
-                    onClick={() => setIsExpanded(!isExpanded)}
-                    style={{
-                      margin: 0,
-                      fontSize: '14px',
-                      fontWeight: 500,
-                      color: 'white',
-                      cursor: 'pointer',
-                    }}
-                  >
+                  <h3 className={styles.headline} onClick={() => setIsExpanded(!isExpanded)}>
                     {$t('Get stream highlights!')}
                   </h3>
 
@@ -160,100 +143,91 @@ export default function AiHighlighterToggle({
             {isExpanded && (
               <>
                 <div className={styles.expandedWrapper}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      paddingLeft: '25px',
-                      height: '100%',
-                    }}
-                  >
-                    {!useHighlighter ? (
-                      <div style={{ paddingTop: '88px', width: '100%', display: 'flex' }}>
-                        {gameConfig?.importModalConfig?.horizontalExampleVideo &&
-                        gameConfig?.importModalConfig?.verticalExampleVideo ? (
-                          <>
-                            <div
-                              className={styles.plattformIcon}
-                              style={{ top: '84px', left: '120px' }}
-                            >
-                              <YouTubeLogo />
-                            </div>
-                            <div
-                              className={styles.plattformIcon}
-                              style={{ top: '181px', left: '32px' }}
-                            >
-                              <DiscordLogo />
-                            </div>
+                  {!useHighlighter ? (
+                    <div style={{ paddingTop: '88px', width: '100%', display: 'flex' }}>
+                      {gameConfig?.importModalConfig?.horizontalExampleVideo &&
+                      gameConfig?.importModalConfig?.verticalExampleVideo ? (
+                        <>
+                          <div
+                            className={styles.plattformIcon}
+                            style={{ top: '84px', left: '120px' }}
+                          >
+                            <YouTubeLogo />
+                          </div>
+                          <div
+                            className={styles.plattformIcon}
+                            style={{ top: '181px', left: '32px' }}
+                          >
+                            <DiscordLogo />
+                          </div>
 
-                            <div
-                              className={styles.plattformIcon}
-                              style={{ top: '85px', left: '250px' }}
-                            >
-                              <TikTokLogo />
-                            </div>
+                          <div
+                            className={styles.plattformIcon}
+                            style={{ top: '85px', left: '250px' }}
+                          >
+                            <TikTokLogo />
+                          </div>
 
-                            <div
-                              className={styles.plattformIcon}
-                              style={{ top: '177px', left: '153px' }}
-                            >
-                              <InstagramLogo />
-                            </div>
-                            <div
-                              className={styles.horizontalVideo}
-                              style={{
-                                backgroundColor: gameConfig?.importModalConfig?.backgroundColor,
-                                borderColor: gameConfig?.importModalConfig?.accentColor,
-                                boxShadow: `0px 0px 42px -4px ${gameConfig?.importModalConfig?.accentColor}30`,
-                              }}
-                            >
-                              <video
-                                muted
-                                autoPlay
-                                loop
-                                style={{ width: '100%' }}
-                                src={gameConfig.importModalConfig.horizontalExampleVideo}
-                              ></video>
-                            </div>
-                            <div
-                              className={styles.verticalVideo}
-                              style={{
-                                backgroundColor: gameConfig?.importModalConfig?.backgroundColor,
-                                borderColor: gameConfig?.importModalConfig?.accentColor,
-                                boxShadow: `0px 0px 42px -4px ${gameConfig?.importModalConfig?.accentColor}30`,
-                              }}
-                            >
-                              {' '}
-                              <video
-                                muted
-                                autoPlay
-                                loop
-                                style={{ height: '100%' }}
-                                src={gameConfig.importModalConfig.verticalExampleVideo}
-                              ></video>
-                            </div>
-                          </>
-                        ) : (
-                          <div className={styles.image}></div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className={styles.educationSection}>
-                        ⚠️{$t('Game language must be English')} <br /> ⚠️
-                        {$t('Game must be fullscreen')} <br /> ⚠️
-                        {$t('Game mode must be supported')}
-                        <span style={{ fontSize: '12px', marginLeft: '27px', marginTop: '-3px' }}>
-                          {gameConfig?.gameModes && `(${gameConfig?.gameModes})`}
-                        </span>
-                        {/* <EducationCarousel game={game!} /> */}
-                      </div>
-                    )}
-                    <img
-                      className={`${styles.artworkImage}`}
-                      src={gameConfig?.importModalConfig?.artwork}
-                      alt=""
-                    />
-                  </div>
+                          <div
+                            className={styles.plattformIcon}
+                            style={{ top: '177px', left: '153px' }}
+                          >
+                            <InstagramLogo />
+                          </div>
+                          <div
+                            className={styles.horizontalVideo}
+                            style={{
+                              backgroundColor: gameConfig?.importModalConfig?.backgroundColor,
+                              borderColor: gameConfig?.importModalConfig?.accentColor,
+                              boxShadow: `0px 0px 42px -4px ${gameConfig?.importModalConfig?.accentColor}30`,
+                            }}
+                          >
+                            <video
+                              muted
+                              autoPlay
+                              loop
+                              style={{ width: '100%' }}
+                              src={gameConfig.importModalConfig.horizontalExampleVideo}
+                            ></video>
+                          </div>
+                          <div
+                            className={styles.verticalVideo}
+                            style={{
+                              backgroundColor: gameConfig?.importModalConfig?.backgroundColor,
+                              borderColor: gameConfig?.importModalConfig?.accentColor,
+                              boxShadow: `0px 0px 42px -4px ${gameConfig?.importModalConfig?.accentColor}30`,
+                            }}
+                          >
+                            {' '}
+                            <video
+                              muted
+                              autoPlay
+                              loop
+                              style={{ height: '100%' }}
+                              src={gameConfig.importModalConfig.verticalExampleVideo}
+                            ></video>
+                          </div>
+                        </>
+                      ) : (
+                        <div className={styles.image}></div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className={styles.educationSection}>
+                      ⚠️{$t('Game language must be English')} <br /> ⚠️
+                      {$t('Game must be fullscreen')} <br /> ⚠️
+                      {$t('Game mode must be supported')}
+                      <span style={{ fontSize: '12px', marginLeft: '27px', marginTop: '-3px' }}>
+                        {gameConfig?.gameModes && `(${gameConfig?.gameModes})`}
+                      </span>
+                      {/* <EducationCarousel game={game!} /> */}
+                    </div>
+                  )}
+                  <img
+                    className={`${styles.artworkImage}`}
+                    src={gameConfig?.importModalConfig?.artwork}
+                    alt=""
+                  />
                 </div>
               </>
             )}
