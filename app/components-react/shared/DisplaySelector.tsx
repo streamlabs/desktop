@@ -13,6 +13,7 @@ interface IDisplaySelectorProps {
   platform: TPlatform | null;
   className?: string;
   style?: CSSProperties;
+  nolabel?: boolean;
 }
 
 export default function DisplaySelector(p: IDisplaySelectorProps) {
@@ -59,7 +60,6 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
   }
 
   const onChange = (val: TDisplayType | 'both') => {
-    console.log('DiplaySelector onChange:', val);
     if (p.platform) {
       const display: TDisplayType =
         // Use horizontal display, vertical stream will be created separately
@@ -81,7 +81,8 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
 
   return (
     <RadioInput
-      nolabel
+      nolabel={p?.nolabel}
+      label={p?.nolabel ? undefined : p.title}
       data-test="display-input"
       id={`${p.platform}-display-input`}
       direction="horizontal"

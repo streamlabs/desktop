@@ -49,7 +49,7 @@ export default function Tooltip(props: PropsWithChildren<ITooltipTipProps>) {
   return (
     <div
       id={id}
-      className={className ? cx(className, styles.tooltipWrapper) : styles.tooltipWrapper}
+      className={cx(className, styles.tooltipWrapper)}
       style={wrapperStyle}
       onClick={onClick}
     >
@@ -60,7 +60,7 @@ export default function Tooltip(props: PropsWithChildren<ITooltipTipProps>) {
         </>
       ) : (
         <AntdTooltip
-          className={cx(styles.tooltipArrow, { [styles.lightShadow]: lightShadow })}
+          className={cx(styles.tooltipContent, { [styles.lightShadow]: lightShadow })}
           placement={placement}
           title={title}
           style={style}
