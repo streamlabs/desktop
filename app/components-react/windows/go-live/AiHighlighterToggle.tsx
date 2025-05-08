@@ -195,7 +195,7 @@ export default function AiHighlighterToggle({
 
                             <div
                               className={styles.plattformIcon}
-                              style={{ top: '187px', left: '153px' }}
+                              style={{ top: '177px', left: '153px' }}
                             >
                               <InstagramLogo />
                             </div>
@@ -239,10 +239,12 @@ export default function AiHighlighterToggle({
                       </div>
                     ) : (
                       <div className={styles.educationSection}>
-                        ⚠️ {$t('Game language must be English')} <br /> ⚠️
+                        ⚠️{$t('Game language must be English')} <br /> ⚠️
                         {$t('Game must be fullscreen')} <br /> ⚠️
                         {$t('Game mode must be supported')}
-                        {(gameConfig?.gameModes && ': ', gameConfig?.gameModes)}
+                        <span style={{ fontSize: '12px', marginLeft: '27px', marginTop: '-3px' }}>
+                          {gameConfig?.gameModes && `(${gameConfig?.gameModes})`}
+                        </span>
                         {/* <EducationCarousel game={game!} /> */}
                       </div>
                     )}

@@ -168,9 +168,11 @@ export function ImportStreamModal({
             <div className={styles.leftWrapper}>
               <div className={styles.headerWrapper}>
                 <h2 className={styles.hypeContentHeadline}>
-                  Turn your gameplay into epic highlight reels
+                  {$t('Turn your gameplay into epic highlight reels')}
                 </h2>
-                <h2 className={styles.hypeContentSubheadline}>Dominate, showcase, inspire!</h2>
+                <h2 className={styles.hypeContentSubheadline}>
+                  {$t('Dominate, showcase, inspire!')}
+                </h2>
               </div>
               {gameConfig?.importModalConfig?.horizontalExampleVideo &&
                 gameConfig?.importModalConfig?.verticalExampleVideo && (

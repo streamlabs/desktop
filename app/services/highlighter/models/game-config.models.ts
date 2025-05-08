@@ -228,7 +228,7 @@ const VALORANT_CONFIG: IGameConfig = {
 
 const COUNTER_STRIKE_2_CONFIG: IGameConfig = {
   name: EGame.COUNTER_STRIKE_2,
-  label: 'Counter-Strike 2',
+  label: 'Counter-Strike',
   gameModes: '',
   thumbnail: `${thumbnailPath}${EGame.COUNTER_STRIKE_2}.png`,
   state: EGameState.INTERNAL,
@@ -260,7 +260,7 @@ const APEX_LEGENDS_CONFIG: IGameConfig = {
 
 const PUBG_CONFIG: IGameConfig = {
   name: EGame.PUBG,
-  label: 'PUBG',
+  label: 'PUBG: BATTLEGROUNDS',
   gameModes: '',
   thumbnail: `${thumbnailPath}${EGame.PUBG}.png`,
   state: EGameState.INTERNAL,
