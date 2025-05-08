@@ -76,7 +76,7 @@ export class SubStreamService extends PersistentStatefulService<ISubStreamState>
     sync: false,
   };
 
-  doingCommand = false; // コマンド実行中フラグ
+  isExecutingCommand = false; // コマンド実行中フラグ
 
   @mutation()
   private SET_STATE(nextState: ISubStreamState) {
@@ -135,10 +135,10 @@ export class SubStreamService extends PersistentStatefulService<ISubStreamState>
     };
 
     // コマンドの連続実行防止
-    if (this.doingCommand) return;
-    this.doingCommand = true;
-    if (await this.waitForReady(false)) await this.client.call('start', param);
-    this.doingCommand = false;
+    if (this.isExecutingCommand) return;
+    this.isExecutingCommand = true;
+    if (await this.waitForStreamState(false)) await this.client.call('start', param);
+    this.isExecutingCommand = false;
   }
 
   /**
@@ -146,10 +146,10 @@ export class SubStreamService extends PersistentStatefulService<ISubStreamState>
    */
   async stop(): Promise<void> {
     // 連投防止
-    if (this.doingCommand) return;
-    this.doingCommand = true;
-    if (await this.waitForReady(true)) await this.client.call('stop');
-    this.doingCommand = false;
+    if (this.isExecutingCommand) return;
+    this.isExecutingCommand = true;
+    if (await this.waitForStreamState(true)) await this.client.call('stop');
+    this.isExecutingCommand = false;
   }
 
   /**
@@ -165,7 +165,7 @@ export class SubStreamService extends PersistentStatefulService<ISubStreamState>
    */
   async status(): Promise<SubStreamStatus> {
     const streamStatus = await this.client.call('status');
-    console.log('status:', JSON.stringify(streamStatus));
+    //console.log('status:', JSON.stringify(streamStatus));
     return streamStatus as SubStreamStatus;
   }
 
@@ -174,7 +174,7 @@ export class SubStreamService extends PersistentStatefulService<ISubStreamState>
    * @param streaming 待機する状態（true: ストリーミング中、false: 停止中）
    * @returns 指定された状態になったかどうか
    */
-  private async waitForReady(streaming: boolean): Promise<boolean> {
+  private async waitForStreamState(streaming: boolean): Promise<boolean> {
     const timeoutAt = Date.now() + 30000; // 30秒タイムアウト
     let status = await this.status();
 
