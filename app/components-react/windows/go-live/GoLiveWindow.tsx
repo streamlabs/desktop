@@ -1,10 +1,9 @@
 import styles from './GoLive.m.less';
 import { WindowsService, DualOutputService } from 'app-services';
 import { ModalLayout } from '../../shared/ModalLayout';
-import { Button, message } from 'antd';
+import { Button } from 'antd';
 import { Services } from '../../service-provider';
 import GoLiveSettings from './GoLiveSettings';
-import GoLiveBanner from './GoLiveInfoBanner';
 import React from 'react';
 import { $t } from '../../../services/i18n';
 import GoLiveChecklist from './GoLiveChecklist';
@@ -62,7 +61,6 @@ function ModalFooter() {
     getCanStreamDualOutput,
     toggleDualOutputMode,
     isLoading,
-    promptApply,
     isDualOutputMode,
     horizontalHasTargets,
   } = useGoLiveSettings().extend(module => ({
@@ -86,10 +84,6 @@ function ModalFooter() {
       const destinationDisplays = module.state.activeDisplayDestinations;
 
       return platformDisplays.horizontal.length > 0 || destinationDisplays.horizontal.length > 0;
-    },
-
-    get promptApply() {
-      return Services.TikTokService.promptApply;
     },
 
     get isDualOutputMode() {
@@ -139,9 +133,7 @@ function ModalFooter() {
 
   return (
     <Form layout={'inline'}>
-      {!isDualOutputMode && <RecordingSwitcher />}
-      {/* TODO handle prompt apply banner */}
-      {/* {promptApply && <GoLiveBanner />} */}
+      <RecordingSwitcher />
       {/* CLOSE BUTTON */}
       <Button onClick={close}>{$t('Close')}</Button>
 
