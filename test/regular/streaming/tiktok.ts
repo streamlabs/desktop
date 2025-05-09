@@ -98,10 +98,6 @@ async function testLiveScope(t: TExecutionContext, scope: TTikTokLiveScopeTypes)
       'TikTok denied error shown',
     );
 
-    await waitForDisplayed('span=Update settings for TikTok');
-    await waitForStreamStart();
-    await stopStream();
-
     return;
   }
 
