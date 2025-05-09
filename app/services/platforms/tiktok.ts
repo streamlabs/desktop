@@ -710,7 +710,7 @@ export class TikTokService
 
     const today = new Date(Date.now());
     const deniedDate = new Date(this.state.dateDenied);
-    const deniedDateDiff = (deniedDate.getTime() - today.getTime()) / (1000 * 3600 * 24);
+    const deniedDateDiff = (today.getTime() - deniedDate.getTime()) / (1000 * 3600 * 24);
     if (this.denied && deniedDateDiff >= 30) return true;
 
     return false;
