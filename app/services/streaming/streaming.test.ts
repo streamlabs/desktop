@@ -125,6 +125,10 @@ const createInjectee = ({
   NicoliveProgramStateService: {
     state: NicoliveProgramStateService.defaultState,
   },
+  SubStreamService: {
+    syncStart: noop,
+    syncStop: noop,
+  },
 });
 
 const setup = createSetupFunction({
