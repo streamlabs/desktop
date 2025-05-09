@@ -371,13 +371,12 @@ export class GoLiveSettingsModule {
       this.state.isEnabled('tiktok') &&
       (Services.TikTokService.neverApplied || Services.TikTokService.denied)
     ) {
-      // TODO: this is a patch to allow users to attempt to go live with rtmp regardless of tiktok status
+      // Show this allow users to attempt to go live with rtmp regardless of tiktok status
       message.info(
         $t("Couldn't confirm TikTok Live Access. Apply for Live Permissions below"),
         2,
         () => true,
       );
-      return false;
     }
 
     try {
