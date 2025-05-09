@@ -76,10 +76,6 @@ export default function AiHighlighterToggle({
             width: 'width: 100%',
             backgroundColor: 'var(--dark-background)',
             borderRadius: '8px',
-            // backgroundColor: isExpanded
-            //   ? `${gameConfig?.importModalConfig?.backgroundColor}`
-            //   : 'var(--dark-background)',
-            // transition: 'background-color 150ms ease, height 150ms ease',
           }}
         >
           <div style={{ flexGrow: 0, backgroundColor: 'red' }}></div>

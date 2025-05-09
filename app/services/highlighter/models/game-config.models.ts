@@ -290,6 +290,22 @@ const RAINBOW_SIX_SIEGE: IGameConfig = {
   },
 };
 
+const OVERWATCH_2: IGameConfig = {
+  name: EGame.OVERWATCH_2,
+  label: 'Overwatch 2',
+  gameModes: '',
+  thumbnail: null,
+  state: EGameState.INTERNAL,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#c66734',
+    artwork: `${heroPath}${EGame.OVERWATCH_2}.png`,
+    backgroundColor: '#c2c9de',
+  },
+};
+
 const UNSET_CONFIG: IGameConfig = {
   name: EGame.UNSET,
   label: 'unset',
@@ -314,6 +330,7 @@ const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.APEX_LEGENDS]: APEX_LEGENDS_CONFIG,
   [EGame.PUBG]: PUBG_CONFIG,
   [EGame.RAINBOW_SIX_SIEGE]: RAINBOW_SIX_SIEGE,
+  [EGame.OVERWATCH_2]: OVERWATCH_2,
   [EGame.UNSET]: UNSET_CONFIG,
 };
 
