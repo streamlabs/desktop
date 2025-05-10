@@ -7,6 +7,7 @@ import {
   IPlatformService,
   IPlatformState,
   TPlatformCapability,
+  TLiveDockFeature,
 } from './index';
 import { authorizedHeaders, jfetch } from '../../util/requests';
 import {
@@ -118,6 +119,12 @@ export class TikTokService
   readonly platform = 'tiktok';
   readonly displayName = 'TikTok';
   readonly capabilities = new Set<TPlatformCapability>(['title', 'viewerCount']);
+  readonly liveDockFeatures = new Set<TLiveDockFeature>([
+    'view-stream',
+    'dashboard',
+    'refresh-chat-restreaming',
+    'chat-streaming',
+  ]);
 
   authWindowOptions: Electron.BrowserWindowConstructorOptions = {
     width: 600,
