@@ -594,6 +594,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return !this.isStreaming && !this.isRecording;
   }
 
+  get replayBufferStatus() {
+    return this.streamingState.replayBufferStatus;
+  }
+
   // TODO: consolidate between this and GoLiveSettings
   get hasDestinations() {
     return this.enabledPlatforms.length > 0 || this.customDestinations.length > 0;
