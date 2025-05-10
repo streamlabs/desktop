@@ -514,6 +514,7 @@ export class Scene {
         const item = this.getItem(nodeModel.id)!;
         item.loadItemAttributes(nodeModel);
         itemIndex++;
+        this.scenesService.itemAdded.next(item.getModel());
       }
     });
 
