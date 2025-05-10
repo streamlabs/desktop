@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as remote from '@electron/remote';
 import cx from 'classnames';
 import Animation from 'rc-animate';
-import { Button, Menu } from 'antd';
+import { Menu } from 'antd';
 import pick from 'lodash/pick';
 import { initStore, useController } from 'components-react/hooks/zustand';
 import { EStreamingState } from 'services/streaming';
@@ -17,7 +17,6 @@ import PlatformAppPageView from 'components-react/shared/PlatformAppPageView';
 import { useVuex } from 'components-react/hooks';
 import { useRealmObject } from 'components-react/hooks/realm';
 import { $i } from 'services/utils';
-import { TikTokChatInfo } from './TiktokChatInfo';
 import { ShareStreamLink } from './ShareStreamLink';
 
 const LiveDockCtx = React.createContext<LiveDockController | null>(null);
@@ -221,12 +220,6 @@ class LiveDockController {
     });
     this.windowsService.actions.updateStyleBlockers('main', true);
     this.customizationService.actions.setSettings({ livedockCollapsed });
-    setTimeout(() => {
-      this.store.setState(s => {
-        s.canAnimate = false;
-      });
-      this.windowsService.actions.updateStyleBlockers('main', false);
-    }, 300);
   }
 
   toggleViewerCount() {
@@ -265,14 +258,12 @@ function LiveDock(p: { onLeft: boolean }) {
     isStreaming,
     isRestreaming,
     hasChatTabs,
-    chatTabs,
     applicationLoading,
     hideStyleBlockers,
     currentViewers,
     pageSlot,
     canAnimate,
     liveText,
-    isPopOutAllowed,
     streamingStatus,
   } = useVuex(() =>
     pick(ctrl, [
@@ -280,14 +271,12 @@ function LiveDock(p: { onLeft: boolean }) {
       'isStreaming',
       'isRestreaming',
       'hasChatTabs',
-      'chatTabs',
       'applicationLoading',
       'hideStyleBlockers',
       'pageSlot',
       'canAnimate',
       'currentViewers',
       'liveText',
-      'isPopOutAllowed',
       'streamingStatus',
     ]),
   );
@@ -297,6 +286,40 @@ function LiveDock(p: { onLeft: boolean }) {
   const hideViewerCount = useRealmObject(Services.CustomizationService.state).hideViewerCount;
 
   const viewerCount = hideViewerCount ? $t('Viewers Hidden') : currentViewers;
+
+  const liveDockRef = useRef<HTMLDivElement>(null);
+
+  // Min and max widths accommodate a 1px border
+  const minWidth = p.onLeft ? 18 : 19;
+  const maxWidth = p.onLeft ? liveDockSize - minWidth : liveDockSize - minWidth + 2;
+
+  const resizeObserver = new ResizeObserver((entries: ResizeObserverEntry[]) => {
+    entries.forEach((entry: ResizeObserverEntry) => {
+      if (!entry || !entry?.contentRect) return;
+
+      const width = Math.floor(entry?.contentRect?.width);
+      if (width === minWidth || width === maxWidth) {
+        Services.WindowsService.actions.updateStyleBlockers('main', false);
+
+        ctrl.store.setState(s => {
+          s.canAnimate = false;
+        });
+      }
+    });
+  });
+
+  useEffect(() => {
+    let mounted = true;
+    if (liveDockRef && liveDockRef?.current) {
+      resizeObserver.observe(liveDockRef?.current);
+    }
+
+    return () => {
+      if (!liveDockRef || !liveDockRef?.current) return;
+      resizeObserver.unobserve(liveDockRef.current);
+      mounted = false;
+    };
+  }, [liveDockRef, liveDockRef?.current]);
 
   useEffect(() => {
     if (streamingStatus === EStreamingState.Starting && collapsed) {
@@ -371,6 +394,7 @@ function LiveDock(p: { onLeft: boolean }) {
         [styles.liveDockLeft]: p.onLeft,
       })}
       style={{ width: liveDockSize + 'px' }}
+      ref={liveDockRef}
     >
       <div className={styles.liveDockChevron} onClick={toggleCollapsed}>
         <i

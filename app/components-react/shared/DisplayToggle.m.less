@@ -1,0 +1,29 @@
+.display-toggle-container {
+  display: flex;
+}
+
+.display-toggle {
+  text-transform: none;
+  font-weight: 400;
+
+  i {
+    line-height: unset;
+    margin-right: 10px;
+  }
+
+  i.active {
+    color: var(--icon-active);
+  }
+
+  i.disabled {
+    opacity: 0.7;
+
+    &:hover {
+      cursor: not-allowed;
+    }
+  }
+}
+
+.display-toggle:last-child i {
+  margin-right: 0px;
+}

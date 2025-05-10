@@ -177,14 +177,6 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
 
   enableStudioMode() {
     if (this.state.studioMode) return;
-    if (this.dualOutputService.views.dualOutputMode) {
-      this.notificationsService.actions.push({
-        message: $t('Cannot toggle Studio Mode in Dual Output Mode.'),
-        type: ENotificationType.WARNING,
-        lifeTime: 2000,
-      });
-      return;
-    }
 
     this.usageStatisticsService.recordFeatureUsage('StudioMode');
     this.SET_STUDIO_MODE(true);
