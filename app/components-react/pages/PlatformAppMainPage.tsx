@@ -5,7 +5,7 @@ import { Services } from 'components-react/service-provider';
 import PlatformAppPageView from 'components-react/shared/PlatformAppPageView';
 import { useVuex } from 'components-react/hooks';
 
-export default function PlatformAppMainPage(p: { params: { appId: string } }) {
+export default function PlatformAppMainPage(p: { params: { appId: string }; className?: string }) {
   const { PlatformAppsService } = Services;
   const pageSlot = EAppPageSlot.TopNav;
 
@@ -16,7 +16,10 @@ export default function PlatformAppMainPage(p: { params: { appId: string } }) {
   }));
 
   return (
-    <div style={{ height: '100%', width: '100%', margin: poppedOut && '20px' }}>
+    <div
+      className={p.className}
+      style={{ height: '100%', width: '100%', margin: poppedOut && '20px' }}
+    >
       {poppedOut ? (
         $t('This app is currently popped out in another window.')
       ) : (
