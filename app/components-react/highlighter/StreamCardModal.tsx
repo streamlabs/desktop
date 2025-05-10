@@ -67,7 +67,7 @@ export default function StreamCardModal({
 
   return (
     <Modal
-      getContainer={`.${styles.streamViewRoot}`}
+      getContainer={`.${styles.streamCardModalRoot}`}
       onCancel={closeModal}
       footer={null}
       width={modalWidth}

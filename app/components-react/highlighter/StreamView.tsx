@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Services } from 'components-react/service-provider';
 import styles from './StreamView.m.less';
 import * as remote from '@electron/remote';
+import cx from 'classnames';
 import {
   EHighlighterView,
   IStreamInfoForAiHighlighter,
@@ -124,8 +125,11 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
 
   return (
     <div
-      style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}
-      className={styles.streamViewRoot}
+      className={cx(
+        styles.streamViewWrapper,
+        showModal && styles.importModalRoot,
+        styles.streamCardModalRoot,
+      )}
       onDrop={event => onDrop(event)}
     >
       <div style={{ display: 'flex', padding: 20 }}>
@@ -188,7 +192,7 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
       </Scrollable>
 
       <Modal
-        getContainer={`.${styles.streamViewRoot}`}
+        getContainer={`.${styles.importModalRoot}`}
         onCancel={() => {
           if (showModal?.type === 'upload') {
             UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
