@@ -43,7 +43,7 @@ test.skip('Installing a theme', async (t: TExecutionContext) => {
 
   // wait for installation complete
   await focusMain();
-  await waitForDisplayed('.editor-page', { timeout: 60000 });
+  await waitForDisplayed('[data-name="editor-page"]', { timeout: 60000 });
 
   // Should've loaded the overlay as a new scene collection
   await waitForDisplayed(`span=${OVERLAY_NAME}`);

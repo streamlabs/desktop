@@ -30,14 +30,19 @@ import { getResource } from 'services';
 import * as obs from '../obs-api';
 import path from 'path';
 import util from 'util';
-import uuid from 'uuid/v4';
-import Main from 'components/windows/Main.vue';
 import { Loader, Blank } from 'components/shared/ReactComponentList';
+import Main from 'components/windows/Main';
 import process from 'process';
 import { MetricsService } from 'services/metrics';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import * as remote from '@electron/remote';
 import { RealmService } from 'app-services';
+
+// // TODO: commented until we remove slap library
+// // For React Windows
+// import React from 'react';
+// import ReactDOM from 'react-dom';
+// import Main from 'components-react/windows/Main';
 
 const { ipcRenderer } = electron;
 const slobsVersion = Utils.env.SLOBS_VERSION;
@@ -335,8 +340,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // create a root Vue component
   const windowId = Utils.getCurrentUrlParams().windowId;
+
+  // // TODO: commented until we remove slap library
+  // if (windowId !== 'main') {
+  // create a root Vue component
   const vm = new Vue({
     i18n,
     store,
@@ -360,6 +368,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     render(h) {
       if (this.isRefreshing) return h(Blank);
       if (windowId === 'worker') return h(Blank);
+      if (windowId === 'main') return h(Main);
       if (windowId === 'child') {
         if (store.state.bulkLoadFinished && store.state.i18nReady) {
           return h(ChildWindow);
@@ -367,10 +376,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         return h(Loader);
       }
-      if (windowId === 'main') return h(Main);
       return h(OneOffWindow);
     },
   });
+
+  // allow to refresh the window by pressing `F5` in the DevMode
+  if (Utils.isDevMode()) {
+    window.addEventListener('keyup', ev => {
+      if (ev.key === 'F5') vm.startWindowRefresh();
+    });
+  }
+  // // TODO: commented until we remove slap library
+  // } else {
+  //   // create a roote React component
+  //   ReactDOM.render(React.createElement(Main), document.getElementById('app'));
+  // }
 
   let mainWindowShowTime = 0;
   if (Utils.isMainWindow()) {
@@ -397,13 +417,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       const ctx = userService.getSentryContext();
       if (ctx) setSentryContext(ctx);
       userService.sentryContext.subscribe(setSentryContext);
-    }
-
-    // allow to refresh the window by pressing `F5` in the DevMode
-    if (Utils.isDevMode()) {
-      window.addEventListener('keyup', ev => {
-        if (ev.key === 'F5') vm.startWindowRefresh();
-      });
     }
   });
 });

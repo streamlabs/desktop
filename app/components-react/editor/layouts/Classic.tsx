@@ -13,7 +13,7 @@ export function Classic(p: React.PropsWithChildren<LayoutProps>) {
   );
 
   return (
-    <div className={styles.rows} ref={componentRef}>
+    <div className={cx(styles.rows, p.className)} ref={componentRef}>
       <div className={styles.cell} style={{ height: `${100 - resizes.bar1 * 100}%` }}>
         {p.children?.['1'] || <></>}
       </div>

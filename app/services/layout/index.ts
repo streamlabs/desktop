@@ -6,7 +6,14 @@ import { mutation } from 'services/core/stateful-service';
 import { CustomizationService } from 'services/customization';
 import { $t } from 'services/i18n';
 import uuid from 'uuid/v4';
-import { LAYOUT_DATA, ELEMENT_DATA, ELayout, ELayoutElement } from './layout-data';
+import {
+  LAYOUT_DATA,
+  ELEMENT_DATA,
+  ELayout,
+  ELayoutElement,
+  TLayout,
+  TLayoutElement,
+} from './layout-data';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import { menuTitles } from 'services/side-nav/menu-data';
 
@@ -35,13 +42,13 @@ class LayoutViews extends ViewHandler<ILayoutServiceState> {
     return this.state.tabs[this.state.currentTab];
   }
 
-  get component() {
+  get component(): TLayout {
     return LAYOUT_DATA[this.currentTab.currentLayout].component;
   }
 
   get elementsToRender() {
     return Object.keys(this.currentTab.slottedElements).filter(
-      key => this.currentTab.slottedElements[key].slot,
+      (key: TLayoutElement) => this.currentTab.slottedElements[key].slot,
     );
   }
 
@@ -62,7 +69,6 @@ class LayoutViews extends ViewHandler<ILayoutServiceState> {
   }
 
   elementComponent(element: ELayoutElement) {
-    if (!element) return '';
     return ELEMENT_DATA()[element].component;
   }
 

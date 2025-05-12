@@ -345,6 +345,11 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
         if (record.match(/ResizeObserver loop limit exceeded/)) {
           return false;
         }
+        // Another ResizeObserver issue that appears outside of our control
+        // See: https://trackjs.com/javascript-errors/resizeobserver-loop-completed-with-undelivered-notifications/
+        if (record.match(/ResizeObserver loop completed with undelivered notifications/)) {
+          return false;
+        }
 
         // This error is related to a bug in `useModule` and this check should be removed
         // after we fix it in the new `useModule`
