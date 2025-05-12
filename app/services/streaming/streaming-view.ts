@@ -133,7 +133,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return (
       this.settings.customDestinations
         .filter(dest => dest.enabled)
-        .map(dest => dest.url.split[2]) || []
+        .map(dest => dest.url.split('/')[2]) || []
     );
   }
 
@@ -321,8 +321,8 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    */
   get savedSettings(): IGoLiveSettings {
     const destinations = {} as IGoLiveSettings['platforms'];
-    this.linkedPlatforms.forEach(platform => {
-      destinations[platform as string] = this.getSavedPlatformSettings(platform);
+    this.linkedPlatforms.forEach((platform: TPlatform) => {
+      destinations[platform] = this.getSavedPlatformSettings(platform);
     });
 
     // if user recently added a new platform then it doesn't have default title and description
@@ -350,6 +350,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       advancedMode: !!this.streamSettingsView.state.goLiveSettings?.advancedMode,
       optimizedProfile: undefined,
       customDestinations: savedGoLiveSettings?.customDestinations || [],
+      recording: this.dualOutputView.recording || [],
     };
   }
 
@@ -378,18 +379,22 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     // search fields in platforms that don't use custom settings first
     destinationsWithCommonSettings.forEach(platform => {
       const destSettings = getDefined(platforms[platform]);
-      Object.keys(commonFields).forEach(fieldName => {
-        if (commonFields[fieldName] || !destSettings[fieldName]) return;
-        commonFields[fieldName] = destSettings[fieldName];
+      Object.keys(commonFields).forEach((fieldName: keyof typeof commonFields) => {
+        if (commonFields[fieldName] || !(destSettings as Record<string, any>)[fieldName]) return;
+        commonFields[fieldName] = (destSettings as Record<keyof typeof commonFields, string>)[
+          fieldName
+        ];
       });
     });
 
     // search fields in platforms that have custom fields
     destinationWithCustomSettings.forEach(platform => {
       const destSettings = getDefined(platforms[platform]);
-      Object.keys(commonFields).forEach(fieldName => {
-        if (commonFields[fieldName] || !destSettings[fieldName]) return;
-        commonFields[fieldName] = destSettings[fieldName];
+      Object.keys(commonFields).forEach((fieldName: keyof typeof commonFields) => {
+        if (commonFields[fieldName] || !(destSettings as Record<string, any>)[fieldName]) return;
+        commonFields[fieldName] = (destSettings as Record<keyof typeof commonFields, string>)[
+          fieldName
+        ];
       });
     });
     return commonFields;
@@ -399,9 +404,9 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     const commonFields = this.getCommonFields(platforms);
     const result = {} as IGoLiveSettings['platforms'];
     Object.keys(platforms).forEach(platform => {
-      result[platform] = platforms[platform];
-      result[platform].title = platforms[platform].title || commonFields.title;
-      result[platform].description = platforms[platform].description || commonFields.description;
+      result[platform] = platforms[platform as TPlatform];
+      result[platform].title = platforms[platform as TPlatform].title || commonFields.title;
+      result[platform].description = platforms[platform]?.description || commonFields.description;
     });
     return result;
   }
@@ -509,25 +514,30 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   private getSavedPlatformSettings(platform: TPlatform) {
     const service = getPlatformService(platform);
     const savedDestinations = this.streamSettingsView.state.goLiveSettings?.platforms;
-    const { enabled, useCustomFields } = (savedDestinations && savedDestinations[platform]) || {
+    const { enabled, useCustomFields } = (savedDestinations &&
+      savedDestinations[platform as keyof typeof savedDestinations]) || {
       enabled: false,
       useCustomFields: false,
     };
     const settings = cloneDeep(service.state.settings);
 
     // don't reuse broadcastId and thumbnail for Youtube
-    if (settings && settings['broadcastId']) settings['broadcastId'] = '';
-    if (settings && settings['thumbnail']) settings['thumbnail'] = '';
+    if (settings && settings['broadcastId' as keyof typeof settings]) {
+      settings['broadcastId' as keyof typeof settings] = '';
+    }
+    if (settings && settings['thumbnail' as keyof typeof settings]) {
+      settings['thumbnail' as keyof typeof settings] = '';
+    }
 
     // don't reuse liveVideoId for Facebook
-    if (platform === 'facebook' && settings && settings['liveVideoId']) {
-      settings['liveVideoId'] = '';
+    if (platform === 'facebook' && settings && settings['liveVideoId' as keyof typeof settings]) {
+      settings['liveVideoId' as keyof typeof settings] = '';
     }
 
     // make sure platforms assigned to the vertical display in dual output mode still go live in single output mode
     const display =
       this.isDualOutputMode && savedDestinations
-        ? savedDestinations[platform]?.display
+        ? savedDestinations[platform as keyof typeof savedDestinations]?.display
         : 'horizontal';
 
     return {
