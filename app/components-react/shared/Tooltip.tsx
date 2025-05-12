@@ -28,6 +28,7 @@ interface ITooltipTipProps {
   content?: HTMLElement | boolean;
   disabled?: boolean;
   autoAdjustOverflow?: boolean;
+  visible?: boolean;
   onClick?: () => void;
 }
 
@@ -43,6 +44,7 @@ export default function Tooltip(props: PropsWithChildren<ITooltipTipProps>) {
     content,
     disabled = false,
     autoAdjustOverflow = true,
+    visible,
     onClick,
   } = props;
 
@@ -68,6 +70,7 @@ export default function Tooltip(props: PropsWithChildren<ITooltipTipProps>) {
           mouseLeaveDelay={0.1}
           trigger={['hover', 'focus', 'click']}
           autoAdjustOverflow={autoAdjustOverflow}
+          visible={visible}
         >
           {content}
           {{ ...props }.children}

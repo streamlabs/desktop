@@ -16,7 +16,6 @@ interface IDisplayToggle {
   setDisplay?: (display: TDisplayType) => void;
   placement?: TTipPosition;
   iconSize?: number;
-  onClick?: () => void;
   disabled?: boolean;
 }
 
