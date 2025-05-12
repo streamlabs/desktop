@@ -55,6 +55,7 @@ export class OneCommeRelation {
 
       // 既存のサービス設定を取得
       const item = await fetchJSON<OneCommeServiceData>(url);
+      console.log('OneCommeRelation sendService item', item);
       const exist = item && item.id === OneCommeServiceFixID;
 
       // 番組が異なる場合の処理
@@ -69,13 +70,17 @@ export class OneCommeRelation {
         }
       }
 
-      // 新規作成は一旦enable=falseで作成、サービス作成後にenable=trueしないと接続しない
+      // 実際の接続に行くには一旦OFFにしてからONにする必要がある
+      const originalEnabledState = data.enabled;
+      data.enabled = false;
       if (!exist) {
-        const originalEnabledState = data.enabled;
-        data.enabled = false;
         await fetchJSON<OneCommeServiceData>(serviceUrl, makeRequest('POST', data));
-        data.enabled = originalEnabledState;
       }
+      if (exist && originalEnabledState) {
+        await fetchJSON<OneCommeServiceData>(url, makeRequest('PUT', data));
+      }
+      data.enabled = originalEnabledState;
+      // ワンコメのログインが放送者IDの場合はテスト配信時でも取得できるが、それ以外の場合は本配信まで取れない
 
       // サービス設定を更新
       const result = await fetchJSON<OneCommeServiceData>(url, makeRequest('PUT', data));
