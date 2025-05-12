@@ -55,6 +55,7 @@ export default function ClipsView({
   const [activeFilter, setActiveFilter] = useState('all'); // Currently not using the setActiveFilter option
 
   const [clipsLoaded, setClipsLoaded] = useState<boolean>(false);
+
   const loadClips = useCallback(async (id: string | undefined) => {
     await HighlighterService.actions.return.loadClips(id);
     setClipsLoaded(true);
@@ -316,6 +317,7 @@ export default function ClipsView({
                                 remote.shell.showItemInFolder(clip.path);
                               }}
                               streamId={streamId}
+                              game={game}
                             />
                           </div>
                         );
