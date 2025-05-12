@@ -13,6 +13,7 @@ import Translate from 'components-react/shared/Translate';
 import Animation from 'rc-animate';
 import { useGoLiveSettings, useGoLiveSettingsRoot } from './useGoLiveSettings';
 import { inject } from 'slap';
+import RecordingSwitcher from './RecordingSwitcher';
 
 export default function GoLiveWindow() {
   const { lifecycle, form } = useGoLiveSettingsRoot().extend(module => ({
@@ -132,6 +133,7 @@ function ModalFooter() {
 
   return (
     <Form layout={'inline'}>
+      {!isDualOutputMode && <RecordingSwitcher />}
       {/* CLOSE BUTTON */}
       <Button onClick={close}>{$t('Close')}</Button>
 

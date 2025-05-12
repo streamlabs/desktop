@@ -17,14 +17,10 @@ import { UserService } from 'services/user';
 import { SelectionService, Selection } from 'services/selection';
 import { StreamingService } from 'services/streaming';
 import { SettingsService } from 'services/settings';
-import { SourcesService, TSourceType } from 'services/sources';
-import { WidgetsService, WidgetType } from 'services/widgets';
 import { RunInLoadingMode } from 'services/app/app-decorators';
 import compact from 'lodash/compact';
 import invert from 'lodash/invert';
 import forEachRight from 'lodash/forEachRight';
-import { byOS, OS } from 'util/operating-systems';
-import { DefaultHardwareService } from 'services/hardware/default-hardware';
 
 interface IDisplayVideoSettings {
   horizontal: IVideoInfo;
@@ -38,6 +34,7 @@ interface IDualOutputServiceState {
   dualOutputMode: boolean;
   videoSettings: IDisplayVideoSettings;
   isLoading: boolean;
+  recording: TDisplayType[];
   // TODO: use Set
   extraOutputPlatforms: TPlatform[];
 }
@@ -150,6 +147,10 @@ class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
 
   get videoSettings() {
     return this.state.videoSettings;
+  }
+
+  get recording() {
+    return this.state.recording;
   }
 
   get activeDisplays() {
@@ -325,6 +326,7 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
         vertical: false,
       },
     },
+    recording: ['horizontal'],
     isLoading: false,
     // TODO: I would like to use `Set` but seem to be having issues with it
     extraOutputPlatforms: [] as TPlatform[],

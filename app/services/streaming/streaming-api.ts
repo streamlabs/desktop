@@ -79,6 +79,7 @@ export interface IStreamSettings {
   };
   customDestinations: ICustomStreamDestination[];
   advancedMode: boolean;
+  recording: TDisplayType[];
 }
 
 export interface IGoLiveSettings extends IStreamSettings {
