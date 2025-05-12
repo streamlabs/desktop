@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: flex-end;
 
-  >div:last-child {
+  > div:last-child {
     top: 44px !important;
     height: calc(100% - 44px);
   }
@@ -34,7 +34,7 @@
 }
 
 :global(.no-top-padding) {
-  .top-container>div:last-child {
+  .top-container > div:last-child {
     top: 32px !important;
     height: calc(100% - 32px);
   }
@@ -171,7 +171,7 @@
   display: flex;
   align-items: center;
 
-  >i {
+  > i {
     margin-right: 8px;
     opacity: 0;
   }
@@ -257,9 +257,6 @@
   }
 }
 
-.display-toggle {
-  i {
-    line-height: unset;
-    margin-left: 10px !important;
-  }
+.editor-display-toggle {
+  margin-left: 10px;
 }

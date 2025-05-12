@@ -660,11 +660,6 @@ class SourceSelectorController {
           content: $t('Cannot toggle Dual Output while live.'),
           className: styles.toggleError,
         });
-      } else if (Services.TransitionsService.views.studioMode) {
-        message.error({
-          content: $t('Cannot toggle Dual Output while in Studio Mode.'),
-          className: styles.toggleError,
-        });
       } else {
         // only open video settings when toggling on dual output
         const skipShowVideoSettings = this.dualOutputService.views.dualOutputMode === true;

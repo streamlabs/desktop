@@ -46,11 +46,6 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
       return;
     }
 
-    if (v.studioMode) {
-      showStudioModeModal();
-      return;
-    }
-
     if (v.selectiveRecording) {
       showSelectiveRecordingModal();
       return;

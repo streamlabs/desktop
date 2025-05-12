@@ -48,7 +48,7 @@ test('Dual output checkbox toggles Dual Output mode', withUser(), async (t: TExe
   t.false(await isDisplayed('div#vertical-display'));
 });
 
-test('Cannot toggle Dual Output in Studio Mode', withUser(), async (t: TExecutionContext) => {
+test.skip('Cannot toggle Dual Output in Studio Mode', withUser(), async (t: TExecutionContext) => {
   const { app } = t.context;
 
   await toggleDualOutputMode();

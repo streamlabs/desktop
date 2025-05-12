@@ -291,14 +291,6 @@ function FeaturesNavItem(p: {
     return menuTitles(menuItem.key);
   }, [menuItem]);
 
-  const disabled = dualOutputMode && menuItem.key === EMenuItemKey.StudioMode;
-
-  function showErrorMessage() {
-    message.error({
-      content: $t('Cannot toggle Studio Mode in Dual Output Mode.'),
-      className: styles.toggleError,
-    });
-  }
   const highlighterEnvironment = useMemo(Utils.getHighlighterEnvironment, []);
 
   return (
@@ -314,13 +306,7 @@ function FeaturesNavItem(p: {
       )}
       title={title}
       icon={setIcon()}
-      onClick={() => {
-        if (disabled) {
-          showErrorMessage();
-        } else {
-          handleNavigation(menuItem);
-        }
-      }}
+      onClick={() => handleNavigation(menuItem)}
     >
       <div style={{ display: 'flex', alignItems: 'center' }}>
         {title}
