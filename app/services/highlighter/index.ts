@@ -77,7 +77,6 @@ import { cutHighlightClips, getVideoDuration } from './cut-highlight-clips';
 import { reduce } from 'lodash';
 import { extractDateTimeFromPath, fileExists } from './file-utils';
 import { addVerticalFilterToExportOptions } from './vertical-export';
-import Utils from '../utils';
 import { SubtitleStyles } from './subtitles/subtitle-styles';
 import { isGameSupported } from './models/game-config.models';
 import Utils from 'services/utils';

@@ -279,15 +279,6 @@ function ExportFlow({
     findSubtitleItem(getSubtitleStyle()) || subtitleItems[0],
   );
 
-  const [currentSetting, setSetting] = useState<TSetting>(
-    settingMatcher({
-      name: 'from default',
-      fps: exportInfo.fps,
-      resolution: exportInfo.resolution,
-      preset: exportInfo.preset,
-    }),
-  );
-    
   const [currentSetting, setSetting] = useState<TSetting | null>(null);
   const [isLoadingResolution, setIsLoadingResolution] = useState(true);
 
