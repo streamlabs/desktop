@@ -3,6 +3,7 @@ import { Inject } from 'services/core/injector';
 import { HttpRelation } from 'services/nicolive-program/httpRelation';
 import { NicoliveCommentLocalFilterService } from 'services/nicolive-program/nicolive-comment-local-filter';
 import { NicoliveCommentSynthesizerService } from 'services/nicolive-program/nicolive-comment-synthesizer';
+import { NicoliveProgramService } from 'services/nicolive-program/nicolive-program';
 import { VoicevoxURL } from 'services/nicolive-program/speech/VoicevoxSynthesizer';
 import {
   NicoliveProgramStateService,
@@ -15,6 +16,7 @@ import Multiselect from 'vue-multiselect';
 import { Component, Watch } from 'vue-property-decorator';
 import VueSlider from 'vue-slider-component';
 import IconListSelect from './IconListSelect.vue';
+
 type MethodObject = {
   text: string;
   value: string;
@@ -47,6 +49,8 @@ export default class CommentSettings extends Vue {
   private nicoliveCommentLocalFilterService: NicoliveCommentLocalFilterService;
   @Inject()
   private nicoliveProgramStateService: NicoliveProgramStateService;
+  @Inject()
+  private nicoliveProgramService: NicoliveProgramService;
 
   synthesizers: SynthesizerItem[] = [
     {
@@ -73,6 +77,7 @@ export default class CommentSettings extends Vue {
 
   mounted() {
     this.startVoicevoxChecker();
+    this.initOneComme();
   }
 
   beforeDestroy() {
@@ -195,6 +200,41 @@ export default class CommentSettings extends Vue {
 
   set showAnonymous(v: boolean) {
     this.nicoliveCommentLocalFilterService.showAnonymous = v;
+  }
+
+  //-----------------------------------------
+
+  useOneComme = false;
+  removeComment = true;
+  isOneCommeError = false;
+
+  initOneComme() {
+    this.useOneComme = this.nicoliveProgramStateService.state.onecommeRelation.use;
+    this.removeComment = this.nicoliveProgramStateService.state.onecommeRelation.removeComment;
+  }
+
+  @Watch('useOneComme')
+  async onUseOneCommeChanged() {
+    const use = this.useOneComme;
+    this.isOneCommeError = false;
+    if (use === this.nicoliveProgramStateService.state.onecommeRelation.use) return;
+    if (use) {
+      if (!(await this.nicoliveProgramService.oneCommeRelation.testConnection())) {
+        this.isOneCommeError = true;
+      }
+    }
+    this.nicoliveProgramStateService.updateOneCommeRelation({ use });
+    if (use) this.nicoliveProgramService.oneCommeRelation.update({ force: true });
+  }
+
+  @Watch('removeComment')
+  onRemoveCommentChanged() {
+    const removeComment = this.removeComment;
+    this.nicoliveProgramStateService.updateOneCommeRelation({ removeComment });
+  }
+
+  showOneCommeInfo() {
+    remote.shell.openExternal('https://onecomme.com/docs/about');
   }
 
   //-----------------------------------------

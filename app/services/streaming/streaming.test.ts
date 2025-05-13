@@ -3,6 +3,7 @@ import { ERecordingState, EStreamingState } from './streaming-api';
 import * as remote from '@electron/remote';
 import { RequestError } from 'util/RequestError';
 import { createSetupFunction } from 'util/test-setup';
+import { NicoliveProgramStateService } from '../nicolive-program/state';
 
 function noop(..._args: any[]) {}
 
@@ -120,6 +121,9 @@ const createInjectee = ({
   RtvcStateService: {
     startStreaming: noop,
     stopStreaming: noop,
+  },
+  NicoliveProgramStateService: {
+    state: NicoliveProgramStateService.defaultState,
   },
 });
 
