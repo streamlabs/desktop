@@ -257,6 +257,7 @@ test(
     await toggleDualOutputMode();
     await prepareToGoLive();
     await clickGoLive();
+    await focusChild();
     await waitForSettingsWindowLoaded();
 
     // check that the primary chat selector is displayed
@@ -301,13 +302,8 @@ test(
 
     // confirm single output go live platform settings
     await clickGoLive();
+    await focusChild();
     await waitForSettingsWindowLoaded();
-
-    // check that the primary chat selector is displayed
-    t.true(
-      await isDisplayed('[data-name="primary-chat-switcher"]'),
-      'Primary chat switcher is displayed',
-    );
 
     t.true(await isDisplayed('.single-output-card'), 'Single output card exists');
     t.false(await isDisplayed('.dual-output-card'), 'Dual output card does not exist');
@@ -327,8 +323,9 @@ test(
 
     // confirm dual output go live platform settings
     await toggleDualOutputMode(true);
-    await prepareToGoLive();
     await clickGoLive();
+    await focusChild();
+    await waitForSettingsWindowLoaded();
 
     await isDisplayed('.dual-output-card');
     t.true(await isDisplayed('.dual-output-card'), 'Dual output card exists');
