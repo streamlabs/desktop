@@ -33,7 +33,6 @@ interface IUpdateInfo {
   tempDir: string;
   cacheDir: string;
   versionFileName: string;
-  details: string;
 }
 
 /**
@@ -342,6 +341,9 @@ async function entry(info: IUpdateInfo) {
    * The temporary directory may not exist though. */
   await mkdir(info.tempDir, { recursive: true });
 
+  const latestVersionPath = path.join(info.tempDir, info.versionFileName);
+  await writeFile(latestVersionPath, JSON.stringify(latestVersion));
+
   const updaterPath = await fetchUpdater(info);
 
   if (!updaterPath) {
@@ -365,7 +367,7 @@ async function entry(info: IUpdateInfo) {
     `"${info.appDir}"`,
     '--force-temp',
     '--details',
-    `"${info.details}"`,
+    `"${latestVersionPath}"`,
   ];
 
   info.waitPids.forEach(pid => {
