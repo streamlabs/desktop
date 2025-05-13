@@ -260,12 +260,6 @@ test(
     await focusChild();
     await waitForSettingsWindowLoaded();
 
-    // check that the primary chat selector is displayed
-    t.true(
-      await isDisplayed('[data-name="primary-chat-switcher"]'),
-      'Primary chat switcher is displayed',
-    );
-
     // check that the selector is displayed
     t.true(await isDisplayed('[data-test=destination-selector]'), 'Destination selector exists');
 
@@ -349,6 +343,12 @@ test(
       'Destination selector does not exist',
     );
     t.false(await isDisplayed('.platform-close'), 'Platform close icon does not exist');
+
+    // check that the primary chat selector is displayed
+    t.true(
+      await isDisplayed('[data-name="primary-chat-switcher"]'),
+      'Primary chat switcher is displayed',
+    );
 
     // cannot use dual output mode with all platforms assigned to one display
     await submit();
