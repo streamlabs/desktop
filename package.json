@@ -95,6 +95,7 @@
     "realm": "12.7.1",
     "rimraf": "^2.6.1",
     "semver": "^5.5.1",
+    "sharp": "^0.33.5",
     "socket.io-client": "2.3.1",
     "tasklist": "^3.1.1",
     "uuid": "^3.0.1",
