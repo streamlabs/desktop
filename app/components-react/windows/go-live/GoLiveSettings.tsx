@@ -36,6 +36,7 @@ export default function GoLiveSettings() {
     showSelector,
     showTweet,
     hasMultiplePlatforms,
+    hasMultiplePlatformsLinked,
     enabledPlatforms,
     primaryChat,
     recommendedColorSpaceWarnings,
@@ -51,6 +52,8 @@ export default function GoLiveSettings() {
       },
 
       showSelector: !UserService.views.isPrime && module.isDualOutputMode,
+
+      hasMultiplePlatformsLinked: module.state.linkedPlatforms.length > 1,
 
       isPrime: UserService.views.isPrime,
 
@@ -76,7 +79,8 @@ export default function GoLiveSettings() {
   const shouldShowLeftCol = isDualOutputMode ? true : protectedModeEnabled;
   const shouldShowAddDestButton = canAddDestinations;
 
-  const shouldShowPrimaryChatSwitcher = hasMultiplePlatforms;
+  const shouldShowPrimaryChatSwitcher =
+    hasMultiplePlatforms || (isDualOutputMode && hasMultiplePlatformsLinked);
 
   return (
     <Row gutter={16} className={styles.settingsRow}>
