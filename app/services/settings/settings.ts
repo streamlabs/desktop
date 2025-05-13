@@ -620,6 +620,8 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
       });
 
       this.setSettings(categoryName, formSubCategories);
+
+      this.settingsUpdated.next(patch);
     });
   }
 
