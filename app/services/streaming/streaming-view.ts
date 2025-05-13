@@ -244,8 +244,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     const platforms = settings?.platforms || this.settings.platforms;
     // If any platform is configured as "Both" for outputs we technically should satisfy
     // this requirement and ignore the warning
-    // TODO: fix types
-    if (Object.values(platforms).some(platform => (platform as any).hasExtraOutputs)) {
+    if (this.dualOutputView.hasExtraOutputs) {
       return true;
     }
 
@@ -561,6 +560,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
   get isIdle(): boolean {
     return !this.isStreaming && !this.isRecording;
+  }
+
+  get replayBufferStatus() {
+    return this.streamingState.replayBufferStatus;
   }
 
   // TODO: consolidate between this and GoLiveSettings

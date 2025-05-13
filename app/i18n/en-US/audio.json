@@ -42,5 +42,6 @@
   "Desktop Audio Device 2": "Desktop Audio Device 2",
   "Mic/Auxiliary Device 1": "Mic/Auxiliary Device 1",
   "Mic/Auxiliary Device 2": "Mic/Auxiliary Device 2",
-  "Mic/Auxiliary Device 3": "Mic/Auxiliary Device 3"
+  "Mic/Auxiliary Device 3": "Mic/Auxiliary Device 3",
+  "Recording Audio Encoder": "Recording Audio Encoder"
 }

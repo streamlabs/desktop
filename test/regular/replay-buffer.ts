@@ -6,14 +6,20 @@ import {
   setTemporaryRecordingPath,
   showSettingsWindow,
 } from '../helpers/modules/settings/settings';
-import { click, clickButton, focusMain, isDisplayed, select } from '../helpers/modules/core';
+import {
+  clickButton,
+  clickCheckbox,
+  clickTab,
+  focusMain,
+  isDisplayed,
+} from '../helpers/modules/core';
 import {
   saveReplayBuffer,
   startReplayBuffer,
   stopReplayBuffer,
 } from '../helpers/modules/replay-buffer';
 import { ExecutionContext } from 'ava';
-import { setFormDropdown } from '../helpers/webdriver/forms';
+import { useForm } from '../helpers/modules/forms';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -38,16 +44,16 @@ async function recordHighlight(
 
 async function toggleReplayBuffer(advanced: boolean = false) {
   await showSettingsWindow('Output', async () => {
+    const { setDropdownInputValue } = useForm('Mode');
+
     if (advanced) {
-      await setFormDropdown('Output Mode', 'Advanced');
-      await clickButton('Replay Buffer');
-      await click(await select('div[data-name="RecRB"]'));
+      await setDropdownInputValue('Mode', 'Advanced');
+      await clickTab('Replay Buffer');
     } else {
-      await setFormDropdown('Output Mode', 'Simple');
-      await click('label=Enable Replay Buffer');
+      await setDropdownInputValue('Mode', 'Simple');
     }
 
-    await sleep(3000);
+    await clickCheckbox('RecRB');
     await clickButton('Done');
     await focusMain();
   });

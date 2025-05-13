@@ -12,6 +12,11 @@ import {
   ReconnectFactory,
   NetworkFactory,
   ISimpleStreaming,
+  IAdvancedStreaming,
+  IAdvancedRecording,
+  IAdvancedReplayBuffer,
+  ISimpleRecording,
+  ISimpleReplayBuffer,
 } from '../../../obs-api';
 import { Inject } from 'services/core/injector';
 import moment from 'moment';
@@ -81,15 +86,40 @@ enum EOBSOutputType {
   ReplayBuffer = 'replay-buffer',
 }
 
+const outputType = (type: EOBSOutputType) =>
+  ({
+    [EOBSOutputType.Streaming]: $t('Streaming'),
+    [EOBSOutputType.Recording]: $t('Recording'),
+    [EOBSOutputType.ReplayBuffer]: $t('Replay Buffer'),
+  }[type]);
+
 enum EOBSOutputSignal {
   Starting = 'starting',
   Start = 'start',
   Stopping = 'stopping',
   Stop = 'stop',
+  Activate = 'activate',
   Deactivate = 'deactivate',
   Reconnect = 'reconnect',
   ReconnectSuccess = 'reconnect_success',
   Wrote = 'wrote',
+  Writing = 'writing',
+  WriteError = 'writing_error',
+}
+
+enum EOutputSignalState {
+  Saving = 'saving',
+  Starting = 'starting',
+  Start = 'start',
+  Stopping = 'stopping',
+  Stop = 'stop',
+  Activate = 'activate',
+  Deactivate = 'deactivate',
+  Reconnect = 'reconnect',
+  ReconnectSuccess = 'reconnect_success',
+  Running = 'running',
+  Wrote = 'wrote',
+  Writing = 'writing',
   WriteError = 'writing_error',
 }
 
@@ -112,6 +142,14 @@ interface IExtraOutput {
   streamKey: string;
   encoder: EEncoderFamily;
   encoderSettings: IStreamingEncoderSettings;
+}
+
+type TOBSOutputType = 'streaming' | 'recording' | 'replayBuffer';
+
+interface IOutputContext {
+  streaming: ISimpleStreaming | IAdvancedStreaming;
+  recording: ISimpleRecording | IAdvancedRecording;
+  replayBuffer: ISimpleReplayBuffer | IAdvancedReplayBuffer;
 }
 
 export class StreamingService
@@ -435,10 +473,9 @@ export class StreamingService
       if (
         this.views.isDualOutputMode &&
         this.views.enabledPlatforms.includes('youtube') &&
-        this.views.getPlatformSettings('youtube')?.hasExtraOutputs &&
+        this.dualOutputService.views.hasExtraOutput('youtube') &&
         /*
          * Super safe so we don't ever bypass validation due to the toggles
-         * or `hasExtraOutputs` not being reset.
          * TODO: might not cover free TikTok, but probably by design
          */
         (this.userService.views.isPrime || this.views.enabledPlatforms.length === 1)
@@ -691,6 +728,17 @@ export class StreamingService
 
     if (settings.platforms.instagram?.enabled) {
       this.usageStatisticsService.recordFeatureUsage('StreamToInstagram');
+    }
+
+    /* YouTube is our only "extra output" so we're making a special case for
+     * it for tracking, in the future, we'd rather track extraOutputs from
+     * StreamingService themselves
+     */
+    if (
+      settings.platforms.youtube?.enabled &&
+      this.dualOutputService.views.hasExtraOutput('youtube')
+    ) {
+      this.usageStatisticsService.recordFeatureUsage('StreamToYouTubeBothOutputs');
     }
   }
 
@@ -983,19 +1031,28 @@ export class StreamingService
 
     this.powerSaveId = remote.powerSaveBlocker.start('prevent-display-sleep');
 
-    // start streaming
+    // start dual output
     if (this.views.isDualOutputMode) {
-      // start dual output
-
+      // stream horizontal and stream vertical
       const horizontalContext = this.videoSettingsService.contexts.horizontal;
       const verticalContext = this.videoSettingsService.contexts.vertical;
 
       NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
       const ytSettings = this.views.getPlatformSettings('youtube');
+      /*
+       * HACK: this needs to be addressed and is the result of the old
+       * streaming API *requiring* you to have both horizontal and vertical
+       * outputs to initialize streaming.
+       */
+      // TODO: this can probably be more generic now
       if (
         this.views.enabledPlatforms.length > 1 &&
         ytSettings?.enabled &&
-        ytSettings.hasExtraOutputs
+        this.dualOutputService.views.hasExtraOutput('youtube') &&
+        !(
+          this.views.activeDisplayPlatforms.vertical.length ||
+          this.views.activeDisplayDestinations.vertical.length
+        )
       ) {
         NodeObs.OBS_service_setVideoInfo(horizontalContext, 'vertical');
       } else {
