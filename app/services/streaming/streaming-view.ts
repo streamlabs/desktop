@@ -4,7 +4,6 @@ import {
   IStreamSettings,
   EStreamingState,
   ERecordingState,
-  EReplayBufferState,
 } from './streaming-api';
 import { StreamSettingsService, ICustomStreamDestination } from '../settings/streaming';
 import { UserService } from '../user';
@@ -551,19 +550,11 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get isRecording() {
-    return this.streamingState.recordingStatus !== ERecordingState.Offline;
-  }
-
-  get isReplayBufferActive() {
-    return this.streamingState.replayBufferStatus !== EReplayBufferState.Offline;
+    return this.streamingState.status.horizontal.recording !== ERecordingState.Offline;
   }
 
   get isIdle(): boolean {
     return !this.isStreaming && !this.isRecording;
-  }
-
-  get replayBufferStatus() {
-    return this.streamingState.replayBufferStatus;
   }
 
   // TODO: consolidate between this and GoLiveSettings
@@ -573,5 +564,9 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
   get selectiveRecording() {
     return this.streamingState.selectiveRecording;
+  }
+
+  get replayBufferStatus() {
+    return this.streamingState.status.horizontal.replayBuffer;
   }
 }

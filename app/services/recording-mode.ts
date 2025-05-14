@@ -8,7 +8,7 @@ import { ELayout, ELayoutElement, LayoutService } from './layout';
 import { ScenesService } from './scenes';
 import { EObsSimpleEncoder, SettingsService } from './settings';
 import { AnchorPoint, ScalableRectangle } from 'util/ScalableRectangle';
-import { VideoSettingsService } from './settings-v2/video';
+import { TDisplayType, VideoSettingsService } from './settings-v2/video';
 import { ENotificationType, NotificationsService } from 'services/notifications';
 import { DefaultHardwareService } from './hardware';
 import { RunInLoadingMode } from './app/app-decorators';
@@ -18,6 +18,7 @@ import { NavigationService, UsageStatisticsService, SharedStorageService } from 
 import { getPlatformService } from 'services/platforms';
 import { IYoutubeUploadResponse } from 'services/platforms/youtube/uploader';
 import { YoutubeService } from 'services/platforms/youtube';
+import { capitalize } from 'lodash';
 
 export interface IRecordingEntry {
   timestamp: string;
@@ -180,12 +181,22 @@ export class RecordingModeService extends PersistentStatefulService<IRecordingMo
     }, 10 * 1000);
   }
 
-  addRecordingEntry(filename: string) {
+  /**
+   * Add entry to recording history and show notification
+   * @param filename - name of file to show in recording history
+   * @param showNotification - primarily used when recording in dual output mode to only show the notification once
+   */
+  addRecordingEntry(filename: string, display?: TDisplayType) {
     const timestamp = moment().format();
     this.ADD_RECORDING_ENTRY(timestamp, filename);
+
+    const message = display
+      ? $t(`A new ${capitalize(display)} Recording has been completed. Click for more info`)
+      : $t('A new Recording has been completed. Click for more info');
+
     this.notificationsService.actions.push({
       type: ENotificationType.SUCCESS,
-      message: $t('A new Recording has been completed. Click for more info'),
+      message,
       action: this.jsonrpcService.createRequest(
         Service.getResourceId(this),
         'showRecordingHistory',

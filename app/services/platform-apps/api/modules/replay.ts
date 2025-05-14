@@ -107,8 +107,8 @@ export class ReplayModule extends Module {
 
   private serializeState(): IReplayBufferState {
     return {
-      status: this.streamingService.state.replayBufferStatus,
-      statusTime: this.streamingService.state.replayBufferStatusTime,
+      status: this.streamingService.state.status.horizontal.replayBuffer,
+      statusTime: this.streamingService.state.status.horizontal.replayBufferTime,
     };
   }
 }

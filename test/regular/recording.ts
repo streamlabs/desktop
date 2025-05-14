@@ -86,7 +86,10 @@ async function validateRecordingFiles(
   // The additional TS files created by M3U8 in advanced mode are not displayed in the recording history
   const numFiles = advanced ? files.length - 1 : files.length;
 
-  t.true(numFiles >= numFormats, `Files that were created:\n${files.join('\n')}`);
+  t.true(
+    numFiles >= numFormats,
+    `Expected ${numFormats}, when directory has ${numFiles}. Files created:\n${files.join(', ')}`,
+  );
 
   // Check that the recordings are displayed in the recording history
   await showPage('Recordings');
@@ -122,9 +125,10 @@ test('Recording', async t => {
   });
 
   await focusMain();
-  await startRecording();
   // Record for 2s to prevent the recording from accidentally having the same key
   await sleep(2000);
+  await startRecording();
+  await sleep(500);
   await stopRecording();
   await clickWhenDisplayed('span=A new Recording has been completed. Click for more info');
   await validateRecordingFiles(t, tmpDir, numSimpleFormats + numAdvancedFormats + 1, true);

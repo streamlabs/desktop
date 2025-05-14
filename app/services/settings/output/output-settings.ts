@@ -919,6 +919,7 @@ export class OutputSettingsService extends Service {
       this.settingsService.setSettingValue('Output', 'Recbitrate', settingsPatch.bitrate);
     }
   }
+
   convertEncoderToNewAPI(
     encoder: EObsSimpleEncoder | string,
   ): EObsSimpleEncoder.x264_lowcpu | EObsAdvancedEncoder {

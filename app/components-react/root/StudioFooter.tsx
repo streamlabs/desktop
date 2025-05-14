@@ -4,7 +4,7 @@ import { EStreamQuality } from '../../services/performance';
 import { EStreamingState, EReplayBufferState, ERecordingState } from '../../services/streaming';
 import { Services } from '../service-provider';
 import { $t } from '../../services/i18n';
-import { useVuex } from '../hooks';
+import { useDebounce, useVuex } from '../hooks';
 import styles from './StudioFooter.m.less';
 import PerformanceMetrics from '../shared/PerformanceMetrics';
 import TestWidgets from './TestWidgets';
@@ -42,9 +42,12 @@ export default function StudioFooterComponent() {
       StreamingService.views.supports('stream-schedule') &&
       !RecordingModeService.views.isRecordingModeEnabled,
     streamQuality: PerformanceService.views.streamQuality,
-    replayBufferOffline: StreamingService.state.replayBufferStatus === EReplayBufferState.Offline,
-    replayBufferStopping: StreamingService.state.replayBufferStatus === EReplayBufferState.Stopping,
-    replayBufferSaving: StreamingService.state.replayBufferStatus === EReplayBufferState.Saving,
+    replayBufferOffline:
+      StreamingService.state.status.horizontal.replayBuffer === EReplayBufferState.Offline,
+    replayBufferStopping:
+      StreamingService.state.status.horizontal.replayBuffer === EReplayBufferState.Stopping,
+    replayBufferSaving:
+      StreamingService.state.status.horizontal.replayBuffer === EReplayBufferState.Saving,
     recordingModeEnabled: RecordingModeService.views.isRecordingModeEnabled,
     replayBufferEnabled: SettingsService.views.values.Output.RecRB,
   }));
@@ -83,7 +86,7 @@ export default function StudioFooterComponent() {
   }
 
   function toggleReplayBuffer() {
-    if (StreamingService.state.replayBufferStatus === EReplayBufferState.Offline) {
+    if (replayBufferOffline) {
       StreamingService.actions.startReplayBuffer();
     } else {
       StreamingService.actions.stopReplayBuffer();
@@ -197,7 +200,7 @@ function RecordingButton() {
   const { StreamingService } = Services;
   const { isRecording, recordingStatus } = useVuex(() => ({
     isRecording: StreamingService.views.isRecording,
-    recordingStatus: StreamingService.state.recordingStatus,
+    recordingStatus: StreamingService.state.status.horizontal.recording,
   }));
 
   function toggleRecording() {
@@ -214,7 +217,7 @@ function RecordingButton() {
         >
           <button
             className={cx(styles.recordButton, 'record-button', { active: isRecording })}
-            onClick={toggleRecording}
+            onClick={useDebounce(200, toggleRecording)}
           >
             <span>
               {recordingStatus === ERecordingState.Stopping ? (
