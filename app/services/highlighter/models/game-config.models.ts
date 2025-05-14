@@ -144,7 +144,7 @@ const WARZONE_CONFIG: IGameConfig = {
   label: 'Call of Duty: Warzone',
   gameModes: '',
   thumbnail: `${thumbnailPath}${EGame.WARZONE}.png`,
-  state: EGameState.INTERNAL,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -161,7 +161,7 @@ const BLACK_OPS_6_CONFIG: IGameConfig = {
   label: 'Call of Duty: Black Ops 6',
   gameModes: '',
   thumbnail: `${thumbnailPath}call-of-duty-black-ops-6.png`,
-  state: EGameState.INTERNAL,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -179,7 +179,7 @@ const MARVEL_RIVALS_CONFIG: IGameConfig = {
   label: 'Marvel Rivals',
   gameModes: '',
   thumbnail: `${thumbnailPath}marvel-rivals.png`,
-  state: EGameState.INTERNAL,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -197,7 +197,7 @@ const WAR_THUNDER_CONFIG: IGameConfig = {
   label: 'War Thunder',
   gameModes: '',
   thumbnail: `${thumbnailPath}war-thunder.png`,
-  state: EGameState.INTERNAL,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -215,7 +215,7 @@ const VALORANT_CONFIG: IGameConfig = {
   label: 'VALORANT',
   gameModes: '',
   thumbnail: `${thumbnailPath}${EGame.VALORANT}.png`,
-  state: EGameState.INTERNAL,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -231,7 +231,7 @@ const COUNTER_STRIKE_2_CONFIG: IGameConfig = {
   label: 'Counter-Strike',
   gameModes: '',
   thumbnail: `${thumbnailPath}${EGame.COUNTER_STRIKE_2}.png`,
-  state: EGameState.INTERNAL,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -247,7 +247,7 @@ const APEX_LEGENDS_CONFIG: IGameConfig = {
   label: 'Apex Legends',
   gameModes: '',
   thumbnail: `${thumbnailPath}${EGame.APEX_LEGENDS}.png`,
-  state: EGameState.INTERNAL,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -263,7 +263,7 @@ const PUBG_CONFIG: IGameConfig = {
   label: 'PUBG: BATTLEGROUNDS',
   gameModes: '',
   thumbnail: `${thumbnailPath}${EGame.PUBG}.png`,
-  state: EGameState.INTERNAL,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -278,15 +278,15 @@ const RAINBOW_SIX_SIEGE: IGameConfig = {
   name: EGame.RAINBOW_SIX_SIEGE,
   label: "Tom Clancy's Rainbow Six Siege",
   gameModes: '',
-  thumbnail: null,
-  state: EGameState.INTERNAL,
+  thumbnail: `${thumbnailPath}${EGame.RAINBOW_SIX_SIEGE}.png`,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
   importModalConfig: {
-    accentColor: '#b3bac5',
+    accentColor: '#5F98F7',
     artwork: `${heroPath}${EGame.RAINBOW_SIX_SIEGE}.png`,
-    backgroundColor: '#e04f3c',
+    backgroundColor: '#25262A',
   },
 };
 
@@ -294,15 +294,15 @@ const OVERWATCH_2: IGameConfig = {
   name: EGame.OVERWATCH_2,
   label: 'Overwatch 2',
   gameModes: '',
-  thumbnail: null,
-  state: EGameState.INTERNAL,
+  thumbnail: `${thumbnailPath}${EGame.OVERWATCH_2}.png`,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
   importModalConfig: {
-    accentColor: '#c66734',
+    accentColor: '#E5803F',
     artwork: `${heroPath}${EGame.OVERWATCH_2}.png`,
-    backgroundColor: '#c2c9de',
+    backgroundColor: '#cdc7cd',
   },
 };
 
