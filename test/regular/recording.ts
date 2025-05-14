@@ -151,3 +151,116 @@ test('Recording with two contexts active', async t => {
   const numFiles = await createRecordingFiles(true);
   await validateRecordingFiles(t, tmpDir, numFiles, true);
 });
+
+/**
+ * TODO Remove after recording formats are fixed
+ * This is just the recording test with only flv, mp4, mov, and mkv formats
+ */
+
+/**
+ * Iterate over all formats and record a 0.5s video in each.
+ * @param advanced - whether to use advanced settings
+ * @returns number of formats
+ */
+async function createSubsetRecordingFiles(advanced: boolean = false): Promise<number> {
+  const formats = ['flv', 'mp4', 'mov', 'mkv'];
+
+  // Record 0.5s video in every format
+  for (const format of formats) {
+    await showSettingsWindow('Output', async () => {
+      if (advanced) {
+        await clickTab('Recording');
+      }
+
+      const { setDropdownInputValue } = useForm('Recording');
+      await setDropdownInputValue('RecFormat', format);
+      await clickButton('Done');
+    });
+
+    await focusMain();
+    await startRecording();
+    await sleep(500);
+    await stopRecording();
+
+    // in advanced mode, it may take a little longer to save the recording
+    if (advanced) {
+      await sleep(1000);
+    }
+
+    // Confirm notification has been shown and navigate to the recording history
+    await focusMain();
+    await clickWhenDisplayed('span=A new Recording has been completed. Click for more info');
+    await waitForDisplayed('h1=Recordings', { timeout: 1000 });
+    await sleep(500);
+    await showPage('Editor');
+  }
+
+  return Promise.resolve(formats.length);
+}
+
+/**
+ * Confirm correct number of files were created and that they are displayed in the recording history.
+ * @param t - AVA test context
+ * @param tmpDir - temporary directory where recordings are saved
+ * @param numFormats - number of formats used to record
+ */
+async function validateSubsetRecordingFiles(
+  t: TExecutionContext,
+  tmpDir: string,
+  numFormats: number,
+) {
+  const files = await readdir(tmpDir);
+  // M3U8 creates multiple TS files in addition to the catalog itself.
+  // The additional TS files created by M3U8 in advanced mode are not displayed in the recording history
+
+  const numFiles = files.length;
+
+  t.true(
+    numFiles >= numFormats,
+    `Expected ${numFormats}, when directory has ${numFiles}. Files created:\n${files.join('\n')}`,
+  );
+
+  // Check that the recordings are displayed in the recording history
+  await showPage('Recordings');
+  waitForDisplayed('h1=Recordings');
+
+  const numRecordings = await getNumElements('[data-test=filename]');
+  t.is(numRecordings, numFiles, 'All recordings show in history matches number of files recorded');
+}
+
+/**
+ * Recording with one context active (horizontal, simple)
+ */
+test('Recording Subset', async t => {
+  // low resolution reduces CPU usage
+  await setOutputResolution('100x100');
+
+  // Simple Recording
+  const tmpDir = await setTemporaryRecordingPath();
+  const numSimpleFormats = await createSubsetRecordingFiles();
+  await validateRecordingFiles(t, tmpDir, numSimpleFormats);
+
+  // Advanced Recording
+  await setTemporaryRecordingPath(true, tmpDir);
+  const numAdvancedFormats = await createSubsetRecordingFiles(true);
+  await validateRecordingFiles(t, tmpDir, numSimpleFormats + numAdvancedFormats);
+
+  // Switches between Advanced and Simple Recording
+  // Note: The recording path for Simple Recording should have persisted from before
+  await showSettingsWindow('Output', async () => {
+    const { setDropdownInputValue } = useForm('Mode');
+    await setDropdownInputValue('Mode', 'Simple');
+    await clickButton('Done');
+  });
+
+  await focusMain();
+  // wait for 2s to prevent the recording from accidentally having the same key
+  await sleep(2000);
+  await startRecording();
+  await sleep(500);
+  await stopRecording();
+  await clickWhenDisplayed('span=A new Recording has been completed. Click for more info');
+  await validateSubsetRecordingFiles(t, tmpDir, numSimpleFormats + numAdvancedFormats + 1);
+
+  t.pass();
+});
