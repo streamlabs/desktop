@@ -152,6 +152,7 @@
   "Failed to post the Tweet": "Failed to post the Tweet",
   "This feature is for Ultra members only": "This feature is for Ultra members only",
   "An unknown error occurred": "An unknown error occurred",
+  "An unknown %{type} error occurred.": "An unknown %{type} error occurred.",
   "Please enable your account for live streaming, and wait 24 hours before attempting to stream.": "Please enable your account for live streaming, and wait 24 hours before attempting to stream.",
   "Please try again. If the issue persists, you can stream directly to a single platform instead.": "Please try again. If the issue persists, you can stream directly to a single platform instead.",
   "Enable Live Streaming": "Enable Live Streaming",
