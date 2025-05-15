@@ -36,6 +36,7 @@
   "recordTooltip": "設定 > 出力で録画パスを指定できます",
   "notBroadcasting": "番組が作成されていません",
   "notBroadcastingMessage": "N Airでログインしているアカウントでは番組が作成されていないため、配信ができません。ニコニコ生放送にて番組を作成してください。",
+  "notBroadcastingCreateProgram": "番組を作成する",
   "broadcastStatusFetchingError": {
     "default": "配信に必要な情報を取得できませんでした。インターネットの接続状態を確認してください。",
     "httpError": "配信に必要な情報を取得できませんでした。（%{requestURL}: %{statusText}）"

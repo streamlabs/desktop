@@ -36,6 +36,7 @@
   "recordTooltip": "Set path in Settings > Output.",
   "notBroadcasting": "There is no program",
   "notBroadcastingMessage": "There is no program to start streaming on. Make a program on niconico live service.",
+  "notBroadcastingCreateProgram": "Create a program",
   "broadcastStatusFetchingError": {
     "default": "Failed to get information on streaming server.  Please check your internet connection.",
     "httpError": "Failed to get information on streaming server. (%{requestURL}: %{statusText})"
