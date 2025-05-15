@@ -287,27 +287,6 @@ export class YoutubeService
   }
 
   async createVertical(settings: IGoLiveSettings): Promise<ICustomStreamDestination> {
-    // {
-    //   id: string;
-    //   snippet: {
-    //     isDefaultStream: boolean;
-    //   };
-    //   cdn: {
-    //     ingestionInfo: {
-    //       /**
-    //        * streamName is actually a secret stream key
-    //        */
-    //       streamName: string;
-    //       ingestionAddress: string;
-    //     };
-    //     resolution: string;
-    //     frameRate: string;
-    //   };
-    //   status: {
-    //     streamStatus: TStreamStatus;
-    //   };
-    // }
-
     const ytSettings = getDefined(settings.platforms.youtube);
     const title = makeVerticalTitle(ytSettings.title);
 
@@ -490,8 +469,8 @@ export class YoutubeService
         url: `${this.apiBase}/${endpoint}`,
       });
     } catch (e: unknown) {
-      // Silently fail to update category if API fails here until we receive further clarification
-      return;
+      // TODO: Silently fail to update category if API fails here until we receive further clarification
+      return console.error(e);
     }
   }
 
