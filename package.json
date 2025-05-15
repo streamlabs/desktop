@@ -92,7 +92,7 @@
     "react-colorful": "^5.5.0",
     "react-devtools-electron": "^4.7.0",
     "react-transition-group": "^4.4.1",
-    "realm": "12.7.1",
+    "realm": "12.14.2",
     "rimraf": "^2.6.1",
     "semver": "^5.5.1",
     "socket.io-client": "2.3.1",
