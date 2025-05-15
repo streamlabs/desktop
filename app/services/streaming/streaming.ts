@@ -222,7 +222,6 @@ export class StreamingService
 
           // 配信可能チャンネルがなく、配信できるユーザー生放送もない場合
           if (!broadcastableUserProgram.programId && !broadcastableUserProgram.nextProgramId) {
-            // TODO ここでユーザーに確認して、番組を作成するならそちらに誘導する
             return this.showNotBroadcastingMessageBoxForNicolive();
           }
         }
