@@ -470,7 +470,7 @@ export class YoutubeService
       });
     } catch (e: unknown) {
       // TODO: Silently fail to update category if API fails here until we receive further clarification
-      return console.error(e);
+      return;
     }
   }
 
