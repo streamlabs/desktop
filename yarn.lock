@@ -10195,10 +10195,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"napi-build-utils@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "napi-build-utils@npm:2.0.0"
-  checksum: 532121efd2dd2272595580bca48859e404bdd4ed455a72a28432ba44868c38d0e64fac3026a8f82bf8563d2a18b32eb9a1d59e601a9da4e84ba4d45b922297f5
+"napi-build-utils@npm:^1.0.1":
+  version: 1.0.2
+  resolution: "napi-build-utils@npm:1.0.2"
+  checksum: 06c14271ee966e108d55ae109f340976a9556c8603e888037145d6522726aebe89dd0c861b4b83947feaf6d39e79e08817559e8693deedc2c94e82c5cbd090c7
   languageName: node
   linkType: hard
 
@@ -11177,16 +11177,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prebuild-install@npm:^7.1.2":
-  version: 7.1.3
-  resolution: "prebuild-install@npm:7.1.3"
+"prebuild-install@npm:^7.1.1":
+  version: 7.1.2
+  resolution: "prebuild-install@npm:7.1.2"
   dependencies:
     detect-libc: ^2.0.0
     expand-template: ^2.0.3
     github-from-package: 0.0.0
     minimist: ^1.2.3
     mkdirp-classic: ^0.5.3
-    napi-build-utils: ^2.0.0
+    napi-build-utils: ^1.0.1
     node-abi: ^3.3.0
     pump: ^3.0.0
     rc: ^1.2.7
@@ -11195,7 +11195,7 @@ __metadata:
     tunnel-agent: ^0.6.0
   bin:
     prebuild-install: bin.js
-  checksum: 300740ca415e9ddbf2bd363f1a6d2673cc11dd0665c5ec431bbb5bf024c2f13c56791fb939ce2b2a2c12f2d2a09c91316169e8063a80eb4482a44b8fe5b265e1
+  checksum: 543dadf8c60e004ae9529e6013ca0cbeac8ef38b5f5ba5518cb0b622fe7f8758b34e4b5cb1a791db3cdc9d2281766302df6088bd1a225f206925d6fee17d6c5c
   languageName: node
   linkType: hard
 
@@ -12334,9 +12334,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"realm@npm:12.14.2":
-  version: 12.14.2
-  resolution: "realm@npm:12.14.2"
+"realm@npm:12.7.1":
+  version: 12.7.1
+  resolution: "realm@npm:12.7.1"
   dependencies:
     "@realm/fetch": ^0.1.1
     bson: ^4.7.2
@@ -12344,13 +12344,13 @@ __metadata:
     node-gyp: latest
     node-machine-id: ^1.1.12
     path-browserify: ^1.0.1
-    prebuild-install: ^7.1.2
+    prebuild-install: ^7.1.1
   peerDependencies:
     react-native: ">=0.71.0"
   peerDependenciesMeta:
     react-native:
       optional: true
-  checksum: 539bf1c394ff9f2c0cb91c54a9b40421a739c9a619911f4865089ba093420771230d7334c72a00d0064e73457735555f3dd199c54d6bc4712405c53961dce327
+  checksum: 4e4e7d2c6ace29e825073f7edacde8f36a90e0da8fea9a697b7c3a93a8140769013c2165da14dad44d412146fc85508319eb270156f6280c8de0ba5a977931f4
   languageName: node
   linkType: hard
 
@@ -13257,7 +13257,7 @@ __metadata:
     react-resizable: 3.0.1
     react-sortablejs: 6.0.0
     react-transition-group: ^4.4.1
-    realm: 12.14.2
+    realm: 12.7.1
     recursive-readdir: 2.2.2
     rimraf: ^2.6.1
     rxjs: 6.3.3
