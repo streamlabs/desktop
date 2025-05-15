@@ -239,7 +239,7 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
       await this.fetchProgram();
       if (startStreaming) {
         if (this.streamingService.state.streamingStatus === EStreamingState.Offline) {
-          this.streamingService.toggleStreaming();
+          await this.streamingService.toggleStreamingAsync();
         }
       }
     }
