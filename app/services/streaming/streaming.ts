@@ -33,6 +33,7 @@ import { NicoliveProgramStateService, SynthesizerSelector } from 'services/nicol
 import { VideoSettingsService } from 'services/settings-v2/video';
 import { RtvcStateService } from '../../services/rtvcStateService';
 import { SubStreamService } from '../substream/SubStreamService';
+
 enum EOBSOutputType {
   Streaming = 'streaming',
   Recording = 'recording',
@@ -805,6 +806,17 @@ export class StreamingService
       },
       rtvc: eventType === 'stream_end' ? this.rtvcStateService.eventLog : {},
     };
+
+    if (this.subStreamService.state.use) {
+      event.substream = {
+        url: this.subStreamService.state.url,
+        videoBitrate: this.subStreamService.state.videoBitrate,
+        audioBitrate: this.subStreamService.state.audioBitrate,
+        videoCodec: this.subStreamService.state.videoCodec,
+        audioCodec: this.subStreamService.state.audioCodec,
+        sync: this.subStreamService.state.sync,
+      };
+    }
 
     this.usageStatisticsService.recordEvent(event);
   }
