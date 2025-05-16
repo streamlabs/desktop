@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/vue';
 import { BehaviorSubject } from 'rxjs';
 import { Inject } from 'services/core/injector';
 import { mutation, StatefulService } from 'services/core/stateful-service';
+import { EStreamingState, StreamingService } from 'services/streaming';
 import { UserService } from 'services/user';
 import { isFakeMode } from 'util/fakeMode';
 import { MAX_PROGRAM_DURATION_SECONDS } from './nicolive-constants';
@@ -9,8 +10,10 @@ import {
   calcServerClockOffsetSec,
   CreateResult,
   EditResult,
+  FailedResult,
   isOk,
   NicoliveClient,
+  WrappedResult,
 } from './NicoliveClient';
 import { NicoliveFailure, openErrorDialogFromFailure } from './NicoliveFailure';
 import { OneCommeRelation } from './OneCommeRelation';
@@ -66,8 +69,8 @@ export enum PanelState {
 
 export class NicoliveProgramService extends StatefulService<INicoliveProgramState> {
   @Inject('NicoliveProgramStateService') private stateService: NicoliveProgramStateService;
-  @Inject()
-  userService: UserService;
+  @Inject() userService: UserService;
+  @Inject() private streamingService: StreamingService;
 
   private stateChangeSubject = new BehaviorSubject(this.state);
   stateChange = this.stateChangeSubject.asObservable();
@@ -226,7 +229,7 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
     }
   }
 
-  async createProgram(): Promise<CreateResult> {
+  async createProgram(startStreaming = false): Promise<CreateResult> {
     if (isFakeMode()) {
       await this.fetchProgram();
       return CreateResult.CREATED;
@@ -234,6 +237,11 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
     const result = await this.client.createProgram();
     if (result === 'CREATED') {
       await this.fetchProgram();
+      if (startStreaming) {
+        if (this.streamingService.state.streamingStatus === EStreamingState.Offline) {
+          await this.streamingService.toggleStreamingAsync();
+        }
+      }
     }
     return result;
   }
@@ -447,9 +455,9 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
     }
   }
 
-  updateStatistics(programID: string): Promise<any> {
+  updateStatistics(programID: string): Promise<WrappedResult<any>[]> {
     if (isFakeMode()) {
-      return Promise.resolve();
+      return Promise.resolve([]);
     }
     const stats = this.client
       .fetchStatistics(programID)
@@ -459,9 +467,10 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
             viewers: res.value.watchCount,
             comments: res.value.commentCount,
           });
+          return res;
         }
       })
-      .catch(() => null);
+      .catch((): FailedResult => null);
     const adStats = this.client
       .fetchNicoadStatistics(programID)
       .then(res => {
@@ -471,8 +480,9 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
             giftPoint: res.value.totalGiftPoint,
           });
         }
+        return res;
       })
-      .catch(() => null);
+      .catch((): FailedResult => null);
 
     // return for testing
     return Promise.all([stats, adStats]);

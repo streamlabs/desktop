@@ -145,21 +145,22 @@ export class StreamingService
     this.toggleStreaming();
   }
 
-  private async showNotBroadcastingMessageBox() {
+  private async showNotBroadcastingMessageBoxForNicolive() {
     Sentry.addBreadcrumb({
       category: 'streaming',
       message: 'showNotBroadcastingMessageBox',
     });
-    return new Promise(resolve => {
-      remote.dialog
-        .showMessageBox(remote.getCurrentWindow(), {
-          title: $t('streaming.notBroadcasting'),
-          type: 'warning',
-          message: $t('streaming.notBroadcastingMessage'),
-          buttons: ['Close'],
-        })
-        .then(({ response: done }) => resolve(done));
+    const { response } = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+      title: $t('streaming.notBroadcasting'),
+      type: 'warning',
+      message: $t('streaming.notBroadcastingMessage'),
+      noLink: true,
+      buttons: [$t('streaming.notBroadcastingCreateProgram'), 'Close'],
     });
+    if (response === 0) {
+      await this.nicoliveProgramService.createProgram(true);
+    }
+    return response;
   }
 
   /**
@@ -221,7 +222,7 @@ export class StreamingService
 
           // 配信可能チャンネルがなく、配信できるユーザー生放送もない場合
           if (!broadcastableUserProgram.programId && !broadcastableUserProgram.nextProgramId) {
-            return this.showNotBroadcastingMessageBox();
+            return this.showNotBroadcastingMessageBoxForNicolive();
           }
         }
 
@@ -236,13 +237,13 @@ export class StreamingService
 
         // 配信番組選択ウィンドウでユーザー番組を選んだが、配信可能なユーザー番組がない場合
         if (!programId) {
-          return this.showNotBroadcastingMessageBox();
+          return this.showNotBroadcastingMessageBoxForNicolive();
         }
 
         const setting = await this.userService.updateStreamSettings(programId);
         const streamKey = setting.key;
         if (streamKey === '') {
-          return this.showNotBroadcastingMessageBox();
+          return this.showNotBroadcastingMessageBoxForNicolive();
         }
 
         // [番組情報を取得]してニコ生パネルを更新する
