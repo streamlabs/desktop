@@ -1,13 +1,21 @@
 <template>
-  <div class="studio-controls row expanded" :class="{ opened: opened || isCompactMode }">
-    <button
-      @click="onToggleControls"
-      class="studio-controls-toggle-button"
-      :class="{ 'studio-controls--opened': opened }"
-      v-if="!isCompactMode"
-    >
-      <i class="icon-drop-down-arrow"></i>
-    </button>
+  <div
+    class="studio-controls row expanded"
+    :class="{
+      opened: opened || isCompactMode,
+    }"
+    :style="opened ? { height: `${currentHeight}px` } : {}"
+  >
+    <div class="studio-controls-header" v-if="!isCompactMode">
+      <button
+        @click="onToggleControls"
+        class="studio-controls-toggle-button"
+        :class="{ 'studio-controls--opened': opened }"
+      >
+        <i class="icon-drop-down-arrow"></i>
+      </button>
+      <div v-if="opened" class="drag-handle" @mousedown="onDragStart"></div>
+    </div>
     <template v-if="isCompactMode">
       <div class="studio-controls-compact">
         <div class="studio-controls-tabs">
@@ -63,32 +71,9 @@
     width: @nicolive-area-width;
     padding-top: 0;
   }
-}
 
-.studio-controls-toggle-button {
-  position: absolute;
-  right: 0;
-  left: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 180px;
-  height: @toggle-button-size;
-  margin: -@toggle-button-size auto 0 auto;
-
-  > i {
-    .icon-hover;
-
-    display: block;
-    font-size: @font-size2;
-    color: var(--color-text);
-    transform: rotate(-180deg);
-  }
-
-  .opened & {
-    i {
-      transform: rotate(0deg);
-    }
+  &.draggable {
+    cursor: ns-resize;
   }
 }
 </style>
@@ -149,5 +134,67 @@
   overflow-y: auto;
   background: var(--color-bg-tertiary);
   .radius;
+}
+
+.studio-controls-header {
+  top: 0;
+  right: 0;
+  // position: absolute;
+  left: 0;
+  display: flex;
+  align-items: center;
+  margin-top: -@toggle-button-size;
+  margin-bottom: 16px;
+}
+
+.studio-controls-toggle-button {
+  position: relative;
+  width: 24px;
+  height: @toggle-button-size;
+  margin-left: 8px;
+
+  > i {
+    .icon-hover;
+
+    display: block;
+    font-size: @font-size2;
+    color: var(--color-text);
+    transform: rotate(-180deg);
+  }
+
+  .opened & {
+    i {
+      transform: rotate(0deg);
+    }
+  }
+}
+
+.drag-handle {
+  position: absolute;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  width: 24px;
+  height: @toggle-button-size;
+  cursor: ns-resize;
+
+  &::before,
+  &::after {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    content: '';
+    background-color: var(--color-text);
+    opacity: 0.5;
+  }
+
+  &::before {
+    top: calc(50% - 3px);
+  }
+
+  &::after {
+    top: calc(50% + 3px);
+  }
 }
 </style>

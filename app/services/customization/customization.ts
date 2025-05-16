@@ -41,6 +41,7 @@ export class CustomizationService
     showAutoCompactDialog: true,
     compactAlwaysOnTop: false,
 
+    studioControlsHeight: 240,
     experimental: {
       // put experimental features here
     },
@@ -172,6 +173,13 @@ export class CustomizationService
 
   restoreDefaults() {
     this.setSettings(CustomizationService.defaultState);
+  }
+
+  getStudioControlsHeight(): number {
+    return this.state.studioControlsHeight;
+  }
+  setStudioControlsHeight(height: number) {
+    this.setSettings({ studioControlsHeight: height });
   }
 
   @mutation()

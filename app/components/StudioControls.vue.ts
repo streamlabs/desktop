@@ -42,4 +42,40 @@ export default class StudioControls extends Vue {
   onToggleControls() {
     this.customizationService.toggleStudioControls();
   }
+
+  //-------------------------------------------------
+  private isDragging = false;
+  private startY = 0;
+  currentHeight = 240;
+
+  mounted() {
+    this.currentHeight = this.rangeHeight(this.customizationService.state.studioControlsHeight);
+  }
+
+  rangeHeight(h: number) {
+    const minHeight = 100;
+    const maxHeight = window.innerHeight - 200;
+    return Math.min(maxHeight, Math.max(minHeight, h));
+  }
+
+  onDragStart(e: MouseEvent) {
+    this.isDragging = true;
+    this.startY = e.clientY;
+    document.addEventListener('mousemove', this.onDrag);
+    document.addEventListener('mouseup', this.onDragEnd);
+  }
+
+  onDrag(e: MouseEvent) {
+    if (!this.isDragging) return;
+    const deltaY = this.startY - e.clientY;
+    this.currentHeight = this.rangeHeight(this.currentHeight + deltaY);
+    this.startY = e.clientY;
+  }
+
+  onDragEnd() {
+    this.isDragging = false;
+    document.removeEventListener('mousemove', this.onDrag);
+    document.removeEventListener('mouseup', this.onDragEnd);
+    this.customizationService.setStudioControlsHeight(this.currentHeight);
+  }
 }
