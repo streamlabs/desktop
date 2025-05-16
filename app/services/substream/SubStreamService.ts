@@ -7,6 +7,7 @@ type Primitive = string | number | boolean;
 
 /** サブストリームの設定状態を表すインターフェース */
 interface ISubStreamState {
+  use: boolean;
   url: string;
   key: string;
   videoBitrate: number;
@@ -42,7 +43,8 @@ export declare type SubStreamStatusValue =
   | 'starting'
   | 'reconnect'
   | 'reconnected'
-  | 'deactive';
+  | 'deactive'
+  | 'unknown';
 
 /** サブストリームのステータスを表すインターフェース */
 export interface SubStreamStatus {
@@ -57,6 +59,7 @@ export interface SubStreamStatus {
   frames?: number;
   congestion?: number;
   dropped?: number;
+  displayStatus: string;
 }
 
 /**
@@ -67,6 +70,7 @@ export class SubStreamService extends PersistentStatefulService<ISubStreamState>
   client = new NamedPipeClient('\\\\.\\pipe\\NAirSubstream');
 
   static defaultState: ISubStreamState = {
+    use: false,
     url: '',
     key: '',
     videoBitrate: 2500,
@@ -94,6 +98,7 @@ export class SubStreamService extends PersistentStatefulService<ISubStreamState>
    */
   async start(): Promise<void> {
     if (!this.state) this.setState(SubStreamService.defaultState);
+    if (!this.state.use) return;
     if (!this.state.url.startsWith('rtmp') || !this.state.key) return;
 
     const bitRange = (value: any, min: number, max: number): number =>
@@ -163,10 +168,31 @@ export class SubStreamService extends PersistentStatefulService<ISubStreamState>
   /**
    * 現在のストリームステータスを取得する
    */
-  async status(): Promise<SubStreamStatus> {
-    const streamStatus = await this.client.call('status');
+  async getStatus(): Promise<SubStreamStatus> {
+    const streamStatus = (await this.client.call('status')) as SubStreamStatus;
+    if (!streamStatus)
+      return {
+        status: 'unknown',
+        displayStatus: '',
+        active: false,
+        busy: false,
+        streaming: false,
+        error: 'not connected',
+      };
+
+    const statusMap: { [name: string]: string } = {
+      starting: '配信開始処理中..',
+      started: '配信中',
+      stopping: '停止処理中..',
+      stopped: '停止中',
+      reconnect: '再接続...',
+      reconnected: '再接続',
+      deactive: '停止中',
+    };
+
+    streamStatus.displayStatus = statusMap[streamStatus.status] || '';
     //console.log('status:', JSON.stringify(streamStatus));
-    return streamStatus as SubStreamStatus;
+    return streamStatus;
   }
 
   /**
@@ -176,12 +202,12 @@ export class SubStreamService extends PersistentStatefulService<ISubStreamState>
    */
   private async waitForStreamState(streaming: boolean): Promise<boolean> {
     const timeoutAt = Date.now() + 30000; // 30秒タイムアウト
-    let status = await this.status();
+    let status = await this.getStatus();
 
     while (Date.now() < timeoutAt) {
       if (status && !status.busy) return status.streaming === streaming;
       await sleep(500); // 500ms待機
-      status = await this.status();
+      status = await this.getStatus();
     }
     return false;
   }

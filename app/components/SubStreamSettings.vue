@@ -1,6 +1,15 @@
 <template>
   <div class="setting-section">
-    <div class="section">
+    <div class="input-wrapper">
+      <div class="row">
+        <div class="name">使用する</div>
+        <div class="value">
+          <input type="checkbox" v-model="use" class="toggle-button" />
+        </div>
+      </div>
+    </div>
+
+    <div class="section" v-if="use">
       <div class="input-container">
         <div class="input-label">
           <label>

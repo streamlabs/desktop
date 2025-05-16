@@ -12,6 +12,7 @@ import { Component, Watch } from 'vue-property-decorator';
 export default class SubStreamSettings extends Vue {
   @Inject() subStreamService: SubStreamService;
 
+  use: boolean = SubStreamService.defaultState.use;
   url: string = SubStreamService.defaultState.url;
   key: string = SubStreamService.defaultState.key;
 
@@ -34,13 +35,21 @@ export default class SubStreamSettings extends Vue {
   defaultYoutubeUrl: string = 'rtmp://a.rtmp.youtube.com/live2';
   defaultTwitchUrl: string = 'rtmp://live-tyo.twitch.tv/app';
 
+  @Watch('use')
+  onUseChange() {
+    this.subStreamService.setState({ use: this.use });
+    if (!this.use) {
+      this.subStreamService.stop();
+    }
+  }
+
   @Watch('url')
-  onStreamUrlChange() {
+  onUrlChange() {
     this.subStreamService.setState({ url: this.url });
   }
 
   @Watch('key')
-  onStreamKeyChange() {
+  onKeyChange() {
     this.subStreamService.setState({ key: this.key });
   }
 
@@ -70,6 +79,7 @@ export default class SubStreamSettings extends Vue {
   }
 
   async mounted() {
+    this.use = this.subStreamService.state.use;
     this.url = this.subStreamService.state.url;
     this.key = this.subStreamService.state.key;
     this.videoBitrate = this.subStreamService.state.videoBitrate;
@@ -105,27 +115,12 @@ export default class SubStreamSettings extends Vue {
   }
 
   async checkStatus() {
-    const r = await this.subStreamService.status();
+    const r = await this.subStreamService.getStatus();
     // console.log(JSON.stringify(r, null, 2)); // Removed debug log
-
-    if (r.status === undefined) {
-      this.status = 'エラー: 接続されていません';
-      return;
-    }
-
-    const statusMap: { [name: string]: string } = {
-      starting: '配信開始処理中..',
-      started: '配信中',
-      stopping: '停止処理中..',
-      stopped: '停止中',
-      reconnect: '再接続...',
-      reconnected: '再接続',
-      deactive: '停止中',
-    };
 
     const statusParts: string[] = [];
     if (r.error) statusParts.push(`エラー: ${r.error}`);
-    statusParts.push(`ステータス: ${statusMap[r.status] ?? r.status}`);
+    statusParts.push(`ステータス: ${r.displayStatus}`);
     if (r.frames) statusParts.push(`送出フレーム数: ${r.frames}`);
     if (r.dropped) statusParts.push(`ドロップ数: ${r.dropped}`);
 
