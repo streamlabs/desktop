@@ -12,6 +12,7 @@
   <div class="footer" v-else>
     <div class="flex flex--center flex--grow flex--justify-start">
       <performance-metrics />
+      <performance-metrics-sub-stream />
     </div>
     <streaming-controller :locked="locked" />
   </div>
