@@ -14,7 +14,11 @@
       >
         <i class="icon-drop-down-arrow"></i>
       </button>
-      <div v-if="opened" class="drag-handle" @mousedown="onDragStart"></div>
+      <div v-if="opened" class="drag-handle" @mousedown="onDragStart">
+        <svg viewBox="0 0 24 24">
+          <path d="M1 10h22M1 14h22" />
+        </svg>
+      </div>
     </div>
     <template v-if="isCompactMode">
       <div class="studio-controls-compact">
@@ -178,23 +182,8 @@
   height: @toggle-button-size;
   cursor: ns-resize;
 
-  &::before,
-  &::after {
-    position: absolute;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    content: '';
-    background-color: var(--color-text);
-    opacity: 0.5;
-  }
-
-  &::before {
-    top: calc(50% - 3px);
-  }
-
-  &::after {
-    top: calc(50% + 3px);
+  svg {
+    stroke: var(--color-text);
   }
 }
 </style>
