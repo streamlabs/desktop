@@ -76,8 +76,26 @@
     padding-top: 0;
   }
 
-  &.draggable {
-    cursor: ns-resize;
+  .studio-controls-toggle-button {
+    position: relative;
+    width: 24px;
+    height: @toggle-button-size;
+    margin-left: 8px;
+
+    > i {
+      .icon-hover;
+
+      display: block;
+      font-size: @font-size2;
+      color: var(--color-text);
+      transform: rotate(-180deg);
+    }
+
+    .opened & {
+      i {
+        transform: rotate(0deg);
+      }
+    }
   }
 }
 </style>
@@ -143,34 +161,11 @@
 .studio-controls-header {
   top: 0;
   right: 0;
-  // position: absolute;
   left: 0;
   display: flex;
   align-items: center;
   margin-top: -@toggle-button-size;
   margin-bottom: 16px;
-}
-
-.studio-controls-toggle-button {
-  position: relative;
-  width: 24px;
-  height: @toggle-button-size;
-  margin-left: 8px;
-
-  > i {
-    .icon-hover;
-
-    display: block;
-    font-size: @font-size2;
-    color: var(--color-text);
-    transform: rotate(-180deg);
-  }
-
-  .opened & {
-    i {
-      transform: rotate(0deg);
-    }
-  }
 }
 
 .drag-handle {
