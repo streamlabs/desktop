@@ -179,7 +179,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   async setupNewUser() {
     await this.initialize();
     await this.installOverlay(
-      'https://cdn.streamlabs.com/marketplace/overlays/42466897/7c5f802/579e09f4-38f6-4a36-8200-311d6ce56f8d.overlay',
+      'https://cdn.streamlabs.com/marketplace/overlays/7684923/9a60b22/ab9d28fe-e032-49e9-8ffc-6bbbae452ace.overlay',
       'Twitchcon Rotterdam 2025',
     );
   }
