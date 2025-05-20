@@ -155,6 +155,19 @@ export class SceneCollectionsService extends Service implements ISceneCollection
       await this.create({ auto: true });
     }
     this.collectionInitialized.next();
+
+    this.userService.userLogout.subscribe(() => {
+      this.wipeCollections();
+    });
+  }
+
+  @RunInLoadingMode()
+  async wipeCollections() {
+    Promise.all(
+      this.collections.map(async collection => {
+        await this.delete(collection.id);
+      }),
+    );
   }
 
   /**
@@ -165,6 +178,10 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   @RunInLoadingMode()
   async setupNewUser() {
     await this.initialize();
+    await this.installOverlay(
+      'https://cdn.streamlabs.com/marketplace/overlays/42466897/7c5f802/579e09f4-38f6-4a36-8200-311d6ce56f8d.overlay',
+      'Twitchcon Rotterdam 2025',
+    );
   }
 
   /**
@@ -1003,35 +1020,35 @@ export class SceneCollectionsService extends Service implements ISceneCollection
       );
 
       if (inManifest) {
-        if (inManifest.deleted) {
-          const success = await this.performSyncStep('Delete on server', async () => {
-            if (inManifest.serverId) {
-              await this.serverApi.deleteSceneCollection(inManifest.serverId);
-            }
-            this.stateService.HARD_DELETE_COLLECTION(inManifest.id);
-          });
+        // if (inManifest.deleted) {
+        //   const success = await this.performSyncStep('Delete on server', async () => {
+        //     if (inManifest.serverId) {
+        //       await this.serverApi.deleteSceneCollection(inManifest.serverId);
+        //     }
+        //     this.stateService.HARD_DELETE_COLLECTION(inManifest.id);
+        //   });
 
-          if (!success) failed = true;
-        } else if (new Date(inManifest.modified) > new Date(onServer.last_updated_at)) {
-          const success = await this.performSyncStep('Update on server', async () => {
-            const exists = await this.stateService.collectionFileExists(inManifest.id);
+        //   if (!success) failed = true;
+        // } else if (new Date(inManifest.modified) > new Date(onServer.last_updated_at)) {
+        //   const success = await this.performSyncStep('Update on server', async () => {
+        //     const exists = await this.stateService.collectionFileExists(inManifest.id);
 
-            if (exists) {
-              const data = this.stateService.readCollectionFile(inManifest.id);
+        //     if (exists) {
+        //       const data = this.stateService.readCollectionFile(inManifest.id);
 
-              if (data && inManifest.serverId) {
-                await this.serverApi.updateSceneCollection({
-                  data,
-                  id: inManifest.serverId,
-                  name: inManifest.name,
-                  last_updated_at: inManifest.modified,
-                });
-              }
-            }
-          });
+        //       if (data && inManifest.serverId) {
+        //         await this.serverApi.updateSceneCollection({
+        //           data,
+        //           id: inManifest.serverId,
+        //           name: inManifest.name,
+        //           last_updated_at: inManifest.modified,
+        //         });
+        //       }
+        //     }
+        //   });
 
-          if (!success) failed = true;
-        } else if (new Date(inManifest.modified) < new Date(onServer.last_updated_at)) {
+        //   if (!success) failed = true;
+        if (new Date(inManifest.modified) < new Date(onServer.last_updated_at)) {
           collectionsToUpdate.push(onServer.id);
         } else {
           console.log('Up to date file: ', inManifest.id);
