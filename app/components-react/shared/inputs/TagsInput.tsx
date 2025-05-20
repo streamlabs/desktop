@@ -38,8 +38,12 @@ export const TagsInput = InputComponent(<T extends any[]>(p: TTagsInputProps<T>)
 
   function renderTag(tagProps: TagProps) {
     const tag = p.options
-      ? tagsMap[tagProps['value']]
-      : { label: tagProps['value'], value: tagProps['value'] };
+      ? // TODO: index
+        // @ts-ignore
+        tagsMap[tagProps['value']]
+      : // TODO: index
+        // @ts-ignore
+        { label: tagProps['value'], value: tagProps['value'] };
     if (p.tagRender) {
       return p.tagRender(tagProps, tag);
     }
@@ -83,7 +87,11 @@ export const TagsInput = InputComponent(<T extends any[]>(p: TTagsInputProps<T>)
         dropdownRender={dropdownRender}
         data-value={JSON.stringify(inputAttrs.value)}
         data-display-value={JSON.stringify(displayValue)}
-        data-show-search={inputAttrs['showSearch']}
+        data-show-search={
+          // TODO: index
+          // @ts-ignore
+          inputAttrs['showSearch']
+        }
       >
         {options.length > 0 && options.map((opt, ind) => renderOption(opt, ind, p))}
       </Select>

@@ -93,6 +93,8 @@ function SideBar() {
   }, [inspectedAppId]);
 
   function widgetData(type: string | WidgetType) {
+    // TODO: index
+    // @ts-ignore
     return WidgetDisplayData(platform)[WidgetType[type]];
   }
 
