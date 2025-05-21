@@ -51,7 +51,7 @@ function signBinaries(identity, directory) {
   }
 }
 
-function afterPackMac() {
+function afterPackMac(context) {
   console.log('Updating dependency paths');
   cp.execSync(
     `install_name_tool -change ./node_modules/node-libuiohook/libuiohook.1.dylib @executable_path/../Resources/app.asar.unpacked/node_modules/node-libuiohook/libuiohook.1.dylib \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Resources/app.asar.unpacked/node_modules/node-libuiohook/node_libuiohook.node\"`,
@@ -83,7 +83,7 @@ function afterPackWin() {
 
 exports.default = async function(context) {
   if (process.platform === 'darwin') {
-    afterPackMac();
+    afterPackMac(context);
   }
 
   if (process.platform === 'win32') {

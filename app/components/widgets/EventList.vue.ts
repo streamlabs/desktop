@@ -43,10 +43,14 @@ export default class EventList extends WidgetSettings<IEventListData, EventListS
   }
 
   valueForEvent(event: { key: string; title: string }) {
+    // TODO: index
+    // @ts-ignore
     return this.wData.settings[event.key];
   }
 
   setEvent(event: { key: string; title: string }, value: boolean) {
+    // TODO: index
+    // @ts-ignore
     this.wData.settings[event.key] = value;
   }
 

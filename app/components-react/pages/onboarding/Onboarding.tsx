@@ -8,7 +8,7 @@ import cx from 'classnames';
 import { $t } from 'services/i18n';
 import * as stepComponents from './steps';
 import Utils from 'services/utils';
-import { IOnboardingStep, ONBOARDING_STEPS } from 'services/onboarding';
+import { IOnboardingStep, ONBOARDING_STEPS, EOnboardingSteps } from 'services/onboarding';
 import Scrollable from 'components-react/shared/Scrollable';
 import StreamlabsDesktopIcon from 'components-react/shared/StreamlabsDesktopIcon';
 import { SkipContext } from './OnboardingContext';
@@ -209,7 +209,9 @@ export class OnboardingModule {
   get currentStep(): IOnboardingStep {
     // Useful for testing in development
     if (Utils.env.SLD_FORCE_ONBOARDING_STEP) {
-      return ONBOARDING_STEPS()[Utils.env.SLD_FORCE_ONBOARDING_STEP];
+      return ONBOARDING_STEPS()[
+        Utils.env.SLD_FORCE_ONBOARDING_STEP as keyof typeof EOnboardingSteps
+      ];
     }
 
     return this.singletonStep ?? this.steps[this.state.stepIndex];

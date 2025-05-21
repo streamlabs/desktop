@@ -203,6 +203,8 @@ export class RecordingModeService extends PersistentStatefulService<IRecordingMo
     const prunedEntries: Dictionary<IRecordingEntry> = {};
     Object.keys(this.state.recordingHistory).forEach(timestamp => {
       if (moment(timestamp).isAfter(oneMonthAgo)) {
+        // TODO: index
+        // @ts-ignore
         prunedEntries[timestamp] = this.state.recordingHistory[timestamp];
       }
     });

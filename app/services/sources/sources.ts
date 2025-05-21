@@ -515,6 +515,8 @@ export class SourcesService extends StatefulService<ISourcesState> {
 
     const types = Object.keys(SUPPORTED_EXT);
     for (const type of types) {
+      // TODO: index
+      // @ts-ignore
       if (!SUPPORTED_EXT[type].includes(ext)) continue;
       let settings: Dictionary<TObsValue> | null = null;
       if (type === 'image_source') {
@@ -809,6 +811,8 @@ export class SourcesService extends StatefulService<ISourcesState> {
 
     const defaultVueWindowSize = { width: 920, height: 1024 };
     const defaultReactWindowSize = { width: 600, height: 800 };
+    // TODO: index
+    // @ts-ignore
     const widgetInfo = this.widgetsService.widgetsConfig[WidgetType[componentName]];
     const { width, height } = isReactComponent
       ? widgetInfo.settingsWindowSize || defaultReactWindowSize
