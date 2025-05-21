@@ -56,15 +56,18 @@ export default class Settings extends Vue {
   categoryNames = this.settingsService.getCategories();
   userSubscription: Subscription;
   icons = CategoryIcons;
+  isLoggedIn = false;
 
   mounted() {
     // Categories depend on whether the user is logged in or not.
     // When they depend another state, it's time to refine this implementation.
-    this.userSubscription = this.userService.userLoginState.subscribe(() => {
+    this.userSubscription = this.userService.userLoginState.subscribe(loggedIn => {
+      this.isLoggedIn = !!loggedIn;
       this.categoryNames = this.settingsService.getCategories();
       // reopen settings because new categories may not have previous category
       this.settingsService.showSettings();
     });
+    this.isLoggedIn = this.userService.isLoggedIn();
 
     this.categoryName = this.getInitialCategoryName();
     this.settingsData = this.settingsService.getSettingsFormData(this.categoryName);

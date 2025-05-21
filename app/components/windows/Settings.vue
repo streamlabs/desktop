@@ -20,7 +20,10 @@
         </aside>
         <aside class="notice-section" v-if="categoryName === 'Stream'">
           <p class="notice-message">
-            <i class="icon-warning" /><i18n path="settings.noticeForStreaming">
+            <i class="icon-warning" /><i18n path="settings.noticeForStreaming" v-if="isLoggedIn">
+              <br place="br" />
+            </i18n>
+            <i18n path="settings.noticeForStreamingNotLoggedIn" v-else>
               <br place="br" />
             </i18n>
           </p>
