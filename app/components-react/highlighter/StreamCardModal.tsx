@@ -1,15 +1,11 @@
 import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
 import React, { useEffect, useState } from 'react';
-import { TModalClipsView } from './ClipsView';
-import { TClip } from 'services/highlighter/models/highlighter.models';
 import styles from './StreamView.m.less';
-import ClipTrimmer from 'components-react/highlighter/ClipTrimmer';
 import { Modal, Alert, Button, Input } from 'antd';
 import ExportModal from 'components-react/highlighter/Export/ExportModal';
 import { $t } from 'services/i18n';
 import PreviewModal from './PreviewModal';
-import TextArea from 'antd/lib/input/TextArea';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import EducationCarousel from './EducationCarousel';
 

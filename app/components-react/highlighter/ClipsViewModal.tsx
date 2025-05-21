@@ -78,7 +78,9 @@ export default function ClipsViewModal({
       keyboard={false}
     >
       {!!v.error && <Alert message={v.error} type="error" showIcon />}
-      {inspectedClip && showModal === 'trim' && <ClipTrimmer clip={inspectedClip} />}
+      {inspectedClip && showModal === 'trim' && (
+        <ClipTrimmer clip={inspectedClip} streamId={streamId} />
+      )}
       {showModal === 'export' && <ExportModal close={closeModal} streamId={streamId} />}
       {showModal === 'preview' && (
         <PreviewModal
