@@ -135,7 +135,7 @@ export class AiHighlighterUpdater {
   }
 
   static startTranscription(videoUri: string, userId: string) {
-    return this.startHighlighterProcess(videoUri, userId, undefined, null, true);
+    return this.startHighlighterProcess(videoUri, userId, undefined, undefined, true);
   }
 
   /**
