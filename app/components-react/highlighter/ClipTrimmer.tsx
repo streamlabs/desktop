@@ -27,7 +27,7 @@ function useStateRef<T>(initialValue: T): [RefObject<T>, (newValue: T) => void] 
   ];
 }
 
-export default function ClipTrimmer(props: { clip: TClip }) {
+export default function ClipTrimmer(props: { clip: TClip; streamId: string | undefined }) {
   const { HighlighterService, UsageStatisticsService } = Services;
   const videoRef = useRef<HTMLVideoElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -160,7 +160,7 @@ export default function ClipTrimmer(props: { clip: TClip }) {
 
     UsageStatisticsService.actions.recordAnalyticsEvent(
       HighlighterService.state.useAiHighlighter ? 'AIHighlighter' : 'Highlighter',
-      { type: 'Trim' },
+      { type: 'Trim', clipPath: props.clip.path, streamId: props.streamId },
     );
   }
 
