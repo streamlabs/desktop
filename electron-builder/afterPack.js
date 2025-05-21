@@ -2,6 +2,7 @@ const cp = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const packVirtualCamera = require('./build-mac-virtualcam');
 
 function signAndCheck(identity, filePath) {
   console.log(`Signing: ${filePath}`);
@@ -64,6 +65,8 @@ function afterPackMac(context) {
   cp.execSync(
     `cp -R ./node_modules/obs-studio-node/Frameworks \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Resources/app.asar.unpacked/node_modules/\"`,
   );
+
+  packVirtualCamera(context);
 
   if (process.env.SLOBS_NO_SIGN) return;
 

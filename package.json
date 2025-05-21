@@ -5,6 +5,7 @@
   "author": "General Workings, Inc.",
   "license": "GPL-3.0",
   "version": "1.19.0-preview.8",
+  "macVirtualCamVersion": "30.2.4sl19test5",
   "main": "main.js",
   "scripts": {
     "compile": "yarn clear && yarn compile:updater && yarn webpack-cli --progress --config ./webpack.dev.config.js",
