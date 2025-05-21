@@ -45,6 +45,7 @@ import { DualOutputService } from 'services/dual-output';
 import { NodeMapNode } from './nodes/node-map';
 import { VideoSettingsService } from 'services/settings-v2';
 import { WidgetsService, WidgetType } from 'services/widgets';
+import { SettingsService } from 'app-services';
 
 const uuid = window['require']('uuid/v4');
 
@@ -96,6 +97,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   @Inject() videoSettingsService: VideoSettingsService;
   @Inject() private defaultHardwareService: DefaultHardwareService;
   @Inject() private widgetsService: WidgetsService;
+  @Inject() private settingsService: SettingsService;
 
   collectionAdded = new Subject<ISceneCollectionsManifestEntry>();
   collectionRemoved = new Subject<ISceneCollectionsManifestEntry>();
@@ -182,6 +184,16 @@ export class SceneCollectionsService extends Service implements ISceneCollection
       'https://cdn.streamlabs.com/marketplace/overlays/7684923/9a60b22/ab9d28fe-e032-49e9-8ffc-6bbbae452ace.overlay',
       'Twitchcon Rotterdam 2025',
     );
+
+    this.videoSettingsService.actions.setSettings(
+      {
+        outputHeight: 1080,
+        outputWidth: 1920,
+      },
+      'horizontal',
+    );
+
+    this.settingsService.actions.setSettingValue('General', 'RecordWhenStreaming', true);
   }
 
   /**
