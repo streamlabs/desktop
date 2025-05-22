@@ -20,7 +20,7 @@ export default function ClipsViewModal({
   streamId: string | undefined;
   modal: { modal: TModalClipsView; inspectedPathId?: string } | null;
   onClose: () => void;
-  deleteClip: (clipPath: string, streamId: string | undefined) => void;
+  deleteClip: (clipPath: string[], streamId: string | undefined) => void;
 }) {
   const { HighlighterService } = Services;
   const v = useVuex(() => ({
