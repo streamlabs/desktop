@@ -1,4 +1,4 @@
-import { OnboardingService } from 'app-services';
+import { ObsImporterService, OnboardingService } from 'app-services';
 import ConnectionSettings from 'components/ConnectionSettings.vue';
 import ModalLayout from 'components/ModalLayout.vue';
 import Tabs, { ITab } from 'components/Tabs.vue';
@@ -26,6 +26,7 @@ export default class SceneTransitions extends Vue {
   @Inject() windowsService: WindowsService;
   @Inject() scenesService: ScenesService;
   @Inject() onboardingService: OnboardingService;
+  @Inject() obsImporterService: ObsImporterService;
 
   inspectedTransition = '';
   inspectedConnection = '';
@@ -138,6 +139,11 @@ export default class SceneTransitions extends Vue {
   dismissModal(modal: string) {
     this.$modal.hide(modal);
   }
+
+  get canImportFromOBS() {
+    return this.obsImporterService.canImportFromOBS;
+  }
+
   importFromOBS() {
     this.windowsService.closeChildWindow();
     this.onboardingService.start({ skipLogin: true });

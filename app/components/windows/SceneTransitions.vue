@@ -113,7 +113,7 @@
       </modal>
     </div>
     <div slot="controls">
-      <button class="button button--secondary" @click="importFromOBS">
+      <button class="button button--secondary" @click="importFromOBS" :disabled="!canImportFromOBS">
         {{ $t('onboarding.importFromObs') }}
       </button>
     </div>
