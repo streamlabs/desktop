@@ -644,11 +644,6 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
       }
       return chat;
     });
-
-    // ピン止めコメントが削除されたらピン止めを解除する
-    if (this.state.pinnedMessage?.value.id === commentId) {
-      this.pinComment(null);
-    }
   }
 
   @mutation()

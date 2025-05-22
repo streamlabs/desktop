@@ -731,7 +731,7 @@ test('NGワードにかかるコメントが来たら ##このコメントは表
   expect(getDisplayText(instance.state.messages[0])).toEqual('##このコメントは表示されません##');
 });
 
-test('コメントを削除すると当該コメントの isDeletedがtrueになり、ピン留めされていたら解除される', async () => {
+test('コメントを削除すると当該コメントの isDeletedがtrueになり、ピン留めは維持される', async () => {
   const { clientSubject, instance } = connectionSetup();
   await sleep(0);
 
@@ -761,5 +761,5 @@ test('コメントを削除すると当該コメントの isDeletedがtrueにな
   await instance.deleteComment(ID);
 
   expect(instance.state.messages[0].isDeleted).toBeTruthy();
-  expect(instance.state.pinnedMessage).toBeNull();
+  expect(instance.state.pinnedMessage).not.toBeNull();
 });
