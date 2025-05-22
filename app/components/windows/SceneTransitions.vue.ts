@@ -1,3 +1,4 @@
+import { OnboardingService } from 'app-services';
 import ConnectionSettings from 'components/ConnectionSettings.vue';
 import ModalLayout from 'components/ModalLayout.vue';
 import Tabs, { ITab } from 'components/Tabs.vue';
@@ -10,7 +11,6 @@ import { WindowsService } from 'services/windows';
 import Vue from 'vue';
 import VModal from 'vue-js-modal';
 import { Component } from 'vue-property-decorator';
-
 Vue.use(VModal);
 
 @Component({
@@ -25,6 +25,7 @@ export default class SceneTransitions extends Vue {
   @Inject() transitionsService: TransitionsService;
   @Inject() windowsService: WindowsService;
   @Inject() scenesService: ScenesService;
+  @Inject() onboardingService: OnboardingService;
 
   inspectedTransition = '';
   inspectedConnection = '';
@@ -136,5 +137,9 @@ export default class SceneTransitions extends Vue {
 
   dismissModal(modal: string) {
     this.$modal.hide(modal);
+  }
+  importFromOBS() {
+    this.windowsService.closeChildWindow();
+    this.onboardingService.start({ skipLogin: true });
   }
 }

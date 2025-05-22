@@ -32,7 +32,7 @@
             {{ $t('onboarding.importFromObs') }}
           </button>
           <button class="link link--skip" @click="startFresh" data-test="Skip">
-            {{ $t('onboarding.skipImport') }}
+            {{ reImportMode ? $t('common.cancel') : $t('onboarding.skipImport') }}
           </button>
         </div>
       </div>

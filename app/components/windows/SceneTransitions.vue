@@ -5,6 +5,7 @@
     :content-styles="{ padding: 0 }"
     :show-cancel="false"
     :done-handler="done"
+    :customControls="true"
   >
     <div slot="content">
       <div v-if="!transitionsEnabled" class="transition-blank">
@@ -110,6 +111,11 @@
           </div>
         </div>
       </modal>
+    </div>
+    <div slot="controls">
+      <button class="button button--secondary" @click="importFromOBS">
+        {{ $t('onboarding.importFromObs') }}
+      </button>
     </div>
   </modal-layout>
 </template>

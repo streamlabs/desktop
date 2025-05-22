@@ -1,3 +1,4 @@
+import * as remote from '@electron/remote';
 import { defer } from 'lodash';
 import { $t } from 'services/i18n';
 import { SceneCollectionsService } from 'services/scene-collections';
@@ -35,7 +36,13 @@ export default class ObsImport extends Vue {
 
   selectedProfile = this.profiles[0] || '';
 
+  reImportMode = false;
+
   created() {
+    // シーン編集から来た場合、初期とは違う表記をするため
+    this.reImportMode = this.onboardingService.state.options.skipLogin;
+
+    // 既存設定を保護するという趣旨を間違って記載されているわけではなく、セーフティかと信じる
     if (this.sceneCollections && this.sceneCollections.length > 0) return;
     this.startFresh();
   }
@@ -65,8 +72,21 @@ export default class ObsImport extends Vue {
   }
 
   startImport() {
-    this.status = 'importing';
     defer(async () => {
+      if (this.reImportMode) {
+        const isOk = await remote.dialog
+          .showMessageBox(remote.getCurrentWindow(), {
+            type: 'warning',
+            message:
+              'インポートを行うと現在設定されているシーン・ソースは全て破棄されます。よろしいですか？',
+            buttons: ['インポートする', $t('common.cancel')],
+            noLink: true,
+          })
+          .then(value => value.response === 0);
+        if (!isOk) return;
+      }
+
+      this.status = 'importing';
       try {
         await this.obsImporterService.load(this.selectedProfile);
         this.status = 'done';

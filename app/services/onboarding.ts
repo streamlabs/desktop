@@ -7,8 +7,9 @@ import { UserService } from './user';
 type TOnboardingStep = 'Connect' | 'ObsImport';
 
 interface IOnboardingOptions {
-  isLogin: boolean; // When logging into a new account after onboarding
+  skipImport: boolean; // When logging into a new account after onboarding
   isSecurityUpgrade: boolean; // When logging in, display a special message
+  skipLogin: boolean; // When logging in, skip the onboarding process
   // about our security upgrade.
 }
 
@@ -37,7 +38,7 @@ const ONBOARDING_STEPS: Dictionary<IOnboardingStep> = {
 
   ObsImport: {
     isEligible: service => {
-      if (service.options.isLogin) return false;
+      if (service.options.skipImport) return false;
       return true;
     },
   },
@@ -46,8 +47,9 @@ const ONBOARDING_STEPS: Dictionary<IOnboardingStep> = {
 export class OnboardingService extends StatefulService<IOnboardingServiceState> {
   static initialState: IOnboardingServiceState = {
     options: {
-      isLogin: false,
+      skipImport: false,
       isSecurityUpgrade: false,
+      skipLogin: false,
     },
     currentStep: null,
     completedSteps: [],
@@ -109,14 +111,15 @@ export class OnboardingService extends StatefulService<IOnboardingServiceState> 
   // and some steps should be skipped.
   start(options: Partial<IOnboardingOptions> = {}) {
     const actualOptions: IOnboardingOptions = {
-      isLogin: false,
+      skipImport: false,
       isSecurityUpgrade: false,
+      skipLogin: false,
       ...options,
     };
 
     this.RESET_COMPLETED_STEPS();
     this.SET_OPTIONS(actualOptions);
-    this.SET_CURRENT_STEP('Connect');
+    this.SET_CURRENT_STEP(actualOptions.skipLogin ? 'ObsImport' : 'Connect');
     // Studioの初期化が終わってから遷移する
     setTimeout(() => {
       this.navigationService.navigate('Onboarding');
@@ -163,7 +166,7 @@ export class OnboardingService extends StatefulService<IOnboardingServiceState> 
     if (!this.userService.isLoggedIn()) return false;
 
     if (!this.userService.apiToken) {
-      this.start({ isLogin: true, isSecurityUpgrade: true });
+      this.start({ skipImport: true, isSecurityUpgrade: true });
       return true;
     }
     return false;
