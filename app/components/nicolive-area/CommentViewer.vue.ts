@@ -221,6 +221,19 @@ export default class CommentViewer extends Vue {
             });
           },
         });
+      } else {
+        menu.append({
+          id: 'Undo delete a comment',
+          label: 'コメントを復元する',
+          click: () => {
+            this.nicoliveCommentViewerService.undoDeleteComment(item.value.id).catch(e => {
+              console.log('undo delete comment failed', e); // DEBUG
+              if (e instanceof NicoliveFailure) {
+                openErrorDialogFromFailure(e);
+              }
+            });
+          },
+        });
       }
       menu.append({
         id: 'Ban comment content',

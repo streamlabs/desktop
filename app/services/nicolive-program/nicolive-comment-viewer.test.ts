@@ -223,6 +223,7 @@ function connectionSetup(options: { speechEnabled?: boolean; httpRelationEnabled
         },
         checkNameplateHint: () => {},
         deleteCommentRaw: () => Promise.resolve(),
+        undoDeleteCommentRaw: () => Promise.resolve(),
       },
       NicoliveModeratorsService: {
         refreshObserver,
@@ -762,4 +763,29 @@ test('コメントを削除すると当該コメントの isDeletedがtrueにな
 
   expect(instance.state.messages[0].isDeleted).toBeTruthy();
   expect(instance.state.pinnedMessage).not.toBeNull();
+});
+
+test('削除したコメントをundoすると元に戻る', async () => {
+  const { clientSubject, instance } = connectionSetup();
+  await sleep(0);
+
+  const ID = '1';
+
+  clientSubject.next({
+    chat: {
+      id: ID,
+      content: 'yay',
+      user_id: '123', // anything not empty
+    },
+  });
+
+  // bufferTime tweaks
+  clientSubject.complete();
+  if (!isWrappedChat(instance.state.messages[0])) {
+    throw new Error('invalid state');
+  }
+  instance.state.messages[0].isDeleted = true;
+
+  await instance.undoDeleteComment(ID);
+  expect(instance.state.messages[0].isDeleted).toBeFalsy();
 });

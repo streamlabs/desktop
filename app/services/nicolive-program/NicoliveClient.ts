@@ -29,6 +29,7 @@ import {
 
 import * as remote from '@electron/remote';
 import { DateTime } from 'luxon';
+import { request } from 'http';
 
 const { BrowserWindow } = remote;
 
@@ -126,6 +127,7 @@ function isValidUserFollowStatusResponse(response: any): response is UserFollowS
 
 export class NicoliveClient {
   static live2BaseURL = 'https://live2.nicovideo.jp' as const;
+  static liveBaseURL = 'https://live.nicovideo.jp' as const;
   static live2ApiBaseURL = 'https://api.live2.nicovideo.jp' as const;
   static publicBaseURL = 'https://public.api.nicovideo.jp' as const;
   static nicoadBaseURL = 'https://api.nicoad.nicovideo.jp' as const;
@@ -769,6 +771,13 @@ export class NicoliveClient {
     );
   }
 
+  static v4ApiHeaders(programId: string): HeadersInit {
+    return {
+      // v4 APIは Origin headerが必要
+      Origin: `${NicoliveClient.liveBaseURL}/watch/${programId}`,
+    };
+  }
+
   async deleteComment(programId: string, messageId: string): Promise<WrappedResult<void>> {
     const params = new URLSearchParams();
     params.append('messageId', messageId);
@@ -779,11 +788,22 @@ export class NicoliveClient {
         NicoliveClient.live2BaseURL
       }/unama/api/v4/programs/${programId}/comments?${params.toString()}`,
       {
-        headers: {
-          // v4 APIは Origin headerが必要
-          Origin: `${NicoliveClient.live2BaseURL}/watch/${programId}`,
-        },
+        headers: NicoliveClient.v4ApiHeaders(programId),
       },
+    );
+  }
+
+  async undoDeleteComment(programId: string, messageId: string): Promise<WrappedResult<void>> {
+    const requestInit = NicoliveClient.jsonBody('');
+    requestInit.headers = {
+      ...requestInit.headers,
+      ...NicoliveClient.v4ApiHeaders(programId),
+    };
+
+    return this.requestAPI<void>(
+      'POST',
+      `${NicoliveClient.live2BaseURL}/unama/api/v4/programs/${programId}/comments/${messageId}/undo`,
+      requestInit,
     );
   }
 

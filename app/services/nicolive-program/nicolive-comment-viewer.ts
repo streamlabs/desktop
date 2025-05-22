@@ -646,6 +646,25 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
     });
   }
 
+  async undoDeleteComment(commentId: string): Promise<void> {
+    if (!commentId) {
+      throw new Error('undoDeleteComment: commentId is required');
+    }
+
+    await this.nicoliveProgramService.undoDeleteCommentRaw(commentId);
+
+    // コメント一覧のコメントの削除を解除する
+    this.updateMessages(chat => {
+      if (isWrappedChat(chat) && chat.value.id === commentId) {
+        return {
+          ...chat,
+          isDeleted: false,
+        };
+      }
+      return chat;
+    });
+  }
+
   @mutation()
   private SET_STATE(nextState: Partial<INicoliveCommentViewerState>) {
     this.state = { ...this.state, ...nextState };

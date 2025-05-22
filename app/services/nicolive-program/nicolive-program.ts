@@ -638,4 +638,15 @@ export class NicoliveProgramService extends StatefulService<INicoliveProgramStat
       throw NicoliveFailure.fromClientError('deleteComment', result);
     }
   }
+
+  async undoDeleteCommentRaw(commentId: string): Promise<void> {
+    if (isFakeMode()) {
+      return;
+    }
+
+    const result = await this.client.undoDeleteComment(this.state.programID, commentId);
+    if (!isOk(result)) {
+      throw NicoliveFailure.fromClientError('undoDeleteComment', result);
+    }
+  }
 }
