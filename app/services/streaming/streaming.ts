@@ -1064,8 +1064,8 @@ export class StreamingService
     this.toggleStreaming();
   }
 
-  async finishStartStreaming(): Promise<unknown> {
-    return this.finishV1StartStreaming();
+  async finishStartStreaming() {
+    await this.finishV1StartStreaming();
     // this.finishV2StartStreaming();
   }
 
