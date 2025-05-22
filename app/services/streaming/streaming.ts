@@ -28,7 +28,14 @@ import {
 import { Inject } from 'services/core/injector';
 import moment from 'moment';
 import padStart from 'lodash/padStart';
-import { IOutputSettings, OutputSettingsService, SettingsService } from 'services/settings';
+import {
+  EEncoderFamily,
+  IOutputSettings,
+  IStreamingEncoderSettings,
+  OutputSettingsService,
+  SettingsService,
+  simpleEncoderToAdvancedEncoder,
+} from 'services/settings';
 import { WindowsService } from 'services/windows';
 import { Subject } from 'rxjs';
 import {
@@ -248,6 +255,11 @@ export class StreamingService
   };
 
   init() {
+    NodeObs.OBS_service_connectOutputSignals((info: IOBSOutputSignalInfo) => {
+      this.signalInfoChanged.next(info);
+      this.handleV1OBSOutputSignal(info);
+    });
+
     // watch for StreamInfoView at emit `streamInfoChanged` event if something has been hanged there
     this.store.watch(
       () => {
@@ -987,7 +999,124 @@ export class StreamingService
   }
 
   async finishStartStreaming(): Promise<unknown> {
-    // register a promise that we should reject or resolve in the `handleObsOutputSignal`
+    return this.finishV1StartStreaming();
+    // this.finishV2StartStreaming();
+  }
+
+  async finishV1StartStreaming(): Promise<unknown> {
+    // V1 api
+    // register a promise that we should reject or resolve in the `handleV1ObsOutputSignal`
+    const startStreamingPromise = new Promise((resolve, reject) => {
+      this.resolveStartStreaming = resolve;
+      this.rejectStartStreaming = reject;
+    });
+
+    const shouldConfirm = this.streamSettingsService.settings.warnBeforeStartingStream;
+
+    if (shouldConfirm) {
+      const goLive = await remote.dialog.showMessageBox(Utils.getMainWindow(), {
+        title: $t('Go Live'),
+        type: 'warning',
+        message: $t('Are you sure you want to start streaming?'),
+        buttons: [$t('Cancel'), $t('Go Live')],
+      });
+
+      if (!goLive.response) {
+        return Promise.reject();
+      }
+    }
+
+    this.powerSaveId = remote.powerSaveBlocker.start('prevent-display-sleep');
+
+    // handle start streaming and recording
+    if (this.views.isDualOutputMode) {
+      // start dual output
+
+      // stream horizontal and stream vertical
+      const horizontalContext = this.videoSettingsService.contexts.horizontal;
+      const verticalContext = this.videoSettingsService.contexts.vertical;
+
+      NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
+      NodeObs.OBS_service_setVideoInfo(verticalContext, 'vertical');
+
+      const signalChanged = this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
+        if (signalInfo.service === 'default') {
+          if (signalInfo.code !== 0) {
+            NodeObs.OBS_service_stopStreaming(true, 'horizontal');
+            NodeObs.OBS_service_stopStreaming(true, 'vertical');
+            // Refactor when move streaming to new API
+            if (this.state.status.vertical.streaming !== EStreamingState.Offline) {
+              this.SET_STREAMING_STATUS(EStreamingState.Offline, 'vertical');
+            }
+          }
+
+          if (signalInfo.signal === EOBSOutputSignal.Start) {
+            NodeObs.OBS_service_startStreaming('vertical');
+
+            // Refactor when move streaming to new API
+            const time = new Date().toISOString();
+            if (this.state.status.vertical.streaming === EStreamingState.Offline) {
+              this.SET_STREAMING_STATUS(EStreamingState.Live, 'vertical', time);
+            }
+
+            signalChanged.unsubscribe();
+          }
+        }
+      });
+
+      NodeObs.OBS_service_startStreaming('horizontal');
+      // sleep for 1 second to allow the first stream to start
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    } else {
+      // start single output
+      const horizontalContext = this.videoSettingsService.contexts.horizontal;
+      NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
+
+      NodeObs.OBS_service_startStreaming();
+
+      const recordWhenStreaming = this.streamSettingsService.settings.recordWhenStreaming;
+
+      if (
+        recordWhenStreaming &&
+        this.state.status.horizontal.recording === ERecordingState.Offline &&
+        this.state.status.vertical.recording === ERecordingState.Offline
+      ) {
+        await this.toggleRecording();
+      }
+    }
+
+    const replayWhenStreaming = this.streamSettingsService.settings.replayBufferWhileStreaming;
+    const isReplayBufferEnabled = this.outputSettingsService.getSettings().replayBuffer.enabled;
+
+    if (
+      replayWhenStreaming &&
+      isReplayBufferEnabled &&
+      this.state.status.horizontal.replayBuffer === EReplayBufferState.Offline &&
+      this.state.status.vertical.replayBuffer === EReplayBufferState.Offline
+    ) {
+      this.startReplayBuffer();
+    }
+
+    startStreamingPromise
+      .then(() => {
+        // run afterGoLive hooks
+        try {
+          this.views.enabledPlatforms.forEach(platform => {
+            getPlatformService(platform).afterGoLive();
+          });
+        } catch (e: unknown) {
+          console.error('Error running afterGoLive for platform', e);
+        }
+      })
+      .catch(() => {
+        console.warn('startStreamingPromise was rejected');
+      });
+
+    return startStreamingPromise;
+  }
+
+  async finishV2StartStreaming(): Promise<unknown> {
+    // register a promise that we should reject or resolve in `handleStreamingSignal`
     const startStreamingPromise = new Promise((resolve, reject) => {
       this.resolveStartStreaming = resolve;
       this.rejectStartStreaming = reject;
@@ -2052,7 +2181,7 @@ export class StreamingService
   private streamErrorUserMessage = '';
   private streamErrorReportMessage = '';
 
-  private handleOBSOutputSignal(info: IOBSOutputSignalInfo) {
+  private handleV1OBSOutputSignal(info: IOBSOutputSignalInfo) {
     console.debug('OBS Output signal: ', info);
 
     /*
@@ -2523,7 +2652,7 @@ export class StreamingService
 
   @mutation()
   private SET_STREAMING_STATUS(status: EStreamingState, display: TDisplayType, time?: string) {
-    // while recording and the replay buffer are in the v2 API and streaming is in the old API
+    // while recording and the replay buffer are in the factory API and streaming is in the old API
     // we need to duplicate tracking the replay buffer status
     this.state.streamingStatus = status;
     this.state.status[display].streaming = status;
@@ -2536,7 +2665,7 @@ export class StreamingService
 
   @mutation()
   private SET_RECORDING_STATUS(status: ERecordingState, display: TDisplayType, time: string) {
-    // while recording and the replay buffer are in the v2 API and streaming is in the old API
+    // while recording and the replay buffer are in the factory API and streaming is in the old API
     // we need to duplicate tracking the replay buffer status
     this.state.status[display].recording = status;
     this.state.status[display].recordingTime = time;
@@ -2550,7 +2679,7 @@ export class StreamingService
     display: TDisplayType,
     time?: string,
   ) {
-    // while recording and the replay buffer are in the v2 API and streaming is in the old API
+    // while recording and the replay buffer are in the factory API and streaming is in the old API
     // we need to duplicate tracking the replay buffer status
     this.state.status[display].replayBuffer = status;
     this.state.replayBufferStatus = status;

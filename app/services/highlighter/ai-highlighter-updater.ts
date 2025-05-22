@@ -13,6 +13,8 @@ import {
 } from './constants';
 import Utils from '../utils';
 import * as remote from '@electron/remote';
+import { UsageStatisticsService } from 'app-services';
+import { Inject } from 'services';
 
 interface IAIHighlighterManifest {
   version: string;
@@ -31,6 +33,7 @@ interface IAIHighlighterManifest {
  * the paths to the highlighter binary and manifest.
  */
 export class AiHighlighterUpdater {
+  @Inject() usageStatisticsService: UsageStatisticsService;
   public static basepath: string = path.join(
     remote.app.getPath('userData'),
     '..',
@@ -224,6 +227,12 @@ export class AiHighlighterUpdater {
       throw new Error('Manifest not found, cannot update');
     }
 
+    this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+      type: 'performUpdateStart',
+      version: this.manifest.version,
+      timeStamp: Date.now(),
+    });
+
     if (!existsSync(AiHighlighterUpdater.basepath)) {
       await fs.mkdir(AiHighlighterUpdater.basepath);
     }
@@ -283,6 +292,11 @@ export class AiHighlighterUpdater {
     console.log('updating manifest...');
     await fs.writeFile(this.manifestPath, JSON.stringify(this.manifest));
     console.log('update complete');
+    this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+      type: 'performUpdateComplete',
+      version: this.manifest.version,
+      timeStamp: Date.now(),
+    });
   }
 
   private async sha256(file: string): Promise<string> {
