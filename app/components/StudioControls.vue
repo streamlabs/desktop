@@ -1,13 +1,25 @@
 <template>
-  <div class="studio-controls row expanded" :class="{ opened: opened || isCompactMode }">
-    <button
-      @click="onToggleControls"
-      class="studio-controls-toggle-button"
-      :class="{ 'studio-controls--opened': opened }"
-      v-if="!isCompactMode"
-    >
-      <i class="icon-drop-down-arrow"></i>
-    </button>
+  <div
+    class="studio-controls row expanded"
+    :class="{
+      opened: opened || isCompactMode,
+    }"
+    :style="opened ? { height: `${currentHeight}px` } : {}"
+  >
+    <div class="studio-controls-header" v-if="!isCompactMode">
+      <button
+        @click="onToggleControls"
+        class="studio-controls-toggle-button"
+        :class="{ 'studio-controls--opened': opened }"
+      >
+        <i class="icon-drop-down-arrow"></i>
+      </button>
+      <div v-if="opened" class="drag-handle" @mousedown="onDragStart">
+        <svg viewBox="0 0 24 24">
+          <path d="M1 10h22M1 14h22" />
+        </svg>
+      </div>
+    </div>
     <template v-if="isCompactMode">
       <div class="studio-controls-compact">
         <div class="studio-controls-tabs">
@@ -63,31 +75,26 @@
     width: @nicolive-area-width;
     padding-top: 0;
   }
-}
 
-.studio-controls-toggle-button {
-  position: absolute;
-  right: 0;
-  left: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 180px;
-  height: @toggle-button-size;
-  margin: -@toggle-button-size auto 0 auto;
+  .studio-controls-toggle-button {
+    position: relative;
+    width: 24px;
+    height: @toggle-button-size;
+    margin-left: 8px;
 
-  > i {
-    .icon-hover;
+    > i {
+      .icon-hover;
 
-    display: block;
-    font-size: @font-size2;
-    color: var(--color-text);
-    transform: rotate(-180deg);
-  }
+      display: block;
+      font-size: @font-size2;
+      color: var(--color-text);
+      transform: rotate(-180deg);
+    }
 
-  .opened & {
-    i {
-      transform: rotate(0deg);
+    .opened & {
+      i {
+        transform: rotate(0deg);
+      }
     }
   }
 }
@@ -149,5 +156,29 @@
   overflow-y: auto;
   background: var(--color-bg-tertiary);
   .radius;
+}
+
+.studio-controls-header {
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  margin-top: -@toggle-button-size;
+  margin-bottom: 16px;
+}
+
+.drag-handle {
+  position: absolute;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  width: 24px;
+  height: @toggle-button-size;
+  cursor: ns-resize;
+
+  svg {
+    stroke: var(--color-text);
+  }
 }
 </style>

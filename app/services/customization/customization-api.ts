@@ -25,6 +25,7 @@ export interface ICustomizationServiceState {
   showAutoCompactDialog: boolean;
   compactAlwaysOnTop: boolean;
   experimental: any;
+  studioControlsHeight: number;
 }
 
 export interface ICustomizationSettings extends ICustomizationServiceState {}
