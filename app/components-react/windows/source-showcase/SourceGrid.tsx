@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { Empty, Row, Col, PageHeader, Button, Collapse } from 'antd';
+import { InputNumber, Form, Empty, Row, Col, PageHeader, Button, Collapse } from 'antd';
+import Fuse from 'fuse.js';
 import Scrollable from 'components-react/shared/Scrollable';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
 import { IObsListOption } from 'components/obs/inputs/ObsInput';
-import { WidgetDisplayData, WidgetType } from 'services/widgets';
-import { TSourceType, SourceDisplayData } from 'services/sources';
+import { IWidgetDisplayData, WidgetDisplayData, WidgetType } from 'services/widgets';
+import { TSourceType, SourceDisplayData, ISourceDisplayData } from 'services/sources';
 import { getPlatformService } from 'services/platforms';
 import { $i } from 'services/utils';
 import { byOS, getOS, OS } from 'util/operating-systems';
@@ -16,7 +17,7 @@ import { EAvailableFeatures } from 'services/incremental-rollout';
 import { useRealmObject } from 'components-react/hooks/realm';
 import styles from './SourceGrid.m.less';
 
-export default function SourceGrid(p: { activeTab: string }) {
+export default function SourceGrid(p: { activeTab: string; searchTerm: string }) {
   const {
     SourcesService,
     UserService,
@@ -69,27 +70,121 @@ export default function SourceGrid(p: { activeTab: string }) {
     ? getPlatformService(UserService.state.auth.primaryPlatform)
     : null;
 
-  const iterableWidgetTypes = useMemo(
-    () =>
-      Object.keys(WidgetType)
-        .filter((type: string) => isNaN(Number(type)) && type !== 'SubscriberGoal')
-        .filter((type: string) => {
-          const widgetPlatforms = WidgetDisplayData(primaryPlatform)[WidgetType[type]]?.platforms;
-          if (!widgetPlatforms) return true;
-          return linkedPlatforms?.some(
-            platform => widgetPlatforms && widgetPlatforms.has(platform),
-          );
-        })
-        .filter(type => {
-          // show only supported widgets
-          const whitelist = primaryPlatformService?.widgetsWhitelist;
-          if (!whitelist) return true;
-          return whitelist.includes(WidgetType[type]);
-        }),
-    [],
-  );
+  const iterableWidgetTypesBase = useMemo(() => {
+    const filtered = Object.keys(WidgetType)
+      .filter((type: string) => isNaN(Number(type)) && type !== 'SubscriberGoal')
+      .filter((type: string) => {
+        const widgetPlatforms = WidgetDisplayData(primaryPlatform)[WidgetType[type]]?.platforms;
+        if (!widgetPlatforms) return true;
+        return linkedPlatforms?.some(platform => widgetPlatforms && widgetPlatforms.has(platform));
+      })
+      .filter(type => {
+        // show only supported widgets
+        const whitelist = primaryPlatformService?.widgetsWhitelist;
+        if (!whitelist) return true;
+        return whitelist.includes(WidgetType[type]);
+      });
 
-  const availableSources = useMemo(() => {
+    // Add Stream Label here as opposed to the DOM as before, still not perfect
+    if (isLoggedIn) {
+      filtered.push('streamlabel');
+    }
+
+    return filtered;
+  }, [isLoggedIn]);
+
+  const { platform } = useVuex(() => ({ platform: UserService.views.platform?.type }));
+  const [searchThreshold, setSearchThreshold] = useState(0.4);
+  const toFuseCollection = (xs: string[], threshold: number = 0.4) => {
+    const list = xs.reduce((acc, type) => {
+      const displayData: IWidgetDisplayData | ISourceDisplayData =
+        WidgetDisplayData(platform)[WidgetType[type]] || SourceDisplayData()[type];
+
+      if (!displayData) {
+        return acc;
+      }
+
+      return [
+        ...acc,
+        {
+          type,
+          name: displayData.name,
+          description: displayData.description,
+          shortDesc: displayData.shortDesc,
+        },
+      ];
+    }, []);
+
+    const result = new Fuse(list, {
+      threshold,
+      //includeMatches: true,
+      //includeScore: true,
+      keys: [
+        { name: 'type', weight: 1 },
+        { name: 'name', weight: 0.8 },
+        { name: 'shortDesc', weight: 0.5 },
+        { name: 'description', weight: 0.2 },
+      ],
+    });
+
+    return result;
+  };
+
+  const isSourceType = (x: any): x is IObsListOption<TSourceType> => {
+    return x && typeof x === 'object' && 'value' in x;
+  };
+
+  const isSourceTypeList = (xs: any[]): xs is IObsListOption<TSourceType>[] => {
+    return isSourceType(xs[0]);
+  };
+
+  type FuseItem = {
+    type: string;
+    name: string;
+    description: string;
+    shortDesc: string;
+  };
+
+  const useSearchMemo = <T extends string[] | IObsListOption<TSourceType>[]>(
+    xs: T,
+    options: { threshold?: number } = {},
+    deps: React.DependencyList = [],
+  ) =>
+    useMemo(() => {
+      const coll = (() => {
+        if (!xs.length) {
+          return [];
+        }
+
+        if (isSourceTypeList(xs)) {
+          return xs.map(x => x.value);
+        } else {
+          return xs as string[];
+        }
+      })();
+
+      const list = toFuseCollection(coll, options.threshold);
+      const toOrigElement = (x: FuseItem) => {
+        // TODO: do this check once, TS is not happy
+        if (isSourceTypeList(xs)) {
+          return {
+            description: x.description,
+            value: x.type,
+          } as IObsListOption<TSourceType>;
+        } else {
+          return x.type;
+        }
+      };
+
+      const result = p.searchTerm ? list.search(p.searchTerm).map(toOrigElement) : xs;
+      return result as T;
+    }, [xs, platform, p.searchTerm, ...(options.threshold ? [options.threshold] : []), ...deps]);
+
+  const iterableWidgetTypes = useSearchMemo(iterableWidgetTypesBase, {
+    threshold: searchThreshold,
+  });
+
+  const availableSourcesBase = useMemo(() => {
     const guestCamAvailable =
       (IncrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.guestCamBeta) ||
         IncrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.guestCamProduction)) &&
@@ -109,6 +204,8 @@ export default function SourceGrid(p: { activeTab: string }) {
     });
   }, []);
 
+  const availableSources = useSearchMemo(availableSourcesBase);
+
   const essentialSourcesOrder = ['game_capture', 'dshow_input', 'ffmpeg_source'];
   // Stream Label is last, we don't have a widget type for it
   const essentialWidgetsOrder = [
@@ -116,6 +213,7 @@ export default function SourceGrid(p: { activeTab: string }) {
     WidgetType.ChatBox,
     WidgetType.EventList,
     WidgetType.ViewerCount,
+    'streamlabel',
   ];
 
   function customOrder<T, U>(orderArray: T[], getter: (a: U) => T) {
@@ -136,10 +234,13 @@ export default function SourceGrid(p: { activeTab: string }) {
       .sort(customOrder(essentialSourcesOrder, s => s.value));
 
     const essentialWidgets = iterableWidgetTypes.filter(type =>
-      [WidgetType.AlertBox, WidgetType.ChatBox].includes(WidgetType[type]),
+      [WidgetType.AlertBox, WidgetType.ChatBox, 'streamlabel'].includes(
+        type === 'streamlabel' ? type : WidgetType[type],
+      ),
     );
+
     return { essentialDefaults, essentialWidgets };
-  }, []);
+  }, [availableSources, iterableWidgetTypes, isLoggedIn]);
 
   function showContent(key: string) {
     const correctKey = key === p.activeTab;
@@ -169,10 +270,26 @@ export default function SourceGrid(p: { activeTab: string }) {
   );
 
   // TODO: restrict type
-  // Hide widget descriptions on non-general tab
-  const toWidgetEl = (widget: string) => (
-    <SourceTag key={widget} type={widget} excludeWrap={excludeWrap} hideShortDescription />
-  );
+  const toWidgetEl = (widget: string, { essential = false, hideShortDescription = false } = {}) =>
+    widget === 'streamlabel' ? (
+      <SourceTag
+        key="streamlabel"
+        name={$t('Stream Label')}
+        type="streamlabel"
+        essential
+        /* Show short desscription if part of the Essentials group in All Sources tab */
+        hideShortDescription={p.activeTab !== 'all'}
+        excludeWrap={excludeWrap}
+      />
+    ) : (
+      <SourceTag
+        key={widget}
+        type={widget}
+        excludeWrap={excludeWrap}
+        essential={essential}
+        hideShortDescription={hideShortDescription}
+      />
+    );
 
   const essentialSourcesList = useMemo(
     () => (
@@ -182,21 +299,12 @@ export default function SourceGrid(p: { activeTab: string }) {
         ))}
 
         {isLoggedIn &&
-          essentialSources.essentialWidgets.map(widgetType => (
-            <SourceTag key={widgetType} type={widgetType} essential excludeWrap={excludeWrap} />
-          ))}
-        {isLoggedIn && (
-          <SourceTag
-            key="streamlabel"
-            name={$t('Stream Label')}
-            type="streamlabel"
-            essential
-            excludeWrap={excludeWrap}
-          />
-        )}
+          essentialSources.essentialWidgets.map(widgetType =>
+            toWidgetEl(widgetType, { essential: true }),
+          )}
       </>
     ),
-    [essentialSources, isLoggedIn, excludeWrap],
+    [essentialSources, isLoggedIn, excludeWrap, iterableWidgetTypes],
   );
 
   const sourceDisplayData = useMemo(() => SourceDisplayData(), []);
@@ -213,8 +321,13 @@ export default function SourceGrid(p: { activeTab: string }) {
 
   const byWidgetGroup = (group: string) => (widget: string) => {
     const displayData = widgetDisplayData[WidgetType[widget]];
-    if (!displayData) {
+
+    if (widget === 'streamlabel' && group === 'essential') {
       return true;
+    }
+
+    if (!displayData) {
+      return false;
     }
 
     return displayData.group === group;
@@ -230,23 +343,28 @@ export default function SourceGrid(p: { activeTab: string }) {
     excludeWrap,
   ]);
 
+  // FIXME: hardcoded sources
   const mediaSourcesList = useMemo(
     () => (
       <>
         {availableSources.filter(byGroup('media')).map(toSourceEl)}
-        <SourceTag
-          key="replay"
-          name={$t('Instant Replay')}
-          type="replay"
-          excludeWrap={excludeWrap}
-        />
-        {designerMode && (
-          <SourceTag
-            key="icon_library"
-            name={$t('Custom Icon')}
-            type={'icon_library'}
-            excludeWrap={excludeWrap}
-          />
+        {!p.searchTerm && (
+          <>
+            <SourceTag
+              key="replay"
+              name={$t('Instant Replay')}
+              type="replay"
+              excludeWrap={excludeWrap}
+            />
+            {designerMode && (
+              <SourceTag
+                key="icon_library"
+                name={$t('Custom Icon')}
+                type={'icon_library'}
+                excludeWrap={excludeWrap}
+              />
+            )}
+          </>
         )}
       </>
     ),
@@ -265,22 +383,9 @@ export default function SourceGrid(p: { activeTab: string }) {
           </Empty>
         ) : (
           <>
-            {iterableWidgetTypes.filter(filterEssential).map(widgetType => (
-              <SourceTag
-                key={widgetType}
-                type={widgetType}
-                excludeWrap={excludeWrap}
-                hideShortDescription
-              />
-            ))}
-            {p.activeTab !== 'all' && (
-              <SourceTag
-                key="streamlabel"
-                name={$t('Stream Label')}
-                type="streamlabel"
-                excludeWrap={excludeWrap}
-              />
-            )}
+            {iterableWidgetTypes
+              .filter(filterEssential)
+              .map(widgetType => toWidgetEl(widgetType, { hideShortDescription: true }))}
           </>
         )}
       </>
@@ -296,23 +401,19 @@ export default function SourceGrid(p: { activeTab: string }) {
         // Sort lexographically by default, if sorter is not provided
         .sort(sorter);
 
-      return widgets.map(toWidgetEl);
+      return widgets.map(type => toWidgetEl(type, { hideShortDescription: true }));
     };
 
     // Using essentials as a group for widgets since we wanna display more
+    // HACK: streamlabel doesn't have a widget type, and we want it at the end
     const essentialWidgets = (
       <>
         {widgetsInGroup(
           'essential',
-          customOrder(essentialWidgetsOrder, x => WidgetType[x]),
+          customOrder(essentialWidgetsOrder, x =>
+            x === 'streamlabel' ? 'streamlabel' : WidgetType[x],
+          ),
         )}
-        <SourceTag
-          key="streamlabel"
-          name={$t('Stream Label')}
-          type="streamlabel"
-          excludeWrap={excludeWrap}
-          hideShortDescription
-        />
       </>
     );
 
@@ -441,9 +542,24 @@ export default function SourceGrid(p: { activeTab: string }) {
     }
   }, [p.activeTab, availableAppSources, appsList, widgetList]);
 
+  const thresholdInput = (
+    <InputNumber
+      // @ts-ignore: it does have a controls prop
+      controls
+      value={searchThreshold}
+      onChange={(x: number) => setSearchThreshold(x)}
+      min={0.1}
+      max={1.0}
+      step={0.1}
+    />
+  );
+
   return (
     <Scrollable style={{ height: 'calc(100% - 64px)' }} className={styles.sourceGrid}>
       <Row gutter={[8, 8]} style={{ marginLeft: '8px', marginRight: '8px', paddingBottom: '24px' }}>
+        <Form style={{ marginTop: 5 }}>
+          <Form.Item label="Search Threshold (for testing)">{thresholdInput}</Form.Item>
+        </Form>
         {p.activeTab === 'all' ? (
           <>
             <Col span={24}>
@@ -463,11 +579,14 @@ export default function SourceGrid(p: { activeTab: string }) {
                     {widgetList}
                   </div>
                 </Panel>
-                <Panel header={$t('Apps')} key="apps">
-                  <div className="collapse-section" data-testid="app-sources">
-                    {appsList}
-                  </div>
-                </Panel>
+                {/* No searching for apps needed */}
+                {!p.searchTerm && (
+                  <Panel header={$t('Apps')} key="apps">
+                    <div className="collapse-section" data-testid="app-sources">
+                      {appsList}
+                    </div>
+                  </Panel>
+                )}
               </Collapse>
             </Col>
           </>
