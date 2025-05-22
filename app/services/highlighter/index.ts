@@ -420,14 +420,31 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     this.streamingService.streamingStatusChange.subscribe(async status => {
       if (status === EStreamingState.Live) {
         streamStarted = true; // console.log('live', this.streamingService.views.settings.platforms.twitch.title);
+        const streamId = 'fromStreamRecording' + uuid();
+
+        this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+          type: 'AiRecordingGoinglive',
+          streamId,
+          game: this.streamingService.views.game,
+        });
 
         if (!this.aiHighlighterFeatureEnabled) {
+          this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+            type: 'AiHighlighterFeatureNotEnabled',
+            streamId,
+          });
           return;
         }
 
         if (this.views.useAiHighlighter === false) {
           return;
         }
+
+        this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+          type: 'AiRecordingHighlighterIsActive',
+          streamId,
+          game: this.streamingService.views.game,
+        });
 
         if (!isGameSupported(this.streamingService.views.game)) {
           return;
@@ -445,7 +462,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         }
 
         streamInfo = {
-          id: 'fromStreamRecording' + uuid(),
+          id: streamId,
           title: this.streamingService.views.settings.platforms.twitch?.title,
           game,
         };
