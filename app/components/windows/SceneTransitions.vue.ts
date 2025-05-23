@@ -1,10 +1,11 @@
-import { ObsImporterService, OnboardingService } from 'app-services';
 import ConnectionSettings from 'components/ConnectionSettings.vue';
 import ModalLayout from 'components/ModalLayout.vue';
 import Tabs, { ITab } from 'components/Tabs.vue';
 import TransitionSettings from 'components/TransitionSettings.vue';
 import { Inject } from 'services/core/injector';
 import { $t } from 'services/i18n';
+import { ObsImporterService } from 'services/obs-importer';
+import { OnboardingService } from 'services/onboarding';
 import { ScenesService } from 'services/scenes';
 import { ETransitionType, TransitionsService } from 'services/transitions';
 import { WindowsService } from 'services/windows';

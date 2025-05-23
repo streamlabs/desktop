@@ -162,6 +162,8 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
 
+  "typescript.preferences.autoImportFileExcludePatterns": ["**/app-services.ts"],
+
   "github.copilot.chat.commitMessageGeneration.instructions": [
     {
       "text": "日本語で書いてください"
