@@ -570,4 +570,9 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   get replayBufferStatus() {
     return this.streamingState.status.horizontal.replayBuffer;
   }
+
+  // TODO: remove this when the new API migration is complete
+  get useFactoryAPI() {
+    return this.dualOutputView.useFactoryAPI;
+  }
 }

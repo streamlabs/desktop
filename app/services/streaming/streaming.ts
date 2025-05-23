@@ -1065,11 +1065,16 @@ export class StreamingService
   }
 
   async finishStartStreaming() {
-    await this.finishV1StartStreaming();
-    // this.finishV2StartStreaming();
+    if (this.views.useFactoryAPI) {
+      this.finishV2StartStreaming();
+    } else {
+      await this.finishV1StartStreaming();
+    }
   }
 
   async finishV1StartStreaming(): Promise<unknown> {
+    console.info('using v1 start streaming');
+
     // V1 api
     // register a promise that we should reject or resolve in the `handleV1ObsOutputSignal`
     const startStreamingPromise = new Promise((resolve, reject) => {
@@ -1272,14 +1277,19 @@ export class StreamingService
   }
 
   async toggleStreaming(options?: TStartStreamOptions, force = false) {
-    await this.toggleV1Streaming(options, force);
-    // await this.toggleV2Streaming(options, force);
+    if (this.views.useFactoryAPI) {
+      await this.toggleV2Streaming(options, force);
+    } else {
+      await this.toggleV1Streaming(options, force);
+    }
   }
 
   /**
    * Toggle streaming for V1 api
    */
   async toggleV1Streaming(options?: TStartStreamOptions, force = false) {
+    console.info('using V1 toggle streaming');
+
     if (this.views.isDualOutputMode && !this.views.getCanStreamDualOutput() && this.isIdle) {
       this.notificationsService.actions.push({
         message: $t('Set up Go Live Settings for Dual Output Mode in the Go Live window.'),
@@ -1391,6 +1401,8 @@ export class StreamingService
    * Toggle streaming for V2 api
    */
   async toggleV2Streaming(options?: TStartStreamOptions, force = false) {
+    console.info('using factory api toggle streaming');
+
     if (this.views.isDualOutputMode && !this.views.getCanStreamDualOutput() && this.isIdle) {
       this.notificationsService.actions.push({
         message: $t('Set up Go Live Settings for Dual Output Mode in the Go Live window.'),
@@ -1475,6 +1487,8 @@ export class StreamingService
   }
 
   async finishV2StartStreaming(): Promise<unknown> {
+    console.info('using factory api finish start streaming');
+
     // register a promise that we should reject or resolve in `handleStreamingSignal`
     const startStreamingPromise = new Promise((resolve, reject) => {
       this.resolveStartStreaming = resolve;

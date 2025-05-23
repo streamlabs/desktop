@@ -37,6 +37,9 @@ interface IDualOutputServiceState {
   recording: TDisplayType[];
   // TODO: use Set
   extraOutputPlatforms: TPlatform[];
+  // TODO: remove after finishing the migration to the factory API
+  // this is a temporary solution to test the factory API against the old one
+  useFactoryAPI?: boolean;
 }
 
 enum EOutputDisplayType {
@@ -302,6 +305,11 @@ class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
   get hasExtraOutputs() {
     return !!this.state.extraOutputPlatforms.length;
   }
+
+  // TODO: remove this after the migration to the factory API
+  get useFactoryAPI() {
+    return this.state.useFactoryAPI;
+  }
 }
 
 @InitAfter('ScenesService')
@@ -330,6 +338,7 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     isLoading: false,
     // TODO: I would like to use `Set` but seem to be having issues with it
     extraOutputPlatforms: [] as TPlatform[],
+    useFactoryAPI: false,
   };
 
   sceneNodeHandled = new Subject<number>();
@@ -911,5 +920,16 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
     if (this.state.extraOutputPlatforms.includes(platform)) {
       this.state.extraOutputPlatforms = this.state.extraOutputPlatforms.filter(p => p !== platform);
     }
+  }
+
+  // TODO: remove this after the migration to the factory API
+  setUseFactoryAPI(status: boolean) {
+    this.SET_USE_FACTORY_API(status);
+  }
+
+  // TODO: remove this after the migration to the factory API
+  @mutation()
+  private SET_USE_FACTORY_API(status: boolean) {
+    this.state = { ...this.state, useFactoryAPI: status };
   }
 }

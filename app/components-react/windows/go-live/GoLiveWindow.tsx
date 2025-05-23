@@ -14,6 +14,7 @@ import Animation from 'rc-animate';
 import { useGoLiveSettings, useGoLiveSettingsRoot } from './useGoLiveSettings';
 import { inject } from 'slap';
 import RecordingSwitcher from './RecordingSwitcher';
+import { SwitchInput } from 'components-react/shared/inputs/SwitchInput';
 
 export default function GoLiveWindow() {
   const { lifecycle, form } = useGoLiveSettingsRoot().extend(module => ({
@@ -63,6 +64,9 @@ function ModalFooter() {
     isLoading,
     isDualOutputMode,
     horizontalHasTargets,
+    // TODO: Remove this when the new API migration is complete
+    useFactoryAPI,
+    setUseFactoryAPI,
   } = useGoLiveSettings().extend(module => ({
     windowsService: inject(WindowsService),
     dualOutputService: inject(DualOutputService),
@@ -88,6 +92,14 @@ function ModalFooter() {
 
     get isDualOutputMode() {
       return Services.TikTokService.promptApply;
+    },
+
+    get useFactoryAPI() {
+      return module.state.useFactoryAPI;
+    },
+
+    setUseFactoryAPI(val: boolean) {
+      this.dualOutputService.actions.setUseFactoryAPI(val);
     },
   }));
 
@@ -134,6 +146,18 @@ function ModalFooter() {
   return (
     <Form layout={'inline'}>
       {!isDualOutputMode && <RecordingSwitcher />}
+      {/* TODO: Remove. This is a temporary toggle to test streaming with the v1 api and factory api */}
+      <SwitchInput
+        name="factory-api-toggle"
+        value={useFactoryAPI}
+        onChange={setUseFactoryAPI}
+        uncontrolled
+        style={{ marginRight: '10px' }}
+        label={$t('Stream with Factory API')}
+        layout="horizontal"
+        checkmark
+      />
+
       {/* CLOSE BUTTON */}
       <Button onClick={close}>{$t('Close')}</Button>
 
