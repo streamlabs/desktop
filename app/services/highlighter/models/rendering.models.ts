@@ -1,11 +1,9 @@
 import { $t } from '../../i18n';
-import { ITextStyle } from '../subtitles/svg-creator';
 
 export type TFPS = 30 | 60;
 export type TResolution = 720 | 1080;
 export type TPreset = 'ultrafast' | 'fast' | 'slow';
 
-export interface ISubtitleStyle extends ITextStyle {}
 export interface IResolution {
   width: number;
   height: number;
@@ -17,7 +15,6 @@ export interface IExportOptions {
   height: number;
   preset: TPreset;
   complexFilter?: string;
-  subtitleStyle?: ISubtitleStyle | null;
 }
 
 // types for highlighter video operations
@@ -34,7 +31,7 @@ export interface IExportInfo {
   cancelRequested: boolean;
   file: string;
   previewFile: string;
-  transcriptionInProgress: boolean;
+
   /**
    * Whether the export finished successfully.
    * Will be set to false whenever something changes
@@ -45,7 +42,6 @@ export interface IExportInfo {
   fps: TFPS;
   resolution: TResolution;
   preset: TPreset;
-  subtitleStyle: ISubtitleStyle | null;
 }
 
 // Capitalization is not consistent because it matches with the
