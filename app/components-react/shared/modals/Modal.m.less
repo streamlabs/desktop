@@ -1,0 +1,23 @@
+@import "../../../styles/index";
+
+.wrapper {
+  display: flex;
+  position: fixed;
+  z-index: 1002; // above resize bars
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+.fader {
+  .absolute(0,0,0,0);
+  background: fade(black, 70%);
+}
+
+.content {
+  z-index: 1;
+  a {
+    color: var(--teal);
+  }
+}
