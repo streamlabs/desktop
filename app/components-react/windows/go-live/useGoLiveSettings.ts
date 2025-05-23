@@ -45,6 +45,13 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
   }
 
   /**
+   * Limit the platforms that can stream both displays at the same time
+   */
+  get canStreamBothDisplays() {
+    return ['youtube'];
+  }
+
+  /**
    * Update top level settings
    */
   updateSettings(patch: Partial<IGoLiveSettingsState>) {
