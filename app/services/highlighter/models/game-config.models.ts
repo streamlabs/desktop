@@ -306,6 +306,22 @@ const OVERWATCH_2: IGameConfig = {
   },
 };
 
+const LEAGUE_OF_LEGENDS: IGameConfig = {
+  name: EGame.LEAGUE_OF_LLEGENDS,
+  label: 'League of Legends',
+  gameModes: '',
+  thumbnail: `${thumbnailPath}${EGame.LEAGUE_OF_LEGENDS}.png`,
+  state: EGameState.INTERNAL,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#E5803F',
+    artwork: `${heroPath}${EGame.LEAGUE_OF_LEGENDS}.png`,
+    backgroundColor: '#cdc7cd',
+  },
+};
+
 const UNSET_CONFIG: IGameConfig = {
   name: EGame.UNSET,
   label: 'unset',
@@ -331,6 +347,7 @@ const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.PUBG]: PUBG_CONFIG,
   [EGame.RAINBOW_SIX_SIEGE]: RAINBOW_SIX_SIEGE,
   [EGame.OVERWATCH_2]: OVERWATCH_2,
+  [EGame.LEAGUE_OF_LEGENDS]: LEAGUE_OF_LEGENDS,
   [EGame.UNSET]: UNSET_CONFIG,
 };
 
