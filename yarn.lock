@@ -13605,6 +13605,8 @@ __metadata:
   dependenciesMeta:
     node-win32-np:
       optional: true
+    sharp:
+      optional: true
   languageName: unknown
   linkType: soft
 
