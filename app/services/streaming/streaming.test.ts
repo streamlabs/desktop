@@ -44,21 +44,23 @@ const showWindow = jest.fn();
 const createInjectee = ({
   recordEvent = noop,
   generateStreamingTrackID = noop,
-  getStreamEncoderSettings = () => ({
-    streamingURL: 'rtmp://service.domain/path',
-    encoder: '',
-    preset: '',
-    profile: '',
-    bitrate: '',
-    baseResolution: '',
-    outputResolution: '',
-    fps: '',
-    audio: {
+  getStreamEncoderSettings = () => {
+    return {
+      streamingURL: 'rtmp://service.domain/path',
+      encoder: '',
+      preset: '',
+      profile: '',
       bitrate: '',
-      sampleRate: 48000,
-      rateControl: null,
-    },
-  }),
+      baseResolution: '',
+      outputResolution: '',
+      fps: '',
+      audio: {
+        bitrate: '',
+        sampleRate: 48000,
+        rateControl: null,
+      } as any,
+    };
+  },
   WarnBeforeStartingStream = false,
   WarnBeforeStoppingStream = false,
   RecordWhenStreaming = false,
@@ -126,6 +128,7 @@ const createInjectee = ({
     state: NicoliveProgramStateService.defaultState,
   },
   SubStreamService: {
+    state: noop,
     syncStart: noop,
     syncStop: noop,
   },
