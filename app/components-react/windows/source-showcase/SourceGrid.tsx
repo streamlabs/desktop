@@ -196,7 +196,7 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
         IncrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.guestCamProduction)) &&
       UserService.views.isLoggedIn;
 
-    return SourcesService.getAvailableSourcesTypesList().filter(type => {
+    const result = SourcesService.getAvailableSourcesTypesList().filter(type => {
       // Freetype on windows is hidden
       if (type.value === 'text_ft2_source' && byOS({ [OS.Windows]: true, [OS.Mac]: false })) {
         return;
@@ -208,6 +208,24 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
 
       return !(type.value === 'scene' && ScenesService.views.scenes.length <= 1);
     });
+
+    // TODO: why aren't these on getAvailableSourcesTypesList?
+    // FIMXE: get out of our way TS, do not want to add them to TSourceType just yet
+    return ([
+      ...result,
+      {
+        description: 'Instant Replay',
+        value: 'replay',
+      },
+      ...(designerMode
+        ? [
+            {
+              value: 'Custom Icon',
+              description: 'Icon Library',
+            },
+          ]
+        : []),
+    ] as any) as IObsListOption<TSourceType>[];
   }, []);
 
   const availableSources = useSearchMemo(availableSourcesBase);
@@ -319,12 +337,9 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
   const widgetDisplayData = useMemo(() => WidgetDisplayData(), []);
 
   const byGroup = (group: 'capture' | 'av' | 'media') => (source: IObsListOption<TSourceType>) => {
-    const displayData = sourceDisplayData[source.value];
-    if (!displayData) {
-      return true;
-    }
+    const displayData = sourceDisplayData[(source as IObsListOption<TSourceType>).value];
 
-    return displayData.group === group;
+    return displayData?.group === group;
   };
 
   const byWidgetGroup = (group: string) => (widget: string) => {
@@ -336,11 +351,7 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
       return true;
     }
 
-    if (!displayData) {
-      return false;
-    }
-
-    return displayData.group === group;
+    return displayData?.group === group;
   };
 
   const captureSourcesList = useMemo(
@@ -353,31 +364,8 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
     excludeWrap,
   ]);
 
-  // FIXME: hardcoded sources
   const mediaSourcesList = useMemo(
-    () => (
-      <>
-        {availableSources.filter(byGroup('media')).map(toSourceEl)}
-        {!p.searchTerm && (
-          <>
-            <SourceTag
-              key="replay"
-              name={$t('Instant Replay')}
-              type="replay"
-              excludeWrap={excludeWrap}
-            />
-            {designerMode && (
-              <SourceTag
-                key="icon_library"
-                name={$t('Custom Icon')}
-                type={'icon_library'}
-                excludeWrap={excludeWrap}
-              />
-            )}
-          </>
-        )}
-      </>
-    ),
+    () => availableSources.filter(byGroup('media')).map(toSourceEl),
     [availableSources, excludeWrap, designerMode],
   );
 
