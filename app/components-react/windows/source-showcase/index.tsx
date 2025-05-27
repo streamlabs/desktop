@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Layout, Menu, Input } from 'antd';
+import { SearchOutlined } from '@ant-design/icons';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
@@ -20,7 +21,6 @@ import * as remote from '@electron/remote';
 import { useRealmObject } from 'components-react/hooks/realm';
 
 const { Content, Sider } = Layout;
-const { Search } = Input;
 
 export default function SourcesShowcase() {
   const controller = useMemo(() => new SourceShowcaseController(), []);
@@ -56,12 +56,13 @@ function SourcesShowcaseModal() {
               <Menu.Item key="widgets">{$t('Widgets')}</Menu.Item>
               {availableAppSources.length > 0 && <Menu.Item key="apps">{$t('Apps')}</Menu.Item>}
             </Menu>
-            <Search
+            <Input
+              type="search"
               className={styles.search}
               allowClear
               placeholder={$t('Search...')}
+              prefix={<SearchOutlined />}
               onChange={ev => setSearchTerm(ev.target.value)}
-              onSearch={val => setSearchTerm(val)}
             />
           </div>
           <SourceGrid activeTab={activeTab} searchTerm={searchTerm} />
