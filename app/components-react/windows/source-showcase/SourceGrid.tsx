@@ -220,8 +220,8 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
       ...(designerMode
         ? [
             {
-              value: 'Custom Icon',
-              description: 'Icon Library',
+              value: 'icon_library',
+              description: 'Custom Icon',
             },
           ]
         : []),
