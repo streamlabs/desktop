@@ -129,6 +129,7 @@ export type IViewState = TClipsViewState | IStreamViewState | ISettingsViewState
 
 export enum EUploadPlatform {
   YOUTUBE = 'youtube',
+  TIKTOK = 'tiktok',
   CROSSCLIP = 'crossclip',
   TYPESTUDIO = 'typestudio',
   VIDEOEDITOR = 'videoeditor',

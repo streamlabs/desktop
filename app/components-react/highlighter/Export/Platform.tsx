@@ -15,6 +15,7 @@ import { formatSecondsToHMS } from '../ClipPreview';
 import { $i } from 'services/utils';
 import * as remote from '@electron/remote';
 import { EUploadPlatform } from 'services/highlighter/models/highlighter.models';
+import TikTokUpload from './TikTokUpload';
 
 export default function PlatformSelect({
   onClose,
@@ -46,12 +47,17 @@ export default function PlatformSelect({
       HighlighterService.clearUpload();
     };
   }, []);
-
+  const defaultActiveKey = ['2'];
   const items = [
     {
       key: '1',
       label: 'Youtube',
       children: <YoutubeUpload defaultTitle={videoName} close={onClose} streamId={streamId} />,
+    },
+    {
+      key: '2',
+      label: 'TikTok',
+      children: <TikTokUpload defaultTitle={videoName} close={onClose} streamId={streamId} />,
     },
   ];
 
@@ -91,7 +97,7 @@ export default function PlatformSelect({
         >
           <Collapse
             expandIconPosition="right"
-            defaultActiveKey={['1']}
+            defaultActiveKey={defaultActiveKey}
             bordered={false}
             style={{ width: '424px', height: '424px' }}
           >

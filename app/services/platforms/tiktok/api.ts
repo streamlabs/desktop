@@ -125,3 +125,34 @@ export interface ITikTokStartStreamResponse {
 export interface ITikTokEndStreamResponse {
   success: boolean;
 }
+
+export enum ETikTokPrivacyLevel {
+  FOLLOWER_OF_CREATOR = 'FOLLOWER_OF_CREATOR',
+  PUBLIC_TO_EVERYONE = 'PUBLIC_TO_EVERYONE',
+  MUTUAL_FOLLOW_FRIENDS = 'MUTUAL_FOLLOW_FRIENDS',
+  SELF_ONLY = 'SELF_ONLY',
+}
+
+export type TTikTokPrivacyLevelOptions =
+  | ETikTokPrivacyLevel.MUTUAL_FOLLOW_FRIENDS
+  | ETikTokPrivacyLevel.FOLLOWER_OF_CREATOR
+  | ETikTokPrivacyLevel.PUBLIC_TO_EVERYONE
+  | ETikTokPrivacyLevel.SELF_ONLY;
+
+export interface ITikTokQueryCreatorInfoResponse {
+  data: {
+    creator_avatar_url: string;
+    creator_username: string;
+    creator_nickname: string;
+    privacy_level_options: TTikTokPrivacyLevelOptions[];
+    comment_disabled: boolean;
+    duet_disabled: boolean;
+    stitch_disabled: boolean;
+    max_video_post_duration_sec: number;
+  };
+  error: {
+    code: string;
+    message: string;
+    log_id: string;
+  };
+}
