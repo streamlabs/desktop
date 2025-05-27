@@ -542,6 +542,8 @@ export class StreamingService
           await this.runCheck('setupDualOutput', async () => {
             this.videoSettingsService.validateVideoContext('vertical');
             const { name, streamKey, url } = await this.youtubeService.createVertical(settings);
+
+            // add YouTube vertical as a custom destination
             const encoderSettings = this.outputSettingsService.getSettings();
 
             this.extraOutputs.push({
@@ -802,6 +804,7 @@ export class StreamingService
    * Update stream stetting while being live
    */
   async updateStreamSettings(settings: IGoLiveSettings): Promise<boolean> {
+    // TODO: update stream settings for dual stream platforms
     const lifecycle = this.state.info.lifecycle;
 
     // save current settings in store so we can re-use them if something will go wrong
@@ -1493,12 +1496,6 @@ export class StreamingService
 
     this.powerSaveId = remote.powerSaveBlocker.start('prevent-display-sleep');
 
-    console.log(
-      'this.settingsService.views.values.Stream',
-      JSON.stringify(this.settingsService.views.values.Stream, null, 2),
-      JSON.stringify(this.settingsService.views.values.StreamSecond),
-    );
-
     // in dual output mode, create the second streaming instance (vertical)
     // TODO: do we need tp create the vertical instance before starting the horizontal one?
     if (this.views.isDualOutputMode) {
@@ -1871,7 +1868,7 @@ export class StreamingService
         );
 
         if (stream.videoEncoder.lastError) {
-          console.log(
+          console.error(
             'Error creating encoder',
             settings.videoEncoder,
             stream.videoEncoder.lastError,
@@ -1921,8 +1918,45 @@ export class StreamingService
         ? this.settingsService.views.values.Stream
         : this.settingsService.views.values.StreamSecond;
 
-    this.contexts[display].streaming.service = ServiceFactory.legacySettings;
-    this.contexts[display].streaming.service.update(streamSettings);
+    console.log('streamSettings', streamSettings);
+
+    // TODO: make more generic and DRY
+    if (this.dualOutputService.views.hasExtraOutput('youtube')) {
+      if (display === 'horizontal') {
+        this.contexts[display].streaming.service = ServiceFactory.legacySettings;
+        this.contexts[display].streaming.service.update(streamSettings);
+      } else {
+        const output = this.extraOutputs[0];
+
+        // TODO: do we need these?
+        this.contexts[display].streaming.enforceServiceBitrate = false;
+        this.contexts[display].streaming.enableTwitchVOD = false;
+        stream.videoEncoder.update(output.encoderSettings);
+
+        this.contexts[display].streaming.service = ServiceFactory.create(
+          'rtmp_common',
+          output.name,
+          {
+            key: output.streamKey,
+            server: output.url,
+            username: '',
+            password: '',
+            use_auth: false,
+            streamType: 'rtmp_custom',
+          },
+        );
+      }
+    } else if (streamSettings.streamType === 'rtmp_common') {
+      this.contexts[display].streaming.service = ServiceFactory.legacySettings;
+      this.contexts[display].streaming.service.update(streamSettings);
+    } else {
+      this.contexts[display].streaming.service = ServiceFactory.create(
+        'rtmp_custom',
+        'service',
+        streamSettings,
+      );
+    }
+
     this.contexts[display].streaming.delay = DelayFactory.create();
     this.contexts[display].streaming.reconnect = ReconnectFactory.create();
     this.contexts[display].streaming.network = NetworkFactory.create();
