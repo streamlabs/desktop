@@ -258,9 +258,14 @@ export class OutputSettingsService extends Service {
       'Mode',
     );
 
+    const encoder = obsEncoderToEncoderFamily(
+      this.settingsService.findSettingValue(output, 'Streaming', 'Encoder') ||
+        this.settingsService.findSettingValue(output, 'Streaming', 'StreamEncoder'),
+    ) as EEncoderFamily;
+
     const convertedEncoderName:
       | EObsSimpleEncoder.x264_lowcpu
-      | EObsAdvancedEncoder = this.convertEncoderToNewAPI(this.getSettings().streaming.encoder);
+      | EObsAdvancedEncoder = this.convertEncoderToNewAPI(encoder);
 
     const videoEncoder: EObsAdvancedEncoder =
       convertedEncoderName === EObsSimpleEncoder.x264_lowcpu

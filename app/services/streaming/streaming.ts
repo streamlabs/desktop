@@ -191,7 +191,6 @@ export class StreamingService
 
   // Dummy subscription for stream deck
   streamingStateChange = new Subject<void>();
-  private recordingStopped = new Subject();
 
   powerSaveId: number;
 
@@ -1494,15 +1493,23 @@ export class StreamingService
 
     this.powerSaveId = remote.powerSaveBlocker.start('prevent-display-sleep');
 
-    // create the default streaming instance (horizontal)
-    await this.validateOrCreateOutputInstance('horizontal', 'streaming', 1);
+    console.log(
+      'this.settingsService.views.values.Stream',
+      JSON.stringify(this.settingsService.views.values.Stream, null, 2),
+      JSON.stringify(this.settingsService.views.values.StreamSecond),
+    );
 
     // in dual output mode, create the second streaming instance (vertical)
+    // TODO: do we need tp create the vertical instance before starting the horizontal one?
     if (this.views.isDualOutputMode) {
-      await this.validateOrCreateOutputInstance('vertical', 'streaming', 2);
+      await this.validateOrCreateOutputInstance('vertical', 'streaming', 1);
+      await this.validateOrCreateOutputInstance('horizontal', 'streaming', 0);
+      this.contexts.horizontal.streaming.start();
+    } else {
+      // create the default streaming instance (horizontal)
+      await this.validateOrCreateOutputInstance('horizontal', 'streaming', 0);
+      this.contexts.horizontal.streaming.start();
     }
-
-    this.contexts.horizontal.streaming.start();
 
     // handle recording
     const recordWhenStreaming = this.streamSettingsService.settings.recordWhenStreaming;
@@ -1664,7 +1671,7 @@ export class StreamingService
       this.contexts.horizontal.recording.stop(true);
       return;
     } else if (this.state.status.horizontal.recording === ERecordingState.Offline) {
-      this.validateOrCreateOutputInstance('horizontal', 'recording', 1, true);
+      this.validateOrCreateOutputInstance('horizontal', 'recording', 0, true);
     } else {
       throwStreamError(
         'UNKNOWN_STREAMING_ERROR_WITH_MESSAGE',
@@ -1858,7 +1865,19 @@ export class StreamingService
 
       // share the video encoder with the recording instance if it exists
       if (key === 'videoEncoder') {
-        stream.videoEncoder = VideoEncoderFactory.create(settings.videoEncoder, 'video-encoder');
+        stream.videoEncoder = VideoEncoderFactory.create(
+          settings.videoEncoder,
+          `video-encoder-${display}`,
+        );
+
+        if (stream.videoEncoder.lastError) {
+          console.log(
+            'Error creating encoder',
+            settings.videoEncoder,
+            stream.videoEncoder.lastError,
+          );
+          throw new Error(stream.videoEncoder.lastError);
+        }
       } else {
         (stream as any)[key] = (settings as any)[key];
       }
@@ -1897,7 +1916,13 @@ export class StreamingService
       await this.handleSignal(signal, display);
     };
 
+    const streamSettings =
+      display === 'horizontal'
+        ? this.settingsService.views.values.Stream
+        : this.settingsService.views.values.StreamSecond;
+
     this.contexts[display].streaming.service = ServiceFactory.legacySettings;
+    this.contexts[display].streaming.service.update(streamSettings);
     this.contexts[display].streaming.delay = DelayFactory.create();
     this.contexts[display].streaming.reconnect = ReconnectFactory.create();
     this.contexts[display].streaming.network = NetworkFactory.create();
@@ -1915,25 +1940,32 @@ export class StreamingService
    * @param display - The context to handle the signal for
    */
   private async handleSignal(info: EOutputSignal, display: TDisplayType) {
-    if (info.code !== EOutputCode.Success) {
-      // handle errors before attempting anything else
-      console.error('Output Signal Error:', info, display);
+    try {
+      if (info.code !== EOutputCode.Success) {
+        // handle errors before attempting anything else
+        console.error('Output Signal Error:', info, display);
 
-      if (!info.error || info.error === '') {
-        info.error = $t('An unknown %{type} error occurred.', {
-          type: outputType(info.type as EOBSOutputType),
-        });
+        if (!info.error || info.error === '') {
+          info.error = $t('An unknown %{type} error occurred.', {
+            type: outputType(info.type as EOBSOutputType),
+          });
+        }
+
+        await this.handleFactoryOutputError(info, display);
+      } else if (info.type === EOBSOutputType.Streaming) {
+        await this.handleStreamingSignal(info, display);
+      } else if (info.type === EOBSOutputType.Recording) {
+        await this.handleRecordingSignal(info, display);
+      } else if (info.type === EOBSOutputType.ReplayBuffer) {
+        await this.handleReplayBufferSignal(info, display);
+      } else {
+        console.debug('Unknown Output Signal or Error:', info);
       }
-
+    } catch (e: unknown) {
+      console.error('Error handling output signal:', e);
       await this.handleFactoryOutputError(info, display);
-    } else if (info.type === EOBSOutputType.Streaming) {
-      await this.handleStreamingSignal(info, display);
-    } else if (info.type === EOBSOutputType.Recording) {
-      await this.handleRecordingSignal(info, display);
-    } else if (info.type === EOBSOutputType.ReplayBuffer) {
-      await this.handleReplayBufferSignal(info, display);
-    } else {
-      console.debug('Unknown Output Signal or Error:', info);
+      this.RESET_STREAM_INFO();
+      this.rejectStartStreaming();
     }
   }
 
@@ -1971,7 +2003,8 @@ export class StreamingService
         // TODO: is this necessary?
         await new Promise(resolve => setTimeout(resolve, 1000));
         // this.contexts.vertical.streaming.start();
-        await this.validateOrCreateOutputInstance('vertical', 'streaming', 2, true);
+        this.contexts.vertical.streaming.start();
+        // await this.validateOrCreateOutputInstance('vertical', 'streaming', 1, true);
         return;
       }
 
@@ -1985,19 +2018,18 @@ export class StreamingService
       // is created after the horizontal `start` signal. Finishing streaming should not resolve
       // until after the final stream context is created and started. In dual output mode this is the vertical
       // stream while in single output mode this is the horizontal stream.
-      if (this.views.isDualOutputMode && display === 'horizontal') {
+      if (this.views.isDualOutputMode && display === 'vertical') {
         return;
       }
     } else if (info.signal === EOBSOutputSignal.Stopping) {
       this.sendStreamEndEvent();
     } else if (info.signal === EOBSOutputSignal.Stop) {
-      this.RESET_STREAM_INFO();
-      this.rejectStartStreaming();
-
-      this.usageStatisticsService.recordAnalyticsEvent('StreamingStatus', {
-        code: info.code,
-        status: EStreamingState.Offline,
-      });
+      // this.RESET_STREAM_INFO();
+      // this.rejectStartStreaming();
+      // this.usageStatisticsService.recordAnalyticsEvent('StreamingStatus', {
+      //   code: info.code,
+      //   status: EStreamingState.Offline,
+      // });
     } else if (info.signal === EOBSOutputSignal.Deactivate) {
       // The `deactivate` signal is sent after the `stop` signal
       // handle replay buffer
@@ -2017,6 +2049,14 @@ export class StreamingService
       if (!keepRecording && isRecording) {
         await this.toggleRecording();
       }
+
+      this.RESET_STREAM_INFO();
+      this.rejectStartStreaming();
+
+      this.usageStatisticsService.recordAnalyticsEvent('StreamingStatus', {
+        code: info.code,
+        status: EStreamingState.Offline,
+      });
 
       await this.handleDestroyOutputContexts(display);
     } else if (info.signal === EOBSOutputSignal.Reconnect) {
@@ -2361,7 +2401,7 @@ export class StreamingService
 
     this.handleOBSOutputError(legacyInfo);
 
-    return Promise.resolve();
+    this.rejectStartStreaming();
   }
 
   /**
@@ -3003,6 +3043,7 @@ export class StreamingService
   ) {
     // if the context does not exist there is nothing to destroy
     if (!this.contexts[display] || !this.contexts[display][contextType]) return;
+    console.log('destroying output context', display, contextType);
 
     // prevent errors by stopping an active context before destroying it
     if (this.state.status[display][contextType].toString() !== 'offline') {
@@ -3032,6 +3073,8 @@ export class StreamingService
           );
           break;
       }
+
+      this.streamingStatusChange.next(EStreamingState.Offline);
     }
 
     // identify the output's factory in order to destroy the context
