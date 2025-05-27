@@ -124,14 +124,20 @@ export interface IHighlighterInput {
   origin: string;
   metadata?: IDeathMetadata | any;
 }
-
+export interface IHighlighterWord {
+  start_time: number;
+  end_time: number;
+  text: string;
+  probability: number;
+}
 // Message
 export type EHighlighterMessageTypes =
   | 'progress'
   | 'inputs'
   | 'inputs_partial'
   | 'highlights'
-  | 'milestone';
+  | 'milestone'
+  | 'transcription';
 
 export interface IHighlighterMessage {
   type: EHighlighterMessageTypes;
@@ -140,6 +146,9 @@ export interface IHighlighterMessage {
 
 export interface IHighlighterProgressMessage {
   progress: number;
+}
+export interface IHighlighterTranscriptionMessage {
+  words: IHighlighterWord[];
 }
 
 export interface IHighlighterMilestone {
