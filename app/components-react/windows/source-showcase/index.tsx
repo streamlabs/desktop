@@ -60,8 +60,8 @@ function SourcesShowcaseModal() {
               className={styles.search}
               allowClear
               placeholder={$t('Search...')}
-              onSearch={(val: string) => setSearchTerm(val)}
-              enterButton
+              onChange={ev => setSearchTerm(ev.target.value)}
+              onSearch={val => setSearchTerm(val)}
             />
           </div>
           <SourceGrid activeTab={activeTab} searchTerm={searchTerm} />
