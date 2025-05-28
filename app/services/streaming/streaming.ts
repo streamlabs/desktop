@@ -1499,12 +1499,12 @@ export class StreamingService
     // in dual output mode, create the second streaming instance (vertical)
     // TODO: do we need tp create the vertical instance before starting the horizontal one?
     if (this.views.isDualOutputMode) {
-      await this.validateOrCreateOutputInstance('vertical', 'streaming', 1);
-      await this.validateOrCreateOutputInstance('horizontal', 'streaming', 0);
+      await this.validateOrCreateOutputInstance('vertical', 'streaming', 2);
+      await this.validateOrCreateOutputInstance('horizontal', 'streaming', 1);
       this.contexts.horizontal.streaming.start();
     } else {
       // create the default streaming instance (horizontal)
-      await this.validateOrCreateOutputInstance('horizontal', 'streaming', 0);
+      await this.validateOrCreateOutputInstance('horizontal', 'streaming', 1);
       this.contexts.horizontal.streaming.start();
     }
 
@@ -1668,7 +1668,7 @@ export class StreamingService
       this.contexts.horizontal.recording.stop(true);
       return;
     } else if (this.state.status.horizontal.recording === ERecordingState.Offline) {
-      this.validateOrCreateOutputInstance('horizontal', 'recording', 0, true);
+      this.validateOrCreateOutputInstance('horizontal', 'recording', 1, true);
     } else {
       throwStreamError(
         'UNKNOWN_STREAMING_ERROR_WITH_MESSAGE',
