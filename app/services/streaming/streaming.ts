@@ -1934,7 +1934,7 @@ export class StreamingService
         stream.videoEncoder.update(output.encoderSettings);
 
         this.contexts[display].streaming.service = ServiceFactory.create(
-          'rtmp_common',
+          'rtmp_custom',
           output.name,
           {
             key: output.streamKey,
