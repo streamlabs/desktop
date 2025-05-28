@@ -316,9 +316,9 @@ const LEAGUE_OF_LEGENDS: IGameConfig = {
     ...COMMON_TYPES,
   },
   importModalConfig: {
-    accentColor: '#E5803F',
+    accentColor: '#9B9B9B',
     artwork: `${heroPath}${EGame.LEAGUE_OF_LEGENDS}.png`,
-    backgroundColor: '#cdc7cd',
+    backgroundColor: '#161D2B',
   },
 };
 
