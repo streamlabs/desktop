@@ -307,7 +307,7 @@ const OVERWATCH_2: IGameConfig = {
 };
 
 const LEAGUE_OF_LEGENDS: IGameConfig = {
-  name: EGame.LEAGUE_OF_LLEGENDS,
+  name: EGame.LEAGUE_OF_LEGENDS,
   label: 'League of Legends',
   gameModes: '',
   thumbnail: `${thumbnailPath}${EGame.LEAGUE_OF_LEGENDS}.png`,
