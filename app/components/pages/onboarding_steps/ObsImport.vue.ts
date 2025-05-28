@@ -76,9 +76,8 @@ export default class ObsImport extends Vue {
         const isOk = await remote.dialog
           .showMessageBox(remote.getCurrentWindow(), {
             type: 'warning',
-            message:
-              'インポートを行うと現在設定されているシーン・ソースは全て破棄されます。よろしいですか？',
-            buttons: ['インポートする', $t('common.cancel')],
+            message: $t('onboarding.reImportWarningMessage'),
+            buttons: [$t('onboarding.importFromObs'), $t('common.cancel')],
             noLink: true,
           })
           .then(value => value.response === 0);

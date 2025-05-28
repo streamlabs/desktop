@@ -19,5 +19,6 @@
   "sceneCollectionsImportDescription": "シーンコレクションはインポートされました。",
 
   "updateHeader": "更新内容のお知らせ",
-  "updateDone": "確認"
+  "updateDone": "確認",
+  "reImportWarningMessage": "インポートを行うと現在設定されているシーン・ソースは全て破棄されます。よろしいですか？"
 }
