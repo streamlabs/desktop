@@ -56,14 +56,17 @@ function SourcesShowcaseModal() {
               <Menu.Item key="widgets">{$t('Widgets')}</Menu.Item>
               {availableAppSources.length > 0 && <Menu.Item key="apps">{$t('Apps')}</Menu.Item>}
             </Menu>
-            <Input
-              type="search"
-              className={styles.search}
-              allowClear
-              placeholder={$t('Search...')}
-              prefix={<SearchOutlined />}
-              onChange={ev => setSearchTerm(ev.target.value)}
-            />
+            {activeTab !== 'apps' && (
+              <Input
+                type="search"
+                className={styles.search}
+                allowClear
+                placeholder={$t('Search...')}
+                prefix={<SearchOutlined />}
+                onChange={ev => setSearchTerm(ev.target.value)}
+                value={searchTerm}
+              />
+            )}
           </div>
           <SourceGrid activeTab={activeTab} searchTerm={searchTerm} />
         </Content>
