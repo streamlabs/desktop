@@ -1146,7 +1146,7 @@ export class StreamingService
             console.log('Error creating encoder', encoder, stream.videoEncoder.lastError);
             throw new Error(stream.videoEncoder.lastError);
           }
-          stream.audioEncoder = AudioEncoderFactory.create();
+          stream.audioEncoder = AudioEncoderFactory.create("ffmpeg_aac", "audio-encoder-stream");
 
           const service = ServiceFactory.create('rtmp_common', output.name, {
             key: output.streamKey,
@@ -1186,7 +1186,15 @@ export class StreamingService
             extraOutputs.forEach(output => {
               if (output.stream) {
                 output.stream.stop();
+                const videoEncoder = output.stream.videoEncoder;
+                const audioEncoder = output.stream.audioEncoder;
                 SimpleStreamingFactory.destroy(output.stream);
+                if (videoEncoder) {
+                  videoEncoder.release();
+                }
+                if (audioEncoder) {
+                  audioEncoder.release();
+                }
               }
             });
 
@@ -1334,7 +1342,15 @@ export class StreamingService
               this.extraOutputs.forEach(output => {
                 if (output.stream) {
                   output.stream.stop();
+                  const videoEncoder = output.stream.videoEncoder;
+                  const audioEncoder = output.stream.audioEncoder;
                   SimpleStreamingFactory.destroy(output.stream);
+                  if (videoEncoder) {
+                    videoEncoder.release();
+                  }
+                  if (audioEncoder) {
+                    audioEncoder.release();
+                  }
                 }
               });
               this.extraOutputs = [];
@@ -1806,7 +1822,7 @@ export class StreamingService
       });
 
       recording.streaming = this.contexts[display].streaming as ISimpleStreaming;
-      recording.audioEncoder = AudioEncoderFactory.create();
+      recording.audioEncoder = AudioEncoderFactory.create("ffmpeg_aac", "audio-encoder-recording");
       this.contexts[display].recording = recording as ISimpleRecording;
     }
 
@@ -1882,7 +1898,7 @@ export class StreamingService
 
       this.contexts[display].streaming = stream as IAdvancedStreaming;
     } else if (this.isSimpleStreaming(stream)) {
-      stream.audioEncoder = AudioEncoderFactory.create();
+      stream.audioEncoder = AudioEncoderFactory.create("ffmpeg_aac", "audio-encoder-stream");
       this.contexts[display].streaming = stream as ISimpleStreaming;
     } else {
       throwStreamError(
@@ -3085,33 +3101,41 @@ export class StreamingService
     // identify the output's factory in order to destroy the context
     if (this.outputSettingsService.getSettings().mode === 'Advanced') {
       switch (contextType) {
-        case 'streaming':
-          this.isAdvancedStreaming(this.contexts[display][contextType])
-            ? AdvancedStreamingFactory.destroy(
-                this.contexts[display][contextType] as IAdvancedStreaming,
-              )
-            : SimpleStreamingFactory.destroy(
-                this.contexts[display][contextType] as ISimpleStreaming,
-              );
+        case 'streaming': {
+          const instance = this.contexts[display][contextType];
+          const videoEncoder = instance.videoEncoder;
+          if (this.isAdvancedStreaming(instance)) {
+            AdvancedStreamingFactory.destroy(instance as IAdvancedStreaming);
+          } else {
+            const audioEncoder = instance.audioEncoder;
+            SimpleStreamingFactory.destroy(instance as ISimpleStreaming);
+            audioEncoder?.release();
+          }
+          videoEncoder?.release();
           break;
-        case 'recording':
-          this.isAdvancedRecording(this.contexts[display][contextType])
-            ? AdvancedRecordingFactory.destroy(
-                this.contexts[display][contextType] as IAdvancedRecording,
-              )
-            : SimpleRecordingFactory.destroy(
-                this.contexts[display][contextType] as ISimpleRecording,
-              );
+        }
+        case 'recording': {
+          const instance = this.contexts[display][contextType];
+          const videoEncoder = instance.videoEncoder;
+          if (this.isAdvancedRecording(instance)) {
+            AdvancedRecordingFactory.destroy(instance as IAdvancedRecording);
+          } else {
+            const audioEncoder = instance.audioEncoder;
+            SimpleRecordingFactory.destroy(instance as ISimpleRecording);
+            audioEncoder?.release();
+          }
+          videoEncoder?.release();
           break;
-        case 'replayBuffer':
-          this.isAdvancedReplayBuffer(this.contexts[display][contextType])
-            ? AdvancedReplayBufferFactory.destroy(
-                this.contexts[display][contextType] as IAdvancedReplayBuffer,
-              )
-            : SimpleReplayBufferFactory.destroy(
-                this.contexts[display][contextType] as ISimpleReplayBuffer,
-              );
+        }
+        case 'replayBuffer': {
+          const instance = this.contexts[display][contextType];
+          if (this.isAdvancedReplayBuffer(instance)) {
+            AdvancedReplayBufferFactory.destroy(instance as IAdvancedReplayBuffer);
+          } else {
+            SimpleReplayBufferFactory.destroy(instance as ISimpleReplayBuffer);
+          }
           break;
+        }
       }
     }
 
