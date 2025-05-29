@@ -76,7 +76,6 @@ export interface ITikTokStartStreamOptions {
   title: string;
   serverUrl: string;
   streamKey: string;
-  display: TDisplayType;
   game: string;
   audienceType?: string;
 }
@@ -199,7 +198,7 @@ export class TikTokService
     return this.state.audienceControlsInfo;
   }
 
-  async beforeGoLive(goLiveSettings: IGoLiveSettings, display?: TDisplayType) {
+  async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     // return an approved dummy account when testing
     if (Utils.isTestMode() && this.getHasScope('approved')) {
       await this.testBeforeGoLive(goLiveSettings);
@@ -207,7 +206,6 @@ export class TikTokService
     }
 
     const ttSettings = getDefined(goLiveSettings.platforms.tiktok);
-    const context = display ?? ttSettings?.display;
 
     if (this.getHasScope('approved')) {
       // update server url and stream key if handling streaming via API

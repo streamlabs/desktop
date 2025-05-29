@@ -131,9 +131,8 @@ export class KickService
     return this.userService.views.state.auth?.platforms?.kick?.token;
   }
 
-  async beforeGoLive(goLiveSettings: IGoLiveSettings, display?: TDisplayType) {
+  async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     const kickSettings = getDefined(goLiveSettings.platforms.kick);
-    const context = display ?? kickSettings?.display;
 
     const streamInfo = await this.startStream(goLiveSettings.platforms.kick ?? this.state.settings);
 

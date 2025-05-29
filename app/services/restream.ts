@@ -481,7 +481,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   private getPlatformMode(platform: TPlatform): TOutputOrientation {
-    const display = this.streamingService.views.settings.platforms[platform]?.display;
+    const display = this.streamingService.views.getPlatformDisplayType(platform);
     return this.getMode(display);
   }
 

@@ -10,7 +10,7 @@ import { Inject } from 'services/core/injector';
 import { authorizedHeaders, jfetch } from 'util/requests';
 import { platformAuthorizedRequest } from './utils';
 import { CustomizationService } from 'services/customization';
-import { IGoLiveSettings } from 'services/streaming';
+import { IGoLiveSettings, TDisplayOutput } from 'services/streaming';
 import { I18nService } from 'services/i18n';
 import { throwStreamError } from 'services/streaming/stream-error';
 import { BasePlatformService } from './base-platform';
@@ -25,6 +25,7 @@ import pick from 'lodash/pick';
 import { TOutputOrientation } from 'services/restream';
 import { UsageStatisticsService } from 'app-services';
 import { ICustomStreamDestination } from 'services/settings/streaming';
+import { cloneDeep } from 'lodash';
 
 interface IYoutubeServiceState extends IPlatformState {
   liveStreamingEnabled: boolean;
@@ -45,9 +46,6 @@ export interface IYoutubeStartStreamOptions extends IExtraBroadcastSettings {
   privacyStatus?: 'private' | 'public' | 'unlisted';
   scheduledStartTime?: number;
   mode?: TOutputOrientation;
-  dualStreamKey?: string;
-  dualStreamServer?: string;
-  dualStreamBroadcastId?: string;
 }
 
 /**
@@ -157,6 +155,7 @@ interface IExtraBroadcastSettings {
   projection?: 'rectangular' | '360';
   latencyPreference?: 'normal' | 'low' | 'ultraLow';
   selfDeclaredMadeForKids?: boolean;
+  display?: TDisplayOutput;
   video?: IVideo;
 }
 
@@ -218,9 +217,7 @@ export class YoutubeService
       thumbnail: '',
       video: undefined,
       mode: undefined,
-      dualStreamKey: '',
-      dualStreamServer: '',
-      dualStreamBroadcastId: '',
+      display: 'horizontal',
     },
   };
 
@@ -310,66 +307,81 @@ export class YoutubeService
 
     this.SET_VERTICAL_STREAM_KEY(verticalStreamKey);
     this.SET_VERTICAL_BROADCAST(verticalBoundBroadcast);
+    if (this.streamingService.views.isMultiplatformMode) {
+      const destinations = cloneDeep(this.streamingService.views.customDestinations);
+      const verticalDestination: ICustomStreamDestination = {
+        name: 'yt-vert',
+        streamKey: verticalStreamKey,
+        url: 'rtmps://a.rtmps.youtube.com/live2',
+        enabled: true,
+        display: 'vertical' as TDisplayType,
+        mode: 'portrait' as TOutputOrientation,
+      };
 
-    this.streamSettingsService.setSettings(
-      {
-        key: verticalStreamKey,
-        streamType: 'rtmp_custom',
-        server: 'rtmp://a.rtmp.youtube.com/live2',
-      },
-      'vertical' as TDisplayType,
-    );
+      this.streamSettingsService.setGoLiveSettings({
+        customDestinations: [...destinations, verticalDestination],
+      });
+    } else {
+      this.streamSettingsService.setSettings(
+        {
+          key: verticalStreamKey,
+          streamType: 'rtmp_custom',
+          server: 'rtmp://a.rtmp.youtube.com/live2',
+        },
+        'vertical' as TDisplayType,
+      );
+    }
   }
 
-  async createVertical(settings: IGoLiveSettings): Promise<ICustomStreamDestination> {
-    // {
-    //   id: string;
-    //   snippet: {
-    //     isDefaultStream: boolean;
-    //   };
-    //   cdn: {
-    //     ingestionInfo: {
-    //       /**
-    //        * streamName is actually a secret stream key
-    //        */
-    //       streamName: string;
-    //       ingestionAddress: string;
-    //     };
-    //     resolution: string;
-    //     frameRate: string;
-    //   };
-    //   status: {
-    //     streamStatus: TStreamStatus;
-    //   };
-    // }
+  // async createVertical(settings: IGoLiveSettings): Promise<ICustomStreamDestination> {
+  //   // {
+  //   //   id: string;
+  //   //   snippet: {
+  //   //     isDefaultStream: boolean;
+  //   //   };
+  //   //   cdn: {
+  //   //     ingestionInfo: {
+  //   //       /**
+  //   //        * streamName is actually a secret stream key
+  //   //        */
+  //   //       streamName: string;
+  //   //       ingestionAddress: string;
+  //   //     };
+  //   //     resolution: string;
+  //   //     frameRate: string;
+  //   //   };
+  //   //   status: {
+  //   //     streamStatus: TStreamStatus;
+  //   //   };
+  //   // }
 
-    const ytSettings = getDefined(settings.platforms.youtube);
-    const title = makeVerticalTitle(ytSettings.title);
+  //   const ytSettings = getDefined(settings.platforms.youtube);
+  //   const title = makeVerticalTitle(ytSettings.title);
 
-    const verticalBroadcast = await this.createBroadcast({ ...ytSettings, title });
-    const verticalStream = await this.createLiveStream(verticalBroadcast.snippet.title);
-    const verticalBoundBroadcast = await this.bindStreamToBroadcast(
-      verticalBroadcast.id,
-      verticalStream.id,
-    );
+  //   const verticalBroadcast = await this.createBroadcast({ ...ytSettings, title });
+  //   const verticalStream = await this.createLiveStream(verticalBroadcast.snippet.title);
+  //   const verticalBoundBroadcast = await this.bindStreamToBroadcast(
+  //     verticalBroadcast.id,
+  //     verticalStream.id,
+  //   );
 
-    await this.updateCategory(verticalBroadcast.id, ytSettings.categoryId!);
+  //   await this.updateCategory(verticalBroadcast.id, ytSettings.categoryId!);
 
-    const verticalStreamKey = verticalStream.cdn.ingestionInfo.streamName;
-    this.SET_VERTICAL_STREAM_KEY(verticalStreamKey);
-    this.SET_VERTICAL_BROADCAST(verticalBoundBroadcast);
+  //   const verticalStreamKey = verticalStream.cdn.ingestionInfo.streamName;
+  //   this.SET_VERTICAL_STREAM_KEY(verticalStreamKey);
+  //   this.SET_VERTICAL_BROADCAST(verticalBoundBroadcast);
 
-    return {
-      name: 'yt-vert',
-      streamKey: verticalStreamKey,
-      url: 'rtmps://a.rtmps.youtube.com/live2',
-      enabled: true,
-      display: 'vertical' as TDisplayType,
-      mode: 'portrait' as TOutputOrientation,
-    };
-  }
+  //   return {
+  //     name: 'yt-vert',
+  //     streamKey: verticalStreamKey,
+  //     url: 'rtmps://a.rtmps.youtube.com/live2',
+  //     enabled: true,
+  //     display: 'vertical' as TDisplayType,
+  //     mode: 'portrait' as TOutputOrientation,
+  //   };
+  // }
 
-  async beforeGoLive(goLiveSettings: IGoLiveSettings, context?: TDisplayType) {
+  async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     const ytSettings = getDefined(goLiveSettings.platforms.youtube);
 
     const streamToScheduledBroadcast = !!ytSettings.broadcastId;
@@ -416,7 +428,7 @@ export class YoutubeService
       );
     }
 
-    if (this.dualOutputService.views.hasExtraOutput('youtube')) {
+    if (ytSettings.display === 'both') {
       await this.setupDualStream(goLiveSettings);
     }
 
@@ -550,6 +562,15 @@ export class YoutubeService
     });
     if (!this.state.categories.length) this.SET_CATEGORIES(await this.fetchCategories());
     this.SET_PREPOPULATED(true);
+
+    // Non-ultra users cannot dual stream. Prevent errors by confirming that the selected display is correct
+    if (!this.userService.views.isPrime && this.state.settings.mode === 'landscape') {
+      this.SET_STREAM_SETTINGS({
+        ...this.state.settings,
+        display: 'horizontal',
+        mode: 'landscape',
+      });
+    }
   }
 
   /**
