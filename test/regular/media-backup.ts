@@ -1,4 +1,10 @@
-import { startApp, stopApp, test, useWebdriver, skipCheckingErrorsInLog } from '../helpers/webdriver';
+import {
+  startApp,
+  stopApp,
+  test,
+  useWebdriver,
+  skipCheckingErrorsInLog,
+} from '../helpers/webdriver';
 
 import { getApiClient } from '../helpers/api-client';
 const path = require('path');
@@ -9,8 +15,10 @@ import { logIn } from '../helpers/webdriver/user';
 import { SceneCollectionsService } from 'services/api/external-api/scene-collections';
 import { ScenesService } from '../../app/services/api/external-api/scenes';
 import { focusChild } from '../helpers/modules/core';
-import {sleep} from "../helpers/sleep";
+import { sleep } from '../helpers/sleep';
 
+// not a react hook
+// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver({ noSync: false });
 
 test('Media backup', async t => {

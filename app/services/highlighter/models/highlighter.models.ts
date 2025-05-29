@@ -27,6 +27,7 @@ export interface IHighlighterState {
   error: string;
   useAiHighlighter: boolean;
   highlightedStreams: IHighlightedStream[];
+  highlightedStreamsDictionary: Dictionary<IHighlightedStream>;
   updaterProgress: number;
   isUpdaterRunning: boolean;
   highlighterVersion: string;

@@ -26,6 +26,7 @@ export enum ERecordingState {
   Starting = 'starting',
   Recording = 'recording',
   Stopping = 'stopping',
+  Start = 'start',
   Wrote = 'wrote',
 }
 
@@ -34,6 +35,7 @@ export enum EReplayBufferState {
   Stopping = 'stopping',
   Offline = 'offline',
   Saving = 'saving',
+  Wrote = 'wrote',
 }
 
 export interface IStreamInfo {
@@ -77,6 +79,7 @@ export interface IStreamSettings {
   };
   customDestinations: ICustomStreamDestination[];
   advancedMode: boolean;
+  recording: TDisplayType[];
 }
 
 export interface IGoLiveSettings extends IStreamSettings {
@@ -95,11 +98,24 @@ export interface IPlatformFlags {
   video?: IVideo;
 }
 
+export interface IOutputStatus {
+  streaming: EStreamingState;
+  streamingTime: string;
+  recording: ERecordingState;
+  recordingTime: string;
+  replayBuffer: EReplayBufferState;
+  replayBufferTime: string;
+}
+
 export interface IStreamingServiceState {
   streamingStatus: EStreamingState;
+  verticalStreamingStatus?: EStreamingState;
   streamingStatusTime: string;
+  verticalStreamingStatusTime?: string;
   recordingStatus: ERecordingState;
+  verticalRecordingStatus?: ERecordingState;
   recordingStatusTime: string;
+  verticalRecordingStatusTime?: string;
   replayBufferStatus: EReplayBufferState;
   replayBufferStatusTime: string;
   selectiveRecording: boolean;

@@ -36,6 +36,7 @@ export default function GoLiveSettings() {
     showSelector,
     showTweet,
     hasMultiplePlatforms,
+    hasMultiplePlatformsLinked,
     enabledPlatforms,
     primaryChat,
     recommendedColorSpaceWarnings,
@@ -51,6 +52,8 @@ export default function GoLiveSettings() {
       },
 
       showSelector: !UserService.views.isPrime && module.isDualOutputMode,
+
+      hasMultiplePlatformsLinked: module.state.linkedPlatforms.length > 1,
 
       isPrime: UserService.views.isPrime,
 
@@ -76,7 +79,8 @@ export default function GoLiveSettings() {
   const shouldShowLeftCol = isDualOutputMode ? true : protectedModeEnabled;
   const shouldShowAddDestButton = canAddDestinations;
 
-  const shouldShowPrimaryChatSwitcher = hasMultiplePlatforms;
+  const shouldShowPrimaryChatSwitcher =
+    hasMultiplePlatforms || (isDualOutputMode && hasMultiplePlatformsLinked);
 
   return (
     <Row gutter={16} className={styles.settingsRow}>
@@ -119,6 +123,8 @@ export default function GoLiveSettings() {
         <GoLiveError />
         {shouldShowSettings && (
           <Scrollable style={{ height: '100%' }} snapToWindowEdge>
+            {/* Spacer is as  scrollable padding-top */}
+            <div className={styles.spacer} />
             {recommendedColorSpaceWarnings && (
               <ColorSpaceWarnings warnings={recommendedColorSpaceWarnings} />
             )}
@@ -131,6 +137,8 @@ export default function GoLiveSettings() {
               {showTweet && <TwitterInput />}
               {!!canUseOptimizedProfile && <OptimizedProfileSwitcher />}
             </Section>
+            {/* Spacer is as  scrollable padding-bottom */}
+            <div className={styles.spacer} />
           </Scrollable>
         )}
       </Col>

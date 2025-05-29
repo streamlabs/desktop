@@ -23,6 +23,7 @@ enum ERecordingState {
   Starting = 'starting',
   Recording = 'recording',
   Stopping = 'stopping',
+  Start = 'start',
   Wrote = 'wrote',
 }
 
@@ -34,6 +35,7 @@ enum EReplayBufferState {
   Stopping = 'stopping',
   Offline = 'offline',
   Saving = 'saving',
+  Wrote = 'wrote',
 }
 
 /**
@@ -42,9 +44,13 @@ enum EReplayBufferState {
  */
 interface IStreamingState {
   streamingStatus: EStreamingState;
+  verticalStreamingStatus?: EStreamingState;
   streamingStatusTime: string;
+  verticalStreamingStatusTime?: string;
   recordingStatus: ERecordingState;
+  verticalRecordingStatus?: ERecordingState;
   recordingStatusTime: string;
+  verticalRecordingStatusTime?: string;
   replayBufferStatus: EReplayBufferState;
   replayBufferStatusTime: string;
   streamErrorCreated?: string;

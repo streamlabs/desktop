@@ -133,7 +133,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return (
       this.settings.customDestinations
         .filter(dest => dest.enabled)
-        .map(dest => dest.url.split[2]) || []
+        .map(dest => dest.url.split('/')[2]) || []
     );
   }
 
@@ -350,6 +350,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       advancedMode: !!this.streamSettingsView.state.goLiveSettings?.advancedMode,
       optimizedProfile: undefined,
       customDestinations: savedGoLiveSettings?.customDestinations || [],
+      recording: this.dualOutputView.recording || [],
     };
   }
 
@@ -560,6 +561,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
   get isIdle(): boolean {
     return !this.isStreaming && !this.isRecording;
+  }
+
+  get replayBufferStatus() {
+    return this.streamingState.replayBufferStatus;
   }
 
   // TODO: consolidate between this and GoLiveSettings

@@ -150,7 +150,7 @@ class SettingsViews extends ViewHandler<ISettingsServiceState> {
     const settingsValues: Partial<ISettingsValues> = {};
 
     for (const groupName in this.state) {
-      this.state[groupName].formData.forEach(subGroup => {
+      this.state[groupName].formData.forEach((subGroup: ISettingsSubCategory) => {
         subGroup.parameters.forEach(parameter => {
           (settingsValues as any)[groupName] =
             settingsValues[groupName as keyof ISettingsValues] || {};
@@ -260,6 +260,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   private videoEncodingOptimizationService: VideoEncodingOptimizationService;
 
   audioRefreshed = new Subject();
+  settingsUpdated = new Subject<DeepPartial<ISettingsValues>>();
 
   get views() {
     return new SettingsViews(this.state);
@@ -619,6 +620,8 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
       });
 
       this.setSettings(categoryName, formSubCategories);
+
+      this.settingsUpdated.next(patch);
     });
   }
 
