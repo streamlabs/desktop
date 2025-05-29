@@ -98,8 +98,8 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
   }, [isLoggedIn]);
 
   const { platform } = useVuex(() => ({ platform: UserService.views.platform?.type }));
-  const [searchThreshold, setSearchThreshold] = useState(0.4);
-  const toFuseCollection = (xs: string[], threshold: number = 0.4) => {
+  const [searchThreshold, setSearchThreshold] = useState(0.3);
+  const toFuseCollection = (xs: string[], threshold: number = 0.3) => {
     const list = xs.reduce((acc, type) => {
       const displayData: IWidgetDisplayData | ISourceDisplayData =
         // TODO: index
