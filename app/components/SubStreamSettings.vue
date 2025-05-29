@@ -10,82 +10,121 @@
             </div>
           </div>
         </div>
-        <div v-if="use">
-          <div class="input-wrapper">
-            <div class="input-label">
-              <label>
-                <div>
-                  ストリーム URL
-                  <button class="help-button" @click="showUrlTips = !showUrlTips">
-                    <i class="icon-help icon-tooltip" title="配信先のURLを指定します"></i>
-                  </button>
-                </div>
-              </label>
-              <div v-if="showUrlTips" class="url-tips">
-                <div>各サービスから提供されているストリーム URL を指定してください</div>
-                <div>
-                  YouTube &nbsp;
-                  {{ defaultYoutubeUrl }}
-                  <button
-                    class="set-url-button basic-button"
-                    data-size="sm"
-                    data-radius="sm"
-                    data-color="secondary"
-                    data-variant="light"
-                    @click="url = defaultYoutubeUrl"
-                  >
-                    セット
-                  </button>
-                </div>
-                <div>
-                  Twitch &nbsp;
-                  {{ defaultTwitchUrl }}
-                  <button
-                    class="set-url-button basic-button"
-                    data-size="sm"
-                    data-radius="sm"
-                    data-color="secondary"
-                    data-variant="light"
-                    @click="url = defaultTwitchUrl"
-                  >
-                    セット
-                  </button>
-                </div>
+      </div>
+
+      <div class="section" v-if="use">
+        <div class="input-wrapper">
+          <div class="input-label">
+            <label> URL </label>
+            <div class="url-tips">
+              <div>各サービスから提供されているストリーム URL を指定してください</div>
+              <div>
+                YouTube &nbsp;
+                {{ defaultYoutubeUrl }}
+                <button
+                  class="set-url-button basic-button"
+                  data-size="sm"
+                  data-radius="sm"
+                  data-color="secondary"
+                  data-variant="light"
+                  @click="url = defaultYoutubeUrl"
+                >
+                  セット
+                </button>
+              </div>
+              <div>
+                Twitch &nbsp;
+                {{ defaultTwitchUrl }}
+                <button
+                  class="set-url-button basic-button"
+                  data-size="sm"
+                  data-radius="sm"
+                  data-color="secondary"
+                  data-variant="light"
+                  @click="url = defaultTwitchUrl"
+                >
+                  セット
+                </button>
               </div>
             </div>
-            <input type="text" v-model="url" />
           </div>
+          <input type="text" v-model="url" />
+        </div>
 
+        <div class="input-wrapper">
+          <div class="input-label">
+            <label> ストリームキー </label>
+          </div>
+          <div class="key-input-wrapper">
+            <input :type="showKey ? 'text' : 'password'" v-model="key" />
+            <button
+              class="toggle-key-button basic-button"
+              style="margin: 0"
+              data-size="sm"
+              data-radius="sm"
+              data-color="secondary"
+              data-variant="light"
+              @click="showKey = !showKey"
+            >
+              {{ showKey ? '非表示' : '表示' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="input-wrapper">
+          <div class="row">
+            <div class="name">配信開始/終了にあわせる</div>
+            <div class="value">
+              <input type="checkbox" v-model="sync" class="toggle-button" />
+            </div>
+          </div>
+        </div>
+
+        <div class="input-wrapper">
+          <div class="action-buttons">
+            <button
+              class="control-button basic-button"
+              data-size="md"
+              data-radius="sm"
+              data-color="secondary"
+              data-variant="light"
+              @click="start()"
+            >
+              開始
+            </button>
+            <button
+              class="control-button basic-button"
+              data-size="md"
+              data-radius="sm"
+              data-color="secondary"
+              data-variant="light"
+              @click="stop()"
+            >
+              停止
+            </button>
+          </div>
+        </div>
+
+        <div style="white-space: pre-wrap">{{ status }}</div>
+      </div>
+
+      <div class="section" v-if="use">
+        <div
+          class="section-title section-title--dropdown"
+          :class="{ 'section-title--opened': !collapsed }"
+          @click="collapsed = !collapsed"
+        >
+          <h4>
+            <i v-if="collapsed === true" class="icon-plus section-title__icon" />
+            <i v-if="collapsed === false" class="icon-minus section-title__icon" />
+            配信品質
+          </h4>
+        </div>
+        <div v-show="!collapsed">
           <div class="input-wrapper">
             <div class="input-label">
               <label>
-                ストリームキー
-                <i class="icon-help icon-tooltip" title="配信先のストリームキーを指定します"></i>
-              </label>
-            </div>
-            <div class="key-input-wrapper">
-              <input :type="showKey ? 'text' : 'password'" v-model="key" />
-              <button
-                class="toggle-key-button basic-button"
-                style="margin: 0"
-                data-size="sm"
-                data-radius="sm"
-                data-color="secondary"
-                data-variant="light"
-                @click="showKey = !showKey"
-              >
-                {{ showKey ? '非表示' : '表示' }}
-              </button>
-            </div>
-          </div>
-
-          <div class="input-wrapper">
-            <div class="input-label">
-              <label>
-                映像コーディック<i
-                  class="icon-help icon-tooltip"
-                  title="デフォルトは obs_x264 です"
-                ></i>
+                映像エンコーダー<span class="label-description">(デフォルト: x264)</span>
               </label>
             </div>
             <multiselect
@@ -102,22 +141,17 @@
           <div class="input-wrapper">
             <div class="input-label">
               <label>
-                映像ビットレート (Kbps)<i
-                  class="icon-help icon-tooltip"
-                  title="デフォルトは 2500 Kbps です"
-                ></i>
-              </label>
+                映像ビットレート (Kbps)
+                <span class="label-description">(デフォルト: 2500Kbps)</span></label
+              >
             </div>
             <input type="number" v-model="videoBitrate" min="200" max="100000" />
           </div>
 
           <div class="input-wrapper">
             <div class="input-label">
-              <label>
-                音声コーディック<i
-                  class="icon-help icon-tooltip"
-                  title="デフォルトは ffmpeg_aac です"
-                ></i>
+              <label
+                >音声エンコーダー<span class="label-description">(デフォルト: FFmpeg AAC)</span>
               </label>
             </div>
             <multiselect
@@ -133,51 +167,13 @@
 
           <div class="input-wrapper">
             <div class="input-label">
-              <label>
-                音声ビットレート (Kbps)<i
-                  class="icon-help icon-tooltip"
-                  title="デフォルトは 128 Kbps です"
-                ></i
-              ></label>
+              <label
+                >音声ビットレート (Kbps)
+                <span class="label-description">(デフォルト: 128Kbps)</span></label
+              >
               <input type="number" v-model="audioBitrate" min="64" max="320" />
             </div>
           </div>
-
-          <div class="input-wrapper">
-            <div class="row">
-              <div class="name">配信開始/終了にあわせる</div>
-              <div class="value">
-                <input type="checkbox" v-model="sync" class="toggle-button" />
-              </div>
-            </div>
-          </div>
-
-          <div class="input-wrapper">
-            <div class="action-buttons">
-              <button
-                class="control-button basic-button"
-                data-size="md"
-                data-radius="sm"
-                data-color="secondary"
-                data-variant="light"
-                @click="start()"
-              >
-                開始
-              </button>
-              <button
-                class="control-button basic-button"
-                data-size="md"
-                data-radius="sm"
-                data-color="secondary"
-                data-variant="light"
-                @click="stop()"
-              >
-                停止
-              </button>
-            </div>
-          </div>
-
-          <div style="white-space: pre-wrap">{{ status }}</div>
         </div>
       </div>
     </div>
@@ -221,7 +217,12 @@
   margin-bottom: 8px;
   margin-left: 16px;
   font-size: @font-size3;
-  color: var(--color-text-sub);
+}
+
+.label-description {
+  margin-left: 16px;
+  font-size: @font-size3;
+  color: var(--color-text-dark);
 }
 
 .set-url-button {

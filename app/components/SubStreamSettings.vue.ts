@@ -12,6 +12,8 @@ import { Component, Watch } from 'vue-property-decorator';
 export default class SubStreamSettings extends Vue {
   @Inject() subStreamService: SubStreamService;
 
+  collapsed: boolean = true;
+
   use: boolean = SubStreamService.defaultState.use;
   url: string = SubStreamService.defaultState.url;
   key: string = SubStreamService.defaultState.key;
@@ -88,10 +90,12 @@ export default class SubStreamSettings extends Vue {
 
     const r = await this.subStreamService.enumEncoderTypes();
     if (r.encoders) {
-      this.videoCodecs = r.encoders.video.map(v => ({
-        id: v.id,
-        name: `${v.name} [${v.id}]`,
-      }));
+      this.videoCodecs = r.encoders.video
+        .filter(v => !(v.id.includes('h265') || v.id.includes('fallback')))
+        .map(v => ({
+          id: v.id,
+          name: `${v.name}`,
+        }));
 
       this.videoCodec = this.videoCodecs.find(
         v => v.id === this.subStreamService.state.videoCodec,
@@ -99,7 +103,7 @@ export default class SubStreamSettings extends Vue {
 
       this.audioCodecs = r.encoders.audio.map(v => ({
         id: v.id,
-        name: `${v.name} [${v.id}]`,
+        name: `${v.name}`,
       }));
 
       this.audioCodec = this.audioCodecs.find(

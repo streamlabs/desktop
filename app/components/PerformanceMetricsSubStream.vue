@@ -1,7 +1,6 @@
 <template>
   <div class="performance-metrics flex" v-if="use">
     <span class="performance-metric-wrapper resolution">
-      <i class="performance-metric-icon icon-output" />
       <span class="performance-metric">
         <span class="performance-metric__value">サブ配信:{{ message }}</span>
       </span>
