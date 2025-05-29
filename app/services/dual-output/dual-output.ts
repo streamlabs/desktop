@@ -172,26 +172,6 @@ class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
     return this.activeDisplays.vertical && !this.activeDisplays.horizontal;
   }
 
-  getPlatformDisplay(platform: TPlatform) {
-    return this.streamingService.views.settings.platforms[platform]?.display;
-  }
-
-  getPlatformContext(platform: TPlatform) {
-    const display = this.getPlatformDisplay(platform);
-    return this.videoSettingsService.state[display];
-  }
-
-  getPlatformMode(platform: TPlatform): TOutputOrientation {
-    const display = this.getPlatformDisplay(platform);
-    if (!display) return 'landscape';
-    return display === 'horizontal' ? 'landscape' : 'portrait';
-  }
-
-  getMode(display?: TDisplayType): TOutputOrientation {
-    if (!display) return 'landscape';
-    return display === 'horizontal' ? 'landscape' : 'portrait';
-  }
-
   getHorizontalNodeId(verticalNodeId: string, sceneId?: string) {
     const sceneNodeMap = sceneId ? this.sceneNodeMaps[sceneId] : this.activeSceneNodeMap;
     if (!sceneNodeMap) return;
@@ -230,14 +210,6 @@ class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
     // return horizontal by default because if the sceneNodeMap doesn't exist
     // dual output has never been toggled on with this scene active
     return 'horizontal';
-  }
-
-  getPlatformContextName(platform?: TPlatform): TOutputOrientation {
-    return this.getPlatformDisplay(platform) === 'horizontal' ? 'landscape' : 'portrait';
-  }
-
-  getDisplayContextName(display: TDisplayType): TOutputOrientation {
-    return display === 'horizontal' ? 'landscape' : 'portrait';
   }
 
   /**

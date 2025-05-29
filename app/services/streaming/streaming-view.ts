@@ -429,13 +429,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   /**
-   * Get the mode name based on the platform or destination display
-   */
-  getDisplayContextName(display: TDisplayType): TOutputOrientation {
-    return this.dualOutputView.getDisplayContextName(display);
-  }
-
-  /**
    * returns `true` if all target platforms have prepopulated their settings
    */
   isPrepopulated(): boolean {

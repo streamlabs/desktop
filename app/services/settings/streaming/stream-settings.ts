@@ -9,7 +9,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import { TwitchService } from 'services/platforms/twitch';
 import { PlatformAppsService } from 'services/platform-apps';
 import { IGoLiveSettings, IPlatformFlags, StreamingService } from 'services/streaming';
-import { TDisplayType } from 'services/settings-v2/video';
+import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
 import Vue from 'vue';
 import { IVideo } from 'obs-studio-node';
 import { DualOutputService } from 'services/dual-output';
@@ -112,6 +112,7 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
   @Inject() private streamSettingsService: StreamSettingsService;
   @Inject() private dualOutputService: DualOutputService;
   @Inject() private streamingService: StreamingService;
+  @Inject() private videoSettingsService: VideoSettingsService;
 
   static defaultState: IStreamSettingsState = {
     protectedModeEnabled: true,
@@ -212,13 +213,13 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
     if (settingsPatch.platforms) {
       const pickedFields: (keyof IPlatformFlags)[] = ['enabled', 'useCustomFields', 'display'];
       const platforms: Dictionary<IPlatformFlags> = {};
-      Object.keys(settingsPatch.platforms).map(platform => {
+      Object.keys(settingsPatch.platforms).map((platform: TPlatform) => {
         const platformSettings = pick(settingsPatch.platforms![platform], pickedFields);
 
         if (this.dualOutputService.views.dualOutputMode) {
-          platformSettings.video = this.dualOutputService.views.getPlatformContext(
-            platform as TPlatform,
-          );
+          this.videoSettingsService.validateVideoContext();
+          const display = this.streamingService.views.settings.platforms[platform]?.display;
+          platformSettings.video = this.videoSettingsService.contexts[display];
         }
         return (platforms[platform] = platformSettings);
       });
@@ -379,7 +380,7 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
 
   @mutation()
   private SET_LOCAL_STORAGE_SETTINGS(settings: Partial<IStreamSettingsState>) {
-    Object.keys(settings).forEach(prop => {
+    Object.keys(settings).forEach((prop: keyof IStreamSettingsState) => {
       Vue.set(this.state, prop, settings[prop]);
     });
   }
