@@ -45,6 +45,9 @@ export interface IYoutubeStartStreamOptions extends IExtraBroadcastSettings {
   privacyStatus?: 'private' | 'public' | 'unlisted';
   scheduledStartTime?: number;
   mode?: TOutputOrientation;
+  dualStreamKey?: string;
+  dualStreamServer?: string;
+  dualStreamBroadcastId?: string;
 }
 
 /**
@@ -189,6 +192,7 @@ export class YoutubeService
     'streamlabels',
     'themes',
     'viewerCount',
+    'dualStream',
   ]);
 
   static initialState: IYoutubeServiceState = {
@@ -214,6 +218,9 @@ export class YoutubeService
       thumbnail: '',
       video: undefined,
       mode: undefined,
+      dualStreamKey: '',
+      dualStreamServer: '',
+      dualStreamBroadcastId: '',
     },
   };
 
@@ -286,6 +293,34 @@ export class YoutubeService
     this.state.liveStreamingEnabled = enabled;
   }
 
+  async setupDualStream(goLiveSettings: IGoLiveSettings) {
+    const ytSettings = getDefined(goLiveSettings.platforms.youtube);
+    const title = makeVerticalTitle(ytSettings.title);
+
+    const verticalBroadcast = await this.createBroadcast({ ...ytSettings, title });
+    const verticalStream = await this.createLiveStream(verticalBroadcast.snippet.title);
+    const verticalBoundBroadcast = await this.bindStreamToBroadcast(
+      verticalBroadcast.id,
+      verticalStream.id,
+    );
+
+    await this.updateCategory(verticalBroadcast.id, ytSettings.categoryId!);
+
+    const verticalStreamKey = verticalStream.cdn.ingestionInfo.streamName;
+
+    this.SET_VERTICAL_STREAM_KEY(verticalStreamKey);
+    this.SET_VERTICAL_BROADCAST(verticalBoundBroadcast);
+
+    this.streamSettingsService.setSettings(
+      {
+        key: verticalStreamKey,
+        streamType: 'rtmp_custom',
+        server: 'rtmp://a.rtmp.youtube.com/live2',
+      },
+      'vertical' as TDisplayType,
+    );
+  }
+
   async createVertical(settings: IGoLiveSettings): Promise<ICustomStreamDestination> {
     // {
     //   id: string;
@@ -334,8 +369,8 @@ export class YoutubeService
     };
   }
 
-  async beforeGoLive(settings: IGoLiveSettings, context?: TDisplayType) {
-    const ytSettings = getDefined(settings.platforms.youtube);
+  async beforeGoLive(goLiveSettings: IGoLiveSettings, context?: TDisplayType) {
+    const ytSettings = getDefined(goLiveSettings.platforms.youtube);
 
     const streamToScheduledBroadcast = !!ytSettings.broadcastId;
     // update selected LiveBroadcast with new title and description
@@ -379,6 +414,10 @@ export class YoutubeService
         },
         context,
       );
+    }
+
+    if (this.dualOutputService.views.hasExtraOutput('youtube')) {
+      await this.setupDualStream(goLiveSettings);
     }
 
     this.UPDATE_STREAM_SETTINGS({ ...ytSettings, broadcastId: broadcast.id });

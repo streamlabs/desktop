@@ -50,6 +50,8 @@ export type TPlatformCapabilityMap = {
   resolutionPreset: IPlatformCapabilityResolutionPreset;
   /** This service supports fetching viewersCount **/
   viewerCount: IPlatformCapabilityViewerCount;
+  /** This service may simultaneously stream both the horizontal and vertical displays in dual output mode*/
+  dualStream: IPlatformCapabilityDualStream;
 };
 
 export type TPlatformCapability = keyof TPlatformCapabilityMap;
@@ -103,6 +105,10 @@ interface IPlatformCapabilityAccountMerging {
 export interface IPlatformCapabilityResolutionPreset {
   inputResolution: string;
   outputResolution: string;
+}
+
+export interface IPlatformCapabilityDualStream {
+  state: { settings: { dualStreamKey: string; dualStreamServer: string } };
 }
 
 /**
@@ -200,6 +206,8 @@ export interface IPlatformService {
   prepopulateInfo: () => Promise<unknown>;
 
   scheduleStream?: (startTime: number, info: TStartStreamOptions) => Promise<any>;
+
+  setupDualStream?: (options: IGoLiveSettings) => Promise<void>;
 
   fetchNewToken: () => Promise<void>;
 

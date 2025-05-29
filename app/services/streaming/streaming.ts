@@ -541,20 +541,6 @@ export class StreamingService
           // This might belong as a YT check
           await this.runCheck('setupDualOutput', async () => {
             this.videoSettingsService.validateVideoContext('vertical');
-            const { name, streamKey, url } = await this.youtubeService.createVertical(settings);
-
-            // add YouTube vertical as a custom destination
-            const encoderSettings = this.outputSettingsService.getSettings();
-
-            this.extraOutputs.push({
-              name,
-              url,
-              // TODO: ICustomStreamDestination's streamKey is optional
-              streamKey: streamKey as string,
-              display: 'vertical',
-              encoder: encoderSettings.streaming.encoder,
-              encoderSettings: encoderSettings.streaming,
-            });
           });
         } catch (e: unknown) {
           const error = this.handleTypedStreamError(
@@ -1918,43 +1904,30 @@ export class StreamingService
         ? this.settingsService.views.values.Stream
         : this.settingsService.views.values.StreamSecond;
 
-    console.log('streamSettings', streamSettings);
-
-    // TODO: make more generic and DRY
-    if (this.dualOutputService.views.hasExtraOutput('youtube')) {
-      if (display === 'horizontal') {
-        this.contexts[display].streaming.service = ServiceFactory.legacySettings;
-        this.contexts[display].streaming.service.update(streamSettings);
-      } else {
-        const output = this.extraOutputs[0];
-
-        // TODO: do we need these?
-        this.contexts[display].streaming.enforceServiceBitrate = false;
-        this.contexts[display].streaming.enableTwitchVOD = false;
-        stream.videoEncoder.update(output.encoderSettings);
-
-        this.contexts[display].streaming.service = ServiceFactory.create(
-          'rtmp_custom',
-          output.name,
-          {
-            key: output.streamKey,
-            server: output.url,
-            username: '',
-            password: '',
-            use_auth: false,
-            streamType: 'rtmp_custom',
-          },
-        );
-      }
-    } else if (streamSettings.streamType === 'rtmp_common') {
+    if (streamSettings.streamType === 'rtmp_common') {
       this.contexts[display].streaming.service = ServiceFactory.legacySettings;
       this.contexts[display].streaming.service.update(streamSettings);
     } else {
-      this.contexts[display].streaming.service = ServiceFactory.create(
-        'rtmp_custom',
-        'service',
-        streamSettings,
-      );
+      if (this.dualOutputService.views.hasExtraOutput('youtube') && display === 'vertical') {
+        // TODO: do we need these?
+        this.contexts[display].streaming.enforceServiceBitrate = false;
+        this.contexts[display].streaming.enableTwitchVOD = false;
+
+        this.contexts[display].streaming.service = ServiceFactory.create('rtmp_custom', 'yt-vert', {
+          key: streamSettings.key,
+          server: streamSettings.server,
+          username: '',
+          password: '',
+          use_auth: false,
+          streamType: 'rtmp_custom',
+        });
+      } else {
+        this.contexts[display].streaming.service = ServiceFactory.create(
+          'rtmp_custom',
+          'service',
+          streamSettings,
+        );
+      }
     }
 
     this.contexts[display].streaming.delay = DelayFactory.create();
