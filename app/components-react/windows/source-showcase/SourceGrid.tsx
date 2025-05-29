@@ -289,8 +289,6 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
     return !essentialSources.essentialDefaults.find(s => s.value === source.value);
   }
 
-  const { Panel } = Collapse;
-
   const toSourceEl = (source: IObsListOption<TSourceType>) => (
     <SourceTag key={source.value} type={source.value} essential excludeWrap={excludeWrap} />
   );
@@ -303,7 +301,7 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
         name={$t('Stream Label')}
         type="streamlabel"
         essential
-        /* Show short desscription if part of the Essentials group in All Sources tab */
+        /* Show short description if part of the Essentials group in All Sources tab */
         hideShortDescription={p.activeTab !== 'all'}
         excludeWrap={excludeWrap}
       />
@@ -317,21 +315,22 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
       />
     );
 
-  const essentialSourcesList = useMemo(
-    () => (
-      <>
-        {essentialSources.essentialDefaults.map(source => (
-          <SourceTag key={source.value} type={source.value} essential excludeWrap={excludeWrap} />
-        ))}
+  const essentialSourcesList = useMemo(() => {
+    if (essentialSources.essentialDefaults.length || essentialSources.essentialWidgets.length) {
+      return (
+        <>
+          {essentialSources.essentialDefaults.map(source => (
+            <SourceTag key={source.value} type={source.value} essential excludeWrap={excludeWrap} />
+          ))}
 
-        {isLoggedIn &&
-          essentialSources.essentialWidgets.map(widgetType =>
-            toWidgetEl(widgetType, { essential: true }),
-          )}
-      </>
-    ),
-    [essentialSources, isLoggedIn, excludeWrap, iterableWidgetTypes],
-  );
+          {isLoggedIn &&
+            essentialSources.essentialWidgets.map(widgetType =>
+              toWidgetEl(widgetType, { essential: true }),
+            )}
+        </>
+      );
+    }
+  }, [essentialSources, isLoggedIn, excludeWrap, iterableWidgetTypes]);
 
   const sourceDisplayData = useMemo(() => SourceDisplayData(), []);
   const widgetDisplayData = useMemo(() => WidgetDisplayData(), []);
@@ -354,23 +353,56 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
     return displayData?.group === group;
   };
 
-  const captureSourcesList = useMemo(
-    () => availableSources.filter(byGroup('capture')).map(toSourceEl),
+  // eslint-disable-next-line comma-spacing
+  const mapToSourceElIfSourceGiven = <T,>(xs: Array<T>): JSX.Element[] | T[] => {
+    if (isSourceTypeList(xs)) {
+      return xs.map(toSourceEl);
+    }
+
+    return xs;
+  };
+
+  // TODO: use concrete types if we never want to use this outside the `*List`'s below
+  const useNonEmptySourceElements = <T, K extends Array<T>>(
+    factory: () => K,
+    deps: React.DependencyList,
+    mapper: (factoryResult: K) => JSX.Element[] | T[] = mapToSourceElIfSourceGiven,
+  ) => {
+    return useMemo(() => {
+      const result = factory();
+      if (result.length) {
+        return mapper(result);
+      }
+    }, deps);
+  };
+
+  const captureSourcesList = useNonEmptySourceElements(
+    () => availableSources.filter(byGroup('capture')),
     [availableSources, excludeWrap],
   );
 
-  const avSourcesList = useMemo(() => availableSources.filter(byGroup('av')).map(toSourceEl), [
+  const avSourcesList = useNonEmptySourceElements(() => availableSources.filter(byGroup('av')), [
     availableSources,
     excludeWrap,
   ]);
 
-  const mediaSourcesList = useMemo(
-    () => availableSources.filter(byGroup('media')).map(toSourceEl),
+  const mediaSourcesList = useNonEmptySourceElements(
+    () => availableSources.filter(byGroup('media')),
     [availableSources, excludeWrap, designerMode],
   );
 
-  const widgetList = useMemo(
-    () => (
+  // TODO: we made useNonEmptySourceElements generic for a reason, but this has way too much logic?
+  const widgetList = useMemo(() => {
+    const widgets = iterableWidgetTypes.filter(filterEssential);
+
+    // If we're not logged in we still want to display the message below
+    if (isLoggedIn && !widgets.length) {
+      return;
+    }
+
+    const list = widgets.map(widgetType => toWidgetEl(widgetType, { hideShortDescription: true }));
+
+    return (
       <>
         {!isLoggedIn ? (
           <Empty
@@ -380,16 +412,11 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
             <Button onClick={handleAuth}>{$t('Click here to log in')}</Button>
           </Empty>
         ) : (
-          <>
-            {iterableWidgetTypes
-              .filter(filterEssential)
-              .map(widgetType => toWidgetEl(widgetType, { hideShortDescription: true }))}
-          </>
+          list
         )}
       </>
-    ),
-    [isLoggedIn, iterableWidgetTypes, p.activeTab, excludeWrap],
-  );
+    );
+  }, [isLoggedIn, iterableWidgetTypes, p.activeTab, excludeWrap]);
 
   const widgetGroupedList = useMemo(() => {
     // TODO: restrict types
@@ -437,26 +464,34 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
             activeKey={widgetSections}
             onChange={xs => setWidgetExpandedSections(xs as string[])}
           >
-            <Panel header={$t('Essentials')} key="essentialWidgets">
-              <div className="collapse-section" data-testid="essential-widgets">
-                {essentialWidgets}
-              </div>
-            </Panel>
-            <Panel header={$t('Interactive')} key="interactive">
-              <div className="collapse-section" data-testid="interactive-widgets">
-                {interactiveWidgets}
-              </div>
-            </Panel>
-            <Panel header={$t('Goals')} key="goals">
-              <div className="collapse-section" data-testid="goal-widgets">
-                {goalWidgets}
-              </div>
-            </Panel>
-            <Panel header={$t('Flair')} key="flair">
-              <div className="collapse-section" data-testid="flair-widgets">
-                {flairWidgets}
-              </div>
-            </Panel>
+            {nonEmptyPanel({
+              id: 'essentialWidgets',
+              src: essentialWidgets,
+              header: $t('Essentials'),
+              testId: 'essential-widgets',
+            })}
+
+            {nonEmptyPanel({
+              id: 'interactive',
+              src: interactiveWidgets,
+              header: $t('Interactive'),
+              testId: 'interactive-widgets',
+            })}
+
+            {nonEmptyPanel({
+              id: 'goals',
+              src: goalWidgets,
+              header: $t('Goals'),
+              testId: 'goal-widgets',
+            })}
+
+            {nonEmptyPanel({
+              id: 'flair',
+              src: flairWidgets,
+              header: $t('Flair'),
+              testId: 'flair-widgets',
+            })}
+
             {/* TODO: we don't have any charity widgets on Desktop
             <Panel header={$t('Charity')} key="charity">
               <div className="collapse-section" data-testid="charity-widgets">
@@ -491,15 +526,26 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
   const groupedSources = useMemo(
     () => (
       <>
-        <Panel header={$t('Capture Sources')} key="captureSources">
-          <div className="collapse-section">{captureSourcesList}</div>
-        </Panel>
-        <Panel header={$t('Video and Audio')} key="avSources">
-          <div className="collapse-section">{avSourcesList}</div>
-        </Panel>
-        <Panel header={$t('Media')} key="mediaSources">
-          <div className="collapse-section">{mediaSourcesList}</div>
-        </Panel>
+        {nonEmptyPanel({
+          id: 'captureSources',
+          src: captureSourcesList,
+          header: $t('Capture Sources'),
+          testId: 'capture-sources',
+        })}
+
+        {nonEmptyPanel({
+          id: 'avSources',
+          src: avSourcesList,
+          header: $t('Video and Audio'),
+          testId: 'av-sources',
+        })}
+
+        {nonEmptyPanel({
+          id: 'mediaSources',
+          src: mediaSourcesList,
+          header: $t('Media'),
+          testId: 'media-sources',
+        })}
       </>
     ),
     [captureSourcesList, avSourcesList, mediaSourcesList],
@@ -568,25 +614,30 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
                 activeKey={expandedSections}
                 onChange={xs => setExpandedSections(xs as string[])}
               >
-                <Panel header={$t('Essentials')} key="essentialSources">
-                  <div className="collapse-section" data-testid="essential-sources">
-                    {essentialSourcesList}
-                  </div>
-                </Panel>
+                {nonEmptyPanel({
+                  id: 'essentialSources',
+                  src: essentialSourcesList,
+                  header: $t('Essentials'),
+                  testId: 'essential-sources',
+                })}
+
                 {groupedSources}
-                <Panel header={$t('Widgets')} key="widgets">
-                  <div className="collapse-section" data-testid="widget-sources">
-                    {widgetList}
-                  </div>
-                </Panel>
+
+                {nonEmptyPanel({
+                  id: 'widgets',
+                  src: widgetList,
+                  header: $t('Widgets'),
+                  testId: 'widget-sources',
+                })}
+
                 {/* No searching for apps needed */}
-                {!p.searchTerm && (
-                  <Panel header={$t('Apps')} key="apps">
-                    <div className="collapse-section" data-testid="app-sources">
-                      {appsList}
-                    </div>
-                  </Panel>
-                )}
+                {!p.searchTerm &&
+                  nonEmptyPanel({
+                    id: 'apps',
+                    src: appsList,
+                    header: $t('Apps'),
+                    testId: 'app-sources',
+                  })}
               </Collapse>
             </Col>
           </>
@@ -597,3 +648,29 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
     </Scrollable>
   );
 }
+
+const { Panel } = Collapse;
+// Why we can't use a component beats me, thanks antd (it would render empty).
+const nonEmptyPanel = ({
+  src,
+  id,
+  header,
+  testId,
+}: {
+  src: null | undefined | unknown[] | JSX.Element;
+  id: string;
+  header: string;
+  testId: string;
+}) => {
+  if (!src) {
+    return null;
+  }
+
+  return (
+    <Panel header={header} key={id}>
+      <div className="collapse-section" data-testid={testId}>
+        {src}
+      </div>
+    </Panel>
+  );
+};
