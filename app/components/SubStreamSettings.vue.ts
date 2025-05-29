@@ -1,4 +1,5 @@
 import { Inject } from 'services/core/injector';
+import { $t } from 'services/i18n';
 import { SubStreamService } from 'services/substream/SubStreamService';
 import Vue from 'vue';
 import Multiselect from 'vue-multiselect';
@@ -120,15 +121,15 @@ export default class SubStreamSettings extends Vue {
 
   async checkStatus() {
     const r = await this.subStreamService.getStatus();
-    // console.log(JSON.stringify(r, null, 2)); // Removed debug log
 
     const statusParts: string[] = [];
-    if (r.error) statusParts.push(`エラー: ${r.error}`);
-    statusParts.push(`ステータス: ${r.displayStatus}`);
-    if (r.frames) statusParts.push(`送出フレーム数: ${r.frames}`);
-    if (r.dropped) statusParts.push(`ドロップ数: ${r.dropped}`);
+    if (r.error) statusParts.push(`${$t('settings.substream.info.error')}: ${r.error}`);
+    statusParts.push(`${$t('settings.substream.info.status')}: ${r.displayStatus}`);
+    if (r.frames) statusParts.push(`${$t('settings.substream.info.frames')}: ${r.frames}`);
+    if (r.dropped) statusParts.push(`${$t('settings.substream.info.dropped')}: ${r.dropped}`);
 
-    this.status = statusParts.length > 0 ? statusParts.join('\n') : '停止中';
+    this.status =
+      statusParts.length > 0 ? statusParts.join('\n') : $t('settings.substream.info.stopped');
   }
 
   startChecker() {

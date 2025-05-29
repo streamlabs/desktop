@@ -2,7 +2,9 @@
   <div class="performance-metrics flex" v-if="use">
     <span class="performance-metric-wrapper resolution">
       <span class="performance-metric">
-        <span class="performance-metric__value">サブ配信:{{ message }}</span>
+        <span class="performance-metric__value"
+          >{{ $t('settings.SubStream.name') }}:{{ message }}</span
+        >
       </span>
     </span>
   </div>

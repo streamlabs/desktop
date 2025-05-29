@@ -1,6 +1,7 @@
 import { sleep } from '../../util/sleep';
 import { PersistentStatefulService } from '../core/persistent-stateful-service';
 import { mutation } from '../core/stateful-service';
+import { $t } from '../i18n';
 import { NamedPipeClient } from './NamedPipeClient';
 
 type Primitive = string | number | boolean;
@@ -181,13 +182,13 @@ export class SubStreamService extends PersistentStatefulService<ISubStreamState>
       };
 
     const statusMap: { [name: string]: string } = {
-      starting: '配信開始処理中..',
-      started: '配信中',
-      stopping: '停止処理中..',
-      stopped: '停止中',
-      reconnect: '再接続...',
-      reconnected: '再接続',
-      deactive: '停止中',
+      starting: $t('settings.substream.status.starting'),
+      started: $t('settings.substream.status.started'),
+      stopping: $t('settings.substream.status.stopping'),
+      stopped: $t('settings.substream.status.stopped'),
+      reconnect: $t('settings.substream.status.reconnect'),
+      reconnected: $t('settings.substream.status.reconnected'),
+      deactive: $t('settings.substream.status.deactive'),
     };
 
     streamStatus.displayStatus = statusMap[streamStatus.status] || '';

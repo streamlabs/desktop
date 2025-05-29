@@ -4,7 +4,7 @@
       <div class="section">
         <div class="input-wrapper">
           <div class="row">
-            <div class="name">使用する</div>
+            <div class="name">{{ $t('settings.substream.use') }}</div>
             <div class="value">
               <input type="checkbox" v-model="use" class="toggle-button" />
             </div>
@@ -15,9 +15,9 @@
       <div class="section" v-if="use">
         <div class="input-wrapper">
           <div class="input-label">
-            <label> URL </label>
+            <label>{{ $t('settings.substream.url') }}</label>
             <div class="url-tips">
-              <div>各サービスから提供されているストリーム URL を指定してください</div>
+              <div>{{ $t('settings.substream.urlTips') }}</div>
               <div>
                 YouTube &nbsp;
                 {{ defaultYoutubeUrl }}
@@ -29,7 +29,7 @@
                   data-variant="light"
                   @click="url = defaultYoutubeUrl"
                 >
-                  セット
+                  {{ $t('settings.substream.set') }}
                 </button>
               </div>
               <div>
@@ -43,7 +43,7 @@
                   data-variant="light"
                   @click="url = defaultTwitchUrl"
                 >
-                  セット
+                  {{ $t('settings.substream.set') }}
                 </button>
               </div>
             </div>
@@ -53,7 +53,7 @@
 
         <div class="input-wrapper">
           <div class="input-label">
-            <label> ストリームキー </label>
+            <label>{{ $t('settings.substream.streamKey') }}</label>
           </div>
           <div class="key-input-wrapper">
             <input :type="showKey ? 'text' : 'password'" v-model="key" />
@@ -66,14 +66,14 @@
               data-variant="light"
               @click="showKey = !showKey"
             >
-              {{ showKey ? '非表示' : '表示' }}
+              {{ showKey ? $t('settings.substream.display') : $t('settings.substream.show') }}
             </button>
           </div>
         </div>
 
         <div class="input-wrapper">
           <div class="row">
-            <div class="name">配信開始/終了にあわせる</div>
+            <div class="name">{{ $t('settings.substream.syncWithMainStream') }}</div>
             <div class="value">
               <input type="checkbox" v-model="sync" class="toggle-button" />
             </div>
@@ -90,7 +90,7 @@
               data-variant="light"
               @click="start()"
             >
-              開始
+              {{ $t('settings.substream.start') }}
             </button>
             <button
               class="control-button basic-button"
@@ -100,7 +100,7 @@
               data-variant="light"
               @click="stop()"
             >
-              停止
+              {{ $t('settings.substream.stop') }}
             </button>
           </div>
         </div>
@@ -117,14 +117,17 @@
           <h4>
             <i v-if="collapsed === true" class="icon-plus section-title__icon" />
             <i v-if="collapsed === false" class="icon-minus section-title__icon" />
-            配信品質
+            {{ $t('settings.substream.streamQuality') }}
           </h4>
         </div>
         <div v-show="!collapsed">
           <div class="input-wrapper">
             <div class="input-label">
               <label>
-                映像エンコーダー<span class="label-description">(デフォルト: x264)</span>
+                {{ $t('settings.substream.videoEncoder')
+                }}<span class="label-description"
+                  >({{ $t('settings.substream.default') }}: x264)</span
+                >
               </label>
             </div>
             <multiselect
@@ -141,8 +144,10 @@
           <div class="input-wrapper">
             <div class="input-label">
               <label>
-                映像ビットレート (Kbps)
-                <span class="label-description">(デフォルト: 2500Kbps)</span></label
+                {{ $t('settings.substream.videoBitrate') }}
+                <span class="label-description"
+                  >({{ $t('settings.substream.default') }}: 2500Kbps)</span
+                ></label
               >
             </div>
             <input type="number" v-model="videoBitrate" min="200" max="100000" />
@@ -151,7 +156,10 @@
           <div class="input-wrapper">
             <div class="input-label">
               <label
-                >音声エンコーダー<span class="label-description">(デフォルト: FFmpeg AAC)</span>
+                >{{ $t('settings.substream.audioEncoder')
+                }}<span class="label-description"
+                  >({{ $t('settings.substream.default') }}: FFmpeg AAC)</span
+                >
               </label>
             </div>
             <multiselect
@@ -168,8 +176,10 @@
           <div class="input-wrapper">
             <div class="input-label">
               <label
-                >音声ビットレート (Kbps)
-                <span class="label-description">(デフォルト: 128Kbps)</span></label
+                >{{ $t('settings.substream.audioBitrate') }}
+                <span class="label-description"
+                  >({{ $t('settings.substream.default') }}: 128Kbps)</span
+                ></label
               >
               <input type="number" v-model="audioBitrate" min="64" max="320" />
             </div>

@@ -706,5 +706,39 @@
     "webSpeech": "Windows SpeechSynthesizer",
     "nVoice": "N Voice / KOTOYOMI Near",
     "ignore": "ignore"
+  },
+  "substream": {
+    "use": "Use",
+    "url": "URL",
+    "urlTips": "Enter the stream URL provided by the service.",
+    "streamKey": "Stream Key",
+    "syncWithMainStream": "Sync with main stream start/stop",
+    "start": "Start",
+    "stop": "Stop",
+    "streamQuality": "Stream Quality",
+    "videoEncoder": "Video Encoder",
+    "videoBitrate": "Video Bitrate (Kbps)",
+    "audioEncoder": "Audio Encoder",
+    "audioBitrate": "Audio Bitrate (Kbps)",
+    "display": "Hide",
+    "show": "Show",
+    "set": "Set",
+    "default": "default",
+    "info": {
+      "error": "Error",
+      "status": "Status",
+      "stopped": "Stopped",
+      "frames": "Frames Sent",
+      "dropped": "Frames Dropped"
+    },
+    "status": {
+      "starting": "Starting stream...",
+      "started": "Streaming",
+      "stopping": "Stopping stream...",
+      "stopped": "Stopped",
+      "reconnect": "Reconnecting...",
+      "reconnected": "Reconnected",
+      "deactive": "Inactive"
+    }
   }
 }
