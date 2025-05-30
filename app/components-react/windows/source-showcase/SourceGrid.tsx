@@ -365,6 +365,13 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
       }
     }, deps);
   };
+  const mapToWidgetEl = (type: string) => toWidgetEl(type, { hideShortDescription: true });
+  const useNonEmptyWidgetElements = (
+    factory: () => string[],
+    deps: React.DependencyList = [iterableWidgetTypes],
+  ) => {
+    return useNonEmptySourceElements(factory, deps, widgets => widgets.map(mapToWidgetEl));
+  };
 
   const captureSourcesList = useNonEmptySourceElements(
     () => availableSources.filter(byGroup('capture')),
@@ -408,35 +415,33 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
     );
   }, [isLoggedIn, iterableWidgetTypes, p.activeTab, excludeWrap]);
 
-  const widgetGroupedList = useMemo(() => {
-    // TODO: restrict types
-    const widgetsInGroup = (group: string, sorter?: (s1: string, s2: string) => number) => {
-      const widgets = iterableWidgetTypes
+  // TODO: restrict types
+  const widgetsInGroup = (group: string, sorter?: (s1: string, s2: string) => number) => {
+    return (
+      iterableWidgetTypes
         .filter(byWidgetGroup(group))
         // Sort lexographically by default, if sorter is not provided
-        .sort(sorter);
-
-      return widgets.map(type => toWidgetEl(type, { hideShortDescription: true }));
-    };
-
-    // Using essentials as a group for widgets since we wanna display more
-    // HACK: streamlabel doesn't have a widget type, and we want it at the end
-    const essentialWidgets = (
-      <>
-        {widgetsInGroup(
-          'essential',
-          customOrder(essentialWidgetsOrder, x =>
-            x === 'streamlabel' ? 'streamlabel' : WidgetType[x],
-          ),
-        )}
-      </>
+        .sort(sorter)
     );
+  };
 
-    const interactiveWidgets = widgetsInGroup('interactive');
-    const goalWidgets = widgetsInGroup('goals');
-    const flairWidgets = <>{widgetsInGroup('flair')}</>;
-    const charityWidgets = widgetsInGroup('charity');
+  // Using essentials as a group for widgets since we wanna display more
+  // HACK: streamlabel doesn't have a widget type, and we want it at the end
+  const essentialWidgets = useNonEmptyWidgetElements(() =>
+    widgetsInGroup(
+      'essential',
+      customOrder(essentialWidgetsOrder, x =>
+        x === 'streamlabel' ? 'streamlabel' : WidgetType[x],
+      ),
+    ),
+  );
 
+  const interactiveWidgets = useNonEmptyWidgetElements(() => widgetsInGroup('interactive'));
+  const goalWidgets = useNonEmptyWidgetElements(() => widgetsInGroup('goals'));
+  const flairWidgets = useNonEmptyWidgetElements(() => widgetsInGroup('flair'));
+  const charityWidgets = useNonEmptyWidgetElements(() => widgetsInGroup('charity'));
+
+  const widgetGroupedList = useMemo(() => {
     return (
       <>
         {!isLoggedIn ? (
@@ -491,7 +496,15 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
         )}
       </>
     );
-  }, [widgetSections, isLoggedIn, iterableWidgetTypes, excludeWrap]);
+  }, [
+    widgetSections,
+    isLoggedIn,
+    essentialWidgets,
+    interactiveWidgets,
+    goalWidgets,
+    flairWidgets,
+    excludeWrap,
+  ]);
 
   const appsList = useMemo(
     () => (
