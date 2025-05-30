@@ -15,7 +15,6 @@ import { TrovoService } from './platforms/trovo';
 import { KickService } from './platforms/kick';
 import * as remote from '@electron/remote';
 import { VideoSettingsService, TDisplayType } from './settings-v2/video';
-import { DualOutputService } from './dual-output';
 import { TwitterPlatformService } from './platforms/twitter';
 import { InstagramService } from './platforms/instagram';
 import { PlatformAppsService } from './platform-apps';
@@ -59,7 +58,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
   @Inject() kickService: KickService;
   @Inject() instagramService: InstagramService;
   @Inject() videoSettingsService: VideoSettingsService;
-  @Inject() dualOutputService: DualOutputService;
   @Inject('TwitterPlatformService') twitterService: TwitterPlatformService;
   @Inject() platformAppsService: PlatformAppsService;
 
@@ -264,7 +262,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
           ? {
               platform,
               streamKey: getPlatformService(platform).state.streamKey,
-              mode: this.dualOutputService.views.getPlatformMode(platform),
+              mode: this.getPlatformMode(platform),
             }
           : {
               platform,
@@ -278,7 +276,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
             ? {
                 platform: 'relay' as 'relay',
                 streamKey: `${dest.url}${dest.streamKey}`,
-                mode: this.dualOutputService.views.getMode(dest.display),
+                mode: this.getMode(dest.display),
               }
             : {
                 platform: 'relay' as 'relay',
@@ -293,9 +291,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
       const ttSettings = this.tiktokService.state.settings;
       tikTokTarget.platform = 'relay';
       tikTokTarget.streamKey = `${ttSettings.serverUrl}/${ttSettings.streamKey}`;
-      tikTokTarget.mode = isDualOutputMode
-        ? this.dualOutputService.views.getPlatformMode('tiktok')
-        : 'landscape';
+      tikTokTarget.mode = isDualOutputMode ? this.getPlatformMode('tiktok') : 'landscape';
     }
 
     // treat twitter as a custom destination
@@ -303,9 +299,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     if (twitterTarget) {
       twitterTarget.platform = 'relay';
       twitterTarget.streamKey = `${this.twitterService.state.ingest}/${this.twitterService.state.streamKey}`;
-      twitterTarget.mode = isDualOutputMode
-        ? this.dualOutputService.views.getPlatformMode('twitter')
-        : 'landscape';
+      twitterTarget.mode = isDualOutputMode ? this.getPlatformMode('twitter') : 'landscape';
     }
 
     // treat instagram as a custom destination
@@ -313,9 +307,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     if (instagramTarget) {
       instagramTarget.platform = 'relay';
       instagramTarget.streamKey = `${this.instagramService.state.settings.streamUrl}${this.instagramService.state.streamKey}`;
-      instagramTarget.mode = isDualOutputMode
-        ? this.dualOutputService.views.getPlatformMode('instagram')
-        : 'landscape';
+      instagramTarget.mode = isDualOutputMode ? this.getPlatformMode('instagram') : 'landscape';
     }
 
     // treat kick as a custom destination
@@ -323,9 +315,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     if (kickTarget) {
       kickTarget.platform = 'relay';
       kickTarget.streamKey = `${this.kickService.state.ingest}/${this.kickService.state.streamKey}`;
-      kickTarget.mode = isDualOutputMode
-        ? this.dualOutputService.views.getPlatformMode('kick')
-        : 'landscape';
+      kickTarget.mode = isDualOutputMode ? this.getPlatformMode('kick') : 'landscape';
     }
 
     await this.createTargets(newTargets);
@@ -486,6 +476,16 @@ export class RestreamService extends StatefulService<IRestreamState> {
     if (changed.chatZoomFactor) {
       this.chatView.webContents.setZoomFactor(changed.chatZoomFactor);
     }
+  }
+
+  private getPlatformMode(platform: TPlatform): TOutputOrientation {
+    const display = this.streamingService.views.getPlatformDisplayType(platform);
+    return this.getMode(display);
+  }
+
+  private getMode(display: TDisplayType): TOutputOrientation {
+    if (!display) return 'landscape';
+    return display === 'horizontal' ? 'landscape' : 'portrait';
   }
 }
 

@@ -6,7 +6,6 @@ import { TPlatform } from 'services/platforms';
 import { EPlaceType } from 'services/editor-commands/commands/reorder-nodes';
 import { EditorCommandsService } from 'services/editor-commands';
 import { Subject } from 'rxjs';
-import { TOutputOrientation } from 'services/restream';
 import { IVideoInfo } from 'obs-studio-node';
 import { ICustomStreamDestination, StreamSettingsService } from 'services/settings/streaming';
 import {
@@ -54,7 +53,6 @@ export type TDisplayDestinations = {
 
 class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
   @Inject() private scenesService: ScenesService;
-  @Inject() private videoSettingsService: VideoSettingsService;
   @Inject() private sceneCollectionsService: SceneCollectionsService;
   @Inject() private streamingService: StreamingService;
 
@@ -169,26 +167,6 @@ class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
     return this.activeDisplays.vertical && !this.activeDisplays.horizontal;
   }
 
-  getPlatformDisplay(platform: TPlatform) {
-    return this.streamingService.views.settings.platforms[platform]?.display;
-  }
-
-  getPlatformContext(platform: TPlatform) {
-    const display = this.getPlatformDisplay(platform);
-    return this.videoSettingsService.state[display];
-  }
-
-  getPlatformMode(platform: TPlatform): TOutputOrientation {
-    const display = this.getPlatformDisplay(platform);
-    if (!display) return 'landscape';
-    return display === 'horizontal' ? 'landscape' : 'portrait';
-  }
-
-  getMode(display?: TDisplayType): TOutputOrientation {
-    if (!display) return 'landscape';
-    return display === 'horizontal' ? 'landscape' : 'portrait';
-  }
-
   getHorizontalNodeId(verticalNodeId: string, sceneId?: string) {
     const sceneNodeMap = sceneId ? this.sceneNodeMaps[sceneId] : this.activeSceneNodeMap;
     if (!sceneNodeMap) return;
@@ -227,14 +205,6 @@ class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
     // return horizontal by default because if the sceneNodeMap doesn't exist
     // dual output has never been toggled on with this scene active
     return 'horizontal';
-  }
-
-  getPlatformContextName(platform?: TPlatform): TOutputOrientation {
-    return this.getPlatformDisplay(platform) === 'horizontal' ? 'landscape' : 'portrait';
-  }
-
-  getDisplayContextName(display: TDisplayType): TOutputOrientation {
-    return display === 'horizontal' ? 'landscape' : 'portrait';
   }
 
   /**
