@@ -21,6 +21,7 @@
   "News": "News",
   "Notifications": "Notifications",
   "A new Recording has been completed. Click for more info": "A new Recording has been completed. Click for more info",
+  "A new %{displayName} Recording has been completed. Click for more info": "A new %{displayName} Recording has been completed. Click for more info",
   "Recording History": "Recording History",
   "Show in folder": "Show in folder",
   "Recordings": "Recordings",
