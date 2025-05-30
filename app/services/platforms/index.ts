@@ -5,7 +5,7 @@ import { ITikTokStartStreamOptions, TikTokService } from './tiktok';
 import { InstagramService, IInstagramStartStreamOptions } from './instagram';
 import { TwitterPlatformService } from './twitter';
 import { TTwitchOAuthScope } from './twitch/index';
-import { IGoLiveSettings, TDisplayOutput } from 'services/streaming';
+import { IGoLiveSettings } from 'services/streaming';
 import { WidgetType } from '../widgets';
 import { ITrovoStartStreamOptions, TrovoService } from './trovo';
 import { TDisplayType } from 'services/settings-v2';
@@ -51,7 +51,7 @@ export type TPlatformCapabilityMap = {
   /** This service supports fetching viewersCount **/
   viewerCount: IPlatformCapabilityViewerCount;
   /** This service may simultaneously stream both the horizontal and vertical displays in dual output mode*/
-  dualStream: true;
+  dualStream: IPlatformCapabilityDualStream;
 };
 
 export type TPlatformCapability = keyof TPlatformCapabilityMap;
@@ -105,6 +105,10 @@ interface IPlatformCapabilityAccountMerging {
 export interface IPlatformCapabilityResolutionPreset {
   inputResolution: string;
   outputResolution: string;
+}
+
+export interface IPlatformCapabilityDualStream {
+  state: { settings: { dualStreamKey: string; dualStreamServer: string } };
 }
 
 /**

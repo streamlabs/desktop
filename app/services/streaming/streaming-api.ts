@@ -66,8 +66,6 @@ export interface IStreamInfo {
 
 export type TGoLiveChecklistItemState = 'not-started' | 'pending' | 'done' | 'failed';
 
-export type TDisplayOutput = TDisplayType | 'both';
-
 export interface IStreamSettings {
   platforms: {
     twitch?: IPlatformFlags & ITwitchStartStreamOptions;
@@ -96,7 +94,7 @@ export interface IGoLiveSettings extends IStreamSettings {
 export interface IPlatformFlags {
   enabled: boolean;
   useCustomFields: boolean;
-  display?: TDisplayOutput;
+  display?: TDisplayType;
   video?: IVideo;
 }
 

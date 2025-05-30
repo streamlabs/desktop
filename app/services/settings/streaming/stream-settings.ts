@@ -15,7 +15,7 @@ import { IVideo } from 'obs-studio-node';
 import { DualOutputService } from 'services/dual-output';
 import { TOutputOrientation } from 'services/restream';
 
-export interface ISavedGoLiveSettings {
+interface ISavedGoLiveSettings {
   platforms: {
     twitch?: IPlatformFlags;
     facebook?: IPlatformFlags;
@@ -23,7 +23,6 @@ export interface ISavedGoLiveSettings {
     trovo?: IPlatformFlags;
     tiktok?: IPlatformFlags;
     kick?: IPlatformFlags;
-    twitter?: IPlatformFlags;
   };
   customDestinations?: ICustomStreamDestination[];
   advancedMode: boolean;
@@ -219,7 +218,7 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
 
         if (this.dualOutputService.views.dualOutputMode) {
           this.videoSettingsService.validateVideoContext();
-          const display = this.streamingService.views.getPlatformDisplayType(platform);
+          const display = this.streamingService.views.settings.platforms[platform]?.display;
           platformSettings.video = this.videoSettingsService.contexts[display];
         }
         return (platforms[platform] = platformSettings);

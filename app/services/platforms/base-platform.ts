@@ -121,7 +121,8 @@ export abstract class BasePlatformService<T extends IPlatformState> extends Stat
 
   setPlatformContext(platform: TPlatform) {
     if (this.dualOutputService.views.dualOutputMode) {
-      const display = this.streamingService.views.getPlatformDisplayType(platform);
+      const display =
+        this.streamingService.views.settings.platforms[platform]?.display ?? 'horizontal';
       const mode = display === 'vertical' ? 'portrait' : 'landscape';
 
       this.UPDATE_STREAM_SETTINGS({

@@ -73,7 +73,7 @@ export class TwitterPlatformService
     return this.userService.state.auth?.platforms?.twitter?.username || '';
   }
 
-  async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
+  async beforeGoLive(goLiveSettings: IGoLiveSettings, context?: TDisplayType) {
     if (Utils.isTestMode()) {
       this.SET_BROADCAST_ID('twitterBroadcast1');
       this.setPlatformContext('twitter');

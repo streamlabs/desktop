@@ -176,11 +176,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return this.dualOutputView.dualOutputMode && this.userView.isLoggedIn;
   }
 
-  getPlatformDisplayType(platform: TPlatform): TDisplayType {
-    const display = this.settings.platforms[platform]?.display ?? 'horizontal';
-    return display === 'both' ? 'horizontal' : display;
-  }
-
   getShouldMultistreamDisplay(
     settings?: IGoLiveSettings,
   ): { horizontal: boolean; vertical: boolean } {
@@ -191,7 +186,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
     for (const platform in platforms) {
       if (platforms[platform as TPlatform]?.enabled) {
-        const display = this.getPlatformDisplayType(platform as TPlatform);
+        const display = platforms[platform as TPlatform]?.display ?? 'horizontal';
         platformDisplays[display].push(platform as TPlatform);
       }
     }
@@ -219,10 +214,8 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   get activeDisplayPlatforms(): TDisplayPlatforms {
     return this.enabledPlatforms.reduce(
       (displayPlatforms: TDisplayPlatforms, platform: TPlatform) => {
-        const display = this.getPlatformDisplayType(platform);
-
+        const display = this.settings.platforms[platform]?.display ?? 'horizontal';
         displayPlatforms[display].push(platform);
-
         return displayPlatforms;
       },
       { horizontal: [], vertical: [] },
@@ -260,7 +253,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
     for (const platform in platforms) {
       if (platforms[platform as TPlatform]?.enabled) {
-        const display = this.getPlatformDisplayType(platform as TPlatform);
+        const display = platforms[platform as TPlatform]?.display ?? 'horizontal';
         platformDisplays[display].push(platform as TPlatform);
       }
     }
