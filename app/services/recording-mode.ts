@@ -18,8 +18,6 @@ import { NavigationService, UsageStatisticsService, SharedStorageService } from 
 import { getPlatformService } from 'services/platforms';
 import { IYoutubeUploadResponse } from 'services/platforms/youtube/uploader';
 import { YoutubeService } from 'services/platforms/youtube';
-import { capitalize } from 'lodash';
-
 export interface IRecordingEntry {
   timestamp: string;
   filename: string;
@@ -189,11 +187,14 @@ export class RecordingModeService extends PersistentStatefulService<IRecordingMo
   addRecordingEntry(filename: string, display?: TDisplayType) {
     const timestamp = moment().format();
     this.ADD_RECORDING_ENTRY(timestamp, filename);
-    const message = display
-      ? $t('A new %{displayName} Recording has been completed. Click for more info', {
-          displayName: capitalize(display),
-        })
-      : $t('A new Recording has been completed. Click for more info');
+    let message = $t('A new Recording has been completed. Click for more info');
+
+    if (display) {
+      message =
+        display === 'horizontal'
+          ? $t('horizontalRecordingMessage')
+          : $t('verticalRecordingMessage');
+    }
 
     this.notificationsService.actions.push({
       type: ENotificationType.SUCCESS,
