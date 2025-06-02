@@ -81,7 +81,7 @@
   "dependencies": {
     "@electron/remote": "2.1.2",
     "@n-air-app/n-voice-package": "^1.0.2",
-    "@n-air-app/nicolive-comment-protobuf": "2024.801.103927",
+    "@n-air-app/nicolive-comment-protobuf": "2025.602.163750",
     "@sentry/electron": "6.6.0",
     "@sentry/vue": "9.18.0",
     "archiver": "^5.3.1",
@@ -107,7 +107,7 @@
     "obs-studio-node": "https://github.com/n-air-app/native-deps/releases/download/assets/osn-0.24.38-release-win64_rtvc1.tar.gz",
     "postcss-loader": "4.3.0",
     "progress": "~2.0.3",
-    "protobufjs": "^7.3.2",
+    "protobufjs": "^7.5.3",
     "recursive-readdir": "~2.2.3",
     "reflect-metadata": "~0.1.13",
     "rimraf": "~2.7.1",

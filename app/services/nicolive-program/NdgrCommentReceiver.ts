@@ -145,6 +145,39 @@ function convertSimpleNotificationToMessageResponse(
   };
 }
 
+function convertSimpleNotificationV2ToMessageResponse(
+  common: CommonComponent,
+  notification: dwango.nicolive.chat.data.atoms.ISimpleNotificationV2,
+): MessageResponse | undefined {
+  const types = {
+    [dwango.nicolive.chat.data.atoms.SimpleNotificationV2.NotificationType.UNKNOWN]: 'unknown',
+    [dwango.nicolive.chat.data.atoms.SimpleNotificationV2.NotificationType.ICHIBA]: 'ichiba',
+    [dwango.nicolive.chat.data.atoms.SimpleNotificationV2.NotificationType.EMOTION]: 'emotion',
+    [dwango.nicolive.chat.data.atoms.SimpleNotificationV2.NotificationType.CRUISE]: 'cruise',
+    [dwango.nicolive.chat.data.atoms.SimpleNotificationV2.NotificationType.PROGRAM_EXTENDED]:
+      'programExtended',
+    [dwango.nicolive.chat.data.atoms.SimpleNotificationV2.NotificationType.RANKING_IN]: 'rankingIn',
+    [dwango.nicolive.chat.data.atoms.SimpleNotificationV2.NotificationType.VISITED]: 'visited',
+    [dwango.nicolive.chat.data.atoms.SimpleNotificationV2.NotificationType.SUPPORTER_REGISTERED]:
+      'supporterRegistered',
+    [dwango.nicolive.chat.data.atoms.SimpleNotificationV2.NotificationType.USER_LEVEL_UP]:
+      'userLevelUp',
+  } as const;
+  let type: NotificationType = 'unknown';
+  if (notification.type in types) {
+    type = types[notification.type as keyof typeof types] as NotificationType;
+  }
+  return {
+    notification: {
+      ...common,
+      type,
+      message: notification.message,
+      showInList: notification.showInList,
+      showInTelop: notification.showInTelop,
+    },
+  };
+}
+
 function convertGiftToMessageResponse(
   common: CommonComponent,
   gift: dwango.nicolive.chat.data.IGift,
@@ -280,6 +313,8 @@ export function convertChunkedResponseToMessageResponse(
   if (msg.message) {
     if (msg.message.chat) {
       return convertChatToMessageResponse(common, msg.message.chat, msg.meta?.id);
+    } else if (msg.message.simpleNotificationV2) {
+      return convertSimpleNotificationV2ToMessageResponse(common, msg.message.simpleNotificationV2);
     } else if (msg.message.simpleNotification) {
       return convertSimpleNotificationToMessageResponse(common, msg.message.simpleNotification);
     } else if (msg.message.gift) {
