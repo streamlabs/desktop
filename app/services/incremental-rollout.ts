@@ -7,7 +7,6 @@ import Utils from 'services/utils';
 import { InitAfter } from './core';
 import { AppService } from './app';
 import { getOS, OS } from 'util/operating-systems';
-import { get } from 'lodash';
 
 export enum EAvailableFeatures {
   platform = 'slobs--platform',
