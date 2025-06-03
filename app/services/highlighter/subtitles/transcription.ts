@@ -618,7 +618,6 @@ export class Transcription {
               ? this.singlePauseLength
               : roundTime(pauseTime - i * this.singlePauseLength);
 
-
           pauseWords.push(
             new Word().initPauseWord(
               pauseStartTime,
