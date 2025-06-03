@@ -69,7 +69,9 @@ interface IKickStreamInfoResponse {
       name: string;
       thumbnail: string;
     };
-    viewerCount: number;
+    stream: {
+      viewer_count: number;
+    };
   };
 }
 
@@ -427,7 +429,7 @@ export class KickService
   async fetchViewerCount(): Promise<number> {
     const resp = await this.fetchStreamInfo();
     if (resp && (resp as IKickStreamInfoResponse).channel) {
-      return (resp as IKickStreamInfoResponse).channel.viewerCount;
+      return (resp as IKickStreamInfoResponse).channel.stream.viewer_count;
     }
   }
 
