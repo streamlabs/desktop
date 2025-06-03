@@ -60,7 +60,7 @@ interface ITikTokStartStreamSettings {
   title: string;
   liveScope: TTikTokLiveScopeTypes;
   game: string;
-  display: TDisplayType;
+  display?: TDisplayType;
   audienceType?: string;
   video?: IVideo;
   mode?: TOutputOrientation;
@@ -76,7 +76,6 @@ export interface ITikTokStartStreamOptions {
   title: string;
   serverUrl: string;
   streamKey: string;
-  display: TDisplayType;
   game: string;
   audienceType?: string;
 }
@@ -95,11 +94,11 @@ export class TikTokService
     ...BasePlatformService.initialState,
     settings: {
       title: '',
-      display: 'vertical',
       liveScope: 'denied',
       mode: 'portrait',
       serverUrl: '',
       streamKey: '',
+      display: 'vertical',
       game: '',
     },
     broadcastId: '',
