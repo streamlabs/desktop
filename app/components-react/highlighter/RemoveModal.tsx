@@ -11,7 +11,7 @@ export default function RemoveModal(p: {
   clip: TClip;
   streamId: string | undefined;
   close: () => void;
-  deleteClip: (clipPath: string, streamId: string | undefined) => void;
+  deleteClip: (clipPath: string[], streamId: string | undefined) => void;
 }) {
   const { HighlighterService } = Services;
   const [deleteAllSelected, setDeleteAllSelected] = useState<boolean>(false);
@@ -94,8 +94,8 @@ export default function RemoveModal(p: {
               clipsToDelete.forEach(clip => {
                 HighlighterService.actions.removeClip(clip.path, p.streamId);
               });
-
-              p.deleteClip(p.clip.path, p.streamId);
+              const clipsToDeletePaths = clipsToDelete.map(clip => clip.path);
+              p.deleteClip(clipsToDeletePaths, p.streamId);
               p.close();
             }}
           >

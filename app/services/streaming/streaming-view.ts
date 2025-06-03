@@ -133,9 +133,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return (
       this.settings.customDestinations
         .filter(dest => dest.enabled)
-        // FIXME: index, but also split is a function?
-        // @ts-ignore
-        .map(dest => dest.url.split[2]) || []
+        .map(dest => dest.url.split('/')[2]) || []
     );
   }
 
@@ -179,6 +177,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return this.dualOutputView.dualOutputMode && this.userView.isLoggedIn;
   }
 
+  getPlatformDisplayType(platform: TPlatform): TDisplayType {
+    return this.settings.platforms[platform]?.display ?? 'horizontal';
+  }
+
   getShouldMultistreamDisplay(
     settings?: IGoLiveSettings,
   ): { horizontal: boolean; vertical: boolean } {
@@ -189,7 +191,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
     for (const platform in platforms) {
       if (platforms[platform as TPlatform]?.enabled) {
-        const display = platforms[platform as TPlatform]?.display ?? 'horizontal';
+        const display = this.getPlatformDisplayType(platform as TPlatform);
         platformDisplays[display].push(platform as TPlatform);
       }
     }
@@ -217,7 +219,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   get activeDisplayPlatforms(): TDisplayPlatforms {
     return this.enabledPlatforms.reduce(
       (displayPlatforms: TDisplayPlatforms, platform: TPlatform) => {
-        const display = this.settings.platforms[platform]?.display ?? 'horizontal';
+        const display = this.getPlatformDisplayType(platform);
         displayPlatforms[display].push(platform);
         return displayPlatforms;
       },
@@ -256,7 +258,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
     for (const platform in platforms) {
       if (platforms[platform as TPlatform]?.enabled) {
-        const display = platforms[platform as TPlatform]?.display ?? 'horizontal';
+        const display = this.getPlatformDisplayType(platform as TPlatform);
         platformDisplays[display].push(platform as TPlatform);
       }
     }
@@ -354,6 +356,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       advancedMode: !!this.streamSettingsView.state.goLiveSettings?.advancedMode,
       optimizedProfile: undefined,
       customDestinations: savedGoLiveSettings?.customDestinations || [],
+      recording: this.dualOutputView.recording || [],
     };
   }
 
@@ -444,13 +447,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       ...platforms.filter(p => this.isPlatformLinked(p)),
       ...platforms.filter(p => !this.isPlatformLinked(p)),
     ];
-  }
-
-  /**
-   * Get the mode name based on the platform or destination display
-   */
-  getDisplayContextName(display: TDisplayType): TOutputOrientation {
-    return this.dualOutputView.getDisplayContextName(display);
   }
 
   /**

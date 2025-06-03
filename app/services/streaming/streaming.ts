@@ -377,7 +377,7 @@ export class StreamingService
       const display = this.views.isDualOutputMode ? destination.display : 'horizontal';
 
       destination.video = this.videoSettingsService.contexts[display];
-      destination.mode = this.views.getDisplayContextName(display);
+      destination.mode = display === 'horizontal' ? 'landscape' : 'portrait';
     });
     // save enabled platforms to reuse setting with the next app start
     this.streamSettingsService.setSettings({ goLiveSettings: settings });

@@ -1,0 +1,45 @@
+@import '../../../styles/index.less';
+
+.recording-tooltip {
+  display: flex;
+  align-items: center;
+
+  i.info {
+    margin-left: 10px;
+  }
+}
+
+.recording-switcher {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
+  :global(.ant-row.ant-form-item) {
+    margin-right: 0px !important;
+  }
+
+  :global(.ant-radio-wrapper::after) {
+    width: inherit;
+  }
+
+  :global(.ant-radio-wrapper-checked) {
+    border: none;
+
+    i {
+      color: var(--icon-active);
+      transition: color 0.3s ease-in-out;
+    }
+  }
+
+  :global(.ant-radio) {
+    position: absolute;
+    left: -9999px;
+    overflow: hidden;
+  }
+
+  :global(.ant-radio) + * {
+    padding: 0px;
+    overflow: hidden;
+  }
+}
