@@ -48,7 +48,7 @@
         >
           <div class="display">
             <display
-              v-if="!animating && !hideStyleBlockers"
+              v-if="!animating"
               :componentProps="{
                 sourceId: widget.previewSourceId,
                 clickHandler: e => createProjector(e),
