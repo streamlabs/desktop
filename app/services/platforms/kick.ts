@@ -430,6 +430,8 @@ export class KickService
     const resp = await this.fetchStreamInfo();
     if (resp && (resp as IKickStreamInfoResponse).channel) {
       return (resp as IKickStreamInfoResponse).channel.stream.viewer_count;
+    } else {
+      return 0;
     }
   }
 
