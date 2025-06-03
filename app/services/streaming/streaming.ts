@@ -649,9 +649,7 @@ export class StreamingService
 
     // in dual output mode, assign context by settings
     // in single output mode, assign context to 'horizontal' by default
-    const display = this.views.isDualOutputMode
-      ? settings.platforms[platform]?.display
-      : 'horizontal';
+    const display = this.views.getPlatformDisplayType(platform);
 
     try {
       // don't update settings for twitch in unattendedMode

@@ -178,7 +178,8 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   getPlatformDisplayType(platform: TPlatform): TDisplayType {
-    return this.settings.platforms[platform]?.display ?? 'horizontal';
+    const display = this.settings.platforms[platform]?.display ?? 'horizontal';
+    return display === 'both' ? 'horizontal' : display;
   }
 
   getShouldMultistreamDisplay(

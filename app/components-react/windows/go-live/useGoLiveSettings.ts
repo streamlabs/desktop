@@ -64,41 +64,17 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
    * Update settings for a specific platform
    */
   updatePlatform(platform: TPlatform, patch: Partial<IGoLiveSettings['platforms'][TPlatform]>) {
-    // TODO: find or create an observer for platform enabling/disabling behavior
-    const isDisablingPlatform =
-      Object.prototype.hasOwnProperty.call(patch, 'enabled') && patch?.enabled === false;
-
-    const hasExtraOutputs = Services.DualOutputService.views.hasExtraOutput(platform);
-
     const updated = {
       platforms: {
         ...this.state.platforms,
-        [platform]: {
-          ...this.state.platforms[platform],
-          ...this.updateDisplayIfNeeded(patch, isDisablingPlatform, hasExtraOutputs),
-        },
+        [platform]: { ...this.state.platforms[platform], ...patch },
       },
     };
     this.updateSettings(updated);
-
-    /*
-     * Reset display and extra outputs when disabling a platform, go live checks aren't enough.
-     * When disabling a platform, the extra output state remains true since its display
-     * `onChange` selector isn't triggered.
-     * Coupled with some bugs we've seen with go live settings persistence, this
-     * is the most practical place we've found to handle.
-     */
-    if (isDisablingPlatform) {
-      Services.DualOutputService.actions.removeExtraOutputPlatform(platform);
-    }
   }
 
-  private updateDisplayIfNeeded(
-    patch: Partial<IGoLiveSettings['platforms'][TPlatform]>,
-    isDisablingPlatform: boolean,
-    hasExtraOutputs: boolean,
-  ) {
-    return isDisablingPlatform && hasExtraOutputs ? { ...patch, display: 'horizontal' } : patch;
+  getCanDualStream(platform: TPlatform) {
+    return Services.StreamingService.views.supports('dualStream', [platform]);
   }
 
   switchPlatforms(enabledPlatforms: TPlatform[]) {
