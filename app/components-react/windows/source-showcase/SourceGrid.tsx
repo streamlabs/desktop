@@ -98,7 +98,7 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
   }, [isLoggedIn]);
 
   const { platform } = useVuex(() => ({ platform: UserService.views.platform?.type }));
-  const [searchThreshold, setSearchThreshold] = useState(0.3);
+  const [searchThreshold, _setSearchThreshold] = useState(0.3);
   const toFuseCollection = (xs: string[], threshold: number = 0.3) => {
     const list = xs.reduce((acc, type) => {
       const displayData: IWidgetDisplayData | ISourceDisplayData =
@@ -123,8 +123,6 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
 
     const result = new Fuse(list, {
       threshold,
-      //includeMatches: true,
-      //includeScore: true,
       keys: [
         { name: 'type', weight: 1 },
         { name: 'name', weight: 0.8 },
@@ -601,24 +599,9 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
     }
   }, [p.activeTab, availableAppSources, appsList, widgetList]);
 
-  const thresholdInput = (
-    <InputNumber
-      // @ts-ignore: it does have a controls prop
-      controls
-      value={searchThreshold}
-      onChange={(x: number) => setSearchThreshold(x)}
-      min={0.1}
-      max={1.0}
-      step={0.1}
-    />
-  );
-
   return (
     <Scrollable style={{ height: 'calc(100% - 64px)' }} className={styles.sourceGrid}>
       <Row gutter={[8, 8]} style={{ marginLeft: '8px', marginRight: '8px', paddingBottom: '24px' }}>
-        <Form style={{ marginTop: 5 }}>
-          <Form.Item label="Search Threshold (for testing)">{thresholdInput}</Form.Item>
-        </Form>
         {p.activeTab === 'all' ? (
           <>
             <Col span={24}>
