@@ -11,14 +11,13 @@ import { useVuex } from 'components-react/hooks';
 const mins = { x: 0, y: 0 };
 
 export function RecordingPreview() {
-  const { WindowsService, StreamingService } = Services;
+  const { StreamingService } = Services;
 
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { renderElement } = useBaseElement(<RecPreview />, mins, containerRef.current);
 
-  const { hideStyleBlockers, selectiveRecording } = useVuex(() => ({
-    hideStyleBlockers: WindowsService.state[Util.getCurrentUrlParams().windowId].hideStyleBlockers,
+  const { selectiveRecording } = useVuex(() => ({
     selectiveRecording: StreamingService.state.selectiveRecording,
   }));
 
@@ -34,7 +33,6 @@ export function RecordingPreview() {
 
   function RecPreview() {
     if (!selectiveRecording) return <SelectiveRecordingMessage />;
-    if (hideStyleBlockers) return <div />;
     return <Display renderingMode={ERenderingMode.OBS_RECORDING_RENDERING} />;
   }
 

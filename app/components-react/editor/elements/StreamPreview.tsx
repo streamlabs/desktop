@@ -1,6 +1,5 @@
 import React, { useRef } from 'react';
 import Display from 'components-react/shared/Display';
-import Util from 'services/utils';
 import { ERenderingMode } from '../../../../obs-api';
 import styles from './BaseElement.m.less';
 import { $t } from 'services/i18n';
@@ -11,14 +10,13 @@ import { useVuex } from 'components-react/hooks';
 const mins = { x: 0, y: 0 };
 
 export function StreamPreview() {
-  const { WindowsService, StreamingService } = Services;
+  const { StreamingService } = Services;
 
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { renderElement } = useBaseElement(<StreamPreviewElement />, mins, containerRef.current);
 
-  const { hideStyleBlockers, selectiveRecording } = useVuex(() => ({
-    hideStyleBlockers: WindowsService.state[Util.getCurrentUrlParams().windowId].hideStyleBlockers,
+  const { selectiveRecording } = useVuex(() => ({
     selectiveRecording: StreamingService.state.selectiveRecording,
   }));
 
@@ -34,7 +32,6 @@ export function StreamPreview() {
 
   function StreamPreviewElement() {
     if (!selectiveRecording) return <SelectiveRecordingMessage />;
-    if (hideStyleBlockers) return <div />;
     return <Display renderingMode={ERenderingMode.OBS_STREAMING_RENDERING} />;
   }
 

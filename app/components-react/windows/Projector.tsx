@@ -17,9 +17,8 @@ export default function Projector() {
 
   const { sourceId, renderingMode } = useOneOffWindowParams();
   const windowId = useMemo(() => Util.getCurrentUrlParams().windowId, []);
-  const { hideStyleBlockers, fullscreen } = useVuex(() => {
+  const { fullscreen } = useVuex(() => {
     return {
-      hideStyleBlockers: WindowsService.state[windowId].hideStyleBlockers,
       fullscreen: WindowsService.state[windowId].isFullScreen,
     };
   });
@@ -74,7 +73,7 @@ export default function Projector() {
                 ))}
               </div>
             </Scrollable>
-            {!hideStyleBlockers && <Display sourceId={sourceId} renderingMode={renderingMode} />}
+            <Display sourceId={sourceId} renderingMode={renderingMode} />
           </div>
         </ModalLayout>
       )}

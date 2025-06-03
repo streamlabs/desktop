@@ -6,11 +6,7 @@
     :cancel-handler="cancel"
     :fixedSectionHeight="200"
   >
-    <display
-      slot="fixed"
-      v-if="source && !hideStyleBlockers"
-      :componentProps="{ sourceId: source.id }"
-    />
+    <display slot="fixed" v-if="source" :componentProps="{ sourceId: source.id }" />
     <div slot="content" v-if="source">
       <component
         v-if="propertiesManagerUI"

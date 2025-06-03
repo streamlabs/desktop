@@ -81,10 +81,6 @@ export default class WidgetEditor extends TsxComponent<WidgetEditorProps> {
   animating = false;
   canShowEditor = false;
 
-  get hideStyleBlockers() {
-    return this.windowsService.state.child.hideStyleBlockers;
-  }
-
   get loaded() {
     return !!this.settingsState.data;
   }
