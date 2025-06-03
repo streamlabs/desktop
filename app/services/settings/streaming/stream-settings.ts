@@ -232,12 +232,12 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
     if (settingsPatch.platforms) {
       const pickedFields: (keyof IPlatformFlags)[] = ['enabled', 'useCustomFields', 'display'];
       const platforms: Dictionary<IPlatformFlags> = {};
-      Object.keys(settingsPatch.platforms).map((platform: TPlatform) => {
+      Object.keys(settingsPatch.platforms).map(platform => {
         const platformSettings = pick(settingsPatch.platforms![platform], pickedFields);
 
         if (this.streamingService.views.isDualOutputMode) {
           this.videoSettingsService.validateVideoContext();
-          const display = this.streamingService.views.getPlatformDisplayType(platform);
+          const display = this.streamingService.views.getPlatformDisplayType(platform as TPlatform);
           platformSettings.video = this.videoSettingsService.contexts[display];
         }
         return (platforms[platform] = platformSettings);
@@ -399,7 +399,7 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
 
   @mutation()
   private SET_LOCAL_STORAGE_SETTINGS(settings: Partial<IStreamSettingsState>) {
-    Object.keys(settings).forEach((prop: keyof IStreamSettingsState) => {
+    Object.keys(settings).forEach(prop => {
       Vue.set(this.state, prop, settings[prop]);
     });
   }
