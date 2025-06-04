@@ -291,27 +291,6 @@ export class YoutubeService
   }
 
   async setupDualStream(goLiveSettings: IGoLiveSettings) {
-    // {
-    //   id: string;
-    //   snippet: {
-    //     isDefaultStream: boolean;
-    //   };
-    //   cdn: {
-    //     ingestionInfo: {
-    //       /**
-    //        * streamName is actually a secret stream key
-    //        */
-    //       streamName: string;
-    //       ingestionAddress: string;
-    //     };
-    //     resolution: string;
-    //     frameRate: string;
-    //   };
-    //   status: {
-    //     streamStatus: TStreamStatus;
-    //   };
-    // }
-
     const ytSettings = getDefined(goLiveSettings.platforms.youtube);
     const title = makeVerticalTitle(ytSettings.title);
 
@@ -644,7 +623,7 @@ export class YoutubeService
     isVertical = false,
   ): Promise<IYoutubeLiveBroadcast> {
     let broadcast = await this.fetchBroadcast(id);
-    const title = isVertical ? makeVerticalTitle(params.title) : params.title;
+    const title = params.title && isVertical ? makeVerticalTitle(params.title) : params.title;
 
     const scheduledStartTime = params.scheduledStartTime
       ? new Date(params.scheduledStartTime)
