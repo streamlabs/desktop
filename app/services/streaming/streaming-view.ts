@@ -178,7 +178,8 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   getPlatformDisplayType(platform: TPlatform): TDisplayType {
-    return this.settings.platforms[platform]?.display ?? 'horizontal';
+    const display = this.settings.platforms[platform]?.display ?? 'horizontal';
+    return display === 'both' ? 'horizontal' : display;
   }
 
   getShouldMultistreamDisplay(
@@ -246,17 +247,18 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
   getCanStreamDualOutput(settings?: IGoLiveSettings): boolean {
     const platforms = settings?.platforms || this.settings.platforms;
-    // If any platform is configured as "Both" for outputs we technically should satisfy
-    // this requirement and ignore the warning
-    if (this.dualOutputView.hasExtraOutputs) {
-      return true;
-    }
 
     const customDestinations = settings?.customDestinations || this.customDestinations;
 
     const platformDisplays = { horizontal: [] as TPlatform[], vertical: [] as TPlatform[] };
 
     for (const platform in platforms) {
+      // If any platform is configured as "Both" for outputs we technically should satisfy
+      // this requirement and ignore the warning
+      if (platforms[platform as TPlatform]?.display === 'both') {
+        return true;
+      }
+
       if (platforms[platform as TPlatform]?.enabled) {
         const display = this.getPlatformDisplayType(platform as TPlatform);
         platformDisplays[display].push(platform as TPlatform);

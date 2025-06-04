@@ -252,7 +252,7 @@ export class FacebookService
     return this.state.streamDashboardUrl;
   }
 
-  async beforeGoLive(options: IGoLiveSettings, context?: TDisplayType) {
+  async beforeGoLive(options: IGoLiveSettings, context: TDisplayType) {
     const fbOptions = getDefined(options.platforms.facebook);
 
     let liveVideo: IFacebookLiveVideo;
