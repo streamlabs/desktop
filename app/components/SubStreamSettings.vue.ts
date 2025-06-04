@@ -89,10 +89,11 @@ export default class SubStreamSettings extends Vue {
     this.audioBitrate = this.subStreamService.state.audioBitrate;
     this.sync = this.subStreamService.state.sync;
 
+    const excepts = ['h265', 'fallback', 'hevc'];
     const r = await this.subStreamService.enumEncoderTypes();
     if (r.encoders) {
       this.videoCodecs = r.encoders.video
-        .filter(v => !(v.id.includes('h265') || v.id.includes('fallback')))
+        .filter(v => excepts.every(except => !v.id.includes(except)))
         .map(v => ({
           id: v.id,
           name: `${v.name}`,
