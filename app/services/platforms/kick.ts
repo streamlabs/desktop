@@ -69,6 +69,9 @@ interface IKickStreamInfoResponse {
       name: string;
       thumbnail: string;
     };
+    stream: {
+      viewer_count: number;
+    };
   };
 }
 
@@ -120,7 +123,7 @@ export class KickService
   readonly domain = 'https://kick.com';
   readonly platform = 'kick';
   readonly displayName = 'Kick';
-  readonly capabilities = new Set<TPlatformCapability>(['title', 'chat', 'game']);
+  readonly capabilities = new Set<TPlatformCapability>(['title', 'chat', 'game', 'viewerCount']);
 
   authWindowOptions: Electron.BrowserWindowConstructorOptions = {
     width: 600,
@@ -421,6 +424,15 @@ export class KickService
       .catch((e: unknown) => {
         console.warn('Error updating Kick channel info', e);
       });
+  }
+
+  async fetchViewerCount(): Promise<number> {
+    const resp = await this.fetchStreamInfo();
+    if (resp && (resp as IKickStreamInfoResponse).channel) {
+      return (resp as IKickStreamInfoResponse).channel.stream.viewer_count;
+    } else {
+      return 0;
+    }
   }
 
   getHeaders(req: IPlatformRequest, useToken?: string | boolean): IKickRequestHeaders {
