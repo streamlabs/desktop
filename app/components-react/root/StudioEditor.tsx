@@ -11,6 +11,7 @@ import AutoProgressBar from 'components-react/shared/AutoProgressBar';
 import { useSubscription } from 'components-react/hooks/useSubscription';
 import { message } from 'antd';
 import { useRealmObject } from 'components-react/hooks/realm';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export default function StudioEditor() {
   const {
@@ -361,6 +362,17 @@ function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
     Services.DualOutputService.views.showVerticalDisplay &&
     !Services.StreamingService.state.selectiveRecording;
 
+  const showRecordingIcons = useMemo(() => {
+    return p.isRecording;
+    // TODO: Comment in after factory API merge
+    // return (
+    //   p.isRecording &&
+    //   Services.IncrementalRolloutService.views.featureIsEnabled(
+    //     EAvailableFeatures.dualOutputRecording,
+    //   )
+    // );
+  }, [p.isRecording]);
+
   return (
     <div
       id="dual-output-header"
@@ -370,7 +382,7 @@ function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
         <div className={styles.horizontalHeader}>
           <i className="icon-desktop" />
           <span>{$t('Horizontal Output')}</span>
-          {p.isRecording && <DualOutputIcons display="horizontal" />}
+          {showRecordingIcons && <DualOutputIcons display="horizontal" />}
         </div>
       )}
 
@@ -378,7 +390,7 @@ function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
         <div className={styles.verticalHeader}>
           <i className="icon-phone-case" />
           <span>{$t('Vertical Output')}</span>
-          {p.isRecording && <DualOutputIcons display="vertical" />}
+          {showRecordingIcons && <DualOutputIcons display="vertical" />}
         </div>
       )}
       <div className={styles.manageLink}>
