@@ -71,6 +71,7 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
     : null;
 
   const iterableWidgetTypesBase = useMemo(() => {
+    // TODO: this can be combined and the conditions improved to make it more performant and readable
     const filtered = Object.keys(WidgetType)
       .filter((type: string) => isNaN(Number(type)) && type !== 'SubscriberGoal')
       .filter((type: string) => {
