@@ -31,9 +31,11 @@ export default function StudioEditor() {
     showHorizontalDisplay: DualOutputService.views.showHorizontalDisplay,
     showVerticalDisplay:
       DualOutputService.views.showVerticalDisplay && !StreamingService.state.selectiveRecording,
+    isRecording: StreamingService.views.isRecording,
     activeSceneId: ScenesService.views.activeSceneId,
     isLoading: DualOutputService.views.isLoading,
   }));
+
   const displayEnabled = !v.hideStyleBlockers && !performanceMode && !v.isLoading;
   const placeholderRef = useRef<HTMLDivElement>(null);
   const studioModeRef = useRef<HTMLDivElement>(null);
@@ -193,7 +195,9 @@ export default function StudioEditor() {
       {displayEnabled && (
         <div className={cx(styles.studioModeContainer, { [styles.stacked]: studioModeStacked })}>
           {v.studioMode && <StudioModeControls stacked={studioModeStacked} />}
-          {v.dualOutputMode && <DualOutputControls stacked={studioModeStacked} />}
+          {v.dualOutputMode && (
+            <DualOutputControls stacked={studioModeStacked} isRecording={v.isRecording} />
+          )}
           <div
             className={cx(styles.studioDisplayContainer, { [styles.stacked]: studioModeStacked })}
           >
@@ -347,10 +351,11 @@ function StudioModeControls(p: { stacked: boolean }) {
   );
 }
 
-function DualOutputControls(p: { stacked: boolean }) {
+function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
   function openSettingsWindow() {
     Services.SettingsService.actions.showSettings('Video');
   }
+
   const showHorizontal = Services.DualOutputService.views.showHorizontalDisplay;
   const showVertical =
     Services.DualOutputService.views.showVerticalDisplay &&
@@ -365,6 +370,7 @@ function DualOutputControls(p: { stacked: boolean }) {
         <div className={styles.horizontalHeader}>
           <i className="icon-desktop" />
           <span>{$t('Horizontal Output')}</span>
+          {p.isRecording && <DualOutputIcons display="horizontal" />}
         </div>
       )}
 
@@ -372,12 +378,41 @@ function DualOutputControls(p: { stacked: boolean }) {
         <div className={styles.verticalHeader}>
           <i className="icon-phone-case" />
           <span>{$t('Vertical Output')}</span>
+          {p.isRecording && <DualOutputIcons display="vertical" />}
         </div>
       )}
       <div className={styles.manageLink}>
         <a onClick={openSettingsWindow}>{$t('Manage Dual Output')}</a>
       </div>
     </div>
+  );
+}
+
+/**
+ * Note for the streaming and recording icons:
+ * To maintain the horizontal and vertical header icon and text positioning centered,
+ * conditionally change the opacity of the streaming and recording icons.
+ * For the horizontal recording, to maintain the same margin of the streaming and recording icons
+ * swap the icons shown conditionally so that when only recording, the recording icon shows next to
+ * the header text.
+ */
+function DualOutputIcons(p: { display: TDisplayType }) {
+  const { StreamingService } = Services;
+
+  const { showStreaming, showRecording } = useVuex(() => ({
+    showStreaming:
+      (p.display === 'horizontal' && StreamingService.views.isHorizontalStreaming) ||
+      (p.display === 'vertical' && StreamingService.views.isVerticalStreaming),
+    showRecording:
+      (p.display === 'horizontal' && StreamingService.views.isHorizontalRecording) ||
+      (p.display === 'vertical' && StreamingService.views.isVerticalRecording),
+  }));
+
+  return (
+    <>
+      <i className={cx('icon-studio', styles.streamIcon, { [styles.hidden]: !showStreaming })} />
+      <i className={cx('icon-record', styles.recordIcon, { [styles.hidden]: !showRecording })} />
+    </>
   );
 }
 

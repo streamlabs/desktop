@@ -556,6 +556,22 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return this.streamingState.replayBufferStatus !== EReplayBufferState.Offline;
   }
 
+  get isHorizontalStreaming() {
+    return this.isStreaming;
+  }
+
+  get isVerticalStreaming() {
+    return this.isStreaming;
+  }
+
+  get isHorizontalRecording() {
+    return this.isRecording;
+  }
+
+  get isVerticalRecording() {
+    return this.isRecording;
+  }
+
   get isIdle(): boolean {
     return !this.isStreaming && !this.isRecording;
   }
