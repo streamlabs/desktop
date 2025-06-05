@@ -92,7 +92,7 @@ export default class SubStreamSettings extends Vue {
     const r = await this.subStreamService.enumEncoderTypes();
     if (r.encoders) {
       this.videoCodecs = r.encoders.video
-        .filter(v => !/h265|hevc|fallback_amf|qsv_soft/.test(v.id))
+        .filter(v => !/h265|hevc|fallback_amf|qsv11_soft/.test(v.id))
         .map(v => ({
           id: v.id,
           name: `${v.name}`,
