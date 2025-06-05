@@ -363,14 +363,12 @@ function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
     !Services.StreamingService.state.selectiveRecording;
 
   const showRecordingIcons = useMemo(() => {
-    return p.isRecording;
-    // TODO: Comment in after factory API merge
-    // return (
-    //   p.isRecording &&
-    //   Services.IncrementalRolloutService.views.featureIsEnabled(
-    //     EAvailableFeatures.dualOutputRecording,
-    //   )
-    // );
+    return (
+      p.isRecording &&
+      Services.IncrementalRolloutService.views.featureIsEnabled(
+        EAvailableFeatures.dualOutputRecording,
+      )
+    );
   }, [p.isRecording]);
 
   return (
