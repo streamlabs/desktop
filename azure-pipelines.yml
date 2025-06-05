@@ -9,6 +9,7 @@ jobs:
   - job: Test
     pool:
       name: 'Default'
+      vmImage: 'windows-2022'
 
     workspace:
       clean: resources
@@ -44,6 +45,7 @@ jobs:
 
     pool:
       name: 'Default'
+      vmImage: 'windows-2022'
 
     workspace:
       clean: resources
