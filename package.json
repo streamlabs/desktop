@@ -242,7 +242,8 @@
     "zustand": "^4.4.1"
   },
   "optionalDependencies": {
-    "node-win32-np": "1.0.6"
+    "node-win32-np": "1.0.6",
+    "sharp": "^0.33.5"
   },
   "resolutions": {
     "minimist": "1.2.6",
