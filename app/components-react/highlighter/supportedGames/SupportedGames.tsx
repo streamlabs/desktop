@@ -4,16 +4,31 @@ import { supportedGames } from 'services/highlighter/models/game-config.models';
 import { Tooltip } from 'antd';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 
-export default function SupportedGames({ emitClick }: { emitClick?: (game: EGame) => void }) {
-  const rotation = ['4.654deg', '-3.9deg', '5.24deg', '-2.58deg'];
-
+export default function SupportedGames({
+  gamesVisible,
+  emitClick,
+}: {
+  gamesVisible?: number;
+  emitClick?: (game: EGame) => void;
+}) {
+  const rotation = [
+    '4.654deg',
+    '-3.9deg',
+    '5.24deg',
+    '-2.58deg',
+    '4.654deg',
+    '-3.9deg',
+    '5.24deg',
+    '-2.58deg',
+  ];
+  gamesVisible = gamesVisible ?? 4;
   const games = [...supportedGames];
   const gamesSortedAlphabetical = [...supportedGames].sort((a, b) =>
     a.label.localeCompare(b.label),
   );
   return (
     <div style={{ display: 'flex' }}>
-      {games.slice(0, 3).map((game, index) => (
+      {games.slice(0, gamesVisible).map((game, index) => (
         <div
           key={game.value + index}
           onClick={e => emitClick && emitClick(game.value)}
@@ -27,7 +42,7 @@ export default function SupportedGames({ emitClick }: { emitClick?: (game: EGame
           <img src={game.image} alt={game.label} />
         </div>
       ))}
-      {games.length > 3 && (
+      {games.length > gamesVisible && (
         <Tooltip
           overlay={
             <div
