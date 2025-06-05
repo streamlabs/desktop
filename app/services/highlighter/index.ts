@@ -118,7 +118,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       error: null,
       fps: 30,
       resolution: 1080,
-      preset: 'fast',
+      preset: 'medium',
     },
     uploads: [],
     dismissedTutorial: false,
