@@ -8,7 +8,6 @@ variables:
 jobs:
   - job: Test
     pool:
-      name: 'Default'
       vmImage: 'windows-2022'
 
     workspace:
@@ -44,7 +43,6 @@ jobs:
   - job: Check_eslint_and_strict_nulls_regression
 
     pool:
-      name: 'Default'
       vmImage: 'windows-2022'
 
     workspace:
