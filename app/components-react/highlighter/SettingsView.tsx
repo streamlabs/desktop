@@ -150,7 +150,13 @@ export default function SettingsView({
                       <h3 style={{ margin: 0, fontSize: '20px' }}> {$t('AI Highlighter')}</h3>
                       <p className={styles.headerbarTag}>{$t('Beta')}</p>
                     </div>
-                    <SupportedGames />
+                    <SupportedGames
+                      gamesVisible={6}
+                      emitClick={() => {
+                        if (v.highlighterVersion === '') return;
+                        emitSetView({ view: EHighlighterView.STREAM });
+                      }}
+                    />
                   </div>
                 </div>
 

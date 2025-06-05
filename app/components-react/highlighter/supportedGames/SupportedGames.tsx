@@ -4,11 +4,31 @@ import { supportedGames } from 'services/highlighter/models/game-config.models';
 import { Tooltip } from 'antd';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 
-export default function SupportedGames({ emitClick }: { emitClick?: (game: EGame) => void }) {
-  const rotation = ['4.654deg', '-3.9deg', '5.24deg', '-2.58deg'];
+export default function SupportedGames({
+  gamesVisible,
+  emitClick,
+}: {
+  gamesVisible?: number;
+  emitClick?: (game: EGame) => void;
+}) {
+  const rotation = [
+    '4.654deg',
+    '-3.9deg',
+    '5.24deg',
+    '-2.58deg',
+    '4.654deg',
+    '-3.9deg',
+    '5.24deg',
+    '-2.58deg',
+  ];
+  gamesVisible = gamesVisible ?? 4;
+  const games = [...supportedGames];
+  const gamesSortedAlphabetical = [...supportedGames].sort((a, b) =>
+    a.label.localeCompare(b.label),
+  );
   return (
     <div style={{ display: 'flex' }}>
-      {supportedGames.slice(0, 4).map((game, index) => (
+      {games.slice(0, gamesVisible).map((game, index) => (
         <div
           key={game.value + index}
           onClick={e => emitClick && emitClick(game.value)}
@@ -22,24 +42,64 @@ export default function SupportedGames({ emitClick }: { emitClick?: (game: EGame
           <img src={game.image} alt={game.label} />
         </div>
       ))}
-      {/* Coming with next PR
-      <Tooltip title="More games">
-        <div
-          className={styles.thumbnail}
-          style={{
-            marginRight: '-8px',
-            fontSize: '12px',
-            fontWeight: 'bold',
-            width: '40px',
-            height: '40px',
-            backgroundColor: 'gray',
-            display: 'grid',
-            placeContent: 'center',
-          }}
+      {games.length > gamesVisible && (
+        <Tooltip
+          overlay={
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start', // Align items to the left
+                justifyContent: 'flex-start', // Align content to the top
+                padding: '16px',
+                marginTop: '8px',
+              }}
+            >
+              <h1 style={{ marginBottom: '8px' }}>Supported games</h1>
+              {gamesSortedAlphabetical.map((game, index) => (
+                <div
+                  onClick={e => emitClick && emitClick(game.value)}
+                  key={game.value + index}
+                  style={{
+                    cursor: 'pointer',
+                    display: 'flex',
+                    marginBottom: 8,
+                    width: '100%',
+                    alignItems: 'center', // Ensure items inside each row are aligned properly
+                    justifyContent: 'flex-start', // Align items to the left
+                  }}
+                >
+                  <img
+                    width={'40px'}
+                    height={'40px'}
+                    className={styles.thumbnail}
+                    style={{ marginRight: 0 }}
+                    src={game.image}
+                    alt={game.label}
+                  />
+                  <p style={{ marginBottom: 0, marginLeft: 4 }}>{game.label}</p>
+                </div>
+              ))}
+            </div>
+          }
         >
-          more
-        </div>
-      </Tooltip> */}
+          <div
+            className={styles.thumbnail}
+            style={{
+              marginRight: '-8px',
+              fontSize: '12px',
+              color: 'white',
+              width: '40px',
+              height: '40px',
+              backgroundColor: 'gray',
+              display: 'grid',
+              placeContent: 'center',
+            }}
+          >
+            more
+          </div>
+        </Tooltip>
+      )}
     </div>
   );
 }
