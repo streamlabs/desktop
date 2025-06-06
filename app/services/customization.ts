@@ -10,6 +10,8 @@ import * as obs from '../../obs-api';
 import { RealmObject } from './realm';
 import { ObjectSchema } from 'realm';
 
+export type TApplicationTheme = 'night-theme' | 'day-theme' | 'prime-dark' | 'prime-light';
+
 // Maps to --background
 const THEME_BACKGROUNDS = {
   'night-theme': { r: 23, g: 36, b: 45 },
@@ -43,7 +45,7 @@ export interface IPinnedStatistics {
 
 export interface ICustomizationServiceState {
   nightMode?: string;
-  theme: string;
+  theme: TApplicationTheme;
   updateStreamInfoOnLive: boolean;
   livePreviewEnabled: boolean;
   leftDock: boolean;
@@ -91,7 +93,7 @@ class PinnedStatistics extends RealmObject {
 PinnedStatistics.register({ persist: true });
 
 export class CustomizationState extends RealmObject {
-  theme: string;
+  theme: TApplicationTheme;
   updateStreamInfoOnLive: boolean;
   livePreviewEnabled: boolean;
   leftDock: boolean;
@@ -220,7 +222,7 @@ export class CustomizationService extends Service {
     return this.state.theme;
   }
 
-  setTheme(theme: string) {
+  setTheme(theme: TApplicationTheme) {
     obs.NodeObs.OBS_content_setDayTheme(['day-theme', 'prime-light'].includes(theme));
     return this.setSettings({ theme });
   }
