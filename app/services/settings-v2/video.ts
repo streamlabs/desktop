@@ -313,10 +313,12 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
     return !!this.contexts[display];
   }
 
+  /**
+   * Validate the video context
+   * @param display - Optional, the context's display name, default is vertical
+   */
   validateVideoContext(display: TDisplayType = 'vertical') {
     if (!this.contexts[display]) {
-      console.log('establishing video context ', display);
-
       this.establishVideoContext(display);
     }
   }
