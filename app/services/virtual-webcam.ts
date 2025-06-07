@@ -9,7 +9,8 @@ import { SettingsService } from 'services/settings';
 import { UsageStatisticsService, SourcesService } from 'app-services';
 import * as remote from '@electron/remote';
 import { Subject } from 'rxjs';
-import { ESourceOutputFlags, VCamOutputType } from 'obs-studio-node';
+import { VCamOutputType } from 'obs-studio-node';
+import { IOBSOutputSignalInfo } from './core/signals';
 
 const PLUGIN_PLIST_PATH =
   '/Library/CoreMediaIO/Plug-Ins/DAL/vcam-plugin.plugin/Contents/Info.plist';
@@ -48,6 +49,7 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
 
   runningChanged = new Subject<boolean>();
   installStatusChanged = new Subject<EVirtualWebcamPluginInstallStatus>();
+  signalInfoChanged = new Subject<IOBSOutputSignalInfo>();
 
   protected init(): void {
     this.setInstallStatus();
@@ -77,46 +79,38 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
 
   @ExecuteInWorkerProcess()
   getInstallStatus(): EVirtualWebcamPluginInstallStatus {
-    return byOS({
-      [OS.Mac]: () => {
-        try {
-          const exists = fs.existsSync(PLUGIN_PLIST_PATH);
-          if (exists) {
-            const latest = this.getCurrentChecksum();
-            const installed = getChecksum(PLUGIN_PLIST_PATH);
+    const result = obs.NodeObs.OBS_service_isVirtualCamPluginInstalled();
+    console.log(`isInstalled ${result}`);
 
-            if (latest === installed) {
-              return EVirtualWebcamPluginInstallStatus.Installed;
-            }
-
-            return EVirtualWebcamPluginInstallStatus.Outdated;
-          }
-
-          return EVirtualWebcamPluginInstallStatus.NotPresent;
-        } catch (e: unknown) {
-          console.error('Error comparing checksums on virtual webcam', e);
-          return EVirtualWebcamPluginInstallStatus.Outdated;
-        }
-      },
-      [OS.Windows]: () => {
-        const result = obs.NodeObs.OBS_service_isVirtualCamPluginInstalled();
-
-        if (result === obs.EVcamInstalledStatus.Installed) {
-          return EVirtualWebcamPluginInstallStatus.Installed;
-        } else if (result === obs.EVcamInstalledStatus.LegacyInstalled) {
-          return EVirtualWebcamPluginInstallStatus.Outdated;
-        } else {
-          return EVirtualWebcamPluginInstallStatus.NotPresent;
-        }
-      },
-    });
+    if (result === obs.EVcamInstalledStatus.Installed) {
+      return EVirtualWebcamPluginInstallStatus.Installed;
+    } else if (result === obs.EVcamInstalledStatus.LegacyInstalled) {
+      return EVirtualWebcamPluginInstallStatus.Outdated;
+    } else {
+      return EVirtualWebcamPluginInstallStatus.NotPresent;
+    }
   }
 
   @ExecuteInWorkerProcess()
   install() {
-    obs.NodeObs.OBS_service_installVirtualCamPlugin();
+    byOS({
+      [OS.Windows]: () => {
+        obs.NodeObs.OBS_service_installVirtualCamPlugin();
 
-    this.setInstallStatus();
+        this.setInstallStatus();
+      },
+      [OS.Mac]: () => {
+        obs.NodeObs.OBS_service_connectOutputSignals((info: IOBSOutputSignalInfo) => {
+          this.signalInfoChanged.next(info);
+        });
+
+        obs.NodeObs.OBS_service_createVirtualCam();
+        this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
+          console.log(`virtual cam install signalInfo: ${signalInfo.signal}`);
+          this.setInstallStatus();
+        });
+      },
+    });
   }
 
   @ExecuteInWorkerProcess()

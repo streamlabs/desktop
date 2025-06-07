@@ -79,57 +79,7 @@ import { byOS, OS } from 'util/operating-systems';
 import { DualOutputService } from 'services/dual-output';
 import { capitalize } from 'lodash';
 import { YoutubeService } from 'app-services';
-
-enum EOBSOutputType {
-  Streaming = 'streaming',
-  Recording = 'recording',
-  ReplayBuffer = 'replay-buffer',
-}
-
-const outputType = (type: EOBSOutputType) =>
-  ({
-    [EOBSOutputType.Streaming]: $t('Streaming'),
-    [EOBSOutputType.Recording]: $t('Recording'),
-    [EOBSOutputType.ReplayBuffer]: $t('Replay Buffer'),
-  }[type]);
-
-enum EOBSOutputSignal {
-  Starting = 'starting',
-  Start = 'start',
-  Stopping = 'stopping',
-  Stop = 'stop',
-  Activate = 'activate',
-  Deactivate = 'deactivate',
-  Reconnect = 'reconnect',
-  ReconnectSuccess = 'reconnect_success',
-  Wrote = 'wrote',
-  Writing = 'writing',
-  WriteError = 'writing_error',
-}
-
-enum EOutputSignalState {
-  Saving = 'saving',
-  Starting = 'starting',
-  Start = 'start',
-  Stopping = 'stopping',
-  Stop = 'stop',
-  Activate = 'activate',
-  Deactivate = 'deactivate',
-  Reconnect = 'reconnect',
-  ReconnectSuccess = 'reconnect_success',
-  Running = 'running',
-  Wrote = 'wrote',
-  Writing = 'writing',
-  WriteError = 'writing_error',
-}
-
-export interface IOBSOutputSignalInfo {
-  type: EOBSOutputType;
-  signal: EOBSOutputSignal;
-  code: EOutputCode;
-  error: string;
-  service: string; // 'default' | 'vertical'
-}
+import { EOBSOutputType, EOBSOutputSignal, IOBSOutputSignalInfo } from 'services/core/signals';
 
 /**
  * Output descriptor for extra outputs (e.g YouTube vertical)
@@ -1733,6 +1683,7 @@ export class StreamingService
         [EOBSOutputType.Streaming]: $t('Streaming Error'),
         [EOBSOutputType.Recording]: $t('Recording Error'),
         [EOBSOutputType.ReplayBuffer]: $t('Replay Buffer Error'),
+        [EOBSOutputType.VirtualCam]: $t('Virtual Cam Error'),
       }[info.type];
 
       if (linkToDriverInfo) buttons.push($t('Learn More'));
