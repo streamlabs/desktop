@@ -6,9 +6,7 @@ function downloadTempRepo() {
   let result = true;
   const repo = `git clone --branch ${repoVersion} --depth 1 https://github.com/streamlabs/obs-studio.git`;
   try {
-    cp.execSync(
-      'rm -rf obs-studio',
-    );
+    cp.execSync('rm -rf obs-studio');
     cp.execSync(repo);
   } catch {
     result = false;
@@ -20,7 +18,7 @@ function downloadTempRepo() {
 function buildVirtualCamExtension(context) {
   const hasDownloadedRepo = downloadTempRepo(cp);
   if (hasDownloadedRepo) {
-    const hasBuiltProj = cp.execSync(`cd ./obs-studio/plugins/mac-virtualcam/src/camera-extension && ./build-slobs-cameraextension.sh`);
+    const hasBuiltProj = cp.execSync('cd ./obs-studio/plugins/mac-virtualcam/src/camera-extension && ./build-slobs-cameraextension.sh');
     if (hasBuiltProj) {
       cp.execSync(
         `mkdir -p \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Library/SystemExtensions\"`,
