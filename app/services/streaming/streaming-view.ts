@@ -10,7 +10,13 @@ import { StreamSettingsService, ICustomStreamDestination } from '../settings/str
 import { UserService } from '../user';
 import { RestreamService, TOutputOrientation } from '../restream';
 import { DualOutputService, TDisplayPlatforms, TDisplayDestinations } from '../dual-output';
-import { getPlatformService, TPlatform, TPlatformCapability, platformList } from '../platforms';
+import {
+  getPlatformService,
+  TPlatform,
+  TPlatformCapability,
+  platformList,
+  EPlatform,
+} from '../platforms';
 import { TwitterService } from '../../app-services';
 import cloneDeep from 'lodash/cloneDeep';
 import difference from 'lodash/difference';
@@ -226,7 +232,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
     return destinations.reduce(
       (displayDestinations: TDisplayDestinations, destination: ICustomStreamDestination) => {
-        if (destination.enabled) {
+        if (destination.enabled && !destination.dualStream) {
           displayDestinations[destination.display ?? 'horizontal'].push(destination.url);
         }
         return displayDestinations;
@@ -242,9 +248,21 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get verticalStream() {
-    return this.activeDisplayDestinations.vertical.concat(
-      this.activeDisplayPlatforms.vertical as string[],
+    // convert dual stream custom destinations to platforms for analytics
+    const verticalDestinations = this.customDestinations.reduce(
+      (verticalDestinations: string[], destination: ICustomStreamDestination) => {
+        if (destination.enabled && destination.dualStream) {
+          const target =
+            destination.url.split('.').find(str => platformList.includes(str as EPlatform)) ??
+            destination.url;
+          verticalDestinations.push(target);
+        }
+        return verticalDestinations;
+      },
+      [],
     );
+
+    return verticalDestinations.concat(this.activeDisplayPlatforms.vertical as string[]);
   }
 
   getCanStreamDualOutput(settings?: IGoLiveSettings): boolean {

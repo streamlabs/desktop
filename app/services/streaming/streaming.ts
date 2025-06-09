@@ -393,9 +393,6 @@ export class StreamingService
       // to be validated.
       try {
         await this.runCheck('setupDualOutput', async () => {
-          // validate vertical video context
-          this.videoSettingsService.validateVideoContext('vertical');
-
           // if a custom destination is enabled for single streaming to the vertical display
           // move the OBS context to custom ingest mode (when multistreaming this is
           // handled by the restream service)
@@ -403,7 +400,7 @@ export class StreamingService
             this.views.activeDisplayDestinations.vertical.length === 1 &&
             this.views.activeDisplayPlatforms.vertical.length === 0
           ) {
-            const customDestinations = cloneDeep(this.views.customDestinations);
+            const customDestinations = cloneDeep(this.views.settings).customDestinations;
             customDestinations.forEach(destination => {
               if (!destination.enabled || destination.display !== 'vertical') return;
 
@@ -426,7 +423,8 @@ export class StreamingService
               destination.video = this.videoSettingsService.contexts.vertical;
             });
 
-            this.streamSettingsService.setSettings({ goLiveSettings: settings });
+            const updatedSettings = { ...settings, customDestinations };
+            this.streamSettingsService.setSettings({ goLiveSettings: updatedSettings });
           }
 
           await Promise.resolve();

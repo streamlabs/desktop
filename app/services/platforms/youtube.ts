@@ -319,6 +319,7 @@ export class YoutubeService
       enabled: true,
       display: 'vertical' as TDisplayType,
       mode: 'portrait' as TOutputOrientation,
+      dualStream: true,
     };
 
     this.streamSettingsService.setGoLiveSettings({

@@ -37,6 +37,10 @@ export interface ICustomStreamDestination {
   display?: TDisplayType;
   video?: IVideo;
   mode?: TOutputOrientation;
+  /**
+   * Indicates if this custom destination is the vertical dual stream
+   */
+  dualStream?: boolean;
 }
 
 /**
