@@ -4,14 +4,13 @@ import Tabs, { ITab } from 'components/Tabs.vue';
 import TransitionSettings from 'components/TransitionSettings.vue';
 import { Inject } from 'services/core/injector';
 import { $t } from 'services/i18n';
-import { ObsImporterService } from 'services/obs-importer';
-import { OnboardingService } from 'services/onboarding';
 import { ScenesService } from 'services/scenes';
 import { ETransitionType, TransitionsService } from 'services/transitions';
 import { WindowsService } from 'services/windows';
 import Vue from 'vue';
 import VModal from 'vue-js-modal';
 import { Component } from 'vue-property-decorator';
+
 Vue.use(VModal);
 
 @Component({
@@ -26,8 +25,6 @@ export default class SceneTransitions extends Vue {
   @Inject() transitionsService: TransitionsService;
   @Inject() windowsService: WindowsService;
   @Inject() scenesService: ScenesService;
-  @Inject() onboardingService: OnboardingService;
-  @Inject() obsImporterService: ObsImporterService;
 
   inspectedTransition = '';
   inspectedConnection = '';
@@ -139,14 +136,5 @@ export default class SceneTransitions extends Vue {
 
   dismissModal(modal: string) {
     this.$modal.hide(modal);
-  }
-
-  get canImportFromOBS() {
-    return this.obsImporterService.canImportFromOBS;
-  }
-
-  importFromOBS() {
-    this.windowsService.closeChildWindow();
-    this.onboardingService.start({ skipLogin: true });
   }
 }

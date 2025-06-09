@@ -19,6 +19,5 @@
   "sceneCollectionsImportDescription": "The scene collection has been imported.",
 
   "updateHeader": "Update Information.",
-  "updateDone": "Done",
-  "reImportWarningMessage": "Importing will delete all currently configured scenes and sources. Are you sure you want to continue?"
+  "updateDone": "Done"
 }

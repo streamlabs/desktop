@@ -1,4 +1,3 @@
-import * as remote from '@electron/remote';
 import { defer } from 'lodash';
 import { $t } from 'services/i18n';
 import { SceneCollectionsService } from 'services/scene-collections';
@@ -71,20 +70,8 @@ export default class ObsImport extends Vue {
   }
 
   startImport() {
+    this.status = 'importing';
     defer(async () => {
-      if (this.reImportMode) {
-        const isOk = await remote.dialog
-          .showMessageBox(remote.getCurrentWindow(), {
-            type: 'warning',
-            message: $t('onboarding.reImportWarningMessage'),
-            buttons: [$t('onboarding.importFromObs'), $t('common.cancel')],
-            noLink: true,
-          })
-          .then(value => value.response === 0);
-        if (!isOk) return;
-      }
-
-      this.status = 'importing';
       try {
         await this.obsImporterService.load(this.selectedProfile);
         this.status = 'done';

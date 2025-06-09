@@ -5,13 +5,13 @@
   "skipConnect": "後でセットアップをする",
   "loginToNiconico": "ニコニコにログイン",
 
-  "selectObsProfile": "インポートしたいOBSのプロファイルを選択してください。",
-  "importFromObs": "OBSからインポート",
+  "selectObsProfile": "インポートしたいOBS Studioのプロファイルを選択してください。",
+  "importFromObs": "OBS Studioからインポート",
   "skipImport": "スキップ",
-  "initialStateTitle": "OBSからインポート",
+  "initialStateTitle": "OBS Studioからインポート",
   "importingStateTitle": "インポート中です",
   "doneStateTitle": "インポートは成功しました",
-  "initialStateDescription": "OBSで利用していたシーンコレクションや設定を、N Airでもご利用いただけます。",
+  "initialStateDescription": "OBS Studioで利用していたシーンコレクションや設定を、N Airでもご利用いただけます。",
   "importingStateDescription": "シーンとソースをインポートしています。",
   "doneStateDescription": "シーンとソース設定をインポートしました。",
 
@@ -19,6 +19,5 @@
   "sceneCollectionsImportDescription": "シーンコレクションはインポートされました。",
 
   "updateHeader": "更新内容のお知らせ",
-  "updateDone": "確認",
-  "reImportWarningMessage": "インポートを行うと現在設定されているシーン・ソースは全て破棄されます。よろしいですか？"
+  "updateDone": "確認"
 }

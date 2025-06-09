@@ -5,7 +5,7 @@
       <div class="onboarding-desc">{{ description }}</div>
       <div v-if="status === 'done'">
         <button class="button button--primary" @click="next">
-          {{ $t('common.continue') }}
+          {{ $t('common.ok') }}
         </button>
       </div>
       <div v-if="status === 'importing'">

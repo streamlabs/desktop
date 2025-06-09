@@ -2,6 +2,8 @@ import EditableSceneCollection from 'components/EditableSceneCollection.vue';
 import ModalLayout from 'components/ModalLayout.vue';
 import Fuse from 'fuse.js';
 import { Inject } from 'services/core/injector';
+import { ObsImporterService } from 'services/obs-importer';
+import { OnboardingService } from 'services/onboarding';
 import { SceneCollectionsService } from 'services/scene-collections';
 import { WindowsService } from 'services/windows';
 import Vue from 'vue';
@@ -16,6 +18,8 @@ import { Component } from 'vue-property-decorator';
 export default class ManageSceneCollections extends Vue {
   @Inject() windowsService: WindowsService;
   @Inject() sceneCollectionsService: SceneCollectionsService;
+  @Inject() onboardingService: OnboardingService;
+  @Inject() obsImporterService: ObsImporterService;
 
   searchQuery = '';
 
@@ -41,5 +45,14 @@ export default class ManageSceneCollections extends Vue {
     }
 
     return list;
+  }
+
+  get canImportFromOBS() {
+    return this.obsImporterService.canImportFromOBS;
+  }
+
+  importFromOBS() {
+    this.windowsService.closeChildWindow();
+    this.onboardingService.start({ skipLogin: true });
   }
 }
