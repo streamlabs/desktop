@@ -52,7 +52,26 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
   signalInfoChanged = new Subject<IOBSOutputSignalInfo>();
 
   protected init(): void {
-    this.setInstallStatus();
+    byOS({
+      [OS.Windows]: () => {
+        this.setInstallStatus();
+      },
+      [OS.Mac]: () => {
+        const result = obs.NodeObs.OBS_service_isVirtualCamPluginInstalled();
+        if (result === obs.EVcamInstalledStatus.Installed) {
+          // Initialize the virtual cam
+          obs.NodeObs.OBS_service_connectOutputSignals((info: IOBSOutputSignalInfo) => {
+            this.signalInfoChanged.next(info);
+          });
+
+          obs.NodeObs.OBS_service_createVirtualCam();
+          this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
+            console.log(`virtual cam init signalInfo: ${signalInfo.signal}`);
+            this.setInstallStatus();
+          });
+        }
+      },
+    });
   }
 
   get views() {
@@ -80,7 +99,6 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
   @ExecuteInWorkerProcess()
   getInstallStatus(): EVirtualWebcamPluginInstallStatus {
     const result = obs.NodeObs.OBS_service_isVirtualCamPluginInstalled();
-    console.log(`isInstalled ${result}`);
 
     if (result === obs.EVcamInstalledStatus.Installed) {
       return EVirtualWebcamPluginInstallStatus.Installed;
