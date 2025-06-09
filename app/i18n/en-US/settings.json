@@ -709,6 +709,7 @@
   },
   "substream": {
     "use": "Use",
+    "description": "When this feature is turned ON, you can simultaneously stream\nto other platforms in addition to your main destination.",
     "url": "URL",
     "urlTips": "Enter the stream URL provided by the service.",
     "streamKey": "Stream Key",

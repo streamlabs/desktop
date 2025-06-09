@@ -12,6 +12,10 @@
         </div>
       </div>
 
+      <div v-if="!use" class="description-text">
+        {{ $t('settings.substream.description') }}
+      </div>
+
       <div class="section" v-if="use">
         <div class="input-wrapper">
           <div class="input-label">
@@ -259,5 +263,10 @@
 
 .control-button {
   margin: 0;
+}
+
+.description-text {
+  margin: 16px;
+  white-space: pre-line;
 }
 </style>
