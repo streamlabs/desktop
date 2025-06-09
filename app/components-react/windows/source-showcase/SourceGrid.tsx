@@ -180,7 +180,6 @@ export default function SourceGrid(p: { activeTab: string }) {
         {essentialSources.essentialDefaults.map(source => (
           <SourceTag key={source.value} type={source.value} essential excludeWrap={excludeWrap} />
         ))}
-
         {isLoggedIn &&
           essentialSources.essentialWidgets.map(widgetType => (
             <SourceTag key={widgetType} type={widgetType} essential excludeWrap={excludeWrap} />
@@ -194,6 +193,13 @@ export default function SourceGrid(p: { activeTab: string }) {
             excludeWrap={excludeWrap}
           />
         )}
+        <SourceTag
+          key="smart_browser_source"
+          type="smart_browser_source"
+          name="Smart Browser Source"
+          essential
+          excludeWrap={excludeWrap}
+        />
       </>
     ),
     [essentialSources, isLoggedIn, excludeWrap],
