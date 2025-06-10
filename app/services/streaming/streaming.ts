@@ -385,35 +385,49 @@ export class StreamingService
     }
 
     /**
-     * SET MULTISTREAM SETTINGS
+     * SET DUAL OUTPUT SETTINGS
      */
-    if (this.views.isMultiplatformMode) {
-      // setup restream
-
-      // check the Restream service is available
-      let ready = false;
+    if (this.views.isDualOutputMode) {
+      // This handles setting up displays that are streaming to a single target.
+      // Note: Because the horizontal video context is the default, it does not need
+      // to be validated.
       try {
-        await this.runCheck(
-          'setupMultistream',
-          async () => (ready = await this.restreamService.checkStatus()),
-        );
-      } catch (e: unknown) {
-        // don't set error to allow multistream setup to continue in go live window
-        console.error('Error fetching restreaming service', e);
-      }
-      // Assume restream is down
-      if (!ready) {
-        console.error('Restream service is not available');
-        this.setError('RESTREAM_DISABLED');
-        return;
-      }
+        await this.runCheck('setupDualOutput', async () => {
+          // if a custom destination is enabled for single streaming to the vertical display
+          // move the OBS context to custom ingest mode (when multistreaming this is
+          // handled by the restream service)
+          if (
+            this.views.activeDisplayDestinations.vertical.length === 1 &&
+            this.views.activeDisplayPlatforms.vertical.length === 0
+          ) {
+            const customDestinations = cloneDeep(this.views.settings).customDestinations;
+            customDestinations.forEach(destination => {
+              if (!destination.enabled || destination.display !== 'vertical') return;
 
-      // update restream settings
-      try {
-        await this.runCheck('setupMultistream', async () => {
-          // enable restream on the backend side
-          if (!this.restreamService.state.enabled) await this.restreamService.setEnabled(true);
-          await this.restreamService.beforeGoLive();
+              // set the OBS context to custom ingest mode in order to update settings
+              this.streamSettingsService.setSettings(
+                {
+                  streamType: 'rtmp_custom',
+                },
+                'vertical' as TDisplayType,
+              );
+
+              this.streamSettingsService.setSettings(
+                {
+                  key: destination.streamKey,
+                  server: destination.url,
+                },
+                'vertical' as TDisplayType,
+              );
+
+              destination.video = this.videoSettingsService.contexts.vertical;
+            });
+
+            const updatedSettings = { ...settings, customDestinations };
+            this.streamSettingsService.setSettings({ goLiveSettings: updatedSettings });
+          }
+
+          await Promise.resolve();
         });
       } catch (e: unknown) {
         // Handle rendering a prompt for enabling permissions to generate a stream key for Kick
@@ -421,32 +435,22 @@ export class StreamingService
 
         const error = this.handleTypedStreamError(
           e,
-          'RESTREAM_SETUP_FAILED',
-          'Failed to setup restream',
+          'DUAL_OUTPUT_SETUP_FAILED',
+          'Failed to setup dual output',
         );
         this.setError(error);
         return;
       }
-    }
 
-    /**
-     * SET DUAL OUTPUT SETTINGS
-     */
-    if (this.views.isDualOutputMode) {
-      const horizontalDestinations: string[] = this.views.activeDisplayDestinations.horizontal;
-      const horizontalPlatforms: TPlatform[] = this.views.activeDisplayPlatforms.horizontal;
-      const horizontalStream = horizontalDestinations.concat(horizontalPlatforms as string[]);
-
-      const verticalDestinations: string[] = this.views.activeDisplayDestinations.vertical;
-      const verticalPlatforms: TPlatform[] = this.views.activeDisplayPlatforms.vertical;
-      const verticalStream = verticalDestinations.concat(verticalPlatforms as string[]);
+      // record dual output usage
+      const horizontalStream = this.views.horizontalStream;
+      const verticalStream = this.views.verticalStream;
 
       const allPlatforms = this.views.enabledPlatforms;
       const allDestinations = this.views.customDestinations
         .filter(dest => dest.enabled)
         .map(dest => dest.url);
 
-      // record dual output analytics event
       this.usageStatisticsService.recordAnalyticsEvent('DualOutput', {
         type: 'StreamingDualOutput',
         platforms: JSON.stringify(allPlatforms),
@@ -454,99 +458,55 @@ export class StreamingService
         horizontal: JSON.stringify(horizontalStream),
         vertical: JSON.stringify(verticalStream),
       });
+    }
 
-      // if needed, set up multistreaming for dual output
-      const shouldMultistreamDisplay = this.views.getShouldMultistreamDisplay(settings);
+    /**
+     * SET MULTISTREAM SETTINGS
+     */
+    if (this.views.shouldSetupRestream) {
+      // In single output mode, this sets up multistreaming
+      // In dual output mode, this sets up streaming displays to multiple targets
 
-      const destinationDisplays = this.views.activeDisplayDestinations;
+      const checkName = this.views.isMultiplatformMode ? 'setupMultistream' : 'setupDualOutput';
+      const errorType = this.views.isMultiplatformMode
+        ? 'RESTREAM_DISABLED'
+        : 'DUAL_OUTPUT_RESTREAM_DISABLED';
+      const failureType = this.views.isMultiplatformMode
+        ? 'RESTREAM_SETUP_FAILED'
+        : 'DUAL_OUTPUT_SETUP_FAILED';
 
-      for (const display in shouldMultistreamDisplay) {
-        const key = display as keyof typeof shouldMultistreamDisplay;
-        // set up restream service to multistream display
-        if (shouldMultistreamDisplay[key]) {
-          // set up restream service to multistream display
-          // check the restream service is available
-          let ready = false;
-          try {
-            await this.runCheck(
-              'setupDualOutput',
-              async () => (ready = await this.restreamService.checkStatus()),
-            );
-          } catch (e: unknown) {
-            console.error('Error fetching restreaming service', e);
-          }
-          // Assume restream is down
-          if (!ready) {
-            console.error('Restream service is not available in dual output setup');
-            this.setError('DUAL_OUTPUT_RESTREAM_DISABLED');
-            return;
-          }
-
-          // update restream settings
-          try {
-            await this.runCheck('setupDualOutput', async () => {
-              // enable restream on the backend side
-              if (!this.restreamService.state.enabled) await this.restreamService.setEnabled(true);
-
-              const mode: TOutputOrientation = display === 'horizontal' ? 'landscape' : 'portrait';
-              await this.restreamService.beforeGoLive(display as TDisplayType, mode);
-            });
-          } catch (e: unknown) {
-            const error = this.handleTypedStreamError(
-              e,
-              'DUAL_OUTPUT_SETUP_FAILED',
-              'Failed to setup dual output restream',
-            );
-            this.setError(error);
-            return;
-          }
-        } else if (destinationDisplays[key].length > 0) {
-          // if a custom destination is enabled for single streaming
-          // move the relevant OBS context to custom ingest mode
-
-          const destination = this.views.customDestinations.find(d => d.display === display);
-          try {
-            await this.runCheck('setupDualOutput', async () => {
-              if (destination) {
-                this.streamSettingsService.setSettings(
-                  {
-                    streamType: 'rtmp_custom',
-                  },
-                  display as TDisplayType,
-                );
-                this.streamSettingsService.setSettings(
-                  {
-                    key: destination.streamKey,
-                    server: destination.url,
-                  },
-                  display as TDisplayType,
-                );
-              } else {
-                console.error('Custom destination not found');
-              }
-              await Promise.resolve();
-            });
-          } catch (e: unknown) {
-            const error = this.handleTypedStreamError(
-              e,
-              'DUAL_OUTPUT_SETUP_FAILED',
-              'Failed to setup dual output custom destination',
-            );
-            this.setError(error);
-            return;
-          }
-        }
+      // check the Restream service is available
+      let ready = false;
+      try {
+        await this.runCheck(
+          checkName,
+          async () => (ready = await this.restreamService.checkStatus()),
+        );
+      } catch (e: unknown) {
+        // don't set error to allow multistream setup to continue in go live window
+        console.error('Error fetching restreaming service', e);
       }
 
-      // finish setting up dual output
+      // Assume restream is down
+      if (!ready) {
+        console.error('Restream service is not available');
+        this.setError(errorType);
+        return;
+      }
+
+      // update restream settings
       try {
-        await this.runCheck('setupDualOutput', async () => await Promise.resolve());
+        await this.runCheck(checkName, async () => {
+          // enable restream on the backend side
+          if (!this.restreamService.state.enabled) await this.restreamService.setEnabled(true);
+
+          await this.restreamService.beforeGoLive();
+        });
       } catch (e: unknown) {
-        const error = this.handleTypedStreamError(
-          e,
-          'DUAL_OUTPUT_SETUP_FAILED',
-          'Failed to setup dual output',
-        );
+        // Handle rendering a prompt for enabling permissions to generate a stream key for Kick
+        if (this.state.info.error?.type === 'KICK_STREAM_KEY_MISSING') return;
+
+        const error = this.handleTypedStreamError(e, failureType, 'Failed to setup restream');
         this.setError(error);
         return;
       }

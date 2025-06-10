@@ -10,7 +10,13 @@ import { StreamSettingsService, ICustomStreamDestination } from '../settings/str
 import { UserService } from '../user';
 import { RestreamService, TOutputOrientation } from '../restream';
 import { DualOutputService, TDisplayPlatforms, TDisplayDestinations } from '../dual-output';
-import { getPlatformService, TPlatform, TPlatformCapability, platformList } from '../platforms';
+import {
+  getPlatformService,
+  TPlatform,
+  TPlatformCapability,
+  platformList,
+  EPlatform,
+} from '../platforms';
 import { TwitterService } from '../../app-services';
 import cloneDeep from 'lodash/cloneDeep';
 import difference from 'lodash/difference';
@@ -171,6 +177,28 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   /**
+   * Returns if the restream service should be set up when going live
+   */
+  get shouldSetupRestream(): boolean {
+    // In dual output mode, if a display has more than one target that display uses the restream service
+    const restreamDualOutputMode =
+      this.isDualOutputMode && this.horizontalStream.length > 0 && this.verticalStream.length > 0;
+    return this.isMultiplatformMode || restreamDualOutputMode;
+  }
+
+  get displaysToRestream(): TDisplayType[] {
+    const displays = [] as TDisplayType[];
+    if (!this.isDualOutputMode) return displays;
+    if (this.horizontalStream.length > 0) {
+      displays.push('horizontal' as TDisplayType);
+    }
+    if (this.verticalStream.length > 0) {
+      displays.push('vertical' as TDisplayType);
+    }
+    return displays;
+  }
+
+  /**
    * Returns if dual output mode is on. Dual output mode is only available to logged in users
    */
   get isDualOutputMode(): boolean {
@@ -180,38 +208,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   getPlatformDisplayType(platform: TPlatform): TDisplayType {
     const display = this.settings.platforms[platform]?.display ?? 'horizontal';
     return display === 'both' ? 'horizontal' : display;
-  }
-
-  getShouldMultistreamDisplay(
-    settings?: IGoLiveSettings,
-  ): { horizontal: boolean; vertical: boolean } {
-    const platforms = settings?.platforms || this.settings.platforms;
-    const customDestinations = settings?.customDestinations || this.customDestinations;
-
-    const platformDisplays = { horizontal: [] as TPlatform[], vertical: [] as TPlatform[] };
-
-    for (const platform in platforms) {
-      if (platforms[platform as TPlatform]?.enabled) {
-        const display = this.getPlatformDisplayType(platform as TPlatform);
-        platformDisplays[display].push(platform as TPlatform);
-      }
-    }
-
-    // determine which enabled custom destinations use which displays
-    const destinationDisplays = customDestinations.reduce(
-      (displays: TDisplayDestinations, destination: ICustomStreamDestination) => {
-        if (destination.enabled && destination?.display) {
-          displays[destination.display].push(destination.name);
-        }
-        return displays;
-      },
-      { horizontal: [], vertical: [] },
-    );
-
-    return {
-      horizontal: platformDisplays.horizontal.length + destinationDisplays.horizontal.length > 1,
-      vertical: platformDisplays.vertical.length + destinationDisplays.vertical.length > 1,
-    };
   }
 
   /**
@@ -236,13 +232,37 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
     return destinations.reduce(
       (displayDestinations: TDisplayDestinations, destination: ICustomStreamDestination) => {
-        if (destination.enabled) {
+        if (destination.enabled && !destination.dualStream) {
           displayDestinations[destination.display ?? 'horizontal'].push(destination.url);
         }
         return displayDestinations;
       },
       { horizontal: [], vertical: [] },
     );
+  }
+
+  get horizontalStream() {
+    return this.activeDisplayDestinations.horizontal.concat(
+      this.activeDisplayPlatforms.horizontal as string[],
+    );
+  }
+
+  get verticalStream() {
+    // convert dual stream custom destinations to platforms for analytics
+    const verticalDestinations = this.customDestinations.reduce(
+      (verticalDestinations: string[], destination: ICustomStreamDestination) => {
+        if (destination.enabled && destination.dualStream) {
+          const target =
+            destination.url.split('.').find(str => platformList.includes(str as EPlatform)) ??
+            destination.url;
+          verticalDestinations.push(target);
+        }
+        return verticalDestinations;
+      },
+      [],
+    );
+
+    return verticalDestinations.concat(this.activeDisplayPlatforms.vertical as string[]);
   }
 
   getCanStreamDualOutput(settings?: IGoLiveSettings): boolean {

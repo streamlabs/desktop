@@ -119,6 +119,8 @@ interface IYoutubeLiveStream {
        */
       streamName: string;
       ingestionAddress: string;
+      rtmpsIngestionAddress: string;
+      rtmpsBackupIngestionAddress: string;
     };
     resolution: string;
     frameRate: string;
@@ -304,31 +306,34 @@ export class YoutubeService
     await this.updateCategory(verticalBroadcast.id, ytSettings.categoryId!);
 
     const verticalStreamKey = verticalStream.cdn.ingestionInfo.streamName;
+    const verticalStreamServer = verticalStream.cdn.ingestionInfo.ingestionAddress;
     this.SET_VERTICAL_STREAM_KEY(verticalStreamKey);
     this.SET_VERTICAL_BROADCAST(verticalBoundBroadcast);
 
-    if (this.streamingService.views.isMultiplatformMode) {
-      const destinations = cloneDeep(this.streamingService.views.customDestinations);
-      const verticalDestination: ICustomStreamDestination = {
-        name: 'yt-vert',
-        streamKey: verticalStreamKey,
-        url: 'rtmps://a.rtmps.youtube.com/live2',
-        enabled: true,
-        display: 'vertical' as TDisplayType,
-        mode: 'portrait' as TOutputOrientation,
-      };
+    const destinations = cloneDeep(this.streamingService.views.customDestinations);
 
-      this.streamSettingsService.setGoLiveSettings({
-        customDestinations: [...destinations, verticalDestination],
-      });
-    } else {
+    const verticalDestination: ICustomStreamDestination = {
+      name: title,
+      streamKey: verticalStreamKey,
+      url: `${verticalStreamServer}/`,
+      enabled: true,
+      display: 'vertical' as TDisplayType,
+      mode: 'portrait' as TOutputOrientation,
+      dualStream: true,
+    };
+
+    this.streamSettingsService.setGoLiveSettings({
+      customDestinations: [...destinations, verticalDestination],
+    });
+
+    if (this.streamingService.views.isMultiplatformMode) {
       this.streamSettingsService.setSettings(
         {
-          key: verticalStreamKey,
           streamType: 'rtmp_custom',
-          server: 'rtmp://a.rtmp.youtube.com/live2',
+          key: verticalDestination.streamKey,
+          server: `${verticalStreamServer}/`,
         },
-        'vertical' as TDisplayType,
+        verticalDestination.display,
       );
     }
   }
