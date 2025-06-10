@@ -78,6 +78,7 @@ import { extractDateTimeFromPath, fileExists } from './file-utils';
 import { addVerticalFilterToExportOptions } from './vertical-export';
 import { isGameSupported } from './models/game-config.models';
 import Utils from 'services/utils';
+import { RealtimeHighlighterService } from './realtime-highlighter-service';
 
 @InitAfter('StreamingService')
 export class HighlighterService extends PersistentStatefulService<IHighlighterState> {
@@ -90,6 +91,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   @Inject() navigationService: NavigationService;
   @Inject() sharedStorageService: SharedStorageService;
   @Inject() incrementalRolloutService: IncrementalRolloutService;
+  @Inject() realtimeHighlighterService: RealtimeHighlighterService;
 
   static defaultState: IHighlighterState = {
     clips: {},
@@ -478,6 +480,9 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
         aiRecordingInProgress = true;
         aiRecordingStartTime = moment();
+
+        // start realtime highlighter service
+        this.realtimeHighlighterService.start();
       }
 
       if (status === EStreamingState.Offline) {
@@ -518,6 +523,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           streamId: streamInfo?.id,
         });
         this.streamingService.actions.toggleRecording();
+        this.realtimeHighlighterService.stop();
 
         // Load potential replaybuffer clips
         await this.loadClips(streamInfo.id);
