@@ -1276,7 +1276,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   async installAiHighlighter(
     downloadNow: boolean = false,
     location: 'Highlighter-tab' | 'Go-live-flow',
-    game: EGame | undefined,
+    game?: string,
   ) {
     this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
       type: 'Installation',
