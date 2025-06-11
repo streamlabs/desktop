@@ -112,6 +112,8 @@ export class RealtimeHighlighterService extends Service {
   @Inject() private settingsService: SettingsService;
   private visionService = new VisionService();
 
+  private static MAX_SCORE = 5;
+
   private isRunning = false;
   private highlights: INewClipData[] = [];
 
@@ -141,6 +143,7 @@ export class RealtimeHighlighterService extends Service {
 
     this.saveReplayAt = null;
     this.currentReplayEvents = [];
+    this.highlights = [];
 
     this.visionService.subscribe('event', this.onEvent.bind(this));
     this.visionService.start();
@@ -228,7 +231,9 @@ export class RealtimeHighlighterService extends Service {
     const replaySavedAt = this.replaySavedAt;
     this.replaySavedAt = null;
     const replayStartedAt = replaySavedAt - replayBufferDuration * 1000;
-
+    console.log(`Replay saved at ${moment(replaySavedAt).format('YYYY-MM-DD HH:mm:ss')}`);
+    console.log(`Replay started at ${moment(replayStartedAt).format('YYYY-MM-DD HH:mm:ss')}`);
+    console.log(`Replay buffer duration: ${replayBufferDuration} seconds`);
 
     const unrefinedHighlights = [];
 
@@ -236,9 +241,13 @@ export class RealtimeHighlighterService extends Service {
       const eventTime = event.timestamp;
 
       const relativeEventTime = eventTime - replayStartedAt;
+      console.log(
+        `Processing event ${event.name} at ${relativeEventTime / 1000}s relative to replay start`
+      );
       const highlightStart = relativeEventTime - (event.highlight.start_adjust || 0) * 1000;
       const highlightEnd = relativeEventTime + (event.highlight.end_adjust || 0) * 1000;
 
+      console.log(`Highlight start: ${highlightStart / 1000}s, Highlight end: ${highlightEnd / 1000}s`);
       // check if the highlight is within the replay buffer duration
       if (highlightStart < 0 || highlightEnd > replayBufferDuration * 1000) {
         console.warn(
@@ -249,11 +258,13 @@ export class RealtimeHighlighterService extends Service {
 
       unrefinedHighlights.push({
         inputs: [event.name],
-        startTime: 0, // convert to seconds
-        endTime: replayBufferDuration, // convert to seconds
+        startTime: highlightStart / 1000, // convert to seconds
+        endTime: highlightEnd / 1000, // convert to seconds
         score: event.highlight.score || 0,
       });
     }
+
+    console.log('Unrefined highlights:', unrefinedHighlights);
 
     // merge overlapping highlights
     const acceptableOffset = 5; // seconds
@@ -281,25 +292,29 @@ export class RealtimeHighlighterService extends Service {
     for (const highlight of mergedHighlights) {
       const aiClipInfo: IAiClipInfo = {
         inputs: highlight.inputs.map((input: string) => ({ type: input }) as IInput),
-        score: highlight.score,
+        score: Math.round(highlight.score / RealtimeHighlighterService.MAX_SCORE),
         metadata: {
           round: 0, // Placeholder, adjust as needed
           webcam_coordinates: undefined, // Placeholder, adjust as needed
         },
       };
 
+      // trim times for desktop are insanely weird, for some reason its offset between start and end
+      const startTrim = highlight.startTime;
+      const endTrim = highlight.endTime - startTrim;
+
       const clip: INewClipData = {
         path,
         aiClipInfo: aiClipInfo,
         startTime: 0,
         endTime: this.getReplayBufferDurationSeconds(),
-        startTrim: highlight.startTime,
-        endTrim: highlight.endTime,
+        startTrim: startTrim,
+        endTrim: endTrim,
       };
 
       this.highlights.push(clip);
       console.log(`New highlight added: ${clip.path}`);
-      console.log(this.highlights);
+      console.log(clip);
       clips.push(clip);
     }
 
