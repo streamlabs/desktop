@@ -1392,6 +1392,10 @@ export class StreamingService
       }
 
       if (info.signal === EOBSOutputSignal.Wrote) {
+        this.usageStatisticsService.recordAnalyticsEvent('RecordingStatus', {
+          status: nextState,
+          code: info.code,
+        });
         const filename = NodeObs.OBS_service_getLastRecording();
         const parsedFilename = byOS({
           [OS.Mac]: filename,
