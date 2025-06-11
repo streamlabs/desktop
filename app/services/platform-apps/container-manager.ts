@@ -106,12 +106,34 @@ export class PlatformContainerManager {
     electronWindowId: number,
     slobsWindowId: string,
   ) {
+    console.log('MOUNTING');
+
     const containerInfo = this.getContainerInfoForSlot(app, slot);
     const win = remote.BrowserWindow.fromId(electronWindowId);
+
+    // console.log('containerInfo.container', JSON.stringify(containerInfo.container, null, 2));
+    // // Create a new container if it doesn't exist to prevent a crash
+    // if (!containerInfo.container.webContents) {
+    //   console.log('Creating new webcontents for app', app.id, 'slot', slot);
+
+    //   containerInfo.container.webContents = this.createContainer(
+    //     app,
+    //     slot,
+    //     containerInfo.persistent,
+    //   );
+
+    //   // containerInfo.container.webContents = new remote.WebContents({
+    //   //   id: containerInfo.container.webContentsId,
+    //   //   session: remote.session.fromPartition(this.getAppPartition(app)),
+    //   //   partition: this.getAppPartition(app),
+    //   // });
+    // }
 
     win.addBrowserView(containerInfo.container);
 
     containerInfo.mountedWindows.push(electronWindowId);
+
+    console.log('containerInfo.mountedWindows', containerInfo.mountedWindows);
 
     containerInfo.transform.next({
       ...containerInfo.transform.getValue(),
@@ -143,6 +165,8 @@ export class PlatformContainerManager {
   }
 
   unmountContainer(containerId: string, electronWindowId: number) {
+    console.log('UNMOUNTING CONTAINER', containerId, electronWindowId);
+
     const info = this.containers.find(cont => cont.id === containerId);
 
     if (!info) return;
@@ -150,7 +174,12 @@ export class PlatformContainerManager {
     const transform = info.transform.getValue();
 
     const win = remote.BrowserWindow.fromId(electronWindowId);
-    win.removeBrowserView(info.container);
+
+    // If the window is already destroyed, the browser view is already removed
+    // and destroyed
+    if (win) {
+      win.removeBrowserView(info.container);
+    }
 
     info.mountedWindows = info.mountedWindows.filter(id => id !== electronWindowId);
 
@@ -181,12 +210,15 @@ export class PlatformContainerManager {
       .forEach(info => info.container.webContents.loadURL(this.getPageUrlForSlot(app, info.slot)));
   }
 
-  private getContainerInfoForSlot(app: ILoadedApp, slot: EAppPageSlot): IContainerInfo {
+  getContainerInfoForSlot(app: ILoadedApp, slot: EAppPageSlot): IContainerInfo {
     const existingContainer = this.containers.find(
       cont => cont.appId === app.id && cont.slot === slot,
     );
 
-    if (existingContainer) return existingContainer;
+    // confirm that the existing container still has content loaded
+    if (existingContainer && existingContainer.container.webContents) {
+      return existingContainer;
+    }
 
     return this.createContainer(app, slot);
   }
@@ -246,6 +278,7 @@ export class PlatformContainerManager {
     return info;
   }
 
+  // HERE
   private destroyContainer(containerId: string) {
     const info = this.containers.find(cont => cont.id === containerId);
 
@@ -260,6 +293,18 @@ export class PlatformContainerManager {
       if (win && !win.isDestroyed()) win.removeBrowserView(info.container);
     });
 
+    // To prevent memory leaks, the `webContents` must be destroyed.
+    // Removing the browser view or closing the window may have already destroyed the `webContents`.
+    // Prevent errors by checking if it still exists before trying to close it.
+    if (!info.container.webContents) return;
+
+    // Destroy the `webContents` like it would be when closing a window.
+    // This is a more graceful way to destroy the `webContents`.
+    info.container.webContents.close();
+
+    if (!info.container.webContents) return;
+
+    // If there was an error destroying it with the `close` method, force destroy it.
     // This method is undocumented, but it's the only way to force a
     // browser view to immediately be destroyed.
     // See: https://github.com/electron/electron/issues/26929

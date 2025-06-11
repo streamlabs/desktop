@@ -251,6 +251,7 @@ export class WindowsService extends StatefulService<IWindowsState> {
 
   windowUpdated = new Subject<{ windowId: string; options: IWindowOptions }>();
   windowDestroyed = new Subject<string>();
+  windowWillDestroy = new Subject<string>();
   styleBlockersUpdated = new Subject<{ windowId: string; hideStyleBlockers: boolean }>();
   windows: Dictionary<Electron.BrowserWindow> = {};
 
@@ -290,6 +291,10 @@ export class WindowsService extends StatefulService<IWindowsState> {
 
   getWindowIdFromElectronId(electronWindowId: number) {
     return Object.keys(this.windows).find(win => this.windows[win].id === electronWindowId);
+  }
+
+  getElectronWindowIdFromWindowId(windowId: string) {
+    return this.windows[windowId].id;
   }
 
   showWindow(options: Partial<IWindowOptions>) {
@@ -459,6 +464,11 @@ export class WindowsService extends StatefulService<IWindowsState> {
     electron.ipcRenderer.sendSync('webContents-enableRemote', newWindow.webContents.id);
 
     newWindow.removeMenu();
+
+    newWindow.on('close', () => {
+      this.windowWillDestroy.next(windowId);
+    });
+
     newWindow.on('closed', () => {
       this.windowDestroyed.next(windowId);
       delete this.windows[windowId];

@@ -651,10 +651,23 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
 
     this.POP_OUT_SLOT(appId, pageSlot);
 
-    const sub = this.windowsService.windowDestroyed.subscribe(winId => {
+    const windowWillDestroy = this.windowsService.windowWillDestroy.subscribe(winId => {
+      // get the containerID
+      const containerInfo = this.containerManager.getContainerInfoForSlot(app, pageSlot);
+      console.log('containerInfo', containerInfo);
+      const slobsWindowId = this.windowsService.getElectronWindowIdFromWindowId(winId);
+
+      this.unmountContainer(containerInfo.id, slobsWindowId);
+
+      console.log('this.containerManager.containers', this.containerManager.containers);
+
+      windowWillDestroy.unsubscribe();
+    });
+
+    const windowDestroyed = this.windowsService.windowDestroyed.subscribe(winId => {
       if (winId === windowId) {
         this.POP_IN_SLOT(appId, pageSlot);
-        sub.unsubscribe();
+        windowDestroyed.unsubscribe();
       }
     });
   }
