@@ -62,6 +62,7 @@ export { VideoSettingsService } from 'services/settings-v2/video';
 export { SettingsManagerService } from 'services/settings-manager';
 export { MarkersService } from 'services/markers';
 export { RealmService } from 'services/realm';
+export { RealtimeHighlighterService } from 'services/highlighter/realtime-highlighter-service';
 import { VirtualWebcamService } from 'services/virtual-webcam';
 
 // ONLINE SERVICES
@@ -164,6 +165,7 @@ import { PatchNotesService } from './services/patch-notes';
 import { VideoService } from './services/video';
 import { ChatService } from './services/chat';
 import { HighlighterService } from './services/highlighter';
+import { RealtimeHighlighterService } from './services/highlighter/realtime-highlighter-service';
 import { GrowService } from './services/grow/grow';
 import { TransitionsService } from './services/transitions';
 import { TcpServerService } from './services/api/tcp-server';
@@ -293,4 +295,5 @@ export const AppServices = {
   RemoteControlService,
   UrlService,
   VirtualWebcamService,
+  RealtimeHighlighterService,
 };

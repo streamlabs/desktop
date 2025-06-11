@@ -403,21 +403,33 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     let streamStarted = false;
     let aiRecordingInProgress = false;
 
-    this.streamingService.replayBufferFileWrite.subscribe(async clipPath => {
-      const streamId = streamInfo?.id || undefined;
-      let endTime: number | undefined;
+    // add check if ai realtime highlighter is enabled?
+    // if yes add hook to realtime highlighter service?
+    console.log('feature enabled: ', this.aiHighlighterFeatureEnabled);
+    if (true) {
+      console.log('AI Highlighter feature is enabled, using realtime highlighter service');
+      this.realtimeHighlighterService.highlightsReady.subscribe(async highlights => {
+        console.log('Realtime highlights received:', highlights);
+        this.addAiClips(highlights, { id: streamInfo.id || '', game: streamInfo.game });
+      });
+    } else {
+      this.streamingService.replayBufferFileWrite.subscribe(async clipPath => {
+        console.log('replay buffer clip received');
+        const streamId = streamInfo?.id || undefined;
+        let endTime: number | undefined;
 
-      if (streamId) {
-        endTime = moment().diff(aiRecordingStartTime, 'seconds');
-      } else {
-        endTime = undefined;
-      }
+        if (streamId) {
+          endTime = moment().diff(aiRecordingStartTime, 'seconds');
+        } else {
+          endTime = undefined;
+        }
 
-      const REPLAY_BUFFER_DURATION = 20; // TODO M: Replace with settingsservice
-      const startTime = Math.max(0, endTime ? endTime - REPLAY_BUFFER_DURATION : 0);
+        const REPLAY_BUFFER_DURATION = 20; // TODO M: Replace with settingsservice
+        const startTime = Math.max(0, endTime ? endTime - REPLAY_BUFFER_DURATION : 0);
 
-      this.addClips([{ path: clipPath, startTime, endTime }], streamId, 'ReplayBuffer');
-    });
+        this.addClips([{ path: clipPath, startTime, endTime }], streamId, 'ReplayBuffer');
+      });
+    }
 
     this.streamingService.streamingStatusChange.subscribe(async status => {
       if (status === EStreamingState.Live) {
@@ -743,6 +755,9 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           initialEndTime: clip.endTime,
         },
       };
+
+      console.log('Adding AI clip:', clip.path);
+      console.log(clip);
 
       this.ADD_CLIP({
         path: clip.path,

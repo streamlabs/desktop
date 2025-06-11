@@ -1,8 +1,11 @@
 import { InitAfter, Inject, Service } from 'services/core';
 import { EventEmitter } from 'events';
-import { EStreamingState, StreamingService } from 'services/streaming';
-import { Subscription } from 'rxjs';
-import { IAiClip } from './models/highlighter.models';
+import { EReplayBufferState, StreamingService } from 'services/streaming';
+import { Subject, Subscription } from 'rxjs';
+import { IAiClip, INewClipData } from './models/highlighter.models';
+import { IAiClipInfo, IInput } from './models/ai-highlighter.models';
+import { SettingsService } from 'app-services';
+import moment from 'moment';
 
 /**
  * Just a mock class to represent a vision service events
@@ -54,10 +57,11 @@ class VisionService extends EventEmitter {
     const minDelay = 5 * 1000;
 
     const delay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
+    console.log('Triggering random event');
+    this.emitRandomEvent();
     console.log(`Next trigger in ${delay / 1000} seconds`);
 
     this.timeoutId = setTimeout(() => {
-      this.emitRandomEvent();
       this.scheduleNext();
     }, delay);
   }
@@ -102,27 +106,34 @@ class VisionService extends EventEmitter {
 
 @InitAfter('StreamingService')
 export class RealtimeHighlighterService extends Service {
-  @Inject() streamingService: StreamingService;
-  visionService = new VisionService();
+  highlightsReady = new Subject<INewClipData[]>();
+
+  @Inject() private streamingService: StreamingService;
+  @Inject() private settingsService: SettingsService;
+  private visionService = new VisionService();
 
   private isRunning = false;
-  private highlights: IAiClip[] = [];
+  private highlights: INewClipData[] = [];
 
   private replayBufferFileReadySubscription: Subscription | null = null;
 
   // timestamp of when the replay should be saved after the event was received
   private saveReplayAt: number | null = null;
+  private replaySavedAt: number | null = null;
   // events that are currently being observer in the replay buffer window
   // (in case there are multiple events in a row that should land in the same replay)
   private currentReplayEvents: any[] = [];
 
   async start() {
+    console.log('Starting RealtimeHighlighterService');
     if (this.isRunning) {
       console.warn('RealtimeHighlighterService is already running');
       return;
     }
+
     this.isRunning = true;
     // start replay buffer if its not already running
+    this.setReplayBufferDurationSeconds(30);
     this.streamingService.startReplayBuffer();
     this.replayBufferFileReadySubscription = this.streamingService.replayBufferFileWrite.subscribe(
       this.onReplayReady.bind(this),
@@ -134,11 +145,16 @@ export class RealtimeHighlighterService extends Service {
     this.visionService.subscribe('event', this.onEvent.bind(this));
     this.visionService.start();
 
-    // start the periodic tick to process replay queue
-    this.tick();
+    // start the periodic tick to process replay queue after first replay buffer duration
+    setTimeout(() => this.tick(), this.getReplayBufferDurationSeconds() * 1000);
   }
 
   async stop() {
+    console.log('Stopping RealtimeHighlighterService');
+    if (!this.isRunning) {
+      console.warn('RealtimeHighlighterService is not running');
+      return;
+    }
     // don't stop replay buffer here, probably better places for it exist
     this.visionService.unsubscribe('event', this.onEvent.bind(this));
     this.visionService.stop();
@@ -154,6 +170,9 @@ export class RealtimeHighlighterService extends Service {
    */
   private async tick() {
     if (!this.saveReplayAt) {
+      // call this method again in 1 second.
+      // setTimeout instead of setInterval to avoid overlapping calls
+      setTimeout(() => this.tick(), 1000);
       return;
     }
 
@@ -162,6 +181,7 @@ export class RealtimeHighlighterService extends Service {
       // save the replay events to file
       if (this.currentReplayEvents.length > 0) {
         console.log('Saving replay buffer');
+        this.replaySavedAt = now;
         this.streamingService.saveReplay();
       }
 
@@ -187,35 +207,116 @@ export class RealtimeHighlighterService extends Service {
     const endAdjust = event.highlight.end_adjust || 0;
 
     this.saveReplayAt = Date.now() + endAdjust * 1000;
+    const currentTime = Date.now();
+
+    event.timestamp = currentTime; // use current time as timestamp
     this.currentReplayEvents.push(event);
   }
 
   private onReplayReady(path: string) {
+    console.log(this.getReplayBufferDurationSeconds());
     const events = this.currentReplayEvents;
+    if (events.length === 0) {
+      return;
+    }
+
     this.currentReplayEvents = [];
 
-    const clip: IAiClip = {
-      path,
-      aiInfo: {
-        inputs: events.map(event => ({
-          type: event.name,
-        })),
-        score: events.reduce((acc, event) => acc + (event.highlight.score || 0), 0),
+    const replayBufferDuration = this.getReplayBufferDurationSeconds();
+
+    // absolute time in milliseconds when the replay was saved
+    const replaySavedAt = this.replaySavedAt;
+    this.replaySavedAt = null;
+    const replayStartedAt = replaySavedAt - replayBufferDuration * 1000;
+
+
+    const unrefinedHighlights = [];
+
+    for (const event of events) {
+      const eventTime = event.timestamp;
+
+      const relativeEventTime = eventTime - replayStartedAt;
+      const highlightStart = relativeEventTime - (event.highlight.start_adjust || 0) * 1000;
+      const highlightEnd = relativeEventTime + (event.highlight.end_adjust || 0) * 1000;
+
+      // check if the highlight is within the replay buffer duration
+      if (highlightStart < 0 || highlightEnd > replayBufferDuration * 1000) {
+        console.warn(
+          `Event ${event.name} is outside of the replay buffer duration, skipping highlight creation.`
+        );
+        continue;
+      }
+
+      unrefinedHighlights.push({
+        inputs: [event.name],
+        startTime: 0, // convert to seconds
+        endTime: replayBufferDuration, // convert to seconds
+        score: event.highlight.score || 0,
+      });
+    }
+
+    // merge overlapping highlights
+    const acceptableOffset = 5; // seconds
+
+    const mergedHighlights: any[] = [];
+    for (const highlight of unrefinedHighlights) {
+      if (mergedHighlights.length === 0) {
+        mergedHighlights.push(highlight);
+        continue;
+      }
+
+      const lastHighlight = mergedHighlights[mergedHighlights.length - 1];
+      if (highlight.startTime - acceptableOffset <= lastHighlight.endTime) {
+        // merge highlights
+        lastHighlight.endTime = highlight.endTime; // extend end time
+        lastHighlight.score = Math.max(highlight.score, lastHighlight.score);
+        lastHighlight.inputs.push(...highlight.inputs);
+      } else {
+        // no overlap, push new highlight
+        mergedHighlights.push(highlight);
+      }
+    }
+
+    const clips = [];
+    for (const highlight of mergedHighlights) {
+      const aiClipInfo: IAiClipInfo = {
+        inputs: highlight.inputs.map((input: string) => ({ type: input }) as IInput),
+        score: highlight.score,
         metadata: {
-          round: 0,
-          webcam_coordinates: undefined,
+          round: 0, // Placeholder, adjust as needed
+          webcam_coordinates: undefined, // Placeholder, adjust as needed
         },
-      },
-      enabled: true,
-      loaded: true,
-      deleted: false,
-      source: 'AiClip',
-      startTrim: 0,
-      endTrim: 0,
-      globalOrderPosition: 0,
-      streamInfo: {},
-    };
-    this.highlights.push(clip);
-    console.log(`New highlight added: ${clip.path}`);
+      };
+
+      const clip: INewClipData = {
+        path,
+        aiClipInfo: aiClipInfo,
+        startTime: 0,
+        endTime: this.getReplayBufferDurationSeconds(),
+        startTrim: highlight.startTime,
+        endTrim: highlight.endTime,
+      };
+
+      this.highlights.push(clip);
+      console.log(`New highlight added: ${clip.path}`);
+      console.log(this.highlights);
+      clips.push(clip);
+    }
+
+    this.highlightsReady.next(clips);
+  }
+
+  private getReplayBufferDurationSeconds(): number {
+    return this.settingsService.views.values.Output.RecRBTime;
+  }
+
+  private setReplayBufferDurationSeconds(seconds: number) {
+    if (this.streamingService.state.replayBufferStatus !== EReplayBufferState.Offline) {
+      console.warn(
+        'Replay buffer must be stopped before its settings can be changed!'
+      );
+      return;
+    }
+    this.settingsService.setSettingsPatch({ Output: { RecRBTime: seconds } });
   }
 }
