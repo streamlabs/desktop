@@ -146,10 +146,14 @@ export class RealtimeHighlighterService extends Service {
     this.highlights = [];
 
     this.visionService.subscribe('event', this.onEvent.bind(this));
-    this.visionService.start();
+    setTimeout(() => {
+      this.visionService.start();
+    }
+    , 1000 * this.getReplayBufferDurationSeconds());
+
 
     // start the periodic tick to process replay queue after first replay buffer duration
-    setTimeout(() => this.tick(), this.getReplayBufferDurationSeconds() * 1000);
+    this.tick();
   }
 
   async stop() {
