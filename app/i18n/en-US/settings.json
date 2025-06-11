@@ -732,6 +732,12 @@
       "frames": "Frames Sent",
       "dropped": "Frames Dropped"
     },
+    "error": {
+      "url_key": "Please configure URL and key",
+      "bad_path": "Invalid URL",
+      "connect_failed": "Connection failed",
+      "invalid_stream": "Invalid stream"
+    },
     "status": {
       "starting": "Starting stream...",
       "started": "Streaming",

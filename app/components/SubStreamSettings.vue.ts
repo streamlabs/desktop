@@ -1,3 +1,4 @@
+import * as remote from '@electron/remote';
 import { Inject } from 'services/core/injector';
 import { $t } from 'services/i18n';
 import { SubStreamService } from 'services/substream/SubStreamService';
@@ -123,7 +124,6 @@ export default class SubStreamSettings extends Vue {
     const r = await this.subStreamService.getStatus();
 
     const statusParts: string[] = [];
-    if (r.error) statusParts.push(`${$t('settings.substream.info.error')}: ${r.error}`);
     statusParts.push(`${$t('settings.substream.info.status')}: ${r.displayStatus}`);
     if (r.frames) statusParts.push(`${$t('settings.substream.info.frames')}: ${r.frames}`);
     if (r.dropped) statusParts.push(`${$t('settings.substream.info.dropped')}: ${r.dropped}`);
@@ -145,7 +145,10 @@ export default class SubStreamSettings extends Vue {
   }
 
   async start() {
-    await this.subStreamService.start();
+    const message = await this.subStreamService.start();
+    if (message) {
+      remote.dialog.showErrorBox('Error', message);
+    }
   }
 
   async stop() {

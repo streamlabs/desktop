@@ -713,9 +713,9 @@
     "url": "URL",
     "urlTips": "各サービスから提供されているストリーム URL を指定してください",
     "streamKey": "ストリームキー",
-    "syncWithMainStream": "配信開始/終了にあわせる",
-    "start": "開始",
-    "stop": "停止",
+    "syncWithMainStream": "メイン配信の配信開始/終了にあわせる",
+    "start": "配信開始",
+    "stop": "配信終了",
     "streamQuality": "配信品質",
     "videoEncoder": "映像エンコーダー",
     "videoBitrate": "映像ビットレート (Kbps)",
@@ -731,6 +731,12 @@
       "stopped": "停止中",
       "frames": "送出フレーム数",
       "dropped": "ドロップ数"
+    },
+    "error": {
+      "url_key": "URLとキーを設定してください",
+      "bad_path": "URLが不正です",
+      "connect_failed": "接続に失敗しました",
+      "invalid_stream": "ストリームが無効です"
     },
     "status": {
       "starting": "配信開始処理中..",

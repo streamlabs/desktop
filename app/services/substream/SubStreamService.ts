@@ -97,10 +97,11 @@ export class SubStreamService extends PersistentStatefulService<ISubStreamState>
    * サブストリームの配信を開始する
    * 設定されたURLとキーを使用して配信を開始する
    */
-  async start(): Promise<void> {
+  async start(): Promise<string | undefined> {
     if (!this.state) this.setState(SubStreamService.defaultState);
     if (!this.state.use) return;
-    if (!this.state.url.startsWith('rtmp') || !this.state.key) return;
+    if (!this.state.url.startsWith('rtmp') || !this.state.key)
+      return $t('settings.substream.error.url_key');
 
     const bitRange = (value: any, min: number, max: number): number =>
       Math.max(min, Math.min(Math.floor(Number(value)), max));
@@ -174,7 +175,7 @@ export class SubStreamService extends PersistentStatefulService<ISubStreamState>
     if (!streamStatus)
       return {
         status: 'unknown',
-        displayStatus: '',
+        displayStatus: 'internal error',
         active: false,
         busy: false,
         streaming: false,
@@ -191,7 +192,15 @@ export class SubStreamService extends PersistentStatefulService<ISubStreamState>
       deactive: $t('settings.substream.status.deactive'),
     };
 
-    streamStatus.displayStatus = statusMap[streamStatus.status] || '';
+    const errorMap: { [name: string]: string } = {
+      'bad path': $t('settings.substream.error.bad_path'),
+      'connect failed': $t('settings.substream.error.connect_failed'),
+      'invalid stream': $t('settings.substream.error.invalid_stream'),
+    };
+
+    streamStatus.displayStatus =
+      (statusMap[streamStatus.status] || '') +
+      (streamStatus.error ? `: ${errorMap[streamStatus.error] || streamStatus.error}` : '');
     //console.log('status:', JSON.stringify(streamStatus));
     return streamStatus;
   }

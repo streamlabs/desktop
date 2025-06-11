@@ -74,7 +74,9 @@
             </button>
           </div>
         </div>
+      </div>
 
+      <div class="section" v-if="use">
         <div class="input-wrapper">
           <div class="row">
             <div class="name">{{ $t('settings.substream.syncWithMainStream') }}</div>
@@ -83,7 +85,6 @@
             </div>
           </div>
         </div>
-
         <div class="input-wrapper">
           <div class="action-buttons">
             <button
