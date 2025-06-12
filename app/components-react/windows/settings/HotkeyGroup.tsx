@@ -53,6 +53,7 @@ export default function HotkeyGroup(props: HotkeyGroupProps) {
     // only filter hotkeys related to scene items
     if (!hasSceneHotkeys) return hotkeys;
 
+    // @@@ ADD HERE??
     // Once a scene collection has been converted to a dual output scene collection,
     // the vertical scene items can be bound to hot keys. After this, when using single output mode
     // with dual output scene collection, filter out the vertical scene items.

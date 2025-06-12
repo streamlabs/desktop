@@ -489,6 +489,7 @@ export class HotkeysService extends StatefulService<IHotkeysServiceState> {
         addedHotkeys.add(`${action.name}-${scene.id}`);
       });
 
+      // @@@ ADD HERE??
       scene.getItems().forEach(sceneItem => {
         Object.values(SCENE_ITEM_ACTIONS).forEach(action => {
           const hotkey: IHotkey = {
@@ -739,8 +740,11 @@ export class HotkeysService extends StatefulService<IHotkeysServiceState> {
     return action && action.name && idPropFor(hotkey);
   }
 
+  // @@@ ADD HERE??
   private getActionForHotkey(hotkey: OBSHotkey): IHotkeyAction | null {
     const action = getActionFromName(hotkey.HotkeyName);
+    // console.log('getActionForHotkey hotkey', hotkey);
+    // console.log('action', action);
 
     // Return the action immediately if there's a 1-1 mapping
     if (action && action.name) {
