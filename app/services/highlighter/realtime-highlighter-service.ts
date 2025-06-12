@@ -148,9 +148,7 @@ export class RealtimeHighlighterService extends Service {
     this.visionService.subscribe('event', this.onEvent.bind(this));
     setTimeout(() => {
       this.visionService.start();
-    }
-    , 1000 * this.getReplayBufferDurationSeconds());
-
+    }, 1000 * this.getReplayBufferDurationSeconds());
 
     // start the periodic tick to process replay queue after first replay buffer duration
     this.tick();
@@ -245,17 +243,17 @@ export class RealtimeHighlighterService extends Service {
       const eventTime = event.timestamp;
 
       const relativeEventTime = eventTime - replayStartedAt;
-      console.log(
-        `Processing event ${event.name} at ${relativeEventTime / 1000}s relative to replay start`
-      );
       const highlightStart = relativeEventTime - (event.highlight.start_adjust || 0) * 1000;
       const highlightEnd = relativeEventTime + (event.highlight.end_adjust || 0) * 1000;
 
-      console.log(`Highlight start: ${highlightStart / 1000}s, Highlight end: ${highlightEnd / 1000}s`);
       // check if the highlight is within the replay buffer duration
       if (highlightStart < 0 || highlightEnd > replayBufferDuration * 1000) {
         console.warn(
-          `Event ${event.name} is outside of the replay buffer duration, skipping highlight creation.`
+          `Event ${
+            event.name
+          } is outside of the replay buffer duration, skipping highlight creation. highlightStart: ${highlightStart}, highlightEnd: ${highlightEnd}, replayBufferDuration: ${
+            replayBufferDuration * 1000
+          } ms`,
         );
         continue;
       }
@@ -295,7 +293,7 @@ export class RealtimeHighlighterService extends Service {
     const clips = [];
     for (const highlight of mergedHighlights) {
       const aiClipInfo: IAiClipInfo = {
-        inputs: highlight.inputs.map((input: string) => ({ type: input }) as IInput),
+        inputs: highlight.inputs.map((input: string) => ({ type: input } as IInput)),
         score: Math.round(highlight.score / RealtimeHighlighterService.MAX_SCORE),
         metadata: {
           round: 0, // Placeholder, adjust as needed
@@ -305,7 +303,7 @@ export class RealtimeHighlighterService extends Service {
 
       // trim times for desktop are insanely weird, for some reason its offset between start and end
       const startTrim = highlight.startTime;
-      const endTrim = highlight.endTime - startTrim;
+      const endTrim = this.getReplayBufferDurationSeconds() - highlight.endTime;
 
       const clip: INewClipData = {
         path,
@@ -331,9 +329,7 @@ export class RealtimeHighlighterService extends Service {
 
   private setReplayBufferDurationSeconds(seconds: number) {
     if (this.streamingService.state.replayBufferStatus !== EReplayBufferState.Offline) {
-      console.warn(
-        'Replay buffer must be stopped before its settings can be changed!'
-      );
+      console.warn('Replay buffer must be stopped before its settings can be changed!');
       return;
     }
     this.settingsService.setSettingsPatch({ Output: { RecRBTime: seconds } });
