@@ -644,7 +644,7 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
         size: this.getPagePopOutSize(appId, pageSlot),
         x: mousePos.x,
         y: mousePos.y,
-        preserveWebContents: true,
+        persistWebContents: true,
         ...windowOptions,
       },
       windowId,
