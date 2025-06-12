@@ -452,11 +452,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         }
 
         let game;
-        const normalizedGameName = this.streamingService.views.game
-          .toLowerCase()
-          .replace(/ /g, '_');
-
-        if (Object.values(EGame).includes(normalizedGameName as EGame)) {
+        const normalizedGameName = isGameSupported(this.streamingService.views.game);
+        if (normalizedGameName) {
           game = normalizedGameName as EGame;
         } else {
           game = EGame.UNSET;
