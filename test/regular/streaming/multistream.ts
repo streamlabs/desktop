@@ -32,9 +32,21 @@ test('Multistream default mode', withUser('twitch', { multistream: true }), asyn
   await clickGoLive();
   await waitForSettingsWindowLoaded();
 
+  // no primary chat switcher if only one platform is enabled
+  t.false(
+    await isDisplayed('[data-name="primary-chat-switcher"]'),
+    'No primary chat switcher if only one platform is enabled',
+  );
+
   // TODO: this is to rule-out a race condition in platform switching, might not be needed and
   // can possibly revert back to fillForm with all platforms.
   await enableAllPlatforms();
+
+  // shows primary chat switcher when multiple platforms are enabled
+  t.true(
+    await isDisplayed('[data-name="primary-chat-switcher"]'),
+    'Shows primary chat switcher when multiple platforms are enabled',
+  );
 
   // add settings
   await fillForm({

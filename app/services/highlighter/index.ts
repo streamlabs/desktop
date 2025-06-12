@@ -420,14 +420,31 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     this.streamingService.streamingStatusChange.subscribe(async status => {
       if (status === EStreamingState.Live) {
         streamStarted = true; // console.log('live', this.streamingService.views.settings.platforms.twitch.title);
+        const streamId = 'fromStreamRecording' + uuid();
+
+        this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+          type: 'AiRecordingGoinglive',
+          streamId,
+          game: this.streamingService.views.game,
+        });
 
         if (!this.aiHighlighterFeatureEnabled) {
+          this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+            type: 'AiHighlighterFeatureNotEnabled',
+            streamId,
+          });
           return;
         }
 
         if (this.views.useAiHighlighter === false) {
           return;
         }
+
+        this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+          type: 'AiRecordingHighlighterIsActive',
+          streamId,
+          game: this.streamingService.views.game,
+        });
 
         if (!isGameSupported(this.streamingService.views.game)) {
           return;
@@ -445,7 +462,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         }
 
         streamInfo = {
-          id: 'fromStreamRecording' + uuid(),
+          id: streamId,
           title: this.streamingService.views.settings.platforms.twitch?.title,
           game,
         };
@@ -1273,6 +1290,10 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   }
 
   async uninstallAiHighlighter() {
+    this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+      type: 'Uninstallation',
+    });
+
     this.setAiHighlighter(false);
     this.SET_HIGHLIGHTER_VERSION('');
 
@@ -1342,7 +1363,17 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     if (this.aiHighlighterUpdater.updateInProgress) {
       await this.aiHighlighterUpdater.currentUpdate;
     } else if (await this.aiHighlighterUpdater.isNewVersionAvailable()) {
+      this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+        type: 'DetectionFlowHighlighterUpdateStart',
+        timeStamp: Date.now(),
+        streamId: streamInfo.id,
+      });
       await this.startUpdater();
+      this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+        type: 'DetectionFlowHighlighterUpdateFinished',
+        timeStamp: Date.now(),
+        streamId: streamInfo.id,
+      });
     }
 
     const fallbackTitle = 'awesome-stream';
@@ -1395,7 +1426,11 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       if (delayStart) {
         await this.wait(5000);
       }
-
+      this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+        type: 'StartDetection',
+        streamId: streamInfo.id,
+        timeStamp: Date.now(),
+      });
       const highlighterResponse = await getHighlightClips(
         filePath,
         this.userService.getLocalUserId(),
@@ -1407,6 +1442,12 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         streamInfo.milestonesPath,
         (milestone: IHighlighterMilestone) => {
           this.streamMilestones?.milestones?.push(milestone);
+          this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+            type: 'DetectionMilestone',
+            milestone: milestone.name,
+            streamId: streamInfo.id,
+            timeStamp: Date.now(),
+          });
         },
         streamInfo.game === 'unset' ? undefined : streamInfo.game,
       );

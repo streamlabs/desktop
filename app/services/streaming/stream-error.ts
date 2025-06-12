@@ -397,10 +397,11 @@ export function formatUnknownErrorMessage(
     } catch (error: unknown) {
       // if it's not JSON, it is the message itself
       // don't show blocked message to user
-      if (!info.split(' ').includes('blocked')) {
+      if (info.split(' ').includes('blocked')) {
+        messages.user.push(errorTypes['UNKNOWN_STREAMING_ERROR_WITH_MESSAGE'].message);
         messages.user.push(info);
       } else {
-        messages.user.push(errorTypes['UNKNOWN_STREAMING_ERROR_WITH_MESSAGE'].message);
+        messages.user.push(info);
       }
 
       // always add non-JSON info to diag report
@@ -414,7 +415,7 @@ export function formatUnknownErrorMessage(
         let error;
         let platform;
 
-        if (typeof info.error === 'string') {
+        if (typeof info.error === 'string' && info.error !== '') {
           /*
            * Try to parse error as JSON as originally done, however, if it's just a string
            * (such as in the case of invalid path and many other unknown -4 errors we've
