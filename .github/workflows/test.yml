@@ -9,7 +9,7 @@ on:
 
 jobs:
   changes:
-    runs-on: windows-2019
+    runs-on: windows-2022
     permissions:
       contents: read
       pull-requests: read
@@ -53,7 +53,7 @@ jobs:
     name: setup(app)
     needs: changes
     if: ${{ needs.changes.outputs.app == 'true' || needs.changes.outputs.bin == 'true' }}
-    runs-on: windows-2019
+    runs-on: windows-2022
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -81,7 +81,7 @@ jobs:
     name: setup(bin)
     needs: changes
     if: ${{ needs.changes.outputs.bin == 'true' }}
-    runs-on: windows-2019
+    runs-on: windows-2022
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -106,7 +106,7 @@ jobs:
     name: unit tests(app)
     needs: [changes, setup-app]
     if: ${{ needs.changes.outputs.app == 'true' }}
-    runs-on: windows-2019
+    runs-on: windows-2022
 
     steps:
       - name: Checkout code
@@ -131,7 +131,7 @@ jobs:
     name: unit tests(bin)
     needs: [changes, setup-app, setup-bin]
     if: ${{ needs.changes.outputs.bin == 'true' }}
-    runs-on: windows-2019
+    runs-on: windows-2022
 
     steps:
       - name: Checkout code
@@ -162,7 +162,7 @@ jobs:
   e2e_test:
     name: e2e tests
     needs: [changes, setup-app]
-    runs-on: windows-2019
+    runs-on: windows-2022
     strategy:
       matrix:
         directory:
