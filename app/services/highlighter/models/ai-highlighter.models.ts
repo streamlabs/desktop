@@ -86,8 +86,8 @@ export interface IAiClipInfo {
   inputs: IInput[];
   score: number;
   metadata: {
-    round: number;
-    webcam_coordinates: ICoordinates;
+    round?: number;
+    webcam_coordinates?: ICoordinates;
   };
 }
 

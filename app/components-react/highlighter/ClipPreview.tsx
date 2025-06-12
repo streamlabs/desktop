@@ -46,10 +46,6 @@ export default function ClipPreview(props: {
 
   return (
     <div className={styles.previewClip} style={{ opacity: v.clip.enabled ? 1.0 : 0.3 }}>
-      Duration: {JSON.stringify(v.clip.duration)} <br />
-      CLIPS: {JSON.stringify(v.clip.startTrim)} - {JSON.stringify(v.clip.endTrim)} ={' '}
-      {JSON.stringify(v.clip.duration! - (v.clip.startTrim + v.clip.endTrim))}
-      <br />
       <div style={{ height: `${SCRUB_HEIGHT}px`, position: 'relative' }}>
         {!v.clip.deleted && (
           <img

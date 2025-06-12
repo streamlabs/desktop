@@ -54,8 +54,8 @@ class VisionService extends EventEmitter {
   }
 
   private scheduleNext(): void {
-    const maxDelay = 30 * 1000;
-    const minDelay = 5 * 1000;
+    const maxDelay = 15 * 1000;
+    const minDelay = 1 * 1000;
 
     const delay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
     console.log('Triggering random event');
@@ -297,10 +297,7 @@ export class RealtimeHighlighterService extends Service {
       const aiClipInfo: IAiClipInfo = {
         inputs: highlight.inputs.map((input: string) => ({ type: input } as IInput)),
         score: Math.round(highlight.score / RealtimeHighlighterService.MAX_SCORE),
-        metadata: {
-          round: 0, // Placeholder, adjust as needed
-          webcam_coordinates: undefined, // Placeholder, adjust as needed
-        },
+        metadata: {},
       };
 
       // trim times for desktop are insanely weird, for some reason its offset between start and end
