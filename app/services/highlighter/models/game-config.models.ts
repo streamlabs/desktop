@@ -276,7 +276,7 @@ const PUBG_CONFIG: IGameConfig = {
 
 const RAINBOW_SIX_SIEGE: IGameConfig = {
   name: EGame.RAINBOW_SIX_SIEGE,
-  label: "Tom Clancy's Rainbow Six Siege",
+  label: "Tom Clancy's Rainbow Six Siege X",
   gameModes: '',
   thumbnail: `${thumbnailPath}${EGame.RAINBOW_SIX_SIEGE}.png`,
   state: EGameState.INTERNAL,
