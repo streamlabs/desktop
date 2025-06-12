@@ -258,7 +258,6 @@ export class PlatformContainerManager {
     return info;
   }
 
-  // HERE
   private destroyContainer(containerId: string) {
     const info = this.containers.find(cont => cont.id === containerId);
 
