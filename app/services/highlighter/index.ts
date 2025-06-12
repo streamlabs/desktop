@@ -432,6 +432,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
             type: 'AiHighlighterFeatureNotEnabled',
             streamId,
+            game: this.streamingService.views.game,
           });
           return;
         }
@@ -516,6 +517,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
           type: 'AiRecordingFinished',
           streamId: streamInfo?.id,
+          game: this.streamingService.views.game,
         });
         this.streamingService.actions.toggleRecording();
 
@@ -538,6 +540,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
             type: 'AiRecordingExists',
             duration,
             streamId: streamInfo?.id,
+            game: this.streamingService.views.game,
           });
         })
         .catch(error => {
@@ -782,7 +785,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     return;
   }
 
-  getGameByStreamId(streamId?: string): EGame {
+  getGameByStreamId(streamId: string | undefined): EGame {
     if (!streamId) return EGame.UNSET;
 
     const game = this.views.highlightedStreamsDictionary[streamId]?.game;
@@ -1273,10 +1276,12 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   async installAiHighlighter(
     downloadNow: boolean = false,
     location: 'Highlighter-tab' | 'Go-live-flow',
+    game?: string,
   ) {
     this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
       type: 'Installation',
       location,
+      game,
     });
 
     this.setAiHighlighter(true);
@@ -1430,6 +1435,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         type: 'StartDetection',
         streamId: streamInfo.id,
         timeStamp: Date.now(),
+        game: setStreamInfo.game,
       });
       const highlighterResponse = await getHighlightClips(
         filePath,
@@ -1447,6 +1453,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
             milestone: milestone.name,
             streamId: streamInfo.id,
             timeStamp: Date.now(),
+            game: setStreamInfo.game,
           });
         },
         streamInfo.game === 'unset' ? undefined : streamInfo.game,
@@ -1622,10 +1629,12 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         });
 
         this.SET_UPLOAD_INFO({ platform: EUploadPlatform.YOUTUBE, error: true });
+        const game = this.getGameByStreamId(streamId);
         this.usageStatisticsService.recordAnalyticsEvent(
           this.views.useAiHighlighter ? 'AIHighlighter' : 'Highlighter',
           {
             type: 'UploadYouTubeError',
+            game,
           },
         );
       }
@@ -1640,11 +1649,13 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     });
 
     if (result) {
+      const game = this.getGameByStreamId(streamId);
       this.usageStatisticsService.recordAnalyticsEvent(
         this.views.useAiHighlighter ? 'AIHighlighter' : 'Highlighter',
         {
           type: 'UploadYouTubeSuccess',
           streamId,
+          game,
           privacy: options.privacyStatus,
           videoLink:
             options.privacyStatus === 'public'
