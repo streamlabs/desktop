@@ -186,7 +186,7 @@ export class PlatformContainerManager {
       .forEach(info => info.container.webContents.loadURL(this.getPageUrlForSlot(app, info.slot)));
   }
 
-  getContainerInfoForSlot(app: ILoadedApp, slot: EAppPageSlot): IContainerInfo {
+  private getContainerInfoForSlot(app: ILoadedApp, slot: EAppPageSlot): IContainerInfo {
     const existingContainer = this.containers.find(
       cont => cont.appId === app.id && cont.slot === slot,
     );

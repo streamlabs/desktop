@@ -169,7 +169,7 @@ export interface IWindowOptions extends Electron.BrowserWindowConstructorOptions
   };
   isPreserved?: boolean;
   preservePrevWindow?: boolean;
-  preserveWebContents?: boolean;
+  persistWebContents?: boolean;
   prevWindowOptions?: IWindowOptions;
   isFullScreen?: boolean;
 
@@ -469,7 +469,7 @@ export class WindowsService extends StatefulService<IWindowsState> {
     // To persist a BrowserView and its WebContents between the main and one off
     // windows, prevent this default behavior. The `close` event is fired before the
     // `closed` event, similar to the `beforeunload` event in a web page.
-    if (options.preserveWebContents) {
+    if (options.persistWebContents) {
       newWindow.on('close', (e: Electron.Event) => {
         e.preventDefault();
         return e.defaultPrevented;
