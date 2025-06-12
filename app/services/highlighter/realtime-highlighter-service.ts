@@ -2,10 +2,11 @@ import { InitAfter, Inject, Service } from 'services/core';
 import { EventEmitter } from 'events';
 import { EReplayBufferState, StreamingService } from 'services/streaming';
 import { Subject, Subscription } from 'rxjs';
-import { IAiClip, INewClipData } from './models/highlighter.models';
+import { INewClipData } from './models/highlighter.models';
 import { IAiClipInfo, IInput } from './models/ai-highlighter.models';
 import { SettingsService } from 'app-services';
 import moment from 'moment';
+import { getVideoDuration } from './cut-highlight-clips';
 
 /**
  * Just a mock class to represent a vision service events
@@ -218,20 +219,21 @@ export class RealtimeHighlighterService extends Service {
     this.currentReplayEvents.push(event);
   }
 
-  private onReplayReady(path: string) {
-    console.log(this.getReplayBufferDurationSeconds());
+  private async onReplayReady(path: string) {
     const events = this.currentReplayEvents;
     if (events.length === 0) {
       return;
     }
-
     this.currentReplayEvents = [];
 
-    const replayBufferDuration = this.getReplayBufferDurationSeconds();
+    const replayBufferDuration =
+      (await getVideoDuration(path)) || this.getReplayBufferDurationSeconds();
+    console.log(`Replay buffer duration: ${replayBufferDuration} seconds`);
 
     // absolute time in milliseconds when the replay was saved
     const replaySavedAt = this.replaySavedAt;
     this.replaySavedAt = null;
+
     const replayStartedAt = replaySavedAt - replayBufferDuration * 1000;
     console.log(`Replay saved at ${moment(replaySavedAt).format('YYYY-MM-DD HH:mm:ss')}`);
     console.log(`Replay started at ${moment(replayStartedAt).format('YYYY-MM-DD HH:mm:ss')}`);
@@ -307,11 +309,11 @@ export class RealtimeHighlighterService extends Service {
 
       const clip: INewClipData = {
         path,
-        aiClipInfo: aiClipInfo,
+        aiClipInfo,
         startTime: 0,
         endTime: this.getReplayBufferDurationSeconds(),
-        startTrim: startTrim,
-        endTrim: endTrim,
+        startTrim,
+        endTrim,
       };
 
       this.highlights.push(clip);

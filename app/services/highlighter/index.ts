@@ -410,6 +410,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       console.log('AI Highlighter feature is enabled, using realtime highlighter service');
       this.realtimeHighlighterService.highlightsReady.subscribe(async highlights => {
         console.log('Realtime highlights received:', highlights);
+        console.log(streamInfo.id);
         this.addAiClips(highlights, { id: streamInfo.id || '', game: streamInfo.game });
       });
     } else {
