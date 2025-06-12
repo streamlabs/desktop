@@ -302,13 +302,13 @@ export class RealtimeHighlighterService extends Service {
 
       // trim times for desktop are insanely weird, for some reason its offset between start and end
       const startTrim = highlight.startTime;
-      const endTrim = this.getReplayBufferDurationSeconds() - highlight.endTime;
+      const endTrim = replayBufferDuration - highlight.endTime;
 
       const clip: INewClipData = {
         path,
         aiClipInfo,
         startTime: 0,
-        endTime: this.getReplayBufferDurationSeconds(),
+        endTime: replayBufferDuration,
         startTrim,
         endTrim,
       };
