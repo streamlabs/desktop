@@ -169,6 +169,7 @@ export interface IWindowOptions extends Electron.BrowserWindowConstructorOptions
   };
   isPreserved?: boolean;
   preservePrevWindow?: boolean;
+  preserveWebContents?: boolean;
   prevWindowOptions?: IWindowOptions;
   isFullScreen?: boolean;
 
@@ -251,7 +252,6 @@ export class WindowsService extends StatefulService<IWindowsState> {
 
   windowUpdated = new Subject<{ windowId: string; options: IWindowOptions }>();
   windowDestroyed = new Subject<string>();
-  windowWillDestroy = new Subject<string>();
   styleBlockersUpdated = new Subject<{ windowId: string; hideStyleBlockers: boolean }>();
   windows: Dictionary<Electron.BrowserWindow> = {};
 
@@ -465,9 +465,16 @@ export class WindowsService extends StatefulService<IWindowsState> {
 
     newWindow.removeMenu();
 
-    newWindow.on('close', () => {
-      this.windowWillDestroy.next(windowId);
-    });
+    // Destroying the BrowserView on window close is default behavior.
+    // To persist a BrowserView and its WebContents between the main and one off
+    // windows, prevent this default behavior. The `close` event is fired before the
+    // `closed` event, similar to the `beforeunload` event in a web page.
+    if (options.preserveWebContents) {
+      newWindow.on('close', (e: Electron.Event) => {
+        e.preventDefault();
+        return e.defaultPrevented;
+      });
+    }
 
     newWindow.on('closed', () => {
       this.windowDestroyed.next(windowId);

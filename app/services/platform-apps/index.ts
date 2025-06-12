@@ -644,25 +644,13 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
         size: this.getPagePopOutSize(appId, pageSlot),
         x: mousePos.x,
         y: mousePos.y,
+        preserveWebContents: true,
         ...windowOptions,
       },
       windowId,
     );
 
     this.POP_OUT_SLOT(appId, pageSlot);
-
-    const windowWillDestroy = this.windowsService.windowWillDestroy.subscribe(winId => {
-      // get the containerID
-      const containerInfo = this.containerManager.getContainerInfoForSlot(app, pageSlot);
-      console.log('containerInfo', containerInfo);
-      const slobsWindowId = this.windowsService.getElectronWindowIdFromWindowId(winId);
-
-      this.unmountContainer(containerInfo.id, slobsWindowId);
-
-      console.log('this.containerManager.containers', this.containerManager.containers);
-
-      windowWillDestroy.unsubscribe();
-    });
 
     const windowDestroyed = this.windowsService.windowDestroyed.subscribe(winId => {
       if (winId === windowId) {

@@ -106,34 +106,12 @@ export class PlatformContainerManager {
     electronWindowId: number,
     slobsWindowId: string,
   ) {
-    console.log('MOUNTING');
-
     const containerInfo = this.getContainerInfoForSlot(app, slot);
     const win = remote.BrowserWindow.fromId(electronWindowId);
-
-    // console.log('containerInfo.container', JSON.stringify(containerInfo.container, null, 2));
-    // // Create a new container if it doesn't exist to prevent a crash
-    // if (!containerInfo.container.webContents) {
-    //   console.log('Creating new webcontents for app', app.id, 'slot', slot);
-
-    //   containerInfo.container.webContents = this.createContainer(
-    //     app,
-    //     slot,
-    //     containerInfo.persistent,
-    //   );
-
-    //   // containerInfo.container.webContents = new remote.WebContents({
-    //   //   id: containerInfo.container.webContentsId,
-    //   //   session: remote.session.fromPartition(this.getAppPartition(app)),
-    //   //   partition: this.getAppPartition(app),
-    //   // });
-    // }
 
     win.addBrowserView(containerInfo.container);
 
     containerInfo.mountedWindows.push(electronWindowId);
-
-    console.log('containerInfo.mountedWindows', containerInfo.mountedWindows);
 
     containerInfo.transform.next({
       ...containerInfo.transform.getValue(),
@@ -165,8 +143,6 @@ export class PlatformContainerManager {
   }
 
   unmountContainer(containerId: string, electronWindowId: number) {
-    console.log('UNMOUNTING CONTAINER', containerId, electronWindowId);
-
     const info = this.containers.find(cont => cont.id === containerId);
 
     if (!info) return;
@@ -215,7 +191,11 @@ export class PlatformContainerManager {
       cont => cont.appId === app.id && cont.slot === slot,
     );
 
-    // confirm that the existing container still has content loaded
+    // Confirming that the existing container still has content loaded
+    // prevents the app from crashing by attempting to access a destroyed
+    // webContents. Not ideal because the alternative is to create a new container,
+    // which loses the state of the previous container. But better than and error
+    // causing a crash.
     if (existingContainer && existingContainer.container.webContents) {
       return existingContainer;
     }
