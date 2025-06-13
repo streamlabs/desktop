@@ -95,7 +95,13 @@ interface IExtraOutput {
   encoderSettings: IStreamingEncoderSettings;
 }
 
-type TOBSOutputType = 'streaming' | 'recording' | 'replayBuffer';
+const outputType = (type: EOBSOutputType) =>
+  ({
+    [EOBSOutputType.Streaming]: $t('Streaming'),
+    [EOBSOutputType.Recording]: $t('Recording'),
+    [EOBSOutputType.ReplayBuffer]: $t('Replay Buffer'),
+    [EOBSOutputType.VirtualCam]: $t('Virtual Cam'),
+  }[type]);
 
 interface IOutputContext {
   streaming: ISimpleStreaming | IAdvancedStreaming;

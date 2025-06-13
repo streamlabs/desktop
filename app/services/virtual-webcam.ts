@@ -122,7 +122,7 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
           this.signalInfoChanged.next(info);
         });
 
-        obs.NodeObs.OBS_service_createVirtualCam();
+        obs.NodeObs.OBS_service_installVirtualCamPlugin();
         this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
           console.log(`virtual cam install signalInfo: ${signalInfo.signal}`);
           this.setInstallStatus();
