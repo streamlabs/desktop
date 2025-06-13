@@ -372,7 +372,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       .forEach(stream => {
         this.UPDATE_HIGHLIGHTED_STREAM({
           ...stream,
-          state: { type: EAiDetectionState.CANCELED_BY_USER, progress: 0 },
+          state: { type: EAiDetectionState.CANCELED_BY_USER },
         });
       });
 
@@ -397,21 +397,37 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     this.handleStreamingChanges();
   }
 
+  useRealtimeHighlighter = true;
   private handleStreamingChanges() {
     let aiRecordingStartTime = moment();
-    let streamInfo: IStreamInfoForAiHighlighter;
+    let streamInfo: IHighlightedStream;
     let streamStarted = false;
     let aiRecordingInProgress = false;
 
     // add check if ai realtime highlighter is enabled?
     // if yes add hook to realtime highlighter service?
     console.log('feature enabled: ', this.aiHighlighterFeatureEnabled);
-    if (true) {
+    if (this.useRealtimeHighlighter) {
       console.log('AI Highlighter feature is enabled, using realtime highlighter service');
       this.realtimeHighlighterService.highlightsReady.subscribe(async highlights => {
         console.log('Realtime highlights received:', highlights);
         console.log(streamInfo.id);
+        console.log('Add ai clips now...');
         this.addAiClips(highlights, { id: streamInfo.id || '', game: streamInfo.game });
+
+        console.log('Load clips now...');
+        await this.loadClips(streamInfo.id);
+
+        let count = 0;
+        const state = this.views.highlightedStreamsDictionary[streamInfo.id]?.state;
+        if (state?.type === EAiDetectionState.REALTIME_DETECTION_IN_PROGRESS) {
+          count = state.count;
+        }
+
+        this.updateStream({
+          state: { type: EAiDetectionState.REALTIME_DETECTION_IN_PROGRESS, count },
+          id: streamInfo.id,
+        });
       });
     } else {
       this.streamingService.replayBufferFileWrite.subscribe(async clipPath => {
@@ -476,26 +492,43 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           game = EGame.UNSET;
         }
 
+        // Set state depending on realtime or not
         streamInfo = {
           id: streamId,
           title: this.streamingService.views.settings.platforms.twitch?.title,
           game,
+          state: this.useRealtimeHighlighter
+            ? {
+                type: EAiDetectionState.REALTIME_DETECTION_IN_PROGRESS,
+                count: 0,
+              }
+            : {
+                type: EAiDetectionState.IN_PROGRESS,
+                progress: 0,
+              },
+          date: moment().toISOString(),
         };
 
-        this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
-          type: 'AiRecordingStarted',
-          streamId: streamInfo?.id,
-        });
+        if (this.useRealtimeHighlighter) {
+          // Add stream folder to stream view already
+          await this.addStream(streamInfo);
 
-        if (this.streamingService.views.isRecording === false) {
-          this.streamingService.actions.toggleRecording();
+          // start realtime highlighter service
+          this.realtimeHighlighterService.start();
+        } else {
+          // normal recording highlighter
+          this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+            type: 'AiRecordingStarted',
+            streamId: streamInfo?.id,
+          });
+
+          if (this.streamingService.views.isRecording === false) {
+            this.streamingService.actions.toggleRecording();
+          }
+
+          aiRecordingInProgress = true;
+          aiRecordingStartTime = moment();
         }
-
-        aiRecordingInProgress = true;
-        aiRecordingStartTime = moment();
-
-        // start realtime highlighter service
-        this.realtimeHighlighterService.start();
       }
 
       if (status === EStreamingState.Offline) {
@@ -527,6 +560,14 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         streamStarted = false;
       }
       if (status === EStreamingState.Ending) {
+        if (this.useRealtimeHighlighter) {
+          this.updateStream({
+            state: { type: EAiDetectionState.FINISHED },
+            id: streamInfo.id,
+          });
+          this.realtimeHighlighterService.stop();
+        }
+
         if (!aiRecordingInProgress) {
           return;
         }
@@ -536,7 +577,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           streamId: streamInfo?.id,
         });
         this.streamingService.actions.toggleRecording();
-        this.realtimeHighlighterService.stop();
 
         // Load potential replaybuffer clips
         await this.loadClips(streamInfo.id);
@@ -1051,8 +1091,14 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     });
   }
 
-  updateStream(streamInfo: IHighlightedStream) {
-    this.UPDATE_HIGHLIGHTED_STREAM(streamInfo);
+  updateStream(updatedStreamInfo: Partial<IHighlightedStream> & { id: string }) {
+    const existingStreamInfo = this.state.highlightedStreamsDictionary[updatedStreamInfo.id];
+    if (!existingStreamInfo) {
+      console.error(`Stream with id ${updatedStreamInfo.id} not found for update`);
+      return;
+    }
+    const updatedStream = { ...existingStreamInfo, ...updatedStreamInfo };
+    this.UPDATE_HIGHLIGHTED_STREAM(updatedStream);
   }
 
   removeStream(streamId: string, deleteClipsFromSystem = true) {
@@ -1421,10 +1467,14 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       milestones: [],
     };
 
+    // For realtime the stream is added on go-live
     await this.addStream(setStreamInfo);
 
     const progressTracker = new ProgressTracker(progress => {
-      setStreamInfo.state.progress = progress;
+      setStreamInfo.state = {
+        type: EAiDetectionState.IN_PROGRESS,
+        progress,
+      };
       this.updateStream(setStreamInfo);
     });
 

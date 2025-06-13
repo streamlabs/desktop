@@ -230,7 +230,8 @@ export default function StreamCard({
             <RotatedClips clips={clips} />
           </div>
           <h3 className={styles.emojiWrapper}>
-            {stream.state.type === EAiDetectionState.FINISHED ? (
+            {stream.state.type === EAiDetectionState.FINISHED ||
+            stream.state.type === EAiDetectionState.REALTIME_DETECTION_IN_PROGRESS ? (
               <StreamCardInfo clips={clips} game={game} />
             ) : (
               <div style={{ height: '22px' }}> </div>
@@ -244,7 +245,11 @@ export default function StreamCard({
             emitShowStreamClips={showStreamClips}
             clipsOfStreamAreLoading={clipsOfStreamAreLoading}
             emitRestartAiDetection={() => {
-              HighlighterService.actions.restartAiDetection(stream.path, stream);
+              if (stream.path) {
+                HighlighterService.actions.restartAiDetection(stream.path, stream);
+              } else {
+                console.log('TODO: Stream path is not available. Realtime dection');
+              }
             }}
             emitSetView={emitSetView}
             emitFeedbackForm={() => {
@@ -312,6 +317,38 @@ function ActionBar({
 
     emitFeedbackForm(clips.length);
   };
+
+  if (stream?.state.type === EAiDetectionState.REALTIME_DETECTION_IN_PROGRESS) {
+    return (
+      <div className={styles.progressbarBackground}>
+        <div style={{ width: '16px', height: '16px', marginRight: '16px' }}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="17"
+            viewBox="0 0 16 17"
+            fill="none"
+          >
+            <circle opacity="0.3" cx="8" cy="8.5" r="8" fill="#F85640" />
+            <circle cx="8" cy="8.5" r="3" fill="#F85640" />
+          </svg>
+        </div>
+        <div className={styles.progressbarText}>{$t('Ai detection in progress')}</div>
+
+        <Button
+          size="large"
+          type="ghost"
+          className={styles.cancelButton}
+          onClick={e => {
+            e.stopPropagation();
+            console.log('TODO: Cancel realtime detection');
+          }}
+        >
+          <i className="icon-close" />
+        </Button>
+      </div>
+    );
+  }
 
   // In Progress
   if (stream?.state.type === EAiDetectionState.IN_PROGRESS) {
