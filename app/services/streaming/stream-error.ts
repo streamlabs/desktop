@@ -1,7 +1,7 @@
 import { getPlatformService, TPlatform } from '../platforms';
 import { $t } from 'services/i18n';
 import { Services } from '../../components-react/service-provider';
-import { IOBSOutputSignalInfo } from './streaming';
+import { IOBSOutputSignalInfo } from '../core/signals';
 import { capitalize } from 'lodash';
 
 // the `message` is shown to the user in the error notification
