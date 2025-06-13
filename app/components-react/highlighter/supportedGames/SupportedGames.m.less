@@ -2,9 +2,8 @@
   position: relative;
   border-radius: 8px;
   overflow: hidden;
-  max-height: 390px;
-  margin: 0 auto;
   margin-right: -8px;
+  cursor: pointer;
   width: 40px;
   height: 40px;
   box-shadow: 0px 2px 18px 0px rgba(0, 0, 0, 0.21), 0px 1px 6px 0px rgba(0, 0, 0, 0.08);
@@ -36,4 +35,15 @@
 .thumbnail:hover {
   z-index: 10;
   transform: rotate(0) scale(1.2);
+}
+
+.tooltip-thumbnail {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  width: 40px;
+  height: 40px;
+  box-shadow: 0px 2px 18px 0px rgba(0, 0, 0, 0.21), 0px 1px 6px 0px rgba(0, 0, 0, 0.08);
+  transform: rotate(var(--rotation));
+  transition: transform 500ms cubic-bezier(0.19, 1, 0.22, 1);
 }

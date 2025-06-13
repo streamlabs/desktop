@@ -29,6 +29,10 @@ export interface ICustomStreamDestination {
   display?: TDisplayType;
   video?: IVideo;
   mode?: TOutputOrientation;
+  /**
+   * Indicates if this custom destination is the vertical dual stream
+   */
+  dualStream?: boolean;
 }
 
 /**
@@ -134,24 +138,7 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
    * setup all stream-settings via single object
    */
   setSettings(patch: Partial<IStreamSettings>, context?: TDisplayType) {
-    const streamName = (() => {
-      if (patch.platform === 'youtube' && context === 'horizontal') {
-        const ytSettings = this.streamingService.views.getPlatformSettings('youtube');
-        if (
-          this.streamingService.views.enabledPlatforms.length > 1 &&
-          ytSettings?.enabled &&
-          this.dualOutputService.views.hasExtraOutput('youtube') &&
-          !(
-            this.streamingService.views.activeDisplayPlatforms.vertical.length ||
-            this.streamingService.views.activeDisplayDestinations.vertical.length
-          )
-        ) {
-          return 'StreamSecond';
-        }
-      }
-
-      return !context || context === 'horizontal' ? 'Stream' : 'StreamSecond';
-    })();
+    const streamName = !context || context === 'horizontal' ? 'Stream' : 'StreamSecond';
 
     // save settings to localStorage
     const localStorageSettings: (keyof IStreamSettingsState)[] = [
