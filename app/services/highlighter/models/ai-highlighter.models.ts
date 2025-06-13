@@ -113,6 +113,7 @@ export interface IInput {
 export enum EAiDetectionState {
   INITIALIZED = 'initialized',
   IN_PROGRESS = 'detection-in-progress',
+  REALTIME_DETECTION_IN_PROGRESS = 'realtime-detection-in-progress',
   ERROR = 'error',
   FINISHED = 'detection-finished',
   CANCELED_BY_USER = 'detection-canceled-by-user',

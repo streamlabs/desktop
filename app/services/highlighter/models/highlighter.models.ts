@@ -93,17 +93,24 @@ export interface IStreamMilestones {
   streamId: string;
   milestones: IHighlighterMilestone[];
 }
+type IHighlightedStreamState =
+  | { type: EAiDetectionState.IN_PROGRESS; progress: number }
+  | { type: EAiDetectionState.REALTIME_DETECTION_IN_PROGRESS; count: number }
+  | {
+      type: Exclude<
+        EAiDetectionState,
+        EAiDetectionState.IN_PROGRESS | EAiDetectionState.REALTIME_DETECTION_IN_PROGRESS
+      >;
+    };
+
 export interface IHighlightedStream {
   id: string;
   game: EGame;
   title: string;
   date: string;
-  state: {
-    type: EAiDetectionState;
-    progress: number;
-  };
+  state: IHighlightedStreamState;
   abortController?: AbortController;
-  path: string;
+  path?: string;
   feedbackLeft?: boolean;
 }
 
