@@ -93,13 +93,14 @@ export function aiFilterClips(
 ): TClip[] {
   const { rounds, targetDuration, includeAllEvents } = options;
 
+  // TODO: this just handles the error for now, probably not the best way.
   const selectedRounds =
     rounds.length === 1 && rounds[0] === 0
       ? [
           ...new Set(
             clips
               .filter(clip => clip.source === 'AiClip')
-              .map(clip => (clip as IAiClip).aiInfo.metadata?.round),
+              .map(clip => (clip as IAiClip).aiInfo.metadata?.round || 0),
           ),
         ]
       : rounds;
