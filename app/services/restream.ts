@@ -207,8 +207,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return jfetch(request);
   }
 
-  async beforeGoLive(context?: TDisplayType, mode?: TOutputOrientation) {
-    await Promise.all([this.setupIngest(context, mode), this.setupTargets(!!mode)]);
+  async beforeGoLive() {
+    await Promise.all([this.setupIngest(), this.setupTargets()]);
   }
 
   /**
@@ -220,25 +220,42 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @param context - Optional, display to stream
    * @param mode - Optional, mode which denotes which context to stream
    */
-  async setupIngest(context?: TDisplayType, mode?: TOutputOrientation) {
+  async setupIngest() {
     const ingest = (await this.fetchIngest()).server;
-    const settings = mode ? await this.fetchUserSettings(mode) : this.settings;
 
-    // We need to move OBS to custom ingest mode before we can set the server
-    this.streamSettingsService.setSettings(
-      {
+    if (this.streamingService.views.isDualOutputMode) {
+      // in dual output mode, we need to set the ingest for each display
+      const displays = this.streamingService.views.displaysToRestream;
+      displays.forEach(async display => {
+        const mode = this.getMode(display);
+        const settings = await this.fetchUserSettings(mode);
+
+        this.streamSettingsService.setSettings(
+          {
+            streamType: 'rtmp_custom',
+          },
+          display,
+        );
+
+        this.streamSettingsService.setSettings(
+          {
+            key: settings.streamKey,
+            server: ingest,
+          },
+          display,
+        );
+      });
+    } else {
+      // in single output mode, we just set the ingest for the default display
+      this.streamSettingsService.setSettings({
         streamType: 'rtmp_custom',
-      },
-      context,
-    );
+      });
 
-    this.streamSettingsService.setSettings(
-      {
-        key: settings.streamKey,
+      this.streamSettingsService.setSettings({
+        key: this.settings.streamKey,
         server: ingest,
-      },
-      context,
-    );
+      });
+    }
   }
 
   /**
@@ -246,10 +263,10 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @remarks
    * In dual output mode, assign a contexts to the ingest targets.
    * Defaults to the horizontal context.
-   *
-   * @param isDualOutputMode - Optional, boolean denoting if dual output mode is on
    */
-  async setupTargets(isDualOutputMode?: boolean) {
+  async setupTargets() {
+    const isDualOutputMode = this.streamingService.views.isDualOutputMode;
+
     // delete existing targets
     const targets = await this.fetchTargets();
     const promises = targets.map(t => this.deleteTarget(t.id));
@@ -483,7 +500,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return this.getMode(display);
   }
 
-  private getMode(display: TDisplayType): TOutputOrientation {
+  getMode(display: TDisplayType): TOutputOrientation {
     if (!display) return 'landscape';
     return display === 'horizontal' ? 'landscape' : 'portrait';
   }

@@ -29,10 +29,10 @@ import { getVideoResolution } from 'services/highlighter/cut-highlight-clips';
 
 type TSetting = { name: string; fps: TFPS; resolution: TResolution; preset: TPreset };
 const settings: TSetting[] = [
-  { name: 'Standard', fps: 30, resolution: 1080, preset: 'fast' },
+  { name: 'Standard', fps: 30, resolution: 1080, preset: 'medium' },
   { name: 'Best', fps: 60, resolution: 1080, preset: 'slow' },
-  { name: 'Fast', fps: 30, resolution: 720, preset: 'ultrafast' },
-  { name: 'Custom', fps: 30, resolution: 720, preset: 'ultrafast' },
+  { name: 'Fast', fps: 30, resolution: 720, preset: 'fast' },
+  { name: 'Custom', fps: 30, resolution: 720, preset: 'medium' },
 ];
 class ExportController {
   get service() {
@@ -236,6 +236,9 @@ function ExportFlow({
       }
 
       setSetting(setting);
+      setFps(setting.fps.toString());
+      setResolution(setting.resolution.toString());
+      setPreset(setting.preset);
     } catch (error: unknown) {
       console.error('Failed to detect clip resolution, setting default. Error: ', error);
       setSetting(
@@ -471,8 +474,8 @@ function ExportFlow({
                     label={$t('File Size')}
                     value={exportInfo.preset}
                     options={[
-                      { value: 'ultrafast', label: $t('Faster Export') },
-                      { value: 'fast', label: $t('Balanced') },
+                      { value: 'fast', label: $t('Faster Export') },
+                      { value: 'medium', label: $t('Balanced') },
                       { value: 'slow', label: $t('Smaller File') },
                     ]}
                     onChange={setPreset}
