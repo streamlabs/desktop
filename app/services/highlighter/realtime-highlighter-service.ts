@@ -5,7 +5,6 @@ import { Subject, Subscription } from 'rxjs';
 import { INewClipData } from './models/highlighter.models';
 import { IAiClipInfo, IInput } from './models/ai-highlighter.models';
 import { SettingsService } from 'app-services';
-import moment from 'moment';
 import { getVideoDuration } from './cut-highlight-clips';
 
 class LocalVisionService extends EventEmitter {
@@ -34,7 +33,7 @@ class LocalVisionService extends EventEmitter {
     this.eventSource = new EventSource('http://localhost:8000/events');
     this.eventSource.onmessage = (event: any) => {
       const data = JSON.parse(event.data);
-      console.log('Received event:', data);
+      console.log('Received events:', data);
       const events = data.events;
       for (const event of events) {
         console.log('Emitting event:', event);
@@ -215,6 +214,18 @@ export class RealtimeHighlighterService extends Service {
     this.isRunning = false;
   }
 
+  private getReplayBufferDurationSeconds(): number {
+    return this.settingsService.views.values.Output.RecRBTime;
+  }
+
+  private setReplayBufferDurationSeconds(seconds: number) {
+    if (this.streamingService.state.replayBufferStatus !== EReplayBufferState.Offline) {
+      console.warn('Replay buffer must be stopped before its settings can be changed!');
+      return;
+    }
+    this.settingsService.setSettingsPatch({ Output: { RecRBTime: seconds } });
+  }
+
   /**
    * This method is called periodically to save replay events to file at correct time
    * when the highlight ends.
@@ -249,13 +260,14 @@ export class RealtimeHighlighterService extends Service {
     setTimeout(() => this.tick(), 1000);
   }
 
+  /**
+   * Fired when a new event is received from the vision service.
+   */
   private onEvent(event: any) {
     // ignore events that have no highlight data
     if (!event.highlight) {
       return;
     }
-
-    console.log('Received event:', event);
 
     const endAdjust = event.highlight.end_adjust || 0;
 
@@ -266,80 +278,51 @@ export class RealtimeHighlighterService extends Service {
     this.currentReplayEvents.push(event);
   }
 
+  /**
+   * Fired when the replay buffer file is ready after the replay buffer was saved.
+   *
+   * Creates highlights from detected events in the replay buffer and notifies subscribers.
+   */
   private async onReplayReady(path: string) {
     const events = this.currentReplayEvents;
     if (events.length === 0) {
       return;
     }
-    console.log('Current replay events:', events);
     this.currentReplayEvents = [];
 
-    const replayBufferDuration =
+    const replayBufferDurationSeconds =
       (await getVideoDuration(path)) || this.getReplayBufferDurationSeconds();
-    console.log(`Replay buffer duration: ${replayBufferDuration} seconds`);
 
     // absolute time in milliseconds when the replay was saved
     const replaySavedAt = this.replaySavedAt;
     this.replaySavedAt = null;
 
-    const replayStartedAt = replaySavedAt - replayBufferDuration * 1000;
-    console.log(`Replay saved at ${moment(replaySavedAt).format('YYYY-MM-DD HH:mm:ss')}`);
-    console.log(`Replay started at ${moment(replayStartedAt).format('YYYY-MM-DD HH:mm:ss')}`);
-    console.log(`Replay buffer duration: ${replayBufferDuration} seconds`);
-
-    const unrefinedHighlights = [];
-
-    for (const event of events) {
-      const eventTime = event.timestamp;
-
-      const relativeEventTime = eventTime - replayStartedAt;
-      const highlightStart = relativeEventTime - (event.highlight.start_adjust || 0) * 1000;
-      const highlightEnd = relativeEventTime + (event.highlight.end_adjust || 0) * 1000;
-
-      // check if the highlight is within the replay buffer duration
-      if (highlightStart < 0 || highlightEnd > replayBufferDuration * 1000) {
-        console.warn(
-          `Event ${
-            event.name
-          } is outside of the replay buffer duration, skipping highlight creation. highlightStart: ${highlightStart}, highlightEnd: ${highlightEnd}, replayBufferDuration: ${
-            replayBufferDuration * 1000
-          } ms`,
-        );
-        continue;
-      }
-
-      unrefinedHighlights.push({
-        inputs: [event.name],
-        startTime: highlightStart / 1000, // convert to seconds
-        endTime: highlightEnd / 1000, // convert to seconds
-        score: event.highlight.score || 0,
-      });
-    }
-
+    const unrefinedHighlights = this.extractUnrefinedHighlights(
+      events,
+      replaySavedAt,
+      replayBufferDurationSeconds,
+    );
     console.log('Unrefined highlights:', unrefinedHighlights);
 
-    // merge overlapping highlights
-    const acceptableOffset = 5; // seconds
+    const mergedHighlights: any[] = this.mergeOverlappingHighlights(unrefinedHighlights);
 
-    const mergedHighlights: any[] = [];
-    for (const highlight of unrefinedHighlights) {
-      if (mergedHighlights.length === 0) {
-        mergedHighlights.push(highlight);
-        continue;
-      }
+    const clips = this.createClipsFromHighlights(
+      mergedHighlights,
+      replayBufferDurationSeconds,
+      path,
+    );
 
-      const lastHighlight = mergedHighlights[mergedHighlights.length - 1];
-      if (highlight.startTime - acceptableOffset <= lastHighlight.endTime) {
-        // merge highlights
-        lastHighlight.endTime = highlight.endTime; // extend end time
-        lastHighlight.score = Math.max(highlight.score, lastHighlight.score);
-        lastHighlight.inputs.push(...highlight.inputs);
-      } else {
-        // no overlap, push new highlight
-        mergedHighlights.push(highlight);
-      }
-    }
+    this.highlightsReady.next(clips);
+  }
 
+  /**
+   * Creates clips from detected highlights. Several highlights can be merged into one clip
+   */
+  private createClipsFromHighlights(
+    mergedHighlights: any[],
+    replayBufferDuration: number,
+    path: string,
+  ) {
     const clips = [];
     for (const highlight of mergedHighlights) {
       // if more than 3 inputs, assign maximum score (1.0), otherwise normalize the score
@@ -364,24 +347,86 @@ export class RealtimeHighlighterService extends Service {
         endTrim,
       };
 
-      this.highlights.push(clip);
-      console.log(`New highlight added: ${clip.path}`);
-      console.log(clip);
       clips.push(clip);
     }
 
-    this.highlightsReady.next(clips);
+    // store in a global state
+    this.highlights.push(...clips);
+    return clips;
   }
 
-  private getReplayBufferDurationSeconds(): number {
-    return this.settingsService.views.values.Output.RecRBTime;
-  }
+  /**
+   * Merges overlapping highlights based on their start and end times.
+   */
+  private mergeOverlappingHighlights(
+    unrefinedHighlights: {
+      inputs: any[];
+      startTime: number; // seconds
+      endTime: number; // seconds
+      score: any;
+    }[],
+  ) {
+    const acceptableOffset = 5; // seconds
+    const mergedHighlights: any[] = [];
+    for (const highlight of unrefinedHighlights) {
+      if (mergedHighlights.length === 0) {
+        mergedHighlights.push(highlight);
+        continue;
+      }
 
-  private setReplayBufferDurationSeconds(seconds: number) {
-    if (this.streamingService.state.replayBufferStatus !== EReplayBufferState.Offline) {
-      console.warn('Replay buffer must be stopped before its settings can be changed!');
-      return;
+      const lastHighlight = mergedHighlights[mergedHighlights.length - 1];
+      if (highlight.startTime - acceptableOffset <= lastHighlight.endTime) {
+        // merge highlights
+        lastHighlight.endTime = highlight.endTime; // extend end time
+        lastHighlight.score = Math.max(highlight.score, lastHighlight.score);
+        lastHighlight.inputs.push(...highlight.inputs);
+      } else {
+        // no overlap, push new highlight
+        mergedHighlights.push(highlight);
+      }
     }
-    this.settingsService.setSettingsPatch({ Output: { RecRBTime: seconds } });
+    return mergedHighlights;
+  }
+
+  /**
+   * Attempts to find unrefined highlights from raw events from the vision service.
+   */
+  private extractUnrefinedHighlights(
+    events: any[],
+    replaySavedAt: number,
+    replayBufferDurationSeconds: number,
+  ) {
+    const unrefinedHighlights = [];
+
+    const replayStartedAt = replaySavedAt - replayBufferDurationSeconds * 1000;
+
+    for (const event of events) {
+      const eventTime = event.timestamp;
+
+      const relativeEventTime = eventTime - replayStartedAt;
+      const highlightStart = relativeEventTime - (event.highlight.start_adjust || 0) * 1000;
+      const highlightEnd = relativeEventTime + (event.highlight.end_adjust || 0) * 1000;
+
+      // check if the highlight is within the replay buffer duration
+      if (highlightStart < 0 || highlightEnd > replayBufferDurationSeconds * 1000) {
+        console.warn(
+          `Event ${
+            event.name
+          } is outside of the replay buffer duration, skipping highlight creation. highlightStart: ${highlightStart}, highlightEnd: ${highlightEnd}, replayBufferDuration: ${
+            replayBufferDurationSeconds * 1000
+          } ms`,
+        );
+        continue;
+      }
+
+      // need to convert all times to seconds
+      unrefinedHighlights.push({
+        inputs: [event.name],
+        startTime: highlightStart / 1000, // convert to seconds
+        endTime: highlightEnd / 1000, // convert to seconds
+        score: event.highlight.score || 0,
+      });
+    }
+    return unrefinedHighlights;
   }
 }
