@@ -8,11 +8,58 @@ import { SettingsService } from 'app-services';
 import moment from 'moment';
 import { getVideoDuration } from './cut-highlight-clips';
 
+class LocalVisionService extends EventEmitter {
+  private isRunning = false;
+  private eventSource: EventSource | null = null;
+
+  constructor() {
+    super();
+  }
+
+  subscribe(event: string | symbol, listener: (...args: any[]) => void) {
+    this.on(event, listener);
+  }
+
+  unsubscribe(event: string | symbol, listener: (...args: any[]) => void) {
+    this.removeListener(event, listener);
+  }
+
+  start() {
+    if (this.isRunning) {
+      console.warn('LocalVisionService is already running');
+      return;
+    }
+
+    this.isRunning = true;
+    this.eventSource = new EventSource('http://localhost:8000/events');
+    this.eventSource.onmessage = (event: any) => {
+      const data = JSON.parse(event.data);
+      console.log('Received event:', data);
+      const events = data.events;
+      for (const event of events) {
+        console.log('Emitting event:', event);
+        this.emit('event', event);
+      }
+    };
+  }
+
+  stop() {
+    if (!this.isRunning) {
+      console.warn('LocalVisionService is not running');
+      return;
+    }
+
+    this.isRunning = false;
+    console.log('Stopping VisionService');
+    this.eventSource?.close();
+  }
+}
+
 /**
  * Just a mock class to represent a vision service events
  * that would be available when it is ready by another team.
  */
-class VisionService extends EventEmitter {
+class MockVisionService extends EventEmitter {
   private timeoutId: NodeJS.Timeout | null = null;
   private isRunning = false;
 
@@ -111,7 +158,7 @@ export class RealtimeHighlighterService extends Service {
 
   @Inject() private streamingService: StreamingService;
   @Inject() private settingsService: SettingsService;
-  private visionService = new VisionService();
+  private visionService = new LocalVisionService();
 
   private static MAX_SCORE = 5;
 
@@ -147,9 +194,7 @@ export class RealtimeHighlighterService extends Service {
     this.highlights = [];
 
     this.visionService.subscribe('event', this.onEvent.bind(this));
-    setTimeout(() => {
-      this.visionService.start();
-    }, 1000 * this.getReplayBufferDurationSeconds());
+    this.visionService.start();
 
     // start the periodic tick to process replay queue after first replay buffer duration
     this.tick();
@@ -210,6 +255,8 @@ export class RealtimeHighlighterService extends Service {
       return;
     }
 
+    console.log('Received event:', event);
+
     const endAdjust = event.highlight.end_adjust || 0;
 
     this.saveReplayAt = Date.now() + endAdjust * 1000;
@@ -224,6 +271,7 @@ export class RealtimeHighlighterService extends Service {
     if (events.length === 0) {
       return;
     }
+    console.log('Current replay events:', events);
     this.currentReplayEvents = [];
 
     const replayBufferDuration =
@@ -294,9 +342,12 @@ export class RealtimeHighlighterService extends Service {
 
     const clips = [];
     for (const highlight of mergedHighlights) {
+      // if more than 3 inputs, assign maximum score (1.0), otherwise normalize the score
+      const score =
+        highlight.inputs.length >= 3 ? 1.0 : highlight.score / RealtimeHighlighterService.MAX_SCORE;
       const aiClipInfo: IAiClipInfo = {
         inputs: highlight.inputs.map((input: string) => ({ type: input } as IInput)),
-        score: Math.round(highlight.score / RealtimeHighlighterService.MAX_SCORE),
+        score,
         metadata: {},
       };
 
