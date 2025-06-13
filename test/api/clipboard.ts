@@ -79,6 +79,17 @@ test('Copy/paste folder with items', async t => {
       Item1:
       Folder3
         Item2:
+  `) ||
+      sceneBuilder.isEqualTo(`
+    Folder2
+      Folder3
+        Item2:
+      Item1:
+    Folder1
+    Folder2
+      Item1:
+      Folder3
+        Item2:
   `),
   );
 });
@@ -114,6 +125,14 @@ test('Copy/paste nodes between scene collections', async t => {
     Folder1
       Item1: color_source
       Item2: image_source
+    Folder1
+      Item1: color_source
+      Item2: image_source
+  `) ||
+      sceneBuilder.isEqualTo(`
+    Folder1
+      Item2: image_source
+      Item1: color_source
     Folder1
       Item1: color_source
       Item2: image_source
@@ -231,6 +250,14 @@ test('Copy/paste duplicate sources', async t => {
     Folder1
       Item1: color_source
       Item2: image_source
+    Folder1
+      Item1: color_source
+      Item2: image_source
+  `) ||
+      sceneBuilder.isEqualTo(`
+    Folder1
+      Item2: image_source
+      Item1: color_source
     Folder1
       Item1: color_source
       Item2: image_source
