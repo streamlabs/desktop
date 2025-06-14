@@ -1,70 +1,22 @@
 @import '../../styles/index';
 
 .live-dock {
-  padding-left: 16px;
   position: relative;
   z-index: 1000;
-  width: 28%;
+  width: 100%;
   box-sizing: border-box;
   height: 100%;
-  border-left: 1px solid var(--border);
 
   &.can-animate {
     transition: width 300ms;
   }
 
   &.live-dock--left {
-    padding-left: 0;
-    padding-right: 16px;
-    border-right: 1px solid var(--border);
     background-color: var(--section);
   }
 
   @media (max-width: 1070px) {
     display: none;
-  }
-}
-
-.live-dock--left {
-  .live-dock-chevron {
-    right: 0;
-    left: auto;
-  }
-
-  .live-dock-expanded-contents {
-    border-right: 1px solid var(--border);
-    border-left: none;
-  }
-}
-
-.live-dock.collapsed {
-  width: 20px !important;
-  padding: 0;
-
-  .live-dock-chevron {
-    .center();
-
-    border: none;
-  }
-}
-
-.live-dock-chevron {
-  width: 16px;
-  height: 20px;
-  position: absolute;
-  top: 0;
-  left: 0;
-  border-bottom: 1px solid var(--border);
-  cursor: pointer;
-
-  i {
-    .center();
-
-    font-size: 12px;
-
-    &:global(.icon-right) {
-      transform: translate(-50%, -50%) rotate(-90deg);
-    }
   }
 }
 
@@ -92,7 +44,6 @@
   flex-direction: column;
   height: 100%;
   padding: 16px;
-  border-left: 1px solid var(--border);
 }
 
 .live-dock-info {

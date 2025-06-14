@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import cx from 'classnames';
 import SvgContainer from 'components-react/shared/SvgContainer';
 import { $t } from 'services/i18n';
 
@@ -35,7 +36,7 @@ const loadingStrings = () => [
   'You can customize the design of your tip page from the Theme Library.',
 ];
 
-export default function Loader() {
+export default function Loader(p: { className?: string }) {
   const [loaderText, setLoaderText] = useState('');
   useEffect(lifecycle, []);
 
@@ -57,7 +58,7 @@ export default function Loader() {
   }
 
   return (
-    <div className="s-loader">
+    <div className={cx('s-loader', p.className)}>
       <div className="s-loader__bg">
         <div className="s-loader__inner">
           <Spinner />
