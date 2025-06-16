@@ -215,12 +215,28 @@ export default class CommentViewer extends Vue {
           id: 'Delete a comment',
           label: 'コメントを削除する',
           click: () => {
-            this.nicoliveCommentViewerService.deleteComment(item.value.id).catch(e => {
-              console.log('delete comment failed', e); // DEBUG
-              if (e instanceof NicoliveFailure) {
-                openErrorDialogFromFailure(e);
-              }
-            });
+            this.nicoliveCommentViewerService
+              .deleteComment(item.value.id)
+              .then(() => {
+                this.openSnackbar('コメントを削除しました', {
+                  label: '取り消す',
+                  onClick: () => {
+                    this.closeSnackbar();
+                    this.nicoliveCommentViewerService.undoDeleteComment(item.value.id).catch(e => {
+                      console.log('undo delete comment failed', e); // DEBUG
+                      if (e instanceof NicoliveFailure) {
+                        openErrorDialogFromFailure(e);
+                      }
+                    });
+                  },
+                });
+              })
+              .catch(e => {
+                console.log('delete comment failed', e); // DEBUG
+                if (e instanceof NicoliveFailure) {
+                  openErrorDialogFromFailure(e);
+                }
+              });
           },
         });
       } else {
@@ -392,6 +408,10 @@ export default class CommentViewer extends Vue {
       return this.snackbarService.state.latest;
     }
     return null;
+  }
+
+  openSnackbar(message: string, action?: { label: string; onClick: () => void }) {
+    this.snackbarService.show('niconico', message, action);
   }
 
   closeSnackbar() {
