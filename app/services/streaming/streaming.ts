@@ -574,7 +574,7 @@ export class StreamingService
         e.type === 'TIKTOK_USER_BANNED' &&
         this.views.enabledPlatforms.length === 1
       ) {
-        throwStreamError('TIKTOK_USER_BANNED', e);
+        throwStreamError('TIKTOK_USER_BANNED', { ...e, platform: 'tiktok' });
       }
     }
   }
@@ -589,10 +589,11 @@ export class StreamingService
           ? 'SETTINGS_UPDATE_FAILED'
           : e.type || 'UNKNOWN_ERROR';
       this.setError(e, platform);
-      console.log('handleSetupPlatformError e', e);
     } else {
       this.setError('SETTINGS_UPDATE_FAILED', platform);
     }
+
+    console.error('Error setting up platform', platform, e);
     return;
   }
 
