@@ -269,13 +269,24 @@ export class RealtimeHighlighterService extends Service {
       return;
     }
 
-    const endAdjust = event.highlight.end_adjust || 0;
-
-    this.saveReplayAt = Date.now() + endAdjust * 1000;
     const currentTime = Date.now();
-
     event.timestamp = currentTime; // use current time as timestamp
     this.currentReplayEvents.push(event);
+
+    // replay should be recorded when it enters the window of the
+    // first detected event start time
+    //
+    // reported buffer durations are not always accurate, so we
+    // use a tolerance to avoid issues with the replay buffer length
+    if (this.saveReplayAt === null) {
+      const startAdjust = (event.highlight.start_adjust || 0) * 1000;
+      const reportedBufferLengthErrorTolerance = 2 * 1000;
+      this.saveReplayAt =
+        Date.now() +
+        this.getReplayBufferDurationSeconds() * 1000 -
+        startAdjust -
+        reportedBufferLengthErrorTolerance;
+    }
   }
 
   /**
@@ -404,11 +415,15 @@ export class RealtimeHighlighterService extends Service {
       const eventTime = event.timestamp;
 
       const relativeEventTime = eventTime - replayStartedAt;
-      const highlightStart = relativeEventTime - (event.highlight.start_adjust || 0) * 1000;
-      const highlightEnd = relativeEventTime + (event.highlight.end_adjust || 0) * 1000;
+      let highlightStart = relativeEventTime - (event.highlight.start_adjust || 0) * 1000;
+      let highlightEnd = relativeEventTime + (event.highlight.end_adjust || 0) * 1000;
 
-      // check if the highlight is within the replay buffer duration
-      if (highlightStart < 0 || highlightEnd > replayBufferDurationSeconds * 1000) {
+      // add some minor error tolerance to avoid issues with the replay buffer length
+      const errorTolerance = 1000; // 1 second error tolerance
+      if (
+        highlightStart < -errorTolerance ||
+        highlightEnd > replayBufferDurationSeconds * 1000 + errorTolerance
+      ) {
         console.warn(
           `Event ${
             event.name
@@ -418,6 +433,13 @@ export class RealtimeHighlighterService extends Service {
         );
         continue;
       }
+
+      // ensure highlight start and end times are within the replay buffer duration
+      // and not negative or exceeding the buffer length.
+      // It is possible that the event is outside of the replay buffer duration
+      // due to the way the replay buffer works, so we need to handle that. (actual video length can be different from the reported one)
+      highlightStart = Math.max(highlightStart, 0); // ensure start time is not negative
+      highlightEnd = Math.min(highlightEnd, replayBufferDurationSeconds * 1000);
 
       // need to convert all times to seconds
       unrefinedHighlights.push({
