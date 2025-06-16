@@ -424,6 +424,28 @@ export class WindowsService extends StatefulService<IWindowsState> {
   /**
    * Creates a one-off window that will not impact or close
    * any existing windows, and will cease to exist when closed.
+   * @remark The `persistWebContents` window option property should **only** be used if the `BrowserView` or `WebContents`
+   * is shared with the main window and actions need to occur before the one-off window is destroyed.
+   *
+   * Electron's `close` event works similarly to the native `onbeforeunload` event in a web page, allowing actions to be run
+   * before the window is destroyed. It is distinct from the `closed` event, which is fired after the window has been destroyed.
+   * Destruction of the window will occur regardless of whether the `close` event is prevented or not.
+   *
+   * Preventing the default behavior of the `close` event allows for actions to be run before the window's destruction,
+   * but does not affect whether or not the window closes. To prevent the window from closing altogether, a value other than `undefined`
+   * must be returned from the `close` event handler. Currently, the only case where a value other than `undefined` is returned in the
+   * `close` event handler is when there is an error, so the return only exists to prevent a crash if an error occurs before the `close`
+   * event is emitted.
+   *
+   * To prevent memory leaks, Electron's native destruction of windows is very aggressive and will destroy instances of `BrowserView`
+   * and `WebContents` regardless of whether or not they are referenced elsewhere. This can have unintended consequences, such as the app crashing
+   * due to referencing an instance that no longer exists.
+   *
+   * For example, the platform app one-off window shares its `BrowserView` instance with the main window. In order to prevent the
+   * `BrowserView` instance from being destroyed when the one-off window is closed, the one-off window's reference to the `BrowserView` instance
+   * must be removed. This is done by preventing the default behavior of the `close` event, which allows the component to be unmounted
+   * and remove the `BrowserView` instance from the child window before it is destroyed.
+   *
    * @param options window options
    * @param windowId A unique window id.  If a window with that id
    * already exists, this function will focus the existing window instead.
