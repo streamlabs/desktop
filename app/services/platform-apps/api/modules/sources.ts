@@ -12,6 +12,9 @@ import { Subject } from 'rxjs';
 import { PlatformAppsService } from 'services/platform-apps';
 import { ScenesService } from 'services/scenes';
 import { AudioService } from 'services/audio';
+import { SourceFiltersService } from 'app-services';
+import { TSourceFilterType } from 'services/source-filters';
+import { TObsValue } from 'components/obs/inputs/ObsInput';
 
 interface ISourceFlags {
   audio: boolean;
@@ -50,6 +53,7 @@ export class SourcesModule extends Module {
   @Inject() private platformAppsService: PlatformAppsService;
   @Inject() private scenesService: ScenesService;
   @Inject() private audioService: AudioService;
+  @Inject() private sourceFiltersService: SourceFiltersService;
 
   constructor() {
     super();
@@ -244,5 +248,31 @@ export class SourcesModule extends Module {
     }
 
     return serialized;
+  }
+
+  @apiMethod()
+  getFilterPresetOptions() {
+    return this.sourceFiltersService.views.presetFilterOptions;
+  }
+
+  @apiMethod()
+  setFilterPreset(ctx: IApiContext, sourceId: string, preset: string) {
+    this.sourceFiltersService.addPresetFilter(sourceId, preset);
+  }
+
+  @apiMethod()
+  getCurrentFilterPreset(ctx: IApiContext, sourceId: string) {
+    const preset = this.sourceFiltersService.views.presetFilterBySourceId(sourceId);
+
+    if (preset) {
+      return this.sourceFiltersService.views.parsePresetValue(preset.settings.image_path as string);
+    }
+
+    return '';
+  }
+
+  @apiMethod()
+  addFilter(ctx: IApiContext, sourceId: string, filterType: TSourceFilterType, filterName: string, settings: Dictionary<TObsValue>) {
+    this.sourceFiltersService.add(sourceId, filterType, filterName, settings);
   }
 }

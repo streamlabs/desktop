@@ -192,7 +192,7 @@ export class PlatformContainerManager {
   }
 
   private createContainer(app: ILoadedApp, slot: EAppPageSlot, persistent = false): IContainerInfo {
-    const view = new remote.BrowserView({
+    const opts: Electron.BrowserViewConstructorOptions = {
       webPreferences: {
         contextIsolation: true,
         nodeIntegration: false,
@@ -200,7 +200,14 @@ export class PlatformContainerManager {
         preload: path.resolve(remote.app.getAppPath(), 'bundles', 'guest-api.js'),
         sandbox: false,
       },
-    });
+    };
+
+    if (app.highlyPrivileged) {
+      opts.webPreferences.nodeIntegration = true;
+      opts.webPreferences.contextIsolation = false;
+    }
+
+    const view = new remote.BrowserView(opts);
 
     electron.ipcRenderer.sendSync('webContents-enableRemote', view.webContents.id);
 

@@ -176,5 +176,10 @@ export interface IRequestHandler {
   // this promise that no longer serves a purpose.
   api.apiReady = Promise.resolve();
 
-  electron.contextBridge.exposeInMainWorld('streamlabsOBS', api);
+  try {
+    electron.contextBridge.exposeInMainWorld('streamlabsOBS', api);
+  } catch (e: unknown) {
+    // Probably means context isolation is disabled
+    window['streamlabsOBS'] = api;
+  }
 })();
