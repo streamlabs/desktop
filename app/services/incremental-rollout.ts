@@ -6,6 +6,7 @@ import { HostsService } from './hosts';
 import Utils from 'services/utils';
 import { InitAfter } from './core';
 import { AppService } from './app';
+import { getOS, OS } from 'util/operating-systems';
 
 export enum EAvailableFeatures {
   platform = 'slobs--platform',
@@ -15,10 +16,12 @@ export enum EAvailableFeatures {
   restream = 'slobs--restream',
   tiktok = 'slobs--tiktok',
   highlighter = 'slobs--highlighter',
+  aiHighlighter = 'slobs--ai-highlighter',
   growTab = 'slobs--grow-tab',
   themeAudit = 'slobs--theme-audit',
   reactWidgets = 'slobs--react-widgets',
   sharedStorage = 'slobs--shared-storage',
+  dualOutputRecording = 'slobs--dual-output-recording',
 
   /**
    * There are two flags because one is used for beta access and
@@ -27,6 +30,7 @@ export enum EAvailableFeatures {
    */
   guestCamBeta = 'slobs--guest-join',
   guestCamProduction = 'slobs--guest-join-prod',
+  newChatBox = 'core--widgets-v2--chat-box',
 }
 
 interface IIncrementalRolloutServiceState {
@@ -112,6 +116,14 @@ class IncrementalRolloutView extends ViewHandler<IIncrementalRolloutServiceState
 
   featureIsEnabled(feature: EAvailableFeatures): boolean {
     if (Utils.isDevMode()) return true; // always show for dev mode
+
+    if (feature === EAvailableFeatures.aiHighlighter) {
+      if (getOS() !== OS.Windows) {
+        return false;
+      }
+      // always enable ai highlighter for all users on windows
+      return true;
+    }
 
     return this.availableFeatures.indexOf(feature) > -1;
   }

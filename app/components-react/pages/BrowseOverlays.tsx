@@ -172,7 +172,9 @@ export default function BrowseOverlays(p: {
     }
 
     const sourceSettings =
-      type === 'video' ? { looping: true, local_file: localFile } : { file: localFile };
+      type === 'video'
+        ? { looping: true, local_file: localFile, display: 'horizontal' }
+        : { file: localFile, display: 'horizontal' };
 
     return ScenesService.actions.return.createAndAddSource(
       sceneId,

@@ -60,7 +60,11 @@ export class SourceShowcaseController {
 
   selectInspectedSource() {
     const inspectedSource = this.store.inspectedSource;
+    // TODO: index
+    // @ts-ignore
     if (WidgetType[inspectedSource] != null) {
+      // TODO: index
+      // @ts-ignore
       this.selectWidget(WidgetType[inspectedSource] as WidgetType);
     } else if (inspectedSource === 'streamlabel') {
       this.selectStreamlabel();

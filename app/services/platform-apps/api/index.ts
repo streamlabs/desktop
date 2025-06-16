@@ -88,6 +88,8 @@ export class PlatformAppsApi {
         methodName => {
           api[moduleName][methodName] = async (...args: any[]) => {
             if (authorized) {
+              // TODO: index
+              // @ts-ignore
               return await this.modules[moduleName][methodName](context, ...args);
             }
 
@@ -102,6 +104,8 @@ export class PlatformAppsApi {
       ((this.modules[moduleName].constructor as typeof Module).apiEvents || []).forEach(
         eventName => {
           if (authorized) {
+            // TODO: index
+            // @ts-ignore
             api[moduleName][eventName] = this.modules[moduleName][eventName];
           } else {
             api[moduleName][eventName] = async () => {

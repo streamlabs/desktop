@@ -9,5 +9,14 @@
   "You've merged a Streamlabs ID to your account, please log back in to ensure you have the right credentials.": "您已将 Streamlabs ID 合并到您的帐户，请重新登录以确保您拥有正确的凭据。",
   "Enable Live Streaming?": "启用直播？",
   "Streamlabs is currently in recording mode, which hides live streaming features. Would you like to enable live streaming features? You can disable them again in General settings.": "Streamlabs 目前处于录制模式，已隐藏直播功能。是否启用直播功能？您可以在常规设置中再次禁用这些功能。",
-  "Enable Streaming": "启用直播"
+  "Enable Streaming": "启用直播",
+  "This account is already linked to another Streamlabs Account. Please use a different account.": "此帐户已关联另一 Streamlabs 帐户。请使用其他帐户。",
+  "Successfully unlinked account": "已成功解除帐户链接",
+  "Successfully merged account": "已成功合并帐户",
+  "Account merge error": "帐户合并错误",
+  "Error Code: %{code}": "错误代码：%{code}",
+  "Unknown error, please contact support": "未知错误，请联系支持人员",
+  "Custom Destination": "自定义目的地",
+  "This app is currently popped out in another window.": "此应用程序当前在另一窗口中弹出。",
+  "Error granting chat permissions.": "授予聊天权限时出错。"
 }

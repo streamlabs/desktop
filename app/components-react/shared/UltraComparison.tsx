@@ -18,6 +18,7 @@ interface IUltraComparisonProps {
 
 export function UltraComparison(p: IUltraComparisonProps) {
   const { MagicLinkService } = Services;
+  const shouldDisplayPrices = false;
 
   const featureData = p.featureData || {
     standard: [
@@ -95,12 +96,16 @@ export function UltraComparison(p: IUltraComparisonProps) {
           </h1>
           <div className={styles.subheader}>
             <span>{$t('Premium features for your stream.')}</span>
-            <span>
-              {$t('%{monthlyPrice}/mo or %{yearlyPrice}/year', {
-                monthlyPrice: '$19',
-                yearlyPrice: '$149',
-              })}
-            </span>
+            {shouldDisplayPrices ? (
+              <span>
+                {$t('%{monthlyPrice}/mo or %{yearlyPrice}/year', {
+                  monthlyPrice: '$19',
+                  yearlyPrice: '$149',
+                })}
+              </span>
+            ) : (
+              <span style={{ marginBottom: '18px' }} />
+            )}
           </div>
           <div
             className={cx(styles.button, styles.primeButton)}

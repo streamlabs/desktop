@@ -26,5 +26,7 @@
   "Disable Message Animations": "Disable Message Animations",
   "Hide Characters": "Hide Characters",
   "Hide Common Chat Bots": "Ẩn Chat bot phổ biến",
-  "Hide commands starting with `!`": "Ẩn lệnh bắt đầu bằng '!'"
+  "Hide commands starting with `!`": "Ẩn lệnh bắt đầu bằng '!'",
+  "Chat Notifications": "Chat Notifications",
+  "Trigger a sound to notify you when there is new chat activity": "Trigger a sound to notify you when there is new chat activity"
 }

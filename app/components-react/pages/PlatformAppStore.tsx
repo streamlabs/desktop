@@ -1,14 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Utils from 'services/utils';
 import urlLib from 'url';
 import BrowserView from 'components-react/shared/BrowserView';
 import { GuestApiHandler } from 'util/guest-api-handler';
 import * as remote from '@electron/remote';
 import { Services } from 'components-react/service-provider';
+import { Button } from 'antd';
+import { EMenuItemKey } from 'services/side-nav';
+import { $t } from 'services/i18n';
+import styles from './PlatformAppStore.m.less';
 
 export default function PlatformAppStore(p: { params: { appId?: string; type?: string } }) {
-  const { UserService, PlatformAppsService, PlatformAppStoreService, NavigationService } = Services;
+  const {
+    UserService,
+    PlatformAppsService,
+    PlatformAppStoreService,
+    NavigationService,
+    HighlighterService,
+  } = Services;
+  const [highlighterInstalled, setHighlighterInstalled] = useState<boolean>(
+    HighlighterService.views.highlighterVersion !== '',
+  );
   const [platformAppsUrl, setPlatformAppsUrl] = useState('');
+  const [currentUrl, setCurrentUrl] = useState<string>('');
 
   useEffect(() => {
     async function getPlatformAppsUrl() {
@@ -69,11 +83,61 @@ export default function PlatformAppStore(p: { params: { appId?: string; type?: s
 
   if (!platformAppsUrl) return <></>;
   return (
-    <BrowserView
-      style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
-      src={platformAppsUrl}
-      onReady={onBrowserViewReady}
-      enableGuestApi
-    />
+    <>
+      <BrowserView
+        className={styles.browserView}
+        style={{
+          height: `calc(100% - ${
+            currentUrl.includes('installed-apps') &&
+            HighlighterService.views.highlighterVersion !== ''
+              ? '72'
+              : '0'
+          }px)`,
+        }}
+        src={platformAppsUrl}
+        onReady={onBrowserViewReady}
+        enableGuestApi
+        emitUrlChange={url => {
+          setCurrentUrl(url);
+        }}
+      />
+      {currentUrl.includes('installed-apps') && highlighterInstalled && (
+        <div className={styles.otherInstalledAppsWrapper}>
+          <div>{$t('Other installed apps:')}</div>
+          <div className={styles.otherAppWrapper}>
+            <div className={styles.textWrapper}>
+              <h3 style={{ margin: 0 }}>AI Highlighter</h3>
+              <p style={{ opacity: 0.3, margin: 0 }}>by Streamlabs</p>
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <Button
+                size="middle"
+                type="default"
+                onClick={() => {
+                  setHighlighterInstalled(false);
+                  HighlighterService.uninstallAiHighlighter();
+                }}
+              >
+                {$t('Uninstall')}
+              </Button>
+
+              <Button
+                size="middle"
+                type="primary"
+                onClick={() => {
+                  NavigationService.actions.navigate(
+                    'Highlighter',
+                    { view: 'settings' },
+                    EMenuItemKey.Highlighter,
+                  );
+                }}
+              >
+                {$t('Open')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

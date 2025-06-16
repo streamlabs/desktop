@@ -34,6 +34,8 @@ export class WidgetNode extends Node<ISchema, IContext> {
     });
 
     // Make sure we don't override the url setting
+    // TODO: index
+    // @ts-ignore
     delete this.data.settings['url'];
     context.sceneItem.getSource().updateSettings(this.data.settings);
   }

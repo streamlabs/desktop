@@ -54,7 +54,11 @@ export class WebcamNode extends Node<ISchema, IContext> {
     if (context.existing) {
       resolution = byOS({
         [OS.Windows]: () =>
-          this.resStringToResolution(input.settings['resolution'], input.settings['resolution']),
+          this.resStringToResolution(
+            input.settings['resolution'],
+            input.settings['resolution'],
+            context.sceneItem,
+          ),
         [OS.Mac]: () => {
           const selectedResolution = (input.properties.get(
             'preset',
@@ -63,6 +67,7 @@ export class WebcamNode extends Node<ISchema, IContext> {
           return this.resStringToResolution(
             selectedResolution.name as string,
             selectedResolution.value as string,
+            context.sceneItem,
           );
         },
       });
@@ -131,15 +136,25 @@ export class WebcamNode extends Node<ISchema, IContext> {
       [OS.Windows]: () => {
         input.update({ video_device_id: device, res_type: 1 });
 
-        return (input.properties.get('resolution') as IListProperty).details.items.map(item => {
-          return this.resStringToResolution(item.value as string, item.value as string);
-        });
+        return (input.properties.get('resolution') as IListProperty).details.items.map(
+          resString => {
+            return this.resStringToResolution(
+              resString.value as string,
+              resString.value as string,
+              item,
+            );
+          },
+        );
       },
       [OS.Mac]: () => {
         input.update({ device, use_preset: true });
 
-        return (input.properties.get('preset') as IListProperty).details.items.map(item => {
-          return this.resStringToResolution(item.name as string, item.value as string);
+        return (input.properties.get('preset') as IListProperty).details.items.map(resString => {
+          return this.resStringToResolution(
+            resString.name as string,
+            resString.value as string,
+            item,
+          );
         });
       },
     });
@@ -209,7 +224,12 @@ export class WebcamNode extends Node<ISchema, IContext> {
     });
   }
 
-  resStringToResolution(resString: string, value: string): IResolution {
+  resStringToResolution(resString: string, value: string, sceneItem: SceneItem): IResolution {
+    if (!resString) {
+      console.error('No resolution string found.  Performing initial setup instead.');
+      return this.performInitialSetup(sceneItem);
+    }
+
     const parts = resString.split('x');
     return {
       value,

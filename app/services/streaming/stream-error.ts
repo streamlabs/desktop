@@ -77,13 +77,12 @@ export const errorTypes = {
     get message() {
       return $t('Failed to authenticate with TikTok, re-login or re-merge TikTok account');
     },
-    get action() {
-      return $t('re-login or re-merge TikTok account');
-    },
   },
   TIKTOK_SCOPE_OUTDATED: {
     get message() {
-      return $t('Failed to update TikTok account');
+      return $t(
+        'Failed to update TikTok account. Please unlink and reconnect your TikTok account.',
+      );
     },
     get action() {
       return $t('unlink and re-merge TikTok account, then restart Desktop');
@@ -107,15 +106,50 @@ export const errorTypes = {
   },
   TIKTOK_GENERATE_CREDENTIALS_FAILED: {
     get message() {
-      return $t('Error generating TikTok stream credentials');
+      return $t('Failed to generate TikTok stream credentials. Confirm Live Access with TikTok.');
+    },
+  },
+  TIKTOK_USER_BANNED: {
+    get message() {
+      return $t('Failed to generate TikTok stream credentials. Confirm Live Access with TikTok.');
     },
     get action() {
-      return $t('confirm streaming approval status with TikTok');
+      return $t(
+        'user might be blocked from streaming to TikTok but do not say they are. Refer them to TikTok',
+      );
     },
   },
   X_PREMIUM_ACCOUNT_REQUIRED: {
     get message() {
       return $t('You need X premium account to go live on X.');
+    },
+  },
+  KICK_SCOPE_OUTDATED: {
+    get message() {
+      return $t('Failed to update Kick account. Please unlink and reconnect your Kick account.');
+    },
+    get action() {
+      return $t('unlink and re-merge Kick account, then restart Desktop');
+    },
+  },
+  KICK_START_STREAM_FAILED: {
+    get message() {
+      return $t('Failed to start Kick stream. Please check permissions with Kick and try again');
+    },
+    get action() {
+      return $t(
+        'Kick request most likely failed due to incorrect or missing permissions. Unlink and re-merge Kick account, then restart Desktop. If that fails, refer to Kick support',
+      );
+    },
+  },
+  KICK_STREAM_KEY_MISSING: {
+    get message() {
+      return $t('Kick stream key failed to generate due to missing permissions');
+    },
+    get action() {
+      return $t(
+        'confirm that a stream key has been generated with 2FA on Kick for use with Streamlabs Desktop and if not ask the user to manually generate one',
+      );
     },
   },
   PRIME_REQUIRED: {
@@ -176,6 +210,7 @@ export interface IRejectedRequest {
   url?: string;
   status?: number;
   statusText?: string;
+  platform?: TPlatform;
 }
 
 export interface IStreamError extends IRejectedRequest {
@@ -297,12 +332,11 @@ export function formatStreamErrorMessage(
       messages.user.push(details);
     }
 
-    // show all available info in diag report
-    const errorMessage = (error as any)?.action
-      ? `${error.message}, ${(error as any).action}`
-      : error.message;
+    message = error.message.replace(/\.*$/, '');
+    // trim trailing periods so that the message joins correctly
+    const errorMessage = (error as any)?.action ? `${message}, ${(error as any).action}` : message;
+
     messages.report.push(errorMessage);
-    if (errorTypeOrError?.message) messages.report.push(message);
     if (details) messages.report.push(details);
     if (code) messages.report.push($t('Error Code: %{code}', { code }));
   } else {
@@ -363,10 +397,11 @@ export function formatUnknownErrorMessage(
     } catch (error: unknown) {
       // if it's not JSON, it is the message itself
       // don't show blocked message to user
-      if (!info.split(' ').includes('blocked')) {
+      if (info.split(' ').includes('blocked')) {
+        messages.user.push(errorTypes['UNKNOWN_STREAMING_ERROR_WITH_MESSAGE'].message);
         messages.user.push(info);
       } else {
-        messages.user.push(errorTypes['UNKNOWN_STREAMING_ERROR_WITH_MESSAGE'].message);
+        messages.user.push(info);
       }
 
       // always add non-JSON info to diag report
@@ -380,7 +415,7 @@ export function formatUnknownErrorMessage(
         let error;
         let platform;
 
-        if (typeof info.error === 'string') {
+        if (typeof info.error === 'string' && info.error !== '') {
           /*
            * Try to parse error as JSON as originally done, however, if it's just a string
            * (such as in the case of invalid path and many other unknown -4 errors we've

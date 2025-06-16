@@ -11,6 +11,7 @@ interface IPrimaryChatSwitcherProps {
   primaryChat: TPlatform;
   onSetPrimaryChat: (platform: TPlatform) => void;
   style?: React.CSSProperties;
+  className?: string | undefined;
   layout?: 'vertical' | 'horizontal';
 }
 
@@ -20,6 +21,7 @@ export default function PrimaryChatSwitcher({
   onSetPrimaryChat,
   style = {},
   layout = 'vertical',
+  className = undefined,
 }: IPrimaryChatSwitcherProps) {
   const primaryChatOptions = useMemo(
     () =>
@@ -34,7 +36,7 @@ export default function PrimaryChatSwitcher({
   );
 
   return (
-    <div style={style}>
+    <div data-name="primary-chat-switcher" style={style} className={className}>
       <Divider style={{ marginBottom: '8px' }} />
       <Form layout={layout}>
         <ListInput

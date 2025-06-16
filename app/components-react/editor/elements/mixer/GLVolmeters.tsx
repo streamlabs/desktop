@@ -11,8 +11,9 @@ import { assertIsDefined, getDefined } from 'util/properties-type-guards';
 // Configuration
 const CHANNEL_HEIGHT = 3;
 const SPACE_BETWEEN_CHANNELS = 2;
+// When height of audio mixer elements changes, these paddings values also should be updated
 const PADDING_TOP = 39;
-const PADDING_BOTTOM = 49;
+const PADDING_BOTTOM = 57;
 const PEAK_WIDTH = 4;
 const PEAK_HOLD_CYCLES = 100;
 const WARNING_LEVEL = -20;
@@ -215,7 +216,10 @@ class GLVolmetersController {
   }
 
   beforeDestroy() {
-    if (this.gl) window['activeWebglContexts'] -= 1;
+    if (this.gl) {
+      // TODO: where is this defined or used, can be undefined too?
+      (window as typeof window & { activeWebglContexts: number })['activeWebglContexts'] -= 1;
+    }
     clearInterval(this.canvasWidthInterval);
     // unsubscribe all volmeters
     Object.keys(this.subscriptions).forEach(sourceId => this.unsubscribeVolmeter(sourceId));
@@ -375,11 +379,7 @@ class GLVolmetersController {
       offsetTop += PADDING_TOP;
       const volmeter = this.subscriptions[sourceId];
       this.drawVolmeterWebgl(volmeter, offsetTop);
-
-      offsetTop +=
-        CHANNEL_HEIGHT * volmeter.channelsCount +
-        SPACE_BETWEEN_CHANNELS * (volmeter.channelsCount - 1) +
-        PADDING_BOTTOM;
+      offsetTop += PADDING_BOTTOM;
     });
   }
 

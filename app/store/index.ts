@@ -93,10 +93,14 @@ export function createStore(): Store<any> {
   const servicesManager: ServicesManager = ServicesManager.instance;
 
   // TODO: This is bad and I should feel bad
+  // TODO: index
+  // @ts-ignore
   window['servicesManager'] = servicesManager;
 
   const statefulServices = servicesManager.getStatefulServicesAndMutators();
   Object.keys(statefulServices).forEach(serviceName => {
+    // TODO: index
+    // @ts-ignore
     statefulServiceModules[serviceName] = getModule(statefulServices[serviceName]);
   });
 

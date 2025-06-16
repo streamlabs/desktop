@@ -132,7 +132,11 @@ export default class DeveloperSettings extends Vue {
     const settings: Partial<ITcpServersSettings> = {};
     settingsData.forEach(subCategory => {
       subCategory.parameters.forEach(parameter => {
+        // TODO: index
+        // @ts-ignore
         if (!settings[subCategory.codeSubCategory]) settings[subCategory.codeSubCategory] = {};
+        // TODO: index
+        // @ts-ignore
         settings[subCategory.codeSubCategory][parameter.name] = parameter.value;
       });
     });

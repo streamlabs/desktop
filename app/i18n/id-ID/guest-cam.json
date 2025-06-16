@@ -1,7 +1,7 @@
 {
   "Source: %{sourceName}": "Sumber: %{sourceName}",
   "Collab Cam": "Collab Cam",
-  "Invite a guest to join your stream from a web browser.": "Undang seorang tamu untuk bergabung dengan streaming Anda dari web browser.",
+  "Invite guests to join your stream from a web browser or their Streamlabs Desktop. Stream games or IRL broadcasts together, use as additional camera angles and more.": "Invite guests to join your stream from a web browser or their Streamlabs Desktop. Stream games or IRL broadcasts together, use as additional camera angles and more.",
   "Guest Cam is currently listening for connecting guests, but is not broadcasting your microphone and webcam to your guests yet.": "Saat ini, Guest Cam mendengarkan untuk menghubungkan tamu, tetapi belum broadcasting mikrofon dan webcam Anda kepada tamu Anda.",
   "No microphone source is selected. Your guest will not be able to hear you.": "Anda belum memilih sumber mikrofon. Tamu Anda tidak akan bisa mendengar Anda.",
   "No webcam source is selected. Your guest will not be able to see you.": "Anda belum memilih sumber webcam. Tamu Anda tidak akan bisa melihat Anda.",

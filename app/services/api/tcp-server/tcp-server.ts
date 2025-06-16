@@ -135,6 +135,19 @@ export class TcpServerService
     this.listen();
   }
 
+  disableWebsocketsRemoteConnections() {
+    this.stopListening();
+    // update websockets settings
+    const defaultWebsoketsSettings = this.getDefaultSettings().websockets;
+    this.setSettings({
+      websockets: {
+        ...defaultWebsoketsSettings,
+      },
+    });
+
+    this.listen();
+  }
+
   getDefaultSettings(): ITcpServersSettings {
     return TcpServerService.defaultState;
   }

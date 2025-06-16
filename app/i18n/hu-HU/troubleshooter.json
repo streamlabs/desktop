@@ -22,5 +22,6 @@
   "Enable VSync in your game": "Kapcsold be a játékon belül a VSync-et",
   "Disable FreeSync or GSync in your Driver": "Kapcsold ki a videokártya driverben a FreeSync-et vagy a GSync-et",
   "Lower graphics settings until you stop lagging frames": "Csökkentsd a grafikai beállításokat, amíg már nem jelentkezik késő képkocka",
-  "Disable hardware decoding under any media sources(This will slightly increase cpu over gpu)": "A média forrásoknál kapcsold ki a hardveres dekódolást (Ez átteszi a terhet a videokártyáról a processzorra)"
+  "Disable hardware decoding under any media sources(This will slightly increase cpu over gpu)": "A média forrásoknál kapcsold ki a hardveres dekódolást (Ez átteszi a terhet a videokártyáról a processzorra)",
+  "CPU usage threshold in Dual Output mode": "CPU usage threshold in Dual Output mode"
 }

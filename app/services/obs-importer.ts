@@ -538,6 +538,8 @@ export class ObsImporterService extends StatefulService<{ progress: number; tota
       'AuxAudioDevice3',
     ];
     channelNames.forEach((channelName, i) => {
+      // TODO: index
+      // @ts-ignore
       const obsAudioSource = configJSON[channelName];
       if (obsAudioSource) {
         const isSourceAvailable = this.sourcesService

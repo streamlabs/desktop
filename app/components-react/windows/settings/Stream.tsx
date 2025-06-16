@@ -2,7 +2,12 @@ import React, { useMemo, useState } from 'react';
 import { $t } from '../../../services/i18n';
 import { ICustomStreamDestination } from '../../../services/settings/streaming';
 import { EStreamingState } from '../../../services/streaming';
-import { EPlatformCallResult, getPlatformService, TPlatform } from '../../../services/platforms';
+import {
+  EPlatformCallResult,
+  externalAuthPlatforms,
+  getPlatformService,
+  TPlatform,
+} from '../../../services/platforms';
 import cloneDeep from 'lodash/cloneDeep';
 import namingHelpers from '../../../util/NamingHelpers';
 import { Services } from '../../service-provider';
@@ -39,18 +44,27 @@ function censorEmail(str: string) {
  */
 class StreamSettingsModule {
   constructor() {
+    const showMessage = (msg: string, success: boolean) => {
+      message.config({
+        duration: 6,
+        maxCount: 1,
+      });
+
+      if (success) {
+        message.success(msg);
+      } else {
+        message.error(msg);
+      }
+    };
     Services.UserService.refreshedLinkedAccounts.subscribe(
       (res: { success: boolean; message: string }) => {
-        message.config({
-          duration: 6,
-          maxCount: 1,
-        });
-
-        if (res.success) {
-          message.success(res.message);
-        } else {
-          message.error(res.message);
-        }
+        const doShowMessage = () => showMessage(res.message, res.success);
+        /*
+         * Since the settings window pops out anyways (presumably because of
+         * using `message`make sure it is at least on the right page, as opposed
+         * to in an infinite loading blank window state.
+         */
+        doShowMessage();
       },
     );
   }
@@ -208,9 +222,7 @@ class StreamSettingsModule {
   }
 
   async platformMergeInline(platform: TPlatform) {
-    const mode = ['youtube', 'twitch', 'twitter', 'tiktok'].includes(platform)
-      ? 'external'
-      : 'internal';
+    const mode = externalAuthPlatforms.includes(platform) ? 'external' : 'internal';
 
     await Services.UserService.actions.return.startAuth(platform, mode, true).then(res => {
       Services.WindowsService.actions.setWindowOnTop('child');
@@ -279,7 +291,7 @@ export function StreamSettings() {
   } = useModule(StreamSettingsModule);
 
   return (
-    <div>
+    <div className={css.section}>
       {/* account info */}
       {protectedModeEnabled && (
         <div>
@@ -463,7 +475,7 @@ function Platform(p: { platform: TPlatform }) {
         style={{
           backgroundColor: `var(--${platform})`,
           borderColor: 'transparent',
-          color: ['trovo', 'instagram'].includes(platform) ? 'black' : 'inherit',
+          color: ['trovo', 'instagram', 'kick'].includes(platform) ? 'black' : 'inherit',
         }}
       >
         {$t('Connect')}

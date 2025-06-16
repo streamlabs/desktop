@@ -7,9 +7,11 @@ import { IStreamError } from './stream-error';
 import { ICustomStreamDestination } from '../settings/streaming';
 import { ITikTokStartStreamOptions } from '../platforms/tiktok';
 import { ITrovoStartStreamOptions } from '../platforms/trovo';
-import { IVideo } from 'obs-studio-node';
+import { IKickStartStreamOptions } from 'services/platforms/kick';
 import { ITwitterStartStreamOptions } from 'services/platforms/twitter';
 import { IInstagramStartStreamOptions } from 'services/platforms/instagram';
+import { IVideo } from 'obs-studio-node';
+import { TDisplayType } from 'services/settings-v2';
 
 export enum EStreamingState {
   Offline = 'offline',
@@ -24,6 +26,7 @@ export enum ERecordingState {
   Starting = 'starting',
   Recording = 'recording',
   Stopping = 'stopping',
+  Start = 'start',
   Wrote = 'wrote',
 }
 
@@ -32,6 +35,7 @@ export enum EReplayBufferState {
   Stopping = 'stopping',
   Offline = 'offline',
   Saving = 'saving',
+  Wrote = 'wrote',
 }
 
 export interface IStreamInfo {
@@ -51,6 +55,7 @@ export interface IStreamInfo {
     facebook: TGoLiveChecklistItemState;
     tiktok: TGoLiveChecklistItemState;
     trovo: TGoLiveChecklistItemState;
+    kick: TGoLiveChecklistItemState;
     twitter: TGoLiveChecklistItemState;
     instagram: TGoLiveChecklistItemState;
     setupMultistream: TGoLiveChecklistItemState;
@@ -61,6 +66,8 @@ export interface IStreamInfo {
 
 export type TGoLiveChecklistItemState = 'not-started' | 'pending' | 'done' | 'failed';
 
+export type TDisplayOutput = TDisplayType | 'both';
+
 export interface IStreamSettings {
   platforms: {
     twitch?: IPlatformFlags & ITwitchStartStreamOptions;
@@ -68,11 +75,13 @@ export interface IStreamSettings {
     facebook?: IPlatformFlags & IFacebookStartStreamOptions;
     tiktok?: IPlatformFlags & ITikTokStartStreamOptions;
     trovo?: IPlatformFlags & ITrovoStartStreamOptions;
+    kick?: IPlatformFlags & IKickStartStreamOptions;
     twitter?: IPlatformFlags & ITwitterStartStreamOptions;
     instagram?: IPlatformFlags & IInstagramStartStreamOptions;
   };
   customDestinations: ICustomStreamDestination[];
   advancedMode: boolean;
+  recording: TDisplayType[];
 }
 
 export interface IGoLiveSettings extends IStreamSettings {
@@ -87,14 +96,28 @@ export interface IGoLiveSettings extends IStreamSettings {
 export interface IPlatformFlags {
   enabled: boolean;
   useCustomFields: boolean;
+  display?: TDisplayOutput;
   video?: IVideo;
+}
+
+export interface IOutputStatus {
+  streaming: EStreamingState;
+  streamingTime: string;
+  recording: ERecordingState;
+  recordingTime: string;
+  replayBuffer: EReplayBufferState;
+  replayBufferTime: string;
 }
 
 export interface IStreamingServiceState {
   streamingStatus: EStreamingState;
+  verticalStreamingStatus?: EStreamingState;
   streamingStatusTime: string;
+  verticalStreamingStatusTime?: string;
   recordingStatus: ERecordingState;
+  verticalRecordingStatus?: ERecordingState;
   recordingStatusTime: string;
+  verticalRecordingStatusTime?: string;
   replayBufferStatus: EReplayBufferState;
   replayBufferStatusTime: string;
   selectiveRecording: boolean;

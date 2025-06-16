@@ -93,9 +93,17 @@ export class TransitionsNode extends Node<ISchema, {}> {
       const transition: ITransition = {
         id: null,
         name: $t('Global Transition'),
+        // TODO: index
+        // @ts-ignore
         type: this.data['type'],
+        // TODO: index
+        // @ts-ignore
         duration: this.data['duration'],
+        // TODO: index
+        // @ts-ignore
         settings: this.data['settings'],
+        // TODO: index
+        // @ts-ignore
         propertiesManagerSettings: this.data['propertiesManagerSettings'],
       };
       this.data.transitions = [transition];

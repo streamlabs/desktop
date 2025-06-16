@@ -1,10 +1,34 @@
 import Vue from 'vue';
 import { mutation, StatefulService } from 'services/core/stateful-service';
-import { EOutputCode, Global, NodeObs } from '../../../obs-api';
+import {
+  EOutputCode,
+  Global,
+  NodeObs,
+  SimpleStreamingFactory,
+  ServiceFactory,
+  VideoEncoderFactory,
+  AudioEncoderFactory,
+  DelayFactory,
+  ReconnectFactory,
+  NetworkFactory,
+  ISimpleStreaming,
+  IAdvancedStreaming,
+  IAdvancedRecording,
+  IAdvancedReplayBuffer,
+  ISimpleRecording,
+  ISimpleReplayBuffer,
+} from '../../../obs-api';
 import { Inject } from 'services/core/injector';
 import moment from 'moment';
 import padStart from 'lodash/padStart';
-import { IOutputSettings, OutputSettingsService } from 'services/settings';
+import {
+  EEncoderFamily,
+  IOutputSettings,
+  IStreamingEncoderSettings,
+  OutputSettingsService,
+  SettingsService,
+  simpleEncoderToAdvancedEncoder,
+} from 'services/settings';
 import { WindowsService } from 'services/windows';
 import { Subject } from 'rxjs';
 import {
@@ -42,6 +66,7 @@ import {
   TStreamErrorType,
   formatUnknownErrorMessage,
   formatStreamErrorMessage,
+  throwStreamError,
 } from './stream-error';
 import { authorizedHeaders } from 'util/requests';
 import { HostsService } from '../hosts';
@@ -54,8 +79,7 @@ import { MarkersService } from 'services/markers';
 import { byOS, OS } from 'util/operating-systems';
 import { DualOutputService } from 'services/dual-output';
 import { capitalize } from 'lodash';
-import { tiktokErrorMessages } from 'services/platforms/tiktok/api';
-import { TikTokService } from 'services/platforms/tiktok';
+import { YoutubeService } from 'app-services';
 
 enum EOBSOutputType {
   Streaming = 'streaming',
@@ -63,15 +87,40 @@ enum EOBSOutputType {
   ReplayBuffer = 'replay-buffer',
 }
 
+const outputType = (type: EOBSOutputType) =>
+  ({
+    [EOBSOutputType.Streaming]: $t('Streaming'),
+    [EOBSOutputType.Recording]: $t('Recording'),
+    [EOBSOutputType.ReplayBuffer]: $t('Replay Buffer'),
+  }[type]);
+
 enum EOBSOutputSignal {
   Starting = 'starting',
   Start = 'start',
   Stopping = 'stopping',
   Stop = 'stop',
+  Activate = 'activate',
   Deactivate = 'deactivate',
   Reconnect = 'reconnect',
   ReconnectSuccess = 'reconnect_success',
   Wrote = 'wrote',
+  Writing = 'writing',
+  WriteError = 'writing_error',
+}
+
+enum EOutputSignalState {
+  Saving = 'saving',
+  Starting = 'starting',
+  Start = 'start',
+  Stopping = 'stopping',
+  Stop = 'stop',
+  Activate = 'activate',
+  Deactivate = 'deactivate',
+  Reconnect = 'reconnect',
+  ReconnectSuccess = 'reconnect_success',
+  Running = 'running',
+  Wrote = 'wrote',
+  Writing = 'writing',
   WriteError = 'writing_error',
 }
 
@@ -81,6 +130,14 @@ export interface IOBSOutputSignalInfo {
   code: EOutputCode;
   error: string;
   service: string; // 'default' | 'vertical'
+}
+
+type TOBSOutputType = 'streaming' | 'recording' | 'replayBuffer';
+
+interface IOutputContext {
+  streaming: ISimpleStreaming | IAdvancedStreaming;
+  recording: ISimpleRecording | IAdvancedRecording;
+  replayBuffer: ISimpleReplayBuffer | IAdvancedReplayBuffer;
 }
 
 export class StreamingService
@@ -100,7 +157,8 @@ export class StreamingService
   @Inject() private videoSettingsService: VideoSettingsService;
   @Inject() private markersService: MarkersService;
   @Inject() private dualOutputService: DualOutputService;
-  @Inject() private tikTokService: TikTokService;
+  @Inject() private youtubeService: YoutubeService;
+  @Inject() private settingsService: SettingsService;
 
   streamingStatusChange = new Subject<EStreamingState>();
   recordingStatusChange = new Subject<ERecordingState>();
@@ -108,6 +166,7 @@ export class StreamingService
   replayBufferFileWrite = new Subject<string>();
   streamInfoChanged = new Subject<StreamInfoView<any>>();
   signalInfoChanged = new Subject<IOBSOutputSignalInfo>();
+  latestRecordingPath = new Subject<string>();
   streamErrorCreated = new Subject<string>();
 
   // Dummy subscription for stream deck
@@ -139,6 +198,7 @@ export class StreamingService
         facebook: 'not-started',
         tiktok: 'not-started',
         trovo: 'not-started',
+        kick: 'not-started',
         twitter: 'not-started',
         instagram: 'not-started',
         setupMultistream: 'not-started',
@@ -175,6 +235,10 @@ export class StreamingService
         deep: true,
       },
     );
+
+    this.settingsService.settingsUpdated.subscribe(patch => {
+      // This will update the API v2 factory instance when the settings are changed
+    });
   }
 
   get views() {
@@ -210,12 +274,12 @@ export class StreamingService
         } catch (e: unknown) {
           // cast all PLATFORM_REQUEST_FAILED errors to PREPOPULATE_FAILED
           if (e instanceof StreamError) {
-            const type =
+            e.type =
               (e.type as TStreamErrorType) === 'PLATFORM_REQUEST_FAILED'
                 ? 'PREPOPULATE_FAILED'
                 : e.type || 'UNKNOWN_ERROR';
-            const error = this.handleTypedStreamError(e, type, `Failed to prepopulate ${platform}`);
-            this.setError(error, platform);
+
+            this.setError(e, platform);
           } else {
             this.setError('PREPOPULATE_FAILED', platform);
           }
@@ -259,34 +323,6 @@ export class StreamingService
   }
 
   /**
-   * set platform stream settings
-   */
-  async handleSetupPlatform(
-    platform: TPlatform,
-    settings: IGoLiveSettings,
-    unattendedMode: boolean,
-    assignContext: boolean = false,
-  ) {
-    const service = getPlatformService(platform);
-    try {
-      // don't update settings for twitch in unattendedMode
-      const settingsForPlatform =
-        !assignContext && platform === 'twitch' && unattendedMode ? undefined : settings;
-
-      if (assignContext) {
-        const context = this.views.getPlatformDisplay(platform);
-        await this.runCheck(platform, () => service.beforeGoLive(settingsForPlatform, context));
-      } else {
-        await this.runCheck(platform, () =>
-          service.beforeGoLive(settingsForPlatform, 'horizontal'),
-        );
-      }
-    } catch (e: unknown) {
-      this.handleSetupPlatformError(e, platform);
-    }
-  }
-
-  /**
    * Make a transition to Live
    */
   async goLive(newSettings?: IGoLiveSettings) {
@@ -313,23 +349,21 @@ export class StreamingService
     /**
      * Set custom destination stream settings
      */
-    if (this.views.isDualOutputMode) {
-      // set custom destination mode and video context before setting settings
-      settings.customDestinations.forEach(destination => {
-        // only update enabled custom destinations
-        if (!destination.enabled) return;
+    settings.customDestinations.forEach(destination => {
+      // only update enabled custom destinations
+      if (!destination.enabled) return;
 
-        if (!destination.display) {
-          // set display to horizontal by default if it does not exist
-          destination.display = 'horizontal';
-        }
+      if (!destination.display) {
+        // set display to horizontal by default if it does not exist
+        destination.display = 'horizontal';
+      }
 
-        const display = destination.display;
-        destination.video = this.videoSettingsService.contexts[display];
-        destination.mode = this.views.getDisplayContextName(display);
-      });
-    }
+      // preserve user's dual output display setting but correctly go live to custom destinations in single output mode
+      const display = this.views.isDualOutputMode ? destination.display : 'horizontal';
 
+      destination.video = this.videoSettingsService.contexts[display];
+      destination.mode = display === 'horizontal' ? 'landscape' : 'portrait';
+    });
     // save enabled platforms to reuse setting with the next app start
     this.streamSettingsService.setSettings({ goLiveSettings: settings });
 
@@ -351,158 +385,54 @@ export class StreamingService
     }
 
     /**
-     * SET MULTISTREAM SETTINGS
-     */
-    if (this.views.isMultiplatformMode) {
-      // setup restream
-
-      // check the Restream service is available
-      let ready = false;
-      try {
-        await this.runCheck(
-          'setupMultistream',
-          async () => (ready = await this.restreamService.checkStatus()),
-        );
-      } catch (e: unknown) {
-        // don't set error to allow multistream setup to continue in go live window
-        console.error('Error fetching restreaming service', e);
-      }
-      // Assume restream is down
-      if (!ready) {
-        console.error('Restream service is not available');
-        this.setError('RESTREAM_DISABLED');
-        return;
-      }
-
-      // update restream settings
-      try {
-        await this.runCheck('setupMultistream', async () => {
-          // enable restream on the backend side
-          if (!this.restreamService.state.enabled) await this.restreamService.setEnabled(true);
-          await this.restreamService.beforeGoLive();
-        });
-      } catch (e: unknown) {
-        const error = this.handleTypedStreamError(
-          e,
-          'RESTREAM_SETUP_FAILED',
-          'Failed to setup restream',
-        );
-        this.setError(error);
-        return;
-      }
-    }
-
-    /**
      * SET DUAL OUTPUT SETTINGS
      */
     if (this.views.isDualOutputMode) {
-      const horizontalStream: string[] = this.views.activeDisplayDestinations.horizontal;
-      horizontalStream.concat(this.views.activeDisplayPlatforms.horizontal as string[]);
-
-      const verticalStream: string[] = this.views.activeDisplayDestinations.vertical;
-      verticalStream.concat(this.views.activeDisplayPlatforms.vertical as string[]);
-
-      const allPlatforms = this.views.enabledPlatforms;
-      const allDestinations = this.views.customDestinations
-        .filter(dest => dest.enabled)
-        .map(dest => dest.url);
-
-      // record dual output analytics event
-      this.usageStatisticsService.recordAnalyticsEvent('DualOutput', {
-        type: 'StreamingDualOutput',
-        platforms: JSON.stringify(allPlatforms),
-        destinations: JSON.stringify(allDestinations),
-        horizontal: JSON.stringify(horizontalStream),
-        vertical: JSON.stringify(verticalStream),
-      });
-
-      // if needed, set up multistreaming for dual output
-      const shouldMultistreamDisplay = this.views.shouldMultistreamDisplay;
-
-      const destinationDisplays = this.views.activeDisplayDestinations;
-
-      for (const display in shouldMultistreamDisplay) {
-        const key = display as keyof typeof shouldMultistreamDisplay;
-        // set up restream service to multistream display
-        if (shouldMultistreamDisplay[key]) {
-          // set up restream service to multistream display
-          // check the restream service is available
-          let ready = false;
-          try {
-            await this.runCheck(
-              'setupDualOutput',
-              async () => (ready = await this.restreamService.checkStatus()),
-            );
-          } catch (e: unknown) {
-            console.error('Error fetching restreaming service', e);
-          }
-          // Assume restream is down
-          if (!ready) {
-            console.error('Restream service is not available in dual output setup');
-            this.setError('DUAL_OUTPUT_RESTREAM_DISABLED');
-            return;
-          }
-
-          // update restream settings
-          try {
-            await this.runCheck('setupDualOutput', async () => {
-              // enable restream on the backend side
-              if (!this.restreamService.state.enabled) await this.restreamService.setEnabled(true);
-
-              const mode: TOutputOrientation = display === 'horizontal' ? 'landscape' : 'portrait';
-              await this.restreamService.beforeGoLive(display as TDisplayType, mode);
-            });
-          } catch (e: unknown) {
-            const error = this.handleTypedStreamError(
-              e,
-              'DUAL_OUTPUT_SETUP_FAILED',
-              'Failed to setup dual output restream',
-            );
-            this.setError(error);
-            return;
-          }
-        } else if (destinationDisplays[key].length > 0) {
-          // if a custom destination is enabled for single streaming
-          // move the relevant OBS context to custom ingest mode
-
-          const destination = this.views.customDestinations.find(d => d.display === display);
-          try {
-            await this.runCheck('setupDualOutput', async () => {
-              if (destination) {
-                this.streamSettingsService.setSettings(
-                  {
-                    streamType: 'rtmp_custom',
-                  },
-                  display as TDisplayType,
-                );
-                this.streamSettingsService.setSettings(
-                  {
-                    key: destination.streamKey,
-                    server: destination.url,
-                  },
-                  display as TDisplayType,
-                );
-              } else {
-                console.error('Custom destination not found');
-              }
-              await Promise.resolve();
-            });
-          } catch (e: unknown) {
-            const error = this.handleTypedStreamError(
-              e,
-              'DUAL_OUTPUT_SETUP_FAILED',
-              'Failed to setup dual output custom destination',
-            );
-            this.setError(error);
-            return;
-          }
-        }
-      }
-
-      // finish setting up dual output
+      // This handles setting up displays that are streaming to a single target.
+      // Note: Because the horizontal video context is the default, it does not need
+      // to be validated.
       try {
-        await this.runCheck('setupDualOutput', async () => await Promise.resolve());
+        await this.runCheck('setupDualOutput', async () => {
+          // if a custom destination is enabled for single streaming to the vertical display
+          // move the OBS context to custom ingest mode (when multistreaming this is
+          // handled by the restream service)
+          if (
+            this.views.activeDisplayDestinations.vertical.length === 1 &&
+            this.views.activeDisplayPlatforms.vertical.length === 0
+          ) {
+            const customDestinations = cloneDeep(this.views.settings).customDestinations;
+            customDestinations.forEach(destination => {
+              if (!destination.enabled || destination.display !== 'vertical') return;
+
+              // set the OBS context to custom ingest mode in order to update settings
+              this.streamSettingsService.setSettings(
+                {
+                  streamType: 'rtmp_custom',
+                },
+                'vertical' as TDisplayType,
+              );
+
+              this.streamSettingsService.setSettings(
+                {
+                  key: destination.streamKey,
+                  server: destination.url,
+                },
+                'vertical' as TDisplayType,
+              );
+
+              destination.video = this.videoSettingsService.contexts.vertical;
+            });
+
+            const updatedSettings = { ...settings, customDestinations };
+            this.streamSettingsService.setSettings({ goLiveSettings: updatedSettings });
+          }
+
+          await Promise.resolve();
+        });
       } catch (e: unknown) {
+        // Handle rendering a prompt for enabling permissions to generate a stream key for Kick
+        if (this.state.info.error?.type === 'KICK_STREAM_KEY_MISSING') return;
+
         const error = this.handleTypedStreamError(
           e,
           'DUAL_OUTPUT_SETUP_FAILED',
@@ -511,7 +441,79 @@ export class StreamingService
         this.setError(error);
         return;
       }
+
+      // record dual output usage
+      const horizontalStream = this.views.horizontalStream;
+      const verticalStream = this.views.verticalStream;
+
+      const allPlatforms = this.views.enabledPlatforms;
+      const allDestinations = this.views.customDestinations
+        .filter(dest => dest.enabled)
+        .map(dest => dest.url);
+
+      this.usageStatisticsService.recordAnalyticsEvent('DualOutput', {
+        type: 'StreamingDualOutput',
+        platforms: JSON.stringify(allPlatforms),
+        destinations: JSON.stringify(allDestinations),
+        horizontal: JSON.stringify(horizontalStream),
+        vertical: JSON.stringify(verticalStream),
+      });
     }
+
+    /**
+     * SET MULTISTREAM SETTINGS
+     */
+    if (this.views.shouldSetupRestream) {
+      // In single output mode, this sets up multistreaming
+      // In dual output mode, this sets up streaming displays to multiple targets
+
+      const checkName = this.views.isMultiplatformMode ? 'setupMultistream' : 'setupDualOutput';
+      const errorType = this.views.isMultiplatformMode
+        ? 'RESTREAM_DISABLED'
+        : 'DUAL_OUTPUT_RESTREAM_DISABLED';
+      const failureType = this.views.isMultiplatformMode
+        ? 'RESTREAM_SETUP_FAILED'
+        : 'DUAL_OUTPUT_SETUP_FAILED';
+
+      // check the Restream service is available
+      let ready = false;
+      try {
+        await this.runCheck(
+          checkName,
+          async () => (ready = await this.restreamService.checkStatus()),
+        );
+      } catch (e: unknown) {
+        // don't set error to allow multistream setup to continue in go live window
+        console.error('Error fetching restreaming service', e);
+      }
+
+      // Assume restream is down
+      if (!ready) {
+        console.error('Restream service is not available');
+        this.setError(errorType);
+        return;
+      }
+
+      // update restream settings
+      try {
+        await this.runCheck(checkName, async () => {
+          // enable restream on the backend side
+          if (!this.restreamService.state.enabled) await this.restreamService.setEnabled(true);
+
+          await this.restreamService.beforeGoLive();
+        });
+      } catch (e: unknown) {
+        // Handle rendering a prompt for enabling permissions to generate a stream key for Kick
+        if (this.state.info.error?.type === 'KICK_STREAM_KEY_MISSING') return;
+
+        const error = this.handleTypedStreamError(e, failureType, 'Failed to setup restream');
+        this.setError(error);
+        return;
+      }
+    }
+
+    // Handle rendering a prompt for enabling permissions to generate a stream key for Kick
+    if (this.state.info.error?.type === 'KICK_STREAM_KEY_MISSING') return;
 
     // apply optimized settings
     const optimizer = this.videoEncodingOptimizationService;
@@ -553,9 +555,7 @@ export class StreamingService
 
     // in dual output mode, assign context by settings
     // in single output mode, assign context to 'horizontal' by default
-    const context = this.views.isDualOutputMode
-      ? this.views.getPlatformDisplay(platform)
-      : 'horizontal';
+    const display = this.views.getPlatformDisplayType(platform);
 
     try {
       // don't update settings for twitch in unattendedMode
@@ -564,34 +564,17 @@ export class StreamingService
           ? undefined
           : settings;
 
-      await this.runCheck(platform, () => service.beforeGoLive(settingsForPlatform, context));
+      await this.runCheck(platform, () => service.beforeGoLive(settingsForPlatform, display));
     } catch (e: unknown) {
       this.handleSetupPlatformError(e, platform);
 
-      if (platform === 'tiktok') {
-        const error = e as StreamError;
-        const title = $t('TikTok Stream Error');
-        const message = tiktokErrorMessages(error.type) ?? title;
-        this.outputErrorOpen = true;
-
-        remote.dialog
-          .showMessageBox(Utils.getMainWindow(), {
-            title,
-            type: 'error',
-            message,
-            buttons: [$t('Open TikTok Live Center'), $t('Close')],
-          })
-          .then(({ response }) => {
-            if (response === 0) {
-              this.tikTokService.handleOpenLiveManager(true);
-            }
-            this.outputErrorOpen = false;
-          })
-          .catch(() => {
-            this.outputErrorOpen = false;
-          });
-
-        this.windowsService.actions.closeChildWindow();
+      // if TikTok is the only platform going live and the user is banned, prevent the stream from attempting to start
+      if (
+        e instanceof StreamError &&
+        e.type === 'TIKTOK_USER_BANNED' &&
+        this.views.enabledPlatforms.length === 1
+      ) {
+        throwStreamError('TIKTOK_USER_BANNED', e);
       }
     }
   }
@@ -606,6 +589,7 @@ export class StreamingService
           ? 'SETTINGS_UPDATE_FAILED'
           : e.type || 'UNKNOWN_ERROR';
       this.setError(e, platform);
+      console.log('handleSetupPlatformError e', e);
     } else {
       this.setError('SETTINGS_UPDATE_FAILED', platform);
     }
@@ -654,6 +638,13 @@ export class StreamingService
 
     if (settings.platforms.instagram?.enabled) {
       this.usageStatisticsService.recordFeatureUsage('StreamToInstagram');
+    }
+
+    /* YouTube is currently the only platform that can dual stream
+    / *so we're making a special case for it for tracking dual streaming usage.
+     */
+    if (settings.platforms.youtube?.enabled && settings.platforms.youtube.display === 'both') {
+      this.usageStatisticsService.recordFeatureUsage('StreamToYouTubeBothOutputs');
     }
   }
 
@@ -713,29 +704,40 @@ export class StreamingService
   }
 
   handleTypedStreamError(
-    e: unknown,
+    e: StreamError | unknown,
     type: TStreamErrorType,
     message: string,
   ): StreamError | TStreamErrorType {
-    console.error(message, e as any);
-
     // restream errors returns an object with key value pairs for error details
-    if (e instanceof StreamError && type.split('_').includes('RESTREAM')) {
-      const messages: string[] = [];
-      const details: string[] = [];
+    const messages: string[] = [message];
+    const details: string[] = [];
+
+    const defaultMessage =
+      this.state.info.error?.message ??
+      $t(
+        'One of destinations might have incomplete permissions. Reconnect the destinations in settings and try again.',
+      );
+
+    if (e && typeof e === 'object' && type.split('_').includes('RESTREAM')) {
+      details.push(defaultMessage);
 
       Object.entries(e).forEach(([key, value]: [string, string]) => {
         const name = capitalize(key.replace(/([A-Z])/g, ' $1'));
         // only show the error message for the stream key and server url to the user for security purposes
         if (['streamKey', 'serverUrl'].includes(key)) {
-          messages.push(`${name}: ${value}`);
+          messages.push($t('Missing server url or stream key'));
         } else {
-          details.push(`${name}: ${value}`);
+          messages.push(`${name}: ${value}`);
         }
       });
 
-      e.message = messages.join('. ');
-      e.details = details.join('.');
+      const status = this.state.info.error?.status ?? 400;
+
+      return createStreamError(
+        type,
+        { status, statusText: messages.join('. ') },
+        details.join('\n'),
+      );
     }
 
     return e instanceof StreamError ? { ...e, type } : type;
@@ -795,7 +797,7 @@ export class StreamingService
       this.streamErrorUserMessage = messages.user;
       this.streamErrorReportMessage = messages.report;
 
-      this.SET_ERROR(errorTypeOrError);
+      this.SET_ERROR(errorTypeOrError, platform);
     } else {
       // an error type has been passed as a first arg
       const errorType = errorTypeOrError as TStreamErrorType;
@@ -806,7 +808,7 @@ export class StreamingService
       this.streamErrorUserMessage = messages.user;
       this.streamErrorReportMessage = messages.report;
 
-      this.SET_ERROR(error);
+      this.SET_ERROR(error, platform);
     }
 
     const error = this.state.info.error;
@@ -828,12 +830,12 @@ export class StreamingService
     }
   }
 
-  resetStreamInfo() {
-    this.RESET_STREAM_INFO();
-  }
-
   @mutation()
-  private SET_ERROR(error: IStreamError) {
+  private SET_ERROR(error: IStreamError, platform?: TPlatform) {
+    if (platform) {
+      error.platform = platform;
+    }
+
     this.state.info.error = error;
   }
 
@@ -889,7 +891,10 @@ export class StreamingService
     // Dual output cannot be toggled while live
     if (this.state.streamingStatus !== EStreamingState.Offline) return;
 
-    if (enabled) this.usageStatisticsService.recordFeatureUsage('DualOutput');
+    if (enabled) {
+      this.dualOutputService.actions.setDualOutputMode(true, true);
+      this.usageStatisticsService.recordFeatureUsage('DualOutput');
+    }
 
     this.SET_DUAL_OUTPUT_MODE(enabled);
   }
@@ -932,10 +937,8 @@ export class StreamingService
 
     this.powerSaveId = remote.powerSaveBlocker.start('prevent-display-sleep');
 
-    // start streaming
+    // start dual output
     if (this.views.isDualOutputMode) {
-      // start dual output
-
       const horizontalContext = this.videoSettingsService.contexts.horizontal;
       const verticalContext = this.videoSettingsService.contexts.vertical;
 
@@ -974,8 +977,13 @@ export class StreamingService
     }
 
     const replayWhenStreaming = this.streamSettingsService.settings.replayBufferWhileStreaming;
+    const isReplayBufferEnabled = this.outputSettingsService.getSettings().replayBuffer.enabled;
 
-    if (replayWhenStreaming && this.state.replayBufferStatus === EReplayBufferState.Offline) {
+    if (
+      replayWhenStreaming &&
+      isReplayBufferEnabled &&
+      this.state.replayBufferStatus === EReplayBufferState.Offline
+    ) {
       this.startReplayBuffer();
     }
 
@@ -998,7 +1006,7 @@ export class StreamingService
   }
 
   async toggleStreaming(options?: TStartStreamOptions, force = false) {
-    if (this.views.isDualOutputMode && !this.dualOutputService.views.getCanStreamDualOutput()) {
+    if (this.views.isDualOutputMode && !this.views.getCanStreamDualOutput() && this.isIdle) {
       this.notificationsService.actions.push({
         message: $t('Set up Go Live Settings for Dual Output Mode in the Go Live window.'),
         type: ENotificationType.WARNING,
@@ -1326,6 +1334,11 @@ export class StreamingService
             ]
           : ['custom_rtmp'];
 
+        if (eventMetadata.platforms.includes('youtube')) {
+          eventMetadata.streamId = this.youtubeService.state.streamId;
+          eventMetadata.broadcastId = this.youtubeService.state.settings?.broadcastId;
+        }
+
         this.usageStatisticsService.recordEvent('stream_start', eventMetadata);
         this.usageStatisticsService.recordAnalyticsEvent('StreamingStatus', {
           code: info.code,
@@ -1379,6 +1392,10 @@ export class StreamingService
       }
 
       if (info.signal === EOBSOutputSignal.Wrote) {
+        this.usageStatisticsService.recordAnalyticsEvent('RecordingStatus', {
+          status: nextState,
+          code: info.code,
+        });
         const filename = NodeObs.OBS_service_getLastRecording();
         const parsedFilename = byOS({
           [OS.Mac]: filename,
@@ -1386,7 +1403,7 @@ export class StreamingService
         });
         this.recordingModeService.actions.addRecordingEntry(parsedFilename);
         this.markersService.actions.exportCsv(parsedFilename);
-        this.recordingModeService.addRecordingEntry(parsedFilename);
+        this.latestRecordingPath.next(filename);
         // Wrote signals come after Offline, so we return early here
         // to not falsely set our state out of Offline
         return;
@@ -1417,152 +1434,171 @@ export class StreamingService
       }
     }
 
-    if (info.code) {
-      if (this.outputErrorOpen) {
-        console.warn('Not showing error message because existing window is open.', info);
-        return;
-      }
+    this.handleOBSOutputError(info);
+  }
 
-      let errorText = this.streamErrorUserMessage;
-      let details = '';
-      let linkToDriverInfo = false;
-      let showNativeErrorMessage = false;
-      let diagReportMessage = this.streamErrorUserMessage;
+  private handleOBSOutputError(info: IOBSOutputSignalInfo) {
+    console.debug('OBS Output signal: ', info);
 
-      if (info.code === EOutputCode.BadPath) {
-        errorText = $t(
-          'Invalid Path or Connection URL.  Please check your settings to confirm that they are valid.',
-        );
-        diagReportMessage = diagReportMessage.concat(errorText);
-      } else if (info.code === EOutputCode.ConnectFailed) {
-        errorText = $t(
-          'Failed to connect to the streaming server.  Please check your internet connection.',
-        );
-        diagReportMessage = diagReportMessage.concat(errorText);
-      } else if (info.code === EOutputCode.Disconnected) {
-        errorText = $t(
-          'Disconnected from the streaming server.  Please check your internet connection.',
-        );
-        diagReportMessage = diagReportMessage.concat(errorText);
-      } else if (info.code === EOutputCode.InvalidStream) {
-        errorText = $t(
-          'Could not access the specified channel or stream key. Please log out and back in to refresh your credentials. If the problem persists, there may be a problem connecting to the server.',
-        );
-        diagReportMessage = diagReportMessage.concat(errorText);
-      } else if (info.code === EOutputCode.NoSpace) {
-        errorText = $t('There is not sufficient disk space to continue recording.');
-        diagReportMessage = diagReportMessage.concat(errorText);
-      } else if (info.code === EOutputCode.Unsupported) {
-        errorText =
-          $t(
-            'The output format is either unsupported or does not support more than one audio track.  ',
-          ) + $t('Please check your settings and try again.');
-        diagReportMessage = diagReportMessage.concat(errorText);
-      } else if (info.code === EOutputCode.OutdatedDriver) {
-        linkToDriverInfo = true;
-        errorText = $t(
-          'An error occurred with the output. This is usually caused by out of date video drivers. Please ensure your Nvidia or AMD drivers are up to date and try again.',
-        );
-        diagReportMessage = diagReportMessage.concat(errorText);
+    if (!info.code) return;
+    if ((info.code as EOutputCode) === EOutputCode.Success) return;
+
+    if (this.outputErrorOpen) {
+      console.warn('Not showing error message because existing window is open.', info);
+
+      const messages = formatUnknownErrorMessage(
+        info,
+        this.streamErrorUserMessage,
+        this.streamErrorReportMessage,
+      );
+
+      this.streamErrorCreated.next(messages.report);
+
+      return;
+    }
+
+    let errorText = this.streamErrorUserMessage;
+    let details = '';
+    let linkToDriverInfo = false;
+    let showNativeErrorMessage = false;
+    let diagReportMessage = this.streamErrorUserMessage;
+
+    if (info.code === EOutputCode.BadPath) {
+      errorText = $t(
+        'Invalid Path or Connection URL.  Please check your settings to confirm that they are valid.',
+      );
+      diagReportMessage = diagReportMessage.concat(errorText);
+    } else if (info.code === EOutputCode.ConnectFailed) {
+      errorText = $t(
+        'Failed to connect to the streaming server.  Please check your internet connection.',
+      );
+      diagReportMessage = diagReportMessage.concat(errorText);
+    } else if (info.code === EOutputCode.Disconnected) {
+      errorText = $t(
+        'Disconnected from the streaming server.  Please check your internet connection.',
+      );
+      diagReportMessage = diagReportMessage.concat(errorText);
+    } else if (info.code === EOutputCode.InvalidStream) {
+      errorText = $t(
+        'Could not access the specified channel or stream key. Please log out and back in to refresh your credentials. If the problem persists, there may be a problem connecting to the server.',
+      );
+      diagReportMessage = diagReportMessage.concat(errorText);
+    } else if (info.code === EOutputCode.NoSpace) {
+      errorText = $t('There is not sufficient disk space to continue recording.');
+      diagReportMessage = diagReportMessage.concat(errorText);
+    } else if (info.code === EOutputCode.Unsupported) {
+      errorText =
+        $t(
+          'The output format is either unsupported or does not support more than one audio track.  ',
+        ) + $t('Please check your settings and try again.');
+      diagReportMessage = diagReportMessage.concat(errorText);
+    } else if (info.code === EOutputCode.OutdatedDriver) {
+      linkToDriverInfo = true;
+      errorText = $t(
+        'An error occurred with the output. This is usually caused by out of date video drivers. Please ensure your Nvidia or AMD drivers are up to date and try again.',
+      );
+      diagReportMessage = diagReportMessage.concat(errorText);
+    } else {
+      // -4 is used for generic unknown messages in OBS. Both -4 and any other code
+      // we don't recognize should fall into this branch and show a generic error.
+
+      if (!this.userService.isLoggedIn) {
+        const messages = formatStreamErrorMessage('LOGGED_OUT_ERROR');
+
+        errorText = messages.user;
+        diagReportMessage = messages.report;
+        if (messages.details) details = messages.details;
+
+        showNativeErrorMessage = details !== '';
       } else {
-        // -4 is used for generic unknown messages in OBS. Both -4 and any other code
-        // we don't recognize should fall into this branch and show a generic error.
-        // if (!this.userService.isLoggedIn) {
-        //   const messages;
-        //   errorText = $t(
-        //     'You are currently logged out. Please log in or confirm your server url and stream key.',
-        //   );
-        //   diagReportMessage = 'User is logged out and has invalid server url or stream key.';
-        // } else
-
-        if (!this.userService.isLoggedIn) {
-          const messages = formatStreamErrorMessage('LOGGED_OUT_ERROR');
-
-          errorText = messages.user;
-          diagReportMessage = messages.report;
-          if (messages.details) details = messages.details;
-
-          showNativeErrorMessage = details !== '';
-        } else if (info.error && typeof info.error === 'string') {
-          const messages = formatUnknownErrorMessage(
-            info,
-            this.streamErrorUserMessage,
-            this.streamErrorReportMessage,
-          );
-
-          errorText = messages.user;
-          diagReportMessage = messages.report;
-          if (messages.details) details = messages.details;
-
-          showNativeErrorMessage = details !== '';
+        if (
+          !info.error ||
+          (info.error && typeof info.error !== 'string') ||
+          (info.error && info.error === '')
+        ) {
+          info.error = $t('An unknown %{type} error occurred.', {
+            type: outputType(info.type),
+          });
         }
+
+        const messages = formatUnknownErrorMessage(
+          info,
+          this.streamErrorUserMessage,
+          this.streamErrorReportMessage,
+        );
+
+        errorText = messages.user;
+        diagReportMessage = messages.report;
+        if (messages.details) details = messages.details;
+
+        showNativeErrorMessage = details !== '';
       }
+    }
 
-      const buttons = [$t('OK')];
+    const buttons = [$t('OK')];
 
-      const title = {
-        [EOBSOutputType.Streaming]: $t('Streaming Error'),
-        [EOBSOutputType.Recording]: $t('Recording Error'),
-        [EOBSOutputType.ReplayBuffer]: $t('Replay Buffer Error'),
-      }[info.type];
+    const title = {
+      [EOBSOutputType.Streaming]: $t('Streaming Error'),
+      [EOBSOutputType.Recording]: $t('Recording Error'),
+      [EOBSOutputType.ReplayBuffer]: $t('Replay Buffer Error'),
+    }[info.type];
 
-      if (linkToDriverInfo) buttons.push($t('Learn More'));
-      if (showNativeErrorMessage) {
-        buttons.push($t('More'));
-      }
+    if (linkToDriverInfo) buttons.push($t('Learn More'));
+    if (showNativeErrorMessage) {
+      buttons.push($t('More'));
+    }
 
-      this.outputErrorOpen = true;
-      const errorType = 'error';
-      remote.dialog
-        .showMessageBox(Utils.getMainWindow(), {
-          buttons,
-          title,
-          type: errorType,
-          message: errorText,
-        })
-        .then(({ response }) => {
-          if (linkToDriverInfo && response === 1) {
-            this.outputErrorOpen = false;
-            remote.shell.openExternal(
-              'https://howto.streamlabs.com/streamlabs-obs-19/nvidia-graphics-driver-clean-install-tutorial-7000',
-            );
-          } else {
-            let expectedResponse = 1;
-            if (linkToDriverInfo) {
-              expectedResponse = 2;
-            }
-            if (showNativeErrorMessage && response === expectedResponse) {
-              const buttons = [$t('OK')];
-              remote.dialog
-                .showMessageBox({
-                  buttons,
-                  title,
-                  type: errorType,
-                  message: details,
-                })
-                .then(({ response }) => {
-                  this.outputErrorOpen = false;
-                  this.streamErrorUserMessage = '';
-                  this.streamErrorReportMessage = '';
-                })
-                .catch(() => {
-                  this.outputErrorOpen = false;
-                });
-            } else {
-              this.outputErrorOpen = false;
-            }
-          }
-        })
-        .catch(() => {
+    this.outputErrorOpen = true;
+    const errorType = 'error';
+    remote.dialog
+      .showMessageBox(Utils.getMainWindow(), {
+        buttons,
+        title,
+        type: errorType,
+        message: errorText,
+      })
+      .then(({ response }) => {
+        if (linkToDriverInfo && response === 1) {
           this.outputErrorOpen = false;
-        });
+          remote.shell.openExternal(
+            'https://howto.streamlabs.com/streamlabs-obs-19/nvidia-graphics-driver-clean-install-tutorial-7000',
+          );
+        } else {
+          let expectedResponse = 1;
+          if (linkToDriverInfo) {
+            expectedResponse = 2;
+          }
+          if (showNativeErrorMessage && response === expectedResponse) {
+            const buttons = [$t('OK')];
+            remote.dialog
+              .showMessageBox({
+                buttons,
+                title,
+                type: errorType,
+                message: details,
+              })
+              .then(({ response }) => {
+                this.outputErrorOpen = false;
+                this.streamErrorUserMessage = '';
+                this.streamErrorReportMessage = '';
+              })
+              .catch(() => {
+                this.outputErrorOpen = false;
+              });
+          } else {
+            this.outputErrorOpen = false;
+          }
+        }
+      })
+      .catch(() => {
+        this.outputErrorOpen = false;
+      });
 
-      this.windowsService.actions.closeChildWindow();
+    this.windowsService.actions.closeChildWindow();
 
-      // pass streaming error to diag report
-      if (info.type === EOBSOutputType.Streaming || !this.userService.isLoggedIn) {
-        this.streamErrorCreated.next(diagReportMessage);
-      }
+    // pass streaming error to diag report
+    if (info.type === EOBSOutputType.Streaming || !this.userService.isLoggedIn) {
+      this.streamErrorCreated.next(diagReportMessage);
     }
   }
 
@@ -1592,6 +1628,11 @@ export class StreamingService
       });
     } else {
       data.platforms = ['custom_rtmp'];
+    }
+
+    if (data.platforms.includes('youtube')) {
+      data.streamId = this.youtubeService.state.streamId;
+      data.broadcastId = this.youtubeService.state.settings?.broadcastId;
     }
 
     this.recordGoals(data.duration);

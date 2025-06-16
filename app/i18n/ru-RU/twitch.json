@@ -3,5 +3,15 @@
   "Twitch Tags": "Теги для Twitch",
   "You need to re-login to access Twitch tags": "Авторизуйтесь повторно, чтобы получить доступ к тегам Twitch",
   "Do not include special characters or spaces in your tag": "Не добавляйте в теги специальные символы и пробелы",
-  "For example: \"Speedrunning\" or \"FirstPlaythrough\"": "Например: «Скоростноепрохождение» или «Первоепрохождение»"
+  "For example: \"Speedrunning\" or \"FirstPlaythrough\"": "Например: «Скоростноепрохождение» или «Первоепрохождение»",
+  "Your Twitch access token has expired. Please log in with Twitch to continue.": "Срок действия маркера доступа к Twitch истек. Войдите с помощью Twitch, чтобы продолжить.",
+  "While updating your Twitch channel info, some tags were removed due to moderation rules: %{tags}": "При обновлении информации о вашем канале Twitch некоторые теги были удалены в соответствии с правилами модерации: %{tags}",
+  "Content Classification": "Классификация контента",
+  "Content classification": "Классификация контента",
+  "Stream features branded content": "Трансляция включает в себя фирменный контент",
+  "Twitch Studio Import": "Импорт из Twitch Studio",
+  "Import from Twitch Studio": "Импортировать из Twitch Studio",
+  "Import your scenes and sources from Twitch Studio.": "Импортируйте сцены и источники из Twitch Studio.",
+  "Importing Your Existing Settings From Twitch Studio": "Импорт существующих настроек из Twitch Studio",
+  "Importing from Twitch Studio is an experimental feature under active development. Some source types are unable to be imported, and not all settings will be carried over.": "Импорт из Twitch Studio — это экспериментальная функция в стадии активной разработки. Некоторые типы источников не могут быть импортированы, и не все настройки будут перенесены."
 }

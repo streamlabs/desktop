@@ -1,6 +1,5 @@
 import { IGoLiveSettings, StreamInfoView } from '../../../services/streaming';
-import { TPlatform, getPlatformService } from '../../../services/platforms';
-import { TDisplayDestinations } from 'services/dual-output';
+import { TPlatform } from '../../../services/platforms';
 import { ICustomStreamDestination } from 'services/settings/streaming';
 import { Services } from '../../service-provider';
 import cloneDeep from 'lodash/cloneDeep';
@@ -34,10 +33,27 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
     return this.state;
   }
 
+  get alwaysEnabledPlatforms(): TPlatform[] {
+    return ['tiktok'];
+  }
+
+  /*
+   * Primary used to get all platforms that should always show the destination switcher in the Go Live window
+   */
+  get alwaysShownPlatforms(): TPlatform[] {
+    return ['kick'];
+  }
+
   /**
    * Update top level settings
    */
   updateSettings(patch: Partial<IGoLiveSettingsState>) {
+    if (patch.platforms?.twitch) {
+      Services.SettingsService.actions.setEnhancedBroadcasting(
+        patch.platforms.twitch.isEnhancedBroadcasting,
+      );
+    }
+
     const newSettings = { ...this.state, ...patch };
     // we should re-calculate common fields before applying new settings
     const platforms = this.getViewFromState(newSettings).applyCommonFields(newSettings.platforms);
@@ -45,7 +61,7 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
     Object.assign(this.state, { ...newSettings, platforms, customDestinations });
   }
   /**
-   * Update settings for a specific platforms
+   * Update settings for a specific platform
    */
   updatePlatform(platform: TPlatform, patch: Partial<IGoLiveSettings['platforms'][TPlatform]>) {
     const updated = {
@@ -55,6 +71,10 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
       },
     };
     this.updateSettings(updated);
+  }
+
+  getCanDualStream(platform: TPlatform) {
+    return Services.StreamingService.views.supports('dualStream', [platform]);
   }
 
   switchPlatforms(enabledPlatforms: TPlatform[]) {
@@ -102,6 +122,26 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
     // reset common fields for all platforms in simple mode
     if (!enabled) this.updateCommonFields(this.getView().commonFields);
   }
+
+  /**
+   * Set displays for recording
+   * @remark Primarily used for dual output recording
+   * @param display - Display to toggle
+   * @param radioBtn - If true, the display will be the only one selected for recording
+   */
+  toggleRecordingDisplay(display: TDisplayType, radioBtn: boolean = false) {
+    if (radioBtn) {
+      this.updateSettings({ recording: [display] });
+      return;
+    }
+
+    if (this.state.recording.includes(display)) {
+      this.updateSettings({ recording: this.state.recording.filter(d => d !== display) });
+    } else {
+      this.updateSettings({ recording: [...this.state.recording, display] });
+    }
+  }
+
   /**
    * Set a common field like title or description for all eligible platforms
    **/
@@ -118,7 +158,7 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
       platforms.forEach(platform => {
         if (!view.supports(fieldName, [platform])) return;
         const platformSettings = getDefined(this.state.platforms[platform]);
-        platformSettings[fieldName] = value;
+        (platformSettings as Record<TCommonFieldName, string>)[fieldName] = value;
       });
     });
   }
@@ -156,6 +196,10 @@ export class GoLiveSettingsModule {
         windowParams as IGoLiveSettings['prepopulateOptions'],
       );
     }
+
+    // determine if TikTok apply notification should be shown
+    Services.TikTokService.actions.handleApplyPrompt();
+
     await this.prepopulate();
   }
 
@@ -163,7 +207,7 @@ export class GoLiveSettingsModule {
    * Fetch settings for each platform
    */
   async prepopulate() {
-    const { StreamingService } = Services;
+    const { StreamingService, RestreamService, DualOutputService } = Services;
     const { isMultiplatformMode } = StreamingService.views;
 
     this.state.setNeedPrepopulate(true);
@@ -173,7 +217,7 @@ export class GoLiveSettingsModule {
 
     const prepopulateOptions = this.state.prepopulateOptions;
     const view = new StreamInfoView({});
-    const settings = {
+    const settings: IGoLiveSettingsState = {
       ...view.savedSettings, // copy saved stream settings
       tweetText: view.getTweetText(view.commonFields.title), // generate a default tweet text
       needPrepopulate: false,
@@ -193,11 +237,36 @@ export class GoLiveSettingsModule {
     // prefill the form if `prepopulateOptions` provided
     if (prepopulateOptions) {
       Object.keys(prepopulateOptions).forEach(platform => {
-        Object.assign(settings.platforms[platform], prepopulateOptions[platform]);
+        Object.assign(
+          (settings.platforms as Record<string, any>)[platform],
+          prepopulateOptions[platform as keyof typeof prepopulateOptions],
+        );
       });
     }
 
     this.state.updateSettings(settings);
+
+    /* If the user was in dual output before but doesn't have restream
+     * we should disable one of the platforms if they have two enabled
+     */
+    const { dualOutputMode } = DualOutputService.state;
+    const { canEnableRestream } = RestreamService.views;
+
+    // Tiktok and Kick can stay active
+    const enabledPlatforms = this.state.enabledPlatforms.filter(
+      platform => !this.state.alwaysEnabledPlatforms.includes(platform),
+    );
+
+    if (!dualOutputMode && !canEnableRestream && enabledPlatforms.length > 1) {
+      /* Find the platform that was set as primary chat to remain enabled,
+       * if for some reason we fail to find it default to the last selected platform
+       */
+      const platform =
+        enabledPlatforms.find(platform => platform === this.primaryChat) ||
+        enabledPlatforms[enabledPlatforms.length - 1];
+
+      this.switchPlatforms([platform]);
+    }
   }
 
   get isPrime() {
@@ -222,10 +291,13 @@ export class GoLiveSettingsModule {
    * Switch platforms on/off and save settings
    * If platform is enabled then prepopulate its settings
    */
-  switchPlatforms(enabledPlatforms: TPlatform[]) {
+  switchPlatforms(enabledPlatforms: TPlatform[], skipPrepopulate?: boolean) {
     this.state.linkedPlatforms.forEach(platform => {
       this.state.updatePlatform(platform, { enabled: enabledPlatforms.includes(platform) });
     });
+
+    if (skipPrepopulate) return;
+
     /*
      * If there's exactly one enabled platform, set primaryChat to it,
      * ensures there's a primary platform if the user has multiple selected and then
@@ -286,45 +358,24 @@ export class GoLiveSettingsModule {
    * Determine if all dual output go live requirements are fulfilled
    */
   getCanStreamDualOutput() {
-    const platformDisplays = Services.StreamingService.views.activeDisplayPlatforms;
-
-    // determine which enabled custom destinations use which displays
-    const destinationDisplays = this.state.customDestinations.reduce(
-      (displays: TDisplayDestinations, destination: ICustomStreamDestination, index: number) => {
-        if (destination.enabled && destination?.display) {
-          displays[destination.display].push(destination.name);
-        }
-        return displays;
-      },
-      { horizontal: [], vertical: [] },
-    );
-    // determine if both displays are selected for active platforms
-    const horizontalHasDestinations =
-      platformDisplays.horizontal.length > 0 || destinationDisplays.horizontal.length > 0;
-    const verticalHasDestinations =
-      platformDisplays.vertical.length > 0 || destinationDisplays.vertical.length > 0;
-
-    return horizontalHasDestinations && verticalHasDestinations;
+    return this.state.getCanStreamDualOutput(this.state);
   }
 
   /**
    * Validate the form and show an error message
    */
   async validate() {
-    // TODO: comment authorization error back in after resolving legacy approval flow
     // tiktok live authorization error
-    // if (this.state.isEnabled('tiktok') && !Services.TikTokService.liveStreamingEnabled) {
-    //   message.error($t('Streaming to TikTok not approved.'));
-    //   return false;
-    // }
-
-    if (Services.DualOutputService.views.dualOutputMode && !this.getCanStreamDualOutput()) {
-      message.error(
-        $t(
-          'To use Dual Output you must stream to at least one horizontal and one vertical platform.',
-        ),
+    if (
+      this.state.isEnabled('tiktok') &&
+      (Services.TikTokService.neverApplied || Services.TikTokService.denied)
+    ) {
+      // Show this allow users to attempt to go live with rtmp regardless of tiktok status
+      message.info(
+        $t("Couldn't confirm TikTok Live Access. Apply for Live Permissions below"),
+        2,
+        () => true,
       );
-      return false;
     }
 
     try {

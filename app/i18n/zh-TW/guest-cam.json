@@ -1,7 +1,7 @@
 {
   "Source: %{sourceName}": "來源：%{sourceName}",
   "Collab Cam": "Collab Cam",
-  "Invite a guest to join your stream from a web browser.": "從瀏覽器邀請來賓加入您的直播。",
+  "Invite guests to join your stream from a web browser or their Streamlabs Desktop. Stream games or IRL broadcasts together, use as additional camera angles and more.": "邀請來賓從網頁瀏覽器或他們的 Streamlabs Desktop 加入您的直播。一起直播遊戲或 IRL 廣播，可作為額外的攝影機角度等使用。",
   "Guest Cam is currently listening for connecting guests, but is not broadcasting your microphone and webcam to your guests yet.": "來賓攝影機目前正在監聽連接的來賓，但尚未向您的來賓廣播您的麥克風和網路攝影機。",
   "No microphone source is selected. Your guest will not be able to hear you.": "沒有選擇麥克風來源。您的來賓無法聽到您的聲音。",
   "No webcam source is selected. Your guest will not be able to see you.": "沒有選擇網路攝影機來源。您的來賓無法看到您。",

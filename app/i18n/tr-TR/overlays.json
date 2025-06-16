@@ -16,5 +16,14 @@
   "Assign Vertical Sources to Horizontal Display": "Dikey Kaynakları Yatay Ekrana Ata",
   "The below will create a copy of the active scene collection, set the copy as the active collection, and then apply the function.": "Aşağıda aktif sahne koleksiyonunun bir kopyası oluşturulup bu kopya aktif koleksiyon olarak ayarlandıktan sonra işlev uygulanır.",
   "Manage Dual Output Scene": "Dual Output Sahnesini Yönet",
-  "Unable to convert dual output collection.": "Dual Output koleksiyonu dönüştürülemedi."
+  "Unable to convert dual output collection.": "Dual Output koleksiyonu dönüştürülemedi.",
+  "One or more scene items were removed because they are not supported": "Bir veya daha fazla sahne ögesi desteklenmediği için kaldırıldı",
+  "Scene items were removed because there was an error loading them: %{inputs}.\n\nPlease accept or reject permissions to view the Streamlabs Editor panel": "Sahne ögeleri, yükleme sırasında bir hata oluştuğu için kaldırıldı: %{inputs}.\n\nLütfen Streamlabs Editor panelini görüntülemek için izinleri kabul edin veya reddedin.",
+  "default_width": "default_width",
+  "default_height": "default_height",
+  "GameCapture.WindowInternalMode": "GameCapture.WindowInternalMode",
+  "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.",
+  "Show Components Library": "Show Components Library",
+  "Convert Dual Output Scene Collection": "Convert Dual Output Scene Collection",
+  "Repair Scene Collection": "Repair Scene Collection"
 }

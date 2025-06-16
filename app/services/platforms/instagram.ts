@@ -60,7 +60,7 @@ export class InstagramService
   }
 
   // FIXME: failing to go live doesn't seem to trigger an error, is there a way to detect it?
-  async beforeGoLive(goLiveSettings: IGoLiveSettings, context?: TDisplayType) {
+  async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     const settings = getDefined(goLiveSettings.platforms.instagram);
 
     if (!this.streamingService.views.isMultiplatformMode) {

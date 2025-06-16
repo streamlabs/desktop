@@ -34,5 +34,8 @@
   "Only Me": "Hanya Saya",
   "Do not change privacy settings": "Jangan mengganti pengaturan privasi",
   "Install %{overlayName}": "Instal %{overlayName}",
-  "Please note that while you can schedule streams to Facebook, some will not appear on this calendar due to API limitations": "Harap dicatat bahwa walaupun Anda bisa menjadwalkan streaming ke Facebook, beberapa tidak akan muncul di kalender ini karena keterbatasan API."
+  "Please note that while you can schedule streams to Facebook, some will not appear on this calendar due to API limitations": "Harap dicatat bahwa walaupun Anda bisa menjadwalkan streaming ke Facebook, beberapa tidak akan muncul di kalender ini karena keterbatasan API.",
+  "Your account is not eligible to stream on Facebook. Click to learn more.": "Your account is not eligible to stream on Facebook. Click to learn more",
+  "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers": "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers",
+  "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers. Click the notification to learn more.": "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers. Click the notification to learn more."
 }

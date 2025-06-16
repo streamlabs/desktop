@@ -22,5 +22,6 @@
   "Enable VSync in your game": "在遊戲中啟用 VSync",
   "Disable FreeSync or GSync in your Driver": "在您的驅動程式中停用 FreeSync 或 GSync",
   "Lower graphics settings until you stop lagging frames": "降低圖形設定，直到延遲影幀停止發生",
-  "Disable hardware decoding under any media sources(This will slightly increase cpu over gpu)": "停用任何媒體來源的硬體解碼 (相較於使用 gpu，這會稍微增加對 cpu 的使用)"
+  "Disable hardware decoding under any media sources(This will slightly increase cpu over gpu)": "停用任何媒體來源的硬體解碼 (相較於使用 gpu，這會稍微增加對 cpu 的使用)",
+  "CPU usage threshold in Dual Output mode": "CPU usage threshold in Dual Output mode"
 }

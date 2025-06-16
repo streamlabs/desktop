@@ -104,8 +104,7 @@ function PreImport() {
 }
 
 function FeatureCards() {
-  const recommendedFeatures = ['appStore', 'gameOverlay'];
-  const featuresMetadata = {
+  const featuresMetadata: Dictionary<Dictionary<string>> = {
     appStore: {
       title: $t('App Store'),
       description: $t(
@@ -128,7 +127,7 @@ function FeatureCards() {
 
   return (
     <div className={styles.container}>
-      {recommendedFeatures.map(feature => {
+      {Object.keys(featuresMetadata).map(feature => {
         const data = featuresMetadata[feature];
         return (
           <div className={styles.card} key={feature}>

@@ -22,5 +22,6 @@
   "Enable VSync in your game": "Включите в игре вертикальную синхронизацию",
   "Disable FreeSync or GSync in your Driver": "Отключите функции FreeSync или GSync драйвера",
   "Lower graphics settings until you stop lagging frames": "Снизьте настройки графики, чтобы устранить отставание кадров",
-  "Disable hardware decoding under any media sources(This will slightly increase cpu over gpu)": "Отключить аппаратное декодирование всех медиаисточников (больше нагрузка на ЦП вместо ГЦ)"
+  "Disable hardware decoding under any media sources(This will slightly increase cpu over gpu)": "Отключить аппаратное декодирование всех медиаисточников (больше нагрузка на ЦП вместо ГЦ)",
+  "CPU usage threshold in Dual Output mode": "CPU usage threshold in Dual Output mode"
 }

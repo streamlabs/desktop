@@ -128,6 +128,7 @@ export class RemoteControlService extends Service {
     if (resp.success) {
       const socket = io.default(`${resp.data.url}?token=${resp.data.token}`, {
         transports: ['websocket'],
+        reconnection: false,
       });
 
       socket.emit('getDevices', {}, (devices: IConnectedDevice[]) => {

@@ -250,8 +250,13 @@
 .progress-bar {
   min-width: 300px;
   width: 50%;
+  height: 100%;
   margin: auto;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .toggle-error {
@@ -260,4 +265,19 @@
   :global(.ant-message-notice-content) {
     padding: 4px 16px;
   }
+}
+
+.stream-icon {
+  margin-right: 0px;
+  color: var(--icon-active);
+}
+
+.record-icon {
+  color: var(--red);
+  font-size: 18px;
+  margin: 3px 0px 0px 0px !important;
+}
+
+.hidden {
+  opacity: 0;
 }

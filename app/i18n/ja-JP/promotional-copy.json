@@ -1,6 +1,6 @@
 {
   "Overlay, Widget, and Site Themes": "オーバーレイ、ウィジェット、およびサイトテーマ",
-  "Fully customize your stream and your website to represent your brand; or pick from thousands of our pre-made themes. Either way, your stream will look amazing and it's all included with Ultra.": "ストリームとウェブサイトを完全にカスタマイズしてブランドを表現、または数多くの既成のテーマから選択。いずれにしても、ストリームは素晴らしい外観になります。すべて Ultra に含まれています。",
+  "Fully customize your stream and your website to represent your brand; or pick from thousands of our pre-made overlays. Either way, your stream will look amazing and it's all included with Ultra.": "ストリームとウェブサイトをすべてカスタマイズしてブランドを表現したり、数多くの既成のオーバーレイから選択できます。いずれにしても、ストリームは素晴らしい外観になります。すべて Ultra に含まれています。",
   "View Themes": "テーマを表示",
   "Every App is FREE": "すべてのアプリは無料です",
   "We've curated a list of diverse and feature rich applications to give you more control, automation, better analytics, and new ways to interact with your audience.": "コントロール、自動化、より良い分析、およびオーディエンスとやり取りするための新しい方法をユーザーに提供するために、多様で機能豊富なアプリケーションを多数作成しました。",
@@ -71,5 +71,8 @@
   "1 Hour Videos + 250GB Storage + More": "1 時間の動画 + 250GB のストレージ + その他",
   "Highest Profit Margins": "最高の利益幅",
   "%{monthlyPrice}/mo or %{yearlyPrice}/year": "%{monthlyPrice}/月または %{yearlyPrice}/年",
-  "Text-based editing of VOD content": "VOD コンテンツのテキストベースの編集"
+  "Text-based editing of VOD content": "VOD コンテンツのテキストベースの編集",
+  "Polish your videos with text-based and AI powered Podcast Editor": "テキストベースとAI搭載のPodcast Editorで動画を編集",
+  "Turn your videos into mobile-friendly short-form TikToks, Reels, and Shorts with Cross Clip": "Cross Clipで動画をモバイルフレンドリーな短編TikToks、リール、ショートに変える",
+  "Edit video professionally from your browser with Video Editor": "Video Editorでブラウザからプロ仕様でビデオを編集"
 }

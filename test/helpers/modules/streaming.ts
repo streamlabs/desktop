@@ -20,7 +20,7 @@ import {
 } from './core';
 import { sleep } from '../sleep';
 import { fillForm, TFormData, useForm } from './forms';
-import { setOutputResolution } from './settings/settings';
+import { setOutputResolution, showSettingsWindow } from './settings/settings';
 import { StreamSettingsService } from '../../../app/services/settings/streaming';
 
 /**
@@ -49,6 +49,7 @@ export async function prepareToGoLive() {
  * It opens the EditStreamInfo window or start stream if the conformation dialog has been disabled
  */
 export async function clickGoLive() {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   await useMainWindow(async () => {
     await clickButton('Go Live');
   });
@@ -60,8 +61,10 @@ export async function clickGoLive() {
 export async function tryToGoLive(prefillData?: Record<string, unknown>) {
   await prepareToGoLive();
   await clickGoLive();
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const { fillForm } = useForm('editStreamForm');
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   await useChildWindow(async () => {
     await waitForSettingsWindowLoaded();
     if (prefillData) {
@@ -87,6 +90,7 @@ export async function submit() {
 
 export async function waitForStreamStart() {
   // check we're streaming
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   await useMainWindow(async () => {
     await (await selectButton('End Stream')).waitForExist({ timeout: 20 * 1000 });
   });
@@ -96,6 +100,7 @@ export async function waitForStreamStart() {
  * Click the "End Stream" button and wait until stream stops
  */
 export async function stopStream() {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   await useMainWindow(async () => {
     await clickButton('End Stream');
     await waitForStreamStop();
@@ -106,16 +111,18 @@ export async function waitForStreamStop() {
   await sleep(2000); // the stream often starts with delay so we have the "Go Live" button visible for a second even we clicked "Start Stream"
   const ms = 40 * 1000; // we may wait for a long time if the stream key is not valid
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   await useMainWindow(async () => {
     try {
       await waitForDisplayed('button=Go Live', { timeout: ms });
-    } catch (e) {
+    } catch (e: unknown) {
       throw new Error(`Stream did not stop in ${ms}ms`);
     }
   });
 }
 
 export async function chatIsVisible() {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   return await useMainWindow(async () => {
     return await isDisplayed('a=Refresh Chat');
   });
@@ -145,6 +152,7 @@ export async function switchAdvancedMode() {
  * Open liveDock and edit stream settings
  */
 export async function updateChannelSettings(prefillData: TFormData) {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   await useMainWindow(async () => {
     await click('.live-dock'); // open LiveDock
     await click('.icon-edit'); // click Edit
@@ -156,6 +164,7 @@ export async function updateChannelSettings(prefillData: TFormData) {
 }
 
 export async function openScheduler() {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   await useMainWindow(async () => {
     await click('.icon-date'); // open the StreamScheduler
     await waitForClickable('.ant-picker-calendar-month-select'); // wait for loading
@@ -167,6 +176,7 @@ export async function scheduleStream(date: Date, formData: TFormData) {
   const month = date.toLocaleString('default', { month: 'short' });
   const day = date.getDate();
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   await useMainWindow(async () => {
     await openScheduler();
 
@@ -187,4 +197,24 @@ export async function scheduleStream(date: Date, formData: TFormData) {
     await clickButton('Schedule');
     await waitForClickable('.ant-picker-calendar-month-select', { timeout: 10000 });
   });
+}
+
+/**
+ * Add streaming target
+ * @param name - name of the destination
+ * @param url - rtmp url
+ * @param streamKey - stream key
+ */
+export async function addCustomDestination(name: string, url: string, streamKey: string) {
+  await showSettingsWindow('Stream');
+  await click('span=Add Destination');
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const { fillForm } = useForm();
+  await fillForm({
+    name,
+    url,
+    streamKey,
+  });
+  await clickButton('Save');
 }

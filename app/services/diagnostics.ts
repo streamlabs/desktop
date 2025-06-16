@@ -31,7 +31,7 @@ import * as remote from '@electron/remote';
 import { AppService } from 'services/app';
 import fs from 'fs';
 import path from 'path';
-import { TPlatform } from './platforms';
+import { platformList, TPlatform } from './platforms';
 import { TDisplayType } from './settings-v2';
 
 interface IStreamDiagnosticInfo {
@@ -113,6 +113,8 @@ class Section {
         }
       }
 
+      // TODO: index
+      // @ts-ignore
       const value = data[key] as unknown;
 
       if (typeof value === 'object' && value != null) {
@@ -329,9 +331,34 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     this.problems.push(problem);
   }
 
-  private formatTargets(arr: TPlatform[] | string[], platforms?: boolean) {
+  private formatTargets(arr: TPlatform[] | string[]) {
     if (!arr.length) return 'None';
     return JSON.stringify(arr).slice(1, -1);
+  }
+
+  /**
+   * Confirm the platforms array contains the names of the platforms
+   * @remark If the item in a platforms array is a number, it's the index of the platform name
+   * when the platforms object is made iterable. Convert the index to the platform name
+   * for readability.
+   * @param platforms The platforms array to validate
+   * @returns Array of platform names
+   */
+  private validatePlatforms(platforms: string) {
+    const platformNames = platforms.replace(/"/g, '').split(',');
+    if (!platformNames.length) {
+      return 'None';
+    }
+
+    const names = platformNames.map(platform => {
+      if (/^\d+$/.test(platform)) {
+        const index = parseInt(platform, 10);
+        return platformList[index];
+      }
+      return platform;
+    });
+
+    return JSON.stringify(names).slice(1, -1);
   }
 
   private formatSimpleOutputInfo() {
@@ -458,7 +485,8 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
 
     const platformList = targets.platforms.horizontal.concat(targets.platforms.vertical);
     const destinationList = targets.destinations.horizontal.concat(targets.destinations.vertical);
-    const platforms = this.formatTargets(platformList, true);
+
+    const platforms = this.formatTargets(platformList);
     const destinations = this.formatTargets(destinationList);
 
     const info = {
@@ -508,6 +536,8 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
         },
         'Connected Platforms': Object.keys(this.userService.views.platforms).map(p => {
           return {
+            // TODO: index
+            // @ts-ignore
             Username: this.userService.views.platforms[p].username,
             Platform: p,
           };
@@ -548,11 +578,19 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
       const fpsObj = { Type: setting.fpsType.toString() };
 
       if (fpsObj.Type === 'Common FPS Values') {
+        // TODO: index
+        // @ts-ignore
         fpsObj['Value'] = setting.fpsCom;
       } else if (fpsObj.Type === 'Integer FPS Value') {
+        // TODO: index
+        // @ts-ignore
         fpsObj['Value'] = setting.fpsInt;
       } else if (fpsObj.Type === 'Fractional FPS Value') {
+        // TODO: index
+        // @ts-ignore
         fpsObj['Numerator'] = setting.fpsNum;
+        // TODO: index
+        // @ts-ignore
         fpsObj['Denominator'] = setting.fpsDen;
       }
 
@@ -634,6 +672,8 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
 
       // Ensures we are working with an array
       [].concat(gpuInfo).forEach((gpu, index) => {
+        // TODO: index
+        // @ts-ignore
         gpuSection[`GPU ${index + 1}`] = {
           Name: gpu.Name,
           'Driver Version': gpu.DriverVersion,
@@ -749,12 +789,16 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
         const data = { Time: entry.timestamp.toString() };
 
         if (entry.module) {
+          // TODO: index
+          // @ts-ignore
           data['Module'] =
             entry.module +
             ' (' +
             (entry.path && entry.path.length !== 0 ? entry.path : 'unknown path') +
             ')';
         } else {
+          // TODO: index
+          // @ts-ignore
           data['Module'] = '(no data)';
         }
 
@@ -800,11 +844,15 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
       ];
 
       if (source) {
+        // TODO: index
+        // @ts-ignore
         globalSources[name] = {
           ...audioDeviceObj(settings.Audio[name] as string),
           ...this.generateSourceData(source),
         };
       } else {
+        // TODO: index
+        // @ts-ignore
         globalSources[name] = 'Disabled';
       }
     });
@@ -863,6 +911,8 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     const sceneData = {};
 
     this.scenesService.views.scenes.map(s => {
+      // TODO: index
+      // @ts-ignore
       sceneData[s.name] = s.getItems().map(si => {
         return this.generateSourceData(si.getSource(), si);
       });
@@ -911,8 +961,12 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     };
 
     if (propertiesManagerType === 'widget') {
+      // TODO: index
+      // @ts-ignore
       sourceData['Widget Type'] = widgetLookup[propertiesManagerSettings.widgetType];
     } else if (propertiesManagerType === 'streamlabels') {
+      // TODO: index
+      // @ts-ignore
       sourceData['Streamlabel Type'] = propertiesManagerSettings.statname;
     }
 
@@ -927,7 +981,11 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
         );
       }
 
+      // TODO: index
+      // @ts-ignore
       sourceData['Selected Device Id'] = deviceId;
+      // TODO: index
+      // @ts-ignore
       sourceData['Selected Device Name'] = device?.description ?? '<DEVICE NOT FOUND>';
     }
 
@@ -936,9 +994,13 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     }
 
     if (sceneItem) {
+      // TODO: index
+      // @ts-ignore
       sourceData['Visible'] = sceneItem.visible;
     }
 
+    // TODO: index
+    // @ts-ignore
     sourceData['Filters'] = this.sourceFiltersService.views
       .filtersBySourceId(source.sourceId)
       .map(f => {
@@ -969,14 +1031,24 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
         return arr;
       }, []);
 
+      // TODO: index
+      // @ts-ignore
       sourceData['Enabled Audio Tracks'] = enabledTracks.join(', ');
     }
 
+    // TODO: index
+    // @ts-ignore
     sourceData['Muted'] = audioSource.muted;
+    // TODO: index
+    // @ts-ignore
     sourceData['Volume'] = audioSource.fader.deflection * 100;
+    // TODO: index
+    // @ts-ignore
     sourceData['Monitoring'] = ['Monitor Off', 'Monitor Only (mute output)', 'Monitor and Output'][
       audioSource.monitoringType
     ];
+    // TODO: index
+    // @ts-ignore
     sourceData['Sync Offset'] = audioSource.syncOffset;
 
     return sourceData;
@@ -986,6 +1058,18 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     return new Section(
       'Streams',
       this.state.streams.map(s => {
+        const platforms = this.validatePlatforms(s?.platforms);
+
+        if (
+          s?.type === 'Single Output' &&
+          platforms.includes('tiktok') &&
+          s?.error.split(' ').at(-1) === '422'
+        ) {
+          this.logProblem(
+            'TikTok user might be blocked from streaming. Refer them to TikTok producer page or support to confirm live access status',
+          );
+        }
+
         return {
           'Start Time': new Date(s.startTime).toString(),
           'End Time': s.endTime ? new Date(s.endTime).toString() : 'Stream did not end cleanly',
@@ -995,7 +1079,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
           'Average CPU': `${s.avgCpu?.toFixed(2)}%`,
           'Average FPS': s.avgFps?.toFixed(2),
           'Stream Error': s?.error ?? 'None',
-          Platforms: s?.platforms,
+          Platforms: platforms,
           Destinations: s?.destinations,
           'Stream Type': s?.type,
         };
@@ -1019,6 +1103,21 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
       );
     }
 
+    /* accessing streamingService directly results in type errors
+     * which it was probably done to restrict the API
+     * don't feel too happy about hacking it
+     */
+    const streamingPlatforms = (this.streamingService as any)?.views?.settings?.platforms || {};
+    const platformsDualStreaming = Object.entries(streamingPlatforms).reduce(
+      (platforms: TPlatform[], [key, value]: [TPlatform, any]) => {
+        if (value.display === 'both') {
+          platforms.push(key);
+        }
+        return platforms;
+      },
+      [],
+    );
+
     return new Section('Dual Output', {
       'Dual Output Active': this.dualOutputService.views.dualOutputMode,
       'Dual Output Scene Collection Active': this.dualOutputService.views.hasNodeMap(),
@@ -1027,10 +1126,11 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
         'Number Vertical Sources': numVertical,
       },
       Targets: {
-        'Horizontal Platforms': this.formatTargets(platforms.horizontal, true),
-        'Vertical Platforms': this.formatTargets(platforms.vertical, true),
+        'Horizontal Platforms': this.formatTargets(platforms.horizontal),
+        'Vertical Platforms': this.formatTargets(platforms.vertical),
         'Horizontal Custom Destinations': this.formatTargets(destinations.horizontal),
         'Vertical Custom Destinations': this.formatTargets(destinations.vertical),
+        'Platforms Using Extra Outputs': platformsDualStreaming,
       },
       'Horizontal Uses Multistream': restreamHorizontal,
       'Vertical Uses Multistream': restreamVertical,
@@ -1069,12 +1169,16 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
 
   private convertWmiValues(wmiObject: object) {
     Object.keys(wmiObject).forEach(key => {
+      // TODO: index
+      // @ts-ignore
       const val = wmiObject[key];
 
       if (typeof val === 'string') {
         const match = val.match(/\/Date\((\d+)\)/);
 
         if (match) {
+          // TODO: index
+          // @ts-ignore
           wmiObject[key] = new Date(parseInt(match[1], 10)).toString();
         }
       }

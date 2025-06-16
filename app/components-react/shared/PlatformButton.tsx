@@ -22,6 +22,7 @@ interface PlatformIconButtonProps {
   onClick: () => void;
   disabled?: boolean;
   loading?: boolean;
+  name: string;
 }
 
 const loadingIcon = <i className="fas fa-spinner fa-spin" />;
@@ -34,6 +35,7 @@ export const PlatformIconButton = ({
   onClick,
   disabled,
   loading,
+  name,
 }: PlatformIconButtonProps) => {
   const icon = platform ? (
     <PlatformLogo platform={platform} size={logoSize} className={styles.platformIcon} />
@@ -43,6 +45,7 @@ export const PlatformIconButton = ({
 
   return (
     <Button
+      data-testid={`platform-icon-button-${name}`}
       className={cx(styles.platformIconButton, platform ? `platform-icon-button--${platform}` : '')}
       onClick={onClick}
       disabled={disabled}

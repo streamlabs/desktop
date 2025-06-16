@@ -181,7 +181,7 @@ export class DefaultManager extends PropertiesManager {
       window_placeholder_image: getSharedResource('capture-placeholder.png'),
       window_placeholder_waiting_message: $t('Looking for a game to capture'),
       window_placeholder_missing_message: $t('Specified window is not a game'),
-      capture_overlays: true,
+      capture_overlays: this.obsSource.settings.capture_overlays ?? true,
     });
   }
 }

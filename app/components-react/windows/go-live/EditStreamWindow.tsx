@@ -31,7 +31,6 @@ export default function EditStreamWindow() {
     form,
     enabledPlatforms,
     hasMultiplePlatforms,
-    isRestreamEnabled,
     primaryChat,
     setPrimaryChat,
   } = useGoLiveSettingsRoot({ isUpdateMode: true });
@@ -89,7 +88,7 @@ export default function EditStreamWindow() {
     );
   }
 
-  const shouldShowPrimaryChatSwitcher = isRestreamEnabled && hasMultiplePlatforms;
+  const shouldShowPrimaryChatSwitcher = hasMultiplePlatforms;
 
   return (
     <ModalLayout footer={renderFooter()}>

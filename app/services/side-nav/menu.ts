@@ -23,6 +23,7 @@ import {
 } from './menu-data';
 
 interface ISideNavServiceState {
+  version: string;
   isOpen: boolean;
   showCustomEditor: boolean;
   hasLegacyMenu: boolean;
@@ -96,7 +97,12 @@ export class SideNavService extends PersistentStatefulService<ISideNavServiceSta
   @Inject() layoutService: LayoutService;
   @Inject() platformAppsService: PlatformAppsService;
 
+  // Since this service persists menu items, for now please change this version
+  // when changes are made to navbar
+  version = '1';
+
   static defaultState: ISideNavServiceState = {
+    version: '0',
     isOpen: false,
     showCustomEditor: true,
     hasLegacyMenu: true,
@@ -109,6 +115,13 @@ export class SideNavService extends PersistentStatefulService<ISideNavServiceSta
 
   init() {
     super.init();
+
+    if (this.state.version !== this.version) {
+      this.UPDATE_MENU_ITEMS(ENavName.TopNav, SideBarTopNavData().menuItems);
+      this.UPDATE_MENU_ITEMS(ENavName.BottomNav, SideBarBottomNavData().menuItems);
+      this.SET_VERSION(this.version);
+    }
+
     this.userService.userLoginFinished.subscribe(() => this.handleUserLogin());
 
     this.handleDismissables();
@@ -129,17 +142,6 @@ export class SideNavService extends PersistentStatefulService<ISideNavServiceSta
       menuItems.splice(index, 0, SideNavMenuItems()[EMenuItemKey.RecordingHistory]);
 
       // update the menu items
-      this.UPDATE_MENU_ITEMS(ENavName.TopNav, menuItems);
-    }
-
-    // Remove alertbox-library, it seems to persist even after removing it from all other places
-    const menuItems = [...this.state[ENavName.TopNav].menuItems];
-    const themes = menuItems.find(menuItems => menuItems.key === EMenuItemKey.Themes)!;
-    if (
-      'subMenuItems' in themes &&
-      themes.subMenuItems.find(item => item.key === 'alertbox-library')
-    ) {
-      themes.subMenuItems = themes.subMenuItems.filter(item => item.key !== 'alertbox-library');
       this.UPDATE_MENU_ITEMS(ENavName.TopNav, menuItems);
     }
 
@@ -291,6 +293,8 @@ export class SideNavService extends PersistentStatefulService<ISideNavServiceSta
         menuItems: this.state[ENavName.BottomNav].menuItems.map((menuItem: IMenuItem) => {
           if (menuItem.key === EMenuItemKey.Dashboard) {
             return {
+              // TODO: index
+              // @ts-ignore
               ...this.state[ENavName.BottomNav].menuItems[EMenuItemKey.Dashboard],
               isExpanded: true,
             };
@@ -415,5 +419,10 @@ export class SideNavService extends PersistentStatefulService<ISideNavServiceSta
       name: navName,
       menuItems: [...menuItems],
     };
+  }
+
+  @mutation()
+  private SET_VERSION(version: string) {
+    this.state.version = version;
   }
 }

@@ -6,15 +6,23 @@ import { $t } from 'services/i18n';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import styles from './RecordingHistory.m.less';
 import AutoProgressBar from 'components-react/shared/AutoProgressBar';
-import { GetSLID } from 'components-react/highlighter/StorageUpload';
+import { GetSLID } from 'components-react/highlighter/Export/StorageUpload';
 import { ENotificationType } from 'services/notifications';
 import Scrollable from 'components-react/shared/Scrollable';
 import { Services } from '../service-provider';
 import { initStore, useController } from '../hooks/zustand';
 import { useVuex } from '../hooks';
 import Translate from 'components-react/shared/Translate';
+import uuid from 'uuid/v4';
+import { EMenuItemKey } from 'services/side-nav';
 import { $i } from 'services/utils';
 import { IRecordingEntry } from 'services/recording-mode';
+import { EAvailableFeatures } from 'services/incremental-rollout';
+import { EAiDetectionState, EGame } from 'services/highlighter/models/ai-highlighter.models';
+import {
+  EHighlighterView,
+  ITempRecordingInfo,
+} from 'services/highlighter/models/highlighter.models';
 
 interface IRecordingHistoryStore {
   showSLIDModal: boolean;
@@ -29,6 +37,9 @@ class RecordingHistoryController {
   private UserService = Services.UserService;
   private SharedStorageService = Services.SharedStorageService;
   private NotificationsService = Services.NotificationsService;
+  private HighlighterService = Services.HighlighterService;
+  private NavigationService = Services.NavigationService;
+  private IncrementalRolloutService = Services.IncrementalRolloutService;
   store = initStore<IRecordingHistoryStore>({
     showSLIDModal: false,
     showEditModal: false,
@@ -51,8 +62,23 @@ class RecordingHistoryController {
     return this.RecordingModeService.state.uploadInfo;
   }
 
+  get aiDetectionInProgress() {
+    return this.HighlighterService.views.highlightedStreams.some(
+      stream => stream.state.type === EAiDetectionState.IN_PROGRESS,
+    );
+  }
+
+  get highlighterVersion() {
+    return this.HighlighterService.views.highlighterVersion;
+  }
+
   get uploadOptions() {
     const opts = [
+      {
+        label: `${$t('Get highlights')}`,
+        value: 'highlighter',
+        icon: 'icon-highlighter',
+      },
       {
         label: $t('Edit'),
         value: 'edit',
@@ -113,6 +139,26 @@ class RecordingHistoryController {
       this.postError($t('Upload already in progress'));
       return;
     }
+    if (platform === 'highlighter') {
+      if (this.aiDetectionInProgress) return;
+
+      const tempRecordingInfo: ITempRecordingInfo = {
+        recordingPath: recording.filename,
+        streamInfo: { id: 'rec_' + uuid(), game: EGame.UNSET },
+        source: 'recordings-tab',
+      };
+      this.HighlighterService.setTempRecordingInfo(tempRecordingInfo);
+
+      this.NavigationService.actions.navigate(
+        'Highlighter',
+        {
+          view: EHighlighterView.STREAM,
+        },
+        EMenuItemKey.Highlighter,
+      );
+      return;
+    }
+
     if (platform === 'youtube') return this.uploadToYoutube(recording.filename);
     if (platform === 'remove') return this.removeEntry(recording.timestamp);
     if (this.hasSLID) {
@@ -168,22 +214,41 @@ export default function RecordingHistoryPage() {
 export function RecordingHistory() {
   const controller = useController(RecordingHistoryCtx);
   const { formattedTimestamp, showFile, handleSelect, postError } = controller;
-  const { uploadInfo, uploadOptions, recordings, hasSLID } = useVuex(() => ({
+  const aiHighlighterFeatureEnabled = Services.IncrementalRolloutService.views.featureIsEnabled(
+    EAvailableFeatures.aiHighlighter,
+  );
+  const {
+    uploadInfo,
+    uploadOptions,
+    recordings,
+    hasSLID,
+    aiDetectionInProgress,
+    highlighterVersion,
+  } = useVuex(() => ({
     recordings: controller.recordings,
+    aiDetectionInProgress: controller.aiDetectionInProgress,
     uploadOptions: controller.uploadOptions,
     uploadInfo: controller.uploadInfo,
     hasSLID: controller.hasSLID,
+    highlighterVersion: controller.highlighterVersion,
   }));
 
   useEffect(() => {
+    let isMounted = true;
+
     if (
       uploadInfo.error &&
       typeof uploadInfo.error === 'string' &&
-      // We don't want to surface unexpected TS errors to the user
       !/TypeError/.test(uploadInfo.error)
     ) {
-      postError(uploadInfo.error);
+      if (isMounted) {
+        postError(uploadInfo.error);
+      }
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [uploadInfo.error]);
 
   function openMarkersSettings() {
@@ -193,18 +258,35 @@ export function RecordingHistory() {
   function UploadActions(p: { recording: IRecordingEntry }) {
     return (
       <span className={styles.actionGroup}>
-        {uploadOptions.map(opt => (
-          <span
-            className={styles.action}
-            key={opt.value}
-            style={{ color: `var(--${opt.value === 'edit' ? 'teal' : 'title'})` }}
-            onClick={() => handleSelect(p.recording, opt.value)}
-          >
-            <i className={opt.icon} />
-            &nbsp;
-            <span>{opt.label}</span>
-          </span>
-        ))}
+        {uploadOptions
+          .map(option => {
+            if (
+              option.value === 'highlighter' &&
+              (!aiHighlighterFeatureEnabled || highlighterVersion === '')
+            ) {
+              return null;
+            }
+            return (
+              <span
+                className={styles.action}
+                key={option.value}
+                style={{
+                  color: `var(--${option.value === 'edit' ? 'teal' : 'title'})`,
+                  opacity: option.value === 'highlighter' && aiDetectionInProgress ? 0.3 : 1,
+                  cursor:
+                    option.value === 'highlighter' && aiDetectionInProgress
+                      ? 'not-allowed'
+                      : 'pointer',
+                }}
+                onClick={() => handleSelect(p.recording, option.value)}
+              >
+                <i className={option.icon} />
+                &nbsp;
+                <span>{option.label}</span>
+              </span>
+            );
+          })
+          .filter(Boolean)}
       </span>
     );
   }
@@ -227,7 +309,11 @@ export function RecordingHistory() {
             <div className={styles.recording} key={recording.timestamp}>
               <span style={{ marginRight: '8px' }}>{formattedTimestamp(recording.timestamp)}</span>
               <Tooltip title={$t('Show in folder')}>
-                <span onClick={() => showFile(recording.filename)} className={styles.filename}>
+                <span
+                  data-test="filename"
+                  onClick={() => showFile(recording.filename)}
+                  className={styles.filename}
+                >
                   {recording.filename}
                 </span>
               </Tooltip>

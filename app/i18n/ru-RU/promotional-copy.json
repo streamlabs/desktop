@@ -1,6 +1,6 @@
 {
   "Overlay, Widget, and Site Themes": "Темы оверлеев, виджетов и сайтов",
-  "Fully customize your stream and your website to represent your brand; or pick from thousands of our pre-made themes. Either way, your stream will look amazing and it's all included with Ultra.": "Полностью персонализируйте трансляцию и сайт под свой бренд или выберите одну из тысяч готовых тем. Все эти возможности доступны в Ultra. Ваша трансляция будет выглядеть великолепно!",
+  "Fully customize your stream and your website to represent your brand; or pick from thousands of our pre-made overlays. Either way, your stream will look amazing and it's all included with Ultra.": "Полностью персонализируйте трансляцию и сайт под свой бренд или выберите одну из тысяч готовых наложений. Все эти возможности доступны в Ultra. Ваша трансляция будет выглядеть великолепно!",
   "View Themes": "Просмотреть темы",
   "Every App is FREE": "Все приложения БЕСПЛАТНЫ",
   "We've curated a list of diverse and feature rich applications to give you more control, automation, better analytics, and new ways to interact with your audience.": "Мы подготовили список разнообразных приложений с широкими возможностями для улучшения управления, автоматизации и сбора аналитических данных, а также для использования новых способов взаимодействия с аудиторией.",
@@ -71,5 +71,8 @@
   "1 Hour Videos + 250GB Storage + More": "1 час видео + 250 ГБ для хранения + Дополнительно",
   "Highest Profit Margins": "Максимум прибыли",
   "%{monthlyPrice}/mo or %{yearlyPrice}/year": "%{monthlyPrice}/мес. или %{yearlyPrice}/год",
-  "Text-based editing of VOD content": "Редактирование текста контента VOD"
+  "Text-based editing of VOD content": "Редактирование текста контента VOD",
+  "Polish your videos with text-based and AI powered Podcast Editor": "Совершенствуйте свои видео с помощью текстового редактора подкастов Podcast Editor с поддержкой искусственного интеллекта",
+  "Turn your videos into mobile-friendly short-form TikToks, Reels, and Shorts with Cross Clip": "Превращайте свои видео в оптимизированные для мобильных устройств ролики для TikTok, рилы и шорты с помощью Cross Clip.",
+  "Edit video professionally from your browser with Video Editor": "Профессиональное редактирование видео из браузера с помощью Video Editor"
 }

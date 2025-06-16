@@ -4,8 +4,7 @@
       "name": "obs-studio-node",
       "url": "https://s3-us-west-2.amazonaws.com/obsstudionodes3.streamlabs.com/",
       "archive": "osn-[VERSION]-release-[OS][ARCH].tar.gz",
-      "version": "0.24.43",
-      "mac_version": "0.24.43",
+      "version": "0.25.33",
       "win64": true,
       "osx": true
     },
@@ -37,7 +36,7 @@
       "name": "crash-handler",
       "url": "https://slobs-crash-handler.s3-us-west-2.amazonaws.com/",
       "archive": "crash-handler-[VERSION]-[OS][ARCH].tar.gz",
-      "version": "1.2.22",
+      "version": "1.2.23",
       "win64": true,
       "osx": true
     },
@@ -45,7 +44,7 @@
       "name": "node-window-rendering",
       "url": "https://slobs-node-window-rendering.s3-us-west-2.amazonaws.com/",
       "archive": "node-window-rendering-[VERSION]-[OS][ARCH].tar.gz",
-      "version": "1.0.20test",
+      "version": "1.0.20",
       "win64": false,
       "osx": true
     },

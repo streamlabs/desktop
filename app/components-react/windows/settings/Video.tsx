@@ -4,8 +4,6 @@ import { useModule, injectState } from 'slap';
 import { Services } from '../../service-provider';
 import { message } from 'antd';
 import FormFactory, { TInputValue } from 'components-react/shared/inputs/FormFactory';
-import { CheckboxInput } from 'components-react/shared/inputs';
-import Tooltip from 'components-react/shared/Tooltip';
 import { EScaleType, EFPSType, IVideoInfo } from '../../../../obs-api';
 import { $t } from 'services/i18n';
 import styles from './Common.m.less';
@@ -13,6 +11,7 @@ import Tabs from 'components-react/shared/Tabs';
 import { invalidFps, IVideoInfoValue, TDisplayType } from 'services/settings-v2/video';
 import { AuthModal } from 'components-react/shared/AuthModal';
 import Utils from 'services/utils';
+import DualOutputToggle from '../../shared/DualOutputToggle';
 
 const CANVAS_RES_OPTIONS = [
   { label: '1920x1080', value: '1920x1080' },
@@ -60,6 +59,7 @@ class VideoSettingsModule {
   userService = Services.UserService;
   dualOutputService = Services.DualOutputService;
   streamingService = Services.StreamingService;
+  tiktokService = Services.TikTokService;
 
   get display(): TDisplayType {
     return this.state.display;
@@ -505,6 +505,9 @@ class VideoSettingsModule {
       Services.UsageStatisticsService.recordAnalyticsEvent('DualOutput', {
         type: 'ToggleOnDualOutput',
         source: 'VideoSettings',
+        isPrime: this.userService.isPrime,
+        platforms: this.streamingService.views.linkedPlatforms,
+        tiktokStatus: this.tiktokService.scope,
       });
     }
   }
@@ -543,31 +546,13 @@ export function VideoSettings() {
     <>
       <div className={styles.videoSettingsHeader}>
         <h2>{$t('Video')}</h2>
-        <div className={styles.doToggle}>
-          {/* THIS CHECKBOX TOGGLES DUAL OUTPUT MODE FOR THE ENTIRE APP */}
-          <CheckboxInput
-            id="dual-output-checkbox"
-            name="dual-output-checkbox"
-            data-name="dual-output-checkbox"
-            label="Dual Output Checkbox"
-            value={showDualOutputSettings}
-            onChange={toggleDualOutput}
-            className={styles.doCheckbox}
-            disabled={cantEditFields}
-          />
-          {$t('Enable Dual Output')}
-          <Tooltip
-            title={$t(
-              'Stream to horizontal and vertical platforms simultaneously. Recordings will be in horizontal only.',
-            )}
-            className={styles.doTooltip}
-            placement="bottomRight"
-            lightShadow
-          >
-            <i className="icon-information" />
-          </Tooltip>
-        </div>
-        {/* )} */}
+        <DualOutputToggle
+          value={showDualOutputSettings}
+          onChange={toggleDualOutput}
+          disabled={cantEditFields}
+          placement="bottomRight"
+          lightShadow
+        />
       </div>
       {showDualOutputSettings && <Tabs onChange={setDisplay} />}
 

@@ -3,5 +3,15 @@
   "Twitch Tags": "Twitch タグ",
   "You need to re-login to access Twitch tags": "Twitch タグにアクセスするには再ログインが必要です",
   "Do not include special characters or spaces in your tag": "タグには特殊文字や空白文字を含めないでください",
-  "For example: \"Speedrunning\" or \"FirstPlaythrough\"": "例：「Speedrunning」、「FirstPlaythrough」"
+  "For example: \"Speedrunning\" or \"FirstPlaythrough\"": "例：「Speedrunning」、「FirstPlaythrough」",
+  "Your Twitch access token has expired. Please log in with Twitch to continue.": "Twitchのアクセストークンの有効期限が切れました。Twitch でログインして続行してください。",
+  "While updating your Twitch channel info, some tags were removed due to moderation rules: %{tags}": "Twitchチャンネル情報の更新中に、モデレーションルールによりいくつかのタグが削除されました：%{tags}",
+  "Content Classification": "コンテンツの分類",
+  "Content classification": "コンテンツの分類",
+  "Stream features branded content": "ブランドコンテンツ提供のストリーム",
+  "Twitch Studio Import": "Twitch Studioのインポート",
+  "Import from Twitch Studio": "Twitch Studioからインポート",
+  "Import your scenes and sources from Twitch Studio.": "Twitch Studioからシーンとソースをインポートします。",
+  "Importing Your Existing Settings From Twitch Studio": "Twitch Studioから既存の設定をインポート",
+  "Importing from Twitch Studio is an experimental feature under active development. Some source types are unable to be imported, and not all settings will be carried over.": "「Twitch Studioからインポート」は、現在開発中の実験的機能です。ソースの種類によってはインポートできないものもあり、すべての設定が引き継がれるわけではありません。"
 }

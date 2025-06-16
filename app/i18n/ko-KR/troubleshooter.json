@@ -22,5 +22,6 @@
   "Enable VSync in your game": "게임 내 VSync 활성화",
   "Disable FreeSync or GSync in your Driver": "드라이버에서 FreeSync 또는 GSync 비활성화",
   "Lower graphics settings until you stop lagging frames": "프레임이 뒤처지지 않을 때까지 그래픽 설정 낮추기",
-  "Disable hardware decoding under any media sources(This will slightly increase cpu over gpu)": "미디어 소스 하의 하드웨어 디코딩 비활성화(GPU보다 CPU를 약간 향상합니다)"
+  "Disable hardware decoding under any media sources(This will slightly increase cpu over gpu)": "미디어 소스 하의 하드웨어 디코딩 비활성화(GPU보다 CPU를 약간 향상합니다)",
+  "CPU usage threshold in Dual Output mode": "CPU usage threshold in Dual Output mode"
 }

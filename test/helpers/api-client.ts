@@ -144,6 +144,8 @@ export class ApiClient {
     if (!requestBody.id) throw 'id is required';
 
     return new Promise((resolve, reject) => {
+      // TODO: index
+      // @ts-ignore
       this.requests[requestBody.id] = {
         resolve,
         reject,
@@ -204,6 +206,8 @@ export class ApiClient {
 
         // if message is response for an API call
         // than we should have a pending request object
+        // TODO: index
+        // @ts-ignore
         const request = this.requests[message.id];
         if (request) {
           if (message.error) {
@@ -211,6 +215,8 @@ export class ApiClient {
           } else {
             request.resolve(message.result);
           }
+          // TODO: index
+          // @ts-ignore
           delete this.requests[message.id];
         }
 
@@ -285,6 +291,8 @@ export class ApiClient {
 
     return new Proxy(resourceModel, {
       get: (target, property: string, receiver) => {
+        // TODO: index
+        // @ts-ignore
         if (resourceModel[property] !== void 0) return resourceModel[property];
 
         const resourceScheme = this.getResourceScheme(resourceId);
@@ -355,6 +363,8 @@ class ApiEventWatcher {
     // start watching for events
     this.subscriptions = this.eventNames.map(eventName => {
       const [resourceId, prop] = eventName.split('.');
+      // TODO: index
+      // @ts-ignore
       const observable = this.apiClient.getResource(resourceId)[prop] as Observable<any>;
       return observable.subscribe(() => void 0);
     });

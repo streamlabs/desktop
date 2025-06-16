@@ -51,10 +51,6 @@ export class GameCaptureNode extends Node<ISchema, IContext> {
   async load(context: IContext) {
     // A custom placeholder is not always provided
     if (!this.data.placeholderFile) {
-      // always capture overlays by default
-      context.sceneItem.getObsInput().update({
-        capture_overlays: true,
-      });
       return;
     }
 
@@ -62,7 +58,6 @@ export class GameCaptureNode extends Node<ISchema, IContext> {
     context.sceneItem.getObsInput().update({
       user_placeholder_image: filePath,
       user_placeholder_use: true,
-      capture_overlays: true,
     });
 
     // This is a bit of a hack to force us to immediately back up

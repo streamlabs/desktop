@@ -13,12 +13,16 @@ import { logIn } from '../../helpers/modules/user';
 import { releaseUserInPool, reserveUserFromPool, withUser } from '../../helpers/webdriver/user';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
 import { test, useWebdriver } from '../../helpers/webdriver';
+import { sleep } from '../../helpers/sleep';
 
+// not a react hook
+// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
 
 async function enableAllPlatforms() {
   for (const platform of ['twitch', 'youtube', 'trovo']) {
     await fillForm({ [platform]: true });
+    await sleep(500);
     await waitForSettingsWindowLoaded();
   }
 }
@@ -28,9 +32,21 @@ test('Multistream default mode', withUser('twitch', { multistream: true }), asyn
   await clickGoLive();
   await waitForSettingsWindowLoaded();
 
+  // no primary chat switcher if only one platform is enabled
+  t.false(
+    await isDisplayed('[data-name="primary-chat-switcher"]'),
+    'No primary chat switcher if only one platform is enabled',
+  );
+
   // TODO: this is to rule-out a race condition in platform switching, might not be needed and
   // can possibly revert back to fillForm with all platforms.
   await enableAllPlatforms();
+
+  // shows primary chat switcher when multiple platforms are enabled
+  t.true(
+    await isDisplayed('[data-name="primary-chat-switcher"]'),
+    'Shows primary chat switcher when multiple platforms are enabled',
+  );
 
   // add settings
   await fillForm({
@@ -118,7 +134,7 @@ test('Custom stream destinations', async t => {
 
     await click('span=Add Destination');
     await fillForm({
-      name: `MyCustomDest`,
+      name: 'MyCustomDest',
       url: 'rtmp://live.twitch.tv/app/',
       streamKey: user.streamKey,
     });

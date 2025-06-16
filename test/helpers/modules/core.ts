@@ -50,6 +50,11 @@ export async function clickIfDisplayed(selectorOrEl: TSelectorOrEl) {
   }
 }
 
+export async function clickWhenDisplayed(selectorOrEl: TSelectorOrEl, options?: WaitForOptions) {
+  await waitForDisplayed(selectorOrEl, options);
+  await click(selectorOrEl);
+}
+
 export async function clickText(text: string) {
   await (await select(`*=${text}`)).click();
 }
@@ -66,6 +71,19 @@ export async function clickTab(tabText: string) {
 export async function clickCheckbox(dataName: string) {
   const $checkbox = await select(`input[data-name="${dataName}"]`);
   await $checkbox.click();
+}
+
+export async function clickToggle(dataName: string) {
+  const $toggle = await select(`button[data-name="${dataName}"]`);
+  await $toggle.click();
+}
+
+export async function selectAsyncAlert(title: string) {
+  await (await getClient().$('span.ant-modal-confirm-title')).waitForExist();
+  const alert = await select('span.ant-modal-confirm-title');
+  if ((await alert.getText()) === title) {
+    return alert;
+  }
 }
 
 // OTHER SHORTCUTS
