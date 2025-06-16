@@ -37,7 +37,7 @@
           :class="{
             row: true,
             name: getDisplayName(item),
-            hint:hasNamePlateHint(item),
+            hint: hasNamePlateHint(item),
           }"
           v-for="item of items"
           :key="item.seqId"
@@ -52,6 +52,18 @@
           @commentUser="showUserInfo(item)"
         />
         <div class="sentinel" ref="sentinel"></div>
+      </div>
+      <div class="snackbar" v-if="snackbar !== null">
+        {{ snackbar.message }}
+        <button
+          v-if="snackbar.action"
+          class="button"
+          :class="['button--primary']"
+          @click="snackbar.action.onClick"
+        >
+          {{ snackbar.action.label }}
+        </button>
+        <i class="icon-close icon-btn" @click="closeSnackbar"></i>
       </div>
       <div class="pinned" v-if="Boolean(pinnedComment)">
         <component
@@ -145,6 +157,22 @@
   height: 4px;
   margin-top: -4px;
   pointer-events: none;
+}
+
+.snackbar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: @z-index-default-content;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  font-size: @font-size2;
+  color: var(--color-text);
+  background-color: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .pinned {

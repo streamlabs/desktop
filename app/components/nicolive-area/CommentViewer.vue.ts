@@ -380,10 +380,14 @@ export default class CommentViewer extends Vue {
     remote.shell.openExternal(this.hostsService.getModeratorSettingsURL());
   }
 
-  snackbar(): SnackbarState['latest'] | null {
+  get snackbar(): { message: string; action: { label: string; onClick: () => void } } | null {
     if (this.snackbarService.state.latest?.position === 'niconico') {
       return this.snackbarService.state.latest;
     }
     return null;
+  }
+
+  closeSnackbar() {
+    this.snackbarService.hide();
   }
 }
