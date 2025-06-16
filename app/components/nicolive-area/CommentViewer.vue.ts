@@ -350,6 +350,13 @@ export default class CommentViewer extends Vue {
       io.unobserve(sentinelEl);
     };
     this.scrollToLatest();
+
+    this.snackbarService.show('niconico', 'テストです', {
+      label: 'debug',
+      onClick: () => {
+        console.log('snackbar clicked');
+      },
+    }); // DEBUG
   }
 
   beforeDestroy() {
