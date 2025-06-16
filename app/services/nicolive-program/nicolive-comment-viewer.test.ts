@@ -469,6 +469,7 @@ test('モデレーターによるSSNG追加・削除がきたらシステムメ�
           userId: parseInt(MODERATOR_ID, 10),
           userName: 'test',
         },
+        byModerator: true,
       },
       message: 'test さんがコメントのブロックを取り消しました',
     },

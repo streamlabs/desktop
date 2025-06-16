@@ -229,6 +229,7 @@ describe('connectModeratorStream', () => {
           userName: 'test',
           userId: 123,
         },
+        byModerator: false,
       },
     ],
   ])(`should notify on refreshObserver on %s`, async (_, ssngUpdated, event) => {
