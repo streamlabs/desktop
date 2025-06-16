@@ -34,6 +34,7 @@ import EmotionComment from './comment/EmotionComment.vue';
 import GiftComment from './comment/GiftComment.vue';
 import NicoadComment from './comment/NicoadComment.vue';
 import SystemMessage from './comment/SystemMessage.vue';
+import { SnackbarService, SnackbarState } from 'services/snackbar';
 
 const componentMap: { [type in ChatComponentType]: Vue.Component } = {
   common: CommonComment,
@@ -74,6 +75,7 @@ export default class CommentViewer extends Vue {
 
   @Inject() private nicoliveModeratorsService: NicoliveModeratorsService;
   @Inject() private hostsService: HostsService;
+  @Inject() private snackbarService: SnackbarService;
 
   @Prop({ default: false }) showPlaceholder: boolean;
 
@@ -376,5 +378,12 @@ export default class CommentViewer extends Vue {
 
   openModeratorSettings() {
     remote.shell.openExternal(this.hostsService.getModeratorSettingsURL());
+  }
+
+  snackbar(): SnackbarState['latest'] | null {
+    if (this.snackbarService.state.latest?.position === 'niconico') {
+      return this.snackbarService.state.latest;
+    }
+    return null;
   }
 }
