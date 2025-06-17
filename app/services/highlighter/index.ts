@@ -78,7 +78,6 @@ import { extractDateTimeFromPath, fileExists } from './file-utils';
 import { addVerticalFilterToExportOptions } from './vertical-export';
 import { isGameSupported } from './models/game-config.models';
 import Utils from 'services/utils';
-import { getOS, OS } from '../../util/operating-systems';
 
 @InitAfter('StreamingService')
 export class HighlighterService extends PersistentStatefulService<IHighlighterState> {
@@ -134,7 +133,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   };
 
   aiHighlighterUpdater: AiHighlighterUpdater;
-  aiHighlighterFeatureEnabled = getOS() === OS.Windows || Utils.isDevMode();
+  aiHighlighterFeatureEnabled = false;
   streamMilestones: IStreamMilestones | null = null;
 
   static filter(state: IHighlighterState) {
@@ -332,13 +331,15 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     super.init();
     await this.migrateHighlightedStreamsToDictionary();
 
-    if (getOS() !== OS.Windows || Utils.isDevMode()) {
-      this.aiHighlighterFeatureEnabled = true;
+    this.incrementalRolloutService.featuresReady.then(async () => {
+      this.aiHighlighterFeatureEnabled = this.incrementalRolloutService.views.featureIsEnabled(
+        EAvailableFeatures.aiHighlighter,
+      );
 
-      if (!this.aiHighlighterUpdater) {
+      if (this.aiHighlighterFeatureEnabled && !this.aiHighlighterUpdater) {
         this.aiHighlighterUpdater = new AiHighlighterUpdater();
       }
-    }
+    });
 
     //
     this.views.clips.forEach(clip => {
