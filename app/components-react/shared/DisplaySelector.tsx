@@ -23,7 +23,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     updatePlatform,
   } = useGoLiveSettings().extend(module => ({
     get canDualStream() {
-      if (!p.platform || !module.isPrime) return false;
+      if (!p.platform) return false;
       return module.getCanDualStream(p.platform);
     },
     get display(): TDisplayOutput {
