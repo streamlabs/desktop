@@ -60,7 +60,11 @@ export default function HotkeyGroup(props: HotkeyGroupProps) {
     if (isDualOutputMode && hasSceneHotkeys && expanded) {
       return hotkeys
         .filter(hotkey => hotkey?.display === display || hotkey?.actionName === 'SWITCH_TO_SCENE')
-        .map(hotkey => hotkey);
+        .map(hotkey => {
+          // console.log('hotkey', JSON.stringify(hotkey, null, 2), '\n');
+
+          return hotkey;
+        });
     } else if (isDualOutputMode) {
       return hotkeys;
     } else {

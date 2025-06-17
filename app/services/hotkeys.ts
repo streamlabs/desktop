@@ -16,7 +16,7 @@ import { RecentEventsService } from './recent-events';
 import { UsageStatisticsService } from './usage-statistics';
 import { getOS, OS } from 'util/operating-systems';
 import { TDisplayType } from './settings-v2';
-import { VirtualWebcamService } from 'app-services';
+import { DualOutputService, VirtualWebcamService } from 'app-services';
 
 function getScenesService(): ScenesService {
   return ScenesService.instance;
@@ -404,7 +404,29 @@ export interface IHotkey {
   hotkeyId?: number;
   isMarker?: boolean;
   display?: TDisplayType;
+  partnerId?: string;
 }
+
+/**
+ * For dual output scene collections, pair any source with audio
+ * so that the hotkeys will correctly mute and unmute the sources
+ */
+const hotkeyPairedSources: TSourceType[] = [
+  'audio_line',
+  'mediasoupconnector',
+  'browser_source',
+  'ffmpeg_source',
+  'vlc_source',
+  'window_capture',
+  'game_capture',
+  'dshow_input',
+  'wasapi_input_capture',
+  'wasapi_output_capture',
+  'wasapi_process_output_capture',
+];
+type THotkeyPairedSource = typeof hotkeyPairedSources[number];
+const isHotkeyPairedSource = (sourceType: TSourceType): sourceType is THotkeyPairedSource =>
+  hotkeyPairedSources.includes(sourceType as THotkeyPairedSource);
 
 /**
  * Represents the full set of bindable hotkeys
@@ -438,6 +460,7 @@ export class HotkeysService extends StatefulService<IHotkeysServiceState> {
   @Inject() private sourcesService: SourcesService;
   @Inject() private keyListenerService: KeyListenerService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
+  @Inject() private dualOutputService: DualOutputService;
 
   /**
    * Memoizes the currently registered hotkeys
@@ -489,7 +512,6 @@ export class HotkeysService extends StatefulService<IHotkeysServiceState> {
         addedHotkeys.add(`${action.name}-${scene.id}`);
       });
 
-      // @@@ ADD HERE??
       scene.getItems().forEach(sceneItem => {
         Object.values(SCENE_ITEM_ACTIONS).forEach(action => {
           const hotkey: IHotkey = {
@@ -498,6 +520,13 @@ export class HotkeysService extends StatefulService<IHotkeysServiceState> {
             sceneItemId: sceneItem.sceneItemId,
             display: sceneItem?.display,
           };
+
+          if (
+            isHotkeyPairedSource(sceneItem.type) &&
+            this.dualOutputService.views.isDualOutputCollection
+          ) {
+            hotkey.partnerId = this.dualOutputService.views.getDualOutputNodeId(sceneItem.id);
+          }
           hotkeys[getHotkeyHash(hotkey)] = hotkey;
           addedHotkeys.add(`${action.name}-${sceneItem.sceneItemId}`);
         });
@@ -842,7 +871,10 @@ export class Hotkey implements IHotkey {
     }
 
     if (down) {
+      console.log('ADD DOWN SUBJECT HERE??', this.actionName, entityId);
       action.downHandler = () => {
+        console.log('Hotkey downHandler', this.actionName, entityId);
+
         if (action.isActive && !action.isActive(entityId)) {
           defer(() => down(entityId, this.hotkeyModel.hotkeyId));
         }

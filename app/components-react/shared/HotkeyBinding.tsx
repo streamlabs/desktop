@@ -128,9 +128,14 @@ export default function HotkeyBinding(p: {
   }
 
   function DualOutputHotkeyLabel() {
-    // if (p.hotkey?.actionName) {
-    // }
-    const icon = p.hotkey?.display === 'vertical' ? 'icon-phone-case' : 'icon-desktop';
+    let icon = 'icon-desktop';
+    if (p.hotkey?.display === 'vertical') {
+      icon = 'icon-phone-case';
+    }
+    if (p.hotkey?.partnerId) {
+      icon = 'icon-dual-output';
+    }
+
     if (!p.hotkey.isMarker) {
       return (
         <>
