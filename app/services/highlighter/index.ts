@@ -413,7 +413,10 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         console.log('Realtime highlights received:', highlights);
         console.log(streamInfo.id);
         console.log('Add ai clips now...');
-        this.addAiClips(highlights, { id: streamInfo.id || '', game: streamInfo.game });
+        // for some reason addAiClips adds only the first highlight
+        for (const highlight of highlights) {
+          this.addAiClips([highlight], { id: streamInfo.id || '', game: streamInfo.game });
+        }
 
         console.log('Load clips now...');
         await this.loadClips(streamInfo.id);
