@@ -81,6 +81,7 @@ import { DualOutputService } from 'services/dual-output';
 import { capitalize } from 'lodash';
 import { YoutubeService } from 'app-services';
 import { EOBSOutputType, EOBSOutputSignal, IOBSOutputSignalInfo } from 'services/core/signals';
+import { SignalsService } from 'services/signals-manager';
 
 /**
  * Output descriptor for extra outputs (e.g YouTube vertical)
@@ -128,6 +129,7 @@ export class StreamingService
   @Inject() private dualOutputService: DualOutputService;
   @Inject() private youtubeService: YoutubeService;
   @Inject() private settingsService: SettingsService;
+  @Inject() private signalsService: SignalsService;
 
   streamingStatusChange = new Subject<EStreamingState>();
   recordingStatusChange = new Subject<ERecordingState>();
@@ -180,7 +182,7 @@ export class StreamingService
   };
 
   init() {
-    NodeObs.OBS_service_connectOutputSignals((info: IOBSOutputSignalInfo) => {
+    this.signalsService.addCallback((info: IOBSOutputSignalInfo) => {
       this.signalInfoChanged.next(info);
       this.handleOBSOutputSignal(info);
     });

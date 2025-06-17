@@ -11,6 +11,7 @@ import * as remote from '@electron/remote';
 import { Subject } from 'rxjs';
 import { VCamOutputType } from 'obs-studio-node';
 import { IOBSOutputSignalInfo } from './core/signals';
+import { SignalsService } from './signals-manager';
 
 const PLUGIN_PLIST_PATH =
   '/Library/CoreMediaIO/Plug-Ins/DAL/vcam-plugin.plugin/Contents/Info.plist';
@@ -39,6 +40,7 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
   @Inject() usageStatisticsService: UsageStatisticsService;
   @Inject() sourcesService: SourcesService;
   @Inject() settingsService: SettingsService;
+  @Inject() signalsService: SignalsService;
 
   static initialState: IVirtualWebcamServiceState = {
     running: false,
@@ -60,9 +62,7 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
         const result = obs.NodeObs.OBS_service_isVirtualCamPluginInstalled();
         if (result === obs.EVcamInstalledStatus.Installed) {
           // Initialize the virtual cam
-          obs.NodeObs.OBS_service_connectOutputSignals((info: IOBSOutputSignalInfo) => {
-            this.signalInfoChanged.next(info);
-          });
+          this.signalsService.addCallback(this.handleSignalOutput);
 
           obs.NodeObs.OBS_service_createVirtualCam();
           this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
@@ -72,6 +72,10 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
         }
       },
     });
+  }
+
+  protected handleSignalOutput(info: IOBSOutputSignalInfo) {
+    this.signalInfoChanged.next(info);
   }
 
   get views() {
@@ -118,9 +122,7 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
         this.setInstallStatus();
       },
       [OS.Mac]: () => {
-        obs.NodeObs.OBS_service_connectOutputSignals((info: IOBSOutputSignalInfo) => {
-          this.signalInfoChanged.next(info);
-        });
+        this.signalsService.addCallback(this.handleSignalOutput);
 
         obs.NodeObs.OBS_service_installVirtualCamPlugin();
         this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
