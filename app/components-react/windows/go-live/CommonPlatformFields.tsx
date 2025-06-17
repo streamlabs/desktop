@@ -60,7 +60,9 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
   }
 
   const view = Services.StreamingService.views;
-  const aiHighlighterFeatureEnabled = Services.HighlighterService.aiHighlighterFeatureEnabled;
+  const aiHighlighterFeatureEnabled = Services.IncrementalRolloutService.views.featureIsEnabled(
+    EAvailableFeatures.aiHighlighter,
+  );
   const hasCustomCheckbox = p.layoutMode === 'multiplatformAdvanced';
   const fieldsAreVisible = !hasCustomCheckbox || p.value.useCustomFields;
   const descriptionIsRequired =
