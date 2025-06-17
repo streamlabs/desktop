@@ -9,8 +9,16 @@ type TRadioInputProps = TSlobsInputProps<
     label?: string;
     nolabel?: boolean;
     nowrap?: boolean;
-    options: { value: string; label: string; description?: string; defaultValue?: string }[];
+    options: {
+      value: string;
+      label: string;
+      description?: string;
+      defaultValue?: string;
+      icon?: string;
+    }[];
     buttons?: boolean;
+    icons?: boolean;
+    value?: string;
     direction?: 'vertical' | 'horizontal';
     disabled?: boolean;
     className?: string;
@@ -25,6 +33,7 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
     p,
     'options',
     'buttons',
+    'icons',
     'disabled',
     'direction',
     'onChange',
@@ -45,7 +54,27 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           className={p.className}
         />
       )}
-      {!p.buttons && (
+      {p.icons && (
+        <Radio.Group
+          value={p.value}
+          defaultValue={p.defaultValue}
+          onChange={e => p.onChange && p.onChange(e.target.value)}
+          className={p.className}
+          disabled={p.disabled}
+        >
+          {p.options.map(option => {
+            return (
+              <Radio
+                key={option.value}
+                value={option.value}
+                disabled={p.disabled}
+                children={<i className={option.icon} />}
+              />
+            );
+          })}
+        </Radio.Group>
+      )}
+      {!p.icons && !p.buttons && (
         <Radio.Group
           value={p.value}
           defaultValue={p.defaultValue}

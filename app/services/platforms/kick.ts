@@ -70,6 +70,9 @@ interface IKickStreamInfoResponse {
       thumbnail: string;
     };
   };
+  stream: {
+    viewer_count: number;
+  };
 }
 
 interface IKickUpdateStreamResponse {
@@ -78,7 +81,6 @@ interface IKickUpdateStreamResponse {
 
 interface IKickStartStreamSettings {
   title: string;
-  display: TDisplayType;
   game: string;
   video?: IVideo;
   mode?: TOutputOrientation;
@@ -103,7 +105,6 @@ export class KickService
     ...BasePlatformService.initialState,
     settings: {
       title: '',
-      display: 'horizontal',
       mode: 'landscape',
       game: '',
     },
@@ -120,7 +121,7 @@ export class KickService
   readonly domain = 'https://kick.com';
   readonly platform = 'kick';
   readonly displayName = 'Kick';
-  readonly capabilities = new Set<TPlatformCapability>(['title', 'chat', 'game']);
+  readonly capabilities = new Set<TPlatformCapability>(['title', 'chat', 'game', 'viewerCount']);
 
   authWindowOptions: Electron.BrowserWindowConstructorOptions = {
     width: 600,
@@ -131,9 +132,8 @@ export class KickService
     return this.userService.views.state.auth?.platforms?.kick?.token;
   }
 
-  async beforeGoLive(goLiveSettings: IGoLiveSettings, display?: TDisplayType) {
+  async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     const kickSettings = getDefined(goLiveSettings.platforms.kick);
-    const context = display ?? kickSettings?.display;
 
     const streamInfo = await this.startStream(goLiveSettings.platforms.kick ?? this.state.settings);
 
@@ -421,6 +421,15 @@ export class KickService
       .catch((e: unknown) => {
         console.warn('Error updating Kick channel info', e);
       });
+  }
+
+  async fetchViewerCount(): Promise<number> {
+    const resp = await this.fetchStreamInfo();
+    if (resp && (resp as IKickStreamInfoResponse).stream) {
+      return (resp as IKickStreamInfoResponse).stream.viewer_count;
+    } else {
+      return 0;
+    }
   }
 
   getHeaders(req: IPlatformRequest, useToken?: string | boolean): IKickRequestHeaders {

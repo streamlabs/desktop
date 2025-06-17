@@ -1107,8 +1107,16 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
      * which it was probably done to restrict the API
      * don't feel too happy about hacking it
      */
-    const streamingPlatforms = (this.streamingService as any)?.views?.settings?.platforms || [];
-    const platformsUsingExtraOutputs = this.dualOutputService.views.extraOutputPlatforms;
+    const streamingPlatforms = (this.streamingService as any)?.views?.settings?.platforms || {};
+    const platformsDualStreaming = Object.entries(streamingPlatforms).reduce(
+      (platforms: TPlatform[], [key, value]: [TPlatform, any]) => {
+        if (value.display === 'both') {
+          platforms.push(key);
+        }
+        return platforms;
+      },
+      [],
+    );
 
     return new Section('Dual Output', {
       'Dual Output Active': this.dualOutputService.views.dualOutputMode,
@@ -1122,7 +1130,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
         'Vertical Platforms': this.formatTargets(platforms.vertical),
         'Horizontal Custom Destinations': this.formatTargets(destinations.horizontal),
         'Vertical Custom Destinations': this.formatTargets(destinations.vertical),
-        'Platforms Using Extra Outputs': platformsUsingExtraOutputs,
+        'Platforms Using Extra Outputs': platformsDualStreaming,
       },
       'Horizontal Uses Multistream': restreamHorizontal,
       'Vertical Uses Multistream': restreamVertical,

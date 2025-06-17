@@ -4,7 +4,7 @@
   "description": "Streamlabs streaming software",
   "author": "General Workings, Inc.",
   "license": "GPL-3.0",
-  "version": "1.19.0-preview.8",
+  "version": "1.19.0-preview.14",
   "main": "main.js",
   "scripts": {
     "compile": "yarn clear && yarn compile:updater && yarn webpack-cli --progress --config ./webpack.dev.config.js",
@@ -249,7 +249,8 @@
     "minimist": "1.2.6",
     "xmlhttprequest-ssl": "1.6.2",
     "ws@~6.1.0": "6.2.2",
-    "got@^9.6.0": "11.8.5"
+    "got@^9.6.0": "11.8.5",
+    "napi-build-utils": "2.0.0"
   },
   "packageManager": "yarn@3.1.1"
 }

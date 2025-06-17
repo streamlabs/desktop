@@ -83,7 +83,7 @@ export class TrovoService
     return this.userService.state.auth?.platforms?.trovo?.username || '';
   }
 
-  async beforeGoLive(goLiveSettings: IGoLiveSettings, context?: TDisplayType) {
+  async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     const trSettings = getDefined(goLiveSettings.platforms.trovo);
 
     const key = this.state.streamKey;
