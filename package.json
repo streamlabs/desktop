@@ -4,9 +4,9 @@
   "description": "Streamlabs streaming software",
   "author": "General Workings, Inc.",
   "license": "GPL-3.0",
-  "version": "1.19.0-preview.13",
-  "macVirtualCamVersion": "30.2.4sl19test5",
+  "version": "1.19.0-preview.14",
   "main": "main.js",
+  "macVirtualCamVersion": "30.2.4sl19test5",
   "scripts": {
     "compile": "yarn clear && yarn compile:updater && yarn webpack-cli --progress --config ./webpack.dev.config.js",
     "compile:production": "yarn clear && yarn compile:updater && yarn webpack-cli --progress --config ./webpack.prod.config.js",
