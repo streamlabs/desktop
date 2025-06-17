@@ -17,25 +17,25 @@ function downloadTempRepo() {
 function buildVirtualCamExtension(context) {
   const hasDownloadedRepo = downloadTempRepo(cp);
   if (hasDownloadedRepo) {
-    const hasBuiltProj = cp.execSync('cd ./obs-studio/plugins/mac-virtualcam/src/camera-extension && ./build-slobs-cameraextension.sh');
-    if (hasBuiltProj) {
-      try {
-        console.log('Create Contents/Library/SystemExtensions');
-        cp.execSync(
-          `mkdir -p \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Library/SystemExtensions\"`,
-        );
-        console.log('Copy system extension into the final app');
-        cp.execSync(
-          `cp -R ./obs-studio/plugins/mac-virtualcam/src/camera-extension/build_macos/RelWithDebInfo/com.streamlabs.slobs.mac-camera-extension.systemextension \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Library/SystemExtensions\"`,
-        );
-        console.log('Perform cleanup');
-        cp.execSync('rm -rf obs-studio'); // Remove the repo
-      } catch {
-        console.error('Failed to copy the system extension into the app.');
-      }
+    try {
+      console.log('Build the camera system extension');
+      cp.execSync('cd ./obs-studio/plugins/mac-virtualcam/src/camera-extension && ./build-slobs-cameraextension.sh');
+
+      console.log('Create Contents/Library/SystemExtensions');
+      cp.execSync(
+        `mkdir -p \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Library/SystemExtensions\"`,
+      );
+      console.log('Copy system extension into the final app');
+      cp.execSync(
+        `cp -R ./obs-studio/plugins/mac-virtualcam/src/camera-extension/build_macos/RelWithDebInfo/com.streamlabs.slobs.mac-camera-extension.systemextension \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Library/SystemExtensions\"`,
+      );
+      console.log('Perform cleanup');
+      cp.execSync('rm -rf obs-studio'); // Remove the repo
+    } catch {
+      console.error('Failed to copy the system extension into the app.');
     }
   } else {
-    console.log('Could not download the vcam repo');
+    console.error('Could not download the mac-virtualcam repo');
   }
 }
 
