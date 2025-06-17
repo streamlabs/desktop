@@ -43,13 +43,13 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Launch With Native Logging",
+      "name": "Launch Without Sync",
       "protocol": "inspector",
       "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron.cmd",
       "osx": {
         "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron"
       },
-      "runtimeArgs": [".", "--remote-debugging-port=9222"],
+      "runtimeArgs": [".", "--remote-debugging-port=9222", "--nosync"],
       "cwd": "${workspaceRoot}",
       "env": {
         "SLOBS_PRODUCTION_DEBUG": "true"
