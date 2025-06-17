@@ -13,7 +13,6 @@ export class SignalsService extends StatefulService<ISignalCallbacks> {
   };
 
   init() {
-    console.log('signals-manager init');
     obs.NodeObs.OBS_service_connectOutputSignals((info: IOBSOutputSignalInfo) => {
       for (const callback of this.state.signalCallbacks) {
         callback(info);
