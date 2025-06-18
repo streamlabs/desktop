@@ -32,6 +32,10 @@ export class HotkeysNode extends ArrayNode<IHotkey, IContext, Hotkey> {
   }
 
   saveItem(hotkey: Hotkey, context: IContext): Promise<IHotkey> {
+    if (hotkey?.partnerId && hotkey.bindings.length > 1) {
+      console.log('Saving hotkey', hotkey.getModel(), 'with context', context);
+    }
+
     const hotkeyObj = hotkey.getModel();
     Object.keys(context).forEach(key => delete hotkeyObj[key]);
     return Promise.resolve(hotkeyObj);

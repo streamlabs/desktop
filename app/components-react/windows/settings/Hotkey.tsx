@@ -1,8 +1,9 @@
-import React, { useState, useEffect, KeyboardEvent, MouseEvent, UIEvent } from 'react';
+import React, { useState, useEffect } from 'react';
 import { IHotkey, IBinding } from 'services/hotkeys';
 import cx from 'classnames';
 import styles from './Hotkey.m.less';
 import HotkeyBinding from 'components-react/shared/HotkeyBinding';
+import { Services } from 'components-react/service-provider';
 
 /**
  * Represents a binding that has a unique key for CSS animations
@@ -98,6 +99,9 @@ export default function Hotkey(props: HotkeyProps) {
   function HotkeyBindings({ bindings }: { bindings: IKeyedBinding[] }) {
     const setBinding = (index: number, binding: IBinding) => {
       setBindings(setBindingAtIndex(index, binding)(bindings));
+      if (hotkey.partnerId) {
+        Services.HotkeysService.actions.setHotkeyPartnerBinding(hotkey);
+      }
     };
 
     return (

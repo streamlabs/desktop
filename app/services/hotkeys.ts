@@ -16,7 +16,8 @@ import { RecentEventsService } from './recent-events';
 import { UsageStatisticsService } from './usage-statistics';
 import { getOS, OS } from 'util/operating-systems';
 import { TDisplayType } from './settings-v2';
-import { DualOutputService, VirtualWebcamService } from 'app-services';
+import { VirtualWebcamService } from 'app-services';
+import { DualOutputService } from 'services/dual-output';
 
 function getScenesService(): ScenesService {
   return ScenesService.instance;
@@ -480,6 +481,71 @@ export class HotkeysService extends StatefulService<IHotkeysServiceState> {
     this.ADD_HOTKEY(hotkeyModel);
   }
 
+  setHotkeyPartnerBinding(hotkey: IHotkey): void {
+    if (!hotkey.partnerId || !hotkey.sceneItemId) return;
+
+    const partnerHotkey: IHotkey = this.state.hotkeys.find(h => h.sceneItemId === hotkey.partnerId);
+    console.log('found ', partnerHotkey, 'hotkey', hotkey);
+
+    this.applyScenesHotkey(partnerHotkey);
+
+    // partnerHotkey.bindings = hotkey.bindings;
+    // console.log('hotkey', JSON.stringify(hotkey, null, 2));
+    // console.log('partnerHotkey', JSON.stringify(partnerHotkey, null, 2), '\n');
+
+    // const set = this.getHotkeysSet();
+    // const partnerHotkeyFromSet = set.scenes[hotkey.partnerId];
+    // console.log('partnerHotkeyFromSet', JSON.stringify(partnerHotkeyFromSet, null, 2), '\n');
+
+    // const partnerHotkeyIndex: number = this.state.hotkeys.findIndex(
+    //   h => h.sceneItemId === hotkey.partnerId,
+    // );
+    // console.log('found ', partnerHotkeyIndex, 'hotkey', hotkey);
+
+    // // If the hotkey is not found, we can't set the partner binding.
+    // // Instead of creating a new hotkey and risking duplicates, just return
+    // if (partnerHotkeyIndex === -1) {
+    //   console.warn(
+    //     `Hotkey partner id with scene item id ${hotkey.partnerId} not found for hotkey with scene item id ${hotkey.sceneItemId}`,
+    //   );
+    //   return;
+    // }
+
+    // const set = this.getHotkeysSet();
+    // const partnerHotkey = set.scenes[hotkey.partnerId];
+
+    // if (!partnerHotkey) {
+    //      console.warn(
+    //     `Hotkey partner with scene item id ${hotkey.partnerId} not found for hotkey with scene item id ${hotkey.sceneItemId}`,
+    //   );
+    //   return;
+    // }
+
+    // console.log('partnerHotkey', partnerHotkey)
+    // this.applyHotkeySet(set);
+    // if (!partnerHotkey) {
+    //   console.warn(
+    //     `Hotkey partner with sceneItemId ${hotkey.partnerId} not found for${hotkey.sceneItemId}`,
+    //   );
+    //   return;
+    // }
+
+    // const updatedPartnerHotkey: IHotkey = {
+    //   ...partnerHotkey,
+    //   bindings: hotkey.bindings,
+    // };
+
+    // this.ADD_HOTKEY(updatedPartnerHotkey);
+
+    // this.bindHotkeys()
+
+    // const hotkey = this.state.hotkeys.find(h => h.hotkeyId === hotkeyId);
+    // if (hotkey) {
+    //   hotkey.partnerId = partnerId;
+    //   this.setHotkeys([...this.state.hotkeys]);
+    // }
+  }
+
   private invalidate() {
     this.registeredHotkeys = null;
   }
@@ -526,6 +592,7 @@ export class HotkeysService extends StatefulService<IHotkeysServiceState> {
             this.dualOutputService.views.isDualOutputCollection
           ) {
             hotkey.partnerId = this.dualOutputService.views.getDualOutputNodeId(sceneItem.id);
+            console.log('hotkey after paired', hotkey);
           }
           hotkeys[getHotkeyHash(hotkey)] = hotkey;
           addedHotkeys.add(`${action.name}-${sceneItem.sceneItemId}`);
@@ -587,6 +654,31 @@ export class HotkeysService extends StatefulService<IHotkeysServiceState> {
     set.general.forEach(h => {
       if (h.actionName === hotkey.actionName) {
         h.bindings = hotkey.bindings;
+      }
+    });
+    this.applyHotkeySet(set);
+  }
+
+  applyScenesHotkey(hotkey: IHotkey) {
+    const set = this.getHotkeysSet();
+    const hotkeyHash = getHotkeyHash(hotkey);
+    console.log('applyScenesHotkey', hotkeyHash, hotkey);
+    const found = this.getHotkey(hotkey).getModel();
+    console.log('found hotkey', found);
+
+    // This is very inefficient, but we need to find the scene and the
+    // hotkey does not have a sceneId
+    const scene = set.scenes[hotkey.sceneId];
+    console.log('set.scenes', set.scenes);
+
+    if (!scene) {
+      console.error(`Hotkey scene with id ${hotkey.sceneId} not found`);
+      return;
+    }
+
+    scene.forEach(h => {
+      if (h.sceneItemId === hotkey.partnerId) {
+        h.bindings = [...hotkey.bindings];
       }
     });
     this.applyHotkeySet(set);
@@ -800,6 +892,7 @@ export class Hotkey implements IHotkey {
   sceneId?: string;
   sourceId?: string;
   sceneItemId?: string;
+  partnerId?: string;
   isMarker?: boolean;
   bindings: IBinding[];
 
@@ -866,15 +959,13 @@ export class Hotkey implements IHotkey {
       action.upHandler = () => {
         if (action.isActive && !action.isActive(entityId)) {
           defer(() => up(entityId, this.hotkeyModel.hotkeyId));
+          // this.hotkeysService.hotkeyAction.next(this.hotkeyModel.partnerId);
         }
       };
     }
 
     if (down) {
-      console.log('ADD DOWN SUBJECT HERE??', this.actionName, entityId);
       action.downHandler = () => {
-        console.log('Hotkey downHandler', this.actionName, entityId);
-
         if (action.isActive && !action.isActive(entityId)) {
           defer(() => down(entityId, this.hotkeyModel.hotkeyId));
         }
