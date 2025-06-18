@@ -190,9 +190,16 @@ export class RealtimeHighlighterService extends Service {
       return;
     }
 
-    this.isRunning = true;
-    // start replay buffer if its not already running
-    this.setReplayBufferDurationSeconds(30);
+    const REQUIRED_REPLAY_BUFFER_DURATION_SECONDS = 30;
+    if (this.getReplayBufferDurationSeconds() < REQUIRED_REPLAY_BUFFER_DURATION_SECONDS) {
+      if (this.streamingService.state.replayBufferStatus !== EReplayBufferState.Offline) {
+        console.log('Stopping replay buffer to change its duration');
+        // to change the replay buffer duration, it must be stopped first
+        this.streamingService.stopReplayBuffer();
+      }
+      this.setReplayBufferDurationSeconds(30);
+    }
+
     this.streamingService.startReplayBuffer();
     this.replayBufferFileReadySubscription = this.streamingService.replayBufferFileWrite.subscribe(
       this.onReplayReady.bind(this),
@@ -205,6 +212,7 @@ export class RealtimeHighlighterService extends Service {
     this.visionService.subscribe('event', this.onEvent.bind(this));
     this.visionService.start();
 
+    this.isRunning = true;
     // start the periodic tick to process replay queue after first replay buffer duration
     this.tick();
   }
@@ -229,10 +237,6 @@ export class RealtimeHighlighterService extends Service {
   }
 
   private setReplayBufferDurationSeconds(seconds: number) {
-    if (this.streamingService.state.replayBufferStatus !== EReplayBufferState.Offline) {
-      console.warn('Replay buffer must be stopped before its settings can be changed!');
-      return;
-    }
     this.settingsService.setSettingsPatch({ Output: { RecRBTime: seconds } });
   }
 
