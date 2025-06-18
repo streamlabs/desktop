@@ -9,15 +9,14 @@ import styles from './RecentEvents.m.less';
 
 const mins = { x: 360, y: 150 };
 
-export function LegacyEvents(p: { onPopout: () => void }) {
+export function LegacyEvents() {
   const { UserService, RecentEventsService, MagicLinkService } = Services;
 
   const containerRef = useRef<HTMLDivElement>(null);
   const magicLinkDisabled = useRef(false);
 
   function popoutRecentEvents() {
-    p.onPopout();
-    return RecentEventsService.openRecentEventsWindow();
+    return RecentEventsService.actions.openRecentEventsWindow();
   }
 
   function handleBrowserViewReady(view: Electron.BrowserView) {

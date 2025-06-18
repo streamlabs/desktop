@@ -4,8 +4,9 @@ import * as elements from 'components-react/editor/elements';
 import * as layouts from 'components-react/editor/layouts';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
+import { TLayoutElement } from 'services/layout/layout-data';
 
-export default function Studio(p: { onTotalWidth: (width: Number) => void }) {
+export default function Studio(p: { onTotalWidth: (width: Number) => void; className?: string }) {
   const { LayoutService } = Services;
 
   function totalWidthHandler(slots: IVec2Array, isColumns: boolean) {
@@ -28,7 +29,7 @@ export default function Studio(p: { onTotalWidth: (width: Number) => void }) {
     const children: Dictionary<ReactNode> = {};
     const childrenMins: Dictionary<IVec2> = {};
     elementsToRender.forEach((el: ELayoutElement) => {
-      const componentName = LayoutService.views.elementComponent(el);
+      const componentName: TLayoutElement = LayoutService.views.elementComponent(el);
       const Component = elements[componentName];
       const slot = slottedElements[el]?.slot;
       if (slot && Component) {
@@ -41,7 +42,8 @@ export default function Studio(p: { onTotalWidth: (width: Number) => void }) {
 
   return (
     <Layout
-      class="editor-page"
+      className={p.className}
+      data-name="editor-page"
       childrenMins={childrenMins}
       onTotalWidth={(slots: IVec2Array, isColumns: boolean) => totalWidthHandler(slots, isColumns)}
     >

@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import * as remote from '@electron/remote';
 import cx from 'classnames';
-import Animation from 'rc-animate';
-import { Button, Menu } from 'antd';
+import { Menu } from 'antd';
 import pick from 'lodash/pick';
 import { initStore, useController } from 'components-react/hooks/zustand';
 import { EStreamingState } from 'services/streaming';
@@ -17,8 +16,6 @@ import PlatformAppPageView from 'components-react/shared/PlatformAppPageView';
 import { useVuex } from 'components-react/hooks';
 import { useRealmObject } from 'components-react/hooks/realm';
 import { $i } from 'services/utils';
-import { TikTokChatInfo } from './TiktokChatInfo';
-import { ShareStreamLink } from './ShareStreamLink';
 
 const LiveDockCtx = React.createContext<LiveDockController | null>(null);
 
@@ -215,20 +212,6 @@ class LiveDockController {
     });
   }
 
-  setCollapsed(livedockCollapsed: boolean) {
-    this.store.setState(s => {
-      s.canAnimate = true;
-    });
-    this.windowsService.actions.updateStyleBlockers('main', true);
-    this.customizationService.actions.setSettings({ livedockCollapsed });
-    setTimeout(() => {
-      this.store.setState(s => {
-        s.canAnimate = false;
-      });
-      this.windowsService.actions.updateStyleBlockers('main', false);
-    }, 300);
-  }
-
   toggleViewerCount() {
     this.customizationService.actions.setHiddenViewerCount(
       !this.customizationService.state.hideViewerCount,
@@ -244,17 +227,16 @@ class LiveDockController {
   }
 }
 
-export default function LiveDockWithContext(p: { onLeft?: boolean }) {
+export default function LiveDockWithContext() {
   const controller = useMemo(() => new LiveDockController(), []);
-  const onLeft = p.onLeft || false;
   return (
     <LiveDockCtx.Provider value={controller}>
-      <LiveDock onLeft={onLeft} />
+      <LiveDock />
     </LiveDockCtx.Provider>
   );
 }
 
-function LiveDock(p: { onLeft: boolean }) {
+function LiveDock() {
   const ctrl = useController(LiveDockCtx);
 
   const [visibleChat, setVisibleChat] = useState('default');
@@ -270,7 +252,6 @@ function LiveDock(p: { onLeft: boolean }) {
     hideStyleBlockers,
     currentViewers,
     pageSlot,
-    canAnimate,
     liveText,
     isPopOutAllowed,
     streamingStatus,
@@ -284,7 +265,6 @@ function LiveDock(p: { onLeft: boolean }) {
       'applicationLoading',
       'hideStyleBlockers',
       'pageSlot',
-      'canAnimate',
       'currentViewers',
       'liveText',
       'isPopOutAllowed',
@@ -292,17 +272,11 @@ function LiveDock(p: { onLeft: boolean }) {
     ]),
   );
 
-  const liveDockSize = useRealmObject(Services.CustomizationService.state).livedockSize;
   const collapsed = useRealmObject(Services.CustomizationService.state).livedockCollapsed;
   const hideViewerCount = useRealmObject(Services.CustomizationService.state).hideViewerCount;
-
   const viewerCount = hideViewerCount ? $t('Viewers Hidden') : currentViewers;
 
   useEffect(() => {
-    if (streamingStatus === EStreamingState.Starting && collapsed) {
-      ctrl.setCollapsed(false);
-    }
-
     const elapsedInterval = window.setInterval(() => {
       if (streamingStatus === EStreamingState.Live) {
         setElapsedStreamTime(ctrl.getElapsedStreamTime());
@@ -325,10 +299,6 @@ function LiveDock(p: { onLeft: boolean }) {
       return;
     }
   }, [visibleChat, isRestreaming, streamingStatus]);
-
-  function toggleCollapsed() {
-    collapsed ? ctrl.setCollapsed(false) : ctrl.setCollapsed(true);
-  }
 
   // Safe getter/setter prevents getting stuck on the chat
   // for an app that was unloaded.
@@ -364,115 +334,93 @@ function LiveDock(p: { onLeft: boolean }) {
   }, [Services.UserService.state.auth!.primaryPlatform, visibleChat]);
 
   return (
-    <div
-      className={cx(styles.liveDock, {
-        [styles.collapsed]: collapsed,
-        [styles.canAnimate]: canAnimate,
-        [styles.liveDockLeft]: p.onLeft,
-      })}
-      style={{ width: liveDockSize + 'px' }}
-    >
-      <div className={styles.liveDockChevron} onClick={toggleCollapsed}>
-        <i
-          className={cx({
-            'icon-back': (!p.onLeft && collapsed) || (p.onLeft && !collapsed),
-            ['icon-down icon-right']: (p.onLeft && collapsed) || (!p.onLeft && !collapsed),
-          })}
-        />
-      </div>
-      <Animation transitionName={p.onLeft ? 'ant-slide-right' : 'ant-slide'}>
-        {!collapsed && (
-          <div className={styles.liveDockExpandedContents}>
-            <div className={styles.liveDockHeader}>
-              <div className="flex flex--center">
-                <div
-                  className={cx(styles.liveDockPulse, {
-                    [styles.liveDockOffline]: !isStreaming,
-                  })}
-                />
-                <span className={styles.liveDockText}>{liveText}</span>
-                <span className={styles.liveDockTimer}>{elapsedStreamTime}</span>
-              </div>
-              <div className={styles.liveDockViewerCount} onClick={() => ctrl.toggleViewerCount()}>
-                <i
-                  className={cx({
-                    ['icon-view']: !hideViewerCount,
-                    ['icon-hide']: hideViewerCount,
-                  })}
-                />
-                <span className={styles.liveDockViewerCountCount}>{viewerCount}</span>
-                {Number(viewerCount) >= 0 && <span>{$t('viewers')}</span>}
-              </div>
-            </div>
+    <div className={styles.liveDock}>
+      <div className={styles.liveDockExpandedContents}>
+        <div className={styles.liveDockHeader}>
+          <div className="flex flex--center">
+            <div
+              className={cx(styles.liveDockPulse, {
+                [styles.liveDockOffline]: !isStreaming,
+              })}
+            />
+            <span className={styles.liveDockText}>{liveText}</span>
+            <span className={styles.liveDockTimer}>{elapsedStreamTime}</span>
+          </div>
+          <div className={styles.liveDockViewerCount}>
+            <i
+              className={cx({
+                ['icon-view']: !hideViewerCount,
+                ['icon-hide']: hideViewerCount,
+              })}
+              onClick={() => ctrl.toggleViewerCount()}
+            />
+            <span className={styles.liveDockViewerCountCount}>{viewerCount}</span>
+            {Number(viewerCount) >= 0 && <span>{$t('viewers')}</span>}
+          </div>
+        </div>
 
-            <div className={styles.liveDockInfo}>
-              <div className={styles.liveDockPlatformTools}>
-                {ctrl.canEditChannelInfo && (
-                  <Tooltip
-                    title={$t('Edit your stream title and description')}
-                    placement="right"
-                    autoAdjustOverflow={false}
-                  >
-                    <i onClick={() => ctrl.showEditStreamInfo()} className="icon-edit" />
-                  </Tooltip>
-                )}
-                {isPlatform(['youtube', 'facebook', 'trovo', 'tiktok', 'kick']) && isStreaming && (
-                  <Tooltip
-                    title={$t('View your live stream in a web browser')}
-                    placement="right"
-                    autoAdjustOverflow={false}
-                  >
-                    <i onClick={() => ctrl.openPlatformStream()} className="icon-studio" />
-                  </Tooltip>
-                )}
-                {isStreaming && <ShareStreamLink />}
-                {isPlatform(['youtube', 'facebook', 'tiktok']) && isStreaming && (
-                  <Tooltip
-                    title={$t('Go to Live Dashboard')}
-                    placement="right"
-                    autoAdjustOverflow={false}
-                  >
-                    <i onClick={() => ctrl.openPlatformDash()} className="icon-settings" />
-                  </Tooltip>
-                )}
-              </div>
-              <div className="flex">
-                {(isPlatform(['twitch', 'trovo', 'facebook', 'kick']) ||
-                  (isPlatform(['youtube', 'twitter']) && isStreaming) ||
-                  (isPlatform(['tiktok']) && isRestreaming)) && (
-                  <a onClick={() => ctrl.refreshChat()}>{$t('Refresh Chat')}</a>
-                )}
-              </div>
-            </div>
-            {!hideStyleBlockers &&
-              (isPlatform(['twitch', 'trovo']) ||
-                (isStreaming &&
-                  isPlatform(['youtube', 'facebook', 'twitter', 'tiktok', 'kick']))) && (
-                <div className={styles.liveDockChat}>
-                  {hasChatTabs && <ChatTabs visibleChat={visibleChat} setChat={setChat} />}
-
-                  {!applicationLoading && !collapsed && chat}
-                  {!['default', 'restream'].includes(visibleChat) && (
-                    <PlatformAppPageView
-                      className={styles.liveDockPlatformAppWebview}
-                      appId={visibleChat}
-                      pageSlot={pageSlot}
-                      key={visibleChat}
-                    />
-                  )}
-                </div>
-              )}
-            {(!ctrl.platform ||
-              (isPlatform(['youtube', 'facebook', 'twitter', 'tiktok', 'kick']) &&
-                !isStreaming)) && (
-              <div className={cx('flex flex--center flex--column', styles.liveDockChatOffline)}>
-                <img className={styles.liveDockChatImgOffline} src={ctrl.offlineImageSrc} />
-                {!hideStyleBlockers && <span>{$t('Your chat is currently offline')}</span>}
-              </div>
+        <div className={styles.liveDockInfo}>
+          <div className={styles.liveDockPlatformTools}>
+            {ctrl.canEditChannelInfo && (
+              <Tooltip
+                title={$t('Edit your stream title and description')}
+                placement="right"
+                autoAdjustOverflow={false}
+              >
+                <i onClick={() => ctrl.showEditStreamInfo()} className="icon-edit" />
+              </Tooltip>
+            )}
+            {isPlatform(['youtube', 'facebook', 'trovo', 'tiktok', 'kick']) && isStreaming && (
+              <Tooltip
+                title={$t('View your live stream in a web browser')}
+                placement="right"
+                autoAdjustOverflow={false}
+              >
+                <i onClick={() => ctrl.openPlatformStream()} className="icon-studio" />
+              </Tooltip>
+            )}
+            {isPlatform(['youtube', 'facebook', 'tiktok']) && isStreaming && (
+              <Tooltip
+                title={$t('Go to Live Dashboard')}
+                placement="right"
+                autoAdjustOverflow={false}
+              >
+                <i onClick={() => ctrl.openPlatformDash()} className="icon-settings" />
+              </Tooltip>
             )}
           </div>
-        )}
-      </Animation>
+          <div className="flex">
+            {(isPlatform(['twitch', 'trovo', 'facebook', 'kick']) ||
+              (isPlatform(['youtube', 'twitter']) && isStreaming) ||
+              (isPlatform(['tiktok']) && isRestreaming)) && (
+              <a onClick={() => ctrl.refreshChat()}>{$t('Refresh Chat')}</a>
+            )}
+          </div>
+        </div>
+        {!hideStyleBlockers &&
+          (isPlatform(['twitch', 'trovo']) ||
+            (isStreaming && isPlatform(['youtube', 'facebook', 'twitter', 'tiktok', 'kick']))) && (
+            <div className={styles.liveDockChat}>
+              {hasChatTabs && <ChatTabs visibleChat={visibleChat} setChat={setChat} />}
+              {!applicationLoading && !collapsed && chat}
+              {!['default', 'restream'].includes(visibleChat) && (
+                <PlatformAppPageView
+                  className={styles.liveDockPlatformAppWebview}
+                  appId={visibleChat}
+                  pageSlot={pageSlot}
+                  key={visibleChat}
+                />
+              )}
+            </div>
+          )}
+      </div>
+      {(!ctrl.platform ||
+        (isPlatform(['youtube', 'facebook', 'twitter', 'tiktok', 'kick']) && !isStreaming)) && (
+        <div className={cx('flex flex--center flex--column', styles.liveDockChatOffline)}>
+          <img className={styles.liveDockChatImgOffline} src={ctrl.offlineImageSrc} />
+          {!hideStyleBlockers && <span>{$t('Your chat is currently offline')}</span>}
+        </div>
+      )}
     </div>
   );
 }
