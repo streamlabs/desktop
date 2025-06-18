@@ -53,7 +53,6 @@ import {
   IAudioInfo,
   IExportInfo,
   IExportOptions,
-  ISubtitleStyle,
   ITransitionInfo,
   IVideoInfo,
   TFPS,
@@ -77,7 +76,6 @@ import { cutHighlightClips, getVideoDuration } from './cut-highlight-clips';
 import { reduce } from 'lodash';
 import { extractDateTimeFromPath, fileExists } from './file-utils';
 import { addVerticalFilterToExportOptions } from './vertical-export';
-import { SubtitleStyles } from './subtitles/subtitle-styles';
 import { isGameSupported } from './models/game-config.models';
 import Utils from 'services/utils';
 
@@ -112,7 +110,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       exporting: false,
       currentFrame: 0,
       totalFrames: 0,
-      transcriptionInProgress: false,
       step: EExportStep.AudioMix,
       cancelRequested: false,
       file: '',
@@ -122,7 +119,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       fps: 30,
       resolution: 1080,
       preset: 'medium',
-      subtitleStyle: null,
     },
     uploads: [],
     dismissedTutorial: false,
@@ -140,7 +136,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   aiHighlighterFeatureEnabled = false;
   streamMilestones: IStreamMilestones | null = null;
 
-  static filter(state: IHighlighterState): IHighlighterState {
+  static filter(state: IHighlighterState) {
     return {
       ...this.defaultState,
       clips: state.clips,
@@ -151,7 +147,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       transition: state.transition,
       useAiHighlighter: state.useAiHighlighter,
       highlighterVersion: state.highlighterVersion,
-      export: { ...this.defaultState.export, subtitleStyle: state.export.subtitleStyle },
     };
   }
 
@@ -609,10 +604,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
   setPreset(preset: TPreset) {
     this.SET_EXPORT_INFO({ preset });
-  }
-
-  setSubtitleStyle(subtitleStyle?: ISubtitleStyle) {
-    this.SET_EXPORT_INFO({ subtitleStyle: subtitleStyle || null });
   }
 
   dismissError() {
@@ -1152,7 +1143,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     };
 
     startRendering(
-      String(this.userService.state.userId) || this.userService.getLocalUserId(),
       {
         isPreview: preview,
         renderingClips,
@@ -1182,7 +1172,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           height: this.views.exportInfo.resolution === 720 ? 720 : 1080,
           fps: this.views.exportInfo.fps,
           preset: this.views.exportInfo.preset,
-          subtitleStyle: this.views.exportInfo.subtitleStyle,
         };
 
     if (orientation === 'vertical') {
@@ -1265,20 +1254,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   // AI-HIGHLIGHTER logic
   // =================================================================================================
 
-  /**
-   * Check if a given version is before the current version
-   * @param version - The version to check
-   * @returns True if the given version is before the current version, false otherwise
-   */
-  public isHighlighterVersionAfter(checkVersion: string): boolean {
-    if (!this.state.highlighterVersion) {
-      return false;
-    }
-
-    const currentVersion = this.state.highlighterVersion;
-    return currentVersion > checkVersion;
-  }
-
   setAiHighlighter(state: boolean) {
     this.SET_USE_AI_HIGHLIGHTER(state);
     this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
@@ -1307,7 +1282,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     });
 
     this.setAiHighlighter(true);
-    if (downloadNow && Utils.getHighlighterEnvironment() !== 'local') {
+    if (downloadNow) {
       await this.aiHighlighterUpdater.isNewVersionAvailable();
       this.startUpdater();
     } else {
@@ -1461,7 +1436,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       });
       const highlighterResponse = await getHighlightClips(
         filePath,
-        String(this.userService.state.userId) || this.userService.getLocalUserId(),
+        this.userService.getLocalUserId(),
         renderHighlights,
         setStreamInfo.abortController!.signal,
         (progress: number) => {
