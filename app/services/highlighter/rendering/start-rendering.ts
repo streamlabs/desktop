@@ -18,7 +18,7 @@ import { $t } from '../../i18n';
 import * as Sentry from '@sentry/browser';
 import { sample } from 'lodash';
 import { TAnalyticsEvent } from '../../usage-statistics';
-
+import { cleanupSubtitleDirectory, createSubtitles, svgToPng } from './render-subtitle';
 export interface IRenderingConfig {
   renderingClips: RenderingClip[];
   isPreview: boolean;
@@ -31,6 +31,7 @@ export interface IRenderingConfig {
   streamId: string | undefined;
 }
 export async function startRendering(
+  userId: string,
   renderingConfig: IRenderingConfig,
   handleFrame: (currentFrame: number) => void,
   setExportInfo: (partialExportInfo: Partial<IExportInfo>) => void,
@@ -48,6 +49,7 @@ export async function startRendering(
 
   let fader: AudioCrossfader | null = null;
   let mixer: AudioMixer | null = null;
+  let subtitleDirectory: string | null = null;
   try {
     // Estimate the total number of frames to set up export info
     const totalFrames = renderingClips.reduce((count: number, clip) => {
@@ -56,7 +58,7 @@ export async function startRendering(
     const numTransitions = renderingClips.length - 1;
     const transitionFrames = transitionDuration * exportOptions.fps;
     const totalFramesAfterTransitions = totalFrames - numTransitions * transitionFrames;
-
+    const totalDuration = totalFramesAfterTransitions / exportOptions.fps;
     setExportInfo({
       totalFrames: totalFramesAfterTransitions,
     });
@@ -72,6 +74,31 @@ export async function startRendering(
     let audioMix = path.join(parsed.dir, `${parsed.name}-mix.flac`);
     fader = new AudioCrossfader(audioConcat, renderingClips, transitionDuration);
     await fader.export();
+
+    // Create subtitles before audio is mixed in
+    if (exportOptions.subtitleStyle) {
+      try {
+        setExportInfo({
+          transcriptionInProgress: true,
+        });
+        subtitleDirectory = await createSubtitles(
+          audioConcat,
+          userId,
+          parsed,
+          exportOptions,
+          totalDuration,
+          totalFramesAfterTransitions,
+        );
+      } catch (error: unknown) {
+        console.error('Error creating subtitles', error);
+        exportOptions.subtitleStyle = null;
+      } finally {
+        setExportInfo({
+          transcriptionInProgress: false,
+        });
+      }
+    }
+    // create transcriptions
 
     if (audioInfo.musicEnabled && audioInfo.musicPath) {
       mixer = new AudioMixer(audioMix, [
@@ -106,6 +133,7 @@ export async function startRendering(
       audioMix,
       totalFramesAfterTransitions / exportOptions.fps,
       exportOptions,
+      subtitleDirectory,
     );
 
     while (true) {
@@ -234,7 +262,8 @@ export async function startRendering(
       exporting: false,
       exported: !exportInfo.cancelRequested && !isPreview && !exportInfo.error,
     });
-
+    // Clean up subtitle directory if it was created
+    cleanupSubtitleDirectory(subtitleDirectory);
     if (fader) await fader.cleanup();
     if (mixer) await mixer.cleanup();
   }

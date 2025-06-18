@@ -9,7 +9,10 @@ import {
   IHighlighterMessage,
   IHighlighterMilestone,
   IHighlighterProgressMessage,
+  IHighlighterTranscriptionMessage,
 } from './models/ai-highlighter.models';
+import { Word } from './subtitles/word';
+import { Transcription } from './subtitles/transcription';
 
 const START_TOKEN = '>>>>';
 const END_TOKEN = '<<<<';
@@ -119,9 +122,7 @@ export function getHighlightClips(
               milestoneUpdate?.(aiHighlighterMessage.json as IHighlighterMilestone);
               break;
             default:
-              // console.log('\n\n');
-              // console.log('Unrecognized message type:', aiHighlighterMessage);
-              // console.log('\n\n');
+              // ('Unrecognized message type:', aiHighlighterMessage);
               break;
           }
         }
@@ -147,7 +148,6 @@ export function getHighlightClips(
     });
   });
 }
-
 function parseAiHighlighterMessage(messageString: string): IHighlighterMessage | string | null {
   try {
     if (messageString.includes(START_TOKEN) && messageString.includes(END_TOKEN)) {
@@ -224,4 +224,92 @@ export class ProgressTracker {
     }, 1000);
     return interval;
   }
+}
+
+export function getTranscription(
+  videoUri: string,
+  userId: string,
+  totalDuration: number,
+  cancelSignal?: AbortSignal,
+  progressUpdate?: (progress: number) => void,
+): Promise<Transcription> {
+  return new Promise((resolve, reject) => {
+    const childProcess: child.ChildProcess = AiHighlighterUpdater.startTranscription(
+      videoUri,
+      userId,
+    );
+    const messageBuffer = new MessageBufferHandler();
+
+    if (cancelSignal) {
+      cancelSignal.addEventListener('abort', () => {
+        console.log('ending transcription process');
+        messageBuffer.clear();
+        kill(childProcess.pid!, 'SIGINT');
+        reject(new Error('Highlight generation canceled'));
+      });
+    }
+
+    childProcess.stdout?.on('data', (data: Buffer) => {
+      const message = data.toString();
+      messageBuffer.appendToBuffer(message);
+
+      // Try to extract a complete message
+      const completeMessages = messageBuffer.extractCompleteMessages();
+
+      for (const completeMessage of completeMessages) {
+        // messageBuffer.clear();
+        const aiHighlighterMessage = parseAiHighlighterMessage(completeMessage);
+        if (typeof aiHighlighterMessage === 'string' || aiHighlighterMessage instanceof String) {
+          console.log('message type of string', aiHighlighterMessage);
+        } else if (aiHighlighterMessage) {
+          switch (aiHighlighterMessage.type) {
+            case 'progress':
+              progressUpdate?.((aiHighlighterMessage.json as IHighlighterProgressMessage).progress);
+              break;
+            case 'transcription': {
+              const highlighterWords = (aiHighlighterMessage.json as IHighlighterTranscriptionMessage)
+                .words;
+
+              const words = highlighterWords.map(highlighterWord =>
+                new Word().fromTranscriptionService(
+                  highlighterWord.text,
+                  highlighterWord.start_time,
+                  highlighterWord.end_time,
+                  0,
+                  highlighterWord.probability,
+                ),
+              );
+              const transcription = new Transcription();
+              transcription.words = words;
+              transcription.generatePauses(totalDuration);
+              resolve(transcription);
+              break;
+            }
+
+            default:
+              // ('Unrecognized message type:', aiHighlighterMessage);
+              break;
+          }
+        }
+      }
+    });
+
+    childProcess.stderr?.on('data', (data: Buffer) => {
+      console.log('Debug logs:', data.toString());
+    });
+
+    childProcess.on('error', error => {
+      messageBuffer.clear();
+      reject(new Error(`Child process threw an error. Error message: ${error.message}.`));
+    });
+
+    childProcess.on('exit', (code, signal) => {
+      messageBuffer.clear();
+      reject({
+        message: `Child process exited with code ${code} and signal ${signal}`,
+        signal,
+        code,
+      });
+    });
+  });
 }
