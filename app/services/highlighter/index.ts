@@ -332,12 +332,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     super.init();
     await this.migrateHighlightedStreamsToDictionary();
 
-    if (getOS() !== OS.Windows || Utils.isDevMode()) {
-      this.aiHighlighterFeatureEnabled = true;
-
-      if (!this.aiHighlighterUpdater) {
-        this.aiHighlighterUpdater = new AiHighlighterUpdater();
-      }
+    if (!this.aiHighlighterUpdater) {
+      this.aiHighlighterUpdater = new AiHighlighterUpdater();
     }
 
     //
