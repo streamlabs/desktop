@@ -11,7 +11,7 @@ import { authorizedHeaders, jfetch } from 'util/requests';
 import { platformAuthorizedRequest } from './utils';
 import { CustomizationService } from 'services/customization';
 import { IGoLiveSettings, TDisplayOutput } from 'services/streaming';
-import { I18nService } from 'services/i18n';
+import { $t, I18nService } from 'services/i18n';
 import { throwStreamError } from 'services/streaming/stream-error';
 import { BasePlatformService } from './base-platform';
 import { TDisplayType } from 'services/settings-v2/video';
@@ -271,7 +271,10 @@ export class YoutubeService
       return await platformAuthorizedRequest<T>('youtube', reqInfo);
     } catch (e: unknown) {
       let details = (e as any).result?.error?.message;
-      if (!details) details = 'connection failed';
+      if (!details) details = $t('Connection Failed');
+      if ((e as any)?.url ?? (e as any)?.url.split('/').includes('token')) {
+        (e as any).statusText = `${$t('Authentication Error: ')}${details}`;
+      }
 
       // if the rate limit exceeded then repeat request after 3s delay
       if (details === 'User requests exceed the rate limit.' && repeatRequestIfRateLimitExceed) {
@@ -283,7 +286,7 @@ export class YoutubeService
         details === 'The user is not enabled for live streaming.'
           ? 'YOUTUBE_STREAMING_DISABLED'
           : 'PLATFORM_REQUEST_FAILED';
-      throw throwStreamError(errorType, e as any, details);
+      throw throwStreamError(errorType, { ...(e as any), platform: 'youtube' }, details);
     }
   }
 
@@ -511,7 +514,7 @@ export class YoutubeService
    */
   async prepopulateInfo(): Promise<void> {
     if (!this.state.liveStreamingEnabled) {
-      throw throwStreamError('YOUTUBE_STREAMING_DISABLED');
+      throw throwStreamError('YOUTUBE_STREAMING_DISABLED', { platform: 'youtube' });
     }
     const settings = this.state.settings;
     this.UPDATE_STREAM_SETTINGS({
@@ -893,7 +896,7 @@ export class YoutubeService
       let details = error.result?.error?.message;
       if (!details) details = 'connection failed';
       const errorType = 'YOUTUBE_THUMBNAIL_UPLOAD_FAILED';
-      throw throwStreamError(errorType, e as any, details);
+      throw throwStreamError(errorType, { ...(e as any), platform: 'youtube' }, details);
     }
   }
 

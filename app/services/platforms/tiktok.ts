@@ -215,7 +215,7 @@ export class TikTokService
       // if the stream did not start successfully, prevent going live
       if (!streamInfo?.id) {
         await this.handleOpenLiveManager();
-        throwStreamError('TIKTOK_GENERATE_CREDENTIALS_FAILED');
+        throwStreamError('TIKTOK_GENERATE_CREDENTIALS_FAILED', { status: 406, platform: 'tiktok' });
       }
 
       if (streamInfo?.chat_url) {
@@ -347,7 +347,7 @@ export class TikTokService
         this.SET_LIVE_SCOPE('relog');
       } else if (hasStream) {
         // show error stream exists
-        throwStreamError('TIKTOK_STREAM_ACTIVE', e as any, details);
+        throwStreamError('TIKTOK_STREAM_ACTIVE', { ...(e as any), platform: 'tiktok' }, details);
       }
 
       return Promise.reject(e);
@@ -383,7 +383,10 @@ export class TikTokService
 
     return jfetch<ITikTokStartStreamResponse>(request).catch((e: unknown) => {
       if (e instanceof StreamError) {
-        throwStreamError('TIKTOK_GENERATE_CREDENTIALS_FAILED', e as any);
+        throwStreamError('TIKTOK_GENERATE_CREDENTIALS_FAILED', {
+          ...(e as any),
+          platform: 'tiktok',
+        });
       }
 
       const error = this.handleStartStreamError((e as ITikTokError)?.status);
@@ -567,7 +570,7 @@ export class TikTokService
     console.debug('TikTok stream status: ', status);
 
     if (status === EPlatformCallResult.TikTokScopeOutdated) {
-      throwStreamError('TIKTOK_SCOPE_OUTDATED');
+      throwStreamError('TIKTOK_SCOPE_OUTDATED', { status: 401, platform: 'tiktok' });
     }
 
     this.SET_PREPOPULATED(true);

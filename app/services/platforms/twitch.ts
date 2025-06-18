@@ -267,7 +267,7 @@ export class TwitchService
         default:
           errorType = 'PLATFORM_REQUEST_FAILED';
       }
-      throwStreamError(errorType, e as any, details);
+      throwStreamError(errorType, { ...(e as any), platform: 'twitch' }, details);
     }
   }
 
