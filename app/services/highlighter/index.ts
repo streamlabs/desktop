@@ -332,7 +332,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     super.init();
     await this.migrateHighlightedStreamsToDictionary();
 
-    if (!this.aiHighlighterUpdater) {
+    if (this.aiHighlighterFeatureEnabled && !this.aiHighlighterUpdater) {
       this.aiHighlighterUpdater = new AiHighlighterUpdater();
     }
 
