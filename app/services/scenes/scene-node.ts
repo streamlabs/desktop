@@ -5,7 +5,7 @@ import { IVideo } from 'obs-studio-node';
 import { SelectionService } from 'services/selection';
 import { TDisplayType } from 'services/settings-v2';
 import { assertIsDefined } from 'util/properties-type-guards';
-import { ServiceHelper, mutation } from '../core';
+import { mutation } from '../core';
 import { Inject } from '../core/injector';
 import {
   ISceneItemNode,
@@ -25,7 +25,7 @@ export function isItem(node: SceneItemNode): node is SceneItem {
   return node.sceneNodeType === 'item';
 }
 
-@ServiceHelper()
+//@ServiceHelper()
 export abstract class SceneItemNode implements ISceneItemNode {
   id: string;
   parentId: string;
@@ -59,11 +59,13 @@ export abstract class SceneItemNode implements ISceneItemNode {
       return;
     }
     this.SET_PARENT(parentId);
+    this.parentId = parentId; // es2015対応、読めないのでセットする es5ではstate経由で読めるので。。
     this.placeAfter(parentId);
   }
 
   detachParent() {
     if (this.parentId) this.SET_PARENT('');
+    this.parentId = '';
   }
 
   getParent(): SceneItemFolder {
