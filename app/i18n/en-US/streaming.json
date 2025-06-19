@@ -303,5 +303,6 @@
   "Record Stream in": "Record Stream in",
   "format": "format",
   "Record Stream": "Record Stream",
-  "AI Highlighter is enabled. Recording will start when stream starts.": "AI Highlighter is enabled. Recording will start when stream starts."
+  "AI Highlighter is enabled. Recording will start when stream starts.": "AI Highlighter is enabled. Recording will start when stream starts.",
+  "Connection Failed": "Connection Failed"
 }
