@@ -3,11 +3,13 @@ import { EventEmitter } from 'events';
 import { EReplayBufferState, StreamingService } from 'services/streaming';
 import { Subject, Subscription } from 'rxjs';
 import { INewClipData } from './models/highlighter.models';
-import { IAiClipInfo, IInput } from './models/ai-highlighter.models';
+import { EGame, IAiClipInfo, IInput } from './models/ai-highlighter.models';
 import { SettingsService } from 'app-services';
 import { getVideoDuration } from './cut-highlight-clips';
 
 class LocalVisionService extends EventEmitter {
+  currentGame: string | null = null;
+
   private isRunning = false;
   private eventSource: EventSource | null = null;
 
@@ -34,6 +36,9 @@ class LocalVisionService extends EventEmitter {
     this.eventSource.onmessage = (event: any) => {
       const data = JSON.parse(event.data);
       console.log('Received events:', data);
+
+      this.currentGame = data.game || null;
+
       const events = data.events;
       for (const event of events) {
         console.log('Emitting event:', event);
@@ -66,6 +71,8 @@ class LocalVisionService extends EventEmitter {
  * that would be available when it is ready by another team.
  */
 class MockVisionService extends EventEmitter {
+  currentGame: string | null = 'fortnite';
+
   private timeoutId: NodeJS.Timeout | null = null;
   private isRunning = false;
 
@@ -160,13 +167,13 @@ class MockVisionService extends EventEmitter {
 
 @InitAfter('StreamingService')
 export class RealtimeHighlighterService extends Service {
+  private static MAX_SCORE = 5;
+
   highlightsReady = new Subject<INewClipData[]>();
 
   @Inject() private streamingService: StreamingService;
   @Inject() private settingsService: SettingsService;
   private visionService = new LocalVisionService();
-
-  private static MAX_SCORE = 5;
 
   private isRunning = false;
   private highlights: INewClipData[] = [];
@@ -182,6 +189,8 @@ export class RealtimeHighlighterService extends Service {
   // sometimes Streamlabs Desktop sends weird replay buffer events
   // when we didn't request them, so we need to track if we requested the replay
   private replayRequested: boolean = false;
+
+  private currentRound: number = 0;
 
   async start() {
     console.log('Starting RealtimeHighlighterService');
@@ -208,6 +217,7 @@ export class RealtimeHighlighterService extends Service {
     this.saveReplayAt = null;
     this.currentReplayEvents = [];
     this.highlights = [];
+    this.currentRound = 0;
 
     this.visionService.subscribe('event', this.onEvent.bind(this));
     this.visionService.start();
@@ -279,6 +289,9 @@ export class RealtimeHighlighterService extends Service {
    * Fired when a new event is received from the vision service.
    */
   private onEvent(event: any) {
+    if (['round_start', 'game_start'].includes(event.name)) {
+      this.currentRound++;
+    }
     // ignore events that have no highlight data
     if (!event.highlight) {
       return;
@@ -361,7 +374,10 @@ export class RealtimeHighlighterService extends Service {
       const aiClipInfo: IAiClipInfo = {
         inputs: highlight.inputs.map((input: string) => ({ type: input } as IInput)),
         score,
-        metadata: {},
+        metadata: {
+          round: this.currentRound,
+          game: this.visionService.currentGame as EGame,
+        },
       };
 
       // trim times for desktop are insanely weird, for some reason its offset between start and end

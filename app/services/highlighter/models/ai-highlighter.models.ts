@@ -88,6 +88,7 @@ export interface IAiClipInfo {
   metadata: {
     round?: number;
     webcam_coordinates?: ICoordinates;
+    game?: EGame;
   };
 }
 
