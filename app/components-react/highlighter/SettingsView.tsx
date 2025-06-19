@@ -29,9 +29,7 @@ export default function SettingsView({
     HighlighterService,
     IncrementalRolloutService,
   } = Services;
-  const aiHighlighterFeatureEnabled = IncrementalRolloutService.views.featureIsEnabled(
-    EAvailableFeatures.aiHighlighter,
-  );
+  const aiHighlighterFeatureEnabled = HighlighterService.aiHighlighterFeatureEnabled;
   const [hotkey, setHotkey] = useState<IHotkey | null>(null);
   const hotkeyRef = useRef<IHotkey | null>(null);
 

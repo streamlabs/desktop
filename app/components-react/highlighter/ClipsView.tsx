@@ -43,9 +43,7 @@ export default function ClipsView({
   emitSetView: (data: IViewState) => void;
 }) {
   const { HighlighterService, UsageStatisticsService, IncrementalRolloutService } = Services;
-  const aiHighlighterFeatureEnabled = IncrementalRolloutService.views.featureIsEnabled(
-    EAvailableFeatures.aiHighlighter,
-  );
+  const aiHighlighterFeatureEnabled = HighlighterService.aiHighlighterFeatureEnabled;
   const clipsAmount = useVuex(() => HighlighterService.views.clips.length);
   const [clips, setClips] = useState<{
     ordered: { id: string }[];
