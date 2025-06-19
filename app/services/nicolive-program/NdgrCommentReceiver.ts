@@ -313,22 +313,28 @@ export function convertChunkedResponseToMessageResponse(
   if (msg.message) {
     if (msg.message.chat) {
       return convertChatToMessageResponse(common, msg.message.chat, msg.meta?.id);
-    } else if (msg.message.simpleNotificationV2) {
+    }
+    if (msg.message.simpleNotificationV2) {
       return convertSimpleNotificationV2ToMessageResponse(common, msg.message.simpleNotificationV2);
-    } else if (msg.message.simpleNotification) {
+    }
+    if (msg.message.simpleNotification) {
       return convertSimpleNotificationToMessageResponse(common, msg.message.simpleNotification);
-    } else if (msg.message.gift) {
+    }
+    if (msg.message.gift) {
       return convertGiftToMessageResponse(common, msg.message.gift);
-    } else if (msg.message.nicoad) {
+    }
+    if (msg.message.nicoad) {
       return convertNicoadToMessageResponse(common, msg.message.nicoad);
-    } else if (msg.message.gameUpdate) {
+    }
+    if (msg.message.gameUpdate) {
       return convertGameUpdateToMessageResponse(common, msg.message.gameUpdate);
     }
   } else if (msg.state) {
     if (msg.state.marquee) {
       // 運コメ(放送者コメント)
       return convertMarqueeToMessageResponse(common, msg.state.marquee);
-    } else if (msg.state.programStatus) {
+    }
+    if (msg.state.programStatus) {
       return convertProgramStatusToMessageResponse(common, msg.state.programStatus);
     }
   } else if (msg.signal !== undefined) {
