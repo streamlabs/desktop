@@ -1,0 +1,76 @@
+.pulseWrapper {
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.pulse {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #f85640;
+  opacity: 0.3;
+  top: 0;
+  left: 0;
+  animation: pulse 2.4s infinite;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f85640;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.15;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+}
+.realtime-detection-action {
+  position: relative;
+  justify-content: space-between;
+  display: flex;
+  padding: 6px 11px;
+  padding-right: 20px;
+  width: 248px;
+  align-items: center;
+  gap: 8px;
+  border-radius: 48px;
+  border: 1px solid #301e24;
+  background: #301e24;
+  color: white;
+  border-color: #5d1e1e;
+  overflow: hidden;
+}
+
+.activity-animation {
+  transform: translateX(200%);
+}
+
+.background-pulse {
+  left: -100%;
+  position: absolute;
+  width: 200px;
+  height: 40px;
+  background: linear-gradient(90deg, #ffffff00, #5d1e1e, #ffffff00);
+  transition: transform 0.5s ease-in-out;
+}
+.realtime-cancel-button {
+}
