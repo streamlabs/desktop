@@ -80,6 +80,7 @@ export class ReplayManager extends PropertiesManager {
    */
   private isSourceVisibleInActiveScene(): boolean {
     const activeSceneId = this.scenesService.views.activeSceneId;
+    // for some reason for instant replay source, the scene id is stored inside obsSource.name
     const sourceItems = this.scenesService.views.getSceneItemsBySourceId(this.obsSource.name);
     for (const item of sourceItems) {
       if (item.sceneId !== activeSceneId) {
