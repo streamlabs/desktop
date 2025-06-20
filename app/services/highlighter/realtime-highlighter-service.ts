@@ -170,13 +170,13 @@ export class RealtimeHighlighterService extends Service {
   private static MAX_SCORE = 5;
 
   highlightsReady = new Subject<INewClipData[]>();
+  highlights: INewClipData[] = [];
 
   @Inject() private streamingService: StreamingService;
   @Inject() private settingsService: SettingsService;
   private visionService = new LocalVisionService();
 
   private isRunning = false;
-  private highlights: INewClipData[] = [];
 
   private replayBufferFileReadySubscription: Subscription | null = null;
 
