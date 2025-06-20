@@ -43,7 +43,7 @@ test('Adding and removing a scene', async (t: TExecutionContext) => {
 
   await selectScene(sceneName);
   await checkDefaultSources();
-  await clickRemoveScene();
+  await clickRemoveScene(sceneName);
 
   t.false(await sceneIsExisting(sceneName));
 });

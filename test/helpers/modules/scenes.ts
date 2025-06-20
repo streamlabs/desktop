@@ -14,8 +14,8 @@ export async function clickAddScene() {
   await clickSceneAction('[data-test="Add"]');
 }
 
-export async function clickRemoveScene() {
-  await clickSceneAction('[data-test="Remove"]');
+export async function clickRemoveScene(name?: string) {
+  await clickSceneAction(`[data-test="Remove${name || ''}"]`);
   await dialogDismiss('OK');
 }
 

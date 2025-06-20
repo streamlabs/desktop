@@ -13,8 +13,8 @@ export async function clickAddSource() {
   await clickSourceAction('[data-test="Add"]');
 }
 
-export async function clickRemoveSource() {
-  await clickSourceAction('[data-test="Remove"]');
+export async function clickRemoveSource(name?: string) {
+  await clickSourceAction(`[data-test="Remove${name || ''}"]`);
   await dialogDismiss('OK');
 }
 
