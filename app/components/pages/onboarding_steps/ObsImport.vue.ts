@@ -35,9 +35,14 @@ export default class ObsImport extends Vue {
 
   selectedProfile = this.profiles[0] || '';
 
+  reImportMode = false;
+
   created() {
-    if (this.sceneCollections && this.sceneCollections.length > 0) return;
-    this.startFresh();
+    // シーン編集から来た場合、初期とは違う表記をするため
+    this.reImportMode = this.onboardingService.state.options.skipLogin;
+
+    // OBSのデータが無いならskip
+    if (!this.obsImporterService.canImportFromOBS) this.startFresh();
   }
 
   get title() {

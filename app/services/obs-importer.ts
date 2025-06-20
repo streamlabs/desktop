@@ -405,4 +405,10 @@ export class ObsImporterService extends Service {
   isOBSinstalled() {
     return fs.existsSync(this.OBSconfigFileDirectory);
   }
+
+  get canImportFromOBS(): boolean {
+    if (!this.getSceneCollections().length) return false;
+    if (!this.getProfiles().length) return false;
+    return true;
+  }
 }
