@@ -733,7 +733,7 @@
       "dropped": "ドロップ数"
     },
     "error": {
-      "url_key": "URLとキーを設定してください",
+      "url_key": "URLとストリームキーを設定してください",
       "bad_path": "URLが不正です",
       "connect_failed": "接続に失敗しました",
       "invalid_stream": "ストリームが無効です"
