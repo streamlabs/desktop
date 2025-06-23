@@ -53,8 +53,20 @@ export class ReplayManager extends PropertiesManager {
   private keepPlaying() {
     const currentTime = Date.now();
 
+    if (!this.stopAt) {
+      return;
+    }
+
+    if (currentTime > this.stopAt - 500) {
+      this.setVolume(0.3);
+    } else if (currentTime > this.stopAt - 1000) {
+      this.setVolume(0.5);
+    } else if (currentTime > this.stopAt - 2000) {
+      this.setVolume(0.7);
+    }
+
     // if time is less than stopAt, do nothing
-    if (this.stopAt && currentTime < this.stopAt) {
+    if (currentTime < this.stopAt) {
       return;
     }
 
@@ -119,6 +131,8 @@ export class ReplayManager extends PropertiesManager {
     // have to do this due to the bug with overlapping audio
     const source = this.sourcesService.views.getSource(this.obsSource.name);
     if (source) {
+      // return volume to normal
+      source.updateSettings({ deflection: 1.0 });
       console.log(`Pausing source: ${source.name}`);
       source.getObsInput()?.pause();
     }
@@ -128,5 +142,13 @@ export class ReplayManager extends PropertiesManager {
     this.obsSource.update({ local_file: highlight.path });
     this.currentReplayIndex = index;
     console.log(`Queued next highlight: ${highlight.path}`);
+  }
+
+  private setVolume(volume: number) {
+    const source = this.sourcesService.views.getSource(this.obsSource.name);
+    if (source) {
+      console.log('changing volume to', volume);
+      source.updateSettings({ deflection: volume });
+    }
   }
 }
