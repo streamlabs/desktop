@@ -48,6 +48,8 @@ export class FrameWriter {
     this.addAudioFilters(args, !!this.options.subtitleStyle);
     this.addVideoFilters(args, !!this.options.subtitleStyle);
 
+    const crf = this.options.preset === 'slow' ? '18' : '21';
+
     args.push(
       ...[
         // Video Output
@@ -58,7 +60,7 @@ export class FrameWriter {
         '-preset:v',
         this.options.preset,
         '-crf',
-        '18',
+        `${crf}`,
         '-movflags',
         'faststart',
 

@@ -15,7 +15,6 @@ import { TrovoService } from './platforms/trovo';
 import { KickService } from './platforms/kick';
 import * as remote from '@electron/remote';
 import { VideoSettingsService, TDisplayType } from './settings-v2/video';
-import { DualOutputService } from './dual-output';
 import { TwitterPlatformService } from './platforms/twitter';
 import { InstagramService } from './platforms/instagram';
 import { PlatformAppsService } from './platform-apps';
@@ -59,7 +58,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
   @Inject() kickService: KickService;
   @Inject() instagramService: InstagramService;
   @Inject() videoSettingsService: VideoSettingsService;
-  @Inject() dualOutputService: DualOutputService;
   @Inject('TwitterPlatformService') twitterService: TwitterPlatformService;
   @Inject() platformAppsService: PlatformAppsService;
 
@@ -209,8 +207,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return jfetch(request);
   }
 
-  async beforeGoLive(context?: TDisplayType, mode?: TOutputOrientation) {
-    await Promise.all([this.setupIngest(context, mode), this.setupTargets(!!mode)]);
+  async beforeGoLive() {
+    await Promise.all([this.setupIngest(), this.setupTargets()]);
   }
 
   /**
@@ -222,25 +220,42 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @param context - Optional, display to stream
    * @param mode - Optional, mode which denotes which context to stream
    */
-  async setupIngest(context?: TDisplayType, mode?: TOutputOrientation) {
+  async setupIngest() {
     const ingest = (await this.fetchIngest()).server;
-    const settings = mode ? await this.fetchUserSettings(mode) : this.settings;
 
-    // We need to move OBS to custom ingest mode before we can set the server
-    this.streamSettingsService.setSettings(
-      {
+    if (this.streamingService.views.isDualOutputMode) {
+      // in dual output mode, we need to set the ingest for each display
+      const displays = this.streamingService.views.displaysToRestream;
+      displays.forEach(async display => {
+        const mode = this.getMode(display);
+        const settings = await this.fetchUserSettings(mode);
+
+        this.streamSettingsService.setSettings(
+          {
+            streamType: 'rtmp_custom',
+          },
+          display,
+        );
+
+        this.streamSettingsService.setSettings(
+          {
+            key: settings.streamKey,
+            server: ingest,
+          },
+          display,
+        );
+      });
+    } else {
+      // in single output mode, we just set the ingest for the default display
+      this.streamSettingsService.setSettings({
         streamType: 'rtmp_custom',
-      },
-      context,
-    );
+      });
 
-    this.streamSettingsService.setSettings(
-      {
-        key: settings.streamKey,
+      this.streamSettingsService.setSettings({
+        key: this.settings.streamKey,
         server: ingest,
-      },
-      context,
-    );
+      });
+    }
   }
 
   /**
@@ -248,10 +263,10 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @remarks
    * In dual output mode, assign a contexts to the ingest targets.
    * Defaults to the horizontal context.
-   *
-   * @param isDualOutputMode - Optional, boolean denoting if dual output mode is on
    */
-  async setupTargets(isDualOutputMode?: boolean) {
+  async setupTargets() {
+    const isDualOutputMode = this.streamingService.views.isDualOutputMode;
+
     // delete existing targets
     const targets = await this.fetchTargets();
     const promises = targets.map(t => this.deleteTarget(t.id));
@@ -264,7 +279,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
           ? {
               platform,
               streamKey: getPlatformService(platform).state.streamKey,
-              mode: this.dualOutputService.views.getPlatformMode(platform),
+              mode: this.getPlatformMode(platform),
             }
           : {
               platform,
@@ -278,7 +293,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
             ? {
                 platform: 'relay' as 'relay',
                 streamKey: `${dest.url}${dest.streamKey}`,
-                mode: this.dualOutputService.views.getMode(dest.display),
+                mode: this.getMode(dest.display),
               }
             : {
                 platform: 'relay' as 'relay',
@@ -293,9 +308,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
       const ttSettings = this.tiktokService.state.settings;
       tikTokTarget.platform = 'relay';
       tikTokTarget.streamKey = `${ttSettings.serverUrl}/${ttSettings.streamKey}`;
-      tikTokTarget.mode = isDualOutputMode
-        ? this.dualOutputService.views.getPlatformMode('tiktok')
-        : 'landscape';
+      tikTokTarget.mode = isDualOutputMode ? this.getPlatformMode('tiktok') : 'landscape';
     }
 
     // treat twitter as a custom destination
@@ -303,9 +316,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     if (twitterTarget) {
       twitterTarget.platform = 'relay';
       twitterTarget.streamKey = `${this.twitterService.state.ingest}/${this.twitterService.state.streamKey}`;
-      twitterTarget.mode = isDualOutputMode
-        ? this.dualOutputService.views.getPlatformMode('twitter')
-        : 'landscape';
+      twitterTarget.mode = isDualOutputMode ? this.getPlatformMode('twitter') : 'landscape';
     }
 
     // treat instagram as a custom destination
@@ -313,9 +324,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     if (instagramTarget) {
       instagramTarget.platform = 'relay';
       instagramTarget.streamKey = `${this.instagramService.state.settings.streamUrl}${this.instagramService.state.streamKey}`;
-      instagramTarget.mode = isDualOutputMode
-        ? this.dualOutputService.views.getPlatformMode('instagram')
-        : 'landscape';
+      instagramTarget.mode = isDualOutputMode ? this.getPlatformMode('instagram') : 'landscape';
     }
 
     // treat kick as a custom destination
@@ -323,9 +332,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     if (kickTarget) {
       kickTarget.platform = 'relay';
       kickTarget.streamKey = `${this.kickService.state.ingest}/${this.kickService.state.streamKey}`;
-      kickTarget.mode = isDualOutputMode
-        ? this.dualOutputService.views.getPlatformMode('kick')
-        : 'landscape';
+      kickTarget.mode = isDualOutputMode ? this.getPlatformMode('kick') : 'landscape';
     }
 
     await this.createTargets(newTargets);
@@ -486,6 +493,16 @@ export class RestreamService extends StatefulService<IRestreamState> {
     if (changed.chatZoomFactor) {
       this.chatView.webContents.setZoomFactor(changed.chatZoomFactor);
     }
+  }
+
+  private getPlatformMode(platform: TPlatform): TOutputOrientation {
+    const display = this.streamingService.views.getPlatformDisplayType(platform);
+    return this.getMode(display);
+  }
+
+  getMode(display: TDisplayType): TOutputOrientation {
+    if (!display) return 'landscape';
+    return display === 'horizontal' ? 'landscape' : 'portrait';
   }
 }
 

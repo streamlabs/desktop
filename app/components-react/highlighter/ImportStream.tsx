@@ -71,6 +71,7 @@ export function ImportStreamModal({
         type: 'DetectionModalCanceled',
         openedFrom,
         streamId: streamInfo?.id,
+        game,
       });
     }
     close();
@@ -95,6 +96,7 @@ export function ImportStreamModal({
           type: 'DetectionInModalStarted',
           openedFrom,
           streamId: id,
+          game,
         });
         closeModal(false);
         return;
@@ -107,6 +109,7 @@ export function ImportStreamModal({
           type: 'DetectionInModalStarted',
           openedFrom,
           streamId: id,
+          game,
         });
         closeModal(false);
       } else {

@@ -424,6 +424,7 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
 
           <DisplaySelector
             title={title}
+            nolabel
             className={styles.dualOutputDisplaySelector}
             platform={platform}
             index={p.index}

@@ -1,11 +1,10 @@
-import React, { CSSProperties } from 'react';
+import React, { CSSProperties, useMemo } from 'react';
 import { $t } from 'services/i18n';
 import { RadioInput } from './inputs';
 import { TDisplayType } from 'services/settings-v2';
 import { TPlatform } from 'services/platforms';
 import { useGoLiveSettings } from 'components-react/windows/go-live/useGoLiveSettings';
-import { useVuex } from 'components-react/hooks';
-import { Services } from 'components-react/service-provider';
+import { TDisplayOutput } from 'services/streaming';
 
 interface IDisplaySelectorProps {
   title: string;
@@ -13,75 +12,63 @@ interface IDisplaySelectorProps {
   platform: TPlatform | null;
   className?: string;
   style?: CSSProperties;
+  nolabel?: boolean;
 }
 
 export default function DisplaySelector(p: IDisplaySelectorProps) {
   const {
-    customDestinations,
-    platforms,
-    updatePlatformDisplayAndSaveSettings,
+    display,
+    canDualStream,
     updateCustomDestinationDisplay,
-    isPrime,
-    enabledPlatforms,
-    updateShouldUseExtraOutput,
-  } = useGoLiveSettings();
+    updatePlatform,
+  } = useGoLiveSettings().extend(module => ({
+    get canDualStream() {
+      if (!p.platform) return false;
+      return module.getCanDualStream(p.platform);
+    },
+    get display(): TDisplayOutput {
+      const defaultDisplay = p.platform
+        ? module.settings.platforms[p.platform]?.display
+        : module.settings.customDestinations[p.index]?.display;
 
-  // TODO: find a way to integrate into goLiveSettings that's reactive (currently not working that way)
-  const { hasExtraOutput } = useVuex(() => ({
-    hasExtraOutput: Services.DualOutputService.views.hasExtraOutput(p.platform!),
+      return defaultDisplay ?? 'horizontal';
+    },
   }));
 
-  const setting = p.platform ? platforms[p.platform] : customDestinations[p.index];
+  const displays = useMemo(() => {
+    const defaultDisplays = [
+      {
+        label: $t('Horizontal'),
+        value: 'horizontal',
+      },
+      {
+        label: $t('Vertical'),
+        value: 'vertical',
+      },
+    ];
 
-  // If the user has Ultra, add extra output for YT, if not, check that we only have
-  // a single platform enabled, hopefully YouTube.
-  // Might need better validation.
-  const supportsExtraOutputs =
-    p.platform === 'youtube' && (isPrime || enabledPlatforms.length === 1);
+    if (canDualStream) {
+      defaultDisplays.push({
+        label: $t('Both'),
+        value: 'both' as TDisplayType,
+      });
+    }
 
-  const displays = [
-    {
-      label: $t('Horizontal'),
-      value: 'horizontal',
-    },
-    {
-      label: $t('Vertical'),
-      value: 'vertical',
-    },
-  ];
-
-  if (supportsExtraOutputs) {
-    // TODO: TS doesn't infer types on filter(id) so we're mutating array here
-    displays.push({
-      label: $t('Both'),
-      value: 'both',
-    });
-  }
+    return defaultDisplays;
+  }, [canDualStream]);
 
   const onChange = (val: TDisplayType | 'both') => {
-    console.log('DiplaySelector onChange:', val);
     if (p.platform) {
-      const display: TDisplayType =
-        // Use horizontal display, vertical stream will be created separately
-        supportsExtraOutputs && val === 'both' ? 'horizontal' : (val as TDisplayType);
-
-      updatePlatformDisplayAndSaveSettings(p.platform, display);
-
-      // Add or remove the platform from the Dual Output's extra output platforms list
-      updateShouldUseExtraOutput(p.platform, val);
+      updatePlatform(p.platform, { display: val });
     } else {
       updateCustomDestinationDisplay(p.index, val as TDisplayType);
     }
   };
 
-  // TODO: Fake accessor, improve, if nothing else, fix type
-  // display can be undefined on first window load
-  const isDefaultDisplay = setting?.display === 'horizontal' || setting?.display === undefined;
-  const value = isDefaultDisplay && hasExtraOutput ? 'both' : setting?.display;
-
   return (
     <RadioInput
-      nolabel
+      nolabel={p?.nolabel}
+      label={p?.nolabel ? undefined : p.title}
       data-test="display-input"
       id={`${p.platform}-display-input`}
       direction="horizontal"
@@ -89,7 +76,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       defaultValue="horizontal"
       options={displays}
       onChange={onChange}
-      value={value ?? 'horizontal'}
+      value={display}
       className={p?.className}
       style={p?.style}
     />

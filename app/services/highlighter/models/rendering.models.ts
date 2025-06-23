@@ -3,7 +3,7 @@ import { ITextStyle } from '../subtitles/svg-creator';
 
 export type TFPS = 30 | 60;
 export type TResolution = 720 | 1080;
-export type TPreset = 'ultrafast' | 'fast' | 'slow';
+export type TPreset = 'ultrafast' | 'fast' | 'slow' | 'medium';
 
 export interface ISubtitleStyle extends ITextStyle {}
 export interface IResolution {

@@ -222,7 +222,10 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
           this.streamStartEncodedFrames)) *
       100;
     const streamDropped = this.state.percentageDroppedFrames;
-    const streamDuration = new Date().getTime() - this.streamStartTime.getTime();
+    const streamDuration =
+      this.streamStartTime !== undefined
+        ? new Date().getTime() - this.streamStartTime.getTime()
+        : 0;
     const averageCPU = this.averageFactor(this.historicalCPU);
     const streamType = this.dualOutputService.views.dualOutputMode ? 'dual' : 'single';
 
