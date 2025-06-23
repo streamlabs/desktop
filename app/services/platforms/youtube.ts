@@ -334,22 +334,7 @@ export class YoutubeService
         {
           streamType: 'rtmp_custom',
           key: verticalDestination.streamKey,
-          server: verticalDestination.url,
-        },
-        verticalDestination.display,
-      );
-    } else {
-      this.streamSettingsService.setSettings(
-        {
-          streamType: 'rtmp_custom',
-        },
-        verticalDestination.display,
-      );
-
-      this.streamSettingsService.setSettings(
-        {
-          key: verticalDestination.streamKey,
-          server: verticalStreamServer,
+          server: `${verticalStreamServer}/`,
         },
         verticalDestination.display,
       );
