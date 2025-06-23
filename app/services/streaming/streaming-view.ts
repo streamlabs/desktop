@@ -177,9 +177,39 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   /**
+   * Returns if dual output should be set up when going live
+   * @remark Both ultra and non-ultra users can use dual output mode
+   */
+  get shouldSetupDualOutput(): boolean {
+    // The user must be logged in to use dual output mode
+    if (!this.userView.isLoggedIn) return false;
+
+    return this.isDualOutputMode && this.getCanStreamDualOutput();
+  }
+
+  /**
    * Returns if the restream service should be set up when going live
    */
   get shouldSetupRestream(): boolean {
+    // The user must be logged in to use the restream service
+    if (!this.userView.isLoggedIn) return false;
+
+    // Non-Ultra users can only use the restream service under one condition
+    // In single output mode, if they are streaming to TikTok and one additional target they use the restream service
+    if (!this.userView.isPrime) {
+      if (
+        !this.isDualOutputMode &&
+        this.enabledPlatforms.includes('tiktok') &&
+        this.enabledPlatforms.length === 2
+      ) {
+        return true;
+      }
+
+      return false;
+    }
+
+    // Ultra users can use the restream service
+    // In single output mode, if the user has more than one target enabled, they use the restream service
     // In dual output mode, if a display has more than one target that display uses the restream service
     const restreamDualOutputMode =
       this.isDualOutputMode && this.horizontalStream.length > 0 && this.verticalStream.length > 0;
