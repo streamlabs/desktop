@@ -6,6 +6,8 @@ import { INewClipData } from './models/highlighter.models';
 import { EGame, IAiClipInfo, IInput } from './models/ai-highlighter.models';
 import { SettingsService } from 'app-services';
 import { getVideoDuration } from './cut-highlight-clips';
+import { ObjectSchema } from 'realm';
+import { RealmObject } from '../realm';
 
 class LocalVisionService extends EventEmitter {
   currentGame: string | null = null;
@@ -165,18 +167,31 @@ class MockVisionService extends EventEmitter {
   }
 }
 
+export class RealtimeHighlighterEphemeralState extends RealmObject {
+  isRunning: boolean;
+  game?: EGame;
+  static schema: ObjectSchema = {
+    name: 'RealtimeHighlighterEphemeralState',
+    properties: {
+      isRunning: { type: 'bool', default: false },
+      game: { type: 'string', optional: true, default: null },
+    },
+  };
+}
+
+RealtimeHighlighterEphemeralState.register();
+
 @InitAfter('StreamingService')
 export class RealtimeHighlighterService extends Service {
   private static MAX_SCORE = 5;
 
   highlightsReady = new Subject<INewClipData[]>();
   highlights: INewClipData[] = [];
+  ephemeralState = RealtimeHighlighterEphemeralState.inject();
 
   @Inject() private streamingService: StreamingService;
   @Inject() private settingsService: SettingsService;
   private visionService = new LocalVisionService();
-
-  private isRunning = false;
 
   private replayBufferFileReadySubscription: Subscription | null = null;
 
@@ -191,6 +206,19 @@ export class RealtimeHighlighterService extends Service {
   private replayRequested: boolean = false;
 
   private currentRound: number = 0;
+  get isRunning(): boolean {
+    return this.ephemeralState.isRunning;
+  }
+  set isRunning(value: boolean) {
+    this.ephemeralState.db.write(() => {
+      this.ephemeralState.isRunning = value;
+      if (value === true) {
+        // this.ephemeralState.game = this.visionService.currentGame as EGame;
+      } else {
+        // this.ephemeralState.game = null;
+      }
+    });
+  }
 
   async start() {
     console.log('Starting RealtimeHighlighterService');
@@ -250,6 +278,23 @@ export class RealtimeHighlighterService extends Service {
     this.settingsService.setSettingsPatch({ Output: { RecRBTime: seconds } });
   }
 
+  addFakeEvent() {
+    const clips: INewClipData[] = [
+      {
+        aiClipInfo: {
+          inputs: [{ type: 'elimination' }],
+          score: 0,
+          metadata: {},
+        },
+        path: '/Users/jankalthoefer/Desktop/streams/djnardi/djnardi-short.mp4',
+        startTime: 15,
+        endTime: 30,
+        startTrim: 0,
+        endTrim: 0,
+      },
+    ];
+    this.highlightsReady.next(clips);
+  }
   /**
    * This method is called periodically to save replay events to file at correct time
    * when the highlight ends.
