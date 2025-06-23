@@ -1,4 +1,9 @@
-import { RealtimeHighlighterService, ScenesService } from 'app-services';
+import {
+  HighlighterService,
+  RealtimeHighlighterService,
+  ScenesService,
+  SourcesService,
+} from 'app-services';
 import { PropertiesManager } from './properties-manager';
 import { Inject } from 'services/core/injector';
 import { StreamingService } from 'services/streaming';
@@ -7,6 +12,8 @@ export class ReplayManager extends PropertiesManager {
   @Inject() streamingService: StreamingService;
   @Inject() realtimeHighlighterService: RealtimeHighlighterService;
   @Inject() scenesService: ScenesService;
+  @Inject() highlighterService: HighlighterService;
+  @Inject() sourcesService: SourcesService;
 
   private inProgress = false;
   private stopAt: number | null = null;
@@ -18,6 +25,15 @@ export class ReplayManager extends PropertiesManager {
 
   init() {
     console.log('ReplayManager initialized');
+    // if ai highlighter is not active, preserve old behavior
+    if (!this.highlighterService.views.useAiHighlighter) {
+      console.log('Using legacy Instant Replay behavior');
+      this.streamingService.replayBufferFileWrite.subscribe(filePath => {
+        this.obsSource.update({ local_file: filePath });
+      });
+      return;
+    }
+
     setInterval(() => {
       this.tick();
     }, 1000);
@@ -44,6 +60,11 @@ export class ReplayManager extends PropertiesManager {
 
     // if we reached the end of the highlight, switch to the next one
     const highlightsCount = this.realtimeHighlighterService.highlights.length;
+    if (highlightsCount === 0) {
+      console.log('No highlights to play');
+      return;
+    }
+
     const nextIndex = this.currentReplayIndex + 1;
     if (nextIndex < highlightsCount) {
       this.queueNextHighlight(nextIndex);
@@ -95,6 +116,13 @@ export class ReplayManager extends PropertiesManager {
   }
 
   private queueNextHighlight(index: number) {
+    // have to do this due to the bug with overlapping audio
+    const source = this.sourcesService.views.getSource(this.obsSource.name);
+    if (source) {
+      console.log(`Pausing source: ${source.name}`);
+      source.getObsInput()?.pause();
+    }
+
     const highlight = this.realtimeHighlighterService.highlights[index];
     this.stopAt = Date.now() + (highlight.endTime - highlight.endTrim) * 1000;
     this.obsSource.update({ local_file: highlight.path });
