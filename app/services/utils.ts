@@ -98,7 +98,7 @@ export default class Utils {
     return Utils.env.NODE_ENV === 'production';
   }
 
-  static isDevMode() {
+  static isDevMode(): boolean {
     return Utils.env.NODE_ENV !== 'production';
   }
 
