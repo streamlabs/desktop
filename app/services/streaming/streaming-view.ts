@@ -334,6 +334,23 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return horizontalHasDestinations && verticalHasDestinations;
   }
 
+  getValidDualStream() {
+    // Ultra users can always dual stream
+    if (this.userView.isPrime) return true;
+
+    // If no platform will dual stream, there is no need to validate further
+    const hasDualStream =
+      this.savedSettings.platforms?.youtube.enabled &&
+      this.savedSettings.platforms?.youtube?.display === 'both';
+    if (!hasDualStream) return true;
+
+    // Non-Ultra users can only dual stream if YouTube is the only target
+    const numEnabledTargets =
+      this.enabledPlatforms.length + this.enabledCustomDestinationHosts.length;
+
+    return hasDualStream && numEnabledTargets > 1;
+  }
+
   get isMidStreamMode(): boolean {
     return this.streamingState.streamingStatus !== 'offline';
   }

@@ -378,6 +378,18 @@ export class GoLiveSettingsModule {
       );
     }
 
+    // If youtube is dual streaming, this satisfies the dual output requirement for one horizontal and one vertical target
+    // so non-ultra users are not able to go live to any additional targets
+    if (
+      !this.isPrime &&
+      this.state.isDualOutputMode &&
+      this.state.isEnabled('youtube') &&
+      this.state.platforms?.youtube?.display === 'both'
+    ) {
+      message.info($t('Upgrade to Ultra to allow more than two outputs'), 2, () => true);
+      return;
+    }
+
     try {
       await getDefined(this.form).validateFields();
       return true;

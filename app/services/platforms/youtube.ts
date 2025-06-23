@@ -309,7 +309,7 @@ export class YoutubeService
     await this.updateCategory(verticalBroadcast.id, ytSettings.categoryId!);
 
     const verticalStreamKey = verticalStream.cdn.ingestionInfo.streamName;
-    const verticalStreamServer = verticalStream.cdn.ingestionInfo.ingestionAddress;
+    const verticalStreamServer = verticalStream.cdn.ingestionInfo.rtmpsIngestionAddress;
     this.SET_VERTICAL_STREAM_KEY(verticalStreamKey);
     this.SET_VERTICAL_BROADCAST(verticalBoundBroadcast);
 
