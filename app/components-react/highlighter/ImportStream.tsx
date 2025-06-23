@@ -82,10 +82,9 @@ export function ImportStreamModal({
     filePath: string[] | undefined,
     id?: string,
   ) {
-    if (/[\\/:"*?<>|]+/g.test(title)) return;
     const streamInfo: IStreamInfoForAiHighlighter = {
       id: id ?? 'manual_' + uuid(),
-      title,
+      title: title.replace(/[\\/:"*?<>|]+/g, ''),
       game,
     };
 
