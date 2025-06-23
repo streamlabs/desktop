@@ -3,6 +3,7 @@ import ExperimentalSettings from 'components/ExperimentalSettings.vue';
 import LanguageSettings from 'components/LanguageSettings.vue';
 import NotificationsSettings from 'components/NotificationsSettings.vue';
 import GenericFormGroups from 'components/obs/inputs/GenericFormGroups.vue';
+import SubStreamSettings from 'components/SubStreamSettings.vue';
 import { Subscription } from 'rxjs';
 import Vue from 'vue';
 import { Component, Watch } from 'vue-property-decorator';
@@ -39,6 +40,7 @@ import { CategoryIcons } from './CategoryIcons';
     LanguageSettings,
     CommentSettings,
     SpeechEngineSettings,
+    SubStreamSettings,
   },
 })
 export default class Settings extends Vue {

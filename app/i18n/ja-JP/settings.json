@@ -650,6 +650,10 @@
   "SpeechEngine": {
     "name": "音声エンジン"
   },
+  "SubStream": {
+    "name": "サブ配信"
+  },
+
   "listPlaceholder": "選択してください",
   "resolutionPlaceholder": "選択するか、値を入力してください",
   "addFiles": "ファイルを追加する",
@@ -702,5 +706,46 @@
     "webSpeech": "Windowsの音声合成",
     "nVoice": "N Voice 琴詠ニア",
     "ignore": "読み上げない"
+  },
+  "substream": {
+    "use": "使用する",
+    "description": "この機能をONにすると、メインの配信先に加えて、\n他のプラットフォームへも同時に配信できます。",
+    "url": "URL",
+    "urlTips": "各サービスから提供されているストリーム URL を指定してください",
+    "streamKey": "ストリームキー",
+    "syncWithMainStream": "メイン配信の配信開始/終了にあわせる",
+    "start": "配信開始",
+    "stop": "配信終了",
+    "streamQuality": "配信品質",
+    "videoEncoder": "映像エンコーダー",
+    "videoBitrate": "映像ビットレート (Kbps)",
+    "audioEncoder": "音声エンコーダー",
+    "audioBitrate": "音声ビットレート (Kbps)",
+    "display": "非表示",
+    "show": "表示",
+    "set": "セット",
+    "default": "デフォルト",
+    "info": {
+      "error": "エラー",
+      "status": "ステータス",
+      "stopped": "停止中",
+      "frames": "送出フレーム数",
+      "dropped": "ドロップ数"
+    },
+    "error": {
+      "url_key": "URLとストリームキーを設定してください",
+      "bad_path": "URLが不正です",
+      "connect_failed": "接続に失敗しました",
+      "invalid_stream": "ストリームが無効です"
+    },
+    "status": {
+      "starting": "配信開始処理中..",
+      "started": "配信中",
+      "stopping": "停止処理中..",
+      "stopped": "停止中",
+      "reconnect": "再接続...",
+      "reconnected": "再接続",
+      "deactive": "停止中"
+    }
   }
 }

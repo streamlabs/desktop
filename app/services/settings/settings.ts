@@ -178,6 +178,8 @@ export class SettingsService
       categories.push('Comment', 'SpeechEngine');
     }
 
+    categories.push('SubStream');
+
     if (Utils.isDevMode()) {
       categories.push('Developer');
     }
