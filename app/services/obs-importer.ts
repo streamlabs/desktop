@@ -33,6 +33,9 @@ interface IOBSConfigFilter {
 
 interface IOBSConfigSceneItem {
   name: string;
+  source_uuid: string;
+  id: string;
+  rot: number;
   crop_top: number;
   crop_right: number;
   crop_bottom: number;
@@ -40,6 +43,13 @@ interface IOBSConfigSceneItem {
   pos: IVec2;
   scale: IVec2;
   visible: boolean;
+  locked: boolean;
+  bounds: IVec2;
+  bounds_align: number;
+  bounds_type: number;
+  blend_type: 'normal' | 'additive' | 'subtract' | 'screen' | 'multiply' | 'lighten' | 'darken';
+  blend_method: 'default' | 'srgb_off';
+  scale_filter: 'disable' | 'point' | 'bilinear' | 'bicubic' | 'lanczos' | 'area';
 }
 
 interface IOBSConfigSource {
@@ -278,14 +288,123 @@ export class ObsImporterService extends Service {
                 };
                 const pos = item.pos;
                 const scale = item.scale;
+                const rot = item.rot;
+
+                if (
+                  item.bounds &&
+                  item.bounds.x &&
+                  item.bounds.y &&
+                  item.bounds_align === 0 &&
+                  [1, 2].includes(item.bounds_type)
+                ) {
+                  scene.fixupSceneItemWhenReady(sourceToAdd.sourceId, () => {
+                    switch (item.bounds_type) {
+                      case 1: // stretch
+                        sceneItem.stretchToScreen();
+                        break;
+                      case 2: // fit
+                        sceneItem.fitToScreen();
+                        break;
+                    }
+                  });
+                }
+
+                let blendingMode: obs.EBlendingMode;
+                switch (item.blend_type) {
+                  case 'normal': {
+                    blendingMode = obs.EBlendingMode.Normal;
+                    break;
+                  }
+                  case 'additive': {
+                    blendingMode = obs.EBlendingMode.Additive;
+                    break;
+                  }
+                  case 'subtract': {
+                    blendingMode = obs.EBlendingMode.Substract;
+                    break;
+                  }
+                  case 'screen': {
+                    blendingMode = obs.EBlendingMode.Screen;
+                    break;
+                  }
+                  case 'multiply': {
+                    blendingMode = obs.EBlendingMode.Multiply;
+                    break;
+                  }
+                  case 'lighten': {
+                    blendingMode = obs.EBlendingMode.Lighten;
+                    break;
+                  }
+                  case 'darken': {
+                    blendingMode = obs.EBlendingMode.Darken;
+                    break;
+                  }
+                  default: {
+                    blendingMode = obs.EBlendingMode.Normal;
+                    break;
+                  }
+                }
+
+                let blendingMethod: obs.EBlendingMethod;
+                switch (item.blend_method) {
+                  case 'default': {
+                    blendingMethod = obs.EBlendingMethod.Default;
+                    break;
+                  }
+                  case 'srgb_off': {
+                    blendingMethod = obs.EBlendingMethod.SrgbOff;
+                    break;
+                  }
+                  default: {
+                    blendingMethod = obs.EBlendingMethod.Default;
+                    break;
+                  }
+                }
+
+                let scaleFilter: obs.EScaleType;
+                switch (item.scale_filter) {
+                  case 'disable': {
+                    scaleFilter = obs.EScaleType.Disable;
+                    break;
+                  }
+                  case 'point': {
+                    scaleFilter = obs.EScaleType.Point;
+                    break;
+                  }
+                  case 'bilinear': {
+                    scaleFilter = obs.EScaleType.Bilinear;
+                    break;
+                  }
+                  case 'bicubic': {
+                    scaleFilter = obs.EScaleType.Bicubic;
+                    break;
+                  }
+                  case 'lanczos': {
+                    scaleFilter = obs.EScaleType.Lanczos;
+                    break;
+                  }
+                  case 'area': {
+                    scaleFilter = obs.EScaleType.Area;
+                    break;
+                  }
+                  default: {
+                    scaleFilter = obs.EScaleType.Disable;
+                    break;
+                  }
+                }
 
                 sceneItem.setSettings({
                   visible: item.visible,
+                  locked: item.locked,
                   transform: {
                     crop,
                     scale,
                     position: pos,
+                    rotation: rot,
                   },
+                  blendingMode,
+                  blendingMethod,
+                  scaleFilter,
                 });
               }
             });
