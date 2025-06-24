@@ -16,6 +16,7 @@ import * as remote from '@electron/remote';
 import StreamCardInfo from './StreamCardInfo';
 import StreamCardModal, { TModalStreamCard } from './StreamCardModal';
 import { supportedGames } from 'services/highlighter/models/game-config.models';
+import RealtimeIndicator from './RealtimeIndicator';
 
 export default function StreamCard({
   streamId,
@@ -319,35 +320,7 @@ function ActionBar({
   };
 
   if (stream?.state.type === EAiDetectionState.REALTIME_DETECTION_IN_PROGRESS) {
-    return (
-      <div className={styles.progressbarBackground}>
-        <div style={{ width: '16px', height: '16px', marginRight: '16px' }}>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="17"
-            viewBox="0 0 16 17"
-            fill="none"
-          >
-            <circle opacity="0.3" cx="8" cy="8.5" r="8" fill="#F85640" />
-            <circle cx="8" cy="8.5" r="3" fill="#F85640" />
-          </svg>
-        </div>
-        <div className={styles.progressbarText}>{$t('Ai detection in progress')}</div>
-
-        <Button
-          size="large"
-          type="ghost"
-          className={styles.cancelButton}
-          onClick={e => {
-            e.stopPropagation();
-            console.log('TODO: Cancel realtime detection');
-          }}
-        >
-          <i className="icon-close" />
-        </Button>
-      </div>
-    );
+    return <RealtimeIndicator emoji={undefined} emitCancel={emitCancelHighlightGeneration} />;
   }
 
   // In Progress

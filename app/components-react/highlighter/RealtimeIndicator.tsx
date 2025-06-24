@@ -1,11 +1,27 @@
 import { Button } from 'antd';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { $t } from 'services/i18n';
 import styles from './RealtimeIndicator.m.less';
 import cx from 'classnames';
 
-export default function HighlightGenerator() {
+export default function HighlightGenerator({
+  emoji,
+  emitCancel,
+}: {
+  emoji?: string;
+  emitCancel: () => void;
+}) {
   const [animateOnce, setAnimateOnce] = useState(false);
+
+  // Run animation once when emoji prop changes
+  useEffect(() => {
+    if (emoji) {
+      setAnimateOnce(true);
+      const timeout = setTimeout(() => setAnimateOnce(false), 2000);
+      return () => clearTimeout(timeout);
+    }
+  }, [emoji]);
+
   function triggerDetection() {
     if (animateOnce) {
       return;
@@ -40,8 +56,7 @@ export default function HighlightGenerator() {
         className={styles.realtimeCancelButton}
         onClick={e => {
           e.stopPropagation();
-          triggerDetection();
-          console.log('TODO: Cancel realtime detection');
+          emitCancel();
         }}
       >
         <i className="icon-close" />
