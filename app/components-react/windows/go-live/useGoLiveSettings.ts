@@ -384,7 +384,8 @@ export class GoLiveSettingsModule {
       !this.isPrime &&
       this.state.isDualOutputMode &&
       this.state.isEnabled('youtube') &&
-      this.state.platforms?.youtube?.display === 'both'
+      this.state.platforms?.youtube?.display === 'both' &&
+      this.state.enabledPlatforms.length > 2
     ) {
       message.info($t('Upgrade to Ultra to allow more than two outputs'), 2, () => true);
       return;
