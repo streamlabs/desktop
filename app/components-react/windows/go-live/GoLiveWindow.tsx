@@ -85,10 +85,6 @@ function ModalFooter() {
 
       return platformDisplays.horizontal.length > 0 || destinationDisplays.horizontal.length > 0;
     },
-
-    get isDualOutputMode() {
-      return Services.TikTokService.promptApply;
-    },
   }));
 
   const shouldShowConfirm = ['prepopulate', 'waitForNewSettings'].includes(lifecycle);

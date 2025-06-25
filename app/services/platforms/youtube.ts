@@ -309,7 +309,7 @@ export class YoutubeService
     await this.updateCategory(verticalBroadcast.id, ytSettings.categoryId!);
 
     const verticalStreamKey = verticalStream.cdn.ingestionInfo.streamName;
-    const verticalStreamServer = verticalStream.cdn.ingestionInfo.ingestionAddress;
+    const verticalStreamServer = verticalStream.cdn.ingestionInfo.rtmpsIngestionAddress;
     this.SET_VERTICAL_STREAM_KEY(verticalStreamKey);
     this.SET_VERTICAL_BROADCAST(verticalBoundBroadcast);
 
@@ -334,7 +334,22 @@ export class YoutubeService
         {
           streamType: 'rtmp_custom',
           key: verticalDestination.streamKey,
-          server: `${verticalStreamServer}/`,
+          server: verticalDestination.url,
+        },
+        verticalDestination.display,
+      );
+    } else {
+      this.streamSettingsService.setSettings(
+        {
+          streamType: 'rtmp_custom',
+        },
+        verticalDestination.display,
+      );
+
+      this.streamSettingsService.setSettings(
+        {
+          key: verticalDestination.streamKey,
+          server: verticalStreamServer,
         },
         verticalDestination.display,
       );

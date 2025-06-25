@@ -387,7 +387,7 @@ export class StreamingService
     /**
      * SET DUAL OUTPUT SETTINGS
      */
-    if (this.views.isDualOutputMode) {
+    if (this.views.shouldSetupDualOutput) {
       // This handles setting up displays that are streaming to a single target.
       // Note: Because the horizontal video context is the default, it does not need
       // to be validated.
