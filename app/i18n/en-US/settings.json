@@ -661,7 +661,7 @@
   "cacheIdCopy": "Copy",
   "cacheManagement": "Management of the cache",
   "noticeWhileStreaming": "Some settings cannot be changed while streaming.",
-  "noticeForStreaming": "The URL/stream key will be set automatically. {br}It will be set automatically according to the niconico account you are logged in to on N Air when you start streaming. {br}There is no need to enter it manually.",
+  "noticeForStreaming": "The URL/stream key will be set automatically according to the niconico account you are logged in to on N Air when you start streaming.",
   "noticeForStreamingNotLoggedIn": "When streaming on niconico live, you can omit entering the URL/stream key by logging in to your niconico account in N Air.",
   "showCacheDirectory": "Show Cache Directory",
   "deleteCacheAndRestart": "Delete Cache and Restart",
