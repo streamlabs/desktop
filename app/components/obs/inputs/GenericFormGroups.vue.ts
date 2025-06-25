@@ -13,6 +13,9 @@ export default class GenericFormGroups extends Vue {
   @Prop()
   category: string;
 
+  @Prop()
+  isLoggedIn: boolean;
+
   collapsedGroups: Dictionary<boolean> = {};
 
   toggleGroup(index: string) {

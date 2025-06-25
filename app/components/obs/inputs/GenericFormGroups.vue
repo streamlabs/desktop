@@ -6,6 +6,17 @@
       :key="formGroup.nameSubCategory + groupIndex"
       v-if="hasAnyVisibleSettings(formGroup)"
     >
+      <aside class="notification-root" v-if="category === 'Stream'">
+        <i class="notification-icon icon-notification" />
+        <p class="notification-message">
+          <i18n path="settings.noticeForStreaming" v-if="isLoggedIn">
+            <br place="br" />
+          </i18n>
+          <i18n path="settings.noticeForStreamingNotLoggedIn" v-else>
+            <br place="br" />
+          </i18n>
+        </p>
+      </aside>
       <div class="section-title--dropdown" v-if="formGroup.nameSubCategory != 'Untitled'">
         <h4 class="section-title" @click="toggleGroup(groupIndex)">
           <i class="icon-plus" v-show="collapsedGroups[groupIndex]"></i>
