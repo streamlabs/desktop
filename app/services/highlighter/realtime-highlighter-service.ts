@@ -3,13 +3,13 @@ import { EventEmitter } from 'events';
 import { EReplayBufferState, StreamingService } from 'services/streaming';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { INewClipData } from './models/highlighter.models';
-import { EGame, IAiClipInfo, IInput } from './models/ai-highlighter.models';
-import { SettingsService } from 'app-services';
-import { getVideoDuration } from './cut-highlight-clips';
+import { EGame, IAiClipInfo, ICoordinates, IInput } from './models/ai-highlighter.models';
+import { ScenesService, SettingsService, SourcesService } from 'app-services';
+import { getVideoDuration, getVideoResolution } from './cut-highlight-clips';
+import { IResolution } from './models/rendering.models';
 import { ObjectSchema } from 'realm';
 import { RealmObject } from '../realm';
 import { FORTNITE_CONFIG } from './models/game-config.models';
-
 class LocalVisionService extends EventEmitter {
   currentGame: string | null = null;
 
@@ -193,6 +193,8 @@ export class RealtimeHighlighterService extends Service {
 
   @Inject() private streamingService: StreamingService;
   @Inject() private settingsService: SettingsService;
+  @Inject() private scenesService: ScenesService;
+  @Inject() private sourcesService: SourcesService;
   private visionService = new LocalVisionService();
 
   private replayBufferFileReadySubscription: Subscription | null = null;
@@ -407,7 +409,7 @@ export class RealtimeHighlighterService extends Service {
 
     const mergedHighlights: any[] = this.mergeOverlappingHighlights(unrefinedHighlights);
 
-    const clips = this.createClipsFromHighlights(
+    const clips = await this.createClipsFromHighlights(
       mergedHighlights,
       replayBufferDurationSeconds,
       path,
@@ -419,13 +421,14 @@ export class RealtimeHighlighterService extends Service {
   /**
    * Creates clips from detected highlights. Several highlights can be merged into one clip
    */
-  private createClipsFromHighlights(
+  private async createClipsFromHighlights(
     mergedHighlights: any[],
     replayBufferDuration: number,
     path: string,
   ) {
     const clips = [];
     for (const highlight of mergedHighlights) {
+      const resolution = await getVideoResolution(path);
       // if more than 3 inputs, assign maximum score (1.0), otherwise normalize the score
       const score =
         highlight.inputs.length >= 3 ? 1.0 : highlight.score / RealtimeHighlighterService.MAX_SCORE;
@@ -435,6 +438,7 @@ export class RealtimeHighlighterService extends Service {
         metadata: {
           round: this.currentRound,
           game: this.visionService.currentGame as EGame,
+          webcam_coordinates: this.findWebcamCoordinates(resolution),
         },
       };
 
@@ -566,5 +570,51 @@ export class RealtimeHighlighterService extends Service {
       });
     }
     return unrefinedHighlights;
+  }
+
+  private findWebcamCoordinates(videoResolution: IResolution): ICoordinates | null {
+    const activeSceneId = this.scenesService.views.activeSceneId;
+    const sources = this.sourcesService.views.getSourcesByType('dshow_input');
+    if (sources.length === 0) {
+      return null;
+    }
+
+    for (const source of sources) {
+      const sceneItems = this.scenesService.views.getSceneItemsBySourceId(source.sourceId);
+      for (const sceneItem of sceneItems) {
+        if (!sceneItem.visible) {
+          continue;
+        }
+        if (sceneItem.sceneId !== activeSceneId) {
+          continue;
+        }
+
+        const x = sceneItem.transform.position.x;
+        const y = sceneItem.transform.position.y;
+        const width = sceneItem.width * sceneItem.transform.scale.x;
+        const height = sceneItem.height * sceneItem.transform.scale.y;
+
+        const x1 = Math.max(x, 0);
+        const y1 = Math.max(y, 0);
+        const x2 = Math.min(x + width, sceneItem.width);
+        const y2 = Math.min(y + height, sceneItem.height);
+
+        // convert coordinates to the video resolution coordinates from videoResolution
+        const scaleX = videoResolution.width / sceneItem.width;
+        const scaleY = videoResolution.height / sceneItem.height;
+        const scaledX1 = Math.round(x1 * scaleX);
+        const scaledY1 = Math.round(y1 * scaleY);
+        const scaledX2 = Math.round(x2 * scaleX);
+        const scaledY2 = Math.round(y2 * scaleY);
+
+        return {
+          x1: scaledX1,
+          y1: scaledY1,
+          x2: scaledX2,
+          y2: scaledY2,
+        };
+      }
+    }
+    return null;
   }
 }
