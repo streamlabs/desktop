@@ -17,7 +17,7 @@
   opacity: 0.3;
   top: 0;
   left: 0;
-  animation: pulse 2.4s infinite;
+  animation: pulse 2.5s infinite;
 }
 
 .dot {
@@ -31,16 +31,20 @@
 
 @keyframes pulse {
   0% {
-    transform: scale(1);
-    opacity: 0.3;
+    transform: scale(0.5);
+    opacity: 0.5;
   }
   50% {
-    transform: scale(1.5);
-    opacity: 0.15;
+    transform: scale(1.4);
+    opacity: 0;
+  }
+  99% {
+    transform: scale(1.4);
+    opacity: 0;
   }
   100% {
-    transform: scale(1);
-    opacity: 0.3;
+    transform: scale(0.5);
+    opacity: 0.5;
   }
 }
 .realtime-detection-action {
@@ -48,7 +52,7 @@
   justify-content: space-between;
   display: flex;
   padding: 6px 11px;
-  padding-right: 20px;
+  padding-right: 10px;
   width: 248px;
   align-items: center;
   gap: 8px;
@@ -72,5 +76,14 @@
   background: linear-gradient(90deg, #ffffff00, #5d1e1e, #ffffff00);
   transition: transform 0.5s ease-in-out;
 }
-.realtime-cancel-button {
+
+.emoji {
+  z-index: 999;
+  margin-right: 4px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }

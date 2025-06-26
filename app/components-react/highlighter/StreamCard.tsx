@@ -320,7 +320,7 @@ function ActionBar({
   };
 
   if (stream?.state.type === EAiDetectionState.REALTIME_DETECTION_IN_PROGRESS) {
-    return <RealtimeIndicator emoji={undefined} emitCancel={emitCancelHighlightGeneration} />;
+    return <RealtimeIndicator eventType={undefined} emitCancel={emitCancelHighlightGeneration} />;
   }
 
   // In Progress

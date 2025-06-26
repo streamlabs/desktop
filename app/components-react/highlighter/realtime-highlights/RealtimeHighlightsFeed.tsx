@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Tooltip, Button } from 'antd';
 import { TooltipPlacement } from 'antd/lib/tooltip';
 import styles from './RealtimeHighlightsFeed.m.less';
-import { IHighlight } from 'services/highlighter/models/ai-highlighter.models';
+import { EGame, IHighlight } from 'services/highlighter/models/ai-highlighter.models';
 import { HighlighterService } from 'app-services';
 import { Services } from '../../service-provider';
 import { useVuex } from '../../hooks';
@@ -16,9 +16,9 @@ import RealtimeHighlightsItem from './RealtimeHighlightsItem';
 import { useRealmObject } from '../../hooks/realm';
 import { EMenuItemKey } from 'services/side-nav';
 import Utils from 'services/utils';
+import RealtimeIndicator from '../RealtimeIndicator';
 
 interface IRealtimeHighlightTooltipProps {
-  children: React.ReactElement;
   placement?: TooltipPlacement;
   trigger?:
     | 'hover'
@@ -29,16 +29,24 @@ interface IRealtimeHighlightTooltipProps {
   maxEvents?: number;
 }
 
-export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightTooltipProps) {
-  const { children, placement, trigger, maxEvents = 5 } = props;
-  const { HighlighterService, RealtimeHighlighterService, NavigationService } = Services;
+export type TRealtimeFeedEvent = {
+  type: string;
+  game: EGame;
+};
 
-  const [displayedEvents, setDisplayedEvents] = useState<INewClipData[]>([]);
+export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightTooltipProps) {
+  const { placement, trigger, maxEvents = 5 } = props;
+  const { HighlighterService, RealtimeHighlighterService, NavigationService } = Services;
+  const [lastEvent, setLastEvent] = useState<TRealtimeFeedEvent | null>(null);
+  const [showTooltip, setShowTooltip] = useState<true | undefined>(undefined);
+
+  const [highlightClips, setHighlightClips] = useState<INewClipData[]>([]);
   let hasMoreEvents = false;
   const isDevMode = Utils.isDevMode();
 
   const currentGame = useRealmObject(RealtimeHighlighterService.ephemeralState).game;
   let realtimeHighlightSubscription: Subscription | null = null;
+  let realtimeEventSubscription: Subscription | null = null;
   useEffect(() => {
     // Initialize component
     console.log('Initializing RealtimeEventTooltip component');
@@ -47,7 +55,7 @@ export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightToolt
       newClipData => {
         // This will be called when highlights are ready
         const highlights = Object.values(newClipData);
-        setDisplayedEvents(prevEvents => {
+        setHighlightClips(prevEvents => {
           const updatedEvents = [...prevEvents, ...highlights];
           // Remove excess events from the beginning if we exceed maxEvents
           if (updatedEvents.length > maxEvents) {
@@ -60,13 +68,28 @@ export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightToolt
       },
     );
 
+    realtimeEventSubscription = RealtimeHighlighterService.latestDetectedEvent.subscribe(event => {
+      if (!event || !event.type) return;
+      setLastEvent({ type: event.type, game: event.game });
+    });
+
     // On unmount, unsubscribe from the realtime highlights
     return () => {
+      realtimeEventSubscription?.unsubscribe();
       realtimeHighlightSubscription?.unsubscribe();
     };
   }, []);
 
-  useEffect(() => {}, []);
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (highlightClips) {
+      setShowTooltip(true);
+      timeoutRef.current = setTimeout(() => {
+        setShowTooltip(undefined);
+      }, 5000);
+    }
+  }, [highlightClips]);
 
   function onViewAll() {
     // Navigate to the Highlighter stream view
@@ -95,8 +118,8 @@ export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightToolt
   const tooltipContent = (
     <div className={styles.eventTooltipContent}>
       <div className={styles.eventList}>
-        {displayedEvents &&
-          displayedEvents.map(clipData => (
+        {highlightClips &&
+          highlightClips.map(clipData => (
             <RealtimeHighlightsItem
               key={clipData.path}
               clipData={clipData}
@@ -123,7 +146,7 @@ export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightToolt
       )}
 
       {isDevMode && (
-        <Button onClick={() => RealtimeHighlighterService.actions.addFakeEvent()}>
+        <Button onClick={() => RealtimeHighlighterService.actions.addFakeClip()}>
           <span>fake event</span>
         </Button>
       )}
@@ -137,8 +160,28 @@ export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightToolt
       trigger={trigger}
       overlayClassName={styles.eventTooltip}
       autoAdjustOverflow={false}
+      visible={showTooltip}
     >
-      {children}
+      <div
+        onMouseEnter={() => {
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+          }
+        }}
+        onMouseLeave={() => {
+          if (showTooltip) {
+            setShowTooltip(undefined);
+          }
+        }}
+      >
+        <RealtimeIndicator
+          eventType={lastEvent || undefined}
+          emitCancel={() => {
+            RealtimeHighlighterService.actions.stop();
+          }}
+        />
+      </div>
     </Tooltip>
   );
 }

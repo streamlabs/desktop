@@ -1,13 +1,14 @@
 import { InitAfter, Inject, Service } from 'services/core';
 import { EventEmitter } from 'events';
 import { EReplayBufferState, StreamingService } from 'services/streaming';
-import { Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { INewClipData } from './models/highlighter.models';
 import { EGame, IAiClipInfo, IInput } from './models/ai-highlighter.models';
 import { SettingsService } from 'app-services';
 import { getVideoDuration } from './cut-highlight-clips';
 import { ObjectSchema } from 'realm';
 import { RealmObject } from '../realm';
+import { FORTNITE_CONFIG } from './models/game-config.models';
 
 class LocalVisionService extends EventEmitter {
   currentGame: string | null = null;
@@ -186,6 +187,7 @@ export class RealtimeHighlighterService extends Service {
   private static MAX_SCORE = 5;
 
   highlightsReady = new Subject<INewClipData[]>();
+  latestDetectedEvent = new BehaviorSubject<{ type: string; game: EGame } | null>(null);
   highlights: INewClipData[] = [];
   ephemeralState = RealtimeHighlighterEphemeralState.inject();
 
@@ -278,7 +280,7 @@ export class RealtimeHighlighterService extends Service {
     this.settingsService.setSettingsPatch({ Output: { RecRBTime: seconds } });
   }
 
-  addFakeEvent() {
+  addFakeClip() {
     const clips: INewClipData[] = [
       {
         aiClipInfo: {
@@ -294,6 +296,12 @@ export class RealtimeHighlighterService extends Service {
       },
     ];
     this.highlightsReady.next(clips);
+  }
+
+  triggerFakeEvent() {
+    const inputTypeKeys = Object.keys(FORTNITE_CONFIG.inputTypeMap);
+    const randomKey = inputTypeKeys[Math.floor(Math.random() * inputTypeKeys.length)];
+    this.latestDetectedEvent.next({ type: randomKey, game: EGame.FORTNITE });
   }
   /**
    * This method is called periodically to save replay events to file at correct time
@@ -342,6 +350,11 @@ export class RealtimeHighlighterService extends Service {
       return;
     }
 
+    this.latestDetectedEvent.next({
+      type: event.name,
+      game: EGame.FORTNITE,
+      // game: this.visionService.currentGame as EGame,
+    });
     event.timestamp = Date.now();
     this.currentReplayEvents.push(event);
 

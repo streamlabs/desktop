@@ -12,13 +12,19 @@ import StreamView from 'components-react/highlighter/StreamView';
 import ClipsView from 'components-react/highlighter/ClipsView';
 import UpdateModal from 'components-react/highlighter/UpdateModal';
 import { EAvailableFeatures } from 'services/incremental-rollout';
+import Utils from 'services/utils';
 
 export default function Highlighter(props: { params?: { view: string } }) {
-  const { HighlighterService, IncrementalRolloutService, UsageStatisticsService } = Services;
+  const {
+    HighlighterService,
+    IncrementalRolloutService,
+    UsageStatisticsService,
+    RealtimeHighlighterService,
+  } = Services;
   const aiHighlighterFeatureEnabled = IncrementalRolloutService.views.featureIsEnabled(
     EAvailableFeatures.aiHighlighter,
   );
-
+  const isDevMode = Utils.isDevMode();
   const v = useVuex(() => ({
     useAiHighlighter: HighlighterService.views.useAiHighlighter,
   }));
@@ -93,6 +99,19 @@ export default function Highlighter(props: { params?: { view: string } }) {
     default:
       return (
         <>
+          {isDevMode && (
+            <>
+              {/* TODO: remove below
+          fe = fake event */}
+              <button onClick={() => RealtimeHighlighterService.triggerFakeEvent()}>
+                Trigger fake Event
+              </button>
+              {/* fc = fake clip */}
+              <button onClick={() => RealtimeHighlighterService.addFakeClip()}>
+                Trigger fake clip
+              </button>
+            </>
+          )}
           {aiHighlighterFeatureEnabled && updaterModal}
           <SettingsView
             close={() => {
