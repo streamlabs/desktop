@@ -291,6 +291,14 @@ export const SourceDisplayData = (): { [key: string]: ISourceDisplayData } => ({
     icon: 'icon-replay-buffer',
     group: 'media',
   },
+  highlighter: {
+    name: $t('Highlight Reel'),
+    shortDesc: $t('Display highlight clips'),
+    description: $t('Automatically display the latest clips captured with AI Highlighter.'),
+    demoFilename: 'media.png',
+    icon: 'icon-replay-buffer',
+    group: 'media',
+  },
   icon_library: {
     name: $t('Custom Icon'),
     description: $t('Displays an icon from one of many selections'),

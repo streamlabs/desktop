@@ -151,7 +151,8 @@ export type TPropertiesManager =
   | 'streamlabels'
   | 'platformApp'
   | 'replay'
-  | 'iconLibrary';
+  | 'iconLibrary'
+  | 'highlighter';
 
 export interface ISourcesState {
   sources: Dictionary<ISource>;

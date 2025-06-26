@@ -8,7 +8,7 @@ import { PropertiesManager } from './properties-manager';
 import { Inject } from 'services/core/injector';
 import { StreamingService } from 'services/streaming';
 
-export class ReplayManager extends PropertiesManager {
+export class HighlightManager extends PropertiesManager {
   @Inject() streamingService: StreamingService;
   @Inject() realtimeHighlighterService: RealtimeHighlighterService;
   @Inject() scenesService: ScenesService;
@@ -24,16 +24,8 @@ export class ReplayManager extends PropertiesManager {
   }
 
   init() {
-    console.log('ReplayManager initialized');
+    console.log('HighlightManager initialized');
     // if ai highlighter is not active, preserve old behavior
-    if (!this.highlighterService.views.useAiHighlighter) {
-      console.log('Using legacy Instant Replay behavior');
-      this.streamingService.replayBufferFileWrite.subscribe(filePath => {
-        this.obsSource.update({ local_file: filePath });
-      });
-      return;
-    }
-
     setInterval(() => {
       this.tick();
     }, 1000);
