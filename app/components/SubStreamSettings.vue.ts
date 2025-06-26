@@ -36,8 +36,16 @@ export default class SubStreamSettings extends Vue {
 
   checker?: number = undefined;
 
-  defaultYoutubeUrl: string = 'rtmp://a.rtmp.youtube.com/live2';
-  defaultTwitchUrl: string = 'rtmp://live-tyo.twitch.tv/app';
+  defautServers: { [key: string]: { url: string; stream_key_link: string } } = {
+    youtube: {
+      url: 'rtmp://a.rtmp.youtube.com/live2',
+      stream_key_link: 'https://www.youtube.com/live_dashboard',
+    },
+    twitch: {
+      url: 'rtmp://live-tyo.twitch.tv/app',
+      stream_key_link: 'https://dashboard.twitch.tv/settings/stream',
+    },
+  };
 
   @Watch('use')
   onUseChange() {
@@ -118,6 +126,10 @@ export default class SubStreamSettings extends Vue {
 
   beforeDestroy() {
     this.stopChecker();
+  }
+
+  openExternalLink(url: string) {
+    remote.shell.openExternal(url);
   }
 
   async checkStatus() {

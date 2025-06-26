@@ -725,6 +725,7 @@
     "show": "表示",
     "set": "セット",
     "default": "デフォルト",
+    "getStreamKey": "ストリームキーを取得",
     "info": {
       "error": "エラー",
       "status": "ステータス",

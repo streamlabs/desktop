@@ -725,6 +725,7 @@
     "show": "Show",
     "set": "Set",
     "default": "default",
+    "getStreamKey": "Get Stream Key",
     "info": {
       "error": "Error",
       "status": "Status",

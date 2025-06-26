@@ -24,30 +24,50 @@
               <div>{{ $t('settings.substream.urlTips') }}</div>
               <div>
                 YouTube &nbsp;
-                {{ defaultYoutubeUrl }}
+                {{ defautServers.youtube.url }}
                 <button
                   class="set-url-button basic-button"
                   data-size="sm"
                   data-radius="sm"
                   data-color="secondary"
                   data-variant="light"
-                  @click="url = defaultYoutubeUrl"
+                  @click="url = defautServers.youtube.url"
                 >
                   {{ $t('settings.substream.set') }}
+                </button>
+                <button
+                  class="set-url-button basic-button"
+                  data-size="sm"
+                  data-radius="sm"
+                  data-color="secondary"
+                  data-variant="light"
+                  @click="openExternalLink(defautServers.youtube.stream_key_link)"
+                >
+                  {{ $t('settings.substream.getStreamKey') }}
                 </button>
               </div>
               <div>
                 Twitch &nbsp;
-                {{ defaultTwitchUrl }}
+                {{ defautServers.twitch.url }}
                 <button
                   class="set-url-button basic-button"
                   data-size="sm"
                   data-radius="sm"
                   data-color="secondary"
                   data-variant="light"
-                  @click="url = defaultTwitchUrl"
+                  @click="url = defautServers.twitch.url"
                 >
                   {{ $t('settings.substream.set') }}
+                </button>
+                <button
+                  class="set-url-button basic-button"
+                  data-size="sm"
+                  data-radius="sm"
+                  data-color="secondary"
+                  data-variant="light"
+                  @click="openExternalLink(defautServers.twitch.stream_key_link)"
+                >
+                  {{ $t('settings.substream.getStreamKey') }}
                 </button>
               </div>
             </div>
@@ -241,8 +261,8 @@
 }
 
 .set-url-button {
-  height: 18px;
-  margin: 0 !important;
+  height: 20px;
+  margin: 2px !important;
 }
 
 .key-input-wrapper {
