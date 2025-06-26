@@ -43,7 +43,8 @@
                   data-variant="light"
                   @click="openExternalLink(defautServers.youtube.stream_key_link)"
                 >
-                  {{ $t('settings.substream.getStreamKey') }}
+                  {{ $t('settings.substream.getStreamKey')
+                  }}<i class="icon-open-blank set-url-icon"></i>
                 </button>
               </div>
               <div>
@@ -67,7 +68,8 @@
                   data-variant="light"
                   @click="openExternalLink(defautServers.twitch.stream_key_link)"
                 >
-                  {{ $t('settings.substream.getStreamKey') }}
+                  {{ $t('settings.substream.getStreamKey')
+                  }}<i class="icon-open-blank set-url-icon"></i>
                 </button>
               </div>
             </div>
@@ -263,6 +265,10 @@
 .set-url-button {
   height: 20px;
   margin: 2px !important;
+}
+
+.set-url-icon {
+  margin-left: 4px;
 }
 
 .key-input-wrapper {
