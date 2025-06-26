@@ -37,7 +37,7 @@ test('Adding and removing some sources', async t => {
     t.true(await sourceIsExisting(sourceName));
 
     await selectSource(sourceName);
-    await clickRemoveSource();
+    await clickRemoveSource(sourceName);
 
     await waitForSourceExist(sourceName, true);
   }

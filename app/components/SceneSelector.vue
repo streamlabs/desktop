@@ -28,7 +28,6 @@
 
       <div class="studio-controls-top-sidebar">
         <i class="icon-add icon-btn" @click="addScene" data-test="Add" />
-        <i class="icon-delete icon-btn" @click="removeScene" data-test="Remove" />
         <i class="icon-settings icon-btn" @click="showTransitions" data-test="Edit" />
       </div>
     </div>
@@ -40,7 +39,15 @@
       @select="makeActive"
       @sort="handleSort"
       @contextmenu="showContextMenu"
-    />
+    >
+      <template slot="actions" slot-scope="p">
+        <i
+          class="icon-delete icon-btn"
+          @click="removeScene(p.item.value)"
+          :data-test="'Remove' + p.item.name"
+        />
+      </template>
+    </selector>
 
     <help-tip :dismissable-key="helpTipDismissable">
       <div slot="title" v-text="$t('scenes.sceneCollections')"></div>

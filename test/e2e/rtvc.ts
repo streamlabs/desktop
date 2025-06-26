@@ -25,7 +25,7 @@ test('rtvc Adding and removing source', async t => {
   t.true(await sourceIsExisting(sourceName));
 
   await selectSource(sourceName);
-  await clickRemoveSource();
+  await clickRemoveSource(sourceName);
 
   await waitForSourceExist(sourceName, true);
 });
