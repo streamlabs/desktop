@@ -1,5 +1,5 @@
 <template>
-  <modal-layout :show-cancel="false" :done-handler="close">
+  <modal-layout :show-cancel="false" :done-handler="close" :customControls="true">
     <div slot="content">
       <div class="manage-scene-collections__header">
         <div class="input-wrapper input-wrapper--search">
@@ -22,6 +22,11 @@
           :collection-id="collection.id"
         />
       </div>
+    </div>
+    <div slot="controls">
+      <button class="button button--secondary" @click="importFromOBS" :disabled="!canImportFromOBS">
+        {{ $t('onboarding.importFromObs') }}
+      </button>
     </div>
   </modal-layout>
 </template>

@@ -26,6 +26,7 @@
     "keylistener",
     "konomi",
     "KOTOYOMI",
+    "lanczos",
     "libuiohook",
     "linebreak",
     "llhp",
@@ -75,9 +76,11 @@
     "spectron",
     "ssng",
     "statusarea",
+    "Streamlabs",
     "stylelint",
     "superfast",
     "systeminformation",
+    "Telop",
     "toplevel",
     "typedoc",
     "ultrafast",
@@ -161,6 +164,8 @@
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
+
+  "typescript.preferences.autoImportFileExcludePatterns": ["**/app-services.ts"],
 
   "github.copilot.chat.commitMessageGeneration.instructions": [
     {

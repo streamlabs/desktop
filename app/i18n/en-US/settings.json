@@ -650,6 +650,10 @@
   "SpeechEngine": {
     "name": "Speech Engine"
   },
+  "SubStream": {
+    "name": "Sub Stream"
+  },
+
   "listPlaceholder": "Select Option",
   "resolutionPlaceholder": "Select Option or Type New Value",
   "addFiles": "Add files",
@@ -702,5 +706,46 @@
     "webSpeech": "Windows SpeechSynthesizer",
     "nVoice": "N Voice / KOTOYOMI Near",
     "ignore": "ignore"
+  },
+  "substream": {
+    "use": "Use",
+    "description": "When this feature is turned ON, you can simultaneously stream\nto other platforms in addition to your main destination.",
+    "url": "URL",
+    "urlTips": "Enter the stream URL provided by the service.",
+    "streamKey": "Stream Key",
+    "syncWithMainStream": "Sync with main stream start/stop",
+    "start": "Start",
+    "stop": "Stop",
+    "streamQuality": "Stream Quality",
+    "videoEncoder": "Video Encoder",
+    "videoBitrate": "Video Bitrate (Kbps)",
+    "audioEncoder": "Audio Encoder",
+    "audioBitrate": "Audio Bitrate (Kbps)",
+    "display": "Hide",
+    "show": "Show",
+    "set": "Set",
+    "default": "default",
+    "info": {
+      "error": "Error",
+      "status": "Status",
+      "stopped": "Stopped",
+      "frames": "Frames Sent",
+      "dropped": "Frames Dropped"
+    },
+    "error": {
+      "url_key": "Please configure URL and Stream key",
+      "bad_path": "Invalid URL",
+      "connect_failed": "Connection failed",
+      "invalid_stream": "Invalid stream"
+    },
+    "status": {
+      "starting": "Starting stream...",
+      "started": "Streaming",
+      "stopping": "Stopping stream...",
+      "stopped": "Stopped",
+      "reconnect": "Reconnecting...",
+      "reconnected": "Reconnected",
+      "deactive": "Inactive"
+    }
   }
 }

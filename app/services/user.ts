@@ -179,7 +179,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
 
   async showLogin() {
     if (this.isLoggedIn()) await this.logOut();
-    this.onboardingService.start({ isLogin: true });
+    this.onboardingService.start({ skipImport: true });
   }
 
   private async login(service: IPlatformService, rawAuth: IPlatformAuth) {

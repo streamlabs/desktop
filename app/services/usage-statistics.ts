@@ -43,6 +43,15 @@ export type RtvcEventLog = {
   param?: RtvcParamPreset | RtvcParamManual | Record<string, never>;
 };
 
+export type SubStreamLog = {
+  url: string;
+  videoBitrate: number;
+  audioBitrate: number;
+  videoCodec: string;
+  audioCodec: string;
+  sync: boolean;
+};
+
 export type TUsageEvent =
   | {
       event: 'boot';
@@ -101,6 +110,7 @@ export type TUsageEvent =
         current: boolean;
       };
       rtvc: RtvcEventLog;
+      substream?: SubStreamLog;
     }
   | {
       event: 'app_start' | 'app_close';

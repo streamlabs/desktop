@@ -182,17 +182,24 @@ export class Scene {
 
     this.scenesService.itemAdded.next(sceneItem.getModel());
     if (source.type === 'monitor_capture') {
-      const subscription = this.sourcesService.sourceUpdated
-        .pipe(filter(patch => patch.sourceId === sourceId))
-        .subscribe(patch => {
-          // 初期サイズが入った後にfitToScreenする
-          if (patch.width && patch.height) {
-            sceneItem.fitToScreen();
-            subscription.unsubscribe();
-          }
-        });
+      this.fixupSceneItemWhenReady(sourceId, () => {
+        sceneItem.fitToScreen();
+      });
     }
     return sceneItem;
+  }
+
+  // SceneItem の width, heightは遅れてセットされるので、設定されたあとに実行する処理を登録する
+  // Streamlabs 側はOBSのプロセスを分けて解決しているようだが、こちらは値の設定されるタイミングがずれているためのtweakが必要
+  fixupSceneItemWhenReady(sourceId: string, callback: () => void) {
+    const subscription = this.sourcesService.sourceUpdated
+      .pipe(filter(patch => patch.sourceId === sourceId))
+      .subscribe(patch => {
+        if (patch.width && patch.height) {
+          callback();
+          subscription.unsubscribe();
+        }
+      });
   }
 
   addFile(path: string, folderId?: string): TSceneNode {

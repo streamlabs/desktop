@@ -5,7 +5,7 @@
       <div class="onboarding-desc">{{ description }}</div>
       <div v-if="status === 'done'">
         <button class="button button--primary" @click="next">
-          {{ $t('common.continue') }}
+          {{ $t('common.ok') }}
         </button>
       </div>
       <div v-if="status === 'importing'">
@@ -32,7 +32,7 @@
             {{ $t('onboarding.importFromObs') }}
           </button>
           <button class="link link--skip" @click="startFresh" data-test="Skip">
-            {{ $t('onboarding.skipImport') }}
+            {{ reImportMode ? $t('common.cancel') : $t('onboarding.skipImport') }}
           </button>
         </div>
       </div>

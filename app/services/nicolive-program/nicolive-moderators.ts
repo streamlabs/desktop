@@ -37,7 +37,11 @@ export class NicoliveModeratorsService extends StatefulService<INicoliveModerato
   stateChange = this.stateChangeSubject.asObservable();
   private refreshSubject = new Subject<
     | { event: 'addSSNG'; record: FilterRecord }
-    | { event: 'removeSSNG'; record: { ssngId: number; userId?: number; userName?: string } }
+    | {
+        event: 'removeSSNG';
+        record: { ssngId: number; userId?: number; userName?: string };
+        byModerator: boolean;
+      }
   >();
   refreshObserver = this.refreshSubject.asObservable();
 
@@ -162,10 +166,14 @@ export class NicoliveModeratorsService extends StatefulService<INicoliveModerato
                 const userId = ssngUpdated.operator?.userId
                   ? toNumber(ssngUpdated.operator.userId)
                   : undefined;
+                const byModerator =
+                  ssngUpdated.operatorType ===
+                  dwango.nicolive.chat.data.atoms.SSNGUpdated.SSNGOperatorType.MODERATOR;
                 if (ssngId) {
                   this.refreshSubject.next({
                     event: 'removeSSNG',
                     record: { ssngId, userName, userId },
+                    byModerator,
                   });
                 }
               }

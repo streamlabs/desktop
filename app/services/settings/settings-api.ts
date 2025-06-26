@@ -22,7 +22,8 @@ export type SettingsCategory =
   | 'Notifications'
   | 'Appearance'
   | 'Experimental'
-  | 'StreamSecond';
+  | 'StreamSecond'
+  | 'SubStream';
 
 export interface ISettingsServiceApi {
   getCategories(): SettingsCategory[];
