@@ -393,24 +393,37 @@ export class StreamingService
       // to be validated.
       try {
         await this.runCheck('setupDualOutput', async () => {
-          // if a custom destination is enabled for single streaming to the vertical display
+          // If a custom destination is enabled for single streaming to the vertical display
           // move the OBS context to custom ingest mode (when multistreaming this is
-          // handled by the restream service)
-          if (
+          // handled by the restream service). Get the current settings for custom destinations
+          // because they may have been updated in the beforeGoLive platform hooks
+          const currentCustomDestinations = this.views.settings.customDestinations;
+
+          // If the vertical display only has one target and it is a custom destination,
+          // the vertical display should be migrated to custom ingest mode.
+          const isVerticalCustomDestination =
             this.views.activeDisplayDestinations.vertical.length === 1 &&
-            this.views.activeDisplayPlatforms.vertical.length === 0
-          ) {
-            const customDestinations = cloneDeep(this.views.settings).customDestinations;
+            this.views.activeDisplayPlatforms.vertical.length === 0;
+
+          // Alternatively, if the vertical display only has one target and it is for a dual stream
+          // the vertical display should be migrated to custom ingest mode.
+          const isVerticalDualStreamDestination =
+            this.views.hasDualStream &&
+            this.views.activeDisplayPlatforms.vertical.length === 1 &&
+            currentCustomDestinations.length > 0;
+
+          if (isVerticalCustomDestination || isVerticalDualStreamDestination) {
+            // set the OBS context to custom ingest mode in order to update settings
+            this.streamSettingsService.setSettings(
+              {
+                streamType: 'rtmp_custom',
+              },
+              'vertical' as TDisplayType,
+            );
+
+            const customDestinations = cloneDeep(currentCustomDestinations);
             customDestinations.forEach(destination => {
               if (!destination.enabled || destination.display !== 'vertical') return;
-
-              // set the OBS context to custom ingest mode in order to update settings
-              this.streamSettingsService.setSettings(
-                {
-                  streamType: 'rtmp_custom',
-                },
-                'vertical' as TDisplayType,
-              );
 
               this.streamSettingsService.setSettings(
                 {
@@ -439,7 +452,6 @@ export class StreamingService
           'Failed to setup dual output',
         );
         this.setError(error);
-        return;
       }
 
       // record dual output usage

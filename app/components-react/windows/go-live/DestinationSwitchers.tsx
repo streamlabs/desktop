@@ -108,7 +108,7 @@ export function DestinationSwitchers() {
       return;
     }
 
-    // user can always stream to tiktok and kick
+    // user can always stream to tiktok in single output mode
     if (!isRestreamEnabled && !alwaysEnabledPlatforms.includes(platform)) {
       /*
        * Clearing this list ensures that when a new platform is selected, instead of enabling 2 platforms

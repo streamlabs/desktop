@@ -246,6 +246,12 @@ export class YoutubeService
 
   protected init() {
     this.syncSettingsWithLocalStorage();
+
+    this.streamingService.streamErrorCreated.subscribe(e => {
+      if (this.state.verticalStreamKey || this.state.verticalBroadcast.id) {
+        this.afterStopStream();
+      }
+    });
   }
 
   get authUrl() {
