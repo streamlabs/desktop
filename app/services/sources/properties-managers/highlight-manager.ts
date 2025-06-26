@@ -24,6 +24,8 @@ export class HighlightManager extends PropertiesManager {
   }
 
   init() {
+    // reset state of the media source, sometimes it gets stuck
+    this.obsSource.update({ local_file: '' });
     console.log('HighlightManager initialized');
     // if ai highlighter is not active, preserve old behavior
     setInterval(() => {
