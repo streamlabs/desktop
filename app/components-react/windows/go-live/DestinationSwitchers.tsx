@@ -56,6 +56,9 @@ export function DestinationSwitchers() {
   // in dual output mode for non-ultra users, only one custom destination can be enabled
   const destinations =
     isDualOutputMode && !isPrime ? customDestinations.filter(d => d.enabled) : customDestinations;
+  // in dual output mode for non-ultra users, only two cards for targets can be shown
+  const showCustomDestinations =
+    isDualOutputMode && !isPrime ? enabledPlatforms.length < 2 && destinations.length > 0 : true;
 
   // there are four different UIs for the switchers for each combination of output mode and ultra status.
   // the below determines which elements to show
@@ -156,17 +159,18 @@ export function DestinationSwitchers() {
         />
       ))}
 
-      {destinations?.map((dest, ind) => (
-        <DestinationSwitcher
-          key={ind}
-          destination={dest}
-          enabled={dest.enabled && !disableCustomDestinationSwitchers}
-          onChange={enabled => toggleDestination(ind, enabled)}
-          switchDisabled={disableCustomDestinationSwitchers}
-          isDualOutputMode={isDualOutputMode}
-          index={ind}
-        />
-      ))}
+      {showCustomDestinations &&
+        destinations?.map((dest, ind) => (
+          <DestinationSwitcher
+            key={ind}
+            destination={dest}
+            enabled={dest.enabled && !disableCustomDestinationSwitchers}
+            onChange={enabled => toggleDestination(ind, enabled)}
+            switchDisabled={disableCustomDestinationSwitchers}
+            isDualOutputMode={isDualOutputMode}
+            index={ind}
+          />
+        ))}
       {showSelector && (
         <DestinationSelector
           togglePlatform={platform => {

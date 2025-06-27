@@ -451,6 +451,7 @@ export class StreamingService
           'Failed to setup dual output',
         );
         this.setError(error);
+        return;
       }
 
       // record dual output usage
@@ -1363,6 +1364,14 @@ export class StreamingService
         this.streamingStatusChange.next(EStreamingState.Starting);
       } else if (info.signal === EOBSOutputSignal.Stop) {
         this.SET_STREAMING_STATUS(EStreamingState.Offline, time);
+
+        // In dual output mode, it is possible that one of the contexts has gone live
+        // while the other one has failed to start. Cleanup the contexts that have been started
+        if (this.views.isDualOutputMode && info.code !== EOutputCode.Success) {
+          NodeObs.OBS_service_stopStreaming(true, 'horizontal');
+          NodeObs.OBS_service_stopStreaming(true, 'vertical');
+        }
+
         this.RESET_STREAM_INFO();
         this.rejectStartStreaming();
         this.streamingStatusChange.next(EStreamingState.Offline);
