@@ -421,8 +421,7 @@ export class StreamingService
               'vertical' as TDisplayType,
             );
 
-            const customDestinations = cloneDeep(currentCustomDestinations);
-            customDestinations.forEach(destination => {
+            currentCustomDestinations.forEach(destination => {
               if (!destination.enabled || destination.display !== 'vertical') return;
 
               this.streamSettingsService.setSettings(
@@ -436,7 +435,7 @@ export class StreamingService
               destination.video = this.videoSettingsService.contexts.vertical;
             });
 
-            const updatedSettings = { ...settings, customDestinations };
+            const updatedSettings = { ...settings, currentCustomDestinations };
             this.streamSettingsService.setSettings({ goLiveSettings: updatedSettings });
           }
 
