@@ -36,36 +36,40 @@ export default function ClipPreviewInfo({
 
 export interface EmojiConfig {
   emoji: string;
+  count: number;
   description: string;
   type: string;
 }
 
 export function getUniqueEmojiConfigFromAiInfo(aiInfos: IAiClipInfo, game?: EGame): EmojiConfig[] {
-  const uniqueInputTypes = new Set<string>();
+  const typeCounts: Record<string, number> = {};
   if (aiInfos.inputs && Array.isArray(aiInfos.inputs)) {
     aiInfos.inputs.forEach(aiInput => {
       if (aiInput.type) {
-        uniqueInputTypes.add(aiInput.type);
+        typeCounts[aiInput.type] = (typeCounts[aiInput.type] || 0) + 1;
       }
     });
   }
 
-  const eventDisplays = Array.from(uniqueInputTypes).map(type => {
+  const uniqueInputTypes = Object.keys(typeCounts);
+
+  const eventDisplays = uniqueInputTypes.map(type => {
+    const count = typeCounts[type];
     if (game) {
       const eventInfo = getEventConfig(game, type);
-
       if (eventInfo) {
         return {
           emoji: eventInfo.emoji,
-          description: eventInfo.description.singular,
+          description: count > 1 ? eventInfo.description.plural : eventInfo.description.singular,
+          count,
           type,
         };
       }
     }
-
     return {
       emoji: '⚡',
       description: type,
+      count,
       type,
     };
   });

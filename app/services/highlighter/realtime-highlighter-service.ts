@@ -282,11 +282,21 @@ export class RealtimeHighlighterService extends Service {
     this.settingsService.setSettingsPatch({ Output: { RecRBTime: seconds } });
   }
 
+  getRandomEventType(): string {
+    const inputTypeKeys = Object.keys(FORTNITE_CONFIG.inputTypeMap);
+    const randomKey = inputTypeKeys[Math.floor(Math.random() * inputTypeKeys.length)];
+    return randomKey;
+  }
+
   addFakeClip() {
     const clips: INewClipData[] = [
       {
         aiClipInfo: {
-          inputs: [{ type: 'elimination' }],
+          inputs: [
+            { type: this.getRandomEventType() } as IInput,
+            { type: this.getRandomEventType() } as IInput,
+            { type: this.getRandomEventType() } as IInput,
+          ],
           score: 0,
           metadata: {},
         },
@@ -301,9 +311,7 @@ export class RealtimeHighlighterService extends Service {
   }
 
   triggerFakeEvent() {
-    const inputTypeKeys = Object.keys(FORTNITE_CONFIG.inputTypeMap);
-    const randomKey = inputTypeKeys[Math.floor(Math.random() * inputTypeKeys.length)];
-    this.latestDetectedEvent.next({ type: randomKey, game: EGame.FORTNITE });
+    this.latestDetectedEvent.next({ type: this.getRandomEventType(), game: EGame.FORTNITE });
   }
   /**
    * This method is called periodically to save replay events to file at correct time
@@ -354,8 +362,7 @@ export class RealtimeHighlighterService extends Service {
 
     this.latestDetectedEvent.next({
       type: event.name,
-      game: EGame.FORTNITE,
-      // game: this.visionService.currentGame as EGame,
+      game: this.visionService.currentGame as EGame,
     });
     event.timestamp = Date.now();
     this.currentReplayEvents.push(event);

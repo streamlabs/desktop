@@ -1,0 +1,49 @@
+.item-wrapper {
+  padding: 8px;
+  width: 100%;
+  display: flex;
+  background-color: #ffffff10;
+  gap: 4px;
+  align-items: center;
+  flex-direction: column;
+  border-radius: 4px;
+}
+
+.appear-animation {
+  animation: fadeIn 0.4s ease-out forwards;
+  animation-delay: 0.5s;
+  opacity: 0;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff4d4f;
+  flex-shrink: 0;
+  animation: pulse 2s infinite;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

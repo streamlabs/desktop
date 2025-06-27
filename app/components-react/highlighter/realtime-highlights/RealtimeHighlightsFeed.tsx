@@ -85,6 +85,10 @@ export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightToolt
   useEffect(() => {
     if (highlightClips) {
       setShowTooltip(true);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
       timeoutRef.current = setTimeout(() => {
         setShowTooltip(undefined);
       }, 5000);
@@ -115,41 +119,52 @@ export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightToolt
     );
   }
 
+  function getItemOpacity(index: number) {
+    if (index === highlightClips.length - 1) return 1;
+    if (index === highlightClips.length - 2) return 0.75;
+    return 0.5;
+  }
+
   const tooltipContent = (
     <div className={styles.eventTooltipContent}>
+      <h2>Clipped highlights</h2>
       <div className={styles.eventList}>
+        {hasMoreEvents && (
+          <div className={styles.eventFooter}>
+            <Button
+              type="primary"
+              size="small"
+              onClick={e => {
+                e.stopPropagation();
+                onViewAll();
+              }}
+              className={styles.viewAllButton}
+            >
+              View all highlights
+            </Button>
+          </div>
+        )}
+
+        {highlightClips.length === 0 && <p>Your clipped highlights will appear here</p>}
+
         {highlightClips &&
-          highlightClips.map(clipData => (
-            <RealtimeHighlightsItem
-              key={clipData.path}
-              clipData={clipData}
-              game={currentGame}
-              onEventItemClick={onEventItemClick}
-            />
+          highlightClips.map((clipData, index) => (
+            <div
+              key={index}
+              style={{
+                opacity: getItemOpacity(index),
+              }}
+            >
+              <RealtimeHighlightsItem
+                key={clipData.path}
+                clipData={clipData}
+                game={currentGame}
+                onEventItemClick={onEventItemClick}
+                latestItem={highlightClips.length - 1 === index}
+              />
+            </div>
           ))}
       </div>
-
-      {hasMoreEvents && (
-        <div className={styles.eventFooter}>
-          <Button
-            type="primary"
-            size="small"
-            onClick={e => {
-              e.stopPropagation();
-              onViewAll();
-            }}
-            className={styles.viewAllButton}
-          >
-            View all highlights
-          </Button>
-        </div>
-      )}
-
-      {isDevMode && (
-        <Button onClick={() => RealtimeHighlighterService.actions.addFakeClip()}>
-          <span>fake event</span>
-        </Button>
-      )}
     </div>
   );
 
