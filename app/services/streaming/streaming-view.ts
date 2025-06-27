@@ -302,9 +302,12 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     const platformDisplays = { horizontal: [] as TPlatform[], vertical: [] as TPlatform[] };
 
     for (const platform in platforms) {
-      // If any platform is configured as "Both" for outputs we technically should satisfy
+      // If any platform is configured as `Both` for outputs we technically should satisfy
       // this requirement and ignore the warning
-      if (platforms[platform as TPlatform]?.display === 'both') {
+      if (
+        platforms[platform as TPlatform]?.enabled &&
+        platforms[platform as TPlatform]?.display === 'both'
+      ) {
         return true;
       }
 
@@ -329,6 +332,9 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       platformDisplays.horizontal.length > 0 || destinationDisplays.horizontal.length > 0;
     const verticalHasDestinations =
       platformDisplays.vertical.length > 0 || destinationDisplays.vertical.length > 0;
+
+    console.log('horizontalHasDestinations', horizontalHasDestinations);
+    console.log('verticalHasDestinations', verticalHasDestinations);
 
     return horizontalHasDestinations && verticalHasDestinations;
   }
