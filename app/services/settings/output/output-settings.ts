@@ -59,8 +59,10 @@ enum EFileFormat {
   mkv = 'mkv',
   ts = 'ts',
   m3u8 = 'm3u8',
-  mpegts = 'mpegts',
-  hls = 'hls',
+  mpegts = 'ts',
+  hls = 'm3u8',
+  // mpegts = 'mpegts',
+  // hls = 'hls',
 }
 
 export const QUALITY_ORDER = [
@@ -258,9 +260,14 @@ export class OutputSettingsService extends Service {
       'Mode',
     );
 
+    const encoder = obsEncoderToEncoderFamily(
+      this.settingsService.findSettingValue(output, 'Streaming', 'Encoder') ||
+        this.settingsService.findSettingValue(output, 'Streaming', 'StreamEncoder'),
+    ) as EEncoderFamily;
+
     const convertedEncoderName:
       | EObsSimpleEncoder.x264_lowcpu
-      | EObsAdvancedEncoder = this.convertEncoderToNewAPI(this.getSettings().streaming.encoder);
+      | EObsAdvancedEncoder = this.convertEncoderToNewAPI(encoder);
 
     const videoEncoder: EObsAdvancedEncoder =
       convertedEncoderName === EObsSimpleEncoder.x264_lowcpu
@@ -919,6 +926,7 @@ export class OutputSettingsService extends Service {
       this.settingsService.setSettingValue('Output', 'Recbitrate', settingsPatch.bitrate);
     }
   }
+
   convertEncoderToNewAPI(
     encoder: EObsSimpleEncoder | string,
   ): EObsSimpleEncoder.x264_lowcpu | EObsAdvancedEncoder {
