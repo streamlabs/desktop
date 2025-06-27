@@ -1231,7 +1231,7 @@ export class StreamingService
 
   toggleRecording() {
     console.log('this.state.recordingStatus', this.state.recordingStatus);
-    // Handle stopping the recording
+    // Handle stopping recording
     if (this.state.recordingStatus === ERecordingState.Recording) {
       if (this.views.isDualOutputMode) {
         // When recording both displays in dual output mode, sleep for 2 seconds to allow a different time stamp to be generated
@@ -1259,7 +1259,6 @@ export class StreamingService
           this.recordingStopped.next();
         }
 
-        // skip handling the horizontal recording separately because it was handled in the subscription above
         return;
       }
 
@@ -1284,18 +1283,21 @@ export class StreamingService
       return;
     }
 
-    // Handle starting the recording
+    // Handle starting recording
     if (this.state.recordingStatus === ERecordingState.Offline) {
-      if (this.state.recordingStatus === ERecordingState.Offline) {
+      const dualOutputRecording =
+        this.views.isDualOutputMode && this.views.settings.recording === 'both';
+
+      if (dualOutputRecording || this.views.settings.recording === 'horizontal') {
+        console.log('Starting horizontal recording');
+
         this.validateOrCreateOutputInstance('horizontal', 'recording', 1, true);
       }
 
-      // this.dualOutputService.views.recording.forEach(display => {
-      //   if (this.state.status[display].recording === ERecordingState.Offline) {
-      //     const audioTrackIndex = display === 'horizontal' ? 1 : 2;
-      //     this.validateOrCreateOutputInstance(display, 'recording', audioTrackIndex, true);
-      //   }
-      // });
+      if (dualOutputRecording || this.views.settings.recording === 'vertical') {
+        console.log('Starting vertical recording');
+        this.validateOrCreateOutputInstance('vertical', 'recording', 2, true);
+      }
     }
 
     /**

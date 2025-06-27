@@ -434,7 +434,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       advancedMode: !!this.streamSettingsView.state.goLiveSettings?.advancedMode,
       optimizedProfile: undefined,
       customDestinations: savedGoLiveSettings?.customDestinations || [],
-      recording: this.dualOutputView.recording || [],
+      recording: savedGoLiveSettings?.recording || 'horizontal',
     };
   }
 
