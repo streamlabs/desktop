@@ -62,6 +62,8 @@ export default function AddSource() {
     let name;
     if (sourceAddOptions.propertiesManager === 'replay') {
       name = $t('Instant Replay');
+    } else if (sourceAddOptions.propertiesManager === 'highlighter') {
+      name = $t('Highlight Reel');
     } else if (sourceAddOptions.propertiesManager === 'streamlabels') {
       name = $t('Stream Label');
     } else if (sourceAddOptions.propertiesManager === 'iconLibrary') {

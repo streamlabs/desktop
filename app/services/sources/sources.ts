@@ -42,6 +42,7 @@ import { CustomizationService } from '../customization';
 import { EAvailableFeatures, IncrementalRolloutService } from '../incremental-rollout';
 import { EMonitoringType, EDeinterlaceMode, EDeinterlaceFieldOrder } from '../../../obs-api';
 import { GuestCamService } from 'services/guest-cam';
+import { HighlightManager } from './properties-managers/highlight-manager';
 
 export { EDeinterlaceMode, EDeinterlaceFieldOrder } from '../../../obs-api';
 
@@ -57,6 +58,7 @@ export const PROPERTIES_MANAGER_TYPES = {
   streamlabels: StreamlabelsManager,
   platformApp: PlatformAppManager,
   replay: ReplayManager,
+  highlighter: HighlightManager,
   iconLibrary: IconLibraryManager,
 };
 
@@ -715,6 +717,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
 
     let propertiesName = SourceDisplayData()[source.type].name;
     if (propertiesManagerType === 'replay') propertiesName = $t('Instant Replay');
+    if (propertiesManagerType === 'highlighter') propertiesName = $t('Highlight Reel');
     if (propertiesManagerType === 'streamlabels') propertiesName = $t('Stream Label');
 
     // uncomment the source type to use it's React version

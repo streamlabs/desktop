@@ -66,6 +66,8 @@ export class SourceShowcaseController {
       this.selectStreamlabel();
     } else if (inspectedSource === 'replay') {
       this.selectSource('ffmpeg_source', { propertiesManager: 'replay' });
+    } else if (inspectedSource === 'highlighter') {
+      this.selectSource('ffmpeg_source', { propertiesManager: 'highlighter' });
     } else if (inspectedSource === 'icon_library') {
       this.selectSource('image_source', { propertiesManager: 'iconLibrary' });
     } else if (inspectedSource === 'app_source') {

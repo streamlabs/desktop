@@ -240,6 +240,12 @@ export default function SourceGrid(p: { activeTab: string }) {
           type="replay"
           excludeWrap={excludeWrap}
         />
+        <SourceTag
+          key="highlighter"
+          name={$t('Highlight Reel')}
+          type="highlighter"
+          excludeWrap={excludeWrap}
+        />
         {designerMode && (
           <SourceTag
             key="icon_library"
