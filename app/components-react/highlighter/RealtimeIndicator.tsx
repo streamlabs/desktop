@@ -16,11 +16,13 @@ export default function HighlightGenerator({
 }) {
   const [animateOnce, setAnimateOnce] = useState(false);
   const [emoji, setEmoji] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
 
   // Run animation once when emoji prop changes
   useEffect(() => {
     if (eventType) {
       setEmoji(getEmojiByEventType(eventType));
+      setDescription(firstLetterUppercase(getDescriptionByEventType(eventType).singular));
       setAnimateOnce(true);
       const timeout = setTimeout(() => setAnimateOnce(false), 2000);
       return () => clearTimeout(timeout);
@@ -31,6 +33,13 @@ export default function HighlightGenerator({
     return GAME_CONFIGS[eventType.game].inputTypeMap[eventType.type]?.emoji || '🤖';
   }
 
+  function getDescriptionByEventType(eventType: { type: string; game: EGame }) {
+    return GAME_CONFIGS[eventType.game].inputTypeMap[eventType.type]?.description || 'Highlight';
+  }
+
+  function firstLetterUppercase(value: string): string {
+    return String(value).charAt(0).toUpperCase() + String(value).slice(1);
+  }
   return (
     <div className={cx(styles.realtimeDetectionAction)}>
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
@@ -46,7 +55,10 @@ export default function HighlightGenerator({
             <div className={styles.dot} />
           </div>
         )}
-        <p style={{ margin: 0, zIndex: 3, opacity: 0.7 }}>{$t('Ai detection in progress')}</p>
+        <p style={{ margin: 0, zIndex: 3, opacity: 0.7 }}>
+          {' '}
+          {animateOnce ? `${description} detected` : $t('Highlight detected')}
+        </p>
       </div>
       <Button
         size="small"
