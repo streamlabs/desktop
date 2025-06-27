@@ -1229,7 +1229,7 @@ export class StreamingService
     this.toggleRecording();
   }
 
-  toggleRecording() {
+  async toggleRecording() {
     console.log('this.state.recordingStatus', this.state.recordingStatus);
     // Handle stopping recording
     if (this.state.recordingStatus === ERecordingState.Recording) {
@@ -1287,16 +1287,17 @@ export class StreamingService
     if (this.state.recordingStatus === ERecordingState.Offline) {
       const dualOutputRecording =
         this.views.isDualOutputMode && this.views.settings.recording === 'both';
+      console.log('this.views.settings', this.views.settings);
 
       if (dualOutputRecording || this.views.settings.recording === 'horizontal') {
         console.log('Starting horizontal recording');
 
-        this.validateOrCreateOutputInstance('horizontal', 'recording', 1, true);
+        await this.validateOrCreateOutputInstance('horizontal', 'recording', 1, true);
       }
 
       if (dualOutputRecording || this.views.settings.recording === 'vertical') {
         console.log('Starting vertical recording');
-        this.validateOrCreateOutputInstance('vertical', 'recording', 2, true);
+        await this.validateOrCreateOutputInstance('vertical', 'recording', 2, true);
       }
     }
 
@@ -1394,11 +1395,14 @@ export class StreamingService
    * @param index - The index of the audio track
    */
   private async createRecording(display: TDisplayType, index: number, start?: boolean) {
+    console.log('Creating recording for display:', display, 'with index:', index);
+
     const mode = this.outputSettingsService.getSettings().mode;
     const settings = this.outputSettingsService.getRecordingSettings();
 
     // recordings must have a streaming instance
     await this.validateOrCreateOutputInstance(display, 'streaming', index);
+    console.log('validated streaming instance for recording:', display, index);
 
     // handle unique properties (including audio)
     if (mode === 'Advanced') {
@@ -1457,7 +1461,10 @@ export class StreamingService
       await this.handleSignal(signal, display);
     };
 
+    console.log('this.contexts[display].recording', this.contexts[display].recording);
     if (start) {
+      console.log('start');
+
       this.contexts[display].recording.start();
     }
 
@@ -1893,12 +1900,14 @@ export class StreamingService
     const mode = this.outputSettingsService.getSettings().mode;
     const validOutput = this.validateOutputInstance(mode, display, type);
 
+    console.log('validOutput', validOutput, display, type);
+
     // If the instance matches the mode, return to validate it
     if (validOutput && start) {
       this.contexts[display][type]?.start();
-      return;
+      return true;
     }
-    if (validOutput) return;
+    if (validOutput) return true;
 
     await this.destroyOutputContextIfExists(display, type);
 
@@ -1907,6 +1916,8 @@ export class StreamingService
     } else {
       await this.createRecording(display, index, start);
     }
+
+    return false;
   }
 
   private validateOutputInstance(
