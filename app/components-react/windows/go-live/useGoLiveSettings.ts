@@ -1,4 +1,4 @@
-import { IGoLiveSettings, StreamInfoView } from '../../../services/streaming';
+import { IGoLiveSettings, StreamInfoView, TDisplayOutput } from '../../../services/streaming';
 import { TPlatform } from '../../../services/platforms';
 import { ICustomStreamDestination } from 'services/settings/streaming';
 import { Services } from '../../service-provider';
@@ -118,17 +118,8 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
    * @param display - Display to toggle
    * @param radioBtn - If true, the display will be the only one selected for recording
    */
-  toggleRecordingDisplay(display: TDisplayType, radioBtn: boolean = false) {
-    if (radioBtn) {
-      this.updateSettings({ recording: [display] });
-      return;
-    }
-
-    if (this.state.recording.includes(display)) {
-      this.updateSettings({ recording: this.state.recording.filter(d => d !== display) });
-    } else {
-      this.updateSettings({ recording: [...this.state.recording, display] });
-    }
+  toggleRecordingDisplay(output: TDisplayOutput) {
+    this.updateSettings({ recording: output });
   }
 
   /**

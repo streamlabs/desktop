@@ -10,6 +10,7 @@ import { SwitchInput } from 'components-react/shared/inputs';
 import { RadioInput } from 'components-react/shared/inputs/RadioInput';
 import cx from 'classnames';
 import { EAvailableFeatures } from 'services/incremental-rollout';
+import { TDisplayOutput } from 'services/streaming';
 
 interface IRecordingSettingsProps {
   style?: CSSProperties;
@@ -61,7 +62,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
                 { value: 'horizontal', label: $t('Horizontal'), icon: 'icon-desktop' },
                 { value: 'vertical', label: $t('Vertical'), icon: 'icon-phone-case' },
               ]}
-              onChange={(display: TDisplayType) => toggleRecordingDisplay(display, true)}
+              onChange={(display: TDisplayOutput) => toggleRecordingDisplay(display)}
               icons={true}
               className={styles.recordingDisplay}
               disabled={v.useAiHighlighter}
