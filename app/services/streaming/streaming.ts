@@ -388,7 +388,6 @@ export class StreamingService
      * SET DUAL OUTPUT SETTINGS
      */
     if (this.views.isDualOutputMode) {
-      console.log('Setting up dual output');
       // This handles setting up displays that are streaming to a single target.
       // Note: Because the horizontal video context is the default, it does not need
       // to be validated.
@@ -465,12 +464,15 @@ export class StreamingService
         .filter(dest => dest.enabled)
         .map(dest => dest.url);
 
-      console.log('Dual Output: ', {
-        platforms: JSON.stringify(allPlatforms),
-        destinations: JSON.stringify(allDestinations),
-        horizontal: JSON.stringify(horizontalStream),
-        vertical: JSON.stringify(verticalStream),
-      });
+      if (Utils.isDevMode()) {
+        console.log('Setting up dual output');
+        console.log('Dual Output: ', {
+          platforms: JSON.stringify(allPlatforms),
+          destinations: JSON.stringify(allDestinations),
+          horizontal: JSON.stringify(horizontalStream),
+          vertical: JSON.stringify(verticalStream),
+        });
+      }
 
       this.usageStatisticsService.recordAnalyticsEvent('DualOutput', {
         type: 'StreamingDualOutput',
@@ -485,8 +487,6 @@ export class StreamingService
      * SET MULTISTREAM SETTINGS
      */
     if (this.views.shouldSetupRestream) {
-      console.log('Setting up restream');
-
       // In single output mode, this sets up multistreaming
       // In dual output mode, this sets up streaming displays to multiple targets
 
@@ -497,6 +497,18 @@ export class StreamingService
       const failureType = this.views.isMultiplatformMode
         ? 'RESTREAM_SETUP_FAILED'
         : 'DUAL_OUTPUT_SETUP_FAILED';
+
+      if (Utils.isDevMode()) {
+        console.log('Setting up restream');
+        console.log(
+          'Restream: ',
+          this.views.displaysToRestream,
+          'Horizontal:',
+          this.views.horizontalStream,
+          'Vertical',
+          this.views.verticalStream,
+        );
+      }
 
       // check the Restream service is available
       let ready = false;

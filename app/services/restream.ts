@@ -232,14 +232,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
     if (this.streamingService.views.isDualOutputMode) {
       // in dual output mode, we need to set the ingest for each display
       const displays = this.streamingService.views.displaysToRestream;
-      console.log(
-        'Restream displays',
-        displays,
-        'Horizontal:',
-        this.streamInfo.horizontalStream,
-        'Vertical',
-        this.streamInfo.verticalStream,
-      );
 
       displays.forEach(async display => {
         const mode = this.getMode(display);
