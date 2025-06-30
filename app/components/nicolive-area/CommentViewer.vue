@@ -32,6 +32,33 @@
       ></i>
     </div>
     <div class="content">
+      <div class="pinned" v-if="Boolean(pinnedComment)">
+        <div class="comment-header"><i class="icon-pinned"></i></div>
+        <component
+          class="comment-readonly"
+          :class="{
+            row: true,
+            name: getDisplayName(pinnedComment),
+          }"
+          :is="componentMap[pinnedComment.component]"
+          :chat="pinnedItem"
+          :getFormattedLiveTime="getFormattedLiveTime"
+          :commentMenuOpened="false"
+          :speaking="false"
+          :nameplateHint="false"
+          @commentUser="showUserInfo(pinnedComment)"
+        />
+        <button
+          class="action-icon pinned-close"
+          data-size="sm"
+          data-variant="sabtle"
+          data-radius="sm"
+          data-color="secondary"
+          @click="pin(null)"
+        >
+          <i class="icon-close"></i>
+        </button>
+      </div>
       <div class="list" ref="scroll">
         <component
           :class="{
@@ -77,23 +104,6 @@
           <i class="icon-close"></i>
         </button>
       </div>
-      <div class="pinned" v-if="Boolean(pinnedComment)">
-        <component
-          class="comment-readonly"
-          :class="{
-            row: true,
-            name: getDisplayName(pinnedComment),
-          }"
-          :is="componentMap[pinnedComment.component]"
-          :chat="pinnedItem"
-          :getFormattedLiveTime="getFormattedLiveTime"
-          :commentMenuOpened="false"
-          :speaking="false"
-          :nameplateHint="false"
-          @commentUser="showUserInfo(pinnedComment)"
-        />
-        <div class="close"><i class="icon-close icon-btn" @click="pin(null)"></i></div>
-      </div>
       <div class="floating-wrapper">
         <button
           type="button"
@@ -124,6 +134,7 @@
 <script lang="ts" src="./CommentViewer.vue.ts"></script>
 <style lang="less" scoped>
 @import url('../../styles/index');
+@import url('./comment/comment');
 
 .container {
   display: flex;
@@ -183,33 +194,31 @@
 }
 
 .pinned {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  left: 8px;
-  z-index: @z-index-default-content;
   display: flex;
-  padding: 0;
-  font-size: @font-size2;
-  background-color: var(--color-popper-bg-dark);
-  border: 1px solid var(--color-border-light);
-  .radius;
+  background-color: color-mix(
+    in srgb,
+    var(--color-object-accent-primary) 15%,
+    transparent
+  ); // TODO:後で変数に差し替える
 
   & /deep/ .comment-wrapper {
     padding: 8px 0;
   }
 
-  & > .close {
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    width: 12px;
-    height: 12px;
-    margin: 8px 8px 0 0;
+  & /deep/ .comment-number {
+    display: none;
+  }
 
-    & > .icon-btn {
-      margin: 0;
-      font-size: @font-size2;
+  .pinned-close {
+    flex-shrink: 0;
+    margin: auto 8px;
+  }
+
+  .comment-header {
+    .common__comment-header;
+
+    > i {
+      color: var(--color-object-accent-primary);
     }
   }
 }
