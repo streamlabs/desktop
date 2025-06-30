@@ -23,6 +23,7 @@ import { AppService } from 'services/app';
 import { importExtractZip } from '../../util/slow-imports';
 import { downloadFile, IDownloadProgress } from 'util/requests';
 import { NodeMapNode } from './nodes/node-map';
+import { SmartBrowserNode } from './nodes/overlays/smartBrowserSource';
 
 const NODE_TYPES = {
   RootNode,
@@ -39,6 +40,7 @@ const NODE_TYPES = {
   GameCaptureNode,
   IconLibraryNode,
   NodeMapNode,
+  SmartBrowserNode,
 };
 
 export class OverlaysPersistenceService extends Service {
@@ -78,6 +80,7 @@ export class OverlaysPersistenceService extends Service {
 
     const configPath = path.join(assetsPath, 'config.json');
     const data = fs.readFileSync(configPath).toString();
+
     const root = parse(data, NODE_TYPES);
     await root.load({ assetsPath });
 
