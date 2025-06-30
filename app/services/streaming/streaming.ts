@@ -809,7 +809,7 @@ export class StreamingService
 
     if (this.subStreamService.state.use) {
       event.substream = {
-        url: this.subStreamService.state.url,
+        url: extractPlatform(this.subStreamService.state.url),
         videoBitrate: this.subStreamService.state.videoBitrate,
         audioBitrate: this.subStreamService.state.audioBitrate,
         videoCodec: this.subStreamService.state.videoCodec,

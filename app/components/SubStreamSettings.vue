@@ -17,62 +17,63 @@
       </div>
 
       <div class="section" v-if="use">
+        <div>{{ $t('settings.substream.urlTips') }}</div>
+        <div class="url-tips">
+          <div>
+            YouTube &nbsp;
+            {{ defautServers.youtube.url }}
+            <button
+              class="set-url-button basic-button"
+              data-size="sm"
+              data-radius="sm"
+              data-color="secondary"
+              data-variant="light"
+              @click="url = defautServers.youtube.url"
+            >
+              {{ $t('settings.substream.set') }}
+            </button>
+            <button
+              class="set-url-button basic-button"
+              data-size="sm"
+              data-radius="sm"
+              data-color="secondary"
+              data-variant="light"
+              @click="openExternalLink(defautServers.youtube.stream_key_link)"
+            >
+              {{ $t('settings.substream.getStreamKey')
+              }}<i class="icon-open-blank set-url-icon"></i>
+            </button>
+          </div>
+          <div>
+            Twitch &nbsp;
+            {{ defautServers.twitch.url }}
+            <button
+              class="set-url-button basic-button"
+              data-size="sm"
+              data-radius="sm"
+              data-color="secondary"
+              data-variant="light"
+              @click="url = defautServers.twitch.url"
+            >
+              {{ $t('settings.substream.set') }}
+            </button>
+            <button
+              class="set-url-button basic-button"
+              data-size="sm"
+              data-radius="sm"
+              data-color="secondary"
+              data-variant="light"
+              @click="openExternalLink(defautServers.twitch.stream_key_link)"
+            >
+              {{ $t('settings.substream.getStreamKey')
+              }}<i class="icon-open-blank set-url-icon"></i>
+            </button>
+          </div>
+        </div>
+
         <div class="input-wrapper">
           <div class="input-label">
             <label>{{ $t('settings.substream.url') }}</label>
-            <div class="url-tips">
-              <div>{{ $t('settings.substream.urlTips') }}</div>
-              <div>
-                YouTube &nbsp;
-                {{ defautServers.youtube.url }}
-                <button
-                  class="set-url-button basic-button"
-                  data-size="sm"
-                  data-radius="sm"
-                  data-color="secondary"
-                  data-variant="light"
-                  @click="url = defautServers.youtube.url"
-                >
-                  {{ $t('settings.substream.set') }}
-                </button>
-                <button
-                  class="set-url-button basic-button"
-                  data-size="sm"
-                  data-radius="sm"
-                  data-color="secondary"
-                  data-variant="light"
-                  @click="openExternalLink(defautServers.youtube.stream_key_link)"
-                >
-                  {{ $t('settings.substream.getStreamKey')
-                  }}<i class="icon-open-blank set-url-icon"></i>
-                </button>
-              </div>
-              <div>
-                Twitch &nbsp;
-                {{ defautServers.twitch.url }}
-                <button
-                  class="set-url-button basic-button"
-                  data-size="sm"
-                  data-radius="sm"
-                  data-color="secondary"
-                  data-variant="light"
-                  @click="url = defautServers.twitch.url"
-                >
-                  {{ $t('settings.substream.set') }}
-                </button>
-                <button
-                  class="set-url-button basic-button"
-                  data-size="sm"
-                  data-radius="sm"
-                  data-color="secondary"
-                  data-variant="light"
-                  @click="openExternalLink(defautServers.twitch.stream_key_link)"
-                >
-                  {{ $t('settings.substream.getStreamKey')
-                  }}<i class="icon-open-blank set-url-icon"></i>
-                </button>
-              </div>
-            </div>
           </div>
           <input type="text" v-model="url" />
         </div>
@@ -93,6 +94,17 @@
               @click="showKey = !showKey"
             >
               {{ showKey ? $t('settings.substream.display') : $t('settings.substream.show') }}
+            </button>
+            <button
+              class="toggle-key-button basic-button"
+              style="margin: 0"
+              data-size="sm"
+              data-radius="sm"
+              data-color="secondary"
+              data-variant="light"
+              @click="pasteKey()"
+            >
+              {{ $t('common.paste') }}
             </button>
           </div>
         </div>
@@ -278,7 +290,7 @@
 }
 
 .toggle-key-button {
-  width: 80px;
+  width: 100px;
   height: 32px;
   margin: 0;
 }

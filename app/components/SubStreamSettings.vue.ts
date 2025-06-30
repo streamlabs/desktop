@@ -1,4 +1,5 @@
 import * as remote from '@electron/remote';
+import { clipboard } from 'electron';
 import { Inject } from 'services/core/injector';
 import { $t } from 'services/i18n';
 import { SubStreamService } from 'services/substream/SubStreamService';
@@ -88,6 +89,13 @@ export default class SubStreamSettings extends Vue {
   @Watch('sync')
   onSyncChange() {
     this.subStreamService.setState({ sync: this.sync });
+  }
+
+  pasteKey() {
+    const text = clipboard.readText();
+    if (!text || /\s/.test(text)) return;
+    this.key = text;
+    //this.showKey = true;
   }
 
   async mounted() {
