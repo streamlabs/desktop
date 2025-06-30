@@ -3,7 +3,7 @@ import { SceneItem } from '../../../scenes';
 
 interface ISchema {
   settings: object;
-  type: 'smartBrowserSource';
+  type: 'smart_browser_source';
 }
 
 interface IContext {
@@ -16,11 +16,10 @@ export class SmartBrowserNode extends Node<ISchema, IContext> {
 
   async save(context: IContext) {
     const settings = { ...context.sceneItem.getObsInput().settings };
-    const type = 'smartBrowserSource';
 
     this.data = {
       settings,
-      type,
+      type: 'smart_browser_source',
     };
   }
 
