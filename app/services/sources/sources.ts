@@ -585,6 +585,14 @@ export class SourcesService extends StatefulService<ISourcesState> {
       resolvedSettings.device = this.defaultHardwareService.state.defaultVideoDevice;
     }
 
+    // TODO: this is looking more and more like a backend fix is needed instead
+    // Set sync mode to Network (or whatever option 1 is for NDI sources, called timestamp on their end)
+    // I still can't get preview to show until I change any setting in the source
+    if (type === 'ndi_source' && typeof resolvedSettings.ndi_sync === 'undefined') {
+      const NDI_SYNC_TIMESTAMP = 1;
+      resolvedSettings.ndi_sync = NDI_SYNC_TIMESTAMP;
+    }
+
     return resolvedSettings;
   }
 
