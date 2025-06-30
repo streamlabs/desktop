@@ -391,6 +391,7 @@ export class StreamingService
       // This handles setting up displays that are streaming to a single target.
       // Note: Because the horizontal video context is the default, it does not need
       // to be validated.
+
       try {
         await this.runCheck('setupDualOutput', async () => {
           // If a custom destination is enabled for single streaming to the vertical display
@@ -463,6 +464,16 @@ export class StreamingService
         .filter(dest => dest.enabled)
         .map(dest => dest.url);
 
+      if (Utils.isDevMode()) {
+        console.log('Setting up dual output');
+        console.log('Dual Output: ', {
+          platforms: JSON.stringify(allPlatforms),
+          destinations: JSON.stringify(allDestinations),
+          horizontal: JSON.stringify(horizontalStream),
+          vertical: JSON.stringify(verticalStream),
+        });
+      }
+
       this.usageStatisticsService.recordAnalyticsEvent('DualOutput', {
         type: 'StreamingDualOutput',
         platforms: JSON.stringify(allPlatforms),
@@ -486,6 +497,18 @@ export class StreamingService
       const failureType = this.views.isMultiplatformMode
         ? 'RESTREAM_SETUP_FAILED'
         : 'DUAL_OUTPUT_SETUP_FAILED';
+
+      if (Utils.isDevMode()) {
+        console.log('Setting up restream');
+        console.log(
+          'Restream: ',
+          this.views.displaysToRestream,
+          'Horizontal:',
+          this.views.horizontalStream,
+          'Vertical',
+          this.views.verticalStream,
+        );
+      }
 
       // check the Restream service is available
       let ready = false;

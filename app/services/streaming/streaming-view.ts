@@ -203,10 +203,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   get displaysToRestream(): TDisplayType[] {
     const displays = [] as TDisplayType[];
     if (!this.isDualOutputMode) return displays;
-    if (this.horizontalStream.length > 0) {
+    if (this.horizontalStream.length > 1) {
       displays.push('horizontal' as TDisplayType);
     }
-    if (this.verticalStream.length > 0) {
+    if (this.verticalStream.length > 1) {
       displays.push('vertical' as TDisplayType);
     }
     return displays;
