@@ -54,16 +54,28 @@
         <div class="sentinel" ref="sentinel"></div>
       </div>
       <div class="snackbar" v-if="snackbar !== null">
-        {{ snackbar.message }}
+        <span class="snackbar-message">{{ snackbar.message }}</span>
         <button
           v-if="snackbar.action"
-          class="button"
-          :class="['button--primary']"
+          class="basic-button"
+          data-size="xs"
+          data-variant="sabtle"
+          data-color="primary"
+          data-radius="sm"
           @click="snackbar.action.onClick"
         >
           {{ snackbar.action.label }}
         </button>
-        <i class="icon-close icon-btn" @click="closeSnackbar"></i>
+        <button
+          class="action-icon"
+          data-size="sm"
+          data-variant="sabtle"
+          data-radius="sm"
+          data-color="secondary"
+          @click="closeSnackbar"
+        >
+          <i class="icon-close"></i>
+        </button>
       </div>
       <div class="pinned" v-if="Boolean(pinnedComment)">
         <component
@@ -160,19 +172,14 @@
 }
 
 .snackbar {
+  .snackbar-styling;
+
   position: absolute;
-  top: 0;
+  top: 8px;
   right: 0;
-  left: 0;
-  z-index: @z-index-default-content;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 16px;
-  font-size: @font-size2;
-  color: var(--color-text);
-  background-color: var(--color-bg-secondary);
-  border-bottom: 1px solid var(--color-border-light);
+  left: 50%;
+  width: calc(100% - 16px);
+  transform: translateX(-50%);
 }
 
 .pinned {

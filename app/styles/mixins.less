@@ -412,3 +412,24 @@
     }
   }
 }
+
+.snackbar-styling {
+  z-index: @z-index-default-content;
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: var(--color-surface-primary);
+  border-radius: var(--radius-sm);
+  outline: 1px solid var(--color-border-emphasis-medium);
+  outline-offset: -1px;
+
+  .snackbar-message {
+    flex-grow: 1;
+    margin-right: var(--spacing-lg);
+    font-size: var(--font-size-xs);
+    font-weight: bold;
+    line-height: var(--line-height-sm);
+    color: var(--color-text);
+  }
+}
