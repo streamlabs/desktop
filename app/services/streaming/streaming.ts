@@ -388,11 +388,15 @@ export class StreamingService
      * SET DUAL OUTPUT SETTINGS
      */
     if (this.views.isDualOutputMode) {
+      console.log('SETTING UP DUAL OUTPUT');
+
       // This handles setting up displays that are streaming to a single target.
       // Note: Because the horizontal video context is the default, it does not need
       // to be validated.
       try {
         await this.runCheck('setupDualOutput', async () => {
+          console.log('RUN DUAL OUTPUT CHECK');
+
           // if a custom destination is enabled for single streaming to the vertical display
           // move the OBS context to custom ingest mode (when multistreaming this is
           // handled by the restream service)
@@ -400,6 +404,8 @@ export class StreamingService
             this.views.activeDisplayDestinations.vertical.length === 1 &&
             this.views.activeDisplayPlatforms.vertical.length === 0
           ) {
+            console.log('SETTING UP CUSTOM DESTINATION FOR VERTICAL DISPLAY');
+
             const customDestinations = cloneDeep(this.views.settings).customDestinations;
             customDestinations.forEach(destination => {
               if (!destination.enabled || destination.display !== 'vertical') return;
@@ -464,6 +470,8 @@ export class StreamingService
      * SET MULTISTREAM SETTINGS
      */
     if (this.views.shouldSetupRestream) {
+      console.log('SETTING UP RESTREAM');
+
       // In single output mode, this sets up multistreaming
       // In dual output mode, this sets up streaming displays to multiple targets
 
@@ -499,6 +507,7 @@ export class StreamingService
         await this.runCheck(checkName, async () => {
           // enable restream on the backend side
           if (!this.restreamService.state.enabled) await this.restreamService.setEnabled(true);
+          console.log('--> RESTREAM SERVICE RUN CHECK BEFORE GO LIVE <--');
 
           await this.restreamService.beforeGoLive();
         });
@@ -528,6 +537,7 @@ export class StreamingService
 
     // start video transmission
     try {
+      console.log('START VIDEO');
       await this.runCheck('startVideoTransmission', () => this.finishStartStreaming());
     } catch (e: unknown) {
       return;

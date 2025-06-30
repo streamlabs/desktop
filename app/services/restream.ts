@@ -208,6 +208,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   async beforeGoLive() {
+    console.log('--> RESTREAM SERVICE BEFORE GO LIVE <--');
+
     await Promise.all([this.setupIngest(), this.setupTargets()]);
   }
 
@@ -339,6 +341,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   checkStatus(): Promise<boolean> {
+    console.log('--> CHECKING RESTREAM STATUS <--');
+
     const url = `https://${this.host}/api/v1/rst/util/status`;
     const request = new Request(url);
 
