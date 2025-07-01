@@ -21,7 +21,7 @@ test('Adding and removing a AudioSource', async t => {
   t.false(await client.$('.mixer-panel').$('div=Source Without Audio').isExisting());
 
   await selectSource('Source With Audio');
-  await clickRemoveSource();
+  await clickRemoveSource('Source With Audio');
 
   await client
     .$('.mixer-panel')

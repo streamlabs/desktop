@@ -13,17 +13,9 @@
         </NavItem>
       </NavMenu>
       <div class="settings-container" ref="settingsContainer">
-        <aside class="notice-section" v-if="isStreaming">
-          <p class="notice-message">
-            <i class="icon-warning" />{{ $t('settings.noticeWhileStreaming') }}
-          </p>
-        </aside>
-        <aside class="notice-section" v-if="categoryName === 'Stream'">
-          <p class="notice-message">
-            <i class="icon-warning" /><i18n path="settings.noticeForStreaming">
-              <br place="br" />
-            </i18n>
-          </p>
+        <aside class="notification-root" v-if="isStreaming">
+          <i class="notification-icon icon-notification" />
+          <p class="notification-message">{{ $t('settings.noticeWhileStreaming') }}</p>
         </aside>
 
         <extra-settings v-if="categoryName === 'General'" />
@@ -44,6 +36,7 @@
           "
           v-model="settingsData"
           :category="categoryName"
+          :isLoggedIn="isLoggedIn"
           @input="save"
         />
       </div>
@@ -84,17 +77,10 @@
 配信中に設定ダイアログへ表示するメッセージのstyle
 子コンポーネントのclassを直接参照しているのでscopedにできない
 */
-.notice-section {
-  .notice-message {
-    font-size: @font-size5;
-    font-weight: @font-weight-bold;
-    color: var(--color-accent);
-    text-align: center;
-  }
+.notification-root {
+  .notification-styling;
 
-  .icon-warning {
-    margin-right: 4px;
-  }
+  margin-bottom: var(--spacing-lg);
 }
 
 .settings-container {

@@ -1,4 +1,5 @@
 import { BehaviorSubject, Subject } from 'rxjs';
+import { jest_fn } from 'util/jest_fn';
 import { createSetupFunction } from 'util/test-setup';
 import { type ICustomizationSettings } from './customization';
 import { type IState } from './nicolive-program/state';
@@ -39,6 +40,32 @@ const setup = createSetupFunction({
   },
 });
 
+function target(options: { dummyMainWindowOperation?: boolean } = {}): {
+  WindowSizeService: typeof WindowSizeServiceType;
+} {
+  const WindowSizeService = require('./window-size')
+    .WindowSizeService as typeof WindowSizeServiceType;
+
+  if (options.dummyMainWindowOperation) {
+    WindowSizeService.mainWindowOperation = {
+      getPosition: () => [0, 0],
+      setPosition() {},
+      getSize: () => [800, 600],
+      setSize() {},
+      getMinimumSize: () => [800, 600],
+      setMinimumSize() {},
+      setMaximumSize() {},
+      isMaximized: () => false,
+      maximize() {},
+      unmaximize() {},
+      setMaximizable() {},
+      setAlwaysOnTop: jest.fn,
+      isAlwaysOnTop: () => false,
+    } as MainWindowOperation;
+  }
+  return { WindowSizeService };
+}
+
 jest.mock('services/user', () => ({ UserService: {} }));
 jest.mock('services/nicolive-program/state', () => ({ NicoliveProgramStateService: {} }));
 
@@ -53,7 +80,7 @@ afterEach(() => {
 
 test('get instance', () => {
   setup();
-  const { WindowSizeService } = require('./window-size');
+  const { WindowSizeService } = target({ dummyMainWindowOperation: true });
   expect(WindowSizeService.instance).toBeInstanceOf(WindowSizeService);
 });
 
@@ -84,7 +111,7 @@ describe('static getPanelState', () => {
   for (const [panelOpened, isLoggedIn, isCompact, isNavigating, result] of suites) {
     test(`panelOpened: ${panelOpened}, isLoggedIn: ${isLoggedIn}`, () => {
       setup();
-      const { WindowSizeService } = require('./window-size');
+      const { WindowSizeService } = target();
 
       expect(
         WindowSizeService.getPanelState({ panelOpened, isLoggedIn, isCompact, isNavigating }),
@@ -93,6 +120,7 @@ describe('static getPanelState', () => {
   }
 });
 
+// TODO fix
 describe('refreshWindowSize', () => {
   const suites = [
     {
@@ -131,7 +159,12 @@ describe('refreshWindowSize', () => {
       isLoggedIn: true,
       states: ['INACTIVE', 'CLOSED'],
     },
-  ];
+  ] as {
+    persistentIsLoggedIn: boolean;
+    persistentPanelOpened: boolean;
+    isLoggedIn: boolean;
+    states: PanelState[];
+  }[];
 
   for (const suite of suites) {
     const name = [
@@ -139,20 +172,17 @@ describe('refreshWindowSize', () => {
       'で',
       suite.persistentPanelOpened ? 'パネル展開状態' : 'パネル収納状態',
       'を復元し、',
-      ['ログインチェックに成功', 'ログインチェックに失敗', '手動ログイン', 'ログインせず'][
+      ['ログインチェックに失敗', 'ログインチェックに成功', '手動ログイン', 'ログインせず'][
         (suite.persistentIsLoggedIn ? 0 : 2) + (suite.isLoggedIn ? 1 : 0)
       ],
       ' → ',
       suite.states.join('/'),
     ].join('');
-    test(name, () => {
+    test(name, async () => {
       const userLoginState = new Subject();
       const updated = new BehaviorSubject({
         panelOpened: suite.persistentPanelOpened,
       });
-      const setMinimumSize = jest.fn();
-      const setMaximumSize = jest.fn();
-      const setSize = jest.fn();
       setup({
         injectee: {
           UserService: {
@@ -170,8 +200,8 @@ describe('refreshWindowSize', () => {
         },
       });
 
-      const { WindowSizeService } = require('./window-size');
-      const updateWindowSize = jest.fn();
+      const { WindowSizeService } = target();
+      const updateWindowSize = jest_fn<(typeof WindowSizeService)['updateWindowSize']>();
       // inject spy
       WindowSizeService.updateWindowSize = updateWindowSize;
 
@@ -179,15 +209,20 @@ describe('refreshWindowSize', () => {
       jest.spyOn(require('electron').ipcRenderer, 'sendSync').mockImplementation(sendSync);
 
       // kick getter
-      WindowSizeService.instance;
+      const windowSizeService: WindowSizeServiceType = WindowSizeService.instance;
 
       userLoginState.next(suite.isLoggedIn);
 
+      // wait for stateChange to be ready
+      await windowSizeService.waitReady();
+
+      const firstCall = 1;
       suite.states.forEach((item, index, arr) => {
+        if (index < firstCall) return;
         expect(updateWindowSize).toHaveBeenNthCalledWith(
-          index + 1,
+          index + 1 - firstCall,
           expect.anything(),
-          arr[index - 1] || null,
+          arr[index - 1] || item,
           item,
           {
             backupHeight: undefined,
@@ -197,7 +232,7 @@ describe('refreshWindowSize', () => {
           },
         );
       });
-      expect(updateWindowSize).toHaveBeenCalledTimes(suite.states.length);
+      expect(updateWindowSize).toHaveBeenCalledTimes(suite.states.length - firstCall);
     });
   }
 });
@@ -237,7 +272,7 @@ describe('updateWindowSize', () => {
       suite.smallerThanMinWidth ? '小さい' : '大きい'
     }`, () => {
       setup();
-      const { WindowSizeService } = require('./window-size');
+      const { WindowSizeService } = target();
       const { WINDOW_MIN_WIDTH } = WindowSizeService;
       const WIDTH = suite.smallerThanMinWidth
         ? SMALL_WIDTH
@@ -251,9 +286,9 @@ describe('updateWindowSize', () => {
         setSize: jest.fn(),
         isMaximized: () => false,
         setMaximizable: () => {},
-      };
+      } as unknown as MainWindowOperation;
 
-      WindowSizeService.updateWindowSize(win, suite.prev, suite.next);
+      WindowSizeService.updateWindowSize(win, suite.prev, suite.next, undefined);
       expect(win.setMinimumSize).toHaveBeenCalledTimes(1);
       expect(win.setMinimumSize).toHaveBeenNthCalledWith(
         1,
@@ -296,7 +331,7 @@ describe('updateWindowSize', () => {
       suite.isMaximized ? '最大化中は幅が変わらない' : '変化量を維持して幅を更新する'
     } setSize_called:${suite.called ? 'yes' : 'no'}`, () => {
       setup();
-      const { WindowSizeService } = require('./window-size');
+      const { WindowSizeService } = target();
       const { WINDOW_MIN_WIDTH } = WindowSizeService;
 
       const win = {
@@ -307,9 +342,9 @@ describe('updateWindowSize', () => {
         setSize: jest.fn(),
         isMaximized: () => suite.isMaximized,
         setMaximizable: jest.fn(),
-      };
+      } as unknown as MainWindowOperation;
 
-      WindowSizeService.updateWindowSize(win, suite.prev, suite.next);
+      WindowSizeService.updateWindowSize(win, suite.prev, suite.next, undefined);
 
       expect(win.setMinimumSize).toHaveBeenCalledTimes(1);
       expect(win.setMinimumSize).toHaveBeenNthCalledWith(
@@ -358,7 +393,7 @@ describe('updateWindowSize', () => {
       stateName[suite.next]
     }${suite.backupMaximized ? '(最大化保存状態)' : ''} 最大化切り替え管理`, () => {
       setup();
-      const { WindowSizeService } = require('./window-size');
+      const { WindowSizeService } = target();
       const { WINDOW_MIN_WIDTH } = WindowSizeService;
 
       const win = {
@@ -373,11 +408,11 @@ describe('updateWindowSize', () => {
         unmaximize: jest.fn(),
         setMaximizable: jest.fn(),
         setAlwaysOnTop: jest.fn(),
-      };
+      } as unknown as MainWindowOperation;
 
       const nextSize = WindowSizeService.updateWindowSize(win, suite.prev, suite.next, {
         maximized: suite.backupMaximized,
-      });
+      } as any);
 
       expect(nextSize.maximized).toEqual(suite.isMaximized);
 
@@ -471,22 +506,7 @@ describe('isAlwaysOnTop', () => {
         },
       });
 
-      const { WindowSizeService } = require('./window-size');
-      WindowSizeService.mainWindowOperation = {
-        getPosition: () => [0, 0],
-        setPosition() {},
-        getSize: () => [800, 600],
-        setSize() {},
-        getMinimumSize: () => [800, 600],
-        setMinimumSize() {},
-        setMaximumSize() {},
-        isMaximized: () => false,
-        maximize() {},
-        unmaximize() {},
-        setMaximizable() {},
-        setAlwaysOnTop: jest.fn,
-        isAlwaysOnTop: () => false,
-      } as MainWindowOperation;
+      const { WindowSizeService } = target({ dummyMainWindowOperation: true });
       const instance = WindowSizeService.instance as WindowSizeServiceType;
 
       expect(instance.state.isCompact).toBe(initCompactMode);

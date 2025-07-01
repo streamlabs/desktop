@@ -12,16 +12,17 @@
 
   // object
   --color-object-emphasis-high: var(--white);
-  --color-object-emphasis-medium: var(--white-alpha-80);
-  --color-object-emphasis-low: var(--white-alpha-50);
+  --color-object-emphasis-medium: var(--gray-100);
+  --color-object-emphasis-low: var(--gray-400);
   --color-object-emphasis-inverse: var(--black);
   --color-object-accent-primary: var(--cyan-600);
+  --color-object-accent-secondary: var(--gray-900);
 
   // surface
   --color-surface-primary: var(--slate-700);
   --color-surface-secondary: var(--slate-600);
-  --color-surface-tertiary: var(--slate-500);
-  --color-surface-quinary: var(--black-alpha-10);
+  --color-surface-tertiary: var(--slate-800);
+  --color-surface-quinary: var(--slate-alpha-50);
   --color-surface-inverse: var(--white);
   --color-surface-accent-primary: var(--cyan-600);
   --color-surface-accent-primary-light: var(--cyan-500);
@@ -31,13 +32,14 @@
 
   // caution
   --color-caution-primary: var(--red-200);
-  --color-caution-secondary: var(--red-30);
+  --color-caution-light: color-mix(in srgb, var(--color-caution-primary) 20%, transparent);
 
   // border
   --color-border-emphasis-high: var(--white-alpha-100);
-  --color-border-emphasis-medium: var(--white-alpha-40);
-  --color-border-emphasis-low: var(--white-alpha-15);
+  --color-border-emphasis-medium: var(--white-alpha-20);
+  --color-border-emphasis-low: var(--white-alpha-10);
   --color-border-emphasis-inverse: var(--black);
+  --color-border-accent: var(--cyan-600);
 
   // background
   --color-background: var(--slate-900);
@@ -49,4 +51,9 @@
   --color-external-emotion: #5c99d6;
   --color-external-nico-blue: #559cff;
   --color-external-nico-red: #f03;
+
+  // highlight
+  --color-highlight-high: var(--cyan-600);
+  --color-highlight-medium: color-mix(in srgb, var(--color-highlight-high) 15%, transparent);
+  --color-highlight-low: var(--white-alpha-10);
 }

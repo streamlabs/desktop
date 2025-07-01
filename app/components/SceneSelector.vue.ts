@@ -76,7 +76,8 @@ export default class SceneSelector extends Vue {
     this.scenesService.showNameScene();
   }
 
-  removeScene() {
+  removeScene(id?: string) {
+    this.makeActive(id || this.activeSceneId);
     const name = this.scenesService.activeScene.name;
     remote.dialog
       .showMessageBox(remote.getCurrentWindow(), {
