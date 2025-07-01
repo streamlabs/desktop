@@ -68,7 +68,7 @@
           :data-test="`Remove` + node.title"
         />
         <i
-          class="source-selector-action icon-delete icon-settings"
+          class="source-selector-action icon-settings"
           @click="sourceProperties"
           v-tooltip.bottom="openSourcePropertiesTooltip"
           data-test="Edit"
@@ -181,14 +181,15 @@
     color: var(--color-text-light);
     opacity: 1;
   }
-}
 
-i.disabled {
-  cursor: inherit;
-  opacity: @opacity-disabled;
+  &.keep-on {
+    color: var(--color-text-light);
+    opacity: 1;
 
-  :hover {
-    opacity: inherit;
+    .sl-vue-tree-node-item:hover & {
+      color: var(--color-text-light);
+      opacity: 1;
+    }
   }
 }
 
