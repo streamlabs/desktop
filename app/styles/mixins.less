@@ -412,3 +412,26 @@
     }
   }
 }
+
+.notification-styling {
+  display: flex;
+  gap: var(--spacing-lg);
+  align-items: center;
+  padding: var(--spacing-lg);
+  background-color: var(--color-highlight-medium);
+  border: var(--color-border-emphasis-low) solid 1px;
+  border-radius: var(--radius-sm);
+
+  .notification-message {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: @font-weight-bold;
+    line-height: var(--line-height-lg);
+    color: var(--color-object-emphasis-high);
+  }
+
+  .notification-icon {
+    font-size: var(--font-size-md);
+    color: var(--color-object-emphasis-high);
+  }
+}
