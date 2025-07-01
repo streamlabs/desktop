@@ -10,12 +10,14 @@ import { NavigationService } from './navigation';
 import { StreamingService } from './streaming';
 import { UserService } from './user';
 import Utils from './utils';
+import { WindowSizeService } from './window-size';
 import { WindowsService } from './windows';
 
 export interface ICompactModeServiceState {
   streaming: boolean;
   autoCompactMode: boolean;
-  navigating: boolean; // true if studio screen is onboarding or patch-note
+  /** true if studio screen is onboarding or patch-note */
+  navigating: boolean;
 }
 
 function shouldBeCompact(state: ICompactModeServiceState): boolean {
@@ -28,6 +30,7 @@ export class CompactModeService extends StatefulService<ICompactModeServiceState
   @Inject() streamingService: StreamingService;
   @Inject() windowsService: WindowsService;
   @Inject() navigationService: NavigationService;
+  @Inject() private windowSizeService: WindowSizeService;
 
   static defaultState: ICompactModeServiceState = {
     streaming: false,
@@ -38,7 +41,6 @@ export class CompactModeService extends StatefulService<ICompactModeServiceState
   init(): void {
     super.init();
     this.setState({
-      autoCompactMode: this.customizationService.state.autoCompactMode,
       streaming: this.streamingService.state.streamingStatus !== 'offline',
       navigating: this.navigationService.state.currentPage !== 'Studio',
     });
@@ -52,6 +54,13 @@ export class CompactModeService extends StatefulService<ICompactModeServiceState
     });
     this.navigationService.navigated.subscribe(state => {
       this.setState({ navigating: state.currentPage !== 'Studio' });
+    });
+
+    // WindowSizeServiceの初期化が完了したら、autoCompactModeを設定する
+    this.windowSizeService.waitReady().then(() => {
+      this.setState({
+        autoCompactMode: this.customizationService.state.autoCompactMode,
+      });
     });
   }
 

@@ -1,5 +1,5 @@
 import { ipcRenderer } from 'electron';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, filter, take } from 'rxjs';
 import { Inject } from './core/injector';
 import { mutation, StatefulService } from './core/stateful-service';
 import { CustomizationService } from './customization/customization';
@@ -13,6 +13,7 @@ interface IWindowSizeState {
   isCompact: boolean | null;
   isNavigating: boolean;
   isAlwaysOnTop: boolean;
+  isReady: boolean; // 初期化が完了したかどうか
 }
 
 const STUDIO_WIDTH = 800;
@@ -64,6 +65,7 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
     isCompact: null,
     isNavigating: false,
     isAlwaysOnTop: false,
+    isReady: false,
   };
 
   private stateChangeSubject = new BehaviorSubject(this.state);
@@ -71,6 +73,12 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
 
   init(): void {
     super.init();
+
+    // 前回終了時のウィンドウのサイズは main.js で windowStateKeeperによって復元されている
+    // 前回終了時にcompactModeだったかどうかは customizationService によって永続化され、復元している
+    // しかし、起動時の初期状態はautoCompactModeの場合、コンパクトモードの条件をみたさないため、解除されてしまう
+    // 初期状態ではまだステートが揃っていないため(isLoggedIn, panelOpened)、getPanelStateがcompactを返さない
+    // 起動時は、autoCompactModeのロジックでコンパクトモードを解除するのを延期して、1回コンパクトモードでウィンドウを開いたあとに、コンパクトモードを解除するようにしたい
 
     this.nicoliveProgramStateService.updated.subscribe({
       next: persistentState => {
@@ -109,6 +117,19 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
     });
   }
 
+  waitReady(): Promise<void> {
+    return new Promise(resolve => {
+      this.stateChange
+        .pipe(
+          filter(state => state.isReady),
+          take(1),
+        )
+        .subscribe(() => {
+          resolve(undefined);
+        });
+    });
+  }
+
   private getAlwaysOnTop(nextState: IWindowSizeState): boolean {
     return (
       WindowSizeService.getPanelState(nextState) === PanelState.COMPACT &&
@@ -118,8 +139,15 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
 
   private setState(partialState: Partial<IWindowSizeState>) {
     const nextState = { ...this.state, ...partialState };
+    if (!nextState.isReady) {
+      nextState.isReady = [nextState.panelOpened, nextState.isLoggedIn, nextState.isCompact].every(
+        v => v !== null,
+      );
+    }
     nextState.isAlwaysOnTop = this.getAlwaysOnTop(nextState);
-    this.refreshWindowSize(this.state, nextState);
+    if (this.state.isReady && nextState.isReady) {
+      this.refreshWindowSize(this.state, nextState);
+    }
     this.SET_STATE(nextState);
     this.stateChangeSubject.next(nextState);
   }
@@ -154,25 +182,26 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
     const nextPanelState = WindowSizeService.getPanelState(nextState);
     if (nextPanelState !== null) {
       if (prevPanelState !== nextPanelState) {
-        const newSize = WindowSizeService.updateWindowSize(
+        const prevBackupSize: BackupSizeInfo = {
+          widthOffset: this.customizationService.state.fullModeWidthOffset,
+          backupX: this.customizationService.state.compactBackupPositionX,
+          backupY: this.customizationService.state.compactBackupPositionY,
+          backupHeight: this.customizationService.state.compactBackupHeight,
+          maximized: this.customizationService.state.compactMaximized,
+        };
+        const nextBackupSize = WindowSizeService.updateWindowSize(
           WindowSizeService.mainWindowOperation,
           prevPanelState,
           nextPanelState,
-          {
-            widthOffset: this.customizationService.state.fullModeWidthOffset,
-            backupX: this.customizationService.state.compactBackupPositionX,
-            backupY: this.customizationService.state.compactBackupPositionY,
-            backupHeight: this.customizationService.state.compactBackupHeight,
-            maximized: this.customizationService.state.compactMaximized,
-          },
+          prevBackupSize,
         );
-        if (prevPanelState && newSize !== undefined) {
+        if (prevPanelState && nextBackupSize !== undefined) {
           this.customizationService.setFullModeWidthOffset({
-            fullModeWidthOffset: newSize.widthOffset,
-            compactBackupPositionX: newSize.backupX,
-            compactBackupPositionY: newSize.backupY,
-            compactBackupHeight: newSize.backupHeight,
-            compactMaximized: newSize.maximized,
+            fullModeWidthOffset: nextBackupSize.widthOffset,
+            compactBackupPositionX: nextBackupSize.backupX,
+            compactBackupPositionY: nextBackupSize.backupY,
+            compactBackupHeight: nextBackupSize.backupHeight,
+            compactMaximized: nextBackupSize.maximized,
           });
         }
       }
