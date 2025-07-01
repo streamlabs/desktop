@@ -23,6 +23,7 @@ import { NicoliveModeratorsService } from 'services/nicolive-program/nicolive-mo
 import { NicoliveProgramService } from 'services/nicolive-program/nicolive-program';
 import { NicoliveProgramStateService } from 'services/nicolive-program/state';
 import { ISettingsServiceApi } from 'services/settings';
+import { SnackbarService } from 'services/snackbar';
 import { Menu } from 'util/menus/Menu';
 import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
@@ -34,7 +35,6 @@ import EmotionComment from './comment/EmotionComment.vue';
 import GiftComment from './comment/GiftComment.vue';
 import NicoadComment from './comment/NicoadComment.vue';
 import SystemMessage from './comment/SystemMessage.vue';
-import { SnackbarService, SnackbarState } from 'services/snackbar';
 
 const componentMap: { [type in ChatComponentType]: Vue.Component } = {
   common: CommonComment,
@@ -198,51 +198,78 @@ export default class CommentViewer extends Vue {
         clipboard.writeText(item.value.content);
       },
     });
-    menu.append({
-      id: "Copy comment owner's id",
-      label: 'ユーザーIDをコピー',
-      click: () => {
-        clipboard.writeText(item.value.user_id);
-      },
-    });
     if (item.type === 'normal') {
-      menu.append({
-        type: 'separator',
-      });
-
-      if (!item.isDeleted) {
+      if (!item.filtered) {
+        if (!item.isDeleted) {
+          menu.append({
+            id: "Copy comment owner's id",
+            label: 'ユーザーIDをコピー',
+            click: () => {
+              clipboard.writeText(item.value.user_id);
+            },
+          });
+        }
         menu.append({
-          id: 'Delete a comment',
-          label: 'コメントを削除する',
-          click: () => {
-            this.nicoliveCommentViewerService
-              .deleteComment(item.value.id)
-              .then(() => {
-                this.openSnackbar('コメントを削除しました', {
-                  label: '取り消す',
-                  onClick: () => {
-                    this.closeSnackbar();
-                    this.nicoliveCommentViewerService.undoDeleteComment(item.value.id).catch(e => {
-                      console.log('undo delete comment failed', e); // DEBUG
-                      if (e instanceof NicoliveFailure) {
-                        openErrorDialogFromFailure(e);
-                      }
-                    });
-                  },
+          type: 'separator',
+        });
+        if (!item.isDeleted) {
+          menu.append({
+            id: 'Delete a comment',
+            label: 'コメントを削除',
+            click: () => {
+              this.nicoliveCommentViewerService
+                .deleteComment(item.value.id)
+                .then(() => {
+                  this.openSnackbar('コメントを削除しました', {
+                    label: '取り消す',
+                    onClick: () => {
+                      this.closeSnackbar();
+                      this.nicoliveCommentViewerService
+                        .undoDeleteComment(item.value.id)
+                        .catch(e => {
+                          console.log('undo delete comment failed', e); // DEBUG
+                          if (e instanceof NicoliveFailure) {
+                            openErrorDialogFromFailure(e);
+                          }
+                        });
+                    },
+                  });
+                })
+                .catch(e => {
+                  console.log('delete comment failed', e); // DEBUG
+                  if (e instanceof NicoliveFailure) {
+                    openErrorDialogFromFailure(e);
+                  }
                 });
+            },
+          });
+        }
+        menu.append({
+          id: 'Ban comment owner',
+          label: 'ユーザーを配信からブロック',
+          click: () => {
+            this.nicoliveCommentFilterService
+              .addFilter({
+                type: 'user',
+                body: item.value.user_id,
+                messageId: `${item.value.id}`,
+                memo: item.value.content,
               })
               .catch(e => {
-                console.log('delete comment failed', e); // DEBUG
                 if (e instanceof NicoliveFailure) {
                   openErrorDialogFromFailure(e);
                 }
               });
           },
         });
-      } else {
+      }
+      if (item.isDeleted) {
+        menu.append({
+          type: 'separator',
+        });
         menu.append({
           id: 'Undo delete a comment',
-          label: 'コメントを復元する',
+          label: 'コメント削除を取り消す',
           click: () => {
             this.nicoliveCommentViewerService.undoDeleteComment(item.value.id).catch(e => {
               console.log('undo delete comment failed', e); // DEBUG
@@ -253,40 +280,11 @@ export default class CommentViewer extends Vue {
           },
         });
       }
-      menu.append({
-        id: 'Ban comment content',
-        label: 'コメントを配信からブロック',
-        click: () => {
-          this.nicoliveCommentFilterService
-            .addFilter({ type: 'word', body: item.value.content })
-            .catch(e => {
-              if (e instanceof NicoliveFailure) {
-                openErrorDialogFromFailure(e);
-              }
-            });
-        },
-      });
-      menu.append({
-        id: 'Ban comment owner',
-        label: 'ユーザーを配信からブロック',
-        click: () => {
-          this.nicoliveCommentFilterService
-            .addFilter({
-              type: 'user',
-              body: item.value.user_id,
-              messageId: `${item.value.id}`,
-              memo: item.value.content,
-            })
-            .catch(e => {
-              if (e instanceof NicoliveFailure) {
-                openErrorDialogFromFailure(e);
-              }
-            });
-        },
-      });
-      menu.append({
-        type: 'separator',
-      });
+      if ((!item.isDeleted && !item.filtered) || item.isModerator) {
+        menu.append({
+          type: 'separator',
+        });
+      }
       if (item.value.name /* なふだ有効ユーザー */) {
         if (!this.nicoliveModeratorsService.isModerator(item.value.user_id)) {
           menu.append({
@@ -311,11 +309,13 @@ export default class CommentViewer extends Vue {
             },
           });
         }
-        menu.append({
-          type: 'separator',
-        });
+        if (!item.filtered && !item.isDeleted) {
+          menu.append({
+            type: 'separator',
+          });
+        }
       }
-      if (!item.isDeleted) {
+      if (!item.isDeleted && !item.filtered) {
         menu.append({
           id: 'Pin the comment',
           label: 'コメントをピン留め',
