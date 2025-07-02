@@ -42,6 +42,7 @@ export async function svgToPng(svgText: string, resolution: IResolution, outputP
     await fs.writeFile(outputPath, buffer);
   } catch (error: unknown) {
     console.error('Error creating PNG from SVG', error);
+    throw new Error('Failed to create PNG from SVG');
   }
 }
 
