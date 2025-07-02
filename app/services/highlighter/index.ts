@@ -79,7 +79,7 @@ import { addVerticalFilterToExportOptions } from './vertical-export';
 import { isGameSupported } from './models/game-config.models';
 import Utils from 'services/utils';
 import { getOS, OS } from '../../util/operating-systems';
-import { ClipCollectionManager, IClipCollection } from './clip-collections';
+import { ClipCollectionManager, IClipCollection, IClipCollectionClip } from './clip-collections';
 
 @InitAfter('StreamingService')
 export class HighlighterService extends PersistentStatefulService<IHighlighterState> {
@@ -291,6 +291,59 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       ...this.state.clipCollections[updatedStreamInfo.id],
       ...updatedStreamInfo,
     });
+  }
+
+  @mutation()
+  ADD_CLIPS_TO_COLLECTION(collectionId: string, clipsToAdd: Dictionary<IClipCollectionClip>) {
+    const collection = this.state.clipCollections[collectionId];
+    if (collection) {
+      // Initialize clips dictionary if it doesn't exist
+      if (!collection.clips) {
+        Vue.set(collection, 'clips', {});
+      }
+
+      // Add each clip to the collection
+      Object.keys(clipsToAdd).forEach(clipPath => {
+        Vue.set(collection.clips!, clipPath, clipsToAdd[clipPath]);
+      });
+    }
+  }
+
+  @mutation()
+  UPDATE_CLIPS_IN_COLLECTION(
+    collectionId: string,
+    clipsToUpdate: Dictionary<Partial<IClipCollectionClip>>,
+  ) {
+    const collection = this.state.clipCollections[collectionId];
+    if (collection && collection.clips) {
+      // Update each clip in the collection
+      Object.keys(clipsToUpdate).forEach(clipPath => {
+        if (collection.clips![clipPath]) {
+          Vue.set(collection.clips!, clipPath, {
+            ...collection.clips![clipPath],
+            ...clipsToUpdate[clipPath],
+          });
+        }
+      });
+    }
+  }
+
+  @mutation()
+  REMOVE_CLIP_FROM_COLLECTION(collectionId: string, clipPath: string) {
+    const collection = this.state.clipCollections[collectionId];
+    if (collection && collection.clips) {
+      Vue.delete(collection.clips, clipPath);
+    }
+  }
+
+  @mutation()
+  REMOVE_CLIPS_FROM_COLLECTION(collectionId: string, clipPaths: string[]) {
+    const collection = this.state.clipCollections[collectionId];
+    if (collection && collection.clips) {
+      clipPaths.forEach(clipPath => {
+        Vue.delete(collection.clips!, clipPath);
+      });
+    }
   }
 
   @mutation()

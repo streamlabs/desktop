@@ -215,6 +215,47 @@ export default function ClipsView({
               >
                 Create ClipCollection
               </Button>
+
+              <Button
+                onClick={() => {
+                  const clips = HighlighterService.getClips(
+                    HighlighterService.views.clips,
+                    streamId,
+                  );
+                  const enabledClips = clips.filter(clip => clip.enabled);
+
+                  HighlighterService.clipCollectionManager.addClipsToCollection(
+                    'DummyId',
+                    enabledClips,
+                  );
+                }}
+              >
+                add selected clips to collection
+              </Button>
+
+              <Button
+                onClick={() => {
+                  const clips = HighlighterService.getClips(
+                    HighlighterService.views.clips,
+                    streamId,
+                  );
+                  const enabledClips = clips.filter(clip => clip.enabled).map(clip => clip.path);
+
+                  HighlighterService.clipCollectionManager.removeClipsFromCollection(
+                    'DummyId',
+                    enabledClips,
+                  );
+                }}
+              >
+                remove selected clips to collection
+              </Button>
+              <Button
+                onClick={() => {
+                  HighlighterService.clipCollectionManager.deleteCollection('DummyId');
+                }}
+              >
+                remove collection
+              </Button>
               <PreviewExportButton streamId={streamId} setModal={setModal} />
             </div>
           </div>
