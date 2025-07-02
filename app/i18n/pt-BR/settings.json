@@ -141,6 +141,9 @@
   "Virtual Webcam allows you to display your scenes from Streamlabs Desktop in video conferencing software. Streamlabs Desktop will appear as a Webcam that can be selected in most video conferencing apps.": "A Webcam Virtual permite que você exiba suas cenas do Streamlabs Desktop em software de videoconferência. O Streamlabs Desktop aparecerá como uma webcam que pode ser selecionada na maioria dos aplicativos de videoconferência.",
   "Uninstalling Virtual Webcam will remove it as a device option in other applications.": "A desinstalação da Webcam Virtual irá removê-la como uma opção de dispositivo em outras aplicações.",
   "Uninstall Virtual Webcam": "Desinstalar Webcam virtual",
+  "Output type": "Output type",
+  "Output selection": "Output selection",
+  "Program (default)": "Program (default)",
   "Use custom resolution": "Usar resolução personalizada",
   "Enable Designer Mode": "Ativar o Modo Designer",
   "Get Support": "Obtenha suporte",
@@ -261,5 +264,6 @@
   "Idle": "Inativo",
   "Please connect platforms directly from Streamlabs Desktop instead of adding Streamlabs Multistream as a custom destination": "Conecte as plataformas diretamente do Streamlabs Desktop em vez de adicionar o Streamlabs Multistream como um destino personalizado",
   "Audio Encoder": "Codificador de áudio",
-  "Additional Settings": "Configurações adicionais"
+  "Additional Settings": "Configurações adicionais",
+  "Bearer Token": "Bearer Token"
 }

@@ -391,26 +391,39 @@ export class StreamingService
       // This handles setting up displays that are streaming to a single target.
       // Note: Because the horizontal video context is the default, it does not need
       // to be validated.
+
       try {
         await this.runCheck('setupDualOutput', async () => {
-          // if a custom destination is enabled for single streaming to the vertical display
+          // If a custom destination is enabled for single streaming to the vertical display
           // move the OBS context to custom ingest mode (when multistreaming this is
-          // handled by the restream service)
-          if (
-            this.views.activeDisplayDestinations.vertical.length === 1 &&
-            this.views.activeDisplayPlatforms.vertical.length === 0
-          ) {
-            const customDestinations = cloneDeep(this.views.settings).customDestinations;
-            customDestinations.forEach(destination => {
-              if (!destination.enabled || destination.display !== 'vertical') return;
+          // handled by the restream service). Get the current settings for custom destinations
+          // because they may have been updated in the beforeGoLive platform hooks
+          const currentCustomDestinations = this.views.settings.customDestinations;
 
-              // set the OBS context to custom ingest mode in order to update settings
-              this.streamSettingsService.setSettings(
-                {
-                  streamType: 'rtmp_custom',
-                },
-                'vertical' as TDisplayType,
-              );
+          // If the vertical display only has one target and it is a custom destination,
+          // the vertical display should be migrated to custom ingest mode.
+          const isVerticalCustomDestination =
+            this.views.activeDisplayDestinations.vertical.length === 1 &&
+            this.views.activeDisplayPlatforms.vertical.length === 0;
+
+          // Alternatively, if the vertical display only has one target and it is for a dual stream
+          // the vertical display should be migrated to custom ingest mode.
+          const isVerticalDualStreamDestination =
+            this.views.hasDualStream &&
+            this.views.activeDisplayPlatforms.vertical.length === 1 &&
+            currentCustomDestinations.length > 0;
+
+          if (isVerticalCustomDestination || isVerticalDualStreamDestination) {
+            // set the OBS context to custom ingest mode in order to update settings
+            this.streamSettingsService.setSettings(
+              {
+                streamType: 'rtmp_custom',
+              },
+              'vertical' as TDisplayType,
+            );
+
+            currentCustomDestinations.forEach(destination => {
+              if (!destination.enabled || destination.display !== 'vertical') return;
 
               this.streamSettingsService.setSettings(
                 {
@@ -423,7 +436,7 @@ export class StreamingService
               destination.video = this.videoSettingsService.contexts.vertical;
             });
 
-            const updatedSettings = { ...settings, customDestinations };
+            const updatedSettings = { ...settings, currentCustomDestinations };
             this.streamSettingsService.setSettings({ goLiveSettings: updatedSettings });
           }
 
@@ -451,6 +464,16 @@ export class StreamingService
         .filter(dest => dest.enabled)
         .map(dest => dest.url);
 
+      if (Utils.isDevMode()) {
+        console.log('Setting up dual output');
+        console.log('Dual Output: ', {
+          platforms: JSON.stringify(allPlatforms),
+          destinations: JSON.stringify(allDestinations),
+          horizontal: JSON.stringify(horizontalStream),
+          vertical: JSON.stringify(verticalStream),
+        });
+      }
+
       this.usageStatisticsService.recordAnalyticsEvent('DualOutput', {
         type: 'StreamingDualOutput',
         platforms: JSON.stringify(allPlatforms),
@@ -474,6 +497,18 @@ export class StreamingService
       const failureType = this.views.isMultiplatformMode
         ? 'RESTREAM_SETUP_FAILED'
         : 'DUAL_OUTPUT_SETUP_FAILED';
+
+      if (Utils.isDevMode()) {
+        console.log('Setting up restream');
+        console.log(
+          'Restream: ',
+          this.views.displaysToRestream,
+          'Horizontal:',
+          this.views.horizontalStream,
+          'Vertical',
+          this.views.verticalStream,
+        );
+      }
 
       // check the Restream service is available
       let ready = false;
@@ -1352,6 +1387,14 @@ export class StreamingService
         this.streamingStatusChange.next(EStreamingState.Starting);
       } else if (info.signal === EOBSOutputSignal.Stop) {
         this.SET_STREAMING_STATUS(EStreamingState.Offline, time);
+
+        // In dual output mode, it is possible that one of the contexts has gone live
+        // while the other one has failed to start. Cleanup the contexts that have been started
+        if (this.views.isDualOutputMode && info.code !== EOutputCode.Success) {
+          NodeObs.OBS_service_stopStreaming(true, 'horizontal');
+          NodeObs.OBS_service_stopStreaming(true, 'vertical');
+        }
+
         this.RESET_STREAM_INFO();
         this.rejectStartStreaming();
         this.streamingStatusChange.next(EStreamingState.Offline);

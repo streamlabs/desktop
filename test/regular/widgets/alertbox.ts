@@ -14,6 +14,7 @@ import { CustomizationService } from '../../../app/services/customization';
 import { assertFormContains, fillForm } from '../../helpers/modules/forms';
 import { sleep } from '../../helpers/sleep';
 
+// TODO: fake hook
 useWebdriver({ pauseIfFailed: false });
 
 test('Alert Box for Twitch', t => testAlertbox(t, 'twitch'));
@@ -36,6 +37,10 @@ const platformAlerts = {
 };
 
 async function testAlertbox(t: TExecutionContext, platform: TPlatform) {
+  if (!Object.keys(platformAlerts).includes(platform)) {
+    t.fail(`Tried to test alerts but no mapping is defined for ${platform}`);
+  }
+
   await logIn(platform);
 
   // create alertbox
@@ -45,7 +50,7 @@ async function testAlertbox(t: TExecutionContext, platform: TPlatform) {
   await openAlertboxSettings();
 
   // click through all available alert types and check for console errors
-  const alerts = platformAlerts[platform];
+  const alerts = platformAlerts[platform as keyof typeof platformAlerts];
   for (const alert of alerts) await click(`span*=${alert}`);
   await sleep(500);
 

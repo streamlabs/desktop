@@ -144,6 +144,20 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   /**
+   * Returns a list of platforms that should always be enabled in single output mode
+   */
+  get alwaysEnabledPlatforms(): TPlatform[] {
+    return ['tiktok'];
+  }
+
+  /*
+   * Primary used to get all platforms that should always show the destination switcher in the Go Live window
+   */
+  get alwaysShownPlatforms(): TPlatform[] {
+    return ['kick'];
+  }
+
+  /**
    * Returns a list of enabled platforms with useCustomFields==false
    */
   get platformsWithoutCustomFields(): TPlatform[] {
@@ -182,17 +196,17 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   get shouldSetupRestream(): boolean {
     // In dual output mode, if a display has more than one target that display uses the restream service
     const restreamDualOutputMode =
-      this.isDualOutputMode && this.horizontalStream.length > 0 && this.verticalStream.length > 0;
+      this.isDualOutputMode && (this.horizontalStream.length > 1 || this.verticalStream.length > 1);
     return this.isMultiplatformMode || restreamDualOutputMode;
   }
 
   get displaysToRestream(): TDisplayType[] {
     const displays = [] as TDisplayType[];
     if (!this.isDualOutputMode) return displays;
-    if (this.horizontalStream.length > 0) {
+    if (this.horizontalStream.length > 1) {
       displays.push('horizontal' as TDisplayType);
     }
-    if (this.verticalStream.length > 0) {
+    if (this.verticalStream.length > 1) {
       displays.push('vertical' as TDisplayType);
     }
     return displays;
@@ -218,6 +232,13 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       (displayPlatforms: TDisplayPlatforms, platform: TPlatform) => {
         const display = this.getPlatformDisplayType(platform);
         displayPlatforms[display].push(platform);
+
+        // if the platform is set to 'both' display, add it to both horizontal and vertical
+        // for analytics purposes
+        if (this.settings.platforms[platform]?.display === 'both') {
+          displayPlatforms.vertical.push(platform);
+        }
+
         return displayPlatforms;
       },
       { horizontal: [], vertical: [] },
@@ -265,6 +286,14 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return verticalDestinations.concat(this.activeDisplayPlatforms.vertical as string[]);
   }
 
+  get hasDualStream() {
+    return this.enabledPlatforms.some(
+      (platform: TPlatform) =>
+        this.supports('dualStream', [platform]) &&
+        this.settings.platforms[platform]?.display === 'both',
+    );
+  }
+
   getCanStreamDualOutput(settings?: IGoLiveSettings): boolean {
     const platforms = settings?.platforms || this.settings.platforms;
 
@@ -273,9 +302,12 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     const platformDisplays = { horizontal: [] as TPlatform[], vertical: [] as TPlatform[] };
 
     for (const platform in platforms) {
-      // If any platform is configured as "Both" for outputs we technically should satisfy
+      // If any platform is configured as `Both` for outputs we technically should satisfy
       // this requirement and ignore the warning
-      if (platforms[platform as TPlatform]?.display === 'both') {
+      if (
+        platforms[platform as TPlatform]?.enabled &&
+        platforms[platform as TPlatform]?.display === 'both'
+      ) {
         return true;
       }
 
@@ -301,7 +333,37 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     const verticalHasDestinations =
       platformDisplays.vertical.length > 0 || destinationDisplays.vertical.length > 0;
 
+    console.log('horizontalHasDestinations', horizontalHasDestinations);
+    console.log('verticalHasDestinations', verticalHasDestinations);
+
     return horizontalHasDestinations && verticalHasDestinations;
+  }
+
+  /**
+   * Return restream service access status
+   * @remark Non-ultra users cannot use the restream service except for:
+   *  - Grandfathered users
+   *  - Users streaming to an always enabled platform and one additional target in single output mode
+   *  - (currently this is only TikTok)
+   * @remark Primary used in the go live flow
+   * @returns - Ability to use the restream service
+   */
+  getIsValidRestreamConfig(): boolean {
+    if (this.restreamView.canEnableRestream) return true;
+
+    // Non-Ultra Users
+    // (Ultra status is already checked in `canEnableRestream`)
+    const numTargets =
+      this.enabledPlatforms.length + this.customDestinations.filter(dest => dest.enabled).length;
+
+    // In single output mode, if the user can only have one of the always enabled platforms and one additional target
+    // Currently, this is only TikTok
+    return (
+      !this.isDualOutputMode &&
+      this.enabledPlatforms.some(platform => {
+        return this.alwaysEnabledPlatforms.includes(platform) && numTargets === 2;
+      })
+    );
   }
 
   get isMidStreamMode(): boolean {
@@ -348,6 +410,8 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   get savedSettings(): IGoLiveSettings {
     const destinations = {} as IGoLiveSettings['platforms'];
     this.linkedPlatforms.forEach(platform => {
+      // TODO: index
+      // @ts-ignore
       destinations[platform as string] = this.getSavedPlatformSettings(platform);
     });
 
@@ -406,7 +470,11 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     destinationsWithCommonSettings.forEach(platform => {
       const destSettings = getDefined(platforms[platform]);
       Object.keys(commonFields).forEach(fieldName => {
+        // TODO: index
+        // @ts-ignore
         if (commonFields[fieldName] || !destSettings[fieldName]) return;
+        // TODO: index
+        // @ts-ignore
         commonFields[fieldName] = destSettings[fieldName];
       });
     });
@@ -415,7 +483,11 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     destinationWithCustomSettings.forEach(platform => {
       const destSettings = getDefined(platforms[platform]);
       Object.keys(commonFields).forEach(fieldName => {
+        // TODO: index
+        // @ts-ignore
         if (commonFields[fieldName] || !destSettings[fieldName]) return;
+        // TODO: index
+        // @ts-ignore
         commonFields[fieldName] = destSettings[fieldName];
       });
     });
@@ -426,8 +498,14 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     const commonFields = this.getCommonFields(platforms);
     const result = {} as IGoLiveSettings['platforms'];
     Object.keys(platforms).forEach(platform => {
+      // TODO: index
+      // @ts-ignore
       result[platform] = platforms[platform];
+      // TODO: index
+      // @ts-ignore
       result[platform].title = platforms[platform].title || commonFields.title;
+      // TODO: index
+      // @ts-ignore
       result[platform].description = platforms[platform].description || commonFields.description;
     });
     return result;
@@ -499,6 +577,8 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    */
   hasFailedChecks(): boolean {
     return !!Object.keys(this.info.checklist).find(
+      // TODO: index
+      // @ts-ignore
       check => this.info.checklist[check] === 'failed',
     );
   }
@@ -508,6 +588,8 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    */
   hasPendingChecks(): boolean {
     return !!Object.keys(this.info.checklist).find(
+      // TODO: index
+      // @ts-ignore
       check => this.info.checklist[check] === 'pending',
     );
   }
@@ -529,6 +611,8 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   private getSavedPlatformSettings(platform: TPlatform) {
     const service = getPlatformService(platform);
     const savedDestinations = this.streamSettingsView.state.goLiveSettings?.platforms;
+    // TODO: index
+    // @ts-ignore
     const { enabled, useCustomFields } = (savedDestinations && savedDestinations[platform]) || {
       enabled: false,
       useCustomFields: false,
@@ -536,11 +620,19 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     const settings = cloneDeep(service.state.settings);
 
     // don't reuse broadcastId and thumbnail for Youtube
+    // TODO: index
+    // @ts-ignore
     if (settings && settings['broadcastId']) settings['broadcastId'] = '';
+    // TODO: index
+    // @ts-ignore
     if (settings && settings['thumbnail']) settings['thumbnail'] = '';
 
     // don't reuse liveVideoId for Facebook
+    // TODO: index
+    // @ts-ignore
     if (platform === 'facebook' && settings && settings['liveVideoId']) {
+      // TODO: index
+      // @ts-ignore
       settings['liveVideoId'] = '';
     }
 

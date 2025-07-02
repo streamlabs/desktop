@@ -21,14 +21,14 @@ import { EDismissable } from 'services/dismissables';
 
 export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
   const twSettings = p.value;
-  const aiHighlighterFeatureEnabled = Services.IncrementalRolloutService.views.featureIsEnabled(
-    EAvailableFeatures.aiHighlighter,
-  );
+  const aiHighlighterFeatureEnabled = Services.HighlighterService.aiHighlighterFeatureEnabled;
   function updateSettings(patch: Partial<ITwitchStartStreamOptions>) {
     p.onChange({ ...twSettings, ...patch });
   }
 
-  const enhancedBroadcastingTooltipText = $t('Enhanced broadcasting automatically optimizes your settings to encode and send multiple video qualities to Twitch. Selecting this option will send basic information about your computer and software setup.');
+  const enhancedBroadcastingTooltipText = $t(
+    'Enhanced broadcasting automatically optimizes your settings to encode and send multiple video qualities to Twitch. Selecting this option will send basic information about your computer and software setup.',
+  );
   const bind = createBinding(twSettings, updatedSettings => updateSettings(updatedSettings));
 
   const optionalFields = (
@@ -38,12 +38,23 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
       <InputWrapper>
         <CheckboxInput label={$t('Stream features branded content')} {...bind.isBrandedContent} />
       </InputWrapper>
-      {p.enabledPlatformsCount === 1 && <InputWrapper>
-        <div>
-          <CheckboxInput style={{display: 'inline-block'}} label={$t('Enhanced broadcasting')} tooltip={enhancedBroadcastingTooltipText} {...bind.isEnhancedBroadcasting} />
-          <Badge style={{display: 'inline-block'}} dismissableKey={EDismissable.EnhancedBroadcasting} content={'Beta'} />
-        </div>
-      </InputWrapper>}
+      {p.enabledPlatformsCount === 1 && process.platform !== 'darwin' && (
+        <InputWrapper>
+          <div>
+            <CheckboxInput
+              style={{ display: 'inline-block' }}
+              label={$t('Enhanced broadcasting')}
+              tooltip={enhancedBroadcastingTooltipText}
+              {...bind.isEnhancedBroadcasting}
+            />
+            <Badge
+              style={{ display: 'inline-block' }}
+              dismissableKey={EDismissable.EnhancedBroadcasting}
+              content={'Beta'}
+            />
+          </div>
+        </InputWrapper>
+      )}
     </div>
   );
   return (

@@ -11,6 +11,9 @@ import AutoProgressBar from 'components-react/shared/AutoProgressBar';
 import { useSubscription } from 'components-react/hooks/useSubscription';
 import { message } from 'antd';
 import { useRealmObject } from 'components-react/hooks/realm';
+import { ENotificationType } from 'services/notifications';
+import { Service } from 'services/core/service';
+import { AudioNotificationType } from 'services/audio/audio';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export default function StudioEditor() {
@@ -22,6 +25,9 @@ export default function StudioEditor() {
     ScenesService,
     DualOutputService,
     StreamingService,
+    AudioService,
+    NotificationsService,
+    JsonrpcService,
   } = Services;
   const performanceMode = useRealmObject(CustomizationService.state).performanceMode;
   const v = useVuex(() => ({
@@ -51,6 +57,47 @@ export default function StudioEditor() {
     const dualOutputMode = v.showHorizontalDisplay && v.showVerticalDisplay;
     return v.studioMode && !dualOutputMode ? studioModeTransitionName : undefined;
   }, [v.showHorizontalDisplay, v.showVerticalDisplay, v.studioMode]);
+
+  useEffect(() => {
+    const timeoutHandles: { [key: number]: NodeJS.Timeout | undefined } = {};
+
+    const subscription = AudioService.audioNotificationUpdated.subscribe(notificationType => {
+      if (timeoutHandles[notificationType]) return;
+
+      timeoutHandles[notificationType] = setTimeout(() => {
+        timeoutHandles[notificationType] = undefined;
+      }, 5 * 60 * 1000);
+
+      let message = '';
+      switch (notificationType) {
+        case AudioNotificationType.YouAreMuted:
+          message = $t('Unmute your Microphone source in Mixer');
+          break;
+        case AudioNotificationType.NoSignalFromAudioInput:
+          message = $t('Your Microphone is unmuted but has no signal');
+          break;
+        default:
+          console.warn('Unknown audio notification type:', notificationType);
+          return;
+      }
+
+      const action = JsonrpcService.createRequest(
+        Service.getResourceId(NotificationsService),
+        'showNotifications',
+      );
+
+      NotificationsService.actions.push({
+        type: ENotificationType.WARNING,
+        message,
+        action,
+      });
+    });
+
+    return () => {
+      subscription.unsubscribe();
+      Object.values(timeoutHandles).forEach(v => clearTimeout(v));
+    };
+  }, []);
 
   // Track vertical orientation for placeholder
   useEffect(() => {

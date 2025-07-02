@@ -317,6 +317,8 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
     try {
       await this.validateManifest(manifest, appPath);
     } catch (e: unknown) {
+      // TODO: index
+      // @ts-ignore
       return e['message'];
     }
 

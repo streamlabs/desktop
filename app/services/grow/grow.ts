@@ -218,6 +218,8 @@ export class GrowService extends StatefulService<IGrowServiceState> {
       Object.keys(platforms)
         .filter(platform => platform !== 'tiktok')
         .map(async platform => {
+          // TODO: index
+          // @ts-ignore
           const followers = await platformService[platform].fetchFollowers();
           communityReach.push({ icon: platform as TPlatform, followers });
         }),

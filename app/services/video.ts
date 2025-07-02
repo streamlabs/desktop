@@ -216,7 +216,6 @@ export class Display {
     this.currentPosition.width = width;
     this.currentPosition.height = height;
     this.videoService.actions.resizeOBSDisplay(this.name, width, height);
-    if (this.outputRegionCallbacks.length) await this.refreshOutputRegion();
 
     // On mac, resizing the display is not enough, we also have to
     // recreate the window and IOSurface for the new size
@@ -226,13 +225,23 @@ export class Display {
         nwr.destroyIOSurface(this.name);
       }
 
-      const surface = this.videoService.createOBSIOSurface(this.name);
-      nwr.createWindow(
-        this.name,
-        remote.BrowserWindow.fromId(this.electronWindowId).getNativeWindowHandle(),
-      );
-      nwr.connectIOSurface(this.name, surface);
+      try {
+        const surface = this.videoService.createOBSIOSurface(this.name);
+        nwr.createWindow(
+          this.name,
+          remote.BrowserWindow.fromId(this.electronWindowId).getNativeWindowHandle(),
+        );
+        nwr.connectIOSurface(this.name, surface);
+
+        if (this.outputRegionCallbacks.length) {
+          await this.refreshOutputRegion();
+        }
+      } catch (ex: unknown) {
+        console.log(`Error encountered creating iosurface: ${ex}`);
+      }
       this.existingWindow = true;
+    } else if (this.outputRegionCallbacks.length) {
+      await this.refreshOutputRegion();
     }
   }
 

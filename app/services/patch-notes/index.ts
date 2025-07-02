@@ -37,6 +37,8 @@ export class PatchNotesService extends PersistentStatefulService<IPatchNotesStat
 
     if (Util.isDevMode()) {
       // Useful for previewing patch notes in dev mode
+      // TODO: index
+      // @ts-ignore
       window['showPatchNotes'] = () => {
         this.navigationService.navigate('PatchNotes');
       };

@@ -59,20 +59,34 @@ export class InternalApiClient {
           return this.applyIpcProxy(target, true, true);
         }
 
+        // TODO: index
+        // @ts-ignore
         if (!target[property]) return target[property];
 
+        // TODO: index
+        // @ts-ignore
         if (typeof target[property] !== 'function' && !(target[property] instanceof Observable)) {
+          // TODO: index
+          // @ts-ignore
           return target[property];
         }
 
         if (
+          // TODO: index
+          // @ts-ignore
           typeof target[property] === 'function' &&
+          // TODO: index
+          // @ts-ignore
           target[property]['__executeInCurrentWindow']
         ) {
+          // TODO: index
+          // @ts-ignore
           return target[property];
         }
 
         const methodName = property.toString();
+        // TODO: index
+        // @ts-ignore
         const isHelper = target['_isHelper'];
 
         // TODO: Remove once you're sure this is impossible
@@ -85,7 +99,11 @@ export class InternalApiClient {
           shouldReturn,
         });
 
+        // TODO: index
+        // @ts-ignore
         if (typeof target[property] === 'function') return handler;
+        // TODO: index
+        // @ts-ignore
         if (target[property] instanceof Observable) return handler();
       },
     });
