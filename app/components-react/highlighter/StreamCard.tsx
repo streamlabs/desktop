@@ -87,7 +87,8 @@ export default function StreamCard({
     setClipsOfStreamAreLoading(id);
 
     try {
-      await HighlighterService.actions.return.loadClips(id);
+      const clips = HighlighterService.getClips(HighlighterService.views.clips, id);
+      await HighlighterService.actions.return.loadClips(clips);
       setClipsOfStreamAreLoading(null);
       setModal('preview');
     } catch (error: unknown) {
@@ -100,7 +101,8 @@ export default function StreamCard({
     setClipsOfStreamAreLoading(id);
 
     try {
-      await HighlighterService.actions.return.loadClips(id);
+      const clips = HighlighterService.getClips(HighlighterService.views.clips, id);
+      await HighlighterService.actions.return.loadClips(clips);
       setClipsOfStreamAreLoading(null);
       setModal('export');
     } catch (error: unknown) {

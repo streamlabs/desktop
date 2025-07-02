@@ -15,7 +15,7 @@ interface IVideoInfo {
 export interface IClipCollectionClip {
   clipId: string;
   enabled: boolean;
-  orderPosition: number;
+  collectionOrderPosition: number;
   startTrim?: number;
   endTrim?: number;
 }
@@ -62,7 +62,7 @@ export class ClipCollectionManager {
       clipCollectionClips[clip.path] = {
         clipId: clip.path,
         enabled: clip.enabled,
-        orderPosition: index,
+        collectionOrderPosition: index,
         startTrim: clip.startTrim,
         endTrim: clip.endTrim,
       };
@@ -113,7 +113,7 @@ export class ClipCollectionManager {
         clipCollectionClips[clip.path] = {
           clipId: clip.path,
           enabled: clip.enabled,
-          orderPosition: index,
+          collectionOrderPosition: index,
           startTrim: clip.startTrim,
           endTrim: clip.endTrim,
         };
@@ -140,7 +140,43 @@ export class ClipCollectionManager {
     console.log(`Updated properties for clip ${clipPath} in collection ${clipCollectionId}`);
   }
 
+  getClipsFromCollection(collectionId: string): TClip[] {
+    const collection = this.highlighterService.views.clipCollectionsDictionary[collectionId];
+    if (!collection || !collection.clips) {
+      console.warn(`Collection ${collectionId} not found or has no clips`);
+      return [];
+    }
+
+    const clips: TClip[] = [];
+    Object.keys(collection.clips).forEach(clipPath => {
+      const clip = this.highlighterService.views.clipsDictionary[clipPath];
+      if (clip) {
+        // Create a copy of the clip with collection-specific properties applied
+        const collectionClip = collection.clips![clipPath];
+        clips.push({
+          ...clip,
+          // Override with collection-specific trim values if they exist
+          startTrim: collectionClip.startTrim ?? clip.startTrim,
+          endTrim: collectionClip.endTrim ?? clip.endTrim,
+          enabled: collectionClip.enabled,
+        });
+      }
+    });
+
+    return clips;
+  }
+
   exportClipCollection(collectionId: string) {
-    this.highlighterService.export();
+    // Get clips from the collection
+    const clips = this.getClipsFromCollection(collectionId);
+    if (clips.length === 0) {
+      console.warn(`No clips found in collection ${collectionId} to export`);
+      return;
+    }
+
+    // Export the clips using the highlighter service
+    console.log('start export');
+
+    this.highlighterService.export(false, clips);
   }
 }

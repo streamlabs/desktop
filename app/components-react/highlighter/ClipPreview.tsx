@@ -41,6 +41,7 @@ export default function ClipPreview(props: {
   }
 
   function setEnabled(enabled: boolean) {
+    console.log(`Setting clip ${v.clip.path} enabled state to ${enabled}`);
     HighlighterService.actions.enableClip(v.clip.path, enabled);
   }
 

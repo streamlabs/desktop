@@ -196,7 +196,15 @@ export default function NewStreamView({
                           Amount of clips: {Object.keys(clipCollection?.clips || {}).length}
                         </p>
 
-                        <Button onClick={() => {}}>export collection</Button>
+                        <Button
+                          onClick={() => {
+                            HighlighterService.clipCollectionManager.exportClipCollection(
+                              clipCollection.id,
+                            );
+                          }}
+                        >
+                          export collection
+                        </Button>
                       </>
                     );
                   })

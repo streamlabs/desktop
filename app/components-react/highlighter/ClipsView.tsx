@@ -55,7 +55,8 @@ export default function ClipsView({
   const [clipsLoaded, setClipsLoaded] = useState<boolean>(false);
 
   const loadClips = useCallback(async (id: string | undefined) => {
-    await HighlighterService.actions.return.loadClips(id);
+    const clips = HighlighterService.getClips(HighlighterService.views.clips, id);
+    await HighlighterService.actions.return.loadClips(clips);
     setClipsLoaded(true);
   }, []);
 
@@ -227,7 +228,7 @@ export default function ClipsView({
                   const enabledClips = clips.filter(clip => clip.enabled);
 
                   HighlighterService.clipCollectionManager.addClipsToCollection(
-                    '54ceda54-d062-4547-a3b7-c62bc9f7889c',
+                    '9894d160-f862-4952-ab52-f5fd09ee8b6a',
                     enabledClips,
                   );
                 }}
@@ -244,7 +245,7 @@ export default function ClipsView({
                   const enabledClips = clips.filter(clip => clip.enabled).map(clip => clip.path);
 
                   HighlighterService.clipCollectionManager.removeClipsFromCollection(
-                    streamId ?? 'DummyId',
+                    '9894d160-f862-4952-ab52-f5fd09ee8b6a',
                     enabledClips,
                   );
                 }}
@@ -424,7 +425,8 @@ function AddClip({
         streamId,
         'Manual',
       );
-      await HighlighterService.actions.return.loadClips(streamId);
+      const clips = HighlighterService.getClips(HighlighterService.views.clips, streamId);
+      await HighlighterService.actions.return.loadClips(clips);
       addedClips();
     }
   }

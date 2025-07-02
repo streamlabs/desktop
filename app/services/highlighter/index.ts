@@ -608,7 +608,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         this.streamingService.actions.toggleRecording();
 
         // Load potential replaybuffer clips
-        await this.loadClips(streamInfo.id);
+        const clips = this.getClips(this.views.clips, streamInfo?.id);
+        await this.loadClips(clips);
       }
     });
 
@@ -842,7 +843,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       });
     });
     this.sortStreamClipsByStartTime(this.views.clips, newStreamInfo);
-    await this.loadClips(newStreamInfo.id);
+    const clips = this.getClips(this.views.clips, newStreamInfo.id);
+    await this.loadClips(clips);
   }
 
   // This sorts all clips (replayBuffer and aiClips) by initialStartTime
@@ -1006,19 +1008,25 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     }
   }
 
-  async loadClips(streamInfoId?: string | undefined) {
-    const clipsToLoad: TClip[] = this.getClips(this.views.clips, streamInfoId);
+  async loadClips(clipsToLoad: TClip[]) {
     // this.resetRenderingClips();
     await this.ensureScrubDirectory();
 
     for (const clip of clipsToLoad) {
       if (!fileExists(clip.path)) {
-        this.removeClip(clip.path, streamInfoId);
+        //TODO M: Remove clip from stream
+        // this.removeClip(clip.path, streamInfoId);
+        this.SET_ERROR(
+          $t(
+            'One or more clips could not be imported because they were not recorded in a supported file format.',
+          ),
+        );
         return;
       }
 
       if (!SUPPORTED_FILE_TYPES.map(e => `.${e}`).includes(path.parse(clip.path).ext)) {
-        this.removeClip(clip.path, streamInfoId);
+        //TODO M: Remove clip from stream
+        // this.removeClip(clip.path, streamInfoId);
         this.SET_ERROR(
           $t(
             'One or more clips could not be imported because they were not recorded in a supported file format.',
@@ -1078,14 +1086,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     return this.getClips(clips, streamId).every(clip => clip.loaded);
   }
 
-  private hasUnloadedClips(streamId?: string) {
-    return !this.views.clips
-      .filter(c => {
-        if (!c.enabled) return false;
-        if (!streamId) return true;
-        return c.streamInfo && c.streamInfo[streamId] !== undefined;
-      })
-      .every(clip => clip.loaded);
+  private hasUnloadedClips(clips: TClip[]) {
+    return !clips.filter(c => c.enabled).every(clip => clip.loaded);
   }
 
   enableOnlySpecificClips(clips: TClip[], streamId?: string) {
@@ -1193,13 +1195,16 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
    */
   async export(
     preview = false,
-    streamId: string | undefined = undefined,
+    clips: TClip[],
     orientation: TOrientation = EOrientation.HORIZONTAL,
   ) {
-    this.resetRenderingClips();
-    await this.loadClips(streamId);
+    const clipCollectionId = '9894d160-f862-4952-ab52-f5fd09ee8b6a';
+    const streamId = 'manual_bf9a27eb-3e07-4461-b075-1e7f993079f9';
 
-    if (this.hasUnloadedClips(streamId)) {
+    this.resetRenderingClips();
+    await this.loadClips(clips);
+
+    if (this.hasUnloadedClips(clips)) {
       console.error('Highlighter: Export called while clips are not fully loaded!: ');
       return;
     }
@@ -1216,7 +1221,12 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       error: null,
     });
 
-    let renderingClips: RenderingClip[] = await this.generateRenderingClips(streamId, orientation);
+    let renderingClips: RenderingClip[] = await this.generateRenderingClips(
+      clips,
+      clipCollectionId,
+      streamId,
+      orientation,
+    );
     const exportOptions: IExportOptions = await this.generateExportOptions(
       renderingClips,
       preview,
@@ -1295,11 +1305,16 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     return exportOptions;
   }
 
-  private async generateRenderingClips(streamId?: string, orientation?: string) {
+  private async generateRenderingClips(
+    clips: TClip[],
+    clipCollectionId?: string,
+    streamId?: string,
+    orientation?: string,
+  ) {
     let renderingClips: RenderingClip[] = [];
 
-    if (streamId) {
-      renderingClips = this.getClips(this.views.clips, streamId)
+    if (streamId && !clipCollectionId) {
+      renderingClips = clips
         .filter(
           clip =>
             !!clip && clip.enabled && clip.streamInfo && clip.streamInfo[streamId] !== undefined,
@@ -1318,7 +1333,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           return clip;
         });
     } else {
-      renderingClips = this.views.clips
+      renderingClips = clips
         .filter(c => c.enabled)
         .sort((a: TClip, b: TClip) => a.globalOrderPosition - b.globalOrderPosition)
         .map(c => {
