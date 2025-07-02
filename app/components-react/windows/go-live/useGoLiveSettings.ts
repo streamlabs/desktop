@@ -33,17 +33,6 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
     return this.state;
   }
 
-  get alwaysEnabledPlatforms(): TPlatform[] {
-    return ['tiktok'];
-  }
-
-  /*
-   * Primary used to get all platforms that should always show the destination switcher in the Go Live window
-   */
-  get alwaysShownPlatforms(): TPlatform[] {
-    return ['kick'];
-  }
-
   /**
    * Update top level settings
    */
@@ -361,6 +350,28 @@ export class GoLiveSettingsModule {
     return this.state.getCanStreamDualOutput(this.state);
   }
 
+  getIsInvalidDualStream(): boolean {
+    if (this.isPrime) {
+      return false;
+    }
+
+    // Using the settings in the Go Live window's state, determine if the user
+    // has set the output of any eligible platform to `both` to validate if
+    // the user is trying to dual stream. Using the settings from the streaming
+    // service views is not enough because the user may have changed them in the
+    // Go Live window.
+    const willDualStream = this.state.enabledPlatforms.some(
+      (platform: TPlatform) =>
+        this.state.getCanDualStream(platform) &&
+        this.state.settings.platforms[platform]?.display === 'both',
+    );
+
+    const numTargets =
+      this.state.enabledPlatforms.length + this.state.enabledCustomDestinationHosts.length;
+
+    return this.state.isDualOutputMode && willDualStream && numTargets !== 1;
+  }
+
   /**
    * Validate the form and show an error message
    */
@@ -376,6 +387,11 @@ export class GoLiveSettingsModule {
         2,
         () => true,
       );
+    }
+
+    if (this.getIsInvalidDualStream()) {
+      message.info($t('Upgrade to Ultra to allow more than two outputs'), 2, () => true);
+      return;
     }
 
     try {
