@@ -1,10 +1,9 @@
 # Run this script as administrator to setup enviroment on new CI machine:
-# powershell install.ps1 your_azure_token host_user host_password agent_pool?
+# powershell install.ps1 your_azure_token host_user host_password
 
 $token=$args[0]
 $username=$args[1]
 $password=$args[2]
-$pool=$args[3]
 
 if (-Not($token) -Or -Not($username) -Or -Not($password)) {
   echo "Provide a token, system user name and password";
@@ -25,11 +24,11 @@ $registerAgentScriptName = "register-agent.ps1"
 [System.Environment]::SetEnvironmentVariable('AZURE_PIPELINES_TOKEN', $token, [System.EnvironmentVariableTarget]::User)
 [System.Environment]::SetEnvironmentVariable('AZURE_PIPELINES_WORKING_DIR', $workingDir, [System.EnvironmentVariableTarget]::User)
 
-echo "Donwload and install Azure Agent"
+echo "Download and install Azure Agent"
 cd /
 Remove-Item -Recurse -Force -ErrorAction Ignore agent
 mkdir agent ; cd agent;
-Invoke-WebRequest -Uri https://vstsagentpackage.azureedge.net/agent/2.150.3/vsts-agent-win-x64-2.150.3.zip -OutFile "$PWD\agent.zip"
+Invoke-WebRequest -Uri https://download.agent.dev.azure.com/agent/4.255.0/vsts-agent-win-x64-4.255.0.zip -OutFile "$PWD\agent.zip"
 Add-Type -AssemblyName System.IO.Compression.FileSystem ; [System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD\agent.zip", "$PWD")
 
 
