@@ -1056,10 +1056,8 @@ function initialize(crashHandler) {
      * @returns {Promise<import('./app/util/fetchViaMainProcess.ts').MainProcessFetchResponse>}
      * */
     async (_e, url, options) => {
-      console.log('fetch', url, options); // DEBUG
       const response = await fetch(url, options);
       const text = await response.text();
-      console.log('fetch response', response.status, text); // DEBUG
       return {
         ok: response.ok,
         headers: response.headers.entries(),

@@ -227,7 +227,6 @@ export default class CommentViewer extends Vue {
                       this.nicoliveCommentViewerService
                         .undoDeleteComment(item.value.id)
                         .catch(e => {
-                          console.log('undo delete comment failed', e); // DEBUG
                           if (e instanceof NicoliveFailure) {
                             openErrorDialogFromFailure(e);
                           }
@@ -236,7 +235,6 @@ export default class CommentViewer extends Vue {
                   });
                 })
                 .catch(e => {
-                  console.log('delete comment failed', e); // DEBUG
                   if (e instanceof NicoliveFailure) {
                     openErrorDialogFromFailure(e);
                   }
@@ -272,7 +270,6 @@ export default class CommentViewer extends Vue {
           label: 'コメント削除を取り消す',
           click: () => {
             this.nicoliveCommentViewerService.undoDeleteComment(item.value.id).catch(e => {
-              console.log('undo delete comment failed', e); // DEBUG
               if (e instanceof NicoliveFailure) {
                 openErrorDialogFromFailure(e);
               }
