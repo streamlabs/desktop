@@ -231,7 +231,7 @@ const COUNTER_STRIKE_2_CONFIG: IGameConfig = {
   label: 'Counter-Strike',
   gameModes: '',
   thumbnail: `${thumbnailPath}${EGame.COUNTER_STRIKE_2}.png`,
-  state: EGameState.INTERNAL,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
