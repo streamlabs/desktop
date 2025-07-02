@@ -6,7 +6,7 @@
   "license": "GPL-3.0",
   "version": "1.19.0",
   "main": "main.js",
-  "macVirtualCamVersion": "30.2.4sl21-vcam6",
+  "macVirtualCamVersion": "30.2.4sl22-vcam1",
   "scripts": {
     "compile": "yarn clear && yarn compile:updater && yarn webpack-cli --progress --config ./webpack.dev.config.js",
     "compile:production": "yarn clear && yarn compile:updater && yarn webpack-cli --progress --config ./webpack.prod.config.js",
