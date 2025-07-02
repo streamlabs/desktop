@@ -253,12 +253,7 @@ function ExportFlow({
     };
   }, [streamId]);
 
-  const showSubtitleSettings = useMemo(
-    () =>
-      ['staging', 'local'].includes(Utils.getHighlighterEnvironment()) &&
-      isHighlighterAfterVersion('0.0.53'),
-    [],
-  );
+  const showSubtitleSettings = useMemo(() => isHighlighterAfterVersion('0.0.53'), []);
 
   function settingMatcher(initialSetting: TSetting) {
     const matchingSetting = settings.find(
