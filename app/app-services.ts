@@ -48,6 +48,7 @@ export { ObsUserPluginsService } from 'services/obs-user-plugins';
 export { HardwareService, DefaultHardwareService } from 'services/hardware';
 export { EditorCommandsService } from 'services/editor-commands';
 export { EditorService } from 'services/editor';
+export { SignalsService } from 'services/signals-manager';
 export { StreamSettingsService } from 'services/settings/streaming';
 export { TouchBarService } from 'services/touch-bar';
 export { ApplicationMenuService } from 'services/application-menu';
@@ -211,6 +212,7 @@ import { TwitchStudioImporterService } from 'services/ts-importer';
 import { RemoteControlService } from 'services/api/remote-control-api';
 import { UrlService } from 'services/hosts';
 import { KickService } from 'services/platforms/kick';
+import { SignalsService } from 'services/signals-manager';
 
 export const AppServices = {
   AppService,
@@ -229,6 +231,7 @@ export const AppServices = {
   PatchNotesService,
   VideoService,
   ChatService,
+  SignalsService,
   StreamingService,
   StreamSettingsService,
   RestreamService,
