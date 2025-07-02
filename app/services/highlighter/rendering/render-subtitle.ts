@@ -1,4 +1,3 @@
-import sharp from 'sharp';
 import fs from 'fs-extra';
 import { IResolution, SvgCreator } from '../subtitles/svg-creator';
 import { getTranscription } from '../ai-highlighter-utils';
@@ -8,7 +7,18 @@ import path from 'path';
 
 export const SUBTITLE_PER_SECOND = 3;
 
+let sharp: any = null;
+
 export async function svgToPng(svgText: string, resolution: IResolution, outputPath: string) {
+  try {
+    if (!sharp) {
+      // Import sharp dynamically to avoid issues with the main process
+      sharp = (await import('sharp')).default;
+    }
+  } catch (error: unknown) {
+    console.error('Error importing sharp:', error);
+    throw new Error('Sharp library is not available. Please ensure it is installed.');
+  }
   try {
     const buffer = await sharp({
       // Generate PNG with transparent background
