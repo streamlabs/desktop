@@ -208,6 +208,13 @@ export default function ClipsView({
               >
                 {$t('Share feedback')}
               </Button>
+              <Button
+                onClick={() => {
+                  HighlighterService.clipCollectionManager.createClipCollection();
+                }}
+              >
+                Create ClipCollection
+              </Button>
               <PreviewExportButton streamId={streamId} setModal={setModal} />
             </div>
           </div>

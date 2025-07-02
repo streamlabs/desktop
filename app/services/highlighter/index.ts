@@ -79,6 +79,7 @@ import { addVerticalFilterToExportOptions } from './vertical-export';
 import { isGameSupported } from './models/game-config.models';
 import Utils from 'services/utils';
 import { getOS, OS } from '../../util/operating-systems';
+import { ClipCollectionManager, IClipCollection } from './clip-collections';
 
 @InitAfter('StreamingService')
 export class HighlighterService extends PersistentStatefulService<IHighlighterState> {
@@ -94,6 +95,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
   static defaultState: IHighlighterState = {
     clips: {},
+    clipCollections: {},
     transition: {
       type: 'fade',
       duration: 1,
@@ -134,6 +136,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   };
 
   aiHighlighterUpdater: AiHighlighterUpdater;
+  clipCollectionManager: ClipCollectionManager = new ClipCollectionManager(this);
   aiHighlighterFeatureEnabled = getOS() === OS.Windows || Utils.isDevMode();
   streamMilestones: IStreamMilestones | null = null;
 
@@ -148,6 +151,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       transition: state.transition,
       useAiHighlighter: state.useAiHighlighter,
       highlighterVersion: state.highlighterVersion,
+      clipCollections: state.clipCollections,
     };
   }
 
@@ -274,6 +278,24 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   @mutation()
   REMOVE_HIGHLIGHTED_STREAM(id: string) {
     Vue.delete(this.state.highlightedStreamsDictionary, id);
+  }
+
+  @mutation()
+  ADD_CLIPS_COLLECTION(streamInfo: IClipCollection) {
+    Vue.set(this.state.clipCollections, streamInfo.id, streamInfo);
+  }
+
+  @mutation()
+  UPDATE_CLIPS_COLLECTION(updatedStreamInfo: Partial<IClipCollection> & { id: string }) {
+    Vue.set(this.state.clipCollections, updatedStreamInfo.id, {
+      ...this.state.clipCollections[updatedStreamInfo.id],
+      ...updatedStreamInfo,
+    });
+  }
+
+  @mutation()
+  REMOVE_CLIPS_COLLECTION(id: string) {
+    Vue.delete(this.state.clipCollections, id);
   }
 
   @mutation()

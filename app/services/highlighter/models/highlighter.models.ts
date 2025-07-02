@@ -1,3 +1,4 @@
+import { IClipCollection } from '../clip-collections';
 import {
   IAiClipInfo,
   IHighlighterMilestone,
@@ -18,6 +19,7 @@ export type TOpenedFrom = 'after-stream' | 'manual-import' | 'recordings-tab';
 
 export interface IHighlighterState {
   clips: Dictionary<TClip>;
+  clipCollections: Dictionary<IClipCollection>;
   transition: ITransitionInfo;
   video: IVideoInfo;
   audio: IAudioInfo;

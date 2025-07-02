@@ -36,6 +36,13 @@ export class HighlighterViews extends ViewHandler<IHighlighterState> {
   }
 
   /**
+   * Returns clipCollections
+   */
+  get clipCollectionsDictionary() {
+    return this.state.clipCollections;
+  }
+
+  /**
    * Whether any clips need to be loaded
    */
   get loaded() {
