@@ -719,6 +719,7 @@
     "streamQuality": "配信品質",
     "videoEncoder": "映像エンコーダー",
     "videoBitrate": "映像ビットレート (Kbps)",
+    "keyintSec": "キーフレーム間隔（秒, 0=自動）",
     "audioEncoder": "音声エンコーダー",
     "audioBitrate": "音声ビットレート (Kbps)",
     "display": "非表示",

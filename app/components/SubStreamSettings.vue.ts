@@ -29,6 +29,7 @@ export default class SubStreamSettings extends Vue {
   audioCodec: { id: string; name: string } = { id: '', name: '' };
   audioCodecs: { id: string; name: string }[] = [];
 
+  keyintSec: number = SubStreamService.defaultState.keyintSec;
   sync: boolean = SubStreamService.defaultState.sync;
 
   status: string = '';
@@ -76,6 +77,11 @@ export default class SubStreamSettings extends Vue {
     this.subStreamService.setState({ videoCodec: this.videoCodec.id });
   }
 
+  @Watch('keyintSec')
+  onKeyintSecChange() {
+    this.subStreamService.setState({ keyintSec: Number(this.keyintSec) });
+  }
+
   @Watch('audioBitrate')
   onAudioBitrateChange() {
     this.subStreamService.setState({ audioBitrate: Number(this.audioBitrate) });
@@ -103,6 +109,7 @@ export default class SubStreamSettings extends Vue {
     this.url = this.subStreamService.state.url;
     this.key = this.subStreamService.state.key;
     this.videoBitrate = this.subStreamService.state.videoBitrate;
+    this.keyintSec = this.subStreamService.state.keyintSec;
     this.audioBitrate = this.subStreamService.state.audioBitrate;
     this.sync = this.subStreamService.state.sync;
 

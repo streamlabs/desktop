@@ -194,6 +194,16 @@
 
           <div class="input-wrapper">
             <div class="input-label">
+              <label>
+                {{ $t('settings.substream.keyintSec') }}
+                <span class="label-description">({{ $t('settings.substream.default') }}: 2)</span>
+              </label>
+            </div>
+            <input type="number" v-model="keyintSec" min="0" max="20" />
+          </div>
+
+          <div class="input-wrapper">
+            <div class="input-label">
               <label
                 >{{ $t('settings.substream.audioEncoder')
                 }}<span class="label-description"

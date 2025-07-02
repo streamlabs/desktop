@@ -719,6 +719,7 @@
     "streamQuality": "Stream Quality",
     "videoEncoder": "Video Encoder",
     "videoBitrate": "Video Bitrate (Kbps)",
+    "keyintSec": "Keyframe Interval (seconds) 0:auto",
     "audioEncoder": "Audio Encoder",
     "audioBitrate": "Audio Bitrate (Kbps)",
     "display": "Hide",
