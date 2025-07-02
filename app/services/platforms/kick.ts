@@ -5,6 +5,7 @@ import {
   IPlatformRequest,
   IPlatformService,
   IPlatformState,
+  TPlatform,
   TPlatformCapability,
 } from './index';
 import { authorizedHeaders, jfetch } from '../../util/requests';
@@ -259,6 +260,7 @@ export class KickService
         const defaultError = {
           status: 403,
           statusText: 'Unable to start Kick stream.',
+          platform: 'kick' as TPlatform,
         };
 
         if (!e) throwStreamError('PLATFORM_REQUEST_FAILED', defaultError);
@@ -271,7 +273,7 @@ export class KickService
 
         // check if the error is an IKickError
         if (typeof e === 'object' && e.hasOwnProperty('result')) {
-          const error = e as IKickError;
+          const error = { ...(e as IKickError), platform: 'kick' as TPlatform };
 
           if (error.result && error.result.data.code === 401) {
             const message = error.statusText !== '' ? error.statusText : error.result.data.message;
@@ -328,6 +330,7 @@ export class KickService
             {
               status: e.status,
               statusText: message,
+              platform: 'kick',
             },
             e.result.data.message,
           );
@@ -415,6 +418,7 @@ export class KickService
           throwStreamError('PLATFORM_REQUEST_FAILED', {
             status: 400,
             statusText: 'Failed to update Kick channel info',
+            platform: 'kick',
           });
         }
       })

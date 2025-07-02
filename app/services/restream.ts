@@ -18,6 +18,7 @@ import { VideoSettingsService, TDisplayType } from './settings-v2/video';
 import { TwitterPlatformService } from './platforms/twitter';
 import { InstagramService } from './platforms/instagram';
 import { PlatformAppsService } from './platform-apps';
+import { throwStreamError } from './streaming/stream-error';
 
 export type TOutputOrientation = 'landscape' | 'portrait';
 interface IRestreamTarget {
@@ -138,6 +139,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   get shouldGoLiveWithRestream() {
+    if (!this.views.canEnableRestream) return false;
     return this.streamInfo.isMultiplatformMode || this.streamInfo.isDualOutputMode;
   }
 
@@ -208,6 +210,10 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   async beforeGoLive() {
+    if (!this.streamInfo.getIsValidRestreamConfig()) {
+      throwStreamError('RESTREAM_SETUP_FAILED');
+    }
+
     await Promise.all([this.setupIngest(), this.setupTargets()]);
   }
 
@@ -226,6 +232,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     if (this.streamingService.views.isDualOutputMode) {
       // in dual output mode, we need to set the ingest for each display
       const displays = this.streamingService.views.displaysToRestream;
+
       displays.forEach(async display => {
         const mode = this.getMode(display);
         const settings = await this.fetchUserSettings(mode);

@@ -123,7 +123,7 @@ export class TrovoService
     } catch (e: unknown) {
       let details = (e as any).message;
       if (!details) details = 'connection failed';
-      throwStreamError('PLATFORM_REQUEST_FAILED', e as any, details);
+      throwStreamError('PLATFORM_REQUEST_FAILED', { ...(e as any), platform: 'trovo' }, details);
     }
   }
 
