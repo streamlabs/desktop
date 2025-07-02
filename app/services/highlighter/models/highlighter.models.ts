@@ -107,6 +107,7 @@ export interface IHighlightedStream {
   abortController?: AbortController;
   path: string;
   feedbackLeft?: boolean;
+  clipCollectionIds?: string[];
 }
 
 // VIEW

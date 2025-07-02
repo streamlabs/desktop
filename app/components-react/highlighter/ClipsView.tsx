@@ -210,7 +210,9 @@ export default function ClipsView({
               </Button>
               <Button
                 onClick={() => {
-                  HighlighterService.clipCollectionManager.createClipCollection();
+                  HighlighterService.clipCollectionManager.createClipCollection(
+                    streamId ?? 'DummyId',
+                  );
                 }}
               >
                 Create ClipCollection
@@ -225,7 +227,7 @@ export default function ClipsView({
                   const enabledClips = clips.filter(clip => clip.enabled);
 
                   HighlighterService.clipCollectionManager.addClipsToCollection(
-                    'DummyId',
+                    '54ceda54-d062-4547-a3b7-c62bc9f7889c',
                     enabledClips,
                   );
                 }}
@@ -242,7 +244,7 @@ export default function ClipsView({
                   const enabledClips = clips.filter(clip => clip.enabled).map(clip => clip.path);
 
                   HighlighterService.clipCollectionManager.removeClipsFromCollection(
-                    'DummyId',
+                    streamId ?? 'DummyId',
                     enabledClips,
                   );
                 }}

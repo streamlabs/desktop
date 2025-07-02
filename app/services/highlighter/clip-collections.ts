@@ -22,14 +22,9 @@ export interface IClipCollectionClip {
 
 export interface IClipCollection {
   id: string;
-  streamId: string;
   clipCollectionInfo?: IVideoInfo;
   exportedFilePath?: string;
-  clips?: Dictionary<IClipCollectionClip>; // Use Dictionary for fast lookups, keyed by clip.path
-  // export: IExportInfo;
-  // uploads: IUploadInfo[];
-  // Video settings
-  // ...any other per-collection options
+  clips?: Dictionary<IClipCollectionClip>;
 }
 export class ClipCollectionManager {
   highlighterService: HighlighterService;
@@ -38,30 +33,24 @@ export class ClipCollectionManager {
     this.highlighterService = highlighterService;
   }
 
-  createClipCollection() {
-    const id = 'DummyId';
-    const clipCollectionInfo: IClipCollection = {
-      id,
-      streamId: 'dummy-stream-id',
-    };
-    // based on logic from the highlighter service
-    this.highlighterService.ADD_CLIPS_COLLECTION(clipCollectionInfo);
-    console.log('Adding clip to collection');
-  }
-
   deleteCollection(collectionId: string) {
     this.highlighterService.REMOVE_CLIPS_COLLECTION(collectionId);
     console.log('Deleted collection:', collectionId);
   }
 
-  addCollection(streamId: string, clipCollectionInfo?: Partial<IVideoInfo>) {
+  createClipCollection(streamId: string, clipCollectionInfo?: Partial<IVideoInfo>) {
     const id = uuid.v4();
     const newClipCollection: IClipCollection = {
       id,
-      streamId,
       clipCollectionInfo: clipCollectionInfo as IVideoInfo,
     };
+
+    // Add the collection to the highlighter service
     this.highlighterService.ADD_CLIPS_COLLECTION(newClipCollection);
+
+    // Add the collection ID to the stream's clipCollectionIds array
+    this.highlighterService.addCollectionToStream(streamId, id);
+
     console.log('Added new collection:', newClipCollection);
     return newClipCollection;
   }
@@ -149,5 +138,9 @@ export class ClipCollectionManager {
     this.highlighterService.UPDATE_CLIPS_IN_COLLECTION(clipCollectionId, clipsToUpdate);
 
     console.log(`Updated properties for clip ${clipPath} in collection ${clipCollectionId}`);
+  }
+
+  exportClipCollection(collectionId: string) {
+    this.highlighterService.export();
   }
 }

@@ -12,6 +12,7 @@ import StreamView from 'components-react/highlighter/StreamView';
 import ClipsView from 'components-react/highlighter/ClipsView';
 import UpdateModal from 'components-react/highlighter/UpdateModal';
 import { EAvailableFeatures } from 'services/incremental-rollout';
+import NewStreamView from 'components-react/highlighter/NewStreamView';
 
 export default function Highlighter(props: { params?: { view: string } }) {
   const { HighlighterService, UsageStatisticsService } = Services;
@@ -64,7 +65,7 @@ export default function Highlighter(props: { params?: { view: string } }) {
       return (
         <>
           {aiHighlighterFeatureEnabled && updaterModal}
-          <StreamView
+          <NewStreamView
             emitSetView={data => {
               setViewFromEmit(data);
             }}

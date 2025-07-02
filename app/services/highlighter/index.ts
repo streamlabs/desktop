@@ -271,8 +271,12 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   }
 
   @mutation()
-  UPDATE_HIGHLIGHTED_STREAM(updatedStreamInfo: IHighlightedStream) {
-    Vue.set(this.state.highlightedStreamsDictionary, updatedStreamInfo.id, updatedStreamInfo);
+  UPDATE_HIGHLIGHTED_STREAM(updatedStreamInfo: Partial<IHighlightedStream> & { id: string }) {
+    const existingStream = this.state.highlightedStreamsDictionary[updatedStreamInfo.id];
+    Vue.set(this.state.highlightedStreamsDictionary, updatedStreamInfo.id, {
+      ...existingStream,
+      ...updatedStreamInfo,
+    });
   }
 
   @mutation()
@@ -295,6 +299,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
   @mutation()
   ADD_CLIPS_TO_COLLECTION(collectionId: string, clipsToAdd: Dictionary<IClipCollectionClip>) {
+    console.log('add clips to collection', collectionId, clipsToAdd);
+
     const collection = this.state.clipCollections[collectionId];
     if (collection) {
       // Initialize clips dictionary if it doesn't exist
@@ -348,6 +354,19 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
   @mutation()
   REMOVE_CLIPS_COLLECTION(id: string) {
+    // Remove the collection from any streams that reference it
+    Object.values(this.state.highlightedStreamsDictionary).forEach(stream => {
+      if (stream.clipCollectionIds && stream.clipCollectionIds.includes(id)) {
+        // Use the helper method to cleanly remove the collection reference
+        const updatedCollectionIds = stream.clipCollectionIds.filter(
+          collectionId => collectionId !== id,
+        );
+        // Direct mutation update here since we're already in a mutation context
+        Vue.set(stream, 'clipCollectionIds', updatedCollectionIds);
+      }
+    });
+
+    // Remove the collection itself
     Vue.delete(this.state.clipCollections, id);
   }
 
@@ -914,6 +933,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         streamInfo: updatedStreamInfo,
       });
     } else {
+      // TODO M: Remove from clipsCollection
       this.REMOVE_CLIP(removePath);
       this.removeScrubFile(clip.scrubSprite);
       delete this.renderingClips[removePath];
@@ -1101,6 +1121,30 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
   updateStream(streamInfo: IHighlightedStream) {
     this.UPDATE_HIGHLIGHTED_STREAM(streamInfo);
+  }
+
+  addCollectionToStream(streamId: string, collectionId: string) {
+    const stream = this.state.highlightedStreamsDictionary[streamId];
+    if (stream) {
+      const currentCollectionIds = stream.clipCollectionIds || [];
+      if (!currentCollectionIds.includes(collectionId)) {
+        this.UPDATE_HIGHLIGHTED_STREAM({
+          id: streamId,
+          clipCollectionIds: [...currentCollectionIds, collectionId],
+        });
+      }
+    }
+  }
+
+  removeCollectionFromStream(streamId: string, collectionId: string) {
+    const stream = this.state.highlightedStreamsDictionary[streamId];
+    if (stream && stream.clipCollectionIds) {
+      const updatedCollectionIds = stream.clipCollectionIds.filter(id => id !== collectionId);
+      this.UPDATE_HIGHLIGHTED_STREAM({
+        id: streamId,
+        clipCollectionIds: updatedCollectionIds,
+      });
+    }
   }
 
   removeStream(streamId: string, deleteClipsFromSystem = true) {
