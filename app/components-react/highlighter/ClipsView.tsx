@@ -28,7 +28,7 @@ import MiniClipPreview from './MiniClipPreview';
 import HighlightGenerator from './HighlightGenerator';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 
-export type TModalClipsView = 'trim' | 'export' | 'preview' | 'remove';
+export type TModalClipsView = 'trim' | 'export' | 'preview' | 'remove' | 'exportMarkers';
 
 interface IClipsViewProps {
   id: string | undefined;
@@ -472,6 +472,14 @@ function PreviewExportButton({
 
   return (
     <>
+      <Tooltip
+        title={$t('Export detectected timecodes as markers for editing software')}
+        placement="bottom"
+      >
+        <Button disabled={!hasClipsToExport} onClick={() => setModal({ modal: 'exportMarkers' })}>
+          {$t('Export Markers')}
+        </Button>
+      </Tooltip>
       <Tooltip
         title={!hasClipsToExport ? $t('Select at least one clip to preview your video') : null}
         placement="bottom"
