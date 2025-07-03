@@ -6,10 +6,14 @@ import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import { getContextEventTypes } from 'services/highlighter/models/game-config.models';
 export const isAiClip = (clip: TClip): clip is IAiClip => clip.source === 'AiClip';
 
-export function sortClipsByOrder(clips: TClip[], streamId: string | undefined): TClip[] {
+export function sortClipsByOrder(
+  clips: TClip[],
+  streamId: string | undefined,
+  collectionId?: string,
+): TClip[] {
   let sortedClips;
 
-  if (streamId) {
+  if (streamId && !collectionId) {
     const clipsWithOrder = clips
       .filter(c => c.streamInfo?.[streamId]?.orderPosition !== undefined && c.deleted !== true)
       .sort(

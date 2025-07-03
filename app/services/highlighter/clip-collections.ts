@@ -177,6 +177,6 @@ export class ClipCollectionManager {
     // Export the clips using the highlighter service
     console.log('start export');
 
-    this.highlighterService.export(false, clips);
+    this.highlighterService.actions.export(false, clips);
   }
 }

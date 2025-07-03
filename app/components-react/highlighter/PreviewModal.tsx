@@ -25,27 +25,30 @@ interface IPlaylist {
 
 export default function PreviewModal({
   close,
+  clips,
   streamId,
   emitSetShowModal,
 }: {
   close: () => void;
   streamId: string | undefined;
+  clips: TClip[];
   emitSetShowModal: (modal: 'export' | null) => void;
 }) {
   const { HighlighterService, UsageStatisticsService } = Services;
-  const clips = useVuex(() =>
-    HighlighterService.getClips(HighlighterService.views.clips, streamId),
-  );
+
   const { intro, outro } = HighlighterService.views.video;
   const audioSettings = HighlighterService.views.audio;
-  const sortedClips = [...sortClipsByOrder(clips, streamId)];
+  // TODO M: Sorting must be fixed
+  const clipCollection = undefined;
+  const sortedClips = [...sortClipsByOrder(clips, streamId, undefined)];
   const initialIndex = getInitialIndex(intro.duration, sortedClips);
   const [currentClipIndex, setCurrentClipIndex] = useState(initialIndex);
   const currentClipIndexRef = useRef(initialIndex);
   const [showDisabled, setShowDisabled] = useState(true);
 
   useEffect(() => {
-    UsageStatisticsService.recordShown('ClipsPreview', streamId);
+    // TODO M: Add tracking back in
+    // UsageStatisticsService.recordShown('ClipsPreview', streamId);
   }, []);
 
   function getInitialIndex(introDuration: number | null, sortedClips: TClip[]): number {

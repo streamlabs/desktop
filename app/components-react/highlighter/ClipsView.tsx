@@ -254,7 +254,9 @@ export default function ClipsView({
               </Button>
               <Button
                 onClick={() => {
-                  HighlighterService.clipCollectionManager.deleteCollection('DummyId');
+                  HighlighterService.clipCollectionManager.deleteCollection(
+                    '9894d160-f862-4952-ab52-f5fd09ee8b6a',
+                  );
                 }}
               >
                 remove collection

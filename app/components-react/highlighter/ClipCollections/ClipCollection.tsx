@@ -1,0 +1,131 @@
+import React, { useEffect, useState } from 'react';
+import { Services } from 'components-react/service-provider';
+import { useVuex } from 'components-react/hooks';
+import styles from '../StreamView.m.less';
+import { IViewState, TClip } from 'services/highlighter/models/highlighter.models';
+import { TModalStreamCard } from '../StreamCardModal';
+
+interface ClipCollectionProps {
+  collectionId: string;
+  emitDeletedCollection: (id: string) => void;
+}
+
+export default function ClipCollection(props: ClipCollectionProps) {
+  const [modal, setModal] = useState<TModalStreamCard | null>(null);
+
+  const { HighlighterService } = Services;
+  const v = useVuex(() => ({
+    clipCollection: HighlighterService.views.clipCollectionsDictionary[props.collectionId],
+  }));
+
+  const clips = HighlighterService.clipCollectionManager.getClipsFromCollection(
+    v.clipCollection.id,
+  );
+
+  return (
+    <div style={{ width: '100px', height: '150px', backgroundColor: 'blue' }}>
+      id: {v.clipCollection.id}
+      clips: {v.clipCollection.clips && Object.keys(v.clipCollection.clips).length}
+      <Button
+        onClick={() => {
+          props.emitDeletedCollection(v.clipCollection.id);
+          HighlighterService.clipCollectionManager.deleteCollection(v.clipCollection.id);
+        }}
+      >
+        delete COllection
+      </Button>
+      <ClipCollectionModal
+        modal={modal}
+        clips={clips}
+        onClose={() => {
+          setModal(null);
+        }}
+      />
+      <Button
+        onClick={() => {
+          setModal('preview');
+        }}
+      >
+        {' '}
+        Export
+      </Button>
+    </div>
+  );
+}
+
+import { Modal, Alert, Button, Input } from 'antd';
+import PreviewModal from '../PreviewModal';
+
+function ClipCollectionModal({
+  modal,
+  clips,
+  onClose,
+}: {
+  modal: TModalStreamCard;
+  clips: TClip[];
+  onClose: () => void;
+}) {
+  const { HighlighterService } = Services;
+  const [showModal, rawSetShowModal] = useState<TModalStreamCard | null>(null);
+  const [modalWidth, setModalWidth] = useState('700px');
+  useEffect(() => {
+    if (modal) {
+      setShowModal(modal);
+    }
+  }, [modal]);
+
+  function closeModal() {
+    // Do not allow closing export modal while export/upload operations are in progress
+    // if (v.exportInfo.exporting) return;
+    // if (v.uploadInfo.some(u => u.uploading)) return;
+
+    setShowModal(null);
+    onClose();
+    // if (v.error) HighlighterService.actions.dismissError();
+  }
+
+  function setShowModal(modal: TModalStreamCard | null) {
+    rawSetShowModal(modal);
+    if (modal) {
+      setModalWidth(
+        {
+          preview: '700px',
+          export: 'fit-content',
+          remove: '400px',
+          requirements: 'fit-content',
+          feedback: '700px',
+        }[modal],
+      );
+    }
+  }
+  return (
+    <Modal
+      getContainer={`.${styles.streamCardModalRoot}`}
+      onCancel={closeModal}
+      footer={null}
+      width={modalWidth}
+      closable={false}
+      // visible={!!showModal || !!v.error}
+      visible={!!showModal}
+      destroyOnClose={true}
+      keyboard={false}
+    >
+      {/* {!!v.error && <Alert message={v.error} type="error" showIcon />}
+    {showModal === 'export' && <ExportModal close={closeModal} streamId={streamId} />} */}
+      {showModal === 'preview' && (
+        <PreviewModal
+          close={closeModal}
+          // streamId={streamId}
+          emitSetShowModal={modal => {
+            setShowModal(modal);
+          }}
+          streamId={undefined}
+          clips={clips}
+        />
+      )}
+      {/* {showModal === 'remove' && <RemoveStream close={closeModal} streamId={streamId} />}
+    {showModal === 'feedback' && <Feedback streamId={streamId} close={closeModal} game={game} />}
+    {showModal === 'requirements' && <EducationCarousel game={game} />} */}
+    </Modal>
+  );
+}

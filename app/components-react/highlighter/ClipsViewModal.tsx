@@ -83,12 +83,14 @@ export default function ClipsViewModal({
       )}
       {showModal === 'export' && <ExportModal close={closeModal} streamId={streamId} />}
       {showModal === 'preview' && (
+        // TODO M: Fix
         <PreviewModal
           close={closeModal}
           streamId={streamId}
           emitSetShowModal={modal => {
             setShowModal(modal);
           }}
+          clips={[]}
         />
       )}
       {inspectedClip && showModal === 'remove' && (

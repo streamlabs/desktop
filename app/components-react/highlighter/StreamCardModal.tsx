@@ -28,6 +28,7 @@ export default function StreamCardModal({
     uploadInfo: HighlighterService.views.uploadInfo,
     error: HighlighterService.views.error,
   }));
+
   const [showModal, rawSetShowModal] = useState<TModalStreamCard | null>(null);
   const [modalWidth, setModalWidth] = useState('700px');
 
@@ -77,10 +78,12 @@ export default function StreamCardModal({
       {showModal === 'preview' && (
         <PreviewModal
           close={closeModal}
-          streamId={streamId}
+          // streamId={streamId}
           emitSetShowModal={modal => {
             setShowModal(modal);
           }}
+          streamId={undefined}
+          clips={[]}
         />
       )}
       {showModal === 'remove' && <RemoveStream close={closeModal} streamId={streamId} />}

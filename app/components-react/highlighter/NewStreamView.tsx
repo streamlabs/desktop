@@ -26,6 +26,7 @@ import EducationCarousel from './EducationCarousel';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import { ImportStreamModal } from './ImportStream';
 import SupportedGames from './supportedGames/SupportedGames';
+import StreamClipCollections from './ClipCollections/StreamClipSuggestions';
 
 type TModalStreamView = {
   type: 'upload';
@@ -40,6 +41,8 @@ export default function NewStreamView({
 }: {
   emitSetView: (data: IViewState) => void;
 }) {
+  console.log('NewStreamView rendered');
+
   const { HighlighterService, HotkeysService, UsageStatisticsService } = Services;
   const v = useVuex(() => ({
     error: HighlighterService.views.error,
@@ -49,6 +52,10 @@ export default function NewStreamView({
     clipCollections: HighlighterService.views.clipCollectionsDictionary,
     streams: HighlighterService.views.highlightedStreamsDictionary,
   }));
+
+  const sortedStreamIds = Object.keys(v.streams)
+    .map(streamId => ({ streamId, streamDate: v.streams[streamId].date }))
+    .sort((a, b) => new Date(b.streamDate).getTime() - new Date(a.streamDate).getTime());
 
   useEffect(() => {
     const recordingInfo = { ...HighlighterService.views.tempRecordingInfo };
@@ -167,51 +174,58 @@ export default function NewStreamView({
       </div>
 
       <Scrollable style={{ flexGrow: 1, padding: '20px 0 20px 20px' }}>
-        {v.streams &&
-          Object.keys(v.streams).map(streamId => {
+        sortedIds length: {sortedStreamIds.length}
+        {sortedStreamIds &&
+          sortedStreamIds.map(({ streamId }) => {
             const streamInfo = v.streams[streamId];
-
             // New grouped stream
             return (
-              <div key={streamId}>
-                <h2>Stream: {streamInfo.title}</h2>
-                <Button
-                  onClick={() => {
-                    emitSetView({ view: EHighlighterView.CLIPS, id: streamId });
-                  }}
-                >
-                  show Clips
-                </Button>
+              <>
+                TITLE: {streamInfo.title}
+                <StreamClipCollections
+                  streamId={streamId}
+                  emitSetView={emitSetView}
+                ></StreamClipCollections>
+              </>
+              // <div key={streamId}>
+              //   <h2>Stream: {streamInfo.title}</h2>
+              //   <Button
+              //     onClick={() => {
+              //       emitSetView({ view: EHighlighterView.CLIPS, id: streamId });
+              //     }}
+              //   >
+              //     show Clips
+              //   </Button>
 
-                {Array.isArray(streamInfo?.clipCollectionIds) &&
-                streamInfo.clipCollectionIds.length > 0 ? (
-                  streamInfo.clipCollectionIds.map((collectionId: string) => {
-                    const clipCollection = v.clipCollections[collectionId];
+              //   {Array.isArray(streamInfo?.clipCollectionIds) &&
+              //   streamInfo.clipCollectionIds.length > 0 ? (
+              //     streamInfo.clipCollectionIds.map((collectionId: string) => {
+              //       const clipCollection = v.clipCollections[collectionId];
 
-                    // New collections
-                    return (
-                      <>
-                        <p key={collectionId}>
-                          Collection: {clipCollection?.clipCollectionInfo?.title || 'Untitled'}
-                          Amount of clips: {Object.keys(clipCollection?.clips || {}).length}
-                        </p>
+              //       // New collections
+              //       return (
+              //         <>
+              //           <p key={collectionId}>
+              //             Collection: {clipCollection?.clipCollectionInfo?.title || 'Untitled'}
+              //             Amount of clips: {Object.keys(clipCollection?.clips || {}).length}
+              //           </p>
 
-                        <Button
-                          onClick={() => {
-                            HighlighterService.clipCollectionManager.exportClipCollection(
-                              clipCollection.id,
-                            );
-                          }}
-                        >
-                          export collection
-                        </Button>
-                      </>
-                    );
-                  })
-                ) : (
-                  <>NO COLLECTION ID</>
-                )}
-              </div>
+              //           <Button
+              //             onClick={() => {
+              //               HighlighterService.clipCollectionManager.exportClipCollection(
+              //                 clipCollection.id,
+              //               );
+              //             }}
+              //           >
+              //             export collection
+              //           </Button>
+              //         </>
+              //       );
+              //     })
+              //   ) : (
+              //     <>NO COLLECTION ID</>
+              //   )}
+              // </div>
             );
           })}
       </Scrollable>
