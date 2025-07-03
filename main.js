@@ -669,14 +669,6 @@ function initialize(crashHandler) {
       }
     });
 
-    if (!process.env.DEV_SERVER && (isDevMode || process.env.NAIR_PRODUCTION_DEBUG)) {
-      console.log('installing vue devtools extension...');
-      const { default: installExtension, VUEJS_DEVTOOLS } = require('electron-devtools-installer');
-      installExtension(VUEJS_DEVTOOLS)
-        .then(name => console.log(name))
-        .catch(err => console.log(err));
-    }
-
     // if (process.env.NAIR_PRODUCTION_DEBUG || process.env.DEV_SERVER) openDevTools();
 
     // simple messaging system for services between windows
