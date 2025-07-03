@@ -192,11 +192,7 @@ export default class SourceSelector extends Vue {
   visibilityClassesForSource(sceneNodeId: string) {
     const selection = this.scene.getSelection(sceneNodeId);
     const visible = selection.isVisible();
-
-    return {
-      'icon-unhide': visible,
-      'icon-hide': !visible,
-    };
+    return visible ? 'icon-unhide' : 'keep-on icon-hide';
   }
 
   lockClassesForSource(sceneNodeId: string) {
