@@ -4,7 +4,7 @@ import { $t } from 'services/i18n';
 import { useVuex } from 'components-react/hooks';
 import { Button, Select, Checkbox } from 'antd';
 import { dialog } from '@electron/remote';
-import { exportEDL } from 'services/highlighter/markers-exporters';
+import { exportCSV, exportEDL } from 'services/highlighter/markers-exporters';
 import { promises as fs } from 'fs';
 const { Option } = Select;
 
@@ -19,7 +19,8 @@ export default function ExportMarkersModal({
   const stream = useVuex(() => HighlighterService.views.highlightedStreamsDictionary[streamId]);
 
   const [markersFormat, setMarkersFormat] = useState('edl');
-  const [davinciStartFromHour, setDavinciStartFromHour] = useState(true);
+  // many professional video editors require the timeline to start from 01:00:00:00, so we default to true
+  const [startFromHour, setStartFromHour] = useState(true);
   const [exportRanges, setExportRanges] = useState(false);
   const [exporting, setExporting] = useState(false);
 
@@ -37,13 +38,19 @@ export default function ExportMarkersModal({
     try {
       const { filePath, canceled } = await dialog.showSaveDialog({
         title: $t('Export Markers'),
-        defaultPath: `markers.${markersFormat}`,
+        defaultPath: `${stream.title} - Markers.${markersFormat}`,
       });
       if (canceled || !filePath) {
         return;
       }
 
-      const content = await exportEDL(stream, exportRanges, davinciStartFromHour);
+      let content = '';
+      if (markersFormat === 'csv') {
+        content = await exportCSV(stream, exportRanges, startFromHour);
+      } else if (markersFormat === 'edl') {
+        content = await exportEDL(stream, exportRanges, startFromHour);
+      }
+
       await fs.writeFile(filePath, content, 'utf-8');
       close();
     } finally {
@@ -67,20 +74,18 @@ export default function ExportMarkersModal({
         ))}
       </Select>
 
-      {markersFormat === 'edl' && (
-        <Checkbox
-          checked={davinciStartFromHour}
-          onChange={e => setDavinciStartFromHour(e.target.checked)}
-          style={{ marginTop: '10px' }}
-        >
-          {$t('Timeline starts from 01:00:00 (default)')}
-        </Checkbox>
-      )}
+      <Checkbox
+        checked={startFromHour}
+        onChange={e => setStartFromHour(e.target.checked)}
+        style={{ marginTop: '10px' }}
+      >
+        {$t('Timeline starts from 01:00:00 (default)')}
+      </Checkbox>
 
       <Checkbox
         checked={exportRanges}
         onChange={e => setExportRanges(e.target.checked)}
-        style={{ marginTop: '10px' }}
+        style={{ marginTop: '6px', marginLeft: '0px' }}
       >
         {$t('Export full highlight duration as marker range')}
       </Checkbox>

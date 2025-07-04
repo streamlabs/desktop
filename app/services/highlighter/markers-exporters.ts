@@ -94,7 +94,12 @@ export async function exportEDL(
       // process each input separately
       highlight.inputs.forEach(input => {
         const start = toTimecode(input.start_time, framerate);
-        const end = input.end_time ? toTimecode(input.end_time, framerate) : start + 1;
+        const end = input.end_time
+          ? toTimecode(input.end_time, framerate)
+          : start
+              .split(':')
+              .map((v, i) => (i === 3 ? String(Number(v) + 1).padStart(2, '0') : v))
+              .join(':');
 
         const durationFrames = 1;
 
@@ -110,4 +115,151 @@ export async function exportEDL(
     index++;
   });
   return lines.join('\n');
+}
+
+export async function exportCSV(
+  stream: IHighlightedStream,
+  exportRange: boolean = false,
+  startFromHour: boolean = false,
+) {
+  function toTimecode(seconds: number, startFromHour: boolean = false) {
+    let hours = Math.floor(seconds / 3600);
+    if (startFromHour) {
+      hours = hours + 1;
+    }
+
+    const hrs = String(hours).padStart(2, '0');
+    const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+    const secs = String(Math.floor(seconds % 60)).padStart(2, '0');
+    return `${hrs}:${mins}:${secs}:00`;
+  }
+
+  function mapColor(inputType: string) {
+    switch (inputType) {
+      case 'deploy':
+        return 'Blue';
+      case 'elimination':
+        return 'Green';
+      case 'knockout':
+        return 'Green';
+      case 'death':
+        return 'Red';
+      case 'victory':
+        return 'Yellow';
+      case 'defeat':
+        return 'Purple';
+      default:
+        return 'Blue';
+    }
+  }
+
+  const { framerate, totalFrames } = await getVideoFramerateAndFrameCount(stream.path);
+
+  const csvRows = [
+    [
+      'No.',
+      'Timecode In',
+      'Timecode Out',
+      'Duration',
+      'Frame In',
+      'Frame Out',
+      'Length',
+      'Name',
+      'Comment',
+      'User',
+      'Note',
+      'Color',
+      'Track',
+      'Clip Name',
+      'Source',
+      'Source Start',
+      'Source End',
+    ],
+  ];
+
+  let index = 1;
+  stream.highlights.forEach(highlight => {
+    // export as marker range if requested
+    if (exportRange) {
+      const start = toTimecode(highlight.start_time, startFromHour);
+      const end = toTimecode(highlight.end_time, startFromHour);
+
+      const duration = highlight.end_time - highlight.start_time;
+      const durationTimecode = toTimecode(duration);
+
+      const frameIn = Math.round(highlight.start_time * framerate);
+      const frameOut = Math.round(highlight.end_time * framerate);
+      const length = Math.round(duration * framerate);
+
+      const mostImportantEvent = highlight.input_types.sort(
+        (a, b) => eventSeverity(b) - eventSeverity(a),
+      )[0];
+
+      const color = mapColor(mostImportantEvent);
+
+      csvRows.push([
+        `${index}.`,
+        start,
+        end,
+        durationTimecode,
+        `${frameIn}`,
+        `${frameOut}`,
+        `${length}`,
+        highlight.input_types.join(' '),
+        '',
+        '',
+        '',
+        color,
+        'V1',
+        '',
+        '',
+        '',
+        '',
+      ]);
+    } else {
+      // process each input separately
+      highlight.inputs.forEach(input => {
+        const start = toTimecode(input.start_time, startFromHour);
+        const end = input.end_time
+          ? toTimecode(input.end_time, startFromHour)
+          : start
+              .split(':')
+              .map((v, i) => (i === 3 ? String(Number(v) + 1).padStart(2, '0') : v))
+              .join(':');
+
+        const durationFrames = 1;
+        const durationTimecode = '00:00:00:01';
+
+        const frameIn = Math.round(input.start_time * framerate);
+        const frameOut = frameIn + durationFrames;
+        const length = durationFrames;
+
+        const color = mapColor(input.type);
+
+        csvRows.push([
+          `${index}.`,
+          start,
+          end,
+          durationTimecode,
+          `${frameIn}`,
+          `${frameOut}`,
+          `${length}`,
+          highlight.input_types.join(' '),
+          '',
+          '',
+          '',
+          color,
+          'V1',
+          '',
+          '',
+          '',
+          '',
+        ]);
+      });
+    }
+
+    index++;
+  });
+
+  return csvRows.map(row => row.join(',')).join('\n');
 }
