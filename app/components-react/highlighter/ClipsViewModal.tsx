@@ -93,7 +93,7 @@ export default function ClipsViewModal({
           }}
         />
       )}
-      {showModal === 'exportMarkers' && (
+      {showModal === 'exportMarkers' && streamId && (
         <ExportMarkersModal close={closeModal} streamId={streamId} />
       )}
       {inspectedClip && showModal === 'remove' && (
