@@ -263,3 +263,29 @@ export async function exportCSV(
 
   return csvRows.map(row => row.join(',')).join('\n');
 }
+
+export async function exportYouTubeChapters(stream: IHighlightedStream) {
+  function toTimecode(seconds: number) {
+    const hours = Math.floor(seconds / 3600);
+    const hrs = String(hours).padStart(2, '0');
+    const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+    const secs = String(Math.floor(seconds % 60)).padStart(2, '0');
+    return `${hrs}:${mins}:${secs}`;
+  }
+
+  const lines: string[] = [];
+  stream.highlights.forEach(highlight => {
+    const start = toTimecode(highlight.start_time);
+
+    const events = highlight.input_types
+      .map(inputType => {
+        return inputType.charAt(0).toUpperCase() + inputType.slice(1);
+      })
+      .map(inputType => inputType.replace(/_/g, ' '))
+      .join(', ');
+
+    lines.push(`${start} ${events}`);
+  });
+
+  return lines.join('\n');
+}

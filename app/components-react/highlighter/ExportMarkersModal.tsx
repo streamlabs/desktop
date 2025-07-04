@@ -4,7 +4,11 @@ import { $t } from 'services/i18n';
 import { useVuex } from 'components-react/hooks';
 import { Button, Select, Checkbox } from 'antd';
 import { dialog } from '@electron/remote';
-import { exportCSV, exportEDL } from 'services/highlighter/markers-exporters';
+import {
+  exportCSV,
+  exportEDL,
+  exportYouTubeChapters,
+} from 'services/highlighter/markers-exporters';
 import { promises as fs } from 'fs';
 const { Option } = Select;
 
@@ -27,6 +31,7 @@ export default function ExportMarkersModal({
   const availableMarkersFormats = [
     { value: 'edl', label: $t('DaVinci Resolve (EDL)') },
     { value: 'csv', label: $t('CSV') },
+    { value: 'youtube', label: $t('YouTube Chapter Markers (for recording)') },
   ];
 
   const exportMarkers = async () => {
@@ -38,7 +43,9 @@ export default function ExportMarkersModal({
     try {
       const { filePath, canceled } = await dialog.showSaveDialog({
         title: $t('Export Markers'),
-        defaultPath: `${stream.title} - Markers.${markersFormat}`,
+        defaultPath: `${stream.title} - Markers.${
+          markersFormat === 'youtube' ? 'txt' : markersFormat
+        }`,
       });
       if (canceled || !filePath) {
         return;
@@ -49,6 +56,8 @@ export default function ExportMarkersModal({
         content = await exportCSV(stream, exportRanges, startFromHour);
       } else if (markersFormat === 'edl') {
         content = await exportEDL(stream, exportRanges, startFromHour);
+      } else if (markersFormat === 'youtube') {
+        content = await exportYouTubeChapters(stream);
       }
 
       await fs.writeFile(filePath, content, 'utf-8');
@@ -73,22 +82,25 @@ export default function ExportMarkersModal({
           </Option>
         ))}
       </Select>
+      {markersFormat !== 'youtube' && (
+        <Checkbox
+          checked={startFromHour}
+          onChange={e => setStartFromHour(e.target.checked)}
+          style={{ marginTop: '10px' }}
+        >
+          {$t('Timeline starts from 01:00:00 (default)')}
+        </Checkbox>
+      )}
 
-      <Checkbox
-        checked={startFromHour}
-        onChange={e => setStartFromHour(e.target.checked)}
-        style={{ marginTop: '10px' }}
-      >
-        {$t('Timeline starts from 01:00:00 (default)')}
-      </Checkbox>
-
-      <Checkbox
-        checked={exportRanges}
-        onChange={e => setExportRanges(e.target.checked)}
-        style={{ marginTop: '6px', marginLeft: '0px' }}
-      >
-        {$t('Export full highlight duration as marker range')}
-      </Checkbox>
+      {markersFormat !== 'youtube' && (
+        <Checkbox
+          checked={exportRanges}
+          onChange={e => setExportRanges(e.target.checked)}
+          style={{ marginTop: '6px', marginLeft: '0px' }}
+        >
+          {$t('Export full highlight duration as marker range')}
+        </Checkbox>
+      )}
 
       <Button
         type="primary"
