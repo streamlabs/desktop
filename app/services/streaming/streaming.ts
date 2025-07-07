@@ -385,12 +385,6 @@ export class StreamingService
     }
 
     /**
-     * Saved any settings updated during the `beforeGoLive` process for the platforms.
-     * This is important for dual streaming and multistreaming.
-     */
-    this.SET_GO_LIVE_SETTINGS(this.views.savedSettings);
-
-    /**
      * SET DUAL OUTPUT SETTINGS
      */
     if (this.views.isDualOutputMode) {
@@ -470,20 +464,13 @@ export class StreamingService
         .map(dest => dest.url);
 
       if (Utils.isDevMode()) {
-        console.log(
-          'Dual Output Setup\n',
-          'Platforms:',
-          JSON.stringify(allPlatforms),
-          '\n',
-          'Destinations:',
-          JSON.stringify(allDestinations),
-          '\n',
-          'Horizontal:',
-          JSON.stringify(horizontalStream),
-          '\n',
-          'Vertical',
-          JSON.stringify(verticalStream),
-        );
+        console.log('Setting up dual output');
+        console.log('Dual Output: ', {
+          platforms: JSON.stringify(allPlatforms),
+          destinations: JSON.stringify(allDestinations),
+          horizontal: JSON.stringify(horizontalStream),
+          vertical: JSON.stringify(verticalStream),
+        });
       }
 
       this.usageStatisticsService.recordAnalyticsEvent('DualOutput', {
@@ -511,14 +498,12 @@ export class StreamingService
         : 'DUAL_OUTPUT_SETUP_FAILED';
 
       if (Utils.isDevMode()) {
+        console.log('Setting up restream');
         console.log(
-          'Restream Setup\n',
-          'Displays:',
+          'Restream: ',
           this.views.displaysToRestream,
-          '\n',
           'Horizontal:',
           this.views.horizontalStream,
-          '\n',
           'Vertical',
           this.views.verticalStream,
         );

@@ -271,13 +271,14 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   get verticalStream() {
     // convert dual stream custom destinations to platforms for analytics
     const verticalDestinations = this.customDestinations.reduce(
-      (displayDestinations: string[], destination: ICustomStreamDestination) => {
-        // skip destinations created for dual stream because they are already included in activeDisplayPlatforms
-        if (destination.enabled && !destination.dualStream) {
-          displayDestinations.push(destination.url);
+      (verticalDestinations: string[], destination: ICustomStreamDestination) => {
+        if (destination.enabled && destination.dualStream) {
+          const target =
+            destination.url.split('.').find(str => platformList.includes(str as EPlatform)) ??
+            destination.url;
+          verticalDestinations.push(target);
         }
-
-        return displayDestinations;
+        return verticalDestinations;
       },
       [],
     );
