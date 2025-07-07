@@ -153,7 +153,7 @@ export class TwitchService
       'channel_editor',
       'user:edit:broadcast',
       'channel:manage:broadcast',
-      'user:write:chat'
+      'user:write:chat',
     ];
 
     const query =

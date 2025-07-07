@@ -79,7 +79,13 @@ export class VisionUpdater {
 
   private static startVisionFromLocalRepository(port: number) {
     const rootPath = '../streamlabs-vision/';
-    const command = ['run', 'python', `${rootPath}/streamlabs_vision/main.py`, '--port', port.toString()];
+    const command = [
+      'run',
+      'python',
+      `${rootPath}/streamlabs_vision/main.py`,
+      '--port',
+      port.toString(),
+    ];
 
     return spawn('poetry', command, {
       cwd: rootPath,
@@ -201,7 +207,11 @@ export class VisionUpdater {
     }
 
     // download the new version
-    await downloadFile(`${this.manifest.url}?t=${this.manifest.checksum}`, zipPath, progressCallback);
+    await downloadFile(
+      `${this.manifest.url}?t=${this.manifest.checksum}`,
+      zipPath,
+      progressCallback,
+    );
     console.log('download complete');
 
     // verify the checksum

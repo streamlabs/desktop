@@ -38,14 +38,14 @@ export class TwitchModule extends Module {
 
   @apiMethod()
   subscribeToChat(ctx: IApiContext, channel?: string) {
-    const TWITCH_IRC_URL = "wss://irc-ws.chat.twitch.tv";
-    const BOT_USERNAME = "StreamCoach";
+    const TWITCH_IRC_URL = 'wss://irc-ws.chat.twitch.tv';
+    const BOT_USERNAME = 'StreamCoach';
     const OAUTH_TOKEN = `oauth:${this.userService.state.auth.platforms.twitch.token}`;
     const CHANNEL = channel || this.userService.state.auth.platforms.twitch.username;
 
     // If a connection already exists and is open, do nothing
     if (this.twitchChatSocket && this.twitchChatSocket.readyState === WebSocket.OPEN) {
-      console.log("Twitch chat is already connected.");
+      console.log('Twitch chat is already connected.');
       return;
     }
 
@@ -58,17 +58,17 @@ export class TwitchModule extends Module {
     this.twitchChatSocket = ws;
 
     ws.onopen = () => {
-      console.log("Connected to Twitch IRC");
+      console.log('Connected to Twitch IRC');
       ws.send(`PASS ${OAUTH_TOKEN}`);
       ws.send(`NICK ${BOT_USERNAME}`);
       ws.send(`JOIN #${CHANNEL}`);
     };
 
-    ws.onmessage = (event) => {
+    ws.onmessage = event => {
       const message = event.data as string;
 
-      if (message.startsWith("PING")) {
-        ws.send("PONG :tmi.twitch.tv");
+      if (message.startsWith('PING')) {
+        ws.send('PONG :tmi.twitch.tv');
         return;
       }
 
@@ -83,14 +83,14 @@ export class TwitchModule extends Module {
     };
 
     ws.onclose = () => {
-      console.log("Disconnected from Twitch IRC");
+      console.log('Disconnected from Twitch IRC');
       if (this.twitchChatSocket === ws) {
         this.twitchChatSocket = undefined;
       }
     };
 
-    ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
+    ws.onerror = error => {
+      console.error('WebSocket error:', error);
     };
   }
 

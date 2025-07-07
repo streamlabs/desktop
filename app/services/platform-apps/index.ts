@@ -179,7 +179,7 @@ class PlatformAppsViews extends ViewHandler<IPlatformAppServiceState> {
       'b472396e49', // Avatar - Prod / Ava
       '04f85c93be', // Avatar - Cale Dev
       '9ef3e51301', // Avatar - Marcin Dev
-      '875cf5de20' // Coach - Ava
+      '875cf5de20', // Coach - Ava
     ].includes(appId);
   }
 }
@@ -449,7 +449,7 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
       if (seenSlots[page.slot]) {
         throw new Error(
           `Error: manifest.pages[${i}].slot "${page.slot}" ` +
-          'is already taken. There can only be 1 page per slot.',
+            'is already taken. There can only be 1 page per slot.',
         );
       }
 

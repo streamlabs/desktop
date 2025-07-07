@@ -272,7 +272,13 @@ export class SourcesModule extends Module {
   }
 
   @apiMethod()
-  addFilter(ctx: IApiContext, sourceId: string, filterType: TSourceFilterType, filterName: string, settings: Dictionary<TObsValue>) {
+  addFilter(
+    ctx: IApiContext,
+    sourceId: string,
+    filterType: TSourceFilterType,
+    filterName: string,
+    settings: Dictionary<TObsValue>,
+  ) {
     this.sourceFiltersService.add(sourceId, filterType, filterName, settings);
   }
 }
