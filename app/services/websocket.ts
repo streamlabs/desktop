@@ -216,36 +216,4 @@ export class WebsocketService extends Service {
       console.log(`WS: ${message}`);
     }
   }
-
-  /** SSE event stream
-   * TODO: extract to own service
-   * TODO2: support multiple event source connection urls
-  */
-  public sseEvent = new Subject<MessageEvent>();
-  private eventSource?: EventSource;
-
-  openSSEConnection(url: string = 'http://localhost:8000/events') {
-    if (this.eventSource) {
-      return;
-    }
-
-    this.eventSource = new EventSource(url);
-    this.eventSource.onmessage = (e: MessageEvent) => {
-      console.log('SSE message', e.data);
-      this.sseEvent.next(e);
-    };
-    this.eventSource.onerror = (err: any) => {
-      console.log('SSE error', err);
-      // optionally: this.sseEvent.error(err);
-    };
-  }
-
-  /** cleanup SSE if needed */
-  closeSSEConnection() {
-    if (this.eventSource) {
-      this.eventSource.close();
-      this.eventSource = undefined;
-      this.sseEvent.complete();
-    }
-  }
 }
