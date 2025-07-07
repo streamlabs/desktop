@@ -28,6 +28,12 @@ interface IRestreamTarget {
   mode?: TOutputOrientation;
 }
 
+interface IRestreamTargetInfo {
+  platform: TPlatform | 'relay';
+  streamKey: string;
+  mode?: TOutputOrientation;
+}
+
 interface IRestreamState {
   /**
    * Whether this user has restream enabled
@@ -71,6 +77,125 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   get streamInfo() {
     return this.streamingService.views;
+  }
+
+  /**
+   * Returns the custom destinations
+   * @remark Must get custom destinations from the streaming service state
+   * because they may have been updated during the `beforeGoLive` process
+   * for the platforms if the user has dual streaming enabled. This is because
+   * the vertical target for the dual stream is created as a custom destination
+   * and added during the `beforeGoLive` process.
+   */
+  get customDestinations() {
+    return this.streamingService.state.info.settings?.customDestinations || [];
+  }
+
+  // createPlatforms() {
+  //   const displaysToRestream = this.streamInfo.displaysToRestream;
+  //   const modesToRestream = displaysToRestream.map(display => this.getMode(display));
+  //   const treatAsCustomDestinations = [
+  //     'tiktok',
+  //     'twitter',
+  //     'instagram',
+  //     'kick',
+  //   ];
+
+  //       // treat tiktok as a custom destination
+  //   // const tikTokTarget = newTargets.find(t => t.platform === 'tiktok');
+  //   // if (tikTokTarget) {
+  //   //   const ttSettings = this.tiktokService.state.settings;
+  //   //   tikTokTarget.platform = 'relay';
+  //   //   tikTokTarget.streamKey = `${ttSettings.serverUrl}/${ttSettings.streamKey}`;
+  //   //   tikTokTarget.mode = isDualOutputMode ? this.getPlatformMode('tiktok') : 'landscape';
+  //   // }
+
+  //   // // treat twitter as a custom destination
+  //   // const twitterTarget = newTargets.find(t => t.platform === 'twitter');
+  //   // if (twitterTarget) {
+  //   //   twitterTarget.platform = 'relay';
+  //   //   twitterTarget.streamKey = `${this.twitterService.state.ingest}/${this.twitterService.state.streamKey}`;
+  //   //   twitterTarget.mode = isDualOutputMode ? this.getPlatformMode('twitter') : 'landscape';
+  //   // }
+
+  //   // // treat instagram as a custom destination
+  //   // const instagramTarget = newTargets.find(t => t.platform === 'instagram');
+  //   // if (instagramTarget) {
+  //   //   instagramTarget.platform = 'relay';
+  //   //   instagramTarget.streamKey = `${this.instagramService.state.settings.streamUrl}${this.instagramService.state.streamKey}`;
+  //   //   instagramTarget.mode = isDualOutputMode ? this.getPlatformMode('instagram') : 'landscape';
+  //   // }
+
+  //   // // treat kick as a custom destination
+  //   // const kickTarget = newTargets.find(t => t.platform === 'kick');
+  //   // if (kickTarget) {
+  //   //   kickTarget.platform = 'relay';
+  //   //   kickTarget.streamKey = `${this.kickService.state.ingest}/${this.kickService.state.streamKey}`;
+  //   //   kickTarget.mode = isDualOutputMode ? this.getPlatformMode('kick') : 'landscape';
+  //   // }
+
+  //   return this.streamInfo.enabledPlatforms.reduce((platforms: IRestreamTargetInfo[], platform) => {
+  //     modesToRestream.forEach(mode => {
+  //       const platformMode = this.getPlatformMode(platform);
+  //       if (platformMode === mode) {
+  //         if (treatAsCustomDestinations.includes(platform)) {
+  //           if (platform === ' tiktok') {
+
+  //           })
+  //               // if (tikTokTarget) {
+  //     //   const ttSettings = this.tiktokService.state.settings;
+  //     //   tikTokTarget.platform = 'relay';
+  //     //   tikTokTarget.streamKey = `${ttSettings.serverUrl}/${ttSettings.streamKey}`;
+  //     //   tikTokTarget.mode = isDualOutputMode ? this.getPlatformMode('tiktok') : 'landscape';
+  //     // }
+
+  //     // // treat twitter as a custom destination
+  //     // const twitterTarget = newTargets.find(t => t.platform === 'twitter');
+  //     // if (twitterTarget) {
+  //     //   twitterTarget.platform = 'relay';
+  //     //   twitterTarget.streamKey = `${this.twitterService.state.ingest}/${this.twitterService.state.streamKey}`;
+  //     //   twitterTarget.mode = isDualOutputMode ? this.getPlatformMode('twitter') : 'landscape';
+  //     // }
+
+  //     // // treat instagram as a custom destination
+  //     // const instagramTarget = newTargets.find(t => t.platform === 'instagram');
+  //     // if (instagramTarget) {
+  //     //   instagramTarget.platform = 'relay';
+  //     //   instagramTarget.streamKey = `${this.instagramService.state.settings.streamUrl}${this.instagramService.state.streamKey}`;
+  //     //   instagramTarget.mode = isDualOutputMode ? this.getPlatformMode('instagram') : 'landscape';
+  //     // }
+
+  //     // // treat kick as a custom destination
+  //     // const kickTarget = newTargets.find(t => t.platform === 'kick');
+  //     // if (kickTarget) {
+  //     //   kickTarget.platform = 'relay';
+  //     //   kickTarget.streamKey = `${this.kickService.state.ingest}/${this.kickService.state.streamKey}`;
+  //     //   kickTarget.mode = isDualOutputMode ? this.getPlatformMode('kick') : 'landscape';
+  //     // }
+  //         }
+  //         platforms.push({
+  //           platform,
+  //           streamKey: getPlatformService(platform).state.streamKey,
+  //           mode: platformMode,
+  //         });
+  //       }
+  //     });
+  //     return platforms;
+  //   }, []);
+  // }
+
+  getEnabledRestreamCustomDestinations() {
+    return this.customDestinations
+      .filter(dest => dest.enabled)
+      .reduce((destinations: IRestreamTargetInfo[], dest) => {
+        const mode = this.getMode(dest.display);
+        destinations.push({
+          platform: 'relay' as 'relay',
+          streamKey: `${dest.url}${dest.streamKey}`,
+          mode,
+        });
+        return destinations;
+      }, []);
   }
 
   @mutation()
@@ -231,7 +356,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
     if (this.streamingService.views.isDualOutputMode) {
       // in dual output mode, we need to set the ingest for each display
-      const displays = this.streamingService.views.displaysToRestream;
+      const displays = this.streamInfo.displaysToRestream;
 
       displays.forEach(async display => {
         const mode = this.getMode(display);
@@ -279,22 +404,52 @@ export class RestreamService extends StatefulService<IRestreamState> {
     const promises = targets.map(t => this.deleteTarget(t.id));
     await Promise.all(promises);
 
+    console.log(
+      'this.streamingService.state.info.settings.customDestinations',
+      this.streamingService.state.info.settings.customDestinations,
+    );
+    console.log('this.streamInfo.customDestinations', this.streamInfo.customDestinations);
+    console.log('this.customDestinations', this.customDestinations);
+
+    // TODO: make less brittle
+    // if (this.streamInfo.enabledPlatforms.includes('youtube')) {
+    //   const youtubeService = getPlatformService('youtube');
+    //   //   const youtubeService = getPlatformService('youtube');
+    //   //   const ytSettings = youtubeService.
+    // }
+
+    //     const verticalDestination: ICustomStreamDestination = {
+    //   name: title,
+    //   streamKey: verticalStreamKey,
+    //   url: `${verticalStreamServer}/`,
+    //   enabled: true,
+    //   display: 'vertical' as TDisplayType,
+    //   mode: 'portrait' as TOutputOrientation,
+    //   dualStream: true,
+    // };
+    // const dest = [...destinations, verticalDestination];
+
+    const modesToRestream = this.streamInfo.displaysToRestream.map(display =>
+      this.getMode(display),
+    );
     // setup new targets
     const newTargets = [
-      ...this.streamInfo.enabledPlatforms.map(platform =>
-        isDualOutputMode
-          ? {
-              platform,
-              streamKey: getPlatformService(platform).state.streamKey,
-              mode: this.getPlatformMode(platform),
-            }
-          : {
-              platform,
-              streamKey: getPlatformService(platform).state.streamKey,
-            },
-      ),
-      ...this.streamInfo.savedSettings.customDestinations
-        .filter(dest => dest.enabled)
+      ...this.streamInfo.enabledPlatforms
+        .filter(platform => modesToRestream.includes(this.getPlatformMode(platform)))
+        .map(platform =>
+          isDualOutputMode
+            ? {
+                platform,
+                streamKey: getPlatformService(platform).state.streamKey,
+                mode: this.getPlatformMode(platform),
+              }
+            : {
+                platform,
+                streamKey: getPlatformService(platform).state.streamKey,
+              },
+        ),
+      ...this.customDestinations
+        .filter(dest => dest.enabled && modesToRestream.includes(this.getMode(dest.display)))
         .map(dest =>
           isDualOutputMode
             ? {
@@ -341,6 +496,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
       kickTarget.streamKey = `${this.kickService.state.ingest}/${this.kickService.state.streamKey}`;
       kickTarget.mode = isDualOutputMode ? this.getPlatformMode('kick') : 'landscape';
     }
+
+    console.log('newTargets', newTargets);
 
     await this.createTargets(newTargets);
   }

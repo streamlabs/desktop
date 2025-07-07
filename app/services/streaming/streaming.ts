@@ -384,6 +384,9 @@ export class StreamingService
       await this.setPlatformSettings(platform, settings, unattendedMode);
     }
 
+    console.log('after setup platform this.views.savedSettings', this.views.savedSettings);
+    this.SET_GO_LIVE_SETTINGS(this.views.savedSettings);
+
     /**
      * SET DUAL OUTPUT SETTINGS
      */

@@ -315,7 +315,8 @@ export class YoutubeService
     await this.updateCategory(verticalBroadcast.id, ytSettings.categoryId!);
 
     const verticalStreamKey = verticalStream.cdn.ingestionInfo.streamName;
-    const verticalStreamServer = verticalStream.cdn.ingestionInfo.ingestionAddress;
+    // const verticalStreamServer = 'rtmp://a.rtmp.youtube.com/live2';
+    const verticalStreamServer = verticalStream.cdn.ingestionInfo.rtmpsBackupIngestionAddress;
     this.SET_VERTICAL_STREAM_KEY(verticalStreamKey);
     this.SET_VERTICAL_BROADCAST(verticalBoundBroadcast);
 
@@ -329,11 +330,16 @@ export class YoutubeService
       display: 'vertical' as TDisplayType,
       mode: 'portrait' as TOutputOrientation,
       dualStream: true,
+      video: this.videoSettingsService.contexts.vertical,
     };
+    const dest = [...destinations, verticalDestination];
+    console.log('dest array', dest);
 
     this.streamSettingsService.setGoLiveSettings({
       customDestinations: [...destinations, verticalDestination],
     });
+
+    console.log('this.streamingService.views.settings', this.streamingService.views.settings);
 
     if (this.streamingService.views.isMultiplatformMode) {
       this.streamSettingsService.setSettings(
@@ -891,6 +897,20 @@ export class YoutubeService
     const youtubeDomain =
       nightMode === 'day' ? 'https://youtube.com' : 'https://gaming.youtube.com';
     return `${youtubeDomain}/watch?v=${this.state.settings.broadcastId}`;
+  }
+
+  getVerticalStream() {
+    const title = makeVerticalTitle(this.state.settings.title);
+
+    return {
+      name: title,
+      streamKey: this.state.verticalStreamKey,
+      url: 'rtmp://a.rtmp.youtube.com/live2/',
+      enabled: true,
+      display: 'vertical' as TDisplayType,
+      mode: 'portrait' as TOutputOrientation,
+      dualStream: true,
+    };
   }
 
   async uploadThumbnail(base64url: string | 'default', videoId: string) {
