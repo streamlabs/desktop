@@ -73,18 +73,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return this.streamingService.views;
   }
 
-  /**
-   * Returns the custom destinations
-   * @remark Must get custom destinations from the streaming service state
-   * because they may have been updated during the `beforeGoLive` process
-   * for the platforms if the user has dual streaming enabled. This is because
-   * the vertical target for the dual stream is created as a custom destination
-   * and added during the `beforeGoLive` process.
-   */
-  get customDestinations() {
-    return this.streamingService.state.info.settings?.customDestinations || [];
-  }
-
   @mutation()
   private SET_ENABLED(enabled: boolean) {
     this.state.enabled = enabled;
@@ -243,7 +231,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
     if (this.streamingService.views.isDualOutputMode) {
       // in dual output mode, we need to set the ingest for each display
-      const displays = this.streamInfo.displaysToRestream;
+      const displays = this.streamingService.views.displaysToRestream;
 
       displays.forEach(async display => {
         const mode = this.getMode(display);
@@ -291,27 +279,22 @@ export class RestreamService extends StatefulService<IRestreamState> {
     const promises = targets.map(t => this.deleteTarget(t.id));
     await Promise.all(promises);
 
-    const modesToRestream = this.streamInfo.displaysToRestream.map(display =>
-      this.getMode(display),
-    );
     // setup new targets
     const newTargets = [
-      ...this.streamInfo.enabledPlatforms
-        .filter(platform => modesToRestream.includes(this.getPlatformMode(platform)))
-        .map(platform =>
-          isDualOutputMode
-            ? {
-                platform,
-                streamKey: getPlatformService(platform).state.streamKey,
-                mode: this.getPlatformMode(platform),
-              }
-            : {
-                platform,
-                streamKey: getPlatformService(platform).state.streamKey,
-              },
-        ),
-      ...this.customDestinations
-        .filter(dest => dest.enabled && modesToRestream.includes(this.getMode(dest.display)))
+      ...this.streamInfo.enabledPlatforms.map(platform =>
+        isDualOutputMode
+          ? {
+              platform,
+              streamKey: getPlatformService(platform).state.streamKey,
+              mode: this.getPlatformMode(platform),
+            }
+          : {
+              platform,
+              streamKey: getPlatformService(platform).state.streamKey,
+            },
+      ),
+      ...this.streamInfo.savedSettings.customDestinations
+        .filter(dest => dest.enabled)
         .map(dest =>
           isDualOutputMode
             ? {
