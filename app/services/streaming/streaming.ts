@@ -1229,8 +1229,6 @@ export class StreamingService
   }
 
   async toggleRecording() {
-    console.log('this.state.recordingStatus', this.state.recordingStatus);
-
     try {
       if (this.state.recordingStatus === ERecordingState.Recording) {
         console.log('Stopping recording');
@@ -1360,8 +1358,6 @@ export class StreamingService
    * @param index - The index of the audio track
    */
   private async createRecording(display: TDisplayType, index: number, start?: boolean) {
-    console.log('Creating recording for display:', display, 'with index:', index);
-
     const mode = this.outputSettingsService.getSettings().mode;
     const settings = this.outputSettingsService.getRecordingSettings();
 
@@ -1423,10 +1419,7 @@ export class StreamingService
       await this.handleSignal(signal, display);
     };
 
-    console.log('this.contexts[display].recording', this.contexts[display].recording);
     if (start) {
-      console.log('start');
-
       this.contexts[display].recording.start();
     }
 
@@ -1608,14 +1601,14 @@ export class StreamingService
         return;
       }
 
-      // handle recording when streaming
+      // Handle start recording when start streaming (and not start replay buffer when start streaming)
       const recordWhenStreaming = this.streamSettingsService.settings.recordWhenStreaming;
 
       if (recordWhenStreaming && this.state.recordingStatus === ERecordingState.Offline) {
         await this.toggleRecording();
       }
 
-      // handle replay buffer when streaming
+      // Handle start replay buffer when start streaming (and not start recording when start streaming))
       const replayWhenStreaming = this.streamSettingsService.settings.replayBufferWhileStreaming;
       const isReplayBufferEnabled = this.outputSettingsService.getSettings().replayBuffer.enabled;
 
@@ -1677,9 +1670,9 @@ export class StreamingService
   }
 
   private async handleRecordingSignal(info: EOutputSignal, display: TDisplayType) {
-    console.log('RECORDING info', info, display);
     // map signals to status
     const nextState: ERecordingState = ({
+      [EOBSOutputSignal.Starting]: ERecordingState.Recording,
       [EOBSOutputSignal.Start]: ERecordingState.Recording,
       [EOBSOutputSignal.Stop]: ERecordingState.Offline,
       [EOBSOutputSignal.Stopping]: ERecordingState.Stopping,
@@ -1742,7 +1735,6 @@ export class StreamingService
   }
 
   private async handleReplayBufferSignal(info: EOutputSignal, display: TDisplayType) {
-    console.log('info', info, display);
     // map signals to status
     const nextState: EReplayBufferState = ({
       [EOBSOutputSignal.Start]: EReplayBufferState.Running,
@@ -1835,7 +1827,13 @@ export class StreamingService
     const mode = this.outputSettingsService.getSettings().mode;
 
     // A replay buffer requires a recording instance and a streaming instance
-    await this.validateOrCreateOutputInstance(display, 'recording', index);
+    // Handle start recording and start replay buffer when start streaming
+    const startRecordingInstance =
+      this.streamSettingsService.settings.recordWhenStreaming &&
+      this.contexts[display].recording &&
+      this.state.status[display].recording === ERecordingState.Offline;
+
+    await this.validateOrCreateOutputInstance(display, 'recording', index, startRecordingInstance); // IS IT HERE
     await this.validateOrCreateOutputInstance(display, 'streaming', index);
 
     const settings = this.outputSettingsService.getReplayBufferSettings();
@@ -1892,7 +1890,7 @@ export class StreamingService
     }
 
     if (
-      this.contexts[display].replayBuffer ||
+      this.contexts[display].replayBuffer &&
       this.state.status[display].replayBuffer === EReplayBufferState.Offline
     ) {
       console.error(
@@ -1941,15 +1939,15 @@ export class StreamingService
     const mode = this.outputSettingsService.getSettings().mode;
     const validOutput = this.validateOutputInstance(mode, display, type);
 
-    console.log('validOutput', validOutput, display, type);
-
     // If the instance matches the mode, return to validate it
-    if (validOutput && start) {
-      this.contexts[display][type]?.start();
+    if (validOutput) {
+      // Validate if the instance should be started
+      if (start && this.state.status[display][type] !== 'offline') {
+        this.contexts[display][type]?.start();
+      }
+
       return true;
     }
-    if (validOutput) return true;
-
     await this.destroyOutputContextIfExists(display, type);
 
     if (type === 'streaming') {

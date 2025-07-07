@@ -60,7 +60,8 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get streamingStatus() {
-    return this.streamingState.streamingStatus;
+    const display = this.getOutputDisplayType();
+    return this.streamingState.status[display].streaming;
   }
 
   get info() {
@@ -224,6 +225,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return display === 'both' ? 'horizontal' : display;
   }
 
+  getOutputDisplayType(): TDisplayType {
+    return this.settings.recording === 'both' ? 'horizontal' : this.settings.recording;
+  }
+
   /**
    * Returns the enabled platforms according to their assigned display
    */
@@ -367,7 +372,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get isMidStreamMode(): boolean {
-    return this.streamingState.streamingStatus !== 'offline';
+    return this.isHorizontalStreaming || this.isVerticalStreaming;
   }
 
   /**
@@ -659,39 +664,48 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get isStreaming() {
-    return this.streamingState.streamingStatus !== EStreamingState.Offline;
+    const display = this.getOutputDisplayType();
+    return this.streamingState.status[display].streaming !== EStreamingState.Offline;
   }
 
   get isRecording() {
-    return this.streamingState.recordingStatus !== ERecordingState.Offline;
+    const display = this.getOutputDisplayType();
+    return this.streamingState.status[display].recording !== ERecordingState.Offline;
   }
 
   get isReplayBufferActive() {
-    return this.streamingState.replayBufferStatus !== EReplayBufferState.Offline;
+    const display = this.getOutputDisplayType();
+    return this.streamingState.status[display].replayBuffer !== EReplayBufferState.Offline;
   }
 
   get isHorizontalStreaming() {
-    return this.isStreaming;
+    return this.streamingState.status.horizontal.streaming !== EStreamingState.Offline;
   }
 
   get isVerticalStreaming() {
-    return this.isStreaming;
+    return this.streamingState.status.vertical.streaming !== EStreamingState.Offline;
   }
 
   get isHorizontalRecording() {
-    return this.isRecording;
+    return this.streamingState.status.horizontal.recording !== ERecordingState.Offline;
   }
 
   get isVerticalRecording() {
-    return this.isRecording;
+    return this.streamingState.status.vertical.recording !== ERecordingState.Offline;
   }
 
   get isIdle(): boolean {
     return !this.isStreaming && !this.isRecording;
   }
 
+  get recordingStatus() {
+    const display = this.getOutputDisplayType();
+    return this.streamingState.status[display].recording;
+  }
+
   get replayBufferStatus() {
-    return this.streamingState.replayBufferStatus;
+    const display = this.getOutputDisplayType();
+    return this.streamingState.status[display].replayBuffer;
   }
 
   // TODO: consolidate between this and GoLiveSettings

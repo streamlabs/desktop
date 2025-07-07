@@ -197,7 +197,7 @@ function RecordingButton() {
   const { StreamingService } = Services;
   const { isRecording, recordingStatus } = useVuex(() => ({
     isRecording: StreamingService.views.isRecording,
-    recordingStatus: StreamingService.state.recordingStatus,
+    recordingStatus: StreamingService.views.recordingStatus,
   }));
 
   function toggleRecording() {
