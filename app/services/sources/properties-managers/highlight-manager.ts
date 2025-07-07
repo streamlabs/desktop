@@ -7,6 +7,11 @@ import {
 import { PropertiesManager } from './properties-manager';
 import { Inject } from 'services/core/injector';
 import { StreamingService } from 'services/streaming';
+import { getSharedResource } from '../../../util/get-shared-resource';
+import { ITransform } from '../../scenes';
+import { getVideoResolution } from '../../highlighter/cut-highlight-clips';
+import { transform } from 'lodash';
+import { IResolution } from '../../highlighter/models/rendering.models';
 
 export class HighlightManager extends PropertiesManager {
   @Inject() streamingService: StreamingService;
@@ -18,6 +23,7 @@ export class HighlightManager extends PropertiesManager {
   private inProgress = false;
   private stopAt: number | null = null;
   private currentReplayIndex: number = 0;
+  private savedResolutions: { itemId: string; resolution?: IResolution }[] = [];
 
   get denylist() {
     return ['is_local_file', 'local_file'];
@@ -25,7 +31,7 @@ export class HighlightManager extends PropertiesManager {
 
   init() {
     // reset state of the media source, sometimes it gets stuck
-    this.obsSource.update({ local_file: '' });
+    this.obsSource.update({ local_file: '', looping: false });
     console.log('HighlightManager initialized');
     // if ai highlighter is not active, preserve old behavior
     setInterval(() => {
@@ -82,6 +88,7 @@ export class HighlightManager extends PropertiesManager {
   private startPlaying() {
     if (this.realtimeHighlighterService.highlights.length === 0) {
       console.log('No highlights to play');
+      this.queueNextHighlight(-1); // if index is -1, we play the placeholder video
       return;
     }
 
@@ -120,7 +127,20 @@ export class HighlightManager extends PropertiesManager {
     return false;
   }
 
-  private queueNextHighlight(index: number) {
+  private async queueNextHighlight(index: number) {
+    if (index === -1) {
+      if (this.currentReplayIndex === -1) {
+        // already playing the placeholder video, do nothing
+        return;
+      }
+      // if index is -1, we play the placeholder video
+      this.obsSource.update({
+        local_file: getSharedResource('highlight-reel-placeholder.mp4'),
+        looping: true,
+      });
+      this.currentReplayIndex = index;
+      return;
+    }
     // have to do this due to the bug with overlapping audio
     const source = this.sourcesService.views.getSource(this.obsSource.name);
     if (source) {
@@ -130,10 +150,20 @@ export class HighlightManager extends PropertiesManager {
       source.getObsInput()?.pause();
     }
 
+    const savedResolutions = this.getSceneItemResolutions();
     const highlight = this.realtimeHighlighterService.highlights[index];
     this.stopAt = Date.now() + (highlight.endTime - highlight.endTrim) * 1000;
-    this.obsSource.update({ local_file: highlight.path });
+    this.obsSource.update({ local_file: highlight.path, looping: false });
+
     this.currentReplayIndex = index;
+
+    this.resetScale(savedResolutions, await getVideoResolution(highlight.path));
+
+    console.log(
+      `Restored transforms for source: ${this.obsSource.name}`,
+      JSON.parse(JSON.stringify(this.savedResolutions)),
+    );
+
     console.log(`Queued next highlight: ${highlight.path}`);
   }
 
@@ -142,6 +172,41 @@ export class HighlightManager extends PropertiesManager {
     if (source) {
       console.log('changing volume to', volume);
       source.updateSettings({ deflection: volume });
+    }
+  }
+  /**
+   * Utility to get and restore transforms for all scene items of the highlight source.
+   */
+  private getSceneItemResolutions(): {
+    itemId: string;
+    resolution?: IResolution;
+  }[] {
+    const sceneItems = this.scenesService.views.getSceneItemsBySourceId(this.obsSource.name);
+    return sceneItems.map(item => ({
+      itemId: item.id,
+      resolution:
+        item.width && item.height ? { width: item.width, height: item.height } : undefined,
+    }));
+  }
+
+  private resetScale(
+    itemResolutions?: { itemId: string; resolution?: IResolution }[],
+    newResolution?: IResolution,
+  ) {
+    for (const { itemId, resolution } of itemResolutions) {
+      // Find the current item again (could be a different reference after update)
+      const sceneItem = this.scenesService.views.getSceneItem(itemId);
+      if (sceneItem) {
+        // Apply all transform properties
+        const newX = (resolution.width / newResolution.width) * sceneItem.transform.scale.x;
+        const newY = (resolution.height / newResolution.height) * sceneItem.transform.scale.y;
+        sceneItem.setTransform({
+          scale: {
+            x: newX,
+            y: newY,
+          },
+        });
+      }
     }
   }
 }
