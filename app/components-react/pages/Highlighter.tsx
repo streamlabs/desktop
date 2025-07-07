@@ -99,19 +99,6 @@ export default function Highlighter(props: { params?: { view: string } }) {
     default:
       return (
         <>
-          {isDevMode && (
-            <>
-              {/* TODO: remove below
-          fe = fake event */}
-              <button onClick={() => RealtimeHighlighterService.triggerFakeEvent()}>
-                Trigger fake Event
-              </button>
-              {/* fc = fake clip */}
-              <button onClick={() => RealtimeHighlighterService.addFakeClip()}>
-                Trigger fake clip
-              </button>
-            </>
-          )}
           {aiHighlighterFeatureEnabled && updaterModal}
           <SettingsView
             close={() => {

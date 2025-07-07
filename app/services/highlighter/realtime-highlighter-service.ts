@@ -288,31 +288,6 @@ export class RealtimeHighlighterService extends Service {
     return randomKey;
   }
 
-  addFakeClip() {
-    const clips: INewClipData[] = [
-      {
-        aiClipInfo: {
-          inputs: [
-            { type: this.getRandomEventType() } as IInput,
-            { type: this.getRandomEventType() } as IInput,
-            { type: this.getRandomEventType() } as IInput,
-          ],
-          score: 0,
-          metadata: {},
-        },
-        path: '/Users/jankalthoefer/Desktop/streams/djnardi/djnardi-short.mp4',
-        startTime: 15,
-        endTime: 30,
-        startTrim: 0,
-        endTrim: 0,
-      },
-    ];
-    this.highlightsReady.next(clips);
-  }
-
-  triggerFakeEvent() {
-    this.latestDetectedEvent.next({ type: this.getRandomEventType(), game: EGame.FORTNITE });
-  }
   /**
    * This method is called periodically to save replay events to file at correct time
    * when the highlight ends.
