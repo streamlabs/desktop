@@ -1,4 +1,4 @@
-import React, { CSSProperties } from 'react';
+import React, { CSSProperties, useMemo } from 'react';
 import styles from './RecordingSwitcher.m.less';
 import { Services } from 'components-react/service-provider';
 import { TDisplayType } from 'services/settings-v2';
@@ -20,6 +20,9 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
   const { recording, toggleRecordingDisplay } = useGoLiveSettings();
 
   const canRecordVertical = Services.IncrementalRolloutService.views.featureIsEnabled(
+    EAvailableFeatures.verticalRecording,
+  );
+  const canRecordDualOutput = Services.IncrementalRolloutService.views.featureIsEnabled(
     EAvailableFeatures.dualOutputRecording,
   );
 
@@ -30,6 +33,19 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
   }));
 
   const recordWhenStartStream = v.recordWhenStreaming || v.useAiHighlighter;
+  const showRecordingIcons = v.isDualOutputMode && (canRecordVertical || canRecordDualOutput);
+
+  const options = useMemo(() => {
+    const opts = [
+      { value: 'horizontal', label: $t('Horizontal'), icon: 'icon-desktop' },
+      { value: 'vertical', label: $t('Vertical'), icon: 'icon-phone-case' },
+    ];
+
+    if (canRecordDualOutput) {
+      opts.push({ value: 'both', label: $t('Both'), icon: 'icon-dual-output' });
+    }
+    return opts;
+  }, [canRecordDualOutput]);
 
   return (
     <div style={p?.style} className={cx(p?.className, styles.recordingSwitcher)}>
@@ -53,15 +69,12 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
           checkmark
           disabled={v.useAiHighlighter}
         />
-        {v.isDualOutputMode && canRecordVertical && (
+        {showRecordingIcons && (
           <>
             <RadioInput
               name="recording-display"
-              value={recording[0]}
-              options={[
-                { value: 'horizontal', label: $t('Horizontal'), icon: 'icon-desktop' },
-                { value: 'vertical', label: $t('Vertical'), icon: 'icon-phone-case' },
-              ]}
+              value={recording}
+              options={options}
               onChange={(display: TDisplayOutput) => toggleRecordingDisplay(display)}
               icons={true}
               className={styles.recordingDisplay}

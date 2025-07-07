@@ -40,6 +40,7 @@ import {
   IStreamingServiceApi,
   IStreamingServiceState,
   IStreamSettings,
+  TDisplayOutput,
   TGoLiveChecklistItemState,
 } from './streaming-api';
 import { UsageStatisticsService } from 'services/usage-statistics';
@@ -1021,6 +1022,11 @@ export class StreamingService
     // TODO: do we need to fully create the vertical instance before starting the horizontal one?
     // vertical instance created in `handleStreamingSignal` if needed
 
+    // if (this.views.isDualOutputMode) {
+    //   // Vertical instance will be started in `handleStreamingSignal` after the horizontal one
+    //   // has started
+    //   await this.validateOrCreateOutputInstance('vertical', 'streaming', 2);
+    // }
     await this.validateOrCreateOutputInstance('horizontal', 'streaming', 1, true);
 
     // handle anything that should be done after the stream is started
@@ -1271,6 +1277,17 @@ export class StreamingService
       return;
     }
 
+    // To prevent errors, if the recording display is not set to a valid value,
+    // correct it to the default display, which is 'horizontal'.
+    if (
+      !this.views.settings.recording ||
+      !['horizontal', 'vertical', 'both'].includes(this.views.settings.recording)
+    ) {
+      this.SET_RECORDING_OUTPUT_TYPE('horizontal');
+      await this.validateOrCreateOutputInstance('horizontal', 'recording', 1, true);
+      return;
+    }
+
     const dualOutputRecording =
       this.views.isDualOutputMode && this.views.settings.recording === 'both';
     console.log('this.views.settings', this.views.settings);
@@ -1289,37 +1306,15 @@ export class StreamingService
 
   private async handleStopRecording() {
     if (this.views.isDualOutputMode) {
-      // When recording both displays in dual output mode, sleep for 2 seconds to allow a different time stamp to be generated
-      // because the recording history uses the time stamp as keys. If the same time stamp is used, the entry will be replaced
-      // in the recording history
-      let time = new Date().toISOString();
-
       // Stop dual output recording
+      // For dual output recording, stopping the vertical recording will occur in `handleRecordingSignal`
+      // after the horizontal recording has been stopped
       if (
         this.contexts.vertical.recording !== null &&
         this.contexts.horizontal.recording !== null
       ) {
-        const dualOutputRecordingStopped = this.dualOutputRecordingStopped.subscribe(async () => {
-          await new Promise(resolve =>
-            setTimeout(() => {
-              time = new Date().toISOString();
-              this.SET_RECORDING_STATUS(ERecordingState.Stopping, 'horizontal', time);
-              if (this.contexts.horizontal.recording !== null) {
-                this.contexts.horizontal.recording.stop();
-              } else {
-                console.error(
-                  'No horizontal recording instance found to stop. Setting status to offline.',
-                );
-                this.SET_RECORDING_STATUS(ERecordingState.Offline, 'horizontal', time);
-              }
-            }, 2000),
-          );
-          dualOutputRecordingStopped.unsubscribe();
-        });
-
-        this.SET_RECORDING_STATUS(ERecordingState.Stopping, 'vertical', time);
-        this.contexts.vertical.recording.stop();
-        this.dualOutputRecordingStopped.next('vertical');
+        this.contexts.horizontal.recording.stop();
+        return;
       }
 
       // Stop vertical recording
@@ -1518,6 +1513,7 @@ export class StreamingService
     this.contexts[display].streaming.reconnect = ReconnectFactory.create();
     this.contexts[display].streaming.network = NetworkFactory.create();
 
+    console.log('this.contexts[display].streaming', this.contexts[display].streaming);
     if (start) {
       this.contexts[display].streaming.start();
     }
@@ -1557,6 +1553,7 @@ export class StreamingService
       await this.handleFactoryOutputError(info, display);
       this.RESET_STREAM_INFO();
       this.rejectStartStreaming();
+      this.handleDestroyAllInstances();
     }
   }
 
@@ -1645,7 +1642,7 @@ export class StreamingService
           status: EStreamingState.Offline,
         });
 
-        await this.handleDestroyOutputContexts(display);
+        await this.handleDestroyAllInstances();
       }
     } else if (info.signal === EOBSOutputSignal.Deactivate) {
       // The `deactivate` signal is sent after the `stop` signal
@@ -1658,7 +1655,19 @@ export class StreamingService
         status: EStreamingState.Offline,
       });
 
-      await this.handleDestroyOutputContexts(display);
+      await this.handleDestroyAllInstances();
+    } else if (info.signal === EOBSOutputSignal.Deactivate) {
+      // The `deactivate` signal is sent after the `stop` signal
+
+      this.RESET_STREAM_INFO();
+      this.rejectStartStreaming();
+
+      this.usageStatisticsService.recordAnalyticsEvent('StreamingStatus', {
+        code: info.code,
+        status: EStreamingState.Offline,
+      });
+
+      await this.handleDestroyAllInstances();
     } else if (info.signal === EOBSOutputSignal.Reconnect) {
       this.sendReconnectingNotification();
     } else if (info.signal === EOBSOutputSignal.ReconnectSuccess) {
@@ -1704,6 +1713,24 @@ export class StreamingService
       });
     }
 
+    if (info.signal === EOBSOutputSignal.Stop) {
+      // Handle stopping the vertical recording instance in dual output mode
+      if (
+        this.views.isDualOutputMode &&
+        display === 'horizontal' &&
+        this.contexts.vertical.recording !== null
+      ) {
+        // When recording both displays in dual output mode, sleep for 2 seconds to allow a different time stamp to be generated
+        // because the recording history uses the time stamp as keys. If the same time stamp is used, the entry will be replaced
+        // in the recording history
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        this.contexts.vertical.recording.stop();
+
+        // Return early because stopping the vertical recording instance needs to resolve
+        return;
+      }
+    }
+
     if (info.signal === EOutputSignalState.Wrote) {
       const fileName = this.contexts[display].recording.lastFile();
 
@@ -1723,11 +1750,8 @@ export class StreamingService
       await this.handleDestroyOutputContexts(display);
 
       this.latestRecordingPath.next(fileName);
-
-      // Wrote signals come after Offline, so we return early here
-      // to not falsely set our state out of Offline
-      return;
     }
+    console.log('Recording Signal:', info, display, nextState);
 
     const time = new Date().toISOString();
     this.SET_RECORDING_STATUS(nextState, display, time);
@@ -1939,10 +1963,12 @@ export class StreamingService
     const mode = this.outputSettingsService.getSettings().mode;
     const validOutput = this.validateOutputInstance(mode, display, type);
 
+    console.log('validOutput', validOutput, display, type, this.state.status[display][type]);
+
     // If the instance matches the mode, return to validate it
     if (validOutput) {
       // Validate if the instance should be started
-      if (start && this.state.status[display][type] !== 'offline') {
+      if (start && this.state.status[display][type] === 'offline') {
         this.contexts[display][type]?.start();
       }
 
@@ -2462,7 +2488,8 @@ export class StreamingService
   }
 
   /**
-   * Destroy all factory API instances
+   * Destroy all factory API instances for a given display
+   * @param display - The display to destroy the output contexts for
    * @remark Primarily used for cleanup.
    */
   private async handleDestroyOutputContexts(display: TDisplayType) {
@@ -2477,6 +2504,17 @@ export class StreamingService
       await this.destroyOutputContextIfExists(display, 'recording');
       await this.destroyOutputContextIfExists(display, 'streaming');
     }
+  }
+
+  /**
+   * Destroy all factory API instances for all displays
+   * @remark Primarily used for cleanup when rejecting starting the stream
+   */
+  private async handleDestroyAllInstances() {
+    await this.handleDestroyOutputContexts('vertical');
+    await this.handleDestroyOutputContexts('horizontal');
+
+    await this.resetInfo();
   }
 
   /**
@@ -2641,6 +2679,11 @@ export class StreamingService
       this.state.status[display].replayBufferTime = time;
       this.state.replayBufferStatusTime = time;
     }
+  }
+
+  @mutation()
+  private SET_RECORDING_OUTPUT_TYPE(output: TDisplayOutput) {
+    this.state.info.settings.recording = output;
   }
 
   @mutation()
