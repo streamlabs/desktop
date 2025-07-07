@@ -1185,7 +1185,11 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   }
 
   canSync(): boolean {
-    return this.userService.isLoggedIn && !this.appService.state.argv.includes('--nosync');
+    return (
+      this.userService.isLoggedIn &&
+      !this.appService.state.argv.includes('--nosync') &&
+      !process.argv.includes('--nosync')
+    );
   }
 
   /**

@@ -179,7 +179,7 @@ const MARVEL_RIVALS_CONFIG: IGameConfig = {
   label: 'Marvel Rivals',
   gameModes: '',
   thumbnail: `${thumbnailPath}marvel-rivals.png`,
-  state: EGameState.INTERNAL,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -197,7 +197,7 @@ const WAR_THUNDER_CONFIG: IGameConfig = {
   label: 'War Thunder',
   gameModes: '',
   thumbnail: `${thumbnailPath}war-thunder.png`,
-  state: EGameState.INTERNAL,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -215,7 +215,7 @@ const VALORANT_CONFIG: IGameConfig = {
   label: 'VALORANT',
   gameModes: '',
   thumbnail: `${thumbnailPath}${EGame.VALORANT}.png`,
-  state: EGameState.INTERNAL,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -231,7 +231,7 @@ const COUNTER_STRIKE_2_CONFIG: IGameConfig = {
   label: 'Counter-Strike',
   gameModes: '',
   thumbnail: `${thumbnailPath}${EGame.COUNTER_STRIKE_2}.png`,
-  state: EGameState.INTERNAL,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -263,7 +263,7 @@ const PUBG_CONFIG: IGameConfig = {
   label: 'PUBG: BATTLEGROUNDS',
   gameModes: '',
   thumbnail: `${thumbnailPath}${EGame.PUBG}.png`,
-  state: EGameState.INTERNAL,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -279,7 +279,7 @@ const RAINBOW_SIX_SIEGE: IGameConfig = {
   label: "Tom Clancy's Rainbow Six Siege X",
   gameModes: '',
   thumbnail: `${thumbnailPath}${EGame.RAINBOW_SIX_SIEGE}.png`,
-  state: EGameState.INTERNAL,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -311,7 +311,7 @@ const LEAGUE_OF_LEGENDS: IGameConfig = {
   label: 'League of Legends',
   gameModes: '',
   thumbnail: `${thumbnailPath}${EGame.LEAGUE_OF_LEGENDS}.png`,
-  state: EGameState.INTERNAL,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -336,18 +336,18 @@ const UNSET_CONFIG: IGameConfig = {
 
 // Each game must have a config like and the config must be added here.
 const GAME_CONFIGS: Record<EGame, IGameConfig> = {
-  [EGame.FORTNITE]: FORTNITE_CONFIG,
-  [EGame.WARZONE]: WARZONE_CONFIG,
-  [EGame.BLACK_OPS_6]: BLACK_OPS_6_CONFIG,
-  [EGame.MARVEL_RIVALS]: MARVEL_RIVALS_CONFIG,
-  [EGame.WAR_THUNDER]: WAR_THUNDER_CONFIG,
-  [EGame.VALORANT]: VALORANT_CONFIG,
+  [EGame.FORTNITE]: FORTNITE_CONFIG, // ✅
+  [EGame.WARZONE]: WARZONE_CONFIG, // ✅
+  [EGame.BLACK_OPS_6]: BLACK_OPS_6_CONFIG, // ✅
+  [EGame.MARVEL_RIVALS]: MARVEL_RIVALS_CONFIG, // ✅
+  [EGame.WAR_THUNDER]: WAR_THUNDER_CONFIG, // ✅
+  [EGame.VALORANT]: VALORANT_CONFIG, // ✅
   [EGame.COUNTER_STRIKE_2]: COUNTER_STRIKE_2_CONFIG,
-  [EGame.APEX_LEGENDS]: APEX_LEGENDS_CONFIG,
-  [EGame.PUBG]: PUBG_CONFIG,
-  [EGame.RAINBOW_SIX_SIEGE]: RAINBOW_SIX_SIEGE,
+  [EGame.APEX_LEGENDS]: APEX_LEGENDS_CONFIG, // ✅
+  [EGame.PUBG]: PUBG_CONFIG, // ✅
+  [EGame.RAINBOW_SIX_SIEGE]: RAINBOW_SIX_SIEGE, // ✅
   [EGame.OVERWATCH_2]: OVERWATCH_2,
-  [EGame.LEAGUE_OF_LEGENDS]: LEAGUE_OF_LEGENDS,
+  [EGame.LEAGUE_OF_LEGENDS]: LEAGUE_OF_LEGENDS, // ✅
   [EGame.UNSET]: UNSET_CONFIG,
 };
 

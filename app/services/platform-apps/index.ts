@@ -665,6 +665,7 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
         size: this.getPagePopOutSize(appId, pageSlot),
         x: mousePos.x,
         y: mousePos.y,
+        persistWebContents: true,
         ...windowOptions,
       },
       windowId,
@@ -672,10 +673,10 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
 
     this.POP_OUT_SLOT(appId, pageSlot);
 
-    const sub = this.windowsService.windowDestroyed.subscribe(winId => {
+    const windowDestroyed = this.windowsService.windowDestroyed.subscribe(winId => {
       if (winId === windowId) {
         this.POP_IN_SLOT(appId, pageSlot);
-        sub.unsubscribe();
+        windowDestroyed.unsubscribe();
       }
     });
   }
