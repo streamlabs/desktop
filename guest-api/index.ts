@@ -180,6 +180,8 @@ export interface IRequestHandler {
     electron.contextBridge.exposeInMainWorld('streamlabsOBS', api);
   } catch (e: unknown) {
     // Probably means context isolation is disabled
+
+    //@ts-ignore
     window['streamlabsOBS'] = api;
   }
 })();

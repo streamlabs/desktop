@@ -72,11 +72,13 @@ export class TwitchModule extends Module {
         return;
       }
 
-      const chatMessageRegex = /:(?<username>\w+)!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :(?<message>.+)/;
+      const chatMessageRegex = /:(\w+)!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :(.+)/;
       const match = message.match(chatMessageRegex);
 
-      if (match && match.groups) {
-        const { username, message: chatMessage } = match.groups;
+      if (match) {
+        // Use the captured groups by their index
+        const username = match[1];
+        const chatMessage = match[2];
         console.log(`[${username}]: ${chatMessage}`);
         this.onChat.next({ username, message: chatMessage });
       }
