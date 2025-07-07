@@ -385,6 +385,12 @@ export class StreamingService
     }
 
     /**
+     * Saved any settings updated during the `beforeGoLive` process for the platforms.
+     * This is important for dual streaming and multistreaming.
+     */
+    this.SET_GO_LIVE_SETTINGS(this.views.savedSettings);
+
+    /**
      * SET DUAL OUTPUT SETTINGS
      */
     if (this.views.isDualOutputMode) {
@@ -463,6 +469,23 @@ export class StreamingService
         .filter(dest => dest.enabled)
         .map(dest => dest.url);
 
+      if (Utils.isDevMode()) {
+        console.log(
+          'Dual Output Setup\n',
+          'Platforms:',
+          JSON.stringify(allPlatforms),
+          '\n',
+          'Destinations:',
+          JSON.stringify(allDestinations),
+          '\n',
+          'Horizontal:',
+          JSON.stringify(horizontalStream),
+          '\n',
+          'Vertical',
+          JSON.stringify(verticalStream),
+        );
+      }
+
       this.usageStatisticsService.recordAnalyticsEvent('DualOutput', {
         type: 'StreamingDualOutput',
         platforms: JSON.stringify(allPlatforms),
@@ -486,6 +509,20 @@ export class StreamingService
       const failureType = this.views.isMultiplatformMode
         ? 'RESTREAM_SETUP_FAILED'
         : 'DUAL_OUTPUT_SETUP_FAILED';
+
+      if (Utils.isDevMode()) {
+        console.log(
+          'Restream Setup\n',
+          'Displays:',
+          this.views.displaysToRestream,
+          '\n',
+          'Horizontal:',
+          this.views.horizontalStream,
+          '\n',
+          'Vertical',
+          this.views.verticalStream,
+        );
+      }
 
       // check the Restream service is available
       let ready = false;
