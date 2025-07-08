@@ -291,39 +291,32 @@ export class RestreamService extends StatefulService<IRestreamState> {
     const promises = targets.map(t => this.deleteTarget(t.id));
     await Promise.all(promises);
 
-    const modesToRestream = this.streamInfo.displaysToRestream.map(display =>
-      this.getMode(display),
-    );
     // setup new targets
     const newTargets = [
-      ...this.streamInfo.enabledPlatforms
-        .filter(platform => modesToRestream.includes(this.getPlatformMode(platform)))
-        .map(platform =>
-          isDualOutputMode
-            ? {
-                platform,
-                streamKey: getPlatformService(platform).state.streamKey,
-                mode: this.getPlatformMode(platform),
-              }
-            : {
-                platform,
-                streamKey: getPlatformService(platform).state.streamKey,
-              },
-        ),
-      ...this.customDestinations
-        .filter(dest => dest.enabled && modesToRestream.includes(this.getMode(dest.display)))
-        .map(dest =>
-          isDualOutputMode
-            ? {
-                platform: 'relay' as 'relay',
-                streamKey: `${dest.url}${dest.streamKey}`,
-                mode: this.getMode(dest.display),
-              }
-            : {
-                platform: 'relay' as 'relay',
-                streamKey: `${dest.url}${dest.streamKey}`,
-              },
-        ),
+      ...this.streamInfo.enabledPlatforms.map(platform =>
+        isDualOutputMode
+          ? {
+              platform,
+              streamKey: getPlatformService(platform).state.streamKey,
+              mode: this.getPlatformMode(platform),
+            }
+          : {
+              platform,
+              streamKey: getPlatformService(platform).state.streamKey,
+            },
+      ),
+      ...this.customDestinations.map(dest =>
+        isDualOutputMode
+          ? {
+              platform: 'relay' as 'relay',
+              streamKey: `${dest.url}${dest.streamKey}`,
+              mode: this.getMode(dest.display),
+            }
+          : {
+              platform: 'relay' as 'relay',
+              streamKey: `${dest.url}${dest.streamKey}`,
+            },
+      ),
     ];
 
     // treat tiktok as a custom destination
@@ -359,7 +352,21 @@ export class RestreamService extends StatefulService<IRestreamState> {
       kickTarget.mode = isDualOutputMode ? this.getPlatformMode('kick') : 'landscape';
     }
 
-    await this.createTargets(newTargets);
+    // in dual output mode, only create targets for the displays that are being restreamed
+    if (isDualOutputMode) {
+      const modesToRestream = this.streamInfo.displaysToRestream.map(display =>
+        this.getMode(display),
+      );
+
+      const filteredTargets = newTargets.filter(
+        target => target.mode && modesToRestream.includes(target.mode),
+      );
+
+      await this.createTargets(filteredTargets);
+    } else {
+      // in single output mode, create all targets
+      await this.createTargets(newTargets);
+    }
   }
 
   checkStatus(): Promise<boolean> {
