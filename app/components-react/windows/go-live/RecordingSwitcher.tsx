@@ -22,9 +22,10 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
   const canRecordVertical = Services.IncrementalRolloutService.views.featureIsEnabled(
     EAvailableFeatures.verticalRecording,
   );
-  const canRecordDualOutput = Services.IncrementalRolloutService.views.featureIsEnabled(
-    EAvailableFeatures.dualOutputRecording,
-  );
+  // const canRecordDualOutput = Services.IncrementalRolloutService.views.featureIsEnabled(
+  //   EAvailableFeatures.dualOutputRecording,
+  // );
+  const canRecordDualOutput = false;
 
   const v = useVuex(() => ({
     isDualOutputMode: Services.DualOutputService.views.dualOutputMode,
