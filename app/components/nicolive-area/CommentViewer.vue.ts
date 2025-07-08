@@ -212,7 +212,19 @@ export default class CommentViewer extends Vue {
         menu.append({
           type: 'separator',
         });
-        if (!item.isDeleted) {
+        if (item.isDeleted) {
+          menu.append({
+            id: 'Undo delete a comment',
+            label: 'コメント削除を取り消す',
+            click: () => {
+              this.nicoliveCommentViewerService.undoDeleteComment(item.value.id).catch(e => {
+                if (e instanceof NicoliveFailure) {
+                  openErrorDialogFromFailure(e);
+                }
+              });
+            },
+          });
+        } else {
           menu.append({
             id: 'Delete a comment',
             label: 'コメントを削除',
@@ -243,6 +255,9 @@ export default class CommentViewer extends Vue {
           });
         }
         menu.append({
+          type: 'separator',
+        });
+        menu.append({
           id: 'Ban comment owner',
           label: 'ユーザーを配信からブロック',
           click: () => {
@@ -261,40 +276,27 @@ export default class CommentViewer extends Vue {
           },
         });
       }
-      if (item.isDeleted) {
-        menu.append({
-          type: 'separator',
-        });
-        menu.append({
-          id: 'Undo delete a comment',
-          label: 'コメント削除を取り消す',
-          click: () => {
-            this.nicoliveCommentViewerService.undoDeleteComment(item.value.id).catch(e => {
-              if (e instanceof NicoliveFailure) {
-                openErrorDialogFromFailure(e);
-              }
-            });
-          },
-        });
-      }
-      if ((!item.isDeleted && !item.filtered) || item.isModerator) {
-        menu.append({
-          type: 'separator',
-        });
-      }
       if (item.value.name /* なふだ有効ユーザー */) {
         if (!this.nicoliveModeratorsService.isModerator(item.value.user_id)) {
-          menu.append({
-            id: 'Add to moderator',
-            label: 'モデレーターに追加',
-            click: () => {
-              this.nicoliveModeratorsService.addModeratorWithConfirm({
-                userId: item.value.user_id,
-                userName: item.value.name,
-              });
-            },
-          });
+          if (!item.filtered) {
+            menu.append({
+              type: 'separator',
+            });
+            menu.append({
+              id: 'Add to moderator',
+              label: 'モデレーターに追加',
+              click: () => {
+                this.nicoliveModeratorsService.addModeratorWithConfirm({
+                  userId: item.value.user_id,
+                  userName: item.value.name,
+                });
+              },
+            });
+          }
         } else {
+          menu.append({
+            type: 'separator',
+          });
           menu.append({
             id: 'Remove from moderator',
             label: 'モデレーターから削除',
@@ -306,13 +308,11 @@ export default class CommentViewer extends Vue {
             },
           });
         }
-        if (!item.filtered && !item.isDeleted) {
-          menu.append({
-            type: 'separator',
-          });
-        }
       }
       if (!item.isDeleted && !item.filtered) {
+        menu.append({
+          type: 'separator',
+        });
         menu.append({
           id: 'Pin the comment',
           label: 'コメントをピン留め',

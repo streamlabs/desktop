@@ -21,7 +21,9 @@
           ></i>
         </div>
         <div class="comment-body" :title="computedTitle">
-          {{ chat.isDeleted ? '##このコメントは削除されました##' : computedContent }}
+          {{
+            chat.isDeleted && !chat.filtered ? '##このコメントは削除されました##' : computedContent
+          }}
         </div>
       </div>
       <button
