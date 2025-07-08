@@ -1,4 +1,5 @@
 import * as remote from '@electron/remote';
+import { clipboard } from 'electron';
 import { Inject } from 'services/core/injector';
 import { $t } from 'services/i18n';
 import { SubStreamService } from 'services/substream/SubStreamService';
@@ -28,6 +29,7 @@ export default class SubStreamSettings extends Vue {
   audioCodec: { id: string; name: string } = { id: '', name: '' };
   audioCodecs: { id: string; name: string }[] = [];
 
+  keyintSec: number = SubStreamService.defaultState.keyintSec;
   sync: boolean = SubStreamService.defaultState.sync;
 
   status: string = '';
@@ -36,8 +38,16 @@ export default class SubStreamSettings extends Vue {
 
   checker?: number = undefined;
 
-  defaultYoutubeUrl: string = 'rtmp://a.rtmp.youtube.com/live2';
-  defaultTwitchUrl: string = 'rtmp://live-tyo.twitch.tv/app';
+  defautServers: { [key: string]: { url: string; stream_key_link: string } } = {
+    youtube: {
+      url: 'rtmp://a.rtmp.youtube.com/live2',
+      stream_key_link: 'https://www.youtube.com/live_dashboard',
+    },
+    twitch: {
+      url: 'rtmp://live-tyo.twitch.tv/app',
+      stream_key_link: 'https://dashboard.twitch.tv/settings/stream',
+    },
+  };
 
   @Watch('use')
   onUseChange() {
@@ -67,6 +77,11 @@ export default class SubStreamSettings extends Vue {
     this.subStreamService.setState({ videoCodec: this.videoCodec.id });
   }
 
+  @Watch('keyintSec')
+  onKeyintSecChange() {
+    this.subStreamService.setState({ keyintSec: Number(this.keyintSec) });
+  }
+
   @Watch('audioBitrate')
   onAudioBitrateChange() {
     this.subStreamService.setState({ audioBitrate: Number(this.audioBitrate) });
@@ -82,11 +97,19 @@ export default class SubStreamSettings extends Vue {
     this.subStreamService.setState({ sync: this.sync });
   }
 
+  pasteKey() {
+    const text = clipboard.readText();
+    if (!text || /\s/.test(text)) return;
+    this.key = text;
+    //this.showKey = true;
+  }
+
   async mounted() {
     this.use = this.subStreamService.state.use;
     this.url = this.subStreamService.state.url;
     this.key = this.subStreamService.state.key;
     this.videoBitrate = this.subStreamService.state.videoBitrate;
+    this.keyintSec = this.subStreamService.state.keyintSec;
     this.audioBitrate = this.subStreamService.state.audioBitrate;
     this.sync = this.subStreamService.state.sync;
 
@@ -118,6 +141,10 @@ export default class SubStreamSettings extends Vue {
 
   beforeDestroy() {
     this.stopChecker();
+  }
+
+  openExternalLink(url: string) {
+    remote.shell.openExternal(url);
   }
 
   async checkStatus() {

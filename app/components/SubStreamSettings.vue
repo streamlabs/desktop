@@ -17,40 +17,63 @@
       </div>
 
       <div class="section" v-if="use">
+        <div>{{ $t('settings.substream.urlTips') }}</div>
+        <div class="url-tips">
+          <div>
+            YouTube &nbsp;
+            {{ defautServers.youtube.url }}
+            <button
+              class="set-url-button basic-button"
+              data-size="sm"
+              data-radius="sm"
+              data-color="secondary"
+              data-variant="light"
+              @click="url = defautServers.youtube.url"
+            >
+              {{ $t('settings.substream.set') }}
+            </button>
+            <button
+              class="set-url-button basic-button"
+              data-size="sm"
+              data-radius="sm"
+              data-color="secondary"
+              data-variant="light"
+              @click="openExternalLink(defautServers.youtube.stream_key_link)"
+            >
+              {{ $t('settings.substream.getStreamKey')
+              }}<i class="icon-open-blank set-url-icon"></i>
+            </button>
+          </div>
+          <div>
+            Twitch &nbsp;
+            {{ defautServers.twitch.url }}
+            <button
+              class="set-url-button basic-button"
+              data-size="sm"
+              data-radius="sm"
+              data-color="secondary"
+              data-variant="light"
+              @click="url = defautServers.twitch.url"
+            >
+              {{ $t('settings.substream.set') }}
+            </button>
+            <button
+              class="set-url-button basic-button"
+              data-size="sm"
+              data-radius="sm"
+              data-color="secondary"
+              data-variant="light"
+              @click="openExternalLink(defautServers.twitch.stream_key_link)"
+            >
+              {{ $t('settings.substream.getStreamKey')
+              }}<i class="icon-open-blank set-url-icon"></i>
+            </button>
+          </div>
+        </div>
+
         <div class="input-wrapper">
           <div class="input-label">
             <label>{{ $t('settings.substream.url') }}</label>
-            <div class="url-tips">
-              <div>{{ $t('settings.substream.urlTips') }}</div>
-              <div>
-                YouTube &nbsp;
-                {{ defaultYoutubeUrl }}
-                <button
-                  class="set-url-button basic-button"
-                  data-size="sm"
-                  data-radius="sm"
-                  data-color="secondary"
-                  data-variant="light"
-                  @click="url = defaultYoutubeUrl"
-                >
-                  {{ $t('settings.substream.set') }}
-                </button>
-              </div>
-              <div>
-                Twitch &nbsp;
-                {{ defaultTwitchUrl }}
-                <button
-                  class="set-url-button basic-button"
-                  data-size="sm"
-                  data-radius="sm"
-                  data-color="secondary"
-                  data-variant="light"
-                  @click="url = defaultTwitchUrl"
-                >
-                  {{ $t('settings.substream.set') }}
-                </button>
-              </div>
-            </div>
           </div>
           <input type="text" v-model="url" />
         </div>
@@ -71,6 +94,17 @@
               @click="showKey = !showKey"
             >
               {{ showKey ? $t('settings.substream.display') : $t('settings.substream.show') }}
+            </button>
+            <button
+              class="toggle-key-button basic-button"
+              style="margin: 0"
+              data-size="sm"
+              data-radius="sm"
+              data-color="secondary"
+              data-variant="light"
+              @click="pasteKey()"
+            >
+              {{ $t('common.paste') }}
             </button>
           </div>
         </div>
@@ -160,6 +194,16 @@
 
           <div class="input-wrapper">
             <div class="input-label">
+              <label>
+                {{ $t('settings.substream.keyintSec') }}
+                <span class="label-description">({{ $t('settings.substream.default') }}: 2)</span>
+              </label>
+            </div>
+            <input type="number" v-model="keyintSec" min="0" max="20" />
+          </div>
+
+          <div class="input-wrapper">
+            <div class="input-label">
               <label
                 >{{ $t('settings.substream.audioEncoder')
                 }}<span class="label-description"
@@ -241,8 +285,12 @@
 }
 
 .set-url-button {
-  height: 18px;
-  margin: 0 !important;
+  height: 20px;
+  margin: 2px !important;
+}
+
+.set-url-icon {
+  margin-left: 4px;
 }
 
 .key-input-wrapper {
@@ -252,7 +300,7 @@
 }
 
 .toggle-key-button {
-  width: 80px;
+  width: 100px;
   height: 32px;
   margin: 0;
 }

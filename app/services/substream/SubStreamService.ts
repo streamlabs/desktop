@@ -14,6 +14,7 @@ interface ISubStreamState {
   videoBitrate: number;
   audioBitrate: number;
   videoCodec: string;
+  keyintSec: number; // キーフレーム間隔（秒）0:auto default:2
   audioCodec: string;
   sync: boolean;
 }
@@ -32,7 +33,7 @@ export interface StartParam {
   audioId: string;
   output: { [name: string]: Primitive };
   service: { key: string; server: string; [name: string]: Primitive };
-  video: { bitrate: number; [name: string]: Primitive };
+  video: { bitrate: number; keyint_sec: number; [name: string]: Primitive };
   audio: { bitrate: number; [name: string]: Primitive };
 }
 
@@ -77,6 +78,7 @@ export class SubStreamService extends PersistentStatefulService<ISubStreamState>
     videoBitrate: 2500,
     audioBitrate: 128,
     videoCodec: 'h264',
+    keyintSec: 2,
     audioCodec: 'aac',
     sync: false,
   };
@@ -124,8 +126,7 @@ export class SubStreamService extends PersistentStatefulService<ISubStreamState>
       },
       video: {
         bitrate: bitRange(this.state.videoBitrate, 200, 100000), // 2500
-        keyint_sec: 0,
-        // "bitrate": 2500,
+        keyint_sec: bitRange(this.state.keyintSec, 0, 20), // 0
         // "buffer_size": 2500,
         // "crf": 23,
         // "preset": "veryfast",
