@@ -572,10 +572,12 @@ export class SourcesService extends StatefulService<ISourcesState> {
     }
 
     if (type === 'smart_browser_source') {
-      resolvedSettings.url = '';
-      resolvedSettings.webpage_control_level = 5;
       resolvedSettings.__remappedType = 'browser_source';
+      resolvedSettings.webpage_control_level = 5;
       resolvedSettings.propertiesManager = 'smart_browser_source';
+      resolvedSettings.url = '';
+      resolvedSettings.width = 1280;
+      resolvedSettings.height = 720;
     }
 
     if (type === 'text_gdiplus' && resolvedSettings.text === void 0) {
