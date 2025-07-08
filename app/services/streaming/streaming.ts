@@ -515,13 +515,13 @@ export class StreamingService
         console.log(
           'Restream Setup\n',
           'Displays:',
-          this.views.displaysToRestream,
+          JSON.stringify(this.views.displaysToRestream),
           '\n',
           'Horizontal:',
-          this.views.horizontalStream,
+          JSON.stringify(this.views.horizontalStream),
           '\n',
           'Vertical',
-          this.views.verticalStream,
+          JSON.stringify(this.views.verticalStream),
         );
       }
 
