@@ -1230,10 +1230,8 @@ export class StreamingService
   async toggleRecording() {
     try {
       if (this.views.recordingStatus === ERecordingState.Recording) {
-        console.log('Stopping recording');
         await this.handleStopRecording();
       } else if (this.views.recordingStatus === ERecordingState.Offline) {
-        console.log('Starting recording');
         await this.handleStartRecording();
       } else {
         const error =
@@ -1284,15 +1282,12 @@ export class StreamingService
 
     const dualOutputRecording =
       this.views.isDualOutputMode && this.views.settings.recording === 'both';
-    console.log('this.views.settings', this.views.settings);
 
     if (dualOutputRecording || this.views.settings.recording === 'horizontal') {
-      console.log('Starting horizontal recording');
       await this.validateOrCreateOutputInstance('horizontal', 'recording', 1, true);
     }
 
     if (dualOutputRecording || this.views.settings.recording === 'vertical') {
-      console.log('Starting vertical recording');
       await this.validateOrCreateOutputInstance('vertical', 'recording', 2, true);
     }
   }
@@ -1314,7 +1309,6 @@ export class StreamingService
       // This is only called in dual output mode because recording the vertical display is not a feature for single output mode
       // This is also a failsafe to prevent errors in case the vertical recording failed to stop for some reason
       if (this.contexts.vertical.recording !== null) {
-        console.log('Stopping vertical recording');
         this.contexts.vertical.recording.stop(true);
       }
 
@@ -1323,8 +1317,6 @@ export class StreamingService
       // This is also a failsafe to prevent errors in case the horizontal recording failed to stop for some reason
 
       if (this.contexts.horizontal.recording !== null) {
-        console.log('Stopping horizontal recording');
-
         this.contexts.horizontal.recording.stop(true);
       }
     } else {
@@ -1332,8 +1324,6 @@ export class StreamingService
       // Note: This will always only be the horizontal display because recording the vertical display is only a
       // feature for dual output mode
       if (this.contexts.horizontal.recording !== null) {
-        console.log('Stopping horizontal recording');
-
         this.contexts.horizontal.recording.stop();
       }
     }
@@ -1351,8 +1341,6 @@ export class StreamingService
 
     // recordings must have a streaming instance
     await this.validateOrCreateOutputInstance(display, 'streaming', index);
-    console.log('validated streaming instance for recording:', display, index);
-
     // handle unique properties (including audio)
     if (mode === 'Advanced') {
       const recording = AdvancedRecordingFactory.create() as IAdvancedRecording;
@@ -1506,7 +1494,6 @@ export class StreamingService
     this.contexts[display].streaming.reconnect = ReconnectFactory.create();
     this.contexts[display].streaming.network = NetworkFactory.create();
 
-    console.log('this.contexts[display].streaming', this.contexts[display].streaming);
     if (start) {
       this.contexts[display].streaming.start();
     }
@@ -1551,8 +1538,6 @@ export class StreamingService
   }
 
   private async handleStreamingSignal(info: EOutputSignal, display: TDisplayType) {
-    console.log('info', info, display);
-
     // map signals to status
     const nextState: EStreamingState = ({
       [EOBSOutputSignal.Starting]: EStreamingState.Starting,
@@ -1744,7 +1729,6 @@ export class StreamingService
 
       this.latestRecordingPath.next(fileName);
     }
-    console.log('Recording Signal:', info, display, nextState);
 
     const time = new Date().toISOString();
     this.SET_RECORDING_STATUS(nextState, display, time);
@@ -2006,8 +1990,6 @@ export class StreamingService
   ) {
     const mode = this.outputSettingsService.getSettings().mode;
     const validOutput = this.validateOutputInstance(mode, display, type);
-
-    console.log('validOutput', validOutput, display, type, this.state.status[display][type]);
 
     // If the instance matches the mode, return to validate it
     if (validOutput) {
@@ -2577,7 +2559,6 @@ export class StreamingService
   ) {
     // if the context does not exist there is nothing to destroy
     if (!this.contexts[display] || !this.contexts[display][contextType]) return;
-    console.log('destroying output context', display, contextType);
 
     // prevent errors by stopping an active context before destroying it
     if (this.state.status[display][contextType].toString() !== 'offline') {
