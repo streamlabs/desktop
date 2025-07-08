@@ -71,6 +71,10 @@ export async function exportEDL(
   lines.push('');
 
   let index = 0;
+  if (!stream.highlights) {
+    return lines.join('\n');
+  }
+
   stream.highlights.forEach(highlight => {
     // export as marker range if requested
     if (exportRange) {
@@ -178,6 +182,10 @@ export async function exportCSV(
   ];
 
   let index = 1;
+  if (!stream.highlights) {
+    return csvRows.map(row => row.join(',')).join('\n');
+  }
+
   stream.highlights.forEach(highlight => {
     // export as marker range if requested
     if (exportRange) {
@@ -274,6 +282,10 @@ export async function exportYouTubeChapters(stream: IHighlightedStream) {
   }
 
   const lines: string[] = [];
+  if (!stream.highlights) {
+    return '';
+  }
+
   stream.highlights.forEach(highlight => {
     const start = toTimecode(highlight.start_time);
 
