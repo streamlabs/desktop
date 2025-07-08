@@ -1,7 +1,6 @@
 import React, { CSSProperties, useMemo } from 'react';
 import styles from './RecordingSwitcher.m.less';
 import { Services } from 'components-react/service-provider';
-import { TDisplayType } from 'services/settings-v2';
 import { $t } from 'services/i18n';
 import { useVuex } from 'components-react/hooks';
 import { useGoLiveSettings } from './useGoLiveSettings';
@@ -34,6 +33,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
 
   const recordWhenStartStream = v.recordWhenStreaming || v.useAiHighlighter;
   const showRecordingIcons = v.isDualOutputMode && (canRecordVertical || canRecordDualOutput);
+  const showRecordingSwitcher = !v.isDualOutputMode || showRecordingIcons;
 
   const options = useMemo(() => {
     const opts = [
@@ -49,42 +49,48 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
 
   return (
     <div style={p?.style} className={cx(p?.className, styles.recordingSwitcher)}>
-      <Tooltip
-        title={$t('AI Highlighter is enabled. Recording will start when stream starts.')}
-        disabled={!v.useAiHighlighter}
-        placement="topRight"
-        lightShadow
-        className={styles.recordingTooltip}
-      >
-        <SwitchInput
-          name="recording-toggle"
-          value={recordWhenStartStream}
-          onChange={val => {
-            Services.SettingsService.actions.setSettingValue('General', 'RecordWhenStreaming', val);
-          }}
-          uncontrolled
-          style={{ marginRight: '10px' }}
-          label={v.isDualOutputMode ? $t('Record Stream in') : $t('Record Stream')}
-          layout="horizontal"
-          checkmark
-          disabled={v.useAiHighlighter}
-        />
-        {showRecordingIcons && (
-          <>
-            <RadioInput
-              name="recording-display"
-              value={recording}
-              options={options}
-              onChange={(display: TDisplayOutput) => toggleRecordingDisplay(display)}
-              icons={true}
-              className={styles.recordingDisplay}
-              disabled={v.useAiHighlighter}
-            />
-            {$t('format')}
-          </>
-        )}
-        {v.useAiHighlighter && <i className={cx(styles.info, 'icon-information')} />}
-      </Tooltip>
+      {showRecordingSwitcher && (
+        <Tooltip
+          title={$t('AI Highlighter is enabled. Recording will start when stream starts.')}
+          disabled={!v.useAiHighlighter}
+          placement="topRight"
+          lightShadow
+          className={styles.recordingTooltip}
+        >
+          <SwitchInput
+            name="recording-toggle"
+            value={recordWhenStartStream}
+            onChange={val => {
+              Services.SettingsService.actions.setSettingValue(
+                'General',
+                'RecordWhenStreaming',
+                val,
+              );
+            }}
+            uncontrolled
+            style={{ marginRight: '10px' }}
+            label={v.isDualOutputMode ? $t('Record Stream in') : $t('Record Stream')}
+            layout="horizontal"
+            checkmark
+            disabled={v.useAiHighlighter}
+          />
+          {showRecordingIcons && (
+            <>
+              <RadioInput
+                name="recording-display"
+                value={recording}
+                options={options}
+                onChange={(display: TDisplayOutput) => toggleRecordingDisplay(display)}
+                icons={true}
+                className={styles.recordingDisplay}
+                disabled={v.useAiHighlighter}
+              />
+              {$t('format')}
+            </>
+          )}
+          {v.useAiHighlighter && <i className={cx(styles.info, 'icon-information')} />}
+        </Tooltip>
+      )}
     </div>
   );
 }

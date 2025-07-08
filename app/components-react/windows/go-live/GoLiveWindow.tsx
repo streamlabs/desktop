@@ -64,7 +64,6 @@ function ModalFooter() {
     isLoading,
     isDualOutputMode,
     horizontalHasTargets,
-    showRecordingSwitcher,
   } = useGoLiveSettings().extend(module => ({
     windowsService: inject(WindowsService),
     dualOutputService: inject(DualOutputService),
@@ -87,22 +86,6 @@ function ModalFooter() {
       const destinationDisplays = module.state.activeDisplayDestinations;
 
       return platformDisplays.horizontal.length > 0 || destinationDisplays.horizontal.length > 0;
-    },
-
-    get showRecordingSwitcher() {
-      if (!module.isDualOutputMode) return true;
-
-      const dualOutputRecordingEnabled = this.incrementalRolloutService.views.featureIsEnabled(
-        EAvailableFeatures.dualOutputRecording,
-      );
-
-      const verticalRecordingEnabled = this.incrementalRolloutService.views.featureIsEnabled(
-        EAvailableFeatures.verticalRecording,
-      );
-
-      if (dualOutputRecordingEnabled || verticalRecordingEnabled) {
-        return true;
-      }
     },
   }));
 
@@ -148,7 +131,7 @@ function ModalFooter() {
 
   return (
     <Form layout={'inline'}>
-      {showRecordingSwitcher && <RecordingSwitcher />}
+      <RecordingSwitcher />
       {/* CLOSE BUTTON */}
       <Button onClick={close}>{$t('Close')}</Button>
 
