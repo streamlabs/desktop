@@ -146,8 +146,6 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
 
   statisticsUpdated = new Subject<IPerformanceState>();
 
-  private statsInterval: NodeJS.Timeout;
-
   @mutation()
   private SET_PERFORMANCE_STATS(stats: Partial<IPerformanceState>) {
     Object.keys(stats).forEach((stat: keyof Partial<IPerformanceState>) => {
@@ -168,17 +166,18 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
 
   // Starts interval to poll updates from OBS
   startMonitoringPerformance() {
-    this.statsInterval = setInterval(() => {
-      if (this.shutdown) {
-        clearInterval(this.statsInterval);
-      }
+    const statsInterval = () => {
+      if (this.shutdown) return;
 
       // Don't request more stats if we haven't finished processing the last bunch
       if (!this.statsRequestInProgress) {
         this.statsRequestInProgress = true;
         electron.ipcRenderer.send('requestPerformanceStats');
       }
-    }, STATS_UPDATE_INTERVAL);
+
+      setTimeout(statsInterval, STATS_UPDATE_INTERVAL);
+    };
+    statsInterval();
 
     electron.ipcRenderer.on(
       'performanceStatsResponse',
@@ -448,6 +447,5 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
 
   stop() {
     this.shutdown = true;
-    clearInterval(this.statsInterval);
   }
 }
