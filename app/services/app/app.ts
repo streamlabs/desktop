@@ -186,27 +186,37 @@ export class AppService extends StatefulService<IAppState> {
     this.loadingChanged.next(true);
     this.tcpServerService.stopListening();
 
+    const trace = async (name: string, fn: () => void | Promise<void>) => {
+      console.log(`Starting ${name} deinit`);
+      try {
+        await fn();
+      } catch (e: unknown) {
+        console.error(`Error in ${name}: ${e}`);
+      }
+      console.log(`Finished ${name} deinit`);
+    };
+
     window.setTimeout(async () => {
       obs.NodeObs.InitShutdownSequence();
-      this.crashReporterService.beginShutdown();
+      trace('crashReporter', () => this.crashReporterService.beginShutdown());
       this.shutdownStarted.next();
-      this.keyListenerService.shutdown();
-      this.platformAppsService.unloadAllApps();
-      await this.usageStatisticsService.flushEvents();
-      this.windowsService.shutdown();
-      this.ipcServerService.stopListening();
-      await this.userService.flushUserSession();
-      await this.sceneCollectionsService.deinitialize();
-      this.performanceService.stop();
-      this.transitionsService.shutdown();
-      this.videoSettingsService.shutdown();
-      await this.gameOverlayService.destroy();
-      await this.fileManagerService.flushAll();
-      obs.NodeObs.RemoveSourceCallback();
-      obs.NodeObs.RemoveVolmeterCallback();
-      obs.NodeObs.OBS_service_removeCallback();
-      obs.IPC.disconnect();
-      this.crashReporterService.endShutdown();
+      trace('keyListener', () => this.keyListenerService.shutdown());
+      trace('platformApps', () => this.platformAppsService.unloadAllApps());
+      trace('usageStatistics', async () => await this.usageStatisticsService.flushEvents());
+      trace('windows', () => this.windowsService.shutdown());
+      trace('ipcServer', () => this.ipcServerService.stopListening());
+      trace('user', async () => await this.userService.flushUserSession());
+      trace('sceneCollections', async () => await this.sceneCollectionsService.deinitialize());
+      trace('performance', () => this.performanceService.stop());
+      trace('transitions', () => this.transitionsService.shutdown());
+      trace('videoSettings', () => this.videoSettingsService.shutdown());
+      trace('gameOverlay', async () => await this.gameOverlayService.destroy());
+      trace('fileManager', async () => await this.fileManagerService.flushAll());
+      trace('obs.removeSourceCallback', () => obs.NodeObs.RemoveSourceCallback());
+      trace('obs.removeVolmeterCallback', () => obs.NodeObs.RemoveVolmeterCallback());
+      trace('obs.serviceRemoveCallback', () => obs.NodeObs.OBS_service_removeCallback());
+      trace('obs.ipcDisconnect', () => obs.IPC.disconnect());
+      trace('crashReporter', () => this.crashReporterService.endShutdown());
       electron.ipcRenderer.send('shutdownComplete');
     }, 300);
   }
