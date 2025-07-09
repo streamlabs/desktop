@@ -59,7 +59,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
 
   const onChange = (val: TDisplayType | 'both') => {
     if (p.platform) {
-      updatePlatformDisplayAndSaveSettings(p.platform, { display: val });
+      updatePlatformDisplayAndSaveSettings(p.platform, display as TDisplayType);
     } else {
       updateCustomDestinationDisplayAndSaveSettings(p.index, val as TDisplayType);
     }
