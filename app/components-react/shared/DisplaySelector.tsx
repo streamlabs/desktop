@@ -19,8 +19,8 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
   const {
     display,
     canDualStream,
-    updateCustomDestinationDisplay,
-    updatePlatform,
+    updateCustomDestinationDisplayAndSaveSettings,
+    updatePlatformDisplayAndSaveSettings,
   } = useGoLiveSettings().extend(module => ({
     get canDualStream() {
       if (!p.platform) return false;
@@ -59,9 +59,9 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
 
   const onChange = (val: TDisplayType | 'both') => {
     if (p.platform) {
-      updatePlatform(p.platform, { display: val });
+      updatePlatformDisplayAndSaveSettings(p.platform, { display: val });
     } else {
-      updateCustomDestinationDisplay(p.index, val as TDisplayType);
+      updateCustomDestinationDisplayAndSaveSettings(p.index, val as TDisplayType);
     }
   };
 
