@@ -408,6 +408,8 @@ export default class CommentViewer extends Vue {
     return null;
   }
 
+  isSnackbarHovered = false;
+
   private snackbarTimeout: NodeJS.Timeout | null = null;
   clearSnackbarTimeout() {
     if (this.snackbarTimeout) {
@@ -418,12 +420,21 @@ export default class CommentViewer extends Vue {
 
   @Watch('snackbar')
   onSnackbarChange() {
+    this.clearSnackbarTimeout();
     if (this.snackbar) {
       this.snackbarTimeout = setTimeout(() => {
-        this.closeSnackbar();
+        this.snackbarTimeout = null;
+        if (!this.isSnackbarHovered) {
+          this.snackbarService.hide();
+        }
       }, this.snackbar.hideDelay);
-    } else {
-      this.clearSnackbarTimeout();
+    }
+  }
+
+  onSnackbarMouseLeave() {
+    this.isSnackbarHovered = false;
+    if (this.snackbar && this.snackbarTimeout === null) {
+      this.snackbarService.hide();
     }
   }
 
@@ -433,6 +444,5 @@ export default class CommentViewer extends Vue {
 
   closeSnackbar() {
     this.snackbarService.hide();
-    this.clearSnackbarTimeout();
   }
 }

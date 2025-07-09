@@ -80,7 +80,12 @@
         />
         <div class="sentinel" ref="sentinel"></div>
       </div>
-      <div class="snackbar" v-if="snackbar !== null">
+      <div
+        class="snackbar"
+        v-if="snackbar !== null"
+        @mouseenter="isSnackbarHovered = true"
+        @mouseleave="onSnackbarMouseLeave"
+      >
         <span class="snackbar-message">{{ snackbar.message }}</span>
         <button
           v-if="snackbar.action"
