@@ -199,16 +199,14 @@ export default class CommentViewer extends Vue {
       },
     });
     if (item.type === 'normal') {
+      menu.append({
+        id: "Copy comment owner's id",
+        label: 'ユーザーIDをコピー',
+        click: () => {
+          clipboard.writeText(item.value.user_id);
+        },
+      });
       if (!item.filtered) {
-        if (!item.isDeleted) {
-          menu.append({
-            id: "Copy comment owner's id",
-            label: 'ユーザーIDをコピー',
-            click: () => {
-              clipboard.writeText(item.value.user_id);
-            },
-          });
-        }
         menu.append({
           type: 'separator',
         });
