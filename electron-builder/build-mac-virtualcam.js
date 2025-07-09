@@ -4,7 +4,7 @@ const cp = require('child_process');
 function downloadTempRepo() {
   const repoVersion = pjson.macVirtualCamVersion;
   let result = true;
-  const downloadRepoCmd = `git clone --branch ${repoVersion} --depth 1 https://github.com/streamlabs/obs-studio.git`;
+  const downloadRepoCmd = `git clone --branch ${repoVersion} --depth 1 https://github.com/streamlabs/slobs-virtual-cam-installer.git`;
   try {
     cp.execSync(downloadRepoCmd);
   } catch {
@@ -19,20 +19,17 @@ function buildVirtualCamExtension(context) {
   if (hasDownloadedRepo) {
     try {
       console.log('Build the camera system extension');
-      cp.execSync('cd ./obs-studio/plugins/mac-virtualcam/src/camera-extension && ./build-slobs-cameraextension.sh');
+      cp.execSync('cd ./slobs-virtual-cam-installer && ./build.sh');
 
-      console.log('Create Contents/Library/SystemExtensions');
+      console.log('Copy the app into Frameworks folder');
       cp.execSync(
-        `mkdir -p \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Library/SystemExtensions\"`,
-      );
-      console.log('Copy system extension into the final app');
-      cp.execSync(
-        `cp -R ./obs-studio/plugins/mac-virtualcam/src/camera-extension/build_macos/RelWithDebInfo/com.streamlabs.slobs.mac-camera-extension.systemextension \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Library/SystemExtensions\"`,
+        `cp -R ./slobs-virtual-cam-installer/build/RelWithDebInfo/slobs-virtual-cam-installer.app \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Frameworks/"`,
       );
       console.log('Perform cleanup');
-      cp.execSync('rm -rf obs-studio'); // Remove the repo
+      cp.execSync('rm -rf slobs-virtual-cam-installer'); // Remove the repo. Not required for the build agent but helpful for local dev
+      console.log('Completed setting up the slobs-virtual-cam-installer.app');
     } catch {
-      console.error('Failed to copy the system extension into the app.');
+      console.error('Failed setup of slobs-virtual-cam-installer.');
     }
   } else {
     console.error('Could not download the mac-virtualcam repo');
