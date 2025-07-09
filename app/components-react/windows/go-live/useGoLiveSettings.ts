@@ -1,4 +1,4 @@
-import { IGoLiveSettings, StreamInfoView } from '../../../services/streaming';
+import { IGoLiveSettings, StreamInfoView, TDisplayOutput } from '../../../services/streaming';
 import { TPlatform } from '../../../services/platforms';
 import { ICustomStreamDestination } from 'services/settings/streaming';
 import { Services } from '../../service-provider';
@@ -325,7 +325,7 @@ export class GoLiveSettingsModule {
    * This makes changing display immediate and is only used in `DisplaySelector`
    * to keep the rest of the code as before, but we might need to revisit that.
    */
-  updatePlatformDisplayAndSaveSettings(platform: TPlatform, display: TDisplayType) {
+  updatePlatformDisplayAndSaveSettings(platform: TPlatform, display: TDisplayOutput) {
     this.state.updatePlatform(platform, { display });
     this.save(this.state.settings);
   }

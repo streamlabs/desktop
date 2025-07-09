@@ -36,7 +36,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
   }));
 
   const displays = useMemo(() => {
-    const defaultDisplays = [
+    const defaultDisplays: { label: string; value: TDisplayOutput }[] = [
       {
         label: $t('Horizontal'),
         value: 'horizontal',
@@ -57,10 +57,14 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     return defaultDisplays;
   }, [canDualStream]);
 
-  const onChange = (val: TDisplayType | 'both') => {
+  const onChange = (val: TDisplayOutput) => {
     if (p.platform) {
-      updatePlatformDisplayAndSaveSettings(p.platform, display as TDisplayType);
+      updatePlatformDisplayAndSaveSettings(p.platform, val);
     } else {
+      if (val === 'both') {
+        // There's no UI that would allow for this, but just in case
+        throw new Error('Attempted to update custom display for dual stream, this is impossible');
+      }
       updateCustomDestinationDisplayAndSaveSettings(p.index, val as TDisplayType);
     }
   };
