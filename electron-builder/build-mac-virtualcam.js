@@ -23,7 +23,7 @@ function buildVirtualCamExtension(context) {
 
       console.log('Copy the app into Frameworks folder');
       cp.execSync(
-        `cp -R ./slobs-virtual-cam-installer/build/RelWithDebInfo/slobs-virtual-cam-installer.app \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Frameworks/"`,
+        `cp -R ./slobs-virtual-cam-installer/build/RelWithDebInfo/slobs-virtual-cam-installer.app \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Frameworks\"`,
       );
       console.log('Perform cleanup');
       cp.execSync('rm -rf slobs-virtual-cam-installer'); // Remove the repo. Not required for the build agent but helpful for local dev
