@@ -11,17 +11,23 @@ import styles from './MiniClipPreview.m.less';
 
 export default function MiniClipPreview({
   clipId,
+  collectionId,
   showDisabled,
   clipStateChanged,
   emitPlayClip,
 }: {
   clipId: string;
+  collectionId?: string;
   showDisabled: boolean;
   clipStateChanged: (clipId: string, newState: boolean) => void;
   emitPlayClip: () => void;
 }) {
   const { HighlighterService } = Services;
-  const clip = useVuex(() => HighlighterService.views.clipsDictionary[clipId] as TClip);
+  const clipToShow = useVuex(() => HighlighterService.views.clipsDictionary[clipId] as TClip);
+
+  const clip = collectionId
+    ? HighlighterService.clipCollectionManager.getClipFromCollection(collectionId, clipId)
+    : HighlighterService.views.clipsDictionary[clipId];
 
   return (
     <div
@@ -34,6 +40,8 @@ export default function MiniClipPreview({
       <CheckboxInput
         value={clip.enabled}
         onChange={(val: boolean, ev?: React.ChangeEvent<Element> | CheckboxChangeEvent) => {
+          // TODO: this needs to change depending on the collectionId
+
           ev?.stopPropagation();
           const newState = !clip.enabled;
           HighlighterService.actions.enableClip(clip.path, newState);

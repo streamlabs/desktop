@@ -153,6 +153,9 @@ export class ClipCollectionManager {
       if (clip) {
         // Create a copy of the clip with collection-specific properties applied
         const collectionClip = collection.clips![clipPath];
+
+        console.log(`clipDict ${clip.enabled} from collection ${collectionClip.enabled}`);
+
         clips.push({
           ...clip,
           // Override with collection-specific trim values if they exist
@@ -164,6 +167,22 @@ export class ClipCollectionManager {
     });
 
     return clips;
+  }
+
+  getClipFromCollection(collectionId: string, clipPath: string): TClip {
+    const globalClip = this.highlighterService.views.clipsDictionary[clipPath];
+    const collection = this.highlighterService.views.clipCollectionsDictionary[collectionId];
+
+    const collectionClip = collection.clips[clipPath];
+
+    const returnClip = {
+      ...globalClip,
+      startTrim: collectionClip.startTrim ?? globalClip.startTrim,
+      endTrim: collectionClip.endTrim ?? globalClip.endTrim,
+      enabled: collectionClip.enabled,
+    };
+
+    return returnClip;
   }
 
   exportClipCollection(collectionId: string) {

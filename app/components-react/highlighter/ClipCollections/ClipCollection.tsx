@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
 import styles from '../StreamView.m.less';
@@ -22,10 +22,19 @@ export default function ClipCollection(props: ClipCollectionProps) {
     v.clipCollection.id,
   );
 
+  const clipsArray = v.clipCollection.clips ? Object.values(v.clipCollection.clips) : [];
+
   return (
-    <div style={{ width: '100px', height: '150px', backgroundColor: 'blue' }}>
+    <div style={{ width: '400px', height: '400px', backgroundColor: 'blue' }}>
       id: {v.clipCollection.id}
       clips: {v.clipCollection.clips && Object.keys(v.clipCollection.clips).length}
+      <div style={{ overflow: 'hidden', height: '264px', width: '100%' }}>
+        <Thumbnail
+          clips={clipsArray}
+          generatedThumbnail=""
+          exportedFilePath={v.clipCollection.exportedFilePath}
+        />
+      </div>
       <Button
         onClick={() => {
           props.emitDeletedCollection(v.clipCollection.id);
@@ -35,6 +44,7 @@ export default function ClipCollection(props: ClipCollectionProps) {
         delete COllection
       </Button>
       <ClipCollectionModal
+        collectionId={v.clipCollection.id}
         modal={modal}
         clips={clips}
         onClose={() => {
@@ -53,16 +63,69 @@ export default function ClipCollection(props: ClipCollectionProps) {
   );
 }
 
+function Thumbnail({
+  exportedFilePath,
+  clips,
+  generatedThumbnail,
+}: {
+  exportedFilePath?: string;
+  clips?: IClipCollectionClip[];
+  generatedThumbnail?: string;
+}) {
+  const { HighlighterService } = Services;
+  const firstClip = useMemo(() => {
+    if (!clips || clips.length === 0) return undefined;
+    return clips.reduce((lowest, current) =>
+      current.collectionOrderPosition < lowest.collectionOrderPosition ? current : lowest,
+    );
+  }, [clips]);
+
+  console.log('dasdsa', firstClip);
+
+  const clipThumbnail =
+    HighlighterService.views.clipsDictionary[firstClip?.clipId || '']?.scrubSprite;
+
+  console.log('clipThumbnail', clipThumbnail);
+  if (generatedThumbnail) {
+    return (
+      <div>
+        <img src={generatedThumbnail} />
+      </div>
+    );
+  }
+
+  if (exportedFilePath) {
+    return (
+      <div>
+        <video src={exportedFilePath}></video>
+      </div>
+    );
+  }
+
+  if (clipThumbnail) {
+    return (
+      <div style={{ position: 'relative', overflowX: 'clip', width: 192, height: 108 }}>
+        <img src={clipThumbnail}></img>
+      </div>
+    );
+  }
+
+  return <div>No thumbnail available</div>;
+}
+
 import { Modal, Alert, Button, Input } from 'antd';
 import PreviewModal from '../PreviewModal';
+import { IClipCollectionClip } from 'services/highlighter/clip-collections';
 
 function ClipCollectionModal({
   modal,
   clips,
+  collectionId,
   onClose,
 }: {
   modal: TModalStreamCard;
   clips: TClip[];
+  collectionId: string;
   onClose: () => void;
 }) {
   const { HighlighterService } = Services;
@@ -115,6 +178,7 @@ function ClipCollectionModal({
       {showModal === 'preview' && (
         <PreviewModal
           close={closeModal}
+          collectionId={collectionId}
           // streamId={streamId}
           emitSetShowModal={modal => {
             setShowModal(modal);

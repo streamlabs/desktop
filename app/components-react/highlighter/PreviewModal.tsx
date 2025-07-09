@@ -26,12 +26,14 @@ interface IPlaylist {
 export default function PreviewModal({
   close,
   clips,
+  collectionId,
   streamId,
   emitSetShowModal,
 }: {
   close: () => void;
   streamId: string | undefined;
   clips: TClip[];
+  collectionId?: string;
   emitSetShowModal: (modal: 'export' | null) => void;
 }) {
   const { HighlighterService, UsageStatisticsService } = Services;
@@ -39,7 +41,6 @@ export default function PreviewModal({
   const { intro, outro } = HighlighterService.views.video;
   const audioSettings = HighlighterService.views.audio;
   // TODO M: Sorting must be fixed
-  const clipCollection = undefined;
   const sortedClips = [...sortClipsByOrder(clips, streamId, undefined)];
   const initialIndex = getInitialIndex(intro.duration, sortedClips);
   const [currentClipIndex, setCurrentClipIndex] = useState(initialIndex);
@@ -272,6 +273,7 @@ export default function PreviewModal({
   return (
     <div>
       <h2>{$t('Preview')}</h2>
+      {JSON.stringify(playlist.map(clip => clip.enabled))}
       <p>
         This is just a preview of your highlight reel. Loading times between clips are possible.
       </p>
@@ -309,6 +311,7 @@ export default function PreviewModal({
                 content = (
                   <MiniClipPreview
                     clipId={path}
+                    collectionId={collectionId}
                     showDisabled={showDisabled}
                     clipStateChanged={(clipId, newState) => {
                       playlist[index].enabled = newState;
