@@ -72,20 +72,19 @@ export class ClipCollectionManager {
     this.highlighterService.ADD_CLIPS_TO_COLLECTION(clipCollectionId, clipCollectionClips);
   }
 
-  updateClipInCollection(clipCollectionId: string, clip: TClip) {
+  updateClipInCollection(
+    clipCollectionId: string,
+    clipUpdates: Partial<IClipCollectionClip> & { clipId: string },
+  ) {
     // Create dictionary with the single clip to update
     const clipsToUpdate: Dictionary<Partial<IClipCollectionClip>> = {
-      [clip.path]: {
-        clipId: clip.path,
-        startTrim: clip.startTrim,
-        endTrim: clip.endTrim,
+      [clipUpdates.clipId]: {
+        ...clipUpdates,
       },
     };
 
     // Use the more efficient mutation that directly updates clips
     this.highlighterService.UPDATE_CLIPS_IN_COLLECTION(clipCollectionId, clipsToUpdate);
-
-    console.log(`Updated clip ${clip.path} in collection ${clipCollectionId}`);
   }
 
   removeClipsFromCollection(clipCollectionId: string, clipPaths: string[]) {

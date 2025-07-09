@@ -24,12 +24,17 @@ export default function MiniClipPreview({
   clipStateChanged: (clipId: string, newState: boolean) => void;
   emitPlayClip: () => void;
 }) {
-  const { HighlighterService } = Services;
-  const clipToShow = useVuex(() => HighlighterService.views.clipsDictionary[clipId] as TClip);
+  console.log('MiniClipPreview rendered', clipId, collectionId);
 
-  const clip = collectionId
-    ? HighlighterService.clipCollectionManager.getClipFromCollection(collectionId, clipId)
-    : HighlighterService.views.clipsDictionary[clipId];
+  const { HighlighterService } = Services;
+
+  const v = useVuex(() => ({
+    collectionClip:
+      HighlighterService.views.clipCollectionsDictionary?.[collectionId || '']?.clips?.[clipId],
+    globalClip: HighlighterService.views.clipsDictionary[clipId],
+  }));
+
+  const clip = { ...v.globalClip, ...v.collectionClip };
 
   return (
     <div
@@ -43,10 +48,16 @@ export default function MiniClipPreview({
         value={clip.enabled}
         onChange={(val: boolean, ev?: React.ChangeEvent<Element> | CheckboxChangeEvent) => {
           // TODO: this needs to change depending on the collectionId
+          console.log(`Setting clip ${clip.path} enabled state to ${val}`);
 
           ev?.stopPropagation();
           const newState = !clip.enabled;
-          HighlighterService.actions.manuallyEnableClip(clip.path, newState, streamId);
+          HighlighterService.actions.manuallyEnableClip(
+            clip.path,
+            newState,
+            streamId,
+            collectionId,
+          );
           clipStateChanged(clip.path, newState);
         }}
         className={styles.customCheckbox}
