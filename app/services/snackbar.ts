@@ -8,24 +8,34 @@ export interface SnackbarState {
       label: string;
       onClick: () => void;
     };
+    hideDelay: number;
   } | null;
 }
+
+const DEFAULT_HIDE_DELAY = 5000; // 5 seconds
 
 export class SnackbarService extends StatefulService<SnackbarState> {
   static initialState: SnackbarState = {
     latest: null,
   };
 
-  show(
-    position: 'main' | 'niconico',
-    message: string,
-    action?: { label: string; onClick: () => void },
-  ) {
+  show({
+    position,
+    message,
+    action,
+    hideDelay = DEFAULT_HIDE_DELAY,
+  }: {
+    position: 'main' | 'niconico';
+    message: string;
+    action?: { label: string; onClick: () => void };
+    hideDelay?: number;
+  }) {
     this.setState({
       latest: {
         position,
         message,
         action,
+        hideDelay: hideDelay || DEFAULT_HIDE_DELAY,
       },
     });
   }

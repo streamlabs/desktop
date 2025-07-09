@@ -26,7 +26,7 @@ import { ISettingsServiceApi } from 'services/settings';
 import { SnackbarService } from 'services/snackbar';
 import { Menu } from 'util/menus/Menu';
 import Vue from 'vue';
-import { Component, Prop } from 'vue-property-decorator';
+import { Component, Prop, Watch } from 'vue-property-decorator';
 import NAirLogo from '../../../media/images/n-air-logo.svg';
 import CommentFilter from './CommentFilter.vue';
 import CommentForm from './CommentForm.vue';
@@ -232,17 +232,20 @@ export default class CommentViewer extends Vue {
               this.nicoliveCommentViewerService
                 .deleteComment(item.value.id)
                 .then(() => {
-                  this.openSnackbar('コメントを削除しました', {
-                    label: '取り消す',
-                    onClick: () => {
-                      this.closeSnackbar();
-                      this.nicoliveCommentViewerService
-                        .undoDeleteComment(item.value.id)
-                        .catch(e => {
-                          if (e instanceof NicoliveFailure) {
-                            openErrorDialogFromFailure(e);
-                          }
-                        });
+                  this.snackbarService.show({
+                    position: 'niconico',
+                    message: 'コメントを削除しました',
+                    action: {
+                      label: '取り消す',
+                      onClick: () => {
+                        this.nicoliveCommentViewerService
+                          .undoDeleteComment(item.value.id)
+                          .catch(e => {
+                            if (e instanceof NicoliveFailure) {
+                              openErrorDialogFromFailure(e);
+                            }
+                          });
+                      },
                     },
                   });
                 })
@@ -370,6 +373,7 @@ export default class CommentViewer extends Vue {
       this.cleanup();
       this.cleanup = undefined;
     }
+    this.clearSnackbarTimeout();
   }
 
   updated() {
@@ -393,18 +397,42 @@ export default class CommentViewer extends Vue {
     remote.shell.openExternal(this.hostsService.getModeratorSettingsURL());
   }
 
-  get snackbar(): { message: string; action: { label: string; onClick: () => void } } | null {
+  get snackbar(): {
+    message: string;
+    action: { label: string; onClick: () => void };
+    hideDelay: number;
+  } | null {
     if (this.snackbarService.state.latest?.position === 'niconico') {
       return this.snackbarService.state.latest;
     }
     return null;
   }
 
+  private snackbarTimeout: NodeJS.Timeout | null = null;
+  clearSnackbarTimeout() {
+    if (this.snackbarTimeout) {
+      clearTimeout(this.snackbarTimeout);
+      this.snackbarTimeout = null;
+    }
+  }
+
+  @Watch('snackbar')
+  onSnackbarChange() {
+    if (this.snackbar) {
+      this.snackbarTimeout = setTimeout(() => {
+        this.closeSnackbar();
+      }, this.snackbar.hideDelay);
+    } else {
+      this.clearSnackbarTimeout();
+    }
+  }
+
   openSnackbar(message: string, action?: { label: string; onClick: () => void }) {
-    this.snackbarService.show('niconico', message, action);
+    this.snackbarService.show({ position: 'niconico', message, action });
   }
 
   closeSnackbar() {
     this.snackbarService.hide();
+    this.clearSnackbarTimeout();
   }
 }
