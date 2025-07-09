@@ -310,7 +310,7 @@ export default class CommentViewer extends Vue {
           });
         }
       }
-      if (!item.isDeleted && !item.filtered) {
+      if (!item.isDeleted && !item.filtered && this.pinnedComment?.seqId !== item.seqId) {
         menu.append({
           type: 'separator',
         });
