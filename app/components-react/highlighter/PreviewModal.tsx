@@ -312,6 +312,7 @@ export default function PreviewModal({
                   <MiniClipPreview
                     clipId={path}
                     collectionId={collectionId}
+                    streamId={streamId}
                     showDisabled={showDisabled}
                     clipStateChanged={(clipId, newState) => {
                       playlist[index].enabled = newState;

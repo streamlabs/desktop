@@ -888,6 +888,28 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     return EGame.UNSET;
   }
 
+  manuallyEnableClip(path: string, enabled: boolean, streamId?: string) {
+    const clipInfo = this.state.clips[path];
+    let clipInputs: string[] | undefined;
+    let clipScore: number | undefined;
+    if (isAiClip(clipInfo)) {
+      clipInputs = clipInfo.aiInfo.inputs.map(input => input.type);
+      clipScore = clipInfo.aiInfo.score;
+    }
+    this.usageStatisticsService.recordAnalyticsEvent(
+      this.views.useAiHighlighter ? 'AIHighlighter' : 'Highlighter',
+      {
+        type: 'ManualSelectUnselect',
+        selected: enabled,
+        events: clipInputs,
+        score: clipScore,
+        streamId,
+      },
+    );
+
+    this.enableClip(path, enabled);
+  }
+
   enableClip(path: string, enabled: boolean) {
     this.UPDATE_CLIP({
       path,
