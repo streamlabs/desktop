@@ -11,30 +11,39 @@ export class OutroRenderer {
       height: number;
       avatarUrl: string;
       profileLink: string;
+      isVertical?: boolean;
     },
   ) {
     this.ratio = window.devicePixelRatio || 1;
     this.canvas.width = this.options.width;
     this.canvas.height = this.options.height;
-    // this.canvas.width = this.options.width * this.ratio;
-    // this.canvas.height = this.options.height * this.ratio;
     this.ctx.fillStyle = 'black';
     this.ctx.fillRect(0, 0, this.options.width, this.options.height);
+    this.ctx.font = '36px "Luckiest Guy"';
+    // preload font for the canvas
+    this.ctx.fillText('outro', this.options.width / 2, this.options.height / 2);
   }
 
   async renderOutro(progress: number): Promise<void> {
     // Clear the canvas
     this.ctx.clearRect(0, 0, this.options.width, this.options.height);
+    // this.ctx.setTransform(this.ratio, 0, 0, this.ratio, 0, 0);
 
-    // this.ctx.scale(this.ratio, this.ratio);
     this.ctx.imageSmoothingQuality = 'high';
     this.ctx.imageSmoothingEnabled = true;
-    this.ctx.font = '24px "Roboto", sans-serif';
+
+    // Scale font and avatar size based on canvas height
+    const baseHeight = 720; // reference height
+    const scale = this.canvas.height / baseHeight;
+
+    const fontSize = this.options.isVertical ? Math.round(36 * scale) : Math.round(12 * scale);
+
+    this.ctx.font = `${fontSize}px "Luckiest Guy"`;
     this.ctx.fillStyle = 'white';
     this.ctx.textAlign = 'center';
     this.ctx.textBaseline = 'middle';
 
-    const avatarWidth = 50;
+    const avatarWidth = this.options.isVertical ? Math.round(100 * scale) : Math.round(50 * scale);
     const avatarRadius = avatarWidth / 2;
 
     if (!this.waterMarkImage) {
@@ -47,7 +56,6 @@ export class OutroRenderer {
       });
     }
 
-    // take avatarUrl and draw it in the center in a circle
     if (!this.avatarImage) {
       this.avatarImage = new Image();
       this.avatarImage.src = this.options.avatarUrl;
@@ -58,17 +66,11 @@ export class OutroRenderer {
     }
 
     const avatarX = this.options.width / 2;
-    // const avatarY = this.options.height / 2 - avatarRadius;
-    const avatarY = 250;
-
-    this.ctx.beginPath();
-    this.ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
-
-    // const avatarSX = this.options.width / 2 - avatarRadius;
-    // // const avatarSY = this.options.height / 2 - 50 - avatarRadius;
-    // const avatarSY = 250 - avatarRadius;
+    const avatarY = this.options.isVertical ? Math.round(50 * scale) : Math.round(250 * scale);
 
     this.ctx.save();
+    this.ctx.beginPath();
+    this.ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
     this.ctx.clip();
     this.ctx.drawImage(
       this.avatarImage,
@@ -80,15 +82,15 @@ export class OutroRenderer {
     this.ctx.restore();
 
     const avatarEndHeight = avatarY + avatarRadius;
-    const margin = 40; // 30px margin below avatar
+    const margin = Math.round(40 * scale);
     this.ctx.fillText(this.options.profileLink, this.options.width / 2, avatarEndHeight + margin);
 
-    // draw watermark in the center bottom of the screen
-    const watermarkWidth = 200;
+    // Draw watermark scaled and positioned relative to canvas size
+    const watermarkWidth = 200 * scale; // 25% of canvas width
     const watermarkHeight =
       (this.waterMarkImage.height / this.waterMarkImage.width) * watermarkWidth;
     const watermarkX = (this.options.width - watermarkWidth) / 2;
-    const watermarkY = this.options.height - watermarkHeight - 20; // 20px margin from bottom
+    const watermarkY = this.options.height - watermarkHeight - Math.round(20 * scale);
     this.ctx.drawImage(
       this.waterMarkImage,
       watermarkX,

@@ -116,11 +116,12 @@ export async function startRendering(
     );
 
     const outroRenderer = new OutroRenderer({
-      width: exportOptions.width,
-      height: exportOptions.height,
+      width: writer.options.width,
+      height: writer.options.height,
       avatarUrl:
         'https://static-cdn.jtvnw.net/jtv_user_pictures/carpenterr-profile_image-76d072975d4ecf60-70x70.jpeg',
       profileLink: 'twitch.tv/carpenterr',
+      isVertical: exportOptions.complexFilter?.length > 0
     });
 
     while (true) {
