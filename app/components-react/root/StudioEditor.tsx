@@ -90,6 +90,7 @@ export default function StudioEditor() {
         type: ENotificationType.WARNING,
         message,
         action,
+        singleton: true,
       });
     });
 
