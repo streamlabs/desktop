@@ -37,6 +37,32 @@ export async function getVideoResolution(filePath: string): Promise<IResolution>
   return { width, height };
 }
 
+export async function getVideoFramerateAndFrameCount(
+  filePath: string,
+): Promise<{ framerate: number; totalFrames: number }> {
+  const { stdout } = await execa(FFPROBE_EXE, [
+    '-v',
+    'error',
+    '-select_streams',
+    'v:0',
+    '-show_entries',
+    'stream=r_frame_rate,nb_frames',
+    '-of',
+    'default=noprint_wrappers=1:nokey=1',
+    filePath,
+  ]);
+
+  const lines = stdout.trim().split('\n');
+  const rateLine = lines[0]; // r_frame_rate
+  const framesLine = lines[1]; // nb_frames
+
+  const [num, denom] = rateLine.split('/').map(Number);
+  const framerate = denom ? num / denom : parseFloat(rateLine);
+  const totalFrames = parseInt(framesLine, 10);
+
+  return { framerate, totalFrames };
+}
+
 export async function cutHighlightClips(
   videoUri: string,
   highlighterData: IHighlight[],
