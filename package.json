@@ -76,7 +76,7 @@
     "color-picker": "https://obs-studio-deployment.s3-us-west-2.amazonaws.com/color-picker-0.0.0.tar.gz",
     "crash-handler": "https://slobs-crash-handler.s3-us-west-2.amazonaws.com/crash-handler-0.0.0.tar.gz",
     "electron-react-devtools": "^0.5.3",
-    "electron-updater": "^4.2.0",
+    "electron-updater": "^6.0.0",
     "electron-window-state": "5.0.3",
     "extract-zip": "^1.6.7",
     "font-manager": "https://slobs-font-manager.s3-us-west-2.amazonaws.com/font-manager-0.0.0.tar.gz",
