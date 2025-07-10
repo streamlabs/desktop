@@ -18,6 +18,7 @@ import { $t } from '../../i18n';
 import * as Sentry from '@sentry/browser';
 import { sample } from 'lodash';
 import { TAnalyticsEvent } from '../../usage-statistics';
+import { OutroRenderer } from './outro-renderer';
 
 export interface IRenderingConfig {
   renderingClips: RenderingClip[];
@@ -49,13 +50,19 @@ export async function startRendering(
   let fader: AudioCrossfader | null = null;
   let mixer: AudioMixer | null = null;
   try {
+    const outroDuration = 3; // seconds
+    const outroFrames = outroDuration * exportOptions.fps;
+
     // Estimate the total number of frames to set up export info
-    const totalFrames = renderingClips.reduce((count: number, clip) => {
-      return count + clip.frameSource.nFrames;
-    }, 0);
+    const totalFrames =
+      renderingClips.reduce((count: number, clip) => {
+        return count + clip.frameSource.nFrames;
+      }, 0) + outroFrames;
     const numTransitions = renderingClips.length - 1;
     const transitionFrames = transitionDuration * exportOptions.fps;
     const totalFramesAfterTransitions = totalFrames - numTransitions * transitionFrames;
+    console.log('Total frames before transitions:', totalFrames);
+    console.log('Total frames after transitions:', totalFramesAfterTransitions);
 
     setExportInfo({
       totalFrames: totalFramesAfterTransitions,
@@ -107,6 +114,14 @@ export async function startRendering(
       totalFramesAfterTransitions / exportOptions.fps,
       exportOptions,
     );
+
+    const outroRenderer = new OutroRenderer({
+      width: exportOptions.width,
+      height: exportOptions.height,
+      avatarUrl:
+        'https://static-cdn.jtvnw.net/jtv_user_pictures/carpenterr-profile_image-76d072975d4ecf60-70x70.jpeg',
+      profileLink: 'twitch.tv/carpenterr',
+    });
 
     while (true) {
       if (exportInfo.cancelRequested) {
@@ -185,6 +200,27 @@ export async function startRendering(
       }
 
       if (!fromClip) {
+        console.log('Rendering outro');
+        console.log('Total frames:', exportInfo.totalFrames);
+        console.log('Current frame:', currentFrame);
+        // If we have no more clips, render the outro
+        while (currentFrame < totalFramesAfterTransitions) {
+          console.log('rendering outro frame', currentFrame);
+          if (exportInfo.cancelRequested) {
+            console.log('Export cancelled, closing file');
+            await writer.end();
+            return;
+          }
+
+          // Progress relative to the outro section only (0 to 1)
+          const outroProgress =
+            (currentFrame - (totalFramesAfterTransitions - outroFrames)) / outroFrames;
+          await outroRenderer.renderOutro(outroProgress);
+          await writer.writeNextFrame(outroRenderer.getFrame());
+          currentFrame++;
+          handleFrame(currentFrame);
+        }
+
         console.log('Out of sources, closing file');
         await writer.end();
         console.debug(
