@@ -49,7 +49,6 @@ export default function NewStreamView({
     uploadInfo: HighlighterService.views.uploadInfo,
     highlighterVersion: HighlighterService.views.highlighterVersion,
     tempRecordingInfoPath: HighlighterService.views.tempRecordingInfo.recordingPath,
-    clipCollections: HighlighterService.views.clipCollectionsDictionary,
     streams: HighlighterService.views.highlightedStreamsDictionary,
   }));
 
@@ -180,13 +179,13 @@ export default function NewStreamView({
             const streamInfo = v.streams[streamId];
             // New grouped stream
             return (
-              <>
+              <React.Fragment key={streamId}>
                 TITLE: {streamInfo.title}
                 <StreamClipCollections
                   streamId={streamId}
                   emitSetView={emitSetView}
                 ></StreamClipCollections>
-              </>
+              </React.Fragment>
               // <div key={streamId}>
               //   <h2>Stream: {streamInfo.title}</h2>
               //   <Button

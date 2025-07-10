@@ -37,6 +37,8 @@ function Header({
   streamInfo: IHighlightedStream;
   emitSetView: (data: IViewState) => void;
 }) {
+  console.log('🎨: Header');
+
   const { HighlighterService } = Services;
   return (
     <div style={{ width: '100%', backgroundColor: 'red' }}>
@@ -48,11 +50,28 @@ function Header({
       >
         show clips
       </Button>
+      <Button
+        onClick={() => {
+          const clipCollectionIds = HighlighterService.clipCollectionManager.getClipCollectionsByStreamId(
+            streamInfo.id,
+          );
+
+          if (clipCollectionIds) {
+            clipCollectionIds.forEach(collectionId => {
+              HighlighterService.actions.queueExportClipCollection(collectionId);
+            });
+          }
+        }}
+      >
+        Export all clips
+      </Button>
     </div>
   );
 }
 
 function ClipCollectionRow({ clipCollectionIds }: { clipCollectionIds: string[] }) {
+  console.log('🎨: ClipCollectionRow', clipCollectionIds);
+
   const [collectionIds, setCollectionIds] = useState(clipCollectionIds);
 
   // Sync local state with props when they change

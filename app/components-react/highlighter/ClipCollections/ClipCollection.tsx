@@ -11,6 +11,8 @@ interface ClipCollectionProps {
 }
 
 export default function ClipCollection(props: ClipCollectionProps) {
+  console.log('ClipCollection rendered', props.collectionId);
+
   const [modal, setModal] = useState<TModalStreamCard | null>(null);
 
   const { HighlighterService } = Services;
@@ -18,21 +20,24 @@ export default function ClipCollection(props: ClipCollectionProps) {
     clipCollection: HighlighterService.views.clipCollectionsDictionary[props.collectionId],
   }));
 
-  const clips = HighlighterService.clipCollectionManager.getClipsFromCollection(
-    v.clipCollection.id,
-  );
+  if (!v.clipCollection) {
+    return <div>Collection not found</div>;
+  }
 
-  const clipsArray = v.clipCollection.clips ? Object.values(v.clipCollection.clips) : [];
+  const clips = HighlighterService.clipCollectionManager.getClipsFromCollection(props.collectionId);
+
+  const clipsArray = v.clipCollection?.clips ? Object.values(v.clipCollection.clips) : [];
 
   return (
     <div style={{ width: '400px', height: '400px', backgroundColor: 'blue' }}>
-      id: {v.clipCollection.id}
-      clips: {v.clipCollection.clips && Object.keys(v.clipCollection.clips).length}
+      state: {v.clipCollection.collectionExportInfo?.state} | currFrame:{' '}
+      {v.clipCollection.collectionExportInfo?.exportInfo?.currentFrame}
+      imagePath: {v.clipCollection.collectionExportInfo?.exportedFilePath}
       <div style={{ overflow: 'hidden', height: '264px', width: '100%' }}>
         <Thumbnail
           clips={clipsArray}
           generatedThumbnail=""
-          exportedFilePath={v.clipCollection.exportedFilePath}
+          exportedFilePath={v.clipCollection.collectionExportInfo?.exportedFilePath}
         />
       </div>
       <Button
@@ -80,12 +85,9 @@ function Thumbnail({
     );
   }, [clips]);
 
-  console.log('dasdsa', firstClip);
-
   const clipThumbnail =
     HighlighterService.views.clipsDictionary[firstClip?.clipId || '']?.scrubSprite;
 
-  console.log('clipThumbnail', clipThumbnail);
   if (generatedThumbnail) {
     return (
       <div>

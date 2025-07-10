@@ -1,9 +1,11 @@
 import { HighlighterService } from 'app-services';
 import { InitAfter, Inject, Service } from 'services/core';
-import { IUploadInfo, TClip } from './models/highlighter.models';
+import { IHighlightedStream, IUploadInfo, TClip } from './models/highlighter.models';
 import uuid from 'uuid';
-import { IExportInfo } from './models/rendering.models';
+import { EExportStep, IExportInfo } from './models/rendering.models';
 import { Dictionary } from 'lodash';
+import path from 'path';
+import * as remote from '@electron/remote';
 
 interface IVideoInfo {
   aspectRatio: string;
@@ -20,22 +22,45 @@ export interface IClipCollectionClip {
   endTrim?: number;
 }
 
+export interface ICollectionExportInfo {
+  state?: 'queued' | 'exporting' | 'exported' | 'error';
+  exportedFilePath?: string;
+  exportInfo?: IExportInfo;
+}
+
 export interface IClipCollection {
   id: string;
   clipCollectionInfo?: IVideoInfo;
-  exportedFilePath?: string;
+  collectionExportInfo?: ICollectionExportInfo;
   clips?: Dictionary<IClipCollectionClip>;
 }
 export class ClipCollectionManager {
   highlighterService: HighlighterService;
+  exportQueue: Array<() => Promise<void>> = [];
+  private isExporting = false;
 
   constructor(highlighterService: HighlighterService) {
     this.highlighterService = highlighterService;
   }
 
-  deleteCollection(collectionId: string) {
-    this.highlighterService.REMOVE_CLIPS_COLLECTION(collectionId);
-    console.log('Deleted collection:', collectionId);
+  // =================================================================================================
+  // Collection handling logic
+  // =================================================================================================
+
+  removeNonExistingCollections(
+    highlightedStreamsDictionary: Dictionary<IHighlightedStream>,
+    clipCollections: Dictionary<IClipCollection>,
+  ) {
+    Object.values(highlightedStreamsDictionary).forEach(stream => {
+      if (Array.isArray(stream.clipCollectionIds)) {
+        stream.clipCollectionIds.forEach(collectionId => {
+          if (!clipCollections[collectionId]?.id) {
+            // Delete collection and collectionIds from stream
+            this.deleteCollection(collectionId);
+          }
+        });
+      }
+    });
   }
 
   createClipCollection(streamId: string, clipCollectionInfo?: Partial<IVideoInfo>) {
@@ -44,16 +69,42 @@ export class ClipCollectionManager {
       id,
       clipCollectionInfo: clipCollectionInfo as IVideoInfo,
     };
-
-    // Add the collection to the highlighter service
     this.highlighterService.ADD_CLIPS_COLLECTION(newClipCollection);
-
-    // Add the collection ID to the stream's clipCollectionIds array
     this.highlighterService.addCollectionToStream(streamId, id);
-
-    console.log('Added new collection:', newClipCollection);
     return newClipCollection;
   }
+
+  updateCollection(collectionUpdate: Partial<IClipCollection> & { id: string }) {
+    this.highlighterService.UPDATE_CLIPS_COLLECTION(collectionUpdate);
+  }
+
+  updateCollectionExportInfo(collectionId: string, exportInfoPartial: Partial<IExportInfo>) {
+    const collection = this.highlighterService.views.clipCollectionsDictionary[collectionId];
+    if (!collection) {
+      console.warn(`Collection ${collectionId} not found`);
+      return;
+    }
+    console.log(`Updating export info for collection ${collectionId}`, exportInfoPartial);
+
+    this.updateCollection({
+      id: collectionId,
+      collectionExportInfo: {
+        ...collection.collectionExportInfo,
+        exportInfo: {
+          ...collection.collectionExportInfo?.exportInfo,
+          ...exportInfoPartial,
+        },
+      },
+    });
+  }
+
+  deleteCollection(collectionId: string) {
+    this.highlighterService.REMOVE_CLIPS_COLLECTION(collectionId);
+  }
+
+  // =================================================================================================
+  // Clips in collection logic
+  // =================================================================================================
 
   addClipsToCollection(clipCollectionId: string, clips: TClip[]) {
     // Convert clips to IClipCollectionClip references with order positions
@@ -153,8 +204,6 @@ export class ClipCollectionManager {
         // Create a copy of the clip with collection-specific properties applied
         const collectionClip = collection.clips![clipPath];
 
-        console.log(`clipDict ${clip.enabled} from collection ${collectionClip.enabled}`);
-
         clips.push({
           ...clip,
           // Override with collection-specific trim values if they exist
@@ -184,7 +233,15 @@ export class ClipCollectionManager {
     return returnClip;
   }
 
-  exportClipCollection(collectionId: string) {
+  getClipCollectionsByStreamId(streamId: string): string[] | undefined {
+    return this.highlighterService.views.highlightedStreamsDictionary[streamId].clipCollectionIds;
+  }
+
+  // =================================================================================================
+  // Collection export logic
+  // =================================================================================================
+
+  async exportClipCollection(collectionId: string): Promise<void> {
     // Get clips from the collection
     const clips = this.getClipsFromCollection(collectionId);
     if (clips.length === 0) {
@@ -192,9 +249,81 @@ export class ClipCollectionManager {
       return;
     }
 
-    // Export the clips using the highlighter service
-    console.log('start export');
+    const filePath = path.join(
+      remote.app.getPath('videos'),
+      `O-video-${collectionId}-${Date.now()}.mp4`,
+    );
 
-    this.highlighterService.actions.export(false, clips);
+    // Set initial collection export info
+    this.updateCollection({
+      id: collectionId,
+      collectionExportInfo: {
+        state: 'exporting',
+        exportInfo: {
+          exporting: false,
+          currentFrame: 0,
+          step: EExportStep.AudioMix,
+          cancelRequested: false,
+          error: null,
+          totalFrames: 0,
+          file: filePath,
+          previewFile: '',
+          exported: false,
+          fps: 30,
+          resolution: 720,
+          preset: 'ultrafast',
+        },
+      },
+    });
+
+    await this.highlighterService.actions.return.export(false, clips, collectionId, undefined);
+    if (
+      this.highlighterService.views.clipCollectionsDictionary[collectionId].collectionExportInfo
+        .exportInfo.error
+    ) {
+      this.updateCollection({
+        id: collectionId,
+        collectionExportInfo: {
+          state: 'error',
+        },
+      });
+      return;
+    }
+
+    if (
+      this.highlighterService.views.clipCollectionsDictionary[collectionId].collectionExportInfo
+        .exportInfo.exported
+    ) {
+      this.updateCollection({
+        id: collectionId,
+        collectionExportInfo: {
+          state: 'exported',
+          exportedFilePath: filePath,
+          exportInfo: undefined,
+        },
+      });
+    }
+
+    console.log('Export completed for collection:', collectionId);
+    return;
+  }
+
+  async processExportQueue() {
+    if (this.isExporting || this.exportQueue.length === 0) return;
+    this.isExporting = true;
+    const nextExport = this.exportQueue.shift();
+    if (nextExport) {
+      try {
+        await nextExport();
+      } catch (e: unknown) {
+        console.error('Export failed:', e);
+      }
+    }
+    this.isExporting = false;
+    if (this.exportQueue.length > 0) {
+      setTimeout(() => {
+        this.processExportQueue();
+      }, 2000);
+    }
   }
 }

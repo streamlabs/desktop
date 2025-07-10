@@ -95,7 +95,7 @@ class ExportController {
     orientation: TOrientation = EOrientation.HORIZONTAL,
   ) {
     const clips = this.service.getClips(this.service.views.clips, streamId);
-    this.service.actions.export(false, clips, orientation);
+    this.service.actions.export(false, clips, undefined, streamId, orientation);
   }
 
   cancelExport() {

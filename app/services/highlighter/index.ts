@@ -290,11 +290,20 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   }
 
   @mutation()
-  UPDATE_CLIPS_COLLECTION(updatedStreamInfo: Partial<IClipCollection> & { id: string }) {
-    Vue.set(this.state.clipCollections, updatedStreamInfo.id, {
-      ...this.state.clipCollections[updatedStreamInfo.id],
-      ...updatedStreamInfo,
+  UPDATE_CLIPS_COLLECTION(updatedCollectionData: Partial<IClipCollection> & { id: string }) {
+    Vue.set(this.state.clipCollections, updatedCollectionData.id, {
+      ...this.state.clipCollections[updatedCollectionData.id],
+      ...updatedCollectionData,
     });
+  }
+
+  @mutation()
+  UPDATE_COLLECTION_EXPORT_INFO(collectionId: string, exportInfo: Partial<IExportInfo>) {
+    this.state.export = {
+      ...this.state.export,
+      exported: false,
+      ...exportInfo,
+    };
   }
 
   @mutation()
@@ -426,6 +435,11 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     super.init();
     await this.migrateHighlightedStreamsToDictionary();
 
+    this.clipCollectionManager.removeNonExistingCollections(
+      this.state.highlightedStreamsDictionary,
+      this.state.clipCollections,
+    );
+
     if (this.aiHighlighterFeatureEnabled && !this.aiHighlighterUpdater) {
       this.aiHighlighterUpdater = new AiHighlighterUpdater();
     }
@@ -452,6 +466,13 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         cancelRequested: false,
       });
     }
+
+    // Check if any clip collections have export info, if so, remove it
+    Object.values(this.views.clipCollectionsDictionary).forEach(collection => {
+      if (collection.collectionExportInfo?.exportInfo) {
+        this.clipCollectionManager.updateCollectionExportInfo(collection.id, undefined);
+      }
+    });
 
     //Check if aiDetections were still running when the user closed desktop
     this.views.highlightedStreams
@@ -1048,6 +1069,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   }
 
   async loadClips(clipsToLoad: TClip[]) {
+    const clips = clipsToLoad.filter(c => c.loaded);
     // this.resetRenderingClips();
     await this.ensureScrubDirectory();
 
@@ -1091,6 +1113,17 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
               source: completed.source,
             },
           );
+
+          const clipToUpdate = {
+            ...completed,
+            path: completed.path,
+            loaded: true,
+            scrubSprite: this.renderingClips[completed.path].frameSource?.scrubJpg,
+            duration: this.renderingClips[completed.path].duration,
+            deleted: this.renderingClips[completed.path].deleted,
+          };
+          clips.push(clipToUpdate);
+
           this.UPDATE_CLIP({
             path: completed.path,
             loaded: true,
@@ -1101,7 +1134,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         },
       },
     );
-    return;
+
+    return clips;
   }
 
   getClips(clips: TClip[], streamId?: string): TClip[] {
@@ -1235,38 +1269,50 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   async export(
     preview = false,
     clips: TClip[],
+    clipCollectionId: string | undefined,
+    streamId: string | undefined,
     orientation: TOrientation = EOrientation.HORIZONTAL,
-  ) {
-    const clipCollectionId = '9894d160-f862-4952-ab52-f5fd09ee8b6a';
-    const streamId = 'manual_bf9a27eb-3e07-4461-b075-1e7f993079f9';
+  ): Promise<void> {
+    const exportInfo = clipCollectionId
+      ? this.views.clipCollectionsDictionary[clipCollectionId].collectionExportInfo.exportInfo
+      : this.views.exportInfo;
 
     this.resetRenderingClips();
-    await this.loadClips(clips);
+    const loadedClips = await this.loadClips(clips);
+    console.log('Highlighter: Export called with loaded clips:', loadedClips);
 
-    if (this.hasUnloadedClips(clips)) {
-      console.error('Highlighter: Export called while clips are not fully loaded!: ');
+    if (this.hasUnloadedClips(loadedClips)) {
+      console.error(
+        'Highlighter: Export called while clips are not fully loaded!: ',
+        clips.filter(c => !c.loaded),
+      );
       return;
     }
 
-    if (this.views.exportInfo.exporting) {
+    if (exportInfo.exporting) {
       console.error('Highlighter: Cannot export until current export operation is finished');
       return;
     }
-    this.SET_EXPORT_INFO({
-      exporting: true,
-      currentFrame: 0,
-      step: EExportStep.AudioMix,
-      cancelRequested: false,
-      error: null,
-    });
+
+    this.setExportInfo(
+      {
+        exporting: true,
+        currentFrame: 0,
+        step: EExportStep.AudioMix,
+        cancelRequested: false,
+        error: null,
+      },
+      clipCollectionId,
+    );
 
     let renderingClips: RenderingClip[] = await this.generateRenderingClips(
-      clips,
+      loadedClips,
       clipCollectionId,
       streamId,
       orientation,
     );
     const exportOptions: IExportOptions = await this.generateExportOptions(
+      exportInfo,
       renderingClips,
       preview,
       orientation,
@@ -1287,29 +1333,32 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
     if (!renderingClips.length) {
       console.error('Highlighter: Export called without any clips!');
-      this.SET_EXPORT_INFO({
-        exporting: false,
-        exported: false,
-        error: $t('Please select at least one clip to export a video'),
-      });
+      this.setExportInfo(
+        {
+          exporting: false,
+          exported: false,
+          error: $t('Please select at least one clip to export a video'),
+        },
+        clipCollectionId,
+      );
       return;
     }
 
     const setExportInfo = (partialExportInfo: Partial<IExportInfo>) => {
-      this.SET_EXPORT_INFO(partialExportInfo);
+      this.setExportInfo(partialExportInfo, clipCollectionId);
     };
     const recordAnalyticsEvent = (type: TAnalyticsEvent, data: Record<string, unknown>) => {
       this.usageStatisticsService.recordAnalyticsEvent(type, data);
     };
     const handleFrame = (currentFrame: number) => {
-      this.setCurrentFrame(currentFrame);
+      this.setCurrentFrame(currentFrame, clipCollectionId);
     };
 
-    startRendering(
+    return startRendering(
       {
         isPreview: preview,
         renderingClips,
-        exportInfo: this.views.exportInfo,
+        exportInfo,
         exportOptions,
         audioInfo: this.views.audio,
         transitionDuration: this.views.transitionDuration,
@@ -1323,7 +1372,24 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     );
   }
 
+  /**
+   * Queues an export for the given collectionId. Exports are processed sequentially.
+   */
+  queueExportClipCollection(collectionId: string) {
+    this.clipCollectionManager.updateCollection({
+      id: collectionId,
+      collectionExportInfo: {
+        state: 'queued',
+      },
+    });
+    this.clipCollectionManager.exportQueue.push(() =>
+      this.clipCollectionManager.exportClipCollection(collectionId),
+    );
+    this.clipCollectionManager.processExportQueue();
+  }
+
   private async generateExportOptions(
+    exportInfo: IExportInfo,
     renderingClips: RenderingClip[],
     preview: boolean,
     orientation: string,
@@ -1331,10 +1397,10 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     const exportOptions: IExportOptions = preview
       ? { width: 1280 / 4, height: 720 / 4, fps: 30, preset: 'ultrafast' }
       : {
-          width: this.views.exportInfo.resolution === 720 ? 1280 : 1920,
-          height: this.views.exportInfo.resolution === 720 ? 720 : 1080,
-          fps: this.views.exportInfo.fps,
-          preset: this.views.exportInfo.preset,
+          width: exportInfo.resolution === 720 ? 1280 : 1920,
+          height: exportInfo.resolution === 720 ? 720 : 1080,
+          fps: exportInfo.fps,
+          preset: exportInfo.preset,
         };
 
     if (orientation === 'vertical') {
@@ -1404,18 +1470,38 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
   // We throttle because this can go extremely fast, especially on previews
   @throttle(100)
-  private setCurrentFrame(frame: number) {
+  private setCurrentFrame(frame: number, collectionId?: string) {
     // Avoid a race condition where we reset the exported flag
-    if (this.views.exportInfo.exported) return;
-    this.SET_EXPORT_INFO({ currentFrame: frame });
+    if (
+      this.views.exportInfo.exported ||
+      this.views.clipCollectionsDictionary[collectionId].collectionExportInfo?.exportInfo?.exported
+    ) {
+      return;
+    }
+
+    this.setExportInfo({ currentFrame: frame }, collectionId);
   }
 
-  cancelExport() {
-    this.SET_EXPORT_INFO({ cancelRequested: true });
+  cancelExport(collectionId?: string) {
+    this.setExportInfo({ cancelRequested: true }, collectionId);
   }
 
   resetRenderingClips() {
     this.renderingClips = {};
+  }
+
+  setExportInfo(exportInfo: Partial<IExportInfo>, collectionId?: string) {
+    console.log('HighlighterService: setExportInfo called with:', exportInfo, collectionId);
+
+    if (collectionId) {
+      console.log('setExportInfo for collection');
+      this.clipCollectionManager.updateCollectionExportInfo(collectionId, {
+        ...exportInfo,
+      });
+      return;
+    }
+
+    this.SET_EXPORT_INFO(exportInfo);
   }
 
   // =================================================================================================
