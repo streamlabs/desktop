@@ -3,7 +3,6 @@ export class OutroRenderer {
   private ctx = this.canvas.getContext('2d')!;
   private avatarImage: HTMLImageElement | null = null;
   private waterMarkImage: HTMLImageElement | null = null;
-  private ratio: number;
 
   constructor(
     private readonly options: {
@@ -14,93 +13,100 @@ export class OutroRenderer {
       isVertical?: boolean;
     },
   ) {
-    this.ratio = window.devicePixelRatio || 1;
+    // Final output canvas (target resolution)
     this.canvas.width = this.options.width;
     this.canvas.height = this.options.height;
-    this.ctx.fillStyle = 'black';
-    this.ctx.fillRect(0, 0, this.options.width, this.options.height);
+
+    // preload fonts
     this.ctx.font = '36px "Luckiest Guy"';
-    // preload font for the canvas
-    this.ctx.fillText('outro', this.options.width / 2, this.options.height / 2);
+    this.ctx.fillText('outro', this.canvas.width / 2, this.canvas.height / 2);
   }
 
   async renderOutro(progress: number): Promise<void> {
-    // Clear the canvas
-    this.ctx.clearRect(0, 0, this.options.width, this.options.height);
-    // this.ctx.setTransform(this.ratio, 0, 0, this.ratio, 0, 0);
+    const ctx = this.ctx;
+    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    this.ctx.imageSmoothingQuality = 'high';
-    this.ctx.imageSmoothingEnabled = true;
-
-    // Scale font and avatar size based on canvas height
-    const baseHeight = 720; // reference height
-    const scale = this.canvas.height / baseHeight;
-
-    const fontSize = this.options.isVertical ? Math.round(36 * scale) : Math.round(12 * scale);
-
-    this.ctx.font = `${fontSize}px "Luckiest Guy"`;
-    this.ctx.fillStyle = 'white';
-    this.ctx.textAlign = 'center';
-    this.ctx.textBaseline = 'middle';
-
-    const avatarWidth = this.options.isVertical ? Math.round(100 * scale) : Math.round(50 * scale);
-    const avatarRadius = avatarWidth / 2;
-
+    // load resources if not already loaded
     if (!this.waterMarkImage) {
-      this.waterMarkImage = new Image();
-      this.waterMarkImage.src =
-        'https://cdn.streamlabs.com/static/imgs/streamlabs-logos/light/streamlabs-logo-horizontal.png';
-      await new Promise<void>((resolve, reject) => {
-        this.waterMarkImage!.onload = () => resolve();
-        this.waterMarkImage!.onerror = reject;
-      });
+      this.waterMarkImage = await this.loadImage(
+        'https://cdn.streamlabs.com/static/imgs/streamlabs-logos/light/streamlabs-logo-horizontal.png',
+      );
     }
 
     if (!this.avatarImage) {
-      this.avatarImage = new Image();
-      this.avatarImage.src = this.options.avatarUrl;
-      await new Promise<void>((resolve, reject) => {
-        this.avatarImage!.onload = () => resolve();
-        this.avatarImage!.onerror = reject;
-      });
+      this.avatarImage = await this.loadImage(this.options.avatarUrl);
     }
 
-    const avatarX = this.options.width / 2;
-    const avatarY = this.options.isVertical ? Math.round(50 * scale) : Math.round(250 * scale);
+    // all margins and positions are based on 720p resolution,
+    // so we need to scale them based on the actual height
+    const baseHeight = 720;
+    const canvasScale = this.canvas.height / baseHeight;
 
-    this.ctx.save();
-    this.ctx.beginPath();
-    this.ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
-    this.ctx.clip();
-    this.ctx.drawImage(
+    // render avatar image with circular clipping
+    const avatarWidth = this.options.isVertical
+      ? Math.round(100 * canvasScale)
+      : Math.round(100 * canvasScale);
+    const avatarRadius = avatarWidth / 2;
+
+    const avatarX = this.canvas.width / 2;
+    const avatarY = this.options.isVertical
+      ? Math.round(50 * canvasScale)
+      : Math.round(80 * canvasScale);
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.drawImage(
       this.avatarImage,
       avatarX - avatarRadius,
       avatarY - avatarRadius,
       avatarRadius * 2,
       avatarRadius * 2,
     );
-    this.ctx.restore();
+    ctx.restore();
 
     const avatarEndHeight = avatarY + avatarRadius;
-    const margin = Math.round(40 * scale);
-    this.ctx.fillText(this.options.profileLink, this.options.width / 2, avatarEndHeight + margin);
+    const margin = this.options.isVertical
+      ? Math.round(40 * canvasScale)
+      : Math.round(80 * canvasScale);
 
-    // Draw watermark scaled and positioned relative to canvas size
-    const watermarkWidth = 200 * scale; // 25% of canvas width
+    // render text
+    const fontSize = this.options.isVertical
+      ? Math.round(36 * canvasScale)
+      : Math.round(58 * canvasScale);
+
+    ctx.fillStyle = 'white';
+    ctx.font = `${fontSize}px "Luckiest Guy"`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    ctx.fillText(this.options.profileLink, this.canvas.width / 2, avatarEndHeight + margin);
+
+    // render watermark
+    const watermarkWidth = this.options.isVertical ? 200 * canvasScale : 400 * canvasScale;
     const watermarkHeight =
       (this.waterMarkImage.height / this.waterMarkImage.width) * watermarkWidth;
-    const watermarkX = (this.options.width - watermarkWidth) / 2;
-    const watermarkY = this.options.height - watermarkHeight - Math.round(20 * scale);
-    this.ctx.drawImage(
-      this.waterMarkImage,
-      watermarkX,
-      watermarkY,
-      watermarkWidth,
-      watermarkHeight,
-    );
+    const watermarkX = (this.canvas.width - watermarkWidth) / 2;
+    const watermarkY = this.canvas.height - watermarkHeight - Math.round(20 * canvasScale);
+    ctx.drawImage(this.waterMarkImage, watermarkX, watermarkY, watermarkWidth, watermarkHeight);
   }
 
   getFrame(): Buffer {
     return Buffer.from(this.ctx.getImageData(0, 0, this.options.width, this.options.height).data);
+  }
+
+  private async loadImage(url: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous'; // important if from CDN
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = url;
+    });
   }
 }
