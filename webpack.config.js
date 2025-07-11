@@ -22,9 +22,6 @@ function getSentryMiniDumpURLFromDSN(dsn) {
 
 /** @type function ({production: boolean}, {mode?:string}): import('webpack').Configuration */
 module.exports = function (env, argv) {
-  console.log(env);
-  const tsOption = env.TS_TARGET ? { compilerOptions: { target: env.TS_TARGET } } : undefined;
-
   const SENTRY_ORG = 'n-air-app2';
   const SENTRY_PROJECT = (() => {
     if (argv.mode === 'production') {
@@ -172,13 +169,12 @@ module.exports = function (env, argv) {
           {
             test: /\.ts$/,
             loader: 'ts-loader',
-            options: tsOption,
             exclude: /node_modules|vue\/src/,
           },
           {
             test: /\.tsx$/,
             exclude: /node_modules|vue\/src/,
-            use: ['babel-loader', { loader: 'ts-loader', options: tsOption }],
+            use: ['babel-loader', { loader: 'ts-loader' }],
           },
           {
             test: /\.js$/,
