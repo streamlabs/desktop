@@ -254,7 +254,7 @@ export abstract class RpcApi extends Service {
     const keys: string[] = [];
     let proto = resource;
     do {
-      keys.push(...Object.keys(proto));
+      keys.push(...Object.getOwnPropertyNames(proto));
       proto = Object.getPrototypeOf(proto);
     } while (proto.constructor.name !== 'Object');
 

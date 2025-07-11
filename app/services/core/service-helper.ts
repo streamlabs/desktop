@@ -16,13 +16,6 @@ export function ServiceHelper() {
 
     // create new constructor that will save arguments in instance
     const f: any = function (this: any, ...args: any[]) {
-      // ES2015互換の`this`の扱い
-      if (!(this instanceof f)) {
-        return new f(...args);
-      }
-
-      // ES2015クラスはnewキーワードなしで呼び出せないので、
-      // ここでは常にインスタンスを作成し、プロパティをコピーする戦略を取る
       const instance = new original(...args);
 
       // 必要なメタデータを設定
@@ -42,7 +35,7 @@ export function ServiceHelper() {
     f.prototype = Object.create(original.prototype);
     f.prototype.constructor = f;
 
-    // プロトタイプメソッドをコピー（getIdsなど）
+    // プロトタイプメソッドをコピー
     Object.getOwnPropertyNames(original.prototype).forEach(key => {
       if (key !== 'constructor') {
         const descriptor = Object.getOwnPropertyDescriptor(original.prototype, key);

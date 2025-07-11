@@ -26,7 +26,7 @@
     "release": "yarn install --cwd bin && yarn --cwd bin release",
     "patch-note": "yarn install --cwd bin && yarn --cwd bin patch-note",
     "webfont": "yarn install --cwd bin && yarn --cwd bin webfont",
-    "test": "yarn clear && webpack-cli --mode development --env TS_TARGET=es5 && node bin/i18n-early-check.js && tsc -p test && ava -v -s",
+    "test": "yarn clear && webpack-cli --mode development  && node bin/i18n-early-check.js && tsc -p test && ava -v -s",
     "test:unit": "yarn test:unit:app && yarn test:unit:bin",
     "test:unit:app": "jest --silent --config ./jest.config.js",
     "test:unit:bin": "yarn install --cwd bin && jest --silent --config ./jest.bin-config.js",
