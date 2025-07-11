@@ -1005,6 +1005,18 @@ function initialize(crashHandler) {
     await recollectUserSessionCookie();
   });
 
+  ipcMain.handle('fetchViaMainProcess', async (e, url, options) => {
+    const fetch = require('node-fetch');
+    const response = await fetch(url, options);
+    return {
+      ok: response.ok,
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers.raw(),
+      text: await response.text(),
+    };
+  });
+
   ipcMain.on('getWindowIds', e => {
     e.returnValue = {
       main: mainWindow.id,

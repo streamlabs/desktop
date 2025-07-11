@@ -6,11 +6,11 @@ import {
   AddFilterRecord,
   AddFilterResult,
   AddModerator,
-  BroadcastStreamData,
   CommonErrorResponse,
   Extension,
   FilterRecord,
   Filters,
+  IngestInfoData,
   Moderator,
   NicoadStatistics,
   OnairChannelData,
@@ -28,6 +28,7 @@ import {
 
 import * as remote from '@electron/remote';
 import { DateTime } from 'luxon';
+import { fetchText } from 'util/fetchText';
 
 const { BrowserWindow } = remote;
 
@@ -40,10 +41,6 @@ export enum CreateResult {
 export enum EditResult {
   EDITED = 'EDITED',
   OTHER = 'OTHER',
-}
-
-interface HeaderSeed {
-  [key: string]: string;
 }
 
 type SucceededResult<T> = {
@@ -194,7 +191,11 @@ export class NicoliveClient {
     };
   }
 
-  static async wrapResult<ResultType>(res: Response): Promise<WrappedResult<ResultType>> {
+  static async wrapResult<ResultType>(res: {
+    ok: boolean;
+    text: () => Promise<string>;
+    headers: Headers;
+  }): Promise<WrappedResult<ResultType>> {
     const body = await res.text();
     let obj: any = null;
     try {
@@ -266,7 +267,7 @@ export class NicoliveClient {
       headers: { ...headers, ...options.headers },
     });
     try {
-      const resp = await fetch(url, requestInit);
+      const resp = await fetchText(url, requestInit);
       return NicoliveClient.wrapResult<T>(resp);
     } catch (err) {
       return NicoliveClient.wrapFetchError(err as Error);
@@ -447,16 +448,16 @@ export class NicoliveClient {
    * 指定番組IDのストリーム情報を取得する
    * @param programId 番組ID(例： lv12345)
    */
-  async fetchBroadcastStream(programId: string): Promise<BroadcastStreamData> {
-    const url = `${NicoliveClient.live2BaseURL}/unama/api/v2/programs/${programId}/broadcast_stream`;
-    const headers = new Headers();
-    const userSession = await this.fetchSession();
-    headers.append('X-niconico-session', userSession);
-    const request = new Request(url, { headers });
-    return fetch(request)
-      .then(handleErrors)
-      .then(response => response.json())
-      .then(json => json.data);
+  async fetchIngestInfo(programId: string): Promise<WrappedResult<IngestInfoData>> {
+    return this.requestAPI<IngestInfoData>(
+      'PUT',
+      `${NicoliveClient.live2BaseURL}/unama/api/v4/ingest_info?nicoliveProgramId=${programId}`,
+      {
+        headers: {
+          Origin: `https://live.nicovideo.jp/watch/${programId}`,
+        },
+      },
+    );
   }
 
   async fetchMaxQuality(programId: string): Promise<Quality> {
