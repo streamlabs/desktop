@@ -137,7 +137,6 @@ export class ClipCollectionManager {
       console.warn(`Collection ${collectionId} not found`);
       return;
     }
-    console.log(`Updating export info for collection ${collectionId}`, exportInfoPartial);
 
     this.updateCollection({
       id: collectionId,

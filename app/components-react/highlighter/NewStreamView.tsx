@@ -41,7 +41,7 @@ export default function NewStreamView({
 }: {
   emitSetView: (data: IViewState) => void;
 }) {
-  console.log('NewStreamView rendered');
+  console.log('🫟 NewStreamView rendered');
 
   const { HighlighterService, HotkeysService, UsageStatisticsService } = Services;
   const v = useVuex(() => ({
@@ -49,11 +49,12 @@ export default function NewStreamView({
     uploadInfo: HighlighterService.views.uploadInfo,
     highlighterVersion: HighlighterService.views.highlighterVersion,
     tempRecordingInfoPath: HighlighterService.views.tempRecordingInfo.recordingPath,
-    streams: HighlighterService.views.highlightedStreamsDictionary,
+    streamLength: HighlighterService.views.highlightedStreamsDictionary.length,
   }));
+  const streams = HighlighterService.views.highlightedStreamsDictionary;
 
-  const sortedStreamIds = Object.keys(v.streams)
-    .map(streamId => ({ streamId, streamDate: v.streams[streamId].date }))
+  const sortedStreamIds = Object.keys(streams)
+    .map(streamId => ({ streamId, streamDate: streams[streamId].date }))
     .sort((a, b) => new Date(b.streamDate).getTime() - new Date(a.streamDate).getTime());
 
   useEffect(() => {
@@ -176,55 +177,13 @@ export default function NewStreamView({
         sortedIds length: {sortedStreamIds.length}
         {sortedStreamIds &&
           sortedStreamIds.map(({ streamId }) => {
-            const streamInfo = v.streams[streamId];
-            // New grouped stream
             return (
               <React.Fragment key={streamId}>
-                TITLE: {streamInfo.title}
                 <StreamClipCollections
                   streamId={streamId}
                   emitSetView={emitSetView}
                 ></StreamClipCollections>
               </React.Fragment>
-              // <div key={streamId}>
-              //   <h2>Stream: {streamInfo.title}</h2>
-              //   <Button
-              //     onClick={() => {
-              //       emitSetView({ view: EHighlighterView.CLIPS, id: streamId });
-              //     }}
-              //   >
-              //     show Clips
-              //   </Button>
-
-              //   {Array.isArray(streamInfo?.clipCollectionIds) &&
-              //   streamInfo.clipCollectionIds.length > 0 ? (
-              //     streamInfo.clipCollectionIds.map((collectionId: string) => {
-              //       const clipCollection = v.clipCollections[collectionId];
-
-              //       // New collections
-              //       return (
-              //         <>
-              //           <p key={collectionId}>
-              //             Collection: {clipCollection?.clipCollectionInfo?.title || 'Untitled'}
-              //             Amount of clips: {Object.keys(clipCollection?.clips || {}).length}
-              //           </p>
-
-              //           <Button
-              //             onClick={() => {
-              //               HighlighterService.clipCollectionManager.exportClipCollection(
-              //                 clipCollection.id,
-              //               );
-              //             }}
-              //           >
-              //             export collection
-              //           </Button>
-              //         </>
-              //       );
-              //     })
-              //   ) : (
-              //     <>NO COLLECTION ID</>
-              //   )}
-              // </div>
             );
           })}
       </Scrollable>

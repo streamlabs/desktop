@@ -1510,10 +1510,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   }
 
   setExportInfo(exportInfo: Partial<IExportInfo>, collectionId?: string) {
-    console.log('HighlighterService: setExportInfo called with:', exportInfo, collectionId);
-
     if (collectionId) {
-      console.log('setExportInfo for collection');
       this.clipCollectionManager.updateCollectionExportInfo(collectionId, {
         ...exportInfo,
       });
@@ -1528,7 +1525,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     collectionId?: string,
   ) {
     if (collectionId) {
-      console.log('setExportInfo for collection');
       this.clipCollectionManager.updateCollectionUploadInfo(collectionId, {
         ...uploadInfo,
       });
