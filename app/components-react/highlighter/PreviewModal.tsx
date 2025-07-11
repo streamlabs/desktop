@@ -369,13 +369,17 @@ export default function PreviewModal({
           </span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-          <CheckboxInput
-            label={'Show disabled clips'}
-            value={showDisabled}
-            onChange={() => {
-              setShowDisabled(!showDisabled);
-            }}
-          />
+          <div>
+            {!collectionId && (
+              <CheckboxInput
+                label={'Show disabled clips'}
+                value={showDisabled}
+                onChange={() => {
+                  setShowDisabled(!showDisabled);
+                }}
+              />
+            )}
+          </div>
           <Button
             type="primary"
             disabled={playlist.filter(clip => clip.enabled).length === 0}

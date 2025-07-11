@@ -24,6 +24,20 @@ export default function ClipCollection(props: ClipCollectionProps) {
     return <div>Collection not found</div>;
   }
 
+  if (
+    v.clipCollection.collectionExportInfo?.exportedFilePath &&
+    fileExists(v.clipCollection.collectionExportInfo?.exportedFilePath) === false
+  ) {
+    HighlighterService.clipCollectionManager.updateCollection({
+      id: v.clipCollection.id,
+      collectionExportInfo: {
+        ...v.clipCollection.collectionExportInfo,
+        exportedFilePath: undefined,
+        state: undefined,
+      },
+    });
+  }
+
   const clips = HighlighterService.clipCollectionManager.getClipsFromCollection(props.collectionId);
 
   const clipsArray = v.clipCollection?.clips ? Object.values(v.clipCollection.clips) : [];
@@ -61,8 +75,7 @@ export default function ClipCollection(props: ClipCollectionProps) {
           setModal('preview');
         }}
       >
-        {' '}
-        Export
+        Preview
       </Button>
     </div>
   );
@@ -118,6 +131,8 @@ function Thumbnail({
 import { Modal, Alert, Button, Input } from 'antd';
 import PreviewModal from '../PreviewModal';
 import { IClipCollectionClip } from 'services/highlighter/clip-collections';
+import { fileExists } from 'services/highlighter/file-utils';
+import ExportModal from '../Export/ExportModal';
 
 function ClipCollectionModal({
   modal,
@@ -175,13 +190,15 @@ function ClipCollectionModal({
       destroyOnClose={true}
       keyboard={false}
     >
-      {/* {!!v.error && <Alert message={v.error} type="error" showIcon />}
-    {showModal === 'export' && <ExportModal close={closeModal} streamId={streamId} />} */}
+      collectionId: {collectionId}
+      {/* {!!v.error && <Alert message={v.error} type="error" showIcon />} */}
+      {showModal === 'export' && (
+        <ExportModal close={closeModal} streamId={undefined} clipCollectionIds={[collectionId]} />
+      )}
       {showModal === 'preview' && (
         <PreviewModal
           close={closeModal}
           collectionId={collectionId}
-          // streamId={streamId}
           emitSetShowModal={modal => {
             setShowModal(modal);
           }}

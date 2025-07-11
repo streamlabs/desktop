@@ -434,11 +434,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   async init() {
     super.init();
     await this.migrateHighlightedStreamsToDictionary();
-
-    this.clipCollectionManager.removeNonExistingCollections(
-      this.state.highlightedStreamsDictionary,
-      this.state.clipCollections,
-    );
+    this.clipCollectionManager.initCollections();
 
     if (this.aiHighlighterFeatureEnabled && !this.aiHighlighterUpdater) {
       this.aiHighlighterUpdater = new AiHighlighterUpdater();
@@ -1273,6 +1269,10 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     streamId: string | undefined,
     orientation: TOrientation = EOrientation.HORIZONTAL,
   ): Promise<void> {
+    if (clips.length === 0) {
+      console.error('Highlighter: Export called with empty clips array');
+    }
+
     const exportInfo = clipCollectionId
       ? this.views.clipCollectionsDictionary[clipCollectionId].collectionExportInfo.exportInfo
       : this.views.exportInfo;
@@ -1353,6 +1353,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     const handleFrame = (currentFrame: number) => {
       this.setCurrentFrame(currentFrame, clipCollectionId);
     };
+
+    console.log('Highlighter: Starting rendering');
 
     return startRendering(
       {
@@ -1471,11 +1473,15 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   // We throttle because this can go extremely fast, especially on previews
   @throttle(100)
   private setCurrentFrame(frame: number, collectionId?: string) {
-    // Avoid a race condition where we reset the exported flag
     if (
-      this.views.exportInfo.exported ||
-      this.views.clipCollectionsDictionary[collectionId].collectionExportInfo?.exportInfo?.exported
+      collectionId &&
+      this.views.clipCollectionsDictionary[collectionId]?.collectionExportInfo?.exportInfo?.exported
     ) {
+      return;
+    }
+
+    // Avoid a race condition where we reset the exported flag
+    if (this.views.exportInfo.exported) {
       return;
     }
 

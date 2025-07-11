@@ -43,9 +43,47 @@ export class ClipCollectionManager {
     this.highlighterService = highlighterService;
   }
 
-  // =================================================================================================
-  // Collection handling logic
-  // =================================================================================================
+  initCollections() {
+    this.resetQueuedExports();
+    this.resetStuckExports();
+    this.removeNonExistingCollections(
+      this.highlighterService.state.highlightedStreamsDictionary,
+      this.highlighterService.state.clipCollections,
+    );
+  }
+
+  resetQueuedExports() {
+    this.exportQueue = [];
+    Object.values(this.highlighterService.views.clipCollectionsDictionary)
+      .filter(collection => collection.collectionExportInfo?.state === 'queued')
+      .forEach(collection => {
+        this.highlighterService.UPDATE_CLIPS_COLLECTION({
+          id: collection.id,
+          collectionExportInfo: {
+            state: undefined,
+            exportInfo: undefined,
+          },
+        });
+      });
+  }
+
+  private resetStuckExports() {
+    Object.values(this.highlighterService.views.clipCollectionsDictionary)
+      .filter(
+        collection =>
+          collection.collectionExportInfo?.state === 'exporting' ||
+          collection.collectionExportInfo?.state === 'error',
+      )
+      .forEach(collection => {
+        this.highlighterService.UPDATE_CLIPS_COLLECTION({
+          id: collection.id,
+          collectionExportInfo: {
+            state: undefined,
+            exportInfo: undefined,
+          },
+        });
+      });
+  }
 
   removeNonExistingCollections(
     highlightedStreamsDictionary: Dictionary<IHighlightedStream>,
@@ -62,6 +100,10 @@ export class ClipCollectionManager {
       }
     });
   }
+
+  // =================================================================================================
+  // Collection handling logic
+  // =================================================================================================
 
   createClipCollection(streamId: string, clipCollectionInfo?: Partial<IVideoInfo>) {
     const id = uuid.v4();
@@ -254,7 +296,8 @@ export class ClipCollectionManager {
       `O-video-${collectionId}-${Date.now()}.mp4`,
     );
 
-    // Set initial collection export info
+    // Set initial collection export info.
+    // right now gets the global export info
     this.updateCollection({
       id: collectionId,
       collectionExportInfo: {
@@ -269,9 +312,9 @@ export class ClipCollectionManager {
           file: filePath,
           previewFile: '',
           exported: false,
-          fps: 30,
-          resolution: 720,
-          preset: 'ultrafast',
+          fps: this.highlighterService.views.exportInfo.fps,
+          resolution: this.highlighterService.views.exportInfo.resolution,
+          preset: this.highlighterService.views.exportInfo.preset,
         },
       },
     });
@@ -323,7 +366,7 @@ export class ClipCollectionManager {
     if (this.exportQueue.length > 0) {
       setTimeout(() => {
         this.processExportQueue();
-      }, 2000);
+      }, 500);
     }
   }
 }

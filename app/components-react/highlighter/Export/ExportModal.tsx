@@ -26,9 +26,11 @@ import { formatSecondsToHMS } from '../ClipPreview';
 import PlatformSelect from './Platform';
 import cx from 'classnames';
 import { getVideoResolution } from 'services/highlighter/cut-highlight-clips';
+import { TClip } from 'services/highlighter/models/highlighter.models';
+import CollectionExport from './CollectionExport';
 
-type TSetting = { name: string; fps: TFPS; resolution: TResolution; preset: TPreset };
-const settings: TSetting[] = [
+export type TSetting = { name: string; fps: TFPS; resolution: TResolution; preset: TPreset };
+export const settings: TSetting[] = [
   { name: 'Standard', fps: 30, resolution: 1080, preset: 'medium' },
   { name: 'Best', fps: 60, resolution: 1080, preset: 'slow' },
   { name: 'Fast', fps: 30, resolution: 720, preset: 'fast' },
@@ -59,8 +61,10 @@ class ExportController {
     return getCombinedClipsDuration(this.getClips(streamId));
   }
 
-  async getClipResolution(streamId?: string) {
-    const firstClipPath = this.getClips(streamId).find(clip => clip.enabled)?.path;
+  async getClipResolution(streamId?: string, collectionId?: string) {
+    const firstClipPath = collectionId
+      ? this.service.clipCollectionManager.getClipsFromCollection(collectionId)[0].path
+      : this.getClips(streamId).find(clip => clip.enabled)?.path;
     if (!firstClipPath) {
       return undefined;
     }
@@ -93,8 +97,8 @@ class ExportController {
   exportCurrentFile(
     streamId: string | undefined,
     orientation: TOrientation = EOrientation.HORIZONTAL,
+    clips: TClip[],
   ) {
-    const clips = this.service.getClips(this.service.views.clips, streamId);
     this.service.actions.export(false, clips, undefined, streamId, orientation);
   }
 
@@ -116,19 +120,29 @@ export const ExportModalCtx = React.createContext<ExportController | null>(null)
 export default function ExportModalProvider({
   close,
   streamId,
+  clipCollectionIds,
 }: {
   close: () => void;
+  clipCollectionIds?: string[];
   streamId: string | undefined;
 }) {
   const controller = useMemo(() => new ExportController(), []);
   return (
     <ExportModalCtx.Provider value={controller}>
-      <ExportModal close={close} streamId={streamId} />
+      <ExportModal close={close} streamId={streamId} clipCollectionIds={clipCollectionIds} />
     </ExportModalCtx.Provider>
   );
 }
 
-function ExportModal({ close, streamId }: { close: () => void; streamId: string | undefined }) {
+function ExportModal({
+  close,
+  streamId,
+  clipCollectionIds,
+}: {
+  close: () => void;
+  streamId: string | undefined;
+  clipCollectionIds?: string[];
+}) {
   const { exportInfo, dismissError, resetExportedState, getStreamTitle } = useController(
     ExportModalCtx,
   );
@@ -141,6 +155,19 @@ function ExportModal({ close, streamId }: { close: () => void; streamId: string 
   };
   // Clear all errors when this component unmounts
   useEffect(() => unmount, []);
+
+  console.log('CollectionID', clipCollectionIds);
+
+  if (clipCollectionIds) {
+    return (
+      <CollectionExport
+        close={() => {
+          close();
+        }}
+        clipCollectionIds={clipCollectionIds}
+      />
+    );
+  }
 
   if (!exportInfo.exported || exportInfo.exporting || exportInfo.error) {
     return (
@@ -188,33 +215,16 @@ function ExportFlow({
 
   const [currentFormat, setCurrentFormat] = useState<TOrientation>(EOrientation.HORIZONTAL);
 
-  const { amount, duration, thumbnail } = useMemo(() => {
+  const { amount, duration, thumbnail, clips } = useMemo(() => {
     const clips = getClips(streamId);
 
     return {
       amount: clips.length,
       duration: formatSecondsToHMS(getCombinedClipsDuration(clips)),
       thumbnail: clips.find(clip => clip.enabled)?.scrubSprite,
+      clips,
     };
   }, [streamId]);
-
-  function settingMatcher(initialSetting: TSetting) {
-    const matchingSetting = settings.find(
-      setting =>
-        setting.fps === initialSetting.fps &&
-        setting.resolution === initialSetting.resolution &&
-        setting.preset === initialSetting.preset,
-    );
-    if (matchingSetting) {
-      return matchingSetting;
-    }
-    return {
-      name: 'Custom',
-      fps: initialSetting.fps,
-      resolution: initialSetting.resolution,
-      preset: initialSetting.preset,
-    };
-  }
 
   const [currentSetting, setSetting] = useState<TSetting | null>(null);
   const [isLoadingResolution, setIsLoadingResolution] = useState(true);
@@ -273,7 +283,7 @@ function ExportFlow({
     return path.parse(exportFile).name;
   }
 
-  async function startExport(orientation: TOrientation) {
+  async function startExport(orientation: TOrientation, clips: TClip[]) {
     if (await fileExists(exportFile)) {
       if (
         !(await confirmAsync({
@@ -291,7 +301,7 @@ function ExportFlow({
     UsageStatisticsService.actions.recordFeatureUsage('HighlighterExport');
 
     setExport(exportFile);
-    exportCurrentFile(streamId, orientation);
+    exportCurrentFile(streamId, orientation, clips);
 
     const streamInfo = HighlighterService.views.highlightedStreams.find(
       stream => stream.id === streamId,
@@ -508,7 +518,7 @@ function ExportFlow({
                 <Button
                   type="primary"
                   style={{ width: '100%' }}
-                  onClick={() => startExport(currentFormat)}
+                  onClick={() => startExport(currentFormat, clips)}
                 >
                   {currentFormat === EOrientation.HORIZONTAL
                     ? $t('Export Horizontal')
@@ -523,7 +533,7 @@ function ExportFlow({
   );
 }
 
-function CustomDropdownWrapper({
+export function CustomDropdownWrapper({
   initialSetting,
   disabled,
   emitSettings,
@@ -622,4 +632,22 @@ function OrientationToggle({
       </div>
     </div>
   );
+}
+
+export function settingMatcher(initialSetting: TSetting) {
+  const matchingSetting = settings.find(
+    setting =>
+      setting.fps === initialSetting.fps &&
+      setting.resolution === initialSetting.resolution &&
+      setting.preset === initialSetting.preset,
+  );
+  if (matchingSetting) {
+    return matchingSetting;
+  }
+  return {
+    name: 'Custom',
+    fps: initialSetting.fps,
+    resolution: initialSetting.resolution,
+    preset: initialSetting.preset,
+  };
 }
