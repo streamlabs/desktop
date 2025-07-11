@@ -122,6 +122,7 @@ interface ILinkedPlatformsResponse {
   user_id: number;
   created_at: string;
   widget_token: string;
+  avatar?: string;
 
   /**
    * When the server sends this back as true, we must force

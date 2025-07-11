@@ -106,6 +106,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     video: {
       intro: { path: '', duration: null },
       outro: { path: '', duration: null },
+      splashScreen: { enabled: true },
     },
     audio: {
       musicEnabled: false,
@@ -1142,18 +1143,10 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
     // add splash screen if it is enabled
     // create a fake rendering clip for the splash screen
-    const splashScreen = new RenderingClip('');
-    console.log(JSON.stringify(await this.userService.fetchAvatar()));
-    const settings: ISplashscreenSettings = {
-      avatarUrl:
-        'https://static-cdn.jtvnw.net/jtv_user_pictures/carpenterr-profile_image-76d072975d4ecf60-70x70.jpeg',
-      profileLink: 'twitch.tv/' + this.userService.views.platform.username,
-    };
-
-    splashScreen.frameSource = new SplashScreenFrameSource(settings, exportOptions);
-    splashScreen.audioSource = new AudioSource('', 0, 0, 0);
-    splashScreen.hasAudio = false;
-    renderingClips.push(splashScreen);
+    if (this.views.video.splashScreen?.enabled) {
+      const splashScreen = await this.generateSplashScreenClip(exportOptions);
+      renderingClips.push(splashScreen);
+    }
 
     // TODO: For now, just remove deleted clips from the video
     // In the future, abort export and surface error to the user.
@@ -1269,6 +1262,26 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       renderingClips.push(outro);
     }
     return renderingClips;
+  }
+
+  /**
+   * Prepares a splash screen clip that will be added to the end of the clip
+   * @param exportOptions
+   * @returns
+   */
+  private async generateSplashScreenClip(exportOptions: IExportOptions): Promise<RenderingClip> {
+    const linkedPlatforms = await this.userService.fetchLinkedPlatforms();
+
+    const splashScreen = new RenderingClip('');
+    const settings: ISplashscreenSettings = {
+      avatarUrl: linkedPlatforms ? linkedPlatforms.avatar : '',
+      profileLink: 'twitch.tv/' + this.userService.views.platform.username,
+    };
+
+    splashScreen.frameSource = new SplashScreenFrameSource(settings, exportOptions);
+    splashScreen.audioSource = new AudioSource('', 0, 0, 0);
+    splashScreen.hasAudio = false;
+    return splashScreen;
   }
 
   // We throttle because this can go extremely fast, especially on previews

@@ -79,9 +79,15 @@ export interface IOutroInfo {
   path: string;
   duration: number | null;
 }
+
+export interface ISplashScreenInfo {
+  enabled: boolean;
+}
+
 export interface IVideoInfo {
   intro: IIntroInfo;
   outro: IOutroInfo;
+  splashScreen: ISplashScreenInfo;
 }
 
 export interface IAvailableTransition {

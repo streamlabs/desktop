@@ -35,6 +35,10 @@ export function EditingControls({
     HighlighterService.actions.setAudio({ musicEnabled: enabled });
   }
 
+  function setSplashScreenEnabled(enabled: boolean) {
+    HighlighterService.actions.setVideo({ splashScreen: { enabled } });
+  }
+
   const musicExtensions = ['mp3', 'wav', 'flac'];
   const videoExtensions = SUPPORTED_FILE_TYPES;
 
@@ -126,6 +130,11 @@ export function EditingControls({
           label={$t('Background Music')}
           value={v.audio.musicEnabled}
           onChange={setMusicEnabled}
+        />
+        <SwitchInput
+          label={$t('Splash Screen')}
+          value={v.video.splashScreen?.enabled}
+          onChange={setSplashScreenEnabled}
         />
         <Animate transitionName="ant-slide-up">
           {v.audio.musicEnabled && (
