@@ -79,6 +79,11 @@ import { addVerticalFilterToExportOptions } from './vertical-export';
 import { isGameSupported } from './models/game-config.models';
 import Utils from 'services/utils';
 import { getOS, OS } from '../../util/operating-systems';
+import {
+  ISplashscreenSettings,
+  SplashScreenFrameSource,
+} from './rendering/splashscreen-frame-source';
+import { AudioSource } from './rendering/audio-source';
 
 @InitAfter('StreamingService')
 export class HighlighterService extends PersistentStatefulService<IHighlighterState> {
@@ -1134,6 +1139,21 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         }
       },
     });
+
+    // add splash screen if it is enabled
+    // create a fake rendering clip for the splash screen
+    const splashScreen = new RenderingClip('');
+    console.log(JSON.stringify(await this.userService.fetchAvatar()));
+    const settings: ISplashscreenSettings = {
+      avatarUrl:
+        'https://static-cdn.jtvnw.net/jtv_user_pictures/carpenterr-profile_image-76d072975d4ecf60-70x70.jpeg',
+      profileLink: 'twitch.tv/' + this.userService.views.platform.username,
+    };
+
+    splashScreen.frameSource = new SplashScreenFrameSource(settings, exportOptions);
+    splashScreen.audioSource = new AudioSource('', 0, 0, 0);
+    splashScreen.hasAudio = false;
+    renderingClips.push(splashScreen);
 
     // TODO: For now, just remove deleted clips from the video
     // In the future, abort export and surface error to the user.

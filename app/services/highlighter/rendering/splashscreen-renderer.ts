@@ -1,4 +1,4 @@
-export class OutroRenderer {
+export class SplashScreenRenderer {
   private canvas = document.createElement('canvas');
   private ctx = this.canvas.getContext('2d')!;
   private avatarImage: HTMLImageElement | null = null;
@@ -22,7 +22,7 @@ export class OutroRenderer {
     this.ctx.fillText('outro', this.canvas.width / 2, this.canvas.height / 2);
   }
 
-  async renderOutro(progress: number): Promise<void> {
+  async renderFrame(progress: number): Promise<void> {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     ctx.fillStyle = 'black';
