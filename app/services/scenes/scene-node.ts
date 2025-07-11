@@ -25,7 +25,6 @@ export function isItem(node: SceneItemNode): node is SceneItem {
   return node.sceneNodeType === 'item';
 }
 
-//@ServiceHelper()
 export abstract class SceneItemNode implements ISceneItemNode {
   id: string;
   parentId: string;
@@ -59,7 +58,7 @@ export abstract class SceneItemNode implements ISceneItemNode {
       return;
     }
     this.SET_PARENT(parentId);
-    this.parentId = parentId; // es2015対応、読めないのでセットする es5ではstate経由で読めるので。。
+    this.parentId = parentId;
     this.placeAfter(parentId);
   }
 
