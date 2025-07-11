@@ -6,6 +6,7 @@ import { EExportStep, IExportInfo } from './models/rendering.models';
 import { Dictionary } from 'lodash';
 import path from 'path';
 import * as remote from '@electron/remote';
+import { TPrivacyStatus } from 'services/platforms/youtube/uploader';
 
 interface IVideoInfo {
   aspectRatio: string;
@@ -28,16 +29,26 @@ export interface ICollectionExportInfo {
   exportInfo?: IExportInfo;
 }
 
+export interface ICollectionUploadInfo {
+  state?: 'queued' | 'uploading' | 'uploaded' | 'error';
+  uploadedFileUrl?: string;
+  uploadInfo?: IUploadInfo;
+}
+
 export interface IClipCollection {
   id: string;
   clipCollectionInfo?: IVideoInfo;
   collectionExportInfo?: ICollectionExportInfo;
+  collectionUploadInfo?: ICollectionUploadInfo;
   clips?: Dictionary<IClipCollectionClip>;
 }
 export class ClipCollectionManager {
   highlighterService: HighlighterService;
   exportQueue: Array<() => Promise<void>> = [];
   private isExporting = false;
+
+  uploadQueue: Array<() => Promise<void>> = [];
+  private isUploading = false;
 
   constructor(highlighterService: HighlighterService) {
     this.highlighterService = highlighterService;
@@ -135,6 +146,25 @@ export class ClipCollectionManager {
         exportInfo: {
           ...collection.collectionExportInfo?.exportInfo,
           ...exportInfoPartial,
+        },
+      },
+    });
+  }
+
+  updateCollectionUploadInfo(collectionId: string, uploadIfoPartial: Partial<IUploadInfo>) {
+    const collection = this.highlighterService.views.clipCollectionsDictionary[collectionId];
+    if (!collection) {
+      console.warn(`Collection ${collectionId} not found`);
+      return;
+    }
+
+    this.updateCollection({
+      id: collectionId,
+      collectionUploadInfo: {
+        ...collection.collectionUploadInfo,
+        uploadInfo: {
+          ...collection.collectionUploadInfo?.uploadInfo,
+          ...uploadIfoPartial,
         },
       },
     });
@@ -368,5 +398,80 @@ export class ClipCollectionManager {
         this.processExportQueue();
       }, 500);
     }
+  }
+
+  // =================================================================================================
+  // Collection upload logic
+  // =================================================================================================
+
+  async processUploadQueue() {
+    if (this.isUploading || this.uploadQueue.length === 0) return;
+    this.isUploading = true;
+    const nextUpload = this.uploadQueue.shift();
+    if (nextUpload) {
+      try {
+        await nextUpload();
+      } catch (e: unknown) {
+        console.error('Upload failed:', e);
+      }
+    }
+    this.isUploading = false;
+    if (this.uploadQueue.length > 0) {
+      setTimeout(() => {
+        this.processUploadQueue();
+      }, 500);
+    }
+  }
+
+  async uploadClipCollection(collectionId: string): Promise<void> {
+    // Set collectionUploadInfo state to 'uploading'
+    this.updateCollection({
+      id: collectionId,
+      collectionUploadInfo: {
+        state: 'uploading',
+        // ...other info as needed
+      },
+    });
+
+    const title: string = `My Video Title ${collectionId}`; // Replace with actual title
+    const description: string = 'My Video Description'; // Replace with actual description
+    const privacy: string = 'public'; // Replace with actual privacy status
+
+    await this.highlighterService.actions.return.uploadYoutube(
+      {
+        title,
+        description,
+        privacyStatus: privacy as TPrivacyStatus,
+      },
+      undefined,
+      collectionId,
+    );
+    console.log('uploaded', collectionId);
+
+    if (
+      this.highlighterService.views.clipCollectionsDictionary[collectionId].collectionUploadInfo
+        .uploadInfo.error
+    ) {
+      this.updateCollection({
+        id: collectionId,
+        collectionUploadInfo: {
+          state: 'error',
+        },
+      });
+      return;
+    }
+
+    // On success:
+    this.updateCollection({
+      id: collectionId,
+      collectionUploadInfo: {
+        state: 'uploaded',
+        uploadedFileUrl: 'https://example.com/video.mp4', // Replace with real URL
+        uploadInfo: undefined,
+      },
+    });
+
+    // On error, set state: 'error'
+    // this.updateCollection({ id: collectionId, collectionUploadInfo: { state: 'error' } });
   }
 }

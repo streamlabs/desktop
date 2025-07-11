@@ -1390,6 +1390,19 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     this.clipCollectionManager.processExportQueue();
   }
 
+  queueUploadClipCollection(collectionId: string) {
+    this.clipCollectionManager.updateCollection({
+      id: collectionId,
+      collectionUploadInfo: {
+        state: 'queued',
+      },
+    });
+    this.clipCollectionManager.uploadQueue.push(() =>
+      this.clipCollectionManager.uploadClipCollection(collectionId),
+    );
+    this.clipCollectionManager.processUploadQueue();
+  }
+
   private async generateExportOptions(
     exportInfo: IExportInfo,
     renderingClips: RenderingClip[],
@@ -1508,6 +1521,21 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     }
 
     this.SET_EXPORT_INFO(exportInfo);
+  }
+
+  setUploadInfo(
+    uploadInfo: Partial<IUploadInfo> & { platform: EUploadPlatform },
+    collectionId?: string,
+  ) {
+    if (collectionId) {
+      console.log('setExportInfo for collection');
+      this.clipCollectionManager.updateCollectionUploadInfo(collectionId, {
+        ...uploadInfo,
+      });
+      return;
+    }
+
+    this.SET_UPLOAD_INFO(uploadInfo);
   }
 
   // =================================================================================================
@@ -1837,12 +1865,36 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     this.CLEAR_UPLOAD();
   }
 
-  async uploadYoutube(options: IYoutubeVideoUploadOptions, streamId: string | undefined) {
+  async uploadYoutube(
+    options: IYoutubeVideoUploadOptions,
+    streamId: string | undefined,
+    collectionId?: string,
+  ) {
+    const fileToUpload = collectionId
+      ? this.views.clipCollectionsDictionary[collectionId].collectionExportInfo.exportedFilePath
+      : this.views.exportInfo.file;
+
+    const latestExportInfo = collectionId
+      ? this.views.clipCollectionsDictionary[collectionId].collectionExportInfo.exportInfo
+      : this.views.exportInfo;
+
+    const latestUploadInfo = collectionId
+      ? this.views.clipCollectionsDictionary[collectionId].collectionUploadInfo.uploadInfo
+      : this.views.uploadInfo;
+
+    if (!fileToUpload) {
+      throw new Error('Cannot upload without a file to upload');
+    }
+
+    if (!fileExists(fileToUpload)) {
+      throw new Error(`Cannot upload file that does not exist: ${fileToUpload}`);
+    }
+
     if (!this.userService.state.auth?.platforms.youtube) {
       throw new Error('Cannot upload without YT linked');
     }
 
-    if (!this.views.exportInfo.exported) {
+    if (latestExportInfo && !latestExportInfo.exported) {
       throw new Error('Cannot upload when export is not complete');
     }
 
@@ -1850,26 +1902,28 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       throw new Error('Cannot start a new upload when uploading is in progress');
     }
 
-    this.SET_UPLOAD_INFO({
-      platform: EUploadPlatform.YOUTUBE,
-      uploading: true,
-      cancelRequested: false,
-      error: false,
-    });
+    this.setUploadInfo(
+      {
+        platform: EUploadPlatform.YOUTUBE,
+        uploading: true,
+        cancelRequested: false,
+        error: false,
+      },
+      collectionId,
+    );
 
     const yt = getPlatformService('youtube') as YoutubeService;
 
-    const { cancel, complete } = yt.uploader.uploadVideo(
-      this.views.exportInfo.file,
-      options,
-      progress => {
-        this.SET_UPLOAD_INFO({
+    const { cancel, complete } = yt.uploader.uploadVideo(fileToUpload, options, progress => {
+      this.setUploadInfo(
+        {
           platform: EUploadPlatform.YOUTUBE,
           uploadedBytes: progress.uploadedBytes,
           totalBytes: progress.totalBytes,
-        });
-      },
-    );
+        },
+        collectionId,
+      );
+    });
 
     this.cancelFunction = cancel;
     let result: IYoutubeUploadResponse | null = null;
@@ -1885,7 +1939,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           console.error('Got error uploading YT video', e);
         });
 
-        this.SET_UPLOAD_INFO({ platform: EUploadPlatform.YOUTUBE, error: true });
+        this.setUploadInfo({ platform: EUploadPlatform.YOUTUBE, error: true }, collectionId);
         const game = this.getGameByStreamId(streamId);
         this.usageStatisticsService.recordAnalyticsEvent(
           this.views.useAiHighlighter ? 'AIHighlighter' : 'Highlighter',
@@ -1898,12 +1952,15 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     }
 
     this.cancelFunction = null;
-    this.SET_UPLOAD_INFO({
-      platform: EUploadPlatform.YOUTUBE,
-      uploading: false,
-      cancelRequested: false,
-      videoId: result ? result.id : null,
-    });
+    this.setUploadInfo(
+      {
+        platform: EUploadPlatform.YOUTUBE,
+        uploading: false,
+        cancelRequested: false,
+        videoId: result ? result.id : null,
+      },
+      collectionId,
+    );
 
     if (result) {
       const game = this.getGameByStreamId(streamId);

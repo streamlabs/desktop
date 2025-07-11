@@ -102,6 +102,25 @@ function Header({
       >
         Export all clips
       </Button>
+      <Button
+        onClick={() => {
+          const clipCollectionIds = HighlighterService.clipCollectionManager
+            .getClipCollectionsByStreamId(streamInfo.id)
+            ?.filter(
+              collectionId =>
+                HighlighterService.views.clipCollectionsDictionary[collectionId]
+                  .collectionExportInfo?.exportedFilePath !== undefined,
+            );
+
+          if (clipCollectionIds) {
+            clipCollectionIds.forEach(collectionId => {
+              HighlighterService.actions.queueUploadClipCollection(collectionId);
+            });
+          }
+        }}
+      >
+        post all exported clips
+      </Button>
     </div>
   );
 }
