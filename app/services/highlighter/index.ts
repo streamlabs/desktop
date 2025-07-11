@@ -4,7 +4,7 @@ import Vue from 'vue';
 import fs from 'fs-extra';
 import * as remote from '@electron/remote';
 import { EStreamingState, StreamingService } from 'services/streaming';
-import { getPlatformService } from 'services/platforms';
+import { EPlatform, getPlatformService } from 'services/platforms';
 import { UserService } from 'services/user';
 import {
   IYoutubeVideoUploadOptions,
@@ -1271,11 +1271,24 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
    */
   private async generateSplashScreenClip(exportOptions: IExportOptions): Promise<RenderingClip> {
     const linkedPlatforms = await this.userService.fetchLinkedPlatforms();
+    const primaryPlatform = this.userService.views.platform;
+    const platform = primaryPlatform.type;
+
+    let profileLink = '@' + primaryPlatform.username;
+    if (platform === EPlatform.Twitch) {
+      profileLink = 'twitch.tv/' + this.userService.views.platform.username;
+    } else if (platform === EPlatform.Trovo) {
+      profileLink = 'trovo.live/s/' + this.userService.views.platform.username;
+    } else if (platform === EPlatform.Facebook) {
+      profileLink = 'facebook.com/gaming/' + this.userService.views.platform.username;
+    } else if (platform === EPlatform.Kick) {
+      profileLink = 'kick.com/' + this.userService.views.platform.username;
+    }
 
     const splashScreen = new RenderingClip('');
     const settings: ISplashscreenSettings = {
       avatarUrl: linkedPlatforms ? linkedPlatforms.avatar : '',
-      profileLink: 'twitch.tv/' + this.userService.views.platform.username,
+      profileLink,
     };
 
     splashScreen.frameSource = new SplashScreenFrameSource(settings, exportOptions);
