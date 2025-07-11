@@ -5,6 +5,7 @@ import { SplashScreenRenderer } from './splashscreen-renderer';
 export interface ISplashscreenSettings {
   avatarUrl: string;
   profileLink: string;
+  duration: number; // duration in seconds
 }
 
 export class SplashScreenFrameSource extends FrameSource {
@@ -14,8 +15,7 @@ export class SplashScreenFrameSource extends FrameSource {
     public readonly settings: ISplashscreenSettings,
     public readonly options: IExportOptions,
   ) {
-    const duration = 3; // seconds
-    super('', duration, 0, 0, options);
+    super('', settings.duration, 0, 0, options);
     this.splashScreenRenderer = new SplashScreenRenderer({
       width: options.width,
       height: options.height,

@@ -1287,6 +1287,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
     const splashScreen = new RenderingClip('');
     const settings: ISplashscreenSettings = {
+      duration: 3,
       avatarUrl: linkedPlatforms ? linkedPlatforms.avatar : '',
       profileLink,
     };
