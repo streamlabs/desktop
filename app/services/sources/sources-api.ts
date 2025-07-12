@@ -173,6 +173,5 @@ export interface ISourceDisplayData {
   shortDesc?: string;
   link?: string;
   linkText?: string;
-  // TODO: make required if none are missing
-  group?: string;
+  group: string;
 }
