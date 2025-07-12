@@ -80,57 +80,8 @@ import { byOS, OS } from 'util/operating-systems';
 import { DualOutputService } from 'services/dual-output';
 import { capitalize } from 'lodash';
 import { YoutubeService } from 'app-services';
-
-enum EOBSOutputType {
-  Streaming = 'streaming',
-  Recording = 'recording',
-  ReplayBuffer = 'replay-buffer',
-}
-
-const outputType = (type: EOBSOutputType) =>
-  ({
-    [EOBSOutputType.Streaming]: $t('Streaming'),
-    [EOBSOutputType.Recording]: $t('Recording'),
-    [EOBSOutputType.ReplayBuffer]: $t('Replay Buffer'),
-  }[type]);
-
-enum EOBSOutputSignal {
-  Starting = 'starting',
-  Start = 'start',
-  Stopping = 'stopping',
-  Stop = 'stop',
-  Activate = 'activate',
-  Deactivate = 'deactivate',
-  Reconnect = 'reconnect',
-  ReconnectSuccess = 'reconnect_success',
-  Wrote = 'wrote',
-  Writing = 'writing',
-  WriteError = 'writing_error',
-}
-
-enum EOutputSignalState {
-  Saving = 'saving',
-  Starting = 'starting',
-  Start = 'start',
-  Stopping = 'stopping',
-  Stop = 'stop',
-  Activate = 'activate',
-  Deactivate = 'deactivate',
-  Reconnect = 'reconnect',
-  ReconnectSuccess = 'reconnect_success',
-  Running = 'running',
-  Wrote = 'wrote',
-  Writing = 'writing',
-  WriteError = 'writing_error',
-}
-
-export interface IOBSOutputSignalInfo {
-  type: EOBSOutputType;
-  signal: EOBSOutputSignal;
-  code: EOutputCode;
-  error: string;
-  service: string; // 'default' | 'vertical'
-}
+import { EOBSOutputType, EOBSOutputSignal, IOBSOutputSignalInfo } from 'services/core/signals';
+import { SignalsService } from 'services/signals-manager';
 
 type TOBSOutputType = 'streaming' | 'recording' | 'replayBuffer';
 
@@ -139,6 +90,14 @@ interface IOutputContext {
   recording: ISimpleRecording | IAdvancedRecording;
   replayBuffer: ISimpleReplayBuffer | IAdvancedReplayBuffer;
 }
+
+const outputType = (type: EOBSOutputType) =>
+  ({
+    [EOBSOutputType.Streaming]: $t('Streaming'),
+    [EOBSOutputType.Recording]: $t('Recording'),
+    [EOBSOutputType.ReplayBuffer]: $t('Replay Buffer'),
+    [EOBSOutputType.VirtualCam]: $t('Virtual Cam'),
+  }[type]);
 
 export class StreamingService
   extends StatefulService<IStreamingServiceState>
@@ -159,6 +118,7 @@ export class StreamingService
   @Inject() private dualOutputService: DualOutputService;
   @Inject() private youtubeService: YoutubeService;
   @Inject() private settingsService: SettingsService;
+  @Inject() private signalsService: SignalsService;
 
   streamingStatusChange = new Subject<EStreamingState>();
   recordingStatusChange = new Subject<ERecordingState>();
@@ -209,7 +169,7 @@ export class StreamingService
   };
 
   init() {
-    NodeObs.OBS_service_connectOutputSignals((info: IOBSOutputSignalInfo) => {
+    this.signalsService.addCallback((info: IOBSOutputSignalInfo) => {
       this.signalInfoChanged.next(info);
       this.handleOBSOutputSignal(info);
     });
@@ -1600,6 +1560,7 @@ export class StreamingService
       [EOBSOutputType.Streaming]: $t('Streaming Error'),
       [EOBSOutputType.Recording]: $t('Recording Error'),
       [EOBSOutputType.ReplayBuffer]: $t('Replay Buffer Error'),
+      [EOBSOutputType.VirtualCam]: $t('Virtual Cam Error'),
     }[info.type];
 
     if (linkToDriverInfo) buttons.push($t('Learn More'));
