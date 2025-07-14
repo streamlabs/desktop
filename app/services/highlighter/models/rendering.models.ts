@@ -82,6 +82,7 @@ export interface IOutroInfo {
 
 export interface ISplashScreenInfo {
   enabled: boolean;
+  duration: number;
 }
 
 export interface IVideoInfo {

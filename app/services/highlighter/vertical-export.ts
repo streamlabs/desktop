@@ -1,7 +1,7 @@
 import { getVideoResolution } from './cut-highlight-clips';
 import { ICoordinates } from './models/ai-highlighter.models';
 import { IAiClip, isAiClip, TClip } from './models/highlighter.models';
-import { IExportOptions, IResolution } from './models/rendering.models';
+import { IExportOptions, IResolution, ISplashScreenInfo } from './models/rendering.models';
 import { RenderingClip } from './rendering/rendering-clip';
 
 /**
@@ -13,6 +13,8 @@ export async function addVerticalFilterToExportOptions(
   clips: TClip[],
   renderingClips: RenderingClip[],
   exportOptions: IExportOptions,
+  duration: number,
+  splashScreenInfo: ISplashScreenInfo,
 ) {
   if (!clips || clips.length === 0) {
     throw new Error('No clips provided');
@@ -34,6 +36,8 @@ export async function addVerticalFilterToExportOptions(
     webcamCoordinates,
     newResolution,
     originalResolution,
+    duration,
+    splashScreenInfo,
   );
 }
 /**
@@ -64,6 +68,8 @@ function getWebcamComplexFilterForFfmpeg(
   webcamCoordinates: ICoordinates | null,
   outputResolution: IResolution,
   originalResolution: IResolution,
+  duration: number,
+  splashScreenInfo: ISplashScreenInfo,
 ) {
   if (!webcamCoordinates) {
     return `
@@ -90,14 +96,38 @@ function getWebcamComplexFilterForFfmpeg(
     oneThirdHeight,
     twoThirdsHeight,
   });
+  // if splash screen is not enabled, we can return a simpler filter
+  if (!splashScreenInfo.enabled) {
+    return `
+      [0:v]split=3[webcam][vid][blur_source];
+      color=c=black:s=${outputResolution.width}x${outputResolution.height}:d=1[base];
+      [webcam]crop=w=${webcamWidth}:h=${webcamHeight}:x=${webcamTopX}:y=${webcamTopY},scale=-1:${oneThirdHeight}[webcam_final];
+      [vid]crop=ih*${outputResolution.width}/${twoThirdsHeight}:ih,scale=${outputResolution.width}:${twoThirdsHeight}[vid_cropped];
+      [blur_source]crop=ih*${outputResolution.width}/${twoThirdsHeight}:ih,scale=${outputResolution.width}:${oneThirdHeight},gblur=sigma=50[blur];
+      [base][blur]overlay=x=0:y=0[blur_base];
+      [blur_base][webcam_final]overlay='(${outputResolution.width}-overlay_w)/2:(${oneThirdHeight}-overlay_h)/2'[base_webcam];
+      [base_webcam][vid_cropped]overlay=x=0:y=${oneThirdHeight}[final];
+      `;
+  }
+
+  const contentDuration = duration - splashScreenInfo.duration;
+
+  // with splash screen we need to add a more complex filter
+  // where we crop and overlay the webcam only for the portion of the video that is not the splash screen
+  // in other case the splash screen video will be cropped as well
   return `
-    [0:v]split=3[webcam][vid][blur_source];
+    [0:v]split=2[full1][full2];
+    [full1]trim=end=${contentDuration},setpts=PTS-STARTPTS[part1];
+    [full2]trim=start=${contentDuration},setpts=PTS-STARTPTS[part2];
+    [part1]split=3[webcam][vid][blur_source];
     color=c=black:s=${outputResolution.width}x${outputResolution.height}:d=1[base];
     [webcam]crop=w=${webcamWidth}:h=${webcamHeight}:x=${webcamTopX}:y=${webcamTopY},scale=-1:${oneThirdHeight}[webcam_final];
     [vid]crop=ih*${outputResolution.width}/${twoThirdsHeight}:ih,scale=${outputResolution.width}:${twoThirdsHeight}[vid_cropped];
     [blur_source]crop=ih*${outputResolution.width}/${twoThirdsHeight}:ih,scale=${outputResolution.width}:${oneThirdHeight},gblur=sigma=50[blur];
     [base][blur]overlay=x=0:y=0[blur_base];
-    [blur_base][webcam_final]overlay='(${outputResolution.width}-overlay_w)/2:(${oneThirdHeight}-overlay_h)/2'[base_webcam];
-    [base_webcam][vid_cropped]overlay=x=0:y=${oneThirdHeight}[final];
+    [blur_base][webcam_final]overlay=x='(${outputResolution.width}-overlay_w)/2':y='(${oneThirdHeight}-overlay_h)/2'[base_webcam];
+    [base_webcam][vid_cropped]overlay=x=0:y=${oneThirdHeight}[filtered_part];
+    [part2]crop=w=ih*9/16:h=ih:x=(in_w-ih*9/16)/2:y=0,scale=${outputResolution.width}:${outputResolution.height},setsar=1[splashscreen];
+    [filtered_part][splashscreen]concat=n=2:v=1:a=0[final];
     `;
 }

@@ -51,12 +51,11 @@ export async function startRendering(
   let mixer: AudioMixer | null = null;
   try {
     // Estimate the total number of frames to set up export info
-    const totalFrames = renderingClips.reduce((count: number, clip) => {
-      return count + clip.frameSource.nFrames;
-    }, 0);
-    const numTransitions = renderingClips.length - 1;
-    const transitionFrames = transitionDuration * exportOptions.fps;
-    const totalFramesAfterTransitions = totalFrames - numTransitions * transitionFrames;
+    const { totalFramesAfterTransitions, transitionFrames } = calculateTotalFrames(
+      renderingClips,
+      transitionDuration,
+      exportOptions.fps,
+    );
 
     setExportInfo({
       totalFrames: totalFramesAfterTransitions,
@@ -239,4 +238,21 @@ export async function startRendering(
     if (fader) await fader.cleanup();
     if (mixer) await mixer.cleanup();
   }
+}
+export function calculateTotalFrames(
+  renderingClips: RenderingClip[],
+  transitionDuration: number,
+  fps: number,
+): { totalFramesAfterTransitions: number; transitionFrames: number, duration: number } {
+  const totalFrames = renderingClips.reduce((count: number, clip) => {
+    return count + clip.frameSource.nFrames;
+  }, 0);
+  const numTransitions = renderingClips.length - 1;
+  const transitionFrames = transitionDuration * fps;
+  const totalFramesAfterTransitions = totalFrames - numTransitions * transitionFrames;
+  return {
+    totalFramesAfterTransitions,
+    transitionFrames,
+    duration: totalFramesAfterTransitions / fps,
+  };
 }

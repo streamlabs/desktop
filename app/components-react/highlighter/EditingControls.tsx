@@ -36,7 +36,7 @@ export function EditingControls({
   }
 
   function setSplashScreenEnabled(enabled: boolean) {
-    HighlighterService.actions.setVideo({ splashScreen: { enabled } });
+    HighlighterService.actions.setVideo({ splashScreen: { enabled, duration: 3 } });
   }
 
   const musicExtensions = ['mp3', 'wav', 'flac'];

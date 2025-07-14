@@ -71,7 +71,7 @@ import {
   EGame,
 } from './models/ai-highlighter.models';
 import { HighlighterViews } from './highlighter-views';
-import { startRendering } from './rendering/start-rendering';
+import { calculateTotalFrames, startRendering } from './rendering/start-rendering';
 import { cutHighlightClips, getVideoDuration } from './cut-highlight-clips';
 import { reduce } from 'lodash';
 import { extractDateTimeFromPath, fileExists } from './file-utils';
@@ -106,7 +106,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     video: {
       intro: { path: '', duration: null },
       outro: { path: '', duration: null },
-      splashScreen: { enabled: true },
+      splashScreen: { enabled: true, duration: 3 },
     },
     audio: {
       musicEnabled: false,
@@ -1126,11 +1126,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     });
 
     let renderingClips: RenderingClip[] = await this.generateRenderingClips(streamId, orientation);
-    const exportOptions: IExportOptions = await this.generateExportOptions(
-      renderingClips,
-      preview,
-      orientation,
-    );
+    const exportOptions: IExportOptions = await this.generateExportOptions(preview);
 
     // Reset all clips
     await pmap(renderingClips, c => c.reset(exportOptions), {
@@ -1144,7 +1140,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     // add splash screen if it is enabled
     // create a fake rendering clip for the splash screen
     if (this.views.video.splashScreen?.enabled) {
-      const splashScreen = await this.generateSplashScreenClip(exportOptions);
+      const splashScreen = await this.generateSplashScreenClip(exportOptions, orientation);
       renderingClips.push(splashScreen);
     }
 
@@ -1160,6 +1156,22 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         error: $t('Please select at least one clip to export a video'),
       });
       return;
+    }
+
+    if (orientation === 'vertical') {
+      // add vertical filter for export options
+      const { duration } = calculateTotalFrames(
+        renderingClips,
+        this.views.transitionDuration,
+        exportOptions.fps,
+      );
+      await addVerticalFilterToExportOptions(
+        this.views.clips,
+        renderingClips,
+        exportOptions,
+        duration,
+        this.views.video.splashScreen,
+      );
     }
 
     const setExportInfo = (partialExportInfo: Partial<IExportInfo>) => {
@@ -1190,11 +1202,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     );
   }
 
-  private async generateExportOptions(
-    renderingClips: RenderingClip[],
-    preview: boolean,
-    orientation: string,
-  ) {
+  private async generateExportOptions(preview: boolean) {
     const exportOptions: IExportOptions = preview
       ? { width: 1280 / 4, height: 720 / 4, fps: 30, preset: 'ultrafast' }
       : {
@@ -1204,10 +1212,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           preset: this.views.exportInfo.preset,
         };
 
-    if (orientation === 'vertical') {
-      // adds complex filter and flips width and height
-      await addVerticalFilterToExportOptions(this.views.clips, renderingClips, exportOptions);
-    }
     return exportOptions;
   }
 
@@ -1269,7 +1273,10 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
    * @param exportOptions
    * @returns
    */
-  private async generateSplashScreenClip(exportOptions: IExportOptions): Promise<RenderingClip> {
+  private async generateSplashScreenClip(
+    exportOptions: IExportOptions,
+    orientation: string,
+  ): Promise<RenderingClip> {
     const linkedPlatforms = await this.userService.fetchLinkedPlatforms();
     const primaryPlatform = this.userService.views.platform;
     const platform = primaryPlatform.type;
@@ -1292,7 +1299,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       profileLink,
     };
 
-    splashScreen.frameSource = new SplashScreenFrameSource(settings, exportOptions);
+    splashScreen.frameSource = new SplashScreenFrameSource(settings, exportOptions, orientation);
     splashScreen.audioSource = new AudioSource('', 0, 0, 0);
     splashScreen.hasAudio = false;
     return splashScreen;

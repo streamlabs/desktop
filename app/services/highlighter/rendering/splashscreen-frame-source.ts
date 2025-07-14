@@ -14,6 +14,7 @@ export class SplashScreenFrameSource extends FrameSource {
   constructor(
     public readonly settings: ISplashscreenSettings,
     public readonly options: IExportOptions,
+    public readonly orientation: string,
   ) {
     super('', settings.duration, 0, 0, options);
     this.splashScreenRenderer = new SplashScreenRenderer({
@@ -21,7 +22,7 @@ export class SplashScreenFrameSource extends FrameSource {
       height: options.height,
       avatarUrl: settings.avatarUrl,
       profileLink: settings.profileLink,
-      isVertical: options.complexFilter?.length > 0,
+      isVertical: orientation === 'vertical',
       backgroundVideo: {
         path:
           'https://cdn.streamlabs.com/marketplace/overlays/41191599/31b3867/media/3caa28a5-d627-4ade-8082-0f2e1ef4a934.mp4',
