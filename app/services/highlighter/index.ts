@@ -79,7 +79,12 @@ import { addVerticalFilterToExportOptions } from './vertical-export';
 import { isGameSupported } from './models/game-config.models';
 import Utils from 'services/utils';
 import { getOS, OS } from '../../util/operating-systems';
-import { ClipCollectionManager, IClipCollection, IClipCollectionClip } from './clip-collections';
+import {
+  ClipCollectionManager,
+  EClipCollectionExportState,
+  IClipCollection,
+  IClipCollectionClip,
+} from './clip-collections';
 
 @InitAfter('StreamingService')
 export class HighlighterService extends PersistentStatefulService<IHighlighterState> {
@@ -1381,7 +1386,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     this.clipCollectionManager.updateCollection({
       id: collectionId,
       collectionExportInfo: {
-        state: 'queued',
+        state: EClipCollectionExportState.QUEUED,
       },
     });
     this.clipCollectionManager.exportQueue.push(() =>

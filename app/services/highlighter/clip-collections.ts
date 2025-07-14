@@ -7,12 +7,13 @@ import { Dictionary } from 'lodash';
 import path from 'path';
 import * as remote from '@electron/remote';
 import { TPrivacyStatus } from 'services/platforms/youtube/uploader';
+import { EOrientation } from './models/ai-highlighter.models';
 
 interface IVideoInfo {
-  aspectRatio: string;
-  description: string;
-  title: string;
-  thumbnailUrl: string;
+  aspectRatio: EOrientation;
+  description?: string;
+  title?: string;
+  thumbnailUrl?: string;
 }
 
 export interface IClipCollectionClip {
@@ -23,8 +24,15 @@ export interface IClipCollectionClip {
   endTrim?: number;
 }
 
+export enum EClipCollectionExportState {
+  QUEUED = 'queued',
+  EXPORTING = 'exporting',
+  EXPORTED = 'exported',
+  ERROR = 'error',
+}
+
 export interface ICollectionExportInfo {
-  state?: 'queued' | 'exporting' | 'exported' | 'error';
+  state?: EClipCollectionExportState;
   exportedFilePath?: string;
   exportInfo?: IExportInfo;
 }
@@ -37,7 +45,7 @@ export interface ICollectionUploadInfo {
 
 export interface IClipCollection {
   id: string;
-  clipCollectionInfo?: IVideoInfo;
+  clipCollectionInfo: IVideoInfo;
   collectionExportInfo?: ICollectionExportInfo;
   collectionUploadInfo?: ICollectionUploadInfo;
   clips?: Dictionary<IClipCollectionClip>;
@@ -116,11 +124,18 @@ export class ClipCollectionManager {
   // Collection handling logic
   // =================================================================================================
 
-  createClipCollection(streamId: string, clipCollectionInfo?: Partial<IVideoInfo>) {
+  createClipCollection(streamId: string) {
     const id = uuid.v4();
+
+    const clipCollectionInfo: IVideoInfo = {
+      aspectRatio: EOrientation.VERTICAL,
+      description: '',
+      title: '',
+      thumbnailUrl: '',
+    };
     const newClipCollection: IClipCollection = {
       id,
-      clipCollectionInfo: clipCollectionInfo as IVideoInfo,
+      clipCollectionInfo,
     };
     this.highlighterService.ADD_CLIPS_COLLECTION(newClipCollection);
     this.highlighterService.addCollectionToStream(streamId, id);
@@ -330,7 +345,7 @@ export class ClipCollectionManager {
     this.updateCollection({
       id: collectionId,
       collectionExportInfo: {
-        state: 'exporting',
+        state: EClipCollectionExportState.EXPORTING,
         exportInfo: {
           exporting: false,
           currentFrame: 0,
@@ -356,7 +371,7 @@ export class ClipCollectionManager {
       this.updateCollection({
         id: collectionId,
         collectionExportInfo: {
-          state: 'error',
+          state: EClipCollectionExportState.ERROR,
         },
       });
       return;
@@ -369,7 +384,7 @@ export class ClipCollectionManager {
       this.updateCollection({
         id: collectionId,
         collectionExportInfo: {
-          state: 'exported',
+          state: EClipCollectionExportState.EXPORTED,
           exportedFilePath: filePath,
           exportInfo: undefined,
         },

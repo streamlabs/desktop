@@ -52,3 +52,38 @@
   font-size: 16px;
   z-index: 1;
 }
+
+// Thumbnail
+.thumbnail {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  max-height: 390px;
+  margin: 0 auto;
+
+  --thumbHeight: 180px;
+  overflow-x: clip;
+
+  height: calc(var(--thumbHeight) * 1.32);
+  background: var(--Day-Colors-Dark-4, #4f5e65);
+}
+
+.thumbnail-in-progress img {
+  position: relative;
+  filter: blur(10px);
+}
+
+.thumbnail img {
+  height: 100%;
+}
+
+.thumbnail::before {
+  content: '';
+  border-style: solid;
+  border-width: 1px;
+  border-color: #ffffff29;
+  border-radius: 8px;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}

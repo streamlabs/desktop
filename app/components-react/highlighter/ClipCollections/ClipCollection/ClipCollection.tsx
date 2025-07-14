@@ -7,6 +7,8 @@ import { fileExists } from 'services/highlighter/file-utils';
 import { Button } from 'antd';
 import { IClipCollectionClip } from 'services/highlighter/clip-collections';
 import ClipCollectionModal from './ClipCollectionModal';
+import Thumbnail from './Thumbail';
+import styles from './ClipCollection.m.less';
 
 interface ClipCollectionProps {
   collectionId: string;
@@ -43,19 +45,10 @@ export default function ClipCollection(props: ClipCollectionProps) {
 
   const clips = HighlighterService.clipCollectionManager.getClipsFromCollection(props.collectionId);
 
-  const clipsArray = v.clipCollection?.clips ? Object.values(v.clipCollection.clips) : [];
-
   return (
-    <div style={{ width: '400px', height: '400px', backgroundColor: 'blue' }}>
-      state: {v.clipCollection.collectionExportInfo?.state} | currFrame:{' '}
-      {v.clipCollection.collectionExportInfo?.exportInfo?.currentFrame}
-      imagePath: {v.clipCollection.collectionExportInfo?.exportedFilePath}
+    <div className={styles.card}>
       <div style={{ overflow: 'hidden', height: '264px', width: '100%' }}>
-        <Thumbnail
-          clips={clipsArray}
-          generatedThumbnail=""
-          exportedFilePath={v.clipCollection.collectionExportInfo?.exportedFilePath}
-        />
+        <Thumbnail collectionInfo={v.clipCollection} />
       </div>
       <Button
         onClick={() => {
@@ -82,51 +75,4 @@ export default function ClipCollection(props: ClipCollectionProps) {
       </Button>
     </div>
   );
-}
-
-function Thumbnail({
-  exportedFilePath,
-  clips,
-  generatedThumbnail,
-}: {
-  exportedFilePath?: string;
-  clips?: IClipCollectionClip[];
-  generatedThumbnail?: string;
-}) {
-  const { HighlighterService } = Services;
-  const firstClip = useMemo(() => {
-    if (!clips || clips.length === 0) return undefined;
-    return clips.reduce((lowest, current) =>
-      current.collectionOrderPosition < lowest.collectionOrderPosition ? current : lowest,
-    );
-  }, [clips]);
-
-  const clipThumbnail =
-    HighlighterService.views.clipsDictionary[firstClip?.clipId || '']?.scrubSprite;
-
-  if (generatedThumbnail) {
-    return (
-      <div>
-        <img src={generatedThumbnail} />
-      </div>
-    );
-  }
-
-  if (exportedFilePath) {
-    return (
-      <div>
-        <video src={exportedFilePath}></video>
-      </div>
-    );
-  }
-
-  if (clipThumbnail) {
-    return (
-      <div style={{ position: 'relative', overflowX: 'clip', width: 192, height: 108 }}>
-        <img src={clipThumbnail}></img>
-      </div>
-    );
-  }
-
-  return <div>No thumbnail available</div>;
 }

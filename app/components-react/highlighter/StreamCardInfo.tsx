@@ -81,6 +81,7 @@ export default function StreamCardInfo({
 
   return (
     <Tooltip
+      placement="top"
       title={stringsToShow
         .map(item => `${item.emoji} ${item.count} ${item.description}`)
         .join(' | ')}
