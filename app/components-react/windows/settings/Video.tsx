@@ -545,7 +545,6 @@ export function VideoSettings() {
 
   return (
     <>
-      <ObsGenericSettingsForm />
       <div className={styles.videoSettingsHeader}>
         <h2>{$t('Video')}</h2>
         <DualOutputToggle
