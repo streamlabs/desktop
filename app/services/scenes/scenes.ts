@@ -460,11 +460,13 @@ export class ScenesService extends StatefulService<IScenesState> {
     const sceneItem = scene.createAndAddSource(sourceName, sourceType, settings);
 
     if (this.dualOutputService.views.hasSceneNodeMaps) {
-      this.dualOutputService.createPartnerNode(sceneItem);
-      /* For some reason dragging items after enabling dual output makes them
-       * duplicate, associate selection on switch to mitigate this issue
-       */
-      this.selectionService.associateSelectionWithDisplay('vertical');
+      this.itemAdded.subscribe(() => {
+        this.dualOutputService.createPartnerNode(sceneItem);
+        /* For some reason dragging items after enabling dual output makes them
+         * duplicate, associate selection on switch to mitigate this issue
+         */
+        this.selectionService.associateSelectionWithDisplay('vertical');
+      });
     }
 
     return sceneItem.sceneItemId;
