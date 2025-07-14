@@ -37,8 +37,15 @@ export interface ICollectionExportInfo {
   exportInfo?: IExportInfo;
 }
 
+export enum EClipCollectionUploadState {
+  QUEUED = 'queued',
+  UPLOADING = 'uploading',
+  UPLOADED = 'uploaded',
+  ERROR = 'error',
+}
+
 export interface ICollectionUploadInfo {
-  state?: 'queued' | 'uploading' | 'uploaded' | 'error';
+  state?: EClipCollectionUploadState;
   uploadedFileUrl?: string;
   uploadInfo?: IUploadInfo;
 }
@@ -451,8 +458,7 @@ export class ClipCollectionManager {
     this.updateCollection({
       id: collectionId,
       collectionUploadInfo: {
-        state: 'uploading',
-        // ...other info as needed
+        state: EClipCollectionUploadState.UPLOADING,
       },
     });
 
@@ -478,7 +484,7 @@ export class ClipCollectionManager {
       this.updateCollection({
         id: collectionId,
         collectionUploadInfo: {
-          state: 'error',
+          state: EClipCollectionUploadState.ERROR,
         },
       });
       return;
@@ -488,7 +494,7 @@ export class ClipCollectionManager {
     this.updateCollection({
       id: collectionId,
       collectionUploadInfo: {
-        state: 'uploaded',
+        state: EClipCollectionUploadState.UPLOADED,
         uploadedFileUrl: 'https://example.com/video.mp4', // Replace with real URL
         uploadInfo: undefined,
       },

@@ -82,6 +82,7 @@ import { getOS, OS } from '../../util/operating-systems';
 import {
   ClipCollectionManager,
   EClipCollectionExportState,
+  EClipCollectionUploadState,
   IClipCollection,
   IClipCollectionClip,
 } from './clip-collections';
@@ -1399,7 +1400,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     this.clipCollectionManager.updateCollection({
       id: collectionId,
       collectionUploadInfo: {
-        state: 'queued',
+        state: EClipCollectionUploadState.QUEUED,
       },
     });
     this.clipCollectionManager.uploadQueue.push(() =>

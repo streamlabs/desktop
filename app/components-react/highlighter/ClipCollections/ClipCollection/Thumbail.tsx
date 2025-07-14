@@ -1,7 +1,8 @@
 import { Services } from 'components-react/service-provider';
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   EClipCollectionExportState,
+  EClipCollectionUploadState,
   IClipCollection,
   IClipCollectionClip,
 } from 'services/highlighter/clip-collections';
@@ -11,8 +12,15 @@ import cx from 'classnames';
 import styles from './ClipCollection.m.less';
 import { IExportInfo } from 'services/highlighter/models/rendering.models';
 import { $t } from 'services/i18n';
+import { IUploadInfo } from 'services/highlighter/models/highlighter.models';
 
-export default function Thumbnail({ collectionInfo }: { collectionInfo?: IClipCollection }) {
+export default function Thumbnail({
+  collectionInfo,
+  emitSetModal,
+}: {
+  collectionInfo?: IClipCollection;
+  emitSetModal: (modal: any) => void;
+}) {
   const { HighlighterService } = Services;
 
   const clips = collectionInfo?.clips ? Object.values(collectionInfo.clips) : [];
@@ -45,8 +53,11 @@ export default function Thumbnail({ collectionInfo }: { collectionInfo?: IClipCo
       {/* {collectionInfo?.collectionExportInfo?.exportInfo && ( */}
       {true && (
         <StateTag
-          state={collectionInfo?.collectionExportInfo?.state}
+          exportState={collectionInfo?.collectionExportInfo?.state}
           exportInfo={collectionInfo?.collectionExportInfo?.exportInfo}
+          uploadState={collectionInfo?.collectionUploadInfo?.state}
+          uploadInfo={collectionInfo?.collectionUploadInfo?.uploadInfo}
+          emitSetModal={emitSetModal}
         />
       )}
       <ThumbnailMedia collectionInfo={collectionInfo} clipThumbnail={clipThumbnail} />
@@ -55,38 +66,62 @@ export default function Thumbnail({ collectionInfo }: { collectionInfo?: IClipCo
 }
 
 function StateTag({
-  state,
+  exportState,
   exportInfo,
+  uploadState,
+  uploadInfo,
+  emitSetModal,
 }: {
-  state: EClipCollectionExportState | undefined;
+  exportState: EClipCollectionExportState | undefined;
   exportInfo?: IExportInfo;
+  uploadState: EClipCollectionUploadState | undefined;
+  uploadInfo?: IUploadInfo;
+  emitSetModal: (modal: any) => void;
 }) {
-  if (state === EClipCollectionExportState.EXPORTING && !exportInfo) {
+  if (!exportState && !uploadState) {
+    return <DeleteButton emitSetModal={modal => emitSetModal(modal)} />;
+  }
+  if (uploadState && uploadInfo) {
+    switch (uploadState) {
+      case EClipCollectionUploadState.UPLOADING:
+        return ProcessTag(
+          'upload',
+          uploadInfo?.uploadedBytes || 0,
+          uploadInfo?.totalBytes || 0,
+          uploadInfo?.cancelRequested || false,
+        );
+      case EClipCollectionUploadState.QUEUED:
+        return QueuedTag('Posting');
+
+      case EClipCollectionUploadState.ERROR:
+        return (
+          <div className={styles.stateTag}>
+            <i className="icon-close" /> <p style={{ margin: 0 }}>Error</p>
+          </div>
+        );
+      default:
+        return <DeleteButton emitSetModal={modal => emitSetModal(modal)} />;
+    }
+  }
+
+  if (exportState === EClipCollectionExportState.EXPORTING && !exportInfo) {
     return <div className={styles.stateTag}>Something went wrong</div>;
   }
 
-  switch (state) {
+  switch (exportState) {
     case EClipCollectionExportState.EXPORTING:
-      return (
+      if (!exportInfo) {
         <div className={styles.stateTag}>
-          <p style={{ margin: 0 }}>
-            {exportInfo?.cancelRequested ? (
-              <span>{$t('Canceling...')}</span>
-            ) : (
-              <span>{$t('Exporting video...')}</span>
-            )}
-          </p>
-          <p style={{ margin: 0 }}>
-            {Math.round((exportInfo!.currentFrame / exportInfo!.totalFrames) * 100) || 0}%
-          </p>
-        </div>
+          <i className="icon-close" /> <p style={{ margin: 0 }}>Error</p>
+        </div>;
+      }
+      return ProcessTag(
+        'export',
+        exportInfo?.currentFrame || 0,
+        exportInfo?.totalFrames || 0,
+        exportInfo?.cancelRequested || false,
       );
-    case EClipCollectionExportState.EXPORTED:
-      return (
-        <div className={styles.stateTag}>
-          <i className="icon-check" />
-        </div>
-      );
+
     case EClipCollectionExportState.ERROR:
       return (
         <div className={styles.stateTag}>
@@ -94,14 +129,51 @@ function StateTag({
         </div>
       );
     case EClipCollectionExportState.QUEUED:
-      return (
-        <div className={styles.stateTag}>
-          <i className="icon-time" /> <p style={{ margin: 0 }}>Queued </p>
-        </div>
-      );
+      return QueuedTag('Export');
     default:
-      return <div></div>;
+      return <DeleteButton emitSetModal={modal => emitSetModal(modal)} />;
   }
+}
+
+function DeleteButton({ emitSetModal }: { emitSetModal: (modal: any) => void }) {
+  return (
+    <div
+      className={cx(styles.stateTag, styles.deleteTag)}
+      onClick={() => {
+        emitSetModal('delete');
+      }}
+    >
+      <i className="icon-trash" />
+    </div>
+  );
+}
+
+function QueuedTag(string: 'Posting' | 'Export') {
+  return (
+    <div className={styles.stateTag}>
+      <i className="icon-time" /> <p style={{ margin: 0 }}> {string} queued </p>
+    </div>
+  );
+}
+
+function ProcessTag(
+  type: 'upload' | 'export',
+  currentValue: number,
+  totalValue: number,
+  cancelRequested: boolean,
+) {
+  return (
+    <div className={styles.stateTag}>
+      <p style={{ margin: 0 }}>
+        {cancelRequested ? (
+          <span>{$t('Canceling...')}</span>
+        ) : (
+          <span>{type === 'export' ? 'Exporting...' : 'Posting...'}</span>
+        )}
+      </p>
+      <p style={{ margin: 0 }}>{Math.round((currentValue / totalValue) * 100) || 0}%</p>
+    </div>
+  );
 }
 
 function ThumbnailMedia({
@@ -111,6 +183,17 @@ function ThumbnailMedia({
   collectionInfo?: IClipCollection;
   clipThumbnail?: string;
 }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [showControls, setShowControls] = useState(false);
+
+  if (videoRef.current) {
+    if (showControls) {
+      videoRef.current.volume = 1;
+    } else {
+      videoRef.current.volume = 0;
+    }
+  }
+
   if (collectionInfo?.clipCollectionInfo.thumbnailUrl) {
     return (
       <img
@@ -127,10 +210,15 @@ function ThumbnailMedia({
   if (collectionInfo?.collectionExportInfo?.exportedFilePath) {
     return (
       <video
-        controls
+        ref={videoRef}
+        controls={showControls}
         width={'100%'}
         height={'100%'}
         src={collectionInfo?.collectionExportInfo?.exportedFilePath}
+        onMouseEnter={() => !showControls && videoRef.current && videoRef.current.play()}
+        onMouseLeave={() => !showControls && videoRef.current && videoRef.current.pause()}
+        onClick={() => setShowControls(true)}
+        style={{ cursor: showControls ? 'default' : 'pointer' }}
       ></video>
     );
   }
