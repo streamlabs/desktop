@@ -107,11 +107,8 @@ export { MagicLinkService } from 'services/magic-link';
 export { GrowService } from 'services/grow/grow';
 export { GuestCamService } from 'services/guest-cam';
 export { DualOutputService } from 'services/dual-output';
-<<<<<<< HEAD
 export { VisionService } from 'services/vision';
-=======
 export { SseService } from 'services/server-sent-events';
->>>>>>> create-sbs
 
 // WIDGETS
 export { WidgetSource, WidgetsService } from './services/widgets';
