@@ -8,7 +8,7 @@ import { EScaleType, EFPSType, IVideoInfo } from '../../../../obs-api';
 import { $t } from 'services/i18n';
 import styles from './Common.m.less';
 import Tabs from 'components-react/shared/Tabs';
-import { invalidFps, IVideoInfoValue, TDisplayType } from 'services/settings-v2/video';
+import { invalidFps, IVideoInfoValue, TDisplayType, ObsSetting } from 'services/settings-v2/video';
 import { AuthModal } from 'components-react/shared/AuthModal';
 import Utils from 'services/utils';
 import DualOutputToggle from '../../shared/DualOutputToggle';
@@ -389,8 +389,7 @@ class VideoSettingsModule {
   setFPSType(value: EFPSType) {
     this.service.actions.setVideoSetting('fpsType', value, 'horizontal');
     this.service.actions.setVideoSetting('fpsNum', 30, 'horizontal');
-    this.service.actions.setVideoSetting('fpsDen', 1, 'horizontal');
-    this.service.actions.syncFPSSettings();
+    this.service.actions.setVideoSetting('fpsDen', 1, 'horizontal', true);
   }
 
   /**
@@ -402,9 +401,11 @@ class VideoSettingsModule {
   setCommonFPS(value: string) {
     const [fpsNum, fpsDen] = value.split('-');
 
-    this.service.actions.setVideoSetting('fpsNum', Number(fpsNum), 'horizontal');
-    this.service.actions.setVideoSetting('fpsDen', Number(fpsDen), 'horizontal');
-    this.service.actions.syncFPSSettings();
+    const obsSettings: ObsSetting[] = [
+      { key: 'fpsNum', value: Number(fpsNum) },
+      { key: 'fpsDen', value: Number(fpsDen) },
+    ];
+    this.service.actions.setVideoSettings('horizontal', obsSettings);
   }
   /**
    * Sets Integer FPS
@@ -415,9 +416,11 @@ class VideoSettingsModule {
   setIntegerFPS(value: string) {
     this.state.setFpsInt(Number(value));
     if (Number(value) > 0 && Number(value) < 1001) {
-      this.service.actions.setVideoSetting('fpsNum', Number(value), 'horizontal');
-      this.service.actions.setVideoSetting('fpsDen', 1, 'horizontal');
-      this.service.actions.syncFPSSettings();
+      const obsSettings: ObsSetting[] = [
+        { key: 'fpsNum', value: Number(value) },
+        { key: 'fpsDen', value: 1 },
+      ];
+      this.service.actions.setVideoSettings('horizontal', obsSettings);
     }
   }
 
@@ -434,14 +437,13 @@ class VideoSettingsModule {
       this.state.setFpsDen(Number(value));
     }
     if (!invalidFps(this.state.fpsNum, this.state.fpsDen) && Number(value) > 0) {
-      this.service.actions.setVideoSetting(key, Number(value), 'horizontal');
-      this.service.actions.syncFPSSettings();
+      this.service.actions.setVideoSetting(key, Number(value), 'horizontal', true);
     }
   }
 
   onChange(key: keyof IVideoInfo) {
     return (val: IVideoInfoValue) =>
-      this.service.actions.setVideoSetting(key, val, this.state.display);
+      this.service.actions.setVideoSetting(key, val, this.state.display, true);
   }
 
   setDisplay(display: TDisplayType) {
