@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
-import { IViewState, TClip } from 'services/highlighter/models/highlighter.models';
+import { EUploadPlatform, IViewState, TClip } from 'services/highlighter/models/highlighter.models';
 import { TModalStreamCard } from '../../StreamCardModal';
 import { fileExists } from 'services/highlighter/file-utils';
 import { Button } from 'antd';
@@ -85,9 +85,10 @@ function CollectionCta({
   collection: IClipCollection;
   emitSetModal: (modal: TModalStreamCard) => void;
 }) {
+  const platform = EUploadPlatform.YOUTUBE;
   const { HighlighterService } = Services;
-  const state = latestState(collection);
-  const uploadedFileUrl = collection.collectionUploadInfo?.uploadedFileUrl;
+  const state = latestState(collection, platform);
+  const uploadedFileUrl = collection.collectionUploadInfo?.[platform]?.uploadedFileUrl;
 
   function openLink(link: string) {
     remote.shell.openExternal(link);
@@ -136,8 +137,14 @@ function CollectionCta({
   }
 }
 
-function latestState(clipCollectionInfo: IClipCollection): 'exported' | 'posted' | undefined {
-  if (clipCollectionInfo.collectionUploadInfo?.state === EClipCollectionUploadState.UPLOADED) {
+function latestState(
+  clipCollectionInfo: IClipCollection,
+  platform: EUploadPlatform,
+): 'exported' | 'posted' | undefined {
+  if (
+    clipCollectionInfo.collectionUploadInfo?.[platform]?.state ===
+    EClipCollectionUploadState.UPLOADED
+  ) {
     return 'posted';
   }
 

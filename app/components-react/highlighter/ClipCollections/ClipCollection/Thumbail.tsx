@@ -12,7 +12,7 @@ import cx from 'classnames';
 import styles from './ClipCollection.m.less';
 import { IExportInfo } from 'services/highlighter/models/rendering.models';
 import { $t } from 'services/i18n';
-import { IUploadInfo } from 'services/highlighter/models/highlighter.models';
+import { EUploadPlatform, IUploadInfo } from 'services/highlighter/models/highlighter.models';
 
 export default function Thumbnail({
   collectionInfo,
@@ -37,6 +37,8 @@ export default function Thumbnail({
   const clipThumbnail =
     HighlighterService.views.clipsDictionary[firstClip?.clipId || '']?.scrubSprite;
 
+  const collectionUploadInfo = collectionInfo?.collectionUploadInfo?.[EUploadPlatform.YOUTUBE];
+
   return (
     <div
       className={cx(
@@ -55,8 +57,8 @@ export default function Thumbnail({
         <StateTag
           exportState={collectionInfo?.collectionExportInfo?.state}
           exportInfo={collectionInfo?.collectionExportInfo?.exportInfo}
-          uploadState={collectionInfo?.collectionUploadInfo?.state}
-          uploadInfo={collectionInfo?.collectionUploadInfo?.uploadInfo}
+          uploadState={collectionUploadInfo?.state}
+          uploadInfo={collectionUploadInfo?.uploadInfo}
           emitSetModal={emitSetModal}
         />
       )}

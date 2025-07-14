@@ -1,6 +1,11 @@
 import { HighlighterService } from 'app-services';
 import { InitAfter, Inject, Service } from 'services/core';
-import { IHighlightedStream, IUploadInfo, TClip } from './models/highlighter.models';
+import {
+  EUploadPlatform,
+  IHighlightedStream,
+  IUploadInfo,
+  TClip,
+} from './models/highlighter.models';
 import uuid from 'uuid';
 import { EExportStep, IExportInfo } from './models/rendering.models';
 import { Dictionary } from 'lodash';
@@ -51,11 +56,15 @@ export interface ICollectionUploadInfo {
   uploadInfo?: IUploadInfo;
 }
 
+type TCollectionUploadInfoByPlatform = {
+  [platform in EUploadPlatform]?: ICollectionUploadInfo;
+};
+
 export interface IClipCollection {
   id: string;
   clipCollectionInfo: IVideoInfo;
   collectionExportInfo?: ICollectionExportInfo;
-  collectionUploadInfo?: ICollectionUploadInfo;
+  collectionUploadInfo?: TCollectionUploadInfoByPlatform;
   clips?: Dictionary<IClipCollectionClip>;
 }
 export class ClipCollectionManager {
@@ -173,7 +182,12 @@ export class ClipCollectionManager {
     });
   }
 
-  updateCollectionUploadInfo(collectionId: string, uploadIfoPartial: Partial<IUploadInfo>) {
+  // To update ICollectionExportInfo
+  updateCollectionUploadInfo(
+    collectionId: string,
+    platform: EUploadPlatform,
+    updatedPartialCollectionUploadInfo: Partial<ICollectionUploadInfo>,
+  ) {
     const collection = this.highlighterService.views.clipCollectionsDictionary[collectionId];
     if (!collection) {
       console.warn(`Collection ${collectionId} not found`);
@@ -184,9 +198,36 @@ export class ClipCollectionManager {
       id: collectionId,
       collectionUploadInfo: {
         ...collection.collectionUploadInfo,
-        uploadInfo: {
-          ...collection.collectionUploadInfo?.uploadInfo,
-          ...uploadIfoPartial,
+        [platform]: {
+          ...collection.collectionUploadInfo?.[platform],
+          ...updatedPartialCollectionUploadInfo,
+        },
+      },
+    });
+  }
+
+  // To update IUploadInfo
+  updateUploadInfo(
+    collectionId: string,
+    platform: EUploadPlatform,
+    uploadInfoPartial: Partial<IUploadInfo>,
+  ) {
+    const collection = this.highlighterService.views.clipCollectionsDictionary[collectionId];
+    if (!collection) {
+      console.warn(`Collection ${collectionId} not found`);
+      return;
+    }
+
+    this.updateCollection({
+      id: collectionId,
+      collectionUploadInfo: {
+        ...collection.collectionUploadInfo,
+        [platform]: {
+          ...collection.collectionUploadInfo?.[platform],
+          uploadInfo: {
+            ...collection.collectionUploadInfo?.[platform]?.uploadInfo,
+            ...uploadInfoPartial,
+          },
         },
       },
     });
@@ -455,12 +496,11 @@ export class ClipCollectionManager {
   }
 
   async uploadClipCollection(collectionId: string): Promise<void> {
+    const platform = EUploadPlatform.YOUTUBE;
     // Set collectionUploadInfo state to 'uploading'
-    this.updateCollection({
-      id: collectionId,
-      collectionUploadInfo: {
-        state: EClipCollectionUploadState.UPLOADING,
-      },
+
+    this.updateCollectionUploadInfo(collectionId, platform, {
+      state: EClipCollectionUploadState.UPLOADING,
     });
 
     const title: string = `My Video Title ${collectionId}`; // Replace with actual title
@@ -476,42 +516,34 @@ export class ClipCollectionManager {
       undefined,
       collectionId,
     );
-    console.log('uploaded', collectionId);
 
     if (
-      this.highlighterService.views.clipCollectionsDictionary[collectionId].collectionUploadInfo
-        .uploadInfo.error
+      this.highlighterService.views.clipCollectionsDictionary[collectionId].collectionUploadInfo[
+        platform
+      ].uploadInfo.error
     ) {
-      this.updateCollection({
-        id: collectionId,
-        collectionUploadInfo: {
-          state: EClipCollectionUploadState.ERROR,
-        },
+      this.updateCollectionUploadInfo(collectionId, platform, {
+        state: EClipCollectionUploadState.ERROR,
       });
+
       return;
     }
 
-    const platform = EPlatform.YouTube;
     let url = '';
     switch (platform) {
-      case EPlatform.YouTube: {
+      case EUploadPlatform.YOUTUBE: {
         const videoId = this.highlighterService.views.clipCollectionsDictionary[collectionId]
-          .collectionUploadInfo.uploadInfo.videoId;
+          .collectionUploadInfo[platform].uploadInfo.videoId;
         url = `https://youtube.com/watch?v=${videoId}`;
         break;
       }
     }
-    // On success:
-    this.updateCollection({
-      id: collectionId,
-      collectionUploadInfo: {
-        state: EClipCollectionUploadState.UPLOADED,
-        uploadedFileUrl: url,
-        uploadInfo: undefined,
-      },
-    });
 
-    // On error, set state: 'error'
-    // this.updateCollection({ id: collectionId, collectionUploadInfo: { state: 'error' } });
+    // On success:
+    this.updateCollectionUploadInfo(collectionId, platform, {
+      state: EClipCollectionUploadState.UPLOADED,
+      uploadedFileUrl: url,
+      uploadInfo: undefined,
+    });
   }
 }

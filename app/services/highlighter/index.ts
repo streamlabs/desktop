@@ -1397,11 +1397,9 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   }
 
   queueUploadClipCollection(collectionId: string) {
-    this.clipCollectionManager.updateCollection({
-      id: collectionId,
-      collectionUploadInfo: {
-        state: EClipCollectionUploadState.QUEUED,
-      },
+    const platform = EUploadPlatform.YOUTUBE;
+    this.clipCollectionManager.updateCollectionUploadInfo(collectionId, platform, {
+      state: EClipCollectionUploadState.QUEUED,
     });
     this.clipCollectionManager.uploadQueue.push(() =>
       this.clipCollectionManager.uploadClipCollection(collectionId),
@@ -1528,12 +1526,11 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
   setUploadInfo(
     uploadInfo: Partial<IUploadInfo> & { platform: EUploadPlatform },
+    platform: EUploadPlatform,
     collectionId?: string,
   ) {
     if (collectionId) {
-      this.clipCollectionManager.updateCollectionUploadInfo(collectionId, {
-        ...uploadInfo,
-      });
+      this.clipCollectionManager.updateUploadInfo(collectionId, platform, uploadInfo);
       return;
     }
 
@@ -1872,6 +1869,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     streamId: string | undefined,
     collectionId?: string,
   ) {
+    const platform = EUploadPlatform.YOUTUBE;
     const fileToUpload = collectionId
       ? this.views.clipCollectionsDictionary[collectionId].collectionExportInfo.exportedFilePath
       : this.views.exportInfo.file;
@@ -1881,7 +1879,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       : this.views.exportInfo;
 
     const latestUploadInfo = collectionId
-      ? this.views.clipCollectionsDictionary[collectionId].collectionUploadInfo.uploadInfo
+      ? this.views.clipCollectionsDictionary[collectionId].collectionUploadInfo?.[platform]
+          .uploadInfo
       : this.views.uploadInfo;
 
     if (!fileToUpload) {
@@ -1906,11 +1905,12 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
     this.setUploadInfo(
       {
-        platform: EUploadPlatform.YOUTUBE,
+        platform,
         uploading: true,
         cancelRequested: false,
         error: false,
       },
+      platform,
       collectionId,
     );
 
@@ -1923,6 +1923,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           uploadedBytes: progress.uploadedBytes,
           totalBytes: progress.totalBytes,
         },
+        platform,
         collectionId,
       );
     });
@@ -1941,7 +1942,11 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           console.error('Got error uploading YT video', e);
         });
 
-        this.setUploadInfo({ platform: EUploadPlatform.YOUTUBE, error: true }, collectionId);
+        this.setUploadInfo(
+          { platform: EUploadPlatform.YOUTUBE, error: true },
+          platform,
+          collectionId,
+        );
         const game = this.getGameByStreamId(streamId);
         this.usageStatisticsService.recordAnalyticsEvent(
           this.views.useAiHighlighter ? 'AIHighlighter' : 'Highlighter',
@@ -1961,6 +1966,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         cancelRequested: false,
         videoId: result ? result.id : null,
       },
+      platform,
       collectionId,
     );
 
