@@ -34,6 +34,7 @@ import { HardwareService, DefaultHardwareService } from 'services/hardware';
 import { AudioService, E_AUDIO_CHANNELS } from '../audio';
 import { ReplayManager } from './properties-managers/replay-manager';
 import { IconLibraryManager } from './properties-managers/icon-library-manager';
+import { SmartBrowserSourceManager } from './properties-managers/smart-browser-source-manager';
 import { assertIsDefined } from 'util/properties-type-guards';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import { SourceFiltersService } from 'services/source-filters';
@@ -58,6 +59,7 @@ export const PROPERTIES_MANAGER_TYPES = {
   platformApp: PlatformAppManager,
   replay: ReplayManager,
   iconLibrary: IconLibraryManager,
+  smartBrowserSource: SmartBrowserSourceManager
 };
 
 interface IObsSourceCallbackInfo {
@@ -95,6 +97,7 @@ export const windowsSources: TSourceType[] = [
   'mediasoupconnector',
   'wasapi_process_output_capture',
   'spout_capture',
+  'smart_browser_source',
 ];
 
 /**
@@ -317,12 +320,17 @@ export class SourcesService extends StatefulService<ISourcesState> {
 
     // This call to obs to create the input must be caught, otherwise it causes an app crash
     try {
-      const obsInput = obs.InputFactory.create(type, id, obsInputSettings);
+      const computedType = obsInputSettings.__remappedType || type;
+      const obsInput = obs.InputFactory.create(computedType, id, obsInputSettings);
 
       // For Guest Cam, we default sources to monitor so the streamer can hear guests
       if (type === 'mediasoupconnector' && !options.audioSettings?.monitoringType) {
         options.audioSettings ??= {};
         options.audioSettings.monitoringType = EMonitoringType.MonitoringOnly;
+      }
+
+      if (type === 'smart_browser_source') {
+        options.propertiesManager = 'smartBrowserSource';
       }
 
       this.addSource(obsInput, name, options);
@@ -420,7 +428,6 @@ export class SourcesService extends StatefulService<ISourcesState> {
     } else if (type === 'spout_capture') {
       this.usageStatisticsService.recordFeatureUsage('SpoutCapture');
     }
-
     const managerKlass = PROPERTIES_MANAGER_TYPES[managerType];
     this.propertiesManagers[id] = {
       manager: new managerKlass(obsInput, options.propertiesManagerSettings || {}, id),
@@ -465,6 +472,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
     if (type === 'mediasoupconnector' && options.guestCamStreamId) {
       this.guestCamService.setGuestSource(options.guestCamStreamId, id);
     }
+
   }
 
   removeSource(id: string) {
@@ -565,6 +573,15 @@ export class SourcesService extends StatefulService<ISourcesState> {
       }
     }
 
+    if (type === 'smart_browser_source') {
+      resolvedSettings.__remappedType = 'browser_source';
+      resolvedSettings.webpage_control_level = 5;
+      resolvedSettings.propertiesManager = 'smart_browser_source';
+      resolvedSettings.url = '';
+      resolvedSettings.width = 1280;
+      resolvedSettings.height = 720;
+    }
+
     if (type === 'text_gdiplus' && resolvedSettings.text === void 0) {
       resolvedSettings.text = name;
     }
@@ -627,6 +644,10 @@ export class SourcesService extends StatefulService<ISourcesState> {
     );
     // 'scene' is not an obs input type so we have to set it manually
     availableAllowlistedTypes.push({ description: 'Scene', value: 'scene' });
+    availableAllowlistedTypes.push({
+      description: 'Smart Browser Source',
+      value: 'smart_browser_source',
+    });
 
     return availableAllowlistedTypes;
   }

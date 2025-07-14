@@ -19,6 +19,7 @@ import { byOS, OS, getOS } from 'util/operating-systems';
 import { GameCaptureNode } from './game-capture';
 import { Node } from '../node';
 import { TDisplayType } from 'services/settings-v2';
+import { SmartBrowserNode } from './smartBrowserSource';
 
 type TContent =
   | ImageNode
@@ -29,7 +30,8 @@ type TContent =
   | WidgetNode
   | SceneSourceNode
   | GameCaptureNode
-  | IconLibraryNode;
+  | IconLibraryNode
+  | SmartBrowserNode;
 
 interface IFilterInfo {
   name: string;
@@ -131,6 +133,11 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
     }
 
     const manager = sceneNode.source.getPropertiesManagerType();
+    if (manager === 'smartBrowserSource') {
+      const content = new SmartBrowserNode();
+      await content.save({ sceneItem: sceneNode, assetsPath: context.assetsPath });
+      return { ...details, content } as IItemSchema;
+    }
 
     if (manager === 'streamlabels') {
       const content = new StreamlabelNode();
@@ -337,6 +344,13 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
       // the users current base resolution
       obj.scaleX *= obj.content.data.width / this.videoSettingsService.baseWidth;
       obj.scaleY *= obj.content.data.height / this.videoSettingsService.baseHeight;
+    } else if (obj.content instanceof SmartBrowserNode) {
+      sceneItem = context.scene.createAndAddSource(
+        obj.name,
+        'browser_source',
+        {},
+        { id, select: false, sourceAddOptions: { propertiesManager: 'smartBrowserSource' }, display },
+      );
     }
 
     this.adjustTransform(sceneItem, obj);
