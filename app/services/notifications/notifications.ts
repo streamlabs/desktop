@@ -30,8 +30,9 @@ class NotificationsViews extends ViewHandler<INotificationsState> {
   }
 
   getAll(type?: ENotificationType): INotification[] {
+    if (!type) return this.state.notifications;
     return this.state.notifications.filter(notify => {
-      return !type || notify.type === type;
+      return notify.type === type;
     });
   }
 
@@ -103,6 +104,10 @@ export class NotificationsService
   }
 
   push(notifyInfo: INotificationOptions): INotification {
+    if (notifyInfo.singleton) {
+      const existingNotif = this.views.getAll().find(notif => notif.message === notifyInfo.message);
+      if (existingNotif) return;
+    }
     const notify = {
       id: this.nextId++,
       unread: true,
