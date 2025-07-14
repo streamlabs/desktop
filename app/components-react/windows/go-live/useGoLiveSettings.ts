@@ -44,7 +44,6 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
     }
 
     const newSettings = { ...this.state, ...patch };
-    console.log('newSettings', JSON.stringify(newSettings, null, 2));
 
     // we should re-calculate common fields before applying new settings
     const platforms = this.getViewFromState(newSettings).applyCommonFields(newSettings.platforms);

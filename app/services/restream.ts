@@ -364,11 +364,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
         target => target.mode && modesToRestream.includes(target.mode),
       );
 
-      console.log('filteredTargets', filteredTargets);
-
       await this.createTargets(filteredTargets);
     } else {
-      console.log('newTargets', newTargets);
       // in single output mode, create all targets
       await this.createTargets(newTargets);
     }
