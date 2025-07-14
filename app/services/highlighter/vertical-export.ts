@@ -127,7 +127,7 @@ function getWebcamComplexFilterForFfmpeg(
     [base][blur]overlay=x=0:y=0[blur_base];
     [blur_base][webcam_final]overlay=x='(${outputResolution.width}-overlay_w)/2':y='(${oneThirdHeight}-overlay_h)/2'[base_webcam];
     [base_webcam][vid_cropped]overlay=x=0:y=${oneThirdHeight}[filtered_part];
-    [part2]crop=w=ih*9/16:h=ih:x=(in_w-ih*9/16)/2:y=0,scale=${outputResolution.width}:${outputResolution.height},setsar=1[splashscreen];
+    [part2]crop=ih*${outputResolution.width}/${outputResolution.height}:ih,scale=${outputResolution.width}:-1:force_original_aspect_ratio=increase[splashscreen];
     [filtered_part][splashscreen]concat=n=2:v=1:a=0[final];
     `;
 }
