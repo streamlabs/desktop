@@ -363,7 +363,16 @@ export class ClipCollectionManager {
       },
     });
 
-    await this.highlighterService.actions.return.export(false, clips, collectionId, undefined);
+    const orientation = this.highlighterService.views.clipCollectionsDictionary[collectionId]
+      .clipCollectionInfo.aspectRatio;
+
+    await this.highlighterService.actions.return.export(
+      false,
+      clips,
+      collectionId,
+      undefined,
+      orientation,
+    );
     if (
       this.highlighterService.views.clipCollectionsDictionary[collectionId].collectionExportInfo
         .exportInfo.error
