@@ -107,6 +107,7 @@ export { MagicLinkService } from 'services/magic-link';
 export { GrowService } from 'services/grow/grow';
 export { GuestCamService } from 'services/guest-cam';
 export { DualOutputService } from 'services/dual-output';
+export { VisionService } from 'services/vision';
 
 // WIDGETS
 export { WidgetSource, WidgetsService } from './services/widgets';

@@ -11,6 +11,7 @@ export enum EApiPermissions {
   ExternalLinks = 'slobs.external-links',
   Notifications = 'slobs.notifications',
   Hotkeys = 'slobs.hotkeys',
+  Vision = 'sld.vision',
 }
 
 /**
