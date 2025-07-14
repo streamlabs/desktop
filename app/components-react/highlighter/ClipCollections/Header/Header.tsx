@@ -60,7 +60,13 @@ export default function Header({
           emitSetView({ view: EHighlighterView.CLIPS, id: streamInfo.id });
         }}
       >
-        <img src={gameConfig?.thumbnail} width="22" height="22" alt="Game thumbnail" />
+        <img
+          style={{ borderRadius: 2 }}
+          src={gameConfig?.thumbnail}
+          width="22"
+          height="22"
+          alt="Game thumbnail"
+        />
         <h2 className={styles.streamcardTitle}>{streamInfo.title}</h2>
         <h3 style={{ margin: 0, opacity: 0.6 }}>
           {streamInfo.state.type === EAiDetectionState.FINISHED && (
