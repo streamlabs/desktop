@@ -441,7 +441,7 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
   }
 
   /**
-   * Set Video Settings
+   * Set Video Settings. Behind the scenes, it will automatically sync fps settings.
    * @remark V2 api. This also updates the video settings in the V1 api.
    * @param display - name of context (aka display) to apply setting to. Default is horizontal.
    * @param settings - collection of key/value pairs. Each pair is a video setting and its' value.
@@ -451,7 +451,7 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
       const setting: ObsSetting = settings[i];
       this.SET_VIDEO_SETTING(setting.key, setting.value, display);
       if (i === settings.length - 1) {
-        // On the last setting, pass in the sync fps parameter.
+        // Only invoke this once (backend only needs to be notified of this once). Also, sync fps settings.
         this.updateObsSettings(display, true);
       }
       // also update the persisted settings
