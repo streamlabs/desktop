@@ -387,9 +387,12 @@ class VideoSettingsModule {
    * Otherwise, update the vertical display persisted settings.
    */
   setFPSType(value: EFPSType) {
-    this.service.actions.setVideoSetting('fpsType', value, 'horizontal');
-    this.service.actions.setVideoSetting('fpsNum', 30, 'horizontal');
-    this.service.actions.setVideoSetting('fpsDen', 1, 'horizontal', true);
+    const obsSettings: ObsSetting[] = [
+      { key: 'fpsType', value: value },
+      { key: 'fpsNum', value: 30 },
+      { key: 'fpsDen', value: 1 },
+    ];
+    this.service.actions.setVideoSettings('horizontal', obsSettings);
   }
 
   /**
