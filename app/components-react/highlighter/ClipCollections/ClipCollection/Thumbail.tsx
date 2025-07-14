@@ -1,5 +1,5 @@
 import { Services } from 'components-react/service-provider';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   EClipCollectionExportState,
   EClipCollectionUploadState,
@@ -186,6 +186,12 @@ function ThumbnailMedia({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [showControls, setShowControls] = useState(false);
 
+  useEffect(() => {
+    if (!videoRef.current) return;
+    if (!showControls) return;
+    videoRef.current?.play();
+  }, [showControls]);
+
   if (videoRef.current) {
     if (showControls) {
       videoRef.current.volume = 1;
@@ -217,7 +223,9 @@ function ThumbnailMedia({
         src={collectionInfo?.collectionExportInfo?.exportedFilePath}
         onMouseEnter={() => !showControls && videoRef.current && videoRef.current.play()}
         onMouseLeave={() => !showControls && videoRef.current && videoRef.current.pause()}
-        onClick={() => setShowControls(true)}
+        onClick={() => {
+          setShowControls(true);
+        }}
         style={{ cursor: showControls ? 'default' : 'pointer' }}
       ></video>
     );
