@@ -443,7 +443,7 @@ class VideoSettingsModule {
 
   onChange(key: keyof IVideoInfo) {
     return (val: IVideoInfoValue) =>
-      this.service.actions.setVideoSetting(key, val, this.state.display, true);
+      this.service.actions.setVideoSetting(key, val, this.state.display);
   }
 
   setDisplay(display: TDisplayType) {
