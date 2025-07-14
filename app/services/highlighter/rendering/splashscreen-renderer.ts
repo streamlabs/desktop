@@ -1,8 +1,12 @@
+import { TFPS } from '../models/rendering.models';
+import { FrameSource } from './frame-source';
+
 export class SplashScreenRenderer {
   private canvas = document.createElement('canvas');
   private ctx = this.canvas.getContext('2d')!;
   private avatarImage: HTMLImageElement | null = null;
   private waterMarkImage: HTMLImageElement | null = null;
+  private backgroundFrameSource: FrameSource | null = null;
 
   constructor(
     private readonly options: {
@@ -11,6 +15,11 @@ export class SplashScreenRenderer {
       avatarUrl: string;
       profileLink: string;
       isVertical?: boolean;
+      backgroundVideo?: {
+        path: string;
+        duration: number;
+        fps: number;
+      };
     },
   ) {
     // Final output canvas (target resolution)
@@ -20,13 +29,35 @@ export class SplashScreenRenderer {
     // preload fonts
     this.ctx.font = '36px "Luckiest Guy"';
     this.ctx.fillText('outro', this.canvas.width / 2, this.canvas.height / 2);
+
+    // create background video frame source if it was requested
+    if (this.options.backgroundVideo) {
+      this.backgroundFrameSource = new FrameSource(
+        this.options.backgroundVideo.path,
+        this.options.backgroundVideo.duration,
+        0,
+        0,
+        {
+          width: this.options.width,
+          height: this.options.height,
+          fps: this.options.backgroundVideo.fps as TFPS,
+          preset: 'fast',
+        },
+      );
+    }
   }
 
   async renderFrame(progress: number): Promise<void> {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    if (this.backgroundFrameSource) {
+      await this.renderBackgroundFromVideo();
+    } else {
+      // if background video is not provided, fill with black
+      ctx.fillStyle = 'black';
+      ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
 
     // load resources if not already loaded
     if (!this.waterMarkImage) {
@@ -98,6 +129,24 @@ export class SplashScreenRenderer {
 
   getFrame(): Buffer {
     return Buffer.from(this.ctx.getImageData(0, 0, this.options.width, this.options.height).data);
+  }
+
+  dispose(): void {
+    if (this.backgroundFrameSource) {
+      this.backgroundFrameSource.end();
+    }
+  }
+
+  private async renderBackgroundFromVideo(): Promise<void> {
+    const success = await this.backgroundFrameSource.readNextFrame();
+    if (success) {
+      const backgroundImageData = new ImageData(
+        new Uint8ClampedArray(this.backgroundFrameSource.readBuffer),
+        this.options.width,
+        this.options.height,
+      );
+      this.ctx.putImageData(backgroundImageData, 0, 0);
+    }
   }
 
   private async loadImage(url: string): Promise<HTMLImageElement> {

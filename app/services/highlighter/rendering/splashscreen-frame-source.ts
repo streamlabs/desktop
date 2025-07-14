@@ -22,12 +22,18 @@ export class SplashScreenFrameSource extends FrameSource {
       avatarUrl: settings.avatarUrl,
       profileLink: settings.profileLink,
       isVertical: options.complexFilter?.length > 0,
+      backgroundVideo: {
+        path:
+          'https://cdn.streamlabs.com/marketplace/overlays/41191599/31b3867/media/3caa28a5-d627-4ade-8082-0f2e1ef4a934.mp4',
+        duration: 3,
+        fps: options.fps,
+      },
     });
   }
 
   readNextFrame(): Promise<boolean> {
     return new Promise(async (resolve, reject) => {
-      this.splashScreenRenderer.renderFrame(this.currentFrame / this.nFrames);
+      await this.splashScreenRenderer.renderFrame(this.currentFrame / this.nFrames);
       this.currentFrame++;
 
       if (this.currentFrame >= this.nFrames) {
@@ -38,5 +44,9 @@ export class SplashScreenFrameSource extends FrameSource {
         resolve(true);
       }
     });
+  }
+
+  end() {
+    this.splashScreenRenderer?.dispose();
   }
 }
