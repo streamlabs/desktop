@@ -8,6 +8,7 @@ import path from 'path';
 import * as remote from '@electron/remote';
 import { TPrivacyStatus } from 'services/platforms/youtube/uploader';
 import { EOrientation } from './models/ai-highlighter.models';
+import { EPlatform } from 'services/platforms';
 
 interface IVideoInfo {
   aspectRatio: EOrientation;
@@ -490,12 +491,22 @@ export class ClipCollectionManager {
       return;
     }
 
+    const platform = EPlatform.YouTube;
+    let url = '';
+    switch (platform) {
+      case EPlatform.YouTube: {
+        const videoId = this.highlighterService.views.clipCollectionsDictionary[collectionId]
+          .collectionUploadInfo.uploadInfo.videoId;
+        url = `https://youtube.com/watch?v=${videoId}`;
+        break;
+      }
+    }
     // On success:
     this.updateCollection({
       id: collectionId,
       collectionUploadInfo: {
         state: EClipCollectionUploadState.UPLOADED,
-        uploadedFileUrl: 'https://example.com/video.mp4', // Replace with real URL
+        uploadedFileUrl: url,
         uploadInfo: undefined,
       },
     });
