@@ -1017,6 +1017,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
         if (
           s?.type === 'Single Output' &&
           platforms.includes('tiktok') &&
+          s?.error &&
           s?.error.split(' ').at(-1) === '422'
         ) {
           this.logProblem(

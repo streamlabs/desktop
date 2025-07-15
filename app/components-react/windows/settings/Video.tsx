@@ -12,6 +12,7 @@ import { invalidFps, IVideoInfoValue, TDisplayType } from 'services/settings-v2/
 import { AuthModal } from 'components-react/shared/AuthModal';
 import Utils from 'services/utils';
 import DualOutputToggle from '../../shared/DualOutputToggle';
+import { ObsGenericSettingsForm } from './ObsSettings';
 
 const CANVAS_RES_OPTIONS = [
   { label: '1920x1080', value: '1920x1080' },
