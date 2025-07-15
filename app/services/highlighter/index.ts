@@ -1870,6 +1870,12 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     collectionId?: string,
   ) {
     const platform = EUploadPlatform.YOUTUBE;
+
+    const isExported = collectionId
+      ? this.views.clipCollectionsDictionary[collectionId].collectionExportInfo.state ===
+        EClipCollectionExportState.EXPORTED
+      : this.views.exportInfo.exported;
+
     const fileToUpload = collectionId
       ? this.views.clipCollectionsDictionary[collectionId].collectionExportInfo.exportedFilePath
       : this.views.exportInfo.file;
@@ -1895,8 +1901,12 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       throw new Error('Cannot upload without YT linked');
     }
 
-    if (latestExportInfo && !latestExportInfo.exported) {
-      throw new Error('Cannot upload when export is not complete');
+    if (!isExported) {
+      throw new Error(
+        `Cannot upload when export is not complete. StreamId: ${streamId}, CollectionId: ${collectionId}, exportInfo: ${JSON.stringify(
+          latestExportInfo,
+        )}`,
+      );
     }
 
     if (this.views.uploadInfo.some(u => u.uploading)) {

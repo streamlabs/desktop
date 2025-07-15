@@ -532,9 +532,12 @@ export class ClipCollectionManager {
       state: EClipCollectionUploadState.UPLOADING,
     });
 
-    const title: string = `My Video Title ${collectionId}`; // Replace with actual title
-    const description: string = 'My Video Description'; // Replace with actual description
-    const privacy: string = 'public'; // Replace with actual privacy status
+    const title: string =
+      this.highlighterService.views.clipCollectionsDictionary[collectionId].clipCollectionInfo
+        .title || 'My Video Title';
+
+    const description: string = 'My Video Description';
+    const privacy: string = 'public';
 
     await this.highlighterService.actions.return.uploadYoutube(
       {
