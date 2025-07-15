@@ -1,5 +1,8 @@
 // @ts-check
 
+const fs = require('fs');
+const path = require('path');
+
 /** @type {import('electron-builder').Configuration} */
 const config = {
   appId: 'jp.nicovideo.nair',
@@ -18,6 +21,18 @@ const config = {
   ],
   extraFiles: ['scene-presets', 'nvoice', 'LICENSE', 'AGREEMENT.sjis'],
   detectUpdateChannel: false,
+  afterPack: async context => {
+    const localesDir = path.join(context.appOutDir, 'locales');
+    if (fs.existsSync(localesDir)) {
+      const files = fs.readdirSync(localesDir);
+      files.forEach(file => {
+        if (file !== 'en-US.pak' && file !== 'ja.pak') {
+          fs.unlinkSync(path.join(localesDir, file));
+        }
+      });
+      console.log('remove unnecessary locales files');
+    }
+  },
   publish: {
     provider: 'generic',
     useMultipleRangeRequest: false,
