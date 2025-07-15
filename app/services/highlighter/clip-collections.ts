@@ -163,6 +163,28 @@ export class ClipCollectionManager {
     this.highlighterService.UPDATE_CLIPS_COLLECTION(collectionUpdate);
   }
 
+  updateCollectionInfo(collectionId: string, exportInfoPartial: Partial<IVideoInfo>) {
+    const collection = this.highlighterService.views.clipCollectionsDictionary[collectionId];
+    if (!collection) {
+      console.warn(`Collection ${collectionId} not found`);
+      return;
+    }
+
+    this.updateCollection({
+      id: collectionId,
+      clipCollectionInfo: {
+        ...collection.clipCollectionInfo,
+        ...exportInfoPartial,
+      },
+      collectionExportInfo: {
+        ...collection.collectionExportInfo,
+        exportInfo: {
+          ...collection.collectionExportInfo?.exportInfo,
+        },
+      },
+    });
+  }
+
   updateCollectionExportInfo(collectionId: string, exportInfoPartial: Partial<IExportInfo>) {
     const collection = this.highlighterService.views.clipCollectionsDictionary[collectionId];
     if (!collection) {
@@ -408,6 +430,13 @@ export class ClipCollectionManager {
           fps: this.highlighterService.views.exportInfo.fps,
           resolution: this.highlighterService.views.exportInfo.resolution,
           preset: this.highlighterService.views.exportInfo.preset,
+        },
+      },
+      collectionUploadInfo: {
+        [EUploadPlatform.YOUTUBE]: {
+          state: null,
+          uploadedFileUrl: undefined,
+          uploadInfo: undefined,
         },
       },
     });

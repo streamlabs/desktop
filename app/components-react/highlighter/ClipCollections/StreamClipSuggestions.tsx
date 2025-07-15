@@ -74,7 +74,7 @@ function DetectionInProgress({ streamInfo }: { streamInfo: IHighlightedStream })
         width: '100%',
       }}
     >
-      state: {streamInfo.state.type}
+      placeholder coming soon state: {streamInfo.state.type}
       progress: {streamInfo.state.progress}
     </div>
   );

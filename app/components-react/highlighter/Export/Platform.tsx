@@ -35,6 +35,8 @@ export default function PlatformSelect({
   const [platform, setPlatform] = useState(() => (isYoutubeLinked ? 'youtube' : 'crossclip'));
   const clipsAmount = getClips(streamId).length;
   const clipsDuration = formatSecondsToHMS(getDuration(streamId));
+  const filePath = exportInfo.file;
+
   async function handlePlatformSelect(val: string) {
     if (platform === 'youtube') await clearUpload();
     setPlatform(val);
@@ -51,7 +53,14 @@ export default function PlatformSelect({
     {
       key: '1',
       label: 'Youtube',
-      children: <YoutubeUpload defaultTitle={videoName} close={onClose} streamId={streamId} />,
+      children: (
+        <YoutubeUpload
+          defaultTitle={videoName}
+          close={onClose}
+          streamId={streamId}
+          collectionId={undefined}
+        />
+      ),
     },
   ];
 
@@ -79,7 +88,7 @@ export default function PlatformSelect({
       </div>
       <div className={styles.publishWrapper}>
         <div className={styles.videoWrapper}>
-          <VideoPreview />
+          <VideoPreview path={filePath} />
         </div>
         <div
           style={{

@@ -18,6 +18,7 @@ export default function ActionBar({
   emitShowStreamClips,
   emitSetView,
   emitFeedbackForm,
+  emitPostVideo,
 }: {
   stream: IHighlightedStream;
   clips: TClip[];
@@ -25,6 +26,7 @@ export default function ActionBar({
   emitShowStreamClips: () => void;
   emitSetView: (data: IViewState) => void;
   emitFeedbackForm: (clipsLength: number) => void;
+  emitPostVideo: () => void;
 }): JSX.Element {
   const { UsageStatisticsService, HighlighterService } = Services;
   const [thumbsDownVisible, setThumbsDownVisible] = useState(!stream?.feedbackLeft);
@@ -136,19 +138,20 @@ export default function ActionBar({
         <Button
           size="large"
           onClick={() => {
-            const clipCollectionIds = HighlighterService.clipCollectionManager
-              .getClipCollectionsByStreamId(stream.id)
-              ?.filter(
-                collectionId =>
-                  HighlighterService.views.clipCollectionsDictionary[collectionId]
-                    .collectionExportInfo?.exportedFilePath !== undefined,
-              );
+            emitPostVideo();
+            // const clipCollectionIds = HighlighterService.clipCollectionManager
+            //   .getClipCollectionsByStreamId(stream.id)
+            //   ?.filter(
+            //     collectionId =>
+            //       HighlighterService.views.clipCollectionsDictionary[collectionId]
+            //         .collectionExportInfo?.exportedFilePath !== undefined,
+            //   );
 
-            if (clipCollectionIds) {
-              clipCollectionIds.forEach(collectionId => {
-                HighlighterService.actions.queueUploadClipCollection(collectionId);
-              });
-            }
+            // if (clipCollectionIds) {
+            //   clipCollectionIds.forEach(collectionId => {
+            //     HighlighterService.actions.queueUploadClipCollection(collectionId);
+            //   });
+            // }
           }}
         >
           post all exported clips

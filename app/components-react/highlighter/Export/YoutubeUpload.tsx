@@ -18,6 +18,7 @@ export default function YoutubeUpload(props: {
   defaultTitle: string;
   close: () => void;
   streamId: string | undefined;
+  collectionId: string | undefined;
 }) {
   const [title, setTitle] = useState(props.defaultTitle);
   const streamId = props.streamId;
@@ -26,22 +27,43 @@ export default function YoutubeUpload(props: {
   const [isOpen, setIsOpen] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
   const { UserService, HighlighterService, NavigationService, UsageStatisticsService } = Services;
+
+  const uploadInfo = props.collectionId
+    ? HighlighterService.views.clipCollectionsDictionary[props.collectionId].collectionUploadInfo?.[
+        EUploadPlatform.YOUTUBE
+      ]?.uploadInfo
+    : HighlighterService.views.uploadInfo.find(info => info.platform === EUploadPlatform.YOUTUBE);
+
+  const fileToUpload = props.collectionId
+    ? HighlighterService.views.clipCollectionsDictionary[props.collectionId].collectionExportInfo
+        ?.exportedFilePath
+    : HighlighterService.views.exportInfo.file;
+
   const v = useVuex(() => ({
     youtubeLinked: !!UserService.state.auth?.platforms.youtube,
-    youTubeUploadInfo: HighlighterService.getUploadInfo(
-      HighlighterService.views.uploadInfo,
-      EUploadPlatform.YOUTUBE,
-    ),
-    exportInfo: HighlighterService.views.exportInfo,
-    otherUploadInProgress: HighlighterService.views.uploadInfo
-      .filter(info => info.platform !== EUploadPlatform.YOUTUBE)
-      .some(info => info.uploading),
+    youTubeUploadInfo: uploadInfo,
+    otherUploadInProgress: false,
+    // uploadInfo
+    //   .filter(info => info.platform !== EUploadPlatform.YOUTUBE)
+    //   .some(info => info.uploading),
   }));
 
   // Clear all errors when this component unmounts
   useEffect(() => {
     return () => HighlighterService.actions.dismissError();
   }, []);
+
+  useEffect(() => {
+    if (!props.collectionId) return;
+    const handler = setTimeout(() => {
+      HighlighterService.clipCollectionManager.updateCollectionInfo(props.collectionId!, {
+        title,
+        description,
+      });
+    }, 400);
+
+    return () => clearTimeout(handler);
+  }, [title, description]);
 
   const options = [
     {
@@ -62,118 +84,143 @@ export default function YoutubeUpload(props: {
   ];
 
   function getYoutubeForm() {
+    if (!fileToUpload) {
+      return (
+        <Alert message={'please re-export this video'} type="error" style={{ marginBottom: 8 }} />
+      );
+    }
+
     return (
       <div>
         <div
           style={{
             display: 'flex',
             flexDirection: 'row',
+            gap: 16,
           }}
         >
-          {v.youtubeLinked && (
-            <div style={{ flexGrow: 1 }}>
-              <Form layout="vertical">
-                <TextInput label={$t('Title')} value={title} onChange={setTitle} />
-                <TextAreaInput
-                  label={$t('Description')}
-                  value={description}
-                  onChange={setDescription}
-                />
-
-                <div style={{ marginBottom: '8px' }}> {$t('Privacy Status')}</div>
-                <Dropdown
-                  overlay={
-                    <div className={styles.innerItemWrapper}>
-                      {options.map(option => {
-                        return (
-                          <div
-                            className={`${styles.innerDropdownItem} ${
-                              option.value === privacy ? styles.active : ''
-                            }`}
-                            onClick={() => {
-                              setPrivacy(option.value);
-                              setIsOpen(false);
-                            }}
-                            key={option.label}
-                          >
-                            <div className={styles.dropdownText}>
-                              {option.label} <p>{option.description}</p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  }
-                  trigger={['click']}
-                  visible={isOpen}
-                  onVisibleChange={setIsOpen}
-                  placement="bottomLeft"
-                >
-                  <div className={styles.innerDropdownWrapper} onClick={() => setIsOpen(!isOpen)}>
-                    <div className={styles.dropdownText}>
-                      {options.find(option => option.value === privacy)?.label}
-                    </div>
-                    <i className="icon-down"></i>
-                  </div>
-                </Dropdown>
-              </Form>
-            </div>
-          )}
-          {!v.youtubeLinked && (
-            <div style={{ flexGrow: 1 }}>
-              <div>
-                {$t('Please connect your YouTube account to upload your video to YouTube.')}
-              </div>
-              <button
-                style={{ marginTop: 8 }}
-                className="button button--youtube"
-                onClick={() =>
-                  NavigationService.actions.navigate('PlatformMerge', {
-                    platform: 'youtube',
-                    highlighter: true,
-                  })
-                }
-              >
-                {$t('Connect')}
-              </button>
-            </div>
-          )}
-        </div>
-        {v.youTubeUploadInfo?.error && (
-          <Alert
-            style={{ marginBottom: 8, marginTop: 8 }}
-            message={$t('An error occurred while uploading to YouTube')}
-            type="error"
-            closable
-            showIcon
-            afterClose={() => HighlighterService.actions.dismissError()}
-          />
-        )}
-        {v.youtubeLinked && (
-          <Button
-            type="primary"
-            size="large"
+          <div className={styles.videoWrapper}>
+            <VideoPreview path={fileToUpload!} />
+          </div>
+          <div
             style={{
-              width: '100%',
-              marginTop: '16px',
-              pointerEvents: v.otherUploadInProgress ? 'none' : 'auto',
-              opacity: v.otherUploadInProgress ? '0.6' : '1',
-            }}
-            onClick={() => {
-              UsageStatisticsService.actions.recordFeatureUsage('HighlighterUpload');
-              HighlighterService.actions.uploadYoutube(
-                {
-                  title,
-                  description,
-                  privacyStatus: privacy as TPrivacyStatus,
-                },
-                streamId,
-              );
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+              flexGrow: 1,
             }}
           >
-            {$t('Publish')}
-          </Button>
-        )}
+            {v.youtubeLinked && (
+              <div style={{ flexGrow: 1 }}>
+                <Form layout="vertical">
+                  <TextInput label={$t('Title')} value={title} onChange={setTitle} />
+                  <TextAreaInput
+                    label={$t('Description')}
+                    value={description}
+                    onChange={setDescription}
+                  />
+
+                  <div style={{ marginBottom: '8px' }}> {$t('Privacy Status')}</div>
+                  <Dropdown
+                    overlay={
+                      <div className={styles.innerItemWrapper}>
+                        {options.map(option => {
+                          return (
+                            <div
+                              className={`${styles.innerDropdownItem} ${
+                                option.value === privacy ? styles.active : ''
+                              }`}
+                              onClick={() => {
+                                setPrivacy(option.value);
+                                setIsOpen(false);
+                              }}
+                              key={option.label}
+                            >
+                              <div className={styles.dropdownText}>
+                                {option.label} <p>{option.description}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    }
+                    trigger={['click']}
+                    visible={isOpen}
+                    onVisibleChange={setIsOpen}
+                    placement="bottomLeft"
+                  >
+                    <div className={styles.innerDropdownWrapper} onClick={() => setIsOpen(!isOpen)}>
+                      <div className={styles.dropdownText}>
+                        {options.find(option => option.value === privacy)?.label}
+                      </div>
+                      <i className="icon-down"></i>
+                    </div>
+                  </Dropdown>
+                </Form>
+              </div>
+            )}{' '}
+            {!v.youtubeLinked && (
+              <div style={{ flexGrow: 1 }}>
+                <div>
+                  {$t('Please connect your YouTube account to upload your video to YouTube.')}
+                </div>
+                <button
+                  style={{ marginTop: 8 }}
+                  className="button button--youtube"
+                  onClick={() =>
+                    NavigationService.actions.navigate('PlatformMerge', {
+                      platform: 'youtube',
+                      highlighter: true,
+                    })
+                  }
+                >
+                  {$t('Connect')}
+                </button>
+              </div>
+            )}
+            {v.youTubeUploadInfo?.error && (
+              <Alert
+                style={{ marginBottom: 8, marginTop: 8 }}
+                message={$t('An error occurred while uploading to YouTube')}
+                type="error"
+                closable
+                showIcon
+                afterClose={() => HighlighterService.actions.dismissError()}
+              />
+            )}{' '}
+            {v.youtubeLinked && (
+              <Button
+                type={props.collectionId ? 'default' : 'primary'}
+                size="large"
+                style={{
+                  width: '100%',
+                  marginTop: '16px',
+                  pointerEvents: v.otherUploadInProgress ? 'none' : 'auto',
+                  opacity: v.otherUploadInProgress ? '0.6' : '1',
+                }}
+                onClick={() => {
+                  UsageStatisticsService.actions.recordFeatureUsage('HighlighterUpload');
+
+                  if (props.collectionId) {
+                    HighlighterService.actions.queueUploadClipCollection(props.collectionId);
+                    return;
+                  }
+
+                  HighlighterService.actions.uploadYoutube(
+                    {
+                      title,
+                      description,
+                      privacyStatus: privacy as TPrivacyStatus,
+                    },
+                    streamId,
+                  );
+                }}
+              >
+                {$t('Publish')}
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
     );
   }

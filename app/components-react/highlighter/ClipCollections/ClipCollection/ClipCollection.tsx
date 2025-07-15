@@ -52,7 +52,7 @@ export default function ClipCollection(props: ClipCollectionProps) {
 
   return (
     <div className={styles.card}>
-      <div style={{ overflow: 'hidden', height: '264px', width: '100%' }}>
+      <div style={{ width: '100%' }}>
         <Thumbnail
           collectionInfo={v.clipCollection}
           emitSetModal={modal => {
@@ -62,6 +62,14 @@ export default function ClipCollection(props: ClipCollectionProps) {
             HighlighterService.clipCollectionManager.deleteCollection(v.clipCollection.id);
           }}
         />
+        <div
+          style={{ height: '38px', width: '100%', alignItems: 'center', display: 'flex' }}
+          className={styles.title}
+        >
+          <h3 style={{ margin: 0 }}>
+            {v.clipCollection.clipCollectionInfo.title || 'Collection Title'}
+          </h3>
+        </div>
       </div>
       <ClipCollectionModal
         collectionId={v.clipCollection.id}

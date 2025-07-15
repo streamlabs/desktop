@@ -15,6 +15,8 @@ import StreamClipSuggestionModal from './HeaderModal';
 import ActionBar from './Actionbar';
 import styles from './Header.m.less';
 
+export type TStreamClipSuggestionsModal = 'export' | 'post' | null; //; //| 'remove' | 'requirements' | 'feedback' | null;
+
 export default function Header({
   streamInfo,
   clips,
@@ -29,7 +31,7 @@ export default function Header({
   console.log('🎨: Header', streamInfo.id);
 
   const { HighlighterService } = Services;
-  const [modal, setModal] = useState<TModalStreamCard | null>(null);
+  const [modal, setModal] = useState<TStreamClipSuggestionsModal | null>(null);
   const game = HighlighterService.getGameByStreamId(streamInfo.id);
   const gameConfig = getConfigByGame(game);
 
@@ -88,6 +90,9 @@ export default function Header({
         <ActionBar
           stream={streamInfo}
           clips={clips}
+          emitPostVideo={() => {
+            setModal('post');
+          }}
           emitExportVideo={() => {
             setModal('export');
           }}
@@ -97,7 +102,8 @@ export default function Header({
           emitSetView={emitSetView}
           // TODO add modals
           emitFeedbackForm={() => {
-            setModal('feedback');
+            console.log('🎨: emitFeedbackForm');
+            // setModal('feedback');
           }}
         />
       </div>

@@ -5,6 +5,8 @@ import { Services } from 'components-react/service-provider';
 import React, { useState, useEffect } from 'react';
 import { TClip } from 'services/highlighter/models/highlighter.models';
 import styles from '../../StreamView.m.less';
+import { TStreamClipSuggestionsModal } from './Header';
+import CollectionUpload from '../Upload/CollectionUpload';
 
 export default function StreamClipSuggestionModal({
   modal,
@@ -12,13 +14,13 @@ export default function StreamClipSuggestionModal({
   collectionIds,
   onClose,
 }: {
-  modal: TModalStreamCard;
+  modal: TStreamClipSuggestionsModal;
   clips: TClip[];
   collectionIds: string[];
   onClose: () => void;
 }) {
   const { HighlighterService } = Services;
-  const [showModal, rawSetShowModal] = useState<TModalStreamCard | null>(null);
+  const [showModal, rawSetShowModal] = useState<TStreamClipSuggestionsModal>(null);
   const [modalWidth, setModalWidth] = useState('700px');
   useEffect(() => {
     if (modal) {
@@ -31,16 +33,16 @@ export default function StreamClipSuggestionModal({
     onClose();
   }
 
-  function setShowModal(modal: TModalStreamCard | null) {
+  function setShowModal(modal: TStreamClipSuggestionsModal) {
     rawSetShowModal(modal);
     if (modal) {
       setModalWidth(
         {
-          preview: '700px',
+          post: '1000px',
           export: 'fit-content',
-          remove: '400px',
-          requirements: 'fit-content',
-          feedback: '700px',
+          // remove: '400px',
+          // requirements: 'fit-content',
+          // feedback: '700px',
         }[modal],
       );
     }
@@ -60,6 +62,10 @@ export default function StreamClipSuggestionModal({
       {/* {!!v.error && <Alert message={v.error} type="error" showIcon />} */}
       {showModal === 'export' && (
         <ExportModal close={closeModal} streamId={undefined} clipCollectionIds={collectionIds} />
+      )}
+
+      {showModal === 'post' && (
+        <CollectionUpload close={closeModal} collectionIds={collectionIds} />
       )}
       {/* {showModal === 'remove' && <RemoveStream close={closeModal} streamId={streamId} />}
     {showModal === 'feedback' && <Feedback streamId={streamId} close={closeModal} game={game} />}
