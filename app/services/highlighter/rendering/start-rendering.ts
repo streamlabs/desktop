@@ -47,6 +47,10 @@ export async function startRendering(
   const useAiHighlighter = renderingConfig.useAiHighlighter;
   const streamId = renderingConfig.streamId;
 
+  const hasSplashScreen = renderingClips.some(
+    clip => clip.frameSource instanceof SplashScreenRenderer,
+  );
+
   let fader: AudioCrossfader | null = null;
   let mixer: AudioMixer | null = null;
   try {
@@ -203,6 +207,7 @@ export async function startRendering(
           duration: totalFramesAfterTransitions / exportOptions.fps,
           isPreview,
           streamId,
+          splashScreen: hasSplashScreen,
         });
         break;
       }
@@ -239,11 +244,12 @@ export async function startRendering(
     if (mixer) await mixer.cleanup();
   }
 }
+
 export function calculateTotalFrames(
   renderingClips: RenderingClip[],
   transitionDuration: number,
   fps: number,
-): { totalFramesAfterTransitions: number; transitionFrames: number, duration: number } {
+): { totalFramesAfterTransitions: number; transitionFrames: number; duration: number } {
   const totalFrames = renderingClips.reduce((count: number, clip) => {
     return count + clip.frameSource.nFrames;
   }, 0);

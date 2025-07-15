@@ -106,7 +106,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     video: {
       intro: { path: '', duration: null },
       outro: { path: '', duration: null },
-      splashScreen: { enabled: true, duration: 3 },
+      splashScreen: { enabled: true, duration: 3, profileLink: undefined },
     },
     audio: {
       musicEnabled: false,
@@ -341,6 +341,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     if (this.aiHighlighterFeatureEnabled && !this.aiHighlighterUpdater) {
       this.aiHighlighterUpdater = new AiHighlighterUpdater();
     }
+
+    this.prefillProfileLink();
 
     //
     this.views.clips.forEach(clip => {
@@ -1278,25 +1280,12 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     orientation: string,
   ): Promise<RenderingClip> {
     const linkedPlatforms = await this.userService.fetchLinkedPlatforms();
-    const primaryPlatform = this.userService.views.platform;
-    const platform = primaryPlatform.type;
-
-    let profileLink = '@' + primaryPlatform.username;
-    if (platform === EPlatform.Twitch) {
-      profileLink = 'twitch.tv/' + this.userService.views.platform.username;
-    } else if (platform === EPlatform.Trovo) {
-      profileLink = 'trovo.live/s/' + this.userService.views.platform.username;
-    } else if (platform === EPlatform.Facebook) {
-      profileLink = 'facebook.com/gaming/' + this.userService.views.platform.username;
-    } else if (platform === EPlatform.Kick) {
-      profileLink = 'kick.com/' + this.userService.views.platform.username;
-    }
 
     const splashScreen = new RenderingClip('');
     const settings: ISplashscreenSettings = {
       duration: 3,
       avatarUrl: linkedPlatforms ? linkedPlatforms.avatar : '',
-      profileLink,
+      profileLink: this.views.video.splashScreen.profileLink,
     };
 
     splashScreen.frameSource = new SplashScreenFrameSource(settings, exportOptions, orientation);
@@ -1785,6 +1774,26 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     }
 
     return id;
+  }
+
+  private prefillProfileLink(): void {
+    const primaryPlatform = this.userService.views.platform;
+    const platform = primaryPlatform.type;
+
+    let profileLink = '@' + primaryPlatform.username;
+    if (platform === EPlatform.Twitch) {
+      profileLink = 'twitch.tv/' + this.userService.views.platform.username;
+    } else if (platform === EPlatform.Trovo) {
+      profileLink = 'trovo.live/s/' + this.userService.views.platform.username;
+    } else if (platform === EPlatform.Facebook) {
+      profileLink = 'facebook.com/gaming/' + this.userService.views.platform.username;
+    } else if (platform === EPlatform.Kick) {
+      profileLink = 'kick.com/' + this.userService.views.platform.username;
+    }
+
+    if (this.views.video.splashScreen && this.views.video.splashScreen.profileLink === undefined) {
+      this.views.video.splashScreen.profileLink = profileLink;
+    }
   }
 
   /**

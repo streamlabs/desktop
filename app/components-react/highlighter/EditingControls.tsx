@@ -1,7 +1,7 @@
 import React from 'react';
 import Form from 'components-react/shared/inputs/Form';
-import { SliderInput, FileInput, SwitchInput } from 'components-react/shared/inputs';
-import { Button } from 'antd';
+import { SliderInput, FileInput, SwitchInput, TextInput } from 'components-react/shared/inputs';
+import { Button, Input } from 'antd';
 import path from 'path';
 import Scrollable from 'components-react/shared/Scrollable';
 import Animate from 'rc-animate';
@@ -36,7 +36,7 @@ export function EditingControls({
   }
 
   function setSplashScreenEnabled(enabled: boolean) {
-    HighlighterService.actions.setVideo({ splashScreen: { enabled, duration: 3 } });
+    HighlighterService.actions.setVideo({ splashScreen: { ...v.video.splashScreen, enabled } });
   }
 
   const musicExtensions = ['mp3', 'wav', 'flac'];
@@ -131,11 +131,6 @@ export function EditingControls({
           value={v.audio.musicEnabled}
           onChange={setMusicEnabled}
         />
-        <SwitchInput
-          label={$t('Splash Screen')}
-          value={v.video.splashScreen?.enabled}
-          onChange={setSplashScreenEnabled}
-        />
         <Animate transitionName="ant-slide-up">
           {v.audio.musicEnabled && (
             <div>
@@ -160,6 +155,24 @@ export function EditingControls({
             </div>
           )}
         </Animate>
+        <SwitchInput
+          label={$t('Splash Screen')}
+          value={v.video.splashScreen?.enabled}
+          onChange={setSplashScreenEnabled}
+        />
+        {v.video.splashScreen?.enabled && (
+          <TextInput
+            style={{ marginBottom: '10px' }}
+            label={$t('Splash Screen Profile')}
+            placeholder={$t('Splash Screen Profile')}
+            value={v.video.splashScreen?.profileLink || ''}
+            onChange={e => {
+              HighlighterService.actions.setVideo({
+                splashScreen: { ...v.video.splashScreen, profileLink: e },
+              });
+            }}
+          />
+        )}
       </Form>
     </Scrollable>
   );
