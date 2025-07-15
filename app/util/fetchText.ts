@@ -31,16 +31,15 @@ export async function fetchText(
 }> {
   const h = new Headers(requestInit.headers);
   const shouldFetchViaMainProcess = h.get('Origin') !== null;
-  if (shouldFetchViaMainProcess) {
-    const r = await fetchViaMainProcess(url, requestInit);
-    return {
-      ok: r.ok,
-      status: r.status,
-      statusText: r.statusText,
-      text: () => Promise.resolve(r.text),
-      headers: new Headers(r.headers),
-    };
-  } else {
+  if (!shouldFetchViaMainProcess) {
     return fetch(url, requestInit);
   }
+  const r = await fetchViaMainProcess(url, requestInit);
+  return {
+    ok: r.ok,
+    status: r.status,
+    statusText: r.statusText,
+    text: () => Promise.resolve(r.text),
+    headers: new Headers(r.headers),
+  };
 }
