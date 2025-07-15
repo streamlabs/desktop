@@ -1,4 +1,3 @@
-
 !macro registerProtocol Protocol
   DetailPrint "Register ${Protocol} URI Handler"
 	DeleteRegKey HKCU "Software\Classes\${Protocol}"
@@ -24,6 +23,21 @@ LangString require_restart 1041 "インストールを完了するには、コ�
 LangString failed_download 1041 "警告: Microsoft から最新の Visual C++ 再頒布可能パッケージをダウンロードできませんでした。"	
 
 !macro customInstall
+  ; Visual C++ Redistributable 2015-2022のインストール状況をチェック
+  ReadRegStr $2 HKLM "SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64" "Version"
+  ${If} $2 != ""
+    DetailPrint "Visual C++ Redistributable is already installed (Version: $2). Skipping download and installation."
+    Goto vcredist_skip
+  ${EndIf}
+
+  ; 別のレジストリパスもチェック（より新しいバージョン用）
+  ReadRegStr $2 HKLM "SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.0\VC\Runtimes\x64" "Version"
+  ${If} $2 != ""
+    DetailPrint "Visual C++ Redistributable is already installed (Version: $2). Skipping download and installation."
+    Goto vcredist_skip
+  ${EndIf}
+
+  DetailPrint "Visual C++ Redistributable not found. Downloading and installing..."
   NSISdl::download https://aka.ms/vs/17/release/vc_redist.x64.exe "$INSTDIR\vc_redist.x64.exe"  
 
   ${If} ${FileExists} `$INSTDIR\vc_redist.x64.exe`
@@ -39,9 +53,14 @@ LangString failed_download 1041 "警告: Microsoft から最新の Visual C++ �
     #     MessageBox MB_OK|MB_ICONEXCLAMATION "$(require_restart)"
     # ${EndIf}
 
+    ; インストール後にファイルを削除
+    Delete "$INSTDIR\vc_redist.x64.exe"
+
   ${Else}
     MessageBox MB_OK|MB_ICONEXCLAMATION "$(failed_download)"
   ${EndIf}
+
+  vcredist_skip:
 
   FileOpen $0 "$INSTDIR\installername" w
   FileWrite $0 $EXEFILE
