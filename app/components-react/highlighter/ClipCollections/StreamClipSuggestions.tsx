@@ -82,7 +82,7 @@ function DetectionInProgress({ streamInfo }: { streamInfo: IHighlightedStream })
 
 function ClipCollectionRow({ clipCollectionIds }: { clipCollectionIds: string[] }) {
   console.log('🎨: ClipCollectionRow', clipCollectionIds);
-
+  const { HighlighterService } = Services;
   const [collectionIds, setCollectionIds] = useState(clipCollectionIds);
 
   // Sync local state with props when they change

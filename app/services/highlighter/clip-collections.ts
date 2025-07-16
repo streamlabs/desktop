@@ -150,6 +150,11 @@ export class ClipCollectionManager {
 
     const autoCollections = createClipCollectionsFromClips(clips);
     autoCollections.forEach(collection => {
+      if (collection.clips.length === 0) {
+        console.warn(`No clips found for auto-created collection ${collection.title}`);
+        return;
+      }
+
       const clipCollectionInfo: IVideoInfo = {
         aspectRatio: collection.orientation,
         title: collection.title,

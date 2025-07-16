@@ -238,6 +238,10 @@ export default function ClipsView({
                     collectionData.id,
                     enabledClips,
                   );
+
+                  emitSetView({
+                    view: EHighlighterView.STREAM,
+                  });
                 }}
               >
                 Create ClipCollection + add selected

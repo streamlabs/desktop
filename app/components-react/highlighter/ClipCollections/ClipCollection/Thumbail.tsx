@@ -13,13 +13,15 @@ import styles from './ClipCollection.m.less';
 import { IExportInfo } from 'services/highlighter/models/rendering.models';
 import { $t } from 'services/i18n';
 import { EUploadPlatform, IUploadInfo } from 'services/highlighter/models/highlighter.models';
+import { TModalClipsView } from 'components-react/highlighter/ClipsView';
+import { TModalStreamCard } from 'components-react/highlighter/StreamCardModal';
 
 export default function Thumbnail({
   collectionInfo,
   emitSetModal,
 }: {
   collectionInfo?: IClipCollection;
-  emitSetModal: (modal: any) => void;
+  emitSetModal: (modal: TModalStreamCard) => void;
 }) {
   const { HighlighterService } = Services;
 
@@ -62,7 +64,11 @@ export default function Thumbnail({
           emitSetModal={emitSetModal}
         />
       )}
-      <ThumbnailMedia collectionInfo={collectionInfo} clipThumbnail={clipThumbnail} />
+      <ThumbnailMedia
+        collectionInfo={collectionInfo}
+        clipThumbnail={clipThumbnail}
+        emitSetModal={emitSetModal}
+      />
     </div>
   );
 }
@@ -182,9 +188,11 @@ function ProcessTag(
 function ThumbnailMedia({
   collectionInfo,
   clipThumbnail,
+  emitSetModal,
 }: {
   collectionInfo?: IClipCollection;
   clipThumbnail?: string;
+  emitSetModal: (modal: TModalStreamCard) => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [showControls, setShowControls] = useState(false);
@@ -237,6 +245,9 @@ function ThumbnailMedia({
   if (clipThumbnail) {
     return (
       <img
+        onClick={() => {
+          emitSetModal('preview');
+        }}
         style={
           collectionInfo?.clipCollectionInfo.aspectRatio === EOrientation.HORIZONTAL
             ? { objectPosition: 'left' }
