@@ -76,6 +76,17 @@ export function ImportStreamModal({
     }
     close();
   }
+
+  async function detectClips(filePath: string, streamInfo: IStreamInfoForAiHighlighter) {
+    HighlighterService.actions.detectAndClipAiHighlights(filePath[0], streamInfo);
+    const clipsToLoad = await HighlighterService.actions.return.getClips(
+      HighlighterService.views.clips,
+      streamInfo.id,
+    );
+    HighlighterService.actions.loadClips(clipsToLoad);
+    HighlighterService.clipCollectionManager.autoCreateClipCollections(streamInfo.id);
+  }
+
   async function startAiDetection(
     title: string,
     game: EGame,
@@ -90,7 +101,7 @@ export function ImportStreamModal({
 
     try {
       if (game && filePath && filePath.length > 0) {
-        HighlighterService.actions.detectAndClipAiHighlights(filePath[0], streamInfo);
+        await detectClips(filePath[0], streamInfo);
         UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
           type: 'DetectionInModalStarted',
           openedFrom,
@@ -103,7 +114,8 @@ export function ImportStreamModal({
 
       filePath = await importStreamFromDevice();
       if (filePath && filePath.length > 0) {
-        HighlighterService.actions.detectAndClipAiHighlights(filePath[0], streamInfo);
+        await detectClips(filePath[0], streamInfo);
+
         UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
           type: 'DetectionInModalStarted',
           openedFrom,

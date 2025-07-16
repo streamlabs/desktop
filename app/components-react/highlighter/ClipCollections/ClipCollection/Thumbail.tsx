@@ -246,6 +246,8 @@ function ThumbnailMedia({
     return (
       <img
         onClick={() => {
+          console.log('preview click');
+
           emitSetModal('preview');
         }}
         style={

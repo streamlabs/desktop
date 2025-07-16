@@ -63,6 +63,11 @@ export default function ClipCollection(props: ClipCollectionProps) {
         <Thumbnail
           collectionInfo={v.clipCollection}
           emitSetModal={modal => {
+            console.log('emitSetModal', modal);
+
+            if (modal === 'preview') {
+              setModal('preview');
+            }
             // Only modal right now is delete
             // so delete
             props.emitDeletedCollection(v.clipCollection.id);

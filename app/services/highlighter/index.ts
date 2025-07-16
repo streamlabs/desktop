@@ -1775,11 +1775,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
       this.updateStream(setStreamInfo);
       // stopProgressUpdates();
-
-      // assured the clips exists when the collections are created
-      setTimeout(() => {
-        this.clipCollectionManager.autoCreateClipCollections(streamInfo.id);
-      }, 2000);
     }
 
     return;
