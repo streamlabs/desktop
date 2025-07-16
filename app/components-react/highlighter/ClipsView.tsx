@@ -20,13 +20,14 @@ import {
 } from './utils';
 import ClipsViewModal from './ClipsViewModal';
 import { useVuex } from 'components-react/hooks';
-import { Button, Tooltip } from 'antd';
+import { Button, Tooltip, Dropdown, MenuProps } from 'antd';
 import { SUPPORTED_FILE_TYPES } from 'services/highlighter/constants';
 import { $t } from 'services/i18n';
 import path from 'path';
 import MiniClipPreview from './MiniClipPreview';
 import HighlightGenerator from './HighlightGenerator';
 import { EAvailableFeatures } from 'services/incremental-rollout';
+import TitleGeneration from './TitleGeneration';
 
 export type TModalClipsView = 'trim' | 'export' | 'preview' | 'remove';
 
@@ -42,7 +43,7 @@ export default function ClipsView({
   props: IClipsViewProps;
   emitSetView: (data: IViewState) => void;
 }) {
-  const { HighlighterService, UsageStatisticsService, IncrementalRolloutService } = Services;
+  const { HighlighterService, UsageStatisticsService, UserService } = Services;
   const aiHighlighterFeatureEnabled = HighlighterService.aiHighlighterFeatureEnabled;
   const clipsAmount = useVuex(() => HighlighterService.views.clips.length);
   const [clips, setClips] = useState<{
@@ -53,7 +54,7 @@ export default function ClipsView({
   const [activeFilter, setActiveFilter] = useState('all'); // Currently not using the setActiveFilter option
 
   const [clipsLoaded, setClipsLoaded] = useState<boolean>(false);
-
+  const [generatedTitles, setGeneratedTitles] = useState<string[]>([]);
   const loadClips = useCallback(async (id: string | undefined) => {
     await HighlighterService.actions.return.loadClips(id);
     setClipsLoaded(true);
@@ -199,6 +200,20 @@ export default function ClipsView({
               >
                 {props.streamTitle ?? $t('All highlight clips')}
               </h1>
+
+              <div style={{ marginLeft: '8px' }}>
+                {props.id && (
+                  <Dropdown
+                    overlay={<TitleGeneration props={{ streamId: props.id }} />}
+                    placement="bottomLeft"
+                    trigger={['click']}
+                  >
+                    <Button size="small" icon={<i className="icon-edit" />}>
+                      {$t('Titles')}
+                    </Button>
+                  </Dropdown>
+                )}
+              </div>
             </header>
             <div style={{ padding: '20px', display: 'flex', gap: '8px' }}>
               <Button

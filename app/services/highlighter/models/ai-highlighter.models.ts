@@ -64,12 +64,15 @@ export enum EGame {
 
 export enum EHighlighterInputTypes {
   KILL = 'kill',
+  ELIMINATION = 'elimination',
+  KNOCKOUT = 'knockout',
   KNOCKED = 'knocked',
   GAME_SEQUENCE = 'game_sequence',
   GAME_START = 'start_game',
   GAME_END = 'end_game',
   VOICE_ACTIVITY = 'voice_activity',
   DEATH = 'death',
+  DEFEAT = 'defeat',
   VICTORY = 'victory',
   DEPLOY = 'deploy',
 }
@@ -132,7 +135,8 @@ export type EHighlighterMessageTypes =
   | 'inputs'
   | 'inputs_partial'
   | 'highlights'
-  | 'milestone';
+  | 'milestone'
+  | 'titles';
 
 export interface IHighlighterMessage {
   type: EHighlighterMessageTypes;

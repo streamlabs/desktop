@@ -15,6 +15,8 @@ import Utils from '../utils';
 import * as remote from '@electron/remote';
 import { UsageStatisticsService } from 'app-services';
 import { Inject } from 'services';
+import { EGame, IHighlight } from './models/ai-highlighter.models';
+import { generate } from 'rxjs';
 
 interface IAIHighlighterManifest {
   version: string;
@@ -127,6 +129,57 @@ export class AiHighlighterUpdater {
     return spawn('poetry', command, {
       cwd: rootPath,
     });
+  }
+
+  public static startTitleGeneration(
+    videoUri: string,
+    userId: string,
+    inputTypes: string[],
+    game?: EGame,
+    prompt?: string,
+  ) {
+    const runHighlighterFromRepository = Utils.getHighlighterEnvironment() === 'local';
+
+    const command = [
+      videoUri,
+      '--ffmpeg_path',
+      FFMPEG_EXE,
+      '--user_id',
+      userId,
+      '--generate_titles',
+      JSON.stringify(inputTypes),
+    ];
+
+    if (game) {
+      command.push('--game');
+      command.push(game);
+    }
+    if (prompt) {
+      command.push('--prompt');
+      command.push(`${prompt}`);
+    }
+
+    if (runHighlighterFromRepository) {
+      const highlighterPath = '../highlighter-api/';
+      command.unshift(
+        'run',
+        'python',
+        `${highlighterPath}/highlighter_api/cli.py`,
+        '--loglevel',
+        'debug',
+      );
+      return spawn('poetry', command, {
+        cwd: highlighterPath,
+      });
+    } else {
+      const highlighterPath = path.resolve(
+        path.join(remote.app.getPath('userData'), '..', 'streamlabs-highlighter'),
+        'bin',
+        'app.exe',
+      );
+      command.push('--use_sentry');
+      return spawn(highlighterPath, command);
+    }
   }
 
   /**
