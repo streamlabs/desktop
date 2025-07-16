@@ -308,8 +308,11 @@ export class StreamingService
     // users can always stream to tiktok
     if (platform === 'tiktok') return false;
 
-    // grandfathered users allowed to stream Twitch/Youtube (primary) + FB
-    if (!this.views.isPrimaryPlatform(platform)) {
+    // users should be able to stream to their primary
+    if (this.views.isPrimaryPlatform(platform)) {
+      return false;
+    } else {
+      // grandfathered users allowed to stream Twitch/Youtube (primary) + FB
       const primaryPlatform = this.userService.state.auth?.primaryPlatform;
 
       const allowFacebook =
