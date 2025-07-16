@@ -6,7 +6,9 @@ function downloadTempRepo() {
   let result = true;
   const downloadRepoCmd = `git clone --branch ${repoVersion} --depth 1 https://github.com/streamlabs/slobs-virtual-cam-installer.git`;
   try {
-    cp.execSync(downloadRepoCmd);
+    const buffer = cp.execSync(downloadRepoCmd);
+    const stdoutString = buffer.toString();
+    console.log(stdoutString);
   } catch {
     result = false;
   }
