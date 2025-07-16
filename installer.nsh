@@ -23,20 +23,21 @@ LangString require_restart 1041 "インストールを完了するには、コ�
 LangString failed_download 1041 "警告: Microsoft から最新の Visual C++ 再頒布可能パッケージをダウンロードできませんでした。"	
 
 !macro customInstall
-  ; Visual C++ Redistributable 2015-2022のインストール状況をチェック
-  ReadRegStr $2 HKLM "SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64" "Version"
-  ${If} $2 != ""
-    DetailPrint "Visual C++ Redistributable is already installed (Version: $2). Skipping download and installation."
-    Goto vcredist_skip
+  ; --updated引数のチェック
+  ${GetParameters} $R0
+  ${GetOptions} $R0 "--updated" $R1
+  
+  ; エラーがない場合は--updated引数が存在
+  ${IfNot} ${Errors}
+    DetailPrint "Update mode: Checking Visual C++ Redistributable status..."
+    ReadRegStr $2 HKLM "SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64" "Version"
+    ${If} $2 != ""
+      DetailPrint "Visual C++ Redistributable is already installed (Version: $2). Skipping download and installation."
+      Goto vcredist_skip
+    ${EndIf}
   ${EndIf}
-
-  ; 別のレジストリパスもチェック（より新しいバージョン用）
-  ReadRegStr $2 HKLM "SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.0\VC\Runtimes\x64" "Version"
-  ${If} $2 != ""
-    DetailPrint "Visual C++ Redistributable is already installed (Version: $2). Skipping download and installation."
-    Goto vcredist_skip
-  ${EndIf}
-
+  
+  ; vc_redistのインストール処理
   DetailPrint "Visual C++ Redistributable not found. Downloading and installing..."
   NSISdl::download https://aka.ms/vs/17/release/vc_redist.x64.exe "$INSTDIR\vc_redist.x64.exe"  
 
