@@ -78,7 +78,7 @@ export function ImportStreamModal({
   }
 
   async function detectClips(filePath: string, streamInfo: IStreamInfoForAiHighlighter) {
-    HighlighterService.actions.detectAndClipAiHighlights(filePath[0], streamInfo);
+    HighlighterService.actions.detectAndClipAiHighlights(filePath, streamInfo);
     const clipsToLoad = await HighlighterService.actions.return.getClips(
       HighlighterService.views.clips,
       streamInfo.id,
