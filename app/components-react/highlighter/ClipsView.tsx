@@ -28,6 +28,8 @@ import MiniClipPreview from './MiniClipPreview';
 import HighlightGenerator from './HighlightGenerator';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 import uuid from 'uuid';
+import { EOrientation } from 'services/highlighter/models/ai-highlighter.models';
+import { IVideoInfo } from 'services/highlighter/clip-collections';
 
 export type TModalClipsView = 'trim' | 'export' | 'preview' | 'remove';
 
@@ -214,8 +216,16 @@ export default function ClipsView({
                 onClick={() => {
                   const id = uuid.v4();
 
-                  const collecetionData = HighlighterService.clipCollectionManager.createClipCollection(
+                  const clipCollectionInfo: IVideoInfo = {
+                    aspectRatio: EOrientation.VERTICAL,
+                    description: 'Placeholder descrition',
+                    title: 'Placeholder ',
+                    thumbnailUrl: '',
+                  };
+
+                  const collectionData = HighlighterService.clipCollectionManager.createClipCollection(
                     streamId!,
+                    clipCollectionInfo,
                   );
 
                   const clips = HighlighterService.getClips(
@@ -225,7 +235,7 @@ export default function ClipsView({
                   const enabledClips = clips.filter(clip => clip.enabled);
 
                   HighlighterService.clipCollectionManager.addClipsToCollection(
-                    collecetionData.id,
+                    collectionData.id,
                     enabledClips,
                   );
                 }}

@@ -156,6 +156,14 @@ export default function ActionBar({
         >
           post all exported clips
         </Button>
+        <Button
+          size="large"
+          onClick={() => {
+            HighlighterService.clipCollectionManager.autoCreateClipCollections(stream.id);
+          }}
+        >
+          ai gen
+        </Button>
       </div>
     );
   }

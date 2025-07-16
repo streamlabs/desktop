@@ -2,7 +2,9 @@ import { HighlighterService } from 'app-services';
 import { InitAfter, Inject, Service } from 'services/core';
 import {
   EUploadPlatform,
+  IAiClip,
   IHighlightedStream,
+  isAiClip,
   IUploadInfo,
   TClip,
 } from './models/highlighter.models';
@@ -15,7 +17,7 @@ import { TPrivacyStatus } from 'services/platforms/youtube/uploader';
 import { EOrientation } from './models/ai-highlighter.models';
 import { EPlatform } from 'services/platforms';
 
-interface IVideoInfo {
+export interface IVideoInfo {
   aspectRatio: EOrientation;
   description?: string;
   title?: string;
@@ -141,15 +143,27 @@ export class ClipCollectionManager {
   // Collection handling logic
   // =================================================================================================
 
-  createClipCollection(streamId: string) {
+  autoCreateClipCollections(streamId: string) {
+    // Check if the stream already has a clip collection
+
+    const clips = this.highlighterService.getClips(this.highlighterService.views.clips, streamId);
+
+    const autoCollections = createClipCollectionsFromClips(clips);
+    autoCollections.forEach(collection => {
+      const clipCollectionInfo: IVideoInfo = {
+        aspectRatio: collection.orientation,
+        title: collection.title,
+      };
+
+      const clipCollection = this.createClipCollection(streamId, clipCollectionInfo);
+      this.addClipsToCollection(clipCollection.id, collection.clips);
+      console.log(`Auto-created collection ${collection.title} for stream ${streamId}`);
+    });
+  }
+
+  createClipCollection(streamId: string, clipCollectionInfo: IVideoInfo): IClipCollection {
     const id = uuid.v4();
 
-    const clipCollectionInfo: IVideoInfo = {
-      aspectRatio: EOrientation.VERTICAL,
-      description: '',
-      title: '',
-      thumbnailUrl: '',
-    };
     const newClipCollection: IClipCollection = {
       id,
       clipCollectionInfo,
@@ -592,4 +606,77 @@ export class ClipCollectionManager {
       uploadInfo: undefined,
     });
   }
+}
+
+// Utility to create 4 clipCollections from clips
+export function createClipCollectionsFromClips(
+  clips: TClip[],
+): { clips: TClip[]; title: string; orientation: EOrientation }[] {
+  // Helper to get kills from aiInfo.inputs
+  const isKill = (input: any) => input.type === 'kill';
+  // Helper to get deaths from aiInfo.inputs
+  const isDeath = (input: any) => input.type === 'death';
+  // Only AI clips have aiInfo
+  const aiClips = clips.filter(isAiClip);
+
+  // 1. Vertical: all kills of the stream
+  const allKills = aiClips.filter(clip => clip.aiInfo.inputs.some(isKill));
+
+  // 2. Horizontal: round with best overall game score
+  // Group by round, pick round with highest score
+  const roundScores: Record<number, { clips: IAiClip[]; score: number }> = {};
+  aiClips.forEach(clip => {
+    const round = clip.aiInfo.metadata.round;
+    if (!roundScores[round]) {
+      roundScores[round] = { clips: [], score: 0 };
+    }
+    roundScores[round].clips.push(clip);
+    roundScores[round].score += clip.aiInfo.score;
+  });
+  const bestRound = Object.values(roundScores).sort((a, b) => b.score - a.score)[0];
+  const bestRoundClips = bestRound ? bestRound.clips : [];
+
+  // 3. Vertical: single clip with most detected events
+  const mostEventsClip = aiClips.reduce(
+    (max, clip) => (clip.aiInfo.inputs.length > (max?.aiInfo.inputs.length ?? 0) ? clip : max),
+    undefined,
+  );
+  const mostEventsClips = mostEventsClip ? [mostEventsClip] : [];
+
+  // 4. Vertical: game winning kill, or all deaths
+  // Game winning kill: last kill in last round
+  let winningKillClip: IAiClip | undefined;
+  if (aiClips.length) {
+    const lastRound = Math.max(...aiClips.map(c => c.aiInfo.metadata.round));
+    const lastRoundClips = aiClips.filter(c => c.aiInfo.metadata.round === lastRound);
+    // Find last kill
+    winningKillClip = lastRoundClips.reverse().find(clip => clip.aiInfo.inputs.some(isKill));
+  }
+  // If no winning kill, use all deaths
+  const allDeaths = aiClips.filter(clip => clip.aiInfo.inputs.some(isDeath));
+  const collection4Clips = winningKillClip ? [winningKillClip] : allDeaths;
+
+  // Build collections
+  return [
+    {
+      orientation: EOrientation.VERTICAL,
+      clips: allKills,
+      title: 'All Kills (Vertical)',
+    },
+    {
+      orientation: EOrientation.HORIZONTAL,
+      clips: bestRoundClips,
+      title: 'Best Round (Horizontal)',
+    },
+    {
+      orientation: EOrientation.VERTICAL,
+      clips: mostEventsClips,
+      title: 'Most Events (Vertical)',
+    },
+    {
+      orientation: EOrientation.VERTICAL,
+      clips: collection4Clips,
+      title: 'Winning Kill or Deaths (Vertical)',
+    },
+  ];
 }

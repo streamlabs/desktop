@@ -1777,6 +1777,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       // stopProgressUpdates();
     }
 
+    this.clipCollectionManager.autoCreateClipCollections(streamInfo.id);
+
     return;
   }
   getRoundDetails(

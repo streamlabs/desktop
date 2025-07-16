@@ -4,6 +4,7 @@ import {
   IHighlighterMilestone,
   EAiDetectionState,
   EGame,
+  EOrientation,
 } from './ai-highlighter.models';
 import { ITransitionInfo, IAudioInfo, IExportInfo, IVideoInfo } from './rendering.models';
 

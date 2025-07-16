@@ -101,6 +101,9 @@ export default function CollectionExport({
             </Button>
           </div>
         </div>
+
+        <div>Placeholder: Add clipCollection select here</div>
+
         <div style={{ display: 'flex', gap: '16px' }}>
           <div className={styles.settingsAndProgress}>
             <div
@@ -196,7 +199,7 @@ export default function CollectionExport({
                 </button>
               ) : (
                 <Button type="primary" style={{ width: '100%' }} onClick={() => startExport()}>
-                  export
+                  Export
                 </Button>
               )}
             </div>
