@@ -1249,10 +1249,12 @@ export class StreamingService
       } else if (this.views.recordingStatus === ERecordingState.Offline) {
         await this.handleStartRecording();
       } else {
+        // Internal error message
         const error =
           this.contexts.horizontal.recording !== null || this.contexts.vertical.recording !== null
-            ? 'Recording instance already exists and is not recording or offline'
+            ? 'Recording already exists but is not recording or offline'
             : 'Recording state is not recording or offline and no recording instance exists';
+
         throwStreamError('UNKNOWN_STREAMING_ERROR_WITH_MESSAGE', {
           status: 409,
           statusText: error,
@@ -1261,11 +1263,22 @@ export class StreamingService
     } catch (e: unknown) {
       console.error('Error toggling recording:', e);
 
-      if (e instanceof StreamError) {
-        this.setError(e);
-      } else {
-        this.setError('UNKNOWN_STREAMING_ERROR');
-      }
+      // Create a `StreamError` to correctly display the error message
+      const display = this.contexts.horizontal.recording !== null ? 'horizontal' : 'vertical';
+      const message =
+        e instanceof StreamError
+          ? e.message
+          : $t('An unknown Recording error occurred. Please try again.');
+
+      const error = {
+        type: EOBSOutputType.Recording,
+        signal: EOBSOutputSignal.Stop,
+        code: EOutputCode.Error,
+        error: message,
+        service: display,
+      };
+
+      this.handleOBSOutputError(error);
 
       // Destroy any existing recording instances and reset the recording state
       // Do not return or throw an error afterwards to allow for the stream and replay buffer to still be toggled
@@ -1290,9 +1303,10 @@ export class StreamingService
       !this.views.settings.recording ||
       !['horizontal', 'vertical', 'both'].includes(this.views.settings.recording)
     ) {
-      this.SET_RECORDING_OUTPUT_TYPE('horizontal');
-      await this.validateOrCreateOutputInstance('horizontal', 'recording', 1, true);
-      return;
+      const settings = cloneDeep(this.views.settings);
+      this.streamSettingsService.setSettings({
+        goLiveSettings: { ...settings, recording: 'horizontal' },
+      });
     }
 
     const dualOutputRecording =
@@ -2001,7 +2015,7 @@ export class StreamingService
     display: TDisplayType,
     type: 'streaming' | 'recording',
     index: number,
-    start?: boolean,
+    start: boolean = false,
   ) {
     const mode = this.outputSettingsService.getSettings().mode;
     const validOutput = this.validateOutputInstance(mode, display, type);

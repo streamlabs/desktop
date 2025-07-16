@@ -305,5 +305,6 @@
   "Record Stream": "Record Stream",
   "AI Highlighter is enabled. Recording will start when stream starts.": "AI Highlighter is enabled. Recording will start when stream starts.",
   "Connection Failed": "Connection Failed",
-  "Upgrade to Ultra to allow more than two outputs": "Upgrade to Ultra to allow more than two outputs"
+  "Upgrade to Ultra to allow more than two outputs": "Upgrade to Ultra to allow more than two outputs",
+  "An unknown Recording error occurred. Please try again.": "An unknown Recording error occurred. Please try again."
 }
