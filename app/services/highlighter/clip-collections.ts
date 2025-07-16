@@ -398,6 +398,13 @@ export class ClipCollectionManager {
   // Collection export logic
   // =================================================================================================
 
+  collectionIsExported(collectionId: string): boolean {
+    const path = this.highlighterService.views.clipCollectionsDictionary[collectionId]
+      ?.collectionExportInfo?.exportedFilePath;
+
+    return !!path;
+  }
+
   async exportClipCollection(collectionId: string): Promise<void> {
     // Get clips from the collection
     const clips = this.getClipsFromCollection(collectionId);
@@ -504,6 +511,13 @@ export class ClipCollectionManager {
   // =================================================================================================
   // Collection upload logic
   // =================================================================================================
+
+  collectionIsPublished(collectionId: string, platform: EUploadPlatform): boolean {
+    const uploadUrl = this.highlighterService.views.clipCollectionsDictionary[collectionId]
+      ?.collectionUploadInfo[platform].uploadedFileUrl;
+
+    return !!uploadUrl;
+  }
 
   async processUploadQueue() {
     if (this.isUploading || this.uploadQueue.length === 0) return;

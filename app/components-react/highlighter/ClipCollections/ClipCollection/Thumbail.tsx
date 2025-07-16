@@ -83,6 +83,7 @@ function StateTag({
   if (!exportState && !uploadState) {
     return <DeleteButton emitSetModal={modal => emitSetModal(modal)} />;
   }
+
   if (uploadState && uploadInfo) {
     switch (uploadState) {
       case EClipCollectionUploadState.UPLOADING:

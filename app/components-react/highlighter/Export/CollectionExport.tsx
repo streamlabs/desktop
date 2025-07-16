@@ -79,6 +79,8 @@ export default function CollectionExport({
   }
   async function startExport() {
     clipCollectionIds.forEach(async clipCollectionId => {
+      // If exported already, skip
+      if (HighlighterService.clipCollectionManager.collectionIsExported(clipCollectionId)) return;
       HighlighterService.actions.queueExportClipCollection(clipCollectionId);
     });
     close();

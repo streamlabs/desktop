@@ -1,12 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
-import { EUploadPlatform, IViewState, TClip } from 'services/highlighter/models/highlighter.models';
+import {
+  EUploadPlatform,
+  IUploadInfo,
+  IViewState,
+  TClip,
+} from 'services/highlighter/models/highlighter.models';
 import { TModalStreamCard } from '../../StreamCardModal';
 import { fileExists } from 'services/highlighter/file-utils';
 import { Button } from 'antd';
 import * as remote from '@electron/remote';
 import {
+  EClipCollectionExportState,
   EClipCollectionUploadState,
   IClipCollection,
   IClipCollectionClip,
@@ -14,6 +20,7 @@ import {
 import ClipCollectionModal from './ClipCollectionModal';
 import Thumbnail from './Thumbail';
 import styles from './ClipCollection.m.less';
+import { IExportInfo } from 'services/highlighter/models/rendering.models';
 
 interface ClipCollectionProps {
   collectionId: string;
@@ -63,10 +70,10 @@ export default function ClipCollection(props: ClipCollectionProps) {
           }}
         />
         <div
-          style={{ height: '38px', width: '100%', alignItems: 'center', display: 'flex' }}
+          style={{ height: '58px', width: '100%', alignItems: 'center', display: 'flex' }}
           className={styles.title}
         >
-          <h3 style={{ margin: 0 }}>
+          <h3 style={{ margin: 0, lineHeight: '18px' }}>
             {v.clipCollection.clipCollectionInfo.title || 'Collection Title'}
           </h3>
         </div>
@@ -93,32 +100,34 @@ function CollectionCta({
   collection: IClipCollection;
   emitSetModal: (modal: TModalStreamCard) => void;
 }) {
+  console.log('CollectionCta rendered', collection.id);
+
   const platform = EUploadPlatform.YOUTUBE;
   const { HighlighterService } = Services;
   const state = latestState(collection, platform);
   const uploadedFileUrl = collection.collectionUploadInfo?.[platform]?.uploadedFileUrl;
 
+  const exportState = collection.collectionExportInfo?.state;
+  const exportInfo = collection.collectionExportInfo?.exportInfo;
+
+  const uploadInfo = collection.collectionUploadInfo?.[platform]?.uploadInfo;
+  const uploadState = collection.collectionUploadInfo?.[platform]?.state;
+
   function openLink(link: string) {
     remote.shell.openExternal(link);
   }
+
   switch (state) {
     case 'exported':
       return (
-        <Button
-          style={{ width: '100%', backgroundColor: 'orange', color: 'white' }}
-          onClick={() => {
-            if (!collection.collectionExportInfo?.exportedFilePath) {
-              console.warn('Cant post: No exported file path found for collection', collection.id);
-              return;
-            }
-            HighlighterService.actions.queueUploadClipCollection(collection.id);
-            // TODO: open posting moda;
-            // emitSetModal('export');
-          }}
-        >
-          Post clip
-        </Button>
+        <PostingCtas
+          collection={collection}
+          uploadState={uploadState}
+          uploadInfo={uploadInfo}
+          emitSetModal={emitSetModal}
+        />
       );
+
     case 'posted':
       return (
         <Button
@@ -133,8 +142,68 @@ function CollectionCta({
       );
     default:
       return (
+        <ExportCtas exportState={exportState} exportInfo={exportInfo} emitSetModal={emitSetModal} />
+      );
+  }
+}
+function ExportCtas({
+  exportState,
+  exportInfo,
+  emitSetModal,
+}: {
+  exportState: EClipCollectionExportState | undefined;
+  exportInfo: IExportInfo | undefined;
+  emitSetModal: (modal: TModalStreamCard) => void;
+}) {
+  console.log('ExportCtas rendered', exportState, exportInfo);
+
+  switch (exportState) {
+    case EClipCollectionExportState.EXPORTING:
+      if (!exportInfo) {
         <Button
-          style={{ width: '100%', backgroundColor: 'red', color: 'white' }}
+          danger
+          onClick={() => {
+            //todo reset function
+          }}
+        >
+          Error
+        </Button>;
+      }
+      return progressCta(
+        'export',
+        exportInfo?.currentFrame || 0,
+        exportInfo?.totalFrames || 0,
+        exportInfo?.cancelRequested || false,
+      );
+
+    case EClipCollectionExportState.ERROR:
+      return (
+        <Button
+          danger
+          onClick={() => {
+            //todo reset function
+          }}
+        >
+          Export error
+        </Button>
+      );
+    case EClipCollectionExportState.QUEUED:
+      return (
+        <Button
+          disabled
+          style={{ width: '100%', backgroundColor: '#BCC1C3', color: 'black' }}
+          onClick={() => {
+            // emitSetModal('export');
+            // add un-queue functionality on hover
+          }}
+        >
+          Export queued
+        </Button>
+      );
+    default:
+      return (
+        <Button
+          style={{ width: '100%', backgroundColor: 'white', color: 'black' }}
           onClick={() => {
             emitSetModal('export');
           }}
@@ -143,6 +212,120 @@ function CollectionCta({
         </Button>
       );
   }
+}
+
+function PostingCtas({
+  collection,
+  uploadState,
+  uploadInfo,
+  emitSetModal,
+}: {
+  collection: IClipCollection;
+  uploadState: EClipCollectionUploadState | undefined;
+  uploadInfo: IUploadInfo | undefined;
+  emitSetModal: (modal: TModalStreamCard) => void;
+}) {
+  const { HighlighterService } = Services;
+
+  switch (uploadState) {
+    case EClipCollectionUploadState.UPLOADING:
+      if (!uploadInfo) {
+        <Button
+          danger
+          onClick={() => {
+            //todo reset function
+          }}
+        >
+          Error
+        </Button>;
+      }
+      return progressCta(
+        'upload',
+        uploadInfo?.uploadedBytes || 0,
+        uploadInfo?.totalBytes || 0,
+        uploadInfo?.cancelRequested || false,
+      );
+
+    case EClipCollectionUploadState.ERROR:
+      return (
+        <Button
+          danger
+          onClick={() => {
+            //todo reset function
+          }}
+        >
+          Error
+        </Button>
+      );
+    case EClipCollectionUploadState.QUEUED:
+      return (
+        <Button
+          disabled
+          style={{ width: '100%', backgroundColor: '#BA8C56', color: 'black' }}
+          onClick={() => {
+            // emitSetModal('export');
+            // add un-queue functionality on hover
+          }}
+        >
+          Post queued
+        </Button>
+      );
+    default:
+      return (
+        <Button
+          color="yello"
+          style={{ width: '100%', backgroundColor: '#FFBE72', color: 'black' }}
+          onClick={() => {
+            // TODO: M needs to be passed via modal
+            // emitSetModal('post');
+            HighlighterService.clipCollectionManager.uploadClipCollection(collection.id);
+          }}
+        >
+          Post
+        </Button>
+      );
+  }
+}
+
+function progressCta(
+  type: 'upload' | 'export',
+  currentValue: number,
+  totalValue: number,
+  cancelRequested: boolean,
+) {
+  const progressBarColor = type === 'export' ? '#E3E8EB' : '#E0A968';
+  const backgroundColor = type === 'export' ? '#ffffff' : '#FFBE72';
+
+  return (
+    <div className={styles.progressbarBackground} style={{ backgroundColor }}>
+      <div className={styles.progressbarText}>
+        <span>{type === 'export' ? 'Exporting... ' : 'Posting... '}</span>
+        <span>{Math.round((currentValue / totalValue) * 100) || 0}%</span>
+      </div>
+      <div
+        className={styles.progressbarProgress}
+        style={{
+          // opacity: currentValue / totalValue < 1 ? 0 : 1,
+          transform: `scaleX(${currentValue / totalValue})`,
+          transformOrigin: 'left',
+          transition: 'transform 1000ms',
+          backgroundColor: progressBarColor,
+        }}
+      ></div>
+      {/* 
+      <Button
+        size="small"
+        className={styles.cancelButton}
+        style={{ backgroundColor }}
+        onClick={e => {
+          e.stopPropagation();
+          // cancelHighlightGeneration();
+        }}
+      >
+        <i className="icon-close" />
+      </Button> */}
+    </div>
+  );
 }
 
 function latestState(

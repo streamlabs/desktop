@@ -104,6 +104,16 @@ export default function CollectionUpload({
 
             if (collectionIds.length > 0) {
               collectionIds.forEach(id => {
+                // If published already, skip
+                if (
+                  HighlighterService.clipCollectionManager.collectionIsPublished(
+                    id,
+                    EUploadPlatform.YOUTUBE,
+                  )
+                ) {
+                  return;
+                }
+
                 HighlighterService.actions.queueUploadClipCollection(id);
               });
 
