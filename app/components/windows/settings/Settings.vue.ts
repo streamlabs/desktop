@@ -279,7 +279,7 @@ export default class Settings extends Vue {
         })
         .then(({ response }) => {
           if (response === 0) {
-            this.dualOutputService.setDualOutputMode(false, true);
+            this.dualOutputService.setDualOutputModeIfPossible(false, true);
             this.userService.logOut();
           }
         });
