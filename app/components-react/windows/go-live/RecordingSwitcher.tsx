@@ -78,6 +78,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
             <>
               <RadioInput
                 name="recording-display"
+                defaultValue="horizontal"
                 value={recording}
                 options={options}
                 onChange={(display: TDisplayOutput) => toggleRecordingDisplay(display)}
