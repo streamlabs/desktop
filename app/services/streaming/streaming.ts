@@ -1034,14 +1034,8 @@ export class StreamingService
 
     this.powerSaveId = remote.powerSaveBlocker.start('prevent-display-sleep');
 
-    // TODO: do we need to fully create the vertical instance before starting the horizontal one?
-    // vertical instance created in `handleStreamingSignal` if needed
+    // In dual output mode, the vertical instance created in `handleStreamingSignal`
 
-    // if (this.views.isDualOutputMode) {
-    //   // Vertical instance will be started in `handleStreamingSignal` after the horizontal one
-    //   // has started
-    //   await this.validateOrCreateOutputInstance('vertical', 'streaming', 2);
-    // }
     await this.validateOrCreateOutputInstance('horizontal', 'streaming', 1, true);
 
     // handle anything that should be done after the stream is started
@@ -1313,10 +1307,14 @@ export class StreamingService
       this.views.isDualOutputMode && this.views.settings.recording === 'both';
 
     if (dualOutputRecording || this.views.settings.recording === 'horizontal') {
+      // Update the recording state for the loading animation
+      this.SET_RECORDING_STATUS(ERecordingState.Starting, 'horizontal', new Date().toISOString());
       await this.validateOrCreateOutputInstance('horizontal', 'recording', 1, true);
     }
 
     if (dualOutputRecording || this.views.settings.recording === 'vertical') {
+      // Update the recording state for the loading animation
+      this.SET_RECORDING_STATUS(ERecordingState.Starting, 'vertical', new Date().toISOString());
       await this.validateOrCreateOutputInstance('vertical', 'recording', 2, true);
     }
   }
@@ -1478,12 +1476,10 @@ export class StreamingService
       this.validateOrCreateAudioTrack(index);
       stream.audioTrack = index;
       // Twitch VOD audio track
-      if (stream.enableTwitchVOD && stream.twitchTrack) {
-        this.validateOrCreateAudioTrack(stream.twitchTrack);
-      } else if (stream.enableTwitchVOD) {
-        // do not use the same audio track for the VOD as the stream
-        stream.twitchTrack = index + 1;
-        this.validateOrCreateAudioTrack(stream.twitchTrack);
+      if (stream.enableTwitchVOD) {
+        const trackNumber = stream.twitchTrack ?? index + 1;
+        this.validateOrCreateAudioTrack(trackNumber);
+        stream.twitchTrack = trackNumber;
       }
 
       this.contexts[display].streaming = stream as IAdvancedStreaming;
