@@ -1882,11 +1882,22 @@ export class StreamingService
     } catch (e: unknown) {
       console.error('Error toggling replay buffer:', e);
 
-      if (e instanceof StreamError) {
-        this.setError(e);
-      } else {
-        this.setError('UNKNOWN_STREAMING_ERROR');
-      }
+      // Create a `StreamError` to correctly display the error message
+      const display = this.contexts.horizontal.replayBuffer !== null ? 'horizontal' : 'vertical';
+      const message =
+        e instanceof StreamError
+          ? e.message
+          : $t('An unknown Replay Buffer error occurred. Please try again.');
+
+      const error = {
+        type: EOBSOutputType.ReplayBuffer,
+        signal: EOBSOutputSignal.Stop,
+        code: EOutputCode.Error,
+        error: message,
+        service: display,
+      };
+
+      this.handleOBSOutputError(error);
 
       // Destroy any existing replay buffer instances and reset the replay buffer state
       // Do not return or throw an error afterwards to allow for the stream and recording to still be toggled
