@@ -1287,7 +1287,7 @@ export class StreamingService
     // Only attempt to create recording instances if the recording status is offline
     // This prevents errors when trying to create a recording instance when one already exists
     if (this.views.isRecording) {
-      // TODO: handling for if the recording instances needs to be started
+      console.warn('Recording already in progress');
       return;
     }
 
@@ -1305,11 +1305,24 @@ export class StreamingService
 
     const dualOutputRecording =
       this.views.isDualOutputMode && this.views.settings.recording === 'both';
+    const isDualOutputModeRecordingOnly = this.views.isDualOutputMode && !this.views.isStreaming;
+    const isSingleOutputMode = !this.views.isDualOutputMode;
 
-    if (dualOutputRecording || this.views.settings.recording === 'horizontal') {
+    if (
+      isSingleOutputMode ||
+      isDualOutputModeRecordingOnly ||
+      dualOutputRecording ||
+      this.views.settings.recording === 'horizontal'
+    ) {
       // Update the recording state for the loading animation
       this.SET_RECORDING_STATUS(ERecordingState.Starting, 'horizontal', new Date().toISOString());
       await this.validateOrCreateOutputInstance('horizontal', 'recording', 1, true);
+
+      // In single output mode or is the user is just recording without streaming,
+      // only use the horizontal display for recording.
+      if (isSingleOutputMode || isDualOutputModeRecordingOnly) {
+        return;
+      }
     }
 
     if (dualOutputRecording || this.views.settings.recording === 'vertical') {
@@ -1698,10 +1711,13 @@ export class StreamingService
     }
 
     if (info.signal === EOBSOutputSignal.Start) {
+      const mode = this.views.isDualOutputMode ? 'dual' : 'single';
       this.usageStatisticsService.recordFeatureUsage('Recording');
       this.usageStatisticsService.recordAnalyticsEvent('RecordingStatus', {
         status: nextState,
         code: info.code,
+        mode,
+        display,
       });
     }
 
@@ -1869,10 +1885,23 @@ export class StreamingService
         return;
       }
 
+      // In single output mode, the horizontal display is always used.
+      // In dual output mode, when using the replay buffer without streaming
+      // only the horizontal display is used.
+      const isDualOutputModeReplayBufferOnly =
+        this.views.isDualOutputMode && !this.views.isStreaming;
+      const isSingleOutputMode = !this.views.isDualOutputMode;
+
+      if (isSingleOutputMode || isDualOutputModeReplayBufferOnly) {
+        // Update the replay buffer state for the loading animation
+        this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Running, 'horizontal');
+        Promise.resolve(this.createReplayBuffer('horizontal', 1));
+        return;
+      }
+
+      // Handle dual output mode replay buffer
       const output = display ?? this.views.getOutputDisplayType();
       this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Running, output);
-
-      // TODO: match the index to the contexts
       const audioTrackIndex = output === 'horizontal' ? 1 : 2;
       Promise.resolve(this.createReplayBuffer(output, audioTrackIndex));
     } catch (e: unknown) {
@@ -1960,13 +1989,16 @@ export class StreamingService
     this.usageStatisticsService.recordFeatureUsage('ReplayBuffer');
   }
 
-  stopReplayBuffer(display?: TDisplayType) {
-    const output = display ?? this.views.getOutputDisplayType();
+  stopReplayBuffer() {
+    const display = this.views.isDualOutputRecordingOnly
+      ? 'horizontal'
+      : this.views.getOutputDisplayType();
+
     // To prevent errors, if the replay buffer instance does not exist and the status is not offline, log an error
     // and reset the replay buffer status to offline.
     if (
-      !this.contexts[output].replayBuffer &&
-      this.state.status[output].replayBuffer !== EReplayBufferState.Offline
+      !this.contexts[display].replayBuffer &&
+      this.state.status[display].replayBuffer !== EReplayBufferState.Offline
     ) {
       console.error(
         'No replay buffer instance found to stop but status is not offline. Setting status to offline.',
@@ -1976,29 +2008,32 @@ export class StreamingService
     }
 
     if (
-      this.contexts[output].replayBuffer &&
-      this.state.status[output].replayBuffer === EReplayBufferState.Offline
+      this.contexts[display].replayBuffer &&
+      this.state.status[display].replayBuffer === EReplayBufferState.Offline
     ) {
       console.error(
         'Replay buffer instance exists but the status is offline. Destroying instance.',
       );
-      this.destroyOutputContextIfExists(output, 'replayBuffer');
+      this.destroyOutputContextIfExists(display, 'replayBuffer');
       return;
     }
 
-    if (this.state.status[output].replayBuffer === EReplayBufferState.Running) {
-      this.contexts[output].replayBuffer.stop(false);
+    if (this.state.status[display].replayBuffer === EReplayBufferState.Running) {
+      this.contexts[display].replayBuffer.stop(false);
       // change the replay buffer status for the loading animation
-      this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Stopping, output, new Date().toISOString());
-    } else if (this.state.status[output].replayBuffer === EReplayBufferState.Stopping) {
+      this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Stopping, display, new Date().toISOString());
+    } else if (this.state.status[display].replayBuffer === EReplayBufferState.Stopping) {
       // If the replay buffer is hanging, we can try to stop it again
-      this.contexts[output].replayBuffer.stop(true);
-      this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Stopping, output, new Date().toISOString());
+      this.contexts[display].replayBuffer.stop(true);
+      this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Stopping, display, new Date().toISOString());
     }
   }
 
   saveReplay() {
-    const display = this.views.getOutputDisplayType();
+    const display = this.views.isDualOutputRecordingOnly
+      ? 'horizontal'
+      : this.views.getOutputDisplayType();
+
     if (!this.contexts[display].replayBuffer) return;
     if (this.state.status[display].replayBuffer === EReplayBufferState.Running) {
       this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Saving, display, new Date().toISOString());

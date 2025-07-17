@@ -29,11 +29,13 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
     isDualOutputMode: Services.DualOutputService.views.dualOutputMode,
     recordWhenStreaming: Services.StreamSettingsService.views.settings.recordWhenStreaming,
     useAiHighlighter: Services.HighlighterService.views.useAiHighlighter,
+    isRecording: Services.StreamingService.views.isRecording,
   }));
 
   const recordWhenStartStream = v.recordWhenStreaming || v.useAiHighlighter;
   const showRecordingIcons = v.isDualOutputMode && (canRecordVertical || canRecordDualOutput);
   const showRecordingSwitcher = !v.isDualOutputMode || showRecordingIcons;
+  const disableSwitcher = !v.useAiHighlighter || !v.isRecording;
 
   const options = useMemo(() => {
     const opts = [
@@ -47,12 +49,16 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
     return opts;
   }, [canRecordDualOutput]);
 
+  const message = v.isRecording
+    ? $t('Recording in progress. Stop recording to change the recording display.')
+    : $t('AI Highlighter is enabled. Recording will start when stream starts.');
+
   return (
     <div style={p?.style} className={cx(p?.className, styles.recordingSwitcher)}>
       {showRecordingSwitcher && (
         <Tooltip
-          title={$t('AI Highlighter is enabled. Recording will start when stream starts.')}
-          disabled={!v.useAiHighlighter}
+          title={message}
+          disabled={!disableSwitcher}
           placement="topRight"
           lightShadow
           className={styles.recordingTooltip}
@@ -72,7 +78,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
             label={v.isDualOutputMode ? $t('Record Stream in') : $t('Record Stream')}
             layout="horizontal"
             checkmark
-            disabled={v.useAiHighlighter}
+            disabled={disableSwitcher}
           />
           {showRecordingIcons && (
             <>
@@ -83,12 +89,12 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
                 onChange={(display: TDisplayOutput) => toggleRecordingDisplay(display)}
                 icons={true}
                 className={styles.recordingDisplay}
-                disabled={v.useAiHighlighter}
+                disabled={disableSwitcher}
               />
               {$t('format')}
             </>
           )}
-          {v.useAiHighlighter && <i className={cx(styles.info, 'icon-information')} />}
+          {disableSwitcher && <i className={cx(styles.info, 'icon-information')} />}
         </Tooltip>
       )}
     </div>

@@ -668,12 +668,12 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get isRecording() {
-    const display = this.getOutputDisplayType();
+    const display = this.isDualOutputRecordingOnly ? 'horizontal' : this.getOutputDisplayType();
     return this.streamingState.status[display].recording !== ERecordingState.Offline;
   }
 
   get isReplayBufferActive() {
-    const display = this.getOutputDisplayType();
+    const display = this.isDualOutputRecordingOnly ? 'horizontal' : this.getOutputDisplayType();
     return this.streamingState.status[display].replayBuffer !== EReplayBufferState.Offline;
   }
 
@@ -693,17 +693,21 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return this.streamingState.status.vertical.recording !== ERecordingState.Offline;
   }
 
+  get isDualOutputRecordingOnly() {
+    return this.isDualOutputMode && !this.isStreaming;
+  }
+
   get isIdle(): boolean {
     return !this.isStreaming && !this.isRecording;
   }
 
   get recordingStatus() {
-    const display = this.getOutputDisplayType();
+    const display = this.isDualOutputRecordingOnly ? 'horizontal' : this.getOutputDisplayType();
     return this.streamingState.status[display].recording;
   }
 
   get replayBufferStatus() {
-    const display = this.getOutputDisplayType();
+    const display = this.isDualOutputRecordingOnly ? 'horizontal' : this.getOutputDisplayType();
     return this.streamingState.status[display].replayBuffer;
   }
 
