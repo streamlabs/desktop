@@ -21,15 +21,22 @@ function buildVirtualCamExtension(context) {
   if (hasDownloadedRepo) {
     try {
       console.log('Build the camera system extension');
-      const buildExtBuffer = cp.execSync('cd slobs-virtual-cam-installer && ./build.sh 2>&1');
-      let stdoutString = buildExtBuffer.toString();
-      console.log(stdoutString);
+      const result = cp.spawnSync('bash', ['./slobs-virtual-cam-installer/build.sh'], {
+        encoding: 'utf-8',
+      });
+      if (result.error) {
+        console.error('Error:', result.error.message);
+      } else {
+        console.log('stdout:', result.stdout);
+        console.log('stderr:', result.stderr);
+        console.log('Exit code:', result.status);
+      }
 
       console.log('Copy the app into Frameworks folder');
       const copyFrameworkBuffer = cp.execSync(
         `cp -R ./slobs-virtual-cam-installer/build/RelWithDebInfo/slobs-virtual-cam-installer.app \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Frameworks\"`,
       );
-      stdoutString = copyFrameworkBuffer.toString();
+      const stdoutString = copyFrameworkBuffer.toString();
       console.log(stdoutString);
 
       console.log('Perform cleanup');
