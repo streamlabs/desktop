@@ -21,7 +21,7 @@ function buildVirtualCamExtension(context) {
   if (hasDownloadedRepo) {
     try {
       console.log('Build the camera system extension');
-      const buildExtBuffer = cp.execSync('cd slobs-virtual-cam-installer && ./build.sh');
+      const buildExtBuffer = cp.execSync('cd slobs-virtual-cam-installer && ./build.sh 2>&1');
       let stdoutString = buildExtBuffer.toString();
       console.log(stdoutString);
 
@@ -36,7 +36,7 @@ function buildVirtualCamExtension(context) {
       cp.execSync('rm -rf slobs-virtual-cam-installer'); // Remove the repo. Not required for the build agent but helpful for local dev
       console.log('Completed setting up the slobs-virtual-cam-installer.app');
     } catch (error) {
-      console.error(`Failed setup of slobs-virtual-cam-installer: ${error}`);
+      console.error('Failed setup of slobs-virtual-cam-installer', error.message);
     }
   } else {
     console.error('Could not download the mac-virtualcam repo');
