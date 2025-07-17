@@ -18,14 +18,14 @@ export type TTipPosition =
   | 'rightBottom';
 
 interface ITooltipTipProps {
-  title: string;
+  title: string | React.ReactNode;
   id?: string;
   className?: HTMLAttributes<HTMLElement> | string;
   wrapperStyle?: CSSProperties;
   style?: CSSProperties;
   lightShadow?: boolean;
   placement?: TTipPosition;
-  content?: HTMLElement | boolean;
+  content?: React.ReactNode | HTMLElement | boolean;
   disabled?: boolean;
   autoAdjustOverflow?: boolean;
   visible?: boolean;

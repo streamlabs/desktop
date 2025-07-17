@@ -12,6 +12,7 @@ import StartStreamingButton from './StartStreamingButton';
 import NotificationsArea from './NotificationsArea';
 import { Tooltip } from 'antd';
 import { confirmAsync } from 'components-react/modals';
+import { RadioInput } from 'components-react/shared/inputs/RadioInput';
 
 export default function StudioFooterComponent() {
   const {
@@ -252,4 +253,59 @@ function RecordingTimer() {
 
   if (!isRecording) return <></>;
   return <div className={cx(styles.navItem, styles.recordTime)}>{recordingTime}</div>;
+}
+
+function DualOutputRecordingButton() {
+  const { StreamingService } = Services;
+  const { isRecording, recordingStatus } = useVuex(() => ({
+    isRecording: StreamingService.views.isRecording,
+    recordingStatus: StreamingService.views.recordingStatus,
+  }));
+
+  function toggleRecording() {
+    StreamingService.actions.toggleRecording();
+  }
+
+  const options = [
+    { value: 'horizontal', label: $t('Horizontal'), icon: 'icon-desktop' },
+    { value: 'vertical', label: $t('Vertical'), icon: 'icon-phone-case' },
+    { value: 'both', label: $t('Both'), icon: 'icon-dual-output' },
+  ];
+
+  return (
+    <>
+      <RecordingTimer />
+      <div className={styles.navItem}>
+        <Tooltip
+          placement="left"
+          title={
+            <div style={{ display: 'flex', flexDirection: 'row' }}>
+              {$t('Start Recording')}
+              <RadioInput
+                name="recording-display"
+                defaultValue="horizontal"
+                value={'horizontal'}
+                options={options}
+                icons={true}
+                className={styles.recordingDisplay}
+              />
+            </div>
+          }
+        >
+          <button
+            className={cx(styles.recordButton, 'record-button', { active: isRecording })}
+            onClick={useDebounce(200, toggleRecording)}
+          >
+            <span>
+              {recordingStatus === ERecordingState.Stopping ? (
+                <i className="fa fa-spinner fa-pulse" />
+              ) : (
+                <>REC</>
+              )}
+            </span>
+          </button>
+        </Tooltip>
+      </div>
+    </>
+  );
 }
