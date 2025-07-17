@@ -364,7 +364,6 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
 
     // If a user is not in protected mode (ie using "Stream to a Custom Ingest")
     // Dual Output will not function correctly and try to overwrite the settings
-    console.log(status, this.streamSettingsService.protectedModeEnabled);
     if (status === true && !this.streamSettingsService.protectedModeEnabled) {
       this.notificationsService.actions.push({
         message: $t(
