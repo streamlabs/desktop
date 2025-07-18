@@ -10,7 +10,7 @@ import PerformanceMetrics from '../shared/PerformanceMetrics';
 import TestWidgets from './TestWidgets';
 import StartStreamingButton from './StartStreamingButton';
 import NotificationsArea from './NotificationsArea';
-import { Tooltip } from 'antd';
+import Tooltip from '../shared/Tooltip';
 import { confirmAsync } from 'components-react/modals';
 import { RadioInput } from 'components-react/shared/inputs/RadioInput';
 
@@ -36,6 +36,7 @@ export default function StudioFooterComponent() {
     replayBufferSaving,
     recordingModeEnabled,
     replayBufferEnabled,
+    isDualOutputMode,
   } = useVuex(() => ({
     streamingStatus: StreamingService.views.streamingStatus,
     isLoggedIn: UserService.views.isLoggedIn,
@@ -48,6 +49,7 @@ export default function StudioFooterComponent() {
     replayBufferSaving: StreamingService.views.replayBufferStatus === EReplayBufferState.Saving,
     recordingModeEnabled: RecordingModeService.views.isRecordingModeEnabled,
     replayBufferEnabled: SettingsService.views.values.Output.RecRB,
+    isDualOutputMode: StreamingService.views.isDualOutputMode,
   }));
 
   function performanceIconClassName() {
@@ -139,7 +141,8 @@ export default function StudioFooterComponent() {
             {$t('Looking to stream?')}
           </button>
         )}
-        {!recordingModeEnabled && <RecordingButton />}
+        {!recordingModeEnabled && !isDualOutputMode && <RecordingButton />}
+        {!recordingModeEnabled && isDualOutputMode && <DualOutputRecordingButton />}
         {replayBufferEnabled && replayBufferOffline && (
           <div className={styles.navItem}>
             <Tooltip placement="left" title={$t('Start Replay Buffer')}>
@@ -188,7 +191,8 @@ export default function StudioFooterComponent() {
             <StartStreamingButton />
           </div>
         )}
-        {recordingModeEnabled && <RecordingButton />}
+        {recordingModeEnabled && !isDualOutputMode && <RecordingButton />}
+        {recordingModeEnabled && isDualOutputMode && <DualOutputRecordingButton />}
       </div>
     </div>
   );
@@ -278,18 +282,21 @@ function DualOutputRecordingButton() {
       <div className={styles.navItem}>
         <Tooltip
           placement="left"
+          lightShadow={true}
           title={
-            <div style={{ display: 'flex', flexDirection: 'row' }}>
-              {$t('Start Recording')}
+            isRecording ? (
+              $t('Stop Recording')
+            ) : (
               <RadioInput
                 name="recording-display"
+                label={$t('Start Recording')}
                 defaultValue="horizontal"
                 value={'horizontal'}
                 options={options}
                 icons={true}
                 className={styles.recordingDisplay}
               />
-            </div>
+            )
           }
         >
           <button

@@ -12,11 +12,12 @@ import { EAvailableFeatures } from 'services/incremental-rollout';
 import { TDisplayOutput } from 'services/streaming';
 
 interface IRecordingSettingsProps {
+  showRecordingToggle?: boolean;
   style?: CSSProperties;
   className?: string | undefined;
 }
 export default function RecordingSwitcher(p: IRecordingSettingsProps) {
-  const { recording, toggleRecordingDisplay } = useGoLiveSettings();
+  const { recording, updateRecordingDisplayAndSaveSettings } = useGoLiveSettings();
 
   const canRecordVertical = Services.IncrementalRolloutService.views.featureIsEnabled(
     EAvailableFeatures.verticalRecording,
@@ -87,7 +88,9 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
                 defaultValue="horizontal"
                 value={recording}
                 options={options}
-                onChange={(display: TDisplayOutput) => toggleRecordingDisplay(display)}
+                onChange={(display: TDisplayOutput) =>
+                  updateRecordingDisplayAndSaveSettings(display)
+                }
                 icons={true}
                 className={styles.recordingDisplay}
                 disabled={disableSwitcher}

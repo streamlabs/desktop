@@ -327,6 +327,11 @@ export class GoLiveSettingsModule {
     this.save(this.state.settings);
   }
 
+  updateRecordingDisplayAndSaveSettings(display: TDisplayOutput) {
+    this.state.toggleRecordingDisplay(display);
+    this.save(this.state.settings);
+  }
+
   get enabledDestinations() {
     return this.state.customDestinations.reduce(
       (enabled: number[], dest: ICustomStreamDestination, index: number) => {

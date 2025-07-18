@@ -1,7 +1,9 @@
 import React from 'react';
 import { InputComponent, TSlobsInputProps } from './inputs';
 import InputWrapper from './InputWrapper';
+import styles from './RadioInput.m.less';
 import { Radio, Space } from 'antd';
+import cx from 'classnames';
 import omit from 'lodash/omit';
 
 type TRadioInputProps = TSlobsInputProps<
@@ -59,7 +61,7 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           value={p.value}
           defaultValue={p.defaultValue}
           onChange={e => p.onChange && p.onChange(e.target.value)}
-          className={p.className}
+          className={cx(p.className, styles.iconRadio)}
           disabled={p.disabled}
         >
           {p.options.map(option => {
