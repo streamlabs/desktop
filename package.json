@@ -4,7 +4,7 @@
   "description": "Streamlabs streaming software",
   "author": "General Workings, Inc.",
   "license": "GPL-3.0",
-  "version": "1.19.2-preview.0",
+  "version": "1.19.2-preview.1",
   "main": "main.js",
   "macVirtualCamVersion": "1.0.5",
   "scripts": {
