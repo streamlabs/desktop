@@ -258,28 +258,33 @@ export class StreamingService
    * Determine if platform requires an ultra subscription for streaming
    */
   isPrimeRequired(platform: TPlatform): boolean {
+    const { isPrime } = this.userService;
+
+    // Default branch has been changed to required (true) to avoid logic issues
+    if (isPrime) {
+      return false;
+    }
+
     // users can always stream to tiktok
     if (platform === 'tiktok') return false;
 
-    if (!this.views.isPrimaryPlatform(platform) && !this.userService.isPrime) {
+    // users should be able to stream to their primary
+    if (this.views.isPrimaryPlatform(platform)) {
+      return false;
+    } else {
+      // grandfathered users allowed to stream Twitch/Youtube (primary) + FB
       const primaryPlatform = this.userService.state.auth?.primaryPlatform;
 
-      // grandfathered users allowed to stream primary + FB
-      if (!this.restreamService.state.grandfathered) {
-        return false;
-      } else if (!this.restreamService.state.grandfathered) {
-        return true;
-      } else if (
+      const allowFacebook =
         isEqual([primaryPlatform, platform], ['twitch', 'facebook']) ||
-        isEqual([primaryPlatform, platform], ['youtube', 'facebook'])
-      ) {
+        isEqual([primaryPlatform, platform], ['youtube', 'facebook']);
+
+      if (this.restreamService.state.grandfathered && allowFacebook) {
         return false;
-      } else {
-        return true;
       }
     }
 
-    return false;
+    return true;
   }
 
   /**
