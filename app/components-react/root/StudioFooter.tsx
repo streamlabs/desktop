@@ -13,6 +13,7 @@ import NotificationsArea from './NotificationsArea';
 import Tooltip from '../shared/Tooltip';
 import { confirmAsync } from 'components-react/modals';
 import { RadioInput } from 'components-react/shared/inputs/RadioInput';
+import RecordingSwitcher from 'components-react/windows/go-live/RecordingSwitcher';
 
 export default function StudioFooterComponent() {
   const {
@@ -270,12 +271,6 @@ function DualOutputRecordingButton() {
     StreamingService.actions.toggleRecording();
   }
 
-  const options = [
-    { value: 'horizontal', label: $t('Horizontal'), icon: 'icon-desktop' },
-    { value: 'vertical', label: $t('Vertical'), icon: 'icon-phone-case' },
-    { value: 'both', label: $t('Both'), icon: 'icon-dual-output' },
-  ];
-
   return (
     <>
       <RecordingTimer />
@@ -284,19 +279,7 @@ function DualOutputRecordingButton() {
           placement="left"
           lightShadow={true}
           title={
-            isRecording ? (
-              $t('Stop Recording')
-            ) : (
-              <RadioInput
-                name="recording-display"
-                label={$t('Start Recording')}
-                defaultValue="horizontal"
-                value={'horizontal'}
-                options={options}
-                icons={true}
-                className={styles.recordingDisplay}
-              />
-            )
+            isRecording ? $t('Stop Recording') : <RecordingSwitcher label={$t('Start Recording')} />
           }
         >
           <button

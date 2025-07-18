@@ -1239,22 +1239,26 @@ export class StreamingService
   async toggleRecording() {
     try {
       if (this.views.recordingStatus === ERecordingState.Recording) {
+        console.log(this.views.recordingStatus, 'Stopping recording');
+
         await this.handleStopRecording();
       } else if (this.views.recordingStatus === ERecordingState.Offline) {
         await this.handleStartRecording();
+      } else if (this.views.recordingStatus === ERecordingState.Stopping) {
+        if (this.contexts.horizontal.recording !== null) {
+          console.warn('Force stopping horizontal recording');
+          this.contexts.horizontal.recording.stop(true);
+        }
+
+        if (this.contexts.vertical.recording !== null) {
+          console.warn('Force stopping vertical recording');
+          this.contexts.vertical.recording.stop(true);
+        }
       } else {
-        // Internal error message
-        const error =
-          this.contexts.horizontal.recording !== null || this.contexts.vertical.recording !== null
-            ? 'Recording already exists but is not recording or offline'
-            : 'Recording state is not recording or offline and no recording instance exists';
-
-        console.error('Error toggling recording:', error);
-
-        throwStreamError('UNKNOWN_STREAMING_ERROR_WITH_MESSAGE', {
-          status: 409,
-          statusText: error,
-        });
+        console.warn(
+          'Recording in-progress, cannot toggle recording in state ',
+          this.views.recordingStatus,
+        );
       }
     } catch (e: unknown) {
       console.error('Error toggling recording:', e);

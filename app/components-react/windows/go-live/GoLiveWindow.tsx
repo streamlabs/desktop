@@ -131,7 +131,7 @@ function ModalFooter() {
 
   return (
     <Form layout={'inline'}>
-      <RecordingSwitcher />
+      <RecordingSwitcher showRecordingToggle={true} />
       {/* CLOSE BUTTON */}
       <Button onClick={close}>{$t('Close')}</Button>
 
