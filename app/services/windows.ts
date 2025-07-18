@@ -587,6 +587,18 @@ export class WindowsService extends StatefulService<IWindowsState> {
     this.styleBlockersUpdated.next({ windowId, hideStyleBlockers });
   }
 
+  updateChildWindowQueryParams(params: Dictionary<any>) {
+    const newOptions = {
+      ...this.getChildWindowOptions(),
+      queryParams: {
+        ...this.getChildWindowQueryParams(),
+        ...params,
+      },
+    };
+
+    this.updateChildWindowOptions(newOptions);
+  }
+
   updateChildWindowOptions(optionsPatch: Partial<IWindowOptions>) {
     const newOptions: IWindowOptions = {
       ...DEFAULT_WINDOW_OPTIONS,
