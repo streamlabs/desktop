@@ -693,6 +693,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return this.streamingState.status.vertical.recording !== ERecordingState.Offline;
   }
 
+  get isDualOutputRecording() {
+    return this.isDualOutputMode && this.settings.recording === 'both';
+  }
+
   get isDualOutputRecordingOnly() {
     return this.isDualOutputMode && !this.isStreaming;
   }

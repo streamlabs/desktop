@@ -1302,16 +1302,13 @@ export class StreamingService
         goLiveSettings: { ...settings, recording: 'horizontal' },
       });
     }
-
-    const dualOutputRecording =
-      this.views.isDualOutputMode && this.views.settings.recording === 'both';
     const isDualOutputModeRecordingOnly = this.views.isDualOutputMode && !this.views.isStreaming;
     const isSingleOutputMode = !this.views.isDualOutputMode;
 
     if (
       isSingleOutputMode ||
       isDualOutputModeRecordingOnly ||
-      dualOutputRecording ||
+      this.views.isDualOutputRecording ||
       this.views.settings.recording === 'horizontal'
     ) {
       // Update the recording state for the loading animation
@@ -1325,7 +1322,7 @@ export class StreamingService
       }
     }
 
-    if (dualOutputRecording || this.views.settings.recording === 'vertical') {
+    if (this.views.isDualOutputRecording || this.views.settings.recording === 'vertical') {
       // Update the recording state for the loading animation
       this.SET_RECORDING_STATUS(ERecordingState.Starting, 'vertical', new Date().toISOString());
       await this.validateOrCreateOutputInstance('vertical', 'recording', 2, true);
@@ -1597,8 +1594,7 @@ export class StreamingService
     const time = new Date().toISOString();
 
     if (info.signal === EOBSOutputSignal.Start) {
-      // Start the vertical streaming instance if in dual output mode. The vertical instance was created in
-      // the `finishStartStreaming` method, so we can safely start it here.
+      // In dual output mode, for dual output recording start the vertical streaming instance.
       // Note: in order to stream in dual output mode, we need to create both a horizontal and vertical
       // streaming instance. To prevent errors, the vertical instance should only be created after the
       // horizontal instance has been created and started. In dual output mode, the start streaming promise
@@ -1608,6 +1604,9 @@ export class StreamingService
         // because the vertical instance and horizontal instance do not share anything and is just a precaution.
         await new Promise(resolve => setTimeout(resolve, 1000));
         await this.validateOrCreateOutputInstance('vertical', 'streaming', 2, true);
+
+        // Update the streaming status for the horizontal instance
+        this.SET_STREAMING_STATUS(nextState, 'horizontal', time);
 
         // Return early because resolving the promise for starting the stream will be handled by signals from the
         // vertical instance.
@@ -1635,17 +1634,10 @@ export class StreamingService
 
       await this.handleStartStreaming(info.signal);
     } else if (info.signal === EOBSOutputSignal.Activate) {
-      // Currently, do nothing on `activate` because the `starting` signal has handled everything
+      // Currently, do nothing on `activate` because the `starting` signal has handled settings the starting
+      // streaming status. The `activate` signal is sent after the `starting` signal and is used to indicate that
+      // the stream has successfully been created and is ready to start.
       return;
-    } else if (info.signal === EOBSOutputSignal.Starting) {
-      // In dual output mode, do nothing on the `starting` signal for the horizontal stream context because
-      // the vertical stream context still needs to be created. To prevent errors, the vertical stream context
-      // is created after the horizontal `start` signal. Finishing streaming should not resolve
-      // until after the final stream context is created and started. In dual output mode this is the vertical
-      // stream while in single output mode this is the horizontal stream.
-      // if (this.views.isDualOutputMode && display === 'vertical') {
-      //   return;
-      // }
     } else if (info.signal === EOBSOutputSignal.Stopping) {
       this.sendStreamEndEvent();
     } else if (info.signal === EOBSOutputSignal.Stop) {
@@ -1660,18 +1652,6 @@ export class StreamingService
 
         await this.handleDestroyAllInstances();
       }
-    } else if (info.signal === EOBSOutputSignal.Deactivate) {
-      // The `deactivate` signal is sent after the `stop` signal
-
-      this.RESET_STREAM_INFO();
-      this.rejectStartStreaming();
-
-      this.usageStatisticsService.recordAnalyticsEvent('StreamingStatus', {
-        code: info.code,
-        status: EStreamingState.Offline,
-      });
-
-      await this.handleDestroyAllInstances();
     } else if (info.signal === EOBSOutputSignal.Deactivate) {
       // The `deactivate` signal is sent after the `stop` signal
 
@@ -1733,9 +1713,9 @@ export class StreamingService
     }
 
     if (info.signal === EOBSOutputSignal.Stop) {
-      // Handle stopping the vertical recording instance in dual output mode
+      // Handle stopping the vertical recording instance in dual output mode dual output recording
       if (
-        this.views.isDualOutputMode &&
+        this.views.isDualOutputRecording &&
         display === 'horizontal' &&
         this.contexts.vertical.recording !== null
       ) {
@@ -1744,6 +1724,10 @@ export class StreamingService
         // in the recording history
         await new Promise(resolve => setTimeout(resolve, 2000));
         this.contexts.vertical.recording.stop();
+
+        // Reset the status of the horizontal recording instance
+        const time = new Date().toISOString();
+        this.SET_RECORDING_STATUS(nextState, 'horizontal', time);
 
         // Return early because stopping the vertical recording instance needs to resolve
         return;
@@ -1792,15 +1776,12 @@ export class StreamingService
       return;
     }
 
-    const isDualOutputReplayBuffer =
-      this.views.isDualOutputMode && this.views.settings.recording === 'both';
+    // The replay buffer's replay buffer output is the same as the recording output
+    const isDualOutputReplayBuffer = this.views.isDualOutputRecording;
 
     if (info.signal === EOBSOutputSignal.Start) {
       // In dual output mode for dual output replay buffer, the horizontal instance is created and started first
       // and the vertical instance is created and started after the horizontal instance has started.
-      // Note: the replay buffer's replay buffer output is the same as the recording output
-      const isDualOutputReplayBuffer =
-        this.views.isDualOutputMode && this.views.settings.recording === 'both';
       if (isDualOutputReplayBuffer && display === 'horizontal') {
         await this.createReplayBuffer('vertical', 2);
         return;
@@ -2040,12 +2021,6 @@ export class StreamingService
       this.contexts[display].replayBuffer.save();
       this.replayBufferStatusChange.next(EReplayBufferState.Saving);
       NodeObs.OBS_service_processReplayBufferHotkey();
-
-      // The replay buffer output is the same as the recording output
-      // For dual output recording, also save the vertical replay buffer
-      if (this.views.isDualOutputMode && this.views.settings.recording === 'both') {
-        this.contexts.vertical.replayBuffer.save();
-      }
     }
   }
 

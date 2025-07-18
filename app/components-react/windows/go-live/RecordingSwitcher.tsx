@@ -35,7 +35,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
   const recordWhenStartStream = v.recordWhenStreaming || v.useAiHighlighter;
   const showRecordingIcons = v.isDualOutputMode && (canRecordVertical || canRecordDualOutput);
   const showRecordingSwitcher = !v.isDualOutputMode || showRecordingIcons;
-  const disableSwitcher = !v.useAiHighlighter || !v.isRecording;
+  const disableSwitcher = v.useAiHighlighter || v.isRecording;
 
   const options = useMemo(() => {
     const opts = [
