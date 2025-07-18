@@ -24,6 +24,7 @@ enum ERecordingState {
   Recording = 'recording',
   Stopping = 'stopping',
   Start = 'start',
+  Writing = 'writing',
   Wrote = 'wrote',
 }
 

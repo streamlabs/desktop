@@ -1249,6 +1249,8 @@ export class StreamingService
             ? 'Recording already exists but is not recording or offline'
             : 'Recording state is not recording or offline and no recording instance exists';
 
+        console.error('Error toggling recording:', error);
+
         throwStreamError('UNKNOWN_STREAMING_ERROR_WITH_MESSAGE', {
           status: 409,
           statusText: error,
@@ -1487,7 +1489,9 @@ export class StreamingService
       stream.audioTrack = index;
       // Twitch VOD audio track
       if (stream.enableTwitchVOD) {
-        const trackNumber = stream.twitchTrack ?? index + 1;
+        // Potentially need to use a different track number for Twitch VODs
+        // const trackNumber = stream.twitchTrack ?? index + 1;
+        const trackNumber = stream.twitchTrack ?? index;
         this.validateOrCreateAudioTrack(trackNumber);
         stream.twitchTrack = trackNumber;
       }
@@ -1679,7 +1683,7 @@ export class StreamingService
     const nextState: ERecordingState = ({
       [EOBSOutputSignal.Starting]: ERecordingState.Recording,
       [EOBSOutputSignal.Start]: ERecordingState.Recording,
-      [EOBSOutputSignal.Stop]: ERecordingState.Offline,
+      [EOBSOutputSignal.Stop]: ERecordingState.Writing,
       [EOBSOutputSignal.Stopping]: ERecordingState.Stopping,
       [EOBSOutputSignal.Wrote]: ERecordingState.Offline,
     } as Dictionary<ERecordingState>)[info.signal];
@@ -1713,6 +1717,9 @@ export class StreamingService
     }
 
     if (info.signal === EOBSOutputSignal.Stop) {
+      // Note: The `stop` signal will set the recording status to `stopping` to allow the recording to
+      // finish writing the last file before setting the status to `offline`. The `wrote` signal will
+      // set the recording status to `offline` after the last file has been written.
       // Handle stopping the vertical recording instance in dual output mode dual output recording
       if (
         this.views.isDualOutputRecording &&
@@ -1750,9 +1757,9 @@ export class StreamingService
       }
       await this.markersService.exportCsv(parsedName);
 
-      await this.handleDestroyOutputContexts(display);
-
       this.latestRecordingPath.next(fileName);
+
+      await this.handleDestroyOutputContexts(display);
     }
 
     const time = new Date().toISOString();
