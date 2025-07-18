@@ -187,7 +187,7 @@ class StreamSettingsModule {
   disableProtectedMode() {
     this.streamSettingsService.actions.setSettings({ protectedModeEnabled: false });
     if (this.dualOutputService.views.dualOutputMode) {
-      this.dualOutputService.actions.setDualOutputModeIfPossible(false);
+      this.dualOutputService.actions.setDualOutputModeIfPossible(false, true);
     }
   }
 
