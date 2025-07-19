@@ -99,7 +99,7 @@ export const instagramUser1: IDummyTestUser = {
   id: 'instagramId4',
   token: 'instagramToken4',
   apiToken: 'instagramApiToken4',
-  streamUrl: 'rtmps://instagramStreamUrl:443/rtmp/',
+  streamUrl: 'rtmps://instagramStreamUrl/',
   streamKey: 'instagramStreamKey4',
   widgetToken: 'instagramWidgetToken4',
 };
