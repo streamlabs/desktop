@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Layout, Menu } from 'antd';
+import { Layout, Menu, Input } from 'antd';
+import { SearchOutlined } from '@ant-design/icons';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
@@ -31,11 +32,9 @@ export default function SourcesShowcase() {
 }
 
 function SourcesShowcaseModal() {
-  const { selectInspectedSource, availableAppSources, store } = useSourceShowcaseSettings();
-
-  const inspectedSource = store.useState(s => s.inspectedSource);
-
+  const { selectInspectedSource, availableAppSources } = useSourceShowcaseSettings();
   const [activeTab, setActiveTab] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   return (
     <ModalLayout
@@ -45,18 +44,31 @@ function SourcesShowcaseModal() {
     >
       <Layout style={{ height: '100%' }}>
         <Content style={{ paddingRight: 0, paddingLeft: 0 }}>
-          <Menu
-            onClick={e => setActiveTab(e.key)}
-            selectedKeys={[activeTab]}
-            mode="horizontal"
-            style={{ marginBottom: '16px' }}
-          >
-            <Menu.Item key="all">{$t('All Sources')}</Menu.Item>
-            <Menu.Item key="general">{$t('Media Categories')}</Menu.Item>
-            <Menu.Item key="widgets">{$t('Widgets')}</Menu.Item>
-            {availableAppSources.length > 0 && <Menu.Item key="apps">{$t('Apps')}</Menu.Item>}
-          </Menu>
-          <SourceGrid activeTab={activeTab} />
+          <div className={styles.header}>
+            <Menu
+              onClick={e => setActiveTab(e.key)}
+              selectedKeys={[activeTab]}
+              mode="horizontal"
+              style={{ borderBottom: 0 }}
+            >
+              <Menu.Item key="all">{$t('All Sources')}</Menu.Item>
+              <Menu.Item key="general">{$t('Media Categories')}</Menu.Item>
+              <Menu.Item key="widgets">{$t('Widgets')}</Menu.Item>
+              {availableAppSources.length > 0 && <Menu.Item key="apps">{$t('Apps')}</Menu.Item>}
+            </Menu>
+            {activeTab !== 'apps' && (
+              <Input
+                type="search"
+                className={styles.search}
+                allowClear
+                placeholder={$t('Search...')}
+                prefix={<SearchOutlined />}
+                onChange={ev => setSearchTerm(ev.target.value)}
+                value={searchTerm}
+              />
+            )}
+          </div>
+          <SourceGrid activeTab={activeTab} searchTerm={searchTerm} />
         </Content>
         <SideBar />
       </Layout>
