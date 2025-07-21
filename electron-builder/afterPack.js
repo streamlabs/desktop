@@ -2,6 +2,7 @@ const cp = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const buildCameraExt = require('./build-mac-virtualcam');
 
 function signAndCheck(identity, filePath) {
   console.log(`Signing: ${filePath}`);
@@ -65,11 +66,17 @@ function afterPackMac(context) {
     `cp -R ./node_modules/obs-studio-node/Frameworks \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Resources/app.asar.unpacked/node_modules/\"`,
   );
 
+  buildCameraExt(context);
+
   if (process.env.SLOBS_NO_SIGN) return;
 
   signBinaries(
     context.packager.config.mac.identity,
     `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Resources/app.asar.unpacked`,
+  );
+  signBinaries(
+    context.packager.config.mac.identity,
+    `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Frameworks/slobs-virtual-cam-installer.app`,
   );
 }
 
