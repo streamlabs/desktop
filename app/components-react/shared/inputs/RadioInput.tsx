@@ -70,7 +70,7 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
                 key={option.value}
                 value={option.value}
                 disabled={p.disabled}
-                children={<i className={option.icon} />}
+                children={<i className={cx(option.icon, styles.iconToggle)} />}
               />
             );
           })}
