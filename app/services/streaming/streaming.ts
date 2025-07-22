@@ -1237,6 +1237,14 @@ export class StreamingService
   }
 
   async toggleRecording() {
+    console.log(
+      '=========== TOGGLING RECORDING\n this.views.recordingStatus',
+      this.views.recordingStatus,
+    );
+    console.log('this.contexts.horizontal', this.contexts.horizontal);
+    console.log('this.contexts.vertical', this.contexts.vertical);
+    console.log('this.state.status.recording', this.state.status.recording, '\n');
+
     try {
       if (this.views.recordingStatus === ERecordingState.Recording) {
         console.log(this.views.recordingStatus, 'Stopping recording');
@@ -1308,29 +1316,25 @@ export class StreamingService
         goLiveSettings: { ...settings, recording: 'horizontal' },
       });
     }
-    const isDualOutputModeRecordingOnly = this.views.isDualOutputMode && !this.views.isStreaming;
     const isSingleOutputMode = !this.views.isDualOutputMode;
 
     if (
       isSingleOutputMode ||
-      isDualOutputModeRecordingOnly ||
       this.views.isDualOutputRecording ||
       this.views.settings.recording === 'horizontal'
     ) {
       // Update the recording state for the loading animation
-      this.SET_RECORDING_STATUS(ERecordingState.Starting, 'horizontal', new Date().toISOString());
       await this.validateOrCreateOutputInstance('horizontal', 'recording', 1, true);
 
       // In single output mode or is the user is just recording without streaming,
       // only use the horizontal display for recording.
-      if (isSingleOutputMode || isDualOutputModeRecordingOnly) {
+      if (isSingleOutputMode) {
         return;
       }
     }
 
     if (this.views.isDualOutputRecording || this.views.settings.recording === 'vertical') {
       // Update the recording state for the loading animation
-      this.SET_RECORDING_STATUS(ERecordingState.Starting, 'vertical', new Date().toISOString());
       await this.validateOrCreateOutputInstance('vertical', 'recording', 2, true);
     }
   }
@@ -1384,50 +1388,29 @@ export class StreamingService
 
     // recordings must have a streaming instance
     await this.validateOrCreateOutputInstance(display, 'streaming', index);
-    // handle unique properties (including audio)
-    if (mode === 'Advanced') {
-      const recording = AdvancedRecordingFactory.create() as IAdvancedRecording;
 
-      Object.keys(settings).forEach(key => {
-        if ((settings as any)[key] === undefined) return;
+    this.contexts[display].recording =
+      mode === 'Advanced'
+        ? (AdvancedRecordingFactory.create() as IAdvancedRecording)
+        : (SimpleRecordingFactory.create() as ISimpleRecording);
 
-        // share the video encoder with the streaming instance if it exists
-        if (key === 'videoEncoder') {
-          recording.videoEncoder = VideoEncoderFactory.create(
-            settings.videoEncoder,
-            'video-encoder',
-          );
-        } else {
-          (recording as any)[key] = (settings as any)[key];
-        }
-      });
-
+    if (this.isAdvancedRecording(this.contexts[display].recording)) {
+      this.migrateSettings('recording', display);
       // output resolutions
       const resolution = this.videoSettingsService.outputResolutions[display];
-      recording.outputWidth = resolution.outputWidth;
-      recording.outputHeight = resolution.outputHeight;
+      this.contexts[display].recording.outputWidth = resolution.outputWidth;
+      this.contexts[display].recording.outputHeight = resolution.outputHeight;
+      this.contexts[display].recording.streaming = this.contexts[display]
+        .streaming as IAdvancedStreaming;
 
-      recording.streaming = this.contexts[display].streaming as IAdvancedStreaming;
-      this.contexts[display].recording = recording as IAdvancedRecording;
+      console.log('Created advanced recording', this.contexts[display].recording);
     } else {
-      const recording = SimpleRecordingFactory.create() as ISimpleRecording;
-      Object.keys(settings).forEach(key => {
-        if ((settings as any)[key] === undefined) return;
-
-        // share the video encoder with the streaming instance if it exists
-        if (key === 'videoEncoder') {
-          recording.videoEncoder = VideoEncoderFactory.create(
-            settings.videoEncoder,
-            'video-encoder',
-          );
-        } else {
-          (recording as any)[key] = (settings as any)[key];
-        }
-      });
-
-      recording.streaming = this.contexts[display].streaming as ISimpleStreaming;
-      recording.audioEncoder = AudioEncoderFactory.create('ffmpeg_aac', 'audio-encoder-recording');
-      this.contexts[display].recording = recording as ISimpleRecording;
+      this.contexts[display].recording.streaming = this.contexts[display]
+        .streaming as ISimpleStreaming;
+      this.contexts[display].recording.audioEncoder = AudioEncoderFactory.create(
+        'ffmpeg_aac',
+        'audio-encoder-recording',
+      );
     }
 
     // assign context
@@ -1445,6 +1428,44 @@ export class StreamingService
     return Promise.resolve(this.contexts[display].recording);
   }
 
+  private migrateSettings(type: 'streaming' | 'recording', display: TDisplayType) {
+    const settings =
+      type === 'streaming'
+        ? this.outputSettingsService.getStreamingSettings()
+        : this.outputSettingsService.getRecordingSettings();
+
+    const instance = this.contexts[display][type] as
+      | ISimpleStreaming
+      | IAdvancedStreaming
+      | ISimpleRecording
+      | IAdvancedRecording;
+
+    Object.keys(settings).forEach(key => {
+      if ((settings as any)[key] === undefined) return;
+
+      // share the video encoder with the recording instance if it exists
+      if (key === 'videoEncoder') {
+        instance.videoEncoder = VideoEncoderFactory.create(
+          settings.videoEncoder,
+          `video-encoder-${type}-${display}`,
+        );
+
+        if (instance.videoEncoder.lastError) {
+          console.error(
+            'Error creating encoder',
+            settings.videoEncoder,
+            instance.videoEncoder.lastError,
+          );
+          throw new Error(instance.videoEncoder.lastError);
+        }
+      } else {
+        (instance as any)[key] = (settings as any)[key];
+      }
+    });
+
+    return instance;
+  }
+
   /**
    * Create a streaming instance for the given display
    * @param display - The display to create the streaming for
@@ -1452,7 +1473,6 @@ export class StreamingService
    */
   private async createStreaming(display: TDisplayType, index: number, start?: boolean) {
     const mode = this.outputSettingsService.getSettings().mode;
-
     const settings = this.outputSettingsService.getStreamingSettings();
 
     const stream =
@@ -1461,14 +1481,14 @@ export class StreamingService
         : (SimpleStreamingFactory.create() as ISimpleStreaming);
 
     // assign settings
-    Object.keys(settings).forEach((key: keyof Partial<ISimpleStreaming>) => {
+    Object.keys(settings).forEach(key => {
       if ((settings as any)[key] === undefined) return;
 
       // share the video encoder with the recording instance if it exists
       if (key === 'videoEncoder') {
         stream.videoEncoder = VideoEncoderFactory.create(
           settings.videoEncoder,
-          `video-encoder-${display}`,
+          `video-encoder-stream-${display}`,
         );
 
         if (stream.videoEncoder.lastError) {
@@ -1485,14 +1505,20 @@ export class StreamingService
     });
 
     if (this.isAdvancedStreaming(stream)) {
+      console.log('advanced stream', stream);
+
       const resolution = this.videoSettingsService.outputResolutions[display];
       stream.outputWidth = resolution.outputWidth;
       stream.outputHeight = resolution.outputHeight;
       // stream audio track
+      console.log('index', index);
+
       this.validateOrCreateAudioTrack(index);
+      console.log('track created');
+
       stream.audioTrack = index;
       // Twitch VOD audio track
-      if (stream.enableTwitchVOD) {
+      if (stream.enableTwitchVOD && display === 'horizontal') {
         // Potentially need to use a different track number for Twitch VODs
         // const trackNumber = stream.twitchTrack ?? index + 1;
         const trackNumber = stream.twitchTrack ?? index;
@@ -1502,6 +1528,8 @@ export class StreamingService
 
       this.contexts[display].streaming = stream as IAdvancedStreaming;
     } else if (this.isSimpleStreaming(stream)) {
+      console.log('simple stream', stream);
+
       stream.audioEncoder = AudioEncoderFactory.create('ffmpeg_aac', 'audio-encoder-stream');
       this.contexts[display].streaming = stream as ISimpleStreaming;
     } else {
@@ -1683,9 +1711,11 @@ export class StreamingService
   }
 
   private async handleRecordingSignal(info: EOutputSignal, display: TDisplayType) {
+    console.log('info', JSON.stringify(info, null, 2));
+
     // map signals to status
     const nextState: ERecordingState = ({
-      [EOBSOutputSignal.Starting]: ERecordingState.Recording,
+      [EOBSOutputSignal.Starting]: ERecordingState.Starting,
       [EOBSOutputSignal.Start]: ERecordingState.Recording,
       [EOBSOutputSignal.Stop]: ERecordingState.Writing,
       [EOBSOutputSignal.Stopping]: ERecordingState.Stopping,
@@ -1931,6 +1961,7 @@ export class StreamingService
    */
   private async createReplayBuffer(display: TDisplayType = 'horizontal', index?: number) {
     const mode = this.outputSettingsService.getSettings().mode;
+    const settings = this.outputSettingsService.getReplayBufferSettings();
 
     // A replay buffer requires a recording instance and a streaming instance
     // Handle start recording and start replay buffer when start streaming
@@ -1942,7 +1973,6 @@ export class StreamingService
     await this.validateOrCreateOutputInstance(display, 'recording', index, startRecordingInstance); // IS IT HERE
     await this.validateOrCreateOutputInstance(display, 'streaming', index);
 
-    const settings = this.outputSettingsService.getReplayBufferSettings();
     const replayBuffer =
       mode === 'Advanced'
         ? (AdvancedReplayBufferFactory.create() as IAdvancedReplayBuffer)
@@ -1982,9 +2012,7 @@ export class StreamingService
   }
 
   stopReplayBuffer() {
-    const display = this.views.isDualOutputRecordingOnly
-      ? 'horizontal'
-      : this.views.getOutputDisplayType();
+    const display = this.views.getOutputDisplayType();
 
     // To prevent errors, if the replay buffer instance does not exist and the status is not offline, log an error
     // and reset the replay buffer status to offline.
@@ -2022,9 +2050,7 @@ export class StreamingService
   }
 
   saveReplay() {
-    const display = this.views.isDualOutputRecordingOnly
-      ? 'horizontal'
-      : this.views.getOutputDisplayType();
+    const display = this.views.getOutputDisplayType();
 
     if (!this.contexts[display].replayBuffer) return;
     if (this.state.status[display].replayBuffer === EReplayBufferState.Running) {
@@ -2047,6 +2073,7 @@ export class StreamingService
   ) {
     const mode = this.outputSettingsService.getSettings().mode;
     const validOutput = this.validateOutputInstance(mode, display, type);
+    console.log('validOutput', validOutput, display, type);
 
     // If the instance matches the mode, return to validate it
     if (validOutput) {
@@ -2065,6 +2092,7 @@ export class StreamingService
       await this.createRecording(display, index, start);
     }
 
+    // TODO REMOVE RECORDING RESTRICTION AND ADD MODAL
     return false;
   }
 
@@ -2096,12 +2124,16 @@ export class StreamingService
    * audio track.
    * @param index - The index of the audio track
    */
-  validateOrCreateAudioTrack(index: number) {
-    // If the audio track already exists, return
-    // if (AudioTrackFactory.getAtIndex(index)) return;
-
-    // Otherwise, create the audio track
-    this.createAudioTrack(index);
+  async validateOrCreateAudioTrack(index: number) {
+    return Promise.resolve(() => {
+      // If the audio track already exists, return
+      const existingTrack = AudioTrackFactory.getAtIndex(index);
+      console.log('existingTrack', existingTrack);
+      return existingTrack !== null;
+    }).catch(() => {
+      // If the audio track does not exist, create it
+      this.createAudioTrack(index);
+    });
   }
 
   /**

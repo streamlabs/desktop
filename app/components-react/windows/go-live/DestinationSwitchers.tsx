@@ -272,13 +272,20 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
       title: $t('Connect your %{platform} account', { platform: platformLabels(platform) }),
       icon: <PlatformLogo platform={platform} className={styles.actionModalLogo} />,
       message,
-      btnText: $t('Connect'),
-      fn: () => {
-        NavigationService.actions.navigate('PlatformMerge', {
-          platform,
-        });
-        WindowsService.actions.closeChildWindow();
-      },
+      btns: [
+        {
+          text: $t('Skip'),
+        },
+        {
+          text: $t('Connect'),
+          fn: () => {
+            NavigationService.actions.navigate('PlatformMerge', {
+              platform,
+            });
+            WindowsService.actions.closeChildWindow();
+          },
+        },
+      ],
     });
   }
 
