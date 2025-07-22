@@ -1005,18 +1005,6 @@ function initialize(crashHandler) {
     await recollectUserSessionCookie();
   });
 
-  ipcMain.handle('fetchViaMainProcess', async (e, url, options) => {
-    const fetch = require('node-fetch');
-    const response = await fetch(url, options);
-    return {
-      ok: response.ok,
-      status: response.status,
-      statusText: response.statusText,
-      headers: response.headers.raw(),
-      text: await response.text(),
-    };
-  });
-
   ipcMain.on('getWindowIds', e => {
     e.returnValue = {
       main: mainWindow.id,
@@ -1050,4 +1038,24 @@ function initialize(crashHandler) {
       fs.appendFileSync(I18N_NOT_FOUND_KEYS_FILE, keys.flatMap(line => [line, '\n']).join(''));
     }
   });
+
+  ipcMain.handle(
+    'fetch',
+    /**
+     * @param {import('electron').IpcMainInvokeEvent} _e
+     * @param {string} url
+     * @param {RequestInit} options
+     * @returns {Promise<import('./app/util/fetchViaMainProcess.ts').MainProcessFetchResponse>}
+     * */
+    async (_e, url, options) => {
+      const response = await fetch(url, options);
+      const text = await response.text();
+      return {
+        ok: response.ok,
+        headers: response.headers.entries(),
+        status: response.status,
+        text,
+      };
+    },
+  );
 }
