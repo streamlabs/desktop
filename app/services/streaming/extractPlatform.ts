@@ -7,7 +7,7 @@ function isOnlyNumberOrDot(str: string): boolean {
 export function extractPlatform(streamingURL: string): string {
   try {
     // URL は rtmp: だとhostnameを抽出してくれないためhttpに置換する
-    const u = new URL(streamingURL.replace('rtmp://', 'http://'));
+    const u = new URL(streamingURL.replace(/rtmps?:\/\//, 'http://'));
     if (isOnlyNumberOrDot(u.hostname)) {
       // IPアドレスは 先頭の2つの値までを返す
       return u.hostname.split('.').slice(0, 2).join('.');
