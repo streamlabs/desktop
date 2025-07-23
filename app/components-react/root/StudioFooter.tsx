@@ -11,6 +11,7 @@ import TestWidgets from './TestWidgets';
 import StartStreamingButton from './StartStreamingButton';
 import NotificationsArea from './NotificationsArea';
 import Tooltip from '../shared/Tooltip';
+import { Tooltip as AntdTooltip } from 'antd';
 import { confirmAsync, promptAction } from 'components-react/modals';
 import RecordingSwitcher from 'components-react/windows/go-live/RecordingSwitcher';
 
@@ -119,7 +120,7 @@ export default function StudioFooterComponent() {
   return (
     <div className={cx('footer', styles.footer)}>
       <div className={cx('flex flex--center flex--grow flex--justify-start', styles.footerLeft)}>
-        <Tooltip placement="left" title={$t('Open Performance Window')}>
+        <AntdTooltip placement="left" title={$t('Open Performance Window')}>
           <i
             className={cx(
               'icon-leaderboard-4',
@@ -129,7 +130,7 @@ export default function StudioFooterComponent() {
             )}
             onClick={openMetricsWindow}
           />
-        </Tooltip>
+        </AntdTooltip>
         <PerformanceMetrics mode="limited" className="performance-metrics" />
         <NotificationsArea />
       </div>
@@ -145,16 +146,16 @@ export default function StudioFooterComponent() {
         {!recordingModeEnabled && isDualOutputMode && <DualOutputRecordingButton />}
         {replayBufferEnabled && replayBufferOffline && (
           <div className={styles.navItem}>
-            <Tooltip placement="left" title={$t('Start Replay Buffer')}>
+            <AntdTooltip placement="left" title={$t('Start Replay Buffer')}>
               <button className="circle-button" onClick={toggleReplayBuffer}>
                 <i className="icon-replay-buffer" />
               </button>
-            </Tooltip>
+            </AntdTooltip>
           </div>
         )}
         {!replayBufferOffline && (
           <div className={cx(styles.navItem, styles.replayButtonGroup)}>
-            <Tooltip placement="left" title={$t('Stop')}>
+            <AntdTooltip placement="left" title={$t('Stop')}>
               <button
                 className={cx('circle-button', styles.leftReplay, 'button--soft-warning')}
                 onClick={toggleReplayBuffer}
@@ -165,25 +166,29 @@ export default function StudioFooterComponent() {
                   <i className="fa fa-stop" />
                 )}
               </button>
-            </Tooltip>
-            <Tooltip placement="right" title={$t('Save Replay')}>
-              <button className={cx('circle-button', styles.rightReplay)} onClick={saveReplay}>
+            </AntdTooltip>
+            <AntdTooltip placement="right" title={$t('Save Replay')}>
+              <button
+                className={cx('circle-button', styles.rightReplay)}
+                onClick={saveReplay}
+                disabled={StreamingService.views.isDualOutputRecording}
+              >
                 {replayBufferSaving ? (
                   <i className="fa fa-spinner fa-pulse" />
                 ) : (
                   <i className="icon-save" />
                 )}
               </button>
-            </Tooltip>
+            </AntdTooltip>
           </div>
         )}
         {canSchedule && (
           <div className={styles.navItem}>
-            <Tooltip placement="left" title={$t('Schedule Stream')}>
+            <AntdTooltip placement="left" title={$t('Schedule Stream')}>
               <button className="circle-button" onClick={openScheduleStream}>
                 <i className="icon-date" />
               </button>
-            </Tooltip>
+            </AntdTooltip>
           </div>
         )}
         {!recordingModeEnabled && (

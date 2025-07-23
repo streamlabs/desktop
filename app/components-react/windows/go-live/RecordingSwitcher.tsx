@@ -33,13 +33,15 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
     recordWhenStreaming: Services.StreamSettingsService.views.settings.recordWhenStreaming,
     useAiHighlighter: Services.HighlighterService.views.useAiHighlighter,
     isRecording: Services.StreamingService.views.isRecording,
+    isReplayBufferActive: Services.StreamingService.views.isReplayBufferActive,
   }));
 
   const recordWhenStartStream = v.recordWhenStreaming || v.useAiHighlighter;
   const showRecordingToggle = p?.showRecordingToggle ?? false;
   const showRecordingIcons = v.isDualOutputMode && (canRecordVertical || canRecordDualOutput);
   const showRecordingSwitcher = !v.isDualOutputMode || showRecordingIcons;
-  const disableSwitcher = v.useAiHighlighter || v.isRecording;
+  const disableToggle = v.useAiHighlighter || v.isRecording;
+  const disableIcons = v.isRecording || v.isReplayBufferActive;
 
   const options = useMemo(() => {
     const opts = [
@@ -62,7 +64,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
       {showRecordingSwitcher && (
         <Tooltip
           title={message}
-          disabled={!disableSwitcher}
+          disabled={!disableToggle}
           placement="topRight"
           lightShadow
           className={styles.recordingTooltip}
@@ -83,7 +85,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
               label={v.isDualOutputMode ? $t('Record Stream in') : $t('Record Stream')}
               layout="horizontal"
               checkmark
-              disabled={disableSwitcher}
+              disabled={disableToggle}
             />
           )}
           {showRecordingIcons && (
@@ -99,12 +101,12 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
                 }
                 icons={true}
                 className={styles.recordingDisplay}
-                disabled={disableSwitcher}
+                disabled={disableToggle || disableIcons}
               />
               {showRecordingToggle && <> {$t('format')} </>}
             </>
           )}
-          {disableSwitcher && <i className={cx(styles.info, 'icon-information')} />}
+          {disableToggle && <i className={cx(styles.info, 'icon-information')} />}
         </Tooltip>
       )}
     </div>

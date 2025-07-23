@@ -274,25 +274,6 @@ export class StreamingService
     );
 
     this.settingsService.settingsUpdated.subscribe(patch => {
-      // This will update the API v2 factory instance when the settings are changed
-      // if (patch.Output?.Mode) {
-      //   if (patch.Output.Mode === 'Advanced') {
-      //     this.contexts.horizontal.streaming = null as IAdvancedStreaming;
-      //     this.contexts.vertical.streaming = null as IAdvancedStreaming;
-      //     this.contexts.horizontal.recording = null as IAdvancedRecording;
-      //     this.contexts.vertical.recording = null as IAdvancedRecording;
-      //     this.contexts.horizontal.replayBuffer = null as IAdvancedReplayBuffer;
-      //     this.contexts.vertical.replayBuffer = null as IAdvancedReplayBuffer;
-      //   } else {
-      //     this.contexts.horizontal.streaming = null as ISimpleStreaming;
-      //     this.contexts.vertical.streaming = null as ISimpleStreaming;
-      //     this.contexts.horizontal.recording = null as ISimpleRecording;
-      //     this.contexts.vertical.recording = null as ISimpleRecording;
-      //     this.contexts.horizontal.replayBuffer = null as ISimpleReplayBuffer;
-      //     this.contexts.vertical.replayBuffer = null as ISimpleReplayBuffer;
-      //   }
-      // }
-
       if (patch.Output?.RecRBTime) {
         if (this.contexts.horizontal.replayBuffer) {
           this.contexts.horizontal.replayBuffer.duration = patch.Output.RecRBTime;
@@ -1842,7 +1823,7 @@ export class StreamingService
       // In dual output mode for dual output replay buffer, the horizontal instance is created and started first
       // and the vertical instance is created and started after the horizontal instance has started.
       if (isDualOutputReplayBuffer && display === 'horizontal') {
-        await this.createReplayBuffer('vertical', 2);
+        this.createReplayBuffer('vertical', 2);
         return;
       }
     }
@@ -1854,17 +1835,34 @@ export class StreamingService
       });
 
       if (isDualOutputReplayBuffer && display === 'horizontal') {
-        if (!this.contexts.vertical.replayBuffer) {
-          console.warn('Vertical replay buffer context does not exist but attempted to save.');
-          return;
-        }
-        this.contexts.vertical.replayBuffer.save();
-        this.replayBufferStatusChange.next(EReplayBufferState.Saving);
-        NodeObs.OBS_service_processReplayBufferHotkey();
-        return;
-      }
+        console.log('saved horizontal replay buffer file');
 
-      this.replayBufferFileWrite.next(this.contexts[display].replayBuffer.lastFile());
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        this.contexts.vertical.replayBuffer.save();
+
+        // TODO: figure out why the horizontal display loops writing until destroyed
+        // if (isDualOutputReplayBuffer && display === 'horizontal') {
+        //   console.log('Horizontal replay buffer file written');
+        //   this.logContexts(display, 'logging for wrote');
+        //   if (!this.contexts.vertical.replayBuffer) {
+        //     console.warn('Vertical replay buffer context does not exist but attempted to save.');
+        //     return;
+        //   }
+        //   console.log('Saving vertical replay buffer file');
+
+        //   this.contexts.vertical.replayBuffer.save();
+
+        //   // this.replayBufferFileWrite.next(this.contexts[display].replayBuffer.lastFile());
+        // } else if (isDualOutputReplayBuffer && display === 'vertical') {
+        //   console.log('Vertical replay buffer file written');
+
+        this.replayBufferFileWrite.next(this.contexts[display].replayBuffer.lastFile());
+        // } else {
+        //   console.log('saving file');
+
+        //   this.replayBufferFileWrite.next(this.contexts[display].replayBuffer.lastFile());
+        // }
+      }
     }
 
     if (info.signal === EOBSOutputSignal.Stop) {
@@ -1925,25 +1923,18 @@ export class StreamingService
         return;
       }
 
-      // In single output mode, the horizontal display is always used.
-      // In dual output mode, when using the replay buffer without streaming
-      // only the horizontal display is used.
-      const isDualOutputModeReplayBufferOnly =
-        this.views.isDualOutputMode && !this.views.isStreaming;
-      const isSingleOutputMode = !this.views.isDualOutputMode;
-
-      if (isSingleOutputMode || isDualOutputModeReplayBufferOnly) {
-        // Update the replay buffer state for the loading animation
+      if (this.views.isDualOutputMode) {
+        // Handle dual output mode replay buffer
+        const output = display ?? this.views.getOutputDisplayType();
+        this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Running, output);
+        const audioTrackIndex = output === 'horizontal' ? 1 : 2;
+        this.createReplayBuffer(output, audioTrackIndex);
+      } else {
+        // Handle single output mode replay buffer
         this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Running, 'horizontal');
-        Promise.resolve(this.createReplayBuffer('horizontal', 1));
+        this.createReplayBuffer('horizontal', 1);
         return;
       }
-
-      // Handle dual output mode replay buffer
-      const output = display ?? this.views.getOutputDisplayType();
-      this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Running, output);
-      const audioTrackIndex = output === 'horizontal' ? 1 : 2;
-      Promise.resolve(this.createReplayBuffer(output, audioTrackIndex));
     } catch (e: unknown) {
       console.error('Error toggling replay buffer:', e);
 
@@ -1978,6 +1969,7 @@ export class StreamingService
    * @param display - The display to create the replay buffer for
    */
   private async createReplayBuffer(display: TDisplayType = 'horizontal', index?: number) {
+    console.log('creating replay buffer', display, index);
     const mode = this.outputSettingsService.getSettings().mode;
     const settings = this.outputSettingsService.getReplayBufferSettings();
 
@@ -2061,14 +2053,38 @@ export class StreamingService
   }
 
   saveReplay() {
+    if (this.views.isDualOutputRecording) return;
+
     const display = this.views.getOutputDisplayType();
 
     if (!this.contexts[display].replayBuffer) return;
+
+    // if (
+    //   this.views.isDualOutputMode &&
+    //   this.state.status[display].replayBuffer === EReplayBufferState.Running
+    // ) {
+    //   // If the replay buffer is running in dual output mode, save the horizontal replay buffer
+    //   // and then save the vertical replay buffer.
+
+    //   // TODO: handle in stop signal for horizontal display but this signal is repeatedly writing
+    //   // the horizontal display in dual output recording (one or the other display works)
+    //   this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Saving, display, new Date().toISOString());
+    //   if (this.contexts.horizontal.replayBuffer) {
+    //     this.contexts.horizontal.replayBuffer.save();
+    //   }
+    //   if (this.contexts.vertical.replayBuffer) {
+    //     Promise.resolve(resolve => setTimeout(resolve, 2000)).then(() => {
+    //       this.contexts.vertical.replayBuffer.save();
+    //     });
+    //   }
+
+    //   return;
+    // }
+
+    // TODO: look at osn for NodeObs.OBS_service_processReplayBufferHotkey
     if (this.state.status[display].replayBuffer === EReplayBufferState.Running) {
       this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Saving, display, new Date().toISOString());
       this.contexts[display].replayBuffer.save();
-      this.replayBufferStatusChange.next(EReplayBufferState.Saving);
-      NodeObs.OBS_service_processReplayBufferHotkey();
     }
   }
 
