@@ -115,7 +115,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
      * and should live as part of the same object, probably a refactor for the future.
      */
     this.state.grandfathered = facebook;
-    this.state.tiktokGrandfathered = /* FIXME: testing tiktok */ false;
+    this.state.tiktokGrandfathered = tiktok;
   }
 
   init() {
