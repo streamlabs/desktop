@@ -275,9 +275,31 @@ export class StreamingService
 
     this.settingsService.settingsUpdated.subscribe(patch => {
       // This will update the API v2 factory instance when the settings are changed
-      // For now, only handle updating the replay buffer duration
-      if (patch.Output?.RecRBTime && this.contexts.horizontal.replayBuffer) {
-        this.contexts.horizontal.replayBuffer.duration = patch.Output.RecRBTime;
+      // if (patch.Output?.Mode) {
+      //   if (patch.Output.Mode === 'Advanced') {
+      //     this.contexts.horizontal.streaming = null as IAdvancedStreaming;
+      //     this.contexts.vertical.streaming = null as IAdvancedStreaming;
+      //     this.contexts.horizontal.recording = null as IAdvancedRecording;
+      //     this.contexts.vertical.recording = null as IAdvancedRecording;
+      //     this.contexts.horizontal.replayBuffer = null as IAdvancedReplayBuffer;
+      //     this.contexts.vertical.replayBuffer = null as IAdvancedReplayBuffer;
+      //   } else {
+      //     this.contexts.horizontal.streaming = null as ISimpleStreaming;
+      //     this.contexts.vertical.streaming = null as ISimpleStreaming;
+      //     this.contexts.horizontal.recording = null as ISimpleRecording;
+      //     this.contexts.vertical.recording = null as ISimpleRecording;
+      //     this.contexts.horizontal.replayBuffer = null as ISimpleReplayBuffer;
+      //     this.contexts.vertical.replayBuffer = null as ISimpleReplayBuffer;
+      //   }
+      // }
+
+      if (patch.Output?.RecRBTime) {
+        if (this.contexts.horizontal.replayBuffer) {
+          this.contexts.horizontal.replayBuffer.duration = patch.Output.RecRBTime;
+        }
+        if (this.contexts.vertical.replayBuffer) {
+          this.contexts.vertical.replayBuffer.duration = patch.Output.RecRBTime;
+        }
       }
     });
   }
@@ -1237,18 +1259,8 @@ export class StreamingService
   }
 
   async toggleRecording() {
-    console.log(
-      '=========== TOGGLING RECORDING\n this.views.recordingStatus',
-      this.views.recordingStatus,
-    );
-    console.log('this.contexts.horizontal', this.contexts.horizontal);
-    console.log('this.contexts.vertical', this.contexts.vertical);
-    console.log('this.state.status.recording', this.state.status.recording, '\n');
-
     try {
       if (this.views.recordingStatus === ERecordingState.Recording) {
-        console.log(this.views.recordingStatus, 'Stopping recording');
-
         await this.handleStopRecording();
       } else if (this.views.recordingStatus === ERecordingState.Offline) {
         await this.handleStartRecording();
@@ -1342,13 +1354,18 @@ export class StreamingService
   private async handleStopRecording() {
     if (this.views.isDualOutputMode) {
       // Stop dual output recording
-      // For dual output recording, stopping the vertical recording will occur in `handleRecordingSignal`
-      // after the horizontal recording has been stopped
       if (
         this.contexts.vertical.recording !== null &&
         this.contexts.horizontal.recording !== null
       ) {
         this.contexts.horizontal.recording.stop();
+
+        // When recording both displays in dual output mode, sleep for 2 seconds to allow a different time stamp to be generated
+        // because the recording history uses the time stamp as keys. If the same time stamp is used, the entry will be replaced
+        // in the recording history. Note: the horizontal recording may still be in progress but this should not cause any issues
+        // because each recording instance shuts down independently without referencing any other recording instance.
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        this.contexts.vertical.recording.stop();
         return;
       }
 
@@ -1384,7 +1401,6 @@ export class StreamingService
    */
   private async createRecording(display: TDisplayType, index: number, start?: boolean) {
     const mode = this.outputSettingsService.getSettings().mode;
-    const settings = this.outputSettingsService.getRecordingSettings();
 
     // recordings must have a streaming instance
     await this.validateOrCreateOutputInstance(display, 'streaming', index);
@@ -1394,22 +1410,41 @@ export class StreamingService
         ? (AdvancedRecordingFactory.create() as IAdvancedRecording)
         : (SimpleRecordingFactory.create() as ISimpleRecording);
 
+    // assign settings to the recording instance
+
     if (this.isAdvancedRecording(this.contexts[display].recording)) {
-      this.migrateSettings('recording', display);
+      // cast the recording instance to advanced recording to be able to set
+      // the values correctly
+      const recording = this.migrateSettings('recording', display) as IAdvancedRecording;
       // output resolutions
       const resolution = this.videoSettingsService.outputResolutions[display];
-      this.contexts[display].recording.outputWidth = resolution.outputWidth;
-      this.contexts[display].recording.outputHeight = resolution.outputHeight;
-      this.contexts[display].recording.streaming = this.contexts[display]
-        .streaming as IAdvancedStreaming;
+      recording.outputWidth = resolution.outputWidth;
+      recording.outputHeight = resolution.outputHeight;
 
-      console.log('Created advanced recording', this.contexts[display].recording);
+      // to prevent reference errors, cast the recording instance
+      this.contexts[display].recording = recording as IAdvancedRecording;
     } else {
-      this.contexts[display].recording.streaming = this.contexts[display]
-        .streaming as ISimpleStreaming;
-      this.contexts[display].recording.audioEncoder = AudioEncoderFactory.create(
-        'ffmpeg_aac',
-        'audio-encoder-recording',
+      // cast the recording instance to simple recording to be able to set
+      // the values correctly
+      const recording = this.migrateSettings('recording', display) as ISimpleRecording;
+      recording.audioEncoder = AudioEncoderFactory.create('ffmpeg_aac', 'audio-encoder-recording');
+
+      // to prevent reference errors, cast the recording instance
+      this.contexts[display].recording = recording as ISimpleRecording;
+    }
+
+    // handle setting the stream
+    if (this.isAdvancedStreaming(this.contexts[display].streaming)) {
+      const stream = this.contexts[display].streaming as IAdvancedStreaming;
+      this.contexts[display].recording.streaming = stream as IAdvancedStreaming;
+    } else if (this.isSimpleStreaming(this.contexts[display].streaming)) {
+      const stream = this.contexts[display].streaming as ISimpleStreaming;
+      this.contexts[display].recording.streaming = stream as ISimpleStreaming;
+    } else {
+      throwStreamError(
+        'UNKNOWN_STREAMING_ERROR_WITH_MESSAGE',
+        {},
+        'Missing streaming instance when assigning to recording instance',
       );
     }
 
@@ -1434,11 +1469,7 @@ export class StreamingService
         ? this.outputSettingsService.getStreamingSettings()
         : this.outputSettingsService.getRecordingSettings();
 
-    const instance = this.contexts[display][type] as
-      | ISimpleStreaming
-      | IAdvancedStreaming
-      | ISimpleRecording
-      | IAdvancedRecording;
+    const instance = this.contexts[display][type];
 
     Object.keys(settings).forEach(key => {
       if ((settings as any)[key] === undefined) return;
@@ -1473,64 +1504,40 @@ export class StreamingService
    */
   private async createStreaming(display: TDisplayType, index: number, start?: boolean) {
     const mode = this.outputSettingsService.getSettings().mode;
-    const settings = this.outputSettingsService.getStreamingSettings();
 
-    const stream =
+    this.contexts[display].streaming =
       mode === 'Advanced'
         ? (AdvancedStreamingFactory.create() as IAdvancedStreaming)
         : (SimpleStreamingFactory.create() as ISimpleStreaming);
 
-    // assign settings
-    Object.keys(settings).forEach(key => {
-      if ((settings as any)[key] === undefined) return;
-
-      // share the video encoder with the recording instance if it exists
-      if (key === 'videoEncoder') {
-        stream.videoEncoder = VideoEncoderFactory.create(
-          settings.videoEncoder,
-          `video-encoder-stream-${display}`,
-        );
-
-        if (stream.videoEncoder.lastError) {
-          console.error(
-            'Error creating encoder',
-            settings.videoEncoder,
-            stream.videoEncoder.lastError,
-          );
-          throw new Error(stream.videoEncoder.lastError);
-        }
-      } else {
-        (stream as any)[key] = (settings as any)[key];
-      }
-    });
-
-    if (this.isAdvancedStreaming(stream)) {
-      console.log('advanced stream', stream);
+    if (this.isAdvancedStreaming(this.contexts[display].streaming)) {
+      // cast the streaming instance to advanced streaming to be able to set
+      // the values correctly
+      const stream = this.migrateSettings('streaming', display) as IAdvancedStreaming;
 
       const resolution = this.videoSettingsService.outputResolutions[display];
       stream.outputWidth = resolution.outputWidth;
       stream.outputHeight = resolution.outputHeight;
       // stream audio track
-      console.log('index', index);
-
       this.validateOrCreateAudioTrack(index);
-      console.log('track created');
-
       stream.audioTrack = index;
       // Twitch VOD audio track
       if (stream.enableTwitchVOD && display === 'horizontal') {
         // Potentially need to use a different track number for Twitch VODs
-        // const trackNumber = stream.twitchTrack ?? index + 1;
         const trackNumber = stream.twitchTrack ?? index;
         this.validateOrCreateAudioTrack(trackNumber);
         stream.twitchTrack = trackNumber;
       }
 
+      // to prevent reference errors, cast the recording instance
       this.contexts[display].streaming = stream as IAdvancedStreaming;
-    } else if (this.isSimpleStreaming(stream)) {
-      console.log('simple stream', stream);
-
+    } else if (this.isSimpleStreaming(this.contexts[display].streaming)) {
+      // cast the streaming instance to simple streaming to be able to set
+      // the values correctly
+      const stream = this.migrateSettings('streaming', display) as ISimpleStreaming;
       stream.audioEncoder = AudioEncoderFactory.create('ffmpeg_aac', 'audio-encoder-stream');
+
+      // to prevent reference errors, cast the recording instance
       this.contexts[display].streaming = stream as ISimpleStreaming;
     } else {
       throwStreamError(
@@ -1539,7 +1546,6 @@ export class StreamingService
         'Unable to create streaming instance',
       );
     }
-
     this.contexts[display].streaming.video = this.videoSettingsService.contexts[display];
     this.contexts[display].streaming.signalHandler = async signal => {
       await this.handleSignal(signal, display);
@@ -1608,6 +1614,15 @@ export class StreamingService
     }
   }
 
+  /**
+   * Handle streaming signals from the Factory API
+   * @remark Any actions that should be taken immediately after the stream starts
+   * will use the `Starting` signal.
+   * @remark Any actions that should be taken after the stream has finished
+   * should use the `Deactivate` signal.
+   * @param info - The signal info from the Factory API
+   * @param display - The display the instance is assigned to
+   */
   private async handleStreamingSignal(info: EOutputSignal, display: TDisplayType) {
     // map signals to status
     const nextState: EStreamingState = ({
@@ -1691,6 +1706,17 @@ export class StreamingService
     } else if (info.signal === EOBSOutputSignal.Deactivate) {
       // The `deactivate` signal is sent after the `stop` signal
 
+      // handle continuing or stopping replay buffer
+      const keepReplaying = this.streamSettingsService.settings.keepReplayBufferStreamStops;
+      if (!keepReplaying && this.views.isReplayBufferActive) {
+        this.stopReplayBuffer();
+      }
+      // handle continuing or stopping recording
+      const keepRecording = this.streamSettingsService.settings.keepRecordingWhenStreamStops;
+      if (!keepRecording && this.views.isRecording) {
+        this.toggleRecording();
+      }
+
       this.RESET_STREAM_INFO();
       this.rejectStartStreaming();
 
@@ -1698,6 +1724,11 @@ export class StreamingService
         code: info.code,
         status: EStreamingState.Offline,
       });
+
+      // Because the recording and replay buffer require a streaming instance
+      // do not attempt to destroy the streaming instance if the recording
+      // or replay buffer is still active.
+      if (keepRecording || keepReplaying) return;
 
       await this.handleDestroyAllInstances();
     } else if (info.signal === EOBSOutputSignal.Reconnect) {
@@ -1711,8 +1742,6 @@ export class StreamingService
   }
 
   private async handleRecordingSignal(info: EOutputSignal, display: TDisplayType) {
-    console.log('info', JSON.stringify(info, null, 2));
-
     // map signals to status
     const nextState: ERecordingState = ({
       [EOBSOutputSignal.Starting]: ERecordingState.Starting,
@@ -1739,38 +1768,20 @@ export class StreamingService
       });
     }
 
-    if (nextState === ERecordingState.Recording) {
-      const mode = this.views.isDualOutputMode ? 'dual' : 'single';
-      this.usageStatisticsService.recordFeatureUsage('Recording');
-      this.usageStatisticsService.recordAnalyticsEvent('RecordingStatus', {
-        status: ERecordingState.Recording,
-        code: info.code,
-        mode,
-        display,
-      });
-    }
-
     if (info.signal === EOBSOutputSignal.Stop) {
       // Note: The `stop` signal will set the recording status to `stopping` to allow the recording to
       // finish writing the last file before setting the status to `offline`. The `wrote` signal will
       // set the recording status to `offline` after the last file has been written.
       // Handle stopping the vertical recording instance in dual output mode dual output recording
+      // after the horizontal recording instance has been stopped.
       if (
         this.views.isDualOutputRecording &&
         display === 'horizontal' &&
         this.contexts.vertical.recording !== null
       ) {
-        // When recording both displays in dual output mode, sleep for 2 seconds to allow a different time stamp to be generated
-        // because the recording history uses the time stamp as keys. If the same time stamp is used, the entry will be replaced
-        // in the recording history
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        this.contexts.vertical.recording.stop();
-
-        // Reset the status of the horizontal recording instance
         const time = new Date().toISOString();
-        this.SET_RECORDING_STATUS(nextState, 'horizontal', time);
-
-        // Return early because stopping the vertical recording instance needs to resolve
+        this.SET_RECORDING_STATUS(nextState, display, time);
+        this.recordingStatusChange.next(nextState);
         return;
       }
     }
@@ -1793,10 +1804,17 @@ export class StreamingService
 
       this.latestRecordingPath.next(fileName);
 
+      const time = new Date().toISOString();
+
+      this.SET_RECORDING_STATUS(nextState, display, time);
+      this.recordingStatusChange.next(nextState);
+
       await this.handleDestroyOutputContexts(display);
+      return;
     }
 
     const time = new Date().toISOString();
+
     this.SET_RECORDING_STATUS(nextState, display, time);
     this.recordingStatusChange.next(nextState);
   }
@@ -1963,14 +1981,7 @@ export class StreamingService
     const mode = this.outputSettingsService.getSettings().mode;
     const settings = this.outputSettingsService.getReplayBufferSettings();
 
-    // A replay buffer requires a recording instance and a streaming instance
-    // Handle start recording and start replay buffer when start streaming
-    const startRecordingInstance =
-      this.streamSettingsService.settings.recordWhenStreaming &&
-      this.contexts[display].recording &&
-      this.state.status[display].recording === ERecordingState.Offline;
-
-    await this.validateOrCreateOutputInstance(display, 'recording', index, startRecordingInstance); // IS IT HERE
+    await this.validateOrCreateOutputInstance(display, 'recording', index);
     await this.validateOrCreateOutputInstance(display, 'streaming', index);
 
     const replayBuffer =
@@ -2073,7 +2084,6 @@ export class StreamingService
   ) {
     const mode = this.outputSettingsService.getSettings().mode;
     const validOutput = this.validateOutputInstance(mode, display, type);
-    console.log('validOutput', validOutput, display, type);
 
     // If the instance matches the mode, return to validate it
     if (validOutput) {
@@ -2084,6 +2094,7 @@ export class StreamingService
 
       return true;
     }
+
     await this.destroyOutputContextIfExists(display, type);
 
     if (type === 'streaming') {
@@ -2125,15 +2136,14 @@ export class StreamingService
    * @param index - The index of the audio track
    */
   async validateOrCreateAudioTrack(index: number) {
-    return Promise.resolve(() => {
-      // If the audio track already exists, return
+    try {
       const existingTrack = AudioTrackFactory.getAtIndex(index);
-      console.log('existingTrack', existingTrack);
-      return existingTrack !== null;
-    }).catch(() => {
-      // If the audio track does not exist, create it
-      this.createAudioTrack(index);
-    });
+      if (existingTrack) return;
+    } catch (e: unknown) {
+      // continue to create track if the audio track does not exist
+    }
+
+    this.createAudioTrack(index);
   }
 
   /**
@@ -2291,7 +2301,11 @@ export class StreamingService
   }
 
   get formattedDurationInCurrentRecordingState() {
-    return this.formattedDurationSince(moment(this.state.recordingStatusTime));
+    const time =
+      this.state.status.horizontal.recording !== ERecordingState.Offline
+        ? this.state.status.horizontal.recordingTime
+        : this.state.status.vertical.recordingTime;
+    return this.formattedDurationSince(moment(time));
   }
 
   get streamingStateChangeTime() {
@@ -2613,7 +2627,6 @@ export class StreamingService
       this.state.status[display].replayBuffer === EReplayBufferState.Offline &&
       this.state.status[display].recording === ERecordingState.Offline &&
       this.state.status[display].streaming === EStreamingState.Offline;
-
     if (offline) {
       await this.destroyOutputContextIfExists(display, 'replayBuffer');
       await this.destroyOutputContextIfExists(display, 'recording');
@@ -2626,10 +2639,14 @@ export class StreamingService
    * @remark Primarily used for cleanup when rejecting starting the stream
    */
   private async handleDestroyAllInstances() {
-    await this.handleDestroyOutputContexts('vertical');
+    // DOES ORDER MATTER HERE???
+    // Dual output recording state not updating correctly
+    // Vertical recording instance will only go live if the horizontal instance is created first
+    // so something is referencing the horizontal instance when creating the vertical instance
     await this.handleDestroyOutputContexts('horizontal');
+    await this.handleDestroyOutputContexts('vertical');
 
-    await this.resetInfo();
+    this.resetInfo();
   }
 
   /**

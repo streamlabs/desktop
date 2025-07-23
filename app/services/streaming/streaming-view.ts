@@ -229,6 +229,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return this.settings.recording === 'both' ? 'horizontal' : this.settings.recording;
   }
 
+  get outputDisplay(): TDisplayType {
+    return this.settings.recording === 'both' ? 'horizontal' : this.settings.recording;
+  }
+
   /**
    * Returns the enabled platforms according to their assigned display
    */
@@ -663,18 +667,18 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get isStreaming() {
-    const display = this.getOutputDisplayType();
-    return this.streamingState.status[display].streaming !== EStreamingState.Offline;
+    return this.isHorizontalStreaming || this.isVerticalStreaming;
   }
 
   get isRecording() {
-    const display = this.getOutputDisplayType();
-    return this.streamingState.status[display].recording !== ERecordingState.Offline;
+    return this.isHorizontalRecording || this.isVerticalRecording;
   }
 
   get isReplayBufferActive() {
-    const display = this.getOutputDisplayType();
-    return this.streamingState.status[display].replayBuffer !== EReplayBufferState.Offline;
+    return (
+      this.streamingState.status.horizontal.replayBuffer !== EReplayBufferState.Offline ||
+      this.streamingState.status.vertical.replayBuffer !== EReplayBufferState.Offline
+    );
   }
 
   get isHorizontalStreaming() {

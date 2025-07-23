@@ -200,33 +200,12 @@ export default function StudioFooterComponent() {
 
 function RecordingButton() {
   const { StreamingService } = Services;
-  const { isRecording, recordingStatus, isDualOutputMode } = useVuex(() => ({
+  const { isRecording, recordingStatus } = useVuex(() => ({
     isRecording: StreamingService.views.isRecording,
     recordingStatus: StreamingService.views.recordingStatus,
-    isDualOutputMode: StreamingService.views.isDualOutputMode,
   }));
 
   function toggleRecording() {
-    if (isDualOutputMode) {
-      console.log('dual output mode is enabled, prompting user');
-
-      promptAction({
-        title: $t('(Beta) Dual Output Recording'),
-        message: $t(
-          'Recording without streaming in dual output mode may have performance issues. Are you sure you want to continue?',
-        ),
-        btns: [
-          {
-            text: $t('Confirm'),
-            fn: StreamingService.actions.toggleRecording,
-          },
-          {
-            text: $t('Cancel'),
-          },
-        ],
-      });
-      return;
-    }
     StreamingService.actions.toggleRecording();
   }
 
@@ -240,8 +219,7 @@ function RecordingButton() {
         >
           <button
             className={cx(styles.recordButton, 'record-button', { active: isRecording })}
-            onClick={toggleRecording}
-            // onClick={useDebounce(200, toggleRecording)}
+            onClick={useDebounce(200, toggleRecording)}
           >
             <span>
               {recordingStatus === ERecordingState.Stopping ? (
@@ -283,10 +261,9 @@ function RecordingTimer() {
 
 function DualOutputRecordingButton() {
   const { StreamingService } = Services;
-  const { isRecording, recordingStatus, isDualOutputMode } = useVuex(() => ({
+  const { isRecording, recordingStatus } = useVuex(() => ({
     isRecording: StreamingService.views.isRecording,
     recordingStatus: StreamingService.views.recordingStatus,
-    isDualOutputMode: StreamingService.views.isDualOutputMode,
   }));
 
   const showLoadingSpinner = [ERecordingState.Starting, ERecordingState.Stopping].includes(
@@ -294,9 +271,7 @@ function DualOutputRecordingButton() {
   );
 
   function toggleRecording() {
-    if (isDualOutputMode) {
-      console.log('dual output mode is enabled, prompting user');
-
+    if (!isRecording) {
       promptAction({
         title: $t('(Beta) Dual Output Recording'),
         message: $t(
@@ -314,6 +289,7 @@ function DualOutputRecordingButton() {
       });
       return;
     }
+
     StreamingService.actions.toggleRecording();
   }
 
@@ -330,7 +306,7 @@ function DualOutputRecordingButton() {
         >
           <button
             className={cx(styles.recordButton, 'record-button', { active: isRecording })}
-            onClick={useDebounce(200, toggleRecording)}
+            onClick={toggleRecording}
           >
             <span>{showLoadingSpinner ? <i className="fa fa-spinner fa-pulse" /> : <>REC</>}</span>
           </button>

@@ -298,15 +298,32 @@ export class OutputSettingsService extends Service {
     const rescaling = this.settingsService.findSettingValue(output, 'Recording', 'RecRescale');
 
     if (mode === 'Advanced') {
-      const twitchTrack = 3; // 3 in the tests, 2 in the description
-
-      return {
+      const advancedStreamSettings = {
         videoEncoder,
         enforceServiceBitrate,
         enableTwitchVOD,
-        twitchTrack,
         rescaling,
       };
+
+      console.log('getStreamingSettings', mode, {
+        videoEncoder,
+        enforceServiceBitrate,
+        enableTwitchVOD,
+        rescaling,
+      });
+
+      if (enableTwitchVOD) {
+        const twitchTrack = this.settingsService.findSettingValue(
+          output,
+          'Streaming',
+          'VodTrackIndex',
+        );
+        console.log('getStreamingSettings', 'twitchTrack', twitchTrack);
+
+        return { ...advancedStreamSettings, twitchTrack };
+      }
+
+      return advancedStreamSettings;
     } else {
       return {
         videoEncoder,
