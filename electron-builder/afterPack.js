@@ -54,12 +54,9 @@ function signBinaries(identity, directory) {
 
 function signXcodeApps(context) {
   // For apps that requires specific entitlements. Ensures the entitlements file is provided during signing
-  const entitlements = "--entitlements electron-builder/entitlements.plist";
+  const entitlements = "--entitlements electron-builder/mac-virtual-cam-entitlements.plist";
   const installerPath = `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Frameworks/slobs-virtual-cam-installer.app`;
-  cp.execSync(`codesign --sign Developer ID Application: "${context.packager.config.mac.identity}" ${entitlements} --deep --force --verbose "${installerPath}"`);
-
-  const systemExtensionPath = `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Library/SystemExtensions/com.streamlabs.slobs.mac-camera-extension.systemextension`;
-  cp.execSync(`codesign --sign Developer ID Application: "${context.packager.config.mac.identity}" ${entitlements} --deep --force --verbose "${systemExtensionPath}"`);
+  cp.execSync(`codesign --sign "${context.packager.config.mac.identity}" ${entitlements} --deep --force --verbose "${installerPath}"`);
 }
 
 async function afterPackMac(context) {

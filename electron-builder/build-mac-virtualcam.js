@@ -13,12 +13,9 @@ async function buildVirtualCamExtension(context) {
   cp.execSync(
     `tar -xzvf ${destFile}`,
   );
-  console.log('Copying app into Frameworks folder');
+  console.log('Copying slobs-virtual-cam-installer.app into Frameworks folder');
   cp.execSync(
     `cp -R ./slobs-virtual-cam-installer.app \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Frameworks\"`,
-  );
-  cp.execSync(
-    `cp -R ./slobs-virtual-cam-installer.app/Contents/Library \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Library\"`,
   );
   cp.execSync(
     `rm -rf ./slobs-virtual-cam-installer.*`,
