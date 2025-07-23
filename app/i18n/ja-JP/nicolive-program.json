@@ -312,6 +312,10 @@
         }
       },
       "deleteComment": {
+        "network_error": {
+          "title": "ネットワークエラーが発生しました",
+          "message": "ネットワークエラーが発生したため、コメントを削除できませんでした。\nネットワーク接続が正常かどうかをご確認ください。"
+        },
         "400": {
           "title": "コメントを削除できませんでした",
           "message": "削除に失敗しました。\n%{additionalMessage}"
@@ -343,6 +347,44 @@
         "SERVICE_ERROR": {
           "title": "SERVICE_ERROR",
           "message": "コメントを削除できませんでした(サービスエラー)"
+        }
+      },
+      "undoDeleteComment": {
+        "network_error": {
+          "title": "ネットワークエラーが発生しました",
+          "message": "ネットワークエラーが発生したため、コメントを復元できませんでした。\nネットワーク接続が正常かどうかをご確認ください。"
+        },
+        "400": {
+          "title": "コメントを復元できませんでした",
+          "message": "復元に失敗しました。\n%{additionalMessage}"
+        },
+        "500": {
+          "title": "コメントを復元できませんでした",
+          "message": "復元に失敗しました。\n%{additionalMessage}"
+        },
+        "NOT_FOUND": {
+          "title": "NOT_FOUND",
+          "message": "コメントが見つかりませんでした"
+        },
+        "AUTHENTICATION_FAILED": {
+          "title": "AUTHENTICATION_FAILED",
+          "message": "ログインしていません"
+        },
+        "AUTHORIZATION_FAILED": {
+          "title": "AUTHORIZATION_FAILED",
+          "message": "放送者でないため、コメントを復元する権限がありません"
+        },
+        "FORBIDDEN": {
+          "title": "FORBIDDEN",
+          "message": "番組が古すぎるため、コメントを復元できませんでした"
+        },
+        "BAD_REQUEST": {
+          "title": "BAD_REQUEST",
+          "message": "コメントを復元できませんでした(不正なリクエスト)"
+        },
+        "SERVICE_ERROR": {
+          "title": "SERVICE_ERROR",
+          "message": "コメントを復元できませんでした(サービスエラー)"
         }
       }
     },

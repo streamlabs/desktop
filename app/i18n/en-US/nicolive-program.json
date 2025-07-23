@@ -312,6 +312,10 @@
         }
       },
       "deleteComment": {
+        "network_error": {
+          "title": "A network error has occurred",
+          "message": "Failed to delete the comment due to a network error.\nPlease check your network connection."
+        },
         "400": {
           "title": "Failed to delete a comment",
           "message": "Failed to delete a comment.\n%{additionalMessage}"
@@ -343,6 +347,44 @@
         "SERVICE_ERROR": {
           "title": "SERVICE_ERROR",
           "message": "Failed to delete a comment(Service Error)."
+        }
+      },
+      "undoDeleteComment": {
+        "network_error": {
+          "title": "A network error has occurred",
+          "message": "Failed to restore the comment due to a network error.\nPlease check your network connection."
+        },
+        "400": {
+          "title": "Failed to restore comment",
+          "message": "Failed to restore.\n%{additionalMessage}"
+        },
+        "500": {
+          "title": "Failed to restore comment",
+          "message": "Failed to restore.\n%{additionalMessage}"
+        },
+        "NOT_FOUND": {
+          "title": "NOT_FOUND",
+          "message": "Comment not found."
+        },
+        "AUTHENTICATION_FAILED": {
+          "title": "AUTHENTICATION_FAILED",
+          "message": "You are not logged in."
+        },
+        "AUTHORIZATION_FAILED": {
+          "title": "AUTHORIZATION_FAILED",
+          "message": "You do not have permission to restore the comment because you are not the broadcaster."
+        },
+        "FORBIDDEN": {
+          "title": "FORBIDDEN",
+          "message": "Could not restore the comment because the program is too old."
+        },
+        "BAD_REQUEST": {
+          "title": "BAD_REQUEST",
+          "message": "Failed to restore comment (Bad Request)."
+        },
+        "SERVICE_ERROR": {
+          "title": "SERVICE_ERROR",
+          "message": "Failed to restore comment (Service Error)."
         }
       }
     },
