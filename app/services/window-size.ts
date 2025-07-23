@@ -214,7 +214,7 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
         }
       } else if (forceUpdate) {
         // パネル状態が変わらないが、強制的に更新する必要がある場合
-        const nextBackupSize = WindowSizeService.updateWindowSize(
+        WindowSizeService.updateWindowSize(
           WindowSizeService.mainWindowOperation,
           prevPanelState,
           nextPanelState,
