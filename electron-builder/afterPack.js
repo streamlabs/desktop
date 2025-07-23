@@ -52,7 +52,17 @@ function signBinaries(identity, directory) {
   }
 }
 
-function afterPackMac(context) {
+function signXcodeApps(context) {
+  // For apps that requires specific entitlements. Ensures the entitlements file is provided during signing
+  const entitlements = "--entitlements electron-builder/entitlements.plist";
+  const fp = `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Frameworks/slobs-virtual-cam-installer.app`;
+  cp.execSync(`codesign --sign Developer ID Application: "${context.packager.config.mac.identity}" ${entitlements} --deep --force --verbose "${fp}"`);
+
+  const fp_ext = `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Library/SystemExtensions/com.streamlabs.slobs.mac-camera-extension.systemextension`;
+  cp.execSync(`codesign --sign Developer ID Application: "${context.packager.config.mac.identity}" ${entitlements} --deep --force --verbose "${fp_ext}"`);
+}
+
+async function afterPackMac(context) {
   console.log('Updating dependency paths');
   cp.execSync(
     `install_name_tool -change ./node_modules/node-libuiohook/libuiohook.1.dylib @executable_path/../Resources/app.asar.unpacked/node_modules/node-libuiohook/libuiohook.1.dylib \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Resources/app.asar.unpacked/node_modules/node-libuiohook/node_libuiohook.node\"`,
@@ -66,7 +76,7 @@ function afterPackMac(context) {
     `cp -R ./node_modules/obs-studio-node/Frameworks \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Resources/app.asar.unpacked/node_modules/\"`,
   );
 
-  buildCameraExt(context);
+  await buildCameraExt(context);
 
   if (process.env.SLOBS_NO_SIGN) return;
 
@@ -74,10 +84,7 @@ function afterPackMac(context) {
     context.packager.config.mac.identity,
     `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Resources/app.asar.unpacked`,
   );
-  signBinaries(
-    context.packager.config.mac.identity,
-    `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Frameworks/slobs-virtual-cam-installer.app`,
-  );
+  signXcodeApps(context);
 }
 
 function afterPackWin() {
