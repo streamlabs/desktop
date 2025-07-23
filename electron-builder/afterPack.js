@@ -2,6 +2,7 @@ const cp = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const buildCameraExt = require('./build-mac-virtualcam');
 
 function signAndCheck(identity, filePath) {
   console.log(`Signing: ${filePath}`);
@@ -51,7 +52,14 @@ function signBinaries(identity, directory) {
   }
 }
 
-function afterPackMac(context) {
+function signXcodeApps(context) {
+  // For apps that requires specific entitlements. Ensures the entitlements file is provided during signing
+  const entitlements = "--entitlements electron-builder/mac-virtual-cam-entitlements.plist";
+  const installerPath = `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Frameworks/slobs-virtual-cam-installer.app`;
+  cp.execSync(`codesign --sign "${context.packager.config.mac.identity}" ${entitlements} --deep --force --verbose "${installerPath}"`);
+}
+
+async function afterPackMac(context) {
   console.log('Updating dependency paths');
   cp.execSync(
     `install_name_tool -change ./node_modules/node-libuiohook/libuiohook.1.dylib @executable_path/../Resources/app.asar.unpacked/node_modules/node-libuiohook/libuiohook.1.dylib \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Resources/app.asar.unpacked/node_modules/node-libuiohook/node_libuiohook.node\"`,
@@ -65,12 +73,15 @@ function afterPackMac(context) {
     `cp -R ./node_modules/obs-studio-node/Frameworks \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Resources/app.asar.unpacked/node_modules/\"`,
   );
 
+  await buildCameraExt(context);
+
   if (process.env.SLOBS_NO_SIGN) return;
 
   signBinaries(
     context.packager.config.mac.identity,
     `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Resources/app.asar.unpacked`,
   );
+  signXcodeApps(context);
 }
 
 function afterPackWin() {
