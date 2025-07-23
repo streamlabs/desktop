@@ -3,7 +3,7 @@ const fs = require('fs');
 const stream = require('stream');
 const cp = require('child_process')
 
-// Download the Mac virtual camera system extension. Build and pack it into the executable.
+// Download the Mac virtual camera system extension and pack it into the executable.
 async function buildVirtualCamExtension(context) {
   console.log("Download mac virtual camera");
   const sourceUrl = pjson.macVirtualCamUrl;
