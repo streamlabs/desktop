@@ -1,5 +1,5 @@
 import { TObsFormData } from 'components/obs/inputs/ObsInput';
-import { Subject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import Utils from 'services/utils';
 import { PersistentStatefulService } from '../core/persistent-stateful-service';
 import { mutation } from '../core/stateful-service';

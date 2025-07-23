@@ -201,7 +201,8 @@ describe('refreshWindowSize', () => {
       });
 
       const { WindowSizeService } = target();
-      const updateWindowSize = jest_fn<(typeof WindowSizeService)['updateWindowSize']>();
+      const updateWindowSize =
+        jest_fn<(typeof WindowSizeService)['updateWindowSize']>().mockName('updateWindowSize');
       // inject spy
       WindowSizeService.updateWindowSize = updateWindowSize;
 
@@ -216,13 +217,13 @@ describe('refreshWindowSize', () => {
       // wait for stateChange to be ready
       await windowSizeService.waitReady();
 
-      const firstCall = 1;
+      const firstCall = 0;
       suite.states.forEach((item, index, arr) => {
         if (index < firstCall) return;
         expect(updateWindowSize).toHaveBeenNthCalledWith(
           index + 1 - firstCall,
           expect.anything(),
-          arr[index - 1] || item,
+          arr[index - 1] || null,
           item,
           {
             backupHeight: undefined,
@@ -230,6 +231,7 @@ describe('refreshWindowSize', () => {
             backupY: undefined,
             widthOffset: undefined,
           },
+          index === firstCall,
         );
       });
       expect(updateWindowSize).toHaveBeenCalledTimes(suite.states.length - firstCall);
