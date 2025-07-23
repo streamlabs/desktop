@@ -137,6 +137,10 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
     );
   }
 
+  forceRefresh() {
+    this.refreshWindowSize(this.state, this.state, true);
+  }
+
   private setState(partialState: Partial<IWindowSizeState>) {
     const nextState = { ...this.state, ...partialState };
     if (!nextState.isReady) {
@@ -145,12 +149,8 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
       );
     }
     nextState.isAlwaysOnTop = this.getAlwaysOnTop(nextState);
-    if (nextState.isReady) {
-      // isReady が false -> true になったそのときには最小サイズ制約だけ更新し、以後のときだけサイズ変更などをする
-      // 前回終了時から変化しないで良い通常起動時は false -> true しか発生しないため、最小サイズ制約だけ実行する必要がある
-      // true -> true は起動時の autoCompactMode によるコンパクトモード解除か、起動後の変更で発生する
-      const onlySetMinSize = !this.state.isReady;
-      this.refreshWindowSize(this.state, nextState, onlySetMinSize);
+    if (this.state.isReady && nextState.isReady) {
+      this.refreshWindowSize(this.state, nextState);
     }
     this.SET_STATE(nextState);
     this.stateChangeSubject.next(nextState);
@@ -184,25 +184,24 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
   refreshWindowSize(
     prevState: IWindowSizeState,
     nextState: IWindowSizeState,
-    onlySetMinSize = false,
+    forceUpdate = false,
   ): void {
     const prevPanelState = WindowSizeService.getPanelState(prevState);
     const nextPanelState = WindowSizeService.getPanelState(nextState);
     if (nextPanelState !== null) {
+      const prevBackupSize: BackupSizeInfo = {
+        widthOffset: this.customizationService.state.fullModeWidthOffset,
+        backupX: this.customizationService.state.compactBackupPositionX,
+        backupY: this.customizationService.state.compactBackupPositionY,
+        backupHeight: this.customizationService.state.compactBackupHeight,
+        maximized: this.customizationService.state.compactMaximized,
+      };
       if (prevPanelState !== nextPanelState) {
-        const prevBackupSize: BackupSizeInfo = {
-          widthOffset: this.customizationService.state.fullModeWidthOffset,
-          backupX: this.customizationService.state.compactBackupPositionX,
-          backupY: this.customizationService.state.compactBackupPositionY,
-          backupHeight: this.customizationService.state.compactBackupHeight,
-          maximized: this.customizationService.state.compactMaximized,
-        };
         const nextBackupSize = WindowSizeService.updateWindowSize(
           WindowSizeService.mainWindowOperation,
           prevPanelState,
           nextPanelState,
           prevBackupSize,
-          onlySetMinSize,
         );
         if (prevPanelState && nextBackupSize !== undefined) {
           this.customizationService.setFullModeWidthOffset({
@@ -213,6 +212,14 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
             compactMaximized: nextBackupSize.maximized,
           });
         }
+      } else if (forceUpdate) {
+        // パネル状態が変わらないが、強制的に更新する必要がある場合
+        const nextBackupSize = WindowSizeService.updateWindowSize(
+          WindowSizeService.mainWindowOperation,
+          prevPanelState,
+          nextPanelState,
+          prevBackupSize,
+        );
       }
       if (prevState.isAlwaysOnTop !== nextState.isAlwaysOnTop) {
         WindowSizeService.mainWindowOperation.setAlwaysOnTop(nextState.isAlwaysOnTop);
@@ -232,7 +239,6 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
     prevState: PanelState,
     nextState: PanelState,
     sizeState: BackupSizeInfo | undefined,
-    onlySetMinSize = false,
   ): BackupSizeInfo {
     if (nextState === null) throw new Error('nextState is null');
     const onInit = !prevState;
@@ -306,15 +312,12 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
     }
 
     win.setMinimumSize(nextMinWidth, minHeight);
-    if (!onlySetMinSize) {
-      // 以下は初期化の段階で実行してしまうとOBSの初期化待ちの間真っ白になってしまう
-      win.setMaximumSize(nextMaxWidth, 16384); // 0では作用しなくなったので変更
-      if (nextWidth !== width || nextHeight !== height) {
-        win.setSize(nextWidth, nextHeight);
-      }
-      if (nextMaximize && !win.isMaximized()) {
-        win.maximize();
-      }
+    win.setMaximumSize(nextMaxWidth, 16384); // 0では作用しなくなったので変更
+    if (nextWidth !== width || nextHeight !== height) {
+      win.setSize(nextWidth, nextHeight);
+    }
+    if (nextMaximize && !win.isMaximized()) {
+      win.maximize();
     }
 
     return nextBackupSize;

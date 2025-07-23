@@ -120,7 +120,6 @@ describe('static getPanelState', () => {
   }
 });
 
-// TODO fix
 describe('refreshWindowSize', () => {
   const suites = [
     {
@@ -217,13 +216,13 @@ describe('refreshWindowSize', () => {
       // wait for stateChange to be ready
       await windowSizeService.waitReady();
 
-      const firstCall = 0;
+      const firstCall = 1;
       suite.states.forEach((item, index, arr) => {
         if (index < firstCall) return;
         expect(updateWindowSize).toHaveBeenNthCalledWith(
           index + 1 - firstCall,
           expect.anything(),
-          arr[index - 1] || null,
+          arr[index - 1] || item,
           item,
           {
             backupHeight: undefined,
@@ -231,7 +230,6 @@ describe('refreshWindowSize', () => {
             backupY: undefined,
             widthOffset: undefined,
           },
-          index === firstCall,
         );
       });
       expect(updateWindowSize).toHaveBeenCalledTimes(suite.states.length - firstCall);
