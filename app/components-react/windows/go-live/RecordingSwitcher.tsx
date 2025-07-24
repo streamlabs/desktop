@@ -19,14 +19,7 @@ interface IRecordingSettingsProps {
   className?: string | undefined;
 }
 export default function RecordingSwitcher(p: IRecordingSettingsProps) {
-  const { recording, updateRecordingDisplayAndSaveSettings } = useGoLiveSettings();
-
-  const canRecordVertical = Services.IncrementalRolloutService.views.featureIsEnabled(
-    EAvailableFeatures.verticalRecording,
-  );
-  const canRecordDualOutput = Services.IncrementalRolloutService.views.featureIsEnabled(
-    EAvailableFeatures.dualOutputRecording,
-  );
+  const { updateRecordingDisplayAndSaveSettings } = useGoLiveSettings();
 
   const v = useVuex(() => ({
     isDualOutputMode: Services.DualOutputService.views.dualOutputMode,
@@ -34,7 +27,16 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
     useAiHighlighter: Services.HighlighterService.views.useAiHighlighter,
     isRecording: Services.StreamingService.views.isRecording,
     isReplayBufferActive: Services.StreamingService.views.isReplayBufferActive,
+    recordingDisplay:
+      Services.StreamSettingsService.views.settings?.goLiveSettings?.recording ?? 'horizontal',
   }));
+
+  const canRecordVertical = Services.IncrementalRolloutService.views.featureIsEnabled(
+    EAvailableFeatures.verticalRecording,
+  );
+  const canRecordDualOutput = Services.IncrementalRolloutService.views.featureIsEnabled(
+    EAvailableFeatures.dualOutputRecording,
+  );
 
   const recordWhenStartStream = v.recordWhenStreaming || v.useAiHighlighter;
   const showRecordingToggle = p?.showRecordingToggle ?? false;
@@ -93,7 +95,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
               <RadioInput
                 name="recording-display"
                 defaultValue="horizontal"
-                value={recording}
+                value={v.recordingDisplay}
                 label={p?.label}
                 options={options}
                 onChange={(display: TDisplayOutput) =>

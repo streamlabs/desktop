@@ -92,6 +92,9 @@ function ModalFooter() {
   const shouldShowConfirm = ['prepopulate', 'waitForNewSettings'].includes(lifecycle);
   const shouldShowGoBackButton =
     lifecycle === 'runChecklist' && error && checklist.startVideoTransmission !== 'done';
+  const shouldShowRecordingSwitcher = ['empty', 'prepopulate', 'waitForNewSettings'].includes(
+    lifecycle,
+  );
 
   function handleGoLive() {
     if (isDualOutputMode && !getCanStreamDualOutput()) {
@@ -131,7 +134,7 @@ function ModalFooter() {
 
   return (
     <Form layout={'inline'}>
-      <RecordingSwitcher showRecordingToggle={true} />
+      {shouldShowRecordingSwitcher && <RecordingSwitcher showRecordingToggle={true} />}
       {/* CLOSE BUTTON */}
       <Button onClick={close}>{$t('Close')}</Button>
 

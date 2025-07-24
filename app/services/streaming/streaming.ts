@@ -1645,14 +1645,14 @@ export class StreamingService
         return;
       }
 
-      // Handle start recording when start streaming (and not start replay buffer when start streaming)
+      // Handle start recording when start streaming
       const recordWhenStreaming = this.streamSettingsService.settings.recordWhenStreaming;
 
       if (recordWhenStreaming && this.state.recordingStatus === ERecordingState.Offline) {
         await this.toggleRecording();
       }
 
-      // Handle start replay buffer when start streaming (and not start recording when start streaming))
+      // Handle start replay buffer when start streaming
       const replayWhenStreaming = this.streamSettingsService.settings.replayBufferWhileStreaming;
       const isReplayBufferEnabled = this.outputSettingsService.getSettings().replayBuffer.enabled;
 
@@ -1840,6 +1840,9 @@ export class StreamingService
         await new Promise(resolve => setTimeout(resolve, 2000));
         this.contexts.vertical.replayBuffer.save();
 
+        // this.replayBufferFileWrite.next(this.contexts[display].replayBuffer.lastFile());
+        // return;
+
         // TODO: figure out why the horizontal display loops writing until destroyed
         // if (isDualOutputReplayBuffer && display === 'horizontal') {
         //   console.log('Horizontal replay buffer file written');
@@ -1856,13 +1859,13 @@ export class StreamingService
         // } else if (isDualOutputReplayBuffer && display === 'vertical') {
         //   console.log('Vertical replay buffer file written');
 
-        this.replayBufferFileWrite.next(this.contexts[display].replayBuffer.lastFile());
         // } else {
         //   console.log('saving file');
 
         //   this.replayBufferFileWrite.next(this.contexts[display].replayBuffer.lastFile());
         // }
       }
+      this.replayBufferFileWrite.next(this.contexts[display].replayBuffer.lastFile());
     }
 
     if (info.signal === EOBSOutputSignal.Stop) {

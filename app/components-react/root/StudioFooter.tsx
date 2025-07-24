@@ -14,6 +14,7 @@ import Tooltip from '../shared/Tooltip';
 import { Tooltip as AntdTooltip } from 'antd';
 import { confirmAsync, promptAction } from 'components-react/modals';
 import RecordingSwitcher from 'components-react/windows/go-live/RecordingSwitcher';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export default function StudioFooterComponent() {
   const {
@@ -38,6 +39,8 @@ export default function StudioFooterComponent() {
     recordingModeEnabled,
     replayBufferEnabled,
     isDualOutputMode,
+    verticalRecording,
+    dualOutputRecording,
   } = useVuex(() => ({
     streamingStatus: StreamingService.views.streamingStatus,
     isLoggedIn: UserService.views.isLoggedIn,
@@ -51,7 +54,15 @@ export default function StudioFooterComponent() {
     recordingModeEnabled: RecordingModeService.views.isRecordingModeEnabled,
     replayBufferEnabled: SettingsService.views.values.Output.RecRB,
     isDualOutputMode: StreamingService.views.isDualOutputMode,
+    verticalRecording: Services.IncrementalRolloutService.views.featureIsEnabled(
+      EAvailableFeatures.verticalRecording,
+    ),
+    dualOutputRecording: Services.IncrementalRolloutService.views.featureIsEnabled(
+      EAvailableFeatures.dualOutputRecording,
+    ),
   }));
+
+  const showRecordingIcons = isDualOutputMode && (verticalRecording || dualOutputRecording);
 
   function performanceIconClassName() {
     if (!streamingStatus || streamingStatus === EStreamingState.Offline) {
@@ -142,8 +153,8 @@ export default function StudioFooterComponent() {
             {$t('Looking to stream?')}
           </button>
         )}
-        {!recordingModeEnabled && !isDualOutputMode && <RecordingButton />}
-        {!recordingModeEnabled && isDualOutputMode && <DualOutputRecordingButton />}
+        {!recordingModeEnabled && !showRecordingIcons && <RecordingButton />}
+        {!recordingModeEnabled && showRecordingIcons && <DualOutputRecordingButton />}
         {replayBufferEnabled && replayBufferOffline && (
           <div className={styles.navItem}>
             <AntdTooltip placement="left" title={$t('Start Replay Buffer')}>
@@ -168,11 +179,7 @@ export default function StudioFooterComponent() {
               </button>
             </AntdTooltip>
             <AntdTooltip placement="right" title={$t('Save Replay')}>
-              <button
-                className={cx('circle-button', styles.rightReplay)}
-                onClick={saveReplay}
-                disabled={StreamingService.views.isDualOutputRecording}
-              >
+              <button className={cx('circle-button', styles.rightReplay)} onClick={saveReplay}>
                 {replayBufferSaving ? (
                   <i className="fa fa-spinner fa-pulse" />
                 ) : (
