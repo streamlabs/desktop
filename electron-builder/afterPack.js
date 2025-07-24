@@ -75,7 +75,7 @@ async function afterPackMac(context) {
     `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Resources/app.asar.unpacked`,
   );
 
-  // For apps that requires specific entitlements. Ensures the entitlements file is provided during signing
+  // virtual cam installer app requires the entitlements file
   const entitlements = "--entitlements electron-builder/mac-virtual-cam-entitlements.plist";
   const installerPath = `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Frameworks/slobs-virtual-cam-installer.app`;
   const extraArgs = `${entitlements} --options runtime --verbose`;
