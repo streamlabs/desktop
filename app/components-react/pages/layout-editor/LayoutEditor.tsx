@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import cx from 'classnames';
 import styles from './LayoutEditor.m.less';
-import { ELayoutElement, LayoutSlot } from 'services/layout';
+import { ELayoutElement, TLayoutSlot } from 'services/layout';
 import { $t } from 'services/i18n';
 import { Services } from 'components-react/service-provider';
 import { TextInput } from 'components-react/shared/inputs';
@@ -49,15 +49,15 @@ function DisplayedLayout() {
   } = useLayoutEditor();
 
   const [canDragSlot, setCanDragSlot] = useState(true);
-  const [highlightedSlot, setHighlightedSlot] = useState<LayoutSlot | null>(null);
+  const [highlightedSlot, setHighlightedSlot] = useState<TLayoutSlot | null>(null);
 
-  function elementInSlot(slot: LayoutSlot) {
+  function elementInSlot(slot: TLayoutSlot) {
     return Object.keys(slottedElements).find(
-      el => slottedElements[el].slot === slot,
+      (el: ELayoutElement) => slottedElements[el]?.slot === slot,
     ) as ELayoutElement;
   }
 
-  function classForSlot(slot: LayoutSlot) {
+  function classForSlot(slot: TLayoutSlot) {
     const layout = LayoutService.views.className(currentLayout);
     return cx(styles.placementZone, styles[`${layout}${slot}`], {
       [styles.occupied]: elementInSlot(slot),
@@ -67,7 +67,7 @@ function DisplayedLayout() {
 
   return (
     <>
-      {['1', '2', '3', '4', '5', '6'].map((slot: LayoutSlot) => (
+      {['1', '2', '3', '4', '5', '6'].map((slot: TLayoutSlot) => (
         <div
           className={classForSlot(slot)}
           id={slot}

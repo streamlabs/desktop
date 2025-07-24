@@ -25,6 +25,7 @@ export enum ETransitionType {
   Cut = 'cut_transition',
   Fade = 'fade_transition',
   Swipe = 'swipe_transition',
+  Shuffle = 'shuffle_transition',
   Slide = 'slide_transition',
   FadeToColor = 'fade_to_color_transition',
   LumaWipe = 'wipe_transition',
@@ -44,6 +45,11 @@ interface ITransition {
   name: string;
   type: ETransitionType;
   duration: number;
+}
+
+interface IObsTransitionCallbackInfo {
+  id: string;
+  event: 'start' | 'stop';
 }
 
 export interface ITransitionConnection {
@@ -72,7 +78,10 @@ class TransitionsViews extends ViewHandler<ITransitionsState> {
       { title: $t('Stinger'), value: ETransitionType.Stinger },
     ];
 
-    if (getOS() === OS.Windows) types.push({ title: $t('Motion'), value: ETransitionType.Motion });
+    if (getOS() === OS.Windows) {
+      types.push({ title: $t('Motion'), value: ETransitionType.Motion });
+      types.push({ title: $t('Shuffle'), value: ETransitionType.Shuffle });
+    }
 
     return types;
   }
@@ -139,6 +148,12 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
   sceneDuplicate: obs.IScene;
 
   /**
+   * This is a previous instance of scene duplicate. The reference
+   * is only valid until the transition is finished.
+   */
+  private oldDuplicate: obs.IScene;
+
+  /**
    * This is an application's id of duplicated scene from above
    */
   currentSceneId: string;
@@ -163,6 +178,10 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
     this.sceneCollectionsService.collectionWillSwitch.subscribe(() => {
       this.disableStudioMode();
     });
+
+    obs.NodeObs.RegisterTransitionCallback((objs: IObsTransitionCallbackInfo[]) =>
+      this.handleTransitionCallback(objs),
+    );
 
     // a video context must be initialized before loading the scene transition
     const establishedContext = this.videoSettingsService.establishedContext.subscribe(() => {
@@ -189,12 +208,14 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
     if (!this.studioModeTransition) this.createStudioModeTransition();
     this.currentSceneId = this.scenesService.views.activeScene.id;
     const currentScene = this.scenesService.views.activeScene.getObsScene();
-    this.sceneDuplicate = currentScene.duplicate(uuid(), obs.ESceneDupType.Copy);
+    this.sceneDuplicate = currentScene.duplicate('scene_copy_' + uuid(), obs.ESceneDupType.Copy);
 
-    // Immediately switch to the duplicated scene
+    // Immediately switch to the duplicated scene (Right window, Live)
     this.getCurrentTransition().set(this.sceneDuplicate);
 
+    // Left window, Edit. Note: order of these 2 calls is important
     this.studioModeTransition.set(currentScene);
+    obs.Global.addSceneToBackstage(this.studioModeTransition);
   }
 
   disableStudioMode() {
@@ -203,7 +224,8 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
     this.SET_STUDIO_MODE(false);
     this.studioModeChanged.next(false);
 
-    this.getCurrentTransition().set(this.scenesService.views.activeScene.getObsScene());
+    const currentScene = this.scenesService.views.activeScene;
+    this.getCurrentTransition().set(currentScene.getObsScene());
     this.releaseStudioModeObjects();
   }
 
@@ -218,14 +240,13 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
 
     const currentScene = this.scenesService.views.activeScene;
 
-    if (this.currentSceneId !== currentScene.id) {
-      this.playFfmpegSources(currentScene, false);
-    }
+    obs.Global.removeSceneFromBackstage(currentScene.getSource().getObsInput());
 
-    const oldDuplicate = this.sceneDuplicate;
-    this.sceneDuplicate = currentScene.getObsScene().duplicate(uuid(), obs.ESceneDupType.Copy);
+    this.oldDuplicate = this.sceneDuplicate;
+    this.sceneDuplicate = currentScene
+      .getObsScene()
+      .duplicate('scene_copy_' + uuid(), obs.ESceneDupType.Copy);
 
-    // TODO: Make this a dropdown box
     const transition = this.getDefaultTransition();
     const obsTransition = this.obsTransitions[transition.id];
 
@@ -235,12 +256,25 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
       Math.min(transition.duration, TRANSITION_DURATION_MAX),
       this.sceneDuplicate,
     );
+  }
 
-    setTimeout(() => {
-      oldDuplicate.release();
-      this.studioModeLocked = false;
-      this.currentSceneId = this.scenesService.views.activeScene.id;
-    }, Math.min(transition.duration, TRANSITION_DURATION_MAX));
+  /**
+   * Callback that helps track state of transitions in the app
+   */
+  private handleTransitionCallback(callbackInfo: IObsTransitionCallbackInfo[]) {
+    callbackInfo.forEach(info => {
+      const obsTransition = this.obsTransitions[info.id];
+      if (!obsTransition) {
+        return;
+      }
+
+      if (this.studioModeLocked && info.event === 'stop') {
+        this.oldDuplicate.release();
+        this.oldDuplicate = null;
+        this.currentSceneId = this.scenesService.views.activeScene.id;
+        this.studioModeLocked = false;
+      }
+    });
   }
 
   /**
@@ -262,6 +296,7 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
 
   releaseStudioModeObjects() {
     if (this.studioModeTransition) {
+      obs.Global.removeSceneFromBackstage(this.studioModeTransition);
       this.studioModeTransition.release();
       this.studioModeTransition = null;
     }
@@ -277,40 +312,19 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
     }
   }
 
-  // This sould be used in 'Studio mode' only.
-  // As ffmpeg sources do not start playing because they are not active when user switches scenes,
-  // we are bypassing this limitation here by forcing to start and stop playback of video files
-  playFfmpegSources(scene: Scene, play: boolean) {
-    if (!this.state.studioMode) {
-      return;
-    }
-
-    for (const source of scene.getNestedSources()) {
-      const settings = source.getSettings();
-      if (settings['restart_on_activate'] !== true) {
-        continue;
-      }
-
-      if (source.type === 'ffmpeg_source') {
-        if (play) {
-          source.getObsInput().play();
-        } else {
-          source.getObsInput().stop();
-        }
-      }
-    }
-  }
-
   transition(sceneAId: string | null, sceneBId: string) {
     if (this.state.studioMode) {
       if (sceneAId && sceneAId !== this.currentSceneId) {
         const prevScene = this.scenesService.views.getScene(sceneAId);
-        this.playFfmpegSources(prevScene, false);
+        obs.Global.removeSceneFromBackstage(prevScene.getSource().getObsInput());
       }
 
       const scene = this.scenesService.views.getScene(sceneBId);
+      if (this.currentSceneId !== sceneBId) {
+        obs.Global.addSceneToBackstage(scene.getSource().getObsInput());
+      }
+
       this.studioModeTransition.set(scene.getObsScene());
-      this.playFfmpegSources(scene, true);
 
       return;
     }
@@ -412,6 +426,9 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
   }
 
   createTransition(type: ETransitionType, name: string, options: ITransitionCreateOptions = {}) {
+    if (!this.views.getTypes().find(t => t.value === type)) {
+      type = ETransitionType.Cut;
+    }
     const id = options.id || uuid();
     const transition = obs.TransitionFactory.create(type, id, options.settings || {});
     const manager = new DefaultManager(transition, options.propertiesManagerSettings || {});
@@ -589,6 +606,8 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
 
     if (transition) {
       Object.keys(patch).forEach(key => {
+        // TODO: index
+        // @ts-ignore
         transition[key] = patch[key];
       });
     }
@@ -623,6 +642,8 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
 
     if (connection) {
       Object.keys(patch).forEach(key => {
+        // TODO: index
+        // @ts-ignore
         connection[key] = patch[key];
       });
     }

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, RefObject } from 'react';
-import { IClip } from 'services/highlighter';
+import { TClip } from 'services/highlighter/models/highlighter.models';
 import { SCRUB_FRAMES, SCRUB_HEIGHT, SCRUB_WIDTH } from 'services/highlighter/constants';
 import { Services } from 'components-react/service-provider';
 import times from 'lodash/times';
@@ -27,7 +27,7 @@ function useStateRef<T>(initialValue: T): [RefObject<T>, (newValue: T) => void] 
   ];
 }
 
-export default function ClipTrimmer(props: { clip: IClip }) {
+export default function ClipTrimmer(props: { clip: TClip; streamId: string | undefined }) {
   const { HighlighterService, UsageStatisticsService } = Services;
   const videoRef = useRef<HTMLVideoElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -151,14 +151,17 @@ export default function ClipTrimmer(props: { clip: IClip }) {
   function stopDragging() {
     if (isDragging.current === 'start') {
       HighlighterService.actions.setStartTrim(props.clip.path, localStartTrim);
-      UsageStatisticsService.actions.recordAnalyticsEvent('Highlighter', { type: 'Trim' });
     } else if (isDragging.current === 'end') {
       HighlighterService.actions.setEndTrim(props.clip.path, localEndTrim);
-      UsageStatisticsService.actions.recordAnalyticsEvent('Highlighter', { type: 'Trim' });
     }
 
     isDragging.current = null;
     playAt(localStartTrim);
+
+    UsageStatisticsService.actions.recordAnalyticsEvent(
+      HighlighterService.state.useAiHighlighter ? 'AIHighlighter' : 'Highlighter',
+      { type: 'Trim', clipPath: props.clip.path, streamId: props.streamId },
+    );
   }
 
   const scrubHeight = 100;

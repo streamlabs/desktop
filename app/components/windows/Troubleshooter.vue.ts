@@ -13,6 +13,7 @@ import { StreamingService } from 'services/streaming';
 import { TObsFormData } from '../obs/inputs/ObsInput';
 import GenericFormGroups from '../obs/inputs/GenericFormGroups.vue';
 import { StartStreamingButton } from 'components/shared/ReactComponentList';
+import { CustomizationService } from 'services/customization';
 
 @Component({
   components: { ModalLayout, GenericFormGroups, StartStreamingButton },
@@ -22,6 +23,7 @@ export default class Troubleshooter extends Vue {
   @Inject() private settingsService: SettingsService;
   @Inject() private windowsService!: WindowsService;
   @Inject() streamingService: StreamingService;
+  @Inject() customizationService: CustomizationService;
 
   issueCode = this.windowsService.getChildWindowQueryParams().issueCode as TIssueCode;
 
@@ -52,6 +54,10 @@ export default class Troubleshooter extends Vue {
     return this.settingsService.state.Output.formData.map(hideParamsForCategory);
   }
 
+  get performanceMode() {
+    return this.customizationService.state.performanceMode;
+  }
+
   showSettings() {
     this.settingsService.showSettings();
   }
@@ -74,6 +80,12 @@ export default class Troubleshooter extends Vue {
 
   destroyed() {
     this.subscription.unsubscribe();
+  }
+
+  enablePerformanceMode() {
+    this.customizationService.setSettings({
+      performanceMode: true,
+    });
   }
 }
 

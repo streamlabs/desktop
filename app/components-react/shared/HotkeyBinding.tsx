@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { IBinding, IHotkey } from 'services/hotkeys';
 import { TextInput } from 'components-react/shared/inputs';
 import { byOS, OS } from 'util/operating-systems';
@@ -37,7 +37,7 @@ export function getBindingString(binding: IBinding) {
 function getHotkeyString(binding: IBinding | null, focused = false) {
   if (focused) return 'Press any key combination...';
 
-  if (binding) {
+  if (binding?.key) {
     return `${getBindingString(binding)} (Click to re-bind)`;
   } else {
     return 'Click to bind';
@@ -65,11 +65,19 @@ export default function HotkeyBinding(p: {
   hotkey: IHotkey;
   binding: IBinding | null;
   onBind: (binding: IBinding) => void;
+  style?: React.CSSProperties;
+  showLabel?: boolean;
 }) {
-  const { MarkersService } = Services;
+  const { MarkersService, DualOutputService } = Services;
 
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<Input>(null);
+
+  const hotKeyLabel = p.showLabel !== false ? <HotkeyLabel /> : <></>;
+  const showDualOutputLabel =
+    DualOutputService.views.dualOutputMode &&
+    p?.hotkey.actionName !== 'SWITCH_TO_SCENE' &&
+    p.hotkey?.sceneItemId;
 
   function handlePress(event: React.KeyboardEvent<HTMLInputElement>) {
     // We don't allow binding a modifier by instelf
@@ -91,7 +99,7 @@ export default function HotkeyBinding(p: {
 
     event.preventDefault();
 
-    const code = {
+    const code: Record<number, string> = {
       1: 'MiddleMouseButton',
       3: 'X1MouseButton',
       4: 'X2MouseButton',
@@ -119,12 +127,34 @@ export default function HotkeyBinding(p: {
     );
   }
 
+  function DualOutputHotkeyLabel() {
+    const icon = p.hotkey?.display === 'vertical' ? 'icon-phone-case' : 'icon-desktop';
+    if (!p.hotkey.isMarker) {
+      return (
+        <>
+          <i className={icon} style={{ margin: '5px', opacity: 0.6 }} />
+          {p.hotkey.description || ''}
+        </>
+      );
+    }
+    return (
+      <>
+        <i className={icon} style={{ margin: '5px', opacity: 0.6 }} />
+        <TextInput
+          value={MarkersService.views.getLabel(p.hotkey.actionName)}
+          onChange={handleLabel}
+          nowrap
+        />
+      </>
+    );
+  }
+
   return (
     <Form layout="inline">
       <TextInput
         name="binding"
-        style={{ width: 400 }}
-        label={<HotkeyLabel />}
+        style={{ width: 400, ...p.style }}
+        label={showDualOutputLabel ? <DualOutputHotkeyLabel /> : hotKeyLabel}
         value={getHotkeyString(p.binding, focused)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}

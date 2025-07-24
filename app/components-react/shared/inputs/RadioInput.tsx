@@ -2,29 +2,47 @@ import React from 'react';
 import { InputComponent, TSlobsInputProps } from './inputs';
 import InputWrapper from './InputWrapper';
 import { Radio, Space } from 'antd';
+import omit from 'lodash/omit';
 
 type TRadioInputProps = TSlobsInputProps<
   {
     label?: string;
     nolabel?: boolean;
-    nomargin?: boolean;
-    options: { value: string; label: string; description?: string; defaultValue?: string }[];
+    nowrap?: boolean;
+    options: {
+      value: string;
+      label: string;
+      description?: string;
+      defaultValue?: string;
+      icon?: string;
+    }[];
     buttons?: boolean;
+    icons?: boolean;
+    value?: string;
     direction?: 'vertical' | 'horizontal';
     disabled?: boolean;
     className?: string;
+    gapsize?: number;
   },
   string,
   {}
 >;
 
 export const RadioInput = InputComponent((p: TRadioInputProps) => {
+  const wrapperProps = omit(
+    p,
+    'options',
+    'buttons',
+    'icons',
+    'disabled',
+    'direction',
+    'onChange',
+    'value',
+    'defaultValue',
+  );
+
   return (
-    <InputWrapper
-      label={p.label}
-      nolabel={p.nolabel ?? undefined}
-      style={{ margin: p.nomargin ? '0px' : undefined }}
-    >
+    <InputWrapper {...wrapperProps}>
       {p.buttons && (
         <Radio.Group
           value={p.value}
@@ -36,14 +54,34 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           className={p.className}
         />
       )}
-      {!p.buttons && (
+      {p.icons && (
+        <Radio.Group
+          value={p.value}
+          defaultValue={p.defaultValue}
+          onChange={e => p.onChange && p.onChange(e.target.value)}
+          className={p.className}
+          disabled={p.disabled}
+        >
+          {p.options.map(option => {
+            return (
+              <Radio
+                key={option.value}
+                value={option.value}
+                disabled={p.disabled}
+                children={<i className={option.icon} />}
+              />
+            );
+          })}
+        </Radio.Group>
+      )}
+      {!p.icons && !p.buttons && (
         <Radio.Group
           value={p.value}
           defaultValue={p.defaultValue}
           onChange={e => p.onChange && p.onChange(e.target.value)}
           className={p.className}
         >
-          <Space direction={p?.direction ?? 'vertical'}>
+          <Space size={p?.gapsize ?? undefined} direction={p?.direction ?? 'vertical'}>
             {p.options.map(option => {
               return (
                 <Radio key={option.value} value={option.value} disabled={p.disabled}>

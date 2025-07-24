@@ -6,7 +6,7 @@ import { Subject } from 'rxjs';
 import { IWindowOptions, WindowsService } from 'services/windows';
 import { Inject } from 'services/core/injector';
 import { EApiPermissions } from './api/modules/module';
-import { VideoService } from 'services/video';
+import { VideoSettingsService } from 'services/settings-v2/video';
 import { DevServer } from './dev-server';
 import { HostsService } from 'services/hosts';
 import { authorizedHeaders, handleResponse, jfetch } from 'util/requests';
@@ -170,7 +170,7 @@ class PlatformAppsViews extends ViewHandler<IPlatformAppServiceState> {
 @InitAfter('UserService')
 export class PlatformAppsService extends StatefulService<IPlatformAppServiceState> {
   @Inject() windowsService: WindowsService;
-  @Inject() videoService: VideoService;
+  @Inject() videoSettingsService: VideoSettingsService;
   @Inject() hostsService: HostsService;
   @Inject() userService: UserService;
   @Inject() navigationService: NavigationService;
@@ -317,6 +317,8 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
     try {
       await this.validateManifest(manifest, appPath);
     } catch (e: unknown) {
+      // TODO: index
+      // @ts-ignore
       return e['message'];
     }
 
@@ -601,8 +603,8 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
       }
       if (source.initialSize.type === ESourceSizeType.Relative) {
         return {
-          width: source.initialSize.width * this.videoService.baseWidth,
-          height: source.initialSize.height * this.videoService.baseHeight,
+          width: source.initialSize.width * this.videoSettingsService.baseWidth,
+          height: source.initialSize.height * this.videoSettingsService.baseHeight,
         };
       }
     }
@@ -644,6 +646,7 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
         size: this.getPagePopOutSize(appId, pageSlot),
         x: mousePos.x,
         y: mousePos.y,
+        persistWebContents: true,
         ...windowOptions,
       },
       windowId,
@@ -651,10 +654,10 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
 
     this.POP_OUT_SLOT(appId, pageSlot);
 
-    const sub = this.windowsService.windowDestroyed.subscribe(winId => {
+    const windowDestroyed = this.windowsService.windowDestroyed.subscribe(winId => {
       if (winId === windowId) {
         this.POP_IN_SLOT(appId, pageSlot);
-        sub.unsubscribe();
+        windowDestroyed.unsubscribe();
       }
     });
   }

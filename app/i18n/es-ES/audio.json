@@ -29,7 +29,7 @@
   "Unmute": "Escuchar",
   "Designates if this source is audible in your live broadcast": "Define si esta fuente es audible en su transmisión en directo",
   "Designates if this source is audible in your recorded track(s)": "Define si esta fuente es audible en sus pistas grabadas",
-  "Source Settings": "Configuración de fuente",
+  "Source Settings": "Ajustes de fuente",
   "Audio Tracks": "Pistas de audio",
   "Designates which tracks are being recorded": "Define qué pistas se van a grabar",
   "Your Stream and VOD Track are the same. This may result in unexpected audio behavior, go to Global Settings to change.": "Las pistas de streaming y VOD son la misma. Esto puede provocar un comportamiento imprevisto del audio. Vaya a los ajustes globales para cambiarlo.",

@@ -31,9 +31,34 @@ export default class GenericForm extends TsxComponent<GenericFormProps> {
     this.$emit('validate', errors);
   }
 
+  async onBlurHandler(event: FocusEvent) {
+    const errors = await this.$refs.form.validateAndGetErrors();
+    for (const e of errors) {
+      const inputs = this.$refs.form.getInputs();
+      const inputWithError = inputs.find(input => {
+        return input.getOptions().uuid === e.field;
+      });
+
+      if (inputWithError) {
+        const name = inputWithError.getOptions()?.name;
+        const errorPropIndex = this.props.value.findIndex(p => p.name === name);
+
+        if (errorPropIndex !== -1) {
+          const errorProp = this.props.value[errorPropIndex];
+          // The trick with adding space symbol at the line below is used to force
+          // value refresh in UI, because UI's HTML element holds value with error and
+          // errorProp.value has the last valid value. Space addintion does not make value illegal,
+          // because it is pruned immediately automatically during error validation phase.
+          errorProp.value += ' ';
+          this.onInputHandler(errorProp, errorPropIndex);
+        }
+      }
+    }
+  }
+
   render() {
     return (
-      <ValidatedForm ref="form">
+      <ValidatedForm ref="form" onBlur={(event: FocusEvent) => this.onBlurHandler(event)}>
         {this.props.value.map((parameter, inputIndex) => {
           const Component = propertyComponentForType(parameter.type);
           return (

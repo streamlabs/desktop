@@ -77,6 +77,8 @@ export class AlertBoxModule extends WidgetModule<IAlertBoxState> {
     // define onChange handler
     statePatch => this.updateSettings(statePatch),
     // pull additional metadata like tooltip, label, min, max, etc...
+    // TODO: index
+    // @ts-ignore
     fieldName => this.generalMetadata[fieldName],
   );
 
@@ -99,6 +101,8 @@ export class AlertBoxModule extends WidgetModule<IAlertBoxState> {
       },
       // pull additional metadata like tooltip, label, min, max, etc...
       fieldName => ({
+        // TODO: index
+        // @ts-ignore
         ...this.variationsMetadata[alertType as any][fieldName],
         hidden: hiddenFields.includes(fieldName as string),
       }),
@@ -117,6 +121,8 @@ export class AlertBoxModule extends WidgetModule<IAlertBoxState> {
    */
   get enabledAlerts() {
     return Object.keys(this.widgetData.variations).filter(
+      // TODO: index
+      // @ts-ignore
       alertType => this.widgetData.variations[alertType].default.enabled,
     );
   }
@@ -153,6 +159,8 @@ export class AlertBoxModule extends WidgetModule<IAlertBoxState> {
 
     // sanitize general settings
     Object.keys(settings).forEach(key => {
+      // TODO: index
+      // @ts-ignore
       settings[key] = this.sanitizeValue(settings[key], key, this.generalMetadata[key]);
     });
 
@@ -187,7 +195,8 @@ export class AlertBoxModule extends WidgetModule<IAlertBoxState> {
   override setData(data: IAlertBoxState['data']) {
     // save widget data instate and calculate additional state variables
     super.setData(data);
-    const allAlerts = values(this.eventsConfig) as IAlertConfig[];
+    // Get all defined alert configurations, unimplemented alerts will show as undefined, so we filter
+    const allAlerts = values(this.eventsConfig).filter(x => x) as IAlertConfig[];
 
     // group alertbox settings by alert types and store them in `state.data.variations`
     this.state.mutate(state => {
@@ -205,6 +214,8 @@ export class AlertBoxModule extends WidgetModule<IAlertBoxState> {
           value = this.sanitizeValue(
             value,
             targetKey,
+            // TODO: index
+            // @ts-ignore
             this.variationsMetadata[alertEvent.type][targetKey],
           );
 
@@ -308,11 +319,13 @@ export class AlertBoxModule extends WidgetModule<IAlertBoxState> {
     // flatten settings by adding prefixes
     const settingsPatch = {} as any;
     Object.keys(variationPatch).forEach(key => {
+      // TODO: index
+      // @ts-ignore
       settingsPatch[`${apiKey}_${key}`] = variationPatch[key];
     });
 
     // set the same message template for all Cheer variations
-    if (type === 'twCheer') {
+    if (type === 'bits') {
       const newBitsVariations = this.widgetData.settings.bit_variations.map((variation: any) => {
         const newVariation = cloneDeep(variation);
         newVariation.settings.text.format = newVariationSettings.message_template;
@@ -332,6 +345,8 @@ export class AlertBoxModule extends WidgetModule<IAlertBoxState> {
 
   get selectedAlert(): TAlertType | null {
     const selectedTab = this.state.selectedTab;
+    // TODO: index
+    // @ts-ignore
     if (this.eventsConfig[selectedTab]) {
       return selectedTab as TAlertType;
     }
@@ -396,7 +411,7 @@ export class AlertBoxModule extends WidgetModule<IAlertBoxState> {
     alerts = topAlerts.concat(alerts.sort().filter(alert => !topAlerts.includes(alert)));
 
     // TODO: fbSupportGift is impossible to enable on backend
-    alerts = alerts.filter(alert => alert !== 'fbSupportGift');
+    alerts = alerts.filter(alert => alert !== 'facebook_support_gifter');
     this.widgetState.availableAlerts = alerts;
   }
 }
@@ -483,54 +498,66 @@ function getVariationsMetadata() {
         min: 0,
       }),
     },
-    twFollow: {},
-    fbFollow: {},
-    twRaid: {
-      message_template: getMessageTemplateMetadata('twRaid'),
+    follow: {},
+    facebook_follow: {},
+    raid: {
+      message_template: getMessageTemplateMetadata('raid'),
     },
-    twHost: {},
-    twSubscription: {},
-    twCheer: {
-      message_template: getMessageTemplateMetadata('twCheer'),
+    sub: {},
+    bits: {
+      message_template: getMessageTemplateMetadata('bits'),
       alert_message_min_amount: metadata.number({
         label: $t('Min. Amount to Trigger Alert'),
         min: 0,
       }),
     },
-    ytSuperchat: {
+    fanfunding: {
       alert_message_min_amount: metadata.number({
         label: $t('Min. Amount to Trigger Alert'),
         min: 0,
       }),
     },
-    fbStars: {
-      message_template: getMessageTemplateMetadata('fbStars'),
+    facebook_stars: {
+      message_template: getMessageTemplateMetadata('facebook_stars'),
       alert_message_min_amount: metadata.number({
         label: $t('Min. Amount to Trigger Alert'),
         min: 0,
       }),
     },
-    fbSupport: {
-      message_template: getMessageTemplateMetadata('fbSupport'),
+    facebook_support: {
+      message_template: getMessageTemplateMetadata('facebook_support'),
     },
-    fbSupportGift: {},
-    fbShare: {},
-    fbLike: {},
+    facebook_support_gifter: {},
+    facebook_share: {},
+    facebook_like: {},
     merch: {
       message_template: getMessageTemplateMetadata('merch'),
       use_custom_image: metadata.bool({
         label: $t('Replace product image with custom image'),
       }),
     },
-    ytSubscriber: {},
-    ytMembership: {},
-    trFollow: {},
-    trSubscription: {},
-    trRaid: {},
+    subscriber: {},
+    sponsor: {},
+    trovo_follow: {},
+    trovo_sub: {},
+    trovo_raid: {},
+    donordrive_donation: undefined,
+    eldonation: undefined,
+    justgiving_donation: undefined,
+    loyalty_store_redemption: undefined,
+    membershipGift: undefined,
+    pledge: undefined,
+    resub: undefined,
+    streamlabscharitydonation: undefined,
+    tiltify_donation: undefined,
+    treat: undefined,
+    twitchcharitydonation: undefined,
   });
 
   // mix common and specific metadata and return it
   Object.keys(specificMetadata).forEach(alertType => {
+    // TODO: index
+    // @ts-ignore
     specificMetadata[alertType] = { ...commonMetadata, ...specificMetadata[alertType] };
   });
   return specificMetadata as {
@@ -552,24 +579,24 @@ function getMessageTemplateMetadata(alert?: TAlertType) {
 
   switch (alert) {
     case 'donation':
-    case 'twCheer':
-    case 'fbStars':
-    case 'fbSupport':
+    case 'bits':
+    case 'facebook_stars':
+    case 'facebook_support':
       tooltipTokens =
         ' {name} ' +
         $t('The name of the donator') +
         ', {amount} ' +
         $t('The amount that was donated');
       break;
-    case 'twRaid':
+    case 'merch':
+      tooltipTokens = '{name}, {product}';
+      break;
+    case 'raid':
       tooltipTokens =
         ' {name} ' +
         $t('The name of the streamer raiding you') +
         ', {amount} ' +
         $t('The number of viewers who joined the raid');
-      break;
-    case 'merch':
-      tooltipTokens = '{name}, {product}';
       break;
   }
 

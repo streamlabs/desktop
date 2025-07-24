@@ -1,8 +1,11 @@
 import { test, useWebdriver } from '../../helpers/webdriver';
 import { logIn } from '../../helpers/webdriver/user';
-import { getFormInput } from '../../helpers/webdriver/forms';
-import { goLive, stopStream } from '../../helpers/modules/streaming';
-import { FormMonkey } from '../../helpers/form-monkey';
+import {
+  goLive,
+  stopStream,
+  waitForStreamStart,
+  waitForStreamStop,
+} from '../../helpers/modules/streaming';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
 import { click } from '../../helpers/modules/core';
 import { assertFormContains, readFields, useForm } from '../../helpers/modules/forms';
@@ -29,11 +32,21 @@ test('Populates stream settings after go live', async t => {
 });
 
 test('Populates stream key after go live', async t => {
-  const { app } = t.context;
+  const user = await logIn(t);
 
-  await logIn(t);
-  await goLive();
+  // make sure all required fields are filled for platforms
+  if (user.type === 'twitch') {
+    await goLive({
+      title: 'Test title',
+      twitchGame: 'Fortnite',
+    });
+  } else {
+    await goLive();
+  }
+
+  await waitForStreamStart();
   await stopStream();
+  await waitForStreamStop();
   await showSettingsWindow('Stream');
   await click('a=Stream to custom ingest');
 

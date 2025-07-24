@@ -32,6 +32,7 @@ export class Source implements ISourceApi {
   height: number;
   configurable: boolean;
   doNotDuplicate: boolean;
+  forceUiRefresh: boolean;
   channel?: number;
   resourceId: string;
   propertiesManagerType: TPropertiesManager;

@@ -1,10 +1,10 @@
-import {WidgetModule, WidgetParams} from './useWidget';
+import { WidgetModule, WidgetParams } from './useWidget';
 import { message } from 'antd';
 import Utils from '../../../services/utils';
 import { Services } from '../../service-provider';
 import { DEFAULT_CUSTOM_FIELDS } from './CustomFields';
 import { getDefined } from '../../../util/properties-type-guards';
-import {inject, injectChild, injectState, injectWatch, mutation, useModule} from 'slap';
+import { inject, injectChild, injectState, injectWatch, mutation, useModule } from 'slap';
 
 type TLang = 'json' | 'js' | 'css' | 'html';
 
@@ -12,7 +12,6 @@ type TLang = 'json' | 'js' | 'css' | 'html';
  * Manages the state for Code Editor window
  */
 class CodeEditorModule {
-
   constructor(public widgetParams: WidgetParams) {}
 
   tabs = [

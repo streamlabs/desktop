@@ -1,66 +1,155 @@
 import {
+  addCustomDestination,
   clickGoLive,
   prepareToGoLive,
+  submit,
   waitForSettingsWindowLoaded,
 } from '../../helpers/modules/streaming';
 import {
-  click,
   clickIfDisplayed,
   focusChild,
   focusMain,
-  hoverElement,
+  getNumElements,
   isDisplayed,
-  selectElements,
-  useMainWindow,
-  waitForText,
+  selectAsyncAlert,
 } from '../../helpers/modules/core';
 import { logIn } from '../../helpers/modules/user';
-import { toggleDualOutputMode, toggleDisplay } from '../../helpers/modules/dual-output';
-import { getApiClient } from '../../helpers/api-client';
-import { releaseUserInPool, reserveUserFromPool } from '../../helpers/webdriver/user';
-import { test, useWebdriver, TExecutionContext } from '../../helpers/webdriver';
+import { toggleDisplay, toggleDualOutputMode } from '../../helpers/modules/dual-output';
+import {
+  skipCheckingErrorsInLog,
+  test,
+  TExecutionContext,
+  useWebdriver,
+} from '../../helpers/webdriver';
+import { getUser, releaseUserInPool, withUser } from '../../helpers/webdriver/user';
 import { SceneBuilder } from '../../helpers/scene-builder';
+import { getApiClient } from '../../helpers/api-client';
 
+// not a react hook
+// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
 
 /**
- * Dual output video settings
+ * Toggle Dual Output Video Settings
+ * @remark to prevent errors from accounts in the user pool not
+ * being available, test multiple aspects of dual output in a single test
  */
-test('User must be logged in to use Dual Output', async (t: TExecutionContext) => {
+test('Dual Output', async (t: TExecutionContext) => {
+  // user must be logged in to toggle dual output
   await toggleDualOutputMode(false);
   await focusChild();
-  t.true(await isDisplayed('form#login-modal', { timeout: 1000 }));
-});
+  t.true(
+    await isDisplayed('form#login-modal', { timeout: 1000 }),
+    'User must be logged in to toggle dual output',
+  );
 
-test.skip('Dual output checkbox toggles Dual Output mode', async (t: TExecutionContext) => {
-  await logIn();
+  // dual output duplicates the scene collection and heirarchy
+  const user = await logIn();
+
+  const sceneBuilder = new SceneBuilder(await getApiClient());
+
+  // Build a complex item and folder hierarchy
+  const sketch = `
+  Item1:
+  Item2:
+  Folder1
+    Item3:
+    Item4:
+  Item5:
+  Folder2
+    Item6:
+    Folder3
+      Item7:
+      Item8:
+    Item9:
+    Folder4
+      Item10:
+  Item11:
+`;
+
+  sceneBuilder.build(sketch);
+
+  t.true(
+    sceneBuilder.isEqualTo(
+      `
+      Item1:
+      Item2:
+      Folder1
+        Item3:
+        Item4:
+      Item5:
+      Folder2
+        Item6:
+        Folder3
+          Item7:
+          Item8:
+        Item9:
+        Folder4
+          Item10:
+      Item11:
+  `,
+    ),
+  );
+
+  // toggle dual output on and convert dual output scene collection
+  await toggleDualOutputMode();
+  t.true(
+    sceneBuilder.isEqualTo(
+      `
+      Item1: color_source
+      Item2: color_source
+      Folder1
+        Item3: color_source
+        Item4: color_source
+      Item5: color_source
+      Folder2
+        Item6: color_source
+        Folder3
+          Item7: color_source
+          Item8: color_source
+        Item9: color_source
+        Folder4
+          Item10: color_source
+      Item11: color_source
+      Item1: color_source
+      Item2: color_source
+      Folder1
+        Item3: color_source
+        Item4: color_source
+      Item5: color_source
+      Folder2
+        Item6: color_source
+        Folder3
+          Item7: color_source
+          Item8: color_source
+        Item9: color_source
+        Folder4
+          Item10: color_source
+      Item11: color_source
+    `,
+    ),
+    'Dual output scene collection duplicated correctly',
+  );
+
+  // toggling dual output shows/hides the vertical display
+  await focusMain();
+  t.true(
+    await isDisplayed('div#vertical-display'),
+    'Toggling on dual output shows vertical display',
+  );
+
   await toggleDualOutputMode();
   await focusMain();
-  t.true(await isDisplayed('div#vertical-display'));
+  t.false(
+    await isDisplayed('div#vertical-display'),
+    'Toggling off dual output hides vertical display',
+  );
 
-  await toggleDualOutputMode();
-  await focusMain();
-  t.false(await isDisplayed('div#vertical-display'));
-});
-
-/**
- * Dual output displays
- */
-test.skip('Dual output elements show on toggle', async (t: TExecutionContext) => {
-  await logIn();
+  // dual output display toggles show/hide displays
   await toggleDualOutputMode();
   await focusMain();
 
-  t.true(await isDisplayed('div#vertical-display'));
-  t.true(await isDisplayed('div#dual-output-header'));
-  t.true(await isDisplayed('i#horizontal-display-toggle'));
-  t.true(await isDisplayed('i#vertical-display-toggle'));
-});
-
-test.skip('Dual output toggles', async (t: TExecutionContext) => {
-  await logIn();
-  await toggleDualOutputMode();
-  await focusMain();
+  t.true(await isDisplayed('div#dual-output-header'), 'Dual output header exists');
 
   // check permutations of toggling on and off the displays
   await clickIfDisplayed('i#horizontal-display-toggle');
@@ -94,273 +183,184 @@ test.skip('Dual output toggles', async (t: TExecutionContext) => {
   await toggleDisplay('horizontal');
   t.true(await isDisplayed('div#horizontal-display'));
   t.true(await isDisplayed('div#vertical-display'));
+
+  await releaseUserInPool(user);
+
+  t.pass();
 });
 
-test.skip('Dual output toggle tooltip text', async t => {
-  // @@@ TODO hover selector working by tooltip still not showing
-  await logIn();
-  await toggleDualOutputMode();
+test(
+  'Dual Output with Studio Mode and Selective Recording',
+  withUser(),
+  async (t: TExecutionContext) => {
+    const { app } = t.context;
 
-  await useMainWindow(async () => {
+    await toggleDualOutputMode();
+
+    // dual output cannot be toggled on in studio mode
     await focusMain();
+    await (await app.client.$('.side-nav .icon-studio-mode-3')).click();
+    t.true(
+      await isDisplayed('div=Cannot toggle Studio Mode in Dual Output Mode.'),
+      'Cannot toggle Studio Mode in Dual Output Mode.',
+    );
 
-    await isDisplayed('i#horizontal-display-toggle');
-    await isDisplayed('i#horizontal-display-toggle');
+    // selective recording in dual output mode is only available for the horizontal display
+    await toggleDualOutputMode();
+    t.false(await isDisplayed('div#vertical-display'), 'Dual output mode is off');
+    await (await app.client.$('[data-name=sourcesControls] .icon-smart-record')).click();
 
-    // check tooltip text changes on hover
-    await hoverElement('i#horizontal-display-toggle', 50000);
-    t.true(await isDisplayed('div#toggle-horizontal-tooltip'));
-    t.true(await waitForText('Hide horizontal display'));
-    await toggleDisplay('horizontal');
-    await hoverElement('i#horizontal-display-toggle', 50000);
-    t.true(await waitForText('Show horizontal display'));
+    // Check that selective recording icon is active
+    await (await app.client.$('.icon-smart-record.active')).waitForExist();
 
-    await hoverElement('i#vertical-display-toggle', 50000);
-    t.true(await waitForText('Hide vertical display'));
-    await toggleDisplay('vertical');
-    await hoverElement('i#vertical-display-toggle', 50000);
-    t.true(await waitForText('Show vertical display'));
-  });
-});
+    await toggleDualOutputMode();
 
-test.skip('Dual output display toggles filter scene items in source selector', async t => {
-  // @@@ TODO scene items not auto duplicating when toggling
+    // dual output is active but the vertical display is not shown
+    await focusMain();
+    await (await app.client.$('.icon-dual-output.active')).waitForExist();
+    t.false(
+      await isDisplayed('div#vertical-display'),
+      'Vertical display is not shown in dual output with selective recording',
+    );
 
-  /* This is not a perfectly precise assessment of whether the correct nodes are showing in the source selector.
-   * The more precise check of the data is in the dual output api tests.
-   */
+    // toggling selective recording off should show the vertical display
+    await (await app.client.$('.icon-smart-record.active')).click();
+    t.true(
+      await isDisplayed('div#vertical-display'),
+      'Toggling selective recording off shows vertical display in dual output mode',
+    );
 
-  const client = await getApiClient();
-  const sceneBuilder = new SceneBuilder(client);
-  sceneBuilder.build(`
-    Folder1
-    Folder2
-      Item1: image
-      Item2: browser_source
-    Folder3
-      Item3:
-   `);
+    // toggling selective recording back on should hide the vertical display
+    await (await app.client.$('.icon-smart-record')).click();
+    t.false(
+      await isDisplayed('div#vertical-display'),
+      'Toggling selective recording back on hides vertical display in dual output mode',
+    );
 
-  // the number of rows in the source selector should be constant when toggling displays or streaming modes
-  const numSourceRows = (await selectElements('div[data-role="source"]')).length;
+    // toggling selective recording on while in dual output mode opens a message box warning
+    // notifying the user that the vertical canvas is no longer accessible
+    // skip checking the log for this error
+    skipCheckingErrorsInLog();
+    t.pass();
+  },
+);
 
-  await logIn();
-  await toggleDualOutputMode();
-  await focusMain();
-  // const sceneBuilder = new SceneBuilder(client);
-  // sceneBuilder.build(`
-  //   Folder1
-  //   Folder2
-  //     Item1: image
-  //     Item2: browser_source
-  //   Folder3
-  //     Item3:
-  //  `);
-
-  // const numSourceRows = (await selectElements('div[data-role="source"]')).length;
-  await isDisplayed('i.horizontal-item', { timeout: 10000 });
-  await isDisplayed('i.vertical-item', { timeout: 10000 });
-
-  // in dual output mode with both displays on
-  // show both horizontal and vertical scene items side by side
-  t.true((await selectElements('div[data-role="source"]')).length === numSourceRows);
-  t.true((await selectElements('i.horizontal-item')).length === numSourceRows);
-  t.true((await selectElements('i.vertical-item')).length === numSourceRows);
-
-  // in dual output mode with the horizontal display off
-  // show only vertical scene items
-  await toggleDisplay('horizontal');
-  t.true((await selectElements('div[data-role="source"]')).length === numSourceRows);
-  t.true((await selectElements('i.horizontal-item')).length === 0);
-  t.true((await selectElements('i.vertical-item')).length === numSourceRows);
-
-  // in dual output mode with both displays off
-  // show both horizontal and vertical scene items side by side
-  await toggleDisplay('vertical');
-  t.true((await selectElements('div[data-role="source"]')).length === numSourceRows);
-  t.true((await selectElements('i.horizontal-item')).length === numSourceRows);
-  t.true((await selectElements('i.vertical-item')).length === numSourceRows);
-
-  // in dual output mode with the vertical display off
-  // only show horizontal scene items
-  await toggleDisplay('horizontal');
-  t.true((await selectElements('div[data-role="source"]')).length === numSourceRows);
-  t.true((await selectElements('i.horizontal-item')).length === numSourceRows);
-  t.true((await selectElements('i.vertical-item')).length === 0);
-
-  // in single output mode, only show horizontal scene items
-  await toggleDualOutputMode();
-  t.true((await selectElements('div[data-role="source"]')).length === numSourceRows);
-  t.true((await selectElements('i.horizontal-item')).length === 0);
-  t.true((await selectElements('i.vertical-item')).length === 0);
-});
-
-test.skip('Dual output source toggles show/hide scene items in displays', async t => {
-  // const client = await getApiClient();
-  // const dualOutputService = client.getResource<DualOutputService>('DualOutputService');
-  // const horizontalNodeIds = dualOutputService.views.horizontalNodeIds;
-  // const verticalNodeIds = dualOutputService.views.verticalNodeIds;
-  // await logIn();
-  // await toggleDualOutputMode(t, true);
-  // await focusMain();
-  // data-role="source"
-  // vertical-item
-  // horizontal-item
-});
-
-// test('Dual output scene item toggles', async t => {});
-
-// test('Dual output folder toggles', async t => {});
-
-// test('Dual output nodes', async t => {});
-
-/*
- * Dual Output Go Live Window
- * In-progress, skip for now
+/**
+ * Dual Output Go Live
  */
-test.skip('Dual Output Go Live Window', async t => {
-  await logIn('twitch');
-  await logIn('trovo');
-  await logIn('youtube');
 
-  //
-  await prepareToGoLive();
-  await clickGoLive();
-  await waitForSettingsWindowLoaded();
-});
+test(
+  'Dual Output Go Live Non-Ultra',
+  // non-ultra user
+  withUser('twitch', { prime: false }),
+  async t => {
+    await toggleDualOutputMode();
+    await prepareToGoLive();
+    await clickGoLive();
+    await focusChild();
+    await waitForSettingsWindowLoaded();
 
-// test('Multistream default mode', async t => {
-//   // login to via Twitch because it doesn't have strict rate limits
-//   await logIn('twitch', { multistream: true });
-//   await prepareToGoLive();
-//   await clickGoLive();
-//   await waitForSettingsWindowLoaded();
+    // check that the selector is displayed
+    t.true(await isDisplayed('[data-test=destination-selector]'), 'Destination selector exists');
 
-//   // enable all platforms
-//   await fillForm({
-//     twitch: true,
-//     youtube: true,
-//     trovo: true,
-//   });
-//   await waitForSettingsWindowLoaded();
+    // check that the platform switcher and close icon do not exist
+    t.false(await isDisplayed('.platform-switch'), 'Platform switch does not exist');
+    t.false(await isDisplayed('.platform-close'), 'Platform close icon does not exist');
+    t.false(await isDisplayed('.destination-switch'), 'Destination switch does not exist');
+    t.false(await isDisplayed('.destination-close'), 'Destination close icon does not exist');
 
-//   // add settings
-//   await fillForm({
-//     title: 'Test stream',
-//     description: 'Test stream description',
-//     twitchGame: 'Fortnite',
-//   });
+    // cannot use dual output mode with only one platform linked
+    await submit();
 
-//   await submit();
-//   await waitForDisplayed('span=Configure the Multistream service');
-//   await waitForDisplayed("h1=You're live!", { timeout: 60000 });
-//   await stopStream();
-//   await t.pass();
-// });
+    t.true(
+      await (
+        await selectAsyncAlert('Confirm Horizontal and Vertical Platforms')
+      ).waitForDisplayed(),
+      'Alert is open',
+    );
 
-// test('Multistream advanced mode', async t => {
-//   // login to via Twitch because it doesn't have strict rate limits
-//   await logIn('twitch', { multistream: true });
-//   await prepareToGoLive();
-//   await clickGoLive();
-//   await waitForSettingsWindowLoaded();
+    await clickIfDisplayed('button=Confirm');
 
-//   // enable all platforms
-//   await fillForm({
-//     twitch: true,
-//     youtube: true,
-//     trovo: true,
-//   });
+    t.pass();
+  },
+);
 
-//   await switchAdvancedMode();
-//   await waitForSettingsWindowLoaded();
+test(
+  'Dual Output Go Live Ultra',
+  withUser('twitch', { prime: true, multistream: true }),
+  async (t: TExecutionContext) => {
+    const user = getUser();
+    await addCustomDestination('MyCustomDest', 'rtmp://live.twitch.tv/app/', user.streamKey);
+    await addCustomDestination('MyCustomDest2', 'rtmp://live.twitch.tv/app/', user.streamKey);
+    await prepareToGoLive();
 
-//   const twitchForm = useForm('twitch-settings');
-//   await twitchForm.fillForm({
-//     customEnabled: true,
-//     title: 'twitch title',
-//     twitchGame: 'Fortnite',
-//     // TODO: Re-enable after reauthing userpool
-//     // twitchTags: ['100%'],
-//   });
+    // confirm single output go live platform settings
+    await clickGoLive();
+    await focusChild();
+    await waitForSettingsWindowLoaded();
 
-//   const youtubeForm = useForm('youtube-settings');
-//   await youtubeForm.fillForm({
-//     customEnabled: true,
-//     title: 'youtube title',
-//     description: 'youtube description',
-//   });
+    t.true(await isDisplayed('.single-output-card'), 'Single output card exists');
+    t.false(await isDisplayed('.dual-output-card'), 'Dual output card does not exist');
+    const numSoPlatforms = await getNumElements('.platform-switch');
+    t.true(numSoPlatforms > 1, 'Multiple platform switches exist');
+    const numSoDestinations = await getNumElements('.destination-switch');
+    t.true(numSoDestinations > 1, 'Custom destination switches exist');
+    t.true(
+      await isDisplayed('[data-test=default-add-destination]'),
+      'Default add destination button exists',
+    );
+    t.false(
+      await isDisplayed('[data-test=destination-selector]'),
+      'Destination selector does not exist',
+    );
+    t.false(await isDisplayed('.platform-close'), 'Platform close icon does not exist');
 
-//   const trovoForm = useForm('trovo-settings');
-//   await trovoForm.fillForm({
-//     customEnabled: true,
-//     trovoGame: 'Doom',
-//     title: 'trovo title',
-//   });
+    // confirm dual output go live platform settings
+    await toggleDualOutputMode(true);
+    await clickGoLive();
+    await focusChild();
+    await waitForSettingsWindowLoaded();
 
-//   await submit();
-//   await waitForDisplayed('span=Configure the Multistream service');
-//   await waitForDisplayed("h1=You're live!", { timeout: 60000 });
-//   await stopStream();
-//   await t.pass();
-// });
+    await isDisplayed('.dual-output-card');
+    t.true(await isDisplayed('.dual-output-card'), 'Dual output card exists');
+    t.false(await isDisplayed('.single-output-card'), 'Single output card does not exist');
+    const numDoPlatforms = await getNumElements('.platform-switch');
+    t.true(
+      numSoPlatforms === numDoPlatforms,
+      'Same number of platform switches exist for both single and dual output modes.',
+    );
+    const numDoDestinations = await getNumElements('.destination-switch');
+    t.true(
+      numSoDestinations === numDoDestinations,
+      'Same number of destination switches exist for both single and dual output modes.',
+    );
+    t.true(
+      await isDisplayed('[data-test=default-add-destination]'),
+      'Default add destination button exists',
+    );
+    t.false(
+      await isDisplayed('[data-test=destination-selector]'),
+      'Destination selector does not exist',
+    );
+    t.false(await isDisplayed('.platform-close'), 'Platform close icon does not exist');
 
-// test('Custom stream destinations', async t => {
-//   await logIn('twitch', { prime: true });
+    // check that the primary chat selector is displayed
+    t.true(
+      await isDisplayed('[data-name="primary-chat-switcher"]'),
+      'Primary chat switcher is displayed',
+    );
 
-//   // fetch a new stream key
-//   const user = await reserveUserFromPool(t, 'twitch');
+    // cannot use dual output mode with all platforms assigned to one display
+    await submit();
+    t.true(
+      await (
+        await selectAsyncAlert('Confirm Horizontal and Vertical Platforms')
+      ).waitForDisplayed(),
+      'Alert is open',
+    );
 
-//   // add new destination
-//   await showSettingsWindow('Stream');
-//   await click('span=Add Destination');
+    await clickIfDisplayed('button=Confirm');
 
-//   const { fillForm } = useForm();
-//   await fillForm({
-//     name: 'MyCustomDest',
-//     url: 'rtmp://live.twitch.tv/app/',
-//     streamKey: user.streamKey,
-//   });
-//   await clickButton('Save');
-//   t.true(await isDisplayed('span=MyCustomDest'), 'New destination should be created');
-
-//   // update destinations
-//   await click('i.fa-pen');
-//   await fillForm({
-//     name: 'MyCustomDestUpdated',
-//   });
-//   await clickButton('Save');
-
-//   t.true(await isDisplayed('span=MyCustomDestUpdated'), 'Destination should be updated');
-
-//   // add one more destination
-//   await click('span=Add Destination');
-//   await fillForm({
-//     name: 'MyCustomDest',
-//     url: 'rtmp://live.twitch.tv/app/',
-//     streamKey: user.streamKey,
-//   });
-//   await clickButton('Save');
-
-//   await t.false(await isDisplayed('span=Add Destination'), 'Do not allow more than 2 custom dest');
-
-//   // open the GoLiveWindow and check destinations
-//   await prepareToGoLive();
-//   await clickGoLive();
-//   await waitForSettingsWindowLoaded();
-//   await t.true(await isDisplayed('span=MyCustomDest'), 'Destination is available');
-//   await click('span=MyCustomDest'); // switch the destination on
-
-//   // try to stream
-//   await submit();
-//   await waitForDisplayed('span=Configure the Multistream service');
-//   await waitForDisplayed("h1=You're live!", { timeout: 60000 });
-//   await stopStream();
-//   await releaseUserInPool(user);
-
-//   // delete existing destinations
-//   await showSettingsWindow('Stream');
-//   await click('i.fa-trash');
-//   await click('i.fa-trash');
-//   t.false(await isDisplayed('i.fa-trash'), 'Destinations should be removed');
-// });
+    t.pass();
+  },
+);

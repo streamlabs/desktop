@@ -1,10 +1,23 @@
 @import '../../styles/index';
 
-.twitch { color: var(--twitch); }
-.youtube { color: var(--youtube); }
-.facebook { color: var(--facebook); }
-.tiktok { color: var(--tiktok); }
-.streamlabs { color: var(--teal); }
+.twitch {
+  color: var(--twitch);
+}
+.facebook {
+  color: var(--facebook);
+}
+.streamlabs {
+  color: var(--teal);
+}
+.youtube {
+  background-image: url('https://slobs-cdn.streamlabs.com/media/youtube-logo.png');
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  vertical-align: middle;
+}
 .dlive {
   background-image: url('../../../media/images/platforms/dlive-logo.png');
   display: inline-block;
@@ -38,8 +51,37 @@
   height: 40px;
   background-size: contain;
   background-repeat: no-repeat;
+  vertical-align: middle;
 
   &.twitter--black {
     background-image: url(https://slobs-cdn.streamlabs.com/media/twitter-logo-black.png);
   }
+}
+.tiktok {
+  background-image: url(https://slobs-cdn.streamlabs.com/media/tiktok-logo-white.png);
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  background-size: contain;
+  background-repeat: no-repeat;
+
+  &.tiktok--black {
+    background-image: url(https://slobs-cdn.streamlabs.com/media/tiktok-logo-black.png);
+  }
+}
+.instagram {
+  background-image: url('https://slobs-cdn.streamlabs.com/media/instagram-logo.png');
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+.kick {
+  background-image: url('https://slobs-cdn.streamlabs.com/media/kick-logo.png');
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  background-size: contain;
+  background-repeat: no-repeat;
 }

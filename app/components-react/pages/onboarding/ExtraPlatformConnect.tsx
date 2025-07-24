@@ -10,25 +10,15 @@ import { OnboardingModule } from './Onboarding';
 import { Services } from 'components-react/service-provider';
 import Form from 'components-react/shared/inputs/Form';
 
-export function ExtraPlatformConnect() {
-  const { selectedExtraPlatform, setExtraPlatform } = useModule(LoginModule);
+export function ExtraPlatformConnect(p: {
+  selectedExtraPlatform: 'dlive' | 'nimotv' | undefined;
+  setExtraPlatform: (val: 'dlive' | 'nimotv' | undefined) => void;
+}) {
+  const { selectedExtraPlatform, setExtraPlatform } = p;
   const { next } = useModule(OnboardingModule);
   const [key, setKey] = useState('');
 
   if (!selectedExtraPlatform) return <div></div>;
-
-  function openHelp() {
-    remote.shell.openExternal(platformDefinition.helpUrl);
-  }
-
-  function onFinish() {
-    Services.StreamSettingsService.setSettings({
-      key,
-      streamType: 'rtmp_custom',
-      server: platformDefinition.ingestUrl,
-    });
-    next();
-  }
 
   const platformDefinition = {
     dlive: {
@@ -45,8 +35,23 @@ export function ExtraPlatformConnect() {
     },
   }[selectedExtraPlatform];
 
+  function openHelp() {
+    remote.shell.openExternal(platformDefinition.helpUrl);
+  }
+
+  function onFinish() {
+    Services.StreamSettingsService.setSettings({
+      key,
+      streamType: 'rtmp_custom',
+      server: platformDefinition.ingestUrl,
+    });
+    next();
+  }
+
   return (
-    <div>
+    <div
+      style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    >
       <div className={styles.container} style={{ height: '50%' }}>
         <p>
           <PlatformLogo platform={selectedExtraPlatform} />

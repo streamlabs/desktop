@@ -87,6 +87,8 @@ export class CacheUploaderService extends Service {
       archive.file(path.join(cacheDir, 'streamEncoder.json'), { name: 'streamEncoder.json' });
       archive.file(path.join(cacheDir, 'recordEncoder.json'), { name: 'recordEncoder.json' });
       archive.file(path.join(cacheDir, 'window-state.json'), { name: 'window-state.json' });
+      archive.file(path.join(cacheDir, 'persistent.realm'), { name: 'persistent.realm' });
+      archive.file(path.join(cacheDir, 'ephemeral-copy.realm'), { name: 'ephemeral-copy.realm' });
       archive.finalize();
     });
   }

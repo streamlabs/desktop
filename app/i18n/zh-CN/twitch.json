@@ -3,5 +3,15 @@
   "Twitch Tags": "Twitch 标签",
   "You need to re-login to access Twitch tags": "您需要重新登录才能访问 Twitch 标签",
   "Do not include special characters or spaces in your tag": "不要在标签中包含特殊字符或空格",
-  "For example: \"Speedrunning\" or \"FirstPlaythrough\"": "例如：“Speedrunning”或“FirstPlaythrough”"
+  "For example: \"Speedrunning\" or \"FirstPlaythrough\"": "例如：“Speedrunning”或“FirstPlaythrough”",
+  "Your Twitch access token has expired. Please log in with Twitch to continue.": "您的 Twitch 访问令牌已过期。请使用 Twitch 登录以继续。",
+  "While updating your Twitch channel info, some tags were removed due to moderation rules: %{tags}": "在更新您的 Twitch 频道信息时，由于审核规则，删除了一些标签：%{tags}",
+  "Content Classification": "内容分类",
+  "Content classification": "内容分类",
+  "Stream features branded content": "直播功能品牌内容",
+  "Twitch Studio Import": "Twitch Studio 导入",
+  "Import from Twitch Studio": "从 Twitch Studio 导入",
+  "Import your scenes and sources from Twitch Studio.": "从 Twitch Studio 导入场景和源。",
+  "Importing Your Existing Settings From Twitch Studio": "从 Twitch Studio 导入现有设置",
+  "Importing from Twitch Studio is an experimental feature under active development. Some source types are unable to be imported, and not all settings will be carried over.": "从 Twitch Studio 导入是一项实验性功能，尚在开发中。某些源类型无法导入，并非所有设置都会沿用。"
 }

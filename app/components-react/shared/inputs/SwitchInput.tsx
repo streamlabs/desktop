@@ -10,7 +10,14 @@ import cx from 'classnames';
 const ANT_SWITCH_FEATURES = ['checkedChildren', 'unCheckedChildren'] as const;
 
 export type TSwitchInputProps = TSlobsInputProps<
-  { inputRef?: React.Ref<HTMLInputElement>; style?: React.CSSProperties; name?: string },
+  {
+    inputRef?: React.Ref<HTMLInputElement>;
+    style?: React.CSSProperties;
+    name?: string;
+    size?: 'small' | 'default';
+    nolabel?: boolean;
+    checkmark?: boolean;
+  },
   boolean,
   SwitchProps,
   ValuesOf<typeof ANT_SWITCH_FEATURES>
@@ -18,27 +25,30 @@ export type TSwitchInputProps = TSlobsInputProps<
 
 export const SwitchInput = InputComponent((p: TSwitchInputProps) => {
   const { wrapperAttrs, inputAttrs } = useInput('switch', p, ANT_SWITCH_FEATURES);
+  const { size = 'small' } = p;
 
   /*
    * The horizontal styling shifts the label to follow the switch.
    */
   return wrapperAttrs?.layout === 'horizontal' ? (
-    <InputWrapper {...{ wrapperAttrs, nowrap: true }}>
+    <InputWrapper {...{ wrapperAttrs, nowrap: true, nolabel: p.nolabel }}>
       <Form.Item colon={false} aria-label={p.label} style={p.style}>
         <Switch
           checked={inputAttrs.value}
-          size="small"
+          size={size}
           {...inputAttrs}
           ref={p.inputRef}
-          className={cx(styles.horizontal, styles.horizontalItem)}
-          checkedChildren={<i className="check-mark" />}
+          className={cx(styles.horizontal, styles.horizontalItem, {
+            [styles.checkmark]: p?.checkmark,
+          })}
+          checkedChildren={p?.checkmark ? <i className="icon-check-mark" /> : undefined}
         />
-        {p.label}
+        {!p.nolabel && p.label}
       </Form.Item>
     </InputWrapper>
   ) : (
     <InputWrapper {...wrapperAttrs}>
-      <Switch checked={inputAttrs.value} size="small" {...inputAttrs} ref={p.inputRef} />
+      <Switch checked={inputAttrs.value} size={size} {...inputAttrs} ref={p.inputRef} />
     </InputWrapper>
   );
 });

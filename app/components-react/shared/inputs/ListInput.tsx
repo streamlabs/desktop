@@ -20,6 +20,7 @@ const ANT_SELECT_FEATURES = [
   'allowClear',
   'defaultActiveFirstOption',
   'listHeight',
+  'filterOption',
 ] as const;
 
 // define custom props
@@ -31,6 +32,7 @@ export interface ICustomListProps<TValue> {
   onBeforeSearch?: (searchStr: string) => unknown;
   options?: IListOption<TValue>[];
   description?: string;
+  nolabel?: boolean;
 }
 
 // define a type for the component's props
@@ -46,6 +48,8 @@ export type TListInputProps<TValue> = TSlobsInputProps<
  */
 export interface IListOption<TValue> {
   label: string;
+  /** The untranslated original label */
+  originalLabel?: string;
   value: TValue;
   description?: string;
   image?: string | ReactNode;
@@ -84,7 +88,11 @@ export const ListInput = InputComponent(<T extends any>(p: TListInputProps<T>) =
   const selectedOption = options?.find(opt => opt.value === p.value);
 
   return (
-    <InputWrapper {...wrapperAttrs} extra={p?.description ?? selectedOption?.description}>
+    <InputWrapper
+      {...wrapperAttrs}
+      extra={p?.description ?? selectedOption?.description}
+      nolabel={p?.nolabel}
+    >
       <Select
         ref={$inputRef}
         {...omit(inputAttrs, 'onChange')}
@@ -94,12 +102,21 @@ export const ListInput = InputComponent(<T extends any>(p: TListInputProps<T>) =
         optionLabelProp="labelrender"
         onSearch={p.showSearch ? onSearchHandler : undefined}
         onChange={val => p.onChange && p.onChange(val as T)}
+        onSelect={p.onSelect}
         defaultValue={p.defaultValue as string}
         getPopupContainer={getPopupContainer}
         data-value={inputAttrs.value}
         data-selected-option-label={selectedOption?.label}
-        data-show-search={!!inputAttrs['showSearch']}
-        data-loading={!!inputAttrs['loading']}
+        data-show-search={
+          // TODO: index
+          // @ts-ignore
+          !!inputAttrs['showSearch']
+        }
+        data-loading={
+          // TODO: index
+          // @ts-ignore
+          !!inputAttrs['loading']
+        }
       >
         {options && options.map((opt, ind) => renderOption(opt, ind, p))}
       </Select>
@@ -114,7 +131,7 @@ export function renderOption<T>(
 ) {
   const attrs = {
     'data-option-list': inputProps.name,
-    'data-option-label': opt.label,
+    'data-option-label': opt.originalLabel ?? opt.label,
     'data-option-value': opt.value,
     label: opt.label,
     value: (opt.value as unknown) as string,

@@ -1,8 +1,9 @@
 {
-  "Please enter the name of the Scenes Collection": "Introduzca el nombre de la colección de escenas",
+  "Please enter the name of the Scenes Collection": "Introduce el nombre de la colección de escenas",
   "The scene name is required": "El nombre de escena es obligatorio",
-  "Please enter the name of the scene": "Introduzca el nombre de la escena",
+  "Please enter the name of the scene": "Introduce el nombre de la escena",
   "Manage Scene Collections": "Gestionar colecciones de escenas",
+  "Create Scene Collection": "Crear colección de escenas",
   "There needs to be at least one scene.": "Debe haber al menos una escena.",
   "Projector:": "Proyector:",
   "Projector: Output": "Proyector: Salida",
@@ -47,7 +48,7 @@
   "Load existing scenes from OBS": "Cargar escena existente de OBS",
   "Template": "Plantilla",
   "Choose a template from our theme library": "Elija una plantilla de nuestra biblioteca de temas",
-  "Enter a Scene Collection Name": "Introduzca un nombre de colección de escenas",
+  "Enter a Scene Collection Name": "Introduce un nombre de colección de escenas",
   "Copy of %{collectionName}": "Copia de %{collectionName}",
   "Your Scene Collections": "Sus colecciones de escenas",
   "Dual Output Mode": "Modo Dual Output",
@@ -56,5 +57,13 @@
   "Arrange sources here for a vertical scene layout.": "Organice las fuentes aquí para una distribución de escenas vertical.",
   "Arrange sources here for a horizontal scene layout.": "Organice las fuentes aquí para una distribución de escenas horizontal.",
   "Toggle Dual Output Mode.": "Conmutar el modo Dual Output.",
-  "Cannot hide dual output toggles in dual output mode.": "No se pueden ocultar los conmutadores de Dual Output en el modo Dual Output."
+  "Cannot hide dual output toggles in dual output mode.": "No se pueden ocultar los conmutadores de Dual Output en el modo Dual Output.",
+  "Choose a template from our overlay library": "Elige una plantilla de nuestra biblioteca de superposiciones",
+  "Log in to choose a template from our overlay library": "Inicia sesión para elegir una plantilla de nuestra biblioteca de superposiciones",
+  "Loading scene...": "Cargando escena...",
+  "Import from OBS": "Importar desde OBS",
+  "Import from Twitch": "Importar desde Twitch",
+  "Import from Twitch Studio": "Importar desde Twitch Studio",
+  "Load existing scenes from Twitch Studio": "Cargar escenas existentes desde Twitch Studio",
+  "Start Fresh": "Empezar desde cero"
 }

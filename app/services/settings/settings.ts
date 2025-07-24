@@ -64,10 +64,43 @@ export interface ISettingsValues {
     RecTracks?: number;
     RecEncoder?: string;
     RecQuality?: string;
+    RecType?: string;
+    RecRescale?: string;
+    RecSplitFile?: string;
+    RecSplitFileType?: string;
+    RecSplitFileTime?: string;
+    RecSplitFileResetTimestamps?: string;
     TrackIndex?: string;
     VodTrackEnabled?: boolean;
     VodTrackIndex?: string;
+    ApplyServiceSettings?: boolean;
+    ABitrate?: number;
+    FileNameWithoutSpace?: boolean;
+    RecAEncoder?: string;
+    MuxerCustom?: string;
+    UseAdvanced?: boolean;
+    EnforceBitrate?: boolean;
+    Track1Bitrate?: string;
+    Track1Name?: string;
+    Track2Bitrate?: string;
+    Track2Name?: string;
+    Track3Bitrate?: string;
+    Track3Name?: string;
+    Track4Bitrate?: string;
+    Track4Name?: string;
+    Track5Bitrate?: string;
+    Track5Name?: string;
+    Track6Bitrate?: string;
+    Track6Name?: string;
     keyint_sec?: number;
+    bitrate?: number;
+    use_bufsize?: boolean;
+    buffer_size?: number;
+    preset?: string;
+    profile?: string;
+    tune?: string;
+    x264opts?: string;
+    x264Settings?: string;
   };
   Video: {
     // default video context
@@ -98,8 +131,6 @@ export interface ISettingsSubCategory {
   parameters: TObsFormData;
 }
 
-declare type TSettingsFormData = Dictionary<ISettingsSubCategory[]>;
-
 export enum ESettingsCategoryType {
   Untabbed = 0,
   Tabbed = 1,
@@ -119,10 +150,11 @@ class SettingsViews extends ViewHandler<ISettingsServiceState> {
     const settingsValues: Partial<ISettingsValues> = {};
 
     for (const groupName in this.state) {
-      this.state[groupName].formData.forEach(subGroup => {
+      this.state[groupName].formData.forEach((subGroup: ISettingsSubCategory) => {
         subGroup.parameters.forEach(parameter => {
-          settingsValues[groupName] = settingsValues[groupName] || {};
-          settingsValues[groupName][parameter.name] = parameter.value;
+          (settingsValues as any)[groupName] =
+            settingsValues[groupName as keyof ISettingsValues] || {};
+          (settingsValues as any)[groupName][parameter.name] = parameter.value;
         });
       });
     }
@@ -190,6 +222,25 @@ class SettingsViews extends ViewHandler<ISettingsServiceState> {
     const colorSetting = advVideo.parameters.find(data => data.name === 'ColorFormat');
     return ['P010', 'I010'].includes(colorSetting.value as string);
   }
+
+  get recommendedColorSpaceWarnings() {
+    const advVideo = this.state.Advanced.formData.find(data => data.nameSubCategory === 'Video');
+    const colorSetting = advVideo.parameters.find(data => data.name === 'ColorFormat')
+      .value as string;
+
+    // If we ever want to validate color space for things like HDR
+    // const _colorSpace = advVideo.parameters.find(data => data.name === 'ColorSpace').value as string;
+
+    // Including HDR format I010 here without color space validation, to avoid annoying those users
+    if (!['NV12', 'P010', 'I010'].includes(colorSetting)) {
+      return $t(
+        'You have selected %{colorFormat} as Color Format. Formats other than NV12 and P010 are commonly used for recording, and might incur high CPU usage or the streaming platform might not support it. Go to Settings -> Advanced -> Video to review.',
+        { colorFormat: colorSetting },
+      );
+    }
+
+    return null;
+  }
 }
 
 export class SettingsService extends StatefulService<ISettingsServiceState> {
@@ -209,6 +260,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   private videoEncodingOptimizationService: VideoEncodingOptimizationService;
 
   audioRefreshed = new Subject();
+  settingsUpdated = new Subject<DeepPartial<ISettingsValues>>();
 
   get views() {
     return new SettingsViews(this.state);
@@ -229,7 +281,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     }
   }
 
-  private fetchSettingsFromObs(categoryName: string): ISettingsCategory {
+  private fetchSettingsFromObs(categoryName: keyof ISettingsServiceState): ISettingsCategory {
     const settingsMetadata = obs.NodeObs.OBS_settings_getSettings(categoryName);
     let settings = settingsMetadata.data;
     if (!settings) settings = [];
@@ -292,10 +344,11 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
    */
   loadSettingsIntoStore() {
     // load configuration from nodeObs to state
-    const settingsFormData = {};
-    this.getCategories().forEach(categoryName => {
+    const settingsFormData = {} as ISettingsServiceState;
+    this.getCategories().forEach((categoryName: keyof ISettingsServiceState) => {
       settingsFormData[categoryName] = this.fetchSettingsFromObs(categoryName);
     });
+
     this.SET_SETTINGS(settingsFormData);
   }
 
@@ -345,6 +398,8 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     let categories: string[] = obs.NodeObs.OBS_settings_getListCategories();
     // insert 'Multistreaming' after 'General'
     categories.splice(1, 0, 'Multistreaming');
+    // Deleting 'Virtual Webcam' category to add it below to position properly
+    categories = categories.filter(category => category !== 'Virtual Webcam');
     categories = categories.concat([
       'Scene Collections',
       'Notifications',
@@ -425,7 +480,11 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     return settingsFormData;
   }
 
-  setSettingValue(category: string, name: string, value: TObsValue) {
+  /**
+   * Set an individual setting value
+   * @remark When setting video settings, use the v2 video settings service.
+   */
+  setSettingValue(category: keyof ISettingsServiceState, name: string, value: TObsValue) {
     const newSettings = this.patchSetting(this.fetchSettingsFromObs(category).formData, name, {
       value,
     });
@@ -496,6 +555,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   }
   /**
    * Set settings in obs.
+   * @remark When setting video settings, use the v2 video settings service.
    * @remark The forceApplyCategory parameter is currently only used for refreshing
    * video settings before starting recording. This is because the video settings is using the v2 api
    * and the output settings are currently using the v1 api. This will no longer be needed when
@@ -510,7 +570,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
    * @param forceApplyCategory - name of property to force apply settings.
    */
   setSettings(
-    categoryName: string,
+    categoryName: keyof ISettingsServiceState,
     settingsData: ISettingsSubCategory[],
     forceApplyCategory?: string,
   ) {
@@ -545,7 +605,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     // This function represents a cleaner API we would like to have
     // in the future.
 
-    Object.keys(patch).forEach(categoryName => {
+    Object.keys(patch).forEach((categoryName: keyof ISettingsValues) => {
       const category: Dictionary<any> = patch[categoryName];
       const formSubCategories = this.fetchSettingsFromObs(categoryName).formData;
 
@@ -560,6 +620,8 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
       });
 
       this.setSettings(categoryName, formSubCategories);
+
+      this.settingsUpdated.next(patch);
     });
   }
 
@@ -600,8 +662,6 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   }
 
   private ensureValidEncoder() {
-    if (getOS() === OS.Mac) return;
-
     const encoderSetting: IObsListInput<string> =
       this.findSetting(this.state.Output.formData, 'Streaming', 'Encoder') ??
       this.findSetting(this.state.Output.formData, 'Streaming', 'StreamEncoder');
@@ -626,6 +686,14 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
           'Your stream encoder has been reset to Software (x264). This can be caused by out of date graphics drivers. Please update your graphics drivers to continue using hardware encoding.',
       });
     }
+  }
+
+  isEnhancedBroadcasting() {
+    return obs.NodeObs.OBS_settings_isEnhancedBroadcasting();
+  }
+
+  setEnhancedBroadcasting(enable: boolean) {
+    obs.NodeObs.OBS_settings_setEnhancedBroadcasting(enable);
   }
 
   @mutation()

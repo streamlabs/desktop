@@ -10,6 +10,11 @@ import { TDisplayType } from 'services/settings-v2';
 import AutoProgressBar from 'components-react/shared/AutoProgressBar';
 import { useSubscription } from 'components-react/hooks/useSubscription';
 import { message } from 'antd';
+import { useRealmObject } from 'components-react/hooks/realm';
+import { ENotificationType } from 'services/notifications';
+import { Service } from 'services/core/service';
+import { AudioNotificationType } from 'services/audio/audio';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export default function StudioEditor() {
   const {
@@ -20,20 +25,25 @@ export default function StudioEditor() {
     ScenesService,
     DualOutputService,
     StreamingService,
+    AudioService,
+    NotificationsService,
+    JsonrpcService,
   } = Services;
+  const performanceMode = useRealmObject(CustomizationService.state).performanceMode;
   const v = useVuex(() => ({
     hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
-    performanceMode: CustomizationService.state.performanceMode,
     cursor: EditorService.state.cursor,
     studioMode: TransitionsService.state.studioMode,
     dualOutputMode: DualOutputService.views.dualOutputMode,
     showHorizontalDisplay: DualOutputService.views.showHorizontalDisplay,
     showVerticalDisplay:
       DualOutputService.views.showVerticalDisplay && !StreamingService.state.selectiveRecording,
+    isRecording: StreamingService.views.isRecording,
     activeSceneId: ScenesService.views.activeSceneId,
     isLoading: DualOutputService.views.isLoading,
   }));
-  const displayEnabled = !v.hideStyleBlockers && !v.performanceMode && !v.isLoading;
+
+  const displayEnabled = !v.hideStyleBlockers && !performanceMode && !v.isLoading;
   const placeholderRef = useRef<HTMLDivElement>(null);
   const studioModeRef = useRef<HTMLDivElement>(null);
   const [studioModeStacked, setStudioModeStacked] = useState(false);
@@ -48,11 +58,53 @@ export default function StudioEditor() {
     return v.studioMode && !dualOutputMode ? studioModeTransitionName : undefined;
   }, [v.showHorizontalDisplay, v.showVerticalDisplay, v.studioMode]);
 
+  useEffect(() => {
+    const timeoutHandles: { [key: number]: NodeJS.Timeout | undefined } = {};
+
+    const subscription = AudioService.audioNotificationUpdated.subscribe(notificationType => {
+      if (timeoutHandles[notificationType]) return;
+
+      timeoutHandles[notificationType] = setTimeout(() => {
+        timeoutHandles[notificationType] = undefined;
+      }, 5 * 60 * 1000);
+
+      let message = '';
+      switch (notificationType) {
+        case AudioNotificationType.YouAreMuted:
+          message = $t('Unmute your Microphone source in Mixer');
+          break;
+        case AudioNotificationType.NoSignalFromAudioInput:
+          message = $t('Your Microphone is unmuted but has no signal');
+          break;
+        default:
+          console.warn('Unknown audio notification type:', notificationType);
+          return;
+      }
+
+      const action = JsonrpcService.createRequest(
+        Service.getResourceId(NotificationsService),
+        'showNotifications',
+      );
+
+      NotificationsService.actions.push({
+        type: ENotificationType.WARNING,
+        message,
+        action,
+        singleton: true,
+      });
+    });
+
+    return () => {
+      subscription.unsubscribe();
+      Object.values(timeoutHandles).forEach(v => clearTimeout(v));
+    };
+  }, []);
+
   // Track vertical orientation for placeholder
   useEffect(() => {
     let timeout: number;
 
-    if (displayEnabled || v.performanceMode) return;
+    if (displayEnabled || performanceMode) return;
 
     function checkVerticalOrientation() {
       if (placeholderRef.current) {
@@ -68,7 +120,7 @@ export default function StudioEditor() {
     return () => {
       if (timeout) clearTimeout(timeout);
     };
-  }, [displayEnabled, v.performanceMode]);
+  }, [displayEnabled, performanceMode]);
 
   // Track orientation for studio mode
   useEffect(() => {
@@ -192,7 +244,9 @@ export default function StudioEditor() {
       {displayEnabled && (
         <div className={cx(styles.studioModeContainer, { [styles.stacked]: studioModeStacked })}>
           {v.studioMode && <StudioModeControls stacked={studioModeStacked} />}
-          {v.dualOutputMode && <DualOutputControls stacked={studioModeStacked} />}
+          {v.dualOutputMode && (
+            <DualOutputControls stacked={studioModeStacked} isRecording={v.isRecording} />
+          )}
           <div
             className={cx(styles.studioDisplayContainer, { [styles.stacked]: studioModeStacked })}
           >
@@ -278,7 +332,7 @@ export default function StudioEditor() {
       {v.isLoading && <DualOutputProgressBar sceneId={v.activeSceneId} />}
       {!displayEnabled && (
         <div className={styles.noPreview}>
-          {v.performanceMode && (
+          {performanceMode && (
             <div className={styles.message}>
               {$t('Preview is disabled in performance mode')}
               <div
@@ -289,7 +343,7 @@ export default function StudioEditor() {
               </div>
             </div>
           )}
-          {!v.performanceMode && (
+          {!performanceMode && (
             <div className={styles.placeholder} ref={placeholderRef}>
               {v.studioMode && (
                 <div
@@ -346,14 +400,24 @@ function StudioModeControls(p: { stacked: boolean }) {
   );
 }
 
-function DualOutputControls(p: { stacked: boolean }) {
+function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
   function openSettingsWindow() {
     Services.SettingsService.actions.showSettings('Video');
   }
+
   const showHorizontal = Services.DualOutputService.views.showHorizontalDisplay;
   const showVertical =
     Services.DualOutputService.views.showVerticalDisplay &&
     !Services.StreamingService.state.selectiveRecording;
+
+  const showRecordingIcons = useMemo(() => {
+    return (
+      p.isRecording &&
+      Services.IncrementalRolloutService.views.featureIsEnabled(
+        EAvailableFeatures.dualOutputRecording,
+      )
+    );
+  }, [p.isRecording]);
 
   return (
     <div
@@ -364,6 +428,7 @@ function DualOutputControls(p: { stacked: boolean }) {
         <div className={styles.horizontalHeader}>
           <i className="icon-desktop" />
           <span>{$t('Horizontal Output')}</span>
+          {showRecordingIcons && <DualOutputIcons display="horizontal" />}
         </div>
       )}
 
@@ -371,6 +436,7 @@ function DualOutputControls(p: { stacked: boolean }) {
         <div className={styles.verticalHeader}>
           <i className="icon-phone-case" />
           <span>{$t('Vertical Output')}</span>
+          {showRecordingIcons && <DualOutputIcons display="vertical" />}
         </div>
       )}
       <div className={styles.manageLink}>
@@ -380,13 +446,41 @@ function DualOutputControls(p: { stacked: boolean }) {
   );
 }
 
+/**
+ * Note for the streaming and recording icons:
+ * To maintain the horizontal and vertical header icon and text positioning centered,
+ * conditionally change the opacity of the streaming and recording icons.
+ * For the horizontal recording, to maintain the same margin of the streaming and recording icons
+ * swap the icons shown conditionally so that when only recording, the recording icon shows next to
+ * the header text.
+ */
+function DualOutputIcons(p: { display: TDisplayType }) {
+  const { StreamingService } = Services;
+
+  const { showStreaming, showRecording } = useVuex(() => ({
+    showStreaming:
+      (p.display === 'horizontal' && StreamingService.views.isHorizontalStreaming) ||
+      (p.display === 'vertical' && StreamingService.views.isVerticalStreaming),
+    showRecording:
+      (p.display === 'horizontal' && StreamingService.views.isHorizontalRecording) ||
+      (p.display === 'vertical' && StreamingService.views.isVerticalRecording),
+  }));
+
+  return (
+    <>
+      <i className={cx('icon-studio', styles.streamIcon, { [styles.hidden]: !showStreaming })} />
+      <i className={cx('icon-record', styles.recordIcon, { [styles.hidden]: !showRecording })} />
+    </>
+  );
+}
+
 function DualOutputProgressBar(p: { sceneId: string }) {
   const { DualOutputService, ScenesService } = Services;
 
   const [current, setCurrent] = useState(0);
 
   const v = useVuex(() => ({
-    total: ScenesService.views.getSceneItemsBySceneId(p.sceneId)?.length ?? 1,
+    total: ScenesService.views.getSceneNodesBySceneId(p.sceneId)?.length ?? 1,
   }));
 
   useSubscription(DualOutputService.sceneNodeHandled, index => setCurrent(index));

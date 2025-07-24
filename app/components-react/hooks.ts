@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import debounce from 'lodash/debounce';
+import throttle from 'lodash/throttle';
 import { StatefulService } from '../services/core';
 import { Services } from './service-provider';
 import Util from 'services/utils';
@@ -71,6 +72,13 @@ export function useOnDestroy(cb: () => void) {
  */
 export function useDebounce<T extends (...args: any[]) => any>(ms = 0, cb: T) {
   return useCallback(debounce(cb, ms), []);
+}
+
+/**
+ * Create a throttled version of the function
+ */
+export function useThrottle<T extends (...args: any[]) => any>(ms = 0, cb: T) {
+  return useCallback(throttle(cb, ms), []);
 }
 
 /**

@@ -8,10 +8,11 @@ import styles from './InstalledApps.m.less';
 import { useVuex } from 'components-react/hooks';
 
 export default function InstalledApps() {
-  const { PlatformAppsService } = Services;
+  const { PlatformAppsService, HighlighterService } = Services;
 
-  const { installedApps } = useVuex(() => ({
+  const { installedApps, highlighterVersion } = useVuex(() => ({
     installedApps: PlatformAppsService.views.productionApps,
+    highlighterVersion: HighlighterService.views.highlighterVersion,
   }));
   const enabledInstalledAppIds = installedApps.filter(app => app.enabled).map(app => app.id);
 
@@ -89,6 +90,32 @@ export default function InstalledApps() {
               </td>
             </tr>
           ))}
+          {highlighterVersion !== '' && (
+            <tr key={'Ai Highlighter'}>
+              <td>
+                <div className={styles.aiHighlighterThumbnail}>
+                  <i
+                    style={{ margin: 0, fontSize: '20px', color: 'black' }}
+                    className="icon-highlighter"
+                  ></i>
+                </div>
+              </td>
+              <td> {'Streamlabs AI Highlighter'} </td>
+              <td> {highlighterVersion} </td>
+              <td className={cx(styles.buttonContainer, 'button-container--right')}>
+                <button
+                  onClick={() => {
+                    HighlighterService.uninstallAiHighlighter();
+                  }}
+                  className={cx('button', {
+                    'button--soft-warning': true,
+                  })}
+                >
+                  {$t('Uninstall')}
+                </button>
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

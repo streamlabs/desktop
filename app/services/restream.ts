@@ -10,12 +10,15 @@ import { IncrementalRolloutService } from './incremental-rollout';
 import electron from 'electron';
 import { StreamingService } from './streaming';
 import { FacebookService } from './platforms/facebook';
-import { TiktokService } from './platforms/tiktok';
+import { TikTokService } from './platforms/tiktok';
 import { TrovoService } from './platforms/trovo';
+import { KickService } from './platforms/kick';
 import * as remote from '@electron/remote';
 import { VideoSettingsService, TDisplayType } from './settings-v2/video';
-import { DualOutputService } from './dual-output';
 import { TwitterPlatformService } from './platforms/twitter';
+import { InstagramService } from './platforms/instagram';
+import { PlatformAppsService } from './platform-apps';
+import { throwStreamError } from './streaming/stream-error';
 
 export type TOutputOrientation = 'landscape' | 'portrait';
 interface IRestreamTarget {
@@ -51,11 +54,13 @@ export class RestreamService extends StatefulService<IRestreamState> {
   @Inject() streamingService: StreamingService;
   @Inject() incrementalRolloutService: IncrementalRolloutService;
   @Inject() facebookService: FacebookService;
-  @Inject() tiktokService: TiktokService;
+  @Inject('TikTokService') tiktokService: TikTokService;
   @Inject() trovoService: TrovoService;
+  @Inject() kickService: KickService;
+  @Inject() instagramService: InstagramService;
   @Inject() videoSettingsService: VideoSettingsService;
-  @Inject() dualOutputService: DualOutputService;
   @Inject('TwitterPlatformService') twitterService: TwitterPlatformService;
+  @Inject() platformAppsService: PlatformAppsService;
 
   settings: IUserSettingsResponse;
 
@@ -66,6 +71,20 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   get streamInfo() {
     return this.streamingService.views;
+  }
+
+  /**
+   * Returns the custom destinations
+   * @remark Must get custom destinations from the streaming service state
+   * because they may have been updated during the `beforeGoLive` process
+   * for the platforms if the user has dual streaming enabled. This is because
+   * the vertical target for the dual stream is created as a custom destination
+   * and added during the `beforeGoLive` process.
+   */
+  get customDestinations() {
+    return (
+      this.streamingService.state.info.settings?.customDestinations.filter(d => d.enabled) || []
+    );
   }
 
   @mutation()
@@ -84,6 +103,11 @@ export class RestreamService extends StatefulService<IRestreamState> {
       this.settings = null;
       this.SET_ENABLED(false);
     });
+
+    this.userService.scopeAdded.subscribe(() => {
+      this.refreshChat();
+      this.platformAppsService.refreshApp('restream');
+    });
   }
 
   get views() {
@@ -101,6 +125,11 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   get chatUrl() {
+    const nightMode = this.customizationService.isDarkTheme ? 'night' : 'day';
+    const platforms = this.streamInfo.enabledPlatforms
+      .filter(platform => ['youtube', 'twitch', 'facebook'].includes(platform))
+      .join(',');
+
     const hasFBTarget = this.streamInfo.enabledPlatforms.includes('facebook' as TPlatform);
     let fbParams = '';
     if (hasFBTarget) {
@@ -115,10 +144,16 @@ export class RestreamService extends StatefulService<IRestreamState> {
        */
       fbParams += `&fbToken=${token}`;
     }
-    return `https://${this.host}/embed/chat?oauth_token=${this.userService.apiToken}${fbParams}`;
+
+    if (platforms) {
+      return `https://${this.host}/embed/chat?oauth_token=${this.userService.apiToken}${fbParams}&mode=${nightMode}&send=true&platforms=${platforms}`;
+    } else {
+      return `https://${this.host}/embed/chat?oauth_token=${this.userService.apiToken}${fbParams}`;
+    }
   }
 
   get shouldGoLiveWithRestream() {
+    if (!this.views.canEnableRestream) return false;
     return this.streamInfo.isMultiplatformMode || this.streamInfo.isDualOutputMode;
   }
 
@@ -188,8 +223,12 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return jfetch(request);
   }
 
-  async beforeGoLive(context?: TDisplayType, mode?: TOutputOrientation) {
-    await Promise.all([this.setupIngest(context, mode), this.setupTargets(!!mode)]);
+  async beforeGoLive() {
+    if (!this.streamInfo.getIsValidRestreamConfig()) {
+      throwStreamError('RESTREAM_SETUP_FAILED');
+    }
+
+    await Promise.all([this.setupIngest(), this.setupTargets()]);
   }
 
   /**
@@ -201,25 +240,43 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @param context - Optional, display to stream
    * @param mode - Optional, mode which denotes which context to stream
    */
-  async setupIngest(context?: TDisplayType, mode?: TOutputOrientation) {
+  async setupIngest() {
     const ingest = (await this.fetchIngest()).server;
-    const settings = mode ? await this.fetchUserSettings(mode) : this.settings;
 
-    // We need to move OBS to custom ingest mode before we can set the server
-    this.streamSettingsService.setSettings(
-      {
+    if (this.streamingService.views.isDualOutputMode) {
+      // in dual output mode, we need to set the ingest for each display
+      const displays = this.streamInfo.displaysToRestream;
+
+      displays.forEach(async display => {
+        const mode = this.getMode(display);
+        const settings = await this.fetchUserSettings(mode);
+
+        this.streamSettingsService.setSettings(
+          {
+            streamType: 'rtmp_custom',
+          },
+          display,
+        );
+
+        this.streamSettingsService.setSettings(
+          {
+            key: settings.streamKey,
+            server: ingest,
+          },
+          display,
+        );
+      });
+    } else {
+      // in single output mode, we just set the ingest for the default display
+      this.streamSettingsService.setSettings({
         streamType: 'rtmp_custom',
-      },
-      context,
-    );
+      });
 
-    this.streamSettingsService.setSettings(
-      {
-        key: settings.streamKey,
+      this.streamSettingsService.setSettings({
+        key: this.settings.streamKey,
         server: ingest,
-      },
-      context,
-    );
+      });
+    }
   }
 
   /**
@@ -227,10 +284,10 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @remarks
    * In dual output mode, assign a contexts to the ingest targets.
    * Defaults to the horizontal context.
-   *
-   * @param isDualOutputMode - Optional, boolean denoting if dual output mode is on
    */
-  async setupTargets(isDualOutputMode?: boolean) {
+  async setupTargets() {
+    const isDualOutputMode = this.streamingService.views.isDualOutputMode;
+
     // delete existing targets
     const targets = await this.fetchTargets();
     const promises = targets.map(t => this.deleteTarget(t.id));
@@ -243,27 +300,25 @@ export class RestreamService extends StatefulService<IRestreamState> {
           ? {
               platform,
               streamKey: getPlatformService(platform).state.streamKey,
-              mode: this.dualOutputService.views.getPlatformMode(platform),
+              mode: this.getPlatformMode(platform),
             }
           : {
               platform,
               streamKey: getPlatformService(platform).state.streamKey,
             },
       ),
-      ...this.streamInfo.savedSettings.customDestinations
-        .filter(dest => dest.enabled)
-        .map(dest =>
-          isDualOutputMode
-            ? {
-                platform: 'relay' as 'relay',
-                streamKey: `${dest.url}${dest.streamKey}`,
-                mode: this.dualOutputService.views.getMode(dest.display),
-              }
-            : {
-                platform: 'relay' as 'relay',
-                streamKey: `${dest.url}${dest.streamKey}`,
-              },
-        ),
+      ...this.customDestinations.map(dest =>
+        isDualOutputMode
+          ? {
+              platform: 'relay' as 'relay',
+              streamKey: `${dest.url}${dest.streamKey}`,
+              mode: this.getMode(dest.display),
+            }
+          : {
+              platform: 'relay' as 'relay',
+              streamKey: `${dest.url}${dest.streamKey}`,
+            },
+      ),
     ];
 
     // treat tiktok as a custom destination
@@ -272,7 +327,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
       const ttSettings = this.tiktokService.state.settings;
       tikTokTarget.platform = 'relay';
       tikTokTarget.streamKey = `${ttSettings.serverUrl}/${ttSettings.streamKey}`;
-      tikTokTarget.mode = this.dualOutputService.views.getPlatformMode('tiktok');
+      tikTokTarget.mode = isDualOutputMode ? this.getPlatformMode('tiktok') : 'landscape';
     }
 
     // treat twitter as a custom destination
@@ -280,10 +335,43 @@ export class RestreamService extends StatefulService<IRestreamState> {
     if (twitterTarget) {
       twitterTarget.platform = 'relay';
       twitterTarget.streamKey = `${this.twitterService.state.ingest}/${this.twitterService.state.streamKey}`;
-      twitterTarget.mode = this.dualOutputService.views.getPlatformMode('twitter');
+      twitterTarget.mode = isDualOutputMode ? this.getPlatformMode('twitter') : 'landscape';
     }
 
-    await this.createTargets(newTargets);
+    // treat instagram as a custom destination
+    const instagramTarget = newTargets.find(t => t.platform === 'instagram');
+    if (instagramTarget) {
+      instagramTarget.platform = 'relay';
+      instagramTarget.streamKey = `${this.instagramService.state.settings.streamUrl}${this.instagramService.state.streamKey}`;
+      instagramTarget.mode = isDualOutputMode ? this.getPlatformMode('instagram') : 'landscape';
+    }
+
+    // treat kick as a custom destination
+    const kickTarget = newTargets.find(t => t.platform === 'kick');
+    if (kickTarget) {
+      kickTarget.platform = 'relay';
+      kickTarget.streamKey = `${this.kickService.state.ingest}/${this.kickService.state.streamKey}`;
+      kickTarget.mode = isDualOutputMode ? this.getPlatformMode('kick') : 'landscape';
+    }
+
+    // in dual output mode, only create targets for the displays that are being restreamed
+    if (isDualOutputMode) {
+      const modesToRestream = this.streamInfo.displaysToRestream.map(display =>
+        this.getMode(display),
+      );
+
+      const filteredTargets = newTargets.filter(
+        target => target.mode && modesToRestream.includes(target.mode),
+      );
+
+      console.log('filteredTargets', filteredTargets);
+
+      await this.createTargets(filteredTargets);
+    } else {
+      console.log('newTargets', newTargets);
+      // in single output mode, create all targets
+      await this.createTargets(newTargets);
+    }
   }
 
   checkStatus(): Promise<boolean> {
@@ -367,6 +455,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
   private chatView: Electron.BrowserView;
 
   refreshChat() {
+    if (!this.chatView) return;
     this.chatView.webContents.loadURL(this.chatUrl);
   }
 
@@ -411,6 +500,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
       webPreferences: {
         partition,
         nodeIntegration: false,
+        contextIsolation: true,
+        sandbox: false,
       },
     });
 
@@ -438,6 +529,16 @@ export class RestreamService extends StatefulService<IRestreamState> {
     if (changed.chatZoomFactor) {
       this.chatView.webContents.setZoomFactor(changed.chatZoomFactor);
     }
+  }
+
+  private getPlatformMode(platform: TPlatform): TOutputOrientation {
+    const display = this.streamingService.views.getPlatformDisplayType(platform);
+    return this.getMode(display);
+  }
+
+  getMode(display: TDisplayType): TOutputOrientation {
+    if (!display) return 'landscape';
+    return display === 'horizontal' ? 'landscape' : 'portrait';
   }
 }
 

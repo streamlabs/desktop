@@ -13,7 +13,6 @@ import {
 import { IIPAddressDescription, ITcpServerServiceApi, ITcpServersSettings } from './tcp-server-api';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import { ExternalApiService } from '../external-api';
-import { SceneCollectionsService } from 'services/scene-collections';
 // eslint-disable-next-line no-undef
 import WritableStream = NodeJS.WritableStream;
 import { $t } from 'services/i18n';
@@ -130,6 +129,19 @@ export class TcpServerService
         ...defaultWebsoketsSettings,
         enabled: true,
         allowRemote: true,
+      },
+    });
+
+    this.listen();
+  }
+
+  disableWebsocketsRemoteConnections() {
+    this.stopListening();
+    // update websockets settings
+    const defaultWebsoketsSettings = this.getDefaultSettings().websockets;
+    this.setSettings({
+      websockets: {
+        ...defaultWebsoketsSettings,
       },
     });
 

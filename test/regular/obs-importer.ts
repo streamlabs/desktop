@@ -8,6 +8,7 @@ import { FormMonkey } from '../helpers/form-monkey';
 import { ExecutionContext } from 'ava';
 import {
   click,
+  clickIfDisplayed,
   focusChild,
   focusMain,
   isDisplayed,
@@ -48,20 +49,25 @@ test('OBS Importer', async t => {
   if (!(await isDisplayed('h2=Live Streaming'))) return;
   await click('h2=Live Streaming');
   await click('button=Continue');
+  await click('button=Skip');
+
+  /*
+  await click('a=Login');
+  await isDisplayed('button=Log in with Twitch');
+  await click('button=Skip');
+  */
 
   await logIn(t, 'twitch', { prime: false }, false, true);
   await sleep(1000);
-  await (await t.context.app.client.$('span=Skip')).click();
 
   // import from OBS
   await click('div=Import from OBS Studio');
   await click('div=Start');
 
-  // auto config
-  // temporarily disable auto config until migrate to new api
-  // await waitForDisplayed('h1=Optimize');
-  // await (await t.context.app.client.$('button=Skip')).click();
-  await (await t.context.app.client.$('div=Choose Starter')).click();
+  // skip Ultra
+  await waitForDisplayed('div[data-testid=choose-free-plan-btn]', { timeout: 15000 });
+  // skip Themes
+  await click('button=Skip');
 
   await waitForDisplayed('[data-name=SceneSelector]');
 

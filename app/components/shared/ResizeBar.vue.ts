@@ -63,6 +63,8 @@ export default class ResizeBar extends TsxComponent<ResizeBarProps> {
   }
 
   stopMouseTracking(event: MouseEvent) {
+    if (!this.active) return;
+
     this.active = false;
     let offset = this.barOffset;
     if (this.props.reverse) offset = -offset;

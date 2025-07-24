@@ -26,6 +26,11 @@ export function $t(...args: any[]): string {
   return vueI18nInstance.t.call(I18nService.vueI18nInstance, ...args);
 }
 
+function $te(...args: any[]): boolean {
+  const vueI18nInstance = I18nService.vueI18nInstance;
+  return vueI18nInstance.te.call(I18nService.vueI18nInstance, ...args);
+}
+
 /**
  * get localized string from dictionary if exists
  * returns a keypath if localized version of string doesn't exist
@@ -33,6 +38,17 @@ export function $t(...args: any[]): string {
 export function $translateIfExist(...args: any[]): string {
   // TODO: Investigate method to silently fail and not trigger console warnings ($te is unreliable)
   return $t(...args);
+}
+
+/*
+ * While above it says `$te` is unreliable, running into bugs when OBS settings are used as translation
+ * keys, where `silentTranslationWarn` is set to false in VueI18n, will cause the process to hang when
+ * running tests, and only when running tests, presumably while trying to log the failure to the console.
+ * Not sure which issues we ran into with `$te`, but hoping a small subset (OBS dropdown setting values,
+ * i.e `OBS_PROPERTY_LIST`) will be more reliable.
+ */
+export function $translateIfExistWithCheck(key: string, ...args: any[]) {
+  return $te(key) ? $t(key, ...args) : key;
 }
 
 /**
@@ -97,20 +113,28 @@ export class I18nService extends PersistentStatefulService<II18nState> implement
     const locale = i18nService.state.locale.toLowerCase();
     view.webContents.on('dom-ready', () => {
       view.webContents.executeJavaScript(`
-        const langCode = $.cookie('langCode');
+        const getCookie = (name) => {
+          let value = "; " + document.cookie;
+          let parts = value.split("; " + name + "=");
+          if (parts.length === 2) return parts.pop().split(";").shift();
+        };
+
+        const setCookie = (name, value) => {
+          document.cookie = name + "=" + (value || "") + "; path=/";
+        };
+
+        const langCode = getCookie('langCode');
 
         if (!(new RegExp('${locale}', 'i').test(langCode))) {
           // Detect the proper format and set the cookie to Desktop's locale
           const isUpper = x => x.toUpperCase() === x;
           const splitLocale = l => l.split('-');
-
-          const [lang, code] = splitLocale(langCode)
+          const [lang, code] = splitLocale(langCode || '');
           const usesUpperCode = code && isUpper(code[0]);
           const [newLang, newCode] = splitLocale('${locale}');
-
           const localeToSet = [newLang, (usesUpperCode ? newCode.toUpperCase() : newCode)].join('-');
 
-          $.cookie('langCode', localeToSet);
+          setCookie('langCode', localeToSet);
           window.location.reload();
         }
       `);

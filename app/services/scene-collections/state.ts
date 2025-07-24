@@ -240,7 +240,6 @@ export class SceneCollectionsStateService extends StatefulService<ISceneCollecti
       operatingSystem: os,
       deleted: false,
       needsRename: false,
-      sceneNodeMaps: {},
     });
   }
 
@@ -293,6 +292,8 @@ export class SceneCollectionsStateService extends StatefulService<ISceneCollecti
   @mutation()
   LOAD_STATE(state: ISceneCollectionsManifest) {
     Object.keys(state).forEach(key => {
+      // TODO: index
+      // @ts-ignore
       Vue.set(this.state, key, state[key]);
     });
   }

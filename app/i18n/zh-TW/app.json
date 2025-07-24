@@ -9,5 +9,14 @@
   "You've merged a Streamlabs ID to your account, please log back in to ensure you have the right credentials.": "你已將 Streamlabs ID 合併到你的帳戶，請再次登入以確認你擁有正確的憑證。",
   "Enable Live Streaming?": "啟用直播嗎？",
   "Streamlabs is currently in recording mode, which hides live streaming features. Would you like to enable live streaming features? You can disable them again in General settings.": "Streamlabs 目前處於錄影模式，這會隱藏直播功能。你要啟用直播功能嗎？你可以在「一般」設定中再次停用這些功能。",
-  "Enable Streaming": "啟用直播"
+  "Enable Streaming": "啟用直播",
+  "This account is already linked to another Streamlabs Account. Please use a different account.": "此帳戶已連結到另一個 Streamlabs 帳戶。請使用不同的帳戶。",
+  "Successfully unlinked account": "成功取消連結帳戶",
+  "Successfully merged account": "成功合併帳戶",
+  "Account merge error": "帳戶合併錯誤",
+  "Error Code: %{code}": "錯誤代碼：%{code}",
+  "Unknown error, please contact support": "未知錯誤，請聯繫支援人員",
+  "Custom Destination": "自訂目的地",
+  "This app is currently popped out in another window.": "此應用程式目前在另一個視窗中彈出。",
+  "Error granting chat permissions.": "授予聊天室權限時發生錯誤。"
 }

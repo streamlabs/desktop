@@ -43,6 +43,7 @@ import { SettingsService } from '../settings';
 import { DualOutputService } from 'services/dual-output';
 import { OS, getOS } from 'util/operating-systems';
 import * as remote from '@electron/remote';
+import { RealmService } from 'services/realm';
 
 interface IAppState {
   loading: boolean;
@@ -94,6 +95,7 @@ export class AppService extends StatefulService<IAppState> {
   @Inject() private usageStatisticsService: UsageStatisticsService;
   @Inject() private videoSettingsService: VideoSettingsService;
   @Inject() private dualOutputService: DualOutputService;
+  @Inject() private realmService: RealmService;
 
   static initialState: IAppState = {
     loading: true,
@@ -118,6 +120,8 @@ export class AppService extends StatefulService<IAppState> {
         this.SET_ERROR_ALERT(true);
       });
     }
+
+    this.realmService.connect();
 
     // perform several concurrent http requests
     await Promise.all([
@@ -199,6 +203,8 @@ export class AppService extends StatefulService<IAppState> {
       await this.gameOverlayService.destroy();
       await this.fileManagerService.flushAll();
       obs.NodeObs.RemoveSourceCallback();
+      obs.NodeObs.RemoveTransitionCallback();
+      obs.NodeObs.RemoveVolmeterCallback();
       obs.NodeObs.OBS_service_removeCallback();
       obs.IPC.disconnect();
       this.crashReporterService.endShutdown();

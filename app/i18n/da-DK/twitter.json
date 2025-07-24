@@ -8,5 +8,18 @@
   "Unlink Twitter": "Fjern tilslutning til Twitter",
   "Tweet & Go Live": "Tweet, og gå live",
   "Could not connect to Twitter": "Forbindelse til Twitter kunne ikke oprettes",
-  "Use Streamlabs URL": "Brug Streamlabs-URL"
+  "Use Streamlabs URL": "Brug Streamlabs-URL",
+  "X (Twitter) Chat Type": "X (Twitter)-chattype",
+  "Disabled": "Deaktiveret",
+  "Chat will be disabled": "Chat bliver deaktiveret",
+  "Everyone": "Alle",
+  "All viewers will be able to chat": "Alle seere vil kunne chatte",
+  "Verified Only": "Kun bekræftede",
+  "Only verified viewers will be able to chat": "Kun bekræftede seere vil kunne chatte",
+  "Followed Only": "Kun fulgte",
+  "Only accounts you follow will be able to chat": "Kun konti, du følger, vil kunne chatte",
+  "Subscriber Only": "Kun abonnenter",
+  "Only viewers that subscribe to you will be able to chat": "Kun seere, der abonnerer på dig, vil kunne chatte",
+  "You need X premium account to go live on X.": "Du skal have en X-premiumkonto for at gå live på X.",
+  "You need X premium account to go live on X. Click to learn more": "Du skal have en X-premiumkonto for at gå live på X. Klik for at få mere at vide"
 }

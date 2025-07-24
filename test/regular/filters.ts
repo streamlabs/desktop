@@ -4,6 +4,7 @@ import { addSource } from '../helpers/modules/sources';
 import { focusChild, isDisplayed, waitForDisplayed } from '../helpers/modules/core';
 
 useWebdriver({
+  skipOnboarding: true,
   restartAppAfterEachTest: false,
   clearCollectionAfterEachTest: true,
 });

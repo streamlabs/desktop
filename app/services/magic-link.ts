@@ -6,6 +6,7 @@ import { HostsService } from './hosts';
 import * as remote from '@electron/remote';
 import electron from 'electron';
 import { UsageStatisticsService } from './usage-statistics';
+import { byOS, OS } from 'util/operating-systems';
 
 interface ILoginTokenResponse {
   login_token: string;
@@ -21,9 +22,12 @@ export class MagicLinkService extends Service {
   @Inject() hostsService: HostsService;
   @Inject() usageStatisticsService: UsageStatisticsService;
 
-  async getDashboardMagicLink(subPage = '', source?: string) {
+  async getDashboardMagicLink(subPage = '', source?: string, os?: string) {
     const token = (await this.fetchNewToken()).login_token;
+    // TODO: we really need `qs` or similar
     const sourceString = source ? `&refl=${source}` : '';
+    const osString = os ? `&os=${os}` : '';
+
     if (subPage === 'multistream') {
       // TODO: remove this if statement when multistream settings are implemented
       return `https://${this.hostsService.streamlabs}/content-hub/post/how-to-multistream-the-ultimate-guide-to-multistreaming?login_token=${token}`;
@@ -31,7 +35,7 @@ export class MagicLinkService extends Service {
 
     return `https://${this.hostsService.streamlabs}/slobs/magic/dashboard?login_token=${token}&r=${
       subPage ?? ''
-    }${sourceString}`;
+    }${sourceString}${osString}`;
   }
 
   private fetchNewToken(): Promise<ILoginTokenResponse> {
@@ -49,13 +53,17 @@ export class MagicLinkService extends Service {
    * @param refl a referral tag for analytics
    */
   async linkToPrime(refl: string) {
+    // TODO: this is only here to acommodate ultra checkout A/B test requiring OS
+    // remove this and the parameter from {getDashboardMagicLink} after.
+    const os = byOS({ [OS.Windows]: 'windows', [OS.Mac]: 'mac' });
+
     if (!this.userService.views.isLoggedIn) {
       return remote.shell.openExternal(
-        `https://${this.hostsService.streamlabs}/ultra?refl=${refl}`,
+        `https://${this.hostsService.streamlabs}/ultra?refl=${refl}&os=${os}`,
       );
     }
     try {
-      const link = await this.getDashboardMagicLink('prime', refl);
+      const link = await this.getDashboardMagicLink('prime', refl, os);
       remote.shell.openExternal(link);
     } catch (e: unknown) {
       console.error('Error generating dashboard magic link', e);

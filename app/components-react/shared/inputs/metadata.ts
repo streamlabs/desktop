@@ -52,11 +52,13 @@ interface IBaseMetadata {
   onChange?: (value: unknown) => void;
   children?: Dictionary<TInputMetadata<unknown>>;
   displayed?: boolean;
+  disabled?: boolean;
   name?: string;
 }
 
 interface ITextMetadata extends IBaseMetadata {
   value?: string;
+  isPassword?: boolean;
 }
 
 export interface ICheckboxGroupMetadata extends IBaseMetadata {

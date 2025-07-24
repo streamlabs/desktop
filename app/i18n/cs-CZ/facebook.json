@@ -34,5 +34,8 @@
   "Only Me": "Jen já",
   "Do not change privacy settings": "Neměnit nastavení ochrany soukromí",
   "Install %{overlayName}": "Instalovat %{overlayName}",
-  "Please note that while you can schedule streams to Facebook, some will not appear on this calendar due to API limitations": "Upozorňujeme, že ačkoli můžete plánovat streamy na Facebook, některé z nich se neobjeví v tomto kalendáři kvůli omezením API"
+  "Please note that while you can schedule streams to Facebook, some will not appear on this calendar due to API limitations": "Upozorňujeme, že ačkoli můžete plánovat streamy na Facebook, některé z nich se neobjeví v tomto kalendáři kvůli omezením API",
+  "Your account is not eligible to stream on Facebook. Click to learn more.": "Váš účet není způsobilý pro streamování na Facebook. Klikněte pro více informací",
+  "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers": "Nemáte nárok na přechod na živé vysílání, váš profil musí být alespoň 60 dní starý a vaše stránka musí mít alespoň 100 sledujících.",
+  "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers. Click the notification to learn more.": "Nemáte nárok na službu Go Live, váš profil musí být alespoň 60 dní starý a vaše stránka musí mít alespoň 100 sledujících. Kliknutím na oznámení se dozvíte více."
 }

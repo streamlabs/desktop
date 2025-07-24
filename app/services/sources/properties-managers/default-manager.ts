@@ -178,6 +178,10 @@ export class DefaultManager extends PropertiesManager {
       auto_capture_rules_path: path.join(remote.app.getPath('userData'), 'game_capture_list.json'),
       auto_placeholder_image: getSharedResource('capture-placeholder.png'),
       auto_placeholder_message: $t('Looking for a game to capture'),
+      window_placeholder_image: getSharedResource('capture-placeholder.png'),
+      window_placeholder_waiting_message: $t('Looking for a game to capture'),
+      window_placeholder_missing_message: $t('Specified window is not a game'),
+      capture_overlays: this.obsSource.settings.capture_overlays ?? true,
     });
   }
 }

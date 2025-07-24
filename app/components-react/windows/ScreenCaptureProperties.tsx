@@ -43,7 +43,7 @@ function useCaptureSource(sourceId: string): ICaptureSourceApi {
   const settings = useMemo(() => source.getSettings(), []);
   const [options, setOptions] = useState<ICapturableOption[]>([]);
   const [selectedOption, setSelectedOption] = useState<string>(settings['capture_source_list']);
-  const [captureCursor, setCaptureCursor] = useState(settings['capture_cursor']);
+  const [captureCursor, setCaptureCursor] = useState<boolean>(settings['capture_cursor'] ?? true);
 
   function buildSetter<TVal>(
     source: Source,

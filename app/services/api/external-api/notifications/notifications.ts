@@ -22,6 +22,7 @@ enum ENotificationSubType {
   LAGGED = 'LAGGED',
   SKIPPED = 'SKIPPED',
   NEWS = 'NEWS',
+  CPU = 'CPU',
 }
 
 /**

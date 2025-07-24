@@ -8,5 +8,18 @@
   "Unlink Twitter": "Desassociar Twitter",
   "Tweet & Go Live": "Enviar Tweet e iniciar transmissão",
   "Could not connect to Twitter": "Não foi possível ligar ao Twitter",
-  "Use Streamlabs URL": "Usar URL do Streamlabs"
+  "Use Streamlabs URL": "Usar URL do Streamlabs",
+  "X (Twitter) Chat Type": "Tipo de chat do X (Twitter)",
+  "Disabled": "Desativado",
+  "Chat will be disabled": "O chat será desativado",
+  "Everyone": "Todos",
+  "All viewers will be able to chat": "Todos os espectadores poderão conversar",
+  "Verified Only": "Apenas verificados",
+  "Only verified viewers will be able to chat": "Apenas os espectadores verificados poderão conversar",
+  "Followed Only": "Apenas seguidos",
+  "Only accounts you follow will be able to chat": "Apenas as contas que segues poderão conversar",
+  "Subscriber Only": "Apenas para subscritores",
+  "Only viewers that subscribe to you will be able to chat": "Apenas os espectadores que te subscreveram poderão conversar",
+  "You need X premium account to go live on X.": "Precisas de uma conta premium do X para transmitir em direto no X.",
+  "You need X premium account to go live on X. Click to learn more": "Precisas de uma conta premium X para transmitir em direto no X. Clica para saber mais"
 }

@@ -6,12 +6,15 @@ import { TPlatform } from '../../../services/platforms';
 import { TwitchEditStreamInfo } from './platforms/TwitchEditStreamInfo';
 import { Section } from './Section';
 import { YoutubeEditStreamInfo } from './platforms/YoutubeEditStreamInfo';
+import { TikTokEditStreamInfo } from './platforms/TiktokEditStreamInfo';
 import FacebookEditStreamInfo from './platforms/FacebookEditStreamInfo';
-import { TiktokEditStreamInfo } from './platforms/TiktokEditStreamInfo';
 import { IPlatformComponentParams, TLayoutMode } from './platforms/PlatformSettingsLayout';
 import { getDefined } from '../../../util/properties-type-guards';
 import { TrovoEditStreamInfo } from './platforms/TrovoEditStreamInfo';
 import { TwitterEditStreamInfo } from './platforms/TwitterEditStreamInfo';
+import { InstagramEditStreamInfo } from './platforms/InstagramEditStreamInfo';
+import { KickEditStreamInfo } from './platforms/KickEditStreamInfo';
+import AdvancedSettingsSwitch from './AdvancedSettingsSwitch';
 
 export default function PlatformSettings() {
   const {
@@ -28,11 +31,16 @@ export default function PlatformSettings() {
     updateCommonFields,
     descriptionIsRequired,
     isUpdateMode,
+    isTikTokConnected,
   } = useGoLiveSettings().extend(settings => ({
     get descriptionIsRequired() {
       const fbSettings = settings.state.platforms['facebook'];
       const descriptionIsRequired = fbSettings && fbSettings.enabled && !fbSettings.useCustomFields;
       return descriptionIsRequired;
+    },
+
+    get isTikTokConnected() {
+      return settings.state.isPlatformLinked('tiktok');
     },
   }));
 
@@ -53,6 +61,9 @@ export default function PlatformSettings() {
       get value() {
         return getDefined(settings.platforms[platform]);
       },
+      get enabledPlatformsCount() {
+        return enabledPlatforms.length;
+      },
       onChange(newSettings) {
         updatePlatform(platform, newSettings);
       },
@@ -64,6 +75,8 @@ export default function PlatformSettings() {
     <div style={{ minHeight: '150px' }}>
       {shouldShowSettings && (
         <div style={{ width: '100%' }}>
+          <AdvancedSettingsSwitch />
+
           {/*COMMON FIELDS*/}
           {canShowAdvancedMode && (
             <Section isSimpleMode={!isAdvancedMode} title={$t('Common Stream Settings')}>
@@ -71,6 +84,7 @@ export default function PlatformSettings() {
                 descriptionIsRequired={descriptionIsRequired}
                 value={commonFields}
                 onChange={updateCommonFields}
+                enabledPlatforms={enabledPlatforms}
               />
             </Section>
           )}
@@ -91,12 +105,16 @@ export default function PlatformSettings() {
               {platform === 'youtube' && (
                 <YoutubeEditStreamInfo {...createPlatformBinding('youtube')} />
               )}
-              {platform === 'tiktok' && (
-                <TiktokEditStreamInfo {...createPlatformBinding('tiktok')} />
+              {platform === 'tiktok' && isTikTokConnected && (
+                <TikTokEditStreamInfo {...createPlatformBinding('tiktok')} />
               )}
+              {platform === 'kick' && <KickEditStreamInfo {...createPlatformBinding('kick')} />}
               {platform === 'trovo' && <TrovoEditStreamInfo {...createPlatformBinding('trovo')} />}
               {platform === 'twitter' && (
                 <TwitterEditStreamInfo {...createPlatformBinding('twitter')} />
+              )}
+              {platform === 'instagram' && (
+                <InstagramEditStreamInfo {...createPlatformBinding('instagram')} />
               )}
             </Section>
           ))}

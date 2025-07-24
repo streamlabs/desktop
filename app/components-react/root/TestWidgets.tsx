@@ -14,6 +14,7 @@ export default function TestWidgets(p: { testers?: string[] }) {
     : allTesters;
 
   function test(testerName: string) {
+    // TODO: uses deprecated function
     WidgetsService.actions.test(testerName);
   }
 

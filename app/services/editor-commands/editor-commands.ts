@@ -133,7 +133,6 @@ export class EditorCommandsService extends StatefulService<IEditorCommandsServic
       let ret: any;
 
       try {
-        console.log(command);
         ret = command.rollback();
       } catch (e: unknown) {
         this.handleUndoRedoError(true, e);

@@ -25,6 +25,7 @@ export function Support() {
 Support.page = 'Get Support';
 
 function SupportLinks() {
+  const { UrlService } = Services;
   function openLink(link: string) {
     remote.shell.openExternal(link);
   }
@@ -32,7 +33,7 @@ function SupportLinks() {
   return (
     <ObsSettingsSection title={$t('Support Links')}>
       <div className="input-container">
-        <a className="link" onClick={() => openLink('https://howto.streamlabs.com/')}>
+        <a className="link" onClick={() => openLink(UrlService.supportLink)}>
           <i className="icon-question" /> <span>{$t('Streamlabs Support')}</span>
         </a>
       </div>

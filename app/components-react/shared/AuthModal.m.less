@@ -1,0 +1,31 @@
+.auth-modal-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1003 !important; // show above resize bars
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80%;
+  width: 100%;
+}
+
+.auth-modal {
+  h2 {
+    align-self: flex-start;
+  }
+
+  .buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    margin-top: 15px;
+    width: 100%;
+
+    button:not(:last-child) {
+      margin-right: 5px;
+    }
+  }
+}

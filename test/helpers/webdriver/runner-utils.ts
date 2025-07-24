@@ -45,9 +45,11 @@ const testTimings: Record<string, number> = (() => {
     const result = {};
 
     // convert the list to the map where key is a test name
+    // TODO: index
+    // @ts-ignore
     records.forEach(r => (result[r.name] = r.time));
     return result;
-  } catch (e) {
+  } catch (e: unknown) {
     return {};
   }
 })();
@@ -55,6 +57,7 @@ const testTimings: Record<string, number> = (() => {
 /**
  * overridden version of the ava.test() function
  */
+// @ts-ignore typescript upgrade
 export const testFn: TestInterface<ITestContext> = new Proxy(avaTest, {
   apply: (target, thisArg, args) => {
     const testName = args[0];

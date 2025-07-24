@@ -26,11 +26,19 @@ export class Vec2 extends Vector2 {
     // Change this here behaviour to always return a new object:
     return new Proxy(this, {
       get: (target, propName) => {
+        // TODO: index
+        // maybe use `Object.hasOwnProperty` or the `in` operator (if we care
+        // about inheritance).
+        // @ts-ignore
         if (typeof target[propName] !== 'function' || !Vector2.prototype[propName]) {
+          // TODO: index
+          // @ts-ignore
           return target[propName];
         }
 
         return (...args: any[]) => {
+          // TODO: index
+          // @ts-ignore
           const result = new Vector2(target.x, target.y)[propName](...args);
           if (result instanceof Vector2) return new Vec2(result);
           return result;

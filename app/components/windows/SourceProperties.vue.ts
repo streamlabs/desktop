@@ -7,7 +7,6 @@ import { SourcesService } from 'services/sources';
 import ModalLayout from 'components/ModalLayout.vue';
 import { Display } from 'components/shared/ReactComponentList';
 import GenericForm from 'components/obs/inputs/GenericForm';
-import WidgetProperties from 'components/custom-source-properties/WidgetProperties.vue';
 import StreamlabelProperties from 'components/custom-source-properties/StreamlabelProperties';
 import PlatformAppProperties from 'components/custom-source-properties/PlatformAppProperties.vue';
 import { $t } from 'services/i18n';
@@ -23,7 +22,6 @@ import * as remote from '@electron/remote';
     ModalLayout,
     Display,
     GenericForm,
-    WidgetProperties,
     StreamlabelProperties,
     PlatformAppProperties,
   },

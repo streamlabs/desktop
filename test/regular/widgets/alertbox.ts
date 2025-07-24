@@ -14,16 +14,17 @@ import { CustomizationService } from '../../../app/services/customization';
 import { assertFormContains, fillForm } from '../../helpers/modules/forms';
 import { sleep } from '../../helpers/sleep';
 
+// TODO: fake hook
 useWebdriver({ pauseIfFailed: false });
 
-test('AlertBox for Twitch', t => testAlertbox(t, 'twitch'));
-test('AlertBox for YouTube', t => testAlertbox(t, 'youtube'));
-test('AlertBox for Facebook', t => testAlertbox(t, 'facebook'));
+test('Alert Box for Twitch', t => testAlertbox(t, 'twitch'));
+test('Alert Box for YouTube', t => testAlertbox(t, 'youtube'));
+test('Alert Box for Facebook', t => testAlertbox(t, 'facebook'));
 
 const commonAlerts = ['Donation', 'Merch'];
 
 const platformAlerts = {
-  twitch: [...commonAlerts, 'Follow', 'Cheer (Bits)', 'Host', 'Raid'],
+  twitch: [...commonAlerts, 'Follow', 'Cheer (Bits)', 'Raid'],
   youtube: [...commonAlerts, 'YouTube Subscribers', 'YouTube Membership', 'YouTube Super Chat'],
   facebook: [
     ...commonAlerts,
@@ -36,16 +37,20 @@ const platformAlerts = {
 };
 
 async function testAlertbox(t: TExecutionContext, platform: TPlatform) {
+  if (!Object.keys(platformAlerts).includes(platform)) {
+    t.fail(`Tried to test alerts but no mapping is defined for ${platform}`);
+  }
+
   await logIn(platform);
 
   // create alertbox
   await enableNewAlertbox();
-  await addSource('Alertbox', 'Alertbox');
+  await addSource('Alert Box', 'Alert Box');
   await sleep(500);
   await openAlertboxSettings();
 
   // click through all available alert types and check for console errors
-  const alerts = platformAlerts[platform];
+  const alerts = platformAlerts[platform as keyof typeof platformAlerts];
   for (const alert of alerts) await click(`span*=${alert}`);
   await sleep(500);
 
@@ -94,7 +99,7 @@ async function testDonationAlert() {
 
 async function openAlertboxSettings() {
   await focusMain();
-  await openSourceProperties('Alertbox');
+  await openSourceProperties('Alert Box');
   await focusChild();
   await waitForDisplayed('span=General Settings');
 }

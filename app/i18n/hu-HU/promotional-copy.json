@@ -1,6 +1,6 @@
 {
   "Overlay, Widget, and Site Themes": "Átfedés, widget és webhely témák",
-  "Fully customize your stream and your website to represent your brand; or pick from thousands of our pre-made themes. Either way, your stream will look amazing and it's all included with Ultra.": "Fully customize your stream and your website to represent your brand; or pick from thousands of our pre-made themes. Either way, your stream will look amazing and it's all included with Ultra.",
+  "Fully customize your stream and your website to represent your brand; or pick from thousands of our pre-made overlays. Either way, your stream will look amazing and it's all included with Ultra.": "Fully customize your stream and your website to represent your brand; or pick from thousands of our pre-made overlays. Either way, your stream will look amazing and it's all included with Ultra.",
   "View Themes": "Témák megtekintése",
   "Every App is FREE": "Az összes alkalmazás INGYENES",
   "We've curated a list of diverse and feature rich applications to give you more control, automation, better analytics, and new ways to interact with your audience.": "We've curated a list of diverse and feature rich applications to give you more control, automation, better analytics, and new ways to interact with your audience.",
@@ -71,5 +71,8 @@
   "1 Hour Videos + 250GB Storage + More": "1 órás videók + 250 GB tárhely + több",
   "Highest Profit Margins": "Highest Profit Margins",
   "%{monthlyPrice}/mo or %{yearlyPrice}/year": "%{monthlyPrice}/hó vagy %{yearlyPrice}/év",
-  "Text-based editing of VOD content": "Text-based editing of VOD content"
+  "Text-based editing of VOD content": "Text-based editing of VOD content",
+  "Polish your videos with text-based and AI powered Podcast Editor": "Polish your videos with text-based and AI powered Podcast Editor",
+  "Turn your videos into mobile-friendly short-form TikToks, Reels, and Shorts with Cross Clip": "Turn your videos into mobile-friendly short-form TikToks, Reels, and Shorts with Cross Clip",
+  "Edit video professionally from your browser with Video Editor": "Edit video professionally from your browser with Video Editor"
 }

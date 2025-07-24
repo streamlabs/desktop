@@ -1,149 +1,133 @@
-import React, { CSSProperties } from 'react';
+import React, { useState } from 'react';
+import { Button } from 'antd';
 import { ObsSettingsSection } from './ObsSettings';
 import { $t } from '../../../services/i18n';
-import QRCode from 'qrcode.react';
 import { Services } from '../../service-provider';
-import Form from '../../shared/inputs/Form';
-import { TextInput } from '../../shared/inputs';
-import { Button, Col, Row, Space } from 'antd';
-import Utils from '../../../services/utils';
-import { injectState, mutation, useModule } from 'slap';
-
-const QRCODE_SIZE = 350;
-
-class RemoteControlModule {
-  state = injectState({
-    qrcodeIsVisible: false,
-    detailsIsVisible: false,
-    qrCodeData: {
-      addresses: [] as string[],
-      port: 0,
-      token: '',
-      version: '',
-    },
-  });
-
-  private updateNetworkInterval: number;
-
-  init() {
-    this.refreshQrcodeData();
-    this.updateNetworkInterval = window.setInterval(() => this.refreshQrcodeData(), 1000);
-  }
-
-  destroy() {
-    clearInterval(this.updateNetworkInterval);
-  }
-
-  get qrCodeValue() {
-    if (!this.state.qrcodeIsVisible) return 'This is totally fake data';
-    const encodedData = encodeURIComponent(JSON.stringify(this.state.qrCodeData));
-    return `https://streamlabs.page.link/?link=https://streamlabs.com/mobile-app&data=${encodedData}&apn=com.streamlabs.slobsrc&isi=1476615877&ibi=com.streamlabs.slobsrc&utm_source=slobs`;
-  }
-
-  private get TcpServerService() {
-    return Services.TcpServerService;
-  }
-
-  showQrCode() {
-    this.TcpServerService.enableWebsoketsRemoteConnections();
-    this.state.setQrcodeIsVisible(true);
-  }
-
-  @mutation()
-  showDetails() {
-    this.state.detailsIsVisible = true;
-  }
-
-  generateToken() {
-    this.TcpServerService.actions.generateToken();
-  }
-
-  private refreshQrcodeData() {
-    const settings = this.TcpServerService.state;
-    const addresses = this.TcpServerService.getIPAddresses()
-      .filter(address => !address.internal)
-      .map(address => address.address);
-
-    this.state.setQrCodeData({
-      addresses,
-      token: settings.token,
-      port: settings.websockets.port,
-      version: Utils.env.SLOBS_VERSION,
-    });
-  }
-}
+import { SwitchInput, TextInput } from '../../shared/inputs';
+import { IConnectedDevice } from 'services/api/remote-control-api';
+import styles from './RemoteControl.m.less';
+import { useRealmObject } from 'components-react/hooks/realm';
+import { useVuex } from 'components-react/hooks';
 
 export function RemoteControlSettings() {
-  const {
-    qrcodeIsVisible,
-    detailsIsVisible,
-    qrCodeData,
-    qrCodeValue,
-    showQrCode,
-    showDetails,
-    generateToken,
-  } = useModule(RemoteControlModule);
+  const { RemoteControlService, UserService, TcpServerService } = Services;
 
-  const colStyle: CSSProperties = {
-    width: `${QRCODE_SIZE}px`,
-    height: `${QRCODE_SIZE}px`,
-    backgroundColor: 'white',
-    fontSize: '20px',
-    display: 'flex',
-    alignItems: 'center',
-    textAlign: 'center',
-    marginBottom: '16px',
-  };
+  const connectedDevices = useRealmObject(RemoteControlService.connectedDevices).devices;
+  const enabled = useRealmObject(RemoteControlService.state).enabled;
 
-  const qrStyles: React.CSSProperties = qrcodeIsVisible
-    ? {}
-    : { filter: 'blur(10px)', position: 'absolute', clip: 'rect(5px, 345px, 345px, 5px)' };
+  const { isLoggedIn, websocketsEnabled, token, port } = useVuex(() => ({
+    isLoggedIn: UserService.views.isLoggedIn,
+    websocketsEnabled: TcpServerService.state.websockets.enabled,
+    token: TcpServerService.state.token,
+    port: TcpServerService.state.websockets.port,
+  }));
+
+  function handleToggle() {
+    if (enabled) {
+      RemoteControlService.actions.disconnect();
+    } else {
+      RemoteControlService.actions.createStreamlabsRemoteConnection();
+    }
+  }
+
+  function handleSocket() {
+    if (websocketsEnabled) {
+      TcpServerService.actions.disableWebsocketsRemoteConnections();
+    } else {
+      TcpServerService.actions.enableWebsoketsRemoteConnections();
+    }
+  }
+
+  function getIPAddresses() {
+    return TcpServerService.getIPAddresses()
+      .filter(address => !address.internal)
+      .map(address => address.address)
+      .join(', ');
+  }
+
+  function generateToken() {
+    TcpServerService.actions.generateToken();
+  }
+
+  function disconnectDevice(device: IConnectedDevice) {
+    RemoteControlService.actions.disconnectDevice(device.socketId);
+  }
 
   return (
-    <ObsSettingsSection>
-      <div>
-        {$t(
-          'The free Streamlabs Controller app allows you to control Streamlabs Desktop from your iOS or Android device. Scan the QR code below to begin.',
-        )}
-        <br />
-        <br />
-      </div>
-
-      <Row justify="space-around" align="middle">
-        <Col style={colStyle}>
-          <QRCode value={qrCodeValue} size={QRCODE_SIZE} style={qrStyles} includeMargin={true} />
-          {!qrcodeIsVisible && (
-            <a
-              style={{ backgroundColor: 'black', position: 'absolute', color: 'white' }}
-              onClick={showQrCode}
-            >
-              {$t("Don't show this code on stream. Click to reveal")}
-            </a>
+    <>
+      <ObsSettingsSection>
+        <div>
+          {$t(
+            'The free Streamlabs Controller app allows you to control Streamlabs Desktop from your iOS or Android device. You must be logged in to use this feature.',
           )}
-        </Col>
-      </Row>
-
-      {qrcodeIsVisible && (
-        <div style={{ marginBottom: '16px' }}>
-          <a onClick={showDetails}>{$t('Show details')}</a>
+          <br />
+          <br />
         </div>
-      )}
 
-      {qrcodeIsVisible && detailsIsVisible && (
-        <Form>
-          {/* TODO: use password input */}
-          <TextInput
-            label={$t('API token')}
-            readOnly
-            isPassword
-            value={qrCodeData.token}
-            addonAfter={<Button onClick={generateToken}>{$t('Generate new')}</Button>}
+        <div>
+          {isLoggedIn && (
+            <SwitchInput
+              label={$t('Allow Controller app connections')}
+              onInput={handleToggle}
+              value={enabled}
+              layout="horizontal"
+            />
+          )}
+
+          {enabled && (
+            <div style={{ paddingBottom: 8 }}>
+              <span>{$t('Connected Devices')}</span>
+              {connectedDevices.length < 1 && (
+                <span className={styles.whisper}>{$t('No devices connected')}</span>
+              )}
+              {connectedDevices.map(device => (
+                <div className={styles.device}>
+                  <span>{device.deviceName}</span>
+                  <span className={styles.disconnect} onClick={() => disconnectDevice(device)}>
+                    {$t('Disconnect')}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </ObsSettingsSection>
+      <ObsSettingsSection>
+        <div>
+          {$t(
+            'Some third party applications connect to Streamlabs Desktop via websockets connection. Toggle this to allow such connections and display connection info.',
+          )}
+          <br />
+          <span style={{ color: 'var(--info)', display: 'inline' }}>
+            <i className="icon-error" />
+            &nbsp;
+            {$t('Warning: Displaying this portion on stream may leak sensitive information.')}
+          </span>
+          <br />
+          <br />
+        </div>
+        <div>
+          <SwitchInput
+            label={$t('Allow third party connections')}
+            onInput={handleSocket}
+            value={websocketsEnabled}
+            layout="horizontal"
           />
-          <TextInput label={$t('Port')} readOnly value={qrCodeData.port.toString(10)} />
-          <TextInput label={$t('IP addresses')} readOnly value={qrCodeData.addresses.join(', ')} />
-        </Form>
-      )}
-    </ObsSettingsSection>
+          {websocketsEnabled && (
+            <div className={styles.websocketsForm}>
+              <TextInput label={$t('IP Addresses')} value={getIPAddresses()} readOnly />
+              <TextInput label={$t('Port')} value={port.toString(10)} readOnly />
+              <TextInput
+                label={$t('API Token')}
+                value={token}
+                readOnly
+                addonAfter={<Button onClick={generateToken}>{$t('Generate new')}</Button>}
+              />
+            </div>
+          )}
+        </div>
+      </ObsSettingsSection>
+    </>
   );
 }
 

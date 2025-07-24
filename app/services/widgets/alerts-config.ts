@@ -2,30 +2,39 @@ import { $t } from '../i18n';
 import { TPlatform } from '../platforms';
 export type TAlertType =
   | 'donation'
-  | 'trSubscription'
-  | 'trFollow'
-  | 'trRaid'
-  | 'twSubscription'
-  | 'twFollow'
-  | 'twCheer'
-  | 'fbFollow'
-  | 'fbSupport'
-  | 'fbStars'
-  | 'fbLike'
-  | 'fbShare'
-  | 'fbSupportGift'
-  | 'twHost'
   | 'merch'
-  | 'twRaid'
-  | 'ytMembership'
-  | 'ytSubscriber'
-  | 'ytSuperchat';
+  | 'follow'
+  | 'sub'
+  | 'resub'
+  | 'bits'
+  | 'raid'
+  | 'subscriber'
+  | 'sponsor'
+  | 'membershipGift'
+  | 'fanfunding' // SuperChat
+  | 'facebook_share'
+  | 'facebook_support'
+  | 'facebook_support_gifter'
+  | 'facebook_stars'
+  | 'facebook_like'
+  | 'facebook_follow'
+  | 'trovo_follow'
+  | 'trovo_sub'
+  | 'trovo_raid'
+  | 'twitchcharitydonation'
+  | 'loyalty_store_redemption'
+  | 'pledge'
+  | 'streamlabscharitydonation'
+  | 'eldonation'
+  | 'tiltify_donation'
+  | 'treat'
+  | 'donordrive_donation'
+  | 'justgiving_donation';
 
 export interface IAlertConfig {
   type: TAlertType;
   apiKey?: string;
   name: string;
-  url(platform?: TPlatform): string;
   platforms?: TPlatform[];
   names?: string[];
   tooltip?: string;
@@ -40,191 +49,131 @@ export function getAlertsConfig(
     donation: {
       type: 'donation',
       name: $t('Donation'),
-      url() {
-        return `https://${host}/api/v5/slobs/test/streamlabs/donation`;
-      },
       tooltip: $t('Plays an alert when a viewer sends a tip/donation'),
     },
 
-    twFollow: {
-      type: 'twFollow',
+    follow: {
+      type: 'follow',
       name: $t('Follow'),
       apiKey: 'follow',
-      url() {
-        return `https://${host}/api/v5/slobs/test/twitch_account/follow`;
-      },
       platforms: ['twitch'],
       tooltip: $t('Plays an alert for new Twitch followers'),
     },
 
-    fbFollow: {
-      type: 'fbFollow',
+    facebook_follow: {
+      type: 'facebook_follow',
       apiKey: 'facebook_follow',
       name: $t('Facebook Follow'),
-      url() {
-        return `https://${host}/api/v5/slobs/test/facebook_account/follow`;
-      },
       platforms: ['facebook'],
       tooltip: $t('Plays an alert for new Facebook followers'),
     },
 
-    trFollow: {
-      type: 'trFollow',
+    trovo_follow: {
+      type: 'trovo_follow',
       name: $t('Trovo Follow'),
       apiKey: 'trovo_follow',
-      url() {
-        return `https://${host}/api/v5/slobs/test/trovo_account/follow`;
-      },
       platforms: ['trovo'],
       tooltip: $t('Plays an alert for new Trovo followers'),
     },
 
-    twSubscription: {
-      type: 'twSubscription',
+    sub: {
+      type: 'sub',
       apiKey: 'sub',
       name: $t('Subscription'),
-      url() {
-        return `https://${host}/api/v5/slobs/test/twitch_account/subscription`;
-      },
       platforms: ['twitch'],
       tooltip: $t('Plays an alert for new Twitch subscriptions'),
       tooltipLink: 'https://help.twitch.tv/s/article/how-to-subscribe',
     },
 
-    trSubscription: {
-      type: 'trSubscription',
+    trovo_sub: {
+      type: 'trovo_sub',
       apiKey: 'trovo_sub',
       name: $t('Trovo Subscription'),
-      url() {
-        return `https://${host}/api/v5/slobs/test/trovo_account/subscription`;
-      },
       platforms: ['trovo'],
       tooltip: $t('Plays an alert for new Trovo subscriptions'),
     },
 
-    twCheer: {
-      type: 'twCheer',
+    bits: {
+      type: 'bits',
       apiKey: 'bits',
       name: $t('Cheer (Bits)'),
-      url() {
-        return `https://${host}/api/v5/slobs/test/twitch_account/bits`;
-      },
       platforms: ['twitch'],
       tooltip: $t('Plays an alert when a viewer sends a Cheer'),
       tooltipLink: 'https://help.twitch.tv/s/article/guide-to-cheering-with-bits',
     },
 
-    twHost: {
-      name: $t('Host'),
-      type: 'twHost',
-      apiKey: 'host',
-      url() {
-        return `https://${host}/api/v5/slobs/test/twitch_account/host`;
-      },
-      platforms: ['twitch'],
-      tooltip: $t('Plays an alert when another streamer hosts your channel'),
-      tooltipLink: 'https://help.twitch.tv/s/article/how-to-use-host-mode',
-    },
-
-    twRaid: {
+    raid: {
       name: $t('Raid'),
-      type: 'twRaid',
+      type: 'raid',
       apiKey: 'raid',
-      url() {
-        return `https://${host}/api/v5/slobs/test/twitch_account/raid`;
-      },
       platforms: ['twitch'],
       tooltip: $t('Plays an alert when another streamer raids your channel'),
       tooltipLink: 'https://help.twitch.tv/s/article/how-to-use-raids',
     },
 
-    trRaid: {
+    trovo_raid: {
       name: $t('Trovo Raid'),
-      type: 'trRaid',
+      type: 'trovo_raid',
       apiKey: 'trovo_raid',
-      url() {
-        return `https://${host}/api/v5/slobs/test/trovo_account/raid`;
-      },
       platforms: ['trovo'],
       tooltip: $t('Plays an alert when another streamer raids your channel'),
     },
 
-    ytMembership: {
+    sponsor: {
       name: $t('YouTube Membership'),
-      type: 'ytMembership',
+      type: 'sponsor',
       apiKey: 'sponsor',
-      url() {
-        return `https://${host}/api/v5/slobs/test/youtube_account/subscription`;
-      },
       platforms: ['youtube'],
       tooltip: $t('Plays an alert for new YouTube Memberships'),
       tooltipLink: 'https://creatoracademy.youtube.com/page/course/channel-memberships',
     },
 
-    ytSuperchat: {
+    fanfunding: {
       name: $t('YouTube Super Chat'),
-      type: 'ytSuperchat',
+      type: 'fanfunding',
       apiKey: 'fanfunding',
-      url() {
-        return `https://${host}/api/v5/slobs/test/youtube_account/superchat`;
-      },
       platforms: ['youtube'],
       tooltip: $t('Plays an alert when a viewer sends a Super Chat'),
       tooltipLink:
         'https://creatoracademy.youtube.com/page/lesson/superchat-and-superstickers_what-is-superchat_video',
     },
 
-    fbSupport: {
+    facebook_support: {
       name: $t('Facebook Support'),
-      type: 'fbSupport',
+      type: 'facebook_support',
       apiKey: 'facebook_support',
-      url() {
-        return `https://${host}/api/v5/slobs/test/facebook_account/support`;
-      },
       platforms: ['facebook'],
       tooltip: $t('Plays an alert for new Facebook Supporters'),
       tooltipLink: 'https://www.facebook.com/business/help/316098022481499',
     },
 
-    fbSupportGift: {
+    facebook_support_gifter: {
       name: $t('Facebook Gifted Support'),
-      type: 'fbSupportGift',
+      type: 'facebook_support_gifter',
       apiKey: 'facebook_support_gifter',
-      url() {
-        return `https://${host}/api/v5/slobs/test/facebook_account/giftSupport`;
-      },
     },
 
-    fbStars: {
+    facebook_stars: {
       name: $t('Facebook Stars'),
       apiKey: 'facebook_stars',
-      type: 'fbStars',
-      url() {
-        return `https://${host}/api/v5/slobs/test/facebook_account/stars`;
-      },
+      type: 'facebook_stars',
       platforms: ['facebook'],
       tooltip: $t('Plays an alert when a viewer sends Stars'),
       tooltipLink: 'https://www.facebook.com/business/help/903272529876480',
     },
 
-    fbLike: {
+    facebook_like: {
       name: $t('Facebook Like'),
       apiKey: 'facebook_like',
-      type: 'fbLike',
-      url() {
-        return `https://${host}/api/v5/slobs/test/facebook_account/like`;
-      },
+      type: 'facebook_like',
       platforms: ['facebook'],
       tooltip: $t('Plays an alert when a viewer likes your stream'),
     },
 
-    fbShare: {
+    facebook_share: {
       name: $t('Facebook Share'),
       apiKey: 'facebook_share',
-      type: 'fbShare',
-      url() {
-        return `https://${host}/api/v5/slobs/test/facebook_account/share`;
-      },
+      type: 'facebook_share',
       platforms: ['facebook'],
       tooltip: $t('Plays an alert when a viewer shares your stream'),
     },
@@ -232,22 +181,28 @@ export function getAlertsConfig(
     merch: {
       name: $t('Merch'),
       type: 'merch',
-      url() {
-        return `https://${host}/api/v5/slobs/test/streamlabs/merch`;
-      },
       tooltip: $t('Plays an alert when a viewer buys your merch'),
       tooltipLink: 'https://streamlabs.com/dashboard#/merchadmin',
     },
 
-    ytSubscriber: {
+    subscriber: {
       name: $t('YouTube Subscribers'),
-      type: 'ytSubscriber',
+      type: 'subscriber',
       apiKey: 'subscriber',
-      url() {
-        return `https://${host}/api/v5/slobs/test/youtube_account/follow`;
-      },
       platforms: ['youtube'],
       tooltip: $t('Plays an alert when a viewer subscribes to your YouTube channel'),
     },
+    // TODO: Implement these when needed
+    donordrive_donation: undefined,
+    eldonation: undefined,
+    justgiving_donation: undefined,
+    loyalty_store_redemption: undefined,
+    membershipGift: undefined,
+    pledge: undefined,
+    resub: undefined,
+    streamlabscharitydonation: undefined,
+    tiltify_donation: undefined,
+    treat: undefined,
+    twitchcharitydonation: undefined,
   };
 }

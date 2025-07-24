@@ -3,7 +3,7 @@ import { Tooltip as AntdTooltip } from 'antd';
 import styles from './Tooltip.m.less';
 import cx from 'classnames';
 
-type TTipPosition =
+export type TTipPosition =
   | 'topLeft'
   | 'top'
   | 'topRight'
@@ -27,6 +27,9 @@ interface ITooltipTipProps {
   placement?: TTipPosition;
   content?: HTMLElement | boolean;
   disabled?: boolean;
+  autoAdjustOverflow?: boolean;
+  visible?: boolean;
+  onClick?: () => void;
 }
 
 export default function Tooltip(props: PropsWithChildren<ITooltipTipProps>) {
@@ -40,13 +43,17 @@ export default function Tooltip(props: PropsWithChildren<ITooltipTipProps>) {
     placement = 'bottom',
     content,
     disabled = false,
+    autoAdjustOverflow = true,
+    visible,
+    onClick,
   } = props;
 
   return (
     <div
       id={id}
-      className={className ? cx(className, styles.tooltipWrapper) : styles.tooltipWrapper}
+      className={cx(className, styles.tooltipWrapper)}
       style={wrapperStyle}
+      onClick={onClick}
     >
       {disabled ? (
         <>
@@ -55,13 +62,15 @@ export default function Tooltip(props: PropsWithChildren<ITooltipTipProps>) {
         </>
       ) : (
         <AntdTooltip
-          className={cx(styles.tooltipArrow, { [styles.lightShadow]: lightShadow })}
+          className={cx(styles.tooltipContent, { [styles.lightShadow]: lightShadow })}
           placement={placement}
           title={title}
           style={style}
           getPopupContainer={triggerNode => triggerNode}
           mouseLeaveDelay={0.1}
           trigger={['hover', 'focus', 'click']}
+          autoAdjustOverflow={autoAdjustOverflow}
+          visible={visible}
         >
           {content}
           {{ ...props }.children}

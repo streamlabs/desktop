@@ -10,6 +10,7 @@ import KevinSvg from './KevinSvg';
 import styles from './TitleBar.m.less';
 import * as remote from '@electron/remote';
 import Banner from 'components-react/root/Banner';
+import { useRealmObject } from 'components-react/hooks/realm';
 
 export default function TitleBar(props: { windowId: string }) {
   const { CustomizationService, StreamingService, WindowsService } = Services;
@@ -18,15 +19,15 @@ export default function TitleBar(props: { windowId: string }) {
   const isMac = byOS({ [OS.Windows]: false, [OS.Mac]: true });
   const v = useVuex(
     () => ({
-      theme: CustomizationService.views.currentTheme,
       title: WindowsService.state[props.windowId]?.title,
     }),
     false,
   );
+  const theme = useRealmObject(CustomizationService.state).theme;
 
   const isDev = useMemo(() => Utils.isDevMode(), []);
 
-  const primeTheme = /prime/.test(v.theme);
+  const primeTheme = /prime/.test(theme);
   const [errorState, setErrorState] = useState(false);
 
   useEffect(lifecycle, []);
@@ -62,7 +63,7 @@ export default function TitleBar(props: { windowId: string }) {
   return (
     <>
       <div
-        className={cx(styles.titlebar, v.theme, {
+        className={cx(styles.titlebar, theme, {
           [styles['titlebar-mac']]: isMac,
           [styles.titlebarError]: errorState,
         })}

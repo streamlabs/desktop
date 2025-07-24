@@ -6,11 +6,11 @@ import { SwitchInput } from 'components-react/shared/inputs';
 import styles from './WelcomeToPrime.m.less';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
+import { useRealmObject } from 'components-react/hooks/realm';
 
 export default function WelcomeToPrime() {
   const { CustomizationService } = Services;
-
-  const { theme } = useVuex(() => ({ theme: CustomizationService.views.currentTheme }));
+  const theme = useRealmObject(CustomizationService.state).theme;
 
   const panelData = [
     {

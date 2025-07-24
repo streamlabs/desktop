@@ -7,6 +7,7 @@ import { ServicesManager } from '../../services-manager';
 import { commitMutation } from '../../store';
 import { ServiceHelper } from 'services/core';
 import Utils from 'services/utils';
+import { RealmObject, RealmService } from 'services/realm';
 const { ipcRenderer } = electron;
 
 /**
@@ -58,20 +59,34 @@ export class InternalApiClient {
           return this.applyIpcProxy(target, true, true);
         }
 
+        // TODO: index
+        // @ts-ignore
         if (!target[property]) return target[property];
 
+        // TODO: index
+        // @ts-ignore
         if (typeof target[property] !== 'function' && !(target[property] instanceof Observable)) {
+          // TODO: index
+          // @ts-ignore
           return target[property];
         }
 
         if (
+          // TODO: index
+          // @ts-ignore
           typeof target[property] === 'function' &&
+          // TODO: index
+          // @ts-ignore
           target[property]['__executeInCurrentWindow']
         ) {
+          // TODO: index
+          // @ts-ignore
           return target[property];
         }
 
         const methodName = property.toString();
+        // TODO: index
+        // @ts-ignore
         const isHelper = target['_isHelper'];
 
         // TODO: Remove once you're sure this is impossible
@@ -84,7 +99,11 @@ export class InternalApiClient {
           shouldReturn,
         });
 
+        // TODO: index
+        // @ts-ignore
         if (typeof target[property] === 'function') return handler;
+        // TODO: index
+        // @ts-ignore
         if (target[property] instanceof Observable) return handler();
       },
     });
@@ -223,11 +242,19 @@ export class InternalApiClient {
       return helper;
     }
 
+    if (result && result._type === 'REALM_OBJECT') {
+      return RealmService.registeredClasses[result.realmType].fromId(result.resourceId);
+    }
+
     // payload can contain helpers-objects
     // we have to wrap them in IpcProxy too
     traverse(result).forEach((item: any) => {
       if (item && item._type === 'HELPER') {
         return this.getResource(item.resourceId);
+      }
+
+      if (item && item._type === 'REALM_OBJECT') {
+        return RealmService.registeredClasses[result.realmType].fromId(result.resourceId);
       }
     });
 

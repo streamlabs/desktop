@@ -8,16 +8,14 @@ import { Services } from 'components-react/service-provider';
 import useBaseElement from './hooks';
 import { useVuex } from 'components-react/hooks';
 
-export default function StreamPreview() {
+const mins = { x: 0, y: 0 };
+
+export function StreamPreview() {
   const { WindowsService, StreamingService } = Services;
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const { renderElement } = useBaseElement(
-    <StreamPreviewElement />,
-    { x: 0, y: 0 },
-    containerRef.current,
-  );
+  const { renderElement } = useBaseElement(<StreamPreviewElement />, mins, containerRef.current);
 
   const { hideStyleBlockers, selectiveRecording } = useVuex(() => ({
     hideStyleBlockers: WindowsService.state[Util.getCurrentUrlParams().windowId].hideStyleBlockers,
@@ -46,3 +44,5 @@ export default function StreamPreview() {
     </div>
   );
 }
+
+StreamPreview.mins = mins;

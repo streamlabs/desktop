@@ -1,4 +1,4 @@
-@import "../../styles/index.less";
+@import '../../styles/index.less';
 
 .container {
   display: flex;
@@ -85,5 +85,59 @@
 
   & > div {
     .center();
+  }
+}
+
+.tip-highlight {
+  color: var(--primary);
+}
+
+.tip-link {
+  font-weight: normal;
+  text-decoration: underline;
+  color: var(--paragraph);
+}
+
+.edit-cell {
+  background: var(--background);
+  height: 220px;
+  width: 220px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+  padding: 16px;
+  text-align: center;
+
+  span {
+    font-size: 12px;
+  }
+  span.edit-title {
+    font-size: 16;
+    color: var(--title);
+  }
+
+  img {
+    width: 80px;
+    height: 80px;
+    padding: 12px;
+  }
+
+  &:hover {
+    cursor: pointer;
+    background: var(--section-alt);
+  }
+}
+
+.close-icon {
+  height: 20px;
+  width: 20px;
+  position: absolute;
+  top: 24px;
+  right: 24px;
+
+  &:hover {
+    cursor: pointer;
   }
 }

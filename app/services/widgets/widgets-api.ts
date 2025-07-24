@@ -19,7 +19,7 @@ type TUrlGenerator = (host: string, token: string) => string;
 export interface IWidgetTester {
   type?: string; // TODO: make required
   name: string;
-  url: (host: string, platform: TPlatform) => string;
+  url: string | ((platform: TPlatform) => string);
 
   // Which platforms this tester can be used on
   platforms: TPlatform[];
@@ -40,6 +40,12 @@ export interface IWidget {
 
   // An anchor (origin) point can be specified for the x&y positions
   anchor: AnchorPoint;
+
+  /**
+   * The actual type of the widget in string form, not a number.
+   * We use this to fetch the widget's static config.
+   */
+  humanType: string;
 }
 
 export interface IWidgetApiSettings {
@@ -106,6 +112,8 @@ export interface IWidgetSettingsGenericState {
   data: IWidgetData;
   rawData: Dictionary<any>; // widget data before patching
   pendingRequests: number; // amount of pending requests to the widget API
+  /** Widget static config (/api/v5/widgets/static/config/{widgetType} response **/
+  staticConfig: unknown;
 }
 
 export interface IWidgetSettingsState<TWidgetData extends IWidgetData>

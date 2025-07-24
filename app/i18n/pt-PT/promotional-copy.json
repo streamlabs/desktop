@@ -1,6 +1,6 @@
 {
   "Overlay, Widget, and Site Themes": "Sobreposição, widget e temas de site",
-  "Fully customize your stream and your website to represent your brand; or pick from thousands of our pre-made themes. Either way, your stream will look amazing and it's all included with Ultra.": "Personalize na íntegra a sua transmissão e o seu Web site para representar a sua marca, ou selecione o seu favorito entre os nossos milhares de temas pré-concebidos. Seja qual for a sua opção, a sua transmissão ficará espetacular, e tudo isto incluído no Ultra.",
+  "Fully customize your stream and your website to represent your brand; or pick from thousands of our pre-made overlays. Either way, your stream will look amazing and it's all included with Ultra.": "Personaliza na íntegra a tua transmissão e o teu site para representar a tua marca ou seleciona o teu favorito entre as nossas milhares de sobreposições pré-concebidas. De qualquer forma, a tua transmissão terá um aspeto fantástico e está tudo incluído no Ultra.",
   "View Themes": "Ver temas",
   "Every App is FREE": "Todas as aplicações são GRÁTIS",
   "We've curated a list of diverse and feature rich applications to give you more control, automation, better analytics, and new ways to interact with your audience.": "Compilámos uma lista de aplicações diversificadas e com muitas funcionalidades para lhe dar mais controlo, automatização, melhores análises e novas formas de interagir com o seu público.",
@@ -71,5 +71,8 @@
   "1 Hour Videos + 250GB Storage + More": "Vídeos de 1 hora mais 250 GB de armazenamento e muito mais",
   "Highest Profit Margins": "As margens de lucro mais altas",
   "%{monthlyPrice}/mo or %{yearlyPrice}/year": "%{monthlyPrice}/mês ou %{yearlyPrice}/ano",
-  "Text-based editing of VOD content": "Edição de texto em conteúdo VOD"
+  "Text-based editing of VOD content": "Edição de texto em conteúdo VOD",
+  "Polish your videos with text-based and AI powered Podcast Editor": "Aperfeiçoa os teus vídeos com o Podcast Editor baseado em texto e alimentado por IA",
+  "Turn your videos into mobile-friendly short-form TikToks, Reels, and Shorts with Cross Clip": "Transforma os teus vídeos em TikToks, Reels e Shorts para telemóveis com Cross Clip",
+  "Edit video professionally from your browser with Video Editor": "Edita vídeos profissionalmente a partir do teu browser com o Video Editor"
 }

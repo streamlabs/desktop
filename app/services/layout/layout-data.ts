@@ -1,6 +1,3 @@
-import * as Layouts from 'components/editor/layouts';
-import * as Elements from 'components/editor/elements';
-import TsxComponent from 'components/tsx-component';
 import { $t } from 'services/i18n';
 
 export enum ELayout {
@@ -28,9 +25,9 @@ export enum ELayoutElement {
 
 type ILayoutData = {
   [Layout in ELayout]: {
-    resizeDefaults: { bar1: number; bar2?: number };
+    resizeDefaults: { bar1: number; bar2: number };
     className: string;
-    component: typeof TsxComponent;
+    component: string;
   };
 };
 
@@ -38,66 +35,87 @@ export const LAYOUT_DATA: ILayoutData = {
   [ELayout.Default]: {
     resizeDefaults: { bar1: 0.2, bar2: 0.3 },
     className: 'default',
-    component: Layouts.Default,
+    component: 'Default',
   },
   [ELayout.TwoPane]: {
     resizeDefaults: { bar1: 0.5, bar2: 0.3 },
     className: 'twoPane',
-    component: Layouts.TwoPane,
+    component: 'TwoPane',
   },
   [ELayout.Classic]: {
-    resizeDefaults: { bar1: 0.4 },
+    resizeDefaults: { bar1: 0.4, bar2: 0 },
     className: 'classic',
-    component: Layouts.Classic,
+    component: 'Classic',
   },
   [ELayout.FourByFour]: {
     resizeDefaults: { bar1: 0.25, bar2: 0.25 },
     className: 'fourByFour',
-    component: Layouts.FourByFour,
+    component: 'FourByFour',
   },
   [ELayout.Triplets]: {
     resizeDefaults: { bar1: 0.6, bar2: 0.3 },
     className: 'triplets',
-    component: Layouts.Triplets,
+    component: 'Triplets',
   },
   [ELayout.OnePane]: {
-    resizeDefaults: { bar1: 0.7 },
+    resizeDefaults: { bar1: 0.7, bar2: 0 },
     className: 'onePane',
-    component: Layouts.OnePane,
+    component: 'OnePane',
   },
   [ELayout.OnePaneR]: {
-    resizeDefaults: { bar1: 0.3 },
+    resizeDefaults: { bar1: 0.3, bar2: 0 },
     className: 'onePaneR',
-    component: Layouts.OnePaneR,
+    component: 'OnePaneR',
   },
   [ELayout.Pyramid]: {
-    resizeDefaults: { bar1: 0.4 },
+    resizeDefaults: { bar1: 0.4, bar2: 0 },
     className: 'pyramid',
-    component: Layouts.Pyramid,
+    component: 'Pyramid',
   },
 };
 
 type IElementData = {
-  [Element in ELayoutElement]: { title: string; component: typeof TsxComponent };
+  [Element in ELayoutElement]: {
+    title: string;
+    component: string;
+  };
 };
 
 export const ELEMENT_DATA = (): IElementData => ({
-  [ELayoutElement.Display]: { title: $t('Editor Display'), component: Elements.Display },
-  [ELayoutElement.Minifeed]: { title: $t('Mini Feed'), component: Elements.MiniFeed },
-  [ELayoutElement.Mixer]: { title: $t('Audio Mixer'), component: Elements.Mixer },
-  [ELayoutElement.Scenes]: { title: $t('Scene Selector'), component: Elements.SceneSelector },
-  [ELayoutElement.Sources]: { title: $t('Source Selector'), component: Elements.SourceSelector },
-  [ELayoutElement.LegacyEvents]: { title: $t('Legacy Events'), component: Elements.LegacyEvents },
+  [ELayoutElement.Display]: {
+    title: $t('Editor Display'),
+    component: 'Display',
+  },
+  [ELayoutElement.Minifeed]: {
+    title: $t('Mini Feed'),
+    component: 'MiniFeed',
+  },
+  [ELayoutElement.Mixer]: {
+    title: $t('Audio Mixer'),
+    component: 'Mixer',
+  },
+  [ELayoutElement.Scenes]: {
+    title: $t('Scene Selector'),
+    component: 'SceneSelectorElement',
+  },
+  [ELayoutElement.Sources]: {
+    title: $t('Source Selector'),
+    component: 'SourceSelectorElement',
+  },
+  [ELayoutElement.LegacyEvents]: {
+    title: $t('Legacy Events'),
+    component: 'LegacyEvents',
+  },
   [ELayoutElement.StreamPreview]: {
     title: $t('Stream Preview'),
-    component: Elements.StreamPreview,
+    component: 'StreamPreview',
   },
   [ELayoutElement.RecordingPreview]: {
     title: $t('Recording Preview'),
-    component: Elements.RecordingPreview,
+    component: 'RecordingPreview',
   },
   [ELayoutElement.Browser]: {
     title: $t('Website'),
-    component: Elements.Browser,
+    component: 'Browser',
   },
 });

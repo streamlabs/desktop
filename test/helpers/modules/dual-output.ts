@@ -1,4 +1,12 @@
-import { focusChild, click, clickCheckbox, clickButton, clickIfDisplayed } from './core';
+import {
+  focusChild,
+  click,
+  clickCheckbox,
+  clickButton,
+  clickIfDisplayed,
+  focusMain,
+  isDisplayed,
+} from './core';
 import { showSettingsWindow } from './settings/settings';
 
 /**
@@ -13,6 +21,8 @@ export async function toggleDualOutputMode(closeChildWindow: boolean = true) {
       await clickButton('Done');
     }
   });
+  await focusMain();
+  await isDisplayed('div#vertical-display');
 }
 
 /**

@@ -4,15 +4,14 @@ import { ELayoutElement, ELayout } from 'services/layout';
 import { $t } from 'services/i18n';
 import Scrollable from 'components-react/shared/Scrollable';
 import { Services } from 'components-react/service-provider';
-import { useVuex } from 'components-react/hooks';
 import { useLayoutEditor } from './hooks';
+import { useRealmObject } from 'components-react/hooks/realm';
 
 export default function SideBar() {
   const { LayoutService, CustomizationService } = Services;
   const { currentLayout, setCurrentLayout } = useLayoutEditor();
-  const { mode } = useVuex(() => ({
-    mode: CustomizationService.views.isDarkTheme ? 'night' : 'day',
-  }));
+
+  const mode = useRealmObject(CustomizationService.state).isDarkTheme ? 'night' : 'day';
 
   function layoutImage(layout: ELayout) {
     const active = currentLayout === layout ? '-active' : '';
@@ -25,12 +24,12 @@ export default function SideBar() {
       <div>
         <div className={styles.title}>{$t('Layouts')}</div>
         <Scrollable className={styles.layouts}>
-          {Object.keys(ELayout).map(layout => (
+          {Object.values(ELayout).map(layout => (
             <img
               key={layout}
               className={currentLayout === layout ? styles.active : ''}
-              onClick={() => setCurrentLayout(ELayout[layout])}
-              src={layoutImage(ELayout[layout])}
+              onClick={() => setCurrentLayout(layout)}
+              src={layoutImage(layout)}
             />
           ))}
         </Scrollable>

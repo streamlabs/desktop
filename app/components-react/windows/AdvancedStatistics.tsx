@@ -11,6 +11,7 @@ import moment from 'moment';
 import { EStreamQuality } from 'services/performance';
 import { ENotificationSubType, INotification } from 'services/notifications';
 import Scrollable from '../shared/Scrollable';
+import { useRealmObject } from 'components-react/hooks/realm';
 
 export default function AdvancedStatistics() {
   const {
@@ -20,7 +21,7 @@ export default function AdvancedStatistics() {
     MediaBackupService,
   } = Services;
 
-  const { notifications, streamQuality, streamingStatus, syncStatus } = useVuex(() => ({
+  const { notifications, streamingStatus, syncStatus, streamQuality } = useVuex(() => ({
     notifications: NotificationsService.views
       .getAll()
       .filter(notification => notification.subType !== ENotificationSubType.DEFAULT),

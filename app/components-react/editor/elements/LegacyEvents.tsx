@@ -6,9 +6,17 @@ import useBaseElement from './hooks';
 import { Services } from 'components-react/service-provider';
 import BrowserView from 'components-react/shared/BrowserView';
 import styles from './RecentEvents.m.less';
+import { useVuex } from 'components-react/hooks';
+import Utils from 'services/utils';
 
-export default function LegacyEvents(p: { onPopout: () => void }) {
-  const { UserService, RecentEventsService, MagicLinkService } = Services;
+const mins = { x: 360, y: 150 };
+
+export function LegacyEvents(p: { onPopout: () => void }) {
+  const { UserService, RecentEventsService, MagicLinkService, WindowsService } = Services;
+
+  const { hideStyleBlockers } = useVuex(() => ({
+    hideStyleBlockers: WindowsService.state[Utils.getCurrentUrlParams().windowId].hideStyleBlockers,
+  }));
 
   const containerRef = useRef<HTMLDivElement>(null);
   const magicLinkDisabled = useRef(false);
@@ -47,7 +55,7 @@ export default function LegacyEvents(p: { onPopout: () => void }) {
     });
   }
 
-  const { renderElement } = useBaseElement(<Element />, { x: 360, y: 150 }, containerRef.current);
+  const { renderElement } = useBaseElement(<Element />, mins, containerRef.current);
 
   function Element() {
     if (!UserService.isLoggedIn) {
@@ -65,6 +73,7 @@ export default function LegacyEvents(p: { onPopout: () => void }) {
           src={UserService.recentEventsUrl()}
           setLocale={true}
           onReady={(view: Electron.BrowserView) => handleBrowserViewReady(view)}
+          hidden={hideStyleBlockers}
         />
       </div>
     );
@@ -76,3 +85,5 @@ export default function LegacyEvents(p: { onPopout: () => void }) {
     </div>
   );
 }
+
+LegacyEvents.mins = mins;

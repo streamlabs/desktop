@@ -1,6 +1,6 @@
 /// <reference path="../../../app/index.d.ts" />
 /// <reference path="../../../app/jsx.d.ts" />
-import avaTest, { afterEach, ExecutionContext } from 'ava';
+import { ExecutionContext } from 'ava';
 import { getApiClient } from '../api-client';
 import { DismissablesService } from 'services/dismissables';
 import { getUser, logOut } from './user';
@@ -333,6 +333,7 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
   async function checkErrorsInLogFile(t: TExecutionContext) {
     await sleep(1000); // electron-log needs some time to write down logs
     const logs: string = await readLogs();
+    if (!logs) return;
     lastLogs = logs;
     let ignoringErrors = false;
     const errors = logs

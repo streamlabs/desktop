@@ -8,6 +8,7 @@ import fs from 'fs';
 import path from 'path';
 import { getDefined } from '../../../util/properties-type-guards';
 import { useVuex } from 'components-react/hooks';
+import { useRealmObject } from 'components-react/hooks/realm';
 
 export function GeneralSettings() {
   return (
@@ -61,17 +62,14 @@ function ExtraSettings() {
   const disableHAFilePath = path.join(AppService.appDataDirectory, 'HADisable');
   const [disableHA, setDisableHA] = useState(() => fs.existsSync(disableHAFilePath));
 
-  const {
-    isRecordingOrStreaming,
-    recordingMode,
-    updateStreamInfoOnLive,
-    isSimpleOutputMode,
-  } = useVuex(() => ({
+  // TODO: unused fields
+  const { isRecordingOrStreaming, recordingMode, isSimpleOutputMode } = useVuex(() => ({
     isRecordingOrStreaming: StreamingService.isStreaming || StreamingService.isRecording,
     recordingMode: RecordingModeService.views.isRecordingModeEnabled,
-    updateStreamInfoOnLive: CustomizationService.state.updateStreamInfoOnLive,
     isSimpleOutputMode: SettingsService.views.isSimpleOutputMode,
   }));
+
+  const updateStreamInfoOnLive = useRealmObject(CustomizationService.state).updateStreamInfoOnLive;
 
   // HDR Settings are not compliant with the auto-optimizer
   // temporarily disable auto config until migrate to new api
@@ -101,6 +99,8 @@ function ExtraSettings() {
   }
 
   function importFromObs() {
+    // TODO: there's no check that OBS is installed like in Onboarding
+    OnboardingService.actions.setImport('obs');
     OnboardingService.actions.start({ isImport: true });
     WindowsService.actions.closeChildWindow();
   }
@@ -126,7 +126,7 @@ function ExtraSettings() {
         {isLoggedIn && !isFacebook && !isYoutube && (
           <CheckboxInput
             value={updateStreamInfoOnLive}
-            onChange={val => CustomizationService.setUpdateStreamInfoOnLive(val)}
+            onChange={val => CustomizationService.actions.setUpdateStreamInfoOnLive(val)}
             label={$t('Confirm stream title and game before going live')}
             name="stream_info_udpate"
           />

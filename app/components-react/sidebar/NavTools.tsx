@@ -8,12 +8,13 @@ import { Services } from '../service-provider';
 import { useVuex } from '../hooks';
 import styles from './NavTools.m.less';
 import * as remote from '@electron/remote';
-import { Badge, Button, Form, Menu, Modal } from 'antd';
+import { Badge, Menu } from 'antd';
 import { EMenuItemKey, ENavName, IMenuItem, IParentMenuItem, menuTitles } from 'services/side-nav';
-import PlatformLogo from 'components-react/shared/PlatformLogo';
 import SubMenu from 'components-react/shared/SubMenu';
 import MenuItem from 'components-react/shared/MenuItem';
 import UltraIcon from 'components-react/shared/UltraIcon';
+import PlatformIndicator from './PlatformIndicator';
+import { AuthModal } from 'components-react/shared/AuthModal';
 
 export default function SideNav() {
   const {
@@ -23,6 +24,7 @@ export default function SideNav() {
     UsageStatisticsService,
     SideNavService,
     WindowsService,
+    UrlService,
   } = Services;
 
   const isDevMode = Utils.isDevMode();
@@ -77,11 +79,19 @@ export default function SideNav() {
 
   const throttledOpenDashboard = throttle(openDashboard, 2000, { trailing: false });
 
+  // Instagram doesn't provide a username, since we're not really linked, pass undefined for a generic logout msg w/o it
+  const username =
+    isLoggedIn && UserService.views.auth!.primaryPlatform !== 'instagram'
+      ? UserService.username
+      : undefined;
+
+  const confirmMsg = username
+    ? $t('Are you sure you want to log out %{username}?', { username })
+    : $t('Are you sure you want to log out?');
+
   function openHelp() {
     UsageStatisticsService.actions.recordClick('SideNav2', 'help');
-    remote.shell.openExternal(
-      'https://streamlabs.com/content-hub/support/support-streamlabs-desktop',
-    );
+    remote.shell.openExternal(UrlService.supportLink);
   }
 
   async function upgradeToPrime() {
@@ -91,6 +101,7 @@ export default function SideNav() {
 
   const handleAuth = () => {
     if (isLoggedIn) {
+      Services.DualOutputService.actions.setDualOutputMode(false, true);
       UserService.actions.logOut();
     } else {
       WindowsService.actions.closeChildWindow();
@@ -191,7 +202,9 @@ export default function SideNav() {
           }
         })}
       </Menu>
-      <LogoutModal
+      <AuthModal
+        title={$t('Confirm')}
+        prompt={confirmMsg}
         showModal={showModal}
         handleAuth={handleAuth}
         handleShowModal={handleShowModal}
@@ -251,31 +264,6 @@ function DashboardSubMenu(p: {
   );
 }
 
-function LogoutModal(p: {
-  showModal: boolean;
-  handleAuth: () => void;
-  handleShowModal: (status: boolean) => void;
-}) {
-  return (
-    <Modal
-      footer={null}
-      visible={p.showModal}
-      onCancel={() => p.handleShowModal(false)}
-      getContainer={false}
-      className={styles.confirmLogout}
-    >
-      <Form className={styles.confirmLogout}>
-        <h2>{$t('Confirm')}</h2>
-        {$t('Are you sure you want to log out?')}
-        <div className={styles.buttons}>
-          <Button onClick={() => p.handleAuth()}>{$t('Yes')}</Button>
-          <Button onClick={() => p.handleShowModal(false)}>{$t('No')}</Button>
-        </div>
-      </Form>
-    </Modal>
-  );
-}
-
 function LoginMenuItem(p: {
   menuItem: IMenuItem;
   handleAuth: () => void;
@@ -295,6 +283,7 @@ function LoginMenuItem(p: {
 
   return (
     <MenuItem
+      data-testid="nav-auth"
       title={!isLoggedIn ? menuTitles(menuItem.key) : $t('Log Out')}
       className={cx(styles.login, !isOpen && styles.loginClosed)}
       icon={!isOpen && <i className="icon-user" />}
@@ -303,22 +292,7 @@ function LoginMenuItem(p: {
       {!isLoggedIn ? (
         <span className={styles.loggedOut}>{menuTitles(menuItem.key)}</span>
       ) : (
-        isOpen && (
-          <>
-            {platform && (
-              <PlatformLogo
-                platform={platform?.type!}
-                className={cx(
-                  styles.platformLogo,
-                  styles[`platform-logo-${platform?.type ?? 'default'}`],
-                )}
-                size={platform.type === 'twitter' ? 20 : undefined}
-              />
-            )}
-            <span className={styles.username}>{platform?.username || $t('Log Out')}</span>
-            <i className={cx('icon-logout', styles.loginArrow)} />
-          </>
-        )
+        isOpen && <PlatformIndicator platform={platform} />
       )}
     </MenuItem>
   );

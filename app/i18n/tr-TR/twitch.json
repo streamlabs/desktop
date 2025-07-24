@@ -3,5 +3,15 @@
   "Twitch Tags": "Twitch Etiketleri",
   "You need to re-login to access Twitch tags": "Twitch etiketlerine erişmek için yeniden oturum açmanız gerekir",
   "Do not include special characters or spaces in your tag": "Etiketinize özel karakter veya boşluk eklemeyin",
-  "For example: \"Speedrunning\" or \"FirstPlaythrough\"": "Örneğin: \"HızlıBitirme\" veya \"İlkOynanış\""
+  "For example: \"Speedrunning\" or \"FirstPlaythrough\"": "Örneğin: \"HızlıBitirme\" veya \"İlkOynanış\"",
+  "Your Twitch access token has expired. Please log in with Twitch to continue.": "Twitch erişim belirtecinizin süresi doldu. Lütfen, devam etmek için Twitch ile giriş yapın.",
+  "While updating your Twitch channel info, some tags were removed due to moderation rules: %{tags}": "Twitch kanal bilgilerinizi güncellerken, bazı etiketler moderasyon kuralları nedeniyle kaldırıldı: %{tags}",
+  "Content Classification": "İçerik Sınıflandırması",
+  "Content classification": "İçerik sınıflandırması",
+  "Stream features branded content": "Yayın markalı içerik sunuyor",
+  "Twitch Studio Import": "Twitch Studio İçe Aktarma",
+  "Import from Twitch Studio": "Twitch Studio'dan içe aktarın",
+  "Import your scenes and sources from Twitch Studio.": "Sahnelerinizi ve kaynaklarınızı Twitch Studio'dan içe aktarın.",
+  "Importing Your Existing Settings From Twitch Studio": "Mevcut Ayarlarınızı Twitch Studio'dan İçe Aktarma",
+  "Importing from Twitch Studio is an experimental feature under active development. Some source types are unable to be imported, and not all settings will be carried over.": "Twitch Studio'dan içe aktarma, aktif olarak geliştirme aşamasında olan deneysel bir özelliktir. Bazı kaynak türleri içe aktarılamaz ve tüm ayarlar taşınmaz."
 }

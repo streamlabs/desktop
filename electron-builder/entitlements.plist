@@ -8,9 +8,11 @@
     <true/>
     <key>com.apple.security.device.camera</key>
     <true/>
-    <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+    <key>com.apple.security.automation.apple-events</key>
     <true/>
     <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+    <key>com.apple.security.cs.allow-jit</key>
     <true/>
   </dict>
 </plist>

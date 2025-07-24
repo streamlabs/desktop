@@ -22,12 +22,19 @@ export class StreamlabelsManager extends DefaultManager {
   init() {
     super.init();
     this.subscription = this.streamlabelsService.output.subscribe(output => {
+      // TODO: index
+      // @ts-ignore
       if (output[this.settings.statname] !== this.oldOutput) {
+        // TODO: index
+        // @ts-ignore
         this.oldOutput = output[this.settings.statname];
+
         this.obsSource.update({
           ...this.obsSource.settings,
+          // TODO: index
+          // @ts-ignore
+          text: this.normalizeText(output[this.settings.statname]),
           read_from_file: false,
-          text: output[this.settings.statname],
         });
       }
     });
@@ -59,17 +66,30 @@ export class StreamlabelsManager extends DefaultManager {
 
     if (this.userService.platform) {
       if (this.userService.platform.type === 'youtube') {
+        // TODO: index
+        // @ts-ignore
         if (youtubeKeys[settings.statname]) {
+          // TODO: index
+          // @ts-ignore
           settings.statname = youtubeKeys[settings.statname];
         }
       }
     }
   }
 
+  normalizeText(text: string | undefined) {
+    // When using `item_separator` for list items, it would appear that streamlabels will
+    // send output like `foo\\nbar` instead of `foo\nbar`, normalize here.
+    // We don't want to do it in settings since it would be sent to the backend
+    return text?.replace('\\n', '\n');
+  }
+
   applySettings(settings: Dictionary<any>) {
     if (settings.statname !== this.settings.statname) {
       this.obsSource.update({
-        text: this.streamlabelsService.output.getValue()[settings.statname],
+        // TODO: index
+        // @ts-ignore
+        text: this.normalizeText(this.streamlabelsService.output.getValue()[settings.statname]),
       });
     }
 

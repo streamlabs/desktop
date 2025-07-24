@@ -1,7 +1,7 @@
 import merge from 'lodash/merge';
 import { mutation, Inject } from 'services';
 import Utils from '../utils';
-import { SourcesService, TSourceType, ISource, Source } from 'services/sources';
+import { SourcesService, TSourceType, ISource } from 'services/sources';
 import { VideoService } from 'services/video';
 import {
   ScalableRectangle,
@@ -23,13 +23,13 @@ import {
   ISceneItemInfo,
 } from './index';
 import { SceneItemNode } from './scene-node';
-import { v2, Vec2 } from '../../util/vec2';
+import { v2 } from '../../util/vec2';
 import { Rect } from '../../util/rect';
 import { TSceneNodeType } from './scenes';
 import { ServiceHelper, ExecuteInWorkerProcess } from 'services/core';
 import { assertIsDefined } from '../../util/properties-type-guards';
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2';
-import { EditorService } from 'services/editor';
+
 /**
  * A SceneItem is a source that contains
  * all of the information about that source, and
@@ -69,6 +69,10 @@ export class SceneItem extends SceneItemNode {
   display?: TDisplayType;
   readonly position: IVec2;
 
+  // TODO: remove after v2 api migration and scene source resolution bug investigation
+  baseWidth: number;
+  baseHeight: number;
+
   // Some computed attributes
 
   get scaledWidth(): number {
@@ -90,7 +94,6 @@ export class SceneItem extends SceneItemNode {
   @Inject() private sourcesService: SourcesService;
   @Inject() private videoService: VideoService;
   @Inject() private videoSettingsService: VideoSettingsService;
-  @Inject() private editorService: EditorService;
 
   constructor(sceneId: string, sceneItemId: string, sourceId: string) {
     super();
@@ -103,6 +106,16 @@ export class SceneItem extends SceneItemNode {
     this.state = sceneItemState;
     Utils.applyProxy(this, sourceState);
     Utils.applyProxy(this, this.state);
+
+    if (this.type === 'scene') {
+      const baseResolutions = this.videoSettingsService.baseResolutions[
+        this.display ?? 'horizontal'
+      ];
+      assertIsDefined(baseResolutions);
+
+      this.baseWidth = baseResolutions.baseWidth ?? this.width;
+      this.baseHeight = baseResolutions.baseHeight ?? this.height;
+    }
   }
 
   getModel(): ISceneItem & ISource {
@@ -283,6 +296,11 @@ export class SceneItem extends SceneItemNode {
     const position = { x: customSceneItem.x, y: customSceneItem.y };
     const crop = customSceneItem.crop;
     const display = customSceneItem?.display ?? this?.display ?? 'horizontal';
+
+    // guarantee vertical context exists to prevent null errors
+    if (display === 'vertical') {
+      this.videoSettingsService.validateVideoContext('vertical');
+    }
     const context = this.videoSettingsService.contexts[display];
 
     const obsSceneItem = this.getObsSceneItem();
@@ -475,13 +493,17 @@ export class SceneItem extends SceneItemNode {
    * A rectangle representing this sceneItem
    */
   get rectangle(): IScalableRectangle {
+    // TODO: remove after v2 api migration and scene source resolution bug investigation
+    const width = this.baseWidth ?? this.width;
+    const height = this.baseHeight ?? this.height;
+
     return {
       x: this.transform.position.x,
       y: this.transform.position.y,
       scaleX: this.transform.scale.x,
       scaleY: this.transform.scale.y,
-      width: this.width,
-      height: this.height,
+      width,
+      height,
       crop: this.transform.crop,
       rotation: this.transform.rotation,
     };

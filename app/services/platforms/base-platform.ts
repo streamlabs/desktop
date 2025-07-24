@@ -92,7 +92,7 @@ export abstract class BasePlatformService<T extends IPlatformState> extends Stat
     //   .then(_ => this.userService.updateLinkedPlatforms());
 
     remote.shell.openExternal(
-      `https://${this.hostsService.streamlabs}/dashboard#/settings/account-settings`,
+      `https://${this.hostsService.streamlabs}/dashboard#/settings/account-settings/platforms`,
     );
   }
 
@@ -120,8 +120,9 @@ export abstract class BasePlatformService<T extends IPlatformState> extends Stat
   }
 
   setPlatformContext(platform: TPlatform) {
-    if (this.dualOutputService.views.dualOutputMode) {
-      const mode = this.dualOutputService.views.getPlatformContextName(platform);
+    if (this.streamingService.views.isDualOutputMode) {
+      const display = this.streamingService.views.getPlatformDisplayType(platform);
+      const mode = display === 'vertical' ? 'portrait' : 'landscape';
 
       this.UPDATE_STREAM_SETTINGS({
         mode,

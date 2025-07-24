@@ -1,8 +1,8 @@
 import { useWebdriver, test } from '../../helpers/webdriver';
 import { getApiClient } from '../../helpers/api-client';
 import { SceneBuilder } from '../../helpers/scene-builder';
-import { sleep } from '../../helpers/sleep';
 import { ScenesService } from '../../../app/services/api/external-api/scenes';
+import { VideoSettingsService, DualOutputService } from 'app-services';
 
 const path = require('path');
 
@@ -287,7 +287,9 @@ test('SceneNode.getNextNode()', async t => {
   const sceneNode1 = scene.createAndAddSource('Item1', 'color_source');
   const sceneNode2 = scene.createAndAddSource('Item2', 'color_source');
   const sceneNode3 = scene.createAndAddSource('Item3', 'color_source');
-  const nextSceneNode = sceneNode2.getNextNode();
-
+  let nextSceneNode = sceneNode2.getNextNode();
   t.is(nextSceneNode.nodeId, sceneNode1.nodeId);
+
+  nextSceneNode = sceneNode3.getNextNode();
+  t.is(nextSceneNode.nodeId, sceneNode2.nodeId);
 });

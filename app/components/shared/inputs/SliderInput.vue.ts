@@ -29,6 +29,18 @@ export default class SliderInput extends BaseInput<number, ISliderMetadata> {
 
   timeout: number | void = null;
 
+  unbind: () => void;
+
+  mounted() {
+    this.unbind = this.customizationService.state.bindProps(this, {
+      theme: 'theme',
+    });
+  }
+
+  destroyed() {
+    this.unbind();
+  }
+
   /**
    * Updates the local value that is used during the display processs.
    * @param value The value that will be displayed on the interface.
@@ -89,9 +101,7 @@ export default class SliderInput extends BaseInput<number, ISliderMetadata> {
     };
   }
 
-  get theme() {
-    return this.customizationService.currentTheme;
-  }
+  theme = 'night-theme';
 
   handleKeydown(event: KeyboardEvent) {
     if (event.code === 'ArrowUp') this.updateValue(this.value + this.interval);

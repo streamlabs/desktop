@@ -6,7 +6,7 @@ import {
   InputComponent,
   ListInput,
 } from '../../../shared/inputs';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Services } from '../../../service-provider';
 import { $t } from '../../../../services/i18n';
 import BroadcastInput from './BroadcastInput';
@@ -70,12 +70,6 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
         updateSettings(newYtSettings);
       });
   }, [broadcastId]);
-
-  function openThumbnailsEditor() {
-    remote.shell.openExternal(
-      'https://streamlabs.com/dashboard#/prime/thumbnails?refl=slobs-thumbnail-editor',
-    );
-  }
 
   function fieldIsDisabled(fieldName: keyof IYoutubeStartStreamOptions): boolean {
     // selfDeclaredMadeForKids can be set only on the broadcast creating step
@@ -153,7 +147,6 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
             <ImageInput
               label={$t('Thumbnail')}
               maxFileSize={2 * 1024 * 1024} // 2 mb
-              extra={<a onClick={openThumbnailsEditor}>{$t('Try our new thumbnail editor')}</a>}
               {...bind.thumbnail}
             />
 
@@ -226,7 +219,7 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
       <PlatformSettingsLayout
         layoutMode={p.layoutMode}
         commonFields={renderCommonFields()}
-        requiredFields={<div key={'empty'} />}
+        requiredFields={<div key={'empty-youtube'} />}
         optionalFields={renderOptionalFields()}
         essentialOptionalFields={renderBroadcastInput()}
       />

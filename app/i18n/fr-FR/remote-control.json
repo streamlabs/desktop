@@ -1,10 +1,18 @@
 {
   "Show details": "Afficher les détails",
   "Hide details": "Masquer les détails",
-  "API token": "Jeton d'API",
+  "API Token": "Jeton d’API",
   "Generate new": "Générer un nouveau jeton",
   "Port": "Port",
-  "IP addresses": "Adresses IP",
+  "IP Addresses": "Adresses IP",
   "Click to show": "Cliquer pour afficher",
-  "The free Streamlabs Controller app allows you to control Streamlabs Desktop from your iOS or Android device. Scan the QR code below to begin.": "L'application gratuite Streamlabs Controller vous permet de contrôler Streamlabs Desktop depuis votre dispositif iOS ou Android. Scannez le code QR ci-dessous pour commencer."
+  "The free Streamlabs Controller app allows you to control Streamlabs Desktop from your iOS or Android device. You must be logged in to use this feature.": "L’application gratuite Streamlabs Controller te permet de contrôler Streamlabs Desktop depuis ton dispositif iOS ou Android. Tu dois être connecté pour utiliser cette fonction.",
+  "Allow Controller app connections": "Autoriser les connexions à l’application Controller",
+  "Connected Devices": "Appareils connectés",
+  "Disconnect": "Déconnecter",
+  "No devices connected": "Aucun appareil n’est connecté",
+  "Some third party applications connect to Streamlabs Desktop via websockets connection. Toggle this to allow such connections and display connection info.": "Certaines applications tierces se connectent à Streamlabs Desktop via une connexion websockets. Active cette option pour autoriser ces connexions et afficher des informations sur la connexion.",
+  "Warning: Displaying this portion on stream may leak sensitive information.": "Avertissement : L’affichage de cette partie sur le stream peut entraîner la fuite d’informations sensibles.",
+  "Allow third party connections": "Autoriser les connexions de tiers",
+  "Host": "Hôte"
 }

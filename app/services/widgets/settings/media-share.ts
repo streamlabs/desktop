@@ -65,7 +65,7 @@ export class MediaShareService extends WidgetSettingsService<IMediaShareData> {
       goalResetEvent: 'mediaShareEnd',
       dataFetchUrl: `https://${this.getHost()}/api/v5/slobs/widget/media`,
       settingsSaveUrl: `https://${this.getHost()}/api/v5/slobs/widget/media`,
-      testers: ['Follow', 'Subscription', 'Donation', 'Bits', 'Host'],
+      testers: ['Follow', 'Subscription', 'Donation', 'Bits'],
       customCodeAllowed: false,
       customFieldsAllowed: false,
     };

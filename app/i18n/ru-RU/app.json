@@ -9,5 +9,14 @@
   "You've merged a Streamlabs ID to your account, please log back in to ensure you have the right credentials.": "Вы добавили Streamlabs ID в свою учетную запись. Повторите вход в систему, чтобы проверить правильность учетных данных.",
   "Enable Live Streaming?": "Включить прямую трансляцию?",
   "Streamlabs is currently in recording mode, which hides live streaming features. Would you like to enable live streaming features? You can disable them again in General settings.": "Streamlabs находится в режиме записи, который скрывает функции прямой трансляции. Включить функции прямой трансляции? Их можно будет отключить снова в основных настройках.",
-  "Enable Streaming": "Включить трансляцию"
+  "Enable Streaming": "Включить трансляцию",
+  "This account is already linked to another Streamlabs Account. Please use a different account.": "Эта учетная запись уже связана с другой учетной записью Streamlabs. Используйте другую учетную запись.",
+  "Successfully unlinked account": "Учетная запись отвязана",
+  "Successfully merged account": "Учетная запись объединена",
+  "Account merge error": "Ошибка объединения учетных записей",
+  "Error Code: %{code}": "Код ошибки: %{code}",
+  "Unknown error, please contact support": "Неизвестная ошибка, обратитесь в службу поддержки",
+  "Custom Destination": "Пользовательское назначение",
+  "This app is currently popped out in another window.": "В настоящее время это приложение отображается в другом окне.",
+  "Error granting chat permissions.": "Ошибка при предоставлении прав на чат."
 }

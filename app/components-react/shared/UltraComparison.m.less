@@ -9,8 +9,8 @@
 
 .headers-container {
   border-top: 1px solid var(--border);
-  width: 250px;
-  margin-top: 232px;
+  width: 360px;
+  margin-top: 180px;
   margin-right: 20px;
 
   &.condensed {
@@ -19,22 +19,7 @@
   }
 
   &.custom {
-    margin-top: 188px;
-  }
-}
-
-.table-header {
-  padding: 12px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-
-  i {
-    margin-right: 8px;
-  }
-
-  i:global(.icon-question) {
-    margin-left: auto;
+    margin-top: 182px;
   }
 }
 
@@ -79,19 +64,42 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  border-bottom: 1px solid var(--background);
 
   span {
     font-size: 13px;
   }
 }
 
+.subheader {
+  margin-bottom: 8px;
+  width: 100%;
+  padding: 0 18px;
+
+  span {
+    display: block;
+
+    &:nth-child(1) {
+      font-weight: bold;
+    }
+  }
+}
+
+.features {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  padding: 0 12px;
+}
+
 .row {
   padding: 12px;
   display: flex;
-  justify-content: center;
   align-items: center;
-  border-bottom: 1px solid var(--background);
+
+  &:last-child {
+    padding-bottom: 36px;
+  }
 }
 
 .button {
@@ -101,6 +109,7 @@
   padding: 14px;
   width: 90%;
   background: var(--button);
+  font-weight: bold;
 }
 
 .prime-card-container {
@@ -111,8 +120,8 @@
   h1 {
     background: var(--ultra);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
-    width: 80px;
     font-weight: 700;
   }
 }
@@ -122,8 +131,9 @@
   border-bottom: none;
 }
 
-.prime-row {
-  border-bottom: 1px solid rgba(127,127,127,0.3)
+.prime-button {
+  background: var(--ultra);
+  color: var(--section);
 }
 
 .prime-backing {
@@ -134,11 +144,6 @@
   right: 0;
   background: var(--ultra);
   opacity: 0.08;
-}
-
-.prime-button {
-  background: var(--ultra);
-  color: var(--section);
 }
 
 .whisper {

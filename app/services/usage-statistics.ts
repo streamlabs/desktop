@@ -22,7 +22,7 @@ interface IUsageApiData {
   data: string;
 }
 
-type TAnalyticsEvent =
+export type TAnalyticsEvent =
   | 'PlatformLogin'
   | 'SocialShare'
   | 'Heartbeat'
@@ -35,12 +35,19 @@ type TAnalyticsEvent =
   | 'Shown'
   | 'AppStart'
   | 'Highlighter'
+  | 'AIHighlighter'
   | 'Hardware'
   | 'WebcamUse'
   | 'MicrophoneUse'
   | 'GuestCam'
   | 'RecordingHistory'
-  | 'DualOutput';
+  | 'DualOutput'
+  | 'StreamToTikTokSettings'
+  | 'StreamCustomDestinations'
+  | 'TikTokLiveAccess'
+  | 'TwitchCredentialsAlert'
+  | 'TikTokApplyPrompt'
+  | 'ScheduleStream';
 
 interface IAnalyticsEvent {
   product: string;
@@ -146,9 +153,13 @@ export class UsageStatisticsService extends Service {
 
     // Don't check logged in because login may not be verified at this point
     if (this.userService.state.auth && this.userService.state.auth.primaryPlatform) {
+      // TODO: index
+      // @ts-ignore
       metadata['platform'] = this.userService.state.auth.primaryPlatform;
     }
 
+    // TODO: index
+    // @ts-ignore
     metadata['os'] = process.platform;
 
     const bodyData: IUsageApiData = {

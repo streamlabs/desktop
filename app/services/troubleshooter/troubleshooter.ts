@@ -25,6 +25,8 @@ export class TroubleshooterService
       laggedThreshold: 0.25,
       droppedEnabled: true,
       droppedThreshold: 0.25,
+      dualOutputCpuEnabled: true,
+      dualOutputCpuThreshold: 0.3,
     },
   };
 
@@ -100,6 +102,28 @@ export class TroubleshooterService
         maxVal: 1,
         stepVal: 0.01,
         visible: settings.droppedEnabled,
+        enabled: true,
+        usePercentages: true,
+      },
+
+      <IObsInput<boolean>>{
+        value: settings.dualOutputCpuEnabled,
+        name: 'dualOutputCpuEnabled',
+        description: $t('Detect CPU usage in Dual Output mode'),
+        type: 'OBS_PROPERTY_BOOL',
+        visible: true,
+        enabled: true,
+      },
+
+      <IObsNumberInputValue>{
+        value: settings.dualOutputCpuThreshold,
+        name: 'dualOutputCpuThreshold',
+        description: $t('CPU usage threshold in Dual Output mode'),
+        type: 'OBS_PROPERTY_SLIDER',
+        minVal: 0,
+        maxVal: 1,
+        stepVal: 0.01,
+        visible: settings.dualOutputCpuEnabled,
         enabled: true,
         usePercentages: true,
       },

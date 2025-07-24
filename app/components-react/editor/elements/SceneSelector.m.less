@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: flex-end;
 
-  > div:last-child {
+  >div:last-child {
     top: 44px !important;
     height: calc(100% - 44px);
   }
@@ -34,7 +34,7 @@
 }
 
 :global(.no-top-padding) {
-  .top-container > div:last-child {
+  .top-container>div:last-child {
     top: 32px !important;
     height: calc(100% - 32px);
   }
@@ -49,7 +49,7 @@
   align-items: center;
   min-width: 0;
   // Fixes long scene collection names still pushing width even with overflow: hidden and text-overflow: ellipsis
-  max-width:  30vw;
+  max-width: 30vw;
 
   &:hover {
     cursor: pointer;
@@ -99,9 +99,15 @@
     border-radius: 0 !important;
   }
 
+  :global(.ant-tree-treenode) {
+    padding: 0 !important;
+  }
+
   :global(.ant-tree-node-content-wrapper) {
     padding-left: 16px !important;
     display: flex;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
   }
 
   :global(.ant-tree-node-selected) {
@@ -165,7 +171,7 @@
   display: flex;
   align-items: center;
 
-  > i {
+  >i {
     margin-right: 8px;
     opacity: 0;
   }
@@ -196,7 +202,8 @@
 .sources-container {
   :global(.ant-tree-switcher) {
     width: 0;
-    display: block;
+    display: flex;
+    align-items: center;
     z-index: 1;
     left: 10px;
   }
@@ -204,6 +211,12 @@
   :global(.ant-tree-node-content-wrapper) {
     padding-left: 32px !important;
     display: flex;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+  }
+
+  :global(.ant-tree-treenode) {
+    padding: 0 !important;
   }
 
   :global(.ant-tree-title) {
@@ -216,8 +229,15 @@
       &::before {
         content: '\f07c';
       }
+
       color: var(--title);
     }
+  }
+
+  :global(.ant-tree-switcher i) {
+    vertical-align: middle;
+    // Icomoon icons have needed this all along
+    display: inline-block;
   }
 }
 
@@ -231,6 +251,7 @@
 .toggle-error {
   padding: 0px !important;
   text-align: unset !important;
+
   :global(.ant-message-notice-content) {
     padding: 4px 16px;
   }

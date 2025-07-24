@@ -2,40 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { $t } from 'services/i18n';
 import styles from './BaseElement.m.less';
 import Scrollable from 'components-react/shared/Scrollable';
-import { useModule, injectState, mutation } from 'slap';
-
-class BaseElementModule {
-  state = injectState({
-    sizeWatcherInterval: 0,
-  });
-
-  sizeWatcherCallbacks: Function[] = [];
-
-  addSizeWatcher(cb: Function) {
-    this.sizeWatcherCallbacks.push(cb);
-    if (this.state.sizeWatcherInterval) return;
-    this.setSizeWatcherInterval();
-  }
-
-  removeSizeWatcher(cb: Function) {
-    const idx = this.sizeWatcherCallbacks.findIndex(func => func === cb);
-    if (idx !== -1) this.sizeWatcherCallbacks.splice(idx, 1);
-    if (this.sizeWatcherCallbacks.length < 1) this.clearSizeWatcherInterval();
-  }
-
-  @mutation()
-  setSizeWatcherInterval() {
-    this.state.sizeWatcherInterval = window.setInterval(() => {
-      this.sizeWatcherCallbacks.forEach(cb => cb());
-    }, 500);
-  }
-
-  @mutation()
-  clearSizeWatcherInterval() {
-    clearInterval(this.state.sizeWatcherInterval);
-    this.state.sizeWatcherInterval = 0;
-  }
-}
 
 export default function useBaseElement(
   element: React.ReactNode,
@@ -46,7 +12,25 @@ export default function useBaseElement(
   const [height, setHeight] = useState(0);
   const [width, setWidth] = useState(0);
 
-  const { addSizeWatcher, removeSizeWatcher } = useModule(BaseElementModule);
+  let sizeWatcherInterval = 0;
+  const sizeWatcherCallbacks: Function[] = [];
+
+  function addSizeWatcher(cb: Function) {
+    sizeWatcherCallbacks.push(cb);
+    if (sizeWatcherInterval) return;
+    sizeWatcherInterval = window.setInterval(() => {
+      sizeWatcherCallbacks.forEach(cb => cb());
+    }, 500);
+  }
+
+  function removeSizeWatcher(cb: Function) {
+    const idx = sizeWatcherCallbacks.findIndex(func => func === cb);
+    if (idx !== -1) sizeWatcherCallbacks.splice(idx, 1);
+    if (sizeWatcherCallbacks.length < 1) {
+      clearInterval(sizeWatcherInterval);
+      sizeWatcherInterval = 0;
+    }
+  }
 
   useEffect(() => {
     const sizeWatcher = () => {

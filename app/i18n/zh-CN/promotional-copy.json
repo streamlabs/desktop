@@ -1,6 +1,6 @@
 {
   "Overlay, Widget, and Site Themes": "叠加层、小工具和站点主题",
-  "Fully customize your stream and your website to represent your brand; or pick from thousands of our pre-made themes. Either way, your stream will look amazing and it's all included with Ultra.": "完全自定义您的直播和站点以展示您的品牌；或从我们数千个预制主题中挑选。无论哪种方式，您的直播始终很精彩，而且所有这些都包含在 Ultra 中。",
+  "Fully customize your stream and your website to represent your brand; or pick from thousands of our pre-made overlays. Either way, your stream will look amazing and it's all included with Ultra.": "完全自定义您的直播和站点以展示您的品牌；或从我们数千个预制叠加层中挑选。无论哪种方式，您的直播始终很精彩，而且所有这些都包含在 Ultra 中。",
   "View Themes": "浏览主题",
   "Every App is FREE": "所有应用程序均为免费",
   "We've curated a list of diverse and feature rich applications to give you more control, automation, better analytics, and new ways to interact with your audience.": "我们精选了一系列功能丰富的应用程序，为您提供更多控制、自动化、更好的分析以及与受众互动的新方法。",
@@ -71,5 +71,8 @@
   "1 Hour Videos + 250GB Storage + More": "1 小时视频 + 250GB 存储空间 + 更多",
   "Highest Profit Margins": "更高利润率",
   "%{monthlyPrice}/mo or %{yearlyPrice}/year": "%{monthlyPrice}/月或 %{yearlyPrice}/年",
-  "Text-based editing of VOD content": "对 VOD 内容进行基于文本的编辑"
+  "Text-based editing of VOD content": "对 VOD 内容进行基于文本的编辑",
+  "Polish your videos with text-based and AI powered Podcast Editor": "使用基于文本和人工智能的 Podcast Editor 对视频进行润色",
+  "Turn your videos into mobile-friendly short-form TikToks, Reels, and Shorts with Cross Clip": "使用 Cross Clip 将您的视频制作成适合移动设备的 TikTok、Reels 和 Shorts 短片",
+  "Edit video professionally from your browser with Video Editor": "通过在浏览器中使用 Video Editor 对视频进行专业剪辑"
 }

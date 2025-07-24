@@ -26,5 +26,7 @@
   "Disable Message Animations": "Nachrichten-Animationen deaktivieren",
   "Hide Characters": "Zeichen ausblenden",
   "Hide Common Chat Bots": "Bekannte Chat-Bots verbergen",
-  "Hide commands starting with `!`": "Befehle beginnend mit \"!\" verstecken"
+  "Hide commands starting with `!`": "Befehle beginnend mit \"!\" verstecken",
+  "Chat Notifications": "Chat-Benachrichtigungen",
+  "Trigger a sound to notify you when there is new chat activity": "Löse einen Ton aus, um dich zu benachrichtigen, wenn es neue Chat-Aktivitäten gibt"
 }

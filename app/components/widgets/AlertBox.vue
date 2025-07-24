@@ -318,12 +318,12 @@
       <v-form-group
         v-model="minTriggerAmount"
         :metadata="metadata.minTriggerAmount"
-        v-if="['donations', 'bits', 'hosts', 'raids'].includes(selectedAlert)"
+        v-if="['donations', 'raids', 'bits'].includes(selectedAlert)"
       />
       <v-form-group
         v-model="minRecentEvents"
         :metadata="metadata.minRecentEvents"
-        v-if="['donations', 'hosts'].includes(selectedAlert)"
+        v-if="['donations'].includes(selectedAlert)"
       />
       <div v-if="!selectedId.includes('default')">
         <v-form-group v-model="selectedVariation.condition" :metadata="metadata.conditions" />

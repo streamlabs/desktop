@@ -83,7 +83,7 @@ export class TrovoService
     return this.userService.state.auth?.platforms?.trovo?.username || '';
   }
 
-  async beforeGoLive(goLiveSettings: IGoLiveSettings, context?: TDisplayType) {
+  async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     const trSettings = getDefined(goLiveSettings.platforms.trovo);
 
     const key = this.state.streamKey;
@@ -123,7 +123,7 @@ export class TrovoService
     } catch (e: unknown) {
       let details = (e as any).message;
       if (!details) details = 'connection failed';
-      throwStreamError('PLATFORM_REQUEST_FAILED', e as any, details);
+      throwStreamError('PLATFORM_REQUEST_FAILED', { ...(e as any), platform: 'trovo' }, details);
     }
   }
 

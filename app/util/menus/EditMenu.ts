@@ -87,7 +87,42 @@ export class EditMenu extends Menu {
       });
     }
 
-    const isMultipleSelection = this.selectionService.views.globalSelection.getSize() > 1;
+    const isSelectionSameNodeAcrossDisplays = (selectionSize: number) => {
+      /*
+       * Check that selection is only two nodes (same node, one for each display), this only
+       * seems to happen when clicking a source from the source selector which selects the
+       * source across both displays.
+       *
+       * When selection size is not 2, we can assume we're either working with a single node or actual
+       * multiple nodes (i.e not the same node across two displays).
+       *
+       * TODO: do we need to be more specific to detect if we're working with the same node?
+       * We've found `source_id` to be stable, but that might change across different source types.
+       *
+       * TODO: It doesn't seem like we need to adjust selection to have Filters, Rename, and Properties
+       * work, we can only assume the commands use `lastSelectedId` or similar access method
+       * to determine which node to work with. Needs to be confirmed with testing.
+       */
+      if (selectionSize !== 2) {
+        return false;
+      }
+
+      const selectedItems = this.selectionService.views.globalSelection
+        .getItems()
+        .map(item => this.scenesService.views.getSceneItem(item.id));
+
+      const [first, second] = selectedItems;
+
+      const bothNodesHaveSameSourceId = first.sourceId === second.sourceId;
+
+      const bothNodesHaveDifferentDisplay = first.display !== second.display;
+
+      return bothNodesHaveSameSourceId && bothNodesHaveDifferentDisplay;
+    };
+
+    const selectionSize = this.selectionService.views.globalSelection.getSize();
+    const isMultipleSelection =
+      selectionSize > 1 && !isSelectionSameNodeAcrossDisplays(selectionSize);
 
     if (this.options.showSceneItemMenu) {
       const selectedItem = this.selectionService.views.globalSelection.getLastSelected();

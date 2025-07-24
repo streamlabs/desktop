@@ -14,6 +14,9 @@ export type TWidgetType =
 export interface IWidgetConfig {
   type: TWidgetType;
 
+  /** Wether this widget uses the new widget API at `/api/v5/widgets/desktop/...` **/
+  useNewWidgetAPI?: boolean;
+
   // Default transform for the widget
   defaultTransform: {
     width: number;
@@ -45,7 +48,11 @@ export interface IWidgetConfig {
   };
 }
 
-export function getWidgetsConfig(host: string, token: string): Record<TWidgetType, IWidgetConfig> {
+export function getWidgetsConfig(
+  host: string,
+  token: string,
+  widgetsWithNewAPI: WidgetType[] = [],
+): Record<TWidgetType, IWidgetConfig> {
   return {
     [WidgetType.AlertBox]: {
       type: WidgetType.AlertBox,
@@ -143,8 +150,8 @@ export function getWidgetsConfig(host: string, token: string): Record<TWidgetTyp
       dataFetchUrl: `https://${host}/api/v5/slobs/widget/emote-wall`,
       settingsSaveUrl: `https://${host}/api/v5/slobs/widget/emote-wall`,
       settingsUpdateEvent: 'emoteWallSettingsUpdate',
-      customCodeAllowed: true,
-      customFieldsAllowed: true,
+      customCodeAllowed: false,
+      customFieldsAllowed: false,
     },
 
     // TODO:
@@ -192,13 +199,23 @@ export function getWidgetsConfig(host: string, token: string): Record<TWidgetTyp
         height: 700,
       },
 
-      url: `https://${host}/widgets/chat-box/v1/${token}`,
-      previewUrl: `https://${host}/widgets/chat-box/v1/${token}?simulate=1`,
-      dataFetchUrl: `https://${host}/api/v5/slobs/widget/chatbox`,
-      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/chatbox`,
       settingsUpdateEvent: 'chatBoxSettingsUpdate',
       customCodeAllowed: true,
       customFieldsAllowed: true,
+      url: `https://${host}/widgets/chat-box/v1/${token}`,
+      previewUrl: `https://${host}/widgets/chat-box/v1/${token}?simulate=1`,
+
+      ...(widgetsWithNewAPI.includes(WidgetType.ChatBox)
+        ? {
+            // TODO: extra boolean tracking, move to method
+            useNewWidgetAPI: true,
+            dataFetchUrl: `https://${host}/api/v5/widgets/desktop/chat-box`,
+            settingsSaveUrl: `https://${host}/api/v5/widgets/desktop/chat-box`,
+          }
+        : {
+            dataFetchUrl: `https://${host}/api/v5/slobs/widget/chatbox`,
+            settingsSaveUrl: `https://${host}/api/v5/slobs/widget/chatbox`,
+          }),
     },
 
     // ChatHighlight: {

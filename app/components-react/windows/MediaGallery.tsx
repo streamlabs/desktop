@@ -14,7 +14,7 @@ import { useChildWindowParams, useVuex } from 'components-react/hooks';
 import { confirmAsync } from 'components-react/modals';
 import styles from './MediaGallery.m.less';
 
-const getTypeMap = () => ({
+const getTypeMap = (): Dictionary<Dictionary<string>> => ({
   title: {
     image: $t('Images'),
     audio: $t('Sounds'),
@@ -299,15 +299,13 @@ export default function MediaGallery() {
 function CardContent(p: { file: IMediaGalleryFile }) {
   const { type, href } = p.file;
   let FilePreview = () => <div />;
-  if (type === 'image' && /\.webm$/.test(href)) {
+  if (type === 'image' && (/\.webm$/.test(href) || /\.mp4$/.test(href))) {
     FilePreview = () => (
       <video autoPlay muted loop src={href} style={{ maxHeight: '148px', maxWidth: '148px' }} />
     );
-  }
-  if (type === 'image' && !/\.webm$/.test(href)) {
+  } else if (type === 'image') {
     FilePreview = () => <img src={href} style={{ maxHeight: '148px', maxWidth: '148px' }} />;
-  }
-  if (type === 'audio') {
+  } else if (type === 'audio') {
     FilePreview = () => (
       <i
         className="icon-music"

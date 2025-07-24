@@ -6,13 +6,18 @@ import { useVuex } from 'components-react/hooks';
 import { TAppPage } from 'services/navigation';
 import { IAnnouncementsInfo } from 'services/announcements';
 import styles from './News.m.less';
+import { useRealmObject } from 'components-react/hooks/realm';
 
 export default function News() {
-  const { WindowsService, SettingsService, NavigationService, AnnouncementsService } = Services;
+  const {
+    WindowsService,
+    SettingsService,
+    NavigationService,
+    AnnouncementsService,
+    UsageStatisticsService,
+  } = Services;
 
-  const { newsItems } = useVuex(() => ({
-    newsItems: AnnouncementsService.state.news,
-  }));
+  const newsItems = useRealmObject(AnnouncementsService.currentAnnouncements).news;
 
   useEffect(() => {
     AnnouncementsService.actions.getNews();
@@ -24,6 +29,8 @@ export default function News() {
 
   function handleClick(item: IAnnouncementsInfo) {
     return () => {
+      AnnouncementsService.actions.closeNews(item.id);
+
       if (item.linkTarget === 'slobs') {
         if (item.link === 'Settings') {
           SettingsService.showSettings(item.params?.category);

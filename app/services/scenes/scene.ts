@@ -193,6 +193,10 @@ export class Scene {
     return childrenItems;
   }
 
+  getIsDualOutputScene() {
+    return this.dualOutputService.views.hasNodeMap(this.id);
+  }
+
   setName(newName: string) {
     const sceneSource = this.getSource();
     sceneSource.setName(newName);

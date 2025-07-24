@@ -1,4 +1,17 @@
-@import "../../../styles/index";
+@import '../../../styles/index';
+
+.page-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+
+  :global(.twitter) {
+    height: 16px;
+  }
+}
 
 .container {
   position: relative;
@@ -6,15 +19,24 @@
   flex-direction: column;
   align-items: center;
   justify-content: space-around;
-
-  margin-top: 10%;
+  z-index: 1;
 
   h1 {
     margin-bottom: 8px;
   }
 
   :global(.list-input),
-  :global(.section) { width: 400px; }
+  :global(.section) {
+    width: 400px;
+  }
+
+  @media (max-height: 600px) {
+
+    &>h1,
+    &>p {
+      display: none;
+    }
+  }
 }
 
 .select-another {
@@ -35,13 +57,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
 
-.link-button {
-  text-decoration: underline;
+  :global(.button--youtube) {
+    overflow: hidden;
+  }
 
-  &:hover {
-    cursor: pointer;
+  :global(.youtube) {
+    max-height: 160px !important;
+    max-width: 200px !important;
+    width: 200px !important;
+    height: 92px !important;
+    background-size: cover;
+    background-position-x: -33px;
   }
 }
 
@@ -59,5 +86,107 @@
   i {
     font-size: 40px;
     margin: 0 !important;
+  }
+}
+
+.footer {
+  position: absolute;
+  display: flex;
+  justify-content: flex-end;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  // TODO: fix once we add pagination container
+  margin: 80px;
+}
+
+.svg-backgrounds {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  width: 100%;
+  height: 100%;
+
+  #oval-right {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+
+  #oval-left {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+  }
+}
+
+:global(#oval-left) {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+
+:global(#oval-right) {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.streamlabs-platform-container {
+  margin-bottom: 55px;
+}
+
+.third-party-platforms {
+  width: 100%;
+
+  p {
+    text-align: center;
+  }
+}
+
+.streamlabs-platform-container,
+.third-party-platforms-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  row-gap: 20px;
+  width: 100%;
+
+  button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: var(--border);
+
+    :global(.fa-spinner) {
+      margin-right: 32px;
+    }
+  }
+}
+
+.extra-platforms-container {
+  display: flex;
+  flex-direction: row;
+  column-gap: 20px;
+  margin-top: 20px;
+  justify-content: center;
+}
+
+.signup-link-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+
+  a {
+    &,
+    &:hover,
+    &:focus,
+    &:active {
+      text-decoration: underline;
+    }
   }
 }

@@ -4,6 +4,7 @@ import { Services } from '../service-provider';
 import { Display as OBSDisplay } from '../../services/video';
 import { TDisplayType } from 'services/settings-v2/video';
 import uuid from 'uuid/v4';
+import { useRealmObject } from 'components-react/hooks/realm';
 interface DisplayProps {
   id?: string;
   sourceId?: string;
@@ -32,35 +33,38 @@ export default function Display(props: DisplayProps) {
     const videoSettings = VideoSettingsService.baseResolutions[p.type];
 
     return {
-      paddingColor: CustomizationService.views.displayBackground,
       baseResolution: `${videoSettings?.baseWidth}x${videoSettings?.baseHeight}`,
     };
   }, false);
 
+  const paddingColor = useRealmObject(CustomizationService.state).displayBackground;
+
   const obsDisplay = useRef<OBSDisplay | null>(null);
   const displayEl = useRef<HTMLDivElement>(null);
 
-  useEffect(updateDisplay, [p.sourceId, v.paddingColor]);
+  useEffect(updateDisplay, [p.sourceId, paddingColor]);
   useEffect(refreshOutputRegion, [v.baseResolution]);
 
   function refreshOutputRegion() {
     if (!obsDisplay.current) return;
-    obsDisplay.current.refreshOutputRegion();
+    const [width, height] = v.baseResolution.split('x');
+    obsDisplay.current.resize(Number(width), Number(height));
   }
 
   function onClickHandler(event: React.MouseEvent) {
     p.clickHandler(event);
   }
 
-  function createDisplay() {
+  async function createDisplay() {
     const displayId = uuid();
     obsDisplay.current = new OBSDisplay(displayId, {
       sourceId: p.sourceId,
       paddingSize: p.paddingSize,
-      paddingColor: v.paddingColor,
+      paddingColor,
       renderingMode: p.renderingMode,
       type: p.type,
     });
+    await refreshOutputRegion();
     obsDisplay.current.setShoulddrawUI(p.drawUI);
     obsDisplay.current.onOutputResize(region => p.onOutputResize(region));
     if (displayEl.current) obsDisplay.current.trackElement(displayEl.current);

@@ -62,7 +62,12 @@ export default function SourceProperties() {
   return (
     <ModalLayout
       scrollable
-      fixedChild={source && !hideStyleBlockers && <Display sourceId={source.sourceId} />}
+      fixedChild={
+        source &&
+        !hideStyleBlockers && (
+          <Display sourceId={source.sourceId} style={{ position: 'relative' }} />
+        )
+      }
     >
       <ObsForm
         value={properties}

@@ -10,16 +10,25 @@ const plugins = [];
 
 const commit = cp.execSync('git rev-parse --short HEAD').toString().replace('\n', '');
 
-plugins.push(
-  new webpack.DefinePlugin({
-    SLOBS_BUNDLE_ID: JSON.stringify(commit),
-    SLD_SENTRY_FRONTEND_DSN: JSON.stringify(process.env.SLD_SENTRY_FRONTEND_DSN ?? ''),
-    SLD_SENTRY_BACKEND_SERVER_URL: JSON.stringify(process.env.SLD_SENTRY_BACKEND_SERVER_URL ?? ''),
-    SLD_SENTRY_BACKEND_SERVER_PREVIEW_URL: JSON.stringify(
-      process.env.SLD_SENTRY_BACKEND_SERVER_PREVIEW_URL ?? '',
-    ),
-  }),
-);
+const envDef = {
+  SLOBS_BUNDLE_ID: JSON.stringify(commit),
+  SLD_SENTRY_FRONTEND_DSN: JSON.stringify(process.env.SLD_SENTRY_FRONTEND_DSN ?? ''),
+  SLD_SENTRY_BACKEND_SERVER_URL: JSON.stringify(process.env.SLD_SENTRY_BACKEND_SERVER_URL ?? ''),
+  SLD_SENTRY_BACKEND_SERVER_PREVIEW_URL: JSON.stringify(
+    process.env.SLD_SENTRY_BACKEND_SERVER_PREVIEW_URL ?? '',
+  ),
+};
+
+if (process.env.SLD_COMPILE_FOR_BETA) {
+  console.log('Compiling build with forced beta SL host.');
+  envDef['process.env.SLD_COMPILE_FOR_BETA'] = JSON.stringify(true);
+}
+if (process.env.HIGHLIGHTER_ENV) {
+  console.log('Compiling build with ' + process.env.HIGHLIGHTER_ENV + ' highlighter version.');
+  envDef['process.env.HIGHLIGHTER_ENV'] = JSON.stringify(process.env.HIGHLIGHTER_ENV ?? '');
+}
+
+plugins.push(new webpack.DefinePlugin(envDef));
 
 plugins.push(
   new WebpackManifestPlugin({
@@ -78,6 +87,7 @@ module.exports = {
     'font-manager': 'require("font-manager")',
     'color-picker': 'require("color-picker")',
     '@electron/remote': 'require("@electron/remote")',
+    realm: 'require("realm")',
 
     // Not actually a native addons, but for one reason or another
     // we don't want them compiled in our webpack bundle.

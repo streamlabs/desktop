@@ -24,6 +24,7 @@ export interface IEnv {
   // Allows joining as a guest instead of a host for guest cam
   SLD_GUEST_CAM_HASH: string;
   CI: boolean;
+  HIGHLIGHTER_ENV: 'production' | 'staging' | 'local';
 }
 
 export default class Utils {
@@ -93,8 +94,25 @@ export default class Utils {
     );
   }
 
-  static isDevMode() {
+  static get isProduction() {
+    return Utils.env.NODE_ENV === 'production';
+  }
+
+  static isDevMode(): boolean {
     return Utils.env.NODE_ENV !== 'production';
+  }
+
+  static getHighlighterEnvironment(): 'production' | 'staging' | 'local' {
+    // need to use this remote thing because main process is being spawned as
+    // subprocess of updater process in the release build
+    if (remote.process.argv.includes('--bundle-qa')) {
+      return 'staging';
+    }
+
+    if (process.env.HIGHLIGHTER_ENV !== 'staging' && process.env.HIGHLIGHTER_ENV !== 'local') {
+      return 'production';
+    }
+    return process.env.HIGHLIGHTER_ENV as 'production' | 'staging' | 'local';
   }
 
   static isTestMode() {
@@ -114,7 +132,7 @@ export default class Utils {
   }
 
   static shouldUseBeta(): boolean {
-    return Utils.env.SLD_USE_BETA as boolean;
+    return (process.env.SLD_COMPILE_FOR_BETA || Utils.env.SLD_USE_BETA) as boolean;
   }
 
   /**
@@ -172,6 +190,8 @@ export default class Utils {
   static getChangedParams<T>(obj: T, patch: T): Partial<T> {
     const result: Dictionary<any> = {};
     Object.keys(patch).forEach(key => {
+      // TODO: index
+      // @ts-ignore
       if (!isEqual(obj[key], patch[key])) result[key] = cloneDeep(patch[key]);
     });
     return result as Partial<T>;
@@ -183,10 +203,18 @@ export default class Utils {
     if (obj == null) return patch;
 
     Object.keys(patch).forEach(key => {
+      // TODO: index
+      // @ts-ignore
       if (!isEqual(obj[key], patch[key])) {
+        // TODO: index
+        // @ts-ignore
         if (patch[key] && typeof patch[key] === 'object' && !Array.isArray(patch[key])) {
+          // TODO: index
+          // @ts-ignore
           result[key] = this.getDeepChangedParams(obj[key], patch[key]);
         } else {
+          // TODO: index
+          // @ts-ignore
           result[key] = patch[key];
         }
       }

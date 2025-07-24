@@ -63,8 +63,8 @@ export class ChatHighlightService extends WidgetSettingsService<IChatHighlightDa
       dataFetchUrl: `https://${this.getHost()}/api/v5/slobs/widget/chat-highlight`,
       settingsSaveUrl: `https://${this.getHost()}/api/v5/slobs/widget/chat-highlight`,
       settingsUpdateEvent: 'chatHighlightSettingsUpdate',
-      customCodeAllowed: true,
-      customFieldsAllowed: true,
+      customCodeAllowed: false,
+      customFieldsAllowed: false,
     };
   }
 

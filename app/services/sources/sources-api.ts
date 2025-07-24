@@ -4,6 +4,7 @@ import { WidgetType } from 'services/widgets';
 import { Observable } from 'rxjs';
 import { IAudioSource } from 'services/audio';
 import { EDeinterlaceFieldOrder, EDeinterlaceMode } from 'obs-studio-node';
+import { TDisplayType } from 'services/settings-v2';
 
 export interface ISource {
   sourceId: string;
@@ -17,6 +18,7 @@ export interface ISource {
   height: number;
   doNotDuplicate: boolean;
   configurable: boolean;
+  forceUiRefresh: boolean;
   propertiesManagerType: TPropertiesManager;
   propertiesManagerSettings?: Dictionary<any>;
   channel?: number;
@@ -105,6 +107,7 @@ export interface ISourceAddOptions<TPropertiesManagerSettings = Dictionary<any>>
   guestCamStreamId?: string; // Automatically assign a guest to this source after creation
   deinterlaceMode?: EDeinterlaceMode;
   deinterlaceFieldOrder?: EDeinterlaceFieldOrder;
+  display?: TDisplayType;
 }
 
 export type TSourceType =
@@ -126,6 +129,7 @@ export type TSourceType =
   | 'ndi_source'
   | 'openvr_capture'
   | 'screen_capture'
+  | 'mac_screen_capture'
   | 'liv_capture'
   | 'ovrstream_dc_source'
   | 'vlc_source'
@@ -169,4 +173,5 @@ export interface ISourceDisplayData {
   shortDesc?: string;
   link?: string;
   linkText?: string;
+  group: string;
 }

@@ -20,7 +20,7 @@
         class="sidenav"
       />
       <div class="live-dock-wrapper" v-if="renderDock && leftDock">
-        <live-dock :onLeft="true" />
+        <live-dock :component-props="{ onLeft: true }" />
         <resize-bar
           v-if="!isDockCollapsed"
           class="live-dock-resize-bar live-dock-resize-bar--left"
@@ -40,7 +40,7 @@
           v-if="!showLoadingSpinner"
           :is="page"
           :params="params"
-          :component-props="{ params }"
+          :component-props="{ onTotalWidth: width => handleEditorWidth(width), params }"
           @totalWidth="width => handleEditorWidth(width)"
           style="grid-row: 1 / span 1"
         />

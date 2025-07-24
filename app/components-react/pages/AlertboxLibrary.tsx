@@ -73,7 +73,7 @@ export default function AlertboxLibrary(p: { params: { id?: string } }) {
       lifeTime: 8000,
       showTime: false,
       message: $t(
-        'Alertbox Theme installed & activated. Click here to manage your Widget Profiles.',
+        'Alert Box Theme installed & activated. Click here to manage your Widget Profiles.',
       ),
       action: JsonrpcService.createRequest(
         Service.getResourceId(MagicLinkService),

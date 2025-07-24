@@ -36,9 +36,9 @@ export enum EMenuItemKey {
  */
 export enum ESubMenuItemKey {
   Scene = 'browse-overlays',
-  AlertBoxLibrary = 'alertbox-library',
   Widget = 'browse-overlays-widgets',
   Sites = 'browse-overlays-sites',
+  Collectibles = 'browse-overlays-collectibles',
   AppsStoreHome = 'platform-app-store-home',
   AppsManager = 'platform-app-store-manager',
   DashboardHome = 'dashboard-home',
@@ -149,9 +149,9 @@ export const menuTitles = (item: EMenuItemKey | ESubMenuItemKey | string) => {
     [EMenuItemKey.Settings]: $t('Settings'),
     [EMenuItemKey.Login]: $t('Login'),
     [ESubMenuItemKey.Scene]: $t('Scene'),
-    [ESubMenuItemKey.AlertBoxLibrary]: $t('Alert Box Library'),
-    [ESubMenuItemKey.Widget]: $t('Widget'),
+    [ESubMenuItemKey.Widget]: $t('Alerts and Widgets'),
     [ESubMenuItemKey.Sites]: $t('Creator Sites'),
+    [ESubMenuItemKey.Collectibles]: $t('Collectibles'),
     [ESubMenuItemKey.AppsStoreHome]: $t('Apps Store Home'),
     [ESubMenuItemKey.AppsManager]: $t('Apps Manager'),
     [ESubMenuItemKey.DashboardHome]: $t('Dashboard Home'),
@@ -232,9 +232,8 @@ export const SideNavMenuItems = (): TMenuItems => ({
     icon: 'icon-themes',
     subMenuItems: [
       SideBarSubMenuItems()[ESubMenuItemKey.Scene],
-      SideBarSubMenuItems()[ESubMenuItemKey.AlertBoxLibrary],
       SideBarSubMenuItems()[ESubMenuItemKey.Widget],
-      SideBarSubMenuItems()[ESubMenuItemKey.Sites],
+      SideBarSubMenuItems()[ESubMenuItemKey.Collectibles],
     ],
     isActive: true,
     isExpanded: false,
@@ -336,12 +335,6 @@ export const SideBarSubMenuItems = (): TSubMenuItems => ({
     trackingTarget: 'themes',
     isExpanded: false,
   },
-  [ESubMenuItemKey.AlertBoxLibrary]: {
-    key: ESubMenuItemKey.AlertBoxLibrary,
-    target: 'AlertboxLibrary',
-    trackingTarget: 'alertbox-library',
-    isExpanded: false,
-  },
   [ESubMenuItemKey.Widget]: {
     key: ESubMenuItemKey.Widget,
     target: 'BrowseOverlays',
@@ -355,6 +348,13 @@ export const SideBarSubMenuItems = (): TSubMenuItems => ({
     type: 'site-themes',
     trackingTarget: 'themes',
     isActive: false,
+    isExpanded: false,
+  },
+  [ESubMenuItemKey.Collectibles]: {
+    key: ESubMenuItemKey.Collectibles,
+    target: 'BrowseOverlays',
+    type: 'collectibles',
+    trackingTarget: 'themes',
     isExpanded: false,
   },
   [ESubMenuItemKey.AppsStoreHome]: {

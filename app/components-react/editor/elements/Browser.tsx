@@ -4,11 +4,13 @@ import { ELayoutElement } from 'services/layout';
 import { Services } from 'components-react/service-provider';
 import useBaseElement from './hooks';
 
-export default function Display() {
+const mins = { x: 0, y: 0 };
+
+export function Browser() {
   const { LayoutService, UserService } = Services;
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const { renderElement } = useBaseElement(<BrowserEl />, { x: 0, y: 0 }, containerRef.current);
+  const { renderElement } = useBaseElement(<BrowserEl />, mins, containerRef.current);
 
   function url() {
     const src = LayoutService.views.currentTab.slottedElements[ELayoutElement.Browser]?.src;
@@ -36,3 +38,5 @@ export default function Display() {
     </div>
   );
 }
+
+Browser.mins = mins;

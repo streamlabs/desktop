@@ -13,7 +13,7 @@ import {
 import cloneDeep from 'lodash/cloneDeep';
 import pick from 'lodash/pick';
 import uuid from 'uuid/v4';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import mapValues from 'lodash/mapValues';
 import { WidgetsService, WidgetType } from './widgets';
 
@@ -53,6 +53,7 @@ export interface IRecentEvent {
   read: boolean;
   hash: string;
   isTest?: boolean;
+  isPreview?: boolean;
   repeat?: boolean;
   // uuid is local and will NOT persist across app restarts/ fetches
   uuid: string;
@@ -147,6 +148,11 @@ export interface ISafeModeServerSettings {
   time_in_minutes: number;
 }
 
+enum ESafeModeStatus {
+  Enabled = 'enabled',
+  Disabled = 'disabled',
+}
+
 const subscriptionMap = (subPlan: string) => {
   return {
     '1000': $t('Tier 1'),
@@ -178,7 +184,6 @@ const filterName = (key: string): string => {
     resub_tier_3: $t('Tier 3'),
     resub_prime: $t('Prime'),
     gifted_sub: $t('Gifted'),
-    host: $t('Hosts'),
     bits: $t('Bits'),
     raid: $t('Raids'),
     subscriber: $t('Subscribers'),
@@ -211,8 +216,6 @@ function getHashForRecentEvent(event: IRecentEvent) {
       return [event.type, event.name, event.message, parseInt(event.amount, 10)].join(':');
     case 'follow':
       return [event.type, event.name, event.message].join(':');
-    case 'host':
-      return [event.type, event.name, event.host_type].join(':');
     case 'justgivingdonation':
       return [event.type, event.name, event.message, parseInt(event.amount, 10)].join(':');
     case 'loyalty_store_redemption':
@@ -221,12 +224,12 @@ function getHashForRecentEvent(event: IRecentEvent) {
       return [event.type, event.name, parseInt(event.amount, 10), event.from].join(':');
     case 'prime_sub_gift':
       return [event.type, event.name, event.streamer, event.giftType].join(':');
-    case 'raid':
-      return [event.type, event.name, event.from].join(':');
     case 'redemption':
       return [event.type, event.name, event.message].join(':');
     case 'sticker':
       return [event.name, event.type, event.currency].join(':');
+    case 'raid':
+      return [event.type, event.name, event.from].join(':');
     case 'subscription':
       return [event.type, event.name.toLowerCase(), event.message].join(':');
     case 'superchat':
@@ -259,11 +262,10 @@ const SUPPORTED_EVENTS = [
   'follow',
   'subscription',
   'bits',
-  'host',
-  'raid',
   'sticker',
   'effect',
   'like',
+  'raid',
   'stars',
   'support',
   'share',
@@ -287,7 +289,6 @@ class RecentEventsViews extends ViewHandler<IRecentEventsState> {
       subscription: this.getSubString(event),
       // Twitch
       bits: $t('has used'),
-      host: $t('has hosted you with %{viewers} viewers', { viewers: event.viewers }),
       raid: $t('has raided you with a party of %{viewers}', { viewers: event.raiders }),
       // Mixer
       sticker: $t('has used %{skill} for', { skill: event.skill }),
@@ -401,6 +402,8 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
   @Inject() private userService: UserService;
   @Inject() private windowsService: WindowsService;
   @Inject() private websocketService: WebsocketService;
+
+  safeModeStatusChanged = new Subject<ESafeModeStatus>();
 
   static initialState: IRecentEventsState = {
     recentEvents: [],
@@ -561,6 +564,8 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
     // Get read status for all events
     const readReceipts = await this.fetchReadReceipts(hashValues);
     eventArray.forEach(event => {
+      // TODO: index
+      // @ts-ignore
       event.read = readReceipts[event.hash] ? readReceipts[event.hash] : false;
 
       // Events older than 1 month are treated as read
@@ -740,9 +745,13 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
   }
 
   getEventTypesString() {
-    return Object.keys(this.state.filterConfig)
-      .filter((type: string) => this.state.filterConfig[type] === true)
-      .join(',');
+    return (
+      Object.keys(this.state.filterConfig)
+        // TODO: index
+        // @ts-ignore
+        .filter((type: string) => this.state.filterConfig[type] === true)
+        .join(',')
+    );
   }
 
   applyConfig(config: IRecentEventsConfig) {
@@ -864,16 +873,28 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
       }
       return this.shouldFilterSubscription(event);
     }
+    // TODO: index
+    // @ts-ignore
     return this.transformFilterForPlatform()[event.type];
   }
 
   transformFilterForPlatform() {
     const filterMap = cloneDeep(this.state.filterConfig);
+    // TODO: index
+    // @ts-ignore
     filterMap['support'] = filterMap['facebook_support'];
+    // TODO: index
+    // @ts-ignore
     filterMap['like'] = filterMap['facebook_like'];
+    // TODO: index
+    // @ts-ignore
     filterMap['share'] = filterMap['facebook_share'];
+    // TODO: index
+    // @ts-ignore
     filterMap['stars'] = filterMap['facebook_stars'];
     if (this.userService.platform.type === 'youtube') {
+      // TODO: index
+      // @ts-ignore
       filterMap['subscription'] = filterMap['membership_level_1'];
       filterMap['follow'] = filterMap['subscriber'];
     }
@@ -882,7 +903,7 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
 
   onEventSocket(e: IEventSocketEvent) {
     const messages = e.message
-      .filter(msg => !msg.isTest && !msg.repeat)
+      .filter(msg => !msg.isTest && !msg.isPreview && !msg.repeat)
       .map(msg => {
         msg.platform = e.for;
         msg.type = e.type;
@@ -1030,6 +1051,11 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
     this.SET_SAFE_MODE_SETTINGS({ loading: true });
     const promise = jfetch(new Request(url, { headers, body, method: 'POST' }));
 
+    promise.then(resp => {
+      this.safeModeStatusChanged.next(ESafeModeStatus.Enabled);
+      return resp;
+    });
+
     promise.finally(() => this.SET_SAFE_MODE_SETTINGS({ loading: false }));
 
     return promise;
@@ -1043,6 +1069,10 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
     this.SET_SAFE_MODE_SETTINGS({ loading: true });
     const promise = jfetch(new Request(url, { headers, method: 'DELETE' }));
 
+    promise.then(resp => {
+      this.safeModeStatusChanged.next(ESafeModeStatus.Disabled);
+    });
+
     promise.finally(() => this.SET_SAFE_MODE_SETTINGS({ loading: false }));
 
     return promise;
@@ -1054,10 +1084,13 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
     if (this.state.safeMode.clearRecentEvents) {
       this.SET_RECENT_EVENTS([]);
     }
+
+    this.safeModeStatusChanged.next(ESafeModeStatus.Enabled);
   }
 
   onSafeModeDisabled() {
     this.SET_SAFE_MODE_SETTINGS({ enabled: false });
+    this.safeModeStatusChanged.next(ESafeModeStatus.Disabled);
   }
 
   @mutation()
@@ -1096,6 +1129,8 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
 
   @mutation()
   private SET_SINGLE_FILTER_CONFIG(key: string, value: boolean | number) {
+    // TODO: index
+    // @ts-ignore
     this.state.filterConfig[key] = value;
   }
 

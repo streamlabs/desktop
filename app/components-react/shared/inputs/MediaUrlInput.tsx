@@ -12,7 +12,7 @@ import cx from 'classnames';
 export const MediaUrlInput = InputComponent((p: TSlobsInputProps<{}, string>) => {
   const { wrapperAttrs, inputAttrs, dataAttrs } = useInput('mediaurl', p);
   const value = inputAttrs.value;
-  const isVideo = /\.webm/.test(inputAttrs.value);
+  const isVideo = /\.webm$/.test(value) || /\.mp4$/.test(value);
   const isImage = !isVideo;
   const previewValue =
     value === '/images/gallery/default.gif'
@@ -25,9 +25,7 @@ export const MediaUrlInput = InputComponent((p: TSlobsInputProps<{}, string>) =>
         {/* VIDEO PREVIEW */}
         {isVideo && (
           <div>
-            <video loop muted autoPlay className={css.preview} key={value}>
-              <source src={previewValue} type="video/webm" />
-            </video>
+            <video loop muted autoPlay className={css.preview} key={value} src={value} />
           </div>
         )}
 

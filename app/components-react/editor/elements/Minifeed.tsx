@@ -2,11 +2,13 @@ import React, { useRef } from 'react';
 import RecentEvents from './RecentEvents';
 import useBaseElement from './hooks';
 
-export default function MiniFeed() {
+const mins = { x: 330, y: 90 };
+
+export function MiniFeed() {
   const containerRef = useRef<HTMLDivElement>(null);
   const { renderElement } = useBaseElement(
     <RecentEvents isOverlay={false} />,
-    { x: 330, y: 90 },
+    mins,
     containerRef.current,
   );
 
@@ -16,3 +18,5 @@ export default function MiniFeed() {
     </div>
   );
 }
+
+MiniFeed.mins = mins;

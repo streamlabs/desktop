@@ -1,4 +1,8 @@
 const signtool = require('signtool');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+const cp = require('child_process');
 
 const base = {
   appId: 'com.streamlabs.slobs',
@@ -26,6 +30,7 @@ const base = {
   nsis: {
     license: 'AGREEMENT',
     oneClick: false,
+    warningsAsErrors: false,
     perMachine: true,
     allowToChangeInstallationDirectory: true,
     include: 'installer.nsh',
@@ -41,6 +46,7 @@ const base = {
     rfc3161TimeStampServer: 'http://timestamp.digicert.com',
     timeStampServer: 'http://timestamp.digicert.com',
     signDlls: true,
+    signingHashAlgorithms: ['sha256'],
     async sign(config) {
       if (process.env.SLOBS_NO_SIGN) return;
 
@@ -52,17 +58,18 @@ const base = {
       }
 
       console.log(`Signing ${config.hash} ${config.path}`);
-      await signtool.sign(config.path, {
-        subject: 'Streamlabs (General Workings, Inc.)',
-        rfcTimestamp: 'http://timestamp.digicert.com',
-        algorithm: config.hash,
-        append: config.isNest,
-        description: config.name,
-        url: config.site,
-      });
+
+      const signingPath = path.join(os.tmpdir(), 'sldesktopsigning');
+
+      if (fs.existsSync(signingPath)) {
+        fs.appendFileSync(signingPath, `${config.path}\n`);
+      } else {
+        cp.execSync(`logisign client --client logitech-cpg-sign-client --app streamlabs --files "${config.path}"`, { stdio: 'inherit' });
+      }
     },
   },
   mac: {
+    identity: (process.env.APPLE_SLD_IDENTITY) ? process.env.APPLE_SLD_IDENTITY : 'Streamlabs LLC (UT675MBB9Q)',
     extraFiles: [
       'shared-resources/**/*',
       '!shared-resources/README',
@@ -82,6 +89,8 @@ const base = {
     entitlements: 'electron-builder/entitlements.plist',
     entitlementsInherit: 'electron-builder/entitlements.plist',
     extendInfo: {
+      NSAppleEventsUsageDescription: 'Allow Streamlabs Desktop to run Apple scripts.',
+      NSAppleScriptEnabled: 'YES',
       CFBundleURLTypes: [
         {
           CFBundleURLName: 'Streamlabs OBS Link',
@@ -112,8 +121,9 @@ const base = {
     sentryBackendClientURL: process.env.SLD_SENTRY_BACKEND_CLIENT_URL,
     sentryBackendClientPreviewURL: process.env.SLD_SENTRY_BACKEND_CLIENT_PREVIEW_URL,
   },
+  beforePack: './electron-builder/beforePack.js',
   afterPack: './electron-builder/afterPack.js',
-  afterSign: './electron-builder/notarize.js',
+  afterSign: './electron-builder/afterSign.js',
 };
 
 module.exports = base;

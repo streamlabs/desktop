@@ -16,6 +16,7 @@ export enum ENotificationSubType {
   LAGGED = 'LAGGED',
   SKIPPED = 'SKIPPED',
   NEWS = 'NEWS',
+  CPU = 'CPU',
 }
 
 export interface INotificationsSettings {
@@ -32,6 +33,7 @@ export interface INotificationOptions {
   playSound?: boolean;
   data?: any;
   subType?: ENotificationSubType;
+  singleton?: boolean;
 
   /** The notification's life time in ms. Use -1 for infinity */
   lifeTime?: number;

@@ -1,0 +1,46 @@
+@import '../../styles/index';
+
+.info-banner {
+  width: 100%;
+  padding: 5px 10px;
+  margin-bottom: 5px;
+  color: var(--teal);
+  background: var(--teal-semi);
+  font-size: 12px;
+  font-style: normal;
+  border-radius: 3px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    cursor: pointer;
+  }
+
+  &.info {
+    color: var(--info);
+    background: var(--info-semi);
+  }
+
+  &.warning {
+    color: var(--warning);
+    background: var(--warning-semi);
+  }
+
+  i {
+    margin-right: 10px;
+  }
+
+  i.close {
+    margin-right: 0px;
+    margin-left: 2px;
+  }
+
+  .message {
+    flex: 1;
+    overflow: visible;
+    text-wrap: wrap;
+    line-break: auto;
+    line-height: normal;
+  }
+}

@@ -312,7 +312,7 @@ export class Selection {
     // copy items and folders structure
     this.getNodes().forEach(sceneNode => {
       if (sceneNode.isFolder()) {
-        insertedNode = scene.createFolder(sceneNode.name);
+        insertedNode = scene.createFolder(sceneNode.name, { display: sceneNode?.display });
         foldersMap[sceneNode.id] = insertedNode.id;
         insertedNodes.push(insertedNode);
       } else if (sceneNode.isItem()) {

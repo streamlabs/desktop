@@ -5,11 +5,11 @@ import { Services } from 'components-react/service-provider';
 import { TAppPage } from 'services/navigation';
 import { $t } from 'services/i18n';
 import styles from './Banner.m.less';
+import { useRealmObject } from 'components-react/hooks/realm';
 
 export default function Banner() {
   const { AnnouncementsService, SettingsService, NavigationService } = Services;
-
-  const { banner } = useVuex(() => ({ banner: AnnouncementsService.views.banner }));
+  const banner = useRealmObject(AnnouncementsService.currentAnnouncements).banner;
   if (!banner) return <></>;
 
   function handleClick() {

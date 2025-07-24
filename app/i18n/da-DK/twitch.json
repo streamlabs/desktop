@@ -3,5 +3,15 @@
   "Twitch Tags": "Twitch-tags",
   "You need to re-login to access Twitch tags": "Du skal logge ind igen for at få adgang til Twitch-tags",
   "Do not include special characters or spaces in your tag": "Der må ikke indgå specialtegn eller mellemrum i dit tag",
-  "For example: \"Speedrunning\" or \"FirstPlaythrough\"": "For eksempel: \"Speedrunning\" eller \"FirstPlaythrough\""
+  "For example: \"Speedrunning\" or \"FirstPlaythrough\"": "For eksempel: \"Speedrunning\" eller \"FirstPlaythrough\"",
+  "Your Twitch access token has expired. Please log in with Twitch to continue.": "Dit Twitch-adgangstoken er udløbet. Log ind med Twitch for at fortsætte.",
+  "While updating your Twitch channel info, some tags were removed due to moderation rules: %{tags}": "Under opdateringen af dine Twitch-kanaloplysninger blev nogle tags fjernet på grund af moderationsregler: %{tags}",
+  "Content Classification": "Klassificering af indhold",
+  "Content classification": "Klassificering af indhold",
+  "Stream features branded content": "Stream har branded indhold",
+  "Twitch Studio Import": "Twitch Studio-import",
+  "Import from Twitch Studio": "Import fra Twitch Studio",
+  "Import your scenes and sources from Twitch Studio.": "Importér dine scener og kilder fra Twitch Studio.",
+  "Importing Your Existing Settings From Twitch Studio": "Importerer dine eksisterende indstillinger fra Twitch Studio",
+  "Importing from Twitch Studio is an experimental feature under active development. Some source types are unable to be imported, and not all settings will be carried over.": "Import fra Twitch Studio er en eksperimentel funktion under aktiv udvikling. Nogle kildetyper kan ikke importeres, og ikke alle indstillinger vil blive overført."
 }
