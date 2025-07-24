@@ -28,8 +28,6 @@ import Utils from './services/utils';
 import { WindowsService } from './services/windows';
 import { createStore } from './store';
 
-const crashHandler = window['require']('crash-handler');
-
 const { ipcRenderer } = electron;
 
 import * as remote from '@electron/remote';
@@ -177,7 +175,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ),
       );
 
-      crashHandler.registerProcess(appService.pid, false);
+      // Initialize crash handler
+      ipcRenderer.send('register-in-crash-handler', { pid: process.pid, critical: false });
 
       // await this.obsUserPluginsService.initialize();
 
@@ -193,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const message = apiInitErrorResultToMessage(apiResult);
         showDialog(message);
 
-        crashHandler.unregisterProcess(appService.pid);
+        ipcRenderer.send('unregister-in-crash-handler', { pid: process.pid });
 
         obs.NodeObs.InitShutdownSequence();
         obs.IPC.disconnect();
