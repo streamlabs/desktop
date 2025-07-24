@@ -6,7 +6,7 @@
   "license": "GPL-3.0",
   "version": "1.19.2-preview.2",
   "main": "main.js",
-  "macVirtualCamUrl": "https://obs-studio-deployment.s3.us-west-2.amazonaws.com/slobs-vcam-installer-1.0.8-release-osx-arm64.tar.gz",
+  "macVirtualCamUrl": "https://obs-studio-deployment.s3.us-west-2.amazonaws.com/slobs-vcam-installer-1.0.9-release-osx-arm64.tar.gz",
   "scripts": {
     "compile": "yarn clear && yarn compile:updater && yarn webpack-cli --progress --config ./webpack.dev.config.js",
     "compile:production": "yarn clear && yarn compile:updater && yarn webpack-cli --progress --config ./webpack.prod.config.js",
