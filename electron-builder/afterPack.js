@@ -4,10 +4,10 @@ const path = require('path');
 const os = require('os');
 const buildCameraExt = require('./build-mac-virtualcam');
 
-function signAndCheck(identity, filePath, extraArgs = '') {
+function signAndCheck(identity, filePath) {
   console.log(`Signing: ${filePath}`);
 
-  cp.execSync(`codesign -fs "Developer ID Application: ${identity}" ${extraArgs} "${filePath}"`);
+  cp.execSync(`codesign -fs "Developer ID Application: ${identity}" "${filePath}"`);
 
   // All files need to be writable for update to succeed on mac
   console.log(`Checking Writable: ${filePath}`);
@@ -18,14 +18,14 @@ function signAndCheck(identity, filePath, extraArgs = '') {
   }
 }
 
-function signBinaries(identity, directory, extraArgs = '') {
+function signBinaries(identity, directory) {
   const files = fs.readdirSync(directory);
 
   for (const file of files) {
     const fullPath = path.join(directory, file);
 
     if (fs.statSync(fullPath).isDirectory()) {
-      signBinaries(identity, fullPath, extraArgs);
+      signBinaries(identity, fullPath);
     } else {
       const absolutePath = path.resolve(fullPath);
       const ext = path.extname(absolutePath);
@@ -35,7 +35,7 @@ function signBinaries(identity, directory, extraArgs = '') {
 
       // Sign dynamic libraries
       if (ext === '.so' || ext === '.dylib') {
-        signAndCheck(identity, absolutePath, extraArgs);
+        signAndCheck(identity, absolutePath);
         continue;
       }
 
@@ -47,8 +47,25 @@ function signBinaries(identity, directory, extraArgs = '') {
         continue;
       }
 
-      signAndCheck(identity, absolutePath, extraArgs);
+      signAndCheck(identity, absolutePath);
     }
+  }
+}
+
+function signXcodeApps(context) {
+  // For apps that requires specific entitlements. Ensures the entitlements file is provided during signing
+  const entitlements = "--entitlements electron-builder/mac-virtual-cam-entitlements.plist";
+  const installerPath = `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Frameworks/slobs-virtual-cam-installer.app`;
+  console.log(`Signing: ${installerPath}`);
+  cp.execSync(
+    `codesign --sign "Developer ID Application: ${context.packager.config.mac.identity}" ${entitlements} --options runtime --deep --force --verbose "${installerPath}"`,
+  );
+  // All files need to be writable for update to succeed on mac
+  console.log(`Checking Writable: ${installerPath}`);
+  try {
+    fs.accessSync(installerPath, fs.constants.W_OK);
+  } catch {
+    throw new Error(`File ${installerPath} is not writable!`);
   }
 }
 
@@ -74,12 +91,7 @@ async function afterPackMac(context) {
     context.packager.config.mac.identity,
     `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Resources/app.asar.unpacked`,
   );
-
-  // For apps that requires specific entitlements. Ensures the entitlements file is provided during signing
-  const entitlements = "--entitlements electron-builder/mac-virtual-cam-entitlements.plist";
-  const installerPath = `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Frameworks/slobs-virtual-cam-installer.app`;
-  const extraArgs = `${entitlements} --options runtime --verbose`;
-  signBinaries(context.packager.config.mac.identity, installerPath, extraArgs);
+  signXcodeApps(context);
 }
 
 function afterPackWin() {
