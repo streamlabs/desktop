@@ -1,4 +1,4 @@
-import { spawn } from 'child_process';
+import { ChildProcess, spawn } from 'child_process';
 import { Inject, Service } from 'services';
 import * as remote from '@electron/remote';
 import path from 'path';
@@ -9,6 +9,11 @@ import crypto from 'crypto';
 import { importExtractZip } from 'util/slow-imports';
 import { pipeline } from 'stream/promises';
 import { HostsService, UserService } from 'app-services';
+import { RealmObject } from 'services/realm';
+import { ObjectSchema } from 'realm';
+import http from 'http';
+import { AddressInfo } from 'net';
+import uuid from 'uuid/v4';
 
 interface IVisionManifest {
   version: string;
@@ -19,18 +24,46 @@ interface IVisionManifest {
   timestamp: number;
 }
 
+export class VisionState extends RealmObject {
+  installedVersion: string;
+  percentDownloaded: number;
+  isCurrentlyUpdating: boolean;
+  isInstalling: boolean;
+  isRunning: boolean;
+  pid: number;
+  port: number;
+
+  static schema: ObjectSchema = {
+    name: 'VisionState',
+    properties: {
+      installedVersion: { type: 'string', default: '' },
+      percentDownloaded: { type: 'double', default: 0 },
+      isCurrentlyUpdating: { type: 'bool', default: false },
+      isRunning: { type: 'bool', default: false },
+      isInstalling: { type: 'bool', default: false },
+      pid: { type: 'int', default: 0 },
+      port: { type: 'int', default: 0 }
+    },
+  };
+}
+
+VisionState.register();
+
 export class VisionService extends Service {
   public basepath: string;
 
   private manifestPath: string;
   private manifest: IVisionManifest | null;
-  private isCurrentlyUpdating: boolean = false;
   private versionChecked: boolean = false;
 
   public currentUpdate: Promise<void> | null = null;
 
   @Inject() userService: UserService;
   @Inject() hostsService: HostsService;
+
+  state = VisionState.inject();
+
+  proc: ChildProcess;
 
   init() {
     this.basepath = path.join(remote.app.getPath('userData'), '..', 'streamlabs-vision');
@@ -41,9 +74,57 @@ export class VisionService extends Service {
    * Ensures the following:
    * - vision is downloaded and up to date
    * - vision is running and sending events
+   * - we are subscribed to events
    */
-  ensureVision() {
-    this.startVisionProcess();
+  async ensureVision() {
+    const needsUpdate = await this.isNewVersionAvailable();
+
+    if (needsUpdate) {
+      await this.update(progress => {
+        this.state.db.write(() => {
+          this.state.percentDownloaded = progress.percent;
+        });
+      });
+
+      await this.loadCurrentManifest();
+    }
+
+    if (this.proc && this.proc.killed) {
+      this.proc = null;
+    }
+
+    if (!this.proc) {
+      this.state.db.write(() => {
+        this.state.isRunning = true;
+      });
+
+      const port = await this.getFreePort();
+
+      this.state.db.write(() => {
+        this.state.port = port;
+      });
+
+      console.log('Starting Streamlabs Vision on port', this.state.port);
+
+      this.proc = await this.startVisionProcess(this.state.port);
+
+      this.state.db.write(() => {
+        this.state.pid = this.proc.pid;
+      });
+
+      this.proc.on('exit', () => {
+        this.proc = null;
+        this.state.db.write(() => {
+          this.state.isRunning = false;
+        });
+      });
+
+      // Uncomment to log from vision (WARNING, will affect CPU)
+      // this.proc.stdout.on('data', d => console.log(`Vision: ${d}`));
+      // this.proc.stderr.on('data', d => console.log(`Vision [ERROR]: ${d}`));
+    }
+
+    this.subscribeToEvents();
   }
 
   private getEnvironment(): 'production' | 'staging' | 'local' {
@@ -57,6 +138,21 @@ export class VisionService extends Service {
       return 'production';
     }
     return process.env.VISION_ENV as 'production' | 'staging' | 'local';
+  }
+
+  private getFreePort() {
+    return new Promise<number>(resolve => {
+      const server = http.createServer();
+      server.on('listening', () => {
+        const port = (server.address() as AddressInfo).port;
+
+        server.close();
+        server.unref();
+
+        resolve(port);
+      });
+      server.listen(); // omitting autoassigns.
+    });
   }
 
   /**
@@ -77,7 +173,7 @@ export class VisionService extends Service {
       'vision.exe',
     );
 
-    const command: string[] = ['--port', port.toString()];
+    const command: string[] = ['--port', port.toString(), '--debug'];
     return spawn(visionBinaryPath, command);
   }
 
@@ -87,6 +183,7 @@ export class VisionService extends Service {
 
     const proc = spawn('poetry.exe', command, {
       cwd: rootPath,
+      stdio: 'pipe',
     });
 
     proc.stdout.on('data', console.log);
@@ -122,16 +219,9 @@ export class VisionService extends Service {
     const newManifest = await jfetch<IVisionManifest>(new Request(manifestUrl));
     this.manifest = newManifest;
 
-    // if manifest.json does not exist, an initial download is required
-    if (!existsSync(this.manifestPath)) {
-      console.log('manifest.json not found, initial download required');
-      return true;
-    }
+    const currentManifest = await this.loadCurrentManifest();
 
-    // read the current manifest
-    const currentManifest = JSON.parse(
-      await fs.readFile(this.manifestPath, 'utf-8'),
-    ) as IVisionManifest;
+    if (!currentManifest) return true;
 
     if (
       newManifest.version !== currentManifest.version ||
@@ -147,6 +237,25 @@ export class VisionService extends Service {
     return false;
   }
 
+  async loadCurrentManifest(): Promise<IVisionManifest> {
+    // if manifest.json does not exist, an initial download is required
+    if (!existsSync(this.manifestPath)) {
+      console.log('manifest.json not found, initial download required');
+      return null;
+    }
+
+    // read the current manifest
+    const currentManifest = JSON.parse(
+      await fs.readFile(this.manifestPath, 'utf-8'),
+    ) as IVisionManifest;
+
+    this.state.db.write(() => {
+      this.state.installedVersion = currentManifest.version;
+    });
+
+    return currentManifest;
+  }
+
   /**
    * Update streamlabs vision to the latest version
    */
@@ -155,11 +264,15 @@ export class VisionService extends Service {
     outputHandler?: OutputStreamHandler,
   ): Promise<void> {
     try {
-      this.isCurrentlyUpdating = true;
+      this.state.db.write(() => {
+        this.state.isCurrentlyUpdating = true;
+      });
       this.currentUpdate = this.performUpdate(progressCallback, outputHandler);
       await this.currentUpdate;
     } finally {
-      this.isCurrentlyUpdating = false;
+      this.state.db.write(() => {
+        this.state.isCurrentlyUpdating = false;
+      });
     }
   }
 
@@ -167,6 +280,10 @@ export class VisionService extends Service {
     progressCallback: (progress: IDownloadProgress) => void,
     outputHandler?: OutputStreamHandler,
   ) {
+    this.state.db.write(() => {
+      this.state.isInstalling = false;
+    });
+
     if (!this.manifest) {
       outputHandler?.('stderr', 'No manifest available. Please check for updates first.');
       throw new Error('Manifest not found, cannot update');
@@ -192,6 +309,10 @@ export class VisionService extends Service {
       progressCallback,
     );
     console.log('download complete');
+
+    this.state.db.write(() => {
+      this.state.isInstalling = true;
+    });
 
     // verify the checksum
     const checksum = await this.sha256(zipPath);
@@ -239,6 +360,10 @@ export class VisionService extends Service {
     console.log('updating manifest...');
     await fs.writeFile(this.manifestPath, JSON.stringify(this.manifest));
     console.log('update complete');
+
+    this.state.db.write(() => {
+      this.state.isInstalling = false;
+    });
   }
 
   private async sha256(file: string): Promise<string> {
@@ -267,7 +392,12 @@ export class VisionService extends Service {
   private eventSource: EventSource;
 
   private subscribeToEvents() {
-    this.eventSource = new EventSource('http://localhost:8000/events');
+    if (this.eventSource) {
+      this.eventSource.close();
+      this.eventSource = null;
+    }
+
+    this.eventSource = new EventSource(`http://localhost:${this.state.port}/events`);
 
     this.eventSource.onmessage = e => {
       console.log('GOT EVENT', e.data);
@@ -276,10 +406,11 @@ export class VisionService extends Service {
         this.userService.apiToken,
         new Headers({ 'Content-Type': 'application/json' }),
       );
-      const url = `https://${this.hostsService.streamlabs}/api/v5/game-pulse/event`;
+      const url = `https://${this.hostsService.streamlabs}/api/v5/vision/desktop/event`;
 
       try {
         const parsed = JSON.parse(e.data);
+        // parsed['event_id'] = uuid();
         jfetch(url, { headers, method: 'POST', body: JSON.stringify(parsed) });
       } catch (e: unknown) {
         console.error('Unable to parse game pulse event', e);

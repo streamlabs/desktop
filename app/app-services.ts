@@ -215,6 +215,7 @@ import { RemoteControlService } from 'services/api/remote-control-api';
 import { UrlService } from 'services/hosts';
 import { KickService } from 'services/platforms/kick';
 import { SseService } from './services/server-sent-events';
+import { VisionService } from 'services/vision';
 
 export const AppServices = {
   AppService,
@@ -298,4 +299,5 @@ export const AppServices = {
   UrlService,
   VirtualWebcamService,
   SseService,
+  VisionService,
 };

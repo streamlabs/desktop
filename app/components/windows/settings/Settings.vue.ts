@@ -82,6 +82,7 @@ export default class Settings extends Vue {
     Experimental: 'fas fa-flask',
     'Installed Apps': 'icon-store',
     'Get Support': 'icon-question',
+    Vision: 'fas fa-eye',
   };
   // for additional dismissables, add below using the category/title as the key
   dismissables: { [key: string]: EDismissable } = {
@@ -146,6 +147,7 @@ export default class Settings extends Vue {
       'Virtual Webcam',
       'Game Overlay',
       'Get Support',
+      'Vision',
       'Ultra',
     ];
     if (Utils.isDevMode()) pages.push('Experimental');
