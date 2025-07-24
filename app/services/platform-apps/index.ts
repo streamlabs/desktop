@@ -129,6 +129,13 @@ export interface ILoadedApp {
   enabled: boolean;
   delisted?: boolean;
   icon?: string;
+
+  /**
+   * This should be for specific internal allow-listed apps which
+   * are given special permission to break the normal security
+   * sandboxing rules of the app store runtime.
+   */
+  highlyPrivileged: boolean;
 }
 
 interface IPlatformAppServiceState {
@@ -164,6 +171,16 @@ class PlatformAppsViews extends ViewHandler<IPlatformAppServiceState> {
 
   getDelisted(appId: string) {
     return this.getApp(appId).delisted;
+  }
+
+  isAppHighlyPrivileged(appId: string) {
+    // WARNING: Only internal Streamlabs apps should have these permissions
+    return [
+      'b472396e49', // Avatar - Prod / Ava
+      '04f85c93be', // Avatar - Cale Dev
+      '9ef3e51301', // Avatar - Marcin Dev
+      '875cf5de20', // Coach - Ava
+    ].includes(appId);
   }
 }
 
@@ -268,6 +285,7 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
         icon: app.icon,
         delisted: app.delisted,
         enabled: !(unpackedVersionLoaded || disabledApps.includes(app.id_hash)),
+        highlyPrivileged: this.views.isAppHighlyPrivileged(app.id_hash),
       });
     });
   }
@@ -346,6 +364,7 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
       devPort: DEV_PORT,
       poppedOutSlots: [],
       enabled: true,
+      highlyPrivileged: this.views.isAppHighlyPrivileged(id),
     });
   }
 
