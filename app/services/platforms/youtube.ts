@@ -106,7 +106,7 @@ export interface IYoutubeLiveBroadcast {
       enabled?: boolean;
       pauseAdsUntil?: string;
       creatorCuepointConfig?: any;
-      ytOptimizedCuepointConfig?: 'CONSERVATIVE' | 'BALANCED' | 'AGGRESSIVE';
+      ytOptimizedCuepointConfig?: 'LOW' | 'MEDIUM' | 'HIGH';
     };
     adsMonetizationStatus?: 'on' | 'off';
     eligibleForAdsMonetization?: boolean;
@@ -731,7 +731,7 @@ export class YoutubeService
         monetizationDetails.cuepointSchedule = {
           ...moneyInfo.cuepointSchedule,
           enabled: params.monetizationEnabled,
-          ytOptimizedCuepointConfig: 'BALANCED',
+          ytOptimizedCuepointConfig: 'MEDIUM',
           creatorCuepointConfig: undefined,
         };
       }
