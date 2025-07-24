@@ -63,6 +63,7 @@ export default function StudioEditor() {
 
     const subscription = AudioService.audioNotificationUpdated.subscribe(notificationType => {
       if (timeoutHandles[notificationType]) return;
+      if (!StreamingService.views.isStreaming && !StreamingService.views.isRecording) return;
 
       timeoutHandles[notificationType] = setTimeout(() => {
         timeoutHandles[notificationType] = undefined;
