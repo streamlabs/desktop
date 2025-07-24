@@ -58,7 +58,7 @@ function signXcodeApps(context) {
   const installerPath = `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Frameworks/slobs-virtual-cam-installer.app`;
   console.log(`Signing: ${installerPath}`);
   cp.execSync(
-    `codesign --sign "Developer ID Application: ${context.packager.config.mac.identity}" ${entitlements} --options runtime --deep --force --verbose "${installerPath}"`,
+    `codesign --sign "Developer ID Application: ${context.packager.config.mac.identity}" ${entitlements} --options runtime,linker-signed --deep --force --verbose "${installerPath}"`,
   );
   // All files need to be writable for update to succeed on mac
   console.log(`Checking Writable: ${installerPath}`);
