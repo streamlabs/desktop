@@ -25,7 +25,7 @@
   "Show in folder": "Zobrazit ve složce",
   "Recordings": "Nahrávky",
   "Marker %{label} added at %{timestamp}": "Značka %{label} přidána %{timestamp}",
-  "File is too large to upload": "File is too large to upload",
-  "File type %{extension} is not supported": "File type %{extension} is not supported",
-  "Upload already in progress": "Upload already in progress"
+  "File is too large to upload": "Soubor je příliš velký na nahrání",
+  "File type %{extension} is not supported": "Typ souboru %{extension} není podporován",
+  "Upload already in progress": "Nahrávání již probíhá"
 }

@@ -24,5 +24,11 @@
   "Previous Slide": "上一张幻灯片",
   "Toggle Performance Mode": "切换性能模式",
   "Skip Alert": "跳过通知",
-  "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop.": "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop."
+  "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop.": "若要在 Mac 上使用热键，前往“系统设置”>“安全”>“辅助功能”，为 Streamlabs Desktop 开启。",
+  "Start Virtual Camera": "启动虚拟摄像头",
+  "Stop Virtual Camera": "停止虚拟摄像头",
+  "This scene has not been converted to Dual Output. Please make the scene active to add vertical sources.": "此场景尚未转换为 Dual Output。使场景处于活动状态，以添加垂直源。",
+  "Learn more here": "点击此处了解更多",
+  "<color>Pro tip:</color> set Markers in Hotkeys settings to timestamp your recordings. <link>Set up here</link>": "<color>专业建议：</color>在热键设置中设置标记，为录制打上时间戳。<link>在此设置</link>",
+  "Markers": "标记"
 }

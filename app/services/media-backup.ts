@@ -189,8 +189,12 @@ export class MediaBackupService extends StatefulService<IMediaBackupState> {
     } catch (e: unknown) {
       // At the moment, we don't surface sync errors to the user
       if (this.validateSyncLock(localId, syncLock)) {
+        // TODO: index
+        // @ts-ignore
         if (e['status'] !== 404) {
           // Don't log 404s, these are somewhat expected.
+          // TODO: index
+          // @ts-ignore
           console.error(`[Media Backup] Ran out of retries fetching data ${e['body']}`);
         }
         this.UPDATE_FILE(localId, { status: EMediaFileStatus.Synced });
@@ -235,6 +239,8 @@ export class MediaBackupService extends StatefulService<IMediaBackupState> {
         this.downloadFile(data.url, serverId, data.filename),
       );
     } catch (e: unknown) {
+      // TODO: index
+      // @ts-ignore
       console.error(`[Media Backup] Error downloading file: ${e['body']}`);
 
       // At the moment, we don't surface sync errors to the user

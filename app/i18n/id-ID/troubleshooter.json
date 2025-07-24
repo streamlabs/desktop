@@ -22,5 +22,6 @@
   "Enable VSync in your game": "Aktifkan VSync di game Anda",
   "Disable FreeSync or GSync in your Driver": "Nonaktifkan FreeSync atau GSync di Driver Anda",
   "Lower graphics settings until you stop lagging frames": "Turunkan pengaturan grafis hingga frame tidak tertunda lagi",
-  "Disable hardware decoding under any media sources(This will slightly increase cpu over gpu)": "Nonaktifkan hardware decoding dalam sumber media apa pun (Hal ini akan sedikit meningkatkan cpu atas gpu)"
+  "Disable hardware decoding under any media sources(This will slightly increase cpu over gpu)": "Nonaktifkan hardware decoding dalam sumber media apa pun (Hal ini akan sedikit meningkatkan cpu atas gpu)",
+  "CPU usage threshold in Dual Output mode": "CPU usage threshold in Dual Output mode"
 }

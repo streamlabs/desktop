@@ -176,8 +176,13 @@ export class SceneItemsNode extends Node<ISchema, {}> {
 
     const promises: Promise<void>[] = [];
 
+    const sources = this.sourcesService.state.sources;
+
     this.data.items.forEach(item => {
       if (item.sceneNodeType === 'folder') return;
+      // prevent loading hotkeys for sources that failed to create obs inputs
+      if (!sources[item.sourceId]) return;
+
       const hotkeys = item.hotkeys;
       if (hotkeys) promises.push(hotkeys.load({ sceneItemId: item.id }));
     });

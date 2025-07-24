@@ -16,5 +16,14 @@
   "Assign Vertical Sources to Horizontal Display": "將垂直來源指派到水平顯示器",
   "The below will create a copy of the active scene collection, set the copy as the active collection, and then apply the function.": "下列項目會建立作用中場景集合的副本，將副本設定為作用中的集合，然後套用功能。",
   "Manage Dual Output Scene": "管理 Dual Output 場景",
-  "Unable to convert dual output collection.": "無法轉換 Dual Output 集合。"
+  "Unable to convert dual output collection.": "無法轉換 Dual Output 集合。",
+  "One or more scene items were removed because they are not supported": "已移除一個或多個場景項目，因為其不受支援",
+  "Scene items were removed because there was an error loading them: %{inputs}.\n\nPlease accept or reject permissions to view the Streamlabs Editor panel": "由於在載入場景項目時發生錯誤，因此其遭到移除：%{inputs}。\n\n請接受或拒絕查看 Streamlabs Editor 面板的權限",
+  "default_width": "default_width",
+  "default_height": "default_height",
+  "GameCapture.WindowInternalMode": "GameCapture.WindowInternalMode",
+  "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.",
+  "Show Components Library": "Show Components Library",
+  "Convert Dual Output Scene Collection": "Convert Dual Output Scene Collection",
+  "Repair Scene Collection": "Repair Scene Collection"
 }

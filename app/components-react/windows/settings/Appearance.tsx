@@ -109,6 +109,8 @@ export function AppearanceSettings() {
             id: app.id,
             name: app.manifest?.name,
             icon: app.manifest?.icon,
+            // TODO: index
+            // @ts-ignore
             isActive: displayedAppsStatus[app.id] ?? false,
           });
         }
@@ -185,7 +187,11 @@ export function AppearanceSettings() {
               label={menuTitles(EMenuItemKey.Editor)}
               layout="horizontal"
               onChange={() => toggleMenuItem(ENavName.TopNav, EMenuItemKey.Editor)}
-              value={menuItemStatus[EMenuItemKey.Editor]}
+              value={
+                // TODO: index
+                // @ts-ignore
+                menuItemStatus[EMenuItemKey.Editor]
+              }
               disabled={!isLoggedIn || compactView || currentTab === 'default'}
             />
             <SwitchInput
@@ -201,35 +207,55 @@ export function AppearanceSettings() {
               label={menuTitles(EMenuItemKey.StudioMode)}
               layout="horizontal"
               onChange={() => toggleMenuItem(ENavName.TopNav, EMenuItemKey.StudioMode)}
-              value={menuItemStatus[EMenuItemKey.StudioMode]}
+              value={
+                // TODO: index
+                // @ts-ignore
+                menuItemStatus[EMenuItemKey.StudioMode]
+              }
               disabled={!isLoggedIn || compactView}
             />
             <SwitchInput
               label={menuTitles(EMenuItemKey.LayoutEditor)}
               layout="horizontal"
               onChange={() => toggleMenuItem(ENavName.TopNav, EMenuItemKey.LayoutEditor)}
-              value={menuItemStatus[EMenuItemKey.LayoutEditor]}
+              value={
+                // TODO: index
+                // @ts-ignore
+                menuItemStatus[EMenuItemKey.LayoutEditor]
+              }
               disabled={!isLoggedIn || compactView}
             />
             <SwitchInput
               label={menuTitles(EMenuItemKey.Themes)}
               layout="horizontal"
               onChange={() => toggleMenuItem(ENavName.TopNav, EMenuItemKey.Themes)}
-              value={menuItemStatus[EMenuItemKey.Themes]}
+              value={
+                // TODO: index
+                // @ts-ignore
+                menuItemStatus[EMenuItemKey.Themes]
+              }
               disabled={!isLoggedIn || compactView}
             />
             <SwitchInput
               label={menuTitles(EMenuItemKey.Highlighter)}
               layout="horizontal"
               onChange={() => toggleMenuItem(ENavName.TopNav, EMenuItemKey.Highlighter)}
-              value={menuItemStatus[EMenuItemKey.Highlighter]}
+              value={
+                // TODO:
+                // @ts-ignore
+                menuItemStatus[EMenuItemKey.Highlighter]
+              }
               disabled={!isLoggedIn || compactView}
             />
             <SwitchInput
               label={menuTitles(EMenuItemKey.RecordingHistory)}
               layout="horizontal"
               onChange={() => toggleMenuItem(ENavName.TopNav, EMenuItemKey.RecordingHistory)}
-              value={menuItemStatus[EMenuItemKey.RecordingHistory]}
+              value={
+                // TODO:
+                // @ts-ignore
+                menuItemStatus[EMenuItemKey.RecordingHistory]
+              }
               disabled={!isLoggedIn || compactView}
             />
           </Col>
@@ -241,7 +267,11 @@ export function AppearanceSettings() {
                 label={menuTitles(EMenuItemKey.AppStore)}
                 layout="horizontal"
                 onChange={() => toggleMenuItem(ENavName.TopNav, EMenuItemKey.AppStore)}
-                value={menuItemStatus[EMenuItemKey.AppStore]}
+                value={
+                  // TODO:
+                  // @ts-ignore
+                  menuItemStatus[EMenuItemKey.AppStore]
+                }
                 disabled={!isLoggedIn || compactView}
               />
 

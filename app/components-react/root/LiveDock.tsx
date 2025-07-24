@@ -27,6 +27,7 @@ class LiveDockController {
   private youtubeService = Services.YoutubeService;
   private facebookService = Services.FacebookService;
   private trovoService = Services.TrovoService;
+  private kickService = Services.KickService;
   private tiktokService = Services.TikTokService;
   private userService = Services.UserService;
   private customizationService = Services.CustomizationService;
@@ -181,6 +182,7 @@ class LiveDockController {
     if (this.platform === 'youtube') url = this.youtubeService.streamPageUrl;
     if (this.platform === 'facebook') url = this.facebookService.streamPageUrl;
     if (this.platform === 'trovo') url = this.trovoService.streamPageUrl;
+    if (this.platform === 'kick') url = this.kickService.streamPageUrl;
     if (this.platform === 'tiktok') url = this.tiktokService.streamPageUrl;
     remote.shell.openExternal(url);
   }
@@ -190,6 +192,7 @@ class LiveDockController {
     if (this.platform === 'youtube') url = this.youtubeService.dashboardUrl;
     if (this.platform === 'facebook') url = this.facebookService.streamDashboardUrl;
     if (this.platform === 'tiktok') url = this.tiktokService.dashboardUrl;
+    if (this.platform === 'kick') url = this.kickService.dashboardUrl;
     remote.shell.openExternal(url);
   }
 
@@ -343,44 +346,11 @@ function LiveDock(p: { onLeft: boolean }) {
 
   const chat = useMemo(() => {
     const primaryChat = Services.UserService.state.auth!.primaryPlatform;
-    const showTiktokInfo =
-      visibleChat === 'tiktok' || (visibleChat === 'default' && primaryChat === 'tiktok');
-
-    if (showTiktokInfo) {
-      return <TikTokChatInfo />;
-    }
 
     const showInstagramInfo = primaryChat === 'instagram';
     if (showInstagramInfo) {
       // FIXME: empty tab
       return <></>;
-    }
-
-    const showKickInfo =
-      visibleChat === 'kick' || (visibleChat === 'default' && primaryChat === 'kick');
-    if (showKickInfo) {
-      return (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            marginTop: '30px',
-          }}
-        >
-          <div style={{ marginBottom: '5px' }}>
-            {$t('Access chat for Kick in the Stream Dashboard.')}
-          </div>
-          <Button
-            style={{
-              width: '200px',
-              marginBottom: '10px',
-            }}
-            onClick={() => remote.shell.openExternal(Services.KickService.chatUrl)}
-          >
-            {$t('Open Kick Chat')}
-          </Button>
-        </div>
-      );
     }
 
     return (
@@ -446,7 +416,7 @@ function LiveDock(p: { onLeft: boolean }) {
                     <i onClick={() => ctrl.showEditStreamInfo()} className="icon-edit" />
                   </Tooltip>
                 )}
-                {isPlatform(['youtube', 'facebook', 'trovo', 'tiktok']) && isStreaming && (
+                {isPlatform(['youtube', 'facebook', 'trovo', 'tiktok', 'kick']) && isStreaming && (
                   <Tooltip
                     title={$t('View your live stream in a web browser')}
                     placement="right"
@@ -467,7 +437,7 @@ function LiveDock(p: { onLeft: boolean }) {
                 )}
               </div>
               <div className="flex">
-                {(isPlatform(['twitch', 'trovo', 'facebook']) ||
+                {(isPlatform(['twitch', 'trovo', 'facebook', 'kick']) ||
                   (isPlatform(['youtube', 'twitter']) && isStreaming) ||
                   (isPlatform(['tiktok']) && isRestreaming)) && (
                   <a onClick={() => ctrl.refreshChat()}>{$t('Refresh Chat')}</a>

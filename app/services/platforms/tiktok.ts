@@ -41,6 +41,7 @@ import { UsageStatisticsService } from 'services/usage-statistics';
 import { DiagnosticsService } from 'services/diagnostics';
 import { ENotificationType, NotificationsService } from 'services/notifications';
 import { JsonrpcService } from '../api/jsonrpc';
+import { DismissablesService, EDismissable } from 'services/dismissables';
 
 interface ITikTokServiceState extends IPlatformState {
   settings: ITikTokStartStreamSettings;
@@ -50,6 +51,7 @@ interface ITikTokServiceState extends IPlatformState {
   gameName: string;
   dateDenied?: string | null;
   audienceControlsInfo: ITikTokAudienceControls;
+  chatUrl: string;
 }
 
 interface ITikTokStartStreamSettings {
@@ -58,7 +60,7 @@ interface ITikTokStartStreamSettings {
   title: string;
   liveScope: TTikTokLiveScopeTypes;
   game: string;
-  display: TDisplayType;
+  display?: TDisplayType;
   audienceType?: string;
   video?: IVideo;
   mode?: TOutputOrientation;
@@ -74,7 +76,6 @@ export interface ITikTokStartStreamOptions {
   title: string;
   serverUrl: string;
   streamKey: string;
-  display: TDisplayType;
   game: string;
   audienceType?: string;
 }
@@ -93,17 +94,18 @@ export class TikTokService
     ...BasePlatformService.initialState,
     settings: {
       title: '',
-      display: 'vertical',
       liveScope: 'denied',
       mode: 'portrait',
       serverUrl: '',
       streamKey: '',
+      display: 'vertical',
       game: '',
     },
     broadcastId: '',
     username: '',
     gameName: '',
     audienceControlsInfo: { disable: true, audienceType: '0', types: [] },
+    chatUrl: '',
   };
 
   @Inject() windowsService: WindowsService;
@@ -111,6 +113,7 @@ export class TikTokService
   @Inject() private usageStatisticsService: UsageStatisticsService;
   @Inject() private notificationsService: NotificationsService;
   @Inject() private jsonrpcService: JsonrpcService;
+  @Inject() private dismissablesService: DismissablesService;
 
   readonly apiBase = 'https://open.tiktokapis.com/v2';
   readonly platform = 'tiktok';
@@ -195,7 +198,7 @@ export class TikTokService
     return this.state.audienceControlsInfo;
   }
 
-  async beforeGoLive(goLiveSettings: IGoLiveSettings, display?: TDisplayType) {
+  async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     // return an approved dummy account when testing
     if (Utils.isTestMode() && this.getHasScope('approved')) {
       await this.testBeforeGoLive(goLiveSettings);
@@ -203,7 +206,6 @@ export class TikTokService
     }
 
     const ttSettings = getDefined(goLiveSettings.platforms.tiktok);
-    const context = display ?? ttSettings?.display;
 
     if (this.getHasScope('approved')) {
       // update server url and stream key if handling streaming via API
@@ -213,7 +215,11 @@ export class TikTokService
       // if the stream did not start successfully, prevent going live
       if (!streamInfo?.id) {
         await this.handleOpenLiveManager();
-        throwStreamError('TIKTOK_GENERATE_CREDENTIALS_FAILED');
+        throwStreamError('TIKTOK_GENERATE_CREDENTIALS_FAILED', { status: 406, platform: 'tiktok' });
+      }
+
+      if (streamInfo?.chat_url) {
+        this.SET_CHAT_URL(streamInfo.chat_url);
       }
 
       ttSettings.serverUrl = streamInfo.rtmp;
@@ -341,7 +347,7 @@ export class TikTokService
         this.SET_LIVE_SCOPE('relog');
       } else if (hasStream) {
         // show error stream exists
-        throwStreamError('TIKTOK_STREAM_ACTIVE', e as any, details);
+        throwStreamError('TIKTOK_STREAM_ACTIVE', { ...(e as any), platform: 'tiktok' }, details);
       }
 
       return Promise.reject(e);
@@ -377,7 +383,10 @@ export class TikTokService
 
     return jfetch<ITikTokStartStreamResponse>(request).catch((e: unknown) => {
       if (e instanceof StreamError) {
-        throwStreamError('TIKTOK_GENERATE_CREDENTIALS_FAILED', e as any);
+        throwStreamError('TIKTOK_GENERATE_CREDENTIALS_FAILED', {
+          ...(e as any),
+          platform: 'tiktok',
+        });
       }
 
       const error = this.handleStartStreamError((e as ITikTokError)?.status);
@@ -468,6 +477,10 @@ export class TikTokService
         return EPlatformCallResult.TikTokStreamScopeMissing;
       }
 
+      if (status?.info.chatUrl) {
+        this.SET_CHAT_URL(status.info.chatUrl);
+      }
+
       // clear any leftover server url or stream key
       if (this.state.settings?.serverUrl || this.state.settings?.streamKey) {
         await this.putChannelInfo({
@@ -537,9 +550,9 @@ export class TikTokService
         games.push(this.defaultGame);
         return games;
       })
-      .catch(e => {
+      .catch((e: unknown) => {
         console.error('Error fetching TikTok categories: ', e);
-        return [];
+        return [] as IGame[];
       });
   }
 
@@ -557,7 +570,7 @@ export class TikTokService
     console.debug('TikTok stream status: ', status);
 
     if (status === EPlatformCallResult.TikTokScopeOutdated) {
-      throwStreamError('TIKTOK_SCOPE_OUTDATED');
+      throwStreamError('TIKTOK_SCOPE_OUTDATED', { status: 401, platform: 'tiktok' });
     }
 
     this.SET_PREPOPULATED(true);
@@ -613,7 +626,7 @@ export class TikTokService
   }
 
   get chatUrl(): string {
-    return '';
+    return `${this.state.chatUrl}?lang=${this.locale}`;
   }
 
   // url for the live monitor
@@ -677,7 +690,7 @@ export class TikTokService
     // and have streamed at least once in the past 30 days
     const createdAt = new Date(this.userService.state.createdAt);
     const today = new Date(Date.now());
-    const dateDiff = (createdAt.getTime() - today.getTime()) / (1000 * 3600 * 24);
+    const dateDiff = (today.getTime() - createdAt.getTime()) / (1000 * 3600 * 24);
     const isOldAccount = dateDiff >= 30;
     const hasRecentlyStreamed = this.diagnosticsService.hasRecentlyStreamed;
 
@@ -698,10 +711,38 @@ export class TikTokService
 
     const today = new Date(Date.now());
     const deniedDate = new Date(this.state.dateDenied);
-    const deniedDateDiff = (deniedDate.getTime() - today.getTime()) / (1000 * 3600 * 24);
+    const deniedDateDiff = (today.getTime() - deniedDate.getTime()) / (1000 * 3600 * 24);
     if (this.denied && deniedDateDiff >= 30) return true;
 
     return false;
+  }
+
+  handleApplyPrompt() {
+    if (!this.promptApply && !this.promptReapply) return;
+
+    const message = this.promptApply
+      ? $t('You may be eligible for TikTok Live Access. Apply here.')
+      : $t('Reapply for TikTok Live Permission. Reapply here.');
+
+    this.notificationsService.actions.push({
+      type: ENotificationType.SUCCESS,
+      lifeTime: 10000,
+      message,
+      action: this.jsonrpcService.createRequest(
+        Service.getResourceId(this),
+        'pushApplyNotification',
+      ),
+    });
+  }
+
+  pushApplyNotification() {
+    const dismissable = this.promptApply ? EDismissable.TikTokEligible : EDismissable.TikTokReapply;
+
+    remote.shell.openExternal(this.applicationUrl);
+    this.dismissablesService.actions.dismiss(dismissable);
+    this.usageStatisticsService.recordAnalyticsEvent('TikTokApplyPrompt', {
+      component: 'Notifications',
+    });
   }
 
   convertScope(scope: number, applicationStatus?: string): TTikTokLiveScopeTypes {
@@ -851,5 +892,10 @@ export class TikTokService
   @mutation()
   protected SET_AUDIENCE_CONTROLS(audienceControlsInfo: ITikTokAudienceControls) {
     this.state.audienceControlsInfo = audienceControlsInfo;
+  }
+
+  @mutation()
+  protected SET_CHAT_URL(chatUrl: string) {
+    this.state.chatUrl = chatUrl;
   }
 }

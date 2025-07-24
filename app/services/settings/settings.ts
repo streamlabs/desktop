@@ -131,8 +131,6 @@ export interface ISettingsSubCategory {
   parameters: TObsFormData;
 }
 
-declare type TSettingsFormData = Dictionary<ISettingsSubCategory[]>;
-
 export enum ESettingsCategoryType {
   Untabbed = 0,
   Tabbed = 1,
@@ -152,10 +150,11 @@ class SettingsViews extends ViewHandler<ISettingsServiceState> {
     const settingsValues: Partial<ISettingsValues> = {};
 
     for (const groupName in this.state) {
-      this.state[groupName].formData.forEach(subGroup => {
+      this.state[groupName].formData.forEach((subGroup: ISettingsSubCategory) => {
         subGroup.parameters.forEach(parameter => {
-          settingsValues[groupName] = settingsValues[groupName] || {};
-          settingsValues[groupName][parameter.name] = parameter.value;
+          (settingsValues as any)[groupName] =
+            settingsValues[groupName as keyof ISettingsValues] || {};
+          (settingsValues as any)[groupName][parameter.name] = parameter.value;
         });
       });
     }
@@ -261,6 +260,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   private videoEncodingOptimizationService: VideoEncodingOptimizationService;
 
   audioRefreshed = new Subject();
+  settingsUpdated = new Subject<DeepPartial<ISettingsValues>>();
 
   get views() {
     return new SettingsViews(this.state);
@@ -281,7 +281,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     }
   }
 
-  private fetchSettingsFromObs(categoryName: string): ISettingsCategory {
+  private fetchSettingsFromObs(categoryName: keyof ISettingsServiceState): ISettingsCategory {
     const settingsMetadata = obs.NodeObs.OBS_settings_getSettings(categoryName);
     let settings = settingsMetadata.data;
     if (!settings) settings = [];
@@ -344,10 +344,11 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
    */
   loadSettingsIntoStore() {
     // load configuration from nodeObs to state
-    const settingsFormData = {};
-    this.getCategories().forEach(categoryName => {
+    const settingsFormData = {} as ISettingsServiceState;
+    this.getCategories().forEach((categoryName: keyof ISettingsServiceState) => {
       settingsFormData[categoryName] = this.fetchSettingsFromObs(categoryName);
     });
+
     this.SET_SETTINGS(settingsFormData);
   }
 
@@ -397,6 +398,8 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     let categories: string[] = obs.NodeObs.OBS_settings_getListCategories();
     // insert 'Multistreaming' after 'General'
     categories.splice(1, 0, 'Multistreaming');
+    // Deleting 'Virtual Webcam' category to add it below to position properly
+    categories = categories.filter(category => category !== 'Virtual Webcam');
     categories = categories.concat([
       'Scene Collections',
       'Notifications',
@@ -481,7 +484,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
    * Set an individual setting value
    * @remark When setting video settings, use the v2 video settings service.
    */
-  setSettingValue(category: string, name: string, value: TObsValue) {
+  setSettingValue(category: keyof ISettingsServiceState, name: string, value: TObsValue) {
     const newSettings = this.patchSetting(this.fetchSettingsFromObs(category).formData, name, {
       value,
     });
@@ -567,7 +570,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
    * @param forceApplyCategory - name of property to force apply settings.
    */
   setSettings(
-    categoryName: string,
+    categoryName: keyof ISettingsServiceState,
     settingsData: ISettingsSubCategory[],
     forceApplyCategory?: string,
   ) {
@@ -602,7 +605,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     // This function represents a cleaner API we would like to have
     // in the future.
 
-    Object.keys(patch).forEach(categoryName => {
+    Object.keys(patch).forEach((categoryName: keyof ISettingsValues) => {
       const category: Dictionary<any> = patch[categoryName];
       const formSubCategories = this.fetchSettingsFromObs(categoryName).formData;
 
@@ -617,6 +620,8 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
       });
 
       this.setSettings(categoryName, formSubCategories);
+
+      this.settingsUpdated.next(patch);
     });
   }
 
@@ -657,8 +662,6 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   }
 
   private ensureValidEncoder() {
-    if (getOS() === OS.Mac) return;
-
     const encoderSetting: IObsListInput<string> =
       this.findSetting(this.state.Output.formData, 'Streaming', 'Encoder') ??
       this.findSetting(this.state.Output.formData, 'Streaming', 'StreamEncoder');
@@ -683,6 +686,14 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
           'Your stream encoder has been reset to Software (x264). This can be caused by out of date graphics drivers. Please update your graphics drivers to continue using hardware encoding.',
       });
     }
+  }
+
+  isEnhancedBroadcasting() {
+    return obs.NodeObs.OBS_settings_isEnhancedBroadcasting();
+  }
+
+  setEnhancedBroadcasting(enable: boolean) {
+    obs.NodeObs.OBS_settings_setEnhancedBroadcasting(enable);
   }
 
   @mutation()

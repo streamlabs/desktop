@@ -34,5 +34,8 @@
   "Only Me": "Solo yo",
   "Do not change privacy settings": "No cambiar ajustes de privacidad",
   "Install %{overlayName}": "Instalar %{overlayName}",
-  "Please note that while you can schedule streams to Facebook, some will not appear on this calendar due to API limitations": "Ten en cuenta que, aunque puedes programar streams para Facebook, algunas no aparecerán en este calendario por limitaciones de API"
+  "Please note that while you can schedule streams to Facebook, some will not appear on this calendar due to API limitations": "Ten en cuenta que, aunque puedes programar streams para Facebook, algunas no aparecerán en este calendario por limitaciones de API",
+  "Your account is not eligible to stream on Facebook. Click to learn more.": "Tu cuenta no cumple los requisitos para transmitir en Facebook. Haz clic para obtener más información",
+  "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers": "Tu perfil debe tener al menos 60 días de antigüedad y tu página debe tener al menos 100 seguidores",
+  "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers. Click the notification to learn more.": "Para poder hacer en directo, tu perfil debe tener al menos 60 días de antigüedad y tu página debe tener al menos 100 seguidores. Haz clic en la notificación para obtener más información."
 }

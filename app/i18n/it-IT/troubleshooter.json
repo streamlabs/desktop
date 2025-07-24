@@ -22,5 +22,6 @@
   "Enable VSync in your game": "Abilita il VSync all'interno del gioco",
   "Disable FreeSync or GSync in your Driver": "Disattiva FreeSync o GSync nei driver della tua scheda video",
   "Lower graphics settings until you stop lagging frames": "Abbassa le impostazioni grafiche fino a quando non si elimina il ritardo dei frame",
-  "Disable hardware decoding under any media sources(This will slightly increase cpu over gpu)": "Disattiva la codifica hardware per ogni risorsa multimediale (questo aumenterà leggermente l'utilizzo della cpu e libererà la gpu)"
+  "Disable hardware decoding under any media sources(This will slightly increase cpu over gpu)": "Disattiva la codifica hardware per ogni risorsa multimediale (questo aumenterà leggermente l'utilizzo della cpu e libererà la gpu)",
+  "CPU usage threshold in Dual Output mode": "CPU usage threshold in Dual Output mode"
 }

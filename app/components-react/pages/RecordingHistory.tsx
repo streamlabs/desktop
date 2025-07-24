@@ -6,7 +6,7 @@ import { $t } from 'services/i18n';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import styles from './RecordingHistory.m.less';
 import AutoProgressBar from 'components-react/shared/AutoProgressBar';
-import { GetSLID } from 'components-react/highlighter/StorageUpload';
+import { GetSLID } from 'components-react/highlighter/Export/StorageUpload';
 import { ENotificationType } from 'services/notifications';
 import Scrollable from 'components-react/shared/Scrollable';
 import { Services } from '../service-provider';
@@ -17,8 +17,12 @@ import uuid from 'uuid/v4';
 import { EMenuItemKey } from 'services/side-nav';
 import { $i } from 'services/utils';
 import { IRecordingEntry } from 'services/recording-mode';
-import { EAiDetectionState, EHighlighterView } from 'services/highlighter';
 import { EAvailableFeatures } from 'services/incremental-rollout';
+import { EAiDetectionState, EGame } from 'services/highlighter/models/ai-highlighter.models';
+import {
+  EHighlighterView,
+  ITempRecordingInfo,
+} from 'services/highlighter/models/highlighter.models';
 
 interface IRecordingHistoryStore {
   showSLIDModal: boolean;
@@ -64,10 +68,14 @@ class RecordingHistoryController {
     );
   }
 
+  get highlighterVersion() {
+    return this.HighlighterService.views.highlighterVersion;
+  }
+
   get uploadOptions() {
     const opts = [
       {
-        label: `${$t('Get highlights (Fortnite only)')}`,
+        label: `${$t('Get highlights')}`,
         value: 'highlighter',
         icon: 'icon-highlighter',
       },
@@ -133,13 +141,19 @@ class RecordingHistoryController {
     }
     if (platform === 'highlighter') {
       if (this.aiDetectionInProgress) return;
-      this.HighlighterService.actions.flow(recording.filename, {
-        game: 'forntnite',
-        id: 'rec_' + uuid(),
-      });
+
+      const tempRecordingInfo: ITempRecordingInfo = {
+        recordingPath: recording.filename,
+        streamInfo: { id: 'rec_' + uuid(), game: EGame.UNSET },
+        source: 'recordings-tab',
+      };
+      this.HighlighterService.setTempRecordingInfo(tempRecordingInfo);
+
       this.NavigationService.actions.navigate(
         'Highlighter',
-        { view: EHighlighterView.STREAM },
+        {
+          view: EHighlighterView.STREAM,
+        },
         EMenuItemKey.Highlighter,
       );
       return;
@@ -200,26 +214,39 @@ export default function RecordingHistoryPage() {
 export function RecordingHistory() {
   const controller = useController(RecordingHistoryCtx);
   const { formattedTimestamp, showFile, handleSelect, postError } = controller;
-  const aiHighlighterEnabled = Services.IncrementalRolloutService.views.featureIsEnabled(
-    EAvailableFeatures.aiHighlighter,
-  );
-  const { uploadInfo, uploadOptions, recordings, hasSLID, aiDetectionInProgress } = useVuex(() => ({
+  const aiHighlighterFeatureEnabled = Services.HighlighterService.aiHighlighterFeatureEnabled;
+  const {
+    uploadInfo,
+    uploadOptions,
+    recordings,
+    hasSLID,
+    aiDetectionInProgress,
+    highlighterVersion,
+  } = useVuex(() => ({
     recordings: controller.recordings,
     aiDetectionInProgress: controller.aiDetectionInProgress,
     uploadOptions: controller.uploadOptions,
     uploadInfo: controller.uploadInfo,
     hasSLID: controller.hasSLID,
+    highlighterVersion: controller.highlighterVersion,
   }));
 
   useEffect(() => {
+    let isMounted = true;
+
     if (
       uploadInfo.error &&
       typeof uploadInfo.error === 'string' &&
-      // We don't want to surface unexpected TS errors to the user
       !/TypeError/.test(uploadInfo.error)
     ) {
-      postError(uploadInfo.error);
+      if (isMounted) {
+        postError(uploadInfo.error);
+      }
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [uploadInfo.error]);
 
   function openMarkersSettings() {
@@ -231,7 +258,10 @@ export function RecordingHistory() {
       <span className={styles.actionGroup}>
         {uploadOptions
           .map(option => {
-            if (option.value === 'highlighter' && !aiHighlighterEnabled) {
+            if (
+              option.value === 'highlighter' &&
+              (!aiHighlighterFeatureEnabled || highlighterVersion === '')
+            ) {
               return null;
             }
             return (
@@ -277,7 +307,11 @@ export function RecordingHistory() {
             <div className={styles.recording} key={recording.timestamp}>
               <span style={{ marginRight: '8px' }}>{formattedTimestamp(recording.timestamp)}</span>
               <Tooltip title={$t('Show in folder')}>
-                <span onClick={() => showFile(recording.filename)} className={styles.filename}>
+                <span
+                  data-test="filename"
+                  onClick={() => showFile(recording.filename)}
+                  className={styles.filename}
+                >
                   {recording.filename}
                 </span>
               </Tooltip>

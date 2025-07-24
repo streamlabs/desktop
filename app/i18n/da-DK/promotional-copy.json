@@ -1,6 +1,6 @@
 {
   "Overlay, Widget, and Site Themes": "Overlay, widget og temaer til websted",
-  "Fully customize your stream and your website to represent your brand; or pick from thousands of our pre-made themes. Either way, your stream will look amazing and it's all included with Ultra.": "Tilpas din stream og dit websted fuldt ud for at repræsentere dit brand, eller vælg blandt tusindvis af vores temaer. Uanset hvad, vil din stream vil se fantastisk ud, og det hele er inkluderet i Ultra.",
+  "Fully customize your stream and your website to represent your brand; or pick from thousands of our pre-made overlays. Either way, your stream will look amazing and it's all included with Ultra.": "Tilpas din stream og dit websted fuldt ud for at repræsentere dit brand, eller vælg blandt tusindvis af færdiglavede overlays. Uanset hvad, vil din stream vil se fantastisk ud, og det hele er inkluderet i Ultra.",
   "View Themes": "Se temaer",
   "Every App is FREE": "Hver app er GRATIS",
   "We've curated a list of diverse and feature rich applications to give you more control, automation, better analytics, and new ways to interact with your audience.": "Vi har samlet en liste med forskellige programmer, der indeholder mange funktioner, så du får mere kontrol, automatisering, bedre analyse og nye måder at interagere med dit publikum.",
@@ -71,5 +71,8 @@
   "1 Hour Videos + 250GB Storage + More": "1 times videoer, 250 GB lagerplads og meget mere",
   "Highest Profit Margins": "Højeste avancer",
   "%{monthlyPrice}/mo or %{yearlyPrice}/year": "%{monthlyPrice}pr. mdr eller %{yearlyPrice}pr. år",
-  "Text-based editing of VOD content": "Text-based editing of VOD content"
+  "Text-based editing of VOD content": "Tekstbaseret redigering af VOD-indhold",
+  "Polish your videos with text-based and AI powered Podcast Editor": "Finpuds dine videoer med den tekstbaserede og AI-drevne Podcast Editor",
+  "Turn your videos into mobile-friendly short-form TikToks, Reels, and Shorts with Cross Clip": "Gør dine videoer til mobilvenlige TikToks, Reels og Shorts i kort format med Cross Clip",
+  "Edit video professionally from your browser with Video Editor": "Rediger video på professionel vis fra din browser med Video Editor"
 }

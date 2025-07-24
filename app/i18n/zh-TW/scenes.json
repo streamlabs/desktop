@@ -3,6 +3,7 @@
   "The scene name is required": "需要場景名稱",
   "Please enter the name of the scene": "請輸入場景名稱",
   "Manage Scene Collections": "管理場景組合",
+  "Create Scene Collection": "建立場景組合",
   "There needs to be at least one scene.": "至少需要一個場景。",
   "Projector:": "投影器：",
   "Projector: Output": "投影器：輸出",
@@ -56,5 +57,13 @@
   "Arrange sources here for a vertical scene layout.": "在此處將來源安排為垂直場景配置。",
   "Arrange sources here for a horizontal scene layout.": "在此處將來源安排為水平場景配置。",
   "Toggle Dual Output Mode.": "切換 Dual Output 模式。",
-  "Cannot hide dual output toggles in dual output mode.": "在 Dual Output 模式中無法隱藏 Dual Output 切換開關。"
+  "Cannot hide dual output toggles in dual output mode.": "在 Dual Output 模式中無法隱藏 Dual Output 切換開關。",
+  "Choose a template from our overlay library": "從我們的疊層庫中選擇範本",
+  "Log in to choose a template from our overlay library": "登入以從我們的疊層庫中選擇範本",
+  "Loading scene...": "正在載入場景……",
+  "Import from OBS": "從 OBS 匯入",
+  "Import from Twitch": "從 Twitch 匯入",
+  "Import from Twitch Studio": "從 Twitch Studio 匯入",
+  "Load existing scenes from Twitch Studio": "從 Twitch Studio 載入現有場景",
+  "Start Fresh": "重新開始"
 }

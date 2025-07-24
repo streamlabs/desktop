@@ -6,7 +6,6 @@ import { TPlatform } from 'services/platforms';
 import { EPlaceType } from 'services/editor-commands/commands/reorder-nodes';
 import { EditorCommandsService } from 'services/editor-commands';
 import { Subject } from 'rxjs';
-import { TOutputOrientation } from 'services/restream';
 import { IVideoInfo } from 'obs-studio-node';
 import { ICustomStreamDestination, StreamSettingsService } from 'services/settings/streaming';
 import {
@@ -17,14 +16,10 @@ import { UserService } from 'services/user';
 import { SelectionService, Selection } from 'services/selection';
 import { StreamingService } from 'services/streaming';
 import { SettingsService } from 'services/settings';
-import { SourcesService, TSourceType } from 'services/sources';
-import { WidgetsService, WidgetType } from 'services/widgets';
 import { RunInLoadingMode } from 'services/app/app-decorators';
 import compact from 'lodash/compact';
 import invert from 'lodash/invert';
 import forEachRight from 'lodash/forEachRight';
-import { byOS, OS } from 'util/operating-systems';
-import { DefaultHardwareService } from 'services/hardware/default-hardware';
 
 interface IDisplayVideoSettings {
   horizontal: IVideoInfo;
@@ -38,6 +33,7 @@ interface IDualOutputServiceState {
   dualOutputMode: boolean;
   videoSettings: IDisplayVideoSettings;
   isLoading: boolean;
+  recording: TDisplayType[];
 }
 
 enum EOutputDisplayType {
@@ -55,7 +51,6 @@ export type TDisplayDestinations = {
 
 class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
   @Inject() private scenesService: ScenesService;
-  @Inject() private videoSettingsService: VideoSettingsService;
   @Inject() private sceneCollectionsService: SceneCollectionsService;
   @Inject() private streamingService: StreamingService;
 
@@ -150,6 +145,10 @@ class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
     return this.state.videoSettings;
   }
 
+  get recording() {
+    return this.state.recording;
+  }
+
   get activeDisplays() {
     return this.state.videoSettings.activeDisplays;
   }
@@ -164,26 +163,6 @@ class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
 
   get onlyVerticalDisplayActive() {
     return this.activeDisplays.vertical && !this.activeDisplays.horizontal;
-  }
-
-  getPlatformDisplay(platform: TPlatform) {
-    return this.streamingService.views.settings.platforms[platform]?.display;
-  }
-
-  getPlatformContext(platform: TPlatform) {
-    const display = this.getPlatformDisplay(platform);
-    return this.videoSettingsService.state[display];
-  }
-
-  getPlatformMode(platform: TPlatform): TOutputOrientation {
-    const display = this.getPlatformDisplay(platform);
-    if (!display) return 'landscape';
-    return display === 'horizontal' ? 'landscape' : 'portrait';
-  }
-
-  getMode(display?: TDisplayType): TOutputOrientation {
-    if (!display) return 'landscape';
-    return display === 'horizontal' ? 'landscape' : 'portrait';
   }
 
   getHorizontalNodeId(verticalNodeId: string, sceneId?: string) {
@@ -224,14 +203,6 @@ class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
     // return horizontal by default because if the sceneNodeMap doesn't exist
     // dual output has never been toggled on with this scene active
     return 'horizontal';
-  }
-
-  getPlatformContextName(platform?: TPlatform): TOutputOrientation {
-    return this.getPlatformDisplay(platform) === 'horizontal' ? 'landscape' : 'portrait';
-  }
-
-  getDisplayContextName(display: TDisplayType): TOutputOrientation {
-    return display === 'horizontal' ? 'landscape' : 'portrait';
   }
 
   /**
@@ -302,6 +273,7 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
         vertical: false,
       },
     },
+    recording: ['horizontal'],
     isLoading: false,
   };
 

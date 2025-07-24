@@ -1,6 +1,6 @@
 {
   "Overlay, Widget, and Site Themes": "Superpositions, widget et thèmes de site",
-  "Fully customize your stream and your website to represent your brand; or pick from thousands of our pre-made themes. Either way, your stream will look amazing and it's all included with Ultra.": "Personnalisez entièrement votre stream et votre site Web à l'image de votre marque ou sélectionnez l'un des milliers de thèmes créés pour vous. Quel que soit votre choix, votre stream aura une apparence exceptionnelle, et tout est inclus avec Ultra.",
+  "Fully customize your stream and your website to represent your brand; or pick from thousands of our pre-made overlays. Either way, your stream will look amazing and it's all included with Ultra.": "Personnalise entièrement ton stream et ton site Web pour représenter ta marque ; ou choisisse parmi des milliers de nos overlays préfabriqués. Quel que soit ton choix, ton stream aura une apparence exceptionnelle, et tout est inclus avec Ultra.",
   "View Themes": "Afficher les thèmes",
   "Every App is FREE": "Chaque application est GRATUITE",
   "We've curated a list of diverse and feature rich applications to give you more control, automation, better analytics, and new ways to interact with your audience.": "Nous avons conservé une liste d’applications diverses dotées de nombreuses fonctions pour vous offrir davantage de contrôle, d’automatisation et de nouveaux moyens d’interagir avec votre public.",
@@ -66,10 +66,13 @@
   "Create Custom Videos with Watermark": "Créez des vidéos personnalisées avec un filigrane",
   "30 Minute Videos + 15GB Storage": "Vidéos de 30 minutes + stockage de 15 Go",
   "Design and Sell Custom Merch": "Concevez et vendez des objets personnalisés",
-  "YouTube Thumbnail Maker, Creator Sites": "Créateur de miniatures YouTube, Creator Sites",
+  "YouTube Thumbnail Maker, Creator Sites": "Créateur de miniatures YouTube, Créateur de sites",
   "No Watermark + 1080p/60fps + More": "Pas de filigrane + 1080p/60ips et bien plus encore",
   "1 Hour Videos + 250GB Storage + More": "1 heure de vidéos + 250 Go de stockage et bien plus encore",
   "Highest Profit Margins": "Marges bénéficiaires les plus élevées",
   "%{monthlyPrice}/mo or %{yearlyPrice}/year": "%{monthlyPrice} par mois ou %{yearlyPrice} par an",
-  "Text-based editing of VOD content": "Édition de texte pour le contenu VOD"
+  "Text-based editing of VOD content": "Édition de texte pour le contenu VOD",
+  "Polish your videos with text-based and AI powered Podcast Editor": "Optimise tes vidéos avec Podcast Editor basé sur le texte et alimenté par l’IA.",
+  "Turn your videos into mobile-friendly short-form TikToks, Reels, and Shorts with Cross Clip": "Transforme tes vidéos en TikToks courts, reels et courts métrages adaptés aux mobiles avec Cross Clip.",
+  "Edit video professionally from your browser with Video Editor": "Monte des vidéos de manière professionnelle depuis ton navigateur avec Video Editor"
 }

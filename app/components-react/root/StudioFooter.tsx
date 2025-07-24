@@ -4,7 +4,7 @@ import { EStreamQuality } from '../../services/performance';
 import { EStreamingState, EReplayBufferState, ERecordingState } from '../../services/streaming';
 import { Services } from '../service-provider';
 import { $t } from '../../services/i18n';
-import { useVuex } from '../hooks';
+import { useDebounce, useVuex } from '../hooks';
 import styles from './StudioFooter.m.less';
 import PerformanceMetrics from '../shared/PerformanceMetrics';
 import TestWidgets from './TestWidgets';
@@ -214,7 +214,7 @@ function RecordingButton() {
         >
           <button
             className={cx(styles.recordButton, 'record-button', { active: isRecording })}
-            onClick={toggleRecording}
+            onClick={useDebounce(200, toggleRecording)}
           >
             <span>
               {recordingStatus === ERecordingState.Stopping ? (

@@ -1,20 +1,24 @@
-import { TClip } from 'services/highlighter';
+import { TClip } from 'services/highlighter/models/highlighter.models';
 import { SCRUB_HEIGHT, SCRUB_WIDTH, SCRUB_FRAMES } from 'services/highlighter/constants';
 import React, { useState } from 'react';
 import { Services } from 'components-react/service-provider';
 import { BoolButtonInput } from 'components-react/shared/inputs/BoolButtonInput';
 import styles from './ClipPreview.m.less';
-import { Button } from 'antd';
+import { Button, Tooltip } from 'antd';
 import { $t } from 'services/i18n';
 import { isAiClip } from './utils';
-import { InputEmojiSection } from './InputEmojiSection';
 import { useVuex } from 'components-react/hooks';
+import ClipPreviewInfo from './ClipPreviewInfo';
+import { EGame } from 'services/highlighter/models/ai-highlighter.models';
+import * as remote from '@electron/remote';
 
 export default function ClipPreview(props: {
   clipId: string;
   streamId: string | undefined;
   emitShowTrim: () => void;
   emitShowRemove: () => void;
+  emitOpenFileInLocation: () => void;
+  game: EGame;
 }) {
   const { HighlighterService } = Services;
   const v = useVuex(() => ({
@@ -37,7 +41,7 @@ export default function ClipPreview(props: {
   }
 
   function setEnabled(enabled: boolean) {
-    HighlighterService.actions.enableClip(v.clip.path, enabled);
+    HighlighterService.actions.manuallyEnableClip(v.clip.path, enabled, props.streamId);
   }
 
   return (
@@ -103,31 +107,33 @@ export default function ClipPreview(props: {
                 }}
               >
                 {isAiClip(v.clip) ? (
-                  <InputEmojiSection
-                    clips={[v.clip]}
-                    includeRounds={false}
-                    includeDeploy={true}
-                    showCount={false}
-                    showDescription={false}
-                  />
+                  <ClipPreviewInfo clip={v.clip} game={props.game} />
                 ) : (
                   <div className={styles.highlighterIcon}>
                     <i className="icon-highlighter" />
                   </div>
                 )}
               </div>
-              {isAiClip(v.clip) && v.clip.aiInfo?.metadata?.round && (
-                <div className={styles.roundTag}>{`Round: ${v.clip.aiInfo.metadata.round}`}</div>
-              )}
             </div>
           </div>
           <div className={styles.previewClipBottomBar}>
             <Button size="large" className={styles.actionButton} onClick={props.emitShowRemove}>
               <i className="icon-trash" />
             </Button>
-            <Button size="large" className={styles.actionButton} onClick={props.emitShowTrim}>
-              <i className="icon-trim" /> {$t('Trim')}
-            </Button>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <Button size="large" className={styles.actionButton} onClick={props.emitShowTrim}>
+                <i className="icon-trim" style={{ marginRight: '8px' }} /> {$t('Trim')}
+              </Button>
+              <Tooltip title={$t('Open file location')} placement="top">
+                <Button
+                  size="large"
+                  className={styles.actionButton}
+                  onClick={props.emitOpenFileInLocation}
+                >
+                  <i className="icon-pop-out-2" />
+                </Button>
+              </Tooltip>
+            </div>
           </div>
         </div>
       </div>

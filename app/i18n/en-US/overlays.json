@@ -17,6 +17,8 @@
   "The below will create a copy of the active scene collection, set the copy as the active collection, and then apply the function.": "The below will create a copy of the active scene collection, set the copy as the active collection, and then apply the function.",
   "Manage Dual Output Scene": "Manage Dual Output Scene",
   "Unable to convert dual output collection.": "Unable to convert dual output collection.",
+  "One or more scene items were removed because they are not supported": "One or more scene items were removed because they are not supported",
+  "Scene items were removed because there was an error loading them: %{inputs}.\n\nPlease accept or reject permissions to view the Streamlabs Editor panel": "Scene items were removed because there was an error loading them: %{inputs}.\n\nPlease accept or reject permissions to view the Streamlabs Editor panel",
   "default_width": "default_width",
   "default_height": "default_height",
   "GameCapture.WindowInternalMode": "GameCapture.WindowInternalMode",

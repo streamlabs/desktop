@@ -26,5 +26,7 @@
   "Disable Message Animations": "Berichtanimaties uitschakelen",
   "Hide Characters": "Tekens verbergen",
   "Hide Common Chat Bots": "Veelgebruikte chatbots verbergen",
-  "Hide commands starting with `!`": "Opdrachten verbergen die starten met '!'"
+  "Hide commands starting with `!`": "Opdrachten verbergen die starten met '!'",
+  "Chat Notifications": "Chatmeldingen",
+  "Trigger a sound to notify you when there is new chat activity": "Laat een geluid horen als er nieuwe chatactiviteit is"
 }

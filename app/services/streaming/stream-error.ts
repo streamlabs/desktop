@@ -1,7 +1,7 @@
 import { getPlatformService, TPlatform } from '../platforms';
 import { $t } from 'services/i18n';
 import { Services } from '../../components-react/service-provider';
-import { IOBSOutputSignalInfo } from './streaming';
+import { IOBSOutputSignalInfo } from '../core/signals';
 import { capitalize } from 'lodash';
 
 // the `message` is shown to the user in the error notification
@@ -124,6 +124,34 @@ export const errorTypes = {
       return $t('You need X premium account to go live on X.');
     },
   },
+  KICK_SCOPE_OUTDATED: {
+    get message() {
+      return $t('Failed to update Kick account. Please unlink and reconnect your Kick account.');
+    },
+    get action() {
+      return $t('unlink and re-merge Kick account, then restart Desktop');
+    },
+  },
+  KICK_START_STREAM_FAILED: {
+    get message() {
+      return $t('Failed to start Kick stream. Please check permissions with Kick and try again');
+    },
+    get action() {
+      return $t(
+        'Kick request most likely failed due to incorrect or missing permissions. Unlink and re-merge Kick account, then restart Desktop. If that fails, refer to Kick support',
+      );
+    },
+  },
+  KICK_STREAM_KEY_MISSING: {
+    get message() {
+      return $t('Kick stream key failed to generate due to missing permissions');
+    },
+    get action() {
+      return $t(
+        'confirm that a stream key has been generated with 2FA on Kick for use with Streamlabs Desktop and if not ask the user to manually generate one',
+      );
+    },
+  },
   PRIME_REQUIRED: {
     get message() {
       return $t('This feature is for Ultra members only');
@@ -182,6 +210,7 @@ export interface IRejectedRequest {
   url?: string;
   status?: number;
   statusText?: string;
+  platform?: TPlatform;
 }
 
 export interface IStreamError extends IRejectedRequest {
@@ -231,7 +260,7 @@ export class StreamError extends Error implements IRejectedRequest {
     this.url = rejectedRequest?.url;
     this.status = rejectedRequest?.status;
     this.statusText = rejectedRequest?.statusText;
-    this.platform = this.url ? getPlatform(this.url) : undefined;
+    this.platform = rejectedRequest?.platform ?? getPlatform(this?.url);
 
     // TODO: remove sensitive data from YT requests
     if (this.platform === 'youtube') {
@@ -245,7 +274,8 @@ export class StreamError extends Error implements IRejectedRequest {
   }
 }
 
-function getPlatform(url: string): TPlatform | undefined {
+function getPlatform(url?: string): TPlatform | undefined {
+  if (!url) return undefined;
   const platforms = Services.StreamingService.views.linkedPlatforms;
   return platforms.find(platform => url.startsWith(getPlatformService(platform).apiBase));
 }
@@ -303,7 +333,7 @@ export function formatStreamErrorMessage(
       messages.user.push(details);
     }
 
-    message = error.message.replace(/\s*\.$/, '');
+    message = error.message.replace(/\.*$/, '');
     // trim trailing periods so that the message joins correctly
     const errorMessage = (error as any)?.action ? `${message}, ${(error as any).action}` : message;
 
@@ -368,10 +398,11 @@ export function formatUnknownErrorMessage(
     } catch (error: unknown) {
       // if it's not JSON, it is the message itself
       // don't show blocked message to user
-      if (!info.split(' ').includes('blocked')) {
+      if (info.split(' ').includes('blocked')) {
+        messages.user.push(errorTypes['UNKNOWN_STREAMING_ERROR_WITH_MESSAGE'].message);
         messages.user.push(info);
       } else {
-        messages.user.push(errorTypes['UNKNOWN_STREAMING_ERROR_WITH_MESSAGE'].message);
+        messages.user.push(info);
       }
 
       // always add non-JSON info to diag report
@@ -385,7 +416,7 @@ export function formatUnknownErrorMessage(
         let error;
         let platform;
 
-        if (typeof info.error === 'string') {
+        if (typeof info.error === 'string' && info.error !== '') {
           /*
            * Try to parse error as JSON as originally done, however, if it's just a string
            * (such as in the case of invalid path and many other unknown -4 errors we've

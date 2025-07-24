@@ -34,5 +34,8 @@
   "Only Me": "Kun mig",
   "Do not change privacy settings": "Ændr ikke indstillinger for beskyttelse af personlige oplysninger",
   "Install %{overlayName}": "Installer %{overlayName}",
-  "Please note that while you can schedule streams to Facebook, some will not appear on this calendar due to API limitations": "Bemærk, at selvom du kan planlægge streams til Facebook, vil nogle af dem ikke blive vist i denne kalender på grund af API-begrænsninger."
+  "Please note that while you can schedule streams to Facebook, some will not appear on this calendar due to API limitations": "Bemærk, at selvom du kan planlægge streams til Facebook, vil nogle af dem ikke blive vist i denne kalender på grund af API-begrænsninger.",
+  "Your account is not eligible to stream on Facebook. Click to learn more.": "Din konto er ikke berettiget til at streame på Facebook. Klik for at få mere at vide",
+  "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers": "Du er ikke berettiget til at gå live. Din profil skal være mindst 60 dage gammel, og din side skal have mindst 100 følgere",
+  "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers. Click the notification to learn more.": "Du er ikke berettiget til at gå live. Din profil skal være mindst 60 dage gammel, og din side skal have mindst 100 følgere. Klik på notifikationen for at få mere at vide."
 }

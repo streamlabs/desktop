@@ -11,7 +11,7 @@ import { TModalClipsView } from './ClipsView';
 import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
 import { SUPPORTED_FILE_TYPES } from 'services/highlighter/constants';
-import { RenderingClip } from 'services/highlighter/clip';
+import { RenderingClip } from 'services/highlighter/rendering/rendering-clip';
 
 export function EditingControls({
   emitSetShowModal,
@@ -152,19 +152,6 @@ export function EditingControls({
           )}
         </Animate>
       </Form>
-      <Button
-        style={{ marginTop: '16px', marginRight: '8px' }}
-        onClick={() => emitSetShowModal('preview')}
-      >
-        {$t('Preview')}
-      </Button>
-      <Button
-        type="primary"
-        style={{ marginTop: '16px' }}
-        onClick={() => emitSetShowModal('export')}
-      >
-        {$t('Export')}
-      </Button>
     </Scrollable>
   );
 }

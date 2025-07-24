@@ -9,5 +9,14 @@
   "You've merged a Streamlabs ID to your account, please log back in to ensure you have the right credentials.": "Sie haben eine Streamlabs ID mit Ihrem Konto verbunden. Bitte loggen Sie sich erneut ein, um sicherzustellen, dass Ihre Anmeldeinformationen richtig sind.",
   "Enable Live Streaming?": "Live-Streaming aktivieren?",
   "Streamlabs is currently in recording mode, which hides live streaming features. Would you like to enable live streaming features? You can disable them again in General settings.": "Streamlabs läuft derzeit im Aufnahmemodus. In diesem Modus sind die Funktionen für Live Streaming ausgeblendet. Möchten Sie die Live Streaming-Funktionen aktivieren? Sie können sie in den allgemeinen Einstellungen erneut deaktivieren.",
-  "Enable Streaming": "Streaming aktivieren"
+  "Enable Streaming": "Streaming aktivieren",
+  "This account is already linked to another Streamlabs Account. Please use a different account.": "Dieses Konto ist bereits mit einem anderen Streamlabs-Konto verknüpft. Bitte verwende ein anderes Konto.",
+  "Successfully unlinked account": "Konto wurde getrennt",
+  "Successfully merged account": "Konto wurde zusammengeführt",
+  "Account merge error": "Fehler beim Zusammenführen von Konten",
+  "Error Code: %{code}": "Fehlercode: %{code}",
+  "Unknown error, please contact support": "Unbekannter Fehler; bitte kontaktiere den Support",
+  "Custom Destination": "Benutzerdefiniertes Ziel",
+  "This app is currently popped out in another window.": "Diese App wird derzeit in einem anderen Fenster angezeigt.",
+  "Error granting chat permissions.": "Fehler beim Erteilen von Chat-Berechtigungen."
 }

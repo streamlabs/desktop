@@ -3,5 +3,15 @@
   "Twitch Tags": "Twitch Tags",
   "You need to re-login to access Twitch tags": "You need to re-login to access Twitch tags",
   "Do not include special characters or spaces in your tag": "Do not include special characters or spaces in your tag",
-  "For example: \"Speedrunning\" or \"FirstPlaythrough\"": "For example: \"Speedrunning\" or \"FirstPlaythrough\""
+  "For example: \"Speedrunning\" or \"FirstPlaythrough\"": "For example: \"Speedrunning\" or \"FirstPlaythrough\"",
+  "Your Twitch access token has expired. Please log in with Twitch to continue.": "Your Twitch access token has expired. Please log in with Twitch to continue.",
+  "While updating your Twitch channel info, some tags were removed due to moderation rules: %{tags}": "While updating your Twitch channel info, some tags were removed due to moderation rules: %{tags}",
+  "Content Classification": "Content Classification",
+  "Content classification": "Content classification",
+  "Stream features branded content": "Stream features branded content",
+  "Twitch Studio Import": "Twitch Studio Import",
+  "Import from Twitch Studio": "Import from Twitch Studio",
+  "Import your scenes and sources from Twitch Studio.": "Import your scenes and sources from Twitch Studio.",
+  "Importing Your Existing Settings From Twitch Studio": "Importing Your Existing Settings From Twitch Studio",
+  "Importing from Twitch Studio is an experimental feature under active development. Some source types are unable to be imported, and not all settings will be carried over.": "Importing from Twitch Studio is an experimental feature under active development. Some source types are unable to be imported, and not all settings will be carried over."
 }

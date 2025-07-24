@@ -1,7 +1,7 @@
 {
   "Source: %{sourceName}": "Fonte: %{sourceName}",
   "Collab Cam": "Collab Cam",
-  "Invite a guest to join your stream from a web browser.": "Chame um convidado para participar da sua transmissão a partir de um navegador da web.",
+  "Invite guests to join your stream from a web browser or their Streamlabs Desktop. Stream games or IRL broadcasts together, use as additional camera angles and more.": "Convide os convidados a participar da sua transmissão a partir de um navegador da Web ou do Streamlabs Desktop. Faça transmissão de jogos ou transmissões IRL juntos, use como ângulos de câmera adicionais e muito mais.",
   "Guest Cam is currently listening for connecting guests, but is not broadcasting your microphone and webcam to your guests yet.": "O Guest Cam está detectando a conexão de convidados, mas ainda não está transmitindo seu microfone e webcam para seus convidados.",
   "No microphone source is selected. Your guest will not be able to hear you.": "Nenhuma fonte de microfone está selecionada. Seu convidado não poderá ouvir você.",
   "No webcam source is selected. Your guest will not be able to see you.": "Nenhuma fonte de webcam está selecionada. Seu convidado não poderá ver você.",

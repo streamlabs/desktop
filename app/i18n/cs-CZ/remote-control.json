@@ -1,10 +1,18 @@
 {
   "Show details": "Zobrazit podrobnosti",
   "Hide details": "Skrýt podrobnosti",
-  "API token": "Token rozhraní API",
+  "API Token": "Token rozhraní API",
   "Generate new": "Vygenerovat nový",
   "Port": "Port",
-  "IP addresses": "IP adresy",
+  "IP Addresses": "IP adresy",
   "Click to show": "Kliknutím zobrazíte",
-  "The free Streamlabs Controller app allows you to control Streamlabs Desktop from your iOS or Android device. Scan the QR code below to begin.": "Bezplatná aplikace Streamlabs Controller umožňuje ovládat Streamlabs Desktop z vašeho zařízení se systémem iOS nebo Android. Začněte naskenováním níže uvedeného QR kódu."
+  "The free Streamlabs Controller app allows you to control Streamlabs Desktop from your iOS or Android device. You must be logged in to use this feature.": "Bezplatná aplikace Streamlabs Controller umožňuje ovládat Streamlabs Desktop z vašeho zařízení se systémem iOS nebo Android. Pro použití této funkce musíte být přihlášeni.",
+  "Allow Controller app connections": "Povolte připojení aplikace ovladače",
+  "Connected Devices": "Připojená zařízení",
+  "Disconnect": "Odpojit",
+  "No devices connected": "Žádné připojené zařízení",
+  "Some third party applications connect to Streamlabs Desktop via websockets connection. Toggle this to allow such connections and display connection info.": "Některé aplikace třetích stran se ke službě Streamlabs Desktop připojují prostřednictvím připojení websocket. Přepnutím této možnosti povolíte taková připojení a zobrazíte informace o připojení.",
+  "Warning: Displaying this portion on stream may leak sensitive information.": "Varování: Zobrazení této části ve streamu může vést k úniku citlivých informací.",
+  "Allow third party connections": "Povolte připojení třetích stran",
+  "Host": "Hostitel"
 }

@@ -11,8 +11,9 @@ import Form from 'components-react/shared/inputs/Form';
 import Scrollable from 'components-react/shared/Scrollable';
 import styles from './SettingsView.m.less';
 import { $t } from 'services/i18n';
-import { EHighlighterView, IViewState } from 'services/highlighter';
+import { EHighlighterView, IViewState } from 'services/highlighter/models/highlighter.models';
 import { EAvailableFeatures } from 'services/incremental-rollout';
+import SupportedGames from './supportedGames/SupportedGames';
 
 export default function SettingsView({
   emitSetView,
@@ -28,9 +29,7 @@ export default function SettingsView({
     HighlighterService,
     IncrementalRolloutService,
   } = Services;
-  const aiHighlighterEnabled = IncrementalRolloutService.views.featureIsEnabled(
-    EAvailableFeatures.aiHighlighter,
-  );
+  const aiHighlighterFeatureEnabled = HighlighterService.aiHighlighterFeatureEnabled;
   const [hotkey, setHotkey] = useState<IHotkey | null>(null);
   const hotkeyRef = useRef<IHotkey | null>(null);
 
@@ -38,6 +37,7 @@ export default function SettingsView({
     settingsValues: SettingsService.views.values,
     isStreaming: StreamingService.isStreaming,
     useAiHighlighter: HighlighterService.views.useAiHighlighter,
+    highlighterVersion: HighlighterService.views.highlighterVersion,
   }));
 
   const correctlyConfigured =
@@ -124,7 +124,7 @@ export default function SettingsView({
           </p>
         </div>
         <div style={{ display: 'flex', gap: '16px' }}>
-          {aiHighlighterEnabled && (
+          {aiHighlighterFeatureEnabled && (
             <Button type="primary" onClick={() => emitSetView({ view: EHighlighterView.STREAM })}>
               {$t('Stream Highlights')}
             </Button>
@@ -139,34 +139,64 @@ export default function SettingsView({
       <Scrollable style={{ flexGrow: 1, padding: '20px 20px 20px 20px', width: '100%' }}>
         <div className={styles.innerScrollWrapper}>
           <div className={styles.cardWrapper}>
-            {aiHighlighterEnabled && (
+            {aiHighlighterFeatureEnabled && (
               <div className={styles.highlighterCard}>
                 <div className={styles.cardHeaderbarWrapper}>
                   <div className={styles.cardHeaderbar}>
-                    <i style={{ margin: 0, fontSize: '20px' }} className="icon-highlighter"></i>
-                    <h3 style={{ margin: 0, fontSize: '20px' }}> {$t('AI Highlighter')}</h3>
-                    <p className={styles.headerbarTag}>{$t('For Fortnite streams (Beta)')}</p>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <i style={{ margin: 0, fontSize: '20px' }} className="icon-highlighter"></i>
+                      <h3 style={{ margin: 0, fontSize: '20px' }}> {$t('AI Highlighter')}</h3>
+                      <p className={styles.headerbarTag}>{$t('Beta')}</p>
+                    </div>
+                    <SupportedGames
+                      gamesVisible={6}
+                      emitClick={() => {
+                        if (v.highlighterVersion === '') return;
+                        emitSetView({ view: EHighlighterView.STREAM });
+                      }}
+                    />
                   </div>
                 </div>
 
                 <p style={{ margin: 0 }}>
                   {$t(
                     'Automatically capture the best moments from your livestream and turn them into a highlight video.',
+                  )}{' '}
+                  {v.highlighterVersion !== '' && (
+                    <span>
+                      {$t(
+                        'The AI Highlighter App can be managed in the Apps Manager tab or in Settings > Installed apps.',
+                      )}
+                    </span>
                   )}
                 </p>
 
-                <SwitchInput
-                  style={{ margin: 0, marginLeft: '-10px' }}
-                  size="default"
-                  value={v.useAiHighlighter}
-                  onChange={toggleUseAiHighlighter}
-                />
+                {v.highlighterVersion !== '' ? (
+                  <SwitchInput
+                    style={{ margin: 0, marginLeft: '-10px' }}
+                    size="default"
+                    value={v.useAiHighlighter}
+                    onChange={toggleUseAiHighlighter}
+                  />
+                ) : (
+                  <Button
+                    style={{ width: 'fit-content' }}
+                    type="primary"
+                    onClick={() => {
+                      HighlighterService.actions.installAiHighlighter(true, 'Highlighter-tab');
+                    }}
+                  >
+                    {$t('Install AI Highlighter App')}
+                  </Button>
+                )}
                 <div className={styles.recommendedCorner}>{$t('Recommended')}</div>
               </div>
             )}
             <div className={styles.manualCard}>
               <h3 className={styles.cardHeaderTitle}>
-                {aiHighlighterEnabled ? 'Or use the manual highlighter ' : 'Manual highlighter'}
+                {aiHighlighterFeatureEnabled
+                  ? $t('Or, use the built-in manual highlighter')
+                  : $t('Built-in manual highlighter')}
               </h3>
               <p>
                 {$t(

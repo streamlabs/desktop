@@ -80,9 +80,8 @@ export default function SideNav() {
   const throttledOpenDashboard = throttle(openDashboard, 2000, { trailing: false });
 
   // Instagram doesn't provide a username, since we're not really linked, pass undefined for a generic logout msg w/o it
-  // Kick doesn't provide a username, since we're not really linked, pass undefined for a generic logout msg w/o it
   const username =
-    isLoggedIn && !['instagram', 'kick'].includes(UserService.views.auth!.primaryPlatform)
+    isLoggedIn && UserService.views.auth!.primaryPlatform !== 'instagram'
       ? UserService.username
       : undefined;
 

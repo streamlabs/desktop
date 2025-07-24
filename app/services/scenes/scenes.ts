@@ -1,13 +1,12 @@
 import Vue from 'vue';
 import without from 'lodash/without';
 import { Subject } from 'rxjs';
-import { filter, take, takeUntil, tap } from 'rxjs/operators';
 import { mutation, StatefulService } from 'services/core/stateful-service';
 import { TransitionsService } from 'services/transitions';
 import { WindowsService } from 'services/windows';
 import { SelectionService } from 'services/selection';
 import { Scene, SceneItem, TSceneNode, EScaleType, EBlendingMode, EBlendingMethod } from './index';
-import { ISource, SourcesService, ISourceAddOptions, TSourceType } from 'services/sources';
+import { SourcesService, ISourceAddOptions, TSourceType } from 'services/sources';
 import { Inject } from 'services/core/injector';
 import { IVideo, SceneFactory } from '../../../obs-api';
 import { $t } from 'services/i18n';
@@ -16,7 +15,7 @@ import uuid from 'uuid/v4';
 import { DualOutputService } from 'services/dual-output';
 import { SceneCollectionsService } from 'services/scene-collections';
 import { TDisplayType } from 'services/settings-v2/video';
-import { ExecuteInWorkerProcess, InitAfter, ViewHandler } from 'services/core';
+import { InitAfter, ViewHandler } from 'services/core';
 
 export type TSceneNodeModel = ISceneItem | ISceneItemFolder;
 
@@ -289,9 +288,9 @@ export class ScenesService extends StatefulService<IScenesState> {
   sceneAdded = new Subject<IScene>();
   sceneRemoved = new Subject<IScene>();
   sceneSwitched = new Subject<IScene>();
-  itemAdded = new Subject<ISceneItem & ISource>();
-  itemRemoved = new Subject<ISceneItem & ISource>();
-  itemUpdated = new Subject<ISceneItem & ISource>();
+  itemAdded = new Subject<ISceneItem>();
+  itemRemoved = new Subject<ISceneItem>();
+  itemUpdated = new Subject<ISceneItem>();
 
   @Inject() private windowsService: WindowsService;
   @Inject() private sourcesService: SourcesService;
@@ -460,28 +459,12 @@ export class ScenesService extends StatefulService<IScenesState> {
 
     const sceneItem = scene.createAndAddSource(sourceName, sourceType, settings);
 
-    const createVerticalNode = () => {
+    if (this.dualOutputService.views.hasSceneNodeMaps) {
       this.dualOutputService.createPartnerNode(sceneItem);
       /* For some reason dragging items after enabling dual output makes them
        * duplicate, associate selection on switch to mitigate this issue
        */
       this.selectionService.associateSelectionWithDisplay('vertical');
-    };
-
-    if (this.dualOutputService.state.dualOutputMode) {
-      createVerticalNode();
-    } else {
-      // Schedule vertical node to be created if the user toggles on dual output in the same session
-      this.dualOutputService.dualOutputModeChanged
-        .pipe(
-          // If we switch collections before we enable dual output drop it
-          // we don't wanna create nodes on inactive scene collections
-          takeUntil(this.sceneCollectionsService.collectionWillSwitch),
-          filter(gotEnabled => !!gotEnabled),
-          take(1),
-          tap(createVerticalNode),
-        )
-        .subscribe();
     }
 
     return sceneItem.sceneItemId;

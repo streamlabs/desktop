@@ -13,7 +13,7 @@ import { HotkeysNode } from './nodes/hotkeys';
 import { SceneFiltersNode } from './nodes/scene-filters';
 import path from 'path';
 import { parse } from './parse';
-import { ScenesService, TSceneNode } from 'services/scenes';
+import { Scene, ScenesService, TSceneNode } from 'services/scenes';
 import { SourcesService, TSourceType } from 'services/sources';
 import { E_AUDIO_CHANNELS } from 'services/audio';
 import { AppService } from 'services/app';
@@ -111,9 +111,18 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   private collectionLoaded = false;
 
   /**
+   * Whether the error dialogue is currently open.
+   * Used to prevent multiple error dialogues from opening when the user
+   * tries to load a collection that fails to load, mostly like due to
+   * missing scenes or sources.
+   */
+  private collectionErrorOpen = false;
+
+  /**
    * true if the scene-collections sync in progress
    */
   private syncPending = false;
+  scenesServices: any;
 
   /**
    * Used to handle actions for users on their first login
@@ -203,11 +212,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
         await this.attemptRecovery(id);
       } else {
         console.warn(`Unsuccessful recovery of scene collection ${id} attempted`);
-        remote.dialog.showMessageBox(Utils.getMainWindow(), {
-          title: 'Streamlabs Desktop',
-          message: $t('Failed to load scene collection.  A new one will be created instead.'),
-        });
-        await this.create();
+        this.handleCollectionLoadError();
       }
     }
   }
@@ -552,37 +557,85 @@ export class SceneCollectionsService extends Service implements ISceneCollection
 
       try {
         data = this.stateService.readCollectionFile(id);
-        if (data == null) throw new Error('Got blank data from collection file');
+        if (!data) throw new Error('Got blank data from collection file');
         await this.loadDataIntoApplicationState(data);
       } catch (e: unknown) {
-        /*
-         * FIXME: we invoke `loadDataIntoApplicationState` a second time below,
-         *  which can cause partial state from the call above to still
-         *  be present and result in duplicate items (for instance, scenes)
-         *  and methods being invoked (like `updateRegisteredHotkeys`) as
-         *  part of the loading process.
-         */
-        console.error('Error while loading collection, restoring backup', e);
-        // Check for a backup and load it
-        const exists = await this.stateService.collectionFileExists(id, true);
+        console.error(
+          'Error while loading collection, restoring backup:',
+          e instanceof Error ? e.message : e,
+        );
 
-        // If there's no backup, throw the original error
-        if (!exists) throw e;
+        try {
+          /*
+           *  Attempt to deload application state because we invoke `loadDataIntoApplicationState` a second time below,
+           *  which can cause partial state from the call above to still
+           *  be present and result in duplicate items (for instance, scenes)
+           *  and methods being invoked (like `updateRegisteredHotkeys`) as
+           *  part of the loading process.
+           */
+          this.deloadPartialApplicationState();
 
-        data = this.stateService.readCollectionFile(id, true);
-        await this.loadDataIntoApplicationState(data);
+          // Check for a backup and load it
+          const backupExists = await this.stateService.collectionFileExists(id, true);
+          // Rethrow the original error if no backup exists
+          if (!backupExists) throw e;
+
+          data = this.stateService.readCollectionFile(id, true);
+          if (!data) throw new Error('Got blank data from backup collection file');
+          await this.loadDataIntoApplicationState(data);
+        } catch (backupError: unknown) {
+          console.error(
+            'Error while loading backup collection:',
+            backupError instanceof Error ? backupError.message : backupError,
+          );
+          return; // Prevent further execution by returning early
+        }
       }
 
+      // create an empty scene collection if failed to load both the collection and the backup
+      if (!data) {
+        await this.create({ auto: true });
+        return;
+      }
+
+      // the app cannot load without a default scene
       if (this.scenesService.views.scenes.length === 0) {
-        throw new Error('Scene collection was loaded but there were no scenes.');
+        console.error('Scene collection was loaded but there were no scenes.');
+        this.setupEmptyCollection();
+        this.collectionLoaded = true;
+        return; // Return early to prevent writing a backup for an empty scene collection
       }
 
       // Everything was successful, write a backup
       this.stateService.writeDataToCollectionFile(id, data, true);
       this.collectionLoaded = true;
     } else {
-      await this.attemptRecovery(id);
+      try {
+        await this.attemptRecovery(id);
+      } catch (recoveryError: unknown) {
+        console.error(
+          'Error during collection recovery:',
+          recoveryError instanceof Error ? recoveryError.message : recoveryError,
+        );
+
+        await this.handleCollectionLoadError();
+        this.setupEmptyCollection();
+      }
+      this.collectionLoaded = true;
     }
+  }
+
+  private async handleCollectionLoadError() {
+    if (this.collectionErrorOpen) return;
+
+    remote.dialog
+      .showMessageBox(Utils.getMainWindow(), {
+        title: 'Streamlabs Desktop',
+        message: $t('Failed to load scene collection.  A new one will be created instead.'),
+      })
+      .then(() => (this.collectionErrorOpen = false));
+
+    this.collectionErrorOpen = true;
   }
 
   /**
@@ -595,24 +648,50 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     // Since scene collections are already segmented by OS,
     // the source code below which restored collections was
     // triggered by incorrect reasons and its result confused users.
-    // Instead of that, now we will just remove unsuppported sources here.
+    // Instead of that, now we will just remove unsupported sources here.
     if (root.data.sources.removeUnsupported()) {
       // The underlying function already wrote all details to the log.
       // Users will see a very basic information.
-      await remote.dialog.showMessageBox(Utils.getMainWindow(), {
-        title: 'Unsupported Sources',
-        type: 'warning',
-        message: 'One or more scene items were removed because they are not supported',
-      });
+      this.showUnsupportedSourcesDialog();
     }
 
     await root.load();
     this.hotkeysService.bindHotkeys();
 
+    if (this.sourcesService.missingInputs.length > 0) {
+      await remote.dialog
+        .showMessageBox(Utils.getMainWindow(), {
+          title: 'Unsupported Sources',
+          type: 'warning',
+          message: $t(
+            'Scene items were removed because there was an error loading them: %{inputs}.\n\nPlease accept or reject permissions to view the Streamlabs Editor panel',
+            { inputs: this.sourcesService.missingInputs.join(', ') },
+          ),
+        })
+        .then(() => {
+          this.collectionErrorOpen = false;
+        });
+      this.collectionErrorOpen = true;
+    }
+
     // Users who selected a theme during onboarding should skip adding default sources
     if (this.newUserFirstLogin) {
       this.newUserFirstLogin = false;
     }
+  }
+
+  async showUnsupportedSourcesDialog(e?: Error | unknown) {
+    const message = e && e instanceof Error ? e.message : e ?? '';
+    console.error('Error during sources creation when loading scene collection:', message);
+
+    await remote.dialog
+      .showMessageBox(Utils.getMainWindow(), {
+        title: 'Unsupported Sources',
+        type: 'warning',
+        message: $t('One or more scene items were removed because they are not supported'),
+      })
+      .then(() => (this.collectionErrorOpen = false));
+    this.collectionErrorOpen = true;
   }
 
   /**
@@ -692,6 +771,73 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     } catch (e: unknown) {
       console.error('Error deloading application state', e);
     }
+
+    this.hotkeysService.clearAllHotkeys();
+    this.collectionLoaded = false;
+  }
+
+  /**
+   * Deloads all scenes and sources when app state is partially loaded.
+   * @remark Primarily used to clear state when the app is partially loaded
+   * due to an error when loading the scene collection sources. This should
+   * only ever be performed while the application is already in a "LOADING" state.
+   * @remark This method is a refactor of `deloadCurrentApplicationState` and
+   * should never be used outside of the scene collections service because it
+   * directly mutates the states of other services.
+   */
+  private async deloadPartialApplicationState() {
+    this.tcpServerService.stopRequestsHandling();
+
+    await this.disableAutoSave();
+
+    this.collectionWillSwitch.next();
+
+    // remove any scenes that were partially loaded
+    const scenesState = this.scenesService.state.scenes;
+    const activeSceneId = this.scenesService.state.activeSceneId;
+    for (const sceneId in scenesState) {
+      if (sceneId === activeSceneId) continue;
+
+      if (scenesState[sceneId]) {
+        const scene = new Scene(sceneId);
+        scene.remove();
+      }
+    }
+
+    if (scenesState[activeSceneId]) {
+      const scene = new Scene(activeSceneId);
+      scene.remove();
+    }
+
+    // remove any sources that were partially loaded
+    const sources = this.sourcesService.state.sources;
+    for (const sourceId in sources) {
+      if (sources[sourceId].type === 'scene') continue;
+
+      try {
+        // if a source does not exist, this function will throw an error
+        this.sourcesService.removeSource(sourceId);
+      } catch (e: unknown) {
+        console.error('Attempted to deload source from partial state: ', e);
+      }
+    }
+
+    // Delete all transitions except for the studio mode transition, which is needed
+    // for the studio editor to render
+    if (this.transitionsService.state.transitions.length > 0) {
+      this.transitionsService.deleteAllTransitions();
+      this.transitionsService.state.transitions.forEach(transition => {
+        if (transition.id !== this.transitionsService.studioModeTransition.id) {
+          this.transitionsService.deleteTransition(transition.id);
+        }
+      });
+    }
+
+    if (this.transitionsService.state.connections) {
+      this.transitionsService.deleteAllConnections();
+    }
+
+    this.streamingService.setSelectiveRecording(false);
 
     this.hotkeysService.clearAllHotkeys();
     this.collectionLoaded = false;
@@ -1039,7 +1185,11 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   }
 
   canSync(): boolean {
-    return this.userService.isLoggedIn && !this.appService.state.argv.includes('--nosync');
+    return (
+      this.userService.isLoggedIn &&
+      !this.appService.state.argv.includes('--nosync') &&
+      !process.argv.includes('--nosync')
+    );
   }
 
   /**

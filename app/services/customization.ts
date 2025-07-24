@@ -9,6 +9,7 @@ import { AppService } from './app';
 import * as obs from '../../obs-api';
 import { RealmObject } from './realm';
 import { ObjectSchema } from 'realm';
+import { Theme } from 'styles/antd';
 
 // Maps to --background
 const THEME_BACKGROUNDS = {
@@ -70,7 +71,7 @@ export interface ICustomizationServiceState {
   enableAnnouncements: boolean;
 }
 
-class PinnedStatistics extends RealmObject {
+class PinnedStatistics extends RealmObject implements IPinnedStatistics {
   cpu: boolean;
   fps: boolean;
   droppedFrames: boolean;
@@ -158,6 +159,8 @@ export class CustomizationState extends RealmObject {
   }
 
   get displayBackground() {
+    // TODO: index
+    // @ts-ignore
     return DISPLAY_BACKGROUNDS[this.theme];
   }
 }
@@ -216,8 +219,9 @@ export class CustomizationService extends Service {
     this.settingsChanged.next(settingsPatch);
   }
 
-  get currentTheme() {
-    return this.state.theme;
+  get currentTheme(): Theme {
+    // TODO: one level deeper is Realm, keep string for now
+    return this.state.theme as Theme;
   }
 
   setTheme(theme: string) {

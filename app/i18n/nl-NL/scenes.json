@@ -3,6 +3,7 @@
   "The scene name is required": "De scènenaam is vereist",
   "Please enter the name of the scene": "Voer de naam van de scène in",
   "Manage Scene Collections": "Scèneverzamelingen beheren",
+  "Create Scene Collection": "Scèneverzameling maken",
   "There needs to be at least one scene.": "Er moet tenminste één scène zijn.",
   "Projector:": "Projector:",
   "Projector: Output": "Projector: Uitvoer",
@@ -56,5 +57,13 @@
   "Arrange sources here for a vertical scene layout.": "Rangschik bronnen hier voor een verticale scènelay-out.",
   "Arrange sources here for a horizontal scene layout.": "Rangschik bronnen hier voor een horizontale scènelay-out.",
   "Toggle Dual Output Mode.": "Schakel de Dual Output-modus in of uit.",
-  "Cannot hide dual output toggles in dual output mode.": "Kan de Dual Output-schakelaars niet verbergen in de Dual Output-modus."
+  "Cannot hide dual output toggles in dual output mode.": "Kan de Dual Output-schakelaars niet verbergen in de Dual Output-modus.",
+  "Choose a template from our overlay library": "Kies een sjabloon uit onze overlaybibliotheek",
+  "Log in to choose a template from our overlay library": "Log in om een sjabloon te kiezen uit onze overlaybibliotheek",
+  "Loading scene...": "Scène wordt geladen...",
+  "Import from OBS": "Importeren vanuit OBS",
+  "Import from Twitch": "Importeren vanuit Twitch",
+  "Import from Twitch Studio": "Importeren vanuit Twitch Studio",
+  "Load existing scenes from Twitch Studio": "Bestaande scènes laden vanuit Twitch Studio",
+  "Start Fresh": "Helemaal opnieuw beginnen"
 }

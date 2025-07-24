@@ -46,4 +46,5 @@ export interface IPlatformComponentParams<T extends TPlatform> {
   layoutMode: TLayoutMode;
   isUpdateMode?: boolean;
   isScheduleMode?: boolean;
+  enabledPlatformsCount?: number;
 }

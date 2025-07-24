@@ -59,7 +59,7 @@ export default function Translate(p: {
     return <span>{s.xmlNodes.map(renderXmlNode)}</span>;
   }
 
-  function renderXmlNode(xmlNode: ChildNode, ind: number) {
+  function renderXmlNode(xmlNode: ChildNode & { tagName: string }, ind: number) {
     // don't handle script nodes
     if (xmlNode.nodeName === 'script') {
       throw new Error('XSS injection detected');

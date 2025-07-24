@@ -261,15 +261,8 @@ function FeaturesNavItem(p: {
   handleNavigation: (menuItem: IMenuItem, key?: string) => void;
   className?: string;
 }) {
-  const {
-    SideNavService,
-    TransitionsService,
-    DualOutputService,
-    IncrementalRolloutService,
-  } = Services;
-  const aiHighlighterEnabled = IncrementalRolloutService.views.featureIsEnabled(
-    EAvailableFeatures.aiHighlighter,
-  );
+  const { SideNavService, TransitionsService, DualOutputService, HighlighterService } = Services;
+  const aiHighlighterFeatureEnabled = HighlighterService.aiHighlighterFeatureEnabled;
   const { isSubMenuItem, menuItem, handleNavigation, className } = p;
 
   const { currentMenuItem, isOpen, studioMode, dualOutputMode } = useVuex(() => ({
@@ -324,7 +317,7 @@ function FeaturesNavItem(p: {
     >
       <div style={{ display: 'flex', alignItems: 'center' }}>
         {title}
-        {menuItem.key === EMenuItemKey.Highlighter && aiHighlighterEnabled && (
+        {menuItem.key === EMenuItemKey.Highlighter && aiHighlighterFeatureEnabled && (
           <div className={styles.betaTag}>
             <p style={{ margin: 0 }}>
               {highlighterEnvironment === 'production' ? 'beta' : highlighterEnvironment}

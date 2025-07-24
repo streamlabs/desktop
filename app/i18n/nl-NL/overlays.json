@@ -16,5 +16,14 @@
   "Assign Vertical Sources to Horizontal Display": "Verticale bronnen aan horizontale weergave toewijzen",
   "The below will create a copy of the active scene collection, set the copy as the active collection, and then apply the function.": "Hiermee wordt een kopie van de actieve scèneverzameling gemaakt, de kopie ingesteld als de actieve verzameling en de functie toegepast.",
   "Manage Dual Output Scene": "Dual Output-scène beheren",
-  "Unable to convert dual output collection.": "Kan Dual Output-verzameling niet converteren."
+  "Unable to convert dual output collection.": "Kan Dual Output-verzameling niet converteren.",
+  "One or more scene items were removed because they are not supported": "Een of meer scène-items zijn verwijderd omdat ze niet worden ondersteund",
+  "Scene items were removed because there was an error loading them: %{inputs}.\n\nPlease accept or reject permissions to view the Streamlabs Editor panel": "Scène-items zijn verwijderd omdat er een fout is opgetreden bij het laden ervan: %{inputs} .\n\nAccepteer of weiger toestemmingen om het Streamlabs Editor-paneel te bekijken",
+  "default_width": "default_width",
+  "default_height": "default_height",
+  "GameCapture.WindowInternalMode": "GameCapture.WindowInternalMode",
+  "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.",
+  "Show Components Library": "Show Components Library",
+  "Convert Dual Output Scene Collection": "Convert Dual Output Scene Collection",
+  "Repair Scene Collection": "Repair Scene Collection"
 }

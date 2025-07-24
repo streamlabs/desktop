@@ -76,35 +76,121 @@
   padding: 0px 15px;
 }
 
-.tiktok-modal-logo {
+.dual-output-platform-switcher {
+  .radius();
+
+  box-sizing: border-box;
+  display: flex;
+  margin-bottom: 15px;
+  padding: 10px;
+  flex-direction: column;
+  color: var(--title);
+  background: var(--dropdown-bg);
+  transition: transform 0.05s;
+  cursor: pointer;
+}
+
+.dual-output-platform-disabled {
+  opacity: 0.7;
+  background: rgba(#2b383f, 0.3);
+}
+
+.dual-output-switcher-header {
+  display: flex;
+  flex: 1;
+  justify-content: space-between;
+}
+
+.dual-output-platform-info-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+}
+
+.dual-output-platform-info {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+  justify-content: space-between;
+}
+
+.dual-output-col-account:extend(.col-account) {
+  flex-direction: column;
+  margin-left: 5px;
+}
+
+.dual-output-platform-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin-left: 5px;
+  width: 100%;
+}
+
+.dual-output-platform-username {
+  color: var(--link);
+  overflow-wrap: break-word;
+  display: inline-block;
+  word-break: break-word;
+  white-space: pre-line;
+  margin-left: 5px;
+}
+
+.dual-output-logo {
+  margin-top: 5px;
+}
+
+.dual-output-display-selector {
+  margin-bottom: 0px !important;
+}
+
+.single-output-logo {
+  margin-top: 3px;
+}
+
+.dual-output-platform-switch {
+  justify-self: flex-end;
+  color: var(--background);
+
+  :global(.ant-form-item-label) {
+    display: none;
+  }
+
+  :global(.ant-switch-small) {
+    min-width: 36px;
+    height: 21px;
+    line-height: 21px;
+  }
+
+  :global(.ant-switch-small .ant-switch-handle) {
+    width: 15px;
+    height: 15px;
+    top: 3px;
+    left: 3px;
+  }
+
+  :global(.ant-switch-small.ant-switch-checked .ant-switch-handle) {
+    left: calc(100% - 15px - 3px) !important;
+  }
+
+  :global(.ant-switch-inner i) {
+    color: var(--background);
+    display: flex;
+    align-self: center;
+  }
+}
+
+.dual-output-col-input:extend(.col-input) {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.action-modal-logo {
   display: inline-block;
   width: 18px;
   height: 18px;
-  margin-right: 5px;
+  font-size: 18px;
+  margin-right: 8px;
   vertical-align: super;
-}
-
-.tiktok-modal {
-  &:global(.ant-modal-confirm .ant-modal-body) {
-    padding: 0px;
-  }
-
-  :global(div.ant-modal-content) {
-    box-shadow: none;
-  }
-
-  :global(.ant-modal-confirm-body .ant-modal-confirm-title) {
-    display: inline-block;
-    font-size: 19px;
-    line-height: unset;
-  }
-
-  :global(.ant-modal-confirm-btns) {
-    display: none;
-  }
-}
-
-.tiktok-modal-footer {
-  display: flex;
-  justify-content: flex-end;
+  color: var(--title);
 }

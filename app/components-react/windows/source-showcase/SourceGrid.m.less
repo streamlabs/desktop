@@ -1,0 +1,39 @@
+.source-grid {
+  :global(.ant-collapse-content-box) {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  :global(.collapse-section) {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+
+  }
+
+  :global(.collapse-section .ant-col-8) {
+    margin-bottom: 8px;
+  }
+
+  :global(.ant-collapse-header) {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    font-size: 20px;
+
+
+    .ant-collapse-arrow {
+      font-size: 16px !important;
+    }
+  }
+
+  // Override disabled styles from antd, we use this for the essential section
+  :global(.ant-collapse-item-disabled .ant-collapse-header) {
+    cursor: default !important;
+    color: var(--title) !important;
+  }
+
+  :global(.ant-collapse-content-box) {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}

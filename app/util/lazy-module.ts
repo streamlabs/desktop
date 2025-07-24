@@ -4,7 +4,11 @@ export function lazyModule(module: any) {
 
     Object.defineProperty(target, key, {
       get: () => {
+        // TODO: index
+        // @ts-ignore
         if (!target[objectKey]) target[objectKey] = new module();
+        // TODO: index
+        // @ts-ignore
         return target[objectKey];
       },
     });

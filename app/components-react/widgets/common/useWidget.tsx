@@ -239,6 +239,8 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
   }
 
   get config(): IWidgetConfig {
+    // TODO: index
+    // @ts-ignore
     return this.widgetsConfig[this.state.type];
   }
 
@@ -451,9 +453,7 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
   }
 
   private setStaticConfig(resp: unknown) {
-    this.state.mutate(state => {
-      state.staticConfig = resp;
-    });
+    this.state.setStaticConfig(resp);
   }
 }
 

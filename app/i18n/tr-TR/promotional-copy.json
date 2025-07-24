@@ -1,6 +1,6 @@
 {
   "Overlay, Widget, and Site Themes": "Katman, Pencere Ögesi ve Site Temaları",
-  "Fully customize your stream and your website to represent your brand; or pick from thousands of our pre-made themes. Either way, your stream will look amazing and it's all included with Ultra.": "Yayınınızı ve web sitenizi markanızı temsil edecek şekilde tamamen özelleştirin veya önceden tasarlanmış olan binlerce temamızdan birini seçin. Her iki şekilde de yayınınız harika görünecektir ve bunların hepsi Ultra üyeliğinize dâhildir.",
+  "Fully customize your stream and your website to represent your brand; or pick from thousands of our pre-made overlays. Either way, your stream will look amazing and it's all included with Ultra.": "Yayınınızı ve web sitenizi markanızı temsil edecek şekilde tamamen özelleştirin veya önceden tasarlanmış olan binlerce katmanımızdan birini seçin. Her iki şekilde de yayınınız harika görünecektir ve bunların hepsi Ultra üyeliğinize dâhildir.",
   "View Themes": "Temaları Görüntüle",
   "Every App is FREE": "Her Uygulama ÜCRETSİZDİR",
   "We've curated a list of diverse and feature rich applications to give you more control, automation, better analytics, and new ways to interact with your audience.": "Size daha fazla kontrol, otomasyon, daha iyi analizler ve izleyicilerinizle etkileşim kurabilmeniz için yeni yöntemler sağlayan birbirinden çeşitli ve zengin özelliklere sahip uygulamalardan oluşan bir liste hazırladık.",
@@ -71,5 +71,8 @@
   "1 Hour Videos + 250GB Storage + More": "1 Saatlik Videolar + 250GB Depolama + Dahası",
   "Highest Profit Margins": "En Yüksek Kâr Oranları",
   "%{monthlyPrice}/mo or %{yearlyPrice}/year": "ayda %{monthlyPrice} veya yılda %{yearlyPrice}",
-  "Text-based editing of VOD content": "VOD içeriği için metin tabanlı düzenleme"
+  "Text-based editing of VOD content": "VOD içeriği için metin tabanlı düzenleme",
+  "Polish your videos with text-based and AI powered Podcast Editor": "Videolarınızı metin tabanlı ve yapay zekâ destekli Podcast Editor ile kusursuz hâle getirin",
+  "Turn your videos into mobile-friendly short-form TikToks, Reels, and Shorts with Cross Clip": "Cross Clip ile videolarınızı mobil uyumlu kısa biçimli TikTok'lara, Reels’lere ve Shorts’lara dönüştürün",
+  "Edit video professionally from your browser with Video Editor": "Video Düzenleyici Tarayıcınızdan profesyonel video düzenlemesi yapın"
 }

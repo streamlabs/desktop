@@ -173,4 +173,5 @@ export interface ISourceDisplayData {
   shortDesc?: string;
   link?: string;
   linkText?: string;
+  group: string;
 }

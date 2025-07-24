@@ -3,7 +3,6 @@ import { IYoutubeStartStreamOptions, YoutubeService } from './youtube';
 import { FacebookService, IFacebookStartStreamOptions } from './facebook';
 import { ITikTokStartStreamOptions, TikTokService } from './tiktok';
 import { InstagramService, IInstagramStartStreamOptions } from './instagram';
-import { KickService, IKickStartStreamOptions } from './kick';
 import { TwitterPlatformService } from './twitter';
 import { TTwitchOAuthScope } from './twitch/index';
 import { IGoLiveSettings } from 'services/streaming';
@@ -11,6 +10,7 @@ import { WidgetType } from '../widgets';
 import { ITrovoStartStreamOptions, TrovoService } from './trovo';
 import { TDisplayType } from 'services/settings-v2';
 import { $t } from 'services/i18n';
+import { KickService, IKickStartStreamOptions } from './kick';
 
 export type Tag = string;
 export interface IGame {
@@ -50,6 +50,8 @@ export type TPlatformCapabilityMap = {
   resolutionPreset: IPlatformCapabilityResolutionPreset;
   /** This service supports fetching viewersCount **/
   viewerCount: IPlatformCapabilityViewerCount;
+  /** This service may simultaneously stream both the horizontal and vertical displays in dual output mode*/
+  dualStream: true;
 };
 
 export type TPlatformCapability = keyof TPlatformCapabilityMap;
@@ -144,6 +146,11 @@ export enum EPlatformCallResult {
    * The user needs to re-merge their to update Live Access status.
    */
   TikTokScopeOutdated,
+
+  /**
+   * The user needs to re-login to update Kick scope.
+   */
+  KickScopeOutdated,
 }
 
 export type TStartStreamOptions =
@@ -195,6 +202,8 @@ export interface IPlatformService {
   prepopulateInfo: () => Promise<unknown>;
 
   scheduleStream?: (startTime: number, info: TStartStreamOptions) => Promise<any>;
+
+  setupDualStream?: (options: IGoLiveSettings) => Promise<void>;
 
   fetchNewToken: () => Promise<void>;
 
@@ -288,12 +297,14 @@ export function getPlatformService(platform: TPlatform): IPlatformService {
     facebook: FacebookService.instance,
     tiktok: TikTokService.instance,
     trovo: TrovoService.instance,
+    kick: KickService.instance,
     twitter: TwitterPlatformService.instance,
     instagram: InstagramService.instance,
-    kick: KickService.instance,
   }[platform];
 }
 
 export interface IPlatformRequest extends RequestInit {
   url: string;
 }
+
+export const externalAuthPlatforms = ['youtube', 'twitch', 'twitter', 'tiktok', 'kick'];

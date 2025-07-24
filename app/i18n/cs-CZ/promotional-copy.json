@@ -1,6 +1,6 @@
 {
   "Overlay, Widget, and Site Themes": "Překrytí, widget a motivy webu",
-  "Fully customize your stream and your website to represent your brand; or pick from thousands of our pre-made themes. Either way, your stream will look amazing and it's all included with Ultra.": "Plně přizpůsobte své streamování a svůj web tak, aby zcela odrážel vaši značku, nebo si vyberte z tisíců našich předem připravených motivů. V každém případě bude váš stream vypadat úžasně a vše je součástí služby Ultra.",
+  "Fully customize your stream and your website to represent your brand; or pick from thousands of our pre-made overlays. Either way, your stream will look amazing and it's all included with Ultra.": "Přizpůsobte své streamování a svůj web tak, aby zcela odrážely vaši značku, nebo si vyberte z tisíců našich předem připravených motivů. V každém případě bude váš stream vypadat úžasně a vše je součástí služby Ultra.",
   "View Themes": "Zobrazit motivy",
   "Every App is FREE": "Všechny aplikace jsou ZDARMA",
   "We've curated a list of diverse and feature rich applications to give you more control, automation, better analytics, and new ways to interact with your audience.": "Připravili jsme pro vás seznam rozmanitých aplikací s řadou funkcí, se kterými získáte větší kontrolu, možnosti automatizace, lepší analytické funkce a nové způsoby interakce s cílovou skupinou.",
@@ -71,5 +71,8 @@
   "1 Hour Videos + 250GB Storage + More": "1 hodinová videa + 250 GB úložiště + další",
   "Highest Profit Margins": "Nejlepší ziskové marže",
   "%{monthlyPrice}/mo or %{yearlyPrice}/year": "%{monthlyPrice}/měs nebo %{yearlyPrice}/rok",
-  "Text-based editing of VOD content": "Text-based editing of VOD content"
+  "Text-based editing of VOD content": "Textové úpravy obsahu VOD",
+  "Polish your videos with text-based and AI powered Podcast Editor": "Vylepšete svá videa pomocí textového editoru a editoru podcastů Podcast Editor s umělou inteligencí",
+  "Turn your videos into mobile-friendly short-form TikToks, Reels, and Shorts with Cross Clip": "Přeměňte svá videa na krátké filmy pro TikTok, Reels a Shorts vhodné pro mobilní zařízení pomocí aplikace Cross Clip",
+  "Edit video professionally from your browser with Video Editor": "Upravujte video profesionálně z prohlížeče pomocí editoru videa Video Editor"
 }
