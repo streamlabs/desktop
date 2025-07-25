@@ -202,9 +202,17 @@ export type OnairChannelData = {
   smallThumbnailUrl: string;
 };
 
-export type BroadcastStreamData = {
-  url: string;
-  name: string;
+export type IngestInfoData = {
+  rtmp: {
+    tcUrl: string;
+    streamName: string;
+    appName: string;
+  };
+  rtmps: {
+    tcUrl: string;
+    streamName: string;
+    appName: string;
+  };
 };
 
 export interface UserFollow {

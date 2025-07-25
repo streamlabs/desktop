@@ -1,7 +1,7 @@
 import { Inject } from 'services/core/injector';
 import { Service } from 'services/core/service';
 import { HostsService } from 'services/hosts';
-import { NicoliveClient } from 'services/nicolive-program/NicoliveClient';
+import { isOk, NicoliveClient } from 'services/nicolive-program/NicoliveClient';
 import { SettingsService } from 'services/settings';
 import { EStreamingState, StreamingService } from 'services/streaming';
 import { UserService } from 'services/user';
@@ -148,7 +148,7 @@ export class NiconicoService extends Service implements IPlatformService {
       console.log('streamingService.streamingStatusChange! ', this.streamingStatus);
       if (this.streamingStatus === EStreamingState.Reconnecting) {
         console.log('reconnecting - checking stream key');
-        this.client.fetchBroadcastStream(this.channelId).catch(() => {
+        this.client.fetchIngestInfo(this.channelId).catch(() => {
           console.log('niconico program has ended! stopping streaming.');
           this.streamingService.stopStreaming();
         });
@@ -184,11 +184,15 @@ export class NiconicoService extends Service implements IPlatformService {
 
   private async _setupStreamSettings(programId: string): Promise<IStreamingSetting> {
     const [stream, quality] = await Promise.all([
-      this.client.fetchBroadcastStream(programId),
+      this.client.fetchIngestInfo(programId),
       this.client.fetchMaxQuality(programId),
     ]);
-    const url = stream.url;
-    const key = stream.name;
+    if (!isOk(stream)) {
+      return Promise.reject(stream.value);
+    }
+
+    const url = stream.value.rtmp.tcUrl;
+    const key = stream.value.rtmp.streamName;
 
     const settings = this.settingsService.getSettingsFormData('Stream');
     settings.forEach(subCategory => {
