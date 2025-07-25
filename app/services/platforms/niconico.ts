@@ -191,8 +191,8 @@ export class NiconicoService extends Service implements IPlatformService {
       return Promise.reject(stream.value);
     }
 
-    const url = stream.value.rtmps.tcUrl;
-    const key = stream.value.rtmps.streamName;
+    const url = stream.value.rtmp.tcUrl;
+    const key = stream.value.rtmp.streamName;
 
     const settings = this.settingsService.getSettingsFormData('Stream');
     settings.forEach(subCategory => {
