@@ -137,6 +137,10 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
     );
   }
 
+  forceRefresh() {
+    this.refreshWindowSize(this.state, this.state, true);
+  }
+
   private setState(partialState: Partial<IWindowSizeState>) {
     const nextState = { ...this.state, ...partialState };
     if (!nextState.isReady) {
@@ -177,18 +181,22 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
   static mainWindowOperation = new MainWindowOperation();
 
   /** パネルが出る幅の分だけ画面の最小幅を拡張する */
-  refreshWindowSize(prevState: IWindowSizeState, nextState: IWindowSizeState): void {
+  refreshWindowSize(
+    prevState: IWindowSizeState,
+    nextState: IWindowSizeState,
+    forceUpdate = false,
+  ): void {
     const prevPanelState = WindowSizeService.getPanelState(prevState);
     const nextPanelState = WindowSizeService.getPanelState(nextState);
     if (nextPanelState !== null) {
+      const prevBackupSize: BackupSizeInfo = {
+        widthOffset: this.customizationService.state.fullModeWidthOffset,
+        backupX: this.customizationService.state.compactBackupPositionX,
+        backupY: this.customizationService.state.compactBackupPositionY,
+        backupHeight: this.customizationService.state.compactBackupHeight,
+        maximized: this.customizationService.state.compactMaximized,
+      };
       if (prevPanelState !== nextPanelState) {
-        const prevBackupSize: BackupSizeInfo = {
-          widthOffset: this.customizationService.state.fullModeWidthOffset,
-          backupX: this.customizationService.state.compactBackupPositionX,
-          backupY: this.customizationService.state.compactBackupPositionY,
-          backupHeight: this.customizationService.state.compactBackupHeight,
-          maximized: this.customizationService.state.compactMaximized,
-        };
         const nextBackupSize = WindowSizeService.updateWindowSize(
           WindowSizeService.mainWindowOperation,
           prevPanelState,
@@ -204,6 +212,14 @@ export class WindowSizeService extends StatefulService<IWindowSizeState> {
             compactMaximized: nextBackupSize.maximized,
           });
         }
+      } else if (forceUpdate) {
+        // パネル状態が変わらないが、強制的に更新する必要がある場合
+        WindowSizeService.updateWindowSize(
+          WindowSizeService.mainWindowOperation,
+          prevPanelState,
+          nextPanelState,
+          prevBackupSize,
+        );
       }
       if (prevState.isAlwaysOnTop !== nextState.isAlwaysOnTop) {
         WindowSizeService.mainWindowOperation.setAlwaysOnTop(nextState.isAlwaysOnTop);

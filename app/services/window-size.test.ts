@@ -120,7 +120,6 @@ describe('static getPanelState', () => {
   }
 });
 
-// TODO fix
 describe('refreshWindowSize', () => {
   const suites = [
     {
@@ -201,7 +200,8 @@ describe('refreshWindowSize', () => {
       });
 
       const { WindowSizeService } = target();
-      const updateWindowSize = jest_fn<(typeof WindowSizeService)['updateWindowSize']>();
+      const updateWindowSize =
+        jest_fn<(typeof WindowSizeService)['updateWindowSize']>().mockName('updateWindowSize');
       // inject spy
       WindowSizeService.updateWindowSize = updateWindowSize;
 
