@@ -51,12 +51,12 @@ function setupInstance() {
     Promise.resolve({
       ok: true,
       value: {
-        rtmps: {
+        rtmp: {
           tcUrl: 'url1',
           streamName: 'key1',
           appName: 'app1',
         },
-        rtmp: {
+        rtmps: {
           tcUrl: 'url2', // この値は使わない
           streamName: 'key2',
           appName: 'app2',
