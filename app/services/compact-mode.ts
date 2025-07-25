@@ -61,6 +61,8 @@ export class CompactModeService extends StatefulService<ICompactModeServiceState
       this.setState({
         autoCompactMode: this.customizationService.state.autoCompactMode,
       });
+      // 起動時のautoCompact判定の後に1回ウィンドウサイズを確定する
+      this.windowSizeService.forceRefresh();
     });
   }
 

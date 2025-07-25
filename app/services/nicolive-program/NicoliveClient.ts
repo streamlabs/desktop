@@ -775,6 +775,35 @@ export class NicoliveClient {
     };
   }
 
+  async deleteComment(programId: string, messageId: string): Promise<WrappedResult<void>> {
+    const params = new URLSearchParams();
+    params.append('messageId', messageId);
+
+    return this.requestAPI<void>(
+      'DELETE',
+      `${
+        NicoliveClient.live2BaseURL
+      }/unama/api/v4/programs/${programId}/comments?${params.toString()}`,
+      {
+        headers: NicoliveClient.v4ApiHeaders(programId),
+      },
+    );
+  }
+
+  async undoDeleteComment(programId: string, messageId: string): Promise<WrappedResult<void>> {
+    const requestInit = NicoliveClient.jsonBody('');
+    requestInit.headers = {
+      ...requestInit.headers,
+      ...NicoliveClient.v4ApiHeaders(programId),
+    };
+
+    return this.requestAPI<void>(
+      'POST',
+      `${NicoliveClient.live2BaseURL}/unama/api/v4/programs/${programId}/comments/${messageId}/undo`,
+      requestInit,
+    );
+  }
+
   async fetchProgramPassword(programID: string): Promise<WrappedResult<ProgramPassword['data']>> {
     return this.requestAPI<ProgramPassword['data']>(
       'GET',

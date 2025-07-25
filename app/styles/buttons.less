@@ -392,22 +392,28 @@ button {
 
 //　button
 .basic-button {
+  &[data-size='xs'] {
+    --font-size: var(--font-size-xs);
+    --height: 24px;
+    --padding: var(--spacing-md);
+  }
+
   &[data-size='sm'] {
     --font-size: var(--font-size-xs);
-    --height: var(--button-height-sm);
-    --padding: var(--button-padding-sm);
+    --height: 32px;
+    --padding: var(--spacing-lg);
   }
 
   &[data-size='md'] {
     --font-size: var(--font-size-sm);
-    --height: var(--button-height-md);
-    --padding: var(--button-padding-md);
+    --height: 36px;
+    --padding: var(--spacing-lg);
   }
 
   &[data-size='lg'] {
     --font-size: var(--font-size-lg);
-    --height: var(--button-height-lg);
-    --padding: var(--button-padding-lg);
+    --height: 40px;
+    --padding: var(--spacing-lg);
   }
 
   &[data-radius='sm'] {
@@ -419,7 +425,7 @@ button {
   }
 
   &[data-color='primary'] {
-    --color-base: var(--color-button-primary);
+    --color-base: var(--color-object-accent-primary);
   }
 
   &[data-color='secondary'] {
@@ -476,15 +482,18 @@ button {
 // action-icon用
 .action-icon {
   &[data-size='sm'] {
-    --size: var(--action-icon-size-sm);
+    --size: 28px;
+    --icon-size: 16px;
   }
 
   &[data-size='md'] {
-    --size: var(--action-icon-size-md);
+    --size: 32px;
+    --icon-size: 18px;
   }
 
   &[data-size='lg'] {
-    --size: var(--action-icon-size-lg);
+    --size: 36px;
+    --icon-size: 20px;
   }
 
   &[data-radius='sm'] {
@@ -521,7 +530,7 @@ button {
   }
 
   &[data-variant='sabtle'] {
-    --color-text: var(--color-object-emphasis-high);
+    --color-text: var(--color-base);
     --color-text-active: var(--color-base-active);
     --color-bg: transparent;
     --color-bg-hover: color-mix(in srgb, var(--color-base) 20%, transparent);
@@ -546,6 +555,10 @@ button {
   background-color: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
+
+  > i {
+    font-size: var(--icon-size);
+  }
 
   .transition;
 

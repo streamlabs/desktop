@@ -1,5 +1,4 @@
 import * as fetchMock from 'fetch-mock';
-import { NicoliveClient, parseMaxQuality } from './NicoliveClient';
 
 jest.mock('services/i18n', () => ({
   $t: (x: any) => x,
@@ -8,9 +7,19 @@ jest.mock('util/menus/Menu', () => ({}));
 jest.mock('@electron/remote', () => ({
   BrowserWindow: jest.fn(),
 }));
+import type { MainProcessFetchResponse } from 'util/fetchViaMainProcess';
+const fetchViaMainProcess = jest
+  .fn<Promise<MainProcessFetchResponse>, [string, RequestInit]>()
+  .mockName('fetchViaMainProcess');
+jest.mock('util/fetchViaMainProcess', () => ({
+  fetchViaMainProcess,
+}));
+
+import { NicoliveClient, parseMaxQuality } from './NicoliveClient';
 
 afterEach(() => {
   fetchMock.reset();
+  fetchViaMainProcess.mockReset();
 });
 
 describe('parseMaxQuality', () => {
@@ -405,6 +414,81 @@ describe('webviews', () => {
 
     await result;
     expect(mock.browserWindow.close).toHaveBeenCalled();
+  });
+});
+
+describe('NicoliveClient.wrapResult', () => {
+  const headers: [string, string][] = [['Date', 'Tue, 01 Jan 2019 00:00:00 GMT']];
+  const serverDateMs = new Date('2019-01-01T00:00:00Z').valueOf();
+
+  test.each<[string, boolean, string | null, MainProcessFetchResponse | Response]>(
+    (
+      [
+        [200, '{"data": "ok"}', 'ok'],
+        [204, null, null],
+        [404, '"not found"', 'not found'],
+      ] as [number, string, string | null][]
+    ).flatMap(([status, text, expect]) =>
+      [false, true].map<[string, boolean, string | null, MainProcessFetchResponse | Response]>(
+        viaMainProcess => {
+          const ok = status < 400;
+          return [
+            `status:${status} viaMainProcess:${viaMainProcess}`,
+            ok,
+            expect,
+            viaMainProcess
+              ? {
+                  ok,
+                  headers,
+                  status,
+                  text,
+                }
+              : new Response(text, { status, headers }),
+          ];
+        },
+      ),
+    ),
+  )('%p ok:%p expect:%p', async (_label, ok, value, response) => {
+    const res = await NicoliveClient.wrapResult<string>(response);
+    console.log(res);
+    expect(res).toEqual({
+      ok,
+      ...(ok ? { serverDateMs } : {}),
+      value,
+    });
+  });
+});
+
+describe('NicoliveClient.deleteComment', () => {
+  setupMock();
+  const error = new Error('error');
+
+  test.each<[boolean, string | Error, Promise<MainProcessFetchResponse>]>([
+    [
+      true,
+      null,
+      Promise.resolve<MainProcessFetchResponse>({ ok: true, headers: [], status: 204, text: '' }),
+    ],
+    [
+      false,
+      'not found',
+      Promise.resolve<MainProcessFetchResponse>({
+        ok: false,
+        headers: [],
+        status: 404,
+        text: '"not found"',
+      }),
+    ],
+    [false, error, Promise.reject(error)],
+  ])('ok:%p expect value:%v', async (ok, value, response) => {
+    fetchViaMainProcess.mockResolvedValueOnce(response);
+
+    const client = new NicoliveClient({ niconicoSession: 'dummy' });
+    {
+      const res = client.deleteComment('lv1', '1');
+      await expect(res).resolves.toEqual({ ok, serverDateMs: undefined, value });
+      expect(fetchViaMainProcess).toHaveBeenCalledWith(expect.anything(), expect.anything());
+    }
   });
 });
 
