@@ -14,6 +14,7 @@ export type WrappedChat = {
   rawName?: string; // ピン留めコメント用にnameを保存
   isModerator?: boolean;
   isSupporter?: boolean;
+  isDeleted?: boolean;
 };
 
 /**

@@ -24,6 +24,11 @@ export class NicoliveSupportersService extends StatefulService<INicoliveSupporte
     const limit = 1000;
     const supporterIds: string[] = [];
 
+    if (isFakeMode()) {
+      this.setState({ supporterIds });
+      return supporterIds;
+    }
+
     try {
       for (let offset = 0; ; offset += limit) {
         const response = await this.client.fetchSupporters({ limit, offset });

@@ -23,9 +23,10 @@ import { NicoliveModeratorsService } from 'services/nicolive-program/nicolive-mo
 import { NicoliveProgramService } from 'services/nicolive-program/nicolive-program';
 import { NicoliveProgramStateService } from 'services/nicolive-program/state';
 import { ISettingsServiceApi } from 'services/settings';
+import { SnackbarService } from 'services/snackbar';
 import { Menu } from 'util/menus/Menu';
 import Vue from 'vue';
-import { Component, Prop } from 'vue-property-decorator';
+import { Component, Prop, Watch } from 'vue-property-decorator';
 import NAirLogo from '../../../media/images/n-air-logo.svg';
 import CommentFilter from './CommentFilter.vue';
 import CommentForm from './CommentForm.vue';
@@ -74,6 +75,7 @@ export default class CommentViewer extends Vue {
 
   @Inject() private nicoliveModeratorsService: NicoliveModeratorsService;
   @Inject() private hostsService: HostsService;
+  @Inject() private snackbarService: SnackbarService;
 
   @Prop({ default: false }) showPlaceholder: boolean;
 
@@ -196,65 +198,106 @@ export default class CommentViewer extends Vue {
         clipboard.writeText(item.value.content);
       },
     });
-    menu.append({
-      id: "Copy comment owner's id",
-      label: 'ユーザーIDをコピー',
-      click: () => {
-        clipboard.writeText(item.value.user_id);
-      },
-    });
     if (item.type === 'normal') {
       menu.append({
-        type: 'separator',
-      });
-
-      menu.append({
-        id: 'Ban comment content',
-        label: 'コメントを配信からブロック',
+        id: "Copy comment owner's id",
+        label: 'ユーザーIDをコピー',
         click: () => {
-          this.nicoliveCommentFilterService
-            .addFilter({ type: 'word', body: item.value.content })
-            .catch(e => {
-              if (e instanceof NicoliveFailure) {
-                openErrorDialogFromFailure(e);
-              }
-            });
+          clipboard.writeText(item.value.user_id);
         },
       });
-      menu.append({
-        id: 'Ban comment owner',
-        label: 'ユーザーを配信からブロック',
-        click: () => {
-          this.nicoliveCommentFilterService
-            .addFilter({
-              type: 'user',
-              body: item.value.user_id,
-              messageId: `${item.value.id}`,
-              memo: item.value.content,
-            })
-            .catch(e => {
-              if (e instanceof NicoliveFailure) {
-                openErrorDialogFromFailure(e);
-              }
-            });
-        },
-      });
-      menu.append({
-        type: 'separator',
-      });
-      if (item.value.name /* なふだ有効ユーザー */) {
-        if (!this.nicoliveModeratorsService.isModerator(item.value.user_id)) {
+      if (!item.filtered) {
+        menu.append({
+          type: 'separator',
+        });
+        if (item.isDeleted) {
           menu.append({
-            id: 'Add to moderator',
-            label: 'モデレーターに追加',
+            id: 'Undo delete a comment',
+            label: 'コメント削除を取り消す',
             click: () => {
-              this.nicoliveModeratorsService.addModeratorWithConfirm({
-                userId: item.value.user_id,
-                userName: item.value.name,
+              this.nicoliveCommentViewerService.undoDeleteComment(item.value.id).catch(e => {
+                if (e instanceof NicoliveFailure) {
+                  openErrorDialogFromFailure(e);
+                }
               });
             },
           });
         } else {
+          menu.append({
+            id: 'Delete a comment',
+            label: 'コメントを削除',
+            click: () => {
+              this.nicoliveCommentViewerService
+                .deleteComment(item.value.id)
+                .then(() => {
+                  this.snackbarService.show({
+                    position: 'niconico',
+                    message: 'コメントを削除しました',
+                    action: {
+                      label: '取り消す',
+                      onClick: () => {
+                        this.nicoliveCommentViewerService
+                          .undoDeleteComment(item.value.id)
+                          .catch(e => {
+                            if (e instanceof NicoliveFailure) {
+                              openErrorDialogFromFailure(e);
+                            }
+                          });
+                      },
+                    },
+                  });
+                })
+                .catch(e => {
+                  if (e instanceof NicoliveFailure) {
+                    openErrorDialogFromFailure(e);
+                  }
+                });
+            },
+          });
+        }
+        menu.append({
+          type: 'separator',
+        });
+        menu.append({
+          id: 'Ban comment owner',
+          label: 'ユーザーを配信からブロック',
+          click: () => {
+            this.nicoliveCommentFilterService
+              .addFilter({
+                type: 'user',
+                body: item.value.user_id,
+                messageId: `${item.value.id}`,
+                memo: item.value.content,
+              })
+              .catch(e => {
+                if (e instanceof NicoliveFailure) {
+                  openErrorDialogFromFailure(e);
+                }
+              });
+          },
+        });
+      }
+      if (item.value.name /* なふだ有効ユーザー */) {
+        if (!this.nicoliveModeratorsService.isModerator(item.value.user_id)) {
+          if (!item.filtered) {
+            menu.append({
+              type: 'separator',
+            });
+            menu.append({
+              id: 'Add to moderator',
+              label: 'モデレーターに追加',
+              click: () => {
+                this.nicoliveModeratorsService.addModeratorWithConfirm({
+                  userId: item.value.user_id,
+                  userName: item.value.name,
+                });
+              },
+            });
+          }
+        } else {
+          menu.append({
+            type: 'separator',
+          });
           menu.append({
             id: 'Remove from moderator',
             label: 'モデレーターから削除',
@@ -266,17 +309,19 @@ export default class CommentViewer extends Vue {
             },
           });
         }
+      }
+      if (!item.isDeleted && !item.filtered && this.pinnedComment?.seqId !== item.seqId) {
         menu.append({
           type: 'separator',
         });
+        menu.append({
+          id: 'Pin the comment',
+          label: 'コメントをピン留め',
+          click: () => {
+            this.pin(item);
+          },
+        });
       }
-      menu.append({
-        id: 'Pin the comment',
-        label: 'コメントをピン留め',
-        click: () => {
-          this.pin(item);
-        },
-      });
     }
 
     // コンテキストメニューが出るとホバー判定が消えるので、外観を維持するために注目している要素を保持しておく
@@ -326,6 +371,7 @@ export default class CommentViewer extends Vue {
       this.cleanup();
       this.cleanup = undefined;
     }
+    this.clearSnackbarTimeout();
   }
 
   updated() {
@@ -347,5 +393,54 @@ export default class CommentViewer extends Vue {
 
   openModeratorSettings() {
     remote.shell.openExternal(this.hostsService.getModeratorSettingsURL());
+  }
+
+  get snackbar(): {
+    message: string;
+    action: { label: string; onClick: () => void };
+    hideDelay: number;
+  } | null {
+    if (this.snackbarService.state.latest?.position === 'niconico') {
+      return this.snackbarService.state.latest;
+    }
+    return null;
+  }
+
+  isSnackbarHovered = false;
+
+  private snackbarTimeout: NodeJS.Timeout | null = null;
+  clearSnackbarTimeout() {
+    if (this.snackbarTimeout) {
+      clearTimeout(this.snackbarTimeout);
+      this.snackbarTimeout = null;
+    }
+  }
+
+  @Watch('snackbar')
+  onSnackbarChange() {
+    this.clearSnackbarTimeout();
+    if (this.snackbar) {
+      this.snackbarTimeout = setTimeout(() => {
+        this.snackbarTimeout = null;
+        if (!this.isSnackbarHovered) {
+          this.snackbarService.hide();
+        }
+      }, this.snackbar.hideDelay);
+    }
+  }
+
+  onSnackbarMouseLeave() {
+    this.isSnackbarHovered = false;
+    if (this.snackbar && this.snackbarTimeout === null) {
+      this.snackbarService.hide();
+    }
+  }
+
+  openSnackbar(message: string, action?: { label: string; onClick: () => void }) {
+    this.snackbarService.show({ position: 'niconico', message, action });
+  }
+
+  closeSnackbar() {
+    this.snackbarService.hide();
   }
 }

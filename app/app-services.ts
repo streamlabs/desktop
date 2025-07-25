@@ -54,6 +54,7 @@ export { Selection, SelectionService } from 'services/selection';
 export { OutputSettingsService, SettingsService } from 'services/settings';
 export { VideoSettingsService } from 'services/settings-v2';
 export { ShortcutsService } from 'services/shortcuts';
+export { SnackbarService } from 'services/snackbar';
 export { SourceFiltersService } from 'services/source-filters';
 export { Source, SourcesService } from 'services/sources';
 export { MonitorCaptureCroppingService } from 'services/sources/monitor-capture-cropping';

@@ -3,7 +3,7 @@
     <div class="comment-wrapper" :speaking="speaking" @dblclick="$emit('pinned')">
       <div class="comment-number">{{ chat.value.no }}</div>
       <div class="comment-box">
-        <div class="comment-name-box" v-if="computedName">
+        <div class="comment-name-box" v-if="computedName && !chat.isDeleted">
           <img
             class="comment-icon"
             :src="userIconURL"
@@ -20,11 +20,22 @@
             v-if="chat.isSupporter"
           ></i>
         </div>
-        <div class="comment-body" :title="computedTitle">{{ computedContent }}</div>
+        <div class="comment-body" :title="computedTitle">
+          {{
+            chat.isDeleted && !chat.filtered ? '##このコメントは削除されました##' : computedContent
+          }}
+        </div>
       </div>
-      <div class="comment-misc" @click.stop="$emit('commentMenu')">
-        <i class="icon-btn icon-ellipsis-vertical"></i>
-      </div>
+      <button
+        class="action-icon comment-misc"
+        data-size="sm"
+        data-variant="sabtle"
+        data-radius="sm"
+        data-color="secondary"
+        @click="$emit('commentMenu')"
+      >
+        <i class="icon-kebab"></i>
+      </button>
     </div>
     <div class="nameplate-hint" v-if="nameplateHint">
       <div class="nameplate-hint-header">［なふだ機能］を使ったコメントが投稿されました</div>
@@ -64,7 +75,7 @@
 .comment-number {
   .common__comment-number;
 
-  .name & {
+  &:has(+ .comment-box .comment-name-box) {
     margin-top: 4px;
   }
 }
@@ -111,13 +122,13 @@
 .icon-moderator {
   margin-left: 4px;
   font-size: @font-size5;
-  color: var(--color-primary);
+  color: var(--color-external-nico-blue);
 }
 
 .icon-creator-support {
   margin-left: 4px;
   font-size: @font-size5;
-  color: var(--color-primary);
+  color: var(--color-external-nico-blue);
 }
 
 .comment-body {

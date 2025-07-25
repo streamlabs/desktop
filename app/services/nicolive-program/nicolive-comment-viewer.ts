@@ -600,6 +600,44 @@ export class NicoliveCommentViewerService extends StatefulService<INicoliveComme
     this.SET_STATE({ pinnedMessage });
   }
 
+  async deleteComment(commentId: string): Promise<void> {
+    if (!commentId) {
+      throw new Error('deleteComment: commentId is required');
+    }
+
+    await this.nicoliveProgramService.deleteCommentRaw(commentId);
+
+    // コメント一覧のコメントを削除に変更する
+    this.updateMessages(chat => {
+      if (isWrappedChat(chat) && chat.value.id === commentId) {
+        return {
+          ...chat,
+          isDeleted: true,
+        };
+      }
+      return chat;
+    });
+  }
+
+  async undoDeleteComment(commentId: string): Promise<void> {
+    if (!commentId) {
+      throw new Error('undoDeleteComment: commentId is required');
+    }
+
+    await this.nicoliveProgramService.undoDeleteCommentRaw(commentId);
+
+    // コメント一覧のコメントの削除を解除する
+    this.updateMessages(chat => {
+      if (isWrappedChat(chat) && chat.value.id === commentId) {
+        return {
+          ...chat,
+          isDeleted: false,
+        };
+      }
+      return chat;
+    });
+  }
+
   @mutation()
   private SET_STATE(nextState: Partial<INicoliveCommentViewerState>) {
     this.state = { ...this.state, ...nextState };

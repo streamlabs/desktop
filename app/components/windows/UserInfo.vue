@@ -255,13 +255,13 @@
 .icon-moderator {
   margin-left: 4px;
   font-size: @font-size5;
-  color: var(--color-primary);
+  color: var(--color-external-nico-blue);
 }
 
 .icon-creator-support {
   margin-left: 4px;
   font-size: @font-size5;
-  color: var(--color-primary);
+  color: var(--color-external-nico-blue);
 }
 
 .user-account {
