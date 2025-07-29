@@ -1,26 +1,15 @@
-const pjson = require('../package.json');
+const cp = require('child_process');
 const fs = require('fs');
+const findDarwinArch = require('../scripts/find-darwin-arch');
+const pjson = require('../package.json');
 const stream = require('stream');
-const cp = require('child_process')
 
 // Download the Mac virtual camera system extension and pack it into the executable.
 async function buildVirtualCamExtension(context) {
   console.log("Download mac virtual camera");
   const destFile = 'slobs-virtual-cam-installer.tar.gz';
 
-  let arch = '';
-
-  if (process.env.npm_config_arch === 'arm64') {
-    arch = 'arm64';
-  } else if (process.env.npm_config_arch === 'x64') {
-    arch = 'x86_64';
-  } else if (process.arch === 'arm64') {
-    arch = 'arm64';
-  } else if (process.arch === 'x64') {
-    arch = 'x86_64';
-  } else {
-    throw 'CPU architecture not supported.';
-  }
+  const arch = findDarwinArch();
   const sourceUrl = pjson.macVirtualCamUrl.replace('[ARCH]', arch);
 
   await downloadFile(sourceUrl, destFile);
