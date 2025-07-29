@@ -231,7 +231,7 @@ const COUNTER_STRIKE_2_CONFIG: IGameConfig = {
   label: 'Counter-Strike',
   gameModes: '',
   thumbnail: `${thumbnailPath}${EGame.COUNTER_STRIKE_2}.png`,
-  state: EGameState.INTERNAL,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -263,7 +263,7 @@ const PUBG_CONFIG: IGameConfig = {
   label: 'PUBG: BATTLEGROUNDS',
   gameModes: '',
   thumbnail: `${thumbnailPath}${EGame.PUBG}.png`,
-  state: EGameState.INTERNAL,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -279,7 +279,7 @@ const RAINBOW_SIX_SIEGE: IGameConfig = {
   label: "Tom Clancy's Rainbow Six Siege X",
   gameModes: '',
   thumbnail: `${thumbnailPath}${EGame.RAINBOW_SIX_SIEGE}.png`,
-  state: EGameState.INTERNAL,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -311,7 +311,7 @@ const LEAGUE_OF_LEGENDS: IGameConfig = {
   label: 'League of Legends',
   gameModes: '',
   thumbnail: `${thumbnailPath}${EGame.LEAGUE_OF_LEGENDS}.png`,
-  state: EGameState.INTERNAL,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -344,10 +344,10 @@ const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.VALORANT]: VALORANT_CONFIG, // ✅
   [EGame.COUNTER_STRIKE_2]: COUNTER_STRIKE_2_CONFIG,
   [EGame.APEX_LEGENDS]: APEX_LEGENDS_CONFIG, // ✅
-  [EGame.PUBG]: PUBG_CONFIG,
-  [EGame.RAINBOW_SIX_SIEGE]: RAINBOW_SIX_SIEGE,
+  [EGame.PUBG]: PUBG_CONFIG, // ✅
+  [EGame.RAINBOW_SIX_SIEGE]: RAINBOW_SIX_SIEGE, // ✅
   [EGame.OVERWATCH_2]: OVERWATCH_2,
-  [EGame.LEAGUE_OF_LEGENDS]: LEAGUE_OF_LEGENDS,
+  [EGame.LEAGUE_OF_LEGENDS]: LEAGUE_OF_LEGENDS, // ✅
   [EGame.UNSET]: UNSET_CONFIG,
 };
 
