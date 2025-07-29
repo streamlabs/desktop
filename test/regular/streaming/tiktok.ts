@@ -22,7 +22,7 @@ import { isDisplayed, waitForDisplayed } from '../../helpers/modules/core';
 // eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
 
-test('Streaming to TikTok', withUser('twitch', { multistream: false, prime: false }), async t => {
+test('Streaming to TikTok', withUser('twitch', { multistream: false, prime: true }), async t => {
   // test approved status
   const { tikTokLiveScope, serverUrl, streamKey } = tikTokUsers.approved;
   await addDummyAccount('tiktok', { tikTokLiveScope, serverUrl, streamKey });
