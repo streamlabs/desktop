@@ -39,7 +39,7 @@ export class InstagramService
   readonly apiBase = '';
   readonly platform = 'instagram';
   readonly displayName = 'Instagram';
-  readonly capabilities = new Set<TPlatformCapability>(['resolutionPreset']);
+  readonly capabilities = new Set<TPlatformCapability>(['resolutionPreset', 'title']);
 
   static initialState: IInstagramServiceState = {
     ...BasePlatformService.initialState,
