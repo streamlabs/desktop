@@ -56,16 +56,19 @@ function signXcodeApps(context) {
   // For apps that requires specific entitlements. Ensures the entitlements file is provided during signing
   const entitlements = "--entitlements electron-builder/mac-virtual-cam-entitlements.plist";
   const installerPath = `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Frameworks/slobs-virtual-cam-installer.app`;
-  console.log(`Signing: ${installerPath}`);
-  cp.execSync(
-    `codesign --sign "Developer ID Application: ${context.packager.config.mac.identity}" ${entitlements} --options runtime --deep --force --verbose "${installerPath}"`,
-  );
-  // All files need to be writable for update to succeed on mac
-  console.log(`Checking Writable: ${installerPath}`);
-  try {
-    fs.accessSync(installerPath, fs.constants.W_OK);
-  } catch {
-    throw new Error(`File ${installerPath} is not writable!`);
+  const extensionPath = `${installerPath}/Contents/Library/SystemExtensions/com.streamlabs.slobs.mac-camera-extension.systemextension`;
+  const executables = [extensionPath, installerPath]; // sign the extension first, then the parent app bundle (the installer)
+  for (const exe of executables) {
+    cp.execSync(
+      `codesign --sign "Developer ID Application: ${context.packager.config.mac.identity}" ${entitlements} --options runtime --deep --force --verbose "${exe}"`,
+    );
+    // All files need to be writable for update to succeed on mac
+    console.log(`Checking Writable: ${exe}`);
+    try {
+      fs.accessSync(exe, fs.constants.W_OK);
+    } catch {
+      throw new Error(`File ${exe} is not writable!`);
+    }
   }
 }
 
