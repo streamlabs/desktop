@@ -220,6 +220,7 @@ export default class CommentViewer extends Vue {
                   openErrorDialogFromFailure(e);
                 }
               });
+              this.snackbarService.hide(); // スナックバーを消す
             },
           });
         } else {
