@@ -300,7 +300,7 @@
 }
 
 .toggle-key-button {
-  width: 100px;
+  width: 110px;
   height: 32px;
   margin: 0;
 }
