@@ -1,7 +1,7 @@
 const sh = require('shelljs');
 const colors = require('colors/safe');
 const fs = require('fs');
-const os = require('os');
+const findDarwinArch = require('./find-darwin-arch');
 const path = require('path');
 const stream = require('stream');
 
@@ -80,17 +80,7 @@ async function runScript() {
       os = 'win64';
     } else if (process.platform === 'darwin') {
       os = 'osx';
-      if (process.env.npm_config_arch == 'arm64') {
-        arch = '-arm64';
-      } else if (process.env.npm_config_arch == 'x64') {
-        arch = '-x86_64';
-      } else if (process.arch == 'arm64') {
-        arch = '-arm64';
-      } else if (process.arch == 'x64') {
-        arch = '-x86_64';
-      } else {
-        throw 'CPU architecture not supported.';
-      }
+      arch = findDarwinArch();
     } else {
       throw 'Platform not supported.';
     }

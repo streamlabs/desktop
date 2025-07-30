@@ -124,20 +124,26 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
       [OS.Mac]: () => {
         this.signalsService.addCallback(this.handleSignalOutput);
 
-        obs.NodeObs.OBS_service_installVirtualCamPlugin();
-        this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
-          console.log(`virtual cam install signalInfo: ${signalInfo.signal}`);
-          this.setInstallStatus();
-          obs.NodeObs.OBS_service_createVirtualCam();
-        });
+        const errorMessage = obs.NodeObs.OBS_service_installVirtualCamPlugin();
+        if (errorMessage) {
+          remote.dialog.showErrorBox('Virtual Camera', errorMessage);
+        } else {
+          this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
+            console.log(`virtual cam install signalInfo: ${signalInfo.signal}`);
+            this.setInstallStatus();
+            obs.NodeObs.OBS_service_createVirtualCam();
+          });
+        }
       },
     });
   }
 
   @ExecuteInWorkerProcess()
   uninstall() {
-    obs.NodeObs.OBS_service_uninstallVirtualCamPlugin();
-
+    const errorMessage = obs.NodeObs.OBS_service_uninstallVirtualCamPlugin();
+    if (errorMessage) {
+      remote.dialog.showErrorBox('Virtual Camera Error', errorMessage);
+    }
     this.SET_INSTALL_STATUS(EVirtualWebcamPluginInstallStatus.NotPresent);
     this.SET_OUTPUT_TYPE(VCamOutputType.ProgramView);
 
@@ -150,8 +156,10 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
     if (this.state.running) return;
 
     //obs.NodeObs.OBS_service_createVirtualWebcam('Streamlabs Desktop Virtual Webcam');
-    obs.NodeObs.OBS_service_startVirtualCam();
-
+    const errorMessage = obs.NodeObs.OBS_service_startVirtualCam();
+    if (errorMessage) {
+      remote.dialog.showErrorBox('Virtual Camera Error', errorMessage);
+    }
     this.SET_RUNNING(true);
     this.runningChanged.next(true);
 
