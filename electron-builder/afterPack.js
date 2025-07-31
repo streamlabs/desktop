@@ -54,7 +54,7 @@ function signBinaries(identity, directory) {
 
 function signXcodeApps(context) {
   // For apps that requires specific entitlements. Ensures the entitlements file is provided during signing
-  const entitlements = "--entitlements electron-builder/mac-virtual-cam-entitlements.plist";
+  const entitlements = "--entitlements electron-builder/entitlements.plist";
   const installerPath = `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Frameworks/slobs-virtual-cam-installer.app`;
   const extensionPath = `${installerPath}/Contents/Library/SystemExtensions/com.streamlabs.slobs.mac-camera-extension.systemextension`;
   const executables = [extensionPath, installerPath]; // sign the extension first, then the parent app bundle (the installer)
