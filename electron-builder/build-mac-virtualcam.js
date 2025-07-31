@@ -1,6 +1,6 @@
 const cp = require('child_process');
 const fs = require('fs');
-const findDarwinArch = require('../scripts/find-darwin-arch');
+const os = require('os');
 const pjson = require('../package.json');
 const stream = require('stream');
 
@@ -9,7 +9,10 @@ async function buildVirtualCamExtension(context) {
   console.log("Download mac virtual camera");
   const destFile = 'slobs-virtual-cam-installer.tar.gz';
 
-  const arch = findDarwinArch();
+  let arch = os.arch();
+  if (arch === 'x64') {
+    arch = 'x86_64';
+  }
   const sourceUrl = pjson.macVirtualCamUrl.replace('[ARCH]', arch);
 
   await downloadFile(sourceUrl, destFile);
