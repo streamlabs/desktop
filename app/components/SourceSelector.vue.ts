@@ -46,6 +46,8 @@ export default class SourceSelector extends Vue {
   removeSourcesTooltip = $t('scenes.removeSourcesTooltip');
   openSourcePropertiesTooltip = $t('scenes.openSourcePropertiesTooltip');
   addGroupTooltip = $t('scenes.addGroupTooltip');
+  lockTooltip = $t('scenes.lockTooltip');
+  visibilityTooltip = $t('scenes.visibilityTooltip');
 
   private expandedFoldersIds: string[] = [];
 

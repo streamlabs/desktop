@@ -27,8 +27,18 @@
       </div>
 
       <div class="studio-controls-top-sidebar">
-        <i class="icon-add icon-btn" @click="addScene" data-test="Add" />
-        <i class="icon-settings icon-btn" @click="showTransitions" data-test="Edit" />
+        <i
+          class="icon-add icon-btn"
+          v-tooltip.bottom="addSceneTooltip"
+          @click="addScene"
+          data-test="Add"
+        />
+        <i
+          class="icon-settings icon-btn"
+          v-tooltip.bottom="openSceneSwitcherTooltip"
+          @click="showTransitions"
+          data-test="Edit"
+        />
       </div>
     </div>
 
@@ -43,6 +53,7 @@
       <template slot="actions" slot-scope="p">
         <i
           class="icon-delete icon-btn"
+          v-tooltip.bottom="removeSceneTooltip"
           @click="removeScene(p.item.value)"
           :data-test="'Remove' + p.item.name"
         />

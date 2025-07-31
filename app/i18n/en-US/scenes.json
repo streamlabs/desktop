@@ -36,5 +36,10 @@
   "nameSceneCollection": "Name Scene Collection",
   "renameScene": "Rename Scene",
   "newSceneName": "New Scene",
-  "newSceneGroupName": "%{activeSceneName} Group"
+  "newSceneGroupName": "%{activeSceneName} Group",
+  "lockTooltip": "Lock the source to prevent accidental movement.",
+  "visibilityTooltip": "Toggle the visibility of the source.",
+  "addSceneTooltip": "Add a new scene.",
+  "removeSceneTooltip": "Remove the scene.",
+  "openSceneSwitcherTooltip": "Open the scene switcher properties."
 }

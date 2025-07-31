@@ -36,5 +36,10 @@
   "nameSceneCollection": "シーンコレクションの名前",
   "renameScene": "シーンの名前を変更",
   "newSceneName": "シーン",
-  "newSceneGroupName": "%{activeSceneName} グループ"
+  "newSceneGroupName": "%{activeSceneName} グループ",
+  "lockTooltip": "ソースをロックして、誤って移動しないようにします。",
+  "visibilityTooltip": "ソースの表示/非表示を切り替えます。",
+  "removeSceneTooltip": "シーンを削除します。",
+  "addSceneTooltip": "新しいシーンを追加します。",
+  "openSceneSwitcherTooltip": "シーン切り替えのプロパティを開きます。"
 }
