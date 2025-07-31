@@ -10,6 +10,12 @@ async function buildVirtualCamExtension(context) {
   const destFile = 'slobs-virtual-cam-installer.tar.gz';
 
   let arch = os.arch();
+  if (process.env.ARCH) {
+    arch = process.env.ARCH; // get the architecture from github runner.
+    console.log(`use process.env.ARCH ${arch} for virtual camera system extension`);
+  } else {
+    console.log(`use os.arch ${arch} for virtual camera system extension`);
+  }
   if (arch === 'x64') {
     arch = 'x86_64';
   }
