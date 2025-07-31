@@ -36,9 +36,16 @@ interface IRestreamState {
 
   /**
    * if true then user obtained the restream feature before it became a prime-only feature
-   * Restream should be available without Prime for such users
+   * These users are allowed to use restream for:
+   * - Twitch or YouTube (primary) + Facebook secondary
    */
   grandfathered: boolean;
+
+  /**
+   * if true the user used tiktok streaming alongside multistream before that option was
+   * removed. Using Restream with tiktok should be allowed for those users.
+   */
+  tiktokGrandfathered: boolean;
 }
 
 interface IUserSettingsResponse extends IRestreamState {
@@ -67,6 +74,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
   static initialState: IRestreamState = {
     enabled: true,
     grandfathered: false,
+    tiktokGrandfathered: false,
   };
 
   get streamInfo() {
@@ -87,14 +95,27 @@ export class RestreamService extends StatefulService<IRestreamState> {
     );
   }
 
+  get facebookGrandfathered() {
+    return this.state.grandfathered;
+  }
+
+  get tiktokGrandfathered() {
+    return this.state.tiktokGrandfathered;
+  }
+
   @mutation()
   private SET_ENABLED(enabled: boolean) {
     this.state.enabled = enabled;
   }
 
   @mutation()
-  private SET_GRANDFATHERED(enabled: boolean) {
-    this.state.grandfathered = enabled;
+  private SET_GRANDFATHERED(facebook: boolean, tiktok: boolean) {
+    /* TODO: what's our take on this, I think the cost of a separate mutation is not justifiable
+     * but can split for clarity. I think these two pieces of state are intrinsically connected,
+     * and should live as part of the same object, probably a refactor for the future.
+     */
+    this.state.grandfathered = facebook;
+    this.state.tiktokGrandfathered = tiktok;
   }
 
   init() {
@@ -116,7 +137,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   async loadUserSettings() {
     this.settings = await this.fetchUserSettings();
-    this.SET_GRANDFATHERED(this.settings.grandfathered);
+    this.SET_GRANDFATHERED(this.settings.grandfathered, this.settings.tiktokGrandfathered);
     this.SET_ENABLED(this.settings.enabled && this.views.canEnableRestream);
   }
 
@@ -543,6 +564,9 @@ export class RestreamService extends StatefulService<IRestreamState> {
 }
 
 class RestreamView extends ViewHandler<IRestreamState> {
+  get isGrandfathered() {
+    return this.state.grandfathered || this.state.tiktokGrandfathered;
+  }
   /**
    * This determines whether the user can enable restream
    * Requirements:
@@ -551,6 +575,6 @@ class RestreamView extends ViewHandler<IRestreamState> {
    */
   get canEnableRestream() {
     const userView = this.getServiceViews(UserService);
-    return userView.isPrime || (userView.auth && this.state.grandfathered);
+    return userView.isPrime || (userView.auth && this.isGrandfathered);
   }
 }
