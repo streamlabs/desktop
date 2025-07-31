@@ -295,7 +295,7 @@ const OVERWATCH_2: IGameConfig = {
   label: 'Overwatch 2',
   gameModes: '',
   thumbnail: `${thumbnailPath}${EGame.OVERWATCH_2}.png`,
-  state: EGameState.INTERNAL,
+  state: EGameState.LIVE,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
