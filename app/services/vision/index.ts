@@ -410,11 +410,18 @@ export class VisionService extends Service {
 
       try {
         const parsed = JSON.parse(e.data);
-        // parsed['event_id'] = uuid();
+        parsed['vision_event_id'] = uuid();
         jfetch(url, { headers, method: 'POST', body: JSON.stringify(parsed) });
       } catch (e: unknown) {
         console.error('Unable to parse game pulse event', e);
       }
     };
   }
+
+  requestState(params: any) {
+    const url = `https://${this.hostsService.streamlabs}/api/v5/user-state/desktop/query`;
+    const headers = authorizedHeaders(this.userService.apiToken, new Headers({ 'Content-Type': 'application/json' }));
+    return jfetch(url, { headers, method: 'POST', body: JSON.stringify(params) })
+  }
 }
+
