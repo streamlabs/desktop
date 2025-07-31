@@ -115,9 +115,10 @@ export default class Settings extends Vue {
   }
 
   set categoryName(val: string) {
-    this.internalCategoryName = val;
     // Ensure access to the category is persistent
     this.windowsService.actions.updateChildWindowQueryParams({ categoryName: val });
+
+    this.internalCategoryName = val;
   }
 
   get isPrime() {
@@ -266,7 +267,7 @@ export default class Settings extends Vue {
   }
 
   highlightSearch(searchStr: string) {
-    this.$refs.settingsContainer.highlightPage(searchStr);
+    this.$refs.settingsContainer?.highlightPage(searchStr);
   }
 
   handleAuth() {
