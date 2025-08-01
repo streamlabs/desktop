@@ -1,4 +1,4 @@
-name: Add Issue or PR to Project
+name: Add Issue or PR to Project v2
 
 on:
   issues:
@@ -6,55 +6,67 @@ on:
   pull_request:
     types: [opened]
 
-permissions:
-  contents: read
-  issues: write
-  pull-requests: write
-
 jobs:
   add-to-project:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Add to Project
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const org = 'n-air-app';
-            const projectNumber = 3;
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
 
-            // イベント種別によって対象ノードを選択
-            const isPR = context.eventName === 'pull_request';
-            const contentNodeId = isPR
-              ? context.payload.pull_request.node_id
-              : context.payload.issue.node_id;
+      - name: Get Project ID
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        id: get_project
+        run: |
+          ORG_NAME="n-air-app"
+          PROJECT_NUMBER=3
 
-            // プロジェクトIDの取得
-            const project = await github.graphql(`
-              query($org: String!, $number: Int!) {
-                organization(login: $org) {
-                  projectV2(number: $number) {
-                    id
-                  }
-                }
+          PROJECT_ID=$(curl -s -H "Authorization: Bearer $GH_PAT" \
+            -X POST https://api.github.com/graphql \
+            -H "Content-Type: application/json" \
+            -d "{\"query\":\"query { organization(login: \\\"$ORG_NAME\\\") { projectV2(number: $PROJECT_NUMBER) { id } } }\"}" \
+            | jq -r '.data.organization.projectV2.id')
+
+          if [ "$PROJECT_ID" = "null" ] || [ -z "$PROJECT_ID" ]; then
+            echo "Project ID could not be found"
+            exit 1
+          fi
+
+          echo "project_id=$PROJECT_ID" >> $GITHUB_OUTPUT
+
+      - name: Add Issue or PR to Project
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          ORG_NAME="n-air-app"
+          PROJECT_NUMBER=3
+
+          if [[ "${{ github.event_name }}" == "issues" ]]; then
+            CONTENT_ID="${{ github.event.issue.node_id }}"
+          else
+            CONTENT_ID="${{ github.event.pull_request.node_id }}"
+          fi
+
+          echo "Adding content ID: $CONTENT_ID to project ID: ${{ steps.get_project.outputs.project_id }}"
+
+          MUTATION='mutation($projectId: ID!, $contentId: ID!) {
+            addProjectV2ItemById(input: {
+              projectId: $projectId,
+              contentId: $contentId
+            }) {
+              item {
+                id
               }
-            `, { org, number: projectNumber });
+            }
+          }'
 
-            // Project に追加
-            await github.graphql(`
-              mutation($projectId: ID!, $contentId: ID!) {
-                addProjectV2ItemById(input: {
-                  projectId: $projectId,
-                  contentId: $contentId
-                }) {
-                  item {
-                    id
-                  }
-                }
-              }
-            `, {
-              projectId: project.organization.projectV2.id,
-              contentId: contentNodeId,
-            });
-
-            console.log(`Added ${isPR ? 'PR' : 'Issue'} to Project`);
+          curl -s -X POST https://api.github.com/graphql \
+            -H "Authorization: Bearer $GH_PAT" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg pid "${{ steps.get_project.outputs.project_id }}" \
+              --arg cid "$CONTENT_ID" \
+              '{ query: "'"${MUTATION//[$'\n']}"'", variables: { projectId: $pid, contentId: $cid } }')"
