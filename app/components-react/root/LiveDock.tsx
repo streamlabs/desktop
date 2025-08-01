@@ -17,8 +17,8 @@ import PlatformAppPageView from 'components-react/shared/PlatformAppPageView';
 import { useVuex } from 'components-react/hooks';
 import { useRealmObject } from 'components-react/hooks/realm';
 import { $i } from 'services/utils';
-import { TikTokChatInfo } from './TiktokChatInfo';
 import { ShareStreamLink } from './ShareStreamLink';
+import { promptAction } from 'components-react/modals';
 
 const LiveDockCtx = React.createContext<LiveDockController | null>(null);
 
@@ -325,6 +325,31 @@ function LiveDock(p: { onLeft: boolean }) {
       return;
     }
   }, [visibleChat, isRestreaming, streamingStatus]);
+
+  useEffect(() => {
+    const switchStreamEvent = Services.StreamingService.streamSwitchEvent.subscribe(event => {
+      if (event.type === 'streamSwitchRequest') {
+        if (event.data.identifier === Services.RestreamService.state.streamSwitcherStreamId) {
+          promptAction({
+            title: $t('Another stream detected'),
+            message: $t(
+              'A stream on another device has been detected. Would you like to switch your stream to Desktop? If you do not want to continue this stream, please end the stream from the other device.',
+            ),
+            fn: () => Services.RestreamService.actions.confirmStreamSwitch('approved'),
+            btnText: $t('Yes'),
+            cancelBtnPosition: 'right',
+            cancelBtnText: $t('No'),
+            cancelFn: () => Services.RestreamService.actions.confirmStreamSwitch('rejected'),
+          });
+        }
+        return;
+      }
+    });
+
+    return () => {
+      switchStreamEvent.unsubscribe();
+    };
+  }, []);
 
   function toggleCollapsed() {
     collapsed ? ctrl.setCollapsed(false) : ctrl.setCollapsed(true);

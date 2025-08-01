@@ -19,6 +19,10 @@ import { TwitterPlatformService } from './platforms/twitter';
 import { InstagramService } from './platforms/instagram';
 import { PlatformAppsService } from './platform-apps';
 import { throwStreamError } from './streaming/stream-error';
+import { TSocketEvent } from './websocket';
+import uuid from 'uuid';
+import Utils from './utils';
+import { $t } from './i18n';
 
 export type TOutputOrientation = 'landscape' | 'portrait';
 interface IRestreamTarget {
@@ -27,6 +31,9 @@ interface IRestreamTarget {
   streamKey: string;
   mode?: TOutputOrientation;
 }
+
+export type TStreamSwitcherStatus = 'pending' | 'inactive';
+export type TStreamSwitcherAction = 'approved' | 'rejected';
 
 interface IRestreamState {
   /**
@@ -46,6 +53,16 @@ interface IRestreamState {
    * removed. Using Restream with tiktok should be allowed for those users.
    */
   tiktokGrandfathered: boolean;
+
+  /**
+   * Stream switcher stream id
+   */
+  streamSwitcherStreamId?: string;
+
+  /**
+   * Stream switcher status
+   */
+  streamSwitcherStatus?: TStreamSwitcherStatus;
 }
 
 interface IUserSettingsResponse extends IRestreamState {
@@ -75,6 +92,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
     enabled: true,
     grandfathered: false,
     tiktokGrandfathered: false,
+    streamSwitcherStreamId: undefined,
+    streamSwitcherStatus: undefined,
   };
 
   get streamInfo() {
@@ -103,6 +122,10 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return this.state.tiktokGrandfathered;
   }
 
+  get streamSwitcherStatus() {
+    return this.state.streamSwitcherStatus || 'inactive';
+  }
+
   @mutation()
   private SET_ENABLED(enabled: boolean) {
     this.state.enabled = enabled;
@@ -118,6 +141,16 @@ export class RestreamService extends StatefulService<IRestreamState> {
     this.state.tiktokGrandfathered = tiktok;
   }
 
+  @mutation()
+  private SET_STREAM_SWITCHER_STREAM_ID(id?: string) {
+    this.state.streamSwitcherStreamId = id ?? null;
+  }
+
+  @mutation()
+  private SET_STREAM_SWITCHER_STATUS(status: TStreamSwitcherStatus) {
+    this.state.streamSwitcherStatus = status;
+  }
+
   init() {
     this.userService.userLogin.subscribe(() => this.loadUserSettings());
     this.userService.userLogout.subscribe(() => {
@@ -128,6 +161,35 @@ export class RestreamService extends StatefulService<IRestreamState> {
     this.userService.scopeAdded.subscribe(() => {
       this.refreshChat();
       this.platformAppsService.refreshApp('restream');
+    });
+
+    this.streamingService.streamSwitchEvent.subscribe(async (res: TSocketEvent) => {
+      if (res.type === 'streamSwitchRequest') {
+        // console.log('streamSwitchRequest res.data.identifier', res.data.identifier);
+        return;
+      }
+
+      if (res.type === 'switchActionComplete') {
+        // console.log('switchActionComplete res.data.identifier', res.data.identifier);
+        if (res.data.identifier !== this.state.streamSwitcherStreamId) {
+          // if they don't match, end stream
+          try {
+            await this.streamingService.toggleStreaming();
+            remote.dialog.showMessageBox(Utils.getMainWindow(), {
+              title: $t('Stream Ended - PC'),
+              type: 'info',
+              message: $t('Stream has ended.'),
+            });
+          } catch (error) {
+            console.error('Error ending stream:', error);
+            remote.dialog.showMessageBox(Utils.getMainWindow(), {
+              title: $t('Error Ended Stream - PC'),
+              type: 'info',
+              message: $t('Error ending stream. Please try starting the stream again.'),
+            });
+          }
+        }
+      }
     });
   }
 
@@ -237,7 +299,10 @@ export class RestreamService extends StatefulService<IRestreamState> {
       enabled,
       dcProtection: false,
       idleTimeout: 30,
+      streamSwitch: this.streamInfo.isStreamSwitchMode,
     });
+
+    console.log('setEnabled body', body);
 
     const request = new Request(url, { headers, body, method: 'PUT' });
 
@@ -246,6 +311,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   async beforeGoLive() {
     if (!this.streamInfo.getIsValidRestreamConfig()) {
+      console.log('Restream config is not valid, skipping setup');
+
       throwStreamError('RESTREAM_SETUP_FAILED');
     }
 
@@ -293,8 +360,13 @@ export class RestreamService extends StatefulService<IRestreamState> {
         streamType: 'rtmp_custom',
       });
 
+      const streamId = uuid();
+      this.SET_STREAM_SWITCHER_STREAM_ID(streamId);
+      // for the stream switcher, the stream needs a unique identifier
+      const streamKey = `${this.settings.streamKey}&sid=${streamId}`;
+
       this.streamSettingsService.setSettings({
-        key: this.settings.streamKey,
+        key: streamKey,
         server: ingest,
       });
     }
@@ -396,6 +468,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   checkStatus(): Promise<boolean> {
+    console.log('Checking restream status...');
+
     const url = `https://${this.host}/api/v1/rst/util/status`;
     const request = new Request(url);
 
@@ -467,6 +541,50 @@ export class RestreamService extends StatefulService<IRestreamState> {
     const request = new Request(url, { headers, body, method: 'PUT' });
 
     return fetch(request).then(res => res.json());
+  }
+
+  setStreamSwitchStatus(status: TStreamSwitcherStatus) {
+    this.SET_STREAM_SWITCHER_STATUS(status);
+  }
+
+  setSwitchStreamId(id?: string) {
+    this.SET_STREAM_SWITCHER_STREAM_ID(id);
+  }
+
+  resetStreamSwitcher() {
+    this.SET_STREAM_SWITCHER_STATUS('inactive');
+    this.SET_STREAM_SWITCHER_STREAM_ID();
+  }
+
+  confirmStreamSwitch(action: TStreamSwitcherAction) {
+    if (action === 'rejected') {
+      this.SET_STREAM_SWITCHER_STATUS('pending');
+    } else {
+      this.SET_STREAM_SWITCHER_STATUS('inactive');
+    }
+
+    this.updateStreamSwitcher(action);
+  }
+
+  /**
+   * Stream Switcher
+   */
+  async updateStreamSwitcher(action: TStreamSwitcherAction) {
+    const headers = authorizedHeaders(
+      this.userService.apiToken,
+      new Headers({ 'Content-Type': 'application/json' }),
+    );
+    const url = `https://${this.host}/api/v1/rst/switch/action`;
+    const body = JSON.stringify({
+      identifier: this.state.streamSwitcherStreamId,
+      action,
+    });
+
+    const request = new Request(url, { headers, body, method: 'POST' });
+
+    const res = await fetch(request);
+    console.log('res', res);
+    return res.json();
   }
 
   /* Chat Handling
@@ -576,5 +694,9 @@ class RestreamView extends ViewHandler<IRestreamState> {
   get canEnableRestream() {
     const userView = this.getServiceViews(UserService);
     return userView.isPrime || (userView.auth && this.isGrandfathered);
+  }
+
+  get streamSwitcherStatus() {
+    return this.state.streamSwitcherStatus;
   }
 }

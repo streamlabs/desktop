@@ -8,7 +8,7 @@ import {
 } from './streaming-api';
 import { StreamSettingsService, ICustomStreamDestination } from '../settings/streaming';
 import { UserService } from '../user';
-import { RestreamService, TOutputOrientation } from '../restream';
+import { RestreamService, TStreamSwitcherStatus } from '../restream';
 import { DualOutputService, TDisplayPlatforms, TDisplayDestinations } from '../dual-output';
 import {
   getPlatformService,
@@ -186,6 +186,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns if the user can or should use the restream service
    */
   get isMultiplatformMode(): boolean {
+    if (this.isStreamSwitchMode) return true;
     if (this.isDualOutputMode) return false;
     return (
       this.protectedModeEnabled &&
@@ -195,9 +196,26 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   /**
+   * Returns if stream switching is enabled
+   * @remark If a user has switch stream enabled, restream even if only one platform is enabled as the only target.
+   * Currently, switch stream cannot be used with only custom destinations. One platform must be enabled.
+   */
+  get isStreamSwitchMode(): boolean {
+    return this.settings.streamSwitch && this.enabledPlatforms.length > 0;
+  }
+
+  get streamSwitcherStatus(): TStreamSwitcherStatus {
+    return this.restreamView.streamSwitcherStatus;
+  }
+
+  /**
    * Returns if the restream service should be set up when going live
    */
   get shouldSetupRestream(): boolean {
+    console.log('this.isStreamSwitchMode', this.isStreamSwitchMode);
+    // The stream switcher uses the restream service
+    if (this.isStreamSwitchMode) return true;
+
     // In dual output mode, if a display has more than one target that display uses the restream service
     const restreamDualOutputMode =
       this.isDualOutputMode && (this.horizontalStream.length > 1 || this.verticalStream.length > 1);
@@ -444,6 +462,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       optimizedProfile: undefined,
       customDestinations: savedGoLiveSettings?.customDestinations || [],
       recording: this.dualOutputView.recording || [],
+      streamSwitch: savedGoLiveSettings?.streamSwitch || false,
     };
   }
 

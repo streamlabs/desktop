@@ -446,6 +446,8 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     }
 
     this.websocketService.socketEvent.subscribe(async event => {
+      console.log('event', JSON.stringify(event, null, 2));
+
       if (event.type === 'slid.force_logout') {
         await this.clearForceLoginStatus();
         await this.reauthenticate(false, {
@@ -492,6 +494,11 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       if (event.type === 'account_permissions_required') {
         const platform = event.message[0].platform.split('_')[0];
         await this.startChatAuth(platform as TPlatform);
+      }
+
+      // TODO: break out switch stream events if needed
+      if (['streamSwitchRequest', 'switchActionComplete'].includes(event.type)) {
+        this.streamingService.streamSwitchEvent.next(event);
       }
     });
   }

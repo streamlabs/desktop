@@ -17,6 +17,8 @@ import DualOutputToggle from 'components-react/shared/DualOutputToggle';
 import { DestinationSwitchers } from './DestinationSwitchers';
 import AddDestinationButton from 'components-react/shared/AddDestinationButton';
 import cx from 'classnames';
+import StreamSwitcherToggle from 'components-react/shared/StreamSwitcherToggle';
+import { CaretDownOutlined } from '@ant-design/icons';
 
 /**
  * Renders settings for starting the stream
@@ -40,9 +42,17 @@ export default function GoLiveSettings() {
     enabledPlatforms,
     primaryChat,
     recommendedColorSpaceWarnings,
+    isPrime,
+    isStreamSwitchMode,
     setPrimaryChat,
+    addUltra,
   } = useGoLiveSettings().extend(module => {
-    const { UserService, VideoEncodingOptimizationService, SettingsService } = Services;
+    const {
+      UserService,
+      VideoEncodingOptimizationService,
+      SettingsService,
+      MagicLinkService,
+    } = Services;
 
     return {
       get canAddDestinations() {
@@ -61,6 +71,10 @@ export default function GoLiveSettings() {
 
       addDestination() {
         SettingsService.actions.showSettings('Stream');
+      },
+
+      addUltra() {
+        MagicLinkService.actions.linkToPrime('slobs-multistream');
       },
 
       // temporarily hide the checkbox until streaming and output settings
@@ -82,64 +96,90 @@ export default function GoLiveSettings() {
   const shouldShowPrimaryChatSwitcher =
     hasMultiplePlatforms || (isDualOutputMode && hasMultiplePlatformsLinked);
 
+  const headerText = isDualOutputMode ? $t('Destinations & Outputs:') : $t('Destinations:');
+
+  const height = shouldShowPrimaryChatSwitcher ? '61%' : '67%';
+
   return (
     <Row gutter={16} className={styles.settingsRow}>
       {/*LEFT COLUMN*/}
       {shouldShowLeftCol && (
-        <Col
-          span={8}
-          className={cx(styles.leftColumn, { [styles.columnPadding]: !isDualOutputMode })}
-        >
-          <Scrollable style={{ height: '81%' }}>
-            <DualOutputToggle
-              className={cx(styles.dualOutputToggle, styles.columnPadding)}
-              type="single"
-              lightShadow
-            />
-            {/*DESTINATION SWITCHERS*/}
-            <DestinationSwitchers />
-
-            {/*ADD DESTINATION BUTTON*/}
-            {shouldShowAddDestButton && !showSelector && <AddDestinationButton />}
-          </Scrollable>
-
-          {shouldShowPrimaryChatSwitcher && (
-            <PrimaryChatSwitcher
-              className={styles.columnPadding}
-              enabledPlatforms={enabledPlatforms}
-              onSetPrimaryChat={setPrimaryChat}
-              primaryChat={primaryChat}
+        <Col span={9} className={styles.leftColumn}>
+          {!isPrime && (
+            <AddDestinationButton
+              type="banner"
+              className={styles.addDestination}
+              onClick={addUltra}
             />
           )}
+          <div className={styles.columnHeader} style={{ paddingTop: '15px' }}>
+            {headerText}
+          </div>
+
+          <Scrollable style={{ height }}>
+            <DestinationSwitchers />
+          </Scrollable>
+
+          <AddDestinationButton
+            type="small"
+            className={styles.columnPadding}
+            onClick={() => Services.SettingsService.actions.showSettings('Stream')}
+          />
+
+          <div className={styles.leftFooter}>
+            {shouldShowPrimaryChatSwitcher && (
+              <PrimaryChatSwitcher
+                className={styles.primaryChat}
+                enabledPlatforms={enabledPlatforms}
+                onSetPrimaryChat={setPrimaryChat}
+                primaryChat={primaryChat}
+                suffixIcon={<CaretDownOutlined />}
+                layout="horizontal"
+                logo={false}
+                border={false}
+              />
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+              <DualOutputToggle
+                className={styles.featureToggle}
+                style={{ paddingBottom: '10px' }}
+                disabled={isStreamSwitchMode}
+                type="single"
+                lightShadow
+              />
+              <StreamSwitcherToggle className={styles.featureToggle} />
+            </div>
+          </div>
         </Col>
       )}
 
       {/*RIGHT COLUMN*/}
       <Col
-        span={shouldShowLeftCol ? 16 : 24}
+        span={shouldShowLeftCol ? 15 : 24}
         className={cx(styles.rightColumn, !shouldShowLeftCol && styles.destinationMode)}
       >
         <Spinner visible={isLoading} relative />
         <GoLiveError />
         {shouldShowSettings && (
-          <Scrollable style={{ height: '100%' }} snapToWindowEdge>
-            {/* Spacer is as  scrollable padding-top */}
-            <div className={styles.spacer} />
-            {recommendedColorSpaceWarnings && (
-              <ColorSpaceWarnings warnings={recommendedColorSpaceWarnings} />
-            )}
-            {/*PLATFORM SETTINGS*/}
-            <PlatformSettings />
-            {/*ADD SOME SPACE IN ADVANCED MODE*/}
-            {isAdvancedMode && <div className={styles.spacer} />}
-            {/*EXTRAS*/}
-            <Section isSimpleMode={!isAdvancedMode} title={$t('Extras')}>
-              {showTweet && <TwitterInput />}
-              {!!canUseOptimizedProfile && <OptimizedProfileSwitcher />}
-            </Section>
-            {/* Spacer is as  scrollable padding-bottom */}
-            <div className={styles.spacer} />
-          </Scrollable>
+          <>
+            <Scrollable style={{ height: '92%' }} snapToWindowEdge>
+              {recommendedColorSpaceWarnings && (
+                <ColorSpaceWarnings warnings={recommendedColorSpaceWarnings} />
+              )}
+              {/*PLATFORM SETTINGS*/}
+              <PlatformSettings />
+              {/*ADD SOME SPACE IN ADVANCED MODE*/}
+              {isAdvancedMode && <div className={styles.spacer} />}
+              {/*EXTRAS*/}
+              <Section isSimpleMode={!isAdvancedMode} title={$t('Extras')}>
+                {!!canUseOptimizedProfile && <OptimizedProfileSwitcher />}
+              </Section>
+
+              {/* Spacer is as  scrollable padding-bottom */}
+              <div className={styles.spacer} />
+            </Scrollable>
+            {showTweet && <TwitterInput />}
+          </>
         )}
       </Col>
     </Row>

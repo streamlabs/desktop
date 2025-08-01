@@ -4,6 +4,7 @@ import { ListInput } from 'components-react/shared/inputs';
 import Form from 'components-react/shared/inputs/Form';
 import { getPlatformService, TPlatform } from 'services/platforms';
 import PlatformLogo from 'components-react/shared/PlatformLogo';
+import Tooltip from 'components-react/shared/Tooltip';
 import { $t } from 'services/i18n';
 
 interface IPrimaryChatSwitcherProps {
@@ -13,6 +14,11 @@ interface IPrimaryChatSwitcherProps {
   style?: React.CSSProperties;
   className?: string | undefined;
   layout?: 'vertical' | 'horizontal';
+  suffixIcon?: React.ReactNode;
+  tooltip?: string;
+  size?: 'small' | 'middle' | 'large';
+  logo?: boolean;
+  border?: boolean;
 }
 
 export default function PrimaryChatSwitcher({
@@ -22,6 +28,11 @@ export default function PrimaryChatSwitcher({
   style = {},
   layout = 'vertical',
   className = undefined,
+  suffixIcon = undefined,
+  tooltip = undefined,
+  size = undefined,
+  logo = true,
+  border = true,
 }: IPrimaryChatSwitcherProps) {
   const primaryChatOptions = useMemo(
     () =>
@@ -37,23 +48,36 @@ export default function PrimaryChatSwitcher({
 
   return (
     <div data-name="primary-chat-switcher" style={style} className={className}>
-      <Divider style={{ marginBottom: '8px' }} />
+      {border && <Divider style={{ marginBottom: '8px' }} />}
       <Form layout={layout}>
         <ListInput
           name="primaryChat"
-          label={$t('Primary Chat')}
+          label={
+            tooltip ? (
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                {`${$t('Primary Chat')}:`}
+                <Tooltip title={tooltip} placement="top" lightShadow={true}>
+                  <i className="icon-information" style={{ marginLeft: '10px' }} />
+                </Tooltip>
+              </div>
+            ) : (
+              `${$t('Primary Chat')}:`
+            )
+          }
           options={primaryChatOptions}
-          labelRender={renderPrimaryChatOption}
-          optionRender={renderPrimaryChatOption}
+          labelRender={opt => renderPrimaryChatOption(opt, logo)}
+          optionRender={opt => renderPrimaryChatOption(opt, logo)}
           value={primaryChat}
           onChange={onSetPrimaryChat}
+          suffixIcon={suffixIcon}
+          size={size}
         />
       </Form>
     </div>
   );
 }
 
-const renderPrimaryChatOption = (option: { label: string; value: TPlatform }) => {
+const renderPrimaryChatOption = (option: { label: string; value: TPlatform }, logo?: boolean) => {
   /*
    * TODO: antd's new version has a new Flex component that should make
    * spacing (`gap` here) more consistent. Also, less typing.
@@ -68,7 +92,7 @@ const renderPrimaryChatOption = (option: { label: string; value: TPlatform }) =>
         gap: '8px',
       }}
     >
-      <PlatformLogo platform={option.value} size={16} />
+      {logo && <PlatformLogo platform={option.value} size={16} />}
       <div>{option.label}</div>
     </div>
   );

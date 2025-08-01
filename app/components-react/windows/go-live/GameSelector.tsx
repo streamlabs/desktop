@@ -146,6 +146,8 @@ export default function GameSelector(p: TProps) {
       loading={isSearching}
       notFoundContent={isSearching ? $t('Searching...') : $t('No matching game(s) found.')}
       allowClear
+      layout="vertical"
+      size="large"
     />
   );
 }

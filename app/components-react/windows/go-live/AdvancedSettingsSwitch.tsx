@@ -2,7 +2,6 @@ import React from 'react';
 import { useGoLiveSettings } from './useGoLiveSettings';
 import { SwitchInput } from '../../shared/inputs';
 import { $t } from '../../../services/i18n';
-import { Form } from 'antd';
 
 export default function AdvancedSettingsSwitch() {
   const {
@@ -25,9 +24,11 @@ export default function AdvancedSettingsSwitch() {
       value={isAdvancedMode}
       debounce={200}
       disabled={isLoading}
-      labelAlign="right"
-      wrapperCol={{ span: 1 }}
-      labelCol={{ flex: '95%' }}
+      size="large"
+      // labelAlign="right"
+      // wrapperCol={{ span: 1 }}
+      // labelCol={{ flex: '95%' }}
+      // layout="horizontal"
     />
   );
 }

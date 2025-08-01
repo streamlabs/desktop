@@ -82,6 +82,7 @@ import { capitalize } from 'lodash';
 import { YoutubeService } from 'app-services';
 import { EOBSOutputType, EOBSOutputSignal, IOBSOutputSignalInfo } from 'services/core/signals';
 import { SignalsService } from 'services/signals-manager';
+import { TSocketEvent } from 'services/websocket';
 
 type TOBSOutputType = 'streaming' | 'recording' | 'replayBuffer';
 
@@ -128,6 +129,7 @@ export class StreamingService
   signalInfoChanged = new Subject<IOBSOutputSignalInfo>();
   latestRecordingPath = new Subject<string>();
   streamErrorCreated = new Subject<string>();
+  streamSwitchEvent = new Subject<TSocketEvent>();
 
   // Dummy subscription for stream deck
   streamingStateChange = new Subject<void>();
@@ -365,6 +367,7 @@ export class StreamingService
       // Note: Because the horizontal video context is the default, it does not need
       // to be validated.
 
+      console.log('this.views.isDualOutputMode', this.views.isDualOutputMode);
       try {
         await this.runCheck('setupDualOutput', async () => {
           // If a custom destination is enabled for single streaming to the vertical display
@@ -1107,6 +1110,7 @@ export class StreamingService
         const service = getPlatformService(platform);
         if (service.afterStopStream) service.afterStopStream();
       });
+      this.restreamService.resetStreamSwitcher();
       this.UPDATE_STREAM_INFO({ lifecycle: 'empty' });
       return Promise.resolve();
     }

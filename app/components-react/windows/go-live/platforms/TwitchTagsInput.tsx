@@ -56,6 +56,7 @@ export function TwitchTagsInput(p: TTwitchTagsInputProps) {
       placeholder={$t('For example: "Speedrunning" or "FirstPlaythrough"')}
       tokenSeparators={[' ', ',']}
       dropdownStyle={{ display: 'none' }}
+      layout="vertical"
     />
   );
 }

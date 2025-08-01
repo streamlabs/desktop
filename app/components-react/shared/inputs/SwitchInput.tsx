@@ -14,7 +14,7 @@ export type TSwitchInputProps = TSlobsInputProps<
     inputRef?: React.Ref<HTMLInputElement>;
     style?: React.CSSProperties;
     name?: string;
-    size?: 'small' | 'default';
+    size?: 'small' | 'default' | 'large';
     nolabel?: boolean;
     checkmark?: boolean;
   },
@@ -27,6 +27,8 @@ export const SwitchInput = InputComponent((p: TSwitchInputProps) => {
   const { wrapperAttrs, inputAttrs } = useInput('switch', p, ANT_SWITCH_FEATURES);
   const { size = 'small' } = p;
 
+  const switchSize = size === 'default' ? 'default' : 'small';
+
   /*
    * The horizontal styling shifts the label to follow the switch.
    */
@@ -35,11 +37,12 @@ export const SwitchInput = InputComponent((p: TSwitchInputProps) => {
       <Form.Item colon={false} aria-label={p.label} style={p.style}>
         <Switch
           checked={inputAttrs.value}
-          size={size}
+          size={switchSize}
           {...inputAttrs}
           ref={p.inputRef}
           className={cx(styles.horizontal, styles.horizontalItem, {
             [styles.checkmark]: p?.checkmark,
+            [styles.largeSwitch]: size === 'large',
           })}
           checkedChildren={p?.checkmark ? <i className="icon-check-mark" /> : undefined}
         />
@@ -48,7 +51,13 @@ export const SwitchInput = InputComponent((p: TSwitchInputProps) => {
     </InputWrapper>
   ) : (
     <InputWrapper {...wrapperAttrs}>
-      <Switch checked={inputAttrs.value} size={size} {...inputAttrs} ref={p.inputRef} />
+      <Switch
+        checked={inputAttrs.value}
+        size={switchSize}
+        {...inputAttrs}
+        ref={p.inputRef}
+        className={cx({ [styles.largeSwitch]: size === 'large' })}
+      />
     </InputWrapper>
   );
 });

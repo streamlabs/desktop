@@ -6,6 +6,7 @@ import { $t } from 'services/i18n';
 import { useVuex } from '../hooks';
 import { Services } from '../service-provider';
 import * as remote from '@electron/remote';
+import { TStreamSwitcherStatus } from 'services/restream';
 
 export default function StartStreamingButton(p: { disabled?: boolean }) {
   const {
@@ -15,12 +16,14 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     CustomizationService,
     MediaBackupService,
     SourcesService,
+    RestreamService,
   } = Services;
 
-  const { streamingStatus, delayEnabled, delaySeconds } = useVuex(() => ({
+  const { streamingStatus, delayEnabled, delaySeconds, streamSwitcherStatus } = useVuex(() => ({
     streamingStatus: StreamingService.state.streamingStatus,
     delayEnabled: StreamingService.views.delayEnabled,
     delaySeconds: StreamingService.views.delaySeconds,
+    streamSwitcherStatus: StreamingService.views.streamSwitcherStatus,
   }));
 
   const [delaySecondsRemaining, setDelayTick] = useState(delaySeconds);
@@ -45,6 +48,10 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
   }, [delaySecondsRemaining, streamingStatus, delayEnabled]);
 
   async function toggleStreaming() {
+    if (streamSwitcherStatus === 'pending') {
+      RestreamService.actions.confirmStreamSwitch('approved');
+    }
+
     if (StreamingService.isStreaming) {
       StreamingService.toggleStreaming();
     } else {
@@ -149,6 +156,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         streamingStatus={streamingStatus}
         delayEnabled={delayEnabled}
         delaySecondsRemaining={delaySecondsRemaining}
+        streamSwitcherStatus={streamSwitcherStatus}
       />
     </button>
   );
@@ -158,7 +166,12 @@ function StreamButtonLabel(p: {
   streamingStatus: EStreamingState;
   delaySecondsRemaining: number;
   delayEnabled: boolean;
+  streamSwitcherStatus: TStreamSwitcherStatus;
 }) {
+  if (p.streamSwitcherStatus === 'pending') {
+    return <>{$t('Claim Stream')}</>;
+  }
+
   if (p.streamingStatus === EStreamingState.Live) {
     return <>{$t('End Stream')}</>;
   }

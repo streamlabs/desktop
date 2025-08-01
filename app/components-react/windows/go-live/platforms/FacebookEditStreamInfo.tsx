@@ -305,6 +305,8 @@ function RequiredFields() {
               hasImage
               imageSize={{ width: 35, height: 35 }}
               options={getDestinationOptions()}
+              layout="vertical"
+              size="large"
             />
           )}
           {shouldShowPages && (
@@ -320,6 +322,8 @@ function RequiredFields() {
                 label: `${page.name} | ${page.category}`,
                 image: pictures[page.id],
               }))}
+              layout="vertical"
+              size="large"
             />
           )}
           {shouldShowGroups && (
@@ -343,6 +347,8 @@ function RequiredFields() {
                     <a onClick={verifyGroup}> {$t('Click here to verify.')}</a>
                   </p>
                 }
+                layout="vertical"
+                size="large"
               />
             </>
           )}
@@ -389,6 +395,8 @@ function OptionalFields() {
               </Translate>
             )
           }
+          layout="vertical"
+          size="large"
         />
       )}
 
@@ -437,6 +445,8 @@ function Events() {
               value: v.id,
             })),
           ]}
+          layout="vertical"
+          size="large"
         />
       )}
     </div>

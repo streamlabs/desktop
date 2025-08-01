@@ -15,6 +15,7 @@ import { TwitterEditStreamInfo } from './platforms/TwitterEditStreamInfo';
 import { InstagramEditStreamInfo } from './platforms/InstagramEditStreamInfo';
 import { KickEditStreamInfo } from './platforms/KickEditStreamInfo';
 import AdvancedSettingsSwitch from './AdvancedSettingsSwitch';
+import styles from './GoLive.m.less';
 
 export default function PlatformSettings() {
   const {
@@ -72,10 +73,21 @@ export default function PlatformSettings() {
 
   return (
     // minHeight is required for the loading spinner
-    <div style={{ minHeight: '150px' }}>
+    <div style={{ minHeight: '150px', flex: 1 }}>
       {shouldShowSettings && (
         <div style={{ width: '100%' }}>
-          <AdvancedSettingsSwitch />
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '10px',
+              fontSize: '16px',
+            }}
+          >
+            <span>{$t('Stream Information:')}</span>
+            <AdvancedSettingsSwitch />
+          </div>
 
           {/*COMMON FIELDS*/}
           {canShowAdvancedMode && (

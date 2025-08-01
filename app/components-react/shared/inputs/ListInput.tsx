@@ -21,6 +21,8 @@ const ANT_SELECT_FEATURES = [
   'defaultActiveFirstOption',
   'listHeight',
   'filterOption',
+  'suffixIcon',
+  'size',
 ] as const;
 
 // define custom props

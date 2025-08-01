@@ -10,9 +10,8 @@ import PlatformLogo from '../../shared/PlatformLogo';
 import { useDebounce } from '../../hooks';
 import { useGoLiveSettings } from './useGoLiveSettings';
 import DisplaySelector from 'components-react/shared/DisplaySelector';
-import DestinationSelector from './DestinationSelector';
-import AddDestinationButton from 'components-react/shared/AddDestinationButton';
 import { promptAction } from 'components-react/modals';
+import ConnectButton from 'components-react/shared/ConnectButton';
 
 /**
  * Allows enabling/disabling platforms and custom destinations for the stream
@@ -21,6 +20,7 @@ export function DestinationSwitchers() {
   const {
     linkedPlatforms,
     enabledPlatforms,
+    unlinkedPlatforms,
     customDestinations,
     enabledDestinations,
     switchPlatforms,
@@ -69,7 +69,6 @@ export function DestinationSwitchers() {
     customDestinations.filter(d => d.enabled).length < 1;
   const hidePlatformController =
     isDualOutputMode && platforms.length === 1 && destinations.length === 1;
-  const showAddDestButton = isDualOutputMode && !isPrime && !showSelector;
 
   const shouldDisableCustomDestinationSwitchers = () => {
     // Multistream users can always add destinations
@@ -145,7 +144,7 @@ export function DestinationSwitchers() {
   }
 
   return (
-    <div className={cx(styles.switchWrapper, styles.columnPadding)}>
+    <div className={styles.switchWrapper}>
       {platforms.map((platform, ind) => (
         <DestinationSwitcher
           key={platform}
@@ -171,20 +170,19 @@ export function DestinationSwitchers() {
             index={ind}
           />
         ))}
-      {showSelector && (
-        <DestinationSelector
-          togglePlatform={platform => {
-            togglePlatform(platform, true);
-            destinationSwitcherRef.current.addClass();
-          }}
-          showSwitcher={destinationSwitcherRef.current.addClass}
-          switchDestination={index => {
-            toggleDestination(index, true);
-            destinationSwitcherRef.current.addClass();
-          }}
+
+      {unlinkedPlatforms.map((platform: TPlatform, ind) => (
+        <DestinationSwitcher
+          key={platform}
+          destination={platform}
+          enabled={false}
+          onChange={() => {}}
+          switchDisabled={true}
+          isDualOutputMode={isDualOutputMode}
+          isUnlinked={true}
+          index={ind}
         />
-      )}
-      {showAddDestButton && <AddDestinationButton />}
+      ))}
     </div>
   );
 }
@@ -196,6 +194,7 @@ interface IDestinationSwitcherProps {
   switchDisabled?: boolean;
   index: number;
   isDualOutputMode: boolean;
+  isUnlinked?: boolean;
   hideController?: boolean;
   showPrompt?: boolean;
 }
@@ -237,6 +236,11 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
   }
 
   function onClickHandler(ev: MouseEvent) {
+    if (p?.isUnlinked) {
+      ev.stopPropagation();
+      return;
+    }
+
     if (p.showPrompt && platform) {
       renderPrompt();
       return;
@@ -293,7 +297,7 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
       const username = platformAuthData?.username ?? '';
 
       return {
-        title: $t('Stream to %{platformName}', { platformName: service.displayName }),
+        title: service.displayName,
         description: username,
         Logo: () => (
           <PlatformLogo
@@ -321,10 +325,7 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
               disabled={disabled}
               uncontrolled
               nolabel
-              className={cx('platform-switch', {
-                [styles.dualOutputPlatformSwitch]: p.isDualOutputMode,
-              })}
-              checkedChildren={p.isDualOutputMode && <i className="icon-check-mark" />}
+              className={cx('platform-switch', styles.dualOutputPlatformSwitch)}
             />
           ),
       };
@@ -352,10 +353,7 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
               disabled={disabled}
               uncontrolled
               nolabel
-              className={cx('destination-switch', {
-                [styles.dualOutputPlatformSwitch]: p.isDualOutputMode,
-              })}
-              checkedChildren={p.isDualOutputMode && <i className="icon-check-mark" />}
+              className={cx('destination-switch', styles.dualOutputPlatformSwitch)}
             />
           ),
       };
@@ -363,78 +361,43 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
   })();
 
   return (
-    <>
-      {/* SINGLE OUTPUT */}
-      {!p.isDualOutputMode && (
-        <div
-          ref={containerRef}
-          className={cx('single-output-card', styles.platformSwitcher, {
-            [styles.platformDisabled]: !p.enabled,
-          })}
-          onClick={onClickHandler}
-        >
-          {/* SWITCH */}
-          <div className={cx(styles.colInput)}>
-            <Controller />
-          </div>
+    <div
+      ref={containerRef}
+      className={cx('single-output-card', styles.platformSwitcher, {
+        [styles.platformDisabled]: !p.enabled && !p?.isUnlinked,
+        [styles.platformEnabled]: p.enabled,
+      })}
+      onClick={!p.isDualOutputMode ? onClickHandler : undefined}
+    >
+      {/* SWITCH */}
+      <div className={cx(styles.colInput)}>
+        <Controller />
+      </div>
 
-          {/* PLATFORM LOGO */}
-          <div className="logo margin-right--20">
-            <Logo />
-          </div>
+      {/* PLATFORM LOGO */}
+      <div className="logo margin-right--20">
+        <Logo />
+      </div>
 
-          {/* PLATFORM TITLE AND ACCOUNT/URL */}
-          <div className={styles.colAccount}>
-            <span className={styles.platformName}>{title}</span> <br />
-            {description} <br />
-          </div>
-        </div>
+      {/* PLATFORM TITLE AND ACCOUNT/URL */}
+      <div className={styles.colAccount}>
+        <span className={styles.platformName}>{title}</span> <br />
+        <span className={styles.platformHandle}>{description}</span>
+        <br />
+      </div>
+      {p.isDualOutputMode && !p?.isUnlinked && (
+        <DisplaySelector
+          title={title}
+          nolabel
+          className={styles.dualOutputDisplaySelector}
+          platform={platform}
+          index={p.index}
+        />
       )}
-
-      {/* DUAL OUTPUT */}
-      {p.isDualOutputMode && (
-        <div
-          ref={containerRef}
-          data-test={platform ? `${platform}-dual-output` : 'destination-dual-output'}
-          className={cx('dual-output-card', styles.dualOutputPlatformSwitcher, {
-            [styles.platformDisabled]: !p.enabled,
-          })}
-          onClick={e => {
-            if (p.showPrompt) {
-              renderPrompt();
-              e.preventDefault();
-            }
-          }}
-        >
-          <div className={styles.dualOutputPlatformInfo}>
-            {/* PLATFORM LOGO */}
-            <Logo />
-            {/* PLATFORM TITLE AND ACCOUNT/URL */}
-            <div className={styles.dualOutputColAccount}>
-              <div className={styles.dualOutputPlatformName}>{title}</div>
-              <div className={styles.dualOutputPlatformUsername}>{description}</div>
-            </div>
-            {/* SWITCH */}
-            <div
-              className={cx(styles.dualOutputColInput)}
-              onClick={e => {
-                if (p.hideController) return;
-                dualOutputClickHandler(e);
-              }}
-            >
-              {!p.hideController && <Controller />}
-            </div>
-          </div>
-
-          <DisplaySelector
-            title={title}
-            nolabel
-            className={styles.dualOutputDisplaySelector}
-            platform={platform}
-            index={p.index}
-          />
-        </div>
+      {/* CONNECT BUTTON ALIGN RIGHT */}
+      {p?.isUnlinked && platform && (
+        <ConnectButton platform={platform} className={styles.connectButton} />
       )}
-    </>
+    </div>
   );
 });

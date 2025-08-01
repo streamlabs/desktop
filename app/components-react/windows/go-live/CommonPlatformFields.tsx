@@ -106,7 +106,7 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
     <div>
       {/* USE CUSTOM CHECKBOX */}
       {hasCustomCheckbox && (
-        <InputWrapper>
+        <InputWrapper layout="vertical">
           <CheckboxInput
             name="customEnabled"
             value={p.value.useCustomFields}
@@ -128,6 +128,8 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
               required={true}
               max={maxCharacters}
               tooltip={titleTooltip}
+              layout="vertical"
+              size="large"
             />
 
             {/*DESCRIPTION*/}
@@ -138,6 +140,7 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
                 name="description"
                 label={$t('Description')}
                 required={descriptionIsRequired}
+                layout="vertical"
               />
             )}
 

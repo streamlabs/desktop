@@ -2,40 +2,54 @@
 @import '../../../styles/mixins.less';
 
 .destination-logo {
-  font-size: 38px;
+  font-size: 34px;
 }
 .platform-logo-twitch {
-  font-size: 40px;
+  font-size: 36px;
 }
 .platform-logo-youtube {
-  font-size: 35px;
+  font-size: 33px;
   margin-top: 5px;
+  width: 36px;
+  height: 36px;
 }
 .platform-logo-facebook {
-  font-size: 40px;
+  font-size: 36px;
 }
 .platform-logo-tiktok {
-  font-size: 40px;
+  font-size: 36px;
   margin-left: 5px;
+  width: 36px;
+  height: 36px;
 }
 .platform-logo-instagram {
-  font-size: 40px;
+  font-size: 36px;
+  width: 36px;
+  height: 36px;
 }
 .platform-logo-twitter {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
+}
+.platform-logo-kick {
+  width: 36px;
+  height: 36px;
+}
+.platform-logo-trovo {
+  width: 36px;
+  height: 36px;
 }
 
 .platform-switcher {
   .radius();
-  .padding();
 
   display: flex;
-  height: 60px;
-  background: var(--dropdown-bg);
+  height: 54px;
+  background: var(--background) !important;
   transition: transform 0.05s;
   cursor: pointer;
   margin-bottom: 15px;
+  padding: 8px 10px;
 
   .col-input {
     padding-top: 5px;
@@ -52,15 +66,16 @@
     max-width: 130px;
     text-overflow: ellipsis;
     overflow: hidden;
+    flex: 1;
   }
 
   .platform-name {
     color: var(--title);
   }
+}
 
-  &:hover .col-account {
-    color: var(--title);
-  }
+.switch-wrapper {
+  padding: 0px 15px;
 }
 
 .platform-switcher:last-child {
@@ -69,11 +84,20 @@
 
 .platform-disabled {
   opacity: 0.7;
-  background: rgba(#2b383f, 0.3);
+  background: rgba(var(--titlebar), 0.3);
 }
 
-.column-padding {
-  padding: 0px 15px;
+.platform-enabled {
+  transition: 0.3 ease-in-out;
+  background: var(--section-alt) !important;
+}
+
+.platform-name {
+  font-size: 14px;
+}
+
+.platform-handle {
+  font-size: 12px;
 }
 
 .dual-output-platform-switcher {
@@ -85,14 +109,14 @@
   padding: 10px;
   flex-direction: column;
   color: var(--title);
-  background: var(--dropdown-bg);
+  background: var(--section-alt);
   transition: transform 0.05s;
   cursor: pointer;
 }
 
 .dual-output-platform-disabled {
   opacity: 0.7;
-  background: rgba(#2b383f, 0.3);
+  background: rgba(var(--titlebar), 0.3);
 }
 
 .dual-output-switcher-header {
@@ -141,6 +165,14 @@
 
 .dual-output-display-selector {
   margin-bottom: 0px !important;
+  display: flex;
+  align-self: flex-end;
+  flex: 1;
+
+  :global(.ant-form-item-control-input-content) {
+    min-width: 100px;
+    text-align: right;
+  }
 }
 
 .single-output-logo {
@@ -166,6 +198,10 @@
     height: 15px;
     top: 3px;
     left: 3px;
+  }
+
+  :global(.ant-switch-checked) {
+    background: var(--title);
   }
 
   :global(.ant-switch-small.ant-switch-checked .ant-switch-handle) {

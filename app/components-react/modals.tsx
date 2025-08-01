@@ -119,7 +119,10 @@ export function promptAction(p: {
   title: string;
   message: string;
   btnText: string;
+  cancelBtnPosition?: 'left' | 'right';
+  cancelBtnText?: string;
   fn(): void | ((props: any) => unknown | void);
+  cancelFn?: void | ((props?: any) => unknown | void);
   icon?: React.ReactNode;
 }) {
   alertAsync({
@@ -137,7 +140,10 @@ export function promptAction(p: {
       <ModalLayout
         footer={
           <Form layout={'inline'} className={styles.actionModalFooter}>
-            <Button onClick={Modal.destroyAll}>{$t('Skip')}</Button>
+            {!p.cancelBtnPosition ||
+              (p.cancelBtnPosition && p.cancelBtnPosition === 'left' && (
+                <Button onClick={Modal.destroyAll}>{p.cancelBtnText ?? $t('Skip')}</Button>
+              ))}
             <Button
               type="primary"
               onClick={() => {
@@ -147,6 +153,18 @@ export function promptAction(p: {
             >
               {p.btnText}
             </Button>
+            {p.cancelBtnPosition && p.cancelBtnPosition === 'right' && (
+              <Button
+                onClick={() => {
+                  Modal.destroyAll();
+                  if (p?.cancelFn) {
+                    p.cancelFn();
+                  }
+                }}
+              >
+                {p.cancelBtnText ?? $t('Skip')}
+              </Button>
+            )}
           </Form>
         }
       >

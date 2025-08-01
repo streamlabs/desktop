@@ -27,7 +27,9 @@ export type TSocketEvent =
   | IUserAccountMerged
   | IUserAccountUnlinked
   | IUserAccountMergeError
-  | IAccountPermissionsRequired;
+  | IAccountPermissionsRequired
+  | IStreamSwitchRequested
+  | IStreamSwitchActionCompleted;
 
 interface IStreamlabelsSocketEvent {
   type: 'streamlabels';
@@ -150,6 +152,42 @@ interface IAccountPermissionsRequired {
     platform: string;
     url: any;
   }[];
+}
+
+// ["event",
+//   {"type":"streamSwitchRequest",
+//    "for":"streamlabs",
+//      "data":{
+//       "identifier":"12"
+//      },
+//    "event_id":"evt_fc9da66bbb30262e6138ff01fea2ccbf"
+//  }]
+
+interface IStreamSwitchRequested {
+  type: 'streamSwitchRequest';
+  for: string;
+  data: {
+    identifier: string;
+  };
+  event_id: string;
+}
+
+// ["event",
+//    {"type": "switchActionComplete",
+//    "for": "streamlabs",
+//    "data": {
+//       "identifier": "12"
+//     },
+//    "event_id": "evt_71deeb1e32e3feac0bf610e7082d696c"
+//  }]
+
+interface IStreamSwitchActionCompleted {
+  type: 'switchActionComplete';
+  for: string;
+  data: {
+    identifier: string;
+  };
+  event_id: string;
 }
 
 export class WebsocketService extends Service {

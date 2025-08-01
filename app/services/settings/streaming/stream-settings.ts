@@ -19,6 +19,7 @@ export interface ISavedGoLiveSettings {
   platforms: Partial<Record<TPlatform, IPlatformFlags>>;
   customDestinations?: ICustomStreamDestination[];
   advancedMode: boolean;
+  streamSwitch?: boolean;
 }
 
 export interface ICustomStreamDestination {

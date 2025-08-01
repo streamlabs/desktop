@@ -29,6 +29,8 @@ export function InstagramEditStreamInfo(p: Props) {
         required
         label={streamUrlLabel}
         addonAfter={<PasteButton onPaste={bind.streamUrl.onChange} />}
+        layout="vertical"
+        size="large"
       />
 
       <TextInput
@@ -38,6 +40,8 @@ export function InstagramEditStreamInfo(p: Props) {
         isPassword
         placeholder={$t('Remember to update your Stream Key')}
         addonAfter={<PasteButton onPaste={bind.streamKey.onChange} />}
+        layout="vertical"
+        size="large"
       />
       {!isStreamSettingsWindow && (
         <Alert

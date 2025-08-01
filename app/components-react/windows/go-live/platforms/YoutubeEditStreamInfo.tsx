@@ -134,6 +134,8 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
                 },
                 { value: 'private', label: $t('Private'), description: $t('Only you can view') },
               ]}
+              layout="vertical"
+              size="large"
             />
             <ListInput
               {...bind.categoryId}
@@ -143,11 +145,14 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
                 value: category.id,
                 label: category.snippet.title,
               }))}
+              layout="vertical"
+              size="large"
             />
             <ImageInput
               label={$t('Thumbnail')}
               maxFileSize={2 * 1024 * 1024} // 2 mb
               {...bind.thumbnail}
+              layout="vertical"
             />
 
             <ListInput
@@ -162,11 +167,13 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
                   description: $t('Does not support: Closed captions, 1440p, and 4k resolutions'),
                 },
               ]}
+              layout="vertical"
+              size="large"
               {...bind.latencyPreference}
             />
           </>
         )}
-        <InputWrapper label={$t('Additional Settings')}>
+        <InputWrapper label={$t('Additional Settings')} layout="vertical">
           {!isScheduleMode && !isMidStreamMode && (
             <CheckboxInput
               {...bind.enableAutoStart}

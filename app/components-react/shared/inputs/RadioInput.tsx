@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { CSSProperties } from 'react';
 import { InputComponent, TSlobsInputProps } from './inputs';
 import InputWrapper from './InputWrapper';
+import styles from './RadioInput.m.less';
 import { Radio, Space } from 'antd';
+import cx from 'classnames';
 import omit from 'lodash/omit';
 
 type TRadioInputProps = TSlobsInputProps<
@@ -18,6 +20,7 @@ type TRadioInputProps = TSlobsInputProps<
     }[];
     buttons?: boolean;
     icons?: boolean;
+    style?: CSSProperties;
     value?: string;
     direction?: 'vertical' | 'horizontal';
     disabled?: boolean;
@@ -52,6 +55,7 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           buttonStyle="solid"
           disabled={p.disabled}
           className={p.className}
+          style={p?.style}
         />
       )}
       {p.icons && (
@@ -59,7 +63,8 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           value={p.value}
           defaultValue={p.defaultValue}
           onChange={e => p.onChange && p.onChange(e.target.value)}
-          className={p.className}
+          className={cx(p.className, styles.iconRadio)}
+          style={p?.style}
           disabled={p.disabled}
         >
           {p.options.map(option => {
@@ -68,7 +73,7 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
                 key={option.value}
                 value={option.value}
                 disabled={p.disabled}
-                children={<i className={option.icon} />}
+                children={<i className={cx(option.icon, styles.iconToggle)} />}
               />
             );
           })}
@@ -80,6 +85,7 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           defaultValue={p.defaultValue}
           onChange={e => p.onChange && p.onChange(e.target.value)}
           className={p.className}
+          style={p?.style}
         >
           <Space size={p?.gapsize ?? undefined} direction={p?.direction ?? 'vertical'}>
             {p.options.map(option => {

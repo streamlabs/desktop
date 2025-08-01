@@ -1,5 +1,5 @@
 import { IGoLiveSettings, StreamInfoView, TDisplayOutput } from '../../../services/streaming';
-import { TPlatform } from '../../../services/platforms';
+import { platformList, TPlatform } from '../../../services/platforms';
 import { ICustomStreamDestination } from 'services/settings/streaming';
 import { Services } from '../../service-provider';
 import cloneDeep from 'lodash/cloneDeep';
@@ -129,6 +129,13 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
     } else {
       this.updateSettings({ recording: [...this.state.recording, display] });
     }
+  }
+
+  /**
+   * Enable/Disable Stream Switcher mode
+   */
+  toggleStreamSwitcher(status: boolean) {
+    this.updateSettings({ streamSwitch: status });
   }
 
   /**
@@ -344,6 +351,12 @@ export class GoLiveSettingsModule {
       [],
     );
   }
+
+  get unlinkedPlatforms() {
+    const platforms = platformList as TPlatform[];
+    return platforms.filter(platform => !this.state.linkedPlatforms.includes(platform));
+  }
+
   get primaryChat() {
     const primaryPlatform = Services.UserService.views.platform!;
     // this is migration-like code for users with old primary platform deselected (i.e me)
@@ -356,6 +369,11 @@ export class GoLiveSettingsModule {
 
   setPrimaryChat(platform: TPlatform) {
     Services.UserService.actions.setPrimaryPlatform(platform);
+  }
+
+  setStreamSwitcher(status: boolean) {
+    this.state.toggleStreamSwitcher(status);
+    this.save(this.state.settings);
   }
 
   /**

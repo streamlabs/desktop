@@ -305,5 +305,19 @@
   "Record Stream": "Record Stream",
   "AI Highlighter is enabled. Recording will start when stream starts.": "AI Highlighter is enabled. Recording will start when stream starts.",
   "Connection Failed": "Connection Failed",
-  "Upgrade to Ultra to allow more than two outputs": "Upgrade to Ultra to allow more than two outputs"
+  "Upgrade to Ultra to allow more than two outputs": "Upgrade to Ultra to allow more than two outputs",
+  "Enable Stream Switcher": "Enable Stream Switcher",
+  "Disable Stream Switcher": "Disable Stream Switcher",
+  "Toggle to swap your stream between Desktop and Mobile devices.": "Toggle to swap your stream between Desktop and Mobile devices.",
+  "You can stream to any 2 destinations for free with Dual Output. Multistream and switch seamlessly between streams with Ultra": "You can stream to any 2 destinations for free with Dual Output. Multistream and switch seamlessly between streams with Ultra",
+  "Switch Stream": "Switch Stream",
+  "Claim Stream": "Claim Stream",
+  "Another stream detected": "Another stream detected",
+  "A stream on another device has been detected. Would you like to switch your stream to Desktop? If you do not want to continue this stream, please end the stream from the current streaming source.": "A stream on another device has been detected. Would you like to switch your stream to Desktop? If you do not want to continue this stream, please end the stream from the current streaming source.",
+  "Switch to Desktop Stream": "Switch to Desktop Stream",
+  "Stream successfully switched": "Stream successfully switched",
+  "Your stream has successfully switched to Streamlabs Mobile.": "Your stream has successfully switched to Streamlabs Mobile.",
+  "Stream Information:": "Stream Information:",
+  "Destinations:": "Destinations:",
+  "Destinations & Outputs:": "Destinations & Outputs:"
 }

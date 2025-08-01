@@ -55,6 +55,7 @@ export function TikTokEditStreamInfo(p: IPlatformComponentParams<'tiktok'>) {
           direction="horizontal"
           colon
           {...bind.audienceType}
+          layout="vertical"
         />
       )}
       {!approved && <TikTokEnterCredentialsFormInfo {...p} denied={denied} />}
@@ -80,6 +81,8 @@ export function TikTokEnterCredentialsFormInfo(
         }
         required
         {...bind.serverUrl}
+        layout="vertical"
+        size="large"
       />
       <TextInput
         label={
@@ -90,6 +93,8 @@ export function TikTokEnterCredentialsFormInfo(
         }
         required
         {...bind.streamKey}
+        layout="vertical"
+        size="large"
       />
       <InputWrapper
         extra={
@@ -97,6 +102,7 @@ export function TikTokEnterCredentialsFormInfo(
             {p.denied ? <TikTokDenied /> : <TikTokInfo />}
           </div>
         }
+        layout="vertical"
       >
         <TikTokButtons denied={p.denied} />
       </InputWrapper>

@@ -20,13 +20,14 @@ export default function TwitchContentClassificationInput({
   }));
 
   return (
-    <InputWrapper label={$t('Content Classification')}>
+    <InputWrapper label={$t('Content Classification')} layout="vertical">
       <Select
         mode="multiple"
         options={options}
         placeholder={$t('Content classification')}
         value={value}
         onChange={onChange}
+        size="large"
       />
     </InputWrapper>
   );

@@ -63,6 +63,8 @@ export function TwitterEditStreamInfo(p: IPlatformComponentParams<'twitter'>) {
                   description: $t('Only viewers that subscribe to you will be able to chat'),
                 },
               ]}
+              layout="vertical"
+              size="large"
             />
           </div>
         }

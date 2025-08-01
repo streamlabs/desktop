@@ -36,14 +36,16 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
   }));
 
   const displays = useMemo(() => {
-    const defaultDisplays: { label: string; value: TDisplayOutput }[] = [
+    const defaultDisplays = [
       {
         label: $t('Horizontal'),
         value: 'horizontal',
+        icon: 'icon-desktop',
       },
       {
         label: $t('Vertical'),
         value: 'vertical',
+        icon: 'icon-phone-case',
       },
     ];
 
@@ -51,6 +53,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       defaultDisplays.push({
         label: $t('Both'),
         value: 'both' as TDisplayType,
+        icon: 'icon-dual-output',
       });
     }
 
@@ -73,14 +76,13 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     <RadioInput
       nolabel={p?.nolabel}
       label={p?.nolabel ? undefined : p.title}
-      data-test="display-input"
+      name={`${p.platform}-display-input`}
       id={`${p.platform}-display-input`}
-      direction="horizontal"
-      gapsize={0}
+      value={display}
       defaultValue="horizontal"
       options={displays}
       onChange={onChange}
-      value={display}
+      icons={true}
       className={p?.className}
       style={p?.style}
     />
