@@ -517,7 +517,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           await this.addStream(streamInfo);
 
           // start realtime highlighter service
-          this.realtimeHighlighterService.start();
+          this.realtimeHighlighterService.start(streamInfo.id);
         } else {
           // normal recording highlighter
           this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {

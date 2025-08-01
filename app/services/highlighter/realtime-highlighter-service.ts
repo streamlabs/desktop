@@ -182,13 +182,18 @@ export class RealtimeHighlighterEphemeralState extends RealmObject {
 
 RealtimeHighlighterEphemeralState.register();
 
+export interface IRealtimeHighlightClipData extends INewClipData {
+  streamId: string;
+}
+
 @InitAfter('StreamingService')
 export class RealtimeHighlighterService extends Service {
   private static MAX_SCORE = 5;
 
-  highlightsReady = new Subject<INewClipData[]>();
+  highlightsReady = new Subject<IRealtimeHighlightClipData[]>();
   latestDetectedEvent = new BehaviorSubject<{ type: string; game: EGame } | null>(null);
   highlights: INewClipData[] = [];
+  currentStreamId: string | null = null;
   ephemeralState = RealtimeHighlighterEphemeralState.inject();
 
   @Inject() private streamingService: StreamingService;
@@ -224,7 +229,9 @@ export class RealtimeHighlighterService extends Service {
     });
   }
 
-  async start() {
+  async start(streamId: string) {
+    this.currentStreamId = streamId;
+
     console.log('Starting RealtimeHighlighterService');
     if (this.isRunning) {
       console.warn('RealtimeHighlighterService is already running');
@@ -271,6 +278,7 @@ export class RealtimeHighlighterService extends Service {
 
     this.replayBufferFileReadySubscription?.unsubscribe();
 
+    this.currentStreamId = null;
     this.isRunning = false;
   }
 
@@ -288,6 +296,9 @@ export class RealtimeHighlighterService extends Service {
     return randomKey;
   }
 
+  triggerFakeEvent() {
+    this.latestDetectedEvent.next({ type: this.getRandomEventType(), game: EGame.FORTNITE });
+  }
   /**
    * This method is called periodically to save replay events to file at correct time
    * when the highlight ends.
@@ -397,7 +408,9 @@ export class RealtimeHighlighterService extends Service {
       path,
     );
 
-    this.highlightsReady.next(clips);
+    const clipsWithStreamId = clips.map(clip => ({ ...clip, streamId: this.currentStreamId }));
+
+    this.highlightsReady.next(clipsWithStreamId);
   }
 
   /**

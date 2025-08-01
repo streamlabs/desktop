@@ -17,6 +17,7 @@ import { useRealmObject } from '../../hooks/realm';
 import { EMenuItemKey } from 'services/side-nav';
 import Utils from 'services/utils';
 import RealtimeIndicator from '../RealtimeIndicator';
+import { IRealtimeHighlightClipData } from 'services/highlighter/realtime-highlighter-service';
 
 interface IRealtimeHighlightTooltipProps {
   placement?: TooltipPlacement;
@@ -40,7 +41,7 @@ export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightToolt
   const [lastEvent, setLastEvent] = useState<TRealtimeFeedEvent | null>(null);
   const [showTooltip, setShowTooltip] = useState<true | undefined>(undefined);
 
-  const [highlightClips, setHighlightClips] = useState<INewClipData[]>([]);
+  const [highlightClips, setHighlightClips] = useState<IRealtimeHighlightClipData[]>([]);
   let hasMoreEvents = false;
   const isDevMode = Utils.isDevMode();
 
@@ -52,9 +53,9 @@ export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightToolt
     console.log('Initializing RealtimeEventTooltip component');
 
     realtimeHighlightSubscription = RealtimeHighlighterService.highlightsReady.subscribe(
-      newClipData => {
+      realtimeClipData => {
         // This will be called when highlights are ready
-        const highlights = Object.values(newClipData);
+        const highlights = Object.values(realtimeClipData);
         setHighlightClips(prevEvents => {
           const updatedEvents = [...prevEvents, ...highlights];
           // Remove excess events from the beginning if we exceed maxEvents
@@ -64,7 +65,7 @@ export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightToolt
           return updatedEvents;
         });
         hasMoreEvents = highlights.length > maxEvents;
-        console.log('Realtime highlights are ready:', newClipData);
+        console.log('Realtime highlights are ready:', realtimeClipData);
       },
     );
 
@@ -106,14 +107,14 @@ export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightToolt
     );
   }
 
-  function onEventItemClick(event: INewClipData) {
+  function onEventItemClick(streamId: string) {
     console.log('Open single highlight view for event:', event);
     // Navigate to specific highlight in stream
     NavigationService.actions.navigate(
       'Highlighter',
       {
         view: EHighlighterView.CLIPS,
-        id: event.path,
+        id: streamId,
       },
       EMenuItemKey.Highlighter,
     );
@@ -159,7 +160,9 @@ export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightToolt
                 key={clipData.path}
                 clipData={clipData}
                 game={currentGame}
-                onEventItemClick={onEventItemClick}
+                onEventItemClick={() => {
+                  onEventItemClick(clipData.streamId);
+                }}
                 latestItem={highlightClips.length - 1 === index}
               />
             </div>
