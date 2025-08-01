@@ -363,7 +363,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
 
     if (!newCollectionId) return;
 
-    this.dualOutputService.setDualOutputMode(false);
+    this.dualOutputService.setDualOutputModeIfPossible(false);
 
     await this.load(newCollectionId);
 

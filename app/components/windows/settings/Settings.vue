@@ -6,7 +6,11 @@
     :contentStyles="{ padding: '0' }"
   >
     <div slot="content" class="settings">
-      <NavMenu v-model="categoryName" class="settings-nav">
+      <NavMenu
+        :value="currentSettingsTab"
+        @input="cat => setCategoryName(cat)"
+        class="settings-nav"
+      >
         <scrollable style="height: 100%" :isResizable="false">
           <form-input
             :value="searchStr"
@@ -73,7 +77,7 @@
       <scrollable className="settings-container">
         <searchable-pages
           ref="settingsContainer"
-          :page="categoryName"
+          :page="currentSettingsTab"
           :pages="categoryNames"
           :searchStr="searchStr"
           :onBeforePageScan="onBeforePageScanHandler"

@@ -55,6 +55,7 @@ export default function Hotkeys(props: HotkeysProps) {
   const [hotkeySet, setHotkeysSet] = useState<IHotkeysSet | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
     if (!hotkeySet) {
       // We don't want hotkeys registering while trying to bind.
       // We may change our minds on this in the future.
@@ -62,7 +63,10 @@ export default function Hotkeys(props: HotkeysProps) {
 
       HotkeysService.actions.return
         .getHotkeysSet()
-        .then(setHotkeysSet)
+        .then((hotkeys: IHotkeysSet) => {
+          if (!isMounted) return;
+          setHotkeysSet(hotkeys);
+        })
         .then(() => highlightSearch(searchString));
     }
 
@@ -70,8 +74,15 @@ export default function Hotkeys(props: HotkeysProps) {
       if (hotkeySet) {
         HotkeysService.actions.applyHotkeySet(hotkeySet);
       }
+      isMounted = false;
     };
   }, [hotkeySet]);
+
+  // Highlight search results when the search string changes
+  useEffect(() => {
+    if (!searchString) return;
+    highlightSearch(searchString);
+  }, [searchString]);
 
   const emptyHotkeySet: IAugmentedHotkeySet = {
     general: {},
@@ -116,9 +127,6 @@ export default function Hotkeys(props: HotkeysProps) {
 
     return filteredHotkeySet;
   }, [augmentedHotkeySet, searchString]);
-
-  // Highlight search results when the search string changes
-  useEffect(() => highlightSearch(searchString), [searchString]);
 
   if (!hotkeySet) {
     return <div />;

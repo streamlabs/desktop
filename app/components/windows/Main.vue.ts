@@ -32,8 +32,8 @@ Vue.use(VueResize);
 
 // Pages
 import { Inject } from '../../services/core/injector';
-import { CustomizationService, CustomizationState } from 'services/customization';
-import { NavigationService } from 'services/navigation';
+import { CustomizationService } from 'services/customization';
+import { NavigationService, TAppPage } from 'services/navigation';
 import { AppService } from 'services/app';
 import { UserService } from 'services/user';
 import { IModalOptions, WindowsService } from 'services/windows';
@@ -83,20 +83,25 @@ export default class Main extends Vue {
   };
 
   theme: Theme = 'night-theme';
+  page: TAppPage = 'Studio';
   minEditorWidth = 500;
 
   created() {
     window.addEventListener('resize', this.windowSizeHandler);
   }
 
-  unbind: () => void;
+  unbindCustomization: () => void;
+  unbindNavigation: () => void;
 
   mounted() {
-    this.unbind = this.customizationService.state.bindProps(this, {
+    this.unbindCustomization = this.customizationService.state.bindProps(this, {
       theme: 'theme',
       isDockCollapsed: 'livedockCollapsed',
       leftDock: 'leftDock',
       liveDockSize: 'livedockSize',
+    });
+    this.unbindNavigation = this.navigationService.state.bindProps(this, {
+      page: 'currentPage',
     });
 
     antdThemes[this.theme].use();
@@ -130,15 +135,12 @@ export default class Main extends Vue {
 
   destroyed() {
     window.removeEventListener('resize', this.windowSizeHandler);
-    this.unbind();
+    this.unbindCustomization();
+    this.unbindNavigation();
   }
 
   get title() {
     return this.windowsService.state.main.title;
-  }
-
-  get page() {
-    return this.navigationService.state.currentPage;
   }
 
   get params() {
@@ -174,7 +176,7 @@ export default class Main extends Vue {
   leftDock = false;
 
   get isOnboarding() {
-    return this.navigationService.state.currentPage === 'Onboarding';
+    return this.page === 'Onboarding';
   }
 
   get platformApps() {

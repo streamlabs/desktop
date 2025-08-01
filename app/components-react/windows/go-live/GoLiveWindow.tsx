@@ -76,7 +76,7 @@ function ModalFooter() {
     },
 
     toggleDualOutputMode() {
-      this.dualOutputService.actions.setDualOutputMode(false, true, true);
+      this.dualOutputService.actions.setDualOutputModeIfPossible(false, true, true);
     },
 
     get horizontalHasTargets() {

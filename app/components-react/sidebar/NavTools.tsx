@@ -101,7 +101,7 @@ export default function SideNav() {
 
   const handleAuth = () => {
     if (isLoggedIn) {
-      Services.DualOutputService.actions.setDualOutputMode(false, true);
+      Services.DualOutputService.actions.setDualOutputModeIfPossible(false, true);
       UserService.actions.logOut();
     } else {
       WindowsService.actions.closeChildWindow();
