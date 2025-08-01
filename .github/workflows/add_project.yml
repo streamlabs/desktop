@@ -5,6 +5,7 @@ on:
     types: [opened]
   pull_request_target:
     types: [opened]
+    branches: ['n-air_development']
 
 jobs:
   add-to-project:
