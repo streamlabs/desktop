@@ -1,0 +1,55 @@
+name: Add Issue or PR to Project
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+jobs:
+  add-to-project:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add to Project
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const org = 'n-air-app';
+            const projectNumber = 1;
+
+            // イベント種別によって対象ノードを選択
+            const isPR = context.eventName === 'pull_request';
+            const contentNodeId = isPR
+              ? context.payload.pull_request.node_id
+              : context.payload.issue.node_id;
+
+            // プロジェクトIDの取得
+            const project = await github.graphql(`
+              query($org: String!, $number: Int!) {
+                organization(login: $org) {
+                  projectV2(number: $number) {
+                    id
+                  }
+                }
+              }
+            `, { org, number: projectNumber });
+
+            // Project に追加
+            await github.graphql(`
+              mutation($projectId: ID!, $contentId: ID!) {
+                addProjectV2ItemById(input: {
+                  projectId: $projectId,
+                  contentId: $contentId
+                }) {
+                  item {
+                    id
+                  }
+                }
+              }
+            `, {
+              projectId: project.organization.projectV2.id,
+              contentId: contentNodeId,
+            });
+
+            console.log(`Added ${isPR ? 'PR' : 'Issue'} to Project`);
