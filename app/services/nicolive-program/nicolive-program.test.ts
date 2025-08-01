@@ -189,7 +189,7 @@ test('findSuitableProgram', () => {
 });
 
 test.each([
-  ['CREATED', 1],
+  ['CREATED', 2],
   ['RESERVED', 0],
   ['OTHER', 0],
 ])('createProgram with %s', async (result: string, fetchProgramCalled: number) => {
@@ -197,11 +197,23 @@ test.each([
   const { NicoliveProgramService } = require('./nicolive-program');
   const instance = NicoliveProgramService.instance as NicoliveProgramService;
 
-  instance.client.createProgram = jest.fn().mockResolvedValue(result);
-  instance.fetchProgram = jest.fn();
+  let resolved: (value: string) => void;
+  const promise = new Promise<string>(r => {
+    resolved = r;
+  });
+  instance.client.createProgram = jest
+    .fn()
+    .mockName('client.createProgram')
+    .mockResolvedValue(promise);
+  instance.fetchProgram = jest.fn().mockName('fetchProgram');
 
-  await expect(instance.createProgram()).resolves.toBe(result);
-  expect(instance.client.createProgram).toHaveBeenCalledTimes(1);
+  // 二重に呼べることを確認
+  const firstCall = instance.createProgram();
+  const secondCall = instance.createProgram();
+  resolved(result);
+  await expect(firstCall).resolves.toBe(result);
+  await expect(secondCall).resolves.toBe(result);
+  expect(instance.client.createProgram).toHaveBeenCalledTimes(2);
   expect(instance.fetchProgram).toHaveBeenCalledTimes(fetchProgramCalled);
 });
 

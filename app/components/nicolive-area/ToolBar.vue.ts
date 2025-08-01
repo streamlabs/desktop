@@ -43,11 +43,8 @@ export default class ToolBar extends Vue {
     return NicoliveProgramService.format(timeInSeconds);
   }
 
-  isCreating: boolean = false;
   async createProgram() {
-    if (this.isCreating) throw new Error('createProgram is running');
     try {
-      this.isCreating = true;
       return await this.nicoliveProgramService.createProgram();
     } catch (caught) {
       if (caught instanceof NicoliveFailure) {
@@ -56,7 +53,6 @@ export default class ToolBar extends Vue {
         throw caught;
       }
     } finally {
-      this.isCreating = false;
       this.selectButton('start');
     }
   }

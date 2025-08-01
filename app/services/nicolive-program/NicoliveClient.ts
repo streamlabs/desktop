@@ -485,7 +485,15 @@ export class NicoliveClient {
   }
 
   /** 番組作成画面を開いて結果を返す */
+  createProgramPromise: Promise<CreateResult> | null = null;
+
   async createProgram(): Promise<CreateResult> {
+    if (NicoliveClient.OpenWindows['createProgram']) {
+      // すでに開いている場合はフォーカスを当てる
+      NicoliveClient.OpenWindows['createProgram'].focus();
+      // すでに開いているPromiseを返す
+      return this.createProgramPromise || CreateResult.OTHER;
+    }
     const win = new BrowserWindow({
       width: 1200,
       height: 900,
@@ -499,7 +507,7 @@ export class NicoliveClient {
     Sentry.addBreadcrumb({
       category: 'createProgram.open',
     });
-    return new Promise<CreateResult>((resolve, _reject) => {
+    this.createProgramPromise = new Promise<CreateResult>((resolve, _reject) => {
       addClipboardMenu(win);
       win.on('closed', () => resolve(CreateResult.OTHER));
       win.webContents.on('did-navigate', (_event, url) => {
@@ -543,8 +551,10 @@ export class NicoliveClient {
         category: 'createProgram.close',
         message: result,
       });
+      this.createProgramPromise = null;
       return result;
     });
+    return this.createProgramPromise;
   }
 
   private editProgramWindow: Electron.BrowserWindow = null;

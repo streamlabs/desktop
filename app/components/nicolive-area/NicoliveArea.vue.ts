@@ -69,16 +69,11 @@ export default class NicolivePanelRoot extends Vue {
     return this.customizationService.state.compactMode;
   }
 
-  isCreating: boolean = false;
   async createProgram(): Promise<void> {
-    if (this.isCreating) throw new Error('createProgram is running');
     try {
-      this.isCreating = true;
       await this.nicoliveProgramService.createProgram();
     } catch (e) {
       console.error(e);
-    } finally {
-      this.isCreating = false;
     }
   }
 
