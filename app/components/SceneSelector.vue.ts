@@ -31,6 +31,10 @@ export default class SceneSelector extends Vue {
 
   searchQuery = '';
 
+  removeSceneTooltip = $t('scenes.removeSceneTooltip');
+  addSceneTooltip = $t('scenes.addSceneTooltip');
+  openSceneSwitcherTooltip = $t('scenes.openSceneSwitcherTooltip');
+
   showContextMenu() {
     const menu = new Menu();
     menu.append({
