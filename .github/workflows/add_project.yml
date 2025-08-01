@@ -3,7 +3,7 @@ name: Add Issue or PR to Project v2
 on:
   issues:
     types: [opened]
-  pull_request:
+  pull_request_target:
     types: [opened]
 
 jobs:
@@ -11,11 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq
-
       - name: Get Project ID
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
