@@ -85,6 +85,11 @@ export abstract class Module {
   static apiEvents: string[];
 
   /**
+   * Whether this module can only be accessed by highly privileged apps
+   */
+  requiresHighlyPrivileged = false;
+
+  /**
    * Takes a patch object and validates it against the required keys.
    * @param requiredKeys keys required in the original object
    * @param patch An object containing the changes to apply
