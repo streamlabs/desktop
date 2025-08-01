@@ -16,7 +16,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const org = 'n-air-app';
-            const projectNumber = 1;
+            const projectNumber = 3;
 
             // イベント種別によって対象ノードを選択
             const isPR = context.eventName === 'pull_request';
