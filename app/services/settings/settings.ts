@@ -381,7 +381,9 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   }
 
   showSettings(categoryName?: string) {
-    this.navigationService.setSettingsNavigation(categoryName);
+    if (categoryName) {
+      this.navigationService.setSettingsNavigation(categoryName);
+    }
     this.windowsService.showWindow({
       componentName: 'Settings',
       title: $t('Settings'),
