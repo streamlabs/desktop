@@ -197,7 +197,7 @@ export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightToolt
         <RealtimeIndicator
           eventType={lastEvent || undefined}
           emitCancel={() => {
-            RealtimeHighlighterService.actions.stop();
+            HighlighterService.actions.stopRealtimeHighlighter();
           }}
         />
       </div>

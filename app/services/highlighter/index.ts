@@ -137,6 +137,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   aiHighlighterUpdater: AiHighlighterUpdater;
   aiHighlighterFeatureEnabled = false;
   streamMilestones: IStreamMilestones | null = null;
+  currentRealtimeStreamId: string | null = null;
 
   static filter(state: IHighlighterState) {
     return {
@@ -368,11 +369,21 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
     //Check if aiDetections were still running when the user closed desktop
     this.views.highlightedStreams
-      .filter(stream => stream.state.type === 'detection-in-progress')
+      .filter(stream => stream.state.type === EAiDetectionState.IN_PROGRESS)
       .forEach(stream => {
         this.UPDATE_HIGHLIGHTED_STREAM({
           ...stream,
           state: { type: EAiDetectionState.CANCELED_BY_USER },
+        });
+      });
+
+    //Check if realtimeDetections were still running when the user closed desktop
+    this.views.highlightedStreams
+      .filter(stream => stream.state.type === EAiDetectionState.REALTIME_DETECTION_IN_PROGRESS)
+      .forEach(stream => {
+        this.UPDATE_HIGHLIGHTED_STREAM({
+          ...stream,
+          state: { type: EAiDetectionState.FINISHED },
         });
       });
 
@@ -517,7 +528,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           await this.addStream(streamInfo);
 
           // start realtime highlighter service
-          this.realtimeHighlighterService.start(streamInfo.id);
+          this.startRealtimeHighlighter(streamInfo.id);
         } else {
           // normal recording highlighter
           this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
@@ -564,11 +575,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       }
       if (status === EStreamingState.Ending) {
         if (this.useRealtimeHighlighter) {
-          this.updateStream({
-            state: { type: EAiDetectionState.FINISHED },
-            id: streamInfo.id,
-          });
-          this.realtimeHighlighterService.stop();
+          this.stopRealtimeHighlighter();
         }
 
         if (!aiRecordingInProgress) {
@@ -624,6 +631,19 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         EMenuItemKey.Highlighter,
       );
     });
+  }
+
+  startRealtimeHighlighter(streamId: string) {
+    this.currentRealtimeStreamId = streamId;
+    this.realtimeHighlighterService.start(streamId);
+  }
+
+  stopRealtimeHighlighter() {
+    const streamId = this.currentRealtimeStreamId;
+    this.updateStream({ id: streamId, state: { type: EAiDetectionState.FINISHED } });
+    this.currentRealtimeStreamId = null;
+
+    this.realtimeHighlighterService.stop();
   }
 
   notificationAction() {
@@ -1399,10 +1419,12 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   }
 
   cancelHighlightGeneration(streamId: string): void {
+    console.log('Cancel highlight generation for stream:', streamId);
     const stream = this.views.highlightedStreamsDictionary[streamId];
     if (stream && stream.abortController) {
       stream.abortController.abort();
     }
+    this.stopRealtimeHighlighter();
   }
 
   async restartAiDetection(filePath: string, streamInfo: IHighlightedStream) {
