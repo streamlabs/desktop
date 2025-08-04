@@ -15,7 +15,7 @@ export default function ClipPreviewInfo({
     return <span>No event data</span>;
   }
 
-  const eventDisplays = getUniqueEmojiConfigFromAiInfo(clip.aiInfo, game);
+  const eventDisplays = getUniqueEmojiConfigFromAiInfo(clip.aiInfo);
   return (
     <div
       style={{
@@ -43,7 +43,7 @@ export interface EmojiConfig {
   type: string;
 }
 
-export function getUniqueEmojiConfigFromAiInfo(aiInfos: IAiClipInfo, game?: EGame): EmojiConfig[] {
+export function getUniqueEmojiConfigFromAiInfo(aiInfos: IAiClipInfo): EmojiConfig[] {
   const typeCounts: Record<string, number> = {};
   if (aiInfos.inputs && Array.isArray(aiInfos.inputs)) {
     aiInfos.inputs.forEach(aiInput => {
@@ -57,8 +57,8 @@ export function getUniqueEmojiConfigFromAiInfo(aiInfos: IAiClipInfo, game?: EGam
 
   const eventDisplays = uniqueInputTypes.map(type => {
     const count = typeCounts[type];
-    if (game) {
-      const eventInfo = getEventConfig(game, type);
+    if (aiInfos.metadata?.game) {
+      const eventInfo = getEventConfig(aiInfos.metadata.game, type);
       if (eventInfo) {
         return {
           emoji: eventInfo.emoji,

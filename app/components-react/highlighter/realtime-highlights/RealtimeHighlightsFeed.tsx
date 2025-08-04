@@ -36,13 +36,13 @@ export type TRealtimeFeedEvent = {
 };
 
 export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightTooltipProps) {
-  const { placement, trigger, maxEvents = 5 } = props;
+  const { placement, trigger, maxEvents = 3 } = props;
   const { HighlighterService, RealtimeHighlighterService, NavigationService } = Services;
   const [lastEvent, setLastEvent] = useState<TRealtimeFeedEvent | null>(null);
   const [showTooltip, setShowTooltip] = useState<true | undefined>(undefined);
 
-  const [highlightClips, setHighlightClips] = useState<IRealtimeHighlightClipData[]>([]);
-  let hasMoreEvents = false;
+  const [highlightClips, setHighlightClips] = useState<INewClipData[]>([]);
+  const [hasMoreEvents, setHasMoreEvents] = useState<boolean>(false);
   const isDevMode = Utils.isDevMode();
 
   const currentGame = useRealmObject(RealtimeHighlighterService.ephemeralState).game;
@@ -61,10 +61,13 @@ export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightToolt
           // Remove excess events from the beginning if we exceed maxEvents
           if (updatedEvents.length > maxEvents) {
             updatedEvents.splice(0, updatedEvents.length - maxEvents);
+            if (hasMoreEvents === false) {
+              setHasMoreEvents(true);
+            }
           }
           return updatedEvents;
         });
-        hasMoreEvents = highlights.length > maxEvents;
+
         console.log('Realtime highlights are ready:', realtimeClipData);
       },
     );
@@ -133,6 +136,7 @@ export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightToolt
         {hasMoreEvents && (
           <div className={styles.eventFooter}>
             <Button
+              style={{ width: '100%' }}
               type="primary"
               size="small"
               onClick={e => {
@@ -159,10 +163,7 @@ export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightToolt
               <RealtimeHighlightsItem
                 key={clipData.path}
                 clipData={clipData}
-                game={currentGame}
-                onEventItemClick={() => {
-                  onEventItemClick(clipData.streamId);
-                }}
+                onEventItemClick={onEventItemClick}
                 latestItem={highlightClips.length - 1 === index}
               />
             </div>
