@@ -8,7 +8,7 @@ import cx from 'classnames';
 
 interface RealtimeHighlightItemProps {
   clipData: INewClipData;
-  onEventItemClick: (highlight: any) => void;
+  onEventItemClick: () => void;
   latestItem: boolean;
 }
 
@@ -34,7 +34,7 @@ export default function RealtimeHighlightsItem(props: RealtimeHighlightItemProps
         style={{ width: '100%' }}
         onClick={e => {
           e.stopPropagation();
-          onEventItemClick(clipData);
+          onEventItemClick();
         }}
       >
         View highlight

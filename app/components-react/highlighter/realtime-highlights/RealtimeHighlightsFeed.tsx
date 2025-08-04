@@ -41,7 +41,7 @@ export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightToolt
   const [lastEvent, setLastEvent] = useState<TRealtimeFeedEvent | null>(null);
   const [showTooltip, setShowTooltip] = useState<true | undefined>(undefined);
 
-  const [highlightClips, setHighlightClips] = useState<INewClipData[]>([]);
+  const [highlightClips, setHighlightClips] = useState<IRealtimeHighlightClipData[]>([]);
   const [hasMoreEvents, setHasMoreEvents] = useState<boolean>(false);
   const isDevMode = Utils.isDevMode();
 
@@ -163,7 +163,9 @@ export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightToolt
               <RealtimeHighlightsItem
                 key={clipData.path}
                 clipData={clipData}
-                onEventItemClick={onEventItemClick}
+                onEventItemClick={() => {
+                  onEventItemClick(clipData.streamId);
+                }}
                 latestItem={highlightClips.length - 1 === index}
               />
             </div>
