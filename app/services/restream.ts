@@ -162,35 +162,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
       this.refreshChat();
       this.platformAppsService.refreshApp('restream');
     });
-
-    this.streamingService.streamSwitchEvent.subscribe(async (res: TSocketEvent) => {
-      if (res.type === 'streamSwitchRequest') {
-        // console.log('streamSwitchRequest res.data.identifier', res.data.identifier);
-        return;
-      }
-
-      if (res.type === 'switchActionComplete') {
-        // console.log('switchActionComplete res.data.identifier', res.data.identifier);
-        if (res.data.identifier !== this.state.streamSwitcherStreamId) {
-          // if they don't match, end stream
-          try {
-            await this.streamingService.toggleStreaming();
-            remote.dialog.showMessageBox(Utils.getMainWindow(), {
-              title: $t('Stream Ended - PC'),
-              type: 'info',
-              message: $t('Stream has ended.'),
-            });
-          } catch (error) {
-            console.error('Error ending stream:', error);
-            remote.dialog.showMessageBox(Utils.getMainWindow(), {
-              title: $t('Error Ended Stream - PC'),
-              type: 'info',
-              message: $t('Error ending stream. Please try starting the stream again.'),
-            });
-          }
-        }
-      }
-    });
   }
 
   get views() {
@@ -543,6 +514,9 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return fetch(request).then(res => res.json());
   }
 
+  /**
+   * Stream Switcher
+   */
   setStreamSwitchStatus(status: TStreamSwitcherStatus) {
     this.SET_STREAM_SWITCHER_STATUS(status);
   }
@@ -566,9 +540,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
     this.updateStreamSwitcher(action);
   }
 
-  /**
-   * Stream Switcher
-   */
   async updateStreamSwitcher(action: TStreamSwitcherAction) {
     const headers = authorizedHeaders(
       this.userService.apiToken,
@@ -587,9 +558,24 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return res.json();
   }
 
+  async endCurrentStream(): Promise<void> {
+    try {
+      await this.streamingService.toggleStreaming();
+    } catch (error: unknown) {
+      console.error('Error ending stream:', error);
+      remote.dialog.showMessageBox(Utils.getMainWindow(), {
+        title: $t('Error Ended Stream - PC'),
+        type: 'info',
+        message: $t(
+          'Error ending stream. Please try ending the stream from the other device again.',
+        ),
+      });
+    }
+  }
+
   /* Chat Handling
    * TODO: Lots of this is copy-pasted from the chat service
-   * The chat service needs to be refactored\
+   * The chat service needs to be refactored
    */
   private chatView: Electron.BrowserView;
 

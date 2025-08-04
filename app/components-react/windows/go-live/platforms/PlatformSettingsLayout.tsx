@@ -6,6 +6,7 @@ import { IFacebookStartStreamOptions } from '../../../../services/platforms/face
 import { ITikTokStartStreamOptions } from '../../../../services/platforms/tiktok';
 import { ITrovoStartStreamOptions } from '../../../../services/platforms/trovo';
 import { IKickStartStreamOptions } from '../../../../services/platforms/kick';
+import { TInputLayout } from 'components-react/shared/inputs';
 
 export type TLayoutMode = 'singlePlatform' | 'multiplatformAdvanced' | 'multiplatformSimple';
 
@@ -15,14 +16,21 @@ export default function PlatformSettingsLayout(p: {
   requiredFields: JSX.Element;
   optionalFields?: JSX.Element;
   essentialOptionalFields?: JSX.Element;
+  layout?: TInputLayout;
 }) {
   let layoutItems = [];
   switch (p.layoutMode) {
     case 'singlePlatform':
-      layoutItems = [p.essentialOptionalFields, p.commonFields, p.requiredFields, p.optionalFields];
+      layoutItems = [
+        p.essentialOptionalFields,
+        p.commonFields,
+        p.requiredFields,
+        p.optionalFields,
+        p.layout,
+      ];
       break;
     case 'multiplatformSimple':
-      layoutItems = [p.requiredFields];
+      layoutItems = [p.requiredFields, p.layout];
       return p.requiredFields;
     case 'multiplatformAdvanced':
       layoutItems = [p.essentialOptionalFields, p.requiredFields, p.optionalFields, p.commonFields];
@@ -44,6 +52,7 @@ export interface IPlatformComponentParams<T extends TPlatform> {
   onChange(newSettings: NonNullable<IPlatformSettings[T]>): unknown;
   value: NonNullable<IPlatformSettings[T]>;
   layoutMode: TLayoutMode;
+  layout?: TInputLayout;
   isUpdateMode?: boolean;
   isScheduleMode?: boolean;
   enabledPlatformsCount?: number;

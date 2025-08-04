@@ -1,13 +1,10 @@
 import React from 'react';
 import { Alert, Button } from 'antd';
 import { clipboard } from 'electron';
-import PlatformSettingsLayout, { IPlatformComponentParams } from './PlatformSettingsLayout';
+import { IPlatformComponentParams } from './PlatformSettingsLayout';
 import { TextInput, createBinding } from '../../../shared/inputs';
 import Form from '../../../shared/inputs/Form';
-import { CommonPlatformFields } from '../CommonPlatformFields';
-import GameSelector from '../GameSelector';
 import { $t } from 'services/i18n';
-import InputWrapper from 'components-react/shared/inputs/InputWrapper';
 
 type Props = IPlatformComponentParams<'instagram'> & {
   isStreamSettingsWindow?: boolean;
@@ -29,7 +26,7 @@ export function InstagramEditStreamInfo(p: Props) {
         required
         label={streamUrlLabel}
         addonAfter={<PasteButton onPaste={bind.streamUrl.onChange} />}
-        layout="vertical"
+        layout={p.layout}
         size="large"
       />
 
@@ -40,7 +37,7 @@ export function InstagramEditStreamInfo(p: Props) {
         isPassword
         placeholder={$t('Remember to update your Stream Key')}
         addonAfter={<PasteButton onPaste={bind.streamKey.onChange} />}
-        layout="vertical"
+        layout={p.layout}
         size="large"
       />
       {!isStreamSettingsWindow && (

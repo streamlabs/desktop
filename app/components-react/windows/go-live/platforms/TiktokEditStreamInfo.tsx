@@ -44,7 +44,9 @@ export function TikTokEditStreamInfo(p: IPlatformComponentParams<'tiktok'>) {
         }
         requiredFields={<div key="empty-tiktok" />}
       />
-      {approved && <GameSelector key="optional" platform={'tiktok'} {...bind.game} />}
+      {approved && (
+        <GameSelector key="optional" platform={'tiktok'} {...bind.game} layout={p.layout} />
+      )}
       {approved && !controls.disable && (
         <RadioInput
           key="audience-ctrl"
@@ -55,7 +57,7 @@ export function TikTokEditStreamInfo(p: IPlatformComponentParams<'tiktok'>) {
           direction="horizontal"
           colon
           {...bind.audienceType}
-          layout="vertical"
+          layout={p.layout}
         />
       )}
       {!approved && <TikTokEnterCredentialsFormInfo {...p} denied={denied} />}
@@ -81,7 +83,7 @@ export function TikTokEnterCredentialsFormInfo(
         }
         required
         {...bind.serverUrl}
-        layout="vertical"
+        layout={p.layout}
         size="large"
       />
       <TextInput
@@ -93,7 +95,7 @@ export function TikTokEnterCredentialsFormInfo(
         }
         required
         {...bind.streamKey}
-        layout="vertical"
+        layout={p.layout}
         size="large"
       />
       <InputWrapper
@@ -102,7 +104,7 @@ export function TikTokEnterCredentialsFormInfo(
             {p.denied ? <TikTokDenied /> : <TikTokInfo />}
           </div>
         }
-        layout="vertical"
+        layout={p.layout}
       >
         <TikTokButtons denied={p.denied} />
       </InputWrapper>

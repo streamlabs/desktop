@@ -35,7 +35,6 @@ export default function GoLiveSettings() {
     isDualOutputMode,
     canAddDestinations,
     canUseOptimizedProfile,
-    showSelector,
     showTweet,
     hasMultiplePlatforms,
     hasMultiplePlatformsLinked,
@@ -171,9 +170,11 @@ export default function GoLiveSettings() {
               {/*ADD SOME SPACE IN ADVANCED MODE*/}
               {isAdvancedMode && <div className={styles.spacer} />}
               {/*EXTRAS*/}
-              <Section isSimpleMode={!isAdvancedMode} title={$t('Extras')}>
-                {!!canUseOptimizedProfile && <OptimizedProfileSwitcher />}
-              </Section>
+              {!!canUseOptimizedProfile && (
+                <Section isSimpleMode={!isAdvancedMode} title={$t('Extras')}>
+                  <OptimizedProfileSwitcher />
+                </Section>
+              )}
 
               {/* Spacer is as  scrollable padding-bottom */}
               <div className={styles.spacer} />

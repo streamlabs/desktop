@@ -96,7 +96,7 @@ export default function BroadcastInput(
       optionRender={optionRender}
       labelRender={labelRender}
       showSearch
-      layout="vertical"
+      layout={p.layout}
       size="large"
     />
   );

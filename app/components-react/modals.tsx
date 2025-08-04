@@ -46,7 +46,9 @@ export function confirmAsync(
  * alert('This is Alert').then(() => console.log('Alert closed'))
  *
  */
-export function alertAsync(p: Omit<ModalFuncProps, 'afterClose'> | string): Promise<void> {
+export function alertAsync(
+  p: (Omit<ModalFuncProps, 'afterClose'> | string) & { afterCloseFn?: () => void },
+): Promise<void> {
   const modalProps = typeof p === 'string' ? { title: p } : p;
   const { WindowsService } = Services;
   WindowsService.updateStyleBlockers(Utils.getWindowId(), true);
@@ -58,6 +60,11 @@ export function alertAsync(p: Omit<ModalFuncProps, 'afterClose'> | string): Prom
       ...modalProps,
       afterClose: () => {
         WindowsService.updateStyleBlockers(Utils.getWindowId(), false);
+
+        if (p?.afterCloseFn) {
+          p.afterCloseFn();
+        }
+
         resolve();
       },
     });

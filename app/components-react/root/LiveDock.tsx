@@ -18,7 +18,7 @@ import { useVuex } from 'components-react/hooks';
 import { useRealmObject } from 'components-react/hooks/realm';
 import { $i } from 'services/utils';
 import { ShareStreamLink } from './ShareStreamLink';
-import { promptAction } from 'components-react/modals';
+import { alertAsync, promptAction } from 'components-react/modals';
 
 const LiveDockCtx = React.createContext<LiveDockController | null>(null);
 
@@ -342,7 +342,26 @@ function LiveDock(p: { onLeft: boolean }) {
             cancelFn: () => Services.RestreamService.actions.confirmStreamSwitch('rejected'),
           });
         }
+
+        if (event.data.identifier !== Services.RestreamService.state.streamSwitcherStreamId) {
+          alertAsync({
+            title: $t(
+              'A stream on another device has been detected. Would you like to switch your stream to the other device? Approve the switch on the other device to switch the stream.',
+            ),
+          });
+        }
         return;
+      }
+
+      if (event.type === 'switchActionComplete') {
+        if (event.data.identifier !== Services.RestreamService.state.streamSwitcherStreamId) {
+          alertAsync({
+            title: $t(
+              'Your stream has been switched to the other device. Ending the stream on this device.',
+            ),
+            afterCloseFn: Services.RestreamService.actions.endCurrentStream,
+          });
+        }
       }
     });
 

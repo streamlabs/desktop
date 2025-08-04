@@ -15,7 +15,7 @@ import { TwitterEditStreamInfo } from './platforms/TwitterEditStreamInfo';
 import { InstagramEditStreamInfo } from './platforms/InstagramEditStreamInfo';
 import { KickEditStreamInfo } from './platforms/KickEditStreamInfo';
 import AdvancedSettingsSwitch from './AdvancedSettingsSwitch';
-import styles from './GoLive.m.less';
+import { TInputLayout } from 'components-react/shared/inputs';
 
 export default function PlatformSettings() {
   const {
@@ -33,6 +33,7 @@ export default function PlatformSettings() {
     descriptionIsRequired,
     isUpdateMode,
     isTikTokConnected,
+    layout,
   } = useGoLiveSettings().extend(settings => ({
     get descriptionIsRequired() {
       const fbSettings = settings.state.platforms['facebook'];
@@ -42,6 +43,10 @@ export default function PlatformSettings() {
 
     get isTikTokConnected() {
       return settings.state.isPlatformLinked('tiktok');
+    },
+
+    get layout(): TInputLayout {
+      return settings.isAdvancedMode ? 'horizontal' : 'vertical';
     },
   }));
 
@@ -85,7 +90,7 @@ export default function PlatformSettings() {
               fontSize: '16px',
             }}
           >
-            <span>{$t('Stream Information:')}</span>
+            <div>{$t('Stream Information:')}</div>
             <AdvancedSettingsSwitch />
           </div>
 
@@ -97,6 +102,7 @@ export default function PlatformSettings() {
                 value={commonFields}
                 onChange={updateCommonFields}
                 enabledPlatforms={enabledPlatforms}
+                layout={layout}
               />
             </Section>
           )}
@@ -109,24 +115,28 @@ export default function PlatformSettings() {
               key={platform}
             >
               {platform === 'twitch' && (
-                <TwitchEditStreamInfo {...createPlatformBinding('twitch')} />
+                <TwitchEditStreamInfo {...createPlatformBinding('twitch')} layout={layout} />
               )}
               {platform === 'facebook' && (
-                <FacebookEditStreamInfo {...createPlatformBinding('facebook')} />
+                <FacebookEditStreamInfo {...createPlatformBinding('facebook')} layout={layout} />
               )}
               {platform === 'youtube' && (
-                <YoutubeEditStreamInfo {...createPlatformBinding('youtube')} />
+                <YoutubeEditStreamInfo {...createPlatformBinding('youtube')} layout={layout} />
               )}
               {platform === 'tiktok' && isTikTokConnected && (
-                <TikTokEditStreamInfo {...createPlatformBinding('tiktok')} />
+                <TikTokEditStreamInfo {...createPlatformBinding('tiktok')} layout={layout} />
               )}
-              {platform === 'kick' && <KickEditStreamInfo {...createPlatformBinding('kick')} />}
-              {platform === 'trovo' && <TrovoEditStreamInfo {...createPlatformBinding('trovo')} />}
+              {platform === 'kick' && (
+                <KickEditStreamInfo {...createPlatformBinding('kick')} layout={layout} />
+              )}
+              {platform === 'trovo' && (
+                <TrovoEditStreamInfo {...createPlatformBinding('trovo')} layout={layout} />
+              )}
               {platform === 'twitter' && (
-                <TwitterEditStreamInfo {...createPlatformBinding('twitter')} />
+                <TwitterEditStreamInfo {...createPlatformBinding('twitter')} layout={layout} />
               )}
               {platform === 'instagram' && (
-                <InstagramEditStreamInfo {...createPlatformBinding('instagram')} />
+                <InstagramEditStreamInfo {...createPlatformBinding('instagram')} layout={layout} />
               )}
             </Section>
           ))}

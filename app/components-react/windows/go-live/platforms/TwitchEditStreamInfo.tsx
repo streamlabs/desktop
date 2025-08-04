@@ -28,13 +28,13 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
 
   const optionalFields = (
     <div key="optional">
-      <TwitchTagsInput label={$t('Twitch Tags')} {...bind.tags} />
-      <TwitchContentClassificationInput {...bind.contentClassificationLabels} />
-      <InputWrapper layout="vertical">
+      <TwitchTagsInput label={$t('Twitch Tags')} {...bind.tags} layout={p.layout} />
+      <TwitchContentClassificationInput {...bind.contentClassificationLabels} layout={p.layout} />
+      <InputWrapper layout={p.layout}>
         <CheckboxInput label={$t('Stream features branded content')} {...bind.isBrandedContent} />
       </InputWrapper>
       {p.enabledPlatformsCount === 1 && process.platform !== 'darwin' && (
-        <InputWrapper layout="vertical">
+        <InputWrapper layout={p.layout}>
           <div>
             <CheckboxInput
               style={{ display: 'inline-block' }}
@@ -63,11 +63,12 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
             layoutMode={p.layoutMode}
             value={twSettings}
             onChange={updateSettings}
+            layout={p.layout}
           />
         }
         requiredFields={
           <React.Fragment key="required-fields">
-            <GameSelector key="required" platform={'twitch'} {...bind.game} />
+            <GameSelector key="required" platform={'twitch'} {...bind.game} layout={p.layout} />
             {aiHighlighterFeatureEnabled && (
               <AiHighlighterToggle key="ai-toggle" game={bind.game?.value} cardIsExpanded={true} />
             )}
