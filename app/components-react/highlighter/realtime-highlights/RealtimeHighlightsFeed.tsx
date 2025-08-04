@@ -18,6 +18,7 @@ import { EMenuItemKey } from 'services/side-nav';
 import Utils from 'services/utils';
 import RealtimeIndicator from '../RealtimeIndicator';
 import { IRealtimeHighlightClipData } from 'services/highlighter/realtime-highlighter-service';
+import { $t } from 'services/i18n/i18n';
 
 interface IRealtimeHighlightTooltipProps {
   placement?: TooltipPlacement;
@@ -49,9 +50,6 @@ export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightToolt
   let realtimeHighlightSubscription: Subscription | null = null;
   let realtimeEventSubscription: Subscription | null = null;
   useEffect(() => {
-    // Initialize component
-    console.log('Initializing RealtimeEventTooltip component');
-
     realtimeHighlightSubscription = RealtimeHighlighterService.highlightsReady.subscribe(
       realtimeClipData => {
         // This will be called when highlights are ready
@@ -67,8 +65,6 @@ export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightToolt
           }
           return updatedEvents;
         });
-
-        console.log('Realtime highlights are ready:', realtimeClipData);
       },
     );
 
@@ -145,12 +141,12 @@ export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightToolt
               }}
               className={styles.viewAllButton}
             >
-              View all highlights
+              {$t('View all highlights')}
             </Button>
           </div>
         )}
 
-        {highlightClips.length === 0 && <p>Your clipped highlights will appear here</p>}
+        {highlightClips.length === 0 && <p>{$t('Your clipped highlights will appear here')}</p>}
 
         {highlightClips &&
           highlightClips.map((clipData, index) => (

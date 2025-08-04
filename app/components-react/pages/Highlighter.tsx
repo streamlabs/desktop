@@ -24,7 +24,6 @@ export default function Highlighter(props: { params?: { view: string; id?: strin
   const aiHighlighterFeatureEnabled = IncrementalRolloutService.views.featureIsEnabled(
     EAvailableFeatures.aiHighlighter,
   );
-  const isDevMode = Utils.isDevMode();
   const v = useVuex(() => ({
     useAiHighlighter: HighlighterService.views.useAiHighlighter,
   }));
@@ -35,8 +34,6 @@ export default function Highlighter(props: { params?: { view: string; id?: strin
   let initialViewState: IViewState;
 
   if (props.params?.view) {
-    console.log('Highlighter view from params:', props.params);
-
     switch (props.params?.view) {
       case EHighlighterView.SETTINGS:
         initialViewState = { view: EHighlighterView.SETTINGS };

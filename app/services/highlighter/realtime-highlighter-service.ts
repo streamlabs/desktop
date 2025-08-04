@@ -38,13 +38,11 @@ class LocalVisionService extends EventEmitter {
     this.eventSource = new EventSource('http://localhost:8000/events');
     this.eventSource.onmessage = (event: any) => {
       const data = JSON.parse(event.data);
-      console.log('Received events:', data);
 
       this.currentGame = data.game || null;
 
       const events = data.events;
       for (const event of events) {
-        console.log('Emitting event:', event);
         this.emit('event', event);
       }
     };
@@ -53,7 +51,7 @@ class LocalVisionService extends EventEmitter {
     fetch('http://localhost:8000/reset_state', {
       method: 'POST',
     }).then(() => {
-      console.log('VisionService state reset');
+      // console.log('VisionService state reset');
     });
   }
 
@@ -64,7 +62,7 @@ class LocalVisionService extends EventEmitter {
     }
 
     this.isRunning = false;
-    console.log('Stopping VisionService');
+    // console.log('Stopping VisionService');
     this.eventSource?.close();
   }
 }
@@ -98,7 +96,7 @@ class MockVisionService extends EventEmitter {
     }
 
     this.isRunning = true;
-    console.log('Starting VisionService');
+    // console.log('Starting VisionService');
     this.scheduleNext();
   }
 
@@ -109,7 +107,7 @@ class MockVisionService extends EventEmitter {
     }
 
     this.isRunning = false;
-    console.log('Stopping VisionService');
+    // console.log('Stopping VisionService');
     if (this.timeoutId) {
       clearTimeout(this.timeoutId);
       this.timeoutId = null;
@@ -121,9 +119,7 @@ class MockVisionService extends EventEmitter {
     const minDelay = 1 * 1000;
 
     const delay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
-    console.log('Triggering random event');
     this.emitRandomEvent();
-    console.log(`Next trigger in ${delay / 1000} seconds`);
 
     this.timeoutId = setTimeout(() => {
       this.scheduleNext();
@@ -157,7 +153,6 @@ class MockVisionService extends EventEmitter {
     const eventKeys = Object.keys(events) as EventKey[];
     const randomEvent = eventKeys[Math.floor(Math.random() * eventKeys.length)];
 
-    console.log(`Emitting event: ${randomEvent}`);
     const settings = events[randomEvent];
 
     this.emit('event', {
@@ -232,7 +227,6 @@ export class RealtimeHighlighterService extends Service {
   async start(streamId: string) {
     this.currentStreamId = streamId;
 
-    console.log('Starting RealtimeHighlighterService');
     if (this.isRunning) {
       console.warn('RealtimeHighlighterService is already running');
       return;

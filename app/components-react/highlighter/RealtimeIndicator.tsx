@@ -57,7 +57,7 @@ export default function HighlightGenerator({
         )}
         <p style={{ margin: 0, zIndex: 3, opacity: 0.7 }}>
           {' '}
-          {animateOnce ? `${description} detected` : $t('Ai detection in progress')}
+          {animateOnce ? `${description} detected` : $t('AI detection in progress')}
         </p>
       </div>
       <Button

@@ -93,7 +93,7 @@ export function aiFilterClips(
 ): TClip[] {
   const { rounds, targetDuration, includeAllEvents } = options;
 
-  // TODO: this just handles the error for now, probably not the best way.
+  // TODO: this just handles the error for now. Needs to be changed at one point
   const selectedRounds =
     rounds.length === 1 && rounds[0] === 0
       ? [

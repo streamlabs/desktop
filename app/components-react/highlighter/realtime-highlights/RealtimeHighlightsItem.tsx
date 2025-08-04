@@ -5,6 +5,7 @@ import { getUniqueEmojiConfigFromAiInfo } from '../ClipPreviewInfo';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import styles from './RealtimeHighlightsItem.m.less';
 import cx from 'classnames';
+import { $t } from 'services/i18n';
 
 interface RealtimeHighlightItemProps {
   clipData: INewClipData;
@@ -37,7 +38,7 @@ export default function RealtimeHighlightsItem(props: RealtimeHighlightItemProps
           onEventItemClick();
         }}
       >
-        View highlight
+        {$t('View highlight')}
       </Button>
     </div>
   );

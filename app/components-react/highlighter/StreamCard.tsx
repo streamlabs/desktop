@@ -251,7 +251,8 @@ export default function StreamCard({
               if (stream.path) {
                 HighlighterService.actions.restartAiDetection(stream.path, stream);
               } else {
-                console.log('TODO: Stream path is not available. Realtime dection');
+                // Can't be restarted because it was a realtime highlight detection
+                // This scenario shouldn't happen
               }
             }}
             emitSetView={emitSetView}

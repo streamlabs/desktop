@@ -417,19 +417,13 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
     // add check if ai realtime highlighter is enabled?
     // if yes add hook to realtime highlighter service?
-    console.log('feature enabled: ', this.aiHighlighterFeatureEnabled);
     if (this.useRealtimeHighlighter) {
-      console.log('AI Highlighter feature is enabled, using realtime highlighter service');
       this.realtimeHighlighterService.highlightsReady.subscribe(async highlights => {
-        console.log('Realtime highlights received:', highlights);
-        console.log(streamInfo.id);
-        console.log('Add ai clips now...');
         // for some reason addAiClips adds only the first highlight
         for (const highlight of highlights) {
           this.addAiClips([highlight], { id: streamInfo.id || '', game: streamInfo.game });
         }
 
-        console.log('Load clips now...');
         await this.loadClips(streamInfo.id);
 
         let count = 0;
@@ -445,7 +439,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       });
     } else {
       this.streamingService.replayBufferFileWrite.subscribe(async clipPath => {
-        console.log('replay buffer clip received');
         const streamId = streamInfo?.id || undefined;
         let endTime: number | undefined;
 
@@ -455,7 +448,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           endTime = undefined;
         }
 
-        const REPLAY_BUFFER_DURATION = 20; // TODO M: Replace with settingsservice
+        const REPLAY_BUFFER_DURATION = 20; // For more finegrained overlay detection use value from settingsService
         const startTime = Math.max(0, endTime ? endTime - REPLAY_BUFFER_DURATION : 0);
 
         this.addClips([{ path: clipPath, startTime, endTime }], streamId, 'ReplayBuffer');
@@ -819,9 +812,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           initialEndTime: clip.endTime,
         },
       };
-
-      console.log('Adding AI clip:', clip.path);
-      console.log(clip);
 
       this.ADD_CLIP({
         path: clip.path,
