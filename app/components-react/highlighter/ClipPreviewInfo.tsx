@@ -27,9 +27,11 @@ export default function ClipPreviewInfo({
       {eventDisplays.map((event, index) => {
         return <React.Fragment key={index}>{event.emoji}</React.Fragment>;
       })}
-      {clip.aiInfo.metadata?.round && (
-        <div className={styles.roundTag}>{`Round: ${clip.aiInfo.metadata.round}`}</div>
-      )}{' '}
+      {clip.aiInfo.metadata?.round !== undefined &&
+        clip.aiInfo.metadata?.round !== null &&
+        clip.aiInfo.metadata?.round !== 0 && (
+          <div className={styles.roundTag}>{`Round: ${clip.aiInfo.metadata.round}`}</div>
+        )}
     </div>
   );
 }
