@@ -108,7 +108,7 @@ export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightToolt
   }
 
   function onEventItemClick(streamId: string) {
-    console.log('Open single highlight view for event:', event);
+    console.log('Open single highlight view for event:', streamId);
     // Navigate to specific highlight in stream
     NavigationService.actions.navigate(
       'Highlighter',

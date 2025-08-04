@@ -14,7 +14,7 @@ import UpdateModal from 'components-react/highlighter/UpdateModal';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 import Utils from 'services/utils';
 
-export default function Highlighter(props: { params?: { view: string } }) {
+export default function Highlighter(props: { params?: { view: string; id?: string } }) {
   const {
     HighlighterService,
     IncrementalRolloutService,
@@ -35,9 +35,25 @@ export default function Highlighter(props: { params?: { view: string } }) {
   let initialViewState: IViewState;
 
   if (props.params?.view) {
-    const view =
-      props.params?.view === 'settings' ? EHighlighterView.SETTINGS : EHighlighterView.STREAM;
-    initialViewState = { view };
+    console.log('Highlighter view from params:', props.params);
+
+    switch (props.params?.view) {
+      case EHighlighterView.SETTINGS:
+        initialViewState = { view: EHighlighterView.SETTINGS };
+        break;
+
+      case EHighlighterView.STREAM:
+        initialViewState = { view: EHighlighterView.STREAM };
+        break;
+
+      case EHighlighterView.CLIPS:
+        initialViewState = { view: EHighlighterView.CLIPS, id: props.params.id };
+        break;
+
+      default:
+        initialViewState = { view: EHighlighterView.SETTINGS };
+        break;
+    }
   } else if (streamAmount > 0 && clipsAmount > 0 && aiHighlighterFeatureEnabled) {
     initialViewState = { view: EHighlighterView.STREAM };
   } else if (clipsAmount > 0) {
