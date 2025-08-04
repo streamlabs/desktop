@@ -47,10 +47,6 @@ export class InternalApiClient {
           return this.applyIpcProxy(target[property]);
         }
 
-        if (Reflect.getMetadata('executeInCurrentWindow', target, property as string)) {
-          return target[property];
-        }
-
         if (typeof target[property] !== 'function' && !(target[property] instanceof Observable)) {
           return target[property];
         }

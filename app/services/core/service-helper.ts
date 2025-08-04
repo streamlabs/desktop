@@ -9,29 +9,65 @@
  */
 import { inheritMutations } from './stateful-service';
 
-export function ServiceHelper(): ClassDecorator {
+export function ServiceHelper() {
   return function (target: any) {
     const original = target;
+    const originalName = target.name;
 
     // create new constructor that will save arguments in instance
     const f: any = function (this: any, ...args: any[]) {
-      original.apply(this, args);
-      this._isHelper = true;
-      this._constructorArgs = args;
-      this._resourceId = target.name + JSON.stringify(args);
+      const instance = new original(...args);
+
+      // 必要なメタデータを設定
+      instance._isHelper = true;
+      instance._constructorArgs = args;
+      instance._resourceId = originalName + JSON.stringify(args);
+
+      // インスタンスからthisにプロパティをコピー
+      Object.getOwnPropertyNames(instance).forEach(key => {
+        this[key] = instance[key];
+      });
+
       return this;
     };
 
-    // copy prototype so intanceof operator still works
-    f.prototype = original.prototype;
+    // プロトタイプチェーンを設定
+    f.prototype = Object.create(original.prototype);
+    f.prototype.constructor = f;
 
-    // vuex modules names related to constructor name
-    // so we need to save the name
-    Object.defineProperty(f, 'name', { value: target.name });
+    // プロトタイプメソッドをコピー
+    Object.getOwnPropertyNames(original.prototype).forEach(key => {
+      if (key !== 'constructor') {
+        const descriptor = Object.getOwnPropertyDescriptor(original.prototype, key);
+        if (descriptor) {
+          Object.defineProperty(f.prototype, key, descriptor);
+        }
+      }
+    });
 
+    // 静的メソッドとプロパティをコピー
+    Object.getOwnPropertyNames(original).forEach(key => {
+      if (key !== 'prototype' && key !== 'name') {
+        const descriptor = Object.getOwnPropertyDescriptor(original, key);
+        if (descriptor) {
+          Object.defineProperty(f, key, descriptor);
+        }
+      }
+    });
+
+    // 名前を設定
+    try {
+      Object.defineProperty(f, 'name', {
+        value: originalName,
+        configurable: true,
+      });
+    } catch (e) {
+      f._originalName = originalName;
+    }
+
+    // ミューテーションを継承
     inheritMutations(f);
 
-    // return new constructor (will override original)
     return f;
   };
 }

@@ -183,7 +183,8 @@ export class Scene {
     this.scenesService.itemAdded.next(sceneItem.getModel());
     if (source.type === 'monitor_capture') {
       this.fixupSceneItemWhenReady(sourceId, () => {
-        sceneItem.fitToScreen();
+        const sceneItem = this.getItem(sceneItemId);
+        sceneItem?.fitToScreen();
       });
     }
     return sceneItem;

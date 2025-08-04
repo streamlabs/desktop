@@ -254,7 +254,16 @@ module.exports = function (env, argv) {
           name: 'vendors~renderer',
         },
         chunkIds: 'named',
-        minimizer: [new TerserPlugin({ terserOptions: { mangle: false } })],
+        minimizer: [
+          new TerserPlugin({
+            terserOptions: {
+              mangle: false,
+              compress: { unsafe: false },
+              keep_classnames: true,
+              keep_fnames: true,
+            },
+          }),
+        ],
       },
 
       plugins,
