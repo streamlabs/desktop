@@ -15,6 +15,7 @@ export type TSwitchInputProps = TSlobsInputProps<
     style?: React.CSSProperties;
     name?: string;
     size?: 'small' | 'default' | 'large';
+    color?: 'primary' | 'secondary';
     nolabel?: boolean;
     checkmark?: boolean;
   },
@@ -28,6 +29,7 @@ export const SwitchInput = InputComponent((p: TSwitchInputProps) => {
   const { size = 'small' } = p;
 
   const switchSize = size === 'default' ? 'default' : 'small';
+  const labelAlign = p?.labelAlign || 'right';
 
   /*
    * The horizontal styling shifts the label to follow the switch.
@@ -35,6 +37,9 @@ export const SwitchInput = InputComponent((p: TSwitchInputProps) => {
   return wrapperAttrs?.layout === 'horizontal' ? (
     <InputWrapper {...{ wrapperAttrs, nowrap: true, nolabel: p.nolabel }}>
       <Form.Item colon={false} aria-label={p.label} style={p.style}>
+        {!p.nolabel && labelAlign === 'left' && (
+          <span style={{ marginRight: '10px' }}>{p.label}</span>
+        )}
         <Switch
           checked={inputAttrs.value}
           size={switchSize}
@@ -42,11 +47,13 @@ export const SwitchInput = InputComponent((p: TSwitchInputProps) => {
           ref={p.inputRef}
           className={cx(styles.horizontal, styles.horizontalItem, {
             [styles.checkmark]: p?.checkmark,
-            [styles.largeSwitch]: size === 'large',
+            [styles.secondarySwitch]: p?.color === 'secondary',
           })}
           checkedChildren={p?.checkmark ? <i className="icon-check-mark" /> : undefined}
         />
-        {!p.nolabel && p.label}
+        {!p.nolabel && labelAlign === 'right' && (
+          <span style={{ marginLeft: '10px' }}>{p.label}</span>
+        )}
       </Form.Item>
     </InputWrapper>
   ) : (
@@ -56,7 +63,7 @@ export const SwitchInput = InputComponent((p: TSwitchInputProps) => {
         size={switchSize}
         {...inputAttrs}
         ref={p.inputRef}
-        className={cx({ [styles.largeSwitch]: size === 'large' })}
+        className={cx({ [styles.secondarySwitch]: p?.color === 'secondary' })}
       />
     </InputWrapper>
   );

@@ -57,6 +57,7 @@ export function TwitchTagsInput(p: TTwitchTagsInputProps) {
       tokenSeparators={[' ', ',']}
       dropdownStyle={{ display: 'none' }}
       layout={p.layout}
+      size="large"
     />
   );
 }

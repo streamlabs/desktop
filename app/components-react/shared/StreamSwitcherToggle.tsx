@@ -1,4 +1,4 @@
-import React, { CSSProperties } from 'react';
+import React, { CSSProperties, useEffect } from 'react';
 import styles from './StreamSwitcherToggle.m.less';
 import Tooltip from 'components-react/shared/Tooltip';
 import { CheckboxInput } from 'components-react/shared/inputs';
@@ -12,7 +12,13 @@ interface IStreamSwitcherToggle {
 }
 
 export default function StreamSwitcherToggle(p: IStreamSwitcherToggle) {
-  const { isDualOutputMode, isPrime, isStreamSwitchMode, setStreamSwitcher } = useGoLiveSettings();
+  const {
+    isDualOutputMode,
+    isPrime,
+    isStreamSwitchMode,
+    setStreamSwitcher,
+    hasMultipleTargetsEnabled,
+  } = useGoLiveSettings();
 
   const label = isStreamSwitchMode ? $t('Disable Stream Switcher') : $t('Enable Stream Switcher');
 
@@ -20,9 +26,9 @@ export default function StreamSwitcherToggle(p: IStreamSwitcherToggle) {
     <div className={cx(p?.className, styles.streamSwitcherToggle)} style={p?.style}>
       <CheckboxInput
         label={label}
-        value={isStreamSwitchMode}
+        value={isStreamSwitchMode || hasMultipleTargetsEnabled}
         onChange={setStreamSwitcher}
-        disabled={isDualOutputMode || !isPrime}
+        disabled={isDualOutputMode || !isPrime || hasMultipleTargetsEnabled}
       />
       {!isPrime && <UltraIcon type="badge" />}
       <Tooltip

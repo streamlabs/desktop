@@ -210,6 +210,9 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
   const containerRef = useRef<HTMLDivElement>(null);
   const platform = typeof p.destination === 'string' ? (p.destination as TPlatform) : null;
   const disabled = p?.switchDisabled || p?.showPrompt;
+  const label = platform
+    ? $t('Toggle %{platform}', { platform: platformLabels(platform) })
+    : $t('Toggle Destination');
 
   const { RestreamService, MagicLinkService, NavigationService, WindowsService } = Services;
 
@@ -324,6 +327,7 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
               name={platform}
               disabled={disabled}
               uncontrolled
+              label={label}
               nolabel
               className={cx('platform-switch', styles.dualOutputPlatformSwitch)}
             />
@@ -352,6 +356,7 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
               name={`destination_${destination.name}`}
               disabled={disabled}
               uncontrolled
+              label={label}
               nolabel
               className={cx('destination-switch', styles.dualOutputPlatformSwitch)}
             />

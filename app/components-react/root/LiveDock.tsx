@@ -344,10 +344,13 @@ function LiveDock(p: { onLeft: boolean }) {
         }
 
         if (event.data.identifier !== Services.RestreamService.state.streamSwitcherStreamId) {
-          alertAsync({
-            title: $t(
+          promptAction({
+            title: $t('Another stream detected'),
+            message: $t(
               'A stream on another device has been detected. Would you like to switch your stream to the other device? Approve the switch on the other device to switch the stream.',
             ),
+            btnText: $t('Ok'),
+            cancelBtnPosition: 'none',
           });
         }
         return;
@@ -355,11 +358,14 @@ function LiveDock(p: { onLeft: boolean }) {
 
       if (event.type === 'switchActionComplete') {
         if (event.data.identifier !== Services.RestreamService.state.streamSwitcherStreamId) {
-          alertAsync({
+          promptAction({
+            message: $t('Stream switch completed'),
             title: $t(
               'Your stream has been switched to the other device. Ending the stream on this device.',
             ),
-            afterCloseFn: Services.RestreamService.actions.endCurrentStream,
+            btnText: $t('Ok'),
+            fn: Services.RestreamService.actions.endCurrentStream,
+            cancelBtnPosition: 'none',
           });
         }
       }

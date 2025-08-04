@@ -270,7 +270,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
       enabled,
       dcProtection: false,
       idleTimeout: 30,
-      streamSwitch: this.streamInfo.isStreamSwitchMode,
+      streamSwitch: true,
     });
 
     console.log('setEnabled body', body);

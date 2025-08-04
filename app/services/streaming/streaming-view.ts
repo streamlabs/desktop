@@ -188,6 +188,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   get isMultiplatformMode(): boolean {
     if (this.isStreamSwitchMode) return true;
     if (this.isDualOutputMode) return false;
+    return this.hasMultipleTargetsEnabled;
+  }
+
+  get hasMultipleTargetsEnabled(): boolean {
     return (
       this.protectedModeEnabled &&
       (this.enabledPlatforms.length > 1 ||
@@ -201,18 +205,17 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Currently, switch stream cannot be used with only custom destinations. One platform must be enabled.
    */
   get isStreamSwitchMode(): boolean {
-    return this.settings.streamSwitch && this.enabledPlatforms.length > 0;
+    return (this.settings.streamSwitch && this.enabledPlatforms.length > 0) || false;
   }
 
   get streamSwitcherStatus(): TStreamSwitcherStatus {
-    return this.restreamView.streamSwitcherStatus;
+    return this.restreamView.streamSwitcherStatus ?? 'inactive';
   }
 
   /**
    * Returns if the restream service should be set up when going live
    */
   get shouldSetupRestream(): boolean {
-    console.log('this.isStreamSwitchMode', this.isStreamSwitchMode);
     // The stream switcher uses the restream service
     if (this.isStreamSwitchMode) return true;
 

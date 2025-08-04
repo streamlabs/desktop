@@ -24,11 +24,12 @@ export default function AdvancedSettingsSwitch() {
       value={isAdvancedMode}
       debounce={200}
       disabled={isLoading}
-      size="large"
-      // labelAlign="right"
-      // wrapperCol={{ span: 1 }}
-      // labelCol={{ flex: '95%' }}
-      // layout="horizontal"
+      labelAlign="left"
+      wrapperCol={{ span: 2 }}
+      labelCol={{ flex: '95%' }}
+      layout="horizontal"
+      color="secondary"
+      style={{ marginBottom: '0px' }}
     />
   );
 }

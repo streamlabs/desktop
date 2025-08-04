@@ -126,9 +126,9 @@ export function promptAction(p: {
   title: string;
   message: string;
   btnText: string;
-  cancelBtnPosition?: 'left' | 'right';
+  cancelBtnPosition?: 'left' | 'right' | 'none';
   cancelBtnText?: string;
-  fn(): void | ((props: any) => unknown | void);
+  fn?(): void | ((props: any) => unknown | void);
   cancelFn?: void | ((props?: any) => unknown | void);
   icon?: React.ReactNode;
 }) {
@@ -155,7 +155,9 @@ export function promptAction(p: {
               type="primary"
               onClick={() => {
                 Modal.destroyAll();
-                p.fn();
+                if (p?.fn) {
+                  p.fn();
+                }
               }}
             >
               {p.btnText}
