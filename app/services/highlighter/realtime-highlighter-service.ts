@@ -298,7 +298,7 @@ export class RealtimeHighlighterService extends Service {
             { type: this.getRandomEventType() } as IInput,
           ],
           score: 0,
-          metadata: {},
+          metadata: { game: EGame.FORTNITE },
         },
         path: '/Users/jankalthoefer/Desktop/streams/djnardi/djnardi-short.mp4',
         startTime: 15,

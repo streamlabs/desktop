@@ -9,13 +9,12 @@ import cx from 'classnames';
 interface RealtimeHighlightItemProps {
   clipData: INewClipData;
   onEventItemClick: (highlight: any) => void;
-  game?: EGame; // Optional game prop, if needed
   latestItem: boolean;
 }
 
 export default function RealtimeHighlightsItem(props: RealtimeHighlightItemProps) {
-  const { clipData, onEventItemClick, game, latestItem } = props;
-  const emojiDisplayConfig = getUniqueEmojiConfigFromAiInfo(clipData.aiClipInfo, game);
+  const { clipData, onEventItemClick, latestItem } = props;
+  const emojiDisplayConfig = getUniqueEmojiConfigFromAiInfo(clipData.aiClipInfo);
   return (
     <div className={cx(styles.itemWrapper)}>
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
