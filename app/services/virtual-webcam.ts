@@ -219,10 +219,10 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
   start() {
     if (this.state.running) return;
 
-    //obs.NodeObs.OBS_service_createVirtualWebcam('Streamlabs Desktop Virtual Webcam');
-    const errorCode = obs.NodeObs.OBS_service_startVirtualCam();
-    if (errorCode > 0) {
-      console.log(`OBS_service_startVirtualCam errorCode ${errorCode}`);
+    try {
+      obs.NodeObs.OBS_service_startVirtualCam();
+    } catch(error) {
+      console.error("Caught OBS_service_startVirtualCam error:", error.message);
       remote.dialog.showErrorBox(
         $t('Virtual Webcam'),
         $t('Unable to start virtual camera.\n\nPlease try again.'),
