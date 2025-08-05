@@ -71,6 +71,7 @@ export function ImportStreamModal({
         type: 'DetectionModalCanceled',
         openedFrom,
         streamId: streamInfo?.id,
+        game,
       });
     }
     close();
@@ -81,10 +82,9 @@ export function ImportStreamModal({
     filePath: string[] | undefined,
     id?: string,
   ) {
-    if (/[\\/:"*?<>|]+/g.test(title)) return;
     const streamInfo: IStreamInfoForAiHighlighter = {
       id: id ?? 'manual_' + uuid(),
-      title,
+      title: title.replace(/[\\/:"*?<>|]+/g, ''),
       game,
     };
 
@@ -95,6 +95,7 @@ export function ImportStreamModal({
           type: 'DetectionInModalStarted',
           openedFrom,
           streamId: id,
+          game,
         });
         closeModal(false);
         return;
@@ -107,6 +108,7 @@ export function ImportStreamModal({
           type: 'DetectionInModalStarted',
           openedFrom,
           streamId: id,
+          game,
         });
         closeModal(false);
       } else {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import cx from 'classnames';
 import Utils from 'services/utils';
 import urlLib from 'url';
@@ -10,6 +10,7 @@ import { Button } from 'antd';
 import { EMenuItemKey } from 'services/side-nav';
 import { $t } from 'services/i18n';
 import styles from './PlatformAppStore.m.less';
+import { useVuex } from 'components-react/hooks';
 
 export default function PlatformAppStore(p: {
   params: { appId?: string; type?: string };
@@ -21,10 +22,17 @@ export default function PlatformAppStore(p: {
     PlatformAppStoreService,
     NavigationService,
     HighlighterService,
+    WindowsService,
   } = Services;
+
   const [highlighterInstalled, setHighlighterInstalled] = useState<boolean>(
     HighlighterService.views.highlighterVersion !== '',
   );
+
+  const { hideStyleBlockers } = useVuex(() => ({
+    hideStyleBlockers: WindowsService.state[Utils.getCurrentUrlParams().windowId].hideStyleBlockers,
+  }));
+
   const [platformAppsUrl, setPlatformAppsUrl] = useState('');
   const [currentUrl, setCurrentUrl] = useState<string>('');
 
@@ -110,6 +118,7 @@ export default function PlatformAppStore(p: {
         emitUrlChange={url => {
           setCurrentUrl(url);
         }}
+        hidden={hideStyleBlockers}
       />
       {currentUrl.includes('installed-apps') && highlighterInstalled && (
         <div className={styles.otherInstalledAppsWrapper}>

@@ -1,10 +1,10 @@
 import React from 'react';
 import cx from 'classnames';
-import useLayout, { LayoutProps } from './hooks';
+import useLayout, { ILayoutProps } from './hooks';
 import ResizeBar from 'components-react/root/ResizeBar';
 import styles from './Layouts.m.less';
 
-export function FourByFour(p: React.PropsWithChildren<LayoutProps>) {
+export function FourByFour(p: ILayoutProps) {
   const { mins, bars, resizes, calculateMax, setBar, componentRef } = useLayout(
     [['1'], ['2', '3'], ['4', '5']],
     false,

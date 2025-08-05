@@ -214,9 +214,7 @@ export default function RecordingHistoryPage(p: { className?: string }) {
 export function RecordingHistory(p: { className?: string }) {
   const controller = useController(RecordingHistoryCtx);
   const { formattedTimestamp, showFile, handleSelect, postError } = controller;
-  const aiHighlighterFeatureEnabled = Services.IncrementalRolloutService.views.featureIsEnabled(
-    EAvailableFeatures.aiHighlighter,
-  );
+  const aiHighlighterFeatureEnabled = Services.HighlighterService.aiHighlighterFeatureEnabled;
   const {
     uploadInfo,
     uploadOptions,

@@ -13,7 +13,7 @@ import { waitForDisplayed } from '../../helpers/modules/core';
 
 useWebdriver();
 
-test('Streaming to X', withUser('twitch', { multistream: true }), async t => {
+test('Streaming to X', withUser('twitch', { prime: true, multistream: true }), async t => {
   await addDummyAccount('twitter');
 
   await prepareToGoLive();

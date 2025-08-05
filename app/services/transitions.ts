@@ -47,6 +47,11 @@ interface ITransition {
   duration: number;
 }
 
+interface IObsTransitionCallbackInfo {
+  id: string;
+  event: 'start' | 'stop';
+}
+
 export interface ITransitionConnection {
   id: string;
   fromSceneId: string;
@@ -143,6 +148,12 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
   sceneDuplicate: obs.IScene;
 
   /**
+   * This is a previous instance of scene duplicate. The reference
+   * is only valid until the transition is finished.
+   */
+  private oldDuplicate: obs.IScene;
+
+  /**
    * This is an application's id of duplicated scene from above
    */
   currentSceneId: string;
@@ -167,6 +178,10 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
     this.sceneCollectionsService.collectionWillSwitch.subscribe(() => {
       this.disableStudioMode();
     });
+
+    obs.NodeObs.RegisterTransitionCallback((objs: IObsTransitionCallbackInfo[]) =>
+      this.handleTransitionCallback(objs),
+    );
 
     // a video context must be initialized before loading the scene transition
     const establishedContext = this.videoSettingsService.establishedContext.subscribe(() => {
@@ -227,12 +242,11 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
 
     obs.Global.removeSceneFromBackstage(currentScene.getSource().getObsInput());
 
-    const oldDuplicate = this.sceneDuplicate;
+    this.oldDuplicate = this.sceneDuplicate;
     this.sceneDuplicate = currentScene
       .getObsScene()
       .duplicate('scene_copy_' + uuid(), obs.ESceneDupType.Copy);
 
-    // TODO: Make this a dropdown box
     const transition = this.getDefaultTransition();
     const obsTransition = this.obsTransitions[transition.id];
 
@@ -242,12 +256,25 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
       Math.min(transition.duration, TRANSITION_DURATION_MAX),
       this.sceneDuplicate,
     );
+  }
 
-    setTimeout(() => {
-      oldDuplicate.release();
-      this.studioModeLocked = false;
-      this.currentSceneId = this.scenesService.views.activeScene.id;
-    }, Math.min(transition.duration, TRANSITION_DURATION_MAX));
+  /**
+   * Callback that helps track state of transitions in the app
+   */
+  private handleTransitionCallback(callbackInfo: IObsTransitionCallbackInfo[]) {
+    callbackInfo.forEach(info => {
+      const obsTransition = this.obsTransitions[info.id];
+      if (!obsTransition) {
+        return;
+      }
+
+      if (this.studioModeLocked && info.event === 'stop') {
+        this.oldDuplicate.release();
+        this.oldDuplicate = null;
+        this.currentSceneId = this.scenesService.views.activeScene.id;
+        this.studioModeLocked = false;
+      }
+    });
   }
 
   /**
@@ -579,6 +606,8 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
 
     if (transition) {
       Object.keys(patch).forEach(key => {
+        // TODO: index
+        // @ts-ignore
         transition[key] = patch[key];
       });
     }
@@ -613,6 +642,8 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
 
     if (connection) {
       Object.keys(patch).forEach(key => {
+        // TODO: index
+        // @ts-ignore
         connection[key] = patch[key];
       });
     }

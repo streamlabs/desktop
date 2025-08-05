@@ -37,6 +37,32 @@ export async function getVideoResolution(filePath: string): Promise<IResolution>
   return { width, height };
 }
 
+export async function getVideoFramerateAndFrameCount(
+  filePath: string,
+): Promise<{ framerate: number; totalFrames: number }> {
+  const { stdout } = await execa(FFPROBE_EXE, [
+    '-v',
+    'error',
+    '-select_streams',
+    'v:0',
+    '-show_entries',
+    'stream=r_frame_rate,nb_frames',
+    '-of',
+    'default=noprint_wrappers=1:nokey=1',
+    filePath,
+  ]);
+
+  const lines = stdout.trim().split('\n');
+  const rateLine = lines[0]; // r_frame_rate
+  const framesLine = lines[1]; // nb_frames
+
+  const [num, denom] = rateLine.split('/').map(Number);
+  const framerate = denom ? num / denom : parseFloat(rateLine);
+  const totalFrames = parseInt(framesLine, 10);
+
+  return { framerate, totalFrames };
+}
+
 export async function cutHighlightClips(
   videoUri: string,
   highlighterData: IHighlight[],
@@ -45,11 +71,13 @@ export async function cutHighlightClips(
   const id = streamInfo.id;
   const fallbackTitle = 'awesome-stream';
   const videoDir = path.dirname(videoUri);
-  const filename = path.basename(videoUri);
+  // const filename = path.basename(videoUri);
   const sanitizedTitle = streamInfo.title
     ? streamInfo.title.replace(/[\\/:"*?<>|]+/g, ' ')
     : fallbackTitle;
-  const folderName = `${filename}-Clips-${sanitizedTitle}-${id.slice(id.length - 4, id.length)}`;
+  const truncatedTitle =
+    sanitizedTitle.length > 50 ? sanitizedTitle.slice(0, 45) + '[...]' : sanitizedTitle;
+  const folderName = `${truncatedTitle}-Clips-${id.slice(id.length - 4, id.length)}`;
   const outputDir = path.join(videoDir, folderName);
 
   // Check if directory for clips exists, if not create it
@@ -101,8 +129,15 @@ export async function cutHighlightClips(
       return async () => {
         const formattedStart = highlight.start_time.toString().padStart(6, '0');
         const formattedEnd = highlight.end_time.toString().padStart(6, '0');
-        const outputFilename = `${folderName}-${formattedStart}-${formattedEnd}.mp4`;
-        const outputUri = path.join(outputDir, outputFilename);
+        let outputFilename = `${truncatedTitle}-Clip-${formattedStart}-${formattedEnd}`;
+        // Ensure combined path length doesn't exceed 250 characters
+        const maxPathLength = 250;
+        const currentPathLength = outputDir.length + outputFilename.length + 5; // +5 for ".mp4" extension
+        if (currentPathLength > maxPathLength) {
+          const excessLength = currentPathLength - maxPathLength;
+          outputFilename = outputFilename.slice(0, outputFilename.length - excessLength);
+        }
+        const outputUri = path.join(outputDir, `${outputFilename}.mp4`);
 
         if (processedFiles.has(outputUri)) {
           console.log('File already exists');
