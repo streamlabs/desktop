@@ -1724,6 +1724,8 @@ export class StreamingService
   }
 
   private async handleRecordingSignal(info: EOutputSignal, display: TDisplayType) {
+    console.log('Recording Signal:', info, display);
+
     // map signals to status
     const nextState: ERecordingState = ({
       [EOBSOutputSignal.Starting]: ERecordingState.Starting,
@@ -2731,6 +2733,7 @@ export class StreamingService
             const audioEncoder = instance.audioEncoder;
             SimpleStreamingFactory.destroy(instance as ISimpleStreaming);
             audioEncoder?.release();
+            console.log('streaming released audio encoder', audioEncoder);
           }
           videoEncoder?.release();
           break;
@@ -2744,6 +2747,7 @@ export class StreamingService
             const audioEncoder = instance.audioEncoder;
             SimpleRecordingFactory.destroy(instance as ISimpleRecording);
             audioEncoder?.release();
+            console.log('streaming released audio encoder', audioEncoder);
           }
           videoEncoder?.release();
           break;

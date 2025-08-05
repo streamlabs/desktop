@@ -103,7 +103,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
                 }
                 icons={true}
                 className={styles.recordingDisplay}
-                disabled={disableToggle || disableIcons}
+                disabled={v.isRecording || disableIcons}
               />
               {showRecordingToggle && <> {$t('format')} </>}
             </>

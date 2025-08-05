@@ -283,25 +283,6 @@ function DualOutputRecordingButton() {
   );
 
   function toggleRecording() {
-    if (!isRecording) {
-      promptAction({
-        title: $t('(Beta) Dual Output Recording'),
-        message: $t(
-          'Recording without streaming in dual output mode may have performance issues. Are you sure you want to continue?',
-        ),
-        btns: [
-          {
-            text: $t('Confirm'),
-            fn: StreamingService.actions.toggleRecording,
-          },
-          {
-            text: $t('Cancel'),
-          },
-        ],
-      });
-      return;
-    }
-
     StreamingService.actions.toggleRecording();
   }
 
