@@ -56,7 +56,7 @@ import {
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
 import { StreamSettingsService } from '../settings/streaming';
-import { RestreamService } from 'services/restream';
+import { RestreamService, TOutputOrientation } from 'services/restream';
 import Utils from 'services/utils';
 import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
@@ -274,6 +274,7 @@ export class StreamingService
     );
 
     this.settingsService.settingsUpdated.subscribe(patch => {
+      // Update the API v2 factory instance when the settings are changed
       if (patch.Output?.RecRBTime) {
         if (this.contexts.horizontal.replayBuffer) {
           this.contexts.horizontal.replayBuffer.duration = patch.Output.RecRBTime;
@@ -473,8 +474,7 @@ export class StreamingService
               'vertical' as TDisplayType,
             );
 
-            const customDestinations = cloneDeep(currentCustomDestinations);
-            customDestinations.forEach(destination => {
+            currentCustomDestinations.forEach(destination => {
               if (!destination.enabled || destination.display !== 'vertical') return;
 
               this.streamSettingsService.setSettings(
@@ -504,6 +504,7 @@ export class StreamingService
           'Failed to setup dual output',
         );
         this.setError(error);
+        return;
       }
 
       // record dual output usage
@@ -995,7 +996,7 @@ export class StreamingService
     this.SET_DUAL_OUTPUT_MODE(enabled);
   }
 
-  /*
+  /**
    * STREAMING
    */
 
@@ -1014,7 +1015,7 @@ export class StreamingService
   }
 
   async finishStartStreaming(): Promise<unknown> {
-    // register a promise that we should reject or resolve in `handleStreamingSignal`
+    // register a promise that we should reject or resolve in  `handleStreamingSignal`
     const startStreamingPromise = new Promise((resolve, reject) => {
       this.resolveStartStreaming = resolve;
       this.rejectStartStreaming = reject;
@@ -2286,6 +2287,7 @@ export class StreamingService
 
   get delaySecondsRemaining() {
     if (!this.delayEnabled) return 0;
+
     if (
       this.state.streamingStatus === EStreamingState.Starting ||
       this.state.streamingStatus === EStreamingState.Ending
