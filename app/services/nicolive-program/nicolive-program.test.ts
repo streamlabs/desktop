@@ -4,72 +4,62 @@ import { MAX_PROGRAM_DURATION_SECONDS } from './nicolive-constants';
 import { calcServerClockOffsetSec, type NicoliveClient } from './NicoliveClient';
 import { ProgramInfo } from './ResponseTypes';
 
-type NicoliveProgramService = import('./nicolive-program').NicoliveProgramService;
+import type {
+  INicoliveProgramState,
+  NicoliveProgramService as NicoliveProgramServiceType,
+  Schedule,
+} from './nicolive-program';
 
 const rooms: ProgramInfo['data']['rooms'] = [{ viewUri: 'https://example.com/lv1' }];
 
-const schedules: Dictionary<{
-  nicoliveProgramId: string;
-  socialGroupId: string;
-  status: ProgramInfo['data']['status'];
-  vposBaseAt: number;
-  onAirBeginAt: number;
-  onAirEndAt: number;
-  rooms: ProgramInfo['data']['rooms'];
-}> = {
+const schedules: Dictionary<Schedule> = {
   ch: {
     nicoliveProgramId: 'lv1',
     socialGroupId: 'ch1',
     status: 'onAir',
-    vposBaseAt: 50,
+    testBeginAt: 0,
     onAirBeginAt: 100,
     onAirEndAt: 150,
-    rooms,
   },
   onAir: {
     nicoliveProgramId: 'lv1',
     socialGroupId: 'co1',
     status: 'onAir',
-    vposBaseAt: 50,
+    testBeginAt: 0,
     onAirBeginAt: 100,
     onAirEndAt: 150,
-    rooms,
   },
   test: {
     nicoliveProgramId: 'lv1',
     socialGroupId: 'co1',
     status: 'test',
-    vposBaseAt: 50,
+    testBeginAt: 0,
     onAirBeginAt: 100,
     onAirEndAt: 150,
-    rooms,
   },
   end: {
     nicoliveProgramId: 'lv1',
     socialGroupId: 'co1',
     status: 'end',
-    vposBaseAt: 50,
+    testBeginAt: 0,
     onAirBeginAt: 100,
     onAirEndAt: 150,
-    rooms,
   },
   reserved1: {
     nicoliveProgramId: 'lv1',
     socialGroupId: 'co1',
     status: 'reserved',
-    vposBaseAt: 50,
+    testBeginAt: 0,
     onAirBeginAt: 150,
     onAirEndAt: 200,
-    rooms,
   },
   reserved2: {
     nicoliveProgramId: 'lv1',
     socialGroupId: 'co1',
     status: 'reserved',
-    vposBaseAt: 50,
+    testBeginAt: 0,
     onAirBeginAt: 250,
     onAirEndAt: 300,
-    rooms,
   },
 };
 
@@ -80,7 +70,7 @@ const programs: Dictionary<Partial<ProgramInfo['data']>> = {
     description: '番組詳細情報',
     beginAt: schedules.test.onAirBeginAt,
     endAt: schedules.test.onAirEndAt,
-    vposBaseAt: schedules.test.vposBaseAt,
+    vposBaseAt: schedules.test.onAirBeginAt,
     isMemberOnly: true,
     rooms,
   },
@@ -90,7 +80,7 @@ const programs: Dictionary<Partial<ProgramInfo['data']>> = {
     description: '番組詳細情報',
     beginAt: schedules.onAir.onAirBeginAt,
     endAt: schedules.onAir.onAirEndAt,
-    vposBaseAt: schedules.onAir.vposBaseAt,
+    vposBaseAt: schedules.onAir.onAirBeginAt,
     isMemberOnly: true,
     rooms,
   },
@@ -135,7 +125,7 @@ jest.mock('services/i18n', () => ({
 }));
 jest.mock('util/menus/Menu', () => ({}));
 jest.mock('@electron/remote', () => ({
-  BrowserWindow: jest.fn(),
+  BrowserWindow: jest.fn().mockName('BrowserWindow'),
 }));
 
 beforeEach(() => {
@@ -147,30 +137,56 @@ afterEach(() => {
   jest.resetModules();
 });
 
+function setupInstance(options: { mockSetState: boolean } = { mockSetState: false }) {
+  const NicoliveProgramService = require('./nicolive-program')
+    .NicoliveProgramService as typeof NicoliveProgramServiceType;
+  const instance = NicoliveProgramService.instance as NicoliveProgramServiceType;
+  const setState = jest.fn().mockName('setState');
+  if (options.mockSetState) {
+    (instance as any).setState = setState; // private method
+  }
+
+  return { NicoliveProgramService, instance, setState };
+}
+
 test('get instance', () => {
   setup();
-  const { NicoliveProgramService } = require('./nicolive-program');
+  const { NicoliveProgramService } = setupInstance();
   expect(NicoliveProgramService.instance).toBeInstanceOf(NicoliveProgramService);
 });
 
 test('isProgramExtendable', () => {
   setup();
-  const { NicoliveProgramService } = require('./nicolive-program');
+  const { NicoliveProgramService } = setupInstance();
   const { isProgramExtendable } = NicoliveProgramService;
+  const initialState = NicoliveProgramService.initialState;
 
   const SAFE_TIME = MAX_PROGRAM_DURATION_SECONDS - 30 * 60;
-  expect(isProgramExtendable({ status: 'reserved', startTime: 0, endTime: SAFE_TIME })).toBe(false);
-  expect(isProgramExtendable({ status: 'test', startTime: 0, endTime: SAFE_TIME })).toBe(false);
-  expect(isProgramExtendable({ status: 'onAir', startTime: 0, endTime: SAFE_TIME })).toBe(true);
-  expect(isProgramExtendable({ status: 'end', startTime: 0, endTime: SAFE_TIME })).toBe(false);
   expect(
-    isProgramExtendable({ status: 'onAir', startTime: 0, endTime: MAX_PROGRAM_DURATION_SECONDS }),
+    isProgramExtendable({ ...initialState, status: 'reserved', startTime: 0, endTime: SAFE_TIME }),
+  ).toBe(false);
+  expect(
+    isProgramExtendable({ ...initialState, status: 'test', startTime: 0, endTime: SAFE_TIME }),
+  ).toBe(false);
+  expect(
+    isProgramExtendable({ ...initialState, status: 'onAir', startTime: 0, endTime: SAFE_TIME }),
+  ).toBe(true);
+  expect(
+    isProgramExtendable({ ...initialState, status: 'end', startTime: 0, endTime: SAFE_TIME }),
+  ).toBe(false);
+  expect(
+    isProgramExtendable({
+      ...initialState,
+      status: 'onAir',
+      startTime: 0,
+      endTime: MAX_PROGRAM_DURATION_SECONDS,
+    }),
   ).toBe(false);
 });
 
 test('findSuitableProgram', () => {
   setup();
-  const { NicoliveProgramService } = require('./nicolive-program');
+  const { NicoliveProgramService } = setupInstance();
   const { findSuitableProgram } = NicoliveProgramService;
 
   const { ch, reserved1, reserved2, test, onAir, end } = schedules;
@@ -194,8 +210,7 @@ test.each([
   ['OTHER', 0],
 ])('createProgram with %s', async (result: string, fetchProgramCalled: number) => {
   setup();
-  const { NicoliveProgramService } = require('./nicolive-program');
-  const instance = NicoliveProgramService.instance as NicoliveProgramService;
+  const { instance } = setupInstance();
 
   let resolved: (value: string) => void;
   const promise = new Promise<string>(r => {
@@ -222,11 +237,10 @@ test.each([
   ['OTHER', 0],
 ])('editProgram with %s', async (result: string, refreshProgramCalled: number) => {
   setup();
-  const m = require('./nicolive-program');
-  const instance = m.NicoliveProgramService.instance as NicoliveProgramService;
+  const { instance } = setupInstance();
 
-  instance.client.editProgram = jest.fn().mockResolvedValue(result);
-  instance.refreshProgram = jest.fn();
+  instance.client.editProgram = jest.fn().mockName('editProgram').mockResolvedValue(result);
+  instance.refreshProgram = jest.fn().mockName('refreshProgram');
 
   await expect(instance.editProgram()).resolves.toBe(result);
   expect(instance.client.editProgram).toHaveBeenCalledTimes(1);
@@ -235,11 +249,12 @@ test.each([
 
 test('fetchProgramで結果が空ならエラー', async () => {
   setup();
-  const { NicoliveProgramService } = require('./nicolive-program');
-  const instance = NicoliveProgramService.instance as NicoliveProgramService;
+  const { instance, setState } = setupInstance({ mockSetState: true });
 
-  instance.client.fetchProgramSchedules = jest.fn().mockResolvedValue({ ok: true, value: [] });
-  (instance as any).setState = jest.fn();
+  instance.client.fetchProgramSchedules = jest
+    .fn()
+    .mockName('fetchProgramSchedules')
+    .mockResolvedValue({ ok: true, value: [] });
 
   await expect(instance.fetchProgram()).rejects.toMatchInlineSnapshot(`
                               NicoliveFailure {
@@ -251,8 +266,8 @@ test('fetchProgramで結果が空ならエラー', async () => {
                               }
                         `);
   expect(instance.client.fetchProgramSchedules).toHaveBeenCalledTimes(1);
-  expect((instance as any).setState).toHaveBeenCalledTimes(3);
-  expect((instance as any).setState.mock.calls).toMatchInlineSnapshot(`
+  expect(setState).toHaveBeenCalledTimes(3);
+  expect(setState.mock.calls).toMatchInlineSnapshot(`
     [
       [
         {
@@ -275,23 +290,27 @@ test('fetchProgramで結果が空ならエラー', async () => {
 
 test('fetchProgram:testのときはshowPlaceholderをtrueにする', async () => {
   setup();
-  const { NicoliveProgramService } = require('./nicolive-program');
-  const instance = NicoliveProgramService.instance as NicoliveProgramService;
+  const { instance, setState } = setupInstance({ mockSetState: true });
 
   instance.client.fetchProgramSchedules = jest
     .fn()
     .mockResolvedValue({ ok: true, value: [schedules.test] });
-  instance.client.fetchProgram = jest.fn().mockResolvedValue({ ok: true, value: programs.test });
-  instance.client.fetchProgramPassword = jest.fn().mockResolvedValue({
-    ok: false,
-    value: PROGRAM_PASSWORD_NOT_SET,
-  });
-  (instance as any).setState = jest.fn();
+  instance.client.fetchProgram = jest
+    .fn()
+    .mockName('fetchProgram')
+    .mockResolvedValue({ ok: true, value: programs.test });
+  instance.client.fetchProgramPassword = jest
+    .fn()
+    .mockName('fetchProgramPassword')
+    .mockResolvedValue({
+      ok: false,
+      value: PROGRAM_PASSWORD_NOT_SET,
+    });
 
   await expect(instance.fetchProgram()).resolves.toBeUndefined();
   expect(instance.client.fetchProgramSchedules).toHaveBeenCalledTimes(1);
   expect(instance.client.fetchProgram).toHaveBeenCalledTimes(1);
-  expect((instance as any).setState.mock.calls).toMatchInlineSnapshot(`
+  expect(setState.mock.calls).toMatchInlineSnapshot(`
     [
       [
         {
@@ -309,7 +328,7 @@ test('fetchProgram:testのときはshowPlaceholderをtrueにする', async () =>
           "status": "test",
           "title": "番組タイトル",
           "viewUri": "https://example.com/lv1",
-          "vposBaseTime": 50,
+          "vposBaseTime": 100,
         },
       ],
       [
@@ -328,25 +347,29 @@ test('fetchProgram:testのときはshowPlaceholderをtrueにする', async () =>
 
 test('fetchProgram:成功', async () => {
   setup();
-  const { NicoliveProgramService } = require('./nicolive-program');
-  const instance = NicoliveProgramService.instance as NicoliveProgramService;
+  const { instance, setState } = setupInstance({ mockSetState: true });
 
   instance.client.fetchProgramSchedules = jest
     .fn()
     .mockResolvedValue({ ok: true, value: [schedules.onAir] });
-  instance.client.fetchProgram = jest.fn().mockResolvedValue({ ok: true, value: programs.onAir });
-  instance.client.fetchProgramPassword = jest.fn().mockResolvedValue({
-    ok: true,
-    value: { password: 'password' },
-  });
+  instance.client.fetchProgram = jest
+    .fn()
+    .mockName('fetchProgram')
+    .mockResolvedValue({ ok: true, value: programs.onAir });
+  instance.client.fetchProgramPassword = jest
+    .fn()
+    .mockName('fetchProgramPassword')
+    .mockResolvedValue({
+      ok: true,
+      value: { password: 'password' },
+    });
 
   // TODO: StatefulServiceのモックをVue非依存にする
-  (instance as any).setState = jest.fn();
 
   await expect(instance.fetchProgram()).resolves.toBeUndefined();
   expect(instance.client.fetchProgramSchedules).toHaveBeenCalledTimes(1);
   expect(instance.client.fetchProgram).toHaveBeenCalledTimes(1);
-  expect((instance as any).setState.mock.calls).toMatchInlineSnapshot(`
+  expect(setState.mock.calls).toMatchInlineSnapshot(`
     [
       [
         {
@@ -365,7 +388,7 @@ test('fetchProgram:成功', async () => {
           "status": "onAir",
           "title": "番組タイトル",
           "viewUri": "https://example.com/lv1",
-          "vposBaseTime": 50,
+          "vposBaseTime": 100,
         },
       ],
       [
@@ -379,19 +402,16 @@ test('fetchProgram:成功', async () => {
 
 test('fetchProgramで番組があったが取りに行ったらエラー', async () => {
   setup();
-  const { NicoliveProgramService } = require('./nicolive-program');
-  const instance = NicoliveProgramService.instance as NicoliveProgramService;
+  const { instance, setState } = setupInstance({ mockSetState: true });
   const value = { meta: { status: 404 } };
 
   instance.client.fetchProgramSchedules = jest
     .fn()
     .mockResolvedValue({ ok: true, value: [schedules.onAir] });
-  instance.client.fetchProgram = jest.fn().mockResolvedValue({
+  instance.client.fetchProgram = jest.fn().mockName('fetchProgram').mockResolvedValue({
     ok: false,
     value,
   });
-
-  (instance as any).setState = jest.fn();
 
   await expect(instance.fetchProgram()).rejects.toMatchInlineSnapshot(`
                               NicoliveFailure {
@@ -404,33 +424,32 @@ test('fetchProgramで番組があったが取りに行ったらエラー', async
                         `);
   expect(instance.client.fetchProgramSchedules).toHaveBeenCalledTimes(1);
   expect(instance.client.fetchProgram).toHaveBeenCalledTimes(1);
-  expect((instance as any).setState).toHaveBeenCalledTimes(2);
+  expect(setState).toHaveBeenCalledTimes(2);
 });
 
 test('fetchProgramでコミュ情報がエラーでも番組があったら先に進む', async () => {
   setup();
-  const { NicoliveProgramService } = require('./nicolive-program');
-  const instance = NicoliveProgramService.instance as NicoliveProgramService;
-  const value = { meta: { status: 404 } };
+  const { instance, setState } = setupInstance({ mockSetState: true });
 
   instance.client.fetchProgramSchedules = jest
     .fn()
     .mockResolvedValue({ ok: true, value: [schedules.onAir] });
-  instance.client.fetchProgram = jest.fn().mockResolvedValue({
+  instance.client.fetchProgram = jest.fn().mockName('fetchProgram').mockResolvedValue({
     ok: true,
     value: programs.onAir,
   });
-  instance.client.fetchProgramPassword = jest.fn().mockResolvedValue({
-    ok: false,
-    value: PROGRAM_PASSWORD_NOT_SET,
-  });
-
-  (instance as any).setState = jest.fn();
+  instance.client.fetchProgramPassword = jest
+    .fn()
+    .mockName('fetchProgramPassword')
+    .mockResolvedValue({
+      ok: false,
+      value: PROGRAM_PASSWORD_NOT_SET,
+    });
 
   await expect(instance.fetchProgram()).resolves.toBeUndefined();
   expect(instance.client.fetchProgramSchedules).toHaveBeenCalledTimes(1);
   expect(instance.client.fetchProgram).toHaveBeenCalledTimes(1);
-  expect((instance as any).setState.mock.calls).toMatchInlineSnapshot(`
+  expect(setState.mock.calls).toMatchInlineSnapshot(`
     [
       [
         {
@@ -448,7 +467,7 @@ test('fetchProgramでコミュ情報がエラーでも番組があったら先�
           "status": "onAir",
           "title": "番組タイトル",
           "viewUri": "https://example.com/lv1",
-          "vposBaseTime": 50,
+          "vposBaseTime": 100,
         },
       ],
       [
@@ -462,18 +481,18 @@ test('fetchProgramでコミュ情報がエラーでも番組があったら先�
 
 test('refreshProgram:成功', async () => {
   setup();
-  const m = require('./nicolive-program');
-  const instance = m.NicoliveProgramService.instance as NicoliveProgramService;
+  const { instance, setState } = setupInstance({ mockSetState: true });
 
-  instance.client.fetchProgram = jest.fn().mockResolvedValue({ ok: true, value: programs.onAir });
-
-  (instance as any).setState = jest.fn();
+  instance.client.fetchProgram = jest
+    .fn()
+    .mockName('fetchProgram')
+    .mockResolvedValue({ ok: true, value: programs.onAir });
 
   await expect(instance.refreshProgram()).resolves.toBeUndefined();
   expect(instance.client.fetchProgram).toHaveBeenCalledTimes(1);
   expect(instance.client.fetchProgram).toHaveBeenCalledWith('lv1');
-  expect((instance as any).setState).toHaveBeenCalledTimes(1);
-  expect((instance as any).setState.mock.calls[0]).toMatchInlineSnapshot(`
+  expect(setState).toHaveBeenCalledTimes(1);
+  expect(setState.mock.calls[0]).toMatchInlineSnapshot(`
     [
       {
         "description": "番組詳細情報",
@@ -491,13 +510,13 @@ test('refreshProgram:成功', async () => {
 
 test('refreshProgram:失敗', async () => {
   setup();
-  const m = require('./nicolive-program');
-  const instance = m.NicoliveProgramService.instance as NicoliveProgramService;
+  const { instance, setState } = setupInstance({ mockSetState: true });
   const value = { meta: { status: 500 } };
 
-  instance.client.fetchProgram = jest.fn().mockResolvedValue({ ok: false, value });
-
-  (instance as any).setState = jest.fn();
+  instance.client.fetchProgram = jest
+    .fn()
+    .mockName('fetchProgram')
+    .mockResolvedValue({ ok: false, value });
 
   await expect(instance.refreshProgram()).rejects.toMatchInlineSnapshot(`
                               NicoliveFailure {
@@ -510,22 +529,23 @@ test('refreshProgram:失敗', async () => {
                         `);
   expect(instance.client.fetchProgram).toHaveBeenCalledTimes(1);
   expect(instance.client.fetchProgram).toHaveBeenCalledWith('lv1');
-  expect((instance as any).setState).not.toHaveBeenCalled();
+  expect(setState).not.toHaveBeenCalled();
 });
 
 test('endProgram:成功', async () => {
   setup();
-  const m = require('./nicolive-program');
-  const instance = m.NicoliveProgramService.instance as NicoliveProgramService;
+  const { instance, setState } = setupInstance({ mockSetState: true });
 
-  instance.client.endProgram = jest.fn().mockResolvedValue({ ok: true, value: { end_time: 125 } });
-  (instance as any).setState = jest.fn();
+  instance.client.endProgram = jest
+    .fn()
+    .mockName('endProgram')
+    .mockResolvedValue({ ok: true, value: { end_time: 125 } });
 
   await expect(instance.endProgram()).resolves.toBeUndefined();
   expect(instance.client.endProgram).toHaveBeenCalledTimes(1);
   expect(instance.client.endProgram).toHaveBeenCalledWith('lv1');
-  expect((instance as any).setState).toHaveBeenCalledTimes(3);
-  expect((instance as any).setState.mock.calls).toMatchInlineSnapshot(`
+  expect(setState).toHaveBeenCalledTimes(3);
+  expect(setState.mock.calls).toMatchInlineSnapshot(`
     [
       [
         {
@@ -549,12 +569,13 @@ test('endProgram:成功', async () => {
 
 test('endProgram:失敗', async () => {
   setup();
-  const m = require('./nicolive-program');
-  const instance = m.NicoliveProgramService.instance as NicoliveProgramService;
+  const { instance, setState } = setupInstance({ mockSetState: true });
 
   const value = { meta: { status: 500 } };
-  instance.client.endProgram = jest.fn().mockResolvedValue({ ok: false, value });
-  (instance as any).setState = jest.fn();
+  instance.client.endProgram = jest
+    .fn()
+    .mockName('endProgram')
+    .mockResolvedValue({ ok: false, value });
 
   await expect(instance.endProgram()).rejects.toMatchInlineSnapshot(`
                               NicoliveFailure {
@@ -567,24 +588,22 @@ test('endProgram:失敗', async () => {
                         `);
   expect(instance.client.endProgram).toHaveBeenCalledTimes(1);
   expect(instance.client.endProgram).toHaveBeenCalledWith('lv1');
-  expect((instance as any).setState).toHaveBeenCalledTimes(2);
+  expect(setState).toHaveBeenCalledTimes(2);
 });
 
 test('extendProgram:成功', async () => {
   setup();
-  const m = require('./nicolive-program');
-  const instance = m.NicoliveProgramService.instance as NicoliveProgramService;
+  const { instance, setState } = setupInstance({ mockSetState: true });
 
   instance.client.extendProgram = jest
     .fn()
     .mockResolvedValue({ ok: true, value: { end_time: 125 } });
-  (instance as any).setState = jest.fn();
 
   await expect(instance.extendProgram()).resolves.toBeUndefined();
   expect(instance.client.extendProgram).toHaveBeenCalledTimes(1);
   expect(instance.client.extendProgram).toHaveBeenCalledWith('lv1');
-  expect((instance as any).setState).toHaveBeenCalledTimes(3);
-  expect((instance as any).setState.mock.calls).toMatchInlineSnapshot(`
+  expect(setState).toHaveBeenCalledTimes(3);
+  expect(setState.mock.calls).toMatchInlineSnapshot(`
     [
       [
         {
@@ -607,12 +626,13 @@ test('extendProgram:成功', async () => {
 
 test('extendProgram:失敗', async () => {
   setup();
-  const m = require('./nicolive-program');
-  const instance = m.NicoliveProgramService.instance as NicoliveProgramService;
+  const { instance, setState } = setupInstance({ mockSetState: true });
 
   const value = { meta: { status: 500 } };
-  instance.client.extendProgram = jest.fn().mockResolvedValue({ ok: false, value });
-  (instance as any).setState = jest.fn();
+  instance.client.extendProgram = jest
+    .fn()
+    .mockName('extendProgram')
+    .mockResolvedValue({ ok: false, value });
 
   await expect(instance.extendProgram()).rejects.toMatchInlineSnapshot(`
                               NicoliveFailure {
@@ -625,7 +645,7 @@ test('extendProgram:失敗', async () => {
                         `);
   expect(instance.client.extendProgram).toHaveBeenCalledTimes(1);
   expect(instance.client.extendProgram).toHaveBeenCalledWith('lv1');
-  expect((instance as any).setState).toHaveBeenCalledTimes(2);
+  expect(setState).toHaveBeenCalledTimes(2);
 });
 
 describe('refreshStatisticsPolling', () => {
@@ -635,8 +655,8 @@ describe('refreshStatisticsPolling', () => {
 
   const suites: {
     name: string;
-    prev: any;
-    next: any;
+    prev: Partial<INicoliveProgramState> | null;
+    next: Partial<INicoliveProgramState> | null;
     result: 'REFRESH' | 'STOP' | 'NOOP';
   }[] = [
     {
@@ -709,15 +729,14 @@ describe('refreshStatisticsPolling', () => {
 
   for (const suite of suites) {
     test(suite.name, () => {
-      jest.spyOn(window, 'setInterval').mockImplementation(jest.fn());
-      jest.spyOn(window, 'clearInterval').mockImplementation(jest.fn());
+      jest.spyOn(window, 'setInterval').mockImplementation(jest.fn().mockName('setInterval'));
+      jest.spyOn(window, 'clearInterval').mockImplementation(jest.fn().mockName('clearInterval'));
 
       setup();
-      const { NicoliveProgramService } = require('./nicolive-program');
-      const instance = NicoliveProgramService.instance as NicoliveProgramService;
+      const { instance } = setupInstance();
       const state = instance.state;
 
-      instance.updateStatistics = jest.fn();
+      instance.updateStatistics = jest.fn().mockName('updateStatistics');
 
       instance.refreshStatisticsPolling({ ...state, ...suite.prev }, { ...state, ...suite.next });
       switch (suite.result) {
@@ -745,8 +764,7 @@ describe('refreshStatisticsPolling', () => {
 
 test('updateStatistics', async () => {
   setup();
-  const { NicoliveProgramService } = require('./nicolive-program');
-  const instance = NicoliveProgramService.instance as NicoliveProgramService;
+  const { instance, setState } = setupInstance({ mockSetState: true });
 
   instance.client.fetchStatistics = jest
     .fn()
@@ -755,15 +773,13 @@ test('updateStatistics', async () => {
     .fn()
     .mockResolvedValue({ ok: true, value: { totalAdPoint: 175, totalGiftPoint: 345 } });
 
-  (instance as any).setState = jest.fn();
-
   await expect(instance.updateStatistics('lv1')).resolves.toBeInstanceOf(Array);
   expect(instance.client.fetchStatistics).toHaveBeenCalledTimes(1);
   expect(instance.client.fetchStatistics).toHaveBeenCalledWith('lv1');
   expect(instance.client.fetchNicoadStatistics).toHaveBeenCalledTimes(1);
   expect(instance.client.fetchNicoadStatistics).toHaveBeenCalledWith('lv1');
-  expect((instance as any).setState).toHaveBeenCalledTimes(2);
-  expect((instance as any).setState.mock.calls).toMatchInlineSnapshot(`
+  expect(setState).toHaveBeenCalledTimes(2);
+  expect(setState.mock.calls).toMatchInlineSnapshot(`
     [
       [
         {
@@ -783,8 +799,7 @@ test('updateStatistics', async () => {
 
 test('updateStatistics:APIがエラーでも無視', async () => {
   setup();
-  const { NicoliveProgramService } = require('./nicolive-program');
-  const instance = NicoliveProgramService.instance as NicoliveProgramService;
+  const { instance, setState } = setupInstance({ mockSetState: true });
 
   instance.client.fetchStatistics = jest
     .fn()
@@ -793,14 +808,12 @@ test('updateStatistics:APIがエラーでも無視', async () => {
     .fn()
     .mockResolvedValue({ ok: false, value: { meta: { status: 500 } } });
 
-  (instance as any).setState = jest.fn();
-
   await expect(instance.updateStatistics('lv1')).resolves.toBeInstanceOf(Array);
   expect(instance.client.fetchStatistics).toHaveBeenCalledTimes(1);
   expect(instance.client.fetchStatistics).toHaveBeenCalledWith('lv1');
   expect(instance.client.fetchNicoadStatistics).toHaveBeenCalledTimes(1);
   expect(instance.client.fetchNicoadStatistics).toHaveBeenCalledWith('lv1');
-  expect((instance as any).setState).not.toHaveBeenCalled();
+  expect(setState).not.toHaveBeenCalled();
 });
 
 describe('refreshProgramStatusTimer', () => {
@@ -810,141 +823,99 @@ describe('refreshProgramStatusTimer', () => {
 
   const suites: {
     name: string;
-    prev: any;
-    next: any;
+    prev: Partial<INicoliveProgramState> | null;
+    next: Partial<INicoliveProgramState> | null;
     result: 'REFRESH' | 'STOP' | 'NOOP';
   }[] = [
     {
       name: '初期状態から予約状態の番組を開くとタイマーを更新する',
       prev: null,
-      next: {
-        status: 'reserved',
-        programID: 'lv1',
-        testStartTime: 100,
-        startTime: 200,
-        endTime: 300,
-      },
+      next: { status: 'reserved', programID: 'lv1', startTime: 200, endTime: 300 },
       result: 'REFRESH',
     },
     {
       name: '初期状態からテスト状態の番組を開くとタイマーを更新する',
       prev: null,
-      next: { status: 'test', programID: 'lv1', testStartTime: 100, startTime: 200, endTime: 300 },
+      next: { status: 'test', programID: 'lv1', startTime: 200, endTime: 300 },
       result: 'REFRESH',
     },
     {
       name: '初期状態から放送中状態の番組を開くとタイマーを更新する',
       prev: null,
-      next: { status: 'onAir', programID: 'lv1', testStartTime: 100, startTime: 200, endTime: 300 },
+      next: { status: 'onAir', programID: 'lv1', startTime: 200, endTime: 300 },
       result: 'REFRESH',
     },
     {
       name: '初期状態から終了状態の番組を開くとタイマーは止まったまま',
       prev: null,
-      next: { status: 'end', programID: 'lv1', testStartTime: 100, startTime: 200, endTime: 300 },
+      next: { status: 'end', programID: 'lv1', startTime: 200, endTime: 300 },
       result: 'NOOP',
     },
     {
       name: '終了状態から予約状態になったらタイマーを更新する',
-      prev: { status: 'end', programID: 'lv0', testStartTime: 10, startTime: 20, endTime: 30 },
-      next: {
-        status: 'reserved',
-        programID: 'lv1',
-        testStartTime: 100,
-        startTime: 200,
-        endTime: 300,
-      },
+      prev: { status: 'end', programID: 'lv0', startTime: 20, endTime: 30 },
+      next: { status: 'reserved', programID: 'lv1', startTime: 200, endTime: 300 },
       result: 'REFRESH',
     },
     {
       name: '予約状態なら毎回タイマーを更新する(30分前境界超え対策)',
-      prev: {
-        status: 'reserved',
-        programID: 'lv1',
-        testStartTime: 100,
-        startTime: 30 * 60 - 1,
-        endTime: 300,
-      },
-      next: {
-        status: 'reserved',
-        programID: 'lv1',
-        testStartTime: 100,
-        startTime: 30 * 60 - 1,
-        endTime: 300,
-      },
+      prev: { status: 'reserved', programID: 'lv1', startTime: 30 * 60 - 1, endTime: 300 },
+      next: { status: 'reserved', programID: 'lv1', startTime: 30 * 60 - 1, endTime: 300 },
       result: 'REFRESH',
     },
     {
       name: '予約状態から放送中状態になったらタイマーを更新する',
-      prev: {
-        status: 'reserved',
-        programID: 'lv1',
-        testStartTime: 100,
-        startTime: 200,
-        endTime: 300,
-      },
-      next: { status: 'onAir', programID: 'lv1', testStartTime: 100, startTime: 200, endTime: 300 },
+      prev: { status: 'reserved', programID: 'lv1', startTime: 200, endTime: 300 },
+      next: { status: 'onAir', programID: 'lv1', startTime: 200, endTime: 300 },
       result: 'REFRESH',
     },
     {
       name: 'テスト状態から放送中状態になったらタイマーを更新する',
-      prev: { status: 'test', programID: 'lv1', testStartTime: 100, startTime: 200, endTime: 300 },
-      next: { status: 'onAir', programID: 'lv1', testStartTime: 100, startTime: 200, endTime: 300 },
+      prev: { status: 'test', programID: 'lv1', startTime: 200, endTime: 300 },
+      next: { status: 'onAir', programID: 'lv1', startTime: 200, endTime: 300 },
       result: 'REFRESH',
     },
     {
       name: 'テスト状態から終了状態になったらタイマーを止める',
-      prev: { status: 'onAir', programID: 'lv1', testStartTime: 100, startTime: 200, endTime: 300 },
-      next: { status: 'end', programID: 'lv1', testStartTime: 100, startTime: 200, endTime: 300 },
+      prev: { status: 'onAir', programID: 'lv1', startTime: 200, endTime: 300 },
+      next: { status: 'end', programID: 'lv1', startTime: 200, endTime: 300 },
       result: 'STOP',
     },
     {
       name: '放送中に終了時間が変わったらタイマーを更新する',
-      prev: { status: 'onAir', programID: 'lv1', testStartTime: 100, startTime: 200, endTime: 300 },
-      next: { status: 'onAir', programID: 'lv1', testStartTime: 100, startTime: 200, endTime: 350 },
+      prev: { status: 'onAir', programID: 'lv1', startTime: 200, endTime: 300 },
+      next: { status: 'onAir', programID: 'lv1', startTime: 200, endTime: 350 },
       result: 'REFRESH',
     },
     {
       name: '何も変わらなければ何もしない',
-      prev: { status: 'onAir', programID: 'lv1', testStartTime: 100, startTime: 200, endTime: 300 },
-      next: { status: 'onAir', programID: 'lv1', testStartTime: 100, startTime: 200, endTime: 300 },
+      prev: { status: 'onAir', programID: 'lv1', startTime: 200, endTime: 300 },
+      next: { status: 'onAir', programID: 'lv1', startTime: 200, endTime: 300 },
       result: 'NOOP',
     },
     // 以下、N Air外部で状態を操作した場合に壊れないことを保証したい
     {
       name: '予約状態から別番組の予約状態になったらタイマーを更新する',
-      prev: {
-        status: 'reserved',
-        programID: 'lv1',
-        testStartTime: 100,
-        startTime: 200,
-        endTime: 300,
-      },
-      next: {
-        status: 'reserved',
-        programID: 'lv2',
-        testStartTime: 400,
-        startTime: 500,
-        endTime: 600,
-      },
+      prev: { status: 'reserved', programID: 'lv1', startTime: 200, endTime: 300 },
+      next: { status: 'reserved', programID: 'lv2', startTime: 500, endTime: 600 },
       result: 'REFRESH',
     },
     {
       name: 'テスト状態から別番組のテスト状態になったらタイマーを更新する',
-      prev: { status: 'test', programID: 'lv1', testStartTime: 100, startTime: 200, endTime: 300 },
-      next: { status: 'test', programID: 'lv2', testStartTime: 400, startTime: 500, endTime: 600 },
+      prev: { status: 'test', programID: 'lv1', startTime: 200, endTime: 300 },
+      next: { status: 'test', programID: 'lv2', startTime: 500, endTime: 600 },
       result: 'REFRESH',
     },
     {
       name: '放送中状態から別番組の放送中状態になったらタイマーを更新する',
-      prev: { status: 'onAir', programID: 'lv1', testStartTime: 100, startTime: 200, endTime: 300 },
-      next: { status: 'onAir', programID: 'lv2', testStartTime: 400, startTime: 500, endTime: 600 },
+      prev: { status: 'onAir', programID: 'lv1', startTime: 200, endTime: 300 },
+      next: { status: 'onAir', programID: 'lv2', startTime: 500, endTime: 600 },
       result: 'REFRESH',
     },
     {
       name: '終了状態から別番組の終了状態になってもタイマーは止まったまま',
-      prev: { status: 'end', programID: 'lv1', testStartTime: 100, startTime: 200, endTime: 300 },
-      next: { status: 'end', programID: 'lv2', testStartTime: 400, startTime: 500, endTime: 600 },
+      prev: { status: 'end', programID: 'lv1', startTime: 200, endTime: 300 },
+      next: { status: 'end', programID: 'lv2', startTime: 500, endTime: 600 },
       result: 'NOOP',
     },
   ];
@@ -952,14 +923,13 @@ describe('refreshProgramStatusTimer', () => {
   for (const suite of suites) {
     test(suite.name, () => {
       setup();
-      const m = require('./nicolive-program');
-      const instance = m.NicoliveProgramService.instance as NicoliveProgramService;
+      const { instance } = setupInstance();
 
-      jest.spyOn(window, 'setTimeout').mockImplementation(jest.fn());
-      jest.spyOn(window, 'clearTimeout').mockImplementation(jest.fn());
-      jest.spyOn(Date, 'now').mockImplementation(jest.fn().mockReturnValue(50));
+      jest.spyOn(window, 'setTimeout').mockImplementation(jest.fn().mockName('setTimeout'));
+      jest.spyOn(window, 'clearTimeout').mockImplementation(jest.fn().mockName('clearTimeout'));
+      jest.spyOn(Date, 'now').mockImplementation(jest.fn().mockName('now').mockReturnValue(50));
 
-      instance.updateStatistics = jest.fn();
+      instance.updateStatistics = jest.fn().mockName('updateStatistics');
       const state = instance.state;
 
       instance.refreshProgramStatusTimer({ ...state, ...suite.prev }, { ...state, ...suite.next });
@@ -989,8 +959,8 @@ describe('refreshAutoExtensionTimer', () => {
 
   const suites: {
     name: string;
-    prev: any;
-    next: any;
+    prev: Partial<INicoliveProgramState> | null;
+    next: Partial<INicoliveProgramState> | null;
     now: number;
     result: 'IMMEDIATE' | 'WAIT' | 'NOOP' | 'CLEAR';
   }[] = [
@@ -1191,14 +1161,18 @@ describe('refreshAutoExtensionTimer', () => {
   for (const suite of suites) {
     test(suite.name, () => {
       setup();
-      const m = require('./nicolive-program');
-      const instance = m.NicoliveProgramService.instance as NicoliveProgramService;
+      const { instance } = setupInstance();
 
-      jest.spyOn(window, 'setTimeout').mockImplementation(jest.fn());
-      jest.spyOn(window, 'clearTimeout').mockImplementation(jest.fn());
-      jest.spyOn(Date, 'now').mockImplementation(jest.fn().mockReturnValue(suite.now * 1000));
+      jest.spyOn(window, 'setTimeout').mockImplementation(jest.fn().mockName('setTimeout'));
+      jest.spyOn(window, 'clearTimeout').mockImplementation(jest.fn().mockName('clearTimeout'));
+      jest.spyOn(Date, 'now').mockImplementation(
+        jest
+          .fn()
+          .mockName('now')
+          .mockReturnValue(suite.now * 1000),
+      );
 
-      instance.client.extendProgram = jest.fn();
+      instance.client.extendProgram = jest.fn().mockName('extendProgram');
       const state = instance.state;
 
       instance.refreshAutoExtensionTimer({ ...state, ...suite.prev }, { ...state, ...suite.next });
@@ -1232,15 +1206,14 @@ describe('refreshAutoExtensionTimer', () => {
 
 test('serverClockOffsetSec に基づいて correctedNowMs が計算される', async () => {
   setup();
-  const instance = require('./nicolive-program').NicoliveProgramService
-    .instance as NicoliveProgramService;
+  const { instance } = setupInstance();
 
   const SERVER_NOW = 0;
   const OFFSET = 5; // clientが5秒進んでいる
   const CLIENT_NOW = SERVER_NOW + OFFSET * 1000;
-  jest.spyOn(Date, 'now').mockImplementation(jest.fn().mockReturnValue(CLIENT_NOW));
-  jest.spyOn(window, 'setTimeout').mockImplementation(jest.fn());
-  jest.spyOn(window, 'clearTimeout').mockImplementation(jest.fn());
+  jest.spyOn(Date, 'now').mockImplementation(jest.fn().mockName('now').mockReturnValue(CLIENT_NOW));
+  jest.spyOn(window, 'setTimeout').mockImplementation(jest.fn().mockName('setTimeout'));
+  jest.spyOn(window, 'clearTimeout').mockImplementation(jest.fn().mockName('clearTimeout'));
 
   instance.client.fetchProgram = jest_fn<NicoliveClient['fetchProgram']>().mockResolvedValue({
     ok: true,
