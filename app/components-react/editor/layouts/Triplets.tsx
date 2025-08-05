@@ -18,7 +18,7 @@ export function Triplets(p: ILayoutProps) {
   );
 
   return (
-    <div className={cx(styles.columns, styles.sidePadded)} ref={componentRef}>
+    <div className={cx(styles.columns, styles.sidePadded, p.className)} ref={componentRef}>
       <ResizeBar
         position="left"
         value={bars.bar1}

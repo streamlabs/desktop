@@ -22,8 +22,7 @@ export function LegacyEvents(p: { onPopout: () => void }) {
   const magicLinkDisabled = useRef(false);
 
   function popoutRecentEvents() {
-    p.onPopout();
-    return RecentEventsService.openRecentEventsWindow();
+    return RecentEventsService.actions.openRecentEventsWindow();
   }
 
   function handleBrowserViewReady(view: Electron.BrowserView) {

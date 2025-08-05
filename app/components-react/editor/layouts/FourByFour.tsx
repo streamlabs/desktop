@@ -13,7 +13,7 @@ export function FourByFour(p: ILayoutProps) {
   );
 
   return (
-    <div className={styles.rows} ref={componentRef}>
+    <div className={cx(styles.rows, p.className)} ref={componentRef}>
       <div
         className={styles.cell}
         style={{ height: `${100 - (resizes.bar1 + resizes.bar2) * 100}%` }}

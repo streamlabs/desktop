@@ -1,10 +1,11 @@
-import { $t } from '../../services/i18n';
 import React from 'react';
-import { Services } from '../service-provider';
 import cx from 'classnames';
+import { $t } from '../../services/i18n';
+import { Services } from '../service-provider';
+
 import styles from './PatchNotes.m.less';
 
-export default function PatchNotes() {
+export default function PatchNotes(p: { className?: string }) {
   const { PatchNotesService, NavigationService } = Services;
 
   const notes = PatchNotesService.notes;
@@ -14,7 +15,7 @@ export default function PatchNotes() {
   }
 
   return (
-    <div className={styles.patchNotesPage}>
+    <div className={cx(styles.patchNotesPage, p.className)}>
       <div className={styles.patchNotesContainer}>
         <div className={styles.patchNotesContent}>
           <div className={styles.patchNotesHeader}>
