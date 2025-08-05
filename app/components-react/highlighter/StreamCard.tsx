@@ -325,6 +325,7 @@ function ActionBar({
   if (stream?.state.type === EAiDetectionState.REALTIME_DETECTION_IN_PROGRESS) {
     return (
       <RealtimeIndicator
+        location="streamCard"
         eventType={undefined}
         emitCancel={() => {
           emitCancelHighlightGeneration();

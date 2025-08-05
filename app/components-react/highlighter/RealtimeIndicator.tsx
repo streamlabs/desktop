@@ -10,9 +10,11 @@ import { TRealtimeFeedEvent } from './realtime-highlights/RealtimeHighlightsFeed
 export default function HighlightGenerator({
   eventType,
   emitCancel,
+  location,
 }: {
   eventType?: TRealtimeFeedEvent;
   emitCancel: () => void;
+  location: 'streamCard' | 'statusBar';
 }) {
   const [animateOnce, setAnimateOnce] = useState(false);
   const [emoji, setEmoji] = useState<string>('');
@@ -41,12 +43,19 @@ export default function HighlightGenerator({
     return String(value).charAt(0).toUpperCase() + String(value).slice(1);
   }
   return (
-    <div className={cx(styles.realtimeDetectionAction)}>
+    <div
+      className={cx(
+        styles.realtimeDetectionAction,
+        location === 'streamCard' && styles.realtimeDetectionStreamcard,
+      )}
+    >
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-        <div
-          className={cx(styles.backgroundPulse, animateOnce && styles.activityAnimation)}
-          // onAnimationEnd={() => setAnimateOnce(false)}
-        />
+        {location === 'statusBar' && (
+          <div
+            className={cx(styles.backgroundPulse, animateOnce && styles.activityAnimation)}
+            // onAnimationEnd={() => setAnimateOnce(false)}
+          />
+        )}
         {animateOnce ? (
           <div className={styles.emoji}>{emoji}</div>
         ) : (
@@ -55,7 +64,7 @@ export default function HighlightGenerator({
             <div className={styles.dot} />
           </div>
         )}
-        <p style={{ margin: 0, zIndex: 3, opacity: 0.7 }}>
+        <p style={{ margin: 0, zIndex: 3, opacity: location === 'statusBar' ? 0.7 : 1 }}>
           {' '}
           {animateOnce ? `${description} detected` : $t('AI detection in progress')}
         </p>

@@ -193,6 +193,7 @@ export default function RealtimeHighlightsTooltip(props: IRealtimeHighlightToolt
         }}
       >
         <RealtimeIndicator
+          location="statusBar"
           eventType={lastEvent || undefined}
           emitCancel={() => {
             HighlighterService.actions.stopRealtimeHighlighter();
