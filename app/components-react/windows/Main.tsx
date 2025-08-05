@@ -28,6 +28,8 @@ import { debounce } from 'lodash-decorators';
 
 const MainCtx = React.createContext<MainController | null>(null);
 
+// TODO: this is technically deprecated as we have moved customizationService to Realm
+// but some users may still have this value
 const loadedTheme = (): TApplicationTheme | undefined => {
   const customizationState = localStorage.getItem('PersistentStatefulService-CustomizationService');
   if (customizationState) {
@@ -252,7 +254,6 @@ function Main() {
   const uiReady = bulkLoadFinished && i18nReady;
 
   const {
-    theme,
     showLoadingSpinner,
     errorAlert,
     hasLiveDock,
@@ -267,7 +268,6 @@ function Main() {
     streamingStatus,
   } = useVuex(
     () => ({
-      theme: ctrl.theme(bulkLoadFinished),
       showLoadingSpinner: ctrl.showLoadingSpinner,
       errorAlert: ctrl.errorAlert,
       renderDock: ctrl.renderDock,
@@ -286,6 +286,8 @@ function Main() {
 
   const dockWidth = useRealmObject(Services.CustomizationService.state).livedockSize;
   const isDockCollapsed = useRealmObject(Services.CustomizationService.state).livedockCollapsed;
+  const realmTheme = useRealmObject(Services.CustomizationService.state).theme;
+  const theme = !bulkLoadFinished ? loadedTheme() || 'night-theme' : realmTheme;
 
   function windowSizeHandler() {
     if (!hideStyleBlockers) {
