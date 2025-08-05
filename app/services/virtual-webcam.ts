@@ -201,7 +201,8 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
   uninstall() {
     const errorCode = obs.NodeObs.OBS_service_uninstallVirtualCamPlugin();
     if (errorCode > 0) {
-      console.log(`uninstalling virtual camera plugin error: ${errorCode}`);
+      const codeName = InstallationErrorCodes[errorCode];
+      console.log(`uninstalling virtual camera plugin error: ${errorCode} code: ${codeName}`);
       remote.dialog.showErrorBox(
         $t('Virtual Webcam'),
         $t('An error has occured while uninstalling the virtual camera'),
