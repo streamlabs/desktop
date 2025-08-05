@@ -13,9 +13,10 @@ import {
   ERangeType,
 } from '../../../obs-api';
 import { DualOutputService } from 'services/dual-output';
-import { SettingsService } from 'services/settings';
+import { ISettingsSubCategory, SettingsService } from 'services/settings';
 import { OutputSettingsService } from 'services/settings/output';
 import { Subject } from 'rxjs';
+import { TObsFormData } from 'components/obs/inputs/ObsInput';
 
 /**
  * Display Types
@@ -394,6 +395,50 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
       const output = `${this.state.horizontal.outputWidth}x${this.state.horizontal.outputHeight}`;
       this.settingsService.setSettingValue('Video', 'Output', output);
     }
+  }
+
+  updateAllSettings(settings: ISettingsSubCategory[], display: TDisplayType = 'horizontal') {
+    this.updateVideo(settings[0].parameters, display, true);
+  }
+
+  // @@@ TODO this updates a single video setting, but the form needs to update all settings
+  updateVideo(
+    settings: TObsFormData,
+    display: TDisplayType = 'horizontal',
+    shouldSyncFPS: boolean = true,
+  ) {
+    const props = {
+      ['Base']: 'baseRes',
+      ['Output']: 'outputRes',
+      ['ScaleType']: 'scaleType',
+      ['FPSType']: 'fpsType',
+      ['FPSInt']: 'fpsInt',
+      ['FPSCommon']: 'fpsCom',
+      ['FPSNum']: 'fpsNum',
+      ['FPSDen']: 'fpsDen',
+    };
+
+    settings.forEach(setting => {
+      const key = props[setting.name as keyof typeof props];
+      if (!key) return;
+
+      if (key === 'baseRes' || key === 'outputRes') {
+        this.setResolution(key, setting.value as string, display);
+      } else {
+        this.SET_VIDEO_SETTING(key as keyof IVideoInfo, setting.value as IVideoInfoValue, display);
+      }
+    });
+
+    this.updateObsSettings(display, shouldSyncFPS);
+  }
+
+  setResolution(key: 'baseRes' | 'outputRes', value: string, display: TDisplayType = 'horizontal') {
+    const [width, height] = value.split('x').map(Number);
+    const widthKey = key === 'baseRes' ? 'baseWidth' : 'outputWidth';
+    const heightKey = key === 'baseRes' ? 'baseHeight' : 'outputHeight';
+
+    this.SET_VIDEO_SETTING(widthKey as keyof IVideoInfo, width, display);
+    this.SET_VIDEO_SETTING(heightKey as keyof IVideoInfo, height, display);
   }
 
   @debounce(200)

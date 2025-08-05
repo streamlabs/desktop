@@ -13,6 +13,8 @@ import { AuthModal } from 'components-react/shared/AuthModal';
 import Utils from 'services/utils';
 import DualOutputToggle from '../../shared/DualOutputToggle';
 import { ObsGenericSettingsForm } from './ObsSettings';
+import { useObsSettings } from './useObsSettings';
+import { ObsFormGroup } from 'components-react/obs/ObsForm';
 
 const CANVAS_RES_OPTIONS = [
   { label: '1920x1080', value: '1920x1080' },
@@ -389,7 +391,7 @@ class VideoSettingsModule {
    */
   setFPSType(value: EFPSType) {
     const obsSettings: ObsSetting[] = [
-      { key: 'fpsType', value: value },
+      { key: 'fpsType', value },
       { key: 'fpsNum', value: 30 },
       { key: 'fpsDen', value: 1 },
     ];
@@ -548,6 +550,19 @@ export function VideoSettings() {
     handleShowModal,
   } = useModule(VideoSettingsModule);
 
+  const { settingsFormData, saveSettings } = useObsSettings();
+  console.log('settingsFormData', JSON.stringify(settingsFormData[0].parameters, null, 2));
+  console.log(
+    'settingsFormData',
+    settingsFormData[0]?.parameters.map((param: any) => ({
+      name: param.name,
+      value: param.value,
+      type: param.type,
+      options: param.options,
+      description: param.description,
+    })),
+  );
+
   return (
     <>
       <div className={styles.videoSettingsHeader}>
@@ -563,13 +578,20 @@ export function VideoSettings() {
       {showDualOutputSettings && <Tabs onChange={setDisplay} />}
 
       <div className={styles.formSection}>
-        <FormFactory
+        <ObsFormGroup
+          value={settingsFormData}
+          onChange={newSettings => {
+            saveSettings(newSettings);
+            Services.VideoSettingsService.actions.updateVideo(newSettings[0].parameters);
+          }}
+        />
+        {/* <FormFactory
           values={values}
           metadata={metadata}
           onChange={onChange}
           formOptions={{ layout: 'vertical' }}
           name="video-settings"
-        />
+        /> */}
       </div>
       <AuthModal
         id="login-modal"
