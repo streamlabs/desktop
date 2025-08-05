@@ -185,14 +185,14 @@ export class StreamingService
     vertical: IOutputContext;
   } = {
     horizontal: {
-      streaming: null,
-      recording: null,
-      replayBuffer: null,
+      streaming: (null as unknown) as ISimpleStreaming | IAdvancedStreaming,
+      recording: (null as unknown) as ISimpleRecording | IAdvancedRecording,
+      replayBuffer: (null as unknown) as ISimpleReplayBuffer | IAdvancedReplayBuffer,
     },
     vertical: {
-      streaming: null,
-      recording: null,
-      replayBuffer: null,
+      streaming: (null as unknown) as ISimpleStreaming | IAdvancedStreaming,
+      recording: (null as unknown) as ISimpleRecording | IAdvancedRecording,
+      replayBuffer: (null as unknown) as ISimpleReplayBuffer | IAdvancedReplayBuffer,
     },
   };
 
@@ -1974,7 +1974,7 @@ export class StreamingService
    * Currently there are no cases where a replay buffer is not started immediately after creation.
    * @param display - The display to create the replay buffer for
    */
-  private async createReplayBuffer(display: TDisplayType = 'horizontal', index?: number) {
+  private async createReplayBuffer(display: TDisplayType = 'horizontal', index: number) {
     console.log('creating replay buffer', display, index);
     const mode = this.outputSettingsService.getSettings().mode;
     const settings = this.outputSettingsService.getReplayBufferSettings();
@@ -2736,6 +2736,10 @@ export class StreamingService
             console.log('streaming released audio encoder', audioEncoder);
           }
           videoEncoder?.release();
+
+          this.contexts[display].streaming = (null as unknown) as
+            | ISimpleStreaming
+            | IAdvancedStreaming;
           break;
         }
         case 'recording': {
@@ -2750,6 +2754,10 @@ export class StreamingService
             console.log('streaming released audio encoder', audioEncoder);
           }
           videoEncoder?.release();
+
+          this.contexts[display].recording = (null as unknown) as
+            | ISimpleRecording
+            | IAdvancedRecording;
           break;
         }
         case 'replayBuffer': {
@@ -2759,12 +2767,14 @@ export class StreamingService
           } else {
             SimpleReplayBufferFactory.destroy(instance as ISimpleReplayBuffer);
           }
+
+          this.contexts[display].replayBuffer = (null as unknown) as
+            | ISimpleReplayBuffer
+            | IAdvancedReplayBuffer;
           break;
         }
       }
     }
-
-    this.contexts[display][contextType] = null;
 
     return Promise.resolve();
   }
@@ -2835,11 +2845,6 @@ export class StreamingService
       this.state.status[display].replayBufferTime = time;
       this.state.replayBufferStatusTime = time;
     }
-  }
-
-  @mutation()
-  private SET_RECORDING_OUTPUT_TYPE(output: TDisplayOutput) {
-    this.state.info.settings.recording = output;
   }
 
   @mutation()
