@@ -21,7 +21,7 @@ import { ProgramSchedules } from './ResponseTypes';
 import { NicoliveProgramStateService } from './state';
 
 type Schedules = ProgramSchedules['data'];
-type Schedule = Schedules[0];
+export type Schedule = Schedules[0];
 
 type ProgramState = {
   programID: string;
@@ -42,7 +42,7 @@ type ProgramState = {
   password?: string;
 };
 
-interface INicoliveProgramState extends ProgramState {
+export interface INicoliveProgramState extends ProgramState {
   /**
    * 永続化された状態をコンポーネントに伝えるための一時置き場
    * 直接ここを編集してはいけない、stateService等の操作結果を反映するだけにする
