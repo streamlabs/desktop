@@ -91,8 +91,8 @@
       transform: rotate(-180deg);
     }
 
-    .opened & {
-      i {
+    &.studio-controls--opened {
+      > i {
         transform: rotate(0deg);
       }
     }
