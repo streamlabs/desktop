@@ -25,5 +25,6 @@ export class SmartBrowserNode extends Node<ISchema, IContext> {
 
   async load(context: IContext) {
     context.sceneItem.getSource().updateSettings(this.data.settings);
+    context.sceneItem.source.replacePropertiesManager('smartBrowserSource', {});
   }
 }
