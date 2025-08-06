@@ -109,6 +109,10 @@ class StreamSettingsModule {
     return Services.CustomizationService;
   }
 
+  private get dualOutputService() {
+    return Services.DualOutputService;
+  }
+
   // DEFINE MUTATIONS
 
   @mutation()
@@ -182,6 +186,9 @@ class StreamSettingsModule {
 
   disableProtectedMode() {
     this.streamSettingsService.actions.setSettings({ protectedModeEnabled: false });
+    if (this.dualOutputService.views.dualOutputMode) {
+      this.dualOutputService.actions.setDualOutputModeIfPossible(false, true);
+    }
   }
 
   enableProtectedMode() {

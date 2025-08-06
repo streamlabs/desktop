@@ -910,7 +910,7 @@ export class StreamingService
     if (this.state.streamingStatus !== EStreamingState.Offline) return;
 
     if (enabled) {
-      this.dualOutputService.actions.setDualOutputMode(true, true);
+      this.dualOutputService.actions.setDualOutputModeIfPossible(true, true);
       this.usageStatisticsService.recordFeatureUsage('DualOutput');
     }
 
