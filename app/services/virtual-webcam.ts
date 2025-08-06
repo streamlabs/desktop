@@ -222,8 +222,8 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
 
     try {
       obs.NodeObs.OBS_service_startVirtualCam();
-    } catch(error) {
-      console.error("Caught OBS_service_startVirtualCam error:", error.message);
+    } catch (error: unknown) {
+      console.error('Caught OBS_service_startVirtualCam error:', error);
       remote.dialog.showErrorBox(
         $t('Virtual Webcam'),
         $t('Unable to start virtual camera.\n\nPlease try again.'),
