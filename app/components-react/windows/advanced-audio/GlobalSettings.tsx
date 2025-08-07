@@ -19,7 +19,7 @@ const trackOptions = [
 ];
 
 export default function GlobalSettings() {
-  const { SettingsService, UserService, StreamingService } = Services;
+  const { SettingsService, UserService, StreamingService, DefaultHardwareService } = Services;
 
   const {
     advancedAudioSettings,
@@ -33,6 +33,7 @@ export default function GlobalSettings() {
     isStreaming,
     isRecording,
     isMultiStreaming,
+    enableMuteNotifications,
   } = useVuex(() => ({
     advancedAudioSettings: SettingsService.views.advancedAudioSettings,
     isAdvancedOutput: SettingsService.views.isAdvancedOutput,
@@ -45,6 +46,7 @@ export default function GlobalSettings() {
     isStreaming: StreamingService.views.isStreaming,
     isRecording: StreamingService.views.isRecording,
     isMultiStreaming: StreamingService.views.isMultiplatformMode,
+    enableMuteNotifications: DefaultHardwareService.state.enableMuteNotifications,
   }));
 
   const monitoringDevice = advancedAudioSettings?.parameters.find(
@@ -67,6 +69,10 @@ export default function GlobalSettings() {
 
   function handleOutputSettingsChange(type: string, value: number | boolean) {
     SettingsService.actions.setSettingValue('Output', type, value);
+  }
+
+  function handleToggleMuteNotifications() {
+    DefaultHardwareService.actions.toggleMuteNotifications();
   }
 
   const shouldShowTwitchVODTrack = isAdvancedOutput && isTwitchAuthedAndActive && !isMultiStreaming;
@@ -147,6 +153,11 @@ export default function GlobalSettings() {
             </div>
           </InputWrapper>
         )}
+        <SwitchInput
+          label={$t('Enable Muted Notifications')}
+          value={enableMuteNotifications}
+          onChange={handleToggleMuteNotifications}
+        />
       </ObsSettingsSection>
 
       <ObsSettings page="Audio" />
