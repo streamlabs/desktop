@@ -23,9 +23,9 @@ async function buildVirtualCamExtension(context) {
 
   await downloadFile(sourceUrl, destFile);
   console.log('Extracting tar file');
-  cp.execSync(
-    `tar -xzvf ${destFile}`,
-  );
+  cp.execSync(`tar -xzvf ${destFile}`);
+  // Remove the slobs developer provision profile
+  cp.execSync('rm -rf ./slobs-virtual-cam-installer.app/Contents/embedded.provisionprofile');
   console.log('Copying slobs-virtual-cam-installer.app into Frameworks folder');
   cp.execSync(
     `cp -R ./slobs-virtual-cam-installer.app \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Frameworks\"`,

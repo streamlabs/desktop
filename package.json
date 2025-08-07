@@ -107,7 +107,7 @@
     "@babel/core": "7.17.2",
     "@babel/plugin-proposal-decorators": "7.17.2",
     "@babel/preset-env": "7.22.10",
-    "@electron/notarize": "^2.3.0",
+    "@electron/notarize": "^2.3.2",
     "@octokit/app": "14.0.0",
     "@octokit/request": "8.1.1",
     "@octokit/rest": "20.0.1",
