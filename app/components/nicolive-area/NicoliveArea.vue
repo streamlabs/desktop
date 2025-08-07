@@ -35,7 +35,6 @@
             <button
               class="button button--primary button--create-program"
               @click="createProgram"
-              :disabled="isCreating"
               v-if="!isCompactMode"
             >
               新しく番組を作成する
