@@ -28,7 +28,7 @@ import MiniClipPreview from './MiniClipPreview';
 import HighlightGenerator from './HighlightGenerator';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 
-export type TModalClipsView = 'trim' | 'export' | 'preview' | 'remove';
+export type TModalClipsView = 'trim' | 'export' | 'preview' | 'remove' | 'exportMarkers';
 
 interface IClipsViewProps {
   id: string | undefined;
@@ -468,10 +468,25 @@ function PreviewExportButton({
   const clips = useVuex(() =>
     HighlighterService.getClips(HighlighterService.views.clips, streamId),
   );
+  const stream = useVuex(() =>
+    streamId ? HighlighterService.views.highlightedStreamsDictionary[streamId] : null,
+  );
   const hasClipsToExport = clips.some(clip => clip.enabled);
+  const hasHighlights: boolean =
+    (stream && stream.highlights && stream.highlights.length > 0) ?? false;
 
   return (
     <>
+      {hasHighlights && (
+        <Tooltip
+          title={$t('Export detectected timecodes as markers for editing software')}
+          placement="bottom"
+        >
+          <Button disabled={!hasHighlights} onClick={() => setModal({ modal: 'exportMarkers' })}>
+            {$t('Export Markers')}
+          </Button>
+        </Tooltip>
+      )}
       <Tooltip
         title={!hasClipsToExport ? $t('Select at least one clip to preview your video') : null}
         placement="bottom"
