@@ -1,15 +1,13 @@
 import styles from './GoLive.m.less';
 import { WindowsService, DualOutputService } from 'app-services';
 import { ModalLayout } from '../../shared/ModalLayout';
-import { Button } from 'antd';
+import { Button, message } from 'antd';
 import { Services } from '../../service-provider';
 import GoLiveSettings from './GoLiveSettings';
 import React from 'react';
 import { $t } from '../../../services/i18n';
 import GoLiveChecklist from './GoLiveChecklist';
-import { alertAsync } from 'components-react/modals';
 import Form from '../../shared/inputs/Form';
-import Translate from 'components-react/shared/Translate';
 import Animation from 'rc-animate';
 import { useGoLiveSettings, useGoLiveSettingsRoot } from './useGoLiveSettings';
 import { inject } from 'slap';
@@ -97,38 +95,15 @@ function ModalFooter() {
 
   function handleGoLive() {
     if (isDualOutputMode && !getCanStreamDualOutput()) {
-      handleConfirmGoLive();
+      message.error({
+        content: $t(
+          'To use Dual Output you must stream to one horizontal and one vertical platform.',
+        ),
+      });
       return;
     }
 
     goLive();
-  }
-
-  function handleConfirmGoLive() {
-    const display = horizontalHasTargets ? $t('Horizontal') : $t('Vertical');
-
-    alertAsync({
-      type: 'warning',
-      title: $t('Confirm Horizontal and Vertical Platforms'),
-      closable: true,
-      content: (
-        <Translate
-          message={$t(
-            'All platforms are currently assigned to the <display></display> display. To use Dual Output you must stream to one horizontal and one vertical platform. Do you want to go live in single output mode with the Horizontal display?',
-          )}
-          renderSlots={{
-            display: () => {
-              return <span key={display}>{display}</span>;
-            },
-          }}
-        ></Translate>
-      ),
-      cancelText: $t('Close'),
-      okText: $t('Confirm'),
-      okButtonProps: { type: 'primary' },
-      onOk: () => toggleDualOutputMode(),
-      cancelButtonProps: { style: { display: 'inline' } },
-    });
   }
 
   return (

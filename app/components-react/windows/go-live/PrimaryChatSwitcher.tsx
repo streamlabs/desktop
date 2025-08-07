@@ -6,6 +6,8 @@ import { getPlatformService, TPlatform } from 'services/platforms';
 import PlatformLogo from 'components-react/shared/PlatformLogo';
 import Tooltip from 'components-react/shared/Tooltip';
 import { $t } from 'services/i18n';
+import { Services } from 'components-react/service-provider';
+import UltraIcon from 'components-react/shared/UltraIcon';
 
 interface IPrimaryChatSwitcherProps {
   enabledPlatforms: TPlatform[];
@@ -19,6 +21,7 @@ interface IPrimaryChatSwitcherProps {
   size?: 'small' | 'middle' | 'large';
   logo?: boolean;
   border?: boolean;
+  disabled?: boolean;
 }
 
 export default function PrimaryChatSwitcher({
@@ -33,6 +36,7 @@ export default function PrimaryChatSwitcher({
   size = undefined,
   logo = true,
   border = true,
+  disabled = false,
 }: IPrimaryChatSwitcherProps) {
   const primaryChatOptions = useMemo(
     () =>
@@ -56,9 +60,14 @@ export default function PrimaryChatSwitcher({
             tooltip ? (
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 {`${$t('Primary Chat')}:`}
-                <Tooltip title={tooltip} placement="top" lightShadow={true}>
-                  <i className="icon-information" style={{ marginLeft: '10px' }} />
-                </Tooltip>
+                {!Services.UserService.views.isPrime &&
+                !Services.DualOutputService.views.dualOutputMode ? (
+                  <UltraIcon type="badge" style={{ marginLeft: '10px' }} />
+                ) : (
+                  <Tooltip title={tooltip} placement="top" lightShadow={true}>
+                    <i className="icon-information" style={{ marginLeft: '10px' }} />
+                  </Tooltip>
+                )}
               </div>
             ) : (
               `${$t('Primary Chat')}:`
@@ -71,6 +80,7 @@ export default function PrimaryChatSwitcher({
           onChange={onSetPrimaryChat}
           suffixIcon={suffixIcon}
           size={size}
+          disabled={disabled}
         />
       </Form>
     </div>

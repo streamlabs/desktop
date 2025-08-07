@@ -311,27 +311,18 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
             )}
           />
         ),
-        Controller: () =>
-          showCloseIcon ? (
-            <i
-              className={cx('icon-close', 'platform-close', styles.close)}
-              onClick={e => {
-                p.onChange(false);
-                e.stopPropagation();
-              }}
-            />
-          ) : (
-            <SwitchInput
-              inputRef={switchInputRef}
-              value={p.enabled}
-              name={platform}
-              disabled={disabled}
-              uncontrolled
-              label={label}
-              nolabel
-              className={cx('platform-switch', styles.dualOutputPlatformSwitch)}
-            />
-          ),
+        Controller: () => (
+          <SwitchInput
+            inputRef={switchInputRef}
+            value={p.enabled}
+            name={platform}
+            disabled={disabled}
+            uncontrolled
+            label={label}
+            nolabel
+            className={cx('platform-switch', styles.dualOutputPlatformSwitch)}
+          />
+        ),
       };
     } else {
       // define slots for a custom destination switcher
@@ -386,9 +377,8 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
 
       {/* PLATFORM TITLE AND ACCOUNT/URL */}
       <div className={styles.colAccount}>
-        <span className={styles.platformName}>{title}</span> <br />
-        <span className={styles.platformHandle}>{description}</span>
-        <br />
+        <div className={styles.platformName}>{title}</div>
+        <div className={styles.platformHandle}>{description}</div>
       </div>
       {p.isDualOutputMode && !p?.isUnlinked && (
         <DisplaySelector

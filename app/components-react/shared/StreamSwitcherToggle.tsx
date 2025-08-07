@@ -30,14 +30,18 @@ export default function StreamSwitcherToggle(p: IStreamSwitcherToggle) {
         onChange={setStreamSwitcher}
         disabled={isDualOutputMode || !isPrime || hasMultipleTargetsEnabled}
       />
-      {!isPrime && <UltraIcon type="badge" />}
-      <Tooltip
-        title={$t('Toggle to swap your stream between Desktop and Mobile devices.')}
-        placement="top"
-        lightShadow={true}
-      >
-        <i className="icon-information" />
-      </Tooltip>
+
+      {!isPrime ? (
+        <UltraIcon type="badge" style={{ marginLeft: '10px' }} />
+      ) : (
+        <Tooltip
+          title={$t('Toggle to swap your stream between Desktop and Mobile devices.')}
+          placement="top"
+          lightShadow={true}
+        >
+          <i className="icon-information" style={{ marginLeft: '10px' }} />
+        </Tooltip>
+      )}
     </div>
   );
 }

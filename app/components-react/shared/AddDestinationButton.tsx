@@ -97,9 +97,7 @@ export default function AddDestinationButton(p: IAddDestinationButtonProps) {
         />
       )}
 
-      {type === 'banner' && (
-        <AddDestinationBanner className={p?.className} isDualOutputMode={isDualOutputMode} />
-      )}
+      {type === 'banner' && <AddDestinationBanner className={p?.className} />}
     </ButtonGroup>
   );
 }
@@ -158,12 +156,10 @@ function UltraAddDestinationButton(p: {
   );
 }
 
-function AddDestinationBanner(p: { className?: string; isDualOutputMode: boolean }) {
-  const text = p.isDualOutputMode
-    ? $t('Multistream and switch seamlessly between streams with Ultra')
-    : $t(
-        'You can stream to any 2 destinations for free with Dual Output. Multistream and switch seamlessly between streams with Ultra',
-      );
+function AddDestinationBanner(p: { className?: string }) {
+  const text = $t(
+    'You can stream to any 2 destinations for free with Dual Output. Multistream and switch seamlessly between streams with Ultra',
+  );
   return (
     <ButtonHighlighted faded className={cx(styles.infoBanner, p?.className)}>
       <UltraIcon type="badge" className={styles.ultraIcon} />

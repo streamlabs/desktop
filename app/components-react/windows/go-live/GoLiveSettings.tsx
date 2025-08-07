@@ -97,7 +97,7 @@ export default function GoLiveSettings() {
 
   const headerText = isDualOutputMode ? $t('Destinations & Outputs:') : $t('Destinations:');
 
-  const height = shouldShowPrimaryChatSwitcher ? '61%' : '67%';
+  const height = isPrime ? '61%' : '50%';
 
   return (
     <Row gutter={16} className={styles.settingsRow}>
@@ -119,25 +119,29 @@ export default function GoLiveSettings() {
             <DestinationSwitchers />
           </Scrollable>
 
-          <AddDestinationButton
-            type="small"
-            className={styles.columnPadding}
-            onClick={() => Services.SettingsService.actions.showSettings('Stream')}
-          />
+          {shouldShowAddDestButton && (
+            <AddDestinationButton
+              type="small"
+              className={styles.columnPadding}
+              onClick={() => Services.SettingsService.actions.showSettings('Stream')}
+            />
+          )}
 
           <div className={styles.leftFooter}>
-            {shouldShowPrimaryChatSwitcher && (
-              <PrimaryChatSwitcher
-                className={styles.primaryChat}
-                enabledPlatforms={enabledPlatforms}
-                onSetPrimaryChat={setPrimaryChat}
-                primaryChat={primaryChat}
-                suffixIcon={<CaretDownOutlined />}
-                layout="horizontal"
-                logo={false}
-                border={false}
-              />
-            )}
+            <PrimaryChatSwitcher
+              className={cx(styles.primaryChat, {
+                [styles.disabled]: !shouldShowPrimaryChatSwitcher,
+              })}
+              enabledPlatforms={enabledPlatforms}
+              onSetPrimaryChat={setPrimaryChat}
+              primaryChat={primaryChat}
+              suffixIcon={<CaretDownOutlined />}
+              layout="horizontal"
+              logo={false}
+              border={false}
+              disabled={!shouldShowPrimaryChatSwitcher}
+            />
+
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
               <DualOutputToggle
                 className={styles.featureToggle}
