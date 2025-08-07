@@ -41,7 +41,6 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
   const recordWhenStartStream = v.recordWhenStreaming || v.useAiHighlighter;
   const showRecordingToggle = p?.showRecordingToggle ?? false;
   const showRecordingIcons = v.isDualOutputMode && (canRecordVertical || canRecordDualOutput);
-  const showRecordingSwitcher = !v.isDualOutputMode || showRecordingIcons;
   const disableToggle = v.useAiHighlighter || v.isRecording;
   const disableIcons = v.isRecording || v.isReplayBufferActive;
 
@@ -63,54 +62,50 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
 
   return (
     <div style={p?.style} className={cx(p?.className, styles.recordingSwitcher)}>
-      {showRecordingSwitcher && (
-        <Tooltip
-          title={message}
-          disabled={!disableToggle}
-          placement="topRight"
-          lightShadow
-          className={styles.recordingTooltip}
-        >
-          {showRecordingToggle && (
-            <SwitchInput
-              name="recording-toggle"
-              value={recordWhenStartStream}
-              onChange={val => {
-                Services.SettingsService.actions.setSettingValue(
-                  'General',
-                  'RecordWhenStreaming',
-                  val,
-                );
-              }}
-              uncontrolled
-              style={{ marginRight: '10px' }}
-              label={v.isDualOutputMode ? $t('Record Stream in') : $t('Record Stream')}
-              layout="horizontal"
-              checkmark
-              disabled={disableToggle}
+      <Tooltip
+        title={message}
+        disabled={!disableToggle}
+        placement="topRight"
+        lightShadow
+        className={styles.recordingTooltip}
+      >
+        {showRecordingToggle && (
+          <SwitchInput
+            name="recording-toggle"
+            value={recordWhenStartStream}
+            onChange={val => {
+              Services.SettingsService.actions.setSettingValue(
+                'General',
+                'RecordWhenStreaming',
+                val,
+              );
+            }}
+            uncontrolled
+            style={{ marginRight: '10px' }}
+            label={v.isDualOutputMode ? $t('Record Stream in') : $t('Record Stream')}
+            layout="horizontal"
+            checkmark
+            disabled={disableToggle}
+          />
+        )}
+        {showRecordingIcons && (
+          <>
+            <RadioInput
+              name="recording-display"
+              defaultValue="horizontal"
+              value={v.recordingDisplay}
+              label={p?.label}
+              options={options}
+              onChange={(display: TDisplayOutput) => updateRecordingDisplayAndSaveSettings(display)}
+              icons={true}
+              className={styles.recordingDisplay}
+              disabled={v.isRecording || disableIcons}
             />
-          )}
-          {showRecordingIcons && (
-            <>
-              <RadioInput
-                name="recording-display"
-                defaultValue="horizontal"
-                value={v.recordingDisplay}
-                label={p?.label}
-                options={options}
-                onChange={(display: TDisplayOutput) =>
-                  updateRecordingDisplayAndSaveSettings(display)
-                }
-                icons={true}
-                className={styles.recordingDisplay}
-                disabled={v.isRecording || disableIcons}
-              />
-              {showRecordingToggle && <> {$t('format')} </>}
-            </>
-          )}
-          {disableToggle && <i className={cx(styles.info, 'icon-information')} />}
-        </Tooltip>
-      )}
+            {showRecordingToggle && <> {$t('format')} </>}
+          </>
+        )}
+        {disableToggle && <i className={cx(styles.info, 'icon-information')} />}
+      </Tooltip>
     </div>
   );
 }
