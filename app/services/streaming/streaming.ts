@@ -2632,7 +2632,7 @@ export class StreamingService
    * on app shutdown to prevent errors.
    */
   shutdown() {
-    Object.keys(this.contexts).forEach(display => {
+    Object.keys(this.contexts).forEach((display: TDisplayType) => {
       Object.keys(this.contexts[display]).forEach(async (contextType: keyof IOutputContext) => {
         this.destroyOutputContextIfExists(display, contextType);
       });
@@ -2683,7 +2683,7 @@ export class StreamingService
    * if the context did not exist
    */
   private async destroyOutputContextIfExists(
-    display: TDisplayType | string,
+    display: TDisplayType,
     contextType: keyof IOutputContext,
   ) {
     // if the context does not exist there is nothing to destroy
@@ -2722,57 +2722,55 @@ export class StreamingService
     }
 
     // identify the output's factory in order to destroy the context
-    if (this.outputSettingsService.getSettings().mode === 'Advanced') {
-      switch (contextType) {
-        case 'streaming': {
-          const instance = this.contexts[display][contextType];
-          const videoEncoder = instance.videoEncoder;
-          if (this.isAdvancedStreaming(instance)) {
-            AdvancedStreamingFactory.destroy(instance as IAdvancedStreaming);
-          } else {
-            const audioEncoder = instance.audioEncoder;
-            SimpleStreamingFactory.destroy(instance as ISimpleStreaming);
-            audioEncoder?.release();
-            console.log('streaming released audio encoder', audioEncoder);
-          }
-          videoEncoder?.release();
-
-          this.contexts[display].streaming = (null as unknown) as
-            | ISimpleStreaming
-            | IAdvancedStreaming;
-          break;
+    switch (contextType) {
+      case 'streaming': {
+        const instance = this.contexts[display][contextType];
+        const videoEncoder = instance.videoEncoder;
+        if (this.isAdvancedStreaming(instance)) {
+          AdvancedStreamingFactory.destroy(instance as IAdvancedStreaming);
+        } else {
+          const audioEncoder = instance.audioEncoder;
+          SimpleStreamingFactory.destroy(instance as ISimpleStreaming);
+          audioEncoder?.release();
+          console.log('streaming released audio encoder', audioEncoder);
         }
-        case 'recording': {
-          const instance = this.contexts[display][contextType];
-          const videoEncoder = instance.videoEncoder;
-          if (this.isAdvancedRecording(instance)) {
-            AdvancedRecordingFactory.destroy(instance as IAdvancedRecording);
-          } else {
-            const audioEncoder = instance.audioEncoder;
-            SimpleRecordingFactory.destroy(instance as ISimpleRecording);
-            audioEncoder?.release();
-            console.log('streaming released audio encoder', audioEncoder);
-          }
-          videoEncoder?.release();
+        videoEncoder?.release();
 
-          this.contexts[display].recording = (null as unknown) as
-            | ISimpleRecording
-            | IAdvancedRecording;
-          break;
+        this.contexts[display].streaming = (null as unknown) as
+          | ISimpleStreaming
+          | IAdvancedStreaming;
+        break;
+      }
+      case 'recording': {
+        const instance = this.contexts[display][contextType];
+        const videoEncoder = instance.videoEncoder;
+        if (this.isAdvancedRecording(instance)) {
+          AdvancedRecordingFactory.destroy(instance as IAdvancedRecording);
+        } else {
+          const audioEncoder = instance.audioEncoder;
+          SimpleRecordingFactory.destroy(instance as ISimpleRecording);
+          audioEncoder?.release();
+          console.log('streaming released audio encoder', audioEncoder);
         }
-        case 'replayBuffer': {
-          const instance = this.contexts[display][contextType];
-          if (this.isAdvancedReplayBuffer(instance)) {
-            AdvancedReplayBufferFactory.destroy(instance as IAdvancedReplayBuffer);
-          } else {
-            SimpleReplayBufferFactory.destroy(instance as ISimpleReplayBuffer);
-          }
+        videoEncoder?.release();
 
-          this.contexts[display].replayBuffer = (null as unknown) as
-            | ISimpleReplayBuffer
-            | IAdvancedReplayBuffer;
-          break;
+        this.contexts[display].recording = (null as unknown) as
+          | ISimpleRecording
+          | IAdvancedRecording;
+        break;
+      }
+      case 'replayBuffer': {
+        const instance = this.contexts[display][contextType];
+        if (this.isAdvancedReplayBuffer(instance)) {
+          AdvancedReplayBufferFactory.destroy(instance as IAdvancedReplayBuffer);
+        } else {
+          SimpleReplayBufferFactory.destroy(instance as ISimpleReplayBuffer);
         }
+
+        this.contexts[display].replayBuffer = (null as unknown) as
+          | ISimpleReplayBuffer
+          | IAdvancedReplayBuffer;
+        break;
       }
     }
 
