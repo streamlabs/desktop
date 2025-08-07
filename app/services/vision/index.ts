@@ -1,5 +1,5 @@
 import { ChildProcess, spawn } from 'child_process';
-import { Inject, Service } from 'services';
+import { InitAfter, Inject, Service } from 'services';
 import * as remote from '@electron/remote';
 import path from 'path';
 import { authorizedHeaders, downloadFile, IDownloadProgress, jfetch } from 'util/requests';
@@ -8,12 +8,14 @@ import { OutputStreamHandler } from 'services/platform-apps/api/modules/native-c
 import crypto from 'crypto';
 import { importExtractZip } from 'util/slow-imports';
 import { pipeline } from 'stream/promises';
-import { HostsService, UserService } from 'app-services';
+import { HostsService, SourcesService, UserService } from 'app-services';
 import { RealmObject } from 'services/realm';
 import { ObjectSchema } from 'realm';
 import http from 'http';
 import { AddressInfo } from 'net';
 import uuid from 'uuid/v4';
+import * as obs from '../../../obs-api';
+import { convertDotNotationToTree } from 'util/dot-tree';
 
 interface IVisionManifest {
   version: string;
@@ -49,6 +51,7 @@ export class VisionState extends RealmObject {
 
 VisionState.register();
 
+@InitAfter('UserService')
 export class VisionService extends Service {
   public basepath: string;
 
@@ -60,6 +63,7 @@ export class VisionService extends Service {
 
   @Inject() userService: UserService;
   @Inject() hostsService: HostsService;
+  @Inject() private sourcesService: SourcesService;
 
   state = VisionState.inject();
 
@@ -68,6 +72,35 @@ export class VisionService extends Service {
   init() {
     this.basepath = path.join(remote.app.getPath('userData'), '..', 'streamlabs-vision');
     this.manifestPath = path.resolve(this.basepath, 'manifest.json');
+
+
+    obs.NodeObs.RegisterSourceMessageCallback(async (evt: { sourceName: string; message: any; }[]) => {
+      console.log("SmartBrowserSourceManager: Received source message", evt);
+
+      for (const { sourceName, message } of evt) {
+        const source = this.sourcesService.views.getSource(sourceName)?.getObsInput();
+
+        if (!source) {
+          continue;
+        }
+
+        const keys = JSON.parse(message).keys;
+        const tree = convertDotNotationToTree(keys);
+        const res = await this.requestState({ query: tree });
+        const payload = JSON.stringify({
+          type: 'state.update',
+          message: res,
+          key: keys?.join(","),
+          event_id: uuid(),
+        });
+
+        console.log("SmartBrowserSourceManager: Sending message to source", sourceName, payload);
+
+        source.sendMessage({
+          message: payload
+        });
+      }
+    });
   }
 
   /**
