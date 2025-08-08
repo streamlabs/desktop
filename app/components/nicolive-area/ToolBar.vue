@@ -90,7 +90,6 @@
         <button
           v-else-if="programStatus === 'end'"
           @click="createProgram"
-          :disabled="isCreating"
           class="button button--primary"
         >
           番組作成
