@@ -959,15 +959,24 @@ export class StreamingService
   }
 
   get isStreaming() {
-    return this.state.streamingStatus !== EStreamingState.Offline;
+    return (
+      this.state.status.horizontal.streaming !== EStreamingState.Offline ||
+      this.state.status.vertical.streaming !== EStreamingState.Offline
+    );
   }
 
   get isRecording() {
-    return this.state.recordingStatus !== ERecordingState.Offline;
+    return (
+      this.state.status.horizontal.recording !== ERecordingState.Offline ||
+      this.state.status.vertical.recording !== ERecordingState.Offline
+    );
   }
 
   get isReplayBufferActive() {
-    return this.state.replayBufferStatus !== EReplayBufferState.Offline;
+    return (
+      this.state.status.horizontal.replayBuffer !== EReplayBufferState.Offline ||
+      this.state.status.vertical.replayBuffer !== EReplayBufferState.Offline
+    );
   }
 
   get isIdle(): boolean {
@@ -1202,15 +1211,13 @@ export class StreamingService
 
     // handle recording
     const keepRecording = this.streamSettingsService.settings.keepRecordingWhenStreamStops;
-    const isRecording = this.state.recordingStatus === ERecordingState.Recording;
-    if (!keepRecording && isRecording) {
+    if (!keepRecording && this.isRecording) {
       await this.toggleRecording();
     }
 
     // handle replay buffer
     const keepReplaying = this.streamSettingsService.settings.keepReplayBufferStreamStops;
-    const isReplayBufferRunning = this.state.replayBufferStatus === EReplayBufferState.Running;
-    if (!keepReplaying && isReplayBufferRunning) {
+    if (!keepReplaying && this.isReplayBufferActive) {
       this.stopReplayBuffer();
     }
 
@@ -1649,7 +1656,7 @@ export class StreamingService
       // Handle start recording when start streaming
       const recordWhenStreaming = this.streamSettingsService.settings.recordWhenStreaming;
 
-      if (recordWhenStreaming && this.state.recordingStatus === ERecordingState.Offline) {
+      if (recordWhenStreaming && this.isRecording) {
         await this.toggleRecording();
       }
 
@@ -1731,7 +1738,7 @@ export class StreamingService
       [EOBSOutputSignal.Starting]: ERecordingState.Starting,
       [EOBSOutputSignal.Start]: ERecordingState.Recording,
       [EOBSOutputSignal.Stop]: ERecordingState.Writing,
-      [EOBSOutputSignal.Stopping]: ERecordingState.Stopping,
+      [EOBSOutputSignal.Stopping]: ERecordingState.Writing,
       [EOBSOutputSignal.Wrote]: ERecordingState.Offline,
     } as Dictionary<ERecordingState>)[info.signal];
 
@@ -1771,6 +1778,10 @@ export class StreamingService
     }
 
     if (info.signal === EOutputSignalState.Wrote) {
+      console.log('setting status ', nextState, display, info);
+
+      this.SET_RECORDING_STATUS(nextState, display, new Date().toISOString());
+
       const fileName = this.contexts[display].recording.lastFile();
 
       const parsedName = byOS({
@@ -1788,12 +1799,8 @@ export class StreamingService
 
       this.latestRecordingPath.next(fileName);
 
-      const time = new Date().toISOString();
-
-      this.SET_RECORDING_STATUS(nextState, display, time);
-      this.recordingStatusChange.next(nextState);
-
       await this.handleDestroyOutputContexts(display);
+      this.recordingStatusChange.next(nextState);
       return;
     }
 
@@ -1842,31 +1849,6 @@ export class StreamingService
 
         await new Promise(resolve => setTimeout(resolve, 2000));
         this.contexts.vertical.replayBuffer.save();
-
-        // this.replayBufferFileWrite.next(this.contexts[display].replayBuffer.lastFile());
-        // return;
-
-        // TODO: figure out why the horizontal display loops writing until destroyed
-        // if (isDualOutputReplayBuffer && display === 'horizontal') {
-        //   console.log('Horizontal replay buffer file written');
-        //   this.logContexts(display, 'logging for wrote');
-        //   if (!this.contexts.vertical.replayBuffer) {
-        //     console.warn('Vertical replay buffer context does not exist but attempted to save.');
-        //     return;
-        //   }
-        //   console.log('Saving vertical replay buffer file');
-
-        //   this.contexts.vertical.replayBuffer.save();
-
-        //   // this.replayBufferFileWrite.next(this.contexts[display].replayBuffer.lastFile());
-        // } else if (isDualOutputReplayBuffer && display === 'vertical') {
-        //   console.log('Vertical replay buffer file written');
-
-        // } else {
-        //   console.log('saving file');
-
-        //   this.replayBufferFileWrite.next(this.contexts[display].replayBuffer.lastFile());
-        // }
       }
       this.replayBufferFileWrite.next(this.contexts[display].replayBuffer.lastFile());
     }
@@ -2065,29 +2047,6 @@ export class StreamingService
 
     if (!this.contexts[display].replayBuffer) return;
 
-    // if (
-    //   this.views.isDualOutputMode &&
-    //   this.state.status[display].replayBuffer === EReplayBufferState.Running
-    // ) {
-    //   // If the replay buffer is running in dual output mode, save the horizontal replay buffer
-    //   // and then save the vertical replay buffer.
-
-    //   // TODO: handle in stop signal for horizontal display but this signal is repeatedly writing
-    //   // the horizontal display in dual output recording (one or the other display works)
-    //   this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Saving, display, new Date().toISOString());
-    //   if (this.contexts.horizontal.replayBuffer) {
-    //     this.contexts.horizontal.replayBuffer.save();
-    //   }
-    //   if (this.contexts.vertical.replayBuffer) {
-    //     Promise.resolve(resolve => setTimeout(resolve, 2000)).then(() => {
-    //       this.contexts.vertical.replayBuffer.save();
-    //     });
-    //   }
-
-    //   return;
-    // }
-
-    // TODO: look at osn for NodeObs.OBS_service_processReplayBufferHotkey
     if (this.state.status[display].replayBuffer === EReplayBufferState.Running) {
       this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Saving, display, new Date().toISOString());
       this.contexts[display].replayBuffer.save();
@@ -2822,6 +2781,8 @@ export class StreamingService
   private SET_RECORDING_STATUS(status: ERecordingState, display: TDisplayType, time: string) {
     // while recording and the replay buffer are in the factory API and streaming is in the old API
     // we need to duplicate tracking the replay buffer status
+    console.log('SET_RECORDING_STATUS', status, display, time);
+
     this.state.status[display].recording = status;
     this.state.status[display].recordingTime = time;
     this.state.recordingStatus = status;

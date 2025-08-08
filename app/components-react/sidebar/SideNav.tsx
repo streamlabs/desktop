@@ -74,6 +74,8 @@ export default function SideNav() {
     if (sider && sider?.current) {
       resizeObserver.observe(sider?.current);
     }
+
+    return () => resizeObserver.disconnect();
   }, [sider]);
 
   return (

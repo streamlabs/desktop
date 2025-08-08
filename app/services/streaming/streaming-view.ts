@@ -670,7 +670,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get isRecording() {
-    return this.isHorizontalRecording || this.isVerticalRecording;
+    return (
+      this.streamingState.status.horizontal.recording !== ERecordingState.Offline ||
+      this.streamingState.status.vertical.recording !== ERecordingState.Offline
+    );
   }
 
   get isReplayBufferActive() {

@@ -212,25 +212,35 @@ export default function StudioFooterComponent() {
 
 function RecordingButton() {
   const { StreamingService } = Services;
-  const { isRecording, recordingStatus } = useVuex(() => ({
-    isRecording: StreamingService.views.isRecording,
-    recordingStatus: StreamingService.views.recordingStatus,
-  }));
+  const [recordingStatus, setRecordingStatus] = useState(ERecordingState.Offline);
+  const isRecording = recordingStatus !== ERecordingState.Offline;
 
   function toggleRecording() {
     StreamingService.actions.toggleRecording();
   }
 
+  useEffect(() => {
+    const subscription = StreamingService.recordingStatusChange.subscribe(status => {
+      console.log('Recording status changed:', status);
+
+      setRecordingStatus(status);
+    });
+
+    return subscription.unsubscribe;
+  }, []);
+
   return (
     <>
-      <RecordingTimer />
+      <RecordingTimer isRecording={isRecording} />
       <div className={styles.navItem}>
         <Tooltip
           placement="left"
           title={isRecording ? $t('Stop Recording') : $t('Start Recording')}
         >
           <button
-            className={cx(styles.recordButton, 'record-button', { active: isRecording })}
+            className={cx(styles.recordButton, 'record-button', {
+              active: isRecording,
+            })}
             onClick={useDebounce(200, toggleRecording)}
           >
             <span>
@@ -247,27 +257,23 @@ function RecordingButton() {
   );
 }
 
-function RecordingTimer() {
+function RecordingTimer(p: { isRecording: boolean }) {
   const { StreamingService } = Services;
   const [recordingTime, setRecordingTime] = useState('');
 
-  const { isRecording } = useVuex(() => ({
-    isRecording: StreamingService.views.isRecording,
-  }));
-
   useEffect(() => {
     let recordingTimeout: number | undefined;
-    if (isRecording) {
+    if (p.isRecording) {
       recordingTimeout = window.setTimeout(() => {
         setRecordingTime(StreamingService.formattedDurationInCurrentRecordingState);
       }, 1000);
-    } else if (recordingTime) {
+    } else if (recordingTime !== '') {
       setRecordingTime('');
     }
     return () => clearTimeout(recordingTimeout);
-  }, [isRecording, recordingTime]);
+  }, [p.isRecording, recordingTime]);
 
-  if (!isRecording) return <></>;
+  if (!p.isRecording) return <></>;
   return <div className={cx(styles.navItem, styles.recordTime)}>{recordingTime}</div>;
 }
 
@@ -288,7 +294,7 @@ function DualOutputRecordingButton() {
 
   return (
     <>
-      <RecordingTimer />
+      <RecordingTimer isRecording={isRecording} />
       <div className={styles.navItem}>
         <Tooltip
           placement="left"
