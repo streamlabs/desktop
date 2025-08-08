@@ -2,33 +2,29 @@
   <modal-layout :showControls="false">
     <div class="informations" slot="content" data-test="Informations">
       <ul class="information-list" v-if="!fetching && !hasError">
-        <li class="information-list-item" v-for="(information, index) in informations" :key="index">
+        <li
+          class="information-list-item"
+          :class="{ 'is-new': isNew(information.date) }"
+          v-for="(information, index) in informations"
+          :key="index"
+        >
           <a class="information-link" :href="information.url" @click="handleAnchorClick($event)">
-            <span class="information-label-new"
-              ><template v-if="shouldShowNewLabel(information.date)">NEW</template></span
-            >
-            <time class="information-date">{{ format(information.date) }}</time>
             <p class="information-title">{{ information.title }}</p>
+            <time class="information-date">{{ format(information.date) }}</time>
           </a>
         </li>
       </ul>
-      <div v-else-if="fetching">
-        <p>fetching...</p>
-      </div>
+      <p v-else-if="fetching" class="information-fetching">読み込み中...</p>
       <div class="information-error" v-else-if="hasError">
-        <i class="icon-warning"></i>
         <h2 class="error-title">{{ $t('informations.errorHeading') }}</h2>
-        <p class="error-text">
-          {{ $t('informations.errorDescription') }}
-        </p>
+        <p class="error-text">{{ $t('informations.errorDescription') }}</p>
         <i18n class="error-attention" path="informations.errorAttention" tag="p">
           <a
             place="link"
             href="https://blog.nicovideo.jp/niconews/category/se_n-air/"
             @click="handleAnchorClick($event)"
+            >{{ $t('informations.errorAttentionLink') }}</a
           >
-            {{ $t('informations.errorAttentionLink') }}
-          </a>
         </i18n>
       </div>
     </div>
@@ -43,105 +39,84 @@
 .informations {
   display: flex;
   flex-direction: column;
+  align-items: center;
   height: 100%;
 }
 
 .information-list {
   margin: -16px;
   list-style: none;
+  background: var(--color-background); // TODO: .modal-layoutの背景色を一括で変えるまでの暫定対応
 }
 
 .information-list-item {
-  border-bottom: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-emphasis-low);
+
+  &.is-new {
+    background-color: var(--color-highlight-medium);
+  }
 }
 
 .information-link {
-  position: relative;
   display: flex;
-  align-items: center;
-  padding: 16px 40px 16px 16px;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md) var(--spacing-lg);
+  line-height: var(--line-height-lg);
   text-decoration: none;
-
-  &::after {
-    position: absolute;
-    top: 50%;
-    right: 16px;
-    display: block;
-    width: 8px;
-    height: 8px;
-    content: '';
-    border-color: var(--color-text);
-    border-style: solid;
-    border-width: 1px 1px 0 0;
-    transform: rotate(45deg) translateY(-50%);
-  }
 
   &:hover {
     background-color: var(--color-bg-active);
-
-    &::after {
-      border-color: var(--color-text-light);
-    }
   }
 }
 
-.information-label-new {
-  flex-basis: 32px;
-  flex-shrink: 0;
-  font-size: @font-size1;
-  font-weight: @font-weight-bold;
-  line-height: 16px;
-  color: var(--color-text-light);
-  text-align: center;
-  background-color: var(--color-accent);
-}
-
 .information-date {
-  margin-left: 16px;
-  color: var(--color-text-dark);
-  white-space: nowrap;
+  font-size: var(--font-size-xs);
+  color: var(--color-object-emphasis-low);
 }
 
 .information-title {
   margin: 0;
-  margin-left: 16px;
-  overflow: hidden;
-  color: @white;
+  font-size: var(--font-size-sm);
+  color: var(--color-object-emphasis-high);
   text-decoration: none;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.information-fetching {
+  margin: auto;
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-lg);
+  color: var(--color-object-emphasis-low);
 }
 
 .information-error {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  gap: var(--spacing-sm);
   align-items: center;
   justify-content: center;
-}
-
-.icon-warning {
-  margin-bottom: 16px;
-  font-size: 70px;
-  color: var(--color-text);
+  line-height: var(--line-height-lg);
 }
 
 .error-title {
-  margin-bottom: 12px;
-  font-size: @font-size5;
-  font-weight: @font-weight-bold;
-  color: var(--color-text-light);
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: bold;
+  color: var(--color-object-emphasis-high);
 }
 
 .error-text {
-  color: @grey;
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-object-emphasis-medium);
   text-align: center;
   white-space: pre-line;
 }
 
 .error-attention {
   margin-bottom: 0;
-  font-size: @font-size2;
-  color: var(--color-text-dark);
+  font-size: var(--font-size-sm);
+  color: var(--color-object-emphasis-medium);
 }
 </style>
