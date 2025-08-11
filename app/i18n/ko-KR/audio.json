@@ -42,5 +42,7 @@
   "Desktop Audio Device 2": "데스크톱 오디오 디바이스 2",
   "Mic/Auxiliary Device 1": "마이크/보조 디바이스 1",
   "Mic/Auxiliary Device 2": "마이크/보조 디바이스 2",
-  "Mic/Auxiliary Device 3": "마이크/보조 디바이스 3"
+  "Mic/Auxiliary Device 3": "마이크/보조 디바이스 3",
+  "Recording Audio Encoder": "Recording Audio Encoder",
+  "Enable Muted Notifications": "Enable Muted Notifications"
 }
