@@ -70,7 +70,6 @@ const base = {
   },
   mac: {
     identity: (process.env.APPLE_SLD_IDENTITY) ? process.env.APPLE_SLD_IDENTITY : 'Streamlabs LLC (UT675MBB9Q)',
-    provisioningProfile: process.env.APPLE_DEVELOPER_PROVISIONING_PROFILE,
     extraFiles: [
       'shared-resources/**/*',
       '!shared-resources/README',

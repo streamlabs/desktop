@@ -180,6 +180,7 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
         this.setInstallStatus();
       },
       [OS.Mac]: () => {
+        /*
         this.signalsService.addCallback(this.handleSignalOutput);
 
         const errorCode = obs.NodeObs.OBS_service_installVirtualCamPlugin();
@@ -192,7 +193,7 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
             this.setInstallStatus();
             obs.NodeObs.OBS_service_createVirtualCam();
           });
-        }
+        }*/
       },
     });
   }
