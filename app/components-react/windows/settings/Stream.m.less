@@ -1,18 +1,86 @@
 @import '../../../styles/index.less';
-
-.platform-button {
-  min-width: 100px;
+.stream-header-wrapper {
+  display: flex;
+  justify-content: space-between;
 }
 
-.platform-logo {
-  width: 50px !important;
-  height: 50px !important;
+.target-cards-wrapper {
+  display: flex;
+  flex-direction: column;
 }
 
-.prime {
+.target-card {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  width: 100%;
+}
+
+.target-data {
+  flex: 1;
+}
+
+.target-logo {
+  margin-right: 10px;
+  align-self: center;
+  font-size: 36px;
+
+  &.youtube {
+    align-self: flex-end;
+  }
+
+  &.twitter {
+    width: 30px !important;
+    height: 30px !important;
+  }
+}
+
+.target-type {
+  font-weight: 600;
+  color: var(--link-active);
+}
+
+.target-name {
+  font-size: 13px;
+}
+
+.ultra {
   margin-right: 16px;
   font-style: italic;
   color: var(--prime-hover);
+}
+
+.ultra-text {
+  display: flex;
+  align-items: center;
+  margin: 15px 0px;
+  font-size: 14px;
+  font-weight: 500;
+
+  border-bottom: 1px solid
+    linear-gradient(123.53deg, #2de8b0 0%, #cbe953 45%, #ffab48 65%, #ff5151 100%) !important;
+  white-space: normal;
+  background-image: linear-gradient(123.53deg, #2de8b0 0%, #cbe953 45%, #ffab48 65%, #ff5151 100%);
+  background-clip: text;
+  color: transparent;
+
+  &:hover {
+    cursor: pointer;
+    opacity: 0.7;
+  }
+}
+
+.add-more {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: unset;
+  color: var(--primary) !important;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--link-active);
+  }
 }
 
 .action-icon {
@@ -32,10 +100,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.destination-logo {
-  font-size: 40px;
 }
 
 .add-destination-btn {
@@ -83,4 +147,14 @@
 
 .section {
   padding-bottom: 1px;
+}
+
+.custom-destinations {
+  margin: 15px 0px;
+}
+
+a.custom-dest {
+  font-size: 15px;
+  text-decoration: underline;
+  margin: 10px 0px;
 }

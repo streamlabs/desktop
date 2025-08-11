@@ -114,14 +114,14 @@ export default function UltraIcon({ type, className, style }: IUltraIcon) {
         style={style}
       >
         <path
-          fill-rule="evenodd"
-          clip-rule="evenodd"
+          fillRule="evenodd"
+          clipRule="evenodd"
           d="M12.8327 3.12958C12.4636 2.57457 11.7146 2.42381 11.1596 2.79284C10.6046 3.16187 10.4538 3.91095 10.8228 4.46595C11.3053 5.19155 11.5864 6.06153 11.5864 7.00083C11.5864 9.53338 9.53338 11.5864 7.00083 11.5864C6.06153 11.5864 5.19155 11.3053 4.46595 10.8228C3.91095 10.4538 3.16187 10.6046 2.79284 11.1596C2.42381 11.7146 2.57457 12.4636 3.12958 12.8327C4.23886 13.5703 5.57149 14 7.00083 14C10.8664 14 14 10.8664 14 7.00083C14 5.57149 13.5703 4.23886 12.8327 3.12958ZM6.99941 8.93029C8.06581 8.93029 8.93029 8.06581 8.93029 6.99941C8.93029 5.93302 8.06581 5.06854 6.99941 5.06854C5.93302 5.06854 5.06854 5.93302 5.06854 6.99941C5.06854 8.06581 5.93302 8.93029 6.99941 8.93029Z"
           fill="url(#paint0_linear_52_1537)"
         />
         <path
-          fill-rule="evenodd"
-          clip-rule="evenodd"
+          fillRule="evenodd"
+          clipRule="evenodd"
           d="M6.99917 2.41359C4.46662 2.41359 2.41359 4.46662 2.41359 6.99917C2.41359 7.66566 1.87329 8.20596 1.2068 8.20596C0.540301 8.20596 0 7.66566 0 6.99917C0 3.13363 3.13363 0 6.99917 0C7.66566 0 8.20596 0.540301 8.20596 1.2068C8.20596 1.87329 7.66566 2.41359 6.99917 2.41359Z"
           fill="url(#paint1_linear_52_1537)"
         />
@@ -134,10 +134,10 @@ export default function UltraIcon({ type, className, style }: IUltraIcon) {
             y2="13.5012"
             gradientUnits="userSpaceOnUse"
           >
-            <stop stop-color="#2DE8B0" />
-            <stop offset="0.488027" stop-color="#CBE953" />
-            <stop offset="0.758621" stop-color="#FFAB48" />
-            <stop offset="1" stop-color="#FF5151" />
+            <stop stopColor="#2DE8B0" />
+            <stop offset="0.488027" stopColor="#CBE953" />
+            <stop offset="0.758621" stopColor="#FFAB48" />
+            <stop offset="1" stopColor="#FF5151" />
           </linearGradient>
           <linearGradient
             id="paint1_linear_52_1537"
@@ -147,10 +147,10 @@ export default function UltraIcon({ type, className, style }: IUltraIcon) {
             y2="13.5012"
             gradientUnits="userSpaceOnUse"
           >
-            <stop stop-color="#2DE8B0" />
-            <stop offset="0.488027" stop-color="#CBE953" />
-            <stop offset="0.758621" stop-color="#FFAB48" />
-            <stop offset="1" stop-color="#FF5151" />
+            <stop stopColor="#2DE8B0" />
+            <stop offset="0.488027" stopColor="#CBE953" />
+            <stop offset="0.758621" stopColor="#FFAB48" />
+            <stop offset="1" stopColor="#FF5151" />
           </linearGradient>
         </defs>
       </svg>

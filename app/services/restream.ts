@@ -273,8 +273,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
       streamSwitch: true,
     });
 
-    console.log('setEnabled body', body);
-
     const request = new Request(url, { headers, body, method: 'PUT' });
 
     return jfetch(request);
@@ -282,8 +280,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   async beforeGoLive() {
     if (!this.streamInfo.getIsValidRestreamConfig()) {
-      console.log('Restream config is not valid, skipping setup');
-
       throwStreamError('RESTREAM_SETUP_FAILED');
     }
 
@@ -427,20 +423,14 @@ export class RestreamService extends StatefulService<IRestreamState> {
       const filteredTargets = newTargets.filter(
         target => target.mode && modesToRestream.includes(target.mode),
       );
-
-      console.log('filteredTargets', filteredTargets);
-
       await this.createTargets(filteredTargets);
     } else {
-      console.log('newTargets', newTargets);
       // in single output mode, create all targets
       await this.createTargets(newTargets);
     }
   }
 
   checkStatus(): Promise<boolean> {
-    console.log('Checking restream status...');
-
     const url = `https://${this.host}/api/v1/rst/util/status`;
     const request = new Request(url);
 
@@ -554,7 +544,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
     const request = new Request(url, { headers, body, method: 'POST' });
 
     const res = await fetch(request);
-    console.log('res', res);
     return res.json();
   }
 

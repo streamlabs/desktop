@@ -446,8 +446,6 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     }
 
     this.websocketService.socketEvent.subscribe(async event => {
-      console.log('event', JSON.stringify(event, null, 2));
-
       if (event.type === 'slid.force_logout') {
         await this.clearForceLoginStatus();
         await this.reauthenticate(false, {

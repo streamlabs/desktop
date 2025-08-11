@@ -15,6 +15,7 @@ import { ObsGenericSettingsForm } from './ObsSettings';
 import css from './Stream.m.less';
 import cx from 'classnames';
 import { Button, message, Tooltip } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import PlatformLogo from '../../shared/PlatformLogo';
 import { injectState, mutation, useModule } from 'slap';
 import UltraIcon from 'components-react/shared/UltraIcon';
@@ -28,6 +29,8 @@ import { metadata } from 'components-react/shared/inputs/metadata';
 import FormFactory, { TInputValue } from 'components-react/shared/inputs/FormFactory';
 import { alertAsync } from '../../modals';
 import { EAuthProcessState } from '../../../services/user';
+
+const PlusIcon = PlusOutlined as Function;
 
 function censorWord(str: string) {
   if (str.length < 3) return str;
@@ -301,22 +304,38 @@ export function StreamSettings() {
     <div className={css.section}>
       {/* account info */}
       {protectedModeEnabled && (
-        <div>
+        <div className={css.protectedMode}>
           <h2>{$t('Streamlabs ID')}</h2>
           <SLIDBlock />
-          <h2>{$t('Stream Destinations')}</h2>
+          <div className={css.streamHeaderWrapper}>
+            <h2 style={{ flex: 1 }}>{$t('Stream Destinations')}</h2>
+            <div className={css.addMore}>
+              <a target="#customDestForm" style={{ fontSize: '16px', color: 'var(--primary)' }}>
+                <PlusIcon style={{ paddingRight: '5px', color: 'var(--primary)' }} />
+                {$t('Add More')}
+              </a>
+            </div>
+          </div>
+          <div className={css.ultraText}>
+            <UltraIcon type="badge" style={{ marginRight: '5px' }} />
+            <div onClick={() => Services.MagicLinkService.linkToPrime('slobs-stream-settings')}>
+              {$t('Upgrade to Ultra to stream to multiple platforms simultaneously!')}
+            </div>
+          </div>
           {platforms.map(platform => (
             <Platform key={platform} platform={platform} />
           ))}
 
-          <CustomDestinationList />
-
           {canEditSettings && (
-            <p>
-              <br />
-              <a onClick={disableProtectedMode}>{$t('Stream to custom ingest')}</a>
-            </p>
+            <a
+              className={css.customDest}
+              onClick={disableProtectedMode}
+              style={{ marginBottom: '10px' }}
+            >
+              {$t('Stream to custom ingest')}
+            </a>
           )}
+          <CustomDestinationList />
         </div>
       )}
 
@@ -373,45 +392,35 @@ function SLIDBlock() {
   }
 
   return (
-    <div className="section">
-      <div className="flex">
-        <div className="margin-right--20" style={{ width: '50px' }}>
-          <PlatformLogo className={css.platformLogo} size="medium" platform="streamlabs" />
-        </div>
-        <div>
-          {hasSLID ? (
-            <div>
-              Streamlabs <br />
-              {username && <b>{censorEmail(username)}</b>}
-            </div>
-          ) : (
-            <Translate message={$t('slidConnectMessage')} />
-          )}
-        </div>
-        {!hasSLID && (
+    <div className={cx('section flex', css.targetCard)}>
+      <PlatformLogo className={css.targetLogo} size="medium" platform="streamlabs" />
+
+      <div className={css.targetData}>
+        {hasSLID && username ? (
+          <b>{censorEmail(username)}</b>
+        ) : (
+          <Translate message={$t('slidConnectMessage')} />
+        )}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        {hasSLID ? (
+          <>
+            <a
+              style={{ fontWeight: 400, marginRight: 10, textDecoration: 'underline' }}
+              onClick={openPasswordLink}
+            >
+              {$t('Update Password')}
+            </a>
+            <a style={{ fontWeight: 400, textDecoration: 'underline' }} onClick={openTwoFactorLink}>
+              {$t('Update Two-factor Auth')}
+            </a>
+          </>
+        ) : (
           <Button type="primary" onClick={mergeSLID}>
             {$t('Setup')}
           </Button>
         )}
       </div>
-      {hasSLID && (
-        <div
-          style={{ margin: '10px -16px', height: 2, backgroundColor: 'var(--background)' }}
-        ></div>
-      )}
-      {hasSLID && (
-        <div style={{ display: 'flex', justifyContent: 'right' }}>
-          <a
-            style={{ fontWeight: 400, marginRight: 10, textDecoration: 'underline' }}
-            onClick={openPasswordLink}
-          >
-            {$t('Update Password')}
-          </a>
-          <a style={{ fontWeight: 400, textDecoration: 'underline' }} onClick={openTwoFactorLink}>
-            {$t('Update Two-factor Auth')}
-          </a>
-        </div>
-      )}
     </div>
   );
 }
@@ -511,20 +520,27 @@ function Platform(p: { platform: TPlatform }) {
   };
 
   return (
-    <div className="section flex" style={{ marginBottom: 16, flexDirection: 'column' }}>
-      <div className="flex">
-        <div className="margin-right--20" style={{ width: '50px' }}>
-          <PlatformLogo className={css.platformLogo} size={50} platform={platform} />
-        </div>
+    <div className="section">
+      <div className={css.targetCard}>
+        <PlatformLogo
+          className={cx(css.targetLogo, {
+            [css.youtube]: platform === 'youtube',
+            [css.twitter]: platform === 'twitter',
+          })}
+          size={36}
+          platform={platform}
+        />
 
-        <div style={{ alignSelf: 'center' }}>
-          {platformName}
+        <div className={css.targetData}>
+          <span className={css.targetType}>{platformName}</span>
           {isMerged ? (
-            usernameOrBlank
+            <span className={css.targetName}>{usernameOrBlank}</span>
           ) : (
             <>
               <br />
-              <span style={{ opacity: '0.5' }}>{$t('unlinked')}</span>
+              <span className={css.targetName} style={{ opacity: '0.5' }}>
+                {$t('unlinked')}
+              </span>
               <br />
             </>
           )}
@@ -572,10 +588,12 @@ function CustomDestinationList() {
   const shouldShowPrimeLabel = !isPrime && destinations.length > 0;
 
   return (
-    <div>
-      {destinations.map((dest, ind) => (
-        <CustomDestination key={ind} ind={ind} destination={dest} />
-      ))}
+    <div className={css.customDestinations}>
+      <div className={css.targetCardsWrapper}>
+        {destinations.map((dest, ind) => (
+          <CustomDestination key={ind} ind={ind} destination={dest} />
+        ))}
+      </div>
       {!isEditMode && canAddMoreDestinations && (
         <a className={css.addDestinationBtn} onClick={() => addCustomDest(shouldShowPrimeLabel)}>
           <i className={cx('fa fa-plus', css.plus)} />
@@ -589,16 +607,12 @@ function CustomDestinationList() {
               icon={<UltraIcon type="simple" />}
             />
           ) : (
-            <div className={css.prime} />
+            <div className={css.ultra} />
           )}
         </a>
       )}
       {!canAddMoreDestinations && <p>{$t('Maximum custom destinations has been added')}</p>}
-      {shouldShowAddForm && (
-        <div className="section">
-          <CustomDestForm />
-        </div>
-      )}
+      {shouldShowAddForm && <CustomDestForm />}
     </div>
   );
 }
@@ -610,14 +624,13 @@ function CustomDestination(p: { destination: ICustomStreamDestination; ind: numb
   const { editCustomDestMode, removeCustomDest, editCustomDest } = useStreamSettings();
   const isEditMode = editCustomDestMode === p.ind;
   return (
-    <div className="section">
-      <div className="flex">
-        <div className="margin-right--20" style={{ width: '50px' }}>
-          <i className={cx(css.destinationLogo, 'fa fa-globe')} />
-        </div>
-        <div className={css.destinationName}>
-          <span>{p.destination.name}</span> <br />
-          {p.destination.url}
+    <div className="section flex--column">
+      <div className={css.targetCard}>
+        <i className={cx(css.targetLogo, 'fa fa-globe')} />
+
+        <div className={cx({ [css.targetData]: isEditMode })}>
+          <span className={css.targetType}>{p.destination.name}</span> <br />
+          <span className={css.targetName}>{p.destination.url}</span>
           <br />
         </div>
 
@@ -671,15 +684,13 @@ function CustomDestForm() {
   }
 
   return (
-    <>
-      <FormFactory
-        metadata={meta}
-        values={formValues}
-        name="customDestForm"
-        onChange={editField}
-        onSubmit={saveCustomDest}
-        onCancel={stopEditing}
-      />
-    </>
+    <FormFactory
+      metadata={meta}
+      values={formValues}
+      name="customDestForm"
+      onChange={editField}
+      onSubmit={saveCustomDest}
+      onCancel={stopEditing}
+    />
   );
 }

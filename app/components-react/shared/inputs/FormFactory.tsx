@@ -57,6 +57,7 @@ export default function FormFactory(p: {
   return (
     <Form
       {...p.formOptions}
+      id={p.name}
       name={p.name}
       form={form}
       onFieldsChange={() => debounce(form.validateFields, 500)()}
