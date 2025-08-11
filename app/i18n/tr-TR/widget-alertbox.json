@@ -154,5 +154,6 @@
   "This applies to all alerts. If enabled all alerts need to be approved manually.": "Bu tüm uyarılar için geçerlidir. Etkinse tüm uyarıların el ile onaylanması gerekir.",
   "Use unlimited delay": "Sınırsız gecikme kullan",
   "When enabled new alerts will interrupt the on screen alert": "Etkinleştirildiğinde yeni uyarılar ekran uyarısını kesintiye uğratacaktır",
-  "Text Highlight Color": "Metin vurgu rengi"
+  "Text Highlight Color": "Metin vurgu rengi",
+  "Platforms: Twitch, YouTube, Facebook, Trovo & integrations": "Platforms: Twitch, YouTube, Facebook, Trovo & integrations"
 }
