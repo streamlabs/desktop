@@ -15,7 +15,7 @@ function signApps(context) {
     const use_entitlement = exe === installerPath ? installer_entitlements : extension_entitlements;
     console.log(`using entitlement ${use_entitlement}`);
     cp.execSync(
-      `codesign --sign "Developer ID Application: ${context.packager.config.mac.identity}" ${use_entitlement} -o runtime --timestamp --force --verbose "${exe}"`,
+      `codesign --sign "${context.packager.config.mac.identity}" ${use_entitlement} -o runtime --timestamp --force --verbose "${exe}"`,
     );
 
     // All files need to be writable for update to succeed on mac
