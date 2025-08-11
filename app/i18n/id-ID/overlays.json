@@ -22,8 +22,8 @@
   "default_width": "default_width",
   "default_height": "default_height",
   "GameCapture.WindowInternalMode": "GameCapture.WindowInternalMode",
-  "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.",
-  "Show Components Library": "Show Components Library",
-  "Convert Dual Output Scene Collection": "Convert Dual Output Scene Collection",
-  "Repair Scene Collection": "Repair Scene Collection"
+  "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "Di bawah ini akan membuat salinan koleksi scene aktif, menetapkan salinan sebagai koleksi aktif, kemudian menghapus semua sumber vertikal.",
+  "Show Components Library": "Tampilkan Perpustakaan Komponen",
+  "Convert Dual Output Scene Collection": "Mengonversi Koleksi Adegan Dual Output",
+  "Repair Scene Collection": "Koleksi Adegan Perbaikan"
 }
