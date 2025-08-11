@@ -154,5 +154,6 @@
   "This applies to all alerts. If enabled all alerts need to be approved manually.": "Ez vonatkozik minden értesítésre. Ha engedélyezve van, az összes értesítés manuálisan kell jóváhagyni.",
   "Use unlimited delay": "Use unlimited delay",
   "When enabled new alerts will interrupt the on screen alert": "When enabled new alerts will interrupt the on screen alert",
-  "Text Highlight Color": "Szövegkiemelő szín"
+  "Text Highlight Color": "Szövegkiemelő szín",
+  "Platforms: Twitch, YouTube, Facebook, Trovo & integrations": "Platforms: Twitch, YouTube, Facebook, Trovo & integrations"
 }
