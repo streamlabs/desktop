@@ -22,8 +22,8 @@
   "default_width": "default_width",
   "default_height": "default_height",
   "GameCapture.WindowInternalMode": "GameCapture.WindowInternalMode",
-  "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.",
-  "Show Components Library": "Show Components Library",
-  "Convert Dual Output Scene Collection": "Convert Dual Output Scene Collection",
-  "Repair Scene Collection": "Repair Scene Collection"
+  "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "以下で、アクティブなシーンコレクションのコピーを作成し、そのコピーをアクティブなコレクションとして設定したら、垂直方向のソースをすべて削除します。",
+  "Show Components Library": "コンポーネントライブラリを表示",
+  "Convert Dual Output Scene Collection": "Dual Outputシーンコレクションを変換",
+  "Repair Scene Collection": "シーンコレクションを修正"
 }
