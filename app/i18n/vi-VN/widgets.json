@@ -2,10 +2,12 @@
   "Add Widgets": "Add Widgets",
   "Select the Streamlabs widgets you would like to activate for your stream. These will get automatically added to your scene.": "Select the Streamlabs widgets you would like to activate for your stream. These will get automatically added to your scene.",
   "Thanks viewers with notification popups": "Thanks viewers with notification popups",
+  "Custom on-screen alerts to thank your loyal viewers for following, subbing, tipping and more.": "Custom on-screen alerts to thank your loyal viewers for following, subbing, tipping and more.",
   "Most recent events into your stream": "Most recent events into your stream",
   "A jar that catches bits, tips, and more": "A jar that catches bits, tips, and more",
   "Your channel's chat in your stream": "Your channel's chat in your stream",
   "Show off most recent donations to viewers": "Show off most recent donations to viewers",
+  "Show off the most recent tips from your viewers": "Show off the most recent tips from your viewers",
   "Give your viewers a donation target to help you reach": "Give your viewers a donation target to help you reach",
   "Give your viewers a follower target to help you reach": "Give your viewers a follower target to help you reach",
   "Give your viewers a bit target to help you reach": "Give your viewers a bit target to help you reach",
@@ -70,6 +72,7 @@
   "Ember amount is at least <amount>": "Ember amount is at least <amount>",
   "Ember amount is exactly <amopunt>": "Ember amount is exactly <amopunt>",
   "Allow your viewers to donate to share media on your stream.": "Allow your viewers to donate to share media on your stream.",
+  "Allow your viewers to tip to share videos on your stream.": "Allow your viewers to tip to share videos on your stream.",
   "Twitch Subscribers": "Twitch Subscribers",
   "YouTube Members": "YouTube Members",
   "Media Share": "Media Share",
@@ -188,5 +191,9 @@
   "Superchat Goal": "Superchat Goal",
   "YouTube Superchats": "YouTube Superchats",
   "Custom Widget": "Custom Widget",
-  "Use HTML, CSS, and JavaScript to create a widget with custom functionality": "Use HTML, CSS, and JavaScript to create a widget with custom functionality"
+  "Use HTML, CSS, and JavaScript to create a widget with custom functionality": "Use HTML, CSS, and JavaScript to create a widget with custom functionality",
+  "Interactive": "Interactive",
+  "Goals": "Goals",
+  "Flair": "Flair",
+  "Charity": "Charity"
 }
