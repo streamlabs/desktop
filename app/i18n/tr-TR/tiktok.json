@@ -21,10 +21,11 @@
   "TikTok Category": "TikTok Kategorisi",
   "TikTok Live Access not granted. Click here to learn more.": "TikTok Canlı Erişim izni verilmedi. Daha fazla bilgi için buraya tıklayın.",
   "Only 32 characters of your title will display on TikTok": "TikTok'ta başlığınızın yalnızca 32 karakteri görüntülenecektir",
-  "You may be eligible for TikTok Live Access. <apply>Apply here.</apply>": "TikTok Canlı Erişim için uygun olabilirsiniz. <apply>Buradan başvurun.</apply>",
+  "You may be eligible for TikTok Live Access. Apply here.": "You may be eligible for TikTok Live Access. Apply here.",
   "Click to view TikTok Replay in your browser.": "TikTok Tekrarını tarayıcınızda görüntülemek için tıklayın.",
   "TikTok Stream Error": "TikTok Yayın Hatası",
   "Couldn't confirm TikTok Live Access. Apply for Live Permissions below": "TikTok Canlı Erişimi onaylanamadı. Canlı İzinler için aşağıdan başvurun",
-  "Connect your TikTok account": "Connect your TikTok account",
-  "Connect your TikTok account to stream to TikTok and one other platform for free. Haven't applied to stream on TikTok Live yet? <link>Start the process here</link>.": "Connect your TikTok account to stream to TikTok and one other platform for free. Haven't applied to stream on TikTok Live yet? <link>Start the process here</link>."
+  "Connect your TikTok account": "TikTok hesabınızı bağlayın",
+  "Connect your TikTok account to stream to TikTok and one other platform for free. Haven't applied to stream on TikTok Live yet? <link>Start the process here</link>.": "TikTok'a ve başka bir platforma ücretsiz yayın yapmak için TikTok hesabınızı bağlayın. TikTok Canlı’da yayın yapmak için henüz başvurmadınız mı? <link>Süreci buradan başlatın</link>.",
+  "Reapply for TikTok Live Permission. Reapply here.": "Reapply for TikTok Live Permission. Reapply here."
 }
