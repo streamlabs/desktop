@@ -42,5 +42,7 @@
   "Desktop Audio Device 2": "桌面音訊裝置 2",
   "Mic/Auxiliary Device 1": "麥克風/輔助裝置 1",
   "Mic/Auxiliary Device 2": "麥克風/輔助裝置 2",
-  "Mic/Auxiliary Device 3": "麥克風/輔助裝置 3"
+  "Mic/Auxiliary Device 3": "麥克風/輔助裝置 3",
+  "Recording Audio Encoder": "Recording Audio Encoder",
+  "Enable Muted Notifications": "Enable Muted Notifications"
 }
