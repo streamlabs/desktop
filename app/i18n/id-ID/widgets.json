@@ -2,10 +2,12 @@
   "Add Widgets": "Tambahkan Widget",
   "Select the Streamlabs widgets you would like to activate for your stream. These will get automatically added to your scene.": "Pilih widget Streamlabs yang ingin Anda aktifkan untuk streaming Anda. Semua ini secara otomatis akan ditambahkan ke scene Anda.",
   "Thanks viewers with notification popups": "Ucapkan terima kasih kepada pemirsa dengan popup notifikasi",
+  "Custom on-screen alerts to thank your loyal viewers for following, subbing, tipping and more.": "Custom on-screen alerts to thank your loyal viewers for following, subbing, tipping and more.",
   "Most recent events into your stream": "Acara terbaru di streaming Anda",
   "A jar that catches bits, tips, and more": "Kendi yang menangkap bit, tips, dan masih banyak lagi",
   "Your channel's chat in your stream": "Obrolan channel Anda di streaming Anda",
   "Show off most recent donations to viewers": "Tampilkan donasi terbaru kepada pemirsa",
+  "Show off the most recent tips from your viewers": "Show off the most recent tips from your viewers",
   "Give your viewers a donation target to help you reach": "Berikan target donasi kepada pemirsa untuk membantu Anda mencapai",
   "Give your viewers a follower target to help you reach": "Berikan target pengikut kepada pemirsa untuk membantu Anda mencapai",
   "Give your viewers a bit target to help you reach": "Berikan target bit kepada pemirsa untuk membantu Anda mencapai",
@@ -70,6 +72,7 @@
   "Ember amount is at least <amount>": "Jumlah Ember setidaknya <amount>",
   "Ember amount is exactly <amopunt>": "Jumlah Ember adalah <amopunt>",
   "Allow your viewers to donate to share media on your stream.": "Allow your viewers to donate to share media on your stream.",
+  "Allow your viewers to tip to share videos on your stream.": "Allow your viewers to tip to share videos on your stream.",
   "Twitch Subscribers": "Pelanggan Twitch",
   "YouTube Members": "Anggota YouTube",
   "Media Share": "Berbagi Media",
@@ -188,5 +191,9 @@
   "Superchat Goal": "Target Super Chat",
   "YouTube Superchats": "Super Chat YouTube",
   "Custom Widget": "Widget Khusus",
-  "Use HTML, CSS, and JavaScript to create a widget with custom functionality": "Gunakan HTML, CSS, dan JavaScript untuk membuat sebuah widget dengan fungsionalitas khusus"
+  "Use HTML, CSS, and JavaScript to create a widget with custom functionality": "Gunakan HTML, CSS, dan JavaScript untuk membuat sebuah widget dengan fungsionalitas khusus",
+  "Interactive": "Interactive",
+  "Goals": "Goals",
+  "Flair": "Flair",
+  "Charity": "Charity"
 }
