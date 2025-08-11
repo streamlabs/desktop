@@ -42,5 +42,7 @@
   "Desktop Audio Device 2": "2. asztali hang",
   "Mic/Auxiliary Device 1": "1. mikrofon/aux hang",
   "Mic/Auxiliary Device 2": "2. mikrofon/aux hang",
-  "Mic/Auxiliary Device 3": "3. mikrofon/aux hang"
+  "Mic/Auxiliary Device 3": "3. mikrofon/aux hang",
+  "Recording Audio Encoder": "Recording Audio Encoder",
+  "Enable Muted Notifications": "Enable Muted Notifications"
 }
