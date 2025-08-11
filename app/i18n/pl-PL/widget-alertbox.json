@@ -154,5 +154,6 @@
   "This applies to all alerts. If enabled all alerts need to be approved manually.": "Dotyczy to wszystkich powiadomień. Jeśli opcja ta jest włączona, każde powiadomienie trzeba zatwierdzić ręcznie.",
   "Use unlimited delay": "Użyj nieograniczonego opóźnienia",
   "When enabled new alerts will interrupt the on screen alert": "Gdy opcja ta jest włączona, nowe powiadomienia będą przerywać powiadomienia wyświetlane",
-  "Text Highlight Color": "Kolor zakreślenia tekstu"
+  "Text Highlight Color": "Kolor zakreślenia tekstu",
+  "Platforms: Twitch, YouTube, Facebook, Trovo & integrations": "Platforms: Twitch, YouTube, Facebook, Trovo & integrations"
 }
