@@ -22,8 +22,8 @@
   "default_width": "default_width",
   "default_height": "default_height",
   "GameCapture.WindowInternalMode": "GameCapture.WindowInternalMode",
-  "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.",
-  "Show Components Library": "Show Components Library",
-  "Convert Dual Output Scene Collection": "Convert Dual Output Scene Collection",
-  "Repair Scene Collection": "Repair Scene Collection"
+  "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "下面将创建活动场景集的副本，将副本设置为活动集，然后移除所有纵向资源。",
+  "Show Components Library": "显示组件库",
+  "Convert Dual Output Scene Collection": "转换 Dual Output 场景集",
+  "Repair Scene Collection": "修复场景集"
 }
