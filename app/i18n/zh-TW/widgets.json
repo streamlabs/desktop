@@ -2,10 +2,12 @@
   "Add Widgets": "新增小程式",
   "Select the Streamlabs widgets you would like to activate for your stream. These will get automatically added to your scene.": "選擇要在您的直播啟用的 Streamlabs 小程式。這些會自動加入到您的場景中。",
   "Thanks viewers with notification popups": "使用彈出式通知感謝觀眾。",
+  "Custom on-screen alerts to thank your loyal viewers for following, subbing, tipping and more.": "Custom on-screen alerts to thank your loyal viewers for following, subbing, tipping and more.",
   "Most recent events into your stream": "進入直播的最新事件",
   "A jar that catches bits, tips, and more": "擷取小奇點、提示等的容器",
   "Your channel's chat in your stream": "在您直播中的您的頻道聊天室",
   "Show off most recent donations to viewers": "向觀眾顯示最近收到的捐贈",
+  "Show off the most recent tips from your viewers": "Show off the most recent tips from your viewers",
   "Give your viewers a donation target to help you reach": "給予要觀眾協助您達成的捐贈目標",
   "Give your viewers a follower target to help you reach": "給予要觀眾協助您達成的關注者目標",
   "Give your viewers a bit target to help you reach": "給予要觀眾協助您達成的小奇點目標",
@@ -70,6 +72,7 @@
   "Ember amount is at least <amount>": "Ember 金額至少為 <amount>",
   "Ember amount is exactly <amopunt>": "Ember 的精確金額為 <amopunt>",
   "Allow your viewers to donate to share media on your stream.": "讓你的觀眾可以對您的直播進行贊助與分享媒體。",
+  "Allow your viewers to tip to share videos on your stream.": "Allow your viewers to tip to share videos on your stream.",
   "Twitch Subscribers": "Twitch 訂閱者",
   "YouTube Members": "YouTube 會員",
   "Media Share": "媒體分享",
@@ -188,5 +191,9 @@
   "Superchat Goal": "超級聊天室目標",
   "YouTube Superchats": "YouTube 超級聊天室",
   "Custom Widget": "自訂小工具",
-  "Use HTML, CSS, and JavaScript to create a widget with custom functionality": "使用 HTML、CSS 以及 JavaScript 來建立具有自訂功能的小工具"
+  "Use HTML, CSS, and JavaScript to create a widget with custom functionality": "使用 HTML、CSS 以及 JavaScript 來建立具有自訂功能的小工具",
+  "Interactive": "Interactive",
+  "Goals": "Goals",
+  "Flair": "Flair",
+  "Charity": "Charity"
 }
