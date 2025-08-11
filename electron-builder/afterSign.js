@@ -19,6 +19,7 @@ async function notarizeMac(context) {
   console.log('This can take several minutes.');
 
   await notarize({
+    tool: 'notarytool',
     appPath,
     appBundleId: 'com.streamlabs.slobs',
     appleId: process.env['APPLE_ID'],
