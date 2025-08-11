@@ -4,5 +4,8 @@
   "Unpacked vers loaded": "解凍されたバージョンがロードされました",
   "You must unload unpacked version before enabling this app.": "このアプリを有効化する前に、解凍されたバージョンをアンロードする必要があります。",
   "Pop Out": "ポップアウト",
-  "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "開発者はこのアプリのサポートを終了しました。アプリは引き続き動作する可能性がありますが、更新プログラムは今後作成されません。アンインストールしたい場合は、こちらの説明に従ってください。"
+  "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "開発者はこのアプリのサポートを終了しました。アプリは引き続き動作する可能性がありますが、更新プログラムは今後作成されません。アンインストールしたい場合は、こちらの説明に従ってください。",
+  "Uninstall": "Uninstall",
+  "Other installed apps:": "Other installed apps:",
+  "Open": "Open"
 }
