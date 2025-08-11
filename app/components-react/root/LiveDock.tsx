@@ -113,6 +113,8 @@ class LiveDockController {
 
   get chatTabs(): { name: string; value: string }[] {
     if (!this.userService.state.auth) return [];
+
+    const hasMultistreamChat = this.isRestreaming || this.hasDifferentDualOutputPlatforms;
     const tabs: { name: string; value: string }[] = [
       {
         name: getPlatformService(this.userService.state.auth.primaryPlatform).displayName,
@@ -128,7 +130,7 @@ class LiveDockController {
           };
         }),
     );
-    if (this.restreamService.shouldGoLiveWithRestream) {
+    if (hasMultistreamChat) {
       tabs.push({
         name: $t('Multistream'),
         value: 'restream',
@@ -139,6 +141,17 @@ class LiveDockController {
 
   get isRestreaming() {
     return this.restreamService.shouldGoLiveWithRestream;
+  }
+
+  // Now that the same platform can stream to multiple displays we want to avoid mistakenly
+  // showing multichat in those instances
+  get hasDifferentDualOutputPlatforms() {
+    const dualOutputPlatforms = this.streamingService.views.activeDisplayPlatforms;
+    const uniquePlatforms = new Set();
+    [...dualOutputPlatforms.horizontal, ...dualOutputPlatforms.vertical].forEach(platform => {
+      uniquePlatforms.add(platform);
+    });
+    return uniquePlatforms.size > 1;
   }
 
   get isPopOutAllowed() {
