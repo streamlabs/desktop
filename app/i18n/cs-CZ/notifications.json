@@ -21,6 +21,8 @@
   "News": "Novinky",
   "Notifications": "Upozornění",
   "A new Recording has been completed. Click for more info": "Byla dokončena nová Nahrávka. Klikněte pro bližší informace",
+  "horizontalRecordingMessage": " A new Horizontal Recording has been completed. Click for more info",
+  "verticalRecordingMessage": "A new Vertical Recording has been completed. Click for more info",
   "Recording History": "Historie nahrávek",
   "Show in folder": "Zobrazit ve složce",
   "Recordings": "Nahrávky",
