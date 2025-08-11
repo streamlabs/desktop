@@ -4,5 +4,8 @@
   "Unpacked vers loaded": "Unpacked vers loaded",
   "You must unload unpacked version before enabling this app.": "You must unload unpacked version before enabling this app.",
   "Pop Out": "Külön ablak",
-  "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "A fejlesztő már nem támogatja ezt az alkalmazást. Az alkalmazás továbbra is működhet, de nem fog frissítéseket kapni. Ha szeretnéd eltávolítani, kérjük, kövesd az itt található utasításokat."
+  "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "A fejlesztő már nem támogatja ezt az alkalmazást. Az alkalmazás továbbra is működhet, de nem fog frissítéseket kapni. Ha szeretnéd eltávolítani, kérjük, kövesd az itt található utasításokat.",
+  "Uninstall": "Uninstall",
+  "Other installed apps:": "Other installed apps:",
+  "Open": "Open"
 }
