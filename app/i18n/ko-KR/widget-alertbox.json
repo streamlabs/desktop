@@ -154,5 +154,6 @@
   "This applies to all alerts. If enabled all alerts need to be approved manually.": "이것은 모든 알림에 적용됩니다. 활성화하면 모든 알림을 수동으로 승인해야 합니다.",
   "Use unlimited delay": "무제한 지연 사용",
   "When enabled new alerts will interrupt the on screen alert": "새로운 알림을 활성화하면 화면 알림이 방해를 받습니다",
-  "Text Highlight Color": "텍스트 하이라이트 색상"
+  "Text Highlight Color": "텍스트 하이라이트 색상",
+  "Platforms: Twitch, YouTube, Facebook, Trovo & integrations": "Platforms: Twitch, YouTube, Facebook, Trovo & integrations"
 }
