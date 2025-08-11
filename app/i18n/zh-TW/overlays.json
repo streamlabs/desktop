@@ -22,8 +22,8 @@
   "default_width": "default_width",
   "default_height": "default_height",
   "GameCapture.WindowInternalMode": "GameCapture.WindowInternalMode",
-  "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.",
-  "Show Components Library": "Show Components Library",
-  "Convert Dual Output Scene Collection": "Convert Dual Output Scene Collection",
-  "Repair Scene Collection": "Repair Scene Collection"
+  "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "下列項目會建立作用中場景集合的副本，將副本設定為作用中的集合，然後移除全部的垂直來源。",
+  "Show Components Library": "顯示組件庫",
+  "Convert Dual Output Scene Collection": "轉換 Dual Output 場景集合",
+  "Repair Scene Collection": "修復場景集合"
 }
