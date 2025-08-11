@@ -154,5 +154,6 @@
   "This applies to all alerts. If enabled all alerts need to be approved manually.": "Aplica-se a todos os alertas. Se ativado, todos os alertas devem ser aprovados manualmente.",
   "Use unlimited delay": "Usar atraso ilimitado",
   "When enabled new alerts will interrupt the on screen alert": "Quando ativado, os novos alertas interrompem o alerta no ecrã",
-  "Text Highlight Color": "Cor de realce do texto"
+  "Text Highlight Color": "Cor de realce do texto",
+  "Platforms: Twitch, YouTube, Facebook, Trovo & integrations": "Platforms: Twitch, YouTube, Facebook, Trovo & integrations"
 }
