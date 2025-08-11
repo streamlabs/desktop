@@ -21,10 +21,8 @@ async function notarizeMac(context) {
   await notarize({
     tool: 'notarytool',
     appPath,
-    appBundleId: 'com.streamlabs.slobs',
     appleId: process.env['APPLE_ID'],
     appleIdPassword: process.env['APPLE_APP_PASSWORD'],
-    ascProvider: process.env['APPLE_ASC_PROVIDER'],
     teamId: process.env['APPLE_TEAM_ID'],
   });
 
