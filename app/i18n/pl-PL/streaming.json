@@ -257,8 +257,8 @@
   "Please try again. If the issue persists, you can stream in single output mode instead.": "Spróbuj ponownie. Jeśli problem nie ustąpi, możesz zamiast tego streamować w trybie pojedynczego wyjścia.",
   "Enable Dual Output to stream to horizontal & vertical platforms simultaneously": "Włącz tryb Dual Output, aby jednocześnie streamować na platformy poziome i pionowe",
   "Disable Dual Output": "Wyłącz tryb Dual Output",
-  "You can now reply to Twitch, YouTube and Facebook messages in Multistream chat. Click to learn more.": "Możesz teraz odpowiadać na wiadomości z Twitcha, YouTube'a i Facebooka w czacie Multistream. Kliknij, aby dowiedzieć się więcej.",
-  "Multistream Chat Platform Support": "Obsługa platformy czatu Multistream",
+  "You can now reply to Twitch, YouTube and Facebook messages in Multichat. Click to learn more.": "You can now reply to Twitch, YouTube and Facebook messages in Multichat. Click to learn more.",
+  "Multichat Platform Support": "Multichat Platform Support",
   "You have selected %{colorFormat} as Color Format. Formats other than NV12 and P010 are commonly used for recording, and might incur high CPU usage or the streaming platform might not support it. Go to Settings -> Advanced -> Video to review.": "Wybrano %{colorFormat} jako format kolorów. Formaty inne niż NV12 i P010 są powszechnie używane do rejestrowania i mogą powodować wysokie zużycie procesora lub platforma transmisji może ich nie obsługiwać. Przejdź do „Ustawienia” -> „Zaawansowane” -> „Wideo”, aby zweryfikować.",
   "Selective Recording Enabled": "Włączone nagrywanie selektywne",
   "Selective Recording only works with horizontal sources and disables editing the vertical output scene. Please disable Selective Recording to go live with Dual Output.": "nagrywanie selektywne działa tylko ze źródłami poziomymi i wyłącza edycję pionowej sceny wyjściowej. Wyłącz nagrywanie selektywne, aby korzystać z funkcji Dual Output.",
@@ -305,5 +305,6 @@
   "Record Stream": "Record Stream",
   "AI Highlighter is enabled. Recording will start when stream starts.": "AI Highlighter is enabled. Recording will start when stream starts.",
   "Connection Failed": "Connection Failed",
-  "Upgrade to Ultra to allow more than two outputs": "Upgrade to Ultra to allow more than two outputs"
+  "Upgrade to Ultra to allow more than two outputs": "Upgrade to Ultra to allow more than two outputs",
+  "Multichat": "Multichat"
 }
