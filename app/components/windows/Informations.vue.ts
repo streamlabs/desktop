@@ -37,7 +37,7 @@ export default class Informations extends Vue {
     return DateTime.fromMillis(unixtime).toFormat('yyyy-MM-dd');
   }
 
-  shouldShowNewLabel(unixtime: number) {
+  isNew(unixtime: number) {
     return unixtime > Date.now() - ONE_WEEK;
   }
 
