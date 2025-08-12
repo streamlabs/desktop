@@ -17,7 +17,6 @@ import PlatformAppPageView from 'components-react/shared/PlatformAppPageView';
 import { useVuex } from 'components-react/hooks';
 import { useRealmObject } from 'components-react/hooks/realm';
 import { $i } from 'services/utils';
-import { TikTokChatInfo } from './TiktokChatInfo';
 import { ShareStreamLink } from './ShareStreamLink';
 
 const LiveDockCtx = React.createContext<LiveDockController | null>(null);
@@ -514,7 +513,7 @@ function ChatTabs(p: { visibleChat: string; setChat: (key: string) => void }) {
         )}
         <Tooltip
           title={$t(
-            'You can now reply to Twitch, YouTube and Facebook messages in Multistream chat. Click to learn more.',
+            'You can now reply to Twitch, YouTube and Facebook messages in Multichat. Click to learn more.',
           )}
           placement="topRight"
           onClick={ctrl.showMultistreamChatInfo}
