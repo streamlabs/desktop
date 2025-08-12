@@ -518,10 +518,7 @@ function ChatTabs(p: { visibleChat: string; setChat: (key: string) => void }) {
           placement="topRight"
           onClick={ctrl.showMultistreamChatInfo}
         >
-          <i
-            className={cx(styles.liveDockChatTabsInfo, 'icon-information')}
-            onClick={ctrl.showMultistreamChatInfo}
-          />
+          <i className={cx(styles.liveDockChatTabsInfo, 'icon-information')} />
         </Tooltip>
       </div>
     </div>
