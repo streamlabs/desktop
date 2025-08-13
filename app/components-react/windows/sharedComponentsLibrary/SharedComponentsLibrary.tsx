@@ -28,6 +28,7 @@ import pick from 'lodash/pick';
 import { DemoForm } from './DemoForm';
 import { CodeInput } from '../../shared/inputs/CodeInput';
 import { injectState, merge, useModule, injectFormBinding } from 'slap';
+import { TApplicationTheme } from 'services/customization';
 
 const { TabPane } = Tabs;
 
@@ -479,7 +480,7 @@ class SharedComponentsModule {
     get theme() {
       return Services.CustomizationService.currentTheme;
     },
-    set theme(theme: string) {
+    set theme(theme: TApplicationTheme) {
       Services.CustomizationService.actions.setTheme(theme);
     },
     get locale() {

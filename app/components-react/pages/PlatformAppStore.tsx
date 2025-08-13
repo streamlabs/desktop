@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import cx from 'classnames';
 import Utils from 'services/utils';
 import urlLib from 'url';
 import BrowserView from 'components-react/shared/BrowserView';
@@ -11,7 +12,10 @@ import { $t } from 'services/i18n';
 import styles from './PlatformAppStore.m.less';
 import { useVuex } from 'components-react/hooks';
 
-export default function PlatformAppStore(p: { params: { appId?: string; type?: string } }) {
+export default function PlatformAppStore(p: {
+  params: { appId?: string; type?: string };
+  className?: string;
+}) {
   const {
     UserService,
     PlatformAppsService,
@@ -90,17 +94,23 @@ export default function PlatformAppStore(p: { params: { appId?: string; type?: s
   }
 
   if (!platformAppsUrl) return <></>;
+
+  const heightDiff =
+    currentUrl.includes('installed-apps') && HighlighterService.views.highlighterVersion !== ''
+      ? '72'
+      : '0';
+
   return (
     <>
       <BrowserView
-        className={styles.browserView}
+        className={cx(styles.browserView, p.className)}
         style={{
-          height: `calc(100% - ${
-            currentUrl.includes('installed-apps') &&
-            HighlighterService.views.highlighterVersion !== ''
-              ? '72'
-              : '0'
-          }px)`,
+          height: `calc(100% - ${heightDiff}px)`,
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
         }}
         src={platformAppsUrl}
         onReady={onBrowserViewReady}
