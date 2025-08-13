@@ -4,5 +4,8 @@
   "Unpacked vers loaded": "解压版本已载入",
   "You must unload unpacked version before enabling this app.": "您必须先卸载解压后的版本，然后才能启用此应用程序。",
   "Pop Out": "弹出",
-  "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "开发者已停止支持此应用程序。该应用程序可能可以继续运行，但不会收到任何更新。如果您想卸载，请按照此处的说明进行操作。"
+  "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "开发者已停止支持此应用程序。该应用程序可能可以继续运行，但不会收到任何更新。如果您想卸载，请按照此处的说明进行操作。",
+  "Uninstall": "Uninstall",
+  "Other installed apps:": "Other installed apps:",
+  "Open": "Open"
 }

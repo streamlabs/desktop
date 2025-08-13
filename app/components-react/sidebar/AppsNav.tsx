@@ -42,6 +42,7 @@ export default function AppsNav(p: IAppsNav) {
     appPath: 'xxx',
     enabled: true,
     icon: 'xxx',
+    highlyPrivileged: false,
   };
 
   const { currentMenuItem, apps, isOpen, navigateApp, enabledApps } = useVuex(() => ({

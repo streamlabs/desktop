@@ -22,8 +22,8 @@
   "default_width": "default_width",
   "default_height": "default_height",
   "GameCapture.WindowInternalMode": "GameCapture.WindowInternalMode",
-  "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.",
-  "Show Components Library": "Show Components Library",
-  "Convert Dual Output Scene Collection": "Convert Dual Output Scene Collection",
-  "Repair Scene Collection": "Repair Scene Collection"
+  "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "아래는 활성 장면 컬렉션의 복사본을 생성하고 복사본을 활성 컬렉션으로 설정한 다음 수직 소스를 모두 제거하는 방법입니다.",
+  "Show Components Library": "요소 라이브러리 표시",
+  "Convert Dual Output Scene Collection": "Dual Output 장면 컬렉션 변환",
+  "Repair Scene Collection": "장면 컬렉션 복구"
 }
