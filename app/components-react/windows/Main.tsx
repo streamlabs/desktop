@@ -75,24 +75,12 @@ class MainController {
     return this.navigationService.state.currentPage;
   }
 
-  get params() {
-    return this.navigationService.state.params;
-  }
-
   get hideStyleBlockers() {
     return this.windowsService.state.main.hideStyleBlockers;
   }
 
   get streamingStatus() {
     return this.streamingService.state.streamingStatus;
-  }
-
-  theme(bulkLoadFinished: boolean): TApplicationTheme {
-    if (bulkLoadFinished) {
-      return this.customizationService.currentTheme;
-    }
-
-    return loadedTheme() || 'night-theme';
   }
 
   get applicationLoading() {
@@ -125,7 +113,7 @@ class MainController {
   }
 
   get isOnboarding() {
-    return this.navigationService.state.currentPage === 'Onboarding';
+    return this.page === 'Onboarding';
   }
 
   get platformApps() {
@@ -260,7 +248,6 @@ function Main() {
     renderDock,
     leftDock,
     applicationLoading,
-    page,
     hideStyleBlockers,
     compactView,
     maxDockWidth,
@@ -274,7 +261,6 @@ function Main() {
       leftDock: ctrl.leftDock,
       hasLiveDock: ctrl.store.hasLiveDock,
       applicationLoading: ctrl.applicationLoading,
-      page: ctrl.page,
       hideStyleBlockers: ctrl.hideStyleBlockers,
       compactView: ctrl.store.compactView,
       maxDockWidth: ctrl.store.maxDockWidth,
@@ -284,10 +270,14 @@ function Main() {
     true,
   );
 
+  const page = useRealmObject(Services.NavigationService.state).currentPage;
+  const params = useRealmObject(Services.NavigationService.state).params;
   const dockWidth = useRealmObject(Services.CustomizationService.state).livedockSize;
   const isDockCollapsed = useRealmObject(Services.CustomizationService.state).livedockCollapsed;
   const realmTheme = useRealmObject(Services.CustomizationService.state).theme;
-  const theme = !bulkLoadFinished ? loadedTheme() || 'night-theme' : realmTheme;
+  const theme = useMemo(() => {
+    return !bulkLoadFinished ? loadedTheme() || 'night-theme' : realmTheme;
+  }, [bulkLoadFinished, realmTheme]);
 
   function windowSizeHandler() {
     if (!hideStyleBlockers) {
@@ -403,7 +393,7 @@ function Main() {
           {!showLoadingSpinner && (
             <div className={styles.mainPageContainer}>
               <Component
-                params={ctrl.params}
+                params={params}
                 onTotalWidth={(width: number) => ctrl.handleEditorWidth(width)}
               />
             </div>
