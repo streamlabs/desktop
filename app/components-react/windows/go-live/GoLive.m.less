@@ -368,6 +368,25 @@ i.destination-logo {
     color: var(--title);
     font-weight: 400;
   }
+
+  &.disabled {
+    :global(.ant-form-item-label > label) {
+      color: var(--button-hover) !important;
+    }
+
+    :global(.ant-select-disabled .ant-select-selector) {
+      background: unset !important;
+      color: var(--button-hover) !important;
+    }
+
+    :global(.ant-select-selection-item) {
+      color: var(--button-hover) !important;
+    }
+
+    :global(.anticon) {
+      color: var(--button-hover) !important;
+    }
+  }
 }
 
 .column-header {

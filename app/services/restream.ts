@@ -62,7 +62,7 @@ interface IRestreamState {
   /**
    * Stream switcher status
    */
-  streamSwitcherStatus?: TStreamSwitcherStatus;
+  streamSwitcherStatus: TStreamSwitcherStatus;
 }
 
 interface IUserSettingsResponse extends IRestreamState {
@@ -93,7 +93,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     grandfathered: false,
     tiktokGrandfathered: false,
     streamSwitcherStreamId: undefined,
-    streamSwitcherStatus: undefined,
+    streamSwitcherStatus: 'inactive',
   };
 
   get streamInfo() {

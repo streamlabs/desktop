@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, forwardRef } from 'react';
 import cx from 'classnames';
 import { EStreamingState } from 'services/streaming';
 import { EGlobalSyncStatus } from 'services/media-backup';
@@ -7,6 +7,8 @@ import { useVuex } from '../hooks';
 import { Services } from '../service-provider';
 import * as remote from '@electron/remote';
 import { TStreamSwitcherStatus } from 'services/restream';
+import { AuthModal } from 'components-react/shared/AuthModal';
+import { promptAction } from 'components-react/modals';
 
 export default function StartStreamingButton(p: { disabled?: boolean }) {
   const {
@@ -17,16 +19,21 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     MediaBackupService,
     SourcesService,
     RestreamService,
+    WindowsService,
   } = Services;
 
   const { streamingStatus, delayEnabled, delaySeconds, streamSwitcherStatus } = useVuex(() => ({
     streamingStatus: StreamingService.state.streamingStatus,
     delayEnabled: StreamingService.views.delayEnabled,
     delaySeconds: StreamingService.views.delaySeconds,
-    streamSwitcherStatus: StreamingService.views.streamSwitcherStatus,
+    streamSwitcherStatus: RestreamService.state.streamSwitcherStatus,
   }));
 
   const [delaySecondsRemaining, setDelayTick] = useState(delaySeconds);
+
+  const [promptSwitchVisible, setPromptSwitchVisible] = useState(false);
+  const [alertSwitchVisible, setAlertSwitchVisible] = useState(false);
+  const [confirmSwitchVisible, setConfirmSwitchVisible] = useState(false);
 
   useEffect(() => {
     setDelayTick(delaySeconds);
@@ -47,9 +54,103 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     }
   }, [delaySecondsRemaining, streamingStatus, delayEnabled]);
 
+  useEffect(() => {
+    const switchStreamEvent = Services.StreamingService.streamSwitchEvent.subscribe(event => {
+      if (event.type === 'streamSwitchRequest') {
+        if (event.data.identifier === Services.RestreamService.state.streamSwitcherStreamId) {
+          promptAction({
+            title: $t('Another stream detected'),
+            message: $t(
+              'A stream on another device has been detected. Would you like to switch your stream to Desktop? If you do not want to continue this stream, please end the stream from the other device.',
+            ),
+            fn: () => Services.RestreamService.actions.confirmStreamSwitch('approved'),
+            btnText: $t('Yes'),
+            cancelBtnPosition: 'right',
+            cancelBtnText: $t('No'),
+            cancelFn: () => Services.RestreamService.actions.confirmStreamSwitch('rejected'),
+          });
+        }
+
+        if (event.data.identifier !== Services.RestreamService.state.streamSwitcherStreamId) {
+          promptAction({
+            title: $t('Another stream detected'),
+            message: $t(
+              'A stream on another device has been detected. Would you like to switch your stream to the other device? Approve the switch on the other device to switch the stream.',
+            ),
+            btnText: $t('Ok'),
+            cancelBtnPosition: 'none',
+          });
+        }
+        return;
+      }
+
+      if (event.type === 'switchActionComplete') {
+        if (event.data.identifier !== Services.RestreamService.state.streamSwitcherStreamId) {
+          promptAction({
+            message: $t('Stream switch completed'),
+            title: $t(
+              'Your stream has been switched to the other device. Ending the stream on this device.',
+            ),
+            btnText: $t('Ok'),
+            fn: Services.RestreamService.actions.endCurrentStream,
+            cancelBtnPosition: 'none',
+          });
+        }
+      }
+    });
+
+    return () => {
+      switchStreamEvent.unsubscribe();
+    };
+  }, []);
+
+  // useEffect(() => {
+  //   const switchStreamEvent = StreamingService.streamSwitchEvent.subscribe(event => {
+  //     if (event.type === 'streamSwitchRequest') {
+  //       if (event.data.identifier === RestreamService.state.streamSwitcherStreamId) {
+  //         WindowsService.actions.updateStyleBlockers('main', true);
+  //         setPromptSwitchVisible(true);
+  //         return;
+  //       }
+
+  //       if (event.data.identifier !== RestreamService.state.streamSwitcherStreamId) {
+  //         WindowsService.actions.updateStyleBlockers('main', true);
+  //         setAlertSwitchVisible(true);
+  //         return;
+  //       }
+  //       return;
+  //     }
+
+  //     if (
+  //       event.type === 'switchActionComplete' &&
+  //       event.data.identifier !== RestreamService.state.streamSwitcherStreamId
+  //     ) {
+  //       WindowsService.actions.updateStyleBlockers('main', true);
+  //       setConfirmSwitchVisible(true);
+  //       return;
+  //     }
+  //   });
+
+  //   return () => {
+  //     switchStreamEvent.unsubscribe();
+  //   };
+  // }, []);
+
   async function toggleStreaming() {
+    console.log('streamSwitcherStatus', streamSwitcherStatus);
     if (streamSwitcherStatus === 'pending') {
-      RestreamService.actions.confirmStreamSwitch('approved');
+      promptAction({
+        title: $t('Another stream detected'),
+        message: $t(
+          'A stream on another device has been detected. Would you like to switch your stream to Desktop? If you do not want to continue this stream, please end the stream from the other device.',
+        ),
+        fn: () => Services.RestreamService.actions.confirmStreamSwitch('approved'),
+        btnText: $t('Yes'),
+        cancelBtnPosition: 'right',
+        cancelBtnText: $t('No'),
+        cancelFn: () => Services.RestreamService.actions.confirmStreamSwitch('rejected'),
+      });
+      return;
     }
 
     if (StreamingService.isStreaming) {
@@ -107,7 +208,8 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     }
   }
 
-  const getIsRedButton = streamingStatus !== EStreamingState.Offline;
+  const getIsRedButton =
+    streamingStatus !== EStreamingState.Offline && streamSwitcherStatus !== 'pending';
 
   const isDisabled =
     p.disabled ||
@@ -146,55 +248,131 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
   }
 
   return (
-    <button
-      style={{ minWidth: '130px' }}
-      className={cx('button button--action', { 'button--soft-warning': getIsRedButton })}
-      disabled={isDisabled}
-      onClick={toggleStreaming}
-    >
-      <StreamButtonLabel
-        streamingStatus={streamingStatus}
-        delayEnabled={delayEnabled}
-        delaySecondsRemaining={delaySecondsRemaining}
-        streamSwitcherStatus={streamSwitcherStatus}
-      />
-    </button>
+    <>
+      <button
+        style={{ minWidth: '130px' }}
+        className={cx('button button--action', { 'button--soft-warning': getIsRedButton })}
+        disabled={isDisabled}
+        onClick={toggleStreaming}
+      >
+        <StreamButtonLabel
+          streamingStatus={streamingStatus}
+          delayEnabled={delayEnabled}
+          delaySecondsRemaining={delaySecondsRemaining}
+          streamSwitcherStatus={streamSwitcherStatus}
+        />
+      </button>
+
+      {promptSwitchVisible && (
+        <StreamSwitcherModal
+          title={$t('Another stream detected')}
+          message={$t(
+            'A stream on another device has been detected. Would you like to switch your stream to this device? If you want to continue this stream, please confirm and end the stream from the other device.',
+          )}
+          // cancel={$t('Ok')}
+          onCancel={() => {
+            RestreamService.actions.confirmStreamSwitch('rejected');
+            setPromptSwitchVisible(false);
+          }}
+          showModal={promptSwitchVisible}
+          onOk={() => {
+            RestreamService.actions.confirmStreamSwitch('approved');
+            setPromptSwitchVisible(false);
+          }}
+        />
+      )}
+
+      {alertSwitchVisible && (
+        <StreamSwitcherModal
+          cancel={$t('Ok')}
+          onCancel={() => setAlertSwitchVisible(false)}
+          showModal={alertSwitchVisible}
+          title={$t('Another stream detected')}
+          message={$t(
+            'A stream on another device has been detected. Would you like to switch your stream to the other device? If you do not want to switch and want to continue this stream, please end the stream on the other device.',
+          )}
+        />
+      )}
+
+      {confirmSwitchVisible && (
+        <StreamSwitcherModal
+          title={$t('Stream switch completed')}
+          message={$t(
+            'Your stream has been switched to the other device. Ending the stream on this device.',
+          )}
+          cancel={$t('Ok')}
+          onCancel={() => {
+            RestreamService.actions.endCurrentStream();
+            setConfirmSwitchVisible(false);
+          }}
+          showModal={confirmSwitchVisible}
+        />
+      )}
+    </>
   );
 }
 
-function StreamButtonLabel(p: {
-  streamingStatus: EStreamingState;
-  delaySecondsRemaining: number;
-  delayEnabled: boolean;
-  streamSwitcherStatus: TStreamSwitcherStatus;
-}) {
-  if (p.streamSwitcherStatus === 'pending') {
-    return <>{$t('Claim Stream')}</>;
+const StreamButtonLabel = forwardRef<
+  HTMLSpanElement,
+  {
+    streamingStatus: EStreamingState;
+    streamSwitcherStatus: TStreamSwitcherStatus;
+    delaySecondsRemaining: number;
+    delayEnabled: boolean;
+  }
+>((p, ref) => {
+  if (p.streamSwitcherStatus === 'pending' && p.streamingStatus === EStreamingState.Live) {
+    return <span ref={ref}>{$t('Claim Stream')}</span>;
   }
 
   if (p.streamingStatus === EStreamingState.Live) {
-    return <>{$t('End Stream')}</>;
+    return <span ref={ref}>{$t('End Stream')}</span>;
   }
 
   if (p.streamingStatus === EStreamingState.Starting) {
     if (p.delayEnabled) {
-      return <>{`Starting ${p.delaySecondsRemaining}s`}</>;
+      return <span ref={ref}>{`Starting ${p.delaySecondsRemaining}s`}</span>;
     }
 
-    return <>{$t('Starting')}</>;
+    return <span ref={ref}>{$t('Starting')}</span>;
   }
 
   if (p.streamingStatus === EStreamingState.Ending) {
     if (p.delayEnabled) {
-      return <>{`Discard ${p.delaySecondsRemaining}s`}</>;
+      return <span ref={ref}>{`Discard ${p.delaySecondsRemaining}s`}</span>;
     }
 
-    return <>{$t('Ending')}</>;
+    return <span ref={ref}>{$t('Ending')}</span>;
   }
 
   if (p.streamingStatus === EStreamingState.Reconnecting) {
-    return <>{$t('Reconnecting')}</>;
+    return <span ref={ref}>{$t('Reconnecting')}</span>;
   }
 
-  return <>{$t('Go Live')}</>;
+  return <span ref={ref}>{$t('Go Live')}</span>;
+});
+
+function StreamSwitcherModal(p: {
+  showModal: boolean;
+  title: string;
+  message: string;
+  cancel?: string;
+  onOk?: () => void;
+  onCancel: (visible: boolean) => void;
+}) {
+  function handleShowModal() {
+    Services.WindowsService.actions.updateStyleBlockers('main', false);
+    p.onCancel(false);
+  }
+  return (
+    <AuthModal
+      title={p.title}
+      prompt={p.message}
+      cancel={p?.cancel ? p.cancel : undefined}
+      showModal={p.showModal}
+      handleAuth={() => {}}
+      // handleAuth={p?.onOk ? p.onOk : undefined}
+      handleShowModal={handleShowModal}
+    />
+  );
 }

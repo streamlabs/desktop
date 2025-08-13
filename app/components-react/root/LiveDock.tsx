@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import * as remote from '@electron/remote';
 import cx from 'classnames';
 import Animation from 'rc-animate';
-import { Button, Menu } from 'antd';
+import { Menu } from 'antd';
 import pick from 'lodash/pick';
 import { initStore, useController } from 'components-react/hooks/zustand';
 import { EStreamingState } from 'services/streaming';
@@ -18,7 +18,6 @@ import { useVuex } from 'components-react/hooks';
 import { useRealmObject } from 'components-react/hooks/realm';
 import { $i } from 'services/utils';
 import { ShareStreamLink } from './ShareStreamLink';
-import { alertAsync, promptAction } from 'components-react/modals';
 
 const LiveDockCtx = React.createContext<LiveDockController | null>(null);
 
@@ -210,19 +209,19 @@ class LiveDockController {
 
   popOut() {
     this.platformAppsService.popOutAppPage(this.store.selectedChat, this.pageSlot);
-    this.store.setState(s => {
+    this.store.setState((s: any) => {
       s.selectedChat = 'default';
     });
   }
 
   setCollapsed(livedockCollapsed: boolean) {
-    this.store.setState(s => {
+    this.store.setState((s: any) => {
       s.canAnimate = true;
     });
     this.windowsService.actions.updateStyleBlockers('main', true);
     this.customizationService.actions.setSettings({ livedockCollapsed });
     setTimeout(() => {
-      this.store.setState(s => {
+      this.store.setState((s: any) => {
         s.canAnimate = false;
       });
       this.windowsService.actions.updateStyleBlockers('main', false);
@@ -326,56 +325,6 @@ function LiveDock(p: { onLeft: boolean }) {
     }
   }, [visibleChat, isRestreaming, streamingStatus]);
 
-  useEffect(() => {
-    const switchStreamEvent = Services.StreamingService.streamSwitchEvent.subscribe(event => {
-      if (event.type === 'streamSwitchRequest') {
-        if (event.data.identifier === Services.RestreamService.state.streamSwitcherStreamId) {
-          promptAction({
-            title: $t('Another stream detected'),
-            message: $t(
-              'A stream on another device has been detected. Would you like to switch your stream to Desktop? If you do not want to continue this stream, please end the stream from the other device.',
-            ),
-            fn: () => Services.RestreamService.actions.confirmStreamSwitch('approved'),
-            btnText: $t('Yes'),
-            cancelBtnPosition: 'right',
-            cancelBtnText: $t('No'),
-            cancelFn: () => Services.RestreamService.actions.confirmStreamSwitch('rejected'),
-          });
-        }
-
-        if (event.data.identifier !== Services.RestreamService.state.streamSwitcherStreamId) {
-          promptAction({
-            title: $t('Another stream detected'),
-            message: $t(
-              'A stream on another device has been detected. Would you like to switch your stream to the other device? Approve the switch on the other device to switch the stream.',
-            ),
-            btnText: $t('Ok'),
-            cancelBtnPosition: 'none',
-          });
-        }
-        return;
-      }
-
-      if (event.type === 'switchActionComplete') {
-        if (event.data.identifier !== Services.RestreamService.state.streamSwitcherStreamId) {
-          promptAction({
-            message: $t('Stream switch completed'),
-            title: $t(
-              'Your stream has been switched to the other device. Ending the stream on this device.',
-            ),
-            btnText: $t('Ok'),
-            fn: Services.RestreamService.actions.endCurrentStream,
-            cancelBtnPosition: 'none',
-          });
-        }
-      }
-    });
-
-    return () => {
-      switchStreamEvent.unsubscribe();
-    };
-  }, []);
-
   function toggleCollapsed() {
     collapsed ? ctrl.setCollapsed(false) : ctrl.setCollapsed(true);
   }
@@ -383,7 +332,7 @@ function LiveDock(p: { onLeft: boolean }) {
   // Safe getter/setter prevents getting stuck on the chat
   // for an app that was unloaded.
   function setChat(key: string) {
-    ctrl.store.setState(s => {
+    ctrl.store.setState((s: any) => {
       if (!ctrl.chatApps.find(app => app.id === key) && !['default', 'restream'].includes(key)) {
         s.selectedChat = 'default';
         setVisibleChat('default');
