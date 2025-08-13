@@ -12,6 +12,7 @@
   "Name Text Color": "命名文字顏色",
   "Name Background Color": "名稱背景顏色",
   "Highlight chat messages from your viewers on your stream.": "高亮顯示您直播觀眾的聊天室訊息。",
+  "Pin and highlight chat messages from your viewers on your stream.": "Pin and highlight chat messages from your viewers on your stream.",
   "A duration of 0 is indefinite": "0 持續時間表示未定義",
   "Use this widget by hovering over the right side of a chat message to see a thumbtack icon. Clicking the icon will pin the message to the widget for its duration, or until you click the unpin button.": "將滑鼠懸停在聊天室訊息的右側查看圖釘圖示可使用此小工具。按一下圖示會將訊息在其持續時間內釘選到小工具，或者到您按一下取消釘選按鈕為止。"
 }
