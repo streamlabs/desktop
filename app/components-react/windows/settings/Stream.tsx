@@ -234,6 +234,17 @@ export function StreamSettings() {
     });
   }
 
+  async function openPlatformSettings() {
+    try {
+      const link = await Services.MagicLinkService.getDashboardMagicLink(
+        'settings/account-settings/platforms',
+      );
+      remote.shell.openExternal(link);
+    } catch (e: unknown) {
+      console.error('Error generating platform settings magic link', e);
+    }
+  }
+
   return (
     <div className={styles.section}>
       {/* account info */}
@@ -243,11 +254,13 @@ export function StreamSettings() {
           <SLIDBlock />
           <div className={styles.streamHeaderWrapper}>
             <h2 style={{ flex: 1 }}>{$t('Stream Destinations')}</h2>
-            <div className={styles.addMore}>
-              <a target="#customDestForm" style={{ fontSize: '16px', color: 'var(--primary)' }}>
-                <PlusIcon style={{ paddingRight: '5px', color: 'var(--primary)' }} />
-                {$t('Add More')}
-              </a>
+            <div
+              className={styles.addMore}
+              onClick={openPlatformSettings}
+              style={{ color: 'var(--primary)', fontSize: '15px' }}
+            >
+              <PlusIcon style={{ paddingRight: '5px', color: 'var(--primary)' }} />
+              {$t('Add More')}
             </div>
           </div>
           <div className={styles.ultraText}>

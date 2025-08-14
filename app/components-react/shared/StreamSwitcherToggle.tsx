@@ -30,7 +30,9 @@ export default function StreamSwitcherToggle(p: IStreamSwitcherToggle) {
         <UltraIcon type="badge" style={{ marginLeft: '10px' }} />
       ) : (
         <Tooltip
-          title={$t('Toggle to swap your stream between Desktop and Mobile devices.')}
+          title={$t(
+            'Stay uninterrupted by switching between devices mid stream. Works between Desktop, Mobile App & Console.',
+          )}
           placement="top"
           lightShadow={true}
           disabled={p?.disabled}

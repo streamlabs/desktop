@@ -19,7 +19,6 @@ import { TwitterPlatformService } from './platforms/twitter';
 import { InstagramService } from './platforms/instagram';
 import { PlatformAppsService } from './platform-apps';
 import { throwStreamError } from './streaming/stream-error';
-import { TSocketEvent } from './websocket';
 import uuid from 'uuid';
 import Utils from './utils';
 import { $t } from './i18n';
@@ -268,7 +267,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     const url = `https://${this.host}/api/v1/rst/user/settings`;
     const body = JSON.stringify({
       enabled,
-      dcProtection: false,
+      dcProtection: this.streamInfo.isStreamSwitchMode,
       idleTimeout: 30,
       streamSwitch: this.streamInfo.isStreamSwitchMode,
     });
@@ -465,7 +464,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
           platform: target.platform,
           streamKey: target.streamKey,
           enabled: true,
-          dcProtection: false,
+          dcProtection: this.streamInfo.isStreamSwitchMode,
           idleTimeout: 30,
           label: `${target.platform} target`,
           mode: target?.mode,

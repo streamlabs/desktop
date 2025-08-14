@@ -39,7 +39,6 @@ export function DestinationSwitchers() {
   enabledPlatformsRef.current = enabledPlatforms;
   const enabledDestRef = useRef(enabledDestinations);
   enabledDestRef.current = enabledDestinations;
-  const destinationSwitcherRef = useRef({ addClass: () => undefined });
 
   // some platforms are always shown, even if not linked
   // add them to the list of platforms to display
@@ -59,16 +58,6 @@ export function DestinationSwitchers() {
   // in dual output mode for non-ultra users, only two cards for targets can be shown
   const showCustomDestinations =
     isDualOutputMode && !isPrime ? enabledPlatforms.length < 2 && destinations.length > 0 : true;
-
-  // there are four different UIs for the switchers for each combination of output mode and ultra status.
-  // the below determines which elements to show
-  const showSelector =
-    isDualOutputMode &&
-    !isPrime &&
-    enabledPlatforms.length < 2 &&
-    customDestinations.filter(d => d.enabled).length < 1;
-  const hidePlatformController =
-    isDualOutputMode && platforms.length === 1 && destinations.length === 1;
 
   const shouldDisableCustomDestinationSwitchers = () => {
     // Multistream users can always add destinations
@@ -99,6 +88,12 @@ export function DestinationSwitchers() {
   }
 
   function togglePlatform(platform: TPlatform, enabled: boolean) {
+    // One platform or destination must always be enabled
+    if (enabledPlatformsRef.current.length + enabledDestRef.current.length === 1) {
+      enabledPlatformsRef.current.push(platform);
+      return;
+    }
+
     // In dual output mode, only allow non-ultra users to have 2 platforms, or 1 platform and 1 custom destination enabled
     if (isDualOutputMode && !isPrime) {
       if (enabledPlatformsRef.current.length < 2 && enabledDestRef.current.length < 1) {
@@ -134,6 +129,12 @@ export function DestinationSwitchers() {
   }
 
   function toggleDestination(index: number, enabled: boolean) {
+    // One platform or destination must always be enabled
+    if (enabledPlatformsRef.current.length + enabledDestRef.current.length === 1) {
+      enabledDestRef.current.push(index);
+      return;
+    }
+
     enabledDestRef.current = enabledDestRef.current.filter((dest, i) => i !== index);
 
     if (enabled) {
@@ -153,7 +154,6 @@ export function DestinationSwitchers() {
           onChange={enabled => togglePlatform(platform, enabled)}
           isDualOutputMode={isDualOutputMode}
           index={ind}
-          hideController={showSelector || hidePlatformController}
           showPrompt={alwaysShownPlatforms.includes(platform) && !isPlatformLinked(platform)}
         />
       ))}
@@ -195,7 +195,6 @@ interface IDestinationSwitcherProps {
   index: number;
   isDualOutputMode: boolean;
   isUnlinked?: boolean;
-  hideController?: boolean;
   showPrompt?: boolean;
 }
 
@@ -214,41 +213,10 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
     ? $t('Toggle %{platform}', { platform: platformLabels(platform) })
     : $t('Toggle Destination');
 
-  const { RestreamService, MagicLinkService, NavigationService, WindowsService } = Services;
-
-  function dualOutputClickHandler(ev: MouseEvent) {
-    if (p.showPrompt && platform) {
-      renderPrompt();
-      return;
-    }
-
-    if (RestreamService.views.canEnableRestream) {
-      p.onChange(!p.enabled);
-      // always proxy the click to the SwitchInput
-      // so it can play a transition animation
-      switchInputRef.current?.click();
-      // switch the container class without re-rendering to not stop the animation
-      if (!p.enabled) {
-        containerRef.current?.classList.remove(styles.platformDisabled);
-      } else {
-        containerRef.current?.classList.add(styles.platformDisabled);
-      }
-    } else {
-      MagicLinkService.actions.linkToPrime('slobs-multistream');
-    }
-  }
+  const { RestreamService, NavigationService, WindowsService } = Services;
 
   function onClickHandler(ev: MouseEvent) {
-    if (p?.isUnlinked) {
-      ev.stopPropagation();
-      return;
-    }
-
-    if (p.showPrompt && platform) {
-      renderPrompt();
-      return;
-    }
-
+    // TODO: MAYBE HAVE NOTY LOGIC HERE
     // If we're disabling the switch we shouldn't be emitting anything past below
     if (disabled) {
       return;
@@ -291,7 +259,6 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
 
   const { title, description, Controller, Logo } = (() => {
     const { UserService } = Services;
-    const showCloseIcon = p.isDualOutputMode && !UserService.views.isPrime && !p?.showPrompt;
 
     if (platform) {
       // define slots for a platform switcher
@@ -303,13 +270,7 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
         title: service.displayName,
         description: username,
         Logo: () => (
-          <PlatformLogo
-            platform={platform}
-            className={cx(
-              styles[`platform-logo-${platform}`],
-              p.isDualOutputMode ? styles.dualOutputLogo : styles.singleOutputLogo,
-            )}
-          />
+          <PlatformLogo platform={platform} className={cx(styles[`platform-logo-${platform}`])} />
         ),
         Controller: () => (
           <SwitchInput
@@ -320,7 +281,7 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
             uncontrolled
             label={label}
             nolabel
-            className={cx('platform-switch', styles.dualOutputPlatformSwitch)}
+            className={cx('platform-switch', styles.platformSwitchToggle)}
           />
         ),
       };
@@ -331,27 +292,18 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
         title: destination.name,
         description: destination.url,
         Logo: () => <i className={cx(styles.destinationLogo, 'fa fa-globe')} />,
-        Controller: () =>
-          showCloseIcon ? (
-            <i
-              className={cx('icon-close', 'destination-close', styles.close)}
-              onClick={e => {
-                p.onChange(false);
-                e.stopPropagation();
-              }}
-            />
-          ) : (
-            <SwitchInput
-              inputRef={switchInputRef}
-              value={p.enabled}
-              name={`destination_${destination.name}`}
-              disabled={disabled}
-              uncontrolled
-              label={label}
-              nolabel
-              className={cx('destination-switch', styles.dualOutputPlatformSwitch)}
-            />
-          ),
+        Controller: () => (
+          <SwitchInput
+            inputRef={switchInputRef}
+            value={p.enabled}
+            name={`destination_${destination.name}`}
+            disabled={disabled}
+            uncontrolled
+            label={label}
+            nolabel
+            className={cx('destination-switch', styles.platformSwitchToggle)}
+          />
+        ),
       };
     }
   })();
@@ -363,7 +315,7 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
         [styles.platformDisabled]: !p.enabled && !p?.isUnlinked,
         [styles.platformEnabled]: p.enabled,
       })}
-      onClick={!p.isDualOutputMode ? onClickHandler : undefined}
+      onClick={onClickHandler}
     >
       {/* SWITCH */}
       <div className={cx(styles.colInput)}>
@@ -380,6 +332,8 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
         <div className={styles.platformName}>{title}</div>
         <div className={styles.platformHandle}>{description}</div>
       </div>
+
+      {/* DISPLAY TOGGLES */}
       {p.isDualOutputMode && !p?.isUnlinked && (
         <DisplaySelector
           title={title}
@@ -389,7 +343,8 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
           index={p.index}
         />
       )}
-      {/* CONNECT BUTTON ALIGN RIGHT */}
+
+      {/* CONNECT BUTTON */}
       {p?.isUnlinked && platform && (
         <ConnectButton platform={platform} className={styles.connectButton} />
       )}

@@ -7,8 +7,8 @@ import { useVuex } from '../hooks';
 import { Services } from '../service-provider';
 import * as remote from '@electron/remote';
 import { TStreamSwitcherStatus } from 'services/restream';
-import { AuthModal } from 'components-react/shared/AuthModal';
 import { promptAction } from 'components-react/modals';
+import { ENotificationType } from 'services/notifications';
 
 export default function StartStreamingButton(p: { disabled?: boolean }) {
   const {
@@ -19,7 +19,6 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     MediaBackupService,
     SourcesService,
     RestreamService,
-    WindowsService,
   } = Services;
 
   const { streamingStatus, delayEnabled, delaySeconds, streamSwitcherStatus } = useVuex(() => ({
@@ -30,10 +29,6 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
   }));
 
   const [delaySecondsRemaining, setDelayTick] = useState(delaySeconds);
-
-  const [promptSwitchVisible, setPromptSwitchVisible] = useState(false);
-  const [alertSwitchVisible, setAlertSwitchVisible] = useState(false);
-  const [confirmSwitchVisible, setConfirmSwitchVisible] = useState(false);
 
   useEffect(() => {
     setDelayTick(delaySeconds);
@@ -56,6 +51,13 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
 
   useEffect(() => {
     const switchStreamEvent = Services.StreamingService.streamSwitchEvent.subscribe(event => {
+      Services.NotificationsService.actions.push({
+        type: ENotificationType.SUCCESS,
+        lifeTime: 8000,
+        showTime: false,
+        message: JSON.stringify(event),
+      });
+
       if (event.type === 'streamSwitchRequest') {
         if (event.data.identifier === Services.RestreamService.state.streamSwitcherStreamId) {
           promptAction({
@@ -104,41 +106,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     };
   }, []);
 
-  // useEffect(() => {
-  //   const switchStreamEvent = StreamingService.streamSwitchEvent.subscribe(event => {
-  //     if (event.type === 'streamSwitchRequest') {
-  //       if (event.data.identifier === RestreamService.state.streamSwitcherStreamId) {
-  //         WindowsService.actions.updateStyleBlockers('main', true);
-  //         setPromptSwitchVisible(true);
-  //         return;
-  //       }
-
-  //       if (event.data.identifier !== RestreamService.state.streamSwitcherStreamId) {
-  //         WindowsService.actions.updateStyleBlockers('main', true);
-  //         setAlertSwitchVisible(true);
-  //         return;
-  //       }
-  //       return;
-  //     }
-
-  //     if (
-  //       event.type === 'switchActionComplete' &&
-  //       event.data.identifier !== RestreamService.state.streamSwitcherStreamId
-  //     ) {
-  //       WindowsService.actions.updateStyleBlockers('main', true);
-  //       setConfirmSwitchVisible(true);
-  //       return;
-  //     }
-  //   });
-
-  //   return () => {
-  //     switchStreamEvent.unsubscribe();
-  //   };
-  // }, []);
-
   async function toggleStreaming() {
-    console.log('streamSwitcherStatus', streamSwitcherStatus);
-
     if (streamSwitcherStatus === 'pending') {
       promptAction({
         title: $t('Another stream detected'),
