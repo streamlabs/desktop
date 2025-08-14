@@ -19,6 +19,7 @@ import AddDestinationButton from 'components-react/shared/AddDestinationButton';
 import cx from 'classnames';
 import StreamSwitcherToggle from 'components-react/shared/StreamSwitcherToggle';
 import { CaretDownOutlined } from '@ant-design/icons';
+import Tooltip from 'components-react/shared/Tooltip';
 
 /**
  * Renders settings for starting the stream
@@ -43,6 +44,7 @@ export default function GoLiveSettings() {
     recommendedColorSpaceWarnings,
     isPrime,
     isStreamSwitchMode,
+    isStreamSwitchDisabled,
     setPrimaryChat,
     addUltra,
   } = useGoLiveSettings().extend(module => {
@@ -67,6 +69,8 @@ export default function GoLiveSettings() {
       isPrime: UserService.views.isPrime,
 
       showTweet: UserService.views.auth?.primaryPlatform !== 'twitter',
+
+      isStreamSwitchDisabled: module.isDualOutputMode || !UserService.views.isPrime,
 
       addDestination() {
         SettingsService.actions.showSettings('Stream');
@@ -143,14 +147,32 @@ export default function GoLiveSettings() {
             />
 
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-              <DualOutputToggle
-                className={styles.featureToggle}
-                style={{ paddingBottom: '10px' }}
-                disabled={isStreamSwitchMode}
-                type="single"
-                lightShadow
-              />
-              <StreamSwitcherToggle className={styles.featureToggle} />
+              <Tooltip
+                title={$t('Dual Output cannot be used with Stream Switcher')}
+                placement="top"
+                lightShadow={true}
+                disabled={!isStreamSwitchMode}
+              >
+                <DualOutputToggle
+                  className={styles.featureToggle}
+                  style={{ paddingBottom: '10px' }}
+                  disabled={isStreamSwitchMode}
+                  tooltipDisabled={isStreamSwitchMode}
+                  type="single"
+                  lightShadow
+                />
+              </Tooltip>
+              <Tooltip
+                title={$t('Stream Switcher cannot be used with Dual Output')}
+                placement="top"
+                lightShadow={true}
+                disabled={!isStreamSwitchDisabled}
+              >
+                <StreamSwitcherToggle
+                  className={styles.featureToggle}
+                  disabled={isStreamSwitchDisabled}
+                />
+              </Tooltip>
             </div>
           </div>
         </Col>

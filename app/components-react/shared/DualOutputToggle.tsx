@@ -14,6 +14,7 @@ interface IDualOutputToggleProps {
   className?: string;
   style?: CSSProperties;
   disabled?: boolean;
+  tooltipDisabled?: boolean;
   placement?: TTipPosition;
   lightShadow?: boolean;
   onChange?: (value: boolean) => void;
@@ -96,6 +97,7 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
         className={styles.doTooltip}
         placement={placement}
         lightShadow={p?.lightShadow}
+        disabled={p?.tooltipDisabled}
       >
         <i className="icon-information" />
       </Tooltip>

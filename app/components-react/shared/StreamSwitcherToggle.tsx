@@ -9,26 +9,21 @@ import UltraIcon from './UltraIcon';
 interface IStreamSwitcherToggle {
   className?: string;
   style?: CSSProperties;
+  disabled?: boolean;
 }
 
 export default function StreamSwitcherToggle(p: IStreamSwitcherToggle) {
-  const {
-    isDualOutputMode,
-    isPrime,
-    isStreamSwitchMode,
-    setStreamSwitcher,
-    hasMultipleTargetsEnabled,
-  } = useGoLiveSettings();
+  const { isDualOutputMode, isPrime, isStreamSwitchMode, setStreamSwitcher } = useGoLiveSettings();
 
-  const label = isStreamSwitchMode ? $t('Disable Stream Switcher') : $t('Enable Stream Switcher');
+  const label = $t('Toggle Stream Switcher');
 
   return (
     <div className={cx(p?.className, styles.streamSwitcherToggle)} style={p?.style}>
       <CheckboxInput
         label={label}
-        value={isStreamSwitchMode || hasMultipleTargetsEnabled}
+        value={isStreamSwitchMode}
         onChange={setStreamSwitcher}
-        disabled={isDualOutputMode || !isPrime || hasMultipleTargetsEnabled}
+        disabled={p?.disabled}
       />
 
       {!isPrime ? (
@@ -38,6 +33,7 @@ export default function StreamSwitcherToggle(p: IStreamSwitcherToggle) {
           title={$t('Toggle to swap your stream between Desktop and Mobile devices.')}
           placement="top"
           lightShadow={true}
+          disabled={p?.disabled}
         >
           <i className="icon-information" style={{ marginLeft: '10px' }} />
         </Tooltip>

@@ -138,6 +138,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
 
   async function toggleStreaming() {
     console.log('streamSwitcherStatus', streamSwitcherStatus);
+
     if (streamSwitcherStatus === 'pending') {
       promptAction({
         title: $t('Another stream detected'),
@@ -248,67 +249,19 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
   }
 
   return (
-    <>
-      <button
-        style={{ minWidth: '130px' }}
-        className={cx('button button--action', { 'button--soft-warning': getIsRedButton })}
-        disabled={isDisabled}
-        onClick={toggleStreaming}
-      >
-        <StreamButtonLabel
-          streamingStatus={streamingStatus}
-          delayEnabled={delayEnabled}
-          delaySecondsRemaining={delaySecondsRemaining}
-          streamSwitcherStatus={streamSwitcherStatus}
-        />
-      </button>
-
-      {promptSwitchVisible && (
-        <StreamSwitcherModal
-          title={$t('Another stream detected')}
-          message={$t(
-            'A stream on another device has been detected. Would you like to switch your stream to this device? If you want to continue this stream, please confirm and end the stream from the other device.',
-          )}
-          // cancel={$t('Ok')}
-          onCancel={() => {
-            RestreamService.actions.confirmStreamSwitch('rejected');
-            setPromptSwitchVisible(false);
-          }}
-          showModal={promptSwitchVisible}
-          onOk={() => {
-            RestreamService.actions.confirmStreamSwitch('approved');
-            setPromptSwitchVisible(false);
-          }}
-        />
-      )}
-
-      {alertSwitchVisible && (
-        <StreamSwitcherModal
-          cancel={$t('Ok')}
-          onCancel={() => setAlertSwitchVisible(false)}
-          showModal={alertSwitchVisible}
-          title={$t('Another stream detected')}
-          message={$t(
-            'A stream on another device has been detected. Would you like to switch your stream to the other device? If you do not want to switch and want to continue this stream, please end the stream on the other device.',
-          )}
-        />
-      )}
-
-      {confirmSwitchVisible && (
-        <StreamSwitcherModal
-          title={$t('Stream switch completed')}
-          message={$t(
-            'Your stream has been switched to the other device. Ending the stream on this device.',
-          )}
-          cancel={$t('Ok')}
-          onCancel={() => {
-            RestreamService.actions.endCurrentStream();
-            setConfirmSwitchVisible(false);
-          }}
-          showModal={confirmSwitchVisible}
-        />
-      )}
-    </>
+    <button
+      style={{ minWidth: '130px' }}
+      className={cx('button button--action', { 'button--soft-warning': getIsRedButton })}
+      disabled={isDisabled}
+      onClick={toggleStreaming}
+    >
+      <StreamButtonLabel
+        streamingStatus={streamingStatus}
+        delayEnabled={delayEnabled}
+        delaySecondsRemaining={delaySecondsRemaining}
+        streamSwitcherStatus={streamSwitcherStatus}
+      />
+    </button>
   );
 }
 
@@ -351,28 +304,3 @@ const StreamButtonLabel = forwardRef<
 
   return <span ref={ref}>{$t('Go Live')}</span>;
 });
-
-function StreamSwitcherModal(p: {
-  showModal: boolean;
-  title: string;
-  message: string;
-  cancel?: string;
-  onOk?: () => void;
-  onCancel: (visible: boolean) => void;
-}) {
-  function handleShowModal() {
-    Services.WindowsService.actions.updateStyleBlockers('main', false);
-    p.onCancel(false);
-  }
-  return (
-    <AuthModal
-      title={p.title}
-      prompt={p.message}
-      cancel={p?.cancel ? p.cancel : undefined}
-      showModal={p.showModal}
-      handleAuth={() => {}}
-      // handleAuth={p?.onOk ? p.onOk : undefined}
-      handleShowModal={handleShowModal}
-    />
-  );
-}
