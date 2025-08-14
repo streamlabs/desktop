@@ -84,6 +84,7 @@ export default class Main extends Vue {
 
   theme: Theme = 'night-theme';
   page: TAppPage = 'Studio';
+  params: Dictionary<string | boolean> = {};
   minEditorWidth = 500;
 
   created() {
@@ -102,6 +103,7 @@ export default class Main extends Vue {
     });
     this.unbindNavigation = this.navigationService.state.bindProps(this, {
       page: 'currentPage',
+      params: 'params',
     });
 
     antdThemes[this.theme].use();
@@ -141,10 +143,6 @@ export default class Main extends Vue {
 
   get title() {
     return this.windowsService.state.main.title;
-  }
-
-  get params() {
-    return this.navigationService.state.params;
   }
 
   get applicationLoading() {
