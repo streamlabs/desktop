@@ -25,7 +25,7 @@ import { SourcesService } from 'app-services';
 
 export function enableBTTVEmotesScript(isDarkTheme: boolean) {
   /*eslint-disable */
-return `
+  return `
 localStorage.setItem('bttv_clickTwitchEmotes', true);
 localStorage.setItem('bttv_darkenedMode', ${
   isDarkTheme ? 'true' : 'false'
@@ -384,7 +384,7 @@ export class ChatService extends Service {
     // same winow multiple times.
     this.windowsService.createOneOffWindow({
       componentName: 'MultistreamChatInfo',
-      title: $t('Multistream Chat Platform Support'),
+      title: $t('Multichat Platform Support'),
       size: {
         width: 748,
         height: 635,
