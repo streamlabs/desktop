@@ -494,8 +494,16 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
         await this.startChatAuth(platform as TPlatform);
       }
 
-      // TODO: break out switch stream events if needed
-      if (['streamSwitchRequest', 'switchActionComplete'].includes(event.type)) {
+      if (event.type === 'streamSwitchRequest') {
+        console.log('event', JSON.stringify(event, null, 2));
+        this.streamingService.streamSwitchEvent.next(event);
+      }
+
+      if (event.type === 'switchActionComplete') {
+        console.log('event', JSON.stringify(event, null, 2));
+        this.usageStatisticsService.recordAnalyticsEvent('StreamSwitcherAction', {
+          stream: 'switched',
+        });
         this.streamingService.streamSwitchEvent.next(event);
       }
     });

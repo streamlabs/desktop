@@ -667,6 +667,14 @@ export class StreamingService
     if (settings.platforms.youtube?.enabled && settings.platforms.youtube.display === 'both') {
       this.usageStatisticsService.recordFeatureUsage('StreamToYouTubeBothOutputs');
     }
+
+    // Record Stream Switcher
+    if (settings.streamSwitch) {
+      this.usageStatisticsService.recordFeatureUsage('StreamSwitcher');
+      this.usageStatisticsService.recordAnalyticsEvent('StreamSwitcherAction', {
+        stream: 'enabled',
+      });
+    }
   }
 
   /**
@@ -1387,6 +1395,11 @@ export class StreamingService
         this.usageStatisticsService.recordAnalyticsEvent('StreamingStatus', {
           code: info.code,
           status: EStreamingState.Offline,
+        });
+
+        // Record stopping a Stream Switch stream
+        this.usageStatisticsService.recordAnalyticsEvent('StreamSwitcherAction', {
+          stream: 'ended',
         });
       } else if (info.signal === EOBSOutputSignal.Stopping) {
         this.sendStreamEndEvent();
