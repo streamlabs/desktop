@@ -361,8 +361,8 @@ export class SourcesNode extends Node<ISchema, {}> {
             audioMixers: defaultTo(sourceInfo.audioMixers, 255),
             monitoringType: defaultTo(sourceInfo.monitoringType, defaultMonitoring),
           });
+          audioSource.setHidden(!!sourceInfo.mixerHidden);
         }
-        audioSource.setHidden(!!sourceInfo.mixerHidden);
       }
 
       if (sourceInfo.hotkeys) {
