@@ -66,7 +66,7 @@ async function afterPackMac(context) {
     `cp -R ./node_modules/obs-studio-node/Frameworks \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Resources/app.asar.unpacked/node_modules/\"`,
   );
 
-  //await virtualCameraPacker.downloadVirtualCamExtension(context);
+  await virtualCameraPacker.downloadVirtualCamExtension(context);
 
   if (process.env.SLOBS_NO_SIGN) return;
 
@@ -74,7 +74,7 @@ async function afterPackMac(context) {
     context.packager.config.mac.identity,
     `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Resources/app.asar.unpacked`,
   );
-  //virtualCameraPacker.signApps(context);
+  virtualCameraPacker.signApps(context);
 }
 
 function afterPackWin() {
