@@ -16,7 +16,7 @@ interface IStreamSwitcherToggle {
 export default function StreamSwitcherToggle(p: IStreamSwitcherToggle) {
   const { isPrime, isStreamSwitchMode, setStreamSwitcher } = useGoLiveSettings();
 
-  const label = $t('Toggle Stream Switcher');
+  const label = $t('Stream Switcher');
 
   return (
     <div className={cx(p?.className, styles.streamSwitcherToggle)} style={p?.style}>

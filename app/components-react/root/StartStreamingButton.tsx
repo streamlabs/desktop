@@ -75,40 +75,19 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       });
 
       if (event.type === 'streamSwitchRequest') {
-        if (
-          streamSwitcherStatus === 'inactive' &&
-          event.data.identifier === Services.RestreamService.state.streamSwitcherStreamId
-        ) {
-          promptAction({
-            message: $t('Stream switch completed'),
-            title: $t(
-              'Your stream has been switched to Desktop. The stream on the other device has ended.',
-            ),
-            btnText: $t('Ok'),
-            cancelBtnPosition: 'none',
-          });
-        }
-
-        if (Services.RestreamService.state.streamSwitcherStreamId !== event.data.identifier) {
-          promptAction({
-            title: $t('Stream Switch Requested'),
-            message: $t(
-              'Stream switch requested on another device. Please accept the request on that device to switch the stream.',
-            ),
-            btnText: $t('Ok'),
-            cancelBtnPosition: 'none',
-          });
+        if (Services.RestreamService.state.streamSwitcherStreamId === event.data.identifier) {
+          RestreamService.confirmStreamSwitch('approved');
         }
       }
 
       if (event.type === 'switchActionComplete') {
         if (event.data.identifier !== Services.RestreamService.state.streamSwitcherStreamId) {
           promptAction({
-            message: $t('Stream switch completed'),
+            message: $t('Stream successfully switched'),
             title: $t(
-              'Your stream has been switched to the other device. Ending the stream on this device.',
+              'Your stream has been switched to Streamlabs Mobile. Ending the stream on Streamlabs Desktop.',
             ),
-            btnText: $t('Ok'),
+            btnText: $t('Close'),
             fn: Services.RestreamService.actions.endCurrentStream,
             cancelBtnPosition: 'none',
           });
@@ -116,11 +95,9 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
 
         if (event.data.identifier === Services.RestreamService.state.streamSwitcherStreamId) {
           promptAction({
-            message: $t('Stream switch completed'),
-            title: $t(
-              'Your stream has been switched to this device. The stream on the other device has ended.',
-            ),
-            btnText: $t('Ok'),
+            message: $t('Stream successfully switched'),
+            title: $t('Your stream has successfully switched to Streamlabs Desktop.'),
+            btnText: $t('Close'),
             cancelBtnPosition: 'none',
           });
         }
@@ -186,12 +163,12 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
           promptAction({
             title: $t('Another stream detected'),
             message: $t(
-              'A stream on another device has been detected. Would you like to switch your stream to this device?',
+              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? \n\n If you do not want to continue this stream, please end the stream from the current streaming source.',
             ),
+            btnText: $t('Switch to Desktop Stream'),
             fn: () => StreamingService.actions.goLive(),
-            btnText: $t('Yes'),
-            cancelBtnPosition: 'right',
-            cancelBtnText: $t('No'),
+            cancelBtnText: $t('Cancel'),
+            cancelBtnPosition: 'left',
           });
           return;
         }

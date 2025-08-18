@@ -315,7 +315,6 @@
   "A stream on another device has been detected. Would you like to switch your stream to Desktop? If you do not want to continue this stream, please end the stream from the current streaming source.": "A stream on another device has been detected. Would you like to switch your stream to Desktop? If you do not want to continue this stream, please end the stream from the current streaming source.",
   "Switch to Desktop Stream": "Switch to Desktop Stream",
   "Stream successfully switched": "Stream successfully switched",
-  "Your stream has successfully switched to Streamlabs Mobile.": "Your stream has successfully switched to Streamlabs Mobile.",
   "Stream Information:": "Stream Information:",
   "Destinations:": "Destinations:",
   "Destinations & Outputs:": "Destinations & Outputs:",
@@ -326,5 +325,8 @@
   "Toggle Destination": "Toggle Destination",
   "Share your stream!": "Share your stream!",
   "Stream Switcher cannot be used with Dual Output": "Stream Switcher cannot be used with Dual Output",
-  "Dual Output cannot be used with Stream Switcher": "Dual Output cannot be used with Stream Switcher"
+  "Dual Output cannot be used with Stream Switcher": "Dual Output cannot be used with Stream Switcher",
+  "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? \n\n If you do not want to continue this stream, please end the stream from the current streaming source.": "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? \n\n If you do not want to continue this stream, please end the stream from the current streaming source.",
+  "Your stream has been switched to Streamlabs Mobile. Ending the stream on Streamlabs Desktop.": "Your stream has been switched to Streamlabs Mobile. Ending the stream on Streamlabs Desktop.",
+  "Your stream has successfully switched to Streamlabs Desktop.": "Your stream has successfully switched to Streamlabs Desktop."
 }

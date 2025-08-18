@@ -158,6 +158,7 @@ export default function GoLiveSettings() {
                   style={{ paddingBottom: '10px' }}
                   disabled={isStreamSwitchMode}
                   tooltipDisabled={isStreamSwitchMode}
+                  label={$t('Dual Output')}
                   type="single"
                   lightShadow
                 />

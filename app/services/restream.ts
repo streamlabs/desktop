@@ -8,7 +8,7 @@ import { CustomizationService, ICustomizationServiceState } from 'services/custo
 import { authorizedHeaders, jfetch } from 'util/requests';
 import { IncrementalRolloutService } from './incremental-rollout';
 import electron from 'electron';
-import { EStreamingState, StreamingService } from './streaming';
+import { StreamingService } from './streaming';
 import { FacebookService } from './platforms/facebook';
 import { TikTokService } from './platforms/tiktok';
 import { TrovoService } from './platforms/trovo';
