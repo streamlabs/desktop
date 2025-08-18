@@ -66,7 +66,7 @@ export class CustomCastNdiManager extends PropertiesManager {
 
       // CUSTOMCAST NDIを強制選択する
       const ndi_source_name = customCastNdi.value;
-      if (this.obsSource.settings['ndi_source_name'].value !== ndi_source_name) {
+      if (this.obsSource.settings['ndi_source_name']?.value !== ndi_source_name) {
         this.obsSource.update({ ndi_source_name });
       }
     }
