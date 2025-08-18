@@ -8,7 +8,7 @@ import { CustomizationService, ICustomizationServiceState } from 'services/custo
 import { authorizedHeaders, jfetch } from 'util/requests';
 import { IncrementalRolloutService } from './incremental-rollout';
 import electron from 'electron';
-import { StreamingService } from './streaming';
+import { EStreamingState, StreamingService } from './streaming';
 import { FacebookService } from './platforms/facebook';
 import { TikTokService } from './platforms/tiktok';
 import { TrovoService } from './platforms/trovo';
@@ -320,7 +320,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
           display,
         );
       });
-    } else {
+    } else if (this.streamInfo.isStreamSwitchMode) {
       // in single output mode, we just set the ingest for the default display
       this.streamSettingsService.setSettings({
         streamType: 'rtmp_custom',
@@ -331,8 +331,21 @@ export class RestreamService extends StatefulService<IRestreamState> {
       // for the stream switcher, the stream needs a unique identifier
       const streamKey = `${this.settings.streamKey}&sid=${streamId}`;
 
+      console.log('Setting stream key for stream switcher:', streamKey);
+
       this.streamSettingsService.setSettings({
         key: streamKey,
+        server: ingest,
+      });
+    } else {
+      // in single output mode, we just set the ingest for the default display
+      this.streamSettingsService.setSettings({
+        streamType: 'rtmp_custom',
+      });
+
+      this.streamSettingsService.setSettings({
+        streamType: 'rtmp_custom',
+        key: this.settings.streamKey,
         server: ingest,
       });
     }
@@ -438,6 +451,26 @@ export class RestreamService extends StatefulService<IRestreamState> {
     );
   }
 
+  async checkIsLive(): Promise<boolean> {
+    const headers = authorizedHeaders(
+      this.userService.apiToken,
+      new Headers({ 'Content-Type': 'application/json' }),
+    );
+    const url = `https://${this.host}/api/v1/rst/user/is-live`;
+    const request = new Request(url, { headers });
+
+    return jfetch<{ isLive: boolean }>(request).then(j => {
+      if (j.isLive) {
+        this.SET_STREAM_SWITCHER_STATUS('pending');
+        this.streamSettingsService.setGoLiveSettings({ streamSwitch: true });
+      } else if (this.state.streamSwitcherStatus === 'pending') {
+        this.SET_STREAM_SWITCHER_STATUS('inactive');
+      }
+
+      return j.isLive;
+    });
+  }
+
   /**
    * Create restream targets
    * @remarks
@@ -519,14 +552,13 @@ export class RestreamService extends StatefulService<IRestreamState> {
     this.SET_STREAM_SWITCHER_STREAM_ID();
   }
 
-  confirmStreamSwitch(action: TStreamSwitcherAction) {
+  async confirmStreamSwitch(action: TStreamSwitcherAction) {
     if (action === 'rejected') {
       this.SET_STREAM_SWITCHER_STATUS('pending');
     } else {
       this.SET_STREAM_SWITCHER_STATUS('inactive');
+      this.updateStreamSwitcher('approved');
     }
-
-    this.updateStreamSwitcher(action);
   }
 
   async updateStreamSwitcher(action: TStreamSwitcherAction) {
@@ -540,9 +572,12 @@ export class RestreamService extends StatefulService<IRestreamState> {
       action,
     });
 
-    const request = new Request(url, { headers, body, method: 'POST' });
+    console.log('Updating stream switcher with action:', action);
+    console.log('body', JSON.stringify(body, null, 2));
 
+    const request = new Request(url, { headers, body, method: 'POST' });
     const res = await fetch(request);
+    if (!res.ok) throw await res.json();
     return res.json();
   }
 

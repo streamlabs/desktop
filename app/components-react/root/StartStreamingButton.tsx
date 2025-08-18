@@ -21,11 +21,18 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     RestreamService,
   } = Services;
 
-  const { streamingStatus, delayEnabled, delaySeconds, streamSwitcherStatus } = useVuex(() => ({
+  const {
+    streamingStatus,
+    delayEnabled,
+    delaySeconds,
+    streamSwitcherStatus,
+    isDualOutputMode,
+  } = useVuex(() => ({
     streamingStatus: StreamingService.state.streamingStatus,
     delayEnabled: StreamingService.views.delayEnabled,
     delaySeconds: StreamingService.views.delaySeconds,
     streamSwitcherStatus: RestreamService.state.streamSwitcherStatus,
+    isDualOutputMode: StreamingService.views.isDualOutputMode,
   }));
 
   const [delaySecondsRemaining, setDelayTick] = useState(delaySeconds);
@@ -49,7 +56,16 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     }
   }, [delaySecondsRemaining, streamingStatus, delayEnabled]);
 
+  // To prevent a lag when toggling streaming, check the stream switcher status on mount
+  // useEffect(() => {
+  //   RestreamService.checkStreamSwitcherStatus();
+  // }, []);
+
   useEffect(() => {
+    if (!isDualOutputMode) {
+      fetchStreamSwitcherStatus();
+    }
+
     const switchStreamEvent = Services.StreamingService.streamSwitchEvent.subscribe(event => {
       Services.NotificationsService.actions.push({
         type: ENotificationType.SUCCESS,
@@ -59,31 +75,30 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       });
 
       if (event.type === 'streamSwitchRequest') {
-        if (event.data.identifier === Services.RestreamService.state.streamSwitcherStreamId) {
+        if (
+          streamSwitcherStatus === 'inactive' &&
+          event.data.identifier === Services.RestreamService.state.streamSwitcherStreamId
+        ) {
           promptAction({
-            title: $t('Another stream detected'),
-            message: $t(
-              'A stream on another device has been detected. Would you like to switch your stream to Desktop? If you do not want to continue this stream, please end the stream from the other device.',
-            ),
-            fn: () => Services.RestreamService.actions.confirmStreamSwitch('approved'),
-            btnText: $t('Yes'),
-            cancelBtnPosition: 'right',
-            cancelBtnText: $t('No'),
-            cancelFn: () => Services.RestreamService.actions.confirmStreamSwitch('rejected'),
-          });
-        }
-
-        if (event.data.identifier !== Services.RestreamService.state.streamSwitcherStreamId) {
-          promptAction({
-            title: $t('Another stream detected'),
-            message: $t(
-              'A stream on another device has been detected. Would you like to switch your stream to the other device? Approve the switch on the other device to switch the stream.',
+            message: $t('Stream switch completed'),
+            title: $t(
+              'Your stream has been switched to Desktop. The stream on the other device has ended.',
             ),
             btnText: $t('Ok'),
             cancelBtnPosition: 'none',
           });
         }
-        return;
+
+        if (Services.RestreamService.state.streamSwitcherStreamId !== event.data.identifier) {
+          promptAction({
+            title: $t('Stream Switch Requested'),
+            message: $t(
+              'Stream switch requested on another device. Please accept the request on that device to switch the stream.',
+            ),
+            btnText: $t('Ok'),
+            cancelBtnPosition: 'none',
+          });
+        }
       }
 
       if (event.type === 'switchActionComplete') {
@@ -98,6 +113,17 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
             cancelBtnPosition: 'none',
           });
         }
+
+        if (event.data.identifier === Services.RestreamService.state.streamSwitcherStreamId) {
+          promptAction({
+            message: $t('Stream switch completed'),
+            title: $t(
+              'Your stream has been switched to this device. The stream on the other device has ended.',
+            ),
+            btnText: $t('Ok'),
+            cancelBtnPosition: 'none',
+          });
+        }
       }
     });
 
@@ -107,24 +133,10 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
   }, []);
 
   async function toggleStreaming() {
-    if (streamSwitcherStatus === 'pending') {
-      promptAction({
-        title: $t('Another stream detected'),
-        message: $t(
-          'A stream on another device has been detected. Would you like to switch your stream to Desktop? If you do not want to continue this stream, please end the stream from the other device.',
-        ),
-        fn: () => Services.RestreamService.actions.confirmStreamSwitch('approved'),
-        btnText: $t('Yes'),
-        cancelBtnPosition: 'right',
-        cancelBtnText: $t('No'),
-        cancelFn: () => Services.RestreamService.actions.confirmStreamSwitch('rejected'),
-      });
-      return;
-    }
-
     if (StreamingService.isStreaming) {
       StreamingService.toggleStreaming();
     } else {
+      // Check if the scene collection has completed loading and syncing
       if (MediaBackupService.views.globalSyncStatus === EGlobalSyncStatus.Syncing) {
         const goLive = await remote.dialog
           .showMessageBox(remote.getCurrentWindow(), {
@@ -166,6 +178,25 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         if (!goLive) return;
       }
 
+      // Only check for Stream Switch in single output mode
+      if (!isDualOutputMode) {
+        const isLive = await fetchStreamSwitcherStatus();
+        console.log('isLive', isLive);
+        if (isLive) {
+          promptAction({
+            title: $t('Another stream detected'),
+            message: $t(
+              'A stream on another device has been detected. Would you like to switch your stream to this device?',
+            ),
+            fn: () => StreamingService.actions.goLive(),
+            btnText: $t('Yes'),
+            cancelBtnPosition: 'right',
+            cancelBtnText: $t('No'),
+          });
+          return;
+        }
+      }
+
       if (shouldShowGoLiveWindow()) {
         if (!StreamingService.views.hasPendingChecks()) {
           StreamingService.actions.resetInfo();
@@ -184,6 +215,17 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     p.disabled ||
     (streamingStatus === EStreamingState.Starting && delaySecondsRemaining === 0) ||
     (streamingStatus === EStreamingState.Ending && delaySecondsRemaining === 0);
+
+  async function fetchStreamSwitcherStatus() {
+    try {
+      const isLive = await RestreamService.checkIsLive();
+      console.log('isLive', isLive);
+      return isLive;
+    } catch (e: unknown) {
+      console.error('Error checking stream switcher status', e);
+      return false;
+    }
+  }
 
   function shouldShowGoLiveWindow() {
     if (!UserService.isLoggedIn) return false;
@@ -242,7 +284,7 @@ const StreamButtonLabel = forwardRef<
     delayEnabled: boolean;
   }
 >((p, ref) => {
-  if (p.streamSwitcherStatus === 'pending' && p.streamingStatus === EStreamingState.Live) {
+  if (p.streamSwitcherStatus === 'pending') {
     return <span ref={ref}>{$t('Claim Stream')}</span>;
   }
 

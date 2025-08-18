@@ -11,6 +11,7 @@ import { useForm } from '../../shared/inputs/Form';
 import { getDefined } from '../../../util/properties-type-guards';
 import isEqual from 'lodash/isEqual';
 import { TDisplayType } from 'services/settings-v2';
+import partition from 'lodash/partition';
 
 type TCommonFieldName = 'title' | 'description';
 
@@ -353,8 +354,14 @@ export class GoLiveSettingsModule {
   }
 
   get unlinkedPlatforms() {
-    const platforms = platformList as TPlatform[];
-    return platforms.filter(platform => !this.state.linkedPlatforms.includes(platform));
+    const platforms = (platformList as TPlatform[]).filter(
+      p => !this.state.linkedPlatforms.includes(p),
+    );
+
+    const [alwaysShown, unlinked] = partition(platforms, p =>
+      this.state.alwaysShownPlatforms.includes(p),
+    );
+    return [...alwaysShown, ...unlinked];
   }
 
   get primaryChat() {

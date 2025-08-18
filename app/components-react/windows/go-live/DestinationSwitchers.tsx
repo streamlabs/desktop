@@ -10,8 +10,8 @@ import PlatformLogo from '../../shared/PlatformLogo';
 import { useDebounce } from '../../hooks';
 import { useGoLiveSettings } from './useGoLiveSettings';
 import DisplaySelector from 'components-react/shared/DisplaySelector';
-import { promptAction } from 'components-react/modals';
 import ConnectButton from 'components-react/shared/ConnectButton';
+import { message } from 'antd';
 
 /**
  * Allows enabling/disabling platforms and custom destinations for the stream
@@ -65,11 +65,33 @@ export function DestinationSwitchers() {
       return false;
     }
 
+    //     // Because users must have at least one platform enabled,
+    // // in single output mode they cannot have a custom destination enabled
+    // // unless they are grandfathered in to streaming with TikTok always enabled
+    // if (
+    //   !isDualOutputMode &&
+    //   !isPrime &&
+    //   enabledPlatformsRef.current.length === 1 &&
+    //   enabledPlatformsRef.current.includes('tiktok')
+    // ) {
+    //   return false;
+    // }
+
+    // // In dual output mode, non-ultra users can have a custom destination
+    // // enabled as the second target
+    // if (isDualOutputMode && !isPrime) {
+    //   return false;
+    // }
+
     // Otherwise, only a single platform and no custom destinations
     return enabledPlatforms.length > 0;
   };
 
   const disableCustomDestinationSwitchers = shouldDisableCustomDestinationSwitchers();
+  const disableNonUltraSwitchers =
+    isDualOutputMode &&
+    !isPrime &&
+    enabledPlatformsRef.current.length + enabledDestRef.current.length >= 2;
 
   const emitSwitch = useDebounce(500, (ind?: number, enabled?: boolean) => {
     if (ind !== undefined && enabled !== undefined) {
@@ -88,12 +110,6 @@ export function DestinationSwitchers() {
   }
 
   function togglePlatform(platform: TPlatform, enabled: boolean) {
-    // One platform or destination must always be enabled
-    if (enabledPlatformsRef.current.length + enabledDestRef.current.length === 1) {
-      enabledPlatformsRef.current.push(platform);
-      return;
-    }
-
     // In dual output mode, only allow non-ultra users to have 2 platforms, or 1 platform and 1 custom destination enabled
     if (isDualOutputMode && !isPrime) {
       if (enabledPlatformsRef.current.length < 2 && enabledDestRef.current.length < 1) {
@@ -129,12 +145,6 @@ export function DestinationSwitchers() {
   }
 
   function toggleDestination(index: number, enabled: boolean) {
-    // One platform or destination must always be enabled
-    if (enabledPlatformsRef.current.length + enabledDestRef.current.length === 1) {
-      enabledDestRef.current.push(index);
-      return;
-    }
-
     enabledDestRef.current = enabledDestRef.current.filter((dest, i) => i !== index);
 
     if (enabled) {
@@ -145,15 +155,17 @@ export function DestinationSwitchers() {
   }
 
   return (
-    <div className={styles.switchWrapper}>
+    <div className={cx(styles.switchWrapper, styles.columnPadding)}>
       {platforms.map((platform, ind) => (
         <DestinationSwitcher
           key={platform}
           destination={platform}
           enabled={isEnabled(platform)}
           onChange={enabled => togglePlatform(platform, enabled)}
+          switchDisabled={!isEnabled(platform) && disableNonUltraSwitchers}
           isDualOutputMode={isDualOutputMode}
           index={ind}
+          // hideController={showSelector || hidePlatformController}
           showPrompt={alwaysShownPlatforms.includes(platform) && !isPlatformLinked(platform)}
         />
       ))}
@@ -165,7 +177,9 @@ export function DestinationSwitchers() {
             destination={dest}
             enabled={dest.enabled && !disableCustomDestinationSwitchers}
             onChange={enabled => toggleDestination(ind, enabled)}
-            switchDisabled={disableCustomDestinationSwitchers}
+            switchDisabled={
+              disableCustomDestinationSwitchers || (!dest.enabled && disableNonUltraSwitchers)
+            }
             isDualOutputMode={isDualOutputMode}
             index={ind}
           />
@@ -213,10 +227,7 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
     ? $t('Toggle %{platform}', { platform: platformLabels(platform) })
     : $t('Toggle Destination');
 
-  const { RestreamService, NavigationService, WindowsService } = Services;
-
   function onClickHandler(ev: MouseEvent) {
-    // TODO: MAYBE HAVE NOTY LOGIC HERE
     // If we're disabling the switch we shouldn't be emitting anything past below
     if (disabled) {
       return;
@@ -227,34 +238,6 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
     // always proxy the click to the SwitchInput
     // so it can play a transition animation
     switchInputRef.current?.click();
-  }
-
-  function renderPrompt() {
-    if (!platform) return;
-
-    const message = RestreamService.views.canEnableRestream
-      ? $t('Connect your %{platform} account to stream to %{platform}.', {
-          platform: platformLabels(platform),
-        })
-      : $t(
-          'Connect your %{platform} account to stream to %{platform}. Try streaming to %{platform} and another platform at the same time for free in dual output mode, or multistream with ultra.',
-          {
-            platform: platformLabels(platform),
-          },
-        );
-
-    promptAction({
-      title: $t('Connect your %{platform} account', { platform: platformLabels(platform) }),
-      icon: <PlatformLogo platform={platform} className={styles.actionModalLogo} />,
-      message,
-      btnText: $t('Connect'),
-      fn: () => {
-        NavigationService.actions.navigate('PlatformMerge', {
-          platform,
-        });
-        WindowsService.actions.closeChildWindow();
-      },
-    });
   }
 
   const { title, description, Controller, Logo } = (() => {
@@ -315,7 +298,10 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
         [styles.platformDisabled]: !p.enabled && !p?.isUnlinked,
         [styles.platformEnabled]: p.enabled,
       })}
-      onClick={onClickHandler}
+      onClick={e => {
+        e.stopPropagation();
+        onClickHandler(e);
+      }}
     >
       {/* SWITCH */}
       <div className={cx(styles.colInput)}>

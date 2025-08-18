@@ -139,7 +139,10 @@ class LiveDockController {
   }
 
   get isRestreaming() {
-    return this.restreamService.shouldGoLiveWithRestream;
+    return (
+      this.restreamService.shouldGoLiveWithRestream &&
+      !this.streamingService.views.isStreamSwitchMode
+    );
   }
 
   // Now that the same platform can stream to multiple displays we want to avoid mistakenly
