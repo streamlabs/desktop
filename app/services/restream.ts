@@ -122,7 +122,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   get streamSwitcherStatus() {
-    return this.state.streamSwitcherStatus || 'inactive';
+    return this.state.streamSwitcherStatus;
   }
 
   @mutation()
@@ -265,11 +265,15 @@ export class RestreamService extends StatefulService<IRestreamState> {
       new Headers({ 'Content-Type': 'application/json' }),
     );
     const url = `https://${this.host}/api/v1/rst/user/settings`;
+
+    const enableStreamSwitch =
+      this.streamInfo.isStreamSwitchMode && !this.streamInfo.isDualOutputMode;
+
     const body = JSON.stringify({
       enabled,
-      dcProtection: this.streamInfo.isStreamSwitchMode,
+      dcProtection: enableStreamSwitch,
       idleTimeout: 30,
-      streamSwitch: this.streamInfo.isStreamSwitchMode,
+      streamSwitch: enableStreamSwitch,
     });
 
     const request = new Request(url, { headers, body, method: 'PUT' });

@@ -45,6 +45,7 @@ export default function GoLiveSettings() {
     isPrime,
     isStreamSwitchMode,
     isStreamSwitchDisabled,
+    isDualOutputSwitchDisabled,
     setPrimaryChat,
     addUltra,
   } = useGoLiveSettings().extend(module => {
@@ -71,6 +72,8 @@ export default function GoLiveSettings() {
       showTweet: UserService.views.auth?.primaryPlatform !== 'twitter',
 
       isStreamSwitchDisabled: module.isDualOutputMode || !UserService.views.isPrime,
+
+      isDualOutputSwitchDisabled: module.isStreamSwitchMode && !module.isDualOutputMode,
 
       addDestination() {
         SettingsService.actions.showSettings('Stream');
@@ -151,7 +154,7 @@ export default function GoLiveSettings() {
                 title={$t('Dual Output cannot be used with Stream Switcher')}
                 placement="top"
                 lightShadow={true}
-                disabled={!isStreamSwitchMode}
+                disabled={isDualOutputSwitchDisabled}
               >
                 <DualOutputToggle
                   className={styles.featureToggle}

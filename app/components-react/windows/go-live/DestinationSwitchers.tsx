@@ -298,10 +298,7 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
         [styles.platformDisabled]: !p.enabled && !p?.isUnlinked,
         [styles.platformEnabled]: p.enabled,
       })}
-      onClick={e => {
-        e.stopPropagation();
-        onClickHandler(e);
-      }}
+      onClick={onClickHandler}
     >
       {/* SWITCH */}
       <div className={cx(styles.colInput)}>
@@ -321,13 +318,15 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
 
       {/* DISPLAY TOGGLES */}
       {p.isDualOutputMode && !p?.isUnlinked && (
-        <DisplaySelector
-          title={title}
-          nolabel
-          className={styles.dualOutputDisplaySelector}
-          platform={platform}
-          index={p.index}
-        />
+        <div onClick={e => e.stopPropagation()}>
+          <DisplaySelector
+            title={title}
+            nolabel
+            className={styles.dualOutputDisplaySelector}
+            platform={platform}
+            index={p.index}
+          />
+        </div>
       )}
 
       {/* CONNECT BUTTON */}

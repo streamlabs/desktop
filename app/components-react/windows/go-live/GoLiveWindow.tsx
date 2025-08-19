@@ -12,6 +12,7 @@ import Animation from 'rc-animate';
 import { useGoLiveSettings, useGoLiveSettingsRoot } from './useGoLiveSettings';
 import { inject } from 'slap';
 import RecordingSwitcher from './RecordingSwitcher';
+import { promptAction } from 'components-react/modals';
 
 export default function GoLiveWindow() {
   const { lifecycle, form } = useGoLiveSettingsRoot().extend(module => ({
@@ -57,10 +58,9 @@ function ModalFooter() {
     close,
     goBackToSettings,
     getCanStreamDualOutput,
-    toggleDualOutputMode,
     isLoading,
     isDualOutputMode,
-    horizontalHasTargets,
+    isStreamSwitchMode,
   } = useGoLiveSettings().extend(module => ({
     windowsService: inject(WindowsService),
     dualOutputService: inject(DualOutputService),
@@ -83,17 +83,13 @@ function ModalFooter() {
 
       return platformDisplays.horizontal.length > 0 || destinationDisplays.horizontal.length > 0;
     },
-
-    get isDualOutputMode() {
-      return Services.TikTokService.promptApply;
-    },
   }));
 
   const shouldShowConfirm = ['prepopulate', 'waitForNewSettings'].includes(lifecycle);
   const shouldShowGoBackButton =
     lifecycle === 'runChecklist' && error && checklist.startVideoTransmission !== 'done';
 
-  function handleGoLive() {
+  async function handleGoLive() {
     if (isDualOutputMode && !getCanStreamDualOutput()) {
       message.error({
         content: $t(
@@ -103,12 +99,36 @@ function ModalFooter() {
       return;
     }
 
+    if (isStreamSwitchMode) {
+      try {
+        const isLive = await Services.RestreamService.checkIsLive();
+        if (isLive) {
+          promptAction({
+            title: $t('Another stream detected'),
+            message: $t(
+              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source.',
+            ),
+            btnText: $t('Switch to Streamlabs Desktop'),
+            fn: () => {
+              Services.StreamingService.actions.goLive();
+              close();
+            },
+            cancelBtnText: $t('Cancel'),
+            cancelBtnPosition: 'left',
+          });
+          return;
+        }
+      } catch (e: unknown) {
+        console.error('Error checking stream switcher status:', e);
+      }
+    }
+
     goLive();
   }
 
   return (
     <Form layout={'inline'}>
-      {!isDualOutputMode && <RecordingSwitcher />}
+      {!isDualOutputMode && shouldShowConfirm && <RecordingSwitcher />}
       {/* CLOSE BUTTON */}
       <Button onClick={close}>{$t('Close')}</Button>
 

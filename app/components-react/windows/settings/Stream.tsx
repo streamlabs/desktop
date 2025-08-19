@@ -186,12 +186,15 @@ function useStreamSettings() {
 export function StreamSettings() {
   const { StreamingService, StreamSettingsService, UserService, DualOutputService } = Services;
 
-  const { canEditSettings, protectedModeEnabled, needToShowWarning, platforms } = useVuex(() => ({
-    canEditSettings: Services.StreamingService.state.streamingStatus === EStreamingState.Offline,
-    protectedModeEnabled: Services.StreamSettingsService.protectedModeEnabled,
-    needToShowWarning: UserService.isLoggedIn && !StreamSettingsService.protectedModeEnabled,
-    platforms: StreamingService.views.allPlatforms,
-  }));
+  const { canEditSettings, protectedModeEnabled, needToShowWarning, platforms, isPrime } = useVuex(
+    () => ({
+      canEditSettings: Services.StreamingService.state.streamingStatus === EStreamingState.Offline,
+      protectedModeEnabled: Services.StreamSettingsService.protectedModeEnabled,
+      needToShowWarning: UserService.isLoggedIn && !StreamSettingsService.protectedModeEnabled,
+      platforms: StreamingService.views.allPlatforms,
+      isPrime: UserService.views.isPrime,
+    }),
+  );
 
   // Show a message when the user has unlinked/linked their account on web
   useSubscription(
@@ -263,12 +266,14 @@ export function StreamSettings() {
               {$t('Add More')}
             </div>
           </div>
-          <div className={styles.ultraText}>
-            <UltraIcon type="badge" style={{ marginRight: '5px' }} />
-            <div onClick={() => Services.MagicLinkService.linkToPrime('slobs-stream-settings')}>
-              {$t('Upgrade to Ultra to stream to multiple platforms simultaneously!')}
+          {!isPrime && (
+            <div className={styles.ultraText}>
+              <UltraIcon type="badge" style={{ marginRight: '5px' }} />
+              <div onClick={() => Services.MagicLinkService.linkToPrime('slobs-stream-settings')}>
+                {$t('Upgrade to Ultra to stream to multiple platforms simultaneously!')}
+              </div>
             </div>
-          </div>
+          )}
           {platforms.map(platform => (
             <Platform key={platform} platform={platform} />
           ))}

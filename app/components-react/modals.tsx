@@ -126,6 +126,7 @@ export function promptAction(p: {
   title: string;
   message: string;
   btnText: string;
+  btnType?: 'default' | 'primary';
   cancelBtnPosition?: 'left' | 'right' | 'none';
   cancelBtnText?: string;
   fn?(): void | ((props: any) => unknown | void);
@@ -152,7 +153,7 @@ export function promptAction(p: {
                 <Button onClick={Modal.destroyAll}>{p.cancelBtnText ?? $t('Skip')}</Button>
               ))}
             <Button
-              type="primary"
+              type={p?.btnType ?? 'primary'}
               onClick={() => {
                 Modal.destroyAll();
                 if (p?.fn) {

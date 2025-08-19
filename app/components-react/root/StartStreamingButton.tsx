@@ -19,6 +19,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     MediaBackupService,
     SourcesService,
     RestreamService,
+    NotificationsService,
   } = Services;
 
   const {
@@ -56,48 +57,51 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     }
   }, [delaySecondsRemaining, streamingStatus, delayEnabled]);
 
-  // To prevent a lag when toggling streaming, check the stream switcher status on mount
-  // useEffect(() => {
-  //   RestreamService.checkStreamSwitcherStatus();
-  // }, []);
-
   useEffect(() => {
     if (!isDualOutputMode) {
       fetchStreamSwitcherStatus();
     }
 
-    const switchStreamEvent = Services.StreamingService.streamSwitchEvent.subscribe(event => {
-      Services.NotificationsService.actions.push({
+    const switchStreamEvent = StreamingService.streamSwitchEvent.subscribe(event => {
+      const streamSwitcherStreamId = RestreamService.state.streamSwitcherStreamId;
+      NotificationsService.actions.push({
         type: ENotificationType.SUCCESS,
         lifeTime: 8000,
         showTime: false,
-        message: JSON.stringify(event),
+        message:
+          'Desktop stream id: ' + streamSwitcherStreamId + '\nEvent:' + JSON.stringify(event),
       });
 
       if (event.type === 'streamSwitchRequest') {
-        if (Services.RestreamService.state.streamSwitcherStreamId === event.data.identifier) {
+        if (event.data.identifier === streamSwitcherStreamId) {
           RestreamService.confirmStreamSwitch('approved');
         }
       }
 
       if (event.type === 'switchActionComplete') {
-        if (event.data.identifier !== Services.RestreamService.state.streamSwitcherStreamId) {
+        const remoteStreamId = event.data.identifier;
+
+        if (remoteStreamId !== streamSwitcherStreamId) {
           promptAction({
-            message: $t('Stream successfully switched'),
-            title: $t(
+            title: $t('Stream successfully switched'),
+            message: $t(
               'Your stream has been switched to Streamlabs Mobile. Ending the stream on Streamlabs Desktop.',
             ),
             btnText: $t('Close'),
             fn: Services.RestreamService.actions.endCurrentStream,
+            btnType: 'default',
             cancelBtnPosition: 'none',
           });
         }
 
-        if (event.data.identifier === Services.RestreamService.state.streamSwitcherStreamId) {
+        if (remoteStreamId === streamSwitcherStreamId) {
           promptAction({
-            message: $t('Stream successfully switched'),
-            title: $t('Your stream has successfully switched to Streamlabs Desktop.'),
+            title: $t('Stream successfully switched'),
+            message: $t(
+              'Your stream has been successfully switched to Streamlabs Desktop. \n\nEnjoy your stream!',
+            ),
             btnText: $t('Close'),
+            btnType: 'default',
             cancelBtnPosition: 'none',
           });
         }
@@ -158,14 +162,14 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       // Only check for Stream Switch in single output mode
       if (!isDualOutputMode) {
         const isLive = await fetchStreamSwitcherStatus();
-        console.log('isLive', isLive);
+
         if (isLive) {
           promptAction({
             title: $t('Another stream detected'),
             message: $t(
-              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? \n\n If you do not want to continue this stream, please end the stream from the current streaming source.',
+              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source.',
             ),
-            btnText: $t('Switch to Desktop Stream'),
+            btnText: $t('Switch to Streamlabs Desktop'),
             fn: () => StreamingService.actions.goLive(),
             cancelBtnText: $t('Cancel'),
             cancelBtnPosition: 'left',
@@ -196,7 +200,6 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
   async function fetchStreamSwitcherStatus() {
     try {
       const isLive = await RestreamService.checkIsLive();
-      console.log('isLive', isLive);
       return isLive;
     } catch (e: unknown) {
       console.error('Error checking stream switcher status', e);
