@@ -12,7 +12,7 @@ import StartStreamingButton from './StartStreamingButton';
 import NotificationsArea from './NotificationsArea';
 import Tooltip from '../shared/Tooltip';
 import { Tooltip as AntdTooltip } from 'antd';
-import { confirmAsync, promptAction } from 'components-react/modals';
+import { confirmAsync } from 'components-react/modals';
 import RecordingSwitcher from 'components-react/windows/go-live/RecordingSwitcher';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 
@@ -61,8 +61,6 @@ export default function StudioFooterComponent() {
       EAvailableFeatures.dualOutputRecording,
     ),
   }));
-
-  const showRecordingIcons = isDualOutputMode && (verticalRecording || dualOutputRecording);
 
   function performanceIconClassName() {
     if (!streamingStatus || streamingStatus === EStreamingState.Offline) {
@@ -153,8 +151,7 @@ export default function StudioFooterComponent() {
             {$t('Looking to stream?')}
           </button>
         )}
-        {!recordingModeEnabled && !showRecordingIcons && <RecordingButton />}
-        {!recordingModeEnabled && showRecordingIcons && <DualOutputRecordingButton />}
+        {!recordingModeEnabled && <RecordingButton />}
         {replayBufferEnabled && replayBufferOffline && (
           <div className={styles.navItem}>
             <AntdTooltip placement="left" title={$t('Start Replay Buffer')}>
@@ -203,31 +200,27 @@ export default function StudioFooterComponent() {
             <StartStreamingButton />
           </div>
         )}
-        {recordingModeEnabled && !isDualOutputMode && <RecordingButton />}
-        {recordingModeEnabled && isDualOutputMode && <DualOutputRecordingButton />}
+        {recordingModeEnabled && <RecordingButton />}
       </div>
     </div>
   );
 }
 
 function RecordingButton() {
-  const { StreamingService } = Services;
-  const [recordingStatus, setRecordingStatus] = useState(ERecordingState.Offline);
-  const isRecording = recordingStatus !== ERecordingState.Offline;
+  const { StreamingService, DualOutputService } = Services;
+  const { isRecording, recordingStatus, isDualOutputMode } = useVuex(() => ({
+    isRecording: StreamingService.views.isRecording,
+    recordingStatus: StreamingService.views.recordingStatus,
+    isDualOutputMode: DualOutputService.views.dualOutputMode,
+  }));
 
   function toggleRecording() {
     StreamingService.actions.toggleRecording();
   }
 
-  useEffect(() => {
-    const subscription = StreamingService.recordingStatusChange.subscribe(status => {
-      console.log('Recording status changed:', status);
-
-      setRecordingStatus(status);
-    });
-
-    return subscription.unsubscribe;
-  }, []);
+  const showLoadingSpinner = [ERecordingState.Starting, ERecordingState.Stopping].includes(
+    recordingStatus,
+  );
 
   return (
     <>
@@ -235,21 +228,17 @@ function RecordingButton() {
       <div className={styles.navItem}>
         <Tooltip
           placement="left"
-          title={isRecording ? $t('Stop Recording') : $t('Start Recording')}
+          title={
+            <RecordingTooltipTitle isRecording={isRecording} isDualOutputMode={isDualOutputMode} />
+          }
         >
           <button
             className={cx(styles.recordButton, 'record-button', {
               active: isRecording,
             })}
-            onClick={useDebounce(200, toggleRecording)}
+            onClick={toggleRecording}
           >
-            <span>
-              {recordingStatus === ERecordingState.Stopping ? (
-                <i className="fa fa-spinner fa-pulse" />
-              ) : (
-                <>REC</>
-              )}
-            </span>
+            <span>{showLoadingSpinner ? <i className="fa fa-spinner fa-pulse" /> : <>REC</>}</span>
           </button>
         </Tooltip>
       </div>
@@ -277,40 +266,11 @@ function RecordingTimer(p: { isRecording: boolean }) {
   return <div className={cx(styles.navItem, styles.recordTime)}>{recordingTime}</div>;
 }
 
-function DualOutputRecordingButton() {
-  const { StreamingService } = Services;
-  const { isRecording, recordingStatus } = useVuex(() => ({
-    isRecording: StreamingService.views.isRecording,
-    recordingStatus: StreamingService.views.recordingStatus,
-  }));
-
-  const showLoadingSpinner = [ERecordingState.Starting, ERecordingState.Stopping].includes(
-    recordingStatus,
-  );
-
-  function toggleRecording() {
-    StreamingService.actions.toggleRecording();
-  }
-
-  return (
-    <>
-      <RecordingTimer isRecording={isRecording} />
-      <div className={styles.navItem}>
-        <Tooltip
-          placement="left"
-          lightShadow={true}
-          title={
-            isRecording ? $t('Stop Recording') : <RecordingSwitcher label={$t('Start Recording')} />
-          }
-        >
-          <button
-            className={cx(styles.recordButton, 'record-button', { active: isRecording })}
-            onClick={toggleRecording}
-          >
-            <span>{showLoadingSpinner ? <i className="fa fa-spinner fa-pulse" /> : <>REC</>}</span>
-          </button>
-        </Tooltip>
-      </div>
-    </>
+function RecordingTooltipTitle(p: { isRecording: boolean; isDualOutputMode: boolean }) {
+  const text = p.isRecording ? $t('Stop Recording') : $t('Start Recording');
+  return p.isDualOutputMode && !p.isRecording ? (
+    <RecordingSwitcher label={$t('Start Recording')} />
+  ) : (
+    <span>{text}</span>
   );
 }

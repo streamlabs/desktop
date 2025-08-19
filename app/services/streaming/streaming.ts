@@ -1335,6 +1335,9 @@ export class StreamingService
     }
 
     if (this.views.isDualOutputRecording || this.views.settings.recording === 'vertical') {
+      // Add analytics for dual output recording
+      this.usageStatisticsService.recordFeatureUsage('DualOutputRecording');
+
       // Update the recording state for the loading animation
       await this.validateOrCreateOutputInstance('vertical', 'recording', 2, true);
     }
