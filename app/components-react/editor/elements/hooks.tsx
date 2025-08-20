@@ -9,25 +9,47 @@ export default function useBaseElement(
   ref: HTMLDivElement | null,
 ) {
   const [belowMins, setBelowMins] = useState(false);
+  const [height, setHeight] = useState(0);
+  const [width, setWidth] = useState(0);
+
+  let sizeWatcherInterval = 0;
+  const sizeWatcherCallbacks: Function[] = [];
+
+  function addSizeWatcher(cb: Function) {
+    sizeWatcherCallbacks.push(cb);
+    if (sizeWatcherInterval) return;
+    sizeWatcherInterval = window.setInterval(() => {
+      sizeWatcherCallbacks.forEach(cb => cb());
+    }, 500);
+  }
+
+  function removeSizeWatcher(cb: Function) {
+    const idx = sizeWatcherCallbacks.findIndex(func => func === cb);
+    if (idx !== -1) sizeWatcherCallbacks.splice(idx, 1);
+    if (sizeWatcherCallbacks.length < 1) {
+      clearInterval(sizeWatcherInterval);
+      sizeWatcherInterval = 0;
+    }
+  }
+
+  useEffect(() => {
+    const sizeWatcher = () => {
+      if (!ref || !ref.getBoundingClientRect) return;
+      setHeight(ref.getBoundingClientRect().height);
+      setWidth(ref.getBoundingClientRect().width);
+    };
+
+    sizeWatcher();
+    addSizeWatcher(sizeWatcher);
+
+    return () => removeSizeWatcher(sizeWatcher);
+  }, []);
 
   useEffect(() => {
     if (!ref) return;
-
-    const handleResize = () => {
-      const rect = ref.getBoundingClientRect();
-      // 26px added to account for size of the resize bars and padding
-      setBelowMins(rect.height + 26 < mins.y || rect.width + 26 < mins.x);
-    };
-
-    handleResize();
-
-    const resizeObserver = new window.ResizeObserver(handleResize);
-    resizeObserver.observe(ref);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [ref, mins.x, mins.y]);
+    // 26px added to account for size of the resize bars and padding
+    setBelowMins(height + 26 < mins.y || width + 26 < mins.x);
+  }, [width, height]);
 
   function renderElement() {
     return belowMins ? <BelowMinWarning /> : element;
