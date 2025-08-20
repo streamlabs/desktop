@@ -40,7 +40,6 @@ import {
   IStreamingServiceApi,
   IStreamingServiceState,
   IStreamSettings,
-  TDisplayOutput,
   TGoLiveChecklistItemState,
 } from './streaming-api';
 import { UsageStatisticsService } from 'services/usage-statistics';
@@ -1325,7 +1324,6 @@ export class StreamingService
       this.views.isDualOutputRecording ||
       this.views.settings.recording === 'horizontal'
     ) {
-      // Update the recording state for the loading animation
       await this.validateOrCreateOutputInstance('horizontal', 'recording', 1, true);
 
       // In single output mode or is the user is just recording without streaming,
@@ -1339,7 +1337,16 @@ export class StreamingService
       // Add analytics for dual output recording
       this.usageStatisticsService.recordFeatureUsage('DualOutputRecording');
 
-      // Update the recording state for the loading animation
+      // TODO Fix: There is a bug with creating the vertical recording without having created a horizontal
+      // recording instance first in the app's current session. A band-aid solution is to always create the
+      // horizontal recording instance and then destroy it since we won't be using it.
+      if (this.contexts.horizontal.recording === null) {
+        await this.validateOrCreateOutputInstance('horizontal', 'recording', 1, false);
+        Utils.sleep(500).then(async () => {
+          await this.destroyOutputContextIfExists('horizontal', 'recording');
+        });
+      }
+
       await this.validateOrCreateOutputInstance('vertical', 'recording', 2, true);
     }
   }
@@ -1736,7 +1743,7 @@ export class StreamingService
   }
 
   private async handleRecordingSignal(info: EOutputSignal, display: TDisplayType) {
-    console.log('Recording Signal:', info, display);
+    console.debug('Recording Signal:', info, display);
 
     // map signals to status
     const nextState: ERecordingState = ({
@@ -1783,8 +1790,6 @@ export class StreamingService
     }
 
     if (info.signal === EOutputSignalState.Wrote) {
-      console.log('setting status ', nextState, display, info);
-
       this.SET_RECORDING_STATUS(nextState, display, new Date().toISOString());
 
       const fileName = this.contexts[display].recording.lastFile();
@@ -1850,8 +1855,6 @@ export class StreamingService
       });
 
       if (isDualOutputReplayBuffer && display === 'horizontal') {
-        console.log('saved horizontal replay buffer file');
-
         await new Promise(resolve => setTimeout(resolve, 2000));
         this.contexts.vertical.replayBuffer.save();
       }
@@ -1962,7 +1965,6 @@ export class StreamingService
    * @param display - The display to create the replay buffer for
    */
   private async createReplayBuffer(display: TDisplayType = 'horizontal', index: number) {
-    console.log('creating replay buffer', display, index);
     const mode = this.outputSettingsService.getSettings().mode;
     const settings = this.outputSettingsService.getReplayBufferSettings();
 
@@ -2696,7 +2698,6 @@ export class StreamingService
           const audioEncoder = instance.audioEncoder;
           SimpleStreamingFactory.destroy(instance as ISimpleStreaming);
           audioEncoder?.release();
-          console.log('streaming released audio encoder', audioEncoder);
         }
         videoEncoder?.release();
 
@@ -2714,7 +2715,6 @@ export class StreamingService
           const audioEncoder = instance.audioEncoder;
           SimpleRecordingFactory.destroy(instance as ISimpleRecording);
           audioEncoder?.release();
-          console.log('streaming released audio encoder', audioEncoder);
         }
         videoEncoder?.release();
 
@@ -2786,7 +2786,6 @@ export class StreamingService
   private SET_RECORDING_STATUS(status: ERecordingState, display: TDisplayType, time: string) {
     // while recording and the replay buffer are in the factory API and streaming is in the old API
     // we need to duplicate tracking the replay buffer status
-    console.log('SET_RECORDING_STATUS', status, display, time);
 
     this.state.status[display].recording = status;
     this.state.status[display].recordingTime = time;
