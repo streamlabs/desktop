@@ -80,57 +80,8 @@ import { byOS, OS } from 'util/operating-systems';
 import { DualOutputService } from 'services/dual-output';
 import { capitalize } from 'lodash';
 import { YoutubeService } from 'app-services';
-
-enum EOBSOutputType {
-  Streaming = 'streaming',
-  Recording = 'recording',
-  ReplayBuffer = 'replay-buffer',
-}
-
-const outputType = (type: EOBSOutputType) =>
-  ({
-    [EOBSOutputType.Streaming]: $t('Streaming'),
-    [EOBSOutputType.Recording]: $t('Recording'),
-    [EOBSOutputType.ReplayBuffer]: $t('Replay Buffer'),
-  }[type]);
-
-enum EOBSOutputSignal {
-  Starting = 'starting',
-  Start = 'start',
-  Stopping = 'stopping',
-  Stop = 'stop',
-  Activate = 'activate',
-  Deactivate = 'deactivate',
-  Reconnect = 'reconnect',
-  ReconnectSuccess = 'reconnect_success',
-  Wrote = 'wrote',
-  Writing = 'writing',
-  WriteError = 'writing_error',
-}
-
-enum EOutputSignalState {
-  Saving = 'saving',
-  Starting = 'starting',
-  Start = 'start',
-  Stopping = 'stopping',
-  Stop = 'stop',
-  Activate = 'activate',
-  Deactivate = 'deactivate',
-  Reconnect = 'reconnect',
-  ReconnectSuccess = 'reconnect_success',
-  Running = 'running',
-  Wrote = 'wrote',
-  Writing = 'writing',
-  WriteError = 'writing_error',
-}
-
-export interface IOBSOutputSignalInfo {
-  type: EOBSOutputType;
-  signal: EOBSOutputSignal;
-  code: EOutputCode;
-  error: string;
-  service: string; // 'default' | 'vertical'
-}
+import { EOBSOutputType, EOBSOutputSignal, IOBSOutputSignalInfo } from 'services/core/signals';
+import { SignalsService } from 'services/signals-manager';
 
 type TOBSOutputType = 'streaming' | 'recording' | 'replayBuffer';
 
@@ -139,6 +90,14 @@ interface IOutputContext {
   recording: ISimpleRecording | IAdvancedRecording;
   replayBuffer: ISimpleReplayBuffer | IAdvancedReplayBuffer;
 }
+
+const outputType = (type: EOBSOutputType) =>
+  ({
+    [EOBSOutputType.Streaming]: $t('Streaming'),
+    [EOBSOutputType.Recording]: $t('Recording'),
+    [EOBSOutputType.ReplayBuffer]: $t('Replay Buffer'),
+    [EOBSOutputType.VirtualCam]: $t('Virtual Cam'),
+  }[type]);
 
 export class StreamingService
   extends StatefulService<IStreamingServiceState>
@@ -159,6 +118,7 @@ export class StreamingService
   @Inject() private dualOutputService: DualOutputService;
   @Inject() private youtubeService: YoutubeService;
   @Inject() private settingsService: SettingsService;
+  @Inject() private signalsService: SignalsService;
 
   streamingStatusChange = new Subject<EStreamingState>();
   recordingStatusChange = new Subject<ERecordingState>();
@@ -246,7 +206,7 @@ export class StreamingService
   };
 
   init() {
-    NodeObs.OBS_service_connectOutputSignals((info: IOBSOutputSignalInfo) => {
+    this.signalsService.addCallback((info: IOBSOutputSignalInfo) => {
       this.signalInfoChanged.next(info);
     });
 
@@ -342,28 +302,35 @@ export class StreamingService
    * Determine if platform requires an ultra subscription for streaming
    */
   isPrimeRequired(platform: TPlatform): boolean {
-    // users can always stream to tiktok
-    if (platform === 'tiktok') return false;
+    const { isPrime } = this.userService;
 
-    if (!this.views.isPrimaryPlatform(platform) && !this.userService.isPrime) {
+    // Default branch has been changed to required (true) to avoid logic issues
+    if (isPrime) {
+      return false;
+    }
+
+    // users that used multistream+tiktok for free before can always stream to tiktok
+    if (platform === 'tiktok' && this.restreamService.tiktokGrandfathered) {
+      return false;
+    }
+
+    // users should be able to stream to their primary
+    if (this.views.isPrimaryPlatform(platform)) {
+      return false;
+    } else {
+      // grandfathered users allowed to stream Twitch/Youtube (primary) + FB
       const primaryPlatform = this.userService.state.auth?.primaryPlatform;
 
-      // grandfathered users allowed to stream primary + FB
-      if (!this.restreamService.state.grandfathered) {
-        return false;
-      } else if (!this.restreamService.state.grandfathered) {
-        return true;
-      } else if (
+      const allowFacebook =
         isEqual([primaryPlatform, platform], ['twitch', 'facebook']) ||
-        isEqual([primaryPlatform, platform], ['youtube', 'facebook'])
-      ) {
+        isEqual([primaryPlatform, platform], ['youtube', 'facebook']);
+
+      if (this.restreamService.facebookGrandfathered && allowFacebook) {
         return false;
-      } else {
-        return true;
       }
     }
 
-    return false;
+    return true;
   }
 
   /**
@@ -997,7 +964,7 @@ export class StreamingService
     if (this.state.streamingStatus !== EStreamingState.Offline) return;
 
     if (enabled) {
-      this.dualOutputService.actions.setDualOutputMode(true, true);
+      this.dualOutputService.actions.setDualOutputModeIfPossible(true, true);
       this.usageStatisticsService.recordFeatureUsage('DualOutput');
     }
 
@@ -1789,7 +1756,7 @@ export class StreamingService
       }
     }
 
-    if (info.signal === EOutputSignalState.Wrote) {
+    if (info.signal === EOBSOutputSignal.Wrote) {
       this.SET_RECORDING_STATUS(nextState, display, new Date().toISOString());
 
       const fileName = this.contexts[display].recording.lastFile();
@@ -2454,6 +2421,7 @@ export class StreamingService
       [EOBSOutputType.Streaming]: $t('Streaming Error'),
       [EOBSOutputType.Recording]: $t('Recording Error'),
       [EOBSOutputType.ReplayBuffer]: $t('Replay Buffer Error'),
+      [EOBSOutputType.VirtualCam]: $t('Virtual Cam Error'),
     }[info.type];
 
     if (linkToDriverInfo) buttons.push($t('Learn More'));

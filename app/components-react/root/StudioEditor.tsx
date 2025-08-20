@@ -28,6 +28,7 @@ export default function StudioEditor() {
     AudioService,
     NotificationsService,
     JsonrpcService,
+    DefaultHardwareService,
   } = Services;
   const performanceMode = useRealmObject(CustomizationService.state).performanceMode;
   const v = useVuex(() => ({
@@ -64,6 +65,7 @@ export default function StudioEditor() {
     const subscription = AudioService.audioNotificationUpdated.subscribe(notificationType => {
       if (timeoutHandles[notificationType]) return;
       if (!StreamingService.views.isStreaming && !StreamingService.views.isRecording) return;
+      if (!DefaultHardwareService.state.enableMuteNotifications) return;
 
       timeoutHandles[notificationType] = setTimeout(() => {
         timeoutHandles[notificationType] = undefined;

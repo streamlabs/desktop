@@ -1,4 +1,11 @@
-import { PersistentStatefulService, InitAfter, Inject, ViewHandler, mutation } from 'services/core';
+import {
+  PersistentStatefulService,
+  Service,
+  InitAfter,
+  Inject,
+  ViewHandler,
+  mutation,
+} from 'services/core';
 import { verticalDisplayData } from '../settings-v2/default-settings-data';
 import { ScenesService, SceneItem, TSceneNode } from 'services/scenes';
 import { TDisplayType, VideoSettingsService } from 'services/settings-v2/video';
@@ -20,6 +27,9 @@ import { RunInLoadingMode } from 'services/app/app-decorators';
 import compact from 'lodash/compact';
 import invert from 'lodash/invert';
 import forEachRight from 'lodash/forEachRight';
+import { NotificationsService, ENotificationType } from 'services/notifications';
+import { $t } from 'services/i18n';
+import { JsonrpcService } from 'app-services';
 
 interface IDisplayVideoSettings {
   horizontal: IVideoInfo;
@@ -257,6 +267,8 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
   @Inject() private selectionService: SelectionService;
   @Inject() private streamingService: StreamingService;
   @Inject() private settingsService: SettingsService;
+  @Inject() private notificationsService: NotificationsService;
+  @Inject() private jsonrpcService: JsonrpcService;
 
   static defaultState: IDualOutputServiceState = {
     dualOutputMode: false,
@@ -343,9 +355,39 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
      */
     this.userService.userLogout.subscribe(() => {
       if (this.state.dualOutputMode) {
-        this.setDualOutputMode();
+        this.setDualOutputMode(false);
       }
     });
+  }
+
+  // Wrapper function since if these conditions short ciruit then
+  // we don't need to move the app into loading mode
+  setDualOutputModeIfPossible(
+    status: boolean = true,
+    skipShowVideoSettings: boolean = false,
+    showGoLiveWindow?: boolean,
+  ) {
+    if (!this.userService.isLoggedIn) return;
+
+    // If a user is not in protected mode (ie using "Stream to a Custom Ingest")
+    // Dual Output will not function correctly and try to overwrite the settings
+    if (status === true && !this.streamSettingsService.protectedModeEnabled) {
+      this.notificationsService.actions.push({
+        message: $t(
+          'Unable to start Dual Output, update your Stream Settings to "Use Recommended Settings"',
+        ),
+        type: ENotificationType.WARNING,
+        lifeTime: 2000,
+        action: this.jsonrpcService.createRequest(
+          Service.getResourceId(this.settingsService),
+          'showSettings',
+          'Stream',
+        ),
+      });
+      return;
+    }
+
+    this.setDualOutputMode(status, skipShowVideoSettings, showGoLiveWindow);
   }
 
   /**
@@ -355,13 +397,11 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
    * @param showGoLiveWindow - Whether to show the go live window
    */
   @RunInLoadingMode()
-  setDualOutputMode(
+  private setDualOutputMode(
     status: boolean = true,
     skipShowVideoSettings: boolean = false,
     showGoLiveWindow?: boolean,
   ) {
-    if (!this.userService.isLoggedIn) return;
-
     this.toggleDualOutputMode(status);
 
     if (this.state.dualOutputMode) {

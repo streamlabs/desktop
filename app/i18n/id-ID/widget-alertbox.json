@@ -154,5 +154,6 @@
   "This applies to all alerts. If enabled all alerts need to be approved manually.": "Hal ini berlaku untuk semua peringatan. Jika diaktifkan, semua peringatan harus disetujui secara manual.",
   "Use unlimited delay": "Gunakan penundaan yang tidak terbatas",
   "When enabled new alerts will interrupt the on screen alert": "Ketika diaktifkan, peringatan baru akan mengganggu peringatan di layar",
-  "Text Highlight Color": "Warna Highlight Teks"
+  "Text Highlight Color": "Warna Highlight Teks",
+  "Platforms: Twitch, YouTube, Facebook, Trovo & integrations": "Platforms: Twitch, YouTube, Facebook, Trovo & integrations"
 }

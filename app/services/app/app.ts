@@ -45,6 +45,7 @@ import { StreamingService } from 'services/streaming';
 import { OS, getOS } from 'util/operating-systems';
 import * as remote from '@electron/remote';
 import { RealmService } from 'services/realm';
+import { StreamAvatarService } from 'services/stream-avatar/stream-avatar-service';
 
 interface IAppState {
   loading: boolean;
@@ -98,6 +99,7 @@ export class AppService extends StatefulService<IAppState> {
   @Inject() private dualOutputService: DualOutputService;
   @Inject() private realmService: RealmService;
   @Inject() private streamingService: StreamingService;
+  @Inject() private streamAvatarService: StreamAvatarService;
 
   static initialState: IAppState = {
     loading: true,
@@ -187,9 +189,10 @@ export class AppService extends StatefulService<IAppState> {
     this.START_LOADING();
     this.loadingChanged.next(true);
     this.tcpServerService.stopListening();
-
     window.setTimeout(async () => {
       obs.NodeObs.InitShutdownSequence();
+      this.streamAvatarService.stopAvatarProcess();
+      this.streamAvatarService.stopVisionProcess();
       this.crashReporterService.beginShutdown();
       this.shutdownStarted.next();
       this.keyListenerService.shutdown();
@@ -228,9 +231,18 @@ export class AppService extends StatefulService<IAppState> {
       this.START_LOADING();
       this.loadingChanged.next(true);
 
-      // The scene collections window is the only one we don't close when
-      // switching scene collections, because it results in poor UX.
-      if (this.windowsService.state.child.componentName !== 'ManageSceneCollections') {
+      // There are two exceptions that do not close the child window during this process
+      // 1. ManageSceneCollections - accesses loading mode often and often performs
+      // multiple loading operations during the window's lifecycle
+      // 2. Stream Settings - enabling custom rtmp here disables dual output which
+      // triggers loading mode, but they will want to configure settings here
+      // immediately after doing so
+      const childWindow = this.windowsService.state.child;
+      const isManageSceneCollections = childWindow.componentName === 'ManageSceneCollections';
+      const isStreamSettings =
+        childWindow.componentName === 'Settings' &&
+        childWindow.queryParams?.categoryName === 'Stream';
+      if (!isManageSceneCollections && !isStreamSettings) {
         this.windowsService.closeChildWindow();
       }
 

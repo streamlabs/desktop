@@ -257,8 +257,8 @@
   "Please try again. If the issue persists, you can stream in single output mode instead.": "Please try again. If the issue persists, you can stream in single output mode instead.",
   "Enable Dual Output to stream to horizontal & vertical platforms simultaneously": "Enable Dual Output to stream to horizontal & vertical platforms simultaneously",
   "Disable Dual Output": "Disable Dual Output",
-  "You can now reply to Twitch, YouTube and Facebook messages in Multistream chat. Click to learn more.": "You can now reply to Twitch, YouTube and Facebook messages in Multistream chat. Click to learn more.",
-  "Multistream Chat Platform Support": "Multistream Chat Platform Support",
+  "You can now reply to Twitch, YouTube and Facebook messages in Multichat. Click to learn more.": "You can now reply to Twitch, YouTube and Facebook messages in Multichat. Click to learn more.",
+  "Multichat Platform Support": "Multichat Platform Support",
   "You have selected %{colorFormat} as Color Format. Formats other than NV12 and P010 are commonly used for recording, and might incur high CPU usage or the streaming platform might not support it. Go to Settings -> Advanced -> Video to review.": "You have selected %{colorFormat} as Color Format. Formats other than NV12 and P010 are commonly used for recording, and might incur high CPU usage or the streaming platform might not support it. Go to Settings -> Advanced -> Video to review.",
   "Selective Recording Enabled": "Selective Recording Enabled",
   "Selective Recording only works with horizontal sources and disables editing the vertical output scene. Please disable Selective Recording to go live with Dual Output.": "Selective Recording only works with horizontal sources and disables editing the vertical output scene. Please disable Selective Recording to go live with Dual Output.",
@@ -308,5 +308,6 @@
   "Upgrade to Ultra to allow more than two outputs": "Upgrade to Ultra to allow more than two outputs",
   "An unknown Recording error occurred. Please try again.": "An unknown Recording error occurred. Please try again.",
   "An unknown Replay Buffer error occurred. Please try again.": "An unknown Replay Buffer error occurred. Please try again.",
-  "Recording in progress. Stop recording to change the recording display.": "Recording in progress. Stop recording to change the recording display."
+  "Recording in progress. Stop recording to change the recording display.": "Recording in progress. Stop recording to change the recording display.",
+  "Multichat": "Multichat"
 }

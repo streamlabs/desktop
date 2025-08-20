@@ -322,6 +322,22 @@ const LEAGUE_OF_LEGENDS: IGameConfig = {
   },
 };
 
+const BATTLEFIELD_6: IGameConfig = {
+  name: EGame.BATTLEFIELD_6,
+  label: 'Battlefield 6',
+  gameModes: '',
+  thumbnail: `${thumbnailPath}${EGame.BATTLEFIELD_6}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#FF3C00',
+    artwork: `${heroPath}${EGame.BATTLEFIELD_6}.png`,
+    backgroundColor: '#32383D',
+  },
+};
+
 const UNSET_CONFIG: IGameConfig = {
   name: EGame.UNSET,
   label: 'unset',
@@ -348,6 +364,7 @@ const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.RAINBOW_SIX_SIEGE]: RAINBOW_SIX_SIEGE, // ✅
   [EGame.OVERWATCH_2]: OVERWATCH_2,
   [EGame.LEAGUE_OF_LEGENDS]: LEAGUE_OF_LEGENDS, // ✅
+  [EGame.BATTLEFIELD_6]: BATTLEFIELD_6, // ✅
   [EGame.UNSET]: UNSET_CONFIG,
 };
 
