@@ -1317,6 +1317,7 @@ export class StreamingService
         goLiveSettings: { ...settings, recording: 'horizontal' },
       });
     }
+
     const isSingleOutputMode = !this.views.isDualOutputMode;
 
     if (
@@ -1357,6 +1358,7 @@ export class StreamingService
         // in the recording history. Note: the horizontal recording may still be in progress but this should not cause any issues
         // because each recording instance shuts down independently without referencing any other recording instance.
         await new Promise(resolve => setTimeout(resolve, 2000));
+
         this.contexts.vertical.recording.stop();
         return;
       }
@@ -1740,7 +1742,7 @@ export class StreamingService
     const nextState: ERecordingState = ({
       [EOBSOutputSignal.Starting]: ERecordingState.Starting,
       [EOBSOutputSignal.Start]: ERecordingState.Recording,
-      [EOBSOutputSignal.Stop]: ERecordingState.Writing,
+      [EOBSOutputSignal.Stop]: ERecordingState.Offline,
       [EOBSOutputSignal.Stopping]: ERecordingState.Writing,
       [EOBSOutputSignal.Wrote]: ERecordingState.Offline,
     } as Dictionary<ERecordingState>)[info.signal];

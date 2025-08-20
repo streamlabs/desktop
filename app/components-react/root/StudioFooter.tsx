@@ -208,11 +208,15 @@ export default function StudioFooterComponent() {
 
 function RecordingButton() {
   const { StreamingService, DualOutputService } = Services;
-  const { isRecording, recordingStatus, isDualOutputMode } = useVuex(() => ({
-    isRecording: StreamingService.views.isRecording,
-    recordingStatus: StreamingService.views.recordingStatus,
-    isDualOutputMode: DualOutputService.views.dualOutputMode,
-  }));
+  const { isHorizontalRecording, isVerticalRecording, recordingStatus, isDualOutputMode } = useVuex(
+    () => ({
+      isHorizontalRecording: StreamingService.views.isHorizontalRecording,
+      isVerticalRecording: StreamingService.views.isVerticalRecording,
+      recordingStatus: StreamingService.views.recordingStatus,
+      isDualOutputMode: DualOutputService.views.dualOutputMode,
+    }),
+  );
+  const isRecording = isHorizontalRecording || isVerticalRecording;
 
   function toggleRecording() {
     StreamingService.actions.toggleRecording();
