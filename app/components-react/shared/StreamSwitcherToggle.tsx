@@ -21,7 +21,27 @@ export default function StreamSwitcherToggle(p: IStreamSwitcherToggle) {
   return (
     <div className={cx(p?.className, styles.streamSwitcherToggle)} style={p?.style}>
       <CheckboxInput
-        label={label}
+        label={
+          !isPrime ? (
+            <div
+              className={styles.labelUltraBadge}
+              onClick={() => {
+                Services.UsageStatisticsService.actions.recordAnalyticsEvent(
+                  'StreamSwitcherAction',
+                  {
+                    ultra: 'go-live-switcher',
+                  },
+                );
+                Services.MagicLinkService.actions.linkToPrime('slobs-streamswitcher');
+              }}
+            >
+              <UltraIcon type="badge" style={{ marginRight: '5px' }} />
+              {label}
+            </div>
+          ) : (
+            <>{label}</>
+          )
+        }
         value={isStreamSwitchMode}
         onChange={(status: boolean) => {
           setStreamSwitcher(status);
@@ -32,29 +52,16 @@ export default function StreamSwitcherToggle(p: IStreamSwitcherToggle) {
         disabled={p?.disabled}
       />
 
-      {!isPrime ? (
-        <div
-          onClick={() => {
-            Services.UsageStatisticsService.actions.recordAnalyticsEvent('StreamSwitcherAction', {
-              ultra: 'go-live-switcher',
-            });
-            Services.MagicLinkService.actions.linkToPrime('slobs-streamswitcher');
-          }}
-        >
-          <UltraIcon type="badge" style={{ marginLeft: '10px' }} />
-        </div>
-      ) : (
-        <Tooltip
-          title={$t(
-            'Stay uninterrupted by switching between devices mid stream. Works between Desktop, Mobile App & Console.',
-          )}
-          placement="top"
-          lightShadow={true}
-          disabled={p?.disabled}
-        >
-          <i className="icon-information" style={{ marginLeft: '10px' }} />
-        </Tooltip>
-      )}
+      <Tooltip
+        title={$t(
+          'Stay uninterrupted by switching between devices mid stream. Works between Desktop, Mobile App & Console.',
+        )}
+        placement="top"
+        lightShadow={true}
+        disabled={p?.disabled}
+      >
+        <i className="icon-information" style={{ marginLeft: '10px' }} />
+      </Tooltip>
     </div>
   );
 }

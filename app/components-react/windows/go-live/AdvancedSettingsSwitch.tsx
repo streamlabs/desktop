@@ -2,7 +2,6 @@ import React from 'react';
 import { useGoLiveSettings } from './useGoLiveSettings';
 import { SwitchInput } from '../../shared/inputs';
 import { $t } from '../../../services/i18n';
-import styles from './GoLive.m.less';
 
 export default function AdvancedSettingsSwitch() {
   const {
@@ -30,7 +29,8 @@ export default function AdvancedSettingsSwitch() {
       labelCol={{ flex: '95%' }}
       layout="horizontal"
       style={{ marginBottom: '0px' }}
-      className={styles.advancedSettingsSwitch}
+      color="secondary"
+      size="default"
     />
   );
 }

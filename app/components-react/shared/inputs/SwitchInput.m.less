@@ -44,39 +44,9 @@
   }
 }
 
-.large-switch {
-  justify-self: flex-end;
-  color: var(--background);
-
+.no-label {
   :global(.ant-form-item-label) {
     display: none;
-  }
-
-  :global(.ant-switch-small) {
-    min-width: 36px;
-    height: 21px;
-    line-height: 21px;
-  }
-
-  :global(.ant-switch-small .ant-switch-handle) {
-    width: 15px;
-    height: 15px;
-    top: 3px;
-    left: 3px;
-  }
-
-  :global(.ant-switch-checked) {
-    background: var(--title);
-  }
-
-  :global(.ant-switch-small.ant-switch-checked .ant-switch-handle) {
-    left: calc(100% - 15px - 3px) !important;
-  }
-
-  :global(.ant-switch-inner i) {
-    color: var(--background);
-    display: flex;
-    align-self: center;
   }
 }
 
@@ -88,24 +58,24 @@
     display: none;
   }
 
-  :global(.ant-switch-small) {
+  &:global(.ant-switch) {
     min-width: 36px;
     height: 21px;
     line-height: 21px;
   }
 
-  :global(.ant-switch-small .ant-switch-handle) {
+  &:global(.ant-switch .ant-switch-handle) {
     width: 15px;
     height: 15px;
     top: 3px;
     left: 3px;
   }
 
-  :global(.ant-switch-checked) {
+  &:global(.ant-switch-checked) {
     background: var(--title);
   }
 
-  :global(.ant-switch-small.ant-switch-checked .ant-switch-handle) {
+  &:global(.ant-switch.ant-switch-checked .ant-switch-handle) {
     left: calc(100% - 15px - 3px) !important;
   }
 

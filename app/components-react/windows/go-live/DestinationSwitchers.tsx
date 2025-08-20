@@ -264,7 +264,10 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
             uncontrolled
             label={label}
             nolabel
-            className={cx('platform-switch', styles.platformSwitchToggle)}
+            className="platform-switch"
+            color="secondary"
+            size="default"
+            skipWrapperAttrs={true}
           />
         ),
       };
@@ -284,7 +287,10 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
             uncontrolled
             label={label}
             nolabel
-            className={cx('destination-switch', styles.platformSwitchToggle)}
+            className="destination-switch"
+            color="secondary"
+            size="default"
+            skipWrapperAttrs={true}
           />
         ),
       };
