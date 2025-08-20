@@ -322,12 +322,12 @@ const SCENE_ITEM_ACTIONS: HotkeyGroup = {
     },
     shouldApply: sceneItemId => !!getScenesService().views.getSceneItem(sceneItemId)?.video,
     isActive: sceneItemId => !!getScenesService().views.getSceneItem(sceneItemId)?.visible,
-    down: sceneItemId => {      
+    down: sceneItemId => {
       getScenesService().views.getSceneItem(sceneItemId)?.setVisibility(true);
       const dualOutputNodeId = getDualOutputService().views.getDualOutputNodeId(sceneItemId);
       if (dualOutputNodeId) {
         getScenesService().views.getSceneItem(dualOutputNodeId)?.setVisibility(true);
-      }      
+      }
     },
   },
   TOGGLE_SOURCE_VISIBILITY_HIDE: {
