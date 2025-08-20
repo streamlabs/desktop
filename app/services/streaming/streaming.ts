@@ -86,9 +86,9 @@ import { SignalsService } from 'services/signals-manager';
 type TOBSOutputType = 'streaming' | 'recording' | 'replayBuffer';
 
 interface IOutputContext {
-  streaming: ISimpleStreaming | IAdvancedStreaming;
-  recording: ISimpleRecording | IAdvancedRecording;
   replayBuffer: ISimpleReplayBuffer | IAdvancedReplayBuffer;
+  recording: ISimpleRecording | IAdvancedRecording;
+  streaming: ISimpleStreaming | IAdvancedStreaming;
 }
 
 const outputType = (type: EOBSOutputType) =>
@@ -1284,37 +1284,30 @@ export class StreamingService
       });
     }
 
-    const isSingleOutputMode = !this.views.isDualOutputMode;
+    if (this.views.isDualOutputMode) {
+      if (this.views.isDualOutputRecording || this.views.settings.recording === 'horizontal') {
+        await this.validateOrCreateOutputInstance('horizontal', 'recording', 1, true);
+      }
 
-    if (
-      isSingleOutputMode ||
-      this.views.isDualOutputRecording ||
-      this.views.settings.recording === 'horizontal'
-    ) {
+      if (this.views.isDualOutputRecording || this.views.settings.recording === 'vertical') {
+        // Add analytics for dual output recording
+        this.usageStatisticsService.recordFeatureUsage('DualOutputRecording');
+
+        // TODO Fix: There is a bug with creating the vertical recording without having created a horizontal
+        // recording instance first in the app's current session. A band-aid solution is to always create the
+        // horizontal recording instance and then destroy it since we won't be using it.
+        if (this.contexts.horizontal.recording === null) {
+          await this.validateOrCreateOutputInstance('horizontal', 'recording', 1, false);
+          Utils.sleep(500).then(async () => {
+            await this.destroyOutputContextIfExists('horizontal', 'recording');
+          });
+        }
+
+        await this.validateOrCreateOutputInstance('vertical', 'recording', 2, true);
+      }
+    } else {
+      // In single output mode, only record using the horizontal display
       await this.validateOrCreateOutputInstance('horizontal', 'recording', 1, true);
-
-      // In single output mode or is the user is just recording without streaming,
-      // only use the horizontal display for recording.
-      if (isSingleOutputMode) {
-        return;
-      }
-    }
-
-    if (this.views.isDualOutputRecording || this.views.settings.recording === 'vertical') {
-      // Add analytics for dual output recording
-      this.usageStatisticsService.recordFeatureUsage('DualOutputRecording');
-
-      // TODO Fix: There is a bug with creating the vertical recording without having created a horizontal
-      // recording instance first in the app's current session. A band-aid solution is to always create the
-      // horizontal recording instance and then destroy it since we won't be using it.
-      if (this.contexts.horizontal.recording === null) {
-        await this.validateOrCreateOutputInstance('horizontal', 'recording', 1, false);
-        Utils.sleep(500).then(async () => {
-          await this.destroyOutputContextIfExists('horizontal', 'recording');
-        });
-      }
-
-      await this.validateOrCreateOutputInstance('vertical', 'recording', 2, true);
     }
   }
 

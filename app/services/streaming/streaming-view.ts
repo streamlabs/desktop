@@ -55,6 +55,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get streamingStatus() {
+    if (!this.isDualOutputMode) {
+      return this.streamingState.status.horizontal.recording;
+    }
+
     const display = this.getOutputDisplayType();
     return this.streamingState.status[display].streaming;
   }
@@ -713,11 +717,19 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get recordingStatus() {
+    if (!this.isDualOutputMode) {
+      return this.streamingState.status.horizontal.recording;
+    }
+
     const display = this.getOutputDisplayType();
     return this.streamingState.status[display].recording;
   }
 
   get replayBufferStatus() {
+    if (!this.isDualOutputMode) {
+      return this.streamingState.status.horizontal.recording;
+    }
+
     const display = this.getOutputDisplayType();
     return this.streamingState.status[display].replayBuffer;
   }
