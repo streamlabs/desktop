@@ -314,5 +314,6 @@
   "Multichat": "Multichat",
   "Toggle %{platform}": "Toggle %{platform}",
   "Toggle Destination": "Toggle Destination",
-  "Share your stream!": "Share your stream!"
+  "Share your stream!": "Share your stream!",
+  "You've selected the two streaming destinations. Disable a destination to enable a different one. \nYou can always upgrade to Ultra for multistreaming.": "You've selected the two streaming destinations. Disable a destination to enable a different one. \nYou can always upgrade to Ultra for multistreaming."
 }

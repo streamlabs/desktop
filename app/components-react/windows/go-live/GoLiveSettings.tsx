@@ -154,7 +154,7 @@ export default function GoLiveSettings() {
                 title={$t('Dual Output cannot be used with Stream Switcher')}
                 placement="top"
                 lightShadow={true}
-                disabled={isDualOutputSwitchDisabled}
+                disabled={isDualOutputSwitchDisabled || !isPrime}
               >
                 <DualOutputToggle
                   className={styles.featureToggle}
@@ -170,7 +170,7 @@ export default function GoLiveSettings() {
                 title={$t('Stream Switcher cannot be used with Dual Output')}
                 placement="top"
                 lightShadow={true}
-                disabled={!isStreamSwitchDisabled}
+                disabled={!isStreamSwitchDisabled || !isPrime}
               >
                 <StreamSwitcherToggle
                   className={styles.featureToggle}

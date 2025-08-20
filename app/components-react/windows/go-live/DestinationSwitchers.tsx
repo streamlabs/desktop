@@ -31,6 +31,7 @@ export function DestinationSwitchers() {
     isPrime,
     alwaysEnabledPlatforms,
     alwaysShownPlatforms,
+    tiktokGrandfathered,
   } = useGoLiveSettings();
 
   // use these references to apply debounce
@@ -43,21 +44,13 @@ export function DestinationSwitchers() {
   // some platforms are always shown, even if not linked
   // add them to the list of platforms to display
   const platforms = useMemo(() => {
-    const displayedPlatforms = isDualOutputMode && !isPrime ? enabledPlatforms : linkedPlatforms;
     const unlinkedAlwaysShownPlatforms = alwaysShownPlatforms.filter(
       platform => !isPlatformLinked(platform),
     );
     return unlinkedAlwaysShownPlatforms.length
-      ? displayedPlatforms.concat(unlinkedAlwaysShownPlatforms)
-      : displayedPlatforms;
+      ? linkedPlatforms.concat(unlinkedAlwaysShownPlatforms)
+      : linkedPlatforms;
   }, [linkedPlatforms, enabledPlatformsRef.current, isDualOutputMode, isPrime]);
-
-  // in dual output mode for non-ultra users, only one custom destination can be enabled
-  const destinations =
-    isDualOutputMode && !isPrime ? customDestinations.filter(d => d.enabled) : customDestinations;
-  // in dual output mode for non-ultra users, only two cards for targets can be shown
-  const showCustomDestinations =
-    isDualOutputMode && !isPrime ? enabledPlatforms.length < 2 && destinations.length > 0 : true;
 
   const shouldDisableCustomDestinationSwitchers = () => {
     // Multistream users can always add destinations
@@ -65,23 +58,24 @@ export function DestinationSwitchers() {
       return false;
     }
 
-    //     // Because users must have at least one platform enabled,
-    // // in single output mode they cannot have a custom destination enabled
-    // // unless they are grandfathered in to streaming with TikTok always enabled
-    // if (
-    //   !isDualOutputMode &&
-    //   !isPrime &&
-    //   enabledPlatformsRef.current.length === 1 &&
-    //   enabledPlatformsRef.current.includes('tiktok')
-    // ) {
-    //   return false;
-    // }
+    // Because users must have at least one platform enabled,
+    // in single output mode they cannot have a custom destination enabled
+    // unless they are grandfathered in to streaming with TikTok always enabled
+    if (
+      !isDualOutputMode &&
+      !isPrime &&
+      tiktokGrandfathered &&
+      enabledPlatformsRef.current.length === 1 &&
+      enabledPlatformsRef.current.includes('tiktok')
+    ) {
+      return false;
+    }
 
-    // // In dual output mode, non-ultra users can have a custom destination
-    // // enabled as the second target
-    // if (isDualOutputMode && !isPrime) {
-    //   return false;
-    // }
+    // In dual output mode, non-ultra users can have a custom destination
+    // enabled as the second target
+    if (isDualOutputMode && !isPrime) {
+      return false;
+    }
 
     // Otherwise, only a single platform and no custom destinations
     return enabledPlatforms.length > 0;
@@ -112,7 +106,7 @@ export function DestinationSwitchers() {
   function togglePlatform(platform: TPlatform, enabled: boolean) {
     // In dual output mode, only allow non-ultra users to have 2 platforms, or 1 platform and 1 custom destination enabled
     if (isDualOutputMode && !isPrime) {
-      if (enabledPlatformsRef.current.length < 2 && enabledDestRef.current.length < 1) {
+      if (enabledPlatformsRef.current.length + enabledDestRef.current.length <= 2) {
         enabledPlatformsRef.current.push(platform);
       } else {
         enabledPlatformsRef.current = enabledPlatformsRef.current.filter(p => p !== platform);
@@ -145,6 +139,17 @@ export function DestinationSwitchers() {
   }
 
   function toggleDestination(index: number, enabled: boolean) {
+    // In dual output mode, only allow non-ultra users to have 2 platforms, or 1 platform and 1 custom destination enabled
+    if (isDualOutputMode && !isPrime) {
+      if (enabledPlatformsRef.current.length + enabledDestRef.current.length < 2) {
+        enabledDestRef.current.push(index);
+      } else {
+        enabledDestRef.current = enabledDestRef.current.filter((dest, i) => i !== index);
+      }
+      emitSwitch(index, enabled);
+      return;
+    }
+
     enabledDestRef.current = enabledDestRef.current.filter((dest, i) => i !== index);
 
     if (enabled) {
@@ -165,25 +170,22 @@ export function DestinationSwitchers() {
           switchDisabled={!isEnabled(platform) && disableNonUltraSwitchers}
           isDualOutputMode={isDualOutputMode}
           index={ind}
-          // hideController={showSelector || hidePlatformController}
-          showPrompt={alwaysShownPlatforms.includes(platform) && !isPlatformLinked(platform)}
         />
       ))}
 
-      {showCustomDestinations &&
-        destinations?.map((dest, ind) => (
-          <DestinationSwitcher
-            key={ind}
-            destination={dest}
-            enabled={dest.enabled && !disableCustomDestinationSwitchers}
-            onChange={enabled => toggleDestination(ind, enabled)}
-            switchDisabled={
-              disableCustomDestinationSwitchers || (!dest.enabled && disableNonUltraSwitchers)
-            }
-            isDualOutputMode={isDualOutputMode}
-            index={ind}
-          />
-        ))}
+      {customDestinations?.map((dest, ind) => (
+        <DestinationSwitcher
+          key={ind}
+          destination={dest}
+          enabled={dest.enabled && !disableCustomDestinationSwitchers}
+          onChange={enabled => toggleDestination(ind, enabled)}
+          switchDisabled={
+            disableCustomDestinationSwitchers || (!dest.enabled && disableNonUltraSwitchers)
+          }
+          isDualOutputMode={isDualOutputMode}
+          index={ind}
+        />
+      ))}
 
       {unlinkedPlatforms.map((platform: TPlatform, ind) => (
         <DestinationSwitcher
@@ -209,7 +211,6 @@ interface IDestinationSwitcherProps {
   index: number;
   isDualOutputMode: boolean;
   isUnlinked?: boolean;
-  showPrompt?: boolean;
 }
 
 /**
@@ -222,7 +223,7 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
   const switchInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const platform = typeof p.destination === 'string' ? (p.destination as TPlatform) : null;
-  const disabled = p?.switchDisabled || p?.showPrompt;
+  const disabled = p?.switchDisabled;
   const label = platform
     ? $t('Toggle %{platform}', { platform: platformLabels(platform) })
     : $t('Toggle Destination');
@@ -230,6 +231,13 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
   function onClickHandler(ev: MouseEvent) {
     // If we're disabling the switch we shouldn't be emitting anything past below
     if (disabled) {
+      if (!Services.UserService.state.isPrime) {
+        message.info(
+          $t(
+            "You've selected the two streaming destinations. Disable a destination to enable a different one. \nYou can always upgrade to Ultra for multistreaming.",
+          ),
+        );
+      }
       return;
     }
 

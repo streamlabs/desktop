@@ -1,4 +1,4 @@
-import React, { CSSProperties } from 'react';
+import React, { CSSProperties, useEffect } from 'react';
 import styles from './StreamSwitcherToggle.m.less';
 import Tooltip from 'components-react/shared/Tooltip';
 import { CheckboxInput } from 'components-react/shared/inputs';
@@ -15,6 +15,13 @@ interface IStreamSwitcherToggle {
 
 export default function StreamSwitcherToggle(p: IStreamSwitcherToggle) {
   const { isPrime, isStreamSwitchMode, setStreamSwitcher } = useGoLiveSettings();
+
+  useEffect(() => {
+    // Ensure that non-ultra users have the stream switcher disabled
+    if (!isPrime && isStreamSwitchMode) {
+      setStreamSwitcher(false);
+    }
+  }, [isPrime, isStreamSwitchMode, setStreamSwitcher]);
 
   const label = $t('Stream Switcher');
 

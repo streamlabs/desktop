@@ -364,6 +364,10 @@ export class GoLiveSettingsModule {
     return [...alwaysShown, ...unlinked];
   }
 
+  get tiktokGrandfathered() {
+    return Services.RestreamService.state.tiktokGrandfathered;
+  }
+
   get primaryChat() {
     const primaryPlatform = Services.UserService.views.platform!;
     // this is migration-like code for users with old primary platform deselected (i.e me)
