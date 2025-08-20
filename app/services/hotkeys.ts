@@ -6,6 +6,7 @@ import { KeyListenerService } from 'services/key-listener';
 import { MarkersService } from 'services/markers';
 import { Inject } from 'services/core/injector';
 import { StatefulService, mutation, ServiceHelper } from 'services';
+import { DualOutputService } from 'services/dual-output';
 import defer from 'lodash/defer';
 import mapValues from 'lodash/mapValues';
 import { $t } from 'services/i18n';
@@ -52,6 +53,10 @@ function getVirtualCameraService(): VirtualWebcamService {
 
 function getMarkersService(): MarkersService {
   return MarkersService.instance;
+}
+
+function getDualOutputService(): DualOutputService {
+  return DualOutputService.instance;
 }
 
 const isAudio = (sourceId: string) => {
@@ -317,7 +322,13 @@ const SCENE_ITEM_ACTIONS: HotkeyGroup = {
     },
     shouldApply: sceneItemId => !!getScenesService().views.getSceneItem(sceneItemId)?.video,
     isActive: sceneItemId => !!getScenesService().views.getSceneItem(sceneItemId)?.visible,
-    down: sceneItemId => getScenesService().views.getSceneItem(sceneItemId)?.setVisibility(true),
+    down: sceneItemId => {      
+      getScenesService().views.getSceneItem(sceneItemId)?.setVisibility(true);
+      const dualOutputNodeId = getDualOutputService().views.getDualOutputNodeId(sceneItemId);
+      if (dualOutputNodeId) {
+        getScenesService().views.getSceneItem(dualOutputNodeId)?.setVisibility(true);
+      }      
+    },
   },
   TOGGLE_SOURCE_VISIBILITY_HIDE: {
     name: 'TOGGLE_SOURCE_VISIBILITY_HIDE',
@@ -327,7 +338,13 @@ const SCENE_ITEM_ACTIONS: HotkeyGroup = {
     },
     shouldApply: sceneItemId => !!getScenesService().views.getSceneItem(sceneItemId)?.video,
     isActive: sceneItemId => getScenesService().views.getSceneItem(sceneItemId)?.visible === false,
-    down: sceneItemId => getScenesService().views.getSceneItem(sceneItemId)?.setVisibility(false),
+    down: sceneItemId => {
+      getScenesService().views.getSceneItem(sceneItemId)?.setVisibility(false);
+      const dualOutputNodeId = getDualOutputService().views.getDualOutputNodeId(sceneItemId);
+      if (dualOutputNodeId) {
+        getScenesService().views.getSceneItem(dualOutputNodeId)?.setVisibility(false);
+      }
+    },
   },
   PUSH_TO_SOURCE_SHOW: {
     name: 'PUSH_TO_SOURCE_SHOW',
