@@ -30,6 +30,10 @@ interface IRestreamTarget {
   streamKey: string;
   mode?: TOutputOrientation;
 }
+interface IStreamSwitcherTarget {
+  platform: TPlatform | 'relay';
+  key?: string;
+}
 
 export type TStreamSwitcherStatus = 'pending' | 'inactive';
 export type TStreamSwitcherAction = 'approved' | 'rejected';
@@ -62,6 +66,12 @@ interface IRestreamState {
    * Stream switcher status
    */
   streamSwitcherStatus: TStreamSwitcherStatus;
+
+  /**
+   * If the user is live using the stream switcher, save the stream data here so that the
+   * stream can be started correctly.
+   */
+  streamSwitcherTargets: IStreamSwitcherTarget[];
 }
 
 interface IUserSettingsResponse extends IRestreamState {
@@ -93,6 +103,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     tiktokGrandfathered: false,
     streamSwitcherStreamId: undefined,
     streamSwitcherStatus: 'inactive',
+    streamSwitcherTargets: [],
   };
 
   get streamInfo() {
@@ -125,6 +136,10 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return this.state.streamSwitcherStatus;
   }
 
+  get streamSwitcherTargets() {
+    return this.state.streamSwitcherTargets;
+  }
+
   @mutation()
   private SET_ENABLED(enabled: boolean) {
     this.state.enabled = enabled;
@@ -148,6 +163,11 @@ export class RestreamService extends StatefulService<IRestreamState> {
   @mutation()
   private SET_STREAM_SWITCHER_STATUS(status: TStreamSwitcherStatus) {
     this.state.streamSwitcherStatus = status;
+  }
+
+  @mutation()
+  private SET_STREAM_SWITCHER_TARGETS(targets: IStreamSwitcherTarget[]) {
+    this.state.streamSwitcherTargets = targets;
   }
 
   init() {
@@ -286,7 +306,11 @@ export class RestreamService extends StatefulService<IRestreamState> {
       throwStreamError('RESTREAM_SETUP_FAILED');
     }
 
-    await Promise.all([this.setupIngest(), this.setupTargets()]);
+    if (this.streamInfo.isStreamSwitchMode) {
+      await Promise.all([this.setupIngest()]);
+    } else {
+      await Promise.all([this.setupIngest(), this.setupTargets()]);
+    }
   }
 
   /**
@@ -369,6 +393,13 @@ export class RestreamService extends StatefulService<IRestreamState> {
     const promises = targets.map(t => this.deleteTarget(t.id));
     await Promise.all(promises);
 
+    // the stream switcher targets are mostly set up already
+    // so handle them differently
+    if (this.streamInfo.isStreamSwitchMode) {
+      await this.setupStreamSwitcherTargets();
+      return;
+    }
+
     // setup new targets
     const newTargets = [
       ...this.streamInfo.enabledPlatforms.map(platform =>
@@ -446,6 +477,38 @@ export class RestreamService extends StatefulService<IRestreamState> {
     }
   }
 
+  /**
+   * Setup a stream from the stream switcher
+   * @remark This will sync desktop's stream targets with the remote stream's targets
+   */
+  async setupStreamSwitcherTargets() {
+    const platformTargets = [
+      ...this.streamInfo.enabledPlatforms.map(platform => ({
+        platform,
+        streamKey: getPlatformService(platform).state.streamKey,
+        mode: 'landscape' as TOutputOrientation,
+      })),
+    ];
+
+    const relayTargets: {
+      platform: TPlatform | 'relay';
+      streamKey: string;
+      mode: TOutputOrientation;
+    }[] = this.streamSwitcherTargets.reduce((targets, target: IStreamSwitcherTarget) => {
+      if (target.platform === 'relay') {
+        targets.push({
+          platform: 'relay',
+          streamKey: target.key,
+          mode: 'landscape' as TOutputOrientation,
+        });
+      }
+      return targets;
+    }, []);
+
+    const newTargets = [...platformTargets, ...relayTargets];
+    await this.createTargets(newTargets);
+  }
+
   checkStatus(): Promise<boolean> {
     const url = `https://${this.host}/api/v1/rst/util/status`;
     const request = new Request(url);
@@ -456,6 +519,21 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   async checkIsLive(): Promise<boolean> {
+    const status = await this.getIsLive();
+    this.streamSettingsService.setGoLiveSettings({ streamSwitch: true });
+
+    if (status.isLive) {
+      this.SET_STREAM_SWITCHER_STATUS('pending');
+      this.SET_STREAM_SWITCHER_TARGETS(status.targets);
+    } else if (this.state.streamSwitcherStatus === 'pending') {
+      this.SET_STREAM_SWITCHER_STATUS('inactive');
+      this.SET_STREAM_SWITCHER_TARGETS([]);
+    }
+
+    return status.isLive;
+  }
+
+  async getIsLive() {
     const headers = authorizedHeaders(
       this.userService.apiToken,
       new Headers({ 'Content-Type': 'application/json' }),
@@ -463,16 +541,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     const url = `https://${this.host}/api/v1/rst/user/is-live`;
     const request = new Request(url, { headers });
 
-    return jfetch<{ isLive: boolean }>(request).then(j => {
-      if (j.isLive) {
-        this.SET_STREAM_SWITCHER_STATUS('pending');
-        this.streamSettingsService.setGoLiveSettings({ streamSwitch: true });
-      } else if (this.state.streamSwitcherStatus === 'pending') {
-        this.SET_STREAM_SWITCHER_STATUS('inactive');
-      }
-
-      return j.isLive;
-    });
+    return jfetch<{ isLive: boolean; targets: IStreamSwitcherTarget[] }>(request);
   }
 
   /**
@@ -543,9 +612,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
   /**
    * Stream Switcher
    */
-  setStreamSwitchStatus(status: TStreamSwitcherStatus) {
-    this.SET_STREAM_SWITCHER_STATUS(status);
-  }
 
   setSwitchStreamId(id?: string) {
     this.SET_STREAM_SWITCHER_STREAM_ID(id);
@@ -554,6 +620,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
   resetStreamSwitcher() {
     this.SET_STREAM_SWITCHER_STATUS('inactive');
     this.SET_STREAM_SWITCHER_STREAM_ID();
+    this.SET_STREAM_SWITCHER_TARGETS([]);
   }
 
   async confirmStreamSwitch(action: TStreamSwitcherAction) {
@@ -711,5 +778,13 @@ class RestreamView extends ViewHandler<IRestreamState> {
 
   get streamSwitcherStatus() {
     return this.state.streamSwitcherStatus;
+  }
+
+  get streamSwitcherTargets() {
+    return this.state.streamSwitcherTargets;
+  }
+
+  get hasStreamSwitcherTargets() {
+    return this.state.streamSwitcherTargets.length > 0;
   }
 }

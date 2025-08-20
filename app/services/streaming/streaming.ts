@@ -315,6 +315,21 @@ export class StreamingService
     // use default settings if no new settings provided
     const settings = newSettings || cloneDeep(this.views.savedSettings);
 
+    // For the Stream Switcher, match remote targets to local targets
+    if (settings.streamSwitch && this.restreamService.views.hasStreamSwitcherTargets) {
+      const targets = this.restreamService.views.streamSwitcherTargets.map(t => t.platform);
+
+      this.views.linkedPlatforms.forEach(p => {
+        // Enable platform for go live checks, except for YouTube because running YouTube's
+        // go live check will create an additional broadcast
+        if (targets.includes(p) && p !== 'youtube') {
+          settings.platforms[p].enabled = true;
+        } else {
+          settings.platforms[p].enabled = false;
+        }
+      });
+    }
+
     /**
      * Set custom destination stream settings
      */
