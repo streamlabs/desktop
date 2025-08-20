@@ -37,6 +37,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
   }));
 
   const [delaySecondsRemaining, setDelayTick] = useState(delaySeconds);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     setDelayTick(delaySeconds);
@@ -64,13 +65,16 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
 
     const switchStreamEvent = StreamingService.streamSwitchEvent.subscribe(event => {
       const streamSwitcherStreamId = RestreamService.state.streamSwitcherStreamId;
-      NotificationsService.actions.push({
-        type: ENotificationType.SUCCESS,
-        lifeTime: 8000,
-        showTime: false,
-        message:
-          'Desktop stream id: ' + streamSwitcherStreamId + '\nEvent:' + JSON.stringify(event),
-      });
+
+      const isMobileRemote = streamSwitcherStreamId && /[A-Z]/.test(streamSwitcherStreamId);
+      console.debug(
+        'Desktop stream id: ' +
+          streamSwitcherStreamId +
+          '\nEvent:' +
+          JSON.stringify(event) +
+          '\nSource: ' +
+          (isMobileRemote ? 'Mobile' : 'Desktop'),
+      );
 
       if (event.type === 'streamSwitchRequest') {
         if (event.data.identifier === streamSwitcherStreamId) {
@@ -161,7 +165,9 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
 
       // Only check for Stream Switch in single output mode
       if (!isDualOutputMode) {
+        setIsLoading(true);
         const isLive = await fetchStreamSwitcherStatus();
+        setIsLoading(false);
 
         if (isLive) {
           promptAction({
@@ -203,6 +209,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       return isLive;
     } catch (e: unknown) {
       console.error('Error checking stream switcher status', e);
+      setIsLoading(false);
       return false;
     }
   }
@@ -245,12 +252,16 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       disabled={isDisabled}
       onClick={toggleStreaming}
     >
-      <StreamButtonLabel
-        streamingStatus={streamingStatus}
-        delayEnabled={delayEnabled}
-        delaySecondsRemaining={delaySecondsRemaining}
-        streamSwitcherStatus={streamSwitcherStatus}
-      />
+      {isLoading ? (
+        <i className="fa fa-spinner fa-pulse" />
+      ) : (
+        <StreamButtonLabel
+          streamingStatus={streamingStatus}
+          delayEnabled={delayEnabled}
+          delaySecondsRemaining={delaySecondsRemaining}
+          streamSwitcherStatus={streamSwitcherStatus}
+        />
+      )}
     </button>
   );
 }

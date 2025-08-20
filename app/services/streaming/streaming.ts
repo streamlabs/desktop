@@ -322,6 +322,9 @@ export class StreamingService
       this.views.linkedPlatforms.forEach(p => {
         // Enable platform for go live checks, except for YouTube because running YouTube's
         // go live check will create an additional broadcast
+
+        if (!settings.platforms[p]) return;
+
         if (targets.includes(p) && p !== 'youtube') {
           settings.platforms[p].enabled = true;
         } else {
