@@ -393,13 +393,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
     const promises = targets.map(t => this.deleteTarget(t.id));
     await Promise.all(promises);
 
-    // the stream switcher targets are mostly set up already
-    // so handle them differently
-    if (this.streamInfo.isStreamSwitchMode) {
-      await this.setupStreamSwitcherTargets();
-      return;
-    }
-
     // setup new targets
     const newTargets = [
       ...this.streamInfo.enabledPlatforms.map(platform =>
@@ -475,38 +468,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
       // in single output mode, create all targets
       await this.createTargets(newTargets);
     }
-  }
-
-  /**
-   * Setup a stream from the stream switcher
-   * @remark This will sync desktop's stream targets with the remote stream's targets
-   */
-  async setupStreamSwitcherTargets() {
-    const platformTargets = [
-      ...this.streamInfo.enabledPlatforms.map(platform => ({
-        platform,
-        streamKey: getPlatformService(platform).state.streamKey,
-        mode: 'landscape' as TOutputOrientation,
-      })),
-    ];
-
-    const relayTargets: {
-      platform: TPlatform | 'relay';
-      streamKey: string;
-      mode: TOutputOrientation;
-    }[] = this.streamSwitcherTargets.reduce((targets, target: IStreamSwitcherTarget) => {
-      if (target.platform === 'relay') {
-        targets.push({
-          platform: 'relay',
-          streamKey: target.key,
-          mode: 'landscape' as TOutputOrientation,
-        });
-      }
-      return targets;
-    }, []);
-
-    const newTargets = [...platformTargets, ...relayTargets];
-    await this.createTargets(newTargets);
   }
 
   checkStatus(): Promise<boolean> {
