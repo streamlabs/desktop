@@ -306,15 +306,6 @@
   "AI Highlighter is enabled. Recording will start when stream starts.": "AI Highlighter is enabled. Recording will start when stream starts.",
   "Connection Failed": "Connection Failed",
   "Upgrade to Ultra to allow more than two outputs": "Upgrade to Ultra to allow more than two outputs",
-  "Toggle Stream Switcher": "Toggle Stream Switcher",
-  "Stay uninterrupted by switching between devices mid stream. Works between Desktop, Mobile App & Console.": "Stay uninterrupted by switching between devices mid stream. Works between Desktop, Mobile App & Console.",
-  "You can stream to any 2 destinations for free with Dual Output. Multistream and switch seamlessly between streams with Ultra": "You can stream to any 2 destinations for free with Dual Output. Multistream and switch seamlessly between streams with Ultra",
-  "Switch Stream": "Switch Stream",
-  "Claim Stream": "Claim Stream",
-  "Another stream detected": "Another stream detected",
-  "A stream on another device has been detected. Would you like to switch your stream to Desktop? If you do not want to continue this stream, please end the stream from the current streaming source.": "A stream on another device has been detected. Would you like to switch your stream to Desktop? If you do not want to continue this stream, please end the stream from the current streaming source.",
-  "Switch to Desktop Stream": "Switch to Desktop Stream",
-  "Stream successfully switched": "Stream successfully switched",
   "Stream Information:": "Stream Information:",
   "Destinations:": "Destinations:",
   "Destinations & Outputs:": "Destinations & Outputs:",
@@ -323,10 +314,5 @@
   "Multichat": "Multichat",
   "Toggle %{platform}": "Toggle %{platform}",
   "Toggle Destination": "Toggle Destination",
-  "Share your stream!": "Share your stream!",
-  "Stream Switcher cannot be used with Dual Output": "Stream Switcher cannot be used with Dual Output",
-  "Dual Output cannot be used with Stream Switcher": "Dual Output cannot be used with Stream Switcher",
-  "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? \n\n If you do not want to continue this stream, please end the stream from the current streaming source.": "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? \n\n If you do not want to continue this stream, please end the stream from the current streaming source.",
-  "Your stream has been switched to Streamlabs Mobile. Ending the stream on Streamlabs Desktop.": "Your stream has been switched to Streamlabs Mobile. Ending the stream on Streamlabs Desktop.",
-  "Your stream has successfully switched to Streamlabs Desktop.": "Your stream has successfully switched to Streamlabs Desktop."
+  "Share your stream!": "Share your stream!"
 }
