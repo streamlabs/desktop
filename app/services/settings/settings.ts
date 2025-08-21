@@ -401,7 +401,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   getCategories(): string[] {
     let categories: string[] = obs.NodeObs.OBS_settings_getListCategories();
     // insert 'Multistreaming' after 'General'
-    categories.splice(1, 0, 'Multistreaming');
+    // categories.splice(1, 0, 'Multistreaming');
     // Deleting 'Virtual Webcam' category to add it below to position properly
     categories = categories.filter(category => category !== 'Virtual Webcam');
     categories = categories.concat([

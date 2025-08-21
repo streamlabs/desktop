@@ -47,14 +47,8 @@ export default function GoLiveSettings() {
     isStreamSwitchDisabled,
     isDualOutputSwitchDisabled,
     setPrimaryChat,
-    addUltra,
   } = useGoLiveSettings().extend(module => {
-    const {
-      UserService,
-      VideoEncodingOptimizationService,
-      SettingsService,
-      MagicLinkService,
-    } = Services;
+    const { UserService, VideoEncodingOptimizationService, SettingsService } = Services;
 
     return {
       get canAddDestinations() {
@@ -77,10 +71,6 @@ export default function GoLiveSettings() {
 
       addDestination() {
         SettingsService.actions.showSettings('Stream');
-      },
-
-      addUltra() {
-        MagicLinkService.actions.linkToPrime('slobs-multistream');
       },
 
       // temporarily hide the checkbox until streaming and output settings
@@ -111,13 +101,7 @@ export default function GoLiveSettings() {
       {/*LEFT COLUMN*/}
       {shouldShowLeftCol && (
         <Col span={9} className={styles.leftColumn}>
-          {!isPrime && (
-            <AddDestinationButton
-              type="banner"
-              className={styles.addDestination}
-              onClick={addUltra}
-            />
-          )}
+          {!isPrime && <AddDestinationButton type="banner" className={styles.addDestination} />}
           <div className={styles.columnHeader} style={{ paddingTop: '15px' }}>
             {headerText}
           </div>
