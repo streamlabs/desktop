@@ -21,6 +21,8 @@
   "News": "新闻",
   "Notifications": "通知",
   "A new Recording has been completed. Click for more info": "一个新的录制已完成。点击了解更多信息",
+  "horizontalRecordingMessage": " A new Horizontal Recording has been completed. Click for more info",
+  "verticalRecordingMessage": "A new Vertical Recording has been completed. Click for more info",
   "Recording History": "录制历史",
   "Show in folder": "在文件夹中显示",
   "Recordings": "录制",
