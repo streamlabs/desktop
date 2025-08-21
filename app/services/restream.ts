@@ -15,10 +15,10 @@ import { TrovoService } from './platforms/trovo';
 import { KickService } from './platforms/kick';
 import * as remote from '@electron/remote';
 import { VideoSettingsService, TDisplayType } from './settings-v2/video';
-import { DualOutputService } from './dual-output';
 import { TwitterPlatformService } from './platforms/twitter';
 import { InstagramService } from './platforms/instagram';
 import { PlatformAppsService } from './platform-apps';
+import { throwStreamError } from './streaming/stream-error';
 
 export type TOutputOrientation = 'landscape' | 'portrait';
 interface IRestreamTarget {
@@ -36,9 +36,16 @@ interface IRestreamState {
 
   /**
    * if true then user obtained the restream feature before it became a prime-only feature
-   * Restream should be available without Prime for such users
+   * These users are allowed to use restream for:
+   * - Twitch or YouTube (primary) + Facebook secondary
    */
   grandfathered: boolean;
+
+  /**
+   * if true the user used tiktok streaming alongside multistream before that option was
+   * removed. Using Restream with tiktok should be allowed for those users.
+   */
+  tiktokGrandfathered: boolean;
 }
 
 interface IUserSettingsResponse extends IRestreamState {
@@ -59,7 +66,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
   @Inject() kickService: KickService;
   @Inject() instagramService: InstagramService;
   @Inject() videoSettingsService: VideoSettingsService;
-  @Inject() dualOutputService: DualOutputService;
   @Inject('TwitterPlatformService') twitterService: TwitterPlatformService;
   @Inject() platformAppsService: PlatformAppsService;
 
@@ -68,10 +74,33 @@ export class RestreamService extends StatefulService<IRestreamState> {
   static initialState: IRestreamState = {
     enabled: true,
     grandfathered: false,
+    tiktokGrandfathered: false,
   };
 
   get streamInfo() {
     return this.streamingService.views;
+  }
+
+  /**
+   * Returns the custom destinations
+   * @remark Must get custom destinations from the streaming service state
+   * because they may have been updated during the `beforeGoLive` process
+   * for the platforms if the user has dual streaming enabled. This is because
+   * the vertical target for the dual stream is created as a custom destination
+   * and added during the `beforeGoLive` process.
+   */
+  get customDestinations() {
+    return (
+      this.streamingService.state.info.settings?.customDestinations.filter(d => d.enabled) || []
+    );
+  }
+
+  get facebookGrandfathered() {
+    return this.state.grandfathered;
+  }
+
+  get tiktokGrandfathered() {
+    return this.state.tiktokGrandfathered;
   }
 
   @mutation()
@@ -80,8 +109,13 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   @mutation()
-  private SET_GRANDFATHERED(enabled: boolean) {
-    this.state.grandfathered = enabled;
+  private SET_GRANDFATHERED(facebook: boolean, tiktok: boolean) {
+    /* TODO: what's our take on this, I think the cost of a separate mutation is not justifiable
+     * but can split for clarity. I think these two pieces of state are intrinsically connected,
+     * and should live as part of the same object, probably a refactor for the future.
+     */
+    this.state.grandfathered = facebook;
+    this.state.tiktokGrandfathered = tiktok;
   }
 
   init() {
@@ -103,7 +137,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   async loadUserSettings() {
     this.settings = await this.fetchUserSettings();
-    this.SET_GRANDFATHERED(this.settings.grandfathered);
+    this.SET_GRANDFATHERED(this.settings.grandfathered, this.settings.tiktokGrandfathered);
     this.SET_ENABLED(this.settings.enabled && this.views.canEnableRestream);
   }
 
@@ -140,6 +174,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   get shouldGoLiveWithRestream() {
+    if (!this.views.canEnableRestream) return false;
     return this.streamInfo.isMultiplatformMode || this.streamInfo.isDualOutputMode;
   }
 
@@ -209,8 +244,12 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return jfetch(request);
   }
 
-  async beforeGoLive(context?: TDisplayType, mode?: TOutputOrientation) {
-    await Promise.all([this.setupIngest(context, mode), this.setupTargets(!!mode)]);
+  async beforeGoLive() {
+    if (!this.streamInfo.getIsValidRestreamConfig()) {
+      throwStreamError('RESTREAM_SETUP_FAILED');
+    }
+
+    await Promise.all([this.setupIngest(), this.setupTargets()]);
   }
 
   /**
@@ -222,25 +261,43 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @param context - Optional, display to stream
    * @param mode - Optional, mode which denotes which context to stream
    */
-  async setupIngest(context?: TDisplayType, mode?: TOutputOrientation) {
+  async setupIngest() {
     const ingest = (await this.fetchIngest()).server;
-    const settings = mode ? await this.fetchUserSettings(mode) : this.settings;
 
-    // We need to move OBS to custom ingest mode before we can set the server
-    this.streamSettingsService.setSettings(
-      {
+    if (this.streamingService.views.isDualOutputMode) {
+      // in dual output mode, we need to set the ingest for each display
+      const displays = this.streamInfo.displaysToRestream;
+
+      displays.forEach(async display => {
+        const mode = this.getMode(display);
+        const settings = await this.fetchUserSettings(mode);
+
+        this.streamSettingsService.setSettings(
+          {
+            streamType: 'rtmp_custom',
+          },
+          display,
+        );
+
+        this.streamSettingsService.setSettings(
+          {
+            key: settings.streamKey,
+            server: ingest,
+          },
+          display,
+        );
+      });
+    } else {
+      // in single output mode, we just set the ingest for the default display
+      this.streamSettingsService.setSettings({
         streamType: 'rtmp_custom',
-      },
-      context,
-    );
+      });
 
-    this.streamSettingsService.setSettings(
-      {
-        key: settings.streamKey,
+      this.streamSettingsService.setSettings({
+        key: this.settings.streamKey,
         server: ingest,
-      },
-      context,
-    );
+      });
+    }
   }
 
   /**
@@ -248,10 +305,10 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @remarks
    * In dual output mode, assign a contexts to the ingest targets.
    * Defaults to the horizontal context.
-   *
-   * @param isDualOutputMode - Optional, boolean denoting if dual output mode is on
    */
-  async setupTargets(isDualOutputMode?: boolean) {
+  async setupTargets() {
+    const isDualOutputMode = this.streamingService.views.isDualOutputMode;
+
     // delete existing targets
     const targets = await this.fetchTargets();
     const promises = targets.map(t => this.deleteTarget(t.id));
@@ -264,27 +321,25 @@ export class RestreamService extends StatefulService<IRestreamState> {
           ? {
               platform,
               streamKey: getPlatformService(platform).state.streamKey,
-              mode: this.dualOutputService.views.getPlatformMode(platform),
+              mode: this.getPlatformMode(platform),
             }
           : {
               platform,
               streamKey: getPlatformService(platform).state.streamKey,
             },
       ),
-      ...this.streamInfo.savedSettings.customDestinations
-        .filter(dest => dest.enabled)
-        .map(dest =>
-          isDualOutputMode
-            ? {
-                platform: 'relay' as 'relay',
-                streamKey: `${dest.url}${dest.streamKey}`,
-                mode: this.dualOutputService.views.getMode(dest.display),
-              }
-            : {
-                platform: 'relay' as 'relay',
-                streamKey: `${dest.url}${dest.streamKey}`,
-              },
-        ),
+      ...this.customDestinations.map(dest =>
+        isDualOutputMode
+          ? {
+              platform: 'relay' as 'relay',
+              streamKey: `${dest.url}${dest.streamKey}`,
+              mode: this.getMode(dest.display),
+            }
+          : {
+              platform: 'relay' as 'relay',
+              streamKey: `${dest.url}${dest.streamKey}`,
+            },
+      ),
     ];
 
     // treat tiktok as a custom destination
@@ -293,9 +348,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
       const ttSettings = this.tiktokService.state.settings;
       tikTokTarget.platform = 'relay';
       tikTokTarget.streamKey = `${ttSettings.serverUrl}/${ttSettings.streamKey}`;
-      tikTokTarget.mode = isDualOutputMode
-        ? this.dualOutputService.views.getPlatformMode('tiktok')
-        : 'landscape';
+      tikTokTarget.mode = isDualOutputMode ? this.getPlatformMode('tiktok') : 'landscape';
     }
 
     // treat twitter as a custom destination
@@ -303,9 +356,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     if (twitterTarget) {
       twitterTarget.platform = 'relay';
       twitterTarget.streamKey = `${this.twitterService.state.ingest}/${this.twitterService.state.streamKey}`;
-      twitterTarget.mode = isDualOutputMode
-        ? this.dualOutputService.views.getPlatformMode('twitter')
-        : 'landscape';
+      twitterTarget.mode = isDualOutputMode ? this.getPlatformMode('twitter') : 'landscape';
     }
 
     // treat instagram as a custom destination
@@ -313,9 +364,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     if (instagramTarget) {
       instagramTarget.platform = 'relay';
       instagramTarget.streamKey = `${this.instagramService.state.settings.streamUrl}${this.instagramService.state.streamKey}`;
-      instagramTarget.mode = isDualOutputMode
-        ? this.dualOutputService.views.getPlatformMode('instagram')
-        : 'landscape';
+      instagramTarget.mode = isDualOutputMode ? this.getPlatformMode('instagram') : 'landscape';
     }
 
     // treat kick as a custom destination
@@ -323,12 +372,27 @@ export class RestreamService extends StatefulService<IRestreamState> {
     if (kickTarget) {
       kickTarget.platform = 'relay';
       kickTarget.streamKey = `${this.kickService.state.ingest}/${this.kickService.state.streamKey}`;
-      kickTarget.mode = isDualOutputMode
-        ? this.dualOutputService.views.getPlatformMode('kick')
-        : 'landscape';
+      kickTarget.mode = isDualOutputMode ? this.getPlatformMode('kick') : 'landscape';
     }
 
-    await this.createTargets(newTargets);
+    // in dual output mode, only create targets for the displays that are being restreamed
+    if (isDualOutputMode) {
+      const modesToRestream = this.streamInfo.displaysToRestream.map(display =>
+        this.getMode(display),
+      );
+
+      const filteredTargets = newTargets.filter(
+        target => target.mode && modesToRestream.includes(target.mode),
+      );
+
+      console.log('filteredTargets', filteredTargets);
+
+      await this.createTargets(filteredTargets);
+    } else {
+      console.log('newTargets', newTargets);
+      // in single output mode, create all targets
+      await this.createTargets(newTargets);
+    }
   }
 
   checkStatus(): Promise<boolean> {
@@ -487,9 +551,22 @@ export class RestreamService extends StatefulService<IRestreamState> {
       this.chatView.webContents.setZoomFactor(changed.chatZoomFactor);
     }
   }
+
+  private getPlatformMode(platform: TPlatform): TOutputOrientation {
+    const display = this.streamingService.views.getPlatformDisplayType(platform);
+    return this.getMode(display);
+  }
+
+  getMode(display: TDisplayType): TOutputOrientation {
+    if (!display) return 'landscape';
+    return display === 'horizontal' ? 'landscape' : 'portrait';
+  }
 }
 
 class RestreamView extends ViewHandler<IRestreamState> {
+  get isGrandfathered() {
+    return this.state.grandfathered || this.state.tiktokGrandfathered;
+  }
   /**
    * This determines whether the user can enable restream
    * Requirements:
@@ -498,6 +575,6 @@ class RestreamView extends ViewHandler<IRestreamState> {
    */
   get canEnableRestream() {
     const userView = this.getServiceViews(UserService);
-    return userView.isPrime || (userView.auth && this.state.grandfathered);
+    return userView.isPrime || (userView.auth && this.isGrandfathered);
   }
 }

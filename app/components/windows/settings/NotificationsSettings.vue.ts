@@ -23,6 +23,8 @@ export default class NotificationsSettings extends Vue {
   saveNotificationsSettings(formData: TObsFormData) {
     const settings: Partial<INotificationsSettings> = {};
     formData.forEach(formInput => {
+      // TODO: index
+      // @ts-ignore
       settings[formInput.name] = formInput.value;
     });
     this.notificationsService.setSettings(settings);
@@ -32,6 +34,8 @@ export default class NotificationsSettings extends Vue {
   saveTroubleshooterSettings(formData: TObsFormData) {
     const settings: Partial<ITroubleshooterSettings> = {};
     formData.forEach(formInput => {
+      // TODO: index
+      // @ts-ignore
       settings[formInput.name] = formInput.value;
     });
     this.troubleshooterService.setSettings(settings);

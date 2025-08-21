@@ -2,6 +2,7 @@ import React from 'react';
 import { useModule, injectState } from 'slap';
 import { Services } from '../../service-provider';
 import { ISettingsSubCategory } from '../../../services/settings';
+import { TDisplayType } from 'services/settings-v2';
 
 /**
  * A module for components in the SettingsWindow
@@ -9,6 +10,7 @@ import { ISettingsSubCategory } from '../../../services/settings';
 class ObsSettingsModule {
   state = injectState({
     page: '',
+    display: 'horizontal',
   });
 
   init() {
@@ -27,6 +29,10 @@ class ObsSettingsModule {
 
   saveSettings(newSettings: ISettingsSubCategory[]) {
     this.settingsService.setSettings(this.state.page, newSettings);
+  }
+
+  setDisplay(display: TDisplayType) {
+    this.state.setDisplay(display);
   }
 
   get settingsFormData() {

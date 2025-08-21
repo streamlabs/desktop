@@ -28,6 +28,8 @@ export default function SideNav() {
       [ESubMenuItemKey.AppsStoreHome]: EMenuItemKey.AppStore,
     };
     if (Object.keys(subMenuItems).includes(currentMenuItem as EMenuItemKey)) {
+      // TODO: index
+      // @ts-ignore
       setCurrentMenuItem(subMenuItems[currentMenuItem]);
     }
   }

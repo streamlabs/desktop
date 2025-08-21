@@ -207,6 +207,8 @@ function CommonAlertSettings(p: { type: TAlertType; hiddenFields?: string[] }) {
   const bind = createVariationBinding(p.type, 'default', useForceUpdate(), p.hiddenFields);
   const containerRef = useRef<HTMLDivElement>(null);
   const bindMinAmount =
+    // TODO: index
+    // @ts-ignore
     bind['alert_message_min_amount'].value !== undefined ? bind['alert_message_min_amount'] : null;
 
   return (

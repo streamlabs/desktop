@@ -239,7 +239,7 @@ export class FacebookService
     this.state.videoId = id;
   }
 
-  apiBase = 'https://graph.facebook.com/v16.0';
+  apiBase = 'https://graph.facebook.com/v22.0';
 
   get authUrl() {
     const host = this.hostsService.streamlabs;
@@ -265,7 +265,7 @@ export class FacebookService
     return this.state.streamDashboardUrl;
   }
 
-  async beforeGoLive(options: IGoLiveSettings, context?: TDisplayType) {
+  async beforeGoLive(options: IGoLiveSettings, context: TDisplayType) {
     const fbOptions = getDefined(options.platforms.facebook);
 
     let liveVideo: IFacebookLiveVideo;
@@ -440,11 +440,11 @@ export class FacebookService
             'openStreamIneligibleHelp',
           ),
         });
-        throwStreamError('FACEBOOK_STREAMING_DISABLED', e as any);
+        throwStreamError('FACEBOOK_STREAMING_DISABLED', { ...(e as any), platform: 'facebook' });
       }
 
       const details = error ? `${error.type} ${error.message}` : 'Connection failed';
-      throwStreamError('PLATFORM_REQUEST_FAILED', e as any, details);
+      throwStreamError('PLATFORM_REQUEST_FAILED', { ...(e as any), platform: 'facebook' }, details);
     }
   }
 

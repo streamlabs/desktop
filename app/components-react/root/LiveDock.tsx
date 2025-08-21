@@ -16,15 +16,12 @@ import PlatformAppPageView from 'components-react/shared/PlatformAppPageView';
 import { useVuex } from 'components-react/hooks';
 import { useRealmObject } from 'components-react/hooks/realm';
 import { $i } from 'services/utils';
+import { ShareStreamLink } from './ShareStreamLink';
 
 const LiveDockCtx = React.createContext<LiveDockController | null>(null);
 
 class LiveDockController {
   private streamingService = Services.StreamingService;
-  private youtubeService = Services.YoutubeService;
-  private facebookService = Services.FacebookService;
-  private kickService = Services.KickService;
-  private tiktokService = Services.TikTokService;
   private userService = Services.UserService;
   private customizationService = Services.CustomizationService;
   private platformAppsService = Services.PlatformAppsService;
@@ -114,6 +111,8 @@ class LiveDockController {
 
   get chatTabs(): { name: string; value: string }[] {
     if (!this.userService.state.auth) return [];
+
+    const hasMultistreamChat = this.isRestreaming || this.hasDifferentDualOutputPlatforms;
     const tabs: { name: string; value: string }[] = [
       {
         name: getPlatformService(this.userService.state.auth.primaryPlatform).displayName,
@@ -129,7 +128,7 @@ class LiveDockController {
           };
         }),
     );
-    if (this.restreamService.shouldGoLiveWithRestream) {
+    if (hasMultistreamChat) {
       tabs.push({
         name: $t('Multistream'),
         value: 'restream',
@@ -140,6 +139,17 @@ class LiveDockController {
 
   get isRestreaming() {
     return this.restreamService.shouldGoLiveWithRestream;
+  }
+
+  // Now that the same platform can stream to multiple displays we want to avoid mistakenly
+  // showing multichat in those instances
+  get hasDifferentDualOutputPlatforms() {
+    const dualOutputPlatforms = this.streamingService.views.activeDisplayPlatforms;
+    const uniquePlatforms = new Set();
+    [...dualOutputPlatforms.horizontal, ...dualOutputPlatforms.vertical].forEach(platform => {
+      uniquePlatforms.add(platform);
+    });
+    return uniquePlatforms.size > 1;
   }
 
   get isPopOutAllowed() {
@@ -449,15 +459,12 @@ function ChatTabs(p: { visibleChat: string; setChat: (key: string) => void }) {
         )}
         <Tooltip
           title={$t(
-            'You can now reply to Twitch, YouTube and Facebook messages in Multistream chat. Click to learn more.',
+            'You can now reply to Twitch, YouTube and Facebook messages in Multichat. Click to learn more.',
           )}
           placement="topRight"
           onClick={ctrl.showMultistreamChatInfo}
         >
-          <i
-            className={cx(styles.liveDockChatTabsInfo, 'icon-information')}
-            onClick={ctrl.showMultistreamChatInfo}
-          />
+          <i className={cx(styles.liveDockChatTabsInfo, 'icon-information')} />
         </Tooltip>
       </div>
     </div>

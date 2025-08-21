@@ -1,10 +1,9 @@
 import styles from './GoLive.m.less';
 import { WindowsService, DualOutputService } from 'app-services';
 import { ModalLayout } from '../../shared/ModalLayout';
-import { Button, message } from 'antd';
+import { Button } from 'antd';
 import { Services } from '../../service-provider';
 import GoLiveSettings from './GoLiveSettings';
-import GoLiveBanner from './GoLiveInfoBanner';
 import React from 'react';
 import { $t } from '../../../services/i18n';
 import GoLiveChecklist from './GoLiveChecklist';
@@ -14,6 +13,7 @@ import Translate from 'components-react/shared/Translate';
 import Animation from 'rc-animate';
 import { useGoLiveSettings, useGoLiveSettingsRoot } from './useGoLiveSettings';
 import { inject } from 'slap';
+import RecordingSwitcher from './RecordingSwitcher';
 
 export default function GoLiveWindow() {
   const { lifecycle, form } = useGoLiveSettingsRoot().extend(module => ({
@@ -61,7 +61,6 @@ function ModalFooter() {
     getCanStreamDualOutput,
     toggleDualOutputMode,
     isLoading,
-    promptApply,
     isDualOutputMode,
     horizontalHasTargets,
   } = useGoLiveSettings().extend(module => ({
@@ -77,7 +76,7 @@ function ModalFooter() {
     },
 
     toggleDualOutputMode() {
-      this.dualOutputService.actions.setDualOutputMode(false, true, true);
+      this.dualOutputService.actions.setDualOutputModeIfPossible(false, true, true);
     },
 
     get horizontalHasTargets() {
@@ -85,10 +84,6 @@ function ModalFooter() {
       const destinationDisplays = module.state.activeDisplayDestinations;
 
       return platformDisplays.horizontal.length > 0 || destinationDisplays.horizontal.length > 0;
-    },
-
-    get promptApply() {
-      return Services.TikTokService.promptApply;
     },
 
     get isDualOutputMode() {
@@ -138,7 +133,7 @@ function ModalFooter() {
 
   return (
     <Form layout={'inline'}>
-      {promptApply && <GoLiveBanner />}
+      {!isDualOutputMode && <RecordingSwitcher />}
       {/* CLOSE BUTTON */}
       <Button onClick={close}>{$t('Close')}</Button>
 

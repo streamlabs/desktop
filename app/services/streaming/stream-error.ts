@@ -1,7 +1,7 @@
 import { getPlatformService, TPlatform } from '../platforms';
 import { $t } from 'services/i18n';
 import { Services } from '../../components-react/service-provider';
-import { IOBSOutputSignalInfo } from './streaming';
+import { IOBSOutputSignalInfo } from '../core/signals';
 import { capitalize } from 'lodash';
 
 // the `message` is shown to the user in the error notification
@@ -260,7 +260,7 @@ export class StreamError extends Error implements IRejectedRequest {
     this.url = rejectedRequest?.url;
     this.status = rejectedRequest?.status;
     this.statusText = rejectedRequest?.statusText;
-    this.platform = this.url ? getPlatform(this.url) : undefined;
+    this.platform = rejectedRequest?.platform ?? getPlatform(this?.url);
 
     // TODO: remove sensitive data from YT requests
     if (this.platform === 'youtube') {
@@ -274,7 +274,8 @@ export class StreamError extends Error implements IRejectedRequest {
   }
 }
 
-function getPlatform(url: string): TPlatform | undefined {
+function getPlatform(url?: string): TPlatform | undefined {
+  if (!url) return undefined;
   const platforms = Services.StreamingService.views.linkedPlatforms;
   return platforms.find(platform => url.startsWith(getPlatformService(platform).apiBase));
 }
@@ -397,10 +398,11 @@ export function formatUnknownErrorMessage(
     } catch (error: unknown) {
       // if it's not JSON, it is the message itself
       // don't show blocked message to user
-      if (!info.split(' ').includes('blocked')) {
+      if (info.split(' ').includes('blocked')) {
+        messages.user.push(errorTypes['UNKNOWN_STREAMING_ERROR_WITH_MESSAGE'].message);
         messages.user.push(info);
       } else {
-        messages.user.push(errorTypes['UNKNOWN_STREAMING_ERROR_WITH_MESSAGE'].message);
+        messages.user.push(info);
       }
 
       // always add non-JSON info to diag report
@@ -414,7 +416,7 @@ export function formatUnknownErrorMessage(
         let error;
         let platform;
 
-        if (typeof info.error === 'string') {
+        if (typeof info.error === 'string' && info.error !== '') {
           /*
            * Try to parse error as JSON as originally done, however, if it's just a string
            * (such as in the case of invalid path and many other unknown -4 errors we've

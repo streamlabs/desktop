@@ -80,6 +80,11 @@ interface ILatestVersionInfo {
    * specific eligibility for this release.
    */
   restricted?: boolean;
+
+  /**
+   * What's included in the latest available version.
+   */
+  details: string;
 }
 
 /**
@@ -336,6 +341,9 @@ async function entry(info: IUpdateInfo) {
    * The temporary directory may not exist though. */
   await mkdir(info.tempDir, { recursive: true });
 
+  const latestVersionPath = path.join(info.tempDir, info.versionFileName);
+  await writeFile(latestVersionPath, JSON.stringify(latestVersion));
+
   const updaterPath = await fetchUpdater(info);
 
   if (!updaterPath) {
@@ -358,6 +366,8 @@ async function entry(info: IUpdateInfo) {
     '--app-dir',
     `"${info.appDir}"`,
     '--force-temp',
+    '--details',
+    `"${latestVersionPath}"`,
   ];
 
   info.waitPids.forEach(pid => {

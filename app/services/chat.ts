@@ -25,7 +25,7 @@ import { SourcesService } from 'app-services';
 
 export function enableBTTVEmotesScript(isDarkTheme: boolean) {
   /*eslint-disable */
-return `
+  return `
 localStorage.setItem('bttv_clickTwitchEmotes', true);
 localStorage.setItem('bttv_darkenedMode', ${
   isDarkTheme ? 'true' : 'false'
@@ -380,17 +380,20 @@ export class ChatService extends Service {
   }
 
   showMultistreamChatWindow() {
-    // We use a generated window Id to prevent someobody popping out the
+    // We use a generated window Id to prevent somebody popping out the
     // same winow multiple times.
-    this.windowsService.createOneOffWindow({
-      componentName: 'MultistreamChatInfo',
-      title: $t('Multistream Chat Platform Support'),
-      size: {
-        width: 748,
-        height: 635,
-        minWidth: 748,
-        minHeight: 635,
+    this.windowsService.createOneOffWindow(
+      {
+        componentName: 'MultistreamChatInfo',
+        title: $t('Multichat Platform Support'),
+        size: {
+          width: 748,
+          height: 635,
+          minWidth: 748,
+          minHeight: 635,
+        },
       },
-    });
+      'MultistreamChatInfo',
+    );
   }
 }

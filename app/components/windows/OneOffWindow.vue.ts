@@ -5,7 +5,7 @@ import { getComponents, WindowsService } from 'services/windows';
 import { CustomizationService } from 'services/customization';
 import Util from 'services/utils';
 import { TitleBar } from 'components/shared/ReactComponentList';
-import antdThemes from 'styles/antd/index';
+import antdThemes, { Theme } from 'styles/antd/index';
 
 @Component({
   components: {
@@ -42,7 +42,7 @@ export default class OneOffWindow extends Vue {
   }
 
   @Watch('theme')
-  updateAntd(newTheme: string, oldTheme: string) {
+  updateAntd(newTheme: Theme, oldTheme: Theme) {
     antdThemes[oldTheme].unuse();
     antdThemes[newTheme].use();
   }

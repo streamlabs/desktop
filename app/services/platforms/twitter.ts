@@ -83,7 +83,7 @@ export class TwitterPlatformService
     return this.userService.state.auth?.platforms?.twitter?.username || '';
   }
 
-  async beforeGoLive(goLiveSettings: IGoLiveSettings, context?: TDisplayType) {
+  async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     if (Utils.isTestMode()) {
       this.SET_BROADCAST_ID('twitterBroadcast1');
       this.setPlatformContext('twitter');
@@ -122,7 +122,7 @@ export class TwitterPlatformService
             'openStreamIneligibleHelp',
           ),
         });
-        throwStreamError('X_PREMIUM_ACCOUNT_REQUIRED', e as any);
+        throwStreamError('X_PREMIUM_ACCOUNT_REQUIRED', { ...(e as any), platform: 'twitter' });
       }
       throw e;
     }
@@ -156,7 +156,7 @@ export class TwitterPlatformService
     } catch (e: unknown) {
       let details = (e as any).message;
       if (!details) details = 'connection failed';
-      throwStreamError('PLATFORM_REQUEST_FAILED', e as any, details);
+      throwStreamError('PLATFORM_REQUEST_FAILED', { ...(e as any), platform: 'twitter' }, details);
     }
   }
 

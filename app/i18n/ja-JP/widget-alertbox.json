@@ -154,5 +154,6 @@
   "This applies to all alerts. If enabled all alerts need to be approved manually.": "これは全てのアラートに適用されます。有効化すると、全てのアラートを手動で承認する必要があります。",
   "Use unlimited delay": "無制限の遅延を使用",
   "When enabled new alerts will interrupt the on screen alert": "有効化した新しいアラートがオンスクリーンアラートを妨害する場合",
-  "Text Highlight Color": "テキストハイライトカラー"
+  "Text Highlight Color": "テキストハイライトカラー",
+  "Platforms: Twitch, YouTube, Facebook, Trovo & integrations": "Platforms: Twitch, YouTube, Facebook, Trovo & integrations"
 }

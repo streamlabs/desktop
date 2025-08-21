@@ -18,6 +18,7 @@ export default function ClipPreview(props: {
   emitShowTrim: () => void;
   emitShowRemove: () => void;
   emitOpenFileInLocation: () => void;
+  game: EGame;
 }) {
   const { HighlighterService } = Services;
   const v = useVuex(() => ({
@@ -27,8 +28,6 @@ export default function ClipPreview(props: {
   const [scrubFrame, setScrubFrame] = useState<number>(0);
   const clipThumbnail = v.clip.scrubSprite || '';
   const enabled = v.clip.deleted ? false : v.clip.enabled;
-
-  const game = HighlighterService.getGameByStreamId(props.streamId);
 
   if (!v.clip) {
     return <>deleted</>;
@@ -42,7 +41,7 @@ export default function ClipPreview(props: {
   }
 
   function setEnabled(enabled: boolean) {
-    HighlighterService.actions.enableClip(v.clip.path, enabled);
+    HighlighterService.actions.manuallyEnableClip(v.clip.path, enabled, props.streamId);
   }
 
   return (
@@ -108,7 +107,7 @@ export default function ClipPreview(props: {
                 }}
               >
                 {isAiClip(v.clip) ? (
-                  <ClipPreviewInfo clip={v.clip} game={game} />
+                  <ClipPreviewInfo clip={v.clip} game={props.game} />
                 ) : (
                   <div className={styles.highlighterIcon}>
                     <i className="icon-highlighter" />
@@ -151,8 +150,9 @@ export function formatSecondsToHMS(seconds: number): string {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const remainingSeconds = totalSeconds % 60;
-  return `${hours !== 0 ? hours.toString() + 'h ' : ''} ${minutes !== 0 ? minutes.toString() + 'm ' : ''
-    }${remainingSeconds !== 0 ? remainingSeconds.toString() + 's' : ''}`;
+  return `${hours !== 0 ? hours.toString() + 'h ' : ''} ${
+    minutes !== 0 ? minutes.toString() + 'm ' : ''
+  }${remainingSeconds !== 0 ? remainingSeconds.toString() + 's' : ''}`;
 }
 
 function FlameHypeScore({ score }: { score: number }) {

@@ -280,10 +280,11 @@ export async function reserveUserFromPool(
       // request a user with a specific feature
       if (features) {
         // create a filter using mongoDB syntax
-        const filter = {};
-        Object.keys(features).forEach(feature => {
+        const filter: Dictionary<boolean | null> = {};
+        Object.keys(features).forEach((feature: keyof typeof features) => {
           const enabled = features[feature];
-          const filterValue = enabled ? true : null; // convert false to null, since DB doesn't have `false` as a value for features
+          // convert false to null, since DB doesn't have `false` as a value for features
+          const filterValue = enabled ? true : null;
           filter[feature] = filterValue;
         });
         getParams.push(`filter=${JSON.stringify(filter)}`);

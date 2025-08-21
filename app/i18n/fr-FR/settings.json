@@ -141,6 +141,17 @@
   "Virtual Webcam allows you to display your scenes from Streamlabs Desktop in video conferencing software. Streamlabs Desktop will appear as a Webcam that can be selected in most video conferencing apps.": "La webcam virtuelle vous permet d'afficher les scènes de Streamlabs Desktop dans un logiciel de visioconférence. Streamlabs Desktop apparaîtra comme une webcam que vous pouvez sélectionner dans la plupart des applications de visioconférence.",
   "Uninstalling Virtual Webcam will remove it as a device option in other applications.": "Si vous désinstallez la webcam virtuelle, elle sera supprimée en tant qu'option de dispositif dans d'autres applications.",
   "Uninstall Virtual Webcam": "Désinstaller la webcam virtuelle",
+  "The virtual camera is not installed.\n\nPlease allow Streamlabs Desktop to install system software in System Settings → Privacy & Security → Security.\n\nYou may need to restart Streamlabs Desktop if this message still appears afterward.": "The virtual camera is not installed.\n\nPlease allow Streamlabs Desktop to install system software in System Settings → Privacy & Security → Security.\n\nYou may need to restart Streamlabs Desktop if this message still appears afterward.",
+  "The virtual camera is not installed.\n\nPlease allow Streamlabs Desktop to install the camera system extension in System Settings → General → Login Items & Extensions → Camera Extensions.\n\nYou may need to restart Streamlabs Desktop if this message still appears afterward.": "The virtual camera is not installed.\n\nPlease allow Streamlabs Desktop to install the camera system extension in System Settings → General → Login Items & Extensions → Camera Extensions.\n\nYou may need to restart Streamlabs Desktop if this message still appears afterward.",
+  "Unable to start virtual camera.\n\nPlease try again.": "Unable to start virtual camera.\n\nPlease try again.",
+  "An error has occured while installing the virtual camera": "An error has occured while installing the virtual camera",
+  "An error has occured while uninstalling the virtual camera": "An error has occured while uninstalling the virtual camera",
+  "Streamlabs Desktop cannot install the virtual camera if it's not in Applications. Please move Streamlabs Desktop to the Applications directory.": "Streamlabs Desktop cannot install the virtual camera if it's not in Applications. Please move Streamlabs Desktop to the Applications directory.",
+  "The installation of the virtual camera will complete after a system reboot.": "The installation of the virtual camera will complete after a system reboot.",
+  "Output Type": "Output Type",
+  "Output Selection": "Output Selection",
+  "Output Source": "Output Source",
+  "Program (default)": "Programme (par défaut)",
   "Use custom resolution": "Utiliser une résolution personnalisée",
   "Enable Designer Mode": "Activer le mode Designer",
   "Get Support": "Obtenir de l'assistance",
@@ -261,5 +272,9 @@
   "Idle": "Au repos",
   "Please connect platforms directly from Streamlabs Desktop instead of adding Streamlabs Multistream as a custom destination": "Connecte les plateformes directement à partir de Streamlabs Desktop au lieu d'ajouter Streamlabs Multistream en tant que destination personnalisée.",
   "Audio Encoder": "Encodeur audio",
-  "Additional Settings": "Paramètres supplémentaires"
+  "Additional Settings": "Paramètres supplémentaires",
+  "Bearer Token": "Jeton du porteur",
+  "Apply Primary": "Apply Primary",
+  "Output Resolution": "Output Resolution",
+  "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\""
 }

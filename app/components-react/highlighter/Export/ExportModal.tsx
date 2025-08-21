@@ -23,17 +23,16 @@ import { SCRUB_HEIGHT, SCRUB_WIDTH, SCRUB_FRAMES } from 'services/highlighter/co
 import styles from './ExportModal.m.less';
 import { getCombinedClipsDuration } from '../utils';
 import { formatSecondsToHMS } from '../ClipPreview';
-import { set } from 'lodash';
 import PlatformSelect from './Platform';
 import cx from 'classnames';
 import { getVideoResolution } from 'services/highlighter/cut-highlight-clips';
 
 type TSetting = { name: string; fps: TFPS; resolution: TResolution; preset: TPreset };
 const settings: TSetting[] = [
-  { name: 'Standard', fps: 30, resolution: 1080, preset: 'fast' },
+  { name: 'Standard', fps: 30, resolution: 1080, preset: 'medium' },
   { name: 'Best', fps: 60, resolution: 1080, preset: 'slow' },
-  { name: 'Fast', fps: 30, resolution: 720, preset: 'ultrafast' },
-  { name: 'Custom', fps: 30, resolution: 720, preset: 'ultrafast' },
+  { name: 'Fast', fps: 30, resolution: 720, preset: 'fast' },
+  { name: 'Custom', fps: 30, resolution: 720, preset: 'medium' },
 ];
 class ExportController {
   get service() {
@@ -55,9 +54,7 @@ class ExportController {
   getClips(streamId?: string) {
     return this.service.getClips(this.service.views.clips, streamId).filter(clip => clip.enabled);
   }
-  getClipThumbnail(streamId?: string) {
-    return this.getClips(streamId).find(clip => clip.enabled)?.scrubSprite;
-  }
+
   getDuration(streamId?: string) {
     return getCombinedClipsDuration(this.getClips(streamId));
   }
@@ -185,14 +182,20 @@ function ExportFlow({
     getStreamTitle,
     getClips,
     getDuration,
-    getClipThumbnail,
     getClipResolution,
   } = useController(ExportModalCtx);
 
   const [currentFormat, setCurrentFormat] = useState<TOrientation>(EOrientation.HORIZONTAL);
 
-  const clipsAmount = getClips(streamId).length;
-  const clipsDuration = formatSecondsToHMS(getDuration(streamId));
+  const { amount, duration, thumbnail } = useMemo(() => {
+    const clips = getClips(streamId);
+
+    return {
+      amount: clips.length,
+      duration: formatSecondsToHMS(getCombinedClipsDuration(clips)),
+      thumbnail: clips.find(clip => clip.enabled)?.scrubSprite,
+    };
+  }, [streamId]);
 
   function settingMatcher(initialSetting: TSetting) {
     const matchingSetting = settings.find(
@@ -215,42 +218,44 @@ function ExportFlow({
   const [currentSetting, setSetting] = useState<TSetting | null>(null);
   const [isLoadingResolution, setIsLoadingResolution] = useState(true);
 
+  async function initializeSettings() {
+    try {
+      const resolution = await getClipResolution(streamId);
+      let setting: TSetting;
+      if (resolution?.height === 720 && exportInfo.resolution !== 720) {
+        setting = settings.find(s => s.resolution === 720) || settings[settings.length - 1];
+      } else if (resolution?.height === 1080 && exportInfo.resolution !== 1080) {
+        setting = settings.find(s => s.resolution === 1080) || settings[settings.length - 1];
+      } else {
+        setting = settingMatcher({
+          name: 'from default',
+          fps: exportInfo.fps,
+          resolution: exportInfo.resolution,
+          preset: exportInfo.preset,
+        });
+      }
+
+      setSetting(setting);
+      setFps(setting.fps.toString());
+      setResolution(setting.resolution.toString());
+      setPreset(setting.preset);
+    } catch (error: unknown) {
+      console.error('Failed to detect clip resolution, setting default. Error: ', error);
+      setSetting(
+        settingMatcher({
+          name: 'from default',
+          fps: exportInfo.fps,
+          resolution: exportInfo.resolution,
+          preset: exportInfo.preset,
+        }),
+      );
+    } finally {
+      setIsLoadingResolution(false);
+    }
+  }
+
   useEffect(() => {
     setIsLoadingResolution(true);
-
-    async function initializeSettings() {
-      try {
-        const resolution = await getClipResolution(streamId);
-        let setting: TSetting;
-        if (resolution?.height === 720 && exportInfo.resolution !== 720) {
-          setting = settings.find(s => s.resolution === 720) || settings[settings.length - 1];
-        } else if (resolution?.height === 1080 && exportInfo.resolution !== 1080) {
-          setting = settings.find(s => s.resolution === 1080) || settings[settings.length - 1];
-        } else {
-          setting = settingMatcher({
-            name: 'from default',
-            fps: exportInfo.fps,
-            resolution: exportInfo.resolution,
-            preset: exportInfo.preset,
-          });
-        }
-
-        setSetting(setting);
-      } catch (error: unknown) {
-        console.error('Failed to detect clip resolution, setting default. Error: ', error);
-        setSetting(
-          settingMatcher({
-            name: 'from default',
-            fps: exportInfo.fps,
-            resolution: exportInfo.resolution,
-            preset: exportInfo.preset,
-          }),
-        );
-      } finally {
-        setIsLoadingResolution(false);
-      }
-    }
-
     initializeSettings();
   }, [streamId]);
 
@@ -376,7 +381,7 @@ function ExportFlow({
                 </div>
               )}
               <img
-                src={getClipThumbnail(streamId)}
+                src={thumbnail}
                 style={
                   currentFormat === EOrientation.HORIZONTAL
                     ? { objectPosition: 'left' }
@@ -398,7 +403,7 @@ function ExportFlow({
                     marginLeft: '8px',
                   }}
                 >
-                  {clipsDuration} | {$t('%{clipsAmount} clips', { clipsAmount })}
+                  {duration} | {$t('%{clipsAmount} clips', { clipsAmount: amount })}
                 </p>
               </div>
               <OrientationToggle
@@ -469,8 +474,8 @@ function ExportFlow({
                     label={$t('File Size')}
                     value={exportInfo.preset}
                     options={[
-                      { value: 'ultrafast', label: $t('Faster Export') },
-                      { value: 'fast', label: $t('Balanced') },
+                      { value: 'fast', label: $t('Faster Export') },
+                      { value: 'medium', label: $t('Balanced') },
                       { value: 'slow', label: $t('Smaller File') },
                     ]}
                     onChange={setPreset}

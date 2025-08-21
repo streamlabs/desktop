@@ -10,7 +10,8 @@ import { Button } from 'antd';
 import { TModalClipsView } from './ClipsView';
 import { CheckboxInput } from 'components-react/shared/inputs';
 import { formatSecondsToHMS } from './ClipPreview';
-import { duration } from 'moment';
+import { TModalStreamCard } from './StreamCardModal';
+import { useVuex } from 'components-react/hooks';
 
 interface IPlaylist {
   src: string;
@@ -29,10 +30,12 @@ export default function PreviewModal({
 }: {
   close: () => void;
   streamId: string | undefined;
-  emitSetShowModal: (modal: TModalClipsView | null) => void;
+  emitSetShowModal: (modal: 'export' | null) => void;
 }) {
   const { HighlighterService, UsageStatisticsService } = Services;
-  const clips = HighlighterService.getClips(HighlighterService.views.clips, streamId);
+  const clips = useVuex(() =>
+    HighlighterService.getClips(HighlighterService.views.clips, streamId),
+  );
   const { intro, outro } = HighlighterService.views.video;
   const audioSettings = HighlighterService.views.audio;
   const sortedClips = [...sortClipsByOrder(clips, streamId)];
@@ -303,6 +306,7 @@ export default function PreviewModal({
                 content = (
                   <MiniClipPreview
                     clipId={path}
+                    streamId={streamId}
                     showDisabled={showDisabled}
                     clipStateChanged={(clipId, newState) => {
                       playlist[index].enabled = newState;
@@ -368,8 +372,8 @@ export default function PreviewModal({
           />
           <Button
             type="primary"
+            disabled={playlist.filter(clip => clip.enabled).length === 0}
             onClick={() => {
-              close();
               emitSetShowModal('export');
             }}
           >

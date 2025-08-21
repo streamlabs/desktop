@@ -45,6 +45,7 @@ import Hotkeys from './windows/settings/Hotkeys';
 import Main from './windows/Main';
 import Loader from './pages/Loader';
 import StartStreamingButton from './root/StartStreamingButton';
+import TestWidgets from './root/TestWidgets';
 import { PlatformMerge, PlatformAppStore, PlatformAppMainPage } from './pages';
 
 // list of React components to be used inside Vue components
@@ -98,4 +99,5 @@ export const components = {
   Main: createRoot(Main),
   Loader,
   StartStreamingButton,
+  TestWidgets,
 };

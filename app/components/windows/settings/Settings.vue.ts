@@ -29,6 +29,7 @@ import { $t } from 'services/i18n';
 import { debounce } from 'lodash-decorators';
 import * as remote from '@electron/remote';
 import Utils from '../../../services/utils';
+import { NavigationService } from 'app-services';
 
 @Component({
   components: {
@@ -57,6 +58,7 @@ export default class Settings extends Vue {
   @Inject() userService: UserService;
   @Inject() dismissablesService: DismissablesService;
   @Inject() dualOutputService: DualOutputService;
+  @Inject() navigationService: NavigationService;
 
   $refs: { settingsContainer: HTMLElement & SearchablePages };
 
@@ -88,11 +90,23 @@ export default class Settings extends Vue {
     ['Appearance']: EDismissable.CustomMenuSettings,
   };
 
-  internalCategoryName: string = null;
-
   created() {
     // Make sure we have the latest settings
     this.settingsService.actions.loadSettingsIntoStore();
+  }
+
+  currentSettingsTab = 'General';
+
+  unbind: () => void;
+
+  mounted() {
+    this.unbind = this.navigationService.state.bindProps(this, {
+      currentSettingsTab: 'currentSettingsTab',
+    });
+  }
+
+  destroyed() {
+    this.unbind();
   }
 
   /**
@@ -102,20 +116,12 @@ export default class Settings extends Vue {
    */
   scanningDone = false;
 
-  get categoryName() {
-    if (this.internalCategoryName == null) {
-      this.internalCategoryName = this.getInitialCategoryName();
-    }
-
-    return this.internalCategoryName;
-  }
-
   get settingsData() {
-    return this.settingsService.state[this.categoryName]?.formData ?? [];
+    return this.settingsService.state[this.currentSettingsTab]?.formData ?? [];
   }
 
-  set categoryName(val: string) {
-    this.internalCategoryName = val;
+  setCategoryName(val: string) {
+    this.navigationService.actions.setSettingsNavigation(val);
   }
 
   get isPrime() {
@@ -134,7 +140,7 @@ export default class Settings extends Vue {
       'General',
       'Multistreaming',
       'Stream',
-      // 'Output',
+      'Output',
       'Audio',
       'Video',
       // 'Hotkeys',
@@ -153,11 +159,11 @@ export default class Settings extends Vue {
   }
 
   get shouldShowReactPage() {
-    return this.reactPages.includes(this.categoryName);
+    return this.reactPages.includes(this.currentSettingsTab);
   }
 
   get shouldShowVuePage() {
-    if (this.reactPages.includes(this.categoryName)) return false;
+    if (this.reactPages.includes(this.currentSettingsTab)) return false;
     return ![
       'Stream',
       'API',
@@ -169,7 +175,7 @@ export default class Settings extends Vue {
       'Installed Apps',
       'Virtual Webcam',
       'Developer',
-    ].includes(this.categoryName);
+    ].includes(this.currentSettingsTab);
   }
 
   getInitialCategoryName() {
@@ -194,7 +200,7 @@ export default class Settings extends Vue {
   }
 
   save(settingsData: ISettingsSubCategory[]) {
-    this.settingsService.setSettings(this.categoryName, settingsData);
+    this.settingsService.setSettings(this.currentSettingsTab, settingsData);
   }
 
   done() {
@@ -210,15 +216,15 @@ export default class Settings extends Vue {
 
   onBeforePageScanHandler(page: string) {
     if (this.originalCategory == null) {
-      this.originalCategory = this.categoryName;
+      this.originalCategory = this.currentSettingsTab;
     }
 
-    this.categoryName = page;
+    this.setCategoryName(page);
   }
 
   onScanCompletedHandler() {
     this.scanningDone = true;
-    this.categoryName = this.originalCategory;
+    this.setCategoryName(this.originalCategory);
     this.originalCategory = null;
   }
 
@@ -234,8 +240,8 @@ export default class Settings extends Vue {
       this.searchResultPages = foundPages;
     }
     // if there are not search results for the current page than switch to the first found page
-    if (foundPages.length && !foundPages.includes(this.categoryName)) {
-      this.categoryName = foundPages[0];
+    if (foundPages.length && !foundPages.includes(this.currentSettingsTab)) {
+      this.setCategoryName(foundPages[0]);
     }
   }
 
@@ -264,7 +270,7 @@ export default class Settings extends Vue {
   }
 
   highlightSearch(searchStr: string) {
-    this.$refs.settingsContainer.highlightPage(searchStr);
+    this.$refs.settingsContainer?.highlightPage(searchStr);
   }
 
   handleAuth() {
@@ -279,7 +285,7 @@ export default class Settings extends Vue {
         })
         .then(({ response }) => {
           if (response === 0) {
-            this.dualOutputService.setDualOutputMode(false, true);
+            this.dualOutputService.setDualOutputModeIfPossible(false, true);
             this.userService.logOut();
           }
         });

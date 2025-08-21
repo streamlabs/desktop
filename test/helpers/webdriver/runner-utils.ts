@@ -45,6 +45,8 @@ const testTimings: Record<string, number> = (() => {
     const result = {};
 
     // convert the list to the map where key is a test name
+    // TODO: index
+    // @ts-ignore
     records.forEach(r => (result[r.name] = r.time));
     return result;
   } catch (e: unknown) {

@@ -141,6 +141,17 @@
   "Virtual Webcam allows you to display your scenes from Streamlabs Desktop in video conferencing software. Streamlabs Desktop will appear as a Webcam that can be selected in most video conferencing apps.": "虛擬網路攝影機讓您可以在視訊會議軟體中從 Streamlabs Desktop 顯示您的場景。Streamlabs Desktop 會顯示為可以在大部分視訊會議應用程式中選取的網路攝影機。",
   "Uninstalling Virtual Webcam will remove it as a device option in other applications.": "解除安裝虛擬網路攝影機會移除其在其他應用程式作為裝置的選項。",
   "Uninstall Virtual Webcam": "解除安裝虛擬網路攝影機",
+  "The virtual camera is not installed.\n\nPlease allow Streamlabs Desktop to install system software in System Settings → Privacy & Security → Security.\n\nYou may need to restart Streamlabs Desktop if this message still appears afterward.": "The virtual camera is not installed.\n\nPlease allow Streamlabs Desktop to install system software in System Settings → Privacy & Security → Security.\n\nYou may need to restart Streamlabs Desktop if this message still appears afterward.",
+  "The virtual camera is not installed.\n\nPlease allow Streamlabs Desktop to install the camera system extension in System Settings → General → Login Items & Extensions → Camera Extensions.\n\nYou may need to restart Streamlabs Desktop if this message still appears afterward.": "The virtual camera is not installed.\n\nPlease allow Streamlabs Desktop to install the camera system extension in System Settings → General → Login Items & Extensions → Camera Extensions.\n\nYou may need to restart Streamlabs Desktop if this message still appears afterward.",
+  "Unable to start virtual camera.\n\nPlease try again.": "Unable to start virtual camera.\n\nPlease try again.",
+  "An error has occured while installing the virtual camera": "An error has occured while installing the virtual camera",
+  "An error has occured while uninstalling the virtual camera": "An error has occured while uninstalling the virtual camera",
+  "Streamlabs Desktop cannot install the virtual camera if it's not in Applications. Please move Streamlabs Desktop to the Applications directory.": "Streamlabs Desktop cannot install the virtual camera if it's not in Applications. Please move Streamlabs Desktop to the Applications directory.",
+  "The installation of the virtual camera will complete after a system reboot.": "The installation of the virtual camera will complete after a system reboot.",
+  "Output Type": "Output Type",
+  "Output Selection": "Output Selection",
+  "Output Source": "Output Source",
+  "Program (default)": "程式 (預設)",
   "Use custom resolution": "使用自訂解析度",
   "Enable Designer Mode": "啟用設計師模式",
   "Get Support": "取得支援",
@@ -261,5 +272,9 @@
   "Idle": "閒置",
   "Please connect platforms directly from Streamlabs Desktop instead of adding Streamlabs Multistream as a custom destination": "請直接從 Streamlabs Desktop 連接平台，而不是將 Streamlabs 多平台直播新增為自訂目的地",
   "Audio Encoder": "音訊編碼器",
-  "Additional Settings": "其他設定"
+  "Additional Settings": "其他設定",
+  "Bearer Token": "不記名符記",
+  "Apply Primary": "Apply Primary",
+  "Output Resolution": "Output Resolution",
+  "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\""
 }

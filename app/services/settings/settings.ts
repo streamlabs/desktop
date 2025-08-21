@@ -24,6 +24,7 @@ import { StreamingService } from 'services/streaming';
 import { byOS, getOS, OS } from 'util/operating-systems';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import { SceneCollectionsService } from 'services/scene-collections';
+import { NavigationService } from 'services/navigation';
 import { Subject } from 'rxjs';
 import * as remote from '@electron/remote';
 import fs from 'fs';
@@ -150,7 +151,7 @@ class SettingsViews extends ViewHandler<ISettingsServiceState> {
     const settingsValues: Partial<ISettingsValues> = {};
 
     for (const groupName in this.state) {
-      this.state[groupName].formData.forEach(subGroup => {
+      this.state[groupName].formData.forEach((subGroup: ISettingsSubCategory) => {
         subGroup.parameters.forEach(parameter => {
           (settingsValues as any)[groupName] =
             settingsValues[groupName as keyof ISettingsValues] || {};
@@ -255,11 +256,13 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   @Inject() private usageStatisticsService: UsageStatisticsService;
   @Inject() private sceneCollectionsService: SceneCollectionsService;
   @Inject() private hardwareService: HardwareService;
+  @Inject() private navigationService: NavigationService;
 
   @Inject()
   private videoEncodingOptimizationService: VideoEncodingOptimizationService;
 
   audioRefreshed = new Subject();
+  settingsUpdated = new Subject<DeepPartial<ISettingsValues>>();
 
   get views() {
     return new SettingsViews(this.state);
@@ -378,10 +381,12 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   }
 
   showSettings(categoryName?: string) {
+    if (categoryName) {
+      this.navigationService.setSettingsNavigation(categoryName);
+    }
     this.windowsService.showWindow({
       componentName: 'Settings',
       title: $t('Settings'),
-      queryParams: { categoryName },
       size: {
         width: 830,
         height: 800,
@@ -619,6 +624,8 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
       });
 
       this.setSettings(categoryName, formSubCategories);
+
+      this.settingsUpdated.next(patch);
     });
   }
 
@@ -659,8 +666,6 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   }
 
   private ensureValidEncoder() {
-    if (getOS() === OS.Mac) return;
-
     const encoderSetting: IObsListInput<string> =
       this.findSetting(this.state.Output.formData, 'Streaming', 'Encoder') ??
       this.findSetting(this.state.Output.formData, 'Streaming', 'StreamEncoder');

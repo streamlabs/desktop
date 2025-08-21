@@ -42,7 +42,10 @@ export default class MainWindow extends TsxComponent {
 
   render() {
     return (
-      <div style={{ height: '100%' }} className={this.theme}>
+      <div
+        style={{ height: '100%', '-webkit-app-region': !this.uiReady ? 'drag' : 'no-drag' }}
+        className={this.theme}
+      >
         {this.uiReady && <Main />}
         <transition name="loader">
           {!this.uiReady && (
@@ -50,6 +53,7 @@ export default class MainWindow extends TsxComponent {
               className={cx(styles.mainLoading, this.theme, {
                 [styles.initialLoading]: !this.uiReady,
               })}
+              data-name="main-loading"
             >
               <Loader componentProps={{ className: this.theme }} />
             </div>

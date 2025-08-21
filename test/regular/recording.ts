@@ -1,7 +1,16 @@
 import { readdir } from 'fs-extra';
 import { test, TExecutionContext, useWebdriver } from '../helpers/webdriver';
 import { sleep } from '../helpers/sleep';
-import { startRecording, stopRecording } from '../helpers/modules/streaming';
+import {
+  clickGoLive,
+  prepareToGoLive,
+  startRecording,
+  stopRecording,
+  stopStream,
+  submit,
+  waitForSettingsWindowLoaded,
+  waitForStreamStart,
+} from '../helpers/modules/streaming';
 import {
   setOutputResolution,
   setTemporaryRecordingPath,
@@ -9,6 +18,8 @@ import {
 } from '../helpers/modules/settings/settings';
 import {
   clickButton,
+  clickTab,
+  clickToggle,
   clickWhenDisplayed,
   focusMain,
   getNumElements,
@@ -16,8 +27,8 @@ import {
 } from '../helpers/modules/core';
 import { logIn } from '../helpers/webdriver/user';
 import { toggleDualOutputMode } from '../helpers/modules/dual-output';
-import { setFormDropdown } from '../helpers/webdriver/forms';
 import { showPage } from '../helpers/modules/navigation';
+import { useForm, fillForm } from '../helpers/modules/forms';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -25,7 +36,6 @@ useWebdriver();
 
 /**
  * Iterate over all formats and record a 0.5s video in each.
- * @param t - AVA test context
  * @param advanced - whether to use advanced settings
  * @returns number of formats
  */
@@ -38,11 +48,11 @@ async function createRecordingFiles(advanced: boolean = false): Promise<number> 
   for (const format of formats) {
     await showSettingsWindow('Output', async () => {
       if (advanced) {
-        await clickButton('Recording');
+        await clickTab('Recording');
       }
 
-      await setFormDropdown('Recording Format', format);
-      await sleep(500);
+      const { setDropdownInputValue } = useForm('Recording');
+      await setDropdownInputValue('RecFormat', format);
       await clickButton('Done');
     });
 
@@ -115,9 +125,9 @@ test('Recording', async t => {
 
   // Switches between Advanced and Simple Recording
   // Note: The recording path for Simple Recording should have persisted from before
-  await sleep(2000);
   await showSettingsWindow('Output', async () => {
-    await setFormDropdown('Output Mode', 'Simple');
+    const { setDropdownInputValue } = useForm('Mode');
+    await setDropdownInputValue('Mode', 'Simple');
     await clickButton('Done');
   });
 
@@ -146,4 +156,31 @@ test('Recording with two contexts active', async t => {
 
   const numFiles = await createRecordingFiles(true);
   await validateRecordingFiles(t, tmpDir, numFiles, true);
+});
+
+test('Recording from Go Live window', async t => {
+  const user = await logIn(t);
+  await setOutputResolution('100x100');
+  const tmpDir = await setTemporaryRecordingPath();
+  await prepareToGoLive();
+
+  await clickGoLive();
+  await waitForSettingsWindowLoaded();
+
+  if (user.type === 'twitch') {
+    await fillForm({
+      twitchGame: 'Fortnite',
+    });
+  }
+
+  await clickToggle('recording-toggle');
+
+  await submit();
+  await waitForStreamStart();
+  await focusMain();
+  await stopRecording();
+  await stopStream();
+
+  const files = await readdir(tmpDir);
+  t.is(files.length, 1, `Files that were created:\n${files.join('\n')}`);
 });

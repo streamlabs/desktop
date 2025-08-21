@@ -4,5 +4,8 @@
   "Unpacked vers loaded": "Versi yang belum dikemas telah dimuat",
   "You must unload unpacked version before enabling this app.": "Anda harus membatalkan pemuatan versi yang belum dikemas sebelum mengaktifkan aplikasi ini.",
   "Pop Out": "Pop Out",
-  "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "Pengembang telah mengakhiri dukungan untuk aplikasi ini. Aplikasi dapat terus digunakan, tetapi tidak akan menerima pembaruan apa pun. Jika Anda ingin meng-uninstal, ikuti petunjuk di sini."
+  "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "Pengembang telah mengakhiri dukungan untuk aplikasi ini. Aplikasi dapat terus digunakan, tetapi tidak akan menerima pembaruan apa pun. Jika Anda ingin meng-uninstal, ikuti petunjuk di sini.",
+  "Uninstall": "Uninstall",
+  "Other installed apps:": "Other installed apps:",
+  "Open": "Open"
 }

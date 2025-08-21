@@ -10,6 +10,13 @@ export enum EGameState {
   BETA_LIVE = 'beta_live',
 }
 
+interface IImportModalConfig {
+  backgroundColor: string;
+  accentColor: string;
+  artwork: string;
+  verticalExampleVideo?: string;
+  horizontalExampleVideo?: string;
+}
 export interface IGameConfig {
   name: EGame;
   label: string; // Must be same as twitch
@@ -17,6 +24,7 @@ export interface IGameConfig {
   thumbnail: string;
   state: EGameState;
   inputTypeMap: Record<string, IEventInfo | IDefaultEventInfo>;
+  importModalConfig: undefined | IImportModalConfig;
 }
 
 export interface TypeWording {
@@ -46,6 +54,12 @@ export enum EGame {
   WAR_THUNDER = 'war_thunder',
   VALORANT = 'valorant',
   COUNTER_STRIKE_2 = 'counter_strike_2',
+  APEX_LEGENDS = 'apex_legends',
+  PUBG = 'pubg',
+  RAINBOW_SIX_SIEGE = 'rainbow_six_siege',
+  OVERWATCH_2 = 'overwatch_2',
+  LEAGUE_OF_LEGENDS = 'league_of_legends',
+  BATTLEFIELD_6 = 'battlefield_6',
   UNSET = 'unset',
 }
 

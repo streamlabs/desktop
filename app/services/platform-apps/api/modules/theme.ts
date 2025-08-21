@@ -24,6 +24,8 @@ export class ThemeModule extends Module {
 
     this.customizationService.settingsChanged.subscribe(patch => {
       if (patch.theme != null) {
+        // TODO: index
+        // @ts-ignore
         this.themeChanged.next(themeTable[patch.theme]);
       }
     });
@@ -34,6 +36,8 @@ export class ThemeModule extends Module {
 
   @apiMethod()
   getTheme(): ETheme {
+    // TODO: index
+    // @ts-ignore
     return themeTable[this.customizationService.currentTheme];
   }
 }

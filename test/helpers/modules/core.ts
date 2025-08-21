@@ -73,6 +73,11 @@ export async function clickCheckbox(dataName: string) {
   await $checkbox.click();
 }
 
+export async function clickToggle(dataName: string) {
+  const $toggle = await select(`button[data-name="${dataName}"]`);
+  await $toggle.click();
+}
+
 export async function selectAsyncAlert(title: string) {
   await (await getClient().$('span.ant-modal-confirm-title')).waitForExist();
   const alert = await select('span.ant-modal-confirm-title');
@@ -209,9 +214,11 @@ export async function useChildWindow<TCallbackResult>(cb: () => Promise<TCallbac
 }
 
 export async function waitForLoader() {
-  await (await select('.main-loading')).waitForExist({
+  await (await select('[data-name="main-loading"]')).waitForExist({
     interval: 100, // we need a smaller interval to run tests faster
-    timeout: 20000,
+    timeout: 30000,
     reverse: true,
   });
+  // Wait for titlebar to show up since there is some lag in loading react components into vue
+  await (await select('[data-name="title-bar"]')).waitForExist({ timeout: 10000 });
 }
