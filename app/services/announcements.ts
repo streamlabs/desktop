@@ -219,6 +219,8 @@ export class AnnouncementsService extends Service {
     try {
       const newState = await jfetch<IAnnouncementsInfo[]>(req);
 
+      console.log(newState);
+
       // splits out params for local links eg PlatformAppStore?appId=<app-id>
       newState.forEach(item => {
         const queryString = item.link.split('?')[1];
