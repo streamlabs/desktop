@@ -8,7 +8,6 @@ import { Services } from '../service-provider';
 import * as remote from '@electron/remote';
 import { TStreamSwitcherStatus } from 'services/restream';
 import { promptAction } from 'components-react/modals';
-import { ENotificationType } from 'services/notifications';
 
 export default function StartStreamingButton(p: { disabled?: boolean }) {
   const {
@@ -19,7 +18,6 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     MediaBackupService,
     SourcesService,
     RestreamService,
-    NotificationsService,
   } = Services;
 
   const {
@@ -28,12 +26,14 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     delaySeconds,
     streamSwitcherStatus,
     isDualOutputMode,
+    isLoggedIn,
   } = useVuex(() => ({
     streamingStatus: StreamingService.state.streamingStatus,
     delayEnabled: StreamingService.views.delayEnabled,
     delaySeconds: StreamingService.views.delaySeconds,
     streamSwitcherStatus: RestreamService.state.streamSwitcherStatus,
     isDualOutputMode: StreamingService.views.isDualOutputMode,
+    isLoggedIn: UserService.isLoggedIn,
   }));
 
   const [delaySecondsRemaining, setDelayTick] = useState(delaySeconds);
@@ -164,7 +164,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       }
 
       // Only check for Stream Switch in single output mode
-      if (!isDualOutputMode) {
+      if (isLoggedIn && !isDualOutputMode) {
         setIsLoading(true);
         const isLive = await fetchStreamSwitcherStatus();
         setIsLoading(false);

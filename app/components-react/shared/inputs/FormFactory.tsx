@@ -23,6 +23,7 @@ const componentTable: {
   switch: inputs.SwitchInput,
   autocomplete: inputs.AutocompleteInput,
   checkboxGroup: inputs.CheckboxGroup,
+  radio: inputs.RadioInput,
   textarea: inputs.TextAreaInput,
   color: inputs.ColorInput,
 };

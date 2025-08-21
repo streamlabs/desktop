@@ -5,6 +5,7 @@ import { TDisplayType } from 'services/settings-v2';
 import { TPlatform } from 'services/platforms';
 import { useGoLiveSettings } from 'components-react/windows/go-live/useGoLiveSettings';
 import { TDisplayOutput } from 'services/streaming';
+import { IRadioMetadata } from './inputs/metadata';
 
 interface IDisplaySelectorProps {
   title: string;
@@ -72,19 +73,32 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     }
   };
 
+  // Convert displays array to Dictionary<TInputValue>
+  const displayDict = useMemo(() => {
+    return displays.reduce((acc: Dictionary<IRadioMetadata>, curr) => {
+      acc[curr.value] = curr;
+      return acc;
+    }, {} as Dictionary<IRadioMetadata>);
+  }, [displays]);
+
+  const name = `${p.platform || `custom-destination-${p.index}`}Display`;
+  const value = displayDict[display]?.value || 'horizontal';
+
   return (
     <RadioInput
+      data-title={p.title}
       nolabel={p?.nolabel}
       label={p?.nolabel ? undefined : p.title}
-      name={`${p.platform}-display-input`}
-      id={`${p.platform}-display-input`}
-      value={display}
+      name={name}
+      value={value}
       defaultValue="horizontal"
       options={displays}
       onChange={onChange}
       icons={true}
       className={p?.className}
       style={p?.style}
+      direction="horizontal"
+      gapsize={0}
     />
   );
 }
