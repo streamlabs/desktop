@@ -52,36 +52,13 @@ export function DestinationSwitchers() {
       : linkedPlatforms;
   }, [linkedPlatforms, enabledPlatformsRef.current, isDualOutputMode, isPrime]);
 
-  const shouldDisableCustomDestinationSwitchers = () => {
-    // Multistream users can always add destinations
-    if (isRestreamEnabled) {
-      return false;
-    }
-
-    // Because users must have at least one platform enabled,
-    // in single output mode they cannot have a custom destination enabled
-    // unless they are grandfathered in to streaming with TikTok always enabled
-    if (
-      !isDualOutputMode &&
-      !isPrime &&
-      tiktokGrandfathered &&
-      enabledPlatformsRef.current.length === 1 &&
-      enabledPlatformsRef.current.includes('tiktok')
-    ) {
-      return false;
-    }
-
-    // In dual output mode, non-ultra users can have a custom destination
-    // enabled as the second target
-    if (isDualOutputMode && !isPrime) {
-      return false;
-    }
-
-    // Otherwise, only a single platform and no custom destinations
-    return enabledPlatforms.length > 0;
-  };
-
-  const disableCustomDestinationSwitchers = shouldDisableCustomDestinationSwitchers();
+  // Disable custom destination switchers when restream is not available
+  // or for a non-ultra user is in single output mode. The one exception
+  // for a non-ultra user in single output mode is if TikTok is the only enabled platform
+  const disableCustomDestinationSwitchers =
+    !isRestreamEnabled ||
+    (!isPrime && !isDualOutputMode && !isEnabled('tiktok')) ||
+    enabledPlatformsRef.current.length > 1;
   const disableNonUltraSwitchers =
     isDualOutputMode &&
     !isPrime &&
@@ -105,12 +82,30 @@ export function DestinationSwitchers() {
 
   function togglePlatform(platform: TPlatform, enabled: boolean) {
     // In dual output mode, only allow non-ultra users to have 2 platforms, or 1 platform and 1 custom destination enabled
-    if (isDualOutputMode && !isPrime) {
-      if (enabledPlatformsRef.current.length + enabledDestRef.current.length <= 2) {
-        enabledPlatformsRef.current.push(platform);
+    if (!isPrime) {
+      if (isDualOutputMode) {
+        if (enabledPlatformsRef.current.length + enabledDestRef.current.length <= 2) {
+          enabledPlatformsRef.current.push(platform);
+        } else {
+          enabledPlatformsRef.current = enabledPlatformsRef.current.filter(p => p !== platform);
+        }
       } else {
-        enabledPlatformsRef.current = enabledPlatformsRef.current.filter(p => p !== platform);
+        if (enabled && alwaysEnabledPlatforms.includes(platform)) {
+          enabledPlatformsRef.current.push(platform);
+        } else if (enabled) {
+          enabledPlatformsRef.current = enabledPlatformsRef.current.filter(p =>
+            alwaysEnabledPlatforms.includes(p),
+          );
+          enabledPlatformsRef.current.push(platform);
+        } else {
+          enabledPlatformsRef.current = enabledPlatformsRef.current.filter(p => p !== platform);
+        }
       }
+
+      if (!enabledPlatformsRef.current.length) {
+        enabledPlatformsRef.current.push(platform);
+      }
+
       emitSwitch();
       return;
     }
