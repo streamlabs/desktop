@@ -317,19 +317,6 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
       } else {
         this.collectionHandled.next(null);
       }
-
-      /**
-       * Handle actions after a scene item is added to a scene
-       */
-      this.scenesService.itemAdded.subscribe(sceneItem => {
-        if (!this.views.isDualOutputCollection && !this.state.dualOutputMode) return;
-
-        this.createPartnerNode(sceneItem as TSceneNode);
-        /* For some reason dragging items after enabling dual output makes them
-         * duplicate, associate selection on switch to mitigate this issue
-         */
-        this.selectionService.associateSelectionWithDisplay('vertical');
-      });
     });
 
     /**
@@ -731,10 +718,6 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
    */
   validateOutput(node: SceneItem, sceneId: string) {
     if (node?.output) return;
-    if (node?.display) {
-      this.assignNodeContext(node, node.display);
-      return;
-    }
 
     // assign an output to the node if it doesn't exist
     const verticalNodeIds = new Set(this.views.getVerticalNodeIds(sceneId));

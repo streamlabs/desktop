@@ -3,7 +3,6 @@ const fs = require('fs');
 const cp = require('child_process');
 const path = require('path');
 const os = require('os');
-const buildCameraExt = require('./build-mac-virtualcam');
 
 async function notarizeMac(context) {
   if (process.env.SLOBS_NO_NOTARIZE) return;
@@ -37,7 +36,10 @@ async function afterPackWin() {
   const signingPath = path.join(os.tmpdir(), 'sldesktopsigning');
 
   if (fs.existsSync(signingPath)) {
-    cp.execSync(`logisign client --client logitech-cpg-sign-client --app streamlabs --filelist ${signingPath}`, { stdio: 'inherit' });
+    cp.execSync(
+      `logisign client --client logitech-cpg-sign-client --app streamlabs --filelist ${signingPath}`,
+      { stdio: 'inherit' },
+    );
     fs.unlinkSync(signingPath);
   } else {
     throw new Error('EXPECTED TO SIGN BINARIES BUT SIGNING MANIFEST IS MISSING');
@@ -46,7 +48,6 @@ async function afterPackWin() {
 
 exports.default = async function afterSign(context) {
   if (process.platform === 'darwin') {
-    buildCameraExt(context);
     await notarizeMac(context);
   }
 
