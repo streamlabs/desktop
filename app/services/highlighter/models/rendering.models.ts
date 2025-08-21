@@ -2,7 +2,7 @@ import { $t } from '../../i18n';
 
 export type TFPS = 30 | 60;
 export type TResolution = 720 | 1080;
-export type TPreset = 'ultrafast' | 'fast' | 'slow';
+export type TPreset = 'ultrafast' | 'fast' | 'slow' | 'medium';
 
 export interface IResolution {
   width: number;

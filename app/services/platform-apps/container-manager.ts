@@ -150,7 +150,12 @@ export class PlatformContainerManager {
     const transform = info.transform.getValue();
 
     const win = remote.BrowserWindow.fromId(electronWindowId);
-    win.removeBrowserView(info.container);
+
+    // If the window is already destroyed, the browser view is already removed
+    // and destroyed
+    if (win) {
+      win.removeBrowserView(info.container);
+    }
 
     info.mountedWindows = info.mountedWindows.filter(id => id !== electronWindowId);
 
@@ -186,13 +191,20 @@ export class PlatformContainerManager {
       cont => cont.appId === app.id && cont.slot === slot,
     );
 
-    if (existingContainer) return existingContainer;
+    // Confirming that the existing container still has content loaded
+    // prevents the app from crashing by attempting to access a destroyed
+    // webContents. Not ideal because the alternative is to create a new container,
+    // which loses the state of the previous container. But better than and error
+    // causing a crash.
+    if (existingContainer && existingContainer.container.webContents) {
+      return existingContainer;
+    }
 
     return this.createContainer(app, slot);
   }
 
   private createContainer(app: ILoadedApp, slot: EAppPageSlot, persistent = false): IContainerInfo {
-    const view = new remote.BrowserView({
+    const opts: Electron.BrowserViewConstructorOptions = {
       webPreferences: {
         contextIsolation: true,
         nodeIntegration: false,
@@ -200,7 +212,14 @@ export class PlatformContainerManager {
         preload: path.resolve(remote.app.getAppPath(), 'bundles', 'guest-api.js'),
         sandbox: false,
       },
-    });
+    };
+
+    if (app.highlyPrivileged) {
+      opts.webPreferences.nodeIntegration = true;
+      opts.webPreferences.contextIsolation = false;
+    }
+
+    const view = new remote.BrowserView(opts);
 
     electron.ipcRenderer.sendSync('webContents-enableRemote', view.webContents.id);
 
@@ -260,6 +279,18 @@ export class PlatformContainerManager {
       if (win && !win.isDestroyed()) win.removeBrowserView(info.container);
     });
 
+    // To prevent memory leaks, the `webContents` must be destroyed.
+    // Removing the browser view or closing the window may have already destroyed the `webContents`.
+    // Prevent errors by checking if it still exists before trying to close it.
+    if (!info.container.webContents) return;
+
+    // Destroy the `webContents` like it would be when closing a window.
+    // This is a more graceful way to destroy the `webContents`.
+    info.container.webContents.close();
+
+    if (!info.container.webContents) return;
+
+    // If there was an error destroying it with the `close` method, force destroy it.
     // This method is undocumented, but it's the only way to force a
     // browser view to immediately be destroyed.
     // See: https://github.com/electron/electron/issues/26929

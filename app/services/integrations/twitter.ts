@@ -5,9 +5,8 @@ import { authorizedHeaders, jfetch } from 'util/requests';
 import { mutation, ViewHandler } from 'services/core/stateful-service';
 import { HostsService } from 'services/hosts';
 import { UserService } from 'services/user';
-import { $t, I18nService } from 'services/i18n';
+import { I18nService } from 'services/i18n';
 import uuid from 'uuid/v4';
-import { throwStreamError } from '../streaming/stream-error';
 import * as remote from '@electron/remote';
 
 interface ITwitterServiceState {

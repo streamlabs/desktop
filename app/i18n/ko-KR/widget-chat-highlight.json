@@ -12,6 +12,7 @@
   "Name Text Color": "텍스트 색상 이름 짓기",
   "Name Background Color": "이름 배경색",
   "Highlight chat messages from your viewers on your stream.": "스트리밍 중의 시청자 하이라이트 채팅 메시지입니다.",
+  "Pin and highlight chat messages from your viewers on your stream.": "Pin and highlight chat messages from your viewers on your stream.",
   "A duration of 0 is indefinite": "시간은 0으로 할 수 없습니다",
   "Use this widget by hovering over the right side of a chat message to see a thumbtack icon. Clicking the icon will pin the message to the widget for its duration, or until you click the unpin button.": "채팅 메시지의 오른쪽에 마우스를 올려 이 위젯을 사용하면 압정 아이콘을 볼 수 있습니다. 아이콘을 클릭하면 일정 기간 또는 핀 해제 버튼을 클릭할 때까지 위젯에 메시지가 고정됩니다."
 }

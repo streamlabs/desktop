@@ -41,6 +41,7 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
     error: HighlighterService.views.error,
     uploadInfo: HighlighterService.views.uploadInfo,
     highlighterVersion: HighlighterService.views.highlighterVersion,
+    tempRecordingInfoPath: HighlighterService.views.tempRecordingInfo.recordingPath,
   }));
 
   useEffect(() => {
@@ -55,7 +56,7 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
         openedFrom: recordingInfo.source,
       });
     }
-  }, []);
+  }, [v.tempRecordingInfoPath]);
 
   // Below is only used because useVueX doesnt work as expected
   // there probably is a better way to do this

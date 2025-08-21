@@ -51,10 +51,14 @@ export class VideoNode extends Node<ISchema, IContext> {
   async load(context: IContext) {
     const filePath = path.join(context.assetsPath, this.data.filename);
     const settings = { ...this.data.settings };
+    // TODO: index
+    // @ts-ignore
     settings['local_file'] = filePath;
 
     // HW decode did not work previously. It now does, so to preserve the same
     // behavior we are disabling it on all new theme installs.
+    // TODO: index
+    // @ts-ignore
     settings['hw_decode'] = false;
     context.sceneItem.getObsInput().update(settings);
 

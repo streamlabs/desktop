@@ -218,7 +218,10 @@ class GLVolmetersController {
   }
 
   beforeDestroy() {
-    if (this.gl) window['activeWebglContexts'] -= 1;
+    if (this.gl) {
+      // TODO: where is this defined or used, can be undefined too?
+      (window as typeof window & { activeWebglContexts: number })['activeWebglContexts'] -= 1;
+    }
     clearInterval(this.canvasWidthInterval);
     // unsubscribe all volmeters
     Object.keys(this.subscriptions).forEach(sourceId => this.unsubscribeVolmeter(sourceId));

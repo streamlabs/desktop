@@ -75,6 +75,8 @@ export class Producer extends MediasoupEntity {
       if (!this.transportId) {
         const turnConfig = await this.guestCamService.getTurnConfig();
 
+        // TODO: index
+        // @ts-ignore
         result['iceServers'] = [turnConfig];
 
         this.makeObsRequest('func_create_send_transport', result);

@@ -9,21 +9,14 @@ import cloneDeep from 'lodash/cloneDeep';
 import { TwitchService } from 'services/platforms/twitch';
 import { PlatformAppsService } from 'services/platform-apps';
 import { IGoLiveSettings, IPlatformFlags, StreamingService } from 'services/streaming';
-import { TDisplayType } from 'services/settings-v2/video';
+import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
 import Vue from 'vue';
 import { IVideo } from 'obs-studio-node';
 import { DualOutputService } from 'services/dual-output';
 import { TOutputOrientation } from 'services/restream';
 
-interface ISavedGoLiveSettings {
-  platforms: {
-    twitch?: IPlatformFlags;
-    facebook?: IPlatformFlags;
-    youtube?: IPlatformFlags;
-    trovo?: IPlatformFlags;
-    tiktok?: IPlatformFlags;
-    kick?: IPlatformFlags;
-  };
+export interface ISavedGoLiveSettings {
+  platforms: Partial<Record<TPlatform, IPlatformFlags>>;
   customDestinations?: ICustomStreamDestination[];
   advancedMode: boolean;
 }
@@ -36,6 +29,10 @@ export interface ICustomStreamDestination {
   display?: TDisplayType;
   video?: IVideo;
   mode?: TOutputOrientation;
+  /**
+   * Indicates if this custom destination is the vertical dual stream
+   */
+  dualStream?: boolean;
 }
 
 /**
@@ -112,6 +109,7 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
   @Inject() private streamSettingsService: StreamSettingsService;
   @Inject() private dualOutputService: DualOutputService;
   @Inject() private streamingService: StreamingService;
+  @Inject() private videoSettingsService: VideoSettingsService;
 
   static defaultState: IStreamSettingsState = {
     protectedModeEnabled: true,
@@ -140,24 +138,7 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
    * setup all stream-settings via single object
    */
   setSettings(patch: Partial<IStreamSettings>, context?: TDisplayType) {
-    const streamName = (() => {
-      if (patch.platform === 'youtube' && context === 'horizontal') {
-        const ytSettings = this.streamingService.views.getPlatformSettings('youtube');
-        if (
-          this.streamingService.views.enabledPlatforms.length > 1 &&
-          ytSettings?.enabled &&
-          this.dualOutputService.views.hasExtraOutput('youtube') &&
-          !(
-            this.streamingService.views.activeDisplayPlatforms.vertical.length ||
-            this.streamingService.views.activeDisplayDestinations.vertical.length
-          )
-        ) {
-          return 'StreamSecond';
-        }
-      }
-
-      return !context || context === 'horizontal' ? 'Stream' : 'StreamSecond';
-    })();
+    const streamName = !context || context === 'horizontal' ? 'Stream' : 'StreamSecond';
 
     // save settings to localStorage
     const localStorageSettings: (keyof IStreamSettingsState)[] = [
@@ -231,12 +212,14 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
       const pickedFields: (keyof IPlatformFlags)[] = ['enabled', 'useCustomFields', 'display'];
       const platforms: Dictionary<IPlatformFlags> = {};
       Object.keys(settingsPatch.platforms).map(platform => {
+        // TODO: index
+        // @ts-ignore
         const platformSettings = pick(settingsPatch.platforms![platform], pickedFields);
 
-        if (this.dualOutputService.views.dualOutputMode) {
-          platformSettings.video = this.dualOutputService.views.getPlatformContext(
-            platform as TPlatform,
-          );
+        if (this.streamingService.views.isDualOutputMode) {
+          this.videoSettingsService.validateVideoContext();
+          const display = this.streamingService.views.getPlatformDisplayType(platform as TPlatform);
+          platformSettings.video = this.videoSettingsService.contexts[display];
         }
         return (platforms[platform] = platformSettings);
       });
@@ -398,6 +381,8 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
   @mutation()
   private SET_LOCAL_STORAGE_SETTINGS(settings: Partial<IStreamSettingsState>) {
     Object.keys(settings).forEach(prop => {
+      // TODO: index
+      // @ts-ignore
       Vue.set(this.state, prop, settings[prop]);
     });
   }

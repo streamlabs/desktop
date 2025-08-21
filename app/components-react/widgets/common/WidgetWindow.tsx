@@ -67,6 +67,8 @@ export function WidgetWindow() {
 
   // take the source id and widget's component from the window's params
   const { Module, WidgetSettingsComponent } = useOnCreate(() => {
+    // TODO: index
+    // @ts-ignore
     const [WidgetSettingsComponent, Module] = components[widgetType];
     return { sourceId, Module, WidgetSettingsComponent };
   });

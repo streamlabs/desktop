@@ -153,9 +153,13 @@ export class UsageStatisticsService extends Service {
 
     // Don't check logged in because login may not be verified at this point
     if (this.userService.state.auth && this.userService.state.auth.primaryPlatform) {
+      // TODO: index
+      // @ts-ignore
       metadata['platform'] = this.userService.state.auth.primaryPlatform;
     }
 
+    // TODO: index
+    // @ts-ignore
     metadata['os'] = process.platform;
 
     const bodyData: IUsageApiData = {

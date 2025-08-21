@@ -109,7 +109,7 @@ export default function AiHighlighterToggle({
                       size="small"
                       type="primary"
                       onClick={() => {
-                        HighlighterService.installAiHighlighter(false, 'Go-live-flow');
+                        HighlighterService.installAiHighlighter(false, 'Go-live-flow', game);
                       }}
                     >
                       {$t('Install AI Highlighter')}

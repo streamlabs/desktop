@@ -431,5 +431,8 @@
   "And more": "And more",
   "The Virtual Webcam plugin needs to be updated before it can be started. This requires administrator privileges.": "The Virtual Webcam plugin needs to be updated before it can be started. This requires administrator privileges.",
   "Virtual camera output selection": "Virtual camera output selection",
-  "Virtual camera output type": "Virtual camera output type"
+  "Virtual camera output type": "Virtual camera output type",
+  "Unmute your Microphone source in Mixer": "Unmute your Microphone source in Mixer",
+  "Your Microphone is unmuted but has no signal": "Your Microphone is unmuted but has no signal",
+  "Search...": "Search..."
 }

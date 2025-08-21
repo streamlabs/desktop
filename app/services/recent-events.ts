@@ -564,6 +564,8 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
     // Get read status for all events
     const readReceipts = await this.fetchReadReceipts(hashValues);
     eventArray.forEach(event => {
+      // TODO: index
+      // @ts-ignore
       event.read = readReceipts[event.hash] ? readReceipts[event.hash] : false;
 
       // Events older than 1 month are treated as read
@@ -743,9 +745,13 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
   }
 
   getEventTypesString() {
-    return Object.keys(this.state.filterConfig)
-      .filter((type: string) => this.state.filterConfig[type] === true)
-      .join(',');
+    return (
+      Object.keys(this.state.filterConfig)
+        // TODO: index
+        // @ts-ignore
+        .filter((type: string) => this.state.filterConfig[type] === true)
+        .join(',')
+    );
   }
 
   applyConfig(config: IRecentEventsConfig) {
@@ -867,16 +873,28 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
       }
       return this.shouldFilterSubscription(event);
     }
+    // TODO: index
+    // @ts-ignore
     return this.transformFilterForPlatform()[event.type];
   }
 
   transformFilterForPlatform() {
     const filterMap = cloneDeep(this.state.filterConfig);
+    // TODO: index
+    // @ts-ignore
     filterMap['support'] = filterMap['facebook_support'];
+    // TODO: index
+    // @ts-ignore
     filterMap['like'] = filterMap['facebook_like'];
+    // TODO: index
+    // @ts-ignore
     filterMap['share'] = filterMap['facebook_share'];
+    // TODO: index
+    // @ts-ignore
     filterMap['stars'] = filterMap['facebook_stars'];
     if (this.userService.platform.type === 'youtube') {
+      // TODO: index
+      // @ts-ignore
       filterMap['subscription'] = filterMap['membership_level_1'];
       filterMap['follow'] = filterMap['subscriber'];
     }
@@ -1111,6 +1129,8 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
 
   @mutation()
   private SET_SINGLE_FILTER_CONFIG(key: string, value: boolean | number) {
+    // TODO: index
+    // @ts-ignore
     this.state.filterConfig[key] = value;
   }
 

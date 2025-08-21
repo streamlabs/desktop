@@ -2,10 +2,12 @@
   "Add Widgets": "Widget hozzáadása",
   "Select the Streamlabs widgets you would like to activate for your stream. These will get automatically added to your scene.": "Válaszd ki, mely Streamlabs widgeteket szeretnéd aktiválni a streameden. Ezeket automatikusan hozzáadjuk a jelenethez.",
   "Thanks viewers with notification popups": "Köszönd meg a nézőknek felugró értesítésekkel",
+  "Custom on-screen alerts to thank your loyal viewers for following, subbing, tipping and more.": "Custom on-screen alerts to thank your loyal viewers for following, subbing, tipping and more.",
   "Most recent events into your stream": "A streamed legújabb eseményei",
   "A jar that catches bits, tips, and more": "Egy persely amely gyűjti a biteket, támogatásokat, és egyebeket",
   "Your channel's chat in your stream": "Csatornád chatje, mely a streamedben jelenik meg",
   "Show off most recent donations to viewers": "Mutasd meg a nézőidnek a legutóbbi támogatásokat",
+  "Show off the most recent tips from your viewers": "Show off the most recent tips from your viewers",
   "Give your viewers a donation target to help you reach": "Adj meg egy támogatási célt, hogy nézőid segíthessenek annak elérésében",
   "Give your viewers a follower target to help you reach": "Adj meg egy követő célt, hogy nézőid segíthessenek annak elérésében",
   "Give your viewers a bit target to help you reach": "Adj meg egy bit célt, hogy nézőid segíthessenek annak elérésében",
@@ -70,6 +72,7 @@
   "Ember amount is at least <amount>": "Ember amount is at least <amount>",
   "Ember amount is exactly <amopunt>": "Ember amount is exactly <amopunt>",
   "Allow your viewers to donate to share media on your stream.": "Allow your viewers to donate to share media on your stream.",
+  "Allow your viewers to tip to share videos on your stream.": "Allow your viewers to tip to share videos on your stream.",
   "Twitch Subscribers": "Twitch Subscribers",
   "YouTube Members": "YouTube Members",
   "Media Share": "Média megosztás",
@@ -188,5 +191,9 @@
   "Superchat Goal": "Szuperchat cél",
   "YouTube Superchats": "YouTube szuper chatek",
   "Custom Widget": "Egyedi widget",
-  "Use HTML, CSS, and JavaScript to create a widget with custom functionality": "Use HTML, CSS, and JavaScript to create a widget with custom functionality"
+  "Use HTML, CSS, and JavaScript to create a widget with custom functionality": "Use HTML, CSS, and JavaScript to create a widget with custom functionality",
+  "Interactive": "Interactive",
+  "Goals": "Goals",
+  "Flair": "Flair",
+  "Charity": "Charity"
 }
