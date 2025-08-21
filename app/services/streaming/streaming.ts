@@ -1585,6 +1585,7 @@ export class StreamingService
    * @param display - The display the instance is assigned to
    */
   private async handleStreamingSignal(info: EOutputSignal, display: TDisplayType) {
+    console.log('Streaming Signal:', info, display);
     // map signals to status
     const nextState: EStreamingState = ({
       [EOBSOutputSignal.Starting]: EStreamingState.Starting,
@@ -1628,7 +1629,7 @@ export class StreamingService
       // Handle start recording when start streaming
       const recordWhenStreaming = this.streamSettingsService.settings.recordWhenStreaming;
 
-      if (recordWhenStreaming && this.isRecording) {
+      if (recordWhenStreaming && !this.isRecording) {
         await this.toggleRecording();
       }
 
@@ -1636,11 +1637,7 @@ export class StreamingService
       const replayWhenStreaming = this.streamSettingsService.settings.replayBufferWhileStreaming;
       const isReplayBufferEnabled = this.outputSettingsService.getSettings().replayBuffer.enabled;
 
-      if (
-        replayWhenStreaming &&
-        isReplayBufferEnabled &&
-        this.state.replayBufferStatus === EReplayBufferState.Offline
-      ) {
+      if (replayWhenStreaming && isReplayBufferEnabled && !this.isReplayBufferActive) {
         this.startReplayBuffer();
       }
 
@@ -1703,7 +1700,7 @@ export class StreamingService
   }
 
   private async handleRecordingSignal(info: EOutputSignal, display: TDisplayType) {
-    console.debug('Recording Signal:', info, display);
+    console.log('Recording Signal:', info, display);
 
     // map signals to status
     const nextState: ERecordingState = ({
@@ -1781,6 +1778,7 @@ export class StreamingService
   }
 
   private async handleReplayBufferSignal(info: EOutputSignal, display: TDisplayType) {
+    console.log('Replay Buffer Signal:', info, display);
     // map signals to status
     const nextState: EReplayBufferState = ({
       [EOBSOutputSignal.Start]: EReplayBufferState.Running,
@@ -1928,8 +1926,8 @@ export class StreamingService
     const mode = this.outputSettingsService.getSettings().mode;
     const settings = this.outputSettingsService.getReplayBufferSettings();
 
-    await this.validateOrCreateOutputInstance(display, 'recording', index);
     await this.validateOrCreateOutputInstance(display, 'streaming', index);
+    await this.validateOrCreateOutputInstance(display, 'recording', index);
 
     const replayBuffer =
       mode === 'Advanced'

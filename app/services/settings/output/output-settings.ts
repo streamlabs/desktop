@@ -305,20 +305,12 @@ export class OutputSettingsService extends Service {
         rescaling,
       };
 
-      console.log('getStreamingSettings', mode, {
-        videoEncoder,
-        enforceServiceBitrate,
-        enableTwitchVOD,
-        rescaling,
-      });
-
       if (enableTwitchVOD) {
         const twitchTrack = this.settingsService.findSettingValue(
           output,
           'Streaming',
           'VodTrackIndex',
         );
-        console.log('getStreamingSettings', 'twitchTrack', twitchTrack);
 
         return { ...advancedStreamSettings, twitchTrack };
       }

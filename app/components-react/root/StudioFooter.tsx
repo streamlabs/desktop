@@ -4,7 +4,7 @@ import { EStreamQuality } from '../../services/performance';
 import { EStreamingState, EReplayBufferState, ERecordingState } from '../../services/streaming';
 import { Services } from '../service-provider';
 import { $t } from '../../services/i18n';
-import { useDebounce, useVuex } from '../hooks';
+import { useVuex } from '../hooks';
 import styles from './StudioFooter.m.less';
 import PerformanceMetrics from '../shared/PerformanceMetrics';
 import TestWidgets from './TestWidgets';
@@ -14,7 +14,6 @@ import Tooltip from '../shared/Tooltip';
 import { Tooltip as AntdTooltip } from 'antd';
 import { confirmAsync } from 'components-react/modals';
 import RecordingSwitcher from 'components-react/windows/go-live/RecordingSwitcher';
-import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export default function StudioFooterComponent() {
   const {
@@ -38,9 +37,6 @@ export default function StudioFooterComponent() {
     replayBufferSaving,
     recordingModeEnabled,
     replayBufferEnabled,
-    isDualOutputMode,
-    verticalRecording,
-    dualOutputRecording,
   } = useVuex(() => ({
     streamingStatus: StreamingService.views.streamingStatus,
     isLoggedIn: UserService.views.isLoggedIn,
@@ -48,18 +44,11 @@ export default function StudioFooterComponent() {
       StreamingService.views.supports('stream-schedule') &&
       !RecordingModeService.views.isRecordingModeEnabled,
     streamQuality: PerformanceService.views.streamQuality,
-    replayBufferOffline: StreamingService.views.replayBufferStatus === EReplayBufferState.Offline,
-    replayBufferStopping: StreamingService.views.replayBufferStatus === EReplayBufferState.Stopping,
-    replayBufferSaving: StreamingService.views.replayBufferStatus === EReplayBufferState.Saving,
+    replayBufferOffline: StreamingService.state.replayBufferStatus === EReplayBufferState.Offline,
+    replayBufferStopping: StreamingService.state.replayBufferStatus === EReplayBufferState.Stopping,
+    replayBufferSaving: StreamingService.state.replayBufferStatus === EReplayBufferState.Saving,
     recordingModeEnabled: RecordingModeService.views.isRecordingModeEnabled,
     replayBufferEnabled: SettingsService.views.values.Output.RecRB,
-    isDualOutputMode: StreamingService.views.isDualOutputMode,
-    verticalRecording: Services.IncrementalRolloutService.views.featureIsEnabled(
-      EAvailableFeatures.verticalRecording,
-    ),
-    dualOutputRecording: Services.IncrementalRolloutService.views.featureIsEnabled(
-      EAvailableFeatures.dualOutputRecording,
-    ),
   }));
 
   function performanceIconClassName() {
@@ -154,11 +143,11 @@ export default function StudioFooterComponent() {
         {!recordingModeEnabled && <RecordingButton />}
         {replayBufferEnabled && replayBufferOffline && (
           <div className={styles.navItem}>
-            <AntdTooltip placement="left" title={$t('Start Replay Buffer')}>
+            <Tooltip placement="left" title={$t('Start Replay Buffer')}>
               <button className="circle-button" onClick={toggleReplayBuffer}>
                 <i className="icon-replay-buffer" />
               </button>
-            </AntdTooltip>
+            </Tooltip>
           </div>
         )}
         {!replayBufferOffline && (
