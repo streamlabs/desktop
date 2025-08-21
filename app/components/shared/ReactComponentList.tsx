@@ -191,6 +191,14 @@ export class ManageSceneCollections extends ReactComponent {}
 
 @Component({
   props: {
+    name: { default: 'MarketingModal' },
+    wrapperStyles: { default: () => ({ height: '100%' }) },
+  },
+})
+export class MarketingModal extends ReactComponent {}
+
+@Component({
+  props: {
     name: { default: 'MediaGallery' },
     wrapperStyles: { default: () => ({ height: '100%' }) },
   },

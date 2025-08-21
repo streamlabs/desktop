@@ -65,12 +65,18 @@ AnnouncementInfo.register();
 
 class AnnouncementsServiceEphemeralState extends RealmObject {
   news: IAnnouncementsInfo[];
+  productUpdates: IAnnouncementsInfo[];
   banner: IAnnouncementsInfo;
 
   static schema: ObjectSchema = {
     name: 'AnnouncementsServiceEphemeralState',
     properties: {
       news: {
+        type: 'list',
+        objectType: 'AnnouncementInfo',
+        default: [] as AnnouncementInfo[],
+      },
+      productUpdates: {
         type: 'list',
         objectType: 'AnnouncementInfo',
         default: [] as AnnouncementInfo[],
@@ -84,11 +90,13 @@ AnnouncementsServiceEphemeralState.register();
 
 class AnnouncementsServicePersistedState extends RealmObject {
   lastReadId: number;
+  lastReadProductUpdate: number;
 
   static schema: ObjectSchema = {
     name: 'AnnouncementsServicePersistedState',
     properties: {
       lastReadId: { type: 'int', default: 145 },
+      lastReadProductUpdate: { type: 'int', default: 0 },
     },
   };
 
@@ -140,6 +148,14 @@ export class AnnouncementsService extends Service {
 
   async getBanner() {
     this.setBanner(await this.fetchBanner());
+  }
+
+  async getProductUpdates() {
+    const { lastUpdatedAt, updates } = await this.fetchProductUpdates();
+    if (lastUpdatedAt <= this.state.lastReadProductUpdate) return;
+    this.setLastReadProductUpdate(lastUpdatedAt);
+    this.setProductUpdates(updates);
+    this.openProductUpdates();
   }
 
   seenNews() {
@@ -260,6 +276,25 @@ export class AnnouncementsService extends Service {
     }
   }
 
+  async fetchProductUpdates() {
+    const recentlyInstalled = await this.recentlyInstalled();
+
+    if (recentlyInstalled || !this.customizationService.state.enableAnnouncements) {
+      return null;
+    }
+
+    const endpoint = `api/v5/slobs/product-updates/get?clientId=${this.userService.getLocalUserId()}&locale=${
+      this.i18nService.state.locale
+    }`;
+    const req = this.formRequest(endpoint);
+    try {
+      const resp = await jfetch<{ updates: IAnnouncementsInfo[]; lastUpdatedAt: number }>(req);
+      return resp;
+    } catch (e: unknown) {
+      return null;
+    }
+  }
+
   async closeNews(newsId: number) {
     const endpoint = 'api/v5/slobs/announcement/close';
     const req = this.formRequest(endpoint, {
@@ -312,6 +347,17 @@ export class AnnouncementsService extends Service {
     });
   }
 
+  openProductUpdates() {
+    this.windowsService.showWindow({
+      componentName: 'MarketingModal',
+      title: $t('New On Streamlabs Desktop'),
+      size: {
+        width: 500,
+        height: 600,
+      },
+    });
+  }
+
   setNews(news: IAnnouncementsInfo[]) {
     this.currentAnnouncements.db.write(() => {
       this.currentAnnouncements.news = news;
@@ -325,9 +371,21 @@ export class AnnouncementsService extends Service {
     });
   }
 
+  setProductUpdates(updates: IAnnouncementsInfo[]) {
+    this.currentAnnouncements.db.write(() => {
+      this.currentAnnouncements.productUpdates = updates;
+    });
+  }
+
   setBanner(banner: IAnnouncementsInfo | null) {
     this.currentAnnouncements.db.write(() => {
       this.currentAnnouncements.banner = banner;
+    });
+  }
+
+  setLastReadProductUpdate(timestamp: number) {
+    this.state.db.write(() => {
+      this.state.lastReadProductUpdate = timestamp;
     });
   }
 
