@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import { Resizable, ResizableProps } from 'react-resizable';
 import cx from 'classnames';
 import styles from './ResizeBar.m.less';
@@ -14,6 +14,7 @@ interface ResizeBarProps {
   onResizestart?: (offset?: number) => void;
   onResizestop?: (offset?: number) => void;
   onInput: (val: number) => void;
+  className?: string;
   transformScale?: number;
 }
 
@@ -86,8 +87,8 @@ export default function ResizeBar(p: React.PropsWithChildren<ResizeBarProps>) {
       {...resizableProps}
       handle={
         <div
-          className={cx(styles.resizeBar, styles[p.position], {
-            [styles['unset']]: v.hideStyleBlockers,
+          className={cx(styles.resizeBar, styles[p.position], p.className, {
+            [styles.unset]: v.hideStyleBlockers,
           })}
         >
           <div className={styles.resizeLine} />
