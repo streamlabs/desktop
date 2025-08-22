@@ -4,6 +4,7 @@ import {
   IPlatformRequest,
   IPlatformService,
   IPlatformState,
+  TLiveDockFeature,
   TPlatformCapability,
 } from '.';
 import { HostsService } from 'services/hosts';
@@ -119,6 +120,8 @@ export class TwitchService
     'themes',
     'viewerCount',
   ]);
+
+  readonly liveDockFeatures = new Set<TLiveDockFeature>(['chat-offline', 'refresh-chat']);
 
   authWindowOptions: Electron.BrowserWindowConstructorOptions = {
     width: 600,
