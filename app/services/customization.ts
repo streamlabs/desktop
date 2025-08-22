@@ -13,8 +13,6 @@ import { Theme } from 'styles/antd';
 
 export type TApplicationTheme = 'night-theme' | 'day-theme' | 'prime-dark' | 'prime-light';
 
-export type TApplicationTheme = 'night-theme' | 'day-theme' | 'prime-dark' | 'prime-light';
-
 // Maps to --background
 const THEME_BACKGROUNDS = {
   'night-theme': { r: 23, g: 36, b: 45 },
