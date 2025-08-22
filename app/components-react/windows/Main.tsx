@@ -71,10 +71,13 @@ export default function Main() {
 
   const page = useRealmObject(Services.NavigationService.state).currentPage;
   const params = useRealmObject(Services.NavigationService.state).params;
-  const dockWidth = useRealmObject(Services.CustomizationService.state).livedockSize;
+  const realmDockWidth = useRealmObject(Services.CustomizationService.state).livedockSize;
   const isDockCollapsed = useRealmObject(Services.CustomizationService.state).livedockCollapsed;
   const realmTheme = useRealmObject(Services.CustomizationService.state).theme;
   const leftDock = useRealmObject(Services.CustomizationService.state).leftDock;
+
+  // Provides smooth chat resizing instead of writing to realm every tick while resizing
+  const [dockWidth, setDockWidth] = useState(realmDockWidth);
 
   const {
     errorAlert,
@@ -157,15 +160,11 @@ export default function Main() {
     setMinEditorWidth(width);
   });
 
-  const setLiveDockWidth = useCallback((width: number) => {
-    CustomizationService.actions.setSettings({ livedockSize: width });
-  }, []);
-
   const updateLiveDockWidth = useCallback(() => {
     let constrainedWidth = Math.max(minDockWidth, dockWidth);
     constrainedWidth = Math.min(maxDockWidth, dockWidth);
 
-    if (dockWidth !== constrainedWidth) setLiveDockWidth(dockWidth);
+    if (dockWidth !== constrainedWidth) setDockWidth(dockWidth);
   }, []);
 
   const setCollapsed = useCallback((livedockCollapsed: boolean) => {
@@ -216,6 +215,8 @@ export default function Main() {
     return () => {
       window.removeEventListener('resize', windowSizeHandler);
       modalChangedSub.unsubscribe();
+      // Sync persisted live dock width in the db
+      CustomizationService.actions.setSettings({ livedockSize: dockWidth });
     };
   }, []);
 
@@ -238,7 +239,7 @@ export default function Main() {
       // migrate from old percentage value to the pixel value
       const appRect = mainWindowEl.current.getBoundingClientRect();
       const defaultWidth = appRect.width * 0.28;
-      setLiveDockWidth(defaultWidth);
+      setDockWidth(defaultWidth);
     }
   }, [uiReady]);
 
@@ -276,10 +277,11 @@ export default function Main() {
         )}
         {renderDock && leftDock && (
           <LiveDockContainer
-            maxDockWidth={maxDockWidth}
-            minDockWidth={minDockWidth}
+            max={maxDockWidth}
+            min={minDockWidth}
+            width={dockWidth}
             setCollapsed={setCollapsed}
-            setLiveDockWidth={setLiveDockWidth}
+            setLiveDockWidth={setDockWidth}
             onLeft
           />
         )}
@@ -303,10 +305,11 @@ export default function Main() {
         </div>
         {renderDock && !leftDock && (
           <LiveDockContainer
-            maxDockWidth={maxDockWidth}
-            minDockWidth={minDockWidth}
+            max={maxDockWidth}
+            min={minDockWidth}
+            width={dockWidth}
             setCollapsed={setCollapsed}
-            setLiveDockWidth={setLiveDockWidth}
+            setLiveDockWidth={setDockWidth}
           />
         )}
       </div>
@@ -323,20 +326,23 @@ export default function Main() {
 }
 
 interface ILiveDockContainerProps {
-  maxDockWidth: number;
-  minDockWidth: number;
+  max: number;
+  min: number;
+  width: number;
   setCollapsed: (val: boolean) => void;
   setLiveDockWidth: (val: number) => void;
   onLeft?: boolean;
 }
 
 function LiveDockContainer(p: ILiveDockContainerProps) {
-  const dockWidth = useRealmObject(Services.CustomizationService.state).livedockSize;
   const isDockCollapsed = useRealmObject(Services.CustomizationService.state).livedockCollapsed;
 
   function Chevron() {
     return (
-      <div className={styles.liveDockChevron} onClick={() => p.setCollapsed(!isDockCollapsed)}>
+      <div
+        className={cx(styles.liveDockChevron, p.onLeft && styles.left)}
+        onClick={() => p.setCollapsed(!isDockCollapsed)}
+      >
         <i
           className={cx({
             'icon-back': (!p.onLeft && isDockCollapsed) || (p.onLeft && !isDockCollapsed),
@@ -358,7 +364,7 @@ function LiveDockContainer(p: ILiveDockContainerProps) {
   return (
     <Animation transitionName={transitionName} transitionAppear>
       {isDockCollapsed && (
-        <div className={styles.liveDockCollapsed} key="collapsed">
+        <div className={cx(styles.liveDockCollapsed, p.onLeft && styles.left)} key="collapsed">
           <Chevron />
         </div>
       )}
@@ -366,13 +372,16 @@ function LiveDockContainer(p: ILiveDockContainerProps) {
         <ResizeBar
           position={p.onLeft ? 'left' : 'right'}
           onInput={(val: number) => p.setLiveDockWidth(val)}
-          max={p.maxDockWidth}
-          min={p.minDockWidth}
-          value={dockWidth}
+          max={p.max}
+          min={p.min}
+          value={p.width}
           transformScale={1}
           key="expanded"
         >
-          <div className={styles.liveDockContainer} style={{ width: `${dockWidth}px` }}>
+          <div
+            className={cx(styles.liveDockContainer, p.onLeft && styles.left)}
+            style={{ width: `${p.width}px` }}
+          >
             <LiveDock />
             <Chevron />
           </div>
