@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import cx from 'classnames';
-import { EStreamingState } from 'services/streaming';
+import { ERecordingState, EStreamingState } from 'services/streaming';
 import { EGlobalSyncStatus } from 'services/media-backup';
 import { $t } from 'services/i18n';
 import { useVuex } from '../hooks';
@@ -17,10 +17,13 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     SourcesService,
   } = Services;
 
-  const { streamingStatus, delayEnabled, delaySeconds } = useVuex(() => ({
+  const { streamingStatus, delayEnabled, delaySeconds, isRecording } = useVuex(() => ({
     streamingStatus: StreamingService.state.streamingStatus,
     delayEnabled: StreamingService.views.delayEnabled,
     delaySeconds: StreamingService.views.delaySeconds,
+    isRecording:
+      StreamingService.state.recordingStatus === ERecordingState.Stopping ||
+      StreamingService.state.recordingStatus === ERecordingState.Writing,
   }));
 
   const [delaySecondsRemaining, setDelayTick] = useState(delaySeconds);
@@ -145,11 +148,15 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       disabled={isDisabled}
       onClick={toggleStreaming}
     >
-      <StreamButtonLabel
-        streamingStatus={streamingStatus}
-        delayEnabled={delayEnabled}
-        delaySecondsRemaining={delaySecondsRemaining}
-      />
+      {isRecording ? (
+        <i className="fa fa-spinner fa-pulse" />
+      ) : (
+        <StreamButtonLabel
+          streamingStatus={streamingStatus}
+          delayEnabled={delayEnabled}
+          delaySecondsRemaining={delaySecondsRemaining}
+        />
+      )}
     </button>
   );
 }
