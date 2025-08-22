@@ -27,8 +27,6 @@ export default function GoLiveWindow() {
   const shouldShowSettings = ['empty', 'prepopulate', 'waitForNewSettings'].includes(lifecycle);
   const shouldShowChecklist = ['runChecklist', 'live'].includes(lifecycle);
 
-  // message.error({ content: $t('Streaming to TikTok not approved.'), duration: 200 });
-
   return (
     <ModalLayout footer={<ModalFooter />} className={styles.dualOutputGoLive}>
       <Form
@@ -92,9 +90,20 @@ function ModalFooter() {
   async function handleGoLive() {
     if (isDualOutputMode && !getCanStreamDualOutput()) {
       message.error({
-        content: $t(
-          'To use Dual Output you must stream to one horizontal and one vertical platform.',
+        key: 'dual-output-error',
+        className: styles.errorAlert,
+        content: (
+          <div className={styles.alertContent}>
+            <div style={{ marginRight: '10px' }}>
+              {$t(
+                'To use Dual Output you must stream to one horizontal and one vertical platform.',
+              )}
+            </div>
+
+            <i className="icon-close" />
+          </div>
         ),
+        onClick: () => message.destroy('dual-output-error'),
       });
       return;
     }

@@ -477,3 +477,27 @@ i.destination-logo {
     align-self: center;
   }
 }
+
+.error-alert {
+  color: #ff6f5b;
+  width: 600px;
+  border-radius: 4px;
+  margin: 0 auto;
+  text-align: left !important;
+
+  :global(.ant-message-error) {
+    display: flex;
+    align-items: center;
+  }
+
+  :global(.ant-message-error .anticon) {
+    color: #ff6f5b;
+    margin-right: 10px;
+  }
+}
+
+.alert-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}

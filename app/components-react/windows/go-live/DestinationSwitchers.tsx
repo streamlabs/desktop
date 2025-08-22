@@ -31,7 +31,6 @@ export function DestinationSwitchers() {
     isPrime,
     alwaysEnabledPlatforms,
     alwaysShownPlatforms,
-    tiktokGrandfathered,
   } = useGoLiveSettings();
 
   // use these references to apply debounce
@@ -227,11 +226,22 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
     // If we're disabling the switch we shouldn't be emitting anything past below
     if (disabled) {
       if (!Services.UserService.state.isPrime) {
-        message.info(
-          $t(
-            "You've selected the two streaming destinations. Disable a destination to enable a different one. \nYou can always upgrade to Ultra for multistreaming.",
+        message.info({
+          key: 'switcher-info-alert',
+          content: (
+            <div className={styles.alertContent}>
+              <div>
+                {$t(
+                  "You've selected the two streaming destinations. Disable a destination to enable a different one. \nYou can always upgrade to Ultra for multistreaming.",
+                )}
+              </div>
+
+              <i className="icon-close" />
+            </div>
           ),
-        );
+          className: styles.infoAlert,
+          onClick: () => message.destroy('switcher-info-alert'),
+        });
       }
       return;
     }
@@ -315,7 +325,7 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
       </div>
 
       {/* PLATFORM LOGO */}
-      <div className="logo margin-right--20">
+      <div className={cx('logo', styles.platformLogo)}>
         <Logo />
       </div>
 
@@ -327,7 +337,7 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
 
       {/* DISPLAY TOGGLES */}
       {p.isDualOutputMode && !p?.isUnlinked && (
-        <div onClick={e => e.stopPropagation()}>
+        <div className={styles.displaySelectorWrapper} onClick={e => e.stopPropagation()}>
           <DisplaySelector
             title={title}
             nolabel
