@@ -339,7 +339,10 @@ function LiveDockContainer(p: ILiveDockContainerProps) {
 
   function Chevron() {
     return (
-      <div className={styles.liveDockChevron} onClick={() => p.setCollapsed(!isDockCollapsed)}>
+      <div
+        className={cx(styles.liveDockChevron, p.onLeft && styles.left)}
+        onClick={() => p.setCollapsed(!isDockCollapsed)}
+      >
         <i
           className={cx({
             'icon-back': (!p.onLeft && isDockCollapsed) || (p.onLeft && !isDockCollapsed),
@@ -361,7 +364,7 @@ function LiveDockContainer(p: ILiveDockContainerProps) {
   return (
     <Animation transitionName={transitionName} transitionAppear>
       {isDockCollapsed && (
-        <div className={styles.liveDockCollapsed} key="collapsed">
+        <div className={cx(styles.liveDockCollapsed, p.onLeft && styles.left)} key="collapsed">
           <Chevron />
         </div>
       )}
@@ -375,7 +378,10 @@ function LiveDockContainer(p: ILiveDockContainerProps) {
           transformScale={1}
           key="expanded"
         >
-          <div className={styles.liveDockContainer} style={{ width: `${p.width}px` }}>
+          <div
+            className={cx(styles.liveDockContainer, p.onLeft && styles.left)}
+            style={{ width: `${p.width}px` }}
+          >
             <LiveDock />
             <Chevron />
           </div>
