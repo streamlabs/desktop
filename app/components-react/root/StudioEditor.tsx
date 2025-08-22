@@ -32,7 +32,6 @@ export default function StudioEditor() {
   } = Services;
   const performanceMode = useRealmObject(CustomizationService.state).performanceMode;
   const v = useVuex(() => ({
-    hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
     cursor: EditorService.state.cursor,
     studioMode: TransitionsService.state.studioMode,
     dualOutputMode: DualOutputService.views.dualOutputMode,
@@ -43,8 +42,7 @@ export default function StudioEditor() {
     activeSceneId: ScenesService.views.activeSceneId,
     isLoading: DualOutputService.views.isLoading,
   }));
-
-  const displayEnabled = !v.hideStyleBlockers && !performanceMode && !v.isLoading;
+  const displayEnabled = !performanceMode && !v.isLoading;
   const placeholderRef = useRef<HTMLDivElement>(null);
   const studioModeRef = useRef<HTMLDivElement>(null);
   const [studioModeStacked, setStudioModeStacked] = useState(false);
