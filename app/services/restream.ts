@@ -291,7 +291,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
     const body = JSON.stringify({
       enabled,
-      dcProtection: enableStreamSwitch,
+      dcProtection: false,
       idleTimeout: 30,
       streamSwitch: enableStreamSwitch,
     });
@@ -358,8 +358,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
       this.SET_STREAM_SWITCHER_STREAM_ID(streamId);
       // for the stream switcher, the stream needs a unique identifier
       const streamKey = `${this.settings.streamKey}&sid=${streamId}`;
-
-      console.log('Setting stream key for stream switcher:', streamKey);
 
       this.streamSettingsService.setSettings({
         key: streamKey,
@@ -531,7 +529,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
           platform: target.platform,
           streamKey: target.streamKey,
           enabled: true,
-          dcProtection: this.streamInfo.isStreamSwitchMode,
+          dcProtection: false,
           idleTimeout: 30,
           label: `${target.platform} target`,
           mode: target?.mode,
