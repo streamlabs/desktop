@@ -17,6 +17,8 @@ import { DisplayModule } from './modules/display';
 import { SceneTransitionsModule } from './modules/scene-transitions';
 import { ReplayModule } from './modules/replay';
 import { StreamlabelsModule } from './modules/streamlabels';
+import { TwitchModule } from './modules/twitch';
+import { NativeComponentsModule } from './modules/native-components';
 
 export class PlatformAppsApi {
   modules: Dictionary<Module> = {};
@@ -39,6 +41,8 @@ export class PlatformAppsApi {
     this.registerModule(new SceneTransitionsModule());
     this.registerModule(new ReplayModule());
     this.registerModule(new StreamlabelsModule());
+    this.registerModule(new TwitchModule());
+    this.registerModule(new NativeComponentsModule());
   }
 
   private registerModule(module: Module) {
@@ -73,6 +77,11 @@ export class PlatformAppsApi {
       for (const permission of this.modules[moduleName].permissions) {
         authorized = app.manifest.permissions.includes(permission);
         if (!authorized) break;
+      }
+
+      // Check for highly privileged modules
+      if (this.modules[moduleName].requiresHighlyPrivileged) {
+        authorized = app.highlyPrivileged;
       }
 
       ((this.modules[moduleName].constructor as typeof Module).apiMethods || []).forEach(

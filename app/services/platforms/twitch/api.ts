@@ -34,4 +34,5 @@ export type TTwitchOAuthScope =
   | 'chat:edit'
   | 'chat:read'
   | 'whispers:read'
-  | 'whispers:edit';
+  | 'whispers:edit'
+  | 'user:write:chat';

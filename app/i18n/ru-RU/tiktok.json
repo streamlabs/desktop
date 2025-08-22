@@ -21,10 +21,11 @@
   "TikTok Category": "Категория TikTok",
   "TikTok Live Access not granted. Click here to learn more.": "Доступ к Трансляциям в TikTok не предоставлено. Нажмите здесь, чтобы узнать больше.",
   "Only 32 characters of your title will display on TikTok": "На TikTok будут отображаться только 32 символа вашего названия",
-  "You may be eligible for TikTok Live Access. <apply>Apply here.</apply>": "Возможно, вы имеете право на доступ к Трансляциям в TikTok. <apply>Подать заявку здесь.</apply>",
+  "You may be eligible for TikTok Live Access. Apply here.": "You may be eligible for TikTok Live Access. Apply here.",
   "Click to view TikTok Replay in your browser.": "Нажмите для просмотра TikTok Replay в вашем браузере.",
   "TikTok Stream Error": "Ошибка потока TikTok",
   "Couldn't confirm TikTok Live Access. Apply for Live Permissions below": "Не удалось подтвердить доступ к трансляции в TikTok. Подайте заявку на получение разрешения на прямые эфиры",
-  "Connect your TikTok account": "Connect your TikTok account",
-  "Connect your TikTok account to stream to TikTok and one other platform for free. Haven't applied to stream on TikTok Live yet? <link>Start the process here</link>.": "Connect your TikTok account to stream to TikTok and one other platform for free. Haven't applied to stream on TikTok Live yet? <link>Start the process here</link>."
+  "Connect your TikTok account": "Подключите учетную запись TikTok",
+  "Connect your TikTok account to stream to TikTok and one other platform for free. Haven't applied to stream on TikTok Live yet? <link>Start the process here</link>.": "Подключите свою учетную запись TikTok, чтобы бесплатно транслировать на TikTok и еще одну дополнительную платформу. Вы еще не подали заявку на трансляцию в TikTok? <link>Начните процесс здесь</link>.",
+  "Reapply for TikTok Live Permission. Reapply here.": "Reapply for TikTok Live Permission. Reapply here."
 }

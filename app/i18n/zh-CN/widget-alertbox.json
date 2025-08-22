@@ -154,5 +154,6 @@
   "This applies to all alerts. If enabled all alerts need to be approved manually.": "适用于所有提示。如果启用，则需要手动批准所有提醒。",
   "Use unlimited delay": "使用无限延迟",
   "When enabled new alerts will interrupt the on screen alert": "启用后，新提醒将中断屏幕提醒",
-  "Text Highlight Color": "文本突出显示颜色"
+  "Text Highlight Color": "文本突出显示颜色",
+  "Platforms: Twitch, YouTube, Facebook, Trovo & integrations": "Platforms: Twitch, YouTube, Facebook, Trovo & integrations"
 }

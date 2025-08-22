@@ -3,7 +3,6 @@ const fs = require('fs');
 const cp = require('child_process');
 const path = require('path');
 const os = require('os');
-const buildCameraExt = require('./build-mac-virtualcam');
 
 async function notarizeMac(context) {
   if (process.env.SLOBS_NO_NOTARIZE) return;
@@ -46,7 +45,6 @@ async function afterPackWin() {
 
 exports.default = async function afterSign(context) {
   if (process.platform === 'darwin') {
-    buildCameraExt(context);
     await notarizeMac(context);
   }
 
