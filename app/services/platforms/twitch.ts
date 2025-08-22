@@ -14,7 +14,7 @@ import { SettingsService } from 'services/settings';
 import { TTwitchOAuthScope, TwitchTagsService } from './twitch/index';
 import { platformAuthorizedRequest } from './utils';
 import { CustomizationService } from 'services/customization';
-import { IGoLiveSettings } from 'services/streaming';
+import { IGoLiveSettings, TDisplayOutput } from 'services/streaming';
 import { InheritMutations, mutation } from 'services/core';
 import { StreamError, throwStreamError, TStreamErrorType } from 'services/streaming/stream-error';
 import { BasePlatformService } from './base-platform';
@@ -28,6 +28,7 @@ import {
 } from './twitch/content-classification';
 import { ENotificationType, NotificationsService } from '../notifications';
 import { $t } from '../i18n';
+import { getDefined } from 'util/properties-type-guards';
 
 export interface ITwitchStartStreamOptions {
   title: string;
@@ -35,6 +36,7 @@ export interface ITwitchStartStreamOptions {
   video?: IVideo;
   tags: string[];
   mode?: TOutputOrientation;
+  display?: TDisplayOutput;
   contentClassificationLabels: string[];
   isBrandedContent: boolean;
   isEnhancedBroadcasting: boolean;
@@ -116,6 +118,7 @@ export class TwitchService
     'streamlabels',
     'themes',
     'viewerCount',
+    'dualStream',
   ]);
 
   authWindowOptions: Electron.BrowserWindowConstructorOptions = {
@@ -207,11 +210,32 @@ export class TwitchService
     }
 
     if (goLiveSettings) {
-      const channelInfo = goLiveSettings?.platforms.twitch;
+      let channelInfo = goLiveSettings?.platforms.twitch;
+
+      if (channelInfo && channelInfo?.display === 'both') {
+        try {
+          channelInfo = await this.setupDualStream(goLiveSettings);
+        } catch (e: unknown) {
+          console.error('Error setting up dual stream:', e);
+        }
+      }
+
       if (channelInfo) await this.putChannelInfo(channelInfo);
     }
 
     this.setPlatformContext('twitch');
+  }
+
+  async setupDualStream(goLiveSettings: IGoLiveSettings) {
+    const twSettings = getDefined(goLiveSettings.platforms?.twitch);
+
+    // Twitch dual stream requires enhanced broadcasting
+    return !twSettings.isEnhancedBroadcasting
+      ? {
+          ...twSettings,
+          isEnhancedBroadcasting: true,
+        }
+      : twSettings;
   }
 
   async validatePlatform() {

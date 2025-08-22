@@ -343,6 +343,17 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   /**
+   * Checks if the vertical stream is the Twitch dual stream vertical target
+   * @remark Twitch dual stream uses only the horizontal stream to go live
+   * because the backend sends both the horizontal and vertical streams in a single request.
+   */
+  get isVerticalTwitchDualStream() {
+    return (
+      this.enabledPlatforms.length === 1 && this.activeDisplayPlatforms.vertical.includes('twitch')
+    );
+  }
+
+  /**
    * Return restream service access status
    * @remark Non-ultra users cannot use the restream service except for:
    *  - Grandfathered users

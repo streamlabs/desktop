@@ -326,7 +326,17 @@ export class GoLiveSettingsModule {
    * to keep the rest of the code as before, but we might need to revisit that.
    */
   updatePlatformDisplayAndSaveSettings(platform: TPlatform, display: TDisplayOutput) {
-    this.state.updatePlatform(platform, { display });
+    if (platform === 'twitch' && this.state.isDualOutputMode) {
+      if (display === 'both') {
+        // Twitch dual stream requires enhanced broadcasting
+        this.state.updatePlatform(platform, { display, isEnhancedBroadcasting: true });
+      } else {
+        // If not dual streaming to Twitch, enhanced broadcasting is disabled in dual output mode
+        this.state.updatePlatform(platform, { display, isEnhancedBroadcasting: false });
+      }
+    } else {
+      this.state.updatePlatform(platform, { display });
+    }
     this.save(this.state.settings);
   }
 
