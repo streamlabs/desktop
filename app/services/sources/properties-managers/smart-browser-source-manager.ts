@@ -1,7 +1,6 @@
 import { PropertiesManager } from './properties-manager';
 import { Inject } from 'services/core/injector';
 import { WebsocketService } from 'services/websocket';
-import { SseService  } from 'services/server-sent-events';
 import * as obs from '../../../../obs-api';
 import { Subscription } from 'rxjs';
 import { VisionService } from 'services/vision';
@@ -19,8 +18,8 @@ export class SmartBrowserSourceManager extends PropertiesManager {
   private sseSub!: Subscription;
 
   init() {
-    obs.NodeObs.RegisterSourceMessageCallback(async(evt: ISourceMessage[]) => {
-      console.log("SmartBrowserSourceManager: Received source message", evt);
+    obs.NodeObs.RegisterSourceMessageCallback(async (evt: ISourceMessage[]) => {
+      console.log('SmartBrowserSourceManager: Received source message', evt);
       for (const { sourceName, message } of evt) {
         if (sourceName !== this.obsSource.name) {
           continue;
@@ -31,12 +30,12 @@ export class SmartBrowserSourceManager extends PropertiesManager {
         const payload = JSON.stringify({
           type: 'state.update',
           message: res,
-          key: keys?.join(","),
+          key: keys?.join(','),
           event_id: uuid(),
         });
-        console.log("SmartBrowserSourceManager: Sending message to source", sourceName, payload);
+        console.log('SmartBrowserSourceManager: Sending message to source', sourceName, payload);
         this.obsSource.sendMessage({
-          message: payload
+          message: payload,
         });
       }
     });
@@ -45,10 +44,11 @@ export class SmartBrowserSourceManager extends PropertiesManager {
 
       if (['visionEvent', 'userStateUpdated'].includes(e.type)) {
         //@ts-ignore
-        console.log("success", JSON.stringify(e));
+        console.log('success', JSON.stringify(e));
         this.obsSource.sendMessage({ message: JSON.stringify(e) });
       }
     });
+    this.visionService.ensureVision();
   }
 
   destroy() {

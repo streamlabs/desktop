@@ -25,6 +25,7 @@ export enum EMenuItemKey {
   GetHelp = 'get-help',
   Settings = 'settings',
   Login = 'login',
+  Vision = 'vision',
 }
 
 /**
@@ -160,6 +161,7 @@ export const menuTitles = (item: EMenuItemKey | ESubMenuItemKey | string) => {
     [ESubMenuItemKey.Widgets]: $t('Widgets'),
     [ESubMenuItemKey.TipSettings]: $t('Tip Settings'),
     [ESubMenuItemKey.Multistream]: $t('Multistream'),
+    [EMenuItemKey.Vision]: 'Vision',
   }[item];
 };
 
@@ -190,6 +192,7 @@ export const SideBarBottomNavData = (): IMenu => ({
     SideNavMenuItems()[EMenuItemKey.GetPrime],
     SideNavMenuItems()[EMenuItemKey.Dashboard],
     SideNavMenuItems()[EMenuItemKey.GetHelp],
+    SideNavMenuItems()[EMenuItemKey.Vision],
     SideNavMenuItems()[EMenuItemKey.Settings],
     SideNavMenuItems()[EMenuItemKey.Login],
   ],
@@ -303,6 +306,12 @@ export const SideNavMenuItems = (): TMenuItems => ({
   [EMenuItemKey.GetHelp]: {
     key: EMenuItemKey.GetHelp,
     icon: 'icon-question',
+    isActive: true,
+    isExpanded: false,
+  },
+  [EMenuItemKey.Vision]: {
+    key: EMenuItemKey.Vision,
+    icon: 'fas fa-eye',
     isActive: true,
     isExpanded: false,
   },
