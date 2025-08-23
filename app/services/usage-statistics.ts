@@ -47,7 +47,8 @@ export type TAnalyticsEvent =
   | 'TikTokLiveAccess'
   | 'TwitchCredentialsAlert'
   | 'TikTokApplyPrompt'
-  | 'ScheduleStream';
+  | 'ScheduleStream'
+  | 'StartDualOutputRecording';
 
 interface IAnalyticsEvent {
   product: string;

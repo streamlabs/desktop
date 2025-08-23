@@ -24,6 +24,7 @@ enum ERecordingState {
   Recording = 'recording',
   Stopping = 'stopping',
   Start = 'start',
+  Writing = 'writing',
   Wrote = 'wrote',
 }
 
@@ -121,7 +122,7 @@ export class StreamingService implements ISerializable {
   /**
    * Toggles recording.
    */
-  toggleRecording(): void {
+  toggleRecording(): Promise<never> | Promise<void> {
     return this.streamingService.toggleRecording();
   }
 

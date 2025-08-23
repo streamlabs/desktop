@@ -118,8 +118,7 @@ export function promptAsync(
 export function promptAction(p: {
   title: string;
   message: string;
-  btnText: string;
-  fn(): void | ((props: any) => unknown | void);
+  btns: { text: string; fn?: () => void }[];
   icon?: React.ReactNode;
 }) {
   alertAsync({
@@ -137,16 +136,20 @@ export function promptAction(p: {
       <ModalLayout
         footer={
           <Form layout={'inline'} className={styles.actionModalFooter}>
-            <Button onClick={Modal.destroyAll}>{$t('Skip')}</Button>
-            <Button
-              type="primary"
-              onClick={() => {
-                Modal.destroyAll();
-                p.fn();
-              }}
-            >
-              {p.btnText}
-            </Button>
+            {p.btns.map((btn, i) => (
+              <Button
+                key={`btn-${i}`}
+                type="primary"
+                onClick={() => {
+                  Modal.destroyAll();
+                  if (btn.fn) {
+                    btn.fn();
+                  }
+                }}
+              >
+                {btn.text}
+              </Button>
+            ))}
           </Form>
         }
       >
