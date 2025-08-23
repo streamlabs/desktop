@@ -213,7 +213,7 @@ export class Display {
   existingWindow = false;
 
   async resize(width: number, height: number) {
-    if (width === 0 || height === 0) {
+    if (getOS() === OS.Mac && (width === 0 || height === 0)) {
       return; // obs gs_draw_sprite() does not render zero sized sprites (so do not call resizeOBSDisplay)
     }
     this.currentPosition.width = width;
