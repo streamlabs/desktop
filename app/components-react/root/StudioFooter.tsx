@@ -44,7 +44,7 @@ export default function StudioFooterComponent() {
       StreamingService.views.supports('stream-schedule') &&
       !RecordingModeService.views.isRecordingModeEnabled,
     streamQuality: PerformanceService.views.streamQuality,
-    replayBufferOffline: StreamingService.state.replayBufferStatus === EReplayBufferState.Offline,
+    replayBufferOffline: StreamingService.views.replayBufferStatus === EReplayBufferState.Offline,
     replayBufferStopping: StreamingService.state.replayBufferStatus === EReplayBufferState.Stopping,
     replayBufferSaving: StreamingService.state.replayBufferStatus === EReplayBufferState.Saving,
     recordingModeEnabled: RecordingModeService.views.isRecordingModeEnabled,

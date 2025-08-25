@@ -1312,6 +1312,10 @@ export class StreamingService
   }
 
   private async handleStopRecording() {
+    const mode = this.views.isDualOutputMode ? 'Dual Output: ' : 'Single Output: ';
+    this.logContexts('horizontal', mode + 'handleStopRecording');
+    this.logContexts('vertical', mode + 'handleStopRecording');
+
     if (this.views.isDualOutputMode) {
       // Stop dual output recording
       if (
@@ -1718,6 +1722,8 @@ export class StreamingService
     }
 
     if (info.signal === EOBSOutputSignal.Start) {
+      // Make sure the time is reset
+      this.SET_RECORDING_STATUS(nextState, display, new Date().toISOString());
       const mode = this.views.isDualOutputMode ? 'dual' : 'single';
       this.usageStatisticsService.recordFeatureUsage('Recording');
       this.usageStatisticsService.recordAnalyticsEvent('RecordingStatus', {
@@ -1740,7 +1746,7 @@ export class StreamingService
         this.contexts.vertical.recording !== null
       ) {
         const time = new Date().toISOString();
-        this.SET_RECORDING_STATUS(nextState, display, time);
+
         this.recordingStatusChange.next(nextState);
         return;
       }
@@ -1767,6 +1773,9 @@ export class StreamingService
       this.latestRecordingPath.next(fileName);
 
       await this.handleDestroyOutputContexts(display);
+
+      this.logContexts('horizontal', 'Wrote');
+      this.logContexts('vertical', 'Wrote');
       this.recordingStatusChange.next(nextState);
       return;
     }

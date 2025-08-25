@@ -20,23 +20,32 @@ interface IRecordingSettingsProps {
 }
 export default function RecordingSwitcher(p: IRecordingSettingsProps) {
   const { updateRecordingDisplayAndSaveSettings } = useGoLiveSettings();
+  const {
+    DualOutputService,
+    StreamSettingsService,
+    HighlighterService,
+    StreamingService,
+    IncrementalRolloutService,
+  } = Services;
 
   const v = useVuex(() => ({
-    isDualOutputMode: Services.DualOutputService.views.dualOutputMode,
-    recordWhenStreaming: Services.StreamSettingsService.views.settings.recordWhenStreaming,
-    useAiHighlighter: Services.HighlighterService.views.useAiHighlighter,
-    isRecording: Services.StreamingService.views.isRecording,
-    isReplayBufferActive: Services.StreamingService.views.isReplayBufferActive,
+    isDualOutputMode: DualOutputService.views.dualOutputMode,
+    recordWhenStreaming: StreamSettingsService.views.settings.recordWhenStreaming,
+    useAiHighlighter: HighlighterService.views.useAiHighlighter,
+    isRecording: StreamingService.views.isRecording,
+    isReplayBufferActive: StreamingService.views.isReplayBufferActive,
     recordingDisplay:
-      Services.StreamSettingsService.views.settings?.goLiveSettings?.recording ?? 'horizontal',
+      StreamSettingsService.views.settings?.goLiveSettings?.recording ?? 'horizontal',
   }));
 
-  const canRecordVertical = Services.IncrementalRolloutService.views.featureIsEnabled(
+  const canRecordVertical = IncrementalRolloutService.views.featureIsEnabled(
     EAvailableFeatures.verticalRecording,
   );
-  const canRecordDualOutput = Services.IncrementalRolloutService.views.featureIsEnabled(
-    EAvailableFeatures.dualOutputRecording,
-  );
+  const canRecordDualOutput = false;
+  // Dual output recording is WIP. To enable testing for dual output recording, modify the logic here.
+  // const canRecordDualOutput =
+  //   IncrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.dualOutputRecording) &&
+  //   !Utils.isDevMode();
 
   const recordWhenStartStream = v.recordWhenStreaming || v.useAiHighlighter;
   const showRecordingToggle = p?.showRecordingToggle ?? false;
