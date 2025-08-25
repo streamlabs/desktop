@@ -22,7 +22,7 @@ import { lazyModule } from 'util/lazy-module';
 import * as remote from '@electron/remote';
 import { IVideo } from 'obs-studio-node';
 import pick from 'lodash/pick';
-import { TOutputOrientation } from 'services/restream';
+import { RestreamService, TOutputOrientation } from 'services/restream';
 import { UsageStatisticsService } from 'app-services';
 import cloneDeep from 'lodash/cloneDeep';
 import { ICustomStreamDestination } from 'services/settings/streaming';
@@ -181,6 +181,7 @@ export class YoutubeService
   implements IPlatformService {
   @Inject() private customizationService: CustomizationService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
+  @Inject() private restreamService: RestreamService;
   @Inject() private i18nService: I18nService;
 
   @lazyModule(YoutubeUploader) uploader: YoutubeUploader;
@@ -301,6 +302,13 @@ export class YoutubeService
     this.state.liveStreamingEnabled = enabled;
   }
 
+  async setupSwitchedStream(goLiveSettings: IGoLiveSettings) {
+    const ytSettings = getDefined(goLiveSettings.platforms.youtube);
+    // TODO: does the stream need to be bound to the broadcast?
+
+    this.setPlatformContext('youtube');
+  }
+
   async setupDualStream(goLiveSettings: IGoLiveSettings) {
     const ytSettings = getDefined(goLiveSettings.platforms.youtube);
     const title = makeVerticalTitle(ytSettings.title);
@@ -363,6 +371,12 @@ export class YoutubeService
 
   async beforeGoLive(goLiveSettings: IGoLiveSettings, context?: TDisplayType) {
     const ytSettings = getDefined(goLiveSettings.platforms.youtube);
+
+    // If the stream has switched from another device, a new broadcast does not need to be created
+    if (goLiveSettings.streamSwitch && this.restreamService.views.hasStreamSwitcherTargets) {
+      await this.setupSwitchedStream(goLiveSettings);
+      return;
+    }
 
     const streamToScheduledBroadcast = !!ytSettings.broadcastId;
     // update selected LiveBroadcast with new title and description

@@ -158,7 +158,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Primary used to get all platforms that should always show the destination switcher in the Go Live window
    */
   get alwaysShownPlatforms(): TPlatform[] {
-    return ['kick'];
+    return [];
   }
 
   /**

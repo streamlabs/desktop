@@ -205,6 +205,8 @@ export interface IPlatformService {
 
   setupDualStream?: (options: IGoLiveSettings) => Promise<void>;
 
+  setupSwitchedStream?: (options: IGoLiveSettings) => Promise<void>;
+
   fetchNewToken: () => Promise<void>;
 
   getHeaders: (
