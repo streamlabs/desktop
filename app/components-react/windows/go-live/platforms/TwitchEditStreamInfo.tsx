@@ -13,6 +13,8 @@ import AiHighlighterToggle from '../AiHighlighterToggle';
 import { Services } from 'components-react/service-provider';
 import Badge from 'components-react/shared/DismissableBadge';
 import { EDismissable } from 'services/dismissables';
+import styles from './TwitchEditStreamInfo.m.less';
+import cx from 'classnames';
 
 export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
   const twSettings = p.value;
@@ -30,11 +32,17 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
     <div key="optional">
       <TwitchTagsInput label={$t('Twitch Tags')} {...bind.tags} layout={p.layout} />
       <TwitchContentClassificationInput {...bind.contentClassificationLabels} layout={p.layout} />
-      <InputWrapper layout={p.layout}>
+      <InputWrapper
+        layout={p.layout}
+        className={cx(styles.twitchCheckbox, { [styles.hideLabel]: p.layout === 'vertical' })}
+      >
         <CheckboxInput label={$t('Stream features branded content')} {...bind.isBrandedContent} />
       </InputWrapper>
       {p.enabledPlatformsCount === 1 && process.platform !== 'darwin' && (
-        <InputWrapper layout={p.layout}>
+        <InputWrapper
+          layout={p.layout}
+          className={cx(styles.twitchCheckbox, { [styles.hideLabel]: p.layout === 'vertical' })}
+        >
           <div>
             <CheckboxInput
               style={{ display: 'inline-block' }}
@@ -70,7 +78,7 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
           <React.Fragment key="required-fields">
             <GameSelector key="required" platform={'twitch'} {...bind.game} layout={p.layout} />
             {aiHighlighterFeatureEnabled && (
-              <AiHighlighterToggle key="ai-toggle" game={bind.game?.value} cardIsExpanded={true} />
+              <AiHighlighterToggle key="ai-toggle" game={bind.game?.value} cardIsExpanded={false} />
             )}
           </React.Fragment>
         }

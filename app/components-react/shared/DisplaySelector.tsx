@@ -2,10 +2,11 @@ import React, { CSSProperties, useMemo } from 'react';
 import { $t } from 'services/i18n';
 import { RadioInput } from './inputs';
 import { TDisplayType } from 'services/settings-v2';
-import { TPlatform } from 'services/platforms';
+import { platformLabels, TPlatform } from 'services/platforms';
 import { useGoLiveSettings } from 'components-react/windows/go-live/useGoLiveSettings';
 import { TDisplayOutput } from 'services/streaming';
 import { IRadioMetadata } from './inputs/metadata';
+import { ICustomRadioOption } from './inputs/RadioInput';
 
 interface IDisplaySelectorProps {
   title: string;
@@ -36,7 +37,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     },
   }));
 
-  const displays = useMemo(() => {
+  const displays: ICustomRadioOption[] = useMemo(() => {
     const defaultDisplays = [
       {
         label: $t('Horizontal'),
@@ -51,11 +52,21 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     ];
 
     if (canDualStream) {
-      defaultDisplays.push({
-        label: $t('Both'),
-        value: 'both' as TDisplayType,
-        icon: 'icon-dual-output',
-      });
+      const tooltip = p?.platform
+        ? $t('Stream both horizontally and vertically to %{platform}', {
+            platform: platformLabels(p.platform),
+          })
+        : undefined;
+
+      return [
+        ...defaultDisplays,
+        {
+          label: $t('Both'),
+          value: 'both' as TDisplayType,
+          icon: 'icon-dual-output',
+          tooltip,
+        },
+      ];
     }
 
     return defaultDisplays;
@@ -86,7 +97,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
 
   return (
     <RadioInput
-      data-title={p.title}
+      // data-title={p.title}
       nolabel={p?.nolabel}
       label={p?.nolabel ? undefined : p.title}
       name={name}

@@ -27,6 +27,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     streamSwitcherStatus,
     isDualOutputMode,
     isLoggedIn,
+    isPrime,
   } = useVuex(() => ({
     streamingStatus: StreamingService.state.streamingStatus,
     delayEnabled: StreamingService.views.delayEnabled,
@@ -34,6 +35,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     streamSwitcherStatus: RestreamService.state.streamSwitcherStatus,
     isDualOutputMode: StreamingService.views.isDualOutputMode,
     isLoggedIn: UserService.isLoggedIn,
+    isPrime: UserService.state.isPrime,
   }));
 
   const [delaySecondsRemaining, setDelayTick] = useState(delaySeconds);
@@ -59,7 +61,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
   }, [delaySecondsRemaining, streamingStatus, delayEnabled]);
 
   useEffect(() => {
-    if (!isDualOutputMode) {
+    if (!isDualOutputMode && isPrime) {
       fetchStreamSwitcherStatus();
     }
 
@@ -164,7 +166,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       }
 
       // Only check for Stream Switch in single output mode
-      if (isLoggedIn && !isDualOutputMode) {
+      if (isLoggedIn && !isDualOutputMode && isPrime) {
         setIsLoading(true);
         const isLive = await fetchStreamSwitcherStatus();
         setIsLoading(false);

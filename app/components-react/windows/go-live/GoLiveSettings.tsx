@@ -65,7 +65,7 @@ export default function GoLiveSettings() {
 
       showTweet: UserService.views.auth?.primaryPlatform !== 'twitter',
 
-      isStreamSwitchDisabled: module.isDualOutputMode || !UserService.views.isPrime,
+      isStreamSwitchDisabled: module.isDualOutputMode,
 
       isDualOutputSwitchDisabled: module.isStreamSwitchMode && !module.isDualOutputMode,
 
@@ -151,14 +151,18 @@ export default function GoLiveSettings() {
                 />
               </Tooltip>
               <Tooltip
-                title={$t('Stream Switcher cannot be used with Dual Output')}
+                title={
+                  isPrime
+                    ? $t('Stream Switcher cannot be used with Dual Output')
+                    : $t('Upgrade to Ultra to switch streams between devices.')
+                }
                 placement="top"
                 lightShadow={true}
-                disabled={!isStreamSwitchDisabled || !isPrime}
+                disabled={isPrime && !isStreamSwitchDisabled}
               >
                 <StreamSwitcherToggle
                   className={styles.featureToggle}
-                  disabled={isStreamSwitchDisabled}
+                  disabled={isStreamSwitchDisabled || !isPrime}
                 />
               </Tooltip>
             </div>

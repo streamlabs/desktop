@@ -15,8 +15,9 @@ import Form from '../../../shared/inputs/Form';
 import { IYoutubeStartStreamOptions, YoutubeService } from '../../../../services/platforms/youtube';
 import PlatformSettingsLayout, { IPlatformComponentParams } from './PlatformSettingsLayout';
 import { assertIsDefined } from '../../../../util/properties-type-guards';
-import * as remote from '@electron/remote';
 import { inject, injectQuery, useModule } from 'slap';
+import styles from './YoutubeEditStreamInfo.m.less';
+import cx from 'classnames';
 
 /***
  * Stream Settings for YT
@@ -108,6 +109,7 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
             broadcasts={broadcastsQuery.data}
             disabled={isUpdateMode}
             {...bind.broadcastId}
+            layout={p.layout}
           />
         )}
       </div>
@@ -174,7 +176,11 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
             />
           </>
         )}
-        <InputWrapper label={$t('Additional Settings')} layout={p.layout}>
+        <InputWrapper
+          label={$t('Additional Settings')}
+          layout={p.layout}
+          className={cx(styles.youtubeCheckbox, { [styles.hideLabel]: p.layout === 'vertical' })}
+        >
           {!isScheduleMode && !isMidStreamMode && (
             <CheckboxInput
               {...bind.enableAutoStart}

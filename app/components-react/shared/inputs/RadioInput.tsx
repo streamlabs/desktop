@@ -2,16 +2,17 @@ import React, { CSSProperties } from 'react';
 import { InputComponent, TSlobsInputProps, useInput } from './inputs';
 import InputWrapper from './InputWrapper';
 import styles from './RadioInput.m.less';
-import { Radio, Space } from 'antd';
+import { Radio, Space, Tooltip } from 'antd';
 import cx from 'classnames';
 import { pick } from 'lodash';
 
-interface ICustomRadioOption {
+export interface ICustomRadioOption {
   value: string;
   label: string;
   description?: string;
   defaultValue?: string;
   icon?: string;
+  tooltip?: string;
 }
 
 interface ICustomRadioGroupProps {
@@ -74,7 +75,15 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
                 key={option.value}
                 value={option.value}
                 disabled={p.disabled}
-                children={<i className={cx(option.icon, styles.iconToggle)} />}
+                children={
+                  option?.tooltip ? (
+                    <Tooltip title={option?.tooltip} placement="topRight">
+                      <i className={cx(option.icon, styles.iconToggle)} />
+                    </Tooltip>
+                  ) : (
+                    <i className={cx(option.icon, styles.iconToggle)} />
+                  )
+                }
               />
             );
           })}

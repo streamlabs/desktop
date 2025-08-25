@@ -325,7 +325,7 @@ export class StreamingService
 
         if (!settings.platforms[p]) return;
 
-        if (targets.includes(p) && p !== 'youtube') {
+        if (targets.includes(p)) {
           settings.platforms[p].enabled = true;
         } else {
           settings.platforms[p].enabled = false;

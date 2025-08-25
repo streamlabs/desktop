@@ -13,6 +13,7 @@ import InputWrapper from '../../shared/inputs/InputWrapper';
 import Animate from 'rc-animate';
 import { TLayoutMode } from './platforms/PlatformSettingsLayout';
 import { Services } from '../../service-provider';
+import { Tooltip } from 'antd';
 
 interface ICommonPlatformSettings {
   title: string;
@@ -126,10 +127,18 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
               value={fields['title']}
               name="title"
               onChange={val => updateCommonField('title', val)}
-              label={$t('Title')}
+              label={
+                titleTooltip ? (
+                  <Tooltip title={titleTooltip} placement="right">
+                    {$t('Title')}
+                    <i className="icon-information" style={{ marginLeft: '5px' }} />
+                  </Tooltip>
+                ) : (
+                  $t('Title')
+                )
+              }
               required={true}
               max={maxCharacters}
-              tooltip={titleTooltip}
               layout={p.layout}
               size="large"
             />
