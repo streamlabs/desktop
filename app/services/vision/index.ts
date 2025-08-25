@@ -463,9 +463,6 @@ export class VisionService extends Service {
     this.eventSource.onmessage = e => {
       console.log('GOT EVENT', e.data);
 
-      // Filter out game process detection events
-      if (e.data['events'].find((e: any) => e.name === 'game_process_detected')) return;
-
       const headers = authorizedHeaders(
         this.userService.apiToken,
         new Headers({ 'Content-Type': 'application/json' }),
@@ -474,6 +471,10 @@ export class VisionService extends Service {
 
       try {
         const parsed = JSON.parse(e.data);
+
+        // Filter out game process detection events
+        if (parsed['events'].find((e: any) => e.name === 'game_process_detected')) return;
+
         parsed['vision_event_id'] = uuid();
         jfetch(url, { headers, method: 'POST', body: JSON.stringify(parsed) });
       } catch (e: unknown) {
