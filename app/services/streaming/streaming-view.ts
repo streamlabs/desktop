@@ -467,9 +467,14 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get isAdvancedMode(): boolean {
-    const isSingleOutputMultistream =
-      this.hasMultipleTargetsEnabled && this.userView.isPrime && !this.isDualOutputMode;
-    return (isSingleOutputMultistream || this.isDualOutputMode) && this.settings.advancedMode;
+    return (this.isMultiplatformMode || this.isDualOutputMode) && this.settings.advancedMode;
+  }
+
+  get canShowAdvancedMode() {
+    if (this.isStreamSwitchMode) {
+      return this.enabledPlatforms.length > 1;
+    }
+    return this.isMultiplatformMode || this.isDualOutputMode;
   }
 
   /**

@@ -6,15 +6,14 @@ import { $t } from '../../../services/i18n';
 export default function AdvancedSettingsSwitch() {
   const {
     isAdvancedMode,
+    canShowAdvancedMode,
     switchAdvancedMode,
     lifecycle,
-    isMultiplatformMode,
-    isDualOutputMode,
     isLoading,
   } = useGoLiveSettings();
 
   const ableToConfirm = ['prepopulate', 'waitForNewSettings'].includes(lifecycle);
-  const shouldShowAdvancedSwitch = ableToConfirm && (isMultiplatformMode || isDualOutputMode);
+  const shouldShowAdvancedSwitch = ableToConfirm && canShowAdvancedMode;
 
   return !shouldShowAdvancedSwitch ? null : (
     <SwitchInput

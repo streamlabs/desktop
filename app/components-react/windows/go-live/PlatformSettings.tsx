@@ -19,8 +19,7 @@ import { TInputLayout } from 'components-react/shared/inputs';
 
 export default function PlatformSettings() {
   const {
-    isMultiplatformMode,
-    isDualOutputMode,
+    canShowAdvancedMode,
     settings,
     error,
     isAdvancedMode,
@@ -51,7 +50,6 @@ export default function PlatformSettings() {
   }));
 
   const shouldShowSettings = !error && !isLoading;
-  const canShowAdvancedMode = isMultiplatformMode || isDualOutputMode;
 
   let layoutMode: TLayoutMode;
   if (canShowAdvancedMode) {
