@@ -43,6 +43,6 @@
   "Mic/Auxiliary Device 1": "マイク/補助デバイス 1",
   "Mic/Auxiliary Device 2": "マイク/補助デバイス 2",
   "Mic/Auxiliary Device 3": "マイク/補助デバイス 3",
-  "Recording Audio Encoder": "Recording Audio Encoder",
-  "Enable Muted Notifications": "Enable Muted Notifications"
+  "Recording Audio Encoder": "録音オーディオエンコーダー",
+  "Enable Muted Notifications": "ミュート通知を有効にする"
 }

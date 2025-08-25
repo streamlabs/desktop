@@ -1,14 +1,14 @@
 {
-  "Edit your stream title on Kick after going live.": "Edit your stream title on Kick after going live.",
-  "Kick Category": "Kick Category",
-  "Failed to update Kick account. Please unlink and reconnect your Kick account.": "Failed to update Kick account. Please unlink and reconnect your Kick account.",
-  "Failed to start Kick stream. Please check permissions with Kick and try again": "Failed to start Kick stream. Please check permissions with Kick and try again",
-  "Kick request most likely failed due to incorrect or missing permissions. Unlink and re-merge Kick account, then restart Desktop. If that fails, refer to Kick support": "Kick request most likely failed due to incorrect or missing permissions. Unlink and re-merge Kick account, then restart Desktop. If that fails, refer to Kick support",
-  "Kick stream key failed to generate due to missing permissions": "Kick stream key failed to generate due to missing permissions",
-  "confirm that a stream key has been generated with 2FA on Kick for use with Streamlabs Desktop and if not ask the user to manually generate one": "confirm that a stream key has been generated with 2FA on Kick for use with Streamlabs Desktop and if not ask the user to manually generate one",
-  "Login to Kick": "Login to Kick",
-  "Go to: <link></link>": "Go to: <link></link>",
-  "Click on the \"eye\" icon to see your stream key": "Click on the \"eye\" icon to see your stream key",
-  "Put in 2FA": "Put in 2FA",
-  "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick."
+  "Edit your stream title on Kick after going live.": "생방송을 시작한 후 Kick에서 스트리밍 제목을 편집합니다.",
+  "Kick Category": "Kick 카테고리",
+  "Failed to update Kick account. Please unlink and reconnect your Kick account.": "Kick 계정을 업데이트하지 못했습니다. Kick 계정 연결을 해제했다가 다시 연결하세요.",
+  "Failed to start Kick stream. Please check permissions with Kick and try again": "Kick 스트리밍을 시작하지 못했습니다. Kick의 권한을 확인한 후 다시 시도하세요.",
+  "Kick request most likely failed due to incorrect or missing permissions. Unlink and re-merge Kick account, then restart Desktop. If that fails, refer to Kick support": "권한이 잘못되었거나 누락되어 Kick 요청이 실패했을 가능성이 큽니다. Kick 계정 연결을 해제하고 다시 병합한 다음 Desktop을 다시 시작합니다. 그래도 실패하는 경우, Kick 지원 참조",
+  "Kick stream key failed to generate due to missing permissions": "권한이 누락되어 Kick 스트리밍 키 생성 실패",
+  "confirm that a stream key has been generated with 2FA on Kick for use with Streamlabs Desktop and if not ask the user to manually generate one": "Streamlabs Desktop에서 사용할 수 있도록 Kick에서 2FA로 스트리밍 키가 생성되었는지 확인하고, 생성되지 않은 경우 사용자에게 수동으로 생성하도록 요청하세요",
+  "Login to Kick": "Kick에 로그인",
+  "Go to: <link></link>": "<link></link>에 이동",
+  "Click on the \"eye\" icon to see your stream key": "스트리밍 키를 보려면 '눈' 아이콘을 클릭하세요",
+  "Put in 2FA": "2FA 입력",
+  "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "2FA가 완료되면 스트리밍 키가 생성되어 해당 채널의 Streamlabs Desktop에서 사용할 수 있습니다. 이제 Kick에서 라이브를 할 수 있습니다."
 }

@@ -1,14 +1,14 @@
 {
-  "Edit your stream title on Kick after going live.": "Edit your stream title on Kick after going live.",
-  "Kick Category": "Kick Category",
-  "Failed to update Kick account. Please unlink and reconnect your Kick account.": "Failed to update Kick account. Please unlink and reconnect your Kick account.",
-  "Failed to start Kick stream. Please check permissions with Kick and try again": "Failed to start Kick stream. Please check permissions with Kick and try again",
-  "Kick request most likely failed due to incorrect or missing permissions. Unlink and re-merge Kick account, then restart Desktop. If that fails, refer to Kick support": "Kick request most likely failed due to incorrect or missing permissions. Unlink and re-merge Kick account, then restart Desktop. If that fails, refer to Kick support",
-  "Kick stream key failed to generate due to missing permissions": "Kick stream key failed to generate due to missing permissions",
-  "confirm that a stream key has been generated with 2FA on Kick for use with Streamlabs Desktop and if not ask the user to manually generate one": "confirm that a stream key has been generated with 2FA on Kick for use with Streamlabs Desktop and if not ask the user to manually generate one",
-  "Login to Kick": "Login to Kick",
-  "Go to: <link></link>": "Go to: <link></link>",
-  "Click on the \"eye\" icon to see your stream key": "Click on the \"eye\" icon to see your stream key",
-  "Put in 2FA": "Put in 2FA",
-  "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick."
+  "Edit your stream title on Kick after going live.": "直播后，在 Kick 上编辑直播标题。",
+  "Kick Category": "Kick 类别",
+  "Failed to update Kick account. Please unlink and reconnect your Kick account.": "更新 Kick 帐户失败。请取消链接，并重新连接 Kick 账户。",
+  "Failed to start Kick stream. Please check permissions with Kick and try again": "启动 Kick 直播失败。请使用 Kick 检查权限，然后重试",
+  "Kick request most likely failed due to incorrect or missing permissions. Unlink and re-merge Kick account, then restart Desktop. If that fails, refer to Kick support": "Kick 请求很可能因权限错误或缺失而失败。取消链接并重新合并 Kick 账户，然后重启 Desktop。如果失败，请参阅 Kick 支持",
+  "Kick stream key failed to generate due to missing permissions": "由于权限缺失，无法生成 Kick 直播密钥",
+  "confirm that a stream key has been generated with 2FA on Kick for use with Streamlabs Desktop and if not ask the user to manually generate one": "确认已在 Kick 上使用双因子验证生成直播密钥，以便与 Streamlabs Desktop 搭配使用，如果没有，则要求用户手动生成",
+  "Login to Kick": "登录 Kick",
+  "Go to: <link></link>": "前往：<link></link>",
+  "Click on the \"eye\" icon to see your stream key": "点击“眼睛”图标，以查看直播密钥",
+  "Put in 2FA": "输入双因子验证",
+  "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "完成双因子验证后，直播密钥已生成，可用于该频道的 Streamlabs Desktop。现在，您应该可以在 Kick 上直播了。"
 }

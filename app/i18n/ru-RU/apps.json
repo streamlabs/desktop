@@ -5,7 +5,7 @@
   "You must unload unpacked version before enabling this app.": "Вы должны выгрузить распакованную версию перед включением этого приложения.",
   "Pop Out": "В новом окне",
   "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "Разработчик прекратил поддержку этого приложения. Приложение может продолжать работать, но не будет получать никаких обновлений. Если вы хотите удалить его, следуйте этим инструкциям.",
-  "Uninstall": "Uninstall",
-  "Other installed apps:": "Other installed apps:",
-  "Open": "Open"
+  "Uninstall": "Удалить",
+  "Other installed apps:": "Другие установленные приложения:",
+  "Open": "Открыть"
 }

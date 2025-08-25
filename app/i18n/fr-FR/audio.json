@@ -43,6 +43,6 @@
   "Mic/Auxiliary Device 1": "Micro/Dispositif auxiliaire 1",
   "Mic/Auxiliary Device 2": "Micro/Dispositif auxiliaire 2",
   "Mic/Auxiliary Device 3": "Micro/Dispositif auxiliaire 3",
-  "Recording Audio Encoder": "Recording Audio Encoder",
-  "Enable Muted Notifications": "Enable Muted Notifications"
+  "Recording Audio Encoder": "Encodeur audio d’enregistrement",
+  "Enable Muted Notifications": "Activer les notifications silencieuses"
 }
