@@ -1,35 +1,82 @@
 import { useRealmObject } from 'components-react/hooks/realm';
 import { Services } from 'components-react/service-provider';
 import React, { useEffect } from 'react';
-import { Button } from 'antd';
+import { Button, Progress } from 'antd';
+import { ObsSettingsSection } from './ObsSettings';
+import { confirmAsync } from 'components-react/modals';
+
+function VisionInstalling(props: { percent: number; isUpdate: boolean }) {
+  const message = props.isUpdate ? 'Updating...' : 'Installing...';
+
+  return (
+    <ObsSettingsSection title={message}>
+      <div style={{ marginBottom: 16 }}>
+        <Progress
+          percent={props.percent * 100}
+          status="active"
+          format={percent => `${(percent || 0).toFixed(0)}%`}
+        />
+      </div>
+    </ObsSettingsSection>
+  );
+}
+
+function VisionInfo(props: {
+  installedVersion: string;
+  isRunning: boolean;
+  isCurrentlyUpdating: boolean;
+  pid: number;
+  port: number;
+}) {
+  return (
+    <ObsSettingsSection title="Streamlabs Vision">
+      <div style={{ marginBottom: 16 }}>
+        <div>Installed: {props.installedVersion ? 'Yes' : 'No'}</div>
+        <div>Version: {props.installedVersion}</div>
+        <div>Running: {props.isRunning ? 'Yes' : 'No'}</div>
+        {props.isRunning && props.pid && <div>PID: {props.pid}</div>}
+        {props.isRunning && props.port && <div>Port: {props.port}</div>}
+      </div>
+    </ObsSettingsSection>
+  );
+}
 
 export function VisionSettings() {
   const { VisionService } = Services;
   const state = useRealmObject(VisionService.state);
 
   useEffect(() => {
-    VisionService.loadCurrentManifest();
-  }, []);
+    if (state.needsUpdate) {
+      let message = 'Streamlabs Vision must be updated before you can use it.';
+      let button = 'Update Now';
 
-  function installVision() {
-    VisionService.actions.ensureVision();
-  }
+      if (!state.installedVersion) {
+        message =
+          'Streamlabs needs to download additional components. Would you like to install them now?';
+        button = 'Install';
+      }
+
+      confirmAsync({ title: message, okText: button }).then(confirmed => {
+        if (confirmed) {
+          VisionService.actions.installOrUpdate();
+        }
+      });
+    }
+  }, []);
 
   return (
     <div>
-      <div>Installed: {state.installedVersion ? 'Yes' : 'No'}</div>
-      {state.installedVersion && <div>Version: {state.installedVersion}</div>}
-      {state.installedVersion && <div>Running: {state.isRunning ? 'Yes' : 'No'}</div>}
-      {state.isCurrentlyUpdating && <div>Progress: {state.percentDownloaded}</div>}
-      {state.isCurrentlyUpdating && state.isInstalling && <div>Installing...</div>}
-      {!state.installedVersion && !state.isCurrentlyUpdating && (
-        <Button onClick={() => installVision()}>Install</Button>
+      <VisionInfo
+        installedVersion={state.installedVersion}
+        isRunning={state.isRunning}
+        isCurrentlyUpdating={state.isCurrentlyUpdating}
+        pid={state.pid || 0}
+        port={state.port || 0}
+      />
+
+      {state.isCurrentlyUpdating && (
+        <VisionInstalling percent={state.percentDownloaded} isUpdate={!!state.installedVersion} />
       )}
-      {state.installedVersion && !state.isRunning && (
-        <Button onClick={() => installVision()}>Start</Button>
-      )}
-      {state.isRunning && state.pid && <div>PID: {state.pid}</div>}
-      {state.isRunning && state.port && <div>Port: {state.port}</div>}
     </div>
   );
 }

@@ -16,10 +16,11 @@ export class SmartBrowserSourceManager extends PropertiesManager {
 
       if (['visionEvent', 'userStateUpdated'].includes(e.type)) {
         //@ts-ignore
-        console.log("success", JSON.stringify(e));
+        console.log('success', JSON.stringify(e));
         this.obsSource.sendMessage({ message: JSON.stringify(e) });
       }
     });
+    this.visionService.ensureVision();
   }
 
   destroy() {

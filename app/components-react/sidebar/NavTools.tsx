@@ -15,6 +15,7 @@ import MenuItem from 'components-react/shared/MenuItem';
 import UltraIcon from 'components-react/shared/UltraIcon';
 import PlatformIndicator from './PlatformIndicator';
 import { AuthModal } from 'components-react/shared/AuthModal';
+import { useRealmObject } from 'components-react/hooks/realm';
 
 export default function SideNav() {
   const {
@@ -25,7 +26,10 @@ export default function SideNav() {
     SideNavService,
     WindowsService,
     UrlService,
+    VisionService,
   } = Services;
+
+  const visionState = useRealmObject(VisionService.state);
 
   const isDevMode = Utils.isDevMode();
 
@@ -53,8 +57,7 @@ export default function SideNav() {
   const [dashboardOpening, setDashboardOpening] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
-  function openSettingsWindow(type?: string, category?: string) {
-    UsageStatisticsService.actions.recordClick('SideNav2', type ?? 'settings');
+  function openSettingsWindow(category?: string) {
     SettingsService.actions.showSettings(category);
   }
 
@@ -180,6 +183,15 @@ export default function SideNav() {
                   </div>
                 }
                 onClick={() => openHelp()}
+              />
+            );
+          } else if (menuItem.key === EMenuItemKey.Vision) {
+            return (
+              <NavToolsItem
+                key={menuItem.key}
+                menuItem={menuItem}
+                className={visionState.isRunning ? styles.vision : undefined}
+                onClick={() => openSettingsWindow('Vision')}
               />
             );
           } else if (menuItem.key === EMenuItemKey.Settings) {

@@ -8,7 +8,7 @@ import { OutputStreamHandler } from 'services/platform-apps/api/modules/native-c
 import crypto from 'crypto';
 import { importExtractZip } from 'util/slow-imports';
 import { pipeline } from 'stream/promises';
-import { HostsService, SourcesService, UserService } from 'app-services';
+import { HostsService, SourcesService, SettingsService, UserService } from 'app-services';
 import { RealmObject } from 'services/realm';
 import { ObjectSchema } from 'realm';
 import http from 'http';
@@ -34,6 +34,7 @@ export class VisionState extends RealmObject {
   isRunning: boolean;
   pid: number;
   port: number;
+  needsUpdate: boolean;
 
   static schema: ObjectSchema = {
     name: 'VisionState',
@@ -44,7 +45,8 @@ export class VisionState extends RealmObject {
       isRunning: { type: 'bool', default: false },
       isInstalling: { type: 'bool', default: false },
       pid: { type: 'int', default: 0 },
-      port: { type: 'int', default: 0 }
+      port: { type: 'int', default: 0 },
+      needsUpdate: { type: 'bool', default: false },
     },
   };
 }
@@ -64,6 +66,7 @@ export class VisionService extends Service {
   @Inject() userService: UserService;
   @Inject() hostsService: HostsService;
   @Inject() private sourcesService: SourcesService;
+  @Inject() settingsService: SettingsService;
 
   state = VisionState.inject();
 
@@ -104,25 +107,46 @@ export class VisionService extends Service {
   }
 
   /**
-   * Ensures the following:
-   * - vision is downloaded and up to date
-   * - vision is running and sending events
-   * - we are subscribed to events
+   * Will pop up a dialog if vision is not installed
+   * or requires an update.
    */
   async ensureVision() {
+    if (this.proc && this.proc.exitCode != null) return;
+
     const needsUpdate = await this.isNewVersionAvailable();
 
+    this.state.db.write(() => {
+      this.state.needsUpdate = needsUpdate;
+    });
+
     if (needsUpdate) {
-      await this.update(progress => {
-        this.state.db.write(() => {
-          this.state.percentDownloaded = progress.percent;
-        });
-      });
-
-      await this.loadCurrentManifest();
+      this.settingsService.showSettings('Vision');
+    } else {
+      await this.startVision();
     }
+  }
 
-    if (this.proc && this.proc.killed) {
+  async installOrUpdate() {
+    if (this.state.isCurrentlyUpdating) return;
+
+    await this.update(progress => {
+      this.state.db.write(() => {
+        this.state.percentDownloaded = progress.percent;
+      });
+    });
+
+    await this.loadCurrentManifest();
+
+    this.state.db.write(() => {
+      this.state.needsUpdate = false;
+      this.state.percentDownloaded = 0;
+    });
+
+    await this.startVision();
+  }
+
+  async startVision() {
+    if (this.proc && this.proc.exitCode != null) {
       this.proc = null;
     }
 
@@ -434,6 +458,9 @@ export class VisionService extends Service {
 
     this.eventSource.onmessage = e => {
       console.log('GOT EVENT', e.data);
+
+      // Filter out game process detection events
+      if (e.data['events'].find((e: any) => e.name === 'game_process_detected')) return;
 
       const headers = authorizedHeaders(
         this.userService.apiToken,
