@@ -76,34 +76,35 @@ export class VisionService extends Service {
     this.basepath = path.join(remote.app.getPath('userData'), '..', 'streamlabs-vision');
     this.manifestPath = path.resolve(this.basepath, 'manifest.json');
 
+    obs.NodeObs.RegisterSourceMessageCallback(
+      async (evt: { sourceName: string; message: any }[]) => {
+        console.log('SmartBrowserSourceManager: Received source message', evt);
 
-    obs.NodeObs.RegisterSourceMessageCallback(async (evt: { sourceName: string; message: any; }[]) => {
-      console.log("SmartBrowserSourceManager: Received source message", evt);
+        for (const { sourceName, message } of evt) {
+          const source = this.sourcesService.views.getSource(sourceName)?.getObsInput();
 
-      for (const { sourceName, message } of evt) {
-        const source = this.sourcesService.views.getSource(sourceName)?.getObsInput();
+          if (!source) {
+            continue;
+          }
 
-        if (!source) {
-          continue;
+          const keys = JSON.parse(message).keys;
+          const tree = convertDotNotationToTree(keys);
+          const res = await this.requestState({ query: tree });
+          const payload = JSON.stringify({
+            type: 'state.update',
+            message: res,
+            key: keys?.join(','),
+            event_id: uuid(),
+          });
+
+          console.log('SmartBrowserSourceManager: Sending message to source', sourceName, payload);
+
+          source.sendMessage({
+            message: payload,
+          });
         }
-
-        const keys = JSON.parse(message).keys;
-        const tree = convertDotNotationToTree(keys);
-        const res = await this.requestState({ query: tree });
-        const payload = JSON.stringify({
-          type: 'state.update',
-          message: res,
-          key: keys?.join(","),
-          event_id: uuid(),
-        });
-
-        console.log("SmartBrowserSourceManager: Sending message to source", sourceName, payload);
-
-        source.sendMessage({
-          message: payload
-        });
-      }
-    });
+      },
+    );
   }
 
   /**
@@ -148,9 +149,12 @@ export class VisionService extends Service {
   async startVision() {
     if (this.proc && this.proc.exitCode != null) {
       this.proc = null;
+      this.state.db.write(() => {
+        this.state.isRunning = false;
+      });
     }
 
-    if (!this.proc) {
+    if (!this.proc && !this.state.isRunning) {
       this.state.db.write(() => {
         this.state.isRunning = true;
       });
@@ -480,8 +484,10 @@ export class VisionService extends Service {
 
   requestState(params: any) {
     const url = `https://${this.hostsService.streamlabs}/api/v5/user-state/desktop/query`;
-    const headers = authorizedHeaders(this.userService.apiToken, new Headers({ 'Content-Type': 'application/json' }));
-    return jfetch(url, { headers, method: 'POST', body: JSON.stringify(params) })
+    const headers = authorizedHeaders(
+      this.userService.apiToken,
+      new Headers({ 'Content-Type': 'application/json' }),
+    );
+    return jfetch(url, { headers, method: 'POST', body: JSON.stringify(params) });
   }
 }
-
