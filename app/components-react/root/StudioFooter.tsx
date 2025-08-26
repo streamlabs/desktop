@@ -198,15 +198,20 @@ export default function StudioFooterComponent() {
 }
 
 function RecordingButton() {
-  const { StreamingService, DualOutputService } = Services;
-  const { isHorizontalRecording, isVerticalRecording, recordingStatus, isDualOutputMode } = useVuex(
-    () => ({
-      isHorizontalRecording: StreamingService.views.isHorizontalRecording,
-      isVerticalRecording: StreamingService.views.isVerticalRecording,
-      recordingStatus: StreamingService.views.recordingStatus,
-      isDualOutputMode: DualOutputService.views.dualOutputMode,
-    }),
-  );
+  const { StreamingService, DualOutputService, HighlighterService } = Services;
+  const {
+    isHorizontalRecording,
+    isVerticalRecording,
+    recordingStatus,
+    isDualOutputMode,
+    useAiHighlighter,
+  } = useVuex(() => ({
+    isHorizontalRecording: StreamingService.views.isHorizontalRecording,
+    isVerticalRecording: StreamingService.views.isVerticalRecording,
+    recordingStatus: StreamingService.views.recordingStatus,
+    isDualOutputMode: DualOutputService.views.dualOutputMode,
+    useAiHighlighter: HighlighterService.views.useAiHighlighter,
+  }));
   const isRecording = isHorizontalRecording || isVerticalRecording;
 
   function toggleRecording() {
@@ -224,7 +229,11 @@ function RecordingButton() {
         <Tooltip
           placement="left"
           title={
-            <RecordingTooltipTitle isRecording={isRecording} isDualOutputMode={isDualOutputMode} />
+            <RecordingTooltipTitle
+              isRecording={isRecording}
+              isDualOutputMode={isDualOutputMode}
+              useAiHighlighter={useAiHighlighter}
+            />
           }
         >
           <button
@@ -261,11 +270,22 @@ function RecordingTimer(p: { isRecording: boolean }) {
   return <div className={cx(styles.navItem, styles.recordTime)}>{recordingTime}</div>;
 }
 
-function RecordingTooltipTitle(p: { isRecording: boolean; isDualOutputMode: boolean }) {
+function RecordingTooltipTitle(p: {
+  isRecording: boolean;
+  isDualOutputMode: boolean;
+  useAiHighlighter: boolean;
+}) {
   const text = p.isRecording ? $t('Stop Recording') : $t('Start Recording');
-  return p.isDualOutputMode && !p.isRecording ? (
-    <RecordingSwitcher label={$t('Start Recording')} />
-  ) : (
-    <span>{text}</span>
+
+  return (
+    <>
+      {p.useAiHighlighter && (
+        <span>{$t('AI Highlighter  is enabled. Recording will start when stream starts.')}</span>
+      )}
+      {p.isDualOutputMode && !p.isRecording && !p.useAiHighlighter && (
+        <RecordingSwitcher label={$t('Start Recording')} />
+      )}
+      {!p.isDualOutputMode && !p.useAiHighlighter && <span>{text}</span>}
+    </>
   );
 }

@@ -3,7 +3,6 @@ import { mutation, StatefulService } from 'services/core/stateful-service';
 import {
   EOutputCode,
   Global,
-  NodeObs,
   SimpleStreamingFactory,
   ServiceFactory,
   VideoEncoderFactory,
@@ -55,7 +54,7 @@ import {
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
 import { StreamSettingsService } from '../settings/streaming';
-import { RestreamService, TOutputOrientation } from 'services/restream';
+import { RestreamService } from 'services/restream';
 import Utils from 'services/utils';
 import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
@@ -82,6 +81,7 @@ import { capitalize } from 'lodash';
 import { YoutubeService } from 'app-services';
 import { EOBSOutputType, EOBSOutputSignal, IOBSOutputSignalInfo } from 'services/core/signals';
 import { SignalsService } from 'services/signals-manager';
+import { HighlighterService } from 'services/highlighter';
 
 type TOBSOutputType = 'streaming' | 'recording' | 'replayBuffer';
 
@@ -119,6 +119,7 @@ export class StreamingService
   @Inject() private youtubeService: YoutubeService;
   @Inject() private settingsService: SettingsService;
   @Inject() private signalsService: SignalsService;
+  @Inject() private highlighterService: HighlighterService;
 
   streamingStatusChange = new Subject<EStreamingState>();
   recordingStatusChange = new Subject<ERecordingState>();
@@ -1904,9 +1905,10 @@ export class StreamingService
         return;
       }
 
-      const display = this.views.isDualOutputMode
-        ? this.views.getOutputDisplayType()
-        : 'horizontal';
+      const display =
+        this.views.isDualOutputMode && !this.highlighterService.views.useAiHighlighter
+          ? this.views.getOutputDisplayType()
+          : 'horizontal';
 
       // TODO Fix: There is a bug with creating the vertical recording without having created a horizontal
       // recording instance first in the app's current session. A band-aid solution is to always create the
@@ -2030,6 +2032,12 @@ export class StreamingService
       // If the replay buffer is hanging, we can try to stop it again
       this.contexts[display].replayBuffer.stop(true);
       this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Stopping, display, new Date().toISOString());
+    }
+
+    // TODO: remove when highlighter has support for vertical display
+    if (display === 'vertical' && this.contexts.horizontal.replayBuffer) {
+      // Handle vertical display case
+      this.contexts.horizontal.replayBuffer.stop(true);
     }
   }
 

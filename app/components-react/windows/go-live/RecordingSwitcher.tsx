@@ -51,7 +51,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
   const showRecordingToggle = p?.showRecordingToggle ?? false;
   const showRecordingIcons = v.isDualOutputMode && (canRecordVertical || canRecordDualOutput);
   const disableToggle = v.useAiHighlighter || v.isRecording;
-  const disableIcons = v.isRecording || v.isReplayBufferActive;
+  const disableIcons = v.useAiHighlighter || v.isRecording || v.isReplayBufferActive;
 
   const options = useMemo(() => {
     const opts = [
@@ -73,7 +73,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
     <div style={p?.style} className={cx(p?.className, styles.recordingSwitcher)}>
       <Tooltip
         title={message}
-        disabled={!disableToggle}
+        disabled={!disableToggle && !p?.showTooltip}
         placement="topRight"
         lightShadow
         className={styles.recordingTooltip}
