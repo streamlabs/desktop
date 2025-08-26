@@ -1220,12 +1220,18 @@ export class StreamingService
       } else if (this.views.recordingStatus === ERecordingState.Offline) {
         await this.handleStartRecording();
       } else if (this.views.recordingStatus === ERecordingState.Stopping) {
-        if (this.contexts.horizontal.recording !== null) {
+        if (
+          this.contexts.horizontal.recording !== null &&
+          this.state.status.horizontal.recording !== ERecordingState.Offline
+        ) {
           console.warn('Force stopping horizontal recording');
           this.contexts.horizontal.recording.stop(true);
         }
 
-        if (this.contexts.vertical.recording !== null) {
+        if (
+          this.contexts.vertical.recording !== null &&
+          this.state.status.vertical.recording !== ERecordingState.Offline
+        ) {
           console.warn('Force stopping vertical recording');
           this.contexts.vertical.recording.stop(true);
         }
@@ -1239,7 +1245,10 @@ export class StreamingService
       console.error('Error toggling recording:', e);
 
       // Create a `StreamError` to correctly display the error message
-      const display = this.contexts.horizontal.recording !== null ? 'horizontal' : 'vertical';
+      const display =
+        this.state.status.horizontal.recording !== ERecordingState.Offline
+          ? 'horizontal'
+          : 'vertical';
       const message =
         e instanceof StreamError
           ? e.message
@@ -1255,10 +1264,9 @@ export class StreamingService
 
       this.handleOBSOutputError(error);
 
-      // Destroy any existing recording instances and reset the recording state
+      // Destroy any existing recording instance and reset the recording state
       // Do not return or throw an error afterwards to allow for the stream and replay buffer to still be toggled
-      this.destroyOutputContextIfExists('horizontal', 'recording');
-      this.destroyOutputContextIfExists('vertical', 'recording');
+      this.handleDestroyOutputContexts(display);
     }
 
     return Promise.resolve();
@@ -1267,7 +1275,7 @@ export class StreamingService
   private async handleStartRecording() {
     // Only attempt to create recording instances if the recording status is offline
     // This prevents errors when trying to create a recording instance when one already exists
-    if (this.views.isRecording) {
+    if (this.isRecording) {
       console.warn('Recording already in progress');
       return;
     }
@@ -1297,10 +1305,7 @@ export class StreamingService
         // recording instance first in the app's current session. A band-aid solution is to always create the
         // horizontal recording instance and then destroy it since we won't be using it.
         if (this.contexts.horizontal.recording === null) {
-          await this.validateOrCreateOutputInstance('horizontal', 'recording', 1, false);
-          Utils.sleep(500).then(async () => {
-            await this.destroyOutputContextIfExists('horizontal', 'recording');
-          });
+          await this.createTemporaryHorizontalRecording();
         }
 
         await this.validateOrCreateOutputInstance('vertical', 'recording', 2, true);
@@ -1308,6 +1313,24 @@ export class StreamingService
     } else {
       // In single output mode, only record using the horizontal display
       await this.validateOrCreateOutputInstance('horizontal', 'recording', 1, true);
+    }
+  }
+
+  /**
+   * Creates and destroys a horizontal recording instance
+   * @remark  There is a bug with creating the vertical recording without having created a horizontal
+   * recording instance first in the app's current session. A band-aid solution is to always create the
+   * horizontal recording instance and then destroy it since we won't be using it.
+   */
+  private async createTemporaryHorizontalRecording() {
+    // TODO Fix: There is a bug with creating the vertical recording without having created a horizontal
+    // recording instance first in the app's current session. A band-aid solution is to always create the
+    // horizontal recording instance and then destroy it since we won't be using it.
+    if (this.contexts.horizontal.recording === null) {
+      await this.validateOrCreateOutputInstance('horizontal', 'recording', 1, false);
+      Utils.sleep(500).then(async () => {
+        await this.destroyOutputContextIfExists('horizontal', 'recording');
+      });
     }
   }
 
@@ -1319,8 +1342,11 @@ export class StreamingService
     if (this.views.isDualOutputMode) {
       // Stop dual output recording
       if (
+        this.views.isDualOutputRecording &&
         this.contexts.vertical.recording !== null &&
-        this.contexts.horizontal.recording !== null
+        this.contexts.horizontal.recording !== null &&
+        this.state.status.vertical.recording === ERecordingState.Recording &&
+        this.state.status.horizontal.recording === ERecordingState.Recording
       ) {
         this.contexts.horizontal.recording.stop();
 
@@ -1337,22 +1363,30 @@ export class StreamingService
       // Stop vertical recording
       // This is only called in dual output mode because recording the vertical display is not a feature for single output mode
       // This is also a failsafe to prevent errors in case the vertical recording failed to stop for some reason
-      if (this.contexts.vertical.recording !== null) {
+      if (
+        this.contexts.vertical.recording !== null &&
+        this.state.status.vertical.recording === ERecordingState.Recording
+      ) {
         this.contexts.vertical.recording.stop(true);
+        return;
       }
 
       // Stop horizontal recording
       // This can be called in both single and dual output modes
-      // This is also a failsafe to prevent errors in case the horizontal recording failed to stop for some reason
-
-      if (this.contexts.horizontal.recording !== null) {
+      if (
+        this.contexts.horizontal.recording !== null &&
+        this.state.status.horizontal.recording === ERecordingState.Recording
+      ) {
         this.contexts.horizontal.recording.stop(true);
       }
     } else {
       // Stop recording in single output mode
       // Note: This will always only be the horizontal display because recording the vertical display is only a
       // feature for dual output mode
-      if (this.contexts.horizontal.recording !== null) {
+      if (
+        this.contexts.horizontal.recording !== null &&
+        this.state.status.horizontal.recording === ERecordingState.Recording
+      ) {
         this.contexts.horizontal.recording.stop();
       }
     }
@@ -1573,9 +1607,13 @@ export class StreamingService
     } catch (e: unknown) {
       console.error('Error handling output signal:', e);
       await this.handleFactoryOutputError(info, display);
-      this.RESET_STREAM_INFO();
-      this.rejectStartStreaming();
-      this.handleDestroyAllInstances();
+
+      if (info.type === EOBSOutputType.Streaming) {
+        this.rejectStartStreaming();
+        this.resetInfo();
+      }
+
+      await this.handleDestroyOutputContexts(display);
     }
   }
 
@@ -1663,7 +1701,7 @@ export class StreamingService
           status: EStreamingState.Offline,
         });
 
-        await this.handleDestroyAllInstances();
+        await this.handleDestroyOutputContexts(display);
       }
     } else if (info.signal === EOBSOutputSignal.Deactivate) {
       // The `deactivate` signal is sent after the `stop` signal
@@ -1692,7 +1730,7 @@ export class StreamingService
       // or replay buffer is still active.
       if (keepRecording || keepReplaying) return;
 
-      await this.handleDestroyAllInstances();
+      await this.handleDestroyOutputContexts(display);
     } else if (info.signal === EOBSOutputSignal.Reconnect) {
       this.sendReconnectingNotification();
     } else if (info.signal === EOBSOutputSignal.ReconnectSuccess) {
@@ -1836,28 +1874,8 @@ export class StreamingService
         }
         this.contexts.vertical.replayBuffer.stop();
       }
-      // The replay buffer must have a recording an streaming instance but they may be
-      // running when the replay buffer is stopped so only destroy the streaming and recording
-      // instances if they are offline to prevent unintended side effects, such as accidentally
-      // stopping the stream or recording. Unlike the recording instance, the replay buffer instance
-      // will not throw and error if the recording and streaming instances do not exist even though
-      // they are required for the replay buffer instance to work correctly.
 
-      // The recording instance must be destroyed the streaming instance because a streaming instance
-      // is required for the recording instance. Destroying the streaming instance before the recording
-      // instance will result in an error when trying to stop the recording instance.
-      if (this.state.status[display].recording === ERecordingState.Offline) {
-        await this.destroyOutputContextIfExists(display, 'recording');
-      }
-
-      // Only destroy the streaming instance if it is offline to prevent errors when trying to stop
-      // and destroy the recording instance.
-      if (this.state.status[display].streaming === EStreamingState.Offline) {
-        await this.destroyOutputContextIfExists(display, 'streaming');
-      }
-
-      // Finally, the replay buffer instance can be destroyed.
-      await this.destroyOutputContextIfExists(display, 'replayBuffer');
+      await this.handleDestroyOutputContexts(display);
     }
 
     const time = new Date().toISOString();
@@ -1878,7 +1896,7 @@ export class StreamingService
    * REPLAY BUFFER
    */
 
-  startReplayBuffer(display?: TDisplayType): void {
+  startReplayBuffer(): void {
     try {
       // Only attempt to create or start the replay buffer instance if the replay buffer is offline
       if (this.views.isReplayBufferActive) {
@@ -1886,18 +1904,20 @@ export class StreamingService
         return;
       }
 
-      if (this.views.isDualOutputMode) {
-        // Handle dual output mode replay buffer
-        const output = display ?? this.views.getOutputDisplayType();
-        this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Running, output);
-        const audioTrackIndex = output === 'horizontal' ? 1 : 2;
-        this.createReplayBuffer(output, audioTrackIndex);
-      } else {
-        // Handle single output mode replay buffer
-        this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Running, 'horizontal');
-        this.createReplayBuffer('horizontal', 1);
-        return;
+      const display = this.views.isDualOutputMode
+        ? this.views.getOutputDisplayType()
+        : 'horizontal';
+
+      // TODO Fix: There is a bug with creating the vertical recording without having created a horizontal
+      // recording instance first in the app's current session. A band-aid solution is to always create the
+      // horizontal recording instance and then destroy it since we won't be using it.
+      if (display === 'vertical' && this.contexts.horizontal.recording === null) {
+        this.createTemporaryHorizontalRecording();
       }
+
+      this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Running, display);
+      const audioTrackIndex = display === 'horizontal' ? 1 : 2;
+      this.createReplayBuffer(display, audioTrackIndex);
     } catch (e: unknown) {
       console.error('Error toggling replay buffer:', e);
 
@@ -1920,8 +1940,7 @@ export class StreamingService
 
       // Destroy any existing replay buffer instances and reset the replay buffer state
       // Do not return or throw an error afterwards to allow for the stream and recording to still be toggled
-      this.destroyOutputContextIfExists('horizontal', 'replayBuffer');
-      this.destroyOutputContextIfExists('vertical', 'replayBuffer');
+      this.handleDestroyOutputContexts(display);
     }
   }
 
@@ -1977,7 +1996,7 @@ export class StreamingService
   }
 
   stopReplayBuffer() {
-    const display = this.views.getOutputDisplayType();
+    const display = this.views.isDualOutputMode ? this.views.getOutputDisplayType() : 'horizontal';
 
     // To prevent errors, if the replay buffer instance does not exist and the status is not offline, log an error
     // and reset the replay buffer status to offline.
@@ -1999,7 +2018,7 @@ export class StreamingService
       console.error(
         'Replay buffer instance exists but the status is offline. Destroying instance.',
       );
-      this.destroyOutputContextIfExists(display, 'replayBuffer');
+      this.handleDestroyOutputContexts(display);
       return;
     }
 
@@ -2050,15 +2069,49 @@ export class StreamingService
       return true;
     }
 
+    const restartReplayBuffer =
+      this.contexts[display].replayBuffer &&
+      this.state.status[display].replayBuffer !== EReplayBufferState.Offline;
+
+    const restartRecording =
+      this.contexts[display].recording &&
+      this.state.status[display].recording !== ERecordingState.Offline;
+
+    if (restartReplayBuffer) {
+      this.contexts[display].replayBuffer.stop();
+    }
+
+    if (restartRecording) {
+      this.contexts[display].recording.stop();
+    }
+
     await this.destroyOutputContextIfExists(display, type);
 
     if (type === 'streaming') {
+      console.log('createStreaming');
+
       await this.createStreaming(display, index, start);
     } else {
+      console.log('createRecording');
       await this.createRecording(display, index, start);
     }
 
-    // TODO REMOVE RECORDING RESTRICTION AND ADD MODAL
+    if (this.contexts[display].recording !== null) {
+      this.contexts[display].recording.streaming = this.contexts[display].streaming;
+    }
+
+    if (restartRecording) {
+      this.contexts[display].recording.start();
+    }
+
+    if (this.contexts[display].replayBuffer !== null) {
+      this.contexts[display].replayBuffer.streaming = this.contexts[display].streaming;
+    }
+
+    if (restartReplayBuffer) {
+      this.contexts[display].replayBuffer.start();
+    }
+
     return false;
   }
 
@@ -2162,9 +2215,7 @@ export class StreamingService
       service: display as string,
     } as IOBSOutputSignalInfo;
 
-    await this.destroyOutputContextIfExists(display, 'replayBuffer');
-    await this.destroyOutputContextIfExists(display, 'recording');
-    await this.destroyOutputContextIfExists(display, 'streaming');
+    await this.handleDestroyOutputContexts(display);
 
     this.handleOBSOutputError(legacyInfo);
 
@@ -2566,10 +2617,8 @@ export class StreamingService
    * on app shutdown to prevent errors.
    */
   shutdown() {
-    Object.keys(this.contexts).forEach((display: TDisplayType) => {
-      Object.keys(this.contexts[display]).forEach(async (contextType: keyof IOutputContext) => {
-        this.destroyOutputContextIfExists(display, contextType);
-      });
+    Object.keys(this.contexts).forEach(async (display: TDisplayType) => {
+      await this.handleDestroyOutputContexts(display);
     });
   }
 
@@ -2584,26 +2633,12 @@ export class StreamingService
       this.state.status[display].replayBuffer === EReplayBufferState.Offline &&
       this.state.status[display].recording === ERecordingState.Offline &&
       this.state.status[display].streaming === EStreamingState.Offline;
+
     if (offline) {
       await this.destroyOutputContextIfExists(display, 'replayBuffer');
       await this.destroyOutputContextIfExists(display, 'recording');
       await this.destroyOutputContextIfExists(display, 'streaming');
     }
-  }
-
-  /**
-   * Destroy all factory API instances for all displays
-   * @remark Primarily used for cleanup when rejecting starting the stream
-   */
-  private async handleDestroyAllInstances() {
-    // DOES ORDER MATTER HERE???
-    // Dual output recording state not updating correctly
-    // Vertical recording instance will only go live if the horizontal instance is created first
-    // so something is referencing the horizontal instance when creating the vertical instance
-    await this.handleDestroyOutputContexts('horizontal');
-    await this.handleDestroyOutputContexts('vertical');
-
-    this.resetInfo();
   }
 
   /**

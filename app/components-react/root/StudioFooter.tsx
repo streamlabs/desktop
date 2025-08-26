@@ -35,6 +35,7 @@ export default function StudioFooterComponent() {
     replayBufferOffline,
     replayBufferStopping,
     replayBufferSaving,
+    isReplayBufferActive,
     recordingModeEnabled,
     replayBufferEnabled,
   } = useVuex(() => ({
@@ -44,9 +45,10 @@ export default function StudioFooterComponent() {
       StreamingService.views.supports('stream-schedule') &&
       !RecordingModeService.views.isRecordingModeEnabled,
     streamQuality: PerformanceService.views.streamQuality,
-    replayBufferOffline: StreamingService.views.replayBufferStatus === EReplayBufferState.Offline,
+    replayBufferOffline: StreamingService.state.replayBufferStatus === EReplayBufferState.Offline,
     replayBufferStopping: StreamingService.state.replayBufferStatus === EReplayBufferState.Stopping,
     replayBufferSaving: StreamingService.state.replayBufferStatus === EReplayBufferState.Saving,
+    isReplayBufferActive: StreamingService.views.isReplayBufferActive,
     recordingModeEnabled: RecordingModeService.views.isRecordingModeEnabled,
     replayBufferEnabled: SettingsService.views.values.Output.RecRB,
   }));
@@ -150,7 +152,7 @@ export default function StudioFooterComponent() {
             </Tooltip>
           </div>
         )}
-        {!replayBufferOffline && (
+        {isReplayBufferActive && (
           <div className={cx(styles.navItem, styles.replayButtonGroup)}>
             <AntdTooltip placement="left" title={$t('Stop')}>
               <button
