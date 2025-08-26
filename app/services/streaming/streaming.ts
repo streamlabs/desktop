@@ -2035,7 +2035,7 @@ export class StreamingService
     }
 
     // TODO: remove when highlighter has support for vertical display
-    if (display === 'vertical' && this.contexts.horizontal.replayBuffer) {
+    if (display === 'vertical' && this.contexts.horizontal.replayBuffer !== null) {
       // Handle vertical display case
       this.contexts.horizontal.replayBuffer.stop(true);
     }
