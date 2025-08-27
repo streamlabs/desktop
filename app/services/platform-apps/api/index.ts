@@ -18,6 +18,7 @@ import { SceneTransitionsModule } from './modules/scene-transitions';
 import { ReplayModule } from './modules/replay';
 import { StreamlabelsModule } from './modules/streamlabels';
 import { TwitchModule } from './modules/twitch';
+import { VisionModule } from './modules/vision';
 import { NativeComponentsModule } from './modules/native-components';
 
 export class PlatformAppsApi {
@@ -42,6 +43,7 @@ export class PlatformAppsApi {
     this.registerModule(new ReplayModule());
     this.registerModule(new StreamlabelsModule());
     this.registerModule(new TwitchModule());
+    this.registerModule(new VisionModule());
     this.registerModule(new NativeComponentsModule());
   }
 

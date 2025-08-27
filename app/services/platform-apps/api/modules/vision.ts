@@ -1,5 +1,5 @@
 import { VisionService } from 'services/vision';
-import { apiEvent, apiMethod, EApiPermissions, Module } from './module';
+import { apiEvent, apiMethod, EApiPermissions, IApiContext, Module } from './module';
 import { Inject } from 'services';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { WebsocketService } from 'app-services';
@@ -30,9 +30,11 @@ export class VisionModule extends Module {
   @apiEvent()
   visionEvent = new Subject<Dictionary<any>>();
 
-  private initiateSubscription() {
+  @apiMethod()
+  public initiateSubscription() {
     if (!this.eventSub) {
       this.eventSub = this.websocketService.socketEvent.subscribe(e => {
+        console.log("Received websocket event:", e);
         if (e.type === 'userStateUpdated') {
           // @ts-ignore
           this.userState.next(e.message.updated_states);
@@ -42,11 +44,31 @@ export class VisionModule extends Module {
 
         if (e.type === 'visionEvent') {
           // @ts-ignore
-          const events: any[] = e.message;
+          const event: any = e.message;
 
-          events.forEach(e => this.visionEvent.next(e));
+          this.visionEvent.next(event);
         }
       });
     }
+  }
+
+  @apiMethod()
+  async requestAvailableProcesses() {
+    return this.visionService.requestAvailableProcesses();
+  }
+
+  @apiMethod()
+  async requestActiveProcess() {
+    return this.visionService.requestActiveProcess();
+  }
+
+  @apiMethod()
+  async activateProcess(_ctx: IApiContext, pid: string) {
+    return this.visionService.activateProcess(pid);
+  }
+
+  @apiMethod()
+  async requestFrame() {
+    return this.visionService.requestFrame();
   }
 }

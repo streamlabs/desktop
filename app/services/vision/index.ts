@@ -491,4 +491,32 @@ export class VisionService extends Service {
     );
     return jfetch(url, { headers, method: 'POST', body: JSON.stringify(params) });
   }
+
+  requestFrame() {
+    const url = `http://localhost:${this.state.port}/query/vision_frame`;
+    const headers = new Headers({ 'Content-Type': 'application/json' });
+
+    return jfetch(url, { headers, method: 'GET' });
+  }
+
+  requestActiveProcess() {
+    const url = `http://localhost:${this.state.port}}/processes/active`;
+    const headers = new Headers({ 'Content-Type': 'application/json' });
+
+    return jfetch(url, { headers, method: 'GET' });
+  }
+
+  requestAvailableProcesses() {
+    const url = `http://localhost:${this.state.port}/processes`;
+    const headers = new Headers({ 'Content-Type': 'application/json' });
+
+    return jfetch(url, { headers, method: 'GET' });
+  }
+
+  activateProcess(pid: string) {
+    const url = `http://localhost:${this.state.port}/processes/${pid}/activate`;
+    const headers = new Headers({ 'Content-Type': 'application/json' });
+
+    return jfetch(url, { headers, method: 'POST' });
+  }
 }
