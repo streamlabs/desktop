@@ -390,6 +390,7 @@ function LiveDock() {
                 <i onClick={() => ctrl.openPlatformStream()} className="icon-studio" />
               </Tooltip>
             )}
+            {isStreaming && <ShareStreamLink />}
             {hasLiveDockFeature('dashboard') && isStreaming && (
               <Tooltip
                 title={$t('Go to Live Dashboard')}
