@@ -135,6 +135,12 @@ export class AnnouncementsService extends Service {
       this.fetchLatestNews();
       this.getBanner();
     });
+
+    // Open product updates modal once loading is finished
+    this.appService.loadingChanged.subscribe(() => {
+      if (this.appService.state.loading || !this.userService.isLoggedIn) return;
+      this.getProductUpdates();
+    });
   }
 
   get newsExist() {
@@ -350,10 +356,10 @@ export class AnnouncementsService extends Service {
   openProductUpdates() {
     this.windowsService.showWindow({
       componentName: 'MarketingModal',
-      title: $t('New On Streamlabs Desktop'),
+      title: $t("What's New"),
       size: {
-        width: 500,
-        height: 600,
+        width: 650,
+        height: 700,
       },
     });
   }
