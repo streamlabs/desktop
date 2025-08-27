@@ -5,7 +5,7 @@
   "You must unload unpacked version before enabling this app.": "Bu uygulamayı etkinleştirmeden önce açık sürümü kaldırmanız gerekir.",
   "Pop Out": "Açılır Pencere",
   "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "Geliştirici bu uygulama için desteği sonlandırdı. Uygulama çalışmaya devam edebilir ancak uygulama için güncelleme yayınlanmayacaktır. Kaldırmak isterseniz lütfen buradaki talimatları izleyin.",
-  "Uninstall": "Uninstall",
-  "Other installed apps:": "Other installed apps:",
-  "Open": "Open"
+  "Uninstall": "Kaldırın",
+  "Other installed apps:": "Diğer yüklü uygulamalar:",
+  "Open": "Aç"
 }
