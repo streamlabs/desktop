@@ -42,6 +42,7 @@ enum InstallationErrorCodes {
   OSSystemExtensionErrorAuthorizationRequired = 13,
   RebootRequired = 100, // slobs-virtualcam-installer custom error
   UserApprovalRequired = 101, // slobs-virtualcam-installer custom error
+  MacOS13Unavailable = 102,
   UnknownError = 999, // slobs-virtualcam-installer custom error
 }
 
@@ -133,6 +134,11 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
           }
         }
         break;
+      case InstallationErrorCodes.MacOS13Unavailable:
+        errorMessage = $t(
+          'Streamlabs Virtual Webcam feature requires macOS 13 or later.',
+        );
+        break;
       default:
         errorMessage = $t('An error has occured while installing the virtual camera');
         break;
@@ -180,15 +186,6 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
         this.setInstallStatus();
       },
       [OS.Mac]: () => {
-        const macOSVersion = process.getSystemVersion();
-        const [major, _] = macOSVersion.split('.').map(Number);
-        if (major < 13) {
-          remote.dialog.showErrorBox(
-            $t('Virtual Webcam'),
-            $t('Streamlabs Virtual Webcam feature requires macOS 13 or later.'),
-          );
-          return;
-        }
         this.signalsService.addCallback(this.handleSignalOutput);
 
         const errorCode = obs.NodeObs.OBS_service_installVirtualCamPlugin();
