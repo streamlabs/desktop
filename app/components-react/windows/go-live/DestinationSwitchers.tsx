@@ -13,7 +13,7 @@ import DisplaySelector from 'components-react/shared/DisplaySelector';
 import DestinationSelector from './DestinationSelector';
 import AddDestinationButton from 'components-react/shared/AddDestinationButton';
 import { promptAction } from 'components-react/modals';
-import Tooltip from 'components-react/shared/Tooltip';
+import { Tooltip } from 'antd';
 
 /**
  * Allows enabling/disabling platforms and custom destinations for the stream
@@ -419,11 +419,11 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
       {/* DUAL OUTPUT */}
       {p.isDualOutputMode && (
         <Tooltip
-          title={$t('Disable Twitch dual stream to add another platform')}
-          disabled={!p.showTwitchTooltip}
-          placement="bottom"
-          lightShadow
-          styleContent={false}
+          title={
+            p.showTwitchTooltip ? $t('Disable Twitch dual stream to add another platform') : null
+          }
+          placement="left"
+          overlayClassName={styles.switcherTooltip}
         >
           <div
             ref={containerRef}
