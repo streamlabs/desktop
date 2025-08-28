@@ -148,6 +148,7 @@
   "An error has occured while uninstalling the virtual camera": "卸载虚拟摄像头时发生错误",
   "Streamlabs Desktop cannot install the virtual camera if it's not in Applications. Please move Streamlabs Desktop to the Applications directory.": "如果虚拟摄像头不在应用程序中，Streamlabs Desktop 则无法安装。请将 Streamlabs Desktop 移动至应用程序目录。",
   "The installation of the virtual camera will complete after a system reboot.": "虚拟摄像头的安装将在系统重启后完成。",
+  "Streamlabs Virtual Webcam feature requires macOS 13 or later.": "Streamlabs Virtual Webcam feature requires macOS 13 or later.",
   "Output Type": "输出类型",
   "Output Selection": "输出选择",
   "Output Source": "输出源",
