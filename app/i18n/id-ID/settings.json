@@ -148,6 +148,7 @@
   "An error has occured while uninstalling the virtual camera": "Terjadi kesalahan saat mencopot instalan kamera virtual",
   "Streamlabs Desktop cannot install the virtual camera if it's not in Applications. Please move Streamlabs Desktop to the Applications directory.": "Streamlabs Desktop tidak dapat menginstal kamera virtual jika tidak ada di Aplikasi. Pindahkan Streamlabs Desktop ke direktori Aplikasi.",
   "The installation of the virtual camera will complete after a system reboot.": "Penginstalan kamera virtual akan selesai setelah sistem di-boot ulang.",
+  "Streamlabs Virtual Webcam feature requires macOS 13 or later.": "Streamlabs Virtual Webcam feature requires macOS 13 or later.",
   "Output Type": "Jenis Keluaran",
   "Output Selection": "Pemilihan Keluaran",
   "Output Source": "Sumber Keluaran",
