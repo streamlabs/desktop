@@ -13,6 +13,7 @@ import DisplaySelector from 'components-react/shared/DisplaySelector';
 import DestinationSelector from './DestinationSelector';
 import AddDestinationButton from 'components-react/shared/AddDestinationButton';
 import { promptAction } from 'components-react/modals';
+import Tooltip from 'components-react/shared/Tooltip';
 
 /**
  * Allows enabling/disabling platforms and custom destinations for the stream
@@ -31,7 +32,14 @@ export function DestinationSwitchers() {
     isPrime,
     alwaysEnabledPlatforms,
     alwaysShownPlatforms,
-  } = useGoLiveSettings();
+    isTikTokBoth,
+  } = useGoLiveSettings().extend(module => ({
+    get isTikTokBoth() {
+      return (
+        module.settings.platforms?.twitch && module.settings.platforms?.twitch.display === 'both'
+      );
+    },
+  }));
 
   // use these references to apply debounce
   // for error handling and switch animation
@@ -82,6 +90,7 @@ export function DestinationSwitchers() {
   };
 
   const disableCustomDestinationSwitchers = shouldDisableCustomDestinationSwitchers();
+  const disablePlatformSwitchers = isDualOutputMode && isTikTokBoth;
 
   const emitSwitch = useDebounce(500, (ind?: number, enabled?: boolean) => {
     if (ind !== undefined && enabled !== undefined) {
@@ -150,12 +159,17 @@ export function DestinationSwitchers() {
         <DestinationSwitcher
           key={platform}
           destination={platform}
-          enabled={isEnabled(platform)}
+          enabled={
+            (disablePlatformSwitchers && platform === 'twitch') ||
+            (!disablePlatformSwitchers && isEnabled(platform))
+          }
           onChange={enabled => togglePlatform(platform, enabled)}
           isDualOutputMode={isDualOutputMode}
           index={ind}
           hideController={showSelector || hidePlatformController}
           showPrompt={alwaysShownPlatforms.includes(platform) && !isPlatformLinked(platform)}
+          switchDisabled={disablePlatformSwitchers && platform !== 'twitch'}
+          showTwitchTooltip={disablePlatformSwitchers}
         />
       ))}
 
@@ -196,6 +210,7 @@ interface IDestinationSwitcherProps {
   switchDisabled?: boolean;
   index: number;
   isDualOutputMode: boolean;
+  showTwitchTooltip?: boolean;
   hideController?: boolean;
   showPrompt?: boolean;
 }
@@ -212,11 +227,21 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
   const platform = typeof p.destination === 'string' ? (p.destination as TPlatform) : null;
   const disabled = p?.switchDisabled || p?.showPrompt;
 
-  const { RestreamService, MagicLinkService, NavigationService, WindowsService } = Services;
+  const {
+    RestreamService,
+    MagicLinkService,
+    NavigationService,
+    WindowsService,
+    UserService,
+  } = Services;
 
   function dualOutputClickHandler(ev: MouseEvent) {
     if (p.showPrompt && platform) {
       renderPrompt();
+      return;
+    }
+
+    if (disabled && UserService.views.isPrime) {
       return;
     }
 
@@ -393,47 +418,55 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
 
       {/* DUAL OUTPUT */}
       {p.isDualOutputMode && (
-        <div
-          ref={containerRef}
-          data-test={platform ? `${platform}-dual-output` : 'destination-dual-output'}
-          className={cx('dual-output-card', styles.dualOutputPlatformSwitcher, {
-            [styles.platformDisabled]: !p.enabled,
-          })}
-          onClick={e => {
-            if (p.showPrompt) {
-              renderPrompt();
-              e.preventDefault();
-            }
-          }}
+        <Tooltip
+          title={$t('Disable Twitch dual stream to add another platform')}
+          disabled={!p.showTwitchTooltip}
+          placement="bottom"
+          lightShadow
+          styleContent={false}
         >
-          <div className={styles.dualOutputPlatformInfo}>
-            {/* PLATFORM LOGO */}
-            <Logo />
-            {/* PLATFORM TITLE AND ACCOUNT/URL */}
-            <div className={styles.dualOutputColAccount}>
-              <div className={styles.dualOutputPlatformName}>{title}</div>
-              <div className={styles.dualOutputPlatformUsername}>{description}</div>
+          <div
+            ref={containerRef}
+            data-test={platform ? `${platform}-dual-output` : 'destination-dual-output'}
+            className={cx('dual-output-card', styles.dualOutputPlatformSwitcher, {
+              [styles.platformDisabled]: !p.enabled,
+            })}
+            onClick={e => {
+              if (p.showPrompt) {
+                renderPrompt();
+                e.preventDefault();
+              }
+            }}
+          >
+            <div className={styles.dualOutputPlatformInfo}>
+              {/* PLATFORM LOGO */}
+              <Logo />
+              {/* PLATFORM TITLE AND ACCOUNT/URL */}
+              <div className={styles.dualOutputColAccount}>
+                <div className={styles.dualOutputPlatformName}>{title}</div>
+                <div className={styles.dualOutputPlatformUsername}>{description}</div>
+              </div>
+              {/* SWITCH */}
+              <div
+                className={cx(styles.dualOutputColInput)}
+                onClick={e => {
+                  if (p.hideController) return;
+                  dualOutputClickHandler(e);
+                }}
+              >
+                {!p.hideController && <Controller />}
+              </div>
             </div>
-            {/* SWITCH */}
-            <div
-              className={cx(styles.dualOutputColInput)}
-              onClick={e => {
-                if (p.hideController) return;
-                dualOutputClickHandler(e);
-              }}
-            >
-              {!p.hideController && <Controller />}
-            </div>
-          </div>
 
-          <DisplaySelector
-            title={title}
-            nolabel
-            className={styles.dualOutputDisplaySelector}
-            platform={platform}
-            index={p.index}
-          />
-        </div>
+            <DisplaySelector
+              title={title}
+              nolabel
+              className={styles.dualOutputDisplaySelector}
+              platform={platform}
+              index={p.index}
+            />
+          </div>
+        </Tooltip>
       )}
     </>
   );
