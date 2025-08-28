@@ -148,6 +148,7 @@
   "An error has occured while uninstalling the virtual camera": "Une erreur s’est produite pendant la désinstallation de la caméra virtuelle",
   "Streamlabs Desktop cannot install the virtual camera if it's not in Applications. Please move Streamlabs Desktop to the Applications directory.": "Streamlabs Desktop ne peut pas installer la caméra virtuelle s’il ne se trouve pas dans Applications. Déplace Streamlabs Desktop vers le répertoire Applications.",
   "The installation of the virtual camera will complete after a system reboot.": "L’installation de la caméra virtuelle sera terminée après le redémarrage du système.",
+  "Streamlabs Virtual Webcam feature requires macOS 13 or later.": "Streamlabs Virtual Webcam feature requires macOS 13 or later.",
   "Output Type": "Type de sortie",
   "Output Selection": "Sélection de la sortie",
   "Output Source": "Source de sortie",
