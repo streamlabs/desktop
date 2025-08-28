@@ -180,6 +180,15 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
         this.setInstallStatus();
       },
       [OS.Mac]: () => {
+        const macOSVersion = process.getSystemVersion();
+        const [major, _] = macOSVersion.split('.').map(Number);
+        if (major < 13) {
+          remote.dialog.showErrorBox(
+            $t('Virtual Webcam'),
+            $t('Streamlabs Virtual Webcam feature requires macOS 13 or later.'),
+          );
+          return;
+        }
         this.signalsService.addCallback(this.handleSignalOutput);
 
         const errorCode = obs.NodeObs.OBS_service_installVirtualCamPlugin();
