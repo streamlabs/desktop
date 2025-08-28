@@ -1,21 +1,21 @@
-import { ChildProcess, spawn } from 'child_process';
-import { InitAfter, Inject, Service } from 'services';
 import * as remote from '@electron/remote';
-import path from 'path';
-import { authorizedHeaders, downloadFile, IDownloadProgress, jfetch } from 'util/requests';
-import { promises as fs, createReadStream, existsSync } from 'fs';
-import { OutputStreamHandler } from 'services/platform-apps/api/modules/native-components';
+import { HostsService, SettingsService, SourcesService, UserService } from 'app-services';
+import { ChildProcess, spawn } from 'child_process';
 import crypto from 'crypto';
-import { importExtractZip } from 'util/slow-imports';
-import { pipeline } from 'stream/promises';
-import { HostsService, SourcesService, SettingsService, UserService } from 'app-services';
-import { RealmObject } from 'services/realm';
-import { ObjectSchema } from 'realm';
+import { createReadStream, existsSync, promises as fs } from 'fs';
 import http from 'http';
 import { AddressInfo } from 'net';
+import path from 'path';
+import { ObjectSchema } from 'realm';
+import { InitAfter, Inject, Service } from 'services';
+import { OutputStreamHandler } from 'services/platform-apps/api/modules/native-components';
+import { RealmObject } from 'services/realm';
+import { pipeline } from 'stream/promises';
+import { convertDotNotationToTree } from 'util/dot-tree';
+import { authorizedHeaders, downloadFile, IDownloadProgress, jfetch } from 'util/requests';
+import { importExtractZip } from 'util/slow-imports';
 import uuid from 'uuid/v4';
 import * as obs from '../../../obs-api';
-import { convertDotNotationToTree } from 'util/dot-tree';
 
 interface IVisionManifest {
   version: string;
@@ -500,7 +500,7 @@ export class VisionService extends Service {
   }
 
   requestActiveProcess() {
-    const url = `http://localhost:${this.state.port}}/processes/active`;
+    const url = `http://localhost:${this.state.port}/processes/active`;
     const headers = new Headers({ 'Content-Type': 'application/json' });
 
     return jfetch(url, { headers, method: 'GET' });
