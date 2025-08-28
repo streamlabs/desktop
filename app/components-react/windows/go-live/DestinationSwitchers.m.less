@@ -196,3 +196,20 @@
   vertical-align: super;
   color: var(--title);
 }
+
+.switcher-tooltip {
+  :global(.ant-tooltip-arrow-content) {
+    width: 12px;
+    height: 12px;
+    z-index: 2;
+  }
+
+  :global(.ant-tooltip-placement-right .ant-tooltip-arrow) {
+    left: -2px !important;
+  }
+
+  :global(div.ant-tooltip-inner) {
+    box-shadow: 0 2px 16px -4px rgba(211, 211, 211, 0.274), 0 2px 15px 0 rgba(211, 211, 211, 0.32),
+      0 2px 28px 6px rgba(211, 211, 211, 0.2) !important;
+  }
+}
