@@ -1,25 +1,25 @@
-import { ArrayNode } from '../array-node';
-import { SceneItem, Scene, TSceneNode, ScenesService } from 'services/scenes';
-import { VideoSettingsService } from 'services/settings-v2/video';
-import { SourcesService, TSourceType } from 'services/sources';
-import { SourceFiltersService, TSourceFilterType } from 'services/source-filters';
-import { Inject } from 'services/core/injector';
-import { ImageNode } from './image';
-import { TextNode } from './text';
-import { WebcamNode } from './webcam';
-import { VideoNode } from './video';
-import { StreamlabelNode } from './streamlabel';
-import { IconLibraryNode } from './icon-library';
-import { WidgetNode } from './widget';
-import { SceneSourceNode } from './scene';
 import { AudioService } from 'services/audio';
+import { Inject } from 'services/core/injector';
+import { Scene, SceneItem, ScenesService, TSceneNode } from 'services/scenes';
+import { TDisplayType } from 'services/settings-v2';
+import { VideoSettingsService } from 'services/settings-v2/video';
+import { SourceFiltersService, TSourceFilterType } from 'services/source-filters';
+import { SourcesService, TSourceType } from 'services/sources';
+import { byOS, getOS, OS } from 'util/operating-systems';
 import * as obs from '../../../../../obs-api';
 import { WidgetType } from '../../../widgets';
-import { byOS, OS, getOS } from 'util/operating-systems';
-import { GameCaptureNode } from './game-capture';
+import { ArrayNode } from '../array-node';
 import { Node } from '../node';
-import { TDisplayType } from 'services/settings-v2';
+import { GameCaptureNode } from './game-capture';
+import { IconLibraryNode } from './icon-library';
+import { ImageNode } from './image';
+import { SceneSourceNode } from './scene';
 import { SmartBrowserNode } from './smartBrowserSource';
+import { StreamlabelNode } from './streamlabel';
+import { TextNode } from './text';
+import { VideoNode } from './video';
+import { WebcamNode } from './webcam';
+import { WidgetNode } from './widget';
 
 type TContent =
   | ImageNode
@@ -349,7 +349,12 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
         obj.name,
         'browser_source',
         {},
-        { id, select: false, sourceAddOptions: { propertiesManager: 'smartBrowserSource' }, display },
+        {
+          id,
+          select: false,
+          sourceAddOptions: { propertiesManager: 'smartBrowserSource' },
+          display,
+        },
       );
     }
 

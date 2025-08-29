@@ -1,5 +1,5 @@
-import { ISourceDisplayData } from './index';
 import { $t } from 'services/i18n';
+import { ISourceDisplayData } from './index';
 
 const imageSupport = ['png', 'jpg', 'jpeg', 'gif', 'tga', 'bmp'];
 const mediaSupport = [
@@ -351,5 +351,5 @@ export const SourceDisplayData = (): { [key: string]: ISourceDisplayData } => ({
     description: 'TODO: add description',
     group: 'media',
     icon: 'fas fa-globe',
-  }
+  },
 });

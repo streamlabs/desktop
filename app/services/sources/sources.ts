@@ -1,21 +1,31 @@
+import { IObsListInput, IObsListOption, TObsValue } from 'components/obs/inputs/ObsInput';
 import * as fs from 'fs';
-import Vue from 'vue';
-import { Subject } from 'rxjs';
 import cloneDeep from 'lodash/cloneDeep';
-import { IObsListOption, TObsValue, IObsListInput } from 'components/obs/inputs/ObsInput';
-import { mutation, StatefulService, ViewHandler } from 'services/core/stateful-service';
-import * as obs from '../../../obs-api';
+import { Subject } from 'rxjs';
 import { InitAfter } from 'services/core';
 import { Inject } from 'services/core/injector';
-import namingHelpers from 'util/NamingHelpers';
-import { WindowsService } from 'services/windows';
-import { WidgetDisplayData, WidgetsService, WidgetType } from 'services/widgets';
-import { DefaultManager } from './properties-managers/default-manager';
-import { WidgetManager } from './properties-managers/widget-manager';
+import { mutation, StatefulService, ViewHandler } from 'services/core/stateful-service';
+import { GuestCamService } from 'services/guest-cam';
+import { DefaultHardwareService, HardwareService } from 'services/hardware';
+import { $t } from 'services/i18n';
+import { NavigationService } from 'services/navigation';
+import { PlatformAppsService } from 'services/platform-apps';
 import { ISceneItem, ScenesService } from 'services/scenes';
-import { StreamlabelsManager } from './properties-managers/streamlabels-manager';
-import { PlatformAppManager } from './properties-managers/platform-app-manager';
+import { VideoSettingsService } from 'services/settings-v2';
+import { SourceFiltersService } from 'services/source-filters';
+import { UsageStatisticsService } from 'services/usage-statistics';
 import { UserService } from 'services/user';
+import { WidgetDisplayData, WidgetsService, WidgetType } from 'services/widgets';
+import { WindowsService } from 'services/windows';
+import namingHelpers from 'util/NamingHelpers';
+import { assertIsDefined } from 'util/properties-type-guards';
+import uuid from 'uuid/v4';
+import Vue from 'vue';
+import * as obs from '../../../obs-api';
+import { EDeinterlaceFieldOrder, EDeinterlaceMode, EMonitoringType } from '../../../obs-api';
+import { AudioService, E_AUDIO_CHANNELS } from '../audio';
+import { CustomizationService } from '../customization';
+import { EAvailableFeatures, IncrementalRolloutService } from '../incremental-rollout';
 import {
   IActivePropertyManager,
   ISource,
@@ -25,26 +35,16 @@ import {
   TPropertiesManager,
   TSourceType,
 } from './index';
-import uuid from 'uuid/v4';
-import { $t } from 'services/i18n';
-import { SourceDisplayData } from './sources-data';
-import { NavigationService } from 'services/navigation';
-import { PlatformAppsService } from 'services/platform-apps';
-import { HardwareService, DefaultHardwareService } from 'services/hardware';
-import { AudioService, E_AUDIO_CHANNELS } from '../audio';
-import { ReplayManager } from './properties-managers/replay-manager';
+import { DefaultManager } from './properties-managers/default-manager';
 import { IconLibraryManager } from './properties-managers/icon-library-manager';
+import { PlatformAppManager } from './properties-managers/platform-app-manager';
+import { ReplayManager } from './properties-managers/replay-manager';
 import { SmartBrowserSourceManager } from './properties-managers/smart-browser-source-manager';
-import { assertIsDefined } from 'util/properties-type-guards';
-import { UsageStatisticsService } from 'services/usage-statistics';
-import { SourceFiltersService } from 'services/source-filters';
-import { VideoSettingsService } from 'services/settings-v2';
-import { CustomizationService } from '../customization';
-import { EAvailableFeatures, IncrementalRolloutService } from '../incremental-rollout';
-import { EMonitoringType, EDeinterlaceMode, EDeinterlaceFieldOrder } from '../../../obs-api';
-import { GuestCamService } from 'services/guest-cam';
+import { StreamlabelsManager } from './properties-managers/streamlabels-manager';
+import { WidgetManager } from './properties-managers/widget-manager';
+import { SourceDisplayData } from './sources-data';
 
-export { EDeinterlaceMode, EDeinterlaceFieldOrder } from '../../../obs-api';
+export { EDeinterlaceFieldOrder, EDeinterlaceMode } from '../../../obs-api';
 
 const AudioFlag = obs.ESourceOutputFlags.Audio;
 const VideoFlag = obs.ESourceOutputFlags.Video;
@@ -59,7 +59,7 @@ export const PROPERTIES_MANAGER_TYPES = {
   platformApp: PlatformAppManager,
   replay: ReplayManager,
   iconLibrary: IconLibraryManager,
-  smartBrowserSource: SmartBrowserSourceManager
+  smartBrowserSource: SmartBrowserSourceManager,
 };
 
 interface IObsSourceCallbackInfo {
@@ -472,7 +472,6 @@ export class SourcesService extends StatefulService<ISourcesState> {
     if (type === 'mediasoupconnector' && options.guestCamStreamId) {
       this.guestCamService.setGuestSource(options.guestCamStreamId, id);
     }
-
   }
 
   removeSource(id: string) {
