@@ -282,7 +282,10 @@ export class AnnouncementsService extends Service {
     }
   }
 
-  async fetchProductUpdates() {
+  async fetchProductUpdates(): Promise<{
+    updates?: IAnnouncementsInfo[];
+    lastUpdatedAt: number | null;
+  }> {
     const recentlyInstalled = await this.recentlyInstalled();
 
     if (recentlyInstalled || !this.customizationService.state.enableAnnouncements) {
@@ -297,7 +300,7 @@ export class AnnouncementsService extends Service {
       const resp = await jfetch<{ updates: IAnnouncementsInfo[]; lastUpdatedAt: number }>(req);
       return resp;
     } catch (e: unknown) {
-      return {};
+      return { lastUpdatedAt: null };
     }
   }
 
