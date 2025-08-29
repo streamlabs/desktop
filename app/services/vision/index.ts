@@ -234,7 +234,7 @@ export class VisionService extends Service {
       'vision.exe',
     );
 
-    const command: string[] = ['--port', port.toString(), '--debug'];
+    const command: string[] = ['--port', port.toString()];
     return spawn(visionBinaryPath, command);
   }
 
