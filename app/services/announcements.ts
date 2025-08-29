@@ -158,7 +158,7 @@ export class AnnouncementsService extends Service {
 
   async getProductUpdates() {
     const { lastUpdatedAt, updates } = await this.fetchProductUpdates();
-    if (lastUpdatedAt <= this.state.lastReadProductUpdate) return;
+    if (!lastUpdatedAt || lastUpdatedAt <= this.state.lastReadProductUpdate) return;
     this.setLastReadProductUpdate(lastUpdatedAt);
     this.setProductUpdates(updates);
     this.openProductUpdates();
@@ -297,7 +297,7 @@ export class AnnouncementsService extends Service {
       const resp = await jfetch<{ updates: IAnnouncementsInfo[]; lastUpdatedAt: number }>(req);
       return resp;
     } catch (e: unknown) {
-      return null;
+      return {};
     }
   }
 
