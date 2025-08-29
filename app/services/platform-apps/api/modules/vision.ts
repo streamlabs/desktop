@@ -1,8 +1,8 @@
+import { WebsocketService } from 'app-services';
+import { BehaviorSubject, Subject, Subscription } from 'rxjs';
+import { Inject } from 'services';
 import { VisionService } from 'services/vision';
 import { apiEvent, apiMethod, EApiPermissions, IApiContext, Module } from './module';
-import { Inject } from 'services';
-import { BehaviorSubject, Subject, Subscription } from 'rxjs';
-import { WebsocketService } from 'app-services';
 
 export class VisionModule extends Module {
   moduleName = 'Vision';
@@ -34,7 +34,7 @@ export class VisionModule extends Module {
   public initiateSubscription() {
     if (!this.eventSub) {
       this.eventSub = this.websocketService.socketEvent.subscribe(e => {
-        console.log("Received websocket event:", e);
+        console.log('Received websocket event:', e);
         if (e.type === 'userStateUpdated') {
           // @ts-ignore
           this.userState.next(e.message.updated_states);
