@@ -226,6 +226,7 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
   const containerRef = useRef<HTMLDivElement>(null);
   const platform = typeof p.destination === 'string' ? (p.destination as TPlatform) : null;
   const disabled = p?.switchDisabled || p?.showPrompt;
+  const showTwitchTooltip = p.showTwitchTooltip && platform !== 'twitch';
 
   const {
     RestreamService,
@@ -420,7 +421,7 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
       {p.isDualOutputMode && (
         <Tooltip
           title={
-            p.showTwitchTooltip ? $t('Disable Twitch dual stream to add another platform') : null
+            showTwitchTooltip ? $t('Disable Twitch dual stream to add another platform') : null
           }
           placement="left"
           overlayClassName={styles.switcherTooltip}
