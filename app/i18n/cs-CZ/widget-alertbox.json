@@ -154,5 +154,6 @@
   "This applies to all alerts. If enabled all alerts need to be approved manually.": "To platí pro všechna upozornění. Je-li tato možnost aktivována, musí být všechna upozornění schválena ručně.",
   "Use unlimited delay": "Použít neomezené zpoždění",
   "When enabled new alerts will interrupt the on screen alert": "Po aktivaci této možnosti přeruší nová upozornění upozornění na obrazovce",
-  "Text Highlight Color": "Barva zvýraznění textu"
+  "Text Highlight Color": "Barva zvýraznění textu",
+  "Platforms: Twitch, YouTube, Facebook, Trovo & integrations": "Platformy: Twitch, YouTube, Facebook, Trovo a integrace"
 }

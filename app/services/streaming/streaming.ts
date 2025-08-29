@@ -265,8 +265,10 @@ export class StreamingService
       return false;
     }
 
-    // users can always stream to tiktok
-    if (platform === 'tiktok') return false;
+    // users that used multistream+tiktok for free before can always stream to tiktok
+    if (platform === 'tiktok' && this.restreamService.tiktokGrandfathered) {
+      return false;
+    }
 
     // users should be able to stream to their primary
     if (this.views.isPrimaryPlatform(platform)) {
@@ -279,7 +281,7 @@ export class StreamingService
         isEqual([primaryPlatform, platform], ['twitch', 'facebook']) ||
         isEqual([primaryPlatform, platform], ['youtube', 'facebook']);
 
-      if (this.restreamService.state.grandfathered && allowFacebook) {
+      if (this.restreamService.facebookGrandfathered && allowFacebook) {
         return false;
       }
     }
@@ -908,7 +910,7 @@ export class StreamingService
     if (this.state.streamingStatus !== EStreamingState.Offline) return;
 
     if (enabled) {
-      this.dualOutputService.actions.setDualOutputMode(true, true);
+      this.dualOutputService.actions.setDualOutputModeIfPossible(true, true);
       this.usageStatisticsService.recordFeatureUsage('DualOutput');
     }
 

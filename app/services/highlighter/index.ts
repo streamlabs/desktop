@@ -1458,6 +1458,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       // 6. add highlight clips
       progressTracker.destroy();
       setStreamInfo.state.type = EAiDetectionState.FINISHED;
+      setStreamInfo.highlights = partialHighlights;
       this.updateStream(setStreamInfo);
 
       console.log('🔄 addClips', clipData);

@@ -2,7 +2,7 @@ const cp = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const buildCameraExt = require('./build-mac-virtualcam');
+const virtualCameraPacker = require('./build-mac-virtualcam');
 
 function signAndCheck(identity, filePath) {
   console.log(`Signing: ${filePath}`);
@@ -52,23 +52,6 @@ function signBinaries(identity, directory) {
   }
 }
 
-function signXcodeApps(context) {
-  // For apps that requires specific entitlements. Ensures the entitlements file is provided during signing
-  const entitlements = "--entitlements electron-builder/mac-virtual-cam-entitlements.plist";
-  const installerPath = `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Frameworks/slobs-virtual-cam-installer.app`;
-  console.log(`Signing: ${installerPath}`);
-  cp.execSync(
-    `codesign --sign "Developer ID Application: ${context.packager.config.mac.identity}" ${entitlements} --options runtime --deep --force --verbose "${installerPath}"`,
-  );
-  // All files need to be writable for update to succeed on mac
-  console.log(`Checking Writable: ${installerPath}`);
-  try {
-    fs.accessSync(installerPath, fs.constants.W_OK);
-  } catch {
-    throw new Error(`File ${installerPath} is not writable!`);
-  }
-}
-
 async function afterPackMac(context) {
   console.log('Updating dependency paths');
   cp.execSync(
@@ -83,7 +66,7 @@ async function afterPackMac(context) {
     `cp -R ./node_modules/obs-studio-node/Frameworks \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Resources/app.asar.unpacked/node_modules/\"`,
   );
 
-  await buildCameraExt(context);
+  await virtualCameraPacker.downloadVirtualCamExtension(context);
 
   if (process.env.SLOBS_NO_SIGN) return;
 
@@ -91,7 +74,7 @@ async function afterPackMac(context) {
     context.packager.config.mac.identity,
     `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Resources/app.asar.unpacked`,
   );
-  signXcodeApps(context);
+  virtualCameraPacker.signApps(context);
 }
 
 function afterPackWin() {

@@ -4,5 +4,8 @@
   "Unpacked vers loaded": "解壓縮版本已載入",
   "You must unload unpacked version before enabling this app.": "在啟用此應用程式之前，您必須先卸載解壓縮版本。",
   "Pop Out": "彈出",
-  "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "開發者對此應用程式的支援已結束。此應用程式可繼續運作，但不會再收到任何更新。如果您想要解除安裝，請依照這裡的指示進行。"
+  "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "開發者對此應用程式的支援已結束。此應用程式可繼續運作，但不會再收到任何更新。如果您想要解除安裝，請依照這裡的指示進行。",
+  "Uninstall": "解除安裝",
+  "Other installed apps:": "其他已安裝的應用程式：",
+  "Open": "開啟"
 }

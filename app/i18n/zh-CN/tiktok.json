@@ -21,10 +21,11 @@
   "TikTok Category": "TikTok 类别",
   "TikTok Live Access not granted. Click here to learn more.": "未授予 TikTok 直播访问权限。点击此处了解更多。",
   "Only 32 characters of your title will display on TikTok": "TikTok 上最多显示 32 个字符的标题",
-  "You may be eligible for TikTok Live Access. <apply>Apply here.</apply>": "您有资格获得 TikTok 直播访问权限。<apply>在此申请。</apply>",
+  "You may be eligible for TikTok Live Access. Apply here.": "您有资格获得 TikTok 直播访问权限。在此申请。",
   "Click to view TikTok Replay in your browser.": "点击以在浏览器中查看 TikTok 重播。",
   "TikTok Stream Error": "TikTok 直播错误",
   "Couldn't confirm TikTok Live Access. Apply for Live Permissions below": "无法确认 TikTok 直播访问。在下方申请直播权限",
-  "Connect your TikTok account": "Connect your TikTok account",
-  "Connect your TikTok account to stream to TikTok and one other platform for free. Haven't applied to stream on TikTok Live yet? <link>Start the process here</link>.": "Connect your TikTok account to stream to TikTok and one other platform for free. Haven't applied to stream on TikTok Live yet? <link>Start the process here</link>."
+  "Connect your TikTok account": "连接您的 TikTok 帐户",
+  "Connect your TikTok account to stream to TikTok and one other platform for free. Haven't applied to stream on TikTok Live yet? <link>Start the process here</link>.": "连接您的 TikTok 帐户，即可免费在 TikTok 和另一平台直播。还未申请 TikTok 直播？<link>从此处开始</link>。",
+  "Reapply for TikTok Live Permission. Reapply here.": "重新申请 TikTok 直播权限。在此重新申请。"
 }

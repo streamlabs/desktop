@@ -4,5 +4,8 @@
   "Unpacked vers loaded": "Udpakket version indlæst",
   "You must unload unpacked version before enabling this app.": "Du skal tømme den udpakkede version, inden du aktiverer denne app.",
   "Pop Out": "Pop ud",
-  "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "Udvikleren yder ikke længere support til denne app. Appen kan fortsætte med at fungere, men der vil ikke komme opdateringer. Hvis du ønsker at afinstallere, skal du følge anvisningerne her."
+  "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "Udvikleren yder ikke længere support til denne app. Appen kan fortsætte med at fungere, men der vil ikke komme opdateringer. Hvis du ønsker at afinstallere, skal du følge anvisningerne her.",
+  "Uninstall": "Afinstaller",
+  "Other installed apps:": "Andre installerede apps:",
+  "Open": "Åbn"
 }

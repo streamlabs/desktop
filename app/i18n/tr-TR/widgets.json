@@ -2,10 +2,12 @@
   "Add Widgets": "Pencere Ögesi Ekle",
   "Select the Streamlabs widgets you would like to activate for your stream. These will get automatically added to your scene.": "Yayınınızda kullanmak istediğiniz Streamlabs pencere ögelerini seçin. Bu ögeler otomatik olarak sahnenize eklenir.",
   "Thanks viewers with notification popups": "Bildirimlerin ekranda görünmesini sağlayarak izleyicilere teşekkürlerinizi sunun",
+  "Custom on-screen alerts to thank your loyal viewers for following, subbing, tipping and more.": "Takip eden, abone olan, bahşiş veren ve daha fazlasını yapan sadık izleyicilerinize teşekkür etmek için özel ekran bildirimleri.",
   "Most recent events into your stream": "Yayınınızla ilgili en son olaylar",
   "A jar that catches bits, tips, and more": "Kavanoz; bitleri, bağışları ve daha fazlasını içerir",
   "Your channel's chat in your stream": "Yayınınızda kanalınızın sohbeti",
   "Show off most recent donations to viewers": "Son bağışları izleyicilerinize gösterin",
+  "Show off the most recent tips from your viewers": "İzleyicilerinizden gelen en son bahşişleri gösterin",
   "Give your viewers a donation target to help you reach": "Bir bağış hedefi belirleyerek izleyicilerinizin hedefe ulaşmanıza yardım etmesini sağlayın",
   "Give your viewers a follower target to help you reach": "Bir takipçi hedefi belirleyerek izleyicilerinizin hedefe ulaşmanıza yardım etmesini sağlayın",
   "Give your viewers a bit target to help you reach": "Bir bit hedefi belirleyerek izleyicilerinizin hedefe ulaşmanıza yardım etmesini sağlayın",
@@ -70,6 +72,7 @@
   "Ember amount is at least <amount>": "Ember miktarı en az <amount>",
   "Ember amount is exactly <amopunt>": "Ember miktarı tam olarak <amopunt>",
   "Allow your viewers to donate to share media on your stream.": "Yayınınızda medya paylaşmak için izleyicilerinizin bağış yapmasına izin verin.",
+  "Allow your viewers to tip to share videos on your stream.": "İzleyicilerinizin yayınınızdaki videoları paylaşmak için bahşiş vermesine izin verin.",
   "Twitch Subscribers": "Twitch Aboneleri",
   "YouTube Members": "YouTube Üyeleri",
   "Media Share": "Medya Paylaşımı",
@@ -188,5 +191,9 @@
   "Superchat Goal": "Süper Sohbet Hedefi",
   "YouTube Superchats": "YouTube Süper Sohbetleri",
   "Custom Widget": "Özel Pencere Ögesi",
-  "Use HTML, CSS, and JavaScript to create a widget with custom functionality": "Özel işlevlere sahip bir pencere ögesi oluşturmak için HTML, CSS ve JavaScript kullanın"
+  "Use HTML, CSS, and JavaScript to create a widget with custom functionality": "Özel işlevlere sahip bir pencere ögesi oluşturmak için HTML, CSS ve JavaScript kullanın",
+  "Interactive": "Etkileşimli",
+  "Goals": "Hedefler",
+  "Flair": "Yetenek",
+  "Charity": "Yardım"
 }

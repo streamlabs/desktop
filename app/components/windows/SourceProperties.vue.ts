@@ -61,10 +61,6 @@ export default class SourceProperties extends Vue {
     this.sourceUpdatedSub.unsubscribe();
   }
 
-  get hideStyleBlockers() {
-    return this.windowsService.state.child.hideStyleBlockers;
-  }
-
   get propertiesManagerUI() {
     if (this.source) return this.source.getPropertiesManagerUI();
   }

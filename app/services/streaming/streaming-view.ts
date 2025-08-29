@@ -147,7 +147,11 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns a list of platforms that should always be enabled in single output mode
    */
   get alwaysEnabledPlatforms(): TPlatform[] {
-    return ['tiktok'];
+    return [
+      ...(this.userView.isPrime || this.restreamView.state.tiktokGrandfathered
+        ? ['tiktok' as const]
+        : []),
+    ];
   }
 
   /*
@@ -356,7 +360,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       this.enabledPlatforms.length + this.customDestinations.filter(dest => dest.enabled).length;
 
     // In single output mode, if the user can only have one of the always enabled platforms and one additional target
-    // Currently, this is only TikTok
+    // Currently, this is only TikTok for grandfathered users
     return (
       !this.isDualOutputMode &&
       this.enabledPlatforms.some(platform => {
