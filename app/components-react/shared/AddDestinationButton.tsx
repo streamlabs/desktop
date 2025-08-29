@@ -9,6 +9,7 @@ import ButtonHighlighted from './ButtonHighlighted';
 import { PlusOutlined } from '@ant-design/icons';
 import styles from './AddDestinationButton.m.less';
 import cx from 'classnames';
+import { useRealmObject } from 'components-react/hooks/realm';
 
 const PlusIcon = PlusOutlined as Function;
 interface IAddDestinationButtonProps {
@@ -159,11 +160,18 @@ function UltraAddDestinationButton(p: {
 }
 
 function AddDestinationBanner(p: { className?: string; onClick: () => void }) {
+  const isDarkTheme = useRealmObject(Services.CustomizationService.state).isDarkTheme;
+
   const text = $t(
     'You can stream to any 2 destinations for free with Dual Output. Multistream and switch seamlessly between streams with Ultra',
   );
+
   return (
-    <ButtonHighlighted faded className={cx(styles.infoBanner, p?.className)} onClick={p.onClick}>
+    <ButtonHighlighted
+      faded
+      className={cx(styles.infoBanner, { [styles.night]: isDarkTheme }, p?.className)}
+      onClick={p.onClick}
+    >
       <UltraIcon type="badge" className={styles.ultraIcon} />
       <div className={styles.bannerText}>{text}</div>
     </ButtonHighlighted>

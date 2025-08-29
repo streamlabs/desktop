@@ -26,6 +26,7 @@ export function DestinationSwitchers() {
     switchPlatforms,
     switchCustomDestination,
     isPlatformLinked,
+    isPrimaryPlatform,
     isRestreamEnabled,
     isDualOutputMode,
     isPrime,
@@ -159,7 +160,11 @@ export function DestinationSwitchers() {
         <DestinationSwitcher
           key={platform}
           destination={platform}
-          enabled={isEnabled(platform)}
+          enabled={
+            isPrime || isDualOutputMode
+              ? isEnabled(platform)
+              : isEnabled(platform) && (isPrimaryPlatform(platform) || platform === 'tiktok')
+          }
           onChange={enabled => togglePlatform(platform, enabled)}
           switchDisabled={!isEnabled(platform) && disableNonUltraSwitchers}
           isDualOutputMode={isDualOutputMode}

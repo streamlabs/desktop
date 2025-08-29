@@ -479,9 +479,9 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   async checkIsLive(): Promise<boolean> {
     const status = await this.getIsLive();
-    this.streamSettingsService.setGoLiveSettings({ streamSwitch: true });
 
     if (status.isLive) {
+      this.streamSettingsService.setGoLiveSettings({ streamSwitch: true });
       this.SET_STREAM_SWITCHER_STATUS('pending');
       this.SET_STREAM_SWITCHER_TARGETS(status.targets);
     } else if (this.state.streamSwitcherStatus === 'pending') {

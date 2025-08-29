@@ -1,10 +1,10 @@
+import React, { useState } from 'react';
 import styles from './GoLive.m.less';
 import { WindowsService, DualOutputService } from 'app-services';
 import { ModalLayout } from '../../shared/ModalLayout';
 import { Button, message } from 'antd';
 import { Services } from '../../service-provider';
 import GoLiveSettings from './GoLiveSettings';
-import React from 'react';
 import { $t } from '../../../services/i18n';
 import GoLiveChecklist from './GoLiveChecklist';
 import Form from '../../shared/inputs/Form';
@@ -58,7 +58,7 @@ function ModalFooter() {
     getCanStreamDualOutput,
     isLoading,
     isDualOutputMode,
-    isStreamSwitchMode,
+    isPrime,
   } = useGoLiveSettings().extend(module => ({
     windowsService: inject(WindowsService),
     dualOutputService: inject(DualOutputService),
@@ -82,6 +82,8 @@ function ModalFooter() {
       return platformDisplays.horizontal.length > 0 || destinationDisplays.horizontal.length > 0;
     },
   }));
+
+  const [isFetchingStreamStatus, setIsFetchingStreamStatus] = useState(false);
 
   const shouldShowConfirm = ['prepopulate', 'waitForNewSettings'].includes(lifecycle);
   const shouldShowGoBackButton =
@@ -108,9 +110,13 @@ function ModalFooter() {
       return;
     }
 
-    if (isStreamSwitchMode) {
+    if (isPrime) {
       try {
+        setIsFetchingStreamStatus(true);
         const isLive = await Services.RestreamService.checkIsLive();
+        setIsFetchingStreamStatus(false);
+
+        // Prompt to confirm stream switch if the stream exists
         if (isLive) {
           promptAction({
             title: $t('Another stream detected'),
@@ -129,6 +135,8 @@ function ModalFooter() {
         }
       } catch (e: unknown) {
         console.error('Error checking stream switcher status:', e);
+
+        setIsFetchingStreamStatus(false);
       }
     }
 
@@ -153,8 +161,13 @@ function ModalFooter() {
           type="primary"
           onClick={handleGoLive}
           disabled={isLoading || !!error}
+          className={styles.confirmBtn}
         >
-          {$t('Confirm & Go Live')}
+          {isFetchingStreamStatus ? (
+            <i className="fa fa-spinner fa-pulse" />
+          ) : (
+            <>{$t('Confirm & Go Live')}</>
+          )}
         </Button>
       )}
     </Form>

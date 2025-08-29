@@ -12,6 +12,7 @@ interface IDualOutputToggleProps {
   type?: 'dual' | 'single';
   value?: boolean;
   className?: string;
+  checkboxClassname?: string;
   style?: CSSProperties;
   disabled?: boolean;
   tooltipDisabled?: boolean;
@@ -88,7 +89,7 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
         label={p?.label ?? defaultLabel}
         value={value}
         onChange={toggleDualOutput}
-        className={styles.doCheckbox}
+        className={cx(styles.doCheckbox, p?.checkboxClassname)}
         disabled={p?.disabled}
       />
       <Tooltip

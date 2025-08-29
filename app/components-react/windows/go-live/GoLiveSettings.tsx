@@ -142,6 +142,7 @@ export default function GoLiveSettings() {
               >
                 <DualOutputToggle
                   className={styles.featureToggle}
+                  checkboxClassname={styles.featureCheckbox}
                   style={{ paddingBottom: '10px' }}
                   disabled={isStreamSwitchMode}
                   tooltipDisabled={isStreamSwitchMode}
@@ -162,6 +163,7 @@ export default function GoLiveSettings() {
               >
                 <StreamSwitcherToggle
                   className={styles.featureToggle}
+                  checkboxClassname={styles.featureCheckbox}
                   disabled={isStreamSwitchDisabled || !isPrime}
                 />
               </Tooltip>

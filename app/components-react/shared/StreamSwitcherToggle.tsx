@@ -9,6 +9,7 @@ import UltraIcon from './UltraIcon';
 import { Services } from '../service-provider';
 interface IStreamSwitcherToggle {
   className?: string;
+  checkboxClassname?: string;
   style?: CSSProperties;
   disabled?: boolean;
 }
@@ -28,6 +29,7 @@ export default function StreamSwitcherToggle(p: IStreamSwitcherToggle) {
   return (
     <div className={cx(p?.className, styles.streamSwitcherToggle)} style={p?.style}>
       <CheckboxInput
+        className={p?.checkboxClassname}
         label={
           !isPrime ? (
             <div

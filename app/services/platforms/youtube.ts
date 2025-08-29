@@ -303,8 +303,32 @@ export class YoutubeService
   }
 
   async setupSwitchedStream(goLiveSettings: IGoLiveSettings) {
-    const ytSettings = getDefined(goLiveSettings.platforms.youtube);
-    // TODO: does the stream need to be bound to the broadcast?
+    try {
+      const broadcasts = await this.fetchEligibleBroadcasts();
+
+      if (!broadcasts) return;
+
+      const liveBroadcasts = broadcasts.filter(b => b.status.lifeCycleStatus === 'live');
+
+      if (liveBroadcasts.length === 0) {
+        console.error('No active YouTube broadcasts found');
+        return;
+      }
+
+      const broadcast = await this.fetchBroadcast(liveBroadcasts[0].id);
+
+      this.UPDATE_STREAM_SETTINGS({
+        broadcastId: broadcast.id,
+        title: broadcast.snippet.title,
+        // categoryId: broadcast.snippet.categoryId,
+        description: broadcast.snippet.description,
+        thumbnail: broadcast.snippet.thumbnails?.high?.url || 'default',
+        privacyStatus: broadcast.status.privacyStatus,
+      });
+    } catch (e: unknown) {
+      console.error('Error fetching broadcasts', e);
+      return;
+    }
 
     this.setPlatformContext('youtube');
   }
@@ -373,7 +397,7 @@ export class YoutubeService
     const ytSettings = getDefined(goLiveSettings.platforms.youtube);
 
     // If the stream has switched from another device, a new broadcast does not need to be created
-    if (goLiveSettings.streamSwitch && this.restreamService.views.hasStreamSwitcherTargets) {
+    if (goLiveSettings.streamSwitch) {
       await this.setupSwitchedStream(goLiveSettings);
       return;
     }
