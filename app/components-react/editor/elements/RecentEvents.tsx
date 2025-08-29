@@ -34,15 +34,21 @@ export default function RecentEvents(p: { isOverlay?: boolean }) {
 function Toolbar() {
   const { RecentEventsService, UserService, SpinWheelService } = Services;
 
-  const { muted, queuePaused, mediaShareEnabled, safeModeEnabled, spinWheelExists } = useVuex(
-    () => ({
-      muted: RecentEventsService.state.muted,
-      queuePaused: RecentEventsService.state.queuePaused,
-      safeModeEnabled: RecentEventsService.state.safeMode.enabled,
-      mediaShareEnabled: RecentEventsService.state.mediaShareEnabled,
-      spinWheelExists: RecentEventsService.views.spinWheelExists,
-    }),
-  );
+  const {
+    muted,
+    muteChatNotifs,
+    queuePaused,
+    mediaShareEnabled,
+    safeModeEnabled,
+    spinWheelExists,
+  } = useVuex(() => ({
+    muted: RecentEventsService.state.muted,
+    muteChatNotifs: RecentEventsService.state.muteChatNotifs,
+    queuePaused: RecentEventsService.state.queuePaused,
+    safeModeEnabled: RecentEventsService.state.safeMode.enabled,
+    mediaShareEnabled: RecentEventsService.state.mediaShareEnabled,
+    spinWheelExists: RecentEventsService.views.spinWheelExists,
+  }));
 
   const pauseTooltip = queuePaused ? $t('Unpause Alert Queue') : $t('Pause Alert Queue');
 
@@ -91,6 +97,22 @@ function Toolbar() {
         <i
           className="icon-skip action-icon"
           onClick={() => RecentEventsService.actions.skipAlert()}
+        />
+      </Tooltip>
+      <Tooltip
+        title={
+          muteChatNotifs
+            ? $t('Enable Chat Box Notifications')
+            : $t('Disable Chat Box Notifications')
+        }
+        placement="left"
+      >
+        <i
+          className={cx('action-icon', {
+            'icon-notifications': !muteChatNotifs,
+            'icon-notifications-off': muteChatNotifs,
+          })}
+          onClick={() => RecentEventsService.actions.toggleMuteChatNotifs()}
         />
       </Tooltip>
       <Tooltip title={$t('Mute Event Sounds')} placement="left">
