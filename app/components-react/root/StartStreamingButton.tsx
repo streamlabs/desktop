@@ -165,20 +165,26 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         if (!goLive) return;
       }
 
-      // Only check for Stream Switch in single output mode
-      if (isLoggedIn && !isDualOutputMode && isPrime) {
+      // Only check for Stream Switch for ultra users
+      if (isLoggedIn && isPrime) {
         setIsLoading(true);
         const isLive = await fetchStreamSwitcherStatus();
         setIsLoading(false);
 
+        const message = isDualOutputMode
+          ? $t(
+              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source.',
+            ) + $t('Dual Output will be disabled since not supported in this mode.')
+          : $t(
+              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source.',
+            );
+
         if (isLive) {
           promptAction({
             title: $t('Another stream detected'),
-            message: $t(
-              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source.',
-            ),
+            message,
             btnText: $t('Switch to Streamlabs Desktop'),
-            fn: () => StreamingService.actions.goLive(),
+            fn: startSwitchStream,
             cancelBtnText: $t('Cancel'),
             cancelBtnPosition: 'left',
           });
@@ -214,6 +220,14 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       setIsLoading(false);
       return false;
     }
+  }
+
+  function startSwitchStream() {
+    if (isDualOutputMode) {
+      Services.DualOutputService.actions.toggleDisplay(false, 'vertical');
+    }
+
+    StreamingService.actions.goLive();
   }
 
   function shouldShowGoLiveWindow() {

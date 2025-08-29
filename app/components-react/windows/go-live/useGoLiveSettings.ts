@@ -241,12 +241,19 @@ export class GoLiveSettingsModule {
       });
     }
 
+    /**
+     * If the user is in dual output mode, we need to ensure the stream switcher is disabled
+     */
+    const { dualOutputMode } = DualOutputService.state;
+    if (dualOutputMode && settings.streamSwitch) {
+      settings.streamSwitch = false;
+    }
+
     this.state.updateSettings(settings);
 
     /* If the user was in dual output before but doesn't have restream
      * we should disable one of the platforms if they have two enabled
      */
-    const { dualOutputMode } = DualOutputService.state;
     const { canEnableRestream } = RestreamService.views;
 
     // Tiktok and Kick can stay active

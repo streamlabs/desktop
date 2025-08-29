@@ -18,6 +18,7 @@ import { VideoSettingsService, TDisplayType } from './settings-v2/video';
 import { TwitterPlatformService } from './platforms/twitter';
 import { InstagramService } from './platforms/instagram';
 import { PlatformAppsService } from './platform-apps';
+import { DualOutputService } from 'services/dual-output';
 import { throwStreamError } from './streaming/stream-error';
 import uuid from 'uuid';
 import Utils from './utils';
@@ -94,6 +95,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
   @Inject() videoSettingsService: VideoSettingsService;
   @Inject('TwitterPlatformService') twitterService: TwitterPlatformService;
   @Inject() platformAppsService: PlatformAppsService;
+  @Inject() dualOutputService: DualOutputService;
 
   settings: IUserSettingsResponse;
 
@@ -325,7 +327,22 @@ export class RestreamService extends StatefulService<IRestreamState> {
   async setupIngest() {
     const ingest = (await this.fetchIngest()).server;
 
-    if (this.streamingService.views.isDualOutputMode) {
+    if (this.streamInfo.isStreamSwitchMode) {
+      // in single output mode, we just set the ingest for the default display
+      this.streamSettingsService.setSettings({
+        streamType: 'rtmp_custom',
+      });
+
+      const streamId = uuid();
+      this.SET_STREAM_SWITCHER_STREAM_ID(streamId);
+      // for the stream switcher, the stream needs a unique identifier
+      const streamKey = `${this.settings.streamKey}&sid=${streamId}`;
+
+      this.streamSettingsService.setSettings({
+        key: streamKey,
+        server: ingest,
+      });
+    } else if (this.streamingService.views.isDualOutputMode) {
       // in dual output mode, we need to set the ingest for each display
       const displays = this.streamInfo.displaysToRestream;
 
@@ -347,21 +364,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
           },
           display,
         );
-      });
-    } else if (this.streamInfo.isStreamSwitchMode) {
-      // in single output mode, we just set the ingest for the default display
-      this.streamSettingsService.setSettings({
-        streamType: 'rtmp_custom',
-      });
-
-      const streamId = uuid();
-      this.SET_STREAM_SWITCHER_STREAM_ID(streamId);
-      // for the stream switcher, the stream needs a unique identifier
-      const streamKey = `${this.settings.streamKey}&sid=${streamId}`;
-
-      this.streamSettingsService.setSettings({
-        key: streamKey,
-        server: ingest,
       });
     } else {
       // in single output mode, we just set the ingest for the default display
@@ -586,6 +588,10 @@ export class RestreamService extends StatefulService<IRestreamState> {
     if (action === 'rejected') {
       this.SET_STREAM_SWITCHER_STATUS('pending');
     } else {
+      if (this.streamInfo.isDualOutputMode) {
+        this.dualOutputService.toggleDisplay(false, 'vertical');
+      }
+
       this.SET_STREAM_SWITCHER_STATUS('inactive');
       this.updateStreamSwitcher('approved');
     }
@@ -601,10 +607,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
       identifier: this.state.streamSwitcherStreamId,
       action,
     });
-
-    console.log('Updating stream switcher with action:', action);
-    console.log('body', JSON.stringify(body, null, 2));
-
     const request = new Request(url, { headers, body, method: 'POST' });
     const res = await fetch(request);
     if (!res.ok) throw await res.json();

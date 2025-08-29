@@ -90,26 +90,6 @@ function ModalFooter() {
     lifecycle === 'runChecklist' && error && checklist.startVideoTransmission !== 'done';
 
   async function handleGoLive() {
-    if (isDualOutputMode && !getCanStreamDualOutput()) {
-      message.error({
-        key: 'dual-output-error',
-        className: styles.errorAlert,
-        content: (
-          <div className={styles.alertContent}>
-            <div style={{ marginRight: '10px' }}>
-              {$t(
-                'To use Dual Output you must stream to one horizontal and one vertical platform.',
-              )}
-            </div>
-
-            <i className="icon-close" />
-          </div>
-        ),
-        onClick: () => message.destroy('dual-output-error'),
-      });
-      return;
-    }
-
     if (isPrime) {
       try {
         setIsFetchingStreamStatus(true);
@@ -138,6 +118,26 @@ function ModalFooter() {
 
         setIsFetchingStreamStatus(false);
       }
+    }
+
+    if (isDualOutputMode && !getCanStreamDualOutput()) {
+      message.error({
+        key: 'dual-output-error',
+        className: styles.errorAlert,
+        content: (
+          <div className={styles.alertContent}>
+            <div style={{ marginRight: '10px' }}>
+              {$t(
+                'To use Dual Output you must stream to one horizontal and one vertical platform.',
+              )}
+            </div>
+
+            <i className="icon-close" />
+          </div>
+        ),
+        onClick: () => message.destroy('dual-output-error'),
+      });
+      return;
     }
 
     goLive();
