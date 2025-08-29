@@ -16,7 +16,7 @@ export class VisionModule extends Module {
 
   @apiMethod()
   async startVision() {
-    await this.visionService.ensureVision();
+    await this.visionService.ensureRunning();
   }
 
   eventSub: Subscription;

@@ -4611,6 +4611,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"async-mutex@npm:^0.5.0":
+  version: 0.5.0
+  resolution: "async-mutex@npm:0.5.0"
+  dependencies:
+    tslib: ^2.4.0
+  checksum: be1587f4875f3bb15e34e9fcce82eac2966daef4432c8d0046e61947fb9a1b95405284601bc7ce4869319249bc07c75100880191db6af11d1498931ac2a2f9ea
+  languageName: node
+  linkType: hard
+
 "async-validator@npm:^3.0.3":
   version: 3.5.1
   resolution: "async-validator@npm:3.5.1"
@@ -14235,6 +14244,7 @@ __metadata:
     amazon-s3-uri: 0.0.3
     antd: 4.16.7
     archiver: 2.1.1
+    async-mutex: ^0.5.0
     ava: 3.15.0
     aws-sdk: ^2.814.0
     babel-helper-vue-jsx-merge-props: 2.0.3
