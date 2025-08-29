@@ -454,6 +454,7 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
     this.fetchMediaShareState();
     this.subscribeToSocketConnection();
     this.fetchSafeModeStatus();
+    this.fetchMuteChatNotifs();
   }
 
   subscribeToSocketConnection() {
@@ -942,6 +943,21 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
     }
   }
 
+  async fetchMuteChatNotifs() {
+    const headers = authorizedHeaders(
+      this.userService.apiToken,
+      new Headers({ 'Content-Type': 'application/json' }),
+    );
+    const url = `https://${this.hostsService.streamlabs}/api/v5/widgets/desktop/chat-box`;
+    try {
+      const resp = await jfetch<any>(new Request(url, { headers, method: 'GET' }));
+      if (!resp?.data?.settings) return;
+      this.SET_MUTE_CHAT_NOTIFS(resp.settings.global?.alert_enabled);
+    } catch (e: unknown) {
+      return;
+    }
+  }
+
   async toggleMuteEvents() {
     const headers = authorizedHeaders(
       this.userService.apiToken,
@@ -1108,6 +1124,10 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
   onSafeModeDisabled() {
     this.SET_SAFE_MODE_SETTINGS({ enabled: false });
     this.safeModeStatusChanged.next(ESafeModeStatus.Disabled);
+  }
+
+  setMuteChatNotifs(val: boolean) {
+    this.SET_MUTE_CHAT_NOTIFS(val);
   }
 
   @mutation()

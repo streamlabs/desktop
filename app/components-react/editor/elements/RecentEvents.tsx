@@ -112,7 +112,7 @@ function Toolbar() {
             'icon-notifications': !muteChatNotifs,
             'icon-notifications-off': muteChatNotifs,
           })}
-          onClick={() => RecentEventsService.actions.toggleMuteEvents()}
+          onClick={() => RecentEventsService.actions.toggleMuteChatNotifs()}
         />
       </Tooltip>
       <Tooltip title={$t('Mute Event Sounds')} placement="left">
