@@ -59,6 +59,7 @@ export class AiHighlighterUpdater {
     userId: string,
     milestonesPath?: string,
     game?: string,
+    onlyTranscription = false,
   ) {
     const runHighlighterFromRepository = Utils.getHighlighterEnvironment() === 'local';
 
@@ -70,6 +71,7 @@ export class AiHighlighterUpdater {
         userId,
         milestonesPath,
         game,
+        onlyTranscription,
       );
     }
 
@@ -90,7 +92,9 @@ export class AiHighlighterUpdater {
     }
     command.push('--use_sentry');
     command.push('--user_id', userId);
-
+    if (onlyTranscription) {
+      command.push('--only_transcription');
+    }
     return spawn(highlighterBinaryPath, command);
   }
 
@@ -99,6 +103,7 @@ export class AiHighlighterUpdater {
     userId: string,
     milestonesPath?: string,
     game?: string,
+    onlyTranscription = false,
   ) {
     const rootPath = '../highlighter-api/';
     const command = [
@@ -118,6 +123,9 @@ export class AiHighlighterUpdater {
       command.push('--milestones_file');
       command.push(milestonesPath);
     }
+    if (onlyTranscription) {
+      command.push('--only_transcription');
+    }
 
     if (game) {
       command.push('--game');
@@ -127,6 +135,10 @@ export class AiHighlighterUpdater {
     return spawn('poetry', command, {
       cwd: rootPath,
     });
+  }
+
+  static startTranscription(videoUri: string, userId: string) {
+    return this.startHighlighterProcess(videoUri, userId, undefined, undefined, true);
   }
 
   /**
