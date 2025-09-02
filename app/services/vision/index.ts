@@ -10,8 +10,8 @@ import * as obs from '../../../obs-api';
 import { convertDotNotationToTree } from 'util/dot-tree';
 import { VisionRunner, VisionRunnerStartOptions } from './vision-runner';
 import { VisionUpdater } from './vision-updater';
-import { Mutex } from 'async-mutex';
 import _ from 'lodash';
+import pMemoize from "p-memoize";
 
 export class VisionState extends RealmObject {
   installedVersion: string;
@@ -48,7 +48,6 @@ export class VisionService extends Service {
   private visionRunner = new VisionRunner();
   private visionUpdater = new VisionUpdater(path.join(remote.app.getPath('userData'), '..', 'streamlabs-vision'));
   private eventSource: EventSource;
-  private mutex = new Mutex();
 
   // update prompt
   private lastPromptAt = 0;
@@ -103,77 +102,77 @@ export class VisionService extends Service {
     }
   }
 
-  async ensureUpdated({ startAfterUpdate = true }: { startAfterUpdate?: boolean } = {}) {
+  ensureUpdated = pMemoize(async ({ startAfterUpdate = true }: { startAfterUpdate?: boolean } = {}) => {
     this.log('ensureUpdated()');
 
-    return await this.mutex.runExclusive(async () => {
-      const { needsUpdate, latestManifest } = await this.visionUpdater.checkNeedsUpdate();
+    const { needsUpdate, latestManifest } = await this.visionUpdater.checkNeedsUpdate();
 
-      if (needsUpdate) {
-        this.writeState({ isCurrentlyUpdating: true });
+    if (needsUpdate) {
+      this.writeState({ isCurrentlyUpdating: true });
 
-        // make sure vision is stopped
-        await this.visionRunner.stop();
+      // make sure vision is stopped
+      await this.visionRunner.stop();
 
-        await this.visionUpdater.downloadAndInstall(latestManifest, progress => {
-          this.writeState({ percentDownloaded: progress.percent });
-        });
+      await this.visionUpdater.downloadAndInstall(latestManifest, progress => {
+        this.writeState({ percentDownloaded: progress.percent });
+      });
 
-        this.writeState({
-          installedVersion: latestManifest?.version || "",
-          needsUpdate: false,
-          isCurrentlyUpdating: false,
-          percentDownloaded: 0,
-        });
-      }
-    }).then(() => {
-      if (startAfterUpdate) {
-        return this.ensureRunning();
-      }
-    });
-  }
+      this.writeState({
+        installedVersion: latestManifest?.version || "",
+        needsUpdate: false,
+        isCurrentlyUpdating: false,
+        percentDownloaded: 0,
+      });
+    }
 
-  async ensureRunning({ debugMode = false }: VisionRunnerStartOptions = {}) {
-    this.log('ensureRunning()');
+    if (startAfterUpdate) {
+      return this.ensureRunning();
+    }
 
-    return await this.mutex.runExclusive(async () => {
+  }, { cache: false });
+
+  ensureRunning = pMemoize(
+    async ({ debugMode = false }: VisionRunnerStartOptions = {}) => {
+      this.log("ensureRunning()");
+
       this.writeState({ isStarting: true });
 
-      const { needsUpdate, installedManifest, latestManifest } = await this.visionUpdater.checkNeedsUpdate();
+      try {
+        const { needsUpdate, installedManifest, latestManifest } = await this.visionUpdater.checkNeedsUpdate();
 
-      this.writeState({
-        needsUpdate,
-        installedVersion: installedManifest?.version || ""
-      });
+        this.writeState({
+          needsUpdate,
+          installedVersion: installedManifest?.version ?? "",
+        });
 
-      if (needsUpdate) {
-        const v = latestManifest.version ?? 'unknown';
-        const now = Date.now();
-        const newVersion = this.lastPromptVersion !== v;
-        const cooledDown = now - this.lastPromptAt > this.promptCooldownMs;
+        if (needsUpdate) {
+          const v = latestManifest.version ?? "unknown";
+          const now = Date.now();
+          const newVersion = this.lastPromptVersion !== v;
+          const cooledDown = now - this.lastPromptAt > this.promptCooldownMs;
 
-        if (newVersion || cooledDown) {
-          this.lastPromptVersion = v;
-          this.lastPromptAt = now;
-          this.settingsService.showSettings('Vision');
+          if (newVersion || cooledDown) {
+            this.lastPromptVersion = v;
+            this.lastPromptAt = now;
+            await this.settingsService.showSettings("Vision");
+          }
+
+          return { started: false, reason: "needs-update" as const };
         }
-        return;
+
+        const { pid, port } = await this.visionRunner.ensureStarted({ debugMode });
+        this.writeState({ pid, port, isRunning: true });
+        this.subscribeToEvents(port);
+
+        return { started: true as const, pid, port };
+
+      } finally {
+        // once we're done, we're no longer starting up
+        this.writeState({ isStarting: false });
       }
-
-      const { pid, port } = await this.visionRunner.ensureStarted({ debugMode });
-
-      this.writeState({
-        pid,
-        port,
-        isRunning: true
-      })
-
-      this.subscribeToEvents(port);
-    })
-      .finally(() => {
-        this.writeState({ isStarting: false })
-      });
-  }
+    },
+    { cache: false }
+  );
 
   private subscribeToEvents(port: number) {
     this.log('subscribeToEvents()');

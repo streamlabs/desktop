@@ -4,9 +4,9 @@ import path from 'node:path';
 import { platform } from 'node:process';
 import * as remote from '@electron/remote';
 import http from 'http';
-import { Mutex } from 'async-mutex';
 import { AddressInfo } from 'node:net';
 import Emittery from 'emittery';
+import pMemoize from 'p-memoize';
 
 export type VisionRunnerStartOptions = { debugMode?: boolean };
 
@@ -20,30 +20,24 @@ export class VisionRunner extends Emittery<VisionRunnerEvents> {
   private proc?: ChildProcessWithoutNullStreams;
   private port?: number;
 
-  private mutex = new Mutex();
-
   private log(...args: any[]) { console.log('[VisionRunner]', ...args); }
 
   get isRunning() { return !!this.proc && this.proc.exitCode == null; }
 
-  async ensureStarted({ debugMode = false }: VisionRunnerStartOptions = {}): Promise<{ pid: number; port: number }> {
-    return await this.mutex.runExclusive(async () => {
-      if (this.isRunning) {
-        return {
-          pid: this.proc.pid!,
-          port: this.port!
-        }
+  ensureStarted = pMemoize(async ({ debugMode = false }: VisionRunnerStartOptions = {}): Promise<{ pid: number; port: number }> => {
+    if (this.isRunning) {
+      return {
+        pid: this.proc.pid!,
+        port: this.port!
       }
+    }
 
-      return await this.restart({ debugMode });
-    })
-  }
+    return await this.restart({ debugMode });
+  }, { cache: false });
 
-  async stop() {
-    return await this.mutex.runExclusive(async () => {
-      await this.stopChild();
-    });
-  }
+  stop = pMemoize(async () => {
+    await this.stopChild();
+  }, { cache: false });
 
   private async restart({ debugMode = false }: VisionRunnerStartOptions = {}): Promise<{ pid: number; port: number }> {
     this.log('restart()');
