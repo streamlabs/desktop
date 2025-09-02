@@ -62,23 +62,15 @@ export function MobileSettings() {
     <>
       <h2>{$t('Mobile Streaming')}</h2>
       <ObsSettingsSection>
-        <div>
-          <img src={$i('images/mobile/qr_ios.png')} />
-          <img src={$i('images/mobile/badge_ios.png')} />
+        <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+          {['ios', 'android'].map(os => (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <img className={styles.qrCode} src={$i(`images/mobile/qr_${os}.png`)} />
+              <img className={styles.badge} src={$i(`images/mobile/badge_${os}.png`)} />
+            </div>
+          ))}
         </div>
-        <div>
-          <img src={$i('images/mobile/qr_android.png')} />
-          <img src={$i('images/mobile/badge_android.png')} />
-        </div>
-        <UltraBox>
-          <UltraIcon />
-          <div>
-            {$t(
-              'Enjoy your Ultra membership benefits on mobile including Multistream, Disconnect protection and premium themes.',
-            )}
-          </div>
-          <ButtonHighlighted title={$t('Join Ultra')} />
-        </UltraBox>
+        <UltraInsert />
       </ObsSettingsSection>
       <h2>{$t('Remote Controller')}</h2>
       <ObsSettingsSection>
@@ -159,3 +151,32 @@ export function MobileSettings() {
 }
 
 MobileSettings.page = 'Mobile';
+
+function UltraInsert() {
+  const { UserService } = Services;
+  const { isPrime } = useVuex(() => ({
+    isPrime: UserService.views.isPrime,
+  }));
+
+  function Content() {
+    return (
+      <div style={{ display: 'flex' }}>
+        <UltraIcon />
+        <div>
+          {$t(
+            'Enjoy your Ultra membership benefits on mobile including Multistream, Disconnect protection and premium themes.',
+          )}
+        </div>
+        {!isPrime && <ButtonHighlighted title={$t('Join Ultra')} />}
+      </div>
+    );
+  }
+
+  return isPrime ? (
+    <Content />
+  ) : (
+    <UltraBox className={styles.ultraBox}>
+      <Content />
+    </UltraBox>
+  );
+}
