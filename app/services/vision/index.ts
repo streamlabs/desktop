@@ -53,7 +53,7 @@ export class VisionService extends Service {
   // update prompt
   private lastPromptAt = 0;
   private lastPromptVersion?: string;
-  private promptCooldownMs = 5_000; // 5 seconds
+  private promptCooldownMs = 500; // 500ms
 
   @Inject() userService: UserService;
   @Inject() hostsService: HostsService;
@@ -256,5 +256,33 @@ export class VisionService extends Service {
 
   private writeState(patch: Partial<VisionState>) {
     this.state.db.write(() => Object.assign(this.state, patch));
+  }
+
+  requestFrame() {
+    const url = `http://localhost:${this.state.port}/query/vision_frame`;
+    const headers = new Headers({ 'Content-Type': 'application/json' });
+
+    return jfetch(url, { headers, method: 'GET' });
+  }
+
+  requestActiveProcess() {
+    const url = `http://localhost:${this.state.port}/processes/active`;
+    const headers = new Headers({ 'Content-Type': 'application/json' });
+
+    return jfetch(url, { headers, method: 'GET' });
+  }
+
+  requestAvailableProcesses() {
+    const url = `http://localhost:${this.state.port}/processes`;
+    const headers = new Headers({ 'Content-Type': 'application/json' });
+
+    return jfetch(url, { headers, method: 'GET' });
+  }
+
+  activateProcess(pid: string) {
+    const url = `http://localhost:${this.state.port}/processes/${pid}/activate`;
+    const headers = new Headers({ 'Content-Type': 'application/json' });
+
+    return jfetch(url, { headers, method: 'POST' });
   }
 }
