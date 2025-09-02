@@ -5,21 +5,26 @@ import { $t } from '../../../services/i18n';
 import { Services } from '../../service-provider';
 import { SwitchInput, TextInput } from '../../shared/inputs';
 import { IConnectedDevice } from 'services/api/remote-control-api';
-import styles from './RemoteControl.m.less';
+import styles from './Mobile.m.less';
 import { useRealmObject } from 'components-react/hooks/realm';
 import { useVuex } from 'components-react/hooks';
+import UltraIcon from 'components-react/shared/UltraIcon';
+import { $i } from 'services/utils';
+import ButtonHighlighted from 'components-react/shared/ButtonHighlighted';
+import UltraBox from 'components-react/shared/UltraBox';
 
-export function RemoteControlSettings() {
+export function MobileSettings() {
   const { RemoteControlService, UserService, TcpServerService } = Services;
 
   const connectedDevices = useRealmObject(RemoteControlService.connectedDevices).devices;
   const enabled = useRealmObject(RemoteControlService.state).enabled;
 
-  const { isLoggedIn, websocketsEnabled, token, port } = useVuex(() => ({
+  const { isLoggedIn, websocketsEnabled, token, port, isPrime } = useVuex(() => ({
     isLoggedIn: UserService.views.isLoggedIn,
     websocketsEnabled: TcpServerService.state.websockets.enabled,
     token: TcpServerService.state.token,
     port: TcpServerService.state.websockets.port,
+    isPrime: UserService.views.isPrime,
   }));
 
   function handleToggle() {
@@ -55,6 +60,27 @@ export function RemoteControlSettings() {
 
   return (
     <>
+      <h2>{$t('Mobile Streaming')}</h2>
+      <ObsSettingsSection>
+        <div>
+          <img src={$i('images/mobile/qr_ios.png')} />
+          <img src={$i('images/mobile/badge_ios.png')} />
+        </div>
+        <div>
+          <img src={$i('images/mobile/qr_android.png')} />
+          <img src={$i('images/mobile/badge_android.png')} />
+        </div>
+        <UltraBox>
+          <UltraIcon />
+          <div>
+            {$t(
+              'Enjoy your Ultra membership benefits on mobile including Multistream, Disconnect protection and premium themes.',
+            )}
+          </div>
+          <ButtonHighlighted title={$t('Join Ultra')} />
+        </UltraBox>
+      </ObsSettingsSection>
+      <h2>{$t('Remote Controller')}</h2>
       <ObsSettingsSection>
         <div>
           {$t(
@@ -92,6 +118,7 @@ export function RemoteControlSettings() {
           )}
         </div>
       </ObsSettingsSection>
+      <h2>{$t('Third Party Connections')}</h2>
       <ObsSettingsSection>
         <div>
           {$t(
@@ -131,4 +158,4 @@ export function RemoteControlSettings() {
   );
 }
 
-RemoteControlSettings.page = 'Remote Control';
+MobileSettings.page = 'Mobile';
