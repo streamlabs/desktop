@@ -120,7 +120,7 @@ export class VisionService extends Service {
         });
 
         this.writeState({
-          installedVersion: latestManifest.version,
+          installedVersion: latestManifest?.version || "",
           needsUpdate: false,
           isCurrentlyUpdating: false,
           percentDownloaded: 0,
@@ -143,7 +143,7 @@ export class VisionService extends Service {
 
       this.writeState({
         needsUpdate,
-        installedVersion: installedManifest?.version
+        installedVersion: installedManifest?.version || ""
       });
 
       if (needsUpdate) {

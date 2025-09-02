@@ -153,11 +153,8 @@ export class VisionUpdater {
         throw e;
       }
 
-      return {
-        needsUpdate: false,
-        installedManifest: manifest,
-        latestManifest: manifest
-      };
+      // let's check for updates and ignore the cache
+      return await this.checkNeedsUpdate({ force: true });
     });
   }
 }
