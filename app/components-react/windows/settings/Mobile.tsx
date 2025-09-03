@@ -19,12 +19,11 @@ export function MobileSettings() {
   const connectedDevices = useRealmObject(RemoteControlService.connectedDevices).devices;
   const enabled = useRealmObject(RemoteControlService.state).enabled;
 
-  const { isLoggedIn, websocketsEnabled, token, port, isPrime } = useVuex(() => ({
+  const { isLoggedIn, websocketsEnabled, token, port } = useVuex(() => ({
     isLoggedIn: UserService.views.isLoggedIn,
     websocketsEnabled: TcpServerService.state.websockets.enabled,
     token: TcpServerService.state.token,
     port: TcpServerService.state.websockets.port,
-    isPrime: UserService.views.isPrime,
   }));
 
   function handleToggle() {
@@ -64,7 +63,10 @@ export function MobileSettings() {
       <ObsSettingsSection>
         <div style={{ display: 'flex', justifyContent: 'space-around' }}>
           {['ios', 'android'].map(os => (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+              key={os}
+            >
               <img className={styles.qrCode} src={$i(`images/mobile/qr_${os}.png`)} />
               <img className={styles.badge} src={$i(`images/mobile/badge_${os}.png`)} />
             </div>
@@ -153,7 +155,7 @@ export function MobileSettings() {
 MobileSettings.page = 'Mobile';
 
 function UltraInsert() {
-  const { UserService } = Services;
+  const { UserService, MagicLinkService } = Services;
   const { isPrime } = useVuex(() => ({
     isPrime: UserService.views.isPrime,
   }));
@@ -161,19 +163,26 @@ function UltraInsert() {
   function Content() {
     return (
       <div style={{ display: 'flex' }}>
-        <UltraIcon />
-        <div>
+        <UltraIcon style={{ width: '20px', height: '20px' }} />
+        <div style={{ margin: '0 8px' }}>
           {$t(
             'Enjoy your Ultra membership benefits on mobile including Multistream, Disconnect protection and premium themes.',
           )}
         </div>
-        {!isPrime && <ButtonHighlighted title={$t('Join Ultra')} />}
+        {!isPrime && (
+          <ButtonHighlighted
+            text={$t('Get Ultra')}
+            onClick={() => MagicLinkService.actions.linkToPrime('mobile-settings')}
+          />
+        )}
       </div>
     );
   }
 
   return isPrime ? (
-    <Content />
+    <div className={styles.ultraBox}>
+      <Content />
+    </div>
   ) : (
     <UltraBox className={styles.ultraBox}>
       <Content />
