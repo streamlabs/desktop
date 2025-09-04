@@ -278,5 +278,9 @@
   "Bearer Token": "Token do portador",
   "Apply Primary": "Aplicar primário",
   "Output Resolution": "Resolução de saída",
-  "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "Não é possível iniciar Dual Output. Atualiza as tuas Definições de transmissão para \"Usar definições recomendadas\""
+  "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "Não é possível iniciar Dual Output. Atualiza as tuas Definições de transmissão para \"Usar definições recomendadas\"",
+  "Mobile": "Mobile",
+  "Mobile Streaming": "Mobile Streaming",
+  "Remote Controller": "Remote Controller",
+  "Third Party Connections": "Third Party Connections"
 }
