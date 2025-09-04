@@ -408,7 +408,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
       'Scene Collections',
       'Notifications',
       'Appearance',
-      'Remote Control',
+      'Mobile',
       'Virtual Webcam',
     ]);
 
