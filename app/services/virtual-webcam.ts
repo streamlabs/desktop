@@ -103,6 +103,33 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
     return new VirtualWebcamViews(this.state);
   }
 
+  private handleUnknownVirtualCamError(error: unknown) {
+    console.error('Caught OBS_service_startVirtualCam error:', error);
+    let errorMessage = '';
+    const darwinVersion = os.release().split('.')[0]; // Extract the major version number
+    const isMacOS15OrGreater = Number(darwinVersion) >= 15;
+    if (isMacOS15OrGreater) {
+      errorMessage = $t(
+        'Unable to start virtual camera.\n\nYou may need to enable permissions. To do this, go to System Settings → General → Login Items & Extensions → Camera Extensions.',
+      );
+    } else {
+      errorMessage = $t(
+        'Unable to start virtual camera.\n\nYou may need to enable permissions. To do this, go to System Settings → Privacy & Security → Security.',
+      );
+    }
+    remote.dialog.showErrorBox($t('Virtual Webcam'), errorMessage);
+  }
+
+  // Returns true if the camera extension is successfully installed. If not, a message is displayed to the user.
+  private tryInstallSystemExtension() {
+    const errorCode = obs.NodeObs.OBS_service_installVirtualCamPlugin();
+    if (errorCode > 0) {
+      const errorMessage = this.getInstallErrorMessage(errorCode);
+      remote.dialog.showErrorBox($t('Virtual Webcam'), errorMessage);
+    }
+    return errorCode === 0;
+  }
+
   private getInstallErrorMessage(errorCode: number) {
     const codeName = InstallationErrorCodes[errorCode];
     console.log(`User experienced virtual cam installation error ${errorCode} value ${codeName}`);
@@ -186,11 +213,7 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
       [OS.Mac]: () => {
         this.signalsService.addCallback(this.handleSignalOutput);
 
-        const errorCode = obs.NodeObs.OBS_service_installVirtualCamPlugin();
-        if (errorCode > 0) {
-          const errorMessage = this.getInstallErrorMessage(errorCode);
-          remote.dialog.showErrorBox($t('Virtual Webcam'), errorMessage);
-        } else {
+        if (this.tryInstallSystemExtension()) {
           this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
             console.log(`virtual cam install signalInfo: ${signalInfo.signal}`);
             this.setInstallStatus();
@@ -227,11 +250,7 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
     try {
       obs.NodeObs.OBS_service_startVirtualCam();
     } catch (error: unknown) {
-      console.error('Caught OBS_service_startVirtualCam error:', error);
-      remote.dialog.showErrorBox(
-        $t('Virtual Webcam'),
-        $t('Unable to start virtual camera.\n\nPlease try again.'),
-      );
+      this.handleUnknownVirtualCamError(error);
       return;
     }
     this.SET_RUNNING(true);
