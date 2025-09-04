@@ -36,14 +36,16 @@ jobs:
       - name: Add Issue or PR to Project
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
+          ISSUE_NODE_ID: ${{ github.event.issue.node_id }}
+          PR_NODE_ID: ${{ github.event.pull_request.node_id }}
         run: |
           ORG_NAME="n-air-app"
           PROJECT_NUMBER=3
 
           if [[ "${{ github.event_name }}" == "issues" ]]; then
-            CONTENT_ID="${{ github.event.issue.node_id }}"
+            CONTENT_ID="$ISSUE_NODE_ID"
           else
-            CONTENT_ID="${{ github.event.pull_request.node_id }}"
+            CONTENT_ID="$PR_NODE_ID"
           fi
 
           echo "Adding content ID: $CONTENT_ID to project ID: ${{ steps.get_project.outputs.project_id }}"
