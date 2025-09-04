@@ -61,6 +61,9 @@ export function MobileSettings() {
     <>
       <h2>{$t('Mobile Streaming')}</h2>
       <ObsSettingsSection>
+        <div style={{ marginBottom: '8px' }}>
+          {$t('Stream your phone camera or mobile game on the go with Streamlabs Mobile App.')}
+        </div>
         <div style={{ display: 'flex', justifyContent: 'space-around' }}>
           {['ios', 'android'].map(os => (
             <div
