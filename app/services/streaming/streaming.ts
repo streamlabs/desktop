@@ -1695,14 +1695,18 @@ export class StreamingService
     } else if (info.signal === EOBSOutputSignal.Stop) {
       // handle the stop signal sent because of an error
       if (info.code !== EOutputCode.Success) {
-        this.RESET_STREAM_INFO();
-        this.rejectStartStreaming();
         this.usageStatisticsService.recordAnalyticsEvent('StreamingStatus', {
           code: info.code,
           status: EStreamingState.Offline,
         });
 
-        await this.handleDestroyOutputContexts(display);
+        await this.handleDestroyOutputContexts('vertical');
+        await this.handleDestroyOutputContexts('horizontal');
+
+        this.SET_STREAMING_STATUS(EStreamingState.Offline, 'vertical', time);
+        this.SET_STREAMING_STATUS(EStreamingState.Offline, 'horizontal', time);
+        this.RESET_STREAM_INFO();
+        this.rejectStartStreaming();
       }
     } else if (info.signal === EOBSOutputSignal.Deactivate) {
       // The `deactivate` signal is sent after the `stop` signal
@@ -2227,10 +2231,17 @@ export class StreamingService
       service: display as string,
     } as IOBSOutputSignalInfo;
 
-    await this.handleDestroyOutputContexts(display);
+    if (info.type === EOBSOutputType.Streaming) {
+      this.SET_STREAMING_STATUS(EStreamingState.Offline, 'vertical');
+      this.SET_STREAMING_STATUS(EStreamingState.Offline, 'horizontal');
+      await this.handleDestroyOutputContexts(display, true);
+    } else {
+      await this.handleDestroyOutputContexts(display);
+    }
 
     this.handleOBSOutputError(legacyInfo);
 
+    this.RESET_STREAM_INFO();
     this.rejectStartStreaming();
   }
 
@@ -2410,6 +2421,8 @@ export class StreamingService
       errorText = $t(
         'Invalid Path or Connection URL.  Please check your settings to confirm that they are valid.',
       );
+      console.debug('Horizontal Output: ', this.settingsService.views.values.Stream);
+      console.debug('Vertical Output: ', this.settingsService.views.values.StreamSecond);
       diagReportMessage = diagReportMessage.concat(errorText);
     } else if (info.code === EOutputCode.ConnectFailed) {
       errorText = $t(
@@ -2630,7 +2643,7 @@ export class StreamingService
    */
   shutdown() {
     Object.keys(this.contexts).forEach(async (display: TDisplayType) => {
-      await this.handleDestroyOutputContexts(display);
+      await this.handleDestroyOutputContexts(display, true);
     });
   }
 
@@ -2639,14 +2652,14 @@ export class StreamingService
    * @param display - The display to destroy the output contexts for
    * @remark Primarily used for cleanup.
    */
-  private async handleDestroyOutputContexts(display: TDisplayType) {
+  private async handleDestroyOutputContexts(display: TDisplayType, force: boolean = false) {
     // Only destroy instances if all outputs are offline
     const offline =
       this.state.status[display].replayBuffer === EReplayBufferState.Offline &&
       this.state.status[display].recording === ERecordingState.Offline &&
       this.state.status[display].streaming === EStreamingState.Offline;
 
-    if (offline) {
+    if (offline || force) {
       await this.destroyOutputContextIfExists(display, 'replayBuffer');
       await this.destroyOutputContextIfExists(display, 'recording');
       await this.destroyOutputContextIfExists(display, 'streaming');
