@@ -286,6 +286,9 @@ function RecordingTooltipTitle(p: {
       {p.isDualOutputMode && !p.isRecording && !p.useAiHighlighter && (
         <RecordingSwitcher label={$t('Start Recording')} />
       )}
+      {p.isDualOutputMode && p.isRecording && !p.useAiHighlighter && (
+        <span>{$t('Stop Recording')}</span>
+      )}
       {!p.isDualOutputMode && !p.useAiHighlighter && <span>{text}</span>}
     </>
   );

@@ -342,10 +342,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       platformDisplays.horizontal.length > 0 || destinationDisplays.horizontal.length > 0;
     const verticalHasDestinations =
       platformDisplays.vertical.length > 0 || destinationDisplays.vertical.length > 0;
-
-    console.log('horizontalHasDestinations', horizontalHasDestinations);
-    console.log('verticalHasDestinations', verticalHasDestinations);
-
     return horizontalHasDestinations && verticalHasDestinations;
   }
 

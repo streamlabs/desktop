@@ -90,7 +90,6 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
               );
             }}
             uncontrolled
-            style={{ marginRight: '10px' }}
             label={v.isDualOutputMode ? $t('Record Stream in') : $t('Record Stream')}
             layout="horizontal"
             checkmark

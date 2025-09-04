@@ -309,5 +309,7 @@
   "An unknown Recording error occurred. Please try again.": "An unknown Recording error occurred. Please try again.",
   "An unknown Replay Buffer error occurred. Please try again.": "An unknown Replay Buffer error occurred. Please try again.",
   "Recording in progress. Stop recording to change the recording display.": "Recording in progress. Stop recording to change the recording display.",
-  "Multichat": "Multichat"
+  "Multichat": "Multichat",
+  "Vertical Recording Active": "Vertical Recording Active",
+  "Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?": "Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?"
 }
