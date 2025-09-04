@@ -278,5 +278,9 @@
   "Bearer Token": "不記名符記",
   "Apply Primary": "套用主要",
   "Output Resolution": "輸出解析度",
-  "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "無法啟動 Dual Output，請將直播設定更新為「使用建議設定」"
+  "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "無法啟動 Dual Output，請將直播設定更新為「使用建議設定」",
+  "Mobile": "Mobile",
+  "Mobile Streaming": "Mobile Streaming",
+  "Remote Controller": "Remote Controller",
+  "Third Party Connections": "Third Party Connections"
 }
