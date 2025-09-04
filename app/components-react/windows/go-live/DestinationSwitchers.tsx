@@ -32,14 +32,8 @@ export function DestinationSwitchers() {
     isPrime,
     alwaysEnabledPlatforms,
     alwaysShownPlatforms,
-    isTikTokBoth,
-  } = useGoLiveSettings().extend(module => ({
-    get isTikTokBoth() {
-      return (
-        module.settings.platforms?.twitch && module.settings.platforms?.twitch.display === 'both'
-      );
-    },
-  }));
+    isTwitchDualStreaming,
+  } = useGoLiveSettings();
 
   // use these references to apply debounce
   // for error handling and switch animation
@@ -90,7 +84,7 @@ export function DestinationSwitchers() {
   };
 
   const disableCustomDestinationSwitchers = shouldDisableCustomDestinationSwitchers();
-  const disablePlatformSwitchers = isDualOutputMode && isTikTokBoth;
+  const disablePlatformSwitchers = isDualOutputMode && isTwitchDualStreaming;
 
   const emitSwitch = useDebounce(500, (ind?: number, enabled?: boolean) => {
     if (ind !== undefined && enabled !== undefined) {
@@ -159,10 +153,7 @@ export function DestinationSwitchers() {
         <DestinationSwitcher
           key={platform}
           destination={platform}
-          enabled={
-            (disablePlatformSwitchers && platform === 'twitch') ||
-            (!disablePlatformSwitchers && isEnabled(platform))
-          }
+          enabled={isEnabled(platform)}
           onChange={enabled => togglePlatform(platform, enabled)}
           isDualOutputMode={isDualOutputMode}
           index={ind}

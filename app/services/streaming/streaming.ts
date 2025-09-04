@@ -293,6 +293,14 @@ export class StreamingService
    * Make a transition to Live
    */
   async goLive(newSettings?: IGoLiveSettings) {
+    // To ensure that the correct chat renders if dual streaming Twitch, make sure that Twitch is the primary platform
+    if (
+      this.userService.state.auth?.primaryPlatform !== 'twitch' &&
+      this.views.isTwitchDualStreaming
+    ) {
+      this.userService.setPrimaryPlatform('twitch');
+    }
+
     // don't interact with API in logged out mode and when protected mode is disabled
     if (
       !this.userService.isLoggedIn ||
