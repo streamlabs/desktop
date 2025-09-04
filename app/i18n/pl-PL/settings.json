@@ -278,5 +278,9 @@
   "Bearer Token": "Token na okaziciela",
   "Apply Primary": "Zastosuj Główne",
   "Output Resolution": "Rozdzielczość wyjściowa",
-  "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "Nie można uruchomić funkcji dwóch wyjść Dual Output. Zaktualizuj Ustawienia transmisji, wybierając opcję „Użyj zalecanych ustawień”."
+  "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "Nie można uruchomić funkcji dwóch wyjść Dual Output. Zaktualizuj Ustawienia transmisji, wybierając opcję „Użyj zalecanych ustawień”.",
+  "Mobile": "Mobile",
+  "Mobile Streaming": "Mobile Streaming",
+  "Remote Controller": "Remote Controller",
+  "Third Party Connections": "Third Party Connections"
 }
