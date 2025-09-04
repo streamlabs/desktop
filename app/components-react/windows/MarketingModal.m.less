@@ -1,0 +1,61 @@
+@import "../../styles/index.less";
+
+.cell {
+  background: var(--section);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+  position: relative;
+  width: 45%;
+
+  .image-container {
+    width: 100%;
+    height: 100px;
+    overflow: hidden;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .image {
+    width: 100%;
+    height: auto;
+
+    .center();
+  }
+
+  .info {
+    padding: 16px;
+  }
+}
+
+.cell.main {
+  flex-direction: row;
+  width: 100%;
+  height: 200px;
+
+  .image-container {
+    height: 100%;
+    width: 50%;
+  }
+
+  .image {
+    height: 100%;
+    width: auto;
+
+    .center();
+  }
+}
+
+.separator {
+  margin: 16px 0;
+  width: 100%;
+  height: 1px;
+  background: var(--section);
+}
+
+.sub-updates {
+  display: flex;
+  justify-content: space-between;
+}

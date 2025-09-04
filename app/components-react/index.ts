@@ -42,6 +42,7 @@ import UltraIcon from './shared/UltraIcon';
 import EditTransform from './windows/EditTransform';
 import InstalledApps from './windows/settings/InstalledApps';
 import Hotkeys from './windows/settings/Hotkeys';
+import MarketingModal from './windows/MarketingModal';
 import Main from './windows/Main';
 import Loader from './pages/Loader';
 import StartStreamingButton from './root/StartStreamingButton';
@@ -96,6 +97,7 @@ export const components = {
   InstalledApps,
   Blank,
   Hotkeys,
+  MarketingModal,
   Main: createRoot(Main),
   Loader,
   StartStreamingButton,
