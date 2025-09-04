@@ -278,5 +278,9 @@
   "Bearer Token": "Taşıyıcı Token",
   "Apply Primary": "Birinci Olarak Uygulayın",
   "Output Resolution": "Çıkış Çözünürlüğü",
-  "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "Dual Output başlatılamıyor, Yayın Ayarlarınızı \"Önerilen Ayarları Kullan\" olarak güncelleyin"
+  "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "Dual Output başlatılamıyor, Yayın Ayarlarınızı \"Önerilen Ayarları Kullan\" olarak güncelleyin",
+  "Mobile": "Mobile",
+  "Mobile Streaming": "Mobile Streaming",
+  "Remote Controller": "Remote Controller",
+  "Third Party Connections": "Third Party Connections"
 }
