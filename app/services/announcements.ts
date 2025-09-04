@@ -157,10 +157,10 @@ export class AnnouncementsService extends Service {
   }
 
   async getProductUpdates() {
-    const { lastUpdatedAt, updates } = await this.fetchProductUpdates();
-    if (!lastUpdatedAt || lastUpdatedAt <= this.state.lastReadProductUpdate) return;
-    this.setLastReadProductUpdate(lastUpdatedAt);
-    this.setProductUpdates(updates);
+    const resp = await this.fetchProductUpdates();
+    if (!resp.lastUpdatedAt || resp.lastUpdatedAt <= this.state.lastReadProductUpdate) return;
+    this.setLastReadProductUpdate(resp.lastUpdatedAt);
+    this.setProductUpdates(resp.updates);
     this.openProductUpdates();
   }
 
