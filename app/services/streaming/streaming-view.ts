@@ -715,6 +715,14 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     // return this.isDualOutputMode && this.settings.recording === 'both';
   }
 
+  get isHorizontalReplayBuffer() {
+    return this.streamingState.status.horizontal.replayBuffer !== EReplayBufferState.Offline;
+  }
+
+  get isVerticalReplayBuffer() {
+    return this.streamingState.status.vertical.replayBuffer !== EReplayBufferState.Offline;
+  }
+
   get isIdle(): boolean {
     return !this.isStreaming && !this.isRecording;
   }

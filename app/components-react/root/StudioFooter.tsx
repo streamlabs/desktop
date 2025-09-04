@@ -279,9 +279,10 @@ function RecordingTooltipTitle(p: {
 
   return (
     <>
-      {p.useAiHighlighter && (
-        <span>{$t('AI Highlighter  is enabled. Recording will start when stream starts.')}</span>
+      {p.useAiHighlighter && !p.isRecording && (
+        <span>{$t('AI Highlighter is enabled. Recording will start when stream starts.')}</span>
       )}
+      {p.useAiHighlighter && p.isRecording && <span>{$t('Stop Recording')}</span>}
       {p.isDualOutputMode && !p.isRecording && !p.useAiHighlighter && (
         <RecordingSwitcher label={$t('Start Recording')} />
       )}

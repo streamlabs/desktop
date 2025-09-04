@@ -1216,23 +1216,26 @@ export class StreamingService
 
   async toggleRecording() {
     try {
-      if (this.views.recordingStatus === ERecordingState.Recording) {
+      if (
+        this.state.status.horizontal.recording === ERecordingState.Recording ||
+        this.state.status.vertical.recording === ERecordingState.Recording
+      ) {
         await this.handleStopRecording();
-      } else if (this.views.recordingStatus === ERecordingState.Offline) {
+      } else if (
+        this.state.status.horizontal.recording === ERecordingState.Offline ||
+        this.state.status.vertical.recording === ERecordingState.Offline
+      ) {
         await this.handleStartRecording();
-      } else if (this.views.recordingStatus === ERecordingState.Stopping) {
-        if (
-          this.contexts.horizontal.recording !== null &&
-          this.state.status.horizontal.recording !== ERecordingState.Offline
-        ) {
+      } else if (
+        this.state.status.horizontal.recording === ERecordingState.Stopping ||
+        this.state.status.vertical.recording === ERecordingState.Stopping
+      ) {
+        if (this.contexts.horizontal.recording !== null) {
           console.warn('Force stopping horizontal recording');
           this.contexts.horizontal.recording.stop(true);
         }
 
-        if (
-          this.contexts.vertical.recording !== null &&
-          this.state.status.vertical.recording !== ERecordingState.Offline
-        ) {
+        if (this.contexts.vertical.recording !== null) {
           console.warn('Force stopping vertical recording');
           this.contexts.vertical.recording.stop(true);
         }
@@ -1293,7 +1296,7 @@ export class StreamingService
       });
     }
 
-    if (this.views.isDualOutputMode) {
+    if (this.views.isDualOutputMode && !this.highlighterService.views.useAiHighlighter) {
       if (this.views.isDualOutputRecording || this.views.settings.recording === 'horizontal') {
         await this.validateOrCreateOutputInstance('horizontal', 'recording', 1, true);
       }
@@ -1337,10 +1340,7 @@ export class StreamingService
 
   private async handleStopRecording() {
     const mode = this.views.isDualOutputMode ? 'Dual Output: ' : 'Single Output: ';
-    this.logContexts('horizontal', mode + 'handleStopRecording');
-    this.logContexts('vertical', mode + 'handleStopRecording');
-
-    if (this.views.isDualOutputMode) {
+    if (this.views.isDualOutputMode && !this.highlighterService.views.useAiHighlighter) {
       // Stop dual output recording
       if (
         this.views.isDualOutputRecording &&
@@ -1628,7 +1628,7 @@ export class StreamingService
    * @param display - The display the instance is assigned to
    */
   private async handleStreamingSignal(info: EOutputSignal, display: TDisplayType) {
-    console.log('Streaming Signal:', info, display);
+    console.info('Streaming Signal:', info, display);
     // map signals to status
     const nextState: EStreamingState = ({
       [EOBSOutputSignal.Starting]: EStreamingState.Starting,
@@ -1743,7 +1743,7 @@ export class StreamingService
   }
 
   private async handleRecordingSignal(info: EOutputSignal, display: TDisplayType) {
-    console.log('Recording Signal:', info, display);
+    console.info('Recording Signal:', info, display);
 
     // map signals to status
     const nextState: ERecordingState = ({
@@ -1813,8 +1813,6 @@ export class StreamingService
 
       await this.handleDestroyOutputContexts(display);
 
-      this.logContexts('horizontal', 'Wrote');
-      this.logContexts('vertical', 'Wrote');
       this.recordingStatusChange.next(nextState);
       return;
     }
@@ -1826,7 +1824,7 @@ export class StreamingService
   }
 
   private async handleReplayBufferSignal(info: EOutputSignal, display: TDisplayType) {
-    console.log('Replay Buffer Signal:', info, display);
+    console.info('Replay Buffer Signal:', info, display);
     // map signals to status
     const nextState: EReplayBufferState = ({
       [EOBSOutputSignal.Start]: EReplayBufferState.Running,
@@ -1864,7 +1862,10 @@ export class StreamingService
         await new Promise(resolve => setTimeout(resolve, 2000));
         this.contexts.vertical.replayBuffer.save();
       }
-      this.replayBufferFileWrite.next(this.contexts[display].replayBuffer.lastFile());
+
+      if (!this.views.isVerticalReplayBuffer) {
+        this.replayBufferFileWrite.next(this.contexts[display].replayBuffer.lastFile());
+      }
     }
 
     if (info.signal === EOBSOutputSignal.Stop) {
@@ -1998,7 +1999,10 @@ export class StreamingService
   }
 
   stopReplayBuffer() {
-    const display = this.views.isDualOutputMode ? this.views.getOutputDisplayType() : 'horizontal';
+    const display =
+      this.views.isDualOutputMode && !this.highlighterService.views.useAiHighlighter
+        ? this.views.getOutputDisplayType()
+        : 'horizontal';
 
     // To prevent errors, if the replay buffer instance does not exist and the status is not offline, log an error
     // and reset the replay buffer status to offline.
@@ -2044,7 +2048,10 @@ export class StreamingService
   saveReplay() {
     if (this.views.isDualOutputRecording) return;
 
-    const display = this.views.getOutputDisplayType();
+    const display =
+      this.views.isDualOutputMode && !this.highlighterService.views.useAiHighlighter
+        ? this.views.getOutputDisplayType()
+        : 'horizontal';
 
     if (!this.contexts[display].replayBuffer) return;
 
@@ -2096,11 +2103,8 @@ export class StreamingService
     await this.destroyOutputContextIfExists(display, type);
 
     if (type === 'streaming') {
-      console.log('createStreaming');
-
       await this.createStreaming(display, index, start);
     } else {
-      console.log('createRecording');
       await this.createRecording(display, index, start);
     }
 

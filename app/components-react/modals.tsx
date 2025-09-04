@@ -46,7 +46,9 @@ export function confirmAsync(
  * alert('This is Alert').then(() => console.log('Alert closed'))
  *
  */
-export function alertAsync(p: Omit<ModalFuncProps, 'afterClose'> | string): Promise<void> {
+export function alertAsync(
+  p: (Omit<ModalFuncProps, 'afterClose'> | string) & { afterCloseFn?: () => void },
+): Promise<void> {
   const modalProps = typeof p === 'string' ? { title: p } : p;
   const { WindowsService } = Services;
   WindowsService.updateStyleBlockers(Utils.getWindowId(), true);
@@ -58,6 +60,11 @@ export function alertAsync(p: Omit<ModalFuncProps, 'afterClose'> | string): Prom
       ...modalProps,
       afterClose: () => {
         WindowsService.updateStyleBlockers(Utils.getWindowId(), false);
+
+        if (p?.afterCloseFn) {
+          p.afterCloseFn();
+        }
+
         resolve();
       },
     });
@@ -118,7 +125,13 @@ export function promptAsync(
 export function promptAction(p: {
   title: string;
   message: string;
-  btns: { text: string; fn?: () => void }[];
+  btns?: { text: string; fn?: () => void }[];
+  btnText?: string;
+  btnType?: 'default' | 'primary';
+  cancelBtnPosition?: 'left' | 'right' | 'none';
+  cancelBtnText?: string;
+  fn?(): void | ((props: any) => unknown | void);
+  cancelFn?(): void | ((props?: any) => unknown | void);
   icon?: React.ReactNode;
 }) {
   alertAsync({
@@ -136,20 +149,33 @@ export function promptAction(p: {
       <ModalLayout
         footer={
           <Form layout={'inline'} className={styles.actionModalFooter}>
-            {p.btns.map((btn, i) => (
+            {!p.cancelBtnPosition ||
+              (p.cancelBtnPosition && p.cancelBtnPosition === 'left' && (
+                <Button onClick={Modal.destroyAll}>{p.cancelBtnText ?? $t('Skip')}</Button>
+              ))}
+            <Button
+              type={p?.btnType ?? 'primary'}
+              onClick={() => {
+                Modal.destroyAll();
+                if (p?.fn) {
+                  p.fn();
+                }
+              }}
+            >
+              {p.btnText}
+            </Button>
+            {p.cancelBtnPosition && p.cancelBtnPosition === 'right' && (
               <Button
-                key={`btn-${i}`}
-                type="primary"
                 onClick={() => {
                   Modal.destroyAll();
-                  if (btn.fn) {
-                    btn.fn();
+                  if (p?.cancelFn) {
+                    p.cancelFn();
                   }
                 }}
               >
-                {btn.text}
+                {p.cancelBtnText ?? $t('Skip')}
               </Button>
-            ))}
+            )}
           </Form>
         }
       >
