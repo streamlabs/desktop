@@ -36,14 +36,14 @@ function Toolbar() {
 
   const {
     muted,
-    muteChatNotifs,
+    enableChatNotifs,
     queuePaused,
     mediaShareEnabled,
     safeModeEnabled,
     spinWheelExists,
   } = useVuex(() => ({
     muted: RecentEventsService.state.muted,
-    muteChatNotifs: RecentEventsService.state.muteChatNotifs,
+    enableChatNotifs: RecentEventsService.state.enableChatNotifs,
     queuePaused: RecentEventsService.state.queuePaused,
     safeModeEnabled: RecentEventsService.state.safeMode.enabled,
     mediaShareEnabled: RecentEventsService.state.mediaShareEnabled,
@@ -101,16 +101,16 @@ function Toolbar() {
       </Tooltip>
       <Tooltip
         title={
-          muteChatNotifs
-            ? $t('Enable Chat Box Notifications')
-            : $t('Disable Chat Box Notifications')
+          enableChatNotifs
+            ? $t('Disable Chat Box Notifications')
+            : $t('Enable Chat Box Notifications')
         }
         placement="left"
       >
         <i
           className={cx('action-icon', {
-            'icon-notifications': !muteChatNotifs,
-            'icon-notifications-off': muteChatNotifs,
+            'icon-notifications': enableChatNotifs,
+            'icon-notifications-off': !enableChatNotifs,
           })}
           onClick={() => RecentEventsService.actions.toggleMuteChatNotifs()}
         />

@@ -129,7 +129,7 @@ interface ISafeModeSettings {
 interface IRecentEventsState {
   recentEvents: IRecentEvent[];
   muted: boolean;
-  muteChatNotifs: boolean;
+  enableChatNotifs: boolean;
   mediaShareEnabled: boolean;
   filterConfig: IRecentEventFilterConfig;
   queuePaused: boolean;
@@ -409,7 +409,7 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
   static initialState: IRecentEventsState = {
     recentEvents: [],
     muted: false,
-    muteChatNotifs: false,
+    enableChatNotifs: false,
     mediaShareEnabled: false,
     filterConfig: {
       donation: false,
@@ -928,7 +928,7 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
   }
 
   async toggleMuteChatNotifs() {
-    const val = !this.state.muteChatNotifs;
+    const val = !this.state.enableChatNotifs;
     const headers = authorizedHeaders(
       this.userService.apiToken,
       new Headers({ 'Content-Type': 'application/json' }),
@@ -1183,6 +1183,6 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
 
   @mutation()
   private SET_MUTE_CHAT_NOTIFS(val: boolean) {
-    this.state.muteChatNotifs = val;
+    this.state.enableChatNotifs = val;
   }
 }
