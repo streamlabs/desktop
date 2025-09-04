@@ -262,8 +262,6 @@ export class EditMenu extends Menu {
                       ? this.dualOutputService.views.getDualOutputNodeId(selectedItem.sceneItemId)
                       : selectedItem.sceneItemId;
 
-                  console.log('sceneItemId ', sceneItemId);
-
                   this.widgetsService.saveWidgetFile(filePath, sceneItemId);
                 });
             },

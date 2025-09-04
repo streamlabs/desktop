@@ -36,7 +36,10 @@ async function afterPackWin() {
   const signingPath = path.join(os.tmpdir(), 'sldesktopsigning');
 
   if (fs.existsSync(signingPath)) {
-    cp.execSync(`logisign client --client logitech-cpg-sign-client --app streamlabs --filelist ${signingPath}`, { stdio: 'inherit' });
+    cp.execSync(
+      `logisign client --client logitech-cpg-sign-client --app streamlabs --filelist ${signingPath}`,
+      { stdio: 'inherit' },
+    );
     fs.unlinkSync(signingPath);
   } else {
     throw new Error('EXPECTED TO SIGN BINARIES BUT SIGNING MANIFEST IS MISSING');
