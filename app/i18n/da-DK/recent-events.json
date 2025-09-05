@@ -80,5 +80,7 @@
   "has resubscribed": "har forlænget abonnement",
   "has gifted a sub to": "har givet et abonnement til",
   "has resubscribed for %{streak} months in a row! (%{months} total)": "har forlænget abonnement i %{streak} måneder i træk (%{months} i alt)",
-  "has resubscribed for %{months} months": "har forlænget abonnement i %{months} måneder"
+  "has resubscribed for %{months} months": "har forlænget abonnement i %{months} måneder",
+  "Disable Chat Box Notifications": "Disable Chat Box Notifications",
+  "Enable Chat Box Notifications": "Enable Chat Box Notifications"
 }

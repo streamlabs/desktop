@@ -278,5 +278,10 @@
   "Bearer Token": "Token držitele",
   "Apply Primary": "Použít primární",
   "Output Resolution": "Rozlišení výstupu",
-  "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "Nelze spustit Dual Output, aktualizujte nastavení streamu na „Použít doporučené nastavení“."
+  "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "Nelze spustit Dual Output, aktualizujte nastavení streamu na „Použít doporučené nastavení“.",
+  "Mobile": "Mobile",
+  "Mobile Streaming": "Mobile Streaming",
+  "Remote Controller": "Remote Controller",
+  "Third Party Connections": "Third Party Connections",
+  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "Stream your phone camera or mobile game on the go with Streamlabs Mobile App."
 }

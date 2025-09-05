@@ -80,5 +80,7 @@
   "has resubscribed": "yeniden abone oldu",
   "has gifted a sub to": "şu kişiye bir abonelik hediye etti:",
   "has resubscribed for %{streak} months in a row! (%{months} total)": "art arda %{streak} ay boyunca yeniden abone oldu! (toplam %{months})",
-  "has resubscribed for %{months} months": "%{months} ay boyunca yeniden abone oldu"
+  "has resubscribed for %{months} months": "%{months} ay boyunca yeniden abone oldu",
+  "Disable Chat Box Notifications": "Disable Chat Box Notifications",
+  "Enable Chat Box Notifications": "Enable Chat Box Notifications"
 }

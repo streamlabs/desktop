@@ -278,5 +278,10 @@
   "Bearer Token": "Token Pembawa",
   "Apply Primary": "Terapkan Primer",
   "Output Resolution": "Resolusi Keluaran",
-  "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "Tidak dapat memulai Dual Output, perbarui Pengaturan Streaming Anda ke \"Gunakan Pengaturan yang Disarankan\""
+  "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "Tidak dapat memulai Dual Output, perbarui Pengaturan Streaming Anda ke \"Gunakan Pengaturan yang Disarankan\"",
+  "Mobile": "Mobile",
+  "Mobile Streaming": "Mobile Streaming",
+  "Remote Controller": "Remote Controller",
+  "Third Party Connections": "Third Party Connections",
+  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "Stream your phone camera or mobile game on the go with Streamlabs Mobile App."
 }
