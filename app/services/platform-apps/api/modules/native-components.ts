@@ -52,6 +52,11 @@ export class NativeComponentsModule extends Module {
   }
 
   @apiMethod()
+  async getAssets() {
+    return await this.streamAvatarService.getAssets();
+  }
+
+  @apiMethod()
   startAvatarProcess(
     ctx: IApiContext,
     renderOffscreen?: boolean,
