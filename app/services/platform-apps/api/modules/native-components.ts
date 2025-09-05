@@ -28,30 +28,6 @@ export class NativeComponentsModule extends Module {
   }
 
   @apiMethod()
-  async isVisionUpdateAvailable() {
-    return await this.streamAvatarService.isVisionUpdateAvailable();
-  }
-
-  @apiMethod()
-  async updateVision(
-    ctx: IApiContext,
-    progressCb: (progress: IDownloadProgress) => void,
-    handler?: OutputStreamHandler,
-  ) {
-    return await this.streamAvatarService.updateVision(progressCb, handler);
-  }
-
-  @apiMethod()
-  startVisionProcess(ctx: IApiContext, handler?: OutputStreamHandler, port = 8000) {
-    this.streamAvatarService.startVisionProcess(handler, port);
-  }
-
-  @apiMethod()
-  stopVisionProcess() {
-    this.streamAvatarService.stopVisionProcess();
-  }
-
-  @apiMethod()
   async getAssets() {
     return await this.streamAvatarService.getAssets();
   }
