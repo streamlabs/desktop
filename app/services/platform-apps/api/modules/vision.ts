@@ -14,7 +14,9 @@ export class VisionModule extends Module {
   @Inject() visionService: VisionService;
   @Inject() websocketService: WebsocketService;
 
-  private log(...args: any[]) { console.log('[VisionModule]', ...args); }
+  private log(...args: any[]) {
+    console.log('[VisionModule]', ...args);
+  }
 
   @apiMethod()
   async startVision() {

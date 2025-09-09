@@ -6,7 +6,7 @@ import { pipeline } from 'node:stream/promises';
 import { downloadFile, IDownloadProgress, jfetch } from 'util/requests';
 import { importExtractZip } from 'util/slow-imports';
 import * as remote from '@electron/remote';
-import pMemoize from "p-memoize";
+import pMemoize from 'p-memoize';
 
 interface IVisionManifest {
   version: string;
@@ -18,21 +18,25 @@ interface IVisionManifest {
 }
 
 type VisionUpdaterResponse = {
-  needsUpdate: boolean,
-  installedManifest?: IVisionManifest,
-  latestManifest: IVisionManifest
-}
+  needsUpdate: boolean;
+  installedManifest?: IVisionManifest;
+  latestManifest: IVisionManifest;
+};
 
 export class VisionUpdater {
-  constructor(private readonly baseDir: string) { }
+  constructor(private readonly baseDir: string) {}
 
   private checkCooldownMs = 60_000;
   private checkCache?: { ts: number; result: VisionUpdaterResponse };
   private checkInflight?: Promise<VisionUpdaterResponse>;
 
-  private log(...args: any[]) { console.log('[VisionUpdater]', ...args); }
+  private log(...args: any[]) {
+    console.log('[VisionUpdater]', ...args);
+  }
 
-  invalidateCache() { this.checkCache = undefined; }
+  invalidateCache() {
+    this.checkCache = undefined;
+  }
 
   get paths() {
     return {
@@ -79,7 +83,9 @@ export class VisionUpdater {
     }
   }
 
-  async checkNeedsUpdate({ force = false }: { force?: boolean } = {}): Promise<VisionUpdaterResponse> {
+  async checkNeedsUpdate({
+    force = false,
+  }: { force?: boolean } = {}): Promise<VisionUpdaterResponse> {
     const now = Date.now();
 
     // return cached if fresh
@@ -104,8 +110,6 @@ export class VisionUpdater {
       const result: VisionUpdaterResponse = { needsUpdate, installedManifest, latestManifest };
       this.checkCache = { ts: Date.now(), result };
       return result;
-
-
     })().finally(() => {
       this.checkInflight = undefined;
     });
@@ -113,46 +117,52 @@ export class VisionUpdater {
     return this.checkInflight;
   }
 
-  downloadAndInstall = pMemoize(async (manifest: IVisionManifest, onProgress?: (p: IDownloadProgress) => void): Promise<VisionUpdaterResponse> => {
-    const { version, url, checksum } = manifest;
+  downloadAndInstall = pMemoize(
+    async (
+      manifest: IVisionManifest,
+      onProgress?: (p: IDownloadProgress) => void,
+    ): Promise<VisionUpdaterResponse> => {
+      const { version, url, checksum } = manifest;
 
-    await this.ensureDirs();
-    const zipPath = path.join(this.paths.tmp, `vision-${version}.zip`);
-    const outDir = path.join(this.baseDir, `bin-${version}`);
-    const bakDir = path.join(this.baseDir, 'bin.bak');
+      await this.ensureDirs();
+      const zipPath = path.join(this.paths.tmp, `vision-${version}.zip`);
+      const outDir = path.join(this.baseDir, `bin-${version}`);
+      const bakDir = path.join(this.baseDir, 'bin.bak');
 
-    // download with timeout + retries (left as helper)
-    await downloadFile(`${url}?t=${checksum}`, zipPath, onProgress);
-    this.log('download complete');
+      // download with timeout + retries (left as helper)
+      await downloadFile(`${url}?t=${checksum}`, zipPath, onProgress);
+      this.log('download complete');
 
-    // verify checksum
-    if ((await sha256(zipPath)).toLowerCase() !== checksum.toLowerCase()) {
-      throw new Error('Checksum verification failed');
-    }
+      // verify checksum
+      if ((await sha256(zipPath)).toLowerCase() !== checksum.toLowerCase()) {
+        throw new Error('Checksum verification failed');
+      }
 
-    // unzip
-    if (fssync.existsSync(outDir)) await fs.rm(outDir, { recursive: true, force: true });
-    await extractZip(zipPath, outDir);
-    await fs.rm(zipPath, { force: true });
+      // unzip
+      if (fssync.existsSync(outDir)) await fs.rm(outDir, { recursive: true, force: true });
+      await extractZip(zipPath, outDir);
+      await fs.rm(zipPath, { force: true });
 
-    // atomic swap with rollback
-    if (fssync.existsSync(this.paths.bin)) {
-      if (fssync.existsSync(bakDir)) await fs.rm(bakDir, { recursive: true, force: true });
-      await fs.rename(this.paths.bin, bakDir);
-    }
-    try {
-      await fs.rename(outDir, this.paths.bin);
-      await atomicWriteFile(this.paths.manifest, JSON.stringify(manifest));
-      if (fssync.existsSync(bakDir)) await fs.rm(bakDir, { recursive: true, force: true });
-    } catch (e) {
-      // rollback
-      if (fssync.existsSync(bakDir)) await fs.rename(bakDir, this.paths.bin);
-      throw e;
-    }
+      // atomic swap with rollback
+      if (fssync.existsSync(this.paths.bin)) {
+        if (fssync.existsSync(bakDir)) await fs.rm(bakDir, { recursive: true, force: true });
+        await fs.rename(this.paths.bin, bakDir);
+      }
+      try {
+        await fs.rename(outDir, this.paths.bin);
+        await atomicWriteFile(this.paths.manifest, JSON.stringify(manifest));
+        if (fssync.existsSync(bakDir)) await fs.rm(bakDir, { recursive: true, force: true });
+      } catch (e) {
+        // rollback
+        if (fssync.existsSync(bakDir)) await fs.rename(bakDir, this.paths.bin);
+        throw e;
+      }
 
-    // let's check for updates and ignore the cache
-    return await this.checkNeedsUpdate({ force: true });
-  }, { cache: false });
+      // let's check for updates and ignore the cache
+      return await this.checkNeedsUpdate({ force: true });
+    },
+    { cache: false },
+  );
 }
 
 // helpers

@@ -11,7 +11,7 @@ import { convertDotNotationToTree } from 'util/dot-tree';
 import { VisionRunner, VisionRunnerStartOptions } from './vision-runner';
 import { VisionUpdater } from './vision-updater';
 import _ from 'lodash';
-import pMemoize from "p-memoize";
+import pMemoize from 'p-memoize';
 
 export class VisionState extends RealmObject {
   installedVersion: string;
@@ -44,9 +44,10 @@ VisionState.register();
 
 @InitAfter('UserService')
 export class VisionService extends Service {
-
   private visionRunner = new VisionRunner();
-  private visionUpdater = new VisionUpdater(path.join(remote.app.getPath('userData'), '..', 'streamlabs-vision'));
+  private visionUpdater = new VisionUpdater(
+    path.join(remote.app.getPath('userData'), '..', 'streamlabs-vision'),
+  );
   private eventSource: EventSource;
 
   // update prompt
@@ -70,9 +71,9 @@ export class VisionService extends Service {
       this.writeState({
         pid: 0,
         port: 0,
-        isRunning: false
-      })
-    })
+        isRunning: false,
+      });
+    });
 
     // useful for testing robustness
     // setInterval(() => this.ensureRunning(), 30_000);
@@ -100,53 +101,59 @@ export class VisionService extends Service {
         message: payload,
       });
     }
-  }
+  };
 
-  ensureUpdated = pMemoize(async ({ startAfterUpdate = true }: { startAfterUpdate?: boolean } = {}) => {
-    this.log('ensureUpdated()');
+  ensureUpdated = pMemoize(
+    async ({ startAfterUpdate = true }: { startAfterUpdate?: boolean } = {}) => {
+      this.log('ensureUpdated()');
 
-    const { needsUpdate, latestManifest } = await this.visionUpdater.checkNeedsUpdate();
+      const { needsUpdate, latestManifest } = await this.visionUpdater.checkNeedsUpdate();
 
-    if (needsUpdate) {
-      this.writeState({ isCurrentlyUpdating: true });
+      if (needsUpdate) {
+        this.writeState({ isCurrentlyUpdating: true });
 
-      // make sure vision is stopped
-      await this.visionRunner.stop();
+        // make sure vision is stopped
+        await this.visionRunner.stop();
 
-      await this.visionUpdater.downloadAndInstall(latestManifest, progress => {
-        this.writeState({ percentDownloaded: progress.percent });
-      });
+        await this.visionUpdater.downloadAndInstall(latestManifest, progress => {
+          this.writeState({ percentDownloaded: progress.percent });
+        });
 
-      this.writeState({
-        installedVersion: latestManifest?.version || "",
-        needsUpdate: false,
-        isCurrentlyUpdating: false,
-        percentDownloaded: 0,
-      });
-    }
+        this.writeState({
+          installedVersion: latestManifest?.version || '',
+          needsUpdate: false,
+          isCurrentlyUpdating: false,
+          percentDownloaded: 0,
+        });
+      }
 
-    if (startAfterUpdate) {
-      return this.ensureRunning();
-    }
-
-  }, { cache: false });
+      if (startAfterUpdate) {
+        return this.ensureRunning();
+      }
+    },
+    { cache: false },
+  );
 
   ensureRunning = pMemoize(
     async ({ debugMode = false }: VisionRunnerStartOptions = {}) => {
-      this.log("ensureRunning()");
+      this.log('ensureRunning()');
 
       this.writeState({ isStarting: true });
 
       try {
-        const { needsUpdate, installedManifest, latestManifest } = await this.visionUpdater.checkNeedsUpdate();
+        const {
+          needsUpdate,
+          installedManifest,
+          latestManifest,
+        } = await this.visionUpdater.checkNeedsUpdate();
 
         this.writeState({
           needsUpdate,
-          installedVersion: installedManifest?.version ?? "",
+          installedVersion: installedManifest?.version ?? '',
         });
 
         if (needsUpdate) {
-          const v = latestManifest.version ?? "unknown";
+          const v = latestManifest.version ?? 'unknown';
           const now = Date.now();
           const newVersion = this.lastPromptVersion !== v;
           const cooledDown = now - this.lastPromptAt > this.promptCooldownMs;
@@ -154,10 +161,10 @@ export class VisionService extends Service {
           if (newVersion || cooledDown) {
             this.lastPromptVersion = v;
             this.lastPromptAt = now;
-            await this.settingsService.showSettings("Vision");
+            await this.settingsService.showSettings('Vision');
           }
 
-          return { started: false, reason: "needs-update" as const };
+          return { started: false, reason: 'needs-update' as const };
         }
 
         const { pid, port } = await this.visionRunner.ensureStarted({ debugMode });
@@ -165,13 +172,12 @@ export class VisionService extends Service {
         this.subscribeToEvents(port);
 
         return { started: true as const, pid, port };
-
       } finally {
         // once we're done, we're no longer starting up
         this.writeState({ isStarting: false });
       }
     },
-    { cache: false }
+    { cache: false },
   );
 
   private subscribeToEvents(port: number) {
@@ -186,15 +192,18 @@ export class VisionService extends Service {
     eventSource.onopen = () => this.log('EventSource opened');
 
     // EventSource auto-reconnects; we just log
-    eventSource.onerror = (e) => this.log('EventSource error:', e, 'state=', eventSource.readyState);
+    eventSource.onerror = e => this.log('EventSource error:', e, 'state=', eventSource.readyState);
 
-    eventSource.onmessage = (e) => {
+    eventSource.onmessage = e => {
       this.log('EventSource message', e.data);
 
       try {
         const parsed = JSON.parse(e.data);
 
-        if (Array.isArray(parsed.events) && parsed.events.some((x: any) => x.name === 'game_process_detected')) return;
+        if (
+          Array.isArray(parsed.events) &&
+          parsed.events.some((x: any) => x.name === 'game_process_detected')
+        ) return;
 
         parsed.vision_event_id = uuid();
 
@@ -211,7 +220,9 @@ export class VisionService extends Service {
     await this.visionRunner.stop();
   }
 
-  private log(...args: any[]) { console.log('[VisionService]', ...args); }
+  private log(...args: any[]) {
+    console.log('[VisionService]', ...args);
+  }
 
   private closeEventSource() {
     try {
@@ -227,7 +238,7 @@ export class VisionService extends Service {
     return await this.authPostWithTimeout(
       `https://${this.hostsService.streamlabs}/api/v5/vision/desktop/event`,
       payload,
-      8_000
+      8_000,
     );
   }
 
@@ -235,12 +246,15 @@ export class VisionService extends Service {
     return await this.authPostWithTimeout(
       `https://${this.hostsService.streamlabs}/api/v5/user-state/desktop/query`,
       params,
-      8_000
+      8_000,
     );
   }
 
   private async authPostWithTimeout(url: string, payload: unknown, timeoutMs = 8_000) {
-    const headers = authorizedHeaders(this.userService.apiToken, new Headers({ 'Content-Type': 'application/json' }));
+    const headers = authorizedHeaders(
+      this.userService.apiToken,
+      new Headers({ 'Content-Type': 'application/json' }),
+    );
 
     const controller = new AbortController();
     const { signal } = controller;

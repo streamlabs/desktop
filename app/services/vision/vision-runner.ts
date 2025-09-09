@@ -11,7 +11,7 @@ import pMemoize from 'p-memoize';
 export type VisionRunnerStartOptions = { debugMode?: boolean };
 
 type VisionRunnerEvents = {
-  exit: { code: number | null; signal: NodeJS.Signals | null; };
+  exit: { code: number | null; signal: NodeJS.Signals | null };
   stdout: string;
   stderr: string;
 };
@@ -20,26 +20,42 @@ export class VisionRunner extends Emittery<VisionRunnerEvents> {
   private proc?: ChildProcessWithoutNullStreams;
   private port?: number;
 
-  private log(...args: any[]) { console.log('[VisionRunner]', ...args); }
+  private log(...args: any[]) {
+    console.log('[VisionRunner]', ...args);
+  }
 
-  get isRunning() { return !!this.proc && this.proc.exitCode == null; }
+  get isRunning() {
+    return !!this.proc && this.proc.exitCode == null;
+  }
 
-  ensureStarted = pMemoize(async ({ debugMode = false }: VisionRunnerStartOptions = {}): Promise<{ pid: number; port: number }> => {
-    if (this.isRunning) {
-      return {
-        pid: this.proc.pid!,
-        port: this.port!
+  ensureStarted = pMemoize(
+    async ({ debugMode = false }: VisionRunnerStartOptions = {}): Promise<{
+      pid: number;
+      port: number;
+    }> => {
+      if (this.isRunning) {
+        return {
+          pid: this.proc.pid!,
+          port: this.port!,
+        };
       }
-    }
 
-    return await this.restart({ debugMode });
-  }, { cache: false });
+      return await this.restart({ debugMode });
+    },
+    { cache: false },
+  );
 
-  stop = pMemoize(async () => {
-    await this.stopChild();
-  }, { cache: false });
+  stop = pMemoize(
+    async () => {
+      await this.stopChild();
+    },
+    { cache: false },
+  );
 
-  private async restart({ debugMode = false }: VisionRunnerStartOptions = {}): Promise<{ pid: number; port: number }> {
+  private async restart({ debugMode = false }: VisionRunnerStartOptions = {}): Promise<{
+    pid: number;
+    port: number;
+  }> {
     this.log('restart()');
 
     // make sure we're stopped first
@@ -91,10 +107,7 @@ export class VisionRunner extends Emittery<VisionRunnerEvents> {
       } else {
         proc.kill('SIGTERM');
       }
-      await Promise.race([
-        once(proc, 'exit'),
-        new Promise(res => setTimeout(res, 10_000))
-      ]);
+      await Promise.race([once(proc, 'exit'), new Promise(res => setTimeout(res, 10_000))]);
 
       if (!proc.killed) {
         proc.kill('SIGKILL');
