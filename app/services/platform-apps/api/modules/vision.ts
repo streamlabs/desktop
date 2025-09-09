@@ -14,9 +14,13 @@ export class VisionModule extends Module {
   @Inject() visionService: VisionService;
   @Inject() websocketService: WebsocketService;
 
+  private log(...args: any[]) {
+    console.log('[VisionModule]', ...args);
+  }
+
   @apiMethod()
   async startVision() {
-    await this.visionService.ensureVision();
+    await this.visionService.ensureRunning();
   }
 
   eventSub: Subscription;
@@ -34,7 +38,7 @@ export class VisionModule extends Module {
   public initiateSubscription() {
     if (!this.eventSub) {
       this.eventSub = this.websocketService.socketEvent.subscribe(e => {
-        console.log('Received websocket event:', e);
+        this.log('Received websocket event: ', JSON.stringify(e, null, 2));
         if (e.type === 'userStateUpdated') {
           // @ts-ignore
           this.userState.next(e.message.updated_states);

@@ -10703,6 +10703,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"mimic-function@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "mimic-function@npm:5.0.1"
+  checksum: eb5893c99e902ccebbc267c6c6b83092966af84682957f79313311edb95e8bb5f39fb048d77132b700474d1c86d90ccc211e99bae0935447a4834eb4c882982c
+  languageName: node
+  linkType: hard
+
 "mimic-response@npm:^1.0.0":
   version: 1.0.1
   resolution: "mimic-response@npm:1.0.1"
@@ -11612,6 +11619,16 @@ __metadata:
   dependencies:
     aggregate-error: ^3.0.0
   checksum: cb0ab21ec0f32ddffd31dfc250e3afa61e103ef43d957cc45497afe37513634589316de4eb88abdfd969fe6410c22c0b93ab24328833b8eb1ccc087fc0442a1c
+  languageName: node
+  linkType: hard
+
+"p-memoize@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "p-memoize@npm:8.0.0"
+  dependencies:
+    mimic-function: ^5.0.1
+    type-fest: ^4.41.0
+  checksum: 9b95022f199bebdb3f9d9fb88af81961fa81c6afd9d5eea3ff0563ab3f4d97c1981de8ef825dca8e90556962268de96d4c328e4c011681f6b6fbaf8d21dde705
   languageName: node
   linkType: hard
 
@@ -14295,6 +14312,7 @@ __metadata:
     overlayscrollbars: 1.13.0
     overlayscrollbars-react: ^0.2.2
     overlayscrollbars-vue: 0.2.2
+    p-memoize: ^8.0.0
     pixelmatch: 4.0.2
     pngjs: 3.3.3
     prettier: 2.2.1
@@ -15546,6 +15564,13 @@ __metadata:
   version: 1.4.0
   resolution: "type-fest@npm:1.4.0"
   checksum: b011c3388665b097ae6a109a437a04d6f61d81b7357f74cbcb02246f2f5bd72b888ae33631b99871388122ba0a87f4ff1c94078e7119ff22c70e52c0ff828201
+  languageName: node
+  linkType: hard
+
+"type-fest@npm:^4.41.0":
+  version: 4.41.0
+  resolution: "type-fest@npm:4.41.0"
+  checksum: 7055c0e3eb188425d07403f1d5dc175ca4c4f093556f26871fe22041bc93d137d54bef5851afa320638ca1379106c594f5aa153caa654ac1a7f22c71588a4e80
   languageName: node
   linkType: hard
 
