@@ -346,10 +346,4 @@ export const SourceDisplayData = (): { [key: string]: ISourceDisplayData } => ({
     linkText: $t('Learn how to set it up'),
     group: 'capture',
   },
-  smart_browser_source: {
-    name: 'Smart Browser Source',
-    description: 'TODO: add description',
-    group: 'media',
-    icon: 'fas fa-globe',
-  },
 });
