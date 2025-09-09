@@ -380,6 +380,14 @@ export class YoutubeService
     } else {
       assertIsDefined(ytSettings.broadcastId);
       await this.updateBroadcast(ytSettings.broadcastId, ytSettings);
+
+      /*
+       * set the category, `createBroadcast` does it automatically now,
+       * we've moved this here until we can refactor `#updateBroadcast`
+       * to avoid duplicate requests
+       */
+      await this.updateCategory(broadcast.id, ytSettings.categoryId!);
+
       broadcast = await this.fetchBroadcast(ytSettings.broadcastId);
       this.usageStatisticsService.actions.recordAnalyticsEvent('ScheduleStream', {
         type: 'StreamToSchedule',
@@ -396,9 +404,6 @@ export class YoutubeService
     } else {
       stream = await this.fetchLiveStream(broadcast.contentDetails.boundStreamId);
     }
-
-    // set the category
-    await this.updateCategory(broadcast.id, ytSettings.categoryId!);
 
     // setup key and platform type in the OBS settings
     const streamKey = stream.cdn.ingestionInfo.streamName;
@@ -639,6 +644,10 @@ export class YoutubeService
       method: 'POST',
       url: `${this.apiBase}/${endpoint}`,
     });
+
+    if (params.categoryId) {
+      await this.updateCategory(broadcast.id, params.categoryId);
+    }
 
     // upload thumbnail
     if (params.thumbnail && params.thumbnail !== 'default') {
