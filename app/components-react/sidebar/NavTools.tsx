@@ -185,13 +185,13 @@ export default function SideNav() {
                 onClick={() => openHelp()}
               />
             );
-          } else if (menuItem.key === EMenuItemKey.Vision) {
+          } else if (menuItem.key === EMenuItemKey.AI) {
             return (
               <NavToolsItem
                 key={menuItem.key}
                 menuItem={menuItem}
                 className={visionState.isRunning ? styles.vision : undefined}
-                onClick={() => openSettingsWindow('Vision')}
+                onClick={() => openSettingsWindow('AI')}
               />
             );
           } else if (menuItem.key === EMenuItemKey.Settings) {

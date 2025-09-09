@@ -36,7 +36,7 @@ function VisionInfo(props: {
   startProcess: (options?: VisionRunnerStartOptions) => void;
 }) {
   return (
-    <ObsSettingsSection title="Streamlabs Vision">
+    <ObsSettingsSection title="Streamlabs AI">
       <div style={{ marginBottom: 16 }}>
         <div>Installed: {props.installedVersion ? 'Yes' : 'No'}</div>
         <div>Version: {props.installedVersion}</div>
@@ -45,45 +45,50 @@ function VisionInfo(props: {
         {props.status === 'running' && props.pid && <div>PID: {props.pid}</div>}
         {props.status === 'running' && props.port && <div>Port: {props.port}</div>}
 
-        {props.status === 'stopped' && <div style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '8px',
-          marginTop: '16px'
-        }}>
-          <button
-            className="button button--action"
-            onClick={() => props.startProcess()}
-          >Start Vision</button>
+        {props.status === 'stopped' && (
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '8px',
+              marginTop: '16px',
+            }}
+          >
+            <button className="button button--action" onClick={() => props.startProcess()}>
+              Start AI
+            </button>
 
-          <button
-            className="button button--warn"
-            onClick={() => props.startProcess({ debugMode: true })}
-          >Start Vision (debug)</button>
-        </div>
-        }
+            <button
+              className="button button--warn"
+              onClick={() => props.startProcess({ debugMode: true })}
+            >
+              Start AI (debug)
+            </button>
+          </div>
+        )}
 
-        {props.status === 'running' && props.port && <div style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '8px',
-          marginTop: '16px'
-        }}>
-          <button
-            className="button button--action"
-            onClick={props.openEventsLog}
-          >Open Events Log</button>
+        {props.status === 'running' && props.port && (
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '8px',
+              marginTop: '16px',
+            }}
+          >
+            <button className="button button--action" onClick={props.openEventsLog}>
+              Open Events Log
+            </button>
 
-          <button
-            className="button button--action"
-            onClick={props.openDisplayFrame}
-          >Open Display Frame</button>
+            <button className="button button--action" onClick={props.openDisplayFrame}>
+              Open Display Frame
+            </button>
 
-          <button
-            className="button button--warn"
-            onClick={props.stopVisionProcess}
-          >Stop Vision</button>
-        </div>}
+            <button className="button button--warn" onClick={props.stopVisionProcess}>
+              Stop AI
+            </button>
+          </div>
+        )}
       </div>
     </ObsSettingsSection>
   );
@@ -93,20 +98,19 @@ function openLink(url: string) {
   remote.shell.openExternal(url);
 }
 
-export function VisionSettings() {
+export function AISettings() {
   const { VisionService } = Services;
   const state = useRealmObject(VisionService.state);
   const promptOpen = React.useRef(false);
 
   useEffect(() => {
-
     // make sure we don't keep opening confirm dialogs
     if (promptOpen.current) return;
 
     // do we need to update?
     if (!state.needsUpdate) return;
 
-    let message = 'Streamlabs Vision must be updated before you can use it.';
+    let message = 'Streamlabs AI must be updated before you can use it.';
     let button = 'Update Now';
 
     if (!state.installedVersion) {
@@ -123,20 +127,30 @@ export function VisionSettings() {
         VisionService.actions.ensureUpdated();
       }
     });
-
   }, []);
 
   return (
     <div>
       <VisionInfo
-        status={state.isRunning ? 'running' : state.isCurrentlyUpdating ? 'updating' : state.isStarting ? 'starting' : 'stopped'}
+        status={
+          // eslint-disable-next-line no-nested-ternary
+          state.isRunning
+            ? 'running' // eslint-disable-next-line no-nested-ternary
+            : state.isCurrentlyUpdating
+            ? 'updating'
+            : state.isStarting
+            ? 'starting'
+            : 'stopped'
+        }
         installedVersion={state.installedVersion}
         pid={state.pid || 0}
         port={state.port || 0}
         stopVisionProcess={() => VisionService.actions.stop()}
         openEventsLog={() => openLink(`http://localhost:${state.port}/events`)}
         openDisplayFrame={() => openLink(`http://localhost:${state.port}/display_frame`)}
-        startProcess={(options: VisionRunnerStartOptions) => VisionService.actions.ensureRunning(options)}
+        startProcess={(options: VisionRunnerStartOptions) =>
+          VisionService.actions.ensureRunning(options)
+        }
       />
 
       {state.isCurrentlyUpdating && (
@@ -146,4 +160,4 @@ export function VisionSettings() {
   );
 }
 
-VisionSettings.page = 'Vision';
+AISettings.page = 'AI';
