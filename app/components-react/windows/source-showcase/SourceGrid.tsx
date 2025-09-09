@@ -199,13 +199,6 @@ export default function SourceGrid(p: { activeTab: string }) {
             excludeWrap={excludeWrap}
           />
         )}
-        <SourceTag
-          key="smart_browser_source"
-          type="smart_browser_source"
-          name="Smart Browser Source"
-          essential
-          excludeWrap={excludeWrap}
-        />
       </>
     ),
     [essentialSources, isLoggedIn, excludeWrap],
