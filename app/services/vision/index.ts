@@ -203,13 +203,15 @@ export class VisionService extends Service {
         if (
           Array.isArray(parsed.events) &&
           parsed.events.some((x: any) => x.name === 'game_process_detected')
-        ) return;
+        ) {
+          return;
+        }
 
         parsed.vision_event_id = uuid();
 
         // todo: queue these incase of network failure?
         void this.forwardEventToApi(parsed);
-      } catch (err) {
+      } catch (err: unknown) {
         this.log('Bad event', err);
       }
     };
