@@ -152,7 +152,7 @@ export class VisionUpdater {
         await fs.rename(outDir, this.paths.bin);
         await atomicWriteFile(this.paths.manifest, JSON.stringify(manifest));
         if (fssync.existsSync(bakDir)) await fs.rm(bakDir, { recursive: true, force: true });
-      } catch (e) {
+      } catch (e: unknown) {
         // rollback
         if (fssync.existsSync(bakDir)) await fs.rename(bakDir, this.paths.bin);
         throw e;
