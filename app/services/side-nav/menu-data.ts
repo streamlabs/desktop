@@ -1,5 +1,6 @@
 import { TAppPage } from 'services/navigation';
 import { $t } from 'services/i18n';
+import { ESettingsCategory } from 'services/settings';
 
 /**
  * Update Menu Items
@@ -161,7 +162,7 @@ export const menuTitles = (item: EMenuItemKey | ESubMenuItemKey | string) => {
     [ESubMenuItemKey.Widgets]: $t('Widgets'),
     [ESubMenuItemKey.TipSettings]: $t('Tip Settings'),
     [ESubMenuItemKey.Multistream]: $t('Multistream'),
-    [EMenuItemKey.AI]: 'AI',
+    [EMenuItemKey.AI]: $t(ESettingsCategory.AI),
   }[item];
 };
 

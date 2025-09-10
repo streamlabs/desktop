@@ -16,6 +16,7 @@ import UltraIcon from 'components-react/shared/UltraIcon';
 import PlatformIndicator from './PlatformIndicator';
 import { AuthModal } from 'components-react/shared/AuthModal';
 import { useRealmObject } from 'components-react/hooks/realm';
+import { ESettingsCategory } from 'services/settings';
 
 export default function SideNav() {
   const {
@@ -191,7 +192,7 @@ export default function SideNav() {
                 key={menuItem.key}
                 menuItem={menuItem}
                 className={visionState.isRunning ? styles.vision : undefined}
-                onClick={() => openSettingsWindow('AI')}
+                onClick={() => openSettingsWindow(ESettingsCategory.AI)}
               />
             );
           } else if (menuItem.key === EMenuItemKey.Settings) {

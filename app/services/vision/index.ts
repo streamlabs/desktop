@@ -12,6 +12,7 @@ import { VisionRunner, VisionRunnerStartOptions } from './vision-runner';
 import { VisionUpdater } from './vision-updater';
 import _ from 'lodash';
 import pMemoize from 'p-memoize';
+import { ESettingsCategory } from 'services/settings';
 
 export class VisionState extends RealmObject {
   installedVersion: string;
@@ -161,7 +162,7 @@ export class VisionService extends Service {
           if (newVersion || cooledDown) {
             this.lastPromptVersion = v;
             this.lastPromptAt = now;
-            await this.settingsService.showSettings('Vision');
+            await this.settingsService.showSettings(ESettingsCategory.AI);
           }
 
           return { started: false, reason: 'needs-update' as const };
@@ -203,13 +204,15 @@ export class VisionService extends Service {
         if (
           Array.isArray(parsed.events) &&
           parsed.events.some((x: any) => x.name === 'game_process_detected')
-        ) return;
+        ) {
+          return;
+        }
 
         parsed.vision_event_id = uuid();
 
         // todo: queue these incase of network failure?
         void this.forwardEventToApi(parsed);
-      } catch (err) {
+      } catch (err: unknown) {
         this.log('Bad event', err);
       }
     };
