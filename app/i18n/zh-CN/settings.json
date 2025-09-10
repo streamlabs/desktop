@@ -278,5 +278,10 @@
   "Bearer Token": "不记名令牌",
   "Apply Primary": "主要应用",
   "Output Resolution": "输出分辨率",
-  "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "无法启动 Dual Output，请将直播设置更新为“使用推荐设置”。"
+  "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "无法启动 Dual Output，请将直播设置更新为“使用推荐设置”。",
+  "Mobile": "Mobile",
+  "Mobile Streaming": "Mobile Streaming",
+  "Remote Controller": "Remote Controller",
+  "Third Party Connections": "Third Party Connections",
+  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "Stream your phone camera or mobile game on the go with Streamlabs Mobile App."
 }

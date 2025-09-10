@@ -80,5 +80,7 @@
   "has resubscribed": "prodloužil(a) své předplatné",
   "has gifted a sub to": "daroval(a) předplatné uživateli",
   "has resubscribed for %{streak} months in a row! (%{months} total)": "prodloužil(a) své předplatné bez přerušení již %{streak}. měsíc! (celkem měsíců: %{months})",
-  "has resubscribed for %{months} months": "prodloužil(a) své předplatné již %{months}. měsíc"
+  "has resubscribed for %{months} months": "prodloužil(a) své předplatné již %{months}. měsíc",
+  "Disable Chat Box Notifications": "Disable Chat Box Notifications",
+  "Enable Chat Box Notifications": "Enable Chat Box Notifications"
 }
