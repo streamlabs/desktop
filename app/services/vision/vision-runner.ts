@@ -112,7 +112,7 @@ export class VisionRunner extends Emittery<VisionRunnerEvents> {
       if (!proc.killed) {
         proc.kill('SIGKILL');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       this.log('Error stopping child process:', err);
     }
   }

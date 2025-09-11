@@ -6,6 +6,7 @@ import { ObsSettingsSection } from './ObsSettings';
 import { confirmAsync } from 'components-react/modals';
 import * as remote from '@electron/remote';
 import { VisionRunnerStartOptions } from 'services/vision/vision-runner';
+import { ESettingsCategory } from 'services/settings';
 
 function VisionInstalling(props: { percent: number; isUpdate: boolean }) {
   const message = props.isUpdate ? 'Updating...' : 'Installing...';
@@ -160,4 +161,4 @@ export function AISettings() {
   );
 }
 
-AISettings.page = 'AI';
+AISettings.page = ESettingsCategory.AI;

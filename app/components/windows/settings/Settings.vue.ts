@@ -6,7 +6,7 @@ import NavMenu from 'components/shared/NavMenu.vue';
 import NavItem from 'components/shared/NavItem.vue';
 import GenericFormGroups from 'components/obs/inputs/GenericFormGroups.vue';
 import { WindowsService } from 'services/windows';
-import { ISettingsSubCategory, SettingsService } from 'services/settings/index';
+import { ESettingsCategory, ISettingsSubCategory, SettingsService } from 'services/settings/index';
 import DeveloperSettings from './DeveloperSettings';
 import OverlaySettings from './OverlaySettings';
 import NotificationsSettings from './NotificationsSettings.vue';
@@ -82,7 +82,7 @@ export default class Settings extends Vue {
     Experimental: 'fas fa-flask',
     'Installed Apps': 'icon-store',
     'Get Support': 'icon-question',
-    AI: 'fas fa-eye',
+    [ESettingsCategory.AI]: 'fas fa-eye',
   };
   // for additional dismissables, add below using the category/title as the key
   dismissables: { [key: string]: EDismissable } = {
@@ -147,7 +147,7 @@ export default class Settings extends Vue {
       'Virtual Webcam',
       'Game Overlay',
       'Get Support',
-      'AI',
+      ESettingsCategory.AI,
       'Ultra',
     ];
     if (Utils.isDevMode()) pages.push('Experimental');
