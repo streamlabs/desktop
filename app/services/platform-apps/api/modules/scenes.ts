@@ -91,13 +91,15 @@ export class ScenesModule extends Module {
       this.sceneRemoved.next(sceneData.id);
     });
     this.scenesService.itemAdded.subscribe(itemData => {
-      this.sceneItemAdded.next(this.serializeNode(itemData as TSceneNode));
+      const item = this.scenesService.views.getSceneItem(itemData.sceneItemId);
+      this.sceneItemAdded.next(this.serializeNode(item));
     });
     this.scenesService.itemUpdated.subscribe(itemData => {
-      this.sceneItemUpdated.next(this.serializeNode(itemData as TSceneNode));
+      const item = this.scenesService.views.getSceneItem(itemData.sceneItemId);
+      this.sceneItemUpdated.next(this.serializeNode(item));
     });
     this.scenesService.itemRemoved.subscribe(itemData => {
-      this.sceneItemRemoved.next(itemData.id);
+      this.sceneItemRemoved.next(itemData.sceneItemId);
     });
   }
 
