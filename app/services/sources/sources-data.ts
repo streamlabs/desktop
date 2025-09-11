@@ -346,4 +346,16 @@ export const SourceDisplayData = (): { [key: string]: ISourceDisplayData } => ({
     linkText: $t('Learn how to set it up'),
     group: 'capture',
   },
+  smart_browser_source: {
+    name: 'Reactive Source',
+    demoVideo: true,
+    demoFilename: 'reactive-overlay-webm.webm',
+    shortDesc: $t('Dynamic game animation'),
+    description: $t(
+      'Dynamic real time animation based on your game & widget events.  Streamlabs Vision powered events include:',
+    ),
+    supportList: [$t('Kills & Eliminations'), $t('Health changes'), $t('Victory & Defeat')],
+    group: 'capture',
+    icon: 'fas fa-globe',
+  },
 });
