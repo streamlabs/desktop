@@ -6,7 +6,7 @@ import { pipeline } from 'node:stream/promises';
 import { downloadFile, IDownloadProgress, jfetch } from 'util/requests';
 import { importExtractZip } from 'util/slow-imports';
 import * as remote from '@electron/remote';
-import pMemoize from 'p-memoize';
+import pMemoize, { pMemoizeClear } from 'p-memoize';
 
 interface IVisionManifest {
   version: string;
@@ -27,15 +27,9 @@ export class VisionUpdater {
   constructor(private readonly baseDir: string) {}
 
   private checkCooldownMs = 60_000;
-  private checkCache?: { ts: number; result: VisionUpdaterResponse };
-  private checkInflight?: Promise<VisionUpdaterResponse>;
 
   private log(...args: any[]) {
     console.log('[VisionUpdater]', ...args);
-  }
-
-  invalidateCache() {
-    this.checkCache = undefined;
   }
 
   get paths() {
@@ -46,12 +40,12 @@ export class VisionUpdater {
     };
   }
 
-  async ensureDirs() {
+  private async ensureDirs() {
     await fs.mkdir(this.baseDir, { recursive: true });
     await fs.mkdir(this.paths.tmp, { recursive: true });
   }
 
-  async readInstalledManifest(): Promise<IVisionManifest | undefined> {
+  private async readInstalledManifest(): Promise<IVisionManifest | undefined> {
     try {
       const raw = await fs.readFile(this.paths.manifest, 'utf8');
       return JSON.parse(raw);
@@ -83,39 +77,31 @@ export class VisionUpdater {
     }
   }
 
-  async checkNeedsUpdate({
-    force = false,
-  }: { force?: boolean } = {}): Promise<VisionUpdaterResponse> {
-    const now = Date.now();
+  private async forceCheckNeedsUpdate() {
+    // clear the memoization cache
+    pMemoizeClear(this.checkNeedsUpdate);
 
-    // return cached if fresh
-    if (!force && this.checkCache && now - this.checkCache.ts < this.checkCooldownMs) {
-      return this.checkCache.result;
-    }
+    return this.checkNeedsUpdate();
+  }
 
-    // return inflight if one is running
-    if (!force && this.checkInflight) {
-      return this.checkInflight;
-    }
-
-    this.checkInflight = (async () => {
+  checkNeedsUpdate = pMemoize(
+    async (): Promise<VisionUpdaterResponse> => {
       const installedManifest = await this.readInstalledManifest();
-      const latestManifest = await jfetch<IVisionManifest>(new Request(this.getManifestUrl()));
+      const manifestUrl = this.getManifestUrl();
+      this.log(`checkNeedsUpdate manifestUrl: ${manifestUrl}`);
+      const latestManifest = await jfetch<IVisionManifest>(new Request(manifestUrl));
 
       const needsUpdate =
         !installedManifest ||
         latestManifest.version !== installedManifest.version ||
         latestManifest.timestamp > installedManifest.timestamp;
 
-      const result: VisionUpdaterResponse = { needsUpdate, installedManifest, latestManifest };
-      this.checkCache = { ts: Date.now(), result };
-      return result;
-    })().finally(() => {
-      this.checkInflight = undefined;
-    });
-
-    return this.checkInflight;
-  }
+      return { needsUpdate, installedManifest, latestManifest };
+    },
+    {
+      maxAge: this.checkCooldownMs,
+    },
+  );
 
   downloadAndInstall = pMemoize(
     async (
@@ -159,7 +145,7 @@ export class VisionUpdater {
       }
 
       // let's check for updates and ignore the cache
-      return await this.checkNeedsUpdate({ force: true });
+      return await this.forceCheckNeedsUpdate();
     },
     { cache: false },
   );
