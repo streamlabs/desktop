@@ -46,6 +46,8 @@ export enum ESettingsCategory {
   Experimental = 'Experimental',
   GetSupport = 'Get Support',
   InstalledApps = 'Installed Apps',
+  Stream = 'Stream',
+  General = 'General',
   // ...
 }
 
@@ -163,7 +165,7 @@ interface ISettingsCategory {
   formData: ISettingsSubCategory[];
 }
 
-type ISettingsServiceState = Record<CategoryName, ISettingsCategory>;
+type ISettingsServiceState = Record<CategoryName | string, ISettingsCategory>;
 
 class SettingsViews extends ViewHandler<ISettingsServiceState> {
   get values() {
@@ -401,7 +403,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     this.setSettings('Output', newOutputSettings);
   }
 
-  showSettings(categoryName?: CategoryName) {
+  showSettings(categoryName?: CategoryName | string) {
     this.windowsService.showWindow({
       componentName: 'Settings',
       title: $t('Settings'),
@@ -596,7 +598,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
    * @param forceApplyCategory - name of property to force apply settings.
    */
   setSettings(
-    categoryName: CategoryName,
+    categoryName: string,
     settingsData: ISettingsSubCategory[],
     forceApplyCategory?: string,
   ) {

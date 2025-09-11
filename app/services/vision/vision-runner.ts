@@ -33,7 +33,10 @@ export class VisionRunner extends Emittery<VisionRunnerEvents> {
       pid: number;
       port: number;
     }> => {
+      this.log('ensureStarted(): { debugMode=', debugMode, ' }');
+
       if (this.isRunning) {
+        this.log('Already running');
         return {
           pid: this.proc.pid!,
           port: this.port!,
@@ -56,7 +59,7 @@ export class VisionRunner extends Emittery<VisionRunnerEvents> {
     pid: number;
     port: number;
   }> {
-    this.log('restart()');
+    this.log('restart(): { debugMode=', debugMode, ' }');
 
     // make sure we're stopped first
     await this.stopChild();

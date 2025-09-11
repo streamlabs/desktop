@@ -24,6 +24,7 @@ export class VisionState extends RealmObject {
   pid: number;
   port: number;
   needsUpdate: boolean;
+  hasFailedToUpdate: boolean;
 
   static schema: ObjectSchema = {
     name: 'VisionState',
@@ -37,6 +38,7 @@ export class VisionState extends RealmObject {
       pid: { type: 'int', default: 0 },
       port: { type: 'int', default: 0 },
       needsUpdate: { type: 'bool', default: false },
+      hasFailedToUpdate: { type: 'bool', default: false },
     },
   };
 }
@@ -108,6 +110,8 @@ export class VisionService extends Service {
     async ({ startAfterUpdate = true }: { startAfterUpdate?: boolean } = {}) => {
       this.log('ensureUpdated()');
 
+      this.writeState({ hasFailedToUpdate: false });
+
       const { needsUpdate, latestManifest } = await this.visionUpdater.checkNeedsUpdate();
 
       if (needsUpdate) {
@@ -116,20 +120,31 @@ export class VisionService extends Service {
         // make sure vision is stopped
         await this.visionRunner.stop();
 
-        await this.visionUpdater.downloadAndInstall(latestManifest, progress => {
-          this.writeState({ percentDownloaded: progress.percent });
-        });
+        try {
+          await this.visionUpdater.downloadAndInstall(latestManifest, progress => {
+            this.writeState({ percentDownloaded: progress.percent });
+          });
 
-        this.writeState({
-          installedVersion: latestManifest?.version || '',
-          needsUpdate: false,
-          isCurrentlyUpdating: false,
-          percentDownloaded: 0,
-        });
-      }
+          this.writeState({
+            installedVersion: latestManifest?.version || '',
+            needsUpdate: false,
+            isCurrentlyUpdating: false,
+            percentDownloaded: 0,
+          });
 
-      if (startAfterUpdate) {
-        return this.ensureRunning();
+          if (startAfterUpdate) {
+            return this.ensureRunning();
+          }
+        } catch (err: unknown) {
+          this.writeState({
+            needsUpdate: true,
+            hasFailedToUpdate: true,
+            isCurrentlyUpdating: false,
+            percentDownloaded: 0,
+          });
+
+          this.log('Error during downloadAndInstall: ', err);
+        }
       }
     },
     { cache: false },
@@ -137,7 +152,7 @@ export class VisionService extends Service {
 
   ensureRunning = pMemoize(
     async ({ debugMode = false }: VisionRunnerStartOptions = {}) => {
-      this.log('ensureRunning()');
+      this.log('ensureRunning(): { debugMode=', debugMode, ' }');
 
       this.writeState({ isStarting: true });
 
