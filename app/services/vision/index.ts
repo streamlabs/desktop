@@ -1,36 +1,24 @@
-import * as remote from '@electron/remote';
-import { HostsService, SettingsService, SourcesService, UserService } from 'app-services';
-import { ChildProcess, spawn } from 'child_process';
-import crypto from 'crypto';
-import { createReadStream, existsSync, promises as fs } from 'fs';
-import http from 'http';
-import { AddressInfo } from 'net';
-import path from 'path';
-import { ObjectSchema } from 'realm';
 import { InitAfter, Inject, Service } from 'services';
-import { OutputStreamHandler } from 'services/platform-apps/api/modules/native-components';
+import * as remote from '@electron/remote';
+import path from 'path';
+import { authorizedHeaders, jfetch } from 'util/requests';
+import { HostsService, SourcesService, SettingsService, UserService } from 'app-services';
 import { RealmObject } from 'services/realm';
-import { pipeline } from 'stream/promises';
-import { convertDotNotationToTree } from 'util/dot-tree';
-import { authorizedHeaders, downloadFile, IDownloadProgress, jfetch } from 'util/requests';
-import { importExtractZip } from 'util/slow-imports';
+import { ObjectSchema } from 'realm';
 import uuid from 'uuid/v4';
 import * as obs from '../../../obs-api';
-
-interface IVisionManifest {
-  version: string;
-  platform: string;
-  url: string;
-  size: number;
-  checksum: string;
-  timestamp: number;
-}
+import { convertDotNotationToTree } from 'util/dot-tree';
+import { VisionRunner, VisionRunnerStartOptions } from './vision-runner';
+import { VisionUpdater } from './vision-updater';
+import _ from 'lodash';
+import pMemoize from 'p-memoize';
 
 export class VisionState extends RealmObject {
   installedVersion: string;
   percentDownloaded: number;
   isCurrentlyUpdating: boolean;
   isInstalling: boolean;
+  isStarting: boolean;
   isRunning: boolean;
   pid: number;
   port: number;
@@ -44,6 +32,7 @@ export class VisionState extends RealmObject {
       isCurrentlyUpdating: { type: 'bool', default: false },
       isRunning: { type: 'bool', default: false },
       isInstalling: { type: 'bool', default: false },
+      isStarting: { type: 'bool', default: false },
       pid: { type: 'int', default: 0 },
       port: { type: 'int', default: 0 },
       needsUpdate: { type: 'bool', default: false },
@@ -55,13 +44,16 @@ VisionState.register();
 
 @InitAfter('UserService')
 export class VisionService extends Service {
-  public basepath: string;
+  private visionRunner = new VisionRunner();
+  private visionUpdater = new VisionUpdater(
+    path.join(remote.app.getPath('userData'), '..', 'streamlabs-vision'),
+  );
+  private eventSource: EventSource;
 
-  private manifestPath: string;
-  private manifest: IVisionManifest | null;
-  private versionChecked: boolean = false;
-
-  public currentUpdate: Promise<void> | null = null;
+  // update prompt
+  private lastPromptAt = 0;
+  private lastPromptVersion?: string;
+  private promptCooldownMs = 500; // 500ms
 
   @Inject() userService: UserService;
   @Inject() hostsService: HostsService;
@@ -70,426 +62,213 @@ export class VisionService extends Service {
 
   state = VisionState.inject();
 
-  proc: ChildProcess;
-
   init() {
-    this.basepath = path.join(remote.app.getPath('userData'), '..', 'streamlabs-vision');
-    this.manifestPath = path.resolve(this.basepath, 'manifest.json');
+    obs.NodeObs.RegisterSourceMessageCallback(this.onSourceMessageCallback);
 
-    obs.NodeObs.RegisterSourceMessageCallback(
-      async (evt: { sourceName: string; message: any }[]) => {
-        console.log('SmartBrowserSourceManager: Received source message', evt);
+    window.addEventListener('beforeunload', () => this.stop());
 
-        for (const { sourceName, message } of evt) {
-          const source = this.sourcesService.views.getSource(sourceName)?.getObsInput();
+    this.visionRunner.on('exit', () => {
+      this.writeState({
+        pid: 0,
+        port: 0,
+        isRunning: false,
+      });
+    });
 
-          if (!source) {
-            continue;
+    // useful for testing robustness
+    // setInterval(() => this.ensureRunning(), 30_000);
+  }
+
+  private onSourceMessageCallback = async (evt: { sourceName: string; message: any }[]) => {
+    for (const { sourceName, message } of evt) {
+      const source = this.sourcesService.views.getSource(sourceName)?.getObsInput();
+
+      if (!source) {
+        continue;
+      }
+
+      const keys = JSON.parse(message).keys;
+      const tree = convertDotNotationToTree(keys);
+      const res = await this.requestState({ query: tree });
+      const payload = JSON.stringify({
+        type: 'state.update',
+        message: res,
+        key: keys?.join(','),
+        event_id: uuid(),
+      });
+
+      source.sendMessage({
+        message: payload,
+      });
+    }
+  };
+
+  ensureUpdated = pMemoize(
+    async ({ startAfterUpdate = true }: { startAfterUpdate?: boolean } = {}) => {
+      this.log('ensureUpdated()');
+
+      const { needsUpdate, latestManifest } = await this.visionUpdater.checkNeedsUpdate();
+
+      if (needsUpdate) {
+        this.writeState({ isCurrentlyUpdating: true });
+
+        // make sure vision is stopped
+        await this.visionRunner.stop();
+
+        await this.visionUpdater.downloadAndInstall(latestManifest, progress => {
+          this.writeState({ percentDownloaded: progress.percent });
+        });
+
+        this.writeState({
+          installedVersion: latestManifest?.version || '',
+          needsUpdate: false,
+          isCurrentlyUpdating: false,
+          percentDownloaded: 0,
+        });
+      }
+
+      if (startAfterUpdate) {
+        return this.ensureRunning();
+      }
+    },
+    { cache: false },
+  );
+
+  ensureRunning = pMemoize(
+    async ({ debugMode = false }: VisionRunnerStartOptions = {}) => {
+      this.log('ensureRunning()');
+
+      this.writeState({ isStarting: true });
+
+      try {
+        const {
+          needsUpdate,
+          installedManifest,
+          latestManifest,
+        } = await this.visionUpdater.checkNeedsUpdate();
+
+        this.writeState({
+          needsUpdate,
+          installedVersion: installedManifest?.version ?? '',
+        });
+
+        if (needsUpdate) {
+          const v = latestManifest.version ?? 'unknown';
+          const now = Date.now();
+          const newVersion = this.lastPromptVersion !== v;
+          const cooledDown = now - this.lastPromptAt > this.promptCooldownMs;
+
+          if (newVersion || cooledDown) {
+            this.lastPromptVersion = v;
+            this.lastPromptAt = now;
+            await this.settingsService.showSettings('Vision');
           }
 
-          const keys = JSON.parse(message).keys;
-          const tree = convertDotNotationToTree(keys);
-          const res = await this.requestState({ query: tree });
-          const payload = JSON.stringify({
-            type: 'state.update',
-            message: res,
-            key: keys?.join(','),
-            event_id: uuid(),
-          });
-
-          console.log('SmartBrowserSourceManager: Sending message to source', sourceName, payload);
-
-          source.sendMessage({
-            message: payload,
-          });
+          return { started: false, reason: 'needs-update' as const };
         }
-      },
-    );
-  }
 
-  /**
-   * Will pop up a dialog if vision is not installed
-   * or requires an update.
-   */
-  async ensureVision() {
-    if (this.proc && this.proc.exitCode != null) return;
+        const { pid, port } = await this.visionRunner.ensureStarted({ debugMode });
+        this.writeState({ pid, port, isRunning: true });
+        this.subscribeToEvents(port);
 
-    const needsUpdate = await this.isNewVersionAvailable();
-
-    this.state.db.write(() => {
-      this.state.needsUpdate = needsUpdate;
-    });
-
-    if (needsUpdate) {
-      this.settingsService.showSettings('Vision');
-    } else {
-      await this.startVision();
-    }
-  }
-
-  async installOrUpdate() {
-    if (this.state.isCurrentlyUpdating) return;
-
-    await this.update(progress => {
-      this.state.db.write(() => {
-        this.state.percentDownloaded = progress.percent;
-      });
-    });
-
-    await this.loadCurrentManifest();
-
-    this.state.db.write(() => {
-      this.state.needsUpdate = false;
-      this.state.percentDownloaded = 0;
-    });
-
-    await this.startVision();
-  }
-
-  async startVision() {
-    if (this.proc && this.proc.exitCode != null) {
-      this.proc = null;
-      this.state.db.write(() => {
-        this.state.isRunning = false;
-      });
-    }
-
-    if (!this.proc && !this.state.isRunning) {
-      this.state.db.write(() => {
-        this.state.isRunning = true;
-      });
-
-      const port = await this.getFreePort();
-
-      this.state.db.write(() => {
-        this.state.port = port;
-      });
-
-      console.log('Starting Streamlabs Vision on port', this.state.port);
-
-      this.proc = await this.startVisionProcess(this.state.port);
-
-      this.state.db.write(() => {
-        this.state.pid = this.proc.pid;
-      });
-
-      this.proc.on('exit', () => {
-        this.proc = null;
-        this.state.db.write(() => {
-          this.state.isRunning = false;
-        });
-      });
-
-      // Uncomment to log from vision (WARNING, will affect CPU)
-      // this.proc.stdout.on('data', d => console.log(`Vision: ${d}`));
-      // this.proc.stderr.on('data', d => console.log(`Vision [ERROR]: ${d}`));
-    }
-
-    this.subscribeToEvents();
-  }
-
-  private getEnvironment(): 'production' | 'staging' | 'local' {
-    // need to use this remote thing because main process is being spawned as
-    // subprocess of updater process in the release build
-    if (remote.process.argv.includes('--bundle-qa')) {
-      return 'staging';
-    }
-
-    if (process.env.VISION_ENV !== 'staging' && process.env.VISION_ENV !== 'local') {
-      return 'production';
-    }
-    return process.env.VISION_ENV as 'production' | 'staging' | 'local';
-  }
-
-  private getFreePort() {
-    return new Promise<number>(resolve => {
-      const server = http.createServer();
-      server.on('listening', () => {
-        const port = (server.address() as AddressInfo).port;
-
-        server.close();
-        server.unref();
-
-        resolve(port);
-      });
-      server.listen(); // omitting autoassigns.
-    });
-  }
-
-  /**
-   * Spawn the Vision process server
-   */
-  private startVisionProcess(port: number = 8000) {
-    const runVisionFromRepository = this.getEnvironment() === 'local';
-
-    if (runVisionFromRepository) {
-      // this is for streamlabs vision development
-      // to run this you have to install the streamlabs vision repository next to desktop
-      return this.startVisionFromLocalRepository(port);
-    }
-
-    const visionBinaryPath = path.resolve(
-      path.join(remote.app.getPath('userData'), '..', 'streamlabs-vision'),
-      'bin',
-      'vision.exe',
-    );
-
-    const command: string[] = ['--port', port.toString()];
-    return spawn(visionBinaryPath, command);
-  }
-
-  private startVisionFromLocalRepository(port: number) {
-    const rootPath = '../streamlabs-vision';
-    const command = ['run', 'python', 'streamlabs_vision/main.py', '--port', port.toString()];
-
-    const proc = spawn('poetry.exe', command, {
-      cwd: rootPath,
-      stdio: 'pipe',
-    });
-
-    proc.stdout.on('data', console.log);
-
-    return proc;
-  }
-
-  /*
-   * Get the path to the streamlabs vision binary
-   */
-  private getManifestUrl(): string {
-    const cacheBuster = Math.floor(Date.now() / 1000);
-    if (this.getEnvironment() === 'staging') {
-      return `https://cdn-vision-builds.streamlabs.com/staging/manifest_win_x86_64.json?t=${cacheBuster}`;
-    } else {
-      return `https://cdn-vision-builds.streamlabs.com/production/manifest_win_x86_64.json?t=${cacheBuster}`;
-    }
-  }
-
-  /**
-   * Check if streamlabs vision requires an update
-   */
-  private async isNewVersionAvailable(): Promise<boolean> {
-    // check if updater checked version in current session already
-    if (this.versionChecked || this.getEnvironment() === 'local') {
-      return false;
-    }
-
-    this.versionChecked = true;
-    console.log('checking for streamlabs vision updates...');
-    const manifestUrl = this.getManifestUrl();
-    // fetch the latest version of the manifest for win x86_64 target
-    const newManifest = await jfetch<IVisionManifest>(new Request(manifestUrl));
-    this.manifest = newManifest;
-
-    const currentManifest = await this.loadCurrentManifest();
-
-    if (!currentManifest) return true;
-
-    if (
-      newManifest.version !== currentManifest.version ||
-      newManifest.timestamp > currentManifest.timestamp
-    ) {
-      console.log(
-        `new streamlabs vision version available. ${currentManifest.version} -> ${newManifest.version}`,
-      );
-      return true;
-    }
-
-    console.log('streamlabs vision is up to date');
-    return false;
-  }
-
-  async loadCurrentManifest(): Promise<IVisionManifest> {
-    // if manifest.json does not exist, an initial download is required
-    if (!existsSync(this.manifestPath)) {
-      console.log('manifest.json not found, initial download required');
-      return null;
-    }
-
-    // read the current manifest
-    const currentManifest = JSON.parse(
-      await fs.readFile(this.manifestPath, 'utf-8'),
-    ) as IVisionManifest;
-
-    this.state.db.write(() => {
-      this.state.installedVersion = currentManifest.version;
-    });
-
-    return currentManifest;
-  }
-
-  /**
-   * Update streamlabs vision to the latest version
-   */
-  private async update(
-    progressCallback: (progress: IDownloadProgress) => void,
-    outputHandler?: OutputStreamHandler,
-  ): Promise<void> {
-    try {
-      this.state.db.write(() => {
-        this.state.isCurrentlyUpdating = true;
-      });
-      this.currentUpdate = this.performUpdate(progressCallback, outputHandler);
-      await this.currentUpdate;
-    } finally {
-      this.state.db.write(() => {
-        this.state.isCurrentlyUpdating = false;
-      });
-    }
-  }
-
-  private async performUpdate(
-    progressCallback: (progress: IDownloadProgress) => void,
-    outputHandler?: OutputStreamHandler,
-  ) {
-    this.state.db.write(() => {
-      this.state.isInstalling = false;
-    });
-
-    if (!this.manifest) {
-      outputHandler?.('stderr', 'No manifest available. Please check for updates first.');
-      throw new Error('Manifest not found, cannot update');
-    }
-
-    if (!existsSync(this.basepath)) {
-      console.log('creating directory for streamlabs vision...');
-      await fs.mkdir(this.basepath);
-    }
-
-    const zipPath = path.resolve(this.basepath, 'vision.zip');
-    console.log('downloading new version of streamlabs vision...');
-
-    // in case if some leftover zip file exists for incomplete update
-    if (existsSync(zipPath)) {
-      await fs.rm(zipPath);
-    }
-
-    // download the new version
-    await downloadFile(
-      `${this.manifest.url}?t=${this.manifest.checksum}`,
-      zipPath,
-      progressCallback,
-    );
-    console.log('download complete');
-
-    this.state.db.write(() => {
-      this.state.isInstalling = true;
-    });
-
-    // verify the checksum
-    const checksum = await this.sha256(zipPath);
-    if (checksum !== this.manifest.checksum) {
-      throw new Error('Checksum verification failed');
-    }
-
-    outputHandler?.('stdout', 'unzipping archive...');
-    console.log('unzipping archive...');
-    const unzipPath = path.resolve(this.basepath, 'bin-' + this.manifest.version);
-    // delete leftover unzipped files in case something happened before
-    if (existsSync(unzipPath)) {
-      await fs.rm(unzipPath, { recursive: true });
-    }
-
-    // unzip archive and delete the zip after
-    await this.unzip(zipPath, unzipPath);
-    await fs.rm(zipPath);
-    outputHandler?.('stdout', 'unzipping complete');
-    console.log('unzip complete');
-
-    // swap with the new version
-    const binPath = path.resolve(this.basepath, 'bin');
-    const outdateVersionPresent = existsSync(binPath);
-
-    // backup the outdated version in case something goes bad
-    if (outdateVersionPresent) {
-      console.log('backing up outdated version...');
-      const backupPath = path.resolve(this.basepath, 'bin.bkp');
-      if (existsSync(backupPath)) {
-        await fs.rm(backupPath, { recursive: true });
+        return { started: true as const, pid, port };
+      } finally {
+        // once we're done, we're no longer starting up
+        this.writeState({ isStarting: false });
       }
-      await fs.rename(binPath, backupPath);
-    }
-    console.log('swapping new version...');
-    await fs.rename(unzipPath, binPath);
+    },
+    { cache: false },
+  );
 
-    // cleanup
-    outputHandler?.('stdout', 'cleaning up...');
-    console.log('cleaning up...');
-    if (outdateVersionPresent) {
-      await fs.rm(path.resolve(this.basepath, 'bin.bkp'), { recursive: true });
-    }
+  private subscribeToEvents(port: number) {
+    this.log('subscribeToEvents()');
 
-    console.log('updating manifest...');
-    await fs.writeFile(this.manifestPath, JSON.stringify(this.manifest));
-    console.log('update complete');
+    this.eventSource?.close();
 
-    this.state.db.write(() => {
-      this.state.isInstalling = false;
-    });
-  }
+    const eventSource = new EventSource(`http://localhost:${port}/events`);
 
-  private async sha256(file: string): Promise<string> {
-    const hash = crypto.createHash('sha256');
-    const stream = createReadStream(file);
+    this.eventSource = eventSource;
 
-    await pipeline(stream, hash);
+    eventSource.onopen = () => this.log('EventSource opened');
 
-    return hash.digest('hex');
-  }
+    // EventSource auto-reconnects; we just log
+    eventSource.onerror = e => this.log('EventSource error:', e, 'state=', eventSource.readyState);
 
-  private async unzip(zipPath: string, unzipPath: string): Promise<void> {
-    // extract the new version
-    const extractZip = (await importExtractZip()).default;
-    return new Promise<void>((resolve, reject) => {
-      extractZip(zipPath, { dir: unzipPath }, err => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
-  }
-
-  private eventSource: EventSource;
-
-  private subscribeToEvents() {
-    if (this.eventSource) {
-      this.eventSource.close();
-      this.eventSource = null;
-    }
-
-    this.eventSource = new EventSource(`http://localhost:${this.state.port}/events`);
-
-    this.eventSource.onmessage = e => {
-      console.log('GOT EVENT', e.data);
-
-      const headers = authorizedHeaders(
-        this.userService.apiToken,
-        new Headers({ 'Content-Type': 'application/json' }),
-      );
-      const url = `https://${this.hostsService.streamlabs}/api/v5/vision/desktop/event`;
+    eventSource.onmessage = e => {
+      this.log('EventSource message', e.data);
 
       try {
         const parsed = JSON.parse(e.data);
 
-        // Filter out game process detection events
-        if (parsed['events'].find((e: any) => e.name === 'game_process_detected')) return;
+        if (
+          Array.isArray(parsed.events) &&
+          parsed.events.some((x: any) => x.name === 'game_process_detected')
+        ) return;
 
-        parsed['vision_event_id'] = uuid();
-        jfetch(url, { headers, method: 'POST', body: JSON.stringify(parsed) });
-      } catch (e: unknown) {
-        console.error('Unable to parse game pulse event', e);
+        parsed.vision_event_id = uuid();
+
+        // todo: queue these incase of network failure?
+        void this.forwardEventToApi(parsed);
+      } catch (err) {
+        this.log('Bad event', err);
       }
     };
   }
 
-  requestState(params: any) {
-    const url = `https://${this.hostsService.streamlabs}/api/v5/user-state/desktop/query`;
+  async stop() {
+    this.closeEventSource();
+    await this.visionRunner.stop();
+  }
+
+  private log(...args: any[]) {
+    console.log('[VisionService]', ...args);
+  }
+
+  private closeEventSource() {
+    try {
+      this.eventSource?.close();
+    } catch {
+      /* ignore */
+    }
+
+    this.eventSource = undefined;
+  }
+
+  private async forwardEventToApi(payload: unknown) {
+    return await this.authPostWithTimeout(
+      `https://${this.hostsService.streamlabs}/api/v5/vision/desktop/event`,
+      payload,
+      8_000,
+    );
+  }
+
+  private async requestState(params: unknown) {
+    return await this.authPostWithTimeout(
+      `https://${this.hostsService.streamlabs}/api/v5/user-state/desktop/query`,
+      params,
+      8_000,
+    );
+  }
+
+  private async authPostWithTimeout(url: string, payload: unknown, timeoutMs = 8_000) {
     const headers = authorizedHeaders(
       this.userService.apiToken,
       new Headers({ 'Content-Type': 'application/json' }),
     );
-    return jfetch(url, { headers, method: 'POST', body: JSON.stringify(params) });
+
+    const controller = new AbortController();
+    const { signal } = controller;
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      return await jfetch(url, { headers, method: 'POST', body: JSON.stringify(payload), signal });
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  private writeState(patch: Partial<VisionState>) {
+    this.state.db.write(() => Object.assign(this.state, patch));
   }
 
   requestFrame() {

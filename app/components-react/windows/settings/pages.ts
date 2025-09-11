@@ -15,4 +15,4 @@ export * from './GameOverlay';
 export * from './Support';
 export * from './Experimental';
 export * from './Ultra';
-export * from './Vision';
+export * from './AI';

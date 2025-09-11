@@ -12,15 +12,13 @@ export class SmartBrowserSourceManager extends PropertiesManager {
 
   init() {
     this.socketSub = this.websocketService.socketEvent.subscribe(e => {
-      console.log('WS event', e);
-
+      // send all visionEvents and userStateUpdated to smart sources
       if (['visionEvent', 'userStateUpdated'].includes(e.type)) {
-        //@ts-ignore
-        console.log('success', JSON.stringify(e));
         this.obsSource.sendMessage({ message: JSON.stringify(e) });
       }
     });
-    this.visionService.ensureVision();
+
+    this.visionService.ensureRunning();
   }
 
   destroy() {

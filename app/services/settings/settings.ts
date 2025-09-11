@@ -428,7 +428,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     categories.push('Get Support');
 
     // TODO: Lock behind admin?
-    categories.push('Vision');
+    categories.push('AI');
 
     return categories;
   }
