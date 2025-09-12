@@ -18,6 +18,7 @@ import {
   TikTokLogo,
   YouTubeLogo,
 } from 'components-react/highlighter/ImportStream';
+import { promptAction } from 'components-react/modals';
 
 export default function AiHighlighterToggle({
   game,
@@ -27,16 +28,19 @@ export default function AiHighlighterToggle({
   cardIsExpanded: boolean;
 }) {
   //TODO M: Probably good way to integrate the highlighter in to GoLiveSettings
-  const { HighlighterService } = Services;
-  const { useHighlighter, highlighterVersion } = useVuex(() => {
+  const { HighlighterService, StreamingService } = Services;
+  const { useHighlighter, highlighterVersion, isRecording, outputDisplay } = useVuex(() => {
     return {
       useHighlighter: HighlighterService.views.useAiHighlighter,
       highlighterVersion: HighlighterService.views.highlighterVersion,
+      isRecording: StreamingService.views.isRecording,
+      outputDisplay: StreamingService.views.outputDisplay,
     };
   });
 
   const [gameIsSupported, setGameIsSupported] = useState(false);
   const [gameConfig, setGameConfig] = useState<any>(null);
+  const disableAIHighlighter = isRecording && outputDisplay === 'vertical';
 
   useEffect(() => {
     const supportedGame = isGameSupported(game);
@@ -62,6 +66,30 @@ export default function AiHighlighterToggle({
   }
   const initialExpandedState = getInitialExpandedState();
   const [isExpanded, setIsExpanded] = useState(initialExpandedState);
+
+  function handleToggleHighlighter() {
+    if (disableAIHighlighter) {
+      promptAction({
+        title: $t('Vertical Recording Active'),
+        message: $t(
+          'Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?',
+        ),
+        btns: [
+          {
+            text: $t('Cancel'),
+          },
+          {
+            text: $t('Stop Recording'),
+            fn: StreamingService.actions.toggleRecording,
+          },
+        ],
+      });
+
+      return;
+    }
+
+    HighlighterService.actions.toggleAiHighlighter();
+  }
 
   return (
     <div>
@@ -99,9 +127,9 @@ export default function AiHighlighterToggle({
                   {highlighterVersion !== '' ? (
                     <SwitchInput
                       style={{ width: '80px', margin: 0, marginTop: '-2px' }}
-                      value={useHighlighter}
+                      value={disableAIHighlighter ? false : useHighlighter}
                       label=""
-                      onChange={() => HighlighterService.actions.toggleAiHighlighter()}
+                      onChange={handleToggleHighlighter}
                     />
                   ) : (
                     <Button
