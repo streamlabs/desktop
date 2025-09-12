@@ -92,10 +92,12 @@ export class ScenesModule extends Module {
     });
     this.scenesService.itemAdded.subscribe(itemData => {
       const item = this.scenesService.views.getSceneItem(itemData.sceneItemId);
+      if (!item) return;
       this.sceneItemAdded.next(this.serializeNode(item));
     });
     this.scenesService.itemUpdated.subscribe(itemData => {
       const item = this.scenesService.views.getSceneItem(itemData.sceneItemId);
+      if (!item) return;
       this.sceneItemUpdated.next(this.serializeNode(item));
     });
     this.scenesService.itemRemoved.subscribe(itemData => {
