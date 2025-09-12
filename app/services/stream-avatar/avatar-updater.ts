@@ -139,12 +139,7 @@ export class AvatarUpdater {
     const fileUrl = this.getFileUrl(relativePath.replace(/\\/g, '/'));
 
     // Download the file
-    const cacheBuster = Math.floor(Date.now() / 1000);
-    await downloadFile(
-      fileUrl + `?t=${fileInfo.hash}&cb=${cacheBuster}`,
-      tempFilePath,
-      progressCallback,
-    );
+    await downloadFile(fileUrl + `?t=${fileInfo.hash}`, tempFilePath, progressCallback);
 
     // Verify the checksum
     const checksum = await this.sha256(tempFilePath);
