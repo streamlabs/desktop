@@ -126,8 +126,8 @@ test('Shows and filters scene item hotkeys', async t => {
   let numHorizontalIcons = (await selectElements('i.icon-desktop')).values.length;
   let numVerticalIcons = (await selectElements('i.icon-phone-case')).values.length;
 
-  t.true(numHorizontalIcons === 0);
-  t.true(numVerticalIcons === 0);
+  t.true(numHorizontalIcons === 0, 'single output mode should have no hori icons');
+  t.true(numVerticalIcons === 0, 'single output mode should have no vert icons');
 
   // confirm dual output scene collection scene item hotkeys
   await toggleDualOutputMode(false);
@@ -155,19 +155,23 @@ test('Shows and filters scene item hotkeys', async t => {
     .map((hotkey: IHotkey) => hotkey).length;
 
   // confirm only horizontal icons show in the horizontal tab
-  // subtract 1 because an icon is shown in the tab
+  // subtract 1 from horizontal because an icon is shown in the tab
+  // subract 2 from vertical due to the mobile settings tab using this icon
   numHorizontalIcons = (await getNumElements('.icon-desktop')) - 1;
-  numVerticalIcons = (await getNumElements('.icon-phone-case')) - 1;
+  numVerticalIcons = (await getNumElements('.icon-phone-case')) - 2;
 
-  t.true(numHorizontalIcons === numHorizontalHotkeys);
-  t.true(numVerticalIcons === 0);
+  t.true(
+    numHorizontalIcons === numHorizontalHotkeys,
+    'horizontal icons should equal horizontal hotkeys',
+  );
+  t.true(numVerticalIcons === 0, 'no vertical icons');
 
   // confirm only vertical icons show in the vertical tab
   await clickTab('Vertical');
   numHorizontalIcons = (await getNumElements('.icon-desktop')) - 1;
-  numVerticalIcons = (await getNumElements('.icon-phone-case')) - 1;
-  t.true(numVerticalIcons === numVerticalHotkeys);
-  t.true(numHorizontalIcons === 0);
+  numVerticalIcons = (await getNumElements('.icon-phone-case')) - 2;
+  t.true(numVerticalIcons === numVerticalHotkeys, 'vertical icons should equal vertical hotkeys');
+  t.true(numHorizontalIcons === 0, 'no horizontal icons');
 
   // confirm only horizontal scene items show when dual output is toggled off
   // on a dual output scene collection
@@ -180,10 +184,13 @@ test('Shows and filters scene item hotkeys', async t => {
   // subtract 1 because the SWITCH_TO_SCENE hotkey is not a scene item but is a scenes hotkey
   const numHotKeyElements = (await getNumElements('.scene-hotkey')) - 1;
   numHorizontalIcons = await getNumElements('.icon-desktop');
-  numVerticalIcons = await getNumElements('.icon-phone-case');
+  numVerticalIcons = (await getNumElements('.icon-phone-case')) - 1;
 
   // no display icons shown
-  t.true(numHorizontalIcons === 0);
-  t.true(numVerticalIcons === 0);
-  t.true(numHotKeyElements === numHorizontalHotkeys);
+  t.true(numHorizontalIcons === 0, 'single output mode should have no hori icons');
+  t.true(numVerticalIcons === 0, 'single output mode should have no vert icons');
+  t.true(
+    numHotKeyElements === numHorizontalHotkeys,
+    'hotkeys should be the same number as horizontal',
+  );
 });
