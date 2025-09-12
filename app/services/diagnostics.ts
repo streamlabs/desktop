@@ -577,15 +577,15 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
 
       const fpsObj = { Type: setting.fpsType.toString() };
 
-      if (fpsObj.Type === 'Common FPS Values') {
+      if (fpsObj.Type === 'Common') {
         // TODO: index
         // @ts-ignore
         fpsObj['Value'] = setting.fpsCom;
-      } else if (fpsObj.Type === 'Integer FPS Value') {
+      } else if (fpsObj.Type === 'Integer') {
         // TODO: index
         // @ts-ignore
         fpsObj['Value'] = setting.fpsInt;
-      } else if (fpsObj.Type === 'Fractional FPS Value') {
+      } else if (fpsObj.Type === 'Fractional') {
         // TODO: index
         // @ts-ignore
         fpsObj['Numerator'] = setting.fpsNum;
