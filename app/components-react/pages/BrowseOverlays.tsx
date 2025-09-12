@@ -12,7 +12,7 @@ import * as remote from '@electron/remote';
 import { Services } from 'components-react/service-provider';
 
 export default function BrowseOverlays(p: {
-  params: { type?: 'overlay' | 'widget-themes' | 'site-themes'; id?: string; install?: string };
+  params: { type: 'overlay' | 'widget-themes' | 'site-themes'; id?: string; install?: string };
   className?: string;
 }) {
   const {
@@ -34,7 +34,7 @@ export default function BrowseOverlays(p: {
   useEffect(() => {
     async function getOverlaysUrl() {
       const url = await UserService.actions.return.overlaysUrl(
-        p.params?.type,
+        p.params.type,
         p.params?.id,
         p.params?.install,
       );
@@ -43,7 +43,7 @@ export default function BrowseOverlays(p: {
     }
 
     getOverlaysUrl();
-  }, [p.params?.type, p.params?.id, p.params?.install]);
+  }, [p.params.type, p.params?.id, p.params?.install]);
 
   function onBrowserViewReady(view: Electron.BrowserView) {
     new GuestApiHandler().exposeApi(view.webContents.id, {
@@ -84,9 +84,9 @@ export default function BrowseOverlays(p: {
     try {
       await installOverlayBase(url, name, progressCallback, mergePlatform);
       NavigationService.actions.navigate('Studio');
-    } catch (e) {
+    } catch (e: unknown) {
       // If the overlay requires platform merge, navigate to the platform merge page
-      if (e.message === 'REQUIRES_PLATFORM_MERGE') {
+      if (e instanceof Error && e.message === 'REQUIRES_PLATFORM_MERGE') {
         NavigationService.actions.navigate('PlatformMerge', { overlayUrl: url, overlayName: name });
       } else {
         console.error(e);
@@ -277,7 +277,7 @@ export default function BrowseOverlays(p: {
       await installOverlayBase(overlayUrl, overlayName);
       await installWidgetsBase(widgetUrls);
       NavigationService.actions.navigate('Studio');
-    } catch (e) {
+    } catch (e: unknown) {
       console.error(e);
     }
   }
