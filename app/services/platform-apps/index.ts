@@ -180,6 +180,7 @@ class PlatformAppsViews extends ViewHandler<IPlatformAppServiceState> {
       '04f85c93be', // Avatar - Cale Dev
       '875cf5de20', // Coach - Ava
       '93125d1c33', // Avatar Prod / Marcin
+      '9ef3e51301', // Avatar - Marcin Dev
     ].includes(appId);
   }
 }

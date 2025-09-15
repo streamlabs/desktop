@@ -22,8 +22,8 @@
   "default_width": "default_width",
   "default_height": "default_height",
   "GameCapture.WindowInternalMode": "GameCapture.WindowInternalMode",
-  "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.",
-  "Show Components Library": "Show Components Library",
-  "Convert Dual Output Scene Collection": "Convert Dual Output Scene Collection",
-  "Repair Scene Collection": "Repair Scene Collection"
+  "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "Cela crée une copie de la collection de scènes active, définit la copie comme collection active, puis supprime toutes les sources verticales.",
+  "Show Components Library": "Afficher la bibliothèque des composants",
+  "Convert Dual Output Scene Collection": "Convertir la collection de scènes Dual Output",
+  "Repair Scene Collection": "Réparer la collection de scènes"
 }

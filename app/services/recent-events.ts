@@ -129,6 +129,7 @@ interface ISafeModeSettings {
 interface IRecentEventsState {
   recentEvents: IRecentEvent[];
   muted: boolean;
+  enableChatNotifs: boolean;
   mediaShareEnabled: boolean;
   filterConfig: IRecentEventFilterConfig;
   queuePaused: boolean;
@@ -408,6 +409,7 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
   static initialState: IRecentEventsState = {
     recentEvents: [],
     muted: false,
+    enableChatNotifs: false,
     mediaShareEnabled: false,
     filterConfig: {
       donation: false,
@@ -452,6 +454,7 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
     this.fetchMediaShareState();
     this.subscribeToSocketConnection();
     this.fetchSafeModeStatus();
+    this.fetchMuteChatNotifs();
   }
 
   subscribeToSocketConnection() {
@@ -924,12 +927,42 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
     this.ADD_RECENT_EVENT(messages);
   }
 
+  async toggleMuteChatNotifs() {
+    const val = !this.state.enableChatNotifs;
+    const headers = authorizedHeaders(
+      this.userService.apiToken,
+      new Headers({ 'Content-Type': 'application/json' }),
+    );
+    const url = `https://${this.hostsService.streamlabs}/api/v5/widgets/desktop/chat-box/notifications`;
+    const body = JSON.stringify({ enable: val });
+    try {
+      await jfetch(new Request(url, { headers, body, method: 'POST' }));
+      this.SET_MUTE_CHAT_NOTIFS(val);
+    } catch (e: unknown) {
+      return;
+    }
+  }
+
+  async fetchMuteChatNotifs() {
+    const headers = authorizedHeaders(
+      this.userService.apiToken,
+      new Headers({ 'Content-Type': 'application/json' }),
+    );
+    const url = `https://${this.hostsService.streamlabs}/api/v5/widgets/desktop/chat-box`;
+    try {
+      const resp = await jfetch<any>(new Request(url, { headers, method: 'GET' }));
+      if (!resp?.data?.settings) return;
+      this.SET_MUTE_CHAT_NOTIFS(resp.settings.global?.alert_enabled);
+    } catch (e: unknown) {
+      return;
+    }
+  }
+
   async toggleMuteEvents() {
     const headers = authorizedHeaders(
       this.userService.apiToken,
       new Headers({ 'Content-Type': 'application/json' }),
     );
-    // eslint-disable-next-line
     const url = `https://${this.hostsService.streamlabs}/api/v5/slobs/widget/recentevents/eventspanel`;
     const body = JSON.stringify({ muted: !this.state.muted });
     return await fetch(new Request(url, { headers, body, method: 'POST' })).then(handleResponse);
@@ -1093,6 +1126,10 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
     this.safeModeStatusChanged.next(ESafeModeStatus.Disabled);
   }
 
+  setMuteChatNotifs(val: boolean) {
+    this.SET_MUTE_CHAT_NOTIFS(val);
+  }
+
   @mutation()
   private ADD_RECENT_EVENT(events: IRecentEvent[]) {
     this.state.recentEvents = events.concat(this.state.recentEvents);
@@ -1142,5 +1179,10 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
   @mutation()
   private SET_SAFE_MODE_SETTINGS(patch: Partial<ISafeModeSettings>) {
     this.state.safeMode = { ...this.state.safeMode, ...patch };
+  }
+
+  @mutation()
+  private SET_MUTE_CHAT_NOTIFS(val: boolean) {
+    this.state.enableChatNotifs = val;
   }
 }

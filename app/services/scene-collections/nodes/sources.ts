@@ -344,24 +344,25 @@ export class SourcesNode extends Node<ISchema, {}> {
       });
 
       if (source.audioMixers) {
-        this.audioService.views
-          .getSource(sourceInfo.id)
-          .setMul(sourceInfo.volume != null ? sourceInfo.volume : 1);
+        const audioSource = this.audioService.views.getSource(sourceInfo.id);
+        if (audioSource) {
+          audioSource.setMul(sourceInfo.volume != null ? sourceInfo.volume : 1);
 
-        const defaultMonitoring =
-          (source.id as TSourceType) === 'browser_source'
-            ? obs.EMonitoringType.MonitoringOnly
-            : obs.EMonitoringType.None;
+          const defaultMonitoring =
+            (source.id as TSourceType) === 'browser_source'
+              ? obs.EMonitoringType.MonitoringOnly
+              : obs.EMonitoringType.None;
 
-        this.audioService.views.getSource(sourceInfo.id).setSettings({
-          forceMono: defaultTo(sourceInfo.forceMono, false),
-          syncOffset: AudioService.timeSpecToMs(
-            defaultTo(sourceInfo.syncOffset, { sec: 0, nsec: 0 }),
-          ),
-          audioMixers: defaultTo(sourceInfo.audioMixers, 255),
-          monitoringType: defaultTo(sourceInfo.monitoringType, defaultMonitoring),
-        });
-        this.audioService.views.getSource(sourceInfo.id).setHidden(!!sourceInfo.mixerHidden);
+          audioSource.setSettings({
+            forceMono: defaultTo(sourceInfo.forceMono, false),
+            syncOffset: AudioService.timeSpecToMs(
+              defaultTo(sourceInfo.syncOffset, { sec: 0, nsec: 0 }),
+            ),
+            audioMixers: defaultTo(sourceInfo.audioMixers, 255),
+            monitoringType: defaultTo(sourceInfo.monitoringType, defaultMonitoring),
+          });
+          audioSource.setHidden(!!sourceInfo.mixerHidden);
+        }
       }
 
       if (sourceInfo.hotkeys) {

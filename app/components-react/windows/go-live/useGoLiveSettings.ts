@@ -1,4 +1,4 @@
-import { IGoLiveSettings, StreamInfoView } from '../../../services/streaming';
+import { IGoLiveSettings, StreamInfoView, TDisplayOutput } from '../../../services/streaming';
 import { TPlatform } from '../../../services/platforms';
 import { ICustomStreamDestination } from 'services/settings/streaming';
 import { Services } from '../../service-provider';
@@ -317,6 +317,21 @@ export class GoLiveSettingsModule {
 
   switchCustomDestination(destInd: number, enabled: boolean) {
     this.state.switchCustomDestination(destInd, enabled);
+    this.save(this.state.settings);
+  }
+
+  /* Go live window has no persistence until we go live or toggle a platform on/off
+   * As a result we don't get the latest state in any of its views.
+   * This makes changing display immediate and is only used in `DisplaySelector`
+   * to keep the rest of the code as before, but we might need to revisit that.
+   */
+  updatePlatformDisplayAndSaveSettings(platform: TPlatform, display: TDisplayOutput) {
+    this.state.updatePlatform(platform, { display });
+    this.save(this.state.settings);
+  }
+
+  updateCustomDestinationDisplayAndSaveSettings(destId: number, display: TDisplayType) {
+    this.state.updateCustomDestinationDisplay(destId, display);
     this.save(this.state.settings);
   }
 

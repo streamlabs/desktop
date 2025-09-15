@@ -8,10 +8,11 @@ import { EScaleType, EFPSType, IVideoInfo } from '../../../../obs-api';
 import { $t } from 'services/i18n';
 import styles from './Common.m.less';
 import Tabs from 'components-react/shared/Tabs';
-import { invalidFps, IVideoInfoValue, TDisplayType } from 'services/settings-v2/video';
+import { invalidFps, IVideoInfoValue, TDisplayType, ObsSetting } from 'services/settings-v2/video';
 import { AuthModal } from 'components-react/shared/AuthModal';
 import Utils from 'services/utils';
 import DualOutputToggle from '../../shared/DualOutputToggle';
+import { ObsGenericSettingsForm } from './ObsSettings';
 
 const CANVAS_RES_OPTIONS = [
   { label: '1920x1080', value: '1920x1080' },
@@ -387,10 +388,12 @@ class VideoSettingsModule {
    * Otherwise, update the vertical display persisted settings.
    */
   setFPSType(value: EFPSType) {
-    this.service.actions.setVideoSetting('fpsType', value, 'horizontal');
-    this.service.actions.setVideoSetting('fpsNum', 30, 'horizontal');
-    this.service.actions.setVideoSetting('fpsDen', 1, 'horizontal');
-    this.service.actions.syncFPSSettings();
+    const obsSettings: ObsSetting[] = [
+      { key: 'fpsType', value },
+      { key: 'fpsNum', value: 30 },
+      { key: 'fpsDen', value: 1 },
+    ];
+    this.service.actions.setVideoSettings('horizontal', obsSettings);
   }
 
   /**
@@ -402,9 +405,11 @@ class VideoSettingsModule {
   setCommonFPS(value: string) {
     const [fpsNum, fpsDen] = value.split('-');
 
-    this.service.actions.setVideoSetting('fpsNum', Number(fpsNum), 'horizontal');
-    this.service.actions.setVideoSetting('fpsDen', Number(fpsDen), 'horizontal');
-    this.service.actions.syncFPSSettings();
+    const obsSettings: ObsSetting[] = [
+      { key: 'fpsNum', value: Number(fpsNum) },
+      { key: 'fpsDen', value: Number(fpsDen) },
+    ];
+    this.service.actions.setVideoSettings('horizontal', obsSettings);
   }
   /**
    * Sets Integer FPS
@@ -415,9 +420,11 @@ class VideoSettingsModule {
   setIntegerFPS(value: string) {
     this.state.setFpsInt(Number(value));
     if (Number(value) > 0 && Number(value) < 1001) {
-      this.service.actions.setVideoSetting('fpsNum', Number(value), 'horizontal');
-      this.service.actions.setVideoSetting('fpsDen', 1, 'horizontal');
-      this.service.actions.syncFPSSettings();
+      const obsSettings: ObsSetting[] = [
+        { key: 'fpsNum', value: Number(value) },
+        { key: 'fpsDen', value: 1 },
+      ];
+      this.service.actions.setVideoSettings('horizontal', obsSettings);
     }
   }
 
@@ -434,8 +441,7 @@ class VideoSettingsModule {
       this.state.setFpsDen(Number(value));
     }
     if (!invalidFps(this.state.fpsNum, this.state.fpsDen) && Number(value) > 0) {
-      this.service.actions.setVideoSetting(key, Number(value), 'horizontal');
-      this.service.actions.syncFPSSettings();
+      this.service.actions.setVideoSetting(key, Number(value), 'horizontal', true);
     }
   }
 
@@ -497,7 +503,7 @@ class VideoSettingsModule {
       }
 
       // toggle dual output
-      this.dualOutputService.actions.setDualOutputMode(
+      this.dualOutputService.actions.setDualOutputModeIfPossible(
         !this.dualOutputService.views.dualOutputMode,
       );
       this.state.setShowDualOutputSettings(!this.state.showDualOutputSettings);
@@ -521,7 +527,7 @@ class VideoSettingsModule {
     Services.WindowsService.actions.closeChildWindow();
     this.userService.actions.showLogin();
     const onboardingCompleted = Services.OnboardingService.onboardingCompleted.subscribe(() => {
-      Services.DualOutputService.actions.setDualOutputMode();
+      Services.DualOutputService.actions.setDualOutputModeIfPossible();
       Services.SettingsService.actions.showSettings('Video');
       onboardingCompleted.unsubscribe();
     });

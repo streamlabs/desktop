@@ -5,6 +5,7 @@ import {
   EPlatformCallResult,
   IPlatformRequest,
   IPlatformState,
+  TLiveDockFeature,
 } from '.';
 import { Inject } from 'services/core/injector';
 import { authorizedHeaders, jfetch } from 'util/requests';
@@ -195,6 +196,12 @@ export class YoutubeService
     'viewerCount',
     'dualStream',
   ]);
+  readonly liveDockFeatures = new Set<TLiveDockFeature>([
+    'view-stream',
+    'dashboard',
+    'refresh-chat-streaming',
+    'chat-streaming',
+  ]);
 
   static initialState: IYoutubeServiceState = {
     ...BasePlatformService.initialState,
@@ -315,7 +322,6 @@ export class YoutubeService
     await this.updateCategory(verticalBroadcast.id, ytSettings.categoryId!);
 
     const verticalStreamKey = verticalStream.cdn.ingestionInfo.streamName;
-    const verticalStreamServer = verticalStream.cdn.ingestionInfo.ingestionAddress;
     this.SET_VERTICAL_STREAM_KEY(verticalStreamKey);
     this.SET_VERTICAL_BROADCAST(verticalBoundBroadcast);
 
@@ -324,7 +330,7 @@ export class YoutubeService
     const verticalDestination: ICustomStreamDestination = {
       name: title,
       streamKey: verticalStreamKey,
-      url: `${verticalStreamServer}/`,
+      url: 'rtmp://a.rtmp.youtube.com/live2/',
       enabled: true,
       display: 'vertical' as TDisplayType,
       mode: 'portrait' as TOutputOrientation,
@@ -355,7 +361,7 @@ export class YoutubeService
       this.streamSettingsService.setSettings(
         {
           key: verticalDestination.streamKey,
-          server: verticalStreamServer,
+          server: verticalDestination.url,
         },
         verticalDestination.display,
       );
@@ -409,7 +415,7 @@ export class YoutubeService
       );
     }
 
-    if (ytSettings.display === 'both') {
+    if (this.streamingService.views.isDualOutputMode && ytSettings.display === 'both') {
       await this.setupDualStream(goLiveSettings);
     }
 

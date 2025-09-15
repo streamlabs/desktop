@@ -27,81 +27,89 @@ async function enableAllPlatforms() {
   }
 }
 
-test('Multistream default mode', withUser('twitch', { multistream: true }), async t => {
-  await prepareToGoLive();
-  await clickGoLive();
-  await waitForSettingsWindowLoaded();
+test(
+  'Multistream default mode',
+  withUser('twitch', { prime: true, multistream: true }),
+  async t => {
+    await prepareToGoLive();
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
 
-  // no primary chat switcher if only one platform is enabled
-  t.false(
-    await isDisplayed('[data-name="primary-chat-switcher"]'),
-    'No primary chat switcher if only one platform is enabled',
-  );
+    // no primary chat switcher if only one platform is enabled
+    t.false(
+      await isDisplayed('[data-name="primary-chat-switcher"]'),
+      'No primary chat switcher if only one platform is enabled',
+    );
 
-  // TODO: this is to rule-out a race condition in platform switching, might not be needed and
-  // can possibly revert back to fillForm with all platforms.
-  await enableAllPlatforms();
+    // TODO: this is to rule-out a race condition in platform switching, might not be needed and
+    // can possibly revert back to fillForm with all platforms.
+    await enableAllPlatforms();
 
-  // shows primary chat switcher when multiple platforms are enabled
-  t.true(
-    await isDisplayed('[data-name="primary-chat-switcher"]'),
-    'Shows primary chat switcher when multiple platforms are enabled',
-  );
+    // shows primary chat switcher when multiple platforms are enabled
+    t.true(
+      await isDisplayed('[data-name="primary-chat-switcher"]'),
+      'Shows primary chat switcher when multiple platforms are enabled',
+    );
 
-  // add settings
-  await fillForm({
-    title: 'Test stream',
-    description: 'Test stream description',
-    twitchGame: 'Fortnite',
-    trovoGame: 'Doom',
-  });
+    // add settings
+    await fillForm({
+      title: 'Test stream',
+      description: 'Test stream description',
+      twitchGame: 'Fortnite',
+      trovoGame: 'Doom',
+    });
 
-  await submit();
-  await waitForDisplayed('span=Configure the Multistream service');
-  await waitForDisplayed("h1=You're live!", { timeout: 60000 });
-  await stopStream();
-  t.pass();
-});
+    await submit();
+    await waitForDisplayed('span=Configure the Multistream service');
+    await waitForDisplayed("h1=You're live!", { timeout: 60000 });
+    await stopStream();
+    t.pass();
+  },
+);
 
-test('Multistream advanced mode', withUser('twitch', { multistream: true }), async t => {
-  await prepareToGoLive();
-  await clickGoLive();
-  await waitForSettingsWindowLoaded();
+test(
+  'Multistream advanced mode',
+  withUser('twitch', { prime: true, multistream: true }),
+  async t => {
+    await prepareToGoLive();
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
 
-  await enableAllPlatforms();
+    await enableAllPlatforms();
 
-  await switchAdvancedMode();
-  await waitForSettingsWindowLoaded();
+    await switchAdvancedMode();
+    await waitForSettingsWindowLoaded();
 
-  const twitchForm = useForm('twitch-settings');
-  await twitchForm.fillForm({
-    customEnabled: true,
-    title: 'twitch title',
-    twitchGame: 'Fortnite',
-    // TODO: Re-enable after reauthing userpool
-    // twitchTags: ['100%'],
-  });
+    const twitchForm = useForm('twitch-settings');
+    await twitchForm.fillForm({
+      customEnabled: true,
+      title: 'twitch title',
+      twitchGame: 'Fortnite',
+      // TODO: Re-enable after reauthing userpool
+      // twitchTags: ['100%'],
+    });
 
-  const youtubeForm = useForm('youtube-settings');
-  await youtubeForm.fillForm({
-    customEnabled: true,
-    title: 'youtube title',
-    description: 'youtube description',
-  });
+    const youtubeForm = useForm('youtube-settings');
+    await youtubeForm.fillForm({
+      customEnabled: true,
+      title: 'youtube title',
+      description: 'youtube description',
+    });
 
-  const trovoForm = useForm('trovo-settings');
-  await trovoForm.fillForm({
-    customEnabled: true,
-    trovoGame: 'Doom',
-    title: 'trovo title',
-  });
+    const trovoForm = useForm('trovo-settings');
+    await trovoForm.fillForm({
+      customEnabled: true,
+      trovoGame: 'Doom',
+      title: 'trovo title',
+    });
 
-  await submit();
-  await waitForDisplayed('span=Configure the Multistream service');
-  await waitForDisplayed("h1=You're live!", { timeout: 60000 });
-  await stopStream();
-  t.pass();
-});
+    await submit();
+    await waitForDisplayed('span=Configure the Multistream service');
+    await waitForDisplayed("h1=You're live!", { timeout: 60000 });
+    await stopStream();
+    t.pass();
+  },
+);
 
 test('Custom stream destinations', async t => {
   const loggedInUser = await logIn('twitch', { prime: true });

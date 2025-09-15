@@ -21,6 +21,8 @@
   "News": "Berita",
   "Notifications": "Notifikasi",
   "A new Recording has been completed. Click for more info": "Recording baru telah selesai. Klik untuk informasi selengkapnya",
+  "horizontalRecordingMessage": " A new Horizontal Recording has been completed. Click for more info",
+  "verticalRecordingMessage": "A new Vertical Recording has been completed. Click for more info",
   "Recording History": "Riwayat Recording",
   "Show in folder": "Tampilkan di folder",
   "Recordings": "Recording",
