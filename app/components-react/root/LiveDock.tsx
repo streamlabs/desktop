@@ -112,7 +112,10 @@ class LiveDockController {
   get chatTabs(): { name: string; value: string }[] {
     if (!this.userService.state.auth) return [];
 
-    const hasMultistreamChat = this.isRestreaming || this.hasDifferentDualOutputPlatforms;
+    const hasMultistreamChat =
+      (this.restreamService.views.canEnableRestream &&
+        this.streamingService.views.isMultiplatformMode) ||
+      this.hasDifferentDualOutputPlatforms;
     const tabs: { name: string; value: string }[] = [
       {
         name: getPlatformService(this.userService.state.auth.primaryPlatform).displayName,
@@ -254,12 +257,10 @@ function LiveDock() {
   const [elapsedStreamTime, setElapsedStreamTime] = useState('');
 
   const {
-    isPlatform,
     hasLiveDockFeature,
     isStreaming,
     isRestreaming,
     hasChatTabs,
-    chatTabs,
     applicationLoading,
     hideStyleBlockers,
     currentViewers,
@@ -268,11 +269,9 @@ function LiveDock() {
     streamingStatus,
   } = useVuex(() =>
     pick(ctrl, [
-      'isPlatform',
       'isStreaming',
       'isRestreaming',
       'hasChatTabs',
-      'chatTabs',
       'applicationLoading',
       'hideStyleBlockers',
       'pageSlot',
