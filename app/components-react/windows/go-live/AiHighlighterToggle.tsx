@@ -29,18 +29,26 @@ export default function AiHighlighterToggle({
 }) {
   //TODO M: Probably good way to integrate the highlighter in to GoLiveSettings
   const { HighlighterService, StreamingService } = Services;
-  const { useHighlighter, highlighterVersion, isRecording, outputDisplay } = useVuex(() => {
+  const {
+    useHighlighter,
+    highlighterVersion,
+    isVerticalRecording,
+    isVerticalReplayBuffer,
+    outputDisplay,
+  } = useVuex(() => {
     return {
       useHighlighter: HighlighterService.views.useAiHighlighter,
       highlighterVersion: HighlighterService.views.highlighterVersion,
-      isRecording: StreamingService.views.isRecording,
+      isVerticalRecording: StreamingService.views.isVerticalRecording,
+      isVerticalReplayBuffer: StreamingService.views.isVerticalReplayBuffer,
       outputDisplay: StreamingService.views.outputDisplay,
     };
   });
 
   const [gameIsSupported, setGameIsSupported] = useState(false);
   const [gameConfig, setGameConfig] = useState<any>(null);
-  const disableAIHighlighter = isRecording && outputDisplay === 'vertical';
+  const disableAIHighlighter =
+    (isVerticalRecording || isVerticalReplayBuffer) && outputDisplay === 'vertical';
 
   useEffect(() => {
     const supportedGame = isGameSupported(game);
@@ -69,14 +77,30 @@ export default function AiHighlighterToggle({
 
   function handleToggleHighlighter() {
     if (disableAIHighlighter) {
+      const title = isVerticalRecording
+        ? $t('Vertical Recording Active')
+        : $t('Vertical Replay Buffer Active');
+
+      const message = isVerticalRecording
+        ? $t(
+            'Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?',
+          )
+        : $t(
+            'Vertical replay buffer is active. Would you like to stop the replay buffer to enable AI Highlighter?',
+          );
+
+      const btnText = isVerticalRecording ? $t('Stop Recording') : $t('Stop Replay Buffer');
+
       promptAction({
-        title: $t('Vertical Recording Active'),
-        message: $t(
-          'Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?',
-        ),
-        btnText: $t('Stop Recording'),
+        title,
+        message,
+        btnText,
         fn: () => {
-          StreamingService.actions.toggleRecording();
+          if (isVerticalRecording) {
+            StreamingService.actions.toggleRecording();
+          } else {
+            StreamingService.actions.stopReplayBuffer();
+          }
           HighlighterService.actions.toggleAiHighlighter();
         },
         cancelBtnPosition: 'left',

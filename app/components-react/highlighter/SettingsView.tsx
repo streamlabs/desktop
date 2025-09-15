@@ -33,10 +33,12 @@ export default function SettingsView({
     useAiHighlighter: HighlighterService.views.useAiHighlighter,
     highlighterVersion: HighlighterService.views.highlighterVersion,
     isVerticalRecording: StreamingService.views.isVerticalRecording,
+    isVerticalReplayBuffer: StreamingService.views.isVerticalReplayBuffer,
     outputDisplay: StreamingService.views.outputDisplay,
   }));
 
-  const disableAIHighlighter = v.isVerticalRecording && v.outputDisplay === 'vertical';
+  const disableAIHighlighter =
+    (v.isVerticalRecording || v.isVerticalReplayBuffer) && v.outputDisplay === 'vertical';
 
   const correctlyConfigured =
     v.settingsValues.Output.RecRB &&
@@ -112,14 +114,30 @@ export default function SettingsView({
 
   function handleToggleHighlighter() {
     if (disableAIHighlighter) {
+      const title = v.isVerticalRecording
+        ? $t('Vertical Recording Active')
+        : $t('Vertical Replay Buffer Active');
+
+      const message = v.isVerticalRecording
+        ? $t(
+            'Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?',
+          )
+        : $t(
+            'Vertical replay buffer is active. Would you like to stop the replay buffer to enable AI Highlighter?',
+          );
+
+      const btnText = v.isVerticalRecording ? $t('Stop Recording') : $t('Stop Replay Buffer');
+
       promptAction({
-        title: $t('Vertical Recording Active'),
-        message: $t(
-          'Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?',
-        ),
-        btnText: $t('Stop Recording'),
+        title,
+        message,
+        btnText,
         fn: () => {
-          StreamingService.actions.toggleRecording();
+          if (v.isVerticalRecording) {
+            StreamingService.actions.toggleRecording();
+          } else {
+            StreamingService.actions.stopReplayBuffer();
+          }
           toggleUseAiHighlighter();
         },
         cancelBtnPosition: 'left',

@@ -311,5 +311,7 @@
   "Recording in progress. Stop recording to change the recording display.": "Recording in progress. Stop recording to change the recording display.",
   "Multichat": "Multichat",
   "Vertical Recording Active": "Vertical Recording Active",
-  "Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?": "Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?"
+  "Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?": "Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?",
+  "Vertical Replay Buffer Active": "Vertical Replay Buffer Active",
+  "Vertical replay buffer is in-progress. Would you like to stop the replay buffer to enable AI Highlighter?": "Vertical replay buffer is in-progress. Would you like to stop the replay buffer to enable AI Highlighter?"
 }
