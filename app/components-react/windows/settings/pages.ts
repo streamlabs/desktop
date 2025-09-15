@@ -9,7 +9,7 @@ export * from './Advanced';
 // 'SceneCollections',
 // 'Notifications',
 export * from './Appearance';
-export * from './RemoteControl';
+export * from './Mobile';
 export * from './VirtualWebcam';
 export * from './GameOverlay';
 export * from './Support';

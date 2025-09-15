@@ -24,7 +24,7 @@ test.skip('Twitch 2FA is disabled', async t => {
 test.skip('Window refresh should work', async t => {
   await getClient().keys('F5');
   await sleep(5000, true);
-  await waitForDisplayed('.main-loading');
+  await waitForDisplayed('[data-name="main-loading"]');
   await waitForLoader();
   t.pass();
 });

@@ -179,7 +179,20 @@ export class AppService extends StatefulService<IAppState> {
     }
 
     ipcRenderer.send('AppInitFinished');
-    this.metricsService.recordMetric('sceneCollectionLoadingTime');
+    const sceneCollectionLoadingTime = Date.now();
+    this.metricsService.recordMetric('sceneCollectionLoadingTime', sceneCollectionLoadingTime);
+
+    // Log startup times
+    const metrics = this.metricsService.getMetrics();
+    if (metrics?.appStartTime) {
+      console.log(
+        '=================================\n',
+        'Time to load scene collection: ',
+        (sceneCollectionLoadingTime - metrics.appStartTime) / 1000,
+        'seconds',
+        '\n=================================',
+      );
+    }
   }
 
   shutdownStarted = new Subject();
