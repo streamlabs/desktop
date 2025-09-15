@@ -12,7 +12,7 @@
   "Name Text Color": "Color de texto de nombre",
   "Name Background Color": "Color de fondo de nombre",
   "Highlight chat messages from your viewers on your stream.": "Resalte mensajes de chat de los espectadores en su stream.",
-  "Pin and highlight chat messages from your viewers on your stream.": "Pin and highlight chat messages from your viewers on your stream.",
+  "Pin and highlight chat messages from your viewers on your stream.": "Fija y resalta los mensajes de chat de tus espectadores en tu stream.",
   "A duration of 0 is indefinite": "Una duración de 0 es indefinida",
   "Use this widget by hovering over the right side of a chat message to see a thumbtack icon. Clicking the icon will pin the message to the widget for its duration, or until you click the unpin button.": "Use este widget moviendo el cursor sobre el lado derecho de un mensaje de chat para ver un icono de chincheta. Al hacer clic en el icono, el mensaje quedará anclado al widget mientras esté abierto o hasta que vuelva a hacer clic en el botón de desanclar."
 }

@@ -48,7 +48,13 @@ async function downloadVirtualCamExtension(context) {
   await downloadFile(sourceUrl, destFile);
   console.log('Extracting tar file');
   cp.execSync(`tar -xzvf ${destFile}`);
-  cp.execSync('rm -rf ./slobs-virtual-cam-installer.app/Contents/embedded.provisionprofile'); // remove the developer profile
+  cp.execSync('rm -rf ./slobs-virtual-cam-installer.app/Contents/embedded.provisionprofile'); // remove the old developer profile
+  if (fs.existsSync(process.env.APPLE_DEVELOPER_PROVISIONING_PROFILE)) {
+    console.log(`Embedding provisioning profile: ${process.env.APPLE_DEVELOPER_PROVISIONING_PROFILE}`);
+    fs.copyFileSync(process.env.APPLE_DEVELOPER_PROVISIONING_PROFILE, './slobs-virtual-cam-installer.app/Contents/embedded.provisionprofile');
+  } else {
+    console.warn("⚠️ No provisioning profile found, skipping embed.");
+  }
 
   console.log('Copying slobs-virtual-cam-installer.app into Frameworks folder');
   cp.execSync(

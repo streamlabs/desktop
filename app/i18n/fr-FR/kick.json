@@ -1,14 +1,14 @@
 {
-  "Edit your stream title on Kick after going live.": "Edit your stream title on Kick after going live.",
-  "Kick Category": "Kick Category",
-  "Failed to update Kick account. Please unlink and reconnect your Kick account.": "Failed to update Kick account. Please unlink and reconnect your Kick account.",
-  "Failed to start Kick stream. Please check permissions with Kick and try again": "Failed to start Kick stream. Please check permissions with Kick and try again",
-  "Kick request most likely failed due to incorrect or missing permissions. Unlink and re-merge Kick account, then restart Desktop. If that fails, refer to Kick support": "Kick request most likely failed due to incorrect or missing permissions. Unlink and re-merge Kick account, then restart Desktop. If that fails, refer to Kick support",
-  "Kick stream key failed to generate due to missing permissions": "Kick stream key failed to generate due to missing permissions",
-  "confirm that a stream key has been generated with 2FA on Kick for use with Streamlabs Desktop and if not ask the user to manually generate one": "confirm that a stream key has been generated with 2FA on Kick for use with Streamlabs Desktop and if not ask the user to manually generate one",
-  "Login to Kick": "Login to Kick",
-  "Go to: <link></link>": "Go to: <link></link>",
-  "Click on the \"eye\" icon to see your stream key": "Click on the \"eye\" icon to see your stream key",
-  "Put in 2FA": "Put in 2FA",
-  "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick."
+  "Edit your stream title on Kick after going live.": "Modifie le titre de ton stream sur Kick après être passé en direct.",
+  "Kick Category": "Catégorie Kick",
+  "Failed to update Kick account. Please unlink and reconnect your Kick account.": "Impossible de mettre à jour le compte Kick. Déconnecte et reconnecte ton compte Kick.",
+  "Failed to start Kick stream. Please check permissions with Kick and try again": "Impossible de démarrer le stream Kick. Vérifie les autorisations avec Kick et réessaie",
+  "Kick request most likely failed due to incorrect or missing permissions. Unlink and re-merge Kick account, then restart Desktop. If that fails, refer to Kick support": "La demande de Kick a probablement échoué à cause d’autorisations incorrectes ou manquantes. Déconnecte et fusionne à nouveau le compte Kick, puis redémarre Desktop. Si cela ne fonctionne pas, consulte l’assistance de Kick",
+  "Kick stream key failed to generate due to missing permissions": "La clé de stream Kick n’a pas pu être générée à cause d’autorisations manquantes",
+  "confirm that a stream key has been generated with 2FA on Kick for use with Streamlabs Desktop and if not ask the user to manually generate one": "Vérifie qu’une clé de stream a bien été générée avec la double authentification sur Kick pour être utilisée avec Streamlabs Desktop. Si ce n’est pas le cas, demande à l’utilisateur d’en générer une manuellement",
+  "Login to Kick": "Connexion à Kick",
+  "Go to: <link></link>": "Accède à : <link></link>",
+  "Click on the \"eye\" icon to see your stream key": "Clique sur l’icône d’« œil » pour afficher ta clé de stream",
+  "Put in 2FA": "Active la double authentification",
+  "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "Après la double authentification, la clé de stream a été générée et sera disponible pour Streamlabs Desktop pour cette chaîne. Tu devrais maintenant pouvoir diffuser en direct sur Kick."
 }
