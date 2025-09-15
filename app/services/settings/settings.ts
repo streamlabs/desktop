@@ -49,6 +49,7 @@ export enum ESettingsCategory {
   InstalledApps = 'Installed Apps',
   Stream = 'Stream',
   General = 'General',
+  Mobile = 'Mobile',
   // ...
 }
 
