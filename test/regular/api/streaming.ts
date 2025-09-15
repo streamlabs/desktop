@@ -4,49 +4,54 @@ import {
   IStreamingServiceApi,
   EStreamingState,
   ERecordingState,
-  EReplayBufferState,
 } from '../../../app/services/streaming/streaming-api';
 import { SettingsService } from '../../../app/services/settings';
-import { releaseUserInPool, reserveUserFromPool, withPoolUser } from '../../helpers/webdriver/user';
+import { reserveUserFromPool, withPoolUser } from '../../helpers/webdriver/user';
 
+// not a react hook
+// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver({ restartAppAfterEachTest: true });
 
 test('Streaming to Twitch via API', async t => {
-  const streamKey = (await reserveUserFromPool(t, 'twitch')).streamKey;
-  const client = await getApiClient();
-  const streamingService = client.getResource<IStreamingServiceApi>('StreamingService');
-  const settingsService = client.getResource<SettingsService>('SettingsService');
+  const user = await reserveUserFromPool(t, 'twitch');
 
-  const streamSettings = settingsService.state.Stream.formData;
-  streamSettings.forEach(subcategory => {
-    subcategory.parameters.forEach(setting => {
-      if (setting.name === 'service') setting.value = 'Twitch';
-      if (setting.name === 'key') setting.value = streamKey;
+  await withPoolUser(user, async () => {
+    const streamKey = user.streamKey;
+    const client = await getApiClient();
+    const streamingService = client.getResource<IStreamingServiceApi>('StreamingService');
+    const settingsService = client.getResource<SettingsService>('SettingsService');
+
+    const streamSettings = settingsService.state.Stream.formData;
+    streamSettings.forEach(subcategory => {
+      subcategory.parameters.forEach(setting => {
+        if (setting.name === 'service') setting.value = 'Twitch';
+        if (setting.name === 'key') setting.value = streamKey;
+      });
     });
+    settingsService.setSettings('Stream', streamSettings);
+
+    let streamingStatus = streamingService.getModel().streamingStatus;
+
+    streamingService.streamingStatusChange.subscribe(() => void 0);
+
+    t.is(streamingStatus, EStreamingState.Offline);
+
+    streamingService.toggleStreaming();
+
+    streamingStatus = (await client.fetchNextEvent()).data;
+    t.is(streamingStatus, EStreamingState.Starting);
+
+    streamingStatus = (await client.fetchNextEvent()).data;
+    t.is(streamingStatus, EStreamingState.Live);
+
+    streamingService.toggleStreaming();
+
+    streamingStatus = (await client.fetchNextEvent()).data;
+    t.is(streamingStatus, EStreamingState.Ending);
+
+    streamingStatus = (await client.fetchNextEvent()).data;
+    t.is(streamingStatus, EStreamingState.Offline);
   });
-  settingsService.setSettings('Stream', streamSettings);
-
-  let streamingStatus = streamingService.getModel().streamingStatus;
-
-  streamingService.streamingStatusChange.subscribe(() => void 0);
-
-  t.is(streamingStatus, EStreamingState.Offline);
-
-  streamingService.toggleStreaming();
-
-  streamingStatus = (await client.fetchNextEvent()).data;
-  t.is(streamingStatus, EStreamingState.Starting);
-
-  streamingStatus = (await client.fetchNextEvent()).data;
-  t.is(streamingStatus, EStreamingState.Live);
-
-  streamingService.toggleStreaming();
-
-  streamingStatus = (await client.fetchNextEvent()).data;
-  t.is(streamingStatus, EStreamingState.Ending);
-
-  streamingStatus = (await client.fetchNextEvent()).data;
-  t.is(streamingStatus, EStreamingState.Offline);
 });
 
 test('Recording via API', async (t: TExecutionContext) => {
@@ -76,7 +81,7 @@ test('Recording via API', async (t: TExecutionContext) => {
   streamingService.toggleRecording();
 
   recordingStatus = (await client.fetchNextEvent()).data;
-  t.is(recordingStatus, ERecordingState.Stopping);
+  t.is(recordingStatus, ERecordingState.Writing);
 
   recordingStatus = (await client.fetchNextEvent()).data;
   t.is(recordingStatus, ERecordingState.Offline);

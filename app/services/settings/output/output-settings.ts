@@ -57,12 +57,8 @@ enum EFileFormat {
   mp4 = 'mp4',
   mov = 'mov',
   mkv = 'mkv',
-  ts = 'ts',
-  m3u8 = 'm3u8',
-  mpegts = 'ts',
-  hls = 'm3u8',
-  // mpegts = 'mpegts',
-  // hls = 'hls',
+  mpegts = 'mpegts',
+  hls = 'hls',
 }
 
 export const QUALITY_ORDER = [
@@ -346,11 +342,13 @@ export class OutputSettingsService extends Service {
     const pathKey = mode === 'Advanced' ? 'RecFilePath' : 'FilePath';
     const path: string = this.settingsService.findSettingValue(output, 'Recording', pathKey);
 
-    const format: ERecordingFormat = this.settingsService.findValidListValue(
+    const fileFormat: EFileFormat = this.settingsService.findValidListValue(
       output,
       'Recording',
       'RecFormat',
-    ) as ERecordingFormat;
+    ) as EFileFormat;
+
+    const format: ERecordingFormat = this.convertFileFormatToRecordingFormat(fileFormat);
 
     const oldQualityName = this.settingsService.findSettingValue(output, 'Recording', 'RecQuality');
     let quality: ERecordingQuality = ERecordingQuality.HigherQuality;
@@ -458,28 +456,13 @@ export class OutputSettingsService extends Service {
     const pathKey = mode === 'Advanced' ? 'RecFilePath' : 'FilePath';
     const path: string = this.settingsService.findSettingValue(output, 'Recording', pathKey);
 
-    const format: ERecordingFormat = this.settingsService.findValidListValue(
+    const fileFormat: EFileFormat = this.settingsService.findValidListValue(
       output,
       'Recording',
       'RecFormat',
-    ) as ERecordingFormat;
+    ) as EFileFormat;
 
-    const oldQualityName = this.settingsService.findSettingValue(output, 'Recording', 'RecQuality');
-    let quality: ERecordingQuality = ERecordingQuality.HigherQuality;
-    switch (oldQualityName) {
-      case 'Small':
-        quality = ERecordingQuality.HighQuality;
-        break;
-      case 'HQ':
-        quality = ERecordingQuality.HigherQuality;
-        break;
-      case 'Lossless':
-        quality = ERecordingQuality.Lossless;
-        break;
-      case 'Stream':
-        quality = ERecordingQuality.Stream;
-        break;
-    }
+    const format: ERecordingFormat = this.convertFileFormatToRecordingFormat(fileFormat);
 
     const overwrite: boolean = this.settingsService.findSettingValue(
       advanced,
@@ -550,11 +533,13 @@ export class OutputSettingsService extends Service {
 
     const path: string = this.settingsService.findSettingValue(output, 'Recording', 'FilePath');
 
-    const format: ERecordingFormat = this.settingsService.findValidListValue(
+    const fileFormat: EFileFormat = this.settingsService.findValidListValue(
       output,
       'Recording',
       'RecFormat',
-    ) as ERecordingFormat;
+    ) as EFileFormat;
+
+    const format: ERecordingFormat = this.convertFileFormatToRecordingFormat(fileFormat);
 
     const oldQualityName = this.settingsService.findSettingValue(output, 'Recording', 'RecQuality');
     let quality: ERecordingQuality = ERecordingQuality.HigherQuality;
@@ -648,11 +633,13 @@ export class OutputSettingsService extends Service {
         ? EObsAdvancedEncoder.obs_x264
         : convertedEncoderName;
 
-    const format = this.settingsService.findValidListValue(
+    const fileFormat: EFileFormat = this.settingsService.findValidListValue(
       output,
       'Recording',
       'RecFormat',
-    ) as ERecordingFormat;
+    ) as EFileFormat;
+
+    const format: ERecordingFormat = this.convertFileFormatToRecordingFormat(fileFormat);
 
     const overwrite = this.settingsService.findSettingValue(
       advanced,
@@ -952,6 +939,23 @@ export class OutputSettingsService extends Service {
         return EObsAdvancedEncoder.jim_nvenc;
       case EObsSimpleEncoder.x264_lowcpu:
         return EObsSimpleEncoder.x264_lowcpu;
+    }
+  }
+
+  convertFileFormatToRecordingFormat(format: EFileFormat): ERecordingFormat {
+    switch (format) {
+      case EFileFormat.mp4:
+        return ERecordingFormat.MP4;
+      case EFileFormat.flv:
+        return ERecordingFormat.FLV;
+      case EFileFormat.mov:
+        return ERecordingFormat.MOV;
+      case EFileFormat.mkv:
+        return ERecordingFormat.MKV;
+      case EFileFormat.mpegts:
+        return ERecordingFormat.MPEGTS;
+      case EFileFormat.hls:
+        return ERecordingFormat.HLS;
     }
   }
 }
