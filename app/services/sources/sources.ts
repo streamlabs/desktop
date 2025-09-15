@@ -645,8 +645,9 @@ export class SourcesService extends StatefulService<ISourcesState> {
     availableAllowlistedTypes.push({ description: 'Scene', value: 'scene' });
     availableAllowlistedTypes.push({
       description: 'Reactive Source',
-      value: 'smart_browser_source'
+      value: 'smart_browser_source',
     });
+
     return availableAllowlistedTypes;
   }
 
