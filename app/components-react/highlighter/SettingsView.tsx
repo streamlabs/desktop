@@ -118,7 +118,10 @@ export default function SettingsView({
           'Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?',
         ),
         btnText: $t('Stop Recording'),
-        fn: StreamingService.actions.toggleRecording,
+        fn: () => {
+          StreamingService.actions.toggleRecording();
+          toggleUseAiHighlighter();
+        },
         cancelBtnPosition: 'left',
         cancelBtnText: $t('Cancel'),
       });

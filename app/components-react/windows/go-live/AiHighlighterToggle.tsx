@@ -74,15 +74,13 @@ export default function AiHighlighterToggle({
         message: $t(
           'Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?',
         ),
-        btns: [
-          {
-            text: $t('Cancel'),
-          },
-          {
-            text: $t('Stop Recording'),
-            fn: StreamingService.actions.toggleRecording,
-          },
-        ],
+        btnText: $t('Stop Recording'),
+        fn: () => {
+          StreamingService.actions.toggleRecording();
+          HighlighterService.actions.toggleAiHighlighter();
+        },
+        cancelBtnPosition: 'left',
+        cancelBtnText: $t('Cancel'),
       });
 
       return;
