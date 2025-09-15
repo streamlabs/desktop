@@ -52,7 +52,7 @@
 
   display: flex;
   height: 54px;
-  background: var(--background) !important;
+  background: var(--card) !important;
   transition: transform 0.05s;
   cursor: pointer;
   margin-bottom: 15px;
@@ -91,13 +91,12 @@
 }
 
 .platform-disabled {
-  opacity: 0.7;
-  background: rgba(var(--titlebar), 0.3);
+  background: var(--card-disabled) !important;
 }
 
 .platform-enabled {
   transition: 0.3 ease-in-out;
-  background: var(--section-alt) !important;
+  background: var(--card-active) !important;
 }
 
 .platform-name {
