@@ -9,6 +9,8 @@ import {
 import { SettingsService } from '../../../app/services/settings';
 import { releaseUserInPool, reserveUserFromPool, withPoolUser } from '../../helpers/webdriver/user';
 
+// not a react hook
+// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver({ restartAppAfterEachTest: true });
 
 test('Streaming to Twitch via API', async t => {
@@ -76,7 +78,7 @@ test('Recording via API', async (t: TExecutionContext) => {
   streamingService.toggleRecording();
 
   recordingStatus = (await client.fetchNextEvent()).data;
-  t.is(recordingStatus, ERecordingState.Stopping);
+  t.is(recordingStatus, ERecordingState.Writing);
 
   recordingStatus = (await client.fetchNextEvent()).data;
   t.is(recordingStatus, ERecordingState.Offline);

@@ -1,5 +1,5 @@
 import styles from './GoLive.m.less';
-import { WindowsService, DualOutputService } from 'app-services';
+import { WindowsService, DualOutputService, IncrementalRolloutService } from 'app-services';
 import { ModalLayout } from '../../shared/ModalLayout';
 import { Button } from 'antd';
 import { Services } from '../../service-provider';
@@ -14,6 +14,7 @@ import Animation from 'rc-animate';
 import { useGoLiveSettings, useGoLiveSettingsRoot } from './useGoLiveSettings';
 import { inject } from 'slap';
 import RecordingSwitcher from './RecordingSwitcher';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export default function GoLiveWindow() {
   const { lifecycle, form } = useGoLiveSettingsRoot().extend(module => ({
@@ -66,6 +67,7 @@ function ModalFooter() {
   } = useGoLiveSettings().extend(module => ({
     windowsService: inject(WindowsService),
     dualOutputService: inject(DualOutputService),
+    incrementalRolloutService: inject(IncrementalRolloutService),
 
     close() {
       this.windowsService.actions.closeChildWindow();
@@ -85,15 +87,14 @@ function ModalFooter() {
 
       return platformDisplays.horizontal.length > 0 || destinationDisplays.horizontal.length > 0;
     },
-
-    get isDualOutputMode() {
-      return Services.TikTokService.promptApply;
-    },
   }));
 
   const shouldShowConfirm = ['prepopulate', 'waitForNewSettings'].includes(lifecycle);
   const shouldShowGoBackButton =
     lifecycle === 'runChecklist' && error && checklist.startVideoTransmission !== 'done';
+  const shouldShowRecordingSwitcher = ['empty', 'prepopulate', 'waitForNewSettings'].includes(
+    lifecycle,
+  );
 
   function handleGoLive() {
     if (isDualOutputMode && !getCanStreamDualOutput()) {
@@ -133,7 +134,7 @@ function ModalFooter() {
 
   return (
     <Form layout={'inline'}>
-      {!isDualOutputMode && <RecordingSwitcher />}
+      {shouldShowRecordingSwitcher && <RecordingSwitcher showRecordingToggle={true} />}
       {/* CLOSE BUTTON */}
       <Button onClick={close}>{$t('Close')}</Button>
 

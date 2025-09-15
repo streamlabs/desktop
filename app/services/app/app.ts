@@ -41,6 +41,7 @@ import { KeyListenerService } from 'services/key-listener';
 import { MetricsService } from '../metrics';
 import { SettingsService } from '../settings';
 import { DualOutputService } from 'services/dual-output';
+import { StreamingService } from 'services/streaming';
 import { OS, getOS } from 'util/operating-systems';
 import * as remote from '@electron/remote';
 import { RealmService } from 'services/realm';
@@ -97,6 +98,7 @@ export class AppService extends StatefulService<IAppState> {
   @Inject() private videoSettingsService: VideoSettingsService;
   @Inject() private dualOutputService: DualOutputService;
   @Inject() private realmService: RealmService;
+  @Inject() private streamingService: StreamingService;
   @Inject() private streamAvatarService: StreamAvatarService;
 
   static initialState: IAppState = {
@@ -208,6 +210,7 @@ export class AppService extends StatefulService<IAppState> {
       this.shutdownStarted.next();
       this.keyListenerService.shutdown();
       this.platformAppsService.unloadAllApps();
+      this.streamingService.shutdown();
       await this.usageStatisticsService.flushEvents();
       this.windowsService.shutdown();
       this.ipcServerService.stopListening();
