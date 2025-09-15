@@ -643,7 +643,10 @@ export class SourcesService extends StatefulService<ISourcesState> {
     );
     // 'scene' is not an obs input type so we have to set it manually
     availableAllowlistedTypes.push({ description: 'Scene', value: 'scene' });
-    availableAllowlistedTypes.push({ description: 'Reactive Source', value: 'smart_browser_source' });
+    availableAllowlistedTypes.push({
+      description: 'Reactive Source',
+      value: 'smart_browser_source'
+    });
     return availableAllowlistedTypes;
   }
 

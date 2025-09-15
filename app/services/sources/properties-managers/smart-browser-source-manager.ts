@@ -8,7 +8,6 @@ export class SmartBrowserSourceManager extends PropertiesManager {
   @Inject() private websocketService: WebsocketService;
   @Inject() visionService: VisionService;
   private socketSub!: Subscription;
-  private sseSub!: Subscription;
 
   init() {
     this.socketSub = this.websocketService.socketEvent.subscribe(e => {
@@ -23,6 +22,5 @@ export class SmartBrowserSourceManager extends PropertiesManager {
 
   destroy() {
     this.socketSub?.unsubscribe();
-    this.sseSub?.unsubscribe();
   }
 }
