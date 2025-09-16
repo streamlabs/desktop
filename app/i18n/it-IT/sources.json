@@ -434,5 +434,10 @@
   "Virtual camera output type": "Tipo di uscita della videocamera virtuale",
   "Unmute your Microphone source in Mixer": "Riattiva audio della sorgente microfono nel Mixer",
   "Your Microphone is unmuted but has no signal": "Il microfono non è silenziato, ma il segnale è assente",
+  "Victory & Defeat": "Victory & Defeat",
+  "Dynamic game animation": "Dynamic game animation",
+  "Dynamic real time animation based on your game & widget events.  Streamlabs Vision powered events include:": "Dynamic real time animation based on your game & widget events.  Streamlabs Vision powered events include:",
+  "Kills & Eliminations": "Kills & Eliminations",
+  "Health changes": "Health changes",
   "Search...": "Cerca..."
 }
