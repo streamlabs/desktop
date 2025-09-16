@@ -42,5 +42,7 @@
   "Desktop Audio Device 2": "Computerlydenhed 2",
   "Mic/Auxiliary Device 1": "Mikrofon/Aux-enhed 1",
   "Mic/Auxiliary Device 2": "Mikrofon/Aux-enhed 2",
-  "Mic/Auxiliary Device 3": "Mikrofon/Aux-enhed 3"
+  "Mic/Auxiliary Device 3": "Mikrofon/Aux-enhed 3",
+  "Recording Audio Encoder": "Recording Audio Encoder",
+  "Enable Muted Notifications": "Enable Muted Notifications"
 }

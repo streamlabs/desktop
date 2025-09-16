@@ -46,6 +46,7 @@ Function un.LeaveUnWelcome
     RMDir /r "$PROFILE\\AppData\\Roaming\\slobs-client"
     RMDir /r "$PROFILE\\AppData\\Roaming\\slobs-plugins"
     RMDir /r "$PROFILE\\AppData\\Roaming\\streamlabs-highlighter"
+    RMDir /r "$PROFILE\\.cache\\streamlabs-vision"
     ; REBOOTOK flag is required, because files might get injected into a game process and system may prevent their removal
     ; see: https://nsis.sourceforge.io/Reference/RMDir
     RMDir /r /REBOOTOK "C:\\ProgramData\\obs-studio-hook"

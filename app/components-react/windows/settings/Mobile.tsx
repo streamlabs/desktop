@@ -5,11 +5,15 @@ import { $t } from '../../../services/i18n';
 import { Services } from '../../service-provider';
 import { SwitchInput, TextInput } from '../../shared/inputs';
 import { IConnectedDevice } from 'services/api/remote-control-api';
-import styles from './RemoteControl.m.less';
+import styles from './Mobile.m.less';
 import { useRealmObject } from 'components-react/hooks/realm';
 import { useVuex } from 'components-react/hooks';
+import UltraIcon from 'components-react/shared/UltraIcon';
+import { $i } from 'services/utils';
+import ButtonHighlighted from 'components-react/shared/ButtonHighlighted';
+import UltraBox from 'components-react/shared/UltraBox';
 
-export function RemoteControlSettings() {
+export function MobileSettings() {
   const { RemoteControlService, UserService, TcpServerService } = Services;
 
   const connectedDevices = useRealmObject(RemoteControlService.connectedDevices).devices;
@@ -55,6 +59,25 @@ export function RemoteControlSettings() {
 
   return (
     <>
+      <h2>{$t('Mobile Streaming')}</h2>
+      <ObsSettingsSection>
+        <div style={{ marginBottom: '8px' }}>
+          {$t('Stream your phone camera or mobile game on the go with Streamlabs Mobile App.')}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+          {['ios', 'android'].map(os => (
+            <div
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+              key={os}
+            >
+              <img className={styles.qrCode} src={$i(`images/mobile/qr_${os}.png`)} />
+              <img className={styles.badge} src={$i(`images/mobile/badge_${os}.png`)} />
+            </div>
+          ))}
+        </div>
+        <UltraInsert />
+      </ObsSettingsSection>
+      <h2>{$t('Remote Controller')}</h2>
       <ObsSettingsSection>
         <div>
           {$t(
@@ -92,6 +115,7 @@ export function RemoteControlSettings() {
           )}
         </div>
       </ObsSettingsSection>
+      <h2>{$t('Third Party Connections')}</h2>
       <ObsSettingsSection>
         <div>
           {$t(
@@ -131,4 +155,40 @@ export function RemoteControlSettings() {
   );
 }
 
-RemoteControlSettings.page = 'Remote Control';
+MobileSettings.page = 'Mobile';
+
+function UltraInsert() {
+  const { UserService, MagicLinkService } = Services;
+  const { isPrime } = useVuex(() => ({
+    isPrime: UserService.views.isPrime,
+  }));
+
+  function Content() {
+    return (
+      <div style={{ display: 'flex' }}>
+        <UltraIcon style={{ width: '20px', height: '20px' }} />
+        <div style={{ margin: '0 8px' }}>
+          {$t(
+            'Enjoy your Ultra membership benefits on mobile including Multistream, Disconnect protection and premium themes.',
+          )}
+        </div>
+        {!isPrime && (
+          <ButtonHighlighted
+            text={$t('Get Ultra')}
+            onClick={() => MagicLinkService.actions.linkToPrime('mobile-settings')}
+          />
+        )}
+      </div>
+    );
+  }
+
+  return isPrime ? (
+    <div className={styles.ultraBox}>
+      <Content />
+    </div>
+  ) : (
+    <UltraBox className={styles.ultraBox}>
+      <Content />
+    </UltraBox>
+  );
+}

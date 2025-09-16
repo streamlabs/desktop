@@ -1888,14 +1888,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@electron/notarize@npm:^2.3.0":
-  version: 2.3.0
-  resolution: "@electron/notarize@npm:2.3.0"
+"@electron/notarize@npm:^2.3.2":
+  version: 2.5.0
+  resolution: "@electron/notarize@npm:2.5.0"
   dependencies:
     debug: ^4.1.1
     fs-extra: ^9.0.1
     promise-retry: ^2.0.1
-  checksum: 03e23005a42087150089ac6fb4176b81880392be06d0b3136107c0d6490beb99678ddd0d0e07185abd31b13384ebaf3fa06a29b16baa80ccebdc2a17abe0acd3
+  checksum: b8935a9648ae53429d6d476b473ae180d76ad281ccd34318ddc45c030c112501b966cd2609f00b74d0127f6f77dec8de134c2b8bbe356da9a84cfa3fea2d06ab
   languageName: node
   linkType: hard
 
@@ -14215,7 +14215,7 @@ __metadata:
     "@babel/core": 7.17.2
     "@babel/plugin-proposal-decorators": 7.17.2
     "@babel/preset-env": 7.22.10
-    "@electron/notarize": ^2.3.0
+    "@electron/notarize": ^2.3.2
     "@electron/remote": 2.1.2
     "@google-cloud/vision": ^4.3.2
     "@inworld/nodejs-sdk": 1.16.1-beta.0
