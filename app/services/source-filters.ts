@@ -42,6 +42,7 @@ export type TSourceFilterType =
   | 'noise_gate_filter'
   | 'compressor_filter'
   | 'vst_filter'
+  | 'sl-bgblur-filter'
   | 'face_mask_filter'
   | 'invert_polarity_filter'
   | 'limiter_filter'
@@ -236,6 +237,7 @@ export class SourceFiltersService extends StatefulService<IFiltersServiceState> 
       { description: $t('Noise Gate'), value: 'noise_gate_filter' },
       { description: $t('Compressor'), value: 'compressor_filter' },
       { description: $t('VST 2.x Plugin'), value: 'vst_filter' },
+      { description: $t('Background Removal'), value: 'sl-bgblur-filter' },
       { description: $t('Face Mask Plugin'), value: 'face_mask_filter' },
       { description: $t('Invert Polarity'), value: 'invert_polarity_filter' },
       { description: $t('Limiter'), value: 'limiter_filter' },
