@@ -647,7 +647,6 @@ export class SourcesService extends StatefulService<ISourcesState> {
       description: 'Reactive Source',
       value: 'smart_browser_source',
     });
-
     return availableAllowlistedTypes;
   }
 

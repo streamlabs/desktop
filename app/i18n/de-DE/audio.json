@@ -43,6 +43,6 @@
   "Mic/Auxiliary Device 1": "MIC/AUX-Gerät 1",
   "Mic/Auxiliary Device 2": "MIC/AUX-Gerät 2",
   "Mic/Auxiliary Device 3": "MIC/AUX-Gerät 3",
-  "Recording Audio Encoder": "Recording Audio Encoder",
-  "Enable Muted Notifications": "Enable Muted Notifications"
+  "Recording Audio Encoder": "Audio-Encoder für Aufnahme",
+  "Enable Muted Notifications": "Stummgeschaltete Benachrichtigungen aktivieren"
 }

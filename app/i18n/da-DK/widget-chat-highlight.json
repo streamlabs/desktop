@@ -12,7 +12,7 @@
   "Name Text Color": "Tekstfarve for navne",
   "Name Background Color": "Baggrundsfarve for navn",
   "Highlight chat messages from your viewers on your stream.": "Fremhæv chatbeskeder fra dine seere på din stream.",
-  "Pin and highlight chat messages from your viewers on your stream.": "Pin and highlight chat messages from your viewers on your stream.",
+  "Pin and highlight chat messages from your viewers on your stream.": "Fastgør og fremhæv chatbeskeder fra dine seere i din stream.",
   "A duration of 0 is indefinite": "En varighed på 0 er ubestemt",
   "Use this widget by hovering over the right side of a chat message to see a thumbtack icon. Clicking the icon will pin the message to the widget for its duration, or until you click the unpin button.": "Brug denne widget ved at holde musen over højre side af en chatbesked for at se et tegnestiftikon. Hvis du klikker på ikonet, fastgøres meddelelsen til widgeten i dens varighed, eller indtil du klikker på knappen til at løsne knappen."
 }
