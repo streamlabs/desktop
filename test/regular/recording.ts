@@ -97,7 +97,6 @@ async function validateRecordingFiles(
   // M3U8 creates multiple TS files in addition to the catalog itself.
   // The additional files created by TS & M3U8 in advanced mode are not displayed in the recording history
   const numFiles = advanced ? files.length - 2 : files.length;
-  // const numFiles = files.length;
   t.true(numFiles >= numFormats, `Files that were created:\n${files.join('\n')}`);
 
   // Check that the recordings are displayed in the recording history
