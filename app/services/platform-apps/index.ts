@@ -269,7 +269,7 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
     const disabledApps = this.getDisabledAppsFromStorage();
 
     productionApps.forEach(app => {
-      if (app.is_beta && !app.manifest) return;
+      if (!app.manifest) return;
 
       const unpackedVersionLoaded = this.state.loadedApps.find(
         loadedApp => loadedApp.id === app.id_hash && loadedApp.unpacked,
