@@ -11,7 +11,7 @@ export const ImagePickerInput = InputComponent((p: TListInputProps<string>) => {
         <div
           key={opt.value}
           className={cx(styles.imageOption, p.value === opt.value && styles.active)}
-          onClick={() => p.onInput && p.onInput(opt.value)}
+          onClick={() => p.onChange && p.onChange(opt.value)}
         >
           {typeof opt.image === 'string' ? <img src={opt.image} /> : opt.image}
         </div>

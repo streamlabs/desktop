@@ -5,7 +5,7 @@ import InputWrapper from './InputWrapper';
 import { InputNumberProps } from 'antd/lib/input-number';
 
 // select which features from the antd lib we are going to use
-export const ANT_NUMBER_FEATURES = ['min', 'max', 'step'] as const;
+export const ANT_NUMBER_FEATURES = ['min', 'max', 'step', 'formatter', 'parser'] as const;
 
 export type TNumberInputProps = TSlobsInputProps<
   {},
@@ -23,6 +23,7 @@ export const NumberInput = React.memo((p: TNumberInputProps) => {
 
   function onChangeHandler(val: number | string) {
     // don't emit onChange if the value is out of range
+    console.log('value', val);
     if (typeof val !== 'number') return;
     if (typeof p.max === 'number' && val > p.max) return;
     if (typeof p.min === 'number' && val < p.min) return;

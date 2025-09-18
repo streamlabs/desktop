@@ -35,7 +35,8 @@ export type TInputType =
   | 'file'
   | 'checkboxGroup'
   | 'imagepicker'
-  | 'animation';
+  | 'animation'
+  | 'duration';
 
 export type TInputLayout = 'horizontal' | 'vertical' | 'inline';
 

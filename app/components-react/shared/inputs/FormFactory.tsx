@@ -29,6 +29,7 @@ const componentTable: {
   imagepicker: inputs.ImagePickerInput,
   time: inputs.TimeInput,
   animation: inputs.AnimationInput,
+  duration: inputs.DurationInput,
 };
 
 interface IFormMetadata {

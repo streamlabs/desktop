@@ -177,14 +177,12 @@ export class SponsorBannerModule extends WidgetModule<ISponsorBannerState> {
   get visualMeta() {
     return {
       hide_duration_in_seconds: {
-        type: 'time',
-        isTimer: true,
+        type: 'duration',
         label: $t('Widget Hide Duration'),
         tooltip: $t('Set to zero to show the widget permanently.'),
       },
       show_duration_in_seconds: {
-        type: 'time',
-        isTimer: true,
+        type: 'duration',
         label: $t('Widget Show Duration'),
         tooltip: $t('The amount of time the widget will appear.'),
       },
