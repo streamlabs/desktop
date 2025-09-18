@@ -27,7 +27,6 @@ export class RootNode extends Node<ISchema, IContext> {
 
     const nodeMap = new NodeMapNode();
     await nodeMap.save();
-
     this.data = { scenes, transition, nodeMap };
   }
 

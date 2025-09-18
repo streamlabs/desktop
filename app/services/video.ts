@@ -213,6 +213,9 @@ export class Display {
   existingWindow = false;
 
   async resize(width: number, height: number) {
+    if (getOS() === OS.Mac && (width === 0 || height === 0 || this.displayDestroyed)) {
+      return; // obs gs_draw_sprite() does not render zero sized sprites (so do not call resizeOBSDisplay)
+    }
     this.currentPosition.width = width;
     this.currentPosition.height = height;
     this.videoService.actions.resizeOBSDisplay(this.name, width, height);
@@ -231,6 +234,7 @@ export class Display {
           this.name,
           remote.BrowserWindow.fromId(this.electronWindowId).getNativeWindowHandle(),
         );
+        this.existingWindow = true;
         nwr.connectIOSurface(this.name, surface);
 
         if (this.outputRegionCallbacks.length) {
@@ -239,7 +243,6 @@ export class Display {
       } catch (ex: unknown) {
         console.log(`Error encountered creating iosurface: ${ex}`);
       }
-      this.existingWindow = true;
     } else if (this.outputRegionCallbacks.length) {
       await this.refreshOutputRegion();
     }

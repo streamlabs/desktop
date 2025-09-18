@@ -108,6 +108,8 @@ export { MagicLinkService } from 'services/magic-link';
 export { GrowService } from 'services/grow/grow';
 export { GuestCamService } from 'services/guest-cam';
 export { DualOutputService } from 'services/dual-output';
+export { VisionService } from 'services/vision';
+export { SseService } from 'services/server-sent-events';
 
 // WIDGETS
 export { WidgetSource, WidgetsService } from './services/widgets';
@@ -213,6 +215,8 @@ import { TwitchStudioImporterService } from 'services/ts-importer';
 import { RemoteControlService } from 'services/api/remote-control-api';
 import { UrlService } from 'services/hosts';
 import { KickService } from 'services/platforms/kick';
+import { SseService } from './services/server-sent-events';
+import { VisionService } from 'services/vision';
 import { SignalsService } from 'services/signals-manager';
 
 export const AppServices = {
@@ -297,4 +301,6 @@ export const AppServices = {
   RemoteControlService,
   UrlService,
   VirtualWebcamService,
+  SseService,
+  VisionService,
 };
