@@ -125,7 +125,6 @@ export { DonationTickerService } from 'services/widgets/settings/donation-ticker
 export { CreditsService } from 'services/widgets/settings/credits';
 export { EventListService } from 'services/widgets/settings/event-list';
 export { TipJarService } from 'services/widgets/settings/tip-jar';
-export { SponsorBannerService } from 'services/widgets/settings/sponsor-banner';
 export { SubGoalService } from 'services/widgets/settings/sub-goal';
 export { MediaShareService } from 'services/widgets/settings/media-share';
 export { AlertBoxService } from 'services/widgets/settings/alert-box';

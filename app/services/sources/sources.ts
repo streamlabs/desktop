@@ -814,7 +814,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
       // MediaShare
       // Poll
       // SpinWheel
-      // SponsorBanner
+      'SponsorBanner',
       // StreamBoss
       // TipJar
       'ViewerCount',
