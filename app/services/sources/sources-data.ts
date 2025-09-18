@@ -1,5 +1,5 @@
-import { ISourceDisplayData } from './index';
 import { $t } from 'services/i18n';
+import { ISourceDisplayData } from './index';
 
 const imageSupport = ['png', 'jpg', 'jpeg', 'gif', 'tga', 'bmp'];
 const mediaSupport = [
@@ -349,5 +349,17 @@ export const SourceDisplayData = (): { [key: string]: ISourceDisplayData } => ({
     link: 'https://streamlabs.com/content-hub/post/vtuber-support-on-streamlabs-desktop',
     linkText: $t('Learn how to set it up'),
     group: 'capture',
+  },
+  smart_browser_source: {
+    name: 'Reactive Source',
+    demoVideo: true,
+    demoFilename: 'reactive-overlay-webm.webm',
+    shortDesc: $t('Dynamic game animation'),
+    description: $t(
+      'Dynamic real time animation based on your game & widget events.  Streamlabs Vision powered events include:',
+    ),
+    supportList: [$t('Kills & Eliminations'), $t('Health changes'), $t('Victory & Defeat')],
+    group: 'capture',
+    icon: 'fas fa-globe',
   },
 });

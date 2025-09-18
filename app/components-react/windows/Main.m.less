@@ -107,11 +107,10 @@
   width: 100%;
   min-width: 0;
   border-left: 1px solid var(--border);
-}
 
-.live-dock-container.left {
-  border-left: none;
-  border-right: 1px solid var(--border);
+  &.left {
+    border-right: 1px solid var(--border);
+  }
 }
 
 .live-dock-collapsed {
@@ -122,9 +121,12 @@
     border-left: 1px solid var(--border);
     box-sizing: border-box;
 
-    .live-dock-collapsed.left {
-      border-left: none;
+    &.left {
       border-right: 1px solid var(--border);
+
+      .live-dock-chevron.left {
+        left: 50%;
+      }
     }
 
     .live-dock-chevron {
@@ -149,6 +151,11 @@
     &:global(.icon-right) {
       transform: translate(-50%, -50%) rotate(-90deg);
     }
+  }
+
+  &.left {
+    left: auto;
+    right: 0;
   }
 }
 

@@ -6,7 +6,7 @@ import pick from 'lodash/pick';
 import { initStore, useController } from 'components-react/hooks/zustand';
 import { EStreamingState } from 'services/streaming';
 import { EAppPageSlot, ILoadedApp } from 'services/platform-apps';
-import { getPlatformService, TPlatform } from 'services/platforms';
+import { getPlatformService, TLiveDockFeature, TPlatform } from 'services/platforms';
 import { $t } from 'services/i18n';
 import { Services } from '../service-provider';
 import Chat from './Chat';
@@ -22,11 +22,6 @@ const LiveDockCtx = React.createContext<LiveDockController | null>(null);
 
 class LiveDockController {
   private streamingService = Services.StreamingService;
-  private youtubeService = Services.YoutubeService;
-  private facebookService = Services.FacebookService;
-  private trovoService = Services.TrovoService;
-  private kickService = Services.KickService;
-  private tiktokService = Services.TikTokService;
   private userService = Services.UserService;
   private customizationService = Services.CustomizationService;
   private platformAppsService = Services.PlatformAppsService;
@@ -78,6 +73,11 @@ class LiveDockController {
 
   get platform() {
     return this.userService.platform?.type;
+  }
+
+  get platformService() {
+    if (!this.platform) return;
+    return getPlatformService(this.platform);
   }
 
   get offlineImageSrc() {
@@ -189,21 +189,14 @@ class LiveDockController {
   }
 
   openPlatformStream() {
-    let url = '';
-    if (this.platform === 'youtube') url = this.youtubeService.streamPageUrl;
-    if (this.platform === 'facebook') url = this.facebookService.streamPageUrl;
-    if (this.platform === 'trovo') url = this.trovoService.streamPageUrl;
-    if (this.platform === 'kick') url = this.kickService.streamPageUrl;
-    if (this.platform === 'tiktok') url = this.tiktokService.streamPageUrl;
+    const url = this.platformService?.streamPageUrl;
+    if (!url) return;
     remote.shell.openExternal(url);
   }
 
   openPlatformDash() {
-    let url = '';
-    if (this.platform === 'youtube') url = this.youtubeService.dashboardUrl;
-    if (this.platform === 'facebook') url = this.facebookService.streamDashboardUrl;
-    if (this.platform === 'tiktok') url = this.tiktokService.dashboardUrl;
-    if (this.platform === 'kick') url = this.kickService.dashboardUrl;
+    const url = this.platformService?.dashboardUrl;
+    if (!url) return;
     remote.shell.openExternal(url);
   }
 
@@ -239,6 +232,10 @@ class LiveDockController {
   showMultistreamChatInfo() {
     this.chatService.actions.showMultistreamChatWindow();
   }
+
+  hasLiveDockFeature(feature: TLiveDockFeature) {
+    return this.platformService?.hasLiveDockFeature(feature);
+  }
 }
 
 export default function LiveDockWithContext() {
@@ -258,6 +255,7 @@ function LiveDock() {
 
   const {
     isPlatform,
+    hasLiveDockFeature,
     isStreaming,
     isRestreaming,
     hasChatTabs,
@@ -267,7 +265,6 @@ function LiveDock() {
     currentViewers,
     pageSlot,
     liveText,
-    isPopOutAllowed,
     streamingStatus,
   } = useVuex(() =>
     pick(ctrl, [
@@ -281,7 +278,7 @@ function LiveDock() {
       'pageSlot',
       'currentViewers',
       'liveText',
-      'isPopOutAllowed',
+      'hasLiveDockFeature',
       'streamingStatus',
     ]),
   );
@@ -384,7 +381,7 @@ function LiveDock() {
                 <i onClick={() => ctrl.showEditStreamInfo()} className="icon-edit" />
               </Tooltip>
             )}
-            {isPlatform(['youtube', 'facebook', 'trovo', 'tiktok', 'kick']) && isStreaming && (
+            {hasLiveDockFeature('view-stream') && isStreaming && (
               <Tooltip
                 title={$t('View your live stream in a web browser')}
                 placement="right"
@@ -394,7 +391,7 @@ function LiveDock() {
               </Tooltip>
             )}
             {isStreaming && <ShareStreamLink />}
-            {isPlatform(['youtube', 'facebook', 'tiktok']) && isStreaming && (
+            {hasLiveDockFeature('dashboard') && isStreaming && (
               <Tooltip
                 title={$t('Go to Live Dashboard')}
                 placement="right"
@@ -405,16 +402,16 @@ function LiveDock() {
             )}
           </div>
           <div className="flex">
-            {(isPlatform(['twitch', 'trovo', 'facebook', 'kick']) ||
-              (isPlatform(['youtube', 'twitter']) && isStreaming) ||
-              (isPlatform(['tiktok']) && isRestreaming)) && (
+            {(hasLiveDockFeature('refresh-chat') ||
+              (hasLiveDockFeature('refresh-chat-streaming') && isStreaming) ||
+              (hasLiveDockFeature('refresh-chat-restreaming') && isRestreaming)) && (
               <a onClick={() => ctrl.refreshChat()}>{$t('Refresh Chat')}</a>
             )}
           </div>
         </div>
         {!hideStyleBlockers &&
-          (isPlatform(['twitch', 'trovo']) ||
-            (isStreaming && isPlatform(['youtube', 'facebook', 'twitter', 'tiktok', 'kick']))) && (
+          (hasLiveDockFeature('chat-offline') ||
+            (isStreaming && hasLiveDockFeature('chat-streaming'))) && (
             <div className={styles.liveDockChat}>
               {hasChatTabs && <ChatTabs visibleChat={visibleChat} setChat={setChat} />}
               {!applicationLoading && !collapsed && chat}
@@ -429,8 +426,7 @@ function LiveDock() {
             </div>
           )}
       </div>
-      {(!ctrl.platform ||
-        (isPlatform(['youtube', 'facebook', 'twitter', 'tiktok', 'kick']) && !isStreaming)) && (
+      {(!ctrl.platform || (hasLiveDockFeature('chat-streaming') && !isStreaming)) && (
         <div className={cx('flex flex--center flex--column', styles.liveDockChatOffline)}>
           <img className={styles.liveDockChatImgOffline} src={ctrl.offlineImageSrc} />
           {!hideStyleBlockers && <span>{$t('Your chat is currently offline')}</span>}

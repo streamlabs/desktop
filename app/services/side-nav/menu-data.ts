@@ -1,5 +1,6 @@
 import { TAppPage } from 'services/navigation';
 import { $t } from 'services/i18n';
+import { ESettingsCategory } from 'services/settings';
 
 /**
  * Update Menu Items
@@ -25,6 +26,7 @@ export enum EMenuItemKey {
   GetHelp = 'get-help',
   Settings = 'settings',
   Login = 'login',
+  AI = 'ai',
 }
 
 /**
@@ -160,6 +162,7 @@ export const menuTitles = (item: EMenuItemKey | ESubMenuItemKey | string) => {
     [ESubMenuItemKey.Widgets]: $t('Widgets'),
     [ESubMenuItemKey.TipSettings]: $t('Tip Settings'),
     [ESubMenuItemKey.Multistream]: $t('Multistream'),
+    [EMenuItemKey.AI]: $t(ESettingsCategory.AI),
   }[item];
 };
 
@@ -190,6 +193,7 @@ export const SideBarBottomNavData = (): IMenu => ({
     SideNavMenuItems()[EMenuItemKey.GetPrime],
     SideNavMenuItems()[EMenuItemKey.Dashboard],
     SideNavMenuItems()[EMenuItemKey.GetHelp],
+    SideNavMenuItems()[EMenuItemKey.AI],
     SideNavMenuItems()[EMenuItemKey.Settings],
     SideNavMenuItems()[EMenuItemKey.Login],
   ],
@@ -303,6 +307,12 @@ export const SideNavMenuItems = (): TMenuItems => ({
   [EMenuItemKey.GetHelp]: {
     key: EMenuItemKey.GetHelp,
     icon: 'icon-question',
+    isActive: true,
+    isExpanded: false,
+  },
+  [EMenuItemKey.AI]: {
+    key: EMenuItemKey.AI,
+    icon: 'fas fa-eye',
     isActive: true,
     isExpanded: false,
   },

@@ -97,7 +97,7 @@ export default function BrowserView(p: BrowserViewProps) {
 
   useEffect(() => {
     loadUrl();
-  }, [theme]);
+  }, [theme, p.src]);
 
   function destroyBrowserView() {
     if (browserView.current) {
