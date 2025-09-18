@@ -594,7 +594,6 @@ export class SourcesService extends StatefulService<ISourcesState> {
       resolvedSettings.version = 3;
     }
 
-
     if (
       type === 'dshow_input' &&
       resolvedSettings.video_device_id === void 0 &&
