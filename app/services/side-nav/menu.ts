@@ -99,7 +99,7 @@ export class SideNavService extends PersistentStatefulService<ISideNavServiceSta
 
   // Since this service persists menu items, for now please change this version
   // when changes are made to navbar
-  version = '1';
+  version = '2';
 
   static defaultState: ISideNavServiceState = {
     version: '0',
