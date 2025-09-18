@@ -8,6 +8,7 @@ import { Services } from '../service-provider';
 import * as remote from '@electron/remote';
 import { TStreamSwitcherStatus } from 'services/restream';
 import { promptAction } from 'components-react/modals';
+import { CloudShiftModal } from 'components-react/shared/CloudShiftModal';
 
 export default function StartStreamingButton(p: { disabled?: boolean }) {
   const {
@@ -40,6 +41,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
 
   const [delaySecondsRemaining, setDelayTick] = useState(delaySeconds);
   const [isLoading, setIsLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     setDelayTick(delaySeconds);
@@ -171,23 +173,9 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         const isLive = await fetchStreamSwitcherStatus();
         setIsLoading(false);
 
-        const message = isDualOutputMode
-          ? $t(
-              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source.',
-            ) + $t('Dual Output will be disabled since not supported in this mode.')
-          : $t(
-              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source.',
-            );
-
         if (isLive) {
-          promptAction({
-            title: $t('Another stream detected'),
-            message,
-            btnText: $t('Switch to Streamlabs Desktop'),
-            fn: startSwitchStream,
-            cancelBtnText: $t('Cancel'),
-            cancelBtnPosition: 'left',
-          });
+          Services.WindowsService.actions.updateStyleBlockers('main', true);
+          setShowModal(true);
           return;
         }
       }
@@ -222,14 +210,6 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     }
   }
 
-  function startSwitchStream() {
-    if (isDualOutputMode) {
-      Services.DualOutputService.actions.toggleDisplay(false, 'vertical');
-    }
-
-    StreamingService.actions.goLive();
-  }
-
   function shouldShowGoLiveWindow() {
     if (!UserService.isLoggedIn) return false;
     const primaryPlatform = UserService.state.auth?.primaryPlatform;
@@ -262,23 +242,26 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
   }
 
   return (
-    <button
-      style={{ minWidth: '130px' }}
-      className={cx('button button--action', { 'button--soft-warning': getIsRedButton })}
-      disabled={isDisabled}
-      onClick={toggleStreaming}
-    >
-      {isLoading ? (
-        <i className="fa fa-spinner fa-pulse" />
-      ) : (
-        <StreamButtonLabel
-          streamingStatus={streamingStatus}
-          delayEnabled={delayEnabled}
-          delaySecondsRemaining={delaySecondsRemaining}
-          streamSwitcherStatus={streamSwitcherStatus}
-        />
-      )}
-    </button>
+    <>
+      <button
+        style={{ minWidth: '130px' }}
+        className={cx('button button--action', { 'button--soft-warning': getIsRedButton })}
+        disabled={isDisabled}
+        onClick={toggleStreaming}
+      >
+        {isLoading ? (
+          <i className="fa fa-spinner fa-pulse" />
+        ) : (
+          <StreamButtonLabel
+            streamingStatus={streamingStatus}
+            delayEnabled={delayEnabled}
+            delaySecondsRemaining={delaySecondsRemaining}
+            streamSwitcherStatus={streamSwitcherStatus}
+          />
+        )}
+      </button>
+      <CloudShiftModal showModal={showModal} handleShowModal={setShowModal} />
+    </>
   );
 }
 
