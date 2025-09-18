@@ -9,6 +9,7 @@ import FormFactory from 'components-react/shared/inputs/FormFactory';
 import { $i } from 'services/utils';
 import InputWrapper from 'components-react/shared/inputs/InputWrapper';
 import { MediaUrlInput, NumberInput } from 'components-react/shared/inputs';
+import Form from 'components-react/shared/inputs/Form';
 
 interface ISponsorBannerState extends IWidgetCommonState {
   data: {
@@ -58,23 +59,26 @@ export function SponsorBanner() {
       <Menu onClick={e => setSelectedTab(e.key)} selectedKeys={[selectedTab]}>
         <Menu.Item key="general">{$t('General Settings')}</Menu.Item>
         {positions.map(number => (
-          <Menu.Item key={number}>{$t('Image set %{number}', { number })}</Menu.Item>
+          <Menu.Item key={number}>{$t('Image Set %{number}', { number })}</Menu.Item>
         ))}
         <Menu.Item key="visual">{$t('Visual Settings')}</Menu.Item>
       </Menu>
-      {!isLoading && selectedTab === 'general' && (
-        <FormFactory metadata={generalMeta} values={formSettings} onChange={updateSetting} />
-      )}
-      {!isLoading && ['1', '2'].includes(selectedTab) && (
-        <ImageSection
-          placement={selectedTab as '1' | '2'}
-          values={settings}
-          updateSetting={updateSetting}
-        />
-      )}
-      {!isLoading && selectedTab === 'visual' && (
-        <FormFactory metadata={visualMeta} values={formSettings} onChange={updateSetting} />
-      )}
+      <Form>
+        {!isLoading && selectedTab === 'general' && (
+          <FormFactory metadata={generalMeta} values={formSettings} onChange={updateSetting} />
+        )}
+        {!isLoading && ['1', '2'].includes(selectedTab) && (
+          <ImageSection
+            key={selectedTab}
+            placement={selectedTab as '1' | '2'}
+            values={settings}
+            updateSetting={updateSetting}
+          />
+        )}
+        {!isLoading && selectedTab === 'visual' && (
+          <FormFactory metadata={visualMeta} values={formSettings} onChange={updateSetting} />
+        )}
+      </Form>
     </WidgetLayout>
   );
 }
@@ -112,20 +116,20 @@ function ImageSection(p: {
   }
 
   return (
-    <InputWrapper label={$t('Placement %{number} Images', { number: p.placement })}>
+    <>
       {images.map(image => (
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative' }} key={image.href}>
           <MediaUrlInput
-            key={image.href}
             value={image.href}
             onChange={val => handleImageChange('href', val, image.href)}
+            nowrap
           />
           <Button
             style={{
               position: 'absolute',
               color: 'var(--warning)',
               top: '2px',
-              right: '2px',
+              left: '300px',
               fontSize: '13px',
             }}
             onClick={() => removeImage(image.href)}
@@ -142,7 +146,7 @@ function ImageSection(p: {
       <Button className="button button--default" onClick={addImage}>
         {$t('Add Image')}
       </Button>
-    </InputWrapper>
+    </>
   );
 }
 
@@ -174,11 +178,13 @@ export class SponsorBannerModule extends WidgetModule<ISponsorBannerState> {
     return {
       hide_duration_in_seconds: {
         type: 'time',
+        isTimer: true,
         label: $t('Widget Hide Duration'),
         tooltip: $t('Set to zero to show the widget permanently.'),
       },
       show_duration_in_seconds: {
         type: 'time',
+        isTimer: true,
         label: $t('Widget Show Duration'),
         tooltip: $t('The amount of time the widget will appear.'),
       },
@@ -222,41 +228,46 @@ export class SponsorBannerModule extends WidgetModule<ISponsorBannerState> {
   }
 
   protected patchAfterFetch(data: any): ISponsorBannerState {
-    data.settings.hide_duration_in_seconds =
-      data.settings.hide_duration_secs + data.settings.hide_duration * 60;
-    data.settings.show_duration_in_seconds =
-      data.settings.show_duration_secs + data.settings.show_duration * 60;
-
-    // make data structure interable and type-predictable
-    data.settings.placement_1_images = data.settings.image_1_href.map((href: string, i: number) => {
-      const subbedHref =
-        href === '/imgs/streamlabs.png'
-          ? 'https://cdn.streamlabs.com/static/imgs/logos/logo.png'
-          : href;
-      return { href: subbedHref, duration: data.settings.placement1_durations[i] };
-    });
-    data.settings.placement_2_images = data.settings.image_2_href.map((href: string, i: number) => {
-      const subbedHref =
-        href === '/imgs/streamlabs.png'
-          ? 'https://cdn.streamlabs.com/static/imgs/logos/logo.png'
-          : href;
-      return { href: subbedHref, duration: data.settings.placement2_durations[i] };
-    });
-    return data;
+    return {
+      ...data,
+      settings: {
+        ...data.settings,
+        hide_duration_in_seconds:
+          data.settings.hide_duration_secs + data.settings.hide_duration * 60,
+        show_duration_in_seconds:
+          data.settings.show_duration_secs + data.settings.show_duration * 60,
+        // make data structure interable and type-predictable
+        placement_1_images: data.settings.image_1_href.map((href: string, i: number) => {
+          const subbedHref =
+            href === '/imgs/streamlabs.png'
+              ? 'https://cdn.streamlabs.com/static/imgs/logos/logo.png'
+              : href;
+          return { href: subbedHref, duration: data.settings.placement1_durations[i] };
+        }),
+        placement_2_images: data.settings.image_2_href.map((href: string, i: number) => {
+          const subbedHref =
+            href === '/imgs/streamlabs.png'
+              ? 'https://cdn.streamlabs.com/static/imgs/logos/logo.png'
+              : href;
+          return { href: subbedHref, duration: data.settings.placement2_durations[i] };
+        }),
+      },
+    };
   }
 
   protected patchBeforeSend(settings: ISponsorBannerState['data']['settings']): any {
-    settings.hide_duration = Math.round(settings.hide_duration_in_seconds / 60);
-    settings.hide_duration_secs = settings.hide_duration_in_seconds % 60;
-    settings.show_duration = Math.round(settings.show_duration_in_seconds / 60);
-    settings.show_duration_secs = settings.show_duration_in_seconds % 60;
+    return {
+      ...settings,
+      hide_duration: Math.round(settings.hide_duration_in_seconds / 60),
+      hide_duration_secs: settings.hide_duration_in_seconds % 60,
+      show_duration: Math.round(settings.show_duration_in_seconds / 60),
+      show_duration_secs: settings.show_duration_in_seconds % 60,
 
-    settings.image_1_href = settings.placement_1_images.map(image => image.href);
-    settings.placement1_durations = settings.placement_1_images.map(image => image.duration);
-    settings.image_2_href = settings.placement_2_images.map(image => image.href);
-    settings.placement2_durations = settings.placement_2_images.map(image => image.duration);
-
-    return settings;
+      image_1_href: settings.placement_1_images.map(image => image.href),
+      placement1_durations: settings.placement_1_images.map(image => image.duration),
+      image_2_href: settings.placement_2_images.map(image => image.href),
+      placement2_durations: settings.placement_2_images.map(image => image.duration),
+    };
   }
 }
 

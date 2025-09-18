@@ -282,8 +282,8 @@ export function getWidgetsConfig(
       },
 
       settingsWindowSize: {
-        width: 600,
-        height: 900,
+        width: 850,
+        height: 700,
       },
 
       url: `https://${host}/widgets/sponsor-banner?token=${token}`,
