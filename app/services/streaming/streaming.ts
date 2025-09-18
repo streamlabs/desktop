@@ -55,7 +55,7 @@ import {
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
 import { StreamSettingsService } from '../settings/streaming';
-import { RestreamService, TOutputOrientation } from 'services/restream';
+import { ICloudShiftTarget, RestreamService, TOutputOrientation } from 'services/restream';
 import Utils from 'services/utils';
 import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
@@ -129,7 +129,7 @@ export class StreamingService
   signalInfoChanged = new Subject<IOBSOutputSignalInfo>();
   latestRecordingPath = new Subject<string>();
   streamErrorCreated = new Subject<string>();
-  streamSwitchEvent = new Subject<TSocketEvent>();
+  cloudShiftEvent = new Subject<TSocketEvent>();
 
   // Dummy subscription for stream deck
   streamingStateChange = new Subject<void>();
@@ -314,10 +314,9 @@ export class StreamingService
 
     // use default settings if no new settings provided
     const settings = newSettings || cloneDeep(this.views.savedSettings);
-
-    // For the Stream Switcher, match remote targets to local targets
-    if (settings.streamSwitch && this.restreamService.views.hasStreamSwitcherTargets) {
-      const targets = this.restreamService.views.streamSwitcherTargets.map(t => t.platform);
+    // For the Cloud Shift, match remote targets to local targets
+    if (settings.cloudShift && this.restreamService.views.hasCloudShiftTargets) {
+      const targets = this.restreamService.views.cloudShiftTargets.map(t => t.platform);
 
       this.views.linkedPlatforms.forEach(p => {
         // Enable platform for go live checks, except for YouTube because running YouTube's
@@ -686,10 +685,10 @@ export class StreamingService
       this.usageStatisticsService.recordFeatureUsage('StreamToYouTubeBothOutputs');
     }
 
-    // Record Stream Switcher
-    if (settings.streamSwitch) {
-      this.usageStatisticsService.recordFeatureUsage('StreamSwitcher');
-      this.usageStatisticsService.recordAnalyticsEvent('StreamSwitcherAction', {
+    // Record Cloud Shift
+    if (settings.cloudShift) {
+      this.usageStatisticsService.recordFeatureUsage('CloudShift');
+      this.usageStatisticsService.recordAnalyticsEvent('CloudShiftAction', {
         stream: 'enabled',
       });
     }
@@ -1136,7 +1135,7 @@ export class StreamingService
         const service = getPlatformService(platform);
         if (service.afterStopStream) service.afterStopStream();
       });
-      this.restreamService.resetStreamSwitcher();
+      this.restreamService.resetCloudShift();
       this.UPDATE_STREAM_INFO({ lifecycle: 'empty' });
       return Promise.resolve();
     }
@@ -1415,8 +1414,8 @@ export class StreamingService
           status: EStreamingState.Offline,
         });
 
-        // Record stopping a Stream Switch stream
-        this.usageStatisticsService.recordAnalyticsEvent('StreamSwitcherAction', {
+        // Record stopping a Cloud Shift stream
+        this.usageStatisticsService.recordAnalyticsEvent('CloudShiftAction', {
           stream: 'ended',
         });
       } else if (info.signal === EOBSOutputSignal.Stopping) {

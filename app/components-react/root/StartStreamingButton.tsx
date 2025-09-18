@@ -6,7 +6,7 @@ import { $t } from 'services/i18n';
 import { useVuex } from '../hooks';
 import { Services } from '../service-provider';
 import * as remote from '@electron/remote';
-import { TStreamSwitcherStatus } from 'services/restream';
+import { TCloudShiftStatus } from 'services/restream';
 import { promptAction } from 'components-react/modals';
 import { CloudShiftModal } from 'components-react/shared/CloudShiftModal';
 
@@ -25,7 +25,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     streamingStatus,
     delayEnabled,
     delaySeconds,
-    streamSwitcherStatus,
+    cloudShiftStatus,
     isDualOutputMode,
     isLoggedIn,
     isPrime,
@@ -33,7 +33,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     streamingStatus: StreamingService.state.streamingStatus,
     delayEnabled: StreamingService.views.delayEnabled,
     delaySeconds: StreamingService.views.delaySeconds,
-    streamSwitcherStatus: RestreamService.state.streamSwitcherStatus,
+    cloudShiftStatus: RestreamService.state.cloudShiftStatus,
     isDualOutputMode: StreamingService.views.isDualOutputMode,
     isLoggedIn: UserService.isLoggedIn,
     isPrime: UserService.state.isPrime,
@@ -64,16 +64,16 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
 
   useEffect(() => {
     if (!isDualOutputMode && isPrime) {
-      fetchStreamSwitcherStatus();
+      fetchCloudShiftStatus();
     }
 
-    const switchStreamEvent = StreamingService.streamSwitchEvent.subscribe(event => {
-      const streamSwitcherStreamId = RestreamService.state.streamSwitcherStreamId;
+    const cloudShiftEvent = StreamingService.cloudShiftEvent.subscribe(event => {
+      const cloudShiftStreamId = RestreamService.state.cloudShiftStreamId;
 
-      const isMobileRemote = streamSwitcherStreamId && /[A-Z]/.test(streamSwitcherStreamId);
+      const isMobileRemote = cloudShiftStreamId && /[A-Z]/.test(cloudShiftStreamId);
       console.debug(
         'Desktop stream id: ' +
-          streamSwitcherStreamId +
+          cloudShiftStreamId +
           '\nEvent:' +
           JSON.stringify(event) +
           '\nSource: ' +
@@ -81,15 +81,15 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       );
 
       if (event.type === 'streamSwitchRequest') {
-        if (event.data.identifier === streamSwitcherStreamId) {
-          RestreamService.confirmStreamSwitch('approved');
+        if (event.data.identifier === cloudShiftStreamId) {
+          RestreamService.confirmCloudShift('approved');
         }
       }
 
       if (event.type === 'switchActionComplete') {
         const remoteStreamId = event.data.identifier;
 
-        if (remoteStreamId !== streamSwitcherStreamId) {
+        if (remoteStreamId !== cloudShiftStreamId) {
           promptAction({
             title: $t('Stream successfully switched'),
             message: $t(
@@ -102,7 +102,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
           });
         }
 
-        if (remoteStreamId === streamSwitcherStreamId) {
+        if (remoteStreamId === cloudShiftStreamId) {
           promptAction({
             title: $t('Stream successfully switched'),
             message: $t(
@@ -117,7 +117,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     });
 
     return () => {
-      switchStreamEvent.unsubscribe();
+      cloudShiftEvent.unsubscribe();
     };
   }, []);
 
@@ -167,10 +167,10 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         if (!goLive) return;
       }
 
-      // Only check for Stream Switch for ultra users
+      // Only check for Cloud Shift for ultra users
       if (isLoggedIn && isPrime) {
         setIsLoading(true);
-        const isLive = await fetchStreamSwitcherStatus();
+        const isLive = await fetchCloudShiftStatus();
         setIsLoading(false);
 
         if (isLive) {
@@ -192,14 +192,14 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
   }
 
   const getIsRedButton =
-    streamingStatus !== EStreamingState.Offline && streamSwitcherStatus !== 'pending';
+    streamingStatus !== EStreamingState.Offline && cloudShiftStatus !== 'pending';
 
   const isDisabled =
     p.disabled ||
     (streamingStatus === EStreamingState.Starting && delaySecondsRemaining === 0) ||
     (streamingStatus === EStreamingState.Ending && delaySecondsRemaining === 0);
 
-  async function fetchStreamSwitcherStatus() {
+  async function fetchCloudShiftStatus() {
     try {
       const isLive = await RestreamService.checkIsLive();
       return isLive;
@@ -256,7 +256,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
             streamingStatus={streamingStatus}
             delayEnabled={delayEnabled}
             delaySecondsRemaining={delaySecondsRemaining}
-            streamSwitcherStatus={streamSwitcherStatus}
+            cloudShiftStatus={cloudShiftStatus}
           />
         )}
       </button>
@@ -269,12 +269,12 @@ const StreamButtonLabel = forwardRef<
   HTMLSpanElement,
   {
     streamingStatus: EStreamingState;
-    streamSwitcherStatus: TStreamSwitcherStatus;
+    cloudShiftStatus: TCloudShiftStatus;
     delaySecondsRemaining: number;
     delayEnabled: boolean;
   }
 >((p, ref) => {
-  if (p.streamSwitcherStatus === 'pending') {
+  if (p.cloudShiftStatus === 'pending') {
     return <span ref={ref}>{$t('Claim Stream')}</span>;
   }
 

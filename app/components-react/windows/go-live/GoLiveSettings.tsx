@@ -17,7 +17,7 @@ import DualOutputToggle from 'components-react/shared/DualOutputToggle';
 import { DestinationSwitchers } from './DestinationSwitchers';
 import AddDestinationButton from 'components-react/shared/AddDestinationButton';
 import cx from 'classnames';
-import StreamSwitcherToggle from 'components-react/shared/StreamSwitcherToggle';
+import CloudShiftToggle from 'components-react/shared/CloudShiftToggle';
 import { CaretDownOutlined } from '@ant-design/icons';
 import Tooltip from 'components-react/shared/Tooltip';
 
@@ -43,8 +43,8 @@ export default function GoLiveSettings() {
     primaryChat,
     recommendedColorSpaceWarnings,
     isPrime,
-    isStreamSwitchMode,
-    isStreamSwitchDisabled,
+    isCloudShiftMode,
+    isCloudShiftDisabled,
     isDualOutputSwitchDisabled,
     setPrimaryChat,
   } = useGoLiveSettings().extend(module => {
@@ -65,9 +65,9 @@ export default function GoLiveSettings() {
 
       showTweet: UserService.views.auth?.primaryPlatform !== 'twitter',
 
-      isStreamSwitchDisabled: module.isDualOutputMode,
+      isCloudShiftDisabled: module.isDualOutputMode,
 
-      isDualOutputSwitchDisabled: module.isStreamSwitchMode && !module.isDualOutputMode,
+      isDualOutputSwitchDisabled: module.isCloudShiftMode && !module.isDualOutputMode,
 
       addDestination() {
         SettingsService.actions.showSettings('Stream');
@@ -135,7 +135,7 @@ export default function GoLiveSettings() {
 
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
               <Tooltip
-                title={$t('Dual Output cannot be used with Stream Switcher')}
+                title={$t('Dual Output cannot be used with Cloud Shift')}
                 placement="top"
                 lightShadow={true}
                 disabled={isDualOutputSwitchDisabled || !isPrime}
@@ -144,8 +144,8 @@ export default function GoLiveSettings() {
                   className={styles.featureToggle}
                   checkboxClassname={styles.featureCheckbox}
                   style={{ paddingBottom: '10px' }}
-                  disabled={isStreamSwitchMode}
-                  tooltipDisabled={isStreamSwitchMode}
+                  disabled={isCloudShiftMode}
+                  tooltipDisabled={isCloudShiftMode}
                   label={$t('Dual Output')}
                   type="single"
                   lightShadow
@@ -154,17 +154,17 @@ export default function GoLiveSettings() {
               <Tooltip
                 title={
                   isPrime
-                    ? $t('Stream Switcher cannot be used with Dual Output')
+                    ? $t('Cloud Shift cannot be used with Dual Output')
                     : $t('Upgrade to Ultra to switch streams between devices.')
                 }
                 placement="top"
                 lightShadow={true}
-                disabled={isPrime && !isStreamSwitchDisabled}
+                disabled={isPrime && !isCloudShiftDisabled}
               >
-                <StreamSwitcherToggle
+                <CloudShiftToggle
                   className={styles.featureToggle}
                   checkboxClassname={styles.featureCheckbox}
-                  disabled={isStreamSwitchDisabled || !isPrime}
+                  disabled={isCloudShiftDisabled || !isPrime}
                 />
               </Tooltip>
             </div>

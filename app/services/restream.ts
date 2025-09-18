@@ -31,13 +31,13 @@ interface IRestreamTarget {
   streamKey: string;
   mode?: TOutputOrientation;
 }
-interface IStreamSwitcherTarget {
+export interface ICloudShiftTarget {
   platform: TPlatform | 'relay';
   key?: string;
 }
 
-export type TStreamSwitcherStatus = 'pending' | 'inactive';
-export type TStreamSwitcherAction = 'approved' | 'rejected';
+export type TCloudShiftStatus = 'pending' | 'inactive';
+export type TCloudShiftAction = 'approved' | 'rejected';
 
 interface IRestreamState {
   /**
@@ -61,18 +61,18 @@ interface IRestreamState {
   /**
    * Stream switcher stream id
    */
-  streamSwitcherStreamId?: string;
+  cloudShiftStreamId?: string;
 
   /**
    * Stream switcher status
    */
-  streamSwitcherStatus: TStreamSwitcherStatus;
+  cloudShiftStatus: TCloudShiftStatus;
 
   /**
    * If the user is live using the stream switcher, save the stream data here so that the
    * stream can be started correctly.
    */
-  streamSwitcherTargets: IStreamSwitcherTarget[];
+  cloudShiftTargets: ICloudShiftTarget[];
 }
 
 interface IUserSettingsResponse extends IRestreamState {
@@ -103,9 +103,9 @@ export class RestreamService extends StatefulService<IRestreamState> {
     enabled: true,
     grandfathered: false,
     tiktokGrandfathered: false,
-    streamSwitcherStreamId: undefined,
-    streamSwitcherStatus: 'inactive',
-    streamSwitcherTargets: [],
+    cloudShiftStreamId: undefined,
+    cloudShiftStatus: 'inactive',
+    cloudShiftTargets: [],
   };
 
   get streamInfo() {
@@ -134,12 +134,12 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return this.state.tiktokGrandfathered;
   }
 
-  get streamSwitcherStatus() {
-    return this.state.streamSwitcherStatus;
+  get cloudShiftStatus() {
+    return this.state.cloudShiftStatus;
   }
 
-  get streamSwitcherTargets() {
-    return this.state.streamSwitcherTargets;
+  get cloudShiftTargets() {
+    return this.state.cloudShiftTargets;
   }
 
   @mutation()
@@ -159,17 +159,17 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   @mutation()
   private SET_STREAM_SWITCHER_STREAM_ID(id?: string) {
-    this.state.streamSwitcherStreamId = id ?? null;
+    this.state.cloudShiftStreamId = id ?? null;
   }
 
   @mutation()
-  private SET_STREAM_SWITCHER_STATUS(status: TStreamSwitcherStatus) {
-    this.state.streamSwitcherStatus = status;
+  private SET_STREAM_SWITCHER_STATUS(status: TCloudShiftStatus) {
+    this.state.cloudShiftStatus = status;
   }
 
   @mutation()
-  private SET_STREAM_SWITCHER_TARGETS(targets: IStreamSwitcherTarget[]) {
-    this.state.streamSwitcherTargets = targets;
+  private SET_STREAM_SWITCHER_TARGETS(targets: ICloudShiftTarget[]) {
+    this.state.cloudShiftTargets = targets;
   }
 
   init() {
@@ -288,14 +288,13 @@ export class RestreamService extends StatefulService<IRestreamState> {
     );
     const url = `https://${this.host}/api/v1/rst/user/settings`;
 
-    const enableStreamSwitch =
-      this.streamInfo.isStreamSwitchMode && !this.streamInfo.isDualOutputMode;
+    const enableCloudShift = this.streamInfo.isCloudShiftMode && !this.streamInfo.isDualOutputMode;
 
     const body = JSON.stringify({
       enabled,
       dcProtection: false,
       idleTimeout: 30,
-      streamSwitch: enableStreamSwitch,
+      cloudShift: enableCloudShift,
     });
 
     const request = new Request(url, { headers, body, method: 'PUT' });
@@ -308,7 +307,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
       throwStreamError('RESTREAM_SETUP_FAILED');
     }
 
-    if (this.streamInfo.isStreamSwitchMode) {
+    if (this.streamInfo.isCloudShiftMode) {
       await Promise.all([this.setupIngest()]);
     } else {
       await Promise.all([this.setupIngest(), this.setupTargets()]);
@@ -327,7 +326,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
   async setupIngest() {
     const ingest = (await this.fetchIngest()).server;
 
-    if (this.streamInfo.isStreamSwitchMode) {
+    if (this.streamInfo.isCloudShiftMode) {
       // in single output mode, we just set the ingest for the default display
       this.streamSettingsService.setSettings({
         streamType: 'rtmp_custom',
@@ -481,12 +480,13 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   async checkIsLive(): Promise<boolean> {
     const status = await this.getIsLive();
+    console.log('status', status);
 
     if (status.isLive) {
-      this.streamSettingsService.setGoLiveSettings({ streamSwitch: true });
+      this.streamSettingsService.setGoLiveSettings({ cloudShift: true });
       this.SET_STREAM_SWITCHER_STATUS('pending');
       this.SET_STREAM_SWITCHER_TARGETS(status.targets);
-    } else if (this.state.streamSwitcherStatus === 'pending') {
+    } else if (this.state.cloudShiftStatus === 'pending') {
       this.SET_STREAM_SWITCHER_STATUS('inactive');
       this.SET_STREAM_SWITCHER_TARGETS([]);
     }
@@ -502,7 +502,11 @@ export class RestreamService extends StatefulService<IRestreamState> {
     const url = `https://${this.host}/api/v1/rst/user/is-live`;
     const request = new Request(url, { headers });
 
-    return jfetch<{ isLive: boolean; targets: IStreamSwitcherTarget[] }>(request);
+    return jfetch<{ isLive: boolean; targets: ICloudShiftTarget[] }>(request);
+  }
+
+  setCloudShiftStatus(status: TCloudShiftStatus) {
+    this.SET_STREAM_SWITCHER_STATUS(status);
   }
 
   /**
@@ -571,20 +575,20 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   /**
-   * Stream Switcher
+   * Cloud Shift
    */
 
   setSwitchStreamId(id?: string) {
     this.SET_STREAM_SWITCHER_STREAM_ID(id);
   }
 
-  resetStreamSwitcher() {
+  resetCloudShift() {
     this.SET_STREAM_SWITCHER_STATUS('inactive');
     this.SET_STREAM_SWITCHER_STREAM_ID();
     this.SET_STREAM_SWITCHER_TARGETS([]);
   }
 
-  async confirmStreamSwitch(action: TStreamSwitcherAction) {
+  async confirmCloudShift(action: TCloudShiftAction) {
     if (action === 'rejected') {
       this.SET_STREAM_SWITCHER_STATUS('pending');
     } else {
@@ -593,18 +597,18 @@ export class RestreamService extends StatefulService<IRestreamState> {
       }
 
       this.SET_STREAM_SWITCHER_STATUS('inactive');
-      this.updateStreamSwitcher('approved');
+      this.updateCloudShift('approved');
     }
   }
 
-  async updateStreamSwitcher(action: TStreamSwitcherAction) {
+  async updateCloudShift(action: TCloudShiftAction) {
     const headers = authorizedHeaders(
       this.userService.apiToken,
       new Headers({ 'Content-Type': 'application/json' }),
     );
     const url = `https://${this.host}/api/v1/rst/switch/action`;
     const body = JSON.stringify({
-      identifier: this.state.streamSwitcherStreamId,
+      identifier: this.state.cloudShiftStreamId,
       action,
     });
     const request = new Request(url, { headers, body, method: 'POST' });
@@ -737,15 +741,15 @@ class RestreamView extends ViewHandler<IRestreamState> {
     return userView.isPrime || (userView.auth && this.isGrandfathered);
   }
 
-  get streamSwitcherStatus() {
-    return this.state.streamSwitcherStatus;
+  get cloudShiftStatus() {
+    return this.state.cloudShiftStatus;
   }
 
-  get streamSwitcherTargets() {
-    return this.state.streamSwitcherTargets;
+  get cloudShiftTargets() {
+    return this.state.cloudShiftTargets;
   }
 
-  get hasStreamSwitcherTargets() {
-    return this.state.streamSwitcherTargets.length > 0;
+  get hasCloudShiftTargets() {
+    return this.state.cloudShiftTargets.length > 0;
   }
 }

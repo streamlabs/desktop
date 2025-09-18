@@ -8,7 +8,7 @@ import {
 } from './streaming-api';
 import { StreamSettingsService, ICustomStreamDestination } from '../settings/streaming';
 import { UserService } from '../user';
-import { RestreamService, TStreamSwitcherStatus } from '../restream';
+import { RestreamService, TCloudShiftStatus } from '../restream';
 import { DualOutputService, TDisplayPlatforms, TDisplayDestinations } from '../dual-output';
 import {
   getPlatformService,
@@ -186,7 +186,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns if the user can or should use the restream service
    */
   get isMultiplatformMode(): boolean {
-    if (this.isStreamSwitchMode) return true;
+    if (this.isCloudShiftMode) return true;
     if (this.isDualOutputMode) return false;
     return this.hasMultipleTargetsEnabled;
   }
@@ -204,12 +204,12 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * @remark If a user has switch stream enabled, restream even if only one platform is enabled as the only target.
    * Currently, switch stream cannot be used with only custom destinations. One platform must be enabled.
    */
-  get isStreamSwitchMode(): boolean {
-    return (this.settings.streamSwitch && this.enabledPlatforms.length > 0) || false;
+  get isCloudShiftMode(): boolean {
+    return (this.settings.cloudShift && this.enabledPlatforms.length > 0) || false;
   }
 
-  get streamSwitcherStatus(): TStreamSwitcherStatus {
-    return this.restreamView.streamSwitcherStatus ?? 'inactive';
+  get cloudShiftStatus(): TCloudShiftStatus {
+    return this.restreamView.cloudShiftStatus ?? 'inactive';
   }
 
   /**
@@ -217,7 +217,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    */
   get shouldSetupRestream(): boolean {
     // The stream switcher uses the restream service
-    if (this.isStreamSwitchMode) return true;
+    if (this.isCloudShiftMode) return true;
 
     // In dual output mode, if a display has more than one target that display uses the restream service
     const restreamDualOutputMode =
@@ -462,7 +462,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       optimizedProfile: undefined,
       customDestinations: savedGoLiveSettings?.customDestinations || [],
       recording: this.dualOutputView.recording || [],
-      streamSwitch: savedGoLiveSettings?.streamSwitch || false,
+      cloudShift: savedGoLiveSettings?.cloudShift || false,
     };
   }
 
@@ -471,7 +471,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get canShowAdvancedMode() {
-    if (this.isStreamSwitchMode) {
+    if (this.isCloudShiftMode) {
       return this.enabledPlatforms.length > 1;
     }
     return this.isMultiplatformMode || this.isDualOutputMode;
