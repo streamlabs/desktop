@@ -837,7 +837,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       cc_expires_in_days?: number;
     }>(request)
       .then(response => this.validatePrimeStatus(response))
-      .catch((e: unknown) => null);
+      .catch((e: unknown): null => null);
   }
 
   validatePrimeStatus(response: {
@@ -906,6 +906,14 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     }
 
     return userId;
+  }
+
+  // Grabs the first digit of their install ID and determines if it's odd or even
+  // Technically not an exact 50% chance but over a large scale of users
+  // should be close enough to 50% for the purposes of testing features
+  get isAlphaGroup() {
+    const localId = this.getLocalUserId();
+    return Number(localId.search(/\d/)) % 2 === 0;
   }
 
   get apiToken() {

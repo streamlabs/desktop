@@ -8,6 +8,7 @@ import {
   TPlatformCapability,
   TStartStreamOptions,
   EPlatformCallResult,
+  TLiveDockFeature,
 } from '.';
 import { BasePlatformService } from './base-platform';
 import { IGoLiveSettings } from 'services/streaming';
@@ -40,6 +41,7 @@ export class InstagramService
   readonly platform = 'instagram';
   readonly displayName = 'Instagram';
   readonly capabilities = new Set<TPlatformCapability>(['resolutionPreset', 'title']);
+  readonly liveDockFeatures = new Set<TLiveDockFeature>();
 
   static initialState: IInstagramServiceState = {
     ...BasePlatformService.initialState,

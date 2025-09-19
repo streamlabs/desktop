@@ -29,7 +29,7 @@ class VuexModule {
     // watch for mutations from the global Vuex store
     // and increment the revision number for affected StatefulService
     StatefulService.store.subscribe(mutation => {
-      if (!mutation.payload.__vuexSyncIgnore) return;
+      if (mutation.payload && !mutation.payload.__vuexSyncIgnore) return;
       const serviceName = mutation.type.split('.')[0];
       const module = this.resolveState(serviceName);
       module.incrementRevision();

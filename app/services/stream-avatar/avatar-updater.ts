@@ -191,7 +191,7 @@ export class AvatarUpdater {
     if (AvatarUpdater.getEnvironment() === 'staging') {
       return `https://cdn-avatar-builds.streamlabs.com/staging/manifest.json?t=${cacheBuster}`;
     } else {
-      return 'https://cdn-avatar-builds.streamlabs.com/production/manifest.json';
+      return `https://cdn-avatar-builds.streamlabs.com/production/manifest.json?t=${cacheBuster}`;
     }
   }
 

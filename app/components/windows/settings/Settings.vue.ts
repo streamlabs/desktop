@@ -6,7 +6,7 @@ import NavMenu from 'components/shared/NavMenu.vue';
 import NavItem from 'components/shared/NavItem.vue';
 import GenericFormGroups from 'components/obs/inputs/GenericFormGroups.vue';
 import { WindowsService } from 'services/windows';
-import { ISettingsSubCategory, SettingsService } from 'services/settings/index';
+import { ESettingsCategory, ISettingsSubCategory, SettingsService } from 'services/settings/index';
 import DeveloperSettings from './DeveloperSettings';
 import OverlaySettings from './OverlaySettings';
 import NotificationsSettings from './NotificationsSettings.vue';
@@ -80,10 +80,11 @@ export default class Settings extends Vue {
     Notifications: 'icon-notifications',
     Appearance: 'icon-settings-3-1',
     'Face Masks': 'icon-face-masks-3',
-    'Remote Control': 'fas fa-play-circle',
+    Mobile: 'icon-phone-case',
     Experimental: 'fas fa-flask',
     'Installed Apps': 'icon-store',
     'Get Support': 'icon-question',
+    [ESettingsCategory.AI]: 'fas fa-eye',
   };
   // for additional dismissables, add below using the category/title as the key
   dismissables: { [key: string]: EDismissable } = {
@@ -148,10 +149,11 @@ export default class Settings extends Vue {
       // 'SceneCollections',
       // 'Notifications',
       'Appearance',
-      'Remote Control',
+      'Mobile',
       'Virtual Webcam',
       'Game Overlay',
       'Get Support',
+      ESettingsCategory.AI,
       'Ultra',
     ];
     if (Utils.isDevMode()) pages.push('Experimental');
@@ -171,7 +173,7 @@ export default class Settings extends Vue {
       'Notifications',
       'Appearance',
       'Experimental',
-      'Remote Control',
+      'Mobile',
       'Installed Apps',
       'Virtual Webcam',
       'Developer',
