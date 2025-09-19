@@ -331,7 +331,7 @@ interface IRealmOptions {
 
 // WARNING: When you increment this number, you are responsible for
 // implementing a migration that handles the data change!
-const REALM_SCHEMA_VERSION = 2;
+const REALM_SCHEMA_VERSION = 3;
 
 export class RealmService extends Service {
   persistentDb: Realm;
