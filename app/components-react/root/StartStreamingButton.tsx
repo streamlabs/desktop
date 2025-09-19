@@ -94,7 +94,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
               'Your stream has been switched to Streamlabs Mobile. Ending the stream on Streamlabs Desktop.',
             ),
             btnText: $t('Close'),
-            fn: Services.RestreamService.actions.endCurrentStream,
+            fn: Services.RestreamService.actions.endCloudShiftStream,
             btnType: 'default',
             cancelBtnPosition: 'none',
           });

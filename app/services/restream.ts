@@ -617,7 +617,14 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return res.json();
   }
 
-  async endCurrentStream(): Promise<void> {
+  /**
+   * End Cloud Shift Stream
+   * @remark This ends the stream on the current device because the stream has been
+   * swapped to another device.
+   * Note: The AI highlighter will automatically save the recording on the current device
+   * when the stream ends.
+   */
+  async endCloudShiftStream(): Promise<void> {
     try {
       await this.streamingService.toggleStreaming();
     } catch (error: unknown) {
