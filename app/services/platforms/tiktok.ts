@@ -198,6 +198,12 @@ export class TikTokService
     return this.state.audienceControlsInfo;
   }
 
+  async setupCloudShiftStream(goLiveSettings: IGoLiveSettings) {
+    await this.validatePlatform();
+
+    this.setPlatformContext('tiktok');
+  }
+
   async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     // return an approved dummy account when testing
     if (Utils.isTestMode() && this.getHasScope('approved')) {
@@ -206,6 +212,11 @@ export class TikTokService
     }
 
     const ttSettings = getDefined(goLiveSettings.platforms.tiktok);
+
+    if (goLiveSettings.cloudShift) {
+      this.setupCloudShiftStream(goLiveSettings);
+      return;
+    }
 
     if (this.getHasScope('approved')) {
       // update server url and stream key if handling streaming via API

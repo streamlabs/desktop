@@ -133,8 +133,28 @@ export class KickService
     return this.userService.views.state.auth?.platforms?.kick?.token;
   }
 
+  async setupCloudShiftStream(options: IGoLiveSettings): Promise<void> {
+    const response = await this.fetchStreamInfo();
+    const info = response as IKickStreamInfoResponse;
+
+    if (info.channel) {
+      this.UPDATE_STREAM_SETTINGS({
+        title: info.channel.title,
+        game: info.channel.category.id.toString(),
+      });
+      this.SET_GAME_NAME(info.channel.category.name);
+    }
+
+    this.setPlatformContext('kick');
+  }
+
   async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     const kickSettings = getDefined(goLiveSettings.platforms.kick);
+
+    if (goLiveSettings.cloudShift) {
+      await this.setupCloudShiftStream(goLiveSettings);
+      return;
+    }
 
     const streamInfo = await this.startStream(goLiveSettings.platforms.kick ?? this.state.settings);
 

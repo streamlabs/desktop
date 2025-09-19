@@ -480,7 +480,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   async checkIsLive(): Promise<boolean> {
     const status = await this.getIsLive();
-    console.log('status', status);
 
     if (status.isLive) {
       this.streamSettingsService.setGoLiveSettings({ cloudShift: true });

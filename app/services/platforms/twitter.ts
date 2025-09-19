@@ -80,6 +80,11 @@ export class TwitterPlatformService
       return;
     }
 
+    if (goLiveSettings.cloudShift) {
+      this.setPlatformContext('twitter');
+      return;
+    }
+
     try {
       const streamInfo = await this.startStream(
         goLiveSettings.platforms.twitter ?? this.state.settings,

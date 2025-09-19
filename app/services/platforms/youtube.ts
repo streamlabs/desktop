@@ -22,7 +22,7 @@ import { lazyModule } from 'util/lazy-module';
 import * as remote from '@electron/remote';
 import { IVideo } from 'obs-studio-node';
 import pick from 'lodash/pick';
-import { RestreamService, TOutputOrientation } from 'services/restream';
+import { TOutputOrientation } from 'services/restream';
 import { UsageStatisticsService } from 'app-services';
 import cloneDeep from 'lodash/cloneDeep';
 import { ICustomStreamDestination } from 'services/settings/streaming';
@@ -181,7 +181,6 @@ export class YoutubeService
   implements IPlatformService {
   @Inject() private customizationService: CustomizationService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
-  @Inject() private restreamService: RestreamService;
   @Inject() private i18nService: I18nService;
 
   @lazyModule(YoutubeUploader) uploader: YoutubeUploader;
@@ -302,9 +301,9 @@ export class YoutubeService
     this.state.liveStreamingEnabled = enabled;
   }
 
-  async setupSwitchedStream(goLiveSettings: IGoLiveSettings) {
+  async setupCloudShiftStream(goLiveSettings: IGoLiveSettings) {
     try {
-      const broadcasts = await this.fetchEligibleBroadcasts();
+      const broadcasts = await this.fetchBroadcasts();
 
       if (!broadcasts) return;
 
@@ -315,15 +314,28 @@ export class YoutubeService
         return;
       }
 
-      const broadcast = await this.fetchBroadcast(liveBroadcasts[0].id);
+      const broadcast = (await this.fetchLiveBroadcasts())?.[0];
+      if (!broadcast) {
+        console.error('No active YouTube broadcasts found');
+        return;
+      }
+
+      const video = await this.fetchVideo(broadcast.id);
+      this.SET_STREAM_ID(broadcast.contentDetails.boundStreamId);
 
       this.UPDATE_STREAM_SETTINGS({
         broadcastId: broadcast.id,
         title: broadcast.snippet.title,
-        // categoryId: broadcast.snippet.categoryId,
         description: broadcast.snippet.description,
-        thumbnail: broadcast.snippet.thumbnails?.high?.url || 'default',
+        categoryId: video?.snippet?.categoryId,
+        enableAutoStart: broadcast.contentDetails.enableAutoStart,
+        enableAutoStop: broadcast.contentDetails.enableAutoStop,
+        enableDvr: broadcast.contentDetails.enableDvr,
+        projection: broadcast.contentDetails.projection,
+        latencyPreference: broadcast.contentDetails.latencyPreference,
         privacyStatus: broadcast.status.privacyStatus,
+        selfDeclaredMadeForKids: broadcast.status.selfDeclaredMadeForKids,
+        thumbnail: broadcast.snippet.thumbnails?.high?.url || 'default',
       });
     } catch (e: unknown) {
       console.error('Error fetching broadcasts', e);
@@ -391,14 +403,16 @@ export class YoutubeService
         verticalDestination.display,
       );
     }
+
+    this.setPlatformContext('youtube');
   }
 
   async beforeGoLive(goLiveSettings: IGoLiveSettings, context?: TDisplayType) {
     const ytSettings = getDefined(goLiveSettings.platforms.youtube);
 
     // If the stream has switched from another device, a new broadcast does not need to be created
-    if (goLiveSettings.streamSwitch) {
-      await this.setupSwitchedStream(goLiveSettings);
+    if (goLiveSettings.cloudShift) {
+      await this.setupCloudShiftStream(goLiveSettings);
       return;
     }
 
@@ -851,6 +865,18 @@ export class YoutubeService
       await platformAuthorizedRequest<IYoutubeCollection<IYoutubeLiveBroadcast>>(
         'youtube',
         `${this.apiBase}/liveBroadcasts?${query}`,
+      )
+    ).items;
+    return broadcasts;
+  }
+
+  private async fetchLiveBroadcasts(): Promise<IYoutubeLiveBroadcast[]> {
+    const fields = ['snippet', 'contentDetails', 'status'];
+    const query = `part=${fields.join(',')}`;
+    const broadcasts = (
+      await platformAuthorizedRequest<IYoutubeCollection<IYoutubeLiveBroadcast>>(
+        'youtube',
+        `${this.apiBase}/liveBroadcasts?${query}&broadcastStatus=active`,
       )
     ).items;
     return broadcasts;

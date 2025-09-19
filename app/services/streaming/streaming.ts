@@ -314,9 +314,18 @@ export class StreamingService
 
     // use default settings if no new settings provided
     const settings = newSettings || cloneDeep(this.views.savedSettings);
+
     // For the Cloud Shift, match remote targets to local targets
     if (settings.cloudShift && this.restreamService.views.hasCloudShiftTargets) {
-      const targets = this.restreamService.views.cloudShiftTargets.map(t => t.platform);
+      const targets: TPlatform[] = this.restreamService.views.cloudShiftTargets.reduce(
+        (platforms: TPlatform[], target: ICloudShiftTarget) => {
+          if (target.platform !== 'relay') {
+            platforms.push(target.platform as TPlatform);
+          }
+          return platforms;
+        },
+        [],
+      );
 
       this.views.linkedPlatforms.forEach(p => {
         // Enable platform for go live checks, except for YouTube because running YouTube's
@@ -330,6 +339,11 @@ export class StreamingService
           settings.platforms[p].enabled = false;
         }
       });
+
+      // make sure one of the platforms going live is a primary platform
+      if (!targets.some(p => p === this.userService.state.auth?.primaryPlatform)) {
+        this.userService.setPrimaryPlatform(targets[0]);
+      }
     }
 
     /**
@@ -1035,6 +1049,23 @@ export class StreamingService
 
     startStreamingPromise
       .then(() => {
+        if (this.views.settings.cloudShift) {
+          // Remove the pending state to show the correct text in the start streaming button
+          this.restreamService.setCloudShiftStatus('inactive');
+
+          // Confirm that the primary platform is streaming to correctly show chat
+          // Otherwise, use the first enabled platform. Note: this is a failsafe to guarantee
+          // that the primary platform is always one of the live platforms. This should have
+          // already been handled in the goLive function.
+          const isPrimaryPlatformEnabled = this.views.enabledPlatforms.some(
+            p => p === this.userService.state.auth?.primaryPlatform,
+          );
+
+          if (!isPrimaryPlatformEnabled) {
+            this.userService.setPrimaryPlatform(this.views.enabledPlatforms[0]);
+          }
+        }
+
         // run afterGoLive hooks
         try {
           this.views.enabledPlatforms.forEach(platform => {

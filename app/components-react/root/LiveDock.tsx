@@ -113,7 +113,10 @@ class LiveDockController {
   get chatTabs(): { name: string; value: string }[] {
     if (!this.userService.state.auth) return [];
 
-    const hasMultistreamChat = this.isRestreaming || this.hasDifferentDualOutputPlatforms;
+    const hasMultistreamChat =
+      (this.restreamService.views.canEnableRestream &&
+        this.streamingService.views.hasMultipleTargetsEnabled) ||
+      this.hasDifferentDualOutputPlatforms;
     const tabs: { name: string; value: string }[] = [
       {
         name: getPlatformService(this.userService.state.auth.primaryPlatform).displayName,
@@ -140,8 +143,7 @@ class LiveDockController {
 
   get isRestreaming() {
     return (
-      this.restreamService.shouldGoLiveWithRestream &&
-      !this.streamingService.views.isStreamSwitchMode
+      this.restreamService.shouldGoLiveWithRestream && !this.streamingService.views.isCloudShiftMode
     );
   }
 

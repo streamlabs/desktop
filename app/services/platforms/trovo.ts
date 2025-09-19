@@ -86,6 +86,12 @@ export class TrovoService
   async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     const trSettings = getDefined(goLiveSettings.platforms.trovo);
 
+    // If the stream has switched from another device, a new broadcast does not need to be created
+    if (goLiveSettings.cloudShift) {
+      await this.setupCloudShiftStream(goLiveSettings);
+      return;
+    }
+
     const key = this.state.streamKey;
     if (!this.streamingService.views.isMultiplatformMode) {
       this.streamSettingsService.setSettings(
@@ -164,6 +170,24 @@ export class TrovoService
 
   private fetchChannelInfo(): Promise<ITrovoChannelInfo> {
     return this.requestTrovo<ITrovoChannelInfo>(`${this.apiBase}/channel`);
+  }
+
+  async setupCloudShiftStream(goLiveSettings: IGoLiveSettings) {
+    // Note: The below is pretty much the same as prepopulateInfo
+
+    const channelInfo = await this.fetchChannelInfo();
+    const userInfo = await this.requestTrovo<ITrovoUserInfo>(`${this.apiBase}/getuserinfo`);
+    const gameInfo = await this.fetchGame(channelInfo.category_name);
+    this.SET_STREAM_SETTINGS({ title: channelInfo.live_title, game: channelInfo.category_id });
+    this.SET_USER_INFO(userInfo);
+    this.SET_STREAM_KEY(channelInfo.stream_key.replace('live/', ''));
+    this.SET_CHANNEL_INFO({
+      gameId: channelInfo.category_id,
+      gameName: channelInfo.category_name,
+      gameImage: gameInfo.image || '',
+    });
+
+    this.setPlatformContext('trovo');
   }
 
   async searchGames(searchString: string): Promise<IGame[]> {

@@ -63,6 +63,11 @@ export class InstagramService
   async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     const settings = getDefined(goLiveSettings.platforms.instagram);
 
+    if (goLiveSettings.cloudShift) {
+      this.setPlatformContext('instagram');
+      return;
+    }
+
     if (!this.streamingService.views.isMultiplatformMode) {
       this.streamSettingsService.setSettings(
         {
