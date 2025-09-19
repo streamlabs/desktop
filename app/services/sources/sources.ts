@@ -581,8 +581,17 @@ export class SourcesService extends StatefulService<ISourcesState> {
       resolvedSettings.height = 720;
     }
 
-    if (type === 'text_gdiplus' && resolvedSettings.text === void 0) {
-      resolvedSettings.text = name;
+    if (type === 'text_gdiplus') {
+      if (resolvedSettings.text === void 0) {
+        resolvedSettings.text = name;
+      }
+
+      // Note: this is the first attempt to add versioning to sources.
+      // In partucular, adding the version 3 for text solves the blurriness problem.
+      // And this approach allows to preserve older behavior for previously created sources.
+      // You can look into this commit as a reference.
+      // https://github.com/obsproject/obs-studio/commit/b2302902a3b3e1cce140a6417f4c5e490869a3f2
+      resolvedSettings.version = 3;
     }
 
     if (
