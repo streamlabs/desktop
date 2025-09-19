@@ -28,7 +28,7 @@ export default function MarketingModal() {
           <h3>{productUpdates[0].header}</h3>
           <p>{productUpdates[0].subHeader}</p>
           <button
-            className="button button--default"
+            className="button button--action"
             onClick={() => handleButton(productUpdates[0].link)}
           >
             {productUpdates[0].linkTitle}
