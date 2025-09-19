@@ -81,6 +81,7 @@ export default function BrowserView(p: BrowserViewProps) {
     const cancelUnload = onUnload(() => destroyBrowserView());
 
     return () => {
+      webContents.removeListener('did-finish-load', () => setLoading(false));
       webContents.removeListener('did-navigate', urlChange);
       webContents.removeListener('did-navigate-in-page', urlChange);
       cancelUnload();
