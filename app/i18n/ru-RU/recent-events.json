@@ -80,5 +80,7 @@
   "has resubscribed": "подписывается заново",
   "has gifted a sub to": "дарит подписку пользователю",
   "has resubscribed for %{streak} months in a row! (%{months} total)": "возобновляет подписку %{streak} мес. подряд! (всего: %{months})",
-  "has resubscribed for %{months} months": "возобновляет подписку на %{months} мес."
+  "has resubscribed for %{months} months": "возобновляет подписку на %{months} мес.",
+  "Disable Chat Box Notifications": "Disable Chat Box Notifications",
+  "Enable Chat Box Notifications": "Enable Chat Box Notifications"
 }
