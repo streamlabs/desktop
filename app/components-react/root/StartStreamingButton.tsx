@@ -1,4 +1,4 @@
-import React, { useEffect, useState, forwardRef } from 'react';
+import React, { useEffect, useState, forwardRef, useCallback } from 'react';
 import cx from 'classnames';
 import { EStreamingState } from 'services/streaming';
 import { EGlobalSyncStatus } from 'services/media-backup';
@@ -8,7 +8,6 @@ import { Services } from '../service-provider';
 import * as remote from '@electron/remote';
 import { TCloudShiftStatus } from 'services/restream';
 import { promptAction } from 'components-react/modals';
-import { CloudShiftModal } from 'components-react/shared/CloudShiftModal';
 
 export default function StartStreamingButton(p: { disabled?: boolean }) {
   const {
@@ -41,7 +40,6 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
 
   const [delaySecondsRemaining, setDelayTick] = useState(delaySeconds);
   const [isLoading, setIsLoading] = useState(false);
-  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     setDelayTick(delaySeconds);
@@ -121,7 +119,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     };
   }, []);
 
-  async function toggleStreaming() {
+  const toggleStreaming = useCallback(async () => {
     if (StreamingService.isStreaming) {
       StreamingService.toggleStreaming();
     } else {
@@ -173,9 +171,23 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         const isLive = await fetchCloudShiftStatus();
         setIsLoading(false);
 
+        const message = isDualOutputMode
+          ? $t(
+              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source.',
+            ) + $t('Dual Output will be disabled since not supported in this mode.')
+          : $t(
+              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source.',
+            );
+
         if (isLive) {
-          Services.WindowsService.actions.updateStyleBlockers('main', true);
-          setShowModal(true);
+          promptAction({
+            title: $t('Another stream detected'),
+            message,
+            btnText: $t('Switch to Streamlabs Desktop'),
+            fn: startCloudShift,
+            cancelBtnText: $t('Cancel'),
+            cancelBtnPosition: 'left',
+          });
           return;
         }
       }
@@ -189,7 +201,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         StreamingService.actions.goLive();
       }
     }
-  }
+  }, [streamingStatus, cloudShiftStatus, delaySecondsRemaining]);
 
   const getIsRedButton =
     streamingStatus !== EStreamingState.Offline && cloudShiftStatus !== 'pending';
@@ -199,18 +211,26 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     (streamingStatus === EStreamingState.Starting && delaySecondsRemaining === 0) ||
     (streamingStatus === EStreamingState.Ending && delaySecondsRemaining === 0);
 
-  async function fetchCloudShiftStatus() {
+  const fetchCloudShiftStatus = useCallback(async () => {
     try {
       const isLive = await RestreamService.checkIsLive();
       return isLive;
     } catch (e: unknown) {
-      console.error('Error checking stream switcher status', e);
+      console.error('Error checking cloud shift status', e);
       setIsLoading(false);
       return false;
     }
-  }
+  }, []);
 
-  function shouldShowGoLiveWindow() {
+  const startCloudShift = useCallback(() => {
+    if (isDualOutputMode) {
+      Services.DualOutputService.actions.toggleDisplay(false, 'vertical');
+    }
+
+    StreamingService.actions.goLive();
+  }, [isDualOutputMode]);
+
+  const shouldShowGoLiveWindow = useCallback(() => {
     if (!UserService.isLoggedIn) return false;
     const primaryPlatform = UserService.state.auth?.primaryPlatform;
     const updateStreamInfoOnLive = CustomizationService.state.updateStreamInfoOnLive;
@@ -239,29 +259,30 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         StreamSettingsService.isSafeToModifyStreamKey()
       );
     }
-  }
+  }, [
+    UserService.state.auth?.primaryPlatform,
+    StreamingService.views.isMultiplatformMode,
+    CustomizationService.state.updateStreamInfoOnLive,
+  ]);
 
   return (
-    <>
-      <button
-        style={{ minWidth: '130px' }}
-        className={cx('button button--action', { 'button--soft-warning': getIsRedButton })}
-        disabled={isDisabled}
-        onClick={toggleStreaming}
-      >
-        {isLoading ? (
-          <i className="fa fa-spinner fa-pulse" />
-        ) : (
-          <StreamButtonLabel
-            streamingStatus={streamingStatus}
-            delayEnabled={delayEnabled}
-            delaySecondsRemaining={delaySecondsRemaining}
-            cloudShiftStatus={cloudShiftStatus}
-          />
-        )}
-      </button>
-      <CloudShiftModal showModal={showModal} handleShowModal={setShowModal} />
-    </>
+    <button
+      style={{ minWidth: '130px' }}
+      className={cx('button button--action', { 'button--soft-warning': getIsRedButton })}
+      disabled={isDisabled}
+      onClick={toggleStreaming}
+    >
+      {isLoading ? (
+        <i className="fa fa-spinner fa-pulse" />
+      ) : (
+        <StreamButtonLabel
+          streamingStatus={streamingStatus}
+          delayEnabled={delayEnabled}
+          delaySecondsRemaining={delaySecondsRemaining}
+          cloudShiftStatus={cloudShiftStatus}
+        />
+      )}
+    </button>
   );
 }
 
