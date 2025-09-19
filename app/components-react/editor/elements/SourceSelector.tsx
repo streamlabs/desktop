@@ -188,6 +188,10 @@ class SourceSelectorController {
     const { sourcesService, widgetsService } = this;
     const source = sourcesService.state.sources[sourceId];
 
+    if (source.propertiesManagerType === 'smartBrowserSource') {
+      return 'icon-ai';
+    }
+
     if (source.propertiesManagerType === 'streamlabels') {
       return 'fas fa-file-alt';
     }
