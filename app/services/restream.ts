@@ -338,6 +338,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
       const streamKey = `${this.settings.streamKey}&sid=${streamId}`;
 
       this.streamSettingsService.setSettings({
+        streamType: 'rtmp_custom',
         key: streamKey,
         server: ingest,
       });
