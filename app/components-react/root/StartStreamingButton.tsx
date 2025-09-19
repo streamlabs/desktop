@@ -201,7 +201,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         StreamingService.actions.goLive();
       }
     }
-  }, [streamingStatus, cloudShiftStatus, delaySecondsRemaining]);
+  }, []);
 
   const getIsRedButton =
     streamingStatus !== EStreamingState.Offline && cloudShiftStatus !== 'pending';

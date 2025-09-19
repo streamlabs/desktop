@@ -500,7 +500,6 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       }
 
       if (event.type === 'switchActionComplete') {
-        console.log('event', JSON.stringify(event, null, 2));
         this.usageStatisticsService.recordAnalyticsEvent('CloudShiftAction', {
           stream: 'switched',
         });
