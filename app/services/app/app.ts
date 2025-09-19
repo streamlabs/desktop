@@ -204,7 +204,6 @@ export class AppService extends StatefulService<IAppState> {
       obs.NodeObs.InitShutdownSequence();
       this.streamAvatarService.stopAvatarProcess();
       this.crashReporterService.beginShutdown();
-      this.shutdownStarted.next();
       this.keyListenerService.shutdown();
       this.platformAppsService.unloadAllApps();
       await this.usageStatisticsService.flushEvents();
@@ -212,6 +211,7 @@ export class AppService extends StatefulService<IAppState> {
       this.ipcServerService.stopListening();
       await this.userService.flushUserSession();
       await this.sceneCollectionsService.deinitialize();
+      this.shutdownStarted.next();
       this.performanceService.stop();
       this.transitionsService.shutdown();
       this.videoSettingsService.shutdown();
