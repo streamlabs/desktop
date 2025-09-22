@@ -81,5 +81,7 @@
   "Open Threshold": "Open Threshold",
   "Close Threshold": "Close Threshold",
   "Presets": "Presets",
-  "Detection": "Detection"
+  "Detection": "Detection",
+  "Background Removal": "Background Removal",
+  "Automatically remove the background on your video without the use of a green screen.": "Automatically remove the background on your video without the use of a green screen."
 }
