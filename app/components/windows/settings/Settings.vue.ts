@@ -84,7 +84,7 @@ export default class Settings extends Vue {
     Experimental: 'fas fa-flask',
     'Installed Apps': 'icon-store',
     'Get Support': 'icon-question',
-    [ESettingsCategory.AI]: 'fas fa-eye',
+    [ESettingsCategory.AI]: 'icon-ai',
   };
   // for additional dismissables, add below using the category/title as the key
   dismissables: { [key: string]: EDismissable } = {

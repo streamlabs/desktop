@@ -356,7 +356,7 @@ export const SourceDisplayData = (): { [key: string]: ISourceDisplayData } => ({
     demoFilename: 'reactive-overlay-webm.webm',
     shortDesc: $t('Dynamic game animation'),
     description: $t(
-      'Dynamic real time animation based on your game & widget events.  Streamlabs Vision powered events include:',
+      "Dynamic real time animation based on your game events, powered by Streamlabs AI. Install Reactive Overlays from our Library to see what it's capable of!",
     ),
     supportList: [$t('Kills & Eliminations'), $t('Health changes'), $t('Victory & Defeat')],
     group: 'capture',
