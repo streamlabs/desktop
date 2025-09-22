@@ -192,7 +192,7 @@ export class TwitchService
 
   async beforeGoLive(goLiveSettings?: IGoLiveSettings, context?: TDisplayType) {
     // If the stream has switched from another device, a new broadcast does not need to be created
-    if (goLiveSettings.cloudShift) {
+    if (goLiveSettings && goLiveSettings.cloudShift) {
       await this.setupCloudShiftStream(goLiveSettings);
       return;
     }
@@ -346,7 +346,7 @@ export class TwitchService
     ).then(json => json.data[0]?.viewer_count ?? 0);
   }
 
-  async setupCloudShiftStream(goLiveSettings: IGoLiveSettings) {
+  async setupCloudShiftStream(goLiveSettings?: IGoLiveSettings) {
     const [channelInfo] = await Promise.all([
       this.requestTwitch<{
         data: {
