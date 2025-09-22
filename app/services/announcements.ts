@@ -158,7 +158,9 @@ export class AnnouncementsService extends Service {
 
   async getProductUpdates() {
     const resp = await this.fetchProductUpdates();
-    if (!resp.lastUpdatedAt || resp.lastUpdatedAt <= this.state.lastReadProductUpdate) return;
+    if (!resp || !resp.lastUpdatedAt || resp.lastUpdatedAt <= this.state.lastReadProductUpdate) {
+      return;
+    }
     this.setLastReadProductUpdate(resp.lastUpdatedAt);
     this.setProductUpdates(resp.updates);
     this.openProductUpdates();
