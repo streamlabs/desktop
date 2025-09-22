@@ -81,6 +81,7 @@ export default function PrimaryChatSwitcher({
           suffixIcon={suffixIcon}
           size={size}
           disabled={disabled}
+          dropdownMatchSelectWidth={false}
         />
       </Form>
     </div>

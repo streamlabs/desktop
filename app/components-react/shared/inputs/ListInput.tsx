@@ -23,6 +23,7 @@ const ANT_SELECT_FEATURES = [
   'filterOption',
   'suffixIcon',
   'size',
+  'dropdownMatchSelectWidth',
 ] as const;
 
 // define custom props
@@ -119,6 +120,7 @@ export const ListInput = InputComponent(<T extends any>(p: TListInputProps<T>) =
           // @ts-ignore
           !!inputAttrs['loading']
         }
+        dropdownMatchSelectWidth={p.dropdownMatchSelectWidth}
       >
         {options && options.map((opt, ind) => renderOption(opt, ind, p))}
       </Select>
