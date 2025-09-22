@@ -425,12 +425,13 @@ function LiveDock() {
               )}
             </div>
           )}
-        {(!ctrl.platform || (hasLiveDockFeature('chat-streaming') && !isStreaming)) && (
-          <div className={cx('flex flex--center flex--column', styles.liveDockChatOffline)}>
-            <img className={styles.liveDockChatImgOffline} src={ctrl.offlineImageSrc} />
-            {!hideStyleBlockers && <span>{$t('Your chat is currently offline')}</span>}
-          </div>
-        )}
+        {!hideStyleBlockers &&
+          (!ctrl.platform || (hasLiveDockFeature('chat-streaming') && !isStreaming)) && (
+            <div className={cx('flex flex--center flex--column', styles.liveDockChatOffline)}>
+              <img className={styles.liveDockChatImgOffline} src={ctrl.offlineImageSrc} />
+              <span>{$t('Your chat is currently offline')}</span>
+            </div>
+          )}
       </div>
     </div>
   );
