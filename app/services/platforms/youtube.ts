@@ -311,10 +311,12 @@ export class YoutubeService
   async setupCloudShiftStream(goLiveSettings: IGoLiveSettings) {
     try {
       const broadcasts = await this.fetchBroadcasts();
+      console.log('YOUTUBE broadcasts', broadcasts);
 
       if (!broadcasts) return;
 
       const liveBroadcasts = broadcasts.filter(b => b.status.lifeCycleStatus === 'live');
+      console.log('YOUTUBE liveBroadcasts', liveBroadcasts);
 
       if (liveBroadcasts.length === 0) {
         console.error('No active YouTube broadcasts found');
@@ -322,12 +324,14 @@ export class YoutubeService
       }
 
       const broadcast = (await this.fetchLiveBroadcasts())?.[0];
+      console.log('YOUTUBE broadcast', broadcast);
       if (!broadcast) {
         console.error('No active YouTube broadcasts found');
         return;
       }
 
       const video = await this.fetchVideo(broadcast.id);
+      console.log('YOUTUBE video', video);
       this.SET_STREAM_ID(broadcast.contentDetails.boundStreamId);
 
       this.UPDATE_STREAM_SETTINGS({

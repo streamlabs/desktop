@@ -208,6 +208,8 @@ export class TikTokService
   async setupCloudShiftStream(goLiveSettings: IGoLiveSettings) {
     await this.validatePlatform();
 
+    console.log('TIKTOK this.state', this.state);
+
     this.setPlatformContext('tiktok');
   }
 

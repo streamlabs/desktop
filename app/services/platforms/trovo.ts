@@ -184,6 +184,11 @@ export class TrovoService
     const channelInfo = await this.fetchChannelInfo();
     const userInfo = await this.requestTrovo<ITrovoUserInfo>(`${this.apiBase}/getuserinfo`);
     const gameInfo = await this.fetchGame(channelInfo.category_name);
+
+    console.log('TROVO channelInfo', channelInfo);
+    console.log('TROVO userInfo', userInfo);
+    console.log('TROVO gameInfo', gameInfo);
+
     this.SET_STREAM_SETTINGS({ title: channelInfo.live_title, game: channelInfo.category_id });
     this.SET_USER_INFO(userInfo);
     this.SET_STREAM_KEY(channelInfo.stream_key.replace('live/', ''));

@@ -372,6 +372,15 @@ export class TwitchService
       ? this.twitchTagsService.views.tags
       : [];
 
+    console.log('TWITCH stream settings', {
+      tags,
+      title: channelInfo.title,
+      game: channelInfo.game,
+      isBrandedContent: channelInfo.is_branded_content,
+      isEnhancedBroadcasting: this.settingsService.isEnhancedBroadcasting(),
+      contentClassificationLabels: channelInfo.content_classification_labels,
+    });
+
     this.SET_STREAM_SETTINGS({
       tags,
       title: channelInfo.title,

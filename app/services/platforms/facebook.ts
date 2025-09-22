@@ -355,8 +355,9 @@ export class FacebookService
       .map(p => p.permission);
     this.SET_PERMISSIONS(grantedPermissions);
 
-    console.log('permissions', JSON.stringify(permissions, null, 2));
-    console.log('await fetchPages()', await this.fetchPages());
+    console.log('FACEBOOK permissions', JSON.stringify(permissions, null, 2));
+    console.log('FACEBOOK await fetchPages()', await this.fetchPages());
+    console.log('FACEBOOK await fetchGroups()', await this.fetchGroups());
 
     // fetch pages and groups
     const [pages, groups] = ((await Promise.all([
@@ -388,6 +389,8 @@ export class FacebookService
       this.UPDATE_STREAM_SETTINGS({ destinationType: 'me' });
     }
 
+    console.log('FACEBOOK await this.fetchPicture("me")', await this.fetchPicture('me'));
+
     if (!this.state.userAvatar) {
       this.SET_AVATAR(await this.fetchPicture('me'));
     }
@@ -396,12 +399,21 @@ export class FacebookService
     const destinationId = this.state.settings.pageId || this.state.settings.groupId || '';
     const stream = await this.fetchStream(destinationType, destinationId);
 
+    console.log(
+      'FACEBOOK await this.fetchStream()',
+      await this.fetchStream(destinationType, destinationId),
+    );
+
     if (!stream) {
       console.error('Could not fetch stream for cloud shift');
       return;
     }
 
     const liveVideo = await this.fetchVideo(stream.id, destinationType, destinationId);
+    console.log(
+      'FACEBOOK await this.fetchVideo()',
+      await this.fetchVideo(stream.id, destinationType, destinationId),
+    );
     if (!liveVideo) {
       console.error('Could not fetch video for cloud shift');
       return;

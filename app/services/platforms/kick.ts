@@ -143,6 +143,8 @@ export class KickService
     const response = await this.fetchStreamInfo();
     const info = response as IKickStreamInfoResponse;
 
+    console.log('KICK await this.fetchStreamInfo()', response);
+
     if (info.channel) {
       this.UPDATE_STREAM_SETTINGS({
         title: info.channel.title,
