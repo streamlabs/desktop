@@ -105,7 +105,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         StreamingService.actions.goLive();
       }
     }
-  }, [streamingStatus, delaySecondsRemaining]);
+  }, []);
 
   const getIsRedButton = useMemo(() => streamingStatus !== EStreamingState.Offline, [
     streamingStatus,
