@@ -936,10 +936,14 @@ export class YoutubeService
         { method: 'POST', body, headers: { Authorization: `Bearer ${this.oauthToken}` } },
       );
     } catch (e: unknown) {
-      const error = await (e as any).json();
-      let details = error.result?.error?.message;
-      if (!details) details = 'connection failed';
+      console.error('Failed to upload thumbnail', e);
       const errorType = 'YOUTUBE_THUMBNAIL_UPLOAD_FAILED';
+      let details = 'Connection Failed';
+      if (typeof e === 'object') {
+        const error = await (e as any).json();
+        details = error.result?.error?.message;
+      }
+
       throw throwStreamError(errorType, { ...(e as any), platform: 'youtube' }, details);
     }
   }
