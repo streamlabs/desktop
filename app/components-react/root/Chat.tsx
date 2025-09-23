@@ -20,8 +20,10 @@ export default function Chat(props: {
 
   let leaveFullScreenTrigger: Function;
 
-  // Setup resize/fullscreen listeners
   useEffect(() => {
+    const service = props.restream ? RestreamService : ChatService;
+    const cancelUnload = onUnload(() => service.actions.unmountChat(remote.getCurrentWindow().id));
+
     window.addEventListener('resize', debounce(checkResize, 100));
 
     // Work around an electron bug on mac where chat is not interactable
@@ -30,11 +32,16 @@ export default function Chat(props: {
       leaveFullScreenTrigger = () => {
         setTimeout(() => {
           setupChat();
+          checkResize();
         }, 1000);
       };
 
       remote.getCurrentWindow().on('leave-full-screen', leaveFullScreenTrigger);
     }
+
+    setupChat();
+    // Wait for livedock to expand to set chat resize
+    setTimeout(checkResize, 100);
 
     return () => {
       window.removeEventListener('resize', debounce(checkResize, 100));
@@ -42,17 +49,7 @@ export default function Chat(props: {
       if (getOS() === OS.Mac) {
         remote.getCurrentWindow().removeListener('leave-full-screen', leaveFullScreenTrigger);
       }
-    };
-  }, [props.restream]);
 
-  // Mount/switch chat
-  useEffect(() => {
-    const service = props.restream ? RestreamService : ChatService;
-
-    setupChat();
-    const cancelUnload = onUnload(() => service.actions.unmountChat(remote.getCurrentWindow().id));
-
-    return () => {
       service.actions.unmountChat(remote.getCurrentWindow().id);
       cancelUnload();
     };
@@ -68,7 +65,6 @@ export default function Chat(props: {
     service.actions.mountChat(windowId);
     currentPosition = null;
     currentSize = null;
-    checkResize();
   }
 
   function checkResize() {
