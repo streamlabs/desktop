@@ -1,5 +1,6 @@
 import { $t } from 'services/i18n';
 import { ISourceDisplayData } from './index';
+import { supportedGames } from 'services/highlighter/models/game-config.models';
 
 const imageSupport = ['png', 'jpg', 'jpeg', 'gif', 'tga', 'bmp'];
 const mediaSupport = [
@@ -295,9 +296,10 @@ export const SourceDisplayData = (): { [key: string]: ISourceDisplayData } => ({
   },
   highlighter: {
     name: $t('Highlight Reel'),
-    shortDesc: $t('Display highlight clips'),
-    description: $t('Automatically display the latest clips captured with AI Highlighter.'),
+    shortDesc: $t('Display AI Highlighter clips'),
+    description: $t('Automatically display the latest clips captured with AI Highlighter.') + "\n\n" + $t('AI Highlighter must be activated in the go live flow for this widget to work.'),
     demoFilename: 'media.png',
+    supportList: supportedGames.map(g => g.label),
     icon: 'icon-replay-buffer',
     group: 'media',
   },

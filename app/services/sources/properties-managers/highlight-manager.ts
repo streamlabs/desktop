@@ -6,7 +6,7 @@ import {
 } from 'app-services';
 import { PropertiesManager } from './properties-manager';
 import { Inject } from 'services/core/injector';
-import { StreamingService } from 'services/streaming';
+import { EStreamingState, StreamingService } from 'services/streaming';
 
 export class HighlightManager extends PropertiesManager {
   @Inject() streamingService: StreamingService;
@@ -24,6 +24,16 @@ export class HighlightManager extends PropertiesManager {
   }
 
   init() {
+    console.log('HighlightManager init');
+
+    this.streamingService.streamingStatusChange.subscribe(status => {
+      if (status === EStreamingState.Ending) {
+        // stop playing if stream stops
+        this.stopPlaying();
+        this.obsSource.update({ local_file: '' });
+      }
+    });
+
     // reset state of the media source, sometimes it gets stuck
     this.obsSource.update({ local_file: '' });
     // console.log('HighlightManager initialized');
