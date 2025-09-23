@@ -295,17 +295,19 @@ export class YoutubeService
         error.statusText = `${$t('Authentication Error')}: ${details}`;
       }
 
+      const isLiveStreamingDisabled =
+        error?.errors &&
+        error?.errors.length &&
+        error?.errors[0].reason === 'liveStreamingNotEnabled';
+
       // if the rate limit exceeded then repeat request after 3s delay
-      if (
-        error?.errors[0]?.reason === 'liveStreamingNotEnabled' &&
-        repeatRequestIfRateLimitExceed
-      ) {
+      if (isLiveStreamingDisabled && repeatRequestIfRateLimitExceed) {
         await Utils.sleep(3000);
         return await this.requestYoutube(reqInfo, false);
       }
 
       let errorType: TStreamErrorType = 'PLATFORM_REQUEST_FAILED';
-      if (error?.errors[0]?.reason === 'liveStreamingNotEnabled') {
+      if (isLiveStreamingDisabled) {
         errorType = 'YOUTUBE_STREAMING_DISABLED';
       } else if (error?.status === 423) {
         errorType = 'YOUTUBE_TOKEN_EXPIRED';
@@ -461,15 +463,35 @@ export class YoutubeService
     } catch (e: unknown) {
       const error = e as any;
 
-      if (error.status === 423) {
-        console.error('Error 423: YouTube token expired, need to refresh', error);
-        return EPlatformCallResult.TokenExpired;
+      // Check if this is a YouTube live stream API error response
+      if (error?.errors && error?.status) {
+        if (error.status === 423) {
+          console.error('Error 423: YouTube token expired, need to refresh', error);
+          this.SET_ENABLED_STATUS(false);
+          return EPlatformCallResult.TokenExpired;
+        }
+        if (error.status && error.status !== 403) {
+          console.error('Error checking if YT is enabled for live streaming', error);
+          return EPlatformCallResult.Error;
+        }
+        if (error?.errors.length && error?.errors[0].reason === 'liveStreamingNotEnabled') {
+          this.SET_ENABLED_STATUS(false);
+        }
+
+        return EPlatformCallResult.YoutubeStreamingDisabled;
       }
+
+      // Otherwise, it's probably a generic YouTube API error
       if (error.status !== 403) {
-        console.error('Error checking if YT is enabled for live streaming', error);
+        console.error('Got 403 checking if YT is enabled for live streaming', error);
         return EPlatformCallResult.Error;
       }
-      if (error?.errors[0].reason === 'liveStreamingNotEnabled') {
+      const json = error.result;
+      if (
+        json.error &&
+        json.error.errors &&
+        json.error.errors[0].reason === 'liveStreamingNotEnabled'
+      ) {
         this.SET_ENABLED_STATUS(false);
       }
       return EPlatformCallResult.YoutubeStreamingDisabled;
@@ -948,10 +970,11 @@ export class YoutubeService
       if (error.message) details = error.message;
 
       if (error.code === 400) {
-        if (error.errors[0].reason === 'invalidImage') {
+        const hasReason = error?.errors && error?.errors.length && error?.errors[0].reason;
+        if (hasReason && error.errors[0].reason === 'invalidImage') {
           // Note: The
           details = $t('Thumbnail image content is invalid.');
-        } else if (error.errors[0].reason === 'mediaBodyRequired') {
+        } else if (hasReason && error.errors[0].reason === 'mediaBodyRequired') {
           details = $t('Thumbnail file does not include image content.');
         }
       }
