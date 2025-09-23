@@ -176,10 +176,11 @@ class PlatformAppsViews extends ViewHandler<IPlatformAppServiceState> {
   isAppHighlyPrivileged(appId: string) {
     // WARNING: Only internal Streamlabs apps should have these permissions
     return [
-      'b472396e49', // Avatar - Prod / Ava
+      'b472396e49', // Avatar - Beta / Ava
       '04f85c93be', // Avatar - Cale Dev
-      '9ef3e51301', // Avatar - Marcin Dev
       '875cf5de20', // Coach - Ava
+      '93125d1c33', // Avatar Prod / Marcin
+      '9ef3e51301', // Avatar - Marcin Dev
     ].includes(appId);
   }
 }
@@ -268,7 +269,7 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
     const disabledApps = this.getDisabledAppsFromStorage();
 
     productionApps.forEach(app => {
-      if (app.is_beta && !app.manifest) return;
+      if (!app.manifest) return;
 
       const unpackedVersionLoaded = this.state.loadedApps.find(
         loadedApp => loadedApp.id === app.id_hash && loadedApp.unpacked,

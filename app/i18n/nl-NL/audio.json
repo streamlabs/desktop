@@ -43,6 +43,6 @@
   "Mic/Auxiliary Device 1": "Mic/aux-apparaat 1",
   "Mic/Auxiliary Device 2": "Mic/aux-apparaat 2",
   "Mic/Auxiliary Device 3": "Mic/aux-apparaat 3",
-  "Recording Audio Encoder": "Recording Audio Encoder",
-  "Enable Muted Notifications": "Enable Muted Notifications"
+  "Recording Audio Encoder": "Audio-encoder opnemen",
+  "Enable Muted Notifications": "Mute meldingen inschakelen"
 }

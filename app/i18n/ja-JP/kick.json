@@ -1,14 +1,14 @@
 {
-  "Edit your stream title on Kick after going live.": "Edit your stream title on Kick after going live.",
-  "Kick Category": "Kick Category",
-  "Failed to update Kick account. Please unlink and reconnect your Kick account.": "Failed to update Kick account. Please unlink and reconnect your Kick account.",
-  "Failed to start Kick stream. Please check permissions with Kick and try again": "Failed to start Kick stream. Please check permissions with Kick and try again",
-  "Kick request most likely failed due to incorrect or missing permissions. Unlink and re-merge Kick account, then restart Desktop. If that fails, refer to Kick support": "Kick request most likely failed due to incorrect or missing permissions. Unlink and re-merge Kick account, then restart Desktop. If that fails, refer to Kick support",
-  "Kick stream key failed to generate due to missing permissions": "Kick stream key failed to generate due to missing permissions",
-  "confirm that a stream key has been generated with 2FA on Kick for use with Streamlabs Desktop and if not ask the user to manually generate one": "confirm that a stream key has been generated with 2FA on Kick for use with Streamlabs Desktop and if not ask the user to manually generate one",
-  "Login to Kick": "Login to Kick",
-  "Go to: <link></link>": "Go to: <link></link>",
-  "Click on the \"eye\" icon to see your stream key": "Click on the \"eye\" icon to see your stream key",
-  "Put in 2FA": "Put in 2FA",
-  "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick."
+  "Edit your stream title on Kick after going live.": "ライブ開始後、Kick でストリームタイトルを編集できます。",
+  "Kick Category": "Kick カテゴリー",
+  "Failed to update Kick account. Please unlink and reconnect your Kick account.": "Kick アカウントの更新に失敗しました。Kick アカウントのリンクを解除し、再接続してください。",
+  "Failed to start Kick stream. Please check permissions with Kick and try again": "Kick ストリームの開始に失敗しました。Kick で権限を確認して再度お試しください",
+  "Kick request most likely failed due to incorrect or missing permissions. Unlink and re-merge Kick account, then restart Desktop. If that fails, refer to Kick support": "Kick のリクエストは、おそらく不正な権限または権限の不足により失敗した可能性があります。Kick アカウントのリンクを解除して再統合し、Desktop を再起動します。うまくいかない場合は、Kick サポートにお問い合わせください",
+  "Kick stream key failed to generate due to missing permissions": "権限が不足しているため、Kick ストリームキーの生成に失敗しました",
+  "confirm that a stream key has been generated with 2FA on Kick for use with Streamlabs Desktop and if not ask the user to manually generate one": "Streamlabs Desktop で使用するために、Kick で2FA を使用してストリームキーが生成されていることを確認します。生成されていない場合は、手動で生成するようユーザーに依頼します",
+  "Login to Kick": "Kick にログイン",
+  "Go to: <link></link>": "<link></link>に移動",
+  "Click on the \"eye\" icon to see your stream key": "「目」のアイコンをクリックしてストリームキーを表示",
+  "Put in 2FA": "2FA を入力",
+  "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "2FA を設定後、ストリームキーが生成され、そのチャンネルの Streamlabs Desktop で使用できるようになります。これで Kick でのライブ配信が可能になります。"
 }

@@ -4,6 +4,7 @@ import { Services } from '../service-provider';
 import styles from './Chat.m.less';
 import { OS, getOS } from '../../util/operating-systems';
 import { onUnload } from 'util/unload';
+import { debounce } from 'lodash';
 
 export default function Chat(props: {
   restream: boolean;
@@ -16,15 +17,12 @@ export default function Chat(props: {
 
   let currentPosition: IVec2 | null;
   let currentSize: IVec2 | null;
-  let resizeInterval: number;
 
   let leaveFullScreenTrigger: Function;
 
   // Setup resize/fullscreen listeners
   useEffect(() => {
-    resizeInterval = window.setInterval(() => {
-      checkResize();
-    }, 100);
+    window.addEventListener('resize', debounce(checkResize, 100));
 
     // Work around an electron bug on mac where chat is not interactable
     // after leaving fullscreen until chat is remounted.
@@ -39,7 +37,7 @@ export default function Chat(props: {
     }
 
     return () => {
-      clearInterval(resizeInterval);
+      window.removeEventListener('resize', debounce(checkResize, 100));
 
       if (getOS() === OS.Mac) {
         remote.getCurrentWindow().removeListener('leave-full-screen', leaveFullScreenTrigger);
