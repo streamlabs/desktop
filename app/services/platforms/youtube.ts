@@ -13,7 +13,7 @@ import { platformAuthorizedRequest } from './utils';
 import { CustomizationService } from 'services/customization';
 import { IGoLiveSettings, TDisplayOutput } from 'services/streaming';
 import { $t, I18nService } from 'services/i18n';
-import { throwStreamError } from 'services/streaming/stream-error';
+import { throwStreamError, TStreamErrorType } from 'services/streaming/stream-error';
 import { BasePlatformService } from './base-platform';
 import { TDisplayType } from 'services/settings-v2/video';
 import { assertIsDefined, getDefined } from 'util/properties-type-guards';
@@ -283,10 +283,12 @@ export class YoutubeService
     try {
       return await platformAuthorizedRequest<T>('youtube', reqInfo);
     } catch (e: unknown) {
+      console.error('Failed Youtube API request', e);
+
       let details = (e as any).result?.error?.message;
       if (!details) details = $t('Connection Failed');
       if ((e as any)?.url ?? (e as any)?.url.split('/').includes('token')) {
-        (e as any).statusText = `${$t('Authentication Error: ')}${details}`;
+        (e as any).statusText = `${$t('Authentication Error')}: ${details}`;
       }
 
       // if the rate limit exceeded then repeat request after 3s delay
@@ -295,10 +297,13 @@ export class YoutubeService
         return await this.requestYoutube(reqInfo, false);
       }
 
-      const errorType =
-        details === 'The user is not enabled for live streaming.'
-          ? 'YOUTUBE_STREAMING_DISABLED'
-          : 'PLATFORM_REQUEST_FAILED';
+      let errorType: TStreamErrorType = 'PLATFORM_REQUEST_FAILED';
+      if (details === 'The user is not enabled for live streaming.') {
+        errorType = 'YOUTUBE_STREAMING_DISABLED';
+      } else if ((e as any).status === 423) {
+        errorType = 'YOUTUBE_TOKEN_EXPIRED';
+      }
+
       throw throwStreamError(errorType, { ...(e as any), platform: 'youtube' }, details);
     }
   }
@@ -447,8 +452,12 @@ export class YoutubeService
       this.SET_ENABLED_STATUS(true);
       return EPlatformCallResult.Success;
     } catch (resp: unknown) {
+      if ((resp as any).status === 423) {
+        console.error('Error 423: YouTube token expired, need to refresh', resp);
+        return EPlatformCallResult.TokenExpired;
+      }
       if ((resp as any).status !== 403) {
-        console.error('Got 403 checking if YT is enabled for live streaming', resp);
+        console.error('Error checking if YT is enabled for live streaming', resp);
         return EPlatformCallResult.Error;
       }
       const json = (resp as any).result;
@@ -540,6 +549,14 @@ export class YoutubeService
    * returns perilled data for the GoLive window
    */
   async prepopulateInfo(): Promise<void> {
+    const status = await this.validatePlatform();
+
+    // If the user's token has expired, refresh it and try again
+    if (status === EPlatformCallResult.TokenExpired) {
+      await this.fetchNewToken();
+      await this.validatePlatform();
+    }
+
     if (!this.state.liveStreamingEnabled) {
       throw throwStreamError('YOUTUBE_STREAMING_DISABLED', { platform: 'youtube' });
     }
