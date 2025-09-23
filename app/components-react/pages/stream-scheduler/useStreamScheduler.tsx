@@ -405,7 +405,7 @@ export class StreamSchedulerController {
       });
     } else if (err?.status === 423) {
       message.error({
-        content: `${'Authentication Error: '}${err.message}`,
+        content: `${'Authentication Error'}: ${err.message}`,
         className: styles.schedulerError,
       });
     } else {
