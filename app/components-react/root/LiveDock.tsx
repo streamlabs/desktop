@@ -425,13 +425,16 @@ function LiveDock() {
               )}
             </div>
           )}
+        {/* Although technically there are no style blocking elements here we want it to mirror
+          the behavior of our chat pane */}
+        {!hideStyleBlockers &&
+          (!ctrl.platform || (hasLiveDockFeature('chat-streaming') && !isStreaming)) && (
+            <div className={cx('flex flex--center flex--column', styles.liveDockChatOffline)}>
+              <img className={styles.liveDockChatImgOffline} src={ctrl.offlineImageSrc} />
+              <span>{$t('Your chat is currently offline')}</span>
+            </div>
+          )}
       </div>
-      {(!ctrl.platform || (hasLiveDockFeature('chat-streaming') && !isStreaming)) && (
-        <div className={cx('flex flex--center flex--column', styles.liveDockChatOffline)}>
-          <img className={styles.liveDockChatImgOffline} src={ctrl.offlineImageSrc} />
-          {!hideStyleBlockers && <span>{$t('Your chat is currently offline')}</span>}
-        </div>
-      )}
     </div>
   );
 }
