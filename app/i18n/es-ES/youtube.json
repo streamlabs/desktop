@@ -39,5 +39,11 @@
   "DVR controls enable the viewer to control the video playback experience by pausing, rewinding, or fast forwarding content": "Los controles de DVR permiten que el espectador controle la experiencia de reproducción de vídeo pausando, rebobinando o avanzando rápidamente el contenido",
   "Auto-start is disabled for your broadcast. You should manually publish your stream from Youtube Studio": "El inicio automático está desactivado para su transmisión. Debe publicar manualmente su transmisión desde YouTube Studio",
   "Made for kids": "Hecho para niños",
-  "Features like personalized ads and live chat won't be available on live streams made for kids.": "Características como anuncios personalizados y chat en directo no estarán disponibles en transmisiones en tiempo real hechas para niños."
+  "Features like personalized ads and live chat won't be available on live streams made for kids.": "Características como anuncios personalizados y chat en directo no estarán disponibles en transmisiones en tiempo real hechas para niños.",
+  "YouTube token has expired, re-login or re-merge YouTube account": "YouTube token has expired, re-login or re-merge YouTube account",
+  "Thumbnail image content is invalid.": "Thumbnail image content is invalid.",
+  "Thumbnail file does not include image content.": "Thumbnail file does not include image content.",
+  "Permission missing to upload thumbnails.": "Permission missing to upload thumbnails.",
+  "Video does not exist. Thumbnail upload failed.": "Video does not exist. Thumbnail upload failed.",
+  "Exceeded thumbnail upload quota. Please try again later.": "Exceeded thumbnail upload quota. Please try again later."
 }
