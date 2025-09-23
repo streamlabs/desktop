@@ -303,10 +303,7 @@ export const AppServices = {
   RemoteControlService,
   UrlService,
   VirtualWebcamService,
-<<<<<<< HEAD
   RealtimeHighlighterService,
-=======
   SseService,
   VisionService,
->>>>>>> master
 };
