@@ -12,8 +12,6 @@ import StartStreamingButton from './StartStreamingButton';
 import NotificationsArea from './NotificationsArea';
 import { Tooltip } from 'antd';
 import { confirmAsync } from 'components-react/modals';
-import RealtimeHighlightsIndicator from '../highlighter/realtime-highlights/RealtimeHighlightsIndicator';
-import { useRealmObject } from '../hooks/realm';
 
 export default function StudioFooterComponent() {
   const {
@@ -25,11 +23,7 @@ export default function StudioFooterComponent() {
     PerformanceService,
     SettingsService,
     UserService,
-    RealtimeHighlighterService,
   } = Services;
-
-  const realtimeHighlighterEnabled = useRealmObject(RealtimeHighlighterService.ephemeralState)
-    .isRunning;
 
   const {
     streamingStatus,
@@ -138,7 +132,6 @@ export default function StudioFooterComponent() {
       </div>
 
       <div className={styles.navRight}>
-        {realtimeHighlighterEnabled && <RealtimeHighlightsIndicator />}
         <div className={styles.navItem}>{isLoggedIn && <TestWidgets />}</div>
         {recordingModeEnabled && (
           <button className="button button--trans" onClick={showRecordingModeDisableModal}>

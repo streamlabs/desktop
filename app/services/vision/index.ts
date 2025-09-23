@@ -13,6 +13,20 @@ import { VisionUpdater } from './vision-updater';
 import _ from 'lodash';
 import pMemoize from 'p-memoize';
 import { ESettingsCategory } from 'services/settings';
+import { Subject } from 'rxjs';
+
+export interface VisionEvent {
+  name: string;
+  data: Record<string, any> | null;
+  highlight: any | null;
+  [key: string]: any;
+}
+
+export interface VisionMessage {
+  game: string | null;
+  events: VisionEvent[];
+  timestamp: number;
+}
 
 export class VisionState extends RealmObject {
   installedVersion: string;
@@ -64,6 +78,8 @@ export class VisionService extends Service {
   @Inject() settingsService: SettingsService;
 
   state = VisionState.inject();
+
+  events = new Subject<VisionMessage>();
 
   init() {
     obs.NodeObs.RegisterSourceMessageCallback(this.onSourceMessageCallback);
@@ -215,6 +231,8 @@ export class VisionService extends Service {
 
       try {
         const parsed = JSON.parse(e.data);
+
+        this.events.next(parsed as VisionMessage);
 
         if (
           Array.isArray(parsed.events) &&

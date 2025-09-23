@@ -1,167 +1,15 @@
 import { InitAfter, Inject, Service } from 'services/core';
-import { EventEmitter } from 'events';
 import { EReplayBufferState, StreamingService } from 'services/streaming';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { INewClipData } from './models/highlighter.models';
 import { EGame, IAiClipInfo, ICoordinates, IInput } from './models/ai-highlighter.models';
-import { ScenesService, SettingsService, SourcesService } from 'app-services';
+import { ScenesService, SettingsService, SourcesService, VisionService } from 'app-services';
 import { getVideoDuration, getVideoResolution } from './cut-highlight-clips';
 import { IResolution } from './models/rendering.models';
 import { ObjectSchema } from 'realm';
 import { RealmObject } from '../realm';
 import { FORTNITE_CONFIG } from './models/game-config.models';
-class LocalVisionService extends EventEmitter {
-  currentGame: string | null = null;
-
-  private isRunning = false;
-  private eventSource: EventSource | null = null;
-
-  constructor() {
-    super();
-  }
-
-  subscribe(event: string | symbol, listener: (...args: any[]) => void) {
-    this.on(event, listener);
-  }
-
-  unsubscribe(event: string | symbol, listener: (...args: any[]) => void) {
-    this.removeListener(event, listener);
-  }
-
-  start() {
-    if (this.isRunning) {
-      console.warn('LocalVisionService is already running');
-      return;
-    }
-
-    this.isRunning = true;
-    this.eventSource = new EventSource('http://localhost:8000/events');
-    this.eventSource.onmessage = (event: any) => {
-      const data = JSON.parse(event.data);
-
-      this.currentGame = data.game || null;
-
-      const events = data.events;
-      for (const event of events) {
-        this.emit('event', event);
-      }
-    };
-
-    // reset vision state for testing purposes on stream start
-    fetch('http://localhost:8000/reset_state', {
-      method: 'POST',
-    }).then(() => {
-      // console.log('VisionService state reset');
-    });
-  }
-
-  stop() {
-    if (!this.isRunning) {
-      console.warn('LocalVisionService is not running');
-      return;
-    }
-
-    this.isRunning = false;
-    // console.log('Stopping VisionService');
-    this.eventSource?.close();
-  }
-}
-
-/**
- * Just a mock class to represent a vision service events
- * that would be available when it is ready by another team.
- */
-class MockVisionService extends EventEmitter {
-  currentGame: string | null = 'fortnite';
-
-  private timeoutId: NodeJS.Timeout | null = null;
-  private isRunning = false;
-
-  constructor() {
-    super();
-  }
-
-  subscribe(event: string | symbol, listener: (...args: any[]) => void) {
-    this.on(event, listener);
-  }
-
-  unsubscribe(event: string | symbol, listener: (...args: any[]) => void) {
-    this.removeListener(event, listener);
-  }
-
-  start() {
-    if (this.isRunning) {
-      console.warn('VisionService is already running');
-      return;
-    }
-
-    this.isRunning = true;
-    // console.log('Starting VisionService');
-    this.scheduleNext();
-  }
-
-  stop() {
-    if (!this.isRunning) {
-      console.warn('VisionService is not running');
-      return;
-    }
-
-    this.isRunning = false;
-    // console.log('Stopping VisionService');
-    if (this.timeoutId) {
-      clearTimeout(this.timeoutId);
-      this.timeoutId = null;
-    }
-  }
-
-  private scheduleNext(): void {
-    const maxDelay = 15 * 1000;
-    const minDelay = 1 * 1000;
-
-    const delay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
-    this.emitRandomEvent();
-
-    this.timeoutId = setTimeout(() => {
-      this.scheduleNext();
-    }, delay);
-  }
-
-  private emitRandomEvent(): void {
-    // const events = ['elimination', 'deploy', 'game_start', 'game_end'];
-    const events = {
-      elimination: {
-        highlight: { start_adjust: 9, end_adjust: 4, score: 3 },
-      },
-      knockout: {
-        highlight: { start_adjust: 9, end_adjust: 4, score: 3 },
-      },
-      victory: {
-        highlight: { start_adjust: 7, end_adjust: 5, score: 5 },
-      },
-      defeat: {
-        highlight: { start_adjust: 7, end_adjust: 5, score: 3 },
-      },
-      death: {
-        highlight: { start_adjust: 7, end_adjust: 5, score: 3 },
-      },
-      deploy: {
-        highlight: { start_adjust: 5, end_adjust: 5, score: 2 },
-      },
-    } as const;
-
-    type EventKey = keyof typeof events;
-    const eventKeys = Object.keys(events) as EventKey[];
-    const randomEvent = eventKeys[Math.floor(Math.random() * eventKeys.length)];
-
-    const settings = events[randomEvent];
-
-    this.emit('event', {
-      name: randomEvent,
-      timestamp: new Date().toISOString(),
-      highlight: settings.highlight,
-    });
-  }
-}
+import { VisionMessage } from 'services/vision';
 
 export class RealtimeHighlighterEphemeralState extends RealmObject {
   isRunning: boolean;
@@ -190,12 +38,14 @@ export class RealtimeHighlighterService extends Service {
   highlights: INewClipData[] = [];
   currentStreamId: string | null = null;
   ephemeralState = RealtimeHighlighterEphemeralState.inject();
+  eventSubscription: Subscription | null = null;
+  currentGame: EGame = EGame.UNSET;
 
   @Inject() private streamingService: StreamingService;
   @Inject() private settingsService: SettingsService;
   @Inject() private scenesService: ScenesService;
   @Inject() private sourcesService: SourcesService;
-  private visionService = new LocalVisionService();
+  @Inject() private visionService: VisionService;
 
   private replayBufferFileReadySubscription: Subscription | null = null;
 
@@ -210,9 +60,11 @@ export class RealtimeHighlighterService extends Service {
   private replayRequested: boolean = false;
 
   private currentRound: number = 0;
+
   get isRunning(): boolean {
     return this.ephemeralState.isRunning;
   }
+
   set isRunning(value: boolean) {
     this.ephemeralState.db.write(() => {
       this.ephemeralState.isRunning = value;
@@ -242,6 +94,8 @@ export class RealtimeHighlighterService extends Service {
       this.setReplayBufferDurationSeconds(30);
     }
 
+    await this.visionService.ensureRunning();
+
     this.streamingService.startReplayBuffer();
     this.replayBufferFileReadySubscription = this.streamingService.replayBufferFileWrite.subscribe(
       this.onReplayReady.bind(this),
@@ -252,8 +106,12 @@ export class RealtimeHighlighterService extends Service {
     this.highlights = [];
     this.currentRound = 0;
 
-    this.visionService.subscribe('event', this.onEvent.bind(this));
-    this.visionService.start();
+    this.eventSubscription = this.visionService.events.subscribe((message: VisionMessage) => {
+      this.currentGame = message.game ? message.game as EGame : EGame.UNSET;
+      for (const event of message.events) {
+        this.onEvent(event);
+      }
+    });
 
     this.isRunning = true;
     // start the periodic tick to process replay queue after first replay buffer duration
@@ -266,14 +124,14 @@ export class RealtimeHighlighterService extends Service {
       console.warn('RealtimeHighlighterService is not running');
       return;
     }
-    // don't stop replay buffer here, probably better places for it exist
-    this.visionService.removeAllListeners();
-    this.visionService.stop();
-
+    this.eventSubscription?.unsubscribe();
     this.replayBufferFileReadySubscription?.unsubscribe();
 
     this.currentStreamId = null;
     this.isRunning = false;
+
+    // reset highlights state on stream stop
+    this.highlights = [];
   }
 
   private getReplayBufferDurationSeconds(): number {
@@ -342,7 +200,7 @@ export class RealtimeHighlighterService extends Service {
 
     this.latestDetectedEvent.next({
       type: event.name,
-      game: this.visionService.currentGame as EGame,
+      game: this.currentGame,
     });
     event.timestamp = Date.now();
     this.currentReplayEvents.push(event);
@@ -426,7 +284,7 @@ export class RealtimeHighlighterService extends Service {
         score,
         metadata: {
           round: this.currentRound,
-          game: this.visionService.currentGame as EGame,
+          game: this.currentGame,
           webcam_coordinates: this.findWebcamCoordinates(resolution),
         },
       };

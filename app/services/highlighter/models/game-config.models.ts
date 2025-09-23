@@ -351,7 +351,7 @@ const UNSET_CONFIG: IGameConfig = {
 };
 
 // Each game must have a config like and the config must be added here.
-const GAME_CONFIGS: Record<EGame, IGameConfig> = {
+export const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.FORTNITE]: FORTNITE_CONFIG, // ✅
   [EGame.WARZONE]: WARZONE_CONFIG, // ✅
   [EGame.BLACK_OPS_6]: BLACK_OPS_6_CONFIG, // ✅
