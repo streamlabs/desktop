@@ -129,6 +129,7 @@ interface ISafeModeSettings {
 interface IRecentEventsState {
   recentEvents: IRecentEvent[];
   muted: boolean;
+  enableChatNotifs: boolean;
   mediaShareEnabled: boolean;
   filterConfig: IRecentEventFilterConfig;
   queuePaused: boolean;
@@ -408,6 +409,7 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
   static initialState: IRecentEventsState = {
     recentEvents: [],
     muted: false,
+    enableChatNotifs: false,
     mediaShareEnabled: false,
     filterConfig: {
       donation: false,
@@ -452,6 +454,7 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
     this.fetchMediaShareState();
     this.subscribeToSocketConnection();
     this.fetchSafeModeStatus();
+    this.fetchMuteChatNotifs();
   }
 
   subscribeToSocketConnection() {
@@ -564,6 +567,8 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
     // Get read status for all events
     const readReceipts = await this.fetchReadReceipts(hashValues);
     eventArray.forEach(event => {
+      // TODO: index
+      // @ts-ignore
       event.read = readReceipts[event.hash] ? readReceipts[event.hash] : false;
 
       // Events older than 1 month are treated as read
@@ -743,9 +748,13 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
   }
 
   getEventTypesString() {
-    return Object.keys(this.state.filterConfig)
-      .filter((type: string) => this.state.filterConfig[type] === true)
-      .join(',');
+    return (
+      Object.keys(this.state.filterConfig)
+        // TODO: index
+        // @ts-ignore
+        .filter((type: string) => this.state.filterConfig[type] === true)
+        .join(',')
+    );
   }
 
   applyConfig(config: IRecentEventsConfig) {
@@ -867,16 +876,28 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
       }
       return this.shouldFilterSubscription(event);
     }
+    // TODO: index
+    // @ts-ignore
     return this.transformFilterForPlatform()[event.type];
   }
 
   transformFilterForPlatform() {
     const filterMap = cloneDeep(this.state.filterConfig);
+    // TODO: index
+    // @ts-ignore
     filterMap['support'] = filterMap['facebook_support'];
+    // TODO: index
+    // @ts-ignore
     filterMap['like'] = filterMap['facebook_like'];
+    // TODO: index
+    // @ts-ignore
     filterMap['share'] = filterMap['facebook_share'];
+    // TODO: index
+    // @ts-ignore
     filterMap['stars'] = filterMap['facebook_stars'];
     if (this.userService.platform.type === 'youtube') {
+      // TODO: index
+      // @ts-ignore
       filterMap['subscription'] = filterMap['membership_level_1'];
       filterMap['follow'] = filterMap['subscriber'];
     }
@@ -906,12 +927,42 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
     this.ADD_RECENT_EVENT(messages);
   }
 
+  async toggleMuteChatNotifs() {
+    const val = !this.state.enableChatNotifs;
+    const headers = authorizedHeaders(
+      this.userService.apiToken,
+      new Headers({ 'Content-Type': 'application/json' }),
+    );
+    const url = `https://${this.hostsService.streamlabs}/api/v5/widgets/desktop/chat-box/notifications`;
+    const body = JSON.stringify({ enable: val });
+    try {
+      await jfetch(new Request(url, { headers, body, method: 'POST' }));
+      this.SET_MUTE_CHAT_NOTIFS(val);
+    } catch (e: unknown) {
+      return;
+    }
+  }
+
+  async fetchMuteChatNotifs() {
+    const headers = authorizedHeaders(
+      this.userService.apiToken,
+      new Headers({ 'Content-Type': 'application/json' }),
+    );
+    const url = `https://${this.hostsService.streamlabs}/api/v5/widgets/desktop/chat-box`;
+    try {
+      const resp = await jfetch<any>(new Request(url, { headers, method: 'GET' }));
+      if (!resp?.data?.settings) return;
+      this.SET_MUTE_CHAT_NOTIFS(resp.settings.global?.alert_enabled);
+    } catch (e: unknown) {
+      return;
+    }
+  }
+
   async toggleMuteEvents() {
     const headers = authorizedHeaders(
       this.userService.apiToken,
       new Headers({ 'Content-Type': 'application/json' }),
     );
-    // eslint-disable-next-line
     const url = `https://${this.hostsService.streamlabs}/api/v5/slobs/widget/recentevents/eventspanel`;
     const body = JSON.stringify({ muted: !this.state.muted });
     return await fetch(new Request(url, { headers, body, method: 'POST' })).then(handleResponse);
@@ -1075,6 +1126,10 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
     this.safeModeStatusChanged.next(ESafeModeStatus.Disabled);
   }
 
+  setMuteChatNotifs(val: boolean) {
+    this.SET_MUTE_CHAT_NOTIFS(val);
+  }
+
   @mutation()
   private ADD_RECENT_EVENT(events: IRecentEvent[]) {
     this.state.recentEvents = events.concat(this.state.recentEvents);
@@ -1111,6 +1166,8 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
 
   @mutation()
   private SET_SINGLE_FILTER_CONFIG(key: string, value: boolean | number) {
+    // TODO: index
+    // @ts-ignore
     this.state.filterConfig[key] = value;
   }
 
@@ -1122,5 +1179,10 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
   @mutation()
   private SET_SAFE_MODE_SETTINGS(patch: Partial<ISafeModeSettings>) {
     this.state.safeMode = { ...this.state.safeMode, ...patch };
+  }
+
+  @mutation()
+  private SET_MUTE_CHAT_NOTIFS(val: boolean) {
+    this.state.enableChatNotifs = val;
   }
 }

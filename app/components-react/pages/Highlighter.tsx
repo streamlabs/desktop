@@ -14,6 +14,7 @@ import UpdateModal from 'components-react/highlighter/UpdateModal';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 import Utils from 'services/utils';
 
+<<<<<<< HEAD
 export default function Highlighter(props: { params?: { view: string; id?: string } }) {
   const {
     HighlighterService,
@@ -24,6 +25,12 @@ export default function Highlighter(props: { params?: { view: string; id?: strin
   const aiHighlighterFeatureEnabled = IncrementalRolloutService.views.featureIsEnabled(
     EAvailableFeatures.aiHighlighter,
   );
+=======
+export default function Highlighter(props: { params?: { view: string } }) {
+  const { HighlighterService, UsageStatisticsService } = Services;
+  const aiHighlighterFeatureEnabled = HighlighterService.aiHighlighterFeatureEnabled;
+
+>>>>>>> master
   const v = useVuex(() => ({
     useAiHighlighter: HighlighterService.views.useAiHighlighter,
   }));

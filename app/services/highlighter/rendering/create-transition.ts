@@ -38,6 +38,8 @@ const resizeModes = {
 };
 
 const makeFrag = (transitionGlsl: string, resizeMode: string): string => {
+  // TODO: index
+  // @ts-ignore
   const r = resizeModes[resizeMode];
   if (!r) throw new Error('invalid resizeMode=' + resizeMode);
   return `\

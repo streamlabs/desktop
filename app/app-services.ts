@@ -48,6 +48,7 @@ export { ObsUserPluginsService } from 'services/obs-user-plugins';
 export { HardwareService, DefaultHardwareService } from 'services/hardware';
 export { EditorCommandsService } from 'services/editor-commands';
 export { EditorService } from 'services/editor';
+export { SignalsService } from 'services/signals-manager';
 export { StreamSettingsService } from 'services/settings/streaming';
 export { TouchBarService } from 'services/touch-bar';
 export { ApplicationMenuService } from 'services/application-menu';
@@ -63,6 +64,7 @@ export { SettingsManagerService } from 'services/settings-manager';
 export { MarkersService } from 'services/markers';
 export { RealmService } from 'services/realm';
 export { RealtimeHighlighterService } from 'services/highlighter/realtime-highlighter-service';
+export { StreamAvatarService } from 'services/stream-avatar/stream-avatar-service';
 import { VirtualWebcamService } from 'services/virtual-webcam';
 
 // ONLINE SERVICES
@@ -107,6 +109,8 @@ export { MagicLinkService } from 'services/magic-link';
 export { GrowService } from 'services/grow/grow';
 export { GuestCamService } from 'services/guest-cam';
 export { DualOutputService } from 'services/dual-output';
+export { VisionService } from 'services/vision';
+export { SseService } from 'services/server-sent-events';
 
 // WIDGETS
 export { WidgetSource, WidgetsService } from './services/widgets';
@@ -213,6 +217,9 @@ import { TwitchStudioImporterService } from 'services/ts-importer';
 import { RemoteControlService } from 'services/api/remote-control-api';
 import { UrlService } from 'services/hosts';
 import { KickService } from 'services/platforms/kick';
+import { SseService } from './services/server-sent-events';
+import { VisionService } from 'services/vision';
+import { SignalsService } from 'services/signals-manager';
 
 export const AppServices = {
   AppService,
@@ -231,6 +238,7 @@ export const AppServices = {
   PatchNotesService,
   VideoService,
   ChatService,
+  SignalsService,
   StreamingService,
   StreamSettingsService,
   RestreamService,
@@ -295,5 +303,10 @@ export const AppServices = {
   RemoteControlService,
   UrlService,
   VirtualWebcamService,
+<<<<<<< HEAD
   RealtimeHighlighterService,
+=======
+  SseService,
+  VisionService,
+>>>>>>> master
 };

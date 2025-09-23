@@ -97,11 +97,27 @@ export default function BrowserView(p: BrowserViewProps) {
 
   useEffect(() => {
     loadUrl();
-  }, [theme]);
+  }, [theme, p.src]);
 
   function destroyBrowserView() {
     if (browserView.current) {
       remote.getCurrentWindow().removeBrowserView(browserView.current);
+
+      if (!browserView.current.webContents) {
+        browserView.current = null;
+        return;
+      }
+
+      // Attempt destruction of `webContents`
+      browserView.current.webContents.close();
+
+      if (!browserView.current.webContents) {
+        browserView.current = null;
+        return;
+      }
+
+      // If there was an error destroying the webContents, force destruction
+      // to prevent memory leaks.
       // See: https://github.com/electron/electron/issues/26929
       // @ts-ignore
       browserView.current.webContents.destroy();
@@ -150,8 +166,14 @@ export default function BrowserView(p: BrowserViewProps) {
       // ignore some common errors
       // that happen when the window has been closed before BrowserView accomplished the request
       if (e && typeof e === 'object') {
-        if (e['code'] === 'ERR_ABORTED') return;
-        if (e['message'] && e['message'].match(/\(\-3\) loading/)) return;
+        if (
+          (e.hasOwnProperty('code') &&
+            Object.getOwnPropertyDescriptor(e, 'code')?.value === 'ERR_ABORTED') ||
+          (e.hasOwnProperty('message') &&
+            Object.getOwnPropertyDescriptor(e, 'code')?.value.match(/\(\-3\) loading/))
+        ) {
+          return;
+        }
       }
       throw e;
     }

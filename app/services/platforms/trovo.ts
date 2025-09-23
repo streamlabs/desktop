@@ -6,6 +6,7 @@ import {
   IPlatformService,
   IPlatformState,
   TPlatformCapability,
+  TLiveDockFeature,
 } from './index';
 import { authorizedHeaders, jfetch } from '../../util/requests';
 import { throwStreamError } from '../streaming/stream-error';
@@ -61,6 +62,11 @@ export class TrovoService
     'themes',
     'streamlabels',
     'viewerCount',
+  ]);
+  readonly liveDockFeatures = new Set<TLiveDockFeature>([
+    'chat-offline',
+    'refresh-chat',
+    'view-stream',
   ]);
   readonly apiBase = 'https://open-api.trovo.live/openplatform';
   readonly rtmpServer = 'rtmp://livepush.trovo.live/live/';
@@ -123,7 +129,7 @@ export class TrovoService
     } catch (e: unknown) {
       let details = (e as any).message;
       if (!details) details = 'connection failed';
-      throwStreamError('PLATFORM_REQUEST_FAILED', e as any, details);
+      throwStreamError('PLATFORM_REQUEST_FAILED', { ...(e as any), platform: 'trovo' }, details);
     }
   }
 

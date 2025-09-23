@@ -4,7 +4,7 @@ const cp = require('child_process');
 const path = require('path');
 const os = require('os');
 
-async function notarizeMac() {
+async function notarizeMac(context) {
   if (process.env.SLOBS_NO_NOTARIZE) return;
   if (process.platform !== 'darwin') return;
 
@@ -19,11 +19,10 @@ async function notarizeMac() {
   console.log('This can take several minutes.');
 
   await notarize({
+    tool: 'notarytool',
     appPath,
-    appBundleId: 'com.streamlabs.slobs',
     appleId: process.env['APPLE_ID'],
     appleIdPassword: process.env['APPLE_APP_PASSWORD'],
-    ascProvider: process.env['APPLE_ASC_PROVIDER'],
     teamId: process.env['APPLE_TEAM_ID'],
   });
 
@@ -45,7 +44,7 @@ async function afterPackWin() {
 
 exports.default = async function afterSign(context) {
   if (process.platform === 'darwin') {
-    await notarizeMac();
+    await notarizeMac(context);
   }
 
   if (process.platform === 'win32') {

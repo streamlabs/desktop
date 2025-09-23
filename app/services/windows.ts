@@ -10,7 +10,6 @@ import { Subject } from 'rxjs';
 import { throttle } from 'lodash-decorators';
 import * as remote from '@electron/remote';
 
-import Main from 'components/windows/Main.vue';
 import Settings from 'components/windows/settings/Settings.vue';
 import FFZSettings from 'components/windows/FFZSettings.vue';
 import SceneTransitions from 'components/windows/SceneTransitions.vue';
@@ -40,10 +39,11 @@ import {
   NotificationsAndNews,
   PlatformAppPopOut,
   RecentEventsWindow,
-  RecordingHistory,
   EditTransform,
   Blank,
+  Main,
   MultistreamChatInfo,
+  MarketingModal,
 } from 'components/shared/ReactComponentList';
 
 import SourcePropertiesDeprecated from 'components/windows/SourceProperties.vue';
@@ -144,7 +144,7 @@ export function getComponents() {
     WidgetWindow,
     CustomCodeWindow,
     SourceShowcase,
-    RecordingHistory,
+    MarketingModal,
   };
 }
 
@@ -169,6 +169,7 @@ export interface IWindowOptions extends Electron.BrowserWindowConstructorOptions
   };
   isPreserved?: boolean;
   preservePrevWindow?: boolean;
+  persistWebContents?: boolean;
   prevWindowOptions?: IWindowOptions;
   isFullScreen?: boolean;
 
@@ -290,6 +291,10 @@ export class WindowsService extends StatefulService<IWindowsState> {
 
   getWindowIdFromElectronId(electronWindowId: number) {
     return Object.keys(this.windows).find(win => this.windows[win].id === electronWindowId);
+  }
+
+  getElectronWindowIdFromWindowId(windowId: string) {
+    return this.windows[windowId].id;
   }
 
   showWindow(options: Partial<IWindowOptions>) {
@@ -419,6 +424,28 @@ export class WindowsService extends StatefulService<IWindowsState> {
   /**
    * Creates a one-off window that will not impact or close
    * any existing windows, and will cease to exist when closed.
+   * @remark The `persistWebContents` window option property should **only** be used if the `BrowserView` or `WebContents`
+   * is shared with the main window and actions need to occur before the one-off window is destroyed.
+   *
+   * Electron's `close` event works similarly to the native `onbeforeunload` event in a web page, allowing actions to be run
+   * before the window is destroyed. It is distinct from the `closed` event, which is fired after the window has been destroyed.
+   * Destruction of the window will occur regardless of whether the `close` event is prevented or not.
+   *
+   * Preventing the default behavior of the `close` event allows for actions to be run before the window's destruction,
+   * but does not affect whether or not the window closes. To prevent the window from closing altogether, a value other than `undefined`
+   * must be returned from the `close` event handler. Currently, the only case where a value other than `undefined` is returned in the
+   * `close` event handler is when there is an error, so the return only exists to prevent a crash if an error occurs before the `close`
+   * event is emitted.
+   *
+   * To prevent memory leaks, Electron's native destruction of windows is very aggressive and will destroy instances of `BrowserView`
+   * and `WebContents` regardless of whether or not they are referenced elsewhere. This can have unintended consequences, such as the app crashing
+   * due to referencing an instance that no longer exists.
+   *
+   * For example, the platform app one-off window shares its `BrowserView` instance with the main window. In order to prevent the
+   * `BrowserView` instance from being destroyed when the one-off window is closed, the one-off window's reference to the `BrowserView` instance
+   * must be removed. This is done by preventing the default behavior of the `close` event, which allows the component to be unmounted
+   * and remove the `BrowserView` instance from the child window before it is destroyed.
+   *
    * @param options window options
    * @param windowId A unique window id.  If a window with that id
    * already exists, this function will focus the existing window instead.
@@ -459,6 +486,18 @@ export class WindowsService extends StatefulService<IWindowsState> {
     electron.ipcRenderer.sendSync('webContents-enableRemote', newWindow.webContents.id);
 
     newWindow.removeMenu();
+
+    // Destroying the BrowserView on window close is default behavior.
+    // To persist a BrowserView and its WebContents between the main and one off
+    // windows, prevent this default behavior. The `close` event is fired before the
+    // `closed` event, similar to the `beforeunload` event in a web page.
+    if (options.persistWebContents) {
+      newWindow.on('close', (e: Electron.Event) => {
+        e.preventDefault();
+        return e.defaultPrevented;
+      });
+    }
+
     newWindow.on('closed', () => {
       this.windowDestroyed.next(windowId);
       delete this.windows[windowId];

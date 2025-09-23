@@ -35,7 +35,7 @@ export default class GenericForm extends TsxComponent<GenericFormProps> {
     const errors = await this.$refs.form.validateAndGetErrors();
     for (const e of errors) {
       const inputs = this.$refs.form.getInputs();
-      const inputWithError = inputs.find((input) => {
+      const inputWithError = inputs.find(input => {
         return input.getOptions().uuid === e.field;
       });
 

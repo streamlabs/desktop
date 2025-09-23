@@ -25,6 +25,8 @@ export default class ObsFontSizeSelector extends ObsInput<number> {
   }
 
   get fontSizePresets() {
-    return [9, 10, 11, 12, 13, 14, 18, 24, 36, 48, 64, 72, 96, 144, 288];
+    // The value '256' was added for compatibility with the OBS,
+    // as it has '256' as the default value for a text with version greater than 1.
+    return [9, 10, 11, 12, 13, 14, 18, 24, 36, 48, 64, 72, 96, 144, 256, 288];
   }
 }

@@ -2,7 +2,14 @@ import moment from 'moment';
 import flatten from 'lodash/flatten';
 import * as remote from '@electron/remote';
 import { mutation, InheritMutations, ViewHandler } from '../core/stateful-service';
-import { IPlatformService, IGame, TPlatformCapability, IPlatformRequest, IPlatformState } from '.';
+import {
+  IPlatformService,
+  IGame,
+  TPlatformCapability,
+  IPlatformRequest,
+  IPlatformState,
+  TLiveDockFeature,
+} from '.';
 import { HostsService } from 'services/hosts';
 import { Inject } from 'services/core/injector';
 import { authorizedHeaders } from 'util/requests';
@@ -169,6 +176,12 @@ export class FacebookService
     'themes',
     'viewerCount',
   ]);
+  readonly liveDockFeatures = new Set<TLiveDockFeature>([
+    'chat-streaming',
+    'refresh-chat',
+    'dashboard',
+    'view-stream',
+  ]);
 
   authWindowOptions: Electron.BrowserWindowConstructorOptions = { width: 800, height: 800 };
 
@@ -248,7 +261,7 @@ export class FacebookService
     return this.state.streamPageUrl;
   }
 
-  get streamDashboardUrl(): string {
+  get dashboardUrl(): string {
     return this.state.streamDashboardUrl;
   }
 
@@ -427,11 +440,11 @@ export class FacebookService
             'openStreamIneligibleHelp',
           ),
         });
-        throwStreamError('FACEBOOK_STREAMING_DISABLED', e as any);
+        throwStreamError('FACEBOOK_STREAMING_DISABLED', { ...(e as any), platform: 'facebook' });
       }
 
       const details = error ? `${error.type} ${error.message}` : 'Connection failed';
-      throwStreamError('PLATFORM_REQUEST_FAILED', e as any, details);
+      throwStreamError('PLATFORM_REQUEST_FAILED', { ...(e as any), platform: 'facebook' }, details);
     }
   }
 

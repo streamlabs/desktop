@@ -9,6 +9,7 @@ import Tooltip from 'components-react/shared/Tooltip';
 import { SwitchInput } from 'components-react/shared/inputs';
 import { RadioInput } from 'components-react/shared/inputs/RadioInput';
 import cx from 'classnames';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 interface IRecordingSettingsProps {
   style?: CSSProperties;
@@ -16,6 +17,10 @@ interface IRecordingSettingsProps {
 }
 export default function RecordingSwitcher(p: IRecordingSettingsProps) {
   const { recording, toggleRecordingDisplay } = useGoLiveSettings();
+
+  const canRecordVertical = Services.IncrementalRolloutService.views.featureIsEnabled(
+    EAvailableFeatures.dualOutputRecording,
+  );
 
   const v = useVuex(() => ({
     isDualOutputMode: Services.DualOutputService.views.dualOutputMode,
@@ -47,7 +52,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
           checkmark
           disabled={v.useAiHighlighter}
         />
-        {v.isDualOutputMode && (
+        {v.isDualOutputMode && canRecordVertical && (
           <>
             <RadioInput
               name="recording-display"

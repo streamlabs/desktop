@@ -669,7 +669,7 @@ class SourceSelectorController {
         // only open video settings when toggling on dual output
         const skipShowVideoSettings = this.dualOutputService.views.dualOutputMode === true;
 
-        this.dualOutputService.actions.setDualOutputMode(
+        this.dualOutputService.actions.setDualOutputModeIfPossible(
           !this.dualOutputService.views.dualOutputMode,
           skipShowVideoSettings,
         );
@@ -708,7 +708,7 @@ class SourceSelectorController {
   handleAuth() {
     this.userService.actions.showLogin();
     const onboardingCompleted = Services.OnboardingService.onboardingCompleted.subscribe(() => {
-      Services.DualOutputService.actions.setDualOutputMode();
+      Services.DualOutputService.actions.setDualOutputModeIfPossible();
       Services.SettingsService.actions.showSettings('Video');
       onboardingCompleted.unsubscribe();
     });

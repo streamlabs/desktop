@@ -280,7 +280,7 @@ export class DragHandler {
     );
   }
 
-  private pageSpaceToCanvasSpace(vec: IVec2, display = 'horizontal') {
+  private pageSpaceToCanvasSpace(vec: IVec2, display: 'horizontal' | 'vertical' = 'horizontal') {
     const baseWidth = this.videoSettingsService.baseResolutions[display].baseWidth;
     const baseHeight = this.videoSettingsService.baseResolutions[display].baseHeight;
     return {

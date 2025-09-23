@@ -209,5 +209,9 @@
   "View all highlights": "View all highlights",
   "Your clipped highlights will appear here": "Your clipped highlights will appear here",
   "View highlight": "View highlight",
-  "AI detection in progress": "AI detection in progress"
+  "AI detection in progress": "AI detection in progress",
+  "YouTube Chapter Markers (for recording)": "YouTube Chapter Markers (for recording)",
+  "Export Markers": "Export Markers",
+  "Timeline starts from 01:00:00 (default)": "Timeline starts from 01:00:00 (default)",
+  "Export full highlight duration as marker range": "Export full highlight duration as marker range"
 }

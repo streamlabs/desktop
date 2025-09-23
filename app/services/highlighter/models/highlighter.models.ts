@@ -3,6 +3,7 @@ import {
   IHighlighterMilestone,
   EAiDetectionState,
   EGame,
+  IHighlight,
 } from './ai-highlighter.models';
 import { ITransitionInfo, IAudioInfo, IExportInfo, IVideoInfo } from './rendering.models';
 
@@ -112,6 +113,7 @@ export interface IHighlightedStream {
   abortController?: AbortController;
   path?: string;
   feedbackLeft?: boolean;
+  highlights?: IHighlight[];
 }
 
 // VIEW

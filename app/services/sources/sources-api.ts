@@ -142,6 +142,7 @@ export type TSourceType =
   | 'soundtrack_source'
   | 'mediasoupconnector'
   | 'wasapi_process_output_capture'
+  | 'smart_browser_source'
   | 'spout_capture';
 
 // Register new properties managers here
@@ -152,7 +153,8 @@ export type TPropertiesManager =
   | 'platformApp'
   | 'replay'
   | 'iconLibrary'
-  | 'highlighter';
+  | 'highlighter'
+  | 'smartBrowserSource';
 
 export interface ISourcesState {
   sources: Dictionary<ISource>;
@@ -174,6 +176,5 @@ export interface ISourceDisplayData {
   shortDesc?: string;
   link?: string;
   linkText?: string;
-  // TODO: make required if none are missing
-  group?: string;
+  group: string;
 }

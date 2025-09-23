@@ -2,10 +2,12 @@
   "Add Widgets": "Dodaj widżety",
   "Select the Streamlabs widgets you would like to activate for your stream. These will get automatically added to your scene.": "Wybierz widżety Streamlabs, które chciałbyś aktywować na swojej transmisji. Zostaną automatycznie dodane do Twojej sceny.",
   "Thanks viewers with notification popups": "Podziękuj widzom wyskakującymi powiadomieniami",
+  "Custom on-screen alerts to thank your loyal viewers for following, subbing, tipping and more.": "Niestandardowe powiadomienia na ekranie, które pozwalają podziękować lojalnym widzom za obserwowanie, subskrypcję, napiwki i nie tylko.",
   "Most recent events into your stream": "Najnowsze wydarzenia w Twojej transmisji",
   "A jar that catches bits, tips, and more": "Słoik, który łapie bity, napiwki i więcej",
   "Your channel's chat in your stream": "Czat Twojego kanału na transmisji",
   "Show off most recent donations to viewers": "Pochwal się przed widzami swoimi najnowszymi dotacjami",
+  "Show off the most recent tips from your viewers": "Pokaż najnowsze napiwki od Twoich widzów",
   "Give your viewers a donation target to help you reach": "Daj swoim widzom cel dotacji, który pomogą Ci osiągnąć",
   "Give your viewers a follower target to help you reach": "Daj swoim widzom cel obserwujących, który pomogą Ci osiągnąć",
   "Give your viewers a bit target to help you reach": "Daj swoim widzom cel bitów, który pomogą Ci osiągnąć",
@@ -70,6 +72,7 @@
   "Ember amount is at least <amount>": "Liczba wysłanych Embers wynosi przynajmniej <amount>",
   "Ember amount is exactly <amopunt>": "Liczba wysłanych Embers wynosi dokładnie <amopunt>",
   "Allow your viewers to donate to share media on your stream.": "Umożliwiaj swoim widzom wpłacanie datków za udostępnianie mediów w Twoim streamie.",
+  "Allow your viewers to tip to share videos on your stream.": "Pozwól widzom na dzielenie się filmami podczas Twojej transmisji za pomocą napiwków.",
   "Twitch Subscribers": "Subskrybenci Twitch",
   "YouTube Members": "Członkowie YouTube",
   "Media Share": "Udostępnianie mediów",
@@ -188,5 +191,9 @@
   "Superchat Goal": "Cel super czatu",
   "YouTube Superchats": "Super czaty na YouTube",
   "Custom Widget": "Widżet niestandardowy",
-  "Use HTML, CSS, and JavaScript to create a widget with custom functionality": "Użyj kodu HTML, CSS i JavaScript, żeby stworzyć widżet o niestandardowej funkcjonalności"
+  "Use HTML, CSS, and JavaScript to create a widget with custom functionality": "Użyj kodu HTML, CSS i JavaScript, żeby stworzyć widżet o niestandardowej funkcjonalności",
+  "Interactive": "Interakcja",
+  "Goals": "Cele",
+  "Flair": "Klasa",
+  "Charity": "Działalność charytatywna"
 }

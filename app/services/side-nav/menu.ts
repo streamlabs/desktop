@@ -99,7 +99,7 @@ export class SideNavService extends PersistentStatefulService<ISideNavServiceSta
 
   // Since this service persists menu items, for now please change this version
   // when changes are made to navbar
-  version = '1';
+  version = '2';
 
   static defaultState: ISideNavServiceState = {
     version: '0',
@@ -293,6 +293,8 @@ export class SideNavService extends PersistentStatefulService<ISideNavServiceSta
         menuItems: this.state[ENavName.BottomNav].menuItems.map((menuItem: IMenuItem) => {
           if (menuItem.key === EMenuItemKey.Dashboard) {
             return {
+              // TODO: index
+              // @ts-ignore
               ...this.state[ENavName.BottomNav].menuItems[EMenuItemKey.Dashboard],
               isExpanded: true,
             };

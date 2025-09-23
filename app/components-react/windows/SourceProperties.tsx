@@ -26,7 +26,6 @@ export default function SourceProperties() {
   const [properties, setProperties] = useState(() =>
     source ? source.getPropertiesFormData() : [],
   );
-  const hideStyleBlockers = useVuex(() => WindowsService.state.child.hideStyleBlockers);
 
   // close the window if the source has been deleted
   useSubscription(SourcesService.sourceRemoved, removedSource => {
@@ -62,12 +61,7 @@ export default function SourceProperties() {
   return (
     <ModalLayout
       scrollable
-      fixedChild={
-        source &&
-        !hideStyleBlockers && (
-          <Display sourceId={source.sourceId} style={{ position: 'relative' }} />
-        )
-      }
+      fixedChild={source && <Display sourceId={source.sourceId} style={{ position: 'relative' }} />}
     >
       <ObsForm
         value={properties}

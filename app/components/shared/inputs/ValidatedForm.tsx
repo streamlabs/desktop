@@ -38,9 +38,8 @@ export default class ValidatedForm extends TsxComponent<ValidatedFormProps> {
   validated = new Subject<ErrorField[]>();
   validationScopeId = uuid();
 
-  getInputs(children?: Vue[]): BaseInput<any, IInputMetadata>[] {
-    // tslint:disable-next-line:no-parameter-reassignment TODO
-    children = children || this.$children;
+  getInputs(propChildren?: Vue[]): BaseInput<any, IInputMetadata>[] {
+    const children = propChildren || this.$children;
     const inputs: BaseInput<any, IInputMetadata>[] = [];
     children.forEach(child => {
       if (child instanceof BaseInput) inputs.push(child);
@@ -52,9 +51,8 @@ export default class ValidatedForm extends TsxComponent<ValidatedFormProps> {
   /**
    * get nested forms
    */
-  getForms(children?: Vue[]): ValidatedForm[] {
-    // tslint:disable-next-line:no-parameter-reassignment TODO
-    children = children || this.$children;
+  getForms(propChildren?: Vue[]): ValidatedForm[] {
+    const children = propChildren || this.$children;
     const forms: ValidatedForm[] = [];
     children.forEach(child => {
       if (child instanceof ValidatedForm) {

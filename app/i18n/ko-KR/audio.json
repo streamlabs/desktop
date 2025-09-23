@@ -42,5 +42,7 @@
   "Desktop Audio Device 2": "데스크톱 오디오 디바이스 2",
   "Mic/Auxiliary Device 1": "마이크/보조 디바이스 1",
   "Mic/Auxiliary Device 2": "마이크/보조 디바이스 2",
-  "Mic/Auxiliary Device 3": "마이크/보조 디바이스 3"
+  "Mic/Auxiliary Device 3": "마이크/보조 디바이스 3",
+  "Recording Audio Encoder": "녹화 오디오 인코더",
+  "Enable Muted Notifications": "음소거 알림 활성화"
 }

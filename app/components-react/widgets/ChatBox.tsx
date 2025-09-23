@@ -4,6 +4,8 @@ import { WidgetLayout } from './common/WidgetLayout';
 import { $t } from '../../services/i18n';
 import { metadata } from '../shared/inputs/metadata';
 import FormFactory from 'components-react/shared/inputs/FormFactory';
+import { inject } from 'slap';
+import { RecentEventsService } from 'app-services';
 
 interface IChatBoxState extends IWidgetCommonState {
   data: {
@@ -44,6 +46,8 @@ export function ChatBox() {
 }
 
 export class ChatBoxModule extends WidgetModule<IChatBoxState> {
+  recentEventsService = inject(RecentEventsService);
+
   get meta() {
     const result = {
       theme: metadata.list({
@@ -120,11 +124,17 @@ export class ChatBoxModule extends WidgetModule<IChatBoxState> {
         alert_enabled: metadata.switch({
           label: $t('Chat Notifications'),
           tooltip: $t('Trigger a sound to notify you when there is new chat activity'),
+          onChange: (value: boolean) => this.handleMuteChatNotifs(value),
         }),
       };
     }
 
     return result;
+  }
+
+  handleMuteChatNotifs(val: boolean) {
+    this.recentEventsService.actions.setMuteChatNotifs(val);
+    this.updateSetting('alert_enabled')(val);
   }
 
   // The server sends and recieves these duration fields at different precision

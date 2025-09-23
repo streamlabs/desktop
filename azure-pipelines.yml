@@ -8,7 +8,7 @@ variables:
 jobs:
   - job: Test
     pool:
-      vmImage: 'windows-2022'
+      name: 'Streamlabs Desktop Frontend'
 
     workspace:
       clean: resources
@@ -43,7 +43,7 @@ jobs:
   - job: Check_eslint_and_strict_nulls_regression
 
     pool:
-      vmImage: 'windows-2022'
+      name: 'Streamlabs Desktop Frontend'
 
     workspace:
       clean: resources
@@ -68,6 +68,7 @@ jobs:
   - job: macOS
 
     pool:
+      name: 'Streamlabs Desktop Frontend'
       vmImage: macOS-latest
 
     workspace:

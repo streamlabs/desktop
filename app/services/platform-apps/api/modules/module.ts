@@ -11,6 +11,7 @@ export enum EApiPermissions {
   ExternalLinks = 'slobs.external-links',
   Notifications = 'slobs.notifications',
   Hotkeys = 'slobs.hotkeys',
+  Vision = 'sld.vision',
 }
 
 /**
@@ -83,6 +84,11 @@ export abstract class Module {
    * edit this directly, and instead use the @apiEvent decorator.
    */
   static apiEvents: string[];
+
+  /**
+   * Whether this module can only be accessed by highly privileged apps
+   */
+  requiresHighlyPrivileged = false;
 
   /**
    * Takes a patch object and validates it against the required keys.

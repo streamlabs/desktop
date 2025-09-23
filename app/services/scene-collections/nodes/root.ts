@@ -148,6 +148,8 @@ export class RootNode extends Node<ISchema, {}> {
   migrate(version: number) {
     // Changed name of transition node in version 2
     if (version < 2) {
+      // TODO: index
+      // @ts-ignore
       this.data.transitions = this.data['transition'];
     }
 

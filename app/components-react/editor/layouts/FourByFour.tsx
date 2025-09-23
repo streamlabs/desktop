@@ -1,10 +1,10 @@
 import React from 'react';
 import cx from 'classnames';
-import useLayout, { LayoutProps } from './hooks';
+import useLayout, { ILayoutProps } from './hooks';
 import ResizeBar from 'components-react/root/ResizeBar';
 import styles from './Layouts.m.less';
 
-export function FourByFour(p: React.PropsWithChildren<LayoutProps>) {
+export function FourByFour(p: ILayoutProps) {
   const { mins, bars, resizes, calculateMax, setBar, componentRef } = useLayout(
     [['1'], ['2', '3'], ['4', '5']],
     false,
@@ -13,7 +13,7 @@ export function FourByFour(p: React.PropsWithChildren<LayoutProps>) {
   );
 
   return (
-    <div className={styles.rows} ref={componentRef}>
+    <div className={cx(styles.rows, p.className)} ref={componentRef}>
       <div
         className={styles.cell}
         style={{ height: `${100 - (resizes.bar1 + resizes.bar2) * 100}%` }}

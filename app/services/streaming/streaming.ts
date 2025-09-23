@@ -80,57 +80,8 @@ import { byOS, OS } from 'util/operating-systems';
 import { DualOutputService } from 'services/dual-output';
 import { capitalize } from 'lodash';
 import { YoutubeService } from 'app-services';
-
-enum EOBSOutputType {
-  Streaming = 'streaming',
-  Recording = 'recording',
-  ReplayBuffer = 'replay-buffer',
-}
-
-const outputType = (type: EOBSOutputType) =>
-  ({
-    [EOBSOutputType.Streaming]: $t('Streaming'),
-    [EOBSOutputType.Recording]: $t('Recording'),
-    [EOBSOutputType.ReplayBuffer]: $t('Replay Buffer'),
-  }[type]);
-
-enum EOBSOutputSignal {
-  Starting = 'starting',
-  Start = 'start',
-  Stopping = 'stopping',
-  Stop = 'stop',
-  Activate = 'activate',
-  Deactivate = 'deactivate',
-  Reconnect = 'reconnect',
-  ReconnectSuccess = 'reconnect_success',
-  Wrote = 'wrote',
-  Writing = 'writing',
-  WriteError = 'writing_error',
-}
-
-enum EOutputSignalState {
-  Saving = 'saving',
-  Starting = 'starting',
-  Start = 'start',
-  Stopping = 'stopping',
-  Stop = 'stop',
-  Activate = 'activate',
-  Deactivate = 'deactivate',
-  Reconnect = 'reconnect',
-  ReconnectSuccess = 'reconnect_success',
-  Running = 'running',
-  Wrote = 'wrote',
-  Writing = 'writing',
-  WriteError = 'writing_error',
-}
-
-export interface IOBSOutputSignalInfo {
-  type: EOBSOutputType;
-  signal: EOBSOutputSignal;
-  code: EOutputCode;
-  error: string;
-  service: string; // 'default' | 'vertical'
-}
+import { EOBSOutputType, EOBSOutputSignal, IOBSOutputSignalInfo } from 'services/core/signals';
+import { SignalsService } from 'services/signals-manager';
 
 type TOBSOutputType = 'streaming' | 'recording' | 'replayBuffer';
 
@@ -139,6 +90,14 @@ interface IOutputContext {
   recording: ISimpleRecording | IAdvancedRecording;
   replayBuffer: ISimpleReplayBuffer | IAdvancedReplayBuffer;
 }
+
+const outputType = (type: EOBSOutputType) =>
+  ({
+    [EOBSOutputType.Streaming]: $t('Streaming'),
+    [EOBSOutputType.Recording]: $t('Recording'),
+    [EOBSOutputType.ReplayBuffer]: $t('Replay Buffer'),
+    [EOBSOutputType.VirtualCam]: $t('Virtual Cam'),
+  }[type]);
 
 export class StreamingService
   extends StatefulService<IStreamingServiceState>
@@ -159,6 +118,7 @@ export class StreamingService
   @Inject() private dualOutputService: DualOutputService;
   @Inject() private youtubeService: YoutubeService;
   @Inject() private settingsService: SettingsService;
+  @Inject() private signalsService: SignalsService;
 
   streamingStatusChange = new Subject<EStreamingState>();
   recordingStatusChange = new Subject<ERecordingState>();
@@ -209,7 +169,7 @@ export class StreamingService
   };
 
   init() {
-    NodeObs.OBS_service_connectOutputSignals((info: IOBSOutputSignalInfo) => {
+    this.signalsService.addCallback((info: IOBSOutputSignalInfo) => {
       this.signalInfoChanged.next(info);
       this.handleOBSOutputSignal(info);
     });
@@ -298,28 +258,35 @@ export class StreamingService
    * Determine if platform requires an ultra subscription for streaming
    */
   isPrimeRequired(platform: TPlatform): boolean {
-    // users can always stream to tiktok
-    if (platform === 'tiktok') return false;
+    const { isPrime } = this.userService;
 
-    if (!this.views.isPrimaryPlatform(platform) && !this.userService.isPrime) {
+    // Default branch has been changed to required (true) to avoid logic issues
+    if (isPrime) {
+      return false;
+    }
+
+    // users that used multistream+tiktok for free before can always stream to tiktok
+    if (platform === 'tiktok' && this.restreamService.tiktokGrandfathered) {
+      return false;
+    }
+
+    // users should be able to stream to their primary
+    if (this.views.isPrimaryPlatform(platform)) {
+      return false;
+    } else {
+      // grandfathered users allowed to stream Twitch/Youtube (primary) + FB
       const primaryPlatform = this.userService.state.auth?.primaryPlatform;
 
-      // grandfathered users allowed to stream primary + FB
-      if (!this.restreamService.state.grandfathered) {
-        return false;
-      } else if (!this.restreamService.state.grandfathered) {
-        return true;
-      } else if (
+      const allowFacebook =
         isEqual([primaryPlatform, platform], ['twitch', 'facebook']) ||
-        isEqual([primaryPlatform, platform], ['youtube', 'facebook'])
-      ) {
+        isEqual([primaryPlatform, platform], ['youtube', 'facebook']);
+
+      if (this.restreamService.facebookGrandfathered && allowFacebook) {
         return false;
-      } else {
-        return true;
       }
     }
 
-    return false;
+    return true;
   }
 
   /**
@@ -385,35 +352,68 @@ export class StreamingService
     }
 
     /**
-     * SET MULTISTREAM SETTINGS
+     * Saved any settings updated during the `beforeGoLive` process for the platforms.
+     * This is important for dual streaming and multistreaming.
      */
-    if (this.views.isMultiplatformMode) {
-      // setup restream
+    this.SET_GO_LIVE_SETTINGS(this.views.savedSettings);
 
-      // check the Restream service is available
-      let ready = false;
-      try {
-        await this.runCheck(
-          'setupMultistream',
-          async () => (ready = await this.restreamService.checkStatus()),
-        );
-      } catch (e: unknown) {
-        // don't set error to allow multistream setup to continue in go live window
-        console.error('Error fetching restreaming service', e);
-      }
-      // Assume restream is down
-      if (!ready) {
-        console.error('Restream service is not available');
-        this.setError('RESTREAM_DISABLED');
-        return;
-      }
+    /**
+     * SET DUAL OUTPUT SETTINGS
+     */
+    if (this.views.isDualOutputMode) {
+      // This handles setting up displays that are streaming to a single target.
+      // Note: Because the horizontal video context is the default, it does not need
+      // to be validated.
 
-      // update restream settings
       try {
-        await this.runCheck('setupMultistream', async () => {
-          // enable restream on the backend side
-          if (!this.restreamService.state.enabled) await this.restreamService.setEnabled(true);
-          await this.restreamService.beforeGoLive();
+        await this.runCheck('setupDualOutput', async () => {
+          // If a custom destination is enabled for single streaming to the vertical display
+          // move the OBS context to custom ingest mode (when multistreaming this is
+          // handled by the restream service). Get the current settings for custom destinations
+          // because they may have been updated in the beforeGoLive platform hooks
+          const currentCustomDestinations = this.views.settings.customDestinations;
+
+          // If the vertical display only has one target and it is a custom destination,
+          // the vertical display should be migrated to custom ingest mode.
+          const isVerticalCustomDestination =
+            this.views.activeDisplayDestinations.vertical.length === 1 &&
+            this.views.activeDisplayPlatforms.vertical.length === 0;
+
+          // Alternatively, if the vertical display only has one target and it is for a dual stream
+          // the vertical display should be migrated to custom ingest mode.
+          const isVerticalDualStreamDestination =
+            this.views.hasDualStream &&
+            this.views.activeDisplayPlatforms.vertical.length === 1 &&
+            currentCustomDestinations.length > 0;
+
+          if (isVerticalCustomDestination || isVerticalDualStreamDestination) {
+            // set the OBS context to custom ingest mode in order to update settings
+            this.streamSettingsService.setSettings(
+              {
+                streamType: 'rtmp_custom',
+              },
+              'vertical' as TDisplayType,
+            );
+
+            currentCustomDestinations.forEach(destination => {
+              if (!destination.enabled || destination.display !== 'vertical') return;
+
+              this.streamSettingsService.setSettings(
+                {
+                  key: destination.streamKey,
+                  server: destination.url,
+                },
+                'vertical' as TDisplayType,
+              );
+
+              destination.video = this.videoSettingsService.contexts.vertical;
+            });
+
+            const updatedSettings = { ...settings, currentCustomDestinations };
+            this.streamSettingsService.setSettings({ goLiveSettings: updatedSettings });
+          }
+
+          await Promise.resolve();
         });
       } catch (e: unknown) {
         // Handle rendering a prompt for enabling permissions to generate a stream key for Kick
@@ -421,32 +421,39 @@ export class StreamingService
 
         const error = this.handleTypedStreamError(
           e,
-          'RESTREAM_SETUP_FAILED',
-          'Failed to setup restream',
+          'DUAL_OUTPUT_SETUP_FAILED',
+          'Failed to setup dual output',
         );
         this.setError(error);
         return;
       }
-    }
 
-    /**
-     * SET DUAL OUTPUT SETTINGS
-     */
-    if (this.views.isDualOutputMode) {
-      const horizontalDestinations: string[] = this.views.activeDisplayDestinations.horizontal;
-      const horizontalPlatforms: TPlatform[] = this.views.activeDisplayPlatforms.horizontal;
-      const horizontalStream = horizontalDestinations.concat(horizontalPlatforms as string[]);
-
-      const verticalDestinations: string[] = this.views.activeDisplayDestinations.vertical;
-      const verticalPlatforms: TPlatform[] = this.views.activeDisplayPlatforms.vertical;
-      const verticalStream = verticalDestinations.concat(verticalPlatforms as string[]);
+      // record dual output usage
+      const horizontalStream = this.views.horizontalStream;
+      const verticalStream = this.views.verticalStream;
 
       const allPlatforms = this.views.enabledPlatforms;
       const allDestinations = this.views.customDestinations
         .filter(dest => dest.enabled)
         .map(dest => dest.url);
 
-      // record dual output analytics event
+      if (Utils.isDevMode()) {
+        console.log(
+          'Dual Output Setup\n',
+          'Platforms:',
+          JSON.stringify(allPlatforms),
+          '\n',
+          'Destinations:',
+          JSON.stringify(allDestinations),
+          '\n',
+          'Horizontal:',
+          JSON.stringify(horizontalStream),
+          '\n',
+          'Vertical',
+          JSON.stringify(verticalStream),
+        );
+      }
+
       this.usageStatisticsService.recordAnalyticsEvent('DualOutput', {
         type: 'StreamingDualOutput',
         platforms: JSON.stringify(allPlatforms),
@@ -454,99 +461,69 @@ export class StreamingService
         horizontal: JSON.stringify(horizontalStream),
         vertical: JSON.stringify(verticalStream),
       });
+    }
 
-      // if needed, set up multistreaming for dual output
-      const shouldMultistreamDisplay = this.views.getShouldMultistreamDisplay(settings);
+    /**
+     * SET MULTISTREAM SETTINGS
+     */
+    if (this.views.shouldSetupRestream) {
+      // In single output mode, this sets up multistreaming
+      // In dual output mode, this sets up streaming displays to multiple targets
 
-      const destinationDisplays = this.views.activeDisplayDestinations;
+      const checkName = this.views.isMultiplatformMode ? 'setupMultistream' : 'setupDualOutput';
+      const errorType = this.views.isMultiplatformMode
+        ? 'RESTREAM_DISABLED'
+        : 'DUAL_OUTPUT_RESTREAM_DISABLED';
+      const failureType = this.views.isMultiplatformMode
+        ? 'RESTREAM_SETUP_FAILED'
+        : 'DUAL_OUTPUT_SETUP_FAILED';
 
-      for (const display in shouldMultistreamDisplay) {
-        const key = display as keyof typeof shouldMultistreamDisplay;
-        // set up restream service to multistream display
-        if (shouldMultistreamDisplay[key]) {
-          // set up restream service to multistream display
-          // check the restream service is available
-          let ready = false;
-          try {
-            await this.runCheck(
-              'setupDualOutput',
-              async () => (ready = await this.restreamService.checkStatus()),
-            );
-          } catch (e: unknown) {
-            console.error('Error fetching restreaming service', e);
-          }
-          // Assume restream is down
-          if (!ready) {
-            console.error('Restream service is not available in dual output setup');
-            this.setError('DUAL_OUTPUT_RESTREAM_DISABLED');
-            return;
-          }
-
-          // update restream settings
-          try {
-            await this.runCheck('setupDualOutput', async () => {
-              // enable restream on the backend side
-              if (!this.restreamService.state.enabled) await this.restreamService.setEnabled(true);
-
-              const mode: TOutputOrientation = display === 'horizontal' ? 'landscape' : 'portrait';
-              await this.restreamService.beforeGoLive(display as TDisplayType, mode);
-            });
-          } catch (e: unknown) {
-            const error = this.handleTypedStreamError(
-              e,
-              'DUAL_OUTPUT_SETUP_FAILED',
-              'Failed to setup dual output restream',
-            );
-            this.setError(error);
-            return;
-          }
-        } else if (destinationDisplays[key].length > 0) {
-          // if a custom destination is enabled for single streaming
-          // move the relevant OBS context to custom ingest mode
-
-          const destination = this.views.customDestinations.find(d => d.display === display);
-          try {
-            await this.runCheck('setupDualOutput', async () => {
-              if (destination) {
-                this.streamSettingsService.setSettings(
-                  {
-                    streamType: 'rtmp_custom',
-                  },
-                  display as TDisplayType,
-                );
-                this.streamSettingsService.setSettings(
-                  {
-                    key: destination.streamKey,
-                    server: destination.url,
-                  },
-                  display as TDisplayType,
-                );
-              } else {
-                console.error('Custom destination not found');
-              }
-              await Promise.resolve();
-            });
-          } catch (e: unknown) {
-            const error = this.handleTypedStreamError(
-              e,
-              'DUAL_OUTPUT_SETUP_FAILED',
-              'Failed to setup dual output custom destination',
-            );
-            this.setError(error);
-            return;
-          }
-        }
+      if (Utils.isDevMode()) {
+        console.log(
+          'Restream Setup\n',
+          'Displays:',
+          this.views.displaysToRestream,
+          '\n',
+          'Horizontal:',
+          this.views.horizontalStream,
+          '\n',
+          'Vertical',
+          this.views.verticalStream,
+        );
       }
 
-      // finish setting up dual output
+      // check the Restream service is available
+      let ready = false;
       try {
-        await this.runCheck('setupDualOutput', async () => await Promise.resolve());
-      } catch (e: unknown) {
-        const error = this.handleTypedStreamError(
-          e,
-          'DUAL_OUTPUT_SETUP_FAILED',
-          'Failed to setup dual output',
+        await this.runCheck(
+          checkName,
+          async () => (ready = await this.restreamService.checkStatus()),
         );
+      } catch (e: unknown) {
+        // don't set error to allow multistream setup to continue in go live window
+        console.error('Error fetching restreaming service', e);
+      }
+
+      // Assume restream is down
+      if (!ready) {
+        console.error('Restream service is not available');
+        this.setError(errorType);
+        return;
+      }
+
+      // update restream settings
+      try {
+        await this.runCheck(checkName, async () => {
+          // enable restream on the backend side
+          if (!this.restreamService.state.enabled) await this.restreamService.setEnabled(true);
+
+          await this.restreamService.beforeGoLive();
+        });
+      } catch (e: unknown) {
+        // Handle rendering a prompt for enabling permissions to generate a stream key for Kick
+        if (this.state.info.error?.type === 'KICK_STREAM_KEY_MISSING') return;
+
+        const error = this.handleTypedStreamError(e, failureType, 'Failed to setup restream');
         this.setError(error);
         return;
       }
@@ -614,7 +591,7 @@ export class StreamingService
         e.type === 'TIKTOK_USER_BANNED' &&
         this.views.enabledPlatforms.length === 1
       ) {
-        throwStreamError('TIKTOK_USER_BANNED', e);
+        throwStreamError('TIKTOK_USER_BANNED', { ...e, platform: 'tiktok' });
       }
     }
   }
@@ -629,10 +606,11 @@ export class StreamingService
           ? 'SETTINGS_UPDATE_FAILED'
           : e.type || 'UNKNOWN_ERROR';
       this.setError(e, platform);
-      console.log('handleSetupPlatformError e', e);
     } else {
       this.setError('SETTINGS_UPDATE_FAILED', platform);
     }
+
+    console.error('Error setting up platform', platform, e);
     return;
   }
 
@@ -932,7 +910,7 @@ export class StreamingService
     if (this.state.streamingStatus !== EStreamingState.Offline) return;
 
     if (enabled) {
-      this.dualOutputService.actions.setDualOutputMode(true, true);
+      this.dualOutputService.actions.setDualOutputModeIfPossible(true, true);
       this.usageStatisticsService.recordFeatureUsage('DualOutput');
     }
 
@@ -1391,6 +1369,14 @@ export class StreamingService
         this.streamingStatusChange.next(EStreamingState.Starting);
       } else if (info.signal === EOBSOutputSignal.Stop) {
         this.SET_STREAMING_STATUS(EStreamingState.Offline, time);
+
+        // In dual output mode, it is possible that one of the contexts has gone live
+        // while the other one has failed to start. Cleanup the contexts that have been started
+        if (this.views.isDualOutputMode && info.code !== EOutputCode.Success) {
+          NodeObs.OBS_service_stopStreaming(true, 'horizontal');
+          NodeObs.OBS_service_stopStreaming(true, 'vertical');
+        }
+
         this.RESET_STREAM_INFO();
         this.rejectStartStreaming();
         this.streamingStatusChange.next(EStreamingState.Offline);
@@ -1432,6 +1418,10 @@ export class StreamingService
       }
 
       if (info.signal === EOBSOutputSignal.Wrote) {
+        this.usageStatisticsService.recordAnalyticsEvent('RecordingStatus', {
+          status: nextState,
+          code: info.code,
+        });
         const filename = NodeObs.OBS_service_getLastRecording();
         const parsedFilename = byOS({
           [OS.Mac]: filename,
@@ -1577,6 +1567,7 @@ export class StreamingService
       [EOBSOutputType.Streaming]: $t('Streaming Error'),
       [EOBSOutputType.Recording]: $t('Recording Error'),
       [EOBSOutputType.ReplayBuffer]: $t('Replay Buffer Error'),
+      [EOBSOutputType.VirtualCam]: $t('Virtual Cam Error'),
     }[info.type];
 
     if (linkToDriverInfo) buttons.push($t('Learn More'));

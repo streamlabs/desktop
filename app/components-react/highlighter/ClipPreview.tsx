@@ -41,7 +41,7 @@ export default function ClipPreview(props: {
   }
 
   function setEnabled(enabled: boolean) {
-    HighlighterService.actions.enableClip(v.clip.path, enabled);
+    HighlighterService.actions.manuallyEnableClip(v.clip.path, enabled, props.streamId);
   }
 
   return (

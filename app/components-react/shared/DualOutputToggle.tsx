@@ -57,7 +57,7 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
     }
 
     // toggle dual output
-    DualOutputService.actions.setDualOutputMode(!v.dualOutputMode, true, true);
+    DualOutputService.actions.setDualOutputModeIfPossible(!v.dualOutputMode, true, true);
 
     if (v.dualOutputMode) {
       UsageStatisticsService.recordFeatureUsage('DualOutput');

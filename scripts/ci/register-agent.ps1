@@ -26,7 +26,7 @@ cd $workingDir
 
 # register aggent in the pool
 if ($command -ne 'remove') {
- $pool = 'Default'
+ $pool = 'Streamlabs Desktop Frontend'
  $publicIp = (Invoke-RestMethod ipinfo.io/ip).trim()
   .\config --unattended --url https://dev.azure.com/streamlabs --auth pat --token $token --agent "$env:computername $publicIp" --pool $pool
  }

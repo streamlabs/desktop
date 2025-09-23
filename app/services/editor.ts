@@ -287,6 +287,8 @@ export class EditorService extends StatefulService<IEditorServiceState> {
       };
 
       const options = {
+        // TODO: index
+        // @ts-ignore
         ...optionsMap[name],
         lockRatio: !event.shiftKey,
       };
@@ -406,7 +408,11 @@ export class EditorService extends StatefulService<IEditorServiceState> {
     // resizeRegion is opposite the anchor point
     const oppositePointsMap = { 0: 1, 0.5: 0.5, 1: 0 };
     const resizeRegionPosition = v2(
+      // TODO: index
+      // @ts-ignore
       oppositePointsMap[AnchorPositions[opts.anchor].x],
+      // TODO: index
+      // @ts-ignore
       oppositePointsMap[AnchorPositions[opts.anchor].y],
     );
 

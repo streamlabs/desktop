@@ -172,7 +172,9 @@ export default function StreamCard({
               }}
             >
               <div className={styles.titleDateWrapper}>
-                <h2 className={styles.streamcardTitle}>{stream.title}</h2>
+                <h2 className={styles.streamcardTitle} style={{ maxWidth: '200px' }}>
+                  {stream.title}
+                </h2>
                 <p style={{ margin: 0, fontSize: '12px' }}>
                   {new Date(stream.date).toDateString()}
                 </p>

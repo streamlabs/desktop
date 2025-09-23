@@ -5,7 +5,9 @@ import {
   IPlatformRequest,
   IPlatformService,
   IPlatformState,
+  TPlatform,
   TPlatformCapability,
+  TLiveDockFeature,
 } from './index';
 import { authorizedHeaders, jfetch } from '../../util/requests';
 import { StreamError, throwStreamError } from '../streaming/stream-error';
@@ -69,9 +71,9 @@ interface IKickStreamInfoResponse {
       name: string;
       thumbnail: string;
     };
-    stream: {
-      viewer_count: number;
-    };
+  };
+  stream: {
+    viewer_count: number;
   };
 }
 
@@ -122,6 +124,11 @@ export class KickService
   readonly platform = 'kick';
   readonly displayName = 'Kick';
   readonly capabilities = new Set<TPlatformCapability>(['title', 'chat', 'game', 'viewerCount']);
+  readonly liveDockFeatures = new Set<TLiveDockFeature>([
+    'view-stream',
+    'refresh-chat',
+    'chat-streaming',
+  ]);
 
   authWindowOptions: Electron.BrowserWindowConstructorOptions = {
     width: 600,
@@ -259,6 +266,7 @@ export class KickService
         const defaultError = {
           status: 403,
           statusText: 'Unable to start Kick stream.',
+          platform: 'kick' as TPlatform,
         };
 
         if (!e) throwStreamError('PLATFORM_REQUEST_FAILED', defaultError);
@@ -271,7 +279,7 @@ export class KickService
 
         // check if the error is an IKickError
         if (typeof e === 'object' && e.hasOwnProperty('result')) {
-          const error = e as IKickError;
+          const error = { ...(e as IKickError), platform: 'kick' as TPlatform };
 
           if (error.result && error.result.data.code === 401) {
             const message = error.statusText !== '' ? error.statusText : error.result.data.message;
@@ -328,6 +336,7 @@ export class KickService
             {
               status: e.status,
               statusText: message,
+              platform: 'kick',
             },
             e.result.data.message,
           );
@@ -415,6 +424,7 @@ export class KickService
           throwStreamError('PLATFORM_REQUEST_FAILED', {
             status: 400,
             statusText: 'Failed to update Kick channel info',
+            platform: 'kick',
           });
         }
       })
@@ -425,8 +435,8 @@ export class KickService
 
   async fetchViewerCount(): Promise<number> {
     const resp = await this.fetchStreamInfo();
-    if (resp && (resp as IKickStreamInfoResponse).channel) {
-      return (resp as IKickStreamInfoResponse).channel.stream.viewer_count;
+    if (resp && (resp as IKickStreamInfoResponse).stream) {
+      return (resp as IKickStreamInfoResponse).stream.viewer_count;
     } else {
       return 0;
     }

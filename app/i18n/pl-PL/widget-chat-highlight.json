@@ -12,6 +12,7 @@
   "Name Text Color": "Kolor tekstu nazwy",
   "Name Background Color": "Kolor tła nazwy",
   "Highlight chat messages from your viewers on your stream.": "Wyróżnij wiadomości widzów na czacie podczas transmisji.",
+  "Pin and highlight chat messages from your viewers on your stream.": "Przypinaj i wyróżniaj wiadomości od widzów na czasie podczas transmisji.",
   "A duration of 0 is indefinite": "Czas trwania 0 oznacza nieokreślony",
   "Use this widget by hovering over the right side of a chat message to see a thumbtack icon. Clicking the icon will pin the message to the widget for its duration, or until you click the unpin button.": "Skorzystaj z tego widżetu najeżdżając myszą na prawą stronę wiadomości na czacie, by wyświetlić ikonę pinezki. Kliknięcie tej ikony spowoduje przypięcie wiadomości do widżetu na określony czas lub do momentu kliknięcia przycisku odpięcia."
 }

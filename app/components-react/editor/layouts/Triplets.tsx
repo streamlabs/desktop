@@ -1,10 +1,11 @@
 import React from 'react';
 import cx from 'classnames';
-import useLayout, { LayoutProps } from './hooks';
+import useLayout, { ILayoutProps } from './hooks';
 import ResizeBar from 'components-react/root/ResizeBar';
 import styles from './Layouts.m.less';
+import { TLayoutSlot } from 'services/layout';
 
-export function Triplets(p: React.PropsWithChildren<LayoutProps>) {
+export function Triplets(p: ILayoutProps) {
   const { mins, bars, resizes, calculateMax, setBar, componentRef } = useLayout(
     [
       ['1', '4'],
@@ -17,7 +18,7 @@ export function Triplets(p: React.PropsWithChildren<LayoutProps>) {
   );
 
   return (
-    <div className={cx(styles.columns, styles.sidePadded)} ref={componentRef}>
+    <div className={cx(styles.columns, styles.sidePadded, p.className)} ref={componentRef}>
       <ResizeBar
         position="left"
         value={bars.bar1}
@@ -29,7 +30,7 @@ export function Triplets(p: React.PropsWithChildren<LayoutProps>) {
           className={styles.stacked}
           style={{ width: `${100 - (resizes.bar1 + resizes.bar2) * 100}%` }}
         >
-          {['1', '4'].map(slot => (
+          {['1', '4'].map((slot: TLayoutSlot) => (
             <div key={slot} className={styles.cell}>
               {p.children?.[slot] || <></>}
             </div>
@@ -37,7 +38,7 @@ export function Triplets(p: React.PropsWithChildren<LayoutProps>) {
         </div>
       </ResizeBar>
       <div className={styles.stacked} style={{ width: `${resizes.bar1 * 100}%` }}>
-        {['2', '5'].map(slot => (
+        {['2', '5'].map((slot: TLayoutSlot) => (
           <div key={slot} className={styles.cell}>
             {p.children?.[slot] || <></>}
           </div>
@@ -52,7 +53,7 @@ export function Triplets(p: React.PropsWithChildren<LayoutProps>) {
         transformScale={1}
       >
         <div className={styles.stacked} style={{ width: `${resizes.bar2 * 100}%` }}>
-          {['3', '6'].map(slot => (
+          {['3', '6'].map((slot: TLayoutSlot) => (
             <div key={slot} className={styles.cell}>
               {p.children?.[slot] || <></>}
             </div>
