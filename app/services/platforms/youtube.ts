@@ -284,27 +284,34 @@ export class YoutubeService
       return await platformAuthorizedRequest<T>('youtube', reqInfo);
     } catch (e: unknown) {
       console.error('Failed Youtube API request', e);
+      const error = e as any;
 
-      let details = (e as any).result?.error?.message;
-      if (!details) details = $t('Connection Failed');
-      if ((e as any)?.url ?? (e as any)?.url.split('/').includes('token')) {
-        (e as any).statusText = `${$t('Authentication Error')}: ${details}`;
+      let details = $t('Connection Failed');
+      if (error?.message) {
+        details = error.message;
+      }
+
+      if (error?.url ?? error?.url.split('/').includes('token')) {
+        error.statusText = `${$t('Authentication Error')}: ${details}`;
       }
 
       // if the rate limit exceeded then repeat request after 3s delay
-      if (details === 'User requests exceed the rate limit.' && repeatRequestIfRateLimitExceed) {
+      if (
+        error?.errors[0]?.reason === 'liveStreamingNotEnabled' &&
+        repeatRequestIfRateLimitExceed
+      ) {
         await Utils.sleep(3000);
         return await this.requestYoutube(reqInfo, false);
       }
 
       let errorType: TStreamErrorType = 'PLATFORM_REQUEST_FAILED';
-      if (details === 'The user is not enabled for live streaming.') {
+      if (error?.errors[0]?.reason === 'liveStreamingNotEnabled') {
         errorType = 'YOUTUBE_STREAMING_DISABLED';
-      } else if ((e as any).status === 423) {
+      } else if (error?.status === 423) {
         errorType = 'YOUTUBE_TOKEN_EXPIRED';
       }
 
-      throw throwStreamError(errorType, { ...(e as any), platform: 'youtube' }, details);
+      throw throwStreamError(errorType, { ...error, platform: 'youtube' }, details);
     }
   }
 
@@ -451,21 +458,18 @@ export class YoutubeService
       await platformAuthorizedRequest('youtube', url);
       this.SET_ENABLED_STATUS(true);
       return EPlatformCallResult.Success;
-    } catch (resp: unknown) {
-      if ((resp as any).status === 423) {
-        console.error('Error 423: YouTube token expired, need to refresh', resp);
+    } catch (e: unknown) {
+      const error = e as any;
+
+      if (error.status === 423) {
+        console.error('Error 423: YouTube token expired, need to refresh', error);
         return EPlatformCallResult.TokenExpired;
       }
-      if ((resp as any).status !== 403) {
-        console.error('Error checking if YT is enabled for live streaming', resp);
+      if (error.status !== 403) {
+        console.error('Error checking if YT is enabled for live streaming', error);
         return EPlatformCallResult.Error;
       }
-      const json = (resp as any).result;
-      if (
-        json.error &&
-        json.error.errors &&
-        json.error.errors[0].reason === 'liveStreamingNotEnabled'
-      ) {
+      if (error?.errors[0].reason === 'liveStreamingNotEnabled') {
         this.SET_ENABLED_STATUS(false);
       }
       return EPlatformCallResult.YoutubeStreamingDisabled;
@@ -938,13 +942,33 @@ export class YoutubeService
     } catch (e: unknown) {
       console.error('Failed to upload thumbnail', e);
       const errorType = 'YOUTUBE_THUMBNAIL_UPLOAD_FAILED';
-      let details = 'Connection Failed';
-      if (typeof e === 'object') {
-        const error = await (e as any).json();
-        details = error.result?.error?.message;
+      const error = e as any;
+
+      let details = 'Failed to upload thumbnail.';
+      if (error.message) details = error.message;
+
+      if (error.code === 400) {
+        if (error.errors[0].reason === 'invalidImage') {
+          // Note: The
+          details = $t('Thumbnail image content is invalid.');
+        } else if (error.errors[0].reason === 'mediaBodyRequired') {
+          details = $t('Thumbnail file does not include image content.');
+        }
       }
 
-      throw throwStreamError(errorType, { ...(e as any), platform: 'youtube' }, details);
+      if (error.code === 403) {
+        details = $t('Permission missing to upload thumbnails.');
+      }
+
+      if (error.code === 404) {
+        details = $t('Video does not exist. Thumbnail upload failed.');
+      }
+
+      if (error.code === 429) {
+        details = $t('Exceeded thumbnail upload quota. Please try again later.');
+      }
+
+      throw throwStreamError(errorType, { ...error, platform: 'youtube' }, details);
     }
   }
 
