@@ -39,5 +39,11 @@
   "DVR controls enable the viewer to control the video playback experience by pausing, rewinding, or fast forwarding content": "DVR 控制讓觀眾可以透過暫停、倒退、快進內容，來控制視訊播放體驗",
   "Auto-start is disabled for your broadcast. You should manually publish your stream from Youtube Studio": "您的直播已停用自動開始功能。您應手動從 YouTube Studio 發佈直播",
   "Made for kids": "針對兒童製作",
-  "Features like personalized ads and live chat won't be available on live streams made for kids.": "針對兒童製作的直播無法使用個性化廣告和及時聊天等功能。"
+  "Features like personalized ads and live chat won't be available on live streams made for kids.": "針對兒童製作的直播無法使用個性化廣告和及時聊天等功能。",
+  "YouTube token has expired, re-login or re-merge YouTube account": "YouTube token has expired, re-login or re-merge YouTube account",
+  "Thumbnail image content is invalid.": "Thumbnail image content is invalid.",
+  "Thumbnail file does not include image content.": "Thumbnail file does not include image content.",
+  "Permission missing to upload thumbnails.": "Permission missing to upload thumbnails.",
+  "Video does not exist. Thumbnail upload failed.": "Video does not exist. Thumbnail upload failed.",
+  "Exceeded thumbnail upload quota. Please try again later.": "Exceeded thumbnail upload quota. Please try again later."
 }
