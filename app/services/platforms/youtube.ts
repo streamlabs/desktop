@@ -13,7 +13,7 @@ import { platformAuthorizedRequest } from './utils';
 import { CustomizationService } from 'services/customization';
 import { IGoLiveSettings, TDisplayOutput } from 'services/streaming';
 import { $t, I18nService } from 'services/i18n';
-import { throwStreamError } from 'services/streaming/stream-error';
+import { throwStreamError, TStreamErrorType } from 'services/streaming/stream-error';
 import { BasePlatformService } from './base-platform';
 import { TDisplayType } from 'services/settings-v2/video';
 import { assertIsDefined, getDefined } from 'util/properties-type-guards';
@@ -283,23 +283,37 @@ export class YoutubeService
     try {
       return await platformAuthorizedRequest<T>('youtube', reqInfo);
     } catch (e: unknown) {
-      let details = (e as any).result?.error?.message;
-      if (!details) details = $t('Connection Failed');
-      if ((e as any)?.url ?? (e as any)?.url.split('/').includes('token')) {
-        (e as any).statusText = `${$t('Authentication Error: ')}${details}`;
+      console.error('Failed Youtube API request', e);
+      const error = e as any;
+
+      let details = $t('Connection Failed');
+      if (error?.message) {
+        details = error.message;
       }
 
+      if (error?.url ?? error?.url.split('/').includes('token')) {
+        error.statusText = `${$t('Authentication Error')}: ${details}`;
+      }
+
+      const isLiveStreamingDisabled =
+        error?.errors &&
+        error?.errors.length &&
+        error?.errors[0].reason === 'liveStreamingNotEnabled';
+
       // if the rate limit exceeded then repeat request after 3s delay
-      if (details === 'User requests exceed the rate limit.' && repeatRequestIfRateLimitExceed) {
+      if (isLiveStreamingDisabled && repeatRequestIfRateLimitExceed) {
         await Utils.sleep(3000);
         return await this.requestYoutube(reqInfo, false);
       }
 
-      const errorType =
-        details === 'The user is not enabled for live streaming.'
-          ? 'YOUTUBE_STREAMING_DISABLED'
-          : 'PLATFORM_REQUEST_FAILED';
-      throw throwStreamError(errorType, { ...(e as any), platform: 'youtube' }, details);
+      let errorType: TStreamErrorType = 'PLATFORM_REQUEST_FAILED';
+      if (isLiveStreamingDisabled) {
+        errorType = 'YOUTUBE_STREAMING_DISABLED';
+      } else if (error?.status === 423) {
+        errorType = 'YOUTUBE_TOKEN_EXPIRED';
+      }
+
+      throw throwStreamError(errorType, { ...error, platform: 'youtube' }, details);
     }
   }
 
@@ -446,12 +460,33 @@ export class YoutubeService
       await platformAuthorizedRequest('youtube', url);
       this.SET_ENABLED_STATUS(true);
       return EPlatformCallResult.Success;
-    } catch (resp: unknown) {
-      if ((resp as any).status !== 403) {
-        console.error('Got 403 checking if YT is enabled for live streaming', resp);
+    } catch (e: unknown) {
+      const error = e as any;
+
+      // Check if this is a YouTube live stream API error response
+      if (error?.errors && error?.status) {
+        if (error.status === 423) {
+          console.error('Error 423: YouTube token expired, need to refresh', error);
+          this.SET_ENABLED_STATUS(false);
+          return EPlatformCallResult.TokenExpired;
+        }
+        if (error.status && error.status !== 403) {
+          console.error('Error checking if YT is enabled for live streaming', error);
+          return EPlatformCallResult.Error;
+        }
+        if (error?.errors.length && error?.errors[0].reason === 'liveStreamingNotEnabled') {
+          this.SET_ENABLED_STATUS(false);
+        }
+
+        return EPlatformCallResult.YoutubeStreamingDisabled;
+      }
+
+      // Otherwise, it's probably a generic YouTube API error
+      if (error.status !== 403) {
+        console.error('Got 403 checking if YT is enabled for live streaming', error);
         return EPlatformCallResult.Error;
       }
-      const json = (resp as any).result;
+      const json = error.result;
       if (
         json.error &&
         json.error.errors &&
@@ -540,6 +575,14 @@ export class YoutubeService
    * returns perilled data for the GoLive window
    */
   async prepopulateInfo(): Promise<void> {
+    const status = await this.validatePlatform();
+
+    // If the user's token has expired, refresh it and try again
+    if (status === EPlatformCallResult.TokenExpired) {
+      await this.fetchNewToken();
+      await this.validatePlatform();
+    }
+
     if (!this.state.liveStreamingEnabled) {
       throw throwStreamError('YOUTUBE_STREAMING_DISABLED', { platform: 'youtube' });
     }
@@ -919,11 +962,36 @@ export class YoutubeService
         { method: 'POST', body, headers: { Authorization: `Bearer ${this.oauthToken}` } },
       );
     } catch (e: unknown) {
-      const error = await (e as any).json();
-      let details = error.result?.error?.message;
-      if (!details) details = 'connection failed';
+      console.error('Failed to upload thumbnail', e);
       const errorType = 'YOUTUBE_THUMBNAIL_UPLOAD_FAILED';
-      throw throwStreamError(errorType, { ...(e as any), platform: 'youtube' }, details);
+      const error = e as any;
+
+      let details = 'Failed to upload thumbnail.';
+      if (error.message) details = error.message;
+
+      if (error.code === 400) {
+        const hasReason = error?.errors && error?.errors.length && error?.errors[0].reason;
+        if (hasReason && error.errors[0].reason === 'invalidImage') {
+          // Note: The
+          details = $t('Thumbnail image content is invalid.');
+        } else if (hasReason && error.errors[0].reason === 'mediaBodyRequired') {
+          details = $t('Thumbnail file does not include image content.');
+        }
+      }
+
+      if (error.code === 403) {
+        details = $t('Permission missing to upload thumbnails.');
+      }
+
+      if (error.code === 404) {
+        details = $t('Video does not exist. Thumbnail upload failed.');
+      }
+
+      if (error.code === 429) {
+        details = $t('Exceeded thumbnail upload quota. Please try again later.');
+      }
+
+      throw throwStreamError(errorType, { ...error, platform: 'youtube' }, details);
     }
   }
 
