@@ -6,7 +6,7 @@ export * from './Audio';
 export * from './Video';
 // 'Hotkeys',
 export * from './Advanced';
-// 'SceneCollections',
+export * from './SceneCollections';
 export * from './Developer';
 export * from './Notifications';
 export * from './Appearance';
