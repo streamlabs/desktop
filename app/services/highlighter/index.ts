@@ -139,6 +139,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   aiHighlighterFeatureEnabled = getOS() === OS.Windows || Utils.isDevMode();
   streamMilestones: IStreamMilestones | null = null;
   currentRealtimeStreamId: string | null = null;
+  useRealtimeHighlighter = true;
 
   static filter(state: IHighlighterState) {
     return {
@@ -403,7 +404,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     this.handleStreamingChanges();
   }
 
-  useRealtimeHighlighter = true;
   private handleStreamingChanges() {
     let aiRecordingStartTime = moment();
     let streamInfo: IHighlightedStream;
@@ -509,19 +509,19 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           date: moment().toISOString(),
         };
 
+        this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+          type: 'AiRecordingStarted',
+          streamId: streamInfo?.id,
+        });
+
         if (this.useRealtimeHighlighter) {
           // Add stream folder to stream view already
           await this.addStream(streamInfo);
-
           // start realtime highlighter service
           this.startRealtimeHighlighter(streamInfo.id);
+
         } else {
           // normal recording highlighter
-          this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
-            type: 'AiRecordingStarted',
-            streamId: streamInfo?.id,
-          });
-
           if (this.streamingService.views.isRecording === false) {
             this.streamingService.actions.toggleRecording();
           }
@@ -560,20 +560,29 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         streamStarted = false;
       }
       if (status === EStreamingState.Ending) {
-        if (this.useRealtimeHighlighter) {
-          this.stopRealtimeHighlighter();
-        }
-
-        if (!aiRecordingInProgress) {
-          return;
-        }
-
         this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
           type: 'AiRecordingFinished',
           streamId: streamInfo?.id,
           game: this.streamingService.views.game,
         });
-        this.streamingService.actions.toggleRecording();
+
+        if (this.useRealtimeHighlighter) {
+          this.stopRealtimeHighlighter();
+          // navigate to the highlighter view
+          this.navigationService.actions.navigate(
+            'Highlighter',
+            {
+              view: EHighlighterView.STREAM,
+            },
+            EMenuItemKey.Highlighter,
+          );
+        } else {
+          if (!aiRecordingInProgress) {
+            return;
+          }
+
+          this.streamingService.actions.toggleRecording();
+        }
 
         // Load potential replaybuffer clips
         await this.loadClips(streamInfo.id);
