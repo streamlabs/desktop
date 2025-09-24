@@ -8,18 +8,10 @@ import { $t } from 'services/i18n';
 import { ObsSettingsSection } from './ObsSettings';
 import FormFactory from 'components-react/shared/inputs/FormFactory';
 import { TextInput } from 'components-react/shared/inputs';
+import { metadata } from 'components-react/shared/inputs/metadata';
 
 export function DeveloperSettings() {
-  const {
-    TcpServerService,
-    PlatformAppsService,
-    OverlaysPersistenceService,
-    SceneCollectionsService,
-  } = Services;
-
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState(false);
+  const { TcpServerService, PlatformAppsService } = Services;
 
   const { tokenInput, appDeveloperMode, apiMeta, apiValues } = useVuex(() => ({
     tokenInput: TcpServerService.state.token,
@@ -44,6 +36,70 @@ export function DeveloperSettings() {
   function restoreDefaults() {
     TcpServerService.actions.restoreDefaultSettings();
   }
+
+  function handleNamedPipeChange(key: string) {
+    return (value: boolean | string) => {
+      TcpServerService.actions.setSettings({ namedPipe: { ...apiValues.namedPipe, [key]: value } });
+    };
+  }
+
+  function handleWebsocketsChange(key: string) {
+    return (value: boolean | number) => {
+      TcpServerService.actions.setSettings({
+        websockets: { ...apiValues.websockets, [key]: value },
+      });
+    };
+  }
+
+  return (
+    <>
+      {appDeveloperMode && (
+        <ObsSettingsSection title={$t('App Platform')}>
+          <AppPlatformDeveloperSettings />
+        </ObsSettingsSection>
+      )}
+      <ObsSettingsSection title={$t('Manage Dual Output Scene')}>
+        <DualOutputDeveloperSettings />
+      </ObsSettingsSection>
+      <ObsSettingsSection>
+        <Button className="button--soft-warning" onClick={restoreDefaults}>
+          {$t('Restore Defaults')}
+        </Button>
+      </ObsSettingsSection>
+      <ObsSettingsSection>
+        <TextInput
+          label={$t('API Token')}
+          value={tokenInput}
+          isPassword
+          addonAfter={<Button onClick={generateToken}>{$t('Update')}</Button>}
+        />
+      </ObsSettingsSection>
+      <ObsSettingsSection title={$t('Named Pipe')}>
+        <FormFactory
+          values={apiValues.namedPipe}
+          metadata={apiMeta.namedPipe}
+          onChange={handleNamedPipeChange}
+        />
+      </ObsSettingsSection>
+      <ObsSettingsSection title={$t('Websockets')}>
+        <FormFactory
+          values={apiValues.websockets}
+          metadata={apiMeta.websockets}
+          onChange={handleWebsocketsChange}
+        />
+      </ObsSettingsSection>
+    </>
+  );
+}
+
+DeveloperSettings.page = 'Developer';
+
+function DualOutputDeveloperSettings() {
+  const { OverlaysPersistenceService, SceneCollectionsService } = Services;
+
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState(false);
 
   /**
    * Convert a dual output scene collection to a vanilla scene collection
@@ -117,96 +173,168 @@ export function DeveloperSettings() {
     }
   }
 
-  function handleNamedPipeChange(key: string) {
-    return (value: boolean | string) => {
-      TcpServerService.actions.setSettings({ namedPipe: { ...apiValues.namedPipe, [key]: value } });
-    };
-  }
-
-  function handleWebsocketsChange(key: string) {
-    return (value: boolean | number) => {
-      TcpServerService.actions.setSettings({
-        websockets: { ...apiValues.websockets, [key]: value },
-      });
-    };
-  }
-
   return (
     <>
-      {appDeveloperMode && (
-        <ObsSettingsSection>{/* <AppPlatformDeveloperSettings /> */}</ObsSettingsSection>
-      )}
-      <ObsSettingsSection>
-        <Button className="button--soft-warning" onClick={restoreDefaults}>
-          {$t('Restore Defaults')}
+      <span>
+        {$t(
+          'The below will create a copy of the active scene collection, set the copy as the active collection, and then apply the function.',
+        )}
+      </span>
+      <div>
+        <h4>{$t('Convert to Vanilla Scene')}</h4>
+        <Button
+          className="button--soft-warning"
+          onClick={() => convertDualOutputCollection()}
+          disabled={busy}
+        >
+          {$t('Convert')}
         </Button>
-      </ObsSettingsSection>
-      <ObsSettingsSection title={$t('Manage Dual Output Scene')}>
-        <span>
-          {$t(
-            'The below will create a copy of the active scene collection, set the copy as the active collection, and then apply the function.',
-          )}
-        </span>
-        <div>
-          <h4>{$t('Convert to Vanilla Scene')}</h4>
-          <Button
-            className="button--soft-warning"
-            onClick={() => convertDualOutputCollection()}
-            disabled={busy}
-          >
-            {$t('Convert')}
-          </Button>
-          <Button
-            className="button--soft-warning"
-            onClick={() => convertDualOutputCollection(false, true)}
-            disabled={busy}
-          >
-            {$t('Convert and Export Overlay')}
-          </Button>
-        </div>
-        <div style={{ marginTop: '10px' }}>
-          <h4>{$t('Assign Vertical Sources to Horizontal Display')}</h4>
-          <Button
-            className="button--soft-warning"
-            onClick={() => convertDualOutputCollection(true)}
-            disabled={busy}
-          >
-            {$t('Assign')}
-          </Button>
-          <Button
-            className="button--soft-warning"
-            onClick={() => convertDualOutputCollection(true, true)}
-            disabled={busy}
-          >
-            {$t('Assign and Export Overlay')}
-          </Button>
-        </div>
-        <div style={{ color: error ? 'red' : 'var(--teal)' }}>{message}</div>
-      </ObsSettingsSection>
-      <ObsSettingsSection>
-        <TextInput
-          label={$t('API Token')}
-          value={tokenInput}
-          isPassword
-          addonAfter={<Button onClick={generateToken}>{$t('Update')}</Button>}
-        />
-      </ObsSettingsSection>
-      <ObsSettingsSection title={$t('Named Pipe')}>
-        <FormFactory
-          values={apiValues.namedPipe}
-          metadata={apiMeta.namedPipe}
-          onChange={handleNamedPipeChange}
-        />
-      </ObsSettingsSection>
-      <ObsSettingsSection title={$t('Websockets')}>
-        <FormFactory
-          values={apiValues.websockets}
-          metadata={apiMeta.websockets}
-          onChange={handleWebsocketsChange}
-        />
-      </ObsSettingsSection>
+        <Button
+          className="button--soft-warning"
+          onClick={() => convertDualOutputCollection(false, true)}
+          disabled={busy}
+        >
+          {$t('Convert and Export Overlay')}
+        </Button>
+      </div>
+      <div style={{ marginTop: '10px' }}>
+        <h4>{$t('Assign Vertical Sources to Horizontal Display')}</h4>
+        <Button
+          className="button--soft-warning"
+          onClick={() => convertDualOutputCollection(true)}
+          disabled={busy}
+        >
+          {$t('Assign')}
+        </Button>
+        <Button
+          className="button--soft-warning"
+          onClick={() => convertDualOutputCollection(true, true)}
+          disabled={busy}
+        >
+          {$t('Assign and Export Overlay')}
+        </Button>
+      </div>
+      <div style={{ color: error ? 'red' : 'var(--teal)' }}>{message}</div>
     </>
   );
 }
 
-DeveloperSettings.page = 'Developer';
+function AppPlatformDeveloperSettings() {
+  const { PlatformAppsService } = Services;
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const { loadedUnpackedApp } = useVuex(() => ({
+    loadedUnpackedApp:
+      PlatformAppsService.views.enabledApps.length === 0
+        ? null
+        : PlatformAppsService.views.enabledApps.find(app => app.unpacked),
+  }));
+
+  const [s, setAppState] = useState({
+    appPath: loadedUnpackedApp?.appPath || '',
+    appToken: loadedUnpackedApp?.appToken || '',
+  });
+
+  const meta = {
+    appPath: metadata.file({
+      label: $t('Unpacked App Path'),
+      directory: true,
+      tooltip: $t(
+        'This is the path to your unpacked app. It should be a folder containing a valid manifest.json',
+      ),
+    }),
+    appToken: metadata.text({
+      label: $t('App Token'),
+      tooltip: $t(
+        'This token allows you app to authenticate with the Streamlabs API. Visit platform.streamlabs.com to create a developer account and get a test app token.',
+      ),
+    }),
+  };
+
+  function handleFormChange(key: string) {
+    return (value: string) => {
+      setAppState({ ...s, [key]: value });
+    };
+  }
+
+  async function loadApp() {
+    if (!s.appPath || !s.appToken) return;
+    if (loadedUnpackedApp) {
+      await PlatformAppsService.actions.return.unloadApp(loadedUnpackedApp);
+    }
+    setLoading(true);
+
+    try {
+      setError(await PlatformAppsService.actions.return.loadUnpackedApp(s.appPath, s.appToken));
+    } catch (e: unknown) {
+      setError(
+        $t(
+          'There was an error loading this app, please try again or contact the Streamlabs development team for assistance.',
+        ),
+      );
+    }
+
+    setLoading(false);
+  }
+
+  async function reloadApp() {
+    if (!loadedUnpackedApp) return;
+    setLoading(true);
+    setError('');
+
+    try {
+      setError(await PlatformAppsService.actions.return.refreshApp(loadedUnpackedApp.id));
+    } catch (e: unknown) {
+      setError(
+        $t(
+          'There was an error loading this app, please try again or contact the Streamlabs development team for assistance.',
+        ),
+      );
+    }
+
+    setLoading(false);
+  }
+
+  function unloadApp() {
+    if (!loadedUnpackedApp) return;
+    PlatformAppsService.actions.unloadApp(loadedUnpackedApp);
+  }
+
+  return (
+    <>
+      {loadedUnpackedApp && (
+        <>
+          <h4>{$t('Currently Loaded App')}</h4>
+          <p style={{ wordWrap: 'break-word' }}>
+            {loadedUnpackedApp.manifest.name}
+            {loadedUnpackedApp.manifest.version}
+          </p>
+          <h4>{$t('Path')}</h4>
+          <p style={{ wordWrap: 'break-word' }}>{loadedUnpackedApp.appPath}</p>
+          <h4>{$t('Token')}</h4>
+          <p style={{ wordWrap: 'break-word' }}>{loadedUnpackedApp.appToken}</p>
+          <Button onClick={reloadApp} type="primary" disabled={loading}>
+            {$t('Reload')}
+            {loading && <i className="fa fa-spinner fa-pulse" />}
+          </Button>
+          <Button onClick={unloadApp} type="primary" disabled={loading}>
+            {$t('Unload')}
+            {loading && <i className="fa fa-spinner fa-pulse" />}
+          </Button>
+        </>
+      )}
+      {!loadedUnpackedApp && (
+        <>
+          <FormFactory values={s} metadata={meta} onChange={handleFormChange} />
+          <Button onClick={loadApp} type="primary" disabled={loading}>
+            {$t('Load App')}
+            {loading && <i className="fa fa-spinner fa-pulse" />}
+          </Button>
+          {error && <div style={{ color: 'var(--warning)', fontSize: '12px' }}>{error}</div>}
+        </>
+      )}
+    </>
+  );
+}
