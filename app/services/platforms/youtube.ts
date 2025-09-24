@@ -435,8 +435,9 @@ export class YoutubeService
       await this.setupDualStream(goLiveSettings);
     }
 
-    // Users can go live even if the thumbnail upload failed.
-    // So if needed, sync the youtube settings with the uploaded broadcast data.
+    // Updating the thumbnail in the stream settings happends when creating the broadcast.
+    // This is because the user can still go live even if the thumbnail upload fails,
+    // and we want to avoid setting an invalid thumbnail in state.
     if (ytSettings.thumbnail && ytSettings.thumbnail !== 'default') {
       const { thumbnail, ...settings } = ytSettings;
       this.UPDATE_STREAM_SETTINGS({ ...settings, broadcastId: broadcast.id });
@@ -695,8 +696,6 @@ export class YoutubeService
 
     // upload thumbnail
     if (params.thumbnail && params.thumbnail !== 'default') {
-      // await this.uploadThumbnail(params.thumbnail, broadcast.id);
-
       try {
         await this.uploadThumbnail(params.thumbnail, broadcast.id);
         this.UPDATE_STREAM_SETTINGS({ thumbnail: params.thumbnail });
