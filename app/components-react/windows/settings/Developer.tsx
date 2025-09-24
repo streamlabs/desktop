@@ -65,6 +65,7 @@ export function DeveloperSettings() {
         <Button className="button--soft-warning" onClick={restoreDefaults}>
           {$t('Restore Defaults')}
         </Button>
+        <div style={{ padding: '8px' }} />
       </ObsSettingsSection>
       <ObsSettingsSection>
         <TextInput
@@ -215,6 +216,7 @@ function DualOutputDeveloperSettings() {
         </Button>
       </div>
       <div style={{ color: error ? 'red' : 'var(--teal)' }}>{message}</div>
+      <div style={{ padding: '8px' }} />
     </>
   );
 }
@@ -333,6 +335,7 @@ function AppPlatformDeveloperSettings() {
             {loading && <i className="fa fa-spinner fa-pulse" />}
           </Button>
           {error && <div style={{ color: 'var(--warning)', fontSize: '12px' }}>{error}</div>}
+          <div style={{ padding: '8px' }} />
         </>
       )}
     </>

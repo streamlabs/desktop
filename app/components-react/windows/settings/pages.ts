@@ -8,6 +8,7 @@ export * from './Video';
 export * from './Advanced';
 // 'SceneCollections',
 // 'Notifications',
+export * from './Developer';
 export * from './Appearance';
 export * from './Mobile';
 export * from './VirtualWebcam';
