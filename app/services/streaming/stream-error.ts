@@ -66,6 +66,11 @@ export const errorTypes = {
       return $t('Failed to upload the thumbnail');
     },
   },
+  YOUTUBE_TOKEN_EXPIRED: {
+    get message() {
+      return $t('YouTube token has expired, re-login or re-merge YouTube account');
+    },
+  },
   FACEBOOK_STREAMING_DISABLED: {
     get message() {
       return $t(

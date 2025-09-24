@@ -617,6 +617,7 @@ export class StreamingService
 
       await this.runCheck(platform, () => service.beforeGoLive(settingsForPlatform, display));
     } catch (e: unknown) {
+      console.error('Error setting platform settings', e);
       this.handleSetupPlatformError(e, platform);
 
       // if TikTok is the only platform going live and the user is banned, prevent the stream from attempting to start
