@@ -439,5 +439,7 @@
   "Dynamic real time animation based on your game & widget events.  Streamlabs Vision powered events include:": "Dynamic real time animation based on your game & widget events.  Streamlabs Vision powered events include:",
   "Kills & Eliminations": "Kills & Eliminations",
   "Health changes": "Health changes",
-  "Search...": "Search..."
+  "Search...": "Search...",
+  "Virtual Cam": "Virtual Cam",
+  "Virtual Cam Error": "Virtual Cam Error"
 }
