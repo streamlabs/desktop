@@ -10,6 +10,7 @@ import { ObjectSchema } from 'realm';
 import { RealmObject } from '../realm';
 import { FORTNITE_CONFIG } from './models/game-config.models';
 import { VisionMessage } from 'services/vision';
+import moment from 'moment';
 
 export class RealtimeHighlighterEphemeralState extends RealmObject {
   isRunning: boolean;
@@ -40,6 +41,7 @@ export class RealtimeHighlighterService extends Service {
   ephemeralState = RealtimeHighlighterEphemeralState.inject();
   eventSubscription: Subscription | null = null;
   currentGame: EGame = EGame.UNSET;
+  startTime: moment.Moment;
 
   @Inject() private streamingService: StreamingService;
   @Inject() private settingsService: SettingsService;
@@ -105,6 +107,8 @@ export class RealtimeHighlighterService extends Service {
     this.currentReplayEvents = [];
     this.highlights = [];
     this.currentRound = 0;
+
+    this.startTime = moment();
 
     this.eventSubscription = this.visionService.events.subscribe((message: VisionMessage) => {
       this.currentGame = message.game ? message.game as EGame : EGame.UNSET;
@@ -227,9 +231,12 @@ export class RealtimeHighlighterService extends Service {
    */
   private async onReplayReady(path: string) {
     if (!this.replayRequested) {
-      console.warn('Replay buffer file ready event received, but no replay was requested.');
+      // manual replay buffer event was received, need to propagate it
+      const clip = await this.createManualClip(path);
+      this.highlightsReady.next([clip]);
       return;
     }
+
     this.replayRequested = false;
 
     const events = this.currentReplayEvents;
@@ -463,5 +470,35 @@ export class RealtimeHighlighterService extends Service {
       }
     }
     return null;
+  }
+
+  /**
+   * Create clip from a manual replay buffer event that is not triggered by AI Highlighter
+   */
+  private async createManualClip(path: string) {
+    const resolution = await getVideoResolution(path);
+
+    const endTime = moment().diff(this.startTime, 'seconds');
+    const startTime = Math.max(0, endTime - this.getReplayBufferDurationSeconds());
+
+    const aiClipInfo: IAiClipInfo = {
+      inputs: [],
+      score: 0,
+      metadata: {
+        round: this.currentRound,
+        game: this.currentGame,
+        webcam_coordinates: this.findWebcamCoordinates(resolution),
+      },
+    };
+
+    return {
+      path,
+      aiClipInfo,
+      startTime,
+      endTime,
+      startTrim: 0,
+      endTrim: 0,
+      streamId: this.currentStreamId,
+    };
   }
 }
