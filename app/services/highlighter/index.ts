@@ -560,6 +560,10 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         streamStarted = false;
       }
       if (status === EStreamingState.Ending) {
+        if (this.views.useAiHighlighter === false) {
+          return;
+        }
+
         this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
           type: 'AiRecordingFinished',
           streamId: streamInfo?.id,
@@ -577,10 +581,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
             EMenuItemKey.Highlighter,
           );
         } else {
-          if (!aiRecordingInProgress) {
-            return;
-          }
-
           this.streamingService.actions.toggleRecording();
         }
 
