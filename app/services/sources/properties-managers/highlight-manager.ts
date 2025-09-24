@@ -24,8 +24,6 @@ export class HighlightManager extends PropertiesManager {
   }
 
   init() {
-    console.log('HighlightManager init');
-
     this.streamingService.streamingStatusChange.subscribe(status => {
       if (status === EStreamingState.Ending) {
         // stop playing if stream stops
@@ -36,7 +34,6 @@ export class HighlightManager extends PropertiesManager {
 
     // reset state of the media source, sometimes it gets stuck
     this.obsSource.update({ local_file: '' });
-    // console.log('HighlightManager initialized');
     // if ai highlighter is not active, preserve old behavior
     setInterval(() => {
       this.tick();
@@ -77,7 +74,6 @@ export class HighlightManager extends PropertiesManager {
     // if we reached the end of the highlight, switch to the next one
     const highlightsCount = this.realtimeHighlighterService.highlights.length;
     if (highlightsCount === 0) {
-      // console.log('No highlights to play');
       return;
     }
 
@@ -91,11 +87,9 @@ export class HighlightManager extends PropertiesManager {
 
   private startPlaying() {
     if (this.realtimeHighlighterService.highlights.length === 0) {
-      // console.log('No highlights to play');
       return;
     }
 
-    // console.log('Start playing highlights');
     this.inProgress = true;
     this.queueNextHighlight(0);
   }
@@ -104,7 +98,6 @@ export class HighlightManager extends PropertiesManager {
     this.inProgress = false;
     this.stopAt = null;
     this.currentReplayIndex = null;
-    // console.log('Stop playing highlights');
   }
 
   /**
@@ -136,7 +129,6 @@ export class HighlightManager extends PropertiesManager {
     if (source) {
       // return volume to normal
       source.updateSettings({ deflection: 1.0 });
-      // console.log(`Pausing source: ${source.name}`);
       source.getObsInput()?.pause();
     }
 
@@ -144,13 +136,11 @@ export class HighlightManager extends PropertiesManager {
     this.stopAt = Date.now() + (highlight.endTime - highlight.endTrim) * 1000;
     this.obsSource.update({ local_file: highlight.path });
     this.currentReplayIndex = index;
-    // console.log(`Queued next highlight: ${highlight.path}`);
   }
 
   private setVolume(volume: number) {
     const source = this.sourcesService.views.getSource(this.obsSource.name);
     if (source) {
-      // console.log('changing volume to', volume);
       source.updateSettings({ deflection: volume });
     }
   }

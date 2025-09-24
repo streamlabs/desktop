@@ -89,7 +89,6 @@ export class RealtimeHighlighterService extends Service {
     const REQUIRED_REPLAY_BUFFER_DURATION_SECONDS = 30;
     if (this.getReplayBufferDurationSeconds() < REQUIRED_REPLAY_BUFFER_DURATION_SECONDS) {
       if (this.streamingService.state.replayBufferStatus !== EReplayBufferState.Offline) {
-        console.log('Stopping replay buffer to change its duration');
         // to change the replay buffer duration, it must be stopped first
         this.streamingService.stopReplayBuffer();
       }
@@ -123,7 +122,6 @@ export class RealtimeHighlighterService extends Service {
   }
 
   async stop() {
-    console.log('Stopping RealtimeHighlighterService');
     if (!this.isRunning) {
       console.warn('RealtimeHighlighterService is not running');
       return;
@@ -171,7 +169,6 @@ export class RealtimeHighlighterService extends Service {
     if (now >= this.saveReplayAt) {
       // save the replay events to file
       if (this.currentReplayEvents.length > 0) {
-        console.log('Saving replay buffer');
         this.replaySavedAt = now;
         this.replayRequested = true;
         this.streamingService.saveReplay();
@@ -217,7 +214,6 @@ export class RealtimeHighlighterService extends Service {
     if (this.saveReplayAt === null) {
       const startAdjust = (event.highlight.start_adjust || 0) * 1000;
       const replayBufferDuration = this.getReplayBufferDurationSeconds() * 1000;
-      console.log('Buffer duration: ', replayBufferDuration);
       const reportedBufferLengthErrorTolerance = 2 * 1000;
       this.saveReplayAt =
         Date.now() + replayBufferDuration - startAdjust - reportedBufferLengthErrorTolerance;
@@ -257,7 +253,6 @@ export class RealtimeHighlighterService extends Service {
       replaySavedAt,
       replayBufferDurationSeconds,
     );
-    console.log('Unrefined highlights:', unrefinedHighlights);
 
     const mergedHighlights: any[] = this.mergeOverlappingHighlights(unrefinedHighlights);
 
@@ -351,7 +346,6 @@ export class RealtimeHighlighterService extends Service {
     // for some reason only 1 highlight that points to the same file is allowed,
     // so need to merge all highlights into the one big highlight
     if (mergedHighlights.length > 1) {
-      console.log('Merging highlights into one highlight');
       const allInputs = mergedHighlights.flatMap(h => h.inputs);
       const maxScore = Math.max(...mergedHighlights.map(h => h.score));
       const startTime = Math.min(...mergedHighlights.map(h => h.startTime));
@@ -384,13 +378,10 @@ export class RealtimeHighlighterService extends Service {
 
     for (const event of events) {
       const eventTime = event.timestamp;
-      console.log('Event time:', eventTime, 'Replay started at:', replayStartedAt);
 
       const relativeEventTime = eventTime - replayStartedAt;
-      console.log('Relative event time:', relativeEventTime);
       let highlightStart = relativeEventTime - (event.highlight.start_adjust || 0) * 1000;
       let highlightEnd = relativeEventTime + (event.highlight.end_adjust || 0) * 1000;
-      console.log(`Event ${event.name} highlight start: ${highlightStart}, end: ${highlightEnd}`);
 
       // add some minor error tolerance to avoid issues with the replay buffer length
       const errorTolerance = 2500; // 1 second error tolerance
