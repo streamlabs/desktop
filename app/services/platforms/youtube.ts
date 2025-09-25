@@ -436,7 +436,7 @@ export class YoutubeService
     const ytSettings = getDefined(goLiveSettings.platforms.youtube);
 
     // If the stream has switched from another device, a new broadcast does not need to be created
-    if (goLiveSettings.cloudShift) {
+    if (goLiveSettings.cloudShift && this.streamingService.views.shouldSwitchStreams) {
       await this.setupCloudShiftStream(goLiveSettings);
       return;
     }

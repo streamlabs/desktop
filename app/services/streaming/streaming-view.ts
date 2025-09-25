@@ -212,6 +212,14 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return this.restreamView.cloudShiftStatus ?? 'inactive';
   }
 
+  get shouldSwitchStreams(): boolean {
+    return this.restreamView.hasCloudShiftTargets;
+  }
+
+  get isSwitchingStream(): boolean {
+    return this.restreamView.cloudShiftStatus === 'active';
+  }
+
   /**
    * Returns if the restream service should be set up when going live
    */

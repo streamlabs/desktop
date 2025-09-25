@@ -90,7 +90,8 @@ export class TwitterPlatformService
       return;
     }
 
-    if (goLiveSettings.cloudShift) {
+    if (goLiveSettings.cloudShift && this.streamingService.views.shouldSwitchStreams) {
+      console.log('TWITTER cloud shift, skipping new broadcast');
       this.setPlatformContext('twitter');
       return;
     }
@@ -134,7 +135,8 @@ export class TwitterPlatformService
   }
 
   async afterStopStream(): Promise<void> {
-    if (this.state.broadcastId) {
+    if (this.state.broadcastId && !this.streamingService.views.isSwitchingStream) {
+      console.log('Ending X stream', this.state.broadcastId);
       await this.endStream(this.state.broadcastId);
     }
   }

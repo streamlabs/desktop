@@ -208,7 +208,7 @@ export class TikTokService
   async setupCloudShiftStream(goLiveSettings: IGoLiveSettings) {
     await this.validatePlatform();
 
-    console.log('TIKTOK this.state', this.state);
+    console.log('TIKTOK cloud shift this.state', this.state);
 
     this.setPlatformContext('tiktok');
   }
@@ -222,7 +222,7 @@ export class TikTokService
 
     const ttSettings = getDefined(goLiveSettings.platforms.tiktok);
 
-    if (goLiveSettings.cloudShift) {
+    if (goLiveSettings.cloudShift && this.streamingService.views.shouldSwitchStreams) {
       this.setupCloudShiftStream(goLiveSettings);
       return;
     }
@@ -273,7 +273,8 @@ export class TikTokService
   }
 
   async afterStopStream(): Promise<void> {
-    if (this.state.broadcastId) {
+    if (this.state.broadcastId && !this.streamingService.views.isSwitchingStream) {
+      console.log('Ending TikTok stream', this.state.broadcastId);
       await this.endStream(this.state.broadcastId);
       this.showReplaysNotification();
     }

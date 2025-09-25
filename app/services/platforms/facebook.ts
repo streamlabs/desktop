@@ -281,7 +281,7 @@ export class FacebookService
     const fbOptions = getDefined(options.platforms.facebook);
 
     // If the stream has switched from another device, a new broadcast does not need to be created
-    if (options.cloudShift) {
+    if (options.cloudShift && this.streamingService.views.shouldSwitchStreams) {
       await this.setupCloudShiftStream(options);
       return;
     }

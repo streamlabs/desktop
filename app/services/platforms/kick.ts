@@ -159,7 +159,7 @@ export class KickService
   async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     const kickSettings = getDefined(goLiveSettings.platforms.kick);
 
-    if (goLiveSettings.cloudShift) {
+    if (goLiveSettings.cloudShift && this.streamingService.views.shouldSwitchStreams) {
       await this.setupCloudShiftStream(goLiveSettings);
       return;
     }

@@ -36,7 +36,7 @@ export interface ICloudShiftTarget {
   key?: string;
 }
 
-export type TCloudShiftStatus = 'pending' | 'inactive';
+export type TCloudShiftStatus = 'pending' | 'inactive' | 'active';
 export type TCloudShiftAction = 'approved' | 'rejected';
 
 interface IRestreamState {
@@ -307,7 +307,9 @@ export class RestreamService extends StatefulService<IRestreamState> {
       throwStreamError('RESTREAM_SETUP_FAILED');
     }
 
-    if (this.streamInfo.isCloudShiftMode) {
+    const shouldSwitchStreams = this.state.cloudShiftTargets.length > 0;
+
+    if (this.streamInfo.isCloudShiftMode && shouldSwitchStreams) {
       await Promise.all([this.setupIngest()]);
     } else {
       await Promise.all([this.setupIngest(), this.setupTargets()]);
@@ -624,11 +626,15 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * Note: The AI highlighter will automatically save the recording on the current device
    * when the stream ends.
    */
-  async endCloudShiftStream(): Promise<void> {
+  async endCloudShiftStream(remoteStreamId: string): Promise<void> {
     try {
+      this.SET_STREAM_SWITCHER_STATUS('active');
       await this.streamingService.toggleStreaming();
+      this.SET_STREAM_SWITCHER_STREAM_ID(remoteStreamId);
     } catch (error: unknown) {
       console.error('Error ending stream:', error);
+
+      this.SET_STREAM_SWITCHER_STATUS('inactive');
       remote.dialog.showMessageBox(Utils.getMainWindow(), {
         title: $t('Error Ended Stream - PC'),
         type: 'info',
