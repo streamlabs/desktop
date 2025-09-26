@@ -277,12 +277,6 @@ export class OutputSettingsService extends Service {
       enforceBitrateKey,
     );
 
-    const enableTwitchVOD = this.settingsService.findSettingValue(
-      output,
-      'Streaming',
-      'VodTrackEnabled',
-    );
-
     const useAdvanced = this.settingsService.findSettingValue(output, 'Streaming', 'UseAdvanced');
 
     const customEncSettings = this.settingsService.findSettingValue(
@@ -291,9 +285,15 @@ export class OutputSettingsService extends Service {
       'x264Settings',
     );
 
-    const rescaling = this.settingsService.findSettingValue(output, 'Recording', 'RecRescale');
-
     if (mode === 'Advanced') {
+      const rescaling = this.settingsService.findSettingValue(output, 'Recording', 'RecRescale');
+
+      const enableTwitchVOD = this.settingsService.findSettingValue(
+        output,
+        'Streaming',
+        'VodTrackEnabled',
+      );
+
       const advancedStreamSettings = {
         videoEncoder,
         enforceServiceBitrate,
@@ -316,7 +316,6 @@ export class OutputSettingsService extends Service {
       return {
         videoEncoder,
         enforceServiceBitrate,
-        enableTwitchVOD,
         useAdvanced,
         customEncSettings,
       };
@@ -367,9 +366,14 @@ export class OutputSettingsService extends Service {
         break;
     }
 
+    const encoder = obsEncoderToEncoderFamily(
+      this.settingsService.findSettingValue(output, 'Streaming', 'Encoder') ||
+        this.settingsService.findSettingValue(output, 'Streaming', 'StreamEncoder'),
+    ) as EEncoderFamily;
+
     const convertedEncoderName:
-      | EObsSimpleEncoder.x264_lowcpu
-      | EObsAdvancedEncoder = this.convertEncoderToNewAPI(this.getSettings().recording.encoder);
+      | EObsSimpleEncoder
+      | EObsAdvancedEncoder = this.convertEncoderToNewAPI(encoder);
 
     const videoEncoder: EObsAdvancedEncoder =
       convertedEncoderName === EObsSimpleEncoder.x264_lowcpu
@@ -436,9 +440,6 @@ export class OutputSettingsService extends Service {
         lowCPU,
         overwrite,
         noSpace,
-        prefix,
-        suffix,
-        duration,
       };
     }
   }

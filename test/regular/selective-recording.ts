@@ -19,7 +19,6 @@ import { startRecording, stopRecording } from '../helpers/modules/streaming';
 import { sleep } from '../helpers/sleep';
 import { toggleDualOutputMode } from '../helpers/modules/dual-output';
 import { logIn, releaseUserInPool } from '../helpers/webdriver/user';
-import { showPage } from '../helpers/modules/navigation';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -47,6 +46,7 @@ test('Selective Recording', async t => {
 
   // Toggle selective recording
   await focusMain();
+
   await (await client.$('[data-name=sourcesControls] .icon-smart-record')).click();
 
   // Check that selective recording icon is active
@@ -78,20 +78,34 @@ test('Selective Recording', async t => {
   await waitForDisplayed('h1=Recordings', { timeout: 1000 });
 
   const files = await readdir(tmpDir);
-  t.is(files.length, 1);
+  t.is(files.length, 1, 'Selective Recording works in Advanced Mode.');
+
+  // Selective Recording in Simple Mode
+  // await showSettingsWindow('Output', async () => {
+  //   const { setDropdownInputValue } = useForm('Mode');
+  //   await setDropdownInputValue('Mode', 'Simple');
+  //   await clickButton('Done');
+  // });
+
+  // await focusMain();
+  // await startRecording();
+  // await sleep(2000);
+  // await stopRecording();
+
+  // // Check that file exists
+  // await clickWhenDisplayed('span=A new Recording has been completed. Click for more info');
+  // await waitForDisplayed('h1=Recordings', { timeout: 1000 });
+
+  // const newFiles = await readdir(tmpDir);
+  // t.is(newFiles.length, 2, 'Selective Recording works in Simple Mode.');
 
   // Selective Recording in Dual Output Mode
-  await showPage('Editor');
-
   const user = await logIn(t);
-  await addSource(sourceType, sourceName);
-  await focusMain();
-  await (await client.$('.icon-smart-record')).click();
-  await toggleDualOutputMode();
+  await toggleDualOutputMode(true);
+  // Toggle selective recording
+  await (await client.$('[data-name=sourcesControls] .icon-smart-record')).click();
 
   // dual output is active but the vertical display is not shown
-  await focusMain();
-  await (await client.$('.icon-dual-output.active')).waitForExist();
   t.false(
     await isDisplayed('div#vertical-display'),
     'Vertical display is not shown in dual output with selective recording',

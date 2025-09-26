@@ -1399,7 +1399,7 @@ export class StreamingService
    * @param display - The display to create the recording for
    * @param index - The index of the audio track
    */
-  private async createRecording(display: TDisplayType, index: number, start?: boolean) {
+  private async createRecording(display: TDisplayType, index: number, start: boolean = false) {
     const mode = this.outputSettingsService.getSettings().mode;
 
     // recordings must have a streaming instance
@@ -1502,7 +1502,7 @@ export class StreamingService
    * @param display - The display to create the streaming for
    * @param index - The index of the audio track
    */
-  private async createStreaming(display: TDisplayType, index: number, start?: boolean) {
+  private async createStreaming(display: TDisplayType, index: number, start: boolean = false) {
     const mode = this.outputSettingsService.getSettings().mode;
 
     this.contexts[display].streaming =
@@ -2085,23 +2085,7 @@ export class StreamingService
         this.contexts[display][type]?.start();
       }
 
-      return true;
-    }
-
-    const restartReplayBuffer =
-      this.contexts[display].replayBuffer &&
-      this.state.status[display].replayBuffer !== EReplayBufferState.Offline;
-
-    const restartRecording =
-      this.contexts[display].recording &&
-      this.state.status[display].recording !== ERecordingState.Offline;
-
-    if (restartReplayBuffer) {
-      this.contexts[display].replayBuffer.stop();
-    }
-
-    if (restartRecording) {
-      this.contexts[display].recording.stop();
+      return;
     }
 
     await this.destroyOutputContextIfExists(display, type);
@@ -2111,24 +2095,6 @@ export class StreamingService
     } else {
       await this.createRecording(display, index, start);
     }
-
-    if (this.contexts[display].recording !== null) {
-      this.contexts[display].recording.streaming = this.contexts[display].streaming;
-    }
-
-    if (restartRecording) {
-      this.contexts[display].recording.start();
-    }
-
-    if (this.contexts[display].replayBuffer !== null) {
-      this.contexts[display].replayBuffer.streaming = this.contexts[display].streaming;
-    }
-
-    if (restartReplayBuffer) {
-      this.contexts[display].replayBuffer.start();
-    }
-
-    return false;
   }
 
   private validateOutputInstance(

@@ -66,7 +66,7 @@ test('Replay Buffer', async t => {
   // Simple Replay Buffer
   await recordHighlight(t, tmpDir, 1, 'Simple Replay Buffer recorded highlight');
 
-  // disable replay buffer
+  // Disable Simple Replay Buffer
   await toggleReplayBuffer();
 
   // check Start Replay Buffer is not visible
@@ -76,6 +76,8 @@ test('Replay Buffer', async t => {
   await setTemporaryRecordingPath(true, tmpDir);
   await toggleReplayBuffer(true);
   await recordHighlight(t, tmpDir, 2, 'Advanced Replay Buffer recorded highlight');
+
+  // Disable Advanced Replay Buffer
   await toggleReplayBuffer(true);
 
   // check Start Replay Buffer is not visible
