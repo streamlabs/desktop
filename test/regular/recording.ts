@@ -39,7 +39,7 @@ useWebdriver();
  * @param advanced - whether to use advanced settings
  * @returns number of formats
  */
-async function createRecordingFiles(advanced: boolean = false): Promise<number> {
+async function createRecordingFiles(advanced: boolean = false, message?: string): Promise<number> {
   const formats = advanced
     ? ['flv', 'mp4', 'mov', 'mkv', 'mpegts', 'hls']
     : ['flv', 'mp4', 'mov', 'mkv', 'mpegts'];
@@ -58,17 +58,19 @@ async function createRecordingFiles(advanced: boolean = false): Promise<number> 
 
     await focusMain();
     await startRecording();
-    await sleep(500);
+    await sleep(2000);
     await stopRecording();
 
     // in advanced mode, it may take a little longer to save the recording
     if (advanced) {
       await sleep(1000);
     }
-
     // Confirm notification has been shown and navigate to the recording history
+    const notificationMessage =
+      message ?? 'A new Recording has been completed. Click for more info';
+
     await focusMain();
-    await clickWhenDisplayed('span=A new Recording has been completed. Click for more info');
+    await clickWhenDisplayed(`span=${notificationMessage}`);
     await waitForDisplayed('h1=Recordings', { timeout: 1000 });
     await sleep(500);
     await showPage('Editor');
@@ -93,9 +95,8 @@ async function validateRecordingFiles(
   const files = await readdir(tmpDir);
 
   // M3U8 creates multiple TS files in addition to the catalog itself.
-  // The additional TS files created by M3U8 in advanced mode are not displayed in the recording history
-  const numFiles = advanced ? files.length - 1 : files.length;
-
+  // The additional files created by TS & M3U8 in advanced mode are not displayed in the recording history
+  const numFiles = advanced ? files.length - 2 : files.length;
   t.true(numFiles >= numFormats, `Files that were created:\n${files.join('\n')}`);
 
   // Check that the recordings are displayed in the recording history
@@ -154,7 +155,10 @@ test('Recording with two contexts active', async t => {
   await setOutputResolution('100x100');
   const tmpDir = await setTemporaryRecordingPath(true);
 
-  const numFiles = await createRecordingFiles(true);
+  const numFiles = await createRecordingFiles(
+    true,
+    'A new Horizontal Recording has been completed. Click for more info',
+  );
   await validateRecordingFiles(t, tmpDir, numFiles, true);
 });
 
