@@ -19,7 +19,7 @@ export enum ENotificationSubType {
   CPU = 'CPU',
 }
 
-export interface INotificationsSettings {
+export interface INotificationsSettings extends Dictionary<boolean> {
   enabled: boolean;
   playSound: boolean;
 }
@@ -63,7 +63,6 @@ export interface INotificationsServiceApi {
     getUnread(type?: ENotificationType): INotification[];
     getRead(type?: ENotificationType): INotification[];
     getSettings(): INotificationsSettings;
-    getSettingsFormData(): TObsFormData;
   };
 
   setSettings(patch: Partial<INotificationsSettings>): void;

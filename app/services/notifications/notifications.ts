@@ -14,6 +14,7 @@ import {
 } from './notifications-api';
 import { $t } from 'services/i18n';
 import { InternalApiService } from 'services/api/internal-api';
+import { metadata } from 'components/shared/inputs';
 
 interface INotificationsState {
   settings: INotificationsSettings;
@@ -48,27 +49,24 @@ class NotificationsViews extends ViewHandler<INotificationsState> {
     return this.state.settings;
   }
 
-  getSettingsFormData(): TObsFormData {
-    const settings = this.state.settings;
-    return [
-      <IObsInput<boolean>>{
-        value: settings.enabled,
-        name: 'enabled',
-        description: $t('Enable notifications'),
-        type: 'OBS_PROPERTY_BOOL',
-        visible: true,
-        enabled: true,
-      },
+  get settings() {
+    return this.state.settings;
+  }
 
-      <IObsInput<boolean>>{
-        value: settings.playSound,
-        name: 'playSound',
-        description: $t('Enable sound'),
-        type: 'OBS_PROPERTY_BOOL',
-        visible: true,
-        enabled: settings.enabled,
+  get metadata() {
+    return {
+      enabled: {
+        type: 'checkbox',
+        label: $t('Enable notifications'),
+        children: {
+          playSound: {
+            type: 'checkbox',
+            label: $t('Enable sound'),
+            displayed: this.state.settings.enabled,
+          },
+        },
       },
-    ];
+    };
   }
 }
 

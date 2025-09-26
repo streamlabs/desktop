@@ -319,7 +319,7 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
 
   // Check if any notification thresholds are met and send applicable notification
   sendNotifications(currentStats: IMonitorState, nextStats: INextStats) {
-    const troubleshooterSettings = this.troubleshooterService.getSettings();
+    const troubleshooterSettings = this.troubleshooterService.views.settings;
 
     // Check if skipped frames exceed notification threshold
     if (

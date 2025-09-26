@@ -7,7 +7,7 @@ export * from './Video';
 // 'Hotkeys',
 export * from './Advanced';
 // 'SceneCollections',
-// 'Notifications',
+export * from './Notifications';
 export * from './Appearance';
 export * from './Mobile';
 export * from './VirtualWebcam';
