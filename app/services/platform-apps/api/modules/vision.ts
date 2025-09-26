@@ -67,8 +67,8 @@ export class VisionModule extends Module {
   }
 
   @apiMethod()
-  async activateProcess(_ctx: IApiContext, pid: string) {
-    return this.visionService.activateProcess(pid);
+  async activateProcess(_ctx: IApiContext, pid: number, selectedGame?: string) {
+    return this.visionService.activateProcess(pid, selectedGame);
   }
 
   @apiMethod()
