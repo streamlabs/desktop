@@ -5,7 +5,7 @@ import {
   clickButton,
   clickIfDisplayed,
   focusMain,
-  waitForDisplayed,
+  isDisplayed,
 } from './core';
 import { showSettingsWindow } from './settings/settings';
 
@@ -23,7 +23,7 @@ export async function toggleDualOutputMode(closeChildWindow: boolean = true) {
   });
   await focusMain();
 
-  await waitForDisplayed('.icon-dual-output.active');
+  await isDisplayed('.icon-dual-output.active');
 }
 
 /**

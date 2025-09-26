@@ -15,12 +15,7 @@ import {
 } from '../../helpers/modules/core';
 import { logIn } from '../../helpers/modules/user';
 import { toggleDisplay, toggleDualOutputMode } from '../../helpers/modules/dual-output';
-import {
-  skipCheckingErrorsInLog,
-  test,
-  TExecutionContext,
-  useWebdriver,
-} from '../../helpers/webdriver';
+import { test, TExecutionContext, useWebdriver } from '../../helpers/webdriver';
 import { getUser, releaseUserInPool, withUser } from '../../helpers/webdriver/user';
 import { SceneBuilder } from '../../helpers/scene-builder';
 import { getApiClient } from '../../helpers/api-client';
@@ -30,7 +25,7 @@ import { getApiClient } from '../../helpers/api-client';
 useWebdriver();
 
 /**
- * Toggle Dual Output Video Settings
+ * Toggle Dual Output Mode
  * @remark to prevent errors from accounts in the user pool not
  * being available, test multiple aspects of dual output in a single test
  */
