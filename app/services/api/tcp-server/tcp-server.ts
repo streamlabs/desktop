@@ -1,8 +1,6 @@
 import os from 'os';
 import crypto from 'crypto';
-import { PersistentStatefulService, Inject, mutation } from 'services/core';
-import { IObsInput } from 'components/obs/inputs/ObsInput';
-import { ISettingsSubCategory } from 'services/settings/index';
+import { PersistentStatefulService, Inject, mutation, ViewHandler } from 'services/core';
 import {
   JsonrpcService,
   E_JSON_RPC_ERROR,
@@ -10,7 +8,6 @@ import {
   IJsonRpcRequest,
   IJsonRpcResponse,
 } from 'services/api/jsonrpc/index';
-import { IIPAddressDescription, ITcpServerServiceApi, ITcpServersSettings } from './tcp-server-api';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import { ExternalApiService } from '../external-api';
 // eslint-disable-next-line no-undef
@@ -22,6 +19,26 @@ const net = require('net');
 
 const LOCAL_HOST_NAME = '127.0.0.1';
 const WILDCARD_HOST_NAME = '0.0.0.0';
+
+export interface ITcpServersSettings {
+  token: string;
+  namedPipe: {
+    enabled: boolean;
+    pipeName: string;
+  };
+  websockets: {
+    enabled: boolean;
+    port: number;
+    allowRemote: boolean;
+  };
+}
+
+export interface IIPAddressDescription {
+  address: string;
+  interface: string;
+  family: 'IPv4' | 'IPv6';
+  internal: boolean;
+}
 
 interface IClient {
   id: number;
@@ -46,12 +63,54 @@ interface IServer {
 
 const TCP_PORT = 28194;
 
+class TcpServerServiceViews extends ViewHandler<ITcpServersSettings> {
+  get settings() {
+    return this.state;
+  }
+
+  get metadata() {
+    return {
+      namedPipe: {
+        enabled: {
+          type: 'checkbox',
+          label: $t('Enabled'),
+          children: {
+            pipeName: {
+              type: 'text',
+              label: $t('Pipe Name'),
+              displayed: this.state.namedPipe.enabled,
+            },
+          },
+        },
+      },
+      websockets: {
+        enabled: {
+          type: 'checkbox',
+          label: $t('Enabled'),
+          children: {
+            allowRemote: {
+              type: 'checkbox',
+              label: $t('Allow Remote Connections'),
+              displayed: this.state.websockets.enabled,
+            },
+            port: {
+              type: 'number',
+              label: $t('Port'),
+              min: 0,
+              max: 65535,
+              displayed: this.state.websockets.enabled,
+            },
+          },
+        },
+      },
+    };
+  }
+}
+
 /**
  * A transport layer for TCP and Websockets communications with internal API
  */
-export class TcpServerService
-  extends PersistentStatefulService<ITcpServersSettings>
-  implements ITcpServerServiceApi {
+export class TcpServerService extends PersistentStatefulService<ITcpServersSettings> {
   static defaultState: ITcpServersSettings = {
     token: '',
     namedPipe: {
@@ -79,6 +138,10 @@ export class TcpServerService
 
   // enable to debug
   private enableLogs = false;
+
+  get views() {
+    return new TcpServerServiceViews(this.state);
+  }
 
   init() {
     super.init();
@@ -123,7 +186,7 @@ export class TcpServerService
     this.stopListening();
 
     // update websockets settings
-    const defaultWebsoketsSettings = this.getDefaultSettings().websockets;
+    const defaultWebsoketsSettings = TcpServerService.defaultState.websockets;
     this.setSettings({
       websockets: {
         ...defaultWebsoketsSettings,
@@ -138,7 +201,7 @@ export class TcpServerService
   disableWebsocketsRemoteConnections() {
     this.stopListening();
     // update websockets settings
-    const defaultWebsoketsSettings = this.getDefaultSettings().websockets;
+    const defaultWebsoketsSettings = TcpServerService.defaultState.websockets;
     this.setSettings({
       websockets: {
         ...defaultWebsoketsSettings,
@@ -148,8 +211,8 @@ export class TcpServerService
     this.listen();
   }
 
-  getDefaultSettings(): ITcpServersSettings {
-    return TcpServerService.defaultState;
+  restoreDefaultSettings() {
+    this.setSettings(TcpServerService.defaultState);
   }
 
   setSettings(settings: Partial<ITcpServersSettings>) {
@@ -161,69 +224,6 @@ export class TcpServerService
 
   getSettings(): ITcpServersSettings {
     return this.state;
-  }
-
-  getApiSettingsFormData(): ISettingsSubCategory[] {
-    const settings = this.state;
-    return [
-      {
-        nameSubCategory: 'Named Pipe',
-        codeSubCategory: 'namedPipe',
-        parameters: [
-          <IObsInput<boolean>>{
-            value: settings.namedPipe.enabled,
-            name: 'enabled',
-            description: 'Enabled',
-            type: 'OBS_PROPERTY_BOOL',
-            visible: true,
-            enabled: true,
-          },
-
-          <IObsInput<string>>{
-            value: settings.namedPipe.pipeName,
-            name: 'pipeName',
-            description: $t('Pipe Name'),
-            type: 'OBS_PROPERTY_TEXT',
-            visible: true,
-            enabled: settings.namedPipe.enabled,
-          },
-        ],
-      },
-      {
-        nameSubCategory: 'Websockets',
-        codeSubCategory: 'websockets',
-        parameters: [
-          <IObsInput<boolean>>{
-            value: settings.websockets.enabled,
-            name: 'enabled',
-            description: $t('Enabled'),
-            type: 'OBS_PROPERTY_BOOL',
-            visible: true,
-            enabled: true,
-          },
-
-          <IObsInput<boolean>>{
-            value: settings.websockets.allowRemote,
-            name: 'allowRemote',
-            description: $t('Allow Remote Connections'),
-            type: 'OBS_PROPERTY_BOOL',
-            visible: true,
-            enabled: settings.websockets.enabled,
-          },
-
-          <IObsInput<number>>{
-            value: settings.websockets.port,
-            name: 'port',
-            description: $t('Port'),
-            type: 'OBS_PROPERTY_INT',
-            minVal: 0,
-            maxVal: 65535,
-            visible: true,
-            enabled: settings.websockets.enabled,
-          },
-        ],
-      },
-    ];
   }
 
   getIPAddresses(): IIPAddressDescription[] {
