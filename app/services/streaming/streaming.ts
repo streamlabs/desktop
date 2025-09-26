@@ -629,6 +629,7 @@ export class StreamingService
 
       await this.runCheck(platform, () => service.beforeGoLive(settingsForPlatform, display));
     } catch (e: unknown) {
+      console.error('Error setting platform settings', e);
       this.handleSetupPlatformError(e, platform);
 
       // if TikTok is the only platform going live and the user is banned, prevent the stream from attempting to start
@@ -852,28 +853,21 @@ export class StreamingService
       ? this.views.getPlatformDisplayName(platform)
       : $t('Custom Destination');
 
-    if (typeof errorTypeOrError === 'object') {
-      // an error object has been passed as a first arg
-      if (platform) errorTypeOrError.platform = platform;
+    const streamError =
+      errorTypeOrError instanceof StreamError
+        ? errorTypeOrError
+        : createStreamError(errorTypeOrError as TStreamErrorType);
 
-      // handle error message for user and diag report
-      const messages = formatStreamErrorMessage(errorTypeOrError, target);
-      this.streamErrorUserMessage = messages.user;
-      this.streamErrorReportMessage = messages.report;
-
-      this.SET_ERROR(errorTypeOrError, platform);
-    } else {
-      // an error type has been passed as a first arg
-      const errorType = errorTypeOrError as TStreamErrorType;
-      const error = createStreamError(errorType);
-      if (platform) error.platform = platform;
-      // handle error message for user and diag report
-      const messages = formatStreamErrorMessage(errorType, target);
-      this.streamErrorUserMessage = messages.user;
-      this.streamErrorReportMessage = messages.report;
-
-      this.SET_ERROR(error, platform);
+    if (platform) {
+      streamError.platform = platform;
     }
+
+    const messages = formatStreamErrorMessage(streamError, target);
+    this.streamErrorUserMessage = messages.user;
+    this.streamErrorReportMessage = messages.report;
+
+    streamError.message = messages.user;
+    this.SET_ERROR(streamError);
 
     const error = this.state.info.error;
     assertIsDefined(error);
@@ -895,11 +889,7 @@ export class StreamingService
   }
 
   @mutation()
-  private SET_ERROR(error: IStreamError, platform?: TPlatform) {
-    if (platform) {
-      error.platform = platform;
-    }
-
+  private SET_ERROR(error: IStreamError) {
     this.state.info.error = error;
   }
 
@@ -2362,6 +2352,7 @@ export class StreamingService
     }
 
     if ((info.code as EOutputCode) === EOutputCode.Success) return;
+    console.debug('OBS Output Error signal: ', info);
 
     if (this.outputErrorOpen) {
       console.warn('Not showing error message because existing window is open.', info);
@@ -2438,9 +2429,12 @@ export class StreamingService
           (info.error && typeof info.error !== 'string') ||
           (info.error && info.error === '')
         ) {
-          info.error = $t('An unknown %{type} error occurred.', {
-            type: outputType(info.type),
-          });
+          info.error =
+            this.streamErrorUserMessage !== ''
+              ? this.streamErrorUserMessage
+              : $t('An unknown %{type} error occurred.', {
+                  type: outputType(info.type),
+                });
         }
 
         const messages = formatUnknownErrorMessage(
