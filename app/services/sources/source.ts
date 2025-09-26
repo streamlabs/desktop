@@ -18,6 +18,7 @@ import omit from 'lodash/omit';
 import { assertIsDefined } from '../../util/properties-type-guards';
 import { SourceFiltersService } from '../source-filters';
 import { TransitionsService } from 'services/transitions';
+import { byOS, OS } from 'util/operating-systems';
 
 @ServiceHelper('SourcesService')
 export class Source implements ISourceApi {
@@ -233,6 +234,54 @@ export class Source implements ISourceApi {
     return this.configurable;
   }
 
+  // Remap keycodes for keys that are independent of keyboard layout
+  getMacVirtualKeyCode(code: number) {
+    // The lookup map contains problematic keys that needs to be remapped into a CGKeyCode.
+    const keyMap: Record<number, { vkey: number; text?: string }> = {
+      8: { text: '', vkey: 51 }, // backspace
+      9: { text: '', vkey: 48 }, // TAB
+      45: { text: '', vkey: 114 }, // insert
+      46: { text: '', vkey: 117 }, // delete
+      37: { text: '', vkey: 123 }, // left arrow
+      39: { text: '', vkey: 124 }, // right arrow
+      38: { text: '', vkey: 126 }, // up arrow
+      40: { text: '', vkey: 125 }, // down arrow
+      36: { text: '', vkey: 115 }, // Home
+      13: { text: '', vkey: 36 }, // Return
+      35: { text: '', vkey: 119 }, // End
+      33: { text: '', vkey: 116 }, // Page Up
+      34: { text: '', vkey: 121 }, // Page Down
+      27: { text: '', vkey: 53 }, // Escape
+      32: { vkey: 49 }, // Space
+      112: { text: '', vkey: 122 }, // F1
+      113: { text: '', vkey: 120 }, // F2
+      114: { text: '', vkey: 99 }, // F3
+      115: { text: '', vkey: 118 }, // F4
+      116: { text: '', vkey: 96 }, // F5
+      117: { text: '', vkey: 97 }, // F6
+      118: { text: '', vkey: 98 }, // F7
+      119: { text: '', vkey: 100 }, // F8
+      120: { text: '', vkey: 101 }, // F9
+      121: { text: '', vkey: 109 }, // F10
+      122: { text: '', vkey: 103 }, // F11
+      123: { text: '', vkey: 111 }, // F12
+      124: { text: '', vkey: 105 }, // Map Print Screen → F13
+      // Number keys 0–9
+      48: { vkey: 29 }, // 0
+      49: { vkey: 18 }, // 1
+      50: { vkey: 19 }, // 2
+      51: { vkey: 20 }, // 3
+      52: { vkey: 21 }, // 4
+      53: { vkey: 23 }, // 5
+      54: { vkey: 22 }, // 6
+      55: { vkey: 26 }, // 7
+      56: { vkey: 28 }, // 8
+      57: { vkey: 25 }, // 9
+      76: { vkey: 37 }, // L key
+    };
+    return keyMap[code];
+  }
+
   /**
    * works only for browser_source
    */
@@ -344,23 +393,47 @@ export class Source implements ISourceApi {
     modifiers: { alt: boolean; ctrl: boolean; shift: boolean },
   ) {
     let normalizedText = key;
+    let nativeVkey = code;
+    let ignoreKeypress = false;
 
-    // Enter key
-    if (code === 13) normalizedText = '\r';
-
-    const altKey: number = (modifiers.alt && obs.EInteractionFlags.AltKey) || 0;
-    const ctrlKey: number = (modifiers.ctrl && obs.EInteractionFlags.ControlKey) || 0;
-    const shiftKey: number = (modifiers.shift && obs.EInteractionFlags.ShiftKey) || 0;
-    this.getObsInput().sendKeyClick(
-      {
-        modifiers: altKey | ctrlKey | shiftKey,
-        text: normalizedText,
-        nativeModifiers: 0,
-        nativeScancode: 0,
-        nativeVkey: code,
+    byOS({
+      [OS.Windows]: () => {
+        // Enter key
+        if (code === 13) normalizedText = '\r';
       },
-      keyup,
-    );
+      [OS.Mac]: () => {
+        const entry = this.getMacVirtualKeyCode(code);
+        if (entry) {
+          if (keyup) {
+            ignoreKeypress = true; // These special keys are handled for both keyup & keydown resulting in two key presses.
+          } else {
+            normalizedText = entry.text ?? key;
+            nativeVkey = entry.vkey;
+          }
+        }
+      },
+    });
+
+    if (!ignoreKeypress) {
+      const altKey: number = (modifiers.alt && obs.EInteractionFlags.AltKey) || 0;
+      const ctrlKey: number = (modifiers.ctrl && obs.EInteractionFlags.ControlKey) || 0;
+      const shiftKey: number = (modifiers.shift && obs.EInteractionFlags.ShiftKey) || 0;
+      this.getObsInput().sendKeyClick(
+        {
+          modifiers: altKey | ctrlKey | shiftKey,
+          text: normalizedText,
+          nativeModifiers: 0,
+          nativeScancode: 0,
+          nativeVkey,
+        },
+        keyup,
+      );
+    }
+  }
+
+  @ExecuteInWorkerProcess()
+  sendFocus(focus: boolean) {
+    this.getObsInput().sendFocus(focus);
   }
 
   @Inject()
