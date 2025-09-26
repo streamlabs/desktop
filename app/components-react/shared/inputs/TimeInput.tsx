@@ -56,7 +56,7 @@ export const TimeInput = InputComponent((p: TTimeInputProps) => {
   );
 });
 
-function getAntdValue(value?: number) {
+function getAntdValue(value: number) {
   return moment(value);
 }
 

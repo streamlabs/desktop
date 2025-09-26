@@ -25,6 +25,11 @@ const componentTable: {
   checkboxGroup: inputs.CheckboxGroup,
   textarea: inputs.TextAreaInput,
   color: inputs.ColorInput,
+  mediaurl: inputs.MediaUrlInput,
+  imagepicker: inputs.ImagePickerInput,
+  time: inputs.TimeInput,
+  animation: inputs.AnimationInput,
+  duration: inputs.DurationInput,
 };
 
 interface IFormMetadata {
