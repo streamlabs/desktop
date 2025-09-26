@@ -30,6 +30,7 @@ export default class BrowserSourceInteraction extends TsxComponent<{}> {
 
   onOutputResize(region: IRectangle) {
     this.currentRegion = region;
+    this.source.sendFocus(true);
   }
 
   eventLocationInSourceSpace(e: MouseEvent): IVec2 {
