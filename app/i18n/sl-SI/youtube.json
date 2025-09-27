@@ -39,5 +39,13 @@
   "DVR controls enable the viewer to control the video playback experience by pausing, rewinding, or fast forwarding content": "DVR controls enable the viewer to control the video playback experience by pausing, rewinding, or fast forwarding content",
   "Auto-start is disabled for your broadcast. You should manually publish your stream from Youtube Studio": "Auto-start is disabled for your broadcast. You should manually publish your stream from Youtube Studio",
   "Made for kids": "Made for kids",
-  "Features like personalized ads and live chat won't be available on live streams made for kids.": "Features like personalized ads and live chat won't be available on live streams made for kids."
+  "Features like personalized ads and live chat won't be available on live streams made for kids.": "Features like personalized ads and live chat won't be available on live streams made for kids.",
+  "YouTube token has expired, re-login or re-merge YouTube account": "YouTube token has expired, re-login or re-merge YouTube account",
+  "Thumbnail image content is invalid.": "Thumbnail image content is invalid.",
+  "Thumbnail file does not include image content.": "Thumbnail file does not include image content.",
+  "Permission missing to upload thumbnails.": "Permission missing to upload thumbnails.",
+  "Video does not exist. Thumbnail upload failed.": "Video does not exist. Thumbnail upload failed.",
+  "Exceeded thumbnail upload quota. Please try again later.": "Exceeded thumbnail upload quota. Please try again later.",
+  "YouTube thumbnail image is too large. Maximum size is 2MB.": "YouTube thumbnail image is too large. Maximum size is 2MB.",
+  "Please upload thumbnail manually on YouTube.": "Please upload thumbnail manually on YouTube."
 }
