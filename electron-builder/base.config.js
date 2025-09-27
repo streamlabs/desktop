@@ -35,7 +35,15 @@ const base = {
     allowToChangeInstallationDirectory: true,
     include: 'installer.nsh',
   },
-  asarUnpack : ["**/node-libuiohook/**", "**/node-fontinfo/**", "**/font-manager/**", "**/game_overlay/**","**/color-picker/**"],
+  asarUnpack: [
+    '**/node-libuiohook/**',
+    '**/node-fontinfo/**',
+    '**/font-manager/**',
+    '**/game_overlay/**',
+    '**/color-picker/**',
+    '**/node_modules/sharp/**/*',
+    '**/node_modules/@img/**/*',
+  ],
   publish: {
     provider: 'generic',
     url: 'https://slobs-cdn.streamlabs.com',
@@ -64,12 +72,17 @@ const base = {
       if (fs.existsSync(signingPath)) {
         fs.appendFileSync(signingPath, `${config.path}\n`);
       } else {
-        cp.execSync(`logisign client --client logitech-cpg-sign-client --app streamlabs --files "${config.path}"`, { stdio: 'inherit' });
+        cp.execSync(
+          `logisign client --client logitech-cpg-sign-client --app streamlabs --files "${config.path}"`,
+          { stdio: 'inherit' },
+        );
       }
     },
   },
   mac: {
-    identity: (process.env.APPLE_SLD_IDENTITY) ? process.env.APPLE_SLD_IDENTITY : 'Streamlabs LLC (UT675MBB9Q)',
+    identity: process.env.APPLE_SLD_IDENTITY
+      ? process.env.APPLE_SLD_IDENTITY
+      : 'Streamlabs LLC (UT675MBB9Q)',
     extraFiles: [
       'shared-resources/**/*',
       '!shared-resources/README',
