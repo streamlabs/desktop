@@ -1,7 +1,6 @@
 import { getDefined } from 'util/properties-type-guards';
 import {
   IGame,
-  IPlatformCapabilityResolutionPreset,
   IPlatformRequest,
   IPlatformService,
   IPlatformState,
@@ -14,8 +13,7 @@ import { BasePlatformService } from './base-platform';
 import { IGoLiveSettings } from 'services/streaming';
 import { TDisplayType } from 'services/settings-v2';
 import { WidgetType } from 'services/widgets';
-import { InheritMutations, mutation } from 'services/core';
-import Utils from 'services/utils';
+import { InheritMutations } from 'services/core';
 
 export interface IInstagramStartStreamOptions {
   streamUrl: string;
@@ -66,11 +64,6 @@ export class InstagramService
     const settings = getDefined(goLiveSettings.platforms.instagram);
 
     if (goLiveSettings.cloudShift && this.streamingService.views.shouldSwitchStreams) {
-      this.setPlatformContext('instagram');
-      return;
-    }
-
-    if (goLiveSettings.cloudShift) {
       this.setPlatformContext('instagram');
       return;
     }

@@ -344,9 +344,7 @@ export class FacebookService
   }
 
   async setupCloudShiftStream(goLiveSettings: IGoLiveSettings): Promise<void> {
-    // Note: The below is pretty much the same as prepopulateInfo
-
-    // const video = await
+    const settings = goLiveSettings.cloudShiftSettings;
 
     const permissions = await this.fetchPermissions();
     const grantedPermissions = permissions
@@ -396,7 +394,8 @@ export class FacebookService
     }
 
     const destinationType = this.state.settings.destinationType;
-    const destinationId = this.state.settings.pageId || this.state.settings.groupId || '';
+    const destinationId =
+      settings?.broadcast_id || this.state.settings.pageId || this.state.settings.groupId || '';
     const stream = await this.fetchStream(destinationType, destinationId);
 
     console.log(
@@ -424,14 +423,12 @@ export class FacebookService
     this.SET_STREAM_KEY(streamKey);
     this.SET_STREAM_PAGE_URL(`https://facebook.com/${liveVideo.permalink_url}`);
     this.SET_STREAM_DASHBOARD_URL(`https://facebook.com/live/producer/${liveVideo.video.id}`);
-    this.UPDATE_STREAM_SETTINGS({ ...liveVideo, liveVideoId: liveVideo.id });
+    this.UPDATE_STREAM_SETTINGS({
+      ...liveVideo,
+      liveVideoId: liveVideo.id,
+      title: settings?.stream_title,
+    });
     this.SET_VIDEO_ID(liveVideo.video.id);
-
-    // send selected pageId to streamlabs.com
-    if (destinationType === 'page') {
-      assertIsDefined(this.state.settings.pageId);
-      await this.postPage(this.state.settings.pageId);
-    }
 
     this.setPlatformContext('facebook');
   }

@@ -323,34 +323,29 @@ export class YoutubeService
   }
 
   async setupCloudShiftStream(goLiveSettings: IGoLiveSettings) {
+    const settings = goLiveSettings?.cloudShiftSettings;
+
     try {
-      const broadcasts = await this.fetchBroadcasts();
-      console.log('YOUTUBE broadcasts', broadcasts);
+      const liveBroadcasts = await this.fetchLiveBroadcasts();
 
-      if (!broadcasts) return;
+      // Use the last broadcast in the list, which should be the most recent one
+      const broadcast = liveBroadcasts?.[liveBroadcasts.length - 1];
 
-      const liveBroadcasts = broadcasts.filter(b => b.status.lifeCycleStatus === 'live');
-      console.log('YOUTUBE liveBroadcasts', liveBroadcasts);
+      const broadcastId = settings?.broadcast_id ?? broadcast?.id;
 
-      if (liveBroadcasts.length === 0) {
-        console.error('No active YouTube broadcasts found');
-        return;
-      }
-
-      const broadcast = (await this.fetchLiveBroadcasts())?.[0];
-      console.log('YOUTUBE broadcast', broadcast);
       if (!broadcast) {
         console.error('No active YouTube broadcasts found');
         return;
       }
 
-      const video = await this.fetchVideo(broadcast.id);
-      console.log('YOUTUBE video', video);
+      const video = await this.fetchVideo(broadcastId);
       this.SET_STREAM_ID(broadcast.contentDetails.boundStreamId);
 
+      const title = settings?.stream_title ?? broadcast.snippet.title;
+
       this.UPDATE_STREAM_SETTINGS({
-        broadcastId: broadcast.id,
-        title: broadcast.snippet.title,
+        title,
+        broadcastId: settings?.broadcast_id ?? broadcast.id,
         description: broadcast.snippet.description,
         categoryId: video?.snippet?.categoryId,
         enableAutoStart: broadcast.contentDetails.enableAutoStart,
@@ -364,6 +359,14 @@ export class YoutubeService
       });
     } catch (e: unknown) {
       console.error('Error fetching broadcasts', e);
+
+      // If fetching the YouTube settings fails, populate just the Cloud Shift settings
+      if (settings) {
+        this.UPDATE_STREAM_SETTINGS({
+          title: settings.stream_title,
+          broadcastId: settings.broadcast_id,
+        });
+      }
       return;
     }
 
@@ -497,6 +500,20 @@ export class YoutubeService
   }
 
   async afterStopStream() {
+    // Confirm that the Cloud Shift stream is stopped
+    if (this.streamingService.views.shouldSwitchStreams) {
+      const broadcasts = await this.fetchLiveBroadcasts();
+
+      if (broadcasts.length) {
+        const cloudShiftBroadcast = broadcasts.find(b => b.id === this.state.settings.broadcastId);
+
+        // If for some reason the broadcast is still live, end it
+        if (cloudShiftBroadcast && cloudShiftBroadcast.status.lifeCycleStatus === 'live') {
+          await this.stopBroadcast(cloudShiftBroadcast.id);
+        }
+      }
+    }
+
     const destinations = this.streamingService.views.customDestinations.filter(
       dest => dest.streamKey !== this.state.verticalStreamKey,
     );
@@ -1061,6 +1078,15 @@ export class YoutubeService
 
       throw throwStreamError(errorType, { ...error, platform: 'youtube' }, details);
     }
+  }
+
+  async stopBroadcast(broadcastId: string) {
+    // https://www.googleapis.com/youtube/v3/liveBroadcasts/transition
+    const endpoint = `liveBroadcasts/transition?id=${broadcastId}&broadcastStatus=complete`;
+    return platformAuthorizedRequest<IYoutubeLiveStream>('youtube', {
+      url: `${this.apiBase}/${endpoint}`,
+      method: 'POST',
+    });
   }
 
   fetchFollowers() {

@@ -317,6 +317,8 @@ export class StreamingService
 
     // For the Cloud Shift, match remote targets to local targets
     if (settings.cloudShift && this.restreamService.views.hasCloudShiftTargets) {
+      await this.restreamService.fetchTargetData();
+
       const targets: TPlatform[] = this.restreamService.views.cloudShiftTargets.reduce(
         (platforms: TPlatform[], target: ICloudShiftTarget) => {
           if (target.platform !== 'relay') {
@@ -609,12 +611,26 @@ export class StreamingService
     const display = this.views.getPlatformDisplayType(platform);
 
     try {
-      // don't update settings for twitch in unattendedMode
+      const isCloudShiftStream = this.restreamService.views.hasCloudShiftTargets;
+      // If this is a Cloud Shift stream switching from another device, populate the
+      // Cloud Shift stream's settings to the platforms
+      if (isCloudShiftStream) {
+        const cloudShiftSettings = this.restreamService.getTargetLiveData(platform);
+
+        if (cloudShiftSettings) {
+          settings.cloudShiftSettings = cloudShiftSettings;
+        }
+      }
+
       const settingsForPlatform =
-        !this.views.isDualOutputMode && platform === 'twitch' && unattendedMode
+        !this.views.isDualOutputMode &&
+        platform === 'twitch' &&
+        unattendedMode &&
+        !isCloudShiftStream
           ? undefined
           : settings;
 
+      // don't update settings for twitch in unattendedMode
       await this.runCheck(platform, () => service.beforeGoLive(settingsForPlatform, display));
     } catch (e: unknown) {
       console.error('Error setting platform settings', e);

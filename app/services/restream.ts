@@ -36,6 +36,16 @@ export interface ICloudShiftTarget {
   key?: string;
 }
 
+export interface ITargetLiveData extends ICloudShiftTarget {
+  is_live?: boolean;
+  chat_url?: string;
+  ccv?: number;
+  platform_id?: string;
+  broadcast_id?: string;
+  channel_name?: string;
+  stream_title?: string;
+}
+
 export type TCloudShiftStatus = 'pending' | 'inactive' | 'active';
 export type TCloudShiftAction = 'approved' | 'rejected';
 
@@ -72,7 +82,7 @@ interface IRestreamState {
    * If the user is live using the stream switcher, save the stream data here so that the
    * stream can be started correctly.
    */
-  cloudShiftTargets: ICloudShiftTarget[];
+  cloudShiftTargets: ITargetLiveData[];
 }
 
 interface IUserSettingsResponse extends IRestreamState {
@@ -482,7 +492,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   async checkIsLive(): Promise<boolean> {
-    const status = await this.getIsLive();
+    const status = await this.fetchLiveStatus();
+    console.debug('Cloud Shift Status', status);
 
     if (status.isLive) {
       this.streamSettingsService.setGoLiveSettings({ cloudShift: true });
@@ -496,7 +507,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return status.isLive;
   }
 
-  async getIsLive() {
+  async fetchLiveStatus() {
     const headers = authorizedHeaders(
       this.userService.apiToken,
       new Headers({ 'Content-Type': 'application/json' }),
@@ -505,6 +516,47 @@ export class RestreamService extends StatefulService<IRestreamState> {
     const request = new Request(url, { headers });
 
     return jfetch<{ isLive: boolean; targets: ICloudShiftTarget[] }>(request);
+  }
+
+  async fetchTargetData(): Promise<any | null> {
+    const headers = authorizedHeaders(this.userService.apiToken);
+
+    const platforms = this.state.cloudShiftTargets
+      .filter(t => t.platform !== 'relay')
+      .map(t => t.platform)
+      .join(',');
+
+    const url = `https://${this.host}/api/v5/slobs/platform/status?platforms=${platforms}`;
+
+    const request = new Request(url, { headers, method: 'GET' });
+
+    return jfetch(request)
+      .then((res: { [key: string]: ITargetLiveData[] }) => {
+        const targets = this.state.cloudShiftTargets.reduce((targetData: ITargetLiveData[], t) => {
+          const platform = t.platform as string;
+          if (t.platform !== 'relay') {
+            const data = res[platform]?.[0];
+
+            if (data) {
+              targetData.push({ ...t, ...data });
+            }
+          }
+
+          return targetData;
+        }, []);
+
+        console.debug('Cloud Shift target data', targets);
+
+        this.SET_STREAM_SWITCHER_TARGETS(targets);
+      })
+      .catch((e: unknown) => {
+        console.error('Error fetching cloud shift target data:', e);
+        return null as any;
+      });
+  }
+
+  getTargetLiveData(platform: TPlatform): ITargetLiveData | undefined {
+    return this.state.cloudShiftTargets.find(t => t.platform === platform);
   }
 
   setCloudShiftStatus(status: TCloudShiftStatus) {

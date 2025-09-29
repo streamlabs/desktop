@@ -60,7 +60,7 @@ export default function CloudShiftToggle(p: ICloudShiftToggle) {
 
       <Tooltip
         title={$t(
-          'Stay uninterrupted by switching between devices mid stream. Works between Desktop, Mobile App & Console.',
+          'Stay uninterrupted by switching between devices mid stream. Works between Desktop and Mobile App.',
         )}
         placement="top"
         lightShadow={true}

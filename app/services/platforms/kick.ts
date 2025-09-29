@@ -139,18 +139,29 @@ export class KickService
     return this.userService.views.state.auth?.platforms?.kick?.token;
   }
 
-  async setupCloudShiftStream(options: IGoLiveSettings): Promise<void> {
+  async setupCloudShiftStream(goLiveSettings: IGoLiveSettings): Promise<void> {
+    const settings = goLiveSettings.cloudShiftSettings;
+
     const response = await this.fetchStreamInfo();
     const info = response as IKickStreamInfoResponse;
 
-    console.log('KICK await this.fetchStreamInfo()', response);
+    const title = settings?.stream_title ?? info.channel?.title;
 
     if (info.channel) {
       this.UPDATE_STREAM_SETTINGS({
-        title: info.channel.title,
+        title,
         game: info.channel.category.id.toString(),
       });
+
       this.SET_GAME_NAME(info.channel.category.name);
+    } else {
+      this.UPDATE_STREAM_SETTINGS({
+        title,
+      });
+    }
+
+    if (settings?.chat_url) {
+      this.SET_CHAT_URL(settings.chat_url);
     }
 
     this.setPlatformContext('kick');
@@ -488,7 +499,7 @@ export class KickService
   }
 
   get chatUrl(): string {
-    return this.state.chatUrl;
+    return this.state.chatUrl ?? `${this.apiBase}/popout/${this.state.channelName}/chat`;
   }
 
   get dashboardUrl(): string {

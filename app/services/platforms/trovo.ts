@@ -180,23 +180,43 @@ export class TrovoService
 
   async setupCloudShiftStream(goLiveSettings: IGoLiveSettings) {
     // Note: The below is pretty much the same as prepopulateInfo
+    const settings = goLiveSettings?.cloudShiftSettings;
 
+    // Set the game
     const channelInfo = await this.fetchChannelInfo();
-    const userInfo = await this.requestTrovo<ITrovoUserInfo>(`${this.apiBase}/getuserinfo`);
     const gameInfo = await this.fetchGame(channelInfo.category_name);
 
-    console.log('TROVO channelInfo', channelInfo);
-    console.log('TROVO userInfo', userInfo);
-    console.log('TROVO gameInfo', gameInfo);
-
-    this.SET_STREAM_SETTINGS({ title: channelInfo.live_title, game: channelInfo.category_id });
-    this.SET_USER_INFO(userInfo);
-    this.SET_STREAM_KEY(channelInfo.stream_key.replace('live/', ''));
+    const title = settings?.stream_title ?? channelInfo.live_title;
     this.SET_CHANNEL_INFO({
       gameId: channelInfo.category_id,
       gameName: channelInfo.category_name,
       gameImage: gameInfo.image || '',
     });
+
+    // Set the stream key
+    this.SET_STREAM_KEY(channelInfo.stream_key.replace('live/', ''));
+
+    // Set the remaining settings
+    if (settings) {
+      this.SET_STREAM_SETTINGS({
+        title,
+        game: channelInfo.category_id,
+      });
+
+      this.SET_USER_INFO({
+        userId: settings.platform_id ?? '',
+        channelId: settings.platform_id ?? channelInfo.stream_key.split('_')[0],
+      });
+    } else {
+      // As a fallback, fetch info from Trovo
+      const userInfo = await this.requestTrovo<ITrovoUserInfo>(`${this.apiBase}/getuserinfo`);
+
+      this.SET_STREAM_SETTINGS({
+        title,
+        game: channelInfo.category_id,
+      });
+      this.SET_USER_INFO(userInfo);
+    }
 
     this.setPlatformContext('trovo');
   }

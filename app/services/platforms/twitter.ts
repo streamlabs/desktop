@@ -83,6 +83,20 @@ export class TwitterPlatformService
     return this.userService.state.auth?.platforms?.twitter?.username || '';
   }
 
+  async setupCloudShiftStream(goLiveSettings?: IGoLiveSettings) {
+    const settings = goLiveSettings?.cloudShiftSettings;
+    // Set up the Cloud Shift settings
+    if (settings) {
+      this.UPDATE_STREAM_SETTINGS({
+        title: settings?.stream_title,
+      });
+
+      this.SET_BROADCAST_ID(settings?.broadcast_id ?? '');
+    }
+
+    this.setPlatformContext('twitter');
+  }
+
   async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     if (Utils.isTestMode()) {
       this.SET_BROADCAST_ID('twitterBroadcast1');
@@ -91,8 +105,7 @@ export class TwitterPlatformService
     }
 
     if (goLiveSettings.cloudShift && this.streamingService.views.shouldSwitchStreams) {
-      console.log('TWITTER cloud shift, skipping new broadcast');
-      this.setPlatformContext('twitter');
+      await this.setupCloudShiftStream(goLiveSettings);
       return;
     }
 

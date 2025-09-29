@@ -351,6 +351,8 @@ export class TwitchService
   }
 
   async setupCloudShiftStream(goLiveSettings?: IGoLiveSettings) {
+    const settings = goLiveSettings?.cloudShiftSettings;
+
     const [channelInfo] = await Promise.all([
       this.requestTwitch<{
         data: {
@@ -361,7 +363,7 @@ export class TwitchService
         }[];
       }>(`${this.apiBase}/helix/channels?broadcaster_id=${this.twitchId}`).then(json => {
         return {
-          title: json.data[0].title,
+          title: settings?.stream_title ?? json.data[0].title,
           game: json.data[0].game_name,
           is_branded_content: json.data[0].is_branded_content,
           content_classification_labels: json.data[0].content_classification_labels,
@@ -372,18 +374,11 @@ export class TwitchService
       ).then(json => this.twitchContentClassificationService.setLabels(json)),
     ]);
 
+    const title = settings?.stream_title ?? channelInfo.title;
+
     const tags: string[] = this.twitchTagsService.views.hasTags
       ? this.twitchTagsService.views.tags
       : [];
-
-    console.log('TWITCH stream settings', {
-      tags,
-      title: channelInfo.title,
-      game: channelInfo.game,
-      isBrandedContent: channelInfo.is_branded_content,
-      isEnhancedBroadcasting: this.settingsService.isEnhancedBroadcasting(),
-      contentClassificationLabels: channelInfo.content_classification_labels,
-    });
 
     this.SET_STREAM_SETTINGS({
       tags,

@@ -119,7 +119,7 @@ export class TikTokService
   readonly apiBase = 'https://open.tiktokapis.com/v2';
   readonly platform = 'tiktok';
   readonly displayName = 'TikTok';
-  readonly capabilities = new Set<TPlatformCapability>(['title', 'viewerCount']);
+  readonly capabilities = new Set<TPlatformCapability>(['title', 'game', 'viewerCount']);
   readonly liveDockFeatures = new Set<TLiveDockFeature>([
     'view-stream',
     'dashboard',
@@ -206,7 +206,17 @@ export class TikTokService
   }
 
   async setupCloudShiftStream(goLiveSettings: IGoLiveSettings) {
-    await this.validatePlatform();
+    const settings = goLiveSettings?.cloudShiftSettings;
+
+    if (settings) {
+      this.SET_LIVE_SCOPE('approved');
+      this.SET_USERNAME(settings.channel_name ?? '');
+      this.UPDATE_STREAM_SETTINGS({
+        title: settings.stream_title,
+      });
+    } else {
+      await this.validatePlatform();
+    }
 
     console.log('TIKTOK cloud shift this.state', this.state);
 
