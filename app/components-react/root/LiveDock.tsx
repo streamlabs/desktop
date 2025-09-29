@@ -116,6 +116,7 @@ class LiveDockController {
       (this.restreamService.views.canEnableRestream &&
         this.streamingService.views.hasMultipleTargetsEnabled) ||
       this.hasDifferentDualOutputPlatforms;
+
     const tabs: { name: string; value: string }[] = [
       {
         name: getPlatformService(this.userService.state.auth.primaryPlatform).displayName,
@@ -142,7 +143,8 @@ class LiveDockController {
 
   get isRestreaming() {
     return (
-      this.restreamService.shouldGoLiveWithRestream && !this.streamingService.views.isCloudShiftMode
+      this.restreamService.shouldGoLiveWithRestream ||
+      this.streamingService.views.isCloudShiftMultistream
     );
   }
 

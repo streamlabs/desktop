@@ -208,6 +208,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return (this.settings.cloudShift && this.enabledPlatforms.length > 0) || false;
   }
 
+  get isCloudShiftMultistream(): boolean {
+    return this.isCloudShiftMode && this.enabledPlatforms.length > 1;
+  }
+
   get cloudShiftStatus(): TCloudShiftStatus {
     return this.restreamView.cloudShiftStatus ?? 'inactive';
   }
