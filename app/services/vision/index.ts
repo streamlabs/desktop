@@ -14,6 +14,29 @@ import _ from 'lodash';
 import pMemoize from 'p-memoize';
 import { ESettingsCategory } from 'services/settings';
 
+export class VisionProcess extends RealmObject {
+  game: string;
+  pid: number;
+  executable_name: string;
+  type: string;
+  title: string;
+  autostart: boolean;
+
+  static schema: ObjectSchema = {
+    name: 'VisionProcess',
+    properties: {
+      game: 'string',
+      pid: 'int',
+      executable_name: 'string',
+      type: 'string',
+      title: 'string',
+      autostart: 'bool',
+    },
+  };
+}
+
+VisionProcess.register();
+
 export class VisionState extends RealmObject {
   installedVersion: string;
   percentDownloaded: number;
@@ -25,6 +48,10 @@ export class VisionState extends RealmObject {
   port: number;
   needsUpdate: boolean;
   hasFailedToUpdate: boolean;
+  selectedProcessId: number;
+  availableProcesses: VisionProcess[];
+  availableGames: Dictionary<string>;
+  selectedGame: string;
 
   static schema: ObjectSchema = {
     name: 'VisionState',
@@ -39,6 +66,28 @@ export class VisionState extends RealmObject {
       port: { type: 'int', default: 0 },
       needsUpdate: { type: 'bool', default: false },
       hasFailedToUpdate: { type: 'bool', default: false },
+      selectedProcessId: { type: 'int', optional: true },
+      availableProcesses: { type: 'list', objectType: 'VisionProcess', default: [] },
+      selectedGame: { type: 'string', default: 'fortnite' },
+      availableGames: {
+        type: 'dictionary',
+        objectType: 'string',
+        default: {
+          apex_legends: 'Apex Legends',
+          battlefield_6: 'Battlefield 6',
+          black_ops_6: 'Call of Duty: Black Ops 6',
+          counter_strike_2: 'Counter-Strike 2',
+          fortnite: 'Fortnite',
+          league_of_legends: 'League of Legends',
+          marvel_rivals: 'Marvel Rivals',
+          overwatch_2: 'Overwatch 2',
+          pubg: 'PUBG: Battlegrounds',
+          rainbow_six_siege: 'Rainbow Six Siege',
+          valorant: 'Valorant',
+          war_thunder: 'War Thunder',
+          warzone: 'Call of Duty: Warzone',
+        },
+      },
     },
   };
 }
@@ -296,23 +345,41 @@ export class VisionService extends Service {
     return jfetch(url, { headers, method: 'GET' });
   }
 
-  requestActiveProcess() {
+  async requestActiveProcess() {
     const url = `http://localhost:${this.state.port}/processes/active`;
     const headers = new Headers({ 'Content-Type': 'application/json' });
+    const response: VisionProcess | undefined = await jfetch(url, { headers, method: 'GET' });
 
-    return jfetch(url, { headers, method: 'GET' });
+    if (response?.pid !== undefined) {
+      this.writeState({ selectedProcessId: response.pid });
+    }
+
+    return response;
   }
 
-  requestAvailableProcesses() {
+  async requestAvailableProcesses() {
     const url = `http://localhost:${this.state.port}/processes`;
     const headers = new Headers({ 'Content-Type': 'application/json' });
+    const response = await jfetch<VisionProcess[]>(url, { headers, method: 'GET' });
 
-    return jfetch(url, { headers, method: 'GET' });
+    if (response) {
+      this.writeState({ availableProcesses: _.sortBy(response, 'title') });
+    }
+
+    return response;
   }
 
-  activateProcess(pid: string) {
-    const url = `http://localhost:${this.state.port}/processes/${pid}/activate`;
+  async activateProcess(pid: number, gameHint: string = 'fortnite') {
+    const url = `http://localhost:${this.state.port}/processes/${pid}/activate?game_hint=${gameHint}`;
     const headers = new Headers({ 'Content-Type': 'application/json' });
+
+    const activeProcess = this.state.availableProcesses.find(p => p.pid === pid);
+    console.log('Activating process', pid, 'with game hint', gameHint, 'process=', activeProcess);
+    if (activeProcess.type === 'capture_device') {
+      this.writeState({ selectedProcessId: pid, selectedGame: gameHint });
+    } else {
+      this.writeState({ selectedProcessId: pid });
+    }
 
     return jfetch(url, { headers, method: 'POST' });
   }
