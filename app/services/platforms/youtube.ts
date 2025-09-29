@@ -501,18 +501,18 @@ export class YoutubeService
 
   async afterStopStream() {
     // Confirm that the Cloud Shift stream is stopped
-    if (this.streamingService.views.shouldSwitchStreams) {
-      const broadcasts = await this.fetchLiveBroadcasts();
+    // if (this.streamingService.views.shouldSwitchStreams) {
+    //   const broadcasts = await this.fetchLiveBroadcasts();
 
-      if (broadcasts.length) {
-        const cloudShiftBroadcast = broadcasts.find(b => b.id === this.state.settings.broadcastId);
+    //   if (broadcasts.length) {
+    //     const cloudShiftBroadcast = broadcasts.find(b => b.id === this.state.settings.broadcastId);
 
-        // If for some reason the broadcast is still live, end it
-        if (cloudShiftBroadcast && cloudShiftBroadcast.status.lifeCycleStatus === 'live') {
-          await this.stopBroadcast(cloudShiftBroadcast.id);
-        }
-      }
-    }
+    //     // If for some reason the broadcast is still live, end it
+    //     if (cloudShiftBroadcast && cloudShiftBroadcast.status.lifeCycleStatus === 'live') {
+    //       await this.stopBroadcast(cloudShiftBroadcast.id);
+    //     }
+    //   }
+    // }
 
     const destinations = this.streamingService.views.customDestinations.filter(
       dest => dest.streamKey !== this.state.verticalStreamKey,
