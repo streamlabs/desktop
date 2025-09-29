@@ -397,7 +397,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
   formatUrl(url: string): string {
     return url.replace(/^\s+|\/+$/g, '') + '/';
-    // return url.replace(/\/+$/, '') + '/';
   }
 
   checkStatus(): Promise<boolean> {
