@@ -360,6 +360,6 @@ export const SourceDisplayData = (): { [key: string]: ISourceDisplayData } => ({
     ),
     supportList: [$t('Kills & Eliminations'), $t('Health changes'), $t('Victory & Defeat')],
     group: 'capture',
-    icon: 'fas fa-globe',
+    icon: 'icon-ai',
   },
 });
