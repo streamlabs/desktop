@@ -81,23 +81,23 @@ test('Selective Recording', async t => {
   t.is(files.length, 1, 'Selective Recording works in Advanced Mode.');
 
   // Selective Recording in Simple Mode
-  // await showSettingsWindow('Output', async () => {
-  //   const { setDropdownInputValue } = useForm('Mode');
-  //   await setDropdownInputValue('Mode', 'Simple');
-  //   await clickButton('Done');
-  // });
+  await showSettingsWindow('Output', async () => {
+    const { setDropdownInputValue } = useForm('Mode');
+    await setDropdownInputValue('Mode', 'Simple');
+    await clickButton('Done');
+  });
 
-  // await focusMain();
-  // await startRecording();
-  // await sleep(2000);
-  // await stopRecording();
+  await focusMain();
+  await startRecording();
+  await sleep(2000);
+  await stopRecording();
 
-  // // Check that file exists
-  // await clickWhenDisplayed('span=A new Recording has been completed. Click for more info');
-  // await waitForDisplayed('h1=Recordings', { timeout: 1000 });
+  // Check that file exists
+  await clickWhenDisplayed('span=A new Recording has been completed. Click for more info');
+  await waitForDisplayed('h1=Recordings', { timeout: 1000 });
 
-  // const newFiles = await readdir(tmpDir);
-  // t.is(newFiles.length, 2, 'Selective Recording works in Simple Mode.');
+  const newFiles = await readdir(tmpDir);
+  t.is(newFiles.length, 2, 'Selective Recording works in Simple Mode.');
 
   // Selective Recording in Dual Output Mode
   const user = await logIn(t);
