@@ -383,4 +383,11 @@ export class VisionService extends Service {
 
     return jfetch(url, { headers, method: 'POST' });
   }
+
+  async resetState() {
+    const url = `http://localhost:${this.state.port}/reset_state`;
+    const headers = new Headers({ 'Content-Type': 'application/json' });
+
+    return jfetch(url, { headers, method: 'POST' });
+  }
 }
