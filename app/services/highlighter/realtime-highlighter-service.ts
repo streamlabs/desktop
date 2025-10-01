@@ -263,7 +263,6 @@ export class RealtimeHighlighterService extends Service {
     );
 
     const clipsWithStreamId = clips.map(clip => ({ ...clip, streamId: this.currentStreamId }));
-
     this.highlightsReady.next(clipsWithStreamId);
   }
 

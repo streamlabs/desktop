@@ -410,45 +410,51 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     let streamStarted = false;
     let aiRecordingInProgress = false;
 
-    // add check if ai realtime highlighter is enabled?
-    // if yes add hook to realtime highlighter service?
-    if (this.useRealtimeHighlighter) {
-      this.realtimeHighlighterService.highlightsReady.subscribe(async highlights => {
-        // for some reason addAiClips adds only the first highlight
-        for (const highlight of highlights) {
-          this.addAiClips([highlight], { id: streamInfo.id || '', game: streamInfo.game });
-        }
+    // need to subscribe to both sources of clips since it is done in the init call
+    // replay buffer clips down the line are just skipped if realtime highlighter is active
+    this.realtimeHighlighterService.highlightsReady.subscribe(async highlights => {
+      if (!this.views.useAiHighlighter || !this.useRealtimeHighlighter) {
+        return;
+      }
+      // for some reason addAiClips adds only the first highlight
+      for (const highlight of highlights) {
+        this.addAiClips([highlight], { id: streamInfo.id || '', game: streamInfo.game });
+      }
 
-        await this.loadClips(streamInfo.id);
+      await this.loadClips(streamInfo.id);
 
-        let count = 0;
-        const state = this.views.highlightedStreamsDictionary[streamInfo.id]?.state;
-        if (state?.type === EAiDetectionState.REALTIME_DETECTION_IN_PROGRESS) {
-          count = state.count;
-        }
+      let count = 0;
+      const state = this.views.highlightedStreamsDictionary[streamInfo.id]?.state;
+      if (state?.type === EAiDetectionState.REALTIME_DETECTION_IN_PROGRESS) {
+        count = state.count;
+      }
 
-        this.updateStream({
-          state: { type: EAiDetectionState.REALTIME_DETECTION_IN_PROGRESS, count },
-          id: streamInfo.id,
-        });
+      this.updateStream({
+        state: { type: EAiDetectionState.REALTIME_DETECTION_IN_PROGRESS, count },
+        id: streamInfo.id,
       });
-    } else {
-      this.streamingService.replayBufferFileWrite.subscribe(async clipPath => {
-        const streamId = streamInfo?.id || undefined;
-        let endTime: number | undefined;
+    });
 
-        if (streamId) {
-          endTime = moment().diff(aiRecordingStartTime, 'seconds');
-        } else {
-          endTime = undefined;
-        }
+    this.streamingService.replayBufferFileWrite.subscribe(async clipPath => {
+      // do not add replaybuffer clips while realtime highlighter is active
+      if (this.views.useAiHighlighter && this.useRealtimeHighlighter && this.realtimeHighlighterService.isRunning) {
+        return;
+      }
 
-        const REPLAY_BUFFER_DURATION = 20; // For more finegrained overlay detection use value from settingsService
-        const startTime = Math.max(0, endTime ? endTime - REPLAY_BUFFER_DURATION : 0);
+      const streamId = streamInfo?.id || undefined;
+      let endTime: number | undefined;
 
-        this.addClips([{ path: clipPath, startTime, endTime }], streamId, 'ReplayBuffer');
-      });
-    }
+      if (streamId) {
+        endTime = moment().diff(aiRecordingStartTime, 'seconds');
+      } else {
+        endTime = undefined;
+      }
+
+      const REPLAY_BUFFER_DURATION = 20; // For more finegrained overlay detection use value from settingsService
+      const startTime = Math.max(0, endTime ? endTime - REPLAY_BUFFER_DURATION : 0);
+
+      this.addClips([{ path: clipPath, startTime, endTime }], streamId, 'ReplayBuffer');
+    });
 
     this.streamingService.streamingStatusChange.subscribe(async status => {
       if (status === EStreamingState.Live) {
