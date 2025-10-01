@@ -146,14 +146,16 @@ export class KickService
     const info = response as IKickStreamInfoResponse;
 
     const title = settings?.stream_title ?? info.channel?.title;
+    const game = settings?.game_id ?? info.channel?.category.id.toString();
+    const gameName = settings?.game_name ?? info.channel?.category.name;
 
     if (info.channel) {
       this.UPDATE_STREAM_SETTINGS({
         title,
-        game: info.channel.category.id.toString(),
+        game,
       });
 
-      this.SET_GAME_NAME(info.channel.category.name);
+      this.SET_GAME_NAME(gameName);
     } else {
       this.UPDATE_STREAM_SETTINGS({
         title,
@@ -499,7 +501,9 @@ export class KickService
   }
 
   get chatUrl(): string {
-    return this.state.chatUrl ?? `${this.apiBase}/popout/${this.state.channelName}/chat`;
+    return this.state.chatUrl !== ''
+      ? this.state.chatUrl
+      : `${this.apiBase}/popout/${this.state.channelName}/chat`;
   }
 
   get dashboardUrl(): string {

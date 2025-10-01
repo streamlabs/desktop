@@ -184,12 +184,15 @@ export class TrovoService
 
     // Set the game
     const channelInfo = await this.fetchChannelInfo();
-    const gameInfo = await this.fetchGame(channelInfo.category_name);
 
     const title = settings?.stream_title ?? channelInfo.live_title;
+    const gameName = settings?.game_name ?? channelInfo.category_name;
+    const gameId = settings?.game_id ?? channelInfo.category_id;
+    const gameInfo = await this.fetchGame(gameName);
+
     this.SET_CHANNEL_INFO({
-      gameId: channelInfo.category_id,
-      gameName: channelInfo.category_name,
+      gameId,
+      gameName,
       gameImage: gameInfo.image || '',
     });
 

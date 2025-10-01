@@ -375,6 +375,7 @@ export class TwitchService
     ]);
 
     const title = settings?.stream_title ?? channelInfo.title;
+    const game = settings?.game_name ?? channelInfo.game;
 
     const tags: string[] = this.twitchTagsService.views.hasTags
       ? this.twitchTagsService.views.tags
@@ -382,8 +383,8 @@ export class TwitchService
 
     this.SET_STREAM_SETTINGS({
       tags,
-      title: channelInfo.title,
-      game: channelInfo.game,
+      title,
+      game,
       isBrandedContent: channelInfo.is_branded_content,
       isEnhancedBroadcasting: this.settingsService.isEnhancedBroadcasting(),
       contentClassificationLabels: channelInfo.content_classification_labels,
