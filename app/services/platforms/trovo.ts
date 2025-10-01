@@ -182,6 +182,11 @@ export class TrovoService
     // Note: The below is pretty much the same as prepopulateInfo
     const settings = goLiveSettings?.cloudShiftSettings;
 
+    if (settings && !settings.is_live) {
+      console.error('Cloud Shift Error: Trovo is not live');
+      return;
+    }
+
     // Set the game
     const channelInfo = await this.fetchChannelInfo();
 

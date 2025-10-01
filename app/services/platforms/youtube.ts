@@ -325,6 +325,11 @@ export class YoutubeService
   async setupCloudShiftStream(goLiveSettings: IGoLiveSettings) {
     const settings = goLiveSettings?.cloudShiftSettings;
 
+    if (settings && !settings.is_live) {
+      console.error('Cloud Shift Error: YouTube is not live');
+      return;
+    }
+
     try {
       const liveBroadcasts = await this.fetchLiveBroadcasts();
 

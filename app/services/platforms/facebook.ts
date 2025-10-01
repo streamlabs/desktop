@@ -346,6 +346,11 @@ export class FacebookService
   async setupCloudShiftStream(goLiveSettings: IGoLiveSettings): Promise<void> {
     const settings = goLiveSettings.cloudShiftSettings;
 
+    if (settings && !settings.is_live) {
+      console.error('Cloud Shift Error: Facebook is not live');
+      return;
+    }
+
     // fetch pages and groups
     const [pages, groups] = ((await Promise.all([
       this.fetchPages(),

@@ -142,6 +142,11 @@ export class KickService
   async setupCloudShiftStream(goLiveSettings: IGoLiveSettings): Promise<void> {
     const settings = goLiveSettings.cloudShiftSettings;
 
+    if (settings && !settings.is_live) {
+      console.error('Cloud Shift Error: Kick is not live');
+      return;
+    }
+
     const response = await this.fetchStreamInfo();
     const info = response as IKickStreamInfoResponse;
 

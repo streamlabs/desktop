@@ -353,6 +353,11 @@ export class TwitchService
   async setupCloudShiftStream(goLiveSettings?: IGoLiveSettings) {
     const settings = goLiveSettings?.cloudShiftSettings;
 
+    if (settings && !settings.is_live) {
+      console.error('Cloud Shift Error: Twitch is not live');
+      return;
+    }
+
     const [channelInfo] = await Promise.all([
       this.requestTwitch<{
         data: {

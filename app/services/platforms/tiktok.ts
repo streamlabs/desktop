@@ -208,6 +208,11 @@ export class TikTokService
   async setupCloudShiftStream(goLiveSettings: IGoLiveSettings) {
     const settings = goLiveSettings?.cloudShiftSettings;
 
+    if (settings && !settings.is_live) {
+      console.error('Cloud Shift Error: TikTok is not live');
+      return;
+    }
+
     if (settings) {
       this.SET_LIVE_SCOPE('approved');
       this.SET_USERNAME(settings.channel_name ?? '');

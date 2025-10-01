@@ -85,7 +85,12 @@ export class TwitterPlatformService
 
   async setupCloudShiftStream(goLiveSettings?: IGoLiveSettings) {
     const settings = goLiveSettings?.cloudShiftSettings;
-    // Set up the Cloud Shift settings
+
+    if (settings && !settings.is_live) {
+      console.error('Cloud Shift Error: X is not live');
+      return;
+    }
+
     if (settings) {
       this.UPDATE_STREAM_SETTINGS({
         title: settings?.stream_title,
