@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styles from './GoLive.m.less';
-import { WindowsService, DualOutputService } from 'app-services';
+import { WindowsService, DualOutputService, IncrementalRolloutService } from 'app-services';
 import { ModalLayout } from '../../shared/ModalLayout';
 import { Button, message } from 'antd';
 import { Services } from '../../service-provider';
@@ -13,6 +13,7 @@ import { useGoLiveSettings, useGoLiveSettingsRoot } from './useGoLiveSettings';
 import { inject } from 'slap';
 import RecordingSwitcher from './RecordingSwitcher';
 import { promptAction } from 'components-react/modals';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export default function GoLiveWindow() {
   const { lifecycle, form } = useGoLiveSettingsRoot().extend(module => ({
@@ -59,9 +60,11 @@ function ModalFooter() {
     isLoading,
     isDualOutputMode,
     isPrime,
+    canUseCloudShift,
   } = useGoLiveSettings().extend(module => ({
     windowsService: inject(WindowsService),
     dualOutputService: inject(DualOutputService),
+    incrementalRolloutService: inject(IncrementalRolloutService),
 
     close() {
       this.windowsService.actions.closeChildWindow();
@@ -81,6 +84,12 @@ function ModalFooter() {
 
       return platformDisplays.horizontal.length > 0 || destinationDisplays.horizontal.length > 0;
     },
+
+    get canUseCloudShift() {
+      return this.incrementalRolloutService.views.availableFeatures.includes(
+        EAvailableFeatures.cloudShift,
+      );
+    },
   }));
 
   const [isFetchingStreamStatus, setIsFetchingStreamStatus] = useState(false);
@@ -90,7 +99,7 @@ function ModalFooter() {
     lifecycle === 'runChecklist' && error && checklist.startVideoTransmission !== 'done';
 
   async function handleGoLive() {
-    if (isPrime) {
+    if (isPrime && canUseCloudShift) {
       try {
         setIsFetchingStreamStatus(true);
         const isLive = await Services.RestreamService.checkIsLive();

@@ -20,6 +20,7 @@ import cx from 'classnames';
 import CloudShiftToggle from 'components-react/shared/CloudShiftToggle';
 import { CaretDownOutlined } from '@ant-design/icons';
 import Tooltip from 'components-react/shared/Tooltip';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 /**
  * Renders settings for starting the stream
@@ -46,9 +47,15 @@ export default function GoLiveSettings() {
     isCloudShiftMode,
     isCloudShiftDisabled,
     isDualOutputSwitchDisabled,
+    canUseCloudShift,
     setPrimaryChat,
   } = useGoLiveSettings().extend(module => {
-    const { UserService, VideoEncodingOptimizationService, SettingsService } = Services;
+    const {
+      UserService,
+      VideoEncodingOptimizationService,
+      SettingsService,
+      IncrementalRolloutService,
+    } = Services;
 
     return {
       get canAddDestinations() {
@@ -71,6 +78,12 @@ export default function GoLiveSettings() {
 
       addDestination() {
         SettingsService.actions.showSettings('Stream');
+      },
+
+      get canUseCloudShift() {
+        return IncrementalRolloutService.views.availableFeatures.includes(
+          EAvailableFeatures.cloudShift,
+        );
       },
 
       // temporarily hide the checkbox until streaming and output settings
@@ -138,7 +151,7 @@ export default function GoLiveSettings() {
                 title={$t('Dual Output cannot be used with Cloud Shift')}
                 placement="top"
                 lightShadow={true}
-                disabled={isDualOutputSwitchDisabled || !isPrime}
+                disabled={isDualOutputSwitchDisabled || !isPrime || !canUseCloudShift}
               >
                 <DualOutputToggle
                   className={styles.featureToggle}
@@ -151,22 +164,24 @@ export default function GoLiveSettings() {
                   lightShadow
                 />
               </Tooltip>
-              <Tooltip
-                title={
-                  isPrime
-                    ? $t('Cloud Shift cannot be used with Dual Output')
-                    : $t('Upgrade to Ultra to switch streams between devices.')
-                }
-                placement="top"
-                lightShadow={true}
-                disabled={isPrime && !isCloudShiftDisabled}
-              >
-                <CloudShiftToggle
-                  className={styles.featureToggle}
-                  checkboxClassname={styles.featureCheckbox}
-                  disabled={isCloudShiftDisabled || !isPrime}
-                />
-              </Tooltip>
+              {canUseCloudShift && (
+                <Tooltip
+                  title={
+                    isPrime
+                      ? $t('Cloud Shift cannot be used with Dual Output')
+                      : $t('Upgrade to Ultra to switch streams between devices.')
+                  }
+                  placement="top"
+                  lightShadow={true}
+                  disabled={isPrime && !isCloudShiftDisabled}
+                >
+                  <CloudShiftToggle
+                    className={styles.featureToggle}
+                    checkboxClassname={styles.featureCheckbox}
+                    disabled={isCloudShiftDisabled || !isPrime}
+                  />
+                </Tooltip>
+              )}
             </div>
           </div>
         </Col>

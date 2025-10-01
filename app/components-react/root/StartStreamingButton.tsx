@@ -8,6 +8,7 @@ import { Services } from '../service-provider';
 import * as remote from '@electron/remote';
 import { TCloudShiftStatus } from 'services/restream';
 import { promptAction } from 'components-react/modals';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export default function StartStreamingButton(p: { disabled?: boolean }) {
   const {
@@ -18,6 +19,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     MediaBackupService,
     SourcesService,
     RestreamService,
+    IncrementalRolloutService,
   } = Services;
 
   const {
@@ -28,6 +30,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     isDualOutputMode,
     isLoggedIn,
     isPrime,
+    canUseCloudShift,
   } = useVuex(() => ({
     streamingStatus: StreamingService.state.streamingStatus,
     delayEnabled: StreamingService.views.delayEnabled,
@@ -36,6 +39,9 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     isDualOutputMode: StreamingService.views.isDualOutputMode,
     isLoggedIn: UserService.isLoggedIn,
     isPrime: UserService.state.isPrime,
+    canUseCloudShift: IncrementalRolloutService.views.availableFeatures.includes(
+      EAvailableFeatures.cloudShift,
+    ),
   }));
 
   const [delaySecondsRemaining, setDelayTick] = useState(delaySeconds);
@@ -166,7 +172,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       }
 
       // Only check for Cloud Shift for ultra users
-      if (isLoggedIn && isPrime) {
+      if (isLoggedIn && isPrime && canUseCloudShift) {
         setIsLoading(true);
         const isLive = await fetchCloudShiftStatus();
         setIsLoading(false);

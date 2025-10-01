@@ -10,19 +10,14 @@ import { StreamSettingsService, ICustomStreamDestination } from '../settings/str
 import { UserService } from '../user';
 import { RestreamService, TCloudShiftStatus } from '../restream';
 import { DualOutputService, TDisplayPlatforms, TDisplayDestinations } from '../dual-output';
-import {
-  getPlatformService,
-  TPlatform,
-  TPlatformCapability,
-  platformList,
-  EPlatform,
-} from '../platforms';
+import { getPlatformService, TPlatform, TPlatformCapability, platformList } from '../platforms';
 import { TwitterService } from '../../app-services';
 import cloneDeep from 'lodash/cloneDeep';
 import difference from 'lodash/difference';
 import { Services } from '../../components-react/service-provider';
 import { getDefined } from '../../util/properties-type-guards';
 import { TDisplayType } from 'services/settings-v2';
+import { EAvailableFeatures, IncrementalRolloutService } from 'services/incremental-rollout';
 
 /**
  * The stream info view is responsible for keeping
@@ -53,6 +48,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
   private get dualOutputView() {
     return this.getServiceViews(DualOutputService);
+  }
+
+  private get incrementalRolloutView() {
+    return this.getServiceViews(IncrementalRolloutService);
   }
 
   private get streamingState() {
@@ -205,6 +204,12 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Currently, switch stream cannot be used with only custom destinations. One platform must be enabled.
    */
   get isCloudShiftMode(): boolean {
+    const canUseCloudShift = this.incrementalRolloutView.availableFeatures.includes(
+      EAvailableFeatures.cloudShift,
+    );
+
+    if (!canUseCloudShift) return false;
+
     return (this.settings.cloudShift && this.enabledPlatforms.length > 0) || false;
   }
 
