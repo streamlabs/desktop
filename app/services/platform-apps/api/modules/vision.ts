@@ -75,4 +75,9 @@ export class VisionModule extends Module {
   async requestFrame() {
     return this.visionService.requestFrame();
   }
+
+  @apiMethod()
+  async resetState() {
+    return this.visionService.resetState();
+  }
 }
