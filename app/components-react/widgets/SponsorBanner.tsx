@@ -94,7 +94,7 @@ function ImageSection(p: {
     p.updateSetting(`placement_${p.placement}_images`)([
       ...images,
       {
-        href: $t('No Image'),
+        href: '',
         duration: 10,
       },
     ]);
@@ -129,7 +129,7 @@ function ImageSection(p: {
               position: 'absolute',
               color: 'var(--warning)',
               top: '2px',
-              left: '300px',
+              left: '308px',
               fontSize: '13px',
             }}
             onClick={() => removeImage(image.href)}
