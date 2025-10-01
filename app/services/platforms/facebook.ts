@@ -346,17 +346,6 @@ export class FacebookService
   async setupCloudShiftStream(goLiveSettings: IGoLiveSettings): Promise<void> {
     const settings = goLiveSettings.cloudShiftSettings;
 
-    const permissions = await this.fetchPermissions();
-    const grantedPermissions = permissions
-      .filter(p => ['publish_video', 'publish_to_groups'].includes(p.permission))
-      .filter(p => p.status === 'granted')
-      .map(p => p.permission);
-    this.SET_PERMISSIONS(grantedPermissions);
-
-    console.log('FACEBOOK permissions', JSON.stringify(permissions, null, 2));
-    console.log('FACEBOOK await fetchPages()', await this.fetchPages());
-    console.log('FACEBOOK await fetchGroups()', await this.fetchGroups());
-
     // fetch pages and groups
     const [pages, groups] = ((await Promise.all([
       this.fetchPages(),
@@ -392,43 +381,31 @@ export class FacebookService
     if (!this.state.userAvatar) {
       this.SET_AVATAR(await this.fetchPicture('me'));
     }
+    this.SET_PREPOPULATED(true);
+    const id = settings?.channel_name ?? this.userService.state.auth?.platforms?.facebook?.id;
+    const liveVideoId = settings?.broadcast_id;
+    const title = settings?.stream_title ?? goLiveSettings.platforms.facebook?.title ?? '';
 
-    const destinationType = this.state.settings.destinationType;
-    const destinationId =
-      settings?.broadcast_id || this.state.settings.pageId || this.state.settings.groupId || '';
-    const stream = await this.fetchStream(destinationType, destinationId);
-
-    console.log(
-      'FACEBOOK await this.fetchStream()',
-      await this.fetchStream(destinationType, destinationId),
-    );
-
-    if (!stream) {
-      console.error('Could not fetch stream for cloud shift');
-      return;
+    if (!liveVideoId) {
+      console.error('Error setting up cloud shift for Facebook, no broadcast id found.');
+      this.UPDATE_STREAM_SETTINGS({ title });
+    } else {
+      this.SET_STREAM_PAGE_URL(`https://facebook.com/${id}/videos/${liveVideoId}`);
+      this.SET_STREAM_DASHBOARD_URL(
+        `https://facebook.com/live/producer/v2/${liveVideoId}/dashboard`,
+      );
+      this.UPDATE_STREAM_SETTINGS({
+        title,
+        liveVideoId,
+      });
+      this.SET_VIDEO_ID(liveVideoId);
     }
 
-    const liveVideo = await this.fetchVideo(stream.id, destinationType, destinationId);
-    console.log(
-      'FACEBOOK await this.fetchVideo()',
-      await this.fetchVideo(stream.id, destinationType, destinationId),
-    );
-    if (!liveVideo) {
-      console.error('Could not fetch video for cloud shift');
-      return;
+    // send selected pageId to streamlabs.com
+    if (this.state.settings.destinationType === 'page') {
+      assertIsDefined(this.state.settings.pageId);
+      await this.postPage(this.state.settings.pageId);
     }
-
-    const streamUrl = liveVideo.stream_url;
-    const streamKey = streamUrl.slice(streamUrl.lastIndexOf('/') + 1);
-    this.SET_STREAM_KEY(streamKey);
-    this.SET_STREAM_PAGE_URL(`https://facebook.com/${liveVideo.permalink_url}`);
-    this.SET_STREAM_DASHBOARD_URL(`https://facebook.com/live/producer/${liveVideo.video.id}`);
-    this.UPDATE_STREAM_SETTINGS({
-      ...liveVideo,
-      liveVideoId: liveVideo.id,
-      title: settings?.stream_title,
-    });
-    this.SET_VIDEO_ID(liveVideo.video.id);
 
     this.setPlatformContext('facebook');
   }
@@ -782,30 +759,6 @@ export class FacebookService
   }
 
   /**
-   * fetch ingest stream
-   */
-  async fetchStream(
-    destinationType: TDestinationType,
-    destinationId: string,
-  ): Promise<IFacebookLiveStream> {
-    // const userId = this.userService.state.auth?.platforms?.facebook?.id;
-    // const token = this.views.getDestinationToken(destinationType, destinationId);
-    // const stream = await this.requestFacebook<IFacebookLiveStream>(
-    //   `${this.apiBase}/${userId}/live_video`,
-    //   token,
-    // );
-    // return stream;
-
-    const userId = this.userService.state.auth?.platforms?.facebook?.id;
-    const token = this.views.getDestinationToken(destinationType, destinationId);
-    const stream = await this.requestFacebook<{ data: IFacebookLiveStream[] }>(
-      `${this.apiBase}/${userId}/live_videos?broadcast_status=['LIVE']`,
-      token,
-    );
-    return stream.data[0];
-  }
-
-  /**
    * fetch StartStreamOptions for a scheduled LiveVideo
    */
   async fetchStartStreamOptionsForVideo(
@@ -865,6 +818,7 @@ export class FacebookService
     }
   }
 
+  // deprecated, keeping for legacy reasons
   async searchGames(searchString: string): Promise<IGame[]> {
     if (searchString.length < 2) return [];
     const gamesResponse = await this.requestFacebook<{ data: { name: string; id: string }[] }>(
