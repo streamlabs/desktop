@@ -143,7 +143,11 @@ function ImageSection(p: {
           />
         </div>
       ))}
-      <Button className="button button--default" onClick={addImage}>
+      <Button
+        className="button button--default"
+        style={{ marginBottom: '16px' }}
+        onClick={addImage}
+      >
         {$t('Add Image')}
       </Button>
     </>
