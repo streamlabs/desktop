@@ -34,7 +34,14 @@ export const MediaUrlInput = InputComponent((p: TSlobsInputProps<{}, string>) =>
         {/* BLANK INPUT */}
         {isPreview && (
           <div>
-            <video loop muted autoPlay className={css.preview} key={PREVIEW_SRC} src={value} />
+            <video
+              loop
+              muted
+              autoPlay
+              className={css.preview}
+              key={PREVIEW_SRC}
+              src={PREVIEW_SRC}
+            />
           </div>
         )}
 

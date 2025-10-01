@@ -100,10 +100,8 @@ function ImageSection(p: {
     ]);
   }
 
-  function removeImage(href: string) {
-    const newValue = p.values[`placement_${p.placement}_images`].filter(
-      (image: { href: string }) => image.href !== href,
-    );
+  function removeImage(index: number) {
+    const newValue = p.values[`placement_${p.placement}_images`].filter((_image, i) => i !== index);
     p.updateSetting(`placement_${p.placement}_images`)(newValue);
   }
 
@@ -117,8 +115,8 @@ function ImageSection(p: {
 
   return (
     <>
-      {images.map(image => (
-        <div style={{ position: 'relative' }} key={image.href}>
+      {images.map((image, i) => (
+        <div style={{ position: 'relative' }} key={`${image.href}${i}`}>
           <MediaUrlInput
             value={image.href}
             onChange={val => handleImageChange('href', val, image.href)}
@@ -132,7 +130,7 @@ function ImageSection(p: {
               left: '308px',
               fontSize: '13px',
             }}
-            onClick={() => removeImage(image.href)}
+            onClick={() => removeImage(i)}
           >
             <i className="icon-close" />
           </Button>
