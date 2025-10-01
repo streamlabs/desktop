@@ -288,6 +288,11 @@ export class YoutubeService
       console.error('Failed Youtube API request', e);
       const error = e as any;
 
+      // Log specific Youtube API errors if they exist
+      if ((e as any)?.result && (e as any).result?.error) {
+        console.log('Youtube API Error: ', JSON.stringify((e as any).result.error, null, 2));
+      }
+
       let details = $t('Connection Failed');
       if (error?.message) {
         details = error.message;
@@ -346,15 +351,17 @@ export class YoutubeService
     const verticalDestination: ICustomStreamDestination = {
       name: title,
       streamKey: verticalStreamKey,
-      url: 'rtmp://a.rtmp.youtube.com/live2/',
+      url: 'rtmp://a.rtmp.youtube.com/live2',
       enabled: true,
       display: 'vertical' as TDisplayType,
       mode: 'portrait' as TOutputOrientation,
       dualStream: true,
     };
 
+    const customDestinations = [...destinations, verticalDestination];
+
     this.streamSettingsService.setGoLiveSettings({
-      customDestinations: [...destinations, verticalDestination],
+      customDestinations,
     });
 
     if (this.streamingService.views.isMultiplatformMode) {
@@ -432,7 +439,13 @@ export class YoutubeService
     }
 
     if (this.streamingService.views.isDualOutputMode && ytSettings.display === 'both') {
-      await this.setupDualStream(goLiveSettings);
+      // Prevent rate limit errors by delaying the dual stream setup by 1 second
+      await new Promise<void>(resolve => {
+        setTimeout(async () => {
+          await this.setupDualStream(goLiveSettings);
+          resolve();
+        }, 1000);
+      });
     }
 
     // Updating the thumbnail in the stream settings happends when creating the broadcast.
