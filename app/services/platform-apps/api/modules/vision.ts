@@ -8,9 +8,6 @@ export class VisionModule extends Module {
   moduleName = 'Vision';
   permissions: EApiPermissions[] = [];
 
-  // Can remove when we roll this out generally
-  requiresHighlyPrivileged = true;
-
   @Inject() visionService: VisionService;
   @Inject() websocketService: WebsocketService;
 
