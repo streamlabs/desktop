@@ -493,6 +493,18 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
         const platform = event.message[0].platform.split('_')[0];
         await this.startChatAuth(platform as TPlatform);
       }
+
+      if (event.type === 'streamSwitchRequest') {
+        console.log('event', JSON.stringify(event, null, 2));
+        this.streamingService.cloudShiftEvent.next(event);
+      }
+
+      if (event.type === 'switchActionComplete') {
+        this.usageStatisticsService.recordAnalyticsEvent('CloudShiftAction', {
+          stream: 'switched',
+        });
+        this.streamingService.cloudShiftEvent.next(event);
+      }
     });
   }
 

@@ -28,6 +28,8 @@ export type TSocketEvent =
   | IUserAccountUnlinked
   | IUserAccountMergeError
   | IAccountPermissionsRequired
+  | ICloudShiftRequested
+  | ICloudShiftActionCompleted
   | IVisionSocketEvent
   | IUserStateSocketEvent;
 
@@ -156,6 +158,23 @@ interface IAccountPermissionsRequired {
   }[];
 }
 
+interface ICloudShiftRequested {
+  type: 'streamSwitchRequest';
+  for: string;
+  data: {
+    identifier: string;
+  };
+  event_id: string;
+}
+
+interface ICloudShiftActionCompleted {
+  type: 'switchActionComplete';
+  for: string;
+  data: {
+    identifier: string;
+  };
+  event_id: string;
+}
 interface IVisionSocketEvent {
   type: 'visionEvent';
   message: {};

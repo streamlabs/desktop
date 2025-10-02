@@ -112,7 +112,11 @@ class LiveDockController {
   get chatTabs(): { name: string; value: string }[] {
     if (!this.userService.state.auth) return [];
 
-    const hasMultistreamChat = this.isRestreaming || this.hasDifferentDualOutputPlatforms;
+    const hasMultistreamChat =
+      (this.restreamService.views.canEnableRestream &&
+        this.streamingService.views.hasMultipleTargetsEnabled) ||
+      this.hasDifferentDualOutputPlatforms;
+
     const tabs: { name: string; value: string }[] = [
       {
         name: getPlatformService(this.userService.state.auth.primaryPlatform).displayName,
@@ -138,7 +142,10 @@ class LiveDockController {
   }
 
   get isRestreaming() {
-    return this.restreamService.shouldGoLiveWithRestream;
+    return (
+      this.restreamService.shouldGoLiveWithRestream ||
+      this.streamingService.views.isCloudShiftMultistream
+    );
   }
 
   // Now that the same platform can stream to multiple displays we want to avoid mistakenly
@@ -214,9 +221,23 @@ class LiveDockController {
 
   popOut() {
     this.platformAppsService.popOutAppPage(this.store.selectedChat, this.pageSlot);
-    this.store.setState(s => {
+    this.store.setState((s: any) => {
       s.selectedChat = 'default';
     });
+  }
+
+  setCollapsed(livedockCollapsed: boolean) {
+    this.store.setState((s: any) => {
+      s.canAnimate = true;
+    });
+    this.windowsService.actions.updateStyleBlockers('main', true);
+    this.customizationService.actions.setSettings({ livedockCollapsed });
+    setTimeout(() => {
+      this.store.setState((s: any) => {
+        s.canAnimate = false;
+      });
+      this.windowsService.actions.updateStyleBlockers('main', false);
+    }, 300);
   }
 
   toggleViewerCount() {
@@ -314,7 +335,7 @@ function LiveDock() {
   // Safe getter/setter prevents getting stuck on the chat
   // for an app that was unloaded.
   function setChat(key: string) {
-    ctrl.store.setState(s => {
+    ctrl.store.setState((s: any) => {
       if (!ctrl.chatApps.find(app => app.id === key) && !['default', 'restream'].includes(key)) {
         s.selectedChat = 'default';
         setVisibleChat('default');

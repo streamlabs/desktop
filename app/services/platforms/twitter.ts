@@ -83,10 +83,34 @@ export class TwitterPlatformService
     return this.userService.state.auth?.platforms?.twitter?.username || '';
   }
 
+  async setupCloudShiftStream(goLiveSettings?: IGoLiveSettings) {
+    const settings = goLiveSettings?.cloudShiftSettings;
+
+    if (settings && !settings.is_live) {
+      console.error('Cloud Shift Error: X is not live');
+      return;
+    }
+
+    if (settings) {
+      this.UPDATE_STREAM_SETTINGS({
+        title: settings?.stream_title,
+      });
+
+      this.SET_BROADCAST_ID(settings?.broadcast_id ?? '');
+    }
+
+    this.setPlatformContext('twitter');
+  }
+
   async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     if (Utils.isTestMode()) {
       this.SET_BROADCAST_ID('twitterBroadcast1');
       this.setPlatformContext('twitter');
+      return;
+    }
+
+    if (goLiveSettings.cloudShift && this.streamingService.views.shouldSwitchStreams) {
+      await this.setupCloudShiftStream(goLiveSettings);
       return;
     }
 
@@ -129,7 +153,8 @@ export class TwitterPlatformService
   }
 
   async afterStopStream(): Promise<void> {
-    if (this.state.broadcastId) {
+    if (this.state.broadcastId && !this.streamingService.views.isSwitchingStream) {
+      console.log('Ending X stream', this.state.broadcastId);
       await this.endStream(this.state.broadcastId);
     }
   }

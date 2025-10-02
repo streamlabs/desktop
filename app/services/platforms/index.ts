@@ -211,6 +211,8 @@ export interface IPlatformService {
 
   setupDualStream?: (options: IGoLiveSettings) => Promise<void>;
 
+  setupCloudShiftStream?: (options: IGoLiveSettings) => Promise<void>;
+
   fetchNewToken: () => Promise<void>;
 
   getHeaders: (

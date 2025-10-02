@@ -23,6 +23,7 @@ const componentTable: {
   switch: inputs.SwitchInput,
   autocomplete: inputs.AutocompleteInput,
   checkboxGroup: inputs.CheckboxGroup,
+  radio: inputs.RadioInput,
   textarea: inputs.TextAreaInput,
   color: inputs.ColorInput,
 };
@@ -57,6 +58,7 @@ export default function FormFactory(p: {
   return (
     <Form
       {...p.formOptions}
+      id={p.name}
       name={p.name}
       form={form}
       onFieldsChange={() => debounce(form.validateFields, 500)()}

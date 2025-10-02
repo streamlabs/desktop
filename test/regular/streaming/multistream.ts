@@ -8,11 +8,17 @@ import {
   waitForStreamStart,
 } from '../../helpers/modules/streaming';
 import { fillForm, useForm } from '../../helpers/modules/forms';
-import { click, clickButton, isDisplayed, waitForDisplayed } from '../../helpers/modules/core';
+import {
+  click,
+  clickButton,
+  focusMain,
+  isDisplayed,
+  waitForDisplayed,
+} from '../../helpers/modules/core';
 import { logIn } from '../../helpers/modules/user';
 import { releaseUserInPool, reserveUserFromPool, withUser } from '../../helpers/webdriver/user';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
-import { test, useWebdriver } from '../../helpers/webdriver';
+import { test, TExecutionContext, useWebdriver } from '../../helpers/webdriver';
 import { sleep } from '../../helpers/sleep';
 
 // not a react hook
@@ -25,6 +31,45 @@ async function enableAllPlatforms() {
     await sleep(500);
     await waitForSettingsWindowLoaded();
   }
+}
+
+async function goLiveWithCloudShift(t: TExecutionContext, multistream: boolean) {
+  await fillForm({ cloudShift: true });
+
+  if (multistream) {
+    await enableAllPlatforms();
+    await waitForSettingsWindowLoaded();
+    await fillForm({
+      title: 'Test stream',
+      description: 'Test stream description',
+      twitchGame: 'Fortnite',
+      kickGame: 'Fortnite',
+    });
+  } else {
+    await fillForm({ twitch: true });
+    await waitForSettingsWindowLoaded();
+    await fillForm({ title: 'Test stream', game: 'Fortnite' });
+  }
+
+  await waitForSettingsWindowLoaded();
+  await submit();
+  await waitForDisplayed('span=Configure the Multistream service');
+  await waitForStreamStart();
+  await focusMain();
+
+  if (multistream) {
+    t.true(
+      await isDisplayed('span.and-menu-title-content=Multistream'),
+      'Multistream chat tab visible',
+    );
+  } else {
+    t.false(
+      await isDisplayed('span.and-menu-title-content=Multistream'),
+      'Multistream chat tab not visible',
+    );
+  }
+
+  await stopStream();
 }
 
 test(
@@ -190,4 +235,18 @@ test('Custom stream destinations', async t => {
     await releaseUserInPool(user);
     await releaseUserInPool(loggedInUser);
   }
+});
+
+test('Cloud Shift', withUser('twitch', { prime: true, multistream: true }), async t => {
+  await prepareToGoLive();
+  await clickGoLive();
+  await waitForSettingsWindowLoaded();
+
+  // Single stream cloud shift
+  await goLiveWithCloudShift(t, false);
+
+  // Multistream cloud shift
+  await goLiveWithCloudShift(t, true);
+
+  t.pass();
 });

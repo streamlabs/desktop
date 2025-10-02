@@ -55,7 +55,7 @@ import {
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
 import { StreamSettingsService } from '../settings/streaming';
-import { RestreamService, TOutputOrientation } from 'services/restream';
+import { ICloudShiftTarget, RestreamService } from 'services/restream';
 import Utils from 'services/utils';
 import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
@@ -82,6 +82,7 @@ import { capitalize } from 'lodash';
 import { YoutubeService } from 'app-services';
 import { EOBSOutputType, EOBSOutputSignal, IOBSOutputSignalInfo } from 'services/core/signals';
 import { SignalsService } from 'services/signals-manager';
+import { TSocketEvent } from 'services/websocket';
 
 type TOBSOutputType = 'streaming' | 'recording' | 'replayBuffer';
 
@@ -128,6 +129,7 @@ export class StreamingService
   signalInfoChanged = new Subject<IOBSOutputSignalInfo>();
   latestRecordingPath = new Subject<string>();
   streamErrorCreated = new Subject<string>();
+  cloudShiftEvent = new Subject<TSocketEvent>();
 
   // Dummy subscription for stream deck
   streamingStateChange = new Subject<void>();
@@ -313,6 +315,39 @@ export class StreamingService
     // use default settings if no new settings provided
     const settings = newSettings || cloneDeep(this.views.savedSettings);
 
+    // For the Cloud Shift, match remote targets to local targets
+    if (settings.cloudShift && this.restreamService.views.hasCloudShiftTargets) {
+      await this.restreamService.fetchTargetData();
+
+      const targets: TPlatform[] = this.restreamService.views.cloudShiftTargets.reduce(
+        (platforms: TPlatform[], target: ICloudShiftTarget) => {
+          if (target.platform !== 'relay') {
+            platforms.push(target.platform as TPlatform);
+          }
+          return platforms;
+        },
+        [],
+      );
+
+      this.views.linkedPlatforms.forEach(p => {
+        // Enable platform for go live checks, except for YouTube because running YouTube's
+        // go live check will create an additional broadcast
+
+        if (!settings.platforms[p]) return;
+
+        if (targets.includes(p)) {
+          settings.platforms[p].enabled = true;
+        } else {
+          settings.platforms[p].enabled = false;
+        }
+      });
+
+      // make sure one of the platforms going live is a primary platform
+      if (!targets.some(p => p === this.userService.state.auth?.primaryPlatform)) {
+        this.userService.setPrimaryPlatform(targets[0]);
+      }
+    }
+
     /**
      * Set custom destination stream settings
      */
@@ -365,6 +400,7 @@ export class StreamingService
       // Note: Because the horizontal video context is the default, it does not need
       // to be validated.
 
+      console.log('this.views.isDualOutputMode', this.views.isDualOutputMode);
       try {
         await this.runCheck('setupDualOutput', async () => {
           // If a custom destination is enabled for single streaming to the vertical display
@@ -575,12 +611,26 @@ export class StreamingService
     const display = this.views.getPlatformDisplayType(platform);
 
     try {
-      // don't update settings for twitch in unattendedMode
+      const isCloudShiftStream = this.restreamService.views.hasCloudShiftTargets;
+      // If this is a Cloud Shift stream switching from another device, populate the
+      // Cloud Shift stream's settings to the platforms
+      if (isCloudShiftStream) {
+        const cloudShiftSettings = this.restreamService.getTargetLiveData(platform);
+
+        if (cloudShiftSettings) {
+          settings.cloudShiftSettings = cloudShiftSettings;
+        }
+      }
+
       const settingsForPlatform =
-        !this.views.isDualOutputMode && platform === 'twitch' && unattendedMode
+        !this.views.isDualOutputMode &&
+        platform === 'twitch' &&
+        unattendedMode &&
+        !isCloudShiftStream
           ? undefined
           : settings;
 
+      // don't update settings for twitch in unattendedMode
       await this.runCheck(platform, () => service.beforeGoLive(settingsForPlatform, display));
     } catch (e: unknown) {
       console.error('Error setting platform settings', e);
@@ -664,6 +714,14 @@ export class StreamingService
      */
     if (settings.platforms.youtube?.enabled && settings.platforms.youtube.display === 'both') {
       this.usageStatisticsService.recordFeatureUsage('StreamToYouTubeBothOutputs');
+    }
+
+    // Record Cloud Shift
+    if (settings.cloudShift) {
+      this.usageStatisticsService.recordFeatureUsage('CloudShift');
+      this.usageStatisticsService.recordAnalyticsEvent('CloudShiftAction', {
+        stream: 'enabled',
+      });
     }
   }
 
@@ -997,6 +1055,23 @@ export class StreamingService
 
     startStreamingPromise
       .then(() => {
+        if (this.views.settings.cloudShift) {
+          // Remove the pending state to show the correct text in the start streaming button
+          this.restreamService.setCloudShiftStatus('inactive');
+
+          // Confirm that the primary platform is streaming to correctly show chat
+          // Otherwise, use the first enabled platform. Note: this is a failsafe to guarantee
+          // that the primary platform is always one of the live platforms. This should have
+          // already been handled in the goLive function.
+          const isPrimaryPlatformEnabled = this.views.enabledPlatforms.some(
+            p => p === this.userService.state.auth?.primaryPlatform,
+          );
+
+          if (!isPrimaryPlatformEnabled) {
+            this.userService.setPrimaryPlatform(this.views.enabledPlatforms[0]);
+          }
+        }
+
         // run afterGoLive hooks
         try {
           this.views.enabledPlatforms.forEach(platform => {
@@ -1097,6 +1172,7 @@ export class StreamingService
         const service = getPlatformService(platform);
         if (service.afterStopStream) service.afterStopStream();
       });
+      this.restreamService.resetCloudShift();
       this.UPDATE_STREAM_INFO({ lifecycle: 'empty' });
       return Promise.resolve();
     }
@@ -1373,6 +1449,11 @@ export class StreamingService
         this.usageStatisticsService.recordAnalyticsEvent('StreamingStatus', {
           code: info.code,
           status: EStreamingState.Offline,
+        });
+
+        // Record stopping a Cloud Shift stream
+        this.usageStatisticsService.recordAnalyticsEvent('CloudShiftAction', {
+          stream: 'ended',
         });
       } else if (info.signal === EOBSOutputSignal.Stopping) {
         this.sendStreamEndEvent();

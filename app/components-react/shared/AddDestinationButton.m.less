@@ -51,6 +51,45 @@ button.add-destination-btn {
   }
 }
 
+.info-banner-group {
+  margin-bottom: 0px !important;
+  padding-bottom: 0px !important;
+}
+
+button.info-banner {
+  width: unset !important;
+  padding: 5px !important;
+  margin: 0px 16px;
+  height: fit-content;
+  align-items: flex-start;
+  border-radius: 6px;
+  border-width: 1px;
+
+  .banner-text {
+    font-size: 13px;
+    font-weight: 400;
+    width: 90%;
+    text-align: left;
+    margin-left: 8px;
+    white-space: normal;
+    background-image: linear-gradient(
+      123.53deg,
+      #2de8b0 0%,
+      #cbe953 48.8%,
+      #ffab48 75.86%,
+      #ff5151 100%
+    );
+    background-clip: text;
+    color: transparent;
+  }
+
+  .ultra-icon {
+    margin-top: 4px;
+    height: 12px;
+    width: 12px;
+  }
+}
+
 .default-output-btn:extend(button.add-destination-btn) {
   border: 1px dashed var(--border) !important;
   min-height: 58px;
@@ -73,6 +112,33 @@ button.add-destination-btn {
   .ultra-icon {
     height: 15px;
     width: 15px;
+  }
+}
+
+.small-btn-group {
+  padding: 0px !important;
+}
+
+.small-btn:extend(button.add-destination-btn) {
+  height: 40px !important;
+  font-weight: 500;
+  color: var(--title) !important;
+  text-align: left !important;
+  font-size: 14px;
+  border: 0px !important;
+  background-color: var(--section-alt) !important;
+  margin: 0px 15px !important;
+  width: calc(100% - 30px) !important;
+
+  :global(.anticon.anticon-plus) {
+    font-size: 14px !important;
+    color: var(--title) !important;
+    padding-left: 65px !important;
+  }
+
+  &:hover {
+    transition: 0.3s;
+    background-color: var(--button);
   }
 }
 

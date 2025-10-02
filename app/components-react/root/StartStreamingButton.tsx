@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, forwardRef, useCallback } from 'react';
 import cx from 'classnames';
 import { EStreamingState } from 'services/streaming';
 import { EGlobalSyncStatus } from 'services/media-backup';
@@ -6,6 +6,9 @@ import { $t } from 'services/i18n';
 import { useVuex } from '../hooks';
 import { Services } from '../service-provider';
 import * as remote from '@electron/remote';
+import { TCloudShiftStatus } from 'services/restream';
+import { promptAction } from 'components-react/modals';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export default function StartStreamingButton(p: { disabled?: boolean }) {
   const {
@@ -15,15 +18,34 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     CustomizationService,
     MediaBackupService,
     SourcesService,
+    RestreamService,
+    IncrementalRolloutService,
   } = Services;
 
-  const { streamingStatus, delayEnabled, delaySeconds } = useVuex(() => ({
+  const {
+    streamingStatus,
+    delayEnabled,
+    delaySeconds,
+    cloudShiftStatus,
+    isDualOutputMode,
+    isLoggedIn,
+    isPrime,
+    canUseCloudShift,
+  } = useVuex(() => ({
     streamingStatus: StreamingService.state.streamingStatus,
     delayEnabled: StreamingService.views.delayEnabled,
     delaySeconds: StreamingService.views.delaySeconds,
+    cloudShiftStatus: RestreamService.state.cloudShiftStatus,
+    isDualOutputMode: StreamingService.views.isDualOutputMode,
+    isLoggedIn: UserService.isLoggedIn,
+    isPrime: UserService.state.isPrime,
+    canUseCloudShift: IncrementalRolloutService.views.availableFeatures.includes(
+      EAvailableFeatures.cloudShift,
+    ),
   }));
 
   const [delaySecondsRemaining, setDelayTick] = useState(delaySeconds);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     setDelayTick(delaySeconds);
@@ -44,10 +66,70 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     }
   }, [delaySecondsRemaining, streamingStatus, delayEnabled]);
 
-  async function toggleStreaming() {
+  useEffect(() => {
+    if (!isDualOutputMode && isPrime) {
+      fetchCloudShiftStatus();
+    }
+
+    const cloudShiftEvent = StreamingService.cloudShiftEvent.subscribe(event => {
+      const cloudShiftStreamId = RestreamService.state.cloudShiftStreamId;
+
+      const isMobileRemote = cloudShiftStreamId && /[A-Z]/.test(cloudShiftStreamId);
+      console.debug(
+        'Desktop stream id: ' +
+          cloudShiftStreamId +
+          '\nEvent:' +
+          JSON.stringify(event) +
+          '\nSource: ' +
+          (isMobileRemote ? 'Mobile' : 'Desktop'),
+      );
+
+      if (event.type === 'streamSwitchRequest') {
+        if (event.data.identifier === cloudShiftStreamId) {
+          RestreamService.confirmCloudShift('approved');
+        }
+      }
+
+      if (event.type === 'switchActionComplete') {
+        const remoteStreamId = event.data.identifier;
+
+        if (remoteStreamId !== cloudShiftStreamId) {
+          promptAction({
+            title: $t('Stream successfully switched'),
+            message: $t(
+              'Your stream has been switched to Streamlabs Mobile. Ending the stream on Streamlabs Desktop.',
+            ),
+            btnText: $t('Close'),
+            fn: () => Services.RestreamService.actions.endCloudShiftStream(remoteStreamId),
+            btnType: 'default',
+            cancelBtnPosition: 'none',
+          });
+        }
+
+        if (remoteStreamId === cloudShiftStreamId) {
+          promptAction({
+            title: $t('Stream successfully switched'),
+            message: $t(
+              'Your stream has been successfully switched to Streamlabs Desktop. \n\nEnjoy your stream!',
+            ),
+            btnText: $t('Close'),
+            btnType: 'default',
+            cancelBtnPosition: 'none',
+          });
+        }
+      }
+    });
+
+    return () => {
+      cloudShiftEvent.unsubscribe();
+    };
+  }, []);
+
+  const toggleStreaming = useCallback(async () => {
     if (StreamingService.isStreaming) {
       StreamingService.toggleStreaming();
     } else {
+      // Check if the scene collection has completed loading and syncing
       if (MediaBackupService.views.globalSyncStatus === EGlobalSyncStatus.Syncing) {
         const goLive = await remote.dialog
           .showMessageBox(remote.getCurrentWindow(), {
@@ -89,6 +171,33 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         if (!goLive) return;
       }
 
+      // Only check for Cloud Shift for ultra users
+      if (isLoggedIn && isPrime && canUseCloudShift) {
+        setIsLoading(true);
+        const isLive = await fetchCloudShiftStatus();
+        setIsLoading(false);
+
+        const message = isDualOutputMode
+          ? $t(
+              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source.',
+            ) + $t('Dual Output will be disabled since not supported in this mode.')
+          : $t(
+              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source.',
+            );
+
+        if (isLive) {
+          promptAction({
+            title: $t('Another stream detected'),
+            message,
+            btnText: $t('Switch to Streamlabs Desktop'),
+            fn: startCloudShift,
+            cancelBtnText: $t('Cancel'),
+            cancelBtnPosition: 'left',
+          });
+          return;
+        }
+      }
+
       if (shouldShowGoLiveWindow()) {
         if (!StreamingService.views.hasPendingChecks()) {
           StreamingService.actions.resetInfo();
@@ -98,16 +207,36 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         StreamingService.actions.goLive();
       }
     }
-  }
+  }, []);
 
-  const getIsRedButton = streamingStatus !== EStreamingState.Offline;
+  const getIsRedButton =
+    streamingStatus !== EStreamingState.Offline && cloudShiftStatus !== 'pending';
 
   const isDisabled =
     p.disabled ||
     (streamingStatus === EStreamingState.Starting && delaySecondsRemaining === 0) ||
     (streamingStatus === EStreamingState.Ending && delaySecondsRemaining === 0);
 
-  function shouldShowGoLiveWindow() {
+  const fetchCloudShiftStatus = useCallback(async () => {
+    try {
+      const isLive = await RestreamService.checkIsLive();
+      return isLive;
+    } catch (e: unknown) {
+      console.error('Error checking cloud shift status', e);
+      setIsLoading(false);
+      return false;
+    }
+  }, []);
+
+  const startCloudShift = useCallback(() => {
+    if (isDualOutputMode) {
+      Services.DualOutputService.actions.toggleDisplay(false, 'vertical');
+    }
+
+    StreamingService.actions.goLive();
+  }, [isDualOutputMode]);
+
+  const shouldShowGoLiveWindow = useCallback(() => {
     if (!UserService.isLoggedIn) return false;
     const primaryPlatform = UserService.state.auth?.primaryPlatform;
     const updateStreamInfoOnLive = CustomizationService.state.updateStreamInfoOnLive;
@@ -136,7 +265,11 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         StreamSettingsService.isSafeToModifyStreamKey()
       );
     }
-  }
+  }, [
+    UserService.state.auth?.primaryPlatform,
+    StreamingService.views.isMultiplatformMode,
+    CustomizationService.state.updateStreamInfoOnLive,
+  ]);
 
   return (
     <button
@@ -145,43 +278,56 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       disabled={isDisabled}
       onClick={toggleStreaming}
     >
-      <StreamButtonLabel
-        streamingStatus={streamingStatus}
-        delayEnabled={delayEnabled}
-        delaySecondsRemaining={delaySecondsRemaining}
-      />
+      {isLoading ? (
+        <i className="fa fa-spinner fa-pulse" />
+      ) : (
+        <StreamButtonLabel
+          streamingStatus={streamingStatus}
+          delayEnabled={delayEnabled}
+          delaySecondsRemaining={delaySecondsRemaining}
+          cloudShiftStatus={cloudShiftStatus}
+        />
+      )}
     </button>
   );
 }
 
-function StreamButtonLabel(p: {
-  streamingStatus: EStreamingState;
-  delaySecondsRemaining: number;
-  delayEnabled: boolean;
-}) {
+const StreamButtonLabel = forwardRef<
+  HTMLSpanElement,
+  {
+    streamingStatus: EStreamingState;
+    cloudShiftStatus: TCloudShiftStatus;
+    delaySecondsRemaining: number;
+    delayEnabled: boolean;
+  }
+>((p, ref) => {
+  if (p.cloudShiftStatus === 'pending') {
+    return <span ref={ref}>{$t('Claim Stream')}</span>;
+  }
+
   if (p.streamingStatus === EStreamingState.Live) {
-    return <>{$t('End Stream')}</>;
+    return <span ref={ref}>{$t('End Stream')}</span>;
   }
 
   if (p.streamingStatus === EStreamingState.Starting) {
     if (p.delayEnabled) {
-      return <>{`Starting ${p.delaySecondsRemaining}s`}</>;
+      return <span ref={ref}>{`Starting ${p.delaySecondsRemaining}s`}</span>;
     }
 
-    return <>{$t('Starting')}</>;
+    return <span ref={ref}>{$t('Starting')}</span>;
   }
 
   if (p.streamingStatus === EStreamingState.Ending) {
     if (p.delayEnabled) {
-      return <>{`Discard ${p.delaySecondsRemaining}s`}</>;
+      return <span ref={ref}>{`Discard ${p.delaySecondsRemaining}s`}</span>;
     }
 
-    return <>{$t('Ending')}</>;
+    return <span ref={ref}>{$t('Ending')}</span>;
   }
 
   if (p.streamingStatus === EStreamingState.Reconnecting) {
-    return <>{$t('Reconnecting')}</>;
+    return <span ref={ref}>{$t('Reconnecting')}</span>;
   }
 
-  return <>{$t('Go Live')}</>;
-}
+  return <span ref={ref}>{$t('Go Live')}</span>;
+});

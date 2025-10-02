@@ -414,6 +414,13 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
       if (!this.streamingService.state.selectiveRecording) {
         this.toggleDisplay(true, 'vertical');
       }
+
+      /**
+       * Stream switcher feature is not available in dual output mode
+       */
+      if (this.streamingService.views.isCloudShiftMode) {
+        this.streamSettingsService.actions.setGoLiveSettings({ cloudShift: false });
+      }
     } else {
       this.selectionService.views.globalSelection.reset();
     }

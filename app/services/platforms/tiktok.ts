@@ -119,7 +119,7 @@ export class TikTokService
   readonly apiBase = 'https://open.tiktokapis.com/v2';
   readonly platform = 'tiktok';
   readonly displayName = 'TikTok';
-  readonly capabilities = new Set<TPlatformCapability>(['title', 'viewerCount']);
+  readonly capabilities = new Set<TPlatformCapability>(['title', 'game', 'viewerCount']);
   readonly liveDockFeatures = new Set<TLiveDockFeature>([
     'view-stream',
     'dashboard',
@@ -205,6 +205,29 @@ export class TikTokService
     return this.state.audienceControlsInfo;
   }
 
+  async setupCloudShiftStream(goLiveSettings: IGoLiveSettings) {
+    const settings = goLiveSettings?.cloudShiftSettings;
+
+    if (settings && !settings.is_live) {
+      console.error('Cloud Shift Error: TikTok is not live');
+      return;
+    }
+
+    if (settings) {
+      this.SET_LIVE_SCOPE('approved');
+      this.SET_USERNAME(settings.channel_name ?? '');
+      this.UPDATE_STREAM_SETTINGS({
+        title: settings.stream_title,
+      });
+    } else {
+      await this.validatePlatform();
+    }
+
+    console.log('TIKTOK cloud shift this.state', this.state);
+
+    this.setPlatformContext('tiktok');
+  }
+
   async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     // return an approved dummy account when testing
     if (Utils.isTestMode() && this.getHasScope('approved')) {
@@ -213,6 +236,11 @@ export class TikTokService
     }
 
     const ttSettings = getDefined(goLiveSettings.platforms.tiktok);
+
+    if (goLiveSettings.cloudShift && this.streamingService.views.shouldSwitchStreams) {
+      this.setupCloudShiftStream(goLiveSettings);
+      return;
+    }
 
     if (this.getHasScope('approved')) {
       // update server url and stream key if handling streaming via API
@@ -260,7 +288,8 @@ export class TikTokService
   }
 
   async afterStopStream(): Promise<void> {
-    if (this.state.broadcastId) {
+    if (this.state.broadcastId && !this.streamingService.views.isSwitchingStream) {
+      console.log('Ending TikTok stream', this.state.broadcastId);
       await this.endStream(this.state.broadcastId);
       this.showReplaysNotification();
     }

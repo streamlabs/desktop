@@ -6,7 +6,7 @@ import { StreamSettingsService } from 'services/settings/streaming';
 import { UserService } from 'services/user';
 import { CustomizationService, ICustomizationServiceState } from 'services/customization';
 import { authorizedHeaders, jfetch } from 'util/requests';
-import { IncrementalRolloutService } from './incremental-rollout';
+import { EAvailableFeatures, IncrementalRolloutService } from './incremental-rollout';
 import electron from 'electron';
 import { StreamingService } from './streaming';
 import { FacebookService } from './platforms/facebook';
@@ -18,7 +18,11 @@ import { VideoSettingsService, TDisplayType } from './settings-v2/video';
 import { TwitterPlatformService } from './platforms/twitter';
 import { InstagramService } from './platforms/instagram';
 import { PlatformAppsService } from './platform-apps';
+import { DualOutputService } from 'services/dual-output';
 import { throwStreamError } from './streaming/stream-error';
+import uuid from 'uuid';
+import Utils from './utils';
+import { $t } from './i18n';
 
 export type TOutputOrientation = 'landscape' | 'portrait';
 interface IRestreamTarget {
@@ -27,6 +31,25 @@ interface IRestreamTarget {
   streamKey: string;
   mode?: TOutputOrientation;
 }
+export interface ICloudShiftTarget {
+  platform: TPlatform | 'relay';
+  key?: string;
+}
+
+export interface ITargetLiveData extends ICloudShiftTarget {
+  is_live?: boolean;
+  chat_url?: string;
+  ccv?: number;
+  platform_id?: string;
+  broadcast_id?: string;
+  channel_name?: string;
+  stream_title?: string;
+  game_id?: string;
+  game_name?: string;
+}
+
+export type TCloudShiftStatus = 'pending' | 'inactive' | 'active';
+export type TCloudShiftAction = 'approved' | 'rejected';
 
 interface IRestreamState {
   /**
@@ -46,6 +69,22 @@ interface IRestreamState {
    * removed. Using Restream with tiktok should be allowed for those users.
    */
   tiktokGrandfathered: boolean;
+
+  /**
+   * Stream switcher stream id
+   */
+  cloudShiftStreamId?: string;
+
+  /**
+   * Stream switcher status
+   */
+  cloudShiftStatus: TCloudShiftStatus;
+
+  /**
+   * If the user is live using the stream switcher, save the stream data here so that the
+   * stream can be started correctly.
+   */
+  cloudShiftTargets: ITargetLiveData[];
 }
 
 interface IUserSettingsResponse extends IRestreamState {
@@ -68,6 +107,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
   @Inject() videoSettingsService: VideoSettingsService;
   @Inject('TwitterPlatformService') twitterService: TwitterPlatformService;
   @Inject() platformAppsService: PlatformAppsService;
+  @Inject() dualOutputService: DualOutputService;
 
   settings: IUserSettingsResponse;
 
@@ -75,6 +115,9 @@ export class RestreamService extends StatefulService<IRestreamState> {
     enabled: true,
     grandfathered: false,
     tiktokGrandfathered: false,
+    cloudShiftStreamId: undefined,
+    cloudShiftStatus: 'inactive',
+    cloudShiftTargets: [],
   };
 
   get streamInfo() {
@@ -103,6 +146,20 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return this.state.tiktokGrandfathered;
   }
 
+  get cloudShiftStatus() {
+    return this.state.cloudShiftStatus;
+  }
+
+  get cloudShiftTargets() {
+    return this.state.cloudShiftTargets;
+  }
+
+  get canUseCloudShift() {
+    return this.incrementalRolloutService.views.availableFeatures.includes(
+      EAvailableFeatures.cloudShift,
+    );
+  }
+
   @mutation()
   private SET_ENABLED(enabled: boolean) {
     this.state.enabled = enabled;
@@ -116,6 +173,21 @@ export class RestreamService extends StatefulService<IRestreamState> {
      */
     this.state.grandfathered = facebook;
     this.state.tiktokGrandfathered = tiktok;
+  }
+
+  @mutation()
+  private SET_STREAM_SWITCHER_STREAM_ID(id?: string) {
+    this.state.cloudShiftStreamId = id ?? null;
+  }
+
+  @mutation()
+  private SET_STREAM_SWITCHER_STATUS(status: TCloudShiftStatus) {
+    this.state.cloudShiftStatus = status;
+  }
+
+  @mutation()
+  private SET_STREAM_SWITCHER_TARGETS(targets: ICloudShiftTarget[]) {
+    this.state.cloudShiftTargets = targets;
   }
 
   init() {
@@ -233,10 +305,17 @@ export class RestreamService extends StatefulService<IRestreamState> {
       new Headers({ 'Content-Type': 'application/json' }),
     );
     const url = `https://${this.host}/api/v1/rst/user/settings`;
+
+    const enableCloudShift =
+      this.canUseCloudShift &&
+      this.streamInfo.isCloudShiftMode &&
+      !this.streamInfo.isDualOutputMode;
+
     const body = JSON.stringify({
       enabled,
       dcProtection: false,
       idleTimeout: 30,
+      cloudShift: enableCloudShift,
     });
 
     const request = new Request(url, { headers, body, method: 'PUT' });
@@ -249,7 +328,13 @@ export class RestreamService extends StatefulService<IRestreamState> {
       throwStreamError('RESTREAM_SETUP_FAILED');
     }
 
-    await Promise.all([this.setupIngest(), this.setupTargets()]);
+    const shouldSwitchStreams = this.state.cloudShiftTargets.length > 0;
+
+    if (this.streamInfo.isCloudShiftMode && shouldSwitchStreams) {
+      await Promise.all([this.setupIngest()]);
+    } else {
+      await Promise.all([this.setupIngest(), this.setupTargets()]);
+    }
   }
 
   /**
@@ -264,7 +349,23 @@ export class RestreamService extends StatefulService<IRestreamState> {
   async setupIngest() {
     const ingest = (await this.fetchIngest()).server;
 
-    if (this.streamingService.views.isDualOutputMode) {
+    if (this.streamInfo.isCloudShiftMode && this.canUseCloudShift) {
+      // in single output mode, we just set the ingest for the default display
+      this.streamSettingsService.setSettings({
+        streamType: 'rtmp_custom',
+      });
+
+      const streamId = uuid();
+      this.SET_STREAM_SWITCHER_STREAM_ID(streamId);
+      // for the stream switcher, the stream needs a unique identifier
+      const streamKey = `${this.settings.streamKey}&sid=${streamId}`;
+
+      this.streamSettingsService.setSettings({
+        streamType: 'rtmp_custom',
+        key: streamKey,
+        server: ingest,
+      });
+    } else if (this.streamingService.views.isDualOutputMode) {
       // in dual output mode, we need to set the ingest for each display
       const displays = this.streamInfo.displaysToRestream;
 
@@ -294,6 +395,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
       });
 
       this.streamSettingsService.setSettings({
+        streamType: 'rtmp_custom',
         key: this.settings.streamKey,
         server: ingest,
       });
@@ -384,12 +486,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
       const filteredTargets = newTargets.filter(
         target => target.mode && modesToRestream.includes(target.mode),
       );
-
-      console.log('filteredTargets', filteredTargets);
-
       await this.createTargets(filteredTargets);
     } else {
-      console.log('newTargets', newTargets);
       // in single output mode, create all targets
       await this.createTargets(newTargets);
     }
@@ -406,6 +504,88 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return jfetch<{ name: string; status: boolean }[]>(request).then(
       j => j.find(service => service.name === 'restream').status,
     );
+  }
+
+  async checkIsLive(): Promise<boolean> {
+    if (!this.canUseCloudShift) return false;
+
+    const status = await this.fetchLiveStatus();
+    console.debug('Cloud Shift Status', status);
+
+    if (status.isLive) {
+      this.streamSettingsService.setGoLiveSettings({ cloudShift: true });
+      this.SET_STREAM_SWITCHER_STATUS('pending');
+      this.SET_STREAM_SWITCHER_TARGETS(status.targets);
+    } else if (this.state.cloudShiftStatus === 'pending') {
+      this.SET_STREAM_SWITCHER_STATUS('inactive');
+      this.SET_STREAM_SWITCHER_TARGETS([]);
+    }
+
+    return status.isLive;
+  }
+
+  async fetchLiveStatus() {
+    if (!this.canUseCloudShift) return;
+
+    const headers = authorizedHeaders(
+      this.userService.apiToken,
+      new Headers({ 'Content-Type': 'application/json' }),
+    );
+    const url = `https://${this.host}/api/v1/rst/user/is-live`;
+    const request = new Request(url, { headers });
+
+    return jfetch<{ isLive: boolean; targets: ICloudShiftTarget[] }>(request);
+  }
+
+  async fetchTargetData(): Promise<any | null> {
+    if (!this.canUseCloudShift) return null;
+
+    const headers = authorizedHeaders(this.userService.apiToken);
+
+    const platforms = this.state.cloudShiftTargets
+      .filter(t => t.platform !== 'relay')
+      .map(t => t.platform)
+      .join(',');
+
+    const url = `https://${this.host}/api/v5/slobs/platform/status?platforms=${platforms}`;
+
+    const request = new Request(url, { headers, method: 'GET' });
+
+    return jfetch(request)
+      .then((res: { [key: string]: ITargetLiveData[] }) => {
+        const targets = this.state.cloudShiftTargets.reduce((targetData: ITargetLiveData[], t) => {
+          const platform = t.platform as string;
+          if (t.platform !== 'relay') {
+            const data = res[platform]?.[0];
+
+            if (data) {
+              targetData.push({ ...t, ...data });
+            }
+          }
+
+          return targetData;
+        }, []);
+
+        console.debug('Cloud Shift target data', targets);
+
+        this.SET_STREAM_SWITCHER_TARGETS(targets);
+      })
+      .catch((e: unknown) => {
+        console.error('Error fetching cloud shift target data:', e);
+        return null as any;
+      });
+  }
+
+  getTargetLiveData(platform: TPlatform): ITargetLiveData | undefined {
+    if (!this.canUseCloudShift) return undefined;
+
+    return this.state.cloudShiftTargets.find(t => t.platform === platform);
+  }
+
+  setCloudShiftStatus(status: TCloudShiftStatus) {
+    if (!this.canUseCloudShift) return;
+
+    this.SET_STREAM_SWITCHER_STATUS(status);
   }
 
   /**
@@ -473,9 +653,88 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return fetch(request).then(res => res.json());
   }
 
+  /**
+   * Cloud Shift
+   */
+
+  setSwitchStreamId(id?: string) {
+    if (!this.canUseCloudShift) return;
+
+    this.SET_STREAM_SWITCHER_STREAM_ID(id);
+  }
+
+  resetCloudShift() {
+    if (!this.canUseCloudShift) return;
+
+    this.SET_STREAM_SWITCHER_STATUS('inactive');
+    this.SET_STREAM_SWITCHER_STREAM_ID();
+    this.SET_STREAM_SWITCHER_TARGETS([]);
+  }
+
+  async confirmCloudShift(action: TCloudShiftAction) {
+    if (!this.canUseCloudShift) return;
+
+    if (action === 'rejected') {
+      this.SET_STREAM_SWITCHER_STATUS('pending');
+    } else {
+      if (this.streamInfo.isDualOutputMode) {
+        this.dualOutputService.toggleDisplay(false, 'vertical');
+      }
+
+      this.SET_STREAM_SWITCHER_STATUS('inactive');
+      this.updateCloudShift('approved');
+    }
+  }
+
+  async updateCloudShift(action: TCloudShiftAction) {
+    if (!this.canUseCloudShift) return;
+
+    const headers = authorizedHeaders(
+      this.userService.apiToken,
+      new Headers({ 'Content-Type': 'application/json' }),
+    );
+    const url = `https://${this.host}/api/v1/rst/switch/action`;
+    const body = JSON.stringify({
+      identifier: this.state.cloudShiftStreamId,
+      action,
+    });
+    const request = new Request(url, { headers, body, method: 'POST' });
+    const res = await fetch(request);
+    if (!res.ok) throw await res.json();
+    return res.json();
+  }
+
+  /**
+   * End Cloud Shift Stream
+   * @remark This ends the stream on the current device because the stream has been
+   * swapped to another device.
+   * Note: The AI highlighter will automatically save the recording on the current device
+   * when the stream ends.
+   */
+  async endCloudShiftStream(remoteStreamId: string): Promise<void> {
+    if (!this.canUseCloudShift) return;
+
+    try {
+      this.SET_STREAM_SWITCHER_STATUS('active');
+      await this.streamingService.toggleStreaming();
+      this.SET_STREAM_SWITCHER_STREAM_ID(remoteStreamId);
+    } catch (error: unknown) {
+      console.error('Error ending stream:', error);
+
+      this.SET_STREAM_SWITCHER_STATUS('inactive');
+      remote.dialog.showMessageBox(Utils.getMainWindow(), {
+        title: $t('Error Ended Stream - PC'),
+        type: 'info',
+        message: $t(
+          'Error ending stream. Please try ending the stream from the other device again.',
+        ),
+      });
+    }
+  }
+
   /* Chat Handling
    * TODO: Lots of this is copy-pasted from the chat service
-   * The chat service needs to be refactored\
+   * The chat service needs to be refactored
    */
   private chatView: Electron.BrowserView;
 
@@ -568,6 +827,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
 }
 
 class RestreamView extends ViewHandler<IRestreamState> {
+  @Inject() incrementalRolloutService: IncrementalRolloutService;
+
   get isGrandfathered() {
     return this.state.grandfathered || this.state.tiktokGrandfathered;
   }
@@ -580,5 +841,21 @@ class RestreamView extends ViewHandler<IRestreamState> {
   get canEnableRestream() {
     const userView = this.getServiceViews(UserService);
     return userView.isPrime || (userView.auth && this.isGrandfathered);
+  }
+
+  get cloudShiftStatus() {
+    return this.state.cloudShiftStatus;
+  }
+
+  get cloudShiftTargets() {
+    return this.state.cloudShiftTargets;
+  }
+
+  get hasCloudShiftTargets() {
+    const canUseCloudShift = this.incrementalRolloutService.views.availableFeatures.includes(
+      EAvailableFeatures.cloudShift,
+    );
+
+    return canUseCloudShift && this.state.cloudShiftTargets.length > 0;
   }
 }

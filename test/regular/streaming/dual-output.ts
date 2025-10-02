@@ -24,6 +24,8 @@ import {
 import { getUser, releaseUserInPool, withUser } from '../../helpers/webdriver/user';
 import { SceneBuilder } from '../../helpers/scene-builder';
 import { getApiClient } from '../../helpers/api-client';
+// import { readFields, fillForm } from '../../helpers/modules/forms';
+// import { sleep } from '../../helpers/sleep';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -263,6 +265,20 @@ test(
     // check that the selector is displayed
     t.true(await isDisplayed('[data-test=destination-selector]'), 'Destination selector exists');
 
+    // const fields = await readFields();
+    // console.log('fields 1', fields);
+
+    // await fillForm({
+    //   twitchDisplay: 'vertical',
+    // });
+    // await waitForSettingsWindowLoaded();
+
+    // console.log('await readFields() 2', await readFields());
+    // await sleep(5000); // wait for the form to update
+
+    // t.pass();
+
+    // return;
     // check that the platform switcher and close icon do not exist
     t.false(await isDisplayed('.platform-switch'), 'Platform switch does not exist');
     t.false(await isDisplayed('.platform-close'), 'Platform close icon does not exist');

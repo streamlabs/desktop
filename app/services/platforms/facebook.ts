@@ -69,6 +69,18 @@ export interface IFacebookLiveVideo {
   event_params: { start_time?: number; cover?: string; status?: TFacebookStatus };
 }
 
+interface IFacebookLiveStream {
+  id: string;
+  // dash_ingest_url: string;
+  // dash_preview_url: string;
+  // is_master: boolean;
+  secure_stream_url: string;
+  // stream_health: string;
+  // stream_id: string;
+  stream_url: string;
+  embed_html: string;
+}
+
 /**
  * Facebook doesn't provide us destinationType and destinationId when we fetch the video
  * So we should additionally save this info in the `IFacebookLiveVideoExtended` object
@@ -268,6 +280,12 @@ export class FacebookService
   async beforeGoLive(options: IGoLiveSettings, context: TDisplayType) {
     const fbOptions = getDefined(options.platforms.facebook);
 
+    // If the stream has switched from another device, a new broadcast does not need to be created
+    if (options.cloudShift && this.streamingService.views.shouldSwitchStreams) {
+      await this.setupCloudShiftStream(options);
+      return;
+    }
+
     let liveVideo: IFacebookLiveVideo;
     if (fbOptions.liveVideoId) {
       // start streaming to a scheduled video
@@ -323,6 +341,78 @@ export class FacebookService
     assertIsDefined(vidId);
     await this.updateLiveVideo(vidId, info);
     this.UPDATE_STREAM_SETTINGS({ ...info, liveVideoId: vidId });
+  }
+
+  async setupCloudShiftStream(goLiveSettings: IGoLiveSettings): Promise<void> {
+    const settings = goLiveSettings.cloudShiftSettings;
+
+    if (settings && !settings.is_live) {
+      console.error('Cloud Shift Error: Facebook is not live');
+      return;
+    }
+
+    // fetch pages and groups
+    const [pages, groups] = ((await Promise.all([
+      this.fetchPages(),
+      this.fetchGroups(),
+    ])) as unknown) as [IFacebookPage[], IFacebookGroup[]];
+    this.SET_FACEBOOK_PAGES_AND_GROUPS(pages, groups);
+
+    if (pages.length) {
+      const pageId = this.state.settings.pageId!;
+      const page = this.views.getPage(pageId);
+      if (!page) this.UPDATE_STREAM_SETTINGS({ pageId: this.state.facebookPages[0].id });
+    } else {
+      this.UPDATE_STREAM_SETTINGS({ pageId: '' });
+    }
+
+    if (groups.length) {
+      const groupId = this.state.settings.groupId!;
+      const group = this.views.getGroup(groupId);
+      if (!group) this.UPDATE_STREAM_SETTINGS({ groupId: this.state.facebookGroups[0].id });
+    } else {
+      this.UPDATE_STREAM_SETTINGS({ groupId: '' });
+    }
+
+    if (
+      (this.state.settings.destinationType === 'page' && !this.state.settings.pageId) ||
+      (this.state.settings.destinationType === 'group' && !this.state.settings.groupId)
+    ) {
+      this.UPDATE_STREAM_SETTINGS({ destinationType: 'me' });
+    }
+
+    console.log('FACEBOOK await this.fetchPicture("me")', await this.fetchPicture('me'));
+
+    if (!this.state.userAvatar) {
+      this.SET_AVATAR(await this.fetchPicture('me'));
+    }
+    this.SET_PREPOPULATED(true);
+    const id = settings?.channel_name ?? this.userService.state.auth?.platforms?.facebook?.id;
+    const liveVideoId = settings?.broadcast_id;
+    const title = settings?.stream_title ?? goLiveSettings.platforms.facebook?.title ?? '';
+
+    if (!liveVideoId) {
+      console.error('Error setting up cloud shift for Facebook, no broadcast id found.');
+      this.UPDATE_STREAM_SETTINGS({ title });
+    } else {
+      this.SET_STREAM_PAGE_URL(`https://facebook.com/${id}/videos/${liveVideoId}`);
+      this.SET_STREAM_DASHBOARD_URL(
+        `https://facebook.com/live/producer/v2/${liveVideoId}/dashboard`,
+      );
+      this.UPDATE_STREAM_SETTINGS({
+        title,
+        liveVideoId,
+      });
+      this.SET_VIDEO_ID(liveVideoId);
+    }
+
+    // send selected pageId to streamlabs.com
+    if (this.state.settings.destinationType === 'page') {
+      assertIsDefined(this.state.settings.pageId);
+      await this.postPage(this.state.settings.pageId);
+    }
+
+    this.setPlatformContext('facebook');
   }
 
   /**
@@ -733,6 +823,7 @@ export class FacebookService
     }
   }
 
+  // deprecated, keeping for legacy reasons
   async searchGames(searchString: string): Promise<IGame[]> {
     if (searchString.length < 2) return [];
     const gamesResponse = await this.requestFacebook<{ data: { name: string; id: string }[] }>(

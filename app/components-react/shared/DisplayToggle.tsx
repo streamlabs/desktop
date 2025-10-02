@@ -28,6 +28,7 @@ export const DisplayToggle = forwardRef((p: IDisplayToggle, ref) => {
     toggleDisplay: DualOutputService.actions.toggleDisplay,
     studioMode: TransitionsService.views.studioMode,
     isMidStreamMode: StreamingService.views.isMidStreamMode,
+    isCloudShiftMode: StreamingService.views.isCloudShiftMode,
     showDualOutput: DualOutputService.views.dualOutputMode,
     selectiveRecording: StreamingService.state.selectiveRecording,
   }));
@@ -54,6 +55,7 @@ export const DisplayToggle = forwardRef((p: IDisplayToggle, ref) => {
 
   const verticalDisabled = useMemo(() => {
     if (p?.disabled) return true;
+    if (v.isCloudShiftMode && v.isMidStreamMode) return true;
     if (controlled) return false;
     return v.selectiveRecording;
   }, [v.selectiveRecording]);
@@ -73,6 +75,13 @@ export const DisplayToggle = forwardRef((p: IDisplayToggle, ref) => {
 
     return verticalActive ? $t('Hide vertical display.') : $t('Show vertical display.');
   }, [v.verticalActive, controlled]);
+
+  function showCloudShiftErrorMessage() {
+    message.error({
+      content: $t('Stream switcher cannot be used in dual output mode.'),
+      className: styles.toggleError,
+    });
+  }
 
   function showToggleDisplayErrorMessage() {
     message.error({
@@ -146,6 +155,7 @@ export const DisplayToggle = forwardRef((p: IDisplayToggle, ref) => {
         title={verticalTooltip}
         className={styles.displayToggle}
         placement={placement}
+        disabled={verticalDisabled}
       >
         <i
           id="vertical-display-toggle"
@@ -155,7 +165,9 @@ export const DisplayToggle = forwardRef((p: IDisplayToggle, ref) => {
               return;
             }
 
-            if (!controlled && v.isMidStreamMode) {
+            if (v.isCloudShiftMode && v.isMidStreamMode) {
+              showCloudShiftErrorMessage();
+            } else if (!controlled && v.isMidStreamMode) {
               showToggleDisplayErrorMessage();
             } else if (!controlled && v.studioMode && v.horizontalActive) {
               showStudioModeErrorMessage();
