@@ -7,7 +7,6 @@ import NavItem from 'components/shared/NavItem.vue';
 import GenericFormGroups from 'components/obs/inputs/GenericFormGroups.vue';
 import { WindowsService } from 'services/windows';
 import { ESettingsCategory, ISettingsSubCategory, SettingsService } from 'services/settings/index';
-import DeveloperSettings from './DeveloperSettings';
 import OverlaySettings from './OverlaySettings';
 import SearchablePages from 'components/shared/SearchablePages';
 import FormInput from 'components/shared/inputs/FormInput.vue';
@@ -38,7 +37,6 @@ import { NavigationService } from 'app-services';
     NavMenu,
     NavItem,
     Hotkeys,
-    DeveloperSettings,
     OverlaySettings,
     InstalledApps,
     FormInput,
@@ -150,6 +148,7 @@ export default class Settings extends Vue {
       'Mobile',
       'Virtual Webcam',
       'Game Overlay',
+      'Developer',
       'Get Support',
       ESettingsCategory.AI,
       'Ultra',

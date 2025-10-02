@@ -533,6 +533,7 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
     }
 
     this.sourceRefresh.next(appId);
+    return '';
   }
 
   private getAppIdFromServer(appToken: string): Promise<string> {
