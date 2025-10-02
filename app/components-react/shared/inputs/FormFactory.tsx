@@ -15,6 +15,7 @@ export type TInputValue = string | number | boolean | IRGBColor;
 const componentTable: {
   [k in TInputType]?: React.FunctionComponent<TSlobsInputProps<{}, TInputValue>>;
 } = {
+  file: inputs.FileInput,
   text: inputs.TextInput,
   number: inputs.NumberInput,
   slider: inputs.SliderInput,
