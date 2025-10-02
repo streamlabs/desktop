@@ -69,7 +69,7 @@ export default function AiHighlighterToggle({
         <div
           key={'aiSelector'}
           style={{
-            marginBottom: '16px',
+            marginBottom: '24px',
             display: 'flex',
             justifyContent: 'flex-end',
             flexFlow: 'rowWrap',
@@ -210,12 +210,31 @@ export default function AiHighlighterToggle({
                     </div>
                   ) : (
                     <div className={styles.educationSection}>
-                      ⚠️{$t('Game language must be English')} <br /> ⚠️
-                      {$t('Game must be fullscreen')} <br /> ⚠️
-                      {$t('Game mode must be supported')}
-                      <span style={{ fontSize: '12px', marginLeft: '27px', marginTop: '-3px' }}>
-                        {gameConfig?.gameModes && `(${gameConfig?.gameModes})`}
-                      </span>
+                      <div>
+                        <span>⚠️</span>
+                        <span> {$t('Game language must be English')}</span>
+                      </div>{' '}
+                      <div>
+                        {' '}
+                        <span>⚠️</span>
+                        <span> {$t('Game must be fullscreen')}</span>{' '}
+                      </div>
+                      <div>
+                        {' '}
+                        <span>⚠️</span>
+                        <span> {$t('Game mode must be supported')}</span>
+                      </div>
+                      <div
+                        style={{
+                          marginTop: '-10px',
+                          marginLeft: '20px',
+                          fontWeight: 400,
+                        }}
+                      >
+                        <span style={{ fontSize: '12px' }}>
+                          {gameConfig?.gameModes && `(${gameConfig?.gameModes})`}
+                        </span>
+                      </div>
                       {/* <EducationCarousel game={game!} /> */}
                     </div>
                   )}
