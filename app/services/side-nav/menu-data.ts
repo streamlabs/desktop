@@ -312,7 +312,7 @@ export const SideNavMenuItems = (): TMenuItems => ({
   },
   [EMenuItemKey.AI]: {
     key: EMenuItemKey.AI,
-    icon: 'fas fa-eye',
+    icon: 'icon-ai',
     isActive: true,
     isExpanded: false,
   },

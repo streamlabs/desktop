@@ -13,7 +13,7 @@ import { platformAuthorizedRequest } from './utils';
 import { CustomizationService } from 'services/customization';
 import { IGoLiveSettings, TDisplayOutput } from 'services/streaming';
 import { $t, I18nService } from 'services/i18n';
-import { throwStreamError, TStreamErrorType } from 'services/streaming/stream-error';
+import { StreamError, throwStreamError, TStreamErrorType } from 'services/streaming/stream-error';
 import { BasePlatformService } from './base-platform';
 import { TDisplayType } from 'services/settings-v2/video';
 import { assertIsDefined, getDefined } from 'util/properties-type-guards';
@@ -27,6 +27,7 @@ import { TOutputOrientation } from 'services/restream';
 import { UsageStatisticsService } from 'app-services';
 import cloneDeep from 'lodash/cloneDeep';
 import { ICustomStreamDestination } from 'services/settings/streaming';
+import { ENotificationType, NotificationsService } from 'services/notifications';
 
 interface IYoutubeServiceState extends IPlatformState {
   liveStreamingEnabled: boolean;
@@ -183,6 +184,7 @@ export class YoutubeService
   @Inject() private customizationService: CustomizationService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
   @Inject() private i18nService: I18nService;
+  @Inject() private notificationsService: NotificationsService;
 
   @lazyModule(YoutubeUploader) uploader: YoutubeUploader;
 
@@ -286,6 +288,11 @@ export class YoutubeService
       console.error('Failed Youtube API request', e);
       const error = e as any;
 
+      // Log specific Youtube API errors if they exist
+      if ((e as any)?.result && (e as any).result?.error) {
+        console.log('Youtube API Error: ', JSON.stringify((e as any).result.error, null, 2));
+      }
+
       let details = $t('Connection Failed');
       if (error?.message) {
         details = error.message;
@@ -344,15 +351,17 @@ export class YoutubeService
     const verticalDestination: ICustomStreamDestination = {
       name: title,
       streamKey: verticalStreamKey,
-      url: 'rtmp://a.rtmp.youtube.com/live2/',
+      url: 'rtmp://a.rtmp.youtube.com/live2',
       enabled: true,
       display: 'vertical' as TDisplayType,
       mode: 'portrait' as TOutputOrientation,
       dualStream: true,
     };
 
+    const customDestinations = [...destinations, verticalDestination];
+
     this.streamSettingsService.setGoLiveSettings({
-      customDestinations: [...destinations, verticalDestination],
+      customDestinations,
     });
 
     if (this.streamingService.views.isMultiplatformMode) {
@@ -430,10 +439,25 @@ export class YoutubeService
     }
 
     if (this.streamingService.views.isDualOutputMode && ytSettings.display === 'both') {
-      await this.setupDualStream(goLiveSettings);
+      // Prevent rate limit errors by delaying the dual stream setup by 1 second
+      await new Promise<void>(resolve => {
+        setTimeout(async () => {
+          await this.setupDualStream(goLiveSettings);
+          resolve();
+        }, 1000);
+      });
     }
 
-    this.UPDATE_STREAM_SETTINGS({ ...ytSettings, broadcastId: broadcast.id });
+    // Updating the thumbnail in the stream settings happends when creating the broadcast.
+    // This is because the user can still go live even if the thumbnail upload fails,
+    // and we want to avoid setting an invalid thumbnail in state.
+    if (ytSettings.thumbnail && ytSettings.thumbnail !== 'default') {
+      const { thumbnail, ...settings } = ytSettings;
+      this.UPDATE_STREAM_SETTINGS({ ...settings, broadcastId: broadcast.id });
+    } else {
+      this.UPDATE_STREAM_SETTINGS({ ...ytSettings, broadcastId: broadcast.id });
+    }
+
     this.SET_STREAM_ID(stream.id);
     this.SET_STREAM_KEY(streamKey);
 
@@ -685,7 +709,23 @@ export class YoutubeService
 
     // upload thumbnail
     if (params.thumbnail && params.thumbnail !== 'default') {
-      await this.uploadThumbnail(params.thumbnail, broadcast.id);
+      try {
+        await this.uploadThumbnail(params.thumbnail, broadcast.id);
+        this.UPDATE_STREAM_SETTINGS({ thumbnail: params.thumbnail });
+      } catch (e: unknown) {
+        // Note: we already logged this error to the console in the `uploadThumbnail` method
+        console.debug('Error uploading thumbnail:', e);
+
+        let message = $t('Please upload thumbnail manually on YouTube.');
+        if (e instanceof StreamError) {
+          message = [$t('Please upload thumbnail manually on YouTube.'), e.details].join(' ');
+        }
+
+        this.notificationsService.actions.push({
+          message,
+          type: ENotificationType.WARNING,
+        });
+      }
     }
 
     return broadcast;
@@ -967,28 +1007,33 @@ export class YoutubeService
       const error = e as any;
 
       let details = 'Failed to upload thumbnail.';
-      if (error.message) details = error.message;
+      const code = error?.code || error?.status;
 
-      if (error.code === 400) {
+      if (code) {
         const hasReason = error?.errors && error?.errors.length && error?.errors[0].reason;
-        if (hasReason && error.errors[0].reason === 'invalidImage') {
-          // Note: The
-          details = $t('Thumbnail image content is invalid.');
-        } else if (hasReason && error.errors[0].reason === 'mediaBodyRequired') {
-          details = $t('Thumbnail file does not include image content.');
+        switch (code) {
+          case 400:
+            if (hasReason && error.errors[0].reason === 'invalidImage') {
+              details = $t('Thumbnail image content is invalid.');
+            } else if (hasReason && error.errors[0].reason === 'mediaBodyRequired') {
+              details = $t('Thumbnail file does not include image content.');
+            }
+            break;
+          case 403:
+            details = $t('Permission missing to upload thumbnails.');
+            break;
+          case 413:
+            details = $t('YouTube thumbnail image is too large. Maximum size is 2MB.');
+            break;
+          case 404:
+            details = $t('Video does not exist. Thumbnail upload failed.');
+            break;
+          case 429:
+            details = $t('Exceeded thumbnail upload quota. Please try again later.');
+            break;
+          default:
+            details = error?.message || details;
         }
-      }
-
-      if (error.code === 403) {
-        details = $t('Permission missing to upload thumbnails.');
-      }
-
-      if (error.code === 404) {
-        details = $t('Video does not exist. Thumbnail upload failed.');
-      }
-
-      if (error.code === 429) {
-        details = $t('Exceeded thumbnail upload quota. Please try again later.');
       }
 
       throw throwStreamError(errorType, { ...error, platform: 'youtube' }, details);

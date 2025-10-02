@@ -8,7 +8,6 @@ import GenericFormGroups from 'components/obs/inputs/GenericFormGroups.vue';
 import { WindowsService } from 'services/windows';
 import { ESettingsCategory, ISettingsSubCategory, SettingsService } from 'services/settings/index';
 import OverlaySettings from './OverlaySettings';
-import NotificationsSettings from './NotificationsSettings.vue';
 import SearchablePages from 'components/shared/SearchablePages';
 import FormInput from 'components/shared/inputs/FormInput.vue';
 import { MagicLinkService } from 'services/magic-link';
@@ -39,7 +38,6 @@ import { NavigationService } from 'app-services';
     NavItem,
     Hotkeys,
     OverlaySettings,
-    NotificationsSettings,
     InstalledApps,
     FormInput,
     Scrollable,
@@ -82,7 +80,7 @@ export default class Settings extends Vue {
     Experimental: 'fas fa-flask',
     'Installed Apps': 'icon-store',
     'Get Support': 'icon-question',
-    [ESettingsCategory.AI]: 'fas fa-eye',
+    [ESettingsCategory.AI]: 'icon-ai',
   };
   // for additional dismissables, add below using the category/title as the key
   dismissables: { [key: string]: EDismissable } = {
@@ -145,7 +143,7 @@ export default class Settings extends Vue {
       // 'Hotkeys',
       'Advanced',
       // 'SceneCollections',
-      // 'Notifications',
+      'Notifications',
       'Appearance',
       'Mobile',
       'Virtual Webcam',

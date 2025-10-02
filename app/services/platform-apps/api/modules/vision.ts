@@ -8,9 +8,6 @@ export class VisionModule extends Module {
   moduleName = 'Vision';
   permissions: EApiPermissions[] = [];
 
-  // Can remove when we roll this out generally
-  requiresHighlyPrivileged = true;
-
   @Inject() visionService: VisionService;
   @Inject() websocketService: WebsocketService;
 
@@ -67,12 +64,17 @@ export class VisionModule extends Module {
   }
 
   @apiMethod()
-  async activateProcess(_ctx: IApiContext, pid: string) {
-    return this.visionService.activateProcess(pid);
+  async activateProcess(_ctx: IApiContext, pid: number, selectedGame?: string) {
+    return this.visionService.activateProcess(pid, selectedGame);
   }
 
   @apiMethod()
   async requestFrame() {
     return this.visionService.requestFrame();
+  }
+
+  @apiMethod()
+  async resetState() {
+    return this.visionService.resetState();
   }
 }

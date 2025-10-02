@@ -9,6 +9,7 @@ export * from './Advanced';
 // 'SceneCollections',
 // 'Notifications',
 export * from './Developer';
+export * from './Notifications';
 export * from './Appearance';
 export * from './Mobile';
 export * from './VirtualWebcam';
