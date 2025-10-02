@@ -159,14 +159,14 @@ export default function AiHighlighterToggle({
 
                           <div
                             className={styles.plattformIcon}
-                            style={{ top: '85px', left: '250px' }}
+                            style={{ top: '85px', left: '283px' }}
                           >
                             <TikTokLogo />
                           </div>
 
                           <div
                             className={styles.plattformIcon}
-                            style={{ top: '177px', left: '153px' }}
+                            style={{ top: '177px', left: '187px' }}
                           >
                             <InstagramLogo />
                           </div>
