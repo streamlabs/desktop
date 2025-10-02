@@ -185,6 +185,7 @@ function DualOutputDeveloperSettings() {
         <h4>{$t('Convert to Vanilla Scene')}</h4>
         <Button
           className="button--soft-warning"
+          style={{ marginRight: '16px' }}
           onClick={() => convertDualOutputCollection()}
           disabled={busy}
         >
@@ -202,6 +203,7 @@ function DualOutputDeveloperSettings() {
         <h4>{$t('Assign Vertical Sources to Horizontal Display')}</h4>
         <Button
           className="button--soft-warning"
+          style={{ marginRight: '16px' }}
           onClick={() => convertDualOutputCollection(true)}
           disabled={busy}
         >
