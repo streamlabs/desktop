@@ -1778,8 +1778,6 @@ export class StreamingService
         display === 'horizontal' &&
         this.contexts.vertical.recording !== null
       ) {
-        const time = new Date().toISOString();
-
         this.recordingStatusChange.next(nextState);
         return;
       }

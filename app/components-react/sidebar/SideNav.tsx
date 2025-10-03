@@ -12,6 +12,7 @@ import { Layout, Button } from 'antd';
 import Scrollable from 'components-react/shared/Scrollable';
 import HelpTip from 'components-react/shared/HelpTip';
 import FeaturesNav from './FeaturesNav';
+import { useRealmObject } from 'components-react/hooks/realm';
 
 const { Sider } = Layout;
 
@@ -37,20 +38,20 @@ export default function SideNav() {
   const {
     currentMenuItem,
     setCurrentMenuItem,
-    leftDock,
     isOpen,
     toggleMenuStatus,
     updateStyleBlockers,
   } = useVuex(() => ({
     currentMenuItem: SideNavService.views.currentMenuItem,
     setCurrentMenuItem: SideNavService.actions.setCurrentMenuItem,
-    leftDock: CustomizationService.state.leftDock,
     isOpen: SideNavService.views.isOpen,
     toggleMenuStatus: SideNavService.actions.toggleMenuStatus,
     updateStyleBlockers: WindowsService.actions.updateStyleBlockers,
   }));
 
   const sider = useRef<HTMLDivElement | null>(null);
+
+  const leftDock = useRealmObject(CustomizationService.state).leftDock;
 
   const siderMinWidth: number = 50;
   const siderMaxWidth: number = 200;
