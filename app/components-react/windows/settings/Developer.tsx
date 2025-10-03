@@ -95,7 +95,7 @@ export function DeveloperSettings() {
 
 DeveloperSettings.page = 'Developer';
 
-function DualOutputDeveloperSettings() {
+export function DualOutputDeveloperSettings(p: { collection?: string }) {
   const { OverlaysPersistenceService, SceneCollectionsService } = Services;
 
   const [busy, setBusy] = useState(false);
@@ -132,6 +132,7 @@ function DualOutputDeveloperSettings() {
       // convert collection
       const collectionFilePath = await SceneCollectionsService.actions.return.convertDualOutputCollection(
         assignToHorizontal,
+        p.collection,
       );
 
       if (!collectionFilePath) {
@@ -191,32 +192,36 @@ function DualOutputDeveloperSettings() {
         >
           {$t('Convert')}
         </Button>
-        <Button
-          className="button--soft-warning"
-          onClick={() => convertDualOutputCollection(false, true)}
-          disabled={busy}
-        >
-          {$t('Convert and Export Overlay')}
-        </Button>
+        {!p.collection && (
+          <Button
+            className="button--soft-warning"
+            onClick={() => convertDualOutputCollection(false, true)}
+            disabled={busy}
+          >
+            {$t('Convert and Export Overlay')}
+          </Button>
+        )}
       </div>
-      <div style={{ marginTop: '10px' }}>
-        <h4>{$t('Assign Vertical Sources to Horizontal Display')}</h4>
-        <Button
-          className="button--soft-warning"
-          style={{ marginRight: '16px' }}
-          onClick={() => convertDualOutputCollection(true)}
-          disabled={busy}
-        >
-          {$t('Assign')}
-        </Button>
-        <Button
-          className="button--soft-warning"
-          onClick={() => convertDualOutputCollection(true, true)}
-          disabled={busy}
-        >
-          {$t('Assign and Export Overlay')}
-        </Button>
-      </div>
+      {!p.collection && (
+        <div style={{ marginTop: '10px' }}>
+          <h4>{$t('Assign Vertical Sources to Horizontal Display')}</h4>
+          <Button
+            className="button--soft-warning"
+            style={{ marginRight: '16px' }}
+            onClick={() => convertDualOutputCollection(true)}
+            disabled={busy}
+          >
+            {$t('Assign')}
+          </Button>
+          <Button
+            className="button--soft-warning"
+            onClick={() => convertDualOutputCollection(true, true)}
+            disabled={busy}
+          >
+            {$t('Assign and Export Overlay')}
+          </Button>
+        </div>
+      )}
       <div style={{ color: error ? 'red' : 'var(--teal)' }}>{message}</div>
       <div style={{ padding: '8px' }} />
     </>

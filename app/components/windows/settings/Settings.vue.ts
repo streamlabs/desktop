@@ -7,7 +7,6 @@ import NavItem from 'components/shared/NavItem.vue';
 import GenericFormGroups from 'components/obs/inputs/GenericFormGroups.vue';
 import { WindowsService } from 'services/windows';
 import { ESettingsCategory, ISettingsSubCategory, SettingsService } from 'services/settings/index';
-import OverlaySettings from './OverlaySettings';
 import SearchablePages from 'components/shared/SearchablePages';
 import FormInput from 'components/shared/inputs/FormInput.vue';
 import { MagicLinkService } from 'services/magic-link';
@@ -37,7 +36,6 @@ import { NavigationService } from 'app-services';
     NavMenu,
     NavItem,
     Hotkeys,
-    OverlaySettings,
     InstalledApps,
     FormInput,
     Scrollable,
@@ -142,8 +140,8 @@ export default class Settings extends Vue {
       'Video',
       // 'Hotkeys',
       'Advanced',
-      // 'SceneCollections',
       'Notifications',
+      'Scene Collections',
       'Appearance',
       'Mobile',
       'Virtual Webcam',
