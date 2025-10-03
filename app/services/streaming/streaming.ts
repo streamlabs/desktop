@@ -719,8 +719,8 @@ export class StreamingService
     // Record Cloud Shift
     if (settings.cloudShift) {
       this.usageStatisticsService.recordFeatureUsage('CloudShift');
-      this.usageStatisticsService.recordAnalyticsEvent('CloudShiftAction', {
-        stream: 'enabled',
+      this.usageStatisticsService.recordAnalyticsEvent('CloudShift', {
+        stream: 'started',
       });
     }
   }
@@ -1460,11 +1460,6 @@ export class StreamingService
         this.usageStatisticsService.recordAnalyticsEvent('StreamingStatus', {
           code: info.code,
           status: EStreamingState.Offline,
-        });
-
-        // Record stopping a Cloud Shift stream
-        this.usageStatisticsService.recordAnalyticsEvent('CloudShiftAction', {
-          stream: 'ended',
         });
       } else if (info.signal === EOBSOutputSignal.Stopping) {
         this.sendStreamEndEvent();

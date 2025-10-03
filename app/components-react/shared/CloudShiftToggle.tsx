@@ -35,8 +35,8 @@ export default function CloudShiftToggle(p: ICloudShiftToggle) {
             <div
               className={styles.labelUltraBadge}
               onClick={() => {
-                Services.UsageStatisticsService.actions.recordAnalyticsEvent('CloudShiftAction', {
-                  ultra: 'go-live-switcher',
+                Services.UsageStatisticsService.actions.recordAnalyticsEvent('CloudShift', {
+                  ultra: 'go-live-toggle',
                 });
                 Services.MagicLinkService.actions.linkToPrime('slobs-streamswitcher');
               }}
@@ -51,7 +51,7 @@ export default function CloudShiftToggle(p: ICloudShiftToggle) {
         value={isCloudShiftMode}
         onChange={(status: boolean) => {
           setCloudShift(status);
-          Services.UsageStatisticsService.actions.recordAnalyticsEvent('CloudShiftAction', {
+          Services.UsageStatisticsService.actions.recordAnalyticsEvent('CloudShift', {
             toggle: status,
           });
         }}

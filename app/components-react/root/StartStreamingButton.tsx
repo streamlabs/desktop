@@ -20,6 +20,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     SourcesService,
     RestreamService,
     IncrementalRolloutService,
+    UsageStatisticsService,
   } = Services;
 
   const {
@@ -94,6 +95,10 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         const remoteStreamId = event.data.identifier;
 
         if (remoteStreamId !== cloudShiftStreamId) {
+          UsageStatisticsService.recordAnalyticsEvent('CloudShift', {
+            stream: 'mobile-to-desktop',
+          });
+
           promptAction({
             title: $t('Stream successfully switched'),
             message: $t(
@@ -107,6 +112,10 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         }
 
         if (remoteStreamId === cloudShiftStreamId) {
+          UsageStatisticsService.recordAnalyticsEvent('CloudShift', {
+            stream: 'desktop-to-mobile',
+          });
+
           promptAction({
             title: $t('Stream successfully switched'),
             message: $t(
