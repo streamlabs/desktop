@@ -51,6 +51,7 @@ export enum ESettingsCategory {
   General = 'General',
   Mobile = 'Mobile',
   Hotkeys = 'Hotkeys',
+  Ultra = 'Ultra',
   // ...
 }
 
