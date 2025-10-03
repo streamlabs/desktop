@@ -278,5 +278,10 @@
   "Bearer Token": "무기명 토큰",
   "Apply Primary": "기본 적용",
   "Output Resolution": "출력 해상도",
-  "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "Dual Output을 시작할 수 없는 경우, 스트리밍 설정을 \"권장 설정 사용\"으로 업데이트하세요."
+  "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "Dual Output을 시작할 수 없는 경우, 스트리밍 설정을 \"권장 설정 사용\"으로 업데이트하세요.",
+  "Mobile": "Mobile",
+  "Mobile Streaming": "Mobile Streaming",
+  "Remote Controller": "Remote Controller",
+  "Third Party Connections": "Third Party Connections",
+  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "Stream your phone camera or mobile game on the go with Streamlabs Mobile App."
 }

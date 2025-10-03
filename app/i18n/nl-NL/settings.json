@@ -278,5 +278,10 @@
   "Bearer Token": "Bearer Token",
   "Apply Primary": "Primair toepassen",
   "Output Resolution": "Uitvoerresolutie",
-  "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "Kan dubbele uitvoer niet starten, pas je streaminstellingen aan naar \"Aanbevolen instellingen gebruiken\"."
+  "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "Kan dubbele uitvoer niet starten, pas je streaminstellingen aan naar \"Aanbevolen instellingen gebruiken\".",
+  "Mobile": "Mobile",
+  "Mobile Streaming": "Mobile Streaming",
+  "Remote Controller": "Remote Controller",
+  "Third Party Connections": "Third Party Connections",
+  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "Stream your phone camera or mobile game on the go with Streamlabs Mobile App."
 }

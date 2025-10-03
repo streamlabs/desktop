@@ -123,38 +123,41 @@ export default function Main() {
     WindowsService.actions.updateStyleBlockers('main', val);
   }, []);
 
-  const onDropHandler = useCallback(async (event: React.DragEvent) => {
-    if (page !== 'Studio') return;
+  const onDropHandler = useCallback(
+    async (event: React.DragEvent) => {
+      if (page !== 'Studio') return;
 
-    const fileList = event.dataTransfer?.files;
+      const fileList = event.dataTransfer?.files;
 
-    if (!fileList || fileList.length < 1) return;
+      if (!fileList || fileList.length < 1) return;
 
-    const files: string[] = [];
-    let fi = fileList.length;
-    while (fi--) files.push(fileList.item(fi)!.path);
+      const files: string[] = [];
+      let fi = fileList.length;
+      while (fi--) files.push(fileList.item(fi)!.path);
 
-    const isDir = await isDirectory(files[0]).catch(err => {
-      console.error('Error checking if drop is directory', err);
-      return false;
-    });
+      const isDir = await isDirectory(files[0]).catch(err => {
+        console.error('Error checking if drop is directory', err);
+        return false;
+      });
 
-    if (files.length > 1 || isDir) {
-      remote.dialog
-        .showMessageBox(remote.getCurrentWindow(), {
-          title: 'Streamlabs Desktop',
-          message: $t('Are you sure you want to import multiple files?'),
-          type: 'warning',
-          buttons: [$t('Cancel'), $t('OK')],
-        })
-        .then(({ response }) => {
-          if (!response) return;
-          EditorCommandsService.actions.executeCommand('AddFilesCommand', activeSceneId, files);
-        });
-    } else {
-      EditorCommandsService.actions.executeCommand('AddFilesCommand', activeSceneId, files);
-    }
-  }, []);
+      if (files.length > 1 || isDir) {
+        remote.dialog
+          .showMessageBox(remote.getCurrentWindow(), {
+            title: 'Streamlabs Desktop',
+            message: $t('Are you sure you want to import multiple files?'),
+            type: 'warning',
+            buttons: [$t('Cancel'), $t('OK')],
+          })
+          .then(({ response }) => {
+            if (!response) return;
+            EditorCommandsService.actions.executeCommand('AddFilesCommand', activeSceneId, files);
+          });
+      } else {
+        EditorCommandsService.actions.executeCommand('AddFilesCommand', activeSceneId, files);
+      }
+    },
+    [activeSceneId, page],
+  );
 
   const handleEditorWidth = useDebounce(500, (width: number) => {
     setMinEditorWidth(width);

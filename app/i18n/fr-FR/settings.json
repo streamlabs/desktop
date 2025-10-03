@@ -278,5 +278,10 @@
   "Bearer Token": "Jeton du porteur",
   "Apply Primary": "Appliquer le principal",
   "Output Resolution": "Résolution de sortie",
-  "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "Si tu n’arrives pas à démarrer Dual Output, mets à jour tes paramètres de stream sur « Utiliser les paramètres recommandés »"
+  "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "Si tu n’arrives pas à démarrer Dual Output, mets à jour tes paramètres de stream sur « Utiliser les paramètres recommandés »",
+  "Mobile": "Mobile",
+  "Mobile Streaming": "Mobile Streaming",
+  "Remote Controller": "Remote Controller",
+  "Third Party Connections": "Third Party Connections",
+  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "Stream your phone camera or mobile game on the go with Streamlabs Mobile App."
 }

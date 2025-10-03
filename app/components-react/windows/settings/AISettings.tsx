@@ -1,13 +1,13 @@
 import { useRealmObject } from 'components-react/hooks/realm';
 import { Services } from 'components-react/service-provider';
 import React, { useEffect, useMemo } from 'react';
-import { message, Progress } from 'antd';
+import { message, Progress, Select } from 'antd';
 import { ObsSettingsSection } from './ObsSettings';
 import { confirmAsync } from 'components-react/modals';
 import * as remote from '@electron/remote';
 import { VisionRunnerStartOptions } from 'services/vision/vision-runner';
 import { $t } from 'services/i18n/index';
-import { VisionState } from 'services/vision';
+import { VisionProcess, VisionState } from 'services/vision';
 import { ESettingsCategory } from 'services/settings';
 
 type VisionStatus = 'running' | 'starting' | 'updating' | 'stopped';
@@ -46,6 +46,12 @@ type VisionInfoProps = {
   installedVersion: string;
   pid?: number;
   port?: number;
+  availableProcesses: VisionProcess[];
+  activeProcessId: number;
+  availableGames: Dictionary<string>;
+  selectedGame: string;
+  requestAvailableProcesses: () => void;
+  activateProcess: (pid: number, gameHint?: string) => void;
   startProcess: (opts?: VisionRunnerStartOptions) => void;
   ensureUpdated: () => void;
   stopProcess: () => void;
@@ -62,7 +68,14 @@ function VisionInfo({
   stopProcess,
   ensureUpdated,
   openExternal,
+  activeProcessId,
+  availableProcesses,
+  requestAvailableProcesses,
+  activateProcess,
+  availableGames,
+  selectedGame,
 }: VisionInfoProps) {
+  const activeProcess = availableProcesses?.find(p => p.pid === activeProcessId);
   const eventsUrl = useMemo(() => buildLocalUrl(port, '/events'), [port]);
   const frameUrl = useMemo(() => buildLocalUrl(port, '/display_frame'), [port]);
 
@@ -116,6 +129,54 @@ function VisionInfo({
             </button>
           </div>
         )}
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 12,
+          }}
+        >
+          {status === 'running' && availableProcesses && (
+            <div style={{ marginTop: 12 }}>
+              <div style={{ marginBottom: 6 }}>Active Process</div>
+              <Select
+                style={{ minWidth: 240 }}
+                value={activeProcessId}
+                onFocus={() => requestAvailableProcesses()}
+                onChange={val => activateProcess(val, selectedGame)}
+              >
+                {availableProcesses.map(p => (
+                  <Select.Option key={p.pid} value={p.pid}>
+                    {p.title || p.executable_name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </div>
+          )}
+
+          {status === 'running' &&
+            activeProcess?.type === 'capture_device' &&
+            availableGames &&
+            Object.keys(availableGames).length > 0 && (
+              <div style={{ marginTop: 12 }}>
+                <div style={{ marginBottom: 6 }}>Selected Game</div>
+                <Select
+                  style={{ minWidth: 240 }}
+                  value={selectedGame}
+                  onChange={val => {
+                    console.log('Changing game to: ', val);
+                    activateProcess(activeProcessId, val);
+                  }}
+                >
+                  {Object.entries(availableGames).map(([key, label]) => (
+                    <Select.Option key={key} value={key}>
+                      {label}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </div>
+            )}
+        </div>
       </div>
     </ObsSettingsSection>
   );
@@ -165,6 +226,13 @@ export function AISettings() {
     }
   }, [state.hasFailedToUpdate]);
 
+  useEffect(() => {
+    if (state.isRunning) {
+      actions.requestAvailableProcesses();
+      actions.requestActiveProcess();
+    }
+  }, [state.isRunning]);
+
   return (
     <div>
       <VisionInfo
@@ -177,6 +245,12 @@ export function AISettings() {
         openExternal={openLink}
         startProcess={(options: VisionRunnerStartOptions) => actions.ensureRunning(options)}
         ensureUpdated={() => actions.ensureUpdated()}
+        availableProcesses={state.availableProcesses}
+        activeProcessId={state.selectedProcessId}
+        requestAvailableProcesses={() => actions.requestAvailableProcesses()}
+        activateProcess={(pid, gameHint) => actions.activateProcess(pid, gameHint)}
+        availableGames={state.availableGames}
+        selectedGame={state.selectedGame}
       />
 
       {state.isCurrentlyUpdating && (

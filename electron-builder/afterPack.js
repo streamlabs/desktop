@@ -66,14 +66,14 @@ async function afterPackMac(context) {
     `cp -R ./node_modules/obs-studio-node/Frameworks \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Resources/app.asar.unpacked/node_modules/\"`,
   );
 
-  await virtualCameraPacker.downloadVirtualCamExtension(context);
-
   if (process.env.SLOBS_NO_SIGN) return;
 
   signBinaries(
     context.packager.config.mac.identity,
     `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Resources/app.asar.unpacked`,
   );
+
+  await virtualCameraPacker.downloadVirtualCamExtension(context); // codesign is required for mac-virtualcam (so dont run if SLOBS_NO_SIGN env var is set)
   virtualCameraPacker.signApps(context);
 }
 
