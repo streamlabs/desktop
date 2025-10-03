@@ -7,10 +7,12 @@ import { getApiClient } from '../api-client';
 import {
   click,
   clickButton,
+  clickTab,
+  clickWhenDisplayed,
   focusChild,
-  getFocusedWindowId,
+  focusMain,
+  getNumElements,
   isDisplayed,
-  select,
   selectButton,
   useChildWindow,
   useMainWindow,
@@ -22,6 +24,9 @@ import { sleep } from '../sleep';
 import { fillForm, TFormData, useForm } from './forms';
 import { setOutputResolution, showSettingsWindow } from './settings/settings';
 import { StreamSettingsService } from '../../../app/services/settings/streaming';
+import { readdir } from 'fs-extra';
+import { TExecutionContext } from '../webdriver';
+import { showPage } from './navigation';
 
 /**
  * Go live and wait for stream start
@@ -136,6 +141,82 @@ export async function startRecording() {
 export async function stopRecording() {
   await click('.record-button');
   await waitForDisplayed('.record-button:not(.active)', { timeout: 15000 });
+}
+
+/**
+ * Iterate over all formats and record a 0.5s video in each.
+ * @param advanced - whether to use advanced settings
+ * @returns number of formats
+ */
+export async function createRecordingFiles(
+  advanced: boolean = false,
+  message?: string,
+): Promise<number> {
+  const formats = advanced
+    ? ['flv', 'mp4', 'mov', 'mkv', 'mpegts', 'hls']
+    : ['flv', 'mp4', 'mov', 'mkv', 'mpegts'];
+
+  // Record 0.5s video in every format
+  for (const format of formats) {
+    await showSettingsWindow('Output', async () => {
+      if (advanced) {
+        await clickTab('Recording');
+      }
+
+      const { setDropdownInputValue } = useForm('Recording');
+      await setDropdownInputValue('RecFormat', format);
+      await clickButton('Done');
+    });
+
+    await focusMain();
+    await startRecording();
+    await sleep(2000);
+    await stopRecording();
+
+    // in advanced mode, it may take a little longer to save the recording
+    if (advanced) {
+      await sleep(1000);
+    }
+    // Confirm notification has been shown and navigate to the recording history
+    const notificationMessage =
+      message ?? 'A new Recording has been completed. Click for more info';
+
+    await focusMain();
+    await clickWhenDisplayed(`span=${notificationMessage}`);
+    await waitForDisplayed('h1=Recordings', { timeout: 1000 });
+    await sleep(500);
+    await showPage('Editor');
+  }
+
+  return Promise.resolve(formats.length);
+}
+
+/**
+ * Confirm correct number of files were created and that they are displayed in the recording history.
+ * @param t - AVA test context
+ * @param tmpDir - temporary directory where recordings are saved
+ * @param numFormats - number of formats used to record
+ */
+export async function validateRecordingFiles(
+  t: TExecutionContext,
+  tmpDir: string,
+  numFormats: number,
+  advanced: boolean = false,
+) {
+  // Check that every file was created
+  const files = await readdir(tmpDir);
+
+  // M3U8 creates multiple TS files in addition to the catalog itself.
+  // The additional files created by TS & M3U8 in advanced mode are not displayed in the recording history
+  const numFiles = advanced ? files.length - 2 : files.length;
+  t.true(numFiles >= numFormats, `Files that were created:\n${files.join('\n')}`);
+
+  // Check that the recordings are displayed in the recording history
+  await showPage('Recordings');
+  waitForDisplayed('h1=Recordings');
+
+  const numRecordings = await getNumElements('[data-test=filename]');
+  t.is(numRecordings, numFiles, 'All recordings show in history matches number of files recorded');
 }
 
 export async function waitForSettingsWindowLoaded() {

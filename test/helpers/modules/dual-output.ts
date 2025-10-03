@@ -22,7 +22,8 @@ export async function toggleDualOutputMode(closeChildWindow: boolean = true) {
     }
   });
   await focusMain();
-  await isDisplayed('div#vertical-display');
+
+  await isDisplayed('.icon-dual-output.active');
 }
 
 /**

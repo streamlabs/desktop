@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import cx from 'classnames';
-import { EStreamingState } from 'services/streaming';
+import { ERecordingState, EStreamingState } from 'services/streaming';
 import { EGlobalSyncStatus } from 'services/media-backup';
 import { $t } from 'services/i18n';
 import { useVuex } from '../hooks';
@@ -17,11 +17,18 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     SourcesService,
   } = Services;
 
-  const { streamingStatus, delayEnabled, delaySeconds } = useVuex(() => ({
+  const { streamingStatus, delayEnabled, delaySeconds, recordingStatus } = useVuex(() => ({
     streamingStatus: StreamingService.state.streamingStatus,
     delayEnabled: StreamingService.views.delayEnabled,
     delaySeconds: StreamingService.views.delaySeconds,
+    recordingStatus: StreamingService.state.recordingStatus,
   }));
+
+  const isRecording = useMemo(() => {
+    return (
+      recordingStatus === ERecordingState.Stopping || recordingStatus === ERecordingState.Writing
+    );
+  }, [recordingStatus]);
 
   const [delaySecondsRemaining, setDelayTick] = useState(delaySeconds);
 
@@ -44,7 +51,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     }
   }, [delaySecondsRemaining, streamingStatus, delayEnabled]);
 
-  async function toggleStreaming() {
+  const toggleStreaming = useCallback(async () => {
     if (StreamingService.isStreaming) {
       StreamingService.toggleStreaming();
     } else {
@@ -98,16 +105,21 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         StreamingService.actions.goLive();
       }
     }
-  }
+  }, []);
 
-  const getIsRedButton = streamingStatus !== EStreamingState.Offline;
+  const getIsRedButton = useMemo(() => streamingStatus !== EStreamingState.Offline, [
+    streamingStatus,
+  ]);
 
-  const isDisabled =
-    p.disabled ||
-    (streamingStatus === EStreamingState.Starting && delaySecondsRemaining === 0) ||
-    (streamingStatus === EStreamingState.Ending && delaySecondsRemaining === 0);
+  const isDisabled = useMemo(() => {
+    return (
+      p.disabled ||
+      (streamingStatus === EStreamingState.Starting && delaySecondsRemaining === 0) ||
+      (streamingStatus === EStreamingState.Ending && delaySecondsRemaining === 0)
+    );
+  }, [p.disabled, streamingStatus, delaySecondsRemaining]);
 
-  function shouldShowGoLiveWindow() {
+  const shouldShowGoLiveWindow = useCallback(() => {
     if (!UserService.isLoggedIn) return false;
     const primaryPlatform = UserService.state.auth?.primaryPlatform;
     const updateStreamInfoOnLive = CustomizationService.state.updateStreamInfoOnLive;
@@ -136,7 +148,22 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         StreamSettingsService.isSafeToModifyStreamKey()
       );
     }
-  }
+  }, []);
+
+  const buttonLabel = useMemo(() => {
+    switch (streamingStatus) {
+      case EStreamingState.Live:
+        return $t('End Stream');
+      case EStreamingState.Starting:
+        return delayEnabled ? `Starting ${delaySecondsRemaining}s` : $t('Starting');
+      case EStreamingState.Ending:
+        return delayEnabled ? `Discard ${delaySecondsRemaining}s` : $t('Ending');
+      case EStreamingState.Reconnecting:
+        return $t('Reconnecting');
+      default:
+        return $t('Go Live');
+    }
+  }, [streamingStatus, delayEnabled, delaySecondsRemaining]);
 
   return (
     <button
@@ -145,43 +172,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       disabled={isDisabled}
       onClick={toggleStreaming}
     >
-      <StreamButtonLabel
-        streamingStatus={streamingStatus}
-        delayEnabled={delayEnabled}
-        delaySecondsRemaining={delaySecondsRemaining}
-      />
+      {isRecording ? <i className="fa fa-spinner fa-pulse" /> : <span>{buttonLabel}</span>}
     </button>
   );
-}
-
-function StreamButtonLabel(p: {
-  streamingStatus: EStreamingState;
-  delaySecondsRemaining: number;
-  delayEnabled: boolean;
-}) {
-  if (p.streamingStatus === EStreamingState.Live) {
-    return <>{$t('End Stream')}</>;
-  }
-
-  if (p.streamingStatus === EStreamingState.Starting) {
-    if (p.delayEnabled) {
-      return <>{`Starting ${p.delaySecondsRemaining}s`}</>;
-    }
-
-    return <>{$t('Starting')}</>;
-  }
-
-  if (p.streamingStatus === EStreamingState.Ending) {
-    if (p.delayEnabled) {
-      return <>{`Discard ${p.delaySecondsRemaining}s`}</>;
-    }
-
-    return <>{$t('Ending')}</>;
-  }
-
-  if (p.streamingStatus === EStreamingState.Reconnecting) {
-    return <>{$t('Reconnecting')}</>;
-  }
-
-  return <>{$t('Go Live')}</>;
 }

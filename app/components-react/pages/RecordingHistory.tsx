@@ -305,6 +305,12 @@ export function RecordingHistory(p: { className?: string }) {
         <Scrollable style={{ height: '100%' }}>
           {recordings.map(recording => (
             <div className={styles.recording} key={recording.timestamp}>
+              {recording?.display && recording.display === 'vertical' && (
+                <i className="icon-phone-case" style={{ paddingRight: '10px' }} />
+              )}
+              {recording?.display && recording.display === 'horizontal' && (
+                <i className="icon-desktop" style={{ paddingRight: '10px' }} />
+              )}
               <span style={{ marginRight: '8px' }}>{formattedTimestamp(recording.timestamp)}</span>
               <Tooltip title={$t('Show in folder')}>
                 <span
