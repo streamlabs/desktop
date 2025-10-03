@@ -40,7 +40,6 @@ import RecentEventsWindow from './windows/RecentEvents';
 import DismissableBadge from './shared/DismissableBadge';
 import UltraIcon from './shared/UltraIcon';
 import EditTransform from './windows/EditTransform';
-import InstalledApps from './windows/settings/InstalledApps';
 import Hotkeys from './windows/settings/Hotkeys';
 import MarketingModal from './windows/MarketingModal';
 import Main from './windows/Main';
@@ -94,7 +93,6 @@ export const components = {
   DismissableBadge,
   UltraIcon,
   EditTransform,
-  InstalledApps,
   Blank,
   Hotkeys,
   MarketingModal,

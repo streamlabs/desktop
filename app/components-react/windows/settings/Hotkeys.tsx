@@ -49,7 +49,7 @@ const setCategoryNameFrom = (srcOrScene: Source | Scene | null) => (hotkey: IAug
   return hotkey;
 };
 
-export default function Hotkeys(props: HotkeysProps) {
+export function Hotkeys(props: HotkeysProps) {
   const { globalSearchStr: searchString, scanning, highlightSearch } = props;
   const { HotkeysService, SourcesService, ScenesService, DualOutputService } = Services;
   const [hotkeySet, setHotkeysSet] = useState<IHotkeysSet | null>(null);
