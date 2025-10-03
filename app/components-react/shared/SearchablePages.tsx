@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState. useRef } from 'react';
 import Spinner from './Spinner';
 import Mark from 'mark.js';
 import styles from './SearchablePages.m.less';
+import { ESettingsCategory } from 'services/settings';
 
 interface IPageInfo {
   /**
@@ -15,8 +16,8 @@ interface IPageInfo {
 }
 
 interface ISearchablePagesProps {
-  page: string;
-  pages: string[];
+  page: ESettingsCategory;
+  pages: ESettingsCategory[];
   searchStr: string;
 
   /**
@@ -30,21 +31,21 @@ interface ISearchablePagesProps {
    * if returns a promise, scanning won't start unless it will be resolved
    */
   onPageRender?: (page: string) => Promise<any> | any;
+
+  onSearchCompleted?: (results: string[]) => void;
+  onScanCompleted?: () => void;
 }
 
 export default function SearchablePages(p: React.PropsWithChildren<ISearchablePagesProps>) {
   // currentPage: string = '';
-  // pagesInfo: Dictionary<IPageInfo> = null;
+  const pagesInfo = useRef<PartialRec<ESettingsCategory, IPageInfo>>({});
+  const pageRef = useRef<HTMLDivElement>(null);
   // searchResultPages: string[] = [];
   const [loading, setLoading] = useState(false);
 
   // created() {
   //   this.currentPage = this.props.page || '';
   // }
-
-  // $refs: {
-  //   pageSlot: HTMLDivElement;
-  // };
 
   // @Watch('searchStr')
   // private async onSearchHandler(searchStr: string) {
@@ -129,52 +130,53 @@ export default function SearchablePages(p: React.PropsWithChildren<ISearchablePa
   //   this.$emit('scanCompleted');
   // }
 
-  // /**
-  //  * this method highlights search matches by modifying DOM elements inside `pageSlot`
-  //  * this is not a recommended way to interact with elements in Vue.js
-  //  * so it should be used carefully
-  //  */
-  // async highlightPage(searchStr: string) {
-  //   // highlight the page text via Mark.js
-  //   const mark = new Mark(this.$refs.pageSlot);
-  //   mark.unmark();
-  //   if (searchStr) mark.mark(searchStr);
+  /**
+   * this method highlights search matches by modifying DOM elements inside `pageRef`
+   * this is not a recommended way to interact with elements
+   * so it should be used carefully
+   */
+  async function highlightPage() {
+    if (!pageRef.current) return;
+    // highlight the page text via Mark.js
+    const mark = new Mark(pageRef.current);
+    mark.unmark();
+    if (p.searchStr) mark.mark(p.searchStr);
 
-  //   // highlight inputs
-  //   const pageInfo = this.pagesInfo && this.pagesInfo[this.props.page];
-  //   if (pageInfo) {
-  //     this.getPageInputs().forEach(($input, ind) => {
-  //       $input.classList.remove('search-highlight');
-  //       const needHighlight = searchStr && pageInfo.inputs[ind].match(new RegExp(searchStr, 'i'));
-  //       if (needHighlight) $input.classList.add('search-highlight');
-  //     });
-  //   }
+    // highlight inputs
+    const pageInfo = pagesInfo.current && pagesInfo.current[p.page];
+    if (pageInfo) {
+      getPageInputs().forEach(($input, ind) => {
+        $input.classList.remove('search-highlight');
+        const needHighlight = p.searchStr && pageInfo.inputs[ind].match(new RegExp(p.searchStr, 'i'));
+        if (needHighlight) $input.classList.add('search-highlight');
+      });
+    }
 
-  //   // highlight buttons
-  //   this.$refs.pageSlot.querySelectorAll('button').forEach($btn => {
-  //     $btn.classList.remove('search-highlight');
-  //     if (!$btn.querySelectorAll('mark').length) return;
-  //     $btn.classList.add('search-highlight');
-  //   });
+    // highlight buttons
+    pageRef.current.querySelectorAll('button').forEach($btn => {
+      $btn.classList.remove('search-highlight');
+      if (!$btn.querySelectorAll('mark').length) return;
+      $btn.classList.add('search-highlight');
+    });
 
-  //   // scroll to the first highlighted element
-  //   const $scrollToEl = this.$refs.pageSlot.querySelector('mark, .search-highlight');
-  //   if ($scrollToEl) $scrollToEl.scrollIntoView({ block: 'nearest' });
-  // }
+    // scroll to the first highlighted element
+    const $scrollToEl = pageRef.current.querySelector('mark, .search-highlight');
+    if ($scrollToEl) $scrollToEl.scrollIntoView({ block: 'nearest' });
+  }
 
-  // private getPageInputs(): HTMLDivElement[] {
-  //   return Array.from(
-  //     this.$refs.pageSlot.querySelectorAll('[data-role="input"]'),
-  //   ).filter(($el: HTMLDivElement) =>
-  //     $el.matches(':not([data-search-exclude])'),
-  //   ) as HTMLDivElement[];
-  // }
+  function getPageInputs(): HTMLDivElement[] {
+    if (!pageRef.current) return [];
+    return Array.from(
+      pageRef.current.querySelectorAll('[data-role="input"]'),
+    ).filter(($el: HTMLDivElement) =>
+      $el.matches(':not([data-search-exclude])'),
+    ) as HTMLDivElement[];
+  }
 
-  // private render() {
   return (
     <div className={styles.searchablePages}>
       {loading && <Spinner />}
-      <div ref="pageSlot">
+      <div ref={pageRef}>
         {!loading && p.children}
         {/* {this.$scopedSlots.default({ page: this.currentPage, scanning: this.loading })} */}
       </div>
