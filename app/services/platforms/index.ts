@@ -213,6 +213,8 @@ export interface IPlatformService {
 
   setupCloudShiftStream?: (options: IGoLiveSettings) => Promise<void>;
 
+  postError?: (message: string) => void;
+
   fetchNewToken: () => Promise<void>;
 
   getHeaders: (

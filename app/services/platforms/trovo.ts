@@ -184,6 +184,7 @@ export class TrovoService
 
     if (settings && !settings.is_live) {
       console.error('Cloud Shift Error: Trovo is not live');
+      this.postError('Cloud Shift Error: Trovo is not live');
       return;
     }
 

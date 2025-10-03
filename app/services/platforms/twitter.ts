@@ -13,7 +13,7 @@ import { platformAuthorizedRequest } from './utils';
 import { IGoLiveSettings } from '../streaming';
 import Utils from '../utils';
 import { TDisplayType } from 'services/settings-v2';
-import { ENotificationType, NotificationsService } from '../notifications';
+import { ENotificationType } from '../notifications';
 import { JsonrpcService } from '../api/jsonrpc';
 import * as remote from '@electron/remote';
 import { $t } from 'services/i18n';
@@ -65,7 +65,6 @@ export class TwitterPlatformService
   readonly displayName = 'X (Twitter)';
   readonly gameImageSize = { width: 30, height: 40 };
 
-  @Inject() private notificationsService: NotificationsService;
   @Inject() private jsonrpcService: JsonrpcService;
 
   authWindowOptions: Electron.BrowserWindowConstructorOptions = {
@@ -88,6 +87,7 @@ export class TwitterPlatformService
 
     if (settings && !settings.is_live) {
       console.error('Cloud Shift Error: X is not live');
+      this.postError('Cloud Shift Error: X is not live');
       return;
     }
 

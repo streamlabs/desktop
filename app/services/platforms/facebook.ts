@@ -22,7 +22,7 @@ import { WindowsService } from '../windows';
 import { assertIsDefined, getDefined } from '../../util/properties-type-guards';
 import { TDisplayType } from 'services/settings-v2';
 import { TOutputOrientation } from 'services/restream';
-import { ENotificationType, NotificationsService } from '../notifications';
+import { ENotificationType } from '../notifications';
 import { $t } from '../i18n';
 import { Service } from '../core';
 import { JsonrpcService } from '../api/jsonrpc';
@@ -169,7 +169,6 @@ export class FacebookService
   implements IPlatformService {
   @Inject() protected hostsService: HostsService;
   @Inject() private windowsService: WindowsService;
-  @Inject() private notificationsService: NotificationsService;
   @Inject() private jsonrpcService: JsonrpcService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
 
@@ -348,6 +347,7 @@ export class FacebookService
 
     if (settings && !settings.is_live) {
       console.error('Cloud Shift Error: Facebook is not live');
+      this.postError('Cloud Shift Error: Facebook is not live');
       return;
     }
 

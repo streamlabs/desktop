@@ -355,6 +355,7 @@ export class TwitchService
 
     if (settings && !settings.is_live) {
       console.error('Cloud Shift Error: Twitch is not live');
+      this.postError('Cloud Shift Error: Twitch is not live');
       return;
     }
 

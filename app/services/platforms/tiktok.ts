@@ -40,7 +40,7 @@ import { WindowsService } from 'services/windows';
 import Utils from 'services/utils';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import { DiagnosticsService } from 'services/diagnostics';
-import { ENotificationType, NotificationsService } from 'services/notifications';
+import { ENotificationType } from 'services/notifications';
 import { JsonrpcService } from '../api/jsonrpc';
 import { DismissablesService, EDismissable } from 'services/dismissables';
 
@@ -112,7 +112,6 @@ export class TikTokService
   @Inject() windowsService: WindowsService;
   @Inject() diagnosticsService: DiagnosticsService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
-  @Inject() private notificationsService: NotificationsService;
   @Inject() private jsonrpcService: JsonrpcService;
   @Inject() private dismissablesService: DismissablesService;
 
@@ -210,6 +209,7 @@ export class TikTokService
 
     if (settings && !settings.is_live) {
       console.error('Cloud Shift Error: TikTok is not live');
+      this.postError('Cloud Shift Error: TikTok is not live');
       return;
     }
 

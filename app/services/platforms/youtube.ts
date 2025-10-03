@@ -327,6 +327,7 @@ export class YoutubeService
 
     if (settings && !settings.is_live) {
       console.error('Cloud Shift Error: YouTube is not live');
+      this.postError('Cloud Shift Error: YouTube is not live');
       return;
     }
 

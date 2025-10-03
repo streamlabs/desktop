@@ -179,6 +179,7 @@ export class KickService
 
     if (goLiveSettings.cloudShift && this.streamingService.views.shouldSwitchStreams) {
       await this.setupCloudShiftStream(goLiveSettings);
+      this.postError('Cloud Shift Error: Kick is not live');
       return;
     }
 
