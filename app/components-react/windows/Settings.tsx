@@ -10,10 +10,12 @@ import { useRealmObject } from 'components-react/hooks/realm';
 import { useVuex } from 'components-react/hooks';
 import { $t } from 'services/i18n';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
-import { Menu, MenuProps } from 'antd';
+import { Menu } from 'antd';
 import Scrollable from 'components-react/shared/Scrollable';
 import styles from './Settings.m.less';
 import { TextInput } from 'components-react/shared/inputs';
+import PlatformLogo from 'components-react/shared/PlatformLogo';
+import DismissableBadge from 'components-react/shared/DismissableBadge';
 
 export interface ISettingsProps {
   globalSearchStr: string;
@@ -23,7 +25,7 @@ export interface ISettingsProps {
 interface ISettingsConfig {
   icon: string;
   component: React.FunctionComponent<ISettingsProps>;
-  dismissables?: Set<EDismissable>;
+  dismissable?: EDismissable;
 }
 
 const SETTINGS_CONFIG: Record<ESettingsCategory, ISettingsConfig> = {
@@ -52,7 +54,7 @@ const SETTINGS_CONFIG: Record<ESettingsCategory, ISettingsConfig> = {
   [ESettingsCategory.Appearance]: {
     icon: 'icon-settings-3-1',
     component: pages.AppearanceSettings,
-    dismissables: new Set([EDismissable.CustomMenuSettings]),
+    dismissable: EDismissable.CustomMenuSettings,
   },
   [ESettingsCategory.Mobile]: { icon: 'icon-phone-case', component: pages.MobileSettings },
   [ESettingsCategory.Experimental]: { icon: 'fas fa-flask', component: pages.ExperimentalSettings },
@@ -70,17 +72,20 @@ export default function Settings() {
     DualOutputService,
     WindowsService,
     DismissablesService,
+    UsageStatisticsService,
   } = Services;
 
   const settingsContent = useRef<HTMLDivElement>(null);
 
   const currentTab = useRealmObject(NavigationService.state).currentSettingsTab;
 
-  const { isPrime, isLoggedIn, username, categories } = useVuex(() => ({
+  const { isPrime, isLoggedIn, username, platform, categories, showDismissable } = useVuex(() => ({
     isPrime: UserService.views.isPrime,
     isLoggedIn: UserService.views.isLoggedIn,
     username: UserService.views.username,
+    platform: UserService.views.platform?.type,
     categories: SettingsService.views.categories,
+    showDismissable: (value: EDismissable) => DismissablesService.views.shouldShow(value),
   }));
 
   useEffect(() => {
@@ -103,6 +108,7 @@ export default function Settings() {
   }
 
   function handleAuth() {
+    UsageStatisticsService.actions.recordClick('Settings', isLoggedIn ? 'logout' : 'login');
     if (isLoggedIn) {
       remote.dialog
         .showMessageBox({
@@ -125,9 +131,9 @@ export default function Settings() {
     }
   }
 
-  function dismiss(category: ESettingsCategory, dismissable: EDismissable) {
-    const dismissables = SETTINGS_CONFIG[category].dismissables;
-    if (dismissables?.has(dismissable)) DismissablesService.actions.dismiss(dismissable);
+  function dismiss(category: ESettingsCategory) {
+    const dismissable = SETTINGS_CONFIG[category].dismissable;
+    if (dismissable) DismissablesService.actions.dismiss(dismissable);
   }
 
   /** PAGE SEARCH LOGIC */
@@ -215,10 +221,21 @@ export default function Settings() {
             const config = SETTINGS_CONFIG[cat];
             return (
               <Menu.Item key={cat} icon={<i className={config.icon} />}>
-                {$t(cat)}
+                <div style={{ display: 'flex' }} onClick={() => dismiss(cat)}>
+                  {$t(cat)}
+                  {config.dismissable && showDismissable(config.dismissable) && (
+                    <DismissableBadge dismissableKey={config.dismissable} />
+                  )}
+                </div>
               </Menu.Item>
             );
           })}
+          <div className={styles.settingsAuth} onClick={handleAuth}>
+            <i className={isLoggedIn ? 'fas fa-sign-out-alt' : 'fas fa-sign-in-alt'} />
+            <strong>{isLoggedIn ? $t('Log Out') : $t('Log In')}</strong>
+            {isLoggedIn && platform && <PlatformLogo platform={platform} size="small" />}
+            {isLoggedIn && <span>{username}</span>}
+          </div>
         </Scrollable>
       </Menu>
       <Scrollable className={styles.settingsContainer}>
