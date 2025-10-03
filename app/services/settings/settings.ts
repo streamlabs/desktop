@@ -283,38 +283,37 @@ class SettingsViews extends ViewHandler<ISettingsServiceState> {
     return Utils.isDevMode() || this.appState.argv.includes('--adv-settings');
   }
 
-  get categories(): CategoryName[] {
-    let categories: CategoryName[] = obs.NodeObs.OBS_settings_getListCategories();
+  get categories(): ESettingsCategory[] {
+    let categories: ESettingsCategory[] = obs.NodeObs.OBS_settings_getListCategories();
     // insert 'Multistreaming' after 'General'
-    categories.splice(1, 0, 'Multistreaming');
+    categories.splice(1, 0, ESettingsCategory.Multistreaming);
     // Deleting 'Virtual Webcam' category to add it below to position properly
-    categories = categories.filter(category => category !== 'Virtual Webcam');
+    categories = categories.filter(category => category !== ESettingsCategory.VirtualWebcam);
     categories = categories.concat([
-      'Scene Collections',
-      'Notifications',
-      'Appearance',
-      'Mobile',
-      'Virtual Webcam',
+      ESettingsCategory.SceneCollections,
+      ESettingsCategory.Notifications,
+      ESettingsCategory.Appearance,
+      ESettingsCategory.Mobile,
+      ESettingsCategory.VirtualWebcam,
     ]);
 
     // Platform-specific categories
     byOS({
       [OS.Mac]: () => {},
       [OS.Windows]: () => {
-        categories = categories.concat(['Game Overlay']);
+        categories.push(ESettingsCategory.GameOverlay);
       },
     });
 
     if (this.advancedSettingEnabled || this.platformAppsState.devMode) {
-      categories = categories.concat('Developer');
-      categories = categories.concat(['Experimental']);
+      categories = categories.concat([ESettingsCategory.Developer, ESettingsCategory.Experimental]);
     }
 
     if (this.platformAppsState.loadedApps.filter(app => !app.unpacked).length > 0) {
-      categories = categories.concat('Installed Apps');
+      categories.push(ESettingsCategory.InstalledApps);
     }
 
-    categories.push('Get Support');
+    categories.push(ESettingsCategory.GetSupport);
 
     // TODO: Lock behind admin?
     categories.push(ESettingsCategory.AI);
@@ -324,6 +323,8 @@ class SettingsViews extends ViewHandler<ISettingsServiceState> {
     categories = categories.filter(
       category => !category.toLowerCase().startsWith('stream') || category === 'Stream',
     );
+
+    categories.push(ESettingsCategory.Ultra);
 
     return categories;
   }
@@ -465,7 +466,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     this.setSettings('Output', newOutputSettings);
   }
 
-  showSettings(categoryName?: CategoryName | string) {
+  showSettings(categoryName?: ESettingsCategory) {
     if (categoryName) {
       this.navigationService.setSettingsNavigation(categoryName);
     }
