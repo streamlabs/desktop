@@ -29,6 +29,7 @@ import { Subject } from 'rxjs';
 import * as remote from '@electron/remote';
 import fs from 'fs';
 import path from 'path';
+import { Services } from 'components-react/service-provider';
 
 export enum ESettingsCategory {
   AI = 'AI',
@@ -40,7 +41,6 @@ export enum ESettingsCategory {
   Multistreaming = 'Multistreaming',
   Notifications = 'Notifications',
   Appearance = 'Appearance',
-  RemoteControl = 'Remote Control',
   VirtualWebcam = 'Virtual Webcam',
   GameOverlay = 'Game Overlay',
   Developer = 'Developer',
@@ -50,6 +50,7 @@ export enum ESettingsCategory {
   Stream = 'Stream',
   General = 'General',
   Mobile = 'Mobile',
+  Hotkeys = 'Hotkeys',
   // ...
 }
 
@@ -170,6 +171,14 @@ interface ISettingsCategory {
 type ISettingsServiceState = Record<CategoryName | string, ISettingsCategory>;
 
 class SettingsViews extends ViewHandler<ISettingsServiceState> {
+  get appState() {
+    return Services.AppService.state;
+  }
+
+  get platformAppsState() {
+    return Services.PlatformAppsService.state;
+  }
+
   get values() {
     const settingsValues: Partial<ISettingsValues> = {};
 
@@ -267,6 +276,55 @@ class SettingsViews extends ViewHandler<ISettingsServiceState> {
     }
 
     return null;
+  }
+
+  get advancedSettingEnabled(): boolean {
+    return Utils.isDevMode() || this.appState.argv.includes('--adv-settings');
+  }
+
+  get categories(): CategoryName[] {
+    let categories: CategoryName[] = obs.NodeObs.OBS_settings_getListCategories();
+    // insert 'Multistreaming' after 'General'
+    categories.splice(1, 0, 'Multistreaming');
+    // Deleting 'Virtual Webcam' category to add it below to position properly
+    categories = categories.filter(category => category !== 'Virtual Webcam');
+    categories = categories.concat([
+      'Scene Collections',
+      'Notifications',
+      'Appearance',
+      'Mobile',
+      'Virtual Webcam',
+    ]);
+
+    // Platform-specific categories
+    byOS({
+      [OS.Mac]: () => {},
+      [OS.Windows]: () => {
+        categories = categories.concat(['Game Overlay']);
+      },
+    });
+
+    if (this.advancedSettingEnabled || this.platformAppsState.devMode) {
+      categories = categories.concat('Developer');
+      categories = categories.concat(['Experimental']);
+    }
+
+    if (this.platformAppsState.loadedApps.filter(app => !app.unpacked).length > 0) {
+      categories = categories.concat('Installed Apps');
+    }
+
+    categories.push('Get Support');
+
+    // TODO: Lock behind admin?
+    categories.push(ESettingsCategory.AI);
+
+    // dual output mode returns additional categories for each context
+    // so hide these from the settings list
+    categories = categories.filter(
+      category => !category.toLowerCase().startsWith('stream') || category === 'Stream',
+    );
+
+    return categories;
   }
 }
 
@@ -373,7 +431,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   loadSettingsIntoStore() {
     // load configuration from nodeObs to state
     const settingsFormData = {} as ISettingsServiceState;
-    this.getCategories().forEach((categoryName: CategoryName) => {
+    this.views.categories.forEach((categoryName: CategoryName) => {
       settingsFormData[categoryName] = this.fetchSettingsFromObs(categoryName);
     });
 
@@ -418,49 +476,6 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
         height: 800,
       },
     });
-  }
-
-  advancedSettingEnabled(): boolean {
-    return Utils.isDevMode() || this.appService.state.argv.includes('--adv-settings');
-  }
-
-  getCategories(): CategoryName[] {
-    let categories: CategoryName[] = obs.NodeObs.OBS_settings_getListCategories();
-    // insert 'Multistreaming' after 'General'
-    categories.splice(1, 0, 'Multistreaming');
-    // Deleting 'Virtual Webcam' category to add it below to position properly
-    categories = categories.filter(category => category !== 'Virtual Webcam');
-    categories = categories.concat([
-      'Scene Collections',
-      'Notifications',
-      'Appearance',
-      'Mobile',
-      'Virtual Webcam',
-    ]);
-
-    // Platform-specific categories
-    byOS({
-      [OS.Mac]: () => {},
-      [OS.Windows]: () => {
-        categories = categories.concat(['Game Overlay']);
-      },
-    });
-
-    if (this.advancedSettingEnabled() || this.platformAppsService.state.devMode) {
-      categories = categories.concat('Developer');
-      categories = categories.concat(['Experimental']);
-    }
-
-    if (this.platformAppsService.state.loadedApps.filter(app => !app.unpacked).length > 0) {
-      categories = categories.concat('Installed Apps');
-    }
-
-    categories.push('Get Support');
-
-    // TODO: Lock behind admin?
-    categories.push(ESettingsCategory.AI);
-
-    return categories;
   }
 
   findSetting(settings: ISettingsSubCategory[], subCategoryName: string, setting: string) {
