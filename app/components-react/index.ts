@@ -40,7 +40,6 @@ import RecentEventsWindow from './windows/RecentEvents';
 import DismissableBadge from './shared/DismissableBadge';
 import UltraIcon from './shared/UltraIcon';
 import EditTransform from './windows/EditTransform';
-import Hotkeys from './windows/settings/Hotkeys';
 import MarketingModal from './windows/MarketingModal';
 import Main from './windows/Main';
 import Loader from './pages/Loader';
@@ -94,7 +93,6 @@ export const components = {
   UltraIcon,
   EditTransform,
   Blank,
-  Hotkeys,
   MarketingModal,
   Main: createRoot(Main),
   Loader,
