@@ -101,7 +101,6 @@
     "realm": "12.7.1",
     "rimraf": "^2.6.1",
     "semver": "^5.5.1",
-    "sharp": "^0.33.5",
     "socket.io-client": "2.3.1",
     "tasklist": "^3.1.1",
     "uuid": "^3.0.1",
@@ -250,7 +249,8 @@
     "zustand": "^4.4.1"
   },
   "optionalDependencies": {
-    "node-win32-np": "1.0.6"
+    "node-win32-np": "1.0.6",
+    "sharp": "^0.34.2"
   },
   "resolutions": {
     "minimist": "1.2.6",
