@@ -18,5 +18,6 @@
   "Unknown error, please contact support": "Er is een fout opgetreden, neem contact op met de helpdesk.",
   "Custom Destination": "Aangepaste bestemming",
   "This app is currently popped out in another window.": "Deze app is nu in een ander venster geopend.",
-  "Error granting chat permissions.": "Er is een fout opgetreden bij het geven van chat-toestemming."
+  "Error granting chat permissions.": "Er is een fout opgetreden bij het geven van chat-toestemming.",
+  "Authentication Error": "Authentication Error"
 }
