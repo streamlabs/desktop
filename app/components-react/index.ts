@@ -46,6 +46,7 @@ import Loader from './pages/Loader';
 import StartStreamingButton from './root/StartStreamingButton';
 import TestWidgets from './root/TestWidgets';
 import { PlatformMerge, PlatformAppStore, PlatformAppMainPage } from './pages';
+import Settings from './windows/Settings';
 
 // list of React components to be used inside Vue components
 export const components = {
@@ -98,4 +99,5 @@ export const components = {
   Loader,
   StartStreamingButton,
   TestWidgets,
+  Settings,
 };

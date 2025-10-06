@@ -3,7 +3,7 @@ import debounce from 'lodash/debounce';
 import remote from '@electron/remote';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import * as pages from './settings/pages';
-import { ESettingsCategory } from 'services/settings';
+import { ESettingsCategory, TCategoryName } from 'services/settings';
 import { EDismissable } from 'services/dismissables';
 import { Services } from 'components-react/service-provider';
 import { useRealmObject } from 'components-react/hooks/realm';
@@ -100,12 +100,12 @@ export default function Settings() {
     }
   }, [currentTab]);
 
-  function setCurrentTab(value: ESettingsCategory) {
+  function setCurrentTab(value: TCategoryName) {
     NavigationService.actions.setSettingsNavigation(value);
   }
 
   function handleMenuNavigation(event: MenuInfo) {
-    setCurrentTab(event.key as ESettingsCategory);
+    setCurrentTab(event.key as TCategoryName);
   }
 
   function handleAuth() {
@@ -132,18 +132,17 @@ export default function Settings() {
     }
   }
 
-  function dismiss(category: ESettingsCategory) {
+  function dismiss(category: TCategoryName) {
     const dismissable = SETTINGS_CONFIG[category].dismissable;
     if (dismissable) DismissablesService.actions.dismiss(dismissable);
   }
 
   /** PAGE SEARCH LOGIC */
-  const originalTab = useRef<ESettingsCategory | null>(null);
   const scanning = useRef(false);
   const [searchStr, setSearchStr] = useState('');
-  const [searchResultPages, setSearchResultPages] = useState<ESettingsCategory[]>([]);
+  const [searchResultPages, setSearchResultPages] = useState<TCategoryName[]>([]);
 
-  function handleSearchCompleted(foundPages: ESettingsCategory[]) {
+  function handleSearchCompleted(foundPages: TCategoryName[]) {
     if (!isPrime && includeUltra(searchStr)) {
       setSearchResultPages([...foundPages, ESettingsCategory.Ultra]);
     } else {
@@ -220,6 +219,7 @@ export default function Settings() {
             pages={categories}
             page={currentTab}
             searchStr={searchStr}
+            searchResults={searchResultPages}
           >
             <SettingsContent highlightSearch={() => {}} globalSearchStr={searchStr} />
           </SearchablePages>

@@ -2,19 +2,19 @@ import React, { useState, useRef, useEffect } from 'react';
 import Spinner from './Spinner';
 import Mark from 'mark.js';
 import styles from './SearchablePages.m.less';
-import { ESettingsCategory } from 'services/settings';
+import { TCategoryName } from 'services/settings';
 import { SETTINGS_CONFIG } from 'components-react/windows/Settings';
 
 interface ISearchablePagesProps {
-  page: ESettingsCategory;
-  pages: ESettingsCategory[];
+  page: TCategoryName;
+  pages: TCategoryName[];
   searchStr: string;
-  searchResults?: ESettingsCategory[];
+  searchResults?: TCategoryName[];
   onSearchCompleted?: (results: string[]) => void;
 }
 
 export default function SearchablePages(p: React.PropsWithChildren<ISearchablePagesProps>) {
-  const pagesInfo = useRef<PartialRec<ESettingsCategory, string> | null>(null);
+  const pagesInfo = useRef<PartialRec<TCategoryName, string> | null>(null);
   const pageRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
 
@@ -26,12 +26,12 @@ export default function SearchablePages(p: React.PropsWithChildren<ISearchablePa
       if (!pagesInfo.current) await scanPages();
 
       // find matching info in cache
-      const searchResultPages: ESettingsCategory[] = [];
+      const searchResultPages: TCategoryName[] = [];
       if (!pagesInfo.current) return;
       for (const pageName of Object.keys(pagesInfo.current)) {
-        const pageText = pagesInfo.current[pageName as ESettingsCategory];
+        const pageText = pagesInfo.current[pageName as TCategoryName];
         if (pageText && pageText.match(new RegExp(p.searchStr, 'i'))) {
-          searchResultPages.push(pageName as ESettingsCategory);
+          searchResultPages.push(pageName as TCategoryName);
         }
       }
       if (searchResultPages.length === 0) return;

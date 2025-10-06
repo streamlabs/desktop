@@ -55,9 +55,9 @@ export enum ESettingsCategory {
   // ...
 }
 
-type CategoryName = `${ESettingsCategory}`;
+export type TCategoryName = `${ESettingsCategory}`;
 
-export interface ISettingsValues extends Record<CategoryName, Dictionary<TObsValue>> {
+export interface ISettingsValues extends Record<TCategoryName, Dictionary<TObsValue>> {
   General: {
     KeepRecordingWhenStreamStops: boolean;
     RecordWhenStreaming: boolean;
@@ -169,7 +169,7 @@ interface ISettingsCategory {
   formData: ISettingsSubCategory[];
 }
 
-type ISettingsServiceState = Record<CategoryName | string, ISettingsCategory>;
+type ISettingsServiceState = Record<TCategoryName | string, ISettingsCategory>;
 
 class SettingsViews extends ViewHandler<ISettingsServiceState> {
   get appState() {
@@ -184,7 +184,7 @@ class SettingsViews extends ViewHandler<ISettingsServiceState> {
     const settingsValues: Partial<ISettingsValues> = {};
 
     for (const [groupName, category] of Object.entries(this.state) as [
-      CategoryName,
+      TCategoryName,
       ISettingsCategory,
     ][]) {
       this.state[groupName].formData.forEach((subGroup: ISettingsSubCategory) => {
@@ -369,7 +369,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     }
   }
 
-  private fetchSettingsFromObs(categoryName: CategoryName): ISettingsCategory {
+  private fetchSettingsFromObs(categoryName: TCategoryName): ISettingsCategory {
     const settingsMetadata = obs.NodeObs.OBS_settings_getSettings(categoryName);
     let settings = settingsMetadata.data;
     if (!settings) settings = [];
@@ -433,7 +433,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   loadSettingsIntoStore() {
     // load configuration from nodeObs to state
     const settingsFormData = {} as ISettingsServiceState;
-    this.views.categories.forEach((categoryName: CategoryName) => {
+    this.views.categories.forEach((categoryName: TCategoryName) => {
       settingsFormData[categoryName] = this.fetchSettingsFromObs(categoryName);
     });
 
@@ -466,7 +466,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     this.setSettings('Output', newOutputSettings);
   }
 
-  showSettings(categoryName?: ESettingsCategory) {
+  showSettings(categoryName?: TCategoryName) {
     if (categoryName) {
       this.navigationService.setSettingsNavigation(categoryName);
     }
@@ -534,7 +534,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
    * Set an individual setting value
    * @remark When setting video settings, use the v2 video settings service.
    */
-  setSettingValue(categoryName: CategoryName, name: string, value: TObsValue) {
+  setSettingValue(categoryName: TCategoryName, name: string, value: TObsValue) {
     const newSettings = this.patchSetting(this.fetchSettingsFromObs(categoryName).formData, name, {
       value,
     });
@@ -655,7 +655,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     // This function represents a cleaner API we would like to have
     // in the future.
 
-    Object.keys(patch).forEach((categoryName: CategoryName) => {
+    Object.keys(patch).forEach((categoryName: TCategoryName) => {
       const category: Dictionary<any> = patch[categoryName];
       const formSubCategories = this.fetchSettingsFromObs(categoryName).formData;
 
@@ -752,7 +752,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   }
 
   @mutation()
-  PATCH_SETTINGS(categoryName: CategoryName, category: ISettingsCategory) {
+  PATCH_SETTINGS(categoryName: TCategoryName, category: ISettingsCategory) {
     this.state[categoryName] = category;
   }
 }

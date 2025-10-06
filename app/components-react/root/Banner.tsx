@@ -6,6 +6,7 @@ import { TAppPage } from 'services/navigation';
 import { $t } from 'services/i18n';
 import styles from './Banner.m.less';
 import { useRealmObject } from 'components-react/hooks/realm';
+import { TCategoryName } from 'services/settings';
 
 export default function Banner() {
   const { AnnouncementsService, SettingsService, NavigationService } = Services;
@@ -15,7 +16,7 @@ export default function Banner() {
   function handleClick() {
     if (banner.linkTarget === 'slobs') {
       if (banner.link === 'Settings') {
-        SettingsService.actions.showSettings(banner.params?.category);
+        SettingsService.actions.showSettings(banner.params?.category as TCategoryName);
       } else {
         NavigationService.actions.navigate(banner.link as TAppPage, banner.params);
       }

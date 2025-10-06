@@ -260,6 +260,14 @@ export class SafeMode extends ReactComponent {}
 
 @Component({
   props: {
+    name: { default: 'Settings' },
+    wrapperStyles: { default: () => ({ width: '100%' }) },
+  },
+})
+export class Settings extends ReactComponent {}
+
+@Component({
+  props: {
     name: { default: 'SourceProperties' },
     wrapperStyles: { default: () => ({ height: '100%' }) },
   },

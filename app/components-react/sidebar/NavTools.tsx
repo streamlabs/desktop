@@ -16,7 +16,7 @@ import UltraIcon from 'components-react/shared/UltraIcon';
 import PlatformIndicator from './PlatformIndicator';
 import { AuthModal } from 'components-react/shared/AuthModal';
 import { useRealmObject } from 'components-react/hooks/realm';
-import { ESettingsCategory } from 'services/settings';
+import { ESettingsCategory, TCategoryName } from 'services/settings';
 
 export default function SideNav() {
   const {
@@ -58,7 +58,7 @@ export default function SideNav() {
   const [dashboardOpening, setDashboardOpening] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
-  function openSettingsWindow(category?: string) {
+  function openSettingsWindow(category?: TCategoryName) {
     SettingsService.actions.showSettings(category);
   }
 
@@ -251,13 +251,13 @@ function NavToolsItem(p: {
 function DashboardSubMenu(p: {
   subMenuItems: IMenuItem[];
   throttledOpenDashboard: (type?: string) => void;
-  openSettingsWindow: (type: string, category: string) => void;
+  openSettingsWindow: (category?: TCategoryName) => void;
 }) {
   const { subMenuItems, throttledOpenDashboard, openSettingsWindow } = p;
 
   function handleNavigation(type?: string) {
     if (type === 'multistream') {
-      openSettingsWindow(type, 'Multistreaming');
+      openSettingsWindow('Multistreaming');
     } else {
       throttledOpenDashboard(type);
     }
