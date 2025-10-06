@@ -204,12 +204,12 @@ export class TikTokService
     return this.state.audienceControlsInfo;
   }
 
-  async setupCloudShiftStream(goLiveSettings: IGoLiveSettings) {
-    const settings = goLiveSettings?.cloudShiftSettings;
+  async setupStreamShiftStream(goLiveSettings: IGoLiveSettings) {
+    const settings = goLiveSettings?.streamShiftSettings;
 
     if (settings && !settings.is_live) {
-      console.error('Cloud Shift Error: TikTok is not live');
-      this.postError('Cloud Shift Error: TikTok is not live');
+      console.error('Stream Shift Error: TikTok is not live');
+      this.postError('Stream Shift Error: TikTok is not live');
       return;
     }
 
@@ -223,8 +223,6 @@ export class TikTokService
       await this.validatePlatform();
     }
 
-    console.log('TIKTOK cloud shift this.state', this.state);
-
     this.setPlatformContext('tiktok');
   }
 
@@ -237,8 +235,8 @@ export class TikTokService
 
     const ttSettings = getDefined(goLiveSettings.platforms.tiktok);
 
-    if (goLiveSettings.cloudShift && this.streamingService.views.shouldSwitchStreams) {
-      this.setupCloudShiftStream(goLiveSettings);
+    if (goLiveSettings.streamShift && this.streamingService.views.shouldSwitchStreams) {
+      this.setupStreamShiftStream(goLiveSettings);
       return;
     }
 

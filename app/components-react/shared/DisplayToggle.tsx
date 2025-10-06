@@ -28,7 +28,7 @@ export const DisplayToggle = forwardRef((p: IDisplayToggle, ref) => {
     toggleDisplay: DualOutputService.actions.toggleDisplay,
     studioMode: TransitionsService.views.studioMode,
     isMidStreamMode: StreamingService.views.isMidStreamMode,
-    isCloudShiftMode: StreamingService.views.isCloudShiftMode,
+    isStreamShiftMode: StreamingService.views.isStreamShiftMode,
     showDualOutput: DualOutputService.views.dualOutputMode,
     selectiveRecording: StreamingService.state.selectiveRecording,
   }));
@@ -55,7 +55,7 @@ export const DisplayToggle = forwardRef((p: IDisplayToggle, ref) => {
 
   const verticalDisabled = useMemo(() => {
     if (p?.disabled) return true;
-    if (v.isCloudShiftMode && v.isMidStreamMode) return true;
+    if (v.isStreamShiftMode && v.isMidStreamMode) return true;
     if (controlled) return false;
     return v.selectiveRecording;
   }, [v.selectiveRecording]);
@@ -76,7 +76,7 @@ export const DisplayToggle = forwardRef((p: IDisplayToggle, ref) => {
     return verticalActive ? $t('Hide vertical display.') : $t('Show vertical display.');
   }, [v.verticalActive, controlled]);
 
-  function showCloudShiftErrorMessage() {
+  function showStreamShiftErrorMessage() {
     message.error({
       content: $t('Stream switcher cannot be used in dual output mode.'),
       className: styles.toggleError,
@@ -165,8 +165,8 @@ export const DisplayToggle = forwardRef((p: IDisplayToggle, ref) => {
               return;
             }
 
-            if (v.isCloudShiftMode && v.isMidStreamMode) {
-              showCloudShiftErrorMessage();
+            if (v.isStreamShiftMode && v.isMidStreamMode) {
+              showStreamShiftErrorMessage();
             } else if (!controlled && v.isMidStreamMode) {
               showToggleDisplayErrorMessage();
             } else if (!controlled && v.studioMode && v.horizontalActive) {

@@ -133,10 +133,10 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
   }
 
   /**
-   * Enable/Disable Cloud Shift mode
+   * Enable/Disable Stream Shift mode
    */
-  toggleCloudShift(status: boolean) {
-    this.updateSettings({ cloudShift: status });
+  toggleStreamShift(status: boolean) {
+    this.updateSettings({ streamShift: status });
   }
 
   /**
@@ -245,8 +245,8 @@ export class GoLiveSettingsModule {
      * If the user is in dual output mode, we need to ensure the stream switcher is disabled
      */
     const { dualOutputMode } = DualOutputService.state;
-    if (dualOutputMode && settings.cloudShift) {
-      settings.cloudShift = false;
+    if (dualOutputMode && settings.streamShift) {
+      settings.streamShift = false;
     }
 
     this.state.updateSettings(settings);
@@ -385,8 +385,8 @@ export class GoLiveSettingsModule {
     Services.UserService.actions.setPrimaryPlatform(platform);
   }
 
-  setCloudShift(status: boolean) {
-    this.state.toggleCloudShift(status);
+  setStreamShift(status: boolean) {
+    this.state.toggleStreamShift(status);
     this.save(this.state.settings);
   }
 

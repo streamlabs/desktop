@@ -139,11 +139,11 @@ export class KickService
     return this.userService.views.state.auth?.platforms?.kick?.token;
   }
 
-  async setupCloudShiftStream(goLiveSettings: IGoLiveSettings): Promise<void> {
-    const settings = goLiveSettings.cloudShiftSettings;
+  async setupStreamShiftStream(goLiveSettings: IGoLiveSettings): Promise<void> {
+    const settings = goLiveSettings.streamShiftSettings;
 
     if (settings && !settings.is_live) {
-      console.error('Cloud Shift Error: Kick is not live');
+      console.error('Stream Shift Error: Kick is not live');
       return;
     }
 
@@ -177,9 +177,9 @@ export class KickService
   async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     const kickSettings = getDefined(goLiveSettings.platforms.kick);
 
-    if (goLiveSettings.cloudShift && this.streamingService.views.shouldSwitchStreams) {
-      await this.setupCloudShiftStream(goLiveSettings);
-      this.postError('Cloud Shift Error: Kick is not live');
+    if (goLiveSettings.streamShift && this.streamingService.views.shouldSwitchStreams) {
+      await this.setupStreamShiftStream(goLiveSettings);
+      this.postError('Stream Shift Error: Kick is not live');
       return;
     }
 

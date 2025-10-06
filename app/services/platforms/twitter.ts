@@ -82,12 +82,12 @@ export class TwitterPlatformService
     return this.userService.state.auth?.platforms?.twitter?.username || '';
   }
 
-  async setupCloudShiftStream(goLiveSettings?: IGoLiveSettings) {
-    const settings = goLiveSettings?.cloudShiftSettings;
+  async setupStreamShiftStream(goLiveSettings?: IGoLiveSettings) {
+    const settings = goLiveSettings?.streamShiftSettings;
 
     if (settings && !settings.is_live) {
-      console.error('Cloud Shift Error: X is not live');
-      this.postError('Cloud Shift Error: X is not live');
+      console.error('Stream Shift Error: X is not live');
+      this.postError('Stream Shift Error: X is not live');
       return;
     }
 
@@ -109,8 +109,8 @@ export class TwitterPlatformService
       return;
     }
 
-    if (goLiveSettings.cloudShift && this.streamingService.views.shouldSwitchStreams) {
-      await this.setupCloudShiftStream(goLiveSettings);
+    if (goLiveSettings.streamShift && this.streamingService.views.shouldSwitchStreams) {
+      await this.setupStreamShiftStream(goLiveSettings);
       return;
     }
 

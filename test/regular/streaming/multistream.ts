@@ -33,8 +33,8 @@ async function enableAllPlatforms() {
   }
 }
 
-async function goLiveWithCloudShift(t: TExecutionContext, multistream: boolean) {
-  await fillForm({ cloudShift: true });
+async function goLiveWithStreamShift(t: TExecutionContext, multistream: boolean) {
+  await fillForm({ streamShift: true });
 
   if (multistream) {
     await enableAllPlatforms();
@@ -238,16 +238,16 @@ test('Custom stream destinations', async t => {
 });
 
 // TODO: enable after merge
-test.skip('Cloud Shift', withUser('twitch', { prime: true, multistream: true }), async t => {
+test.skip('Stream Shift', withUser('twitch', { prime: true, multistream: true }), async t => {
   await prepareToGoLive();
   await clickGoLive();
   await waitForSettingsWindowLoaded();
 
-  // Single stream cloud shift
-  await goLiveWithCloudShift(t, false);
+  // Single stream shift
+  await goLiveWithStreamShift(t, false);
 
-  // Multistream cloud shift
-  await goLiveWithCloudShift(t, true);
+  // Multistream shift
+  await goLiveWithStreamShift(t, true);
 
   t.pass();
 });

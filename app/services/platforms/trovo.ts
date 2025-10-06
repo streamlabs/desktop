@@ -93,8 +93,8 @@ export class TrovoService
     const trSettings = getDefined(goLiveSettings.platforms.trovo);
 
     // If the stream has switched from another device, a new broadcast does not need to be created
-    if (goLiveSettings.cloudShift && this.streamingService.views.shouldSwitchStreams) {
-      await this.setupCloudShiftStream(goLiveSettings);
+    if (goLiveSettings.streamShift && this.streamingService.views.shouldSwitchStreams) {
+      await this.setupStreamShiftStream(goLiveSettings);
       return;
     }
 
@@ -178,13 +178,13 @@ export class TrovoService
     return this.requestTrovo<ITrovoChannelInfo>(`${this.apiBase}/channel`);
   }
 
-  async setupCloudShiftStream(goLiveSettings: IGoLiveSettings) {
+  async setupStreamShiftStream(goLiveSettings: IGoLiveSettings) {
     // Note: The below is pretty much the same as prepopulateInfo
-    const settings = goLiveSettings?.cloudShiftSettings;
+    const settings = goLiveSettings?.streamShiftSettings;
 
     if (settings && !settings.is_live) {
-      console.error('Cloud Shift Error: Trovo is not live');
-      this.postError('Cloud Shift Error: Trovo is not live');
+      console.error('Stream Shift Error: Trovo is not live');
+      this.postError('Stream Shift Error: Trovo is not live');
       return;
     }
 

@@ -194,10 +194,10 @@ export class TwitchService
     // If the stream has switched from another device, a new broadcast does not need to be created
     if (
       goLiveSettings &&
-      goLiveSettings.cloudShift &&
+      goLiveSettings.streamShift &&
       this.streamingService.views.shouldSwitchStreams
     ) {
-      await this.setupCloudShiftStream(goLiveSettings);
+      await this.setupStreamShiftStream(goLiveSettings);
       return;
     }
 
@@ -350,12 +350,12 @@ export class TwitchService
     ).then(json => json.data[0]?.viewer_count ?? 0);
   }
 
-  async setupCloudShiftStream(goLiveSettings?: IGoLiveSettings) {
-    const settings = goLiveSettings?.cloudShiftSettings;
+  async setupStreamShiftStream(goLiveSettings?: IGoLiveSettings) {
+    const settings = goLiveSettings?.streamShiftSettings;
 
     if (settings && !settings.is_live) {
-      console.error('Cloud Shift Error: Twitch is not live');
-      this.postError('Cloud Shift Error: Twitch is not live');
+      console.error('Stream Shift Error: Twitch is not live');
+      this.postError('Stream Shift Error: Twitch is not live');
       return;
     }
 

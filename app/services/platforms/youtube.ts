@@ -322,12 +322,12 @@ export class YoutubeService
     this.state.liveStreamingEnabled = enabled;
   }
 
-  async setupCloudShiftStream(goLiveSettings: IGoLiveSettings) {
-    const settings = goLiveSettings?.cloudShiftSettings;
+  async setupStreamShiftStream(goLiveSettings: IGoLiveSettings) {
+    const settings = goLiveSettings?.streamShiftSettings;
 
     if (settings && !settings.is_live) {
-      console.error('Cloud Shift Error: YouTube is not live');
-      this.postError('Cloud Shift Error: YouTube is not live');
+      console.error('Stream Shift Error: YouTube is not live');
+      this.postError('Stream Shift Error: YouTube is not live');
       return;
     }
 
@@ -366,7 +366,7 @@ export class YoutubeService
     } catch (e: unknown) {
       console.error('Error fetching broadcasts', e);
 
-      // If fetching the YouTube settings fails, populate just the Cloud Shift settings
+      // If fetching the YouTube settings fails, populate just the Stream Shift settings
       if (settings) {
         this.UPDATE_STREAM_SETTINGS({
           title: settings.stream_title,
@@ -445,8 +445,8 @@ export class YoutubeService
     const ytSettings = getDefined(goLiveSettings.platforms.youtube);
 
     // If the stream has switched from another device, a new broadcast does not need to be created
-    if (goLiveSettings.cloudShift && this.streamingService.views.shouldSwitchStreams) {
-      await this.setupCloudShiftStream(goLiveSettings);
+    if (goLiveSettings.streamShift && this.streamingService.views.shouldSwitchStreams) {
+      await this.setupStreamShiftStream(goLiveSettings);
       return;
     }
 
@@ -506,16 +506,16 @@ export class YoutubeService
   }
 
   async afterStopStream() {
-    // Confirm that the Cloud Shift stream is stopped
+    // Confirm that the Stream Shift stream is stopped
     // if (this.streamingService.views.shouldSwitchStreams) {
     //   const broadcasts = await this.fetchLiveBroadcasts();
 
     //   if (broadcasts.length) {
-    //     const cloudShiftBroadcast = broadcasts.find(b => b.id === this.state.settings.broadcastId);
+    //     const streamShiftBroadcast = broadcasts.find(b => b.id === this.state.settings.broadcastId);
 
     //     // If for some reason the broadcast is still live, end it
-    //     if (cloudShiftBroadcast && cloudShiftBroadcast.status.lifeCycleStatus === 'live') {
-    //       await this.stopBroadcast(cloudShiftBroadcast.id);
+    //     if (streamShiftBroadcast && streamShiftBroadcast.status.lifeCycleStatus === 'live') {
+    //       await this.stopBroadcast(streamShiftBroadcast.id);
     //     }
     //   }
     // }

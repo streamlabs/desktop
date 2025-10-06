@@ -144,7 +144,7 @@ class LiveDockController {
   get isRestreaming() {
     return (
       this.restreamService.shouldGoLiveWithRestream ||
-      this.streamingService.views.isCloudShiftMultistream
+      this.streamingService.views.isStreamShiftMultistream
     );
   }
 

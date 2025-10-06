@@ -495,11 +495,11 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       }
 
       if (event.type === 'streamSwitchRequest') {
-        this.streamingService.cloudShiftEvent.next(event);
+        this.streamingService.streamShiftEvent.next(event);
       }
 
       if (event.type === 'switchActionComplete') {
-        this.streamingService.cloudShiftEvent.next(event);
+        this.streamingService.streamShiftEvent.next(event);
       }
     });
   }

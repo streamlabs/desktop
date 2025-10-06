@@ -1,5 +1,5 @@
 import React, { CSSProperties, useEffect } from 'react';
-import styles from './CloudShiftToggle.m.less';
+import styles from './StreamShiftToggle.m.less';
 import Tooltip from 'components-react/shared/Tooltip';
 import { CheckboxInput } from 'components-react/shared/inputs';
 import cx from 'classnames';
@@ -7,27 +7,27 @@ import { $t } from 'services/i18n';
 import { useGoLiveSettings } from 'components-react/windows/go-live/useGoLiveSettings';
 import UltraIcon from './UltraIcon';
 import { Services } from '../service-provider';
-interface ICloudShiftToggle {
+interface IStreamShiftToggle {
   className?: string;
   checkboxClassname?: string;
   style?: CSSProperties;
   disabled?: boolean;
 }
 
-export default function CloudShiftToggle(p: ICloudShiftToggle) {
-  const { isPrime, isCloudShiftMode, setCloudShift } = useGoLiveSettings();
+export default function StreamShiftToggle(p: IStreamShiftToggle) {
+  const { isPrime, isStreamShiftMode, setStreamShift } = useGoLiveSettings();
 
   useEffect(() => {
     // Ensure that non-ultra users have the stream switcher disabled
-    if (!isPrime && isCloudShiftMode) {
-      setCloudShift(false);
+    if (!isPrime && isStreamShiftMode) {
+      setStreamShift(false);
     }
-  }, [isPrime, isCloudShiftMode, setCloudShift]);
+  }, [isPrime, isStreamShiftMode, setStreamShift]);
 
-  const label = $t('Cloud Shift');
+  const label = $t('Stream Shift');
 
   return (
-    <div className={cx(p?.className, styles.cloudShiftToggle)} style={p?.style}>
+    <div className={cx(p?.className, styles.streamShiftToggle)} style={p?.style}>
       <CheckboxInput
         className={p?.checkboxClassname}
         label={
@@ -35,7 +35,7 @@ export default function CloudShiftToggle(p: ICloudShiftToggle) {
             <div
               className={styles.labelUltraBadge}
               onClick={() => {
-                Services.UsageStatisticsService.actions.recordAnalyticsEvent('CloudShift', {
+                Services.UsageStatisticsService.actions.recordAnalyticsEvent('StreamShift', {
                   ultra: 'go-live-toggle',
                 });
                 Services.MagicLinkService.actions.linkToPrime('slobs-streamswitcher');
@@ -48,10 +48,10 @@ export default function CloudShiftToggle(p: ICloudShiftToggle) {
             <>{label}</>
           )
         }
-        value={isCloudShiftMode}
+        value={isStreamShiftMode}
         onChange={(status: boolean) => {
-          setCloudShift(status);
-          Services.UsageStatisticsService.actions.recordAnalyticsEvent('CloudShift', {
+          setStreamShift(status);
+          Services.UsageStatisticsService.actions.recordAnalyticsEvent('StreamShift', {
             toggle: status,
           });
         }}

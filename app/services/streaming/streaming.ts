@@ -55,7 +55,7 @@ import {
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
 import { StreamSettingsService } from '../settings/streaming';
-import { ICloudShiftTarget, RestreamService } from 'services/restream';
+import { IStreamShiftTarget, RestreamService } from 'services/restream';
 import Utils from 'services/utils';
 import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
@@ -129,7 +129,7 @@ export class StreamingService
   signalInfoChanged = new Subject<IOBSOutputSignalInfo>();
   latestRecordingPath = new Subject<string>();
   streamErrorCreated = new Subject<string>();
-  cloudShiftEvent = new Subject<TSocketEvent>();
+  streamShiftEvent = new Subject<TSocketEvent>();
 
   // Dummy subscription for stream deck
   streamingStateChange = new Subject<void>();
@@ -315,12 +315,12 @@ export class StreamingService
     // use default settings if no new settings provided
     const settings = newSettings || cloneDeep(this.views.savedSettings);
 
-    // For the Cloud Shift, match remote targets to local targets
-    if (settings.cloudShift && this.restreamService.views.hasCloudShiftTargets) {
+    // For the Stream Shift, match remote targets to local targets
+    if (settings.streamShift && this.restreamService.views.hasStreamShiftTargets) {
       await this.restreamService.fetchTargetData();
 
-      const targets: TPlatform[] = this.restreamService.views.cloudShiftTargets.reduce(
-        (platforms: TPlatform[], target: ICloudShiftTarget) => {
+      const targets: TPlatform[] = this.restreamService.views.streamShiftTargets.reduce(
+        (platforms: TPlatform[], target: IStreamShiftTarget) => {
           if (target.platform !== 'relay') {
             platforms.push(target.platform as TPlatform);
           }
@@ -611,14 +611,14 @@ export class StreamingService
     const display = this.views.getPlatformDisplayType(platform);
 
     try {
-      const isCloudShiftStream = this.restreamService.views.hasCloudShiftTargets;
-      // If this is a Cloud Shift stream switching from another device, populate the
-      // Cloud Shift stream's settings to the platforms
-      if (isCloudShiftStream) {
-        const cloudShiftSettings = this.restreamService.getTargetLiveData(platform);
+      const isStreamShiftStream = this.restreamService.views.hasStreamShiftTargets;
+      // If this is a Stream Shift stream switching from another device, populate the
+      // Stream Shift stream's settings to the platforms
+      if (isStreamShiftStream) {
+        const streamShiftSettings = this.restreamService.getTargetLiveData(platform);
 
-        if (cloudShiftSettings) {
-          settings.cloudShiftSettings = cloudShiftSettings;
+        if (streamShiftSettings) {
+          settings.streamShiftSettings = streamShiftSettings;
         }
       }
 
@@ -626,7 +626,7 @@ export class StreamingService
         !this.views.isDualOutputMode &&
         platform === 'twitch' &&
         unattendedMode &&
-        !isCloudShiftStream
+        !isStreamShiftStream
           ? undefined
           : settings;
 
@@ -716,10 +716,10 @@ export class StreamingService
       this.usageStatisticsService.recordFeatureUsage('StreamToYouTubeBothOutputs');
     }
 
-    // Record Cloud Shift
-    if (settings.cloudShift) {
-      this.usageStatisticsService.recordFeatureUsage('CloudShift');
-      this.usageStatisticsService.recordAnalyticsEvent('CloudShift', {
+    // Record Stream Shift
+    if (settings.streamShift) {
+      this.usageStatisticsService.recordFeatureUsage('StreamShift');
+      this.usageStatisticsService.recordAnalyticsEvent('StreamShift', {
         stream: 'started',
       });
     }
@@ -1066,9 +1066,9 @@ export class StreamingService
 
     startStreamingPromise
       .then(() => {
-        if (this.views.settings.cloudShift) {
+        if (this.views.settings.streamShift) {
           // Remove the pending state to show the correct text in the start streaming button
-          this.restreamService.setCloudShiftStatus('inactive');
+          this.restreamService.setStreamShiftStatus('inactive');
 
           // Confirm that the primary platform is streaming to correctly show chat
           // Otherwise, use the first enabled platform. Note: this is a failsafe to guarantee
@@ -1183,7 +1183,7 @@ export class StreamingService
         const service = getPlatformService(platform);
         if (service.afterStopStream) service.afterStopStream();
       });
-      this.restreamService.resetCloudShift();
+      this.restreamService.resetStreamShift();
       this.UPDATE_STREAM_INFO({ lifecycle: 'empty' });
       return Promise.resolve();
     }

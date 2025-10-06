@@ -17,7 +17,7 @@ import DualOutputToggle from 'components-react/shared/DualOutputToggle';
 import { DestinationSwitchers } from './DestinationSwitchers';
 import AddDestinationButton from 'components-react/shared/AddDestinationButton';
 import cx from 'classnames';
-import CloudShiftToggle from 'components-react/shared/CloudShiftToggle';
+import StreamShiftToggle from 'components-react/shared/StreamShiftToggle';
 import { CaretDownOutlined } from '@ant-design/icons';
 import Tooltip from 'components-react/shared/Tooltip';
 import { EAvailableFeatures } from 'services/incremental-rollout';
@@ -44,10 +44,10 @@ export default function GoLiveSettings() {
     primaryChat,
     recommendedColorSpaceWarnings,
     isPrime,
-    isCloudShiftMode,
-    isCloudShiftDisabled,
+    isStreamShiftMode,
+    isStreamShiftDisabled,
     isDualOutputSwitchDisabled,
-    canUseCloudShift,
+    canUseStreamShift,
     setPrimaryChat,
   } = useGoLiveSettings().extend(module => {
     const {
@@ -72,17 +72,17 @@ export default function GoLiveSettings() {
 
       showTweet: UserService.views.auth?.primaryPlatform !== 'twitter',
 
-      isCloudShiftDisabled: module.isDualOutputMode,
+      isStreamShiftDisabled: module.isDualOutputMode,
 
-      isDualOutputSwitchDisabled: module.isCloudShiftMode && !module.isDualOutputMode,
+      isDualOutputSwitchDisabled: module.isStreamShiftMode && !module.isDualOutputMode,
 
       addDestination() {
         SettingsService.actions.showSettings('Stream');
       },
 
-      get canUseCloudShift() {
+      get canUseStreamShift() {
         return IncrementalRolloutService.views.availableFeatures.includes(
-          EAvailableFeatures.cloudShift,
+          EAvailableFeatures.streamShift,
         );
       },
 
@@ -146,39 +146,39 @@ export default function GoLiveSettings() {
               disabled={!shouldShowPrimaryChatSwitcher}
             />
 
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+            <div className={cx(styles.toggleWrapper, { [styles.shiftEnabled]: isStreamShiftMode })}>
               <Tooltip
-                title={$t('Dual Output cannot be used with Cloud Shift')}
+                title={$t('Dual Output cannot be used with Stream Shift')}
                 placement="top"
                 lightShadow={true}
-                disabled={isDualOutputSwitchDisabled || !isPrime || !canUseCloudShift}
+                disabled={isDualOutputSwitchDisabled || !isPrime || !canUseStreamShift}
               >
                 <DualOutputToggle
                   className={styles.featureToggle}
                   checkboxClassname={styles.featureCheckbox}
                   style={{ paddingBottom: '10px' }}
-                  disabled={isCloudShiftMode}
-                  tooltipDisabled={isCloudShiftMode}
+                  disabled={isStreamShiftMode}
+                  tooltipDisabled={isStreamShiftMode}
                   label={$t('Dual Output')}
                   type="single"
                   lightShadow
                 />
               </Tooltip>
-              {canUseCloudShift && (
+              {canUseStreamShift && (
                 <Tooltip
                   title={
                     isPrime
-                      ? $t('Cloud Shift cannot be used with Dual Output')
+                      ? $t('Stream Shift cannot be used with Dual Output')
                       : $t('Upgrade to Ultra to switch streams between devices.')
                   }
                   placement="top"
                   lightShadow={true}
-                  disabled={isPrime && !isCloudShiftDisabled}
+                  disabled={isPrime && !isStreamShiftDisabled}
                 >
-                  <CloudShiftToggle
+                  <StreamShiftToggle
                     className={styles.featureToggle}
                     checkboxClassname={styles.featureCheckbox}
-                    disabled={isCloudShiftDisabled || !isPrime}
+                    disabled={isStreamShiftDisabled || !isPrime}
                   />
                 </Tooltip>
               )}

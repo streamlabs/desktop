@@ -83,7 +83,7 @@ export interface IStreamSettings {
   customDestinations: ICustomStreamDestination[];
   advancedMode: boolean;
   recording: TDisplayType[];
-  cloudShift?: boolean;
+  streamShift?: boolean;
 }
 
 export interface IGoLiveSettings extends IStreamSettings {
@@ -93,7 +93,7 @@ export interface IGoLiveSettings extends IStreamSettings {
     youtube?: Partial<IYoutubeStartStreamOptions>;
     facebook?: Partial<IFacebookStartStreamOptions>;
   };
-  cloudShiftSettings?: ITargetLiveData;
+  streamShiftSettings?: ITargetLiveData;
 }
 
 export interface IPlatformFlags {

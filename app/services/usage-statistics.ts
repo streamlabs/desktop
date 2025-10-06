@@ -48,7 +48,7 @@ export type TAnalyticsEvent =
   | 'TwitchCredentialsAlert'
   | 'TikTokApplyPrompt'
   | 'ScheduleStream'
-  | 'CloudShift';
+  | 'StreamShift';
 
 interface IAnalyticsEvent {
   product: string;

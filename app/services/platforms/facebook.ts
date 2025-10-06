@@ -280,8 +280,8 @@ export class FacebookService
     const fbOptions = getDefined(options.platforms.facebook);
 
     // If the stream has switched from another device, a new broadcast does not need to be created
-    if (options.cloudShift && this.streamingService.views.shouldSwitchStreams) {
-      await this.setupCloudShiftStream(options);
+    if (options.streamShift && this.streamingService.views.shouldSwitchStreams) {
+      await this.setupStreamShiftStream(options);
       return;
     }
 
@@ -342,12 +342,12 @@ export class FacebookService
     this.UPDATE_STREAM_SETTINGS({ ...info, liveVideoId: vidId });
   }
 
-  async setupCloudShiftStream(goLiveSettings: IGoLiveSettings): Promise<void> {
-    const settings = goLiveSettings.cloudShiftSettings;
+  async setupStreamShiftStream(goLiveSettings: IGoLiveSettings): Promise<void> {
+    const settings = goLiveSettings.streamShiftSettings;
 
     if (settings && !settings.is_live) {
-      console.error('Cloud Shift Error: Facebook is not live');
-      this.postError('Cloud Shift Error: Facebook is not live');
+      console.error('Stream Shift Error: Facebook is not live');
+      this.postError('Stream Shift Error: Facebook is not live');
       return;
     }
 
@@ -392,7 +392,7 @@ export class FacebookService
     const title = settings?.stream_title ?? goLiveSettings.platforms.facebook?.title ?? '';
 
     if (!liveVideoId) {
-      console.error('Error setting up cloud shift for Facebook, no broadcast id found.');
+      console.error('Error setting up stream shift for Facebook, no broadcast id found.');
       this.UPDATE_STREAM_SETTINGS({ title });
     } else {
       this.SET_STREAM_PAGE_URL(`https://facebook.com/${id}/videos/${liveVideoId}`);

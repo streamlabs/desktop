@@ -211,7 +211,7 @@ export interface IPlatformService {
 
   setupDualStream?: (options: IGoLiveSettings) => Promise<void>;
 
-  setupCloudShiftStream?: (options: IGoLiveSettings) => Promise<void>;
+  setupStreamShiftStream?: (options: IGoLiveSettings) => Promise<void>;
 
   postError?: (message: string) => void;
 

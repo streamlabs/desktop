@@ -21,7 +21,7 @@ export enum EAvailableFeatures {
   reactWidgets = 'slobs--react-widgets',
   sharedStorage = 'slobs--shared-storage',
   dualOutputRecording = 'slobs--dual-output-recording',
-  cloudShift = 'slobs--cloud-shift',
+  streamShift = 'slobs--stream-shift',
 
   /**
    * There are two flags because one is used for beta access and

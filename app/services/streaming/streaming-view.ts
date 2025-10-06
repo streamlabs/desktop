@@ -8,7 +8,7 @@ import {
 } from './streaming-api';
 import { StreamSettingsService, ICustomStreamDestination } from '../settings/streaming';
 import { UserService } from '../user';
-import { RestreamService, TCloudShiftStatus } from '../restream';
+import { RestreamService, TStreamShiftStatus } from '../restream';
 import { DualOutputService, TDisplayPlatforms, TDisplayDestinations } from '../dual-output';
 import { getPlatformService, TPlatform, TPlatformCapability, platformList } from '../platforms';
 import { TwitterService } from '../../app-services';
@@ -185,7 +185,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns if the user can or should use the restream service
    */
   get isMultiplatformMode(): boolean {
-    if (this.isCloudShiftMode) return true;
+    if (this.isStreamShiftMode) return true;
     if (this.isDualOutputMode) return false;
     return this.hasMultipleTargetsEnabled;
   }
@@ -203,30 +203,30 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * @remark If a user has switch stream enabled, restream even if only one platform is enabled as the only target.
    * Currently, switch stream cannot be used with only custom destinations. One platform must be enabled.
    */
-  get isCloudShiftMode(): boolean {
-    const canUseCloudShift = this.incrementalRolloutView.availableFeatures.includes(
-      EAvailableFeatures.cloudShift,
+  get isStreamShiftMode(): boolean {
+    const canUseStreamShift = this.incrementalRolloutView.availableFeatures.includes(
+      EAvailableFeatures.streamShift,
     );
 
-    if (!canUseCloudShift) return false;
+    if (!canUseStreamShift) return false;
 
-    return (this.settings.cloudShift && this.enabledPlatforms.length > 0) || false;
+    return (this.settings.streamShift && this.enabledPlatforms.length > 0) || false;
   }
 
-  get isCloudShiftMultistream(): boolean {
-    return this.isCloudShiftMode && this.enabledPlatforms.length > 1;
+  get isStreamShiftMultistream(): boolean {
+    return this.isStreamShiftMode && this.enabledPlatforms.length > 1;
   }
 
-  get cloudShiftStatus(): TCloudShiftStatus {
-    return this.restreamView.cloudShiftStatus ?? 'inactive';
+  get streamShiftStatus(): TStreamShiftStatus {
+    return this.restreamView.streamShiftStatus ?? 'inactive';
   }
 
   get shouldSwitchStreams(): boolean {
-    return this.restreamView.hasCloudShiftTargets;
+    return this.restreamView.hasStreamShiftTargets;
   }
 
   get isSwitchingStream(): boolean {
-    return this.restreamView.cloudShiftStatus === 'active';
+    return this.restreamView.streamShiftStatus === 'active';
   }
 
   /**
@@ -234,7 +234,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    */
   get shouldSetupRestream(): boolean {
     // The stream switcher uses the restream service
-    if (this.isCloudShiftMode) return true;
+    if (this.isStreamShiftMode) return true;
 
     // In dual output mode, if a display has more than one target that display uses the restream service
     const restreamDualOutputMode =
@@ -479,7 +479,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       optimizedProfile: undefined,
       customDestinations: savedGoLiveSettings?.customDestinations || [],
       recording: this.dualOutputView.recording || [],
-      cloudShift: savedGoLiveSettings?.cloudShift || false,
+      streamShift: savedGoLiveSettings?.streamShift || false,
     };
   }
 
@@ -488,7 +488,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get canShowAdvancedMode() {
-    if (this.isCloudShiftMode) {
+    if (this.isStreamShiftMode) {
       return this.enabledPlatforms.length > 1;
     }
     return this.isMultiplatformMode || this.isDualOutputMode;
