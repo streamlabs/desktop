@@ -92,7 +92,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     }, {} as Dictionary<IRadioMetadata>);
   }, [displays]);
 
-  const name = `${p.platform || `custom-destination-${p.index}`}Display`;
+  const name = `${p.platform || `destination${p.index}`}Display`;
   const value = displayDict[display]?.value || 'horizontal';
 
   return (

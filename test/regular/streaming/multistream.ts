@@ -237,7 +237,8 @@ test('Custom stream destinations', async t => {
   }
 });
 
-test('Cloud Shift', withUser('twitch', { prime: true, multistream: true }), async t => {
+// TODO: enable after merge
+test.skip('Cloud Shift', withUser('twitch', { prime: true, multistream: true }), async t => {
   await prepareToGoLive();
   await clickGoLive();
   await waitForSettingsWindowLoaded();

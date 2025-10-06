@@ -292,6 +292,7 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
     } else {
       // define slots for a custom destination switcher
       const destination = p.destination as ICustomStreamDestination;
+      const name = `destination${p?.index}`;
       return {
         title: destination.name,
         description: destination.url,
@@ -300,7 +301,7 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
           <SwitchInput
             inputRef={switchInputRef}
             value={p.enabled}
-            name={`destination_${destination.name}`}
+            name={name}
             disabled={disabled}
             uncontrolled
             label={label}

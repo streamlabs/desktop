@@ -524,6 +524,7 @@ function Platform(p: { platform: TPlatform }) {
           {shouldShowConnectBtn && <ConnectButton />}
           {shouldShowUnlinkBtn && (
             <Button
+              data-name={`${platform}Unlink`}
               danger
               onClick={() => (isInstagram ? instagramUnlink() : platformUnlink(platform))}
             >
