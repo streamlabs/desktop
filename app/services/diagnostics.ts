@@ -34,6 +34,7 @@ import fs from 'fs';
 import path from 'path';
 import { platformList, TPlatform } from './platforms';
 import { TDisplayType } from './settings-v2';
+import { getWmiClass } from 'util/wmi';
 
 interface IStreamDiagnosticInfo {
   startTime: number;
@@ -666,11 +667,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     let isAdmin: string | boolean = 'N/A';
 
     if (getOS() === OS.Windows) {
-      const gpuInfo = this.getWmiClass('Win32_VideoController', [
-        'Name',
-        'DriverVersion',
-        'DriverDate',
-      ]);
+      const gpuInfo = getWmiClass('Win32_VideoController', ['Name', 'DriverVersion', 'DriverDate']);
 
       gpuSection = {};
 
@@ -1161,45 +1158,6 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
       'Potential Issues',
       this.problems.length ? this.problems : 'No issues detected',
     );
-  }
-
-  getWmiClass(wmiClass: string, select: string[]): object {
-    try {
-      const result = JSON.parse(
-        cp
-          .execSync(
-            `Powershell -command "Get-CimInstance -ClassName ${wmiClass} | Select-Object ${select.join(
-              ', ',
-            )} | ConvertTo-JSON"`,
-          )
-          .toString(),
-      );
-
-      if (Array.isArray(result)) {
-        return result.map(o => this.convertWmiValues(o));
-      } else {
-        return this.convertWmiValues(result);
-      }
-    } catch (e: unknown) {
-      console.error(`Error fetching WMI class ${wmiClass} for diagnostics`, e);
-      return [];
-    }
-  }
-
-  private convertWmiValues(wmiObject: Dictionary<any>) {
-    Object.keys(wmiObject).forEach(key => {
-      const val = wmiObject[key];
-
-      if (typeof val === 'string') {
-        const match = val.match(/\/Date\((\d+)\)/);
-
-        if (match) {
-          wmiObject[key] = new Date(parseInt(match[1], 10)).toString();
-        }
-      }
-    });
-
-    return wmiObject;
   }
 
   private isRunningAsAdmin() {
