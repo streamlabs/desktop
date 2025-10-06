@@ -1,141 +1,95 @@
-import React, { useState. useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Spinner from './Spinner';
 import Mark from 'mark.js';
 import styles from './SearchablePages.m.less';
 import { ESettingsCategory } from 'services/settings';
-
-interface IPageInfo {
-  /**
-   * text fetched from the page via .innerText attribute
-   */
-  text: string;
-  /**
-   * text fetched from page inputs
-   */
-  inputs: string[];
-}
+import { SETTINGS_CONFIG } from 'components-react/windows/Settings';
 
 interface ISearchablePagesProps {
   page: ESettingsCategory;
   pages: ESettingsCategory[];
   searchStr: string;
-
-  /**
-   * this event is called when page has been switched but before it has been rendered
-   * can be used for preparing data for rendering
-   */
-  onBeforePageScan?: (page: string) => any;
-
-  /**
-   * this event is called when page has been rendered but before it has been parsed
-   * if returns a promise, scanning won't start unless it will be resolved
-   */
-  onPageRender?: (page: string) => Promise<any> | any;
-
+  searchResults?: ESettingsCategory[];
   onSearchCompleted?: (results: string[]) => void;
-  onScanCompleted?: () => void;
 }
 
 export default function SearchablePages(p: React.PropsWithChildren<ISearchablePagesProps>) {
-  // currentPage: string = '';
-  const pagesInfo = useRef<PartialRec<ESettingsCategory, IPageInfo>>({});
+  const pagesInfo = useRef<PartialRec<ESettingsCategory, string> | null>(null);
   const pageRef = useRef<HTMLDivElement>(null);
-  // searchResultPages: string[] = [];
   const [loading, setLoading] = useState(false);
 
-  // created() {
-  //   this.currentPage = this.props.page || '';
-  // }
+  // Search pages when receiving a search string input
+  useEffect(() => {
+    if (loading || p.searchStr === '') return;
+    async function searchHandler() {
+      // build cache of info on pages if it doesn't exist
+      if (!pagesInfo.current) await scanPages();
 
-  // @Watch('searchStr')
-  // private async onSearchHandler(searchStr: string) {
-  //   if (this.loading) return;
+      // find matching info in cache
+      const searchResultPages: ESettingsCategory[] = [];
+      if (!pagesInfo.current) return;
+      for (const pageName of Object.keys(pagesInfo.current)) {
+        const pageText = pagesInfo.current[pageName as ESettingsCategory];
+        if (pageText && pageText.match(new RegExp(p.searchStr, 'i'))) {
+          searchResultPages.push(pageName as ESettingsCategory);
+        }
+      }
+      if (searchResultPages.length === 0) return;
+      // we send out search results to receive as props here
+      // in order to properly display the searched page
+      p.onSearchCompleted && p.onSearchCompleted(searchResultPages);
+    }
 
-  //   // build the pages cache if it's Can
-  //   if (!this.pagesInfo) await this.scanPages();
+    searchHandler();
+  }, [p.searchStr]);
 
-  //   // find pages matches to the search string in the cache
-  //   const searchResultPages: string[] = [];
-  //   Object.keys(this.pagesInfo).forEach(pageName => {
-  //     const pageInfo = this.pagesInfo[pageName];
-  //     const pageText = pageInfo.text + pageInfo.inputs.join(' ');
-  //     if (pageText.match(new RegExp(searchStr, 'i'))) searchResultPages.push(pageName);
-  //   });
-  //   this.searchResultPages = searchResultPages;
-
-  //   this.$emit('searchCompleted', this.searchResultPages);
-
-  //   // after we sent `searchCompleted` event to the external component, it may re-render the slot content
-  //   // so call `$nextTick` before `highlightPage()` to highlight the relevant content
-  //   await this.$nextTick();
-  //   await this.highlightPage(this.props.searchStr);
-
-  //   // if search request has been updated while searching then search again
-  //   if (searchStr !== this.props.searchStr) await this.onSearchHandler(this.props.searchStr);
-  // }
-
-  // @Watch('page')
-  // private async onPageChangeHandler(page: string) {
-  //   this.currentPage = page;
-
-  //   // if search is active then highlight the current page
-  //   if (this.props.searchStr && this.pagesInfo) {
-  //     await this.$nextTick();
-  //     await (this.props.onPageRender && this.props.onPageRender(page));
-  //     await this.highlightPage(this.props.searchStr);
-  //   }
-  // }
+  // Highlight page after receiving search results
+  useEffect(() => {
+    if (!p.searchResults) return;
+    highlightPage();
+  }, [p.searchResults]);
 
   // /**
-  //  * fetch and cache all text information from the page
+  //  * fetch and cache all text information from settings pages
   //  */
-  // private async scanPages() {
-  //   this.loading = true;
-  //   this.pagesInfo = {};
+  async function scanPages() {
+    setLoading(true);
+    pagesInfo.current = {};
 
-  //   // switch and render each page
-  //   for (const page of this.props.pages) {
-  //     this.props.onBeforePageScan && this.props.onBeforePageScan(page);
+    for (const page of p.pages) {
+      const component = SETTINGS_CONFIG[page].component;
 
-  //     // render the page
-  //     this.currentPage = page;
-  //     await this.$nextTick();
+      // collect the page text and text from inputs
+      pagesInfo.current[page] = await grabReactTextContent(component);
+    }
 
-  //     await (this.props.onPageRender && this.props.onPageRender(page));
+    setLoading(false);
+  }
 
-  //     // collect the page text and text from inputs
-  //     this.pagesInfo[page] = {
-  //       text: this.$refs.pageSlot.innerText,
-  //       inputs: this.getPageInputs().map($input => {
-  //         // collect the text from text-inputs
-  //         const inputsText = Array.from($input.querySelectorAll('[type="text"]'))
-  //           .map(($textInput: HTMLInputElement) => $textInput.value)
-  //           .join(' ');
-
-  //         // collect the text from list-options
-  //         const listOptionsText = Array.from($input.querySelectorAll('[data-option-value]'))
-  //           .map(($option: HTMLSpanElement) => $option.innerText)
-  //           .join(' ');
-
-  //         return `${inputsText} ${$input.innerText} ${listOptionsText}`;
-  //       }),
-  //     };
-  //   }
-
-  //   // don't forget to switch back to the original page from the `page` property
-  //   this.currentPage = this.props.page;
-  //   await this.$nextTick();
-
-  //   this.loading = false;
-  //   this.$emit('scanCompleted');
-  // }
+  async function grabReactTextContent(node: React.ReactNode): Promise<string> {
+    if (!node) return '';
+    const isPrimaryData =
+      typeof node === 'string' ||
+      typeof node === 'number' ||
+      typeof node === 'boolean' ||
+      node == null;
+    if (isPrimaryData) return node.toString();
+    if (node instanceof Promise) return await grabReactTextContent(await node);
+    if (!isPrimaryData && (node as React.ReactElement).props) {
+      return grabReactTextContent((node as React.ReactElement).props?.children);
+    }
+    // node is an iterable
+    return Array.from(node as ArrayLike<React.ReactNode>)
+      .map(grabReactTextContent)
+      .join('');
+  }
 
   /**
    * this method highlights search matches by modifying DOM elements inside `pageRef`
    * this is not a recommended way to interact with elements
    * so it should be used carefully
    */
-  async function highlightPage() {
+  function highlightPage() {
     if (!pageRef.current) return;
     // highlight the page text via Mark.js
     const mark = new Mark(pageRef.current);
@@ -145,9 +99,9 @@ export default function SearchablePages(p: React.PropsWithChildren<ISearchablePa
     // highlight inputs
     const pageInfo = pagesInfo.current && pagesInfo.current[p.page];
     if (pageInfo) {
-      getPageInputs().forEach(($input, ind) => {
+      getPageInputs().forEach($input => {
         $input.classList.remove('search-highlight');
-        const needHighlight = p.searchStr && pageInfo.inputs[ind].match(new RegExp(p.searchStr, 'i'));
+        const needHighlight = p.searchStr && inputText($input).match(new RegExp(p.searchStr, 'i'));
         if (needHighlight) $input.classList.add('search-highlight');
       });
     }
@@ -164,6 +118,20 @@ export default function SearchablePages(p: React.PropsWithChildren<ISearchablePa
     if ($scrollToEl) $scrollToEl.scrollIntoView({ block: 'nearest' });
   }
 
+  function inputText($input: HTMLDivElement) {
+    // collect the text from text-inputs
+    const inputsText = Array.from($input.querySelectorAll('[type="text"]'))
+      .map(($textInput: HTMLInputElement) => $textInput.value)
+      .join(' ');
+
+    // collect the text from list-options
+    const listOptionsText = Array.from($input.querySelectorAll('[data-option-value]'))
+      .map(($option: HTMLSpanElement) => $option.innerText)
+      .join(' ');
+
+    return `${inputsText} ${$input.innerText} ${listOptionsText}`;
+  }
+
   function getPageInputs(): HTMLDivElement[] {
     if (!pageRef.current) return [];
     return Array.from(
@@ -176,10 +144,7 @@ export default function SearchablePages(p: React.PropsWithChildren<ISearchablePa
   return (
     <div className={styles.searchablePages}>
       {loading && <Spinner />}
-      <div ref={pageRef}>
-        {!loading && p.children}
-        {/* {this.$scopedSlots.default({ page: this.currentPage, scanning: this.loading })} */}
-      </div>
+      <div ref={pageRef}>{!loading && p.children}</div>
     </div>
   );
 }

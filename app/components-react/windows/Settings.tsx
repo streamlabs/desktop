@@ -16,6 +16,7 @@ import styles from './Settings.m.less';
 import { TextInput } from 'components-react/shared/inputs';
 import PlatformLogo from 'components-react/shared/PlatformLogo';
 import DismissableBadge from 'components-react/shared/DismissableBadge';
+import SearchablePages from 'components-react/shared/SearchablePages';
 
 export interface ISettingsProps {
   globalSearchStr: string;
@@ -28,7 +29,7 @@ interface ISettingsConfig {
   dismissable?: EDismissable;
 }
 
-const SETTINGS_CONFIG: Record<ESettingsCategory, ISettingsConfig> = {
+export const SETTINGS_CONFIG: Record<ESettingsCategory, ISettingsConfig> = {
   [ESettingsCategory.General]: { icon: 'icon-overview', component: pages.GeneralSettings },
   [ESettingsCategory.Multistreaming]: {
     icon: 'icon-multistream',
@@ -142,23 +143,7 @@ export default function Settings() {
   const [searchStr, setSearchStr] = useState('');
   const [searchResultPages, setSearchResultPages] = useState<ESettingsCategory[]>([]);
 
-  function onBeforePageScanHandler(page: ESettingsCategory) {
-    if (originalTab.current === null) {
-      originalTab.current = currentTab;
-    }
-
-    setCurrentTab(page);
-  }
-
-  function onScanCompletedHandler() {
-    scanning.current = false;
-    if (originalTab.current) {
-      setCurrentTab(originalTab.current);
-    }
-    originalTab.current = null;
-  }
-
-  function onSearchCompletedHandler(foundPages: ESettingsCategory[]) {
+  function handleSearchCompleted(foundPages: ESettingsCategory[]) {
     if (!isPrime && includeUltra(searchStr)) {
       setSearchResultPages([...foundPages, ESettingsCategory.Ultra]);
     } else {
@@ -170,17 +155,15 @@ export default function Settings() {
     }
   }
 
-  function onPageRenderHandler(page: ESettingsCategory) {
-    // hotkeys.vue has a delayed rendering, we have to wait before scanning
-    if (page === ESettingsCategory.Hotkeys) return new Promise(r => setTimeout(r, 500));
-  }
-
   function onSearchInput(str: string) {
     if (!scanning.current) {
       setSearchStr(str);
       scanning.current = true;
     } else {
-      debouncedSearchInput(str);
+      debounce(() => {
+        setSearchStr(str);
+        scanning.current = false;
+      }, 300);
     }
   }
 
@@ -195,14 +178,6 @@ export default function Settings() {
     return false;
   }
 
-  function debouncedSearchInput(str: string) {
-    debounce(() => setSearchStr(str), 300);
-  }
-
-  //   highlightSearch(searchStr: string) {
-  //     this.$refs.settingsContainer?.highlightPage(searchStr);
-  //   }
-
   const SettingsContent = SETTINGS_CONFIG[currentTab].component;
 
   return (
@@ -213,7 +188,7 @@ export default function Settings() {
             prefix={<i className="icon-search" />}
             placeholder={$t('Search')}
             value={searchStr}
-            onChange={setSearchStr}
+            onChange={onSearchInput}
             uncontrolled={false}
             nowrap
           />
@@ -240,7 +215,14 @@ export default function Settings() {
       </Menu>
       <Scrollable className={styles.settingsContainer}>
         <div ref={settingsContent}>
-          <SettingsContent highlightSearch={() => {}} globalSearchStr={searchStr} />
+          <SearchablePages
+            onSearchCompleted={handleSearchCompleted}
+            pages={categories}
+            page={currentTab}
+            searchStr={searchStr}
+          >
+            <SettingsContent highlightSearch={() => {}} globalSearchStr={searchStr} />
+          </SearchablePages>
         </div>
       </Scrollable>
     </ModalLayout>
