@@ -1163,7 +1163,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     );
   }
 
-  private getWmiClass(wmiClass: string, select: string[]): object {
+  getWmiClass(wmiClass: string, select: string[]): object {
     try {
       const result = JSON.parse(
         cp
@@ -1186,18 +1186,14 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     }
   }
 
-  private convertWmiValues(wmiObject: object) {
+  private convertWmiValues(wmiObject: Dictionary<any>) {
     Object.keys(wmiObject).forEach(key => {
-      // TODO: index
-      // @ts-ignore
       const val = wmiObject[key];
 
       if (typeof val === 'string') {
         const match = val.match(/\/Date\((\d+)\)/);
 
         if (match) {
-          // TODO: index
-          // @ts-ignore
           wmiObject[key] = new Date(parseInt(match[1], 10)).toString();
         }
       }
