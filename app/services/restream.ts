@@ -315,7 +315,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
       enabled,
       dcProtection: false,
       idleTimeout: 30,
-      streamShift: enableStreamShift,
+      streamSwitch: enableStreamShift,
     });
 
     const request = new Request(url, { headers, body, method: 'PUT' });
