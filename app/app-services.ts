@@ -218,6 +218,7 @@ import { KickService } from 'services/platforms/kick';
 import { SseService } from './services/server-sent-events';
 import { VisionService } from 'services/vision';
 import { SignalsService } from 'services/signals-manager';
+import { TroubleshooterService } from 'services/troubleshooter';
 
 export const AppServices = {
   AppService,
@@ -303,4 +304,5 @@ export const AppServices = {
   VirtualWebcamService,
   SseService,
   VisionService,
+  TroubleshooterService,
 };

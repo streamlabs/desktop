@@ -33,6 +33,10 @@ export const metadata = {
     ...options,
     type: 'slider',
   }),
+  file: (options: IFileMetadata) => ({
+    ...options,
+    type: 'file',
+  }),
   radio: (options: IRadioMetadata) => ({
     ...options,
     type: 'radio',
@@ -103,6 +107,13 @@ interface ITextBoolMetadata extends IBaseMetadata {
 
 interface IAnyMetadata extends IBaseMetadata {
   value?: any;
+}
+
+interface IFileMetadata extends IBaseMetadata {
+  directory?: boolean;
+  filters?: Electron.FileFilter[];
+  save?: boolean;
+  buttonContent?: React.ReactNode;
 }
 
 export interface IListMetadata<T = string> extends IBaseMetadata {
