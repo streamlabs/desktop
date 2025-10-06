@@ -13,6 +13,7 @@ import os from 'os';
 import * as remote from '@electron/remote';
 import { DiagnosticsService } from 'app-services';
 import { getOS, OS } from 'util/operating-systems';
+import { getWmiClass } from 'util/wmi';
 
 export type TUsageEvent = 'stream_start' | 'stream_end' | 'app_start' | 'app_close' | 'crash';
 
@@ -246,14 +247,12 @@ export class UsageStatisticsService extends Service {
     await this.sendAnalytics();
   }
 
-  getSysInfo() {
+  // We can't fetch this before app startup like the rest of sysInfo since it
+  // relies on another service
+  getGpuInfo() {
     const gpuSection: Dictionary<any> = {};
     if (getOS() === OS.Windows) {
-      const gpuInfo = this.diagnosticsService.getWmiClass('Win32_VideoController', [
-        'Name',
-        'DriverVersion',
-        'DriverDate',
-      ]);
+      const gpuInfo = getWmiClass('Win32_VideoController', ['Name', 'DriverVersion', 'DriverDate']);
 
       // Ensures we are working with an array
       [].concat(gpuInfo).forEach((gpu, index) => {
@@ -265,6 +264,10 @@ export class UsageStatisticsService extends Service {
       });
     }
 
+    return gpuSection;
+  }
+
+  getSysInfo() {
     return {
       os: {
         platform: os.platform(),
@@ -274,7 +277,7 @@ export class UsageStatisticsService extends Service {
       cpu: os.cpus()[0].model,
       cores: os.cpus().length,
       mem: os.totalmem(),
-      gpu: gpuSection,
+      gpu: this.getGpuInfo(),
     };
   }
 
