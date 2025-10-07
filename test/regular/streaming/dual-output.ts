@@ -9,7 +9,9 @@ import {
 } from '../../helpers/modules/streaming';
 import {
   click,
+  clickButton,
   clickIfDisplayed,
+  clickWhenDisplayed,
   closeWindow,
   focusChild,
   focusMain,
@@ -25,10 +27,16 @@ import {
   TExecutionContext,
   useWebdriver,
 } from '../../helpers/webdriver';
-import { addDummyAccount, logOut, releaseUserInPool, withUser } from '../../helpers/webdriver/user';
+import {
+  addDummyAccount,
+  logOut,
+  releaseUserInPool,
+  reserveUserFromPool,
+  withUser,
+} from '../../helpers/webdriver/user';
 import { SceneBuilder } from '../../helpers/scene-builder';
 import { getApiClient } from '../../helpers/api-client';
-import { fillForm } from '../../helpers/modules/forms';
+import { fillForm, readFields } from '../../helpers/modules/forms';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
 import { sleep } from '../../helpers/sleep';
 // import { readFields, fillForm } from '../../helpers/modules/forms';
@@ -310,10 +318,16 @@ test(
     await focusMain();
     await waitForDisplayed('div=Refresh Chat', { timeout: 60000 });
 
-    // Vertical display is hidden after logging out
-    await showSettingsWindow('Stream');
-    await click('[data-name="instagramUnlink"]');
+    // Dummy account will cause the stream to not go live
+    await waitForStreamStop();
 
+    // Clean up the dummy account
+    await showSettingsWindow('Stream', async () => {
+      await waitForDisplayed('h2=Stream Destinations');
+      await clickWhenDisplayed('[data-name="instagramUnlink"]');
+    });
+
+    // Vertical display is hidden after logging out
     await logOut(t);
     t.false(await isDisplayed('div#vertical-display'));
 
@@ -339,58 +353,19 @@ test(
     });
     await click('div.ant-message-notice-content');
 
-    await focusChild();
-    const youtube = await select('[data-name=youtube]');
-    const trovo = await select('[data-name=trovo]');
-    if (youtube.isExisting()) {
-      await fillForm({
-        youtube: true,
-        youtubeDisplay: 'vertical',
-      });
-      await waitForSettingsWindowLoaded();
-      await fillForm({
-        title: 'Test stream',
-        description: 'Test Stream Description',
-        twitchGame: 'Fortnite',
-      });
-    } else if (trovo.isExisting()) {
-      await fillForm({
-        trovo: true,
-        trovoDisplay: 'vertical',
-      });
-
-      await waitForSettingsWindowLoaded();
-      await fillForm({
-        title: 'Test stream',
-        trovoGame: 'Fortnite',
-        twitchGame: 'Fortnite',
-      });
-    } else {
-      // To prevent errors from accounts in the user pool,
-      // as a last resort use a dummy account
-      const dummy = await addDummyAccount('instagram');
-
-      await fillForm({
-        instagram: true,
-        instagramDisplay: 'vertical',
-      });
-
-      await waitForDisplayed('div[data-name="instagram-settings"]');
-      await waitForSettingsWindowLoaded();
-
-      await fillForm({ serverUrl: dummy.serverUrl, streamKey: dummy.streamKey });
-
-      await submit();
-      await focusMain();
-      await waitForDisplayed('div=Refresh Chat', { timeout: 60000 });
-
-      await showSettingsWindow('Stream');
-      await click('[data-name="instagramUnlink"]');
-      t.pass();
-    }
-
     // Dual output with one platform for each display
-    await waitForSettingsWindowLoaded();
+    await focusChild();
+    await fillForm({
+      trovo: true,
+      trovoDisplay: 'vertical',
+    });
+
+    await waitForDisplayed('div[data-name="trovo-settings"]');
+    await fillForm({
+      title: 'Test stream',
+      trovoGame: 'Fortnite',
+    });
+
     await submit();
     await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
     await waitForStreamStart();
@@ -398,47 +373,22 @@ test(
     await stopStream();
     await waitForStreamStop();
 
-    // Attempt to multistream to two platforms with the same display
-    if (youtube.isExisting() && trovo.isExisting()) {
-      await clickGoLive();
-      await focusChild();
-      await waitForSettingsWindowLoaded();
-      // multistreaming with the horizontal display
-      await fillForm({
-        trovo: true,
-      });
+    await clickGoLive();
+    await focusChild();
 
-      await waitForSettingsWindowLoaded();
-      await fillForm({
-        title: 'Test stream',
-        trovoGame: 'Fortnite',
-      });
+    // Swap displays
+    await waitForSettingsWindowLoaded();
+    await fillForm({
+      trovoDisplay: 'horizontal',
+      twitchDisplay: 'vertical',
+    });
 
-      await waitForSettingsWindowLoaded();
-      await submit();
-      await waitForDisplayed('span=Configure the Dual Output service');
-      t.false(await isDisplayed('Configure the Multistream service'));
-      await waitForStreamStart();
-      await sleep(2000);
-      await stopStream();
-      await waitForStreamStop();
-
-      await clickGoLive();
-      await focusChild();
-      await waitForSettingsWindowLoaded();
-      // multistreaming with the vertical display
-      await fillForm({
-        trovoDisplay: 'vertical',
-      });
-
-      await submit();
-      await waitForDisplayed('span=Configure the Dual Output service');
-      t.false(await isDisplayed('Configure the Multistream service'));
-      await waitForStreamStart();
-      await sleep(2000);
-      await stopStream();
-      await waitForStreamStop();
-    }
+    await submit();
+    await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
+    await waitForStreamStart();
+    await sleep(2000);
+    await stopStream();
+    await waitForStreamStop();
 
     t.pass();
   },
