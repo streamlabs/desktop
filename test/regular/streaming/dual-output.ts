@@ -9,14 +9,12 @@ import {
 } from '../../helpers/modules/streaming';
 import {
   click,
-  clickButton,
   clickIfDisplayed,
   clickWhenDisplayed,
   closeWindow,
   focusChild,
   focusMain,
   isDisplayed,
-  select,
   waitForDisplayed,
 } from '../../helpers/modules/core';
 import { logIn } from '../../helpers/modules/user';
@@ -27,16 +25,10 @@ import {
   TExecutionContext,
   useWebdriver,
 } from '../../helpers/webdriver';
-import {
-  addDummyAccount,
-  logOut,
-  releaseUserInPool,
-  reserveUserFromPool,
-  withUser,
-} from '../../helpers/webdriver/user';
+import { addDummyAccount, logOut, releaseUserInPool, withUser } from '../../helpers/webdriver/user';
 import { SceneBuilder } from '../../helpers/scene-builder';
 import { getApiClient } from '../../helpers/api-client';
-import { fillForm, readFields } from '../../helpers/modules/forms';
+import { fillForm } from '../../helpers/modules/forms';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
 import { sleep } from '../../helpers/sleep';
 // import { readFields, fillForm } from '../../helpers/modules/forms';
