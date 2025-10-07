@@ -99,13 +99,14 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
             stream: 'mobile-to-desktop',
           });
 
+          Services.RestreamService.actions.endStreamShiftStream(remoteStreamId);
+
           promptAction({
             title: $t('Stream successfully switched'),
             message: $t(
               'Your stream has been switched to Streamlabs Mobile. Ending the stream on Streamlabs Desktop.',
             ),
             btnText: $t('Close'),
-            fn: () => Services.RestreamService.actions.endStreamShiftStream(remoteStreamId),
             btnType: 'default',
             cancelBtnPosition: 'none',
           });
