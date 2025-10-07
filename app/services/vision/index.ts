@@ -13,6 +13,7 @@ import { VisionUpdater } from './vision-updater';
 import _ from 'lodash';
 import pMemoize from 'p-memoize';
 import { ESettingsCategory } from 'services/settings';
+import { Subject } from 'rxjs';
 
 export class VisionProcess extends RealmObject {
   game: string;
@@ -107,6 +108,12 @@ export class VisionService extends Service {
   private lastPromptVersion?: string;
   private promptCooldownMs = 500; // 500ms
 
+  onState = new Subject<{ isRunning: boolean; isStarting: boolean; isInstalling: boolean }>();
+  onGame = new Subject<{
+    activeProcess: VisionProcess;
+    selectedGame: string;
+    availableProcesses: VisionProcess[];
+  }>();
   @Inject() userService: UserService;
   @Inject() hostsService: HostsService;
   @Inject() private sourcesService: SourcesService;
@@ -235,6 +242,8 @@ export class VisionService extends Service {
         const { pid, port } = await this.visionRunner.ensureStarted({ debugMode });
         this.writeState({ pid, port, isRunning: true });
         this.subscribeToEvents(port);
+        await this.requestAvailableProcesses();
+        await this.requestActiveProcess();
 
         return { started: true as const, pid, port };
       } finally {
@@ -280,6 +289,30 @@ export class VisionService extends Service {
         this.log('Bad event', err);
       }
     };
+  }
+
+  private notifyOfStateChange() {
+    this.onState.next({
+      isRunning: this.state.isRunning,
+      isStarting: this.state.isStarting,
+      isInstalling: this.state.isInstalling,
+    });
+
+    try {
+      const active = this.state.availableProcesses.find(
+        p => p.pid === this.state.selectedProcessId,
+      );
+      const activeJson = JSON.stringify(active);
+      const availableJson = JSON.stringify(this.state.availableProcesses || []);
+
+      this.onGame.next({
+        activeProcess: JSON.parse(activeJson ?? 'null'),
+        selectedGame: this.state.selectedGame,
+        availableProcesses: JSON.parse(availableJson),
+      });
+    } catch (err: unknown) {
+      console.error('Error notifying of state change', err);
+    }
   }
 
   async stop() {
@@ -336,6 +369,8 @@ export class VisionService extends Service {
 
   private writeState(patch: Partial<VisionState>) {
     this.state.db.write(() => Object.assign(this.state, patch));
+
+    this.notifyOfStateChange();
   }
 
   requestFrame() {
