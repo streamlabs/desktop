@@ -7,6 +7,7 @@ import { $t } from 'services/i18n';
 import { useGoLiveSettings } from 'components-react/windows/go-live/useGoLiveSettings';
 import UltraIcon from './UltraIcon';
 import { Services } from '../service-provider';
+import Badge from 'components-react/shared/DismissableBadge';
 interface IStreamShiftToggle {
   className?: string;
   checkboxClassname?: string;
@@ -27,47 +28,50 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
   const label = $t('Stream Shift');
 
   return (
-    <div className={cx(p?.className, styles.streamShiftToggle)} style={p?.style}>
-      <CheckboxInput
-        className={p?.checkboxClassname}
-        label={
-          !isPrime ? (
-            <div
-              className={styles.labelUltraBadge}
-              onClick={() => {
-                Services.UsageStatisticsService.actions.recordAnalyticsEvent('StreamShift', {
-                  ultra: 'go-live-toggle',
-                });
-                Services.MagicLinkService.actions.linkToPrime('slobs-streamswitcher');
-              }}
-            >
-              <UltraIcon type="badge" style={{ marginRight: '5px' }} />
-              {label}
-            </div>
-          ) : (
-            <>{label}</>
-          )
-        }
-        value={isStreamShiftMode}
-        onChange={(status: boolean) => {
-          setStreamShift(status);
-          Services.UsageStatisticsService.actions.recordAnalyticsEvent('StreamShift', {
-            toggle: status,
-          });
-        }}
-        disabled={p?.disabled}
-      />
+    <div className={styles.streamShiftWrapper}>
+      <div className={cx(p?.className, styles.streamShiftToggle)} style={p?.style}>
+        <CheckboxInput
+          className={p?.checkboxClassname}
+          label={
+            !isPrime ? (
+              <div
+                className={styles.labelUltraBadge}
+                onClick={() => {
+                  Services.UsageStatisticsService.actions.recordAnalyticsEvent('StreamShift', {
+                    ultra: 'go-live-toggle',
+                  });
+                  Services.MagicLinkService.actions.linkToPrime('slobs-streamswitcher');
+                }}
+              >
+                <UltraIcon type="badge" style={{ marginRight: '5px' }} />
+                {label}
+              </div>
+            ) : (
+              <>{label}</>
+            )
+          }
+          value={isStreamShiftMode}
+          onChange={(status: boolean) => {
+            setStreamShift(status);
+            Services.UsageStatisticsService.actions.recordAnalyticsEvent('StreamShift', {
+              toggle: status,
+            });
+          }}
+          disabled={p?.disabled}
+        />
 
-      <Tooltip
-        title={$t(
-          'Stay uninterrupted by switching between devices mid stream. Works between Desktop and Mobile App.',
-        )}
-        placement="top"
-        lightShadow={true}
-        disabled={p?.disabled}
-      >
-        <i className="icon-information" style={{ marginLeft: '10px' }} />
-      </Tooltip>
+        <Tooltip
+          title={$t(
+            'Stay uninterrupted by switching between devices mid stream. Works between Desktop and Mobile App.',
+          )}
+          placement="top"
+          lightShadow={true}
+          disabled={p?.disabled}
+        >
+          <i className="icon-information" style={{ marginLeft: '10px' }} />
+        </Tooltip>
+      </div>
+      <Badge content={'Beta'} />
     </div>
   );
 }
