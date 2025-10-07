@@ -22,3 +22,6 @@ export { CardInput } from './CardInput';
 export { AutocompleteInput } from './AutocompleteInput';
 export { RadioInput } from './RadioInput';
 export { CheckboxGroup } from './CheckboxGroup';
+export { ImagePickerInput } from './ImagePickerInput';
+export { AnimationInput } from './AnimationInput';
+export { DurationInput } from './DurationInput';
