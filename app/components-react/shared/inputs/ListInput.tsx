@@ -36,6 +36,7 @@ export interface ICustomListProps<TValue> {
   options?: IListOption<TValue>[];
   description?: string;
   nolabel?: boolean;
+  filter?: string;
 }
 
 // define a type for the component's props

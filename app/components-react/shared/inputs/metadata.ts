@@ -1,5 +1,6 @@
 import { Rule } from 'antd/lib/form';
 import { TInputValue } from './FormFactory';
+import { IListOption } from './ListInput';
 
 /**
  * Metadata generator for inputs
@@ -118,5 +119,5 @@ interface IFileMetadata extends IBaseMetadata {
 
 export interface IListMetadata<T = string> extends IBaseMetadata {
   value?: T;
-  options?: { label: string; value: T }[];
+  options?: IListOption<T>[];
 }

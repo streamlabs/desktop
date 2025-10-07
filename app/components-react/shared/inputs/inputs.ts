@@ -36,6 +36,10 @@ export type TInputType =
   | 'checkboxGroup'
   | 'radio'
   | 'radioGroup';
+  | 'imagepicker'
+  | 'animation'
+  | 'duration';
+
 
 export type TInputLayout = 'horizontal' | 'vertical' | 'inline';
 
