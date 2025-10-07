@@ -144,6 +144,7 @@ export class KickService
 
     if (settings && !settings.is_live) {
       console.error('Stream Shift Error: Kick is not live');
+      this.postError('Stream Shift Error: Kick is not live');
       return;
     }
 
@@ -179,7 +180,6 @@ export class KickService
 
     if (goLiveSettings.streamShift && this.streamingService.views.shouldSwitchStreams) {
       await this.setupStreamShiftStream(goLiveSettings);
-      this.postError('Stream Shift Error: Kick is not live');
       return;
     }
 
