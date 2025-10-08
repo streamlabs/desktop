@@ -17,7 +17,7 @@ export async function showSettingsWindow(category: string, cb?: () => Promise<un
 
     if (category) {
       await focusChild();
-      await click(`.nav-item__content=${category}`);
+      await click(`[data-name="settings-nav-item"]=${category}`);
     }
   });
 

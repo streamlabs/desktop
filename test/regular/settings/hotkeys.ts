@@ -132,7 +132,7 @@ test('Shows and filters scene item hotkeys', async t => {
   // confirm dual output scene collection scene item hotkeys
   await toggleDualOutputMode(false);
   await focusChild();
-  await click('.nav-item__content=Hotkeys');
+  await click('[data-name="settings-nav-item"]=Hotkeys');
   await clickIfDisplayed('div.ant-collapse-item');
   await waitForDisplayed('div.section-content--opened');
 
@@ -175,9 +175,9 @@ test('Shows and filters scene item hotkeys', async t => {
 
   // confirm only horizontal scene items show when dual output is toggled off
   // on a dual output scene collection
-  await click('.nav-item__content=Video');
+  await click('[data-name="settings-nav-item"]=Video');
   await clickCheckbox('dual-output-checkbox');
-  await click('.nav-item__content=Hotkeys');
+  await click('[data-name="settings-nav-item"]=Hotkeys');
   await clickIfDisplayed('div.ant-collapse-item');
   await waitForDisplayed('div.section-content--opened');
 

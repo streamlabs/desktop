@@ -186,7 +186,10 @@ export default function Settings() {
           {categories.map(cat => {
             const config = SETTINGS_CONFIG[cat];
             return (
-              <Menu.Item key={cat} icon={<i className={config.icon} />}>
+              <Menu.Item
+                key={cat}
+                icon={<i className={config.icon} data-name="settings-nav-item" />}
+              >
                 <div style={{ display: 'flex' }} onClick={() => dismiss(cat)}>
                   {$t(cat)}
                   {config.dismissable && showDismissable(config.dismissable) && (
