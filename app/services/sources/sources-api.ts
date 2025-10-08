@@ -135,7 +135,7 @@ export type TSourceType =
   | 'vlc_source'
   | 'coreaudio_input_capture'
   | 'coreaudio_output_capture'
-  | 'av_capture_input'
+  | 'macos_avcapture'
   | 'display_capture'
   | 'audio_line'
   | 'syphon-input'

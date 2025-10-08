@@ -197,7 +197,7 @@ function PanelForm(p: { source: AudioSource }) {
         'wasapi_input_capture',
         'coreaudio_input_capture',
         'dshow_input',
-        'av_capture_input',
+        'macos_avcapture',
       ].includes(source.type)
     : false;
 
