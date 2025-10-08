@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import Spinner from './Spinner';
 import Mark from 'mark.js';
 import styles from './SearchablePages.m.less';
 import { TCategoryName } from 'services/settings';
 import { SETTINGS_CONFIG } from 'components-react/windows/Settings';
+import { createRoot } from 'components-react/root/ReactRoot';
 
 interface ISearchablePagesProps {
   page: TCategoryName;
@@ -30,7 +32,7 @@ export default function SearchablePages(p: React.PropsWithChildren<ISearchablePa
       if (!pagesInfo.current) return;
       for (const pageName of Object.keys(pagesInfo.current)) {
         const pageText = pagesInfo.current[pageName as TCategoryName];
-        if (pageText && pageText.match(new RegExp(p.searchStr, 'i'))) {
+        if (pageText && pageText.match(new RegExp(p.searchStr, 'ig'))) {
           searchResultPages.push(pageName as TCategoryName);
         }
       }
@@ -66,22 +68,15 @@ export default function SearchablePages(p: React.PropsWithChildren<ISearchablePa
     setLoading(false);
   }
 
-  async function grabReactTextContent(node: React.ReactNode): Promise<string> {
-    if (!node) return '';
-    const isPrimaryData =
-      typeof node === 'string' ||
-      typeof node === 'number' ||
-      typeof node === 'boolean' ||
-      node == null;
-    if (isPrimaryData) return node.toString();
-    if (node instanceof Promise) return await grabReactTextContent(await node);
-    if (!isPrimaryData && (node as React.ReactElement).props) {
-      return grabReactTextContent((node as React.ReactElement).props?.children);
-    }
-    // node is an iterable
-    return Array.from(node as ArrayLike<React.ReactNode>)
-      .map(grabReactTextContent)
-      .join('');
+  async function grabReactTextContent(component: React.FunctionComponent<any>): Promise<string> {
+    if (!component) return '';
+    const tempDiv = document.createElement('div');
+    const RootedComponent = createRoot(component);
+    await ReactDOM.render(<RootedComponent />, tempDiv);
+    const stringValue = tempDiv.innerText || '';
+    await ReactDOM.unmountComponentAtNode(tempDiv);
+    tempDiv.remove();
+    return stringValue;
   }
 
   /**

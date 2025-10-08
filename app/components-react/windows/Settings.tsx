@@ -7,7 +7,7 @@ import { ESettingsCategory, TCategoryName } from 'services/settings';
 import { EDismissable } from 'services/dismissables';
 import { Services } from 'components-react/service-provider';
 import { useRealmObject } from 'components-react/hooks/realm';
-import { useVuex } from 'components-react/hooks';
+import { useDebounce, useVuex } from 'components-react/hooks';
 import { $t } from 'services/i18n';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import { Menu } from 'antd';
@@ -20,7 +20,6 @@ import SearchablePages from 'components-react/shared/SearchablePages';
 
 export interface ISettingsProps {
   globalSearchStr: string;
-  highlightSearch: (searchString: string) => void;
 }
 
 interface ISettingsConfig {
@@ -76,8 +75,6 @@ export default function Settings() {
     UsageStatisticsService,
   } = Services;
 
-  const settingsContent = useRef<HTMLDivElement>(null);
-
   const currentTab = useRealmObject(NavigationService.state).currentSettingsTab;
 
   const { isPrime, isLoggedIn, username, platform, showDismissable } = useVuex(() => ({
@@ -95,18 +92,11 @@ export default function Settings() {
     SettingsService.actions.loadSettingsIntoStore();
   }, []);
 
-  useEffect(() => {
-    if (settingsContent.current) {
-      settingsContent.current.scrollTop = 0;
-    }
-  }, [currentTab]);
-
   function setCurrentTab(value: TCategoryName) {
     NavigationService.actions.setSettingsNavigation(value);
   }
 
   function handleMenuNavigation(event: MenuInfo) {
-    console.log(event);
     setCurrentTab(event.key as TCategoryName);
   }
 
@@ -157,15 +147,7 @@ export default function Settings() {
   }
 
   function onSearchInput(str: string) {
-    if (!scanning.current) {
-      setSearchStr(str);
-      scanning.current = true;
-    } else {
-      debounce(() => {
-        setSearchStr(str);
-        scanning.current = false;
-      }, 300);
-    }
+    setSearchStr(str);
   }
 
   function includeUltra(str: string) {
@@ -223,7 +205,7 @@ export default function Settings() {
         </div>
       </Scrollable>
       <Scrollable className={styles.settingsContainer} snapToWindowEdge>
-        <div ref={settingsContent} className={styles.settingsContent}>
+        <div className={styles.settingsContent}>
           <SearchablePages
             onSearchCompleted={handleSearchCompleted}
             pages={categories}
@@ -231,7 +213,7 @@ export default function Settings() {
             searchStr={searchStr}
             searchResults={searchResultPages}
           >
-            <SettingsContent highlightSearch={() => {}} globalSearchStr={searchStr} />
+            <SettingsContent globalSearchStr={searchStr} />
           </SearchablePages>
         </div>
       </Scrollable>

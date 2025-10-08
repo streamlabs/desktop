@@ -77,7 +77,7 @@ function resolveApp() {
 /**
  * Creates a root React component with integrated Redux store
  */
-export function createRoot(ChildComponent: (props: any) => JSX.Element) {
+export function createRoot(ChildComponent: React.FunctionComponent<any>) {
   return function ReactRoot(childProps: Object) {
     const app = resolveApp();
 

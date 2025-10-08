@@ -45,7 +45,7 @@ const setCategoryNameFrom = (srcOrScene: Source | Scene | null) => (hotkey: IAug
 };
 
 export function Hotkeys(props: ISettingsProps) {
-  const { globalSearchStr: searchString, highlightSearch } = props;
+  const { globalSearchStr: searchString } = props;
   const { HotkeysService, SourcesService, ScenesService, DualOutputService } = Services;
   const [hotkeySet, setHotkeysSet] = useState<IHotkeysSet | null>(null);
 
@@ -56,13 +56,10 @@ export function Hotkeys(props: ISettingsProps) {
       // We may change our minds on this in the future.
       HotkeysService.actions.unregisterAll();
 
-      HotkeysService.actions.return
-        .getHotkeysSet()
-        .then((hotkeys: IHotkeysSet) => {
-          if (!isMounted) return;
-          setHotkeysSet(hotkeys);
-        })
-        .then(() => highlightSearch(searchString));
+      HotkeysService.actions.return.getHotkeysSet().then((hotkeys: IHotkeysSet) => {
+        if (!isMounted) return;
+        setHotkeysSet(hotkeys);
+      });
     }
 
     return () => {
@@ -72,12 +69,6 @@ export function Hotkeys(props: ISettingsProps) {
       isMounted = false;
     };
   }, [hotkeySet]);
-
-  // Highlight search results when the search string changes
-  useEffect(() => {
-    if (!searchString) return;
-    highlightSearch(searchString);
-  }, [searchString]);
 
   const emptyHotkeySet: IAugmentedHotkeySet = {
     general: {},
