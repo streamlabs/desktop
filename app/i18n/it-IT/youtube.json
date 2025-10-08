@@ -40,12 +40,12 @@
   "Auto-start is disabled for your broadcast. You should manually publish your stream from Youtube Studio": "Auto-start non è abilitato per la tua trasmissione. Devi pubblicare manualmente il tuo streaming da YouTube Studio",
   "Made for kids": "Creato per i bambini",
   "Features like personalized ads and live chat won't be available on live streams made for kids.": "Funzionalità quali pubblicità personalizzate e chat live non saranno disponibili negli streaming live per bambini.",
-  "YouTube token has expired, re-login or re-merge YouTube account": "YouTube token has expired, re-login or re-merge YouTube account",
-  "Thumbnail image content is invalid.": "Thumbnail image content is invalid.",
-  "Thumbnail file does not include image content.": "Thumbnail file does not include image content.",
-  "Permission missing to upload thumbnails.": "Permission missing to upload thumbnails.",
-  "Video does not exist. Thumbnail upload failed.": "Video does not exist. Thumbnail upload failed.",
-  "Exceeded thumbnail upload quota. Please try again later.": "Exceeded thumbnail upload quota. Please try again later.",
-  "YouTube thumbnail image is too large. Maximum size is 2MB.": "YouTube thumbnail image is too large. Maximum size is 2MB.",
-  "Please upload thumbnail manually on YouTube.": "Please upload thumbnail manually on YouTube."
+  "YouTube token has expired, re-login or re-merge YouTube account": "Il token di YouTube è scaduto, accedi di nuovo o unisci di nuovo il tuo account YouTube",
+  "Thumbnail image content is invalid.": "Il contenuto dell’immagine di anteprima non è valido.",
+  "Thumbnail file does not include image content.": "Il file dell’immagine di anteprima non include contenuto di tipo immagine.",
+  "Permission missing to upload thumbnails.": "Non hai le autorizzazioni per caricare immagini di anteprima.",
+  "Video does not exist. Thumbnail upload failed.": "Video inesistente. Caricamento dell’immagine di anteprima non riuscito.",
+  "Exceeded thumbnail upload quota. Please try again later.": "Hai superato il limite di caricamento delle immagini di anteprima. Riprova più tardi.",
+  "YouTube thumbnail image is too large. Maximum size is 2MB.": "L'immagine di anteprima di YouTube è troppo grande. La dimensione massima è di 2 MB.",
+  "Please upload thumbnail manually on YouTube.": "Carica l’immagine di anteprima manualmente su YouTube."
 }
