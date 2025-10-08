@@ -40,12 +40,12 @@
   "Auto-start is disabled for your broadcast. You should manually publish your stream from Youtube Studio": "Автозапуск для вашей трансляции отключен. Опубликуйте прямой эфир вручную из Творческой студии YouTube",
   "Made for kids": "Для детей",
   "Features like personalized ads and live chat won't be available on live streams made for kids.": "Такие функции, как персонализированная реклама и чат, не будут доступны в прямых трансляциях для детей.",
-  "YouTube token has expired, re-login or re-merge YouTube account": "YouTube token has expired, re-login or re-merge YouTube account",
-  "Thumbnail image content is invalid.": "Thumbnail image content is invalid.",
-  "Thumbnail file does not include image content.": "Thumbnail file does not include image content.",
-  "Permission missing to upload thumbnails.": "Permission missing to upload thumbnails.",
-  "Video does not exist. Thumbnail upload failed.": "Video does not exist. Thumbnail upload failed.",
-  "Exceeded thumbnail upload quota. Please try again later.": "Exceeded thumbnail upload quota. Please try again later.",
-  "YouTube thumbnail image is too large. Maximum size is 2MB.": "YouTube thumbnail image is too large. Maximum size is 2MB.",
-  "Please upload thumbnail manually on YouTube.": "Please upload thumbnail manually on YouTube."
+  "YouTube token has expired, re-login or re-merge YouTube account": "Срок действия токена YouTube истек, повторно войдите в систему или повторно выполните объединение с учетной записью YouTube",
+  "Thumbnail image content is invalid.": "Недопустимый контент изображения миниатюры.",
+  "Thumbnail file does not include image content.": "Файл миниатюры не содержит контента изображения.",
+  "Permission missing to upload thumbnails.": "Отсутствует разрешение на отправку миниатюр.",
+  "Video does not exist. Thumbnail upload failed.": "Видео не существует. Не удалось загрузить миниатюру.",
+  "Exceeded thumbnail upload quota. Please try again later.": "Превышена квота на отправку миниатюр. Повторите попытку позже.",
+  "YouTube thumbnail image is too large. Maximum size is 2MB.": "Изображение миниатюры на YouTube слишком большое. Максимальный размер — 2 МБ.",
+  "Please upload thumbnail manually on YouTube.": "Загрузите миниатюру на YouTube вручную."
 }
