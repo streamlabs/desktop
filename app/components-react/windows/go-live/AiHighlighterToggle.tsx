@@ -4,13 +4,13 @@ import styles from './AiHighlighterToggle.m.less';
 
 import { Services } from 'components-react/service-provider';
 import Highlighter from 'components-react/pages/Highlighter';
-import { useVuex } from 'components-react/hooks';
+import { useDebounce, useVuex } from 'components-react/hooks';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { Button, Carousel } from 'antd';
 import EducationCarousel from 'components-react/highlighter/EducationCarousel';
 import { getConfigByGame, isGameSupported } from 'services/highlighter/models/game-config.models';
 import { $t } from 'services/i18n';
-import { set } from 'lodash';
+import { debounce, set } from 'lodash';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import {
   DiscordLogo,
@@ -63,6 +63,8 @@ export default function AiHighlighterToggle({
   const initialExpandedState = getInitialExpandedState();
   const [isExpanded, setIsExpanded] = useState(initialExpandedState);
 
+  const toggleHighlighter = useDebounce(300, HighlighterService.actions.toggleAiHighlighter);
+
   return (
     <div>
       {gameIsSupported ? (
@@ -101,7 +103,7 @@ export default function AiHighlighterToggle({
                       style={{ width: '80px', margin: 0, marginTop: '-2px' }}
                       value={useHighlighter}
                       label=""
-                      onChange={() => HighlighterService.actions.toggleAiHighlighter()}
+                      onChange={debounce(HighlighterService.actions.toggleAiHighlighter, 300)}
                     />
                   ) : (
                     <Button
