@@ -257,8 +257,8 @@
   "Please try again. If the issue persists, you can stream in single output mode instead.": "다시 시도하세요. 문제가 지속되면 대신에 단일 출력 모드로 스트리밍할 수 있습니다.",
   "Enable Dual Output to stream to horizontal & vertical platforms simultaneously": "Dual Output을 활성화하여 가로 및 세로 플랫폼에 동시에 스트리밍",
   "Disable Dual Output": "Dual Output 비활성화",
-  "You can now reply to Twitch, YouTube and Facebook messages in Multichat. Click to learn more.": "You can now reply to Twitch, YouTube and Facebook messages in Multichat. Click to learn more.",
-  "Multichat Platform Support": "Multichat Platform Support",
+  "You can now reply to Twitch, YouTube and Facebook messages in Multichat. Click to learn more.": "이제 멀티챗에서 Twitch, YouTube 및 Facebook 메시지에 답장할 수 있습니다. 자세히 알아보려면 클릭하십시오.",
+  "Multichat Platform Support": "멀티챗 플랫폼 지원",
   "You have selected %{colorFormat} as Color Format. Formats other than NV12 and P010 are commonly used for recording, and might incur high CPU usage or the streaming platform might not support it. Go to Settings -> Advanced -> Video to review.": "%{colorFormat} 포맷을 색상 포맷으로 선택했습니다. NV12 및 P010 이외의 포맷은 일반적으로 녹화에 사용되며 CPU 사용량이 높습니다. 또한 스트리밍 플랫폼에서 지원하지 않을 수 있습니다. 설정 -> 고급 -> 동영상으로 이동하여 검토하세요.",
   "Selective Recording Enabled": "선택 녹화 활성화",
   "Selective Recording only works with horizontal sources and disables editing the vertical output scene. Please disable Selective Recording to go live with Dual Output.": "선택 녹화 기능은 가로 소스에만 작동하며 세로 출력 장면 편집 기능을 비활성화합니다. Dual Output으로 라이브를 하려면 선택 녹화를 비활성화하세요.",
@@ -306,5 +306,5 @@
   "AI Highlighter is enabled. Recording will start when stream starts.": "AI Highlighter가 활성화되었습니다. 스트리밍이 시작되면 녹화가 시작됩니다.",
   "Connection Failed": "연결 실패",
   "Upgrade to Ultra to allow more than two outputs": "두 개 이상의 출력을 허용하려면 Ultra로 업그레이드하세요",
-  "Multichat": "Multichat"
+  "Multichat": "멀티챗"
 }
