@@ -1,17 +1,13 @@
 import { SwitchInput } from 'components-react/shared/inputs/SwitchInput';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './AiHighlighterToggle.m.less';
-
 import { Services } from 'components-react/service-provider';
-import Highlighter from 'components-react/pages/Highlighter';
 import { useDebounce, useVuex } from 'components-react/hooks';
-import { DownOutlined, UpOutlined } from '@ant-design/icons';
-import { Button, Carousel } from 'antd';
 import EducationCarousel from 'components-react/highlighter/EducationCarousel';
+import { DownOutlined, UpOutlined } from '@ant-design/icons';
+import { Button } from 'antd';
 import { getConfigByGame, isGameSupported } from 'services/highlighter/models/game-config.models';
 import { $t } from 'services/i18n';
-import { debounce, set } from 'lodash';
-import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import {
   DiscordLogo,
   InstagramLogo,
@@ -103,7 +99,7 @@ export default function AiHighlighterToggle({
                       style={{ width: '80px', margin: 0, marginTop: '-2px' }}
                       value={useHighlighter}
                       label=""
-                      onChange={debounce(HighlighterService.actions.toggleAiHighlighter, 300)}
+                      onChange={toggleHighlighter}
                     />
                   ) : (
                     <Button
