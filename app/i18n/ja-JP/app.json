@@ -19,5 +19,5 @@
   "Custom Destination": "カスタム宛先",
   "This app is currently popped out in another window.": "このアプリは現在、別のウィンドウで表示されています。",
   "Error granting chat permissions.": "チャット権限の付与エラーが発生しました。",
-  "Authentication Error": "Authentication Error"
+  "Authentication Error": "認証エラー"
 }
