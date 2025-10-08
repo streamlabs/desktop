@@ -257,8 +257,8 @@
   "Please try again. If the issue persists, you can stream in single output mode instead.": "Попробуйте еще раз. Если проблема не решена, для трансляции можно использовать режим одиночного вывода.",
   "Enable Dual Output to stream to horizontal & vertical platforms simultaneously": "Включите Dual Output для одновременной трансляции на горизонтальные и вертикальные платформы",
   "Disable Dual Output": "Отключить Dual Output",
-  "You can now reply to Twitch, YouTube and Facebook messages in Multichat. Click to learn more.": "You can now reply to Twitch, YouTube and Facebook messages in Multichat. Click to learn more.",
-  "Multichat Platform Support": "Multichat Platform Support",
+  "You can now reply to Twitch, YouTube and Facebook messages in Multichat. Click to learn more.": "Теперь вы можете отвечать на сообщения Twitch, YouTube и Facebook в мультичате. Щелкните, чтобы узнать больше.",
+  "Multichat Platform Support": "Поддержка платформы мультичата",
   "You have selected %{colorFormat} as Color Format. Formats other than NV12 and P010 are commonly used for recording, and might incur high CPU usage or the streaming platform might not support it. Go to Settings -> Advanced -> Video to review.": "Вы выбрали %{colorFormat} в качестве формата цвета. Для записи обычно используются форматы, отличные от NV12 и P010, которые могут требовать высокой нагрузки на процессор или не поддерживаться стриминговой платформой. Перейдите в Настройки -> Дополнительно -> Видео для просмотра.",
   "Selective Recording Enabled": "Выборочная запись включена",
   "Selective Recording only works with horizontal sources and disables editing the vertical output scene. Please disable Selective Recording to go live with Dual Output.": "Выборочная запись работает только с горизонтальными источниками и исключает возможность редактирования сцен с вертикальным выводом. Пожалуйста, отключите выборочную запись, чтобы перейти на Dual Output.",
@@ -306,5 +306,5 @@
   "AI Highlighter is enabled. Recording will start when stream starts.": "AI Highlighter включен. Запись начнется, когда начнется трансляция.",
   "Connection Failed": "Соединение не удалось",
   "Upgrade to Ultra to allow more than two outputs": "Обновитесь до уровня Ultra для обеспечения более двух выходов",
-  "Multichat": "Multichat"
+  "Multichat": "Мультичат"
 }
