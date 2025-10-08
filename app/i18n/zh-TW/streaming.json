@@ -257,8 +257,8 @@
   "Please try again. If the issue persists, you can stream in single output mode instead.": "請再試一次。如果問題持續存在，您可以改為以單輸出模式進行直播。",
   "Enable Dual Output to stream to horizontal & vertical platforms simultaneously": "啟用 Dual Output，同時在水平和垂直平台上直播",
   "Disable Dual Output": "停用 Dual Output",
-  "You can now reply to Twitch, YouTube and Facebook messages in Multichat. Click to learn more.": "You can now reply to Twitch, YouTube and Facebook messages in Multichat. Click to learn more.",
-  "Multichat Platform Support": "Multichat Platform Support",
+  "You can now reply to Twitch, YouTube and Facebook messages in Multichat. Click to learn more.": "您現在可以在多人聊天室中回覆 Twitch、YouTube 和 Facebook 的訊息。按一下以瞭解更多資訊。",
+  "Multichat Platform Support": "多人聊天室平台支援",
   "You have selected %{colorFormat} as Color Format. Formats other than NV12 and P010 are commonly used for recording, and might incur high CPU usage or the streaming platform might not support it. Go to Settings -> Advanced -> Video to review.": "您已選取 %{colorFormat} 作為顏色格式。NV12 和 P010 以外的格式通常用於錄製，可能會導致 CPU 使用量較高，或串流平台可能不支援。前往設定 -> 進階 -> 影片進行檢視。",
   "Selective Recording Enabled": "選擇性錄製已啟用",
   "Selective Recording only works with horizontal sources and disables editing the vertical output scene. Please disable Selective Recording to go live with Dual Output.": "選擇性錄製僅適用於水平來源且會停用編輯垂直輸出場景。請停用選擇性錄製，以啟用 Dual Output。",
@@ -306,5 +306,5 @@
   "AI Highlighter is enabled. Recording will start when stream starts.": "AI Highlighter 已啟用。直播開始時會同時啟動錄製。",
   "Connection Failed": "連線失敗",
   "Upgrade to Ultra to allow more than two outputs": "升級至 Ultra 以支援超過兩個輸出",
-  "Multichat": "Multichat"
+  "Multichat": "多人聊天室"
 }
