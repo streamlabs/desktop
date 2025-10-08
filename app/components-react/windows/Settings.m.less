@@ -56,7 +56,13 @@
 
 .settings-nav {
   height: 100%;
-  width: 200px;
+  width: 240px;
+  margin-left: -24px;
+
+  :global(.ant-menu-item) {
+    height: 30px !important;
+    line-height: 30px !important;
+  }
 }
 
 .settings-auth {
@@ -68,7 +74,8 @@
   align-items: center;
   justify-content: flex-start;
   position: fixed;
-  bottom: 40px;
+  bottom: 56px;
+  left: 0;
   padding-top: 16px;
   padding-bottom: 16px;
   width: 240px;

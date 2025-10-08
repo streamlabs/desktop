@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import debounce from 'lodash/debounce';
-import remote from '@electron/remote';
+import * as remote from '@electron/remote';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import * as pages from './settings/pages';
 import { ESettingsCategory, TCategoryName } from 'services/settings';
@@ -184,16 +184,23 @@ export default function Settings() {
 
   return (
     <ModalLayout bodyClassName={styles.settings}>
-      <Scrollable snapToWindowEdge style={{ height: '100%' }} className={styles.settingsNav}>
-        <TextInput
-          prefix={<i className="icon-search" />}
-          placeholder={$t('Search')}
-          value={searchStr}
-          onChange={onSearchInput}
-          uncontrolled={false}
-          nowrap
-        />
-        <Menu mode="vertical" selectedKeys={[currentTab]} onClick={handleMenuNavigation}>
+      <Scrollable className={styles.settingsNav}>
+        <div style={{ padding: '0 24px 12px 24px' }}>
+          <TextInput
+            prefix={<i className="icon-search" />}
+            placeholder={$t('Search')}
+            value={searchStr}
+            onChange={onSearchInput}
+            uncontrolled={false}
+            nowrap
+          />
+        </div>
+        <Menu
+          mode="inline"
+          selectedKeys={[currentTab]}
+          onClick={handleMenuNavigation}
+          style={{ paddingBottom: '46px' }}
+        >
           {categories.map(cat => {
             const config = SETTINGS_CONFIG[cat];
             return (
@@ -215,7 +222,7 @@ export default function Settings() {
           {isLoggedIn && <span>{username}</span>}
         </div>
       </Scrollable>
-      <Scrollable className={styles.settingsContainer}>
+      <Scrollable className={styles.settingsContainer} snapToWindowEdge>
         <div ref={settingsContent} className={styles.settingsContent}>
           <SearchablePages
             onSearchCompleted={handleSearchCompleted}
