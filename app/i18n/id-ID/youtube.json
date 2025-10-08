@@ -40,12 +40,12 @@
   "Auto-start is disabled for your broadcast. You should manually publish your stream from Youtube Studio": "Auto-start dinonaktifkan untuk broadcast Anda. Anda harus menerbitkan streaming Anda dari YouTube Studio secara manual",
   "Made for kids": "Dibuat untuk anak-anak",
   "Features like personalized ads and live chat won't be available on live streams made for kids.": "Fitur seperti iklan yang dipersonalisasi dan live chat tidak akan tersedia di live streaming yang dibuat untuk anak-anak.",
-  "YouTube token has expired, re-login or re-merge YouTube account": "YouTube token has expired, re-login or re-merge YouTube account",
-  "Thumbnail image content is invalid.": "Thumbnail image content is invalid.",
-  "Thumbnail file does not include image content.": "Thumbnail file does not include image content.",
-  "Permission missing to upload thumbnails.": "Permission missing to upload thumbnails.",
-  "Video does not exist. Thumbnail upload failed.": "Video does not exist. Thumbnail upload failed.",
-  "Exceeded thumbnail upload quota. Please try again later.": "Exceeded thumbnail upload quota. Please try again later.",
-  "YouTube thumbnail image is too large. Maximum size is 2MB.": "YouTube thumbnail image is too large. Maximum size is 2MB.",
-  "Please upload thumbnail manually on YouTube.": "Please upload thumbnail manually on YouTube."
+  "YouTube token has expired, re-login or re-merge YouTube account": "Token YouTube telah kedaluwarsa, masuk kembali atau gabungkan kembali akun YouTube",
+  "Thumbnail image content is invalid.": "Konten gambar mini tidak valid.",
+  "Thumbnail file does not include image content.": "File gambar mini tidak menyertakan konten gambar.",
+  "Permission missing to upload thumbnails.": "Izin tidak ada untuk mengunggah gambar mini.",
+  "Video does not exist. Thumbnail upload failed.": "Video tidak ada. Unggahan gambar mini gagal.",
+  "Exceeded thumbnail upload quota. Please try again later.": "Kuota unggahan gambar mini melebihi batas. Coba kembali nanti.",
+  "YouTube thumbnail image is too large. Maximum size is 2MB.": "Gambar mini YouTube terlalu besar. Ukuran maksimum adalah 2MB.",
+  "Please upload thumbnail manually on YouTube.": "Silakan unggah gambar mini secara manual di YouTube."
 }
