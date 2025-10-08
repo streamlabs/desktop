@@ -434,12 +434,12 @@
   "Virtual camera output type": "Sanal kamera çıkış tipi",
   "Unmute your Microphone source in Mixer": "Mixer'deki Mikrofon kaynağınızın sesini açın",
   "Your Microphone is unmuted but has no signal": "Mikrofonunuzun sesi açık ancak sinyal yok",
-  "Victory & Defeat": "Victory & Defeat",
-  "Dynamic game animation": "Dynamic game animation",
-  "Dynamic real time animation based on your game events, powered by Streamlabs AI. Install Reactive Overlays from our Library to see what it's capable of!": "Dynamic real time animation based on your game events, powered by Streamlabs AI. Install Reactive Overlays from our Library to see what it's capable of!",
-  "Kills & Eliminations": "Kills & Eliminations",
-  "Health changes": "Health changes",
+  "Victory & Defeat": "Zafer ve Yenilgi",
+  "Dynamic game animation": "Dinamik oyun animasyonu",
+  "Dynamic real time animation based on your game events, powered by Streamlabs AI. Install Reactive Overlays from our Library to see what it's capable of!": "Streamlabs AI tarafından desteklenen, oyun etkinliklerinize dayalı dinamik gerçek zamanlı animasyon. Neler yapabileceğini görmek için Kütüphanemizden Reaktif Katmanları yükleyin!",
+  "Kills & Eliminations": "Öldürmeler ve Ele Geçirmeler",
+  "Health changes": "Sağlık değişiklikleri",
   "Search...": "Ara...",
-  "Virtual Cam": "Virtual Cam",
-  "Virtual Cam Error": "Virtual Cam Error"
+  "Virtual Cam": "Sanal Kamera",
+  "Virtual Cam Error": "Sanal Kamera Hatası"
 }
