@@ -400,7 +400,6 @@ export class StreamingService
       // Note: Because the horizontal video context is the default, it does not need
       // to be validated.
 
-      console.log('this.views.isDualOutputMode', this.views.isDualOutputMode);
       try {
         await this.runCheck('setupDualOutput', async () => {
           // If a custom destination is enabled for single streaming to the vertical display

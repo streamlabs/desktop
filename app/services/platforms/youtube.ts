@@ -164,6 +164,7 @@ interface IExtraBroadcastSettings {
 }
 
 type TStreamStatus = 'active' | 'created' | 'error' | 'inactive' | 'ready';
+type TBroadcastStatus = 'all' | 'active' | 'completed' | 'upcoming';
 type TBroadcastLifecycleStatus =
   | 'complete'
   | 'created'
@@ -331,33 +332,63 @@ export class YoutubeService
   async setupStreamShiftStream(goLiveSettings: IGoLiveSettings) {
     const settings = goLiveSettings?.streamShiftSettings;
 
-    if (settings && !settings.is_live) {
+    if (settings && settings.broadcast_id !== null && !settings.is_live) {
       console.error('Stream Shift Error: YouTube is not live');
       this.postError('Stream Shift Error: YouTube is not live');
       return;
     }
 
     try {
-      const liveBroadcasts = await this.fetchLiveBroadcasts();
+      const liveBroadcasts = await this.fetchBroadcastsByStatus('active');
 
       // Use the last broadcast in the list, which should be the most recent one
-      const broadcast = liveBroadcasts?.[liveBroadcasts.length - 1];
+      let broadcast = liveBroadcasts?.[liveBroadcasts.length - 1];
 
-      const broadcastId = settings?.broadcast_id ?? broadcast?.id;
-
+      // Try to find an upcoming broadcast if there are no active broadcasts
       if (!broadcast) {
-        console.error('No active YouTube broadcasts found');
-        return;
+        console.debug('No active YouTube broadcasts found');
+        this.postError(
+          $t(
+            'Auto-start is disabled for your broadcast. You should manually publish your stream from Youtube Studio',
+          ),
+        );
+        const upcomingBroadcasts = await this.fetchBroadcastsByStatus('upcoming');
+        broadcast = upcomingBroadcasts?.[upcomingBroadcasts.length - 1];
       }
 
-      const video = await this.fetchVideo(broadcastId);
+      // If there are no active or upcoming broadcasts, create one
+      if (!broadcast) {
+        console.debug('No upcoming YouTube broadcasts found');
+        const ytSettings = getDefined(goLiveSettings.platforms.youtube);
+        broadcast = await this.createBroadcast({
+          title: settings?.stream_title ?? ytSettings.title,
+          description: ytSettings?.description ?? '',
+        });
+      }
+
+      // Validate stream binding to broadcast
+      if (broadcast.contentDetails.boundStreamId) {
+        const liveStream = await this.fetchLiveStream(broadcast.contentDetails.boundStreamId);
+        console.debug('Bound stream for YouTube broadcast: ', !!liveStream);
+        const streamKey = liveStream.cdn.ingestionInfo.streamName;
+        this.SET_STREAM_KEY(streamKey);
+      } else {
+        console.error('No stream to bind to YouTube broadcast, creating a new stream');
+        const liveStream = await this.createLiveStream(broadcast.snippet.title);
+        await this.bindStreamToBroadcast(broadcast.id, liveStream.id);
+
+        const streamKey = liveStream.cdn.ingestionInfo.streamName;
+        this.SET_STREAM_KEY(streamKey);
+      }
+
+      const video = await this.fetchVideo(broadcast.id);
       this.SET_STREAM_ID(broadcast.contentDetails.boundStreamId);
 
       const title = settings?.stream_title ?? broadcast.snippet.title;
 
       this.UPDATE_STREAM_SETTINGS({
         title,
-        broadcastId: settings?.broadcast_id ?? broadcast.id,
+        broadcastId: broadcast.id,
         description: broadcast.snippet.description,
         categoryId: video?.snippet?.categoryId,
         enableAutoStart: broadcast.contentDetails.enableAutoStart,
@@ -986,13 +1017,15 @@ export class YoutubeService
     return broadcasts;
   }
 
-  private async fetchLiveBroadcasts(): Promise<IYoutubeLiveBroadcast[]> {
+  private async fetchBroadcastsByStatus(
+    status: TBroadcastStatus,
+  ): Promise<IYoutubeLiveBroadcast[]> {
     const fields = ['snippet', 'contentDetails', 'status'];
     const query = `part=${fields.join(',')}`;
     const broadcasts = (
       await platformAuthorizedRequest<IYoutubeCollection<IYoutubeLiveBroadcast>>(
         'youtube',
-        `${this.apiBase}/liveBroadcasts?${query}&broadcastStatus=active`,
+        `${this.apiBase}/liveBroadcasts?${query}&broadcastStatus=${status}&maxResults=100`,
       )
     ).items;
     return broadcasts;
