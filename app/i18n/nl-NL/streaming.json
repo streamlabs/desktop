@@ -257,8 +257,8 @@
   "Please try again. If the issue persists, you can stream in single output mode instead.": "Probeer het later opnieuw. Als het probleem aanhoudt, kun je in plaats daarvan streamen in de modus Single Output.",
   "Enable Dual Output to stream to horizontal & vertical platforms simultaneously": "Schakel Dual Output in om gelijktijdig naar horizontale en verticale platforms te streamen",
   "Disable Dual Output": "Dual Output uitschakelen",
-  "You can now reply to Twitch, YouTube and Facebook messages in Multichat. Click to learn more.": "You can now reply to Twitch, YouTube and Facebook messages in Multichat. Click to learn more.",
-  "Multichat Platform Support": "Multichat Platform Support",
+  "You can now reply to Twitch, YouTube and Facebook messages in Multichat. Click to learn more.": "Je kunt nu reageren op berichten van Twitch, YouTube en Facebook in Multichat. Klik voor meer informatie",
+  "Multichat Platform Support": "Ondersteuning voor Multichat-platform",
   "You have selected %{colorFormat} as Color Format. Formats other than NV12 and P010 are commonly used for recording, and might incur high CPU usage or the streaming platform might not support it. Go to Settings -> Advanced -> Video to review.": "Je hebt %{colorFormat} geselecteerd als Kleurindeling. Andere formaten dan NV12 en P010 worden vaak gebruikt voor opname en kunnen een hoog CPU-gebruik met zich meebrengen of worden niet ondersteund door het streamingplatform. Ga naar Instellingen -> Geavanceerd -> Video om te bekijken.",
   "Selective Recording Enabled": "Selectieve opname ingeschakeld",
   "Selective Recording only works with horizontal sources and disables editing the vertical output scene. Please disable Selective Recording to go live with Dual Output.": "Selectieve opname werkt alleen met horizontale bronnen en schakelt het bewerken van de verticale uitvoerscène uit. Schakel selectieve opname uit om te kunnen werken met Dual Output.",
@@ -306,5 +306,5 @@
   "AI Highlighter is enabled. Recording will start when stream starts.": "AI-markeerstift is aan. De opname begint zodra de stream start.",
   "Connection Failed": "Verbinding mislukt",
   "Upgrade to Ultra to allow more than two outputs": "Upgrade naar Ultra om meer dan twee outputs te kunnen gebruiken.",
-  "Multichat": "Multichat"
+  "Multichat": "Meerdere chats"
 }
