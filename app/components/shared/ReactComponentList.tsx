@@ -173,14 +173,6 @@ export class NotificationsAndNews extends ReactComponent {}
 
 @Component({
   props: {
-    name: { default: 'ObsSettings' },
-    componentProps: { default: () => ({ page: 'General' }) },
-  },
-})
-export class ObsSettings extends ReactComponent {}
-
-@Component({
-  props: {
     name: { default: 'PerformanceMetrics' },
     componentProps: { default: () => ({ mode: 'limited' }) },
   },

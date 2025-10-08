@@ -15,7 +15,6 @@ import { createRoot } from './root/ReactRoot';
 import SourceProperties from './windows/SourceProperties';
 import RenameSource from './windows/RenameSource';
 import SharedComponentsLibrary from './windows/sharedComponentsLibrary/SharedComponentsLibrary';
-import { ObsSettings } from './windows/settings/ObsSettings';
 import ManageSceneCollections from './windows/ManageSceneCollections';
 import { WidgetWindow } from './widgets/common/WidgetWindow';
 import SafeMode from './windows/SafeMode';
@@ -69,7 +68,6 @@ export const components = {
   SourceProperties: createRoot(SourceProperties),
   SharedComponentsLibrary: createRoot(SharedComponentsLibrary),
   RenameSource,
-  ObsSettings: createRoot(ObsSettings),
   WidgetWindow: createRoot(WidgetWindow),
   CustomCodeWindow: createRoot(CustomCodeWindow),
   SafeMode,
