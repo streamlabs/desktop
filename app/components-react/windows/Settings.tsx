@@ -213,7 +213,7 @@ export default function Settings() {
         </Scrollable>
       </Menu>
       <Scrollable className={styles.settingsContainer}>
-        <div ref={settingsContent}>
+        <div ref={settingsContent} className={styles.settingsContent}>
           <SearchablePages
             onSearchCompleted={handleSearchCompleted}
             pages={categories}

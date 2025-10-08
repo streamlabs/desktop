@@ -259,5 +259,3 @@ function UninstallVirtualWebcam() {
     </ObsSettingsSection>
   );
 }
-
-VirtualWebcamSettings.page = 'Virtual Webcam';

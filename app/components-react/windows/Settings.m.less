@@ -1,5 +1,6 @@
 @import '../../styles/index';
 @import '../../styles/badges';
+@import '../../styles/mixins';
 
 .settings {
   & /deep/ h2 {
@@ -110,5 +111,19 @@
         line-height: 16px;
       }
     }
+  }
+}
+
+.settings-content {
+  :global(.ant-checkbox-wrapper) {
+    margin-bottom: 8px;
+  }
+
+  :global(.actions) {
+    .flex();
+    .flex--space-between();
+    .margin-top();
+
+    flex-wrap: wrap;
   }
 }

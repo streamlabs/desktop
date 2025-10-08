@@ -15,12 +15,10 @@ export function GeneralSettings() {
     <div>
       <LanguageSettings />
       <ExtraSettings />
-      <ObsGenericSettingsForm />
+      <ObsGenericSettingsForm page="General" />
     </div>
   );
 }
-
-GeneralSettings.page = 'General';
 
 function LanguageSettings() {
   const i18nService = I18nService.instance as I18nService;
