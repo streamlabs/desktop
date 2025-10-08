@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import debounce from 'lodash/debounce';
 import remote from '@electron/remote';
 import { MenuInfo } from 'rc-menu/lib/interface';
@@ -80,14 +80,15 @@ export default function Settings() {
 
   const currentTab = useRealmObject(NavigationService.state).currentSettingsTab;
 
-  const { isPrime, isLoggedIn, username, platform, categories, showDismissable } = useVuex(() => ({
+  const { isPrime, isLoggedIn, username, platform, showDismissable } = useVuex(() => ({
     isPrime: UserService.views.isPrime,
     isLoggedIn: UserService.views.isLoggedIn,
     username: UserService.views.username,
     platform: UserService.views.platform?.type,
-    categories: SettingsService.views.categories,
     showDismissable: (value: EDismissable) => DismissablesService.views.shouldShow(value),
   }));
+
+  const categories = useMemo(() => SettingsService.getCategories(), [isPrime]);
 
   useEffect(() => {
     // Make sure we have the latest settings
@@ -105,6 +106,7 @@ export default function Settings() {
   }
 
   function handleMenuNavigation(event: MenuInfo) {
+    console.log(event);
     setCurrentTab(event.key as TCategoryName);
   }
 
@@ -143,10 +145,10 @@ export default function Settings() {
   const [searchResultPages, setSearchResultPages] = useState<TCategoryName[]>([]);
 
   function handleSearchCompleted(foundPages: TCategoryName[]) {
-    if (!isPrime && includeUltra(searchStr)) {
-      setSearchResultPages([...foundPages, ESettingsCategory.Ultra]);
-    } else {
+    if (includeUltra(searchStr)) {
       setSearchResultPages(foundPages);
+    } else {
+      setSearchResultPages(foundPages.filter(page => page !== 'Ultra'));
     }
     // if there are not search results for the current page than switch to the first found page
     if (foundPages.length && !foundPages.includes(currentTab)) {
@@ -167,6 +169,7 @@ export default function Settings() {
   }
 
   function includeUltra(str: string) {
+    if (isPrime) return false;
     if (str.length < 6 && str.toLowerCase().startsWith('u')) {
       for (let i = 0; i < 'ultra'.length + 1; i++) {
         if ('ultra'.slice(0, i) === str) {
@@ -180,17 +183,17 @@ export default function Settings() {
   const SettingsContent = SETTINGS_CONFIG[currentTab].component;
 
   return (
-    <ModalLayout>
-      <Menu mode="vertical" selectedKeys={[currentTab]} onClick={handleMenuNavigation}>
-        <Scrollable>
-          <TextInput
-            prefix={<i className="icon-search" />}
-            placeholder={$t('Search')}
-            value={searchStr}
-            onChange={onSearchInput}
-            uncontrolled={false}
-            nowrap
-          />
+    <ModalLayout bodyClassName={styles.settings}>
+      <Scrollable snapToWindowEdge style={{ height: '100%' }} className={styles.settingsNav}>
+        <TextInput
+          prefix={<i className="icon-search" />}
+          placeholder={$t('Search')}
+          value={searchStr}
+          onChange={onSearchInput}
+          uncontrolled={false}
+          nowrap
+        />
+        <Menu mode="vertical" selectedKeys={[currentTab]} onClick={handleMenuNavigation}>
           {categories.map(cat => {
             const config = SETTINGS_CONFIG[cat];
             return (
@@ -204,14 +207,14 @@ export default function Settings() {
               </Menu.Item>
             );
           })}
-          <div className={styles.settingsAuth} onClick={handleAuth}>
-            <i className={isLoggedIn ? 'fas fa-sign-out-alt' : 'fas fa-sign-in-alt'} />
-            <strong>{isLoggedIn ? $t('Log Out') : $t('Log In')}</strong>
-            {isLoggedIn && platform && <PlatformLogo platform={platform} size="small" />}
-            {isLoggedIn && <span>{username}</span>}
-          </div>
-        </Scrollable>
-      </Menu>
+        </Menu>
+        <div className={styles.settingsAuth} onClick={handleAuth}>
+          <i className={isLoggedIn ? 'fas fa-sign-out-alt' : 'fas fa-sign-in-alt'} />
+          <strong>{isLoggedIn ? $t('Log Out') : $t('Log In')}</strong>
+          {isLoggedIn && platform && <PlatformLogo platform={platform} size="small" />}
+          {isLoggedIn && <span>{username}</span>}
+        </div>
+      </Scrollable>
       <Scrollable className={styles.settingsContainer}>
         <div ref={settingsContent} className={styles.settingsContent}>
           <SearchablePages

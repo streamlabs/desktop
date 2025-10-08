@@ -97,5 +97,5 @@ export const components = {
   Loader,
   StartStreamingButton,
   TestWidgets,
-  Settings,
+  Settings: createRoot(Settings),
 };

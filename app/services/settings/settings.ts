@@ -18,10 +18,9 @@ import { AppService } from 'services/app';
 import { $t } from 'services/i18n';
 import { encoderFieldsMap, obsEncoderToEncoderFamily } from './output';
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
-import { PlatformAppsService } from 'services/platform-apps';
 import { EDeviceType, HardwareService } from 'services/hardware';
 import { StreamingService } from 'services/streaming';
-import { byOS, getOS, OS } from 'util/operating-systems';
+import { byOS, OS } from 'util/operating-systems';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import { SceneCollectionsService } from 'services/scene-collections';
 import { NavigationService } from 'services/navigation';
@@ -30,6 +29,7 @@ import * as remote from '@electron/remote';
 import fs from 'fs';
 import path from 'path';
 import { Services } from 'components-react/service-provider';
+import { UserService } from 'app-services';
 
 export enum ESettingsCategory {
   AI = 'AI',
@@ -282,52 +282,6 @@ class SettingsViews extends ViewHandler<ISettingsServiceState> {
   get advancedSettingEnabled(): boolean {
     return Utils.isDevMode() || this.appState.argv.includes('--adv-settings');
   }
-
-  get categories(): ESettingsCategory[] {
-    let categories: ESettingsCategory[] = obs.NodeObs.OBS_settings_getListCategories();
-    // insert 'Multistreaming' after 'General'
-    categories.splice(1, 0, ESettingsCategory.Multistreaming);
-    // Deleting 'Virtual Webcam' category to add it below to position properly
-    categories = categories.filter(category => category !== ESettingsCategory.VirtualWebcam);
-    categories = categories.concat([
-      ESettingsCategory.SceneCollections,
-      ESettingsCategory.Notifications,
-      ESettingsCategory.Appearance,
-      ESettingsCategory.Mobile,
-      ESettingsCategory.VirtualWebcam,
-    ]);
-
-    // Platform-specific categories
-    byOS({
-      [OS.Mac]: () => {},
-      [OS.Windows]: () => {
-        categories.push(ESettingsCategory.GameOverlay);
-      },
-    });
-
-    if (this.advancedSettingEnabled || this.platformAppsState.devMode) {
-      categories = categories.concat([ESettingsCategory.Developer, ESettingsCategory.Experimental]);
-    }
-
-    if (this.platformAppsState.loadedApps.filter(app => !app.unpacked).length > 0) {
-      categories.push(ESettingsCategory.InstalledApps);
-    }
-
-    categories.push(ESettingsCategory.GetSupport);
-
-    // TODO: Lock behind admin?
-    categories.push(ESettingsCategory.AI);
-
-    // dual output mode returns additional categories for each context
-    // so hide these from the settings list
-    categories = categories.filter(
-      category => !category.toLowerCase().startsWith('stream') || category === 'Stream',
-    );
-
-    categories.push(ESettingsCategory.Ultra);
-
-    return categories;
-  }
 }
 
 export class SettingsService extends StatefulService<ISettingsServiceState> {
@@ -337,12 +291,12 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   @Inject() private audioService: AudioService;
   @Inject() private windowsService: WindowsService;
   @Inject() private appService: AppService;
-  @Inject() private platformAppsService: PlatformAppsService;
   @Inject() private streamingService: StreamingService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
   @Inject() private sceneCollectionsService: SceneCollectionsService;
   @Inject() private hardwareService: HardwareService;
   @Inject() private navigationService: NavigationService;
+  @Inject() private userService: UserService;
 
   @Inject()
   private videoEncodingOptimizationService: VideoEncodingOptimizationService;
@@ -426,6 +380,54 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     };
   }
 
+  getCategories(): ESettingsCategory[] {
+    let categories: ESettingsCategory[] = obs.NodeObs.OBS_settings_getListCategories();
+    // insert 'Multistreaming' after 'General'
+    categories.splice(1, 0, ESettingsCategory.Multistreaming);
+    // Deleting 'Virtual Webcam' category to add it below to position properly
+    categories = categories.filter(category => category !== ESettingsCategory.VirtualWebcam);
+    categories = categories.concat([
+      ESettingsCategory.SceneCollections,
+      ESettingsCategory.Notifications,
+      ESettingsCategory.Appearance,
+      ESettingsCategory.Mobile,
+      ESettingsCategory.VirtualWebcam,
+    ]);
+
+    // Platform-specific categories
+    byOS({
+      [OS.Mac]: () => {},
+      [OS.Windows]: () => {
+        categories.push(ESettingsCategory.GameOverlay);
+      },
+    });
+
+    if (this.views.advancedSettingEnabled || this.views.platformAppsState.devMode) {
+      categories = categories.concat([ESettingsCategory.Developer, ESettingsCategory.Experimental]);
+    }
+
+    if (this.views.platformAppsState.loadedApps.filter(app => !app.unpacked).length > 0) {
+      categories.push(ESettingsCategory.InstalledApps);
+    }
+
+    categories.push(ESettingsCategory.GetSupport);
+
+    // TODO: Lock behind admin?
+    categories.push(ESettingsCategory.AI);
+
+    // dual output mode returns additional categories for each context
+    // so hide these from the settings list
+    categories = categories.filter(
+      category => !category.toLowerCase().startsWith('stream') || category === 'Stream',
+    );
+
+    if (!this.userService.views.isPrime) {
+      categories.push(ESettingsCategory.Ultra);
+    }
+
+    return categories;
+  }
+
   /**
    * Can be called externally to ensure that you have the absolute latest settings
    * fetched from OBS directly.
@@ -433,7 +435,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   loadSettingsIntoStore() {
     // load configuration from nodeObs to state
     const settingsFormData = {} as ISettingsServiceState;
-    this.views.categories.forEach((categoryName: TCategoryName) => {
+    this.getCategories().forEach((categoryName: TCategoryName) => {
       settingsFormData[categoryName] = this.fetchSettingsFromObs(categoryName);
     });
 

@@ -20,7 +20,7 @@ export default function SearchablePages(p: React.PropsWithChildren<ISearchablePa
 
   // Search pages when receiving a search string input
   useEffect(() => {
-    if (loading || p.searchStr === '') return;
+    if (loading || p.searchStr === '' || p.searchStr.length < 3) return;
     async function searchHandler() {
       // build cache of info on pages if it doesn't exist
       if (!pagesInfo.current) await scanPages();
