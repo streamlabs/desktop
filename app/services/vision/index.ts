@@ -410,7 +410,7 @@ export class VisionService extends Service {
 
     const activeProcess = this.state.availableProcesses.find(p => p.pid === pid);
     console.log('Activating process', pid, 'with game hint', gameHint, 'process=', activeProcess);
-    if (activeProcess.type === 'capture_device') {
+    if (activeProcess.type === 'capture_device' || activeProcess.executable_name === 'vlc.exe') {
       this.writeState({ selectedProcessId: pid, selectedGame: gameHint });
     } else {
       this.writeState({ selectedProcessId: pid });
