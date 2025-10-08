@@ -54,7 +54,9 @@ export default function Display(props: DisplayProps) {
     if (v.hideDisplay) {
       destroyDisplay();
     } else {
-      createDisplay();
+      if (!obsDisplay.current) {
+        createDisplay();
+      }
       if (obsDisplay.current) {
         obsDisplay.current.refreshOutputRegion();
       }
@@ -92,7 +94,9 @@ export default function Display(props: DisplayProps) {
 
   function updateDisplay() {
     destroyDisplay();
-    createDisplay();
+    if (!v.hideDisplay) {
+      createDisplay();
+    }
 
     return function cleanup() {
       destroyDisplay();

@@ -332,12 +332,12 @@ export class RestreamService extends StatefulService<IRestreamState> {
         isDualOutputMode
           ? {
               platform: 'relay' as 'relay',
-              streamKey: `${dest.url}${dest.streamKey}`,
+              streamKey: `${this.formatUrl(dest.url)}${dest.streamKey}`,
               mode: this.getMode(dest.display),
             }
           : {
               platform: 'relay' as 'relay',
-              streamKey: `${dest.url}${dest.streamKey}`,
+              streamKey: `${this.formatUrl(dest.url)}${dest.streamKey}`,
             },
       ),
     ];
@@ -393,6 +393,10 @@ export class RestreamService extends StatefulService<IRestreamState> {
       // in single output mode, create all targets
       await this.createTargets(newTargets);
     }
+  }
+
+  formatUrl(url: string): string {
+    return url.replace(/^\s+|\/+$/g, '') + '/';
   }
 
   checkStatus(): Promise<boolean> {

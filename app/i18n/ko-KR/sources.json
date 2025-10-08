@@ -434,5 +434,10 @@
   "Virtual camera output type": "가상 카메라 출력 유형",
   "Unmute your Microphone source in Mixer": "믹서에서 마이크 소스 음소거 해제",
   "Your Microphone is unmuted but has no signal": "마이크 음소거가 해제되었지만 신호가 없습니다",
+  "Victory & Defeat": "Victory & Defeat",
+  "Dynamic game animation": "Dynamic game animation",
+  "Dynamic real time animation based on your game & widget events.  Streamlabs Vision powered events include:": "Dynamic real time animation based on your game & widget events.  Streamlabs Vision powered events include:",
+  "Kills & Eliminations": "Kills & Eliminations",
+  "Health changes": "Health changes",
   "Search...": "검색..."
 }

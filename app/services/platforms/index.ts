@@ -151,6 +151,11 @@ export enum EPlatformCallResult {
    * The user needs to re-login to update Kick scope.
    */
   KickScopeOutdated,
+
+  /**
+   * Token expired
+   */
+  TokenExpired,
 }
 
 export type TStartStreamOptions =

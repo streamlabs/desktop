@@ -26,6 +26,7 @@ import {
   StreamSettingsService,
   TransitionsService,
   VideoSettingsService,
+  VisionService,
 } from 'app-services';
 import * as remote from '@electron/remote';
 import { AppService } from 'services/app';
@@ -33,6 +34,7 @@ import fs from 'fs';
 import path from 'path';
 import { platformList, TPlatform } from './platforms';
 import { TDisplayType } from './settings-v2';
+import { getWmiClass } from 'util/wmi';
 
 interface IStreamDiagnosticInfo {
   startTime: number;
@@ -161,6 +163,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
   @Inject() dualOutputService: DualOutputService;
   @Inject() streamSettingsService: StreamSettingsService;
   @Inject() videoSettingsService: VideoSettingsService;
+  @Inject() visionService: VisionService;
 
   get cacheDir() {
     return this.appService.appDataDirectory;
@@ -288,6 +291,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     const network = this.generateNetworkSection();
     const crashes = this.generateCrashesSection();
     const dualOutput = this.generateDualOutputSection();
+    const vision = this.generateVisionSection();
 
     // Problems section needs to be generated last, because it relies on the
     // problems array that all other sections add to.
@@ -309,6 +313,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
       dualOutput,
       scenes,
       transitions,
+      vision,
     ];
 
     return report.join('');
@@ -577,15 +582,15 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
 
       const fpsObj = { Type: setting.fpsType.toString() };
 
-      if (fpsObj.Type === 'Common FPS Values') {
+      if (fpsObj.Type === 'Common') {
         // TODO: index
         // @ts-ignore
         fpsObj['Value'] = setting.fpsCom;
-      } else if (fpsObj.Type === 'Integer FPS Value') {
+      } else if (fpsObj.Type === 'Integer') {
         // TODO: index
         // @ts-ignore
         fpsObj['Value'] = setting.fpsInt;
-      } else if (fpsObj.Type === 'Fractional FPS Value') {
+      } else if (fpsObj.Type === 'Fractional') {
         // TODO: index
         // @ts-ignore
         fpsObj['Numerator'] = setting.fpsNum;
@@ -662,11 +667,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     let isAdmin: string | boolean = 'N/A';
 
     if (getOS() === OS.Windows) {
-      const gpuInfo = this.getWmiClass('Win32_VideoController', [
-        'Name',
-        'DriverVersion',
-        'DriverDate',
-      ]);
+      const gpuInfo = getWmiClass('Win32_VideoController', ['Name', 'DriverVersion', 'DriverDate']);
 
       gpuSection = {};
 
@@ -1138,54 +1139,25 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     });
   }
 
+  private generateVisionSection() {
+    return new Section('Vision', {
+      'Installed Version': this.visionService.state.installedVersion,
+      'Is Running': this.visionService.state.isRunning,
+      PID: this.visionService.state.pid,
+      Port: this.visionService.state.port,
+      'Update Failed': this.visionService.state.hasFailedToUpdate,
+      'Available Processes': this.visionService.state.availableProcesses,
+      'Selected Process': this.visionService.state.selectedProcessId,
+      'Available Games': this.visionService.state.availableGames,
+      'Selected Game': this.visionService.state.selectedGame,
+    });
+  }
+
   private generateProblemsSection() {
     return new Section(
       'Potential Issues',
       this.problems.length ? this.problems : 'No issues detected',
     );
-  }
-
-  private getWmiClass(wmiClass: string, select: string[]): object {
-    try {
-      const result = JSON.parse(
-        cp
-          .execSync(
-            `Powershell -command "Get-CimInstance -ClassName ${wmiClass} | Select-Object ${select.join(
-              ', ',
-            )} | ConvertTo-JSON"`,
-          )
-          .toString(),
-      );
-
-      if (Array.isArray(result)) {
-        return result.map(o => this.convertWmiValues(o));
-      } else {
-        return this.convertWmiValues(result);
-      }
-    } catch (e: unknown) {
-      console.error(`Error fetching WMI class ${wmiClass} for diagnostics`, e);
-      return [];
-    }
-  }
-
-  private convertWmiValues(wmiObject: object) {
-    Object.keys(wmiObject).forEach(key => {
-      // TODO: index
-      // @ts-ignore
-      const val = wmiObject[key];
-
-      if (typeof val === 'string') {
-        const match = val.match(/\/Date\((\d+)\)/);
-
-        if (match) {
-          // TODO: index
-          // @ts-ignore
-          wmiObject[key] = new Date(parseInt(match[1], 10)).toString();
-        }
-      }
-    });
-
-    return wmiObject;
   }
 
   private isRunningAsAdmin() {

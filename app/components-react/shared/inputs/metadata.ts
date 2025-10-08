@@ -1,5 +1,6 @@
 import { Rule } from 'antd/lib/form';
 import { TInputValue } from './FormFactory';
+import { IListOption } from './ListInput';
 
 /**
  * Metadata generator for inputs
@@ -32,6 +33,10 @@ export const metadata = {
     tipFormatter: (ms: number) => `${ms / 1000}s`,
     ...options,
     type: 'slider',
+  }),
+  file: (options: IFileMetadata) => ({
+    ...options,
+    type: 'file',
   }),
 };
 
@@ -89,7 +94,14 @@ interface IAnyMetadata extends IBaseMetadata {
   value?: any;
 }
 
+interface IFileMetadata extends IBaseMetadata {
+  directory?: boolean;
+  filters?: Electron.FileFilter[];
+  save?: boolean;
+  buttonContent?: React.ReactNode;
+}
+
 export interface IListMetadata<T = string> extends IBaseMetadata {
   value?: T;
-  options?: { label: string; value: T }[];
+  options?: IListOption<T>[];
 }

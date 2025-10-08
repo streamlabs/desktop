@@ -108,6 +108,8 @@ export { MagicLinkService } from 'services/magic-link';
 export { GrowService } from 'services/grow/grow';
 export { GuestCamService } from 'services/guest-cam';
 export { DualOutputService } from 'services/dual-output';
+export { VisionService } from 'services/vision';
+export { SseService } from 'services/server-sent-events';
 
 // WIDGETS
 export { WidgetSource, WidgetsService } from './services/widgets';
@@ -123,7 +125,6 @@ export { DonationTickerService } from 'services/widgets/settings/donation-ticker
 export { CreditsService } from 'services/widgets/settings/credits';
 export { EventListService } from 'services/widgets/settings/event-list';
 export { TipJarService } from 'services/widgets/settings/tip-jar';
-export { SponsorBannerService } from 'services/widgets/settings/sponsor-banner';
 export { SubGoalService } from 'services/widgets/settings/sub-goal';
 export { MediaShareService } from 'services/widgets/settings/media-share';
 export { AlertBoxService } from 'services/widgets/settings/alert-box';
@@ -213,7 +214,10 @@ import { TwitchStudioImporterService } from 'services/ts-importer';
 import { RemoteControlService } from 'services/api/remote-control-api';
 import { UrlService } from 'services/hosts';
 import { KickService } from 'services/platforms/kick';
+import { SseService } from './services/server-sent-events';
+import { VisionService } from 'services/vision';
 import { SignalsService } from 'services/signals-manager';
+import { TroubleshooterService } from 'services/troubleshooter';
 
 export const AppServices = {
   AppService,
@@ -297,4 +301,7 @@ export const AppServices = {
   RemoteControlService,
   UrlService,
   VirtualWebcamService,
+  SseService,
+  VisionService,
+  TroubleshooterService,
 };

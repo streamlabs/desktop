@@ -94,10 +94,7 @@
               globalSearchStr: scanning ? '' : searchStr,
             }"
           />
-          <developer-settings v-if="page === 'Developer'" />
           <installed-apps v-if="page === 'Installed Apps'" />
-          <overlay-settings v-if="page === 'Scene Collections'" />
-          <notifications-settings v-if="page === 'Notifications'" />
           <ObsSettings v-if="shouldShowReactPage" :componentProps="{ page: page }" />
           <GenericFormGroups
             v-if="shouldShowVuePage"

@@ -33,7 +33,10 @@ export type TInputType =
   | 'image'
   | 'time'
   | 'file'
-  | 'checkboxGroup';
+  | 'checkboxGroup'
+  | 'imagepicker'
+  | 'animation'
+  | 'duration';
 
 export type TInputLayout = 'horizontal' | 'vertical' | 'inline';
 

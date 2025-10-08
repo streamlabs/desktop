@@ -203,7 +203,6 @@ export class AppService extends StatefulService<IAppState> {
     window.setTimeout(async () => {
       obs.NodeObs.InitShutdownSequence();
       this.streamAvatarService.stopAvatarProcess();
-      this.streamAvatarService.stopVisionProcess();
       this.crashReporterService.beginShutdown();
       this.shutdownStarted.next();
       this.keyListenerService.shutdown();

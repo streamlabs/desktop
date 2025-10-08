@@ -203,11 +203,9 @@ export default function BrowseOverlays(p: {
       if (!trustedHosts.includes(host)) {
         reject(new Error(`Ignoring overlay install from untrusted host: ${host}`));
       }
-
       if (downloading) {
         reject(new Error('Already installing a theme'));
       }
-
       // Handle exclusive theme that requires enabling multistream first
       // User should be eligible to enable restream for this behavior to work.
       // If restream is already set up, then just install as normal.

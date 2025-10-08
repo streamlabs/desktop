@@ -43,6 +43,7 @@ import {
   Blank,
   Main,
   MultistreamChatInfo,
+  MarketingModal,
 } from 'components/shared/ReactComponentList';
 
 import SourcePropertiesDeprecated from 'components/windows/SourceProperties.vue';
@@ -64,7 +65,6 @@ import StreamBoss from 'components/widgets/StreamBoss.vue';
 import Credits from 'components/widgets/Credits.vue';
 import EventList from 'components/widgets/EventList.vue';
 import TipJar from 'components/widgets/TipJar.vue';
-import SponsorBanner from 'components/widgets/SponsorBanner.vue';
 import MediaShare from 'components/widgets/MediaShare';
 import AlertBox from 'components/widgets/AlertBox.vue';
 import SpinWheel from 'components/widgets/SpinWheel.vue';
@@ -125,7 +125,6 @@ export function getComponents() {
     Credits,
     EventList,
     TipJar,
-    SponsorBanner,
     StreamBoss,
     SubGoal,
     MediaShare,
@@ -143,6 +142,7 @@ export function getComponents() {
     WidgetWindow,
     CustomCodeWindow,
     SourceShowcase,
+    MarketingModal,
   };
 }
 
