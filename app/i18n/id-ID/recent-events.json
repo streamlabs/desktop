@@ -81,6 +81,6 @@
   "has gifted a sub to": "telah menghadiahkan langganan kepada",
   "has resubscribed for %{streak} months in a row! (%{months} total)": "telah berlangganan ulang untuk %{streak} bulan berturut-turut! (total %{months})",
   "has resubscribed for %{months} months": "telah berlangganan ulang untuk %{months} bulan",
-  "Disable Chat Box Notifications": "Disable Chat Box Notifications",
-  "Enable Chat Box Notifications": "Enable Chat Box Notifications"
+  "Disable Chat Box Notifications": "Nonaktifkan Pemberitahuan Kotak Obrolan",
+  "Enable Chat Box Notifications": "Aktifkan Pemberitahuan Kotak Obrolan"
 }
