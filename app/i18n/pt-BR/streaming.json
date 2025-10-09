@@ -306,5 +306,8 @@
   "AI Highlighter is enabled. Recording will start when stream starts.": "O AI Highlighter está habilitado. A gravação começará quando a transmissão começar.",
   "Connection Failed": "Falha na conexão",
   "Upgrade to Ultra to allow more than two outputs": "Atualize para o Ultra para permitir mais de duas saídas",
-  "Multichat": "Multichat"
+  "Multichat": "Multichat",
+  "Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays": "Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays",
+  "Disable Twitch dual stream to add another platform": "Disable Twitch dual stream to add another platform",
+  "Dual streaming to Twitch only available with Twitch as the only platform": "Dual streaming to Twitch only available with Twitch as the only platform"
 }
