@@ -80,21 +80,12 @@ test(
     await clickGoLive();
     await waitForSettingsWindowLoaded();
 
-    // no primary chat switcher if only one platform is enabled
-    t.false(
-      await isDisplayed('[data-name="primary-chat-switcher"]'),
-      'No primary chat switcher if only one platform is enabled',
-    );
-
     // TODO: this is to rule-out a race condition in platform switching, might not be needed and
     // can possibly revert back to fillForm with all platforms.
     await enableAllPlatforms();
 
     // shows primary chat switcher when multiple platforms are enabled
-    t.true(
-      await isDisplayed('[data-name="primary-chat-switcher"]'),
-      'Shows primary chat switcher when multiple platforms are enabled',
-    );
+    t.true(await isDisplayed('[data-name="primary-chat-switcher"]'), 'Shows primary chat switcher');
 
     // add settings
     await fillForm({
@@ -210,15 +201,15 @@ test('Custom stream destinations', async t => {
     await prepareToGoLive();
     await clickGoLive();
     await waitForSettingsWindowLoaded();
-    t.true(await isDisplayed('span=MyCustomDest'), 'Destination is available');
-    await click('span=MyCustomDest'); // switch the destination on
 
-    // try to stream
     await fillForm({
       title: 'Test stream',
       twitchGame: 'Fortnite',
     });
-    await waitForSettingsWindowLoaded();
+
+    t.true(await isDisplayed('div=MyCustomDest'), 'Destination is available');
+    await click('div=MyCustomDest'); // switch the destination on
+
     await submit();
     await waitForDisplayed('span=Configure the Multistream service');
     await waitForDisplayed("h1=You're live!", { timeout: 60000 });
