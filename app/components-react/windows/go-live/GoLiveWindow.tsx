@@ -106,6 +106,7 @@ function ModalFooter() {
         setIsFetchingStreamStatus(false);
 
         // Prompt to confirm stream switch if the stream exists
+        // TODO: unify with start streaming button prompt
         if (isLive) {
           promptAction({
             title: $t('Another stream detected'),

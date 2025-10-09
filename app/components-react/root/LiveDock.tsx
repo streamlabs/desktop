@@ -221,19 +221,19 @@ class LiveDockController {
 
   popOut() {
     this.platformAppsService.popOutAppPage(this.store.selectedChat, this.pageSlot);
-    this.store.setState((s: any) => {
+    this.store.setState(s => {
       s.selectedChat = 'default';
     });
   }
 
   setCollapsed(livedockCollapsed: boolean) {
-    this.store.setState((s: any) => {
+    this.store.setState(s => {
       s.canAnimate = true;
     });
     this.windowsService.actions.updateStyleBlockers('main', true);
     this.customizationService.actions.setSettings({ livedockCollapsed });
     setTimeout(() => {
-      this.store.setState((s: any) => {
+      this.store.setState(s => {
         s.canAnimate = false;
       });
       this.windowsService.actions.updateStyleBlockers('main', false);
@@ -335,7 +335,7 @@ function LiveDock() {
   // Safe getter/setter prevents getting stuck on the chat
   // for an app that was unloaded.
   function setChat(key: string) {
-    ctrl.store.setState((s: any) => {
+    ctrl.store.setState(s => {
       if (!ctrl.chatApps.find(app => app.id === key) && !['default', 'restream'].includes(key)) {
         s.selectedChat = 'default';
         setVisibleChat('default');

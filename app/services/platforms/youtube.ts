@@ -560,6 +560,7 @@ export class YoutubeService
   }
 
   async afterStopStream() {
+    // TODO: Remove if first fix for Stream Shift with auto-start/auto-stop disabled works
     // Confirm that the Stream Shift stream is stopped
     // if (this.streamingService.views.shouldSwitchStreams) {
     //   const broadcasts = await this.fetchLiveBroadcasts();

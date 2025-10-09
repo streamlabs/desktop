@@ -97,7 +97,6 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
 
   return (
     <RadioInput
-      // data-title={p.title}
       nolabel={p?.nolabel}
       label={p?.nolabel ? undefined : p.title}
       name={name}

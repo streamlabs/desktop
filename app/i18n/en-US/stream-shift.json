@@ -10,8 +10,9 @@
   "Stream Shift cannot be used with Dual Output": "Stream Shift cannot be used with Dual Output",
   "Dual Output cannot be used with Stream Shift": "Dual Output cannot be used with Stream Shift",
   "Your stream has been switched to Streamlabs Mobile. Ending the stream on Streamlabs Desktop.": "Your stream has been switched to Streamlabs Mobile. Ending the stream on Streamlabs Desktop.",
-  "Your stream has been successfully switched to Streamlabs Desktop. \n\nEnjoy your stream!": "Your stream has been successfully switched to Streamlabs Desktop. \n\nEnjoy your stream!",
+  "Your stream has been successfully switched to Streamlabs Desktop. Enjoy your stream!": "Your stream has been successfully switched to Streamlabs Desktop. Enjoy your stream!",
   "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source.": "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source.",
+  "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. Dual Output will be disabled since not supported in this mode.": "A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. Dual Output will be disabled since not supported in this mode.",
   "Switch to Streamlabs Desktop": "Switch to Streamlabs Desktop",
   "Upgrade to Ultra to switch streams between devices.": "Upgrade to Ultra to switch streams between devices."
 }

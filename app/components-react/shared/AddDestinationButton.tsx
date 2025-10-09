@@ -108,7 +108,7 @@ export default function AddDestinationButton(p: IAddDestinationButtonProps) {
 function DefaultAddDestinationButton(p: { className?: string; onClick: () => void }) {
   return (
     <Button
-      data-test="default-add-destination"
+      data-name="default-add-destination"
       className={cx(styles.addDestinationBtn, styles.defaultOutputBtn, p.className)}
       onClick={p.onClick}
       block
@@ -122,7 +122,7 @@ function DefaultAddDestinationButton(p: { className?: string; onClick: () => voi
 function SmallAddDestinationButton(p: { className?: string; onClick: () => void }) {
   return (
     <Button
-      data-test="default-add-destination"
+      data-name="default-add-destination"
       className={cx(styles.addDestinationBtn, styles.smallBtn, p.className)}
       onClick={p.onClick}
       block
@@ -140,7 +140,7 @@ function UltraAddDestinationButton(p: {
 }) {
   return (
     <ButtonHighlighted
-      data-test="ultra-add-destination"
+      data-name="ultra-add-destination"
       faded
       className={cx(
         styles.addDestinationBtn,

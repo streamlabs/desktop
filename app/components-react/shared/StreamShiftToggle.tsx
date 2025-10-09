@@ -23,7 +23,7 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
     if (!isPrime && isStreamShiftMode) {
       setStreamShift(false);
     }
-  }, [isPrime, isStreamShiftMode, setStreamShift]);
+  }, [isPrime, isStreamShiftMode]);
 
   const label = $t('Stream Shift');
 
