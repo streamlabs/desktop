@@ -306,5 +306,8 @@
   "AI Highlighter is enabled. Recording will start when stream starts.": "AI Highlighter가 활성화되었습니다. 스트리밍이 시작되면 녹화가 시작됩니다.",
   "Connection Failed": "연결 실패",
   "Upgrade to Ultra to allow more than two outputs": "두 개 이상의 출력을 허용하려면 Ultra로 업그레이드하세요",
-  "Multichat": "멀티챗"
+  "Multichat": "멀티챗",
+  "Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays": "Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays",
+  "Disable Twitch dual stream to add another platform": "Disable Twitch dual stream to add another platform",
+  "Dual streaming to Twitch only available with Twitch as the only platform": "Dual streaming to Twitch only available with Twitch as the only platform"
 }
