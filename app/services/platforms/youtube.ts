@@ -331,6 +331,7 @@ export class YoutubeService
 
   async setupStreamShiftStream(goLiveSettings: IGoLiveSettings) {
     const settings = goLiveSettings?.streamShiftSettings;
+    console.log('YouTube Stream Shift settings ', settings);
 
     if (settings && settings.broadcast_id !== null && !settings.is_live) {
       console.error('Stream Shift Error: YouTube is not live');
@@ -343,6 +344,8 @@ export class YoutubeService
 
       // Use the last broadcast in the list, which should be the most recent one
       let broadcast = liveBroadcasts?.[liveBroadcasts.length - 1];
+      console.log('YouTube fetched ', liveBroadcasts?.length, ' active broadcasts');
+      console.log('YouTube fetched active broadcast', broadcast);
 
       // Try to find an upcoming broadcast if there are no active broadcasts
       if (!broadcast) {
@@ -353,6 +356,8 @@ export class YoutubeService
           ),
         );
         const upcomingBroadcasts = await this.fetchBroadcastsByStatus('upcoming');
+        console.log('YouTube fetched ', upcomingBroadcasts?.length, ' upcoming broadcasts');
+        console.log('YouTube fetched upcoming broadcast', broadcast);
         broadcast = upcomingBroadcasts?.[upcomingBroadcasts.length - 1];
       }
 
@@ -364,12 +369,14 @@ export class YoutubeService
           title: settings?.stream_title ?? ytSettings.title,
           description: ytSettings?.description ?? '',
         });
+        console.log('YouTube created broadcast', broadcast);
       }
 
       // Validate stream binding to broadcast
       if (broadcast.contentDetails.boundStreamId) {
         const liveStream = await this.fetchLiveStream(broadcast.contentDetails.boundStreamId);
         console.debug('Bound stream for YouTube broadcast: ', !!liveStream);
+        console.log('YouTube found stream', liveStream, ' bound to broadcast', broadcast.id);
         const streamKey = liveStream.cdn.ingestionInfo.streamName;
         this.SET_STREAM_KEY(streamKey);
       } else {
@@ -377,12 +384,21 @@ export class YoutubeService
         const liveStream = await this.createLiveStream(broadcast.snippet.title);
         await this.bindStreamToBroadcast(broadcast.id, liveStream.id);
 
+        console.log(
+          'YouTube created stream',
+          liveStream,
+          ' and bound it to broadcast',
+          broadcast.id,
+        );
+
         const streamKey = liveStream.cdn.ingestionInfo.streamName;
         this.SET_STREAM_KEY(streamKey);
       }
 
       const video = await this.fetchVideo(broadcast.id);
       this.SET_STREAM_ID(broadcast.contentDetails.boundStreamId);
+
+      console.log('YouTube fetched video', video, ' for broadcast', broadcast.id);
 
       const title = settings?.stream_title ?? broadcast.snippet.title;
 
