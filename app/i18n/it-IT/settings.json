@@ -149,7 +149,7 @@
   "An error has occured while uninstalling the virtual camera": "Si è verificato un problema durante la disinstallazione della videocamera virtuale.",
   "Streamlabs Desktop cannot install the virtual camera if it's not in Applications. Please move Streamlabs Desktop to the Applications directory.": "Streamlabs Desktop non può installare la videocamera virtuale se non è presente in Applicazioni. Sposta Streamlabs Desktop nella cartella Applicazioni.",
   "The installation of the virtual camera will complete after a system reboot.": "L’installazione della videocamera virtuale terminerà dopo che il sistema verrà riavviato.",
-  "Streamlabs Virtual Webcam feature requires macOS 13 or later.": "Streamlabs Virtual Webcam feature requires macOS 13 or later.",
+  "Streamlabs Virtual Webcam feature requires macOS 13 or later.": "La funzione Webcam virtuale di Streamlabs richiede macOS 13 o versioni successive.",
   "Output Type": "Tipo di uscita",
   "Output Selection": "Selezione dell’uscita",
   "Output Source": "Fonte di uscita",
@@ -280,8 +280,8 @@
   "Output Resolution": "Risoluzione di uscita",
   "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "Se non riesci ad avviare Dual Output, prova ad aggiornare le impostazioni di streaming in “Usa impostazioni consigliate”",
   "Mobile": "Mobile",
-  "Mobile Streaming": "Mobile Streaming",
-  "Remote Controller": "Remote Controller",
-  "Third Party Connections": "Third Party Connections",
-  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "Stream your phone camera or mobile game on the go with Streamlabs Mobile App."
+  "Mobile Streaming": "Streaming da dispositivi portatili",
+  "Remote Controller": "Controllo remoto",
+  "Third Party Connections": "Connessioni di terze parti",
+  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "Trasmetti in streaming la videocamera del tuo telefono o i tuoi giochi mobili ovunque tu sia con l'app Streamlabs Mobile."
 }

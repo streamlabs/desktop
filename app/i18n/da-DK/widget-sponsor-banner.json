@@ -3,8 +3,7 @@
   "Ad Layout": "Annoncelayout",
   "Placement": "Placering",
   "Image Layout": "Billedlayout",
-  "Image Duration": "Billedvarighed",
-  "Seconds": "Sekunder",
+  "Image Duration (seconds)": "Image Duration (seconds)",
   "Add Image": "Tilføj billede",
   "Widget Hide Duration": "Varighed af widgetskjulning",
   "Widget Show Duration": "Varighed af widgetvisning",
@@ -19,8 +18,10 @@
   "The amount of time the widget will appear.": "Mængden af tid widgetten vises.",
   "These are the animations that are used to show your banner.": "Dette er animationerne, der bruges til at vise dit banner.",
   "Visual Settings": "Visuelle indstillinger",
-  "Image Set ": "Billedsæt ",
+  "Image Set %{number}": "Image Set %{number}",
+  "Placement %{number} Images": "Placement %{number} Images",
   "No Image": "Intet billede",
   "Set up a sponsor banner to be able to edit (add, remove, update) rotating sponsor logos on streamer channel.": "Lav et sponsorbanner for at være i stand til at redigere (tilføje, fjerne, opdatere) roterende sponsorlogoer på streamerkanal.",
-  "Show off rotating media to display your socials, sponsorships, CTAs or just cute animations.": "Kør roterende medier for at vise dine sociale medier, sponsorater, CTAs (opfordringer til handling) eller bare søde animationer."
+  "Show off rotating media to display your socials, sponsorships, CTAs or just cute animations.": "Kør roterende medier for at vise dine sociale medier, sponsorater, CTAs (opfordringer til handling) eller bare søde animationer.",
+  "The duration must be in the format [minutes]:[seconds] (i.e. 02:05)": "The duration must be in the format [minutes]:[seconds] (i.e. 02:05)"
 }

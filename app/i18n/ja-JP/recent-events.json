@@ -81,6 +81,6 @@
   "has gifted a sub to": "がサブを次に贈りました",
   "has resubscribed for %{streak} months in a row! (%{months} total)": "が %{streak} ヵ月連続して再登録しました！（合計 %{months} ヵ月）",
   "has resubscribed for %{months} months": "が %{months} ヵ月間再登録しました",
-  "Disable Chat Box Notifications": "Disable Chat Box Notifications",
-  "Enable Chat Box Notifications": "Enable Chat Box Notifications"
+  "Disable Chat Box Notifications": "チャットボックスの通知を無効にする",
+  "Enable Chat Box Notifications": "チャットボックス通知を有効にする"
 }
