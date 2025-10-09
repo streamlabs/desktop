@@ -129,6 +129,12 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns a list of enabled for streaming platforms
    */
   get enabledPlatforms(): TPlatform[] {
+    // Twitch dual streaming is only available if Twitch is the only enabled platform for performance reasons.
+    // Checking for Twitch dual streaming instead of toggling all other platforms off preserves the enabled platforms state.
+    if (this.isTwitchDualStreaming) {
+      return ['twitch'];
+    }
+
     return this.getEnabledPlatforms(this.settings.platforms);
   }
 
@@ -159,6 +165,13 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    */
   get alwaysShownPlatforms(): TPlatform[] {
     return ['kick'];
+  }
+
+  /**
+   * Primarily used for custom UI handling for Twitch dual stream
+   */
+  get isTwitchDualStreaming() {
+    return this.settings.platforms?.twitch && this.settings.platforms?.twitch.display === 'both';
   }
 
   /**
@@ -340,6 +353,17 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     console.log('verticalHasDestinations', verticalHasDestinations);
 
     return horizontalHasDestinations && verticalHasDestinations;
+  }
+
+  /**
+   * Checks if the vertical stream is the Twitch dual stream vertical target
+   * @remark Twitch dual stream uses only the horizontal stream to go live
+   * because the backend sends both the horizontal and vertical streams in a single request.
+   */
+  get isVerticalTwitchDualStream() {
+    return (
+      this.enabledPlatforms.length === 1 && this.activeDisplayPlatforms.vertical.includes('twitch')
+    );
   }
 
   /**

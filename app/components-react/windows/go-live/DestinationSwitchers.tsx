@@ -13,6 +13,7 @@ import DisplaySelector from 'components-react/shared/DisplaySelector';
 import DestinationSelector from './DestinationSelector';
 import AddDestinationButton from 'components-react/shared/AddDestinationButton';
 import { promptAction } from 'components-react/modals';
+import { Tooltip } from 'antd';
 
 /**
  * Allows enabling/disabling platforms and custom destinations for the stream
@@ -31,6 +32,7 @@ export function DestinationSwitchers() {
     isPrime,
     alwaysEnabledPlatforms,
     alwaysShownPlatforms,
+    isTwitchDualStreaming,
   } = useGoLiveSettings();
 
   // use these references to apply debounce
@@ -82,6 +84,7 @@ export function DestinationSwitchers() {
   };
 
   const disableCustomDestinationSwitchers = shouldDisableCustomDestinationSwitchers();
+  const disablePlatformSwitchers = isDualOutputMode && isTwitchDualStreaming;
 
   const emitSwitch = useDebounce(500, (ind?: number, enabled?: boolean) => {
     if (ind !== undefined && enabled !== undefined) {
@@ -156,6 +159,8 @@ export function DestinationSwitchers() {
           index={ind}
           hideController={showSelector || hidePlatformController}
           showPrompt={alwaysShownPlatforms.includes(platform) && !isPlatformLinked(platform)}
+          switchDisabled={disablePlatformSwitchers && platform !== 'twitch'}
+          showTwitchTooltip={disablePlatformSwitchers}
         />
       ))}
 
@@ -196,6 +201,7 @@ interface IDestinationSwitcherProps {
   switchDisabled?: boolean;
   index: number;
   isDualOutputMode: boolean;
+  showTwitchTooltip?: boolean;
   hideController?: boolean;
   showPrompt?: boolean;
 }
@@ -211,12 +217,23 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
   const containerRef = useRef<HTMLDivElement>(null);
   const platform = typeof p.destination === 'string' ? (p.destination as TPlatform) : null;
   const disabled = p?.switchDisabled || p?.showPrompt;
+  const showTwitchTooltip = p.showTwitchTooltip && platform !== 'twitch';
 
-  const { RestreamService, MagicLinkService, NavigationService, WindowsService } = Services;
+  const {
+    RestreamService,
+    MagicLinkService,
+    NavigationService,
+    WindowsService,
+    UserService,
+  } = Services;
 
   function dualOutputClickHandler(ev: MouseEvent) {
     if (p.showPrompt && platform) {
       renderPrompt();
+      return;
+    }
+
+    if (disabled && UserService.views.isPrime) {
       return;
     }
 
@@ -393,47 +410,55 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
 
       {/* DUAL OUTPUT */}
       {p.isDualOutputMode && (
-        <div
-          ref={containerRef}
-          data-test={platform ? `${platform}-dual-output` : 'destination-dual-output'}
-          className={cx('dual-output-card', styles.dualOutputPlatformSwitcher, {
-            [styles.platformDisabled]: !p.enabled,
-          })}
-          onClick={e => {
-            if (p.showPrompt) {
-              renderPrompt();
-              e.preventDefault();
-            }
-          }}
+        <Tooltip
+          title={
+            showTwitchTooltip ? $t('Disable Twitch dual stream to add another platform') : null
+          }
+          placement="left"
+          overlayClassName={styles.switcherTooltip}
         >
-          <div className={styles.dualOutputPlatformInfo}>
-            {/* PLATFORM LOGO */}
-            <Logo />
-            {/* PLATFORM TITLE AND ACCOUNT/URL */}
-            <div className={styles.dualOutputColAccount}>
-              <div className={styles.dualOutputPlatformName}>{title}</div>
-              <div className={styles.dualOutputPlatformUsername}>{description}</div>
+          <div
+            ref={containerRef}
+            data-test={platform ? `${platform}-dual-output` : 'destination-dual-output'}
+            className={cx('dual-output-card', styles.dualOutputPlatformSwitcher, {
+              [styles.platformDisabled]: !p.enabled,
+            })}
+            onClick={e => {
+              if (p.showPrompt) {
+                renderPrompt();
+                e.preventDefault();
+              }
+            }}
+          >
+            <div className={styles.dualOutputPlatformInfo}>
+              {/* PLATFORM LOGO */}
+              <Logo />
+              {/* PLATFORM TITLE AND ACCOUNT/URL */}
+              <div className={styles.dualOutputColAccount}>
+                <div className={styles.dualOutputPlatformName}>{title}</div>
+                <div className={styles.dualOutputPlatformUsername}>{description}</div>
+              </div>
+              {/* SWITCH */}
+              <div
+                className={cx(styles.dualOutputColInput)}
+                onClick={e => {
+                  if (p.hideController) return;
+                  dualOutputClickHandler(e);
+                }}
+              >
+                {!p.hideController && <Controller />}
+              </div>
             </div>
-            {/* SWITCH */}
-            <div
-              className={cx(styles.dualOutputColInput)}
-              onClick={e => {
-                if (p.hideController) return;
-                dualOutputClickHandler(e);
-              }}
-            >
-              {!p.hideController && <Controller />}
-            </div>
-          </div>
 
-          <DisplaySelector
-            title={title}
-            nolabel
-            className={styles.dualOutputDisplaySelector}
-            platform={platform}
-            index={p.index}
-          />
-        </div>
+            <DisplaySelector
+              title={title}
+              nolabel
+              className={styles.dualOutputDisplaySelector}
+              platform={platform}
+              index={p.index}
+            />
+          </div>
+        </Tooltip>
       )}
     </>
   );
