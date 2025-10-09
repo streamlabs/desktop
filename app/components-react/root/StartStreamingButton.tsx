@@ -89,7 +89,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         return;
       }
 
-      const isMobileRemote = streamShiftStreamId && /[A-Z]/.test(streamShiftStreamId);
+      const isMobileRemote = /[A-Z]/.test(streamShiftStreamId);
       const remoteDeviceType = isMobileRemote ? 'mobile' : 'desktop';
 
       // TODO: Remove after launch
@@ -126,13 +126,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         });
 
         // Notify the user
-        const message = isFromOtherDevice
-          ? $t(
-              'Your stream has been switched to Streamlabs Mobile. You can end the stream on Streamlabs Desktop.',
-            )
-          : $t(
-              'Your stream has been successfully switched to Streamlabs Desktop. Enjoy your stream!',
-            );
+        const message = formatStreamShiftMessage(isMobileRemote, isFromOtherDevice);
 
         promptAction({
           title: $t('Stream successfully switched'),
@@ -148,6 +142,27 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       streamShiftEvent.unsubscribe();
     };
   }, []);
+
+  const formatStreamShiftMessage = useCallback(
+    (isMobileRemote: boolean, isFromOtherDevice: boolean) => {
+      if (isFromOtherDevice && isMobileRemote) {
+        return $t(
+          'Your stream has been switched to Streamlabs Mobile. The stream has ended on Streamlabs Desktop.',
+        );
+      }
+
+      if (!isFromOtherDevice && !isMobileRemote) {
+        return $t(
+          'Your stream has been switched to Streamlabs Desktop on another device. The stream has ended on this device.',
+        );
+      }
+
+      return $t(
+        'Your stream has been successfully switched to Streamlabs Desktop. Enjoy your stream!',
+      );
+    },
+    [],
+  );
 
   const toggleStreaming = useCallback(async () => {
     if (StreamingService.isStreaming) {
