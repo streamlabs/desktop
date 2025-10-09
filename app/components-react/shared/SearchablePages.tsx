@@ -11,7 +11,6 @@ interface ISearchablePagesProps {
   page: TCategoryName;
   pages: TCategoryName[];
   searchStr: string;
-  searchResults?: TCategoryName[];
   onSearchCompleted?: (results: string[]) => void;
 }
 
@@ -42,14 +41,14 @@ export default function SearchablePages(p: React.PropsWithChildren<ISearchablePa
       p.onSearchCompleted && p.onSearchCompleted(searchResultPages);
     }
 
-    searchHandler();
-  }, [p.searchStr]);
+    searchHandler().then(highlightPage);
+  }, [p.searchStr, loading]);
 
-  // Highlight page after receiving search results
+  // Highlight new page if necessary
   useEffect(() => {
-    if (!p.searchResults) return;
+    if (loading || p.searchStr === '' || p.searchStr.length < 3) return;
     highlightPage();
-  }, [p.searchResults]);
+  }, [p.page]);
 
   // /**
   //  * fetch and cache all text information from settings pages

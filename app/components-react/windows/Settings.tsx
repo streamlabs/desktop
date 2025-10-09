@@ -215,7 +215,6 @@ export default function Settings() {
             pages={categories}
             page={currentTab}
             searchStr={searchStr}
-            searchResults={searchResultPages}
           >
             <SettingsContent globalSearchStr={searchStr} />
           </SearchablePages>
