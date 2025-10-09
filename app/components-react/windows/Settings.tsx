@@ -186,11 +186,12 @@ export default function Settings() {
           {categories.map(cat => {
             const config = SETTINGS_CONFIG[cat];
             return (
-              <Menu.Item
-                key={cat}
-                icon={<i className={config.icon} data-name="settings-nav-item" />}
-              >
-                <div style={{ display: 'flex' }} onClick={() => dismiss(cat)}>
+              <Menu.Item key={cat} icon={<i className={config.icon} />}>
+                <div
+                  style={{ display: 'flex' }}
+                  onClick={() => dismiss(cat)}
+                  data-name="settings-nav-item"
+                >
                   {$t(cat)}
                   {config.dismissable && showDismissable(config.dismissable) && (
                     <DismissableBadge dismissableKey={config.dismissable} />
