@@ -306,5 +306,8 @@
   "AI Highlighter is enabled. Recording will start when stream starts.": "AI-markeerstift is aan. De opname begint zodra de stream start.",
   "Connection Failed": "Verbinding mislukt",
   "Upgrade to Ultra to allow more than two outputs": "Upgrade naar Ultra om meer dan twee outputs te kunnen gebruiken.",
-  "Multichat": "Meerdere chats"
+  "Multichat": "Meerdere chats",
+  "Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays": "Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays",
+  "Disable Twitch dual stream to add another platform": "Disable Twitch dual stream to add another platform",
+  "Dual streaming to Twitch only available with Twitch as the only platform": "Dual streaming to Twitch only available with Twitch as the only platform"
 }
