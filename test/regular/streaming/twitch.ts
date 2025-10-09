@@ -43,7 +43,7 @@ test('Streaming to Twitch without auth', async t => {
   await showSettingsWindow('Stream');
   const key = userInfo.streamKey;
   await fillForm({ key });
-  await clickButton('Done');
+  await clickButton('Close');
 
   // go live
   await prepareToGoLive();

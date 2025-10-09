@@ -51,7 +51,7 @@ export async function setTemporaryRecordingPath(
     });
   }
 
-  await clickButton('Done');
+  await clickButton('Close');
   return tmpDir;
 }
 
@@ -64,6 +64,6 @@ export async function setOutputResolution(resolution: string) {
   const [width, height] = resolution.split('x');
   await showSettingsWindow('Video', async () => {
     await setInputValue('[data-name="outputRes"]', `${width}x${height}`);
-    await clickButton('Done');
+    await clickButton('Close');
   });
 }

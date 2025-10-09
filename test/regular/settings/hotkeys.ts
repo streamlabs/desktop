@@ -65,7 +65,7 @@ test('Binds a hotkey', async t => {
 
   const getBinding = async (root = app) => (await bindingEl(root)).getValue();
 
-  const doneButton = app.client.$('button=Done');
+  const doneButton = app.client.$('button=Close');
 
   // Bind a hotkey to Start Recording
   await bindingEl().then(el => el.click());
