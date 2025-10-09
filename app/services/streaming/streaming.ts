@@ -293,6 +293,14 @@ export class StreamingService
    * Make a transition to Live
    */
   async goLive(newSettings?: IGoLiveSettings) {
+    // To ensure that the correct chat renders if dual streaming Twitch, make sure that Twitch is the primary platform
+    if (
+      this.userService.state.auth?.primaryPlatform !== 'twitch' &&
+      this.views.isTwitchDualStreaming
+    ) {
+      this.userService.setPrimaryPlatform('twitch');
+    }
+
     // don't interact with API in logged out mode and when protected mode is disabled
     if (
       !this.userService.isLoggedIn ||
@@ -953,23 +961,35 @@ export class StreamingService
       NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
       NodeObs.OBS_service_setVideoInfo(verticalContext, 'vertical');
 
-      const signalChanged = this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
-        if (signalInfo.service === 'default') {
-          if (signalInfo.code !== 0) {
-            NodeObs.OBS_service_stopStreaming(true, 'horizontal');
-            NodeObs.OBS_service_stopStreaming(true, 'vertical');
-          }
+      // Twitch dual stream's vertical display is handled by the backend
+      // so when Twitch is the only target for dual stream, only start the
+      // horizontal stream
+      if (this.views.isVerticalTwitchDualStream) {
+        NodeObs.OBS_service_startStreaming('horizontal');
+      } else {
+        NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
+        NodeObs.OBS_service_setVideoInfo(verticalContext, 'vertical');
 
-          if (signalInfo.signal === EOBSOutputSignal.Start) {
-            NodeObs.OBS_service_startStreaming('vertical');
-            signalChanged.unsubscribe();
-          }
-        }
-      });
+        const signalChanged = this.signalInfoChanged.subscribe(
+          (signalInfo: IOBSOutputSignalInfo) => {
+            if (signalInfo.service === 'default') {
+              if (signalInfo.code !== 0) {
+                NodeObs.OBS_service_stopStreaming(true, 'horizontal');
+                NodeObs.OBS_service_stopStreaming(true, 'vertical');
+              }
 
-      NodeObs.OBS_service_startStreaming('horizontal');
-      // sleep for 1 second to allow the first stream to start
-      await new Promise(resolve => setTimeout(resolve, 1000));
+              if (signalInfo.signal === EOBSOutputSignal.Start) {
+                NodeObs.OBS_service_startStreaming('vertical');
+                signalChanged.unsubscribe();
+              }
+            }
+          },
+        );
+
+        NodeObs.OBS_service_startStreaming('horizontal');
+        // sleep for 1 second to allow the first stream to start
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     } else {
       // start single output
       const horizontalContext = this.videoSettingsService.contexts.horizontal;
@@ -1294,9 +1314,21 @@ export class StreamingService
 
   private handleOBSOutputSignal(info: IOBSOutputSignalInfo) {
     console.debug('OBS Output signal: ', info);
+    console.log('info', JSON.stringify(info, null, 2));
 
+    // Starting the stream should resolve:
+    // 1. Single Output: In single output mode after the stream start signal has been received
+    // 2. Dual Output: In dual output mode after the stream start signal has been received
+    //    for the vertical display
+    // 3. Dual Output, Dual Stream with Twitch: In dual output mode with Twitch as the only target
+    //    for dual stream, resolve after the stream start signal has been received for the
+    //    horizontal display
     const shouldResolve =
-      !this.views.isDualOutputMode || (this.views.isDualOutputMode && info.service === 'vertical');
+      !this.views.isDualOutputMode ||
+      (this.views.isDualOutputMode && info.service === 'vertical') ||
+      (this.views.isDualOutputMode &&
+        info.service === 'default' &&
+        this.views.isVerticalTwitchDualStream);
 
     const time = new Date().toISOString();
 

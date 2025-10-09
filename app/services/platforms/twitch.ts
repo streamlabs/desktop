@@ -15,7 +15,7 @@ import { SettingsService } from 'services/settings';
 import { TTwitchOAuthScope, TwitchTagsService } from './twitch/index';
 import { platformAuthorizedRequest } from './utils';
 import { CustomizationService } from 'services/customization';
-import { IGoLiveSettings } from 'services/streaming';
+import { IGoLiveSettings, TDisplayOutput } from 'services/streaming';
 import { InheritMutations, mutation } from 'services/core';
 import { StreamError, throwStreamError, TStreamErrorType } from 'services/streaming/stream-error';
 import { BasePlatformService } from './base-platform';
@@ -29,6 +29,7 @@ import {
 } from './twitch/content-classification';
 import { ENotificationType, NotificationsService } from '../notifications';
 import { $t } from '../i18n';
+import { getDefined } from 'util/properties-type-guards';
 
 export interface ITwitchStartStreamOptions {
   title: string;
@@ -36,6 +37,7 @@ export interface ITwitchStartStreamOptions {
   video?: IVideo;
   tags: string[];
   mode?: TOutputOrientation;
+  display?: TDisplayOutput;
   contentClassificationLabels: string[];
   isBrandedContent: boolean;
   isEnhancedBroadcasting: boolean;
@@ -119,6 +121,7 @@ export class TwitchService
     'streamlabels',
     'themes',
     'viewerCount',
+    'dualStream',
   ]);
 
   readonly liveDockFeatures = new Set<TLiveDockFeature>(['chat-offline', 'refresh-chat']);
@@ -216,10 +219,31 @@ export class TwitchService
 
     if (goLiveSettings) {
       const channelInfo = goLiveSettings?.platforms.twitch;
-      if (channelInfo) await this.putChannelInfo(channelInfo);
+
+      if (channelInfo) {
+        if (channelInfo?.display === 'both') {
+          try {
+            await this.setupDualStream(goLiveSettings);
+          } catch (e: unknown) {
+            console.error('Error setting up dual stream:', e);
+          }
+        }
+
+        await this.putChannelInfo(channelInfo);
+      }
     }
 
     this.setPlatformContext('twitch');
+  }
+
+  async afterStopStream(): Promise<void> {
+    // Restore enhanced broadcasting state
+    this.settingsService.setEnhancedBroadcasting(this.state.settings.isEnhancedBroadcasting);
+  }
+
+  async setupDualStream(goLiveSettings: IGoLiveSettings) {
+    // Enhanced broadcasting is required for dual streaming
+    this.settingsService.setEnhancedBroadcasting(true);
   }
 
   async validatePlatform() {
@@ -320,7 +344,8 @@ export class TwitchService
       title: channelInfo.title,
       game: channelInfo.game,
       isBrandedContent: channelInfo.is_branded_content,
-      isEnhancedBroadcasting: this.settingsService.isEnhancedBroadcasting(),
+      isEnhancedBroadcasting:
+        this.state.settings.isEnhancedBroadcasting ?? this.settingsService.isEnhancedBroadcasting(),
       contentClassificationLabels: channelInfo.content_classification_labels,
     });
   }
@@ -351,6 +376,7 @@ export class TwitchService
     tags = [],
     contentClassificationLabels = [],
     isBrandedContent = false,
+    isEnhancedBroadcasting = false,
   }: ITwitchStartStreamOptions): Promise<void> {
     let gameId = '';
     const isUnlisted = game === UNLISTED_GAME_CATEGORY.name;
@@ -425,7 +451,12 @@ export class TwitchService
       throw e;
     }
 
-    this.SET_STREAM_SETTINGS({ title, game, tags });
+    this.SET_STREAM_SETTINGS({
+      title,
+      game,
+      tags,
+      isEnhancedBroadcasting,
+    });
   }
 
   async searchGames(searchString: string): Promise<IGame[]> {
@@ -497,6 +528,10 @@ export class TwitchService
     });
   }
 
+  setEnhancedBroadcasting(status: boolean) {
+    this.SET_ENHANCED_BROADCASTING(status);
+  }
+
   hasScope(scope: TTwitchOAuthScope): Promise<boolean> {
     // prettier-ignore
     return platformAuthorizedRequest('twitch', 'https://id.twitch.tv/oauth2/validate').then(
@@ -533,5 +568,10 @@ export class TwitchService
   @mutation()
   private SET_HAS_CHAT_WRITE_PERMISSION(hasChatWritePermission: boolean) {
     this.state.hasChatWritePermission = hasChatWritePermission;
+  }
+
+  @mutation()
+  private SET_ENHANCED_BROADCASTING(status: boolean) {
+    this.state.settings.isEnhancedBroadcasting = status;
   }
 }
