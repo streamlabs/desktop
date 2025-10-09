@@ -222,7 +222,7 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
 
     const webcamSourceType = byOS<TSourceType>({
       [OS.Windows]: 'dshow_input',
-      [OS.Mac]: 'av_capture_input',
+      [OS.Mac]: 'macos_avcapture',
     });
 
     if (obj.content instanceof WebcamNode) {

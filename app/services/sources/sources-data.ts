@@ -240,7 +240,7 @@ export const SourceDisplayData = (): { [key: string]: ISourceDisplayData } => ({
     icon: 'icon-audio',
     group: 'av',
   },
-  av_capture_input: {
+  macos_avcapture: {
     name: $t('Video Capture'),
     shortDesc: $t('Camera / Capture Card'),
     description: $t('Display video from webcams, capture cards, and other devices.'),
