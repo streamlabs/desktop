@@ -76,7 +76,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
   }, [delaySecondsRemaining, streamingStatus, delayEnabled]);
 
   useEffect(() => {
-    if (!isDualOutputMode && isPrime) {
+    if (!isDualOutputMode && isPrime && streamingStatus === EStreamingState.Offline) {
       fetchStreamShiftStatus();
     }
 
