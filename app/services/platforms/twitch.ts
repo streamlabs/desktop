@@ -29,7 +29,6 @@ import {
 } from './twitch/content-classification';
 import { ENotificationType, NotificationsService } from '../notifications';
 import { $t } from '../i18n';
-import { getDefined } from 'util/properties-type-guards';
 
 export interface ITwitchStartStreamOptions {
   title: string;

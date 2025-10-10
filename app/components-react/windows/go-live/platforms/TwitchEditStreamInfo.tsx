@@ -51,19 +51,17 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
           layout={p.layout}
           className={cx(styles.twitchCheckbox, { [styles.hideLabel]: p.layout === 'vertical' })}
         >
-          <div>
-            <CheckboxInput
-              style={{ display: 'inline-block' }}
-              label={$t('Enhanced broadcasting')}
-              tooltip={enhancedBroadcastingTooltipText}
-              {...bind.isEnhancedBroadcasting}
-            />
-            <Badge
-              style={{ display: 'inline-block' }}
-              dismissableKey={EDismissable.EnhancedBroadcasting}
-              content={'Beta'}
-            />
-          </div>
+          <CheckboxInput
+            style={{ display: 'inline-block' }}
+            label={$t('Enhanced broadcasting')}
+            tooltip={enhancedBroadcastingTooltipText}
+            {...bind.isEnhancedBroadcasting}
+          />
+          <Badge
+            style={{ display: 'inline-block' }}
+            dismissableKey={EDismissable.EnhancedBroadcasting}
+            content={'Beta'}
+          />
         </InputWrapper>
       )}
     </div>
