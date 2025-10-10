@@ -83,12 +83,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     const streamShiftEvent = StreamingService.streamShiftEvent.subscribe(event => {
       const streamShiftStreamId = RestreamService.state.streamShiftStreamId;
 
-      if (!streamShiftStreamId) {
-        alertAsync('Error fetching stream shift stream ID');
-        // TODO: Add to Diag Report
-      }
-
-      const isMobileRemote = streamShiftStreamId && /[A-Z]/.test(streamShiftStreamId);
+      const isMobileRemote = streamShiftStreamId ? /[A-Z]/.test(streamShiftStreamId) : false;
       const remoteDeviceType = isMobileRemote ? 'mobile' : 'desktop';
 
       // TODO: Remove after launch
