@@ -55,7 +55,7 @@ import {
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
 import { StreamSettingsService } from '../settings/streaming';
-import { RestreamService, TOutputOrientation } from 'services/restream';
+import { IStreamShiftTarget, RestreamService } from 'services/restream';
 import Utils from 'services/utils';
 import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
@@ -82,6 +82,7 @@ import { capitalize } from 'lodash';
 import { YoutubeService } from 'app-services';
 import { EOBSOutputType, EOBSOutputSignal, IOBSOutputSignalInfo } from 'services/core/signals';
 import { SignalsService } from 'services/signals-manager';
+import { TSocketEvent } from 'services/websocket';
 
 type TOBSOutputType = 'streaming' | 'recording' | 'replayBuffer';
 
@@ -128,6 +129,7 @@ export class StreamingService
   signalInfoChanged = new Subject<IOBSOutputSignalInfo>();
   latestRecordingPath = new Subject<string>();
   streamErrorCreated = new Subject<string>();
+  streamShiftEvent = new Subject<TSocketEvent>();
 
   // Dummy subscription for stream deck
   streamingStateChange = new Subject<void>();
@@ -320,6 +322,39 @@ export class StreamingService
 
     // use default settings if no new settings provided
     const settings = newSettings || cloneDeep(this.views.savedSettings);
+
+    // For the Stream Shift, match remote targets to local targets
+    if (settings.streamShift && this.restreamService.views.hasStreamShiftTargets) {
+      await this.restreamService.fetchTargetData();
+
+      const targets: TPlatform[] = this.restreamService.views.streamShiftTargets.reduce(
+        (platforms: TPlatform[], target: IStreamShiftTarget) => {
+          if (target.platform !== 'relay') {
+            platforms.push(target.platform as TPlatform);
+          }
+          return platforms;
+        },
+        [],
+      );
+
+      this.views.linkedPlatforms.forEach(p => {
+        // Enable platform for go live checks, except for YouTube because running YouTube's
+        // go live check will create an additional broadcast
+
+        if (!settings.platforms[p]) return;
+
+        if (targets.includes(p)) {
+          settings.platforms[p].enabled = true;
+        } else {
+          settings.platforms[p].enabled = false;
+        }
+      });
+
+      // make sure one of the platforms going live is a primary platform
+      if (!targets.some(p => p === this.userService.state.auth?.primaryPlatform)) {
+        this.userService.setPrimaryPlatform(targets[0]);
+      }
+    }
 
     /**
      * Set custom destination stream settings
@@ -583,12 +618,26 @@ export class StreamingService
     const display = this.views.getPlatformDisplayType(platform);
 
     try {
-      // don't update settings for twitch in unattendedMode
+      const isStreamShiftStream = this.restreamService.views.hasStreamShiftTargets;
+      // If this is a Stream Shift stream switching from another device, populate the
+      // Stream Shift stream's settings to the platforms
+      if (isStreamShiftStream) {
+        const streamShiftSettings = this.restreamService.getTargetLiveData(platform);
+
+        if (streamShiftSettings) {
+          settings.streamShiftSettings = streamShiftSettings;
+        }
+      }
+
       const settingsForPlatform =
-        !this.views.isDualOutputMode && platform === 'twitch' && unattendedMode
+        !this.views.isDualOutputMode &&
+        platform === 'twitch' &&
+        unattendedMode &&
+        !isStreamShiftStream
           ? undefined
           : settings;
 
+      // don't update settings for twitch in unattendedMode
       await this.runCheck(platform, () => service.beforeGoLive(settingsForPlatform, display));
     } catch (e: unknown) {
       console.error('Error setting platform settings', e);
@@ -672,6 +721,14 @@ export class StreamingService
      */
     if (settings.platforms.youtube?.enabled && settings.platforms.youtube.display === 'both') {
       this.usageStatisticsService.recordFeatureUsage('StreamToYouTubeBothOutputs');
+    }
+
+    // Record Stream Shift
+    if (settings.streamShift) {
+      this.usageStatisticsService.recordFeatureUsage('StreamShift');
+      this.usageStatisticsService.recordAnalyticsEvent('StreamShift', {
+        stream: 'started',
+      });
     }
   }
 
@@ -1017,6 +1074,23 @@ export class StreamingService
 
     startStreamingPromise
       .then(() => {
+        if (this.views.settings.streamShift) {
+          // Remove the pending state to show the correct text in the start streaming button
+          this.restreamService.setStreamShiftStatus('inactive');
+
+          // Confirm that the primary platform is streaming to correctly show chat
+          // Otherwise, use the first enabled platform. Note: this is a failsafe to guarantee
+          // that the primary platform is always one of the live platforms. This should have
+          // already been handled in the goLive function.
+          const isPrimaryPlatformEnabled = this.views.enabledPlatforms.some(
+            p => p === this.userService.state.auth?.primaryPlatform,
+          );
+
+          if (!isPrimaryPlatformEnabled) {
+            this.userService.setPrimaryPlatform(this.views.enabledPlatforms[0]);
+          }
+        }
+
         // run afterGoLive hooks
         try {
           this.views.enabledPlatforms.forEach(platform => {
@@ -1117,6 +1191,7 @@ export class StreamingService
         const service = getPlatformService(platform);
         if (service.afterStopStream) service.afterStopStream();
       });
+      this.restreamService.resetStreamShift();
       this.UPDATE_STREAM_INFO({ lifecycle: 'empty' });
       return Promise.resolve();
     }
