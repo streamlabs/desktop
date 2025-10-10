@@ -48,6 +48,7 @@ interface IStreamDiagnosticInfo {
   platforms?: string;
   destinations?: string;
   type?: string;
+  enhancedBroadcasting?: string;
 }
 
 interface IDiagnosticsServiceState {
@@ -216,13 +217,14 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
 
         this.streaming = true;
 
-        const { platforms, destinations, type } = this.formatStreamInfo();
+        const { platforms, destinations, type, enhancedBroadcasting } = this.formatStreamInfo();
 
         this.ADD_STREAM({
           startTime: Date.now(),
           platforms,
           destinations,
           type,
+          enhancedBroadcasting,
         });
 
         this.accumulators.skipped = new Accumulator();
@@ -493,11 +495,13 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
 
     const platforms = this.formatTargets(platformList);
     const destinations = this.formatTargets(destinationList);
+    const enhancedBroadcasting = this.outputSettingsService.getIsEnhancedBroadcasting();
 
     const info = {
       platforms,
       destinations,
       type: 'Single Output',
+      enhancedBroadcasting,
     };
 
     if (this.dualOutputService.views.dualOutputMode) {
@@ -1081,6 +1085,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
           Platforms: platforms,
           Destinations: s?.destinations,
           'Stream Type': s?.type,
+          'Enhanced Broadcasting': s?.enhancedBroadcasting ?? 'N/A',
         };
       }),
     );
