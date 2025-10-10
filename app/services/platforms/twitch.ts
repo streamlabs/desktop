@@ -198,6 +198,7 @@ export class TwitchService
       this.streamSettingsService.protectedModeEnabled &&
       this.streamSettingsService.isSafeToModifyStreamKey()
     ) {
+      console.log('protectedModeEnabled, fetching Twitch stream key');
       let key = await this.fetchStreamKey();
       // do not start actual stream when testing
       if (Utils.isTestMode()) {
@@ -223,6 +224,7 @@ export class TwitchService
       if (channelInfo) {
         if (channelInfo?.display === 'both') {
           try {
+            console.log('Has goLiveSettings, setting up dual stream for Twitch');
             await this.setupDualStream(goLiveSettings);
           } catch (e: unknown) {
             console.error('Error setting up dual stream:', e);
@@ -230,6 +232,14 @@ export class TwitchService
         }
 
         await this.putChannelInfo(channelInfo);
+      }
+    } else if (this.streamingService.views.isTwitchDualStreaming) {
+      // Failsafe to guarantee that enhanced broadcasting is enabled if dual streaming is active
+      try {
+        console.log('Does not have goLiveSettings, setting up dual stream for Twitch');
+        await this.setupDualStream(goLiveSettings);
+      } catch (e: unknown) {
+        console.error('Error setting up dual stream:', e);
       }
     }
 
