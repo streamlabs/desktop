@@ -295,6 +295,10 @@ export class WindowsService extends StatefulService<IWindowsState> {
     return this.windows[windowId].id;
   }
 
+  getIsChildWindowShown(componentName: string): boolean {
+    return this.state.child.isShown && this.state.child.componentName === componentName;
+  }
+
   showWindow(options: Partial<IWindowOptions>) {
     // Don't center the window if it's the same component
     // This prevents "snapping" behavior when navigating settings

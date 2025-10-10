@@ -15,8 +15,9 @@ import Form from '../../../shared/inputs/Form';
 import { IYoutubeStartStreamOptions, YoutubeService } from '../../../../services/platforms/youtube';
 import PlatformSettingsLayout, { IPlatformComponentParams } from './PlatformSettingsLayout';
 import { assertIsDefined } from '../../../../util/properties-type-guards';
-import * as remote from '@electron/remote';
 import { inject, injectQuery, useModule } from 'slap';
+import styles from './YoutubeEditStreamInfo.m.less';
+import cx from 'classnames';
 
 /***
  * Stream Settings for YT
@@ -93,6 +94,7 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
         layoutMode={p.layoutMode}
         value={ytSettings}
         onChange={updateSettings}
+        layout={p.layout}
       />
     );
   }
@@ -107,6 +109,7 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
             broadcasts={broadcastsQuery.data}
             disabled={isUpdateMode}
             {...bind.broadcastId}
+            layout={p.layout}
           />
         )}
       </div>
@@ -134,6 +137,8 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
                 },
                 { value: 'private', label: $t('Private'), description: $t('Only you can view') },
               ]}
+              layout={p.layout}
+              size="large"
             />
             <ListInput
               {...bind.categoryId}
@@ -143,11 +148,14 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
                 value: category.id,
                 label: category.snippet.title,
               }))}
+              layout={p.layout}
+              size="large"
             />
             <ImageInput
               label={$t('Thumbnail')}
               maxFileSize={2 * 1024 * 1024} // 2 mb
               {...bind.thumbnail}
+              layout={p.layout}
             />
 
             <ListInput
@@ -162,11 +170,17 @@ export const YoutubeEditStreamInfo = InputComponent((p: IPlatformComponentParams
                   description: $t('Does not support: Closed captions, 1440p, and 4k resolutions'),
                 },
               ]}
+              layout={p.layout}
+              size="large"
               {...bind.latencyPreference}
             />
           </>
         )}
-        <InputWrapper label={$t('Additional Settings')}>
+        <InputWrapper
+          label={$t('Additional Settings')}
+          layout={p.layout}
+          className={cx(styles.youtubeCheckbox, { [styles.hideLabel]: p.layout === 'vertical' })}
+        >
           {!isScheduleMode && !isMidStreamMode && (
             <CheckboxInput
               {...bind.enableAutoStart}

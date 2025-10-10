@@ -191,6 +191,16 @@ export class TwitchService
   }
 
   async beforeGoLive(goLiveSettings?: IGoLiveSettings, context?: TDisplayType) {
+    // If the stream has switched from another device, a new broadcast does not need to be created
+    if (
+      goLiveSettings &&
+      goLiveSettings.streamShift &&
+      this.streamingService.views.shouldSwitchStreams
+    ) {
+      await this.setupStreamShiftStream(goLiveSettings);
+      return;
+    }
+
     if (
       this.streamSettingsService.protectedModeEnabled &&
       this.streamSettingsService.isSafeToModifyStreamKey()
@@ -313,7 +323,6 @@ export class TwitchService
     const tags: string[] = this.twitchTagsService.views.hasTags
       ? this.twitchTagsService.views.tags
       : [];
-    this.SET_PREPOPULATED(true);
 
     this.SET_STREAM_SETTINGS({
       tags,
@@ -323,6 +332,8 @@ export class TwitchService
       isEnhancedBroadcasting: this.settingsService.isEnhancedBroadcasting(),
       contentClassificationLabels: channelInfo.content_classification_labels,
     });
+
+    this.SET_PREPOPULATED(true);
   }
 
   fetchUserInfo() {
@@ -337,6 +348,55 @@ export class TwitchService
       'twitch',
       `${this.apiBase}/helix/streams?user_id=${this.twitchId}`,
     ).then(json => json.data[0]?.viewer_count ?? 0);
+  }
+
+  async setupStreamShiftStream(goLiveSettings?: IGoLiveSettings) {
+    const settings = goLiveSettings?.streamShiftSettings;
+
+    if (settings && !settings.is_live) {
+      console.error('Stream Shift Error: Twitch is not live');
+      this.postError('Stream Shift Error: Twitch is not live');
+      return;
+    }
+
+    const [channelInfo] = await Promise.all([
+      this.requestTwitch<{
+        data: {
+          title: string;
+          game_name: string;
+          is_branded_content: boolean;
+          content_classification_labels: string[];
+        }[];
+      }>(`${this.apiBase}/helix/channels?broadcaster_id=${this.twitchId}`).then(json => {
+        return {
+          title: settings?.stream_title ?? json.data[0].title,
+          game: json.data[0].game_name,
+          is_branded_content: json.data[0].is_branded_content,
+          content_classification_labels: json.data[0].content_classification_labels,
+        };
+      }),
+      this.requestTwitch<ITwitchContentClassificationLabelsRootResponse>(
+        `${this.apiBase}/helix/content_classification_labels`,
+      ).then(json => this.twitchContentClassificationService.setLabels(json)),
+    ]);
+
+    const title = settings?.stream_title ?? channelInfo.title;
+    const game = settings?.game_name ?? channelInfo.game;
+
+    const tags: string[] = this.twitchTagsService.views.hasTags
+      ? this.twitchTagsService.views.tags
+      : [];
+
+    this.SET_STREAM_SETTINGS({
+      tags,
+      title,
+      game,
+      isBrandedContent: channelInfo.is_branded_content,
+      isEnhancedBroadcasting: this.settingsService.isEnhancedBroadcasting(),
+      contentClassificationLabels: channelInfo.content_classification_labels,
+    });
+
+    this.setPlatformContext('twitch');
   }
 
   fetchFollowers(): Promise<number> {

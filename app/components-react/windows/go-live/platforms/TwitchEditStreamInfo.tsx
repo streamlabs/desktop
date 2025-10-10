@@ -5,19 +5,16 @@ import { TwitchTagsInput } from './TwitchTagsInput';
 import GameSelector from '../GameSelector';
 import Form from '../../../shared/inputs/Form';
 import PlatformSettingsLayout, { IPlatformComponentParams } from './PlatformSettingsLayout';
-import { CheckboxInput, ListInput, createBinding } from '../../../shared/inputs';
+import { CheckboxInput, createBinding } from '../../../shared/inputs';
 import { ITwitchStartStreamOptions } from '../../../../services/platforms/twitch';
 import InputWrapper from 'components-react/shared/inputs/InputWrapper';
-import Message from '../../../shared/Message';
-import { Row, Col, Select } from 'antd';
-import { IListOption } from 'components/shared/inputs';
 import TwitchContentClassificationInput from './TwitchContentClassificationInput';
 import AiHighlighterToggle from '../AiHighlighterToggle';
 import { Services } from 'components-react/service-provider';
-import { EAvailableFeatures } from 'services/incremental-rollout';
-
 import Badge from 'components-react/shared/DismissableBadge';
 import { EDismissable } from 'services/dismissables';
+import styles from './TwitchEditStreamInfo.m.less';
+import cx from 'classnames';
 
 export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
   const twSettings = p.value;
@@ -33,13 +30,19 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
 
   const optionalFields = (
     <div key="optional">
-      <TwitchTagsInput label={$t('Twitch Tags')} {...bind.tags} />
-      <TwitchContentClassificationInput {...bind.contentClassificationLabels} />
-      <InputWrapper>
+      <TwitchTagsInput label={$t('Twitch Tags')} {...bind.tags} layout={p.layout} />
+      <TwitchContentClassificationInput {...bind.contentClassificationLabels} layout={p.layout} />
+      <InputWrapper
+        layout={p.layout}
+        className={cx(styles.twitchCheckbox, { [styles.hideLabel]: p.layout === 'vertical' })}
+      >
         <CheckboxInput label={$t('Stream features branded content')} {...bind.isBrandedContent} />
       </InputWrapper>
       {p.enabledPlatformsCount === 1 && process.platform !== 'darwin' && (
-        <InputWrapper>
+        <InputWrapper
+          layout={p.layout}
+          className={cx(styles.twitchCheckbox, { [styles.hideLabel]: p.layout === 'vertical' })}
+        >
           <div>
             <CheckboxInput
               style={{ display: 'inline-block' }}
@@ -68,13 +71,14 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
             layoutMode={p.layoutMode}
             value={twSettings}
             onChange={updateSettings}
+            layout={p.layout}
           />
         }
         requiredFields={
           <React.Fragment key="required-fields">
-            <GameSelector key="required" platform={'twitch'} {...bind.game} />
+            <GameSelector key="required" platform={'twitch'} {...bind.game} layout={p.layout} />
             {aiHighlighterFeatureEnabled && (
-              <AiHighlighterToggle key="ai-toggle" game={bind.game?.value} cardIsExpanded={true} />
+              <AiHighlighterToggle key="ai-toggle" game={bind.game?.value} cardIsExpanded={false} />
             )}
           </React.Fragment>
         }

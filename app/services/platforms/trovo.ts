@@ -92,6 +92,12 @@ export class TrovoService
   async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     const trSettings = getDefined(goLiveSettings.platforms.trovo);
 
+    // If the stream has switched from another device, a new broadcast does not need to be created
+    if (goLiveSettings.streamShift && this.streamingService.views.shouldSwitchStreams) {
+      await this.setupStreamShiftStream(goLiveSettings);
+      return;
+    }
+
     const key = this.state.streamKey;
     if (!this.streamingService.views.isMultiplatformMode) {
       this.streamSettingsService.setSettings(
@@ -170,6 +176,58 @@ export class TrovoService
 
   private fetchChannelInfo(): Promise<ITrovoChannelInfo> {
     return this.requestTrovo<ITrovoChannelInfo>(`${this.apiBase}/channel`);
+  }
+
+  async setupStreamShiftStream(goLiveSettings: IGoLiveSettings) {
+    // Note: The below is pretty much the same as prepopulateInfo
+    const settings = goLiveSettings?.streamShiftSettings;
+
+    if (settings && !settings.is_live) {
+      console.error('Stream Shift Error: Trovo is not live');
+      this.postError('Stream Shift Error: Trovo is not live');
+      return;
+    }
+
+    // Set the game
+    const channelInfo = await this.fetchChannelInfo();
+
+    const title = settings?.stream_title ?? channelInfo.live_title;
+    const gameName = settings?.game_name ?? channelInfo.category_name;
+    const gameId = settings?.game_id ?? channelInfo.category_id;
+    const gameInfo = await this.fetchGame(gameName);
+
+    this.SET_CHANNEL_INFO({
+      gameId,
+      gameName,
+      gameImage: gameInfo.image || '',
+    });
+
+    // Set the stream key
+    this.SET_STREAM_KEY(channelInfo.stream_key.replace('live/', ''));
+
+    // Set the remaining settings
+    if (settings) {
+      this.SET_STREAM_SETTINGS({
+        title,
+        game: channelInfo.category_id,
+      });
+
+      this.SET_USER_INFO({
+        userId: settings.platform_id ?? '',
+        channelId: settings.platform_id ?? channelInfo.stream_key.split('_')[0],
+      });
+    } else {
+      // As a fallback, fetch info from Trovo
+      const userInfo = await this.requestTrovo<ITrovoUserInfo>(`${this.apiBase}/getuserinfo`);
+
+      this.SET_STREAM_SETTINGS({
+        title,
+        game: channelInfo.category_id,
+      });
+      this.SET_USER_INFO(userInfo);
+    }
+
+    this.setPlatformContext('trovo');
   }
 
   async searchGames(searchString: string): Promise<IGame[]> {
