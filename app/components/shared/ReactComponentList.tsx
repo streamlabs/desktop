@@ -173,14 +173,6 @@ export class NotificationsAndNews extends ReactComponent {}
 
 @Component({
   props: {
-    name: { default: 'ObsSettings' },
-    componentProps: { default: () => ({ page: 'General' }) },
-  },
-})
-export class ObsSettings extends ReactComponent {}
-
-@Component({
-  props: {
     name: { default: 'PerformanceMetrics' },
     componentProps: { default: () => ({ mode: 'limited' }) },
   },
@@ -257,6 +249,14 @@ export class RenameSource extends ReactComponent {}
   },
 })
 export class SafeMode extends ReactComponent {}
+
+@Component({
+  props: {
+    name: { default: 'Settings' },
+    wrapperStyles: { default: () => ({ height: '100%' }) },
+  },
+})
+export class Settings extends ReactComponent {}
 
 @Component({
   props: {

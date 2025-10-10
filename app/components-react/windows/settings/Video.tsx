@@ -581,5 +581,3 @@ export function VideoSettings() {
     </>
   );
 }
-
-VideoSettings.page = 'Video';

@@ -1,43 +1,56 @@
-import React, { CSSProperties, HTMLAttributes } from 'react';
-import * as pageComponents from './pages';
-import { useObsSettings } from './useObsSettings';
+import React, { CSSProperties, HTMLAttributes, useMemo, useState } from 'react';
 import { ObsFormGroup } from '../../obs/ObsForm';
 import Form from '../../shared/inputs/Form';
-import css from './ObsSettings.m.less';
 import Tabs from 'components-react/shared/Tabs';
+import { Services } from '../../service-provider';
+import { ISettingsSubCategory, TCategoryName } from '../../../services/settings';
+import { TDisplayType } from 'services/settings-v2';
+import { useVuex } from 'components-react/hooks';
+import { useRealmObject } from 'components-react/hooks/realm';
 
 export type IObsFormType = 'default' | 'tabs' | 'collapsible';
 
-/**
- * Renders a settings page
- */
-export function ObsSettings(p: { page: string }) {
-  const { setPage, setDisplay } = useObsSettings();
-  setPage(p.page);
-  const PageComponent = getPageComponent(p.page);
+export function useObsSettings(page?: TCategoryName) {
+  const { SettingsService, NavigationService } = Services;
+  const [display, setDisplay] = useState<TDisplayType>('horizontal');
 
-  // TODO: Comment in when switched to new API
-  // const showTabs = ['Output', 'Audio', 'Advanced'].includes(p.page);
-  const showTabs = false;
-  return (
-    <div className={css.obsSettingsWindow}>
-      {showTabs && <Tabs onChange={setDisplay} />}
-      <PageComponent />
-    </div>
-  );
+  const category = useRealmObject(NavigationService.state).currentSettingsTab;
+
+  const memoizedPage = useMemo(() => {
+    if (page) return page;
+    if (category) return category;
+    return 'General';
+  }, [page, category]);
+
+  function saveSettings(newSettings: ISettingsSubCategory[]) {
+    SettingsService.actions.setSettings(memoizedPage, newSettings);
+  }
+
+  const { settingsFormData } = useVuex(() => ({
+    settingsFormData: SettingsService.state[memoizedPage]?.formData ?? {},
+  }));
+
+  return { settingsFormData, saveSettings, display, setDisplay };
 }
 
 /**
  * Renders generic inputs from OBS
  */
-export function ObsGenericSettingsForm(p: { type?: IObsFormType }) {
-  const { settingsFormData, saveSettings } = useObsSettings();
+export function ObsGenericSettingsForm(p: { type?: IObsFormType; page?: TCategoryName }) {
+  const { settingsFormData, saveSettings, setDisplay } = useObsSettings(p.page);
+
+  // TODO: Comment in when switched to new API
+  // const showTabs = ['Output', 'Audio', 'Advanced'].includes(p.page);
+  const showTabs = false;
   return (
-    <ObsFormGroup
-      value={settingsFormData}
-      onChange={newSettings => saveSettings(newSettings)}
-      type={p?.type}
-    />
+    <>
+      {showTabs && <Tabs onChange={setDisplay} />}
+      <ObsFormGroup
+        value={settingsFormData}
+        onChange={newSettings => saveSettings(newSettings)}
+        type={p?.type}
+      />
+    </>
   );
 }
 
@@ -55,14 +68,4 @@ export function ObsSettingsSection(
       </div>
     </div>
   );
-}
-
-/**
- * Returns a component for a given page
- */
-function getPageComponent(page: string) {
-  const componentName = Object.keys(pageComponents).find(componentName => {
-    return (pageComponents as Record<string, any>)[componentName].page === page;
-  });
-  return componentName ? (pageComponents as Record<string, any>)[componentName] : null;
 }

@@ -78,5 +78,3 @@ export function MultistreamingSettings() {
     </div>
   );
 }
-
-MultistreamingSettings.page = 'Multistreaming';

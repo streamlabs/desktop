@@ -7,7 +7,7 @@ import { useVuex } from 'components-react/hooks';
 import { $t } from 'services/i18n';
 import Utils from 'services/utils';
 import styles from './AdvancedAudio.m.less';
-import { ObsSettings, ObsSettingsSection } from '../../windows/settings/ObsSettings';
+import { ObsGenericSettingsForm, ObsSettingsSection } from '../../windows/settings/ObsSettings';
 
 const trackOptions = [
   { label: '1', value: 1 },
@@ -160,7 +160,7 @@ export default function GlobalSettings() {
         />
       </ObsSettingsSection>
 
-      <ObsSettings page="Audio" />
+      <ObsGenericSettingsForm page="Audio" />
     </>
   );
 }

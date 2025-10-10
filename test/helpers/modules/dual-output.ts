@@ -18,7 +18,7 @@ export async function toggleDualOutputMode(closeChildWindow: boolean = true) {
     await clickCheckbox('dual-output-checkbox');
 
     if (closeChildWindow) {
-      await clickButton('Done');
+      await clickButton('Close');
     }
   });
   await focusMain();
