@@ -964,7 +964,8 @@ export class StreamingService
       // Twitch dual stream's vertical display is handled by the backend
       // so when Twitch is the only target for dual stream, only start the
       // horizontal stream
-      if (this.views.isVerticalTwitchDualStream) {
+      if (this.views.isTwitchDualStreaming) {
+        console.log('Start Twitch Dual Stream');
         NodeObs.OBS_service_startStreaming('horizontal');
       } else {
         NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
@@ -1328,7 +1329,7 @@ export class StreamingService
       (this.views.isDualOutputMode && info.service === 'vertical') ||
       (this.views.isDualOutputMode &&
         info.service === 'default' &&
-        this.views.isVerticalTwitchDualStream);
+        this.views.isTwitchDualStreaming);
 
     const time = new Date().toISOString();
 
