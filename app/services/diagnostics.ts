@@ -507,7 +507,10 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
       };
     }
 
-    if (this.streamSettingsService.state.goLiveSettings.streamShift) {
+    if (
+      this.streamSettingsService.state.goLiveSettings &&
+      this.streamSettingsService.state.goLiveSettings?.streamShift
+    ) {
       return {
         ...info,
         type: 'Stream Shift',
