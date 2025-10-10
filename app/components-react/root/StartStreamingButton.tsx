@@ -86,10 +86,9 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       if (!streamShiftStreamId) {
         alertAsync('Error fetching stream shift stream ID');
         // TODO: Add to Diag Report
-        return;
       }
 
-      const isMobileRemote = /[A-Z]/.test(streamShiftStreamId);
+      const isMobileRemote = streamShiftStreamId && /[A-Z]/.test(streamShiftStreamId);
       const remoteDeviceType = isMobileRemote ? 'mobile' : 'desktop';
 
       // TODO: Remove after launch
