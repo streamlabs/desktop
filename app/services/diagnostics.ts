@@ -495,6 +495,8 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
 
     const platforms = this.formatTargets(platformList);
     const destinations = this.formatTargets(destinationList);
+    // Note: this tracks if the user streamed with enhanced broadcasting, it does not
+    // indicate if the user had enhanced broadcasting enabled in settings.
     const enhancedBroadcasting = this.outputSettingsService.getIsEnhancedBroadcasting();
 
     const info = {
