@@ -434,10 +434,12 @@
   "Virtual camera output type": "Typ výstupu virtuální kamery",
   "Unmute your Microphone source in Mixer": "V mixéru zrušte ztlumení zdroje mikrofonu",
   "Your Microphone is unmuted but has no signal": "Váš mikrofon není ztlumený, ale nemá signál",
-  "Victory & Defeat": "Victory & Defeat",
-  "Dynamic game animation": "Dynamic game animation",
-  "Dynamic real time animation based on your game & widget events.  Streamlabs Vision powered events include:": "Dynamic real time animation based on your game & widget events.  Streamlabs Vision powered events include:",
-  "Kills & Eliminations": "Kills & Eliminations",
-  "Health changes": "Health changes",
-  "Search...": "Hledat..."
+  "Victory & Defeat": "Vítězství a porážky",
+  "Dynamic game animation": "Dynamická herní animace",
+  "Dynamic real time animation based on your game events, powered by Streamlabs AI. Install Reactive Overlays from our Library to see what it's capable of!": "Dynamická animace v reálném čase založená na událostech ve vaší hře, s podporou Streamlabs AI. Nainstalujte si překryvy reagující na určité události (Reactive Overlays) z naší knihovny a vyzkoušejte, co všechno umí!",
+  "Kills & Eliminations": "Zabití a eliminovaní hráči",
+  "Health changes": "Změny úrovně zdraví",
+  "Search...": "Hledat...",
+  "Virtual Cam": "Virtuální kamera",
+  "Virtual Cam Error": "Chyba virtuální kamery"
 }

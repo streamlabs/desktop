@@ -81,6 +81,6 @@
   "has gifted a sub to": "님의 구독 선물, 받는 사람:",
   "has resubscribed for %{streak} months in a row! (%{months} total)": "님의 재구독(%{streak}개월 연속)(총 %{months}개월)!",
   "has resubscribed for %{months} months": "님, %{months}개월 째 재구독",
-  "Disable Chat Box Notifications": "Disable Chat Box Notifications",
-  "Enable Chat Box Notifications": "Enable Chat Box Notifications"
+  "Disable Chat Box Notifications": "채팅 상자 알림 비활성화",
+  "Enable Chat Box Notifications": "채팅 상자 알림 활성화"
 }

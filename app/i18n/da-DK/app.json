@@ -18,5 +18,6 @@
   "Unknown error, please contact support": "Ukendt fejl, kontakt support",
   "Custom Destination": "Brugerdefineret destination",
   "This app is currently popped out in another window.": "Denne app er i øjeblikket poppet op i et andet vindue.",
-  "Error granting chat permissions.": "Fejl under tildeling af chatrettigheder."
+  "Error granting chat permissions.": "Fejl under tildeling af chatrettigheder.",
+  "Authentication Error": "Godkendelsesfejl"
 }

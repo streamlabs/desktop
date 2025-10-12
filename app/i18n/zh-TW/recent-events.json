@@ -81,6 +81,6 @@
   "has gifted a sub to": "已贈送訂閱給",
   "has resubscribed for %{streak} months in a row! (%{months} total)": "已訂閱連續 %{streak} 個月！(總共 %{months} 個月)",
   "has resubscribed for %{months} months": "已重新訂閱 %{months} 個月",
-  "Disable Chat Box Notifications": "Disable Chat Box Notifications",
-  "Enable Chat Box Notifications": "Enable Chat Box Notifications"
+  "Disable Chat Box Notifications": "停用聊天室方塊通知",
+  "Enable Chat Box Notifications": "啟用聊天室方塊通知"
 }

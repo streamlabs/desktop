@@ -18,5 +18,6 @@
   "Unknown error, please contact support": "不明なエラーが発生しました。サポートにお問合せください",
   "Custom Destination": "カスタム宛先",
   "This app is currently popped out in another window.": "このアプリは現在、別のウィンドウで表示されています。",
-  "Error granting chat permissions.": "チャット権限の付与エラーが発生しました。"
+  "Error granting chat permissions.": "チャット権限の付与エラーが発生しました。",
+  "Authentication Error": "認証エラー"
 }

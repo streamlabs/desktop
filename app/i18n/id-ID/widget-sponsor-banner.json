@@ -3,8 +3,7 @@
   "Ad Layout": "Tata Letak Iklan",
   "Placement": "Penempatan",
   "Image Layout": "Tata Letak Gambar",
-  "Image Duration": "Durasi Gambar",
-  "Seconds": "Detik",
+  "Image Duration (seconds)": "Image Duration (seconds)",
   "Add Image": "Tambahkan Gambar",
   "Widget Hide Duration": "Durasi Menyembunyikan Widget",
   "Widget Show Duration": "Durasi Menampilkan Widget",
@@ -19,8 +18,10 @@
   "The amount of time the widget will appear.": "Lamanya waktu widget akan ditampilkan.",
   "These are the animations that are used to show your banner.": "Semua ini adalah animasi yang digunakan untuk menampilkan spanduk Anda.",
   "Visual Settings": "Pengaturan Visual",
-  "Image Set ": "Set Gambar",
+  "Image Set %{number}": "Image Set %{number}",
+  "Placement %{number} Images": "Placement %{number} Images",
   "No Image": "Tidak Ada Gambar",
   "Set up a sponsor banner to be able to edit (add, remove, update) rotating sponsor logos on streamer channel.": "Pasang spanduk sponsor agar bisa mengedit (tambah, hapus, perbarui) logo sponsor berotasi di channel streamer.",
-  "Show off rotating media to display your socials, sponsorships, CTAs or just cute animations.": "Pamerkan media yang berputar untuk menampilkan media sosial, sponsor, CTA atau hanya animasi yang lucu."
+  "Show off rotating media to display your socials, sponsorships, CTAs or just cute animations.": "Pamerkan media yang berputar untuk menampilkan media sosial, sponsor, CTA atau hanya animasi yang lucu.",
+  "The duration must be in the format [minutes]:[seconds] (i.e. 02:05)": "The duration must be in the format [minutes]:[seconds] (i.e. 02:05)"
 }
