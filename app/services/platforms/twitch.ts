@@ -251,7 +251,7 @@ export class TwitchService
     this.settingsService.setEnhancedBroadcasting(this.state.settings.isEnhancedBroadcasting);
   }
 
-  async setupDualStream(goLiveSettings: IGoLiveSettings) {
+  async setupDualStream(goLiveSettings?: IGoLiveSettings) {
     // Enhanced broadcasting is required for dual streaming
     this.settingsService.setEnhancedBroadcasting(true);
   }
