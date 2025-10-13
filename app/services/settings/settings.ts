@@ -297,6 +297,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   init() {
     this.loadSettingsIntoStore();
     this.ensureValidEncoder();
+    this.ensureValidRecordingEncoder();
     this.sceneCollectionsService.collectionSwitched.subscribe(() => this.refreshAudioSettings());
 
     // TODO: Remove in a week
@@ -720,6 +721,29 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
         message:
           'Your stream encoder has been reset to Software (x264). This can be caused by out of date graphics drivers. Please update your graphics drivers to continue using hardware encoding.',
       });
+    }
+  }
+
+  private ensureValidRecordingEncoder() {
+    this.setSettings('Output', this.state.Output.formData);
+  }
+
+  /**
+   * List all settings by category to the console
+   * @remark For debugging purposes only
+   */
+  private listSettingsByCategory() {
+    const settings = {} as any;
+
+    for (const category in this.state) {
+      settings[category] = this.state[category].formData.reduce(
+        (acc: any, subCategory: ISettingsSubCategory) => {
+          subCategory.parameters.forEach(param => {
+            console.log(param.name, category, subCategory.nameSubCategory, param.value);
+          });
+        },
+        {},
+      );
     }
   }
 
