@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, forwardRef, useCallback, useMemo } from 'react';
 import cx from 'classnames';
 import { EStreamingState } from 'services/streaming';
 import { EGlobalSyncStatus } from 'services/media-backup';
@@ -6,6 +6,9 @@ import { $t } from 'services/i18n';
 import { useVuex } from '../hooks';
 import { Services } from '../service-provider';
 import * as remote from '@electron/remote';
+import { TStreamShiftStatus } from 'services/restream';
+import { alertAsync, promptAction } from 'components-react/modals';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export default function StartStreamingButton(p: { disabled?: boolean }) {
   const {
@@ -15,15 +18,43 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     CustomizationService,
     MediaBackupService,
     SourcesService,
+    RestreamService,
+    IncrementalRolloutService,
+    UsageStatisticsService,
   } = Services;
 
-  const { streamingStatus, delayEnabled, delaySeconds } = useVuex(() => ({
+  const {
+    streamingStatus,
+    delayEnabled,
+    delaySeconds,
+    streamShiftStatus,
+    isDualOutputMode,
+    isLoggedIn,
+    isPrime,
+    canUseStreamShift,
+    primaryPlatform,
+    isMultiplatformMode,
+    updateStreamInfoOnLive,
+  } = useVuex(() => ({
     streamingStatus: StreamingService.state.streamingStatus,
     delayEnabled: StreamingService.views.delayEnabled,
     delaySeconds: StreamingService.views.delaySeconds,
+    streamShiftStatus: RestreamService.state.streamShiftStatus,
+    isDualOutputMode: StreamingService.views.isDualOutputMode,
+    isLoggedIn: UserService.isLoggedIn,
+    isPrime: UserService.state.isPrime,
+    canUseStreamShift: IncrementalRolloutService.views.availableFeatures.includes(
+      EAvailableFeatures.streamShift,
+    ),
+    primaryPlatform: UserService.state.auth?.primaryPlatform,
+    isMultiplatformMode: StreamingService.views.isMultiplatformMode,
+    updateStreamInfoOnLive: CustomizationService.state.updateStreamInfoOnLive,
   }));
 
   const [delaySecondsRemaining, setDelayTick] = useState(delaySeconds);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const streamlabelRef = React.createRef<HTMLSpanElement>();
 
   useEffect(() => {
     setDelayTick(delaySeconds);
@@ -44,10 +75,94 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     }
   }, [delaySecondsRemaining, streamingStatus, delayEnabled]);
 
-  async function toggleStreaming() {
+  useEffect(() => {
+    if (!isDualOutputMode && isPrime && streamingStatus === EStreamingState.Offline) {
+      fetchStreamShiftStatus();
+    }
+
+    const streamShiftEvent = StreamingService.streamShiftEvent.subscribe(event => {
+      const streamShiftStreamId = RestreamService.state.streamShiftStreamId;
+
+      const isMobileRemote = streamShiftStreamId ? /[A-Z]/.test(streamShiftStreamId) : false;
+      const remoteDeviceType = isMobileRemote ? 'mobile' : 'desktop';
+
+      // TODO: Remove after launch
+      console.debug(
+        'Desktop stream id: ' +
+          streamShiftStreamId +
+          '\nEvent:' +
+          JSON.stringify(event) +
+          '\nSource: ' +
+          remoteDeviceType,
+      );
+
+      if (event.type === 'streamSwitchRequest') {
+        if (event.data.identifier === streamShiftStreamId) {
+          RestreamService.confirmStreamShift('approved');
+        }
+
+        UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
+          stream: `desktop-${remoteDeviceType}`,
+        });
+      }
+
+      if (event.type === 'switchActionComplete') {
+        const remoteStreamId = event.data.identifier;
+        const isFromOtherDevice = remoteStreamId !== streamShiftStreamId;
+
+        // End the stream on this device if switching the stream to another device
+        if (isFromOtherDevice) {
+          Services.RestreamService.actions.endStreamShiftStream(remoteStreamId);
+        }
+
+        UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
+          stream: `desktop-${remoteDeviceType}`,
+        });
+
+        // Notify the user
+        const message = formatStreamShiftMessage(isMobileRemote, isFromOtherDevice);
+
+        promptAction({
+          title: $t('Stream successfully switched'),
+          message,
+          btnText: $t('Close'),
+          btnType: 'default',
+          cancelBtnPosition: 'none',
+        });
+      }
+    });
+
+    return () => {
+      streamShiftEvent.unsubscribe();
+    };
+  }, []);
+
+  const formatStreamShiftMessage = useCallback(
+    (isMobileRemote: boolean, isFromOtherDevice: boolean) => {
+      if (isFromOtherDevice && isMobileRemote) {
+        return $t(
+          'Your stream has been switched to Streamlabs Mobile. The stream has ended on Streamlabs Desktop.',
+        );
+      }
+
+      if (!isFromOtherDevice && !isMobileRemote) {
+        return $t(
+          'Your stream has been switched to Streamlabs Desktop on another device. The stream has ended on this device.',
+        );
+      }
+
+      return $t(
+        'Your stream has been successfully switched to Streamlabs Desktop. Enjoy your stream!',
+      );
+    },
+    [],
+  );
+
+  const toggleStreaming = useCallback(async () => {
     if (StreamingService.isStreaming) {
       StreamingService.toggleStreaming();
     } else {
+      // Check if the scene collection has completed loading and syncing
       if (MediaBackupService.views.globalSyncStatus === EGlobalSyncStatus.Syncing) {
         const goLive = await remote.dialog
           .showMessageBox(remote.getCurrentWindow(), {
@@ -89,6 +204,33 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         if (!goLive) return;
       }
 
+      // Only check for Stream Shift for ultra users
+      if (isLoggedIn && isPrime && canUseStreamShift) {
+        setIsLoading(true);
+        const isLive = await fetchStreamShiftStatus();
+        setIsLoading(false);
+
+        const message = isDualOutputMode
+          ? $t(
+              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. Dual Output will be disabled since not supported in this mode.',
+            )
+          : $t(
+              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source.',
+            );
+
+        if (isLive) {
+          promptAction({
+            title: $t('Another stream detected'),
+            message,
+            btnText: $t('Switch to Streamlabs Desktop'),
+            fn: startStreamShift,
+            cancelBtnText: $t('Cancel'),
+            cancelBtnPosition: 'left',
+          });
+          return;
+        }
+      }
+
       if (shouldShowGoLiveWindow()) {
         if (!StreamingService.views.hasPendingChecks()) {
           StreamingService.actions.resetInfo();
@@ -98,16 +240,50 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         StreamingService.actions.goLive();
       }
     }
-  }
+  }, []);
 
-  const getIsRedButton = streamingStatus !== EStreamingState.Offline;
+  const getIsRedButton =
+    streamingStatus !== EStreamingState.Offline && streamShiftStatus !== 'pending';
 
   const isDisabled =
     p.disabled ||
     (streamingStatus === EStreamingState.Starting && delaySecondsRemaining === 0) ||
     (streamingStatus === EStreamingState.Ending && delaySecondsRemaining === 0);
 
-  function shouldShowGoLiveWindow() {
+  const formatStreamSwitchResponse = useCallback((streamId: string, remoteStreamId?: string) => {
+    // Determine if the remote stream ID is from a mobile device
+    const isMobileRemote = remoteStreamId && remoteStreamId && /[A-Z]/.test(remoteStreamId);
+
+    if (isMobileRemote) {
+      // Handle mobile to desktop case
+    }
+
+    return {
+      source: '',
+      message: '',
+    };
+  }, []);
+
+  const fetchStreamShiftStatus = useCallback(async () => {
+    try {
+      const isLive = await RestreamService.checkIsLive();
+      return isLive;
+    } catch (e: unknown) {
+      console.error('Error checking stream shift status', e);
+      setIsLoading(false);
+      return false;
+    }
+  }, []);
+
+  const startStreamShift = useCallback(() => {
+    if (isDualOutputMode) {
+      Services.DualOutputService.actions.toggleDisplay(false, 'vertical');
+    }
+
+    StreamingService.actions.goLive();
+  }, [isDualOutputMode]);
+
+  const shouldShowGoLiveWindow = useCallback(() => {
     if (!UserService.isLoggedIn) return false;
     const primaryPlatform = UserService.state.auth?.primaryPlatform;
     const updateStreamInfoOnLive = CustomizationService.state.updateStreamInfoOnLive;
@@ -136,7 +312,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         StreamSettingsService.isSafeToModifyStreamKey()
       );
     }
-  }
+  }, [primaryPlatform, isMultiplatformMode, updateStreamInfoOnLive]);
 
   return (
     <button
@@ -145,43 +321,49 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       disabled={isDisabled}
       onClick={toggleStreaming}
     >
-      <StreamButtonLabel
-        streamingStatus={streamingStatus}
-        delayEnabled={delayEnabled}
-        delaySecondsRemaining={delaySecondsRemaining}
-      />
+      {isLoading ? (
+        <i className="fa fa-spinner fa-pulse" />
+      ) : (
+        <StreamButtonLabel
+          streamingStatus={streamingStatus}
+          delayEnabled={delayEnabled}
+          delaySecondsRemaining={delaySecondsRemaining}
+          streamShiftStatus={streamShiftStatus}
+          ref={streamlabelRef}
+        />
+      )}
     </button>
   );
 }
 
-function StreamButtonLabel(p: {
-  streamingStatus: EStreamingState;
-  delaySecondsRemaining: number;
-  delayEnabled: boolean;
-}) {
-  if (p.streamingStatus === EStreamingState.Live) {
-    return <>{$t('End Stream')}</>;
+const StreamButtonLabel = forwardRef<
+  HTMLSpanElement,
+  {
+    streamingStatus: EStreamingState;
+    streamShiftStatus: TStreamShiftStatus;
+    delaySecondsRemaining: number;
+    delayEnabled: boolean;
   }
-
-  if (p.streamingStatus === EStreamingState.Starting) {
-    if (p.delayEnabled) {
-      return <>{`Starting ${p.delaySecondsRemaining}s`}</>;
+>((p, ref) => {
+  const label = useMemo(() => {
+    if (p.streamShiftStatus === 'pending') {
+      return $t('Claim Stream');
     }
 
-    return <>{$t('Starting')}</>;
-  }
-
-  if (p.streamingStatus === EStreamingState.Ending) {
-    if (p.delayEnabled) {
-      return <>{`Discard ${p.delaySecondsRemaining}s`}</>;
+    switch (p.streamingStatus) {
+      case EStreamingState.Live:
+        return $t('End Stream');
+      case EStreamingState.Starting:
+        return p.delayEnabled ? `Starting ${p.delaySecondsRemaining}s` : $t('Starting');
+      case EStreamingState.Ending:
+        return p.delayEnabled ? `Discard ${p.delaySecondsRemaining}s` : $t('Ending');
+      case EStreamingState.Reconnecting:
+        return $t('Reconnecting');
+      case EStreamingState.Offline:
+      default:
+        return $t('Go Live');
     }
+  }, [p.streamShiftStatus, p.streamingStatus, p.delayEnabled, p.delaySecondsRemaining]);
 
-    return <>{$t('Ending')}</>;
-  }
-
-  if (p.streamingStatus === EStreamingState.Reconnecting) {
-    return <>{$t('Reconnecting')}</>;
-  }
-
-  return <>{$t('Go Live')}</>;
-}
+  return <span ref={ref}>{label}</span>;
+});
