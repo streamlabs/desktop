@@ -1,95 +1,18 @@
 @import '../../../styles/index.less';
-.stream-header-wrapper {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 15px;
 
-  h2 {
-    margin-bottom: 0px;
-  }
+.platform-button {
+  min-width: 100px;
 }
 
-.target-cards-wrapper {
-  display: flex;
-  flex-direction: column;
+.platform-logo {
+  width: 50px !important;
+  height: 50px !important;
 }
 
-.target-card {
-  display: flex;
-  align-items: center;
-  flex-direction: row;
-  width: 100%;
-}
-
-.target-data {
-  flex: 1;
-}
-
-.target-logo {
-  margin-right: 10px;
-  align-self: center;
-  font-size: 36px;
-
-  &.youtube {
-    align-self: flex-end;
-  }
-
-  &.twitter {
-    width: 30px !important;
-    height: 30px !important;
-  }
-}
-
-.target-type {
-  font-weight: 600;
-  color: var(--link-active);
-}
-
-.target-name {
-  font-size: 13px;
-}
-
-.ultra {
+.prime {
   margin-right: 16px;
   font-style: italic;
   color: var(--prime-hover);
-}
-
-.ultra-text {
-  display: flex;
-  align-items: center;
-  margin: 0px 0px 15px 0px;
-  font-size: 14px;
-  font-weight: 500;
-
-  white-space: normal;
-  background-image: linear-gradient(123.53deg, #2de8b0 0%, #cbe953 45%, #ffab48 65%, #ff5151 100%);
-  background-clip: text;
-  color: transparent;
-
-  &:hover {
-    background-image: linear-gradient(
-      123.53deg,
-      #6effd2 0%,
-      #f6ff9a 45%,
-      #ffd48a 65%,
-      #ff8a8a 100%
-    );
-    cursor: pointer;
-  }
-}
-
-.add-more {
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  font-weight: unset;
-  color: var(--primary) !important;
-  cursor: pointer;
-
-  &:hover {
-    color: var(--link-active);
-  }
 }
 
 .action-icon {
@@ -109,6 +32,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.destination-logo {
+  font-size: 40px;
 }
 
 .add-destination-btn {
@@ -155,16 +82,5 @@
 }
 
 .section {
-  margin-bottom: 15px !important;
-}
-
-.custom-destinations {
-  margin: 15px 0px;
-  padding-bottom: 15px;
-}
-
-a.custom-dest {
-  font-size: 15px;
-  text-decoration: underline;
-  margin: 10px 0px;
+  padding-bottom: 1px;
 }

@@ -8,17 +8,11 @@ import {
   waitForStreamStart,
 } from '../../helpers/modules/streaming';
 import { fillForm, useForm } from '../../helpers/modules/forms';
-import {
-  click,
-  clickButton,
-  focusMain,
-  isDisplayed,
-  waitForDisplayed,
-} from '../../helpers/modules/core';
+import { click, clickButton, isDisplayed, waitForDisplayed } from '../../helpers/modules/core';
 import { logIn } from '../../helpers/modules/user';
 import { releaseUserInPool, reserveUserFromPool, withUser } from '../../helpers/webdriver/user';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
-import { test, TExecutionContext, useWebdriver } from '../../helpers/webdriver';
+import { test, useWebdriver } from '../../helpers/webdriver';
 import { sleep } from '../../helpers/sleep';
 
 // not a react hook
@@ -33,45 +27,6 @@ async function enableAllPlatforms() {
   }
 }
 
-async function goLiveWithStreamShift(t: TExecutionContext, multistream: boolean) {
-  await fillForm({ streamShift: true });
-
-  if (multistream) {
-    await enableAllPlatforms();
-    await waitForSettingsWindowLoaded();
-    await fillForm({
-      title: 'Test stream',
-      description: 'Test stream description',
-      twitchGame: 'Fortnite',
-      kickGame: 'Fortnite',
-    });
-  } else {
-    await fillForm({ twitch: true });
-    await waitForSettingsWindowLoaded();
-    await fillForm({ title: 'Test stream', game: 'Fortnite' });
-  }
-
-  await waitForSettingsWindowLoaded();
-  await submit();
-  await waitForDisplayed('span=Configure the Multistream service');
-  await waitForStreamStart();
-  await focusMain();
-
-  if (multistream) {
-    t.true(
-      await isDisplayed('span.and-menu-title-content=Multistream'),
-      'Multistream chat tab visible',
-    );
-  } else {
-    t.false(
-      await isDisplayed('span.and-menu-title-content=Multistream'),
-      'Multistream chat tab not visible',
-    );
-  }
-
-  await stopStream();
-}
-
 test(
   'Multistream default mode',
   withUser('twitch', { prime: true, multistream: true }),
@@ -80,12 +35,21 @@ test(
     await clickGoLive();
     await waitForSettingsWindowLoaded();
 
+    // no primary chat switcher if only one platform is enabled
+    t.false(
+      await isDisplayed('[data-name="primary-chat-switcher"]'),
+      'No primary chat switcher if only one platform is enabled',
+    );
+
     // TODO: this is to rule-out a race condition in platform switching, might not be needed and
     // can possibly revert back to fillForm with all platforms.
     await enableAllPlatforms();
 
     // shows primary chat switcher when multiple platforms are enabled
-    t.true(await isDisplayed('[data-name="primary-chat-switcher"]'), 'Shows primary chat switcher');
+    t.true(
+      await isDisplayed('[data-name="primary-chat-switcher"]'),
+      'Shows primary chat switcher when multiple platforms are enabled',
+    );
 
     // add settings
     await fillForm({
@@ -201,15 +165,15 @@ test('Custom stream destinations', async t => {
     await prepareToGoLive();
     await clickGoLive();
     await waitForSettingsWindowLoaded();
+    t.true(await isDisplayed('span=MyCustomDest'), 'Destination is available');
+    await click('span=MyCustomDest'); // switch the destination on
 
+    // try to stream
     await fillForm({
       title: 'Test stream',
       twitchGame: 'Fortnite',
     });
-
-    t.true(await isDisplayed('div=MyCustomDest'), 'Destination is available');
-    await click('div=MyCustomDest'); // switch the destination on
-
+    await waitForSettingsWindowLoaded();
     await submit();
     await waitForDisplayed('span=Configure the Multistream service');
     await waitForDisplayed("h1=You're live!", { timeout: 60000 });
@@ -226,19 +190,4 @@ test('Custom stream destinations', async t => {
     await releaseUserInPool(user);
     await releaseUserInPool(loggedInUser);
   }
-});
-
-// TODO: enable after merge
-test.skip('Stream Shift', withUser('twitch', { prime: true, multistream: true }), async t => {
-  await prepareToGoLive();
-  await clickGoLive();
-  await waitForSettingsWindowLoaded();
-
-  // Single stream shift
-  await goLiveWithStreamShift(t, false);
-
-  // Multistream shift
-  await goLiveWithStreamShift(t, true);
-
-  t.pass();
 });

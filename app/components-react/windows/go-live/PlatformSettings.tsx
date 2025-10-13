@@ -15,11 +15,11 @@ import { TwitterEditStreamInfo } from './platforms/TwitterEditStreamInfo';
 import { InstagramEditStreamInfo } from './platforms/InstagramEditStreamInfo';
 import { KickEditStreamInfo } from './platforms/KickEditStreamInfo';
 import AdvancedSettingsSwitch from './AdvancedSettingsSwitch';
-import { TInputLayout } from 'components-react/shared/inputs';
 
 export default function PlatformSettings() {
   const {
-    canShowAdvancedMode,
+    isMultiplatformMode,
+    isDualOutputMode,
     settings,
     error,
     isAdvancedMode,
@@ -32,7 +32,6 @@ export default function PlatformSettings() {
     descriptionIsRequired,
     isUpdateMode,
     isTikTokConnected,
-    layout,
   } = useGoLiveSettings().extend(settings => ({
     get descriptionIsRequired() {
       const fbSettings = settings.state.platforms['facebook'];
@@ -43,13 +42,10 @@ export default function PlatformSettings() {
     get isTikTokConnected() {
       return settings.state.isPlatformLinked('tiktok');
     },
-
-    get layout(): TInputLayout {
-      return settings.isAdvancedMode ? 'horizontal' : 'vertical';
-    },
   }));
 
   const shouldShowSettings = !error && !isLoading;
+  const canShowAdvancedMode = isMultiplatformMode || isDualOutputMode;
 
   let layoutMode: TLayoutMode;
   if (canShowAdvancedMode) {
@@ -76,21 +72,10 @@ export default function PlatformSettings() {
 
   return (
     // minHeight is required for the loading spinner
-    <div style={{ minHeight: '150px', flex: 1 }}>
+    <div style={{ minHeight: '150px' }}>
       {shouldShowSettings && (
         <div style={{ width: '100%' }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '10px',
-              fontSize: '16px',
-            }}
-          >
-            <div>{$t('Stream Information:')}</div>
-            <AdvancedSettingsSwitch />
-          </div>
+          <AdvancedSettingsSwitch />
 
           {/*COMMON FIELDS*/}
           {canShowAdvancedMode && (
@@ -100,7 +85,6 @@ export default function PlatformSettings() {
                 value={commonFields}
                 onChange={updateCommonFields}
                 enabledPlatforms={enabledPlatforms}
-                layout={layout}
               />
             </Section>
           )}
@@ -113,28 +97,24 @@ export default function PlatformSettings() {
               key={platform}
             >
               {platform === 'twitch' && (
-                <TwitchEditStreamInfo {...createPlatformBinding('twitch')} layout={layout} />
+                <TwitchEditStreamInfo {...createPlatformBinding('twitch')} />
               )}
               {platform === 'facebook' && (
-                <FacebookEditStreamInfo {...createPlatformBinding('facebook')} layout={layout} />
+                <FacebookEditStreamInfo {...createPlatformBinding('facebook')} />
               )}
               {platform === 'youtube' && (
-                <YoutubeEditStreamInfo {...createPlatformBinding('youtube')} layout={layout} />
+                <YoutubeEditStreamInfo {...createPlatformBinding('youtube')} />
               )}
               {platform === 'tiktok' && isTikTokConnected && (
-                <TikTokEditStreamInfo {...createPlatformBinding('tiktok')} layout={layout} />
+                <TikTokEditStreamInfo {...createPlatformBinding('tiktok')} />
               )}
-              {platform === 'kick' && (
-                <KickEditStreamInfo {...createPlatformBinding('kick')} layout={layout} />
-              )}
-              {platform === 'trovo' && (
-                <TrovoEditStreamInfo {...createPlatformBinding('trovo')} layout={layout} />
-              )}
+              {platform === 'kick' && <KickEditStreamInfo {...createPlatformBinding('kick')} />}
+              {platform === 'trovo' && <TrovoEditStreamInfo {...createPlatformBinding('trovo')} />}
               {platform === 'twitter' && (
-                <TwitterEditStreamInfo {...createPlatformBinding('twitter')} layout={layout} />
+                <TwitterEditStreamInfo {...createPlatformBinding('twitter')} />
               )}
               {platform === 'instagram' && (
-                <InstagramEditStreamInfo {...createPlatformBinding('instagram')} layout={layout} />
+                <InstagramEditStreamInfo {...createPlatformBinding('instagram')} />
               )}
             </Section>
           ))}

@@ -16,7 +16,6 @@ import { IFacebookStartStreamOptions } from './facebook';
 import { StreamSettingsService } from '../settings/streaming';
 import * as remote from '@electron/remote';
 import { VideoSettingsService } from 'services/settings-v2/video';
-import { ENotificationType, NotificationsService } from 'services/notifications';
 
 const VIEWER_COUNT_UPDATE_INTERVAL = 60 * 1000;
 
@@ -38,7 +37,6 @@ export abstract class BasePlatformService<T extends IPlatformState> extends Stat
   @Inject() protected streamSettingsService: StreamSettingsService;
   @Inject() protected dualOutputService: DualOutputService;
   @Inject() protected videoSettingsService: VideoSettingsService;
-  @Inject() protected notificationsService: NotificationsService;
 
   abstract readonly platform: TPlatform;
 
@@ -123,14 +121,6 @@ export abstract class BasePlatformService<T extends IPlatformState> extends Stat
 
   async validatePlatform() {
     return EPlatformCallResult.Success;
-  }
-
-  postError(message: string) {
-    this.notificationsService.actions.push({
-      message,
-      type: ENotificationType.WARNING,
-      lifeTime: 5000,
-    });
   }
 
   fetchUserInfo() {

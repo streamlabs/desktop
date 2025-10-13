@@ -8,6 +8,7 @@ import { $t } from '../../../services/i18n';
 import GoLiveChecklist from './GoLiveChecklist';
 import Form from '../../shared/inputs/Form';
 import Animation from 'rc-animate';
+import { SwitchInput } from '../../shared/inputs';
 import { useGoLiveSettingsRoot } from './useGoLiveSettings';
 import PlatformSettings from './PlatformSettings';
 import Scrollable from '../../shared/Scrollable';
@@ -20,7 +21,11 @@ export default function EditStreamWindow() {
   const {
     error,
     lifecycle,
+    isMultiplatformMode,
+    isDualOutputMode,
     updateStream,
+    isAdvancedMode,
+    switchAdvancedMode,
     prepopulate,
     isLoading,
     form,
@@ -34,6 +39,7 @@ export default function EditStreamWindow() {
   const shouldShowSettings = !shouldShowChecklist;
   const shouldShowUpdateButton = lifecycle !== 'runChecklist';
   const shouldShowGoBackButton = !shouldShowUpdateButton && error;
+  const shouldShowAdvancedSwitch = isMultiplatformMode || isDualOutputMode;
 
   useOnCreate(() => {
     // the streamingService still may keep a error from GoLive flow like a "Post a Tweet" error
@@ -53,6 +59,17 @@ export default function EditStreamWindow() {
   function renderFooter() {
     return (
       <Form layout={'inline'}>
+        {shouldShowAdvancedSwitch && (
+          <SwitchInput
+            label={$t('Show Advanced Settings')}
+            name="advancedMode"
+            onChange={switchAdvancedMode}
+            value={isAdvancedMode}
+            debounce={300}
+            disabled={isLoading}
+          />
+        )}
+
         {/* CLOSE BUTTON */}
         <Button onClick={close}>{$t('Close')}</Button>
 

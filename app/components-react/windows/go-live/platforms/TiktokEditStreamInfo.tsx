@@ -12,8 +12,6 @@ import { RadioInput, TextInput, createBinding } from 'components-react/shared/in
 import InfoBanner from 'components-react/shared/InfoBanner';
 import GameSelector from '../GameSelector';
 import { EDismissable } from 'services/dismissables';
-import styles from './TikTokEditStreamInfo.m.less';
-import cx from 'classnames';
 
 /**
  * @remark The filename for this component is intentionally not consistent with capitalization to preserve the commit history
@@ -42,14 +40,11 @@ export function TikTokEditStreamInfo(p: IPlatformComponentParams<'tiktok'>) {
             layoutMode={p.layoutMode}
             value={ttSettings}
             onChange={updateSettings}
-            layout={p.layout}
           />
         }
         requiredFields={<div key="empty-tiktok" />}
       />
-      {approved && (
-        <GameSelector key="optional" platform={'tiktok'} {...bind.game} layout={p.layout} />
-      )}
+      {approved && <GameSelector key="optional" platform={'tiktok'} {...bind.game} />}
       {approved && !controls.disable && (
         <RadioInput
           key="audience-ctrl"
@@ -60,7 +55,6 @@ export function TikTokEditStreamInfo(p: IPlatformComponentParams<'tiktok'>) {
           direction="horizontal"
           colon
           {...bind.audienceType}
-          layout={p.layout}
         />
       )}
       {!approved && <TikTokEnterCredentialsFormInfo {...p} denied={denied} />}
@@ -86,8 +80,6 @@ export function TikTokEnterCredentialsFormInfo(
         }
         required
         {...bind.serverUrl}
-        layout={p.layout}
-        size="large"
       />
       <TextInput
         label={
@@ -98,8 +90,6 @@ export function TikTokEnterCredentialsFormInfo(
         }
         required
         {...bind.streamKey}
-        layout={p.layout}
-        size="large"
       />
       <InputWrapper
         extra={
@@ -107,8 +97,6 @@ export function TikTokEnterCredentialsFormInfo(
             {p.denied ? <TikTokDenied /> : <TikTokInfo />}
           </div>
         }
-        layout={p.layout}
-        className={cx({ [styles.hideLabel]: p.layout === 'vertical' })}
       >
         <TikTokButtons denied={p.denied} />
       </InputWrapper>

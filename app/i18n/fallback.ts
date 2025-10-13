@@ -66,7 +66,6 @@ const fallbackDictionary = {
   ...require('./en-US/loader.json'),
   ...require('./en-US/guest-cam.json'),
   ...require('./en-US/kick.json'),
-  ...require('./en-US/stream-shift.json'),
   ...require('./en-US/developer.json'),
 };
 
