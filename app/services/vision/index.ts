@@ -219,7 +219,9 @@ export class VisionService extends Service {
 
         if (needsUpdate) {
           if (installedManifest) {
-            this.log(`vision needs update: ${installedManifest.version} -> ${latestManifest.version}`);
+            this.log(
+              `vision needs update: ${installedManifest.version} -> ${latestManifest.version}`,
+            );
             // silently update in the background
             await this.ensureUpdated({ startAfterUpdate: false });
           } else {
@@ -401,7 +403,7 @@ export class VisionService extends Service {
     return await this.authPostWithTimeout(
       `https://${this.hostsService.streamlabs}/api/v5/vision/desktop/test-event`,
       {
-        game: "fortnite", // default to fortnite for now
+        game: 'fortnite', // default to fortnite for now
         events: [{ name: type }],
       },
       8_000,
