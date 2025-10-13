@@ -29,6 +29,7 @@ export function TwitterEditStreamInfo(p: IPlatformComponentParams<'twitter'>) {
             layoutMode={p.layoutMode}
             value={twSettings}
             onChange={updateSettings}
+            layout={p.layout}
           />
         }
         requiredFields={
@@ -63,6 +64,8 @@ export function TwitterEditStreamInfo(p: IPlatformComponentParams<'twitter'>) {
                   description: $t('Only viewers that subscribe to you will be able to chat'),
                 },
               ]}
+              layout={p.layout}
+              size="large"
             />
           </div>
         }

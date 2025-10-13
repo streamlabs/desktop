@@ -1,19 +1,19 @@
+import React, { useState } from 'react';
 import styles from './GoLive.m.less';
-import { WindowsService, DualOutputService } from 'app-services';
+import { WindowsService, DualOutputService, IncrementalRolloutService } from 'app-services';
 import { ModalLayout } from '../../shared/ModalLayout';
-import { Button } from 'antd';
+import { Button, message } from 'antd';
 import { Services } from '../../service-provider';
 import GoLiveSettings from './GoLiveSettings';
-import React from 'react';
 import { $t } from '../../../services/i18n';
 import GoLiveChecklist from './GoLiveChecklist';
-import { alertAsync } from 'components-react/modals';
 import Form from '../../shared/inputs/Form';
-import Translate from 'components-react/shared/Translate';
 import Animation from 'rc-animate';
 import { useGoLiveSettings, useGoLiveSettingsRoot } from './useGoLiveSettings';
 import { inject } from 'slap';
 import RecordingSwitcher from './RecordingSwitcher';
+import { promptAction } from 'components-react/modals';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export default function GoLiveWindow() {
   const { lifecycle, form } = useGoLiveSettingsRoot().extend(module => ({
@@ -27,8 +27,6 @@ export default function GoLiveWindow() {
 
   const shouldShowSettings = ['empty', 'prepopulate', 'waitForNewSettings'].includes(lifecycle);
   const shouldShowChecklist = ['runChecklist', 'live'].includes(lifecycle);
-
-  // message.error({ content: $t('Streaming to TikTok not approved.'), duration: 200 });
 
   return (
     <ModalLayout footer={<ModalFooter />} className={styles.dualOutputGoLive}>
@@ -59,13 +57,14 @@ function ModalFooter() {
     close,
     goBackToSettings,
     getCanStreamDualOutput,
-    toggleDualOutputMode,
     isLoading,
     isDualOutputMode,
-    horizontalHasTargets,
+    isPrime,
+    canUseStreamShift,
   } = useGoLiveSettings().extend(module => ({
     windowsService: inject(WindowsService),
     dualOutputService: inject(DualOutputService),
+    incrementalRolloutService: inject(IncrementalRolloutService),
 
     close() {
       this.windowsService.actions.closeChildWindow();
@@ -86,54 +85,77 @@ function ModalFooter() {
       return platformDisplays.horizontal.length > 0 || destinationDisplays.horizontal.length > 0;
     },
 
-    get isDualOutputMode() {
-      return Services.TikTokService.promptApply;
+    get canUseStreamShift() {
+      return this.incrementalRolloutService.views.availableFeatures.includes(
+        EAvailableFeatures.streamShift,
+      );
     },
   }));
+
+  const [isFetchingStreamStatus, setIsFetchingStreamStatus] = useState(false);
 
   const shouldShowConfirm = ['prepopulate', 'waitForNewSettings'].includes(lifecycle);
   const shouldShowGoBackButton =
     lifecycle === 'runChecklist' && error && checklist.startVideoTransmission !== 'done';
 
-  function handleGoLive() {
+  async function handleGoLive() {
+    if (isPrime && canUseStreamShift) {
+      try {
+        setIsFetchingStreamStatus(true);
+        const isLive = await Services.RestreamService.checkIsLive();
+        setIsFetchingStreamStatus(false);
+
+        // Prompt to confirm stream switch if the stream exists
+        // TODO: unify with start streaming button prompt
+        if (isLive) {
+          promptAction({
+            title: $t('Another stream detected'),
+            message: $t(
+              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source.',
+            ),
+            btnText: $t('Switch to Streamlabs Desktop'),
+            fn: () => {
+              Services.StreamingService.actions.goLive();
+              close();
+            },
+            cancelBtnText: $t('Cancel'),
+            cancelBtnPosition: 'left',
+          });
+          return;
+        }
+      } catch (e: unknown) {
+        console.error('Error checking stream switcher status:', e);
+
+        setIsFetchingStreamStatus(false);
+      }
+    }
+
     if (isDualOutputMode && !getCanStreamDualOutput()) {
-      handleConfirmGoLive();
+      message.error({
+        key: 'dual-output-error',
+        className: styles.errorAlert,
+        content: (
+          <div className={styles.alertContent}>
+            <div style={{ marginRight: '10px' }}>
+              {$t(
+                'To use Dual Output you must stream to one horizontal and one vertical platform.',
+              )}
+            </div>
+
+            <i className="icon-close" />
+          </div>
+        ),
+        onClick: () => message.destroy('dual-output-error'),
+      });
       return;
     }
 
     goLive();
   }
 
-  function handleConfirmGoLive() {
-    const display = horizontalHasTargets ? $t('Horizontal') : $t('Vertical');
-
-    alertAsync({
-      type: 'warning',
-      title: $t('Confirm Horizontal and Vertical Platforms'),
-      closable: true,
-      content: (
-        <Translate
-          message={$t(
-            'All platforms are currently assigned to the <display></display> display. To use Dual Output you must stream to one horizontal and one vertical platform. Do you want to go live in single output mode with the Horizontal display?',
-          )}
-          renderSlots={{
-            display: () => {
-              return <span key={display}>{display}</span>;
-            },
-          }}
-        ></Translate>
-      ),
-      cancelText: $t('Close'),
-      okText: $t('Confirm'),
-      okButtonProps: { type: 'primary' },
-      onOk: () => toggleDualOutputMode(),
-      cancelButtonProps: { style: { display: 'inline' } },
-    });
-  }
-
   return (
     <Form layout={'inline'}>
-      {!isDualOutputMode && <RecordingSwitcher />}
+      {!isDualOutputMode && shouldShowConfirm && <RecordingSwitcher />}
       {/* CLOSE BUTTON */}
       <Button onClick={close}>{$t('Close')}</Button>
 
@@ -149,8 +171,13 @@ function ModalFooter() {
           type="primary"
           onClick={handleGoLive}
           disabled={isLoading || !!error}
+          className={styles.confirmBtn}
         >
-          {$t('Confirm & Go Live')}
+          {isFetchingStreamStatus ? (
+            <i className="fa fa-spinner fa-pulse" />
+          ) : (
+            <>{$t('Confirm & Go Live')}</>
+          )}
         </Button>
       )}
     </Form>
