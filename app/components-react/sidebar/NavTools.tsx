@@ -17,6 +17,7 @@ import PlatformIndicator from './PlatformIndicator';
 import { AuthModal } from 'components-react/shared/AuthModal';
 import { useRealmObject } from 'components-react/hooks/realm';
 import { ESettingsCategory } from 'services/settings';
+import { getOS, OS } from 'util/operating-systems';
 
 export default function SideNav() {
   const {
@@ -32,7 +33,11 @@ export default function SideNav() {
 
   const visionState = useRealmObject(VisionService.state);
 
-  const isDevMode = Utils.isDevMode();
+  const isDevMode = useMemo(() => Utils.isDevMode(), []);
+
+  const showAiTab = useMemo(() => {
+    return getOS() === OS.Windows || (getOS() === OS.Mac && isDevMode);
+  }, [isDevMode]);
 
   const {
     isLoggedIn,
@@ -186,7 +191,7 @@ export default function SideNav() {
                 onClick={() => openHelp()}
               />
             );
-          } else if (isDevMode && menuItem.key === EMenuItemKey.AI) {
+          } else if (showAiTab && menuItem.key === EMenuItemKey.AI) {
             return (
               <NavToolsItem
                 key={menuItem.key}
