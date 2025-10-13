@@ -186,7 +186,7 @@ export default function SideNav() {
                 onClick={() => openHelp()}
               />
             );
-          } else if (menuItem.key === EMenuItemKey.AI) {
+          } else if (isDevMode && menuItem.key === EMenuItemKey.AI) {
             return (
               <NavToolsItem
                 key={menuItem.key}
