@@ -82,21 +82,21 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
 
     const streamShiftEvent = StreamingService.streamShiftEvent.subscribe(event => {
       const streamShiftStreamId = RestreamService.state.streamShiftStreamId;
-
       const isMobileRemote = streamShiftStreamId ? /[A-Z]/.test(streamShiftStreamId) : false;
       const remoteDeviceType = isMobileRemote ? 'mobile' : 'desktop';
 
       // TODO: Remove after launch
-      console.debug(
-        'Desktop stream id: ' +
-          streamShiftStreamId +
-          '\nEvent:' +
-          JSON.stringify(event) +
+      console.log(
+        'Event:' +
+          event.type +
           '\nSource: ' +
-          remoteDeviceType,
+          remoteDeviceType +
+          '\nDesktop stream id: ' +
+          streamShiftStreamId,
       );
 
       if (event.type === 'streamSwitchRequest') {
+        console.debug('Event stream id: ' + event.data.identifier);
         if (event.data.identifier === streamShiftStreamId) {
           RestreamService.confirmStreamShift('approved');
         }
@@ -107,6 +107,8 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       }
 
       if (event.type === 'switchActionComplete') {
+        console.debug('Event stream id: ' + event.data.identifier);
+
         const remoteStreamId = event.data.identifier;
         const isFromOtherDevice = remoteStreamId !== streamShiftStreamId;
 
@@ -120,7 +122,13 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         });
 
         // Notify the user
-        const message = formatStreamShiftMessage(isMobileRemote, isFromOtherDevice);
+        const message = isFromOtherDevice
+          ? $t(
+              'Your stream has been successfully switched to Streamlabs Desktop. Enjoy your stream!',
+            )
+          : $t(
+              'Your stream has been switched to Streamlabs Desktop from another device. Enjoy your stream!',
+            );
 
         promptAction({
           title: $t('Stream successfully switched'),
@@ -136,27 +144,6 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       streamShiftEvent.unsubscribe();
     };
   }, []);
-
-  const formatStreamShiftMessage = useCallback(
-    (isMobileRemote: boolean, isFromOtherDevice: boolean) => {
-      if (isFromOtherDevice && isMobileRemote) {
-        return $t(
-          'Your stream has been switched to Streamlabs Mobile. The stream has ended on Streamlabs Desktop.',
-        );
-      }
-
-      if (!isFromOtherDevice && !isMobileRemote) {
-        return $t(
-          'Your stream has been switched to Streamlabs Desktop on another device. The stream has ended on this device.',
-        );
-      }
-
-      return $t(
-        'Your stream has been successfully switched to Streamlabs Desktop. Enjoy your stream!',
-      );
-    },
-    [],
-  );
 
   const toggleStreaming = useCallback(async () => {
     if (StreamingService.isStreaming) {
