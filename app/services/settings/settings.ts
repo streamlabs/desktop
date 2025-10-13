@@ -459,7 +459,8 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     categories.push('Get Support');
 
     // TODO: Lock behind admin?
-    if (Utils.isDevMode()) {
+    // Show AI settings for Windows, or for Mac in development. Do not show to Mac users in production.
+    if (getOS() === OS.Windows || (getOS() === OS.Mac && !Utils.isDevMode())) {
       categories.push(ESettingsCategory.AI);
     }
 
