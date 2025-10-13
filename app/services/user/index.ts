@@ -493,14 +493,6 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
         const platform = event.message[0].platform.split('_')[0];
         await this.startChatAuth(platform as TPlatform);
       }
-
-      if (event.type === 'streamSwitchRequest') {
-        this.streamingService.streamShiftEvent.next(event);
-      }
-
-      if (event.type === 'switchActionComplete') {
-        this.streamingService.streamShiftEvent.next(event);
-      }
     });
   }
 

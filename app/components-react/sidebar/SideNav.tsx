@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import cx from 'classnames';
 import { EMenuItemKey, ESubMenuItemKey } from 'services/side-nav';
@@ -19,24 +19,37 @@ const { Sider } = Layout;
 export default function SideNav() {
   const { CustomizationService, SideNavService, WindowsService } = Services;
 
+  function updateSubMenu() {
+    // when opening/closing the navbar swap the submenu current menu item
+    // to correctly display selected color
+    const subMenuItems = {
+      [EMenuItemKey.Themes]: ESubMenuItemKey.Scene,
+      [ESubMenuItemKey.Scene]: EMenuItemKey.Themes,
+      [EMenuItemKey.AppStore]: ESubMenuItemKey.AppsStoreHome,
+      [ESubMenuItemKey.AppsStoreHome]: EMenuItemKey.AppStore,
+    };
+    if (Object.keys(subMenuItems).includes(currentMenuItem as EMenuItemKey)) {
+      // TODO: index
+      // @ts-ignore
+      setCurrentMenuItem(subMenuItems[currentMenuItem]);
+    }
+  }
+
   const {
     currentMenuItem,
     setCurrentMenuItem,
     isOpen,
     toggleMenuStatus,
     updateStyleBlockers,
-    hideStyleBlockers,
   } = useVuex(() => ({
     currentMenuItem: SideNavService.views.currentMenuItem,
     setCurrentMenuItem: SideNavService.actions.setCurrentMenuItem,
     isOpen: SideNavService.views.isOpen,
     toggleMenuStatus: SideNavService.actions.toggleMenuStatus,
     updateStyleBlockers: WindowsService.actions.updateStyleBlockers,
-    hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
   }));
 
   const sider = useRef<HTMLDivElement | null>(null);
-  const isMounted = useRef(false);
 
   const leftDock = useRealmObject(CustomizationService.state).leftDock;
 
@@ -58,42 +71,17 @@ export default function SideNav() {
     });
   });
 
-  useEffect(() => {
-    isMounted.current = true;
-    if (!sider || !sider.current) return;
-
+  useLayoutEffect(() => {
     if (sider && sider?.current) {
       resizeObserver.observe(sider?.current);
-
-      if (hideStyleBlockers) {
-        updateStyleBlockers('main', false);
-      }
     }
 
     return () => {
       if (sider && sider?.current) {
         resizeObserver.disconnect();
       }
-
-      isMounted.current = false;
     };
   }, [sider]);
-
-  const updateSubMenu = useCallback(() => {
-    // when opening/closing the navbar swap the submenu current menu item
-    // to correctly display selected color
-    const subMenuItems = {
-      [EMenuItemKey.Themes]: ESubMenuItemKey.Scene,
-      [ESubMenuItemKey.Scene]: EMenuItemKey.Themes,
-      [EMenuItemKey.AppStore]: ESubMenuItemKey.AppsStoreHome,
-      [ESubMenuItemKey.AppsStoreHome]: EMenuItemKey.AppStore,
-    };
-    if (Object.keys(subMenuItems).includes(currentMenuItem as EMenuItemKey)) {
-      // TODO: index
-      // @ts-ignore
-      setCurrentMenuItem(subMenuItems[currentMenuItem]);
-    }
-  }, [currentMenuItem]);
 
   return (
     <Layout hasSider className="side-nav">

@@ -10,7 +10,7 @@ import { $t } from '../../../services/i18n';
 import Message from '../Message';
 
 // select which features from the antd lib we are going to use
-const ANT_SELECT_FEATURES = ['showSearch', 'loading', 'size'] as const;
+const ANT_SELECT_FEATURES = ['showSearch', 'loading'] as const;
 
 interface ICustomTagsProps<TValue> extends Omit<ICustomListProps<SingleType<TValue>>, 'options'> {
   max?: number;

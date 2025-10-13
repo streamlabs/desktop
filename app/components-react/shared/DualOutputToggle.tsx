@@ -12,13 +12,10 @@ interface IDualOutputToggleProps {
   type?: 'dual' | 'single';
   value?: boolean;
   className?: string;
-  checkboxClassname?: string;
   style?: CSSProperties;
   disabled?: boolean;
-  tooltipDisabled?: boolean;
   placement?: TTipPosition;
   lightShadow?: boolean;
-  label?: string;
   onChange?: (value: boolean) => void;
 }
 
@@ -39,7 +36,7 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
     isPrime: UserService.state.isPrime,
   }));
 
-  const defaultLabel = v.dualOutputMode ? $t('Disable Dual Output') : $t('Enable Dual Output');
+  const label = v.dualOutputMode ? $t('Disable Dual Output') : $t('Enable Dual Output');
   const value = p?.value ?? v.dualOutputMode;
   const placement = p?.placement ?? 'bottom';
 
@@ -86,10 +83,10 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
         id="dual-output-checkbox"
         name="dual-output-checkbox"
         data-name="dual-output-checkbox"
-        label={p?.label ?? defaultLabel}
+        label={label}
         value={value}
         onChange={toggleDualOutput}
-        className={cx(styles.doCheckbox, p?.checkboxClassname)}
+        className={styles.doCheckbox}
         disabled={p?.disabled}
       />
       <Tooltip
@@ -99,7 +96,6 @@ export default function DualOutputToggle(p: IDualOutputToggleProps) {
         className={styles.doTooltip}
         placement={placement}
         lightShadow={p?.lightShadow}
-        disabled={p?.tooltipDisabled}
       >
         <i className="icon-information" />
       </Tooltip>

@@ -27,7 +27,7 @@ import { TOutputOrientation } from 'services/restream';
 import { UsageStatisticsService } from 'app-services';
 import cloneDeep from 'lodash/cloneDeep';
 import { ICustomStreamDestination } from 'services/settings/streaming';
-import { ENotificationType } from 'services/notifications';
+import { ENotificationType, NotificationsService } from 'services/notifications';
 
 interface IYoutubeServiceState extends IPlatformState {
   liveStreamingEnabled: boolean;
@@ -164,7 +164,6 @@ interface IExtraBroadcastSettings {
 }
 
 type TStreamStatus = 'active' | 'created' | 'error' | 'inactive' | 'ready';
-type TBroadcastStatus = 'all' | 'active' | 'completed' | 'upcoming';
 type TBroadcastLifecycleStatus =
   | 'complete'
   | 'created'
@@ -185,6 +184,7 @@ export class YoutubeService
   @Inject() private customizationService: CustomizationService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
   @Inject() private i18nService: I18nService;
+  @Inject() private notificationsService: NotificationsService;
 
   @lazyModule(YoutubeUploader) uploader: YoutubeUploader;
 
@@ -329,109 +329,6 @@ export class YoutubeService
     this.state.liveStreamingEnabled = enabled;
   }
 
-  async setupStreamShiftStream(goLiveSettings: IGoLiveSettings) {
-    const settings = goLiveSettings?.streamShiftSettings;
-    console.log('YouTube Stream Shift settings ', settings);
-
-    if (settings && settings.broadcast_id !== null && !settings.is_live) {
-      console.error('Stream Shift Error: YouTube is not live');
-      this.postError('Stream Shift Error: YouTube is not live');
-      return;
-    }
-
-    try {
-      const liveBroadcasts = await this.fetchBroadcastsByStatus('active');
-
-      // Use the last broadcast in the list, which should be the most recent one
-      let broadcast = liveBroadcasts?.[liveBroadcasts.length - 1];
-      console.log('YouTube fetched ', liveBroadcasts?.length, ' active broadcasts');
-      console.log('YouTube fetched active broadcast', broadcast);
-
-      // Try to find an upcoming broadcast if there are no active broadcasts
-      if (!broadcast) {
-        console.debug('No active YouTube broadcasts found');
-        this.postError(
-          $t(
-            'Auto-start is disabled for your broadcast. You should manually publish your stream from Youtube Studio',
-          ),
-        );
-        const upcomingBroadcasts = await this.fetchBroadcastsByStatus('upcoming');
-        console.log('YouTube fetched ', upcomingBroadcasts?.length, ' upcoming broadcasts');
-        console.log('YouTube fetched upcoming broadcast', broadcast);
-        broadcast = upcomingBroadcasts?.[upcomingBroadcasts.length - 1];
-      }
-
-      // If there are no active or upcoming broadcasts, create one
-      if (!broadcast) {
-        console.debug('No upcoming YouTube broadcasts found');
-        const ytSettings = getDefined(goLiveSettings.platforms.youtube);
-        broadcast = await this.createBroadcast({
-          title: settings?.stream_title ?? ytSettings.title,
-          description: ytSettings?.description ?? '',
-        });
-        console.log('YouTube created broadcast', broadcast);
-      }
-
-      // Validate stream binding to broadcast
-      if (broadcast.contentDetails.boundStreamId) {
-        const liveStream = await this.fetchLiveStream(broadcast.contentDetails.boundStreamId);
-        console.debug('Bound stream for YouTube broadcast: ', !!liveStream);
-        console.log('YouTube found stream', liveStream, ' bound to broadcast', broadcast.id);
-        const streamKey = liveStream.cdn.ingestionInfo.streamName;
-        this.SET_STREAM_KEY(streamKey);
-      } else {
-        console.error('No stream to bind to YouTube broadcast, creating a new stream');
-        const liveStream = await this.createLiveStream(broadcast.snippet.title);
-        await this.bindStreamToBroadcast(broadcast.id, liveStream.id);
-
-        console.log(
-          'YouTube created stream',
-          liveStream,
-          ' and bound it to broadcast',
-          broadcast.id,
-        );
-
-        const streamKey = liveStream.cdn.ingestionInfo.streamName;
-        this.SET_STREAM_KEY(streamKey);
-      }
-
-      const video = await this.fetchVideo(broadcast.id);
-      this.SET_STREAM_ID(broadcast.contentDetails.boundStreamId);
-
-      console.log('YouTube fetched video', video, ' for broadcast', broadcast.id);
-
-      const title = settings?.stream_title ?? broadcast.snippet.title;
-
-      this.UPDATE_STREAM_SETTINGS({
-        title,
-        broadcastId: broadcast.id,
-        description: broadcast.snippet.description,
-        categoryId: video?.snippet?.categoryId,
-        enableAutoStart: broadcast.contentDetails.enableAutoStart,
-        enableAutoStop: broadcast.contentDetails.enableAutoStop,
-        enableDvr: broadcast.contentDetails.enableDvr,
-        projection: broadcast.contentDetails.projection,
-        latencyPreference: broadcast.contentDetails.latencyPreference,
-        privacyStatus: broadcast.status.privacyStatus,
-        selfDeclaredMadeForKids: broadcast.status.selfDeclaredMadeForKids,
-        thumbnail: broadcast.snippet.thumbnails?.high?.url || 'default',
-      });
-    } catch (e: unknown) {
-      console.error('Error fetching broadcasts', e);
-
-      // If fetching the YouTube settings fails, populate just the Stream Shift settings
-      if (settings) {
-        this.UPDATE_STREAM_SETTINGS({
-          title: settings.stream_title,
-          broadcastId: settings.broadcast_id,
-        });
-      }
-      return;
-    }
-
-    this.setPlatformContext('youtube');
-  }
-
   async setupDualStream(goLiveSettings: IGoLiveSettings) {
     const ytSettings = getDefined(goLiveSettings.platforms.youtube);
     const title = makeVerticalTitle(ytSettings.title);
@@ -492,18 +389,10 @@ export class YoutubeService
         verticalDestination.display,
       );
     }
-
-    this.setPlatformContext('youtube');
   }
 
   async beforeGoLive(goLiveSettings: IGoLiveSettings, context?: TDisplayType) {
     const ytSettings = getDefined(goLiveSettings.platforms.youtube);
-
-    // If the stream has switched from another device, a new broadcast does not need to be created
-    if (goLiveSettings.streamShift && this.streamingService.views.shouldSwitchStreams) {
-      await this.setupStreamShiftStream(goLiveSettings);
-      return;
-    }
 
     const streamToScheduledBroadcast = !!ytSettings.broadcastId;
     // update selected LiveBroadcast with new title and description
@@ -576,21 +465,6 @@ export class YoutubeService
   }
 
   async afterStopStream() {
-    // TODO: Remove if first fix for Stream Shift with auto-start/auto-stop disabled works
-    // Confirm that the Stream Shift stream is stopped
-    // if (this.streamingService.views.shouldSwitchStreams) {
-    //   const broadcasts = await this.fetchLiveBroadcasts();
-
-    //   if (broadcasts.length) {
-    //     const streamShiftBroadcast = broadcasts.find(b => b.id === this.state.settings.broadcastId);
-
-    //     // If for some reason the broadcast is still live, end it
-    //     if (streamShiftBroadcast && streamShiftBroadcast.status.lifeCycleStatus === 'live') {
-    //       await this.stopBroadcast(streamShiftBroadcast.id);
-    //     }
-    //   }
-    // }
-
     const destinations = this.streamingService.views.customDestinations.filter(
       dest => dest.streamKey !== this.state.verticalStreamKey,
     );
@@ -1034,20 +908,6 @@ export class YoutubeService
     return broadcasts;
   }
 
-  private async fetchBroadcastsByStatus(
-    status: TBroadcastStatus,
-  ): Promise<IYoutubeLiveBroadcast[]> {
-    const fields = ['snippet', 'contentDetails', 'status'];
-    const query = `part=${fields.join(',')}`;
-    const broadcasts = (
-      await platformAuthorizedRequest<IYoutubeCollection<IYoutubeLiveBroadcast>>(
-        'youtube',
-        `${this.apiBase}/liveBroadcasts?${query}&broadcastStatus=${status}&maxResults=100`,
-      )
-    ).items;
-    return broadcasts;
-  }
-
   private async fetchLiveStream(id: string): Promise<IYoutubeLiveStream> {
     const url = `${this.apiBase}/liveStreams?part=cdn,snippet,contentDetails&id=${id}`;
     return (await platformAuthorizedRequest<{ items: IYoutubeLiveStream[] }>('youtube', url))
@@ -1178,15 +1038,6 @@ export class YoutubeService
 
       throw throwStreamError(errorType, { ...error, platform: 'youtube' }, details);
     }
-  }
-
-  async stopBroadcast(broadcastId: string) {
-    // https://www.googleapis.com/youtube/v3/liveBroadcasts/transition
-    const endpoint = `liveBroadcasts/transition?id=${broadcastId}&broadcastStatus=complete`;
-    return platformAuthorizedRequest<IYoutubeLiveStream>('youtube', {
-      url: `${this.apiBase}/${endpoint}`,
-      method: 'POST',
-    });
   }
 
   fetchFollowers() {

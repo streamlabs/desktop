@@ -34,7 +34,6 @@ export type TInputType =
   | 'time'
   | 'file'
   | 'checkboxGroup'
-  | 'radio'
   | 'imagepicker'
   | 'animation'
   | 'duration';

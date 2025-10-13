@@ -8,4 +8,3 @@ export { CheckboxInputController } from './checkbox';
 export { BoolButtonInputController } from './bool-button';
 export { SliderInputController } from './slider';
 export { FileInputController } from './file';
-export { RadioInputController } from './radio';

@@ -139,49 +139,8 @@ export class KickService
     return this.userService.views.state.auth?.platforms?.kick?.token;
   }
 
-  async setupStreamShiftStream(goLiveSettings: IGoLiveSettings): Promise<void> {
-    const settings = goLiveSettings.streamShiftSettings;
-
-    if (settings && !settings.is_live) {
-      console.error('Stream Shift Error: Kick is not live');
-      this.postError('Stream Shift Error: Kick is not live');
-      return;
-    }
-
-    const response = await this.fetchStreamInfo();
-    const info = response as IKickStreamInfoResponse;
-
-    const title = settings?.stream_title ?? info.channel?.title;
-    const game = settings?.game_id ?? info.channel?.category.id.toString();
-    const gameName = settings?.game_name ?? info.channel?.category.name;
-
-    if (info.channel) {
-      this.UPDATE_STREAM_SETTINGS({
-        title,
-        game,
-      });
-
-      this.SET_GAME_NAME(gameName);
-    } else {
-      this.UPDATE_STREAM_SETTINGS({
-        title,
-      });
-    }
-
-    if (settings?.chat_url) {
-      this.SET_CHAT_URL(settings.chat_url);
-    }
-
-    this.setPlatformContext('kick');
-  }
-
   async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     const kickSettings = getDefined(goLiveSettings.platforms.kick);
-
-    if (goLiveSettings.streamShift && this.streamingService.views.shouldSwitchStreams) {
-      await this.setupStreamShiftStream(goLiveSettings);
-      return;
-    }
 
     const streamInfo = await this.startStream(goLiveSettings.platforms.kick ?? this.state.settings);
 
@@ -507,9 +466,7 @@ export class KickService
   }
 
   get chatUrl(): string {
-    return this.state.chatUrl !== ''
-      ? this.state.chatUrl
-      : `${this.apiBase}/popout/${this.state.channelName}/chat`;
+    return this.state.chatUrl;
   }
 
   get dashboardUrl(): string {

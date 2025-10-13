@@ -113,9 +113,8 @@ export default function DestinationSelector(p: IDestinationSelectorProps) {
       }}
       labelInValue
       value={defaultLabel[0]}
-      size="large"
     >
-      {options.map((option: { value: string; label: JSX.Element }) => (
+      {options.map(option => (
         <Option key={option.value} value={option.value ?? ''}>
           {option.label}
         </Option>
