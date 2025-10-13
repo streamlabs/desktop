@@ -185,7 +185,7 @@ class PlatformAppsViews extends ViewHandler<IPlatformAppServiceState> {
   }
 }
 
-@InitAfter('UserService')
+@InitAfter('TcpServerService')
 export class PlatformAppsService extends StatefulService<IPlatformAppServiceState> {
   @Inject() windowsService: WindowsService;
   @Inject() videoSettingsService: VideoSettingsService;
@@ -222,6 +222,7 @@ export class PlatformAppsService extends StatefulService<IPlatformAppServiceStat
   private devServer: DevServer;
 
   init() {
+    console.log('PlatformAppsService initialized');
     this.userService.userLogin.subscribe(async () => {
       this.unloadAllApps();
       this.loadProductionApps();
