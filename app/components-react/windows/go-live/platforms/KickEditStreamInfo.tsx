@@ -28,9 +28,12 @@ export const KickEditStreamInfo = InputComponent((p: IPlatformComponentParams<'k
             layoutMode={p.layoutMode}
             value={kickSettings}
             onChange={updateSettings}
+            layout={p.layout}
           />
         }
-        requiredFields={<GameSelector key="required" platform={'kick'} {...bind.game} />}
+        requiredFields={
+          <GameSelector key="required" platform={'kick'} {...bind.game} layout={p.layout} />
+        }
       />
     </Form>
   );
