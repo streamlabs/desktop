@@ -181,8 +181,8 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   async setupNewUser() {
     await this.initialize();
     await this.installOverlay(
-      'https://cdn.streamlabs.com/marketplace/overlays/7684923/9a60b22/ab9d28fe-e032-49e9-8ffc-6bbbae452ace.overlay',
-      'Twitchcon Rotterdam 2025',
+      'https://cdn.streamlabs.com/marketplace/overlay/7684923/5352ee7/78710952-c3f2-4d72-9e37-4875b86a5bed.overlay',
+      'Twitchcon San Jose 2025',
     );
 
     this.videoSettingsService.actions.setSettings(

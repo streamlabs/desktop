@@ -155,9 +155,10 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   get canUseStreamShift() {
-    return this.incrementalRolloutService.views.availableFeatures.includes(
-      EAvailableFeatures.streamShift,
-    );
+    return true;
+    // return this.incrementalRolloutService.views.availableFeatures.includes(
+    //   EAvailableFeatures.streamShift,
+    // );
   }
 
   @mutation()
