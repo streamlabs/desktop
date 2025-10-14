@@ -210,7 +210,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
     if (!canUseStreamShift) return false;
 
-    return (this.settings.streamShift && this.enabledPlatforms.length > 0) || false;
+    return (
+      (this.userView.isPrime && this.settings.streamShift && this.enabledPlatforms.length > 0) ||
+      false
+    );
   }
 
   get isStreamShiftMultistream(): boolean {
