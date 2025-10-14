@@ -121,15 +121,21 @@ export default class CustomFieldsEditor extends Vue {
   created() {
     this.customFields = this.selectedVariation
       ? this.selectedVariation.settings.customJson
-      : this.value.settings['custom_json'];
+      : // TODO: index
+        // @ts-ignore
+        this.value.settings['custom_json'];
     this.editorInputValue = this.selectedVariation
       ? this.selectedVariation.settings.customJson
-      : this.value.settings['custom_json'];
+      : // TODO: index
+        // @ts-ignore
+        this.value.settings['custom_json'];
     this.settingsService = this.widgetsService.getWidgetSettingsService(this.value.type);
   }
 
   get selectedVariation() {
     if (!this.metadata.selectedAlert || !this.metadata.selectedId) return;
+    // TODO: index
+    // @ts-ignore
     return this.value.settings[this.metadata.selectedAlert].variations.find(
       (variation: IAlertBoxVariation) => variation.id === this.metadata.selectedId,
     );
@@ -189,11 +195,15 @@ export default class CustomFieldsEditor extends Vue {
 
   setCustomJson(newData: IWidgetData) {
     if (this.selectedVariation) {
+      // TODO: index
+      // @ts-ignore
       const newVariation = newData.settings[this.metadata.selectedAlert].variations.find(
         (variation: IAlertBoxVariation) => variation.id === this.metadata.selectedId,
       );
       newVariation.settings.customJson = this.customFields;
     } else {
+      // TODO: index
+      // @ts-ignore
       newData.settings['custom_json'] = this.customFields;
     }
     return newData;
@@ -249,6 +259,8 @@ export default class CustomFieldsEditor extends Vue {
 
   emitInput(newValue: IWidgetData) {
     this.$emit('input', newValue);
+    // TODO: index
+    // @ts-ignore
     this.editorInputValue = newValue.settings['custom_json'];
   }
 

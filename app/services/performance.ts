@@ -222,7 +222,10 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
           this.streamStartEncodedFrames)) *
       100;
     const streamDropped = this.state.percentageDroppedFrames;
-    const streamDuration = new Date().getTime() - this.streamStartTime.getTime();
+    const streamDuration =
+      this.streamStartTime !== undefined
+        ? new Date().getTime() - this.streamStartTime.getTime()
+        : 0;
     const averageCPU = this.averageFactor(this.historicalCPU);
     const streamType = this.dualOutputService.views.dualOutputMode ? 'dual' : 'single';
 
@@ -316,7 +319,7 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
 
   // Check if any notification thresholds are met and send applicable notification
   sendNotifications(currentStats: IMonitorState, nextStats: INextStats) {
-    const troubleshooterSettings = this.troubleshooterService.getSettings();
+    const troubleshooterSettings = this.troubleshooterService.views.settings;
 
     // Check if skipped frames exceed notification threshold
     if (

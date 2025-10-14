@@ -26,6 +26,7 @@ import {
   StreamSettingsService,
   TransitionsService,
   VideoSettingsService,
+  VisionService,
 } from 'app-services';
 import * as remote from '@electron/remote';
 import { AppService } from 'services/app';
@@ -33,6 +34,7 @@ import fs from 'fs';
 import path from 'path';
 import { platformList, TPlatform } from './platforms';
 import { TDisplayType } from './settings-v2';
+import { getWmiClass } from 'util/wmi';
 
 interface IStreamDiagnosticInfo {
   startTime: number;
@@ -113,6 +115,8 @@ class Section {
         }
       }
 
+      // TODO: index
+      // @ts-ignore
       const value = data[key] as unknown;
 
       if (typeof value === 'object' && value != null) {
@@ -159,6 +163,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
   @Inject() dualOutputService: DualOutputService;
   @Inject() streamSettingsService: StreamSettingsService;
   @Inject() videoSettingsService: VideoSettingsService;
+  @Inject() visionService: VisionService;
 
   get cacheDir() {
     return this.appService.appDataDirectory;
@@ -286,6 +291,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     const network = this.generateNetworkSection();
     const crashes = this.generateCrashesSection();
     const dualOutput = this.generateDualOutputSection();
+    const vision = this.generateVisionSection();
 
     // Problems section needs to be generated last, because it relies on the
     // problems array that all other sections add to.
@@ -307,6 +313,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
       dualOutput,
       scenes,
       transitions,
+      vision,
     ];
 
     return report.join('');
@@ -500,6 +507,16 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
       };
     }
 
+    if (
+      this.streamSettingsService.state.goLiveSettings &&
+      this.streamSettingsService.state.goLiveSettings?.streamShift
+    ) {
+      return {
+        ...info,
+        type: 'Stream Shift',
+      };
+    }
+
     if (platformList.length + destinationList.length > 1) {
       return {
         ...info,
@@ -534,6 +551,8 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
         },
         'Connected Platforms': Object.keys(this.userService.views.platforms).map(p => {
           return {
+            // TODO: index
+            // @ts-ignore
             Username: this.userService.views.platforms[p].username,
             Platform: p,
           };
@@ -573,12 +592,20 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
 
       const fpsObj = { Type: setting.fpsType.toString() };
 
-      if (fpsObj.Type === 'Common FPS Values') {
+      if (fpsObj.Type === 'Common') {
+        // TODO: index
+        // @ts-ignore
         fpsObj['Value'] = setting.fpsCom;
-      } else if (fpsObj.Type === 'Integer FPS Value') {
+      } else if (fpsObj.Type === 'Integer') {
+        // TODO: index
+        // @ts-ignore
         fpsObj['Value'] = setting.fpsInt;
-      } else if (fpsObj.Type === 'Fractional FPS Value') {
+      } else if (fpsObj.Type === 'Fractional') {
+        // TODO: index
+        // @ts-ignore
         fpsObj['Numerator'] = setting.fpsNum;
+        // TODO: index
+        // @ts-ignore
         fpsObj['Denominator'] = setting.fpsDen;
       }
 
@@ -650,16 +677,14 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     let isAdmin: string | boolean = 'N/A';
 
     if (getOS() === OS.Windows) {
-      const gpuInfo = this.getWmiClass('Win32_VideoController', [
-        'Name',
-        'DriverVersion',
-        'DriverDate',
-      ]);
+      const gpuInfo = getWmiClass('Win32_VideoController', ['Name', 'DriverVersion', 'DriverDate']);
 
       gpuSection = {};
 
       // Ensures we are working with an array
       [].concat(gpuInfo).forEach((gpu, index) => {
+        // TODO: index
+        // @ts-ignore
         gpuSection[`GPU ${index + 1}`] = {
           Name: gpu.Name,
           'Driver Version': gpu.DriverVersion,
@@ -775,12 +800,16 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
         const data = { Time: entry.timestamp.toString() };
 
         if (entry.module) {
+          // TODO: index
+          // @ts-ignore
           data['Module'] =
             entry.module +
             ' (' +
             (entry.path && entry.path.length !== 0 ? entry.path : 'unknown path') +
             ')';
         } else {
+          // TODO: index
+          // @ts-ignore
           data['Module'] = '(no data)';
         }
 
@@ -826,11 +855,15 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
       ];
 
       if (source) {
+        // TODO: index
+        // @ts-ignore
         globalSources[name] = {
           ...audioDeviceObj(settings.Audio[name] as string),
           ...this.generateSourceData(source),
         };
       } else {
+        // TODO: index
+        // @ts-ignore
         globalSources[name] = 'Disabled';
       }
     });
@@ -889,6 +922,8 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     const sceneData = {};
 
     this.scenesService.views.scenes.map(s => {
+      // TODO: index
+      // @ts-ignore
       sceneData[s.name] = s.getItems().map(si => {
         return this.generateSourceData(si.getSource(), si);
       });
@@ -937,8 +972,12 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     };
 
     if (propertiesManagerType === 'widget') {
+      // TODO: index
+      // @ts-ignore
       sourceData['Widget Type'] = widgetLookup[propertiesManagerSettings.widgetType];
     } else if (propertiesManagerType === 'streamlabels') {
+      // TODO: index
+      // @ts-ignore
       sourceData['Streamlabel Type'] = propertiesManagerSettings.statname;
     }
 
@@ -953,7 +992,11 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
         );
       }
 
+      // TODO: index
+      // @ts-ignore
       sourceData['Selected Device Id'] = deviceId;
+      // TODO: index
+      // @ts-ignore
       sourceData['Selected Device Name'] = device?.description ?? '<DEVICE NOT FOUND>';
     }
 
@@ -962,9 +1005,13 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     }
 
     if (sceneItem) {
+      // TODO: index
+      // @ts-ignore
       sourceData['Visible'] = sceneItem.visible;
     }
 
+    // TODO: index
+    // @ts-ignore
     sourceData['Filters'] = this.sourceFiltersService.views
       .filtersBySourceId(source.sourceId)
       .map(f => {
@@ -995,14 +1042,24 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
         return arr;
       }, []);
 
+      // TODO: index
+      // @ts-ignore
       sourceData['Enabled Audio Tracks'] = enabledTracks.join(', ');
     }
 
+    // TODO: index
+    // @ts-ignore
     sourceData['Muted'] = audioSource.muted;
+    // TODO: index
+    // @ts-ignore
     sourceData['Volume'] = audioSource.fader.deflection * 100;
+    // TODO: index
+    // @ts-ignore
     sourceData['Monitoring'] = ['Monitor Off', 'Monitor Only (mute output)', 'Monitor and Output'][
       audioSource.monitoringType
     ];
+    // TODO: index
+    // @ts-ignore
     sourceData['Sync Offset'] = audioSource.syncOffset;
 
     return sourceData;
@@ -1017,6 +1074,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
         if (
           s?.type === 'Single Output' &&
           platforms.includes('tiktok') &&
+          s?.error &&
           s?.error.split(' ').at(-1) === '422'
         ) {
           this.logProblem(
@@ -1061,8 +1119,16 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
      * which it was probably done to restrict the API
      * don't feel too happy about hacking it
      */
-    const streamingPlatforms = (this.streamingService as any)?.views?.settings?.platforms || [];
-    const platformsUsingExtraOutputs = this.dualOutputService.views.extraOutputPlatforms;
+    const streamingPlatforms = (this.streamingService as any)?.views?.settings?.platforms || {};
+    const platformsDualStreaming = Object.entries(streamingPlatforms).reduce(
+      (platforms: TPlatform[], [key, value]: [TPlatform, any]) => {
+        if (value.display === 'both') {
+          platforms.push(key);
+        }
+        return platforms;
+      },
+      [],
+    );
 
     return new Section('Dual Output', {
       'Dual Output Active': this.dualOutputService.views.dualOutputMode,
@@ -1076,10 +1142,36 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
         'Vertical Platforms': this.formatTargets(platforms.vertical),
         'Horizontal Custom Destinations': this.formatTargets(destinations.horizontal),
         'Vertical Custom Destinations': this.formatTargets(destinations.vertical),
-        'Platforms Using Extra Outputs': platformsUsingExtraOutputs,
+        'Platforms Using Extra Outputs': platformsDualStreaming,
       },
       'Horizontal Uses Multistream': restreamHorizontal,
       'Vertical Uses Multistream': restreamVertical,
+    });
+  }
+
+  // TODO: add details for stream switch section
+  // private generateStreamSwitchSection() {
+
+  //   return new Section('Stream Switch', {
+  //     'Stream Switch Active': ,
+  //     // 'Stream Switch ID': ,
+  //     // 'Stream Switch Origin Device': ,
+  //     // 'Stream Switch Previous Device': ,
+  //     // 'Stream Switch Type': ,
+  //   });
+  // }
+
+  private generateVisionSection() {
+    return new Section('Vision', {
+      'Installed Version': this.visionService.state.installedVersion,
+      'Is Running': this.visionService.state.isRunning,
+      PID: this.visionService.state.pid,
+      Port: this.visionService.state.port,
+      'Update Failed': this.visionService.state.hasFailedToUpdate,
+      'Available Processes': this.visionService.state.availableProcesses,
+      'Selected Process': this.visionService.state.selectedProcessId,
+      'Available Games': this.visionService.state.availableGames,
+      'Selected Game': this.visionService.state.selectedGame,
     });
   }
 
@@ -1088,45 +1180,6 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
       'Potential Issues',
       this.problems.length ? this.problems : 'No issues detected',
     );
-  }
-
-  private getWmiClass(wmiClass: string, select: string[]): object {
-    try {
-      const result = JSON.parse(
-        cp
-          .execSync(
-            `Powershell -command "Get-CimInstance -ClassName ${wmiClass} | Select-Object ${select.join(
-              ', ',
-            )} | ConvertTo-JSON"`,
-          )
-          .toString(),
-      );
-
-      if (Array.isArray(result)) {
-        return result.map(o => this.convertWmiValues(o));
-      } else {
-        return this.convertWmiValues(result);
-      }
-    } catch (e: unknown) {
-      console.error(`Error fetching WMI class ${wmiClass} for diagnostics`, e);
-      return [];
-    }
-  }
-
-  private convertWmiValues(wmiObject: object) {
-    Object.keys(wmiObject).forEach(key => {
-      const val = wmiObject[key];
-
-      if (typeof val === 'string') {
-        const match = val.match(/\/Date\((\d+)\)/);
-
-        if (match) {
-          wmiObject[key] = new Date(parseInt(match[1], 10)).toString();
-        }
-      }
-    });
-
-    return wmiObject;
   }
 
   private isRunningAsAdmin() {

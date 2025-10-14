@@ -80,6 +80,8 @@ const determineTester = (key: string) => {
 };
 
 export const REGEX_TESTERS = Object.keys(API_NAME_MAP).map(key => ({
+  // TODO: index
+  // @ts-ignore
   name: API_NAME_MAP[key],
   tester: determineTester(key),
 }));
@@ -232,6 +234,8 @@ export const newVariation = (type: string): IAlertBoxVariation => ({
       color: '#FFFFFF',
       color2: '#32C3A6',
       font: 'Open Sans',
+      // TODO: index
+      // @ts-ignore
       format: DEFAULT_ALERT_FORMATS[type] || '',
       resubFormat: null,
       tierUpgradeFormat: null,
@@ -239,6 +243,8 @@ export const newVariation = (type: string): IAlertBoxVariation => ({
       thickness: 400,
     },
     textDelay: 0,
+    // TODO: index
+    // @ts-ignore
     type: Object.keys(API_NAME_MAP).find(key => API_NAME_MAP[key] === type),
     useCustomImage: null,
     moderation: null,

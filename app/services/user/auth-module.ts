@@ -56,10 +56,12 @@ export class AuthModule {
 
     const partition = `persist:${uuid()}`;
 
+    let code = '';
+
     if (external) {
-      await this.externalLogin(authUrl, codeChallenge, merge, onWindowShow);
+      code = await this.externalLogin(authUrl, codeChallenge, merge, onWindowShow);
     } else {
-      await this.internalLogin(
+      code = await this.internalLogin(
         authUrl,
         codeChallenge,
         merge,
@@ -72,7 +74,7 @@ export class AuthModule {
 
     try {
       const host = this.hostsService.streamlabs;
-      const url = `https://${host}/api/v5/slobs/auth/data?code_verifier=${codeVerifier}`;
+      const url = `https://${host}/api/v5/slobs/auth/data?code_verifier=${codeVerifier}&code=${code}`;
 
       const resp = await jfetch<IPkceAuthResponse>(url);
 
@@ -119,8 +121,8 @@ export class AuthModule {
     codeChallenge: string,
     merge: boolean,
     onWindowShow: () => void,
-  ) {
-    await new Promise<void>(resolve => {
+  ): Promise<string> {
+    const code = await new Promise<string>(resolve => {
       if (this.authServer) {
         this.authServer.close();
         this.authServer.unref();
@@ -150,7 +152,7 @@ export class AuthModule {
           this.authServer.unref();
           this.authServer = null;
 
-          resolve();
+          resolve(query['code']);
         } else {
           // All other requests we respond with a generic 200
           response.writeHead(200);
@@ -163,7 +165,7 @@ export class AuthModule {
         const address = this.authServer.address();
         if (address && typeof address !== 'string') {
           const paramSeparator = merge ? '?' : '&';
-          const url = `${authUrl}${paramSeparator}port=${address.port}&code_challenge=${codeChallenge}`;
+          const url = `${authUrl}${paramSeparator}port=${address.port}&code_challenge=${codeChallenge}&code_flow=true`;
 
           electron.shell.openExternal(url);
           onWindowShow();
@@ -181,6 +183,8 @@ export class AuthModule {
     win.show();
     win.focus();
     win.setAlwaysOnTop(false);
+
+    return code;
   }
 
   private async internalLogin(
@@ -192,7 +196,7 @@ export class AuthModule {
     onWindowShow: () => void,
     onWindowClose: () => void,
   ) {
-    return new Promise<void>(resolve => {
+    return new Promise<string>(resolve => {
       let completed = false;
       const authWindow = new remote.BrowserWindow({
         ...windowOptions,
@@ -210,7 +214,7 @@ export class AuthModule {
         if (query['success']) {
           completed = true;
           authWindow.close();
-          resolve();
+          resolve(query['code']);
         }
       });
 

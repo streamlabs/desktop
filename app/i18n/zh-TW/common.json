@@ -154,6 +154,7 @@
   "Instagram": "Instagram",
   "Instagram Live": "Instagram 直播",
   "X (Twitter)": "X (Twitter)",
+  "Kick": "Kick",
   "Facebook Profiles": "Facebook 個人檔案",
   "Facebook Pages": "Facebook 粉絲專頁",
   "Alert Box": "通知方塊",
@@ -168,5 +169,6 @@
   "Dashboard Home": "儀表板首頁",
   "Alert Box Library": "通知方塊庫",
   "Alert Box Settings": "通知方塊設定",
-  "Alerts and Widgets": "通知與小工具"
+  "Alerts and Widgets": "通知與小工具",
+  "AI": "AI"
 }

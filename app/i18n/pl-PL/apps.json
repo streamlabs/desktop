@@ -4,5 +4,8 @@
   "Unpacked vers loaded": "Rozpakowane wersje zostały załadowane",
   "You must unload unpacked version before enabling this app.": "Musisz rozładować rozpakowaną wersję przed włączeniem tej aplikacji.",
   "Pop Out": "Wyświetl w oknie",
-  "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "Deweloper zakończył wspieranie tej aplikacji. Aplikacja może nadal działać, ale nie będzie otrzymywać żadnych aktualizacji. Jeśli chcesz odinstalować, postępuj zgodnie z przedstawionymi tutaj instrukcjami."
+  "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "Deweloper zakończył wspieranie tej aplikacji. Aplikacja może nadal działać, ale nie będzie otrzymywać żadnych aktualizacji. Jeśli chcesz odinstalować, postępuj zgodnie z przedstawionymi tutaj instrukcjami.",
+  "Uninstall": "Odinstaluj",
+  "Other installed apps:": "Inne zainstalowane aplikacje:",
+  "Open": "Otwórz"
 }

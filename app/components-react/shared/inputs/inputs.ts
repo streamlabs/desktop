@@ -33,7 +33,11 @@ export type TInputType =
   | 'image'
   | 'time'
   | 'file'
-  | 'checkboxGroup';
+  | 'checkboxGroup'
+  | 'radio'
+  | 'imagepicker'
+  | 'animation'
+  | 'duration';
 
 export type TInputLayout = 'horizontal' | 'vertical' | 'inline';
 
@@ -429,5 +433,7 @@ export function getInputComponentByType(
   const name = Object.keys(InputComponents).find(componentName => {
     return componentName.split('Input')[0].toLowerCase() === type;
   });
+  // TODO: index
+  // @ts-ignore
   return name ? InputComponents[name] : null;
 }

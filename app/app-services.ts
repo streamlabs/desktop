@@ -48,6 +48,7 @@ export { ObsUserPluginsService } from 'services/obs-user-plugins';
 export { HardwareService, DefaultHardwareService } from 'services/hardware';
 export { EditorCommandsService } from 'services/editor-commands';
 export { EditorService } from 'services/editor';
+export { SignalsService } from 'services/signals-manager';
 export { StreamSettingsService } from 'services/settings/streaming';
 export { TouchBarService } from 'services/touch-bar';
 export { ApplicationMenuService } from 'services/application-menu';
@@ -62,6 +63,7 @@ export { VideoSettingsService } from 'services/settings-v2/video';
 export { SettingsManagerService } from 'services/settings-manager';
 export { MarkersService } from 'services/markers';
 export { RealmService } from 'services/realm';
+export { StreamAvatarService } from 'services/stream-avatar/stream-avatar-service';
 import { VirtualWebcamService } from 'services/virtual-webcam';
 
 // ONLINE SERVICES
@@ -106,6 +108,8 @@ export { MagicLinkService } from 'services/magic-link';
 export { GrowService } from 'services/grow/grow';
 export { GuestCamService } from 'services/guest-cam';
 export { DualOutputService } from 'services/dual-output';
+export { VisionService } from 'services/vision';
+export { SseService } from 'services/server-sent-events';
 
 // WIDGETS
 export { WidgetSource, WidgetsService } from './services/widgets';
@@ -121,7 +125,6 @@ export { DonationTickerService } from 'services/widgets/settings/donation-ticker
 export { CreditsService } from 'services/widgets/settings/credits';
 export { EventListService } from 'services/widgets/settings/event-list';
 export { TipJarService } from 'services/widgets/settings/tip-jar';
-export { SponsorBannerService } from 'services/widgets/settings/sponsor-banner';
 export { SubGoalService } from 'services/widgets/settings/sub-goal';
 export { MediaShareService } from 'services/widgets/settings/media-share';
 export { AlertBoxService } from 'services/widgets/settings/alert-box';
@@ -211,6 +214,10 @@ import { TwitchStudioImporterService } from 'services/ts-importer';
 import { RemoteControlService } from 'services/api/remote-control-api';
 import { UrlService } from 'services/hosts';
 import { KickService } from 'services/platforms/kick';
+import { SseService } from './services/server-sent-events';
+import { VisionService } from 'services/vision';
+import { SignalsService } from 'services/signals-manager';
+import { TroubleshooterService } from 'services/troubleshooter';
 
 export const AppServices = {
   AppService,
@@ -229,6 +236,7 @@ export const AppServices = {
   PatchNotesService,
   VideoService,
   ChatService,
+  SignalsService,
   StreamingService,
   StreamSettingsService,
   RestreamService,
@@ -293,4 +301,7 @@ export const AppServices = {
   RemoteControlService,
   UrlService,
   VirtualWebcamService,
+  SseService,
+  VisionService,
+  TroubleshooterService,
 };

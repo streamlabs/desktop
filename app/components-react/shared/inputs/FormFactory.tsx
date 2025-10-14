@@ -15,6 +15,7 @@ export type TInputValue = string | number | boolean | IRGBColor;
 const componentTable: {
   [k in TInputType]?: React.FunctionComponent<TSlobsInputProps<{}, TInputValue>>;
 } = {
+  file: inputs.FileInput,
   text: inputs.TextInput,
   number: inputs.NumberInput,
   slider: inputs.SliderInput,
@@ -23,8 +24,14 @@ const componentTable: {
   switch: inputs.SwitchInput,
   autocomplete: inputs.AutocompleteInput,
   checkboxGroup: inputs.CheckboxGroup,
+  radio: inputs.RadioInput,
   textarea: inputs.TextAreaInput,
   color: inputs.ColorInput,
+  mediaurl: inputs.MediaUrlInput,
+  imagepicker: inputs.ImagePickerInput,
+  time: inputs.TimeInput,
+  animation: inputs.AnimationInput,
+  duration: inputs.DurationInput,
 };
 
 interface IFormMetadata {
@@ -57,6 +64,7 @@ export default function FormFactory(p: {
   return (
     <Form
       {...p.formOptions}
+      id={p.name}
       name={p.name}
       form={form}
       onFieldsChange={() => debounce(form.validateFields, 500)()}
@@ -92,6 +100,8 @@ function FormInput(p: {
 
   if (!type) return <></>;
 
+  // TODO: index
+  // @ts-ignore
   const Input = componentTable[type];
   let handleChange = p.onChange(p.id);
   if (type === 'checkboxGroup') handleChange = p.onChange;

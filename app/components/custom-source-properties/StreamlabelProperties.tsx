@@ -254,7 +254,7 @@ export default class StreamlabelProperties extends Vue {
             onInput={(val: string) => this.handleInput(val)}
             metadata={this.metadata.labelType}
           />
-          {Object.keys(this.labelSettings).map(key => (
+          {Object.keys(this.labelSettings).map((key: keyof IStreamlabelSettings) => (
             <HFormGroup
               key={key}
               vModel={this.labelSettings[key]}

@@ -7,6 +7,7 @@ import styles from './Grow.m.less';
 import { Services } from '../../service-provider';
 import { ICommunityReach, IGoal, IUniversityProgress } from '../../../services/grow/grow';
 import { $t } from '../../../services/i18n';
+import { TPlatform } from 'services/platforms';
 
 const ONE_DAY = 1000 * 60 * 60 * 24;
 
@@ -164,7 +165,7 @@ export function PlatformCard(p: { platform: ICommunityReach }) {
     NavigationService.actions.navigate('PlatformMerge', { platform: icon });
   }
 
-  const nameMap = {
+  const nameMap: Partial<Record<TPlatform, string>> = {
     twitch: 'Twitch',
     facebook: 'Facebook',
     youtube: 'YouTube',

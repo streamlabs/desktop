@@ -81,10 +81,6 @@ export default class WidgetEditor extends TsxComponent<WidgetEditorProps> {
   animating = false;
   canShowEditor = false;
 
-  get hideStyleBlockers() {
-    return this.windowsService.state.child.hideStyleBlockers;
-  }
-
   get loaded() {
     return !!this.settingsState.data;
   }
@@ -106,6 +102,9 @@ export default class WidgetEditor extends TsxComponent<WidgetEditorProps> {
     ) {
       return;
     }
+    // TODO: index
+    // WONTFIX till AlertBox replacement
+    // @ts-ignore
     return this.wData.settings[this.props.selectedAlert].variations.find(
       (variation: IAlertBoxVariation) => variation.id === this.props.selectedId,
     );

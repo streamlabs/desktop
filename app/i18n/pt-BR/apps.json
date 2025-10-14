@@ -4,5 +4,8 @@
   "Unpacked vers loaded": "Versão descompactada carregada",
   "You must unload unpacked version before enabling this app.": "Você deve descarregar a versão descompactada antes de ativar esse app.",
   "Pop Out": "Sair",
-  "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "O desenvolvedor terminou o suporte para este app. O app pode continuar a funcionar, mas não receberá nenhuma atualização. Se deseja desinstalar, siga estas instruções."
+  "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "O desenvolvedor terminou o suporte para este app. O app pode continuar a funcionar, mas não receberá nenhuma atualização. Se deseja desinstalar, siga estas instruções.",
+  "Uninstall": "Desinstalar",
+  "Other installed apps:": "Outros aplicativos instalados:",
+  "Open": "Abrir"
 }

@@ -107,10 +107,16 @@ export class SharedStorageService extends Service {
 
   validateFile(filepath: string, platform?: string) {
     const stats = fs.lstatSync(filepath);
+    // TODO: index
+    // @ts-ignore
     if (platform && PLATFORM_RULES[platform]) {
+      // TODO: index
+      // @ts-ignore
       if (stats.size > PLATFORM_RULES[platform].size) {
         throw new Error($t('File is too large to upload'));
       }
+      // TODO: index
+      // @ts-ignore
       if (!PLATFORM_RULES[platform].types.includes(path.extname(filepath))) {
         throw new Error(
           $t('File type %{extension} is not supported', { extension: path.extname(filepath) }),

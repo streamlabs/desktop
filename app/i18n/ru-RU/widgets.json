@@ -2,10 +2,12 @@
   "Add Widgets": "Добавить виджеты",
   "Select the Streamlabs widgets you would like to activate for your stream. These will get automatically added to your scene.": "Выберите виджеты Streamlabs, которые вы хотите использовать в своей трансляции. Виджеты автоматически добавятся на вашу сцену.",
   "Thanks viewers with notification popups": "Вывод всплывающих уведомлений с благодарностью зрителям",
+  "Custom on-screen alerts to thank your loyal viewers for following, subbing, tipping and more.": "Пользовательские экранные оповещения, чтобы поблагодарить ваших преданных зрителей за то что они следят за вашими новостями, подписываются на ваш канал, отправляют чаевые и выполняют другие действия.",
   "Most recent events into your stream": "Самые последние события в трансляции",
   "A jar that catches bits, tips, and more": "Копилка для сбора Bits, чаевых и не только",
   "Your channel's chat in your stream": "Чат вашего канала в трансляции",
   "Show off most recent donations to viewers": "Показывайте последние пожертвования вашим зрителям",
+  "Show off the most recent tips from your viewers": "Покажите последние чаевые от своих зрителей.",
   "Give your viewers a donation target to help you reach": "Задайте желаемый объем пожертвований для ваших зрителей",
   "Give your viewers a follower target to help you reach": "Задайте желаемое число последователей для ваших зрителей",
   "Give your viewers a bit target to help you reach": "Задайте желаемое количество Bits для ваших зрителей",
@@ -70,6 +72,7 @@
   "Ember amount is at least <amount>": "Количество угольков: не менее <amount>",
   "Ember amount is exactly <amopunt>": "Количество угольков: ровно <amopunt>",
   "Allow your viewers to donate to share media on your stream.": "Разрешить зрителям вносить пожертвования для демонстрации медиафайлов во время вашей трансляции.",
+  "Allow your viewers to tip to share videos on your stream.": "Позвольте зрителям давать чаевые, чтобы делиться видео из вашей трансляции.",
   "Twitch Subscribers": "Подписчики Twitch",
   "YouTube Members": "Спонсоры YouTube",
   "Media Share": "Обмен медиафайлами",
@@ -188,5 +191,9 @@
   "Superchat Goal": "Цель суперчата",
   "YouTube Superchats": "Суперчат YouTube",
   "Custom Widget": "Пользовательский виджет",
-  "Use HTML, CSS, and JavaScript to create a widget with custom functionality": "Используйте HTML, CSS и JavaScript, чтобы создать виджет с нужной вам функциональностью"
+  "Use HTML, CSS, and JavaScript to create a widget with custom functionality": "Используйте HTML, CSS и JavaScript, чтобы создать виджет с нужной вам функциональностью",
+  "Interactive": "Интерактивные функции",
+  "Goals": "Цели",
+  "Flair": "Специальная отметка",
+  "Charity": "Благотворительный фонд"
 }

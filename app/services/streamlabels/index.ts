@@ -373,6 +373,8 @@ export class StreamlabelsService extends StatefulService<IStreamlabelsServiceSta
     const { trains_combos, ...rest } = data;
     const trainData = {};
     trains_combos.files.forEach(file => {
+      // TODO: index
+      // @ts-ignore
       trainData[file.name] = { label: file.label, files: this.trainFiles(file.name) };
     });
     return {
@@ -382,6 +384,8 @@ export class StreamlabelsService extends StatefulService<IStreamlabelsServiceSta
   }
 
   trainFiles(fileName: string) {
+    // TODO: index
+    // @ts-ignore
     const type = Object.keys(this.trains).find(key => this.trains[key].setting === fileName);
 
     const baseFiles = [

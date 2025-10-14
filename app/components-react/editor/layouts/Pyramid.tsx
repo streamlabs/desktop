@@ -1,10 +1,11 @@
 import React from 'react';
 import cx from 'classnames';
-import useLayout, { LayoutProps } from './hooks';
+import useLayout, { ILayoutProps } from './hooks';
 import ResizeBar from 'components-react/root/ResizeBar';
 import styles from './Layouts.m.less';
+import { TLayoutSlot } from 'services/layout';
 
-export function Pyramid(p: React.PropsWithChildren<LayoutProps>) {
+export function Pyramid(p: ILayoutProps) {
   const { mins, bars, resizes, calculateMax, setBar, componentRef } = useLayout(
     [['1'], ['2', '3']],
     false,
@@ -13,7 +14,7 @@ export function Pyramid(p: React.PropsWithChildren<LayoutProps>) {
   );
 
   return (
-    <div className={styles.rows} ref={componentRef}>
+    <div className={cx(styles.rows, p.className)} ref={componentRef}>
       <div className={styles.cell} style={{ height: `${100 - resizes.bar1 * 100}%` }}>
         {p.children?.['1'] || <></>}
       </div>
@@ -28,7 +29,7 @@ export function Pyramid(p: React.PropsWithChildren<LayoutProps>) {
           className={styles.segmented}
           style={{ height: `${resizes.bar1 * 100}%`, padding: '0 8px' }}
         >
-          {['2', '3'].map(slot => (
+          {['2', '3'].map((slot: TLayoutSlot) => (
             <div className={cx(styles.cell, 'no-top-padding')} key={slot}>
               {p.children?.[slot] || <></>}
             </div>

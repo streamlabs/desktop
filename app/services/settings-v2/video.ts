@@ -79,6 +79,11 @@ export function invalidFps(num: number, den: number) {
   return num / den > 1000 || num / den < 1;
 }
 
+export interface ObsSetting {
+  key: keyof IVideoInfo;
+  value: IVideoInfoValue;
+}
+
 export class VideoSettingsService extends StatefulService<IVideoSetting> {
   @Inject() dualOutputService: DualOutputService;
   @Inject() settingsService: SettingsService;
@@ -313,10 +318,12 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
     return !!this.contexts[display];
   }
 
+  /**
+   * Validate the video context
+   * @param display - Optional, the context's display name, default is vertical
+   */
   validateVideoContext(display: TDisplayType = 'vertical') {
     if (!this.contexts[display]) {
-      console.log('establishing video context ', display);
-
       this.establishVideoContext(display);
     }
   }
@@ -390,11 +397,14 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
   }
 
   @debounce(200)
-  updateObsSettings(display: TDisplayType = 'horizontal') {
+  updateObsSettings(display: TDisplayType = 'horizontal', shouldSyncFPS: Boolean = false) {
     // confirm all vertical fps settings are synced to the horizontal fps settings
     // update contexts to values on state
     this.contexts[display].video = this.state[display];
     this.contexts[display].legacySettings = this.state[display];
+    if (shouldSyncFPS) {
+      this.syncFPSSettings();
+    }
   }
 
   updateVideoSettings(patch: Partial<IVideoInfo>, display: TDisplayType = 'horizontal') {
@@ -418,15 +428,38 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
     key: keyof IVideoInfo,
     value: IVideoInfoValue,
     display: TDisplayType = 'horizontal',
+    shouldSyncFPS: Boolean = false,
   ) {
     this.SET_VIDEO_SETTING(key, value, display);
-    this.updateObsSettings(display);
+    this.updateObsSettings(display, shouldSyncFPS);
 
     // also update the persisted settings
     this.dualOutputService.setVideoSetting({ [key]: value }, display);
 
     // refresh v1 settings
     this.settingsService.refreshVideoSettings();
+  }
+
+  /**
+   * Set Video Settings. Behind the scenes, it will automatically sync fps settings.
+   * @remark V2 api. This also updates the video settings in the V1 api.
+   * @param display - name of context (aka display) to apply setting to. Default is horizontal.
+   * @param settings - collection of key/value pairs. Each pair is a video setting and its' value.
+   */
+  setVideoSettings(display: TDisplayType = 'horizontal', settings: ObsSetting[]) {
+    for (let i = 0; i < settings.length; i++) {
+      const setting: ObsSetting = settings[i];
+      this.SET_VIDEO_SETTING(setting.key, setting.value, display);
+      if (i === settings.length - 1) {
+        // Only invoke this once (backend only needs to be notified of this once). Also, sync fps settings.
+        this.updateObsSettings(display, true);
+      }
+      // also update the persisted settings
+      this.dualOutputService.setVideoSetting({ [setting.key]: setting.value }, display);
+
+      // refresh v1 settings
+      this.settingsService.refreshVideoSettings();
+    }
   }
 
   setSettings(settings: Partial<IVideoInfo>, display: TDisplayType = 'horizontal') {
@@ -451,7 +484,7 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
    * we need to apply this change to both contexts to keep them synced.
    * @param - Currently, we must confirm fps settings are synced before start streaming
    */
-  syncFPSSettings(updateContexts?: boolean): boolean {
+  private syncFPSSettings(updateContexts?: boolean): boolean {
     const fpsSettings = ['scaleType', 'fpsType', 'fpsCom', 'fpsNum', 'fpsDen', 'fpsInt'];
 
     // update persisted local settings if the vertical context does not exist

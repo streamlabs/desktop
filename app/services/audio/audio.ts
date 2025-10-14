@@ -69,6 +69,11 @@ class AudioViews extends ViewHandler<IAudioSourcesState> {
   }
 }
 
+export enum AudioNotificationType {
+  YouAreMuted,
+  NoSignalFromAudioInput,
+}
+
 @InitAfter('SourcesService')
 export class AudioService extends StatefulService<IAudioSourcesState> {
   static initialState: IAudioSourcesState = {
@@ -76,6 +81,7 @@ export class AudioService extends StatefulService<IAudioSourcesState> {
   };
 
   audioSourceUpdated = new Subject<IAudioSource>();
+  audioNotificationUpdated = new Subject<AudioNotificationType>();
 
   sourceData: Dictionary<IAudioSourceData> = {};
 
@@ -237,12 +243,12 @@ export class AudioService extends StatefulService<IAudioSourcesState> {
     // Fader is ignored by this method.  Use setFader instead
     const newPatch = omit(patch, 'fader');
 
-    Object.keys(newPatch).forEach(name => {
+    Object.keys(newPatch).forEach((name: keyof typeof newPatch) => {
       const value = newPatch[name];
       if (value === void 0) return;
 
       if (name === 'syncOffset') {
-        obsInput.syncOffset = AudioService.msToTimeSpec(value);
+        obsInput.syncOffset = AudioService.msToTimeSpec(value as typeof newPatch['syncOffset']);
       } else if (name === 'forceMono') {
         if (this.views.getSource(sourceId).forceMono !== value) {
           value
@@ -250,8 +256,10 @@ export class AudioService extends StatefulService<IAudioSourcesState> {
             : (obsInput.flags -= obs.ESourceFlags.ForceMono);
         }
       } else if (name === 'muted') {
-        this.sourcesService.setMuted(sourceId, value);
+        this.sourcesService.setMuted(sourceId, value as typeof newPatch['muted']);
       } else {
+        // TODO: index
+        // @ts-ignore
         obsInput[name] = value;
       }
     });
@@ -271,7 +279,21 @@ export class AudioService extends StatefulService<IAudioSourcesState> {
     this.audioSourceUpdated.next(this.state.audioSources[sourceId]);
   }
 
+  private peakHistoryMap = new Map<string, Array<number>>();
+
   private handleVolmeterCallback(objs: IObsVolmeterCallbackInfo[]) {
+    const hasUnmutedAudioInput = objs.some(info => {
+      if (!info.sourceName.startsWith('wasapi_input')) {
+        return false;
+      }
+
+      const source = this.views.getSource(info.sourceName);
+      return source && !source.muted;
+    });
+
+    let shouldNotifyYouAreMuted = false;
+    let shouldNotifyNoSignal = false;
+
     objs.forEach(info => {
       const source = this.views.getSource(info.sourceName);
       // A source we don't care about
@@ -280,8 +302,53 @@ export class AudioService extends StatefulService<IAudioSourcesState> {
       }
 
       const volmeter: IVolmeter = info;
+
+      if (info.sourceName.startsWith('wasapi_input')) {
+        if (!this.peakHistoryMap.has(info.sourceName)) {
+          this.peakHistoryMap.set(info.sourceName, []);
+        }
+
+        const peakHistory = this.peakHistoryMap.get(info.sourceName);
+
+        // Subtraction of source.fader.db is used here to compensate possible input level change by slider in UI
+        peakHistory.push(volmeter.peak[0] - source.fader.db);
+        const averagePeakValue = peakHistory.reduce((a, b) => a + b) / peakHistory.length;
+
+        const hasEnoughData = peakHistory.length >= 50;
+        if (hasEnoughData) {
+          peakHistory.shift();
+        }
+
+        if (source.muted) {
+          if (hasEnoughData && !hasUnmutedAudioInput && averagePeakValue >= -30 /* db */) {
+            this.peakHistoryMap.set(info.sourceName, []);
+            shouldNotifyYouAreMuted = true;
+          }
+
+          // This is needed to not render audio peaks in UI for muted audio inputs
+          volmeter.inputPeak.forEach((item, index) => (volmeter.inputPeak[index] = -65535));
+          volmeter.peak.forEach((item, index) => (volmeter.peak[index] = -65535));
+          volmeter.magnitude.forEach((item, index) => (volmeter.magnitude[index] = -65535));
+        } else {
+          if (hasEnoughData && averagePeakValue <= -1000 /* db */) {
+            this.peakHistoryMap.set(info.sourceName, []);
+            shouldNotifyNoSignal = true;
+          }
+        }
+      }
+
       this.sendVolmeterData(info.sourceName, volmeter);
     });
+
+    // Note: in practice these events will never fire simultaneously because of opposite
+    // conditions for thier activations
+    if (shouldNotifyYouAreMuted) {
+      this.audioNotificationUpdated.next(AudioNotificationType.YouAreMuted);
+    }
+
+    if (shouldNotifyNoSignal) {
+      this.audioNotificationUpdated.next(AudioNotificationType.NoSignalFromAudioInput);
+    }
   }
 
   private createAudioSource(source: Source) {

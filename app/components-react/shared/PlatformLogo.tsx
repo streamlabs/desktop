@@ -1,11 +1,11 @@
-import React, { HTMLAttributes } from 'react';
+import React, { CSSProperties, HTMLAttributes } from 'react';
 import { TPlatform } from '../../services/platforms';
 import cx from 'classnames';
 import css from './PlatformLogo.m.less';
 import { Services } from 'components-react/service-provider';
 import { useRealmObject } from 'components-react/hooks/realm';
 
-export const sizeMap = {
+export const sizeMap: Dictionary<number> = {
   small: 14,
   medium: 40,
 };
@@ -17,6 +17,7 @@ interface IProps {
   nocolor?: boolean;
   unwrapped?: boolean;
   fontIcon?: string;
+  style?: CSSProperties;
 }
 
 export default function PlatformLogo(p: IProps & HTMLAttributes<unknown>) {
@@ -49,7 +50,7 @@ export default function PlatformLogo(p: IProps & HTMLAttributes<unknown>) {
       }
     : undefined;
   const colorStyle = p.color ? { color: p.color } : undefined;
-  const style = { ...sizeStyle, ...colorStyle };
+  const style = { ...sizeStyle, ...colorStyle, ...p?.style };
 
   let color = p.color;
 

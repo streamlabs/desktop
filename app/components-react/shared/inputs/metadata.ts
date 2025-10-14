@@ -1,5 +1,6 @@
 import { Rule } from 'antd/lib/form';
 import { TInputValue } from './FormFactory';
+import { IListOption } from './ListInput';
 
 /**
  * Metadata generator for inputs
@@ -33,6 +34,14 @@ export const metadata = {
     ...options,
     type: 'slider',
   }),
+  file: (options: IFileMetadata) => ({
+    ...options,
+    type: 'file',
+  }),
+  radio: (options: IRadioMetadata) => ({
+    ...options,
+    type: 'radio',
+  }),
 };
 
 export type TInputMetadata<T = string> =
@@ -41,6 +50,7 @@ export type TInputMetadata<T = string> =
   | ISliderMetadata
   | ITextBoolMetadata
   | ICheckboxGroupMetadata
+  | IRadioGroupMetadata
   | IListMetadata<T>;
 
 interface IBaseMetadata {
@@ -67,6 +77,17 @@ export interface ICheckboxGroupMetadata extends IBaseMetadata {
   onChange: (key: string) => (value: boolean) => void;
 }
 
+export interface IRadioGroupMetadata extends IBaseMetadata {
+  children: Dictionary<IRadioMetadata>;
+  values: Dictionary<IRadioMetadata>;
+  onChange: (key: string) => (value: string) => void;
+}
+
+export interface IRadioMetadata extends IBaseMetadata {
+  value: string;
+  label: string;
+}
+
 interface INumberMetadata extends IBaseMetadata {
   value?: number;
   min?: number;
@@ -89,7 +110,14 @@ interface IAnyMetadata extends IBaseMetadata {
   value?: any;
 }
 
+interface IFileMetadata extends IBaseMetadata {
+  directory?: boolean;
+  filters?: Electron.FileFilter[];
+  save?: boolean;
+  buttonContent?: React.ReactNode;
+}
+
 export interface IListMetadata<T = string> extends IBaseMetadata {
   value?: T;
-  options?: { label: string; value: T }[];
+  options?: IListOption<T>[];
 }

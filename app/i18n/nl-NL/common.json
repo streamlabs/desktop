@@ -154,6 +154,7 @@
   "Instagram": "Instagram",
   "Instagram Live": "Instagram Live",
   "X (Twitter)": "X (Twitter)",
+  "Kick": "Kick",
   "Facebook Profiles": "Facebook-profielen",
   "Facebook Pages": "Facebook-pagina's",
   "Alert Box": "Meldingenvenster",
@@ -168,5 +169,6 @@
   "Dashboard Home": "Home van dashboard",
   "Alert Box Library": "Bibliotheek Meldingenvenster",
   "Alert Box Settings": "Instellingen Meldingenvenster",
-  "Alerts and Widgets": "Meldingen en widgets"
+  "Alerts and Widgets": "Meldingen en widgets",
+  "AI": "AI"
 }

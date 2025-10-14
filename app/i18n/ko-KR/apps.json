@@ -4,5 +4,8 @@
   "Unpacked vers loaded": "언팩 버전 로드됨",
   "You must unload unpacked version before enabling this app.": "이 앱을 활성화하기 전에 언팩 버전을 없애야 합니다.",
   "Pop Out": "팝 아웃",
-  "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "개발자가 이 앱에 대한 지원을 종료했습니다. 앱이 계속 작동할 순 있지만 업데이트는 이루어지지 않습니다. 앱을 제거하고 싶은 경우, 여기의 안내를 따르십시오."
+  "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "개발자가 이 앱에 대한 지원을 종료했습니다. 앱이 계속 작동할 순 있지만 업데이트는 이루어지지 않습니다. 앱을 제거하고 싶은 경우, 여기의 안내를 따르십시오.",
+  "Uninstall": "제거",
+  "Other installed apps:": "기타 설치된 앱:",
+  "Open": "열기"
 }

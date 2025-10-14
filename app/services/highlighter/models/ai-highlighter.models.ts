@@ -58,6 +58,8 @@ export enum EGame {
   PUBG = 'pubg',
   RAINBOW_SIX_SIEGE = 'rainbow_six_siege',
   OVERWATCH_2 = 'overwatch_2',
+  LEAGUE_OF_LEGENDS = 'league_of_legends',
+  BATTLEFIELD_6 = 'battlefield_6',
   UNSET = 'unset',
 }
 

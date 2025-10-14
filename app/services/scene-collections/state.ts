@@ -18,7 +18,7 @@ interface ISceneCollectionsManifest {
  * This is a submodule of the scene collections service that handles
  * state/manifest mutations and persistence.
  *
- * All methods are public, but this class should be considered prviate
+ * All methods are public, but this class should be considered private
  * to the rest of the app.  It is an internal module in the scene collections
  * service.
  */
@@ -292,6 +292,8 @@ export class SceneCollectionsStateService extends StatefulService<ISceneCollecti
   @mutation()
   LOAD_STATE(state: ISceneCollectionsManifest) {
     Object.keys(state).forEach(key => {
+      // TODO: index
+      // @ts-ignore
       Vue.set(this.state, key, state[key]);
     });
   }

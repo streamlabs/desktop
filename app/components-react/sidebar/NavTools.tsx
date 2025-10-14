@@ -15,6 +15,9 @@ import MenuItem from 'components-react/shared/MenuItem';
 import UltraIcon from 'components-react/shared/UltraIcon';
 import PlatformIndicator from './PlatformIndicator';
 import { AuthModal } from 'components-react/shared/AuthModal';
+import { useRealmObject } from 'components-react/hooks/realm';
+import { ESettingsCategory } from 'services/settings';
+import { getOS, OS } from 'util/operating-systems';
 
 export default function SideNav() {
   const {
@@ -25,9 +28,16 @@ export default function SideNav() {
     SideNavService,
     WindowsService,
     UrlService,
+    VisionService,
   } = Services;
 
-  const isDevMode = Utils.isDevMode();
+  const visionState = useRealmObject(VisionService.state);
+
+  const isDevMode = useMemo(() => Utils.isDevMode(), []);
+
+  const showAiTab = useMemo(() => {
+    return getOS() === OS.Windows || (getOS() === OS.Mac && isDevMode);
+  }, [isDevMode]);
 
   const {
     isLoggedIn,
@@ -53,8 +63,7 @@ export default function SideNav() {
   const [dashboardOpening, setDashboardOpening] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
-  function openSettingsWindow(type?: string, category?: string) {
-    UsageStatisticsService.actions.recordClick('SideNav2', type ?? 'settings');
+  function openSettingsWindow(category?: string) {
     SettingsService.actions.showSettings(category);
   }
 
@@ -101,7 +110,7 @@ export default function SideNav() {
 
   const handleAuth = () => {
     if (isLoggedIn) {
-      Services.DualOutputService.actions.setDualOutputMode(false, true);
+      Services.DualOutputService.actions.setDualOutputModeIfPossible(false, true);
       UserService.actions.logOut();
     } else {
       WindowsService.actions.closeChildWindow();
@@ -180,6 +189,15 @@ export default function SideNav() {
                   </div>
                 }
                 onClick={() => openHelp()}
+              />
+            );
+          } else if (showAiTab && menuItem.key === EMenuItemKey.AI) {
+            return (
+              <NavToolsItem
+                key={menuItem.key}
+                menuItem={menuItem}
+                className={visionState.isRunning ? styles.vision : undefined}
+                onClick={() => openSettingsWindow(ESettingsCategory.AI)}
               />
             );
           } else if (menuItem.key === EMenuItemKey.Settings) {

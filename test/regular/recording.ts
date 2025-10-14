@@ -1,7 +1,16 @@
 import { readdir } from 'fs-extra';
 import { test, TExecutionContext, useWebdriver } from '../helpers/webdriver';
 import { sleep } from '../helpers/sleep';
-import { startRecording, stopRecording } from '../helpers/modules/streaming';
+import {
+  clickGoLive,
+  prepareToGoLive,
+  startRecording,
+  stopRecording,
+  stopStream,
+  submit,
+  waitForSettingsWindowLoaded,
+  waitForStreamStart,
+} from '../helpers/modules/streaming';
 import {
   setOutputResolution,
   setTemporaryRecordingPath,
@@ -10,6 +19,7 @@ import {
 import {
   clickButton,
   clickTab,
+  clickToggle,
   clickWhenDisplayed,
   focusMain,
   getNumElements,
@@ -18,7 +28,7 @@ import {
 import { logIn } from '../helpers/webdriver/user';
 import { toggleDualOutputMode } from '../helpers/modules/dual-output';
 import { showPage } from '../helpers/modules/navigation';
-import { useForm } from '../helpers/modules/forms';
+import { useForm, fillForm } from '../helpers/modules/forms';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -146,4 +156,31 @@ test('Recording with two contexts active', async t => {
 
   const numFiles = await createRecordingFiles(true);
   await validateRecordingFiles(t, tmpDir, numFiles, true);
+});
+
+test('Recording from Go Live window', async t => {
+  const user = await logIn(t);
+  await setOutputResolution('100x100');
+  const tmpDir = await setTemporaryRecordingPath();
+  await prepareToGoLive();
+
+  await clickGoLive();
+  await waitForSettingsWindowLoaded();
+
+  if (user.type === 'twitch') {
+    await fillForm({
+      twitchGame: 'Fortnite',
+    });
+  }
+
+  await clickToggle('recording-toggle');
+
+  await submit();
+  await waitForStreamStart();
+  await focusMain();
+  await stopRecording();
+  await stopStream();
+
+  const files = await readdir(tmpDir);
+  t.is(files.length, 1, `Files that were created:\n${files.join('\n')}`);
 });

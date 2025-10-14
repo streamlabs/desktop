@@ -11,6 +11,9 @@ import { Service } from './core/service';
 import Utils from './utils';
 import os from 'os';
 import * as remote from '@electron/remote';
+import { DiagnosticsService } from 'app-services';
+import { getOS, OS } from 'util/operating-systems';
+import { getWmiClass } from 'util/wmi';
 
 export type TUsageEvent = 'stream_start' | 'stream_end' | 'app_start' | 'app_close' | 'crash';
 
@@ -47,7 +50,8 @@ export type TAnalyticsEvent =
   | 'TikTokLiveAccess'
   | 'TwitchCredentialsAlert'
   | 'TikTokApplyPrompt'
-  | 'ScheduleStream';
+  | 'ScheduleStream'
+  | 'StreamShift';
 
 interface IAnalyticsEvent {
   product: string;
@@ -94,6 +98,7 @@ export function track(event: TUsageEvent) {
 export class UsageStatisticsService extends Service {
   @Inject() userService: UserService;
   @Inject() hostsService: HostsService;
+  @Inject() diagnosticsService: DiagnosticsService;
 
   installerId: string;
   version = Utils.env.SLOBS_VERSION;
@@ -153,9 +158,13 @@ export class UsageStatisticsService extends Service {
 
     // Don't check logged in because login may not be verified at this point
     if (this.userService.state.auth && this.userService.state.auth.primaryPlatform) {
+      // TODO: index
+      // @ts-ignore
       metadata['platform'] = this.userService.state.auth.primaryPlatform;
     }
 
+    // TODO: index
+    // @ts-ignore
     metadata['os'] = process.platform;
 
     const bodyData: IUsageApiData = {
@@ -239,6 +248,26 @@ export class UsageStatisticsService extends Service {
     await this.sendAnalytics();
   }
 
+  // We can't fetch this before app startup like the rest of sysInfo since it
+  // relies on another service
+  getGpuInfo() {
+    const gpuSection: Dictionary<any> = {};
+    if (getOS() === OS.Windows) {
+      const gpuInfo = getWmiClass('Win32_VideoController', ['Name', 'DriverVersion', 'DriverDate']);
+
+      // Ensures we are working with an array
+      [].concat(gpuInfo).forEach((gpu, index) => {
+        gpuSection[`GPU ${index + 1}`] = {
+          Name: gpu.Name,
+          'Driver Version': gpu.DriverVersion,
+          'Driver Date': gpu.DriverDate,
+        };
+      });
+    }
+
+    return gpuSection;
+  }
+
   getSysInfo() {
     return {
       os: {
@@ -249,6 +278,7 @@ export class UsageStatisticsService extends Service {
       cpu: os.cpus()[0].model,
       cores: os.cpus().length,
       mem: os.totalmem(),
+      gpu: this.getGpuInfo(),
     };
   }
 

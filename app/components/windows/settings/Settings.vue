@@ -6,7 +6,11 @@
     :contentStyles="{ padding: '0' }"
   >
     <div slot="content" class="settings">
-      <NavMenu v-model="categoryName" class="settings-nav">
+      <NavMenu
+        :value="currentSettingsTab"
+        @input="cat => setCategoryName(cat)"
+        class="settings-nav"
+      >
         <scrollable style="height: 100%" :isResizable="false">
           <form-input
             :value="searchStr"
@@ -73,7 +77,7 @@
       <scrollable className="settings-container">
         <searchable-pages
           ref="settingsContainer"
-          :page="categoryName"
+          :page="currentSettingsTab"
           :pages="categoryNames"
           :searchStr="searchStr"
           :onBeforePageScan="onBeforePageScanHandler"
@@ -90,10 +94,7 @@
               globalSearchStr: scanning ? '' : searchStr,
             }"
           />
-          <developer-settings v-if="page === 'Developer'" />
           <installed-apps v-if="page === 'Installed Apps'" />
-          <overlay-settings v-if="page === 'Scene Collections'" />
-          <notifications-settings v-if="page === 'Notifications'" />
           <ObsSettings v-if="shouldShowReactPage" :componentProps="{ page: page }" />
           <GenericFormGroups
             v-if="shouldShowVuePage"

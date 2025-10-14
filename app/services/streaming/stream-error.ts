@@ -1,7 +1,7 @@
 import { getPlatformService, TPlatform } from '../platforms';
 import { $t } from 'services/i18n';
 import { Services } from '../../components-react/service-provider';
-import { IOBSOutputSignalInfo } from './streaming';
+import { IOBSOutputSignalInfo } from '../core/signals';
 import { capitalize } from 'lodash';
 
 // the `message` is shown to the user in the error notification
@@ -64,6 +64,11 @@ export const errorTypes = {
   YOUTUBE_THUMBNAIL_UPLOAD_FAILED: {
     get message() {
       return $t('Failed to upload the thumbnail');
+    },
+  },
+  YOUTUBE_TOKEN_EXPIRED: {
+    get message() {
+      return $t('YouTube token has expired, re-login or re-merge YouTube account');
     },
   },
   FACEBOOK_STREAMING_DISABLED: {
@@ -243,6 +248,7 @@ export class StreamError extends Error implements IRejectedRequest {
       type: this.type,
       message: this.message,
       details: this.details,
+      platform: this.platform,
     };
   };
 
@@ -260,7 +266,7 @@ export class StreamError extends Error implements IRejectedRequest {
     this.url = rejectedRequest?.url;
     this.status = rejectedRequest?.status;
     this.statusText = rejectedRequest?.statusText;
-    this.platform = this.url ? getPlatform(this.url) : undefined;
+    this.platform = rejectedRequest?.platform ?? getPlatform(this?.url);
 
     // TODO: remove sensitive data from YT requests
     if (this.platform === 'youtube') {
@@ -274,7 +280,8 @@ export class StreamError extends Error implements IRejectedRequest {
   }
 }
 
-function getPlatform(url: string): TPlatform | undefined {
+function getPlatform(url?: string): TPlatform | undefined {
+  if (!url) return undefined;
   const platforms = Services.StreamingService.views.linkedPlatforms;
   return platforms.find(platform => url.startsWith(getPlatformService(platform).apiBase));
 }
@@ -316,6 +323,7 @@ export function formatStreamErrorMessage(
     report: [] as string[],
   };
   if (typeof errorTypeOrError === 'object') {
+    console.debug('Formatting stream error', errorTypeOrError.getModel());
     // if an error object has been passed as a first arg
     let message = errorTypeOrError?.message;
     const details = errorTypeOrError?.details;
@@ -326,20 +334,22 @@ export function formatStreamErrorMessage(
     if (!message || (message && message.split(' ').includes('blocked'))) {
       message = error.message;
     }
+
+    // trim trailing periods or commas so that the message joins correctly
+    message = message.replace(/[.,]$/, '');
     messages.user.push(message);
 
     if (details && !details.split(' ').includes('blocked')) {
       messages.user.push(details);
     }
 
-    message = error.message.replace(/\.*$/, '');
-    // trim trailing periods so that the message joins correctly
-    const errorMessage = (error as any)?.action ? `${message}, ${(error as any).action}` : message;
+    const reportMessage = (error as any)?.action ? `${message}, ${(error as any).action}` : message;
 
-    messages.report.push(errorMessage);
-    if (details) messages.report.push(details);
+    messages.report.push(reportMessage.replace(/[.,]$/, ''));
+    if (details) messages.report.push(details.replace(/[.,]$/, ''));
     if (code) messages.report.push($t('Error Code: %{code}', { code }));
   } else {
+    console.debug('Creating default stream error message', errorTypeOrError, target);
     const typedMessages = createDefaultUnknownMessage(messages, errorTypeOrError, target);
     messages.user = typedMessages.user;
     messages.report = typedMessages.report;
@@ -379,6 +389,15 @@ export function formatUnknownErrorMessage(
   userMessage: string,
   reportMessage: string,
 ): IErrorMessages {
+  console.debug(
+    'Formatting unknown streaming error: ',
+    info,
+    '\n User Message:',
+    userMessage,
+    '\n Report Message:',
+    reportMessage,
+  );
+
   const messages = {
     user: userMessage !== '' ? [userMessage] : [],
     report: reportMessage !== '' ? [reportMessage] : [],
@@ -489,8 +508,8 @@ export function formatUnknownErrorMessage(
     }
   } else {
     const typedMessages = createDefaultUnknownMessage(messages, 'UNKNOWN_STREAMING_ERROR');
-    messages.user = typedMessages.user;
-    messages.report = typedMessages.report;
+    messages.user = messages.user.length ? messages.user : typedMessages.user;
+    messages.report = messages.report.length ? messages.report : typedMessages.report;
   }
 
   const details = messages.details.length ? messages.details.join('. ') : undefined;

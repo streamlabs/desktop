@@ -6,12 +6,14 @@ export * from './Audio';
 export * from './Video';
 // 'Hotkeys',
 export * from './Advanced';
-// 'SceneCollections',
-// 'Notifications',
+export * from './SceneCollections';
+export * from './Developer';
+export * from './Notifications';
 export * from './Appearance';
-export * from './RemoteControl';
+export * from './Mobile';
 export * from './VirtualWebcam';
 export * from './GameOverlay';
 export * from './Support';
 export * from './Experimental';
 export * from './Ultra';
+export * from './AISettings';

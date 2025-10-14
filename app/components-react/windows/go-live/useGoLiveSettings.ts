@@ -1,5 +1,5 @@
-import { IGoLiveSettings, StreamInfoView } from '../../../services/streaming';
-import { TPlatform } from '../../../services/platforms';
+import { IGoLiveSettings, StreamInfoView, TDisplayOutput } from '../../../services/streaming';
+import { platformList, TPlatform } from '../../../services/platforms';
 import { ICustomStreamDestination } from 'services/settings/streaming';
 import { Services } from '../../service-provider';
 import cloneDeep from 'lodash/cloneDeep';
@@ -11,6 +11,7 @@ import { useForm } from '../../shared/inputs/Form';
 import { getDefined } from '../../../util/properties-type-guards';
 import isEqual from 'lodash/isEqual';
 import { TDisplayType } from 'services/settings-v2';
+import partition from 'lodash/partition';
 
 type TCommonFieldName = 'title' | 'description';
 
@@ -33,17 +34,6 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
     return this.state;
   }
 
-  get alwaysEnabledPlatforms(): TPlatform[] {
-    return ['tiktok'];
-  }
-
-  /*
-   * Primary used to get all platforms that should always show the destination switcher in the Go Live window
-   */
-  get alwaysShownPlatforms(): TPlatform[] {
-    return ['kick'];
-  }
-
   /**
    * Update top level settings
    */
@@ -64,41 +54,17 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
    * Update settings for a specific platform
    */
   updatePlatform(platform: TPlatform, patch: Partial<IGoLiveSettings['platforms'][TPlatform]>) {
-    // TODO: find or create an observer for platform enabling/disabling behavior
-    const isDisablingPlatform =
-      Object.prototype.hasOwnProperty.call(patch, 'enabled') && patch?.enabled === false;
-
-    const hasExtraOutputs = Services.DualOutputService.views.hasExtraOutput(platform);
-
     const updated = {
       platforms: {
         ...this.state.platforms,
-        [platform]: {
-          ...this.state.platforms[platform],
-          ...this.updateDisplayIfNeeded(patch, isDisablingPlatform, hasExtraOutputs),
-        },
+        [platform]: { ...this.state.platforms[platform], ...patch },
       },
     };
     this.updateSettings(updated);
-
-    /*
-     * Reset display and extra outputs when disabling a platform, go live checks aren't enough.
-     * When disabling a platform, the extra output state remains true since its display
-     * `onChange` selector isn't triggered.
-     * Coupled with some bugs we've seen with go live settings persistence, this
-     * is the most practical place we've found to handle.
-     */
-    if (isDisablingPlatform) {
-      Services.DualOutputService.actions.removeExtraOutputPlatform(platform);
-    }
   }
 
-  private updateDisplayIfNeeded(
-    patch: Partial<IGoLiveSettings['platforms'][TPlatform]>,
-    isDisablingPlatform: boolean,
-    hasExtraOutputs: boolean,
-  ) {
-    return isDisablingPlatform && hasExtraOutputs ? { ...patch, display: 'horizontal' } : patch;
+  getCanDualStream(platform: TPlatform) {
+    return Services.StreamingService.views.supports('dualStream', [platform]);
   }
 
   switchPlatforms(enabledPlatforms: TPlatform[]) {
@@ -146,6 +112,33 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
     // reset common fields for all platforms in simple mode
     if (!enabled) this.updateCommonFields(this.getView().commonFields);
   }
+
+  /**
+   * Set displays for recording
+   * @remark Primarily used for dual output recording
+   * @param display - Display to toggle
+   * @param radioBtn - If true, the display will be the only one selected for recording
+   */
+  toggleRecordingDisplay(display: TDisplayType, radioBtn: boolean = false) {
+    if (radioBtn) {
+      this.updateSettings({ recording: [display] });
+      return;
+    }
+
+    if (this.state.recording.includes(display)) {
+      this.updateSettings({ recording: this.state.recording.filter(d => d !== display) });
+    } else {
+      this.updateSettings({ recording: [...this.state.recording, display] });
+    }
+  }
+
+  /**
+   * Enable/Disable Stream Shift mode
+   */
+  toggleStreamShift(status: boolean) {
+    this.updateSettings({ streamShift: status });
+  }
+
   /**
    * Set a common field like title or description for all eligible platforms
    **/
@@ -248,12 +241,19 @@ export class GoLiveSettingsModule {
       });
     }
 
+    /**
+     * If the user is in dual output mode, we need to ensure the stream switcher is disabled
+     */
+    const { dualOutputMode } = DualOutputService.state;
+    if (dualOutputMode && settings.streamShift) {
+      settings.streamShift = false;
+    }
+
     this.state.updateSettings(settings);
 
     /* If the user was in dual output before but doesn't have restream
      * we should disable one of the platforms if they have two enabled
      */
-    const { dualOutputMode } = DualOutputService.state;
     const { canEnableRestream } = RestreamService.views;
 
     // Tiktok and Kick can stay active
@@ -335,6 +335,21 @@ export class GoLiveSettingsModule {
     this.save(this.state.settings);
   }
 
+  /* Go live window has no persistence until we go live or toggle a platform on/off
+   * As a result we don't get the latest state in any of its views.
+   * This makes changing display immediate and is only used in `DisplaySelector`
+   * to keep the rest of the code as before, but we might need to revisit that.
+   */
+  updatePlatformDisplayAndSaveSettings(platform: TPlatform, display: TDisplayOutput) {
+    this.state.updatePlatform(platform, { display });
+    this.save(this.state.settings);
+  }
+
+  updateCustomDestinationDisplayAndSaveSettings(destId: number, display: TDisplayType) {
+    this.state.updateCustomDestinationDisplay(destId, display);
+    this.save(this.state.settings);
+  }
+
   get enabledDestinations() {
     return this.state.customDestinations.reduce(
       (enabled: number[], dest: ICustomStreamDestination, index: number) => {
@@ -344,6 +359,18 @@ export class GoLiveSettingsModule {
       [],
     );
   }
+
+  get unlinkedPlatforms() {
+    const platforms = (platformList as TPlatform[]).filter(
+      p => !this.state.linkedPlatforms.includes(p),
+    );
+
+    const [alwaysShown, unlinked] = partition(platforms, p =>
+      this.state.alwaysShownPlatforms.includes(p),
+    );
+    return [...alwaysShown, ...unlinked];
+  }
+
   get primaryChat() {
     const primaryPlatform = Services.UserService.views.platform!;
     // this is migration-like code for users with old primary platform deselected (i.e me)
@@ -358,11 +385,38 @@ export class GoLiveSettingsModule {
     Services.UserService.actions.setPrimaryPlatform(platform);
   }
 
+  setStreamShift(status: boolean) {
+    this.state.toggleStreamShift(status);
+    this.save(this.state.settings);
+  }
+
   /**
    * Determine if all dual output go live requirements are fulfilled
    */
   getCanStreamDualOutput() {
     return this.state.getCanStreamDualOutput(this.state);
+  }
+
+  getIsInvalidDualStream(): boolean {
+    if (this.isPrime) {
+      return false;
+    }
+
+    // Using the settings in the Go Live window's state, determine if the user
+    // has set the output of any eligible platform to `both` to validate if
+    // the user is trying to dual stream. Using the settings from the streaming
+    // service views is not enough because the user may have changed them in the
+    // Go Live window.
+    const willDualStream = this.state.enabledPlatforms.some(
+      (platform: TPlatform) =>
+        this.state.getCanDualStream(platform) &&
+        this.state.settings.platforms[platform]?.display === 'both',
+    );
+
+    const numTargets =
+      this.state.enabledPlatforms.length + this.state.enabledCustomDestinationHosts.length;
+
+    return this.state.isDualOutputMode && willDualStream && numTargets !== 1;
   }
 
   /**
@@ -380,6 +434,11 @@ export class GoLiveSettingsModule {
         2,
         () => true,
       );
+    }
+
+    if (this.getIsInvalidDualStream()) {
+      message.info($t('Upgrade to Ultra to allow more than two outputs'), 2, () => true);
+      return;
     }
 
     try {
@@ -428,34 +487,6 @@ export class GoLiveSettingsModule {
 
   get recommendedColorSpaceWarnings() {
     return Services.SettingsService.views.recommendedColorSpaceWarnings;
-  }
-
-  /**
-   * Add or remove a platform from Dual Output's extra output list
-   * according to display.
-   * If display is set to `both` it would add it, otherwise would remove it
-   * from the list if present.
-   */
-  updateShouldUseExtraOutput(platform: TPlatform, display: TDisplayType | 'both') {
-    if (display === 'both') {
-      Services.DualOutputService.actions.return.addExtraOutputPlatform(platform);
-    } else {
-      Services.DualOutputService.actions.return.removeExtraOutputPlatform(platform);
-    }
-  }
-
-  hasExtraOutput(platform: TPlatform) {
-    return Services.DualOutputService.views.hasExtraOutput(platform);
-  }
-
-  /* Go live window has no persistence until we go live or toggle a platform on/off
-   * As a result we don't get the latest state in any of its views.
-   * This makes changing display immediate and is only used in `DisplaySelector`
-   * to keep the rest of the code as before, but we might need to revisit that.
-   */
-  updatePlatformDisplayAndSaveSettings(platform: TPlatform, display: TDisplayType) {
-    this.state.updatePlatform(platform, { display });
-    this.save(this.state.settings);
   }
 }
 

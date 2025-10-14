@@ -19,7 +19,7 @@ export enum ENotificationSubType {
   CPU = 'CPU',
 }
 
-export interface INotificationsSettings {
+export interface INotificationsSettings extends Dictionary<boolean> {
   enabled: boolean;
   playSound: boolean;
 }
@@ -33,6 +33,7 @@ export interface INotificationOptions {
   playSound?: boolean;
   data?: any;
   subType?: ENotificationSubType;
+  singleton?: boolean;
 
   /** The notification's life time in ms. Use -1 for infinity */
   lifeTime?: number;
@@ -62,7 +63,6 @@ export interface INotificationsServiceApi {
     getUnread(type?: ENotificationType): INotification[];
     getRead(type?: ENotificationType): INotification[];
     getSettings(): INotificationsSettings;
-    getSettingsFormData(): TObsFormData;
   };
 
   setSettings(patch: Partial<INotificationsSettings>): void;

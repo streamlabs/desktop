@@ -10,6 +10,7 @@ import ExportModal from 'components-react/highlighter/Export/ExportModal';
 import { $t } from 'services/i18n';
 import PreviewModal from './PreviewModal';
 import RemoveModal from './RemoveModal';
+import ExportMarkersModal from './ExportMarkersModal';
 
 export default function ClipsViewModal({
   streamId,
@@ -20,7 +21,7 @@ export default function ClipsViewModal({
   streamId: string | undefined;
   modal: { modal: TModalClipsView; inspectedPathId?: string } | null;
   onClose: () => void;
-  deleteClip: (clipPath: string, streamId: string | undefined) => void;
+  deleteClip: (clipPath: string[], streamId: string | undefined) => void;
 }) {
   const { HighlighterService } = Services;
   const v = useVuex(() => ({
@@ -46,12 +47,13 @@ export default function ClipsViewModal({
 
     if (modal) {
       setModalWidth(
-        {
+        ({
           trim: '60%',
           preview: '700px',
           export: 'fit-content',
           remove: '280px',
-        }[modal],
+          exportMarkers: 'fit-content',
+        } as Record<string, string>)[modal] ?? '700px',
       );
     }
   }
@@ -90,6 +92,9 @@ export default function ClipsViewModal({
             setShowModal(modal);
           }}
         />
+      )}
+      {showModal === 'exportMarkers' && streamId && (
+        <ExportMarkersModal close={closeModal} streamId={streamId} />
       )}
       {inspectedClip && showModal === 'remove' && (
         <RemoveModal

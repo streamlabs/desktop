@@ -15,6 +15,23 @@
   margin-top: 24px;
 }
 
+.header {
+  display: flex;
+  flex: 1;
+  border-bottom: 1px solid var(--border);
+}
+
+.search {
+  align-self: center;
+  margin-right: 8px;
+
+  // Override global #mainWrapper styling
+  // Without it the clear icon overlays with the search icon
+  :global(.ant-input-group-addon .ant-btn) {
+    margin: 0 !important;
+  }
+}
+
 .source-tag {
   background: var(--section-alt);
   border-radius: 4px;

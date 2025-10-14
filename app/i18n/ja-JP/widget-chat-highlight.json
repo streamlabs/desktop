@@ -12,6 +12,7 @@
   "Name Text Color": "テキスト色に名前を付ける",
   "Name Background Color": "名前の背景色",
   "Highlight chat messages from your viewers on your stream.": "ストリームで視聴者が送ったチャットメッセージをハイライトします。",
+  "Pin and highlight chat messages from your viewers on your stream.": "視聴者からのチャットメッセージをストリームにピン留めしたり、ハイライトしたりできます。",
   "A duration of 0 is indefinite": "所要時間 0 は無制限を意味します",
   "Use this widget by hovering over the right side of a chat message to see a thumbtack icon. Clicking the icon will pin the message to the widget for its duration, or until you click the unpin button.": "このウィジェットを使用するには、チャットメッセージ右側にマウスオーバーしてピンのアイコンを表示します。アイコンをクリックすると、メッセージが期間中、またはピン解除するまでウィジェットにピン留めされます。"
 }

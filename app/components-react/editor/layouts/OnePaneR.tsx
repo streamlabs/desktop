@@ -1,10 +1,10 @@
 import React from 'react';
 import cx from 'classnames';
-import useLayout, { LayoutProps } from './hooks';
+import useLayout, { ILayoutProps } from './hooks';
 import ResizeBar from 'components-react/root/ResizeBar';
 import styles from './Layouts.m.less';
 
-export function OnePaneR(p: React.PropsWithChildren<LayoutProps>) {
+export function OnePaneR(p: ILayoutProps) {
   const { mins, bars, resizes, calculateMax, setBar, componentRef } = useLayout(
     [['1', ['3', '4', '5']], ['2']],
     true,
@@ -13,7 +13,7 @@ export function OnePaneR(p: React.PropsWithChildren<LayoutProps>) {
   );
 
   return (
-    <div className={cx(styles.columns, styles.sidePadded)} ref={componentRef}>
+    <div className={cx(styles.columns, styles.sidePadded, p.className)} ref={componentRef}>
       <div
         className={styles.rows}
         style={{ width: `${100 - resizes.bar1 * 100}%`, paddingTop: '16px' }}

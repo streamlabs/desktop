@@ -42,5 +42,7 @@
   "Desktop Audio Device 2": "Dispositivo de áudio de ambiente de trabalho 2",
   "Mic/Auxiliary Device 1": "Dispositivo auxiliar/microfone 1",
   "Mic/Auxiliary Device 2": "Dispositivo auxiliar/microfone 2",
-  "Mic/Auxiliary Device 3": "Dispositivo auxiliar/microfone 3"
+  "Mic/Auxiliary Device 3": "Dispositivo auxiliar/microfone 3",
+  "Recording Audio Encoder": "Codificador de áudio de gravação",
+  "Enable Muted Notifications": "Ativar notificações silenciadas"
 }

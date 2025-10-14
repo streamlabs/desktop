@@ -154,5 +154,6 @@
   "This applies to all alerts. If enabled all alerts need to be approved manually.": "這適用於所有通知。 如果啟用，則需要手動批准所有通知。",
   "Use unlimited delay": "使用無限延遲",
   "When enabled new alerts will interrupt the on screen alert": "啟用時，新提醒會中斷螢幕上的提醒",
-  "Text Highlight Color": "文字高亮顯示顏色"
+  "Text Highlight Color": "文字高亮顯示顏色",
+  "Platforms: Twitch, YouTube, Facebook, Trovo & integrations": "平台：Twitch、YouTube、Facebook、Trovo 與整合"
 }

@@ -80,5 +80,7 @@
   "has resubscribed": "hat erneut abonniert",
   "has gifted a sub to": "hat ein Abonnement geschenkt für",
   "has resubscribed for %{streak} months in a row! (%{months} total)": "hat %{streak} Monate lang ununterbrochen wiederholt abonniert! (Insgesamt %{months})",
-  "has resubscribed for %{months} months": "hat %{months} Monate lang wiederholt abonniert"
+  "has resubscribed for %{months} months": "hat %{months} Monate lang wiederholt abonniert",
+  "Disable Chat Box Notifications": "Disable Chat Box Notifications",
+  "Enable Chat Box Notifications": "Enable Chat Box Notifications"
 }

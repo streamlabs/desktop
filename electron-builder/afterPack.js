@@ -2,6 +2,7 @@ const cp = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const virtualCameraPacker = require('./build-mac-virtualcam');
 
 function signAndCheck(identity, filePath) {
   console.log(`Signing: ${filePath}`);
@@ -51,7 +52,7 @@ function signBinaries(identity, directory) {
   }
 }
 
-function afterPackMac() {
+async function afterPackMac(context) {
   console.log('Updating dependency paths');
   cp.execSync(
     `install_name_tool -change ./node_modules/node-libuiohook/libuiohook.1.dylib @executable_path/../Resources/app.asar.unpacked/node_modules/node-libuiohook/libuiohook.1.dylib \"${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Resources/app.asar.unpacked/node_modules/node-libuiohook/node_libuiohook.node\"`,
@@ -71,6 +72,9 @@ function afterPackMac() {
     context.packager.config.mac.identity,
     `${context.appOutDir}/${context.packager.appInfo.productName}.app/Contents/Resources/app.asar.unpacked`,
   );
+
+  await virtualCameraPacker.downloadVirtualCamExtension(context); // codesign is required for mac-virtualcam (so dont run if SLOBS_NO_SIGN env var is set)
+  virtualCameraPacker.signApps(context);
 }
 
 function afterPackWin() {
@@ -83,7 +87,7 @@ function afterPackWin() {
 
 exports.default = async function(context) {
   if (process.platform === 'darwin') {
-    afterPackMac();
+    afterPackMac(context);
   }
 
   if (process.platform === 'win32') {

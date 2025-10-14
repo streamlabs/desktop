@@ -16,7 +16,6 @@
     "experimentalDecorators": true,
     "noImplicitThis": true,
     "removeComments": true,
-    "suppressImplicitAnyIndexErrors": true,
     "strictNullChecks": false,
     // webdriverio bug in their type files
     "skipLibCheck": true,

@@ -239,6 +239,8 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
   }
 
   get config(): IWidgetConfig {
+    // TODO: index
+    // @ts-ignore
     return this.widgetsConfig[this.state.type];
   }
 
@@ -265,9 +267,24 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
     await this.saveSettings(newSettings);
   }
 
+  // for use in mutable settings values like arrays
+  public async replaceSettings(formValues: any) {
+    const newSettings = { ...this.settings, ...formValues };
+    // save setting to the store
+    this.setSettings(newSettings);
+    // send setting to the server
+    await this.saveSettings(newSettings);
+  }
+
   // Update setting compatible with FormFactory
-  updateSetting(key: string) {
-    return (value: any) => this.updateSettings({ [key]: value });
+  public updateSetting(key: string) {
+    return (value: any) => {
+      if (Array.isArray(this.settings[key])) {
+        this.replaceSettings({ [key]: value });
+      } else {
+        this.updateSettings({ [key]: value });
+      }
+    };
   }
 
   /**

@@ -42,5 +42,7 @@
   "Desktop Audio Device 2": "Основное устройство воспроизведения 2",
   "Mic/Auxiliary Device 1": "Микрофон/дополнительное устройство 1",
   "Mic/Auxiliary Device 2": "Микрофон/дополнительное устройство 2",
-  "Mic/Auxiliary Device 3": "Микрофон/дополнительное устройство 3"
+  "Mic/Auxiliary Device 3": "Микрофон/дополнительное устройство 3",
+  "Recording Audio Encoder": "Кодировщик записи аудио",
+  "Enable Muted Notifications": "Включить уведомления без звука"
 }

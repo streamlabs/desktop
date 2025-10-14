@@ -42,5 +42,7 @@
   "Desktop Audio Device 2": "Desktop-audioapparaat 2",
   "Mic/Auxiliary Device 1": "Mic/aux-apparaat 1",
   "Mic/Auxiliary Device 2": "Mic/aux-apparaat 2",
-  "Mic/Auxiliary Device 3": "Mic/aux-apparaat 3"
+  "Mic/Auxiliary Device 3": "Mic/aux-apparaat 3",
+  "Recording Audio Encoder": "Audio-encoder opnemen",
+  "Enable Muted Notifications": "Mute meldingen inschakelen"
 }
