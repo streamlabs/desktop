@@ -51,6 +51,7 @@ export enum ESettingsCategory {
   Stream = 'Stream',
   General = 'General',
   Mobile = 'Mobile',
+  StreamSecond = 'StreamSecond',
   // ...
 }
 
