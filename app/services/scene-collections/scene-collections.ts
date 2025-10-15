@@ -182,7 +182,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     await this.initialize();
     await this.installOverlay(
       'https://cdn.streamlabs.com/marketplace/overlay/7684923/5352ee7/78710952-c3f2-4d72-9e37-4875b86a5bed.overlay',
-      'Twitchcon San Jose 2025',
+      'Twitchcon San Diego 2025',
     );
 
     this.videoSettingsService.actions.setSettings(
