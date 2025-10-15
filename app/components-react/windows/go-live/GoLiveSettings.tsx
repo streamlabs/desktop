@@ -81,9 +81,10 @@ export default function GoLiveSettings() {
       },
 
       get canUseStreamShift() {
-        return IncrementalRolloutService.views.availableFeatures.includes(
-          EAvailableFeatures.streamShift,
-        );
+        return true;
+        // return IncrementalRolloutService.views.availableFeatures.includes(
+        //   EAvailableFeatures.streamShift,
+        // );
       },
 
       // temporarily hide the checkbox until streaming and output settings
