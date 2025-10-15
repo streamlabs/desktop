@@ -43,9 +43,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     isDualOutputMode: StreamingService.views.isDualOutputMode,
     isLoggedIn: UserService.isLoggedIn,
     isPrime: UserService.state.isPrime,
-    canUseStreamShift: IncrementalRolloutService.views.availableFeatures.includes(
-      EAvailableFeatures.streamShift,
-    ),
+    canUseStreamShift: true,
     primaryPlatform: UserService.state.auth?.primaryPlatform,
     isMultiplatformMode: StreamingService.views.isMultiplatformMode,
     updateStreamInfoOnLive: CustomizationService.state.updateStreamInfoOnLive,

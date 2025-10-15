@@ -853,9 +853,7 @@ class RestreamView extends ViewHandler<IRestreamState> {
   }
 
   get hasStreamShiftTargets() {
-    const canUseStreamShift = this.incrementalRolloutService.views.availableFeatures.includes(
-      EAvailableFeatures.streamShift,
-    );
+    const canUseStreamShift = true;
 
     return canUseStreamShift && this.state.streamShiftTargets.length > 0;
   }

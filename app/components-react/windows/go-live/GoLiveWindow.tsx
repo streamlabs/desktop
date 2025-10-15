@@ -86,9 +86,7 @@ function ModalFooter() {
     },
 
     get canUseStreamShift() {
-      return this.incrementalRolloutService.views.availableFeatures.includes(
-        EAvailableFeatures.streamShift,
-      );
+      return true;
     },
   }));
 
