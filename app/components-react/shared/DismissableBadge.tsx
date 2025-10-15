@@ -8,7 +8,7 @@ import { $t } from 'services/i18n';
 
 interface INewButtonProps {
   content?: string | React.ReactElement;
-  dismissableKey: EDismissable;
+  dismissableKey?: EDismissable;
   size?: 'standard' | 'small';
   absolute?: boolean;
   style?: CSSProperties;

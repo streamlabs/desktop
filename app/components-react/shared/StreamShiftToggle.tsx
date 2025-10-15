@@ -71,6 +71,7 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
           <i className="icon-information" style={{ marginLeft: '10px' }} />
         </Tooltip>
       </div>
+      <Badge content={'Beta'} />
     </div>
   );
 }
