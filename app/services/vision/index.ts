@@ -225,18 +225,26 @@ export class VisionService extends Service {
         });
 
         if (needsUpdate) {
-          const v = latestManifest.version ?? 'unknown';
-          const now = Date.now();
-          const newVersion = this.lastPromptVersion !== v;
-          const cooledDown = now - this.lastPromptAt > this.promptCooldownMs;
+          if (installedManifest) {
+            this.log(
+              `vision needs update: ${installedManifest.version} -> ${latestManifest.version}`,
+            );
+            // silently update in the background
+            await this.ensureUpdated({ startAfterUpdate: false });
+          } else {
+            const v = latestManifest.version ?? 'unknown';
+            const now = Date.now();
+            const newVersion = this.lastPromptVersion !== v;
+            const cooledDown = now - this.lastPromptAt > this.promptCooldownMs;
 
-          if (newVersion || cooledDown) {
-            this.lastPromptVersion = v;
-            this.lastPromptAt = now;
-            await this.settingsService.showSettings(ESettingsCategory.AI);
+            if (newVersion || cooledDown) {
+              this.lastPromptVersion = v;
+              this.lastPromptAt = now;
+              await this.settingsService.showSettings(ESettingsCategory.AI);
+            }
+
+            return { started: false, reason: 'needs-update' as const };
           }
-
-          return { started: false, reason: 'needs-update' as const };
         }
 
         const { pid, port } = await this.visionRunner.ensureStarted({ debugMode });
@@ -424,5 +432,16 @@ export class VisionService extends Service {
     const headers = new Headers({ 'Content-Type': 'application/json' });
 
     return jfetch(url, { headers, method: 'POST' });
+  }
+
+  async testEvent(type: string) {
+    return await this.authPostWithTimeout(
+      `https://${this.hostsService.streamlabs}/api/v5/vision/desktop/test-event`,
+      {
+        game: 'fortnite', // default to fortnite for now
+        events: [{ name: type }],
+      },
+      8_000,
+    );
   }
 }

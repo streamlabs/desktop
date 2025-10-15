@@ -8,7 +8,6 @@ import { $t } from 'services/i18n';
 
 interface INewButtonProps {
   content?: string | React.ReactElement;
-
   dismissableKey: EDismissable;
   size?: 'standard' | 'small';
   absolute?: boolean;
@@ -25,7 +24,7 @@ export default function DismissableBadge({
   const { DismissablesService } = Services;
 
   const { shouldShow } = useVuex(() => ({
-    shouldShow: DismissablesService.views.shouldShow(dismissableKey),
+    shouldShow: !dismissableKey || DismissablesService.views.shouldShow(dismissableKey),
   }));
 
   if (!shouldShow) return <></>;
