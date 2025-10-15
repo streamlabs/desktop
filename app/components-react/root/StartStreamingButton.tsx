@@ -31,7 +31,6 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     isDualOutputMode,
     isLoggedIn,
     isPrime,
-    canUseStreamShift,
     primaryPlatform,
     isMultiplatformMode,
     updateStreamInfoOnLive,
@@ -43,9 +42,6 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     isDualOutputMode: StreamingService.views.isDualOutputMode,
     isLoggedIn: UserService.isLoggedIn,
     isPrime: UserService.state.isPrime,
-    canUseStreamShift: IncrementalRolloutService.views.availableFeatures.includes(
-      EAvailableFeatures.streamShift,
-    ),
     primaryPlatform: UserService.state.auth?.primaryPlatform,
     isMultiplatformMode: StreamingService.views.isMultiplatformMode,
     updateStreamInfoOnLive: CustomizationService.state.updateStreamInfoOnLive,
@@ -192,7 +188,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       }
 
       // Only check for Stream Shift for ultra users
-      if (isLoggedIn && isPrime && canUseStreamShift) {
+      if (isLoggedIn && isPrime) {
         setIsLoading(true);
         const isLive = await fetchStreamShiftStatus();
         setIsLoading(false);
