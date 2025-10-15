@@ -1219,7 +1219,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     // add webcam source
     const type = byOS({
       [OS.Windows]: 'dshow_input',
-      [OS.Mac]: 'av_capture_input',
+      [OS.Mac]: 'macos_avcapture',
     }) as TSourceType;
 
     const defaultSource = this.defaultHardwareService.state.defaultVideoDevice;

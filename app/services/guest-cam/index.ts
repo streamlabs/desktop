@@ -449,7 +449,7 @@ export class GuestCamService extends StatefulService<IGuestCamServiceState> {
       !this.state.videoSourceId ||
       !this.sourcesService.views.getSource(this.state.videoSourceId)
     ) {
-      const sourceType = byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'av_capture_input' });
+      const sourceType = byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'macos_avcapture' });
       const videoSource = this.sourcesService.views.sources.find(s => s.type === sourceType);
 
       if (videoSource) this.SET_VIDEO_SOURCE(videoSource.sourceId);
