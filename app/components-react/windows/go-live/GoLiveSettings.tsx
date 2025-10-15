@@ -47,7 +47,6 @@ export default function GoLiveSettings() {
     isStreamShiftMode,
     isStreamShiftDisabled,
     isDualOutputSwitchDisabled,
-    canUseStreamShift,
     setPrimaryChat,
   } = useGoLiveSettings().extend(module => {
     const {
@@ -78,12 +77,6 @@ export default function GoLiveSettings() {
 
       addDestination() {
         SettingsService.actions.showSettings('Stream');
-      },
-
-      get canUseStreamShift() {
-        return IncrementalRolloutService.views.availableFeatures.includes(
-          EAvailableFeatures.streamShift,
-        );
       },
 
       // temporarily hide the checkbox until streaming and output settings
@@ -152,7 +145,7 @@ export default function GoLiveSettings() {
                 title={$t('Dual Output cannot be used with Stream Shift')}
                 placement="top"
                 lightShadow={true}
-                disabled={isDualOutputSwitchDisabled || !isPrime || !canUseStreamShift}
+                disabled={isDualOutputSwitchDisabled || !isPrime}
               >
                 <DualOutputToggle
                   className={styles.featureToggle}
@@ -165,25 +158,23 @@ export default function GoLiveSettings() {
                   lightShadow
                 />
               </Tooltip>
-              {canUseStreamShift && (
-                <Tooltip
-                  title={
-                    isPrime
-                      ? $t('Stream Shift cannot be used with Dual Output')
-                      : $t('Upgrade to Ultra to switch streams between devices.')
-                  }
-                  placement="top"
-                  lightShadow={true}
-                  disabled={isPrime && !isStreamShiftDisabled}
-                >
-                  <StreamShiftToggle
-                    className={styles.featureToggle}
-                    checkboxClassname={styles.featureCheckbox}
-                    style={{ width: featureCheckboxWidth }}
-                    disabled={isStreamShiftDisabled || !isPrime}
-                  />
-                </Tooltip>
-              )}
+              <Tooltip
+                title={
+                  isPrime
+                    ? $t('Stream Shift cannot be used with Dual Output')
+                    : $t('Upgrade to Ultra to switch streams between devices.')
+                }
+                placement="top"
+                lightShadow={true}
+                disabled={isPrime && !isStreamShiftDisabled}
+              >
+                <StreamShiftToggle
+                  className={styles.featureToggle}
+                  checkboxClassname={styles.featureCheckbox}
+                  style={{ width: featureCheckboxWidth }}
+                  disabled={isStreamShiftDisabled || !isPrime}
+                />
+              </Tooltip>
             </div>
           </div>
         </Col>
