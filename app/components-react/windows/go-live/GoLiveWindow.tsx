@@ -60,7 +60,6 @@ function ModalFooter() {
     isLoading,
     isDualOutputMode,
     isPrime,
-    canUseStreamShift,
   } = useGoLiveSettings().extend(module => ({
     windowsService: inject(WindowsService),
     dualOutputService: inject(DualOutputService),
@@ -84,10 +83,6 @@ function ModalFooter() {
 
       return platformDisplays.horizontal.length > 0 || destinationDisplays.horizontal.length > 0;
     },
-
-    get canUseStreamShift() {
-      return true;
-    },
   }));
 
   const [isFetchingStreamStatus, setIsFetchingStreamStatus] = useState(false);
@@ -97,7 +92,7 @@ function ModalFooter() {
     lifecycle === 'runChecklist' && error && checklist.startVideoTransmission !== 'done';
 
   async function handleGoLive() {
-    if (isPrime && canUseStreamShift) {
+    if (isPrime) {
       try {
         setIsFetchingStreamStatus(true);
         const isLive = await Services.RestreamService.checkIsLive();

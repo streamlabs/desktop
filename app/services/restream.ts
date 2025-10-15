@@ -154,13 +154,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return this.state.streamShiftTargets;
   }
 
-  get canUseStreamShift() {
-    return true;
-    // return this.incrementalRolloutService.views.availableFeatures.includes(
-    //   EAvailableFeatures.streamShift,
-    // );
-  }
-
   @mutation()
   private SET_ENABLED(enabled: boolean) {
     this.state.enabled = enabled;
@@ -308,9 +301,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     const url = `https://${this.host}/api/v1/rst/user/settings`;
 
     const enableStreamShift =
-      this.canUseStreamShift &&
-      this.streamInfo.isStreamShiftMode &&
-      !this.streamInfo.isDualOutputMode;
+      this.streamInfo.isStreamShiftMode && !this.streamInfo.isDualOutputMode;
 
     const body = JSON.stringify({
       enabled,
@@ -350,7 +341,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
   async setupIngest() {
     const ingest = (await this.fetchIngest()).server;
 
-    if (this.streamInfo.isStreamShiftMode && this.canUseStreamShift) {
+    if (this.streamInfo.isStreamShiftMode) {
       // in single output mode, we just set the ingest for the default display
       this.streamSettingsService.setSettings({
         streamType: 'rtmp_custom',
@@ -508,8 +499,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   async checkIsLive(): Promise<boolean> {
-    if (!this.canUseStreamShift) return false;
-
     const status = await this.fetchLiveStatus();
     console.debug('Stream Shift Status', status);
 
@@ -526,8 +515,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   async fetchLiveStatus() {
-    if (!this.canUseStreamShift) return;
-
     const headers = authorizedHeaders(
       this.userService.apiToken,
       new Headers({ 'Content-Type': 'application/json' }),
@@ -539,8 +526,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   async fetchTargetData(): Promise<any | null> {
-    if (!this.canUseStreamShift) return null;
-
     const headers = authorizedHeaders(this.userService.apiToken);
 
     const platforms = this.state.streamShiftTargets
@@ -578,14 +563,10 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   getTargetLiveData(platform: TPlatform): ITargetLiveData | undefined {
-    if (!this.canUseStreamShift) return undefined;
-
     return this.state.streamShiftTargets.find(t => t.platform === platform);
   }
 
   setStreamShiftStatus(status: TStreamShiftStatus) {
-    if (!this.canUseStreamShift) return;
-
     this.SET_STREAM_SWITCHER_STATUS(status);
   }
 
@@ -659,22 +640,16 @@ export class RestreamService extends StatefulService<IRestreamState> {
    */
 
   setSwitchStreamId(id?: string) {
-    if (!this.canUseStreamShift) return;
-
     this.SET_STREAM_SWITCHER_STREAM_ID(id);
   }
 
   resetStreamShift() {
-    if (!this.canUseStreamShift) return;
-
     this.SET_STREAM_SWITCHER_STATUS('inactive');
     this.SET_STREAM_SWITCHER_STREAM_ID();
     this.SET_STREAM_SWITCHER_TARGETS([]);
   }
 
   async confirmStreamShift(action: TStreamShiftAction) {
-    if (!this.canUseStreamShift) return;
-
     if (action === 'rejected') {
       this.SET_STREAM_SWITCHER_STATUS('pending');
     } else {
@@ -688,8 +663,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   async updateStreamShift(action: TStreamShiftAction) {
-    if (!this.canUseStreamShift) return;
-
     const headers = authorizedHeaders(
       this.userService.apiToken,
       new Headers({ 'Content-Type': 'application/json' }),
@@ -713,8 +686,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * when the stream ends.
    */
   async endStreamShiftStream(remoteStreamId: string): Promise<void> {
-    if (!this.canUseStreamShift) return;
-
     try {
       this.SET_STREAM_SWITCHER_STATUS('active');
       await this.streamingService.toggleStreaming();
@@ -853,8 +824,6 @@ class RestreamView extends ViewHandler<IRestreamState> {
   }
 
   get hasStreamShiftTargets() {
-    const canUseStreamShift = true;
-
-    return canUseStreamShift && this.state.streamShiftTargets.length > 0;
+    return this.state.streamShiftTargets.length > 0;
   }
 }
