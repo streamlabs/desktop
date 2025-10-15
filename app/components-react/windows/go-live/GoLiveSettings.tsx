@@ -101,6 +101,7 @@ export default function GoLiveSettings() {
   const headerText = isDualOutputMode ? $t('Destinations & Outputs:') : $t('Destinations:');
 
   const height = isPrime ? '61%' : '50%';
+  const featureCheckboxWidth = isPrime ? 140 : 155;
 
   return (
     <Row gutter={16} className={styles.settingsRow}>
@@ -149,7 +150,7 @@ export default function GoLiveSettings() {
                 <DualOutputToggle
                   className={styles.featureToggle}
                   checkboxClassname={styles.featureCheckbox}
-                  style={{ paddingBottom: '10px' }}
+                  style={{ paddingBottom: '10px', width: featureCheckboxWidth }}
                   disabled={isStreamShiftMode}
                   tooltipDisabled={isStreamShiftMode}
                   label={$t('Dual Output')}
@@ -157,7 +158,6 @@ export default function GoLiveSettings() {
                   lightShadow
                 />
               </Tooltip>
-
               <Tooltip
                 title={
                   isPrime
@@ -171,6 +171,7 @@ export default function GoLiveSettings() {
                 <StreamShiftToggle
                   className={styles.featureToggle}
                   checkboxClassname={styles.featureCheckbox}
+                  style={{ width: featureCheckboxWidth }}
                   disabled={isStreamShiftDisabled || !isPrime}
                 />
               </Tooltip>
