@@ -50,9 +50,9 @@ export default function SearchablePages(p: React.PropsWithChildren<ISearchablePa
     highlightPage();
   }, [p.page]);
 
-  // /**
-  //  * fetch and cache all text information from settings pages
-  //  */
+  /**
+   * fetch and cache all text information from settings pages
+   */
   async function scanPages() {
     setLoading(true);
     pagesInfo.current = {};
@@ -67,7 +67,9 @@ export default function SearchablePages(p: React.PropsWithChildren<ISearchablePa
     setLoading(false);
   }
 
-  async function grabReactTextContent(component: React.FunctionComponent<any>): Promise<string> {
+  async function grabReactTextContent<T = any>(
+    component: React.FunctionComponent<T>,
+  ): Promise<string> {
     if (!component) return '';
     const tempDiv = document.createElement('div');
     const RootedComponent = createRoot(component);

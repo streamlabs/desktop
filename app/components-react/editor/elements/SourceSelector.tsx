@@ -22,7 +22,6 @@ import { useVuex } from 'components-react/hooks';
 import * as remote from '@electron/remote';
 import { AuthModal } from 'components-react/shared/AuthModal';
 import Utils from 'services/utils';
-import { ESettingsCategory } from 'services/settings';
 
 interface ISourceMetadata {
   id: string;

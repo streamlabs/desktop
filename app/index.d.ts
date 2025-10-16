@@ -95,7 +95,6 @@ declare module 'gl-transitions';
 // React modules
 declare module 'rc-animate';
 declare module 'react-dom';
-declare module 'react-dom/server';
 
 // uncomment to allow TS to import components without type definitions
 // webpack still checks the module existence

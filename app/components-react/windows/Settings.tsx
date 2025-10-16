@@ -130,20 +130,13 @@ export default function Settings() {
   }
 
   /** PAGE SEARCH LOGIC */
-  const scanning = useRef(false);
   const [searchStr, setSearchStr] = useState('');
-  const [searchResultPages, setSearchResultPages] = useState<TCategoryName[]>([]);
 
   function handleSearchCompleted(foundPages: TCategoryName[]) {
-    if (includeUltra(searchStr)) {
-      setSearchResultPages(foundPages);
-    } else {
-      setSearchResultPages(foundPages.filter(page => page !== 'Ultra'));
-    }
-    // if there are not search results for the current page than switch to the first found page
-    if (foundPages.length && !foundPages.includes(currentTab)) {
-      setCurrentTab(foundPages[0]);
-    }
+    const filteredPages = includeUltra(searchStr)
+      ? foundPages
+      : foundPages.filter(page => page !== 'Ultra');
+    setCurrentTab(filteredPages[0]);
   }
 
   function onSearchInput(str: string) {
