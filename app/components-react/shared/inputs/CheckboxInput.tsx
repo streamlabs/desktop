@@ -1,10 +1,14 @@
+import React, { CSSProperties } from 'react';
 import { Checkbox, Tooltip } from 'antd';
-import React from 'react';
 import { InputComponent, TSlobsInputProps, useInput } from './inputs';
 import { CheckboxProps } from 'antd/lib/checkbox';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 
-export type TCheckboxInputProps = TSlobsInputProps<{}, boolean, CheckboxProps>;
+export type TCheckboxInputProps = TSlobsInputProps<
+  { nolabel?: boolean; className?: string; style?: CSSProperties },
+  boolean,
+  CheckboxProps
+>;
 
 export const CheckboxInput = InputComponent((p: TCheckboxInputProps) => {
   const { inputAttrs, wrapperAttrs } = useInput('checkbox', p);

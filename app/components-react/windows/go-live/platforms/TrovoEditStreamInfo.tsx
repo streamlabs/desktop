@@ -26,9 +26,12 @@ export function TrovoEditStreamInfo(p: IPlatformComponentParams<'trovo'>) {
             layoutMode={p.layoutMode}
             value={trSettings}
             onChange={updateSettings}
+            layout={p.layout}
           />
         }
-        requiredFields={<GameSelector key="game" platform="trovo" {...bind.game} />}
+        requiredFields={
+          <GameSelector key="game" platform="trovo" {...bind.game} layout={p.layout} />
+        }
       />
     </Form>
   );

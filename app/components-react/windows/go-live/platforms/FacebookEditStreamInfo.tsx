@@ -20,10 +20,7 @@ import moment from 'moment';
 import Translate from '../../../shared/Translate';
 import { IListOption } from '../../../shared/inputs/ListInput';
 import MessageLayout from '../MessageLayout';
-import PlatformSettingsLayout, {
-  IPlatformComponentParams,
-  TLayoutMode,
-} from './PlatformSettingsLayout';
+import PlatformSettingsLayout, { IPlatformComponentParams } from './PlatformSettingsLayout';
 import { assertIsDefined } from '../../../../util/properties-type-guards';
 import * as remote from '@electron/remote';
 import { $t } from 'services/i18n';
@@ -73,6 +70,10 @@ class FacebookEditStreamInfoModule {
 
   get layoutMode() {
     return this.props.layoutMode;
+  }
+
+  get layout() {
+    return this.props.layout;
   }
 
   get isUpdateMode() {
@@ -266,7 +267,7 @@ export default function FacebookEditStreamInfo(p: IPlatformComponentParams<'face
 }
 
 function CommonFields() {
-  const { settings, updateSettings, layoutMode } = useFacebook();
+  const { settings, updateSettings, layoutMode, layout } = useFacebook();
 
   return (
     <CommonPlatformFields
@@ -275,6 +276,7 @@ function CommonFields() {
       layoutMode={layoutMode}
       value={settings}
       onChange={updateSettings}
+      layout={layout}
     />
   );
 }
@@ -289,6 +291,7 @@ function RequiredFields() {
     groups,
     shouldShowGroups,
     pictures,
+    layout,
     loadPictures,
     getDestinationOptions,
     verifyGroup,
@@ -305,6 +308,8 @@ function RequiredFields() {
               hasImage
               imageSize={{ width: 35, height: 35 }}
               options={getDestinationOptions()}
+              layout={layout}
+              size="large"
             />
           )}
           {shouldShowPages && (
@@ -320,6 +325,8 @@ function RequiredFields() {
                 label: `${page.name} | ${page.category}`,
                 image: pictures[page.id],
               }))}
+              layout={layout}
+              size="large"
             />
           )}
           {shouldShowGroups && (
@@ -343,6 +350,8 @@ function RequiredFields() {
                     <a onClick={verifyGroup}> {$t('Click here to verify.')}</a>
                   </p>
                 }
+                layout={layout}
+                size="large"
               />
             </>
           )}
@@ -363,6 +372,7 @@ function OptionalFields() {
     shouldShowGamingWarning,
     bind,
     fbService,
+    layout,
   } = useFacebook();
   return (
     <div key="optional">
@@ -389,6 +399,8 @@ function OptionalFields() {
               </Translate>
             )
           }
+          layout={layout}
+          size="large"
         />
       )}
 
@@ -416,6 +428,7 @@ function Events() {
     onEventChange,
     scheduledVideosLoaded,
     scheduledVideos,
+    layout,
   } = useFacebook();
   return (
     <div key="events">
@@ -437,6 +450,8 @@ function Events() {
               value: v.id,
             })),
           ]}
+          layout={layout}
+          size="large"
         />
       )}
     </div>

@@ -211,6 +211,10 @@ export interface IPlatformService {
 
   setupDualStream?: (options: IGoLiveSettings) => Promise<any>;
 
+  setupStreamShiftStream?: (options: IGoLiveSettings) => Promise<void>;
+
+  postError?: (message: string) => void;
+
   fetchNewToken: () => Promise<void>;
 
   getHeaders: (

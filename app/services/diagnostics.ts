@@ -513,6 +513,16 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
       };
     }
 
+    if (
+      this.streamSettingsService.state.goLiveSettings &&
+      this.streamSettingsService.state.goLiveSettings?.streamShift
+    ) {
+      return {
+        ...info,
+        type: 'Stream Shift',
+      };
+    }
+
     if (platformList.length + destinationList.length > 1) {
       return {
         ...info,
@@ -1127,6 +1137,18 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
       'Vertical Uses Multistream': restreamVertical,
     });
   }
+
+  // TODO: add details for stream switch section
+  // private generateStreamSwitchSection() {
+
+  //   return new Section('Stream Switch', {
+  //     'Stream Switch Active': ,
+  //     // 'Stream Switch ID': ,
+  //     // 'Stream Switch Origin Device': ,
+  //     // 'Stream Switch Previous Device': ,
+  //     // 'Stream Switch Type': ,
+  //   });
+  // }
 
   private generateVisionSection() {
     return new Section('Vision', {

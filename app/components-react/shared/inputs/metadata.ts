@@ -38,6 +38,10 @@ export const metadata = {
     ...options,
     type: 'file',
   }),
+  radio: (options: IRadioMetadata) => ({
+    ...options,
+    type: 'radio',
+  }),
 };
 
 export type TInputMetadata<T = string> =
@@ -46,6 +50,7 @@ export type TInputMetadata<T = string> =
   | ISliderMetadata
   | ITextBoolMetadata
   | ICheckboxGroupMetadata
+  | IRadioGroupMetadata
   | IListMetadata<T>;
 
 interface IBaseMetadata {
@@ -70,6 +75,17 @@ export interface ICheckboxGroupMetadata extends IBaseMetadata {
   children: Dictionary<ITextBoolMetadata>;
   values: Dictionary<TInputValue>;
   onChange: (key: string) => (value: boolean) => void;
+}
+
+export interface IRadioGroupMetadata extends IBaseMetadata {
+  children: Dictionary<IRadioMetadata>;
+  values: Dictionary<IRadioMetadata>;
+  onChange: (key: string) => (value: string) => void;
+}
+
+export interface IRadioMetadata extends IBaseMetadata {
+  value: string;
+  label: string;
 }
 
 interface INumberMetadata extends IBaseMetadata {

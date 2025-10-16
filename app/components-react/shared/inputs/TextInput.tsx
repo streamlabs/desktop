@@ -6,7 +6,13 @@ import { InputProps } from 'antd/lib/input';
 
 // select which features from the antd lib we are going to use
 // note: to add a submit button for the text input, pass in a button to the `addonAfter` or `addonBefore` prop
-export const ANT_INPUT_FEATURES = ['addonBefore', 'addonAfter', 'autoFocus', 'prefix'] as const;
+export const ANT_INPUT_FEATURES = [
+  'addonBefore',
+  'addonAfter',
+  'autoFocus',
+  'prefix',
+  'size',
+] as const;
 
 export type TTextInputProps = TSlobsInputProps<
   {

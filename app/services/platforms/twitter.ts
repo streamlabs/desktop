@@ -13,7 +13,7 @@ import { platformAuthorizedRequest } from './utils';
 import { IGoLiveSettings } from '../streaming';
 import Utils from '../utils';
 import { TDisplayType } from 'services/settings-v2';
-import { ENotificationType, NotificationsService } from '../notifications';
+import { ENotificationType } from '../notifications';
 import { JsonrpcService } from '../api/jsonrpc';
 import * as remote from '@electron/remote';
 import { $t } from 'services/i18n';
@@ -65,7 +65,6 @@ export class TwitterPlatformService
   readonly displayName = 'X (Twitter)';
   readonly gameImageSize = { width: 30, height: 40 };
 
-  @Inject() private notificationsService: NotificationsService;
   @Inject() private jsonrpcService: JsonrpcService;
 
   authWindowOptions: Electron.BrowserWindowConstructorOptions = {
@@ -83,10 +82,35 @@ export class TwitterPlatformService
     return this.userService.state.auth?.platforms?.twitter?.username || '';
   }
 
+  async setupStreamShiftStream(goLiveSettings?: IGoLiveSettings) {
+    const settings = goLiveSettings?.streamShiftSettings;
+
+    if (settings && !settings.is_live) {
+      console.error('Stream Shift Error: X is not live');
+      this.postError('Stream Shift Error: X is not live');
+      return;
+    }
+
+    if (settings) {
+      this.UPDATE_STREAM_SETTINGS({
+        title: settings?.stream_title,
+      });
+
+      this.SET_BROADCAST_ID(settings?.broadcast_id ?? '');
+    }
+
+    this.setPlatformContext('twitter');
+  }
+
   async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     if (Utils.isTestMode()) {
       this.SET_BROADCAST_ID('twitterBroadcast1');
       this.setPlatformContext('twitter');
+      return;
+    }
+
+    if (goLiveSettings.streamShift && this.streamingService.views.shouldSwitchStreams) {
+      await this.setupStreamShiftStream(goLiveSettings);
       return;
     }
 
@@ -129,7 +153,8 @@ export class TwitterPlatformService
   }
 
   async afterStopStream(): Promise<void> {
-    if (this.state.broadcastId) {
+    if (this.state.broadcastId && !this.streamingService.views.isSwitchingStream) {
+      console.log('Ending X stream', this.state.broadcastId);
       await this.endStream(this.state.broadcastId);
     }
   }

@@ -114,8 +114,9 @@ class LiveDockController {
 
     const hasMultistreamChat =
       (this.restreamService.views.canEnableRestream &&
-        this.streamingService.views.isMultiplatformMode) ||
+        this.streamingService.views.hasMultipleTargetsEnabled) ||
       this.hasDifferentDualOutputPlatforms;
+
     const tabs: { name: string; value: string }[] = [
       {
         name: getPlatformService(this.userService.state.auth.primaryPlatform).displayName,
@@ -141,7 +142,10 @@ class LiveDockController {
   }
 
   get isRestreaming() {
-    return this.restreamService.shouldGoLiveWithRestream;
+    return (
+      this.restreamService.shouldGoLiveWithRestream ||
+      this.streamingService.views.isStreamShiftMultistream
+    );
   }
 
   // Now that the same platform can stream to multiple displays we want to avoid mistakenly
@@ -220,6 +224,20 @@ class LiveDockController {
     this.store.setState(s => {
       s.selectedChat = 'default';
     });
+  }
+
+  setCollapsed(livedockCollapsed: boolean) {
+    this.store.setState(s => {
+      s.canAnimate = true;
+    });
+    this.windowsService.actions.updateStyleBlockers('main', true);
+    this.customizationService.actions.setSettings({ livedockCollapsed });
+    setTimeout(() => {
+      this.store.setState(s => {
+        s.canAnimate = false;
+      });
+      this.windowsService.actions.updateStyleBlockers('main', false);
+    }, 300);
   }
 
   toggleViewerCount() {
