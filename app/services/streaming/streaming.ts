@@ -1192,7 +1192,11 @@ export class StreamingService
         const service = getPlatformService(platform);
         if (service.afterStopStream) service.afterStopStream();
       });
-      this.restreamService.resetStreamShift();
+
+      if (this.views.isStreamShiftMode) {
+        this.restreamService.resetStreamShift();
+      }
+
       this.UPDATE_STREAM_INFO({ lifecycle: 'empty' });
       return Promise.resolve();
     }
@@ -1204,6 +1208,11 @@ export class StreamingService
       } else {
         NodeObs.OBS_service_stopStreaming(true);
       }
+
+      if (this.views.isStreamShiftMode) {
+        this.restreamService.resetStreamShift();
+      }
+
       return Promise.resolve();
     }
   }

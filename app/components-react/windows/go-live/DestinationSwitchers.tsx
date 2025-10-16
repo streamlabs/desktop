@@ -57,8 +57,9 @@ export function DestinationSwitchers() {
   // or for a non-ultra user is in single output mode. The one exception
   // for a non-ultra user in single output mode is if TikTok is the only enabled platform
   const disableCustomDestinationSwitchers =
-    !isRestreamEnabled ||
-    (!isPrime && !isDualOutputMode && !isEnabled('tiktok')) ||
+    !isRestreamEnabled &&
+    !isDualOutputMode &&
+    !isEnabled('tiktok') &&
     enabledPlatformsRef.current.length > 1;
   const disableNonUltraSwitchers =
     isDualOutputMode &&

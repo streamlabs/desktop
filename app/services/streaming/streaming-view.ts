@@ -217,13 +217,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Currently, switch stream cannot be used with only custom destinations. One platform must be enabled.
    */
   get isStreamShiftMode(): boolean {
-    const canUseStreamShift = this.incrementalRolloutView.availableFeatures.includes(
-      EAvailableFeatures.streamShift,
+    return (
+      (this.userView.isPrime && this.settings.streamShift && this.enabledPlatforms.length > 0) ||
+      false
     );
-
-    if (!canUseStreamShift) return false;
-
-    return (this.settings.streamShift && this.enabledPlatforms.length > 0) || false;
   }
 
   get isStreamShiftMultistream(): boolean {
