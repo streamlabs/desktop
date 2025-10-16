@@ -19,7 +19,6 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     MediaBackupService,
     SourcesService,
     RestreamService,
-    IncrementalRolloutService,
     UsageStatisticsService,
   } = Services;
 
@@ -49,8 +48,6 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
 
   const [delaySecondsRemaining, setDelayTick] = useState(delaySeconds);
   const [isLoading, setIsLoading] = useState(false);
-
-  const streamlabelRef = React.createRef<HTMLSpanElement>();
 
   useEffect(() => {
     setDelayTick(delaySeconds);
@@ -233,20 +230,6 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     (streamingStatus === EStreamingState.Starting && delaySecondsRemaining === 0) ||
     (streamingStatus === EStreamingState.Ending && delaySecondsRemaining === 0);
 
-  const formatStreamSwitchResponse = useCallback((streamId: string, remoteStreamId?: string) => {
-    // Determine if the remote stream ID is from a mobile device
-    const isMobileRemote = remoteStreamId && remoteStreamId && /[A-Z]/.test(remoteStreamId);
-
-    if (isMobileRemote) {
-      // Handle mobile to desktop case
-    }
-
-    return {
-      source: '',
-      message: '',
-    };
-  }, []);
-
   const fetchStreamShiftStatus = useCallback(async () => {
     try {
       const isLive = await RestreamService.checkIsLive();
@@ -303,6 +286,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       className={cx('button button--action', { 'button--soft-warning': getIsRedButton })}
       disabled={isDisabled}
       onClick={toggleStreaming}
+      data-name="StartStreamingButton"
     >
       {isLoading ? (
         <i className="fa fa-spinner fa-pulse" />
@@ -312,22 +296,18 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
           delayEnabled={delayEnabled}
           delaySecondsRemaining={delaySecondsRemaining}
           streamShiftStatus={streamShiftStatus}
-          ref={streamlabelRef}
         />
       )}
     </button>
   );
 }
 
-const StreamButtonLabel = forwardRef<
-  HTMLSpanElement,
-  {
-    streamingStatus: EStreamingState;
-    streamShiftStatus: TStreamShiftStatus;
-    delaySecondsRemaining: number;
-    delayEnabled: boolean;
-  }
->((p, ref) => {
+function StreamButtonLabel(p: {
+  streamingStatus: EStreamingState;
+  streamShiftStatus: TStreamShiftStatus;
+  delaySecondsRemaining: number;
+  delayEnabled: boolean;
+}) {
   const label = useMemo(() => {
     if (p.streamShiftStatus === 'pending') {
       return $t('Claim Stream');
@@ -348,5 +328,5 @@ const StreamButtonLabel = forwardRef<
     }
   }, [p.streamShiftStatus, p.streamingStatus, p.delayEnabled, p.delaySecondsRemaining]);
 
-  return <span ref={ref}>{label}</span>;
-});
+  return <>{label}</>;
+}
