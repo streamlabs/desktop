@@ -139,7 +139,7 @@ export async function stopRecording() {
 }
 
 export async function waitForSettingsWindowLoaded() {
-  return waitForEnabled('[data-name=confirmGoLiveBtn]');
+  return waitForEnabled('[data-name=confirmGoLiveBtn]', { timeout: 10000 });
 }
 
 export async function switchAdvancedMode() {
