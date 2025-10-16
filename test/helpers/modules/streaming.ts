@@ -51,7 +51,7 @@ export async function prepareToGoLive() {
 export async function clickGoLive() {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   await useMainWindow(async () => {
-    await clickButton('[data-name="StartStreamingButton"]');
+    await click('[data-name="StartStreamingButton"]');
   });
 }
 
