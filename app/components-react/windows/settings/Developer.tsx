@@ -93,8 +93,6 @@ export function DeveloperSettings() {
   );
 }
 
-DeveloperSettings.page = 'Developer';
-
 export function DualOutputDeveloperSettings(p: { collection?: string }) {
   const { OverlaysPersistenceService, SceneCollectionsService } = Services;
 

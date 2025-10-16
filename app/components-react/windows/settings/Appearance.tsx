@@ -341,5 +341,3 @@ export function AppearanceSettings() {
     </div>
   );
 }
-
-AppearanceSettings.page = 'Appearance';

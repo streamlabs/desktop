@@ -338,7 +338,6 @@ const ObsInput = forwardRef<{}, IObsInputProps>((p, ref) => {
 });
 
 interface IObsFormGroupProps {
-  categoryName?: string;
   value: ISettingsSubCategory[];
   onChange: (newValue: ISettingsSubCategory[]) => unknown;
   type?: IObsFormType;

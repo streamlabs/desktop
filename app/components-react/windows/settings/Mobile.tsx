@@ -155,8 +155,6 @@ export function MobileSettings() {
   );
 }
 
-MobileSettings.page = 'Mobile';
-
 function UltraInsert() {
   const { UserService, MagicLinkService } = Services;
   const { isPrime } = useVuex(() => ({

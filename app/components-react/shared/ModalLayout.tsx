@@ -1,10 +1,8 @@
 import React, { ReactNode, CSSProperties } from 'react';
-import { useVuex } from '../hooks';
 import { Services } from '../service-provider';
 import { getOS, OS } from '../../util/operating-systems';
 import cx from 'classnames';
 import { $t } from '../../services/i18n';
-import css from './ModalLayout.m.less';
 import { Button } from 'antd';
 import { ModalProps } from 'antd/lib/modal';
 import Scrollable from './Scrollable';
@@ -18,6 +16,7 @@ type TProps = {
   scrollable?: boolean;
   wrapperStyle?: React.CSSProperties;
   className?: string;
+  bodyClassName?: string;
 } & Pick<ModalProps, 'footer' | 'onOk' | 'okText' | 'bodyStyle' | 'confirmLoading' | 'onCancel'>;
 
 // calculate OS dependent styles
@@ -87,11 +86,11 @@ export function ModalLayout(p: TProps) {
       {p.scrollable ? (
         <div style={bodyStyles}>
           <Scrollable isResizable={false} style={{ height: '100%' }}>
-            <div className="ant-modal-body">{p.children}</div>
+            <div className={cx('ant-modal-body', p.bodyClassName)}>{p.children}</div>
           </Scrollable>
         </div>
       ) : (
-        <div className="ant-modal-body" style={bodyStyles}>
+        <div className={cx('ant-modal-body', p.bodyClassName)} style={bodyStyles}>
           {p.children}
         </div>
       )}

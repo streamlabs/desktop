@@ -4,7 +4,8 @@ export * from './Stream';
 export * from './Output';
 export * from './Audio';
 export * from './Video';
-// 'Hotkeys',
+export * from './Hotkeys';
+export * from './InstalledApps';
 export * from './Advanced';
 export * from './SceneCollections';
 export * from './Developer';
