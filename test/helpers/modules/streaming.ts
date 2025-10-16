@@ -139,7 +139,7 @@ export async function stopRecording() {
 }
 
 export async function waitForSettingsWindowLoaded() {
-  return waitForEnabled('button[data-testid=confirmGoLiveBtn]');
+  return waitForEnabled('[data-name=confirmGoLiveBtn]');
 }
 
 export async function switchAdvancedMode() {

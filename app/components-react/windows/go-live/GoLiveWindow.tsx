@@ -62,8 +62,6 @@ function ModalFooter() {
     isPrime,
   } = useGoLiveSettings().extend(module => ({
     windowsService: inject(WindowsService),
-    dualOutputService: inject(DualOutputService),
-    incrementalRolloutService: inject(IncrementalRolloutService),
 
     close() {
       this.windowsService.actions.closeChildWindow();
@@ -71,17 +69,6 @@ function ModalFooter() {
 
     goBackToSettings() {
       module.prepopulate();
-    },
-
-    toggleDualOutputMode() {
-      this.dualOutputService.actions.setDualOutputModeIfPossible(false, true, true);
-    },
-
-    get horizontalHasTargets() {
-      const platformDisplays = module.state.activeDisplayPlatforms;
-      const destinationDisplays = module.state.activeDisplayDestinations;
-
-      return platformDisplays.horizontal.length > 0 || destinationDisplays.horizontal.length > 0;
     },
   }));
 
@@ -160,7 +147,7 @@ function ModalFooter() {
       {/* GO LIVE BUTTON */}
       {shouldShowConfirm && (
         <Button
-          data-testid="confirmGoLiveBtn"
+          data-name="confirmGoLiveBtn"
           type="primary"
           onClick={handleGoLive}
           disabled={isLoading || !!error}
