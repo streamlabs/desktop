@@ -140,7 +140,8 @@ export async function stopRecording() {
 
 export async function waitForSettingsWindowLoaded() {
   await waitForCloudshift();
-  return waitForEnabled('[data-name=confirmGoLiveBtn]', { timeout: 10000 });
+  await focusChild();
+  return waitForEnabled('[data-name=confirmGoLiveBtn]', { timeout: 5000 });
 }
 
 async function waitForCloudshift() {
