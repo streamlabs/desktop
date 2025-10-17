@@ -51,7 +51,7 @@ export async function prepareToGoLive() {
 export async function clickGoLive() {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   await useMainWindow(async () => {
-    await clickButton('Go Live');
+    await click('[data-name="StartStreamingButton"]');
   });
 }
 
@@ -139,7 +139,22 @@ export async function stopRecording() {
 }
 
 export async function waitForSettingsWindowLoaded() {
-  return waitForEnabled('button[data-testid=confirmGoLiveBtn]');
+  await waitForCloudshift();
+  await focusChild();
+  return waitForEnabled('[data-name=confirmGoLiveBtn]', { timeout: 5000 });
+}
+
+async function waitForCloudshift() {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  await useMainWindow(async () => {
+    let cloudShifted = await isDisplayed('span=Another stream detected', { timeout: 5000 });
+    while (cloudShifted) {
+      await click('.ant-modal-close-x');
+      await sleep(500);
+      await clickGoLive();
+      cloudShifted = await isDisplayed('span=Another stream detected', { timeout: 5000 });
+    }
+  });
 }
 
 export async function switchAdvancedMode() {
