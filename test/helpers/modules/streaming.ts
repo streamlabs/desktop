@@ -139,7 +139,18 @@ export async function stopRecording() {
 }
 
 export async function waitForSettingsWindowLoaded() {
-  return waitForEnabled('[data-name=confirmGoLiveBtn]', { timeout: 20000 });
+  await waitForCloudshift();
+  return waitForEnabled('[data-name=confirmGoLiveBtn]');
+}
+
+async function waitForCloudshift() {
+  let cloudShifted = await isDisplayed('span=Another stream detected', { timeout: 5000 });
+  while (cloudShifted) {
+    await click('.ant-modal-close-x');
+    await sleep(500);
+    await clickGoLive();
+    cloudShifted = await isDisplayed('span=Another stream detected', { timeout: 5000 });
+  }
 }
 
 export async function switchAdvancedMode() {
