@@ -45,6 +45,7 @@ import { DualOutputService } from 'services/dual-output';
 import { NodeMapNode } from './nodes/node-map';
 import { VideoSettingsService } from 'services/settings-v2';
 import { WidgetsService, WidgetType } from 'services/widgets';
+import { SettingsService } from 'app-services';
 
 const uuid = window['require']('uuid/v4');
 
@@ -96,6 +97,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   @Inject() videoSettingsService: VideoSettingsService;
   @Inject() private defaultHardwareService: DefaultHardwareService;
   @Inject() private widgetsService: WidgetsService;
+  @Inject() private settingsService: SettingsService;
 
   collectionAdded = new Subject<ISceneCollectionsManifestEntry>();
   collectionRemoved = new Subject<ISceneCollectionsManifestEntry>();
@@ -155,6 +157,19 @@ export class SceneCollectionsService extends Service implements ISceneCollection
       await this.create({ auto: true });
     }
     this.collectionInitialized.next();
+
+    this.userService.userLogout.subscribe(() => {
+      this.wipeCollections();
+    });
+  }
+
+  @RunInLoadingMode()
+  async wipeCollections() {
+    Promise.all(
+      this.collections.map(async collection => {
+        await this.delete(collection.id);
+      }),
+    );
   }
 
   /**
@@ -165,6 +180,20 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   @RunInLoadingMode()
   async setupNewUser() {
     await this.initialize();
+    await this.installOverlay(
+      'https://cdn.streamlabs.com/marketplace/overlay/7684923/5352ee7/78710952-c3f2-4d72-9e37-4875b86a5bed.overlay',
+      'Twitchcon San Diego 2025',
+    );
+
+    this.videoSettingsService.actions.setSettings(
+      {
+        outputHeight: 1080,
+        outputWidth: 1920,
+      },
+      'horizontal',
+    );
+
+    this.settingsService.actions.setSettingValue('General', 'RecordWhenStreaming', true);
   }
 
   /**
@@ -1003,35 +1032,35 @@ export class SceneCollectionsService extends Service implements ISceneCollection
       );
 
       if (inManifest) {
-        if (inManifest.deleted) {
-          const success = await this.performSyncStep('Delete on server', async () => {
-            if (inManifest.serverId) {
-              await this.serverApi.deleteSceneCollection(inManifest.serverId);
-            }
-            this.stateService.HARD_DELETE_COLLECTION(inManifest.id);
-          });
+        // if (inManifest.deleted) {
+        //   const success = await this.performSyncStep('Delete on server', async () => {
+        //     if (inManifest.serverId) {
+        //       await this.serverApi.deleteSceneCollection(inManifest.serverId);
+        //     }
+        //     this.stateService.HARD_DELETE_COLLECTION(inManifest.id);
+        //   });
 
-          if (!success) failed = true;
-        } else if (new Date(inManifest.modified) > new Date(onServer.last_updated_at)) {
-          const success = await this.performSyncStep('Update on server', async () => {
-            const exists = await this.stateService.collectionFileExists(inManifest.id);
+        //   if (!success) failed = true;
+        // } else if (new Date(inManifest.modified) > new Date(onServer.last_updated_at)) {
+        //   const success = await this.performSyncStep('Update on server', async () => {
+        //     const exists = await this.stateService.collectionFileExists(inManifest.id);
 
-            if (exists) {
-              const data = this.stateService.readCollectionFile(inManifest.id);
+        //     if (exists) {
+        //       const data = this.stateService.readCollectionFile(inManifest.id);
 
-              if (data && inManifest.serverId) {
-                await this.serverApi.updateSceneCollection({
-                  data,
-                  id: inManifest.serverId,
-                  name: inManifest.name,
-                  last_updated_at: inManifest.modified,
-                });
-              }
-            }
-          });
+        //       if (data && inManifest.serverId) {
+        //         await this.serverApi.updateSceneCollection({
+        //           data,
+        //           id: inManifest.serverId,
+        //           name: inManifest.name,
+        //           last_updated_at: inManifest.modified,
+        //         });
+        //       }
+        //     }
+        //   });
 
-          if (!success) failed = true;
-        } else if (new Date(inManifest.modified) < new Date(onServer.last_updated_at)) {
+        //   if (!success) failed = true;
+        if (new Date(inManifest.modified) < new Date(onServer.last_updated_at)) {
           collectionsToUpdate.push(onServer.id);
         } else {
           console.log('Up to date file: ', inManifest.id);

@@ -29,6 +29,7 @@ import { Subject } from 'rxjs';
 import * as remote from '@electron/remote';
 import fs from 'fs';
 import path from 'path';
+import { UserService } from 'app-services';
 
 export enum ESettingsCategory {
   AI = 'AI',
@@ -50,6 +51,7 @@ export enum ESettingsCategory {
   Stream = 'Stream',
   General = 'General',
   Mobile = 'Mobile',
+  StreamSecond = 'StreamSecond',
   // ...
 }
 
@@ -282,6 +284,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   @Inject() private usageStatisticsService: UsageStatisticsService;
   @Inject() private sceneCollectionsService: SceneCollectionsService;
   @Inject() private hardwareService: HardwareService;
+  @Inject() private userService: UserService;
   @Inject() private navigationService: NavigationService;
 
   @Inject()
@@ -308,6 +311,11 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     } catch (e: unknown) {
       console.error('Error fetching hardware acceleration state', e);
     }
+
+    this.userService.userLogout.subscribe(() => {
+      this.setSettingValue('Stream', 'key', '');
+      this.setSettingValue('StreamSecond', 'key', '');
+    });
   }
 
   private fetchSettingsFromObs(categoryName: CategoryName): ISettingsCategory {
