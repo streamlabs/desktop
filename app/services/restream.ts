@@ -85,6 +85,8 @@ interface IRestreamState {
    * stream can be started correctly.
    */
   streamShiftTargets: ITargetLiveData[];
+
+  streamShiftForceGoLive: boolean;
 }
 
 interface IUserSettingsResponse extends IRestreamState {
@@ -118,6 +120,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     streamShiftStreamId: undefined,
     streamShiftStatus: 'inactive',
     streamShiftTargets: [],
+    streamShiftForceGoLive: false,
   };
 
   get streamInfo() {
@@ -182,6 +185,11 @@ export class RestreamService extends StatefulService<IRestreamState> {
   @mutation()
   private SET_STREAM_SWITCHER_TARGETS(targets: IStreamShiftTarget[]) {
     this.state.streamShiftTargets = targets;
+  }
+
+  @mutation()
+  private SET_STREAM_SWITCHER_FORCE_GO_LIVE(shouldForce: boolean) {
+    this.state.streamShiftForceGoLive = shouldForce;
   }
 
   init() {
@@ -704,6 +712,10 @@ export class RestreamService extends StatefulService<IRestreamState> {
     }
   }
 
+  forceStreamShiftGoLive(shouldForce: boolean) {
+    this.SET_STREAM_SWITCHER_FORCE_GO_LIVE(shouldForce);
+  }
+
   /* Chat Handling
    * TODO: Lots of this is copy-pasted from the chat service
    * The chat service needs to be refactored
@@ -825,5 +837,9 @@ class RestreamView extends ViewHandler<IRestreamState> {
 
   get hasStreamShiftTargets() {
     return this.state.streamShiftTargets.length > 0;
+  }
+
+  get shouldForceGoLive() {
+    return this.state.streamShiftForceGoLive;
   }
 }

@@ -100,8 +100,10 @@ function ModalFooter() {
 
         // Prompt to confirm stream switch if the stream exists
         // TODO: unify with start streaming button prompt
-        if (isLive) {
+        const { streamShiftForceGoLive } = Services.RestreamService.state;
+        if (isLive && !streamShiftForceGoLive) {
           let shouldForceGoLive = false;
+
           await promptAction({
             title: $t('Another stream detected'),
             message: $t(
@@ -115,7 +117,8 @@ function ModalFooter() {
             cancelBtnText: $t('Cancel'),
             cancelBtnPosition: 'left',
             secondaryActionText: $t('Start Fresh'),
-            secondaryActionFn: () => {
+            secondaryActionFn: async () => {
+              Services.RestreamService.actions.forceStreamShiftGoLive(true);
               shouldForceGoLive = true;
             },
           });

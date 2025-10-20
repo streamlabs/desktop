@@ -77,7 +77,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     }
 
     const streamShiftEvent = StreamingService.streamShiftEvent.subscribe(event => {
-      const streamShiftStreamId = RestreamService.state.streamShiftStreamId;
+      const { streamShiftStreamId, streamShiftForceGoLive } = RestreamService.state;
       const isMobileRemote = streamShiftStreamId ? /[A-Z]/.test(streamShiftStreamId) : false;
       const remoteDeviceType = isMobileRemote ? 'mobile' : 'desktop';
 
@@ -202,7 +202,9 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
             );
 
         if (isLive) {
-          let shouldForceGoLive = false;
+          const { streamShiftForceGoLive } = RestreamService.state;
+          let shouldForceGoLive = streamShiftForceGoLive;
+
           await promptAction({
             title: $t('Another stream detected'),
             message,
@@ -211,8 +213,9 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
             cancelBtnText: $t('Cancel'),
             cancelBtnPosition: 'left',
             secondaryActionText: $t('Start Fresh'),
-            secondaryActionFn: () => {
+            secondaryActionFn: async () => {
               // FIXME: this should actually do something server-side
+              RestreamService.actions.return.forceStreamShiftGoLive(true);
               shouldForceGoLive = true;
             },
           });
