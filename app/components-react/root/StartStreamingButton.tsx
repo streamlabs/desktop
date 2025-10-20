@@ -202,15 +202,24 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
             );
 
         if (isLive) {
-          promptAction({
+          let shouldForceGoLive = false;
+          await promptAction({
             title: $t('Another stream detected'),
             message,
             btnText: $t('Switch to Streamlabs Desktop'),
             fn: startStreamShift,
             cancelBtnText: $t('Cancel'),
             cancelBtnPosition: 'left',
+            secondaryActionText: $t('Start Fresh'),
+            secondaryActionFn: () => {
+              // FIXME: this should actually do something server-side
+              shouldForceGoLive = true;
+            },
           });
-          return;
+
+          if (!shouldForceGoLive) {
+            return;
+          }
         }
       }
 

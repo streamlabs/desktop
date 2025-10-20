@@ -132,8 +132,10 @@ export function promptAction(p: {
   fn?(): void | ((props: any) => unknown | void);
   cancelFn?: void | ((props?: any) => unknown | void);
   icon?: React.ReactNode;
+  secondaryActionText?: string;
+  secondaryActionFn?: () => unknown;
 }) {
-  alertAsync({
+  return alertAsync({
     bodyStyle: { padding: '24px' },
     className: styles.actionModal,
     type: 'confirm',
@@ -152,6 +154,9 @@ export function promptAction(p: {
               (p.cancelBtnPosition && p.cancelBtnPosition === 'left' && (
                 <Button onClick={() => submit(p?.cancelFn)}>{p.cancelBtnText ?? $t('Skip')}</Button>
               ))}
+            {p.secondaryActionFn && p.secondaryActionText && (
+              <Button onClick={() => submit(p?.secondaryActionFn)}>{p.secondaryActionText}</Button>
+            )}
             <Button type={p?.btnType ?? 'primary'} onClick={() => submit(p?.fn)}>
               {p.btnText}
             </Button>
