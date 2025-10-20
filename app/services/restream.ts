@@ -713,6 +713,10 @@ export class RestreamService extends StatefulService<IRestreamState> {
   }
 
   forceStreamShiftGoLive(shouldForce: boolean) {
+    if (shouldForce) {
+      this.streamSettingsService.setGoLiveSettings({ streamShift: false });
+    }
+
     this.SET_STREAM_SWITCHER_FORCE_GO_LIVE(shouldForce);
   }
 

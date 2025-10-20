@@ -205,9 +205,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    */
   get isStreamShiftMode(): boolean {
     return (
-      (this.userView.isPrime &&
-        (this.settings.streamShift || this.restreamView.shouldForceGoLive) &&
-        this.enabledPlatforms.length > 0) ||
+      (this.userView.isPrime && this.settings.streamShift && this.enabledPlatforms.length > 0) ||
       false
     );
   }
