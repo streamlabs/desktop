@@ -101,7 +101,8 @@ function ModalFooter() {
         // Prompt to confirm stream switch if the stream exists
         // TODO: unify with start streaming button prompt
         if (isLive) {
-          promptAction({
+          let shouldForceGoLive = false;
+          await promptAction({
             title: $t('Another stream detected'),
             message: $t(
               'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source.',
@@ -113,8 +114,15 @@ function ModalFooter() {
             },
             cancelBtnText: $t('Cancel'),
             cancelBtnPosition: 'left',
+            secondaryActionText: $t('Start Fresh'),
+            secondaryActionFn: () => {
+              shouldForceGoLive = true;
+            },
           });
-          return;
+
+          if (!shouldForceGoLive) {
+            return;
+          }
         }
       } catch (e: unknown) {
         console.error('Error checking stream switcher status:', e);
