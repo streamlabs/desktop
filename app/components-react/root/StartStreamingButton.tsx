@@ -198,7 +198,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
               'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
             );
 
-        if (isLive || true) {
+        if (isLive) {
           const { streamShiftForceGoLive } = RestreamService.state;
           let shouldForceGoLive = streamShiftForceGoLive;
 
