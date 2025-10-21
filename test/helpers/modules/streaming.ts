@@ -147,12 +147,9 @@ export async function waitForSettingsWindowLoaded() {
 async function waitForCloudshift() {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   await useMainWindow(async () => {
-    let cloudShifted = await isDisplayed('span=Another stream detected', { timeout: 5000 });
-    while (cloudShifted) {
-      await click('.ant-modal-close-x');
-      await sleep(500);
-      await clickGoLive();
-      cloudShifted = await isDisplayed('span=Another stream detected', { timeout: 5000 });
+    const cloudShifted = await isDisplayed('span=Another stream detected', { timeout: 5000 });
+    if (cloudShifted) {
+      await click('span=Force Start');
     }
   });
 }
