@@ -74,7 +74,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     }
 
     const streamShiftEvent = StreamingService.streamShiftEvent.subscribe(event => {
-      const streamShiftStreamId = RestreamService.state.streamShiftStreamId;
+      const { streamShiftStreamId, streamShiftForceGoLive } = RestreamService.state;
       const isMobileRemote = streamShiftStreamId ? /[A-Z]/.test(streamShiftStreamId) : false;
       const remoteDeviceType = isMobileRemote ? 'mobile' : 'desktop';
 
@@ -192,22 +192,34 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
 
         const message = isDualOutputMode
           ? $t(
-              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. Dual Output will be disabled since not supported in this mode.',
+              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. Dual Output will be disabled since not supported in this mode. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
             )
           : $t(
-              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source.',
+              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
             );
 
         if (isLive) {
-          promptAction({
+          const { streamShiftForceGoLive } = RestreamService.state;
+          let shouldForceGoLive = streamShiftForceGoLive;
+
+          await promptAction({
             title: $t('Another stream detected'),
             message,
             btnText: $t('Switch to Streamlabs Desktop'),
             fn: startStreamShift,
             cancelBtnText: $t('Cancel'),
             cancelBtnPosition: 'left',
+            secondaryActionText: $t('Force Start'),
+            secondaryActionFn: async () => {
+              // FIXME: this should actually do something server-side
+              RestreamService.actions.return.forceStreamShiftGoLive(true);
+              shouldForceGoLive = true;
+            },
           });
-          return;
+
+          if (!shouldForceGoLive) {
+            return;
+          }
         }
       }
 
