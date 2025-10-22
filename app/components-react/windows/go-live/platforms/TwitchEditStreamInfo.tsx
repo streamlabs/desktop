@@ -15,11 +15,16 @@ import Badge from 'components-react/shared/DismissableBadge';
 import { EDismissable } from 'services/dismissables';
 import styles from './TwitchEditStreamInfo.m.less';
 import cx from 'classnames';
+import { useVuex } from 'components-react/hooks';
 
 export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
   const twSettings = p.value;
+  // We always pass this into TwitchEditStreamInfo
+  const enabledPlatformsCount = p.enabledPlatformsCount!;
   const aiHighlighterFeatureEnabled = Services.HighlighterService.aiHighlighterFeatureEnabled;
-  const isDualOutputMode = Services.DualOutputService.views.dualOutputMode;
+  const { isDualOutputMode } = useVuex(() => ({
+    isDualOutputMode: Services.DualOutputService.views.dualOutputMode,
+  }));
 
   function updateSettings(patch: Partial<ITwitchStartStreamOptions>) {
     p.onChange({ ...twSettings, ...patch });
@@ -27,15 +32,12 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
 
   const enhancedBroadcastingTooltipText = isDualOutputMode
     ? $t(
-        'Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays',
+        'Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays in Twitch',
       )
     : $t(
         'Enhanced broadcasting automatically optimizes your settings to encode and send multiple video qualities to Twitch. Selecting this option will send basic information about your computer and software setup.',
       );
   const bind = createBinding(twSettings, updatedSettings => updateSettings(updatedSettings));
-
-  const showEnhancedBroadcasting =
-    p.enabledPlatformsCount === 1 && process.platform !== 'darwin' && isDualOutputMode;
 
   const optionalFields = (
     <div key="optional">
@@ -47,7 +49,7 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
       >
         <CheckboxInput label={$t('Stream features branded content')} {...bind.isBrandedContent} />
       </InputWrapper>
-      {p.enabledPlatformsCount === 1 && process.platform !== 'darwin' && (
+      {process.platform !== 'darwin' && (
         <InputWrapper
           layout={p.layout}
           className={cx(styles.twitchCheckbox, { [styles.hideLabel]: p.layout === 'vertical' })}
@@ -57,6 +59,8 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
             label={$t('Enhanced broadcasting')}
             tooltip={enhancedBroadcastingTooltipText}
             {...bind.isEnhancedBroadcasting}
+            disabled={twSettings?.display === 'both' || enabledPlatformsCount > 1}
+            value={twSettings?.display === 'both' ? true : twSettings?.isEnhancedBroadcasting}
           />
           <Badge
             style={{ display: 'inline-block' }}
@@ -67,6 +71,7 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
       )}
     </div>
   );
+
   return (
     <Form name="twitch-settings">
       <PlatformSettingsLayout
@@ -91,26 +96,6 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
         }
         optionalFields={optionalFields}
       />
-      {showEnhancedBroadcasting && (
-        <InputWrapper
-          layout={p.layout}
-          className={cx(styles.twitchCheckbox, { [styles.hideLabel]: p.layout === 'vertical' })}
-        >
-          <CheckboxInput
-            style={{ display: 'inline-block' }}
-            label={$t('Enhanced broadcasting')}
-            tooltip={enhancedBroadcastingTooltipText}
-            {...bind.isEnhancedBroadcasting}
-            disabled={twSettings?.display === 'both'}
-            value={twSettings?.display === 'both' ? true : twSettings?.isEnhancedBroadcasting}
-          />
-          <Badge
-            style={{ display: 'inline-block' }}
-            dismissableKey={EDismissable.EnhancedBroadcasting}
-            content={'Beta'}
-          />
-        </InputWrapper>
-      )}
     </Form>
   );
 }
