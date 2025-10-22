@@ -5,13 +5,13 @@ import {
   IPlatformCapabilityGame,
   TPlatform,
 } from '../../../services/platforms';
-import { ListInput, TSlobsInputProps } from '../../shared/inputs';
+import { ListInput, TInputLayout, TSlobsInputProps } from '../../shared/inputs';
 import { $t } from '../../../services/i18n';
 import { IListOption } from '../../shared/inputs/ListInput';
 import { Services } from '../../service-provider';
 import { injectState, useModule } from 'slap';
 
-type TProps = TSlobsInputProps<{ platform: TPlatform }, string>;
+type TProps = TSlobsInputProps<{ platform: TPlatform; layout?: TInputLayout }, string>;
 
 export default function GameSelector(p: TProps) {
   const { platform } = p;
@@ -146,6 +146,8 @@ export default function GameSelector(p: TProps) {
       loading={isSearching}
       notFoundContent={isSearching ? $t('Searching...') : $t('No matching game(s) found.')}
       allowClear
+      layout={p.layout}
+      size="large"
     />
   );
 }

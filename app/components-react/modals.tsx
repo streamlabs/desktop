@@ -46,7 +46,9 @@ export function confirmAsync(
  * alert('This is Alert').then(() => console.log('Alert closed'))
  *
  */
-export function alertAsync(p: Omit<ModalFuncProps, 'afterClose'> | string): Promise<void> {
+export function alertAsync(
+  p: (Omit<ModalFuncProps, 'afterClose'> | string) & { afterCloseFn?: () => void },
+): Promise<void> {
   const modalProps = typeof p === 'string' ? { title: p } : p;
   const { WindowsService } = Services;
   WindowsService.updateStyleBlockers(Utils.getWindowId(), true);
@@ -58,6 +60,11 @@ export function alertAsync(p: Omit<ModalFuncProps, 'afterClose'> | string): Prom
       ...modalProps,
       afterClose: () => {
         WindowsService.updateStyleBlockers(Utils.getWindowId(), false);
+
+        if (p?.afterCloseFn) {
+          p.afterCloseFn();
+        }
+
         resolve();
       },
     });
@@ -119,10 +126,16 @@ export function promptAction(p: {
   title: string;
   message: string;
   btnText: string;
-  fn(): void | ((props: any) => unknown | void);
+  btnType?: 'default' | 'primary';
+  cancelBtnPosition?: 'left' | 'right' | 'none';
+  cancelBtnText?: string;
+  fn?(): void | ((props: any) => unknown | void);
+  cancelFn?: void | ((props?: any) => unknown | void);
   icon?: React.ReactNode;
+  secondaryActionText?: string;
+  secondaryActionFn?: () => unknown;
 }) {
-  alertAsync({
+  return alertAsync({
     bodyStyle: { padding: '24px' },
     className: styles.actionModal,
     type: 'confirm',
@@ -137,16 +150,19 @@ export function promptAction(p: {
       <ModalLayout
         footer={
           <Form layout={'inline'} className={styles.actionModalFooter}>
-            <Button onClick={Modal.destroyAll}>{$t('Skip')}</Button>
-            <Button
-              type="primary"
-              onClick={() => {
-                Modal.destroyAll();
-                p.fn();
-              }}
-            >
+            {!p.cancelBtnPosition ||
+              (p.cancelBtnPosition && p.cancelBtnPosition === 'left' && (
+                <Button onClick={() => submit(p?.cancelFn)}>{p.cancelBtnText ?? $t('Skip')}</Button>
+              ))}
+            {p.secondaryActionFn && p.secondaryActionText && (
+              <Button onClick={() => submit(p?.secondaryActionFn)}>{p.secondaryActionText}</Button>
+            )}
+            <Button type={p?.btnType ?? 'primary'} onClick={() => submit(p?.fn)}>
               {p.btnText}
             </Button>
+            {p.cancelBtnPosition && p.cancelBtnPosition === 'right' && (
+              <Button onClick={() => submit(p?.cancelFn)}>{p.cancelBtnText ?? $t('Skip')}</Button>
+            )}
           </Form>
         }
       >
@@ -200,4 +216,11 @@ function fixBodyWidth() {
   setTimeout(() => {
     document.querySelector('body')!.setAttribute('style', '');
   });
+}
+
+function submit(fn?: void | ((props?: any) => unknown) | undefined) {
+  Modal.destroyAll();
+  if (fn) {
+    fn();
+  }
 }
