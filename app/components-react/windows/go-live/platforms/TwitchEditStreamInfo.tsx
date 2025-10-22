@@ -19,11 +19,13 @@ import cx from 'classnames';
 export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
   const twSettings = p.value;
   const aiHighlighterFeatureEnabled = Services.HighlighterService.aiHighlighterFeatureEnabled;
+  const isDualOutputMode = Services.DualOutputService.views.dualOutputMode;
+
   function updateSettings(patch: Partial<ITwitchStartStreamOptions>) {
     p.onChange({ ...twSettings, ...patch });
   }
 
-  const enhancedBroadcastingTooltipText = Services.DualOutputService.views.dualOutputMode
+  const enhancedBroadcastingTooltipText = isDualOutputMode
     ? $t(
         'Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays',
       )
@@ -33,8 +35,7 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
   const bind = createBinding(twSettings, updatedSettings => updateSettings(updatedSettings));
 
   const showEnhancedBroadcasting =
-    (p.enabledPlatformsCount === 1 && process.platform !== 'darwin') ||
-    Services.DualOutputService.views.dualOutputMode;
+    p.enabledPlatformsCount === 1 && process.platform !== 'darwin' && isDualOutputMode;
 
   const optionalFields = (
     <div key="optional">
@@ -91,7 +92,10 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
         optionalFields={optionalFields}
       />
       {showEnhancedBroadcasting && (
-        <InputWrapper>
+        <InputWrapper
+          layout={p.layout}
+          className={cx(styles.twitchCheckbox, { [styles.hideLabel]: p.layout === 'vertical' })}
+        >
           <CheckboxInput
             style={{ display: 'inline-block' }}
             label={$t('Enhanced broadcasting')}
