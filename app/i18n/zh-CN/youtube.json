@@ -47,5 +47,6 @@
   "Video does not exist. Thumbnail upload failed.": "视频不存在。缩略图上传失败。",
   "Exceeded thumbnail upload quota. Please try again later.": "超过缩略图上传限制。请稍后再试。",
   "YouTube thumbnail image is too large. Maximum size is 2MB.": "YouTube 缩略图过大。最大为 2 MB。",
-  "Please upload thumbnail manually on YouTube.": "请在 YouTube 上手动上传缩略图。"
+  "Please upload thumbnail manually on YouTube.": "请在 YouTube 上手动上传缩略图。",
+  "Stream Shift Error: YouTube is not live": "Stream Shift Error: YouTube is not live"
 }
