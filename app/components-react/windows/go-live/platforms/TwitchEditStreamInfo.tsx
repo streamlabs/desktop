@@ -1,5 +1,5 @@
 import { CommonPlatformFields } from '../CommonPlatformFields';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { $t } from '../../../../services/i18n';
 import { TwitchTagsInput } from './TwitchTagsInput';
 import GameSelector from '../GameSelector';
@@ -25,6 +25,12 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
   const { isDualOutputMode } = useVuex(() => ({
     isDualOutputMode: Services.DualOutputService.views.dualOutputMode,
   }));
+
+  useEffect(() => {
+    if (enabledPlatformsCount > 1 && twSettings.isEnhancedBroadcasting) {
+      updateSettings({ isEnhancedBroadcasting: false });
+    }
+  }, [enabledPlatformsCount]);
 
   function updateSettings(patch: Partial<ITwitchStartStreamOptions>) {
     p.onChange({ ...twSettings, ...patch });
