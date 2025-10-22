@@ -47,5 +47,6 @@
   "Video does not exist. Thumbnail upload failed.": "La vidéo n’existe pas. Le téléchargement de la miniature a échoué.",
   "Exceeded thumbnail upload quota. Please try again later.": "Le quota de téléchargement de miniatures a été dépassé. Réessaie plus tard.",
   "YouTube thumbnail image is too large. Maximum size is 2MB.": "L’image de miniature YouTube est trop grande. La taille maximum est de 2 Mo.",
-  "Please upload thumbnail manually on YouTube.": "Mets en ligne la miniature manuellement sur YouTube."
+  "Please upload thumbnail manually on YouTube.": "Mets en ligne la miniature manuellement sur YouTube.",
+  "Stream Shift Error: YouTube is not live": "Stream Shift Error: YouTube is not live"
 }
