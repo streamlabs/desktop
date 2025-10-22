@@ -78,16 +78,6 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       const isMobileRemote = streamShiftStreamId ? /[A-Z]/.test(streamShiftStreamId) : false;
       const remoteDeviceType = isMobileRemote ? 'mobile' : 'desktop';
 
-      // TODO: Remove after launch
-      console.log(
-        'Event:' +
-          event.type +
-          '\nSource: ' +
-          remoteDeviceType +
-          '\nDesktop stream id: ' +
-          streamShiftStreamId,
-      );
-
       if (event.type === 'streamSwitchRequest') {
         console.debug('Event stream id: ' + event.data.identifier);
         if (event.data.identifier === streamShiftStreamId) {
