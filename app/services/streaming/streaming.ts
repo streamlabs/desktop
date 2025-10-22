@@ -509,6 +509,8 @@ export class StreamingService
     /**
      * SET MULTISTREAM SETTINGS
      */
+    // TODO: remove after server-side impl
+    this.restreamService.actions.forceStreamShiftGoLive(false);
     if (this.views.shouldSetupRestream) {
       // In single output mode, this sets up multistreaming
       // In dual output mode, this sets up streaming displays to multiple targets
