@@ -80,6 +80,7 @@ async function sendKeys(keys: string) {
   const keyList = keys.split('');
   for (const key of keyList) {
     await ((client.keys(key) as any) as Promise<any>);
+    await sleep(24);
   }
 }
 
