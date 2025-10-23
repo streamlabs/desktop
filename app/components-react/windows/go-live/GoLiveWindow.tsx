@@ -62,8 +62,6 @@ function ModalFooter() {
     isPrime,
   } = useGoLiveSettings().extend(module => ({
     windowsService: inject(WindowsService),
-    dualOutputService: inject(DualOutputService),
-    incrementalRolloutService: inject(IncrementalRolloutService),
 
     close() {
       this.windowsService.actions.closeChildWindow();
@@ -71,17 +69,6 @@ function ModalFooter() {
 
     goBackToSettings() {
       module.prepopulate();
-    },
-
-    toggleDualOutputMode() {
-      this.dualOutputService.actions.setDualOutputModeIfPossible(false, true, true);
-    },
-
-    get horizontalHasTargets() {
-      const platformDisplays = module.state.activeDisplayPlatforms;
-      const destinationDisplays = module.state.activeDisplayDestinations;
-
-      return platformDisplays.horizontal.length > 0 || destinationDisplays.horizontal.length > 0;
     },
   }));
 
@@ -100,11 +87,14 @@ function ModalFooter() {
 
         // Prompt to confirm stream switch if the stream exists
         // TODO: unify with start streaming button prompt
-        if (isLive) {
-          promptAction({
+        const { streamShiftForceGoLive } = Services.RestreamService.state;
+        if (isLive && !streamShiftForceGoLive) {
+          let shouldForceGoLive = false;
+
+          await promptAction({
             title: $t('Another stream detected'),
             message: $t(
-              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source.',
+              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
             ),
             btnText: $t('Switch to Streamlabs Desktop'),
             fn: () => {
@@ -113,8 +103,16 @@ function ModalFooter() {
             },
             cancelBtnText: $t('Cancel'),
             cancelBtnPosition: 'left',
+            secondaryActionText: $t('Force Start'),
+            secondaryActionFn: async () => {
+              Services.RestreamService.actions.forceStreamShiftGoLive(true);
+              shouldForceGoLive = true;
+            },
           });
-          return;
+
+          if (!shouldForceGoLive) {
+            return;
+          }
         }
       } catch (e: unknown) {
         console.error('Error checking stream switcher status:', e);
@@ -160,7 +158,7 @@ function ModalFooter() {
       {/* GO LIVE BUTTON */}
       {shouldShowConfirm && (
         <Button
-          data-testid="confirmGoLiveBtn"
+          data-name="confirmGoLiveBtn"
           type="primary"
           onClick={handleGoLive}
           disabled={isLoading || !!error}
