@@ -13,5 +13,6 @@
   "Import from Twitch Studio": "从 Twitch Studio 导入",
   "Import your scenes and sources from Twitch Studio.": "从 Twitch Studio 导入场景和源。",
   "Importing Your Existing Settings From Twitch Studio": "从 Twitch Studio 导入现有设置",
-  "Importing from Twitch Studio is an experimental feature under active development. Some source types are unable to be imported, and not all settings will be carried over.": "从 Twitch Studio 导入是一项实验性功能，尚在开发中。某些源类型无法导入，并非所有设置都会沿用。"
+  "Importing from Twitch Studio is an experimental feature under active development. Some source types are unable to be imported, and not all settings will be carried over.": "从 Twitch Studio 导入是一项实验性功能，尚在开发中。某些源类型无法导入，并非所有设置都会沿用。",
+  "Stream Shift Error: Twitch is not live": "Stream Shift Error: Twitch is not live"
 }

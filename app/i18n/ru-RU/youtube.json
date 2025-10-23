@@ -39,5 +39,14 @@
   "DVR controls enable the viewer to control the video playback experience by pausing, rewinding, or fast forwarding content": "Элементы управления видеорегистратора позволяют зрителю управлять воспроизведением видео, в том числе ставить его на паузу, перематывать назад или быстро перематывать вперед",
   "Auto-start is disabled for your broadcast. You should manually publish your stream from Youtube Studio": "Автозапуск для вашей трансляции отключен. Опубликуйте прямой эфир вручную из Творческой студии YouTube",
   "Made for kids": "Для детей",
-  "Features like personalized ads and live chat won't be available on live streams made for kids.": "Такие функции, как персонализированная реклама и чат, не будут доступны в прямых трансляциях для детей."
+  "Features like personalized ads and live chat won't be available on live streams made for kids.": "Такие функции, как персонализированная реклама и чат, не будут доступны в прямых трансляциях для детей.",
+  "YouTube token has expired, re-login or re-merge YouTube account": "Срок действия токена YouTube истек, повторно войдите в систему или повторно выполните объединение с учетной записью YouTube",
+  "Thumbnail image content is invalid.": "Недопустимый контент изображения миниатюры.",
+  "Thumbnail file does not include image content.": "Файл миниатюры не содержит контента изображения.",
+  "Permission missing to upload thumbnails.": "Отсутствует разрешение на отправку миниатюр.",
+  "Video does not exist. Thumbnail upload failed.": "Видео не существует. Не удалось загрузить миниатюру.",
+  "Exceeded thumbnail upload quota. Please try again later.": "Превышена квота на отправку миниатюр. Повторите попытку позже.",
+  "YouTube thumbnail image is too large. Maximum size is 2MB.": "Изображение миниатюры на YouTube слишком большое. Максимальный размер — 2 МБ.",
+  "Please upload thumbnail manually on YouTube.": "Загрузите миниатюру на YouTube вручную.",
+  "Stream Shift Error: YouTube is not live": "Stream Shift Error: YouTube is not live"
 }

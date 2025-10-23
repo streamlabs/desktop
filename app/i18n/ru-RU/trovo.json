@@ -7,5 +7,6 @@
   "Plays an alert for new Trovo followers": "При появлении новых подписчиков Trovo воспроизводится оповещение",
   "Plays an alert for new Trovo subscriptions": "При появлении новых подписок Trovo воспроизводится оповещение",
   "Trovo Resubs": "Повторные подписки Trovo",
-  "Trovo Subs": "Подписчики на Trovo"
+  "Trovo Subs": "Подписчики на Trovo",
+  "Stream Shift Error: Trovo is not live": "Stream Shift Error: Trovo is not live"
 }
