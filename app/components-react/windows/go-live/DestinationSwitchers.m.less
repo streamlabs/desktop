@@ -153,6 +153,11 @@
   margin: 0 auto;
   text-align: left !important;
 
+  :global(.ant-form-item-control-input-content) {
+    min-width: 100px;
+    text-align: right;
+  }
+
   :global(.ant-message-info) {
     display: flex;
     align-items: center;
@@ -185,4 +190,45 @@
     box-shadow: 0 2px 16px -4px rgba(211, 211, 211, 0.274), 0 2px 15px 0 rgba(211, 211, 211, 0.32),
       0 2px 28px 6px rgba(211, 211, 211, 0.2) !important;
   }
+  :global(.ant-radio-wrapper:last-child::after) {
+    display: none;
+  }
+}
+
+.action-modal-logo {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+  margin-right: 8px;
+  vertical-align: super;
+  color: var(--title);
+}
+
+.connect-button {
+  align-self: center;
+}
+
+.info-alert {
+  color: #72d5ff;
+  width: 600px;
+  border-radius: 4px;
+  margin: 0 auto;
+  text-align: left !important;
+
+  :global(.ant-message-info) {
+    display: flex;
+    align-items: center;
+  }
+
+  :global(.ant-message-info .anticon) {
+    color: #72d5ff;
+    margin-right: 10px;
+  }
+}
+
+.alert-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 }
