@@ -4,7 +4,6 @@ import { UserService } from 'services/user';
 import { authorizedHeaders, jfetch } from 'util/requests';
 import { HostsService } from './hosts';
 import * as remote from '@electron/remote';
-import electron from 'electron';
 import { UsageStatisticsService } from './usage-statistics';
 import { byOS, OS } from 'util/operating-systems';
 
@@ -57,6 +56,7 @@ export class MagicLinkService extends Service {
     // remove this and the parameter from {getDashboardMagicLink} after.
     const os = byOS({ [OS.Windows]: 'windows', [OS.Mac]: 'mac' });
 
+    this.usageStatisticsService.recordUltra('Ultra', refl);
     if (!this.userService.views.isLoggedIn) {
       return remote.shell.openExternal(
         `https://${this.hostsService.streamlabs}/ultra?refl=${refl}&os=${os}`,

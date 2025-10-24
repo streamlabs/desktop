@@ -486,7 +486,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       }
 
       if (event.type === 'streamlabs_prime_subscribe') {
-        this.websocketService.ultraSubscription.next(true);
+        this.usageStatisticsService.ultraSubscription.next(true);
       }
 
       if (event.type === 'account_permissions_required') {
