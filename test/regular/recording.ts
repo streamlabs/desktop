@@ -53,7 +53,7 @@ async function createRecordingFiles(advanced: boolean = false): Promise<number> 
 
       const { setDropdownInputValue } = useForm('Recording');
       await setDropdownInputValue('RecFormat', format);
-      await clickButton('Done');
+      await clickButton('Close');
     });
 
     await focusMain();
@@ -128,7 +128,7 @@ test('Recording', async t => {
   await showSettingsWindow('Output', async () => {
     const { setDropdownInputValue } = useForm('Mode');
     await setDropdownInputValue('Mode', 'Simple');
-    await clickButton('Done');
+    await clickButton('Close');
   });
 
   await focusMain();
