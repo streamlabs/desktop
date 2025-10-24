@@ -25,6 +25,7 @@ import { byOS, getOS, OS } from 'util/operating-systems';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import { SceneCollectionsService } from 'services/scene-collections';
 import { NavigationService } from 'services/navigation';
+import { FileManagerService } from 'services/file-manager';
 import { Subject } from 'rxjs';
 import * as remote from '@electron/remote';
 import fs from 'fs';
@@ -283,6 +284,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   @Inject() private sceneCollectionsService: SceneCollectionsService;
   @Inject() private hardwareService: HardwareService;
   @Inject() private navigationService: NavigationService;
+  @Inject() private fileManagerService: FileManagerService;
 
   @Inject()
   private videoEncodingOptimizationService: VideoEncodingOptimizationService;
@@ -295,6 +297,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   }
 
   init() {
+    this.ensureValidRecordingEncoderData();
     this.loadSettingsIntoStore();
     this.ensureValidEncoder();
     this.ensureValidRecordingEncoder();
@@ -725,7 +728,28 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     }
   }
 
-  private ensureValidRecordingEncoder() {
+  ensureValidRecordingEncoderData() {
+    const filePath = path.join(this.appService.appDataDirectory, 'recordEncoder.json');
+
+    const data = this.fileManagerService.read(filePath, {
+      validateJSON: true,
+      retries: 2,
+    });
+
+    if (data) {
+      const parsed = JSON.parse(data);
+
+      // Repair a corrupted recording encoder file
+      if (Object.keys(parsed).length === 3) {
+        this.fileManagerService.write(
+          filePath,
+          '{"SplitFileType":"Time","SplitFileTime":15,"SplitFileResetTimestamps":true,"rate_control":"cbr","bitrate":10000,"target_quality":20,"max_bitrate":10000,"cqp":20,"keyint_sec":0,"preset":"p5","tune":"hq","multipass":"qres","profile":"high","lookahead":true,"adaptive_quantization":true,"bf":2,"opts":"","repeat_headers":false,"force_cuda_tex":false,"disable_scenecut":false}',
+        );
+      }
+    }
+  }
+
+  ensureValidRecordingEncoder() {
     this.setSettings('Output', this.state.Output.formData);
   }
 
@@ -734,6 +758,8 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
    * @remark For debugging purposes only
    */
   private listSettingsByCategory() {
+    if (!Utils.isDevMode()) return;
+
     const settings = {} as any;
 
     for (const category in this.state) {
