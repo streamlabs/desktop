@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { useObsSettings } from './useObsSettings';
+import { useObsSettings } from './ObsSettings';
 import {
   IObsSectionedFormGroupProps,
   ObsCollapsibleFormGroup,
@@ -11,7 +11,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import { TObsFormData } from 'components/obs/inputs/ObsInput';
 
 export function OutputSettings() {
-  const { settingsFormData, saveSettings } = useObsSettings();
+  const { settingsFormData, saveSettings } = useObsSettings('Output');
 
   const type = settingsFormData[0].parameters[0].currentValue === 'Simple' ? 'collapsible' : 'tabs';
 
@@ -92,5 +92,3 @@ export function ObsTabbedOutputFormGroup(p: IObsSectionedFormGroupProps) {
     </div>
   );
 }
-
-OutputSettings.page = 'Output';

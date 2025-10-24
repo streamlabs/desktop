@@ -114,5 +114,3 @@ export function ExperimentalSettings() {
     </ObsSettingsSection>
   );
 }
-
-ExperimentalSettings.page = 'Experimental';
