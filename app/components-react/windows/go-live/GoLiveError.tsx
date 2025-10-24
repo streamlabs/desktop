@@ -136,7 +136,7 @@ export default function GoLiveError() {
       >
         <button
           className="button button--prime"
-          onClick={() => MagicLinkService.actions.linkToPrime('slobs-multistream')}
+          onClick={() => MagicLinkService.actions.linkToPrime('slobs-multistream-error')}
         >
           {$t('Become a Ultra member')}
         </button>

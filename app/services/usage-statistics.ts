@@ -14,6 +14,7 @@ import * as remote from '@electron/remote';
 import { DiagnosticsService } from 'app-services';
 import { getOS, OS } from 'util/operating-systems';
 import { getWmiClass } from 'util/wmi';
+import { Subject } from 'rxjs';
 
 export type TUsageEvent = 'stream_start' | 'stream_end' | 'app_start' | 'app_close' | 'crash';
 
@@ -51,7 +52,26 @@ export type TAnalyticsEvent =
   | 'TwitchCredentialsAlert'
   | 'TikTokApplyPrompt'
   | 'ScheduleStream'
-  | 'StreamShift';
+  | 'StreamShift'
+  | 'Ultra';
+
+// Refls are used as uuids for ultra components. Update this when adding new ones.
+export type TUltraRefl =
+  | 'grow-community'
+  | 'slobs-dual-output'
+  | 'slobs-single-output'
+  | 'slobs-streamswitcher'
+  | 'slobs-side-nav'
+  | 'desktop-collab-cam'
+  | 'slobs-scene-collections'
+  | 'slobs-media-gallery'
+  | 'slobs-multistream-error'
+  | 'slobs-ui-themes'
+  | 'mobile-settings'
+  | 'slobs-multistream-settings'
+  | 'slobs-multistream'
+  | 'slobs-stream-settings'
+  | string;
 
 interface IAnalyticsEvent {
   product: string;
@@ -104,6 +124,9 @@ export class UsageStatisticsService extends Service {
   version = Utils.env.SLOBS_VERSION;
 
   private analyticsEvents: IAnalyticsEvent[] = [];
+  private refl: string = '';
+
+  ultraSubscription = new Subject<boolean>();
 
   init() {
     this.loadInstallerId();
@@ -112,6 +135,14 @@ export class UsageStatisticsService extends Service {
     setInterval(() => {
       this.recordAnalyticsEvent('Heartbeat', { bundle: SLOBS_BUNDLE_ID });
     }, 10 * 60 * 1000);
+
+    this.ultraSubscription.subscribe(() => {
+      if (this.refl === '') {
+        console.warn('Ultra event recorded with empty refl.');
+      }
+
+      this.recordAnalyticsEvent('Ultra', { refl: this.refl });
+    });
   }
 
   loadInstallerId() {
@@ -227,6 +258,11 @@ export class UsageStatisticsService extends Service {
 
   recordShown(component: string, target?: string) {
     this.recordAnalyticsEvent('Shown', { component, target });
+  }
+
+  recordUltra(target: TUltraRefl) {
+    this.recordClick('Ultra', target);
+    this.refl = target;
   }
 
   /**
