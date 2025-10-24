@@ -18,7 +18,7 @@ export type TTipPosition =
   | 'rightBottom';
 
 interface ITooltipTipProps {
-  title: string;
+  title: React.ReactNode;
   id?: string;
   className?: HTMLAttributes<HTMLElement> | string;
   wrapperStyle?: CSSProperties;
