@@ -325,7 +325,8 @@ const SCENE_ITEM_ACTIONS: HotkeyGroup = {
     down: sceneItemId => {
       getScenesService().views.getSceneItem(sceneItemId)?.setVisibility(true);
       const dualOutputNodeId = getDualOutputService().views.getDualOutputNodeId(sceneItemId);
-      if (dualOutputNodeId) {
+      const dualOutputMode = getDualOutputService().state.dualOutputMode;
+      if (dualOutputNodeId && !dualOutputMode) {
         getScenesService().views.getSceneItem(dualOutputNodeId)?.setVisibility(true);
       }
     },
@@ -341,7 +342,8 @@ const SCENE_ITEM_ACTIONS: HotkeyGroup = {
     down: sceneItemId => {
       getScenesService().views.getSceneItem(sceneItemId)?.setVisibility(false);
       const dualOutputNodeId = getDualOutputService().views.getDualOutputNodeId(sceneItemId);
-      if (dualOutputNodeId) {
+      const dualOutputMode = getDualOutputService().state.dualOutputMode;
+      if (dualOutputNodeId && !dualOutputMode) {
         getScenesService().views.getSceneItem(dualOutputNodeId)?.setVisibility(false);
       }
     },
