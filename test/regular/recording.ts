@@ -49,7 +49,7 @@ test('Recording', async t => {
   await showSettingsWindow('Output', async () => {
     const { setDropdownInputValue } = useForm('Mode');
     await setDropdownInputValue('Mode', 'Simple');
-    await clickButton('Done');
+    await clickButton('Close');
   });
 
   await focusMain();

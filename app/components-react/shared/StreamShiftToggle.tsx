@@ -1,4 +1,5 @@
 import React, { CSSProperties, useEffect } from 'react';
+import { shell } from '@electron/remote';
 import styles from './StreamShiftToggle.m.less';
 import Tooltip from 'components-react/shared/Tooltip';
 import { CheckboxInput } from 'components-react/shared/inputs';
@@ -26,6 +27,12 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
   }, [isPrime, isStreamShiftMode]);
 
   const label = $t('Stream Shift');
+
+  function handleTooltipClick() {
+    shell.openExternal(
+      'https://streamlabs.com/content-hub/post/how-to-use-streamlabs-stream-shift',
+    );
+  }
 
   return (
     <div className={styles.streamShiftWrapper}>
@@ -61,9 +68,14 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
         />
 
         <Tooltip
-          title={$t(
-            'Stay uninterrupted by switching between devices mid stream. Works between Desktop and Mobile App.',
-          )}
+          title={
+            <span onClick={handleTooltipClick}>
+              {$t(
+                'Stay uninterrupted by switching between devices mid stream. Works between Desktop and Mobile App.',
+              )}
+              <a style={{ marginLeft: 4 }}>{$t('Learn More')}</a>
+            </span>
+          }
           placement="top"
           lightShadow={true}
           disabled={p?.disabled}

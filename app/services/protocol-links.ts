@@ -6,7 +6,7 @@ import { NavigationService } from 'services/navigation';
 import { PlatformAppsService } from 'services/platform-apps';
 import { PlatformAppStoreService } from 'services/platform-app-store';
 import { UserService } from 'services/user';
-import { SettingsService } from './settings';
+import { SettingsService, TCategoryName } from './settings';
 import { byOS, OS } from 'util/operating-systems';
 import { GuestCamService } from './guest-cam';
 import { SideNavService, ESideNavKey, ProtocolLinkKeyMap } from './side-nav';
@@ -140,7 +140,7 @@ export class ProtocolLinksService extends Service {
   private openSettings(info: IProtocolLinkInfo) {
     const category = info.path.replace('/', '');
 
-    this.settingsService.showSettings(category);
+    this.settingsService.showSettings(category as TCategoryName);
   }
 
   @protocolHandler('join')

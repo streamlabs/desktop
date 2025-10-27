@@ -167,5 +167,3 @@ function ProductCard(p: IProductInfo) {
     </div>
   );
 }
-
-Ultra.page = 'Ultra';

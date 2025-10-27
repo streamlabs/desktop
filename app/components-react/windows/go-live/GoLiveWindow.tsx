@@ -61,8 +61,6 @@ function ModalFooter() {
     isPrime,
   } = useGoLiveSettings().extend(module => ({
     windowsService: inject(WindowsService),
-    incrementalRolloutService: inject(IncrementalRolloutService),
-    dualOutputService: inject(DualOutputService),
 
     close() {
       this.windowsService.actions.closeChildWindow();
@@ -70,17 +68,6 @@ function ModalFooter() {
 
     goBackToSettings() {
       module.prepopulate();
-    },
-
-    toggleDualOutputMode() {
-      this.dualOutputService.actions.setDualOutputModeIfPossible(false, true, true);
-    },
-
-    get horizontalHasTargets() {
-      const platformDisplays = module.state.activeDisplayPlatforms;
-      const destinationDisplays = module.state.activeDisplayDestinations;
-
-      return platformDisplays.horizontal.length > 0 || destinationDisplays.horizontal.length > 0;
     },
   }));
 

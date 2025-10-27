@@ -8,7 +8,6 @@ import TsxComponent, { createProps } from 'components/tsx-component';
 
 class GenericFormGroupProps {
   value: ISettingsSubCategory[] = null;
-  categoryName?: string = '';
   onInput?: (value: any) => void = () => {};
 }
 
@@ -21,12 +20,6 @@ export default class GenericFormGroups extends TsxComponent<GenericFormGroupProp
 
   collapsedGroups: Dictionary<boolean> = {};
 
-  isAdvancedOutput = false;
-
-  created() {
-    this.updateIsAdvancedOutput();
-  }
-
   toggleGroup(index: string) {
     this.$set(this.collapsedGroups, index, !this.collapsedGroups[index]);
   }
@@ -34,14 +27,6 @@ export default class GenericFormGroups extends TsxComponent<GenericFormGroupProp
   onInputHandler() {
     if (this.props.onInput) this.props.onInput(this.props.value);
     this.$emit('input', this.props.value);
-
-    this.$nextTick(this.updateIsAdvancedOutput);
-  }
-
-  @Watch('categoryName')
-  updateIsAdvancedOutput() {
-    this.isAdvancedOutput =
-      this.settingsService.state[this.props.categoryName]?.type === ESettingsCategoryType.Tabbed;
   }
 
   hasAnyVisibleSettings(category: ISettingsSubCategory) {
