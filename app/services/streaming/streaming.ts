@@ -1936,9 +1936,7 @@ export class StreamingService
         this.contexts.vertical.replayBuffer.save();
       }
 
-      if (!this.views.isVerticalReplayBuffer) {
-        this.replayBufferFileWrite.next(this.contexts[display].replayBuffer.lastFile());
-      }
+      this.replayBufferFileWrite.next(this.contexts[display].replayBuffer.lastFile());
     }
 
     if (info.signal === EOBSOutputSignal.Stop) {

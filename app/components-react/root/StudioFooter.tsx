@@ -230,8 +230,9 @@ function RecordingButton() {
     StreamingService.actions.toggleRecording();
   }, []);
 
-  const showLoadingSpinner = [ERecordingState.Starting, ERecordingState.Stopping].includes(
-    recordingStatus,
+  const showLoadingSpinner = useMemo(
+    () => [ERecordingState.Starting, ERecordingState.Stopping].includes(recordingStatus),
+    [recordingStatus],
   );
 
   return (
