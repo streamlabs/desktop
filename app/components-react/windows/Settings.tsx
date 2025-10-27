@@ -62,6 +62,8 @@ export const SETTINGS_CONFIG: Record<ESettingsCategory, ISettingsConfig> = {
   [ESettingsCategory.GetSupport]: { icon: 'icon-question', component: pages.Support },
   [ESettingsCategory.AI]: { icon: 'icon-ai', component: pages.AISettings },
   [ESettingsCategory.Ultra]: { icon: 'icon-ultra', component: pages.Ultra },
+  // This isn't shown but is required for TS
+  [ESettingsCategory.StreamSecond]: { icon: '', component: () => <></> },
 };
 
 export default function Settings() {

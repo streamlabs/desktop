@@ -48,6 +48,7 @@ export enum ESettingsCategory {
   GetSupport = 'Get Support',
   InstalledApps = 'Installed Apps',
   Stream = 'Stream',
+  StreamSecond = 'StreamSecond',
   General = 'General',
   Mobile = 'Mobile',
   Hotkeys = 'Hotkeys',
@@ -442,6 +443,9 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     this.getCategories().forEach((categoryName: TCategoryName) => {
       settingsFormData[categoryName] = this.fetchSettingsFromObs(categoryName);
     });
+    // These settings are not displayed in the menu but are still needed for dual output
+    settingsFormData.Stream = this.fetchSettingsFromObs('Stream');
+    settingsFormData.StreamSecond = this.fetchSettingsFromObs('StreamSecond');
 
     this.SET_SETTINGS(settingsFormData);
   }
