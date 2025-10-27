@@ -7,8 +7,7 @@ import { useVuex } from '../hooks';
 import { Services } from '../service-provider';
 import * as remote from '@electron/remote';
 import { TStreamShiftStatus } from 'services/restream';
-import { alertAsync, promptAction } from 'components-react/modals';
-import { EAvailableFeatures } from 'services/incremental-rollout';
+import { promptAction } from 'components-react/modals';
 
 export default function StartStreamingButton(p: { disabled?: boolean }) {
   const {
@@ -74,34 +73,44 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     }
 
     const streamShiftEvent = StreamingService.streamShiftEvent.subscribe(event => {
-      const { streamShiftStreamId, streamShiftForceGoLive } = RestreamService.state;
+      const { streamShiftStreamId } = RestreamService.state;
       const isMobileRemote = streamShiftStreamId ? /[A-Z]/.test(streamShiftStreamId) : false;
       const remoteDeviceType = isMobileRemote ? 'mobile' : 'desktop';
 
       if (event.type === 'streamSwitchRequest') {
         console.debug('Event stream id: ' + event.data.identifier);
-        if (event.data.identifier === streamShiftStreamId) {
+        const isFromOtherDevice = event.data.identifier !== streamShiftStreamId;
+
+        if (!isFromOtherDevice) {
           RestreamService.confirmStreamShift('approved');
         }
 
+        const switchType = isFromOtherDevice
+          ? `${remoteDeviceType}-desktop`
+          : `desktop-${remoteDeviceType}`;
+
         UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
-          stream: `desktop-${remoteDeviceType}`,
+          stream: switchType,
+          action: 'request',
         });
       }
 
       if (event.type === 'switchActionComplete') {
         console.debug('Event stream id: ' + event.data.identifier);
-
-        const remoteStreamId = event.data.identifier;
-        const isFromOtherDevice = remoteStreamId !== streamShiftStreamId;
+        const isFromOtherDevice = event.data.identifier !== streamShiftStreamId;
 
         // End the stream on this device if switching the stream to another device
         if (isFromOtherDevice) {
-          Services.RestreamService.actions.endStreamShiftStream(remoteStreamId);
+          Services.RestreamService.actions.endStreamShiftStream(event.data.identifier);
         }
 
+        const switchType = isFromOtherDevice
+          ? `desktop-${remoteDeviceType}`
+          : `${remoteDeviceType}-desktop`;
+
         UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
-          stream: `desktop-${remoteDeviceType}`,
+          stream: switchType,
+          action: 'complete',
         });
 
         // Notify the user
