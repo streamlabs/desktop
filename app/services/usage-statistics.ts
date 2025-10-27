@@ -269,6 +269,9 @@ export class UsageStatisticsService extends Service {
    * Should be called on shutdown to flush all events in the pipeline
    */
   async flushEvents() {
+    // Correctly handle unsubscribing to prevent memory leaks
+    this.ultraSubscription.unsubscribe();
+
     this.session.endTime = new Date();
 
     const session = {

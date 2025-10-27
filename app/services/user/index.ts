@@ -486,6 +486,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       }
 
       if (event.type === 'streamlabs_prime_subscribe') {
+        this.windowsService.actions.setWindowOnTop('all');
         this.usageStatisticsService.ultraSubscription.next(true);
       }
 
