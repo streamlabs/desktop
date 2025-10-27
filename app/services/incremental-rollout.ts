@@ -22,6 +22,7 @@ export enum EAvailableFeatures {
   sharedStorage = 'slobs--shared-storage',
   dualOutputRecording = 'slobs--dual-output-recording',
   verticalRecording = 'slobs--vertical-recording',
+  streamShift = 'slobs--stream-shift',
 
   /**
    * There are two flags because one is used for beta access and

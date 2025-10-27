@@ -133,8 +133,10 @@ export function promptAction(p: {
   fn?(): void | ((props: any) => unknown | void);
   cancelFn?(): void | ((props?: any) => unknown | void);
   icon?: React.ReactNode;
+  secondaryActionText?: string;
+  secondaryActionFn?: () => unknown;
 }) {
-  alertAsync({
+  return alertAsync({
     bodyStyle: { padding: '24px' },
     className: styles.actionModal,
     type: 'confirm',
@@ -151,30 +153,16 @@ export function promptAction(p: {
           <Form layout={'inline'} className={styles.actionModalFooter}>
             {!p.cancelBtnPosition ||
               (p.cancelBtnPosition && p.cancelBtnPosition === 'left' && (
-                <Button onClick={Modal.destroyAll}>{p.cancelBtnText ?? $t('Skip')}</Button>
+                <Button onClick={() => submit(p?.cancelFn)}>{p.cancelBtnText ?? $t('Skip')}</Button>
               ))}
-            <Button
-              type={p?.btnType ?? 'primary'}
-              onClick={() => {
-                Modal.destroyAll();
-                if (p?.fn) {
-                  p.fn();
-                }
-              }}
-            >
+            {p.secondaryActionFn && p.secondaryActionText && (
+              <Button onClick={() => submit(p?.secondaryActionFn)}>{p.secondaryActionText}</Button>
+            )}
+            <Button type={p?.btnType ?? 'primary'} onClick={() => submit(p?.fn)}>
               {p.btnText}
             </Button>
             {p.cancelBtnPosition && p.cancelBtnPosition === 'right' && (
-              <Button
-                onClick={() => {
-                  Modal.destroyAll();
-                  if (p?.cancelFn) {
-                    p.cancelFn();
-                  }
-                }}
-              >
-                {p.cancelBtnText ?? $t('Skip')}
-              </Button>
+              <Button onClick={() => submit(p?.cancelFn)}>{p.cancelBtnText ?? $t('Skip')}</Button>
             )}
           </Form>
         }
@@ -229,4 +217,11 @@ function fixBodyWidth() {
   setTimeout(() => {
     document.querySelector('body')!.setAttribute('style', '');
   });
+}
+
+function submit(fn?: void | ((props?: any) => unknown) | undefined) {
+  Modal.destroyAll();
+  if (fn) {
+    fn();
+  }
 }

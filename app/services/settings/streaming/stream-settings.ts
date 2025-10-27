@@ -25,6 +25,7 @@ export interface ISavedGoLiveSettings {
   customDestinations?: ICustomStreamDestination[];
   advancedMode: boolean;
   recording?: TDisplayOutput;
+  streamShift?: boolean;
 }
 
 export interface ICustomStreamDestination {

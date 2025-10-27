@@ -65,7 +65,6 @@ import StreamBoss from 'components/widgets/StreamBoss.vue';
 import Credits from 'components/widgets/Credits.vue';
 import EventList from 'components/widgets/EventList.vue';
 import TipJar from 'components/widgets/TipJar.vue';
-import SponsorBanner from 'components/widgets/SponsorBanner.vue';
 import MediaShare from 'components/widgets/MediaShare';
 import AlertBox from 'components/widgets/AlertBox.vue';
 import SpinWheel from 'components/widgets/SpinWheel.vue';
@@ -126,7 +125,6 @@ export function getComponents() {
     Credits,
     EventList,
     TipJar,
-    SponsorBanner,
     StreamBoss,
     SubGoal,
     MediaShare,
@@ -295,6 +293,10 @@ export class WindowsService extends StatefulService<IWindowsState> {
 
   getElectronWindowIdFromWindowId(windowId: string) {
     return this.windows[windowId].id;
+  }
+
+  getIsChildWindowShown(componentName: string): boolean {
+    return this.state.child.isShown && this.state.child.componentName === componentName;
   }
 
   showWindow(options: Partial<IWindowOptions>) {

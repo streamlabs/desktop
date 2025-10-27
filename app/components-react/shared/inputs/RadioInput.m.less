@@ -14,11 +14,18 @@
     width: inherit;
   }
 
+  :global(.ant-radio-wrapper) {
+    i {
+      color: var(--icon-toggle);
+      transition: color 0.3s ease-in-out;
+    }
+  }
+
   :global(.ant-radio-wrapper-checked) {
     border: none;
 
     i {
-      color: var(--icon-active);
+      color: var(--icon-toggle-active);
       transition: color 0.3s ease-in-out;
     }
   }

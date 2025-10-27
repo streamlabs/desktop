@@ -8,7 +8,7 @@ import {
 } from './streaming-api';
 import { StreamSettingsService, ICustomStreamDestination } from '../settings/streaming';
 import { UserService } from '../user';
-import { RestreamService } from '../restream';
+import { RestreamService, TStreamShiftStatus } from '../restream';
 import { DualOutputService, TDisplayPlatforms, TDisplayDestinations } from '../dual-output';
 import { getPlatformService, TPlatform, TPlatformCapability, platformList } from '../platforms';
 import { TwitterService } from '../../app-services';
@@ -157,7 +157,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Primary used to get all platforms that should always show the destination switcher in the Go Live window
    */
   get alwaysShownPlatforms(): TPlatform[] {
-    return ['kick'];
+    return [];
   }
 
   /**
@@ -185,7 +185,12 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns if the user can or should use the restream service
    */
   get isMultiplatformMode(): boolean {
+    if (this.isStreamShiftMode) return true;
     if (this.isDualOutputMode) return false;
+    return this.hasMultipleTargetsEnabled;
+  }
+
+  get hasMultipleTargetsEnabled(): boolean {
     return (
       this.protectedModeEnabled &&
       (this.enabledPlatforms.length > 1 ||
@@ -194,9 +199,40 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   /**
+   * Returns if stream switching is enabled
+   * @remark If a user has switch stream enabled, restream even if only one platform is enabled as the only target.
+   * Currently, switch stream cannot be used with only custom destinations. One platform must be enabled.
+   */
+  get isStreamShiftMode(): boolean {
+    return (
+      (this.userView.isPrime && this.settings.streamShift && this.enabledPlatforms.length > 0) ||
+      false
+    );
+  }
+
+  get isStreamShiftMultistream(): boolean {
+    return this.isStreamShiftMode && this.enabledPlatforms.length > 1;
+  }
+
+  get streamShiftStatus(): TStreamShiftStatus {
+    return this.restreamView.streamShiftStatus ?? 'inactive';
+  }
+
+  get shouldSwitchStreams(): boolean {
+    return this.restreamView.hasStreamShiftTargets;
+  }
+
+  get isSwitchingStream(): boolean {
+    return this.restreamView.streamShiftStatus === 'active';
+  }
+
+  /**
    * Returns if the restream service should be set up when going live
    */
   get shouldSetupRestream(): boolean {
+    // The stream switcher uses the restream service
+    if (this.isStreamShiftMode) return true;
+
     // In dual output mode, if a display has more than one target that display uses the restream service
     const restreamDualOutputMode =
       this.isDualOutputMode && (this.horizontalStream.length > 1 || this.verticalStream.length > 1);
@@ -447,11 +483,19 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       optimizedProfile: undefined,
       customDestinations: savedGoLiveSettings?.customDestinations || [],
       recording: savedGoLiveSettings?.recording || 'horizontal',
+      streamShift: savedGoLiveSettings?.streamShift || false,
     };
   }
 
   get isAdvancedMode(): boolean {
     return (this.isMultiplatformMode || this.isDualOutputMode) && this.settings.advancedMode;
+  }
+
+  get canShowAdvancedMode() {
+    if (this.isStreamShiftMode) {
+      return this.enabledPlatforms.length > 1;
+    }
+    return this.isMultiplatformMode || this.isDualOutputMode;
   }
 
   /**

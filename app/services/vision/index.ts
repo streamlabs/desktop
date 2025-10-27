@@ -13,6 +13,7 @@ import { VisionUpdater } from './vision-updater';
 import _ from 'lodash';
 import pMemoize from 'p-memoize';
 import { ESettingsCategory } from 'services/settings';
+import { Subject } from 'rxjs';
 
 export class VisionProcess extends RealmObject {
   game: string;
@@ -107,6 +108,12 @@ export class VisionService extends Service {
   private lastPromptVersion?: string;
   private promptCooldownMs = 500; // 500ms
 
+  onState = new Subject<{ isRunning: boolean; isStarting: boolean; isInstalling: boolean }>();
+  onGame = new Subject<{
+    activeProcess: VisionProcess;
+    selectedGame: string;
+    availableProcesses: VisionProcess[];
+  }>();
   @Inject() userService: UserService;
   @Inject() hostsService: HostsService;
   @Inject() private sourcesService: SourcesService;
@@ -218,23 +225,33 @@ export class VisionService extends Service {
         });
 
         if (needsUpdate) {
-          const v = latestManifest.version ?? 'unknown';
-          const now = Date.now();
-          const newVersion = this.lastPromptVersion !== v;
-          const cooledDown = now - this.lastPromptAt > this.promptCooldownMs;
+          if (installedManifest) {
+            this.log(
+              `vision needs update: ${installedManifest.version} -> ${latestManifest.version}`,
+            );
+            // silently update in the background
+            await this.ensureUpdated({ startAfterUpdate: false });
+          } else {
+            const v = latestManifest.version ?? 'unknown';
+            const now = Date.now();
+            const newVersion = this.lastPromptVersion !== v;
+            const cooledDown = now - this.lastPromptAt > this.promptCooldownMs;
 
-          if (newVersion || cooledDown) {
-            this.lastPromptVersion = v;
-            this.lastPromptAt = now;
-            await this.settingsService.showSettings(ESettingsCategory.AI);
+            if (newVersion || cooledDown) {
+              this.lastPromptVersion = v;
+              this.lastPromptAt = now;
+              await this.settingsService.showSettings(ESettingsCategory.AI);
+            }
+
+            return { started: false, reason: 'needs-update' as const };
           }
-
-          return { started: false, reason: 'needs-update' as const };
         }
 
         const { pid, port } = await this.visionRunner.ensureStarted({ debugMode });
         this.writeState({ pid, port, isRunning: true });
         this.subscribeToEvents(port);
+        await this.requestAvailableProcesses();
+        await this.requestActiveProcess();
 
         return { started: true as const, pid, port };
       } finally {
@@ -280,6 +297,30 @@ export class VisionService extends Service {
         this.log('Bad event', err);
       }
     };
+  }
+
+  private notifyOfStateChange() {
+    this.onState.next({
+      isRunning: this.state.isRunning,
+      isStarting: this.state.isStarting,
+      isInstalling: this.state.isInstalling,
+    });
+
+    try {
+      const active = this.state.availableProcesses.find(
+        p => p.pid === this.state.selectedProcessId,
+      );
+      const activeJson = JSON.stringify(active);
+      const availableJson = JSON.stringify(this.state.availableProcesses || []);
+
+      this.onGame.next({
+        activeProcess: JSON.parse(activeJson ?? 'null'),
+        selectedGame: this.state.selectedGame,
+        availableProcesses: JSON.parse(availableJson),
+      });
+    } catch (err: unknown) {
+      console.error('Error notifying of state change', err);
+    }
   }
 
   async stop() {
@@ -336,6 +377,8 @@ export class VisionService extends Service {
 
   private writeState(patch: Partial<VisionState>) {
     this.state.db.write(() => Object.assign(this.state, patch));
+
+    this.notifyOfStateChange();
   }
 
   requestFrame() {
@@ -375,7 +418,7 @@ export class VisionService extends Service {
 
     const activeProcess = this.state.availableProcesses.find(p => p.pid === pid);
     console.log('Activating process', pid, 'with game hint', gameHint, 'process=', activeProcess);
-    if (activeProcess.type === 'capture_device') {
+    if (activeProcess.type === 'capture_device' || activeProcess.executable_name === 'vlc.exe') {
       this.writeState({ selectedProcessId: pid, selectedGame: gameHint });
     } else {
       this.writeState({ selectedProcessId: pid });
@@ -389,5 +432,16 @@ export class VisionService extends Service {
     const headers = new Headers({ 'Content-Type': 'application/json' });
 
     return jfetch(url, { headers, method: 'POST' });
+  }
+
+  async testEvent(type: string) {
+    return await this.authPostWithTimeout(
+      `https://${this.hostsService.streamlabs}/api/v5/vision/desktop/test-event`,
+      {
+        game: 'fortnite', // default to fortnite for now
+        events: [{ name: type }],
+      },
+      8_000,
+    );
   }
 }

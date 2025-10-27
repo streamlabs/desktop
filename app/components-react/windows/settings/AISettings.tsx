@@ -78,7 +78,11 @@ function VisionInfo({
   const activeProcess = availableProcesses?.find(p => p.pid === activeProcessId);
   const eventsUrl = useMemo(() => buildLocalUrl(port, '/events'), [port]);
   const frameUrl = useMemo(() => buildLocalUrl(port, '/display_frame'), [port]);
-
+  const isQaBundle = useMemo(
+    () =>
+      remote.process.argv.includes('--bundle-qa') && activeProcess?.executable_name === 'vlc.exe',
+    [activeProcess],
+  );
   return (
     <ObsSettingsSection title="Streamlabs AI">
       <div style={{ marginBottom: 16 }}>
@@ -155,7 +159,7 @@ function VisionInfo({
           )}
 
           {status === 'running' &&
-            activeProcess?.type === 'capture_device' &&
+            (activeProcess?.type === 'capture_device' || isQaBundle) &&
             availableGames &&
             Object.keys(availableGames).length > 0 && (
               <div style={{ marginTop: 12 }}>
