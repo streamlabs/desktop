@@ -155,3 +155,5 @@ export function OverlaySettings() {
     </>
   );
 }
+
+OverlaySettings.page = 'Scene Collections';

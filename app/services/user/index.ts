@@ -195,12 +195,6 @@ class UserViews extends ViewHandler<IUserServiceState> {
     return this.state.isPrime;
   }
 
-  get username() {
-    if (this.isLoggedIn) {
-      return this.platform.username;
-    }
-  }
-
   get platform() {
     if (this.isLoggedIn) {
       return this.state.auth.platforms[this.state.auth.primaryPlatform];

@@ -62,3 +62,5 @@ export function NotificationSettings() {
     </>
   );
 }
+
+NotificationSettings.page = 'Notifications';

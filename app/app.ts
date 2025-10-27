@@ -215,6 +215,27 @@ Vue.use(Toasted);
 Vue.use(VeeValidate); // form validations
 Vue.use(VModal);
 
+Vue.directive('trackClick', {
+  bind(el: HTMLElement, binding: { value?: { component: string; target: string } }) {
+    if (typeof binding.value.component !== 'string') {
+      throw new Error(
+        `vTrackClick requires "component" to be passed. Got: ${binding.value.component}`,
+      );
+    }
+
+    if (typeof binding.value.target !== 'string') {
+      throw new Error(`vTrackClick requires "target" to be passed. Got: ${binding.value.target}`);
+    }
+
+    el.addEventListener('click', () => {
+      getResource<UsageStatisticsService>('UsageStatisticsService').actions.recordClick(
+        binding.value.component,
+        binding.value.target,
+      );
+    });
+  },
+});
+
 // Disable chrome default drag/drop behavior
 document.addEventListener('dragover', event => event.preventDefault());
 document.addEventListener('dragenter', event => event.preventDefault());

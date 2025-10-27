@@ -17,7 +17,7 @@ export async function showSettingsWindow(category: string, cb?: () => Promise<un
 
     if (category) {
       await focusChild();
-      await click(`[data-name="settings-nav-item"]=${category}`);
+      await click(`.nav-item__content=${category}`);
     }
   });
 
@@ -43,15 +43,15 @@ export async function setTemporaryRecordingPath(
       const { setDropdownInputValue } = useForm('Mode');
       await setDropdownInputValue('Mode', 'Advanced');
       await clickTab('Recording');
-      await setInputValue('input[data-name="RecFilePath"]', tmpDir, true);
+      await setInputValue('input[data-name="RecFilePath"]', tmpDir);
     });
   } else {
     await showSettingsWindow('Output', async () => {
-      await setInputValue('input[data-name="FilePath"]', tmpDir, true);
+      await setInputValue('input[data-name="FilePath"]', tmpDir);
     });
   }
 
-  await clickButton('Close');
+  await clickButton('Done');
   return tmpDir;
 }
 
@@ -64,6 +64,6 @@ export async function setOutputResolution(resolution: string) {
   const [width, height] = resolution.split('x');
   await showSettingsWindow('Video', async () => {
     await setInputValue('[data-name="outputRes"]', `${width}x${height}`);
-    await clickButton('Close');
+    await clickButton('Done');
   });
 }

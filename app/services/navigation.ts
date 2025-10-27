@@ -4,7 +4,6 @@ import { Inject, Service } from 'services/core';
 import { SideNavService } from 'app-services';
 import { EMenuItemKey } from './side-nav';
 import { RealmObject } from './realm';
-import { TCategoryName } from './settings';
 
 export type TAppPage =
   | 'Studio'
@@ -26,13 +25,13 @@ export type TAppPage =
 interface INavigationState {
   currentPage: TAppPage;
   params: Dictionary<string | boolean>;
-  currentSettingsTab: TCategoryName;
 }
 
 class NavigationServiceEphemeralState extends RealmObject {
   currentPage: TAppPage;
   params: Dictionary<string | boolean>;
-  currentSettingsTab: TCategoryName;
+  // TODO: better typing here
+  currentSettingsTab: string;
 
   static schema: ObjectSchema = {
     name: 'NavigationServiceEphemeralState',
@@ -85,7 +84,7 @@ export class NavigationService extends Service {
    * track such a thing as opposed to the much more congested WindowsService which largely deals
    * much less with internal navigation inside a single window.
    */
-  setSettingsNavigation(category: TCategoryName) {
+  setSettingsNavigation(category: string) {
     this.state.db.write(() => {
       this.state.currentSettingsTab = category;
     });

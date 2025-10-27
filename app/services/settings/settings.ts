@@ -18,6 +18,7 @@ import { AppService } from 'services/app';
 import { $t } from 'services/i18n';
 import { encoderFieldsMap, obsEncoderToEncoderFamily } from './output';
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
+import { PlatformAppsService } from 'services/platform-apps';
 import { EDeviceType, HardwareService } from 'services/hardware';
 import { StreamingService } from 'services/streaming';
 import { byOS, getOS, OS } from 'util/operating-systems';
@@ -28,8 +29,6 @@ import { Subject } from 'rxjs';
 import * as remote from '@electron/remote';
 import fs from 'fs';
 import path from 'path';
-import { Services } from 'components-react/service-provider';
-import { UserService } from 'app-services';
 
 export enum ESettingsCategory {
   AI = 'AI',
@@ -41,6 +40,7 @@ export enum ESettingsCategory {
   Multistreaming = 'Multistreaming',
   Notifications = 'Notifications',
   Appearance = 'Appearance',
+  RemoteControl = 'Remote Control',
   VirtualWebcam = 'Virtual Webcam',
   GameOverlay = 'Game Overlay',
   Developer = 'Developer',
@@ -50,14 +50,12 @@ export enum ESettingsCategory {
   Stream = 'Stream',
   General = 'General',
   Mobile = 'Mobile',
-  Hotkeys = 'Hotkeys',
-  Ultra = 'Ultra',
   // ...
 }
 
-export type TCategoryName = `${ESettingsCategory}`;
+type CategoryName = `${ESettingsCategory}`;
 
-export interface ISettingsValues extends Record<TCategoryName, Dictionary<TObsValue>> {
+export interface ISettingsValues extends Record<CategoryName, Dictionary<TObsValue>> {
   General: {
     KeepRecordingWhenStreamStops: boolean;
     RecordWhenStreaming: boolean;
@@ -169,22 +167,14 @@ interface ISettingsCategory {
   formData: ISettingsSubCategory[];
 }
 
-type ISettingsServiceState = Record<TCategoryName | string, ISettingsCategory>;
+type ISettingsServiceState = Record<CategoryName | string, ISettingsCategory>;
 
 class SettingsViews extends ViewHandler<ISettingsServiceState> {
-  get appState() {
-    return Services.AppService.state;
-  }
-
-  get platformAppsState() {
-    return Services.PlatformAppsService.state;
-  }
-
   get values() {
     const settingsValues: Partial<ISettingsValues> = {};
 
     for (const [groupName, category] of Object.entries(this.state) as [
-      TCategoryName,
+      CategoryName,
       ISettingsCategory,
     ][]) {
       this.state[groupName].formData.forEach((subGroup: ISettingsSubCategory) => {
@@ -278,10 +268,6 @@ class SettingsViews extends ViewHandler<ISettingsServiceState> {
 
     return null;
   }
-
-  get advancedSettingEnabled(): boolean {
-    return Utils.isDevMode() || this.appState.argv.includes('--adv-settings');
-  }
 }
 
 export class SettingsService extends StatefulService<ISettingsServiceState> {
@@ -291,12 +277,12 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   @Inject() private audioService: AudioService;
   @Inject() private windowsService: WindowsService;
   @Inject() private appService: AppService;
+  @Inject() private platformAppsService: PlatformAppsService;
   @Inject() private streamingService: StreamingService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
   @Inject() private sceneCollectionsService: SceneCollectionsService;
   @Inject() private hardwareService: HardwareService;
   @Inject() private navigationService: NavigationService;
-  @Inject() private userService: UserService;
 
   @Inject()
   private videoEncodingOptimizationService: VideoEncodingOptimizationService;
@@ -324,7 +310,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     }
   }
 
-  private fetchSettingsFromObs(categoryName: TCategoryName): ISettingsCategory {
+  private fetchSettingsFromObs(categoryName: CategoryName): ISettingsCategory {
     const settingsMetadata = obs.NodeObs.OBS_settings_getSettings(categoryName);
     let settings = settingsMetadata.data;
     if (!settings) settings = [];
@@ -381,57 +367,6 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     };
   }
 
-  getCategories(): ESettingsCategory[] {
-    let categories: ESettingsCategory[] = obs.NodeObs.OBS_settings_getListCategories();
-    // insert 'Multistreaming' after 'General'
-    categories.splice(1, 0, ESettingsCategory.Multistreaming);
-    // Deleting 'Virtual Webcam' category to add it below to position properly
-    categories = categories.filter(category => category !== ESettingsCategory.VirtualWebcam);
-    categories = categories.concat([
-      ESettingsCategory.SceneCollections,
-      ESettingsCategory.Notifications,
-      ESettingsCategory.Appearance,
-      ESettingsCategory.Mobile,
-      ESettingsCategory.VirtualWebcam,
-    ]);
-
-    // Platform-specific categories
-    byOS({
-      [OS.Mac]: () => {},
-      [OS.Windows]: () => {
-        categories.push(ESettingsCategory.GameOverlay);
-      },
-    });
-
-    if (this.views.advancedSettingEnabled || this.views.platformAppsState.devMode) {
-      categories = categories.concat([ESettingsCategory.Developer, ESettingsCategory.Experimental]);
-    }
-
-    if (this.views.platformAppsState.loadedApps.filter(app => !app.unpacked).length > 0) {
-      categories.push(ESettingsCategory.InstalledApps);
-    }
-
-    categories.push(ESettingsCategory.GetSupport);
-
-    // TODO: Lock behind admin?
-    // Show AI settings for Windows, or for Mac in development. Do not show to Mac users in production.
-    if (getOS() === OS.Windows || (getOS() === OS.Mac && Utils.isDevMode())) {
-      categories.push(ESettingsCategory.AI);
-    }
-
-    // dual output mode returns additional categories for each context
-    // so hide these from the settings list
-    categories = categories.filter(
-      category => !category.toLowerCase().startsWith('stream') || category === 'Stream',
-    );
-
-    if (!this.userService.views.isPrime) {
-      categories.push(ESettingsCategory.Ultra);
-    }
-
-    return categories;
-  }
-
   /**
    * Can be called externally to ensure that you have the absolute latest settings
    * fetched from OBS directly.
@@ -439,7 +374,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   loadSettingsIntoStore() {
     // load configuration from nodeObs to state
     const settingsFormData = {} as ISettingsServiceState;
-    this.getCategories().forEach((categoryName: TCategoryName) => {
+    this.getCategories().forEach((categoryName: CategoryName) => {
       settingsFormData[categoryName] = this.fetchSettingsFromObs(categoryName);
     });
 
@@ -472,7 +407,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     this.setSettings('Output', newOutputSettings);
   }
 
-  showSettings(categoryName?: TCategoryName) {
+  showSettings(categoryName?: CategoryName | string) {
     if (categoryName) {
       this.navigationService.setSettingsNavigation(categoryName);
     }
@@ -484,6 +419,52 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
         height: 800,
       },
     });
+  }
+
+  advancedSettingEnabled(): boolean {
+    return Utils.isDevMode() || this.appService.state.argv.includes('--adv-settings');
+  }
+
+  getCategories(): CategoryName[] {
+    let categories: CategoryName[] = obs.NodeObs.OBS_settings_getListCategories();
+    // insert 'Multistreaming' after 'General'
+    // categories.splice(1, 0, 'Multistreaming');
+    // Deleting 'Virtual Webcam' category to add it below to position properly
+    categories = categories.filter(category => category !== 'Virtual Webcam');
+    categories = categories.concat([
+      'Scene Collections',
+      'Notifications',
+      'Appearance',
+      'Mobile',
+      'Virtual Webcam',
+    ]);
+
+    // Platform-specific categories
+    byOS({
+      [OS.Mac]: () => {},
+      [OS.Windows]: () => {
+        categories = categories.concat(['Game Overlay']);
+      },
+    });
+
+    if (this.advancedSettingEnabled() || this.platformAppsService.state.devMode) {
+      categories = categories.concat('Developer');
+      categories = categories.concat(['Experimental']);
+    }
+
+    if (this.platformAppsService.state.loadedApps.filter(app => !app.unpacked).length > 0) {
+      categories = categories.concat('Installed Apps');
+    }
+
+    categories.push('Get Support');
+
+    // TODO: Lock behind admin?
+    // Show AI settings for Windows, or for Mac in development. Do not show to Mac users in production.
+    if (getOS() === OS.Windows || (getOS() === OS.Mac && !Utils.isDevMode())) {
+      categories.push(ESettingsCategory.AI);
+    }
+
+    return categories;
   }
 
   findSetting(settings: ISettingsSubCategory[], subCategoryName: string, setting: string) {
@@ -540,7 +521,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
    * Set an individual setting value
    * @remark When setting video settings, use the v2 video settings service.
    */
-  setSettingValue(categoryName: TCategoryName, name: string, value: TObsValue) {
+  setSettingValue(categoryName: CategoryName, name: string, value: TObsValue) {
     const newSettings = this.patchSetting(this.fetchSettingsFromObs(categoryName).formData, name, {
       value,
     });
@@ -661,7 +642,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     // This function represents a cleaner API we would like to have
     // in the future.
 
-    Object.keys(patch).forEach((categoryName: TCategoryName) => {
+    Object.keys(patch).forEach((categoryName: CategoryName) => {
       const category: Dictionary<any> = patch[categoryName];
       const formSubCategories = this.fetchSettingsFromObs(categoryName).formData;
 
@@ -781,7 +762,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
   }
 
   @mutation()
-  PATCH_SETTINGS(categoryName: TCategoryName, category: ISettingsCategory) {
+  PATCH_SETTINGS(categoryName: CategoryName, category: ISettingsCategory) {
     this.state[categoryName] = category;
   }
 }

@@ -315,10 +315,12 @@ export function StreamSettings() {
       )}
 
       {/* OBS settings */}
-      {!protectedModeEnabled && canEditSettings && <ObsGenericSettingsForm page="Stream" />}
+      {!protectedModeEnabled && canEditSettings && <ObsGenericSettingsForm />}
     </div>
   );
 }
+
+StreamSettings.page = 'Stream';
 
 function SLIDBlock() {
   const { UserService, SettingsService } = Services;

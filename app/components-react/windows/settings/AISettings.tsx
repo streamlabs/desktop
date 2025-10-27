@@ -263,3 +263,5 @@ export function AISettings() {
     </div>
   );
 }
+
+AISettings.page = ESettingsCategory.AI;

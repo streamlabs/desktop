@@ -22,6 +22,8 @@ export function Support() {
   );
 }
 
+Support.page = 'Get Support';
+
 function SupportLinks() {
   const { UrlService } = Services;
   function openLink(link: string) {

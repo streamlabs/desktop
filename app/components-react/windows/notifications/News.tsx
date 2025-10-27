@@ -7,7 +7,6 @@ import { TAppPage } from 'services/navigation';
 import { IAnnouncementsInfo } from 'services/announcements';
 import styles from './News.m.less';
 import { useRealmObject } from 'components-react/hooks/realm';
-import { TCategoryName } from 'services/settings';
 
 export default function News() {
   const {
@@ -34,7 +33,7 @@ export default function News() {
 
       if (item.linkTarget === 'slobs') {
         if (item.link === 'Settings') {
-          SettingsService.showSettings(item.params?.category as TCategoryName);
+          SettingsService.showSettings(item.params?.category);
         } else {
           NavigationService.navigate(item.link as TAppPage, item.params);
         }

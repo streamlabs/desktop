@@ -30,7 +30,7 @@ test('Populates audio settings', async t => {
   t.true(await (await app.client.$('label=Mic/Auxiliary Device 3')).isExisting());
 
   // Test that we're displaying mixer settings in the footer
-  await (await app.client.$('button=Close')).click();
+  await (await app.client.$('button=Done')).click();
   await focusMain();
   t.true(await (await app.client.$('.source-name=Desktop Audio')).isExisting());
   t.true(await (await app.client.$('.source-name*=Mic')).isExisting());

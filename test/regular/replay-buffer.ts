@@ -54,7 +54,7 @@ async function toggleReplayBuffer(advanced: boolean = false) {
     }
 
     await clickCheckbox('RecRB');
-    await clickButton('Close');
+    await clickButton('Done');
     await focusMain();
   });
 }

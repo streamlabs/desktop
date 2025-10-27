@@ -59,11 +59,7 @@ export abstract class BaseInputController<TValue> {
 /**
  * Type text in text input
  */
-export async function setInputValue(
-  selectorOrEl: TSelectorOrEl,
-  value: string | number,
-  bufferInput?: boolean,
-) {
+export async function setInputValue(selectorOrEl: TSelectorOrEl, value: string | number) {
   // find element
   const $el = await select(selectorOrEl);
   const client = getClient();
@@ -76,15 +72,14 @@ export async function setInputValue(
   await ((client.keys('Backspace') as any) as Promise<any>); // clear
 
   await $el.click(); // click again if it's a list input
-  await sendKeys(String(value), bufferInput); // type text
+  await sendKeys(String(value)); // type text
 }
 
-async function sendKeys(keys: string, bufferInput?: boolean) {
+async function sendKeys(keys: string) {
   const client = getClient();
   const keyList = keys.split('');
   for (const key of keyList) {
     await ((client.keys(key) as any) as Promise<any>);
-    if (bufferInput) await sleep(100);
   }
 }
 

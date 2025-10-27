@@ -45,7 +45,6 @@ import { OS, getOS } from 'util/operating-systems';
 import * as remote from '@electron/remote';
 import { RealmService } from 'services/realm';
 import { StreamAvatarService } from 'services/stream-avatar/stream-avatar-service';
-import { NavigationService } from 'services/navigation';
 
 interface IAppState {
   loading: boolean;
@@ -99,7 +98,6 @@ export class AppService extends StatefulService<IAppState> {
   @Inject() private dualOutputService: DualOutputService;
   @Inject() private realmService: RealmService;
   @Inject() private streamAvatarService: StreamAvatarService;
-  @Inject() private navigationService: NavigationService;
 
   static initialState: IAppState = {
     loading: true,
@@ -253,7 +251,7 @@ export class AppService extends StatefulService<IAppState> {
       const isManageSceneCollections = childWindow.componentName === 'ManageSceneCollections';
       const isStreamSettings =
         childWindow.componentName === 'Settings' &&
-        this.navigationService.state.currentSettingsTab === 'Stream';
+        childWindow.queryParams?.categoryName === 'Stream';
       if (!isManageSceneCollections && !isStreamSettings) {
         this.windowsService.closeChildWindow();
       }

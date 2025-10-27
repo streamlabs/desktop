@@ -126,3 +126,5 @@ export function GameOverlay() {
     </div>
   );
 }
+
+GameOverlay.page = 'Game Overlay';
