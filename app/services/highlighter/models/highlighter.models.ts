@@ -55,6 +55,7 @@ interface IBaseClip {
   duration?: number;
   deleted: boolean;
   globalOrderPosition: number;
+  display?: string;
   streamInfo:
     | {
         [streamId: string]: TStreamInfo;

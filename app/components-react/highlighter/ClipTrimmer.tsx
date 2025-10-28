@@ -187,7 +187,7 @@ export default function ClipTrimmer(props: { clip: TClip; streamId: string | und
       <video
         ref={videoRef}
         src={props.clip.path.replace('#', '%23')}
-        style={{ borderRadius: 5 }}
+        style={{ borderRadius: 5, height: '50vh' }}
         width="100%"
         onEnded={() => {
           setIsPlaying(false);

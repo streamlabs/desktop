@@ -695,6 +695,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         });
         return;
       } else {
+        const display = this.streamingService.views.getOutputDisplayType();
+
         this.ADD_CLIP({
           path: clipData.path,
           loaded: false,
@@ -703,6 +705,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           endTrim: 0,
           deleted: false,
           source,
+          display,
 
           // Manual clips always get prepended to be visible after adding them
           // ReplayBuffers will appended to have them in the correct order.
