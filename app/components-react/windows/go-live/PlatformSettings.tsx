@@ -16,6 +16,8 @@ import { InstagramEditStreamInfo } from './platforms/InstagramEditStreamInfo';
 import { KickEditStreamInfo } from './platforms/KickEditStreamInfo';
 import AdvancedSettingsSwitch from './AdvancedSettingsSwitch';
 import { TInputLayout } from 'components-react/shared/inputs';
+import { inject } from 'slap';
+import { HighlighterService } from 'app-services';
 
 export default function PlatformSettings() {
   const {
@@ -33,7 +35,11 @@ export default function PlatformSettings() {
     isUpdateMode,
     isTikTokConnected,
     layout,
+    isDualOutputMode,
+    isAiHighlighterEnabled,
   } = useGoLiveSettings().extend(settings => ({
+    highlighterService: inject(HighlighterService),
+
     get descriptionIsRequired() {
       const fbSettings = settings.state.platforms['facebook'];
       const descriptionIsRequired = fbSettings && fbSettings.enabled && !fbSettings.useCustomFields;
@@ -46,6 +52,14 @@ export default function PlatformSettings() {
 
     get layout(): TInputLayout {
       return settings.isAdvancedMode ? 'horizontal' : 'vertical';
+    },
+
+    get isDualOutputMode() {
+      return settings.isDualOutputMode;
+    },
+
+    get isAiHighlighterEnabled() {
+      return this.highlighterService.aiHighlighterFeatureEnabled;
     },
   }));
 
@@ -62,11 +76,10 @@ export default function PlatformSettings() {
     return {
       isUpdateMode,
       layoutMode,
+      isDualOutputMode,
+      isAiHighlighterEnabled,
       get value() {
         return getDefined(settings.platforms[platform]);
-      },
-      get enabledPlatformsCount() {
-        return enabledPlatforms.length;
       },
       onChange(newSettings) {
         updatePlatform(platform, newSettings);
