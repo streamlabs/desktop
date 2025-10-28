@@ -32,26 +32,45 @@ export class CacheUploaderService extends Service {
       const archive = archiver('zip', { zlib: { level: 9 } });
 
       output.on('close', async () => {
-        const file = fs.createReadStream(cacheFile);
+        // const file = fs.createReadStream(cacheFile);
         // import of aws-sdk takes ~400-500ms so make a dynamic import
         const AWS = await importAwsSdk();
-        AWS.config.region = 'us-east-2';
+        AWS.config.region = 'us-west-2';
 
         AWS.config.credentials = new AWS.CognitoIdentityCredentials({
-          IdentityPoolId: 'e848f7ca-eba7-4132-b595-55d651f058d5',
+          IdentityPoolId: 'us-west-2:d5badad4-ff41-4a80-8677-e2757ab32263',
         });
 
-        const upload = new AWS.S3.ManagedUpload({
-          params: {
+        new AWS.S3().createPresignedPost(
+          {
             Bucket: 'streamlabs-obs-user-cache',
-            Key: keyname,
-            Body: file,
+            Fields: { key: keyname },
           },
-        });
-
-        upload.promise().then(() => {
-          resolve(keyname);
-        });
+          async (err, data) => {
+            if (err) {
+              console.error(err);
+            } else {
+              const formData = new FormData();
+              const fileBlob = await new Promise<Blob>(r => {
+                fs.readFile(cacheFile, (err, data) => r(new Blob([data])));
+              });
+              const fileObj = new File([fileBlob], keyname);
+              Object.entries(data.fields).forEach(([key, value]) => formData.append(key, value));
+              formData.append('file', fileObj);
+              const req = new Request(data.url, {
+                method: 'POST',
+                body: formData,
+              });
+              try {
+                const resp = await fetch(req);
+                if (!resp.ok) throw new Error(await resp.text());
+                resolve(keyname);
+              } catch (e: unknown) {
+                console.error(e);
+              }
+            }
+          },
+        );
       });
 
       // Modify the stream key in service.json in a reversible way when uploading user caches
