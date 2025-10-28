@@ -35,15 +35,10 @@ export class CacheUploaderService extends Service {
         const file = fs.createReadStream(cacheFile);
         // import of aws-sdk takes ~400-500ms so make a dynamic import
         const AWS = await importAwsSdk();
-        AWS.config.region = 'us-west-2';
+        AWS.config.region = 'us-east-2';
 
-        /*************** ATTENTION *********************
-         * These credentials are intentionally public. *
-         * Please do not report this to us.            *
-         **********************************************/
-        AWS.config.credentials = new AWS.Credentials({
-          accessKeyId: 'AKIAIAINC32O7I3KUJGQ',
-          secretAccessKey: '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',
+        AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+          IdentityPoolId: 'e848f7ca-eba7-4132-b595-55d651f058d5',
         });
 
         const upload = new AWS.S3.ManagedUpload({
