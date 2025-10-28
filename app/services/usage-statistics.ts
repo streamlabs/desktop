@@ -55,7 +55,7 @@ export type TAnalyticsEvent =
   | 'StreamShift'
   | 'Ultra';
 
-// Refls are used as uuids for ultra components. Update this when adding new ones.
+// Refls are used as uuids for ultra components and should be updated for new ulta components.
 export type TUltraRefl =
   | 'grow-community'
   | 'slobs-dual-output'
@@ -125,6 +125,7 @@ export class UsageStatisticsService extends Service {
 
   private analyticsEvents: IAnalyticsEvent[] = [];
   private refl: string = '';
+  private event: TAnalyticsEvent | null = null;
 
   ultraSubscription = new Subject<boolean>();
 
@@ -141,7 +142,7 @@ export class UsageStatisticsService extends Service {
         console.warn('Ultra event recorded with empty refl.');
       }
 
-      this.recordAnalyticsEvent('Ultra', { refl: this.refl });
+      this.recordAnalyticsEvent(this.event, { refl: this.refl });
     });
   }
 
@@ -260,9 +261,11 @@ export class UsageStatisticsService extends Service {
     this.recordAnalyticsEvent('Shown', { component, target });
   }
 
-  recordUltra(target: TUltraRefl) {
-    this.recordClick('Ultra', target);
+  recordUltra(target: TUltraRefl, event?: TAnalyticsEvent) {
+    const eventName = event || 'Ultra';
+    this.recordClick(eventName, target);
     this.refl = target;
+    this.event = eventName;
   }
 
   /**

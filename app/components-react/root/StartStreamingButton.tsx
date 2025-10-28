@@ -1,4 +1,4 @@
-import React, { useEffect, useState, forwardRef, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import cx from 'classnames';
 import { EStreamingState } from 'services/streaming';
 import { EGlobalSyncStatus } from 'services/media-backup';
@@ -8,6 +8,7 @@ import { Services } from '../service-provider';
 import * as remote from '@electron/remote';
 import { TStreamShiftStatus } from 'services/restream';
 import { promptAction } from 'components-react/modals';
+import { IStreamShiftRequested, IStreamShiftActionCompleted } from 'services/websocket';
 
 export default function StartStreamingButton(p: { disabled?: boolean }) {
   const {
@@ -72,65 +73,64 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       fetchStreamShiftStatus();
     }
 
-    const streamShiftEvent = StreamingService.streamShiftEvent.subscribe(event => {
-      const { streamShiftStreamId } = RestreamService.state;
-      const isMobileRemote = streamShiftStreamId ? /[A-Z]/.test(streamShiftStreamId) : false;
-      const remoteDeviceType = isMobileRemote ? 'mobile' : 'desktop';
+    const streamShiftEvent = StreamingService.streamShiftEvent.subscribe(
+      (event: IStreamShiftRequested | IStreamShiftActionCompleted) => {
+        const { streamShiftStreamId } = RestreamService.state;
+        console.debug('Event ID: ' + event.data.identifier, '\n Stream ID: ' + streamShiftStreamId);
+        const isFromOtherDevice =
+          streamShiftStreamId && event.data.identifier !== streamShiftStreamId;
 
-      if (event.type === 'streamSwitchRequest') {
-        console.debug('Event stream id: ' + event.data.identifier);
-        const isFromOtherDevice = event.data.identifier !== streamShiftStreamId;
+        const isMobileRemote = isFromOtherDevice ? /[A-Z]/.test(event.data.identifier) : false;
+        const remoteDeviceType = isMobileRemote ? 'mobile' : 'desktop';
 
-        if (!isFromOtherDevice) {
-          RestreamService.confirmStreamShift('approved');
+        // Note: because the event's stream id is from the device that requested the switch,
+        // it is not possible to know what type of device the stream will be switching from.
+        // We can only identify the type of device the stream is switching to.
+        const switchType = `desktop-${remoteDeviceType}`;
+
+        if (event.type === 'streamSwitchRequest') {
+          if (!isFromOtherDevice) {
+            // Don't record the request from this device because the other device will record it
+            RestreamService.actions.confirmStreamShift('approved');
+          } else {
+            UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
+              stream: switchType,
+              action: 'request',
+            });
+          }
         }
 
-        const switchType = isFromOtherDevice
-          ? `${remoteDeviceType}-desktop`
-          : `desktop-${remoteDeviceType}`;
+        if (event.type === 'switchActionComplete') {
+          // End the stream on this device if switching the stream to another device
+          // Only record analytics if the stream was switched from this device to a different one
+          if (isFromOtherDevice) {
+            Services.RestreamService.actions.endStreamShiftStream(event.data.identifier);
 
-        UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
-          stream: switchType,
-          action: 'request',
-        });
-      }
+            UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
+              stream: switchType,
+              action: 'complete',
+            });
+          }
 
-      if (event.type === 'switchActionComplete') {
-        console.debug('Event stream id: ' + event.data.identifier);
-        const isFromOtherDevice = event.data.identifier !== streamShiftStreamId;
+          // Notify the user
+          const message = isFromOtherDevice
+            ? $t(
+                'Your stream has been successfully switched to Streamlabs Desktop. Enjoy your stream!',
+              )
+            : $t(
+                'Your stream has been switched to Streamlabs Desktop from another device. Enjoy your stream!',
+              );
 
-        // End the stream on this device if switching the stream to another device
-        if (isFromOtherDevice) {
-          Services.RestreamService.actions.endStreamShiftStream(event.data.identifier);
+          promptAction({
+            title: $t('Stream successfully switched'),
+            message,
+            btnText: $t('Close'),
+            btnType: 'default',
+            cancelBtnPosition: 'none',
+          });
         }
-
-        const switchType = isFromOtherDevice
-          ? `desktop-${remoteDeviceType}`
-          : `${remoteDeviceType}-desktop`;
-
-        UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
-          stream: switchType,
-          action: 'complete',
-        });
-
-        // Notify the user
-        const message = isFromOtherDevice
-          ? $t(
-              'Your stream has been successfully switched to Streamlabs Desktop. Enjoy your stream!',
-            )
-          : $t(
-              'Your stream has been switched to Streamlabs Desktop from another device. Enjoy your stream!',
-            );
-
-        promptAction({
-          title: $t('Stream successfully switched'),
-          message,
-          btnText: $t('Close'),
-          btnType: 'default',
-          cancelBtnPosition: 'none',
-        });
-      }
-    });
+      },
+    );
 
     return () => {
       streamShiftEvent.unsubscribe();

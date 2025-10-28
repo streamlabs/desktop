@@ -158,7 +158,7 @@ interface IAccountPermissionsRequired {
   }[];
 }
 
-interface IStreamShiftRequested {
+export interface IStreamShiftRequested {
   type: 'streamSwitchRequest';
   for: string;
   data: {
@@ -167,7 +167,7 @@ interface IStreamShiftRequested {
   event_id: string;
 }
 
-interface IStreamShiftActionCompleted {
+export interface IStreamShiftActionCompleted {
   type: 'switchActionComplete';
   for: string;
   data: {

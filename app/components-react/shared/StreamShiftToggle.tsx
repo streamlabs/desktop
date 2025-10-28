@@ -37,10 +37,10 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
               <div
                 className={styles.labelUltraBadge}
                 onClick={() => {
-                  Services.UsageStatisticsService.actions.recordAnalyticsEvent('StreamShift', {
-                    ultra: 'go-live-toggle',
-                  });
-                  Services.MagicLinkService.actions.linkToPrime('slobs-streamswitcher');
+                  Services.MagicLinkService.actions.linkToPrime(
+                    'slobs-streamswitcher',
+                    'StreamShift',
+                  );
                 }}
               >
                 <UltraIcon type="badge" style={{ marginRight: '5px' }} />
