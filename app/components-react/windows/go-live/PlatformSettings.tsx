@@ -63,6 +63,10 @@ export default function PlatformSettings() {
     get enabledPlatformsCount() {
       return settings.enabledPlatforms.length;
     },
+
+    get isDualOutputMode() {
+      return settings.isDualOutputMode;
+    },
   }));
 
   const shouldShowSettings = !error && !isLoading;
