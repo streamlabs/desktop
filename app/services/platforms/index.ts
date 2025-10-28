@@ -215,10 +215,6 @@ export interface IPlatformService {
 
   postError?: (message: string) => void;
 
-  setupStreamShiftStream?: (options: IGoLiveSettings) => Promise<void>;
-
-  postError?: (message: string) => void;
-
   fetchNewToken: () => Promise<void>;
 
   getHeaders: (
