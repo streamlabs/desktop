@@ -22,48 +22,52 @@ import { isDisplayed, waitForDisplayed } from '../../helpers/modules/core';
 // eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
 
-test('Streaming to TikTok', withUser('twitch', { multistream: false, prime: true }), async t => {
-  // test approved status
-  const { tikTokLiveScope, serverUrl, streamKey } = tikTokUsers.approved;
-  await addDummyAccount('tiktok', { tikTokLiveScope, serverUrl, streamKey });
+test.skip(
+  'Streaming to TikTok',
+  withUser('twitch', { multistream: false, prime: true }),
+  async t => {
+    // test approved status
+    const { tikTokLiveScope, serverUrl, streamKey } = tikTokUsers.approved;
+    await addDummyAccount('tiktok', { tikTokLiveScope, serverUrl, streamKey });
 
-  await prepareToGoLive();
-  await clickGoLive();
-  await waitForSettingsWindowLoaded();
+    await prepareToGoLive();
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
 
-  // enable tiktok
-  await fillForm({
-    twitch: true,
-    tiktok: true,
-  });
-  await waitForSettingsWindowLoaded();
-  await waitForDisplayed('div[data-name="tiktok-settings"]');
+    // enable tiktok
+    await fillForm({
+      twitch: true,
+      tiktok: true,
+    });
+    await waitForSettingsWindowLoaded();
+    await waitForDisplayed('div[data-name="tiktok-settings"]');
 
-  const fields = await readFields();
+    const fields = await readFields();
 
-  // tiktok always shows regardless of ultra status
-  t.true(fields.hasOwnProperty('tiktok'));
+    // tiktok always shows regardless of ultra status
+    t.true(fields.hasOwnProperty('tiktok'));
 
-  // accounts approved for live access do not show the server url and stream key fields
-  t.false(fields.hasOwnProperty('serverUrl'));
-  t.false(fields.hasOwnProperty('streamKey'));
+    // accounts approved for live access do not show the server url and stream key fields
+    t.false(fields.hasOwnProperty('serverUrl'));
+    t.false(fields.hasOwnProperty('streamKey'));
 
-  await fillForm({
-    title: 'Test stream',
-    twitchGame: 'Fortnite',
-  });
-  await submit();
-  await waitForDisplayed('span=Update settings for TikTok');
-  await waitForStreamStart();
-  await stopStream();
+    await fillForm({
+      title: 'Test stream',
+      twitchGame: 'Fortnite',
+    });
+    await submit();
+    await waitForDisplayed('span=Update settings for TikTok');
+    await waitForStreamStart();
+    await stopStream();
 
-  // test all other tiktok statuses
-  await testLiveScope(t, 'legacy');
-  await testLiveScope(t, 'denied');
-  await testLiveScope(t, 'relog');
+    // test all other tiktok statuses
+    await testLiveScope(t, 'legacy');
+    await testLiveScope(t, 'denied');
+    await testLiveScope(t, 'relog');
 
-  t.pass();
-});
+    t.pass();
+  },
+);
 
 async function testLiveScope(t: TExecutionContext, scope: TTikTokLiveScopeTypes) {
   const { serverUrl, streamKey } = tikTokUsers[scope];

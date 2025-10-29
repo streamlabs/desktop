@@ -44,10 +44,10 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
               <div
                 className={styles.labelUltraBadge}
                 onClick={() => {
-                  Services.UsageStatisticsService.actions.recordAnalyticsEvent('StreamShift', {
-                    ultra: 'go-live-toggle',
-                  });
-                  Services.MagicLinkService.actions.linkToPrime('slobs-streamswitcher');
+                  Services.MagicLinkService.actions.linkToPrime(
+                    'slobs-streamswitcher',
+                    'StreamShift',
+                  );
                 }}
               >
                 <UltraIcon type="badge" style={{ marginRight: '5px' }} />
@@ -83,7 +83,7 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
           <i className="icon-information" style={{ marginLeft: '10px' }} />
         </Tooltip>
       </div>
-      <Badge content={'Beta'} />
+      <Badge className={styles.betaBadge} content={'Beta'} />
     </div>
   );
 }
