@@ -70,7 +70,7 @@ export async function toggleReplayBuffer(advanced: boolean = false) {
     }
 
     await clickCheckbox('RecRB');
-    await clickButton('Done');
+    await clickButton('Close');
     await focusMain();
   });
 }

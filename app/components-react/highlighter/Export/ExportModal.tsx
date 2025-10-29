@@ -19,7 +19,7 @@ import { useVuex } from 'components-react/hooks';
 import { initStore, useController } from '../../hooks/zustand';
 import { EOrientation, TOrientation } from 'services/highlighter/models/ai-highlighter.models';
 import { fileExists } from 'services/highlighter/file-utils';
-import { SCRUB_HEIGHT, SCRUB_WIDTH, SCRUB_FRAMES } from 'services/highlighter/constants';
+import { SCRUB_WIDTH, SCRUB_WIDTH_VERTICAL } from 'services/highlighter/constants';
 import styles from './ExportModal.m.less';
 import { getCombinedClipsDuration } from '../utils';
 import { formatSecondsToHMS } from '../ClipPreview';
@@ -385,7 +385,7 @@ function ExportFlow({
                 style={
                   currentFormat === EOrientation.HORIZONTAL
                     ? { objectPosition: 'left' }
-                    : { objectPosition: `-${(SCRUB_WIDTH * 1.32) / 3 + 4}px` }
+                    : { objectPosition: `-${(SCRUB_WIDTH * 1.32) / 3 + 4}px` } // @@@
                 }
               />
             </div>

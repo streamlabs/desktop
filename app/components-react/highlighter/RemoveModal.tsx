@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { TClip } from 'services/highlighter/models/highlighter.models';
 import { $t } from 'services/i18n';
 import styles from './RemoveModal.m.less';
-import { SCRUB_HEIGHT, SCRUB_WIDTH } from 'services/highlighter/constants';
+import { SCRUB_HEIGHT, SCRUB_WIDTH, SCRUB_WIDTH_VERTICAL } from 'services/highlighter/constants';
 
 export default function RemoveModal(p: {
   removeType: 'clip' | 'stream';
@@ -16,6 +16,8 @@ export default function RemoveModal(p: {
   const { HighlighterService } = Services;
   const [deleteAllSelected, setDeleteAllSelected] = useState<boolean>(false);
   const [clipsToDelete, setClipsToDelete] = useState<TClip[]>([p.clip]);
+
+  const width = p.clip.display === 'vertical' ? SCRUB_WIDTH_VERTICAL : SCRUB_WIDTH;
 
   function getClipsToDelete(): TClip[] {
     return HighlighterService.getClips(HighlighterService.views.clips, p.streamId).filter(
@@ -38,7 +40,7 @@ export default function RemoveModal(p: {
             <div
               className={styles.thumbnail}
               style={{
-                width: `${SCRUB_WIDTH / 2}px`,
+                width: `${width / 2}px`,
                 height: `${SCRUB_HEIGHT / 2}px`,
                 rotate: `${clipsToDelete.length !== 1 ? (index - 1) * 6 : 0}deg`,
                 scale: '1.2',

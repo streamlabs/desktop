@@ -1,6 +1,11 @@
 import React, { useEffect, useRef, useState, RefObject } from 'react';
 import { TClip } from 'services/highlighter/models/highlighter.models';
-import { SCRUB_FRAMES, SCRUB_HEIGHT, SCRUB_WIDTH } from 'services/highlighter/constants';
+import {
+  SCRUB_FRAMES,
+  SCRUB_HEIGHT,
+  SCRUB_WIDTH,
+  SCRUB_WIDTH_VERTICAL,
+} from 'services/highlighter/constants';
 import { Services } from 'components-react/service-provider';
 import times from 'lodash/times';
 import styles from './ClipTrimmer.m.less';
@@ -44,6 +49,7 @@ export default function ClipTrimmer(props: { clip: TClip; streamId: string | und
   const [isPlaying, setIsPlaying] = useStateRef(false);
 
   const endTime = props.clip.duration! - localEndTrim;
+  const width = props.clip?.display === 'vertical' ? SCRUB_WIDTH_VERTICAL : SCRUB_WIDTH;
 
   function playAt(t: number) {
     if (!videoRef.current) return;
@@ -165,7 +171,7 @@ export default function ClipTrimmer(props: { clip: TClip; streamId: string | und
   }
 
   const scrubHeight = 100;
-  const scrubWidth = scrubHeight * (SCRUB_WIDTH / SCRUB_HEIGHT);
+  const scrubWidth = scrubHeight * (width / SCRUB_HEIGHT);
 
   // TODO: React to window size change
   useEffect(() => {
@@ -218,13 +224,13 @@ export default function ClipTrimmer(props: { clip: TClip; streamId: string | und
               <img
                 key={frame}
                 src={props.clip.scrubSprite?.replace('#', '%23')}
-                width={SCRUB_WIDTH}
+                width={width}
                 height={SCRUB_HEIGHT}
                 style={{
                   height: scrubHeight,
                   width: scrubWidth,
                   objectFit: 'cover',
-                  objectPosition: `-${frame * SCRUB_WIDTH * (scrubHeight / SCRUB_HEIGHT)}px`,
+                  objectPosition: `-${frame * width * (scrubHeight / SCRUB_HEIGHT)}px`,
                   pointerEvents: 'none',
                   maxWidth: '100%',
                 }}

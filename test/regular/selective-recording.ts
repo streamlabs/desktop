@@ -38,7 +38,7 @@ test('Selective Recording', async t => {
     await setDropdownInputValue('Mode', 'Advanced');
     await clickTab('Recording');
     await setInputValue('input[data-name="RecFilePath"]', tmpDir);
-    await clickButton('Done');
+    await clickButton('Close');
   });
 
   // Add a browser source

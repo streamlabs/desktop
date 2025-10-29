@@ -84,7 +84,7 @@ test(
     // Streaming + Recording
     await showSettingsWindow('General', async () => {
       await clickCheckbox('RecordWhenStreaming');
-      await clickButton('Done');
+      await clickButton('Close');
     });
 
     await goLive({
@@ -109,7 +109,7 @@ test(
     await showSettingsWindow('General', async () => {
       await clickCheckbox('RecordWhenStreaming');
       await clickCheckbox('ReplayBufferWhileStreaming');
-      await clickButton('Done');
+      await clickButton('Close');
     });
 
     await goLive();
@@ -125,13 +125,13 @@ test(
     await showSettingsWindow('Output', async () => {
       const { setDropdownInputValue } = useForm('Recording');
       await setDropdownInputValue('RecFormat', 'mov');
-      await clickButton('Done');
+      await clickButton('Close');
     });
 
     // Streaming + Recording + Replay Buffer
     await showSettingsWindow('General', async () => {
       await clickCheckbox('RecordWhenStreaming');
-      await clickButton('Done');
+      await clickButton('Close');
     });
 
     await goLive();

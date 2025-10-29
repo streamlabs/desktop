@@ -134,6 +134,7 @@ export async function chatIsVisible() {
 }
 
 export async function startRecording() {
+  await focusMain();
   await click('.record-button');
   await waitForDisplayed('.record-button.active');
 }
@@ -165,7 +166,7 @@ export async function createRecordingFiles(
 
       const { setDropdownInputValue } = useForm('Recording');
       await setDropdownInputValue('RecFormat', format);
-      await clickButton('Done');
+      await clickButton('Close');
     });
 
     await focusMain();
