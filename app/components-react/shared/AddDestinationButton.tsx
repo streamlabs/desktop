@@ -22,13 +22,7 @@ interface IAddDestinationButtonProps {
 
 export default function AddDestinationButton(p: IAddDestinationButtonProps) {
   const { addDestination, btnType, isDualOutputMode } = useGoLiveSettings().extend(module => {
-    const {
-      RestreamService,
-      SettingsService,
-      MagicLinkService,
-      UsageStatisticsService,
-      WebsocketService,
-    } = Services;
+    const { RestreamService, SettingsService, MagicLinkService } = Services;
 
     return {
       addDestination() {
@@ -36,16 +30,9 @@ export default function AddDestinationButton(p: IAddDestinationButtonProps) {
         if (module.isPrime) {
           SettingsService.actions.showSettings('Stream');
         } else if (module.isDualOutputMode) {
-          // record dual output analytics event
-          const ultraSubscription = WebsocketService.ultraSubscription.subscribe(() => {
-            UsageStatisticsService.recordAnalyticsEvent('DualOutput', {
-              type: 'UpgradeToUltra',
-            });
-            ultraSubscription.unsubscribe();
-          });
-          MagicLinkService.linkToPrime('slobs-multistream');
+          MagicLinkService.linkToPrime('slobs-dual-output', 'DualOutput');
         } else {
-          MagicLinkService.linkToPrime('slobs-multistream');
+          MagicLinkService.linkToPrime('slobs-single-output');
         }
       },
 
