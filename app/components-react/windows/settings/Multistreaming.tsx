@@ -17,7 +17,7 @@ export function MultistreamingSettings() {
   }));
 
   async function upgradeToPrime() {
-    MagicLinkService.actions.linkToPrime('slobs-multistream');
+    MagicLinkService.actions.linkToPrime('slobs-multistream-settings');
   }
 
   const shouldShowPrime = v.isLoggedIn && !v.isPrime;

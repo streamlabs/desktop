@@ -182,42 +182,46 @@ export function DualOutputDeveloperSettings(p: { collection?: string }) {
       </span>
       <div>
         <h4>{$t('Convert to Vanilla Scene')}</h4>
-        <Button
-          className="button--soft-warning"
-          style={{ marginRight: '16px' }}
-          onClick={() => convertDualOutputCollection()}
-          disabled={busy}
-        >
-          {$t('Convert')}
-        </Button>
-        {!p.collection && (
+        <div style={{ display: 'flex', justifyContent: 'space-evenly', paddingBottom: '16px' }}>
           <Button
             className="button--soft-warning"
-            onClick={() => convertDualOutputCollection(false, true)}
+            style={{ marginRight: '16px' }}
+            onClick={() => convertDualOutputCollection()}
             disabled={busy}
           >
-            {$t('Convert and Export Overlay')}
+            {$t('Convert')}
           </Button>
-        )}
+          {!p.collection && (
+            <Button
+              className="button--soft-warning"
+              onClick={() => convertDualOutputCollection(false, true)}
+              disabled={busy}
+            >
+              {$t('Convert and Export Overlay')}
+            </Button>
+          )}
+        </div>
       </div>
       {!p.collection && (
         <div style={{ marginTop: '10px' }}>
           <h4>{$t('Assign Vertical Sources to Horizontal Display')}</h4>
-          <Button
-            className="button--soft-warning"
-            style={{ marginRight: '16px' }}
-            onClick={() => convertDualOutputCollection(true)}
-            disabled={busy}
-          >
-            {$t('Assign')}
-          </Button>
-          <Button
-            className="button--soft-warning"
-            onClick={() => convertDualOutputCollection(true, true)}
-            disabled={busy}
-          >
-            {$t('Assign and Export Overlay')}
-          </Button>
+          <div style={{ display: 'flex', justifyContent: 'space-evenly', paddingBottom: '16px' }}>
+            <Button
+              className="button--soft-warning"
+              style={{ marginRight: '16px' }}
+              onClick={() => convertDualOutputCollection(true)}
+              disabled={busy}
+            >
+              {$t('Assign')}
+            </Button>
+            <Button
+              className="button--soft-warning"
+              onClick={() => convertDualOutputCollection(true, true)}
+              disabled={busy}
+            >
+              {$t('Assign and Export Overlay')}
+            </Button>
+          </div>
         </div>
       )}
       <div style={{ color: error ? 'red' : 'var(--teal)' }}>{message}</div>
@@ -322,14 +326,16 @@ function AppPlatformDeveloperSettings() {
           <p style={{ wordWrap: 'break-word' }}>{loadedUnpackedApp.appPath}</p>
           <h4>{$t('Token')}</h4>
           <p style={{ wordWrap: 'break-word' }}>{loadedUnpackedApp.appToken}</p>
-          <Button onClick={reloadApp} type="primary" disabled={loading}>
-            {$t('Reload')}
-            {loading && <i className="fa fa-spinner fa-pulse" />}
-          </Button>
-          <Button onClick={unloadApp} type="primary" disabled={loading}>
-            {$t('Unload')}
-            {loading && <i className="fa fa-spinner fa-pulse" />}
-          </Button>
+          <div style={{ display: 'flex', justifyContent: 'space-evenly', paddingBottom: '16px' }}>
+            <Button onClick={reloadApp} type="primary" disabled={loading}>
+              {$t('Reload')}
+              {loading && <i className="fa fa-spinner fa-pulse" />}
+            </Button>
+            <Button onClick={unloadApp} type="primary" disabled={loading}>
+              {$t('Unload')}
+              {loading && <i className="fa fa-spinner fa-pulse" />}
+            </Button>
+          </div>
         </>
       )}
       {!loadedUnpackedApp && (
