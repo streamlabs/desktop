@@ -5,6 +5,7 @@ import {
   Global,
   NodeObs,
   SimpleStreamingFactory,
+  AdvancedStreamingFactory,
   ServiceFactory,
   VideoEncoderFactory,
   AudioEncoderFactory,
@@ -17,6 +18,7 @@ import {
   IAdvancedReplayBuffer,
   ISimpleRecording,
   ISimpleReplayBuffer,
+  AudioTrackFactory,
 } from '../../../obs-api';
 import { Inject } from 'services/core/injector';
 import moment from 'moment';
@@ -138,6 +140,27 @@ export class StreamingService
 
   private resolveStartStreaming: Function = () => {};
   private rejectStartStreaming: Function = () => {};
+
+  private contexts: {
+    [name: string]: Partial<IOutputContext>;
+    horizontal: IOutputContext;
+    vertical: IOutputContext;
+    broadcast: Partial<IOutputContext>;
+  } = {
+    horizontal: {
+      streaming: (null as unknown) as ISimpleStreaming | IAdvancedStreaming,
+      recording: (null as unknown) as ISimpleRecording | IAdvancedRecording,
+      replayBuffer: (null as unknown) as ISimpleReplayBuffer | IAdvancedReplayBuffer,
+    },
+    vertical: {
+      streaming: (null as unknown) as ISimpleStreaming | IAdvancedStreaming,
+      recording: (null as unknown) as ISimpleRecording | IAdvancedRecording,
+      replayBuffer: (null as unknown) as ISimpleReplayBuffer | IAdvancedReplayBuffer,
+    },
+    broadcast: {
+      streaming: (null as unknown) as ISimpleStreaming | IAdvancedStreaming,
+    },
+  };
 
   static initialState: IStreamingServiceState = {
     streamingStatus: EStreamingState.Offline,
@@ -654,6 +677,15 @@ export class StreamingService
         throwStreamError('TIKTOK_USER_BANNED', { ...e, platform: 'tiktok' });
       }
     }
+
+    // After setting up Twitch for go live, create the broadcast stream for multistreaming
+    if (
+      this.views.hasMultipleTargetsEnabled &&
+      this.views.isEnhancedBroadcastingMultistream() &&
+      platform === 'twitch'
+    ) {
+      this.createBroadcastStream('twitch');
+    }
   }
 
   handleSetupPlatformError(e: unknown, platform: TPlatform) {
@@ -1058,6 +1090,17 @@ export class StreamingService
       NodeObs.OBS_service_startStreaming();
     }
 
+    // When multistreaming Twitch enhanced broadcasting, use the new API to start a designated stream
+    if (this.views.isEnhancedBroadcastingMultistream()) {
+      // The broadcast stream context should have been created during the go live checklist
+      // but as a failsafe, check again here and create if missing
+      if (!this.contexts.broadcast.streaming) {
+        this.createBroadcastStream('twitch');
+      }
+
+      this.contexts.broadcast.streaming.start();
+    }
+
     const recordWhenStreaming = this.streamSettingsService.settings.recordWhenStreaming;
 
     if (recordWhenStreaming && this.state.recordingStatus === ERecordingState.Offline) {
@@ -1179,6 +1222,10 @@ export class StreamingService
         NodeObs.OBS_service_stopStreaming(false);
       }
 
+      if (this.contexts.broadcast.streaming) {
+        this.contexts.broadcast.streaming.stop();
+      }
+
       const keepRecording = this.streamSettingsService.settings.keepRecordingWhenStreamStops;
       if (!keepRecording && this.state.recordingStatus === ERecordingState.Recording) {
         this.toggleRecording();
@@ -1217,6 +1264,199 @@ export class StreamingService
 
       return Promise.resolve();
     }
+  }
+
+  private async createBroadcastStream(platform: TPlatform) {
+    console.log('STREAMING Creating broadcast stream for platform', platform);
+    const display = this.views.getPlatformDisplayType(platform);
+
+    if (!this.videoSettingsService.contexts.broadcast) {
+      this.videoSettingsService.establishBroadcastContext(display);
+    }
+
+    const mode = this.outputSettingsService.getSettings().mode;
+
+    this.contexts.broadcast.streaming =
+      mode === 'Advanced'
+        ? (AdvancedStreamingFactory.create() as IAdvancedStreaming)
+        : (SimpleStreamingFactory.create() as ISimpleStreaming);
+
+    if (this.isAdvancedStreaming(this.contexts.broadcast.streaming)) {
+      // cast the streaming instance to advanced streaming to be able to set
+      // the values correctly
+      const stream = this.migrateSettings('streaming', 'broadcast') as IAdvancedStreaming;
+
+      const resolution = this.videoSettingsService.outputResolutions[display];
+      stream.outputWidth = resolution.outputWidth;
+      stream.outputHeight = resolution.outputHeight;
+      // stream audio track
+      this.validateOrCreateAudioTrack(3);
+      stream.audioTrack = 3;
+      // Twitch VOD audio track
+      if (stream.enableTwitchVOD && display === 'horizontal') {
+        // Potentially need to use a different track number for Twitch VODs
+        const trackNumber = stream.twitchTrack ?? 3;
+        this.validateOrCreateAudioTrack(trackNumber);
+        stream.twitchTrack = trackNumber;
+      }
+
+      // to prevent reference errors, cast the recording instance
+      this.contexts.broadcast.streaming = stream as IAdvancedStreaming;
+    } else if (this.isSimpleStreaming(this.contexts.broadcast.streaming)) {
+      // cast the streaming instance to simple streaming to be able to set
+      // the values correctly
+      const stream = this.migrateSettings('streaming', 'broadcast') as ISimpleStreaming;
+      // TODO: comment in when api migration is merged
+      // stream.audioEncoder = AudioEncoderFactory.create('ffmpeg_aac', 'audio-encoder-stream');
+      stream.audioEncoder = AudioEncoderFactory.create();
+
+      // to prevent reference errors, cast the recording instance
+      this.contexts.broadcast.streaming = stream as ISimpleStreaming;
+    } else {
+      throwStreamError(
+        'UNKNOWN_STREAMING_ERROR_WITH_MESSAGE',
+        {},
+        'Unable to create streaming instance',
+      );
+    }
+    this.contexts.broadcast.streaming.video = this.videoSettingsService.contexts.broadcast;
+    this.contexts.broadcast.streaming.signalHandler = async signal => {
+      console.log('Broadcast Stream Signal:', signal);
+
+      // Destroy the broadcast context when the stream is deactivated because we no longer need it
+      // Note: the order of destruction is important to prevent undefined or null reference errors
+      if (
+        signal.type === EOBSOutputType.Streaming &&
+        signal.signal === EOBSOutputSignal.Deactivate
+      ) {
+        // 1. Destroy the broadcast streaming instance
+        const instance = this.contexts.broadcast.streaming;
+        if (this.isAdvancedStreaming(instance)) {
+          AdvancedStreamingFactory.destroy(instance);
+        } else {
+          SimpleStreamingFactory.destroy(instance);
+        }
+
+        // 2. Clear the broadcast streaming instance
+        this.contexts.broadcast.streaming = (null as unknown) as
+          | ISimpleStreaming
+          | IAdvancedStreaming;
+
+        // 3. Destroy the broadcast video context
+        this.videoSettingsService.destroyBroadcastContext();
+      }
+    };
+
+    const streamSettings =
+      display === 'horizontal'
+        ? this.settingsService.views.values.Stream
+        : this.settingsService.views.values.StreamSecond;
+
+    this.contexts.broadcast.streaming.service = ServiceFactory.create('rtmp_common', platform, {
+      key: streamSettings.key,
+      server: streamSettings.server,
+      username: '',
+      password: '',
+      use_auth: false,
+      streamType: 'rtmp_custom',
+    });
+
+    this.contexts.broadcast.streaming.service.update(streamSettings);
+
+    this.contexts.broadcast.streaming.delay = DelayFactory.create();
+    this.contexts.broadcast.streaming.reconnect = ReconnectFactory.create();
+    this.contexts.broadcast.streaming.network = NetworkFactory.create();
+
+    return Promise.resolve(this.contexts.broadcast.streaming);
+  }
+
+  private isAdvancedStreaming(
+    instance: ISimpleStreaming | IAdvancedStreaming | null,
+  ): instance is IAdvancedStreaming {
+    if (!instance) return false;
+    return 'rescaling' in instance;
+  }
+
+  private isSimpleStreaming(
+    instance: ISimpleStreaming | IAdvancedStreaming | null,
+  ): instance is ISimpleStreaming {
+    if (!instance) return false;
+    return 'useAdvanced' in instance;
+  }
+
+  private migrateSettings(type: 'streaming' | 'recording', display: TDisplayType | 'broadcast') {
+    // TODO: remove after api migration is merged
+    if (type === 'recording') {
+      return;
+    }
+
+    const settings =
+      type === 'streaming'
+        ? this.outputSettingsService.getStreamingSettings(true) // TODO: remove boolean after api migration is merged
+        : this.outputSettingsService.getRecordingSettings();
+
+    const instance = this.contexts[display][type];
+
+    Object.keys(settings).forEach(key => {
+      if ((settings as any)[key] === undefined) return;
+
+      // share the video encoder with the recording instance if it exists
+      if (key === 'videoEncoder') {
+        // TODO: remove applying encoder settings after api migration is merged
+        const encoderSettings = this.outputSettingsService.getSettings().streaming;
+
+        instance.videoEncoder = VideoEncoderFactory.create(
+          settings.videoEncoder,
+          `video-encoder-${type}-${display}`,
+          encoderSettings, // TODO: remove after api migration is merged
+        );
+
+        if (instance.videoEncoder.lastError) {
+          console.error(
+            'Error creating encoder',
+            settings.videoEncoder,
+            instance.videoEncoder.lastError,
+          );
+          throw new Error(instance.videoEncoder.lastError);
+        }
+
+        // TODO: remove this workaround after api migration is merged
+        instance.videoEncoder.update(encoderSettings);
+      } else {
+        (instance as any)[key] = (settings as any)[key];
+      }
+    });
+
+    return instance;
+  }
+
+  /**
+   * Validate or create an audio track at the given index
+   * @remark Without checking if the audio track already exists, this will create a new audio track
+   * which will result in any existing streaming, recording, or replay buffer instances having an
+   * incorrect reference to the audio track. All instances for the same context should use the same
+   * audio track.
+   * @param index - The index of the audio track
+   */
+  async validateOrCreateAudioTrack(index: number) {
+    try {
+      const existingTrack = AudioTrackFactory.getAtIndex(index);
+      if (existingTrack) return;
+    } catch (e: unknown) {
+      // continue to create track if the audio track does not exist
+    }
+
+    this.createAudioTrack(index);
+  }
+
+  /**
+   * Create an audio track
+   * @param index - index of the audio track to create
+   */
+  private createAudioTrack(index: number) {
+    const trackName = `track${index}`;
+    const track = AudioTrackFactory.create(160, trackName);
+    AudioTrackFactory.setAtIndex(track, index);
   }
 
   /**

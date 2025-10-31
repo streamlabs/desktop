@@ -6,7 +6,7 @@ import { StreamSettingsService } from 'services/settings/streaming';
 import { UserService } from 'services/user';
 import { CustomizationService, ICustomizationServiceState } from 'services/customization';
 import { authorizedHeaders, jfetch } from 'util/requests';
-import { EAvailableFeatures, IncrementalRolloutService } from './incremental-rollout';
+import { IncrementalRolloutService } from './incremental-rollout';
 import electron from 'electron';
 import { StreamingService } from './streaming';
 import { FacebookService } from './platforms/facebook';
@@ -19,6 +19,7 @@ import { TwitterPlatformService } from './platforms/twitter';
 import { InstagramService } from './platforms/instagram';
 import { PlatformAppsService } from './platform-apps';
 import { DualOutputService } from 'services/dual-output';
+import { SettingsService } from 'services/settings';
 import { throwStreamError } from './streaming/stream-error';
 import uuid from 'uuid';
 import Utils from './utils';
@@ -86,6 +87,9 @@ interface IRestreamState {
    */
   streamShiftTargets: ITargetLiveData[];
 
+  /**
+   * This allows the user to bypass disconnect protection in stream shift mode
+   */
   streamShiftForceGoLive: boolean;
 }
 
@@ -110,6 +114,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
   @Inject('TwitterPlatformService') twitterService: TwitterPlatformService;
   @Inject() platformAppsService: PlatformAppsService;
   @Inject() dualOutputService: DualOutputService;
+  @Inject() settingsService: SettingsService;
 
   settings: IUserSettingsResponse;
 
@@ -418,18 +423,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
     // setup new targets
     const newTargets = [
-      ...this.streamInfo.enabledPlatforms.map(platform =>
-        isDualOutputMode
-          ? {
-              platform,
-              streamKey: getPlatformService(platform).state.streamKey,
-              mode: this.getPlatformMode(platform),
-            }
-          : {
-              platform,
-              streamKey: getPlatformService(platform).state.streamKey,
-            },
-      ),
+      ...this.setupPlatforms(),
       ...this.customDestinations.map(dest =>
         isDualOutputMode
           ? {
@@ -477,6 +471,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
       kickTarget.mode = isDualOutputMode ? this.getPlatformMode('kick') : 'landscape';
     }
 
+    console.log('RESTREAM Creating restream targets:', newTargets);
+
     // in dual output mode, only create targets for the displays that are being restreamed
     if (isDualOutputMode) {
       const modesToRestream = this.streamInfo.displaysToRestream.map(display =>
@@ -486,11 +482,54 @@ export class RestreamService extends StatefulService<IRestreamState> {
       const filteredTargets = newTargets.filter(
         target => target.mode && modesToRestream.includes(target.mode),
       );
+
       await this.createTargets(filteredTargets);
     } else {
       // in single output mode, create all targets
       await this.createTargets(newTargets);
     }
+  }
+
+  setupPlatforms() {
+    const isEnhancedBroadcasting = this.settingsService.isEnhancedBroadcasting();
+    console.log('RESTREAM Enhanced broadcasting multistream:', isEnhancedBroadcasting);
+    const isDualOutputMode = this.streamingService.views.isDualOutputMode;
+
+    return this.streamInfo.enabledPlatforms.reduce((platforms, platform) => {
+      // Enhanced broacasting when multistreaming uses its own video context and stream
+      // so skip setting up Twitch as a target here
+      if (isEnhancedBroadcasting && platform === 'twitch') {
+        return platforms;
+      }
+
+      const targetInfo = isDualOutputMode
+        ? {
+            platform,
+            streamKey: getPlatformService(platform).state.streamKey,
+            mode: this.getPlatformMode(platform),
+          }
+        : {
+            platform,
+            streamKey: getPlatformService(platform).state.streamKey,
+          };
+
+      platforms.push(targetInfo);
+
+      return platforms;
+    }, []);
+
+    // return this.streamInfo.enabledPlatforms.map(platform =>
+    //   isDualOutputMode
+    //     ? {
+    //         platform,
+    //         streamKey: getPlatformService(platform).state.streamKey,
+    //         mode: this.getPlatformMode(platform),
+    //       }
+    //     : {
+    //         platform,
+    //         streamKey: getPlatformService(platform).state.streamKey,
+    //       },
+    // );
   }
 
   formatUrl(url: string): string {

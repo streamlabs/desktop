@@ -249,7 +249,12 @@ export class OutputSettingsService extends Service {
    * settings based on the current mode.
    * @returns settings for the recording
    */
-  getStreamingSettings() {
+  getStreamingSettings(v2: boolean = false) {
+    // TODO: remove after migration merged
+    if (v2) {
+      return this.getV2StreamingSettings();
+    }
+
     const output = this.settingsService.state.Output.formData;
 
     const mode: TOutputSettingsMode = this.settingsService.findSettingValue(
@@ -305,6 +310,88 @@ export class OutputSettingsService extends Service {
         videoEncoder,
         enforceServiceBitrate,
         enableTwitchVOD,
+        useAdvanced,
+        customEncSettings,
+      };
+    }
+  }
+
+  /**
+   * Get streaming settings
+   * @remark Primarily used for setting up the streaming output context,
+   * this function will automatically return either the simple or advanced
+   * settings based on the current mode.
+   * @returns settings for the streaming
+   */
+  getV2StreamingSettings() {
+    const output = this.settingsService.state.Output.formData;
+
+    const mode: TOutputSettingsMode = this.settingsService.findSettingValue(
+      output,
+      'Untitled',
+      'Mode',
+    );
+
+    const encoder = obsEncoderToEncoderFamily(
+      this.settingsService.findSettingValue(output, 'Streaming', 'Encoder') ||
+        this.settingsService.findSettingValue(output, 'Streaming', 'StreamEncoder'),
+    ) as EEncoderFamily;
+
+    const convertedEncoderName:
+      | EObsSimpleEncoder.x264_lowcpu
+      | EObsAdvancedEncoder = this.convertEncoderToNewAPI(encoder);
+
+    const videoEncoder: EObsAdvancedEncoder =
+      convertedEncoderName === EObsSimpleEncoder.x264_lowcpu
+        ? EObsAdvancedEncoder.obs_x264
+        : convertedEncoderName;
+
+    const enforceBitrateKey = mode === 'Advanced' ? 'ApplyServiceSettings' : 'EnforceBitrate';
+    const enforceServiceBitrate = this.settingsService.findSettingValue(
+      output,
+      'Streaming',
+      enforceBitrateKey,
+    );
+
+    const useAdvanced = this.settingsService.findSettingValue(output, 'Streaming', 'UseAdvanced');
+
+    const customEncSettings = this.settingsService.findSettingValue(
+      output,
+      'Streaming',
+      'x264Settings',
+    );
+
+    if (mode === 'Advanced') {
+      const rescaling = this.settingsService.findSettingValue(output, 'Recording', 'RecRescale');
+
+      const enableTwitchVOD = this.settingsService.findSettingValue(
+        output,
+        'Streaming',
+        'VodTrackEnabled',
+      );
+
+      const advancedStreamSettings = {
+        videoEncoder,
+        enforceServiceBitrate,
+        enableTwitchVOD,
+        rescaling,
+      };
+
+      if (enableTwitchVOD) {
+        const twitchTrack = this.settingsService.findSettingValue(
+          output,
+          'Streaming',
+          'VodTrackIndex',
+        );
+
+        return { ...advancedStreamSettings, twitchTrack };
+      }
+
+      return advancedStreamSettings;
+    } else {
+      return {
+        videoEncoder,
+        enforceServiceBitrate,
         useAdvanced,
         customEncSettings,
       };

@@ -29,7 +29,6 @@ import {
 } from './twitch/content-classification';
 import { ENotificationType, NotificationsService } from '../notifications';
 import { $t } from '../i18n';
-import { getDefined } from 'util/properties-type-guards';
 
 export interface ITwitchStartStreamOptions {
   title: string;
@@ -208,7 +207,6 @@ export class TwitchService
       this.streamSettingsService.protectedModeEnabled &&
       this.streamSettingsService.isSafeToModifyStreamKey()
     ) {
-      console.log('protectedModeEnabled, fetching Twitch stream key');
       let key = await this.fetchStreamKey();
       // do not start actual stream when testing
       if (Utils.isTestMode()) {
@@ -241,6 +239,8 @@ export class TwitchService
           }
         }
 
+        console.log('TWITCH channelInfo', JSON.stringify(channelInfo, null, 2));
+
         await this.putChannelInfo(channelInfo);
       }
     } else if (this.streamingService.views.isTwitchDualStreaming) {
@@ -257,8 +257,12 @@ export class TwitchService
   }
 
   async afterStopStream(): Promise<void> {
-    // Restore enhanced broadcasting state
-    this.settingsService.setEnhancedBroadcasting(this.state.settings.isEnhancedBroadcasting);
+    // To dual stream twitch, enhanced broadcasting is required so it is enabled by default
+    // in the go live window. But to persist the user's preference when not dual streaming,
+    // restore the previous state.
+    if (this.streamingService.views.isTwitchDualStreaming) {
+      this.settingsService.setEnhancedBroadcasting(this.state.settings.isEnhancedBroadcasting);
+    }
   }
 
   async setupDualStream(goLiveSettings?: IGoLiveSettings) {
