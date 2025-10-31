@@ -324,7 +324,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     }
   }
 
-  private fetchSettingsFromObs(categoryName: TCategoryName): ISettingsCategory {
+  private fetchSettingsFromObs(categoryName: TCategoryName | 'StreamSecond'): ISettingsCategory {
     const settingsMetadata = obs.NodeObs.OBS_settings_getSettings(categoryName);
     let settings = settingsMetadata.data;
     if (!settings) settings = [];
@@ -442,6 +442,8 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     this.getCategories().forEach((categoryName: TCategoryName) => {
       settingsFormData[categoryName] = this.fetchSettingsFromObs(categoryName);
     });
+    // These settings are not displayed in the menu but are still needed for dual output
+    settingsFormData.StreamSecond = this.fetchSettingsFromObs('StreamSecond');
 
     this.SET_SETTINGS(settingsFormData);
   }

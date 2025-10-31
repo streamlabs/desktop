@@ -10,7 +10,7 @@ import { DualOutputDeveloperSettings } from './Developer';
 import { ObsSettingsSection } from './ObsSettings';
 import { CheckboxInput, SwitchInput, ListInput } from 'components-react/shared/inputs';
 
-export function OverlaySettings() {
+export function SceneCollectionsSettings() {
   const {
     SceneCollectionsService,
     OverlaysPersistenceService,
@@ -116,9 +116,10 @@ export function OverlaySettings() {
   return (
     <>
       <ObsSettingsSection>
-        <Button onClick={createSceneCollection}>{$t('Create Scene Collection')}</Button>
-        <Button onClick={loadWidget}>{$t('Import Widget File in Current Scene')}</Button>
-        <br />
+        <div style={{ display: 'flex', justifyContent: 'space-evenly', paddingBottom: '16px' }}>
+          <Button onClick={createSceneCollection}>{$t('Create Scene Collection')}</Button>
+          <Button onClick={loadWidget}>{$t('Import Widget File in Current Scene')}</Button>
+        </div>
       </ObsSettingsSection>
       <ObsSettingsSection>
         <p>
@@ -126,14 +127,15 @@ export function OverlaySettings() {
             'This feature is intended for overlay designers to export their work for our Overlay Library. Not all sources will be exported, use at your own risk.',
           )}
         </p>
-        <Button onClick={saveOverlay}>{$t('Export Overlay File')}</Button>
-        <Button onClick={loadOverlay}>{$t('Import Overlay File')}</Button>
+        <div style={{ display: 'flex', justifyContent: 'space-evenly', paddingBottom: '16px' }}>
+          <Button onClick={saveOverlay}>{$t('Export Overlay File')}</Button>
+          <Button onClick={loadOverlay}>{$t('Import Overlay File')}</Button>
+        </div>
         <SwitchInput
           label={$t('Enable Designer Mode')}
           value={designerMode}
           onChange={setDesignerMode}
         />
-        <br />
         {message}
       </ObsSettingsSection>
       <ObsSettingsSection>

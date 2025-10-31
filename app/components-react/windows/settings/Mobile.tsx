@@ -164,18 +164,29 @@ function UltraInsert() {
   function Content() {
     return (
       <div style={{ display: 'flex' }}>
-        <UltraIcon style={{ width: '20px', height: '20px' }} />
-        <div style={{ margin: '0 8px' }}>
-          {$t(
-            'Enjoy your Ultra membership benefits on mobile including Multistream, Disconnect protection and premium themes.',
+        <UltraIcon style={{ width: '20px', height: '20px', alignSelf: 'flex-start' }} />
+        <div style={{ margin: '0 8px', display: 'flex', flexDirection: 'column' }}>
+          <h2>{$t('Go Ultra and do more!')}</h2>
+          <ul style={{ paddingInlineStart: 0 }}>
+            <li>
+              {$t(
+                'Enjoy your Ultra membership benefits on mobile including Multistream, Disconnect protection and premium themes.',
+              )}
+            </li>
+            <li>
+              {$t(
+                'Switch between your Desktop and Mobile stream without going offline with Stream Shift.',
+              )}
+            </li>
+          </ul>
+          {!isPrime && (
+            <ButtonHighlighted
+              style={{ alignSelf: 'center', width: '120px' }}
+              text={$t('Get Ultra')}
+              onClick={() => MagicLinkService.actions.linkToPrime('mobile-settings')}
+            />
           )}
         </div>
-        {!isPrime && (
-          <ButtonHighlighted
-            text={$t('Get Ultra')}
-            onClick={() => MagicLinkService.actions.linkToPrime('mobile-settings')}
-          />
-        )}
       </div>
     );
   }

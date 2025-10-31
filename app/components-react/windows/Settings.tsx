@@ -46,7 +46,10 @@ export const SETTINGS_CONFIG: Record<ESettingsCategory, ISettingsConfig> = {
   },
   [ESettingsCategory.Advanced]: { icon: 'fas fa-cogs', component: pages.AdvancedSettings },
   [ESettingsCategory.Developer]: { icon: 'far fa-file-code', component: pages.DeveloperSettings },
-  [ESettingsCategory.SceneCollections]: { icon: 'icon-themes', component: pages.OverlaySettings },
+  [ESettingsCategory.SceneCollections]: {
+    icon: 'icon-themes',
+    component: pages.SceneCollectionsSettings,
+  },
   [ESettingsCategory.Notifications]: {
     icon: 'icon-notifications',
     component: pages.NotificationSettings,
