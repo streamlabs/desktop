@@ -541,23 +541,23 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
    * @remark - Currently only used for Twitch Enhanced Broadcasting when Multistreaming
    * @param display - Video context to copy settings from
    */
-  establishBroadcastContext(display: TDisplayType) {
-    if (!this.contexts[display]) {
-      console.error(
-        `Cannot create extra broadcast context because ${display} context does not exist.`,
-      );
-    }
+  // establishBroadcastContext(display: TDisplayType) {
+  //   if (!this.contexts[display]) {
+  //     console.error(
+  //       `Cannot create extra broadcast context because ${display} context does not exist.`,
+  //     );
+  //   }
 
-    this.contexts.broadcast = VideoFactory.create();
-    this.contexts.broadcast.video = { ...this.contexts[display].video };
-  }
+  //   this.contexts.broadcast = VideoFactory.create();
+  //   this.contexts.broadcast.video = { ...this.contexts[display].video };
+  // }
 
-  destroyBroadcastContext() {
-    if (this.contexts.broadcast) {
-      this.contexts.broadcast.destroy();
-      this.contexts.broadcast = null as IVideo;
-    }
-  }
+  // destroyBroadcastContext() {
+  //   if (this.contexts.broadcast) {
+  //     this.contexts.broadcast.destroy();
+  //     this.contexts.broadcast = null as IVideo;
+  //   }
+  // }
 
   /**
    * Shut down the video settings service
