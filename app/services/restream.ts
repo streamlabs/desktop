@@ -86,6 +86,10 @@ interface IRestreamState {
    */
   streamShiftTargets: ITargetLiveData[];
 
+  /**
+   * To prevent the user from being in a stale stream shift state, allow the user to
+   * force go live even if the stream shift is live call returns true.
+   */
   streamShiftForceGoLive: boolean;
 }
 

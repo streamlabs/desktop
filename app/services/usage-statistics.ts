@@ -14,6 +14,7 @@ import * as remote from '@electron/remote';
 import { DiagnosticsService } from 'app-services';
 import { getOS, OS } from 'util/operating-systems';
 import { getWmiClass } from 'util/wmi';
+import { Subject } from 'rxjs';
 
 export type TUsageEvent = 'stream_start' | 'stream_end' | 'app_start' | 'app_close' | 'crash';
 
@@ -52,7 +53,26 @@ export type TAnalyticsEvent =
   | 'TikTokApplyPrompt'
   | 'ScheduleStream'
   | 'StreamShift'
-  | 'StartDualOutputRecording';
+  | 'StartDualOutputRecording'
+  | 'Ultra';
+
+// Refls are used as uuids for ultra components and should be updated for new ulta components.
+export type TUltraRefl =
+  | 'grow-community'
+  | 'slobs-dual-output'
+  | 'slobs-single-output'
+  | 'slobs-streamswitcher'
+  | 'slobs-side-nav'
+  | 'desktop-collab-cam'
+  | 'slobs-scene-collections'
+  | 'slobs-media-gallery'
+  | 'slobs-multistream-error'
+  | 'slobs-ui-themes'
+  | 'mobile-settings'
+  | 'slobs-multistream-settings'
+  | 'slobs-multistream'
+  | 'slobs-stream-settings'
+  | string;
 
 interface IAnalyticsEvent {
   product: string;
@@ -105,6 +125,10 @@ export class UsageStatisticsService extends Service {
   version = Utils.env.SLOBS_VERSION;
 
   private analyticsEvents: IAnalyticsEvent[] = [];
+  private refl: string = '';
+  private event: TAnalyticsEvent | null = null;
+
+  ultraSubscription = new Subject<boolean>();
 
   init() {
     this.loadInstallerId();
@@ -113,6 +137,14 @@ export class UsageStatisticsService extends Service {
     setInterval(() => {
       this.recordAnalyticsEvent('Heartbeat', { bundle: SLOBS_BUNDLE_ID });
     }, 10 * 60 * 1000);
+
+    this.ultraSubscription.subscribe(() => {
+      if (this.refl === '') {
+        console.warn('Ultra event recorded with empty refl.');
+      }
+
+      this.recordAnalyticsEvent(this.event, { refl: this.refl });
+    });
   }
 
   loadInstallerId() {
@@ -230,10 +262,20 @@ export class UsageStatisticsService extends Service {
     this.recordAnalyticsEvent('Shown', { component, target });
   }
 
+  recordUltra(target: TUltraRefl, event?: TAnalyticsEvent) {
+    const eventName = event || 'Ultra';
+    this.recordClick(eventName, target);
+    this.refl = target;
+    this.event = eventName;
+  }
+
   /**
    * Should be called on shutdown to flush all events in the pipeline
    */
   async flushEvents() {
+    // Correctly handle unsubscribing to prevent memory leaks
+    this.ultraSubscription.unsubscribe();
+
     this.session.endTime = new Date();
 
     const session = {

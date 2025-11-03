@@ -100,7 +100,7 @@ function ModalFooter() {
             ),
             btnText: $t('Switch to Streamlabs Desktop'),
             fn: () => {
-              Services.StreamingService.actions.goLive();
+              goLive();
               close();
             },
             cancelBtnText: $t('Cancel'),
@@ -112,9 +112,7 @@ function ModalFooter() {
             },
           });
 
-          if (!shouldForceGoLive) {
-            return;
-          }
+          if (!shouldForceGoLive) return;
         }
       } catch (e: unknown) {
         console.error('Error checking stream switcher status:', e);
@@ -171,7 +169,7 @@ function ModalFooter() {
           {isFetchingStreamStatus ? (
             <i className="fa fa-spinner fa-pulse" />
           ) : (
-            <>{$t('Confirm & Go Live')}</>
+            $t('Confirm & Go Live')
           )}
         </Button>
       )}
