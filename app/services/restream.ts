@@ -414,15 +414,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
       'this.settingsService.views.values.StreamSecond',
       JSON.stringify(this.settingsService.views.values.StreamSecond, null, 2),
     );
-
-    console.log(
-      'this.streamSettingsService.views.obsStreamSettings',
-      this.streamSettingsService.views.obsStreamSettings,
-    );
-    console.log(
-      'this.streamSettingsService.views.obsStreamSecondSettings',
-      this.streamSettingsService.views.obsStreamSecondSettings,
-    );
   }
 
   /**
@@ -535,19 +526,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
       return platforms;
     }, []);
-
-    // return this.streamInfo.enabledPlatforms.map(platform =>
-    //   isDualOutputMode
-    //     ? {
-    //         platform,
-    //         streamKey: getPlatformService(platform).state.streamKey,
-    //         mode: this.getPlatformMode(platform),
-    //       }
-    //     : {
-    //         platform,
-    //         streamKey: getPlatformService(platform).state.streamKey,
-    //       },
-    // );
   }
 
   formatUrl(url: string): string {

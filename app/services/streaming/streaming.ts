@@ -1311,6 +1311,8 @@ export class StreamingService
       ? 'horizontal'
       : 'vertical';
 
+    console.log('STREAMING Setting up restream context for display', display);
+
     const settings =
       display === 'horizontal'
         ? this.settingsService.views.values.Stream
@@ -1320,7 +1322,7 @@ export class StreamingService
 
     this.videoSettingsService.validateVideoContext(display);
 
-    // Restore Twitch stream for the display that is being restreamed
+    // Apply Twitch stream settings for the display that is being restreamed
     const streamKey = await (getPlatformService('twitch') as TwitchService).fetchStreamKey();
 
     this.streamSettingsService.setSettings(
