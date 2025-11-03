@@ -86,7 +86,7 @@ import { MarkersService } from 'services/markers';
 import { byOS, OS } from 'util/operating-systems';
 import { DualOutputService } from 'services/dual-output';
 import { capitalize } from 'lodash';
-import { YoutubeService } from 'app-services';
+import { TwitchService, YoutubeService } from 'app-services';
 import { EOBSOutputType, EOBSOutputSignal, IOBSOutputSignalInfo } from 'services/core/signals';
 import { SignalsService } from 'services/signals-manager';
 import { TSocketEvent } from 'services/websocket';
@@ -603,7 +603,19 @@ export class StreamingService
 
       // Setup restream context if enhanced broadcasting is enabled for Twitch
       if (this.state.enhancedBroadcasting) {
-        this.setupRestreamContext();
+        try {
+          await this.setupRestreamContext();
+        } catch (e: unknown) {
+          console.error('Error setting up restream context for enhanced broadcasting:', e);
+
+          const error = this.handleTypedStreamError(
+            e,
+            'RESTREAM_ENHANCED_BROADCASTING_FAILED',
+            'Failed to setup restream for enhanced broadcasting',
+          );
+          this.setError(error);
+          return;
+        }
       }
     }
 
@@ -1105,7 +1117,7 @@ export class StreamingService
       // The broadcast stream context should have been created during the go live checklist
       // but as a failsafe, check again here and create if missing
       if (!this.contexts.restream.streaming) {
-        this.setupRestreamContext();
+        await this.setupRestreamContext();
       }
 
       console.log('STARTING this.contexts.restream.streaming', this.contexts.restream.streaming);
@@ -1294,7 +1306,7 @@ export class StreamingService
    * @remark Twitch enhanced broadcasting handles both the horizontal and vertical target on its own
    * so only one restream context is needed.
    */
-  private setupRestreamContext() {
+  private async setupRestreamContext() {
     const display = this.settingsService.views.values.Stream.server.includes('streamlabs')
       ? 'horizontal'
       : 'vertical';
@@ -1307,6 +1319,19 @@ export class StreamingService
     console.log('STREAMING Creating RESTREAM stream for platform', settings.key, settings.server);
 
     this.videoSettingsService.validateVideoContext(display);
+
+    // Restore Twitch stream for the display that is being restreamed
+    const streamKey = await (getPlatformService('twitch') as TwitchService).fetchStreamKey();
+
+    this.streamSettingsService.setSettings(
+      {
+        key: streamKey,
+        platform: 'twitch',
+        streamType: 'rtmp_common',
+        server: 'auto',
+      },
+      display,
+    );
 
     const mode = this.outputSettingsService.getSettings().mode;
     try {
