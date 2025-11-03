@@ -405,6 +405,24 @@ export class RestreamService extends StatefulService<IRestreamState> {
         server: ingest,
       });
     }
+
+    console.log(
+      'this.settingsService.views.values.Stream',
+      JSON.stringify(this.settingsService.views.values.Stream, null, 2),
+    );
+    console.log(
+      'this.settingsService.views.values.StreamSecond',
+      JSON.stringify(this.settingsService.views.values.StreamSecond, null, 2),
+    );
+
+    console.log(
+      'this.streamSettingsService.views.obsStreamSettings',
+      this.streamSettingsService.views.obsStreamSettings,
+    );
+    console.log(
+      'this.streamSettingsService.views.obsStreamSecondSettings',
+      this.streamSettingsService.views.obsStreamSecondSettings,
+    );
   }
 
   /**

@@ -124,9 +124,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   get enabledPlatforms(): TPlatform[] {
     // Twitch dual streaming is only available if Twitch is the only enabled platform for performance reasons.
     // Checking for Twitch dual streaming instead of toggling all other platforms off preserves the enabled platforms state.
-    // if (this.isTwitchDualStreaming) {
-    //   return ['twitch'];
-    // }
+    // TODO: comment out for multistream dual stream with enhanced broadcasting
+    if (this.isTwitchDualStreaming) {
+      return ['twitch'];
+    }
 
     return this.getEnabledPlatforms(this.settings.platforms);
   }
@@ -164,17 +165,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Primarily used for custom UI handling for Twitch dual stream
    */
   get isTwitchDualStreaming() {
-    // console.log(
-    //   'old isTwitchDualStreaming ',
-    //   this.settings.platforms?.twitch && this.settings.platforms?.twitch.display === 'both',
-    // );
-
-    // console.log('hasMultipleTargetsEnabled ', this.hasMultipleTargetsEnabled);
-
     return (
       this.settings.platforms?.twitch &&
       this.settings.platforms?.twitch.display === 'both' &&
-      this.enabledPlatforms.length === 1
+      this.isDualOutputMode
     );
   }
 
@@ -406,6 +400,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return (
       this.enabledPlatforms.length === 1 && this.activeDisplayPlatforms.vertical.includes('twitch')
     );
+  }
+
+  getIsEnhancedBroadcasting(): boolean {
+    return Services.SettingsService.isEnhancedBroadcasting();
   }
 
   /**
