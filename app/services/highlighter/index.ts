@@ -957,7 +957,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       }
 
       this.renderingClips[clip.path] =
-        this.renderingClips[clip.path] ?? new RenderingClip(clip.path);
+        this.renderingClips[clip.path] ?? new RenderingClip(clip.path, clip.display);
     }
 
     //TODO M: tracking type not correct

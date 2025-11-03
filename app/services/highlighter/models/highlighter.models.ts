@@ -1,3 +1,4 @@
+import { TDisplayType } from 'services/settings-v2/video';
 import {
   IAiClipInfo,
   IHighlighterMilestone,
@@ -55,7 +56,7 @@ interface IBaseClip {
   duration?: number;
   deleted: boolean;
   globalOrderPosition: number;
-  display?: string;
+  display?: TDisplayType;
   streamInfo:
     | {
         [streamId: string]: TStreamInfo;
