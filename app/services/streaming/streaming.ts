@@ -1498,7 +1498,10 @@ export class StreamingService
       // cast the recording instance to simple recording to be able to set
       // the values correctly
       const recording = this.migrateSettings('recording', display) as ISimpleRecording;
-      recording.audioEncoder = AudioEncoderFactory.create('ffmpeg_aac', 'audio-encoder-recording');
+      recording.audioEncoder = AudioEncoderFactory.create(
+        'ffmpeg_aac',
+        `audio-encoder-recording-${display}`,
+      );
 
       // to prevent reference errors, cast the recording instance
       this.contexts[display].recording = recording as ISimpleRecording;
@@ -1606,7 +1609,10 @@ export class StreamingService
       // cast the streaming instance to simple streaming to be able to set
       // the values correctly
       const stream = this.migrateSettings('streaming', display) as ISimpleStreaming;
-      stream.audioEncoder = AudioEncoderFactory.create('ffmpeg_aac', 'audio-encoder-stream');
+      stream.audioEncoder = AudioEncoderFactory.create(
+        'ffmpeg_aac',
+        `audio-encoder-stream-${display}`,
+      );
 
       // to prevent reference errors, cast the recording instance
       this.contexts[display].streaming = stream as ISimpleStreaming;
@@ -1646,6 +1652,7 @@ export class StreamingService
       this.contexts[display].streaming.start();
     }
 
+    this.logContexts(display, 'streaming');
     return Promise.resolve(this.contexts[display].streaming);
   }
 
