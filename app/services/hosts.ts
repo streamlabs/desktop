@@ -65,4 +65,8 @@ export class UrlService extends Service {
     const locale = this.i18nService.state.locale;
     return `https://support.streamlabs.com/hc/${locale.toLowerCase()}`;
   }
+
+  get reactiveDataSchemaUrl() {
+    return 'https://alpha-sl-dynamic-overlays-demo.streamlabs.workers.dev/schema.json';
+  }
 }

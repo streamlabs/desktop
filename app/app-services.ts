@@ -109,6 +109,7 @@ export { GrowService } from 'services/grow/grow';
 export { GuestCamService } from 'services/guest-cam';
 export { DualOutputService } from 'services/dual-output';
 export { VisionService } from 'services/vision';
+export { UserStateService } from 'services/user-state';
 export { SseService } from 'services/server-sent-events';
 
 // WIDGETS
@@ -216,6 +217,7 @@ import { UrlService } from 'services/hosts';
 import { KickService } from 'services/platforms/kick';
 import { SseService } from './services/server-sent-events';
 import { VisionService } from 'services/vision';
+import { UserStateService } from 'services/user-state';
 import { SignalsService } from 'services/signals-manager';
 import { TroubleshooterService } from 'services/troubleshooter';
 
@@ -303,5 +305,6 @@ export const AppServices = {
   VirtualWebcamService,
   SseService,
   VisionService,
+  UserStateService,
   TroubleshooterService,
 };

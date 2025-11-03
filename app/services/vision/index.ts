@@ -2,12 +2,10 @@ import { InitAfter, Inject, Service } from 'services';
 import * as remote from '@electron/remote';
 import path from 'path';
 import { authorizedHeaders, jfetch } from 'util/requests';
-import { HostsService, SourcesService, SettingsService, UserService } from 'app-services';
+import { HostsService, SettingsService, UserService } from 'app-services';
 import { RealmObject } from 'services/realm';
 import { ObjectSchema } from 'realm';
 import uuid from 'uuid/v4';
-import * as obs from '../../../obs-api';
-import { convertDotNotationToTree } from 'util/dot-tree';
 import { VisionRunner, VisionRunnerStartOptions } from './vision-runner';
 import { VisionUpdater } from './vision-updater';
 import _ from 'lodash';
@@ -94,6 +92,9 @@ export class VisionState extends RealmObject {
 
 VisionState.register();
 
+//
+//
+
 @InitAfter('UserService')
 export class VisionService extends Service {
   private visionRunner = new VisionRunner();
@@ -102,6 +103,8 @@ export class VisionService extends Service {
   );
   private eventSource: EventSource;
 
+  public sourceStateKeyInterest: Map<string, Set<string>> = new Map();
+
   // update prompt
   private lastPromptAt = 0;
   private lastPromptVersion?: string;
@@ -109,14 +112,11 @@ export class VisionService extends Service {
 
   @Inject() userService: UserService;
   @Inject() hostsService: HostsService;
-  @Inject() private sourcesService: SourcesService;
   @Inject() settingsService: SettingsService;
 
   state = VisionState.inject();
 
   init() {
-    obs.NodeObs.RegisterSourceMessageCallback(this.onSourceMessageCallback);
-
     window.addEventListener('beforeunload', () => this.stop());
 
     this.visionRunner.on('exit', () => {
@@ -130,30 +130,6 @@ export class VisionService extends Service {
     // useful for testing robustness
     // setInterval(() => this.ensureRunning(), 30_000);
   }
-
-  private onSourceMessageCallback = async (evt: { sourceName: string; message: any }[]) => {
-    for (const { sourceName, message } of evt) {
-      const source = this.sourcesService.views.getSource(sourceName)?.getObsInput();
-
-      if (!source) {
-        continue;
-      }
-
-      const keys = JSON.parse(message).keys;
-      const tree = convertDotNotationToTree(keys);
-      const res = await this.requestState({ query: tree });
-      const payload = JSON.stringify({
-        type: 'state.update',
-        message: res,
-        key: keys?.join(','),
-        event_id: uuid(),
-      });
-
-      source.sendMessage({
-        message: payload,
-      });
-    }
-  };
 
   ensureUpdated = pMemoize(
     async ({ startAfterUpdate = true }: { startAfterUpdate?: boolean } = {}) => {
@@ -309,14 +285,6 @@ export class VisionService extends Service {
     );
   }
 
-  private async requestState(params: unknown) {
-    return await this.authPostWithTimeout(
-      `https://${this.hostsService.streamlabs}/api/v5/user-state/desktop/query`,
-      params,
-      8_000,
-    );
-  }
-
   private async authPostWithTimeout(url: string, payload: unknown, timeoutMs = 8_000) {
     const headers = authorizedHeaders(
       this.userService.apiToken,
@@ -374,7 +342,7 @@ export class VisionService extends Service {
     const headers = new Headers({ 'Content-Type': 'application/json' });
 
     const activeProcess = this.state.availableProcesses.find(p => p.pid === pid);
-    console.log('Activating process', pid, 'with game hint', gameHint, 'process=', activeProcess);
+    this.log('Activating process', pid, 'with game hint', gameHint, 'process=', activeProcess);
     if (activeProcess.type === 'capture_device') {
       this.writeState({ selectedProcessId: pid, selectedGame: gameHint });
     } else {

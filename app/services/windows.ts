@@ -44,6 +44,7 @@ import {
   Main,
   MultistreamChatInfo,
   MarketingModal,
+  ReactiveDataEditorWindow,
 } from 'components/shared/ReactComponentList';
 
 import SourcePropertiesDeprecated from 'components/windows/SourceProperties.vue';
@@ -143,6 +144,7 @@ export function getComponents() {
     CustomCodeWindow,
     SourceShowcase,
     MarketingModal,
+    ReactiveDataEditorWindow,
   };
 }
 

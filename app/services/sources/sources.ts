@@ -43,6 +43,8 @@ import { SmartBrowserSourceManager } from './properties-managers/smart-browser-s
 import { StreamlabelsManager } from './properties-managers/streamlabels-manager';
 import { WidgetManager } from './properties-managers/widget-manager';
 import { SourceDisplayData } from './sources-data';
+import { UserStateService } from 'app-services';
+import { ReactiveDataEditorProps } from 'components-react/windows/reactive-data-editor/types';
 
 export { EDeinterlaceFieldOrder, EDeinterlaceMode } from '../../../obs-api';
 
@@ -197,6 +199,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
   @Inject() private customizationService: CustomizationService;
   @Inject() private incrementalRolloutService: IncrementalRolloutService;
   @Inject() private guestCamService: GuestCamService;
+  @Inject() private userStateService: UserStateService;
 
   sourceDisplayData = SourceDisplayData(); // cache source display data
 
@@ -988,6 +991,29 @@ export class SourcesService extends StatefulService<ISourcesState> {
       componentName: 'BrowserSourceInteraction',
       queryParams: { sourceId },
       title: $t('Interact: %{sourceName}', { sourceName: source.name }),
+      size: {
+        width: 800,
+        height: 600,
+      },
+    });
+  }
+
+  showReactiveDataEditorWindow(sourceId: string) {
+    const source = this.views.getSource(sourceId);
+    if (!source) return;
+
+    if (source.propertiesManagerType !== 'smartBrowserSource') {
+      return;
+    }
+
+    const stateKeys = this.userStateService.getStateKeysForSource(source.sourceId);
+
+    console.log({ stateKeysOfInterest: stateKeys });
+
+    this.windowsService.showWindow({
+      componentName: 'ReactiveDataEditorWindow',
+      queryParams: { stateKeysOfInterest: stateKeys } as ReactiveDataEditorProps,
+      title: $t('Reactive Data Editor'),
       size: {
         width: 800,
         height: 600,

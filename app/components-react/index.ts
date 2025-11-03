@@ -47,6 +47,7 @@ import Main from './windows/Main';
 import Loader from './pages/Loader';
 import StartStreamingButton from './root/StartStreamingButton';
 import TestWidgets from './root/TestWidgets';
+import ReactiveDataEditorWindow from './windows/reactive-data-editor/ReactiveDataEditorWindow';
 import { PlatformMerge, PlatformAppStore, PlatformAppMainPage } from './pages';
 
 // list of React components to be used inside Vue components
@@ -102,4 +103,5 @@ export const components = {
   Loader,
   StartStreamingButton,
   TestWidgets,
+  ReactiveDataEditorWindow,
 };
