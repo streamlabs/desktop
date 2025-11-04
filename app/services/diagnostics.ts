@@ -495,16 +495,24 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
 
     const platforms = this.formatTargets(platformList);
     const destinations = this.formatTargets(destinationList);
-    // Note: this tracks if the user streamed with enhanced broadcasting, it does not
-    // indicate if the user had enhanced broadcasting enabled in settings.
-    const enhancedBroadcasting = this.outputSettingsService.getIsEnhancedBroadcasting();
 
     const info = {
       platforms,
       destinations,
       type: 'Single Output',
-      enhancedBroadcasting,
-    };
+    } as Partial<IStreamDiagnosticInfo>;
+
+    if (!this.dualOutputService.views.dualOutputMode && platforms.replace(/"/g, '') === 'twitch') {
+      const enhancedBroadcasting = this.outputSettingsService.getIsEnhancedBroadcasting();
+
+      if (enhancedBroadcasting.setting === 'Enabled' && enhancedBroadcasting.live !== 'Enabled') {
+        this.logProblem(
+          'Twitch Enhanced Broadcasting setting enabled but did not go live with Enhanced Broadcasting.',
+        );
+      }
+
+      info.enhancedBroadcasting = enhancedBroadcasting.live;
+    }
 
     if (this.dualOutputService.views.dualOutputMode) {
       return {
@@ -1100,7 +1108,8 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
           Platforms: platforms,
           Destinations: s?.destinations,
           'Stream Type': s?.type,
-          'Enhanced Broadcasting': s?.enhancedBroadcasting ?? 'N/A',
+          'Enhanced Broadcasting':
+            s?.enhancedBroadcasting !== undefined ? s.enhancedBroadcasting : 'N/A',
         };
       }),
     );
