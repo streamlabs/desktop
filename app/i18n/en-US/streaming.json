@@ -320,5 +320,12 @@
   "Cannot change displays while live.": "Cannot change displays while live.",
   "Stream switcher cannot be used in dual output mode.": "Stream switcher cannot be used in dual output mode.",
   "Cannot toggle dual output in Studio Mode.": "Cannot toggle dual output in Studio Mode.",
-  "Dual Output will be disabled since not supported in this mode.": "Dual Output will be disabled since not supported in this mode."
+  "Dual Output will be disabled since not supported in this mode.": "Dual Output will be disabled since not supported in this mode.",
+  "An unknown Recording error occurred. Please try again.": "An unknown Recording error occurred. Please try again.",
+  "An unknown Replay Buffer error occurred. Please try again.": "An unknown Replay Buffer error occurred. Please try again.",
+  "Recording in progress. Stop recording to change the recording display.": "Recording in progress. Stop recording to change the recording display.",
+  "Vertical Recording Active": "Vertical Recording Active",
+  "Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?": "Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?",
+  "Vertical Replay Buffer Active": "Vertical Replay Buffer Active",
+  "Vertical replay buffer is in-progress. Would you like to stop the replay buffer to enable AI Highlighter?": "Vertical replay buffer is in-progress. Would you like to stop the replay buffer to enable AI Highlighter?"
 }

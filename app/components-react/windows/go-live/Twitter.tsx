@@ -2,14 +2,10 @@ import React from 'react';
 import InputWrapper from '../../shared/inputs/InputWrapper';
 import { Services } from '../../service-provider';
 import { $t } from '../../../services/i18n';
-import { Button } from 'antd';
 import { useGoLiveSettings } from './useGoLiveSettings';
 import { injectWatch } from 'slap';
-import { TwitterOutlined } from '@ant-design/icons';
 import * as remote from '@electron/remote';
 import PlatformLogo from 'components-react/shared/PlatformLogo';
-
-const TwitterIcon = TwitterOutlined;
 
 export default function TwitterInput() {
   const { TwitterService } = Services;

@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { shell } from 'electron';
 import Scrollable from 'components-react/shared/Scrollable';
 import { Services } from 'components-react/service-provider';
-import { useVuex } from 'components-react/hooks';
 import { TAppPage } from 'services/navigation';
 import { IAnnouncementsInfo } from 'services/announcements';
 import styles from './News.m.less';
@@ -10,13 +9,7 @@ import { useRealmObject } from 'components-react/hooks/realm';
 import { TCategoryName } from 'services/settings';
 
 export default function News() {
-  const {
-    WindowsService,
-    SettingsService,
-    NavigationService,
-    AnnouncementsService,
-    UsageStatisticsService,
-  } = Services;
+  const { WindowsService, SettingsService, NavigationService, AnnouncementsService } = Services;
 
   const newsItems = useRealmObject(AnnouncementsService.currentAnnouncements).news;
 

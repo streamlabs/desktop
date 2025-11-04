@@ -233,13 +233,18 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     }
   }, []);
 
-  const getIsRedButton =
-    streamingStatus !== EStreamingState.Offline && streamShiftStatus !== 'pending';
+  const getIsRedButton = useMemo(
+    () => streamingStatus !== EStreamingState.Offline && streamShiftStatus !== 'pending',
+    [streamingStatus],
+  );
 
-  const isDisabled =
-    p.disabled ||
-    (streamingStatus === EStreamingState.Starting && delaySecondsRemaining === 0) ||
-    (streamingStatus === EStreamingState.Ending && delaySecondsRemaining === 0);
+  const isDisabled = useMemo(() => {
+    return (
+      p.disabled ||
+      (streamingStatus === EStreamingState.Starting && delaySecondsRemaining === 0) ||
+      (streamingStatus === EStreamingState.Ending && delaySecondsRemaining === 0)
+    );
+  }, [p.disabled, streamingStatus, delaySecondsRemaining]);
 
   const fetchStreamShiftStatus = useCallback(async () => {
     try {

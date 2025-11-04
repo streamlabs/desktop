@@ -17,7 +17,6 @@ import difference from 'lodash/difference';
 import { Services } from '../../components-react/service-provider';
 import { getDefined } from '../../util/properties-type-guards';
 import { TDisplayType } from 'services/settings-v2';
-import { EAvailableFeatures, IncrementalRolloutService } from 'services/incremental-rollout';
 
 /**
  * The stream info view is responsible for keeping
@@ -50,16 +49,17 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return this.getServiceViews(DualOutputService);
   }
 
-  private get incrementalRolloutView() {
-    return this.getServiceViews(IncrementalRolloutService);
-  }
-
   private get streamingState() {
     return Services.StreamingService.state;
   }
 
   get streamingStatus() {
-    return this.streamingState.streamingStatus;
+    if (!this.isDualOutputMode) {
+      return this.streamingState.status.horizontal.recording;
+    }
+
+    const display = this.getOutputDisplayType();
+    return this.streamingState.status[display].streaming;
   }
 
   get info() {
@@ -263,6 +263,14 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return display === 'both' ? 'horizontal' : display;
   }
 
+  getOutputDisplayType(): TDisplayType {
+    return this.settings.recording === 'both' ? 'horizontal' : this.settings.recording;
+  }
+
+  get outputDisplay(): TDisplayType {
+    return this.settings.recording === 'both' ? 'horizontal' : this.settings.recording;
+  }
+
   /**
    * Returns the enabled platforms according to their assigned display
    */
@@ -370,7 +378,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       platformDisplays.horizontal.length > 0 || destinationDisplays.horizontal.length > 0;
     const verticalHasDestinations =
       platformDisplays.vertical.length > 0 || destinationDisplays.vertical.length > 0;
-
     return horizontalHasDestinations && verticalHasDestinations;
   }
 
@@ -402,7 +409,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get isMidStreamMode(): boolean {
-    return this.streamingState.streamingStatus !== 'offline';
+    return this.isHorizontalStreaming || this.isVerticalStreaming;
   }
 
   /**
@@ -475,7 +482,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       advancedMode: !!this.streamSettingsView.state.goLiveSettings?.advancedMode,
       optimizedProfile: undefined,
       customDestinations: savedGoLiveSettings?.customDestinations || [],
-      recording: this.dualOutputView.recording || [],
+      recording: savedGoLiveSettings?.recording || 'horizontal',
       streamShift: savedGoLiveSettings?.streamShift || false,
     };
   }
@@ -702,39 +709,80 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get isStreaming() {
-    return this.streamingState.streamingStatus !== EStreamingState.Offline;
+    return this.isHorizontalStreaming || this.isVerticalStreaming;
   }
 
   get isRecording() {
-    return this.streamingState.recordingStatus !== ERecordingState.Offline;
+    return (
+      this.streamingState.status.horizontal.recording !== ERecordingState.Offline ||
+      this.streamingState.status.vertical.recording !== ERecordingState.Offline
+    );
   }
 
   get isReplayBufferActive() {
-    return this.streamingState.replayBufferStatus !== EReplayBufferState.Offline;
+    return (
+      this.streamingState.status.horizontal.replayBuffer !== EReplayBufferState.Offline ||
+      this.streamingState.status.vertical.replayBuffer !== EReplayBufferState.Offline
+    );
   }
 
   get isHorizontalStreaming() {
-    return this.isStreaming;
+    return this.streamingState.status.horizontal.streaming !== EStreamingState.Offline;
   }
 
   get isVerticalStreaming() {
-    return this.isStreaming;
+    return this.streamingState.status.vertical.streaming !== EStreamingState.Offline;
   }
 
   get isHorizontalRecording() {
-    return this.isRecording;
+    return this.streamingState.status.horizontal.recording !== ERecordingState.Offline;
   }
 
   get isVerticalRecording() {
-    return this.isRecording;
+    return this.streamingState.status.vertical.recording !== ERecordingState.Offline;
+  }
+
+  get isDualOutputRecording() {
+    return false;
+
+    // Dual output recording is WIP. To enable testing for dual output recording, modify the logic here.
+    // const canRecordDualOutput =
+    //   Services.IncrementalRolloutService.views.featureIsEnabled(
+    //     EAvailableFeatures.dualOutputRecording,
+    //   ) && !Utils.isDevMode();
+
+    // if (!canRecordDualOutput) return false;
+    // return this.isDualOutputMode && this.settings.recording === 'both';
+  }
+
+  get isHorizontalReplayBuffer() {
+    return this.streamingState.status.horizontal.replayBuffer !== EReplayBufferState.Offline;
+  }
+
+  get isVerticalReplayBuffer() {
+    return this.streamingState.status.vertical.replayBuffer !== EReplayBufferState.Offline;
   }
 
   get isIdle(): boolean {
     return !this.isStreaming && !this.isRecording;
   }
 
+  get recordingStatus() {
+    if (!this.isDualOutputMode) {
+      return this.streamingState.status.horizontal.recording;
+    }
+
+    const display = this.getOutputDisplayType();
+    return this.streamingState.status[display].recording;
+  }
+
   get replayBufferStatus() {
-    return this.streamingState.replayBufferStatus;
+    if (!this.isDualOutputMode) {
+      return this.streamingState.status.horizontal.recording;
+    }
+
+    const display = this.getOutputDisplayType();
+    return this.streamingState.status[display].replayBuffer;
   }
 
   // TODO: consolidate between this and GoLiveSettings

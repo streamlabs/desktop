@@ -13,7 +13,6 @@ import { useGoLiveSettings, useGoLiveSettingsRoot } from './useGoLiveSettings';
 import { inject } from 'slap';
 import RecordingSwitcher from './RecordingSwitcher';
 import { promptAction } from 'components-react/modals';
-import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export default function GoLiveWindow() {
   const { lifecycle, form } = useGoLiveSettingsRoot().extend(module => ({
@@ -77,6 +76,9 @@ function ModalFooter() {
   const shouldShowConfirm = ['prepopulate', 'waitForNewSettings'].includes(lifecycle);
   const shouldShowGoBackButton =
     lifecycle === 'runChecklist' && error && checklist.startVideoTransmission !== 'done';
+  const shouldShowRecordingSwitcher = ['empty', 'prepopulate', 'waitForNewSettings'].includes(
+    lifecycle,
+  );
 
   async function handleGoLive() {
     if (isPrime) {
@@ -144,7 +146,9 @@ function ModalFooter() {
 
   return (
     <Form layout={'inline'}>
-      {!isDualOutputMode && shouldShowConfirm && <RecordingSwitcher />}
+      {shouldShowRecordingSwitcher && shouldShowConfirm && (
+        <RecordingSwitcher showRecordingToggle={true} />
+      )}
       {/* CLOSE BUTTON */}
       <Button onClick={close}>{$t('Close')}</Button>
 

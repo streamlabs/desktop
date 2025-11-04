@@ -20,7 +20,6 @@ import cx from 'classnames';
 import StreamShiftToggle from 'components-react/shared/StreamShiftToggle';
 import { CaretDownOutlined } from '@ant-design/icons';
 import Tooltip from 'components-react/shared/Tooltip';
-import { EAvailableFeatures } from 'services/incremental-rollout';
 
 /**
  * Renders settings for starting the stream
@@ -49,12 +48,7 @@ export default function GoLiveSettings() {
     isDualOutputSwitchDisabled,
     setPrimaryChat,
   } = useGoLiveSettings().extend(module => {
-    const {
-      UserService,
-      VideoEncodingOptimizationService,
-      SettingsService,
-      IncrementalRolloutService,
-    } = Services;
+    const { UserService, VideoEncodingOptimizationService, SettingsService } = Services;
 
     return {
       get canAddDestinations() {

@@ -1,7 +1,6 @@
 import React from 'react';
 import { InputComponent } from './inputs';
 import { NumberInput, TNumberInputProps } from './NumberInput';
-import { $t } from 'services/i18n';
 
 export const DurationInput = InputComponent((p: TNumberInputProps) => {
   function formatter(value: number) {

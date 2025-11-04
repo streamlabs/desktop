@@ -1,3 +1,4 @@
+import { TDisplayType } from 'services/settings-v2';
 import { $t } from '../../i18n';
 
 export type TFPS = 30 | 60;
@@ -15,6 +16,7 @@ export interface IExportOptions {
   height: number;
   preset: TPreset;
   complexFilter?: string;
+  display?: TDisplayType;
 }
 
 // types for highlighter video operations

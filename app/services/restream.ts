@@ -490,6 +490,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
       const filteredTargets = newTargets.filter(
         target => target.mode && modesToRestream.includes(target.mode),
       );
+
       await this.createTargets(filteredTargets);
     } else {
       // in single output mode, create all targets
@@ -820,8 +821,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
 }
 
 class RestreamView extends ViewHandler<IRestreamState> {
-  @Inject() incrementalRolloutService: IncrementalRolloutService;
-
   get isGrandfathered() {
     return this.state.grandfathered || this.state.tiktokGrandfathered;
   }

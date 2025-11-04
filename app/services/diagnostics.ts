@@ -1149,18 +1149,6 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     });
   }
 
-  // TODO: add details for stream switch section
-  // private generateStreamSwitchSection() {
-
-  //   return new Section('Stream Switch', {
-  //     'Stream Switch Active': ,
-  //     // 'Stream Switch ID': ,
-  //     // 'Stream Switch Origin Device': ,
-  //     // 'Stream Switch Previous Device': ,
-  //     // 'Stream Switch Type': ,
-  //   });
-  // }
-
   private generateVisionSection() {
     return new Section('Vision', {
       'Installed Version': this.visionService.state.installedVersion,

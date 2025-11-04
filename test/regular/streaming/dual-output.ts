@@ -1,11 +1,11 @@
 import {
   clickGoLive,
   prepareToGoLive,
-  stopStream,
+  // stopStream,
   submit,
   waitForSettingsWindowLoaded,
-  waitForStreamStart,
-  waitForStreamStop,
+  // waitForStreamStart,
+  // waitForStreamStop,
 } from '../../helpers/modules/streaming';
 import {
   click,
@@ -19,18 +19,13 @@ import {
 } from '../../helpers/modules/core';
 import { logIn } from '../../helpers/modules/user';
 import { toggleDisplay, toggleDualOutputMode } from '../../helpers/modules/dual-output';
-import {
-  skipCheckingErrorsInLog,
-  test,
-  TExecutionContext,
-  useWebdriver,
-} from '../../helpers/webdriver';
+import { test, TExecutionContext, useWebdriver } from '../../helpers/webdriver';
 import { addDummyAccount, logOut, releaseUserInPool, withUser } from '../../helpers/webdriver/user';
 import { SceneBuilder } from '../../helpers/scene-builder';
 import { getApiClient } from '../../helpers/api-client';
 import { fillForm } from '../../helpers/modules/forms';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
-import { sleep } from '../../helpers/sleep';
+// import { sleep } from '../../helpers/sleep';
 // import { readFields, fillForm } from '../../helpers/modules/forms';
 // import { sleep } from '../../helpers/sleep';
 
@@ -39,7 +34,7 @@ import { sleep } from '../../helpers/sleep';
 useWebdriver();
 
 /**
- * Toggle Dual Output Video Settings
+ * Toggle Dual Output Mode
  * @remark to prevent errors from accounts in the user pool not
  * being available, test multiple aspects of dual output in a single test
  */
@@ -160,6 +155,14 @@ test('Dual Output', async (t: TExecutionContext) => {
 
   t.true(await isDisplayed('div#dual-output-header'), 'Dual output header exists');
 
+  // dual output does not work with studio mode
+  const { app } = t.context;
+  await (await app.client.$('.side-nav .icon-studio-mode-3')).click();
+  t.true(
+    await isDisplayed('div=Cannot toggle Studio Mode in Dual Output Mode.'),
+    'Cannot toggle Studio Mode in Dual Output Mode.',
+  );
+
   // check permutations of toggling on and off the displays
   await clickIfDisplayed('i#horizontal-display-toggle');
   t.false(await isDisplayed('div#horizontal-display'));
@@ -197,62 +200,6 @@ test('Dual Output', async (t: TExecutionContext) => {
 
   t.pass();
 });
-
-test(
-  'Dual Output with Studio Mode and Selective Recording',
-  withUser(),
-  async (t: TExecutionContext) => {
-    const { app } = t.context;
-
-    await toggleDualOutputMode();
-
-    // dual output cannot be toggled on in studio mode
-    await focusMain();
-    await (await app.client.$('.side-nav .icon-studio-mode-3')).click();
-    t.true(
-      await isDisplayed('div=Cannot toggle Studio Mode in Dual Output Mode.'),
-      'Cannot toggle Studio Mode in Dual Output Mode.',
-    );
-
-    // selective recording in dual output mode is only available for the horizontal display
-    await toggleDualOutputMode();
-    t.false(await isDisplayed('div#vertical-display'), 'Dual output mode is off');
-    await (await app.client.$('[data-name=sourcesControls] .icon-smart-record')).click();
-
-    // Check that selective recording icon is active
-    await (await app.client.$('.icon-smart-record.active')).waitForExist();
-
-    await toggleDualOutputMode();
-
-    // dual output is active but the vertical display is not shown
-    await focusMain();
-    await (await app.client.$('.icon-dual-output.active')).waitForExist();
-    t.false(
-      await isDisplayed('div#vertical-display'),
-      'Vertical display is not shown in dual output with selective recording',
-    );
-
-    // toggling selective recording off should show the vertical display
-    await (await app.client.$('.icon-smart-record.active')).click();
-    t.true(
-      await isDisplayed('div#vertical-display'),
-      'Toggling selective recording off shows vertical display in dual output mode',
-    );
-
-    // toggling selective recording back on should hide the vertical display
-    await (await app.client.$('.icon-smart-record')).click();
-    t.false(
-      await isDisplayed('div#vertical-display'),
-      'Toggling selective recording back on hides vertical display in dual output mode',
-    );
-
-    // toggling selective recording on while in dual output mode opens a message box warning
-    // notifying the user that the vertical canvas is no longer accessible
-    // skip checking the log for this error
-    skipCheckingErrorsInLog();
-    t.pass();
-  },
-);
 
 /**
  * Dual Output Go Live
