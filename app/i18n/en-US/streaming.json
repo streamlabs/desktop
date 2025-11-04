@@ -320,5 +320,7 @@
   "Cannot change displays while live.": "Cannot change displays while live.",
   "Stream switcher cannot be used in dual output mode.": "Stream switcher cannot be used in dual output mode.",
   "Cannot toggle dual output in Studio Mode.": "Cannot toggle dual output in Studio Mode.",
-  "Dual Output will be disabled since not supported in this mode.": "Dual Output will be disabled since not supported in this mode."
+  "Dual Output will be disabled since not supported in this mode.": "Dual Output will be disabled since not supported in this mode.",
+  "Please confirm %{platforms} in the Horizontal stream.": "Please confirm %{platforms} in the Horizontal stream.",
+  "Please confirm %{platforms} in the Vertical stream.": "Please confirm %{platforms} in the Vertical stream."
 }
