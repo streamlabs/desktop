@@ -322,6 +322,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
       streamSwitch: enableStreamShift,
     });
 
+    console.log('Marcin', body);
+
     const request = new Request(url, { headers, body, method: 'PUT' });
 
     return jfetch(request);
@@ -670,7 +672,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
       }
 
       this.SET_STREAM_SWITCHER_STATUS('inactive');
-      this.updateStreamShift('approved');
+      const result = await this.updateStreamShift('approved');
+      console.log('Marcin', 'Stream shift confirmed:', result);
     }
   }
 

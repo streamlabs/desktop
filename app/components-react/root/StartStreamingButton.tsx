@@ -82,7 +82,12 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
 
         const isMobileRemote = isFromOtherDevice ? /[A-Z]/.test(event.data.identifier) : false;
         const remoteDeviceType = isMobileRemote ? 'mobile' : 'desktop';
-
+        console.log(
+          'Marcin - Device Check',
+          isFromOtherDevice,
+          event.data.identifier,
+          streamShiftStreamId,
+        );
         // Note: because the event's stream id is from the device that requested the switch,
         // it is not possible to know what type of device the stream will be switching from.
         // We can only identify the type of device the stream is switching to.
@@ -91,8 +96,10 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         if (event.type === 'streamSwitchRequest') {
           if (!isFromOtherDevice) {
             // Don't record the request from this device because the other device will record it
+            console.log('Marcin', 'Not recording request from this device');
             RestreamService.actions.confirmStreamShift('approved');
           } else {
+            console.log('Marcin', 'Recording request from another device');
             UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
               stream: switchType,
               action: 'request',
@@ -115,11 +122,11 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
           // Notify the user
           const message = isFromOtherDevice
             ? $t(
-                'Your stream has been successfully switched to Streamlabs Desktop. Enjoy your stream!',
-              )
+              'Your stream has been successfully switched to Streamlabs Desktop. Enjoy your stream!',
+            )
             : $t(
-                'Your stream has been switched to Streamlabs Desktop from another device. Enjoy your stream!',
-              );
+              'Your stream has been switched to Streamlabs Desktop from another device. Enjoy your stream!',
+            );
 
           promptAction({
             title: $t('Stream successfully switched'),
@@ -191,11 +198,11 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
 
         const message = isDualOutputMode
           ? $t(
-              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. Dual Output will be disabled since not supported in this mode. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
-            )
+            'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. Dual Output will be disabled since not supported in this mode. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
+          )
           : $t(
-              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
-            );
+            'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
+          );
 
         if (isLive) {
           const { streamShiftForceGoLive } = RestreamService.state;
