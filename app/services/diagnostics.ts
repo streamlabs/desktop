@@ -32,9 +32,10 @@ import * as remote from '@electron/remote';
 import { AppService } from 'services/app';
 import fs from 'fs';
 import path from 'path';
-import { platformList, TPlatform } from './platforms';
+import { getPlatformService, platformList, TPlatform } from './platforms';
 import { TDisplayType } from './settings-v2';
 import { getWmiClass } from 'util/wmi';
+import { ITwitchStartStreamOptions } from './platforms/twitch';
 
 interface IStreamDiagnosticInfo {
   startTime: number;
@@ -503,15 +504,19 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     } as Partial<IStreamDiagnosticInfo>;
 
     if (!this.dualOutputService.views.dualOutputMode && platforms.replace(/"/g, '') === 'twitch') {
-      const enhancedBroadcasting = this.outputSettingsService.getIsEnhancedBroadcasting();
+      const enhancedBroadcasting = this.streamingService.getModel().enhancedBroadcasting;
+      const twService = getPlatformService('twitch');
+      const settingsMatch =
+        enhancedBroadcasting &&
+        (twService.state.settings as ITwitchStartStreamOptions).isEnhancedBroadcasting;
 
-      if (enhancedBroadcasting.setting === 'Enabled' && enhancedBroadcasting.live !== 'Enabled') {
+      if (!settingsMatch) {
         this.logProblem(
           'Twitch Enhanced Broadcasting setting enabled but did not go live with Enhanced Broadcasting.',
         );
       }
 
-      info.enhancedBroadcasting = enhancedBroadcasting.live;
+      info.enhancedBroadcasting = enhancedBroadcasting ? 'Enabled' : 'Disabled';
     }
 
     if (this.dualOutputService.views.dualOutputMode) {
@@ -1096,7 +1101,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
           );
         }
 
-        return {
+        const info = {
           'Start Time': new Date(s.startTime).toString(),
           'End Time': s.endTime ? new Date(s.endTime).toString() : 'Stream did not end cleanly',
           'Skipped Frames': `${s.pctSkipped?.toFixed(2)}%`,
@@ -1108,9 +1113,12 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
           Platforms: platforms,
           Destinations: s?.destinations,
           'Stream Type': s?.type,
-          'Enhanced Broadcasting':
-            s?.enhancedBroadcasting !== undefined ? s.enhancedBroadcasting : 'N/A',
         };
+
+        if (s?.enhancedBroadcasting !== undefined) {
+          (info as any)['Enhanced Broadcasting'] = s.enhancedBroadcasting;
+        }
+        return info;
       }),
     );
   }

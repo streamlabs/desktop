@@ -53,6 +53,7 @@ interface IStreamingState {
   verticalRecordingStatusTime?: string;
   replayBufferStatus: EReplayBufferState;
   replayBufferStatusTime: string;
+  enhancedBroadcasting?: boolean;
   streamErrorCreated?: string;
 }
 
