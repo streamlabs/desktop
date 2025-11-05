@@ -11,6 +11,8 @@ import {
   ISimpleStreaming,
   IAdvancedStreaming,
 } from 'obs-studio-node';
+import { getPlatformService } from 'services/platforms';
+import { ITwitchStartStreamOptions } from 'services/platforms/twitch';
 
 export type IStreamingOutputSettings = Omit<
   Partial<ISimpleStreaming | IAdvancedStreaming>,
@@ -935,6 +937,34 @@ export class OutputSettingsService extends Service {
         return EObsAdvancedEncoder.jim_nvenc;
       case EObsSimpleEncoder.x264_lowcpu:
         return EObsSimpleEncoder.x264_lowcpu;
+    }
+  }
+
+  /**
+   * Fetch enhanced broadcasting setting from the backend
+   * @remark This function is used in the diagnostics report to determine if a stream
+   * went live with enhanced broadcasting enabled. It should not be used for logic.
+   * This only represents the setting in the backend but not the setting in the Twitch service,
+   * which is the actual source of truth.
+   * @returns string representation of the setting for the diagnositics report
+   */
+  getIsEnhancedBroadcasting() {
+    try {
+      const enhancedBroadcasting = this.settingsService.isEnhancedBroadcasting();
+      const twService = getPlatformService('twitch');
+      return {
+        setting: (twService.state.settings as ITwitchStartStreamOptions).isEnhancedBroadcasting
+          ? 'Enabled'
+          : 'Disabled',
+        live: enhancedBroadcasting ? 'Enabled' : 'Disabled',
+      };
+    } catch (e: unknown) {
+      console.error('Error getting enhanced broadcasting setting:', e);
+
+      return {
+        setting: 'Unknown',
+        live: 'Unknown',
+      };
     }
   }
 }

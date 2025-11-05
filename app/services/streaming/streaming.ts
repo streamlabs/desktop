@@ -552,7 +552,7 @@ export class StreamingService
       try {
         await this.runCheck(checkName, async () => {
           // enable restream on the backend side
-          if (!this.restreamService.state.enabled) await this.restreamService.setEnabled(true);
+          await this.restreamService.setEnabled(true);
 
           await this.restreamService.beforeGoLive();
         });
