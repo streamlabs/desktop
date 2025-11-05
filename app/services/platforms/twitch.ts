@@ -195,7 +195,7 @@ export class TwitchService
     // Enhanced broadcasting is currently only available with single output single stream
     // To prevent errors, correctly update it here when streaming in other modes.
     if (
-      goLiveSettings.streamShift ||
+      (goLiveSettings && goLiveSettings.streamShift) ||
       this.streamingService.views.isMultiplatformMode ||
       this.streamingService.views.isDualOutputMode
     ) {
