@@ -1,0 +1,240 @@
+import { RealmObject } from 'services/realm';
+import { ObjectSchema } from 'realm';
+import * as remote from '@electron/remote';
+import { Inject, Service } from 'services/core';
+import { ObsImporterService, RecordingModeService, UserService } from 'app-services';
+
+enum EOnboardingSteps {
+  Splash = 'Splash',
+  Login = 'Login',
+  RecordingLogin = 'RecordingLogin',
+  ConnectMore = 'ConnectMore',
+  OBSImport = 'OBSImport',
+  Ultra = 'Ultra',
+  Devices = 'Devices',
+  Themes = 'Themes',
+}
+
+interface IOnboardingStep {
+  name: EOnboardingSteps;
+  isSkippable?: boolean;
+  isClosable?: boolean;
+}
+
+interface IOnboardingInitialization {
+  startingStep: IOnboardingStep;
+  isSingleton?: boolean;
+}
+
+class OnboardingStep {
+  config: IOnboardingStep;
+  next: OnboardingStep | null = null;
+
+  constructor(config: IOnboardingStep) {
+    this.config = config;
+  }
+}
+
+class OnboardingPath {
+  private head: OnboardingStep | null = null;
+  private current: OnboardingStep | null = null;
+
+  append(config: IOnboardingStep) {
+    const step = new OnboardingStep(config);
+    if (!this.head) {
+      this.head = step;
+      this.current = step;
+    } else {
+      this.getFinalNode(this.head).next = step;
+    }
+  }
+
+  // Returns false if at end of list, marking the end of the flow and no more steps
+  takeNextStep() {
+    if (!this.current.next) return false;
+    this.current = this.current.next;
+    return this.current.config;
+  }
+
+  find(searchCb: (config: IOnboardingStep) => boolean) {
+    function checkStep(step: OnboardingStep): OnboardingStep | null {
+      if (searchCb(step.config)) return step;
+      return step.next ? checkStep(step.next) : null;
+    }
+
+    return this.head ? checkStep(this.head) : null;
+  }
+
+  private getFinalNode(startingNode: OnboardingStep): OnboardingStep {
+    return startingNode.next ? this.getFinalNode(startingNode.next) : startingNode;
+  }
+}
+
+class OnboardingStepState extends RealmObject {
+  name: string;
+  isSkipapble: boolean;
+  isClosable: boolean;
+
+  static schema: ObjectSchema = {
+    name: 'OnboardingStepState',
+    properties: {
+      name: 'string',
+      isSkippable: { type: 'bool', default: false },
+      isClosable: { type: 'bool', default: false },
+    },
+  };
+}
+
+OnboardingStepState.register();
+
+class OnboardingServiceState extends RealmObject {
+  currentStep: IOnboardingStep;
+  showOnboarding: boolean;
+
+  static schema: ObjectSchema = {
+    name: 'OnboardingServiceState',
+    properties: {
+      currentStep: 'OnboardingStepState',
+      showOnboarding: { type: 'bool', default: false },
+    },
+  };
+}
+
+OnboardingServiceState.register();
+
+export class OnboardingV2Service extends Service {
+  @Inject() private recordingModeService: RecordingModeService;
+  @Inject() private userService: UserService;
+  @Inject() private obsImporterService: ObsImporterService;
+
+  state = OnboardingServiceState.inject();
+  /**
+   * flows
+   *
+   * Free User
+   * Login Splash -> Login Select -> Connect More Platforms (if <2 platforms) -> OBS Import (if obs installed) -> Ultra Upsell -> Setup Devices -> Themes
+   *
+   * Ultra User
+   * Login Splash -> Login Select -> Connect More Platforms (if <2 platforms) -> OBS Import (if obs installed) -> Setup Devices -> Themes
+   *
+   * Recording Mode
+   * Login Splash -> Recording Mode Login -> OBS Import (if obs installed)
+   */
+
+  path: OnboardingPath = null;
+  localStorageKey = 'UserHasBeenOnboarded';
+  singletonPath = false;
+
+  get currentStepName() {
+    return this.state.currentStep.name;
+  }
+
+  showOnboarding() {
+    this.initalizeView({ startingStep: { name: EOnboardingSteps.Splash }, isSingleton: false });
+  }
+
+  showLogin() {
+    this.initalizeView({
+      startingStep: { name: EOnboardingSteps.Login, isClosable: true },
+      isSingleton: true,
+    });
+  }
+
+  showObsImport() {
+    this.initalizeView({
+      startingStep: { name: EOnboardingSteps.OBSImport, isClosable: true },
+      isSingleton: true,
+    });
+  }
+
+  takeStep() {
+    this.determineSteps();
+    const nextStep = this.path.takeNextStep();
+    if (!nextStep) {
+      this.completeOnboarding();
+    } else {
+      this.setCurrentStep(nextStep);
+    }
+  }
+
+  private initalizeView(config: IOnboardingInitialization) {
+    this.singletonPath = config.isSingleton;
+    this.path = new OnboardingPath();
+    this.path.append(config.startingStep);
+    this.setCurrentStep(config.startingStep);
+    this.setShowOnboarding(true);
+  }
+
+  private determineSteps() {
+    // Singleton paths dont have other steps
+    if (this.singletonPath) return;
+    // User is on the first step
+    if (EOnboardingSteps.Splash === this.currentStepName) {
+      // Entire recording mode path is determined here
+      if (this.recordingModeService.views.isRecordingModeEnabled) {
+        this.path.append({
+          name: EOnboardingSteps.RecordingLogin,
+          isSkippable: true,
+          isClosable: true,
+        });
+        if (this.obsImporterService.views.isOBSinstalled()) {
+          this.path.append({
+            name: EOnboardingSteps.OBSImport,
+            isSkippable: true,
+            isClosable: true,
+          });
+        }
+      } else {
+        // Streaming mode path begins here
+        this.path.append({ name: EOnboardingSteps.Login, isSkippable: true });
+      }
+    }
+    // User has logged into streaming path, where the rest of the steps can be derived
+    if (EOnboardingSteps.Login === this.currentStepName) {
+      if (this.userService.views.isLoggedIn && this.userService.views.linkedPlatforms.length < 2) {
+        this.path.append({
+          name: EOnboardingSteps.ConnectMore,
+          isSkippable: true,
+          isClosable: true,
+        });
+      }
+      if (this.obsImporterService.views.isOBSinstalled()) {
+        this.path.append({
+          name: EOnboardingSteps.OBSImport,
+          isSkippable: true,
+          isClosable: true,
+        });
+      }
+      if (this.userService.views.isLoggedIn && !this.userService.views.isPrime) {
+        this.path.append({ name: EOnboardingSteps.Ultra, isSkippable: true, isClosable: true });
+      }
+      this.path.append({ name: EOnboardingSteps.Devices, isSkippable: true, isClosable: true });
+      if (this.userService.views.isLoggedIn) {
+        this.path.append({ name: EOnboardingSteps.Themes, isSkippable: true, isClosable: true });
+      }
+    }
+  }
+
+  private completeOnboarding() {
+    if (!this.singletonPath) {
+      localStorage.setItem(this.localStorageKey, 'true');
+      remote.session.defaultSession.flushStorageData();
+      console.log('Set onboarding key successful.');
+    }
+    this.setShowOnboarding(false);
+    this.setCurrentStep(null);
+    this.path = null;
+  }
+
+  private setCurrentStep(step: IOnboardingStep) {
+    this.state.db.write(() => {
+      this.state.currentStep = step;
+    });
+  }
+
+  private setShowOnboarding(val: boolean) {
+    this.state.db.write(() => {
+      this.state.showOnboarding = val;
+    });
+  }
+}
