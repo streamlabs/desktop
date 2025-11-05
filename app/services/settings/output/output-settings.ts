@@ -11,8 +11,6 @@ import {
   ISimpleStreaming,
   IAdvancedStreaming,
 } from 'obs-studio-node';
-import { getPlatformService } from 'services/platforms';
-import { ITwitchStartStreamOptions } from 'services/platforms/twitch';
 
 export type IStreamingOutputSettings = Omit<
   Partial<ISimpleStreaming | IAdvancedStreaming>,
@@ -951,20 +949,12 @@ export class OutputSettingsService extends Service {
   getIsEnhancedBroadcasting() {
     try {
       const enhancedBroadcasting = this.settingsService.isEnhancedBroadcasting();
-      const twService = getPlatformService('twitch');
-      return {
-        setting: (twService.state.settings as ITwitchStartStreamOptions).isEnhancedBroadcasting
-          ? 'Enabled'
-          : 'Disabled',
-        live: enhancedBroadcasting ? 'Enabled' : 'Disabled',
-      };
+
+      return enhancedBroadcasting ? 'Enabled' : 'Disabled';
     } catch (e: unknown) {
       console.error('Error getting enhanced broadcasting setting:', e);
 
-      return {
-        setting: 'Unknown',
-        live: 'Unknown',
-      };
+      return 'Unknown';
     }
   }
 }
