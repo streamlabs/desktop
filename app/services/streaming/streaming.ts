@@ -631,6 +631,11 @@ export class StreamingService
           ? undefined
           : settings;
 
+      if (platform === 'twitch' && settingsForPlatform && !this.views.isDualOutputMode) {
+        const isEnhancedBroadcasting = this.settingsService.isEnhancedBroadcasting();
+        this.SET_ENHANCED_BROADCASTING(isEnhancedBroadcasting);
+      }
+
       // don't update settings for twitch in unattendedMode
       await this.runCheck(platform, () => service.beforeGoLive(settingsForPlatform, display));
     } catch (e: unknown) {
@@ -862,10 +867,6 @@ export class StreamingService
    * Set the error state for the GoLive window
    */
   private setError(errorTypeOrError?: TStreamErrorType | StreamError, platform?: TPlatform) {
-    const target = platform
-      ? this.views.getPlatformDisplayName(platform)
-      : $t('Custom Destination');
-
     const streamError =
       errorTypeOrError instanceof StreamError
         ? errorTypeOrError
@@ -875,7 +876,11 @@ export class StreamingService
       streamError.platform = platform;
     }
 
-    const messages = formatStreamErrorMessage(streamError, target);
+    const target = streamError.platform
+      ? this.views.getPlatformDisplayName(streamError.platform)
+      : $t('Custom Destination');
+
+    const messages = formatStreamErrorMessage(streamError, target, streamError.statusText);
     this.streamErrorUserMessage = messages.user;
     this.streamErrorReportMessage = messages.report;
 
@@ -1177,6 +1182,8 @@ export class StreamingService
       if (this.views.isStreamShiftMode) {
         this.restreamService.resetStreamShift();
       }
+
+      this.SET_ENHANCED_BROADCASTING(false);
 
       this.UPDATE_STREAM_INFO({ lifecycle: 'empty' });
       return Promise.resolve();
@@ -1799,6 +1806,11 @@ export class StreamingService
   @mutation()
   private SET_DUAL_OUTPUT_MODE(enabled: boolean) {
     this.state.dualOutputMode = enabled;
+  }
+
+  @mutation()
+  private SET_ENHANCED_BROADCASTING(enabled: boolean) {
+    this.state.enhancedBroadcasting = enabled;
   }
 
   @mutation()

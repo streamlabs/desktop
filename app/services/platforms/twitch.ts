@@ -15,7 +15,7 @@ import { SettingsService } from 'services/settings';
 import { TTwitchOAuthScope, TwitchTagsService } from './twitch/index';
 import { platformAuthorizedRequest } from './utils';
 import { CustomizationService } from 'services/customization';
-import { IGoLiveSettings } from 'services/streaming';
+import { IGoLiveSettings, TDisplayOutput } from 'services/streaming';
 import { InheritMutations, mutation } from 'services/core';
 import { StreamError, throwStreamError, TStreamErrorType } from 'services/streaming/stream-error';
 import { BasePlatformService } from './base-platform';
@@ -35,6 +35,7 @@ export interface ITwitchStartStreamOptions {
   game?: string;
   video?: IVideo;
   tags: string[];
+  display?: TDisplayOutput;
   mode?: TOutputOrientation;
   contentClassificationLabels: string[];
   isBrandedContent: boolean;
@@ -191,6 +192,16 @@ export class TwitchService
   }
 
   async beforeGoLive(goLiveSettings?: IGoLiveSettings, context?: TDisplayType) {
+    // Enhanced broadcasting is currently only available with single output single stream
+    // To prevent errors, correctly update it here when streaming in other modes.
+    if (
+      goLiveSettings.streamShift ||
+      this.streamingService.views.isMultiplatformMode ||
+      this.streamingService.views.isDualOutputMode
+    ) {
+      this.settingsService.actions.setEnhancedBroadcasting(false);
+    }
+
     // If the stream has switched from another device, a new broadcast does not need to be created
     if (
       goLiveSettings &&
@@ -230,6 +241,12 @@ export class TwitchService
     }
 
     this.setPlatformContext('twitch');
+  }
+
+  async afterStopStream() {
+    if (this.state.settings.isEnhancedBroadcasting) {
+      this.settingsService.actions.setEnhancedBroadcasting(true);
+    }
   }
 
   async validatePlatform() {

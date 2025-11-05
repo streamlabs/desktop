@@ -317,6 +317,7 @@ export function throwStreamError(
 export function formatStreamErrorMessage(
   errorTypeOrError?: TStreamErrorType | StreamError,
   target?: string,
+  statusText?: string,
 ): IErrorMessages {
   const messages = {
     user: [] as string[],
@@ -341,6 +342,14 @@ export function formatStreamErrorMessage(
 
     if (details && !details.split(' ').includes('blocked')) {
       messages.user.push(details);
+    }
+
+    if (target) {
+      messages.user.push($t('Stream Error : %{target}', { target }));
+    }
+
+    if (statusText && !message.split(' ').includes('blocked')) {
+      messages.user.push(statusText);
     }
 
     const reportMessage = (error as any)?.action ? `${message}, ${(error as any).action}` : message;
