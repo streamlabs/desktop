@@ -44,7 +44,12 @@ import {
 } from './streaming-api';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import { $t } from 'services/i18n';
-import { getPlatformService, TPlatform, TStartStreamOptions } from 'services/platforms';
+import {
+  getPlatformService,
+  platformLabels,
+  TPlatform,
+  TStartStreamOptions,
+} from 'services/platforms';
 import { UserService } from 'services/user';
 import {
   ENotificationSubType,
@@ -1637,6 +1642,24 @@ export class StreamingService
 
         showNativeErrorMessage = details !== '';
       }
+    }
+
+    // Add display information for dual output mode
+    if (this.views.isDualOutputMode) {
+      const platforms =
+        info.service === 'vertical'
+          ? this.views.verticalStream.map(p => platformLabels(p))
+          : this.views.horizontalStream.map(p => platformLabels(p));
+
+      const stream =
+        info.service === 'vertical'
+          ? $t('Please confirm %{platforms} in the Vertical stream.', {
+              platforms,
+            })
+          : $t('Please confirm %{platforms} in the Horizontal stream.', {
+              platforms,
+            });
+      errorText = [errorText, stream].join('\n\n');
     }
 
     const buttons = [$t('OK')];
