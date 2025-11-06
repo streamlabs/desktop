@@ -175,6 +175,27 @@ class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
     return this.activeDisplays.vertical && !this.activeDisplays.horizontal;
   }
 
+  get platformsDualStreaming() {
+    // Note: copied from diag report service
+    const streamingPlatforms = this.streamingService.views?.settings?.platforms || {};
+    const dualStreaming = Object.entries(streamingPlatforms).reduce(
+      (platforms: TPlatform[], [key, value]: [TPlatform, any]) => {
+        if (value.display === 'both') {
+          platforms.push(key);
+        }
+
+        // For debugging purposes, log if a platform is missing a display
+        if (!value.display) {
+          console.log('Platform missing display: ', key);
+        }
+
+        return platforms;
+      },
+      [],
+    );
+    return dualStreaming.length ? dualStreaming : 'None';
+  }
+
   getHorizontalNodeId(verticalNodeId: string, sceneId?: string) {
     const sceneNodeMap = sceneId ? this.sceneNodeMaps[sceneId] : this.activeSceneNodeMap;
     if (!sceneNodeMap) return;
@@ -413,6 +434,13 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
        */
       if (!this.streamingService.state.selectiveRecording) {
         this.toggleDisplay(true, 'vertical');
+      }
+
+      /**
+       * Stream switcher feature is not available in dual output mode
+       */
+      if (this.streamingService.views.isStreamShiftMode) {
+        this.streamSettingsService.actions.setGoLiveSettings({ streamShift: false });
       }
     } else {
       this.selectionService.views.globalSelection.reset();

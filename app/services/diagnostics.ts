@@ -48,6 +48,7 @@ interface IStreamDiagnosticInfo {
   platforms?: string;
   destinations?: string;
   type?: string;
+  enhancedBroadcasting?: string;
 }
 
 interface IDiagnosticsServiceState {
@@ -216,13 +217,14 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
 
         this.streaming = true;
 
-        const { platforms, destinations, type } = this.formatStreamInfo();
+        const { platforms, destinations, type, enhancedBroadcasting } = this.formatStreamInfo();
 
         this.ADD_STREAM({
           startTime: Date.now(),
           platforms,
           destinations,
           type,
+          enhancedBroadcasting,
         });
 
         this.accumulators.skipped = new Accumulator();
@@ -493,17 +495,31 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
 
     const platforms = this.formatTargets(platformList);
     const destinations = this.formatTargets(destinationList);
+    // Note: this tracks if the user streamed with enhanced broadcasting, it does not
+    // indicate if the user had enhanced broadcasting enabled in settings.
+    const enhancedBroadcasting = this.outputSettingsService.getIsEnhancedBroadcasting();
 
     const info = {
       platforms,
       destinations,
       type: 'Single Output',
+      enhancedBroadcasting,
     };
 
     if (this.dualOutputService.views.dualOutputMode) {
       return {
         ...info,
         type: 'Dual Output',
+      };
+    }
+
+    if (
+      this.streamSettingsService.state.goLiveSettings &&
+      this.streamSettingsService.state.goLiveSettings?.streamShift
+    ) {
+      return {
+        ...info,
+        type: 'Stream Shift',
       };
     }
 
@@ -561,9 +577,9 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
 
   private generateVideoSection() {
     const isDualOutputMode = this.dualOutputService.views.dualOutputMode;
-    const displays: TDisplayType[] = isDualOutputMode ? ['horizontal'] : ['horizontal', 'vertical'];
+    const displays: TDisplayType[] = isDualOutputMode ? ['horizontal', 'vertical'] : ['horizontal'];
 
-    let settings = {} as { horizontal: {}; vertical: {} };
+    let settings = { horizontal: {}, vertical: {} };
 
     // get settings for all active displays
     displays.forEach((display: TDisplayType) => {
@@ -1084,6 +1100,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
           Platforms: platforms,
           Destinations: s?.destinations,
           'Stream Type': s?.type,
+          'Enhanced Broadcasting': s?.enhancedBroadcasting ?? 'N/A',
         };
       }),
     );
@@ -1105,21 +1122,6 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
       );
     }
 
-    /* accessing streamingService directly results in type errors
-     * which it was probably done to restrict the API
-     * don't feel too happy about hacking it
-     */
-    const streamingPlatforms = (this.streamingService as any)?.views?.settings?.platforms || {};
-    const platformsDualStreaming = Object.entries(streamingPlatforms).reduce(
-      (platforms: TPlatform[], [key, value]: [TPlatform, any]) => {
-        if (value.display === 'both') {
-          platforms.push(key);
-        }
-        return platforms;
-      },
-      [],
-    );
-
     return new Section('Dual Output', {
       'Dual Output Active': this.dualOutputService.views.dualOutputMode,
       'Dual Output Scene Collection Active': this.dualOutputService.views.hasNodeMap(),
@@ -1132,12 +1134,24 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
         'Vertical Platforms': this.formatTargets(platforms.vertical),
         'Horizontal Custom Destinations': this.formatTargets(destinations.horizontal),
         'Vertical Custom Destinations': this.formatTargets(destinations.vertical),
-        'Platforms Using Extra Outputs': platformsDualStreaming,
+        'Platforms Using Extra Outputs': this.dualOutputService.views.platformsDualStreaming,
       },
       'Horizontal Uses Multistream': restreamHorizontal,
       'Vertical Uses Multistream': restreamVertical,
     });
   }
+
+  // TODO: add details for stream switch section
+  // private generateStreamSwitchSection() {
+
+  //   return new Section('Stream Switch', {
+  //     'Stream Switch Active': ,
+  //     // 'Stream Switch ID': ,
+  //     // 'Stream Switch Origin Device': ,
+  //     // 'Stream Switch Previous Device': ,
+  //     // 'Stream Switch Type': ,
+  //   });
+  // }
 
   private generateVisionSection() {
     return new Section('Vision', {

@@ -15,7 +15,6 @@ import { createRoot } from './root/ReactRoot';
 import SourceProperties from './windows/SourceProperties';
 import RenameSource from './windows/RenameSource';
 import SharedComponentsLibrary from './windows/sharedComponentsLibrary/SharedComponentsLibrary';
-import { ObsSettings } from './windows/settings/ObsSettings';
 import ManageSceneCollections from './windows/ManageSceneCollections';
 import { WidgetWindow } from './widgets/common/WidgetWindow';
 import SafeMode from './windows/SafeMode';
@@ -40,8 +39,6 @@ import RecentEventsWindow from './windows/RecentEvents';
 import DismissableBadge from './shared/DismissableBadge';
 import UltraIcon from './shared/UltraIcon';
 import EditTransform from './windows/EditTransform';
-import InstalledApps from './windows/settings/InstalledApps';
-import Hotkeys from './windows/settings/Hotkeys';
 import MarketingModal from './windows/MarketingModal';
 import Main from './windows/Main';
 import Loader from './pages/Loader';
@@ -49,6 +46,8 @@ import StartStreamingButton from './root/StartStreamingButton';
 import TestWidgets from './root/TestWidgets';
 import ReactiveDataEditorWindow from './windows/reactive-data-editor/ReactiveDataEditorWindow';
 import { PlatformMerge, PlatformAppStore, PlatformAppMainPage } from './pages';
+import Settings from './windows/Settings';
+import Troubleshooter from './windows/Troubleshooter';
 
 // list of React components to be used inside Vue components
 export const components = {
@@ -71,7 +70,6 @@ export const components = {
   SourceProperties: createRoot(SourceProperties),
   SharedComponentsLibrary: createRoot(SharedComponentsLibrary),
   RenameSource,
-  ObsSettings: createRoot(ObsSettings),
   WidgetWindow: createRoot(WidgetWindow),
   CustomCodeWindow: createRoot(CustomCodeWindow),
   SafeMode,
@@ -95,13 +93,13 @@ export const components = {
   DismissableBadge,
   UltraIcon,
   EditTransform,
-  InstalledApps,
   Blank,
-  Hotkeys,
   MarketingModal,
   Main: createRoot(Main),
   Loader,
   StartStreamingButton,
   TestWidgets,
   ReactiveDataEditorWindow,
+  Settings: createRoot(Settings),
+  Troubleshooter,
 };

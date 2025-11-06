@@ -28,6 +28,8 @@ export type TSocketEvent =
   | IUserAccountUnlinked
   | IUserAccountMergeError
   | IAccountPermissionsRequired
+  | IStreamShiftRequested
+  | IStreamShiftActionCompleted
   | IVisionSocketEvent
   | IUserStateSocketEvent;
 
@@ -156,6 +158,23 @@ interface IAccountPermissionsRequired {
   }[];
 }
 
+export interface IStreamShiftRequested {
+  type: 'streamSwitchRequest';
+  for: string;
+  data: {
+    identifier: string;
+  };
+  event_id: string;
+}
+
+export interface IStreamShiftActionCompleted {
+  type: 'switchActionComplete';
+  for: string;
+  data: {
+    identifier: string;
+  };
+  event_id: string;
+}
 interface IVisionSocketEvent {
   type: 'visionEvent';
   message: {};
@@ -178,7 +197,6 @@ export class WebsocketService extends Service {
   socket: SocketIOClient.Socket;
 
   socketEvent = new Subject<TSocketEvent>();
-  ultraSubscription = new Subject<boolean>();
   io: SocketIOClientStatic;
 
   init() {

@@ -195,6 +195,12 @@ class UserViews extends ViewHandler<IUserServiceState> {
     return this.state.isPrime;
   }
 
+  get username() {
+    if (this.isLoggedIn) {
+      return this.platform.username;
+    }
+  }
+
   get platform() {
     if (this.isLoggedIn) {
       return this.state.auth.platforms[this.state.auth.primaryPlatform];
@@ -486,12 +492,21 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       }
 
       if (event.type === 'streamlabs_prime_subscribe') {
-        this.websocketService.ultraSubscription.next(true);
+        this.windowsService.actions.setWindowOnTop('all');
+        this.usageStatisticsService.ultraSubscription.next(true);
       }
 
       if (event.type === 'account_permissions_required') {
         const platform = event.message[0].platform.split('_')[0];
         await this.startChatAuth(platform as TPlatform);
+      }
+
+      if (event.type === 'streamSwitchRequest') {
+        this.streamingService.streamShiftEvent.next(event);
+      }
+
+      if (event.type === 'switchActionComplete') {
+        this.streamingService.streamShiftEvent.next(event);
       }
     });
   }

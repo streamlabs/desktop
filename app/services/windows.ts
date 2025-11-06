@@ -10,7 +10,6 @@ import { Subject } from 'rxjs';
 import { throttle } from 'lodash-decorators';
 import * as remote from '@electron/remote';
 
-import Settings from 'components/windows/settings/Settings.vue';
 import FFZSettings from 'components/windows/FFZSettings.vue';
 import SceneTransitions from 'components/windows/SceneTransitions.vue';
 import {
@@ -45,10 +44,11 @@ import {
   MultistreamChatInfo,
   MarketingModal,
   ReactiveDataEditorWindow,
+  Settings,
+  Troubleshooter,
 } from 'components/shared/ReactComponentList';
 
 import SourcePropertiesDeprecated from 'components/windows/SourceProperties.vue';
-import Troubleshooter from 'components/windows/Troubleshooter.vue';
 import GameOverlayEventFeed from 'components/windows/GameOverlayEventFeed';
 import EventFilterMenu from 'components/windows/EventFilterMenu';
 import OverlayPlaceholder from 'components/windows/OverlayPlaceholder';
@@ -295,6 +295,10 @@ export class WindowsService extends StatefulService<IWindowsState> {
 
   getElectronWindowIdFromWindowId(windowId: string) {
     return this.windows[windowId].id;
+  }
+
+  getIsChildWindowShown(componentName: string): boolean {
+    return this.state.child.isShown && this.state.child.componentName === componentName;
   }
 
   showWindow(options: Partial<IWindowOptions>) {

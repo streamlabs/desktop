@@ -6,7 +6,7 @@ import { StreamSettingsService } from 'services/settings/streaming';
 import { UserService } from 'services/user';
 import { CustomizationService, ICustomizationServiceState } from 'services/customization';
 import { authorizedHeaders, jfetch } from 'util/requests';
-import { IncrementalRolloutService } from './incremental-rollout';
+import { EAvailableFeatures, IncrementalRolloutService } from './incremental-rollout';
 import electron from 'electron';
 import { StreamingService } from './streaming';
 import { FacebookService } from './platforms/facebook';
@@ -18,7 +18,11 @@ import { VideoSettingsService, TDisplayType } from './settings-v2/video';
 import { TwitterPlatformService } from './platforms/twitter';
 import { InstagramService } from './platforms/instagram';
 import { PlatformAppsService } from './platform-apps';
+import { DualOutputService } from 'services/dual-output';
 import { throwStreamError } from './streaming/stream-error';
+import uuid from 'uuid';
+import Utils from './utils';
+import { $t } from './i18n';
 
 export type TOutputOrientation = 'landscape' | 'portrait';
 interface IRestreamTarget {
@@ -27,6 +31,25 @@ interface IRestreamTarget {
   streamKey: string;
   mode?: TOutputOrientation;
 }
+export interface IStreamShiftTarget {
+  platform: TPlatform | 'relay';
+  key?: string;
+}
+
+export interface ITargetLiveData extends IStreamShiftTarget {
+  is_live?: boolean;
+  chat_url?: string;
+  ccv?: number;
+  platform_id?: string;
+  broadcast_id?: string;
+  channel_name?: string;
+  stream_title?: string;
+  game_id?: string;
+  game_name?: string;
+}
+
+export type TStreamShiftStatus = 'pending' | 'inactive' | 'active';
+export type TStreamShiftAction = 'approved' | 'rejected';
 
 interface IRestreamState {
   /**
@@ -46,6 +69,28 @@ interface IRestreamState {
    * removed. Using Restream with tiktok should be allowed for those users.
    */
   tiktokGrandfathered: boolean;
+
+  /**
+   * Stream switcher stream id
+   */
+  streamShiftStreamId?: string;
+
+  /**
+   * Stream switcher status
+   */
+  streamShiftStatus: TStreamShiftStatus;
+
+  /**
+   * If the user is live using the stream switcher, save the stream data here so that the
+   * stream can be started correctly.
+   */
+  streamShiftTargets: ITargetLiveData[];
+
+  /**
+   * To prevent the user from being in a stale stream shift state, allow the user to
+   * force go live even if the stream shift is live call returns true.
+   */
+  streamShiftForceGoLive: boolean;
 }
 
 interface IUserSettingsResponse extends IRestreamState {
@@ -68,6 +113,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
   @Inject() videoSettingsService: VideoSettingsService;
   @Inject('TwitterPlatformService') twitterService: TwitterPlatformService;
   @Inject() platformAppsService: PlatformAppsService;
+  @Inject() dualOutputService: DualOutputService;
 
   settings: IUserSettingsResponse;
 
@@ -75,6 +121,10 @@ export class RestreamService extends StatefulService<IRestreamState> {
     enabled: true,
     grandfathered: false,
     tiktokGrandfathered: false,
+    streamShiftStreamId: undefined,
+    streamShiftStatus: 'inactive',
+    streamShiftTargets: [],
+    streamShiftForceGoLive: false,
   };
 
   get streamInfo() {
@@ -103,6 +153,14 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return this.state.tiktokGrandfathered;
   }
 
+  get streamShiftStatus() {
+    return this.state.streamShiftStatus;
+  }
+
+  get streamShiftTargets() {
+    return this.state.streamShiftTargets;
+  }
+
   @mutation()
   private SET_ENABLED(enabled: boolean) {
     this.state.enabled = enabled;
@@ -116,6 +174,26 @@ export class RestreamService extends StatefulService<IRestreamState> {
      */
     this.state.grandfathered = facebook;
     this.state.tiktokGrandfathered = tiktok;
+  }
+
+  @mutation()
+  private SET_STREAM_SWITCHER_STREAM_ID(id?: string) {
+    this.state.streamShiftStreamId = id ?? null;
+  }
+
+  @mutation()
+  private SET_STREAM_SWITCHER_STATUS(status: TStreamShiftStatus) {
+    this.state.streamShiftStatus = status;
+  }
+
+  @mutation()
+  private SET_STREAM_SWITCHER_TARGETS(targets: IStreamShiftTarget[]) {
+    this.state.streamShiftTargets = targets;
+  }
+
+  @mutation()
+  private SET_STREAM_SWITCHER_FORCE_GO_LIVE(shouldForce: boolean) {
+    this.state.streamShiftForceGoLive = shouldForce;
   }
 
   init() {
@@ -233,10 +311,15 @@ export class RestreamService extends StatefulService<IRestreamState> {
       new Headers({ 'Content-Type': 'application/json' }),
     );
     const url = `https://${this.host}/api/v1/rst/user/settings`;
+
+    const enableStreamShift =
+      this.streamInfo.isStreamShiftMode && !this.streamInfo.isDualOutputMode;
+
     const body = JSON.stringify({
       enabled,
       dcProtection: false,
       idleTimeout: 30,
+      streamSwitch: enableStreamShift,
     });
 
     const request = new Request(url, { headers, body, method: 'PUT' });
@@ -249,7 +332,13 @@ export class RestreamService extends StatefulService<IRestreamState> {
       throwStreamError('RESTREAM_SETUP_FAILED');
     }
 
-    await Promise.all([this.setupIngest(), this.setupTargets()]);
+    const shouldSwitchStreams = this.state.streamShiftTargets.length > 0;
+
+    if (this.streamInfo.isStreamShiftMode && shouldSwitchStreams) {
+      await Promise.all([this.setupIngest()]);
+    } else {
+      await Promise.all([this.setupIngest(), this.setupTargets()]);
+    }
   }
 
   /**
@@ -264,7 +353,23 @@ export class RestreamService extends StatefulService<IRestreamState> {
   async setupIngest() {
     const ingest = (await this.fetchIngest()).server;
 
-    if (this.streamingService.views.isDualOutputMode) {
+    if (this.streamInfo.isStreamShiftMode) {
+      // in single output mode, we just set the ingest for the default display
+      this.streamSettingsService.setSettings({
+        streamType: 'rtmp_custom',
+      });
+
+      const streamId = uuid();
+      this.SET_STREAM_SWITCHER_STREAM_ID(streamId);
+      // for the stream switcher, the stream needs a unique identifier
+      const streamKey = `${this.settings.streamKey}&sid=${streamId}`;
+
+      this.streamSettingsService.setSettings({
+        streamType: 'rtmp_custom',
+        key: streamKey,
+        server: ingest,
+      });
+    } else if (this.streamingService.views.isDualOutputMode) {
       // in dual output mode, we need to set the ingest for each display
       const displays = this.streamInfo.displaysToRestream;
 
@@ -294,6 +399,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
       });
 
       this.streamSettingsService.setSettings({
+        streamType: 'rtmp_custom',
         key: this.settings.streamKey,
         server: ingest,
       });
@@ -384,12 +490,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
       const filteredTargets = newTargets.filter(
         target => target.mode && modesToRestream.includes(target.mode),
       );
-
-      console.log('filteredTargets', filteredTargets);
-
       await this.createTargets(filteredTargets);
     } else {
-      console.log('newTargets', newTargets);
       // in single output mode, create all targets
       await this.createTargets(newTargets);
     }
@@ -406,6 +508,78 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return jfetch<{ name: string; status: boolean }[]>(request).then(
       j => j.find(service => service.name === 'restream').status,
     );
+  }
+
+  async checkIsLive(): Promise<boolean> {
+    const status = await this.fetchLiveStatus();
+    console.debug('Stream Shift Status', status);
+
+    if (status.isLive) {
+      this.streamSettingsService.setGoLiveSettings({ streamShift: true });
+      this.SET_STREAM_SWITCHER_STATUS('pending');
+      this.SET_STREAM_SWITCHER_TARGETS(status.targets);
+    } else if (this.state.streamShiftStatus === 'pending') {
+      this.SET_STREAM_SWITCHER_STATUS('inactive');
+      this.SET_STREAM_SWITCHER_TARGETS([]);
+    }
+
+    return status.isLive;
+  }
+
+  async fetchLiveStatus() {
+    const headers = authorizedHeaders(
+      this.userService.apiToken,
+      new Headers({ 'Content-Type': 'application/json' }),
+    );
+    const url = `https://${this.host}/api/v1/rst/user/is-live`;
+    const request = new Request(url, { headers });
+
+    return jfetch<{ isLive: boolean; targets: IStreamShiftTarget[] }>(request);
+  }
+
+  async fetchTargetData(): Promise<any | null> {
+    const headers = authorizedHeaders(this.userService.apiToken);
+
+    const platforms = this.state.streamShiftTargets
+      .filter(t => t.platform !== 'relay')
+      .map(t => t.platform)
+      .join(',');
+
+    const url = `https://${this.host}/api/v5/slobs/platform/status?platforms=${platforms}`;
+
+    const request = new Request(url, { headers, method: 'GET' });
+
+    return jfetch(request)
+      .then((res: { [key: string]: ITargetLiveData[] }) => {
+        const targets = this.state.streamShiftTargets.reduce((targetData: ITargetLiveData[], t) => {
+          const platform = t.platform as string;
+          if (t.platform !== 'relay') {
+            const data = res[platform]?.[0];
+
+            if (data) {
+              targetData.push({ ...t, ...data });
+            }
+          }
+
+          return targetData;
+        }, []);
+
+        console.debug('Stream Shift target data', targets);
+
+        this.SET_STREAM_SWITCHER_TARGETS(targets);
+      })
+      .catch((e: unknown) => {
+        console.error('Error fetching stream shift target data:', e);
+        return null as any;
+      });
+  }
+
+  getTargetLiveData(platform: TPlatform): ITargetLiveData | undefined {
+    return this.state.streamShiftTargets.find(t => t.platform === platform);
+  }
+
+  setStreamShiftStatus(status: TStreamShiftStatus) {
+    this.SET_STREAM_SWITCHER_STATUS(status);
   }
 
   /**
@@ -473,9 +647,87 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return fetch(request).then(res => res.json());
   }
 
+  /**
+   * Stream Shift
+   */
+
+  setSwitchStreamId(id?: string) {
+    this.SET_STREAM_SWITCHER_STREAM_ID(id);
+  }
+
+  resetStreamShift() {
+    this.SET_STREAM_SWITCHER_STATUS('inactive');
+    this.SET_STREAM_SWITCHER_STREAM_ID();
+    this.SET_STREAM_SWITCHER_TARGETS([]);
+  }
+
+  async confirmStreamShift(action: TStreamShiftAction) {
+    if (action === 'rejected') {
+      this.SET_STREAM_SWITCHER_STATUS('pending');
+    } else {
+      if (this.streamInfo.isDualOutputMode) {
+        this.dualOutputService.toggleDisplay(false, 'vertical');
+      }
+
+      this.SET_STREAM_SWITCHER_STATUS('inactive');
+      this.updateStreamShift('approved');
+    }
+  }
+
+  async updateStreamShift(action: TStreamShiftAction) {
+    const headers = authorizedHeaders(
+      this.userService.apiToken,
+      new Headers({ 'Content-Type': 'application/json' }),
+    );
+    const url = `https://${this.host}/api/v1/rst/switch/action`;
+    const body = JSON.stringify({
+      identifier: this.state.streamShiftStreamId,
+      action,
+    });
+    const request = new Request(url, { headers, body, method: 'POST' });
+    const res = await fetch(request);
+    if (!res.ok) throw await res.json();
+    return res.json();
+  }
+
+  /**
+   * End Stream Shift Stream
+   * @remark This ends the stream on the current device because the stream has been
+   * swapped to another device.
+   * Note: The AI highlighter will automatically save the recording on the current device
+   * when the stream ends.
+   */
+  async endStreamShiftStream(remoteStreamId: string): Promise<void> {
+    try {
+      this.SET_STREAM_SWITCHER_STATUS('active');
+      await this.streamingService.toggleStreaming();
+      this.SET_STREAM_SWITCHER_STREAM_ID(remoteStreamId);
+    } catch (error: unknown) {
+      console.error('Error ending stream:', error);
+
+      this.SET_STREAM_SWITCHER_STATUS('inactive');
+      remote.dialog.showMessageBox(Utils.getMainWindow(), {
+        title: $t('Error Ended Stream - PC'),
+        type: 'info',
+        message: $t(
+          'Error ending stream. Please try ending the stream from the other device again.',
+        ),
+      });
+    }
+  }
+
+  forceStreamShiftGoLive(shouldForce: boolean) {
+    if (shouldForce) {
+      this.streamSettingsService.setGoLiveSettings({ streamShift: false });
+      this.SET_STREAM_SWITCHER_STATUS('inactive');
+    }
+
+    this.SET_STREAM_SWITCHER_FORCE_GO_LIVE(shouldForce);
+  }
+
   /* Chat Handling
    * TODO: Lots of this is copy-pasted from the chat service
-   * The chat service needs to be refactored\
+   * The chat service needs to be refactored
    */
   private chatView: Electron.BrowserView;
 
@@ -568,6 +820,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
 }
 
 class RestreamView extends ViewHandler<IRestreamState> {
+  @Inject() incrementalRolloutService: IncrementalRolloutService;
+
   get isGrandfathered() {
     return this.state.grandfathered || this.state.tiktokGrandfathered;
   }
@@ -580,5 +834,21 @@ class RestreamView extends ViewHandler<IRestreamState> {
   get canEnableRestream() {
     const userView = this.getServiceViews(UserService);
     return userView.isPrime || (userView.auth && this.isGrandfathered);
+  }
+
+  get streamShiftStatus() {
+    return this.state.streamShiftStatus;
+  }
+
+  get streamShiftTargets() {
+    return this.state.streamShiftTargets;
+  }
+
+  get hasStreamShiftTargets() {
+    return this.state.streamShiftTargets.length > 0;
+  }
+
+  get shouldForceGoLive() {
+    return this.state.streamShiftForceGoLive;
   }
 }

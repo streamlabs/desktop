@@ -17,6 +17,7 @@ import { reserveUserFromPool } from '../../helpers/webdriver/user';
 import { getApiClient } from '../../helpers/api-client';
 import { StreamSettingsService } from '../../../app/services/settings/streaming';
 import { assertFormContains, fillForm } from '../../helpers/modules/forms';
+import { setInputValue } from '../../helpers/modules/forms/base';
 import { logIn } from '../../helpers/modules/user';
 
 useWebdriver();
@@ -42,8 +43,8 @@ test('Streaming to Twitch without auth', async t => {
   // type a new stream key in the Stream Settings Window
   await showSettingsWindow('Stream');
   const key = userInfo.streamKey;
-  await fillForm({ key });
-  await clickButton('Done');
+  await setInputValue('input[data-name="key"]', key, true);
+  await clickButton('Close');
 
   // go live
   await prepareToGoLive();

@@ -2,7 +2,5 @@ import React from 'react';
 import { ObsGenericSettingsForm } from './ObsSettings';
 
 export function AdvancedSettings() {
-  return <ObsGenericSettingsForm />;
+  return <ObsGenericSettingsForm page="Advanced" />;
 }
-
-AdvancedSettings.page = 'Advanced';
