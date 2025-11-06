@@ -1,5 +1,5 @@
 import { CommonPlatformFields } from '../CommonPlatformFields';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { $t } from '../../../../services/i18n';
 import { TwitchTagsInput } from './TwitchTagsInput';
 import GameSelector from '../GameSelector';
@@ -10,21 +10,16 @@ import { ITwitchStartStreamOptions } from '../../../../services/platforms/twitch
 import InputWrapper from 'components-react/shared/inputs/InputWrapper';
 import TwitchContentClassificationInput from './TwitchContentClassificationInput';
 import AiHighlighterToggle from '../AiHighlighterToggle';
-import { Services } from 'components-react/service-provider';
 import Badge from 'components-react/shared/DismissableBadge';
 import { EDismissable } from 'services/dismissables';
 import styles from './TwitchEditStreamInfo.m.less';
 import cx from 'classnames';
-import { useVuex } from 'components-react/hooks';
+import Tooltip from 'components-react/shared/Tooltip';
 
 export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
   const twSettings = p.value;
   // We always pass this into TwitchEditStreamInfo
   const enabledPlatformsCount = p.enabledPlatformsCount!;
-  const aiHighlighterFeatureEnabled = Services.HighlighterService.aiHighlighterFeatureEnabled;
-  const { isDualOutputMode } = useVuex(() => ({
-    isDualOutputMode: Services.DualOutputService.views.dualOutputMode,
-  }));
 
   useEffect(() => {
     if (enabledPlatformsCount > 1 && twSettings.isEnhancedBroadcasting) {
@@ -36,7 +31,7 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
     p.onChange({ ...twSettings, ...patch });
   }
 
-  const enhancedBroadcastingTooltipText = isDualOutputMode
+  const enhancedBroadcastingTooltipText = p.isDualOutputMode
     ? $t(
         'Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays in Twitch',
       )
@@ -56,24 +51,31 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
         <CheckboxInput label={$t('Stream features branded content')} {...bind.isBrandedContent} />
       </InputWrapper>
       {process.platform !== 'darwin' && (
-        <InputWrapper
-          layout={p.layout}
-          className={cx(styles.twitchCheckbox, { [styles.hideLabel]: p.layout === 'vertical' })}
+        <Tooltip
+          title={$t('Enhanced broadcasting is required for Twitch Dual streaming')}
+          placement="top"
+          disabled={!p.isDualOutputMode || (p.isDualOutputMode && twSettings?.display !== 'both')}
+          lightShadow
         >
-          <CheckboxInput
-            style={{ display: 'inline-block' }}
-            label={$t('Enhanced broadcasting')}
-            tooltip={enhancedBroadcastingTooltipText}
-            {...bind.isEnhancedBroadcasting}
-            disabled={twSettings?.display === 'both' || enabledPlatformsCount > 1}
-            value={twSettings?.display === 'both' ? true : twSettings?.isEnhancedBroadcasting}
-          />
-          <Badge
-            style={{ display: 'inline-block' }}
-            dismissableKey={EDismissable.EnhancedBroadcasting}
-            content={'Beta'}
-          />
-        </InputWrapper>
+          <InputWrapper
+            layout={p.layout}
+            className={cx(styles.twitchCheckbox, { [styles.hideLabel]: p.layout === 'vertical' })}
+          >
+            <CheckboxInput
+              style={{ display: 'inline-block' }}
+              label={$t('Enhanced broadcasting')}
+              tooltip={enhancedBroadcastingTooltipText}
+              {...bind.isEnhancedBroadcasting}
+              disabled={twSettings?.display === 'both' || enabledPlatformsCount > 1}
+              value={twSettings?.display === 'both' ? true : twSettings?.isEnhancedBroadcasting}
+            />
+            <Badge
+              style={{ display: 'inline-block' }}
+              dismissableKey={EDismissable.EnhancedBroadcasting}
+              content={'Beta'}
+            />
+          </InputWrapper>
+        </Tooltip>
       )}
     </div>
   );
@@ -95,7 +97,7 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
         requiredFields={
           <React.Fragment key="required-fields">
             <GameSelector key="required" platform={'twitch'} {...bind.game} layout={p.layout} />
-            {aiHighlighterFeatureEnabled && (
+            {p.isAiHighlighterEnabled && (
               <AiHighlighterToggle key="ai-toggle" game={bind.game?.value} cardIsExpanded={false} />
             )}
           </React.Fragment>
