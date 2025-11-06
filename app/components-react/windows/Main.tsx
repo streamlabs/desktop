@@ -170,25 +170,38 @@ export default function Main() {
     if (dockWidth !== constrainedWidth) setDockWidth(dockWidth);
   }, []);
 
-  function windowSizeHandler() {
-    if (!hideStyleBlockers) {
-      updateStyleBlockers(true);
-    }
+  const windowSizeHandler = useCallback(() => {
+    updateStyleBlockers(true);
+
     const windowWidth = window.innerWidth;
 
     if (windowResizeTimeout.current) clearTimeout(windowResizeTimeout.current);
 
-    setHasLiveDock(page === 'Studio' ? windowWidth >= minEditorWidth + 100 : windowWidth >= 1070);
-    windowResizeTimeout.current = window.setTimeout(() => {
-      updateStyleBlockers(false);
-      const appRect = mainWindowEl.current?.getBoundingClientRect();
-      if (!appRect) return;
-      setMaxDockWidth(Math.min(appRect.width - minEditorWidth, appRect.width / 2));
-      setMinDockWidth(Math.min(290, maxDockWidth));
+    // To prevent infinite loop, only set hasLiveDock if it needs to change
+    if (page === 'Studio' && hasLiveDock && windowWidth < minEditorWidth + 100) {
+      setHasLiveDock(false);
+    } else if (page === 'Studio' && !hasLiveDock && windowWidth >= minEditorWidth + 100) {
+      setHasLiveDock(true);
+    } else if (page !== 'Studio' && !hasLiveDock && windowWidth >= 1070) {
+      setHasLiveDock(true);
+    } else if (page !== 'Studio' && hasLiveDock && windowWidth < 1070) {
+      setHasLiveDock(false);
+    }
 
-      updateLiveDockWidth();
-    }, 200);
-  }
+    if (hasLiveDock) {
+      windowResizeTimeout.current = window.setTimeout(() => {
+        const appRect = mainWindowEl.current?.getBoundingClientRect();
+        if (!appRect) return;
+        setMaxDockWidth(Math.min(appRect.width - minEditorWidth, appRect.width / 2));
+        setMinDockWidth(Math.min(290, maxDockWidth));
+
+        if (hasLiveDock) {
+          updateLiveDockWidth();
+        }
+        updateStyleBlockers(false);
+      }, 200);
+    }
+  }, [hasLiveDock, minEditorWidth, maxDockWidth, page]);
 
   useEffect(() => {
     const unsubscribe = StatefulService.store.subscribe((_, state) => {
@@ -270,6 +283,7 @@ export default function Main() {
             min={minDockWidth}
             width={dockWidth}
             setLiveDockWidth={setDockWidth}
+            hasLiveDock={hasLiveDock}
             onLeft
           />
         )}
@@ -297,6 +311,7 @@ export default function Main() {
             min={minDockWidth}
             width={dockWidth}
             setLiveDockWidth={setDockWidth}
+            hasLiveDock={hasLiveDock}
           />
         )}
       </div>
@@ -317,6 +332,7 @@ interface ILiveDockContainerProps {
   min: number;
   width: number;
   setLiveDockWidth: (val: number) => void;
+  hasLiveDock: boolean;
   onLeft?: boolean;
 }
 
@@ -368,6 +384,7 @@ function LiveDockContainer(p: ILiveDockContainerProps) {
         collapsible
         collapsed={isDockCollapsed}
         onTransitionEnd={() => updateStyleBlockers('main', false)}
+        hidden={!p.hasLiveDock}
       >
         {isDockCollapsed && (
           <div className={cx(styles.liveDockCollapsed, p.onLeft && styles.left)} key="collapsed">
