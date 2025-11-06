@@ -272,7 +272,7 @@ export default function Main() {
           [styles.mainContentsOnboarding]: page === 'Onboarding',
         })}
       >
-        {page !== 'Onboarding' && !showLoadingSpinner && (
+        {page !== 'Onboarding' && !showLoadingSpinner && uiReady && (
           <div className={styles.sideNavContainer}>
             <SideNav />
           </div>

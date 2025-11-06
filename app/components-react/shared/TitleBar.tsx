@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import cx from 'classnames';
 import { useVuex } from '../hooks';
 import { Services } from '../service-provider';
@@ -30,19 +30,27 @@ export default function TitleBar(props: { windowId: string; className?: string }
   const primeTheme = /prime/.test(theme);
   const [errorState, setErrorState] = useState(false);
 
-  useEffect(lifecycle, []);
+  useEffect(() => {
+    lifecycle();
 
-  function lifecycle() {
+    return () => {
+      if (Utils.isDevMode()) {
+        ipcRenderer.removeAllListeners('unhandledErrorState');
+      }
+    };
+  }, []);
+
+  const lifecycle = useCallback(() => {
     if (Utils.isDevMode()) {
       ipcRenderer.on('unhandledErrorState', () => setErrorState(true));
     }
-  }
+  }, []);
 
-  function minimize() {
+  const minimize = useCallback(() => {
     remote.getCurrentWindow().minimize();
-  }
+  }, []);
 
-  function maximize() {
+  const maximize = useCallback(() => {
     const win = remote.getCurrentWindow();
 
     if (win.isMaximized()) {
@@ -50,15 +58,15 @@ export default function TitleBar(props: { windowId: string; className?: string }
     } else {
       win.maximize();
     }
-  }
+  }, []);
 
-  function close() {
+  const close = useCallback(() => {
     if (Utils.isMainWindow() && StreamingService.isStreaming) {
       if (!confirm($t('Are you sure you want to exit while live?'))) return;
     }
 
     remote.getCurrentWindow().close();
-  }
+  }, [StreamingService.isStreaming]);
 
   return (
     <>
