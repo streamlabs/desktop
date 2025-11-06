@@ -50,6 +50,12 @@ export default function SideNav() {
     }
   }, [currentMenuItem]);
 
+  const toggleSideNav = useCallback(() => {
+    updateStyleBlockers('main', true);
+    updateSubMenu();
+    toggleMenuStatus();
+  }, [isOpen, toggleMenuStatus, updateStyleBlockers, updateSubMenu]);
+
   return (
     <Layout hasSider className="side-nav">
       <Sider
@@ -84,11 +90,7 @@ export default function SideNav() {
           isOpen && styles.siderOpen,
           leftDock && styles.leftDock,
         )}
-        onClick={() => {
-          updateStyleBlockers('main', true);
-          updateSubMenu();
-          toggleMenuStatus();
-        }}
+        onClick={toggleSideNav}
       >
         <i className="icon-back" />
       </Button>
