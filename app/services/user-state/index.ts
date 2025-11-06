@@ -26,6 +26,8 @@ type UserStateServiceState = {
   stateFlat?: { [x: `${string}.${string}`]: number | StateTreeNode };
 };
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 @InitAfter('UserService')
 // export class UserStateService extends Service {
 export class UserStateService extends StatefulService<UserStateServiceState> {
@@ -61,6 +63,7 @@ export class UserStateService extends StatefulService<UserStateServiceState> {
     obs.NodeObs.RegisterSourceMessageCallback(this.onSourceMessageCallback);
 
     this.fetchSchema().then(schema => {
+      this.log('Fetched user state schema:', JSON.stringify(schema).slice(0, 100) + '...');
       this.state.schemaFlat = toDotNotation(
         schema,
         (v): v is SchemaTreeLeaf => typeof v === 'object' && v !== null && 'name' in v,
@@ -69,6 +72,7 @@ export class UserStateService extends StatefulService<UserStateServiceState> {
 
     // load everything into our initial state
     this.fetchFullState().then(res => {
+      this.log('Fetched full user state:', JSON.stringify(res).slice(0, 100) + '...');
       this.state.stateFlat = toDotNotation(res);
     });
 
@@ -102,7 +106,21 @@ export class UserStateService extends StatefulService<UserStateServiceState> {
 
   async getState(keys: string[]) {
     this.log('getState()', { keys });
-    return this.state.stateFlat;
+
+    if (!this.state.stateFlat) {
+      return undefined;
+    }
+
+    // filter stateFlat to only include keys in "keys"
+    const res = Object.fromEntries(
+      Object.entries(this.state.stateFlat).filter(([key]) => keys.includes(key)),
+    );
+
+    this.log('res', res);
+
+    return res;
+
+    // return this.state.stateFlat;
   }
 
   private onSourceMessageCallback = async (evt: { sourceName: string; message: any }[]) => {
@@ -111,43 +129,57 @@ export class UserStateService extends StatefulService<UserStateServiceState> {
       const source = sourceView?.getObsInput();
 
       if (!source || !sourceView) {
+        this.log(`Source ${sourceName} not found`);
         continue;
       }
 
       const parsed = JSON.parse(message);
 
-      if ('type' in parsed && parsed.type === 'getState') {
-        const key = sourceView.sourceId;
+      if ('type' in parsed) {
+        switch (parsed.type) {
+          case 'getState': {
+            const key = sourceView.sourceId;
 
-        this.log({
-          type: parsed.type,
-          keys: parsed.keys,
-          sourceName,
-          sourceId: key,
-        });
+            this.log({
+              type: parsed.type,
+              keys: parsed.keys,
+              sourceName,
+              sourceId: key,
+            });
 
-        this.sourceStateKeyInterest.set(
-          key,
-          new Set([...(this.sourceStateKeyInterest.get(key) ?? []), ...parsed.keys]),
-        );
+            this.sourceStateKeyInterest.set(
+              key,
+              new Set([...(this.sourceStateKeyInterest.get(key) ?? []), ...parsed.keys]),
+            );
 
-        this.log(key, 'using state keys: ', this.sourceStateKeyInterest.get(key));
+            this.log(key, 'using state keys: ', this.sourceStateKeyInterest.get(key));
+
+            const keys = parsed.keys;
+
+            const s = await this.getState(keys);
+
+            if (!s) {
+              this.log('#### !s');
+              return;
+            } else {
+              this.log('#### s is ', s);
+            }
+
+            const message = toDotNotation(s);
+
+            const payload = JSON.stringify({
+              type: 'state.update',
+              message,
+              key: keys?.join(','),
+              event_id: uuid(),
+            });
+
+            source.sendMessage({ message: payload });
+          }
+        }
       }
 
-      const keys = parsed.keys;
-
-      const s = await this.getState(keys);
-
-      const sAsTree = toDotNotation(s);
-
-      const payload = JSON.stringify({
-        type: 'state.update',
-        message: sAsTree,
-        key: keys?.join(','),
-        event_id: uuid(),
-      });
-
-      source.sendMessage({ message: payload });
+      this.log(`unhandled source message from ${sourceName}:`, parsed);
     }
   };
 
@@ -191,7 +223,7 @@ export class UserStateService extends StatefulService<UserStateServiceState> {
   }
 
   private async fetchSchema() {
-    return fetch(this.urlService.reactiveDataSchemaUrl).then(
+    return await fetch(this.urlService.reactiveDataSchemaUrl).then(
       res => res.json() as Promise<SchemaTree>,
     );
   }

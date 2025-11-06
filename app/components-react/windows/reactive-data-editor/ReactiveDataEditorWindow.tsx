@@ -27,6 +27,15 @@ export default function ReactiveDataEditorWindow() {
   type FlatSchemaKey = keyof typeof schemaFlat;
   const filteredStateKeys = props.stateKeysOfInterest as FlatSchemaKey[];
 
+  // Don't render until schemaFlat and stateFlat are ready
+  if (!schemaFlat || !stateFlat) {
+    return (
+      <ModalLayout bodyStyle={{ padding: '20px' }} hideFooter={true}>
+        <div>Loading...</div>
+      </ModalLayout>
+    );
+  }
+
   return (
     <ModalLayout bodyStyle={{ padding: '0px' }} hideFooter={true}>
       <ReactiveDataEditor
