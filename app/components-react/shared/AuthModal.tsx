@@ -24,7 +24,7 @@ export function AuthModal(p: AuthModalProps) {
 
   const { isLoggedIn, primaryPlatform, name } = useVuex(() => ({
     isLoggedIn: UserService.views.isLoggedIn,
-    primaryPlatform: UserService.views.auth!.primaryPlatform,
+    primaryPlatform: UserService.views.auth?.primaryPlatform,
     name: UserService.views.username,
   }));
 
@@ -36,7 +36,8 @@ export function AuthModal(p: AuthModalProps) {
     if (p.prompt) return p.prompt;
 
     // Instagram doesn't provide a username, since we're not really linked, pass undefined for a generic logout msg w/o it
-    const username = isLoggedIn && primaryPlatform !== 'instagram' ? name : undefined;
+    const username =
+      isLoggedIn && primaryPlatform && primaryPlatform !== 'instagram' ? name : undefined;
 
     return username
       ? $t('Are you sure you want to log out %{username}?', { username })
