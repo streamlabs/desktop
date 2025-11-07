@@ -34,14 +34,18 @@ export default function TitleBar(props: { windowId: string; className?: string }
     lifecycle();
 
     return () => {
-      if (Utils.isDevMode()) {
+      if (Utils.isDevMode() && Utils.isMainWindow()) {
         ipcRenderer.removeAllListeners('unhandledErrorState');
+      }
+
+      if (Utils.isDevMode() && Utils.isChildWindow()) {
+        ipcRenderer.removeListener('unhandledErrorState', () => setErrorState(true));
       }
     };
   }, []);
 
   const lifecycle = useCallback(() => {
-    if (Utils.isDevMode()) {
+    if (Utils.isDevMode() && Utils.isMainWindow()) {
       ipcRenderer.on('unhandledErrorState', () => setErrorState(true));
     }
   }, []);
@@ -66,7 +70,7 @@ export default function TitleBar(props: { windowId: string; className?: string }
     }
 
     remote.getCurrentWindow().close();
-  }, [StreamingService.isStreaming]);
+  }, []);
 
   return (
     <>
