@@ -68,7 +68,6 @@ export default function SideNav() {
           { [styles.siderClosed]: !isOpen },
           { [styles.noLeftDock]: !leftDock },
         )}
-        onTransitionEnd={() => updateStyleBlockers('main', false)}
       >
         <Scrollable className={cx(styles.sidenavScroll)}>
           {/* top navigation menu */}
@@ -91,6 +90,7 @@ export default function SideNav() {
           leftDock && styles.leftDock,
         )}
         onClick={toggleSideNav}
+        onTransitionEnd={() => updateStyleBlockers('main', false)}
       >
         <i className="icon-back" />
       </Button>
