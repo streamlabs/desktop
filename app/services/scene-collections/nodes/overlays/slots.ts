@@ -345,7 +345,6 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
       obj.scaleX *= obj.content.data.width / this.videoSettingsService.baseWidth;
       obj.scaleY *= obj.content.data.height / this.videoSettingsService.baseHeight;
     } else if (obj.content instanceof SmartBrowserNode) {
-      console.log('!!!!!!! !!!!!!! Creating smart browser source for slot', obj.name, id);
       sceneItem = context.scene.createAndAddSource(
         obj.name,
         'browser_source',

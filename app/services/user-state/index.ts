@@ -29,7 +29,6 @@ type UserStateServiceState = {
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 @InitAfter('UserService')
-// export class UserStateService extends Service {
 export class UserStateService extends StatefulService<UserStateServiceState> {
   @Inject() userService: UserService;
   @Inject() hostsService: HostsService;
@@ -48,16 +47,6 @@ export class UserStateService extends StatefulService<UserStateServiceState> {
 
   public sourceStateKeyInterest: Map<string, Set<string>> = new Map();
   private socketSub!: Subscription;
-
-  // private schemaTree: SchemaTree;
-  // private schemaFlat: { [x: `${string}.${string}`]: SchemaTreeLeaf };
-
-  // private stateTree: StateTree;
-  // private stateFlat: { [x: `${string}.${string}`]: number | StateTreeNode };
-
-  // getStateFlat() {
-  //   return this.stateFlat;
-  // }
 
   init() {
     obs.NodeObs.RegisterSourceMessageCallback(this.onSourceMessageCallback);
@@ -90,6 +79,9 @@ export class UserStateService extends StatefulService<UserStateServiceState> {
     const body = JSON.stringify(fromDotNotation(changes));
 
     try {
+      this.log(`PUT https://${this.hostsService.streamlabs}/api/v5/user-state/desktop/offset`);
+      this.log(body);
+
       const resp = await this.authedRequest(
         `https://${this.hostsService.streamlabs}/api/v5/user-state/desktop/offset`,
         { body, method: 'PUT' },
@@ -104,23 +96,17 @@ export class UserStateService extends StatefulService<UserStateServiceState> {
     }
   }
 
-  async getState(keys: string[]) {
-    this.log('getState()', { keys });
+  async getUserState(keys: string[]) {
+    this.log('getUserState()', { keys });
 
     if (!this.state.stateFlat) {
       return undefined;
     }
 
     // filter stateFlat to only include keys in "keys"
-    const res = Object.fromEntries(
+    return Object.fromEntries(
       Object.entries(this.state.stateFlat).filter(([key]) => keys.includes(key)),
     );
-
-    this.log('res', res);
-
-    return res;
-
-    // return this.state.stateFlat;
   }
 
   private onSourceMessageCallback = async (evt: { sourceName: string; message: any }[]) => {
@@ -156,13 +142,11 @@ export class UserStateService extends StatefulService<UserStateServiceState> {
 
             const keys = parsed.keys;
 
-            const s = await this.getState(keys);
+            const s = await this.getUserState(keys);
 
             if (!s) {
-              this.log('#### !s');
+              this.log('No state available yet, skipping response to source');
               return;
-            } else {
-              this.log('#### s is ', s);
             }
 
             const message = toDotNotation(s);

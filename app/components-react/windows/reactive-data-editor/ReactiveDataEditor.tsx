@@ -14,6 +14,9 @@ type ResolvedEntry<T extends FlatSchema> = {
   info: LeafInfo;
 };
 
+const MIN_VALUE = 0;
+const MAX_VALUE = 999999999;
+
 const resolveStateKeys = <T extends FlatSchema>(
   stateKeys: (keyof T)[] | undefined,
   schemaEntries: T,
@@ -58,7 +61,11 @@ const buildInitialDirty = <T extends FlatSchema>(
   return record;
 };
 
-const valueChanged = (prev: number | undefined, next: number): boolean => {
+const valueChanged = (prev: number | undefined, next: number | undefined): boolean => {
+  if (next === undefined) {
+    return false;
+  }
+
   return prev !== next;
 };
 
@@ -101,11 +108,30 @@ export default function ReactiveStateEditor<T extends FlatSchema>({
     setDirtyMap(buildInitialDirty(entries));
   }, [entries, state]);
 
-  const handleValueChange = (key: SchemaKeys<T>, next: number) => {
-    setValues(prev => ({ ...prev, [key]: next }));
+  const handleValueChange = (key: SchemaKeys<T>, rawValue: string) => {
+    const isEmpty = rawValue === '';
+    const nextValue = isEmpty ? undefined : Number(rawValue);
+
+    if (!isEmpty && Number.isNaN(nextValue)) {
+      return;
+    }
+
+    const clampedValue =
+      nextValue === undefined ? undefined : Math.max(MIN_VALUE, Math.min(MAX_VALUE, nextValue));
+
+    setValues(prev => {
+      const next = { ...prev };
+      if (clampedValue === undefined) {
+        delete next[key];
+      } else {
+        next[key] = clampedValue;
+      }
+      return next;
+    });
+
     setDirtyMap(prev => ({
       ...prev,
-      [key]: valueChanged(initialValues[key], next),
+      [key]: valueChanged(initialValues[key], clampedValue),
     }));
   };
 
@@ -122,14 +148,25 @@ export default function ReactiveStateEditor<T extends FlatSchema>({
 
     const changes: Partial<Record<string, number>> = {};
     entries.forEach(({ key }) => {
-      if (dirtyMap[key]) {
-        changes[key] = values[key];
-      }
+      if (!dirtyMap[key]) return;
+
+      const nextValue = values[key];
+      if (nextValue === undefined) return;
+
+      changes[key] = nextValue;
     });
 
     onSave?.(changes);
 
-    setInitialValues(values);
+    const nextInitialValues = entries.reduce<Partial<FlatState<T>>>((acc, { key }) => {
+      const currentValue = values[key];
+      const fallback = initialValues[key] ?? 0;
+      acc[key] = currentValue ?? fallback;
+      return acc;
+    }, {});
+
+    setInitialValues(nextInitialValues);
+    setValues(nextInitialValues);
     setDirtyMap(buildInitialDirty(entries));
   };
 
@@ -171,10 +208,10 @@ export default function ReactiveStateEditor<T extends FlatSchema>({
                     type="number"
                     inputMode="numeric"
                     pattern="[0-9]*"
-                    min={0}
-                    max={999999999}
+                    min={MIN_VALUE}
+                    max={MAX_VALUE}
                     value={values[key] ?? ''}
-                    onChange={event => handleValueChange(key, Number(event.target.value))}
+                    onChange={event => handleValueChange(key, event.target.value)}
                     className={inputClassName}
                   />
                 </div>
