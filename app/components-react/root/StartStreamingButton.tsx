@@ -75,12 +75,19 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
 
     const streamShiftEvent = StreamingService.streamShiftEvent.subscribe(
       (event: IStreamShiftRequested | IStreamShiftActionCompleted) => {
+        console.log('Received stream shift event:', event);
         const { streamShiftStreamId } = RestreamService.state;
-        console.debug('Event ID: ' + event.data.identifier, '\n Stream ID: ' + streamShiftStreamId);
+        // console.debug('Event ID: ' + event.data.identifier, '\n Stream ID: ' + streamShiftStreamId);
         const isFromOtherDevice = streamShiftStreamId
           ? event.data.identifier !== streamShiftStreamId
           : false;
         const switchType = formatStreamType(isFromOtherDevice, event.data.identifier);
+        console.log(
+          'isFromOtherDevice',
+          isFromOtherDevice,
+          'switchType: ' + switchType,
+          event.type,
+        );
 
         if (event.type === 'streamSwitchRequest') {
           if (!isFromOtherDevice) {
@@ -97,9 +104,8 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         if (event.type === 'switchActionComplete') {
           // End the stream on this device if switching the stream to another device
           // Only record analytics if the stream was switched from this device to a different one
-          if (isFromOtherDevice) {
-            Services.RestreamService.actions.endStreamShiftStream(event.data.identifier);
-          }
+
+          Services.RestreamService.actions.endStreamShiftStream(event.data.identifier);
 
           UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
             stream: switchType,
