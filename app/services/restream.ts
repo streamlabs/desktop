@@ -48,7 +48,7 @@ export interface ITargetLiveData extends IStreamShiftTarget {
   game_name?: string;
 }
 
-export type TStreamShiftStatus = 'pending' | 'inactive' | 'active';
+export type TStreamShiftStatus = 'pending' | 'claimed' | 'inactive' | 'active';
 export type TStreamShiftAction = 'approved' | 'rejected';
 
 interface IRestreamState {
@@ -121,7 +121,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     enabled: true,
     grandfathered: false,
     tiktokGrandfathered: false,
-    streamShiftStreamId: undefined,
+    streamShiftStreamId: null,
     streamShiftStatus: 'inactive',
     streamShiftTargets: [],
     streamShiftForceGoLive: false,
@@ -518,7 +518,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
       this.streamSettingsService.setGoLiveSettings({ streamShift: true });
       this.SET_STREAM_SWITCHER_STATUS('pending');
       this.SET_STREAM_SWITCHER_TARGETS(status.targets);
-    } else if (this.state.streamShiftStatus === 'pending') {
+    } else {
+      this.SET_STREAM_SWITCHER_STREAM_ID();
       this.SET_STREAM_SWITCHER_STATUS('inactive');
       this.SET_STREAM_SWITCHER_TARGETS([]);
     }
@@ -669,7 +670,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
         this.dualOutputService.toggleDisplay(false, 'vertical');
       }
 
-      this.SET_STREAM_SWITCHER_STATUS('inactive');
+      this.SET_STREAM_SWITCHER_STATUS('claimed');
       this.updateStreamShift('approved');
     }
   }

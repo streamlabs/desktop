@@ -77,27 +77,21 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       (event: IStreamShiftRequested | IStreamShiftActionCompleted) => {
         const { streamShiftStreamId } = RestreamService.state;
         console.debug('Event ID: ' + event.data.identifier, '\n Stream ID: ' + streamShiftStreamId);
-        const isFromOtherDevice =
-          streamShiftStreamId && event.data.identifier !== streamShiftStreamId;
-
-        const isMobileRemote = isFromOtherDevice ? /[A-Z]/.test(event.data.identifier) : false;
-        const remoteDeviceType = isMobileRemote ? 'mobile' : 'desktop';
-
-        // Note: because the event's stream id is from the device that requested the switch,
-        // it is not possible to know what type of device the stream will be switching from.
-        // We can only identify the type of device the stream is switching to.
-        const switchType = `desktop-${remoteDeviceType}`;
+        const isFromOtherDevice = streamShiftStreamId
+          ? event.data.identifier !== streamShiftStreamId
+          : false;
+        const switchType = formatStreamType(isFromOtherDevice, event.data.identifier);
 
         if (event.type === 'streamSwitchRequest') {
           if (!isFromOtherDevice) {
             // Don't record the request from this device because the other device will record it
             RestreamService.actions.confirmStreamShift('approved');
-          } else {
-            UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
-              stream: switchType,
-              action: 'request',
-            });
           }
+
+          UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
+            stream: switchType,
+            action: 'request',
+          });
         }
 
         if (event.type === 'switchActionComplete') {
@@ -105,12 +99,12 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
           // Only record analytics if the stream was switched from this device to a different one
           if (isFromOtherDevice) {
             Services.RestreamService.actions.endStreamShiftStream(event.data.identifier);
-
-            UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
-              stream: switchType,
-              action: 'complete',
-            });
           }
+
+          UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
+            stream: switchType,
+            action: 'complete',
+          });
 
           // Notify the user
           const message = isFromOtherDevice
@@ -135,6 +129,19 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     return () => {
       streamShiftEvent.unsubscribe();
     };
+  }, []);
+
+  const formatStreamType = useCallback((isFromOtherDevice: boolean, eventStreamId?: string) => {
+    // Because the event's stream id is from the device that requested the switch,
+    // it is not possible to know what type of device the stream will be switching from.
+    // We can only identify the type of device the stream is switching to.
+    if (!isFromOtherDevice || !eventStreamId) {
+      return 'other-desktop';
+    }
+
+    // Mobile stream ids have capital letters, Desktop stream ids do not.
+    const remoteDeviceType = /[A-Z]/.test(eventStreamId) ? 'mobile' : 'desktop';
+    return `desktop-${remoteDeviceType}`;
   }, []);
 
   const toggleStreaming = useCallback(async () => {
