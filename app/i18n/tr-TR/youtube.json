@@ -48,5 +48,5 @@
   "Exceeded thumbnail upload quota. Please try again later.": "Küçük resim yükleme kotası aşıldı. Lütfen daha sonra yeniden deneyin.",
   "YouTube thumbnail image is too large. Maximum size is 2MB.": "YouTube küçük resim görseli çok büyük. Maksimum boyut 2 MB'dir.",
   "Please upload thumbnail manually on YouTube.": "Lütfen YouTube'a küçük resmi manuel olarak yükleyin.",
-  "Stream Shift Error: YouTube is not live": "Stream Shift Error: YouTube is not live"
+  "Stream Shift Error: YouTube is not live": "Stream Shift Hatası: YouTube canlı değil"
 }
