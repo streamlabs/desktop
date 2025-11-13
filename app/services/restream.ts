@@ -6,7 +6,7 @@ import { StreamSettingsService } from 'services/settings/streaming';
 import { UserService } from 'services/user';
 import { CustomizationService, ICustomizationServiceState } from 'services/customization';
 import { authorizedHeaders, jfetch } from 'util/requests';
-import { EAvailableFeatures, IncrementalRolloutService } from './incremental-rollout';
+import { IncrementalRolloutService } from './incremental-rollout';
 import electron from 'electron';
 import { StreamingService } from './streaming';
 import { FacebookService } from './platforms/facebook';
@@ -30,7 +30,9 @@ interface IRestreamTarget {
   platform: TPlatform;
   streamKey: string;
   mode?: TOutputOrientation;
+  label?: string;
 }
+
 export interface IStreamShiftTarget {
   platform: TPlatform | 'relay';
   key?: string;
@@ -85,12 +87,6 @@ interface IRestreamState {
    * stream can be started correctly.
    */
   streamShiftTargets: ITargetLiveData[];
-
-  /**
-   * To prevent the user from being in a stale stream shift state, allow the user to
-   * force go live even if the stream shift is live call returns true.
-   */
-  streamShiftForceGoLive: boolean;
 }
 
 interface IUserSettingsResponse extends IRestreamState {
@@ -124,7 +120,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
     streamShiftStreamId: undefined,
     streamShiftStatus: 'inactive',
     streamShiftTargets: [],
-    streamShiftForceGoLive: false,
   };
 
   get streamInfo() {
@@ -189,11 +184,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
   @mutation()
   private SET_STREAM_SWITCHER_TARGETS(targets: IStreamShiftTarget[]) {
     this.state.streamShiftTargets = targets;
-  }
-
-  @mutation()
-  private SET_STREAM_SWITCHER_FORCE_GO_LIVE(shouldForce: boolean) {
-    this.state.streamShiftForceGoLive = shouldForce;
   }
 
   init() {
@@ -293,6 +283,71 @@ export class RestreamService extends StatefulService<IRestreamState> {
     const request = new Request(url, { headers });
 
     return jfetch(request);
+  }
+
+  async updateTargets(newTargets: TPlatform[]) {
+    const streamKey = await this.fetchUserSettings().then(s => s.streamKey);
+
+    const remoteTargets: IRestreamTarget[] = await this.fetchTargets();
+
+    if (!streamKey || !remoteTargets.length) {
+      console.debug('No active restream targets.');
+    }
+
+    const targetsToRemove = remoteTargets.reduce((ids: { id: number }[], target) => {
+      if (!newTargets.includes(target.platform)) {
+        ids.push({ id: target.id });
+      }
+      return ids;
+    }, []);
+
+    const targetsToAdd = newTargets.reduce((ids: any[], platform) => {
+      const target = remoteTargets.find(rt => rt.platform === platform);
+      if (!target) {
+        const service = getPlatformService(platform);
+        ids.push({
+          label: target.label,
+          platform,
+          enabled: true,
+          streamKey: service.state.streamKey,
+          dcProtection: false,
+          mode: target.mode,
+        });
+      }
+      return ids;
+    }, []);
+
+    this.removeTargets(streamKey, targetsToRemove);
+    this.postTargets(streamKey, targetsToAdd);
+  }
+
+  postTargets(streamKey: string, targets: { id: number }[]) {
+    const headers = authorizedHeaders(this.userService.apiToken);
+    const url = `https://${this.host}/api/v1/rst/targets/runtime`;
+    const request = new Request(url, {
+      headers,
+      body: JSON.stringify({ streamKey, targets }),
+      method: 'POST',
+    });
+
+    return jfetch(request);
+  }
+
+  removeTargets(streamKey: string, targets: { id: number }[]) {
+    const headers = authorizedHeaders(
+      this.userService.apiToken,
+      new Headers({ 'Content-Type': 'application/json' }),
+    );
+    const url = `https://${this.host}/api/v1/rst/targets/runtime`;
+    const body = JSON.stringify({ streamKey, targets });
+    console.log('body', body);
+    const request = new Request(url, {
+      headers,
+      body,
+      method: 'DELETE',
+    });
+
+    return fetch(request);
   }
 
   fetchIngest(): Promise<{ server: string }> {
@@ -716,13 +771,19 @@ export class RestreamService extends StatefulService<IRestreamState> {
     }
   }
 
-  forceStreamShiftGoLive(shouldForce: boolean) {
-    if (shouldForce) {
-      this.streamSettingsService.setGoLiveSettings({ streamShift: false });
-      this.SET_STREAM_SWITCHER_STATUS('inactive');
-    }
+  async forceStreamShiftGoLive() {
+    try {
+      const streamKey = await this.fetchUserSettings().then(s => s.streamKey);
 
-    this.SET_STREAM_SWITCHER_FORCE_GO_LIVE(shouldForce);
+      const remoteTargets: IRestreamTarget[] = await this.fetchTargets();
+
+      const targets = remoteTargets.map(t => ({ id: t.id }));
+      await this.removeTargets(streamKey, targets);
+
+      this.streamingService.showGoLiveWindow();
+    } catch (e: unknown) {
+      console.error('Error forcing stream shift go live:', e);
+    }
   }
 
   /* Chat Handling
@@ -846,9 +907,5 @@ class RestreamView extends ViewHandler<IRestreamState> {
 
   get hasStreamShiftTargets() {
     return this.state.streamShiftTargets.length > 0;
-  }
-
-  get shouldForceGoLive() {
-    return this.state.streamShiftForceGoLive;
   }
 }
