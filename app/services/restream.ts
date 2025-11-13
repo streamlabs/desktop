@@ -291,38 +291,44 @@ export class RestreamService extends StatefulService<IRestreamState> {
     const remoteTargets: IRestreamTarget[] = await this.fetchTargets();
 
     if (!streamKey || !remoteTargets.length) {
-      console.debug('No active restream targets.');
+      console.debug('No active restream targets or stream key missing.');
+      return;
     }
 
     const targetsToRemove = remoteTargets.reduce((ids: { id: number }[], target) => {
       if (!newTargets.includes(target.platform)) {
         ids.push({ id: target.id });
       }
+
       return ids;
     }, []);
 
     const targetsToAdd = newTargets.reduce((ids: any[], platform) => {
       const target = remoteTargets.find(rt => rt.platform === platform);
+
       if (!target) {
         const service = getPlatformService(platform);
         ids.push({
-          label: target.label,
+          label: `${platform} target`,
           platform,
           enabled: true,
           streamKey: service.state.streamKey,
           dcProtection: false,
-          mode: target.mode,
+          mode: this.getPlatformMode(platform),
         });
       }
       return ids;
     }, []);
 
-    this.removeTargets(streamKey, targetsToRemove);
     this.postTargets(streamKey, targetsToAdd);
+    this.removeTargets(streamKey, targetsToRemove);
   }
 
   postTargets(streamKey: string, targets: { id: number }[]) {
-    const headers = authorizedHeaders(this.userService.apiToken);
+    const headers = authorizedHeaders(
+      this.userService.apiToken,
+      new Headers({ 'Content-Type': 'application/json' }),
+    );
     const url = `https://${this.host}/api/v1/rst/targets/runtime`;
     const request = new Request(url, {
       headers,
@@ -339,11 +345,9 @@ export class RestreamService extends StatefulService<IRestreamState> {
       new Headers({ 'Content-Type': 'application/json' }),
     );
     const url = `https://${this.host}/api/v1/rst/targets/runtime`;
-    const body = JSON.stringify({ streamKey, targets });
-    console.log('body', body);
     const request = new Request(url, {
       headers,
-      body,
+      body: JSON.stringify({ streamKey, targets }),
       method: 'DELETE',
     });
 
