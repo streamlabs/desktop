@@ -713,7 +713,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
    */
   async endStreamShiftStream(remoteStreamId: string): Promise<void> {
     try {
-      this.SET_STREAM_SWITCHER_STATUS('active');
+      this.SET_STREAM_SWITCHER_STATUS('inactive');
       await this.streamingService.toggleStreaming();
       this.SET_STREAM_SWITCHER_STREAM_ID(remoteStreamId);
     } catch (error: unknown) {
