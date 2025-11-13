@@ -14,5 +14,5 @@
   "Import your scenes and sources from Twitch Studio.": "Importe suas cenas e fontes do Twitch Studio.",
   "Importing Your Existing Settings From Twitch Studio": "Importando suas configurações existentes do Twitch Studio",
   "Importing from Twitch Studio is an experimental feature under active development. Some source types are unable to be imported, and not all settings will be carried over.": "A importação do Twitch Studio é um recurso experimental em desenvolvimento ativo. Alguns tipos de fontes não podem ser importados, e nem todas as configurações serão transferidas.",
-  "Stream Shift Error: Twitch is not live": "Stream Shift Error: Twitch is not live"
+  "Stream Shift Error: Twitch is not live": "Erro de Stream Shift: O Twitch não está ao vivo"
 }
