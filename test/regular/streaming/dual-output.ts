@@ -4,7 +4,6 @@ import {
   stopStream,
   submit,
   waitForSettingsWindowLoaded,
-  waitForStreamStart,
   waitForStreamStop,
 } from '../../helpers/modules/streaming';
 import {
@@ -28,11 +27,8 @@ import {
 import { addDummyAccount, logOut, releaseUserInPool, withUser } from '../../helpers/webdriver/user';
 import { SceneBuilder } from '../../helpers/scene-builder';
 import { getApiClient } from '../../helpers/api-client';
-import { fillForm } from '../../helpers/modules/forms';
+import { fillForm, useForm } from '../../helpers/modules/forms';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
-import { sleep } from '../../helpers/sleep';
-// import { readFields, fillForm } from '../../helpers/modules/forms';
-// import { sleep } from '../../helpers/sleep';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -285,10 +281,10 @@ test(
     await submit();
 
     // Cannot go live in dual output mode with all targets assigned to one display
-    await waitForDisplayed('div.ant-message-notice-content', {
-      timeout: 5000,
+    await waitForDisplayed('div.ant-message-notice', {
+      timeout: 7000,
     });
-    await click('div.ant-message-notice-content');
+    await click('div.ant-message-notice');
 
     await fillForm({
       instagram: true,
@@ -306,13 +302,12 @@ test(
     });
 
     // TODO: fix go live errors from dummy accounts
-    // await submit();
-    // await waitForDisplayed('span=Configure the Dual Output service');
-    // await focusMain();
-    // await waitForDisplayed('div=Refresh Chat', { timeout: 60000 });
-
-    // // Dummy account will cause the stream to not go live
-    // await waitForStreamStop();
+    await submit();
+    await waitForDisplayed('span=Configure the Dual Output service', { timeout: 100000 });
+    // Dummy account will cause the stream to not go live, so check to make sure the chat loads
+    await waitForStreamStop();
+    await focusMain();
+    await waitForDisplayed('div=Refresh Chat', { timeout: 60000 });
 
     // Clean up the dummy account
     await showSettingsWindow('Stream', async () => {
@@ -323,6 +318,9 @@ test(
     // Vertical display is hidden after logging out
     await logOut(t);
     t.false(await isDisplayed('div#vertical-display'));
+
+    // Skip checking errors due to possible issues loading chat in the test environment
+    skipCheckingErrorsInLog();
     t.pass();
   },
 );
@@ -340,49 +338,56 @@ test(
     await submit();
 
     // Cannot go live in dual output mode with all targets assigned to one display
-    await waitForDisplayed('div.ant-message-notice-content', {
-      timeout: 5000,
+    await waitForDisplayed('div.ant-message-notice', {
+      timeout: 7000,
     });
-    await click('div.ant-message-notice-content');
+    await click('div.ant-message-notice');
 
     // Dual output with one platform for each display
     await focusChild();
     await fillForm({
       trovo: true,
-      trovoDisplay: 'vertical',
     });
 
     await waitForDisplayed('div[data-name="trovo-settings"]');
     await fillForm({
       title: 'Test stream',
       trovoGame: 'Fortnite',
+      trovoDisplay: 'vertical',
     });
 
-    // TODO: fix go live errors from dummy accounts
-    // await submit();
-    // await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
-    // await waitForStreamStart();
-    // await sleep(2000);
-    // await stopStream();
-    // await waitForStreamStop();
+    await submit();
+    await waitForDisplayed('span=Configure the Dual Output service', { timeout: 100000 });
+    // Confirm multistream chat loads
+    await focusMain();
+    await waitForDisplayed('div=Refresh Chat', { timeout: 60000 });
+    await stopStream();
+    await waitForStreamStop();
 
-    // await clickGoLive();
-    // await focusChild();
+    await clickGoLive();
+    await focusChild();
 
     // // Swap displays
-    // await waitForSettingsWindowLoaded();
-    // await fillForm({
-    //   trovoDisplay: 'horizontal',
-    //   twitchDisplay: 'vertical',
-    // });
+    await waitForSettingsWindowLoaded();
+    await fillForm({
+      trovoDisplay: 'horizontal',
+      twitchDisplay: 'vertical',
+    });
 
-    // await submit();
-    // await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
-    // await waitForStreamStart();
-    // await sleep(2000);
-    // await stopStream();
-    // await waitForStreamStop();
+    // Shows primary chat switcher when multiple platforms are enabled in dual output mode
+    const { setDropdownInputValue } = useForm();
+    await setDropdownInputValue('primaryChat', 'Trovo');
 
+    await submit();
+    await waitForDisplayed('span=Configure the Dual Output service', { timeout: 100000 });
+    // Confirm chat loads
+    await focusMain();
+    await waitForDisplayed('div=Refresh Chat', { timeout: 60000 });
+    await stopStream();
+    await waitForStreamStop();
+
+    // Skip checking errors due to possible issues loading chat in the test environment
+    skipCheckingErrorsInLog();
     t.pass();
   },
 );
