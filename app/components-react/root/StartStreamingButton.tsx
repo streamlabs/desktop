@@ -80,7 +80,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         // console.debug('Event ID: ' + event.data.identifier, '\n Stream ID: ' + streamShiftStreamId);
         const isFromOtherDevice = streamShiftStreamId
           ? event.data.identifier !== streamShiftStreamId
-          : false;
+          : true;
         const switchType = formatStreamType(isFromOtherDevice, event.data.identifier);
         console.log(
           'isFromOtherDevice',
@@ -91,7 +91,6 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
 
         if (event.type === 'streamSwitchRequest') {
           if (!isFromOtherDevice) {
-            // Don't record the request from this device because the other device will record it
             RestreamService.actions.confirmStreamShift('approved');
           }
 
@@ -105,7 +104,9 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
           // End the stream on this device if switching the stream to another device
           // Only record analytics if the stream was switched from this device to a different one
 
-          Services.RestreamService.actions.endStreamShiftStream(event.data.identifier);
+          if (isFromOtherDevice) {
+            Services.RestreamService.actions.endStreamShiftStream(event.data.identifier);
+          }
 
           UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
             stream: switchType,
@@ -218,7 +219,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
             title: $t('Another stream detected'),
             message,
             btnText: $t('Switch to Streamlabs Desktop'),
-            fn: startStreamShift,
+            fn: RestreamService.actions.startStreamShift,
             cancelBtnText: $t('Cancel'),
             cancelBtnPosition: 'left',
             secondaryActionText: $t('Force Start'),
@@ -264,14 +265,6 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       return false;
     }
   }, []);
-
-  const startStreamShift = useCallback(() => {
-    if (isDualOutputMode) {
-      Services.DualOutputService.actions.toggleDisplay(false, 'vertical');
-    }
-
-    StreamingService.actions.goLive();
-  }, [isDualOutputMode]);
 
   const shouldShowGoLiveWindow = useCallback(() => {
     if (!UserService.isLoggedIn) return false;

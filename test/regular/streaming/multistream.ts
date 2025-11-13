@@ -6,6 +6,7 @@ import {
   switchAdvancedMode,
   waitForSettingsWindowLoaded,
   waitForStreamStart,
+  waitForStreamStop,
 } from '../../helpers/modules/streaming';
 import { fillForm, useForm } from '../../helpers/modules/forms';
 import {
@@ -20,6 +21,8 @@ import { releaseUserInPool, reserveUserFromPool, withUser } from '../../helpers/
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
 import { test, TExecutionContext, useWebdriver } from '../../helpers/webdriver';
 import { sleep } from '../../helpers/sleep';
+import { getApiClient } from '../../helpers/api-client';
+import { RestreamService } from 'services/restream';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -33,9 +36,99 @@ async function enableAllPlatforms() {
   }
 }
 
-async function goLiveWithStreamShift(t: TExecutionContext, multistream: boolean) {
-  await fillForm({ streamShift: true });
+async function shiftStream(t: TExecutionContext) {
+  const client = await getApiClient();
+  // const restreamService = client.getResource<RestreamService>('RestreamService');
 
+  const jsonRpcRequest = {
+    result: {
+      _type: 'EVENT',
+      resourceId: 'WebsocketService.socketEvent',
+      emitter: 'STREAM',
+    },
+    jsonrpc: '2.0',
+  };
+
+  const mobileSwitchRequest = {
+    data: {
+      identifier: 'MOBILE-STREAM-IDENTIFIER-1234',
+    },
+    event_id: 'evt_1234',
+    for: 'streamlabs',
+    type: 'streamSwitchRequest',
+  };
+
+  const desktopSwitchRequest = {
+    data: {
+      identifier: 'desktop-stream-identifier-5678',
+    },
+    event_id: 'evt_5678',
+    for: 'streamlabs',
+    type: 'streamSwitchRequest',
+  };
+
+  const selfSwitchRequest = JSON.stringify({
+    data: {
+      identifier: 'self-stream-identifier-91011',
+    },
+    event_id: 'evt_91011',
+    for: 'streamlabs',
+    type: 'streamSwitchRequest',
+  });
+
+  // client.eventReceived.subscribe(async event => {
+  //   console.log('Received socket event:', event);
+  //   if (event.data.type === 'streamSwitchRequest') {
+  //     console.log('\nStream shift received ', event.data);
+  //     // await clickGoLive();
+  //     await waitForDisplayed('span=Another stream detected', { timeout: 10000 });
+  //     await clickButton('Switch to Streamlabs Desktop');
+  //     // await waitForStreamStart();
+  //     //     await stopStream();
+  //     //     await waitForStreamStop();
+  //   }
+
+  //   if (event.data.type === 'switchActionComplete') {
+  //     console.log('\nStream shift to completed ', event.data);
+  //     await waitForDisplayed('span=Stream successfully switched', { timeout: 10000 });
+  //     await sleep(10000);
+  //     await clickButton('Close');
+  //   }
+  // });
+
+  // client.sendJson(JSON.stringify({ data: { ...jsonRpcRequest, ...mobileSwitchRequest } }));
+
+  await new Promise<void>((resolve, reject) => {
+    client.eventReceived.subscribe(async event => {
+      if (event.data.type === 'streamSwitchRequest') {
+        await waitForDisplayed('span=Another stream detected', { timeout: 10000 });
+        await clickButton('Switch to Streamlabs Desktop');
+      }
+
+      if (event.data.type === 'switchActionComplete') {
+        await waitForDisplayed('span=Stream successfully switched', { timeout: 10000 });
+        await sleep(10000);
+        await clickButton('Close');
+        await waitForStreamStart();
+        await stopStream();
+        await waitForStreamStop();
+        resolve();
+      }
+    });
+
+    const data = { data: { ...jsonRpcRequest, ...mobileSwitchRequest } };
+
+    client.sendJson(JSON.stringify(data));
+
+    // setup waiting timeout
+    setTimeout(
+      () => reject(`Socket event has not been received ${JSON.stringify(data, null, 2)}`),
+      30000,
+    );
+  });
+}
+
+async function goLiveWithStreamShift(t: TExecutionContext, multistream: boolean) {
   if (multistream) {
     await enableAllPlatforms();
     await waitForSettingsWindowLoaded();
@@ -43,17 +136,18 @@ async function goLiveWithStreamShift(t: TExecutionContext, multistream: boolean)
       title: 'Test stream',
       description: 'Test stream description',
       twitchGame: 'Fortnite',
-      kickGame: 'Fortnite',
+      trovoGame: 'Doom',
+      streamShift: true,
     });
   } else {
     await fillForm({ twitch: true });
     await waitForSettingsWindowLoaded();
-    await fillForm({ title: 'Test stream', game: 'Fortnite' });
+    await fillForm({ title: 'Test stream', twitchGame: 'Fortnite', streamShift: true });
   }
 
   await waitForSettingsWindowLoaded();
   await submit();
-  await waitForDisplayed('span=Configure the Multistream service');
+  await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
   await waitForStreamStart();
   await focusMain();
 
@@ -68,8 +162,6 @@ async function goLiveWithStreamShift(t: TExecutionContext, multistream: boolean)
       'Multistream chat tab not visible',
     );
   }
-
-  await stopStream();
 }
 
 test(
@@ -228,8 +320,7 @@ test('Custom stream destinations', async t => {
   }
 });
 
-// TODO: enable after merge
-test.skip('Stream Shift', withUser('twitch', { prime: true, multistream: true }), async t => {
+test('Stream Shift', withUser('twitch', { prime: true, multistream: true }), async t => {
   await prepareToGoLive();
   await clickGoLive();
   await waitForSettingsWindowLoaded();
@@ -237,8 +328,5 @@ test.skip('Stream Shift', withUser('twitch', { prime: true, multistream: true })
   // Single stream shift
   await goLiveWithStreamShift(t, false);
 
-  // Multistream shift
-  await goLiveWithStreamShift(t, true);
-
-  t.pass();
+  await shiftStream(t);
 });

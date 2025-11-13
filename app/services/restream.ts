@@ -662,6 +662,19 @@ export class RestreamService extends StatefulService<IRestreamState> {
     this.SET_STREAM_SWITCHER_TARGETS([]);
   }
 
+  async startStreamShift() {
+    try {
+      await this.streamingService.goLive();
+      this.updateStreamShift('approved');
+
+      return Promise.resolve();
+    } catch (e: unknown) {
+      console.error('Error switching stream shift stream:', e);
+
+      return Promise.reject(e);
+    }
+  }
+
   async confirmStreamShift(action: TStreamShiftAction) {
     if (action === 'rejected') {
       this.SET_STREAM_SWITCHER_STATUS('pending');
