@@ -1,9 +1,9 @@
 {
-  "App Platform": "App Platform",
-  "Unpacked App Path": "Unpacked App Path",
-  "This is the path to your unpacked app. It should be a folder containing a valid manifest.json": "This is the path to your unpacked app. It should be a folder containing a valid manifest.json",
-  "App Token": "App Token",
-  "This token allows you app to authenticate with the Streamlabs API. Visit platform.streamlabs.com to create a developer account and get a test app token.": "This token allows you app to authenticate with the Streamlabs API. Visit platform.streamlabs.com to create a developer account and get a test app token.",
-  "Load App": "Load App",
-  "There was an error loading this app, please try again or contact the Streamlabs development team for assistance.": "There was an error loading this app, please try again or contact the Streamlabs development team for assistance."
+  "App Platform": "應用程式平台",
+  "Unpacked App Path": "未封裝應用程式路徑",
+  "This is the path to your unpacked app. It should be a folder containing a valid manifest.json": "這是您未封裝應用程式的路徑。應為包含有效 manifest.json 的資料夾",
+  "App Token": "應用程式符記",
+  "This token allows you app to authenticate with the Streamlabs API. Visit platform.streamlabs.com to create a developer account and get a test app token.": "此符記可讓您的應用程式通過 Streamlabs API 驗證。前往 platform.streamlabs.com 建立開發者帳號並取得測試應用程式符記。",
+  "Load App": "載入應用程式",
+  "There was an error loading this app, please try again or contact the Streamlabs development team for assistance.": "載入此應用程式時發生錯誤，請重試或聯絡 Streamlabs 開發團隊以取得協助。"
 }
