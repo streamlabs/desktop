@@ -23,6 +23,9 @@ import { TApplicationTheme } from 'services/customization';
 import styles from './Main.m.less';
 import { StatefulService } from 'services';
 import { useRealmObject } from 'components-react/hooks/realm';
+import { Layout } from 'antd';
+
+const { Sider } = Layout;
 
 // TODO: this is technically deprecated as we have moved customizationService to Realm
 // but some users may still have this value
@@ -47,12 +50,12 @@ async function isDirectory(path: string) {
 export default function Main() {
   const {
     AppService,
-    StreamingService,
     WindowsService,
     UserService,
     EditorCommandsService,
     ScenesService,
     CustomizationService,
+    NavigationService,
   } = Services;
   const mainWindowEl = useRef<HTMLDivElement | null>(null);
   const mainMiddleEl = useRef<HTMLDivElement | null>(null);
@@ -69,12 +72,11 @@ export default function Main() {
 
   const uiReady = bulkLoadFinished && i18nReady;
 
-  const page = useRealmObject(Services.NavigationService.state).currentPage;
-  const params = useRealmObject(Services.NavigationService.state).params;
-  const realmDockWidth = useRealmObject(Services.CustomizationService.state).livedockSize;
-  const isDockCollapsed = useRealmObject(Services.CustomizationService.state).livedockCollapsed;
-  const realmTheme = useRealmObject(Services.CustomizationService.state).theme;
-  const leftDock = useRealmObject(Services.CustomizationService.state).leftDock;
+  const page = useRealmObject(NavigationService.state).currentPage;
+  const params = useRealmObject(NavigationService.state).params;
+  const realmDockWidth = useRealmObject(CustomizationService.state).livedockSize;
+  const realmTheme = useRealmObject(CustomizationService.state).theme;
+  const leftDock = useRealmObject(CustomizationService.state).leftDock;
 
   // Provides smooth chat resizing instead of writing to realm every tick while resizing
   const [dockWidth, setDockWidth] = useState(realmDockWidth);
@@ -83,7 +85,6 @@ export default function Main() {
     errorAlert,
     applicationLoading,
     hideStyleBlockers,
-    streamingStatus,
     isLoggedIn,
     platform,
     activeSceneId,
@@ -91,7 +92,6 @@ export default function Main() {
     errorAlert: AppService.state.errorAlert,
     applicationLoading: AppService.state.loading,
     hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
-    streamingStatus: StreamingService.state.streamingStatus,
     isLoggedIn: UserService.views.isLoggedIn,
     platform: UserService.views.platform,
     activeSceneId: ScenesService.views.activeSceneId,
@@ -170,33 +170,38 @@ export default function Main() {
     if (dockWidth !== constrainedWidth) setDockWidth(dockWidth);
   }, []);
 
-  const setCollapsed = useCallback((livedockCollapsed: boolean) => {
-    WindowsService.actions.updateStyleBlockers('main', true);
-    CustomizationService.actions.setSettings({ livedockCollapsed });
-    setTimeout(() => {
-      WindowsService.actions.updateStyleBlockers('main', false);
-    }, 300);
-  }, []);
+  const windowSizeHandler = useCallback(() => {
+    updateStyleBlockers(true);
 
-  function windowSizeHandler() {
-    if (!hideStyleBlockers) {
-      updateStyleBlockers(true);
-    }
     const windowWidth = window.innerWidth;
 
     if (windowResizeTimeout.current) clearTimeout(windowResizeTimeout.current);
 
-    setHasLiveDock(page === 'Studio' ? windowWidth >= minEditorWidth + 100 : windowWidth >= 1070);
-    windowResizeTimeout.current = window.setTimeout(() => {
-      updateStyleBlockers(false);
-      const appRect = mainWindowEl.current?.getBoundingClientRect();
-      if (!appRect) return;
-      setMaxDockWidth(Math.min(appRect.width - minEditorWidth, appRect.width / 2));
-      setMinDockWidth(Math.min(290, maxDockWidth));
+    // To prevent infinite loop, only set hasLiveDock if it needs to change
+    if (page === 'Studio' && hasLiveDock && windowWidth < minEditorWidth + 100) {
+      setHasLiveDock(false);
+    } else if (page === 'Studio' && !hasLiveDock && windowWidth >= minEditorWidth + 100) {
+      setHasLiveDock(true);
+    } else if (page !== 'Studio' && !hasLiveDock && windowWidth >= 1070) {
+      setHasLiveDock(true);
+    } else if (page !== 'Studio' && hasLiveDock && windowWidth < 1070) {
+      setHasLiveDock(false);
+    }
 
-      updateLiveDockWidth();
-    }, 200);
-  }
+    if (hasLiveDock) {
+      windowResizeTimeout.current = window.setTimeout(() => {
+        const appRect = mainWindowEl.current?.getBoundingClientRect();
+        if (!appRect) return;
+        setMaxDockWidth(Math.min(appRect.width - minEditorWidth, appRect.width / 2));
+        setMinDockWidth(Math.min(290, maxDockWidth));
+
+        if (hasLiveDock) {
+          updateLiveDockWidth();
+        }
+        updateStyleBlockers(false);
+      }, 200);
+    }
+  }, [hasLiveDock, minEditorWidth, maxDockWidth, page]);
 
   useEffect(() => {
     const unsubscribe = StatefulService.store.subscribe((_, state) => {
@@ -222,12 +227,6 @@ export default function Main() {
       CustomizationService.actions.setSettings({ livedockSize: dockWidth });
     };
   }, []);
-
-  useEffect(() => {
-    if (streamingStatus === EStreamingState.Starting && isDockCollapsed) {
-      setCollapsed(false);
-    }
-  }, [streamingStatus]);
 
   const oldTheme = useRef<TApplicationTheme | null>(null);
   useEffect(() => {
@@ -273,7 +272,7 @@ export default function Main() {
           [styles.mainContentsOnboarding]: page === 'Onboarding',
         })}
       >
-        {page !== 'Onboarding' && !showLoadingSpinner && (
+        {page !== 'Onboarding' && !showLoadingSpinner && uiReady && (
           <div className={styles.sideNavContainer}>
             <SideNav />
           </div>
@@ -283,8 +282,8 @@ export default function Main() {
             max={maxDockWidth}
             min={minDockWidth}
             width={dockWidth}
-            setCollapsed={setCollapsed}
             setLiveDockWidth={setDockWidth}
+            hasLiveDock={hasLiveDock}
             onLeft
           />
         )}
@@ -311,8 +310,8 @@ export default function Main() {
             max={maxDockWidth}
             min={minDockWidth}
             width={dockWidth}
-            setCollapsed={setCollapsed}
             setLiveDockWidth={setDockWidth}
+            hasLiveDock={hasLiveDock}
           />
         )}
       </div>
@@ -332,19 +331,35 @@ interface ILiveDockContainerProps {
   max: number;
   min: number;
   width: number;
-  setCollapsed: (val: boolean) => void;
   setLiveDockWidth: (val: number) => void;
+  hasLiveDock: boolean;
   onLeft?: boolean;
 }
 
 function LiveDockContainer(p: ILiveDockContainerProps) {
-  const isDockCollapsed = useRealmObject(Services.CustomizationService.state).livedockCollapsed;
+  const { WindowsService, CustomizationService, StreamingService } = Services;
+  const isDockCollapsed = useRealmObject(CustomizationService.state).livedockCollapsed;
+  const { updateStyleBlockers, streamingStatus } = useVuex(() => ({
+    streamingStatus: StreamingService.state.streamingStatus,
+    updateStyleBlockers: WindowsService.actions.updateStyleBlockers,
+  }));
+
+  const setCollapsed = useCallback((livedockCollapsed: boolean) => {
+    updateStyleBlockers('main', true);
+    CustomizationService.actions.setSettings({ livedockCollapsed });
+  }, []);
+
+  useEffect(() => {
+    if (streamingStatus === EStreamingState.Starting && isDockCollapsed) {
+      setCollapsed(false);
+    }
+  }, [streamingStatus]);
 
   function Chevron() {
     return (
       <div
         className={cx(styles.liveDockChevron, p.onLeft && styles.left)}
-        onClick={() => p.setCollapsed(!isDockCollapsed)}
+        onClick={() => setCollapsed(!isDockCollapsed)}
       >
         <i
           className={cx({
@@ -357,39 +372,45 @@ function LiveDockContainer(p: ILiveDockContainerProps) {
     );
   }
 
-  const transitionName = useMemo(() => {
-    if ((p.onLeft && isDockCollapsed) || (!p.onLeft && !isDockCollapsed)) {
-      return 'ant-slide-right';
-    }
-    return 'ant-slide-left';
-  }, [p.onLeft, isDockCollapsed]);
-
   return (
-    <Animation transitionName={transitionName} transitionAppear>
-      {isDockCollapsed && (
-        <div className={cx(styles.liveDockCollapsed, p.onLeft && styles.left)} key="collapsed">
-          <Chevron />
-        </div>
-      )}
-      {!isDockCollapsed && (
-        <ResizeBar
-          position={p.onLeft ? 'left' : 'right'}
-          onInput={(val: number) => p.setLiveDockWidth(val)}
-          max={p.max}
-          min={p.min}
-          value={p.width}
-          transformScale={1}
-          key="expanded"
-        >
-          <div
-            className={cx(styles.liveDockContainer, p.onLeft && styles.left)}
-            style={{ width: `${p.width}px` }}
-          >
-            <LiveDock />
+    <Layout hasSider style={{ height: '100%' }}>
+      <Sider
+        trigger={null}
+        className={cx(styles.liveDockSider, { [styles.collapsed]: isDockCollapsed })}
+        style={{ height: '100%' }}
+        id="dock"
+        width={p.width}
+        collapsedWidth={20}
+        collapsible
+        collapsed={isDockCollapsed}
+        onTransitionEnd={() => updateStyleBlockers('main', false)}
+        hidden={!p.hasLiveDock}
+      >
+        {isDockCollapsed && (
+          <div className={cx(styles.liveDockCollapsed, p.onLeft && styles.left)} key="collapsed">
             <Chevron />
           </div>
-        </ResizeBar>
-      )}
-    </Animation>
+        )}
+        {!isDockCollapsed && (
+          <ResizeBar
+            position={p.onLeft ? 'left' : 'right'}
+            onInput={(val: number) => p.setLiveDockWidth(val)}
+            max={p.max}
+            min={p.min}
+            value={p.width}
+            transformScale={1}
+            key="expanded"
+          >
+            <div
+              className={cx(styles.liveDockContainer, p.onLeft && styles.left)}
+              style={{ width: `${p.width}px` }}
+            >
+              <LiveDock />
+              <Chevron />
+            </div>
+          </ResizeBar>
+        )}
+      </Sider>
+    </Layout>
   );
 }

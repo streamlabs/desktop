@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import cx from 'classnames';
 import electron from 'electron';
 import Utils from 'services/utils';
@@ -63,52 +63,45 @@ export default function SideNav() {
   const [dashboardOpening, setDashboardOpening] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
-  function openSettingsWindow(category?: TCategoryName) {
+  const openSettingsWindow = useCallback((category?: TCategoryName) => {
     SettingsService.actions.showSettings(category);
-  }
+  }, []);
 
-  function openDevTools() {
+  const openDevTools = useCallback(() => {
     electron.ipcRenderer.send('openDevTools');
-  }
+  }, []);
 
-  async function openDashboard(page?: string) {
-    UsageStatisticsService.actions.recordClick('SideNav2', page || 'dashboard');
-    if (dashboardOpening) return;
-    setDashboardOpening(true);
+  const openDashboard = useCallback(
+    async (page?: string) => {
+      UsageStatisticsService.actions.recordClick('SideNav2', page || 'dashboard');
+      if (dashboardOpening) return;
+      setDashboardOpening(true);
 
-    try {
-      const link = await MagicLinkService.getDashboardMagicLink(page);
-      remote.shell.openExternal(link);
-    } catch (e: unknown) {
-      console.error('Error generating dashboard magic link', e);
-    }
+      try {
+        const link = await MagicLinkService.getDashboardMagicLink(page);
+        remote.shell.openExternal(link);
+      } catch (e: unknown) {
+        console.error('Error generating dashboard magic link', e);
+      }
 
-    setDashboardOpening(false);
-  }
+      setDashboardOpening(false);
+    },
+    [dashboardOpening],
+  );
 
   const throttledOpenDashboard = throttle(openDashboard, 2000, { trailing: false });
 
-  // Instagram doesn't provide a username, since we're not really linked, pass undefined for a generic logout msg w/o it
-  const username =
-    isLoggedIn && UserService.views.auth!.primaryPlatform !== 'instagram'
-      ? UserService.username
-      : undefined;
-
-  const confirmMsg = username
-    ? $t('Are you sure you want to log out %{username}?', { username })
-    : $t('Are you sure you want to log out?');
-
-  function openHelp() {
+  const openHelp = useCallback(() => {
     UsageStatisticsService.actions.recordClick('SideNav2', 'help');
     remote.shell.openExternal(UrlService.supportLink);
-  }
+  }, []);
 
-  async function upgradeToPrime() {
+  const upgradeToPrime = useCallback(async () => {
     UsageStatisticsService.actions.recordClick('SideNav2', 'prime');
     MagicLinkService.linkToPrime('slobs-side-nav');
-  }
+  }, []);
 
-  const handleAuth = () => {
+  const handleAuth = useCallback(() => {
     if (isLoggedIn) {
       Services.DualOutputService.actions.setDualOutputModeIfPossible(false, true);
       UserService.actions.logOut();
@@ -116,12 +109,12 @@ export default function SideNav() {
       WindowsService.actions.closeChildWindow();
       UserService.actions.showLogin();
     }
-  };
+  }, [isLoggedIn]);
 
-  const handleShowModal = (status: boolean) => {
-    updateStyleBlockers('main', status);
+  const handleShowModal = useCallback((status: boolean) => {
     setShowModal(status);
-  };
+    updateStyleBlockers('main', status);
+  }, []);
 
   return (
     <>
@@ -222,7 +215,6 @@ export default function SideNav() {
       </Menu>
       <AuthModal
         title={$t('Confirm')}
-        prompt={confirmMsg}
         showModal={showModal}
         handleAuth={handleAuth}
         handleShowModal={handleShowModal}
