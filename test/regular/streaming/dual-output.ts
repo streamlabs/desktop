@@ -264,7 +264,7 @@ test(
 
     await clickGoLive();
     await focusChild();
-    await waitForSettingsWindowLoaded();
+    await waitForDisplayed('div[data-name="twitch-settings"]', { timeout: 15000 });
     await submit();
 
     // Cannot go live in dual output mode with only one target linked
@@ -292,7 +292,6 @@ test(
     });
 
     await waitForDisplayed('div[data-name="instagram-settings"]');
-    await waitForSettingsWindowLoaded();
 
     await fillForm({
       title: 'Test stream',
@@ -338,10 +337,10 @@ test(
     await submit();
 
     // Cannot go live in dual output mode with all targets assigned to one display
-    await waitForDisplayed('div.ant-message-notice', {
+    await waitForDisplayed('div.ant-message-notice-content', {
       timeout: 7000,
     });
-    await click('div.ant-message-notice');
+    await click('div.ant-message-notice-content');
 
     // Dual output with one platform for each display
     await focusChild();
@@ -367,7 +366,7 @@ test(
     await clickGoLive();
     await focusChild();
 
-    // // Swap displays
+    // Swap displays
     await waitForSettingsWindowLoaded();
     await fillForm({
       trovoDisplay: 'horizontal',
@@ -385,6 +384,10 @@ test(
     await waitForDisplayed('div=Refresh Chat', { timeout: 60000 });
     await stopStream();
     await waitForStreamStop();
+
+    // Vertical display is hidden after logging out
+    await logOut(t);
+    t.false(await isDisplayed('div#vertical-display'));
 
     // Skip checking errors due to possible issues loading chat in the test environment
     skipCheckingErrorsInLog();
