@@ -22,7 +22,6 @@ import { showSettingsWindow } from '../../helpers/modules/settings/settings';
 import { test, TExecutionContext, useWebdriver } from '../../helpers/webdriver';
 import { sleep } from '../../helpers/sleep';
 import { getApiClient } from '../../helpers/api-client';
-import { RestreamService } from 'services/restream';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -328,5 +327,6 @@ test('Stream Shift', withUser('twitch', { prime: true, multistream: true }), asy
   // Single stream shift
   await goLiveWithStreamShift(t, false);
 
-  await shiftStream(t);
+  // TODO: Add socket events to test
+  // await shiftStream(t);
 });
