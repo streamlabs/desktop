@@ -1062,8 +1062,9 @@ export class StreamingService
     startStreamingPromise
       .then(() => {
         if (this.views.settings.streamShift) {
-          // Remove the pending state to show the correct text in the start streaming button
-          this.restreamService.setStreamShiftStatus('inactive');
+          // Remove the pending state and update streaming state to show the correct text in the start streaming button
+          this.restreamService.setStreamShiftStatus('active');
+          this.SET_STREAMING_STATUS(EStreamingState.Live);
 
           // Confirm that the primary platform is streaming to correctly show chat
           // Otherwise, use the first enabled platform. Note: this is a failsafe to guarantee

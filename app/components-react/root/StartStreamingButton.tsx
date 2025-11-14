@@ -9,6 +9,7 @@ import * as remote from '@electron/remote';
 import { TStreamShiftStatus } from 'services/restream';
 import { promptAction } from 'components-react/modals';
 import { IStreamShiftRequested, IStreamShiftActionCompleted } from 'services/websocket';
+import { confirmStreamShift } from 'components-react/shared/StreamShiftModal';
 
 export default function StartStreamingButton(p: { disabled?: boolean }) {
   const {
@@ -77,40 +78,34 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       (event: IStreamShiftRequested | IStreamShiftActionCompleted) => {
         const { streamShiftStreamId } = RestreamService.state;
         console.debug('Event ID: ' + event.data.identifier, '\n Stream ID: ' + streamShiftStreamId);
-        const isFromOtherDevice =
-          streamShiftStreamId && event.data.identifier !== streamShiftStreamId;
-
-        const isMobileRemote = isFromOtherDevice ? /[A-Z]/.test(event.data.identifier) : false;
-        const remoteDeviceType = isMobileRemote ? 'mobile' : 'desktop';
-
-        // Note: because the event's stream id is from the device that requested the switch,
-        // it is not possible to know what type of device the stream will be switching from.
-        // We can only identify the type of device the stream is switching to.
-        const switchType = `desktop-${remoteDeviceType}`;
+        const isFromOtherDevice = streamShiftStreamId
+          ? event.data.identifier !== streamShiftStreamId
+          : true;
+        const switchType = formatStreamType(isFromOtherDevice, event.data.identifier);
 
         if (event.type === 'streamSwitchRequest') {
           if (!isFromOtherDevice) {
-            // Don't record the request from this device because the other device will record it
             RestreamService.actions.confirmStreamShift('approved');
-          } else {
-            UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
-              stream: switchType,
-              action: 'request',
-            });
           }
+
+          UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
+            stream: switchType,
+            action: 'request',
+          });
         }
 
         if (event.type === 'switchActionComplete') {
           // End the stream on this device if switching the stream to another device
           // Only record analytics if the stream was switched from this device to a different one
+
           if (isFromOtherDevice) {
             Services.RestreamService.actions.endStreamShiftStream(event.data.identifier);
-
-            UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
-              stream: switchType,
-              action: 'complete',
-            });
           }
+
+          UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
+            stream: switchType,
+            action: 'complete',
+          });
 
           // Notify the user
           const message = isFromOtherDevice
@@ -135,6 +130,19 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     return () => {
       streamShiftEvent.unsubscribe();
     };
+  }, []);
+
+  const formatStreamType = useCallback((isFromOtherDevice: boolean, eventStreamId?: string) => {
+    // Because the event's stream id is from the device that requested the switch,
+    // it is not possible to know what type of device the stream will be switching from.
+    // We can only identify the type of device the stream is switching to.
+    if (!isFromOtherDevice || !eventStreamId) {
+      return 'other-desktop';
+    }
+
+    // Mobile stream ids have capital letters, Desktop stream ids do not.
+    const remoteDeviceType = /[A-Z]/.test(eventStreamId) ? 'mobile' : 'desktop';
+    return `desktop-${remoteDeviceType}`;
   }, []);
 
   const toggleStreaming = useCallback(async () => {
@@ -189,33 +197,8 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         const isLive = await fetchStreamShiftStatus();
         setIsLoading(false);
 
-        const message = isDualOutputMode
-          ? $t(
-              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. Dual Output will be disabled since not supported in this mode. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
-            )
-          : $t(
-              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
-            );
-
         if (isLive) {
-          const { streamShiftForceGoLive } = RestreamService.state;
-          let shouldForceGoLive = streamShiftForceGoLive;
-
-          await promptAction({
-            title: $t('Another stream detected'),
-            message,
-            btnText: $t('Switch to Streamlabs Desktop'),
-            fn: startStreamShift,
-            cancelBtnText: $t('Cancel'),
-            cancelBtnPosition: 'left',
-            secondaryActionText: $t('Force Start'),
-            secondaryActionFn: async () => {
-              // FIXME: this should actually do something server-side
-              RestreamService.actions.return.forceStreamShiftGoLive(true);
-              shouldForceGoLive = true;
-            },
-          });
-
+          const shouldForceGoLive = await confirmStreamShift();
           if (!shouldForceGoLive) {
             return;
           }
@@ -251,14 +234,6 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       return false;
     }
   }, []);
-
-  const startStreamShift = useCallback(() => {
-    if (isDualOutputMode) {
-      Services.DualOutputService.actions.toggleDisplay(false, 'vertical');
-    }
-
-    StreamingService.actions.goLive();
-  }, [isDualOutputMode]);
 
   const shouldShowGoLiveWindow = useCallback(() => {
     if (!UserService.isLoggedIn) return false;
