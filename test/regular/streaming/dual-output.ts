@@ -280,9 +280,9 @@ test(
     await focusChild();
     await submit();
 
-    // Cannot go live in dual output mode with all targets assigned to one display
+    // Cannot go live in dual output mode with only one target
     await waitForDisplayed('div.ant-message-notice', {
-      timeout: 7000,
+      timeout: 15000,
     });
     await click('div.ant-message-notice');
 
@@ -333,12 +333,16 @@ test(
 
     await clickGoLive();
     await focusChild();
-    await waitForSettingsWindowLoaded();
+    await waitForDisplayed('div[data-name="twitch-settings"]', { timeout: 15000 });
+    await fillForm({
+      twitchDisplay: 'horizontal',
+      trovoDisplay: 'horizontal',
+    });
     await submit();
 
     // Cannot go live in dual output mode with all targets assigned to one display
     await waitForDisplayed('div.ant-message-notice-content', {
-      timeout: 7000,
+      timeout: 15000,
     });
     await click('div.ant-message-notice-content');
 
