@@ -150,7 +150,7 @@ function AddDestinationBanner(p: { className?: string; onClick: () => void }) {
   const isDarkTheme = useRealmObject(Services.CustomizationService.state).isDarkTheme;
 
   const text = $t(
-    'You can stream to any 2 destinations for free with Dual Output. Multistream and switch seamlessly between streams with Ultra',
+    'Stream to 1 horizontal and vertical destination for free with Dual Output, or go Ultra for unlimited multistreaming to unlimited destinations.',
   );
 
   return (
