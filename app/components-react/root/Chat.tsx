@@ -1,18 +1,15 @@
 import * as remote from '@electron/remote';
-import React, { useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { Services } from '../service-provider';
 import styles from './Chat.m.less';
 import { OS, getOS } from '../../util/operating-systems';
 import { onUnload } from 'util/unload';
-import { useVuex } from 'components-react/hooks';
+import { useRealmObject } from 'components-react/hooks/realm';
 
-export default function Chat(props: {
-  restream: boolean;
-  visibleChat: string;
-  setChat: (key: string) => void;
-}) {
-  const { ChatService, RestreamService, WindowsService } = Services;
+function Chat(props: { restream: boolean; visibleChat: string; setChat: (key: string) => void }) {
+  const { ChatService, RestreamService, CustomizationService } = Services;
 
+  const dockWidth = useRealmObject(CustomizationService.state).livedockSize;
   const chatEl = useRef<HTMLDivElement>(null);
 
   const currentPosition = useRef<IVec2 | null>(null);
@@ -20,10 +17,6 @@ export default function Chat(props: {
   const mountedRef = useRef<boolean>(true);
   const service = useMemo(() => (props.restream ? RestreamService : ChatService), [props.restream]);
   const windowId = useMemo(() => remote.getCurrentWindow().id, []);
-
-  const { hideStyleBlockers } = useVuex(() => ({
-    hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
-  }));
 
   const leaveFullScreenTrigger = useCallback(() => {
     setTimeout(() => {
@@ -68,7 +61,7 @@ export default function Chat(props: {
 
       service.actions.setChatBounds(currentPosition.current, currentSize.current);
     }
-  }, [service, hideStyleBlockers]);
+  }, [service]);
 
   const rectChanged = useCallback((rect: DOMRect) => {
     if (!currentPosition.current || !currentSize.current) return;
@@ -80,12 +73,13 @@ export default function Chat(props: {
     );
   }, []);
 
+  // Handle chat component resize by updating the chat bounds when dock width changes
+  // Use the chat element's bounding rect for the actual size and position for accuracy
   useEffect(() => {
-    if (!hideStyleBlockers && mountedRef.current) {
-      // Small delay to ensure DOM has updated after style blockers removed
-      setTimeout(() => checkResize(), 50);
+    if (mountedRef.current) {
+      checkResize();
     }
-  }, [hideStyleBlockers, checkResize]);
+  }, [dockWidth]);
 
   const setupChat = useCallback(() => {
     ChatService.actions.unmountChat();
@@ -94,7 +88,9 @@ export default function Chat(props: {
     service.actions.mountChat(windowId);
     currentPosition.current = null;
     currentSize.current = null;
-  }, [service, checkResize]);
+  }, [service, windowId]);
 
   return <div className={styles.chat} ref={chatEl} />;
 }
+
+export default memo(Chat);

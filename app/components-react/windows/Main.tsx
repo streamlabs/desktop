@@ -339,15 +339,28 @@ interface ILiveDockContainerProps {
 function LiveDockContainer(p: ILiveDockContainerProps) {
   const { WindowsService, CustomizationService, StreamingService } = Services;
   const isDockCollapsed = useRealmObject(CustomizationService.state).livedockCollapsed;
-  const { updateStyleBlockers, streamingStatus } = useVuex(() => ({
+  const { streamingStatus } = useVuex(() => ({
     streamingStatus: StreamingService.state.streamingStatus,
-    updateStyleBlockers: WindowsService.actions.updateStyleBlockers,
   }));
 
+  const updateStyleBlockers = useCallback((status: boolean) => {
+    WindowsService.actions.updateStyleBlockers('main', status);
+  }, []);
+
   const setCollapsed = useCallback((livedockCollapsed: boolean) => {
-    updateStyleBlockers('main', true);
+    updateStyleBlockers(true);
     CustomizationService.actions.setSettings({ livedockCollapsed });
   }, []);
+
+  const onResizeStop = useCallback(() => {
+    CustomizationService.actions.setSettings({ livedockSize: p.width });
+    updateStyleBlockers(false);
+  }, [p.width]);
+
+  const onResizeStart = useCallback(() => {
+    CustomizationService.actions.setSettings({ livedockSize: p.width });
+    updateStyleBlockers(true);
+  }, [p.width]);
 
   useEffect(() => {
     if (streamingStatus === EStreamingState.Starting && isDockCollapsed) {
@@ -383,7 +396,7 @@ function LiveDockContainer(p: ILiveDockContainerProps) {
         collapsedWidth={20}
         collapsible
         collapsed={isDockCollapsed}
-        onTransitionEnd={() => updateStyleBlockers('main', false)}
+        onTransitionEnd={() => updateStyleBlockers(false)}
         hidden={!p.hasLiveDock}
       >
         {isDockCollapsed && (
@@ -394,17 +407,16 @@ function LiveDockContainer(p: ILiveDockContainerProps) {
         {!isDockCollapsed && (
           <ResizeBar
             position={p.onLeft ? 'left' : 'right'}
-            onInput={(val: number) => p.setLiveDockWidth(val)}
+            onInput={p.setLiveDockWidth}
+            onResizestart={onResizeStart}
+            onResizestop={onResizeStop}
             max={p.max}
             min={p.min}
             value={p.width}
             transformScale={1}
             key="expanded"
           >
-            <div
-              className={cx(styles.liveDockContainer, p.onLeft && styles.left)}
-              style={{ width: `${p.width}px` }}
-            >
+            <div className={cx(styles.liveDockContainer, p.onLeft && styles.left)}>
               <LiveDock />
               <Chevron />
             </div>
