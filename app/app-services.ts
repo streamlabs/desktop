@@ -218,6 +218,7 @@ import { SseService } from './services/server-sent-events';
 import { VisionService } from 'services/vision';
 import { SignalsService } from 'services/signals-manager';
 import { TroubleshooterService } from 'services/troubleshooter';
+import { OnboardingV2Service } from 'services/onboarding/onboarding-v2';
 
 export const AppServices = {
   AppService,
@@ -304,4 +305,5 @@ export const AppServices = {
   SseService,
   VisionService,
   TroubleshooterService,
+  OnboardingV2Service,
 };

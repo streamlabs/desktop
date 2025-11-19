@@ -2,9 +2,14 @@ import { RealmObject } from 'services/realm';
 import { ObjectSchema } from 'realm';
 import * as remote from '@electron/remote';
 import { Inject, Service } from 'services/core';
-import { ObsImporterService, RecordingModeService, UserService } from 'app-services';
+import {
+  ObsImporterService,
+  RecordingModeService,
+  SceneCollectionsService,
+  UserService,
+} from 'app-services';
 
-enum EOnboardingSteps {
+export enum EOnboardingSteps {
   Splash = 'Splash',
   Login = 'Login',
   RecordingLogin = 'RecordingLogin',
@@ -29,6 +34,7 @@ interface IOnboardingInitialization {
 class OnboardingStep {
   config: IOnboardingStep;
   next: OnboardingStep | null = null;
+  prev: OnboardingStep | null = null;
 
   constructor(config: IOnboardingStep) {
     this.config = config;
@@ -38,21 +44,45 @@ class OnboardingStep {
 class OnboardingPath {
   private head: OnboardingStep | null = null;
   private current: OnboardingStep | null = null;
+  private size = 0;
+  private currentIndex = 0;
 
+  // Extracted to getters to prevent external mutation
+  get length() {
+    return this.size;
+  }
+
+  get index() {
+    return this.currentIndex;
+  }
+
+  // Adds a node to the end of the list
   append(config: IOnboardingStep) {
     const step = new OnboardingStep(config);
     if (!this.head) {
       this.head = step;
       this.current = step;
     } else {
-      this.getFinalNode(this.head).next = step;
+      const lastStep = this.getFinalNode(this.head);
+      lastStep.next = step;
+      step.prev = lastStep;
     }
+    this.size += 1;
   }
 
   // Returns false if at end of list, marking the end of the flow and no more steps
   takeNextStep() {
     if (!this.current.next) return false;
     this.current = this.current.next;
+    this.currentIndex += 1;
+    return this.current.config;
+  }
+
+  // Returns false if at beginning of list and cannot go back further
+  takePrevStep() {
+    if (!this.current.prev) return false;
+    this.current = this.current.prev;
+    this.currentIndex -= 1;
     return this.current.config;
   }
 
@@ -70,9 +100,9 @@ class OnboardingPath {
   }
 }
 
-class OnboardingStepState extends RealmObject {
-  name: string;
-  isSkipapble: boolean;
+class OnboardingStepState extends RealmObject implements IOnboardingStep {
+  name: EOnboardingSteps;
+  isSkippable: boolean;
   isClosable: boolean;
 
   static schema: ObjectSchema = {
@@ -88,14 +118,18 @@ class OnboardingStepState extends RealmObject {
 OnboardingStepState.register();
 
 class OnboardingServiceState extends RealmObject {
-  currentStep: IOnboardingStep;
+  currentStep: OnboardingStepState;
   showOnboarding: boolean;
+  currentIndex: number;
+  pathLength: number;
 
   static schema: ObjectSchema = {
     name: 'OnboardingServiceState',
     properties: {
       currentStep: 'OnboardingStepState',
       showOnboarding: { type: 'bool', default: false },
+      currentIndex: 'double',
+      pathLength: 'double',
     },
   };
 }
@@ -106,6 +140,7 @@ export class OnboardingV2Service extends Service {
   @Inject() private recordingModeService: RecordingModeService;
   @Inject() private userService: UserService;
   @Inject() private obsImporterService: ObsImporterService;
+  @Inject() private sceneCollectionsService: SceneCollectionsService;
 
   state = OnboardingServiceState.inject();
   /**
@@ -155,6 +190,14 @@ export class OnboardingV2Service extends Service {
     } else {
       this.setCurrentStep(nextStep);
     }
+    this.setIndex(this.path.index);
+  }
+
+  stepBack() {
+    const prevStep = this.path.takePrevStep();
+    if (!prevStep) return;
+    this.setCurrentStep(prevStep);
+    this.setIndex(this.path.index);
   }
 
   private initalizeView(config: IOnboardingInitialization) {
@@ -209,9 +252,14 @@ export class OnboardingV2Service extends Service {
         this.path.append({ name: EOnboardingSteps.Ultra, isSkippable: true, isClosable: true });
       }
       this.path.append({ name: EOnboardingSteps.Devices, isSkippable: true, isClosable: true });
-      if (this.userService.views.isLoggedIn) {
+      if (this.userService.views.isLoggedIn && !this.hasExistingSceneCollections) {
         this.path.append({ name: EOnboardingSteps.Themes, isSkippable: true, isClosable: true });
       }
+    }
+
+    // Finally update the path length if necessary
+    if (this.state.pathLength !== this.path.length) {
+      this.setPathLength(this.path.length);
     }
   }
 
@@ -228,13 +276,26 @@ export class OnboardingV2Service extends Service {
 
   private setCurrentStep(step: IOnboardingStep) {
     this.state.db.write(() => {
-      this.state.currentStep = step;
+      this.state.currentStep.deepPatch({ isSkippable: false, isClosable: false, ...step });
     });
   }
 
   private setShowOnboarding(val: boolean) {
-    this.state.db.write(() => {
-      this.state.showOnboarding = val;
-    });
+    this.state.simpleWrite('showOnboarding', val);
+  }
+
+  private setPathLength(length: number) {
+    this.state.simpleWrite('pathLength', length);
+  }
+
+  private setIndex(val: number) {
+    this.state.simpleWrite('currentIndex', val);
+  }
+
+  get hasExistingSceneCollections() {
+    return !(
+      this.sceneCollectionsService.loadableCollections.length === 1 &&
+      this.sceneCollectionsService.loadableCollections[0].auto
+    );
   }
 }

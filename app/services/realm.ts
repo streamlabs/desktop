@@ -145,6 +145,20 @@ export class RealmObject {
     });
   }
 
+  /**
+   * Wrapper function for simple replacement writes of primitive values
+   * @param key property of the schema
+   * @param value primitive value attempted to being written
+   */
+  simpleWrite(key: string, value: string | boolean | number) {
+    if (!this.schema.properties.hasOwnProperty(key)) {
+      throw new Error(`Unrecognized key ${key}`);
+    }
+    this.db.write(() => {
+      Object.assign(this, { key: value });
+    });
+  }
+
   toObject() {
     const obj = {};
 
