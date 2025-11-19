@@ -100,7 +100,7 @@ export default function GoLiveSettings() {
 
   const headerText = isDualOutputMode ? $t('Destinations & Outputs:') : $t('Destinations:');
 
-  const height = isPrime ? '61%' : '50%';
+  const height = isPrime ? '61%' : '46%';
   const featureCheckboxWidth = isPrime ? 140 : 155;
 
   return (
