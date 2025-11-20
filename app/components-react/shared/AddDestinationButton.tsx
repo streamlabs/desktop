@@ -10,6 +10,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import styles from './AddDestinationButton.m.less';
 import cx from 'classnames';
 import { useRealmObject } from 'components-react/hooks/realm';
+import Translate from 'components-react/shared/Translate';
 
 const PlusIcon = PlusOutlined as Function;
 interface IAddDestinationButtonProps {
@@ -149,10 +150,6 @@ function UltraAddDestinationButton(p: {
 function AddDestinationBanner(p: { className?: string; onClick: () => void }) {
   const isDarkTheme = useRealmObject(Services.CustomizationService.state).isDarkTheme;
 
-  const text = $t(
-    'Stream to 1 horizontal and vertical destination for free with Dual Output, or go Ultra for unlimited multistreaming to unlimited destinations.',
-  );
-
   return (
     <ButtonHighlighted
       faded
@@ -160,7 +157,11 @@ function AddDestinationBanner(p: { className?: string; onClick: () => void }) {
       onClick={p.onClick}
     >
       <UltraIcon type="badge" className={styles.ultraIcon} />
-      <div className={styles.bannerText}>{text}</div>
+      <div className={styles.bannerText}>
+        <Translate message="Stream to 1 horizontal and vertical destination for free with Dual Output, or go Ultra for unlimited multistreaming to unlimited destinations. <ultra>Upgrade now</ultra>">
+          <u slot="ultra" className={styles.ultraLink} />
+        </Translate>
+      </div>
     </ButtonHighlighted>
   );
 }
