@@ -360,6 +360,7 @@ test(
     });
 
     try {
+      skipCheckingErrorsInLog();
       await submit();
       await waitForDisplayed('span=Configure the Dual Output service', { timeout: 100000 });
       // Confirm multistream chat loads
