@@ -70,6 +70,9 @@ export default function Main() {
   const [maxDockWidth, setMaxDockWidth] = useState(290);
   const [minEditorWidth, setMinEditorWidth] = useState(500);
 
+  // To prevent errors with state with the login modal, track it here
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
   const uiReady = bulkLoadFinished && i18nReady;
 
   const page = useRealmObject(NavigationService.state).currentPage;
@@ -77,6 +80,9 @@ export default function Main() {
   const realmDockWidth = useRealmObject(CustomizationService.state).livedockSize;
   const realmTheme = useRealmObject(CustomizationService.state).theme;
   const leftDock = useRealmObject(CustomizationService.state).leftDock;
+
+  // To prevent errors with state with the vision icon color, track it here
+  const isVisionRunning = useRealmObject(Services.VisionService.state).isRunning;
 
   // Provides smooth chat resizing instead of writing to realm every tick while resizing
   const [dockWidth, setDockWidth] = useState(realmDockWidth);
@@ -114,6 +120,10 @@ export default function Main() {
       getPlatformService(platform.type).liveDockEnabled
     );
   }, [isLoggedIn, isOnboarding, hasLiveDock, showLoadingSpinner, platform?.type]);
+
+  const renderNav = useMemo(() => {
+    return !isOnboarding && uiReady && !showLoadingSpinner;
+  }, [showLoadingSpinner, isOnboarding, uiReady]);
 
   const theme = useMemo(() => {
     return !bulkLoadFinished ? loadedTheme() || 'night-theme' : realmTheme;
@@ -198,7 +208,10 @@ export default function Main() {
         if (hasLiveDock) {
           updateLiveDockWidth();
         }
-        updateStyleBlockers(false);
+
+        if (!showLoginModal) {
+          updateStyleBlockers(false);
+        }
       }, 200);
     }
   }, [hasLiveDock, minEditorWidth, maxDockWidth, page]);
@@ -272,9 +285,13 @@ export default function Main() {
           [styles.mainContentsOnboarding]: page === 'Onboarding',
         })}
       >
-        {page !== 'Onboarding' && !showLoadingSpinner && uiReady && (
+        {renderNav && (
           <div className={styles.sideNavContainer}>
-            <SideNav />
+            <SideNav
+              showLoginModal={showLoginModal}
+              setShowLoginModal={setShowLoginModal}
+              isVisionRunning={isVisionRunning}
+            />
           </div>
         )}
         {renderDock && leftDock && (
@@ -339,15 +356,28 @@ interface ILiveDockContainerProps {
 function LiveDockContainer(p: ILiveDockContainerProps) {
   const { WindowsService, CustomizationService, StreamingService } = Services;
   const isDockCollapsed = useRealmObject(CustomizationService.state).livedockCollapsed;
-  const { updateStyleBlockers, streamingStatus } = useVuex(() => ({
+  const { streamingStatus } = useVuex(() => ({
     streamingStatus: StreamingService.state.streamingStatus,
-    updateStyleBlockers: WindowsService.actions.updateStyleBlockers,
   }));
 
+  const updateStyleBlockers = useCallback((status: boolean) => {
+    WindowsService.actions.updateStyleBlockers('main', status);
+  }, []);
+
   const setCollapsed = useCallback((livedockCollapsed: boolean) => {
-    updateStyleBlockers('main', true);
+    updateStyleBlockers(true);
     CustomizationService.actions.setSettings({ livedockCollapsed });
   }, []);
+
+  const onResizeStop = useCallback(() => {
+    CustomizationService.actions.setSettings({ livedockSize: p.width });
+    updateStyleBlockers(false);
+  }, [p.width]);
+
+  const onResizeStart = useCallback(() => {
+    CustomizationService.actions.setSettings({ livedockSize: p.width });
+    updateStyleBlockers(true);
+  }, [p.width]);
 
   useEffect(() => {
     if (streamingStatus === EStreamingState.Starting && isDockCollapsed) {
@@ -383,7 +413,7 @@ function LiveDockContainer(p: ILiveDockContainerProps) {
         collapsedWidth={20}
         collapsible
         collapsed={isDockCollapsed}
-        onTransitionEnd={() => updateStyleBlockers('main', false)}
+        onTransitionEnd={() => updateStyleBlockers(false)}
         hidden={!p.hasLiveDock}
       >
         {isDockCollapsed && (
@@ -394,17 +424,16 @@ function LiveDockContainer(p: ILiveDockContainerProps) {
         {!isDockCollapsed && (
           <ResizeBar
             position={p.onLeft ? 'left' : 'right'}
-            onInput={(val: number) => p.setLiveDockWidth(val)}
+            onInput={p.setLiveDockWidth}
+            onResizestart={onResizeStart}
+            onResizestop={onResizeStop}
             max={p.max}
             min={p.min}
             value={p.width}
             transformScale={1}
             key="expanded"
           >
-            <div
-              className={cx(styles.liveDockContainer, p.onLeft && styles.left)}
-              style={{ width: `${p.width}px` }}
-            >
+            <div className={cx(styles.liveDockContainer, p.onLeft && styles.left)}>
               <LiveDock />
               <Chevron />
             </div>

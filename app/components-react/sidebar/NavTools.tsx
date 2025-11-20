@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import cx from 'classnames';
 import electron from 'electron';
 import Utils from 'services/utils';
@@ -15,11 +15,14 @@ import MenuItem from 'components-react/shared/MenuItem';
 import UltraIcon from 'components-react/shared/UltraIcon';
 import PlatformIndicator from './PlatformIndicator';
 import { AuthModal } from 'components-react/shared/AuthModal';
-import { useRealmObject } from 'components-react/hooks/realm';
 import { ESettingsCategory, TCategoryName } from 'services/settings';
 import { getOS, OS } from 'util/operating-systems';
 
-export default function SideNav() {
+export default function NavTools(p: {
+  showLoginModal: boolean;
+  setShowLoginModal: (show: boolean) => void;
+  isVisionRunning: boolean;
+}) {
   const {
     UserService,
     SettingsService,
@@ -28,16 +31,7 @@ export default function SideNav() {
     SideNavService,
     WindowsService,
     UrlService,
-    VisionService,
   } = Services;
-
-  const visionState = useRealmObject(VisionService.state);
-
-  const isDevMode = useMemo(() => Utils.isDevMode(), []);
-
-  const showAiTab = useMemo(() => {
-    return getOS() === OS.Windows || (getOS() === OS.Mac && isDevMode);
-  }, [isDevMode]);
 
   const {
     isLoggedIn,
@@ -47,6 +41,7 @@ export default function SideNav() {
     openMenuItems,
     expandMenuItem,
     updateStyleBlockers,
+    hideStyleBlockers,
   } = useVuex(
     () => ({
       isLoggedIn: UserService.views.isLoggedIn,
@@ -56,12 +51,16 @@ export default function SideNav() {
       openMenuItems: SideNavService.views.getExpandedMenuItems(ENavName.BottomNav),
       expandMenuItem: SideNavService.actions.expandMenuItem,
       updateStyleBlockers: WindowsService.actions.updateStyleBlockers,
+      hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
     }),
     false,
   );
 
-  const [dashboardOpening, setDashboardOpening] = useState(false);
-  const [showModal, setShowModal] = useState(false);
+  const isDevMode = useMemo(() => Utils.isDevMode(), []);
+
+  const showAiTab = useMemo(() => {
+    return isLoggedIn && (getOS() === OS.Windows || (getOS() === OS.Mac && isDevMode));
+  }, [isDevMode, isLoggedIn]);
 
   const openSettingsWindow = useCallback((category?: TCategoryName) => {
     SettingsService.actions.showSettings(category);
@@ -74,8 +73,7 @@ export default function SideNav() {
   const openDashboard = useCallback(
     async (page?: string) => {
       UsageStatisticsService.actions.recordClick('SideNav2', page || 'dashboard');
-      if (dashboardOpening) return;
-      setDashboardOpening(true);
+      if (hideStyleBlockers) return;
 
       try {
         const link = await MagicLinkService.getDashboardMagicLink(page);
@@ -83,10 +81,8 @@ export default function SideNav() {
       } catch (e: unknown) {
         console.error('Error generating dashboard magic link', e);
       }
-
-      setDashboardOpening(false);
     },
-    [dashboardOpening],
+    [hideStyleBlockers],
   );
 
   const throttledOpenDashboard = throttle(openDashboard, 2000, { trailing: false });
@@ -112,7 +108,7 @@ export default function SideNav() {
   }, [isLoggedIn]);
 
   const handleShowModal = useCallback((status: boolean) => {
-    setShowModal(status);
+    p.setShowLoginModal(status);
     updateStyleBlockers('main', status);
   }, []);
 
@@ -189,7 +185,7 @@ export default function SideNav() {
               <NavToolsItem
                 key={menuItem.key}
                 menuItem={menuItem}
-                className={visionState.isRunning ? styles.vision : undefined}
+                className={cx({ [styles.vision]: p.isVisionRunning })}
                 onClick={() => openSettingsWindow(ESettingsCategory.AI)}
               />
             );
@@ -215,7 +211,7 @@ export default function SideNav() {
       </Menu>
       <AuthModal
         title={$t('Confirm')}
-        showModal={showModal}
+        showModal={p.showLoginModal}
         handleAuth={handleAuth}
         handleShowModal={handleShowModal}
       />
