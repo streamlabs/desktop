@@ -70,6 +70,9 @@ export default function Main() {
   const [maxDockWidth, setMaxDockWidth] = useState(290);
   const [minEditorWidth, setMinEditorWidth] = useState(500);
 
+  // To prevent errors with state with the login modal, track it here
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
   const uiReady = bulkLoadFinished && i18nReady;
 
   const page = useRealmObject(NavigationService.state).currentPage;
@@ -77,6 +80,9 @@ export default function Main() {
   const realmDockWidth = useRealmObject(CustomizationService.state).livedockSize;
   const realmTheme = useRealmObject(CustomizationService.state).theme;
   const leftDock = useRealmObject(CustomizationService.state).leftDock;
+
+  // To prevent errors with state with the vision icon color, track it here
+  const isVisionRunning = useRealmObject(Services.VisionService.state).isRunning;
 
   // Provides smooth chat resizing instead of writing to realm every tick while resizing
   const [dockWidth, setDockWidth] = useState(realmDockWidth);
@@ -114,6 +120,10 @@ export default function Main() {
       getPlatformService(platform.type).liveDockEnabled
     );
   }, [isLoggedIn, isOnboarding, hasLiveDock, showLoadingSpinner, platform?.type]);
+
+  const renderNav = useMemo(() => {
+    return !isOnboarding && uiReady && !showLoadingSpinner;
+  }, [showLoadingSpinner, isOnboarding, uiReady]);
 
   const theme = useMemo(() => {
     return !bulkLoadFinished ? loadedTheme() || 'night-theme' : realmTheme;
@@ -198,7 +208,10 @@ export default function Main() {
         if (hasLiveDock) {
           updateLiveDockWidth();
         }
-        updateStyleBlockers(false);
+
+        if (!showLoginModal) {
+          updateStyleBlockers(false);
+        }
       }, 200);
     }
   }, [hasLiveDock, minEditorWidth, maxDockWidth, page]);
@@ -272,9 +285,13 @@ export default function Main() {
           [styles.mainContentsOnboarding]: page === 'Onboarding',
         })}
       >
-        {page !== 'Onboarding' && !showLoadingSpinner && uiReady && (
+        {renderNav && (
           <div className={styles.sideNavContainer}>
-            <SideNav />
+            <SideNav
+              showLoginModal={showLoginModal}
+              setShowLoginModal={setShowLoginModal}
+              isVisionRunning={isVisionRunning}
+            />
           </div>
         )}
         {renderDock && leftDock && (
