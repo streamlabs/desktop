@@ -258,7 +258,7 @@ test(
   'Dual Output Go Live Non-Ultra',
   // non-ultra user
   withUser('twitch', { prime: false }),
-  async t => {
+  async (t: TExecutionContext) => {
     await toggleDualOutputMode();
     await prepareToGoLive();
 
@@ -383,6 +383,9 @@ test(
 
     await submit();
     await waitForDisplayed('span=Configure the Dual Output service', { timeout: 100000 });
+
+    // Skip checking errors due to possible issues loading chat in the test environment
+    skipCheckingErrorsInLog();
     // Confirm chat loads
     await focusMain();
     await waitForDisplayed('div=Refresh Chat', { timeout: 60000 });
@@ -393,8 +396,6 @@ test(
     await logOut(t);
     t.false(await isDisplayed('div#vertical-display'));
 
-    // Skip checking errors due to possible issues loading chat in the test environment
-    skipCheckingErrorsInLog();
     t.pass();
   },
 );
