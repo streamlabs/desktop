@@ -51,7 +51,7 @@ export default function PrimaryChatSwitcher({
   );
 
   return (
-    <div style={style} className={className}>
+    <div data-name="primary-chat-switcher" style={style} className={className}>
       {border && <Divider style={{ marginBottom: '8px' }} />}
       <Form layout={layout}>
         <ListInput

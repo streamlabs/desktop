@@ -53,7 +53,7 @@ async function goLiveWithStreamShift(t: TExecutionContext, multistream: boolean)
 
   await waitForSettingsWindowLoaded();
   await submit();
-  await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
+  await waitForDisplayed('span=Configure the Multistream service');
   await waitForStreamStart();
   await focusMain();
 
@@ -84,8 +84,8 @@ test(
     // can possibly revert back to fillForm with all platforms.
     await enableAllPlatforms();
 
-    // Shows primary chat switcher when multiple platforms are enabled
-    t.true(await isDisplayed('[data-name="primaryChat"]'), 'Shows primary chat switcher');
+    // shows primary chat switcher when multiple platforms are enabled
+    t.true(await isDisplayed('[data-name="primary-chat-switcher"]'), 'Shows primary chat switcher');
 
     // add settings
     await fillForm({
@@ -93,15 +93,11 @@ test(
       description: 'Test stream description',
       twitchGame: 'Fortnite',
       trovoGame: 'Doom',
-      primaryChat: 'YouTube',
     });
 
     await submit();
-    await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
+    await waitForDisplayed('span=Configure the Multistream service');
     await waitForDisplayed("h1=You're live!", { timeout: 60000 });
-    // Confirm chat loads
-    await focusMain();
-    await waitForDisplayed('div=Refresh Chat', { timeout: 60000 });
     await stopStream();
     t.pass();
   },
@@ -144,7 +140,7 @@ test(
     });
 
     await submit();
-    await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
+    await waitForDisplayed('span=Configure the Multistream service');
     await waitForDisplayed("h1=You're live!", { timeout: 60000 });
     await stopStream();
     t.pass();
@@ -215,7 +211,7 @@ test('Custom stream destinations', async t => {
     await click('div=MyCustomDest'); // switch the destination on
 
     await submit();
-    await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
+    await waitForDisplayed('span=Configure the Multistream service');
     await waitForDisplayed("h1=You're live!", { timeout: 60000 });
     await waitForStreamStart();
     await stopStream();

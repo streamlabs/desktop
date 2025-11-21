@@ -11,8 +11,6 @@ import { addDummyAccount, withUser } from '../../helpers/webdriver/user';
 import { fillForm } from '../../helpers/modules/forms';
 import { waitForDisplayed } from '../../helpers/modules/core';
 
-// not a react hook
-// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
 
 test('Streaming to Instagram', withUser('twitch', { prime: true, multistream: false }), async t => {
@@ -35,7 +33,7 @@ test('Streaming to Instagram', withUser('twitch', { prime: true, multistream: fa
     streamKey: dummy.streamKey,
   });
   await submit();
-  await waitForDisplayed('span=Update settings for Instagram', { timeout: 10000 });
+  await waitForDisplayed('span=Update settings for Instagram');
   await waitForStreamStart();
   await stopStream();
 
