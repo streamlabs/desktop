@@ -63,10 +63,6 @@ class LiveDockController {
     return this.store.selectedChat;
   }
 
-  get primaryChat() {
-    return this.userService.state.auth!.primaryPlatform;
-  }
-
   get liveText() {
     if (this.streamingStatus === EStreamingState.Live) return 'Live';
     if (this.streamingStatus === EStreamingState.Starting) return 'Starting';
@@ -230,6 +226,20 @@ class LiveDockController {
     });
   }
 
+  setCollapsed(livedockCollapsed: boolean) {
+    this.store.setState(s => {
+      s.canAnimate = true;
+    });
+    this.windowsService.actions.updateStyleBlockers('main', true);
+    this.customizationService.actions.setSettings({ livedockCollapsed });
+    setTimeout(() => {
+      this.store.setState(s => {
+        s.canAnimate = false;
+      });
+      this.windowsService.actions.updateStyleBlockers('main', false);
+    }, 300);
+  }
+
   toggleViewerCount() {
     this.customizationService.actions.setHiddenViewerCount(
       !this.customizationService.state.hideViewerCount,
@@ -265,22 +275,25 @@ function LiveDock() {
   const [elapsedStreamTime, setElapsedStreamTime] = useState('');
 
   const {
+    isPlatform,
     hasLiveDockFeature,
     isStreaming,
     isRestreaming,
     hasChatTabs,
+    chatTabs,
     applicationLoading,
     hideStyleBlockers,
     currentViewers,
     pageSlot,
     liveText,
     streamingStatus,
-    primaryChat,
   } = useVuex(() =>
     pick(ctrl, [
+      'isPlatform',
       'isStreaming',
       'isRestreaming',
       'hasChatTabs',
+      'chatTabs',
       'applicationLoading',
       'hideStyleBlockers',
       'pageSlot',
@@ -288,7 +301,6 @@ function LiveDock() {
       'liveText',
       'hasLiveDockFeature',
       'streamingStatus',
-      'primaryChat',
     ]),
   );
 
@@ -334,9 +346,24 @@ function LiveDock() {
     });
   }
 
-  const showChat = useMemo(() => {
-    return !hideStyleBlockers && !applicationLoading && !collapsed && primaryChat !== 'instagram';
-  }, [hideStyleBlockers, applicationLoading, collapsed, primaryChat]);
+  const chat = useMemo(() => {
+    const primaryChat = Services.UserService.state.auth!.primaryPlatform;
+
+    const showInstagramInfo = primaryChat === 'instagram';
+    if (showInstagramInfo) {
+      // FIXME: empty tab
+      return <></>;
+    }
+
+    return (
+      <Chat
+        restream={isRestreaming && visibleChat === 'restream'}
+        key={visibleChat}
+        visibleChat={visibleChat}
+        setChat={setChat}
+      />
+    );
+  }, [Services.UserService.state.auth!.primaryPlatform, visibleChat]);
 
   return (
     <div className={styles.liveDock}>
@@ -408,16 +435,7 @@ function LiveDock() {
             (isStreaming && hasLiveDockFeature('chat-streaming'))) && (
             <div className={styles.liveDockChat}>
               {hasChatTabs && <ChatTabs visibleChat={visibleChat} setChat={setChat} />}
-              {showChat ? (
-                <Chat
-                  restream={isRestreaming && visibleChat === 'restream'}
-                  key={visibleChat}
-                  visibleChat={visibleChat}
-                  setChat={setChat}
-                />
-              ) : (
-                <></>
-              )}
+              {!applicationLoading && !collapsed && chat}
               {!['default', 'restream'].includes(visibleChat) && (
                 <PlatformAppPageView
                   className={styles.liveDockPlatformAppWebview}
