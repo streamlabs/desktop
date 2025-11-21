@@ -4,11 +4,11 @@ import { Button } from 'antd';
 import { $i } from 'services/utils';
 import { $t } from 'services/i18n';
 import { Services } from 'components-react/service-provider';
-import { EPlatformCallResult } from 'services/platforms';
 import styles from 'Common.m.less';
+import { useAuth } from './Onboarding';
 
 export function Splash() {
-  const { OnboardingV2Service, RecordingModeService, UserService } = Services;
+  const { OnboardingV2Service, RecordingModeService } = Services;
 
   function startRecordingMode() {
     RecordingModeService.actions.setRecordingMode(true);
@@ -16,19 +16,14 @@ export function Splash() {
     OnboardingV2Service.actions.takeStep();
   }
 
-  function createAccount() {
-    UserService.actions.return.startSLAuth().then((status: EPlatformCallResult) => {
-      if (status !== EPlatformCallResult.Success) return;
-      OnboardingV2Service.actions.takeStep();
-    });
-  }
+  const { SLIDLogin } = useAuth();
 
   function login() {
     OnboardingV2Service.actions.takeStep();
   }
 
   return (
-    <div>
+    <div className={styles.centered}>
       <video src={$i('webm/kevin_jump.webm')} controls={false} autoPlay loop />
       <div className={cx(styles.darkBox, styles.centered)}>
         <h2>{$t('Welcome to Streamlabs Desktop')}</h2>
@@ -37,7 +32,7 @@ export function Splash() {
             'Access all the tools you need, including overlays, alerts, automatic clips, sponsorships, and more',
           )}
         </span>
-        <Button onClick={createAccount}>
+        <Button onClick={SLIDLogin}>
           {$t('Create an account')}
           <i className="icon-pop-out-2" />
         </Button>
@@ -47,7 +42,7 @@ export function Splash() {
         </span>
       </div>
       <span>
-        {$t('Just looking to reacord?')}
+        {$t('Just looking to record?')}
         <a onClick={startRecordingMode}>{$t('Start here')}</a>
       </span>
     </div>
