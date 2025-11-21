@@ -15,11 +15,7 @@ import { useRealmObject } from 'components-react/hooks/realm';
 
 const { Sider } = Layout;
 
-export default function SideNav(p: {
-  showLoginModal: boolean;
-  setShowLoginModal: (show: boolean) => void;
-  isVisionRunning: boolean;
-}) {
+export default function SideNav() {
   const { CustomizationService, SideNavService, WindowsService } = Services;
 
   const {
@@ -78,11 +74,7 @@ export default function SideNav(p: {
           <FeaturesNav />
 
           {/* bottom navigation menu */}
-          <NavTools
-            showLoginModal={p.showLoginModal}
-            setShowLoginModal={p.setShowLoginModal}
-            isVisionRunning={p.isVisionRunning}
-          />
+          <NavTools />
         </Scrollable>
 
         <LoginHelpTip />

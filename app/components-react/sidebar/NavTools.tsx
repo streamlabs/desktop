@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import cx from 'classnames';
 import electron from 'electron';
 import Utils from 'services/utils';
@@ -15,14 +15,11 @@ import MenuItem from 'components-react/shared/MenuItem';
 import UltraIcon from 'components-react/shared/UltraIcon';
 import PlatformIndicator from './PlatformIndicator';
 import { AuthModal } from 'components-react/shared/AuthModal';
+import { useRealmObject } from 'components-react/hooks/realm';
 import { ESettingsCategory, TCategoryName } from 'services/settings';
 import { getOS, OS } from 'util/operating-systems';
 
-export default function NavTools(p: {
-  showLoginModal: boolean;
-  setShowLoginModal: (show: boolean) => void;
-  isVisionRunning: boolean;
-}) {
+export default function SideNav() {
   const {
     UserService,
     SettingsService,
@@ -31,7 +28,16 @@ export default function NavTools(p: {
     SideNavService,
     WindowsService,
     UrlService,
+    VisionService,
   } = Services;
+
+  const visionState = useRealmObject(VisionService.state);
+
+  const isDevMode = useMemo(() => Utils.isDevMode(), []);
+
+  const showAiTab = useMemo(() => {
+    return getOS() === OS.Windows || (getOS() === OS.Mac && isDevMode);
+  }, [isDevMode]);
 
   const {
     isLoggedIn,
@@ -41,7 +47,6 @@ export default function NavTools(p: {
     openMenuItems,
     expandMenuItem,
     updateStyleBlockers,
-    hideStyleBlockers,
   } = useVuex(
     () => ({
       isLoggedIn: UserService.views.isLoggedIn,
@@ -51,16 +56,12 @@ export default function NavTools(p: {
       openMenuItems: SideNavService.views.getExpandedMenuItems(ENavName.BottomNav),
       expandMenuItem: SideNavService.actions.expandMenuItem,
       updateStyleBlockers: WindowsService.actions.updateStyleBlockers,
-      hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
     }),
     false,
   );
 
-  const isDevMode = useMemo(() => Utils.isDevMode(), []);
-
-  const showAiTab = useMemo(() => {
-    return isLoggedIn && (getOS() === OS.Windows || (getOS() === OS.Mac && isDevMode));
-  }, [isDevMode, isLoggedIn]);
+  const [dashboardOpening, setDashboardOpening] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const openSettingsWindow = useCallback((category?: TCategoryName) => {
     SettingsService.actions.showSettings(category);
@@ -73,7 +74,8 @@ export default function NavTools(p: {
   const openDashboard = useCallback(
     async (page?: string) => {
       UsageStatisticsService.actions.recordClick('SideNav2', page || 'dashboard');
-      if (hideStyleBlockers) return;
+      if (dashboardOpening) return;
+      setDashboardOpening(true);
 
       try {
         const link = await MagicLinkService.getDashboardMagicLink(page);
@@ -81,8 +83,10 @@ export default function NavTools(p: {
       } catch (e: unknown) {
         console.error('Error generating dashboard magic link', e);
       }
+
+      setDashboardOpening(false);
     },
-    [hideStyleBlockers],
+    [dashboardOpening],
   );
 
   const throttledOpenDashboard = throttle(openDashboard, 2000, { trailing: false });
@@ -108,7 +112,7 @@ export default function NavTools(p: {
   }, [isLoggedIn]);
 
   const handleShowModal = useCallback((status: boolean) => {
-    p.setShowLoginModal(status);
+    setShowModal(status);
     updateStyleBlockers('main', status);
   }, []);
 
@@ -185,7 +189,7 @@ export default function NavTools(p: {
               <NavToolsItem
                 key={menuItem.key}
                 menuItem={menuItem}
-                className={cx({ [styles.vision]: p.isVisionRunning })}
+                className={visionState.isRunning ? styles.vision : undefined}
                 onClick={() => openSettingsWindow(ESettingsCategory.AI)}
               />
             );
@@ -211,7 +215,7 @@ export default function NavTools(p: {
       </Menu>
       <AuthModal
         title={$t('Confirm')}
-        showModal={p.showLoginModal}
+        showModal={showModal}
         handleAuth={handleAuth}
         handleShowModal={handleShowModal}
       />
