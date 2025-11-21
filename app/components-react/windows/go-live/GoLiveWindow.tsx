@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styles from './GoLive.m.less';
-import { WindowsService, DualOutputService, IncrementalRolloutService } from 'app-services';
+import { WindowsService } from 'app-services';
 import { ModalLayout } from '../../shared/ModalLayout';
 import { Button, message } from 'antd';
 import { Services } from '../../service-provider';
@@ -12,8 +12,7 @@ import Animation from 'rc-animate';
 import { useGoLiveSettings, useGoLiveSettingsRoot } from './useGoLiveSettings';
 import { inject } from 'slap';
 import RecordingSwitcher from './RecordingSwitcher';
-import { promptAction } from 'components-react/modals';
-import { EAvailableFeatures } from 'services/incremental-rollout';
+import { confirmStreamShift } from 'components-react/shared/StreamShiftModal';
 
 export default function GoLiveWindow() {
   const { lifecycle, form } = useGoLiveSettingsRoot().extend(module => ({
@@ -86,31 +85,11 @@ function ModalFooter() {
         setIsFetchingStreamStatus(false);
 
         // Prompt to confirm stream switch if the stream exists
-        // TODO: unify with start streaming button prompt
-        const { streamShiftForceGoLive } = Services.RestreamService.state;
-        if (isLive && !streamShiftForceGoLive) {
-          let shouldForceGoLive = false;
-
-          await promptAction({
-            title: $t('Another stream detected'),
-            message: $t(
-              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
-            ),
-            btnText: $t('Switch to Streamlabs Desktop'),
-            fn: () => {
-              goLive();
-              close();
-            },
-            cancelBtnText: $t('Cancel'),
-            cancelBtnPosition: 'left',
-            secondaryActionText: $t('Force Start'),
-            secondaryActionFn: async () => {
-              Services.RestreamService.actions.forceStreamShiftGoLive(true);
-              shouldForceGoLive = true;
-            },
-          });
-
-          if (!shouldForceGoLive) return;
+        if (isLive && !Services.RestreamService.state.streamShiftForceGoLive) {
+          const shouldForceGoLive = await confirmStreamShift();
+          if (!shouldForceGoLive) {
+            return;
+          }
         }
       } catch (e: unknown) {
         console.error('Error checking stream switcher status:', e);

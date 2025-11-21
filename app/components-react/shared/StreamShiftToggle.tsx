@@ -38,6 +38,7 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
     <div className={styles.streamShiftWrapper}>
       <div className={cx(p?.className, styles.streamShiftToggle)} style={p?.style}>
         <CheckboxInput
+          name={'streamShift'}
           className={p?.checkboxClassname}
           label={
             !isPrime ? (
