@@ -4,7 +4,6 @@
 // We should probably make these menu styles global
 // across the entire app.
 .widget-layout {
-
   height: 100%;
 
   // collapse
@@ -39,6 +38,7 @@
     margin-left: -16px;
     margin-right: -16px;
   }
+
   :global(.ant-menu-vertical) {
     border: none !important;
   }
@@ -86,13 +86,18 @@
     }
   }
 
-
   // content
   .content-wrapper {
     padding: 16px;
     padding-top: 32px;
     height: 100%;
     overflow: auto;
+    box-sizing: border-box;
+    max-width: 100%; 
+  }
+
+  :global(.ant-layout.ant-layout-has-sider > .ant-layout-content) {
+    width: auto;
   }
 }
 

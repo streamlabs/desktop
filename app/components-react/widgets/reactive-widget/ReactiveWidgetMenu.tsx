@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, Menu, Tooltip } from 'antd';
 import { PlusOutlined, SettingOutlined, CaretRightOutlined } from '@ant-design/icons';
 import { CheckboxInput } from 'components-react/shared/inputs';
-import { $t } from '../../../services/i18n';
+import { $t } from 'services/i18n';
 
 export function GameIcon() {
   return (
@@ -27,11 +27,11 @@ export function ReactiveWidgetMenu(props: {
       defaultOpenKeys={['global']}
       onClick={({ key }) => onChange(key as any)}
     >
-      <Menu.Item key="add-trigger" icon={<PlusOutlined />}>
+      <Menu.Item key="add-trigger"  icon={<PlusOutlined />} style={{ height: '45px', lineHeight: '45px' }}>
         {$t('Add a new trigger')}
       </Menu.Item>
 
-      <Menu.Item key="general">{$t('Game Settings')}</Menu.Item>
+      <Menu.Item key="general" style={{ height: '45px', lineHeight: '45px' }}>{$t('Game Settings')}</Menu.Item>
       {Object.entries(menuItems).map(([groupKey, group]) => (
         <Menu.SubMenu
           key={groupKey}
@@ -40,7 +40,7 @@ export function ReactiveWidgetMenu(props: {
         >
           {(group as any).triggers?.map((trigger: any, index: number) => (
             // TODO$chris: consider just using trigger.id
-            <Menu.Item key={`${groupKey}-trigger-${trigger.id}`}>
+            <Menu.Item key={`${groupKey}-trigger-${trigger.id}`} style={{ height: '45px', lineHeight: '45px' }}>
               <CheckboxInput value={trigger.enabled} style={{ display: 'inline-block' }} />
               {trigger.name || `Trigger ${index + 1}`}
               {/* TODO$chris: add delete trigger button */}

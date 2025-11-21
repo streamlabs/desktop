@@ -3,4 +3,26 @@
     display: flex;
     align-items: center;
   }
+
+  :global(.ant-switch) {
+    margin: 0 !important;
+  }
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  li:nth-child(odd) {
+    background-color: var(--section-alt);
+  }
+}
+.list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0px 16px;
+  height: 45px;
+  border-radius: 4px;
 }
