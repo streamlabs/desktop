@@ -1,0 +1,15 @@
+.reactive-widget {
+  height: 100%;
+  width: calc(100% - 3px); // scrollbar fix for widget layout component
+  :global(.ant-layout-content > :last-child) {
+    padding-top: 16px !important; // box padding reset for widget layout component
+  }
+
+  :global(.ant-layout-sider-children) {
+    overflow-y: auto;
+  }
+
+  :global(.ant-input-number) {
+    width: 100%;
+  }
+}
