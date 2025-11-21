@@ -829,6 +829,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
       'ViewerCount',
       'GameWidget',
       'CustomWidget',
+      'ReactiveWidget',
     ];
     const isLegacyAlertbox = this.customizationService.state.legacyAlertbox;
     if (isLegacyAlertbox) reactWidgets = reactWidgets.filter(w => w !== 'AlertBox');

@@ -80,6 +80,7 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
   // create shortcuts for widgetsConfig and eventsInfo
   public widgetsConfig = this.widgetsService.widgetsConfig;
   public eventsConfig = this.widgetsService.alertsConfig;
+  public streamlabsHost = this.widgetsService.hostsService.streamlabs;
 
   bind = injectFormBinding(
     () => this.settings,
@@ -254,6 +255,10 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
 
   public playAlert(type: TAlertType) {
     this.actions.playAlert(type);
+  }
+
+  public playReactiveAlert(trigger: any) {
+    this.actions.playReactiveAlert(trigger);
   }
 
   /**

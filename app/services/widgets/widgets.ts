@@ -233,6 +233,20 @@ export class WidgetsService
     );
   }
 
+  @Throttle(1000) // TODO$chris: this doesnt work yet
+  playReactiveAlert(trigger: any) {
+    const host = this.hostsService.streamlabs;
+    const headers = authorizedHeaders(this.userService.apiToken);
+
+    return fetch(
+      new Request(`https://${host}/api/v5/widgets/game-pulse/preview-trigger`, {
+        headers,
+        method: 'POST',
+        body: JSON.stringify(trigger),
+      }),
+    );
+  }
+
   private previewSourceWatchers: Dictionary<Subscription> = {};
 
   /**

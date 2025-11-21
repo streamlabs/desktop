@@ -28,6 +28,8 @@ import { SponsorBanner, SponsorBannerModule } from '../SponsorBanner';
 import { GameWidget, GameWidgetModule } from '../GameWidget';
 import { ViewerCount, ViewerCountModule } from '../ViewerCount';
 import { CustomWidget, CustomWidgetModule } from '../CustomWidget';
+import { ReactiveWidget } from '../ReactiveWidget';
+import { ReactiveWidgetModule } from '../reactive-widget/useReactiveWidget';
 import { useSubscription } from '../../hooks/useSubscription';
 import { useChildWindowParams } from 'components-react/hooks';
 
@@ -56,6 +58,7 @@ export const components = {
   ViewerCount: [ViewerCount, ViewerCountModule],
   GameWidget: [GameWidget, GameWidgetModule],
   CustomWidget: [CustomWidget, CustomWidgetModule],
+  ReactiveWidget: [ReactiveWidget, ReactiveWidgetModule],
 };
 
 /**

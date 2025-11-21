@@ -975,6 +975,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
       'EmoteWall',
       'ChatHighlight',
       'CustomWidget',
+      'ReactiveWidget',
     ];
 
     const propertiesManagerType = source.getPropertiesManagerType();

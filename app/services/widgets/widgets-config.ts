@@ -10,7 +10,8 @@ export type TWidgetType =
   | WidgetType.DonationTicker
   | WidgetType.CustomWidget
   | WidgetType.ChatBox
-  | WidgetType.SponsorBanner;
+  | WidgetType.SponsorBanner
+  | WidgetType.ReactiveWidget;
 
 export interface IWidgetConfig {
   type: TWidgetType;
@@ -326,6 +327,31 @@ export function getWidgetsConfig(
       settingsUpdateEvent: 'customWidgetSettingsUpdate',
       customCodeAllowed: true,
       customFieldsAllowed: true,
+    },
+
+    [WidgetType.ReactiveWidget]: {
+      type: WidgetType.ReactiveWidget,
+
+      defaultTransform: {
+        width: 600,
+        height: 400,
+        x: 0.5,
+        y: 0.5,
+        anchor: AnchorPoint.Center,
+      },
+
+      settingsWindowSize: {
+        width: 800,
+        height: 800,
+      },
+      useNewWidgetAPI: true,
+      url: `https://${host}/api/v5/widgets/desktop/reactive-widget`,
+      previewUrl: `https://${host}/api/v5/widgets/desktop/reactive-widget`,
+      dataFetchUrl: `https://${host}/api/v5/widgets/desktop/reactive-widget`,
+      settingsSaveUrl: `https://${host}/api/v5/widgets/desktop/reactive-widget`,
+      settingsUpdateEvent: 'reactiveWidgetSettingsUpdate',
+      customCodeAllowed: false,
+      customFieldsAllowed: false,
     },
   };
 }
