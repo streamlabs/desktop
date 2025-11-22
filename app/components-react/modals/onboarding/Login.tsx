@@ -6,7 +6,6 @@ import styles from './Common.m.less';
 import { $t } from 'services/i18n';
 import { $i } from 'services/utils';
 import { platformLabels, platformList } from 'services/platforms';
-import { Services } from 'components-react/service-provider';
 import PlatformLogo from 'components-react/shared/PlatformLogo';
 import { ExtraPlatformConnect } from 'components-react/pages/onboarding/ExtraPlatformConnect';
 import { useAuth } from './Onboarding';

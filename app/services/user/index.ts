@@ -432,6 +432,8 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
    */
   refreshedLinkedAccounts = new Subject();
 
+  subscribedToPrime = new Subject();
+
   /**
    * Used by child and 1-off windows to update their sentry contexts
    */
@@ -973,6 +975,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   onSocketEvent(e: TSocketEvent) {
     if (e.type !== 'streamlabs_prime_subscribe') return;
     this.SET_PRIME(true);
+    this.subscribedToPrime.next();
     if (this.navigationService.state.currentPage === 'Onboarding') return;
     const theme = this.customizationService.isDarkTheme ? 'prime-dark' : 'prime-light';
     this.customizationService.setTheme(theme);

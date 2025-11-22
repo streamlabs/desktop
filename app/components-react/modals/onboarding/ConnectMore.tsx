@@ -5,10 +5,9 @@ import { Services } from 'components-react/service-provider';
 import { $t } from 'services/i18n';
 import styles from './Common.m.less';
 import PlatformLogo from 'components-react/shared/PlatformLogo';
-import KevinSvg from 'components-react/shared/KevinSvg';
 import { ListInput } from 'components-react/shared/inputs';
 import { platformLabels, TPlatform } from 'services/platforms';
-import { useAuth } from './Onboarding';
+import { Header, useAuth } from './Onboarding';
 
 export function ConnectMore() {
   const { UserService } = Services;
@@ -28,9 +27,7 @@ export function ConnectMore() {
 
   return (
     <div className={styles.centered}>
-      <KevinSvg />
-      <h2>{$t('Connect platforms')}</h2>
-      <span>{subtitle}</span>
+      <Header title={$t('Connect platforms')} description={subtitle} />
       <div style={{ display: 'flex' }}>
         {platformCards.map(platform => (
           <PlatformCard platform={platform} />

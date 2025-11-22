@@ -7,15 +7,17 @@ import { useRealmObject } from 'components-react/hooks/realm';
 import { Button } from 'antd';
 import { $t } from 'services/i18n';
 import { EPlatformCallResult, externalAuthPlatforms, TPlatform } from 'services/platforms';
+import UltraIcon from 'components-react/shared/UltraIcon';
+import KevinSvg from 'components-react/shared/KevinSvg';
 
 const STEPS_MAP = {
   [EOnboardingSteps.Splash]: steps.Splash,
-  [EOnboardingSteps.Login]: () => <></>,
+  [EOnboardingSteps.Login]: steps.Login,
   [EOnboardingSteps.RecordingLogin]: () => <></>,
-  [EOnboardingSteps.ConnectMore]: () => <></>,
+  [EOnboardingSteps.ConnectMore]: steps.ConnectMore,
   [EOnboardingSteps.Devices]: () => <></>,
   [EOnboardingSteps.OBSImport]: () => <></>,
-  [EOnboardingSteps.Ultra]: () => <></>,
+  [EOnboardingSteps.Ultra]: steps.Ultra,
   [EOnboardingSteps.Themes]: () => <></>,
 };
 
@@ -45,6 +47,31 @@ export default function Onboarding() {
         {currentStep.isSkippable && <Button onClick={takeStep}>{$t('Skip')}</Button>}
         <Button onClick={takeStep}>{$t('Continue')}</Button>
       </div>
+    </div>
+  );
+}
+
+export function Header(p: { title: string; description?: string }) {
+  return (
+    <>
+      <KevinSvg />
+      <h2>{p.title}</h2>
+      {p.description && <span>{p.description}</span>}
+    </>
+  );
+}
+
+export function ImageCard(p: {
+  metadata: { img: string; title: string; description: string; isUltra?: boolean };
+}) {
+  return (
+    <div>
+      <img src={p.metadata.img} />
+      <h4>
+        {p.metadata.isUltra && <UltraIcon />}
+        {p.metadata.title}
+      </h4>
+      <span>{p.metadata.description}</span>
     </div>
   );
 }

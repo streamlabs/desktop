@@ -83,6 +83,7 @@ interface IAnalyticsEvent {
   uuid?: string;
   saveUser?: boolean;
   userId?: number;
+  testGroup: 'A' | 'B';
 }
 
 interface ISystemInfo {
@@ -237,6 +238,7 @@ export class UsageStatisticsService extends Service {
       count: 1,
       uuid: this.userService.getLocalUserId(),
       time: new Date(),
+      testGroup: this.userService.isAlphaGroup ? 'A' : 'B',
     };
 
     if (this.userService.state.userId) analyticsEvent.userId = this.userService.state.userId;
