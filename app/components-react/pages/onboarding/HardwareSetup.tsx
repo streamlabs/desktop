@@ -122,7 +122,7 @@ export function HardwareSetup() {
   );
 }
 
-function DisplaySection() {
+export function DisplaySection() {
   const { DefaultHardwareService } = Services;
   const v = useVuex(() => ({
     videoDevices: DefaultHardwareService.videoDevices,

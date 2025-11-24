@@ -6,6 +6,7 @@ import {
   ObsImporterService,
   RecordingModeService,
   SceneCollectionsService,
+  UsageStatisticsService,
   UserService,
 } from 'app-services';
 
@@ -31,6 +32,9 @@ interface IOnboardingInitialization {
   isSingleton?: boolean;
 }
 
+type TOnboardingNavigationEvent = 'skip' | 'continue' | 'backtrack' | 'completed' | 'closed';
+type TOnboardingInteractionEvent = 'connectPlatform' | 'installTheme' | 'browseThemes';
+
 class OnboardingStep {
   config: IOnboardingStep;
   next: OnboardingStep | null = null;
@@ -54,6 +58,14 @@ class OnboardingPath {
 
   get index() {
     return this.currentIndex;
+  }
+
+  get prevStepName() {
+    return this.current.prev?.config.name;
+  }
+
+  get nextStepName() {
+    return this.current.next?.config.name;
   }
 
   // Adds a node to the end of the list
@@ -141,6 +153,7 @@ export class OnboardingV2Service extends Service {
   @Inject() private userService: UserService;
   @Inject() private obsImporterService: ObsImporterService;
   @Inject() private sceneCollectionsService: SceneCollectionsService;
+  @Inject() private usageStatisticsService: UsageStatisticsService;
 
   state = OnboardingServiceState.inject();
   /**
@@ -182,22 +195,39 @@ export class OnboardingV2Service extends Service {
     });
   }
 
-  takeStep() {
+  takeStep(skipped?: boolean) {
+    this.recordOnboardingNavEvent(skipped ? 'skip' : 'continue');
     this.determineSteps();
     const nextStep = this.path.takeNextStep();
     if (!nextStep) {
       this.completeOnboarding();
     } else {
       this.setCurrentStep(nextStep);
+      this.setIndex(this.path.index);
     }
-    this.setIndex(this.path.index);
   }
 
   stepBack() {
+    this.recordOnboardingNavEvent('backtrack');
     const prevStep = this.path.takePrevStep();
     if (!prevStep) return;
     this.setCurrentStep(prevStep);
     this.setIndex(this.path.index);
+  }
+
+  closeOnboarding() {
+    this.completeOnboarding(true);
+  }
+
+  recordOnboardingInteractionEvent(type: TOnboardingInteractionEvent, data: any) {
+    this.usageStatisticsService.actions.recordAnalyticsEvent('Onboarding', {
+      isUltra: this.userService.views.isPrime,
+      hasExistingSceneCollections: this.hasExistingSceneCollections,
+      hasOBSInstalled: this.obsImporterService.views.isOBSinstalled(),
+      platforms: this.userService.views.linkedPlatforms,
+      ...data,
+      type,
+    });
   }
 
   private initalizeView(config: IOnboardingInitialization) {
@@ -205,6 +235,7 @@ export class OnboardingV2Service extends Service {
     this.path = new OnboardingPath();
     this.path.append(config.startingStep);
     this.setCurrentStep(config.startingStep);
+    this.setIndex(0);
     this.setShowOnboarding(true);
   }
 
@@ -263,15 +294,29 @@ export class OnboardingV2Service extends Service {
     }
   }
 
-  private completeOnboarding() {
+  private completeOnboarding(closedEarly?: boolean) {
     if (!this.singletonPath) {
       localStorage.setItem(this.localStorageKey, 'true');
       remote.session.defaultSession.flushStorageData();
       console.log('Set onboarding key successful.');
+      this.recordOnboardingNavEvent(closedEarly ? 'closed' : 'completed');
     }
     this.setShowOnboarding(false);
     this.setCurrentStep(null);
     this.path = null;
+  }
+
+  private recordOnboardingNavEvent(type: TOnboardingNavigationEvent) {
+    this.usageStatisticsService.actions.recordAnalyticsEvent('Onboarding', {
+      type,
+      currentStep: this.currentStepName,
+      prevStep: this.path.prevStepName,
+      nextStep: this.path.nextStepName,
+      isUltra: this.userService.views.isPrime,
+      hasExistingSceneCollections: this.hasExistingSceneCollections,
+      hasOBSInstalled: this.obsImporterService.views.isOBSinstalled(),
+      platforms: this.userService.views.linkedPlatforms,
+    });
   }
 
   private setCurrentStep(step: IOnboardingStep) {

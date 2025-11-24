@@ -53,7 +53,8 @@ export type TAnalyticsEvent =
   | 'TikTokApplyPrompt'
   | 'ScheduleStream'
   | 'StreamShift'
-  | 'Ultra';
+  | 'Ultra'
+  | 'Onboarding';
 
 // Refls are used as uuids for ultra components and should be updated for new ulta components.
 export type TUltraRefl =
