@@ -11,6 +11,8 @@ import { VisionService } from 'services/vision';
  */
 const REACTIVE_SOURCES_ORIGIN = 'https://alpha-sl-dynamic-overlays-demo.streamlabs.workers.dev';
 
+export const USER_STATE_SCHEMA_URL = `${REACTIVE_SOURCES_ORIGIN}/schema.json`;
+
 /**
  * List of valid reactive source hostnames that should be normalized.
  * Any reactive browser source using one of these hostnames will be automatically

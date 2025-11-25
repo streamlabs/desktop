@@ -12,6 +12,7 @@ import { Subscription } from 'rxjs';
 import * as obs from '../../../obs-api';
 import uuid from 'uuid/v4';
 import { fromDotNotation } from 'util/dot-tree';
+import { USER_STATE_SCHEMA_URL } from 'services/sources/properties-managers/smart-browser-source-manager';
 
 type StateTreeLeaf = number;
 type StateTreeNode = { [key: string]: StateTreeLeaf | StateTreeNode };
@@ -207,8 +208,6 @@ export class UserStateService extends StatefulService<UserStateServiceState> {
   }
 
   private async fetchSchema() {
-    return await fetch(this.urlService.reactiveDataSchemaUrl).then(
-      res => res.json() as Promise<SchemaTree>,
-    );
+    return await fetch(USER_STATE_SCHEMA_URL).then(res => res.json() as Promise<SchemaTree>);
   }
 }
