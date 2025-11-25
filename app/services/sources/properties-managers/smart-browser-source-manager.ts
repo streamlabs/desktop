@@ -4,12 +4,22 @@ import { WebsocketService } from 'services/websocket';
 import { Subscription } from 'rxjs';
 import { VisionService } from 'services/vision';
 
+/**
+ * Target origin for all reactive sources.
+ * This enforces a consistent hostname across all reactive browser sources,
+ * enabling centralized testing and deployment of new reactive overlay features.
+ */
 const REACTIVE_SOURCES_ORIGIN = 'https://alpha-sl-dynamic-overlays-demo.streamlabs.workers.dev';
+
+/**
+ * List of valid reactive source hostnames that should be normalized.
+ * Any reactive browser source using one of these hostnames will be automatically
+ * redirected to use REACTIVE_SOURCES_ORIGIN for consistency.
+ */
 const ALL_HOSTNAMES = [
   'reactive-sources.streamlabs.com',
   'alpha-sl-dynamic-overlays-demo.streamlabs.workers.dev',
   'sl-dynamic-overlays-demo.streamlabs.workers.dev',
-  'tmaneri-m4',
 ];
 
 export class SmartBrowserSourceManager extends PropertiesManager {
@@ -27,6 +37,8 @@ export class SmartBrowserSourceManager extends PropertiesManager {
         ...this.settings,
         url: url.replace(origin, REACTIVE_SOURCES_ORIGIN),
       });
+
+      this.obsSource.save();
     }
   }
 

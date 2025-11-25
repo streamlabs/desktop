@@ -31,7 +31,7 @@ export default function ReactiveDataEditorWindow() {
   if (!schemaFlat || !stateFlat) {
     return (
       <ModalLayout bodyStyle={{ padding: '20px' }} hideFooter={true}>
-        <div>Loading...</div>
+        {!schemaFlat ? <div>Waiting for schema...</div> : <div>Waiting for state...</div>}
       </ModalLayout>
     );
   }
