@@ -38,6 +38,7 @@ interface ISourceMetadata {
   parentId?: string;
   sceneId?: string;
   toggleAll?: boolean;
+  sourceId?: string;
 }
 
 export const SourceSelectorCtx = React.createContext<SourceSelectorController | null>(null);
@@ -104,6 +105,16 @@ class SourceSelectorController {
               onDoubleClick={() => this.sourceProperties(sceneNode.id)}
               removeSource={() => this.removeItems(sceneNode.id)}
               sourceProperties={() => this.sourceProperties(sceneNode.id)}
+              onEditReactiveData={
+                sceneNode.sourceId &&
+                this.sourcesService.state.sources[sceneNode.sourceId]?.propertiesManagerType ===
+                  'smartBrowserSource'
+                  ? (sourceId => () =>
+                      this.sourcesService.actions.showReactiveDataEditorWindow(sourceId))(
+                      sceneNode.sourceId,
+                    )
+                  : undefined
+              }
             />
           ),
           isLeaf: !children,
@@ -158,6 +169,7 @@ class SourceSelectorController {
         isDualOutputActive,
         parentId: node.parentId,
         sceneId: node.sceneId,
+        sourceId: isItem(node) ? node.sourceId : undefined,
         canShowActions: itemsForNode.length > 0,
         isFolder,
         toggleAll,
@@ -891,6 +903,7 @@ const TreeNode = React.forwardRef(
       onDoubleClick: () => void;
       removeSource: () => void;
       sourceProperties: () => void;
+      onEditReactiveData?: () => void;
     },
     ref: React.RefObject<HTMLDivElement>,
   ) => {
@@ -978,6 +991,22 @@ const TreeNode = React.forwardRef(
             onMouseLeave={() => setHoveredIcon('')}
           />
         </Tooltip>
+
+        {p.onEditReactiveData && (
+          <Tooltip
+            title={$t('Edit Data')}
+            placement="left"
+            visible={['icon-advanced'].includes(hoveredIcon)}
+          >
+            <i
+              onClick={p.onEditReactiveData}
+              className={'icon-advanced'}
+              onMouseEnter={() => setHoveredIcon('icon-advanced')}
+              onMouseLeave={() => setHoveredIcon('')}
+              style={{ opacity: 0.7 }}
+            />
+          </Tooltip>
+        )}
       </div>
     );
   },
