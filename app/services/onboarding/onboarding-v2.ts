@@ -219,7 +219,7 @@ export class OnboardingV2Service extends Service {
     this.completeOnboarding(true);
   }
 
-  recordOnboardingInteractionEvent(type: TOnboardingInteractionEvent, data: any) {
+  recordOnboardingInteractionEvent(type: TOnboardingInteractionEvent, data?: any) {
     this.usageStatisticsService.actions.recordAnalyticsEvent('Onboarding', {
       isUltra: this.userService.views.isPrime,
       hasExistingSceneCollections: this.hasExistingSceneCollections,
