@@ -11,7 +11,7 @@ import { useDebounce } from '../../hooks';
 import { useGoLiveSettings } from './useGoLiveSettings';
 import DisplaySelector from 'components-react/shared/DisplaySelector';
 import ConnectButton from 'components-react/shared/ConnectButton';
-import { message, Tooltip } from 'antd';
+import { message } from 'antd';
 
 /**
  * Allows enabling/disabling platforms and custom destinations for the stream
@@ -31,7 +31,6 @@ export function DestinationSwitchers() {
     isPrime,
     alwaysEnabledPlatforms,
     alwaysShownPlatforms,
-    isTwitchDualStreaming,
   } = useGoLiveSettings();
 
   // use these references to apply debounce
@@ -64,7 +63,6 @@ export function DestinationSwitchers() {
     isDualOutputMode &&
     !isPrime &&
     enabledPlatformsRef.current.length + enabledDestRef.current.length >= 2;
-  const disablePlatformSwitchers = isDualOutputMode && isTwitchDualStreaming;
 
   const emitSwitch = useDebounce(500, (ind?: number, enabled?: boolean) => {
     if (ind !== undefined && enabled !== undefined) {
@@ -168,11 +166,7 @@ export function DestinationSwitchers() {
               : isEnabled(platform) && (isPrimaryPlatform(platform) || platform === 'tiktok')
           }
           onChange={enabled => togglePlatform(platform, enabled)}
-          switchDisabled={
-            (disablePlatformSwitchers && platform !== 'twitch') || // Disable non-Twitch platforms if Twitch dual streaming is on
-            (!isEnabled(platform) && disableNonUltraSwitchers) // Handle non-ultra user restrictions
-          }
-          showTwitchTooltip={disablePlatformSwitchers && platform !== 'twitch'}
+          switchDisabled={!isEnabled(platform) && disableNonUltraSwitchers}
           isDualOutputMode={isDualOutputMode}
           index={ind}
         />
@@ -203,7 +197,6 @@ interface IDestinationSwitcherProps {
   index: number;
   isDualOutputMode: boolean;
   isUnlinked?: boolean;
-  showTwitchTooltip?: boolean;
 }
 
 /**
@@ -311,53 +304,47 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
   })();
 
   return (
-    <Tooltip
-      title={p.showTwitchTooltip ? $t('Disable Twitch dual stream to add another platform') : null}
-      placement="left"
-      overlayClassName={styles.switcherTooltip}
+    <div
+      ref={containerRef}
+      className={cx('single-output-card', styles.platformSwitcher, {
+        [styles.platformDisabled]: !p.enabled && !p?.isUnlinked,
+        [styles.platformEnabled]: p.enabled,
+      })}
+      onClick={onClickHandler}
     >
-      <div
-        ref={containerRef}
-        className={cx('single-output-card', styles.platformSwitcher, {
-          [styles.platformDisabled]: !p.enabled && !p?.isUnlinked,
-          [styles.platformEnabled]: p.enabled,
-        })}
-        onClick={onClickHandler}
-      >
-        {/* SWITCH */}
-        <div className={cx(styles.colInput)}>
-          <Controller />
-        </div>
-
-        {/* PLATFORM LOGO */}
-        <div className={cx('logo', styles.platformLogo)}>
-          <Logo />
-        </div>
-
-        {/* PLATFORM TITLE AND ACCOUNT/URL */}
-        <div className={styles.colAccount}>
-          <div className={styles.platformName}>{title}</div>
-          <div className={styles.platformHandle}>{description}</div>
-        </div>
-
-        {/* DISPLAY TOGGLES */}
-        {p.isDualOutputMode && !p?.isUnlinked && (
-          <div className={styles.displaySelectorWrapper} onClick={e => e.stopPropagation()}>
-            <DisplaySelector
-              title={title}
-              nolabel
-              className={styles.dualOutputDisplaySelector}
-              platform={platform}
-              index={p.index}
-            />
-          </div>
-        )}
-
-        {/* CONNECT BUTTON */}
-        {p?.isUnlinked && platform && (
-          <ConnectButton platform={platform} className={styles.connectButton} />
-        )}
+      {/* SWITCH */}
+      <div className={cx(styles.colInput)}>
+        <Controller />
       </div>
-    </Tooltip>
+
+      {/* PLATFORM LOGO */}
+      <div className={cx('logo', styles.platformLogo)}>
+        <Logo />
+      </div>
+
+      {/* PLATFORM TITLE AND ACCOUNT/URL */}
+      <div className={styles.colAccount}>
+        <div className={styles.platformName}>{title}</div>
+        <div className={styles.platformHandle}>{description}</div>
+      </div>
+
+      {/* DISPLAY TOGGLES */}
+      {p.isDualOutputMode && !p?.isUnlinked && (
+        <div className={styles.displaySelectorWrapper} onClick={e => e.stopPropagation()}>
+          <DisplaySelector
+            title={title}
+            nolabel
+            className={styles.dualOutputDisplaySelector}
+            platform={platform}
+            index={p.index}
+          />
+        </div>
+      )}
+
+      {/* CONNECT BUTTON */}
+      {p?.isUnlinked && platform && (
+        <ConnectButton platform={platform} className={styles.connectButton} />
+      )}
+    </div>
   );
 });

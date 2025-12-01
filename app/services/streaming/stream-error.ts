@@ -46,6 +46,14 @@ export const errorTypes = {
       return $t('Failed to configure the Multistream server');
     },
   },
+  RESTREAM_ENHANCED_BROADCASTING_FAILED: {
+    get message() {
+      return $t('Failed to configure the Multistream server for Enhanced Broadcasting');
+    },
+    get action() {
+      return $t('disable Enhanced Broadcasting for Twitch and try again');
+    },
+  },
   DUAL_OUTPUT_RESTREAM_DISABLED: {
     get message() {
       return $t('The Multistream server is temporarily unavailable for Dual Output');

@@ -317,7 +317,8 @@ export class StreamingService
     // To ensure that the correct chat renders if dual streaming Twitch, make sure that Twitch is the primary platform
     if (
       this.userService.state.auth?.primaryPlatform !== 'twitch' &&
-      this.views.isTwitchDualStreaming
+      this.views.isTwitchDualStreaming &&
+      !this.views.shouldSetupRestream
     ) {
       this.userService.setPrimaryPlatform('twitch');
     }
@@ -598,6 +599,23 @@ export class StreamingService
       }
     }
 
+    // Setup restream context if enhanced broadcasting is enabled for Twitch
+    if (this.state.enhancedBroadcasting) {
+      try {
+        // await this.setupRestreamContext(); TODO
+      } catch (e: unknown) {
+        console.error('Error setting up restream context for enhanced broadcasting:', e);
+
+        const error = this.handleTypedStreamError(
+          e,
+          'RESTREAM_ENHANCED_BROADCASTING_FAILED',
+          'Failed to setup restream for enhanced broadcasting',
+        );
+        this.setError(error);
+        return;
+      }
+    }
+
     // apply optimized settings
     const optimizer = this.videoEncodingOptimizationService;
     if (optimizer.state.useOptimizedProfile && settings.optimizedProfile) {
@@ -666,12 +684,8 @@ export class StreamingService
       // between streams in order to restore the user's preferences for when they go live with
       // Twitch dual stream, which requires enhanced broadcasting to be enabled. The setting
       // in osn is what actually determines if the stream will use enhanced broadcasting.
-      if (platform === 'twitch') {
-        const isEnhancedBroadcasting =
-          (settings.platforms.twitch && settings.platforms.twitch.isEnhancedBroadcasting) ||
-          this.views.getIsEnhancedBroadcasting();
-
-        this.SET_ENHANCED_BROADCASTING(isEnhancedBroadcasting);
+      if (platform === 'twitch' && this.views.getIsEnhancedBroadcasting()) {
+        this.SET_ENHANCED_BROADCASTING(true);
       }
 
       // don't update settings for twitch in unattendedMode
@@ -1096,9 +1110,11 @@ export class StreamingService
       // Twitch dual stream's vertical display is handled by the backend
       // so when Twitch is the only target for dual stream, only start the
       // horizontal stream
-      if (this.views.isTwitchDualStreaming) {
+      if (this.views.isTwitchDualStreaming && !this.views.shouldSetupRestream) {
         console.log('Start Twitch Dual Stream');
-        NodeObs.OBS_service_startStreaming('both');
+        NodeObs.OBS_service_startStreaming('horizontal');
+      } else if (this.state.enhancedBroadcasting && this.views.shouldSetupRestream) {
+        // TODO
       } else {
         NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
         NodeObs.OBS_service_setVideoInfo(verticalContext, 'vertical');
@@ -1129,6 +1145,18 @@ export class StreamingService
       NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
 
       NodeObs.OBS_service_startStreaming();
+    }
+
+    // When multistreaming Twitch enhanced broadcasting, use the new API to start a designated stream
+    if (this.state.enhancedBroadcasting) {
+      // The broadcast stream context should have been created during the go live checklist
+      // but as a failsafe, check again here and create if missing
+      if (!this.contexts.restream.streaming) {
+        // @@@ TODO: await this.setupRestreamContext(true ); // START
+      } else {
+        console.log('STARTING this.contexts.restream.streaming', this.contexts.restream.streaming);
+        this.contexts.restream.streaming.start();
+      }
     }
 
     const recordWhenStreaming = this.streamSettingsService.settings.recordWhenStreaming;
@@ -1252,6 +1280,11 @@ export class StreamingService
         NodeObs.OBS_service_stopStreaming(false);
       }
 
+      // TODO: @@@
+      if (this.contexts.restream.streaming) {
+        this.contexts.restream.streaming.stop();
+      }
+
       const keepRecording = this.streamSettingsService.settings.keepRecordingWhenStreamStops;
       if (!keepRecording && this.state.recordingStatus === ERecordingState.Recording) {
         this.toggleRecording();
@@ -1268,10 +1301,7 @@ export class StreamingService
         if (service.afterStopStream) service.afterStopStream();
       });
 
-      if (this.views.isStreamShiftMode) {
-        this.restreamService.resetStreamShift();
-      }
-
+      this.restreamService.resetStreamShift();
       // Reset enhanced broadcasting after streaming stops to prevent it from being accidentally enabled for the next stream
       if (this.state.enhancedBroadcasting) {
         this.SET_ENHANCED_BROADCASTING(false);
