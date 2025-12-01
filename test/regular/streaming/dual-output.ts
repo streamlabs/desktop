@@ -337,34 +337,31 @@ test(
     await clickGoLive();
     await focusChild();
     await waitForSettingsWindowLoaded();
+    await fillForm({
+      trovo: true,
+      trovoDisplay: 'horizontal',
+    });
+    await waitForDisplayed('div[data-name="trovo-settings"]');
     await submit();
 
     // Cannot go live in dual output mode with all targets assigned to one display
     await waitForDisplayed('div.ant-message-notice-content', {
-      timeout: 5000,
+      timeout: 10000,
     });
     await click('div.ant-message-notice-content');
 
     // Dual output with one platform for each display
     await focusChild();
     await fillForm({
-      trovo: true,
       trovoDisplay: 'vertical',
     });
 
-    await waitForDisplayed('div[data-name="trovo-settings"]');
-    await fillForm({
-      title: 'Test stream',
-      trovoGame: 'Fortnite',
-    });
-
     // TODO: fix go live errors from dummy accounts
-    // await submit();
-    // await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
-    // await waitForStreamStart();
-    // await sleep(2000);
-    // await stopStream();
-    // await waitForStreamStop();
+    await submit();
+    await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
+    await waitForStreamStart();
+    await stopStream();
+    await waitForStreamStop();
 
     // await clickGoLive();
     // await focusChild();
