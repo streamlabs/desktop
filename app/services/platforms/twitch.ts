@@ -367,7 +367,7 @@ export class TwitchService
       game: channelInfo.game,
       isBrandedContent: channelInfo.is_branded_content,
       isEnhancedBroadcasting:
-        this.state.settings.isEnhancedBroadcasting ?? this.settingsService.isEnhancedBroadcasting(),
+        this.state.settings.isEnhancedBroadcasting || this.settingsService.isEnhancedBroadcasting(),
       contentClassificationLabels: channelInfo.content_classification_labels,
     });
 

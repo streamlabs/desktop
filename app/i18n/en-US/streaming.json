@@ -145,6 +145,8 @@
   "Failed to update platform settings": "Failed to update platform settings",
   "The Multistream server is temporarily unavailable": "The Multistream server is temporarily unavailable",
   "Failed to configure the Multistream server": "Failed to configure the Multistream server",
+  "Failed to configure the Multistream server for Enhanced Broadcasting": "Failed to configure the Multistream server for Enhanced Broadcasting",
+  "disable Enhanced Broadcasting for Twitch and try again": "disable Enhanced Broadcasting for Twitch and try again",
   "Failed to configure the Dual Output service": "Failed to configure the Dual Output service",
   "The Multistream server is temporarily unavailable for Dual Output": "The Multistream server is temporarily unavailable for Dual Output",
   "Your YouTube account is not enabled for live streaming": "Your YouTube account is not enabled for live streaming",
@@ -322,6 +324,5 @@
   "Cannot toggle dual output in Studio Mode.": "Cannot toggle dual output in Studio Mode.",
   "Dual Output will be disabled since not supported in this mode.": "Dual Output will be disabled since not supported in this mode.",
   "Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays in Twitch": "Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays in Twitch",
-  "Disable Twitch dual stream to add another platform": "Disable Twitch dual stream to add another platform",
   "Dual streaming to Twitch only available with Twitch as the only platform": "Dual streaming to Twitch only available with Twitch as the only platform"
 }
