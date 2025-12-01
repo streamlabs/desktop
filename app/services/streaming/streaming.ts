@@ -2567,6 +2567,23 @@ export class StreamingService
   }
 
   /**
+   * Shut down the streaming service
+   *
+   * @remark Each streaming/recording/replay buffer context must be destroyed
+   * on app shutdown to prevent errors.
+   */
+  async shutdown() {
+    return new Promise<void>(async resolve => {
+      Object.keys(this.contexts).forEach(display => {
+        Object.keys(this.contexts[display]).forEach(async (contextType: keyof IOutputContext) => {
+          this.destroyOutputContextIfExists(display, contextType);
+        });
+      });
+      resolve();
+    });
+  }
+
+  /**
    * Destroy all factory API instances
    * @remark Primarily used for cleanup.
    */
