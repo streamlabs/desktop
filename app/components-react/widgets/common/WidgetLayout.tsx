@@ -131,6 +131,7 @@ function ModalFooter() {
 
 function ModalDisplay() {
   const { previewSourceId, isLoading } = useWidget();
+  console.log({ previewSourceId, isLoading });
   return (
     <div style={{ height: `${PREVIEW_HEIGHT}px`, backgroundColor: 'var(--section)' }}>
       {!isLoading && <Display sourceId={previewSourceId} />}

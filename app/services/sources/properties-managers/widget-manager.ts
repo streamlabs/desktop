@@ -27,6 +27,7 @@ export class WidgetManager extends PropertiesManager {
 
   applySettings(settings: Dictionary<any>) {
     settings.widgetType = parseInt(settings.widgetType, 10);
+    console.log("Applying widget manager settings", { settings });
     super.applySettings(settings);
     this.setWidgetType(this.settings.widgetType);
   }

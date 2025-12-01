@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  CheckboxInput,
   MediaUrlInput,
   NumberInput,
   SliderInput,
@@ -13,7 +12,7 @@ import {
   FontSizeInput,
   ListInput,
 } from 'components-react/shared/inputs';
-import { Alert, Button, Collapse, Menu, Tooltip, Row, Col } from 'antd';
+import { Collapse } from 'antd';
 import { $t } from 'services/i18n';
 import { LayoutInput } from '../common/LayoutInput';
 import css from './ReactiveWidgetTriggerDetails.m.less';
@@ -27,7 +26,7 @@ interface ReactiveWidgetTriggerDetailsProps {
 function flattenAnimationOptions(options: any[]): any[] {
   const flattened: any[] = [];
   const optionsArray = Array.isArray(options) ? options : [options];
-  optionsArray.forEach((opt) => {
+  optionsArray.forEach(opt => {
     if (opt.list && Array.isArray(opt.list)) {
       opt.list.forEach((subOpt: any) => {
         flattened.push({
@@ -50,7 +49,6 @@ export function ReactiveWidgetTriggerDetails({
   onUpdate,
   staticConfig,
 }: ReactiveWidgetTriggerDetailsProps) {
-  console.log({ trigger });
   const isStreakTrigger = trigger?.type === 'streak';
   const streakOptions = Object.entries(
     staticConfig?.data?.options?.streak_time_periods ?? {},
@@ -59,7 +57,11 @@ export function ReactiveWidgetTriggerDetails({
   const showAnimationOptions = flattenAnimationOptions(animationOptions.show_animations);
   const hideAnimationOptions = flattenAnimationOptions(animationOptions.hide_animations);
   const textAnimationOptions = flattenAnimationOptions(animationOptions.text_animations);
-  const messageTemplateTooltip = $t(`When a trigger fires, this will be the format of the message. Available tokens: number`);
+
+  const messageTemplateTooltip = $t(
+    'When a trigger fires, this will be the format of the message. Available tokens: number',
+  );
+
   const bind = React.useCallback(
     (path: string) => {
       const segments = path.split('.');
@@ -90,16 +92,27 @@ export function ReactiveWidgetTriggerDetails({
     },
     [trigger, onUpdate],
   );
+
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <h3 style={{ marginBottom: '0', fontSize: '16px', lineHeight: '100%' }}>
+      {/* Header + Enabled toggle */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '16px',
+        }}
+      >
+        <h3 style={{ marginBottom: 0, fontSize: '16px', lineHeight: '100%' }}>
           {$t('Trigger Details')}
         </h3>
         <SwitchInput
           name={`toggle-${trigger.id}`}
           value={trigger.enabled}
-          onChange={value => onUpdate && onUpdate({ ...trigger, enabled: value as boolean })}
+          onChange={value =>
+            onUpdate && onUpdate({ ...trigger, enabled: value as boolean })
+          }
           label={trigger.enabled ? $t('Enabled') : $t('Disabled')}
           labelAlign="left"
           layout="horizontal"
@@ -114,10 +127,14 @@ export function ReactiveWidgetTriggerDetails({
           }}
         />
       </div>
+
+      {/* Basic fields */}
       <TextInput label={$t('Name')} {...bind('name')} />
+
       {isStreakTrigger && (
         <>
-          <NumberInput label={$t('Amount Minimum')} {...bind('amount_min')} />
+          {/* note: using amount_minimum to match your JSON */}
+          <NumberInput label={$t('Amount Minimum')} {...bind('amount_minimum')} />
           <ListInput
             label={$t('Streak Time Period')}
             {...bind('streak_period')}
@@ -125,30 +142,71 @@ export function ReactiveWidgetTriggerDetails({
           />
         </>
       )}
+
       <h3 style={{ marginBottom: '16px', fontSize: '16px', lineHeight: '100%' }}>
         {$t('Action Settings')}
       </h3>
+
+      {/* Media / Layout / Sound */}
       <MediaUrlInput label={$t('Media')} {...bind('media_settings.image_href')} />
       {/* TODO$chris: if enabling custom code in the future, check here */}
       <LayoutInput label={$t('Layout')} {...bind('layout')} />
       <AudioUrlInput label={$t('Sound')} {...bind('media_settings.sound_href')} />
-      <SliderInput label={$t('Sound Volume')} debounce={500} {...bind('media_settings.sound_volume')} />
-      <TextInput label={$t('Message Template')} tooltip={messageTemplateTooltip} {...bind('message_template')} />
-      <SliderInput label={$t('Duration')} min={2000} max={30000} step={1} debounce={500} {...bind('alert_duration_ms')} />
+      <SliderInput
+        label={$t('Sound Volume')}
+        debounce={500}
+        {...bind('media_settings.sound_volume')}
+      />
+      <TextInput
+        label={$t('Message Template')}
+        tooltip={messageTemplateTooltip}
+        {...bind('text_settings.message_template')}
+      />
+      <SliderInput
+        label={$t('Duration')}
+        min={2000}
+        max={30000}
+        step={1}
+        debounce={500}
+        {...bind('alert_duration_ms')}
+      />
+
+      {/* Font Settings */}
       <Collapse bordered={false}>
         <Collapse.Panel header={$t('Font Settings')} key={1}>
           <FontFamilyInput label={$t('Font Family')} {...bind('text_settings.font')} />
           <FontSizeInput label={$t('Font Size')} {...bind('text_settings.font_size')} />
           <FontWeightInput label={$t('Font Weight')} {...bind('text_settings.font_weight')} />
           <ColorInput label={$t('Text Color')} {...bind('text_settings.font_color')} />
-          <ColorInput label={$t('Text Highlight Color')} {...bind('text_settings.font_color2')} />
+          <ColorInput
+            label={$t('Text Highlight Color')}
+            {...bind('text_settings.font_color2')}
+          />
         </Collapse.Panel>
       </Collapse>
+
+      {/* Animation Settings */}
       <Collapse bordered={false}>
         <Collapse.Panel header={$t('Animation Settings')} key={2}>
-          <div style={{ display: 'flex', width: '100%', alignItems: 'center', gap: '12px', marginBottom: '24px'  }}>
-            <span className={'ant-col ant-col-8 ant-form-item-label'} style={{ marginRight: '-12px', paddingRight: '10px' }}>{$t('Animation')}</span>
-            <div className={css.selectInputGroup} style={{ display: 'flex', gap: '12px', width: '100%'}}>
+          <div
+            style={{
+              display: 'flex',
+              width: '100%',
+              alignItems: 'center',
+              gap: '12px',
+              marginBottom: '24px',
+            }}
+          >
+            <span
+              className="ant-col ant-col-8 ant-form-item-label"
+              style={{ marginRight: '-12px', paddingRight: '10px' }}
+            >
+              {$t('Animation')}
+            </span>
+            <div
+              className={css.selectInputGroup}
+              style={{ display: 'flex', gap: '12px', width: '100%' }}
+            >
               <ListInput
                 {...bind('media_settings.show_animation')}
                 options={showAnimationOptions}
@@ -164,7 +222,11 @@ export function ReactiveWidgetTriggerDetails({
             {...bind('text_settings.text_animation')}
             options={textAnimationOptions}
           />
-          <SliderInput label={$t('Text Delay')} max={60000} {...bind('text_settings.text_delay_ms')} />
+          <SliderInput
+            label={$t('Text Delay')}
+            max={60000}
+            {...bind('text_settings.text_delay_ms')}
+          />
         </Collapse.Panel>
       </Collapse>
     </div>

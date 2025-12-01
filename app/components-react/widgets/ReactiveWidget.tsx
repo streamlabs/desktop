@@ -6,7 +6,9 @@ import { ReactiveWidgetCreateTriggerForm } from './reactive-widget/ReactiveWidge
 import { ReactiveWidgetGameSettings } from './reactive-widget/ReactiveWidgetGameSettings';
 import { ReactiveWidgetTriggerDetails } from './reactive-widget/ReactiveWidgetTriggerDetails';
 import css from './reactive-widget/ReactiveWidget.m.less';
+import { useForceUpdate } from 'slap';
 
+// TODO$chris: rename to make it clear its for creating a new trigger
 function onSubmit(values: any) {
   console.log('TODO: Submitting new trigger:', values);
 }
@@ -32,7 +34,7 @@ const AddTriggerTab: React.FC = () => {
 };
 
 const GameSettingsTab: React.FC = () => {
-  const { data, games: gamesMeta } = useReactiveWidget();
+  const { data, games: gamesMeta, updateSettings } = useReactiveWidget();
   const games = Object.entries((data as any)?.settings?.games || {}).map(([gameId, gameData]) => {
     return {
       id: gameId,
@@ -49,6 +51,22 @@ const GameSettingsTab: React.FC = () => {
   function onToggleGame(gameId: string, enabled: boolean) {
     // TODO$chris
     console.log('TODO: Toggle game:', gameId, enabled);
+    const newSettings = { ...(data as any)?.settings || {} };
+    if (gameId === 'global') {
+      newSettings.global = {
+        ...newSettings.global,
+        enabled,
+      };
+    } else {
+      newSettings.games = {
+        ...newSettings.games,
+        [gameId]: {
+          ...newSettings.games?.[gameId],
+          enabled,
+        },
+      };
+    }
+    updateSettings(newSettings);
   }
   return (
     <div>
@@ -59,34 +77,78 @@ const GameSettingsTab: React.FC = () => {
 };
 
 const ManageTriggersTab: React.FC = () => {
-  const { selectedTab, data, games: gamesMeta } = useReactiveWidget();
+  const { selectedTab, data, games: gamesMeta, updateSettings } = useReactiveWidget();
   const selectedGame = selectedTab.split('-manage-trigger')[0];
-  console.log({ selectedTab, selectedGame, data, gamesMeta });
+
   function onToggleGame(gameId: string, enabled: boolean) {
-    // TODO$chris
-    console.log('TODO: Toggle game:', gameId, enabled);
+    const newSettings = { ...(data as any)?.settings || {} };
+    if (selectedGame === 'global') {
+      newSettings.global = {
+        ...newSettings.global,
+        triggers: (newSettings.global?.triggers || []).map((trigger: any) => ({
+          ...trigger,
+          enabled: gameId === trigger.id ? enabled : trigger.enabled,
+        })),
+      };
+    } else {
+      newSettings.games = {
+        ...newSettings.games,
+        [selectedGame]: {
+          ...newSettings.games?.[selectedGame],
+          triggers: (newSettings.games?.[selectedGame]?.triggers || []).map((trigger: any) => ({
+            ...trigger,
+            enabled: gameId === trigger.id ? enabled : trigger.enabled,
+          })),
+        },
+      };
+    }
+    updateSettings(newSettings);
   }
 
   const options = selectedGame === 'global' ? (data as any)?.settings?.global?.triggers : (data as any)?.settings?.games?.[selectedGame]?.triggers;
   return <ReactiveWidgetGameSettings options={options} onToggleGame={onToggleGame} />;
 };
 
-const TriggerDetails: React.FC = () => {
-  const { selectedTab, data, staticConfig } = useReactiveWidget();
-  console.log({ staticConfig })
-  const selectedGame = selectedTab.split('-trigger-')[0];
-  const selectedTriggerId = selectedTab.split('-trigger-')[1];
-  function onUpdate(payload: any) {
-    // TODO$chris
-    console.log('TODO: Update trigger:', payload);
+const TriggerDetailsTab: React.FC = () => {
+  const {
+    selectedTab,
+    staticConfig,
+    createTriggerBinding,
+    widgetData,
+    widgetState,
+  } = useReactiveWidget();
+  const forceUpdate = useForceUpdate();
+
+  const [selectedGame, selectedTriggerId] = React.useMemo(() => {
+    const [game, triggerId] = selectedTab.split('-trigger-');
+    return [game, triggerId];
+  }, [selectedTab]);
+
+  const binding = React.useMemo(() => {
+    if (!selectedGame || !selectedTriggerId || !createTriggerBinding) return null;
+    return createTriggerBinding(selectedGame, selectedTriggerId, forceUpdate);
+  }, [createTriggerBinding, selectedGame, selectedTriggerId, forceUpdate]);
+
+  const trigger = binding?.trigger;
+
+  if (!trigger) {
+    return null;
   }
-  const trigger = selectedGame === 'global'
-    ? (data as any)?.settings?.global?.triggers?.find((t: any) => t.id === selectedTriggerId)
-    : (data as any)?.settings?.games?.[selectedGame]?.triggers?.find((t: any) => t.id === selectedTriggerId);
+
+  function handleUpdate(updatedTrigger: any) {
+    binding?.updateTrigger(updatedTrigger);
+  }
+
   return (
-    <ReactiveWidgetTriggerDetails trigger={trigger} onUpdate={onUpdate} staticConfig={staticConfig} />
+    <ReactiveWidgetTriggerDetails
+      key={trigger.id}
+      trigger={trigger}
+      onUpdate={handleUpdate}
+      staticConfig={staticConfig}
+    />
   );
 };
+
 
 type TabKind = 'add-trigger' | 'general' | 'game-manage-trigger' | 'trigger-detail';
 
@@ -94,7 +156,7 @@ const TAB_COMPONENTS: Record<TabKind, React.FC> = {
   'add-trigger': AddTriggerTab,
   general: GameSettingsTab,
   'game-manage-trigger': ManageTriggersTab,
-  'trigger-detail': TriggerDetails,
+  'trigger-detail': TriggerDetailsTab,
 };
 
 function getTabKind(selectedTab: string): TabKind {
@@ -117,6 +179,8 @@ export function ReactiveWidget() {
     playReactiveAlert,
     triggerGroups,
     games,
+    data,
+    updateSettings,
   } = useReactiveWidget();
 
   const tabKind = getTabKind(selectedTab);
@@ -128,6 +192,40 @@ export function ReactiveWidget() {
   };
 
   const showDisplay = tabKind !== 'general' && tabKind !== 'game-manage-trigger';
+  function onPlayAlert(trigger: any) {
+    // if active tab is not the trigger detail, switch to it first
+    if (tabKind !== 'trigger-detail') {
+      const gameKey = trigger.game || 'global';
+      setSelectedTab(`${gameKey}-trigger-${trigger.id}`);
+    }
+    playReactiveAlert(trigger);
+  }
+
+  function toggleTrigger(group: any, triggerId: string, enabled: boolean) {
+    console.log('TODO: toggle trigger', group, triggerId, enabled);
+    const newSettings = { ...(data as any)?.settings || {} };
+    if (group === 'global') {
+      newSettings.global = {
+        ...newSettings.global,
+        triggers: (newSettings.global?.triggers || []).map((trigger: any) => ({
+          ...trigger,
+          enabled: trigger.id === triggerId ? enabled : trigger.enabled,
+        })),
+      };
+    } else {
+      newSettings.games = {
+        ...newSettings.games,
+        [group]: {
+          ...newSettings.games?.[group],
+          triggers: (newSettings.games?.[group]?.triggers || []).map((trigger: any) => ({
+            ...trigger,
+            enabled: trigger.id === triggerId ? enabled : trigger.enabled,
+          })),
+        },
+      };
+    }
+    updateSettings(newSettings);
+  }
 
   return (
     <div className={css.reactiveWidget}>
@@ -137,7 +235,8 @@ export function ReactiveWidget() {
           keyMap={keyMap}
           activeKey={selectedTab}
           onChange={key => setSelectedTab(key)}
-          playAlert={trigger => playReactiveAlert(trigger)}
+          playAlert={trigger => onPlayAlert(trigger)}
+          toggleTrigger={toggleTrigger}
         />
         <ActiveTab />
       </WidgetLayout>

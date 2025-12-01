@@ -62,6 +62,7 @@ export abstract class WidgetSettingsService<TWidgetData extends IWidgetData>
 
   subToWebsocket() {
     this.websocketService.socketEvent.subscribe(event => {
+      console.log("Received websocket event in WidgetSettingsService:", event);
       const apiSettings = this.getApiSettings();
       if (event.type === 'alertProfileChanged') this.onWidgetThemeChange();
       if (event.type !== apiSettings.settingsUpdateEvent) return;
@@ -70,6 +71,7 @@ export abstract class WidgetSettingsService<TWidgetData extends IWidgetData>
   }
 
   private onSettingsUpdatedHandler(event: ISocketEvent) {
+    console.log("Handling settings update event in WidgetSettingsService:", event);
     if (!this.state.data) return;
     const rawData = cloneDeep(this.state.rawData);
     rawData.settings = event.message;

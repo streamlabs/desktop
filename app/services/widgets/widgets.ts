@@ -94,10 +94,12 @@ export class WidgetsService
 
     this.sourcesService.sourceAdded.subscribe(sourceModel => {
       this.register(sourceModel.sourceId);
+      console.log('Source added', sourceModel);
     });
 
     this.sourcesService.sourceUpdated.subscribe(sourceModel => {
       // sync widgets when propertiesManagerType has been changed
+      console.log('Source updated', sourceModel);
       if (
         sourceModel.propertiesManagerType === 'widget' &&
         !this.state.widgetSources[sourceModel.sourceId]
@@ -114,6 +116,7 @@ export class WidgetsService
     this.sourcesService.sourceRemoved.subscribe(sourceModel => {
       if (!this.state.widgetSources[sourceModel.sourceId]) return;
       this.unregister(sourceModel.sourceId);
+      console.log('Source removed', sourceModel);
     });
   }
 
@@ -190,7 +193,7 @@ export class WidgetsService
         display: 'horizontal',
       },
     );
-
+    console.log('Created widget', { type, name: suggestedName, item });
     return item;
   }
 
@@ -206,6 +209,7 @@ export class WidgetsService
   getWidgetSettingsService(type: WidgetType): any {
     const servicesManager: ServicesManager = ServicesManager.instance;
     const serviceName = `${this.getWidgetComponent(type)}Service`;
+    console.log('Getting widget settings service', serviceName);
     return servicesManager.getResource(serviceName);
   }
 
@@ -237,14 +241,18 @@ export class WidgetsService
   playReactiveAlert(trigger: any) {
     const host = this.hostsService.streamlabs;
     const headers = authorizedHeaders(this.userService.apiToken);
+    headers.append('accept', 'application/json');
 
-    return fetch(
-      new Request(`https://${host}/api/v5/widgets/game-pulse/preview-trigger`, {
-        headers,
-        method: 'POST',
-        body: JSON.stringify(trigger),
-      }),
-    );
+    const request = new Request(`https://${host}/api/v5/widgets/game-pulse/preview-trigger`, {
+      headers,
+      method: 'POST',
+      body: JSON.stringify(trigger),
+    });
+    return fetch(request)
+      .then(res => {
+        return Promise.resolve(res);
+      })
+      .then(handleResponse);
   }
 
   private previewSourceWatchers: Dictionary<Subscription> = {};
@@ -272,6 +280,7 @@ export class WidgetsService
         const previewSource = widget.getPreviewSource();
         previewSource.updateSettings(newPreviewSettings);
         previewSource.refresh();
+        console.log("synced preview source", { previewSourceId, newPreviewSettings })
       },
     );
   }
@@ -336,7 +345,9 @@ export class WidgetsService
     const source = this.sourcesService.views.getSource(sourceId);
     if (source.getPropertiesManagerType() !== 'widget') return;
     const widgetType = source.getPropertiesManagerSettings().widgetType;
-
+    if (source.name === 'Reactive Widget') {
+      console.log('register', { source });
+    }
     this.ADD_WIDGET_SOURCE({
       sourceId: source.sourceId,
       type: widgetType,
@@ -491,6 +502,7 @@ export class WidgetsService
     if (this.incrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.newChatBox)) {
       widgetsWithNewAPI.push(WidgetType.ChatBox);
     }
+    widgetsWithNewAPI.push(WidgetType.ReactiveWidget);
 
     return getWidgetsConfig(
       this.hostsService.streamlabs,

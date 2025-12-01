@@ -19,6 +19,7 @@ export class WidgetSource implements IWidgetSource {
   constructor(sourceId: string) {
     this.state = this.widgetsService.state.widgetSources[sourceId];
     Utils.applyProxy(this, this.state);
+    console.log('WidgetSource created', this.type, this.state);
   }
 
   private isDestroyed() {
@@ -67,6 +68,11 @@ export class WidgetSource implements IWidgetSource {
     this.SET_PREVIEW_SOURCE_ID(previewSource.sourceId);
 
     this.widgetsService.syncPreviewSource(this.sourceId, this.previewSourceId);
+
+    console.log('Created preview source for widget', {
+      previewSourceSettings,
+      source,
+    })
     return previewSource;
   }
 

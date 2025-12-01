@@ -364,6 +364,7 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
         url: this.config.settingsSaveUrl,
       });
     } catch (e: unknown) {
+      console.log(e);
       await alertAsync({
         title: $t('Something went wrong while applying settings'),
         style: { marginTop: '300px' },

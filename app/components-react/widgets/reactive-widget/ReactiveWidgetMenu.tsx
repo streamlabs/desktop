@@ -16,8 +16,9 @@ export function ReactiveWidgetMenu(props: {
   activeKey: any;
   onChange: (key: string) => void;
   playAlert: (type: any) => void;
+  toggleTrigger: (group: any, triggerId: string, enabled: boolean) => void;
 }) {
-  const { menuItems, activeKey, keyMap, onChange, playAlert } = props;
+  const { menuItems, activeKey, keyMap, onChange, playAlert, toggleTrigger } = props;
 
   return (
     <Menu
@@ -41,7 +42,7 @@ export function ReactiveWidgetMenu(props: {
           {(group as any).triggers?.map((trigger: any, index: number) => (
             // TODO$chris: consider just using trigger.id
             <Menu.Item key={`${groupKey}-trigger-${trigger.id}`} style={{ height: '45px', lineHeight: '45px' }}>
-              <CheckboxInput value={trigger.enabled} style={{ display: 'inline-block' }} />
+              <CheckboxInput value={trigger.enabled} onChange={enabled => toggleTrigger(groupKey, trigger.id, enabled)} style={{ display: 'inline-block' }} />
               {trigger.name || `Trigger ${index + 1}`}
               {/* TODO$chris: add delete trigger button */}
               <Tooltip title={$t('Play Alert')} placement="left" mouseLeaveDelay={0}>

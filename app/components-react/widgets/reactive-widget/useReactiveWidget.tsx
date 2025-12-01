@@ -1,5 +1,6 @@
-
 import { IWidgetCommonState, useWidget, WidgetModule } from '../common/useWidget';
+import { injectFormBinding } from 'slap';
+import cloneDeep from 'lodash/cloneDeep';
 
 interface IReactiveWidgetState extends IWidgetCommonState {
   data: { settings: {} }; // TODO$chris: define settings structure
@@ -70,21 +71,76 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
   protected patchBeforeSend(settings: any) {
     return settings;
   }
-  protected patchAfterFetch(data: any) {
-    return data;
+
+  /**
+   * normalizes the API response so WidgetModule sees `{ settings: ... }`.
+   * raw is something like: { success, message, data: { ..., settings }, settings? }
+   */
+  protected patchAfterFetch(raw: any) {
+    const settings = raw.settings ?? raw.data?.settings ?? {};
+    return { settings };
+  }
+
+  private findTrigger(groupId: string, triggerId: string) {
+    const s = this.settings as any;
+    if (!s) return null;
+
+    const group =
+      groupId === 'global'
+        ? s.global
+        : s.games?.[groupId];
+
+    if (!group) return null;
+
+    return (group.triggers || []).find((t: any) => t.id === triggerId) || null;
+  }
+
+  createTriggerBinding(
+    groupId: string,
+    triggerId: string,
+    forceUpdate: () => unknown,
+  ) {
+    const module = this;
+
+    return {
+      get trigger(): IReactiveWidgetTrigger | null {
+        return module.findTrigger(groupId, triggerId) as IReactiveWidgetTrigger | null;
+      },
+
+      updateTrigger(updated: IReactiveWidgetTrigger) {
+        const s = cloneDeep(module.settings) as any;
+        const defaultGroup = { enabled: true, triggers: [] }; 
+        const group =
+          groupId === 'global'
+            ? (s.global = s.global || defaultGroup)
+            : (s.games[groupId] =
+                s.games?.[groupId] || defaultGroup);
+
+        group.triggers = (group.triggers || []).map((t: any) =>
+          t.id === updated.id ? updated : t,
+        );
+
+        module.updateSettings(s);
+
+        forceUpdate();
+      },
+    };
   }
 
   get data(): any {
-    return (this.widgetData as any).data;
+    return this.widgetData as any;
+  }
+
+  get settingsObject() {
+    return this.settings as any;
   }
 
   get triggerGroups() {
-    if (!this.data?.settings) return {};
-    const global = this.data?.settings?.global;
-    const games = Object.entries(this.data?.settings?.games).reduce((acc, [key, value]) => {
-      if (value) {
-        acc[key] = value;
-      }
+    const s = this.settingsObject;
+    if (!s) return {};
+    const global = s.global;
+    const games = Object.entries(s.games ?? {}).reduce((acc, [key, value]) => {
+      if (value) acc[key] = value;
       return acc;
     }, {} as Record<string, any>);
     return { global, ...games };
@@ -95,13 +151,11 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     return Object.entries(this.data?.settings?.games ?? {}).map(
       ([gameId, gameData]) => ({
         gameId,
-        ...(
-          gameData ?? {
-            enabled: false,
-            triggers: [],
-          }
-        ),
-      })
+        ...(gameData ?? {
+          enabled: false,
+          triggers: [],
+        }),
+      }),
     );
   }
 
@@ -117,7 +171,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     return (this.state?.staticConfig as any)?.data?.options?.game_events || {};
   }
 
-  get globalEvents(): {[key: string]: string} {
+  get globalEvents(): { [key: string]: string } {
     return (this.state?.staticConfig as any)?.data?.options?.global_events || {};
   }
 
@@ -125,48 +179,15 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     return (this.state?.staticConfig as any)?.data?.options?.streak_time_periods || {};
   }
 
-  enableTrigger(triggerId: string) {
-    // TODO$chris
-    if (triggerId === 'global') {
-
-    } else {
-
-    }
-  }
-
-  disableTrigger(triggerId: string) {
-    // TODO$chris
-    if (triggerId === 'global') {
-
-    } else {
-      
-    }
-  }
-
-  enableAllTriggers(groupId: string) {
-    // TODO$chris
-    // e.g., groupId = 'global' or a game ID
-  }
-
-  disableAllTriggers(groupId: string) {
-    // TODO$chris
-  }
-
-  deleteTrigger(triggerId: string) {
-    // TODO$chris
-  }
-
-  previewTrigger(triggerId: string) {
-    // TODO$chris
-  }
-
-  toggleTrigger(triggerId: string) {
-    // TODO$chris
-  }
-
-  createTrigger(groupId: string, triggerData: Partial<IReactiveWidgetTrigger>) {
-    // TODO$chris
-  }
+  // TODO$chris: extra helpers to implement later
+  enableTrigger(triggerId: string) {}
+  disableTrigger(triggerId: string) {}
+  enableAllTriggers(groupId: string) {}
+  disableAllTriggers(groupId: string) {}
+  deleteTrigger(triggerId: string) {}
+  previewTrigger(triggerId: string) {}
+  toggleTrigger(triggerId: string) {}
+  createTrigger(groupId: string, triggerData: Partial<IReactiveWidgetTrigger>) {}
 }
 
 export function useReactiveWidget() {
