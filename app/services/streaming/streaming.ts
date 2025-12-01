@@ -411,6 +411,9 @@ export class StreamingService
 
     for (const platform of platforms) {
       await this.setPlatformSettings(platform, settings, unattendedMode);
+
+      // Handle rendering a prompt for enabling permissions to generate a stream key for Kick
+      if (this.state.info.error?.type === 'KICK_STREAM_KEY_MISSING') return;
     }
 
     /**
@@ -587,6 +590,9 @@ export class StreamingService
           await this.restreamService.beforeGoLive();
         });
       } catch (e: unknown) {
+        // Handle rendering a prompt for enabling permissions to generate a stream key for Kick
+        if (this.state.info.error?.type === 'KICK_STREAM_KEY_MISSING') return;
+
         const errorType = this.handleTypedStreamError(e, failureType, 'Failed to setup restream');
         throwStreamError(errorType);
       }
@@ -1401,7 +1407,7 @@ export class StreamingService
   private async createStreaming(display: TDisplayType, index: number, start?: boolean) {
     const mode = this.outputSettingsService.getSettings().mode;
 
-    const settings = this.outputSettingsService.getStreamingSettings();
+    const settings = this.outputSettingsService.getFactoryAPIStreamingSettings();
 
     const stream =
       mode === 'Advanced'
@@ -2092,7 +2098,7 @@ export class StreamingService
     }
   }
 
-  private handleOBSOutputSignal(info: IOBSOutputSignalInfo) {
+  private handleOBSOutputSignal(info: IOBSOutputSignalInfo, platform?: string) {
     console.debug('OBS Output signal: ', info);
     console.log('info', JSON.stringify(info, null, 2));
 
@@ -2305,7 +2311,7 @@ export class StreamingService
     this.streamErrorCreated.next(errorText);
   }
 
-  private handleOBSOutputError(info: IOBSOutputSignalInfo) {
+  private handleOBSOutputError(info: IOBSOutputSignalInfo, platform?: string) {
     if (!info.code) return;
     if ((info.code as EOutputCode) === EOutputCode.Success) return;
     console.debug('OBS Output Error signal: ', info);
@@ -2412,6 +2418,10 @@ export class StreamingService
 
         showNativeErrorMessage = details !== '';
       }
+    }
+
+    if (platform) {
+      errorText = [errorText, `Platform: ${platformLabels(platform)}`].join(' ');
     }
 
     // Add display information for dual output mode

@@ -241,7 +241,10 @@ export class TwitchService
         key = key.split('?')[0] + `?bandwidthtest=true&rnd=${Math.random()}`;
       }
       this.SET_STREAM_KEY(key);
-      if (!this.streamingService.views.isMultiplatformMode) {
+      if (
+        !this.streamingService.views.isMultiplatformMode ||
+        this.streamingService.views.isEnhancedBroadcastingMultistream()
+      ) {
         this.streamSettingsService.setSettings(
           {
             key,
