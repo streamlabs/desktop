@@ -272,10 +272,10 @@ test(
     await submit();
 
     // Cannot go live in dual output mode with only one target linked
-    await waitForDisplayed('div.ant-message-notice-content', {
+    await waitForDisplayed('div.ant-message-error', {
       timeout: 5000,
     });
-    await click('div.ant-message-notice-content');
+    await click('div.ant-message-error');
 
     await closeWindow('child');
     const dummy = await addDummyAccount('instagram');
@@ -285,10 +285,10 @@ test(
     await submit();
 
     // Cannot go live in dual output mode with all targets assigned to one display
-    await waitForDisplayed('div.ant-message-notice-content', {
+    await waitForDisplayed('div.ant-message-error', {
       timeout: 5000,
     });
-    await click('div.ant-message-notice-content');
+    await click('div.ant-message-error');
 
     await fillForm({
       instagram: true,
@@ -345,10 +345,10 @@ test(
     await submit();
 
     // Cannot go live in dual output mode with all targets assigned to one display
-    await waitForDisplayed('div.ant-message-notice-content', {
+    await waitForDisplayed('div.ant-message-error', {
       timeout: 10000,
     });
-    await click('div.ant-message-notice-content');
+    await click('div.ant-message-error');
 
     // Dual output with one platform for each display
     await focusChild();
