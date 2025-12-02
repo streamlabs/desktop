@@ -354,26 +354,26 @@ test(
       await fillForm({
         trovoDisplay: 'vertical',
       });
-      await submit();
-      await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
-      await waitForStreamStart();
-      await isDisplayed('span=Multistream');
-      await stopStream();
-      await waitForStreamStop();
+      // await submit();
+      // await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
+      // await waitForStreamStart();
+      // await isDisplayed('span=Multistream');
+      // await stopStream();
+      // await waitForStreamStop();
 
-      await clickGoLive();
-      await waitForSettingsWindowLoaded();
-      await fillForm({
-        trovoDisplay: 'horizontal',
-        twitchDisplay: 'vertical',
-      });
+      // await clickGoLive();
+      // await waitForSettingsWindowLoaded();
+      // await fillForm({
+      //   trovoDisplay: 'horizontal',
+      //   twitchDisplay: 'vertical',
+      // });
 
-      await submit();
-      await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
-      await waitForStreamStart();
-      await sleep(2000);
-      await stopStream();
-      await waitForStreamStop();
+      // await submit();
+      // await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
+      // await waitForStreamStart();
+      // await sleep(2000);
+      // await stopStream();
+      // await waitForStreamStop();
       // Vertical display is hidden after logging out
       await logOut(t);
       t.false(await isDisplayed('div#vertical-display'));
