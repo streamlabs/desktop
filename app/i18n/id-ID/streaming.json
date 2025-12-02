@@ -321,6 +321,8 @@
   "Stream switcher cannot be used in dual output mode.": "Pengalih aliran tidak dapat digunakan dalam mode output ganda.",
   "Cannot toggle dual output in Studio Mode.": "Tidak dapat mengalihkan output ganda dalam Mode Studio.",
   "Dual Output will be disabled since not supported in this mode.": "Output Ganda akan dinonaktifkan karena tidak didukung dalam mode ini.",
+  "Please confirm %{platforms} in the Horizontal stream.": "Please confirm %{platforms} in the Horizontal stream.",
+  "Please confirm %{platforms} in the Vertical stream.": "Please confirm %{platforms} in the Vertical stream.",
   "Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays in Twitch": "Penyiaran yang disempurnakan dalam mode output ganda hanya tersedia saat aliran langsung ke tampilan horizontal dan vertikal di Twitch",
   "Disable Twitch dual stream to add another platform": "Nonaktifkan aliran langsung ganda Twitch untuk menambahkan platform lain",
   "Dual streaming to Twitch only available with Twitch as the only platform": "Aliran langsung ganda ke Twitch hanya tersedia dengan Twitch sebagai satu-satunya platform"
