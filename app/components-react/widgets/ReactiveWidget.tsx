@@ -1,4 +1,5 @@
 import React from 'react';
+import * as remote from '@electron/remote';
 import { WidgetLayout } from './common/WidgetLayout';
 import { useReactiveWidget } from './reactive-widget/useReactiveWidget';
 import { ReactiveWidgetMenu } from './reactive-widget/ReactiveWidgetMenu';
@@ -7,6 +8,7 @@ import { ReactiveWidgetGameSettings } from './reactive-widget/ReactiveWidgetGame
 import { ReactiveWidgetTriggerDetails } from './reactive-widget/ReactiveWidgetTriggerDetails';
 import css from './reactive-widget/ReactiveWidget.m.less';
 import { useForceUpdate } from 'slap';
+import { $t } from 'services/i18n/i18n';
 
 const AddTriggerTab: React.FC = () => {
   const { availableGameEvents, gameEvents, globalEvents, games, data, createTrigger } = useReactiveWidget();
@@ -64,9 +66,38 @@ const GameSettingsTab: React.FC = () => {
     }
     updateSettings(newSettings);
   }
+
+  function onEnableAll() {
+    const newSettings = { ...(data as any)?.settings || {} };
+    // enable global and all games
+    newSettings.global = {
+      ...newSettings.global,
+      enabled: true,
+    };
+    newSettings.games = {
+      ...newSettings.games,
+      ...Object.fromEntries(Object.keys(newSettings.games || {}).map(gameId => [gameId, { ...(newSettings.games?.[gameId] || {}), enabled: true }])),
+    };
+    updateSettings(newSettings);
+  }
+
+  function onDisableAll() {
+    const newSettings = { ...(data as any)?.settings || {} };
+    // disable global and all games
+    newSettings.global = {
+      ...newSettings.global,
+      enabled: false,
+    };
+    newSettings.games = {
+      ...newSettings.games,
+      ...Object.fromEntries(Object.keys(newSettings.games || {}).map(gameId => [gameId, { ...(newSettings.games?.[gameId] || {}), enabled: false }])),
+    };
+    updateSettings(newSettings);
+  }
+
   return (
     <div>
-      <ReactiveWidgetGameSettings options={[global, ...games]} onToggleGame={onToggleGame} />
+      <ReactiveWidgetGameSettings options={[global, ...games]} onToggleGame={onToggleGame} onEnableAll={onEnableAll} onDisableAll={onDisableAll} />
       <hr style={{ margin: '24px 0', opacity: 0.2 }} />
     </div>
   );
@@ -101,8 +132,58 @@ const ManageTriggersTab: React.FC = () => {
     updateSettings(newSettings);
   }
 
+  function onEnableAll() {
+    const newSettings = { ...(data as any)?.settings || {} };
+    if (selectedGame === 'global') {
+      newSettings.global = {
+        ...newSettings.global,
+        triggers: (newSettings.global?.triggers || []).map((trigger: any) => ({
+          ...trigger,
+          enabled: true,
+        })),
+      };
+    } else {
+      newSettings.games = {
+        ...newSettings.games,
+        [selectedGame]: {
+          ...newSettings.games?.[selectedGame],
+          triggers: (newSettings.games?.[selectedGame]?.triggers || []).map((trigger: any) => ({
+            ...trigger,
+            enabled: true,
+          })),
+        },
+      };
+    }
+    updateSettings(newSettings);
+  }
+
+  function onDisableAll() {
+    const newSettings = { ...(data as any)?.settings || {} };
+    if (selectedGame === 'global') {
+      newSettings.global = {
+        ...newSettings.global,
+        triggers: (newSettings.global?.triggers || []).map((trigger: any) => ({
+          ...trigger,
+          enabled: false,
+        })),
+      };
+    } else {
+      newSettings.games = {
+        ...newSettings.games,
+        [selectedGame]: {
+          ...newSettings.games?.[selectedGame],
+          triggers: (newSettings.games?.[selectedGame]?.triggers || []).map((trigger: any) => ({
+            ...trigger,
+            enabled: false,
+          })),
+        },
+      };
+    }
+    updateSettings(newSettings);
+  }
+
   const options = selectedGame === 'global' ? (data as any)?.settings?.global?.triggers : (data as any)?.settings?.games?.[selectedGame]?.triggers;
-  return <ReactiveWidgetGameSettings options={options} onToggleGame={onToggleGame} />;
+  return <ReactiveWidgetGameSettings options={options} onToggleGame={onToggleGame} onEnableAll={onEnableAll} onDisableAll={onDisableAll} />;
 };
 
 const TriggerDetailsTab: React.FC = () => {
@@ -199,7 +280,6 @@ export function ReactiveWidget() {
   }
 
   function toggleTrigger(group: any, triggerId: string, enabled: boolean) {
-    console.log('TODO: toggle trigger', group, triggerId, enabled);
     const newSettings = { ...(data as any)?.settings || {} };
     if (group === 'global') {
       newSettings.global = {
@@ -224,26 +304,17 @@ export function ReactiveWidget() {
     updateSettings(newSettings);
   }
 
-  // function deleteTrigger(group: any, triggerId: string) {
-  //   console.log('TODO: delete trigger', group, triggerId);
-  //   const newSettings = { ...(data as any)?.settings || {} };
-  //   if (group === 'global') {
-  //     newSettings.global = {
-  //       ...newSettings.global,
-  //       triggers: (newSettings.global?.triggers || []).filter((trigger: any) => trigger.id !== triggerId),
-  //     };
-  //   } else {
-  //     newSettings.games = {
-  //       ...newSettings.games,
-  //       [group]: {
-  //         ...newSettings.games?.[group],
-  //         triggers: (newSettings.games?.[group]?.triggers || []).filter((trigger: any) => trigger.id !== triggerId),
-  //       },
-  //     };
-  //   }
-  //   updateSettings(newSettings);
-  // }
-
+  function onDelete(triggerId: string) {
+    remote.dialog
+      .showMessageBox(remote.getCurrentWindow(), {
+        title: 'Streamlabs Desktop',
+        message: $t('Are you sure you want to delete this trigger? This action cannot be undone.'),
+        buttons: [$t('Cancel'), $t('OK')],
+      }).then(({ response }) => {
+        if (!response) return;
+        deleteTrigger(triggerId);
+      });
+  }
   return (
     <div className={css.reactiveWidget}>
       <WidgetLayout layout="long-menu" showDisplay={showDisplay}>
@@ -254,7 +325,7 @@ export function ReactiveWidget() {
           onChange={key => setSelectedTab(key)}
           playAlert={trigger => onPlayAlert(trigger)}
           toggleTrigger={toggleTrigger}
-          deleteTrigger={deleteTrigger}
+          deleteTrigger={onDelete}
         />
         <ActiveTab />
       </WidgetLayout>

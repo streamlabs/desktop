@@ -3,6 +3,7 @@ import { Button, Menu, Tooltip } from 'antd';
 import { PlusOutlined, SettingOutlined, CaretRightOutlined } from '@ant-design/icons';
 import { CheckboxInput } from 'components-react/shared/inputs';
 import { $t } from 'services/i18n';
+import css from './ReactiveWidgetMenu.m.less';
 
 export function GameIcon() {
   return (
@@ -60,10 +61,10 @@ export function ReactiveWidgetMenu(props: {
                   style={{ display: 'inline-block' }}
                 />
                 <div>
-                  <div style={{ width: '110px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div className={css.triggerTitle}>
                     {trigger.name || `Trigger ${index + 1}`}
                   </div>
-                  {activeKey === `${groupKey}-trigger-${trigger.id}` && (
+                  <Tooltip title={$t('Delete Trigger')} placement="left" mouseLeaveDelay={0}>
                     <Button
                       onClick={e => {
                         e.stopPropagation();
@@ -74,7 +75,7 @@ export function ReactiveWidgetMenu(props: {
                     >
                       <i className="icon-trash" style={{ fontSize: 16 }} />
                     </Button>
-                  )}
+                  </Tooltip>
                   <Tooltip title={$t('Play Alert')} placement="left" mouseLeaveDelay={0}>
                     <Button
                       onClick={e => {

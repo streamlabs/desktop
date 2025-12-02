@@ -7,6 +7,8 @@ import css from './ReactiveWidgetGameSettings.m.less';
 interface ReactiveWidgetGameSettingsProps {
   options: { id: string; name: string; enabled: boolean }[];
   onToggleGame: (gameId: string, enabled: boolean) => void;
+  onEnableAll: () => void;
+  onDisableAll: () => void;
   title?: string;
 }
 
@@ -14,6 +16,8 @@ export function ReactiveWidgetGameSettings({
   options,
   onToggleGame,
   title,
+  onEnableAll,
+  onDisableAll,
 }: ReactiveWidgetGameSettingsProps) {
   const computedTitle = title || $t('General Game Settings');
   const allOptionsEnabled = options.every(option => option.enabled);
@@ -26,10 +30,10 @@ export function ReactiveWidgetGameSettings({
       <div className={css.listRow} style={{ padding: '0px 12px 0 16px' }}>
         <span style={{ fontSize: '12px', color: 'var(--link)' }}>{$t('Name')}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <Button type="text" style={{ padding: '4px', color: 'var(--primary)', opacity: allOptionsEnabled ? 0.5 : 1 }} disabled={allOptionsEnabled}>
+          <Button onClick={onEnableAll} type="text" style={{ padding: '4px', color: 'var(--primary)', opacity: allOptionsEnabled ? 0.5 : 1 }} disabled={allOptionsEnabled}>
             {$t('Enable All')}
           </Button>
-          <Button type="text" style={{ padding: '4px', color: 'var(--warning)', opacity: allOptionsDisabled ? 0.5 : 1 }} disabled={allOptionsDisabled}>
+          <Button onClick={onDisableAll} type="text" style={{ padding: '4px', color: 'var(--warning)', opacity: allOptionsDisabled ? 0.5 : 1 }} disabled={allOptionsDisabled}>
             {$t('Disable All')}
           </Button>
         </div>
