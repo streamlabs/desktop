@@ -17,8 +17,9 @@ export function ReactiveWidgetMenu(props: {
   onChange: (key: string) => void;
   playAlert: (type: any) => void;
   toggleTrigger: (group: any, triggerId: string, enabled: boolean) => void;
+  deleteTrigger: (triggerId: string) => void;
 }) {
-  const { menuItems, activeKey, keyMap, onChange, playAlert, toggleTrigger } = props;
+  const { menuItems, activeKey, keyMap, onChange, playAlert, toggleTrigger, deleteTrigger } = props;
 
   return (
     <Menu
@@ -28,11 +29,18 @@ export function ReactiveWidgetMenu(props: {
       defaultOpenKeys={['global']}
       onClick={({ key }) => onChange(key as any)}
     >
-      <Menu.Item key="add-trigger"  icon={<PlusOutlined />} style={{ height: '45px', lineHeight: '45px' }}>
+      <Menu.Item
+
+        key="add-trigger"
+        icon={<PlusOutlined />}
+        style={{ height: '45px', lineHeight: '45px' }}
+      >
         {$t('Add a new trigger')}
       </Menu.Item>
 
-      <Menu.Item key="general" style={{ height: '45px', lineHeight: '45px' }}>{$t('Game Settings')}</Menu.Item>
+      <Menu.Item key="general" style={{ height: '45px', lineHeight: '45px' }}>
+        {$t('Game Settings')}
+      </Menu.Item>
       {Object.entries(menuItems).map(([groupKey, group]) => (
         <Menu.SubMenu
           key={groupKey}
@@ -41,21 +49,45 @@ export function ReactiveWidgetMenu(props: {
         >
           {(group as any).triggers?.map((trigger: any, index: number) => (
             // TODO$chris: consider just using trigger.id
-            <Menu.Item key={`${groupKey}-trigger-${trigger.id}`} style={{ height: '45px', lineHeight: '45px' }}>
-              <CheckboxInput value={trigger.enabled} onChange={enabled => toggleTrigger(groupKey, trigger.id, enabled)} style={{ display: 'inline-block' }} />
-              {trigger.name || `Trigger ${index + 1}`}
-              {/* TODO$chris: add delete trigger button */}
-              <Tooltip title={$t('Play Alert')} placement="left" mouseLeaveDelay={0}>
-                <Button
-                  onClick={e => {
-                    e.stopPropagation();
-                    playAlert(trigger);
-                  }}
-                  type={'text'}
-                  style={{ position: 'absolute', right: '16px', top: '8px' }}
-                  icon={<CaretRightOutlined style={{ fontSize: '24px', color: 'white' }} />}
+            <Menu.Item
+              key={`${groupKey}-trigger-${trigger.id}`}
+              style={{ height: '45px', lineHeight: '45px' }}
+            >
+              <div style={{ display: 'flex' }}>
+                <CheckboxInput
+                  value={trigger.enabled}
+                  onChange={enabled => toggleTrigger(groupKey, trigger.id, enabled)}
+                  style={{ display: 'inline-block' }}
                 />
-              </Tooltip>
+                <div>
+                  <div style={{ width: '110px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {trigger.name || `Trigger ${index + 1}`}
+                  </div>
+                  {activeKey === `${groupKey}-trigger-${trigger.id}` && (
+                    <Button
+                      onClick={e => {
+                        e.stopPropagation();
+                        deleteTrigger(trigger.id);
+                      }}
+                      type={'text'}
+                      style={{ position: 'absolute', right: '32px', top: '8px', color: 'var(--red)' }}
+                    >
+                      <i className="icon-trash" style={{ fontSize: 16 }} />
+                    </Button>
+                  )}
+                  <Tooltip title={$t('Play Alert')} placement="left" mouseLeaveDelay={0}>
+                    <Button
+                      onClick={e => {
+                        e.stopPropagation();
+                        playAlert(trigger);
+                      }}
+                      type={'text'}
+                      style={{ position: 'absolute', right: '16px', top: '8px' }}
+                      icon={<CaretRightOutlined style={{ fontSize: '24px', color: 'white' }} />}
+                    />
+                  </Tooltip>
+                </div>
+              </div>
             </Menu.Item>
           ))}
           <Menu.Item key={`${groupKey}-manage-trigger`} icon={<SettingOutlined />}>

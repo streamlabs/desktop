@@ -4,11 +4,12 @@ import { Button } from 'antd';
 
 interface TriggerFormProps {
   trigger: { game?: string; event_type?: string; name?: string };
-  onSubmit: (values: Record<string, TInputValue>) => void;
+  onSubmit: ({ eventType, game, name, triggerType }: { eventType: string; game: string; name: string; triggerType: string }) => void;
   availableGameEvents: Record<string, any>;
-  gameEvents?: Record<string, any>;
+  gameEvents: Record<string, any>;
   globalEvents?: Record<string, any>;
   gameOptions?: { label: string; value: string }[];
+  data: any;
 }
 
 export function ReactiveWidgetCreateTriggerForm(props: TriggerFormProps) {
@@ -23,8 +24,13 @@ export function ReactiveWidgetCreateTriggerForm(props: TriggerFormProps) {
     game: triggerDefaults.game ?? '',
     event_type: triggerDefaults.event_type ?? '',
     name: triggerDefaults.name ?? '',
+    triggerType: gameEvents && triggerDefaults.event_type ? gameEvents[triggerDefaults.event_type]?.trigger_type : '',
   });
 
+  const triggerType = useMemo(() => {
+    if (!values.event_type) return '';
+    return gameEvents[values.event_type as string]?.trigger_type || '';
+  }, [values.event_type, values.game, gameEvents, globalEvents]);
   
   const eventOptions = useMemo(() => {
     if (values.game === 'global') {
@@ -98,7 +104,7 @@ export function ReactiveWidgetCreateTriggerForm(props: TriggerFormProps) {
         onChange={handleChange}
         name="create-trigger-form"
       />
-      <Button style={{ alignSelf: 'center' }} disabled={!(values.game && values.event_type && values.name)} type="primary" size='large' onClick={() => onSubmit(values)}>Add</Button>
+      <Button style={{ alignSelf: 'center' }} disabled={!(values.game && values.event_type && values.name)} type="primary" size='large' onClick={() => onSubmit({ eventType: values.event_type as string, game: values.game as string, name: values.name as string, triggerType })}>Add</Button>
     </div>
   );
 }

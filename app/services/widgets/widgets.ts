@@ -242,7 +242,7 @@ export class WidgetsService
     const host = this.hostsService.streamlabs;
     const headers = authorizedHeaders(this.userService.apiToken);
     headers.append('accept', 'application/json');
-
+    headers.append('Content-Type', 'application/json');
     const request = new Request(`https://${host}/api/v5/widgets/game-pulse/preview-trigger`, {
       headers,
       method: 'POST',

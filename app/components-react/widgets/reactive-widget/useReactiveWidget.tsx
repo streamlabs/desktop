@@ -1,6 +1,9 @@
 import { IWidgetCommonState, useWidget, WidgetModule } from '../common/useWidget';
-import { injectFormBinding } from 'slap';
+import { Inject } from 'services/core/injector';
+import { HostsService } from 'services/hosts';
 import cloneDeep from 'lodash/cloneDeep';
+import { authorizedHeaders } from 'util/requests';
+import { UserService } from 'services/user';
 
 interface IReactiveWidgetState extends IWidgetCommonState {
   data: { settings: {} }; // TODO$chris: define settings structure
@@ -67,7 +70,48 @@ export type IReactiveWidgetTrigger =
   | ReactiveStreakTrigger
   | ReactiveAchievementTrigger;
 
+export const defaultTriggerSettings = {
+  media_settings: {
+    image_href: "https://cdn.streamlabs.com/library/giflibrary/jumpy-kevin.webm",
+    sound_href: "https://cdn.streamlabs.com/static/sounds/bits.ogg",
+    sound_volume: 50,
+    show_animation: "fadeIn",
+    hide_animation: "fadeOut"
+  },
+  text_settings: {
+    font: "Open Sans",
+    font_color: "#FFFFFF",
+    font_color2: "#80F5D2",
+    font_size: 24,
+    font_weight: 400,
+    message_template: "{number} kill streak!",
+    text_animation: "bounce",
+    text_delay_ms: 0
+  },
+  tts_settings: {
+    enabled: false,
+    include_message_template: true,
+    language: "Salli",
+    repetition_block_length: 1,
+    security: 0,
+    volume: 50
+  },
+  alert_duration_ms: 5000,
+  amount_maximum: null,
+  amount_minimum: 1,
+  enabled: true,
+  game_event: "kill",
+  id: null, // server assigns ID
+  name: "",
+  layout: "above",
+  type: "streak",
+  streak_period: "session"
+};
+
 export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
+  // add hostsService
+  @Inject() hostsService: HostsService;
+  @Inject() userService: UserService
   protected patchBeforeSend(settings: any) {
     return settings;
   }
@@ -184,10 +228,88 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
   disableTrigger(triggerId: string) {}
   enableAllTriggers(groupId: string) {}
   disableAllTriggers(groupId: string) {}
-  deleteTrigger(triggerId: string) {}
+  deleteTrigger(triggerId: string) {
+    const url = `https://${this.hostsService.streamlabs}/api/v5/widgets/game-pulse/trigger?ulid=${triggerId}`;
+    const headers = authorizedHeaders(this.userService.apiToken);
+    headers.append('Content-Type', 'application/json');
+    headers.append('Accept', 'application/json');
+    return fetch(url, {
+      method: 'DELETE',
+      headers,
+    }).then(async res => {
+      if (!res.ok) {
+        throw new Error(`Failed to delete trigger: ${res.status} ${await res.text()}`);
+      }
+      // TODO$chris: update local state to remove the trigger
+    });
+  }
   previewTrigger(triggerId: string) {}
   toggleTrigger(triggerId: string) {}
-  createTrigger(groupId: string, triggerData: Partial<IReactiveWidgetTrigger>) {}
+  async createTrigger({ eventType, game, name, triggerType }: { eventType: string; game: string; name: string; triggerType: string }) {
+    const newTrigger = {
+      ...defaultTriggerSettings,
+      name,
+      game_event: eventType,
+      type: triggerType,
+      media_settings: {
+        ...defaultTriggerSettings.media_settings,
+        image_href: this.generateDefaultMedia(eventType),
+      },
+      text_settings: {
+        ...defaultTriggerSettings.text_settings,
+        message_template: this.generateDefaultMessageTemplate(triggerType, eventType),
+      },
+    }
+    const newSettings = { ...(this.data as any)?.settings || {} };
+    if (game === 'global') {
+      newSettings.global = {
+        ...newSettings.global,
+        triggers: [
+          ...(newSettings.global?.triggers || []),
+          newTrigger,
+        ],
+      };
+    } else {
+      if (!newSettings.games[game]) {
+        newSettings.games[game] = { enabled: true, triggers: [] };
+      }
+      newSettings.games = {
+        ...newSettings.games,
+        [game]: {
+          ...newSettings.games?.[game],
+          triggers: [
+            ...(newSettings.games?.[game]?.triggers || []),
+            newTrigger,
+          ],
+        },
+      };
+    }
+    console.log('TODO: createTrigger', newSettings);
+    this.updateSettings(newSettings);
+    await this.reload();
+  }
+
+  generateDefaultMedia(eventType: string): string {
+    switch (eventType) {
+      case 'death':
+        return 'https://cdn.streamlabs.com/library/animations/default-death.webm';
+      case 'defeat':
+        return 'https://cdn.streamlabs.com/library/animations/default-defeat.webm';
+      case 'victory':
+        return 'https://cdn.streamlabs.com/library/animations/default-victory.webm';
+      case 'elimination':
+        return 'https://cdn.streamlabs.com/library/animations/elimination.webm';
+      default:
+        return 'https://cdn.streamlabs.com/library/giflibrary/jumpy-kevin.webm';
+    }
+  }
+
+  generateDefaultMessageTemplate(triggerType: string, eventType: string): string {
+    const token = '{number}';
+    if (triggerType === 'level') return `${eventType}: ${token}`;
+    if (triggerType === 'streak') return `${token} ${eventType}`;
+    return eventType;
+  }
 }
 
 export function useReactiveWidget() {

@@ -8,13 +8,8 @@ import { ReactiveWidgetTriggerDetails } from './reactive-widget/ReactiveWidgetTr
 import css from './reactive-widget/ReactiveWidget.m.less';
 import { useForceUpdate } from 'slap';
 
-// TODO$chris: rename to make it clear its for creating a new trigger
-function onSubmit(values: any) {
-  console.log('TODO: Submitting new trigger:', values);
-}
-
 const AddTriggerTab: React.FC = () => {
-  const { availableGameEvents, gameEvents, globalEvents, games } = useReactiveWidget();
+  const { availableGameEvents, gameEvents, globalEvents, games, data, createTrigger } = useReactiveWidget();
 
   const gameOptions = [
     { label: 'Global', value: 'global' },
@@ -28,7 +23,8 @@ const AddTriggerTab: React.FC = () => {
       gameEvents={gameEvents}
       globalEvents={globalEvents}
       gameOptions={gameOptions}
-      onSubmit={onSubmit}
+      data={data}
+      onSubmit={createTrigger}
     />
   );
 };
@@ -181,6 +177,7 @@ export function ReactiveWidget() {
     games,
     data,
     updateSettings,
+    deleteTrigger,
   } = useReactiveWidget();
 
   const tabKind = getTabKind(selectedTab);
@@ -227,6 +224,26 @@ export function ReactiveWidget() {
     updateSettings(newSettings);
   }
 
+  // function deleteTrigger(group: any, triggerId: string) {
+  //   console.log('TODO: delete trigger', group, triggerId);
+  //   const newSettings = { ...(data as any)?.settings || {} };
+  //   if (group === 'global') {
+  //     newSettings.global = {
+  //       ...newSettings.global,
+  //       triggers: (newSettings.global?.triggers || []).filter((trigger: any) => trigger.id !== triggerId),
+  //     };
+  //   } else {
+  //     newSettings.games = {
+  //       ...newSettings.games,
+  //       [group]: {
+  //         ...newSettings.games?.[group],
+  //         triggers: (newSettings.games?.[group]?.triggers || []).filter((trigger: any) => trigger.id !== triggerId),
+  //       },
+  //     };
+  //   }
+  //   updateSettings(newSettings);
+  // }
+
   return (
     <div className={css.reactiveWidget}>
       <WidgetLayout layout="long-menu" showDisplay={showDisplay}>
@@ -237,6 +254,7 @@ export function ReactiveWidget() {
           onChange={key => setSelectedTab(key)}
           playAlert={trigger => onPlayAlert(trigger)}
           toggleTrigger={toggleTrigger}
+          deleteTrigger={deleteTrigger}
         />
         <ActiveTab />
       </WidgetLayout>
