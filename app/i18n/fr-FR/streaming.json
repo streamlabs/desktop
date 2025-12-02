@@ -321,6 +321,8 @@
   "Stream switcher cannot be used in dual output mode.": "Le sélecteur de stream ne fonctionne pas en mode Dual Output.",
   "Cannot toggle dual output in Studio Mode.": "Impossible d’activer le Dual Output en mode Studio.",
   "Dual Output will be disabled since not supported in this mode.": "Le Dual Output sera désactivé, car il n’est pas pris en charge dans ce mode.",
+  "Please confirm %{platforms} in the Horizontal stream.": "Please confirm %{platforms} in the Horizontal stream.",
+  "Please confirm %{platforms} in the Vertical stream.": "Please confirm %{platforms} in the Vertical stream.",
   "Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays in Twitch": "La diffusion améliorée en mode Dual Output est seulement possible quand tu streames à la fois sur les écrans horizontal et vertical sur Twitch.",
   "Disable Twitch dual stream to add another platform": "Désactive le double streaming Twitch pour ajouter une autre plateforme",
   "Dual streaming to Twitch only available with Twitch as the only platform": "Le double streaming sur Twitch est uniquement possible si Twitch est la seule plateforme utilisée"
