@@ -60,33 +60,34 @@ export function ReactiveWidgetMenu(props: {
                   onChange={enabled => toggleTrigger(groupKey, trigger.id, enabled)}
                   style={{ display: 'inline-block' }}
                 />
-                <div>
+                <div style={{ display: 'flex', width: '100%', overflow: 'hidden' }}>
                   <div className={css.triggerTitle}>
                     {trigger.name || `Trigger ${index + 1}`}
                   </div>
-                  <Tooltip title={$t('Delete Trigger')} placement="left" mouseLeaveDelay={0}>
-                    <Button
-                      onClick={e => {
-                        e.stopPropagation();
-                        deleteTrigger(trigger.id);
-                      }}
-                      type={'text'}
-                      style={{ position: 'absolute', right: '32px', top: '8px', color: 'var(--red)' }}
-                    >
-                      <i className="icon-trash" style={{ fontSize: 16 }} />
-                    </Button>
-                  </Tooltip>
-                  <Tooltip title={$t('Play Alert')} placement="left" mouseLeaveDelay={0}>
-                    <Button
-                      onClick={e => {
-                        e.stopPropagation();
-                        playAlert(trigger);
-                      }}
-                      type={'text'}
-                      style={{ position: 'absolute', right: '16px', top: '8px' }}
-                      icon={<CaretRightOutlined style={{ fontSize: '24px', color: 'white' }} />}
-                    />
-                  </Tooltip>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
+                    <Tooltip title={$t('Delete Trigger')} placement="left" mouseLeaveDelay={0}>
+                      <Button
+                        onClick={e => {
+                          e.stopPropagation();
+                          deleteTrigger(trigger.id);
+                        }}
+                        type={'text'}
+                        style={{ padding: '4.4px 0', width: '16px', color: 'var(--red)' }}
+                      >
+                        <i className="icon-trash" style={{ fontSize: '16px' }} />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip title={$t('Play Alert')} placement="left" mouseLeaveDelay={0}>
+                      <Button
+                        onClick={e => {
+                          e.stopPropagation();
+                          playAlert(trigger);
+                        }}
+                        type={'text'}
+                        icon={<CaretRightOutlined style={{ fontSize: '24px', color: 'white' }} />}
+                      />
+                    </Tooltip>
+                  </div>
                 </div>
               </div>
             </Menu.Item>

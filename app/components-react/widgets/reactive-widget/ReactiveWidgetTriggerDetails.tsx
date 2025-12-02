@@ -9,7 +9,6 @@ import {
   FontFamilyInput,
   ColorInput,
   FontWeightInput,
-  FontSizeInput,
   ListInput,
 } from 'components-react/shared/inputs';
 import { Collapse } from 'antd';
@@ -156,6 +155,7 @@ export function ReactiveWidgetTriggerDetails({
         label={$t('Sound Volume')}
         debounce={500}
         {...bind('media_settings.sound_volume')}
+        tipFormatter={(n: number) => `${n}%`}
       />
       <TextInput
         label={$t('Message Template')}
@@ -169,13 +169,14 @@ export function ReactiveWidgetTriggerDetails({
         step={1}
         debounce={500}
         {...bind('alert_duration_ms')}
+        tipFormatter={(ms: number) => `${(ms / 1000).toFixed(1)}s`}
       />
 
       {/* Font Settings */}
       <Collapse bordered={false}>
         <Collapse.Panel header={$t('Font Settings')} key={1}>
           <FontFamilyInput label={$t('Font Family')} {...bind('text_settings.font')} />
-          <FontSizeInput label={$t('Font Size')} {...bind('text_settings.font_size')} />
+          <SliderInput min={8} max={80} label={$t('Font Size')} {...bind('text_settings.font_size')} tipFormatter={(n: number) => `${n}px`} />
           <FontWeightInput label={$t('Font Weight')} {...bind('text_settings.font_weight')} />
           <ColorInput label={$t('Text Color')} {...bind('text_settings.font_color')} />
           <ColorInput
@@ -226,6 +227,7 @@ export function ReactiveWidgetTriggerDetails({
             label={$t('Text Delay')}
             max={60000}
             {...bind('text_settings.text_delay_ms')}
+            tipFormatter={(ms: number) => `${(ms / 1000).toFixed(1)}s`}
           />
         </Collapse.Panel>
       </Collapse>
