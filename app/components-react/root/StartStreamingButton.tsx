@@ -70,7 +70,9 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
 
   useEffect(() => {
     if (!isDualOutputMode && isPrime && streamingStatus === EStreamingState.Offline) {
-      fetchStreamShiftStatus();
+      fetchStreamShiftStatus().catch((e: unknown) => {
+        console.error('Error fetching stream shift status:', e);
+      });
     }
 
     const streamShiftEvent = StreamingService.streamShiftEvent.subscribe(
@@ -253,10 +255,22 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       const isLive = await RestreamService.actions.return.checkIsLive();
       return isLive;
     } catch (e: unknown) {
-      console.error('Error checking stream shift status', e);
+      console.log('Error checking stream shift status', e);
       setIsLoading(false);
       return false;
     }
+    // return await new Promise<boolean>(async (resolve, reject) => {
+    //   try {
+    //     const isLive = await RestreamService.actions.return.checkIsLive();
+    //     resolve(isLive);
+    //   } catch (e: unknown) {
+    //     console.log('Error checking stream shift status', e);
+    //     setIsLoading(false);
+    //     resolve(false);
+    //   }
+
+    //   reject(false);
+    // });
   }, []);
 
   const startStreamShift = useCallback(() => {
