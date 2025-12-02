@@ -321,6 +321,8 @@
   "Stream switcher cannot be used in dual output mode.": "스트리밍 스위처는 Dual Output 모드에서 사용할 수 없습니다.",
   "Cannot toggle dual output in Studio Mode.": "스튜디오 모드에서는 Dual Output을 토글할 수 없습니다.",
   "Dual Output will be disabled since not supported in this mode.": "Dual Output은 이 모드에서 지원되지 않으므로 비활성화됩니다.",
+  "Please confirm %{platforms} in the Horizontal stream.": "Please confirm %{platforms} in the Horizontal stream.",
+  "Please confirm %{platforms} in the Vertical stream.": "Please confirm %{platforms} in the Vertical stream.",
   "Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays in Twitch": "Dual Output 모드의 향상된 방송은 Twitch에서 가로 및 세로 디스플레이 모두로 스트리밍할 때만 사용할 수 있습니다.",
   "Disable Twitch dual stream to add another platform": "다른 플랫폼을 추가하려면 Twitch 듀얼 스트리밍을 비활성화하세요",
   "Dual streaming to Twitch only available with Twitch as the only platform": "Twitch를 유일한 플랫폼으로 사용하는 경우에만 Twitch로 듀얼 스트리밍 가능"
