@@ -44,10 +44,10 @@ import {
   MultistreamChatInfo,
   MarketingModal,
   Settings,
+  Troubleshooter,
 } from 'components/shared/ReactComponentList';
 
 import SourcePropertiesDeprecated from 'components/windows/SourceProperties.vue';
-import Troubleshooter from 'components/windows/Troubleshooter.vue';
 import GameOverlayEventFeed from 'components/windows/GameOverlayEventFeed';
 import EventFilterMenu from 'components/windows/EventFilterMenu';
 import OverlayPlaceholder from 'components/windows/OverlayPlaceholder';
