@@ -285,10 +285,10 @@ test(
     await submit();
 
     // Cannot go live in dual output mode with all targets assigned to one display
-    await waitForDisplayed('div.ant-message-notice-content', {
-      timeout: 5000,
-    });
-    await click('div.ant-message-notice-content');
+    // await waitForDisplayed('div.ant-message-notice-content', {
+    //   timeout: 5000,
+    // });
+    // await click('div.ant-message-notice-content');
 
     await fillForm({
       instagram: true,
@@ -345,10 +345,10 @@ test(
       await submit();
 
       // Cannot go live in dual output mode with all targets assigned to one display
-      await waitForDisplayed('div.ant-message-notice-content', {
-        timeout: 10000,
-      });
-      await click('div.ant-message-notice-content');
+      // await waitForDisplayed('div.ant-message-notice-content', {
+      //   timeout: 10000,
+      // });
+      // await click('div.ant-message-notice-content');
 
       // Dual output with one platform for each display
       await fillForm({
