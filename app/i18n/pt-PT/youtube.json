@@ -48,5 +48,5 @@
   "Exceeded thumbnail upload quota. Please try again later.": "Cota de carregamento de miniaturas excedida. Tenta novamente mais tarde.",
   "YouTube thumbnail image is too large. Maximum size is 2MB.": "A imagem de miniatura do YouTube é demasiado grande. O tamanho máximo é de 2 MB.",
   "Please upload thumbnail manually on YouTube.": "Carrega a miniatura manualmente para o YouTube.",
-  "Stream Shift Error: YouTube is not live": "Stream Shift Error: YouTube is not live"
+  "Stream Shift Error: YouTube is not live": "Erro de Stream Shift: O YouTube não está em direto"
 }

@@ -1,9 +1,9 @@
 {
-  "App Platform": "App Platform",
-  "Unpacked App Path": "Unpacked App Path",
-  "This is the path to your unpacked app. It should be a folder containing a valid manifest.json": "This is the path to your unpacked app. It should be a folder containing a valid manifest.json",
-  "App Token": "App Token",
-  "This token allows you app to authenticate with the Streamlabs API. Visit platform.streamlabs.com to create a developer account and get a test app token.": "This token allows you app to authenticate with the Streamlabs API. Visit platform.streamlabs.com to create a developer account and get a test app token.",
-  "Load App": "Load App",
-  "There was an error loading this app, please try again or contact the Streamlabs development team for assistance.": "There was an error loading this app, please try again or contact the Streamlabs development team for assistance."
+  "App Platform": "App-platform",
+  "Unpacked App Path": "Sti til udpakket app",
+  "This is the path to your unpacked app. It should be a folder containing a valid manifest.json": "Dette er stien til din udpakkede app. Det skal være en mappe, der indeholder en gyldig manifest.json",
+  "App Token": "App-token",
+  "This token allows you app to authenticate with the Streamlabs API. Visit platform.streamlabs.com to create a developer account and get a test app token.": "Med dette token kan din app godkendes med Streamlabs API. Besøg platform.streamlabs.com for at oprette en udviklerkonto og få et testapp-token.",
+  "Load App": "Indlæs app",
+  "There was an error loading this app, please try again or contact the Streamlabs development team for assistance.": "Der opstod en fejl ved indlæsning af denne app. Prøv igen, eller kontakt Streamlabs' udviklerteam for at få hjælp."
 }

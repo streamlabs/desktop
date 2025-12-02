@@ -48,5 +48,5 @@
   "Exceeded thumbnail upload quota. Please try again later.": "サムネイルのアップロード枠を超えました。後で再度お試しください。",
   "YouTube thumbnail image is too large. Maximum size is 2MB.": "YouTube のサムネイルの画像サイズが大きすぎます。最大サイズは2MB です。",
   "Please upload thumbnail manually on YouTube.": "サムネイルを手動で YouTube にアップロードしてください。",
-  "Stream Shift Error: YouTube is not live": "Stream Shift Error: YouTube is not live"
+  "Stream Shift Error: YouTube is not live": "Stream Shift エラー：YouTube はライブ配信されていません"
 }
