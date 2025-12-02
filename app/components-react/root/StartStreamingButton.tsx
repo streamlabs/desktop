@@ -185,40 +185,47 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
 
       // Only check for Stream Shift for ultra users
       if (isLoggedIn && isPrime) {
-        setIsLoading(true);
-        const isLive = await fetchStreamShiftStatus();
-        setIsLoading(false);
+        try {
+          setIsLoading(true);
+          const isLive = await fetchStreamShiftStatus();
+          setIsLoading(false);
 
-        const message = isDualOutputMode
-          ? $t(
-              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. Dual Output will be disabled since not supported in this mode. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
-            )
-          : $t(
-              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
-            );
+          const message = isDualOutputMode
+            ? $t(
+                'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. Dual Output will be disabled since not supported in this mode. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
+              )
+            : $t(
+                'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
+              );
 
-        if (isLive) {
-          const { streamShiftForceGoLive } = RestreamService.state;
-          let shouldForceGoLive = streamShiftForceGoLive;
+          if (isLive) {
+            const { streamShiftForceGoLive } = RestreamService.state;
+            let shouldForceGoLive = streamShiftForceGoLive;
 
-          await promptAction({
-            title: $t('Another stream detected'),
-            message,
-            btnText: $t('Switch to Streamlabs Desktop'),
-            fn: startStreamShift,
-            cancelBtnText: $t('Cancel'),
-            cancelBtnPosition: 'left',
-            secondaryActionText: $t('Force Start'),
-            secondaryActionFn: async () => {
-              // FIXME: this should actually do something server-side
-              RestreamService.actions.return.forceStreamShiftGoLive(true);
-              shouldForceGoLive = true;
-            },
-          });
+            await promptAction({
+              title: $t('Another stream detected'),
+              message,
+              btnText: $t('Switch to Streamlabs Desktop'),
+              fn: startStreamShift,
+              cancelBtnText: $t('Cancel'),
+              cancelBtnPosition: 'left',
+              secondaryActionText: $t('Force Start'),
+              secondaryActionFn: async () => {
+                // FIXME: this should actually do something server-side
+                RestreamService.actions.return.forceStreamShiftGoLive(true);
+                shouldForceGoLive = true;
+              },
+            });
 
-          if (!shouldForceGoLive) {
-            return;
+            if (!shouldForceGoLive) {
+              return;
+            }
           }
+        } catch (e: unknown) {
+          console.error('Error checking stream switcher status when toggle streaming:', e);
+          setIsLoading(false);
+
+          return;
         }
       }
 
@@ -243,7 +250,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
 
   const fetchStreamShiftStatus = useCallback(async () => {
     try {
-      const isLive = await RestreamService.checkIsLive();
+      const isLive = await RestreamService.actions.return.checkIsLive();
       return isLive;
     } catch (e: unknown) {
       console.error('Error checking stream shift status', e);

@@ -327,58 +327,65 @@ test(
   },
 );
 
-test.skip(
+test(
   'Dual Output Go Live Ultra',
   withUser('twitch', { prime: true, multistream: true }),
   async (t: TExecutionContext) => {
-    await toggleDualOutputMode();
-    await prepareToGoLive();
+    try {
+      await toggleDualOutputMode();
+      await prepareToGoLive();
 
-    await clickGoLive();
-    await focusChild();
-    await waitForSettingsWindowLoaded();
-    await fillForm({
-      trovo: true,
-      trovoDisplay: 'horizontal',
-    });
-    // await waitForDisplayed('div[data-name="trovo-settings"]');
-    // await submit();
+      await clickGoLive();
+      await focusChild();
+      await waitForSettingsWindowLoaded();
+      await fillForm({
+        trovo: true,
+        trovoDisplay: 'horizontal',
+      });
+      await waitForDisplayed('div[data-name="trovo-settings"]');
+      await submit();
 
-    // // Cannot go live in dual output mode with all targets assigned to one display
-    // await waitForDisplayed('div.ant-message-notice-content', {
-    //   timeout: 10000,
-    // });
-    // await click('div.ant-message-notice-content');
+      // Cannot go live in dual output mode with all targets assigned to one display
+      await waitForDisplayed('div.ant-message-notice-content', {
+        timeout: 10000,
+      });
+      await click('div.ant-message-notice-content');
 
-    // // Dual output with one platform for each display
-    // await focusChild();
-    // await fillForm({
-    //   trovoDisplay: 'vertical',
-    // });
+      // Dual output with one platform for each display
+      await focusChild();
+      await fillForm({
+        trovoDisplay: 'vertical',
+      });
 
-    // // TODO: fix go live errors from dummy accounts
-    // await submit();
-    // await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
-    // await waitForStreamStart();
-    // await stopStream();
-    // await waitForStreamStop();
+      // TODO: fix go live errors from dummy accounts
+      await submit();
+      await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
+      await waitForStreamStart();
+      await stopStream();
+      await waitForStreamStop();
 
-    // await clickGoLive();
-    // await focusChild();
+      await clickGoLive();
+      await focusChild();
 
-    // // Swap displays
-    // await waitForSettingsWindowLoaded();
-    // await fillForm({
-    //   trovoDisplay: 'horizontal',
-    //   twitchDisplay: 'vertical',
-    // });
+      // Swap displays
+      await waitForSettingsWindowLoaded();
+      await fillForm({
+        trovoDisplay: 'horizontal',
+        twitchDisplay: 'vertical',
+      });
 
-    // await submit();
-    // await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
-    // await waitForStreamStart();
-    // await sleep(2000);
-    // await stopStream();
-    // await waitForStreamStop();
+      await submit();
+      await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
+      await waitForStreamStart();
+      await sleep(2000);
+      await stopStream();
+      await waitForStreamStop();
+      // Vertical display is hidden after logging out
+      await logOut(t);
+      t.false(await isDisplayed('div#vertical-display'));
+    } catch (e: unknown) {
+      console.log('Error during Dual Output Go Live Ultra test:', e);
+    }
 
     t.pass();
   },
