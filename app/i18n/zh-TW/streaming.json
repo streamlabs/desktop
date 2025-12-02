@@ -321,6 +321,8 @@
   "Stream switcher cannot be used in dual output mode.": "在雙輸出模式下無法使用直播切換器。",
   "Cannot toggle dual output in Studio Mode.": "在 Studio 模式中無法切換雙輸出。",
   "Dual Output will be disabled since not supported in this mode.": "由於此模式不支援雙輸出，將予以停用。",
+  "Please confirm %{platforms} in the Horizontal stream.": "Please confirm %{platforms} in the Horizontal stream.",
+  "Please confirm %{platforms} in the Vertical stream.": "Please confirm %{platforms} in the Vertical stream.",
   "Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays in Twitch": "僅在 Twitch 同時向橫向與直向顯示進行直播時，雙輸出模式的增強型廣播功能才可用",
   "Disable Twitch dual stream to add another platform": "請停用 Twitch 雙直播以新增其他平台",
   "Dual streaming to Twitch only available with Twitch as the only platform": "僅在 Twitch 為唯一平台時，才可在 Twitch 進行雙直播"
