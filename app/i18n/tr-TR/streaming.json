@@ -321,6 +321,8 @@
   "Stream switcher cannot be used in dual output mode.": "Yayın değiştirici dual output modunda kullanılamaz.",
   "Cannot toggle dual output in Studio Mode.": "Stüdyo Modunda dual output değiştirilemiyor.",
   "Dual Output will be disabled since not supported in this mode.": "Dual Output, bu modda desteklenmediği için devre dışı bırakılacaktır.",
+  "Please confirm %{platforms} in the Horizontal stream.": "Please confirm %{platforms} in the Horizontal stream.",
+  "Please confirm %{platforms} in the Vertical stream.": "Please confirm %{platforms} in the Vertical stream.",
   "Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays in Twitch": "Gelişmiş yayınlama özelliği, Twitch'te hem yatay hem de dikey ekranlara yayın yaparken kullanılabilir.",
   "Disable Twitch dual stream to add another platform": "Başka bir platform eklemek için Twitch dual stream'i devre dışı bırakın",
   "Dual streaming to Twitch only available with Twitch as the only platform": "Twitch'e çift yayın, yalnızca Twitch platformunda kullanılabilir."
