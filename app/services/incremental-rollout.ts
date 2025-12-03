@@ -22,7 +22,6 @@ export enum EAvailableFeatures {
   sharedStorage = 'slobs--shared-storage',
   dualOutputRecording = 'slobs--dual-output-recording',
   streamShift = 'slobs--stream-shift',
-  twitchDualStream = 'slobs--twitch-dual-stream',
 
   /**
    * There are two flags because one is used for beta access and

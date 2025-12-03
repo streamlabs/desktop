@@ -33,10 +33,6 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
         ? module.settings.platforms[p.platform]?.display
         : module.settings.customDestinations[p.index]?.display;
 
-      if (defaultDisplay === 'both' && !this.canDualStream) {
-        return 'horizontal';
-      }
-
       return defaultDisplay ?? 'horizontal';
     },
   }));
