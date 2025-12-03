@@ -6,12 +6,11 @@ import {
   UserService,
   WebsocketService,
 } from 'app-services';
-import { toDotNotation } from 'components-react/windows/reactive-data-editor/lib/dot-tree';
 import { authorizedHeaders, jfetch } from 'util/requests';
 import { Subscription } from 'rxjs';
 import * as obs from '../../../obs-api';
 import uuid from 'uuid/v4';
-import { fromDotNotation } from 'util/dot-tree';
+import { fromDotNotation, toDotNotation } from 'util/dot-tree';
 import { USER_STATE_SCHEMA_URL } from 'services/sources/properties-managers/smart-browser-source-manager';
 
 type StateTreeLeaf = number;

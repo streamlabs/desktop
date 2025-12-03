@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { LeafInfo } from './lib/schema';
+
+type LeafInfo = {
+  name: string;
+};
 
 type FlatSchema = Record<string, LeafInfo>;
 

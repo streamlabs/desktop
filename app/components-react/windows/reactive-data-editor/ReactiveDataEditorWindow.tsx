@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import { Services } from 'components-react/service-provider';
-import type { ReactiveDataEditorProps } from './types';
 import { useChildWindowParams } from 'components-react/hooks';
 import ReactiveDataEditor from './ReactiveDataEditor';
-import { schemaFlat } from './lib/schema';
+import { $t } from 'services/i18n';
+
+export type ReactiveDataEditorProps = {
+  stateKeysOfInterest: string[];
+};
 
 export default function ReactiveDataEditorWindow() {
   const { WindowsService, UserStateService } = Services;
@@ -15,10 +18,15 @@ export default function ReactiveDataEditorWindow() {
     WindowsService.actions.closeChildWindow();
   }
 
-  const [stateFlat, setStateFlat] = useState(UserStateService.state.stateFlat);
+  const [stateFlat, setStateFlat] = useState(() =>
+    UserStateService.state.stateFlat
+      ? { ...UserStateService.state.stateFlat }
+      : UserStateService.state.stateFlat,
+  );
+
+  const schemaFlat = useMemo(() => UserStateService.state.schemaFlat, []);
 
   const handleSaveChanges = (changes: Partial<Record<string, number>>) => {
-    console.log('Saving changes:', changes);
     setStateFlat(prev => ({ ...prev, ...changes }));
 
     UserStateService.actions.updateState(changes);
@@ -31,7 +39,11 @@ export default function ReactiveDataEditorWindow() {
   if (!schemaFlat || !stateFlat) {
     return (
       <ModalLayout bodyStyle={{ padding: '20px' }} hideFooter={true}>
-        {!schemaFlat ? <div>Waiting for schema...</div> : <div>Waiting for state...</div>}
+        {!schemaFlat ? (
+          <div>{$t('Waiting for schema...')}</div>
+        ) : (
+          <div>{$t('Waiting for state...')}</div>
+        )}
       </ModalLayout>
     );
   }

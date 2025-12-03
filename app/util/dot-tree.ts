@@ -1,20 +1,3 @@
-// todo: find where this is used and replace
-export function convertDotNotationToTree(states: string[] | string): any {
-  const tree: any = {};
-  const stateArray = Array.isArray(states) ? states : [states];
-  stateArray.forEach(state => {
-    const parts = state.split('.');
-    let current = tree;
-    parts.forEach((part, index) => {
-      if (!current[part]) {
-        current[part] = index === parts.length - 1 ? true : {};
-      }
-      current = current[part];
-    });
-  });
-  return tree;
-}
-
 export type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
 type LeafPaths<T, Leaf = never> = T extends object
@@ -27,16 +10,8 @@ type LeafPaths<T, Leaf = never> = T extends object
     }[Extract<keyof T, string>]
   : never;
 
-type ValueAtPath<T, P extends string> = P extends `${infer K}.${infer Rest}`
-  ? K extends keyof T
-    ? ValueAtPath<NonNullable<T[K]>, Rest>
-    : never
-  : P extends keyof T
-  ? NonNullable<T[P]>
-  : never;
-
 type DotMap<T extends object, Leaf = never> = {
-  [P in LeafPaths<T, Leaf>]: ValueAtPath<T, P>;
+  [P in LeafPaths<T, Leaf>]: Leaf;
 };
 
 // 1) Custom leaf via type guard (more specific — listed first)
