@@ -1107,15 +1107,17 @@ export class StreamingService
         }
 
         // @@@ TODO: Handle: horizontal multi, vertical multi, and both multi
-        if (
-          this.views.activeDisplayDestinations.horizontal.length > 1 &&
-          this.views.activeDisplayDestinations.vertical.length > 1
-        ) {
+        if (this.views.horizontalStream.length > 1 && this.views.verticalStream.length > 1) {
           // Setup additional second stream context
           await this.createEnhancedBroadcastMultistream(true, 'secondStream');
         }
 
-        await this.startDualOutputStream();
+        // If Twitch is streaming the vertical display, reassign the video contexts
+        if (this.settingsService.views.values.StreamSecond.service === 'Twitch') {
+          NodeObs.OBS_service_setVideoInfo(verticalContext, 'horizontal');
+        }
+
+        NodeObs.OBS_service_startStreaming('horizontal');
       } else if (this.state.enhancedBroadcasting) {
         // Setup enhanced broadcasting if both displays have only one target
         console.log('Setup Enhanced Broadcasting Dual Output Single Streams');
@@ -1664,16 +1666,15 @@ export class StreamingService
       // streaming instance. To prevent errors, the vertical instance should only be created after the
       // horizontal instance has been created and started. In dual output mode, the start streaming promise
       // should be resolved after the vertical instance has been created and started.
-      if (this.views.isDualOutputMode && display === 'horizontal') {
-        // sleep for 1 second to allow the first stream to start
-        // TODO: is this necessary?
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        // this.contexts.vertical.streaming.start();
-        this.contexts.vertical.streaming.start();
-        // await this.validateOrCreateOutputInstance('vertical', 'streaming', 1, true);
-        return;
-      }
-
+      // if (this.views.isDualOutputMode && display === 'horizontal') {
+      //   // sleep for 1 second to allow the first stream to start
+      //   // TODO: is this necessary?
+      //   await new Promise(resolve => setTimeout(resolve, 1000));
+      //   // this.contexts.vertical.streaming.start();
+      //   this.contexts.vertical.streaming.start();
+      //   // await this.validateOrCreateOutputInstance('vertical', 'streaming', 1, true);
+      //   return;
+      // }
       await this.handleStartStreaming(info.signal);
     } else if (info.signal === EOBSOutputSignal.Activate) {
       // Currently, do nothing on `activate` because the `starting` signal has handled everything
@@ -2008,9 +2009,14 @@ export class StreamingService
     const shouldResolve =
       !this.views.isDualOutputMode ||
       (this.views.isDualOutputMode && isVerticalDisplayStartSignal) ||
-      (this.views.isDualOutputMode && info.signal === EOBSOutputSignal.Start);
+      (this.views.isDualOutputMode && info.signal === EOBSOutputSignal.Start) ||
+      (this.views.isDualOutputMode &&
+        this.state.enhancedBroadcasting &&
+        this.views.shouldSetupRestream);
 
     const time = new Date().toISOString();
+
+    console.log('SHOULD RESOLVE STREAMING SIGNAL:', shouldResolve);
 
     if (info.type === EOBSOutputType.Streaming) {
       if (info.signal === EOBSOutputSignal.Start && shouldResolve) {
