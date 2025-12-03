@@ -170,6 +170,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Primarily used for custom UI handling for Twitch dual stream
    */
   get isTwitchDualStreaming() {
+    if (!this.incrementalRolloutView.featureIsEnabled(EAvailableFeatures.twitchDualStream)) {
+      return false;
+    }
+
     return this.settings.platforms?.twitch && this.settings.platforms?.twitch.display === 'both';
   }
 
