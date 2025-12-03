@@ -272,6 +272,9 @@ export class TwitchService
           this.settingsService.setEnhancedBroadcasting(channelInfo.isEnhancedBroadcasting);
         }
 
+        // Update enhanced broadcasting setting based on go live settings
+        this.settingsService.setEnhancedBroadcasting(channelInfo.isEnhancedBroadcasting);
+
         await this.putChannelInfo(channelInfo);
       }
     } else if (this.streamingService.views.isTwitchDualStreaming) {

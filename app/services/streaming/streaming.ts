@@ -694,13 +694,23 @@ export class StreamingService
           ? undefined
           : settings;
 
+      console.log(
+        'settings.platforms[platform]',
+        JSON.stringify(settings.platforms[platform], null, 2),
+      );
+
       // Note: Enhanced broadcasting setting persist in two places during the go live flow:
       // in the Twitch service and in osn. The setting in the Twitch service is persisted
       // between streams in order to restore the user's preferences for when they go live with
       // Twitch dual stream, which requires enhanced broadcasting to be enabled. The setting
       // in osn is what actually determines if the stream will use enhanced broadcasting.
-      if (platform === 'twitch' && this.views.getIsEnhancedBroadcasting()) {
-        this.SET_ENHANCED_BROADCASTING(true);
+      if (platform === 'twitch') {
+        const isEnhancedBroadcasting =
+          settings.platforms.twitch.isEnhancedBroadcasting ||
+          this.views.getIsEnhancedBroadcasting();
+
+        console.log('Enabling enhanced broadcasting');
+        this.SET_ENHANCED_BROADCASTING(isEnhancedBroadcasting);
       }
 
       // don't update settings for twitch in unattendedMode
@@ -1126,37 +1136,30 @@ export class StreamingService
       // so when Twitch is the only target for dual stream, only start the
       // horizontal stream
       if (this.views.isTwitchDualStreaming && !this.views.shouldSetupRestream) {
+        // Setup Twitch dual stream
         console.log('Start Twitch Dual Stream');
         NodeObs.OBS_service_startStreaming('horizontal');
       } else if (this.state.enhancedBroadcasting && this.views.shouldSetupRestream) {
+        // Setup enhanced broadcasting multistream if either of the displays has more than one target
         if (!this.contexts.restream.streaming) {
           await this.createEnhancedBroadcastMultistream(true);
         } else {
           this.contexts.restream.streaming.start();
         }
+      } else if (this.state.enhancedBroadcasting) {
+        // Setup enhanced broadcasting if both displays have only one target
+        console.log('Setup Enhanced Broadcasting Dual Output Single Streams');
+
+        // If Twitch is streaming the vertical display, reassign the video contexts
+        if (this.settingsService.views.values.StreamSecond.service === 'Twitch') {
+          NodeObs.OBS_service_setVideoInfo(horizontalContext, 'vertical');
+          NodeObs.OBS_service_setVideoInfo(verticalContext, 'horizontal');
+        }
+
+        await this.startDualOutputStream();
       } else {
-        NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
-        NodeObs.OBS_service_setVideoInfo(verticalContext, 'vertical');
-
-        const signalChanged = this.signalInfoChanged.subscribe(
-          (signalInfo: IOBSOutputSignalInfo) => {
-            if (signalInfo.service === 'default') {
-              if (signalInfo.code !== 0) {
-                NodeObs.OBS_service_stopStreaming(true, 'horizontal');
-                NodeObs.OBS_service_stopStreaming(true, 'vertical');
-              }
-
-              if (signalInfo.signal === EOBSOutputSignal.Start) {
-                NodeObs.OBS_service_startStreaming('vertical');
-                signalChanged.unsubscribe();
-              }
-            }
-          },
-        );
-
-        NodeObs.OBS_service_startStreaming('horizontal');
-        // sleep for 1 second to allow the first stream to start
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        console.log('Start Regular Dual Output Streaming');
+        await this.startDualOutputStream();
       }
     } else {
       // When multistreaming Twitch enhanced broadcasting, use the new API to start a designated stream
@@ -1164,7 +1167,7 @@ export class StreamingService
         // The broadcast stream context should have been created during the go live checklist
         // but as a failsafe, check again here and create if missing
         if (!this.contexts.restream.streaming) {
-          // @@@ TODO: await this.setupRestreamContext(true ); // START
+          await this.createEnhancedBroadcastMultistream(true);
         } else {
           console.log(
             'STARTING this.contexts.restream.streaming',
@@ -1231,6 +1234,26 @@ export class StreamingService
       });
 
     return startStreamingPromise;
+  }
+
+  async startDualOutputStream() {
+    const signalChanged = this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
+      if (signalInfo.service === 'default') {
+        if (signalInfo.code !== 0) {
+          NodeObs.OBS_service_stopStreaming(true, 'horizontal');
+          NodeObs.OBS_service_stopStreaming(true, 'vertical');
+        }
+
+        if (signalInfo.signal === EOBSOutputSignal.Start) {
+          NodeObs.OBS_service_startStreaming('vertical');
+          signalChanged.unsubscribe();
+        }
+      }
+    });
+
+    NodeObs.OBS_service_startStreaming('horizontal');
+    // sleep for 1 second to allow the first stream to start
+    await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
   async toggleStreaming(options?: TStartStreamOptions, force = false) {
