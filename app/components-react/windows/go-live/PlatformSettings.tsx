@@ -16,6 +16,8 @@ import { InstagramEditStreamInfo } from './platforms/InstagramEditStreamInfo';
 import { KickEditStreamInfo } from './platforms/KickEditStreamInfo';
 import AdvancedSettingsSwitch from './AdvancedSettingsSwitch';
 import { TInputLayout } from 'components-react/shared/inputs';
+import { HighlighterService } from 'services/highlighter';
+import { inject } from 'slap';
 
 export default function PlatformSettings() {
   const {
@@ -33,19 +35,32 @@ export default function PlatformSettings() {
     isUpdateMode,
     isTikTokConnected,
     layout,
+    isDualOutputMode,
+    isAiHighlighterEnabled,
+    enabledPlatformsCount,
   } = useGoLiveSettings().extend(settings => ({
-    get descriptionIsRequired() {
+    highlighterService: inject(HighlighterService),
+
+    get descriptionIsRequired(): boolean | undefined {
       const fbSettings = settings.state.platforms['facebook'];
       const descriptionIsRequired = fbSettings && fbSettings.enabled && !fbSettings.useCustomFields;
       return descriptionIsRequired;
     },
 
-    get isTikTokConnected() {
+    get isTikTokConnected(): boolean {
       return settings.state.isPlatformLinked('tiktok');
     },
 
     get layout(): TInputLayout {
       return settings.isAdvancedMode ? 'horizontal' : 'vertical';
+    },
+
+    get isAiHighlighterEnabled(): boolean {
+      return this.highlighterService.aiHighlighterFeatureEnabled;
+    },
+
+    get enabledPlatformsCount(): number {
+      return enabledPlatforms.length;
     },
   }));
 
@@ -65,8 +80,14 @@ export default function PlatformSettings() {
       get value() {
         return getDefined(settings.platforms[platform]);
       },
+      get isDualOutputMode() {
+        return isDualOutputMode;
+      },
+      get isAiHighlighterEnabled() {
+        return isAiHighlighterEnabled;
+      },
       get enabledPlatformsCount() {
-        return enabledPlatforms.length;
+        return enabledPlatformsCount;
       },
       onChange(newSettings) {
         updatePlatform(platform, newSettings);
