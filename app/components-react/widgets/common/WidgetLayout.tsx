@@ -23,17 +23,17 @@ const PREVIEW_HEIGHT = 250;
  * If "basic" layout selected then display 1 column or 2 columns depending
  * on how many children have been provided to props
  */
-export function WidgetLayout(p: { layout?: TWidgetLayoutType; children: TLayoutChildren, showDisplay?: boolean; }) {
+export function WidgetLayout(p: { layout?: TWidgetLayoutType; children: TLayoutChildren, showDisplay?: boolean; footerSlots?: ReactNode }) {
   const layout = p.layout || 'basic';
   switch (layout) {
     case 'basic':
-      return <BasicLayout showDisplay={p.showDisplay}>{p.children}</BasicLayout>;
+      return <BasicLayout showDisplay={p.showDisplay} footerSlots={p.footerSlots}>{p.children}</BasicLayout>;
     case 'long-menu':
-      return <LongMenuLayout showDisplay={p.showDisplay}>{p.children}</LongMenuLayout>;
+      return <LongMenuLayout showDisplay={p.showDisplay} footerSlots={p.footerSlots}>{p.children}</LongMenuLayout>;
   }
 }
 
-function BasicLayout(p: { children: TLayoutChildren, showDisplay?: boolean }) {
+function BasicLayout(p: { children: TLayoutChildren, showDisplay?: boolean, footerSlots?: ReactNode }) {
   const { isLoading } = useWidget();
   const { MenuPanel, ContentPanel } = getLayoutPanels(p.children);
   const hasDisplay = p.showDisplay !== false;
@@ -52,12 +52,12 @@ function BasicLayout(p: { children: TLayoutChildren, showDisplay?: boolean }) {
           </Col>
         </Row>
       </Content>
-      <ModalFooter />
+      <ModalFooter footerSlots={p.footerSlots} />
     </Layout>
   );
 }
 
-function LongMenuLayout(p: { children: TLayoutChildren, showDisplay?: boolean }) {
+function LongMenuLayout(p: { children: TLayoutChildren, showDisplay?: boolean, footerSlots?: ReactNode }) {
   const { isLoading } = useWidget();
   const { MenuPanel, ContentPanel } = getLayoutPanels(p.children);
   const wrapperStyle = {
@@ -82,7 +82,7 @@ function LongMenuLayout(p: { children: TLayoutChildren, showDisplay?: boolean })
           </div>
         </Content>
       </Layout>
-      <ModalFooter />
+      <ModalFooter footerSlots={p.footerSlots} />
     </Layout>
   );
 }
@@ -114,10 +114,12 @@ function ModalContent(p: { children: ReactNode }) {
   );
 }
 
-function ModalFooter() {
+function ModalFooter({ footerSlots }: { footerSlots?: ReactNode }) {
   const { canRevert, revertChanges, close } = useWidget();
   return (
     <div className="ant-modal-footer">
+      {/* optional buttons  */}
+      {footerSlots}
       {canRevert && (
         <Button onClick={revertChanges} type="ghost" style={{ position: 'absolute', left: '16px' }}>
           <RollbackOutlined />

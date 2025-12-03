@@ -9,6 +9,7 @@ import { ReactiveWidgetTriggerDetails } from './reactive-widget/ReactiveWidgetTr
 import css from './reactive-widget/ReactiveWidget.m.less';
 import { useForceUpdate } from 'slap';
 import { $t } from 'services/i18n/i18n';
+import { Button } from 'antd';
 
 const AddTriggerTab: React.FC = () => {
   const { availableGameEvents, gameEvents, globalEvents, games, data, createTrigger } = useReactiveWidget();
@@ -104,7 +105,7 @@ const GameSettingsTab: React.FC = () => {
 };
 
 const ManageTriggersTab: React.FC = () => {
-  const { selectedTab, data, games: gamesMeta, updateSettings } = useReactiveWidget();
+  const { selectedTab, data, updateSettings } = useReactiveWidget();
   const selectedGame = selectedTab.split('-manage-trigger')[0];
 
   function onToggleGame(gameId: string, enabled: boolean) {
@@ -191,8 +192,6 @@ const TriggerDetailsTab: React.FC = () => {
     selectedTab,
     staticConfig,
     createTriggerBinding,
-    widgetData,
-    widgetState,
   } = useReactiveWidget();
   const forceUpdate = useForceUpdate();
 
@@ -226,7 +225,6 @@ const TriggerDetailsTab: React.FC = () => {
   );
 };
 
-
 type TabKind = 'add-trigger' | 'general' | 'game-manage-trigger' | 'trigger-detail';
 
 const TAB_COMPONENTS: Record<TabKind, React.FC> = {
@@ -247,6 +245,17 @@ function getTabKind(selectedTab: string): TabKind {
   }
 
   return 'game-manage-trigger';
+}
+
+function ManageOnWebButton() {
+  const handleClick = () => {
+    remote.shell.openExternal('https://streamlabs.com/dashboard#/widgets/reactive-widget');
+  };
+  return (
+    <Button type="ghost" onClick={handleClick}>
+      {$t('Manage on Web')}
+    </Button>
+  );
 }
 
 export function ReactiveWidget() {
@@ -315,9 +324,10 @@ export function ReactiveWidget() {
         deleteTrigger(triggerId);
       });
   }
+
   return (
     <div className={css.reactiveWidget}>
-      <WidgetLayout layout="long-menu" showDisplay={showDisplay}>
+      <WidgetLayout layout="long-menu" showDisplay={showDisplay} footerSlots={<ManageOnWebButton />}>
         <ReactiveWidgetMenu
           menuItems={triggerGroups}
           keyMap={keyMap}

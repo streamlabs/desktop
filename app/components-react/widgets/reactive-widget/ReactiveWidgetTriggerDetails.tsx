@@ -94,7 +94,6 @@ export function ReactiveWidgetTriggerDetails({
 
   return (
     <div>
-      {/* Header + Enabled toggle */}
       <div
         style={{
           display: 'flex',
@@ -127,12 +126,10 @@ export function ReactiveWidgetTriggerDetails({
         />
       </div>
 
-      {/* Basic fields */}
       <TextInput label={$t('Name')} {...bind('name')} />
 
       {isStreakTrigger && (
         <>
-          {/* note: using amount_minimum to match your JSON */}
           <NumberInput label={$t('Amount Minimum')} {...bind('amount_minimum')} />
           <ListInput
             label={$t('Streak Time Period')}
@@ -146,7 +143,6 @@ export function ReactiveWidgetTriggerDetails({
         {$t('Action Settings')}
       </h3>
 
-      {/* Media / Layout / Sound */}
       <MediaUrlInput label={$t('Media')} {...bind('media_settings.image_href')} />
       {/* TODO$chris: if enabling custom code in the future, check here */}
       <LayoutInput label={$t('Layout')} {...bind('layout')} />
