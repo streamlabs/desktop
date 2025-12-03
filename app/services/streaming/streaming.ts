@@ -80,17 +80,25 @@ import { MarkersService } from 'services/markers';
 import { byOS, OS } from 'util/operating-systems';
 import { DualOutputService } from 'services/dual-output';
 import { capitalize } from 'lodash';
-import { YoutubeService } from 'app-services';
+import { TwitchService, YoutubeService } from 'app-services';
 import { EOBSOutputType, EOBSOutputSignal, IOBSOutputSignalInfo } from 'services/core/signals';
 import { SignalsService } from 'services/signals-manager';
 import { TSocketEvent } from 'services/websocket';
 
 type TOBSOutputType = 'streaming' | 'recording' | 'replayBuffer';
+type TOutputContext = 'horizontal' | 'vertical' | 'restream' | 'secondStream';
 
 interface IOutputContext {
   streaming: ISimpleStreaming | IAdvancedStreaming;
   recording: ISimpleRecording | IAdvancedRecording;
   replayBuffer: ISimpleReplayBuffer | IAdvancedReplayBuffer;
+}
+
+interface IStreamOutputSettings {
+  key: string;
+  streamType: string;
+  service: string;
+  server: string;
 }
 
 const outputType = (type: EOBSOutputType) =>
@@ -141,19 +149,26 @@ export class StreamingService
   private rejectStartStreaming: Function = () => {};
 
   private contexts: {
-    [name: string]: IOutputContext;
     horizontal: IOutputContext;
     vertical: IOutputContext;
+    restream: Partial<IOutputContext>;
+    secondStream: Partial<IOutputContext>;
   } = {
     horizontal: {
-      streaming: null,
-      recording: null,
-      replayBuffer: null,
+      streaming: (null as unknown) as ISimpleStreaming | IAdvancedStreaming,
+      recording: (null as unknown) as ISimpleRecording | IAdvancedRecording,
+      replayBuffer: (null as unknown) as ISimpleReplayBuffer | IAdvancedReplayBuffer,
     },
     vertical: {
-      streaming: null,
-      recording: null,
-      replayBuffer: null,
+      streaming: (null as unknown) as ISimpleStreaming | IAdvancedStreaming,
+      recording: (null as unknown) as ISimpleRecording | IAdvancedRecording,
+      replayBuffer: (null as unknown) as ISimpleReplayBuffer | IAdvancedReplayBuffer,
+    },
+    restream: {
+      streaming: (null as unknown) as ISimpleStreaming | IAdvancedStreaming,
+    },
+    secondStream: {
+      streaming: (null as unknown) as ISimpleStreaming | IAdvancedStreaming,
     },
   };
 
@@ -597,22 +612,22 @@ export class StreamingService
         const errorType = this.handleTypedStreamError(e, failureType, 'Failed to setup restream');
         throwStreamError(errorType);
       }
-    }
 
-    // Setup restream context if enhanced broadcasting is enabled for Twitch
-    if (this.state.enhancedBroadcasting) {
-      try {
-        // await this.setupRestreamContext(); TODO
-      } catch (e: unknown) {
-        console.error('Error setting up restream context for enhanced broadcasting:', e);
+      // Setup restream context if enhanced broadcasting is enabled for Twitch
+      if (this.state.enhancedBroadcasting) {
+        try {
+          await this.createEnhancedBroadcastMultistream();
+        } catch (e: unknown) {
+          console.error('Error setting up restream context for enhanced broadcasting:', e);
 
-        const error = this.handleTypedStreamError(
-          e,
-          'RESTREAM_ENHANCED_BROADCASTING_FAILED',
-          'Failed to setup restream for enhanced broadcasting',
-        );
-        this.setError(error);
-        return;
+          const error = this.handleTypedStreamError(
+            e,
+            'RESTREAM_ENHANCED_BROADCASTING_FAILED',
+            'Failed to setup restream for enhanced broadcasting',
+          );
+          this.setError(error);
+          return;
+        }
       }
     }
 
@@ -1114,7 +1129,11 @@ export class StreamingService
         console.log('Start Twitch Dual Stream');
         NodeObs.OBS_service_startStreaming('horizontal');
       } else if (this.state.enhancedBroadcasting && this.views.shouldSetupRestream) {
-        // TODO
+        if (!this.contexts.restream.streaming) {
+          await this.createEnhancedBroadcastMultistream(true);
+        } else {
+          this.contexts.restream.streaming.start();
+        }
       } else {
         NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
         NodeObs.OBS_service_setVideoInfo(verticalContext, 'vertical');
@@ -1140,23 +1159,26 @@ export class StreamingService
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     } else {
+      // When multistreaming Twitch enhanced broadcasting, use the new API to start a designated stream
+      if (this.state.enhancedBroadcasting) {
+        // The broadcast stream context should have been created during the go live checklist
+        // but as a failsafe, check again here and create if missing
+        if (!this.contexts.restream.streaming) {
+          // @@@ TODO: await this.setupRestreamContext(true ); // START
+        } else {
+          console.log(
+            'STARTING this.contexts.restream.streaming',
+            this.contexts.restream.streaming,
+          );
+          this.contexts.restream.streaming.start();
+        }
+      }
+
       // start single output
       const horizontalContext = this.videoSettingsService.contexts.horizontal;
       NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
 
       NodeObs.OBS_service_startStreaming();
-    }
-
-    // When multistreaming Twitch enhanced broadcasting, use the new API to start a designated stream
-    if (this.state.enhancedBroadcasting) {
-      // The broadcast stream context should have been created during the go live checklist
-      // but as a failsafe, check again here and create if missing
-      if (!this.contexts.restream.streaming) {
-        // @@@ TODO: await this.setupRestreamContext(true ); // START
-      } else {
-        console.log('STARTING this.contexts.restream.streaming', this.contexts.restream.streaming);
-        this.contexts.restream.streaming.start();
-      }
     }
 
     const recordWhenStreaming = this.streamSettingsService.settings.recordWhenStreaming;
@@ -1429,12 +1451,54 @@ export class StreamingService
     }
   }
 
+  private async createEnhancedBroadcastMultistream(start: boolean = false) {
+    const display = this.settingsService.views.values.Stream.server.includes('streamlabs')
+      ? 'horizontal'
+      : 'vertical';
+
+    const outputSettings =
+      display === 'horizontal'
+        ? this.settingsService.views.values.Stream
+        : this.settingsService.views.values.StreamSecond;
+
+    console.log(
+      'STREAMING Creating RESTREAM stream for platform',
+      outputSettings.key,
+      outputSettings.server,
+    );
+
+    this.videoSettingsService.validateVideoContext(display);
+
+    // Restore Twitch stream for the display that is being restreamed
+    const twitchService = getPlatformService('twitch') as TwitchService;
+    const streamKey = twitchService.state.streamKey || (await twitchService.fetchStreamKey());
+
+    this.streamSettingsService.setSettings(
+      {
+        key: streamKey,
+        platform: 'twitch',
+        streamType: 'rtmp_common',
+        server: 'auto',
+      },
+      display,
+    );
+
+    await this.createStreaming(display as TDisplayType, 3, start, 'restream', outputSettings);
+  }
+
   /**
    * Create a streaming instance for the given display
    * @param display - The display to create the streaming for
    * @param index - The index of the audio track
    */
-  private async createStreaming(display: TDisplayType, index: number, start?: boolean) {
+  private async createStreaming(
+    display: TDisplayType,
+    index: number,
+    start?: boolean,
+    context?: TOutputContext,
+    outputSettings?: IStreamOutputSettings,
+  ) {
+    const contextName = context || display;
     const mode = this.outputSettingsService.getSettings().mode;
 
     const settings = this.outputSettingsService.getFactoryAPIStreamingSettings();
@@ -1484,10 +1548,10 @@ export class StreamingService
         this.createAudioTrack(stream.twitchTrack);
       }
 
-      this.contexts[display].streaming = stream as IAdvancedStreaming;
+      this.contexts[contextName].streaming = stream as IAdvancedStreaming;
     } else if (this.isSimpleStreaming(stream)) {
       stream.audioEncoder = AudioEncoderFactory.create();
-      this.contexts[display].streaming = stream as ISimpleStreaming;
+      this.contexts[contextName].streaming = stream as ISimpleStreaming;
     } else {
       throwStreamError(
         'UNKNOWN_STREAMING_ERROR_WITH_MESSAGE',
@@ -1496,27 +1560,44 @@ export class StreamingService
       );
     }
 
-    this.contexts[display].streaming.video = this.videoSettingsService.contexts[display];
-    this.contexts[display].streaming.signalHandler = async signal => {
+    this.contexts[contextName].streaming.video = this.videoSettingsService.contexts[display];
+    this.contexts[contextName].streaming.signalHandler = async signal => {
       await this.handleSignal(signal, display);
     };
 
-    const streamSettings =
-      display === 'horizontal'
-        ? this.settingsService.views.values.Stream
-        : this.settingsService.views.values.StreamSecond;
+    const streamSettings = this.getStreamSettings(display, outputSettings);
 
-    this.contexts[display].streaming.service = ServiceFactory.legacySettings;
-    this.contexts[display].streaming.service.update(streamSettings);
-    this.contexts[display].streaming.delay = DelayFactory.create();
-    this.contexts[display].streaming.reconnect = ReconnectFactory.create();
-    this.contexts[display].streaming.network = NetworkFactory.create();
-
-    if (start) {
-      this.contexts[display].streaming.start();
+    // If output settings
+    if (streamSettings.streamType === 'rtmp_common' && outputSettings === undefined) {
+      this.contexts[contextName].streaming.service = ServiceFactory.legacySettings;
+    } else {
+      this.contexts[contextName].streaming.service = ServiceFactory.create(
+        'rtmp_custom',
+        'service',
+        streamSettings,
+      );
     }
 
-    return Promise.resolve(this.contexts[display].streaming);
+    this.contexts[contextName].streaming.service.update(streamSettings);
+    this.contexts[contextName].streaming.delay = DelayFactory.create();
+    this.contexts[contextName].streaming.reconnect = ReconnectFactory.create();
+    this.contexts[contextName].streaming.network = NetworkFactory.create();
+
+    if (start) {
+      this.contexts[contextName].streaming.start();
+    }
+
+    return Promise.resolve(this.contexts[contextName].streaming);
+  }
+
+  getStreamSettings(display: TDisplayType, outputSettings?: IStreamOutputSettings) {
+    if (outputSettings) {
+      return outputSettings;
+    }
+
+    return display === 'horizontal'
+      ? this.settingsService.views.values.Stream
+      : this.settingsService.views.values.StreamSecond;
   }
 
   /**
@@ -1691,24 +1772,25 @@ export class StreamingService
     type: 'streaming' | 'recording',
     index: number,
     start?: boolean,
+    contextName?: TOutputContext,
   ) {
     const mode = this.outputSettingsService.getSettings().mode;
     // TODO: Remove for factory api migration
-    const validOutput = this.validateOutputInstance(mode, display);
+    const validOutput = this.validateOutputInstance(mode, contextName);
     // TODO: Comment in for factory api migration
     // const validOutput = this.validateOutputInstance(mode, display, type);
 
     // If the instance matches the mode, return to validate it
     if (validOutput && start) {
-      this.contexts[display][type]?.start();
+      this.contexts[contextName][type]?.start();
       return;
     }
     if (validOutput) return;
 
-    await this.destroyOutputContextIfExists(display, type);
+    await this.destroyOutputContextIfExists(contextName, type);
 
     if (type === 'streaming') {
-      await this.createStreaming(display, index, start);
+      await this.createStreaming(display, index, start, contextName);
       // TODO: Comment in for factory api migration
       // } else {
       //   await this.createRecording(display, index, start);
@@ -1717,15 +1799,15 @@ export class StreamingService
 
   private validateOutputInstance(
     mode: 'Simple' | 'Advanced',
-    display: TDisplayType,
+    contextName: TOutputContext,
     // TODO: Comment in for factory api migration
     // type: 'streaming' | 'recording',
   ) {
     // TODO: Remove for factory api migration
-    if (!this.contexts[display].streaming) return false;
+    if (!this.contexts[contextName].streaming) return false;
 
-    const isAdvancedOutput = this.isAdvancedStreaming(this.contexts[display].streaming);
-    const isSimpleOutput = this.isSimpleStreaming(this.contexts[display].streaming);
+    const isAdvancedOutput = this.isAdvancedStreaming(this.contexts[contextName].streaming);
+    const isSimpleOutput = this.isSimpleStreaming(this.contexts[contextName].streaming);
 
     // TODO: Comment in for factory api migration
     // if (!this.contexts[display][type]) return false;
@@ -2614,9 +2696,9 @@ export class StreamingService
    */
   async shutdown() {
     return new Promise<void>(async resolve => {
-      Object.keys(this.contexts).forEach(display => {
-        Object.keys(this.contexts[display]).forEach(async (contextType: keyof IOutputContext) => {
-          this.destroyOutputContextIfExists(display, contextType);
+      Object.keys(this.contexts).forEach((context: TOutputContext) => {
+        Object.keys(this.contexts[context]).forEach(async (contextType: keyof IOutputContext) => {
+          this.destroyOutputContextIfExists(context, contextType);
         });
       });
       resolve();
@@ -2656,11 +2738,17 @@ export class StreamingService
    * if the context did not exist
    */
   private async destroyOutputContextIfExists(
-    display: TDisplayType | string,
+    contextName: TOutputContext,
     contextType: keyof IOutputContext,
   ) {
     // if the context does not exist there is nothing to destroy
-    if (!this.contexts[display] || !this.contexts[display][contextType]) return;
+    if (!this.contexts[contextName] || !this.contexts[contextName][contextType]) return;
+    // recording and replay buffer can only use the horizontal and vertical contexts
+    if (contextType !== 'streaming' && !['horizontal', 'vertical'].includes(contextName)) {
+      return;
+    }
+
+    const instance = this.contexts[contextName][contextType];
 
     // TODO: Comment in for factory api migration
     // prevent errors by stopping an active context before destroying it
@@ -2699,37 +2787,33 @@ export class StreamingService
     if (this.outputSettingsService.getSettings().mode === 'Advanced') {
       switch (contextType) {
         case 'streaming':
-          this.isAdvancedStreaming(this.contexts[display][contextType])
-            ? AdvancedStreamingFactory.destroy(
-                this.contexts[display][contextType] as IAdvancedStreaming,
-              )
-            : SimpleStreamingFactory.destroy(
-                this.contexts[display][contextType] as ISimpleStreaming,
-              );
+          this.isAdvancedStreaming(instance as ISimpleStreaming | IAdvancedStreaming)
+            ? AdvancedStreamingFactory.destroy(instance as IAdvancedStreaming)
+            : SimpleStreamingFactory.destroy(instance as ISimpleStreaming);
           break;
         // TODO: Comment in for factory api migration
         // case 'recording':
-        //   this.isAdvancedRecording(this.contexts[display][contextType])
+        //   this.isAdvancedRecording(instance)
         //     ? AdvancedRecordingFactory.destroy(
-        //         this.contexts[display][contextType] as IAdvancedRecording,
+        //         instance as IAdvancedRecording,
         //       )
         //     : SimpleRecordingFactory.destroy(
-        //         this.contexts[display][contextType] as ISimpleRecording,
+        //         instance as ISimpleRecording,
         //       );
         //   break;
         // case 'replayBuffer':
-        //   this.isAdvancedReplayBuffer(this.contexts[display][contextType])
+        //   this.isAdvancedReplayBuffer(instance)
         //     ? AdvancedReplayBufferFactory.destroy(
-        //         this.contexts[display][contextType] as IAdvancedReplayBuffer,
+        //         instance as IAdvancedReplayBuffer,
         //       )
         //     : SimpleReplayBufferFactory.destroy(
-        //         this.contexts[display][contextType] as ISimpleReplayBuffer,
+        //         instance as ISimpleReplayBuffer,
         //       );
         //   break;
       }
     }
 
-    this.contexts[display][contextType] = null;
+    this.contexts[contextName][contextType] = null;
 
     return Promise.resolve();
   }
