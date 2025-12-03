@@ -1146,6 +1146,17 @@ export class StreamingService
         } else {
           this.contexts.restream.streaming.start();
         }
+
+        // @@@ TODO: Handle: horizontal multi, vertical multi, and both multi
+        if (
+          this.views.activeDisplayDestinations.horizontal.length > 1 &&
+          this.views.activeDisplayDestinations.vertical.length > 1
+        ) {
+          // Setup additional second stream context
+          await this.createEnhancedBroadcastMultistream(true, 'secondStream');
+        }
+
+        await this.startDualOutputStream();
       } else if (this.state.enhancedBroadcasting) {
         // Setup enhanced broadcasting if both displays have only one target
         console.log('Setup Enhanced Broadcasting Dual Output Single Streams');
@@ -1325,9 +1336,12 @@ export class StreamingService
         NodeObs.OBS_service_stopStreaming(false);
       }
 
-      // TODO: @@@
-      if (this.contexts.restream.streaming) {
+      if (this.contexts.restream.streaming !== null) {
         this.contexts.restream.streaming.stop();
+      }
+
+      if (this.contexts.secondStream.streaming !== null) {
+        this.contexts.secondStream.streaming.stop();
       }
 
       const keepRecording = this.streamSettingsService.settings.keepRecordingWhenStreamStops;
@@ -1474,7 +1488,10 @@ export class StreamingService
     }
   }
 
-  private async createEnhancedBroadcastMultistream(start: boolean = false) {
+  private async createEnhancedBroadcastMultistream(
+    start: boolean = false,
+    contextName: TOutputContext = 'restream',
+  ) {
     const display = this.settingsService.views.values.Stream.server.includes('streamlabs')
       ? 'horizontal'
       : 'vertical';
@@ -1506,7 +1523,7 @@ export class StreamingService
       display,
     );
 
-    await this.createStreaming(display as TDisplayType, 3, start, 'restream', outputSettings);
+    await this.createStreaming(display as TDisplayType, 3, start, contextName, outputSettings);
   }
 
   /**
