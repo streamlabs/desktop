@@ -64,6 +64,8 @@ export default function GoLiveError() {
         return renderDualOutputError(error);
       case 'YOUTUBE_STREAMING_DISABLED':
         return renderYoutubeStreamingDisabled(error);
+      case 'YOUTUBE_TOKEN_EXPIRED':
+        return renderYoutubeTokenExpiredError(error);
       case 'TIKTOK_OAUTH_EXPIRED':
         return renderTikTokOAuthExpiredError(error);
       case 'TIKTOK_STREAM_SCOPE_MISSING':
@@ -134,7 +136,7 @@ export default function GoLiveError() {
       >
         <button
           className="button button--prime"
-          onClick={() => MagicLinkService.actions.linkToPrime('slobs-multistream')}
+          onClick={() => MagicLinkService.actions.linkToPrime('slobs-multistream-error')}
         >
           {$t('Become a Ultra member')}
         </button>
@@ -320,13 +322,29 @@ export default function GoLiveError() {
     );
   }
 
+  function renderYoutubeTokenExpiredError(error: IStreamError) {
+    return (
+      <MessageLayout error={error} hasButton={true}>
+        <Translate message={$t('YouTube token has expired, re-login or re-merge YouTube account')}>
+          <button
+            slot="connectButton"
+            className="button button--warn"
+            onClick={() => navigatePlatformMerge('youtube')}
+          />
+        </Translate>
+      </MessageLayout>
+    );
+  }
+
   function renderTikTokOAuthExpiredError(error: IStreamError) {
     // If error authenticating with TikTok, prompt re-login
     assertIsDefined(error.platform);
 
     return (
       <MessageLayout error={error} hasButton={true}>
-        <Translate message={$t('tiktokReAuthError')}>
+        <Translate
+          message={$t('Failed to authenticate with TikTok, re-login or re-merge TikTok account')}
+        >
           <button
             slot="connectButton"
             className="button button--warn"

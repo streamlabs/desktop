@@ -21,6 +21,8 @@
   "News": "Novità",
   "Notifications": "Notifiche",
   "A new Recording has been completed. Click for more info": "È stata completata una nuova registrazione. Clicca qui per maggiori info.",
+  "horizontalRecordingMessage": " È stata eseguita una nuova registrazione orizzontale. Clicca qui per maggiori info.",
+  "verticalRecordingMessage": "È stata eseguita una nuova registrazione verticale. Clicca qui per maggiori info.",
   "Recording History": "Cronologia delle registrazioni",
   "Show in folder": "Mostra nella cartella",
   "Recordings": "Registrazioni",

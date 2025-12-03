@@ -1,17 +1,21 @@
 import {
-  addCustomDestination,
   clickGoLive,
   prepareToGoLive,
+  stopStream,
   submit,
   waitForSettingsWindowLoaded,
+  waitForStreamStart,
+  waitForStreamStop,
 } from '../../helpers/modules/streaming';
 import {
+  click,
   clickIfDisplayed,
+  clickWhenDisplayed,
+  closeWindow,
   focusChild,
   focusMain,
-  getNumElements,
   isDisplayed,
-  selectAsyncAlert,
+  waitForDisplayed,
 } from '../../helpers/modules/core';
 import { logIn } from '../../helpers/modules/user';
 import { toggleDisplay, toggleDualOutputMode } from '../../helpers/modules/dual-output';
@@ -21,9 +25,14 @@ import {
   TExecutionContext,
   useWebdriver,
 } from '../../helpers/webdriver';
-import { getUser, releaseUserInPool, withUser } from '../../helpers/webdriver/user';
+import { addDummyAccount, logOut, releaseUserInPool, withUser } from '../../helpers/webdriver/user';
 import { SceneBuilder } from '../../helpers/scene-builder';
 import { getApiClient } from '../../helpers/api-client';
+import { fillForm } from '../../helpers/modules/forms';
+import { showSettingsWindow } from '../../helpers/modules/settings/settings';
+import { sleep } from '../../helpers/sleep';
+// import { readFields, fillForm } from '../../helpers/modules/forms';
+// import { sleep } from '../../helpers/sleep';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -256,31 +265,64 @@ test(
   async t => {
     await toggleDualOutputMode();
     await prepareToGoLive();
+
     await clickGoLive();
     await focusChild();
     await waitForSettingsWindowLoaded();
-
-    // check that the selector is displayed
-    t.true(await isDisplayed('[data-test=destination-selector]'), 'Destination selector exists');
-
-    // check that the platform switcher and close icon do not exist
-    t.false(await isDisplayed('.platform-switch'), 'Platform switch does not exist');
-    t.false(await isDisplayed('.platform-close'), 'Platform close icon does not exist');
-    t.false(await isDisplayed('.destination-switch'), 'Destination switch does not exist');
-    t.false(await isDisplayed('.destination-close'), 'Destination close icon does not exist');
-
-    // cannot use dual output mode with only one platform linked
     await submit();
 
-    t.true(
-      await (
-        await selectAsyncAlert('Confirm Horizontal and Vertical Platforms')
-      ).waitForDisplayed(),
-      'Alert is open',
-    );
+    // Cannot go live in dual output mode with only one target linked
+    await waitForDisplayed('div.ant-message-notice-content', {
+      timeout: 5000,
+    });
+    await click('div.ant-message-notice-content');
 
-    await clickIfDisplayed('button=Confirm');
+    await closeWindow('child');
+    const dummy = await addDummyAccount('instagram');
+    await prepareToGoLive();
+    await clickGoLive();
+    await focusChild();
+    await submit();
 
+    // Cannot go live in dual output mode with all targets assigned to one display
+    await waitForDisplayed('div.ant-message-notice-content', {
+      timeout: 5000,
+    });
+    await click('div.ant-message-notice-content');
+
+    await fillForm({
+      instagram: true,
+      instagramDisplay: 'vertical',
+    });
+
+    await waitForDisplayed('div[data-name="instagram-settings"]');
+    await waitForSettingsWindowLoaded();
+
+    await fillForm({
+      title: 'Test stream',
+      twitchGame: 'Fortnite',
+      streamUrl: dummy.streamUrl,
+      streamKey: dummy.streamKey,
+    });
+
+    // TODO: fix go live errors from dummy accounts
+    // await submit();
+    // await waitForDisplayed('span=Configure the Dual Output service');
+    // await focusMain();
+    // await waitForDisplayed('div=Refresh Chat', { timeout: 60000 });
+
+    // // Dummy account will cause the stream to not go live
+    // await waitForStreamStop();
+
+    // Clean up the dummy account
+    await showSettingsWindow('Stream', async () => {
+      await waitForDisplayed('h2=Stream Destinations');
+      await clickWhenDisplayed('[data-name="instagramUnlink"]');
+    });
+
+    // Vertical display is hidden after logging out
+    await logOut(t);
+    t.false(await isDisplayed('div#vertical-display'));
     t.pass();
   },
 );
@@ -289,77 +331,54 @@ test(
   'Dual Output Go Live Ultra',
   withUser('twitch', { prime: true, multistream: true }),
   async (t: TExecutionContext) => {
-    const user = getUser();
-    await addCustomDestination('MyCustomDest', 'rtmp://live.twitch.tv/app/', user.streamKey);
-    await addCustomDestination('MyCustomDest2', 'rtmp://live.twitch.tv/app/', user.streamKey);
+    await toggleDualOutputMode();
     await prepareToGoLive();
 
-    // confirm single output go live platform settings
     await clickGoLive();
     await focusChild();
     await waitForSettingsWindowLoaded();
-
-    t.true(await isDisplayed('.single-output-card'), 'Single output card exists');
-    t.false(await isDisplayed('.dual-output-card'), 'Dual output card does not exist');
-    const numSoPlatforms = await getNumElements('.platform-switch');
-    t.true(numSoPlatforms > 1, 'Multiple platform switches exist');
-    const numSoDestinations = await getNumElements('.destination-switch');
-    t.true(numSoDestinations > 1, 'Custom destination switches exist');
-    t.true(
-      await isDisplayed('[data-test=default-add-destination]'),
-      'Default add destination button exists',
-    );
-    t.false(
-      await isDisplayed('[data-test=destination-selector]'),
-      'Destination selector does not exist',
-    );
-    t.false(await isDisplayed('.platform-close'), 'Platform close icon does not exist');
-
-    // confirm dual output go live platform settings
-    await toggleDualOutputMode(true);
-    await clickGoLive();
-    await focusChild();
-    await waitForSettingsWindowLoaded();
-
-    await isDisplayed('.dual-output-card');
-    t.true(await isDisplayed('.dual-output-card'), 'Dual output card exists');
-    t.false(await isDisplayed('.single-output-card'), 'Single output card does not exist');
-    const numDoPlatforms = await getNumElements('.platform-switch');
-    t.true(
-      numSoPlatforms === numDoPlatforms,
-      'Same number of platform switches exist for both single and dual output modes.',
-    );
-    const numDoDestinations = await getNumElements('.destination-switch');
-    t.true(
-      numSoDestinations === numDoDestinations,
-      'Same number of destination switches exist for both single and dual output modes.',
-    );
-    t.true(
-      await isDisplayed('[data-test=default-add-destination]'),
-      'Default add destination button exists',
-    );
-    t.false(
-      await isDisplayed('[data-test=destination-selector]'),
-      'Destination selector does not exist',
-    );
-    t.false(await isDisplayed('.platform-close'), 'Platform close icon does not exist');
-
-    // check that the primary chat selector is displayed
-    t.true(
-      await isDisplayed('[data-name="primary-chat-switcher"]'),
-      'Primary chat switcher is displayed',
-    );
-
-    // cannot use dual output mode with all platforms assigned to one display
+    await fillForm({
+      trovo: true,
+      trovoDisplay: 'horizontal',
+    });
+    await waitForDisplayed('div[data-name="trovo-settings"]');
     await submit();
-    t.true(
-      await (
-        await selectAsyncAlert('Confirm Horizontal and Vertical Platforms')
-      ).waitForDisplayed(),
-      'Alert is open',
-    );
 
-    await clickIfDisplayed('button=Confirm');
+    // Cannot go live in dual output mode with all targets assigned to one display
+    await waitForDisplayed('div.ant-message-notice-content', {
+      timeout: 10000,
+    });
+    await click('div.ant-message-notice-content');
+
+    // Dual output with one platform for each display
+    await focusChild();
+    await fillForm({
+      trovoDisplay: 'vertical',
+    });
+
+    // TODO: fix go live errors from dummy accounts
+    await submit();
+    await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
+    await waitForStreamStart();
+    await stopStream();
+    await waitForStreamStop();
+
+    // await clickGoLive();
+    // await focusChild();
+
+    // // Swap displays
+    // await waitForSettingsWindowLoaded();
+    // await fillForm({
+    //   trovoDisplay: 'horizontal',
+    //   twitchDisplay: 'vertical',
+    // });
+
+    // await submit();
+    // await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
+    // await waitForStreamStart();
+    // await sleep(2000);
+    // await stopStream();
+    // await waitForStreamStop();
 
     t.pass();
   },

@@ -389,7 +389,7 @@ class VideoSettingsModule {
    */
   setFPSType(value: EFPSType) {
     const obsSettings: ObsSetting[] = [
-      { key: 'fpsType', value: value },
+      { key: 'fpsType', value },
       { key: 'fpsNum', value: 30 },
       { key: 'fpsDen', value: 1 },
     ];
@@ -503,7 +503,7 @@ class VideoSettingsModule {
       }
 
       // toggle dual output
-      this.dualOutputService.actions.setDualOutputMode(
+      this.dualOutputService.actions.setDualOutputModeIfPossible(
         !this.dualOutputService.views.dualOutputMode,
       );
       this.state.setShowDualOutputSettings(!this.state.showDualOutputSettings);
@@ -527,7 +527,7 @@ class VideoSettingsModule {
     Services.WindowsService.actions.closeChildWindow();
     this.userService.actions.showLogin();
     const onboardingCompleted = Services.OnboardingService.onboardingCompleted.subscribe(() => {
-      Services.DualOutputService.actions.setDualOutputMode();
+      Services.DualOutputService.actions.setDualOutputModeIfPossible();
       Services.SettingsService.actions.showSettings('Video');
       onboardingCompleted.unsubscribe();
     });
@@ -581,5 +581,3 @@ export function VideoSettings() {
     </>
   );
 }
-
-VideoSettings.page = 'Video';

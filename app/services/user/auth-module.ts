@@ -61,7 +61,7 @@ export class AuthModule {
     if (external) {
       code = await this.externalLogin(authUrl, codeChallenge, merge, onWindowShow);
     } else {
-      await this.internalLogin(
+      code = await this.internalLogin(
         authUrl,
         codeChallenge,
         merge,
@@ -196,7 +196,7 @@ export class AuthModule {
     onWindowShow: () => void,
     onWindowClose: () => void,
   ) {
-    return new Promise<void>(resolve => {
+    return new Promise<string>(resolve => {
       let completed = false;
       const authWindow = new remote.BrowserWindow({
         ...windowOptions,
@@ -214,7 +214,7 @@ export class AuthModule {
         if (query['success']) {
           completed = true;
           authWindow.close();
-          resolve();
+          resolve(query['code']);
         }
       });
 

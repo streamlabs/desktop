@@ -1,0 +1,14 @@
+{
+  "Edit your stream title on Kick after going live.": "Edite o título da sua transmissão no Kick depois de entrar ao vivo.",
+  "Kick Category": "Categoria da Kick",
+  "Failed to update Kick account. Please unlink and reconnect your Kick account.": "Falha ao atualizar a conta do Kick. Desvincule e reconecte sua conta do Kick.",
+  "Failed to start Kick stream. Please check permissions with Kick and try again": "Falha ao iniciar a transmissão no Kick. Verifique as permissões no Kick e tente novamente",
+  "Kick request most likely failed due to incorrect or missing permissions. Unlink and re-merge Kick account, then restart Desktop. If that fails, refer to Kick support": "A solicitação no Kick provavelmente falhou devido a permissões incorretas ou ausentes. Desvincule e mescle novamente a conta do Kick e, em seguida, reinicie o Desktop. Se não funcionar, consulte o suporte do Kick",
+  "Kick stream key failed to generate due to missing permissions": "Falha ao gerar a chave de transmissão do Kick devido à falta de permissões",
+  "confirm that a stream key has been generated with 2FA on Kick for use with Streamlabs Desktop and if not ask the user to manually generate one": "Confirme se uma chave de transmissão foi gerada com 2FA no Kick para uso com o Streamlabs Desktop e, caso não tenha sido, peça ao usuário para gerar uma manualmente",
+  "Login to Kick": "Fazer login no Kick",
+  "Go to: <link></link>": "Acesse: <link></link>",
+  "Click on the \"eye\" icon to see your stream key": "Clique no ícone de “olho” para ver a sua chave de transmissão",
+  "Put in 2FA": "Ative a autenticação de dois fatores (2FA)",
+  "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "Após a 2FA, a chave de transmissão foi gerada e estará disponível no Streamlabs Desktop para esse canal. Agora você pode fazer transmissões ao vivo no Kick."
+}

@@ -8,9 +8,7 @@ import {
   click,
   clickButton,
   focusChild,
-  getFocusedWindowId,
   isDisplayed,
-  select,
   selectButton,
   useChildWindow,
   useMainWindow,
@@ -51,7 +49,7 @@ export async function prepareToGoLive() {
 export async function clickGoLive() {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   await useMainWindow(async () => {
-    await clickButton('Go Live');
+    await click('[data-name="StartStreamingButton"]');
   });
 }
 
@@ -139,7 +137,19 @@ export async function stopRecording() {
 }
 
 export async function waitForSettingsWindowLoaded() {
-  return waitForEnabled('button[data-testid=confirmGoLiveBtn]');
+  await waitForStreamShift();
+  await focusChild();
+  return waitForEnabled('[data-name=confirmGoLiveBtn]', { timeout: 15000 });
+}
+
+async function waitForStreamShift() {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  await useMainWindow(async () => {
+    const streamShifted = await isDisplayed('span=Another stream detected', { timeout: 5000 });
+    if (streamShifted) {
+      await click('span=Force Start');
+    }
+  });
 }
 
 export async function switchAdvancedMode() {

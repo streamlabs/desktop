@@ -373,7 +373,7 @@ export class WidgetsService
 
   /**
    * Load a widget file from the given path
-   * @param path the path to the widget file to laod
+   * @param path the path to the widget file to load
    * @param sceneId the id of the scene to load into
    */
   async loadWidgetFile(path: string, sceneId: string) {

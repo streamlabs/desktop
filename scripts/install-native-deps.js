@@ -1,7 +1,6 @@
 const sh = require('shelljs');
 const colors = require('colors/safe');
 const fs = require('fs');
-const os = require('os');
 const path = require('path');
 const stream = require('stream');
 

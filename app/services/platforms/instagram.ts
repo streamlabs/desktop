@@ -1,20 +1,19 @@
 import { getDefined } from 'util/properties-type-guards';
 import {
   IGame,
-  IPlatformCapabilityResolutionPreset,
   IPlatformRequest,
   IPlatformService,
   IPlatformState,
   TPlatformCapability,
   TStartStreamOptions,
   EPlatformCallResult,
+  TLiveDockFeature,
 } from '.';
 import { BasePlatformService } from './base-platform';
 import { IGoLiveSettings } from 'services/streaming';
 import { TDisplayType } from 'services/settings-v2';
 import { WidgetType } from 'services/widgets';
-import { InheritMutations, mutation } from 'services/core';
-import Utils from 'services/utils';
+import { InheritMutations } from 'services/core';
 
 export interface IInstagramStartStreamOptions {
   streamUrl: string;
@@ -39,7 +38,8 @@ export class InstagramService
   readonly apiBase = '';
   readonly platform = 'instagram';
   readonly displayName = 'Instagram';
-  readonly capabilities = new Set<TPlatformCapability>(['resolutionPreset']);
+  readonly capabilities = new Set<TPlatformCapability>(['resolutionPreset', 'title']);
+  readonly liveDockFeatures = new Set<TLiveDockFeature>();
 
   static initialState: IInstagramServiceState = {
     ...BasePlatformService.initialState,
@@ -62,6 +62,11 @@ export class InstagramService
   // FIXME: failing to go live doesn't seem to trigger an error, is there a way to detect it?
   async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     const settings = getDefined(goLiveSettings.platforms.instagram);
+
+    if (goLiveSettings.streamShift && this.streamingService.views.shouldSwitchStreams) {
+      this.setPlatformContext('instagram');
+      return;
+    }
 
     if (!this.streamingService.views.isMultiplatformMode) {
       this.streamSettingsService.setSettings(

@@ -9,6 +9,7 @@ import type { Scene, Source } from 'app-services';
 import Tooltip from 'components-react/shared/Tooltip';
 import { getOS, OS } from 'util/operating-systems';
 import * as remote from '@electron/remote';
+import { ISettingsProps } from '../Settings';
 
 interface IAugmentedHotkey extends IHotkey {
   // Will be scene or source name
@@ -25,12 +26,6 @@ interface IAugmentedHotkeySet {
 function hasHotkeys(hotkeyDict: Dictionary<IAugmentedHotkey[]>) {
   return Object.values(hotkeyDict).some(hotkeys => hotkeys.length);
 }
-
-type HotkeysProps = {
-  globalSearchStr: string;
-  scanning: boolean;
-  highlightSearch: (searchString: string) => void;
-};
 
 const mkFilterHotkeys = (searchString: string) => (hotkeys: IHotkey[]): IHotkey[] => {
   return new Fuse(hotkeys, {
@@ -49,27 +44,29 @@ const setCategoryNameFrom = (srcOrScene: Source | Scene | null) => (hotkey: IAug
   return hotkey;
 };
 
-export default function Hotkeys(props: HotkeysProps) {
-  const { globalSearchStr: searchString, scanning, highlightSearch } = props;
+export function Hotkeys(props: ISettingsProps) {
+  const { globalSearchStr: searchString } = props;
   const { HotkeysService, SourcesService, ScenesService, DualOutputService } = Services;
   const [hotkeySet, setHotkeysSet] = useState<IHotkeysSet | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
     if (!hotkeySet) {
       // We don't want hotkeys registering while trying to bind.
       // We may change our minds on this in the future.
       HotkeysService.actions.unregisterAll();
 
-      HotkeysService.actions.return
-        .getHotkeysSet()
-        .then(setHotkeysSet)
-        .then(() => highlightSearch(searchString));
+      HotkeysService.actions.return.getHotkeysSet().then((hotkeys: IHotkeysSet) => {
+        if (!isMounted) return;
+        setHotkeysSet(hotkeys);
+      });
     }
 
     return () => {
       if (hotkeySet) {
         HotkeysService.actions.applyHotkeySet(hotkeySet);
       }
+      isMounted = false;
     };
   }, [hotkeySet]);
 
@@ -117,13 +114,10 @@ export default function Hotkeys(props: HotkeysProps) {
     return filteredHotkeySet;
   }, [augmentedHotkeySet, searchString]);
 
-  // Highlight search results when the search string changes
-  useEffect(() => highlightSearch(searchString), [searchString]);
-
   if (!hotkeySet) {
     return <div />;
   }
-  const isSearch = !!searchString || scanning;
+  const isSearch = !!searchString;
   const isDualOutputMode = DualOutputService.views.dualOutputMode;
 
   const generalHotkeys = filteredHotkeySet.general;

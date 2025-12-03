@@ -5,6 +5,8 @@ import { Display as OBSDisplay } from '../../services/video';
 import { TDisplayType } from 'services/settings-v2/video';
 import uuid from 'uuid/v4';
 import { useRealmObject } from 'components-react/hooks/realm';
+import Utils from 'services/utils';
+
 interface DisplayProps {
   id?: string;
   sourceId?: string;
@@ -18,7 +20,8 @@ interface DisplayProps {
 }
 
 export default function Display(props: DisplayProps) {
-  const { CustomizationService, VideoSettingsService } = Services;
+  const { CustomizationService, VideoSettingsService, WindowsService } = Services;
+  const windowId = Utils.getWindowId();
 
   const p = {
     paddingSize: 0,
@@ -34,6 +37,7 @@ export default function Display(props: DisplayProps) {
 
     return {
       baseResolution: `${videoSettings?.baseWidth}x${videoSettings?.baseHeight}`,
+      hideDisplay: WindowsService.state[windowId]?.hideStyleBlockers,
     };
   }, false);
 
@@ -43,9 +47,23 @@ export default function Display(props: DisplayProps) {
   const displayEl = useRef<HTMLDivElement>(null);
 
   useEffect(updateDisplay, [p.sourceId, paddingColor]);
-  useEffect(refreshOutputRegion, [v.baseResolution]);
+  useEffect(handleResize, [v.baseResolution]);
+  useEffect(handleHideDisplay, [v.hideDisplay]);
 
-  function refreshOutputRegion() {
+  function handleHideDisplay() {
+    if (v.hideDisplay) {
+      destroyDisplay();
+    } else {
+      if (!obsDisplay.current) {
+        createDisplay();
+      }
+      if (obsDisplay.current) {
+        obsDisplay.current.refreshOutputRegion();
+      }
+    }
+  }
+
+  function handleResize() {
     if (!obsDisplay.current) return;
     const [width, height] = v.baseResolution.split('x');
     obsDisplay.current.resize(Number(width), Number(height));
@@ -55,7 +73,7 @@ export default function Display(props: DisplayProps) {
     p.clickHandler(event);
   }
 
-  async function createDisplay() {
+  function createDisplay() {
     const displayId = uuid();
     obsDisplay.current = new OBSDisplay(displayId, {
       sourceId: p.sourceId,
@@ -64,7 +82,6 @@ export default function Display(props: DisplayProps) {
       renderingMode: p.renderingMode,
       type: p.type,
     });
-    await refreshOutputRegion();
     obsDisplay.current.setShoulddrawUI(p.drawUI);
     obsDisplay.current.onOutputResize(region => p.onOutputResize(region));
     if (displayEl.current) obsDisplay.current.trackElement(displayEl.current);
@@ -77,7 +94,9 @@ export default function Display(props: DisplayProps) {
 
   function updateDisplay() {
     destroyDisplay();
-    createDisplay();
+    if (!v.hideDisplay) {
+      createDisplay();
+    }
 
     return function cleanup() {
       destroyDisplay();

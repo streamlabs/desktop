@@ -7,6 +7,7 @@ import {
   IPlatformService,
   IPlatformState,
   TPlatformCapability,
+  TLiveDockFeature,
 } from './index';
 import { authorizedHeaders, jfetch } from '../../util/requests';
 import {
@@ -39,7 +40,7 @@ import { WindowsService } from 'services/windows';
 import Utils from 'services/utils';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import { DiagnosticsService } from 'services/diagnostics';
-import { ENotificationType, NotificationsService } from 'services/notifications';
+import { ENotificationType } from 'services/notifications';
 import { JsonrpcService } from '../api/jsonrpc';
 import { DismissablesService, EDismissable } from 'services/dismissables';
 
@@ -111,14 +112,19 @@ export class TikTokService
   @Inject() windowsService: WindowsService;
   @Inject() diagnosticsService: DiagnosticsService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
-  @Inject() private notificationsService: NotificationsService;
   @Inject() private jsonrpcService: JsonrpcService;
   @Inject() private dismissablesService: DismissablesService;
 
   readonly apiBase = 'https://open.tiktokapis.com/v2';
   readonly platform = 'tiktok';
   readonly displayName = 'TikTok';
-  readonly capabilities = new Set<TPlatformCapability>(['title', 'viewerCount']);
+  readonly capabilities = new Set<TPlatformCapability>(['title', 'game', 'viewerCount']);
+  readonly liveDockFeatures = new Set<TLiveDockFeature>([
+    'view-stream',
+    'dashboard',
+    'refresh-chat-restreaming',
+    'chat-streaming',
+  ]);
 
   authWindowOptions: Electron.BrowserWindowConstructorOptions = {
     width: 600,
@@ -198,6 +204,28 @@ export class TikTokService
     return this.state.audienceControlsInfo;
   }
 
+  async setupStreamShiftStream(goLiveSettings: IGoLiveSettings) {
+    const settings = goLiveSettings?.streamShiftSettings;
+
+    if (settings && !settings.is_live) {
+      console.error('Stream Shift Error: TikTok is not live');
+      this.postError('Stream Shift Error: TikTok is not live');
+      return;
+    }
+
+    if (settings) {
+      this.SET_LIVE_SCOPE('approved');
+      this.SET_USERNAME(settings.channel_name ?? '');
+      this.UPDATE_STREAM_SETTINGS({
+        title: settings.stream_title,
+      });
+    } else {
+      await this.validatePlatform();
+    }
+
+    this.setPlatformContext('tiktok');
+  }
+
   async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     // return an approved dummy account when testing
     if (Utils.isTestMode() && this.getHasScope('approved')) {
@@ -206,6 +234,11 @@ export class TikTokService
     }
 
     const ttSettings = getDefined(goLiveSettings.platforms.tiktok);
+
+    if (goLiveSettings.streamShift && this.streamingService.views.shouldSwitchStreams) {
+      this.setupStreamShiftStream(goLiveSettings);
+      return;
+    }
 
     if (this.getHasScope('approved')) {
       // update server url and stream key if handling streaming via API
@@ -253,7 +286,8 @@ export class TikTokService
   }
 
   async afterStopStream(): Promise<void> {
-    if (this.state.broadcastId) {
+    if (this.state.broadcastId && !this.streamingService.views.isSwitchingStream) {
+      console.log('Ending TikTok stream', this.state.broadcastId);
       await this.endStream(this.state.broadcastId);
       this.showReplaysNotification();
     }

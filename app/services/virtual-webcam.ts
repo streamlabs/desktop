@@ -1,6 +1,5 @@
 import { ExecuteInWorkerProcess, StatefulService, ViewHandler, mutation } from 'services/core';
 import * as obs from '../../obs-api';
-import fs from 'fs';
 import path from 'path';
 import { getChecksum } from 'util/requests';
 import { byOS, OS } from 'util/operating-systems';
@@ -11,7 +10,9 @@ import * as remote from '@electron/remote';
 import { Subject } from 'rxjs';
 import { VCamOutputType } from 'obs-studio-node';
 import { IOBSOutputSignalInfo } from './core/signals';
+import os from 'os';
 import { SignalsService } from './signals-manager';
+import { $t } from 'services/i18n';
 
 const PLUGIN_PLIST_PATH =
   '/Library/CoreMediaIO/Plug-Ins/DAL/vcam-plugin.plugin/Contents/Info.plist';
@@ -23,6 +24,26 @@ export enum EVirtualWebcamPluginInstallStatus {
   Installed = 'installed',
   NotPresent = 'notPresent',
   Outdated = 'outdated',
+}
+
+enum InstallationErrorCodes {
+  OSSystemExtensionErrorUnknown = 1,
+  OSSystemExtensionErrorMissingEntitlement = 2,
+  OSSystemExtensionErrorUnsupportedParentBundleLocation = 3,
+  OSSystemExtensionErrorExtensionNotFound = 4,
+  OSSystemExtensionErrorExtensionMissingIdentifier = 5,
+  OSSystemExtensionErrorDuplicateExtensionIdentifer = 6,
+  OSSystemExtensionErrorUnknownExtensionCategory = 7,
+  OSSystemExtensionErrorCodeSignatureInvalid = 8,
+  OSSystemExtensionErrorValidationFailed = 9,
+  OSSystemExtensionErrorForbiddenBySystemPolicy = 10,
+  OSSystemExtensionErrorRequestCanceled = 11,
+  OSSystemExtensionErrorRequestSuperseded = 12,
+  OSSystemExtensionErrorAuthorizationRequired = 13,
+  RebootRequired = 100, // slobs-virtualcam-installer custom error
+  UserApprovalRequired = 101, // slobs-virtualcam-installer custom error
+  MacOS13Unavailable = 102,
+  UnknownError = 999, // slobs-virtualcam-installer custom error
 }
 
 export type TVirtualWebcamPluginInstallStatus =
@@ -82,6 +103,74 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
     return new VirtualWebcamViews(this.state);
   }
 
+  private handleUnknownVirtualCamError(error: unknown) {
+    console.error('Caught OBS_service_startVirtualCam error:', error);
+    let errorMessage = '';
+    const darwinVersion = os.release().split('.')[0]; // Extract the major version number
+    const isMacOS15OrGreater = Number(darwinVersion) >= 15;
+    if (isMacOS15OrGreater) {
+      errorMessage = $t(
+        'Unable to start virtual camera.\n\nYou may need to enable permissions. To do this, go to System Settings → General → Login Items & Extensions → Camera Extensions.',
+      );
+    } else {
+      errorMessage = $t(
+        'Unable to start virtual camera.\n\nYou may need to enable permissions. To do this, go to System Settings → Privacy & Security → Security.',
+      );
+    }
+    remote.dialog.showErrorBox($t('Virtual Webcam'), errorMessage);
+  }
+
+  // Returns true if the camera extension is successfully installed. If not, a message is displayed to the user.
+  private tryInstallSystemExtension() {
+    const errorCode = obs.NodeObs.OBS_service_installVirtualCamPlugin();
+    if (errorCode > 0) {
+      const errorMessage = this.getInstallErrorMessage(errorCode);
+      remote.dialog.showErrorBox($t('Virtual Webcam'), errorMessage);
+    }
+    return errorCode === 0;
+  }
+
+  private getInstallErrorMessage(errorCode: number) {
+    const codeName = InstallationErrorCodes[errorCode];
+    console.log(`User experienced virtual cam installation error ${errorCode} value ${codeName}`);
+    let errorMessage = '';
+    switch (errorCode) {
+      case InstallationErrorCodes.OSSystemExtensionErrorUnsupportedParentBundleLocation:
+        errorMessage = $t(
+          "Streamlabs Desktop cannot install the virtual camera if it's not in Applications. Please move Streamlabs Desktop to the Applications directory.",
+        );
+        break;
+      case InstallationErrorCodes.RebootRequired:
+        errorMessage = $t(
+          'The installation of the virtual camera will complete after a system reboot.',
+        );
+        break;
+      case InstallationErrorCodes.UserApprovalRequired:
+        {
+          // Get Darwin kernel version from os.release
+          const darwinVersion = os.release().split('.')[0]; // Extract the major version number
+          const isMacOS15OrGreater = Number(darwinVersion) >= 15;
+          if (isMacOS15OrGreater) {
+            errorMessage = $t(
+              'The virtual camera is not installed.\n\nPlease allow Streamlabs Desktop to install the camera system extension in System Settings → General → Login Items & Extensions → Camera Extensions.\n\nYou may need to restart Streamlabs Desktop if this message still appears afterward.',
+            );
+          } else {
+            errorMessage = $t(
+              'The virtual camera is not installed.\n\nPlease allow Streamlabs Desktop to install system software in System Settings → Privacy & Security → Security.\n\nYou may need to restart Streamlabs Desktop if this message still appears afterward.',
+            );
+          }
+        }
+        break;
+      case InstallationErrorCodes.MacOS13Unavailable:
+        errorMessage = $t('Streamlabs Virtual Webcam feature requires macOS 13 or later.');
+        break;
+      default:
+        errorMessage = $t('An error has occured while installing the virtual camera');
+        break;
+    }
+    return errorMessage;
+  }
+
   /**
    * Set the virtual camera install status
    * @remark This method wraps getting the install status in a try/catch block
@@ -124,20 +213,29 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
       [OS.Mac]: () => {
         this.signalsService.addCallback(this.handleSignalOutput);
 
-        obs.NodeObs.OBS_service_installVirtualCamPlugin();
-        this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
-          console.log(`virtual cam install signalInfo: ${signalInfo.signal}`);
-          this.setInstallStatus();
-          obs.NodeObs.OBS_service_createVirtualCam();
-        });
+        if (this.tryInstallSystemExtension()) {
+          this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
+            console.log(`virtual cam install signalInfo: ${signalInfo.signal}`);
+            this.setInstallStatus();
+            obs.NodeObs.OBS_service_createVirtualCam();
+          });
+        }
       },
     });
   }
 
   @ExecuteInWorkerProcess()
   uninstall() {
-    obs.NodeObs.OBS_service_uninstallVirtualCamPlugin();
-
+    const errorCode = obs.NodeObs.OBS_service_uninstallVirtualCamPlugin();
+    if (errorCode > 0) {
+      const codeName = InstallationErrorCodes[errorCode];
+      console.log(`uninstalling virtual camera plugin error: ${errorCode} code: ${codeName}`);
+      remote.dialog.showErrorBox(
+        $t('Virtual Webcam'),
+        $t('An error has occured while uninstalling the virtual camera'),
+      );
+      return;
+    }
     this.SET_INSTALL_STATUS(EVirtualWebcamPluginInstallStatus.NotPresent);
     this.SET_OUTPUT_TYPE(VCamOutputType.ProgramView);
 
@@ -149,9 +247,12 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
   start() {
     if (this.state.running) return;
 
-    //obs.NodeObs.OBS_service_createVirtualWebcam('Streamlabs Desktop Virtual Webcam');
-    obs.NodeObs.OBS_service_startVirtualCam();
-
+    try {
+      obs.NodeObs.OBS_service_startVirtualCam();
+    } catch (error: unknown) {
+      this.handleUnknownVirtualCamError(error);
+      return;
+    }
     this.SET_RUNNING(true);
     this.runningChanged.next(true);
 

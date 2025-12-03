@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import cx from 'classnames';
 import { EMenuItemKey, ESubMenuItemKey } from 'services/side-nav';
@@ -12,45 +12,33 @@ import { Layout, Button } from 'antd';
 import Scrollable from 'components-react/shared/Scrollable';
 import HelpTip from 'components-react/shared/HelpTip';
 import FeaturesNav from './FeaturesNav';
+import { useRealmObject } from 'components-react/hooks/realm';
 
 const { Sider } = Layout;
 
-export default function SideNav() {
+export default function SideNav(p: { isVisionRunning: boolean }) {
   const { CustomizationService, SideNavService, WindowsService } = Services;
-
-  function updateSubMenu() {
-    // when opening/closing the navbar swap the submenu current menu item
-    // to correctly display selected color
-    const subMenuItems = {
-      [EMenuItemKey.Themes]: ESubMenuItemKey.Scene,
-      [ESubMenuItemKey.Scene]: EMenuItemKey.Themes,
-      [EMenuItemKey.AppStore]: ESubMenuItemKey.AppsStoreHome,
-      [ESubMenuItemKey.AppsStoreHome]: EMenuItemKey.AppStore,
-    };
-    if (Object.keys(subMenuItems).includes(currentMenuItem as EMenuItemKey)) {
-      // TODO: index
-      // @ts-ignore
-      setCurrentMenuItem(subMenuItems[currentMenuItem]);
-    }
-  }
 
   const {
     currentMenuItem,
     setCurrentMenuItem,
-    leftDock,
     isOpen,
     toggleMenuStatus,
     updateStyleBlockers,
+    hideStyleBlockers,
   } = useVuex(() => ({
     currentMenuItem: SideNavService.views.currentMenuItem,
     setCurrentMenuItem: SideNavService.actions.setCurrentMenuItem,
-    leftDock: CustomizationService.state.leftDock,
     isOpen: SideNavService.views.isOpen,
     toggleMenuStatus: SideNavService.actions.toggleMenuStatus,
     updateStyleBlockers: WindowsService.actions.updateStyleBlockers,
+    hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
   }));
 
   const sider = useRef<HTMLDivElement | null>(null);
+  const isMounted = useRef(false);
+
+  const leftDock = useRealmObject(CustomizationService.state).leftDock;
 
   const siderMinWidth: number = 50;
   const siderMaxWidth: number = 200;
@@ -70,11 +58,42 @@ export default function SideNav() {
     });
   });
 
-  useLayoutEffect(() => {
+  useEffect(() => {
+    isMounted.current = true;
+    if (!sider || !sider.current) return;
+
     if (sider && sider?.current) {
       resizeObserver.observe(sider?.current);
+
+      if (hideStyleBlockers) {
+        updateStyleBlockers('main', false);
+      }
     }
+
+    return () => {
+      if (sider && sider?.current) {
+        resizeObserver.disconnect();
+      }
+
+      isMounted.current = false;
+    };
   }, [sider]);
+
+  const updateSubMenu = useCallback(() => {
+    // when opening/closing the navbar swap the submenu current menu item
+    // to correctly display selected color
+    const subMenuItems = {
+      [EMenuItemKey.Themes]: ESubMenuItemKey.Scene,
+      [ESubMenuItemKey.Scene]: EMenuItemKey.Themes,
+      [EMenuItemKey.AppStore]: ESubMenuItemKey.AppsStoreHome,
+      [ESubMenuItemKey.AppsStoreHome]: EMenuItemKey.AppStore,
+    };
+    if (Object.keys(subMenuItems).includes(currentMenuItem as EMenuItemKey)) {
+      // TODO: index
+      // @ts-ignore
+      setCurrentMenuItem(subMenuItems[currentMenuItem]);
+    }
+  }, [currentMenuItem]);
 
   return (
     <Layout hasSider className="side-nav">
@@ -94,7 +113,7 @@ export default function SideNav() {
           <FeaturesNav />
 
           {/* bottom navigation menu */}
-          <NavTools />
+          <NavTools isVisionRunning={p.isVisionRunning} />
         </Scrollable>
 
         <LoginHelpTip />

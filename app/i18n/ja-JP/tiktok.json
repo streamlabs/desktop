@@ -21,10 +21,11 @@
   "TikTok Category": "TikTokカテゴリー",
   "TikTok Live Access not granted. Click here to learn more.": "TikTok Liveにアクセスできません。こちらをクリックして詳細をご覧ください。",
   "Only 32 characters of your title will display on TikTok": "TikTokに表示されるタイトルは32文字のみです",
-  "You may be eligible for TikTok Live Access. <apply>Apply here.</apply>": "TikTok Liveにアクセスできる場合があります。<apply>こちらからお申込みください。</apply>",
+  "You may be eligible for TikTok Live Access. Apply here.": "TikTok Liveにアクセスできる場合があります。こちらでお申し込みください。",
   "Click to view TikTok Replay in your browser.": "クリックしてTikTokのリプレイをブラウザで見ましょう。",
   "TikTok Stream Error": "TikTokストリームエラー",
   "Couldn't confirm TikTok Live Access. Apply for Live Permissions below": "TikTok Liveアクセスを確認できませんでした。以下でLive許可を申請してください",
-  "Connect your TikTok account": "Connect your TikTok account",
-  "Connect your TikTok account to stream to TikTok and one other platform for free. Haven't applied to stream on TikTok Live yet? <link>Start the process here</link>.": "Connect your TikTok account to stream to TikTok and one other platform for free. Haven't applied to stream on TikTok Live yet? <link>Start the process here</link>."
+  "Connect your TikTok account": "TikTokアカウントと接続",
+  "Connect your TikTok account to stream to TikTok and one other platform for free. Haven't applied to stream on TikTok Live yet? <link>Start the process here</link>.": "TikTokアカウントに接続して、TikTokともう1つ別のプラットフォームに無料でストリーミングできます。TikTok Liveでのストリーム配信をまだ申し込んでいない場合は、<link>こちらから処理を開始してください</link>。",
+  "Reapply for TikTok Live Permission. Reapply here.": "TikTok Live の許可を再度お申し込みください。こちらから再度お申し込みください。"
 }

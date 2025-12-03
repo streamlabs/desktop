@@ -4,8 +4,7 @@ import { UserService } from 'services/user';
 import { authorizedHeaders, jfetch } from 'util/requests';
 import { HostsService } from './hosts';
 import * as remote from '@electron/remote';
-import electron from 'electron';
-import { UsageStatisticsService } from './usage-statistics';
+import { TAnalyticsEvent, TUltraRefl, UsageStatisticsService } from './usage-statistics';
 import { byOS, OS } from 'util/operating-systems';
 
 interface ILoginTokenResponse {
@@ -52,16 +51,19 @@ export class MagicLinkService extends Service {
    * open the prime onboarding in the browser
    * @param refl a referral tag for analytics
    */
-  async linkToPrime(refl: string) {
+  async linkToPrime(refl: TUltraRefl, event?: TAnalyticsEvent) {
     // TODO: this is only here to acommodate ultra checkout A/B test requiring OS
     // remove this and the parameter from {getDashboardMagicLink} after.
     const os = byOS({ [OS.Windows]: 'windows', [OS.Mac]: 'mac' });
+
+    this.usageStatisticsService.recordUltra(refl, event);
 
     if (!this.userService.views.isLoggedIn) {
       return remote.shell.openExternal(
         `https://${this.hostsService.streamlabs}/ultra?refl=${refl}&os=${os}`,
       );
     }
+
     try {
       const link = await this.getDashboardMagicLink('prime', refl, os);
       remote.shell.openExternal(link);

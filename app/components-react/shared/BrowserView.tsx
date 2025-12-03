@@ -97,11 +97,27 @@ export default function BrowserView(p: BrowserViewProps) {
 
   useEffect(() => {
     loadUrl();
-  }, [theme]);
+  }, [theme, p.src]);
 
   function destroyBrowserView() {
     if (browserView.current) {
       remote.getCurrentWindow().removeBrowserView(browserView.current);
+
+      if (!browserView.current.webContents) {
+        browserView.current = null;
+        return;
+      }
+
+      // Attempt destruction of `webContents`
+      browserView.current.webContents.close();
+
+      if (!browserView.current.webContents) {
+        browserView.current = null;
+        return;
+      }
+
+      // If there was an error destroying the webContents, force destruction
+      // to prevent memory leaks.
       // See: https://github.com/electron/electron/issues/26929
       // @ts-ignore
       browserView.current.webContents.destroy();

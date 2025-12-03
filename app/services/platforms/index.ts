@@ -151,6 +151,11 @@ export enum EPlatformCallResult {
    * The user needs to re-login to update Kick scope.
    */
   KickScopeOutdated,
+
+  /**
+   * Token expired
+   */
+  TokenExpired,
 }
 
 export type TStartStreamOptions =
@@ -174,6 +179,7 @@ export interface IPlatformState {
 export interface IPlatformService {
   capabilities: Set<TPlatformCapability>;
   hasCapability<T extends TPlatformCapability>(capability: T): this is TPlatformCapabilityMap[T];
+  hasLiveDockFeature(feature: TLiveDockFeature): boolean;
 
   authWindowOptions: Electron.BrowserWindowConstructorOptions;
 
@@ -205,6 +211,10 @@ export interface IPlatformService {
 
   setupDualStream?: (options: IGoLiveSettings) => Promise<void>;
 
+  setupStreamShiftStream?: (options: IGoLiveSettings) => Promise<void>;
+
+  postError?: (message: string) => void;
+
   fetchNewToken: () => Promise<void>;
 
   getHeaders: (
@@ -222,6 +232,7 @@ export interface IPlatformService {
   readonly mergeUrl: string;
   readonly streamPageUrl: string;
   readonly chatUrl: string;
+  readonly dashboardUrl?: string;
 
   /**
    * the list of widgets supported by the platform
@@ -244,6 +255,15 @@ export interface IPlatformAuth {
 export interface IUserInfo {
   username?: string;
 }
+
+export type TLiveDockFeature =
+  | 'chat-offline'
+  | 'chat-streaming'
+  | 'dashboard'
+  | 'view-stream'
+  | 'refresh-chat'
+  | 'refresh-chat-streaming'
+  | 'refresh-chat-restreaming';
 
 export enum EPlatform {
   Twitch = 'twitch',

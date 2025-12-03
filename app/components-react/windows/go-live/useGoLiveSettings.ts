@@ -1,5 +1,5 @@
 import { IGoLiveSettings, StreamInfoView, TDisplayOutput } from '../../../services/streaming';
-import { TPlatform } from '../../../services/platforms';
+import { platformList, TPlatform } from '../../../services/platforms';
 import { ICustomStreamDestination } from 'services/settings/streaming';
 import { Services } from '../../service-provider';
 import cloneDeep from 'lodash/cloneDeep';
@@ -11,6 +11,7 @@ import { useForm } from '../../shared/inputs/Form';
 import { getDefined } from '../../../util/properties-type-guards';
 import isEqual from 'lodash/isEqual';
 import { TDisplayType } from 'services/settings-v2';
+import partition from 'lodash/partition';
 
 type TCommonFieldName = 'title' | 'description';
 
@@ -132,6 +133,13 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
   }
 
   /**
+   * Enable/Disable Stream Shift mode
+   */
+  toggleStreamShift(status: boolean) {
+    this.updateSettings({ streamShift: status });
+  }
+
+  /**
    * Set a common field like title or description for all eligible platforms
    **/
   updateCommonFields(
@@ -233,12 +241,19 @@ export class GoLiveSettingsModule {
       });
     }
 
+    /**
+     * If the user is in dual output mode, we need to ensure the stream switcher is disabled
+     */
+    const { dualOutputMode } = DualOutputService.state;
+    if (dualOutputMode && settings.streamShift) {
+      settings.streamShift = false;
+    }
+
     this.state.updateSettings(settings);
 
     /* If the user was in dual output before but doesn't have restream
      * we should disable one of the platforms if they have two enabled
      */
-    const { dualOutputMode } = DualOutputService.state;
     const { canEnableRestream } = RestreamService.views;
 
     // Tiktok and Kick can stay active
@@ -344,6 +359,18 @@ export class GoLiveSettingsModule {
       [],
     );
   }
+
+  get unlinkedPlatforms() {
+    const platforms = (platformList as TPlatform[]).filter(
+      p => !this.state.linkedPlatforms.includes(p),
+    );
+
+    const [alwaysShown, unlinked] = partition(platforms, p =>
+      this.state.alwaysShownPlatforms.includes(p),
+    );
+    return [...alwaysShown, ...unlinked];
+  }
+
   get primaryChat() {
     const primaryPlatform = Services.UserService.views.platform!;
     // this is migration-like code for users with old primary platform deselected (i.e me)
@@ -356,6 +383,11 @@ export class GoLiveSettingsModule {
 
   setPrimaryChat(platform: TPlatform) {
     Services.UserService.actions.setPrimaryPlatform(platform);
+  }
+
+  setStreamShift(status: boolean) {
+    this.state.toggleStreamShift(status);
+    this.save(this.state.settings);
   }
 
   /**

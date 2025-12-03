@@ -4,6 +4,7 @@ import {
   IPlatformRequest,
   IPlatformService,
   IPlatformState,
+  TLiveDockFeature,
   TPlatformCapability,
 } from '.';
 import { HostsService } from 'services/hosts';
@@ -68,6 +69,7 @@ interface ITwitchOAuthValidateResponse {
 interface ITwitchServiceState extends IPlatformState {
   hasUpdateTagsPermission: boolean;
   hasPollsPermission: boolean;
+  hasChatWritePermission: boolean;
   settings: ITwitchStartStreamOptions;
 }
 
@@ -89,6 +91,7 @@ export class TwitchService
     ...BasePlatformService.initialState,
     hasUpdateTagsPermission: false,
     hasPollsPermission: false,
+    hasChatWritePermission: false,
     settings: {
       title: '',
       game: '',
@@ -118,6 +121,8 @@ export class TwitchService
     'viewerCount',
   ]);
 
+  readonly liveDockFeatures = new Set<TLiveDockFeature>(['chat-offline', 'refresh-chat']);
+
   authWindowOptions: Electron.BrowserWindowConstructorOptions = {
     width: 600,
     height: 800,
@@ -138,6 +143,8 @@ export class TwitchService
         this.validatePollsScope();
         // Check for updated tags scopes
         this.validateTagsScope();
+        // Check for chat write scope
+        this.validateChatWriteScope();
       }
     });
   }
@@ -149,6 +156,7 @@ export class TwitchService
       'channel_editor',
       'user:edit:broadcast',
       'channel:manage:broadcast',
+      'user:write:chat',
     ];
 
     const query =
@@ -183,6 +191,16 @@ export class TwitchService
   }
 
   async beforeGoLive(goLiveSettings?: IGoLiveSettings, context?: TDisplayType) {
+    // If the stream has switched from another device, a new broadcast does not need to be created
+    if (
+      goLiveSettings &&
+      goLiveSettings.streamShift &&
+      this.streamingService.views.shouldSwitchStreams
+    ) {
+      await this.setupStreamShiftStream(goLiveSettings);
+      return;
+    }
+
     if (
       this.streamSettingsService.protectedModeEnabled &&
       this.streamSettingsService.isSafeToModifyStreamKey()
@@ -305,7 +323,6 @@ export class TwitchService
     const tags: string[] = this.twitchTagsService.views.hasTags
       ? this.twitchTagsService.views.tags
       : [];
-    this.SET_PREPOPULATED(true);
 
     this.SET_STREAM_SETTINGS({
       tags,
@@ -315,6 +332,8 @@ export class TwitchService
       isEnhancedBroadcasting: this.settingsService.isEnhancedBroadcasting(),
       contentClassificationLabels: channelInfo.content_classification_labels,
     });
+
+    this.SET_PREPOPULATED(true);
   }
 
   fetchUserInfo() {
@@ -329,6 +348,55 @@ export class TwitchService
       'twitch',
       `${this.apiBase}/helix/streams?user_id=${this.twitchId}`,
     ).then(json => json.data[0]?.viewer_count ?? 0);
+  }
+
+  async setupStreamShiftStream(goLiveSettings?: IGoLiveSettings) {
+    const settings = goLiveSettings?.streamShiftSettings;
+
+    if (settings && !settings.is_live) {
+      console.error('Stream Shift Error: Twitch is not live');
+      this.postError('Stream Shift Error: Twitch is not live');
+      return;
+    }
+
+    const [channelInfo] = await Promise.all([
+      this.requestTwitch<{
+        data: {
+          title: string;
+          game_name: string;
+          is_branded_content: boolean;
+          content_classification_labels: string[];
+        }[];
+      }>(`${this.apiBase}/helix/channels?broadcaster_id=${this.twitchId}`).then(json => {
+        return {
+          title: settings?.stream_title ?? json.data[0].title,
+          game: json.data[0].game_name,
+          is_branded_content: json.data[0].is_branded_content,
+          content_classification_labels: json.data[0].content_classification_labels,
+        };
+      }),
+      this.requestTwitch<ITwitchContentClassificationLabelsRootResponse>(
+        `${this.apiBase}/helix/content_classification_labels`,
+      ).then(json => this.twitchContentClassificationService.setLabels(json)),
+    ]);
+
+    const title = settings?.stream_title ?? channelInfo.title;
+    const game = settings?.game_name ?? channelInfo.game;
+
+    const tags: string[] = this.twitchTagsService.views.hasTags
+      ? this.twitchTagsService.views.tags
+      : [];
+
+    this.SET_STREAM_SETTINGS({
+      tags,
+      title,
+      game,
+      isBrandedContent: channelInfo.is_branded_content,
+      isEnhancedBroadcasting: this.settingsService.isEnhancedBroadcasting(),
+      contentClassificationLabels: channelInfo.content_classification_labels,
+    });
+
+    this.setPlatformContext('twitch');
   }
 
   fetchFollowers(): Promise<number> {
@@ -472,6 +540,23 @@ export class TwitchService
     this.SET_HAS_POLLS_PERMISSION(hasPollsPermission);
   }
 
+  async validateChatWriteScope() {
+    const hasChatWritePermission = await this.hasScope('user:write:chat');
+    this.SET_HAS_CHAT_WRITE_PERMISSION(hasChatWritePermission);
+  }
+
+  async sendChatMessage(msg: string) {
+    this.requestTwitch({
+      url: `${this.apiBase}/helix/chat/messages`,
+      method: 'POST',
+      body: JSON.stringify({
+        broadcaster_id: this.twitchId,
+        sender_id: this.twitchId,
+        message: msg,
+      }),
+    });
+  }
+
   hasScope(scope: TTwitchOAuthScope): Promise<boolean> {
     // prettier-ignore
     return platformAuthorizedRequest('twitch', 'https://id.twitch.tv/oauth2/validate').then(
@@ -503,5 +588,10 @@ export class TwitchService
   @mutation()
   private SET_HAS_TAGS_PERMISSION(hasUpdateTagsPermission: boolean) {
     this.state.hasUpdateTagsPermission = hasUpdateTagsPermission;
+  }
+
+  @mutation()
+  private SET_HAS_CHAT_WRITE_PERMISSION(hasChatWritePermission: boolean) {
+    this.state.hasChatWritePermission = hasChatWritePermission;
   }
 }

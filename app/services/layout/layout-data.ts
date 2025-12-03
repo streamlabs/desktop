@@ -11,23 +11,13 @@ export enum ELayout {
   Pyramid = 'Pyramid',
 }
 
-export enum ELayoutElement {
-  Minifeed = 'Minifeed',
-  LegacyEvents = 'LegacyEvents',
-  Display = 'Display',
-  Mixer = 'Mixer',
-  Scenes = 'Scenes',
-  Sources = 'Sources',
-  StreamPreview = 'StreamPreview',
-  RecordingPreview = 'RecordingPreview',
-  Browser = 'Browser',
-}
+export type TLayout = `${ELayout}`;
 
 type ILayoutData = {
   [Layout in ELayout]: {
     resizeDefaults: { bar1: number; bar2: number };
     className: string;
-    component: string;
+    component: TLayout;
   };
 };
 
@@ -74,10 +64,24 @@ export const LAYOUT_DATA: ILayoutData = {
   },
 };
 
+export enum ELayoutElement {
+  Minifeed = 'Minifeed',
+  LegacyEvents = 'LegacyEvents',
+  Display = 'Display',
+  Mixer = 'Mixer',
+  Scenes = 'Scenes',
+  Sources = 'Sources',
+  StreamPreview = 'StreamPreview',
+  RecordingPreview = 'RecordingPreview',
+  Browser = 'Browser',
+}
+
+export type TLayoutElement = `${ELayoutElement}`;
+
 type IElementData = {
   [Element in ELayoutElement]: {
     title: string;
-    component: string;
+    component: TLayoutElement;
   };
 };
 
@@ -88,7 +92,7 @@ export const ELEMENT_DATA = (): IElementData => ({
   },
   [ELayoutElement.Minifeed]: {
     title: $t('Mini Feed'),
-    component: 'MiniFeed',
+    component: 'Minifeed',
   },
   [ELayoutElement.Mixer]: {
     title: $t('Audio Mixer'),
@@ -96,11 +100,11 @@ export const ELEMENT_DATA = (): IElementData => ({
   },
   [ELayoutElement.Scenes]: {
     title: $t('Scene Selector'),
-    component: 'SceneSelectorElement',
+    component: 'Scenes',
   },
   [ELayoutElement.Sources]: {
     title: $t('Source Selector'),
-    component: 'SourceSelectorElement',
+    component: 'Sources',
   },
   [ELayoutElement.LegacyEvents]: {
     title: $t('Legacy Events'),
