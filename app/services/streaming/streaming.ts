@@ -44,7 +44,12 @@ import {
 } from './streaming-api';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import { $t } from 'services/i18n';
-import { getPlatformService, TPlatform, TStartStreamOptions } from 'services/platforms';
+import {
+  getPlatformService,
+  platformLabels,
+  TPlatform,
+  TStartStreamOptions,
+} from 'services/platforms';
 import { UserService } from 'services/user';
 import {
   ENotificationSubType,
@@ -148,6 +153,7 @@ export class StreamingService
     replayBufferStatusTime: new Date().toISOString(),
     selectiveRecording: false,
     dualOutputMode: false,
+    enhancedBroadcasting: false,
     info: {
       settings: null,
       lifecycle: 'empty',
@@ -560,7 +566,7 @@ export class StreamingService
       try {
         await this.runCheck(checkName, async () => {
           // enable restream on the backend side
-          if (!this.restreamService.state.enabled) await this.restreamService.setEnabled(true);
+          await this.restreamService.setEnabled(true);
 
           await this.restreamService.beforeGoLive();
         });
@@ -638,6 +644,19 @@ export class StreamingService
         !isStreamShiftStream
           ? undefined
           : settings;
+
+      // Note: Enhanced broadcasting setting persist in two places during the go live flow:
+      // in the Twitch service and in osn. The setting in the Twitch service is persisted
+      // between streams in order to restore the user's preferences for when they go live with
+      // Twitch dual stream, which requires enhanced broadcasting to be enabled. The setting
+      // in osn is what actually determines if the stream will use enhanced broadcasting.
+      if (platform === 'twitch') {
+        const isEnhancedBroadcasting =
+          (settings.platforms.twitch && settings.platforms.twitch.isEnhancedBroadcasting) ||
+          this.views.getIsEnhancedBroadcasting();
+
+        this.SET_ENHANCED_BROADCASTING(isEnhancedBroadcasting);
+      }
 
       // don't update settings for twitch in unattendedMode
       await this.runCheck(platform, () => service.beforeGoLive(settingsForPlatform, display));
@@ -1025,7 +1044,7 @@ export class StreamingService
       // horizontal stream
       if (this.views.isTwitchDualStreaming) {
         console.log('Start Twitch Dual Stream');
-        NodeObs.OBS_service_startStreaming('horizontal');
+        NodeObs.OBS_service_startStreaming('both');
       } else {
         NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
         NodeObs.OBS_service_setVideoInfo(verticalContext, 'vertical');
@@ -1197,6 +1216,11 @@ export class StreamingService
 
       if (this.views.isStreamShiftMode) {
         this.restreamService.resetStreamShift();
+      }
+
+      // Reset enhanced broadcasting after streaming stops to prevent it from being accidentally enabled for the next stream
+      if (this.state.enhancedBroadcasting) {
+        this.SET_ENHANCED_BROADCASTING(false);
       }
 
       this.UPDATE_STREAM_INFO({ lifecycle: 'empty' });
@@ -1672,6 +1696,24 @@ export class StreamingService
       }
     }
 
+    // Add display information for dual output mode
+    if (this.views.isDualOutputMode) {
+      const platforms =
+        info.service === 'vertical'
+          ? this.views.verticalStream.map(p => platformLabels(p))
+          : this.views.horizontalStream.map(p => platformLabels(p));
+
+      const stream =
+        info.service === 'vertical'
+          ? $t('Please confirm %{platforms} in the Vertical stream.', {
+              platforms,
+            })
+          : $t('Please confirm %{platforms} in the Horizontal stream.', {
+              platforms,
+            });
+      errorText = [errorText, stream].join('\n\n');
+    }
+
     const buttons = [$t('OK')];
 
     const title = {
@@ -1842,5 +1884,10 @@ export class StreamingService
   @mutation()
   private SET_GO_LIVE_SETTINGS(settings: IGoLiveSettings) {
     this.state.info.settings = settings;
+  }
+
+  @mutation()
+  private SET_ENHANCED_BROADCASTING(enabled: boolean) {
+    this.state.enhancedBroadcasting = enabled;
   }
 }

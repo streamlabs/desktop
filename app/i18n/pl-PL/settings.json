@@ -149,7 +149,7 @@
   "An error has occured while uninstalling the virtual camera": "Wystąpił błąd podczas odinstalowywania kamery wirtualnej.",
   "Streamlabs Desktop cannot install the virtual camera if it's not in Applications. Please move Streamlabs Desktop to the Applications directory.": "Aplikacja Streamlabs Desktop nie może zainstalować kamery wirtualnej, jeśli nie znajduje się ona w Aplikacjach. Przenieś aplikację Streamlabs Desktop do katalogu Aplikacje.",
   "The installation of the virtual camera will complete after a system reboot.": "Instalacja kamery wirtualnej zostanie zakończona po ponownym uruchomieniu systemu.",
-  "Streamlabs Virtual Webcam feature requires macOS 13 or later.": "Streamlabs Virtual Webcam feature requires macOS 13 or later.",
+  "Streamlabs Virtual Webcam feature requires macOS 13 or later.": "Funkcja wirtualnej kamery internetowej Streamlabs wymaga systemu macOS 13 lub nowszego.",
   "Output Type": "Rodzaj informacji wyjściowych",
   "Output Selection": "Wybór informacji wyjściowych",
   "Output Source": "Źródło informacji wyjściowych",
@@ -279,9 +279,9 @@
   "Apply Primary": "Zastosuj Główne",
   "Output Resolution": "Rozdzielczość wyjściowa",
   "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "Nie można uruchomić funkcji dwóch wyjść Dual Output. Zaktualizuj Ustawienia transmisji, wybierając opcję „Użyj zalecanych ustawień”.",
-  "Mobile": "Mobile",
-  "Mobile Streaming": "Mobile Streaming",
-  "Remote Controller": "Remote Controller",
-  "Third Party Connections": "Third Party Connections",
-  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "Stream your phone camera or mobile game on the go with Streamlabs Mobile App."
+  "Mobile": "Mobilne",
+  "Mobile Streaming": "Streaming z komórki",
+  "Remote Controller": "Kontroler zdalnego sterowania",
+  "Third Party Connections": "Połączenia zewnętrzne",
+  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "Dzięki aplikacji Streamlabs Mobile możesz przesyłać strumieniowo treści z kamery telefonu lub gry mobilnej w trakcie podróży."
 }

@@ -13,5 +13,6 @@
   "Import from Twitch Studio": "Importeren vanuit Twitch Studio",
   "Import your scenes and sources from Twitch Studio.": "Importeer je scènes en bronnen vanuit Twitch Studio.",
   "Importing Your Existing Settings From Twitch Studio": "Je bestaande instellingen importeren uit Twitch Studio",
-  "Importing from Twitch Studio is an experimental feature under active development. Some source types are unable to be imported, and not all settings will be carried over.": "Importeren vanuit Twitch Studio is een experimentele functie die in actieve ontwikkeling is. Sommige brontypes kunnen niet worden geïmporteerd en niet alle instellingen worden overgenomen."
+  "Importing from Twitch Studio is an experimental feature under active development. Some source types are unable to be imported, and not all settings will be carried over.": "Importeren vanuit Twitch Studio is een experimentele functie die in actieve ontwikkeling is. Sommige brontypes kunnen niet worden geïmporteerd en niet alle instellingen worden overgenomen.",
+  "Stream Shift Error: Twitch is not live": "Stream Shift Error: Twitch is not live"
 }

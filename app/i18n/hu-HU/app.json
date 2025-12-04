@@ -18,5 +18,6 @@
   "Unknown error, please contact support": "Unknown error, please contact support",
   "Custom Destination": "Custom Destination",
   "This app is currently popped out in another window.": "This app is currently popped out in another window.",
-  "Error granting chat permissions.": "Error granting chat permissions."
+  "Error granting chat permissions.": "Error granting chat permissions.",
+  "Authentication Error": "Authentication Error"
 }

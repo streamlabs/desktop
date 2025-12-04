@@ -29,7 +29,6 @@ import {
 } from './twitch/content-classification';
 import { ENotificationType, NotificationsService } from '../notifications';
 import { $t } from '../i18n';
-import { getDefined } from 'util/properties-type-guards';
 
 export interface ITwitchStartStreamOptions {
   title: string;
@@ -241,6 +240,9 @@ export class TwitchService
           }
         }
 
+        // Update enhanced broadcasting setting based on go live settings
+        this.settingsService.setEnhancedBroadcasting(channelInfo.isEnhancedBroadcasting);
+
         await this.putChannelInfo(channelInfo);
       }
     } else if (this.streamingService.views.isTwitchDualStreaming) {
@@ -262,6 +264,10 @@ export class TwitchService
   }
 
   async setupDualStream(goLiveSettings?: IGoLiveSettings) {
+    if (!this.streamingService.views.isTwitchDualStreaming) {
+      return;
+    }
+
     // Enhanced broadcasting is required for dual streaming
     this.settingsService.setEnhancedBroadcasting(true);
   }
@@ -364,7 +370,7 @@ export class TwitchService
       game: channelInfo.game,
       isBrandedContent: channelInfo.is_branded_content,
       isEnhancedBroadcasting:
-        this.state.settings.isEnhancedBroadcasting ?? this.settingsService.isEnhancedBroadcasting(),
+        this.state.settings.isEnhancedBroadcasting || this.settingsService.isEnhancedBroadcasting(),
       contentClassificationLabels: channelInfo.content_classification_labels,
     });
 

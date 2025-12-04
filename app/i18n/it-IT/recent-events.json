@@ -81,6 +81,6 @@
   "has gifted a sub to": "ha regalato un'iscrizione a",
   "has resubscribed for %{streak} months in a row! (%{months} total)": "si è iscritto nuovamente per %{streak} mesi consecutivi. (%{months} mesi in totale)",
   "has resubscribed for %{months} months": "si è iscritto nuovamente per %{months} mesi",
-  "Disable Chat Box Notifications": "Disable Chat Box Notifications",
-  "Enable Chat Box Notifications": "Enable Chat Box Notifications"
+  "Disable Chat Box Notifications": "Disabilita le notifiche della Chat Box",
+  "Enable Chat Box Notifications": "Abilita le notifiche della Chat Box"
 }
