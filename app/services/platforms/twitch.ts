@@ -241,10 +241,10 @@ export class TwitchService
           } catch (e: unknown) {
             console.error('Error setting up dual stream:', e);
           }
+        } else {
+          // Update enhanced broadcasting setting based on go live settings
+          this.settingsService.setEnhancedBroadcasting(channelInfo.isEnhancedBroadcasting);
         }
-
-        // Update enhanced broadcasting setting based on go live settings
-        this.settingsService.setEnhancedBroadcasting(channelInfo.isEnhancedBroadcasting);
 
         await this.putChannelInfo(channelInfo);
       }
