@@ -18,5 +18,6 @@
   "Unknown error, please contact support": "Neznámá chyba, kontaktujte prosím podporu",
   "Custom Destination": "Vlastní cílové umístění",
   "This app is currently popped out in another window.": "Tato aplikace je v současné době otevřena v jiném okně.",
-  "Error granting chat permissions.": "Chyba při udělování oprávnění k chatu."
+  "Error granting chat permissions.": "Chyba při udělování oprávnění k chatu.",
+  "Authentication Error": "Chyba ověření"
 }

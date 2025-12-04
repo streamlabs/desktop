@@ -39,5 +39,14 @@
   "DVR controls enable the viewer to control the video playback experience by pausing, rewinding, or fast forwarding content": "Os controlos de DVR permitem que o espetador controle a experiência de reprodução de vídeo colocando em pausa, retrocedendo ou avançando no conteúdo",
   "Auto-start is disabled for your broadcast. You should manually publish your stream from Youtube Studio": "O início automático está desativado para a sua transmissão. Deve publicar manualmente a sua transmissão a partir do YouTube Studio",
   "Made for kids": "Criado para crianças",
-  "Features like personalized ads and live chat won't be available on live streams made for kids.": "As funcionalidades, como os anúncios personalizados e o chat ao vivo, não estarão disponíveis nas transmissões ao vivo criadas para crianças."
+  "Features like personalized ads and live chat won't be available on live streams made for kids.": "As funcionalidades, como os anúncios personalizados e o chat ao vivo, não estarão disponíveis nas transmissões ao vivo criadas para crianças.",
+  "YouTube token has expired, re-login or re-merge YouTube account": "O token do YouTube expirou. Volta a iniciar sessão ou associa novamente a conta do YouTube",
+  "Thumbnail image content is invalid.": "O conteúdo da imagem de miniatura é inválido.",
+  "Thumbnail file does not include image content.": "O ficheiro de miniatura não inclui conteúdo de imagem.",
+  "Permission missing to upload thumbnails.": "Sem permissão para carregar miniaturas.",
+  "Video does not exist. Thumbnail upload failed.": "O vídeo não existe. Falha ao carregar a miniatura.",
+  "Exceeded thumbnail upload quota. Please try again later.": "Cota de carregamento de miniaturas excedida. Tenta novamente mais tarde.",
+  "YouTube thumbnail image is too large. Maximum size is 2MB.": "A imagem de miniatura do YouTube é demasiado grande. O tamanho máximo é de 2 MB.",
+  "Please upload thumbnail manually on YouTube.": "Carrega a miniatura manualmente para o YouTube.",
+  "Stream Shift Error: YouTube is not live": "Stream Shift Error: YouTube is not live"
 }

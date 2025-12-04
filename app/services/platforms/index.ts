@@ -209,7 +209,7 @@ export interface IPlatformService {
 
   scheduleStream?: (startTime: number, info: TStartStreamOptions) => Promise<any>;
 
-  setupDualStream?: (options: IGoLiveSettings) => Promise<void>;
+  setupDualStream?: (options: IGoLiveSettings) => Promise<any>;
 
   setupStreamShiftStream?: (options: IGoLiveSettings) => Promise<void>;
 

@@ -434,10 +434,12 @@
   "Virtual camera output type": "Jenis keluaran kamera virtual",
   "Unmute your Microphone source in Mixer": "Membunyikan sumber Mikrofon Anda di Mixer",
   "Your Microphone is unmuted but has no signal": "Mikrofon Anda tidak dibisukan, tetapi tidak memiliki sinyal",
-  "Victory & Defeat": "Victory & Defeat",
-  "Dynamic game animation": "Dynamic game animation",
-  "Dynamic real time animation based on your game & widget events.  Streamlabs Vision powered events include:": "Dynamic real time animation based on your game & widget events.  Streamlabs Vision powered events include:",
-  "Kills & Eliminations": "Kills & Eliminations",
-  "Health changes": "Health changes",
-  "Search...": "Cari..."
+  "Victory & Defeat": "Kemenangan & Kekalahan",
+  "Dynamic game animation": "Animasi permainan yang dinamis",
+  "Dynamic real time animation based on your game events, powered by Streamlabs AI. Install Reactive Overlays from our Library to see what it's capable of!": "Animasi waktu nyata yang dinamis berdasarkan kejadian game Anda, didukung oleh Streamlabs AI. Instal Reactive Overlay dari Perpustakaan kami untuk melihat kemampuannya!",
+  "Kills & Eliminations": "Pembunuhan & Eliminasi",
+  "Health changes": "Perubahan kesehatan",
+  "Search...": "Cari...",
+  "Virtual Cam": "Kamera Virtual",
+  "Virtual Cam Error": "Kesalahan Kamera Virtual"
 }
