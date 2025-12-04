@@ -55,7 +55,7 @@ export class DefaultHardwareService extends PersistentStatefulService<IDefaultHa
       if (!device.id) return;
       this.sourcesService.createSource(
         device.id,
-        byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'av_capture_input' }),
+        byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'macos_avcapture' }),
         byOS({ [OS.Windows]: { video_device_id: device.id }, [OS.Mac]: { device: device.id } }),
         {
           isTemporary: true,
@@ -73,7 +73,7 @@ export class DefaultHardwareService extends PersistentStatefulService<IDefaultHa
     return this.sourcesService.views.sources
       .filter(
         source =>
-          source.type === byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'av_capture_input' }) &&
+          source.type === byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'macos_avcapture' }) &&
           this.videoDevices.find(device => device.id === source.getSettings()[deviceProperty]),
       )
       .map(source => ({
@@ -87,14 +87,14 @@ export class DefaultHardwareService extends PersistentStatefulService<IDefaultHa
 
     let found = this.sourcesService.views.sources.find(
       source =>
-        source.type === byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'av_capture_input' }) &&
+        source.type === byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'macos_avcapture' }) &&
         source.getSettings()[deviceProperty] === deviceId,
     );
 
     if (!found) {
       found = this.sourcesService.views.temporarySources.find(
         source =>
-          source.type === byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'av_capture_input' }) &&
+          source.type === byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'macos_avcapture' }) &&
           source.getSettings()[deviceProperty] === deviceId,
       );
     }

@@ -3,8 +3,7 @@
   "Ad Layout": "Mise en page de la publicité",
   "Placement": "Emplacement",
   "Image Layout": "Disposition de l'image",
-  "Image Duration": "Durée de l'image",
-  "Seconds": "Secondes",
+  "Image Duration (seconds)": "Image Duration (seconds)",
   "Add Image": "Ajouter l'image",
   "Widget Hide Duration": "Durée de masquage du widget",
   "Widget Show Duration": "Durée d'affichage du widget",
@@ -19,8 +18,10 @@
   "The amount of time the widget will appear.": "La durée d'apparition du widget.",
   "These are the animations that are used to show your banner.": "Ce sont les animations qui servent à afficher votre bannière.",
   "Visual Settings": "Paramètres visuels",
-  "Image Set ": "Jeu d'images ",
+  "Image Set %{number}": "Image Set %{number}",
+  "Placement %{number} Images": "Placement %{number} Images",
   "No Image": "Aucune image",
   "Set up a sponsor banner to be able to edit (add, remove, update) rotating sponsor logos on streamer channel.": "Configurez une bannière de sponsor pour pouvoir éditer (ajouter, supprimer, mettre à jour) des logos de sponsor rotatifs sur la chaîne du streamer.",
-  "Show off rotating media to display your socials, sponsorships, CTAs or just cute animations.": "Montre des supports rotatifs pour afficher tes réseaux sociaux, tes parrainages, tes CTA ou simplement des animations."
+  "Show off rotating media to display your socials, sponsorships, CTAs or just cute animations.": "Montre des supports rotatifs pour afficher tes réseaux sociaux, tes parrainages, tes CTA ou simplement des animations.",
+  "The duration must be in the format [minutes]:[seconds] (i.e. 02:05)": "The duration must be in the format [minutes]:[seconds] (i.e. 02:05)"
 }

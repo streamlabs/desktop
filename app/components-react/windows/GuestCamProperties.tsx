@@ -93,7 +93,7 @@ class GuestCamController {
   }
 
   get videoProducerSourceOptions() {
-    const videoSourceType = byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'av_capture_input' });
+    const videoSourceType = byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'macos_avcapture' });
 
     return this.SourcesService.views.getSourcesByType(videoSourceType as TSourceType).map(s => ({
       label: s.name,
