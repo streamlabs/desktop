@@ -16,7 +16,7 @@ import { TTwitchOAuthScope, TwitchTagsService } from './twitch/index';
 import { platformAuthorizedRequest } from './utils';
 import { CustomizationService } from 'services/customization';
 import { IGoLiveSettings, TDisplayOutput } from 'services/streaming';
-import { InheritMutations, mutation } from 'services/core';
+import { InheritMutations, mutation, ViewHandler } from 'services/core';
 import { StreamError, throwStreamError, TStreamErrorType } from 'services/streaming/stream-error';
 import { BasePlatformService } from './base-platform';
 import Utils from '../utils';
@@ -29,6 +29,8 @@ import {
 } from './twitch/content-classification';
 import { ENotificationType, NotificationsService } from '../notifications';
 import { $t } from '../i18n';
+import { IncrementalRolloutService } from 'app-services';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export interface ITwitchStartStreamOptions {
   title: string;
@@ -76,6 +78,26 @@ interface ITwitchServiceState extends IPlatformState {
 
 const UNLISTED_GAME_CATEGORY = { id: '0', name: 'Unlisted', box_art_url: '' };
 
+class TwitchServiceViews extends ViewHandler<ITwitchServiceState> {
+  get incrementalRolloutServiceView() {
+    return this.getServiceViews(IncrementalRolloutService);
+  }
+
+  /**
+   * TODO: This variable currently needs to be different for preview vs live releases
+   * while twitch is in closed beta for this feature, meaning we need to change it
+   * every time we release to production and then change it back
+   *
+   * Preview releases: "twitchDualStreamPreview"
+   * Production releases: "twitchDualStream"
+   */
+  get hasTwitchDualStreamAccess() {
+    return this.incrementalRolloutServiceView.featureIsEnabled(
+      EAvailableFeatures.twitchDualStreamPreview,
+    );
+  }
+}
+
 @InheritMutations()
 export class TwitchService
   extends BasePlatformService<ITwitchServiceState>
@@ -87,6 +109,7 @@ export class TwitchService
   @Inject() twitchContentClassificationService: TwitchContentClassificationService;
   @Inject() notificationsService: NotificationsService;
   @Inject() settingsService: SettingsService;
+  @Inject() incrementalRolloutService: IncrementalRolloutService;
 
   static initialState: ITwitchServiceState = {
     ...BasePlatformService.initialState,
@@ -149,6 +172,10 @@ export class TwitchService
         this.validateChatWriteScope();
       }
     });
+  }
+
+  get views() {
+    return new TwitchServiceViews(this.state);
   }
 
   get authUrl() {
