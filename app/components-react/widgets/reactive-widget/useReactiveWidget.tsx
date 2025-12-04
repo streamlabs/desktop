@@ -284,12 +284,18 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
         },
       };
     }
-    console.log('TODO: createTrigger', newSettings);
-    this.updateSettings(newSettings);
+    await this.updateSettings(newSettings);
     await this.reload();
+    // attempt to set the selected tab to the new trigger
+    const triggerId = game === 'global'
+      ? this.data.settings.global.triggers.slice(-1)[0].id
+      : this.data.settings.games[game].triggers.slice(-1)[0].id;
+    if (triggerId) {
+      this.state.setSelectedTab(`${game}-trigger-${triggerId}`);
+    }
   }
 
-  generateDefaultMedia(eventType: string): string {
+  protected generateDefaultMedia(eventType: string): string {
     switch (eventType) {
       case 'death':
         return 'https://cdn.streamlabs.com/library/animations/default-death.webm';
@@ -304,7 +310,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     }
   }
 
-  generateDefaultMessageTemplate(triggerType: string, eventType: string): string {
+  protected generateDefaultMessageTemplate(triggerType: string, eventType: string): string {
     const token = '{number}';
     if (triggerType === 'level') return `${eventType}: ${token}`;
     if (triggerType === 'streak') return `${token} ${eventType}`;

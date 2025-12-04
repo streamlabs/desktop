@@ -117,15 +117,16 @@ function ModalContent(p: { children: ReactNode }) {
 function ModalFooter({ footerSlots }: { footerSlots?: ReactNode }) {
   const { canRevert, revertChanges, close } = useWidget();
   return (
-    <div className="ant-modal-footer">
-      {/* optional buttons  */}
-      {footerSlots}
-      {canRevert && (
-        <Button onClick={revertChanges} type="ghost" style={{ position: 'absolute', left: '16px' }}>
-          <RollbackOutlined />
-          {$t('Revert Changes')}
-        </Button>
-      )}
+    <div className="ant-modal-footer" style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <div>
+        {footerSlots}
+        {canRevert && (
+          <Button onClick={revertChanges} type="ghost">
+            <RollbackOutlined />
+            {$t('Revert Changes')}
+          </Button>
+        )}
+      </div>
       <Button onClick={close}>{$t('Close')}</Button>
     </div>
   );

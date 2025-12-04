@@ -253,6 +253,7 @@ function ManageOnWebButton() {
   };
   return (
     <Button type="ghost" onClick={handleClick}>
+      <i className="icon-pop-out-2" style={{ marginRight: 8 }} />
       {$t('Manage on Web')}
     </Button>
   );

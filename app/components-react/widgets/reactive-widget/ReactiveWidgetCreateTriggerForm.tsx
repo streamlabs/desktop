@@ -74,7 +74,7 @@ export function ReactiveWidgetCreateTriggerForm(props: TriggerFormProps) {
     const count = existingNames.filter(name => regex.test(name)).length;
 
     if (count === 0) return baseLabel;
-    return `${baseLabel} (${count > 1 ? count + 1 : 1})`;
+    return `${baseLabel} (${count})`;
   };
 
   const eventOptions = useMemo(() => {

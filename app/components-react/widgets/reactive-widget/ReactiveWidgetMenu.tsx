@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Menu, Tooltip } from 'antd';
 import { PlusOutlined, SettingOutlined, CaretRightOutlined } from '@ant-design/icons';
 import { CheckboxInput } from 'components-react/shared/inputs';
 import { $t } from 'services/i18n';
 import css from './ReactiveWidgetMenu.m.less';
 
-export function GameIcon() {
+function GameIcon() {
   return (
     <i className="icon-console ant-menu-item-icon" style={{ fontSize: 16, lineHeight: '16px' }} />
   );
@@ -14,7 +14,7 @@ export function GameIcon() {
 export function ReactiveWidgetMenu(props: {
   menuItems: any;
   keyMap: any;
-  activeKey: any;
+  activeKey: string;
   onChange: (key: string) => void;
   playAlert: (type: any) => void;
   toggleTrigger: (group: any, triggerId: string, enabled: boolean) => void;
@@ -22,16 +22,32 @@ export function ReactiveWidgetMenu(props: {
 }) {
   const { menuItems, activeKey, keyMap, onChange, playAlert, toggleTrigger, deleteTrigger } = props;
 
+  const [openKeys, setOpenKeys] = useState<string[]>(['global']);
+
+  useEffect(() => {
+    if (typeof activeKey !== 'string') return;
+
+    // we only care about trigger keys like `${groupKey}-trigger-${id}`
+    if (!activeKey.includes('-trigger-')) return;
+
+    const [groupKey] = activeKey.split('-trigger-');
+    if (!groupKey) return;
+
+    setOpenKeys(prev =>
+      prev.includes(groupKey) ? prev : [...prev, groupKey],
+    );
+  }, [activeKey]);
+
   return (
     <Menu
       mode="inline"
       theme="dark"
       selectedKeys={[activeKey]}
-      defaultOpenKeys={['global']}
-      onClick={({ key }) => onChange(key as any)}
+      openKeys={openKeys}
+      onOpenChange={keys => setOpenKeys(keys as string[])}
+      onClick={({ key }) => onChange(key as string)}
     >
       <Menu.Item
-
         key="add-trigger"
         icon={<PlusOutlined />}
         style={{ height: '45px', lineHeight: '45px' }}
@@ -42,6 +58,7 @@ export function ReactiveWidgetMenu(props: {
       <Menu.Item key="general" style={{ height: '45px', lineHeight: '45px' }}>
         {$t('Game Settings')}
       </Menu.Item>
+
       {Object.entries(menuItems).map(([groupKey, group]) => (
         <Menu.SubMenu
           key={groupKey}
@@ -49,7 +66,6 @@ export function ReactiveWidgetMenu(props: {
           title={keyMap[groupKey]?.title || groupKey}
         >
           {(group as any).triggers?.map((trigger: any, index: number) => (
-            // TODO$chris: consider just using trigger.id
             <Menu.Item
               key={`${groupKey}-trigger-${trigger.id}`}
               style={{ height: '45px', lineHeight: '45px' }}
@@ -64,14 +80,21 @@ export function ReactiveWidgetMenu(props: {
                   <div className={css.triggerTitle}>
                     {trigger.name || `Trigger ${index + 1}`}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'flex-end',
+                      height: '100%',
+                    }}
+                  >
                     <Tooltip title={$t('Delete Trigger')} placement="left" mouseLeaveDelay={0}>
                       <Button
                         onClick={e => {
                           e.stopPropagation();
                           deleteTrigger(trigger.id);
                         }}
-                        type={'text'}
+                        type="text"
                         style={{ padding: '4.4px 0', width: '16px', color: 'var(--red)' }}
                       >
                         <i className="icon-trash" style={{ fontSize: '16px' }} />
@@ -83,8 +106,10 @@ export function ReactiveWidgetMenu(props: {
                           e.stopPropagation();
                           playAlert(trigger);
                         }}
-                        type={'text'}
-                        icon={<CaretRightOutlined style={{ fontSize: '24px', color: 'white' }} />}
+                        type="text"
+                        icon={
+                          <CaretRightOutlined style={{ fontSize: '24px', color: 'white' }} />
+                        }
                       />
                     </Tooltip>
                   </div>
