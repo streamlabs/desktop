@@ -153,6 +153,7 @@ export class StreamingService
     replayBufferStatusTime: new Date().toISOString(),
     selectiveRecording: false,
     dualOutputMode: false,
+    enhancedBroadcasting: false,
     info: {
       settings: null,
       lifecycle: 'empty',
@@ -643,6 +644,19 @@ export class StreamingService
         !isStreamShiftStream
           ? undefined
           : settings;
+
+      // Note: Enhanced broadcasting setting persist in two places during the go live flow:
+      // in the Twitch service and in osn. The setting in the Twitch service is persisted
+      // between streams in order to restore the user's preferences for when they go live with
+      // Twitch dual stream, which requires enhanced broadcasting to be enabled. The setting
+      // in osn is what actually determines if the stream will use enhanced broadcasting.
+      if (platform === 'twitch') {
+        const isEnhancedBroadcasting =
+          settings.platforms.twitch.isEnhancedBroadcasting ||
+          this.views.getIsEnhancedBroadcasting();
+
+        this.SET_ENHANCED_BROADCASTING(isEnhancedBroadcasting);
+      }
 
       // don't update settings for twitch in unattendedMode
       await this.runCheck(platform, () => service.beforeGoLive(settingsForPlatform, display));
@@ -1202,6 +1216,11 @@ export class StreamingService
 
       if (this.views.isStreamShiftMode) {
         this.restreamService.resetStreamShift();
+      }
+
+      // Reset enhanced broadcasting after streaming stops to prevent it from being accidentally enabled for the next stream
+      if (this.state.enhancedBroadcasting) {
+        this.SET_ENHANCED_BROADCASTING(false);
       }
 
       this.UPDATE_STREAM_INFO({ lifecycle: 'empty' });
@@ -1865,5 +1884,10 @@ export class StreamingService
   @mutation()
   private SET_GO_LIVE_SETTINGS(settings: IGoLiveSettings) {
     this.state.info.settings = settings;
+  }
+
+  @mutation()
+  private SET_ENHANCED_BROADCASTING(enabled: boolean) {
+    this.state.enhancedBroadcasting = enabled;
   }
 }
