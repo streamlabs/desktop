@@ -402,6 +402,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     );
   }
 
+  getIsEnhancedBroadcasting(): boolean {
+    return Services.SettingsService.isEnhancedBroadcasting();
+  }
+
   /**
    * Return restream service access status
    * @remark Non-ultra users cannot use the restream service except for:
