@@ -1138,7 +1138,7 @@ export class StreamingService
       if (this.views.isTwitchDualStreaming && !this.views.shouldSetupRestream) {
         // Setup Twitch dual stream
         console.log('Start Twitch Dual Stream');
-        NodeObs.OBS_service_startStreaming('horizontal');
+        NodeObs.OBS_service_startStreaming('both');
       } else if (this.state.enhancedBroadcasting && this.views.shouldSetupRestream) {
         // Setup enhanced broadcasting multistream if either of the displays has more than one target
         if (!this.contexts.restream.streaming) {
