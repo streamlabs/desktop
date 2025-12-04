@@ -232,9 +232,7 @@ export class TwitchService
 
       if (channelInfo) {
         if (channelInfo?.display === 'both') {
-          console.log('channelInfo.isEnhancedBroadcasting:', channelInfo.isEnhancedBroadcasting);
           try {
-            console.log('Has goLiveSettings, setting up dual stream for Twitch');
             await this.setupDualStream(goLiveSettings);
           } catch (e: unknown) {
             console.error('Error setting up dual stream:', e);
@@ -249,7 +247,6 @@ export class TwitchService
     } else if (this.streamingService.views.isTwitchDualStreaming) {
       // Failsafe to guarantee that enhanced broadcasting is enabled if dual streaming is active
       try {
-        console.log('Does not have goLiveSettings, setting up dual stream for Twitch');
         await this.setupDualStream(goLiveSettings);
       } catch (e: unknown) {
         console.error('Error setting up dual stream:', e);
