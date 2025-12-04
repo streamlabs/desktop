@@ -598,7 +598,7 @@ export class StreamingService
       try {
         await this.runCheck(checkName, async () => {
           // enable restream on the backend side
-          if (!this.restreamService.state.enabled) await this.restreamService.setEnabled(true);
+          await this.restreamService.setEnabled(true);
 
           await this.restreamService.beforeGoLive();
         });
@@ -2488,8 +2488,22 @@ export class StreamingService
       }
     }
 
-    if (platform) {
-      errorText = [errorText, `Platform: ${platformLabels(platform)}`].join(' ');
+    // Add display information for dual output mode
+    if (this.views.isDualOutputMode) {
+      const platforms =
+        info.service === 'vertical'
+          ? this.views.verticalStream.map(p => platformLabels(p))
+          : this.views.horizontalStream.map(p => platformLabels(p));
+
+      const stream =
+        info.service === 'vertical'
+          ? $t('Please confirm %{platforms} in the Vertical stream.', {
+              platforms,
+            })
+          : $t('Please confirm %{platforms} in the Horizontal stream.', {
+              platforms,
+            });
+      errorText = [errorText, stream].join('\n\n');
     }
 
     const buttons = [$t('OK')];

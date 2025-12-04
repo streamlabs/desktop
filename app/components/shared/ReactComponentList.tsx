@@ -317,6 +317,14 @@ export class TitleBar extends ReactComponent {}
 
 @Component({
   props: {
+    name: { default: 'Troubleshooter' },
+    wrapperStyles: { default: () => ({ height: '100%' }) },
+  },
+})
+export class Troubleshooter extends ReactComponent {}
+
+@Component({
+  props: {
     name: { default: 'WelcomeToPrime' },
     wrapperStyles: { default: () => ({ height: '100%' }) },
   },

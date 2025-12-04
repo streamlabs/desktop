@@ -53,6 +53,7 @@ export default function Main() {
     EditorCommandsService,
     ScenesService,
     CustomizationService,
+    VisionService,
   } = Services;
   const mainWindowEl = useRef<HTMLDivElement | null>(null);
   const mainMiddleEl = useRef<HTMLDivElement | null>(null);
@@ -75,6 +76,7 @@ export default function Main() {
   const isDockCollapsed = useRealmObject(Services.CustomizationService.state).livedockCollapsed;
   const realmTheme = useRealmObject(Services.CustomizationService.state).theme;
   const leftDock = useRealmObject(Services.CustomizationService.state).leftDock;
+  const isVisionRunning = useRealmObject(VisionService.state).isRunning;
 
   // Provides smooth chat resizing instead of writing to realm every tick while resizing
   const [dockWidth, setDockWidth] = useState(realmDockWidth);
@@ -275,7 +277,7 @@ export default function Main() {
       >
         {page !== 'Onboarding' && !showLoadingSpinner && (
           <div className={styles.sideNavContainer}>
-            <SideNav />
+            <SideNav isVisionRunning={isVisionRunning} />
           </div>
         )}
         {renderDock && leftDock && (
