@@ -1030,7 +1030,7 @@ export class StreamingService
       // horizontal stream
       if (this.views.isTwitchDualStreaming) {
         console.log('Start Twitch Dual Stream');
-        NodeObs.OBS_service_startStreaming('horizontal');
+        NodeObs.OBS_service_startStreaming('both');
       } else {
         NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
         NodeObs.OBS_service_setVideoInfo(verticalContext, 'vertical');
