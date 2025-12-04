@@ -13,6 +13,12 @@ type ReactiveTriggerType = 'streak' | 'achievement';
 type ReactiveLayout = 'above' | 'banner' | 'side';
 type ReactiveStreakPeriod = 'session' | 'today' | 'round';
 
+interface IReactiveGroupOption {
+  id: string;
+  name: string;
+  enabled: boolean;
+}
+
 interface ReactiveMediaSettings {
   image_href: string;
   sound_href: string;
@@ -243,6 +249,28 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
 
   get streakTimePeriods(): { [key: string]: string } {
     return (this.state?.staticConfig as any)?.data?.options?.streak_time_periods || {};
+  }
+
+  get groupOptions(): IReactiveGroupOption[] {
+    const data = (this.data as any) ?? {};
+    const settings = data.settings ?? {};
+    const gamesMeta = this.games;
+
+    const games = Object.entries(settings.games || {}).map(
+      ([gameId, gameData]: [string, any]) => ({
+        id: gameId,
+        name: gamesMeta?.[gameId]?.title || gameId,
+        enabled: !!gameData?.enabled,
+      }),
+    );
+
+    const global: IReactiveGroupOption = {
+      id: 'global',
+      name: 'Global',
+      enabled: !!settings.global?.enabled,
+    };
+
+    return [global, ...games];
   }
 
   enableTrigger(groupId: string, triggerId: string) {

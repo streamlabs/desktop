@@ -41,33 +41,16 @@ const AddTriggerTab: React.FC = () => {
 
 const GameSettingsTab: React.FC = () => {
   const {
-    data,
-    games: gamesMeta,
+    groupOptions,
     setGroupEnabled,
     enableAllGroups,
     disableAllGroups,
   } = useReactiveWidget();
 
-  const games = Object.entries((data as any)?.settings?.games || {}).map(
-    ([gameId, gameData]) => {
-      return {
-        id: gameId,
-        name: gamesMeta[gameId]?.title || gameId,
-        enabled: (gameData as any)?.enabled || false,
-      };
-    },
-  );
-
-  const global = {
-    id: 'global',
-    name: 'Global',
-    enabled: (data as any)?.settings?.global?.enabled || false,
-  };
-
   return (
     <div>
       <ReactiveWidgetGameSettings
-        options={[global, ...games]}
+        options={groupOptions}
         onToggleGame={setGroupEnabled}
         onEnableAll={enableAllGroups}
         onDisableAll={disableAllGroups}
