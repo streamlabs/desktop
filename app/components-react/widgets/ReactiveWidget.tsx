@@ -12,7 +12,14 @@ import { $t } from 'services/i18n/i18n';
 import { Button } from 'antd';
 
 const AddTriggerTab: React.FC = () => {
-  const { availableGameEvents, gameEvents, globalEvents, games, data, createTrigger } = useReactiveWidget();
+  const {
+    availableGameEvents,
+    gameEvents,
+    globalEvents,
+    games,
+    data,
+    createTrigger,
+  } = useReactiveWidget();
 
   const gameOptions = [
     { label: 'Global', value: 'global' },
@@ -33,166 +40,81 @@ const AddTriggerTab: React.FC = () => {
 };
 
 const GameSettingsTab: React.FC = () => {
-  const { data, games: gamesMeta, updateSettings } = useReactiveWidget();
-  const games = Object.entries((data as any)?.settings?.games || {}).map(([gameId, gameData]) => {
-    return {
-      id: gameId,
-      name: gamesMeta[gameId]?.title || gameId,
-      enabled: (gameData as any)?.enabled || false,
-    };
-  });
+  const {
+    data,
+    games: gamesMeta,
+    setGroupEnabled,
+    enableAllGroups,
+    disableAllGroups,
+  } = useReactiveWidget();
+
+  const games = Object.entries((data as any)?.settings?.games || {}).map(
+    ([gameId, gameData]) => {
+      return {
+        id: gameId,
+        name: gamesMeta[gameId]?.title || gameId,
+        enabled: (gameData as any)?.enabled || false,
+      };
+    },
+  );
+
   const global = {
     id: 'global',
     name: 'Global',
     enabled: (data as any)?.settings?.global?.enabled || false,
   };
 
-  function onToggleGame(gameId: string, enabled: boolean) {
-    // TODO$chris
-    console.log('TODO: Toggle game:', gameId, enabled);
-    const newSettings = { ...(data as any)?.settings || {} };
-    if (gameId === 'global') {
-      newSettings.global = {
-        ...newSettings.global,
-        enabled,
-      };
-    } else {
-      newSettings.games = {
-        ...newSettings.games,
-        [gameId]: {
-          ...newSettings.games?.[gameId],
-          enabled,
-        },
-      };
-    }
-    updateSettings(newSettings);
-  }
-
-  function onEnableAll() {
-    const newSettings = { ...(data as any)?.settings || {} };
-    // enable global and all games
-    newSettings.global = {
-      ...newSettings.global,
-      enabled: true,
-    };
-    newSettings.games = {
-      ...newSettings.games,
-      ...Object.fromEntries(Object.keys(newSettings.games || {}).map(gameId => [gameId, { ...(newSettings.games?.[gameId] || {}), enabled: true }])),
-    };
-    updateSettings(newSettings);
-  }
-
-  function onDisableAll() {
-    const newSettings = { ...(data as any)?.settings || {} };
-    // disable global and all games
-    newSettings.global = {
-      ...newSettings.global,
-      enabled: false,
-    };
-    newSettings.games = {
-      ...newSettings.games,
-      ...Object.fromEntries(Object.keys(newSettings.games || {}).map(gameId => [gameId, { ...(newSettings.games?.[gameId] || {}), enabled: false }])),
-    };
-    updateSettings(newSettings);
-  }
-
   return (
     <div>
-      <ReactiveWidgetGameSettings options={[global, ...games]} onToggleGame={onToggleGame} onEnableAll={onEnableAll} onDisableAll={onDisableAll} />
+      <ReactiveWidgetGameSettings
+        options={[global, ...games]}
+        onToggleGame={setGroupEnabled}
+        onEnableAll={enableAllGroups}
+        onDisableAll={disableAllGroups}
+      />
       <hr style={{ margin: '24px 0', opacity: 0.2 }} />
     </div>
   );
 };
 
 const ManageTriggersTab: React.FC = () => {
-  const { selectedTab, data, updateSettings } = useReactiveWidget();
+  const {
+    selectedTab,
+    data,
+    enableAllTriggers,
+    disableAllTriggers,
+    toggleTrigger,
+  } = useReactiveWidget();
   const selectedGame = selectedTab.split('-manage-trigger')[0];
 
-  function onToggleGame(gameId: string, enabled: boolean) {
-    const newSettings = { ...(data as any)?.settings || {} };
-    if (selectedGame === 'global') {
-      newSettings.global = {
-        ...newSettings.global,
-        triggers: (newSettings.global?.triggers || []).map((trigger: any) => ({
-          ...trigger,
-          enabled: gameId === trigger.id ? enabled : trigger.enabled,
-        })),
-      };
-    } else {
-      newSettings.games = {
-        ...newSettings.games,
-        [selectedGame]: {
-          ...newSettings.games?.[selectedGame],
-          triggers: (newSettings.games?.[selectedGame]?.triggers || []).map((trigger: any) => ({
-            ...trigger,
-            enabled: gameId === trigger.id ? enabled : trigger.enabled,
-          })),
-        },
-      };
-    }
-    updateSettings(newSettings);
+  function onToggleGame(triggerId: string, enabled: boolean) {
+    toggleTrigger(selectedGame, triggerId, enabled);
   }
 
   function onEnableAll() {
-    const newSettings = { ...(data as any)?.settings || {} };
-    if (selectedGame === 'global') {
-      newSettings.global = {
-        ...newSettings.global,
-        triggers: (newSettings.global?.triggers || []).map((trigger: any) => ({
-          ...trigger,
-          enabled: true,
-        })),
-      };
-    } else {
-      newSettings.games = {
-        ...newSettings.games,
-        [selectedGame]: {
-          ...newSettings.games?.[selectedGame],
-          triggers: (newSettings.games?.[selectedGame]?.triggers || []).map((trigger: any) => ({
-            ...trigger,
-            enabled: true,
-          })),
-        },
-      };
-    }
-    updateSettings(newSettings);
+    enableAllTriggers(selectedGame);
   }
 
   function onDisableAll() {
-    const newSettings = { ...(data as any)?.settings || {} };
-    if (selectedGame === 'global') {
-      newSettings.global = {
-        ...newSettings.global,
-        triggers: (newSettings.global?.triggers || []).map((trigger: any) => ({
-          ...trigger,
-          enabled: false,
-        })),
-      };
-    } else {
-      newSettings.games = {
-        ...newSettings.games,
-        [selectedGame]: {
-          ...newSettings.games?.[selectedGame],
-          triggers: (newSettings.games?.[selectedGame]?.triggers || []).map((trigger: any) => ({
-            ...trigger,
-            enabled: false,
-          })),
-        },
-      };
-    }
-    updateSettings(newSettings);
+    disableAllTriggers(selectedGame);
   }
 
-  const options = selectedGame === 'global' ? (data as any)?.settings?.global?.triggers : (data as any)?.settings?.games?.[selectedGame]?.triggers;
-  return <ReactiveWidgetGameSettings options={options} onToggleGame={onToggleGame} onEnableAll={onEnableAll} onDisableAll={onDisableAll} />;
+  const options =
+    selectedGame === 'global'
+      ? (data as any)?.settings?.global?.triggers
+      : (data as any)?.settings?.games?.[selectedGame]?.triggers;
+  return (
+    <ReactiveWidgetGameSettings
+      options={options}
+      onToggleGame={onToggleGame}
+      onEnableAll={onEnableAll}
+      onDisableAll={onDisableAll}
+    />
+  );
 };
 
 const TriggerDetailsTab: React.FC = () => {
-  const {
-    selectedTab,
-    staticConfig,
-    createTriggerBinding,
-  } = useReactiveWidget();
+  const { selectedTab, staticConfig, createTriggerBinding } = useReactiveWidget();
   const forceUpdate = useForceUpdate();
 
   const [selectedGame, selectedTriggerId] = React.useMemo(() => {
@@ -290,7 +212,7 @@ export function ReactiveWidget() {
   }
 
   function toggleTrigger(group: any, triggerId: string, enabled: boolean) {
-    const newSettings = { ...(data as any)?.settings || {} };
+    const newSettings = { ...((data as any)?.settings || {}) };
     if (group === 'global') {
       newSettings.global = {
         ...newSettings.global,
@@ -320,7 +242,8 @@ export function ReactiveWidget() {
         title: 'Streamlabs Desktop',
         message: $t('Are you sure you want to delete this trigger? This action cannot be undone.'),
         buttons: [$t('Cancel'), $t('OK')],
-      }).then(({ response }) => {
+      })
+      .then(({ response }) => {
         if (!response) return;
         deleteTrigger(triggerId);
       });
@@ -328,7 +251,11 @@ export function ReactiveWidget() {
 
   return (
     <div className={css.reactiveWidget}>
-      <WidgetLayout layout="long-menu" showDisplay={showDisplay} footerSlots={<ManageOnWebButton />}>
+      <WidgetLayout
+        layout="long-menu"
+        showDisplay={showDisplay}
+        footerSlots={<ManageOnWebButton />}
+      >
         <ReactiveWidgetMenu
           menuItems={triggerGroups}
           keyMap={keyMap}

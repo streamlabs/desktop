@@ -237,7 +237,7 @@ export class WidgetsService
     );
   }
 
-  @Throttle(1000) // TODO$chris: this doesnt work yet
+  @Throttle(1000)
   playReactiveAlert(trigger: any) {
     const host = this.hostsService.streamlabs;
     const headers = authorizedHeaders(this.userService.apiToken);

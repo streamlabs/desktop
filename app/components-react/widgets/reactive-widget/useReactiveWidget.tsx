@@ -66,52 +66,50 @@ interface ReactiveAchievementTrigger extends ReactiveBaseTrigger {
   amount_maximum?: undefined;
 }
 
-export type IReactiveWidgetTrigger =
-  | ReactiveStreakTrigger
-  | ReactiveAchievementTrigger;
+export type IReactiveWidgetTrigger = ReactiveStreakTrigger | ReactiveAchievementTrigger;
 
 export const defaultTriggerSettings = {
   media_settings: {
-    image_href: "https://cdn.streamlabs.com/library/giflibrary/jumpy-kevin.webm",
-    sound_href: "https://cdn.streamlabs.com/static/sounds/bits.ogg",
+    image_href: 'https://cdn.streamlabs.com/library/giflibrary/jumpy-kevin.webm',
+    sound_href: 'https://cdn.streamlabs.com/static/sounds/bits.ogg',
     sound_volume: 50,
-    show_animation: "fadeIn",
-    hide_animation: "fadeOut"
+    show_animation: 'fadeIn',
+    hide_animation: 'fadeOut',
   },
   text_settings: {
-    font: "Open Sans",
-    font_color: "#FFFFFF",
-    font_color2: "#80F5D2",
+    font: 'Open Sans',
+    font_color: '#FFFFFF',
+    font_color2: '#80F5D2',
     font_size: 24,
     font_weight: 400,
-    message_template: "{number} kill streak!",
-    text_animation: "bounce",
-    text_delay_ms: 0
+    message_template: '{number} kill streak!',
+    text_animation: 'bounce',
+    text_delay_ms: 0,
   },
   tts_settings: {
     enabled: false,
     include_message_template: true,
-    language: "Salli",
+    language: 'Salli',
     repetition_block_length: 1,
     security: 0,
-    volume: 50
+    volume: 50,
   },
   alert_duration_ms: 5000,
   amount_maximum: null,
   amount_minimum: 1,
   enabled: true,
-  game_event: "kill",
+  game_event: 'kill',
   id: null, // server assigns ID
-  name: "",
-  layout: "above",
-  type: "streak",
-  streak_period: "session"
+  name: '',
+  layout: 'above',
+  type: 'streak',
+  streak_period: 'session',
 };
 
 export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
-  // add hostsService
   @Inject() hostsService: HostsService;
-  @Inject() userService: UserService
+  @Inject() userService: UserService;
+
   protected patchBeforeSend(settings: any) {
     return settings;
   }
@@ -129,21 +127,48 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     const s = this.settings as any;
     if (!s) return null;
 
-    const group =
-      groupId === 'global'
-        ? s.global
-        : s.games?.[groupId];
+    const group = groupId === 'global' ? s.global : s.games?.[groupId];
 
     if (!group) return null;
 
     return (group.triggers || []).find((t: any) => t.id === triggerId) || null;
   }
 
-  createTriggerBinding(
+  /**
+   * shared helper: update triggers for a given group (`'global'` or gameId)
+   */
+  private updateTriggers(
     groupId: string,
-    triggerId: string,
-    forceUpdate: () => unknown,
+    updater: (trigger: IReactiveWidgetTrigger) => IReactiveWidgetTrigger,
   ) {
+    const currentSettings = ((this.data as any)?.settings ?? {}) as any;
+    const isGlobal = groupId === 'global';
+
+    const groupSettings = isGlobal
+      ? currentSettings.global || { enabled: true, triggers: [] }
+      : currentSettings.games?.[groupId] || { enabled: true, triggers: [] };
+
+    const updatedGroupSettings = {
+      ...groupSettings,
+      triggers: (groupSettings.triggers || []).map(updater),
+    };
+
+    const newSettings: any = {
+      ...currentSettings,
+      ...(isGlobal
+        ? { global: updatedGroupSettings }
+        : {
+            games: {
+              ...(currentSettings.games || {}),
+              [groupId]: updatedGroupSettings,
+            },
+          }),
+    };
+
+    this.updateSettings(newSettings);
+  }
+
+  createTriggerBinding(groupId: string, triggerId: string, forceUpdate: () => unknown) {
     const module = this;
 
     return {
@@ -153,12 +178,11 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
 
       updateTrigger(updated: IReactiveWidgetTrigger) {
         const s = cloneDeep(module.settings) as any;
-        const defaultGroup = { enabled: true, triggers: [] }; 
+        const defaultGroup = { enabled: true, triggers: [] };
         const group =
           groupId === 'global'
             ? (s.global = s.global || defaultGroup)
-            : (s.games[groupId] =
-                s.games?.[groupId] || defaultGroup);
+            : (s.games[groupId] = s.games?.[groupId] || defaultGroup);
 
         group.triggers = (group.triggers || []).map((t: any) =>
           t.id === updated.id ? updated : t,
@@ -192,15 +216,13 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
 
   // for game settings UI
   get gameSettings(): any[] {
-    return Object.entries(this.data?.settings?.games ?? {}).map(
-      ([gameId, gameData]) => ({
-        gameId,
-        ...(gameData ?? {
-          enabled: false,
-          triggers: [],
-        }),
+    return Object.entries(this.data?.settings?.games ?? {}).map(([gameId, gameData]) => ({
+      gameId,
+      ...(gameData ?? {
+        enabled: false,
+        triggers: [],
       }),
-    );
+    }));
   }
 
   get games(): { [key: string]: { title: string; camel: string } } {
@@ -223,13 +245,44 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     return (this.state?.staticConfig as any)?.data?.options?.streak_time_periods || {};
   }
 
-  // TODO$chris: extra helpers to implement later
-  enableTrigger(triggerId: string) {}
-  disableTrigger(triggerId: string) {}
-  enableAllTriggers(groupId: string) {}
-  disableAllTriggers(groupId: string) {}
+  enableTrigger(groupId: string, triggerId: string) {
+    this.updateTriggers(groupId, trigger =>
+      trigger.id === triggerId ? { ...trigger, enabled: true } : trigger,
+    );
+  }
+
+  disableTrigger(groupId: string, triggerId: string) {
+    this.updateTriggers(groupId, trigger =>
+      trigger.id === triggerId ? { ...trigger, enabled: false } : trigger,
+    );
+  }
+
+  enableAllTriggers(groupId: string) {
+    this.updateTriggers(groupId, trigger => ({
+      ...trigger,
+      enabled: true,
+    }));
+  }
+
+  disableAllTriggers(groupId: string) {
+    this.updateTriggers(groupId, trigger => ({
+      ...trigger,
+      enabled: false,
+    }));
+  }
+
+  toggleTrigger(groupId: string, triggerId: string, enabled?: boolean) {
+    this.updateTriggers(groupId, trigger => {
+      if (trigger.id !== triggerId) return trigger;
+      return {
+        ...trigger,
+        enabled: typeof enabled === 'boolean' ? enabled : !trigger.enabled,
+      };
+    });
+  }
+
   deleteTrigger(triggerId: string) {
-    const url = `https://${this.hostsService.streamlabs}/api/v5/widgets/game-pulse/trigger?ulid=${triggerId}`;
+    const url = `https://${this.hostsService.streamlabs}/api/v5/widgets/desktop/game-pulse/trigger?ulid=${triggerId}`;
     const headers = authorizedHeaders(this.userService.apiToken);
     headers.append('Content-Type', 'application/json');
     headers.append('Accept', 'application/json');
@@ -243,9 +296,103 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
       // TODO$chris: update local state to remove the trigger
     });
   }
-  previewTrigger(triggerId: string) {}
-  toggleTrigger(triggerId: string) {}
-  async createTrigger({ eventType, game, name, triggerType }: { eventType: string; game: string; name: string; triggerType: string }) {
+
+  /**
+   * Enable/disable a single group (either 'global' or a specific game id)
+   */
+  setGroupEnabled(groupId: string, enabled: boolean) {
+    const settings = ((this.data as any)?.settings ?? {}) as any;
+    const newSettings: any = { ...settings };
+
+    if (groupId === 'global') {
+      newSettings.global = {
+        ...(newSettings.global || {}),
+        enabled,
+      };
+    } else {
+      const games = newSettings.games || {};
+      const group = games[groupId] || {};
+      newSettings.games = {
+        ...games,
+        [groupId]: {
+          ...group,
+          enabled,
+        },
+      };
+    }
+
+    this.updateSettings(newSettings);
+  }
+
+  /**
+   * Enable global + all games
+   */
+  enableAllGroups() {
+    const settings = ((this.data as any)?.settings ?? {}) as any;
+    const games = settings.games || {};
+    const newGames: any = {};
+
+    Object.keys(games).forEach(gameId => {
+      newGames[gameId] = {
+        ...(games[gameId] || {}),
+        enabled: true,
+      };
+    });
+
+    const newSettings: any = {
+      ...settings,
+      global: {
+        ...(settings.global || {}),
+        enabled: true,
+      },
+      games: newGames,
+    };
+
+    this.updateSettings(newSettings);
+  }
+
+  /**
+   * Disable global + all games
+   */
+  disableAllGroups() {
+    const settings = ((this.data as any)?.settings ?? {}) as any;
+    const games = settings.games || {};
+    const newGames: any = {};
+
+    Object.keys(games).forEach(gameId => {
+      newGames[gameId] = {
+        ...(games[gameId] || {}),
+        enabled: false,
+      };
+    });
+
+    const newSettings: any = {
+      ...settings,
+      global: {
+        ...(settings.global || {}),
+        enabled: false,
+      },
+      games: newGames,
+    };
+
+    this.updateSettings(newSettings);
+  }
+
+  previewTrigger(triggerId: string) {
+    // TODO$chris: implement if needed
+  }
+
+  async createTrigger({
+    eventType,
+    game,
+    name,
+    triggerType,
+  }: {
+    eventType: string;
+    game: string;
+    name: string;
+    triggerType: string;
+  }) {
     const newTrigger = {
       ...defaultTriggerSettings,
       name,
@@ -259,37 +406,37 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
         ...defaultTriggerSettings.text_settings,
         message_template: this.generateDefaultMessageTemplate(triggerType, eventType),
       },
-    }
-    const newSettings = { ...(this.data as any)?.settings || {} };
+    };
+
+    const newSettings: any = { ...((this.data as any)?.settings || {}) };
+
     if (game === 'global') {
       newSettings.global = {
         ...newSettings.global,
-        triggers: [
-          ...(newSettings.global?.triggers || []),
-          newTrigger,
-        ],
+        triggers: [...(newSettings.global?.triggers || []), newTrigger],
       };
     } else {
-      if (!newSettings.games[game]) {
-        newSettings.games[game] = { enabled: true, triggers: [] };
-      }
+      const games = newSettings.games || {};
+      const existingGroup = games[game] || { enabled: true, triggers: [] };
+
       newSettings.games = {
-        ...newSettings.games,
+        ...games,
         [game]: {
-          ...newSettings.games?.[game],
-          triggers: [
-            ...(newSettings.games?.[game]?.triggers || []),
-            newTrigger,
-          ],
+          ...existingGroup,
+          triggers: [...(existingGroup.triggers || []), newTrigger],
         },
       };
     }
+
     await this.updateSettings(newSettings);
     await this.reload();
+
     // attempt to set the selected tab to the new trigger
-    const triggerId = game === 'global'
-      ? this.data.settings.global.triggers.slice(-1)[0].id
-      : this.data.settings.games[game].triggers.slice(-1)[0].id;
+    const triggerId =
+      game === 'global'
+        ? this.data.settings.global.triggers.slice(-1)[0].id
+        : this.data.settings.games[game].triggers.slice(-1)[0].id;
+
     if (triggerId) {
       this.state.setSelectedTab(`${game}-trigger-${triggerId}`);
     }
