@@ -1142,23 +1142,27 @@ export class StreamingService
       } else if (this.state.enhancedBroadcasting && this.views.shouldSetupRestream) {
         // Setup enhanced broadcasting multistream if either of the displays has more than one target
         if (!this.contexts.stream.streaming) {
-          await this.createEnhancedBroadcastMultistream(true);
+          await this.createEnhancedBroadcastMultistream(true, 'stream');
         } else {
           this.contexts.stream.streaming.start();
         }
 
-        // @@@ TODO: Handle: horizontal multi, vertical multi, and both multi
         if (this.views.horizontalStream.length > 1 && this.views.verticalStream.length > 1) {
           // Setup additional second stream context
           await this.createEnhancedBroadcastMultistream(true, 'streamSecond');
         }
 
-        // If Twitch is streaming the vertical display, reassign the video contexts
-        // if (this.settingsService.views.values.StreamSecond.service === 'Twitch') {
-        //   NodeObs.OBS_service_setVideoInfo(verticalContext, 'horizontal');
-        // }
-
-        NodeObs.OBS_service_startStreaming('horizontal');
+        if (this.views.isTwitchDualStreaming) {
+          // If Twitch is dual streaming, signal that both streams should be active
+          NodeObs.OBS_service_startStreaming('both');
+        } else if (this.settingsService.views.values.StreamSecond.service === 'Twitch') {
+          // If Twitch is streaming the vertical display, reassign the video contexts
+          NodeObs.OBS_service_setVideoInfo(horizontalContext, 'vertical');
+          NodeObs.OBS_service_setVideoInfo(verticalContext, 'horizontal');
+          NodeObs.OBS_service_startStreaming('vertical');
+        } else {
+          NodeObs.OBS_service_startStreaming('horizontal');
+        }
       } else if (this.state.enhancedBroadcasting) {
         // Setup enhanced broadcasting if both displays have only one target
         console.log('Setup Enhanced Broadcasting Dual Output Single Streams');
@@ -2056,12 +2060,8 @@ export class StreamingService
     const shouldResolve =
       !this.views.isDualOutputMode ||
       (this.views.isDualOutputMode && isVerticalDisplayStartSignal) ||
-      (this.views.isDualOutputMode &&
-        info.signal === EOBSOutputSignal.Start &&
-        !this.state.enhancedBroadcasting) ||
-      (this.views.isDualOutputMode &&
-        this.state.enhancedBroadcasting &&
-        this.views.shouldSetupRestream);
+      (this.views.isDualOutputMode && info.signal === EOBSOutputSignal.Start) ||
+      (this.views.isDualOutputMode && this.views.isTwitchDualStreaming);
 
     const time = new Date().toISOString();
 
