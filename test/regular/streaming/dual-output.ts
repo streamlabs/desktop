@@ -338,28 +338,28 @@ test(
       await clickGoLive();
       await waitForSettingsWindowLoaded();
       await fillForm({
-        trovoDisplay: 'horizontal',
         trovo: true,
+        trovoDisplay: 'horizontal',
       });
       await waitForSettingsWindowLoaded();
       await submit();
 
       // Cannot go live in dual output mode with all targets assigned to one display
-      // await waitForDisplayed('div.ant-message-notice-content', {
-      //   timeout: 10000,
-      // });
-      // await click('div.ant-message-notice-content');
+      await waitForDisplayed('div.ant-message-notice-content', {
+        timeout: 10000,
+      });
+      await click('div.ant-message-notice-content');
 
       // Dual output with one platform for each display
       await fillForm({
         trovoDisplay: 'vertical',
       });
-      // await submit();
-      // await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
-      // await waitForStreamStart();
-      // await isDisplayed('span=Multistream');
-      // await stopStream();
-      // await waitForStreamStop();
+      await submit();
+      await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
+      await waitForStreamStart();
+      await isDisplayed('span=Multistream');
+      await stopStream();
+      await waitForStreamStop();
 
       // await clickGoLive();
       // await waitForSettingsWindowLoaded();
