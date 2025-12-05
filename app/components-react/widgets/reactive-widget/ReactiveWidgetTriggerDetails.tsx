@@ -22,10 +22,12 @@ interface ReactiveWidgetTriggerDetailsProps {
   onUpdate?: (updatedTrigger: any) => void;
 }
 
-function flattenAnimationOptions(options: any[]): any[] {
+function flattenAnimationOptions(options: any): any[] {
+  if (!options) return [];
   const flattened: any[] = [];
   const optionsArray = Array.isArray(options) ? options : [options];
   optionsArray.forEach(opt => {
+    if (!opt) return;
     if (opt.list && Array.isArray(opt.list)) {
       opt.list.forEach((subOpt: any) => {
         flattened.push({
@@ -49,10 +51,15 @@ export function ReactiveWidgetTriggerDetails({
   staticConfig,
 }: ReactiveWidgetTriggerDetailsProps) {
   const isStreakTrigger = trigger?.type === 'streak';
-  const streakOptions = Object.entries(
-    staticConfig?.data?.options?.streak_time_periods ?? {},
-  ).map(([key, value]) => ({ label: String(value), value: key }));
-  const animationOptions = staticConfig?.data?.animations || [];
+  const streakOptions = React.useMemo(
+    () =>
+      Object.entries(
+        staticConfig?.data?.options?.streak_time_periods ?? {},
+      ).map(([key, value]) => ({ label: String(value), value: key })),
+    [staticConfig?.data?.options?.streak_time_periods],
+  );
+
+  const animationOptions = staticConfig?.data?.animations ?? {};
   const showAnimationOptions = flattenAnimationOptions(animationOptions.show_animations);
   const hideAnimationOptions = flattenAnimationOptions(animationOptions.hide_animations);
   const textAnimationOptions = flattenAnimationOptions(animationOptions.text_animations);
@@ -108,9 +115,7 @@ export function ReactiveWidgetTriggerDetails({
         <SwitchInput
           name={`toggle-${trigger.id}`}
           value={trigger.enabled}
-          onChange={value =>
-            onUpdate && onUpdate({ ...trigger, enabled: value as boolean })
-          }
+          onChange={value => onUpdate && onUpdate({ ...trigger, enabled: value as boolean })}
           label={trigger.enabled ? $t('Enabled') : $t('Disabled')}
           labelAlign="left"
           layout="horizontal"
@@ -172,13 +177,16 @@ export function ReactiveWidgetTriggerDetails({
       <Collapse bordered={false}>
         <Collapse.Panel header={$t('Font Settings')} key={1}>
           <FontFamilyInput label={$t('Font Family')} {...bind('text_settings.font')} />
-          <SliderInput min={8} max={80} label={$t('Font Size')} {...bind('text_settings.font_size')} tipFormatter={(n: number) => `${n}px`} />
+          <SliderInput
+            min={8}
+            max={80}
+            label={$t('Font Size')}
+            {...bind('text_settings.font_size')}
+            tipFormatter={(n: number) => `${n}px`}
+          />
           <FontWeightInput label={$t('Font Weight')} {...bind('text_settings.font_weight')} />
           <ColorInput label={$t('Text Color')} {...bind('text_settings.font_color')} />
-          <ColorInput
-            label={$t('Text Highlight Color')}
-            {...bind('text_settings.font_color2')}
-          />
+          <ColorInput label={$t('Text Highlight Color')} {...bind('text_settings.font_color2')} />
         </Collapse.Panel>
       </Collapse>
 

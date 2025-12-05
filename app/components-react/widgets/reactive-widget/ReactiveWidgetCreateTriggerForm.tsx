@@ -44,10 +44,6 @@ export function ReactiveWidgetCreateTriggerForm(props: TriggerFormProps) {
     game: triggerDefaults.game ?? '',
     event_type: triggerDefaults.event_type ?? '',
     name: triggerDefaults.name ?? '',
-    triggerType:
-      gameEvents && triggerDefaults.event_type
-        ? gameEvents[triggerDefaults.event_type]?.trigger_type
-        : '',
   });
 
   const triggerType = useMemo(() => {
