@@ -7,9 +7,9 @@ import styles from './Common.m.less';
 import PlatformLogo from 'components-react/shared/PlatformLogo';
 import { ListInput } from 'components-react/shared/inputs';
 import { platformLabels, TPlatform } from 'services/platforms';
-import { Header, useAuth } from './Onboarding';
+import { Header, IOnboardingStepProps, useAuth } from './Onboarding';
 
-export function ConnectMore() {
+export function ConnectMore(p: IOnboardingStepProps) {
   const { UserService } = Services;
 
   const { isPartialSLAuth } = useVuex(() => ({

@@ -1,9 +1,9 @@
 import React from 'react';
 import { $t } from 'services/i18n';
 import styles from './Common.m.less';
-import { Header, ImageCard } from './Onboarding';
+import { Header, ImageCard, IOnboardingStepProps } from './Onboarding';
 
-export function RecordingLogin() {
+export function RecordingLogin(p: IOnboardingStepProps) {
   const promoMetadata = [
     {
       title: $t('Free AI Highlighter'),

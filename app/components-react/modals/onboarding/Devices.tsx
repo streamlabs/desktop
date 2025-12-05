@@ -1,14 +1,14 @@
 import React from 'react';
 import { DisplaySection } from 'components-react/pages/onboarding/HardwareSetup';
 import styles from './Common.m.less';
-import { Header } from './Onboarding';
+import { Header, IOnboardingStepProps } from './Onboarding';
 import { $t } from 'services/i18n';
 import { ListInput } from 'components-react/shared/inputs';
 import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
 import Form from 'components-react/shared/inputs/Form';
 
-export function Devices() {
+export function Devices(p: IOnboardingStepProps) {
   const { DefaultHardwareService } = Services;
 
   const { videoDevices, audioDevices } = useVuex(() => ({

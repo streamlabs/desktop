@@ -6,9 +6,9 @@ import { $t } from 'services/i18n';
 import UltraBox from 'components-react/shared/UltraBox';
 import UltraIcon from 'components-react/shared/UltraIcon';
 import ButtonHighlighted from 'components-react/shared/ButtonHighlighted';
-import { Header, ImageCard } from './Onboarding';
+import { Header, ImageCard, IOnboardingStepProps } from './Onboarding';
 
-export function Ultra() {
+export function Ultra(p: IOnboardingStepProps) {
   const { MagicLinkService, UserService, OnboardingV2Service } = Services;
 
   useEffect(() => {

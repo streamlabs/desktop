@@ -8,9 +8,9 @@ import { $i } from 'services/utils';
 import { platformLabels, platformList } from 'services/platforms';
 import PlatformLogo from 'components-react/shared/PlatformLogo';
 import { ExtraPlatformConnect } from 'components-react/pages/onboarding/ExtraPlatformConnect';
-import { useAuth } from './Onboarding';
+import { IOnboardingStepProps, useAuth } from './Onboarding';
 
-export function Login() {
+export function Login(p: IOnboardingStepProps) {
   const [extraPlatform, setExtraPlatform] = useState<'dlive' | 'nimotv'>();
 
   const { SLIDLogin, platformLogin } = useAuth();

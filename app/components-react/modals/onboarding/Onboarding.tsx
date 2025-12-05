@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import * as remote from '@electron/remote';
 import * as steps from './steps';
 import { EOnboardingSteps } from 'services/onboarding/onboarding-v2';
@@ -10,29 +10,41 @@ import { EPlatformCallResult, externalAuthPlatforms, TPlatform } from 'services/
 import UltraIcon from 'components-react/shared/UltraIcon';
 import KevinSvg from 'components-react/shared/KevinSvg';
 
+export interface IOnboardingStepProps {
+  processing: boolean;
+  setProcessing: (val: boolean) => void;
+}
+
 const STEPS_MAP = {
   [EOnboardingSteps.Splash]: steps.Splash,
   [EOnboardingSteps.Login]: steps.Login,
-  [EOnboardingSteps.RecordingLogin]: () => <></>,
+  [EOnboardingSteps.RecordingLogin]: steps.RecordingLogin,
   [EOnboardingSteps.ConnectMore]: steps.ConnectMore,
-  [EOnboardingSteps.Devices]: () => <></>,
-  [EOnboardingSteps.OBSImport]: () => <></>,
+  [EOnboardingSteps.Devices]: steps.Devices,
+  [EOnboardingSteps.OBSImport]: steps.OBSImport,
   [EOnboardingSteps.Ultra]: steps.Ultra,
-  [EOnboardingSteps.Themes]: () => <></>,
+  [EOnboardingSteps.Themes]: steps.Themes,
 };
 
 export default function Onboarding() {
   const { OnboardingV2Service } = Services;
 
+  const [processing, setProcessing] = useState(false);
+
   const currentStep = useRealmObject(OnboardingV2Service.state.currentStep);
 
-  function closeModal() {}
+  function closeModal() {
+    if (processing) return;
+    OnboardingV2Service.actions.closeOnboarding();
+  }
 
   function takeStep() {
+    if (processing) return;
     OnboardingV2Service.actions.takeStep();
   }
 
   function stepBack() {
+    if (processing) return;
     OnboardingV2Service.actions.stepBack();
   }
 
@@ -41,8 +53,8 @@ export default function Onboarding() {
   return (
     <div>
       {currentStep.isClosable && <i className="icon-close" onClick={closeModal} />}
-      <Component />
-      <div>
+      <Component processing={processing} setProcessing={setProcessing} />
+      <div style={{ display: 'flex' }}>
         <Button onClick={stepBack}>{$t('Back')}</Button>
         {currentStep.isSkippable && <Button onClick={takeStep}>{$t('Skip')}</Button>}
         <Button onClick={takeStep}>{$t('Continue')}</Button>
