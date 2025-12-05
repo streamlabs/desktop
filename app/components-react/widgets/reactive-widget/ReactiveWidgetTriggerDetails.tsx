@@ -31,14 +31,14 @@ function flattenAnimationOptions(options: any): any[] {
     if (opt.list && Array.isArray(opt.list)) {
       opt.list.forEach((subOpt: any) => {
         flattened.push({
-          label: subOpt.label,
-          value: subOpt.value,
+          label: subOpt.value,
+          value: subOpt.key,
         });
       });
     } else {
       flattened.push({
-        label: opt.label,
-        value: opt.value,
+        label: opt.value,
+        value: opt.key,
       });
     }
   });
@@ -59,10 +59,26 @@ export function ReactiveWidgetTriggerDetails({
     [staticConfig?.data?.options?.streak_time_periods],
   );
 
-  const animationOptions = staticConfig?.data?.animations ?? {};
-  const showAnimationOptions = flattenAnimationOptions(animationOptions.show_animations);
-  const hideAnimationOptions = flattenAnimationOptions(animationOptions.hide_animations);
-  const textAnimationOptions = flattenAnimationOptions(animationOptions.text_animations);
+  const animationsConfig = (staticConfig?.data?.animations ?? {}) as {
+    show_animations?: any;
+    hide_animations?: any;
+    text_animations?: any;
+  };
+
+  const showAnimationOptions = React.useMemo(
+    () => flattenAnimationOptions(animationsConfig.show_animations),
+    [animationsConfig.show_animations],
+  );
+
+  const hideAnimationOptions = React.useMemo(
+    () => flattenAnimationOptions(animationsConfig.hide_animations),
+    [animationsConfig.hide_animations],
+  );
+
+  const textAnimationOptions = React.useMemo(
+    () => flattenAnimationOptions(animationsConfig.text_animations),
+    [animationsConfig.text_animations],
+  );
 
   const messageTemplateTooltip = $t(
     'When a trigger fires, this will be the format of the message. Available tokens: number',
