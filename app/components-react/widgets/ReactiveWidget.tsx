@@ -40,12 +40,7 @@ const AddTriggerTab: React.FC = () => {
 };
 
 const GameSettingsTab: React.FC = () => {
-  const {
-    groupOptions,
-    setGroupEnabled,
-    enableAllGroups,
-    disableAllGroups,
-  } = useReactiveWidget();
+  const { groupOptions, setGroupEnabled, enableAllGroups, disableAllGroups } = useReactiveWidget();
 
   return (
     <div>
@@ -139,19 +134,6 @@ const TAB_COMPONENTS: Record<TabKind, React.FC> = {
   'trigger-detail': TriggerDetailsTab,
 };
 
-function getTabKind(selectedTab: string): TabKind {
-  if (selectedTab === 'add-trigger') return 'add-trigger';
-  if (selectedTab === 'general') return 'general';
-  if (selectedTab.endsWith('-manage-trigger')) {
-    return 'game-manage-trigger';
-  }
-  if (selectedTab.includes('-trigger-')) {
-    return 'trigger-detail';
-  }
-
-  return 'game-manage-trigger';
-}
-
 function ManageOnWebButton() {
   const handleClick = () => {
     remote.shell.openExternal('https://streamlabs.com/dashboard#/widgets/reactive-widget');
@@ -170,21 +152,16 @@ export function ReactiveWidget() {
     setSelectedTab,
     playReactiveAlert,
     triggerGroups,
-    games,
-    data,
-    updateSettings,
+    groupMeta,
+    toggleTrigger,
     deleteTrigger,
+    tabKind,
   } = useReactiveWidget();
 
-  const tabKind = getTabKind(selectedTab);
   const ActiveTab = TAB_COMPONENTS[tabKind];
 
-  const keyMap = {
-    global: { title: 'Global', camel: 'global' },
-    ...games,
-  };
-
   const showDisplay = tabKind !== 'general' && tabKind !== 'game-manage-trigger';
+
   function onPlayAlert(trigger: any) {
     // if active tab is not the trigger detail, switch to it first
     if (tabKind !== 'trigger-detail') {
@@ -194,29 +171,8 @@ export function ReactiveWidget() {
     playReactiveAlert(trigger);
   }
 
-  function toggleTrigger(group: any, triggerId: string, enabled: boolean) {
-    const newSettings = { ...((data as any)?.settings || {}) };
-    if (group === 'global') {
-      newSettings.global = {
-        ...newSettings.global,
-        triggers: (newSettings.global?.triggers || []).map((trigger: any) => ({
-          ...trigger,
-          enabled: trigger.id === triggerId ? enabled : trigger.enabled,
-        })),
-      };
-    } else {
-      newSettings.games = {
-        ...newSettings.games,
-        [group]: {
-          ...newSettings.games?.[group],
-          triggers: (newSettings.games?.[group]?.triggers || []).map((trigger: any) => ({
-            ...trigger,
-            enabled: trigger.id === triggerId ? enabled : trigger.enabled,
-          })),
-        },
-      };
-    }
-    updateSettings(newSettings);
+  function onToggleTrigger(groupId: string, triggerId: string, enabled: boolean) {
+    toggleTrigger(groupId, triggerId, enabled);
   }
 
   function onDelete(triggerId: string) {
@@ -241,11 +197,11 @@ export function ReactiveWidget() {
       >
         <ReactiveWidgetMenu
           menuItems={triggerGroups}
-          keyMap={keyMap}
+          groupMeta={groupMeta}
           activeKey={selectedTab}
           onChange={key => setSelectedTab(key)}
-          playAlert={trigger => onPlayAlert(trigger)}
-          toggleTrigger={toggleTrigger}
+          playAlert={onPlayAlert}
+          toggleTrigger={onToggleTrigger}
           deleteTrigger={onDelete}
         />
         <ActiveTab />

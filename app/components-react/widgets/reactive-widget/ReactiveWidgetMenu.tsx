@@ -13,14 +13,22 @@ function GameIcon() {
 
 export function ReactiveWidgetMenu(props: {
   menuItems: any;
-  keyMap: any;
+  groupMeta: any;
   activeKey: string;
   onChange: (key: string) => void;
   playAlert: (type: any) => void;
   toggleTrigger: (group: any, triggerId: string, enabled: boolean) => void;
   deleteTrigger: (triggerId: string) => void;
 }) {
-  const { menuItems, activeKey, keyMap, onChange, playAlert, toggleTrigger, deleteTrigger } = props;
+  const {
+    menuItems,
+    activeKey,
+    groupMeta,
+    onChange,
+    playAlert,
+    toggleTrigger,
+    deleteTrigger,
+  } = props;
 
   const [openKeys, setOpenKeys] = useState<string[]>(['global']);
 
@@ -33,9 +41,7 @@ export function ReactiveWidgetMenu(props: {
     const [groupKey] = activeKey.split('-trigger-');
     if (!groupKey) return;
 
-    setOpenKeys(prev =>
-      prev.includes(groupKey) ? prev : [...prev, groupKey],
-    );
+    setOpenKeys(prev => (prev.includes(groupKey) ? prev : [...prev, groupKey]));
   }, [activeKey]);
 
   return (
@@ -63,7 +69,7 @@ export function ReactiveWidgetMenu(props: {
         <Menu.SubMenu
           key={groupKey}
           icon={<GameIcon />}
-          title={keyMap[groupKey]?.title || groupKey}
+          title={groupMeta[groupKey]?.title || groupKey}
         >
           {(group as any).triggers?.map((trigger: any, index: number) => (
             <Menu.Item
@@ -77,9 +83,7 @@ export function ReactiveWidgetMenu(props: {
                   style={{ display: 'inline-block' }}
                 />
                 <div style={{ display: 'flex', width: '100%', overflow: 'hidden' }}>
-                  <div className={css.triggerTitle}>
-                    {trigger.name || `Trigger ${index + 1}`}
-                  </div>
+                  <div className={css.triggerTitle}>{trigger.name || `Trigger ${index + 1}`}</div>
                   <div
                     style={{
                       display: 'flex',
@@ -107,9 +111,7 @@ export function ReactiveWidgetMenu(props: {
                           playAlert(trigger);
                         }}
                         type="text"
-                        icon={
-                          <CaretRightOutlined style={{ fontSize: '24px', color: 'white' }} />
-                        }
+                        icon={<CaretRightOutlined style={{ fontSize: '24px', color: 'white' }} />}
                       />
                     </Tooltip>
                   </div>

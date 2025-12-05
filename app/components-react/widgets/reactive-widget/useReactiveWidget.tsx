@@ -273,6 +273,26 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     return [global, ...games];
   }
 
+  get groupMeta() {
+    return {
+      global: { title: 'Global', camel: 'global' },
+      ...this.games,
+    };
+  }
+
+  get tabKind(): 'add-trigger' | 'general' | 'game-manage-trigger' | 'trigger-detail' {
+    const selectedTab = this.state?.selectedTab;
+
+    if (!selectedTab) return 'game-manage-trigger'; // default fallback
+
+    if (selectedTab === 'add-trigger') return 'add-trigger';
+    if (selectedTab === 'general') return 'general';
+    if (selectedTab.endsWith('-manage-trigger')) return 'game-manage-trigger';
+    if (selectedTab.includes('-trigger-')) return 'trigger-detail';
+
+    return 'game-manage-trigger';
+  }
+
   enableTrigger(groupId: string, triggerId: string) {
     this.updateTriggers(groupId, trigger =>
       trigger.id === triggerId ? { ...trigger, enabled: true } : trigger,
