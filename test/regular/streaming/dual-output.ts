@@ -351,6 +351,7 @@ test(
       // await click('div.ant-message-notice-content');
 
       // Dual output with one platform for each display
+      await waitForSettingsWindowLoaded();
       await fillForm({
         trovoDisplay: 'vertical',
       });
