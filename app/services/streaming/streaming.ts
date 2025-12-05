@@ -703,7 +703,7 @@ export class StreamingService
       // in osn is what actually determines if the stream will use enhanced broadcasting.
       if (platform === 'twitch') {
         const isEnhancedBroadcasting =
-          settings.platforms.twitch.isEnhancedBroadcasting ||
+          (settings.platforms.twitch && settings.platforms.twitch.isEnhancedBroadcasting) ||
           this.views.getIsEnhancedBroadcasting();
 
         console.log('Enabling enhanced broadcasting');
@@ -1418,9 +1418,11 @@ export class StreamingService
     }
 
     for (const context of Object.values(this.contexts)) {
-      if (context.streaming !== null) {
-        context.streaming.stop(force);
+      if (context.streaming === undefined || context.streaming === null) {
+        continue;
       }
+
+      context.streaming.stop(force);
     }
   }
 
@@ -1761,8 +1763,8 @@ export class StreamingService
     display: TDisplayType,
     type: 'streaming' | 'recording',
     index: number,
+    contextName: TOutputContext,
     start?: boolean,
-    contextName?: TOutputContext,
   ) {
     const mode = this.outputSettingsService.getSettings().mode;
     // TODO: Remove for factory api migration
@@ -2295,9 +2297,10 @@ export class StreamingService
         }
 
         for (const context of Object.values(this.contexts)) {
-          if (context.streaming !== null) {
-            context.streaming.stop();
+          if (context.streaming === undefined || context.streaming === null) {
+            continue;
           }
+          context.streaming.stop();
         }
 
         this.RESET_STREAM_INFO();
@@ -2764,7 +2767,11 @@ export class StreamingService
       }
     }
 
-    this.contexts[contextName][contextType] = null;
+    this.contexts[contextName][contextType] = (null as unknown) as (
+      | ISimpleStreaming
+      | IAdvancedStreaming
+    ) &
+      ((ISimpleRecording | IAdvancedRecording) & (ISimpleReplayBuffer | IAdvancedReplayBuffer));
 
     return Promise.resolve();
   }
