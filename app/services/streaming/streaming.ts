@@ -1099,6 +1099,7 @@ export class StreamingService
         console.log('Start Twitch Dual Stream');
         NodeObs.OBS_service_startStreaming('both');
       } else if (this.state.enhancedBroadcasting && this.views.shouldSetupRestream) {
+        console.log('Start Enhanced Broadcasting Dual Output Multistream');
         // Setup enhanced broadcasting multistream if either of the displays has more than one target
         if (!this.contexts.stream.streaming) {
           await this.createEnhancedBroadcastMultistream(true, 'stream');
@@ -1149,7 +1150,6 @@ export class StreamingService
         if (!this.contexts.stream.streaming) {
           await this.createEnhancedBroadcastMultistream(true);
         } else {
-          console.log('STARTING this.contexts.stream.streaming', this.contexts.stream.streaming);
           this.contexts.stream.streaming.start();
         }
       }
@@ -1463,12 +1463,6 @@ export class StreamingService
         ? this.settingsService.views.values.Stream
         : this.settingsService.views.values.StreamSecond;
 
-    console.log(
-      '\n\nSTREAMING Creating ENHANCED BROADCAST stream for platform',
-      outputSettings.key,
-      outputSettings.server,
-    );
-
     this.videoSettingsService.validateVideoContext(display);
 
     // Restore Twitch stream for the display that is being restreamed
@@ -1522,11 +1516,6 @@ export class StreamingService
         );
 
         if (stream.videoEncoder.lastError) {
-          console.log(
-            'Error creating encoder',
-            settings.videoEncoder,
-            stream.videoEncoder.lastError,
-          );
           throw new Error(stream.videoEncoder.lastError);
         }
       } else {
@@ -1568,7 +1557,6 @@ export class StreamingService
     };
 
     const streamSettings = this.getStreamSettings(display, outputSettings);
-    console.log('NEW API stream settings ', streamSettings);
 
     // If output settings
     if (streamSettings.streamType === 'rtmp_common' && outputSettings === undefined) {
@@ -1586,8 +1574,6 @@ export class StreamingService
     this.contexts[contextName].streaming.reconnect = ReconnectFactory.create();
     this.contexts[contextName].streaming.network = NetworkFactory.create();
 
-    console.log('NEW API Created streaming instance', this.contexts[contextName].streaming);
-
     if (start) {
       this.contexts[contextName].streaming.start();
     }
@@ -1597,7 +1583,6 @@ export class StreamingService
 
   getStreamSettings(display: TDisplayType, outputSettings?: IStreamOutputSettings) {
     if (outputSettings !== undefined) {
-      console.log('returning output settings', outputSettings);
       return outputSettings;
     }
 
@@ -1678,11 +1663,6 @@ export class StreamingService
       //   // this.contexts.vertical.streaming.start();
       //   this.contexts.vertical.streaming.start();
       //   // await this.validateOrCreateOutputInstance('vertical', 'streaming', 1, true);
-      //   return;
-      // }
-      // if (this.views.isDualOutputMode && this.contexts.vertical.streaming !== null) {
-      //   console.log('Starting OLD API stream in dual output mode');
-      //   NodeObs.OBS_service_startStreaming('horizontal');
       //   return;
       // }
       // await this.handleStartStreaming(info.signal);
@@ -2004,7 +1984,7 @@ export class StreamingService
   private streamErrorReportMessage = '';
 
   private handleOBSV2OutputSignal(info: IOBSOutputSignalInfo) {
-    console.debug('OBS Output signal: ', info);
+    console.debug('OLD API OBS Output signal: ', info);
 
     /*
      * Resolve when:
@@ -2024,7 +2004,7 @@ export class StreamingService
 
     const time = new Date().toISOString();
 
-    console.log('SHOULD RESOLVE STREAMING SIGNAL:', shouldResolve);
+    console.log('OLD API SHOULD RESOLVE STREAMING SIGNAL:', shouldResolve);
 
     if (info.type === EOBSOutputType.Streaming) {
       if (info.signal === EOBSOutputSignal.Start && shouldResolve) {
