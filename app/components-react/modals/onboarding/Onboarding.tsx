@@ -33,6 +33,7 @@ export default function Onboarding() {
   const [processing, setProcessing] = useState(false);
 
   const currentStep = useRealmObject(OnboardingV2Service.state).currentStep;
+  const currentIndex = useRealmObject(OnboardingV2Service.state).currentIndex;
   const showOnboarding = useRealmObject(OnboardingV2Service.state).showOnboarding;
 
   useEffect(() => {
@@ -60,8 +61,6 @@ export default function Onboarding() {
 
   const Component = STEPS_MAP[currentStep.name];
 
-  console.log('rendering', currentStep.name);
-
   return (
     <Modal
       closable={currentStep.isClosable}
@@ -69,15 +68,25 @@ export default function Onboarding() {
       maskClosable={false}
       destroyOnClose
       centered
-      bodyStyle={{ height: '80%', width: '80%', padding: 32 }}
+      bodyStyle={{ padding: 32, height: '100%' }}
       className={styles.modalWrapper}
       visible={showOnboarding}
       getContainer={false}
       footer={
-        <div style={{ display: 'flex' }}>
-          <Button onClick={stepBack}>{$t('Back')}</Button>
-          {currentStep.isSkippable && <Button onClick={takeStep}>{$t('Skip')}</Button>}
-          <Button onClick={takeStep}>{$t('Continue')}</Button>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          {currentIndex !== 0 && (
+            <Button onClick={stepBack} style={{ right: 'auto' }}>
+              {$t('Back')}
+            </Button>
+          )}
+          {currentStep.isSkippable && (
+            <Button type="link" onClick={takeStep}>
+              {$t('Skip')}
+            </Button>
+          )}
+          <Button type="primary" onClick={takeStep}>
+            {$t('Continue')}
+          </Button>
         </div>
       }
     >
