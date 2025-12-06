@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import * as remote from '@electron/remote';
 import { Services } from 'components-react/service-provider';
-import KevinSvg from 'components-react/shared/KevinSvg';
 import { $t } from 'services/i18n';
 import UltraBox from 'components-react/shared/UltraBox';
 import UltraIcon from 'components-react/shared/UltraIcon';

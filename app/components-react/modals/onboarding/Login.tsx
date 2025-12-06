@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import cx from 'classnames';
-import * as remote from '@electron/remote';
 import { Button } from 'antd';
 import styles from './Common.m.less';
 import { $t } from 'services/i18n';

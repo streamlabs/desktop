@@ -1,5 +1,4 @@
 import React from 'react';
-import * as remote from '@electron/remote';
 import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
 import { $t } from 'services/i18n';

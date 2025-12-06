@@ -70,6 +70,8 @@ export class RealmObject {
             this._realmModel = this.db.create(this.schema.name, {});
           });
         } catch (e: unknown) {
+          // We want to surface legit errors in db/schema config
+          console.error(e);
           this._realmModel = this.db.create(this.schema.name, {});
         }
 
@@ -142,20 +144,6 @@ export class RealmObject {
         // @ts-ignore
         this[key] = patch[key];
       }
-    });
-  }
-
-  /**
-   * Wrapper function for simple replacement writes of primitive values
-   * @param key property of the schema
-   * @param value primitive value attempted to being written
-   */
-  simpleWrite(key: string, value: string | boolean | number) {
-    if (!this.schema.properties.hasOwnProperty(key)) {
-      throw new Error(`Unrecognized key ${key}`);
-    }
-    this.db.write(() => {
-      Object.assign(this, { key: value });
     });
   }
 

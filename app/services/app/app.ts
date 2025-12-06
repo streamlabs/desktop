@@ -152,7 +152,9 @@ export class AppService extends StatefulService<IAppState> {
       await this.sceneCollectionsService.initialize();
     }
 
-    this.SET_ONBOARDED(this.onboardingService.startOnboardingIfRequired());
+    if (this.userService.isAlphaGroup) {
+      this.SET_ONBOARDED(this.onboardingService.startOnboardingIfRequired());
+    }
     this.dismissablesService.initialize();
 
     electron.ipcRenderer.on('shutdown', () => {
@@ -314,6 +316,10 @@ export class AppService extends StatefulService<IAppState> {
       'https://slobs-cdn.streamlabs.com/configs/game_capture_list.json',
       `${this.appDataDirectory}/game_capture_list.json`,
     );
+  }
+
+  setOnboarded(value: boolean) {
+    this.SET_ONBOARDED(value);
   }
 
   @mutation()

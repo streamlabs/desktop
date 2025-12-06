@@ -77,6 +77,7 @@ import { UsageStatisticsService } from './usage-statistics';
 import { Inject } from 'services/core';
 import MessageBoxModal from 'components/shared/modals/MessageBoxModal';
 import Modal from 'components/shared/modals/Modal';
+import { OnboardingV2Service } from 'app-services';
 
 const { ipcRenderer } = electron;
 const BrowserWindow = remote.BrowserWindow;
@@ -194,6 +195,7 @@ const DEFAULT_WINDOW_OPTIONS: IWindowOptions = {
 
 export class WindowsService extends StatefulService<IWindowsState> {
   @Inject() usageStatisticsService: UsageStatisticsService;
+  @Inject() onboardingV2Service: OnboardingV2Service;
 
   /**
    * 'main' and 'child' are special window ids that always exist
@@ -585,6 +587,14 @@ export class WindowsService extends StatefulService<IWindowsState> {
   }
 
   updateStyleBlockers(windowId: string, hideStyleBlockers: boolean) {
+    // Style blockers should never appear during onboarding
+    if (
+      windowId === 'main' &&
+      hideStyleBlockers === false &&
+      this.onboardingV2Service.state.showOnboarding
+    ) {
+      return;
+    }
     this.UPDATE_HIDE_STYLE_BLOCKERS(windowId, hideStyleBlockers);
     this.styleBlockersUpdated.next({ windowId, hideStyleBlockers });
   }

@@ -1,14 +1,15 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
+import { Button, Modal } from 'antd';
 import * as remote from '@electron/remote';
 import * as steps from './steps';
 import { EOnboardingSteps } from 'services/onboarding/onboarding-v2';
 import { Services } from 'components-react/service-provider';
 import { useRealmObject } from 'components-react/hooks/realm';
-import { Button } from 'antd';
 import { $t } from 'services/i18n';
 import { EPlatformCallResult, externalAuthPlatforms, TPlatform } from 'services/platforms';
 import UltraIcon from 'components-react/shared/UltraIcon';
 import KevinSvg from 'components-react/shared/KevinSvg';
+import styles from './Common.m.less';
 
 export interface IOnboardingStepProps {
   processing: boolean;
@@ -27,11 +28,18 @@ const STEPS_MAP = {
 };
 
 export default function Onboarding() {
-  const { OnboardingV2Service } = Services;
+  const { OnboardingV2Service, WindowsService } = Services;
 
   const [processing, setProcessing] = useState(false);
 
-  const currentStep = useRealmObject(OnboardingV2Service.state.currentStep);
+  const currentStep = useRealmObject(OnboardingV2Service.state).currentStep;
+  const showOnboarding = useRealmObject(OnboardingV2Service.state).showOnboarding;
+
+  useEffect(() => {
+    if (true) {
+      OnboardingV2Service.actions.showOnboarding();
+    }
+  }, []);
 
   function closeModal() {
     if (processing) return;
@@ -48,18 +56,33 @@ export default function Onboarding() {
     OnboardingV2Service.actions.stepBack();
   }
 
+  if (!currentStep) return <></>;
+
   const Component = STEPS_MAP[currentStep.name];
 
+  console.log('rendering', currentStep.name);
+
   return (
-    <div>
-      {currentStep.isClosable && <i className="icon-close" onClick={closeModal} />}
+    <Modal
+      closable={currentStep.isClosable}
+      onCancel={closeModal}
+      maskClosable={false}
+      destroyOnClose
+      centered
+      bodyStyle={{ height: '80%', width: '80%', padding: 32 }}
+      className={styles.modalWrapper}
+      visible={showOnboarding}
+      getContainer={false}
+      footer={
+        <div style={{ display: 'flex' }}>
+          <Button onClick={stepBack}>{$t('Back')}</Button>
+          {currentStep.isSkippable && <Button onClick={takeStep}>{$t('Skip')}</Button>}
+          <Button onClick={takeStep}>{$t('Continue')}</Button>
+        </div>
+      }
+    >
       <Component processing={processing} setProcessing={setProcessing} />
-      <div style={{ display: 'flex' }}>
-        <Button onClick={stepBack}>{$t('Back')}</Button>
-        {currentStep.isSkippable && <Button onClick={takeStep}>{$t('Skip')}</Button>}
-        <Button onClick={takeStep}>{$t('Continue')}</Button>
-      </div>
-    </div>
+    </Modal>
   );
 }
 

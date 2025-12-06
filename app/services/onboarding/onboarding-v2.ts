@@ -3,11 +3,13 @@ import { ObjectSchema } from 'realm';
 import * as remote from '@electron/remote';
 import { Inject, Service } from 'services/core';
 import {
+  AppService,
   ObsImporterService,
   RecordingModeService,
   SceneCollectionsService,
   UsageStatisticsService,
   UserService,
+  WindowsService,
 } from 'app-services';
 
 export enum EOnboardingSteps {
@@ -130,7 +132,7 @@ class OnboardingStepState extends RealmObject implements IOnboardingStep {
 OnboardingStepState.register();
 
 class OnboardingServiceState extends RealmObject {
-  currentStep: OnboardingStepState;
+  currentStep: IOnboardingStep;
   showOnboarding: boolean;
   currentIndex: number;
   pathLength: number;
@@ -140,8 +142,8 @@ class OnboardingServiceState extends RealmObject {
     properties: {
       currentStep: 'OnboardingStepState',
       showOnboarding: { type: 'bool', default: false },
-      currentIndex: 'double',
-      pathLength: 'double',
+      currentIndex: { type: 'int', default: 0 },
+      pathLength: { type: 'int', default: 0 },
     },
   };
 }
@@ -154,6 +156,8 @@ export class OnboardingV2Service extends Service {
   @Inject() private obsImporterService: ObsImporterService;
   @Inject() private sceneCollectionsService: SceneCollectionsService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
+  @Inject() private appService: AppService;
+  @Inject() private windowsService: WindowsService;
 
   state = OnboardingServiceState.inject();
   /**
@@ -170,8 +174,8 @@ export class OnboardingV2Service extends Service {
    */
 
   path: OnboardingPath = null;
-  localStorageKey = 'UserHasBeenOnboarded';
   singletonPath = false;
+  localStorageKey = 'UserHasBeenOnboarded';
 
   get currentStepName() {
     return this.state.currentStep.name;
@@ -231,6 +235,7 @@ export class OnboardingV2Service extends Service {
   }
 
   private initalizeView(config: IOnboardingInitialization) {
+    this.windowsService.updateStyleBlockers('main', true);
     this.singletonPath = config.isSingleton;
     this.path = new OnboardingPath();
     this.path.append(config.startingStep);
@@ -300,8 +305,10 @@ export class OnboardingV2Service extends Service {
       remote.session.defaultSession.flushStorageData();
       console.log('Set onboarding key successful.');
       this.recordOnboardingNavEvent(closedEarly ? 'closed' : 'completed');
+      this.appService.actions.setOnboarded(true);
     }
     this.setShowOnboarding(false);
+    this.windowsService.updateStyleBlockers('main', false);
     this.setCurrentStep(null);
     this.path = null;
   }
@@ -321,20 +328,20 @@ export class OnboardingV2Service extends Service {
 
   private setCurrentStep(step: IOnboardingStep) {
     this.state.db.write(() => {
-      this.state.currentStep.deepPatch({ isSkippable: false, isClosable: false, ...step });
+      this.state.currentStep = { isSkippable: false, isClosable: false, ...step };
     });
   }
 
   private setShowOnboarding(val: boolean) {
-    this.state.simpleWrite('showOnboarding', val);
+    this.state.db.write(() => (this.state.showOnboarding = val));
   }
 
   private setPathLength(length: number) {
-    this.state.simpleWrite('pathLength', length);
+    this.state.db.write(() => (this.state.pathLength = length));
   }
 
   private setIndex(val: number) {
-    this.state.simpleWrite('currentIndex', val);
+    this.state.db.write(() => (this.state.currentIndex = val));
   }
 
   get hasExistingSceneCollections() {

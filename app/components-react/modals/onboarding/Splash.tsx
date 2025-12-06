@@ -4,7 +4,7 @@ import { Button } from 'antd';
 import { $i } from 'services/utils';
 import { $t } from 'services/i18n';
 import { Services } from 'components-react/service-provider';
-import styles from 'Common.m.less';
+import styles from './Common.m.less';
 import { IOnboardingStepProps, useAuth } from './Onboarding';
 
 export function Splash(p: IOnboardingStepProps) {
