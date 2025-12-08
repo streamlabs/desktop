@@ -5,7 +5,6 @@ interface IReactiveWidgetState extends IWidgetCommonState {
   data: { settings: ReactiveWidgetSettings }; // TODO$chris: define settings structure
 }
 
-type ReactiveTriggerType = 'streak' | 'achievement';
 type ReactiveLayout = 'above' | 'banner' | 'side';
 type ReactiveStreakPeriod = 'session' | 'today' | 'round';
 
