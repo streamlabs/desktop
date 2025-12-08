@@ -495,24 +495,16 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
 
     const platforms = this.formatTargets(platformList);
     const destinations = this.formatTargets(destinationList);
+    // Note: this tracks if the user streamed with enhanced broadcasting, it does not
+    // indicate if the user had enhanced broadcasting enabled in settings.
+    const enhancedBroadcasting = this.outputSettingsService.getIsEnhancedBroadcasting();
 
     const info = {
       platforms,
       destinations,
       type: 'Single Output',
-    } as Partial<IStreamDiagnosticInfo>;
-
-    if (!this.dualOutputService.views.dualOutputMode && platforms.replace(/"/g, '') === 'twitch') {
-      const enhancedBroadcasting = this.outputSettingsService.getIsEnhancedBroadcasting();
-
-      if (enhancedBroadcasting.setting === 'Enabled' && enhancedBroadcasting.live !== 'Enabled') {
-        this.logProblem(
-          'Twitch Enhanced Broadcasting setting enabled but did not go live with Enhanced Broadcasting.',
-        );
-      }
-
-      info.enhancedBroadcasting = enhancedBroadcasting.live;
-    }
+      enhancedBroadcasting,
+    };
 
     if (this.dualOutputService.views.dualOutputMode) {
       return {
@@ -587,7 +579,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     const isDualOutputMode = this.dualOutputService.views.dualOutputMode;
     const displays: TDisplayType[] = isDualOutputMode ? ['horizontal', 'vertical'] : ['horizontal'];
 
-    let settings = { horizontal: {}, vertical: {} };
+    const settings = { horizontal: {}, vertical: {} };
 
     // get settings for all active displays
     displays.forEach((display: TDisplayType) => {
@@ -650,14 +642,11 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
         this.logProblem(`Low Base resolution: ${setting.baseRes}`);
       }
 
-      settings = {
-        ...settings,
-        [display]: {
-          'Base Resolution': setting.baseRes,
-          'Output Resolution': setting.outputRes,
-          'Downscale Filter': setting.scaleType,
-          'Frame Rate': fpsObj,
-        },
+      settings[display] = {
+        'Base Resolution': setting.baseRes,
+        'Output Resolution': setting.outputRes,
+        'Downscale Filter': setting.scaleType,
+        'Frame Rate': fpsObj,
       };
     });
 
@@ -1109,8 +1098,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
           Platforms: platforms,
           Destinations: s?.destinations,
           'Stream Type': s?.type,
-          'Enhanced Broadcasting':
-            s?.enhancedBroadcasting !== undefined ? s.enhancedBroadcasting : 'N/A',
+          'Enhanced Broadcasting': s?.enhancedBroadcasting ?? 'N/A',
         };
       }),
     );

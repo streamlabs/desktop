@@ -15,7 +15,11 @@ export class SignalsService extends StatefulService<ISignalCallbacks> {
   init() {
     obs.NodeObs.OBS_service_connectOutputSignals((info: IOBSOutputSignalInfo) => {
       for (const callback of this.state.signalCallbacks) {
-        callback(info);
+        try {
+          callback(info);
+        } catch (err: unknown) {
+          console.error('Signal callback error:', err);
+        }
       }
     });
   }

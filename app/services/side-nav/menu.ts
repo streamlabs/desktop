@@ -88,7 +88,6 @@ class SideNavViews extends ViewHandler<ISideNavServiceState> {
   }
 }
 
-@InitAfter('UserService')
 @InitAfter('PlatformAppsService')
 export class SideNavService extends PersistentStatefulService<ISideNavServiceState> {
   @Inject() userService: UserService;

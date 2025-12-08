@@ -10,5 +10,6 @@
   "Go to: <link></link>": "Ga naar: <link></link>",
   "Click on the \"eye\" icon to see your stream key": "Klik op het oogje om je streamcode te zien.",
   "Put in 2FA": "Zet 2FA aan",
-  "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "Na 2FA is de stream-sleutel gegenereerd en beschikbaar voor Streamlabs Desktop voor dat kanaal. Je zou nu live moeten kunnen gaan op Kick."
+  "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "Na 2FA is de stream-sleutel gegenereerd en beschikbaar voor Streamlabs Desktop voor dat kanaal. Je zou nu live moeten kunnen gaan op Kick.",
+  "Stream Shift Error: Kick is not live": "Stream Shift Error: Kick is not live"
 }

@@ -44,7 +44,12 @@ import {
 } from './streaming-api';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import { $t } from 'services/i18n';
-import { getPlatformService, TPlatform, TStartStreamOptions } from 'services/platforms';
+import {
+  getPlatformService,
+  platformLabels,
+  TPlatform,
+  TStartStreamOptions,
+} from 'services/platforms';
 import { UserService } from 'services/user';
 import {
   ENotificationSubType,
@@ -148,6 +153,7 @@ export class StreamingService
     replayBufferStatusTime: new Date().toISOString(),
     selectiveRecording: false,
     dualOutputMode: false,
+    enhancedBroadcasting: false,
     info: {
       settings: null,
       lifecycle: 'empty',
@@ -295,6 +301,14 @@ export class StreamingService
    * Make a transition to Live
    */
   async goLive(newSettings?: IGoLiveSettings) {
+    // To ensure that the correct chat renders if dual streaming Twitch, make sure that Twitch is the primary platform
+    if (
+      this.userService.state.auth?.primaryPlatform !== 'twitch' &&
+      this.views.isTwitchDualStreaming
+    ) {
+      this.userService.setPrimaryPlatform('twitch');
+    }
+
     // don't interact with API in logged out mode and when protected mode is disabled
     if (
       !this.userService.isLoggedIn ||
@@ -630,6 +644,19 @@ export class StreamingService
         !isStreamShiftStream
           ? undefined
           : settings;
+
+      // Note: Enhanced broadcasting setting persist in two places during the go live flow:
+      // in the Twitch service and in osn. The setting in the Twitch service is persisted
+      // between streams in order to restore the user's preferences for when they go live with
+      // Twitch dual stream, which requires enhanced broadcasting to be enabled. The setting
+      // in osn is what actually determines if the stream will use enhanced broadcasting.
+      if (platform === 'twitch') {
+        const isEnhancedBroadcasting =
+          (settings.platforms.twitch && settings.platforms.twitch.isEnhancedBroadcasting) ||
+          this.views.getIsEnhancedBroadcasting();
+
+        this.SET_ENHANCED_BROADCASTING(isEnhancedBroadcasting);
+      }
 
       // don't update settings for twitch in unattendedMode
       await this.runCheck(platform, () => service.beforeGoLive(settingsForPlatform, display));
@@ -1012,23 +1039,36 @@ export class StreamingService
       NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
       NodeObs.OBS_service_setVideoInfo(verticalContext, 'vertical');
 
-      const signalChanged = this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
-        if (signalInfo.service === 'default') {
-          if (signalInfo.code !== 0) {
-            NodeObs.OBS_service_stopStreaming(true, 'horizontal');
-            NodeObs.OBS_service_stopStreaming(true, 'vertical');
-          }
+      // Twitch dual stream's vertical display is handled by the backend
+      // so when Twitch is the only target for dual stream, only start the
+      // horizontal stream
+      if (this.views.isTwitchDualStreaming) {
+        console.log('Start Twitch Dual Stream');
+        NodeObs.OBS_service_startStreaming('both');
+      } else {
+        NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
+        NodeObs.OBS_service_setVideoInfo(verticalContext, 'vertical');
 
-          if (signalInfo.signal === EOBSOutputSignal.Start) {
-            NodeObs.OBS_service_startStreaming('vertical');
-            signalChanged.unsubscribe();
-          }
-        }
-      });
+        const signalChanged = this.signalInfoChanged.subscribe(
+          (signalInfo: IOBSOutputSignalInfo) => {
+            if (signalInfo.service === 'default') {
+              if (signalInfo.code !== 0) {
+                NodeObs.OBS_service_stopStreaming(true, 'horizontal');
+                NodeObs.OBS_service_stopStreaming(true, 'vertical');
+              }
 
-      NodeObs.OBS_service_startStreaming('horizontal');
-      // sleep for 1 second to allow the first stream to start
-      await new Promise(resolve => setTimeout(resolve, 1000));
+              if (signalInfo.signal === EOBSOutputSignal.Start) {
+                NodeObs.OBS_service_startStreaming('vertical');
+                signalChanged.unsubscribe();
+              }
+            }
+          },
+        );
+
+        NodeObs.OBS_service_startStreaming('horizontal');
+        // sleep for 1 second to allow the first stream to start
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     } else {
       // start single output
       const horizontalContext = this.videoSettingsService.contexts.horizontal;
@@ -1176,6 +1216,11 @@ export class StreamingService
 
       if (this.views.isStreamShiftMode) {
         this.restreamService.resetStreamShift();
+      }
+
+      // Reset enhanced broadcasting after streaming stops to prevent it from being accidentally enabled for the next stream
+      if (this.state.enhancedBroadcasting) {
+        this.SET_ENHANCED_BROADCASTING(false);
       }
 
       this.UPDATE_STREAM_INFO({ lifecycle: 'empty' });
@@ -1380,9 +1425,21 @@ export class StreamingService
 
   private handleOBSOutputSignal(info: IOBSOutputSignalInfo) {
     console.debug('OBS Output signal: ', info);
+    console.log('info', JSON.stringify(info, null, 2));
 
+    // Starting the stream should resolve:
+    // 1. Single Output: In single output mode after the stream start signal has been received
+    // 2. Dual Output: In dual output mode after the stream start signal has been received
+    //    for the vertical display
+    // 3. Dual Output, Dual Stream with Twitch: In dual output mode with Twitch as the only target
+    //    for dual stream, resolve after the stream start signal has been received for the
+    //    horizontal display
     const shouldResolve =
-      !this.views.isDualOutputMode || (this.views.isDualOutputMode && info.service === 'vertical');
+      !this.views.isDualOutputMode ||
+      (this.views.isDualOutputMode && info.service === 'vertical') ||
+      (this.views.isDualOutputMode &&
+        info.service === 'default' &&
+        this.views.isTwitchDualStreaming);
 
     const time = new Date().toISOString();
 
@@ -1639,6 +1696,24 @@ export class StreamingService
       }
     }
 
+    // Add display information for dual output mode
+    if (this.views.isDualOutputMode) {
+      const platforms =
+        info.service === 'vertical'
+          ? this.views.verticalStream.map(p => platformLabels(p))
+          : this.views.horizontalStream.map(p => platformLabels(p));
+
+      const stream =
+        info.service === 'vertical'
+          ? $t('Please confirm %{platforms} in the Vertical stream.', {
+              platforms,
+            })
+          : $t('Please confirm %{platforms} in the Horizontal stream.', {
+              platforms,
+            });
+      errorText = [errorText, stream].join('\n\n');
+    }
+
     const buttons = [$t('OK')];
 
     const title = {
@@ -1809,5 +1884,10 @@ export class StreamingService
   @mutation()
   private SET_GO_LIVE_SETTINGS(settings: IGoLiveSettings) {
     this.state.info.settings = settings;
+  }
+
+  @mutation()
+  private SET_ENHANCED_BROADCASTING(enabled: boolean) {
+    this.state.enhancedBroadcasting = enabled;
   }
 }

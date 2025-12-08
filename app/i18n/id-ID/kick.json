@@ -10,5 +10,6 @@
   "Go to: <link></link>": "Kunjungi: <link></link>",
   "Click on the \"eye\" icon to see your stream key": "Klik ikon \"mata\" untuk melihat kunci streaming Anda",
   "Put in 2FA": "Masukkan 2FA",
-  "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "Setelah 2FA, kunci streaming telah dibuat dan akan tersedia untuk Streamlabs Desktop untuk saluran tersebut. Sekarang Anda seharusnya sudah dapat melakukan siaran langsung di Kick."
+  "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "Setelah 2FA, kunci streaming telah dibuat dan akan tersedia untuk Streamlabs Desktop untuk saluran tersebut. Sekarang Anda seharusnya sudah dapat melakukan siaran langsung di Kick.",
+  "Stream Shift Error: Kick is not live": "Stream Shift Error: Kick is not live"
 }
