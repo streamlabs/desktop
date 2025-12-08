@@ -11,6 +11,8 @@ import UltraIcon from 'components-react/shared/UltraIcon';
 import KevinSvg from 'components-react/shared/KevinSvg';
 import styles from './Common.m.less';
 
+const NO_BUTTON_STEPS = new Set([EOnboardingSteps.Splash, EOnboardingSteps.Login]);
+
 export interface IOnboardingStepProps {
   processing: boolean;
   setProcessing: (val: boolean) => void;
@@ -84,9 +86,11 @@ export default function Onboarding() {
               {$t('Skip')}
             </Button>
           )}
-          <Button type="primary" onClick={takeStep}>
-            {$t('Continue')}
-          </Button>
+          {!NO_BUTTON_STEPS.has(currentStep.name) && (
+            <Button type="primary" onClick={takeStep}>
+              {$t('Continue')}
+            </Button>
+          )}
         </div>
       }
     >
@@ -99,7 +103,7 @@ export function Header(p: { title: string; description?: string }) {
   return (
     <>
       <KevinSvg />
-      <h2>{p.title}</h2>
+      <h1>{p.title}</h1>
       {p.description && <span>{p.description}</span>}
     </>
   );

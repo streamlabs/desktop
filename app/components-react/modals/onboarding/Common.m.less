@@ -9,6 +9,11 @@
     z-index: 2000 !important; // show above everything
     height: 100% !important;
   }
+
+  :global(.ant-modal-footer) {
+    background-color: var(--backround);
+    border-top: none;
+  }
 }
 
 .dark-box {
@@ -19,6 +24,14 @@
 .centered {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-evenly;
   align-items: center;
+  text-align: center;
+}
+
+.big-button {
+  border-radius: 32px !important;
+  width: 240px;
+  height: 64px !important;
+  font-weight: bold !important;
 }

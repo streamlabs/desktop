@@ -24,25 +24,37 @@ export function Splash(p: IOnboardingStepProps) {
 
   return (
     <div className={styles.centered}>
-      <video src={$i('webm/kevin_jump.webm')} controls={false} autoPlay loop />
-      <div className={cx(styles.darkBox, styles.centered)}>
-        <h2>{$t('Welcome to Streamlabs Desktop')}</h2>
+      <video
+        src={$i('webm/kevin_jump.webm')}
+        controls={false}
+        autoPlay
+        loop
+        style={{ height: 160 }}
+      />
+      <div
+        className={cx(styles.darkBox, styles.centered)}
+        style={{ padding: 24, width: 600, height: 360 }}
+      >
+        <h1>{$t('Welcome to Streamlabs Desktop')}</h1>
         <span>
           {$t(
             'Access all the tools you need, including overlays, alerts, automatic clips, sponsorships, and more',
           )}
         </span>
-        <Button onClick={SLIDLogin}>
+        <Button onClick={SLIDLogin} type="primary" className={styles.bigButton}>
           {$t('Create an account')}
+          &nbsp;
           <i className="icon-pop-out-2" />
         </Button>
-        <span>
+        <span style={{ paddingTop: 24 }}>
           {$t('Already have an account?')}
+          &nbsp;
           <a onClick={login}>{$t('Log In')}</a>
         </span>
       </div>
-      <span>
+      <span style={{ paddingTop: 32 }}>
         {$t('Just looking to record?')}
+        &nbsp;
         <a onClick={startRecordingMode}>{$t('Start here')}</a>
       </span>
     </div>
