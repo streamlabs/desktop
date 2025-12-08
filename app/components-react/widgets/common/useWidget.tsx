@@ -223,7 +223,7 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
     );
   }
 
-  private get widgetsService() {
+  protected get widgetsService() {
     return Services.WidgetsService;
   }
 
@@ -375,7 +375,7 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
   }
 
   /**
-   * override this method to patch data after fetching
+a   * override this method to patch data after fetching
    *
    * @remarks If you override this method, and the widget is using the new widget
    * API (at `/api/v5/widgets/desktop/{type}`) you need to either replicate this

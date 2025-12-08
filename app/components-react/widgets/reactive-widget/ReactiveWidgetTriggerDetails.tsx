@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import {
   MediaUrlInput,
   NumberInput,
@@ -51,7 +51,8 @@ export function ReactiveWidgetTriggerDetails({
   staticConfig,
 }: ReactiveWidgetTriggerDetailsProps) {
   const isStreakTrigger = trigger?.type === 'streak';
-  const streakOptions = React.useMemo(
+
+  const streakOptions = useMemo(
     () =>
       Object.entries(
         staticConfig?.data?.options?.streak_time_periods ?? {},
@@ -65,17 +66,17 @@ export function ReactiveWidgetTriggerDetails({
     text_animations?: any;
   };
 
-  const showAnimationOptions = React.useMemo(
+  const showAnimationOptions = useMemo(
     () => flattenAnimationOptions(animationsConfig.show_animations),
     [animationsConfig.show_animations],
   );
 
-  const hideAnimationOptions = React.useMemo(
+  const hideAnimationOptions = useMemo(
     () => flattenAnimationOptions(animationsConfig.hide_animations),
     [animationsConfig.hide_animations],
   );
 
-  const textAnimationOptions = React.useMemo(
+  const textAnimationOptions = useMemo(
     () => flattenAnimationOptions(animationsConfig.text_animations),
     [animationsConfig.text_animations],
   );
@@ -84,7 +85,7 @@ export function ReactiveWidgetTriggerDetails({
     'When a trigger fires, this will be the format of the message. Available tokens: number',
   );
 
-  const bind = React.useCallback(
+  const bind = useCallback(
     (path: string) => {
       const segments = path.split('.');
 
@@ -117,34 +118,20 @@ export function ReactiveWidgetTriggerDetails({
 
   return (
     <div>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '16px',
-        }}
-      >
-        <h3 style={{ marginBottom: 0, fontSize: '16px', lineHeight: '100%' }}>
-          {$t('Trigger Details')}
-        </h3>
-        <SwitchInput
-          name={`toggle-${trigger.id}`}
-          value={trigger.enabled}
-          onChange={value => onUpdate && onUpdate({ ...trigger, enabled: value as boolean })}
-          label={trigger.enabled ? $t('Enabled') : $t('Disabled')}
-          labelAlign="left"
-          layout="horizontal"
-          uncontrolled
-          checkmark
-          style={{
-            marginBottom: 0,
-            display: 'flex',
-            alignItems: 'center',
-            fontWeight: 500,
-            color: trigger.enabled ? 'var(--title)' : 'var(--nav-icon-inactive)',
-          }}
-        />
+      <div className={css.headerRow}>
+        <h3 className={css.title}>{$t('Trigger Details')}</h3>
+        <div className={trigger.enabled ? css.switchEnabled : css.switchDisabled}>
+          <SwitchInput
+            name={`toggle-${trigger.id}`}
+            value={trigger.enabled}
+            onChange={value => onUpdate && onUpdate({ ...trigger, enabled: value as boolean })}
+            label={trigger.enabled ? $t('Enabled') : $t('Disabled')}
+            labelAlign="left"
+            layout="horizontal"
+            uncontrolled
+            checkmark
+          />
+        </div>
       </div>
 
       <TextInput label={$t('Name')} {...bind('name')} />
@@ -160,12 +147,9 @@ export function ReactiveWidgetTriggerDetails({
         </>
       )}
 
-      <h3 style={{ marginBottom: '16px', fontSize: '16px', lineHeight: '100%' }}>
-        {$t('Action Settings')}
-      </h3>
+      <h3 className={css.sectionTitle}>{$t('Action Settings')}</h3>
 
       <MediaUrlInput label={$t('Media')} {...bind('media_settings.image_href')} />
-      {/* TODO$chris: if enabling custom code in the future, check here */}
       <LayoutInput label={$t('Layout')} {...bind('layout')} />
       <AudioUrlInput label={$t('Sound')} {...bind('media_settings.sound_href')} />
       <SliderInput
@@ -189,7 +173,6 @@ export function ReactiveWidgetTriggerDetails({
         tipFormatter={(ms: number) => `${(ms / 1000).toFixed(1)}s`}
       />
 
-      {/* Font Settings */}
       <Collapse bordered={false}>
         <Collapse.Panel header={$t('Font Settings')} key={1}>
           <FontFamilyInput label={$t('Font Family')} {...bind('text_settings.font')} />
@@ -206,28 +189,11 @@ export function ReactiveWidgetTriggerDetails({
         </Collapse.Panel>
       </Collapse>
 
-      {/* Animation Settings */}
       <Collapse bordered={false}>
         <Collapse.Panel header={$t('Animation Settings')} key={2}>
-          <div
-            style={{
-              display: 'flex',
-              width: '100%',
-              alignItems: 'center',
-              gap: '12px',
-              marginBottom: '24px',
-            }}
-          >
-            <span
-              className="ant-col ant-col-8 ant-form-item-label"
-              style={{ marginRight: '-12px', paddingRight: '10px' }}
-            >
-              {$t('Animation')}
-            </span>
-            <div
-              className={css.selectInputGroup}
-              style={{ display: 'flex', gap: '12px', width: '100%' }}
-            >
+          <div className={css.animationRow}>
+            <span className={css.animationLabel}>{$t('Animation')}</span>
+            <div className={css.selectInputGroup}>
               <ListInput
                 {...bind('media_settings.show_animation')}
                 options={showAnimationOptions}
@@ -238,6 +204,7 @@ export function ReactiveWidgetTriggerDetails({
               />
             </div>
           </div>
+
           <ListInput
             label={$t('Text Animation')}
             {...bind('text_settings.text_animation')}

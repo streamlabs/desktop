@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import FormFactory, { TInputValue } from 'components-react/shared/inputs/FormFactory';
 import { Button } from 'antd';
 import { $t } from 'services/i18n/i18n';
+import css from './ReactiveWidgetCreateTriggerForm.m.less'
 
 interface TriggerFormProps {
   trigger: { game?: string; event_type?: string; name?: string };
@@ -187,7 +188,7 @@ export function ReactiveWidgetCreateTriggerForm(props: TriggerFormProps) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <div className={css.container}>
       <FormFactory
         metadata={metadata}
         values={values}
@@ -195,7 +196,7 @@ export function ReactiveWidgetCreateTriggerForm(props: TriggerFormProps) {
         name="create-trigger-form"
       />
       <Button
-        style={{ alignSelf: 'center' }}
+        className={css.submitBtn}
         disabled={!(values.game && values.event_type && values.name)}
         type="primary"
         size="large"

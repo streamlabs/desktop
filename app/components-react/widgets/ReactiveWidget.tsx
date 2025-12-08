@@ -46,7 +46,7 @@ const GameSettingsTab: React.FC = () => {
     <div>
       <ReactiveWidgetGameSettings
         options={groupOptions}
-        onToggleGame={setGroupEnabled}
+        onChangeGroupEnabled={setGroupEnabled}
         onEnableAll={enableAllGroups}
         onDisableAll={disableAllGroups}
       />
@@ -84,7 +84,7 @@ const ManageTriggersTab: React.FC = () => {
   return (
     <ReactiveWidgetGameSettings
       options={options}
-      onToggleGame={onToggleGame}
+      onChangeGroupEnabled={onToggleGame}
       onEnableAll={onEnableAll}
       onDisableAll={onDisableAll}
     />
@@ -171,10 +171,6 @@ export function ReactiveWidget() {
     playReactiveAlert(trigger);
   }
 
-  function onToggleTrigger(groupId: string, triggerId: string, enabled: boolean) {
-    toggleTrigger(groupId, triggerId, enabled);
-  }
-
   function onDelete(triggerId: string) {
     remote.dialog
       .showMessageBox(remote.getCurrentWindow(), {
@@ -201,7 +197,7 @@ export function ReactiveWidget() {
           activeKey={selectedTab}
           onChange={key => setSelectedTab(key)}
           playAlert={onPlayAlert}
-          toggleTrigger={onToggleTrigger}
+          toggleTrigger={toggleTrigger}
           deleteTrigger={onDelete}
         />
         <ActiveTab />

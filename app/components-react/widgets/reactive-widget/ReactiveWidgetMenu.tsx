@@ -7,7 +7,9 @@ import css from './ReactiveWidgetMenu.m.less';
 
 function GameIcon() {
   return (
-    <i className="icon-console ant-menu-item-icon" style={{ fontSize: 16, lineHeight: '16px' }} />
+    <i
+      className={`icon-console ant-menu-item-icon ${css.gameIcon}`}
+    />
   );
 }
 
@@ -56,12 +58,12 @@ export function ReactiveWidgetMenu(props: {
       <Menu.Item
         key="add-trigger"
         icon={<PlusOutlined />}
-        style={{ height: '45px', lineHeight: '45px' }}
+        className={css.menuItem}
       >
         {$t('Add a new trigger')}
       </Menu.Item>
 
-      <Menu.Item key="general" style={{ height: '45px', lineHeight: '45px' }}>
+      <Menu.Item key="general" className={css.menuItem}>
         {$t('Game Settings')}
       </Menu.Item>
 
@@ -74,24 +76,19 @@ export function ReactiveWidgetMenu(props: {
           {(group as any).triggers?.map((trigger: any, index: number) => (
             <Menu.Item
               key={`${groupKey}-trigger-${trigger.id}`}
-              style={{ height: '45px', lineHeight: '45px' }}
+              className={css.menuItem}
             >
-              <div style={{ display: 'flex' }}>
+              <div className={css.triggerRow}>
                 <CheckboxInput
                   value={trigger.enabled}
                   onChange={enabled => toggleTrigger(groupKey, trigger.id, enabled)}
-                  style={{ display: 'inline-block' }}
+                  className={css.triggerCheckbox}
                 />
-                <div style={{ display: 'flex', width: '100%', overflow: 'hidden' }}>
-                  <div className={css.triggerTitle}>{trigger.name || `Trigger ${index + 1}`}</div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'flex-end',
-                      height: '100%',
-                    }}
-                  >
+                <div className={css.triggerMain}>
+                  <div className={css.triggerTitle}>
+                    {trigger.name || `Trigger ${index + 1}`}
+                  </div>
+                  <div className={css.triggerActions}>
                     <Tooltip title={$t('Delete Trigger')} placement="left" mouseLeaveDelay={0}>
                       <Button
                         onClick={e => {
@@ -99,9 +96,9 @@ export function ReactiveWidgetMenu(props: {
                           deleteTrigger(trigger.id);
                         }}
                         type="text"
-                        style={{ padding: '4.4px 0', width: '16px', color: 'var(--red)' }}
+                        className={css.deleteButton}
                       >
-                        <i className="icon-trash" style={{ fontSize: '16px' }} />
+                        <i className={`icon-trash ${css.deleteIcon}`} />
                       </Button>
                     </Tooltip>
                     <Tooltip title={$t('Play Alert')} placement="left" mouseLeaveDelay={0}>
@@ -111,7 +108,7 @@ export function ReactiveWidgetMenu(props: {
                           playAlert(trigger);
                         }}
                         type="text"
-                        icon={<CaretRightOutlined style={{ fontSize: '24px', color: 'white' }} />}
+                        icon={<CaretRightOutlined className={css.playIcon} />}
                       />
                     </Tooltip>
                   </div>

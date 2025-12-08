@@ -1,4 +1,56 @@
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.title {
+  margin-bottom: 0;
+  font-size: 16px;
+  line-height: 100%;
+}
+
+.section-title {
+  margin-bottom: 16px;
+  font-size: 16px;
+  line-height: 100%;
+}
+
+.switch-enabled :global(.ant-form-item) {
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  color: var(--title);
+}
+
+.switch-disabled :global(.ant-form-item) {
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  color: var(--nav-icon-inactive);
+}
+
+.animation-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.animation-label {
+  margin-right: -12px;
+  padding-right: 10px;
+}
+
 .select-input-group {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+
   :global(.ant-form-item-label) {
     display: none;
   }
