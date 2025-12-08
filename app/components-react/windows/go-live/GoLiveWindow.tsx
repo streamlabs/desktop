@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styles from './GoLive.m.less';
 import { WindowsService } from 'app-services';
 import { ModalLayout } from '../../shared/ModalLayout';
-import { Button, message, Modal } from 'antd';
+import { Button, message } from 'antd';
 import { Services } from '../../service-provider';
 import GoLiveSettings from './GoLiveSettings';
 import { $t } from '../../../services/i18n';
@@ -15,7 +15,7 @@ import RecordingSwitcher from './RecordingSwitcher';
 import { promptAction } from 'components-react/modals';
 
 export default function GoLiveWindow() {
-  const { lifecycle, form, destroy } = useGoLiveSettingsRoot().extend(module => ({
+  const { lifecycle, form } = useGoLiveSettingsRoot().extend(module => ({
     destroy() {
       // clear failed checks and warnings on window close
       if (module.checklist.startVideoTransmission !== 'done') {
@@ -26,14 +26,6 @@ export default function GoLiveWindow() {
 
   const shouldShowSettings = ['empty', 'prepopulate', 'waitForNewSettings'].includes(lifecycle);
   const shouldShowChecklist = ['runChecklist', 'live'].includes(lifecycle);
-
-  useEffect(() => {
-    return () => {
-      destroy();
-      // Note: the below will only destroy modals in the Go Live window and will not effect other windows
-      Modal.destroyAll();
-    };
-  }, []);
 
   return (
     <ModalLayout footer={<ModalFooter />} className={styles.dualOutputGoLive}>
@@ -89,7 +81,7 @@ function ModalFooter() {
     if (isPrime) {
       try {
         setIsFetchingStreamStatus(true);
-        const isLive = await Services.RestreamService.checkIsLive();
+        const isLive = await Services.RestreamService.actions.return.checkIsLive();
         setIsFetchingStreamStatus(false);
 
         // Prompt to confirm stream switch if the stream exists

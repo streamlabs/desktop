@@ -434,10 +434,12 @@
   "Virtual camera output type": "가상 카메라 출력 유형",
   "Unmute your Microphone source in Mixer": "믹서에서 마이크 소스 음소거 해제",
   "Your Microphone is unmuted but has no signal": "마이크 음소거가 해제되었지만 신호가 없습니다",
-  "Victory & Defeat": "Victory & Defeat",
-  "Dynamic game animation": "Dynamic game animation",
-  "Dynamic real time animation based on your game & widget events.  Streamlabs Vision powered events include:": "Dynamic real time animation based on your game & widget events.  Streamlabs Vision powered events include:",
-  "Kills & Eliminations": "Kills & Eliminations",
-  "Health changes": "Health changes",
-  "Search...": "검색..."
+  "Victory & Defeat": "승리 및 패배",
+  "Dynamic game animation": "다이내믹한 게임 애니메이션",
+  "Dynamic real time animation based on your game events, powered by Streamlabs AI. Install Reactive Overlays from our Library to see what it's capable of!": "Streamlabs AI가 제공하는 게임 이벤트에 기반한 다이내믹한 실시간 애니메이션. 라이브러리에서 반응형 오버레이를 설치하여 어떤 기능이 있는지 확인해 보세요!",
+  "Kills & Eliminations": "처치 및 제거",
+  "Health changes": "체력의 변화",
+  "Search...": "검색...",
+  "Virtual Cam": "가상 카메라",
+  "Virtual Cam Error": "가상 카메라 오류"
 }

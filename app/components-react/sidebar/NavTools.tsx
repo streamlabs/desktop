@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useState } from 'react';
 import cx from 'classnames';
 import electron from 'electron';
 import Utils from 'services/utils';
@@ -18,11 +18,7 @@ import { AuthModal } from 'components-react/shared/AuthModal';
 import { ESettingsCategory, TCategoryName } from 'services/settings';
 import { getOS, OS } from 'util/operating-systems';
 
-export default function NavTools(p: {
-  showLoginModal: boolean;
-  setShowLoginModal: (show: boolean) => void;
-  isVisionRunning: boolean;
-}) {
+export default function NavTools(p: { isVisionRunning: boolean }) {
   const {
     UserService,
     SettingsService,
@@ -33,6 +29,12 @@ export default function NavTools(p: {
     UrlService,
   } = Services;
 
+  const isDevMode = useMemo(() => Utils.isDevMode(), []);
+
+  const showAiTab = useMemo(() => {
+    return getOS() === OS.Windows || (getOS() === OS.Mac && isDevMode);
+  }, [isDevMode]);
+
   const {
     isLoggedIn,
     isPrime,
@@ -41,7 +43,6 @@ export default function NavTools(p: {
     openMenuItems,
     expandMenuItem,
     updateStyleBlockers,
-    hideStyleBlockers,
   } = useVuex(
     () => ({
       isLoggedIn: UserService.views.isLoggedIn,
@@ -51,53 +52,59 @@ export default function NavTools(p: {
       openMenuItems: SideNavService.views.getExpandedMenuItems(ENavName.BottomNav),
       expandMenuItem: SideNavService.actions.expandMenuItem,
       updateStyleBlockers: WindowsService.actions.updateStyleBlockers,
-      hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
     }),
     false,
   );
 
-  const isDevMode = useMemo(() => Utils.isDevMode(), []);
+  const [dashboardOpening, setDashboardOpening] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
-  const showAiTab = useMemo(() => {
-    return isLoggedIn && (getOS() === OS.Windows || (getOS() === OS.Mac && isDevMode));
-  }, [isDevMode, isLoggedIn]);
-
-  const openSettingsWindow = useCallback((category?: TCategoryName) => {
+  function openSettingsWindow(category?: TCategoryName) {
     SettingsService.actions.showSettings(category);
-  }, []);
+  }
 
-  const openDevTools = useCallback(() => {
+  function openDevTools() {
     electron.ipcRenderer.send('openDevTools');
-  }, []);
+  }
 
-  const openDashboard = useCallback(
-    async (page?: string) => {
-      UsageStatisticsService.actions.recordClick('SideNav2', page || 'dashboard');
-      if (hideStyleBlockers) return;
+  async function openDashboard(page?: string) {
+    UsageStatisticsService.actions.recordClick('SideNav2', page || 'dashboard');
+    if (dashboardOpening) return;
+    setDashboardOpening(true);
 
-      try {
-        const link = await MagicLinkService.getDashboardMagicLink(page);
-        remote.shell.openExternal(link);
-      } catch (e: unknown) {
-        console.error('Error generating dashboard magic link', e);
-      }
-    },
-    [hideStyleBlockers],
-  );
+    try {
+      const link = await MagicLinkService.getDashboardMagicLink(page);
+      remote.shell.openExternal(link);
+    } catch (e: unknown) {
+      console.error('Error generating dashboard magic link', e);
+    }
+
+    setDashboardOpening(false);
+  }
 
   const throttledOpenDashboard = throttle(openDashboard, 2000, { trailing: false });
 
-  const openHelp = useCallback(() => {
+  // Instagram doesn't provide a username, since we're not really linked, pass undefined for a generic logout msg w/o it
+  const username =
+    isLoggedIn && UserService.views.auth!.primaryPlatform !== 'instagram'
+      ? UserService.username
+      : undefined;
+
+  const confirmMsg = username
+    ? $t('Are you sure you want to log out %{username}?', { username })
+    : $t('Are you sure you want to log out?');
+
+  function openHelp() {
     UsageStatisticsService.actions.recordClick('SideNav2', 'help');
     remote.shell.openExternal(UrlService.supportLink);
-  }, []);
+  }
 
-  const upgradeToPrime = useCallback(async () => {
+  async function upgradeToPrime() {
     UsageStatisticsService.actions.recordClick('SideNav2', 'prime');
     MagicLinkService.linkToPrime('slobs-side-nav');
-  }, []);
+  }
 
-  const handleAuth = useCallback(() => {
+  const handleAuth = () => {
     if (isLoggedIn) {
       Services.DualOutputService.actions.setDualOutputModeIfPossible(false, true);
       UserService.actions.logOut();
@@ -105,12 +112,12 @@ export default function NavTools(p: {
       WindowsService.actions.closeChildWindow();
       UserService.actions.showLogin();
     }
-  }, [isLoggedIn]);
+  };
 
-  const handleShowModal = useCallback((status: boolean) => {
-    p.setShowLoginModal(status);
+  const handleShowModal = (status: boolean) => {
     updateStyleBlockers('main', status);
-  }, []);
+    setShowModal(status);
+  };
 
   return (
     <>
@@ -211,7 +218,8 @@ export default function NavTools(p: {
       </Menu>
       <AuthModal
         title={$t('Confirm')}
-        showModal={p.showLoginModal}
+        prompt={confirmMsg}
+        showModal={showModal}
         handleAuth={handleAuth}
         handleShowModal={handleShowModal}
       />

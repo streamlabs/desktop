@@ -12,6 +12,7 @@ import { getDefined } from '../../../util/properties-type-guards';
 import isEqual from 'lodash/isEqual';
 import { TDisplayType } from 'services/settings-v2';
 import partition from 'lodash/partition';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 type TCommonFieldName = 'title' | 'description';
 
@@ -38,12 +39,6 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
    * Update top level settings
    */
   updateSettings(patch: Partial<IGoLiveSettingsState>) {
-    if (patch.platforms?.twitch) {
-      Services.SettingsService.actions.setEnhancedBroadcasting(
-        patch.platforms.twitch.isEnhancedBroadcasting,
-      );
-    }
-
     const newSettings = { ...this.state, ...patch };
     // we should re-calculate common fields before applying new settings
     const platforms = this.getViewFromState(newSettings).applyCommonFields(newSettings.platforms);
@@ -60,10 +55,22 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
         [platform]: { ...this.state.platforms[platform], ...patch },
       },
     };
+
+    // In order for the enhanced broadcasting setting value to persist in the go live window when switching between
+    // single output and dual output modes, explicitly set enhanced broadcasting setting
+    if (platform === 'twitch' && patch && patch.hasOwnProperty('isEnhancedBroadcasting')) {
+      Services.TwitchService.actions.setEnhancedBroadcasting((patch as any).isEnhancedBroadcasting);
+    }
+
     this.updateSettings(updated);
   }
 
   getCanDualStream(platform: TPlatform) {
+    if (platform === 'twitch') {
+      return Services.IncrementalRolloutService.views.featureIsEnabled(
+        EAvailableFeatures.twitchDualStream,
+      );
+    }
     return Services.StreamingService.views.supports('dualStream', [platform]);
   }
 
