@@ -159,6 +159,7 @@ export class ReactiveDataService extends StatefulService<ReactiveDataServiceStat
             });
 
             source.sendMessage({ message: payload });
+            return;
           }
         }
       }

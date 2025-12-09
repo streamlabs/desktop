@@ -44,7 +44,7 @@ import { StreamlabelsManager } from './properties-managers/streamlabels-manager'
 import { WidgetManager } from './properties-managers/widget-manager';
 import { SourceDisplayData } from './sources-data';
 import { ReactiveDataService } from 'app-services';
-import { IReactiveDataEditorProps } from 'components-react/windows/reactive-data-editor/ReactiveDataEditorWindow';
+import { IReactiveDataEditorProps } from 'components-react/windows/reactive-data-editor/types';
 
 export { EDeinterlaceFieldOrder, EDeinterlaceMode } from '../../../obs-api';
 

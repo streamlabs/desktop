@@ -1,6 +1,6 @@
 import { Component } from 'vue-property-decorator';
 import ReactComponent from './ReactComponent';
-import type { IReactiveDataEditorProps } from 'components-react/windows/reactive-data-editor/ReactiveDataEditorWindow';
+import { IReactiveDataEditorProps } from 'components-react/windows/reactive-data-editor/types';
 
 @Component({
   props: {

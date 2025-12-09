@@ -4,10 +4,7 @@ import { Services } from 'components-react/service-provider';
 import { useChildWindowParams } from 'components-react/hooks';
 import ReactiveDataEditor from './ReactiveDataEditor';
 import { $t } from 'services/i18n';
-
-export interface IReactiveDataEditorProps {
-  stateKeysOfInterest: string[];
-}
+import { IReactiveDataEditorProps } from 'components-react/windows/reactive-data-editor/types';
 
 export default function ReactiveDataEditorWindow() {
   const { WindowsService, ReactiveDataService } = Services;
