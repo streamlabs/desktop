@@ -21,7 +21,7 @@ type SchemaTreeLeaf = { name: string; aliases?: string[] };
 type SchemaTreeNode = { [key: string]: SchemaTreeLeaf | SchemaTreeNode };
 type SchemaTree = { [key: string]: SchemaTreeNode };
 
-type UserStateServiceState = {
+type ReactiveDataServiceState = {
   schemaFlat?: { [x: `${string}.${string}`]: SchemaTreeLeaf };
   stateFlat?: { [x: `${string}.${string}`]: number | StateTreeNode };
 };
@@ -29,7 +29,7 @@ type UserStateServiceState = {
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 @InitAfter('UserService')
-export class UserStateService extends StatefulService<UserStateServiceState> {
+export class ReactiveDataService extends StatefulService<ReactiveDataServiceState> {
   @Inject() userService: UserService;
   @Inject() hostsService: HostsService;
   @Inject() urlService: UrlService;
@@ -39,10 +39,10 @@ export class UserStateService extends StatefulService<UserStateServiceState> {
   static initialState = {
     schemaFlat: undefined,
     stateFlat: undefined,
-  } as UserStateServiceState;
+  } as ReactiveDataServiceState;
 
   private log(...args: any[]) {
-    console.log('[UserStateService]', ...args);
+    console.log('[ReactiveDataService]', ...args);
   }
 
   public sourceStateKeyInterest: Map<string, Set<string>> = new Map();

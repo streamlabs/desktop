@@ -43,7 +43,7 @@ import { SmartBrowserSourceManager } from './properties-managers/smart-browser-s
 import { StreamlabelsManager } from './properties-managers/streamlabels-manager';
 import { WidgetManager } from './properties-managers/widget-manager';
 import { SourceDisplayData } from './sources-data';
-import { UserStateService } from 'app-services';
+import { ReactiveDataService } from 'app-services';
 import { IReactiveDataEditorProps } from 'components-react/windows/reactive-data-editor/ReactiveDataEditorWindow';
 
 export { EDeinterlaceFieldOrder, EDeinterlaceMode } from '../../../obs-api';
@@ -199,7 +199,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
   @Inject() private customizationService: CustomizationService;
   @Inject() private incrementalRolloutService: IncrementalRolloutService;
   @Inject() private guestCamService: GuestCamService;
-  @Inject() private userStateService: UserStateService;
+  @Inject() private reactiveDataService: ReactiveDataService;
 
   sourceDisplayData = SourceDisplayData(); // cache source display data
 
@@ -1009,7 +1009,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
       return;
     }
 
-    const stateKeys = this.userStateService.getStateKeysForSource(source.sourceId);
+    const stateKeys = this.reactiveDataService.getStateKeysForSource(source.sourceId);
 
     this.windowsService.showWindow({
       componentName: 'ReactiveDataEditorWindow',

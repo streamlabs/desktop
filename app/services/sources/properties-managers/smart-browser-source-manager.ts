@@ -47,7 +47,7 @@ export class SmartBrowserSourceManager extends PropertiesManager {
   init() {
     this.normalizeUrl();
 
-    // todo: switch over to consume from UserStateService
+    // todo: switch over to consume from ReactiveDataService
     this.socketSub = this.websocketService.socketEvent.subscribe(e => {
       // send all visionEvents and userStateUpdated to smart sources
       if (['visionEvent', 'userStateUpdated'].includes(e.type)) {

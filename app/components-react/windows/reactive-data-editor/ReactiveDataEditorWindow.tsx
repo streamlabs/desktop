@@ -10,7 +10,7 @@ export interface IReactiveDataEditorProps {
 }
 
 export default function ReactiveDataEditorWindow() {
-  const { WindowsService, UserStateService } = Services;
+  const { WindowsService, ReactiveDataService } = Services;
 
   const props: IReactiveDataEditorProps = useChildWindowParams();
 
@@ -19,17 +19,17 @@ export default function ReactiveDataEditorWindow() {
   }
 
   const [stateFlat, setStateFlat] = useState(() =>
-    UserStateService.state.stateFlat
-      ? { ...UserStateService.state.stateFlat }
-      : UserStateService.state.stateFlat,
+    ReactiveDataService.state.stateFlat
+      ? { ...ReactiveDataService.state.stateFlat }
+      : ReactiveDataService.state.stateFlat,
   );
 
-  const schemaFlat = useMemo(() => UserStateService.state.schemaFlat, []);
+  const schemaFlat = useMemo(() => ReactiveDataService.state.schemaFlat, []);
 
   const handleSaveChanges = (changes: Partial<Record<string, number>>) => {
     setStateFlat(prev => ({ ...prev, ...changes }));
 
-    UserStateService.actions.updateState(changes);
+    ReactiveDataService.actions.updateState(changes);
   };
 
   type FlatSchemaKey = keyof typeof schemaFlat;
