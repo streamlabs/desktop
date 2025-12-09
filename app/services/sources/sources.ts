@@ -44,7 +44,7 @@ import { StreamlabelsManager } from './properties-managers/streamlabels-manager'
 import { WidgetManager } from './properties-managers/widget-manager';
 import { SourceDisplayData } from './sources-data';
 import { UserStateService } from 'app-services';
-import { ReactiveDataEditorProps } from 'components-react/windows/reactive-data-editor/ReactiveDataEditorWindow';
+import { IReactiveDataEditorProps } from 'components-react/windows/reactive-data-editor/ReactiveDataEditorWindow';
 
 export { EDeinterlaceFieldOrder, EDeinterlaceMode } from '../../../obs-api';
 
@@ -998,8 +998,11 @@ export class SourcesService extends StatefulService<ISourcesState> {
     });
   }
 
-  showReactiveDataEditorWindow(sourceId: string) {
+  showReactiveDataEditorWindow(sourceId?: string) {
+    if (!sourceId) return; // for now, require a source id
+
     const source = this.views.getSource(sourceId);
+
     if (!source) return;
 
     if (source.propertiesManagerType !== 'smartBrowserSource') {
@@ -1008,11 +1011,9 @@ export class SourcesService extends StatefulService<ISourcesState> {
 
     const stateKeys = this.userStateService.getStateKeysForSource(source.sourceId);
 
-    console.log({ stateKeysOfInterest: stateKeys });
-
     this.windowsService.showWindow({
       componentName: 'ReactiveDataEditorWindow',
-      queryParams: { stateKeysOfInterest: stateKeys } as ReactiveDataEditorProps,
+      queryParams: { stateKeysOfInterest: stateKeys } as IReactiveDataEditorProps,
       title: $t('Reactive Data Editor'),
       size: {
         width: 800,

@@ -109,7 +109,6 @@ class SourceSelectorController {
               onEditReactiveData={
                 sceneNode.sourceId && sceneNode.propertiesManagerType === 'smartBrowserSource'
                   ? () =>
-                      sceneNode.sourceId &&
                       this.sourcesService.actions.showReactiveDataEditorWindow(sceneNode.sourceId)
                   : undefined
               }

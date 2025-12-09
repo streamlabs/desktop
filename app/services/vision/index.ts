@@ -93,9 +93,6 @@ export class VisionState extends RealmObject {
 
 VisionState.register();
 
-//
-//
-
 @InitAfter('UserService')
 export class VisionService extends Service {
   private visionRunner = new VisionRunner();

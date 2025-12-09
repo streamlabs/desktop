@@ -5,14 +5,14 @@ import { useChildWindowParams } from 'components-react/hooks';
 import ReactiveDataEditor from './ReactiveDataEditor';
 import { $t } from 'services/i18n';
 
-export type ReactiveDataEditorProps = {
+export interface IReactiveDataEditorProps {
   stateKeysOfInterest: string[];
-};
+}
 
 export default function ReactiveDataEditorWindow() {
   const { WindowsService, UserStateService } = Services;
 
-  const props: ReactiveDataEditorProps = useChildWindowParams();
+  const props: IReactiveDataEditorProps = useChildWindowParams();
 
   function handleCancel() {
     WindowsService.actions.closeChildWindow();
