@@ -10,6 +10,7 @@ import { EPlatformCallResult, externalAuthPlatforms, TPlatform } from 'services/
 import UltraIcon from 'components-react/shared/UltraIcon';
 import KevinSvg from 'components-react/shared/KevinSvg';
 import styles from './Common.m.less';
+import { $i } from 'services/utils';
 
 const NO_BUTTON_STEPS = new Set([EOnboardingSteps.Splash, EOnboardingSteps.Login]);
 
@@ -75,14 +76,14 @@ export default function Onboarding() {
       visible={showOnboarding}
       getContainer={false}
       footer={
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           {currentIndex !== 0 && (
-            <Button onClick={stepBack} style={{ right: 'auto' }}>
+            <Button onClick={stepBack} type="link">
               {$t('Back')}
             </Button>
           )}
           {currentStep.isSkippable && (
-            <Button type="link" onClick={takeStep}>
+            <Button type="link" style={{ marginLeft: 'auto' }} onClick={takeStep}>
               {$t('Skip')}
             </Button>
           )}
@@ -102,9 +103,11 @@ export default function Onboarding() {
 export function Header(p: { title: string; description?: string }) {
   return (
     <>
-      <KevinSvg />
+      <div className={styles.kevinBox}>
+        <KevinSvg style={{ height: 32, width: 36, fill: 'var(--background)' }} />
+      </div>
       <h1>{p.title}</h1>
-      {p.description && <span>{p.description}</span>}
+      {p.description && <span style={{ marginBottom: 16 }}>{p.description}</span>}
     </>
   );
 }
@@ -113,13 +116,25 @@ export function ImageCard(p: {
   metadata: { img: string; title: string; description: string; isUltra?: boolean };
 }) {
   return (
-    <div>
-      <img src={p.metadata.img} />
+    <div style={{ marginRight: 32, textAlign: 'left' }}>
+      <img style={{ height: 160, width: 'auto', marginBottom: 16 }} src={p.metadata.img} />
       <h4>
         {p.metadata.isUltra && <UltraIcon />}
         {p.metadata.title}
       </h4>
       <span>{p.metadata.description}</span>
+    </div>
+  );
+}
+
+export function DancingKevins() {
+  const url = $i('webm/kevin_jump.webm');
+
+  return (
+    <div style={{ display: 'flex', height: 160 }}>
+      <video src={url} controls={false} autoPlay loop style={{ margin: '0 -150px' }} />
+      <video src={`${url}#t=1`} controls={false} autoPlay loop style={{ margin: '0 -150px' }} />
+      <video src={`${url}#t=2`} controls={false} autoPlay loop style={{ margin: '0 -150px' }} />
     </div>
   );
 }

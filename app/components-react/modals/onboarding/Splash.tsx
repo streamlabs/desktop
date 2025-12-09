@@ -1,11 +1,10 @@
 import React from 'react';
 import cx from 'classnames';
 import { Button } from 'antd';
-import { $i } from 'services/utils';
 import { $t } from 'services/i18n';
 import { Services } from 'components-react/service-provider';
 import styles from './Common.m.less';
-import { IOnboardingStepProps, useAuth } from './Onboarding';
+import { DancingKevins, IOnboardingStepProps, useAuth } from './Onboarding';
 
 export function Splash(p: IOnboardingStepProps) {
   const { OnboardingV2Service, RecordingModeService } = Services;
@@ -24,13 +23,7 @@ export function Splash(p: IOnboardingStepProps) {
 
   return (
     <div className={styles.centered}>
-      <video
-        src={$i('webm/kevin_jump.webm')}
-        controls={false}
-        autoPlay
-        loop
-        style={{ height: 160 }}
-      />
+      <DancingKevins />
       <div
         className={cx(styles.darkBox, styles.centered)}
         style={{ padding: 24, width: 600, height: 360 }}

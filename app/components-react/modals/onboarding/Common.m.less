@@ -1,3 +1,5 @@
+@import "../../../styles/index.less";
+
 .modal-wrapper {
   display: flex;
   justify-content: center;
@@ -11,7 +13,7 @@
   }
 
   :global(.ant-modal-footer) {
-    background-color: var(--backround);
+    background-color: var(--background);
     border-top: none;
   }
 }
@@ -29,9 +31,56 @@
   text-align: center;
 }
 
+.kevin-box {
+  width: 56px;
+  height: 56px;
+  background: var(--teal);
+  border-radius: 16px;
+  position: relative;
+  margin-bottom: 32px;
+
+  svg {
+    .center();
+  }
+}
+
 .big-button {
   border-radius: 32px !important;
   width: 240px;
   height: 64px !important;
   font-weight: bold !important;
+  display: flex;
+  align-items: center;
+
+  i {
+    margin-right: 4px;
+  }
+}
+
+.big-button.white {
+  background: var(--white);
+  color: var(--section);
+
+  &:hover {
+    border: none;
+    background: var(--icon);
+    color: var(--section);
+  }
+}
+
+.platform-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+
+  button {
+    margin-right: 8px;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+
+    i {
+      margin-right: 4px;
+    }
+  }
 }
