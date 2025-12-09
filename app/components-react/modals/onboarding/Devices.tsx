@@ -11,7 +11,7 @@ import Form from 'components-react/shared/inputs/Form';
 export function Devices(p: IOnboardingStepProps) {
   const { DefaultHardwareService } = Services;
 
-  const { videoDevices, audioDevices } = useVuex(() => ({
+  const { videoDevices, audioDevices, selectedAudioDevice, selectedVideoDevice } = useVuex(() => ({
     videoDevices: DefaultHardwareService.videoDevices.map(device => ({
       label: device.description,
       value: device.id,
@@ -20,7 +20,17 @@ export function Devices(p: IOnboardingStepProps) {
       label: device.description,
       value: device.id,
     })),
+    selectedVideoSource: DefaultHardwareService.selectedVideoSource,
+    selectedVideoDevice: DefaultHardwareService.state.defaultVideoDevice,
+    selectedAudioDevice: DefaultHardwareService.state.defaultAudioDevice,
+    selectedAudioSource: DefaultHardwareService.selectedAudioSource,
   }));
+
+  function setDevice(type: 'video' | 'audio') {
+    return (value: string) => {
+      DefaultHardwareService.setDefault(type, value);
+    };
+  }
 
   return (
     <div className={styles.centered}>
@@ -30,11 +40,20 @@ export function Devices(p: IOnboardingStepProps) {
       />
       <div style={{ display: 'flex' }}>
         <DisplaySection />
-        <div className={styles.darkBox}>
+        <div className={styles.darkBox} style={{ width: 360, height: 320, padding: 32 }}>
           <Form layout="vertical">
-            <ListInput options={videoDevices} />
-            <ListInput options={audioDevices} />
-            <ListInput />
+            <ListInput
+              label={$t('Webcam')}
+              options={videoDevices}
+              value={selectedVideoDevice}
+              onInput={setDevice('video')}
+            />
+            <ListInput
+              label={$t('Microphone')}
+              options={audioDevices}
+              value={selectedAudioDevice}
+              onInput={setDevice('audio')}
+            />
           </Form>
         </div>
       </div>
