@@ -1,4 +1,4 @@
-import { InitAfter, Inject, Service, StatefulService } from 'services';
+import { InitAfter, Inject, Service } from 'services';
 import {
   HostsService,
   SourcesService,
@@ -12,6 +12,8 @@ import * as obs from '../../../obs-api';
 import uuid from 'uuid/v4';
 import { fromDotNotation, toDotNotation } from 'util/dot-tree';
 import { USER_STATE_SCHEMA_URL } from 'services/sources/properties-managers/smart-browser-source-manager';
+import { RealmObject } from 'services/realm';
+import { ObjectSchema } from 'realm';
 
 type StateTreeLeaf = number;
 type StateTreeNode = { [key: string]: StateTreeLeaf | StateTreeNode };
@@ -21,25 +23,53 @@ type SchemaTreeLeaf = { name: string; aliases?: string[] };
 type SchemaTreeNode = { [key: string]: SchemaTreeLeaf | SchemaTreeNode };
 type SchemaTree = { [key: string]: SchemaTreeNode };
 
-type ReactiveDataServiceState = {
-  schemaFlat?: { [x: `${string}.${string}`]: SchemaTreeLeaf };
-  stateFlat?: { [x: `${string}.${string}`]: number | StateTreeNode };
-};
+export type SchemaFlatType = { [x: `${string}.${string}`]: SchemaTreeLeaf };
+export type StateFlatType = { [x: `${string}.${string}`]: number | StateTreeNode };
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+export class ReactiveDataState extends RealmObject {
+  schemaFlatJson: string;
+  stateFlatJson: string;
+
+  static schema: ObjectSchema = {
+    name: 'ReactiveDataState',
+    properties: {
+      schemaFlatJson: { type: 'string', default: '' },
+      stateFlatJson: { type: 'string', default: '' },
+    },
+  };
+
+  get schemaFlat(): SchemaFlatType | null {
+    if (!this.schemaFlatJson) return null;
+    try {
+      return JSON.parse(this.schemaFlatJson);
+    } catch {
+      return null;
+    }
+  }
+
+  get stateFlat(): StateFlatType | null {
+    if (!this.stateFlatJson) return null;
+    try {
+      return JSON.parse(this.stateFlatJson);
+    } catch {
+      return null;
+    }
+  }
+}
+
+ReactiveDataState.register();
+
 @InitAfter('UserService')
-export class ReactiveDataService extends StatefulService<ReactiveDataServiceState> {
+export class ReactiveDataService extends Service {
   @Inject() userService: UserService;
   @Inject() hostsService: HostsService;
   @Inject() urlService: UrlService;
   @Inject() websocketService: WebsocketService;
   @Inject() sourcesService: SourcesService;
 
-  static initialState = {
-    schemaFlat: undefined,
-    stateFlat: undefined,
-  } as ReactiveDataServiceState;
+  state = ReactiveDataState.inject();
 
   private log(...args: any[]) {
     console.log('[ReactiveDataService]', ...args);
@@ -53,16 +83,18 @@ export class ReactiveDataService extends StatefulService<ReactiveDataServiceStat
 
     this.fetchSchema().then(schema => {
       this.log('Fetched user state schema:', JSON.stringify(schema).slice(0, 100) + '...');
-      this.state.schemaFlat = toDotNotation(
+      const schemaFlat = toDotNotation(
         schema,
         (v): v is SchemaTreeLeaf => typeof v === 'object' && v !== null && 'name' in v,
       );
+      this.writeState({ schemaFlatJson: JSON.stringify(schemaFlat) });
     });
 
     // load everything into our initial state
     this.fetchFullState().then(res => {
       this.log('Fetched full user state:', JSON.stringify(res).slice(0, 100) + '...');
-      this.state.stateFlat = toDotNotation(res);
+      const stateFlat = toDotNotation(res);
+      this.writeState({ stateFlatJson: JSON.stringify(stateFlat) });
     });
 
     // subscribe to websocket events to keep state updated
@@ -89,7 +121,9 @@ export class ReactiveDataService extends StatefulService<ReactiveDataServiceStat
 
       this.log('response', JSON.stringify(resp, null, 2));
 
-      this.state.stateFlat = { ...this.state.stateFlat, ...changes };
+      const currentStateFlat = this.state.stateFlat || {};
+      const newStateFlat = { ...currentStateFlat, ...changes };
+      this.writeState({ stateFlatJson: JSON.stringify(newStateFlat) });
     } catch (e: unknown) {
       this.log('error updating state:', e);
       throw e;
@@ -205,6 +239,10 @@ export class ReactiveDataService extends StatefulService<ReactiveDataServiceStat
 
   getStateKeysForSource(sourceId: string): string[] {
     return Array.from(this.sourceStateKeyInterest.get(sourceId) ?? []);
+  }
+
+  private writeState(patch: Partial<{ schemaFlatJson: string; stateFlatJson: string }>) {
+    this.state.db.write(() => Object.assign(this.state, patch));
   }
 
   private async fetchSchema() {
