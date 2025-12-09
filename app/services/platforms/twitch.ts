@@ -207,7 +207,6 @@ export class TwitchService
       this.streamSettingsService.protectedModeEnabled &&
       this.streamSettingsService.isSafeToModifyStreamKey()
     ) {
-      console.log('protectedModeEnabled, fetching Twitch stream key');
       let key = await this.fetchStreamKey();
       // do not start actual stream when testing
       if (Utils.isTestMode()) {
@@ -311,6 +310,8 @@ export class TwitchService
     try {
       return await platformAuthorizedRequest<T>('twitch', reqInfo);
     } catch (e: unknown) {
+      // console.error('Twitch Request Error: ', e);
+
       const details = (e as any).result
         ? `${(e as any).result.status} ${(e as any).result.error} ${(e as any).result.message}`
         : 'Connection failed';
@@ -333,6 +334,10 @@ export class TwitchService
     return this.requestTwitch<{ data: { stream_key: string }[] }>(
       `${this.apiBase}/helix/streams/key?broadcaster_id=${this.twitchId}`,
     ).then(json => json.data[0].stream_key);
+    // .catch((e: unknown) => {
+    // console.log('Error fetching Twitch stream key: ', e);
+    // throwStreamError('TWITCH_FETCH_FAILED', { ...(e as any), platform: 'twitch' });
+    // });
   }
 
   /**
@@ -466,11 +471,27 @@ export class TwitchService
     const hasPermission = await this.hasScope('channel:manage:broadcast');
     const scopedTags = hasPermission ? tags : undefined;
 
+    // if (!hasPermission) {
+    //   console.debug('Twitch manage broadcast scope missing.');
+    // }
+
+    // console.log('TAGS TO SET:', tags);
+
     // Twitch seems to require you to add a label with disabled to remove it
     const labels = this.twitchContentClassificationService.options.map(option => ({
       id: option.value,
       is_enabled: contentClassificationLabels.includes(option.value),
     }));
+
+    // console.log(
+    //   JSON.stringify({
+    //     tags,
+    //     title,
+    //     game_id: gameId,
+    //     is_branded_content: isBrandedContent,
+    //     content_classification_labels: labels,
+    //   }),
+    // );
 
     const updateInfo = async (tags: ITwitchStartStreamOptions['tags'] | undefined) =>
       this.requestTwitch({
@@ -489,6 +510,8 @@ export class TwitchService
     try {
       await updateInfo(scopedTags);
     } catch (e: unknown) {
+      // console.debug('Error updating Twitch channel info, filtering tags.', e);
+
       // Full error message from Twitch:
       // "400 Bad Request One or more tags were not applied because they failed a moderation check: [noob, Twitch]"
       if (e instanceof StreamError && e.details?.includes('One or more tags were not applied')) {

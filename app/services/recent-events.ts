@@ -101,6 +101,7 @@ interface IRecentEventFilterConfig {
   subscriber?: boolean;
   sponsor?: boolean;
   superchat?: boolean;
+  // membershipGift?: boolean;
   // Mixer
   sticker?: boolean;
   effect?: boolean;
@@ -190,6 +191,7 @@ const filterName = (key: string): string => {
     subscriber: $t('Subscribers'),
     sponsor: $t('Members'),
     superchat: $t('Super Chats'),
+    // membershipGift: $t('Membership'),
     sticker: $t('Stickers'),
     effect: $t('Effects'),
     facebook_support: $t('Supports'),
@@ -206,6 +208,9 @@ const filterName = (key: string): string => {
  * event. Should be refactored when backend is rewritten for consistency
  */
 function getHashForRecentEvent(event: IRecentEvent) {
+  // if (event.type === 'membershipGift') {
+  //   console.log('&&&&&&&&&&&&&&&&&&& membershipGift event', JSON.stringify(event, null, 2));
+  // }
   switch (event.type) {
     case 'donation':
       return [event.type, event.name, event.message, parseInt(event.amount, 10)].join(':');
@@ -235,6 +240,10 @@ function getHashForRecentEvent(event: IRecentEvent) {
       return [event.type, event.name.toLowerCase(), event.message].join(':');
     case 'superchat':
       return [event.type, event.name, event.message].join(':');
+    case 'platformcredentials':
+      return [event.type, event.name, event.message].join(':');
+    // case 'membershipGift':
+    //   return [event.type, event.name, event.message].join(':');
     case 'superheart':
       return [event.type, event.name, event.message, parseInt(event.amount, 10)].join(':');
     case 'tiltifydonation':
@@ -271,6 +280,7 @@ const SUPPORTED_EVENTS = [
   'support',
   'share',
   'superchat',
+  // 'membershipGift',
   'pledge',
   'eldonation',
   'tiltifydonation',
@@ -282,6 +292,8 @@ const SUPPORTED_EVENTS = [
 class RecentEventsViews extends ViewHandler<IRecentEventsState> {
   @Inject() private widgetsService: WidgetsService;
   getEventString(event: IRecentEvent) {
+    console.log('RECENT EVENTS event', JSON.stringify(event, null, 2));
+
     return {
       donation: this.getDonoString(event),
       merch: $t('has purchased %{product} from the store', { product: event.product }),
@@ -301,6 +313,8 @@ class RecentEventsViews extends ViewHandler<IRecentEventsState> {
       share: $t('has shared'),
       // Youtube
       superchat: $t('has superchatted'),
+      sponsor: $t('has become a member'),
+      // membershipGift: $t('has gifted a membership'),
       // Integrations
       pledge: $t('has pledged on Patreon'),
       eldonation: $t('has donated to Extra Life'),
@@ -516,8 +530,10 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
       return;
     }
     Object.keys(events.data).forEach(key => {
+      console.log('key ', key, events.data[key]);
       const fortifiedEvents = events.data[key].map(event => {
         event.hash = getHashForRecentEvent(event);
+        console.log('event hash ', event.hash);
         event.uuid = uuid();
         return event;
       });
@@ -672,6 +688,7 @@ export class RecentEventsService extends StatefulService<IRecentEventsState> {
       'subscriber',
       'sponsor',
       'superchat',
+      // 'membershipGift',
       'sticker',
       'effect',
       'facebook_support',

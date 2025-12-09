@@ -23,6 +23,14 @@ export const errorTypes = {
       return $t('Your stream title or description contain banned words');
     },
   },
+  // TWITCH_FETCH_FAILED: {
+  //   get message() {
+  //     return $t('Failed to fetch Twitch stream key');
+  //   },
+  //   get action() {
+  //     return $t('remerge Twitch account and try again');
+  //   },
+  // },
   PREPOPULATE_FAILED: {
     get message() {
       return $t('Failed to fetch platform settings');

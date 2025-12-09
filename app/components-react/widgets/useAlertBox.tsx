@@ -541,6 +541,7 @@ function getVariationsMetadata() {
     trovo_follow: {},
     trovo_sub: {},
     trovo_raid: {},
+    // membershipGift: {},
     donordrive_donation: undefined,
     eldonation: undefined,
     justgiving_donation: undefined,

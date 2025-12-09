@@ -119,6 +119,7 @@ export function getAlertsConfig(
       tooltip: $t('Plays an alert when another streamer raids your channel'),
     },
 
+    // @@@ HERE
     sponsor: {
       name: $t('YouTube Membership'),
       type: 'sponsor',
@@ -192,6 +193,15 @@ export function getAlertsConfig(
       platforms: ['youtube'],
       tooltip: $t('Plays an alert when a viewer subscribes to your YouTube channel'),
     },
+
+    // membershipGift: {
+    //   name: $t('Membership'),
+    //   apiKey: 'membershipGift',
+    //   type: 'membershipGift',
+    //   platforms: ['youtube'],
+    //   tooltip: $t('Plays an alert when a viewer gifts memberships'),
+    //   tooltipLink: 'https://support.google.com/youtube/answer/14915302#giftmem',
+    // },
     // TODO: Implement these when needed
     donordrive_donation: undefined,
     eldonation: undefined,

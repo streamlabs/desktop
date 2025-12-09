@@ -452,6 +452,8 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
   const flairWidgets = useNonEmptyWidgetElements(() => widgetsInGroup('flair'));
   const charityWidgets = useNonEmptyWidgetElements(() => widgetsInGroup('charity'));
 
+  console.log('SOURCE GRID goalWidgets', goalWidgets);
+
   const widgetGroupedList = useMemo(() => {
     return (
       <>

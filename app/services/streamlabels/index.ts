@@ -52,6 +52,7 @@ interface ITrains {
   facebook_follow: ITrainInfo;
   trovo_follow: ITrainInfo;
   trovo_subscription: ITrainInfo;
+  // membershipGift: ITrainInfo;
 }
 
 export interface IStreamlabelSet {
@@ -91,6 +92,7 @@ type TTrainType =
   | 'trovo_follow'
   | 'trovo_subscription'
   | 'facebook_follow';
+// | 'membershipGift';
 
 interface IStreamlabelsServiceState {
   definitions: IStreamlabelSet;
@@ -217,6 +219,12 @@ export class StreamlabelsService extends StatefulService<IStreamlabelsServiceSta
       counter: 0,
       setting: 'train_youtube_superchats',
     },
+    // membershipGift: {
+    //   mostRecentEventAt: null,
+    //   mostRecentName: null,
+    //   counter: 0,
+    //   setting: 'train_membershipGift',
+    // },
   };
 
   @mutation()
@@ -480,6 +488,8 @@ export class StreamlabelsService extends StatefulService<IStreamlabelsServiceSta
    * train is running.
    */
   private outputTrainInfo(trainType: TTrainType) {
+    // console.log('this.trains', JSON.stringify(this.trains, null, 2));
+
     const train = this.trains[trainType] as ITrainInfo | IDonationTrainInfo;
     const settings = this.getSettingsForStat(train.setting);
     const output = {
@@ -611,6 +621,19 @@ export class StreamlabelsService extends StatefulService<IStreamlabelsServiceSta
       this.trains.stars.mostRecentName = latest.name;
 
       this.outputTrainInfo('stars');
+      // } else if (event.type === 'membershipGift') {
+      //   console.log('=================== membershipGift event ', event);
+      //   this.trains.membershipGift.mostRecentEventAt = Date.now();
+      //   this.trains.membershipGift.counter += event.message.length;
+      //   // this.trains.membershipGift.counter =
+      //   //   typeof event.message[0].amount === 'number'
+      //   //     ? event.message[0].amount
+      //   //     : Number(event.message[0].amount);
+
+      //   const latest = event.message[event.message.length - 1];
+      //   this.trains.membershipGift.mostRecentName = latest.name;
+
+      //   this.outputTrainInfo('membershipGift');
     }
   }
 

@@ -65,6 +65,7 @@ export interface IEventSocketEvent {
     | 'account_permissions_required'
     | 'visionEvent'
     | 'userStateUpdated';
+  // | 'membershipGift';
   for: string;
   message: IRecentEvent[];
 }
