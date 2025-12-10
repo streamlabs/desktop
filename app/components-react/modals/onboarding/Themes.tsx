@@ -133,7 +133,11 @@ export function Themes(p: IOnboardingStepProps) {
       );
       await SceneCollectionsService.actions.return.installOverlay(url, name);
       sub.unsubscribe();
-    } finally {
+      setInstalling(false);
+      p.setProcessing(false);
+      OnboardingV2Service.actions.takeStep();
+    } catch (e: unknown) {
+      console.error('Error installing theme', e);
       setInstalling(false);
       p.setProcessing(false);
     }
