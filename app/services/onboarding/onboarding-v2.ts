@@ -11,6 +11,7 @@ import {
   UserService,
   WindowsService,
 } from 'app-services';
+import Utils from '../utils';
 
 export enum EOnboardingSteps {
   Splash = 'Splash',
@@ -181,6 +182,18 @@ export class OnboardingV2Service extends Service {
     return this.state.currentStep.name;
   }
 
+  showOnboardingIfNecessary() {
+    if (Utils.env.SLD_FORCE_ONBOARDING_STEP || Utils.env.CI) this.showOnboarding();
+    if (
+      this.appService.state.onboarded ||
+      this.userService.isAlphaGroup ||
+      localStorage.getItem(this.localStorageKey)
+    ) {
+      return;
+    }
+    this.showOnboarding();
+  }
+
   showOnboarding() {
     this.initalizeView({ startingStep: { name: EOnboardingSteps.Splash }, isSingleton: false });
   }
@@ -284,7 +297,7 @@ export class OnboardingV2Service extends Service {
           isClosable: true,
         });
       }
-      if (this.userService.views.isLoggedIn && !this.userService.views.isPrime) {
+      if (true || (this.userService.views.isLoggedIn && !this.userService.views.isPrime)) {
         this.path.append({ name: EOnboardingSteps.Ultra, isSkippable: true, isClosable: true });
       }
       this.path.append({ name: EOnboardingSteps.Devices, isSkippable: true, isClosable: true });

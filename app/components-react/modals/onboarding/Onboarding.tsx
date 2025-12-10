@@ -31,7 +31,7 @@ const STEPS_MAP = {
 };
 
 export default function Onboarding() {
-  const { OnboardingV2Service, WindowsService } = Services;
+  const { OnboardingV2Service } = Services;
 
   const [processing, setProcessing] = useState(false);
 
@@ -40,9 +40,8 @@ export default function Onboarding() {
   const showOnboarding = useRealmObject(OnboardingV2Service.state).showOnboarding;
 
   useEffect(() => {
-    if (true) {
-      OnboardingV2Service.actions.showOnboarding();
-    }
+    // OnboardingV2Service.actions.showOnboardingIfNecessary();
+    OnboardingV2Service.actions.showOnboarding();
   }, []);
 
   function closeModal() {
