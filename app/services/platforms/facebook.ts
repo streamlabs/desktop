@@ -347,7 +347,7 @@ export class FacebookService
 
     if (settings && !settings.is_live) {
       console.error('Stream Shift Error: Facebook is not live');
-      this.postError('Stream Shift Error: Facebook is not live');
+      this.postNotification('Stream Shift Error: Facebook is not live');
       return;
     }
 
@@ -525,14 +525,14 @@ export class FacebookService
 
       if (apiError && notEligibleErrorCodes.includes(apiError.error_subcode)) {
         // TODO: probably not a good idea to be pushing notifications from service code, again
-        this.notificationsService.push({
-          type: ENotificationType.WARNING,
-          message: $t('Your account is not eligible to stream on Facebook. Click to learn more'),
-          action: this.jsonrpcService.createRequest(
+        this.postNotification(
+          $t('Your account is not eligible to stream on Facebook. Click to learn more'),
+          ENotificationType.WARNING,
+          this.jsonrpcService.createRequest(
             Service.getResourceId(this),
             'openStreamIneligibleHelp',
           ),
-        });
+        );
         throwStreamError('FACEBOOK_STREAMING_DISABLED', { ...error, platform: 'facebook' });
       }
 

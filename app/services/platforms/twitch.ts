@@ -432,7 +432,7 @@ export class TwitchService
 
     if (settings && !settings.is_live) {
       console.error('Stream Shift Error: Twitch is not live');
-      this.postError('Stream Shift Error: Twitch is not live');
+      this.postNotification('Stream Shift Error: Twitch is not live');
       return;
     }
 

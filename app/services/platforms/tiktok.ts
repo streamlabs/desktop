@@ -209,7 +209,7 @@ export class TikTokService
 
     if (settings && !settings.is_live) {
       console.error('Stream Shift Error: TikTok is not live');
-      this.postError('Stream Shift Error: TikTok is not live');
+      this.postNotification('Stream Shift Error: TikTok is not live');
       return;
     }
 
@@ -645,11 +645,11 @@ export class TikTokService
    * @remark This is a temporary solution until we can show replays in the app
    */
   showReplaysNotification() {
-    this.notificationsService.actions.push({
-      type: ENotificationType.SUCCESS,
-      message: $t('Click to view TikTok Replay in your browser.'),
-      action: this.jsonrpcService.createRequest(Service.getResourceId(this), 'openReplaysLink'),
-    });
+    this.postNotification(
+      $t('Click to view TikTok Replay in your browser.'),
+      ENotificationType.SUCCESS,
+      this.jsonrpcService.createRequest(Service.getResourceId(this), 'openReplaysLink'),
+    );
   }
 
   openReplaysLink() {
@@ -763,15 +763,11 @@ export class TikTokService
       ? $t('You may be eligible for TikTok Live Access. Apply here.')
       : $t('Reapply for TikTok Live Permission. Reapply here.');
 
-    this.notificationsService.actions.push({
-      type: ENotificationType.SUCCESS,
-      lifeTime: 10000,
+    this.postNotification(
       message,
-      action: this.jsonrpcService.createRequest(
-        Service.getResourceId(this),
-        'pushApplyNotification',
-      ),
-    });
+      ENotificationType.SUCCESS,
+      this.jsonrpcService.createRequest(Service.getResourceId(this), 'pushApplyNotification'),
+    );
   }
 
   pushApplyNotification() {

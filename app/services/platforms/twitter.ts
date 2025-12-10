@@ -87,7 +87,7 @@ export class TwitterPlatformService
 
     if (settings && !settings.is_live) {
       console.error('Stream Shift Error: X is not live');
-      this.postError('Stream Shift Error: X is not live');
+      this.postNotification('Stream Shift Error: X is not live');
       return;
     }
 

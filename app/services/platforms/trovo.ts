@@ -187,7 +187,7 @@ export class TrovoService
 
     if (settings && !settings.is_live) {
       console.error('Stream Shift Error: Trovo is not live');
-      this.postError('Stream Shift Error: Trovo is not live');
+      this.postNotification('Stream Shift Error: Trovo is not live');
       return;
     }
 

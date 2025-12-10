@@ -144,7 +144,7 @@ export class KickService
 
     if (settings && !settings.is_live) {
       console.error('Stream Shift Error: Kick is not live');
-      this.postError('Stream Shift Error: Kick is not live');
+      this.postNotification('Stream Shift Error: Kick is not live');
       return;
     }
 

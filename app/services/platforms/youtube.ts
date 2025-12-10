@@ -336,7 +336,7 @@ export class YoutubeService
 
     if (settings && settings.broadcast_id !== null && !settings.is_live) {
       console.error('Stream Shift Error: YouTube is not live');
-      this.postError('Stream Shift Error: YouTube is not live');
+      this.postNotification('Stream Shift Error: YouTube is not live');
       return;
     }
 
