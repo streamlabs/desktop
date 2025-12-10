@@ -285,12 +285,13 @@ export class YoutubeService
     try {
       return await platformAuthorizedRequest<T>('youtube', reqInfo);
     } catch (e: unknown) {
-      console.error('Failed Youtube API request', e);
+      console.error(`Failed ${this.displayName} API Request:`, reqInfo);
+
       const error = e as any;
 
       // Log specific Youtube API errors if they exist
-      if ((e as any)?.result && (e as any).result?.error) {
-        console.log('Youtube API Error: ', JSON.stringify((e as any).result.error, null, 2));
+      if (error?.result && error.result?.error) {
+        console.log('Youtube API Error: ', JSON.stringify(error.result.error, null, 2));
       }
 
       let details = $t('Connection Failed');
@@ -350,7 +351,7 @@ export class YoutubeService
       // Try to find an upcoming broadcast if there are no active broadcasts
       if (!broadcast) {
         console.debug('No active YouTube broadcasts found');
-        this.postError(
+        this.postNotification(
           $t(
             'Auto-start is disabled for your broadcast. You should manually publish your stream from Youtube Studio',
           ),
@@ -559,7 +560,7 @@ export class YoutubeService
       });
     }
 
-    // Updating the thumbnail in the stream settings happends when creating the broadcast.
+    // Updating the thumbnail in the stream settings happens when creating the broadcast.
     // This is because the user can still go live even if the thumbnail upload fails,
     // and we want to avoid setting an invalid thumbnail in state.
     if (ytSettings.thumbnail && ytSettings.thumbnail !== 'default') {

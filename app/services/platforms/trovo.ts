@@ -133,9 +133,12 @@ export class TrovoService
     try {
       return await platformAuthorizedRequest<T>('trovo', reqInfo);
     } catch (e: unknown) {
-      let details = (e as any).message;
-      if (!details) details = 'connection failed';
-      throwStreamError('PLATFORM_REQUEST_FAILED', { ...(e as any), platform: 'trovo' }, details);
+      console.error(`Failed ${this.displayName} API Request:`, reqInfo);
+
+      const error = e as any;
+      let details = error.message;
+      if (!details) details = 'Connection failed';
+      throwStreamError('PLATFORM_REQUEST_FAILED', { ...error, platform: 'trovo' }, details);
     }
   }
 

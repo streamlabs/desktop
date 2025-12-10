@@ -508,6 +508,8 @@ export class FacebookService
         ? await platformRequest<T>('facebook', reqInfo, token)
         : await platformAuthorizedRequest<T>('facebook', reqInfo);
     } catch (e: unknown) {
+      console.error(`Failed ${this.displayName} API Request:`, reqInfo);
+
       const ACCOUNT_NOT_OLD_ENOUGH = 1363120;
       const NOT_ENOUGH_FOLLOWERS_FOR_PAGE = 1363144;
       // We don't know what this is, but their API started returning this shortly after, with the same messaging
@@ -518,9 +520,10 @@ export class FacebookService
         NOT_ENOUGH_FOLLOWERS_FOR_PAGE,
         UNKNOWN_SUBCODE,
       ];
-      const error = (e as any).result?.error;
+      const error = e as any;
+      const apiError = error.result?.error;
 
-      if (error && notEligibleErrorCodes.includes(error.error_subcode)) {
+      if (apiError && notEligibleErrorCodes.includes(apiError.error_subcode)) {
         // TODO: probably not a good idea to be pushing notifications from service code, again
         this.notificationsService.push({
           type: ENotificationType.WARNING,
@@ -530,11 +533,11 @@ export class FacebookService
             'openStreamIneligibleHelp',
           ),
         });
-        throwStreamError('FACEBOOK_STREAMING_DISABLED', { ...(e as any), platform: 'facebook' });
+        throwStreamError('FACEBOOK_STREAMING_DISABLED', { ...error, platform: 'facebook' });
       }
 
-      const details = error ? `${error.type} ${error.message}` : 'Connection failed';
-      throwStreamError('PLATFORM_REQUEST_FAILED', { ...(e as any), platform: 'facebook' }, details);
+      const details = apiError ? `${apiError.type} ${apiError.message}` : 'Connection failed';
+      throwStreamError('PLATFORM_REQUEST_FAILED', { ...error, platform: 'facebook' }, details);
     }
   }
 

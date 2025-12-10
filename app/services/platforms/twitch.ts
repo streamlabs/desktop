@@ -325,10 +325,11 @@ export class TwitchService
     const url = `https://${host}/api/v5/slobs/twitch/refresh`;
     const headers = authorizedHeaders(this.userService.apiToken!);
     const request = new Request(url, { headers });
-
-    return jfetch<{ access_token: string }>(request).then(response =>
-      this.userService.updatePlatformToken('twitch', response.access_token),
-    );
+    console.log('TWITCH FETCH NEW TOKEN ', headers);
+    return jfetch<{ access_token: string }>(request).then(response => {
+      console.log('TWITCH TOKEN ', response);
+      this.userService.updatePlatformToken('twitch', response.access_token);
+    });
   }
 
   /**
@@ -338,11 +339,14 @@ export class TwitchService
     try {
       return await platformAuthorizedRequest<T>('twitch', reqInfo);
     } catch (e: unknown) {
-      const details = (e as any).result
-        ? `${(e as any).result.status} ${(e as any).result.error} ${(e as any).result.message}`
+      console.error(`Failed ${this.displayName} API Request:`, reqInfo);
+
+      const error = e as any;
+      const details = error.result
+        ? `${error.result.status} ${error.result.error} ${error.result.message}`
         : 'Connection failed';
       let errorType: TStreamErrorType;
-      switch ((e as any).result?.message) {
+      switch (error.result?.message) {
         case 'missing required oauth scope':
           errorType = 'TWITCH_MISSED_OAUTH_SCOPE';
           break;
@@ -352,14 +356,17 @@ export class TwitchService
         default:
           errorType = 'PLATFORM_REQUEST_FAILED';
       }
-      throwStreamError(errorType, { ...(e as any), platform: 'twitch' }, details);
+      throwStreamError(errorType, { ...error, platform: 'twitch' }, details);
     }
   }
 
   fetchStreamKey(): Promise<string> {
     return this.requestTwitch<{ data: { stream_key: string }[] }>(
       `${this.apiBase}/helix/streams/key?broadcaster_id=${this.twitchId}`,
-    ).then(json => json.data[0].stream_key);
+    ).then(json => {
+      console.log('TWITCH FETCH STREAM KEY json ', json);
+      return json.data[0].stream_key;
+    });
   }
 
   /**
@@ -375,6 +382,8 @@ export class TwitchService
           content_classification_labels: string[];
         }[];
       }>(`${this.apiBase}/helix/channels?broadcaster_id=${this.twitchId}`).then(json => {
+        console.log('TWITCH json ', json);
+        // @@@ TODO: WIP why is this being done when Twitch isn't enabled?
         return {
           title: json.data[0].title,
           game: json.data[0].game_name,
