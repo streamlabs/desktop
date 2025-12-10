@@ -43,6 +43,7 @@ export function Login(p: IOnboardingStepProps) {
             <div className={styles.platformButtons}>
               {orderedPlatforms.map(platform => (
                 <Button
+                  key={platform}
                   icon={<PlatformLogo platform={platform} size="small" />}
                   onClick={() => platformLogin(platform)}
                 >
@@ -50,7 +51,7 @@ export function Login(p: IOnboardingStepProps) {
                 </Button>
               ))}
               {['dlive', 'nimotv'].map((platform: 'dlive' | 'nimotv') => (
-                <Button onClick={() => setExtraPlatform(platform)}>
+                <Button onClick={() => setExtraPlatform(platform)} key={platform}>
                   {platformLabels(platform)}
                 </Button>
               ))}

@@ -288,7 +288,7 @@ export class OnboardingV2Service extends Service {
         this.path.append({ name: EOnboardingSteps.Ultra, isSkippable: true, isClosable: true });
       }
       this.path.append({ name: EOnboardingSteps.Devices, isSkippable: true, isClosable: true });
-      if (this.userService.views.isLoggedIn && !this.hasExistingSceneCollections) {
+      if (true || (this.userService.views.isLoggedIn && !this.hasExistingSceneCollections)) {
         this.path.append({ name: EOnboardingSteps.Themes, isSkippable: true, isClosable: true });
       }
     }
