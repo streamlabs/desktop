@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { DisplaySection } from 'components-react/pages/onboarding/HardwareSetup';
 import styles from './Common.m.less';
 import { Header, IOnboardingStepProps } from './Onboarding';
@@ -20,15 +20,24 @@ export function Devices(p: IOnboardingStepProps) {
       label: device.description,
       value: device.id,
     })),
-    selectedVideoSource: DefaultHardwareService.selectedVideoSource,
     selectedVideoDevice: DefaultHardwareService.state.defaultVideoDevice,
     selectedAudioDevice: DefaultHardwareService.state.defaultAudioDevice,
-    selectedAudioSource: DefaultHardwareService.selectedAudioSource,
   }));
+
+  // Set up temporary sources
+  useEffect(() => {
+    DefaultHardwareService.createTemporarySources();
+
+    if (!selectedVideoDevice && videoDevices.length) {
+      DefaultHardwareService.actions.setDefault('video', videoDevices[0].value);
+    }
+
+    return () => DefaultHardwareService.actions.clearTemporarySources();
+  }, []);
 
   function setDevice(type: 'video' | 'audio') {
     return (value: string) => {
-      DefaultHardwareService.setDefault(type, value);
+      DefaultHardwareService.actions.setDefault(type, value);
     };
   }
 
@@ -38,21 +47,30 @@ export function Devices(p: IOnboardingStepProps) {
         title={$t('Set Up Your Mic & Webcam')}
         description={$t('Connect your most essential devices now or later on')}
       />
-      <div style={{ display: 'flex' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-evenly',
+          alignItems: 'center',
+          width: '100%',
+        }}
+      >
         <DisplaySection />
-        <div className={styles.darkBox} style={{ width: 360, height: 320, padding: 32 }}>
+        <div className={styles.darkBox} style={{ width: 360, height: 240, padding: 32 }}>
           <Form layout="vertical">
             <ListInput
               label={$t('Webcam')}
               options={videoDevices}
               value={selectedVideoDevice}
               onInput={setDevice('video')}
+              style={{ width: 200 }}
             />
             <ListInput
               label={$t('Microphone')}
               options={audioDevices}
               value={selectedAudioDevice}
               onInput={setDevice('audio')}
+              style={{ width: 200 }}
             />
           </Form>
         </div>

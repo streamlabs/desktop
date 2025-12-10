@@ -29,6 +29,8 @@ export function OBSImport(p: IOnboardingStepProps) {
     });
   }
 
+  console.log(selectedProfile);
+
   return (
     <div className={styles.centered}>
       <Header
@@ -59,8 +61,9 @@ export function OBSImport(p: IOnboardingStepProps) {
         <>
           <ListInput
             options={profiles.map(p => ({ label: p, value: p }))}
-            onInput={setSelectedProfile}
+            onChange={setSelectedProfile}
             value={selectedProfile}
+            defaultValue={profiles[0]}
             allowClear={false}
             style={{ width: '240px', margin: 16, marginLeft: 6 }}
           />
