@@ -195,7 +195,7 @@ export function ReactiveWidget() {
           menuItems={triggerGroups}
           groupMeta={groupMeta}
           activeKey={selectedTab}
-          onChange={key => setSelectedTab(key)}
+          onChange={setSelectedTab}
           playAlert={onPlayAlert}
           toggleTrigger={toggleTrigger}
           deleteTrigger={onDelete}

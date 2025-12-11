@@ -221,7 +221,6 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     const selectedTab = this.state?.selectedTab;
 
     if (!selectedTab) return 'game-manage-trigger'; // default fallback
-
     if (selectedTab === 'add-trigger') return 'add-trigger';
     if (selectedTab === 'general') return 'general';
     if (selectedTab.endsWith('-manage-trigger')) return 'game-manage-trigger';

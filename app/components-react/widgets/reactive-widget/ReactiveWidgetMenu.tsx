@@ -17,7 +17,7 @@ export function ReactiveWidgetMenu(props: {
   menuItems: any;
   groupMeta: any;
   activeKey: string;
-  onChange: (key: string) => void;
+  onChange: (params: any) => void;
   playAlert: (type: any) => void;
   toggleTrigger: (group: any, triggerId: string, enabled: boolean) => void;
   deleteTrigger: (triggerId: string) => void;
@@ -53,7 +53,7 @@ export function ReactiveWidgetMenu(props: {
       selectedKeys={[activeKey]}
       openKeys={openKeys}
       onOpenChange={keys => setOpenKeys(keys as string[])}
-      onClick={({ key }) => onChange(key as string)}
+      onClick={onChange}
     >
       <Menu.Item
         key="add-trigger"

@@ -12,9 +12,9 @@ interface TriggerFormProps {
     name,
     triggerType,
   }: {
-    eventType: string;
-    game: string;
-    name: string;
+    eventType: TInputValue;
+    game: TInputValue;
+    name: TInputValue;
     triggerType: string;
   }) => void;
   availableGameEvents: Record<string, any>;
@@ -202,9 +202,9 @@ export function ReactiveWidgetCreateTriggerForm(props: TriggerFormProps) {
         size="large"
         onClick={() =>
           onSubmit({
-            eventType: values.event_type as string,
-            game: values.game as string,
-            name: values.name as string,
+            eventType: values.event_type,
+            game: values.game,
+            name: values.name,
             triggerType,
           })
         }
