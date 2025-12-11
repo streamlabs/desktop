@@ -115,10 +115,10 @@ export function ImageCard(p: {
   metadata: { img: string; title: string; description: string; isUltra?: boolean };
 }) {
   return (
-    <div style={{ marginRight: 32, textAlign: 'left' }}>
+    <div style={{ textAlign: 'left' }}>
       <img style={{ height: 160, width: 'auto', marginBottom: 16 }} src={p.metadata.img} />
       <h4>
-        {p.metadata.isUltra && <UltraIcon />}
+        {p.metadata.isUltra && <UltraIcon style={{ marginRight: 4 }} />}
         {p.metadata.title}
       </h4>
       <span>{p.metadata.description}</span>

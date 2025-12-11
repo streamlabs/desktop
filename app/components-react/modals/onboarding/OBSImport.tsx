@@ -37,7 +37,7 @@ export function OBSImport(p: IOnboardingStepProps) {
         title={$t('Import your OBS settings for a seamless setup')}
         description={$t('While that loads, explore a few key features worth checking out!')}
       />
-      <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
         <ImageCard
           metadata={{
             title: $t('Dual Output'),

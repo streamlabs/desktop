@@ -183,7 +183,7 @@ export class OnboardingV2Service extends Service {
   }
 
   showOnboardingIfNecessary() {
-    if (Utils.env.SLD_FORCE_ONBOARDING_STEP || Utils.env.CI) this.showOnboarding();
+    if (Utils.env.SLD_FORCE_ONBOARDING_STEP) this.showOnboarding();
     if (
       this.appService.state.onboarded ||
       this.userService.isAlphaGroup ||

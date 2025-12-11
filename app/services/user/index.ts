@@ -917,6 +917,8 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   // Technically not an exact 50% chance but over a large scale of users
   // should be close enough to 50% for the purposes of testing features
   get isAlphaGroup() {
+    // CI should have a consistent experience
+    if (Utils.env.CI) return true;
     const localId = this.getLocalUserId();
     return Number(localId.search(/\d/)) % 2 === 0;
   }

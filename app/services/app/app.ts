@@ -152,7 +152,7 @@ export class AppService extends StatefulService<IAppState> {
       await this.sceneCollectionsService.initialize();
     }
 
-    if (this.userService.isAlphaGroup && !Utils.env.CI) {
+    if (this.userService.isAlphaGroup) {
       this.SET_ONBOARDED(this.onboardingService.startOnboardingIfRequired());
     }
     this.dismissablesService.initialize();
