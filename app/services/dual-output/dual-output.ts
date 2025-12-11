@@ -787,13 +787,17 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
 
       if (!copiedSceneItem) return null;
 
+      // Dual output scenes should be ordered so that all of the vertical nodes are
+      // after all of the horizontal nodes. So place the vertical node at the correct position.
       const selection = scene.getSelection(copiedSceneItem.id);
-      this.editorCommandsService.executeCommand(
-        'ReorderNodesCommand',
-        selection,
-        sceneItem.id,
-        EPlaceType.Before,
-      );
+
+      const numHorizontalNodes = this.scenesService.views.activeScene.nodes.filter(
+        n => n.display === 'horizontal',
+      ).length;
+
+      // place the vertical node after the last horizontal node
+      selection.freeze();
+      selection.placeAfter(scene.getNodesIds()[numHorizontalNodes]);
 
       this.sceneCollectionsService.createNodeMapEntry(sceneId, sceneItem.id, copiedSceneItem.id);
       return copiedSceneItem;
