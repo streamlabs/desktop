@@ -10,5 +10,6 @@
   "Go to: <link></link>": "Gehe zu: <link></link>",
   "Click on the \"eye\" icon to see your stream key": "Klicke auf das „Augen”-Symbol, um deinen Stream-Key zu sehen.",
   "Put in 2FA": "2FA aktivieren",
-  "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "Nach der 2FA-Authentifizierung wird der Stream-Key erstellt und steht für Streamlabs Desktop für diesen Kanal bereit. Jetzt solltest du auf Kick live gehen können."
+  "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "Nach der 2FA-Authentifizierung wird der Stream-Key erstellt und steht für Streamlabs Desktop für diesen Kanal bereit. Jetzt solltest du auf Kick live gehen können.",
+  "Stream Shift Error: Kick is not live": "Stream Shift Error: Kick is not live"
 }

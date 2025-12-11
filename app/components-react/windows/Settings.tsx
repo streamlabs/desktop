@@ -1,13 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import debounce from 'lodash/debounce';
+import React, { useEffect, useMemo, useState } from 'react';
 import * as remote from '@electron/remote';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import * as pages from './settings/pages';
 import { ESettingsCategory, TCategoryName } from 'services/settings';
 import { EDismissable } from 'services/dismissables';
+import { getOS, OS } from 'util/operating-systems';
 import { Services } from 'components-react/service-provider';
 import { useRealmObject } from 'components-react/hooks/realm';
-import { useDebounce, useVuex } from 'components-react/hooks';
+import { useVuex } from 'components-react/hooks';
 import { $t } from 'services/i18n';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import { Menu } from 'antd';
@@ -17,6 +17,7 @@ import { TextInput } from 'components-react/shared/inputs';
 import PlatformLogo from 'components-react/shared/PlatformLogo';
 import DismissableBadge from 'components-react/shared/DismissableBadge';
 import SearchablePages from 'components-react/shared/SearchablePages';
+import Utils from 'services/utils';
 
 export interface ISettingsProps {
   globalSearchStr: string;
@@ -26,6 +27,7 @@ interface ISettingsConfig {
   icon: string;
   component: React.FunctionComponent<ISettingsProps>;
   dismissable?: EDismissable;
+  shouldShow?: () => boolean;
 }
 
 export const SETTINGS_CONFIG: Record<ESettingsCategory, ISettingsConfig> = {
@@ -63,7 +65,13 @@ export const SETTINGS_CONFIG: Record<ESettingsCategory, ISettingsConfig> = {
   [ESettingsCategory.Experimental]: { icon: 'fas fa-flask', component: pages.ExperimentalSettings },
   [ESettingsCategory.InstalledApps]: { icon: 'icon-store', component: pages.InstalledApps },
   [ESettingsCategory.GetSupport]: { icon: 'icon-question', component: pages.Support },
-  [ESettingsCategory.AI]: { icon: 'icon-ai', component: pages.AISettings },
+  [ESettingsCategory.AI]: {
+    icon: 'icon-ai',
+    component: pages.AISettings,
+    shouldShow: () => {
+      return getOS() === OS.Windows || (getOS() === OS.Mac && Utils.isDevMode());
+    },
+  },
   [ESettingsCategory.Ultra]: { icon: 'icon-ultra', component: pages.Ultra },
 };
 
@@ -181,20 +189,22 @@ export default function Settings() {
         >
           {categories.map(cat => {
             const config = SETTINGS_CONFIG[cat];
-            return (
-              <Menu.Item key={cat} icon={<i className={config.icon} />}>
-                <div
-                  style={{ display: 'flex' }}
-                  onClick={() => dismiss(cat)}
-                  data-name="settings-nav-item"
-                >
-                  {$t(cat)}
-                  {config.dismissable && showDismissable(config.dismissable) && (
-                    <DismissableBadge dismissableKey={config.dismissable} />
-                  )}
-                </div>
-              </Menu.Item>
-            );
+            if (!config.shouldShow || config.shouldShow()) {
+              return (
+                <Menu.Item key={cat} icon={<i className={config.icon} />}>
+                  <div
+                    style={{ display: 'flex' }}
+                    onClick={() => dismiss(cat)}
+                    data-name="settings-nav-item"
+                  >
+                    {$t(cat)}
+                    {config.dismissable && showDismissable(config.dismissable) && (
+                      <DismissableBadge dismissableKey={config.dismissable} />
+                    )}
+                  </div>
+                </Menu.Item>
+              );
+            }
           })}
         </Menu>
         <div className={styles.settingsAuth} onClick={handleAuth}>
