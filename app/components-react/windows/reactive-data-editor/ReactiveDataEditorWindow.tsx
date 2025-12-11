@@ -6,7 +6,6 @@ import { useRealmObject } from 'components-react/hooks/realm';
 import ReactiveDataEditor from './ReactiveDataEditor';
 import { $t } from 'services/i18n';
 import { IReactiveDataEditorProps } from 'components-react/windows/reactive-data-editor/types';
-import { StateFlatType, SchemaFlatType } from 'services/reactive-data';
 
 export default function ReactiveDataEditorWindow() {
   const { WindowsService, ReactiveDataService } = Services;
@@ -19,13 +18,14 @@ export default function ReactiveDataEditorWindow() {
 
   const reactiveDataState = useRealmObject(ReactiveDataService.state);
 
-  const [stateFlat, setStateFlat] = useState<StateFlatType | null>(() =>
-    reactiveDataState.stateFlat ? { ...reactiveDataState.stateFlat } : reactiveDataState.stateFlat,
+  const [stateFlat, setStateFlat] = useState(() =>
+    reactiveDataState.isStateLoaded ? { ...reactiveDataState.stateFlat } : null,
   );
 
-  const schemaFlat = useMemo<SchemaFlatType | null>(() => reactiveDataState.schemaFlat, [
-    reactiveDataState.schemaFlatJson,
-  ]);
+  const schemaFlat = useMemo(
+    () => (reactiveDataState.isSchemaLoaded ? reactiveDataState.schemaFlat : null),
+    [reactiveDataState.schemaFlatJson],
+  );
 
   const handleSaveChanges = (changes: Partial<Record<string, number>>) => {
     setStateFlat(prev => (prev ? { ...prev, ...changes } : prev));

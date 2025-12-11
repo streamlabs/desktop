@@ -15,22 +15,23 @@ import { USER_STATE_SCHEMA_URL } from 'services/sources/properties-managers/smar
 import { RealmObject } from 'services/realm';
 import { ObjectSchema } from 'realm';
 
-type StateTreeLeaf = number;
-type StateTreeNode = { [key: string]: StateTreeLeaf | StateTreeNode };
-type StateTree = { [key: string]: StateTreeNode };
+type TStateTreeLeaf = number | string;
+type TStateTreeNode = { [key: string]: TStateTreeLeaf | TStateTreeNode };
+type TStateTree = { [key: string]: TStateTreeNode };
+type TStateFlat = { [x: `${string}.${string}`]: TStateTreeLeaf };
 
-type SchemaTreeLeaf = { name: string; aliases?: string[] };
-type SchemaTreeNode = { [key: string]: SchemaTreeLeaf | SchemaTreeNode };
-type SchemaTree = { [key: string]: SchemaTreeNode };
-
-export type SchemaFlatType = { [x: `${string}.${string}`]: SchemaTreeLeaf };
-export type StateFlatType = { [x: `${string}.${string}`]: number | StateTreeNode };
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+type TSchemaTreeLeaf = { name: string; aliases?: string[] };
+type TSchemaTreeNode = { [key: string]: TSchemaTreeLeaf | TSchemaTreeNode };
+type TSchemaTree = { [key: string]: TSchemaTreeNode };
+type TSchemaFlat = { [x: `${string}.${string}`]: TSchemaTreeLeaf };
 
 export class ReactiveDataState extends RealmObject {
   schemaFlatJson: string;
   stateFlatJson: string;
+
+  // In-memory caches to avoid repeated JSON parsing
+  private _schemaFlatCache: TSchemaFlat | null = null;
+  private _stateFlatCache: TStateFlat | null = null;
 
   static schema: ObjectSchema = {
     name: 'ReactiveDataState',
@@ -40,22 +41,42 @@ export class ReactiveDataState extends RealmObject {
     },
   };
 
-  get schemaFlat(): SchemaFlatType | null {
+  get schemaFlat(): TSchemaFlat | null {
     if (!this.schemaFlatJson) return null;
+    if (this._schemaFlatCache) return this._schemaFlatCache;
     try {
-      return JSON.parse(this.schemaFlatJson);
+      this._schemaFlatCache = JSON.parse(this.schemaFlatJson);
+      return this._schemaFlatCache;
     } catch {
       return null;
     }
   }
 
-  get stateFlat(): StateFlatType | null {
+  get stateFlat(): TStateFlat | null {
     if (!this.stateFlatJson) return null;
+    if (this._stateFlatCache) return this._stateFlatCache;
     try {
-      return JSON.parse(this.stateFlatJson);
+      this._stateFlatCache = JSON.parse(this.stateFlatJson);
+      return this._stateFlatCache;
     } catch {
       return null;
     }
+  }
+
+  get isSchemaLoaded(): boolean {
+    return !!this.schemaFlatJson;
+  }
+
+  get isStateLoaded(): boolean {
+    return !!this.stateFlatJson;
+  }
+
+  invalidateSchemaCache() {
+    this._schemaFlatCache = null;
+  }
+
+  invalidateStateCache() {
+    this._stateFlatCache = null;
   }
 }
 
@@ -76,7 +97,7 @@ export class ReactiveDataService extends Service {
   }
 
   public sourceStateKeyInterest: Map<string, Set<string>> = new Map();
-  private socketSub!: Subscription;
+  private socketSub: Subscription;
 
   init() {
     obs.NodeObs.RegisterSourceMessageCallback(this.onSourceMessageCallback);
@@ -85,8 +106,9 @@ export class ReactiveDataService extends Service {
       this.log('Fetched user state schema:', JSON.stringify(schema).slice(0, 100) + '...');
       const schemaFlat = toDotNotation(
         schema,
-        (v): v is SchemaTreeLeaf => typeof v === 'object' && v !== null && 'name' in v,
+        (v): v is TSchemaTreeLeaf => typeof v === 'object' && v !== null && 'name' in v,
       );
+      this.state.invalidateSchemaCache();
       this.writeState({ schemaFlatJson: JSON.stringify(schemaFlat) });
     });
 
@@ -94,6 +116,7 @@ export class ReactiveDataService extends Service {
     this.fetchFullState().then(res => {
       this.log('Fetched full user state:', JSON.stringify(res).slice(0, 100) + '...');
       const stateFlat = toDotNotation(res);
+      this.state.invalidateStateCache();
       this.writeState({ stateFlatJson: JSON.stringify(stateFlat) });
     });
 
@@ -123,6 +146,7 @@ export class ReactiveDataService extends Service {
 
       const currentStateFlat = this.state.stateFlat || {};
       const newStateFlat = { ...currentStateFlat, ...changes };
+      this.state.invalidateStateCache();
       this.writeState({ stateFlatJson: JSON.stringify(newStateFlat) });
     } catch (e: unknown) {
       this.log('error updating state:', e);
@@ -133,7 +157,7 @@ export class ReactiveDataService extends Service {
   async getUserState(keys: string[]) {
     this.log('getUserState()', { keys });
 
-    if (!this.state.stateFlat) {
+    if (!this.state.isStateLoaded) {
       return undefined;
     }
 
@@ -202,11 +226,11 @@ export class ReactiveDataService extends Service {
     }
   };
 
-  private async fetchFullState(): Promise<StateTree> {
+  private async fetchFullState(): Promise<TStateTree> {
     return (await this.authedRequest(
       `https://${this.hostsService.streamlabs}/api/v5/user-state/desktop/query`,
       { body: JSON.stringify({ query: {} }) },
-    )) as StateTree;
+    )) as TStateTree;
   }
 
   private async authedRequest(
@@ -246,6 +270,6 @@ export class ReactiveDataService extends Service {
   }
 
   private async fetchSchema() {
-    return await fetch(USER_STATE_SCHEMA_URL).then(res => res.json() as Promise<SchemaTree>);
+    return await fetch(USER_STATE_SCHEMA_URL).then(res => res.json() as Promise<TSchemaTree>);
   }
 }
