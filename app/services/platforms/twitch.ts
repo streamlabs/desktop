@@ -234,7 +234,6 @@ export class TwitchService
       this.streamSettingsService.protectedModeEnabled &&
       this.streamSettingsService.isSafeToModifyStreamKey()
     ) {
-      console.log('protectedModeEnabled, fetching Twitch stream key');
       let key = await this.fetchStreamKey();
       // do not start actual stream when testing
       if (Utils.isTestMode()) {
@@ -325,9 +324,7 @@ export class TwitchService
     const url = `https://${host}/api/v5/slobs/twitch/refresh`;
     const headers = authorizedHeaders(this.userService.apiToken!);
     const request = new Request(url, { headers });
-    console.log('TWITCH FETCH NEW TOKEN ', headers);
     return jfetch<{ access_token: string }>(request).then(response => {
-      console.log('TWITCH TOKEN ', response);
       this.userService.updatePlatformToken('twitch', response.access_token);
     });
   }
@@ -363,10 +360,7 @@ export class TwitchService
   fetchStreamKey(): Promise<string> {
     return this.requestTwitch<{ data: { stream_key: string }[] }>(
       `${this.apiBase}/helix/streams/key?broadcaster_id=${this.twitchId}`,
-    ).then(json => {
-      console.log('TWITCH FETCH STREAM KEY json ', json);
-      return json.data[0].stream_key;
-    });
+    ).then(json => json.data[0].stream_key);
   }
 
   /**
@@ -382,8 +376,6 @@ export class TwitchService
           content_classification_labels: string[];
         }[];
       }>(`${this.apiBase}/helix/channels?broadcaster_id=${this.twitchId}`).then(json => {
-        console.log('TWITCH json ', json);
-        // @@@ TODO: WIP why is this being done when Twitch isn't enabled?
         return {
           title: json.data[0].title,
           game: json.data[0].game_name,
