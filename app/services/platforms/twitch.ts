@@ -92,9 +92,7 @@ class TwitchServiceViews extends ViewHandler<ITwitchServiceState> {
    * Production releases: "twitchDualStream"
    */
   get hasTwitchDualStreamAccess() {
-    return this.incrementalRolloutServiceView.featureIsEnabled(
-      EAvailableFeatures.twitchDualStreamPreview,
-    );
+    return this.incrementalRolloutServiceView.featureIsEnabled(EAvailableFeatures.twitchDualStream);
   }
 }
 
