@@ -6,7 +6,7 @@ import css from './ReactiveWidgetGameSettings.m.less';
 import { IReactiveGroupOption } from './ReactiveWidget.helpers';
 
 interface ReactiveWidgetGameSettingsProps {
-  options: IReactiveGroupOption[];
+  options: IReactiveGroupOption[] | null | undefined;
   onChangeGroupEnabled: (gameId: string, enabled: boolean) => void;
   onEnableAll: () => void;
   onDisableAll: () => void;

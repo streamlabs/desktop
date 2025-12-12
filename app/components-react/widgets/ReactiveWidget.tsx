@@ -2,7 +2,7 @@ import React, { useMemo, useCallback } from 'react';
 import * as remote from '@electron/remote';
 import { WidgetLayout } from './common/WidgetLayout';
 import { useReactiveWidget } from './reactive-widget/useReactiveWidget';
-import { TabKind, ReactiveTabUtils, ReactiveTrigger, sanitizeTrigger } from './reactive-widget/ReactiveWidget.helpers';
+import { TabKind, ReactiveTabUtils, ReactiveWidgetSettings, ReactiveTrigger, sanitizeTrigger, ReactiveGamesMap } from './reactive-widget/ReactiveWidget.helpers';
 import { ReactiveWidgetMenu } from './reactive-widget/ReactiveWidgetMenu';
 import { ReactiveWidgetCreateTriggerForm } from './reactive-widget/ReactiveWidgetCreateTriggerForm';
 import { ReactiveWidgetGameSettings } from './reactive-widget/ReactiveWidgetGameSettings';
@@ -35,8 +35,8 @@ export function ReactiveWidget() {
 
   const showDisplay = tabKind !== TabKind.General && tabKind !== TabKind.GameManage;
 
-  function onPlayAlert(gameKey = 'global', trigger: ReactiveTrigger) {
-    if (!trigger.id) return;
+  function onPlayAlert(gameKey: string = 'global', trigger: ReactiveTrigger) {
+    if (!trigger?.id) return;
 
     const targetTab = ReactiveTabUtils.generateTriggerId(gameKey, trigger.id);
 
@@ -83,7 +83,7 @@ export function ReactiveWidget() {
   );
 }
 
-const AddTriggerTab: React.FC = () => {
+function AddTriggerTab() {
   const {
     availableGameEvents,
     gameEvents,
@@ -111,7 +111,7 @@ const AddTriggerTab: React.FC = () => {
   );
 };
 
-const GameSettingsTab: React.FC = () => {
+function GameSettingsTab() {
   const { groupOptions, setGroupEnabled, enableAllGroups, disableAllGroups } = useReactiveWidget();
 
   return (
@@ -127,10 +127,11 @@ const GameSettingsTab: React.FC = () => {
   );
 };
 
-const ManageTriggersTab: React.FC = () => {
+function ManageTriggersTab() {
   const {
     activeTabContext,
     data,
+    settings,
     enableAllTriggers,
     disableAllTriggers,
     toggleTrigger,
@@ -150,10 +151,20 @@ const ManageTriggersTab: React.FC = () => {
     disableAllTriggers(selectedGame);
   }
 
-  const options =
+  const rawTriggers =
     selectedGame === 'global'
-      ? (data as any)?.settings?.global?.triggers
-      : (data as any)?.settings?.games?.[selectedGame]?.triggers;
+      ? settings?.global?.triggers
+      : settings?.games?.[selectedGame]?.triggers;
+
+  const options = useMemo(() => {
+    return (rawTriggers || [])
+      .filter((t) => t.id !== null) 
+      .map((t) => ({
+        id: t.id as string, 
+        name: t.name,
+        enabled: t.enabled,
+      }));
+  }, [rawTriggers]);
   return (
     <ReactiveWidgetGameSettings
       options={options}
@@ -164,7 +175,7 @@ const ManageTriggersTab: React.FC = () => {
   );
 };
 
-const TriggerDetailsTab: React.FC = () => {
+function TriggerDetailsTab() {
   const { activeTabContext, staticConfig, createTriggerBinding } = useReactiveWidget();
   const { gameId: selectedGame, triggerId: selectedTriggerId } = activeTabContext;
 
@@ -175,7 +186,7 @@ const TriggerDetailsTab: React.FC = () => {
     return createTriggerBinding(selectedGame, selectedTriggerId, forceUpdate);
   }, [createTriggerBinding, selectedGame, selectedTriggerId, forceUpdate]);
   const handleUpdate = useCallback(
-    (trigger: any) => {
+    (trigger: ReactiveTrigger) => {
       binding?.updateTrigger(trigger);
     },
     [binding],
