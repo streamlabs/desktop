@@ -215,7 +215,7 @@ export class ScenesModule extends Module {
       if (!verticalNodeId) return;
 
       scene.removeItem(verticalNodeId);
-      this.sceneCollectionsService.removeNodeMapEntry(sceneItemId, sceneId);
+      this.sceneCollectionsService.removeNodeMapEntry(sceneId, sceneItemId);
     }
   }
 

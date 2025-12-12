@@ -1318,20 +1318,9 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * @param horizontalNodeId - The horizontal node id, used as the key to find the vertical node id
    * @param sceneId - The scene id
    */
-  removeNodeMapEntry(horizontalNodeId: string, sceneId: string) {
-    if (
-      !this.activeCollection ||
-      !this.activeCollection?.sceneNodeMaps ||
-      !this.activeCollection?.sceneNodeMaps.hasOwnProperty(sceneId)
-    ) {
-      return;
-    }
-
-    const nodeMap = this.activeCollection?.sceneNodeMaps[sceneId];
-    delete nodeMap[horizontalNodeId];
-
-    this.activeCollection.sceneNodeMaps[sceneId] = { ...nodeMap };
-    this.stateService.removeNodeMapEntry(horizontalNodeId, sceneId);
+  removeNodeMapEntry(sceneId: string, horizontalNodeId: string) {
+    console.log('removing node map entry for node id: ', horizontalNodeId, sceneId);
+    this.stateService.removeNodeMapEntry(sceneId, horizontalNodeId);
   }
 
   /**

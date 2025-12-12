@@ -54,15 +54,6 @@ export class CreateFolderCommand extends Command {
     // Note: Check the existence of all scene node maps because the scene may not have a
     // node map created for it
     if (this.dualOutputService.views.hasSceneNodeMaps) {
-      console.log('horizontal folder id ', this.folderId);
-      console.log('horizontal folder index ', folder.getNodeIndex());
-
-      // 1 get node index
-      // 2 calculate vertical node index
-      //   - get number of horizontal nodes
-      //   - vertical index = folder index + number of horizontal nodes
-      // 3 create vertical folder at calculated index
-
       // create vertical folder
       const verticalFolder = scene.createFolder(this.name, {
         id: this.verticalFolderId,
@@ -128,6 +119,12 @@ export class CreateFolderCommand extends Command {
 
       this.moveToFolderSubCommand.execute();
     }
+
+    console.log('created horizontal folder ', this.folderId);
+    if (this.verticalFolderId) {
+      console.log('created vertical folder ', this.verticalFolderId);
+      console.log('scene node map ', this.dualOutputService.views.sceneNodeMaps[this.sceneId]);
+    }
   }
 
   rollback() {
@@ -148,7 +145,7 @@ export class CreateFolderCommand extends Command {
 
       scene.removeFolder(this.verticalFolderId);
       console.log('removed vertical folder ', this.verticalFolderId);
-      this.sceneCollectionsService.removeNodeMapEntry(this.folderId, this.sceneId);
+      this.sceneCollectionsService.removeNodeMapEntry(this.sceneId, this.folderId);
     }
 
     // remove horizontal folder
