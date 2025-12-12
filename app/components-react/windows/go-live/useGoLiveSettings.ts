@@ -67,9 +67,7 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
 
   getCanDualStream(platform: TPlatform) {
     if (platform === 'twitch') {
-      return Services.IncrementalRolloutService.views.featureIsEnabled(
-        EAvailableFeatures.twitchDualStream,
-      );
+      return Services.TwitchService.views.hasTwitchDualStreamAccess;
     }
     return Services.StreamingService.views.supports('dualStream', [platform]);
   }
