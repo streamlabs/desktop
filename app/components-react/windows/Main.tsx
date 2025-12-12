@@ -7,9 +7,7 @@ import { $t } from 'services/i18n';
 import { useDebounce, useVuex } from 'components-react/hooks';
 import * as appPages from 'components-react/pages';
 import TitleBar from 'components-react/shared/TitleBar';
-import ModalWrapper from 'components-react/shared/modals/ModalWrapper';
 import { Services } from 'components-react/service-provider';
-import { VisionService, WindowsService as WindowsServiceClass } from 'app-services';
 import SideNav from 'components-react/sidebar/SideNav';
 import LiveDock from 'components-react/root/LiveDock';
 import StudioFooter from 'components-react/root/StudioFooter';
@@ -17,12 +15,12 @@ import Loader from 'components-react/pages/Loader';
 import ResizeBar from 'components-react/root/ResizeBar';
 import antdThemes from 'styles/antd/index';
 import { getPlatformService } from 'services/platforms';
-import { IModalOptions } from 'services/windows';
 import { EStreamingState } from 'services/streaming';
 import { TApplicationTheme } from 'services/customization';
 import styles from './Main.m.less';
 import { StatefulService } from 'services';
 import { useRealmObject } from 'components-react/hooks/realm';
+import Onboarding from 'components-react/modals/onboarding/Onboarding';
 
 // TODO: this is technically deprecated as we have moved customizationService to Realm
 // but some users may still have this value
@@ -54,10 +52,10 @@ export default function Main() {
     ScenesService,
     CustomizationService,
     VisionService,
+    OnboardingV2Service,
   } = Services;
   const mainWindowEl = useRef<HTMLDivElement | null>(null);
   const mainMiddleEl = useRef<HTMLDivElement | null>(null);
-  const modalOptions = useRef<IModalOptions>({ renderFn: null });
   const windowResizeTimeout = useRef<number | null>(null);
 
   const [bulkLoadFinished, setBulkLoadFinished] = useState(false);
@@ -77,6 +75,7 @@ export default function Main() {
   const realmTheme = useRealmObject(Services.CustomizationService.state).theme;
   const leftDock = useRealmObject(Services.CustomizationService.state).leftDock;
   const isVisionRunning = useRealmObject(VisionService.state).isRunning;
+  const showOnboarding = useRealmObject(OnboardingV2Service.state).showOnboarding;
 
   // Provides smooth chat resizing instead of writing to realm every tick while resizing
   const [dockWidth, setDockWidth] = useState(realmDockWidth);
@@ -121,9 +120,12 @@ export default function Main() {
     return !bulkLoadFinished ? loadedTheme() || 'night-theme' : realmTheme;
   }, [bulkLoadFinished, realmTheme]);
 
-  const updateStyleBlockers = useCallback((val: boolean) => {
-    WindowsService.actions.updateStyleBlockers('main', val);
-  }, []);
+  const updateStyleBlockers = useCallback(
+    (val: boolean) => {
+      WindowsService.actions.updateStyleBlockers('main', val);
+    },
+    [showOnboarding],
+  );
 
   const onDropHandler = useCallback(
     async (event: React.DragEvent) => {
@@ -173,10 +175,10 @@ export default function Main() {
   }, []);
 
   const setCollapsed = useCallback((livedockCollapsed: boolean) => {
-    WindowsService.actions.updateStyleBlockers('main', true);
+    updateStyleBlockers(true);
     CustomizationService.actions.setSettings({ livedockCollapsed });
     setTimeout(() => {
-      WindowsService.actions.updateStyleBlockers('main', false);
+      () => updateStyleBlockers(false);
     }, 300);
   }, []);
 
@@ -213,13 +215,9 @@ export default function Main() {
 
   useEffect(() => {
     window.addEventListener('resize', windowSizeHandler);
-    const modalChangedSub = WindowsServiceClass.modalChanged.subscribe(newOptions => {
-      modalOptions.current = { ...modalOptions.current, ...newOptions };
-    });
 
     return () => {
       window.removeEventListener('resize', windowSizeHandler);
-      modalChangedSub.unsubscribe();
       // Sync persisted live dock width in the db
       CustomizationService.actions.setSettings({ livedockSize: dockWidth });
     };
@@ -318,7 +316,6 @@ export default function Main() {
           />
         )}
       </div>
-      <ModalWrapper renderFn={modalOptions.current.renderFn} />
       <Animation transitionName="ant-fade">
         {(!uiReady || showLoadingSpinner) && (
           <div className={cx(styles.mainLoading, { [styles.initialLoading]: !uiReady })}>
@@ -326,6 +323,7 @@ export default function Main() {
           </div>
         )}
       </Animation>
+      <Onboarding />
     </div>
   );
 }
