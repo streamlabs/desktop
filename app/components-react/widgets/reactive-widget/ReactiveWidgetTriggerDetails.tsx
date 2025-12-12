@@ -1,4 +1,8 @@
 import React, { useMemo, useCallback } from 'react';
+import cloneDeep from 'lodash/cloneDeep';
+import set from 'lodash/set';
+import get from 'lodash/get';
+
 import {
   MediaUrlInput,
   NumberInput,
@@ -15,34 +19,34 @@ import { Collapse } from 'antd';
 import { $t } from 'services/i18n';
 import { LayoutInput } from '../common/LayoutInput';
 import css from './ReactiveWidgetTriggerDetails.m.less';
+import { ReactiveTrigger } from './ReactiveWidget.helpers';
 
 interface ReactiveWidgetTriggerDetailsProps {
-  trigger: any;
+  trigger: ReactiveTrigger;
   staticConfig?: any;
-  onUpdate?: (updatedTrigger: any) => void;
+  onUpdate?: (updatedTrigger: ReactiveTrigger) => void;
 }
 
-function flattenAnimationOptions(options: any): any[] {
-  if (!options) return [];
-  const flattened: any[] = [];
-  const optionsArray = Array.isArray(options) ? options : [options];
-  optionsArray.forEach(opt => {
-    if (!opt) return;
-    if (opt.list && Array.isArray(opt.list)) {
-      opt.list.forEach((subOpt: any) => {
-        flattened.push({
-          label: subOpt.value,
-          value: subOpt.key,
-        });
-      });
-    } else {
-      flattened.push({
-        label: opt.value,
-        value: opt.key,
-      });
-    }
-  });
-  return flattened;
+/**
+ * Custom hook to handle deep object binding.
+ * Creates a { value, onChange } object for a given path (e.g., 'media_settings.sound_volume').
+ */
+function useTriggerBinding(
+  trigger: ReactiveTrigger,
+  onUpdate: ((t: ReactiveTrigger) => void) | undefined
+) {
+  return useCallback(
+    (path: string, defaultValue?: any) => ({
+      value: get(trigger, path) ?? defaultValue ?? '',
+      onChange: (nextVal: any) => {
+        if (!onUpdate) return;
+        const updated = cloneDeep(trigger);
+        set(updated, path, nextVal);
+        onUpdate(updated);
+      },
+    }),
+    [trigger, onUpdate]
+  );
 }
 
 export function ReactiveWidgetTriggerDetails({
@@ -50,70 +54,28 @@ export function ReactiveWidgetTriggerDetails({
   onUpdate,
   staticConfig,
 }: ReactiveWidgetTriggerDetailsProps) {
+
+  const bind = useTriggerBinding(trigger, onUpdate);
   const isStreakTrigger = trigger?.type === 'streak';
+  const streakOptions = useMemo(() => {
+    const periods = staticConfig?.data?.options?.streak_time_periods ?? {};
+    return Object.entries(periods).map(([key, value]) => ({
+      label: String(value),
+      value: key,
+    }));
+  }, [staticConfig]);
 
-  const streakOptions = useMemo(
-    () =>
-      Object.entries(
-        staticConfig?.data?.options?.streak_time_periods ?? {},
-      ).map(([key, value]) => ({ label: String(value), value: key })),
-    [staticConfig?.data?.options?.streak_time_periods],
-  );
-
-  const animationsConfig = (staticConfig?.data?.animations ?? {}) as {
-    show_animations?: any;
-    hide_animations?: any;
-    text_animations?: any;
-  };
-
-  const showAnimationOptions = useMemo(
-    () => flattenAnimationOptions(animationsConfig.show_animations),
-    [animationsConfig.show_animations],
-  );
-
-  const hideAnimationOptions = useMemo(
-    () => flattenAnimationOptions(animationsConfig.hide_animations),
-    [animationsConfig.hide_animations],
-  );
-
-  const textAnimationOptions = useMemo(
-    () => flattenAnimationOptions(animationsConfig.text_animations),
-    [animationsConfig.text_animations],
-  );
+  const { showAnimationOptions, hideAnimationOptions, textAnimationOptions } = useMemo(() => {
+    const anims = staticConfig?.data?.animations ?? {};
+    return {
+      showAnimationOptions: flattenAnimationOptions(anims.show_animations),
+      hideAnimationOptions: flattenAnimationOptions(anims.hide_animations),
+      textAnimationOptions: flattenAnimationOptions(anims.text_animations),
+    };
+  }, [staticConfig]);
 
   const messageTemplateTooltip = $t(
     'When a trigger fires, this will be the format of the message. Available tokens: number',
-  );
-
-  const bind = useCallback(
-    (path: string) => {
-      const segments = path.split('.');
-
-      let value: any = trigger;
-      for (const seg of segments) {
-        if (value == null) break;
-        value = value[seg];
-      }
-
-      return {
-        value,
-        onChange: (nextVal: any) => {
-          if (!onUpdate) return;
-          const updated: any = { ...trigger };
-          let cursor: any = updated;
-
-          for (let i = 0; i < segments.length - 1; i++) {
-            const key = segments[i];
-            cursor[key] = { ...(cursor[key] || {}) };
-            cursor = cursor[key];
-          }
-
-          cursor[segments[segments.length - 1]] = nextVal;
-          onUpdate(updated);
-        },
-      };
-    },
-    [trigger, onUpdate],
   );
 
   return (
@@ -123,8 +85,7 @@ export function ReactiveWidgetTriggerDetails({
         <div className={trigger.enabled ? css.switchEnabled : css.switchDisabled}>
           <SwitchInput
             name={`toggle-${trigger.id}`}
-            value={trigger.enabled}
-            onChange={value => onUpdate && onUpdate({ ...trigger, enabled: value as boolean })}
+            {...bind('enabled')}
             label={trigger.enabled ? $t('Enabled') : $t('Disabled')}
             labelAlign="left"
             layout="horizontal"
@@ -220,4 +181,18 @@ export function ReactiveWidgetTriggerDetails({
       </Collapse>
     </div>
   );
+}
+
+function flattenAnimationOptions(options: any): { label: string; value: string }[] {
+  if (!options) return [];
+  const arr = Array.isArray(options) ? options : [options];
+
+  return arr.flatMap((opt: any) => {
+    if (!opt) return [];
+
+    if (opt.list && Array.isArray(opt.list)) {
+      return opt.list.map((sub: any) => ({ label: sub.value, value: sub.key }));
+    }
+    return [{ label: opt.value, value: opt.key }];
+  });
 }

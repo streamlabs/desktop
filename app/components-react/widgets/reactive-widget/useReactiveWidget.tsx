@@ -1,132 +1,19 @@
 import { IWidgetCommonState, useWidget, WidgetModule } from '../common/useWidget';
 import cloneDeep from 'lodash/cloneDeep';
+import {
+  ReactiveWidgetSettings,
+  ReactiveTrigger,
+  IReactiveWidgetTrigger,
+  IReactiveGroupOption,
+  TabKind,
+  ActiveTabContext,
+  ReactiveTabUtils,
+  defaultTriggerSettings,
+} from './ReactiveWidget.helpers';
 
 interface IReactiveWidgetState extends IWidgetCommonState {
-  data: { settings: ReactiveWidgetSettings }; // TODO$chris: define settings structure
+  data: { settings: ReactiveWidgetSettings };
 }
-
-type ReactiveLayout = 'above' | 'banner' | 'side';
-type ReactiveStreakPeriod = 'session' | 'today' | 'round';
-
-interface IReactiveGroupOption {
-  id: string;
-  name: string;
-  enabled: boolean;
-}
-
-interface ReactiveMediaSettings {
-  image_href: string;
-  sound_href: string;
-  sound_volume: number;
-  show_animation: string;
-  hide_animation: string;
-}
-
-interface ReactiveTextSettings {
-  message_template: string;
-  font: string;
-  font_size: number;
-  font_color: string;
-  font_color2: string;
-  font_weight: number;
-  text_delay_ms: number;
-  text_animation: string;
-}
-
-interface ReactiveTtsSettings {
-  enabled: boolean;
-  language: string;
-  security: number;
-  repetition_block_length: number;
-  volume: number;
-  include_message_template: boolean;
-}
-
-interface ReactiveBaseTrigger {
-  id: string | null; // server assigns ID, null for new triggers
-  enabled: boolean;
-  name: string;
-  game_event: string;
-  layout: ReactiveLayout;
-  alert_duration_ms: number;
-  media_settings: ReactiveMediaSettings;
-  text_settings: ReactiveTextSettings;
-  tts_settings: ReactiveTtsSettings;
-}
-
-interface ReactiveStreakTrigger extends ReactiveBaseTrigger {
-  type: 'streak';
-  streak_period: ReactiveStreakPeriod;
-  amount_minimum: number;
-  amount_maximum?: number | null;
-}
-
-interface ReactiveAchievementTrigger extends ReactiveBaseTrigger {
-  type: 'achievement';
-  streak_period?: undefined; // TODO$chris: update these
-  amount_minimum?: undefined;
-  amount_maximum?: undefined;
-}
-
-type ReactiveTrigger = ReactiveStreakTrigger | ReactiveAchievementTrigger;
-export type ReactiveWidgetTabKind =
-  | 'add-trigger'
-  | 'general'
-  | 'game-manage-trigger'
-  | 'trigger-detail';
-interface ReactiveTriggerGroup {
-  enabled: boolean;
-  triggers: ReactiveTrigger[]; // may be empty
-}
-
-export type ReactiveGamesMap = Record<string, ReactiveTriggerGroup | null | undefined>;
-
-export type IReactiveWidgetTrigger = ReactiveStreakTrigger | ReactiveAchievementTrigger;
-export interface ReactiveWidgetSettings {
-  background_color: string;
-  interrupt_mode: boolean;
-  is_muted: boolean;
-  global: ReactiveTriggerGroup;
-  games: ReactiveGamesMap;
-}
-
-export const defaultTriggerSettings: ReactiveTrigger = {
-  media_settings: {
-    image_href: 'https://cdn.streamlabs.com/library/giflibrary/jumpy-kevin.webm',
-    sound_href: 'https://cdn.streamlabs.com/static/sounds/bits.ogg',
-    sound_volume: 50,
-    show_animation: 'fadeIn',
-    hide_animation: 'fadeOut',
-  },
-  text_settings: {
-    font: 'Open Sans',
-    font_color: '#FFFFFF',
-    font_color2: '#80F5D2',
-    font_size: 24,
-    font_weight: 400,
-    message_template: '{number} kill streak!',
-    text_animation: 'bounce',
-    text_delay_ms: 0,
-  },
-  tts_settings: {
-    enabled: false,
-    include_message_template: true,
-    language: 'Salli',
-    repetition_block_length: 1,
-    security: 0,
-    volume: 50,
-  },
-  alert_duration_ms: 5000,
-  amount_maximum: null,
-  amount_minimum: 1,
-  enabled: true,
-  game_event: 'kill',
-  id: null, // server assigns ID
-  name: '',
-  layout: 'above',
-  type: 'streak',
-  streak_period: 'session',
-};
 
 /**
  * Reactive widget module for Game Pulse triggers.
@@ -217,16 +104,22 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     };
   }
 
-  get tabKind(): ReactiveWidgetTabKind {
-    const selectedTab = this.state?.selectedTab;
+  get activeTabContext(): ActiveTabContext {
+    const tab = this.state?.selectedTab;
+    const context = ReactiveTabUtils.parse(tab);
 
-    if (!selectedTab) return 'game-manage-trigger'; // default fallback
-    if (selectedTab === 'add-trigger') return 'add-trigger';
-    if (selectedTab === 'general') return 'general';
-    if (selectedTab.endsWith('-manage-trigger')) return 'game-manage-trigger';
-    if (selectedTab.includes('-trigger-')) return 'trigger-detail';
+    if (context.kind === 'general' && typeof tab !== 'string') {
+      const firstGameId = Object.keys(this.data?.settings?.games || {})[0];
+      return firstGameId
+        ? { kind: TabKind.GameManage, gameId: firstGameId }
+        : { kind: TabKind.General };
+    }
 
-    return 'game-manage-trigger';
+    return context;
+  }
+
+  get tabKind(): TabKind {
+    return this.activeTabContext.kind;
   }
 
   protected patchBeforeSend(settings: any) {

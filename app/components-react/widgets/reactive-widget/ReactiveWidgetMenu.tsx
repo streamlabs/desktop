@@ -4,13 +4,10 @@ import { PlusOutlined, SettingOutlined, CaretRightOutlined } from '@ant-design/i
 import { CheckboxInput } from 'components-react/shared/inputs';
 import { $t } from 'services/i18n';
 import css from './ReactiveWidgetMenu.m.less';
+import { ReactiveTabUtils } from './ReactiveWidget.helpers';
 
 function GameIcon() {
-  return (
-    <i
-      className={`icon-console ant-menu-item-icon ${css.gameIcon}`}
-    />
-  );
+  return <i className={`icon-console ant-menu-item-icon ${css.gameIcon}`} />;
 }
 
 export function ReactiveWidgetMenu(props: {
@@ -35,15 +32,14 @@ export function ReactiveWidgetMenu(props: {
   const [openKeys, setOpenKeys] = useState<string[]>(['global']);
 
   useEffect(() => {
-    if (typeof activeKey !== 'string') return;
+    const context = ReactiveTabUtils.parse(activeKey);
 
-    // we only care about trigger keys like `${groupKey}-trigger-${id}`
-    if (!activeKey.includes('-trigger-')) return;
-
-    const [groupKey] = activeKey.split('-trigger-');
-    if (!groupKey) return;
-
-    setOpenKeys(prev => (prev.includes(groupKey) ? prev : [...prev, groupKey]));
+    if (context.gameId) {
+      setOpenKeys(prev => {
+        if (prev.includes(context.gameId!)) return prev;
+        return [...prev, context.gameId!];
+      });
+    }
   }, [activeKey]);
 
   return (
@@ -53,17 +49,17 @@ export function ReactiveWidgetMenu(props: {
       selectedKeys={[activeKey]}
       openKeys={openKeys}
       onOpenChange={keys => setOpenKeys(keys as string[])}
-      onClick={onChange}
+      onClick={({ key }) => onChange(key)}
     >
       <Menu.Item
-        key="add-trigger"
+        key={ReactiveTabUtils.ID_ADD_TRIGGER}
         icon={<PlusOutlined />}
         className={css.menuItem}
       >
         {$t('Add a new trigger')}
       </Menu.Item>
 
-      <Menu.Item key="general" className={css.menuItem}>
+      <Menu.Item key={ReactiveTabUtils.ID_GENERAL} className={css.menuItem}>
         {$t('Game Settings')}
       </Menu.Item>
 
@@ -75,7 +71,7 @@ export function ReactiveWidgetMenu(props: {
         >
           {(group as any).triggers?.map((trigger: any, index: number) => (
             <Menu.Item
-              key={`${groupKey}-trigger-${trigger.id}`}
+              key={ReactiveTabUtils.generateTriggerId(groupKey, trigger.id)}
               className={css.menuItem}
             >
               <div className={css.triggerRow}>
@@ -85,11 +81,9 @@ export function ReactiveWidgetMenu(props: {
                   className={css.triggerCheckbox}
                 />
                 <div className={css.triggerMain}>
-                  <div className={css.triggerTitle}>
-                    {trigger.name || `Trigger ${index + 1}`}
-                  </div>
+                  <div className={css.triggerTitle}>{trigger.name || `Trigger ${index + 1}`}</div>
                   <div className={css.triggerActions}>
-                    <Tooltip title={$t('Delete Trigger')} placement="left" mouseLeaveDelay={0}>
+                    <Tooltip title={$t('Delete Trigger')} placement="top" mouseLeaveDelay={0}>
                       <Button
                         onClick={e => {
                           e.stopPropagation();
@@ -101,7 +95,7 @@ export function ReactiveWidgetMenu(props: {
                         <i className={`icon-trash ${css.deleteIcon}`} />
                       </Button>
                     </Tooltip>
-                    <Tooltip title={$t('Play Alert')} placement="left" mouseLeaveDelay={0}>
+                    <Tooltip title={$t('Play Alert')} placement="top" mouseLeaveDelay={0}>
                       <Button
                         onClick={e => {
                           e.stopPropagation();
@@ -116,7 +110,10 @@ export function ReactiveWidgetMenu(props: {
               </div>
             </Menu.Item>
           ))}
-          <Menu.Item key={`${groupKey}-manage-trigger`} icon={<SettingOutlined />}>
+          <Menu.Item
+            key={ReactiveTabUtils.generateManageGameId(groupKey)}
+            icon={<SettingOutlined />}
+          >
             {$t('Manage Triggers')}
           </Menu.Item>
         </Menu.SubMenu>
