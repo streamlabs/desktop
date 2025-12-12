@@ -89,6 +89,53 @@ export interface IReactiveGroupOption {
   enabled: boolean;
 }
 
+export interface ReactiveWidgetOptions {
+  games: Record<string, ReactiveGameMeta>;
+  game_events: Record<string, ReactiveEventMeta>;
+  global_events: Record<string, string>;
+  streak_time_periods: Record<string, string>;
+  available_game_events: Record<string, string[]>;
+}
+
+export interface AnimationListItem {
+  key: string;
+  value: string;
+}
+
+export interface AnimationGroup {
+  group: string;
+  list: AnimationListItem[];
+}
+
+export interface ReactiveWidgetAnimations {
+  text_animations: AnimationGroup; // JSON shows this is an object
+  show_animations: AnimationGroup[]; // JSON shows this is an array
+  hide_animations: AnimationGroup[]; // JSON shows this is an array
+}
+
+export interface ReactiveStaticData {
+  widget_type: string;
+  title: string;
+  options: ReactiveWidgetOptions;
+  animations: ReactiveWidgetAnimations;
+}
+
+export interface ReactiveStaticConfig {
+  success: boolean;
+  message: string;
+  data: ReactiveStaticData;
+}
+
+export interface ReactiveGameMeta {
+  title: string;
+  camel: string;
+}
+
+export interface ReactiveEventMeta {
+  title: string;
+  trigger_type: ReactiveTriggerType;
+}
+
 export interface SelectOption {
   label: string;
   value: string;

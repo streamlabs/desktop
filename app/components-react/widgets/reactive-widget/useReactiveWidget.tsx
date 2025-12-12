@@ -10,10 +10,15 @@ import {
   generateTriggerSettings,
   ReactiveTriggerType,
   ReactiveGameSettingsUI,
+  ReactiveStaticConfig,
+  ReactiveGameMeta,
+  ReactiveEventMeta,
+  ReactiveTriggerGroup,
 } from './ReactiveWidget.helpers';
 
 interface IReactiveWidgetState extends IWidgetCommonState {
   data: { settings: ReactiveWidgetSettings };
+  staticConfig: ReactiveStaticConfig;
 }
 
 /**
@@ -29,8 +34,12 @@ interface IReactiveWidgetState extends IWidgetCommonState {
  * - manages trigger CRUD and enable/disable state
  */
 export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
-  get hostsService() {
+  private get hostsService() {
     return this.widgetsService.hostsService;
+  }
+
+  get staticConfig(): ReactiveStaticConfig | undefined {
+    return (this.state?.staticConfig as unknown) as ReactiveStaticConfig | undefined;
   }
 
   get data(): IReactiveWidgetState['data'] {
@@ -44,7 +53,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     const games = Object.entries(s.games ?? {}).reduce((acc, [key, value]) => {
       if (value) acc[key] = value;
       return acc;
-    }, {} as Record<string, any>);
+    }, {} as Record<string, ReactiveTriggerGroup>);
     return { global, ...games };
   }
 
@@ -58,34 +67,32 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     }));
   }
 
-  get games(): { [key: string]: { title: string; camel: string } } {
-    return (this.state?.staticConfig as any)?.data?.options?.games || {};
+  get games(): Record<string, ReactiveGameMeta> {
+    return this.staticConfig?.data?.options?.games || {};
   }
 
-  get availableGameEvents(): { [key: string]: string[] } {
-    return (this.state?.staticConfig as any)?.data?.options?.available_game_events || {};
+  get availableGameEvents(): Record<string, string[]> {
+    return this.staticConfig?.data?.options?.available_game_events || {};
   }
 
-  get gameEvents(): { [key: string]: string[] } {
-    return (this.state?.staticConfig as any)?.data?.options?.game_events || {};
+  get gameEvents(): Record<string, ReactiveEventMeta> {
+    return this.staticConfig?.data?.options?.game_events || {};
   }
 
   get globalEvents(): { [key: string]: string } {
-    return (this.state?.staticConfig as any)?.data?.options?.global_events || {};
-  }
-
-  get streakTimePeriods(): { [key: string]: string } {
-    return (this.state?.staticConfig as any)?.data?.options?.streak_time_periods || {};
+    return this.staticConfig?.data?.options?.global_events || {};
   }
 
   get groupOptions(): IReactiveGroupOption[] {
     const gamesMeta = this.games;
 
-    const games = Object.entries(this.settings.games || {}).map(([gameId, gameData]: [string, any]) => ({
-      id: gameId,
-      name: gamesMeta?.[gameId]?.title || gameId,
-      enabled: !!gameData?.enabled,
-    }));
+    const games = Object.entries(this.settings.games || {}).map(
+      ([gameId, gameData]: [string, ReactiveTriggerGroup]) => ({
+        id: gameId,
+        name: gamesMeta?.[gameId]?.title || gameId,
+        enabled: !!gameData?.enabled,
+      }),
+    );
 
     const global: IReactiveGroupOption = {
       id: 'global',
@@ -96,7 +103,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     return [global, ...games];
   }
 
-  get groupMeta() {
+  get groupMeta(): Record<string, ReactiveGameMeta> {
     return {
       global: { title: 'Global', camel: 'global' },
       ...this.games,
@@ -168,10 +175,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
    * @param groupId The owning group (`'global'` or a game id).
    * @param updater A function that receives a trigger and returns the updated trigger.
    */
-  private updateTriggers(
-    groupId: string,
-    updater: (trigger: ReactiveTrigger) => ReactiveTrigger,
-  ) {
+  private updateTriggers(groupId: string, updater: (trigger: ReactiveTrigger) => ReactiveTrigger) {
     const isGlobal = groupId === 'global';
 
     const groupSettings = isGlobal
@@ -216,7 +220,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
    * @param triggerId  The trigger ULID within that group.
    * @param forceUpdate Callback to re-render the consuming component once updated.
    */
-  createTriggerBinding(groupId: string, triggerId: string, forceUpdate: () => unknown) {
+  public createTriggerBinding(groupId: string, triggerId: string, forceUpdate: () => unknown) {
     const module = this;
 
     return {
@@ -232,7 +236,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
             ? (settings.global = settings.global || defaultGroup)
             : (settings.games[groupId] = settings.games?.[groupId] || defaultGroup);
 
-        group.triggers = (group.triggers || []).map((t: any) =>
+        group.triggers = (group.triggers || []).map((t: ReactiveTrigger) =>
           t.id === updated.id ? updated : t,
         );
 
@@ -244,21 +248,21 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
   }
 
   /** Enable a single trigger by ID within the given group. */
-  enableTrigger(groupId: string, triggerId: string) {
+  public enableTrigger(groupId: string, triggerId: string) {
     this.updateTriggers(groupId, trigger =>
       trigger.id === triggerId ? { ...trigger, enabled: true } : trigger,
     );
   }
 
   /** Disable a single trigger by ID within the given group. */
-  disableTrigger(groupId: string, triggerId: string) {
+  public disableTrigger(groupId: string, triggerId: string) {
     this.updateTriggers(groupId, trigger =>
       trigger.id === triggerId ? { ...trigger, enabled: false } : trigger,
     );
   }
 
   /**Enable every trigger in the specified group. */
-  enableAllTriggers(groupId: string) {
+  public enableAllTriggers(groupId: string) {
     this.updateTriggers(groupId, trigger => ({
       ...trigger,
       enabled: true,
@@ -266,7 +270,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
   }
 
   /** Disable every trigger in the specified group. */
-  disableAllTriggers(groupId: string) {
+  public disableAllTriggers(groupId: string) {
     this.updateTriggers(groupId, trigger => ({
       ...trigger,
       enabled: false,
@@ -284,7 +288,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
    * @param triggerId ID of the trigger to update.
    * @param enabled   Optional explicit enabled state. When omitted, the state is flipped.
    */
-  toggleTrigger(groupId: string, triggerId: string, enabled?: boolean) {
+  public toggleTrigger(groupId: string, triggerId: string, enabled?: boolean) {
     this.updateTriggers(groupId, trigger => {
       if (trigger.id !== triggerId) return trigger;
       return {
@@ -308,17 +312,17 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
    * @param groupId The group to update (`'global'` or a game id).
    * @param enabled Whether the group should be enabled (true) or disabled (false).
    */
-  setGroupEnabled(groupId: string, enabled: boolean) {
-    const newSettings: any = { ...this.settings };
+  public setGroupEnabled(groupId: string, enabled: boolean) {
+    const newSettings: ReactiveWidgetSettings = cloneDeep(this.settings) as ReactiveWidgetSettings;
 
     if (groupId === 'global') {
       newSettings.global = {
-        ...(newSettings.global || {}),
+        ...(newSettings.global || { triggers: [] }),
         enabled,
       };
     } else {
       const games = newSettings.games || {};
-      const group = games[groupId] || {};
+      const group = games[groupId] || { triggers: [] };
       newSettings.games = {
         ...games,
         [groupId]: {
@@ -332,18 +336,19 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
   }
 
   /** Enable all trigger groups at once. */
-  enableAllGroups() {
+  public enableAllGroups() {
     const games = this.settings.games || {};
-    const newGames: any = {};
+    const newGames: Record<string, ReactiveTriggerGroup> = {};
 
     Object.keys(games).forEach(gameId => {
       newGames[gameId] = {
         ...(games[gameId] || {}),
+        triggers: games[gameId]?.triggers || [],
         enabled: true,
       };
     });
 
-    const newSettings: any = {
+    const newSettings: ReactiveWidgetSettings = {
       ...this.settings,
       global: {
         ...(this.settings.global || {}),
@@ -356,18 +361,19 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
   }
 
   /** Disable all trigger groups at once. */
-  disableAllGroups() {
+  public disableAllGroups() {
     const games = this.settings.games || {};
-    const newGames: any = {};
+    const newGames: Record<string, ReactiveTriggerGroup> = {};
 
     Object.keys(games).forEach(gameId => {
       newGames[gameId] = {
         ...(games[gameId] || {}),
+        triggers: games[gameId]?.triggers || [],
         enabled: false,
       };
     });
 
-    const newSettings: any = {
+    const newSettings: ReactiveWidgetSettings = {
       ...this.settings,
       global: {
         ...(this.settings.global || {}),
@@ -379,7 +385,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     this.updateSettings(newSettings);
   }
 
-  async deleteTrigger(triggerId: string) {
+  public async deleteTrigger(triggerId: string) {
     const url = `https://${this.hostsService.streamlabs}/api/v5/widgets/desktop/game-pulse/trigger?ulid=${triggerId}`;
     const res = await this.widgetsService.request({
       url,
@@ -390,14 +396,14 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     }
 
     const newSettings = cloneDeep(this.settings) as ReactiveWidgetSettings;
-    
+
     // remove the trigger from whichever group it belongs to
     const groups = ['global', ...Object.keys(newSettings.games || {})];
     for (const groupId of groups) {
       const group = groupId === 'global' ? newSettings.global : newSettings.games?.[groupId];
       if (!group || !group.triggers) continue;
 
-      const triggerIndex = group.triggers.findIndex((t) => t.id === triggerId);
+      const triggerIndex = group.triggers.findIndex(t => t.id === triggerId);
       if (triggerIndex !== -1) {
         group.triggers.splice(triggerIndex, 1);
         break;
@@ -436,7 +442,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
    * @param name        Display name for the trigger (already made unique per game by the form).
    * @param triggerType The trigger type (e.g. `'streak'`, `'achievement'`, `'level'`).
    */
-  async createTrigger({
+  public async createTrigger({
     eventType,
     game,
     name,
@@ -448,7 +454,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     triggerType: ReactiveTriggerType;
   }) {
     const baseSettings = generateTriggerSettings(triggerType);
-    const newTrigger: ReactiveTrigger = {
+    const newTrigger = {
       ...baseSettings,
       name,
       game_event: eventType,
@@ -460,7 +466,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
         ...baseSettings.text_settings,
         message_template: this.generateDefaultMessageTemplate(triggerType, eventType),
       },
-    };
+    } as ReactiveTrigger;
 
     const newSettings = cloneDeep(this.settings) as ReactiveWidgetSettings;
 
@@ -492,9 +498,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
         : this.data.settings.games?.[game]?.triggers.slice(-1)[0].id;
 
     if (triggerId) {
-      this.state.setSelectedTab(
-        ReactiveTabUtils.generateTriggerId(game, triggerId),
-      );
+      this.state.setSelectedTab(ReactiveTabUtils.generateTriggerId(game, triggerId));
     }
   }
 
