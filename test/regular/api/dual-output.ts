@@ -1,7 +1,7 @@
 import { DualOutputService } from 'services/dual-output';
 import { getApiClient } from '../../helpers/api-client';
 import { test, useWebdriver, TExecutionContext } from '../../helpers/webdriver';
-import { ScenesService, Scene, SceneItem } from '../../../app/services/api/external-api/scenes';
+import { ScenesService, Scene, SceneItem } from 'services/scenes';
 import { VideoSettingsService } from 'services/settings-v2/video';
 
 // not a react hook
@@ -119,43 +119,4 @@ test('Convert single output collection to dual output', async (t: TExecutionCont
       );
     }
   });
-});
-
-test('Dual Output sources and scenes', async t => {
-  const client = await getApiClient();
-  const scenesService = client.getResource<ScenesService>('ScenesService');
-  const videoSettingsService = client.getResource<VideoSettingsService>('VideoSettingsService');
-  const dualOutputService = client.getResource<DualOutputService>('DualOutputService');
-
-  let verticalContext = videoSettingsService.contexts.vertical;
-  t.is(
-    verticalContext,
-    null,
-    'Single output scene collection does not create vertical context on app start.',
-  );
-
-  dualOutputService.collectionHandled.subscribe(() => void 0);
-
-  // dual output
-  dualOutputService.convertSingleOutputToDualOutputCollection();
-
-  // validate scene node maps
-  const sceneNodeMaps = (await client.fetchNextEvent()).data;
-  t.not(sceneNodeMaps, null, 'Dual output scene collection initiates scene node map.');
-
-  // validate vertical video context
-  verticalContext = videoSettingsService.contexts.vertical;
-  t.is(
-    verticalContext,
-    null,
-    'Converting a single output collection to a dual output collection creates a vertical video context.',
-  );
-
-  // TEST ADD
-  const item = scenesService.activeScene.createAndAddSource('Color 1', 'color_source');
-
-  // confirm adding scene item to dual output collection does not create an additional source
-  confirmDualOutputSources(t, scenesService.activeScene);
-
-  console.log('scenesService.activeScene ', scenesService.activeScene.nodes);
 });

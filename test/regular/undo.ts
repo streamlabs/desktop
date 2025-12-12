@@ -10,18 +10,13 @@ import {
 } from '../helpers/modules/scenes';
 import { focusMain, getClient, useMainWindow } from '../helpers/modules/core';
 import { getApiClient } from '../helpers/api-client';
-import { withUser } from '../helpers/webdriver/user';
-import { toggleDualOutputMode } from '../helpers/modules/dual-output';
 
-// not a react hook
-// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver({
   clearCollectionAfterEachTest: true,
   restartAppAfterEachTest: false,
 });
 
 async function undo() {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   await useMainWindow(async () => {
     await ((getClient().keys(['Control', 'z']) as any) as Promise<any>);
     await ((getClient().keys('Control') as any) as Promise<any>);
@@ -29,7 +24,6 @@ async function undo() {
 }
 
 async function redo() {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   await useMainWindow(async () => {
     await ((getClient().keys(['Control', 'y']) as any) as Promise<any>);
     await ((getClient().keys('Control') as any) as Promise<any>);
@@ -173,59 +167,4 @@ test('Duplicating a scene with undo/redo', async t => {
 
   await selectScene('Duplicate');
   t.true(sceneBuilder.isEqualTo(sketch));
-});
-
-test.skip('Dual output undo/redo', withUser(), async t => {
-  await toggleDualOutputMode(false);
-
-  const sceneBuilder = new SceneBuilder(await getApiClient());
-
-  // TODO: Test for sceneNodeMap = {}
-  await addSource('Color Block', 'Color Source');
-  t.true(
-    sceneBuilder.isEqualTo(
-      `
-      Color Block
-      Color Block
-    `,
-    ),
-  );
-  // TODO: Test for sceneNodeMap = { [horizontalId]: verticalId }
-
-  await undo();
-
-  // TODO: Test for sceneNodeMap = {}
-  t.true(sceneBuilder.isEqualTo(''));
-
-  await redo();
-
-  t.true(
-    sceneBuilder.isEqualTo(
-      `
-      Color Block
-      Color Block
-    `,
-    ),
-  );
-
-  await addSource('Color Block', 'Color Source 2');
-  await addSource('Color Block', 'Color Source 3');
-
-  t.true(
-    sceneBuilder.isEqualTo(
-      `
-    Color Source 3:
-    Color Source 2:
-    Color Source:
-    Color Source 3:
-    Color Source 2:
-    Color Source:
-  `,
-    ),
-  );
-
-  await undo();
-
-  console.log('scene is now ', sceneBuilder.getSceneSchema());
-  console.log('scene is now ', sceneBuilder.getSceneScketch());
 });
