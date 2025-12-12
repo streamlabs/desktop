@@ -632,20 +632,6 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
           // if the scene is still a single output scene, convert it to dual output
           this.createPartnerNodes(scene.id);
         }
-
-        // @@@ TODO: remove debug logs
-        const nodes = scene.getModel().nodes.map(node => ({
-          display: node.display,
-          name: node.hasOwnProperty('name') ? (node as any).name : undefined,
-          id: node.id,
-          sceneNodeType: node.sceneNodeType,
-          parentId: node.parentId,
-          sourceId: node.hasOwnProperty('sourceId') ? (node as any).sourceId : undefined,
-        }));
-        console.log(
-          'scene, ' + scene.name + ' after validating scene ' + nodes.length,
-          JSON.stringify(nodes, null, 2),
-        );
       });
     } catch (error: unknown) {
       console.error('Error validating dual output collection: ', error);

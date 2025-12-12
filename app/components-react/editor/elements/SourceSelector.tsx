@@ -224,10 +224,15 @@ class SourceSelectorController {
         const parent = this.selectionService.views.globalSelection.getClosestParent();
         if (parent) parentId = parent.id;
       }
+
+      const sceneId =
+        this.scenesService.views.activeScene.id ??
+        this.selectionService.views.globalSelection.sceneId;
+
       this.scenesService.actions.showNameFolder({
         itemsToGroup,
         parentId,
-        sceneId: this.scenesService.views.activeScene.id,
+        sceneId,
       });
     }
   }

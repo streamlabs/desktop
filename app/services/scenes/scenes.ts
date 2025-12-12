@@ -530,10 +530,11 @@ export class ScenesService extends StatefulService<IScenesState> {
       parentId?: string;
     } = {},
   ) {
+    const sceneId = options.sceneId || this.views.activeSceneId;
     this.windowsService.showWindow({
       componentName: 'NameFolder',
       title: options.renameId ? $t('Rename Folder') : $t('Name Folder'),
-      queryParams: options,
+      queryParams: { ...options, sceneId },
       size: {
         width: 400,
         height: 250,
