@@ -295,7 +295,7 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
   /**
    * Fetch settings from the server
    */
-  private async fetchData(): Promise<TWidgetState['data']> {
+  protected async fetchData(): Promise<TWidgetState['data']> {
     const widgetType = WidgetDefinitions[this.config.type].humanType;
 
     // load widget settings data into state

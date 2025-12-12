@@ -3,9 +3,10 @@ import { Button } from 'antd';
 import { $t } from 'services/i18n';
 import { SwitchInput } from 'components-react/shared/inputs';
 import css from './ReactiveWidgetGameSettings.m.less';
+import { IReactiveGroupOption } from './ReactiveWidget.helpers';
 
 interface ReactiveWidgetGameSettingsProps {
-  options: { id: string; name: string; enabled: boolean }[];
+  options: IReactiveGroupOption[];
   onChangeGroupEnabled: (gameId: string, enabled: boolean) => void;
   onEnableAll: () => void;
   onDisableAll: () => void;
@@ -19,12 +20,14 @@ export function ReactiveWidgetGameSettings({
   onEnableAll,
   onDisableAll,
 }: ReactiveWidgetGameSettingsProps) {
-  const computedTitle = title || $t('General Game Settings');
-  const allOptionsEnabled = options?.every(option => option.enabled);
-  const allOptionsDisabled = options?.every(option => !option.enabled);
   if (!options || options.length === 0) {
     return <div>{$t('No triggers available.')}</div>;
   }
+
+  const computedTitle = title || $t('General Game Settings');
+  const allOptionsEnabled = options.every(option => option.enabled);
+  const allOptionsDisabled = options.every(option => !option.enabled);
+  
   return (
     <div className={css.containerGameSettings}>
       <h3 className={css.title}>{computedTitle}</h3>
@@ -52,7 +55,7 @@ export function ReactiveWidgetGameSettings({
         </div>
       </div>
       <ul className={css.list}>
-        {options?.map(option => {
+        {options.map(option => {
           return (
             <li key={option.id} className={css.listRow}>
               <span

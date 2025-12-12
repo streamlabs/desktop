@@ -19,7 +19,7 @@ import { Collapse } from 'antd';
 import { $t } from 'services/i18n';
 import { LayoutInput } from '../common/LayoutInput';
 import css from './ReactiveWidgetTriggerDetails.m.less';
-import { ReactiveTrigger } from './ReactiveWidget.helpers';
+import { ReactiveTrigger, flattenAnimationOptions } from './ReactiveWidget.helpers';
 
 interface ReactiveWidgetTriggerDetailsProps {
   trigger: ReactiveTrigger;
@@ -135,7 +135,7 @@ export function ReactiveWidgetTriggerDetails({
       />
 
       <Collapse bordered={false}>
-        <Collapse.Panel header={$t('Font Settings')} key={1}>
+        <Collapse.Panel header={$t('Font Settings')} key='font-settings'>
           <FontFamilyInput label={$t('Font Family')} {...bind('text_settings.font')} />
           <SliderInput
             min={8}
@@ -151,7 +151,7 @@ export function ReactiveWidgetTriggerDetails({
       </Collapse>
 
       <Collapse bordered={false}>
-        <Collapse.Panel header={$t('Animation Settings')} key={2}>
+        <Collapse.Panel header={$t('Animation Settings')} key='animation-settings'>
           <div className={css.animationRow}>
             <span className={css.animationLabel}>{$t('Animation')}</span>
             <div className={css.selectInputGroup}>
@@ -181,18 +181,4 @@ export function ReactiveWidgetTriggerDetails({
       </Collapse>
     </div>
   );
-}
-
-function flattenAnimationOptions(options: any): { label: string; value: string }[] {
-  if (!options) return [];
-  const arr = Array.isArray(options) ? options : [options];
-
-  return arr.flatMap((opt: any) => {
-    if (!opt) return [];
-
-    if (opt.list && Array.isArray(opt.list)) {
-      return opt.list.map((sub: any) => ({ label: sub.value, value: sub.key }));
-    }
-    return [{ label: opt.value, value: opt.key }];
-  });
 }

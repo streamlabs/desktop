@@ -15,7 +15,7 @@ export function ReactiveWidgetMenu(props: {
   groupMeta: any;
   activeKey: string;
   onChange: (params: any) => void;
-  playAlert: (type: any) => void;
+  playAlert: (game: any, type: any) => void;
   toggleTrigger: (group: any, triggerId: string, enabled: boolean) => void;
   deleteTrigger: (triggerId: string) => void;
 }) {
@@ -99,7 +99,7 @@ export function ReactiveWidgetMenu(props: {
                       <Button
                         onClick={e => {
                           e.stopPropagation();
-                          playAlert(trigger);
+                          playAlert(groupKey, trigger);
                         }}
                         type="text"
                         icon={<CaretRightOutlined className={css.playIcon} />}

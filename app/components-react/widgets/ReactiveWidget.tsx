@@ -2,7 +2,7 @@ import React, { useMemo, useCallback } from 'react';
 import * as remote from '@electron/remote';
 import { WidgetLayout } from './common/WidgetLayout';
 import { useReactiveWidget } from './reactive-widget/useReactiveWidget';
-import { TabKind, ReactiveTabUtils } from './reactive-widget/ReactiveWidget.helpers';
+import { TabKind, ReactiveTabUtils, ReactiveTrigger, sanitizeTrigger } from './reactive-widget/ReactiveWidget.helpers';
 import { ReactiveWidgetMenu } from './reactive-widget/ReactiveWidgetMenu';
 import { ReactiveWidgetCreateTriggerForm } from './reactive-widget/ReactiveWidgetCreateTriggerForm';
 import { ReactiveWidgetGameSettings } from './reactive-widget/ReactiveWidgetGameSettings';
@@ -35,20 +35,24 @@ export function ReactiveWidget() {
 
   const showDisplay = tabKind !== TabKind.General && tabKind !== TabKind.GameManage;
 
-  function onPlayAlert(trigger: any) {
-    // if active tab is not the trigger detail, switch to it first
-    if (tabKind !== TabKind.TriggerDetail) {
-      const gameKey = trigger.game || 'global';
-      setSelectedTab(ReactiveTabUtils.generateTriggerId(gameKey, trigger.id));
+  function onPlayAlert(gameKey = 'global', trigger: ReactiveTrigger) {
+    if (!trigger.id) return;
+
+    const targetTab = ReactiveTabUtils.generateTriggerId(gameKey, trigger.id);
+
+    if (selectedTab !== targetTab) {
+      setSelectedTab(targetTab);
     }
-    playReactiveAlert(trigger);
+
+    const cleanTrigger = sanitizeTrigger(trigger);
+    playReactiveAlert(cleanTrigger);
   }
 
   function onDelete(triggerId: string) {
     remote.dialog
       .showMessageBox(remote.getCurrentWindow(), {
         title: 'Streamlabs Desktop',
-        message: $t('Are you sure you want to delete this trigger? This action cannot be undone.'),
+        message: $t('Are you sure you want to delete this trigger?'),
         buttons: [$t('Cancel'), $t('OK')],
       })
       .then(({ response }) => {

@@ -1,5 +1,8 @@
+import cloneDeep from 'lodash/cloneDeep';
+
 export type ReactiveLayout = 'above' | 'banner' | 'side';
 export type ReactiveStreakPeriod = 'session' | 'today' | 'round';
+export type ReactiveTriggerType = 'streak' | 'achievement' | 'level';
 
 export interface ReactiveMediaSettings {
   image_href: string;
@@ -50,21 +53,27 @@ export interface ReactiveStreakTrigger extends ReactiveBaseTrigger {
 
 export interface ReactiveAchievementTrigger extends ReactiveBaseTrigger {
   type: 'achievement';
-  streak_period?: undefined;
-  amount_minimum?: undefined;
-  amount_maximum?: undefined;
 }
 
-export type ReactiveTrigger = ReactiveStreakTrigger | ReactiveAchievementTrigger;
+export interface ReactiveLevelTrigger extends ReactiveBaseTrigger {
+  type: 'level';
+}
+
+export type ReactiveTrigger = 
+  | ReactiveStreakTrigger 
+  | ReactiveAchievementTrigger 
+  | ReactiveLevelTrigger;
 
 export interface ReactiveTriggerGroup {
   enabled: boolean;
   triggers: ReactiveTrigger[];
 }
 
-export type ReactiveGamesMap = Record<string, ReactiveTriggerGroup | null | undefined>;
+export interface ReactiveGameSettingsUI extends ReactiveTriggerGroup {
+  gameId: string;
+}
 
-export type IReactiveWidgetTrigger = ReactiveTrigger;
+export type ReactiveGamesMap = Record<string, ReactiveTriggerGroup | null | undefined>;
 
 export interface ReactiveWidgetSettings {
   background_color: string;
@@ -78,6 +87,32 @@ export interface IReactiveGroupOption {
   id: string;
   name: string;
   enabled: boolean;
+}
+
+export interface SelectOption {
+  label: string;
+  value: string;
+}
+
+export interface AnimationOptionConfig {
+  key: string;
+  value: string;
+  list?: AnimationOptionConfig[];
+}
+
+export function flattenAnimationOptions(
+  options: AnimationOptionConfig | AnimationOptionConfig[] | undefined | null
+): SelectOption[] {
+  if (!options) return [];
+  const arr = Array.isArray(options) ? options : [options];
+
+  return arr.flatMap((opt) => {
+    if (!opt) return [];
+    if (opt.list && Array.isArray(opt.list)) {
+      return opt.list.map((sub) => ({ label: sub.value, value: sub.key }));
+    }
+    return [{ label: opt.value, value: opt.key }];
+  });
 }
 
 // ============================================================================
@@ -117,8 +152,8 @@ export const ReactiveTabUtils = {
   parse: (tabId: string | undefined | null): ActiveTabContext => {
     if (!tabId || typeof tabId !== 'string') return { kind: TabKind.General };
 
-    if (tabId === ReactiveTabUtils.ID_ADD_TRIGGER) return { kind: TabKind.AddTrigger };
-    if (tabId === ReactiveTabUtils.ID_GENERAL) return { kind: TabKind.General };
+    if (tabId === TabKind.AddTrigger) return { kind: TabKind.AddTrigger };
+    if (tabId === TabKind.General) return { kind: TabKind.General };
 
     if (tabId.includes('-trigger-')) {
       const parts = tabId.split('-trigger-');
@@ -138,45 +173,67 @@ export const ReactiveTabUtils = {
   },
 };
 
-// ============================================================================
-// DEFAULT SETTINGS
-// ============================================================================
-
 /** default trigger settings, used as a template for new triggers */
-export const defaultTriggerSettings: ReactiveTrigger = {
-  media_settings: {
-    image_href: 'https://cdn.streamlabs.com/library/giflibrary/jumpy-kevin.webm',
-    sound_href: 'https://cdn.streamlabs.com/static/sounds/bits.ogg',
-    sound_volume: 50,
-    show_animation: 'fadeIn',
-    hide_animation: 'fadeOut',
-  },
-  text_settings: {
-    font: 'Open Sans',
-    font_color: '#FFFFFF',
-    font_color2: '#80F5D2',
-    font_size: 24,
-    font_weight: 400,
-    message_template: '{number} kill streak!',
-    text_animation: 'bounce',
-    text_delay_ms: 0,
-  },
-  tts_settings: {
-    enabled: false,
-    include_message_template: true,
-    language: 'Salli',
-    repetition_block_length: 1,
-    security: 0,
-    volume: 50,
-  },
-  alert_duration_ms: 5000,
-  amount_maximum: null,
-  amount_minimum: 1,
-  enabled: true,
-  game_event: 'kill',
-  id: null,
-  name: '',
-  layout: 'above',
-  type: 'streak',
-  streak_period: 'session',
-};
+export function generateTriggerSettings(type: ReactiveTriggerType): ReactiveTrigger {
+  const commonSettings = {
+    media_settings: {
+      image_href: 'https://cdn.streamlabs.com/library/giflibrary/jumpy-kevin.webm',
+      sound_href: 'https://cdn.streamlabs.com/static/sounds/bits.ogg',
+      sound_volume: 50,
+      show_animation: 'fadeIn',
+      hide_animation: 'fadeOut',
+    },
+    text_settings: {
+      font: 'Open Sans',
+      font_color: '#FFFFFF',
+      font_color2: '#80F5D2',
+      font_size: 24,
+      font_weight: 400,
+      message_template: '{number} kill streak!',
+      text_animation: 'bounce',
+      text_delay_ms: 0,
+    },
+    tts_settings: {
+      enabled: false,
+      include_message_template: true,
+      language: 'Salli',
+      repetition_block_length: 1,
+      security: 0,
+      volume: 50,
+    },
+    alert_duration_ms: 5000,
+    enabled: true,
+    game_event: 'kill',
+    id: null,
+    name: '',
+    layout: 'above' as const,
+  };
+
+  if (type === 'streak') {
+    return {
+      ...commonSettings,
+      type: 'streak',
+      amount_minimum: 1,
+      amount_maximum: null,
+      streak_period: 'session',
+    };
+  }
+
+  return {
+    type,
+    ...commonSettings,
+  } as ReactiveTrigger;
+}
+
+export function sanitizeTrigger(raw: any): ReactiveTrigger {
+  const trigger = cloneDeep(raw);
+
+  if (trigger.type !== 'streak') {
+    // the server might send them anyway, so we yeet them just in case.
+    delete trigger.streak_period;
+    delete trigger.amount_minimum;
+    delete trigger.amount_maximum;
+  }
+
+  return trigger as ReactiveTrigger;
+}
