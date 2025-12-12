@@ -251,7 +251,7 @@ class ScenesViews extends ViewHandler<IScenesState> {
     return null;
   }
 
-  getNodeVisibility(sceneNodeId: string, sceneId?: string) {
+  getNodeVisibility(sceneNodeId: string, sceneId: string) {
     const nodeModel: TSceneNode | null = this.getSceneNode(sceneNodeId);
     if (!nodeModel) return false;
 
@@ -259,14 +259,10 @@ class ScenesViews extends ViewHandler<IScenesState> {
       return nodeModel?.visible;
     }
 
-    if (sceneId) {
-      // to determine if a folder is visible, check the visibility of the child nodes
-      const scene = this.getScene(sceneId);
-      if (!scene) return false;
-      return scene.getItemsForNode(sceneNodeId).some(i => i.visible);
-    }
-
-    return false;
+    // to determine if a folder is visible, check the visibility of the child nodes
+    const scene = this.getScene(sceneId);
+    if (!scene) return false;
+    return scene.getItemsForNode(sceneNodeId).some(i => i.visible);
   }
 }
 

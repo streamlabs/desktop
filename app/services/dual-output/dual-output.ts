@@ -10,8 +10,6 @@ import { verticalDisplayData } from '../settings-v2/default-settings-data';
 import { ScenesService, SceneItem, TSceneNode } from 'services/scenes';
 import { TDisplayType, VideoSettingsService } from 'services/settings-v2/video';
 import { TPlatform } from 'services/platforms';
-import { EPlaceType } from 'services/editor-commands/commands/reorder-nodes';
-import { EditorCommandsService } from 'services/editor-commands';
 import { Subject } from 'rxjs';
 import { IVideoInfo } from 'obs-studio-node';
 import { ICustomStreamDestination, StreamSettingsService } from 'services/settings/streaming';
@@ -286,7 +284,6 @@ class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
 export class DualOutputService extends PersistentStatefulService<IDualOutputServiceState> {
   @Inject() private scenesService: ScenesService;
   @Inject() private videoSettingsService: VideoSettingsService;
-  @Inject() private editorCommandsService: EditorCommandsService;
   @Inject() private sceneCollectionsService: SceneCollectionsService;
   @Inject() private streamSettingsService: StreamSettingsService;
   @Inject() private userService: UserService;

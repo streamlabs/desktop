@@ -316,10 +316,9 @@ export class SceneCollectionsStateService extends StatefulService<ISceneCollecti
     if (!coll.sceneNodeMaps) coll.sceneNodeMaps = {};
     if (!coll.sceneNodeMaps[sceneId]) coll.sceneNodeMaps[sceneId] = {};
 
-    coll.sceneNodeMaps[sceneId] = {
-      ...coll.sceneNodeMaps[sceneId],
-      [horizontalNodeId]: verticalNodeId,
-    };
+    const updatedNodeMap = { ...coll.sceneNodeMaps[sceneId], [horizontalNodeId]: verticalNodeId };
+
+    coll.sceneNodeMaps[sceneId] = updatedNodeMap;
   }
 
   @mutation()

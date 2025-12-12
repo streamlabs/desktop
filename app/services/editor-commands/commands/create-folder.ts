@@ -1,11 +1,12 @@
 import { Command } from './command';
 import { Selection } from 'services/selection';
 import { Inject } from 'services/core/injector';
-import { ScenesService, TSceneNode } from 'services/scenes';
+import { ScenesService } from 'services/scenes';
 import { ReorderNodesCommand, EPlaceType } from './reorder-nodes';
 import { $t } from 'services/i18n';
 import { DualOutputService } from 'services/dual-output';
 import { SceneCollectionsService } from 'services/scene-collections';
+import partition from 'lodash/partition';
 
 /**
  * Creates a folder
@@ -72,84 +73,62 @@ export class CreateFolderCommand extends Command {
       const numHorizontalNodes = scene
         .getModel()
         .nodes.filter(node => node.display === 'horizontal').length;
-      const selection = scene.getSelection(this.verticalFolderId);
-      selection.freeze();
-      selection.placeAfter(scene.getNodesIds()[numHorizontalNodes]);
-
-      // @@@ TODO: remove debug logs
-      console.log(
-        'scene model after reordering vertical folder ',
-        JSON.stringify(
-          scene.getModel().nodes.map(node => ({
-            display: node.display,
-            name: node.hasOwnProperty('name') ? (node as any).name : undefined,
-            id: node.id,
-            sceneNodeType: node.sceneNodeType,
-            parentId: node.parentId,
-            sourceId: node.hasOwnProperty('sourceId') ? (node as any).sourceId : undefined,
-          })),
-          null,
-          2,
-        ),
-      );
+      const verticalFolderSelection = scene.getSelection(this.verticalFolderId);
+      verticalFolderSelection.freeze();
+      verticalFolderSelection.placeAfter(scene.getNodesIds()[numHorizontalNodes]);
     }
 
     if (this.items) {
       // if the scene has dual output nodes filter the nodes by display
       // and move them into their respective folders
       if (this.verticalFolderId) {
-        const verticalSelection = scene.getSelection(
-          this.items.getNodes().filter(n => n.display === 'vertical'),
-        );
+        const selection = partition(this.items.getNodes(), n => n.display === 'vertical');
+        const verticalSelection = scene.getSelection(selection[0]);
+        const horizontalSelection = scene.getSelection(selection[1]);
         verticalSelection.freeze();
+        horizontalSelection.freeze();
 
+        // move vertical nodes
         this.dualOutputMoveToFolderSubCommand = new ReorderNodesCommand(
           verticalSelection,
           this.verticalFolderId,
           EPlaceType.Inside,
         );
         this.dualOutputMoveToFolderSubCommand.execute();
+
+        // move horizontal nodes
+        this.moveToFolderSubCommand = new ReorderNodesCommand(
+          horizontalSelection,
+          this.folderId,
+          EPlaceType.Inside,
+        );
+        this.moveToFolderSubCommand.execute();
+      } else {
+        this.moveToFolderSubCommand = new ReorderNodesCommand(
+          this.items,
+          folder.id,
+          EPlaceType.Inside,
+        );
+
+        this.moveToFolderSubCommand.execute();
       }
-
-      this.moveToFolderSubCommand = new ReorderNodesCommand(
-        this.items,
-        folder.id,
-        EPlaceType.Inside,
-      );
-
-      this.moveToFolderSubCommand.execute();
-    }
-
-    console.log('created horizontal folder ', this.folderId);
-    if (this.verticalFolderId) {
-      console.log('created vertical folder ', this.verticalFolderId);
-      console.log('scene node map ', this.dualOutputService.views.sceneNodeMaps[this.sceneId]);
     }
   }
 
   rollback() {
     // rollback command
     if (this.moveToFolderSubCommand) this.moveToFolderSubCommand.rollback();
-    console.log('rolled back horizontal move to folder command ', this.moveToFolderSubCommand);
-
     const scene = this.scenesService.views.getScene(this.sceneId);
 
     // remove vertical folder node and node map entry
     if (this.dualOutputService.views.hasNodeMap(this.sceneId)) {
-      console.log(
-        'rolled back vertical move to folder command ',
-        this.dualOutputMoveToFolderSubCommand,
-      );
-
       if (this.dualOutputMoveToFolderSubCommand) this.dualOutputMoveToFolderSubCommand.rollback();
 
       scene.removeFolder(this.verticalFolderId);
-      console.log('removed vertical folder ', this.verticalFolderId);
       this.sceneCollectionsService.removeNodeMapEntry(this.sceneId, this.folderId);
     }
 
     // remove horizontal folder
     scene.removeFolder(this.folderId);
-    console.log('removed horizontal folder ', this.folderId);
   }
 }
