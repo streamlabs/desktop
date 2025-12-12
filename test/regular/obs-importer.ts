@@ -51,12 +51,6 @@ test('OBS Importer', async t => {
   await click('button=Continue');
   await click('button=Skip');
 
-  /*
-  await click('a=Login');
-  await isDisplayed('button=Log in with Twitch');
-  await click('button=Skip');
-  */
-
   await logIn(t, 'twitch', { prime: false }, false, true);
   await sleep(1000);
 
@@ -93,6 +87,11 @@ test('OBS Importer', async t => {
   // check that widgets have been migrated
   await focusMain();
   await switchCollection('Widgets');
+
+  // Without this sleep widgetsService might have empty widgetSources
+  // TODO: Certainly, there is a race condition that should be addressed.
+  await sleep(1000);
+
   const api = await getApiClient();
   const widgetsService = api.getResource<WidgetsService>('WidgetsService');
 
