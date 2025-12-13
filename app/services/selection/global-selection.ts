@@ -55,8 +55,8 @@ export class GlobalSelection extends Selection {
 
     const name = lastSelected.name;
     const selectionLength = this.dualOutputService.views.isDualOutputCollection
-      ? this.getIds().length / 2
-      : this.getIds().length;
+      ? this.getIds().length
+      : this.getIds().length / 2;
     const message =
       selectionLength > 1
         ? $t('Are you sure you want to remove these %{count} items?', { count: selectionLength })
