@@ -87,7 +87,7 @@ export class TwitterPlatformService
 
     if (settings && !settings.is_live) {
       console.error('Stream Shift Error: X is not live');
-      this.postError('Stream Shift Error: X is not live');
+      this.postNotification('Stream Shift Error: X is not live');
       return;
     }
 
@@ -179,9 +179,12 @@ export class TwitterPlatformService
     try {
       return await platformAuthorizedRequest<T>('twitter', reqInfo);
     } catch (e: unknown) {
-      let details = (e as any).message;
+      console.error(`Failed ${this.displayName} API Request:`, reqInfo);
+
+      const error = e as any;
+      let details = error.message;
       if (!details) details = 'connection failed';
-      throwStreamError('PLATFORM_REQUEST_FAILED', { ...(e as any), platform: 'twitter' }, details);
+      throwStreamError('PLATFORM_REQUEST_FAILED', { ...error, platform: 'twitter' }, details);
     }
   }
 

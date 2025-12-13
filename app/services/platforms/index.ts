@@ -213,7 +213,7 @@ export interface IPlatformService {
 
   setupStreamShiftStream?: (options: IGoLiveSettings) => Promise<void>;
 
-  postError?: (message: string) => void;
+  postNotification?: (message: string) => void;
 
   fetchNewToken: () => Promise<void>;
 
