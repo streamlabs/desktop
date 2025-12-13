@@ -26,7 +26,6 @@ export class WidgetNode extends Node<ISchema, IContext> {
       settings,
       type,
     };
-    console.log('Saved widget', this.data);
   }
 
   async load(context: IContext) {
@@ -39,6 +38,5 @@ export class WidgetNode extends Node<ISchema, IContext> {
     // @ts-ignore
     delete this.data.settings['url'];
     context.sceneItem.getSource().updateSettings(this.data.settings);
-    console.log('Loaded widget', this.data);
   }
 }

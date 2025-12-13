@@ -44,7 +44,6 @@ export class AlertBoxService extends WidgetSettingsService<IAlertBoxData> {
   }
 
   getApiSettings() {
-    console.log("Getting API settings for AlertBoxService");
     return {
       type: WidgetType.AlertBox,
       url: WidgetDefinitions[WidgetType.AlertBox].url(this.getHost(), this.getWidgetToken()),

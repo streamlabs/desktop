@@ -19,7 +19,6 @@ export class WidgetSource implements IWidgetSource {
   constructor(sourceId: string) {
     this.state = this.widgetsService.state.widgetSources[sourceId];
     Utils.applyProxy(this, this.state);
-    console.log('WidgetSource created', this.type, this.state);
   }
 
   private isDestroyed() {
@@ -44,7 +43,11 @@ export class WidgetSource implements IWidgetSource {
    */
   createPreviewSource(): Source {
     if (this.previewSourceId) {
-      throw new Error('Only one preview source is allowed for widget');
+      // TODO$chris: question. why not just call destroyPreviewSource instead?
+      // throwing an error here breaks the child window if you reload on dev
+      // throw new Error('Only one preview source is allowed for widget');
+      console.warn('Only one preview source is allowed for widget');
+      this.destroyPreviewSource();
     }
 
     // TODO: index
@@ -69,10 +72,6 @@ export class WidgetSource implements IWidgetSource {
 
     this.widgetsService.syncPreviewSource(this.sourceId, this.previewSourceId);
 
-    console.log('Created preview source for widget', {
-      previewSourceSettings,
-      source,
-    })
     return previewSource;
   }
 

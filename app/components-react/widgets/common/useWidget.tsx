@@ -364,7 +364,6 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
         url: this.config.settingsSaveUrl,
       });
     } catch (e: unknown) {
-      console.log(e);
       await alertAsync({
         title: $t('Something went wrong while applying settings'),
         style: { marginTop: '300px' },
@@ -375,7 +374,7 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
   }
 
   /**
-a   * override this method to patch data after fetching
+   * override this method to patch data after fetching
    *
    * @remarks If you override this method, and the widget is using the new widget
    * API (at `/api/v5/widgets/desktop/{type}`) you need to either replicate this
