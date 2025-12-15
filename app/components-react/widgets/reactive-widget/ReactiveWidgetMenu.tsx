@@ -4,19 +4,19 @@ import { PlusOutlined, SettingOutlined, CaretRightOutlined } from '@ant-design/i
 import { CheckboxInput } from 'components-react/shared/inputs';
 import { $t } from 'services/i18n';
 import css from './ReactiveWidgetMenu.m.less';
-import { ReactiveTabUtils } from './ReactiveWidget.helpers';
+import { ReactiveTabUtils, ReactiveTriggerGroup, ReactiveTrigger } from './ReactiveWidget.helpers';
 
 function GameIcon() {
   return <i className={`icon-console ant-menu-item-icon ${css.gameIcon}`} />;
 }
 
 export function ReactiveWidgetMenu(props: {
-  menuItems: any;
-  groupMeta: any;
+  menuItems: Record<string, ReactiveTriggerGroup>;
+  groupMeta: Record<string, { title: string }>;
   activeKey: string;
-  onChange: (params: any) => void;
-  playAlert: (game: any, type: any) => void;
-  toggleTrigger: (group: any, triggerId: string, enabled: boolean) => void;
+  onChange: (params: string) => void;
+  playAlert: (game: string, type: ReactiveTrigger) => void;
+  toggleTrigger: (group: string, triggerId: string, enabled: boolean) => void;
   deleteTrigger: (triggerId: string) => void;
 }) {
   const {
@@ -31,13 +31,23 @@ export function ReactiveWidgetMenu(props: {
 
   const [openKeys, setOpenKeys] = useState<string[]>(['global']);
 
-  useEffect(() => {
-    const context = ReactiveTabUtils.parse(activeKey);
+  function onDelete(event: React.MouseEvent, triggerId: string) {
+    event.stopPropagation();
+    deleteTrigger(triggerId);
+  }
 
-    if (context.gameId) {
+  function onPlayAlert(event: React.MouseEvent, gameKey: string, trigger: ReactiveTrigger) {
+    event.stopPropagation();
+    playAlert(gameKey, trigger);
+  }
+
+  useEffect(() => {
+    const { gameId } = ReactiveTabUtils.parse(activeKey);
+
+    if (gameId) {
       setOpenKeys(prev => {
-        if (prev.includes(context.gameId!)) return prev;
-        return [...prev, context.gameId!];
+        if (prev.includes(gameId!)) return prev;
+        return [...prev, gameId!];
       });
     }
   }, [activeKey]);
@@ -69,26 +79,25 @@ export function ReactiveWidgetMenu(props: {
           icon={<GameIcon />}
           title={groupMeta[groupKey]?.title || groupKey}
         >
-          {(group as any).triggers?.map((trigger: any, index: number) => (
+          {(group as ReactiveTriggerGroup).triggers?.map((trigger: ReactiveTrigger, index: number) => (
             <Menu.Item
               key={ReactiveTabUtils.generateTriggerId(groupKey, trigger.id)}
               className={css.menuItem}
             >
               <div className={css.triggerRow}>
-                <CheckboxInput
-                  value={trigger.enabled}
-                  onChange={enabled => toggleTrigger(groupKey, trigger.id, enabled)}
-                  className={css.triggerCheckbox}
-                />
+                <div onClick={e => e.stopPropagation()}>
+                  <CheckboxInput
+                    value={trigger.enabled}
+                    onChange={enabled => toggleTrigger(groupKey, trigger.id, enabled)}
+                    className={css.triggerCheckbox}
+                  />
+                </div>
                 <div className={css.triggerMain}>
                   <div className={css.triggerTitle}>{trigger.name || `Trigger ${index + 1}`}</div>
                   <div className={css.triggerActions}>
                     <Tooltip title={$t('Delete Trigger')} placement="top" mouseLeaveDelay={0}>
                       <Button
-                        onClick={e => {
-                          e.stopPropagation();
-                          deleteTrigger(trigger.id);
-                        }}
+                        onClick={e => onDelete(e, trigger.id)}
                         type="text"
                         className={css.deleteButton}
                       >
@@ -97,10 +106,7 @@ export function ReactiveWidgetMenu(props: {
                     </Tooltip>
                     <Tooltip title={$t('Play Alert')} placement="top" mouseLeaveDelay={0}>
                       <Button
-                        onClick={e => {
-                          e.stopPropagation();
-                          playAlert(groupKey, trigger);
-                        }}
+                        onClick={e => onPlayAlert(e, groupKey, trigger)}
                         type="text"
                         icon={<CaretRightOutlined className={css.playIcon} />}
                       />

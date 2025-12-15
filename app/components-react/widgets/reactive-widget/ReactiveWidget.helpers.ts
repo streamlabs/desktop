@@ -1,4 +1,5 @@
 import cloneDeep from 'lodash/cloneDeep';
+import uuid from 'uuid';
 
 export type ReactiveLayout = 'above' | 'banner' | 'side';
 export type ReactiveStreakPeriod = 'session' | 'today' | 'round';
@@ -33,7 +34,7 @@ export interface ReactiveTtsSettings {
 }
 
 export interface ReactiveBaseTrigger {
-  id: string | null;
+  id: string;
   enabled: boolean;
   name: string;
   game_event: string;
@@ -195,7 +196,7 @@ export const ReactiveTabUtils = {
   ID_ADD_TRIGGER: TabKind.AddTrigger,
   ID_GENERAL: TabKind.General,
   generateManageGameId: (gameId: string) => `${gameId}-manage-trigger`,
-  generateTriggerId: (gameId: string, triggerId: string) => `${gameId}-trigger-${triggerId}`,
+  generateTriggerId: (gameId: string, triggerId: string | null) => `${gameId}-trigger-${triggerId}`,
   parse: (tabId: string | undefined | null): ActiveTabContext => {
     if (!tabId || typeof tabId !== 'string') return { kind: TabKind.General };
 
@@ -251,11 +252,10 @@ export function generateTriggerSettings(type: ReactiveTriggerType): ReactiveTrig
     alert_duration_ms: 5000,
     enabled: true,
     game_event: 'kill',
-    id: null,
+    id: uuid(),
     name: '',
     layout: 'above' as const,
   };
-
   if (type === 'streak') {
     return {
       ...commonSettings,

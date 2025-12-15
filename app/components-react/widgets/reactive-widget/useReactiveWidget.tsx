@@ -46,7 +46,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     return this.widgetData;
   }
 
-  get triggerGroups() {
+  get triggerGroups(): Record<string, ReactiveTriggerGroup> {
     const s = this.settings as ReactiveWidgetSettings;
     if (!s) return {};
     const global = s.global;
@@ -288,7 +288,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
    * @param triggerId ID of the trigger to update.
    * @param enabled   Optional explicit enabled state. When omitted, the state is flipped.
    */
-  public toggleTrigger(groupId: string, triggerId: string, enabled?: boolean) {
+  public toggleTrigger(groupId: string, triggerId: string, enabled?: boolean): void {
     this.updateTriggers(groupId, trigger => {
       if (trigger.id !== triggerId) return trigger;
       return {
