@@ -53,7 +53,7 @@ export default function ReactiveDataEditorWindow() {
     <ModalLayout bodyStyle={{ padding: '0px' }} hideFooter={true}>
       <ReactiveDataEditor
         schema={schemaFlat}
-        state={stateFlat as Partial<Record<string, number>>}
+        state={stateFlat}
         onSave={handleSaveChanges}
         onCancel={handleCancel}
         filteredStateKeys={filteredStateKeys}

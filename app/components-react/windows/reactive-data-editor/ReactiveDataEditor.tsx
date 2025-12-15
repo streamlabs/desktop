@@ -1,46 +1,41 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { TSchemaFlat, TSchemaTreeLeaf, TStateFlat, TStateTreeLeaf } from 'services/reactive-data';
 
-type LeafInfo = {
-  name: string;
-};
+type SchemaKeys = keyof TSchemaFlat & string;
 
-type FlatSchema = Record<string, LeafInfo>;
-
-type SchemaKeys<T extends FlatSchema> = keyof T & string;
-
-type FlatState<T extends FlatSchema> = Record<SchemaKeys<T>, number>;
-
-type ResolvedEntry<T extends FlatSchema> = {
-  key: SchemaKeys<T>;
-  info: LeafInfo;
+type ResolvedEntry = {
+  key: SchemaKeys;
+  info: TSchemaTreeLeaf;
 };
 
 const MIN_VALUE = 0;
 const MAX_VALUE = 999999999;
 
-const resolveStateKeys = <T extends FlatSchema>(
-  stateKeys: (keyof T)[] | undefined,
-  schemaEntries: T,
-): ResolvedEntry<T>[] => {
-  const keysToProcess = stateKeys ?? (Object.keys(schemaEntries) as (keyof T)[]);
+const resolveStateKeys = (
+  stateKeys: SchemaKeys[] | undefined,
+  schemaEntries: TSchemaFlat,
+): ResolvedEntry[] => {
+  const keysToProcess = stateKeys ?? (Object.keys(schemaEntries) as SchemaKeys[]);
+
+  console.log({ keysToProcess, schemaEntries });
 
   const seen = new Set<string>();
-  return keysToProcess.reduce<ResolvedEntry<T>[]>((acc, key) => {
+  return keysToProcess.reduce<ResolvedEntry[]>((acc, key) => {
     const keyStr = String(key);
     if (seen.has(keyStr)) return acc;
     const info = schemaEntries[key];
     if (!info) return acc;
     seen.add(keyStr);
-    acc.push({ key: keyStr as SchemaKeys<T>, info });
+    acc.push({ key: keyStr as SchemaKeys, info });
     return acc;
   }, []);
 };
 
-const buildInitialValues = <T extends FlatSchema>(
-  entries: ResolvedEntry<T>[],
-  state: Partial<Record<string, number>>,
-): Partial<FlatState<T>> => {
-  const values: Partial<FlatState<T>> = {};
+const buildInitialValues = (
+  entries: ResolvedEntry[],
+  state: Partial<TStateFlat>,
+): Partial<TStateFlat> => {
+  const values: Partial<TStateFlat> = {};
   entries.forEach(({ key }) => {
     if (state[key] !== undefined) {
       console.log({ state: JSON.stringify(state).slice(0, 30) + '...' });
@@ -52,9 +47,7 @@ const buildInitialValues = <T extends FlatSchema>(
   return values;
 };
 
-const buildInitialDirty = <T extends FlatSchema>(
-  entries: ResolvedEntry<T>[],
-): Record<string, boolean> => {
+const buildInitialDirty = (entries: ResolvedEntry[]): Record<string, boolean> => {
   const record: Record<string, boolean> = {};
   entries.forEach(({ key }) => {
     record[key] = false;
@@ -62,7 +55,10 @@ const buildInitialDirty = <T extends FlatSchema>(
   return record;
 };
 
-const valueChanged = (prev: number | undefined, next: number | undefined): boolean => {
+const valueChanged = (
+  prev: TStateTreeLeaf | undefined,
+  next: TStateTreeLeaf | undefined,
+): boolean => {
   if (next === undefined) {
     return false;
   }
@@ -88,31 +84,31 @@ const colors = {
   textWhite20: 'rgba(255, 255, 255, 0.2)',
 };
 
-type ReactiveStateEditorProps<T extends FlatSchema> = {
-  filteredStateKeys?: (keyof T)[];
-  schema: T;
-  state: Partial<Record<string, number>>;
-  onSave?: (changes: Partial<Record<string, number>>) => void;
+type ReactiveStateEditorProps = {
+  filteredStateKeys?: SchemaKeys[];
+  schema: TSchemaFlat;
+  state: Partial<TStateFlat>;
+  onSave?: (changes: Partial<TStateFlat>) => void;
   onCancel?: () => void;
 };
 
-export default function ReactiveStateEditor<T extends FlatSchema>({
+export default function ReactiveStateEditor({
   filteredStateKeys,
   schema,
   state,
   onSave,
   onCancel,
-}: ReactiveStateEditorProps<T>) {
+}: ReactiveStateEditorProps) {
   const entries = useMemo(() => resolveStateKeys(filteredStateKeys, schema), [
     filteredStateKeys,
     schema,
   ]);
 
-  const [initialValues, setInitialValues] = useState<Partial<FlatState<T>>>(() =>
+  const [initialValues, setInitialValues] = useState<Partial<TStateFlat>>(() =>
     buildInitialValues(entries, state),
   );
 
-  const [values, setValues] = useState<Partial<FlatState<T>>>(() =>
+  const [values, setValues] = useState<Partial<TStateFlat>>(() =>
     buildInitialValues(entries, state),
   );
 
@@ -127,7 +123,7 @@ export default function ReactiveStateEditor<T extends FlatSchema>({
     setDirtyMap(buildInitialDirty(entries));
   }, [entries, state]);
 
-  const handleValueChange = (key: SchemaKeys<T>, rawValue: string) => {
+  const handleValueChange = (key: SchemaKeys, rawValue: string) => {
     const isEmpty = rawValue === '';
     const nextValue = isEmpty ? undefined : Number(rawValue);
 
@@ -165,7 +161,7 @@ export default function ReactiveStateEditor<T extends FlatSchema>({
   const handleSave = () => {
     if (!hasAnyDirty) return;
 
-    const changes: Partial<Record<string, number>> = {};
+    const changes: Partial<TStateFlat> = {};
     entries.forEach(({ key }) => {
       if (!dirtyMap[key]) return;
 
@@ -177,7 +173,7 @@ export default function ReactiveStateEditor<T extends FlatSchema>({
 
     onSave?.(changes);
 
-    const nextInitialValues = entries.reduce<Partial<FlatState<T>>>((acc, { key }) => {
+    const nextInitialValues = entries.reduce<Partial<TStateFlat>>((acc, { key }) => {
       const currentValue = values[key];
       const fallback = initialValues[key] ?? 0;
       acc[key] = currentValue ?? fallback;

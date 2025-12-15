@@ -15,15 +15,15 @@ import { USER_STATE_SCHEMA_URL } from 'services/sources/properties-managers/smar
 import { RealmObject } from 'services/realm';
 import { ObjectSchema } from 'realm';
 
-type TStateTreeLeaf = number | string;
+export type TStateTreeLeaf = number | string;
 type TStateTreeNode = { [key: string]: TStateTreeLeaf | TStateTreeNode };
 type TStateTree = { [key: string]: TStateTreeNode };
-type TStateFlat = { [x: `${string}.${string}`]: TStateTreeLeaf };
+export type TStateFlat = { [x: `${string}.${string}`]: TStateTreeLeaf };
 
-type TSchemaTreeLeaf = { name: string; aliases?: string[] };
+export type TSchemaTreeLeaf = { name: string; aliases?: string[] };
 type TSchemaTreeNode = { [key: string]: TSchemaTreeLeaf | TSchemaTreeNode };
 type TSchemaTree = { [key: string]: TSchemaTreeNode };
-type TSchemaFlat = { [x: `${string}.${string}`]: TSchemaTreeLeaf };
+export type TSchemaFlat = { [x: `${string}.${string}`]: TSchemaTreeLeaf };
 
 export class ReactiveDataState extends RealmObject {
   schemaFlatJson: string;
