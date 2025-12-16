@@ -1596,6 +1596,46 @@ export class StreamingService
     this.handleOBSOutputError(info);
   }
 
+  private async handleRetryStartStreaming(info: IOBSOutputSignalInfo) {
+    console.log('RETRYING START STREAMING WITH RECORDING/REPLAY BUFFER OFF');
+    // Toggle off recording and replay buffer when starting the stream
+    const recordWhenStreaming = this.streamSettingsService.settings.recordWhenStreaming;
+    if (recordWhenStreaming) {
+      this.settingsService.setSettingValue('General', 'RecordWhenStreaming', false);
+    }
+
+    if (recordWhenStreaming && this.state.recordingStatus === ERecordingState.Offline) {
+      this.toggleRecording();
+    }
+
+    const replayWhenStreaming = this.streamSettingsService.settings.replayBufferWhileStreaming;
+    if (replayWhenStreaming) {
+      this.settingsService.setSettingValue('General', 'ReplayBufferWhileStreaming', false);
+    }
+
+    // Notify the user that recording/replay buffer was toggled off
+    this.notificationsService.actions.push({
+      type: ENotificationType.WARNING,
+      message: $t(
+        'Recording and/or Replay Buffer failed to start and was automatically turned off when starting the stream.',
+      ),
+      lifeTime: 3000,
+    });
+
+    const errorText = $t(
+      'Recording and/or Replay Buffer failed to start and was automatically turned off when starting the stream.',
+    );
+
+    remote.dialog.showMessageBox(Utils.getMainWindow(), {
+      buttons: [$t('OK')],
+      title: $t('Streaming Started Without Recording/Replay Buffer'),
+      type: 'error',
+      message: errorText,
+    });
+
+    this.streamErrorCreated.next(errorText);
+  }
+
   private handleOBSOutputError(info: IOBSOutputSignalInfo) {
     if (!info.code) return;
     if ((info.code as EOutputCode) === EOutputCode.Success) return;
@@ -1669,6 +1709,15 @@ export class StreamingService
 
         showNativeErrorMessage = details !== '';
       } else {
+        // Only retry in dual output and if recording or replay buffer failes to start and the error is unknown
+        if (
+          this.views.isDualOutputMode &&
+          info.type !== EOBSOutputType.Streaming &&
+          info.code === -4
+        ) {
+          this.handleRetryStartStreaming(info);
+          return;
+        }
         if (
           !info.error ||
           (info.error && typeof info.error !== 'string') ||
