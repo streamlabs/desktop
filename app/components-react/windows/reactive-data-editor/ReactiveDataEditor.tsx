@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { TSchemaFlat, TSchemaTreeLeaf, TStateFlat, TStateTreeLeaf } from 'services/reactive-data';
+import { $t } from 'services/i18n';
+import { Button } from 'antd';
+import { NumberInput } from 'components-react/shared/inputs/NumberInput';
 
 type SchemaKeys = keyof TSchemaFlat & string;
 
@@ -67,21 +70,11 @@ const valueChanged = (
 };
 
 const colors = {
-  dark1: '#09161D',
-  dark2: '#17242D',
-  dark3: '#2B383F',
-  dark4: '#4F5E65',
-  streamlabs: '#80f5d2',
-  grey: '#91979A',
-  light4: '#BDC2C4',
-  borderWhite10: 'rgba(255, 255, 255, 0.1)',
-  borderWhite20: 'rgba(255, 255, 255, 0.2)',
-  borderWhite30: 'rgba(255, 255, 255, 0.3)',
-  borderWhite5: 'rgba(255, 255, 255, 0.05)',
-  textWhite90: 'rgba(255, 255, 255, 0.9)',
-  textWhite60: 'rgba(255, 255, 255, 0.6)',
-  textWhite40: 'rgba(255, 255, 255, 0.4)',
-  textWhite20: 'rgba(255, 255, 255, 0.2)',
+  background: 'var(--section)',
+  darkBackground: 'var(--background)',
+  streamlabs: 'var(--teal)',
+  border: 'var(--border)',
+  text: 'var(--paragraph)',
 };
 
 type ReactiveStateEditorProps = {
@@ -198,14 +191,14 @@ export default function ReactiveStateEditor({
         width: '100%',
         height: '100%',
         overflow: 'hidden',
-        border: `1px solid ${colors.borderWhite10}`,
-        backgroundColor: colors.dark1,
+        border: `1px solid ${colors.border}`,
+        backgroundColor: colors.background,
       }}
     >
       <div
         style={{
-          borderBottom: `1px solid ${colors.borderWhite10}`,
-          backgroundColor: 'rgba(23, 36, 45, 0.5)',
+          borderBottom: `1px solid ${colors.border}`,
+          backgroundColor: colors.darkBackground,
           padding: '16px 24px',
         }}
       >
@@ -215,19 +208,19 @@ export default function ReactiveStateEditor({
             fontSize: '1.125rem',
             fontWeight: 600,
             letterSpacing: '-0.01em',
-            color: '#ffffff',
+            color: 'var(--white)',
           }}
         >
-          Reactive State
+          {$t('Reactive Data')}
         </h2>
         <p
           style={{
             marginTop: '4px',
             fontSize: '0.875rem',
-            color: colors.textWhite60,
+            color: colors.text,
           }}
         >
-          Manage your reactive state values
+          {$t('Manage your reactive data values')}
         </p>
       </div>
 
@@ -256,7 +249,7 @@ export default function ReactiveStateEditor({
                   gap: '12px',
                   padding: '16px 24px',
                   transition: 'background-color 0.2s ease',
-                  borderTop: index === 0 ? 'none' : `1px solid ${colors.borderWhite5}`,
+                  borderTop: index === 0 ? 'none' : `1px solid ${colors.border}`,
                   alignItems: 'center',
                   justifyContent: 'space-between',
                 }}
@@ -274,7 +267,7 @@ export default function ReactiveStateEditor({
                     style={{
                       fontSize: '0.875rem',
                       fontWeight: 600,
-                      color: isDirty ? colors.streamlabs : colors.textWhite90,
+                      color: isDirty ? colors.streamlabs : colors.text,
                       transition: 'color 0.2s ease',
                     }}
                   >
@@ -283,7 +276,7 @@ export default function ReactiveStateEditor({
                   <div
                     style={{
                       fontSize: '0.75rem',
-                      color: colors.textWhite60,
+                      color: colors.text,
                     }}
                   >
                     {key.split('.')[1]}
@@ -295,33 +288,13 @@ export default function ReactiveStateEditor({
                     width: '200px',
                   }}
                 >
-                  <input
-                    id={key}
-                    type="number"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    min={MIN_VALUE}
-                    max={MAX_VALUE}
-                    value={values[key] ?? ''}
-                    onChange={event => handleValueChange(key, event.target.value)}
-                    style={{
-                      width: '100%',
-                      height: '36px',
-                      borderRadius: '6px',
-                      border: isDirty
-                        ? '1px solid rgba(128, 245, 210, 0.5)'
-                        : `1px solid ${colors.borderWhite10}`,
-                      backgroundColor: isDirty ? 'rgba(128, 245, 210, 0.05)' : 'transparent',
-                      padding: '4px 12px',
-                      fontSize: '0.875rem',
-                      color: '#ffffff',
-                      boxShadow: isDirty
-                        ? '0 0 0 1px rgba(128, 245, 210, 0.2)'
-                        : '0 1px 2px rgba(0, 0, 0, 0.3)',
-                      outline: 'none',
-                      transition:
-                        'border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease',
-                    }}
+                  <NumberInput
+                    value={Number(values[key]) ?? 0}
+                    onChange={v =>
+                      handleValueChange(key, Math.max(MIN_VALUE, Math.min(MAX_VALUE, v)).toString())
+                    }
+                    defaultValue={Number(values[key]) ?? 0}
+                    required
                   />
                 </div>
               </div>
@@ -332,8 +305,8 @@ export default function ReactiveStateEditor({
 
       <footer
         style={{
-          borderTop: `1px solid ${colors.borderWhite10}`,
-          backgroundColor: 'rgba(23, 36, 45, 0.5)',
+          borderTop: `1px solid ${colors.border}`,
+          backgroundColor: colors.darkBackground,
           padding: '16px 24px',
         }}
       >
@@ -345,30 +318,7 @@ export default function ReactiveStateEditor({
             gap: '12px',
           }}
         >
-          {hasAnyDirty && (
-            <button
-              type="button"
-              onClick={handleReset}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '36px',
-                padding: '0 16px',
-                borderRadius: '6px',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                border: 'none',
-                background: 'transparent',
-                color: '#ffffff',
-                transition:
-                  'background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease',
-              }}
-            >
-              Reset
-            </button>
-          )}
+          {hasAnyDirty && <Button onClick={handleReset}>{$t('Reset')}</Button>}
           <div
             style={{
               display: 'flex',
@@ -377,54 +327,10 @@ export default function ReactiveStateEditor({
               marginLeft: 'auto',
             }}
           >
-            <button
-              type="button"
-              onClick={handleCancel}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '36px',
-                padding: '0 16px',
-                borderRadius: '6px',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                border: `1px solid ${colors.borderWhite10}`,
-                background: 'transparent',
-                color: colors.textWhite90,
-                transition:
-                  'background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease',
-              }}
-            >
-              Close
-            </button>
-            <button
-              type="button"
-              disabled={!hasAnyDirty}
-              onClick={handleSave}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '36px',
-                padding: '0 16px',
-                borderRadius: '6px',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                cursor: hasAnyDirty ? 'pointer' : 'not-allowed',
-                border: 'none',
-                backgroundColor: hasAnyDirty ? '#ffffff' : 'rgba(255, 255, 255, 0.1)',
-                color: hasAnyDirty ? '#0f172a' : colors.textWhite40,
-                boxShadow: hasAnyDirty ? '0 4px 12px rgba(15, 23, 42, 0.25)' : 'none',
-                transition:
-                  'background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease',
-              }}
-            >
-              {countDirty
-                ? `Save ${countDirty} Change${countDirty === 1 ? '' : 's'}`
-                : 'Save Changes'}
-            </button>
+            <Button onClick={handleCancel}>{$t('Close')}</Button>
+            <Button type="primary" disabled={!hasAnyDirty} onClick={handleSave}>
+              {$t('Save Changes')}
+            </Button>
           </div>
         </div>
       </footer>
