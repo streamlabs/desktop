@@ -261,22 +261,20 @@ export class TwitchService
       if (channelInfo) {
         if (channelInfo?.display === 'both') {
           try {
-            console.log('Has goLiveSettings, setting up dual stream for Twitch');
             await this.setupDualStream(goLiveSettings);
           } catch (e: unknown) {
             console.error('Error setting up dual stream:', e);
           }
+        } else {
+          // Update enhanced broadcasting setting based on go live settings
+          this.settingsService.setEnhancedBroadcasting(channelInfo.isEnhancedBroadcasting);
         }
-
-        // Update enhanced broadcasting setting based on go live settings
-        this.settingsService.setEnhancedBroadcasting(channelInfo.isEnhancedBroadcasting);
 
         await this.putChannelInfo(channelInfo);
       }
     } else if (this.streamingService.views.isTwitchDualStreaming) {
       // Failsafe to guarantee that enhanced broadcasting is enabled if dual streaming is active
       try {
-        console.log('Does not have goLiveSettings, setting up dual stream for Twitch');
         await this.setupDualStream(goLiveSettings);
       } catch (e: unknown) {
         console.error('Error setting up dual stream:', e);
