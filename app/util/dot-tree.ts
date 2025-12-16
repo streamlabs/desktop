@@ -1,5 +1,3 @@
-export type Prettify<T> = { [K in keyof T]: T[K] } & {};
-
 type LeafPaths<T, Leaf = never> = T extends object
   ? {
       [K in Extract<keyof T, string>]: NonNullable<T[K]> extends Leaf

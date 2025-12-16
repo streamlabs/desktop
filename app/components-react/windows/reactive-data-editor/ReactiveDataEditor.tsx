@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import cx from 'classnames';
 import { TSchemaFlat, TSchemaTreeLeaf, TStateFlat, TStateTreeLeaf } from 'services/reactive-data';
 import { $t } from 'services/i18n';
 import { Button } from 'antd';
 import { NumberInput } from 'components-react/shared/inputs/NumberInput';
+import styles from './ReactiveDataEditor.m.less';
 
 type SchemaKeys = keyof TSchemaFlat & string;
 
@@ -67,14 +69,6 @@ const valueChanged = (
   }
 
   return prev !== next;
-};
-
-const colors = {
-  background: 'var(--section)',
-  darkBackground: 'var(--background)',
-  streamlabs: 'var(--teal)',
-  border: 'var(--border)',
-  text: 'var(--paragraph)',
 };
 
 type ReactiveStateEditorProps = {
@@ -183,111 +177,30 @@ export default function ReactiveStateEditor({
   };
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        flex: 1,
-        width: '100%',
-        height: '100%',
-        overflow: 'hidden',
-        border: `1px solid ${colors.border}`,
-        backgroundColor: colors.background,
-      }}
-    >
-      <div
-        style={{
-          borderBottom: `1px solid ${colors.border}`,
-          backgroundColor: colors.darkBackground,
-          padding: '16px 24px',
-        }}
-      >
-        <h2
-          style={{
-            margin: 0,
-            fontSize: '1.125rem',
-            fontWeight: 600,
-            letterSpacing: '-0.01em',
-            color: 'var(--white)',
-          }}
-        >
-          {$t('Reactive Data')}
-        </h2>
-        <p
-          style={{
-            marginTop: '4px',
-            fontSize: '0.875rem',
-            color: colors.text,
-          }}
-        >
-          {$t('Manage your reactive data values')}
-        </p>
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <h2>{$t('Reactive Data')}</h2>
+        <p>{$t('Manage your reactive data values')}</p>
       </div>
 
-      <section
-        style={{
-          display: 'flex',
-          flex: 1,
-          flexDirection: 'column',
-          overflowY: 'auto',
-        }}
-      >
-        <div
-          style={{
-            borderTop: '1px solid transparent',
-          }}
-        >
-          {entries.map(({ key, info }, index) => {
+      <section className={styles.content}>
+        <div className={styles.entriesList}>
+          {entries.map(({ key, info }) => {
             const isDirty = dirtyMap[key] ?? false;
 
             return (
-              <div
-                key={key}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  gap: '12px',
-                  padding: '16px 24px',
-                  transition: 'background-color 0.2s ease',
-                  borderTop: index === 0 ? 'none' : `1px solid ${colors.border}`,
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <div
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '4px',
-                  }}
-                >
+              <div key={key} className={styles.entryRow}>
+                <div className={styles.entryInfo}>
                   <label
                     htmlFor={key}
-                    style={{
-                      fontSize: '0.875rem',
-                      fontWeight: 600,
-                      color: isDirty ? colors.streamlabs : colors.text,
-                      transition: 'color 0.2s ease',
-                    }}
+                    className={cx(styles.entryLabel, { [styles.dirty]: isDirty })}
                   >
                     {info.name}
                   </label>
-                  <div
-                    style={{
-                      fontSize: '0.75rem',
-                      color: colors.text,
-                    }}
-                  >
-                    {key.split('.')[1]}
-                  </div>
+                  <div className={styles.entryKey}>{key.split('.')[1]}</div>
                 </div>
 
-                <div
-                  style={{
-                    width: '200px',
-                  }}
-                >
+                <div className={styles.entryInput}>
                   <NumberInput
                     value={Number(values[key]) ?? 0}
                     onChange={v =>
@@ -303,30 +216,10 @@ export default function ReactiveStateEditor({
         </div>
       </section>
 
-      <footer
-        style={{
-          borderTop: `1px solid ${colors.border}`,
-          backgroundColor: colors.darkBackground,
-          padding: '16px 24px',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '12px',
-          }}
-        >
+      <footer className={styles.footer}>
+        <div className={styles.footerContent}>
           {hasAnyDirty && <Button onClick={handleReset}>{$t('Reset')}</Button>}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              marginLeft: 'auto',
-            }}
-          >
+          <div className={styles.footerActions}>
             <Button onClick={handleCancel}>{$t('Close')}</Button>
             <Button type="primary" disabled={!hasAnyDirty} onClick={handleSave}>
               {$t('Save Changes')}
