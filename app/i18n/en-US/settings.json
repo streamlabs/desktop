@@ -283,5 +283,11 @@
   "Mobile Streaming": "Mobile Streaming",
   "Remote Controller": "Remote Controller",
   "Third Party Connections": "Third Party Connections",
-  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "Stream your phone camera or mobile game on the go with Streamlabs Mobile App."
+  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.",
+  "Incompatible Codec Detected": "Incompatible Codec Detected",
+  "Use H.264 Codec": "Use H.264 Codec",
+  "Select Codec": "Select Codec",
+  "AV1 codec is not supported for Multistream. Would you like to proceed with the H.264 codec or select another codec?": "AV1 codec is not supported for Multistream. Would you like to proceed with the H.264 codec or select another codec?",
+  "AV1 codec is not supported for Stream Shift. Would you like to proceed with the H.264 codec or select another codec?": "AV1 codec is not supported for Stream Shift. Would you like to proceed with the H.264 codec or select another codec?",
+  "AV1 codec is not supported for Dual Output. Would you like to proceed with the H.264 codec or select another codec?": "AV1 codec is not supported for Dual Output. Would you like to proceed with the H.264 codec or select another codec?"
 }

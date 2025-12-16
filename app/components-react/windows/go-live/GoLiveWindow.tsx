@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import styles from './GoLive.m.less';
-import { WindowsService } from 'app-services';
+import { WindowsService } from 'services/windows';
+import { SettingsService } from 'services/settings';
+import { RestreamService } from 'services/restream';
 import { ModalLayout } from '../../shared/ModalLayout';
 import { Button, message } from 'antd';
 import { Services } from '../../service-provider';
@@ -59,8 +61,16 @@ function ModalFooter() {
     isLoading,
     isDualOutputMode,
     isPrime,
+    isStreamShiftMode,
+    shouldSetupRestream,
+    streamShiftForceGoLive,
+    checkIsLive,
+    setCodec,
+    showSettings,
   } = useGoLiveSettings().extend(module => ({
     windowsService: inject(WindowsService),
+    settingsService: inject(SettingsService),
+    restreamService: inject(RestreamService),
 
     close() {
       this.windowsService.actions.closeChildWindow();
@@ -68,6 +78,22 @@ function ModalFooter() {
 
     goBackToSettings() {
       module.prepopulate();
+    },
+
+    get streamShiftForceGoLive() {
+      return this.restreamService.state.streamShiftForceGoLive;
+    },
+
+    async checkIsLive() {
+      return this.restreamService.actions.return.checkIsLive();
+    },
+
+    setCodec() {
+      this.settingsService.actions.setDefaultVideoEncoder();
+    },
+
+    showSettings() {
+      this.settingsService.actions.showSettings('Output');
     },
   }));
 
@@ -78,15 +104,67 @@ function ModalFooter() {
     lifecycle === 'runChecklist' && error && checklist.startVideoTransmission !== 'done';
 
   async function handleGoLive() {
+    if (isDualOutputMode && !getCanStreamDualOutput()) {
+      message.error({
+        key: 'dual-output-error',
+        className: styles.errorAlert,
+        content: (
+          <div className={styles.alertContent}>
+            <div style={{ marginRight: '10px' }}>
+              {$t(
+                'To use Dual Output you must stream to one horizontal and one vertical platform.',
+              )}
+            </div>
+
+            <i className="icon-close" />
+          </div>
+        ),
+        onClick: () => message.destroy('dual-output-error'),
+      });
+      return;
+    }
+
+    if (shouldSetupRestream) {
+      let message = $t(
+        'AV1 codec is not supported for Multistream. Would you like to proceed with the H.264 codec or select another codec?',
+      );
+
+      if (isStreamShiftMode) {
+        message = $t(
+          'AV1 codec is not supported for Stream Shift. Would you like to proceed with the H.264 codec or select another codec?',
+        );
+      }
+
+      if (isDualOutputMode) {
+        message = $t(
+          'AV1 codec is not supported for Dual Output streaming to more than two destinations. Would you like to proceed with the H.264 codec or select another codec?',
+        );
+      }
+
+      await promptAction({
+        title: $t('Incompatible Codec Detected'),
+        message,
+        btnText: $t('Use H.264 Codec'),
+        fn: () => {
+          setCodec();
+          goLive();
+          close();
+        },
+        cancelBtnText: $t('Cancel'),
+        cancelBtnPosition: 'left',
+        secondaryActionText: $t('Select Codec'),
+        secondaryActionFn: showSettings,
+      });
+    }
+
     if (isPrime) {
       try {
         setIsFetchingStreamStatus(true);
-        const isLive = await Services.RestreamService.actions.return.checkIsLive();
+        const isLive = await checkIsLive();
         setIsFetchingStreamStatus(false);
 
         // Prompt to confirm stream switch if the stream exists
         // TODO: unify with start streaming button prompt
-        const { streamShiftForceGoLive } = Services.RestreamService.state;
         if (isLive && !streamShiftForceGoLive) {
           let shouldForceGoLive = false;
 
@@ -116,26 +194,6 @@ function ModalFooter() {
 
         setIsFetchingStreamStatus(false);
       }
-    }
-
-    if (isDualOutputMode && !getCanStreamDualOutput()) {
-      message.error({
-        key: 'dual-output-error',
-        className: styles.errorAlert,
-        content: (
-          <div className={styles.alertContent}>
-            <div style={{ marginRight: '10px' }}>
-              {$t(
-                'To use Dual Output you must stream to one horizontal and one vertical platform.',
-              )}
-            </div>
-
-            <i className="icon-close" />
-          </div>
-        ),
-        onClick: () => message.destroy('dual-output-error'),
-      });
-      return;
     }
 
     goLive();
