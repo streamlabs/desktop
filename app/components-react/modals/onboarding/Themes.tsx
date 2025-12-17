@@ -103,6 +103,16 @@ export function Themes(p: IOnboardingStepProps) {
       });
   }, []);
 
+  useEffect(() => {
+    if (installing) {
+      const sub = SceneCollectionsService.downloadProgress.subscribe(progress =>
+        setProgress(progress.percent * 100),
+      );
+
+      return sub.unsubscribe;
+    }
+  }, [installing]);
+
   function goToTheme(i: number) {
     if (!sliderRef.current) return;
     sliderRef.current.goTo(i);
@@ -128,11 +138,7 @@ export function Themes(p: IOnboardingStepProps) {
       const name = themeMetadata.current[id].name;
       setInstalling(true);
       p.setProcessing(true);
-      const sub = SceneCollectionsService.downloadProgress.subscribe(progress =>
-        setProgress(progress.percent * 100),
-      );
       await SceneCollectionsService.actions.return.installOverlay(url, name);
-      sub.unsubscribe();
       setInstalling(false);
       p.setProcessing(false);
       OnboardingV2Service.actions.takeStep();

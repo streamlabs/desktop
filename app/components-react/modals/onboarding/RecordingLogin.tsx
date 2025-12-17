@@ -9,6 +9,7 @@ import PlatformLogo from 'components-react/shared/PlatformLogo';
 import { $i } from 'services/utils';
 import ultraS from './Ultra.m.less';
 import KevinSvg from 'components-react/shared/KevinSvg';
+import Translate from 'components-react/shared/Translate';
 
 export function RecordingLogin(p: IOnboardingStepProps) {
   const { platformLogin, SLIDLogin } = useAuth();
@@ -66,11 +67,12 @@ export function RecordingLogin(p: IOnboardingStepProps) {
         >
           {$t('Log in with Streamlabs ID')}
         </Button>
-        <span style={{ paddingTop: 24 }}>
-          {$t("Don't have an account?")}
-          &nbsp;
-          <a onClick={SLIDLogin}>{$t('Create one')}</a>
-        </span>
+        <Translate
+          style={{ paddingTop: 24 }}
+          message="Don't have an account? <link>Create one</link>"
+        >
+          <a onClick={SLIDLogin} slot="link" />
+        </Translate>
         {$t('Or log in with a platform')}
         <div className={styles.platformButtons}>
           {platforms.map(platform => (

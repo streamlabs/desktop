@@ -29,8 +29,6 @@ export function OBSImport(p: IOnboardingStepProps) {
     });
   }
 
-  console.log(selectedProfile);
-
   return (
     <div className={styles.centered}>
       <Header

@@ -5,6 +5,7 @@ import { $t } from 'services/i18n';
 import { Services } from 'components-react/service-provider';
 import styles from './Common.m.less';
 import { DancingKevins, IOnboardingStepProps, useAuth } from './Onboarding';
+import Translate from 'components-react/shared/Translate';
 
 export function Splash(p: IOnboardingStepProps) {
   const { OnboardingV2Service, RecordingModeService } = Services;
@@ -39,17 +40,19 @@ export function Splash(p: IOnboardingStepProps) {
           &nbsp;
           <i className="icon-pop-out-2" />
         </Button>
-        <span style={{ paddingTop: 24 }}>
-          {$t('Already have an account?')}
-          &nbsp;
-          <a onClick={login}>{$t('Log In')}</a>
-        </span>
+        <Translate
+          style={{ paddingTop: 24 }}
+          message="Already have an account? <link>Log In</link>"
+        >
+          <a onClick={login} slot="link" />
+        </Translate>
       </div>
-      <span style={{ paddingTop: 32 }}>
-        {$t('Just looking to record?')}
-        &nbsp;
-        <a onClick={startRecordingMode}>{$t('Start here')}</a>
-      </span>
+      <Translate
+        style={{ paddingTop: 32 }}
+        message="Just looking to record? <link>Start here</link>"
+      >
+        <a onClick={startRecordingMode} slot="link" />
+      </Translate>
     </div>
   );
 }
