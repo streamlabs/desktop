@@ -71,6 +71,7 @@ export abstract class WidgetSettingsService<TWidgetData extends IWidgetData>
   }
 
   private onSettingsUpdatedHandler(event: ISocketEvent) {
+    console.log("Handling settings update event:", event);
     if (!this.state.data) return;
     const rawData = cloneDeep(this.state.rawData);
     rawData.settings = event.message;

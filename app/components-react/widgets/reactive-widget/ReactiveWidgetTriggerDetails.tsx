@@ -29,11 +29,10 @@ interface ReactiveWidgetTriggerDetailsProps {
 
 /**
  * Custom hook to handle deep object binding.
- * Creates a { value, onChange } object for a given path (e.g., 'media_settings.sound_volume').
  */
 function useTriggerBinding(
   trigger: ReactiveTrigger,
-  onUpdate: ((t: ReactiveTrigger) => void) | undefined
+  onUpdate: ((t: ReactiveTrigger) => void) | undefined,
 ) {
   return useCallback(
     (path: string, defaultValue?: any) => ({
@@ -45,7 +44,7 @@ function useTriggerBinding(
         onUpdate(updated);
       },
     }),
-    [trigger, onUpdate]
+    [trigger, onUpdate],
   );
 }
 
@@ -54,15 +53,27 @@ export function ReactiveWidgetTriggerDetails({
   onUpdate,
   staticConfig,
 }: ReactiveWidgetTriggerDetailsProps) {
-
   const bind = useTriggerBinding(trigger, onUpdate);
-  const isStreakTrigger = trigger?.type === 'streak';
-  const streakOptions = useMemo(() => {
-    const periods = staticConfig?.data?.options?.streak_time_periods ?? {};
-    return Object.entries(periods).map(([key, value]) => ({
-      label: String(value),
-      value: key,
-    }));
+
+  const { streakOptions, totalPeriodOptions, levelRangeOptions } = useMemo(() => {
+    const streakPeriods = staticConfig?.data?.options?.streak_time_periods ?? {};
+    const totalPeriods = staticConfig?.data?.options?.event_time_periods ?? {};
+
+    return {
+      streakOptions: Object.entries(streakPeriods).map(([key, value]) => ({
+        label: String(value),
+        value: key,
+      })),
+      totalPeriodOptions: Object.entries(totalPeriods).map(([key, value]) => ({
+        label: String(value),
+        value: key,
+      })),
+      levelRangeOptions: [
+        { value: 'minimum', label: $t('Minimum') },
+        { value: 'maximum', label: $t('Maximum') },
+        { value: 'between', label: $t('Between') },
+      ],
+    };
   }, [staticConfig]);
 
   const { showAnimationOptions, hideAnimationOptions, textAnimationOptions } = useMemo(() => {
@@ -73,6 +84,59 @@ export function ReactiveWidgetTriggerDetails({
       textAnimationOptions: flattenAnimationOptions(anims.text_animations),
     };
   }, [staticConfig]);
+
+  const eventType = trigger?.event_type;
+  const isStreak = eventType === 'streak';
+  const isTotal = eventType === 'total';
+  const isLevel = eventType === 'level';
+  type LevelRangeType = 'minimum' | 'maximum' | 'between';
+
+  function hasValue(n: any) {
+    return n !== null && n !== undefined;
+  }
+  function deriveLevelRangeType(trigger: ReactiveTrigger): LevelRangeType {
+    const hasMin = hasValue(trigger.amount_minimum);
+    const hasMax = hasValue(trigger.amount_maximum);
+
+    if (hasMin && hasMax) return 'between';
+    if (hasMax) return 'maximum';
+    return 'minimum';
+  }
+  function applyLevelRangeType(trigger: ReactiveTrigger, nextType: LevelRangeType) {
+    switch (nextType) {
+      case 'minimum': {
+        trigger.amount_maximum = null;
+        return;
+      }
+      case 'maximum': {
+        trigger.amount_minimum = null;
+        if (!hasValue(trigger.amount_maximum)) trigger.amount_maximum = 10;
+        return;
+      }
+      case 'between': {
+        if (!hasValue(trigger.amount_minimum)) trigger.amount_minimum = 1;
+        if (!hasValue(trigger.amount_maximum)) trigger.amount_maximum = 10;
+        return;
+      }
+    }
+  }
+  const currentLevelRangeType = useMemo<LevelRangeType | null>(() => {
+    if (!isLevel) return null;
+    return deriveLevelRangeType(trigger);
+  }, [isLevel, trigger.amount_minimum, trigger.amount_maximum]);
+
+  const handleLevelRangeChange = useCallback(
+    (newType: LevelRangeType) => {
+      if (!onUpdate) return;
+      const updated = cloneDeep(trigger);
+      applyLevelRangeType(updated, newType);
+      onUpdate(updated);
+    },
+    [trigger, onUpdate],
+  );
+
+  const showMin = currentLevelRangeType === 'minimum' || currentLevelRangeType === 'between';
+  const showMax = currentLevelRangeType === 'maximum' || currentLevelRangeType === 'between';
 
   const messageTemplateTooltip = $t(
     'When a trigger fires, this will be the format of the message. Available tokens: number',
@@ -97,14 +161,51 @@ export function ReactiveWidgetTriggerDetails({
 
       <TextInput label={$t('Name')} {...bind('name')} />
 
-      {isStreakTrigger && (
+      {(isStreak || isTotal) && (
+        <NumberInput
+          label={isStreak ? $t('Amount Minimum') : $t('Total Amount')}
+          {...bind('amount_minimum')}
+          min={0}
+        />
+      )}
+
+      {isStreak && (
+        <ListInput
+          label={$t('Streak Time Period')}
+          {...bind('streak_period')}
+          options={streakOptions}
+        />
+      )}
+
+      {isTotal && (
+        <ListInput
+          label={$t('Event Time Period')}
+          {...bind('event_period')}
+          options={totalPeriodOptions}
+        />
+      )}
+
+      {isLevel && (
         <>
-          <NumberInput label={$t('Amount Minimum')} {...bind('amount_minimum')} />
           <ListInput
-            label={$t('Streak Time Period')}
-            {...bind('streak_period')}
-            options={streakOptions}
+            label={$t('Level Range Type')}
+            value={currentLevelRangeType}
+            onChange={handleLevelRangeChange}
+            options={levelRangeOptions}
           />
+
+          {showMin && (
+            <NumberInput
+              label={$t('Amount Minimum')}
+              {...bind('amount_minimum')}
+              min={0}
+              max={trigger.amount_maximum ?? undefined}
+            />
+          )}
+
+          {showMax && (
+            <NumberInput label={$t('Amount Maximum')} {...bind('amount_maximum')} min={0} />
+          )}
         </>
       )}
 
@@ -127,7 +228,7 @@ export function ReactiveWidgetTriggerDetails({
       <SliderInput
         label={$t('Duration')}
         min={2000}
-        max={30000}
+        max={60000}
         step={1}
         debounce={500}
         {...bind('alert_duration_ms')}
@@ -135,7 +236,7 @@ export function ReactiveWidgetTriggerDetails({
       />
 
       <Collapse bordered={false}>
-        <Collapse.Panel header={$t('Font Settings')} key='font-settings'>
+        <Collapse.Panel header={$t('Font Settings')} key="font-settings">
           <FontFamilyInput label={$t('Font Family')} {...bind('text_settings.font')} />
           <SliderInput
             min={8}
@@ -151,7 +252,7 @@ export function ReactiveWidgetTriggerDetails({
       </Collapse>
 
       <Collapse bordered={false}>
-        <Collapse.Panel header={$t('Animation Settings')} key='animation-settings'>
+        <Collapse.Panel header={$t('Animation Settings')} key="animation-settings">
           <div className={css.animationRow}>
             <span className={css.animationLabel}>{$t('Animation')}</span>
             <div className={css.selectInputGroup}>
@@ -173,7 +274,7 @@ export function ReactiveWidgetTriggerDetails({
           />
           <SliderInput
             label={$t('Text Delay')}
-            max={60000}
+            max={20000}
             {...bind('text_settings.text_delay_ms')}
             tipFormatter={(ms: number) => `${(ms / 1000).toFixed(1)}s`}
           />

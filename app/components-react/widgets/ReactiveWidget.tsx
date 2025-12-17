@@ -130,7 +130,6 @@ function GameSettingsTab() {
 function ManageTriggersTab() {
   const {
     activeTabContext,
-    data,
     settings,
     enableAllTriggers,
     disableAllTriggers,

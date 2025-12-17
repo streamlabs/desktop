@@ -2,23 +2,19 @@ import React, { useMemo, useState, useCallback } from 'react';
 import FormFactory, { TInputValue } from 'components-react/shared/inputs/FormFactory';
 import { Button } from 'antd';
 import { $t } from 'services/i18n/i18n';
-import { 
-  ReactiveWidgetSettings, 
-  ReactiveTrigger, 
-  SelectOption 
+import {
+  ReactiveWidgetSettings,
+  ReactiveTrigger,
+  SelectOption,
+  ReactiveEventMeta,
 } from './ReactiveWidget.helpers';
 import css from './ReactiveWidgetCreateTriggerForm.m.less';
 
 interface TriggerFormProps {
   trigger: { game?: string; event_type?: string; name?: string };
-  onSubmit: (data: {
-    eventType: string;
-    game: string;
-    name: string;
-    triggerType: string;
-  }) => void;
+  onSubmit: (data: { eventType: string; game: string; name: string; triggerType: string }) => void;
   availableGameEvents: Record<string, string[]>;
-  gameEvents: Record<string, any>;
+  gameEvents: Record<string, ReactiveEventMeta>;
   globalEvents?: Record<string, string>;
   gameOptions?: SelectOption[];
   data: { settings: ReactiveWidgetSettings };
@@ -39,6 +35,7 @@ export function ReactiveWidgetCreateTriggerForm(props: TriggerFormProps) {
     game: trigger.game || gameOptions[0]?.value || '',
     event_type: trigger.event_type || '',
     name: trigger.name || '',
+    trigger_type: '',
   });
 
   const eventOptions = useMemo(() => {
@@ -47,32 +44,40 @@ export function ReactiveWidgetCreateTriggerForm(props: TriggerFormProps) {
 
     const existingTriggers = getTriggersForGame(data, gameKey);
 
-    const eventKeys = gameKey === 'global'
-      ? Object.keys(globalEvents || {})
-      : availableGameEvents[gameKey] || [];
+    const eventKeys =
+      gameKey === 'global' ? Object.keys(globalEvents || {}) : availableGameEvents[gameKey] || [];
 
     return eventKeys
       .filter(eventKey => {
         // filter out 'achievement' events that are already taken
         const evtMeta = gameEvents?.[eventKey];
-        if (evtMeta?.trigger_type === 'achievement') {
-           return !existingTriggers.some(t => 
-             t.type === 'achievement' && t.game_event === eventKey
-           );
+        if (evtMeta?.trigger_types.includes('achievement')) {
+          return !existingTriggers.some(
+            t => t.event_type === 'achievement' && t.game_event === eventKey,
+          );
         }
         return true;
       })
       .map(eventKey => ({
         value: eventKey,
-        label: gameKey === 'global'
+        label:
+          gameKey === 'global'
             ? globalEvents?.[eventKey] || eventKey
             : gameEvents?.[eventKey]?.title || eventKey,
       }));
   }, [values.game, availableGameEvents, gameEvents, globalEvents, data]);
 
-  const triggerType = useMemo(() => {
-    if (!values.event_type) return '';
-    return gameEvents[values.event_type]?.trigger_type || 'streak';
+  const triggerTypeOptions = useMemo(() => {
+    const eventType = values.event_type;
+    if (!eventType) return [];
+
+    const evtMeta = gameEvents?.[eventType];
+    if (!evtMeta) return [];
+
+    return evtMeta.trigger_types.map(triggerType => ({
+      label: triggerType.charAt(0).toUpperCase() + triggerType.slice(1),
+      value: triggerType,
+    }));
   }, [values.event_type, gameEvents]);
 
   const handleGameChange = useCallback((newGame: string) => {
@@ -81,50 +86,76 @@ export function ReactiveWidgetCreateTriggerForm(props: TriggerFormProps) {
       game: newGame,
       event_type: '',
       name: '',
+      trigger_type: '',
     });
   }, []);
 
-  const handleEventChange = useCallback((newEvent: string) => {
-    const selectedOption = eventOptions.find(opt => opt.value === newEvent);
-    const baseLabel = selectedOption?.label || newEvent;
-    const uniqueName = generateUniqueName(data, values.game as string, baseLabel);
+  const handleEventChange = useCallback(
+    (newEvent: string) => {
+      const selectedOption = eventOptions.find(opt => opt.value === newEvent);
+      const baseLabel = selectedOption?.label || newEvent;
+      const uniqueName = generateUniqueName(data, values.game as string, baseLabel);
+      const types = gameEvents[newEvent]?.trigger_types || [];
+      const defaultTriggerType = types.length > 0 ? types[0] : '';
 
-    setValues(prev => ({
-      ...prev,
-      event_type: newEvent,
-      name: uniqueName
-    }));
-  }, [data, values.game, eventOptions]);
+      setValues(prev => ({
+        ...prev,
+        name: uniqueName,
+        event_type: newEvent,
+        trigger_type: defaultTriggerType,
+      }));
+    },
+    [data, values.game, eventOptions, gameEvents],
+  );
 
   const handleNameChange = useCallback((newName: string) => {
     setValues(prev => ({ ...prev, name: newName }));
   }, []);
 
-  const handleChange = useCallback((key: string) => (value: TInputValue) => {
-    if (key === 'game') handleGameChange(value as string);
-    else if (key === 'event_type') handleEventChange(value as string);
-    else if (key === 'name') handleNameChange(value as string);
-  }, [handleGameChange, handleEventChange, handleNameChange]);
+  const handleChange = useCallback(
+    (key: string) => (value: TInputValue) => {
+      if (key === 'game') handleGameChange(value as string);
+      else if (key === 'event_type') handleEventChange(value as string);
+      else if (key === 'name') handleNameChange(value as string);
+      else if (key === 'trigger_type') {
+        setValues(prev => ({ ...prev, trigger_type: value as string }));
+      }
+    },
+    [handleGameChange, handleEventChange, handleNameChange],
+  );
 
-  const metadata = useMemo(() => ({
-    game: {
-      type: 'list',
-      label: $t('Game'),
-      placeholder: $t('Select a Game'),
-      options: gameOptions,
-    },
-    event_type: {
-      type: 'list',
-      label: $t('Event Type'),
-      placeholder: $t('Select an Event'),
-      options: eventOptions,
-    },
-    name: {
-      type: 'text',
-      label: $t('Name'),
-      placeholder: 'Trigger Name',
-    },
-  }), [gameOptions, eventOptions]);
+  const metadata = useMemo(() => {
+    const meta: any = {
+      game: {
+        type: 'list',
+        label: $t('Game'),
+        placeholder: $t('Select a Game'),
+        options: gameOptions,
+      },
+      event_type: {
+        type: 'list',
+        label: $t('Event Type'),
+        placeholder: $t('Select an Event'),
+        options: eventOptions,
+      },
+      name: {
+        type: 'text',
+        label: $t('Name'),
+        placeholder: 'Trigger Name',
+      },
+    };
+
+    if (triggerTypeOptions.length > 1) {
+      meta.trigger_type = {
+        type: 'list',
+        label: $t('Trigger Type'),
+        placeholder: $t('Select a Trigger Type'),
+        options: triggerTypeOptions,
+      };
+    }
+
+    return meta;
+  }, [gameOptions, eventOptions, triggerTypeOptions]);
 
   const isValid = values.game && values.event_type && values.name;
 
@@ -146,7 +177,7 @@ export function ReactiveWidgetCreateTriggerForm(props: TriggerFormProps) {
             eventType: values.event_type as string,
             game: values.game as string,
             name: values.name as string,
-            triggerType,
+            triggerType: values.trigger_type as string,
           })
         }
       >
@@ -156,10 +187,13 @@ export function ReactiveWidgetCreateTriggerForm(props: TriggerFormProps) {
   );
 }
 
-function getTriggersForGame(data: { settings: ReactiveWidgetSettings }, gameKey: string): ReactiveTrigger[] {
+function getTriggersForGame(
+  data: { settings: ReactiveWidgetSettings },
+  gameKey: string,
+): ReactiveTrigger[] {
   const settings = data?.settings;
   if (!settings) return [];
-  
+
   if (gameKey === 'global') {
     return settings.global?.triggers || [];
   }
@@ -167,9 +201,9 @@ function getTriggersForGame(data: { settings: ReactiveWidgetSettings }, gameKey:
 }
 
 function generateUniqueName(
-  data: { settings: ReactiveWidgetSettings }, 
-  gameKey: string, 
-  baseLabel: string
+  data: { settings: ReactiveWidgetSettings },
+  gameKey: string,
+  baseLabel: string,
 ): string {
   const triggers = getTriggersForGame(data, gameKey);
   const existingNames = triggers.map(t => t.name).filter(Boolean);

@@ -1,9 +1,9 @@
 import cloneDeep from 'lodash/cloneDeep';
-import uuid from 'uuid';
 
 export type ReactiveLayout = 'above' | 'banner' | 'side';
 export type ReactiveStreakPeriod = 'session' | 'today' | 'round';
-export type ReactiveTriggerType = 'streak' | 'achievement' | 'level';
+export type ReactiveTriggerType = 'streak' | 'achievement' | 'level' | 'total';
+export type ReactiveEventPeriod = 'round' | 'today' | null;
 
 export interface ReactiveMediaSettings {
   image_href: string;
@@ -43,27 +43,39 @@ export interface ReactiveBaseTrigger {
   media_settings: ReactiveMediaSettings;
   text_settings: ReactiveTextSettings;
   tts_settings: ReactiveTtsSettings;
+  event_period: ReactiveEventPeriod;
 }
 
 export interface ReactiveStreakTrigger extends ReactiveBaseTrigger {
-  type: 'streak';
+  event_type: 'streak';
   streak_period: ReactiveStreakPeriod;
   amount_minimum: number;
   amount_maximum?: number | null;
 }
 
 export interface ReactiveAchievementTrigger extends ReactiveBaseTrigger {
-  type: 'achievement';
+  event_type: 'achievement';
+  amount_minimum: number | null;
+  amount_maximum: number | null;
 }
 
 export interface ReactiveLevelTrigger extends ReactiveBaseTrigger {
-  type: 'level';
+  event_type: 'level';
+  amount_minimum?: number | null;
+  amount_maximum?: number | null;
+}
+
+export interface ReactiveTotalTrigger extends ReactiveBaseTrigger {
+  event_type: 'total';
+  amount_minimum: number;
+  amount_maximum?: number | null;
 }
 
 export type ReactiveTrigger = 
   | ReactiveStreakTrigger 
   | ReactiveAchievementTrigger 
-  | ReactiveLevelTrigger;
+  | ReactiveLevelTrigger
+  | ReactiveTotalTrigger;
 
 export interface ReactiveTriggerGroup {
   enabled: boolean;
@@ -134,7 +146,7 @@ export interface ReactiveGameMeta {
 
 export interface ReactiveEventMeta {
   title: string;
-  trigger_type: ReactiveTriggerType;
+  trigger_types: ReactiveTriggerType[];
 }
 
 export interface SelectOption {
@@ -222,7 +234,35 @@ export const ReactiveTabUtils = {
 };
 
 /** default trigger settings, used as a template for new triggers */
-export function generateTriggerSettings(type: ReactiveTriggerType): ReactiveTrigger {
+export function defaultMediaForEvent(eventKey: string): string {
+  switch (eventKey) {
+    case 'death': return 'https://cdn.streamlabs.com/library/animations/default-death.webm';
+    case 'defeat': return 'https://cdn.streamlabs.com/library/animations/default-defeat.webm';
+    case 'victory': return 'https://cdn.streamlabs.com/library/animations/default-victory.webm';
+    case 'elimination': return 'https://cdn.streamlabs.com/library/animations/elimination.webm';
+    default: return 'https://cdn.streamlabs.com/library/giflibrary/jumpy-kevin.webm';
+  }
+}
+
+export function defaultMessageTemplate(
+  triggerType: ReactiveTriggerType,
+  eventKey: string,
+): string {
+  const token = '{number}';
+  if (triggerType === 'level') return `${eventKey}: ${token}`;
+  if (triggerType === 'streak') return `${token} ${eventKey}`;
+  if (triggerType === 'total') return `${eventKey} total: ${token}`;
+  return eventKey;
+}
+
+export function defaultEventPeriod(triggerType: ReactiveTriggerType): ReactiveEventPeriod {
+  if (triggerType === 'total') return 'today';
+  if (triggerType === 'streak') return 'round';
+  return null;
+}
+
+/** default trigger settings, used as a template for new triggers */
+export function generateTriggerSettings(event_type: ReactiveTriggerType): ReactiveTrigger {
   const commonSettings = {
     media_settings: {
       image_href: 'https://cdn.streamlabs.com/library/giflibrary/jumpy-kevin.webm',
@@ -252,32 +292,78 @@ export function generateTriggerSettings(type: ReactiveTriggerType): ReactiveTrig
     alert_duration_ms: 5000,
     enabled: true,
     game_event: 'kill',
-    id: uuid(),
+    id: '',
     name: '',
     layout: 'above' as const,
   };
-  if (type === 'streak') {
+  if (event_type === 'streak') {
     return {
       ...commonSettings,
-      type: 'streak',
+      event_type: 'streak',
       amount_minimum: 1,
       amount_maximum: null,
       streak_period: 'session',
+      event_period: 'round',
+    };
+  }
+
+  if (event_type === 'total') {
+    return {
+      ...commonSettings,
+      amount_minimum: 1,
+      amount_maximum: null,
+      event_type,
+      event_period: 'today',
+    }
+  }
+
+  if (event_type === 'achievement') {
+    return {
+      ...commonSettings,
+      event_type: 'achievement',
+      amount_minimum: null,
+      amount_maximum: null,
+      event_period: null,
     };
   }
 
   return {
-    type,
+    event_type,
     ...commonSettings,
   } as ReactiveTrigger;
 }
 
-export function sanitizeTrigger(raw: any): ReactiveTrigger {
-  const trigger = cloneDeep(raw);
+export function buildNewTrigger(params: {
+  triggerType: ReactiveTriggerType;
+  eventKey: string;
+  name: string;
+}): ReactiveTrigger {
+  const { triggerType, eventKey, name } = params;
+  const base = generateTriggerSettings(triggerType);
 
-  if (trigger.type !== 'streak') {
+  return {
+    ...base,
+    name,
+    game_event: eventKey,
+    event_period: defaultEventPeriod(triggerType),
+    media_settings: {
+      ...base.media_settings,
+      image_href: defaultMediaForEvent(eventKey),
+    },
+    text_settings: {
+      ...base.text_settings,
+      message_template: defaultMessageTemplate(triggerType, eventKey),
+    },
+  };
+}
+
+export function sanitizeTrigger(raw: ReactiveTrigger): ReactiveTrigger {
+  const trigger = cloneDeep(raw) as any; // use 'any' to allow deletion of properties
+
+  if (trigger.event_type !== 'streak') {
     // the server might send them anyway, so we yeet them just in case.
     delete trigger.streak_period;
+    // TODO: $chris: remove amount min/max? see if they cause issues with other event
     delete trigger.amount_minimum;
     delete trigger.amount_maximum;
   }

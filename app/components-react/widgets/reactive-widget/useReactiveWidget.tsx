@@ -7,7 +7,7 @@ import {
   TabKind,
   ActiveTabContext,
   ReactiveTabUtils,
-  generateTriggerSettings,
+  buildNewTrigger,
   ReactiveTriggerType,
   ReactiveGameSettingsUI,
   ReactiveStaticConfig,
@@ -114,7 +114,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     const tab = this.state?.selectedTab;
     const context = ReactiveTabUtils.parse(tab);
 
-    if (context.kind === 'general' && typeof tab !== 'string') {
+    if (context.kind === TabKind.General && typeof tab !== 'string') {
       const firstGameId = Object.keys(this.data?.settings?.games || {})[0];
       return firstGameId
         ? { kind: TabKind.GameManage, gameId: firstGameId }
@@ -139,17 +139,6 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
   protected patchAfterFetch(raw: any) {
     const settings = raw.settings ?? raw.data?.settings ?? {};
     return { settings };
-  }
-
-  private findTrigger(groupId: string, triggerId: string) {
-    const settings = this.settings as ReactiveWidgetSettings;
-    if (!settings) return null;
-
-    const group = groupId === 'global' ? settings.global : settings.games?.[groupId];
-
-    if (!group) return null;
-
-    return (group.triggers || []).find((t: ReactiveTrigger) => t.id === triggerId) || null;
   }
 
   /**
@@ -177,11 +166,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
    */
   private updateTriggers(groupId: string, updater: (trigger: ReactiveTrigger) => ReactiveTrigger) {
     const isGlobal = groupId === 'global';
-
-    const groupSettings = isGlobal
-      ? this.settings.global || { enabled: true, triggers: [] }
-      : this.settings.games?.[groupId] || { enabled: true, triggers: [] };
-
+    const groupSettings = this.getGroup(groupId) || { enabled: true, triggers: [] };
     const updatedGroupSettings = {
       ...groupSettings,
       triggers: (groupSettings.triggers || []).map(updater),
@@ -225,7 +210,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
 
     return {
       get trigger(): ReactiveTrigger | null {
-        return module.findTrigger(groupId, triggerId) as ReactiveTrigger | null;
+        return module.getTrigger(groupId, triggerId);
       },
 
       updateTrigger(updated: ReactiveTrigger) {
@@ -314,17 +299,16 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
    */
   public setGroupEnabled(groupId: string, enabled: boolean) {
     const newSettings: ReactiveWidgetSettings = cloneDeep(this.settings) as ReactiveWidgetSettings;
+    const group = this.getGroup(groupId, newSettings) || { triggers: [] };
 
     if (groupId === 'global') {
       newSettings.global = {
-        ...(newSettings.global || { triggers: [] }),
+        ...group,
         enabled,
       };
     } else {
-      const games = newSettings.games || {};
-      const group = games[groupId] || { triggers: [] };
       newSettings.games = {
-        ...games,
+        ...(newSettings.games || {}),
         [groupId]: {
           ...group,
           enabled,
@@ -400,7 +384,8 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     // remove the trigger from whichever group it belongs to
     const groups = ['global', ...Object.keys(newSettings.games || {})];
     for (const groupId of groups) {
-      const group = groupId === 'global' ? newSettings.global : newSettings.games?.[groupId];
+      // const group = groupId === 'global' ? newSettings.global : newSettings.games?.[groupId];
+      const group = this.getGroup(groupId, newSettings);
       if (!group || !group.triggers) continue;
 
       const triggerIndex = group.triggers.findIndex(t => t.id === triggerId);
@@ -424,24 +409,18 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
    * Create a new trigger in the specified group (`global` or a game id).
    *
    * This:
-   *  - builds a trigger object from `defaultTriggerSettings`
-   *  - sets the trigger's `name`, `game_event` (eventType), and `type` (triggerType)
-   *  - derives default `media_settings.image_href` via `generateDefaultMedia(eventType)`
-   *  - derives default `text_settings.message_template` via
-   *    `generateDefaultMessageTemplate(triggerType, eventType)`
-   *  - appends the trigger to either:
-   *      - `settings.global.triggers` when `game === 'global'`, or
-   *      - `settings.games[game].triggers` for a specific game group
-   *  - persists the updated settings with `updateSettings()`
-   *  - reloads widget data with `reload()`
-   *  - and finally switches the selected tab to the newly created trigger
-   *    (e.g. `${game}-trigger-${triggerId}`) if it can be resolved.
+   * - Generates a new trigger object using `buildNewTrigger`.
+   * - Appends the new trigger to the settings via `appendTriggerToSettings`.
+   * - Persists the updated settings to the backend via `updateSettings`.
+   * - Refreshes the local data state by calling `fetchData`.
+   * - Switches the selected UI tab to the newly created trigger by resolving the ID of the last added entry.
    *
    * @param eventType   The event key to attach the trigger to (e.g. `'victory'`, `'elimination'`).
    * @param game        The group id: `'global'` or a specific game id.
    * @param name        Display name for the trigger (already made unique per game by the form).
    * @param triggerType The trigger type (e.g. `'streak'`, `'achievement'`, `'level'`).
    */
+  // TODO:$chris: add typing for params
   public async createTrigger({
     eventType,
     game,
@@ -453,75 +432,71 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     name: string;
     triggerType: ReactiveTriggerType;
   }) {
-    const baseSettings = generateTriggerSettings(triggerType);
-    const newTrigger = {
-      ...baseSettings,
+    const newTrigger = buildNewTrigger({
+      triggerType,
+      eventKey: eventType,
       name,
-      game_event: eventType,
-      media_settings: {
-        ...baseSettings.media_settings,
-        image_href: this.generateDefaultMedia(eventType),
-      },
-      text_settings: {
-        ...baseSettings.text_settings,
-        message_template: this.generateDefaultMessageTemplate(triggerType, eventType),
-      },
-    } as ReactiveTrigger;
+    });
 
-    const newSettings = cloneDeep(this.settings) as ReactiveWidgetSettings;
-
-    if (game === 'global') {
-      newSettings.global = {
-        ...newSettings.global,
-        triggers: [...(newSettings.global.triggers || []), newTrigger],
-      };
-    } else {
-      const games = newSettings.games || {};
-      const existingGroup = games[game] || { enabled: true, triggers: [] };
-
-      newSettings.games = {
-        ...games,
-        [game]: {
-          ...existingGroup,
-          triggers: [...(existingGroup.triggers || []), newTrigger],
-        },
-      };
-    }
-
+    const newSettings = this.appendTriggerToSettings(this.settings, game, newTrigger);
     await this.updateSettings(newSettings);
     this.setData(await this.fetchData());
 
-    // attempt to set the selected tab to the new trigger
-    const triggerId =
-      game === 'global'
-        ? this.data.settings.global.triggers.slice(-1)[0].id
-        : this.data.settings.games?.[game]?.triggers.slice(-1)[0].id;
-
+    const triggerId = this.getTriggers(game)?.at(-1)?.id;
     if (triggerId) {
       this.state.setSelectedTab(ReactiveTabUtils.generateTriggerId(game, triggerId));
     }
   }
 
-  protected generateDefaultMedia(eventType: string): string {
-    switch (eventType) {
-      case 'death':
-        return 'https://cdn.streamlabs.com/library/animations/default-death.webm';
-      case 'defeat':
-        return 'https://cdn.streamlabs.com/library/animations/default-defeat.webm';
-      case 'victory':
-        return 'https://cdn.streamlabs.com/library/animations/default-victory.webm';
-      case 'elimination':
-        return 'https://cdn.streamlabs.com/library/animations/elimination.webm';
-      default:
-        return 'https://cdn.streamlabs.com/library/giflibrary/jumpy-kevin.webm';
+  /** Helper to append a new trigger to the correct group in settings. Either global or a specific game group */
+  private appendTriggerToSettings(
+    settings: ReactiveWidgetSettings,
+    groupId: string,
+    trigger: ReactiveTrigger,
+  ): ReactiveWidgetSettings {
+    const nextSettings = cloneDeep(settings) as ReactiveWidgetSettings;
+
+    if (groupId === 'global') {
+      const global = nextSettings.global || { enabled: true, triggers: [] };
+      nextSettings.global = {
+        ...global,
+        triggers: [...(global.triggers || []), trigger],
+      };
+      return nextSettings;
     }
+
+    const games = nextSettings.games || {};
+    const group = (games[groupId] as ReactiveTriggerGroup) || {
+      enabled: true,
+      triggers: [],
+    };
+
+    nextSettings.games = {
+      ...games,
+      [groupId]: {
+        ...group,
+        triggers: [...(group.triggers || []), trigger],
+      },
+    };
+
+    return nextSettings;
   }
 
-  protected generateDefaultMessageTemplate(triggerType: string, eventType: string): string {
-    const token = '{number}';
-    if (triggerType === 'level') return `${eventType}: ${token}`;
-    if (triggerType === 'streak') return `${token} ${eventType}`;
-    return eventType;
+  private getGroup(game: string, settings = this.settings) {
+    return game === 'global' ? settings.global : settings.games?.[game];
+  }
+
+  /** Get all triggers for a specific group. */
+  public getTriggers(game: string): ReactiveTrigger[] {
+    const group = this.getGroup(game);
+    return group?.triggers ?? [];
+  }
+
+  /** Get a specific trigger by ID within a group. Returns null if not found. */
+  public getTrigger(game: string, triggerId: string): ReactiveTrigger | null {
+    const group = this.getGroup(game);
+    if (!group) return null;
+    return group.triggers.find(t => t.id === triggerId) ?? null;
   }
 }
 

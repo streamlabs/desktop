@@ -349,7 +349,7 @@ export function getWidgetsConfig(
       previewUrl: `https://${host}/widgets/preview/game-pulse/${token}?simulate=1`,
       dataFetchUrl: `https://${host}/api/v5/widgets/desktop/game-pulse`,
       settingsSaveUrl: `https://${host}/api/v5/widgets/desktop/game-pulse`,
-      settingsUpdateEvent: 'reactiveWidgetSettingsUpdate',
+      settingsUpdateEvent: 'gamePulseSettingsUpdate',
       customCodeAllowed: false,
       customFieldsAllowed: false,
     },
