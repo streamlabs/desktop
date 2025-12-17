@@ -16,7 +16,9 @@ export function ConnectMore(p: IOnboardingStepProps) {
   }));
 
   const subtitle = isPartialSLAuth
-    ? $t('SLID requires at least one ')
+    ? $t(
+        'Streamlabs Desktop requires that you have a connected platform account in order to use all of its features. By skipping this step, you will be logged out and some features may be unavailable.',
+      )
     : $t('Connect your accounts for the best experience. You can always connect more later.');
 
   const platformCards: TPlatform[] = ['twitch', 'youtube', 'tiktok', 'kick', 'facebook'];
@@ -26,7 +28,7 @@ export function ConnectMore(p: IOnboardingStepProps) {
 
   return (
     <div className={styles.centered}>
-      <Header title={$t('Connect platforms')} description={subtitle} />
+      <Header title={$t('Connect Platforms')} description={subtitle} />
       <div style={{ display: 'flex' }}>
         {platformCards.map(platform => (
           <PlatformCard platform={platform} />
