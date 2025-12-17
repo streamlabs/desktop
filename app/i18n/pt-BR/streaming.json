@@ -325,5 +325,6 @@
   "Please confirm %{platforms} in the Vertical stream.": "Please confirm %{platforms} in the Vertical stream.",
   "Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays in Twitch": "A transmissão aprimorada no modo Dual Output só está disponível quando você está transmitindo para as telas horizontal e vertical no Twitch.",
   "Disable Twitch dual stream to add another platform": "Desative a transmissão dupla do Twitch para adicionar outra plataforma",
-  "Dual streaming to Twitch only available with Twitch as the only platform": "A transmissão dupla para o Twitch só será possível se o Twitch for a única plataforma."
+  "Dual streaming to Twitch only available with Twitch as the only platform": "A transmissão dupla para o Twitch só será possível se o Twitch for a única plataforma.",
+  "Recording and/or Replay Buffer failed to start and was automatically turned off when starting the stream.": "Error: Recording and/or Replay Buffer failed to start and was automatically turned off when starting the stream."
 }
