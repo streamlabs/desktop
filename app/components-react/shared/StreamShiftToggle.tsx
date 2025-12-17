@@ -57,6 +57,7 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
               <>{label}</>
             )
           }
+          name="streamShift"
           value={isStreamShiftMode}
           onChange={(status: boolean) => {
             setStreamShift(status);

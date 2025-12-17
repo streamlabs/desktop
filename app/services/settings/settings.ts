@@ -85,6 +85,7 @@ export interface ISettingsValues extends Record<TCategoryName, Dictionary<TObsVa
   };
   Output: {
     Mode: string;
+    Encoder: string;
     RecRB?: boolean;
     RecRBTime?: number;
     RecFormat: string;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import styles from './GoLive.m.less';
 import { WindowsService } from 'services/windows';
 import { SettingsService } from 'services/settings';
@@ -62,10 +62,11 @@ function ModalFooter() {
     isDualOutputMode,
     isPrime,
     isStreamShiftMode,
-    shouldSetupRestream,
+    hasIncompatibleCodec,
     streamShiftForceGoLive,
     checkIsLive,
-    setCodec,
+    forceStreamShiftGoLive,
+    goLiveWithDefaultCodec,
     showSettings,
   } = useGoLiveSettings().extend(module => ({
     windowsService: inject(WindowsService),
@@ -88,8 +89,20 @@ function ModalFooter() {
       return this.restreamService.actions.return.checkIsLive();
     },
 
-    setCodec() {
+    async forceStreamShiftGoLive() {
+      this.restreamService.actions.forceStreamShiftGoLive(true);
+    },
+
+    get hasIncompatibleCodec() {
+      const codec = this.settingsService.views.values.Output.Encoder;
+      return (
+        codec && ['ffmpeg_aom_av1', 'ffmpeg_svt_av1'].includes(codec) && module.shouldSetupRestream
+      );
+    },
+
+    goLiveWithDefaultCodec() {
       this.settingsService.actions.setDefaultVideoEncoder();
+      module.goLive();
     },
 
     showSettings() {
@@ -103,7 +116,37 @@ function ModalFooter() {
   const shouldShowGoBackButton =
     lifecycle === 'runChecklist' && error && checklist.startVideoTransmission !== 'done';
 
-  async function handleGoLive() {
+  const promptUseDefaultCodec = useCallback(async () => {
+    // If the user is not live but has an incompatible codec, prompt to change codec
+    let message = $t(
+      'AV1 codec is not supported for Multistream. Would you like to proceed with the H.264 codec or select another codec?',
+    );
+
+    if (isStreamShiftMode) {
+      message = $t(
+        'AV1 codec is not supported for Stream Shift. Would you like to proceed with the H.264 codec or select another codec?',
+      );
+    }
+
+    if (isDualOutputMode) {
+      message = $t(
+        'AV1 codec is not supported for Dual Output streaming to more than two destinations. Would you like to proceed with the H.264 codec or select another codec?',
+      );
+    }
+
+    await promptAction({
+      title: $t('Incompatible Codec Detected'),
+      message,
+      btnText: $t('Use H.264 Codec'),
+      fn: goLiveWithDefaultCodec,
+      cancelBtnText: $t('Cancel'),
+      cancelBtnPosition: 'left',
+      secondaryActionText: $t('Select Codec'),
+      secondaryActionFn: showSettings,
+    });
+  }, [hasIncompatibleCodec, isStreamShiftMode, isDualOutputMode]);
+
+  const handleGoLive = useCallback(async () => {
     if (isDualOutputMode && !getCanStreamDualOutput()) {
       message.error({
         key: 'dual-output-error',
@@ -121,40 +164,8 @@ function ModalFooter() {
         ),
         onClick: () => message.destroy('dual-output-error'),
       });
+
       return;
-    }
-
-    if (shouldSetupRestream) {
-      let message = $t(
-        'AV1 codec is not supported for Multistream. Would you like to proceed with the H.264 codec or select another codec?',
-      );
-
-      if (isStreamShiftMode) {
-        message = $t(
-          'AV1 codec is not supported for Stream Shift. Would you like to proceed with the H.264 codec or select another codec?',
-        );
-      }
-
-      if (isDualOutputMode) {
-        message = $t(
-          'AV1 codec is not supported for Dual Output streaming to more than two destinations. Would you like to proceed with the H.264 codec or select another codec?',
-        );
-      }
-
-      await promptAction({
-        title: $t('Incompatible Codec Detected'),
-        message,
-        btnText: $t('Use H.264 Codec'),
-        fn: () => {
-          setCodec();
-          goLive();
-          close();
-        },
-        cancelBtnText: $t('Cancel'),
-        cancelBtnPosition: 'left',
-        secondaryActionText: $t('Select Codec'),
-        secondaryActionFn: showSettings,
-      });
     }
 
     if (isPrime) {
@@ -175,19 +186,30 @@ function ModalFooter() {
             ),
             btnText: $t('Switch to Streamlabs Desktop'),
             fn: () => {
-              goLive();
-              close();
+              // If the user is live and has an incompatible codec, prompt to change codec
+              // or the stream will not go live
+              if (hasIncompatibleCodec) {
+                promptUseDefaultCodec();
+              } else {
+                goLive();
+                close();
+              }
             },
             cancelBtnText: $t('Cancel'),
             cancelBtnPosition: 'left',
             secondaryActionText: $t('Force Start'),
             secondaryActionFn: async () => {
-              Services.RestreamService.actions.forceStreamShiftGoLive(true);
+              forceStreamShiftGoLive();
               shouldForceGoLive = true;
             },
           });
 
           if (!shouldForceGoLive) return;
+        } else if (!isLive && hasIncompatibleCodec) {
+          console.log('Incompatible codec detected, prompting user to change codec');
+          // If the user is not live but has an incompatible codec, prompt to change codec
+          await promptUseDefaultCodec();
+          return;
         }
       } catch (e: unknown) {
         console.error('Error checking stream switcher status:', e);
@@ -197,7 +219,7 @@ function ModalFooter() {
     }
 
     goLive();
-  }
+  }, [isDualOutputMode, isPrime, streamShiftForceGoLive, hasIncompatibleCodec]);
 
   return (
     <Form layout={'inline'}>
