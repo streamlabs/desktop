@@ -92,9 +92,10 @@ class TwitchServiceViews extends ViewHandler<ITwitchServiceState> {
    * Production releases: "twitchDualStream"
    */
   get hasTwitchDualStreamAccess() {
-    return this.incrementalRolloutServiceView.featureIsEnabled(
-      EAvailableFeatures.twitchDualStreamPreview,
-    );
+    const featureName = Utils.env.SLOBS_PREVIEW
+      ? EAvailableFeatures.twitchDualStreamPreview
+      : EAvailableFeatures.twitchDualStream;
+    return this.incrementalRolloutServiceView.featureIsEnabled(featureName);
   }
 }
 
@@ -234,7 +235,6 @@ export class TwitchService
       this.streamSettingsService.protectedModeEnabled &&
       this.streamSettingsService.isSafeToModifyStreamKey()
     ) {
-      console.log('protectedModeEnabled, fetching Twitch stream key');
       let key = await this.fetchStreamKey();
       // do not start actual stream when testing
       if (Utils.isTestMode()) {
@@ -260,22 +260,20 @@ export class TwitchService
       if (channelInfo) {
         if (channelInfo?.display === 'both') {
           try {
-            console.log('Has goLiveSettings, setting up dual stream for Twitch');
             await this.setupDualStream(goLiveSettings);
           } catch (e: unknown) {
             console.error('Error setting up dual stream:', e);
           }
+        } else {
+          // Update enhanced broadcasting setting based on go live settings
+          this.settingsService.setEnhancedBroadcasting(channelInfo.isEnhancedBroadcasting);
         }
-
-        // Update enhanced broadcasting setting based on go live settings
-        this.settingsService.setEnhancedBroadcasting(channelInfo.isEnhancedBroadcasting);
 
         await this.putChannelInfo(channelInfo);
       }
     } else if (this.streamingService.views.isTwitchDualStreaming) {
       // Failsafe to guarantee that enhanced broadcasting is enabled if dual streaming is active
       try {
-        console.log('Does not have goLiveSettings, setting up dual stream for Twitch');
         await this.setupDualStream(goLiveSettings);
       } catch (e: unknown) {
         console.error('Error setting up dual stream:', e);
@@ -325,10 +323,9 @@ export class TwitchService
     const url = `https://${host}/api/v5/slobs/twitch/refresh`;
     const headers = authorizedHeaders(this.userService.apiToken!);
     const request = new Request(url, { headers });
-
-    return jfetch<{ access_token: string }>(request).then(response =>
-      this.userService.updatePlatformToken('twitch', response.access_token),
-    );
+    return jfetch<{ access_token: string }>(request).then(response => {
+      this.userService.updatePlatformToken('twitch', response.access_token);
+    });
   }
 
   /**
@@ -338,11 +335,14 @@ export class TwitchService
     try {
       return await platformAuthorizedRequest<T>('twitch', reqInfo);
     } catch (e: unknown) {
-      const details = (e as any).result
-        ? `${(e as any).result.status} ${(e as any).result.error} ${(e as any).result.message}`
+      console.error(`Failed ${this.displayName} API Request:`, reqInfo);
+
+      const error = e as any;
+      const details = error.result
+        ? `${error.result.status} ${error.result.error} ${error.result.message}`
         : 'Connection failed';
       let errorType: TStreamErrorType;
-      switch ((e as any).result?.message) {
+      switch (error.result?.message) {
         case 'missing required oauth scope':
           errorType = 'TWITCH_MISSED_OAUTH_SCOPE';
           break;
@@ -352,7 +352,7 @@ export class TwitchService
         default:
           errorType = 'PLATFORM_REQUEST_FAILED';
       }
-      throwStreamError(errorType, { ...(e as any), platform: 'twitch' }, details);
+      throwStreamError(errorType, { ...error, platform: 'twitch' }, details);
     }
   }
 
@@ -423,7 +423,7 @@ export class TwitchService
 
     if (settings && !settings.is_live) {
       console.error('Stream Shift Error: Twitch is not live');
-      this.postError('Stream Shift Error: Twitch is not live');
+      this.postNotification('Stream Shift Error: Twitch is not live');
       return;
     }
 
