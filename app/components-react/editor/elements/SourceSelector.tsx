@@ -793,6 +793,7 @@ function StudioControls() {
 
       <Tooltip title={ctrl.dualOutputTitle} placement="bottomRight">
         <i
+          data-name="dual-output-toggle"
           className={cx('icon-dual-output icon-button icon-button--lg', {
             active: ctrl.isDualOutputActive,
           })}
@@ -923,7 +924,7 @@ const TreeNode = React.forwardRef(
           <>
             {p.isGuestCamActive && <i className="fa fa-signal" />}
             {p.isDualOutputActive && p.hasNodeMap && (
-              <DualOutputSourceSelector nodeId={p.id} sceneId={p?.sceneId} />
+              <DualOutputSourceSelector nodeId={p.id} sceneId={p?.sceneId} sourceName={p.title} />
             )}
             {p.selectiveRecordingEnabled && (
               <Tooltip title={selectiveRecordingMetadata().tooltip} placement="left">
