@@ -40,7 +40,6 @@ export enum ESubMenuItemKey {
   Scene = 'browse-overlays',
   Widget = 'browse-overlays-widgets',
   Sites = 'browse-overlays-sites',
-  Collectibles = 'browse-overlays-collectibles',
   AppsStoreHome = 'platform-app-store-home',
   AppsManager = 'platform-app-store-manager',
   DashboardHome = 'dashboard-home',
@@ -153,7 +152,6 @@ export const menuTitles = (item: EMenuItemKey | ESubMenuItemKey | string) => {
     [ESubMenuItemKey.Scene]: $t('Scene'),
     [ESubMenuItemKey.Widget]: $t('Alerts and Widgets'),
     [ESubMenuItemKey.Sites]: $t('Creator Sites'),
-    [ESubMenuItemKey.Collectibles]: $t('Collectibles'),
     [ESubMenuItemKey.AppsStoreHome]: $t('Apps Store Home'),
     [ESubMenuItemKey.AppsManager]: $t('Apps Manager'),
     [ESubMenuItemKey.DashboardHome]: $t('Dashboard Home'),
@@ -237,7 +235,6 @@ export const SideNavMenuItems = (): TMenuItems => ({
     subMenuItems: [
       SideBarSubMenuItems()[ESubMenuItemKey.Scene],
       SideBarSubMenuItems()[ESubMenuItemKey.Widget],
-      SideBarSubMenuItems()[ESubMenuItemKey.Collectibles],
     ],
     isActive: true,
     isExpanded: false,
@@ -358,13 +355,6 @@ export const SideBarSubMenuItems = (): TSubMenuItems => ({
     type: 'site-themes',
     trackingTarget: 'themes',
     isActive: false,
-    isExpanded: false,
-  },
-  [ESubMenuItemKey.Collectibles]: {
-    key: ESubMenuItemKey.Collectibles,
-    target: 'BrowseOverlays',
-    type: 'collectibles',
-    trackingTarget: 'themes',
     isExpanded: false,
   },
   [ESubMenuItemKey.AppsStoreHome]: {
