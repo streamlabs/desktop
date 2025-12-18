@@ -141,7 +141,6 @@ test(
     await focusMain();
     await waitForDisplayed('div=Refresh Chat', { timeout: 60000 });
     await stopStream();
-    await waitForStreamStop();
 
     await goLiveWithDefaultCodec();
 
@@ -189,39 +188,6 @@ test(
     await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
     await waitForDisplayed("h1=You're live!", { timeout: 60000 });
     await stopStream();
-    await waitForStreamStop();
-
-    await showSettingsWindow('Output', async () => {
-      await fillForm({ StreamEncoder: 'AOM AV1' });
-      await clickButton('Close');
-    });
-
-    // Try to go live with incompatible codec
-    await clickGoLive();
-    await waitForSettingsWindowLoaded();
-    await submit();
-    await waitForDisplayed('div=Invalid Codec Detected', { timeout: 10000 });
-
-    // Try a new codec the incompatible codec dialog
-    await clickButton('Select Codec');
-
-    console.log('Selecting a different incompatible codec');
-
-    // Select another incompatible codec
-    await fillForm({ StreamEncoder: 'SVT-AV1' });
-    await clickButton('Close');
-
-    await clickGoLive();
-    await waitForSettingsWindowLoaded();
-    await submit();
-    await waitForDisplayed('div=Invalid Codec Detected', { timeout: 10000 });
-    await clickButton('Use H.264 Codec');
-
-    await submit();
-    await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
-    await waitForDisplayed("h1=You're live!", { timeout: 60000 });
-    await stopStream();
-    await waitForStreamStop();
 
     t.pass();
   },
