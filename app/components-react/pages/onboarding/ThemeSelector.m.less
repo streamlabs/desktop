@@ -9,16 +9,33 @@
   margin: 40px;
   width: calc(100% - 80px);
   overflow: hidden;
+  background: var(--section);
+  .radius(2);
+  padding: 16px;
 
-  img, video {
+  img,
+  video {
     object-fit: cover;
     width: 100%;
     max-height: 100%;
   }
 }
 
+.themes-sidebar {
+  padding-right: 16px;
+  border-right: 1px solid var(--background);
+  max-width: 320px;
+}
+
+img.designer-logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+}
+
 .cell {
   .radius(2);
+  margin-bottom: 16px;
 
   position: relative;
   overflow: hidden;
@@ -30,7 +47,7 @@
 
 .title {
   position: absolute;
-  background: var(--section);
+  background: var(--button);
   width: 100%;
   bottom: -1px;
   padding: 8px;
@@ -42,17 +59,10 @@
 }
 
 .detail-panel {
-  .radius(2);
-
   position: relative;
   grid-column: 1 / span 2;
   grid-row: 1 / span 2;
-  background: var(--section);
   padding: 16px;
-
-  h1 {
-    margin-bottom: 0;
-  }
 }
 
 .detail-panel.right {
@@ -72,6 +82,13 @@
   button {
     margin-left: auto;
     margin-right: 32px;
+  }
+
+  .theme-details {
+    align-self: flex-start;
+    flex-direction: column;
+    justify-content: space-between;
+    margin-left: 20px;
   }
 }
 
@@ -102,4 +119,13 @@
 
 .preview.active {
   border: 1px solid var(--teal);
+}
+
+.designer-name {
+  font-weight: bold;
+}
+
+:global(.has-link) {
+  cursor: pointer;
+  text-decoration: underline;
 }

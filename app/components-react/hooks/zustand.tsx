@@ -2,6 +2,7 @@ import { StoreApi, useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
 import { immer } from 'zustand/middleware/immer';
 import React, { Context, useContext, useMemo } from 'react';
+import { Draft } from 'immer';
 
 /**
  * Initializes a Zustand store with the provided initial state, utilizing immer middleware.
@@ -26,8 +27,16 @@ export function initStore<TState extends any>(initialStateDraft: TState) {
   const useState = createBoundedUseStore(store);
   (store as any).useState = useState;
 
+  const update = (key: keyof TState, value: any) =>
+    store.setState((s: Draft<TState>) => {
+      (s as any)[key] = value;
+    });
+  (store as any).update = update;
+
   // ensure we have correct types
-  return store as typeof store & { useState: typeof useState } & Readonly<typeof initialStateDraft>;
+  return store as typeof store & { useState: typeof useState } & {
+    update: typeof update;
+  } & Readonly<typeof initialStateDraft>;
 }
 
 /**
@@ -78,6 +87,8 @@ export function useController<T>(ControllerCtx: Context<T>): NonNullable<T> {
       if (actionName === 'constructor') continue;
       if (!(controller as any)[actionName]?.bind) continue;
       // Run initialize actions if they exist
+      // TODO: index
+      // @ts-ignore
       if (actionName === 'init') controller[actionName]();
       actions[actionName] = (controller as any)[actionName].bind(controller);
     }

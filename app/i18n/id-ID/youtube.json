@@ -40,5 +40,13 @@
   "Auto-start is disabled for your broadcast. You should manually publish your stream from Youtube Studio": "Auto-start dinonaktifkan untuk broadcast Anda. Anda harus menerbitkan streaming Anda dari YouTube Studio secara manual",
   "Made for kids": "Dibuat untuk anak-anak",
   "Features like personalized ads and live chat won't be available on live streams made for kids.": "Fitur seperti iklan yang dipersonalisasi dan live chat tidak akan tersedia di live streaming yang dibuat untuk anak-anak.",
-  "Try our new thumbnail editor": "Cobalah thumbnail editor kami yang baru"
+  "YouTube token has expired, re-login or re-merge YouTube account": "Token YouTube telah kedaluwarsa, masuk kembali atau gabungkan kembali akun YouTube",
+  "Thumbnail image content is invalid.": "Konten gambar mini tidak valid.",
+  "Thumbnail file does not include image content.": "File gambar mini tidak menyertakan konten gambar.",
+  "Permission missing to upload thumbnails.": "Izin tidak ada untuk mengunggah gambar mini.",
+  "Video does not exist. Thumbnail upload failed.": "Video tidak ada. Unggahan gambar mini gagal.",
+  "Exceeded thumbnail upload quota. Please try again later.": "Kuota unggahan gambar mini melebihi batas. Coba kembali nanti.",
+  "YouTube thumbnail image is too large. Maximum size is 2MB.": "Gambar mini YouTube terlalu besar. Ukuran maksimum adalah 2MB.",
+  "Please upload thumbnail manually on YouTube.": "Silakan unggah gambar mini secara manual di YouTube.",
+  "Stream Shift Error: YouTube is not live": "Stream Shift Error: YouTube is not live"
 }

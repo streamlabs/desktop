@@ -1,0 +1,47 @@
+.action-modal-icon {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  margin-right: 10px;
+  vertical-align: super;
+  font-size: 18px;
+  color: var(--title);
+}
+
+.action-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1003 !important; // show above resize bars
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80%;
+  width: 100%;
+
+  &:global(.ant-modal-confirm .ant-modal-body) {
+    padding: 0px;
+  }
+
+  :global(div.ant-modal-content) {
+    box-shadow: none;
+    height: unset !important;
+  }
+
+  :global(.ant-modal-confirm-body .ant-modal-confirm-title) {
+    display: inline-block;
+    font-size: 19px;
+    line-height: unset;
+  }
+
+  :global(.ant-modal-confirm-btns) {
+    display: none;
+  }
+}
+
+.action-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+}

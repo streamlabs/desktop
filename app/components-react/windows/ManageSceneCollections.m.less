@@ -1,16 +1,21 @@
 .button-container {
   display: grid;
   grid-template-columns: 50% 50%;
-  grid-template-rows: 150px 150px;
+  grid-template-rows: 165px 165px;
   gap: 16px;
-  padding-right: 20px;
+  padding-right: 8px;
   margin-top: 8px;
 
   .button {
-    background: var(--button);
+    background: transparent;
+    border: 2px solid var(--focus-border);
     color: var(--paragraph);
     padding: 8px;
     border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
 
     i {
       display: block;
@@ -27,6 +32,16 @@
     &.button:disabled {
       pointer-events: none;
     }
+
+    p {
+      font-weight: 400;
+      line-height: 21px;
+      margin-bottom: 0;
+    }
+  }
+
+  .button.new {
+    grid-column: 1 / span 2;
   }
 
   .button.lg {
@@ -34,6 +49,7 @@
     display: flex;
     justify-content: space-evenly;
     align-items: center;
+    min-height: 165px;
 
     img {
       width: 140px;

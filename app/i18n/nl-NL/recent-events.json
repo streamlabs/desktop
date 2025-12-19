@@ -80,5 +80,7 @@
   "has resubscribed": "is opnieuw geabonneerd",
   "has gifted a sub to": "heeft een abonnement cadeau gegeven aan",
   "has resubscribed for %{streak} months in a row! (%{months} total)": "is opnieuw geabonneerd voor %{streak} maanden op rij (%{months} in totaal)",
-  "has resubscribed for %{months} months": "is opnieuw geabonneerd voor %{months} maanden"
+  "has resubscribed for %{months} months": "is opnieuw geabonneerd voor %{months} maanden",
+  "Disable Chat Box Notifications": "Chatvenstermeldingen uitschakelen",
+  "Enable Chat Box Notifications": "Chatvenstermeldingen inschakelen"
 }

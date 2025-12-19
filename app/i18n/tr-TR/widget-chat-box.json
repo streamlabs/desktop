@@ -26,5 +26,7 @@
   "Disable Message Animations": "Mesaj Animasyonlarını Devre Dışı Bırak",
   "Hide Characters": "Karakterleri Gizle",
   "Hide Common Chat Bots": "Genel sohbet robotlarını gizleyin",
-  "Hide commands starting with `!`": "'!' ile başlayan komutlarını gizle"
+  "Hide commands starting with `!`": "'!' ile başlayan komutlarını gizle",
+  "Chat Notifications": "Sohbet Bildirimleri Gönder",
+  "Trigger a sound to notify you when there is new chat activity": "Yeni bir sohbet etkinliği olduğunda sizi uyarması için bir sesli bildirim ayarlayın."
 }

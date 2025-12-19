@@ -3,6 +3,7 @@
   "The scene name is required": "Der Szenenname ist erforderlich",
   "Please enter the name of the scene": "Bitte Szenennamen eingeben",
   "Manage Scene Collections": "Szenen-Sammlungen verwalten",
+  "Create Scene Collection": "Szenensammlung erstellen",
   "There needs to be at least one scene.": "Es muss mindestens eine Szene vorhanden sein.",
   "Projector:": "Projektor:",
   "Projector: Output": "Projektor: Ausgabe",
@@ -56,5 +57,13 @@
   "Arrange sources here for a vertical scene layout.": "Quellen für vertikales Szenenlayout hier anordnen.",
   "Arrange sources here for a horizontal scene layout.": "Quellen für horizontales Szenenlayout hier anordnen.",
   "Toggle Dual Output Mode.": "Dual Output Modus ein/aus.",
-  "Cannot hide dual output toggles in dual output mode.": "Im Dual Output Modus können die Umschalter für Dual Output nicht ausgeblendet werden."
+  "Cannot hide dual output toggles in dual output mode.": "Im Dual Output Modus können die Umschalter für Dual Output nicht ausgeblendet werden.",
+  "Choose a template from our overlay library": "Wähle eine Vorlage aus unserer Overlay-Bibliothek",
+  "Log in to choose a template from our overlay library": "Logge dich ein, um eine Vorlage aus unserer Overlay-Bibliothek auszuwählen",
+  "Loading scene...": "Szene laden ...",
+  "Import from OBS": "Von OBS importieren",
+  "Import from Twitch": "Von Twitch importieren",
+  "Import from Twitch Studio": "Aus Twitch Studio importieren",
+  "Load existing scenes from Twitch Studio": "Vorhandene Szenen aus Twitch Studio laden",
+  "Start Fresh": "Ohne Import starten"
 }

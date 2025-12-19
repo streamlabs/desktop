@@ -1,21 +1,31 @@
+import { IObsListInput, IObsListOption, TObsValue } from 'components/obs/inputs/ObsInput';
 import * as fs from 'fs';
-import Vue from 'vue';
-import { Subject } from 'rxjs';
 import cloneDeep from 'lodash/cloneDeep';
-import { IObsListOption, TObsValue, IObsListInput } from 'components/obs/inputs/ObsInput';
-import { mutation, StatefulService, ViewHandler } from 'services/core/stateful-service';
-import * as obs from '../../../obs-api';
+import { Subject } from 'rxjs';
 import { InitAfter } from 'services/core';
 import { Inject } from 'services/core/injector';
-import namingHelpers from 'util/NamingHelpers';
-import { WindowsService } from 'services/windows';
-import { WidgetDisplayData, WidgetsService, WidgetType } from 'services/widgets';
-import { DefaultManager } from './properties-managers/default-manager';
-import { WidgetManager } from './properties-managers/widget-manager';
+import { mutation, StatefulService, ViewHandler } from 'services/core/stateful-service';
+import { GuestCamService } from 'services/guest-cam';
+import { DefaultHardwareService, HardwareService } from 'services/hardware';
+import { $t } from 'services/i18n';
+import { NavigationService } from 'services/navigation';
+import { PlatformAppsService } from 'services/platform-apps';
 import { ISceneItem, ScenesService } from 'services/scenes';
-import { StreamlabelsManager } from './properties-managers/streamlabels-manager';
-import { PlatformAppManager } from './properties-managers/platform-app-manager';
+import { VideoSettingsService } from 'services/settings-v2';
+import { SourceFiltersService } from 'services/source-filters';
+import { UsageStatisticsService } from 'services/usage-statistics';
 import { UserService } from 'services/user';
+import { WidgetDisplayData, WidgetsService, WidgetType } from 'services/widgets';
+import { WindowsService } from 'services/windows';
+import namingHelpers from 'util/NamingHelpers';
+import { assertIsDefined } from 'util/properties-type-guards';
+import uuid from 'uuid/v4';
+import Vue from 'vue';
+import * as obs from '../../../obs-api';
+import { EDeinterlaceFieldOrder, EDeinterlaceMode, EMonitoringType } from '../../../obs-api';
+import { AudioService, E_AUDIO_CHANNELS } from '../audio';
+import { CustomizationService } from '../customization';
+import { EAvailableFeatures, IncrementalRolloutService } from '../incremental-rollout';
 import {
   IActivePropertyManager,
   ISource,
@@ -25,30 +35,22 @@ import {
   TPropertiesManager,
   TSourceType,
 } from './index';
-import uuid from 'uuid/v4';
-import { $t } from 'services/i18n';
-import { SourceDisplayData } from './sources-data';
-import { NavigationService } from 'services/navigation';
-import { PlatformAppsService } from 'services/platform-apps';
-import { HardwareService, DefaultHardwareService } from 'services/hardware';
-import { AudioService, E_AUDIO_CHANNELS } from '../audio';
-import { ReplayManager } from './properties-managers/replay-manager';
+import { DefaultManager } from './properties-managers/default-manager';
 import { IconLibraryManager } from './properties-managers/icon-library-manager';
-import { assertIsDefined } from 'util/properties-type-guards';
-import { UsageStatisticsService } from 'services/usage-statistics';
-import { SourceFiltersService } from 'services/source-filters';
-import { VideoService } from 'services/video';
-import { CustomizationService } from '../customization';
-import { EAvailableFeatures, IncrementalRolloutService } from '../incremental-rollout';
-import { EMonitoringType, EDeinterlaceMode, EDeinterlaceFieldOrder } from '../../../obs-api';
-import { GuestCamService } from 'services/guest-cam';
+import { PlatformAppManager } from './properties-managers/platform-app-manager';
+import { ReplayManager } from './properties-managers/replay-manager';
+import { SmartBrowserSourceManager } from './properties-managers/smart-browser-source-manager';
+import { StreamlabelsManager } from './properties-managers/streamlabels-manager';
+import { WidgetManager } from './properties-managers/widget-manager';
+import { SourceDisplayData } from './sources-data';
 
-export { EDeinterlaceMode, EDeinterlaceFieldOrder } from '../../../obs-api';
+export { EDeinterlaceFieldOrder, EDeinterlaceMode } from '../../../obs-api';
 
 const AudioFlag = obs.ESourceOutputFlags.Audio;
 const VideoFlag = obs.ESourceOutputFlags.Video;
 const AsyncFlag = obs.ESourceOutputFlags.Async;
 const DoNotDuplicateFlag = obs.ESourceOutputFlags.DoNotDuplicate;
+const ForceUiRefresh = obs.ESourceOutputFlags.ForceUiRefresh;
 
 export const PROPERTIES_MANAGER_TYPES = {
   default: DefaultManager,
@@ -57,6 +59,7 @@ export const PROPERTIES_MANAGER_TYPES = {
   platformApp: PlatformAppManager,
   replay: ReplayManager,
   iconLibrary: IconLibraryManager,
+  smartBrowserSource: SmartBrowserSourceManager,
 };
 
 interface IObsSourceCallbackInfo {
@@ -93,6 +96,8 @@ export const windowsSources: TSourceType[] = [
   'soundtrack_source',
   'mediasoupconnector',
   'wasapi_process_output_capture',
+  'spout_capture',
+  'smart_browser_source',
 ];
 
 /**
@@ -108,10 +113,11 @@ export const macSources: TSourceType[] = [
   'scene',
   'coreaudio_input_capture',
   'coreaudio_output_capture',
-  'av_capture_input',
+  'macos_avcapture',
   'display_capture',
   'audio_line',
   'ndi_source',
+  'mac_screen_capture',
   'vlc_source',
   'window_capture',
   'syphon-input',
@@ -187,7 +193,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
   @Inject() private defaultHardwareService: DefaultHardwareService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
   @Inject() private sourceFiltersService: SourceFiltersService;
-  @Inject() private videoService: VideoService;
+  @Inject() private videoSettingsService: VideoSettingsService;
   @Inject() private customizationService: CustomizationService;
   @Inject() private incrementalRolloutService: IncrementalRolloutService;
   @Inject() private guestCamService: GuestCamService;
@@ -202,6 +208,11 @@ export class SourcesService extends StatefulService<ISourcesState> {
    * Maps a source id to a property manager
    */
   propertiesManagers: Dictionary<IActivePropertyManager> = {};
+
+  /**
+   * Sources that failed to create obs inputs on initial load
+   */
+  missingInputs: string[] = [];
 
   protected init() {
     obs.NodeObs.RegisterSourceCallback((objs: IObsSourceCallbackInfo[]) =>
@@ -247,6 +258,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
       video: false,
       async: false,
       doNotDuplicate: false,
+      forceUiRefresh: false,
 
       configurable: addOptions.configurable,
 
@@ -284,7 +296,10 @@ export class SourcesService extends StatefulService<ISourcesState> {
   private UPDATE_SOURCE(sourcePatch: TPatch<ISource>) {
     if (this.state.sources[sourcePatch.id]) {
       Object.assign(this.state.sources[sourcePatch.id], sourcePatch);
+    } else if (this.state.temporarySources[sourcePatch.id]) {
+      Object.assign(this.state.temporarySources[sourcePatch.id], sourcePatch);
     } else {
+      this.state.temporarySources[sourcePatch.id] = {} as ISource;
       Object.assign(this.state.temporarySources[sourcePatch.id], sourcePatch);
     }
   }
@@ -295,7 +310,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
     settings: Dictionary<any> = {},
     options: ISourceAddOptions = {},
   ): Source {
-    const id: string = options.sourceId || `${type}_${uuid()}`;
+    const id: string = options?.sourceId || `${type}_${uuid()}`;
     const obsInputSettings = this.getObsSourceCreateSettings(type, settings);
 
     // Universally disabled for security reasons
@@ -303,30 +318,46 @@ export class SourcesService extends StatefulService<ISourcesState> {
       obsInputSettings.is_media_flag = false;
     }
 
-    const obsInput = obs.InputFactory.create(type, id, obsInputSettings);
+    // This call to obs to create the input must be caught, otherwise it causes an app crash
+    try {
+      const computedType = obsInputSettings.__remappedType || type;
+      const obsInput = obs.InputFactory.create(computedType, id, obsInputSettings);
 
-    // For Guest Cam, we default sources to monitor so the streamer can hear guests
-    if (type === 'mediasoupconnector' && !options.audioSettings?.monitoringType) {
-      options.audioSettings ??= {};
-      options.audioSettings.monitoringType = EMonitoringType.MonitoringOnly;
-    }
+      // For Guest Cam, we default sources to monitor so the streamer can hear guests
+      if (type === 'mediasoupconnector' && !options.audioSettings?.monitoringType) {
+        options.audioSettings ??= {};
+        options.audioSettings.monitoringType = EMonitoringType.MonitoringOnly;
+      }
 
-    this.addSource(obsInput, name, options);
+      if (type === 'smart_browser_source') {
+        options.propertiesManager = 'smartBrowserSource';
+      }
 
-    if (
-      this.defaultHardwareService.state.defaultVideoDevice === obsInputSettings.video_device_id &&
-      this.defaultHardwareService.state.presetFilter !== '' &&
-      this.defaultHardwareService.state.presetFilter !== 'none'
-    ) {
-      this.sourceFiltersService.addPresetFilter(id, this.defaultHardwareService.state.presetFilter);
-    }
+      this.addSource(obsInput, name, options);
 
-    if (
-      this.defaultHardwareService.state.defaultVideoDevice === obsInputSettings.device &&
-      this.defaultHardwareService.state.presetFilter !== '' &&
-      this.defaultHardwareService.state.presetFilter !== 'none'
-    ) {
-      this.sourceFiltersService.addPresetFilter(id, this.defaultHardwareService.state.presetFilter);
+      if (
+        this.defaultHardwareService.state.defaultVideoDevice === obsInputSettings.video_device_id &&
+        this.defaultHardwareService.state.presetFilter !== '' &&
+        this.defaultHardwareService.state.presetFilter !== 'none'
+      ) {
+        this.sourceFiltersService.addPresetFilter(
+          id,
+          this.defaultHardwareService.state.presetFilter,
+        );
+      }
+
+      if (
+        this.defaultHardwareService.state.defaultVideoDevice === obsInputSettings.device &&
+        this.defaultHardwareService.state.presetFilter !== '' &&
+        this.defaultHardwareService.state.presetFilter !== 'none'
+      ) {
+        this.sourceFiltersService.addPresetFilter(
+          id,
+          this.defaultHardwareService.state.presetFilter,
+        );
+      }
+    } catch (e: unknown) {
+      console.log('Error creating obs source: ', e);
     }
 
     return this.views.getSource(id)!;
@@ -339,12 +370,19 @@ export class SourcesService extends StatefulService<ISourcesState> {
     const id = obsInput.name;
     const type: TSourceType = obsInput.id as TSourceType;
     const managerType = options.propertiesManager || 'default';
+    const width = options?.display
+      ? this.videoSettingsService.baseResolutions[options?.display].baseWidth
+      : obsInput.width;
+    const height = options?.display
+      ? this.videoSettingsService.baseResolutions[options?.display].baseHeight
+      : obsInput.height;
+
     this.ADD_SOURCE({
       id,
       name,
       type,
-      width: obsInput.width,
-      height: obsInput.height,
+      width,
+      height,
       configurable: obsInput.configurable,
       channel: options.channel,
       isTemporary: options.isTemporary,
@@ -355,7 +393,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
     const source = this.views.getSource(id)!;
     const muted = obsInput.muted;
     this.UPDATE_SOURCE({ id, muted });
-    this.updateSourceFlags(source.state, obsInput.outputFlags, true);
+    this.updateSourceFlags(source, obsInput.outputFlags, true);
 
     if (type === 'ndi_source') {
       this.usageStatisticsService.recordFeatureUsage('NDI');
@@ -387,38 +425,42 @@ export class SourcesService extends StatefulService<ISourcesState> {
       this.usageStatisticsService.recordFeatureUsage('DisplayCapture');
     } else if (type === 'game_capture') {
       this.usageStatisticsService.recordFeatureUsage('GameCapture');
+    } else if (type === 'spout_capture') {
+      this.usageStatisticsService.recordFeatureUsage('SpoutCapture');
     }
-
     const managerKlass = PROPERTIES_MANAGER_TYPES[managerType];
     this.propertiesManagers[id] = {
       manager: new managerKlass(obsInput, options.propertiesManagerSettings || {}, id),
       type: managerType,
     };
 
-    // Needs to happen after properties manager creation, otherwise we can't fetch props
-    if (type === 'wasapi_input_capture') {
+    //function to check for missing device, return device description (display name)
+    function checkForDefaultDevice(): string {
       const props = source.getPropertiesFormData();
       const deviceProp = props.find(p => p.name === 'device_id');
 
-      if (deviceProp && deviceProp.value === 'default') {
-        const defaultDeviceNameProp = props.find(p => p.name === 'device_name');
-
-        if (defaultDeviceNameProp) {
-          this.usageStatisticsService.recordAnalyticsEvent('MicrophoneUse', {
-            device: defaultDeviceNameProp.description,
-          });
-        }
-      } else if (deviceProp && deviceProp.type === 'OBS_PROPERTY_LIST') {
+      if (deviceProp && deviceProp.type === 'OBS_PROPERTY_LIST') {
         const deviceOption = (deviceProp as IObsListInput<string>).options.find(
           opt => opt.value === deviceProp.value,
         );
-
-        if (deviceOption) {
-          this.usageStatisticsService.recordAnalyticsEvent('MicrophoneUse', {
-            device: deviceOption.description,
-          });
+        if (!deviceOption) {
+          const updateSettings = source.getSettings();
+          updateSettings['device_id'] = 'default';
+          source.updateSettings(updateSettings);
+          return 'Default';
         }
+        return deviceOption.description;
       }
+      return 'Default';
+    }
+
+    // Needs to happen after properties manager creation, otherwise we can't fetch props
+    if (type === 'wasapi_input_capture') {
+      this.usageStatisticsService.recordAnalyticsEvent('MicrophoneUse', {
+        device: checkForDefaultDevice(),
+      });
+    } else if (type === 'wasapi_output_capture') {
+      checkForDefaultDevice();
     }
 
     this.sourceAdded.next(source.state);
@@ -480,6 +522,8 @@ export class SourcesService extends StatefulService<ISourcesState> {
 
     const types = Object.keys(SUPPORTED_EXT);
     for (const type of types) {
+      // TODO: index
+      // @ts-ignore
       if (!SUPPORTED_EXT[type].includes(ext)) continue;
       let settings: Dictionary<TObsValue> | null = null;
       if (type === 'image_source') {
@@ -528,8 +572,26 @@ export class SourcesService extends StatefulService<ISourcesState> {
       }
     }
 
-    if (type === 'text_gdiplus' && resolvedSettings.text === void 0) {
-      resolvedSettings.text = name;
+    if (type === 'smart_browser_source') {
+      resolvedSettings.__remappedType = 'browser_source';
+      resolvedSettings.webpage_control_level = 5;
+      resolvedSettings.propertiesManager = 'smart_browser_source';
+      resolvedSettings.url = '';
+      resolvedSettings.width = 1280;
+      resolvedSettings.height = 720;
+    }
+
+    if (type === 'text_gdiplus') {
+      if (resolvedSettings.text === void 0) {
+        resolvedSettings.text = name;
+      }
+
+      // Note: this is the first attempt to add versioning to sources.
+      // In partucular, adding the version 3 for text solves the blurriness problem.
+      // And this approach allows to preserve older behavior for previously created sources.
+      // You can look into this commit as a reference.
+      // https://github.com/obsproject/obs-studio/commit/b2302902a3b3e1cce140a6417f4c5e490869a3f2
+      resolvedSettings.version = 3;
     }
 
     if (
@@ -541,7 +603,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
     }
 
     if (
-      type === 'av_capture_input' &&
+      type === 'macos_avcapture' &&
       resolvedSettings.device === void 0 &&
       this.defaultHardwareService.state.defaultVideoDevice
     ) {
@@ -571,16 +633,18 @@ export class SourcesService extends StatefulService<ISourcesState> {
       { description: 'NDI Source', value: 'ndi_source' },
       { description: 'OpenVR Capture', value: 'openvr_capture' },
       { description: 'Screen Capture', value: 'screen_capture' },
+      { description: 'macOS Screen Capture', value: 'mac_screen_capture' },
       { description: 'LIV Client Capture', value: 'liv_capture' },
       { description: 'OvrStream', value: 'ovrstream_dc_source' },
       { description: 'VLC Source', value: 'vlc_source' },
       { description: 'Audio Input Capture', value: 'coreaudio_input_capture' },
       { description: 'Audio Output Capture', value: 'coreaudio_output_capture' },
-      { description: 'Video Capture Device', value: 'av_capture_input' },
+      { description: 'Video Capture Device', value: 'macos_avcapture' },
       { description: 'Display Capture', value: 'display_capture' },
       { description: 'Soundtrack source', value: 'soundtrack_source' },
       { description: 'Collab Cam', value: 'mediasoupconnector' },
       { description: 'Application Audio Capture (BETA)', value: 'wasapi_process_output_capture' },
+      { description: 'Spout2 capture', value: 'spout_capture' },
     ];
 
     const availableAllowlistedTypes = allowlistedTypes.filter(type =>
@@ -588,7 +652,10 @@ export class SourcesService extends StatefulService<ISourcesState> {
     );
     // 'scene' is not an obs input type so we have to set it manually
     availableAllowlistedTypes.push({ description: 'Scene', value: 'scene' });
-
+    availableAllowlistedTypes.push({
+      description: 'Reactive Source',
+      value: 'smart_browser_source',
+    });
     return availableAllowlistedTypes;
   }
 
@@ -612,16 +679,28 @@ export class SourcesService extends StatefulService<ISourcesState> {
     });
   }
 
-  private updateSourceFlags(source: ISource, flags: number, doNotEmit?: boolean) {
+  private updateSourceFlags(source: Source, flags: number, doNotEmit?: boolean) {
     const audio = !!(AudioFlag & flags);
     const video = !!(VideoFlag & flags);
     const async = !!(AsyncFlag & flags);
     const doNotDuplicate = !!(DoNotDuplicateFlag & flags);
+    const forceUiRefresh = !!(ForceUiRefresh & flags);
 
-    if (source.audio !== audio || source.video !== video) {
-      this.UPDATE_SOURCE({ audio, video, async, doNotDuplicate, id: source.sourceId });
+    if (
+      source.audio !== audio ||
+      source.video !== video ||
+      source.forceUiRefresh !== forceUiRefresh
+    ) {
+      this.UPDATE_SOURCE({
+        audio,
+        video,
+        async,
+        doNotDuplicate,
+        forceUiRefresh,
+        id: source.sourceId,
+      });
 
-      if (!doNotEmit) this.sourceUpdated.next(source);
+      if (!doNotEmit) this.sourceUpdated.next(source.getModel());
     }
   }
 
@@ -694,7 +773,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
       // 'vlc_source',
       // 'coreaudio_input_capture',
       // 'coreaudio_output_capture',
-      // 'av_capture_input',
+      // 'macos_avcapture',
       // 'display_capture',
       // 'audio_line',
       // 'syphon-input',
@@ -744,7 +823,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
       // MediaShare
       // Poll
       // SpinWheel
-      // SponsorBanner
+      'SponsorBanner',
       // StreamBoss
       // TipJar
       'ViewerCount',
@@ -760,6 +839,8 @@ export class SourcesService extends StatefulService<ISourcesState> {
 
     const defaultVueWindowSize = { width: 920, height: 1024 };
     const defaultReactWindowSize = { width: 600, height: 800 };
+    // TODO: index
+    // @ts-ignore
     const widgetInfo = this.widgetsService.widgetsConfig[WidgetType[componentName]];
     const { width, height } = isReactComponent
       ? widgetInfo.settingsWindowSize || defaultReactWindowSize

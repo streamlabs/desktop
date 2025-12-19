@@ -29,7 +29,7 @@ class VuexModule {
     // watch for mutations from the global Vuex store
     // and increment the revision number for affected StatefulService
     StatefulService.store.subscribe(mutation => {
-      if (!mutation.payload.__vuexSyncIgnore) return;
+      if (mutation.payload && !mutation.payload.__vuexSyncIgnore) return;
       const serviceName = mutation.type.split('.')[0];
       const module = this.resolveState(serviceName);
       module.incrementRevision();
@@ -77,7 +77,7 @@ function resolveApp() {
 /**
  * Creates a root React component with integrated Redux store
  */
-export function createRoot(ChildComponent: (props: any) => JSX.Element) {
+export function createRoot(ChildComponent: React.FunctionComponent<any>) {
   return function ReactRoot(childProps: Object) {
     const app = resolveApp();
 

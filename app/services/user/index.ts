@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import { PersistentStatefulService } from 'services/core/persistent-stateful-service';
-import { handleResponse, authorizedHeaders, jfetch } from 'util/requests';
+import { authorizedHeaders, jfetch } from 'util/requests';
 import { mutation } from 'services/core/stateful-service';
 import { Service, Inject, ViewHandler } from 'services/core';
 import electron from 'electron';
@@ -33,11 +33,14 @@ import { MagicLinkService } from 'services/magic-link';
 import fs from 'fs';
 import path from 'path';
 import { AppService } from 'services/app';
-import { UsageStatisticsService } from 'services/usage-statistics';
 import { StreamingService } from 'services/streaming';
 import { NotificationsService, ENotificationType } from 'services/notifications';
 import { JsonrpcService } from 'services/api/jsonrpc';
 import * as remote from '@electron/remote';
+import { TikTokService } from 'services/platforms/tiktok';
+import { TTikTokLiveScopeTypes } from 'services/platforms/tiktok/api';
+import { UsageStatisticsService } from 'app-services';
+import { debounce } from 'lodash-decorators';
 
 export enum EAuthProcessState {
   Idle = 'idle',
@@ -104,6 +107,7 @@ interface ILinkedPlatform {
   access_token: string;
   platform_id: string;
   platform_name: string;
+  validation_error?: 'invalid' | 'missing_scope' | null;
 }
 
 interface ILinkedPlatformsResponse {
@@ -112,6 +116,7 @@ interface ILinkedPlatformsResponse {
   youtube_account?: ILinkedPlatform;
   tiktok_account?: ILinkedPlatform;
   trovo_account?: ILinkedPlatform;
+  kick_account?: ILinkedPlatform;
   streamlabs_account?: ILinkedPlatform;
   twitter_account?: ILinkedPlatform;
   user_id: number;
@@ -161,6 +166,8 @@ class UserViews extends ViewHandler<IUserServiceState> {
   // Injecting HostsService since it's not stateful
   @Inject() hostsService: HostsService;
   @Inject() magicLinkService: MagicLinkService;
+  @Inject() customizationService: CustomizationService;
+  @Inject() userService: UserService;
 
   get settingsServiceViews() {
     return this.getServiceViews(SettingsService);
@@ -168,10 +175,6 @@ class UserViews extends ViewHandler<IUserServiceState> {
 
   get streamSettingsServiceViews() {
     return this.getServiceViews(StreamSettingsService);
-  }
-
-  get customizationServiceViews() {
-    return this.getServiceViews(CustomizationService);
   }
 
   get isLoggedIn() {
@@ -190,6 +193,12 @@ class UserViews extends ViewHandler<IUserServiceState> {
   get isPrime() {
     if (!this.isLoggedIn) return false;
     return this.state.isPrime;
+  }
+
+  get username() {
+    if (this.isLoggedIn) {
+      return this.platform.username;
+    }
   }
 
   get platform() {
@@ -251,11 +260,8 @@ class UserViews extends ViewHandler<IUserServiceState> {
     return this.state.auth;
   }
 
-  appStoreUrl(params?: { appId?: string | undefined; type?: string | undefined }) {
-    const host = this.hostsService.platform;
-    const token = this.auth.apiToken;
-    const nightMode = this.customizationServiceViews.isDarkTheme ? 'night' : 'day';
-    let url = `https://${host}/slobs-store`;
+  async appStoreUrl(params?: { appId?: string | undefined; type?: string | undefined }) {
+    let url = `https://${this.hostsService.streamlabs}/library/app-store`;
 
     if (params?.appId) {
       url = `${url}/app/${params?.appId}`;
@@ -264,7 +270,13 @@ class UserViews extends ViewHandler<IUserServiceState> {
       url = `${url}/${params?.type}`;
     }
 
-    return `${url}?token=${token}&mode=${nightMode}`;
+    const magicUrl = await this.magicLinkService.actions.return.getMagicSessionUrl(url);
+
+    return magicUrl;
+  }
+
+  setPrimaryPlatform(platform: TPlatform) {
+    this.userService.setPrimaryPlatform(platform);
   }
 }
 
@@ -281,9 +293,14 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   @Inject() private websocketService: WebsocketService;
   @Inject() private magicLinkService: MagicLinkService;
   @Inject() private appService: AppService;
-  @Inject() private usageStatisticsService: UsageStatisticsService;
   @Inject() private notificationsService: NotificationsService;
   @Inject() private jsonrpcService: JsonrpcService;
+  @Inject() private usageStatisticsService: UsageStatisticsService;
+  @Inject('TikTokService') tiktokService: TikTokService;
+
+  setPrimaryPlatform(platform: TPlatform) {
+    this.SET_PRIMARY_PLATFORM(platform);
+  }
 
   @mutation()
   LOGIN(auth: IUserAuth) {
@@ -399,6 +416,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
 
   userLogin = new Subject<IUserAuth>();
   userLogout = new Subject();
+  scopeAdded = new Subject();
 
   /**
    * Will fire on every login, similar to userLogin, but will
@@ -408,6 +426,11 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
    */
   userLoginFinished = new Subject();
   private socketConnection: Subscription = null;
+
+  /**
+   * Primarily used for frontend confirmations
+   */
+  refreshedLinkedAccounts = new Subject();
 
   /**
    * Used by child and 1-off windows to update their sentry contexts
@@ -437,7 +460,80 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
           ),
         });
       }
+
+      if (['account_merged', 'account_unlinked'].includes(event.type)) {
+        if (!this.isLoggedIn) return;
+
+        await this.updateLinkedPlatforms();
+
+        const message =
+          event.type === 'account_merged'
+            ? $t('Successfully merged account')
+            : $t('Successfully unlinked account');
+
+        // if the account was successfully merged, hide the connect page in the main window
+        if (
+          event.type === 'account_merged' &&
+          this.navigationService.state.currentPage === 'PlatformMerge'
+        ) {
+          this.navigationService.navigate('Studio');
+        }
+
+        await this.showStreamSettingsIfNeeded();
+
+        this.windowsService.actions.setWindowOnTop('all');
+        this.refreshedLinkedAccounts.next({ success: true, message });
+      }
+
+      if (event.type === 'account_merge_error') {
+        await this.showStreamSettingsIfNeeded();
+        this.windowsService.actions.setWindowOnTop('all');
+        this.refreshedLinkedAccounts.next({ success: false, message: $t('Account merge error') });
+      }
+
+      if (event.type === 'streamlabs_prime_subscribe') {
+        this.windowsService.actions.setWindowOnTop('all');
+        this.usageStatisticsService.ultraSubscription.next(true);
+      }
+
+      if (event.type === 'account_permissions_required') {
+        const platform = event.message[0].platform.split('_')[0];
+        await this.startChatAuth(platform as TPlatform);
+      }
+
+      if (event.type === 'streamSwitchRequest') {
+        this.streamingService.streamShiftEvent.next(event);
+      }
+
+      if (event.type === 'switchActionComplete') {
+        this.streamingService.streamShiftEvent.next(event);
+      }
     });
+  }
+
+  /*
+   * Since we're displaying the child window in all cases, it might've
+   * been closed when we get this event, so no component was rendered into
+   * it and instead shows an empty blank window with a loading spinner.
+   * It could also never been created (or a component rendered into it
+   * at least), both cases resulted in that invalid state.
+   *
+   * If the child window is closed, and we get one of these user events,
+   * (refer to callers), show Settings -> Stream which in our case should
+   * displays user accounts.
+   */
+  async showStreamSettingsIfNeeded() {
+    if (this.windowsService.state.child && !this.windowsService.state.child.isShown) {
+      this.settingsService.showSettings('Stream');
+      /* TODO: added a sleep here so on first child window create
+       * we still get to see messages (i.e Stream settings).
+       * Otherwise subscriber is called late, since this is a normal
+       * subject.
+       * TODO: should we convert to `BehaviorSubject` or whatever was
+       * it the one that replays events for new subscribers?
+       */
+      await Utils.sleep(500);
+    }
   }
 
   get views() {
@@ -449,11 +545,53 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
    * to do this because Twitch adds a captcha when we try to
    * actually log in from integration tests.
    */
-  async testingFakeAuth(auth: IUserAuth, isOnboardingTest: boolean) {
+  async testingFakeAuth(
+    auth: IUserAuth,
+    isOnboardingTest: boolean = false,
+    isNewUser: boolean = false,
+  ) {
+    if (!Utils.isTestMode()) return;
+
     const service = getPlatformService(auth.primaryPlatform);
     this.streamSettingsService.resetStreamSettings();
     await this.login(service, auth);
+
+    if (isNewUser) {
+      this.sceneCollectionsService.newUserFirstLogin = true;
+    }
+
     if (!isOnboardingTest) this.onboardingService.finish();
+  }
+
+  /**
+   * This is also allows us to use dummy accounts for tests.
+   * @remark Use for tests where test accounts are not available.
+   */
+  async addDummyAccount(
+    dummyAcct: IPlatformAuth,
+    settings?: { tikTokLiveScope?: TTikTokLiveScopeTypes; serverUrl?: string; streamKey?: string },
+  ): Promise<EPlatformCallResult> {
+    if (!Utils.isTestMode()) return;
+
+    this.UPDATE_PLATFORM(dummyAcct);
+
+    // for tiktok, update live access status
+    if (settings?.tikTokLiveScope) {
+      this.tiktokService.setLiveScope(settings?.tikTokLiveScope);
+    }
+
+    // for platforms that require serverUrl and streamKey
+    if (settings?.serverUrl && settings?.streamKey) {
+      const service = getPlatformService(dummyAcct.type);
+
+      service.putChannelInfo({
+        ...service.state.settings,
+        serverUrl: settings.serverUrl,
+        streamKey: settings.streamKey,
+      });
+    }
+
+    return EPlatformCallResult.Success;
   }
 
   async autoLogin() {
@@ -462,7 +600,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     if (!this.state.auth.hasRelogged) {
       await remote.session.defaultSession.clearCache();
       await remote.session.defaultSession.clearStorageData({
-        storages: ['appcache, cookies', 'cachestorage', 'filesystem'],
+        storages: ['cookies', 'cachestorage', 'filesystem'],
       });
       this.streamSettingsService.resetStreamSettings();
       this.LOGOUT();
@@ -585,6 +723,23 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
         id: linkedPlatforms.twitch_account.platform_id,
         token: linkedPlatforms.twitch_account.access_token,
       });
+
+      const validationError = linkedPlatforms.twitch_account.validation_error;
+      if (validationError) {
+        const message =
+          validationError === 'missing_scope'
+            ? $t(
+                'Streamlabs requires additional permissions from your Twitch account. Please log in with Twitch to continue.',
+              )
+            : $t('Your Twitch access token has expired. Please log in with Twitch to continue.');
+        this.usageStatisticsService.recordAnalyticsEvent('TwitchCredentialsAlert', validationError);
+        this.reauthenticate(true, {
+          type: 'warning',
+          title: 'Twitch Error',
+          buttons: [$t('Refresh Login')],
+          message,
+        });
+      }
     } else if (this.state.auth.primaryPlatform !== 'twitch') {
       this.UNLINK_PLATFORM('twitch');
     }
@@ -620,6 +775,17 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       });
     } else if (this.state.auth.primaryPlatform !== 'trovo') {
       this.UNLINK_PLATFORM('trovo');
+    }
+
+    if (linkedPlatforms.kick_account) {
+      this.UPDATE_PLATFORM({
+        type: 'kick',
+        username: linkedPlatforms.kick_account.platform_name,
+        id: linkedPlatforms.kick_account.platform_id,
+        token: linkedPlatforms.kick_account.access_token,
+      });
+    } else if (this.state.auth.primaryPlatform !== 'kick') {
+      this.UNLINK_PLATFORM('kick');
     }
 
     if (linkedPlatforms.streamlabs_account) {
@@ -674,7 +840,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       cc_expires_in_days?: number;
     }>(request)
       .then(response => this.validatePrimeStatus(response))
-      .catch(() => null);
+      .catch((e: unknown): null => null);
   }
 
   validatePrimeStatus(response: {
@@ -743,6 +909,14 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     }
 
     return userId;
+  }
+
+  // Grabs the first digit of their install ID and determines if it's odd or even
+  // Technically not an exact 50% chance but over a large scale of users
+  // should be close enough to 50% for the purposes of testing features
+  get isAlphaGroup() {
+    const localId = this.getLocalUserId();
+    return Number(localId.search(/\d/)) % 2 === 0;
   }
 
   get apiToken() {
@@ -830,7 +1004,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   }
 
   async alertboxLibraryUrl(id?: string) {
-    const uiTheme = this.customizationService.views.isDarkTheme ? 'night' : 'day';
+    const uiTheme = this.customizationService.isDarkTheme ? 'night' : 'day';
     let url = `https://${this.hostsService.streamlabs}/alert-box-themes?mode=${uiTheme}&slobs`;
 
     if (id) url += `&id=${id}`;
@@ -838,8 +1012,12 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     return await this.magicLinkService.actions.return.getMagicSessionUrl(url);
   }
 
-  async overlaysUrl(type?: 'overlay' | 'widget-themes' | 'site-themes', id?: string) {
-    const uiTheme = this.customizationService.views.isDarkTheme ? 'night' : 'day';
+  async overlaysUrl(
+    type?: 'overlay' | 'widget-themes' | 'site-themes' | 'collectibles',
+    id?: string,
+    install?: string,
+  ) {
+    const uiTheme = this.customizationService.isDarkTheme ? 'night' : 'day';
 
     let url = `https://${this.hostsService.streamlabs}/library`;
 
@@ -851,6 +1029,10 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
 
     if (type && id) {
       url += `#/?type=${type}&id=${id}`;
+    }
+
+    if (install) {
+      url += `&install=${install}`;
     }
 
     return await this.magicLinkService.actions.return.getMagicSessionUrl(url);
@@ -997,24 +1179,33 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
    * platform linked, they will be prompted to merge a platform into their
    * account before they can be considered fully logged in.
    */
-  async startSLAuth() {
-    const query = `_=${Date.now()}&skip_splash=true&external=electron&slid&force_verify&origin=slobs`;
-    const url = `https://${this.hostsService.streamlabs}/slobs/login?${query}`;
+  async startSLAuth({ signup = false, merge = false } = {}) {
+    const query = `_=${Date.now()}&skip_splash=true&external=electron&slid&force_verify&origin=slobs${
+      merge ? '&intent=merge' : ''
+    }`;
+    const url = `https://${this.hostsService.streamlabs}/slobs/${
+      signup ? 'signup' : 'login'
+    }?${query}`;
 
     this.SET_AUTH_STATE(EAuthProcessState.Loading);
-    const auth = await this.authModule.startExternalAuth(
-      url,
-      () => {
-        this.SET_AUTH_STATE(EAuthProcessState.Idle);
-      },
-      false,
-    );
+
+    const auth = await this.authModule.startPkceAuth(url, () => {
+      this.SET_AUTH_STATE(EAuthProcessState.Idle);
+    });
+
+    if (!auth) return EPlatformCallResult.Error;
 
     this.LOGOUT();
     this.LOGIN(auth);
 
+    // We need to fetch prime status to skip onboarding step for
+    // picking a primary platform if the user has Ultra, as we'll
+    // auto-select the first one in that case.
+    await this.setPrimeStatus();
+
     // Find out if the user has any additional platforms linked
     await this.updateLinkedPlatforms();
+    return EPlatformCallResult.Success;
   }
 
   /**
@@ -1045,6 +1236,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     const service = getPlatformService(primaryPlatform);
 
     this.SET_AUTH_STATE(EAuthProcessState.Loading);
+    this.streamSettingsService.resetStreamSettings();
     const result = await this.login(service);
     this.SET_AUTH_STATE(EAuthProcessState.Idle);
 
@@ -1065,13 +1257,38 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     this.SET_AUTH_STATE(EAuthProcessState.Loading);
     const onWindowShow = () => this.SET_AUTH_STATE(EAuthProcessState.Idle);
 
-    const auth = await this.authModule.startExternalAuth(authUrl, onWindowShow, true);
+    try {
+      const auth = await this.authModule.startPkceAuth(authUrl, onWindowShow, () => {}, true);
+      this.SET_AUTH_STATE(EAuthProcessState.Loading);
+      this.SET_IS_RELOG(false);
+      this.SET_SLID(auth.slid);
+      this.SET_AUTH_STATE(EAuthProcessState.Idle);
+      return EPlatformCallResult.Success;
+    } catch (e: unknown) {
+      console.error('Merge Account Error: ', e);
+      return EPlatformCallResult.Error;
+    }
+  }
 
-    this.SET_AUTH_STATE(EAuthProcessState.Loading);
-    this.SET_IS_RELOG(false);
-    this.SET_SLID(auth.slid);
-    this.SET_AUTH_STATE(EAuthProcessState.Idle);
-    return EPlatformCallResult.Success;
+  /**
+   * Wrapper to add debounce to auth for adding chat scope for multistream chat
+   * @remark For now, only used for Twitch
+   */
+  @debounce(200)
+  async startChatAuth(platform: TPlatform = 'twitch') {
+    await this.startAuth(platform, 'external', false, true)
+      .then(res => {
+        this.windowsService.actions.setWindowOnTop('main');
+        if (res === EPlatformCallResult.Error) {
+          alert($t('Error granting chat permissions.'));
+          return;
+        }
+        this.scopeAdded.next();
+      })
+      .catch(e => {
+        this.windowsService.actions.setWindowOnTop('main');
+        alert($t('Error granting chat permissions.'));
+      });
   }
 
   /**
@@ -1082,12 +1299,37 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     platform: TPlatform,
     mode: 'internal' | 'external',
     merge = false,
+    scope = false,
   ): Promise<EPlatformCallResult> {
     const service = getPlatformService(platform);
     const authUrl = merge ? service.mergeUrl : service.authUrl;
 
     if (merge && !this.isLoggedIn && !this.views.isPartialSLAuth) {
       throw new Error('Account merging can only be performed while logged in');
+    }
+
+    // HACK: faking instagram login
+    if (platform === 'instagram') {
+      const auth = {
+        widgetToken: '',
+        apiToken: '',
+        primaryPlatform: 'instagram' as TPlatform,
+        platforms: {
+          instagram: {
+            type: 'instagram' as TPlatform,
+            // HACK: faking instagram username
+            username: 'linked',
+            token: '',
+            id: 'instagram',
+          },
+        },
+        hasRelogged: true,
+      };
+
+      this.UPDATE_PLATFORM(
+        (auth.platforms as Record<TPlatform, IPlatformAuth>)[auth.primaryPlatform],
+      );
+      return EPlatformCallResult.Success;
     }
 
     this.SET_AUTH_STATE(EAuthProcessState.Loading);
@@ -1097,32 +1339,32 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       );
     const onWindowClose = () => this.SET_AUTH_STATE(EAuthProcessState.Idle);
 
-    const auth =
-      mode === 'internal'
-        ? /* eslint-disable */
-          await this.authModule.startInternalAuth(
-            authUrl,
-            service.authWindowOptions,
-            onWindowShow,
-            onWindowClose,
-            merge,
-          )
-        : await this.authModule.startExternalAuth(authUrl, onWindowShow, merge);
-    /* eslint-enable */
+    const auth = await this.authModule.startPkceAuth(
+      authUrl,
+      onWindowShow,
+      onWindowClose,
+      merge,
+      mode === 'external',
+      service.authWindowOptions,
+    );
 
     this.SET_AUTH_STATE(EAuthProcessState.Loading);
     this.SET_IS_RELOG(false);
 
     let result: EPlatformCallResult;
 
-    if (!merge) {
+    if (!merge && !scope) {
       // Ensure we are starting with fresh stream settings
       this.streamSettingsService.resetStreamSettings();
 
       result = await this.login(service, auth);
     } else {
-      this.UPDATE_PLATFORM(auth.platforms[auth.primaryPlatform]);
-      result = EPlatformCallResult.Success;
+      if (auth) {
+        this.UPDATE_PLATFORM(auth.platforms[auth.primaryPlatform]);
+        result = EPlatformCallResult.Success;
+      } else {
+        result = EPlatformCallResult.Error;
+      }
     }
 
     this.SET_AUTH_STATE(EAuthProcessState.Idle);

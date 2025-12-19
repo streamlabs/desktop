@@ -21,11 +21,13 @@
   "News": "Novinky",
   "Notifications": "Upozornění",
   "A new Recording has been completed. Click for more info": "Byla dokončena nová Nahrávka. Klikněte pro bližší informace",
+  "horizontalRecordingMessage": " Byla dokončena nová nahrávka v horizontálním formátu. Klikněte pro bližší informace",
+  "verticalRecordingMessage": "Byla dokončena nová nahrávka ve vertikálním formátu. Klikněte pro bližší informace",
   "Recording History": "Historie nahrávek",
   "Show in folder": "Zobrazit ve složce",
   "Recordings": "Nahrávky",
   "Marker %{label} added at %{timestamp}": "Značka %{label} přidána %{timestamp}",
-  "File is too large to upload": "File is too large to upload",
-  "File type %{extension} is not supported": "File type %{extension} is not supported",
-  "Upload already in progress": "Upload already in progress"
+  "File is too large to upload": "Soubor je příliš velký na nahrání",
+  "File type %{extension} is not supported": "Typ souboru %{extension} není podporován",
+  "Upload already in progress": "Nahrávání již probíhá"
 }

@@ -15,6 +15,7 @@ export default function SourceTag(p: {
   appSourceId?: string;
   essential?: boolean;
   excludeWrap?: boolean;
+  hideShortDescription?: boolean;
 }) {
   const { inspectSource, selectInspectedSource, store } = useSourceShowcaseSettings();
 
@@ -29,6 +30,8 @@ export default function SourceTag(p: {
   const { platform } = useVuex(() => ({ platform: UserService.views.platform?.type }));
 
   const displayData =
+    // TODO: index
+    // @ts-ignore
     WidgetDisplayData(platform)[WidgetType[p.type]] || SourceDisplayData()[p.type];
 
   function active() {
@@ -39,7 +42,7 @@ export default function SourceTag(p: {
   return (
     <Col span={8}>
       <div
-        className={cx(styles.sourceTag, {
+        className={cx('source-tag', styles.sourceTag, {
           [styles.active]: active(),
           [styles.essential]: p.essential,
           [styles.excludeWrap]: p.excludeWrap,
@@ -48,9 +51,21 @@ export default function SourceTag(p: {
         onDoubleClick={() => selectInspectedSource()}
         data-name={displayData?.name || p.name}
       >
-        <i className={displayData?.icon} />
-        {displayData?.name || p.name}
-        {p.essential && <div style={{ opacity: '0.5' }}>{displayData?.shortDesc}</div>}
+        <div style={{ display: 'flex', flexDirection: 'row' }}>
+          <div className={styles.iconWrapper}>
+            {displayData?.icon && <i className={displayData?.icon} />}
+          </div>
+          <div className={styles.displayName}>{displayData?.name || p.name}</div>
+        </div>
+        {displayData?.shortDesc && !p.hideShortDescription && (
+          <div
+            style={{
+              opacity: '0.5',
+            }}
+          >
+            {displayData?.shortDesc}
+          </div>
+        )}
       </div>
     </Col>
   );

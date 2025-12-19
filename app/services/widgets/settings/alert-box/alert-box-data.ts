@@ -17,10 +17,9 @@ export const API_NAME_MAP = {
   tiltifydonation: 'tiltify',
   treat: 'treat',
   follow: 'follows',
-  host: 'hosts',
-  raid: 'raids',
   superheart: 'superhearts',
   fanfunding: 'fanfunding',
+  raid: 'raids',
   subscriber: 'subscribers', // YouTube
   sponsor: 'sponsors',
   facebook_support_gifter: 'giftSupport',
@@ -49,11 +48,10 @@ export const alertNameMap = () => ({
   tiltify: $t('Tiltify Donations'),
   treat: $t('TreatStream'),
   follows: $t('Follows'),
-  hosts: $t('Hosts'),
-  raids: $t('Raids'),
   superhearts: $t('Super Hearts'),
   fanfunding: $t('Super Chat'),
   sponsors: $t('Members'),
+  raids: $t('Raids'),
   subscribers: $t('Subscribers'), // YouTube
   stars: $t('Stars'),
   support: $t('Support'),
@@ -82,6 +80,8 @@ const determineTester = (key: string) => {
 };
 
 export const REGEX_TESTERS = Object.keys(API_NAME_MAP).map(key => ({
+  // TODO: index
+  // @ts-ignore
   name: API_NAME_MAP[key],
   tester: determineTester(key),
 }));
@@ -111,7 +111,6 @@ export const conditions = () => ({
       title: $t('When a Prime Gaming sub is upgraded to a recurring <tier> sub'),
     },
   ],
-  hosts: [{ value: 'MIN_VIEWERS_ACQUIRED', title: $t('Viewers gained is at least <viewers>') }],
   bits: [
     { value: 'MIN_BITS_USED', title: $t('Bits used is at least <amount>') },
     { value: 'EXACT_BITS_USED', title: $t('Bits used is exactly <amount>') },
@@ -235,6 +234,8 @@ export const newVariation = (type: string): IAlertBoxVariation => ({
       color: '#FFFFFF',
       color2: '#32C3A6',
       font: 'Open Sans',
+      // TODO: index
+      // @ts-ignore
       format: DEFAULT_ALERT_FORMATS[type] || '',
       resubFormat: null,
       tierUpgradeFormat: null,
@@ -242,6 +243,8 @@ export const newVariation = (type: string): IAlertBoxVariation => ({
       thickness: 400,
     },
     textDelay: 0,
+    // TODO: index
+    // @ts-ignore
     type: Object.keys(API_NAME_MAP).find(key => API_NAME_MAP[key] === type),
     useCustomImage: null,
     moderation: null,
@@ -262,11 +265,10 @@ const DEFAULT_ALERT_FORMATS = {
   tiltify: '{name} has just donated {amount} via Tiltify!',
   treat: '{name} bought you a {title} treat via Treatstream!',
   follows: '{name} is now following!',
-  hosts: '{name} just hosted for {count} viewers!',
-  raids: '{name} is raiding with a party of {count}!',
   superhearts: '{name} gifted {style} worth {amount} coins!',
   fanfunding: '{name} has just donated {amount} through Super Chat!',
   subscribers: '{name} just subscribed!', // YouTube
+  raids: '{name} is raiding with a party of {count}!',
   sponsors: '{name} has sponsored you {months} months in a row!',
   support: '{name} has supported for {months} months!',
   likes: '{name} has liked!',

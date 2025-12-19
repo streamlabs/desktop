@@ -6,6 +6,7 @@ import { KeyListenerService } from 'services/key-listener';
 import { MarkersService } from 'services/markers';
 import { Inject } from 'services/core/injector';
 import { StatefulService, mutation, ServiceHelper } from 'services';
+import { DualOutputService } from 'services/dual-output';
 import defer from 'lodash/defer';
 import mapValues from 'lodash/mapValues';
 import { $t } from 'services/i18n';
@@ -15,6 +16,8 @@ import { CustomizationService } from './customization';
 import { RecentEventsService } from './recent-events';
 import { UsageStatisticsService } from './usage-statistics';
 import { getOS, OS } from 'util/operating-systems';
+import { TDisplayType } from './settings-v2';
+import { VirtualWebcamService } from 'app-services';
 
 function getScenesService(): ScenesService {
   return ScenesService.instance;
@@ -44,8 +47,16 @@ function getRecentEventsService(): RecentEventsService {
   return RecentEventsService.instance;
 }
 
+function getVirtualCameraService(): VirtualWebcamService {
+  return VirtualWebcamService.instance;
+}
+
 function getMarkersService(): MarkersService {
   return MarkersService.instance;
+}
+
+function getDualOutputService(): DualOutputService {
+  return DualOutputService.instance;
 }
 
 const isAudio = (sourceId: string) => {
@@ -193,6 +204,18 @@ const GENERAL_ACTIONS: HotkeyGroup = {
     description: () => $t('Skip Alert'),
     down: () => getRecentEventsService().skipAlert(),
   },
+  TOGGLE_VIRTUAL_CAMERA_ON: {
+    name: 'TOGGLE_VIRTUAL_CAMERA_ON',
+    description: () => $t('Start Virtual Camera'),
+    down: () => getVirtualCameraService().start(),
+    isActive: () => getVirtualCameraService().state.running,
+  },
+  TOGGLE_VIRTUAL_CAMERA_OFF: {
+    name: 'TOGGLE_VIRTUAL_CAMERA_OFF',
+    description: () => $t('Stop Virtual Camera'),
+    down: () => getVirtualCameraService().stop(),
+    isActive: () => !getVirtualCameraService().state.running,
+  },
 };
 
 const SOURCE_ACTIONS: HotkeyGroup = {
@@ -299,7 +322,14 @@ const SCENE_ITEM_ACTIONS: HotkeyGroup = {
     },
     shouldApply: sceneItemId => !!getScenesService().views.getSceneItem(sceneItemId)?.video,
     isActive: sceneItemId => !!getScenesService().views.getSceneItem(sceneItemId)?.visible,
-    down: sceneItemId => getScenesService().views.getSceneItem(sceneItemId)?.setVisibility(true),
+    down: sceneItemId => {
+      getScenesService().views.getSceneItem(sceneItemId)?.setVisibility(true);
+      const dualOutputNodeId = getDualOutputService().views.getDualOutputNodeId(sceneItemId);
+      const dualOutputMode = getDualOutputService().state.dualOutputMode;
+      if (dualOutputNodeId && !dualOutputMode) {
+        getScenesService().views.getSceneItem(dualOutputNodeId)?.setVisibility(true);
+      }
+    },
   },
   TOGGLE_SOURCE_VISIBILITY_HIDE: {
     name: 'TOGGLE_SOURCE_VISIBILITY_HIDE',
@@ -309,7 +339,14 @@ const SCENE_ITEM_ACTIONS: HotkeyGroup = {
     },
     shouldApply: sceneItemId => !!getScenesService().views.getSceneItem(sceneItemId)?.video,
     isActive: sceneItemId => getScenesService().views.getSceneItem(sceneItemId)?.visible === false,
-    down: sceneItemId => getScenesService().views.getSceneItem(sceneItemId)?.setVisibility(false),
+    down: sceneItemId => {
+      getScenesService().views.getSceneItem(sceneItemId)?.setVisibility(false);
+      const dualOutputNodeId = getDualOutputService().views.getDualOutputNodeId(sceneItemId);
+      const dualOutputMode = getDualOutputService().state.dualOutputMode;
+      if (dualOutputNodeId && !dualOutputMode) {
+        getScenesService().views.getSceneItem(dualOutputNodeId)?.setVisibility(false);
+      }
+    },
   },
   PUSH_TO_SOURCE_SHOW: {
     name: 'PUSH_TO_SOURCE_SHOW',
@@ -385,6 +422,7 @@ export interface IHotkey {
   sceneItemId?: string;
   hotkeyId?: number;
   isMarker?: boolean;
+  display?: TDisplayType;
 }
 
 /**
@@ -476,6 +514,7 @@ export class HotkeysService extends StatefulService<IHotkeysServiceState> {
             actionName: action.name,
             bindings: [],
             sceneItemId: sceneItem.sceneItemId,
+            display: sceneItem?.display,
           };
           hotkeys[getHotkeyHash(hotkey)] = hotkey;
           addedHotkeys.add(`${action.name}-${sceneItem.sceneItemId}`);
@@ -754,6 +793,7 @@ export class Hotkey implements IHotkey {
   description: string;
   action: IHotkeyAction;
   shouldApply: boolean;
+  display?: TDisplayType;
 
   private readonly hotkeyModel: IHotkey;
 

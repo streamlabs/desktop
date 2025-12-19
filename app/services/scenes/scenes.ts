@@ -4,14 +4,16 @@ import { Subject } from 'rxjs';
 import { mutation, StatefulService } from 'services/core/stateful-service';
 import { TransitionsService } from 'services/transitions';
 import { WindowsService } from 'services/windows';
+import { SelectionService } from 'services/selection';
 import { Scene, SceneItem, TSceneNode, EScaleType, EBlendingMode, EBlendingMethod } from './index';
-import { ISource, SourcesService, ISourceAddOptions, TSourceType } from 'services/sources';
+import { SourcesService, ISourceAddOptions, TSourceType } from 'services/sources';
 import { Inject } from 'services/core/injector';
 import { IVideo, SceneFactory } from '../../../obs-api';
 import { $t } from 'services/i18n';
 import namingHelpers from 'util/NamingHelpers';
 import uuid from 'uuid/v4';
 import { DualOutputService } from 'services/dual-output';
+import { SceneCollectionsService } from 'services/scene-collections';
 import { TDisplayType } from 'services/settings-v2/video';
 import { InitAfter, ViewHandler } from 'services/core';
 
@@ -216,6 +218,12 @@ class ScenesViews extends ViewHandler<IScenesState> {
     return scene.getItems();
   }
 
+  getSceneNodesBySceneId(sceneId: string): TSceneNode[] | undefined {
+    const scene: Scene | null = this.getScene(sceneId);
+    if (!scene) return;
+    return scene.getNodes();
+  }
+
   /**
    * Returns an array of all scene items across all scenes
    * referencing the given source id.
@@ -265,6 +273,7 @@ class ScenesViews extends ViewHandler<IScenesState> {
 @InitAfter('DualOutputService')
 export class ScenesService extends StatefulService<IScenesState> {
   @Inject() private dualOutputService: DualOutputService;
+  @Inject() private sceneCollectionsService: SceneCollectionsService;
 
   static initialState: IScenesState = {
     activeSceneId: '',
@@ -279,13 +288,14 @@ export class ScenesService extends StatefulService<IScenesState> {
   sceneAdded = new Subject<IScene>();
   sceneRemoved = new Subject<IScene>();
   sceneSwitched = new Subject<IScene>();
-  itemAdded = new Subject<ISceneItem & ISource>();
-  itemRemoved = new Subject<ISceneItem & ISource>();
-  itemUpdated = new Subject<ISceneItem & ISource>();
+  itemAdded = new Subject<ISceneItem>();
+  itemRemoved = new Subject<ISceneItem>();
+  itemUpdated = new Subject<ISceneItem>();
 
   @Inject() private windowsService: WindowsService;
   @Inject() private sourcesService: SourcesService;
   @Inject() private transitionsService: TransitionsService;
+  @Inject() private selectionService: SelectionService;
 
   @mutation()
   private ADD_SCENE(id: string, name: string) {
@@ -322,7 +332,7 @@ export class ScenesService extends StatefulService<IScenesState> {
     const id = options.sceneId || `scene_${uuid()}`;
     this.ADD_SCENE(id, name);
     const obsScene = SceneFactory.create(id);
-    this.sourcesService.addSource(obsScene.source, name, { sourceId: id });
+    this.sourcesService.addSource(obsScene.source, name, { sourceId: id, display: 'horizontal' });
 
     if (options.duplicateSourcesFromScene) {
       const newScene = this.views.getScene(id)!;
@@ -415,6 +425,10 @@ export class ScenesService extends StatefulService<IScenesState> {
 
     const activeScene = this.views.activeScene;
 
+    if (this.dualOutputService.views.dualOutputMode && id !== this.state.activeSceneId) {
+      this.dualOutputService.setIsLoading(true);
+    }
+
     this.MAKE_SCENE_ACTIVE(id);
 
     this.transitionsService.transition(activeScene && activeScene.id, scene.id);
@@ -430,6 +444,30 @@ export class ScenesService extends StatefulService<IScenesState> {
 
   getModel(): IScenesState {
     return this.state;
+  }
+
+  createAndAddSource(
+    sceneId: string,
+    sourceName: string,
+    sourceType: TSourceType,
+    settings: Dictionary<unknown>,
+  ) {
+    const scene = this.views.getScene(sceneId);
+    if (!scene) {
+      throw new Error(`Can't find scene with ID: ${sceneId}`);
+    }
+
+    const sceneItem = scene.createAndAddSource(sourceName, sourceType, settings);
+
+    if (this.dualOutputService.views.hasSceneNodeMaps) {
+      this.dualOutputService.createPartnerNode(sceneItem);
+      /* For some reason dragging items after enabling dual output makes them
+       * duplicate, associate selection on switch to mitigate this issue
+       */
+      this.selectionService.associateSelectionWithDisplay('vertical');
+    }
+
+    return sceneItem.sceneItemId;
   }
 
   // TODO: Remove all of this in favor of the new "views" methods

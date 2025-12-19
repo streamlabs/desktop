@@ -6,9 +6,9 @@ import { I18nService } from 'services/i18n';
 import Utils from 'services/utils';
 import Spinner from 'components-react/shared/Spinner';
 import { Services } from 'components-react/service-provider';
-import { useVuex } from 'components-react/hooks';
 import electron from 'electron';
 import { onUnload } from 'util/unload';
+import { Button } from 'antd';
 
 interface BrowserViewProps {
   src: string;
@@ -19,6 +19,7 @@ interface BrowserViewProps {
   onReady?: (view: any) => void;
   className?: string;
   style?: React.CSSProperties;
+  emitUrlChange?: (url: string) => void;
 }
 
 export default function BrowserView(p: BrowserViewProps) {
@@ -27,10 +28,8 @@ export default function BrowserView(p: BrowserViewProps) {
   const [loading, setLoading] = useState(true);
   const sizeContainer = useRef<HTMLDivElement>(null);
 
-  const { hideStyleBlockers, theme } = useVuex(() => ({
-    hideStyleBlockers: WindowsService.state[Utils.getWindowId()].hideStyleBlockers,
-    theme: CustomizationService.state.theme,
-  }));
+  const { hideStyleBlockers } = WindowsService.state[Utils.getWindowId()];
+  const { theme } = CustomizationService.state;
 
   let currentPosition: IVec2;
   let currentSize: IVec2;
@@ -55,17 +54,26 @@ export default function BrowserView(p: BrowserViewProps) {
 
   const browserView = useRef<Electron.BrowserView | null>(null);
 
+  function urlChange(_: any, url: string) {
+    if (p.emitUrlChange) {
+      p.emitUrlChange(url);
+    }
+  }
+
   useEffect(() => {
     browserView.current = new remote.BrowserView(options);
+    const webContents = browserView.current.webContents;
 
     if (p.enableGuestApi) {
-      electron.ipcRenderer.sendSync('webContents-enableRemote', browserView.current.webContents.id);
+      electron.ipcRenderer.sendSync('webContents-enableRemote', webContents.id);
     }
 
     if (p.onReady) p.onReady(browserView.current);
     if (p.setLocale) I18nService.setBrowserViewLocale(browserView.current);
 
-    browserView.current.webContents.on('did-finish-load', () => setLoading(false));
+    webContents.on('did-finish-load', () => setLoading(false));
+    webContents.on('did-navigate', urlChange);
+    webContents.on('did-navigate-in-page', urlChange);
     remote.getCurrentWindow().addBrowserView(browserView.current);
 
     const shutdownSubscription = AppService.shutdownStarted.subscribe(destroyBrowserView);
@@ -73,6 +81,8 @@ export default function BrowserView(p: BrowserViewProps) {
     const cancelUnload = onUnload(() => destroyBrowserView());
 
     return () => {
+      webContents.removeListener('did-navigate', urlChange);
+      webContents.removeListener('did-navigate-in-page', urlChange);
       cancelUnload();
       destroyBrowserView();
       shutdownSubscription.unsubscribe();
@@ -87,11 +97,27 @@ export default function BrowserView(p: BrowserViewProps) {
 
   useEffect(() => {
     loadUrl();
-  }, [theme]);
+  }, [theme, p.src]);
 
   function destroyBrowserView() {
     if (browserView.current) {
       remote.getCurrentWindow().removeBrowserView(browserView.current);
+
+      if (!browserView.current.webContents) {
+        browserView.current = null;
+        return;
+      }
+
+      // Attempt destruction of `webContents`
+      browserView.current.webContents.close();
+
+      if (!browserView.current.webContents) {
+        browserView.current = null;
+        return;
+      }
+
+      // If there was an error destroying the webContents, force destruction
+      // to prevent memory leaks.
       // See: https://github.com/electron/electron/issues/26929
       // @ts-ignore
       browserView.current.webContents.destroy();
@@ -140,8 +166,14 @@ export default function BrowserView(p: BrowserViewProps) {
       // ignore some common errors
       // that happen when the window has been closed before BrowserView accomplished the request
       if (e && typeof e === 'object') {
-        if (e['code'] === 'ERR_ABORTED') return;
-        if (e['message'] && e['message'].match(/\(\-3\) loading/)) return;
+        if (
+          (e.hasOwnProperty('code') &&
+            Object.getOwnPropertyDescriptor(e, 'code')?.value === 'ERR_ABORTED') ||
+          (e.hasOwnProperty('message') &&
+            Object.getOwnPropertyDescriptor(e, 'code')?.value.match(/\(\-3\) loading/))
+        ) {
+          return;
+        }
       }
       throw e;
     }
@@ -170,6 +202,13 @@ export default function BrowserView(p: BrowserViewProps) {
         <Spinner visible pageLoader />
       </div>
     );
+  }
+
+  function getCurrentUrl() {
+    if (!browserView.current) {
+      return '';
+    }
+    return browserView.current.webContents.getURL();
   }
 
   return <div style={{ height: '100%', ...p.style }} ref={sizeContainer} className={p.className} />;

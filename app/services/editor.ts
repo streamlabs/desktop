@@ -241,7 +241,7 @@ export class EditorService extends StatefulService<IEditorServiceState> {
           menu = new EditMenu({ selectedSceneId: this.scene.id, display: event.display });
         }
 
-        menu.popup();
+        menu.popup({ window: this.windowsService.windows.main, x: event.pageX, y: event.pageY });
       }
     }
 
@@ -287,6 +287,8 @@ export class EditorService extends StatefulService<IEditorServiceState> {
       };
 
       const options = {
+        // TODO: index
+        // @ts-ignore
         ...optionsMap[name],
         lockRatio: !event.shiftKey,
       };
@@ -406,7 +408,11 @@ export class EditorService extends StatefulService<IEditorServiceState> {
     // resizeRegion is opposite the anchor point
     const oppositePointsMap = { 0: 1, 0.5: 0.5, 1: 0 };
     const resizeRegionPosition = v2(
+      // TODO: index
+      // @ts-ignore
       oppositePointsMap[AnchorPositions[opts.anchor].x],
+      // TODO: index
+      // @ts-ignore
       oppositePointsMap[AnchorPositions[opts.anchor].y],
     );
 
@@ -616,7 +622,7 @@ export class EditorService extends StatefulService<IEditorServiceState> {
       });
     }
 
-    return null;
+    return;
   }
 
   // Size (width & height) is a scalar value, and
@@ -695,11 +701,16 @@ export class EditorService extends StatefulService<IEditorServiceState> {
     // We don't need to adjust mac coordinates for scale factor
     const factor = byOS({ [OS.Windows]: this.windowsService.state.main.scaleFactor, [OS.Mac]: 1 });
 
-    const regionRadius =
-      (renderedRegionRadius *
-        factor *
-        this.baseResolutions[item.display ?? 'horizontal'].baseWidth) /
-      this.baseResolutions[item.display ?? 'horizontal'].baseHeight;
+    const radiusLowerBound = Math.min(
+      this.baseResolutions[item.display ?? 'horizontal'].baseWidth,
+      this.baseResolutions[item.display ?? 'horizontal'].baseHeight,
+    );
+    const radiusUpperBound = Math.max(
+      this.baseResolutions[item.display ?? 'horizontal'].baseWidth,
+      this.baseResolutions[item.display ?? 'horizontal'].baseHeight,
+    );
+
+    const regionRadius = (renderedRegionRadius * factor * radiusUpperBound) / radiusLowerBound;
     const width = regionRadius * 2;
     const height = regionRadius * 2;
 

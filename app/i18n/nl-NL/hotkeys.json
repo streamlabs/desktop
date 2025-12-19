@@ -24,5 +24,11 @@
   "Previous Slide": "Vorige dia",
   "Toggle Performance Mode": "Prestatiemodus schakelen",
   "Skip Alert": "Melding overslaan",
-  "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop.": "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop."
+  "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop.": "Om sneltoetsen op een Mac te gebruiken, ga je naar Systeemvoorkeuren > Beveiliging > Toegankelijkheid en zet je Streamlabs Desktop aan.",
+  "Start Virtual Camera": "Start virtuele camera",
+  "Stop Virtual Camera": "Stop virtuele camera",
+  "This scene has not been converted to Dual Output. Please make the scene active to add vertical sources.": "Deze scène is niet omgezet naar dubbele uitvoer. Maak de scène actief om verticale bronnen toe te voegen.",
+  "Learn more here": "Lees hier meer",
+  "<color>Pro tip:</color> set Markers in Hotkeys settings to timestamp your recordings. <link>Set up here</link>": "<color>Pro tip:</color> zet Markers in de sneltoetsinstellingen aan om je opnames van een tijdstempel te voorzien. <link>Hier instellen</link>",
+  "Markers": "Markeringen"
 }

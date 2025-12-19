@@ -15,10 +15,15 @@ export enum EAvailableFeatures {
   restream = 'slobs--restream',
   tiktok = 'slobs--tiktok',
   highlighter = 'slobs--highlighter',
+  aiHighlighter = 'slobs--ai-highlighter',
   growTab = 'slobs--grow-tab',
   themeAudit = 'slobs--theme-audit',
   reactWidgets = 'slobs--react-widgets',
   sharedStorage = 'slobs--shared-storage',
+  dualOutputRecording = 'slobs--dual-output-recording',
+  streamShift = 'slobs--stream-shift',
+  twitchDualStream = 'slobs--twitch-dual-stream',
+  twitchDualStreamPreview = 'slobs--twitch-dual-stream-preview',
 
   /**
    * There are two flags because one is used for beta access and
@@ -26,7 +31,8 @@ export enum EAvailableFeatures {
    * availability at launch.
    */
   guestCamBeta = 'slobs--guest-join',
-  guestCaProduction = 'slobs--guest-join-prod',
+  guestCamProduction = 'slobs--guest-join-prod',
+  newChatBox = 'core--widgets-v2--chat-box',
 }
 
 interface IIncrementalRolloutServiceState {

@@ -9,5 +9,15 @@
   "You've merged a Streamlabs ID to your account, please log back in to ensure you have the right credentials.": "Anda telah menggabungkan Streamlabs ID ke akun Anda, log in kembali untuk memastikan Anda memiliki kredensial yang tepat.",
   "Enable Live Streaming?": "Aktifkan Live Streaming?",
   "Streamlabs is currently in recording mode, which hides live streaming features. Would you like to enable live streaming features? You can disable them again in General settings.": "Streamlabs kini berada dalam mode recording, yang menyembunyikan fitur live streaming. Apakah Anda ingin mengaktifkan fitur live streaming? Anda dapat menonaktifkannya kembali di pengaturan Umum.",
-  "Enable Streaming": "Aktifkan Streaming"
+  "Enable Streaming": "Aktifkan Streaming",
+  "This account is already linked to another Streamlabs Account. Please use a different account.": "Akun ini sudah ditautkan ke Akun Streamlabs lain. Silakan gunakan akun yang berbeda.",
+  "Successfully unlinked account": "Berhasil memutuskan tautan akun",
+  "Successfully merged account": "Berhasil menggabungkan akun",
+  "Account merge error": "Kesalahan penggabungan akun",
+  "Error Code: %{code}": "Kode Kesalahan: %{code}",
+  "Unknown error, please contact support": "Kesalahan yang tidak diketahui, silakan hubungi dukungan",
+  "Custom Destination": "Tujuan Kustom",
+  "This app is currently popped out in another window.": "Aplikasi ini saat ini muncul di jendela lain.",
+  "Error granting chat permissions.": "Kesalahan pemberian izin obrolan.",
+  "Authentication Error": "Kesalahan Autentikasi"
 }

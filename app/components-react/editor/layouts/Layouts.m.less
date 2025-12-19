@@ -1,0 +1,54 @@
+@import "../../../styles/index";
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.columns {
+  position: relative;
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+.segmented {
+  display: flex;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.stacked {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  position: relative;
+}
+
+.cell {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  padding: 16px 8px;
+  width: 100%;
+  min-width: 0;
+
+  &:global(.no-top-padding) {
+    padding-top: 0;
+  }
+
+  > div {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.side-padded {
+  .padding-h-sides();
+}

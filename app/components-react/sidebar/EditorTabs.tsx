@@ -43,9 +43,9 @@ export default function EditorTabs(p: IEditorTabs) {
 
   function navigateToStudioTab(tabId: string, trackingTarget: string, key: string) {
     if (currentMenuItem !== key) {
-      NavigationService.actions.navigate('Studio', { trackingTarget });
       LayoutService.actions.setCurrentTab(tabId);
       setCurrentMenuItem(key);
+      NavigationService.actions.navigate('Studio', { trackingTarget });
 
       // make sure custom editor setting is toggled on
       // if the active editor screen is not the default editor screen

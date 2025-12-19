@@ -24,5 +24,11 @@
   "Previous Slide": "Diapositive précédente",
   "Toggle Performance Mode": "Activer/désactiver le mode Performance",
   "Skip Alert": "Passer l'alerte",
-  "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop.": "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop."
+  "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop.": "Pour utiliser les touches de raccourci sur Mac, va dans Paramètres système > Sécurité > Accessibilité et activez l'option Streamlabs Desktop.",
+  "Start Virtual Camera": "Démarrer la caméra virtuelle",
+  "Stop Virtual Camera": "Arrêter la caméra virtuelle",
+  "This scene has not been converted to Dual Output. Please make the scene active to add vertical sources.": "Cette scène n'a pas été convertie en Dual Output. Rends la scène active pour ajouter des sources verticales.",
+  "Learn more here": "En savoir plus ici",
+  "<color>Pro tip:</color> set Markers in Hotkeys settings to timestamp your recordings. <link>Set up here</link>": "<color>Conseil de pro :</color> règle les marqueurs dans les paramètres des touches de raccourci pour horodater tes enregistrements. <link>Installer ici</link>",
+  "Markers": "Marqueurs"
 }

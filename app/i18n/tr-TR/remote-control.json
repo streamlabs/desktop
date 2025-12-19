@@ -1,10 +1,18 @@
 {
   "Show details": "Detayları göster",
   "Hide details": "Detayları gizle",
-  "API token": "API belirteci",
+  "API Token": "API Belirteci",
   "Generate new": "Yeni oluştur",
   "Port": "Bağlantı noktası",
-  "IP addresses": "IP adresleri",
+  "IP Addresses": "IP adresleri",
   "Click to show": "Görüntülemek için tıklayın",
-  "The free Streamlabs Controller app allows you to control Streamlabs Desktop from your iOS or Android device. Scan the QR code below to begin.": "Ücretsiz Streamlabs Controller uygulaması, Streamlabs Desktop’ı iOS veya Android cihazınızdan kontrol etmenizi sağlar. Başlamak için aşağıdaki QR kodunu tarayın."
+  "The free Streamlabs Controller app allows you to control Streamlabs Desktop from your iOS or Android device. You must be logged in to use this feature.": "Ücretsiz Streamlabs Controller uygulaması, Streamlabs Desktop’ı iOS veya Android cihazınızdan kontrol etmenizi sağlar. Bu özelliği kullanmak için giriş yapmış olmanız gerekmektedir.",
+  "Allow Controller app connections": "Denetleyici uygulama bağlantılarına izin ver",
+  "Connected Devices": "Bağlantılı Cihazlar",
+  "Disconnect": "Bağlantıyı kes",
+  "No devices connected": "Bağlı cihaz yok",
+  "Some third party applications connect to Streamlabs Desktop via websockets connection. Toggle this to allow such connections and display connection info.": "Bazı üçüncü taraf uygulamalar, Streamlabs Desktop’a websockets bağlantısı üzerinden bağlanır. Bu tür bağlantılara izin vermek ve bağlantı bilgilerini görüntülemek için bunu açın.",
+  "Warning: Displaying this portion on stream may leak sensitive information.": "Uyarı: Bu bölümün yayın sırasında gösterilmesi hassas bilgileri sızdırılmasına yol açabilir.",
+  "Allow third party connections": "Üçüncü taraf bağlantılarına izin ver",
+  "Host": "Host"
 }

@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
 import { EAuthProcessState } from 'services/user';
 import { $t } from 'services/i18n';
-import { getPlatformService, TPlatform } from '../../services/platforms';
+import {
+  EPlatformCallResult,
+  externalAuthPlatforms,
+  getPlatformService,
+  TPlatform,
+} from '../../services/platforms';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
+import { alertAsync } from 'components-react/modals';
 
 interface IPlatformMergeProps {
   params: {
@@ -12,6 +18,7 @@ interface IPlatformMergeProps {
     overlayName?: string;
     highlighter?: boolean;
   };
+  className?: string;
 }
 
 export default function PlatformMerge(p: IPlatformMergeProps) {
@@ -20,6 +27,7 @@ export default function PlatformMerge(p: IPlatformMergeProps) {
     NavigationService,
     StreamSettingsService,
     SceneCollectionsService,
+    WindowsService,
   } = Services;
 
   const [showOverlay, setShowOverlay] = useState(false);
@@ -36,21 +44,39 @@ export default function PlatformMerge(p: IPlatformMergeProps) {
 
   async function mergePlatform() {
     if (!platform) return;
-    const mode = ['youtube', 'twitch', 'twitter'].includes(platform) ? 'external' : 'internal';
-    await UserService.actions.return.startAuth(platform, mode, true);
+    const mode = externalAuthPlatforms.includes(platform) ? 'external' : 'internal';
+    await UserService.actions.return
+      .startAuth(platform, mode, true)
+      .then(res => {
+        if (res === EPlatformCallResult.Error) {
+          WindowsService.actions.setWindowOnTop();
+          alertAsync(
+            $t(
+              'This account is already linked to another Streamlabs Account. Please use a different account.',
+            ),
+          ).then(() => {
+            NavigationService.actions.navigate('Studio');
+          });
+          return;
+        }
 
-    if (p.params.highlighter) {
-      NavigationService.actions.navigate('Highlighter');
-      return;
-    }
+        if (p.params.highlighter) {
+          NavigationService.actions.navigate('Highlighter');
+          return;
+        }
 
-    StreamSettingsService.actions.setSettings({ protectedModeEnabled: true });
+        StreamSettingsService.actions.setSettings({ protectedModeEnabled: true });
 
-    if (p.params.overlayUrl) {
-      setShowOverlay(true);
-    } else {
-      NavigationService.actions.navigate('Studio');
-    }
+        if (p.params.overlayUrl) {
+          setShowOverlay(true);
+        } else {
+          NavigationService.actions.navigate('Studio');
+        }
+      })
+      .catch(e => {
+        NavigationService.actions.navigate('Studio');
+        WindowsService.actions.setWindowOnTop();
+      });
   }
 
   async function installOverlay() {
@@ -102,7 +128,10 @@ export default function PlatformMerge(p: IPlatformMergeProps) {
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+    <div
+      className={p.className}
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}
+    >
       <div style={{ width: '400px' }}>
         <h1>{$t('Connect %{platformName}', { platformName })}</h1>
         {showOverlay ? <OverlayStep /> : <LoginStep />}

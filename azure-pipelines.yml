@@ -8,7 +8,7 @@ variables:
 jobs:
   - job: Test
     pool:
-      name: 'Default'
+      name: 'Streamlabs Desktop Frontend'
 
     workspace:
       clean: resources
@@ -25,6 +25,13 @@ jobs:
 
       - script: yarn install --immutable 2>&1
         displayName: 'Install Dependencies'
+
+      - powershell: |
+          $url = "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+          $output = "$env:TEMP\vc_redist.x64.exe"
+          Invoke-WebRequest -Uri $url -OutFile $output
+          Start-Process -FilePath $output -ArgumentList "/install", "/quiet", "/norestart" -Wait
+        displayName: 'Install Visual Studio Redistributable DLLs'
 
       - script: node node_modules/electron/install.js
         displayName: 'Install Electron'
@@ -43,7 +50,7 @@ jobs:
   - job: Check_eslint_and_strict_nulls_regression
 
     pool:
-      name: 'Default'
+      name: 'Streamlabs Desktop Frontend'
 
     workspace:
       clean: resources
@@ -68,6 +75,7 @@ jobs:
   - job: macOS
 
     pool:
+      name: 'Streamlabs Desktop Frontend'
       vmImage: macOS-latest
 
     workspace:

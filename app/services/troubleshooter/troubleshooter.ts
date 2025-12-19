@@ -1,4 +1,4 @@
-import { mutation } from '../core/stateful-service';
+import { mutation, ViewHandler } from '../core/stateful-service';
 import { PersistentStatefulService } from 'services/core/persistent-stateful-service';
 import { IObsInput, IObsNumberInputValue, TObsFormData } from 'components/obs/inputs/ObsInput';
 import {
@@ -14,6 +14,77 @@ interface ITroubleshooterState {
   settings: ITroubleshooterSettings;
 }
 
+class TroubleshooterViews extends ViewHandler<ITroubleshooterState> {
+  get metadata() {
+    return {
+      skippedEnabled: {
+        type: 'checkbox',
+        label: $t('Detect skipped frames'),
+        children: {
+          skippedThreshold: {
+            type: 'slider',
+            label: $t('Skipped frames threshold'),
+            min: 0,
+            max: 1,
+            step: 0.01,
+            usePercentages: true,
+            displayed: this.state.settings.skippedEnabled,
+          },
+        },
+      },
+      laggedEnabled: {
+        type: 'checkbox',
+        label: $t('Detect lagged frames'),
+        children: {
+          laggedThreshold: {
+            type: 'slider',
+            label: $t('Lagged frames threshold'),
+            min: 0,
+            max: 1,
+            step: 0.01,
+            usePercentages: true,
+            displayed: this.state.settings.laggedEnabled,
+          },
+        },
+      },
+      droppedEnabled: {
+        type: 'checkbox',
+        label: $t('Detect dropped frames'),
+        children: {
+          droppedThreshold: {
+            type: 'slider',
+            label: $t('Dropped frames threshold'),
+            min: 0,
+            max: 1,
+            step: 0.01,
+            usePercentages: true,
+            displayed: this.state.settings.droppedEnabled,
+          },
+        },
+      },
+      dualOutputCpuEnabled: {
+        type: 'checkbox',
+        label: $t('Detect CPU usage in Dual Output mode'),
+        children: {
+          dualOutputCpuThreshold: {
+            type: 'slider',
+            label: $t('CPU usage threshold in Dual Output mode'),
+            min: 0,
+            max: 1,
+            step: 0.01,
+            usePercentages: true,
+            displayed: this.state.settings.dualOutputCpuEnabled,
+          },
+        },
+      },
+    };
+  }
+
+  get settings() {
+    return this.state.settings;
+  }
+}
+
 export class TroubleshooterService
   extends PersistentStatefulService<ITroubleshooterState>
   implements ITroubleshooterServiceApi {
@@ -25,85 +96,15 @@ export class TroubleshooterService
       laggedThreshold: 0.25,
       droppedEnabled: true,
       droppedThreshold: 0.25,
+      dualOutputCpuEnabled: true,
+      dualOutputCpuThreshold: 0.3,
     },
   };
 
   @Inject() private windowsService: WindowsService;
 
-  getSettings(): ITroubleshooterSettings {
-    return this.state.settings;
-  }
-
-  getSettingsFormData(): TObsFormData {
-    const settings = this.state.settings;
-
-    return [
-      <IObsInput<boolean>>{
-        value: settings.skippedEnabled,
-        name: 'skippedEnabled',
-        description: $t('Detect skipped frames'),
-        type: 'OBS_PROPERTY_BOOL',
-        visible: true,
-        enabled: true,
-      },
-
-      <IObsNumberInputValue>{
-        value: settings.skippedThreshold,
-        name: 'skippedThreshold',
-        description: $t('Skipped frames threshold'),
-        type: 'OBS_PROPERTY_SLIDER',
-        minVal: 0,
-        maxVal: 1,
-        stepVal: 0.01,
-        visible: settings.skippedEnabled,
-        enabled: true,
-        usePercentages: true,
-      },
-
-      <IObsInput<boolean>>{
-        value: settings.laggedEnabled,
-        name: 'laggedEnabled',
-        description: $t('Detect lagged frames'),
-        type: 'OBS_PROPERTY_BOOL',
-        visible: true,
-        enabled: true,
-      },
-
-      <IObsNumberInputValue>{
-        value: settings.laggedThreshold,
-        name: 'laggedThreshold',
-        description: $t('Lagged frames threshold'),
-        type: 'OBS_PROPERTY_SLIDER',
-        minVal: 0,
-        maxVal: 1,
-        stepVal: 0.01,
-        visible: settings.laggedEnabled,
-        enabled: true,
-        usePercentages: true,
-      },
-
-      <IObsInput<boolean>>{
-        value: settings.droppedEnabled,
-        name: 'droppedEnabled',
-        description: $t('Detect dropped frames'),
-        type: 'OBS_PROPERTY_BOOL',
-        visible: true,
-        enabled: true,
-      },
-
-      <IObsNumberInputValue>{
-        value: settings.droppedThreshold,
-        name: 'droppedThreshold',
-        description: $t('Dropped frames threshold'),
-        type: 'OBS_PROPERTY_SLIDER',
-        minVal: 0,
-        maxVal: 1,
-        stepVal: 0.01,
-        visible: settings.droppedEnabled,
-        enabled: true,
-        usePercentages: true,
-      },
-    ];
+  get views() {
+    return new TroubleshooterViews(this.state);
   }
 
   setSettings(settingsPatch: Partial<ITroubleshooterSettings>) {

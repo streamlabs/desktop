@@ -26,5 +26,7 @@
   "Disable Message Animations": "Desactivar animaciones de mensajes",
   "Hide Characters": "Ocultar personajes",
   "Hide Common Chat Bots": "Ocultar chatbots comunes",
-  "Hide commands starting with `!`": "Ocultar comandos que empiecen por '!'"
+  "Hide commands starting with `!`": "Ocultar comandos que empiecen por '!'",
+  "Chat Notifications": "Notificaciones de chat",
+  "Trigger a sound to notify you when there is new chat activity": "Activa un sonido para que te avise cuando haya nueva actividad en el chat"
 }

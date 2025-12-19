@@ -148,12 +148,14 @@ export class RootNode extends Node<ISchema, {}> {
   migrate(version: number) {
     // Changed name of transition node in version 2
     if (version < 2) {
+      // TODO: index
+      // @ts-ignore
       this.data.transitions = this.data['transition'];
     }
 
     // Added baseResolution in version 3
     if (version < 3) {
-      this.data.baseResolution = this.videoService.baseResolution;
+      this.data.baseResolution = this.videoSettingsService.baseResolution;
     }
     // Added multiple displays with individual base resolutions in version 4
     if (version < 4) {

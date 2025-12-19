@@ -6,7 +6,7 @@ import { NavigationService } from 'services/navigation';
 import { PlatformAppsService } from 'services/platform-apps';
 import { PlatformAppStoreService } from 'services/platform-app-store';
 import { UserService } from 'services/user';
-import { SettingsService } from './settings';
+import { SettingsService, TCategoryName } from './settings';
 import { byOS, OS } from 'util/operating-systems';
 import { GuestCamService } from './guest-cam';
 import { SideNavService, ESideNavKey, ProtocolLinkKeyMap } from './side-nav';
@@ -77,6 +77,8 @@ export class ProtocolLinksService extends Service {
     };
 
     if (this.handlers[info.base]) {
+      // TODO: index
+      // @ts-ignore
       this[this.handlers[info.base]](info);
     }
   }
@@ -84,30 +86,23 @@ export class ProtocolLinksService extends Service {
   @protocolHandler('library')
   private navigateLibrary(info: IProtocolLinkInfo) {
     if (!this.userService.isLoggedIn) return;
-
     const parts = info.path.match(/^\/(.+)\/(.+)$/);
+    const searchParams = new URLSearchParams(info.query);
+    // additional param to prompt the install confirm dialog on the overlay page
+    const install = searchParams?.get('install');
     if (parts) {
       this.navigationService.navigate('BrowseOverlays', {
         type: parts[1],
         id: parts[2],
+        install,
       });
       const menuItem =
+        // TODO: index
+        // @ts-ignore
         ProtocolLinkKeyMap[parts[1]] ?? this.sideNavService.views.isOpen
           ? ESideNavKey.Scene
           : ESideNavKey.Themes;
       this.sideNavService.setCurrentMenuItem(menuItem);
-    }
-  }
-
-  @protocolHandler('alertbox-library')
-  private navigateAlertboxLibrary(info: IProtocolLinkInfo) {
-    if (!this.userService.isLoggedIn) return;
-
-    const match = info.path.match(/^\/?([0-9]+)?\/?$/);
-
-    if (match) {
-      this.navigationService.navigate('AlertboxLibrary', { id: match[1] });
-      this.sideNavService.setCurrentMenuItem(ESideNavKey.AlertBoxLibrary);
     }
   }
 
@@ -145,7 +140,7 @@ export class ProtocolLinksService extends Service {
   private openSettings(info: IProtocolLinkInfo) {
     const category = info.path.replace('/', '');
 
-    this.settingsService.showSettings(category);
+    this.settingsService.showSettings(category as TCategoryName);
   }
 
   @protocolHandler('join')

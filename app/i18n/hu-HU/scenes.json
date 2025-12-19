@@ -3,6 +3,7 @@
   "The scene name is required": "A jelenet nevét kötelező megadni",
   "Please enter the name of the scene": "Kérjük, add meg a jelenet nevét",
   "Manage Scene Collections": "Jelenet Gyűjtemények Kezelése",
+  "Create Scene Collection": "Create Scene Collection",
   "There needs to be at least one scene.": "Minimum egy jelenetnek lennie kell.",
   "Projector:": "Kivetítő:",
   "Projector: Output": "Kivetítő: Kimenet",
@@ -56,5 +57,13 @@
   "Arrange sources here for a vertical scene layout.": "Arrange sources here for a vertical scene layout.",
   "Arrange sources here for a horizontal scene layout.": "Arrange sources here for a horizontal scene layout.",
   "Toggle Dual Output Mode.": "Toggle Dual Output Mode.",
-  "Cannot hide dual output toggles in dual output mode.": "Cannot hide dual output toggles in dual output mode."
+  "Cannot hide dual output toggles in dual output mode.": "Cannot hide dual output toggles in dual output mode.",
+  "Choose a template from our overlay library": "Choose a template from our overlay library",
+  "Log in to choose a template from our overlay library": "Log in to choose a template from our overlay library",
+  "Loading scene...": "Loading scene...",
+  "Import from OBS": "Import from OBS",
+  "Import from Twitch": "Import from Twitch",
+  "Import from Twitch Studio": "Import from Twitch Studio",
+  "Load existing scenes from Twitch Studio": "Load existing scenes from Twitch Studio",
+  "Start Fresh": "Start Fresh"
 }

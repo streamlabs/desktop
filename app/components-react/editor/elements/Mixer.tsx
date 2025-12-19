@@ -8,13 +8,16 @@ import MixerItem from './mixer/MixerItem';
 import { Services } from 'components-react/service-provider';
 import { Menu } from 'util/menus/Menu';
 import { $t } from 'services/i18n';
+import { useRealmObject } from 'components-react/hooks/realm';
 
-export default function Mixer() {
-  const { EditorCommandsService, AudioService, CustomizationService } = Services;
+const mins = { x: 150, y: 120 };
+
+export function Mixer() {
+  const { EditorCommandsService, AudioService, CustomizationService, WindowsService } = Services;
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const { renderElement } = useBaseElement(<Element />, { x: 150, y: 120 }, containerRef.current);
+  const { renderElement } = useBaseElement(<Element />, mins, containerRef.current);
 
   const needToRenderVolmeters: boolean = useMemo(() => {
     // render volmeters without hardware acceleration only if we don't have the webgl context
@@ -22,11 +25,12 @@ export default function Mixer() {
     return !canvas.getContext('webgl');
   }, []);
 
-  const { performanceMode, audioSourceIds } = useVuex(() => ({
-    performanceMode: CustomizationService.state.performanceMode,
+  const performanceMode = useRealmObject(CustomizationService.state).performanceMode;
+  const { audioSourceIds, hideStyleBlockers } = useVuex(() => ({
     audioSourceIds: AudioService.views.sourcesForCurrentScene
       .filter(source => !source.mixerHidden && source.isControlledViaObs)
       .map(source => source.sourceId),
+    hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
   }));
 
   function showAdvancedSettings() {
@@ -85,3 +89,5 @@ export default function Mixer() {
     </div>
   );
 }
+
+Mixer.mins = mins;

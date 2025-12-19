@@ -24,6 +24,7 @@ export abstract class BaseInput<
   abstract readonly title: string;
   abstract readonly metadata: TMetadataType;
   onInput: Function = null;
+  onBlur: Function = null;
 
   /**
    * true if the component listens and re-emits child-inputs events
@@ -74,6 +75,14 @@ export abstract class BaseInput<
     if (needToSendEventToForm) this.form.emitInput(eventData, event);
   }
 
+  emitBlur(event?: any) {
+    this.$emit('blur', event);
+
+    if (this.onBlur) this.onBlur();
+
+    this.form.emitBlur(event);
+  }
+
   getValidations() {
     return { required: this.options.required };
   }
@@ -83,7 +92,7 @@ export abstract class BaseInput<
    */
   get validate() {
     const validations = this.getValidations();
-    Object.keys(validations).forEach(key => {
+    Object.keys(validations).forEach((key: keyof typeof validations) => {
       // VeeValidate recognizes undefined values as valid constraints
       // so just remove it
       if (validations[key] == null) delete validations[key];

@@ -6,6 +6,7 @@ import {
   IPlatformService,
   IPlatformState,
   TPlatformCapability,
+  TLiveDockFeature,
 } from './index';
 import { authorizedHeaders, jfetch } from '../../util/requests';
 import { throwStreamError } from '../streaming/stream-error';
@@ -62,6 +63,11 @@ export class TrovoService
     'streamlabels',
     'viewerCount',
   ]);
+  readonly liveDockFeatures = new Set<TLiveDockFeature>([
+    'chat-offline',
+    'refresh-chat',
+    'view-stream',
+  ]);
   readonly apiBase = 'https://open-api.trovo.live/openplatform';
   readonly rtmpServer = 'rtmp://livepush.trovo.live/live/';
   readonly platform = 'trovo';
@@ -83,8 +89,14 @@ export class TrovoService
     return this.userService.state.auth?.platforms?.trovo?.username || '';
   }
 
-  async beforeGoLive(goLiveSettings: IGoLiveSettings, context?: TDisplayType) {
+  async beforeGoLive(goLiveSettings: IGoLiveSettings, context: TDisplayType) {
     const trSettings = getDefined(goLiveSettings.platforms.trovo);
+
+    // If the stream has switched from another device, a new broadcast does not need to be created
+    if (goLiveSettings.streamShift && this.streamingService.views.shouldSwitchStreams) {
+      await this.setupStreamShiftStream(goLiveSettings);
+      return;
+    }
 
     const key = this.state.streamKey;
     if (!this.streamingService.views.isMultiplatformMode) {
@@ -121,9 +133,12 @@ export class TrovoService
     try {
       return await platformAuthorizedRequest<T>('trovo', reqInfo);
     } catch (e: unknown) {
-      let details = (e as any).message;
-      if (!details) details = 'connection failed';
-      throwStreamError('PLATFORM_REQUEST_FAILED', e as any, details);
+      console.error(`Failed ${this.displayName} API Request:`, reqInfo);
+
+      const error = e as any;
+      let details = error.message;
+      if (!details) details = 'Connection failed';
+      throwStreamError('PLATFORM_REQUEST_FAILED', { ...error, platform: 'trovo' }, details);
     }
   }
 
@@ -164,6 +179,58 @@ export class TrovoService
 
   private fetchChannelInfo(): Promise<ITrovoChannelInfo> {
     return this.requestTrovo<ITrovoChannelInfo>(`${this.apiBase}/channel`);
+  }
+
+  async setupStreamShiftStream(goLiveSettings: IGoLiveSettings) {
+    // Note: The below is pretty much the same as prepopulateInfo
+    const settings = goLiveSettings?.streamShiftSettings;
+
+    if (settings && !settings.is_live) {
+      console.error('Stream Shift Error: Trovo is not live');
+      this.postNotification('Stream Shift Error: Trovo is not live');
+      return;
+    }
+
+    // Set the game
+    const channelInfo = await this.fetchChannelInfo();
+
+    const title = settings?.stream_title ?? channelInfo.live_title;
+    const gameName = settings?.game_name ?? channelInfo.category_name;
+    const gameId = settings?.game_id ?? channelInfo.category_id;
+    const gameInfo = await this.fetchGame(gameName);
+
+    this.SET_CHANNEL_INFO({
+      gameId,
+      gameName,
+      gameImage: gameInfo.image || '',
+    });
+
+    // Set the stream key
+    this.SET_STREAM_KEY(channelInfo.stream_key.replace('live/', ''));
+
+    // Set the remaining settings
+    if (settings) {
+      this.SET_STREAM_SETTINGS({
+        title,
+        game: channelInfo.category_id,
+      });
+
+      this.SET_USER_INFO({
+        userId: settings.platform_id ?? '',
+        channelId: settings.platform_id ?? channelInfo.stream_key.split('_')[0],
+      });
+    } else {
+      // As a fallback, fetch info from Trovo
+      const userInfo = await this.requestTrovo<ITrovoUserInfo>(`${this.apiBase}/getuserinfo`);
+
+      this.SET_STREAM_SETTINGS({
+        title,
+        game: channelInfo.category_id,
+      });
+      this.SET_USER_INFO(userInfo);
+    }
+
+    this.setPlatformContext('trovo');
   }
 
   async searchGames(searchString: string): Promise<IGame[]> {

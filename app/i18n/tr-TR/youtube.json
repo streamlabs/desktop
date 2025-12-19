@@ -40,5 +40,13 @@
   "Auto-start is disabled for your broadcast. You should manually publish your stream from Youtube Studio": "Yayınınız için otomatik başlatma devre dışı bırakıldı. Akışınızı YouTube Studio'dan manuel olarak yayınlamalısınız",
   "Made for kids": "Çocuklara özel içerik",
   "Features like personalized ads and live chat won't be available on live streams made for kids.": "Kişiselleştirilmiş reklamlar ve canlı sohbet gibi özellikler, çocuklara özel canlı yayınlarda kullanılamaz.",
-  "Try our new thumbnail editor": "Yeni küçük resim düzenleyicimizi deneyin"
+  "YouTube token has expired, re-login or re-merge YouTube account": "YouTube belirtecinin süresi doldu, yeniden giriş yapın veya YouTube hesabını yeniden birleştirin",
+  "Thumbnail image content is invalid.": "Küçük resim içeriği geçersiz.",
+  "Thumbnail file does not include image content.": "Küçük resim dosyası görsel içeriği içermez.",
+  "Permission missing to upload thumbnails.": "Küçük resimleri yüklemek için izin eksik.",
+  "Video does not exist. Thumbnail upload failed.": "Video mevcut değil. Küçük resim yükleme başarısız oldu.",
+  "Exceeded thumbnail upload quota. Please try again later.": "Küçük resim yükleme kotası aşıldı. Lütfen daha sonra yeniden deneyin.",
+  "YouTube thumbnail image is too large. Maximum size is 2MB.": "YouTube küçük resim görseli çok büyük. Maksimum boyut 2 MB'dir.",
+  "Please upload thumbnail manually on YouTube.": "Lütfen YouTube'a küçük resmi manuel olarak yükleyin.",
+  "Stream Shift Error: YouTube is not live": "Stream Shift Error: YouTube is not live"
 }

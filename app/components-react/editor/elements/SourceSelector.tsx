@@ -1,18 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Tooltip, Tree } from 'antd';
+import React, { useEffect, useRef, useState, useMemo, Ref, RefObject } from 'react';
+import pick from 'lodash/pick';
+import { message, Tooltip, Tree } from 'antd';
 import { DataNode } from 'rc-tree/lib/interface';
 import { TreeProps } from 'rc-tree/lib/Tree';
 import cx from 'classnames';
-import { inject, injectState, injectWatch, mutation, useModule } from 'slap';
-import { SourcesService } from 'services/sources';
-import { ScenesService, TSceneNode, isItem } from 'services/scenes';
-import { SelectionService } from 'services/selection';
+import { TSceneNode, isItem } from 'services/scenes';
 import { EditMenu } from 'util/menus/EditMenu';
 import { $t } from 'services/i18n';
-import { EditorCommandsService } from 'services/editor-commands';
 import { EPlaceType } from 'services/editor-commands/commands/reorder-nodes';
-import { AudioService } from 'services/audio';
-import { StreamingService } from 'services/streaming';
 import { EDismissable } from 'services/dismissables';
 import { assertIsDefined, getDefined } from 'util/properties-type-guards';
 import useBaseElement from './hooks';
@@ -21,9 +16,13 @@ import Scrollable from 'components-react/shared/Scrollable';
 import HelpTip from 'components-react/shared/HelpTip';
 import Translate from 'components-react/shared/Translate';
 import { DualOutputSourceSelector } from './DualOutputSourceSelector';
-import { WidgetsService } from '../../../app-services';
-import { GuestCamService } from 'app-services';
-import { DualOutputService } from 'services/dual-output';
+import { Services } from 'components-react/service-provider';
+import { initStore, useController } from 'components-react/hooks/zustand';
+import { useVuex } from 'components-react/hooks';
+import * as remote from '@electron/remote';
+import { AuthModal } from 'components-react/shared/AuthModal';
+import Utils from 'services/utils';
+
 interface ISourceMetadata {
   id: string;
   title: string;
@@ -41,28 +40,27 @@ interface ISourceMetadata {
   toggleAll?: boolean;
 }
 
-export class SourceSelectorModule {
-  private scenesService = inject(ScenesService);
-  private sourcesService = inject(SourcesService);
-  private widgetsService = inject(WidgetsService);
-  private selectionService = inject(SelectionService);
-  private editorCommandsService = inject(EditorCommandsService);
-  private streamingService = inject(StreamingService);
-  private audioService = inject(AudioService);
-  private guestCamService = inject(GuestCamService);
-  private dualOutputService = inject(DualOutputService);
+export const SourceSelectorCtx = React.createContext<SourceSelectorController | null>(null);
 
-  sourcesTooltip = $t('The building blocks of your scene. Also contains widgets.');
-  addSourceTooltip = $t('Add a new Source to your Scene. Includes widgets.');
-  openSourcePropertiesTooltip = $t('Open the Source Properties.');
-  addGroupTooltip = $t('Add a Group so you can move multiple Sources at the same time.');
+class SourceSelectorController {
+  private scenesService = Services.ScenesService;
+  private sourcesService = Services.SourcesService;
+  private widgetsService = Services.WidgetsService;
+  private selectionService = Services.SelectionService;
+  private editorCommandsService = Services.EditorCommandsService;
+  private streamingService = Services.StreamingService;
+  private audioService = Services.AudioService;
+  private guestCamService = Services.GuestCamService;
+  private dualOutputService = Services.DualOutputService;
+  private userService = Services.UserService;
+  private tiktokService = Services.TikTokService;
 
-  state = injectState({
+  store = initStore({
     expandedFoldersIds: [] as string[],
-    showTreeMask: true,
+    showModal: false,
   });
 
-  nodeRefs = {};
+  nodeRefs: Dictionary<Ref<HTMLDivElement>> = {};
 
   /**
    * This property handles selection when expanding/collapsing folders
@@ -182,13 +180,17 @@ export class SourceSelectorModule {
 
   determineIcon(isLeaf: boolean, sourceId: string) {
     if (!isLeaf) {
-      return this.state.expandedFoldersIds.includes(sourceId)
+      return this.store.expandedFoldersIds.includes(sourceId)
         ? 'fas fa-folder-open'
         : 'fa fa-folder';
     }
 
     const { sourcesService, widgetsService } = this;
     const source = sourcesService.state.sources[sourceId];
+
+    if (source.propertiesManagerType === 'smartBrowserSource') {
+      return 'icon-ai';
+    }
 
     if (source.propertiesManagerType === 'streamlabels') {
       return 'fas fa-file-alt';
@@ -209,7 +211,7 @@ export class SourceSelectorModule {
 
   addSource() {
     if (this.scenesService.views.activeScene) {
-      this.sourcesService.showShowcase();
+      this.sourcesService.actions.showShowcase();
     }
   }
 
@@ -222,7 +224,7 @@ export class SourceSelectorModule {
         const parent = this.selectionService.views.globalSelection.getClosestParent();
         if (parent) parentId = parent.id;
       }
-      this.scenesService.showNameFolder({
+      this.scenesService.actions.showNameFolder({
         itemsToGroup,
         parentId,
         sceneId: this.scenesService.views.activeScene.id,
@@ -395,13 +397,14 @@ export class SourceSelectorModule {
     this.callCameFromIcon = false;
   }
 
-  @mutation()
   toggleFolder(nodeId: string) {
-    if (this.state.expandedFoldersIds.includes(nodeId)) {
-      this.state.expandedFoldersIds.splice(this.state.expandedFoldersIds.indexOf(nodeId), 1);
-    } else {
-      this.state.expandedFoldersIds.push(nodeId);
-    }
+    this.store.setState(s => {
+      if (s.expandedFoldersIds.includes(nodeId)) {
+        s.expandedFoldersIds = s.expandedFoldersIds.filter(id => id !== nodeId);
+      } else {
+        s.expandedFoldersIds = [...s.expandedFoldersIds, nodeId];
+      }
+    });
   }
 
   get lastSelectedId() {
@@ -443,20 +446,21 @@ export class SourceSelectorModule {
     return this.dualOutputService.views.activeDisplays.vertical;
   }
 
-  watchSelected = injectWatch(() => this.lastSelectedId, this.expandSelectedFolders);
-
   async expandSelectedFolders() {
+    if (!this.store) return;
     if (this.callCameFromInsideTheHouse) {
       this.callCameFromInsideTheHouse = false;
       return;
     }
     const node = this.scene.getNode(this.lastSelectedId);
     if (!node || this.selectionService.state.selectedIds.length > 1) return;
-    this.state.setExpandedFoldersIds(
-      this.state.expandedFoldersIds.concat(node.getPath().slice(0, -1)),
-    );
+    this.store.setState(s => {
+      s.expandedFoldersIds = s.expandedFoldersIds.concat(node.getPath().slice(0, -1));
+    });
 
-    this.nodeRefs[this.lastSelectedId]?.current?.scrollIntoView({ behavior: 'smooth' });
+    (this.nodeRefs[this.lastSelectedId] as RefObject<HTMLDivElement>)?.current?.scrollIntoView({
+      behavior: 'smooth',
+    });
   }
 
   /**
@@ -598,9 +602,22 @@ export class SourceSelectorModule {
     this.streamingService.actions.setSelectiveRecording(
       !this.streamingService.state.selectiveRecording,
     );
-    if (!this.selectiveRecordingEnabled && this.isDualOutputActive) {
-      this.dualOutputService.actions.toggleDisplay(false, 'vertical');
+    if (this.isDualOutputActive) {
+      // selective recording only works with the horizontal display
+      // so toggle the vertical display to hide it
+      this.dualOutputService.actions.toggleDisplay(this.selectiveRecordingEnabled, 'vertical');
       this.selectionService.views.globalSelection.filterDualOutputNodes();
+
+      // if the vertical display is hidden because of selective recording
+      // show an alert to the user notifying them that the vertical display is disabled
+      if (!this.selectiveRecordingEnabled) {
+        remote.dialog.showMessageBox({
+          title: 'Vertical Display Disabled',
+          message: $t(
+            'Dual Output can’t be displayed - Selective Recording only works with horizontal sources and disables editing the vertical output scene. Please disable selective recording from Sources to set up Dual Output.',
+          ),
+        });
+      }
     }
   }
 
@@ -640,6 +657,73 @@ export class SourceSelectorModule {
     return this.scene.getSelection(sceneNodeId);
   }
 
+  toggleDualOutput() {
+    if (this.userService.isLoggedIn) {
+      if (Services.StreamingService.views.isMidStreamMode) {
+        message.error({
+          content: $t('Cannot toggle Dual Output while live.'),
+          className: styles.toggleError,
+        });
+      } else if (Services.TransitionsService.views.studioMode) {
+        message.error({
+          content: $t('Cannot toggle Dual Output while in Studio Mode.'),
+          className: styles.toggleError,
+        });
+      } else {
+        // only open video settings when toggling on dual output
+        const skipShowVideoSettings = this.dualOutputService.views.dualOutputMode === true;
+
+        this.dualOutputService.actions.setDualOutputModeIfPossible(
+          !this.dualOutputService.views.dualOutputMode,
+          skipShowVideoSettings,
+        );
+        Services.UsageStatisticsService.recordFeatureUsage('DualOutput');
+        Services.UsageStatisticsService.recordAnalyticsEvent('DualOutput', {
+          type: 'ToggleOnDualOutput',
+          source: 'SourceSelector',
+          isPrime: this.userService.isPrime,
+          platforms: this.streamingService.views.linkedPlatforms,
+          tiktokStatus: this.tiktokService.scope,
+        });
+
+        if (!this.dualOutputService.views.dualOutputMode && this.selectiveRecordingEnabled) {
+          // show warning message if selective recording is active
+          remote.dialog
+            .showMessageBox(Utils.getChildWindow(), {
+              title: 'Vertical Display Disabled',
+              message: $t(
+                'Dual Output can’t be displayed - Selective Recording only works with horizontal sources and disables editing the vertical output scene. Please disable selective recording from Sources to set up Dual Output.',
+              ),
+              buttons: [$t('OK')],
+            })
+            .catch(() => {});
+        }
+      }
+    } else {
+      this.handleShowModal(true);
+    }
+  }
+
+  handleShowModal(status: boolean) {
+    Services.WindowsService.actions.updateStyleBlockers('main', status);
+    this.store.update('showModal', status);
+  }
+
+  handleAuth() {
+    this.userService.actions.showLogin();
+    const onboardingCompleted = Services.OnboardingService.onboardingCompleted.subscribe(() => {
+      Services.DualOutputService.actions.setDualOutputModeIfPossible();
+      Services.SettingsService.actions.showSettings('Video');
+      onboardingCompleted.unsubscribe();
+    });
+  }
+
+  get dualOutputTitle() {
+    return !this.isDualOutputActive || !this.userService.isLoggedIn
+      ? $t('Enable Dual Output to stream to horizontal & vertical platforms simultaneously')
+      : $t('Disable Dual Output');
+  }
+
   get scene() {
     const scene = getDefined(this.scenesService.views.activeScene);
     return scene;
@@ -647,12 +731,13 @@ export class SourceSelectorModule {
 }
 
 function SourceSelector() {
-  const { nodeData } = useModule(SourceSelectorModule);
+  const ctrl = useController(SourceSelectorCtx);
+  const showModal = ctrl.store.useState(s => s.showModal);
   return (
     <>
       <StudioControls />
       <ItemsTree />
-      {nodeData.some(node => node.isFolder) && (
+      {ctrl.nodeData.some(node => node.isFolder) && (
         <HelpTip
           title={$t('Folder Expansion')}
           dismissableKey={EDismissable.SourceSelectorFolders}
@@ -667,21 +752,25 @@ function SourceSelector() {
           </Translate>
         </HelpTip>
       )}
+      <AuthModal
+        prompt={$t('Please log in to enable dual output. Would you like to log in now?')}
+        showModal={showModal}
+        handleShowModal={ctrl.handleShowModal}
+        handleAuth={ctrl.handleAuth}
+      />
     </>
   );
 }
 
 function StudioControls() {
-  const {
-    sourcesTooltip,
-    addGroupTooltip,
-    addSourceTooltip,
-    selectiveRecordingEnabled,
-    selectiveRecordingLocked,
-    addSource,
-    addFolder,
-    toggleSelectiveRecording,
-  } = useModule(SourceSelectorModule);
+  const ctrl = useController(SourceSelectorCtx);
+  const { selectiveRecordingEnabled, selectiveRecordingLocked } = useVuex(() =>
+    pick(ctrl, ['selectiveRecordingEnabled', 'selectiveRecordingLocked']),
+  );
+
+  const sourcesTooltip = $t('The building blocks of your scene. Also contains widgets.');
+  const addSourceTooltip = $t('Add a new Source to your Scene. Includes widgets.');
+  const addGroupTooltip = $t('Add a Group so you can move multiple Sources at the same time.');
 
   return (
     <div className={styles.topContainer} data-name="sourcesControls">
@@ -691,7 +780,20 @@ function StudioControls() {
         </Tooltip>
       </div>
       <Tooltip title={addSourceTooltip} placement="bottomLeft">
-        <i className="icon-add-circle icon-button icon-button--lg" onClick={addSource} />
+        <i
+          className="icon-add-circle icon-button icon-button--lg"
+          onClick={() => ctrl.addSource()}
+        />
+      </Tooltip>
+
+      <Tooltip title={ctrl.dualOutputTitle} placement="bottomRight">
+        <i
+          className={cx('icon-dual-output icon-button icon-button--lg', {
+            active: ctrl.isDualOutputActive,
+          })}
+          onClick={() => ctrl.toggleDualOutput()}
+          data-testid={ctrl.isDualOutputActive ? 'dual-output-active' : 'dual-output-inactive'}
+        />
       </Tooltip>
 
       <Tooltip title={$t('Toggle Selective Recording')} placement="bottomRight">
@@ -700,30 +802,27 @@ function StudioControls() {
             active: selectiveRecordingEnabled,
             disabled: selectiveRecordingLocked,
           })}
-          onClick={toggleSelectiveRecording}
+          onClick={() => ctrl.toggleSelectiveRecording()}
         />
       </Tooltip>
       <Tooltip title={addGroupTooltip} placement="bottomRight">
-        <i className="icon-add-folder icon-button icon-button--lg" onClick={addFolder} />
+        <i
+          className="icon-add-folder icon-button icon-button--lg"
+          onClick={() => ctrl.addFolder()}
+        />
       </Tooltip>
     </div>
   );
 }
 
 function ItemsTree() {
-  const {
-    nodeData,
-    getTreeData,
-    selectionItemIds,
-    expandedFoldersIds,
-    selectiveRecordingEnabled,
-    showContextMenu,
-    makeActive,
-    toggleFolder,
-    handleSort,
-    showTreeMask,
-    setShowTreeMask,
-  } = useModule(SourceSelectorModule);
+  const ctrl = useController(SourceSelectorCtx);
+  const { nodeData, selectionItemIds, selectiveRecordingEnabled, lastSelectedId } = useVuex(() =>
+    pick(ctrl, ['nodeData', 'selectionItemIds', 'selectiveRecordingEnabled', 'lastSelectedId']),
+  );
+  const expandedFoldersIds = ctrl.store.useState(s => s.expandedFoldersIds);
+
+  const [showTreeMask, setShowTreeMask] = useState(true);
 
   // Force a rerender when the state of selective recording changes
   const [selectiveRecordingToggled, setSelectiveRecordingToggled] = useState(false);
@@ -731,7 +830,11 @@ function ItemsTree() {
     selectiveRecordingEnabled,
   ]);
 
-  const treeData = getTreeData(nodeData);
+  useEffect(() => {
+    ctrl.expandSelectedFolders();
+  }, [lastSelectedId]);
+
+  const treeData = ctrl.getTreeData(nodeData);
 
   return (
     <div
@@ -746,16 +849,16 @@ function ItemsTree() {
     >
       <Scrollable
         className={cx(styles.scenesContainer, styles.sourcesContainer)}
-        onContextMenu={(e: React.MouseEvent) => showContextMenu('', e)}
+        onContextMenu={(e: React.MouseEvent) => ctrl.showContextMenu('', e)}
       >
         {showTreeMask && <div className={styles.treeMask} data-name="treeMask" />}
         <Tree
           selectedKeys={selectionItemIds}
           expandedKeys={expandedFoldersIds}
-          onSelect={(selectedKeys, info) => makeActive(info)}
-          onExpand={(selectedKeys, info) => toggleFolder(info.node.key as string)}
-          onRightClick={info => showContextMenu(info.node.key as string, info.event)}
-          onDrop={handleSort}
+          onSelect={(selectedKeys, info) => ctrl.makeActive(info)}
+          onExpand={(selectedKeys, info) => ctrl.toggleFolder(info.node.key as string)}
+          onRightClick={info => ctrl.showContextMenu(info.node.key as string, info.event)}
+          onDrop={(info: Parameters<Required<TreeProps>['onDrop']>[0]) => ctrl.handleSort(info)}
           treeData={treeData}
           draggable
           multiple
@@ -825,8 +928,30 @@ const TreeNode = React.forwardRef(
                 />
               </Tooltip>
             )}
-            <i onClick={p.toggleLock} className={p.isLocked ? 'icon-lock' : 'icon-unlock'} />
-            <i onClick={p.toggleVisibility} className={p.isVisible ? 'icon-view' : 'icon-hide'} />
+            <Tooltip
+              title={$t('Lock/Unlock Source')}
+              placement="left"
+              visible={['icon-lock', 'icon-unlock'].includes(hoveredIcon)}
+            >
+              <i
+                onClick={p.toggleLock}
+                className={p.isLocked ? 'icon-lock' : 'icon-unlock'}
+                onMouseEnter={() => setHoveredIcon(p.isLocked ? 'icon-lock' : 'icon-unlock')}
+                onMouseLeave={() => setHoveredIcon('')}
+              />
+            </Tooltip>
+            <Tooltip
+              title={$t('Hide/Unhide')}
+              placement="left"
+              visible={['icon-view', 'icon-hide'].includes(hoveredIcon)}
+            >
+              <i
+                onClick={p.toggleVisibility}
+                className={p.isVisible ? 'icon-view' : 'icon-hide'}
+                onMouseEnter={() => setHoveredIcon(p.isVisible ? 'icon-view' : 'icon-hide')}
+                onMouseLeave={() => setHoveredIcon('')}
+              />
+            </Tooltip>
           </>
         )}
         <Tooltip
@@ -858,13 +983,12 @@ const TreeNode = React.forwardRef(
   },
 );
 
-export default function SourceSelectorElement() {
+const mins = { x: 200, y: 120 };
+
+export function SourceSelectorElement() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { renderElement } = useBaseElement(
-    <SourceSelector />,
-    { x: 200, y: 120 },
-    containerRef.current,
-  );
+  const { renderElement } = useBaseElement(<SourceSelector />, mins, containerRef.current);
+  const controller = useMemo(() => new SourceSelectorController(), []);
 
   return (
     <div
@@ -872,7 +996,9 @@ export default function SourceSelectorElement() {
       data-name="SourceSelector"
       style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
     >
-      {renderElement()}
+      <SourceSelectorCtx.Provider value={controller}>{renderElement()}</SourceSelectorCtx.Provider>
     </div>
   );
 }
+
+SourceSelectorElement.mins = mins;

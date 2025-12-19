@@ -36,8 +36,8 @@ export class EmoteWallService extends WidgetSettingsService<IEmoteWallData> {
       dataFetchUrl: `https://${this.getHost()}/api/v5/slobs/widget/emote-wall`,
       settingsSaveUrl: `https://${this.getHost()}/api/v5/slobs/widget/emote-wall`,
       settingsUpdateEvent: 'emoteWallSettingsUpdate',
-      customCodeAllowed: true,
-      customFieldsAllowed: true,
+      customCodeAllowed: false,
+      customFieldsAllowed: false,
       hasTestButtons: true,
     };
   }

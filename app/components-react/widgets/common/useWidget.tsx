@@ -1,4 +1,4 @@
-import { WidgetType } from '../../../services/widgets';
+import { WidgetDefinitions, WidgetType } from '../../../services/widgets';
 import { Services } from '../../service-provider';
 import { throttle } from 'lodash-decorators';
 import { assertIsDefined, getDefined } from '../../../util/properties-type-guards';
@@ -28,6 +28,7 @@ export interface IWidgetCommonState {
   prevSettings: any;
   canRevert: boolean;
   widgetData: IWidgetState;
+  staticConfig: unknown;
 }
 
 /**
@@ -58,6 +59,7 @@ export const DEFAULT_WIDGET_STATE: IWidgetCommonState = {
   prevSettings: {},
   canRevert: false,
   browserSourceProps: (null as any) as TObsFormData,
+  staticConfig: null,
 } as IWidgetCommonState;
 
 /**
@@ -72,6 +74,7 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
     sourceId: this.params.sourceId,
     shouldCreatePreviewSource: this.params.shouldCreatePreviewSource ?? true,
     selectedTab: this.params.selectedTab ?? 'general',
+    staticConfig: null,
   } as IWidgetCommonState);
 
   // create shortcuts for widgetsConfig and eventsInfo
@@ -91,13 +94,46 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
     const widget = this.widget;
     this.setBrowserSourceProps(widget.getSource()!.getPropertiesFormData());
 
-    // create a temporary preview-source for the Display component
-    if (this.state.shouldCreatePreviewSource) {
-      const previewSource = widget.createPreviewSource();
-      this.state.previewSourceId = previewSource.sourceId;
-    }
+    /* FIXME: we need a more robust way of handling these `onUnload` invocations,
+     *
+     * These are supposed to fire for any window that gets closed, not just
+     * the window that is displaying this component, that includes one-off windows.
+     * As a result, we destroyed the preview source when a child window such as
+     * the one in Custom Code editor gets created, that resulted in an infinite
+     * load state since we try to cleanup again on widget's destroy.
+     *
+     * We would ideally:
+     * a) get rid of these types of handlers
+     * or b) make sure we're using the windowId given to the listener to
+     * check whether we should proceed or not, like in this case.
+     *
+     * More importanlty, this module's `init` gets called on CustomCode since
+     * that uses `injectChild`, all of the init logic of this module is
+     * executed, including this `onUnload` handler.
+     * While this is the minimum viable fix for the issue with code editor,
+     * we should revisit this logic entirely. At best, we're wasting compute
+     * time and network requests.
+     */
+    /* Reaching into slap internals to check if we're on the instance
+     * that used `injectChild`
+     */
+    if ((this as any).__provider?.options?.parentScope) {
+      // Do not create preview sources on child injected modules
+      // Empty since we don't need to cleanup
+      this.cancelUnload = () => {};
+    } else {
+      // create a temporary preview-source for the Display component
+      if (this.state.shouldCreatePreviewSource) {
+        const previewSource = widget.createPreviewSource();
+        this.state.previewSourceId = previewSource.sourceId;
+      }
 
-    this.cancelUnload = onUnload(() => this.widget.destroyPreviewSource());
+      this.cancelUnload = () => {
+        if (this.state.previewSourceId) {
+          this.widget.destroyPreviewSource();
+        }
+      };
+    }
 
     // load settings from the server to the store
     this.state.type = widget.type;
@@ -203,6 +239,8 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
   }
 
   get config(): IWidgetConfig {
+    // TODO: index
+    // @ts-ignore
     return this.widgetsConfig[this.state.type];
   }
 
@@ -229,20 +267,80 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
     await this.saveSettings(newSettings);
   }
 
+  // for use in mutable settings values like arrays
+  public async replaceSettings(formValues: any) {
+    const newSettings = { ...this.settings, ...formValues };
+    // save setting to the store
+    this.setSettings(newSettings);
+    // send setting to the server
+    await this.saveSettings(newSettings);
+  }
+
   // Update setting compatible with FormFactory
-  updateSetting(key: string) {
-    return (value: any) => this.updateSettings({ [key]: value });
+  public updateSetting(key: string) {
+    return (value: any) => {
+      if (Array.isArray(this.settings[key])) {
+        this.replaceSettings({ [key]: value });
+      } else {
+        this.updateSettings({ [key]: value });
+      }
+    };
   }
 
   /**
    * Fetch settings from the server
    */
   private async fetchData(): Promise<TWidgetState['data']> {
+    const widgetType = WidgetDefinitions[this.config.type].humanType;
+
     // load widget settings data into state
-    const rawData = await this.actions.return.request({
-      url: this.config.dataFetchUrl,
-      method: 'GET',
-    });
+    // TODO: this is duplicate/very similar to the version that was done for Vue
+    const [rawData, staticConfig] = await Promise.all([
+      this.actions.return.request({
+        url: this.config.dataFetchUrl,
+        method: 'GET',
+      }),
+      // TODO: duplicate from vue version
+      this.state.staticConfig
+        ? Promise.resolve(this.state.staticConfig)
+        : this.actions.return.request({
+            url: `https://${this.widgetsService.hostsService.streamlabs}/api/v5/widgets/static/config/${widgetType}`,
+            method: 'GET',
+          }),
+    ]);
+
+    this.setStaticConfig(staticConfig);
+    if (staticConfig?.data?.custom_code) {
+      // I miss lenses
+      const makeLenses = (type: 'html' | 'css' | 'js') => {
+        const prop = `custom_${type}`;
+        if (this.config.useNewWidgetAPI) {
+          return {
+            get: () => rawData.data.settings.global[prop],
+            set: (val: string) => {
+              rawData.data.settings.global[prop] = val;
+            },
+          };
+        }
+
+        return {
+          get: () => rawData.settings[prop],
+          set: (val: string) => {
+            rawData.settings[prop] = val;
+          },
+        };
+      };
+      // If we have a default for custom code and the fields are empty in the
+      // response, prefill that with the default, this is what backend should
+      // also do
+      ['html', 'css', 'js'].forEach((customType: 'html' | 'css' | 'js') => {
+        const { get, set } = makeLenses(customType);
+        if (staticConfig.data.custom_code[customType] && !get()) {
+          set(staticConfig.data.custom_code[customType]);
+        }
+      });
+    }
+
     return this.patchAfterFetch(rawData);
   }
 
@@ -252,11 +350,13 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
   @throttle(500)
   private async saveSettings(settings: TWidgetState['data']['settings']) {
     const body = this.patchBeforeSend(settings);
+    const method = this.config.useNewWidgetAPI ? 'PUT' : 'POST';
+
     try {
       return await this.actions.return.request({
         body,
+        method,
         url: this.config.settingsSaveUrl,
-        method: 'POST',
       });
     } catch (e: unknown) {
       await alertAsync({
@@ -270,15 +370,45 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
 
   /**
    * override this method to patch data after fetching
+   *
+   * @remarks If you override this method, and the widget is using the new widget
+   * API (at `/api/v5/widgets/desktop/{type}`) you need to either replicate this
+   * method, or adapt the widget to read its settings from inside a nested `global`
+   * object.
+   * @see `settingsFromGlobal` provided for convenience.
    */
   protected patchAfterFetch(data: any): any {
+    if (this.config.useNewWidgetAPI) {
+      return settingsFromGlobal(data);
+    }
+
     return data;
   }
 
+  /* The reason these base methods are now aware of new API and do their own
+   * checks and transforms, is that some code spawns WidgetModule by itself,
+   * and skips the inheritance chain, namely Custom Code and Custom Fields.
+   * This bypasses the overrides from any widget that chooses to modify these,
+   * and as a result, the data is sent and received unmodified.
+   * This is ultimately where all code should live while we transition all
+   * our widgets and then we can finally remove them once they actually use
+   * the new structure provided by the new API.
+   */
+
   /**
    * override this method to patch data before save
+   *
+   * @remarks If you override this method, and the widget is using the new widget
+   * API (at `/api/v5/widgets/desktop/{type}`) you need to either replicate this
+   * method, or adapt the widget to send most settings inside a nested `global`
+   * object.
+   * @see `settingsToGlobal` provided for convenience.
    */
   protected patchBeforeSend(settings: any): any {
+    if (this.config.useNewWidgetAPI) {
+      return settingsToGlobal(settings);
+    }
+
     return settings;
   }
 
@@ -336,6 +466,10 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
     const sortedProps = propsOrder.map(propName => props.find(p => p.name === propName)!);
     this.state.setBrowserSourceProps(sortedProps);
   }
+
+  private setStaticConfig(resp: unknown) {
+    this.state.setStaticConfig(resp);
+  }
 }
 
 export type WidgetParams = {
@@ -383,4 +517,14 @@ export interface ICustomField {
   max?: number;
   min?: number;
   steps?: number;
+}
+
+export function settingsFromGlobal(data: any) {
+  return {
+    settings: data.data.settings.global,
+  };
+}
+
+export function settingsToGlobal(settings: unknown) {
+  return { global: settings };
 }

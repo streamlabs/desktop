@@ -26,5 +26,7 @@
   "Disable Message Animations": "Disable Message Animations",
   "Hide Characters": "Hide Characters",
   "Hide Common Chat Bots": "Dölja Vanliga Chat Bots",
-  "Hide commands starting with `!`": "Dölj kommandon som börjar med '!'"
+  "Hide commands starting with `!`": "Dölj kommandon som börjar med '!'",
+  "Chat Notifications": "Chat Notifications",
+  "Trigger a sound to notify you when there is new chat activity": "Trigger a sound to notify you when there is new chat activity"
 }

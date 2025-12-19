@@ -11,48 +11,19 @@
   align-items: center;
   width: 100%;
   height: 24px;
-  margin-top: 24px;
-  margin-bottom: 60px;
+  margin-top: 60px;
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
 }
 
-.top-bar-segment {
-  display: flex;
-  margin: 4px;
-  align-items: center;
+.footer-prime {
+  position: relative !important;
 }
 
-.top-bar-step {
-  height: 24px;
-  width: 24px;
-  border-radius: 12px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.top-bar-seperator {
-  width: 124px;
-  height: 4px;
-  margin-left: 8px;
-}
-
-.top-bar-step.incomplete,
-.top-bar-seperator.incomplete,
-.top-bar-seperator.current {
-  background-color: var(--section);
-}
-
-.top-bar-step.current {
-  background-color: var(--title);
-
-  i {
-    color: var(--background);
-  }
-}
-
-.top-bar-step.completed,
-.top-bar-seperator.completed {
-  background-color: var(--nav-icon-inactive);
+.top-bar-container-prime {
+  position: relative;
+  margin-bottom: 40px;
 }
 
 .onboarding-content {
@@ -70,20 +41,70 @@
 
 .footer {
   display: flex;
-  justify-content: flex-end;
-  position: relative;
-  background: var(--background);
-  left: 0;
-  right: 0;
+  flex-direction: row;
+  position: absolute;
   bottom: 0;
-  width: calc(100% - 80px);
   padding: 24px 0;
-  margin: 0 40px;
-  z-index: 10;
-  flex-shrink: 0;
-  border-top: 1px solid var(--border);
+  width: 100%;
+  pointer-events: none;
 
-  button {
-    margin-left: 16px;
+  .progress {
+    display: flex;
+    flex: 1;
+    align-self: center;
+    justify-content: center;
+    margin-top: 40px;
+
+    @media (min-height: 800px) {
+      margin-bottom: 40px;
+    }
+
+    @media (max-height: 799px) {
+      display: none;
+    }
+
+    // Accomodate progress bar so still centered when there's a skip button to its right
+    &-with-skip {
+      padding-left: 40px;
+    }
+
+    :global(.ant-progress-steps-item) {
+      width: 8px !important;
+      height: 8px !important;
+      border-radius: 8px;
+      background-color: var(--midtone);
+      margin-right: 8px;
+
+      &-active {
+        background-color: var(--icon);
+      }
+    }
+  }
+
+  .skip {
+    // position: relative makes the skip button go left on small windows
+    position: absolute;
+    bottom: 60px;
+    right: 40px;
+    z-index: 2;
+    pointer-events: auto;
+
+    @media (max-height: 799px) {
+      bottom: 10px;
+    }
   }
 }
+
+
+.action-button {
+  margin-bottom: 8px;
+}
+
+.link-button {
+  text-decoration: underline;
+
+  &:hover {
+    cursor: pointer;
+  }
+}
+

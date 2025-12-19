@@ -3,7 +3,8 @@
   flex-direction: column;
   align-items: center;
 
-  > h2, span {
+  > h2,
+  span {
     position: relative;
     text-align: center;
     color: var(--title);
@@ -31,7 +32,7 @@
 }
 
 .product-card {
-  height: 200px;
+  min-height: 200px;
   width: 100%;
   border-radius: 8px;
   background: var(--section);
@@ -59,7 +60,13 @@
     cursor: pointer;
   }
 
+  .description {
+    flex-grow: 1;
+  }
+
   .explore {
     color: var(--teal);
+    align-self: flex-end;
+    width: 100%;
   }
 }

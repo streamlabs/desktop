@@ -154,5 +154,6 @@
   "This applies to all alerts. If enabled all alerts need to be approved manually.": "Esto es aplicable a todas las alertas. Si se habilita, se deben aprobar manualmente todas las alertas.",
   "Use unlimited delay": "Usar demora ilimitada",
   "When enabled new alerts will interrupt the on screen alert": "Con esta opción activada, las alertas nuevas interrumpirán la alerta en pantalla",
-  "Text Highlight Color": "Color de resaltado de texto"
+  "Text Highlight Color": "Color de resaltado de texto",
+  "Platforms: Twitch, YouTube, Facebook, Trovo & integrations": "Plataformas: Twitch, YouTube, Facebook, Trovo e integraciones"
 }

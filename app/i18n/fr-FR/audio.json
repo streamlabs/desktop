@@ -42,5 +42,7 @@
   "Desktop Audio Device 2": "Dispositif audio de bureau 2",
   "Mic/Auxiliary Device 1": "Micro/Dispositif auxiliaire 1",
   "Mic/Auxiliary Device 2": "Micro/Dispositif auxiliaire 2",
-  "Mic/Auxiliary Device 3": "Micro/Dispositif auxiliaire 3"
+  "Mic/Auxiliary Device 3": "Micro/Dispositif auxiliaire 3",
+  "Recording Audio Encoder": "Encodeur audio d’enregistrement",
+  "Enable Muted Notifications": "Activer les notifications silencieuses"
 }

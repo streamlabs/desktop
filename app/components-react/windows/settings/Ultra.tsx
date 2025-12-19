@@ -162,10 +162,8 @@ function ProductCard(p: IProductInfo) {
     <div className={cx(styles.productCard, { [styles.hasLink]: !!p.link })} onClick={linkToProduct}>
       <img src={$i(`images/products/${p.image}`)} />
       <span className={styles.title}>{p.title}</span>
-      <span>{p.description}</span>
+      <span className={styles.description}>{p.description}</span>
       {!!p.link && <span className={styles.explore}>{$t('Explore')}</span>}
     </div>
   );
 }
-
-Ultra.page = 'Ultra';

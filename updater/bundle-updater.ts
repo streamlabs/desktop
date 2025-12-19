@@ -299,6 +299,11 @@ module.exports = async (basePath: string) => {
     useLocalBundles = true;
   }
 
+  const forceLocalBundles = path.join(basePath, '../../force-local-bundles');
+  if (fs.existsSync(forceLocalBundles)) {
+    useLocalBundles = true;
+  }
+
   const localManifest: IManifest = require(path.join(`${basePath}/bundles/manifest.json`));
 
   console.log('Local bundle info:', localManifest);

@@ -244,16 +244,32 @@ export class StreamlabelsService extends StatefulService<IStreamlabelsServiceSta
   getSettingsForStat(statname: string) {
     const settings = { ...this.settings[statname] };
 
+    if (settings.format) {
+      settings.format = this.escapeNewline(settings.format);
+    }
+
     if (settings.item_separator) {
-      settings.item_separator = settings.item_separator.replace(/\n/gi, '\\n');
+      settings.item_separator = this.escapeNewline(settings.item_separator);
     }
 
     return settings;
   }
 
+  escapeNewline(text: string) {
+    return text.replace(/\n/gi, '\\n');
+  }
+
+  unescapeNewline(text: string) {
+    return text.replace(/\\n/gi, '\n');
+  }
+
   setSettingsForStat(statname: string, settings: IStreamlabelSettings): Promise<boolean> {
+    if (settings.format) {
+      settings.format = this.escapeNewline(settings.format);
+    }
+
     if (settings.item_separator) {
-      settings.item_separator = settings.item_separator.replace(/\\n/gi, '\n');
+      settings.item_separator = this.unescapeNewline(settings.item_separator);
     }
 
     this.settings[statname] = {
@@ -357,6 +373,8 @@ export class StreamlabelsService extends StatefulService<IStreamlabelsServiceSta
     const { trains_combos, ...rest } = data;
     const trainData = {};
     trains_combos.files.forEach(file => {
+      // TODO: index
+      // @ts-ignore
       trainData[file.name] = { label: file.label, files: this.trainFiles(file.name) };
     });
     return {
@@ -366,6 +384,8 @@ export class StreamlabelsService extends StatefulService<IStreamlabelsServiceSta
   }
 
   trainFiles(fileName: string) {
+    // TODO: index
+    // @ts-ignore
     const type = Object.keys(this.trains).find(key => this.trains[key].setting === fileName);
 
     const baseFiles = [

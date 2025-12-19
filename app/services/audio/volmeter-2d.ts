@@ -2,7 +2,7 @@ import { Subscription } from 'rxjs';
 import { AudioSource, AudioService, IVolmeter } from 'services/audio';
 import { Inject } from 'services/core/injector';
 import { CustomizationService } from 'services/customization';
-import electron from 'electron';
+import electron, { ipcRenderer } from 'electron';
 import { WindowsService } from 'services/windows';
 
 // Configuration
@@ -263,34 +263,37 @@ export class Volmeter2d {
 
   workerId: number;
 
-  listener: (e: Electron.Event, volmeter: IVolmeter) => void;
+  listener: (e: { data: IVolmeter }) => void;
+
+  channelId: string;
 
   subscribeVolmeter() {
-    this.listener = (e: Electron.Event, volmeter: IVolmeter) => {
+    this.listener = (e: { data: IVolmeter }) => {
       if (this.canvas) {
         // don't init context for inactive sources
-        if (!volmeter.peak.length && !this.renderingInitialized) return;
+        if (!e.data.peak.length && !this.renderingInitialized) return;
 
         this.initRenderingContext();
-        this.setChannelCount(volmeter.peak.length);
+        this.setChannelCount(e.data.peak.length);
 
         // save peaks value to render it in the next animationFrame
         this.prevPeaks = this.interpolatedPeaks;
-        this.currentPeaks = Array.from(volmeter.peak);
+        this.currentPeaks = Array.from(e.data.peak);
         this.lastEventTime = performance.now();
       }
     };
 
-    electron.ipcRenderer.on(`volmeter-${this.audioSource.sourceId}`, this.listener);
+    this.audioService.subscribeVolmeter(this.audioSource.sourceId).then(id => {
+      ipcRenderer.once(`port-${id}`, e => {
+        this.channelId = id;
+        e.ports[0].onmessage = this.listener;
+      });
 
-    // TODO: Remove sync
-    this.workerId = electron.ipcRenderer.sendSync('getWorkerWindowId');
-
-    electron.ipcRenderer.sendTo(this.workerId, 'volmeterSubscribe', this.audioSource.sourceId);
+      ipcRenderer.send('request-message-channel-out', id);
+    });
   }
 
   unsubscribeVolmeter() {
-    electron.ipcRenderer.removeListener(`volmeter-${this.audioSource.sourceId}`, this.listener);
-    electron.ipcRenderer.sendTo(this.workerId, 'volmeterUnsubscribe', this.audioSource.sourceId);
+    this.audioService.actions.unsubscribeVolmeter(this.audioSource.sourceId, this.channelId);
   }
 }

@@ -21,8 +21,6 @@ export interface IEventListSettings extends IWidgetSettings {
   flip_y: boolean;
   font_family: string;
   hide_animation: string;
-  host_show_auto_hosts: boolean;
-  host_viewer_minimum: number;
   hue: number;
   keep_history: boolean;
   max_events: number;
@@ -35,7 +33,6 @@ export interface IEventListSettings extends IWidgetSettings {
   show_follows: boolean;
   show_gamewispresubscriptions: boolean;
   show_gamewispsubscriptions: boolean;
-  show_hosts: boolean;
   show_justgivingdonations: boolean;
   show_merch: boolean;
   show_pledges: boolean;
@@ -73,7 +70,7 @@ export class EventListService extends WidgetSettingsService<IEventListData> {
       settingsUpdateEvent: 'eventListSettingsUpdate',
       customCodeAllowed: true,
       customFieldsAllowed: true,
-      testers: ['Follow', 'Subscription', 'Donation', 'Bits', 'Host'],
+      testers: ['Follow', 'Subscription', 'Donation', 'Bits'],
     };
   }
 
@@ -96,14 +93,16 @@ export class EventListService extends WidgetSettingsService<IEventListData> {
   }
 
   eventsByPlatform(): { key: string; title: string }[] {
-    const platform = this.userService.platform.type as Exclude<TPlatform, 'tiktok' | 'twitter'>;
+    const platform = this.userService.platform.type as Exclude<
+      TPlatform,
+      'tiktok' | 'twitter' | 'instagram' | 'kick'
+    >;
     return {
       twitch: [
         { key: 'show_follows', title: $t('Follows') },
         { key: 'show_subscriptions', title: $t('Subscriptions') },
         { key: 'show_resubs', title: $t('Show Resubs') },
         { key: 'show_sub_tiers', title: $t('Show Sub Tiers') },
-        { key: 'show_hosts', title: $t('Hosts') },
         { key: 'show_bits', title: $t('Bits') },
         { key: 'show_raids', title: $t('Raids') },
       ],

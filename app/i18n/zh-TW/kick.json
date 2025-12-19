@@ -1,0 +1,15 @@
+{
+  "Edit your stream title on Kick after going live.": "開播後可在 Kick 編輯您的直播標題。",
+  "Kick Category": "Kick 類別",
+  "Failed to update Kick account. Please unlink and reconnect your Kick account.": "無法更新 Kick 帳戶。請取消連結，並重新連接您的 Kick 帳戶。",
+  "Failed to start Kick stream. Please check permissions with Kick and try again": "無法啟動 Kick 直播。請檢查您在 Kick 的權限設定後再試一次",
+  "Kick request most likely failed due to incorrect or missing permissions. Unlink and re-merge Kick account, then restart Desktop. If that fails, refer to Kick support": "Kick 請求很可能因權限錯誤或缺少而失敗。取消連結並重新合併 Kick 帳戶，然後重新啟動 Desktop。如果仍然失敗，請參閱 Kick 支援",
+  "Kick stream key failed to generate due to missing permissions": "Kick 直播金鑰因缺少權限而無法產生",
+  "confirm that a stream key has been generated with 2FA on Kick for use with Streamlabs Desktop and if not ask the user to manually generate one": "確認已在 Kick 啟用雙因子驗證並產生直播金鑰，以便在 Streamlabs Desktop 使用；如果尚未產生，請要求使用者手動建立一組金鑰",
+  "Login to Kick": "登入 Kick",
+  "Go to: <link></link>": "請至：<link></link>",
+  "Click on the \"eye\" icon to see your stream key": "按一下「眼睛」圖示以查看您的直播金鑰",
+  "Put in 2FA": "輸入雙因子驗證",
+  "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "完成雙因子驗證後，系統將產生直播金鑰，並且可用於該頻道的 Streamlabs Desktop。您現在應該可以在 Kick 上開始直播了。",
+  "Stream Shift Error: Kick is not live": "Stream Shift Error: Kick is not live"
+}

@@ -14,6 +14,7 @@
       :value="displayValue"
       @input="handleInput($event.target.value)"
       @mousewheel="onMouseWheelHandler"
+      @blur="handleBlur"
       :name="options.uuid"
       v-validate="validate"
       :disabled="options.disabled"

@@ -56,9 +56,11 @@ export const TimeInput = InputComponent((p: TTimeInputProps) => {
   );
 });
 
-function getAntdValue(value?: number) {
+function getAntdValue(value: number) {
   return moment(value);
 }
 
 // tell the Form to convert a timestamp value to a Moment value when call `Form.setFieldsValue`
+// TODO: index
+// @ts-ignore
 TimeInput['getAntdValue'] = getAntdValue;

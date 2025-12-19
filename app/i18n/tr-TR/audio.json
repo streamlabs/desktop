@@ -42,5 +42,7 @@
   "Desktop Audio Device 2": "Masaüstü Ses Cihazı 2",
   "Mic/Auxiliary Device 1": "Mik./Yardımcı Cihaz 1",
   "Mic/Auxiliary Device 2": "Mik./Yardımcı Cihaz 2",
-  "Mic/Auxiliary Device 3": "Mik./Yardımcı Cihaz 3"
+  "Mic/Auxiliary Device 3": "Mik./Yardımcı Cihaz 3",
+  "Recording Audio Encoder": "Kayıt Ses Kodlayıcısı",
+  "Enable Muted Notifications": "Sessiz Bildirimleri Etkinleştirin"
 }

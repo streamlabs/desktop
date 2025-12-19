@@ -1,5 +1,6 @@
 import { TAppPage } from 'services/navigation';
 import { $t } from 'services/i18n';
+import { ESettingsCategory } from 'services/settings';
 
 /**
  * Update Menu Items
@@ -25,6 +26,7 @@ export enum EMenuItemKey {
   GetHelp = 'get-help',
   Settings = 'settings',
   Login = 'login',
+  AI = 'ai',
 }
 
 /**
@@ -36,7 +38,6 @@ export enum EMenuItemKey {
  */
 export enum ESubMenuItemKey {
   Scene = 'browse-overlays',
-  AlertBoxLibrary = 'alertbox-library',
   Widget = 'browse-overlays-widgets',
   Sites = 'browse-overlays-sites',
   AppsStoreHome = 'platform-app-store-home',
@@ -137,7 +138,7 @@ export const menuTitles = (item: EMenuItemKey | ESubMenuItemKey | string) => {
     [EMenuItemKey.Editor]: $t('Editor'),
     [EMenuItemKey.LayoutEditor]: $t('Layout Editor'),
     [EMenuItemKey.StudioMode]: $t('Studio Mode'),
-    [EMenuItemKey.Themes]: $t('Themes'),
+    [EMenuItemKey.Themes]: $t('Overlays'),
     [EMenuItemKey.AppStore]: $t('App Store'),
     [EMenuItemKey.Highlighter]: $t('Highlighter'),
     [EMenuItemKey.RecordingHistory]: $t('Recordings'),
@@ -149,8 +150,7 @@ export const menuTitles = (item: EMenuItemKey | ESubMenuItemKey | string) => {
     [EMenuItemKey.Settings]: $t('Settings'),
     [EMenuItemKey.Login]: $t('Login'),
     [ESubMenuItemKey.Scene]: $t('Scene'),
-    [ESubMenuItemKey.AlertBoxLibrary]: $t('Alert Box Library'),
-    [ESubMenuItemKey.Widget]: $t('Widget'),
+    [ESubMenuItemKey.Widget]: $t('Alerts and Widgets'),
     [ESubMenuItemKey.Sites]: $t('Creator Sites'),
     [ESubMenuItemKey.AppsStoreHome]: $t('Apps Store Home'),
     [ESubMenuItemKey.AppsManager]: $t('Apps Manager'),
@@ -160,6 +160,7 @@ export const menuTitles = (item: EMenuItemKey | ESubMenuItemKey | string) => {
     [ESubMenuItemKey.Widgets]: $t('Widgets'),
     [ESubMenuItemKey.TipSettings]: $t('Tip Settings'),
     [ESubMenuItemKey.Multistream]: $t('Multistream'),
+    [EMenuItemKey.AI]: $t(ESettingsCategory.AI),
   }[item];
 };
 
@@ -190,6 +191,7 @@ export const SideBarBottomNavData = (): IMenu => ({
     SideNavMenuItems()[EMenuItemKey.GetPrime],
     SideNavMenuItems()[EMenuItemKey.Dashboard],
     SideNavMenuItems()[EMenuItemKey.GetHelp],
+    SideNavMenuItems()[EMenuItemKey.AI],
     SideNavMenuItems()[EMenuItemKey.Settings],
     SideNavMenuItems()[EMenuItemKey.Login],
   ],
@@ -232,9 +234,7 @@ export const SideNavMenuItems = (): TMenuItems => ({
     icon: 'icon-themes',
     subMenuItems: [
       SideBarSubMenuItems()[ESubMenuItemKey.Scene],
-      SideBarSubMenuItems()[ESubMenuItemKey.AlertBoxLibrary],
       SideBarSubMenuItems()[ESubMenuItemKey.Widget],
-      SideBarSubMenuItems()[ESubMenuItemKey.Sites],
     ],
     isActive: true,
     isExpanded: false,
@@ -307,6 +307,12 @@ export const SideNavMenuItems = (): TMenuItems => ({
     isActive: true,
     isExpanded: false,
   },
+  [EMenuItemKey.AI]: {
+    key: EMenuItemKey.AI,
+    icon: 'icon-ai',
+    isActive: true,
+    isExpanded: false,
+  },
   [EMenuItemKey.Settings]: {
     key: EMenuItemKey.Settings,
     icon: 'icon-settings',
@@ -334,12 +340,6 @@ export const SideBarSubMenuItems = (): TSubMenuItems => ({
     target: 'BrowseOverlays',
     type: 'overlays',
     trackingTarget: 'themes',
-    isExpanded: false,
-  },
-  [ESubMenuItemKey.AlertBoxLibrary]: {
-    key: ESubMenuItemKey.AlertBoxLibrary,
-    target: 'AlertboxLibrary',
-    trackingTarget: 'alertbox-library',
     isExpanded: false,
   },
   [ESubMenuItemKey.Widget]: {

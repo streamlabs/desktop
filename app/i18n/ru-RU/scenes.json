@@ -3,6 +3,7 @@
   "The scene name is required": "Укажите имя сцены",
   "Please enter the name of the scene": "Введите название сцены",
   "Manage Scene Collections": "Управление коллекциями сцен",
+  "Create Scene Collection": "Создать коллекцию сцен",
   "There needs to be at least one scene.": "Должна быть хотя бы одна сцена.",
   "Projector:": "Проектор:",
   "Projector: Output": "Проектор: Вывод",
@@ -56,5 +57,13 @@
   "Arrange sources here for a vertical scene layout.": "Расположите источники здесь для вертикального макета сцены.",
   "Arrange sources here for a horizontal scene layout.": "Расположите источники здесь для горизонтального макета сцены.",
   "Toggle Dual Output Mode.": "Переключите режим Dual Output.",
-  "Cannot hide dual output toggles in dual output mode.": "Нельзя скрыть переключатели Dual Output в режиме Dual Output."
+  "Cannot hide dual output toggles in dual output mode.": "Нельзя скрыть переключатели Dual Output в режиме Dual Output.",
+  "Choose a template from our overlay library": "Выберите шаблон из библиотеки наложений",
+  "Log in to choose a template from our overlay library": "Войдите в систему, чтобы выбрать шаблон из библиотеки наложений",
+  "Loading scene...": "Загрузка сцены…",
+  "Import from OBS": "Импортировать из OBS",
+  "Import from Twitch": "Импортировать из Twitch",
+  "Import from Twitch Studio": "Импортировать из Twitch Studio",
+  "Load existing scenes from Twitch Studio": "Загрузите существующие сцены из Twitch Studio",
+  "Start Fresh": "Начать с нуля"
 }

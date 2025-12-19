@@ -25,24 +25,8 @@ export class AdvancedAudio extends ReactComponent {}
 })
 export class AdvancedStatistics extends ReactComponent {}
 
-@Component({
-  props: {
-    name: { default: 'AlertboxLibrary' },
-    wrapperStyles: { default: () => ({ height: '100%' }) },
-  },
-})
-export class AlertboxLibrary extends ReactComponent {}
-
 @Component({ props: { name: { default: 'Blank' } } })
 export class Blank extends ReactComponent {}
-
-@Component({
-  props: {
-    name: { default: 'BrowseOverlays' },
-    wrapperStyles: { default: () => ({ height: '100%' }) },
-  },
-})
-export class BrowseOverlays extends ReactComponent {}
 
 @Component({
   props: { name: { default: 'Browser' }, wrapperStyles: { default: () => ({ height: '100%' }) } },
@@ -60,17 +44,6 @@ export class BrowserView extends ReactComponent {}
 
 @Component({
   props: {
-    name: { default: 'Chat' },
-    componentProps: { default: () => ({ restream: false }) },
-    wrapperStyles: {
-      default: () => ({ height: '100%', display: 'flex', flexDirection: 'column' }),
-    },
-  },
-})
-export class Chat extends ReactComponent {}
-
-@Component({
-  props: {
     name: { default: 'Display' },
     wrapperStyles: { default: () => ({ height: '100%' }) },
     componentProps: {
@@ -82,15 +55,6 @@ export class Chat extends ReactComponent {}
   },
 })
 export class Display extends ReactComponent {}
-
-@Component({
-  props: {
-    name: { default: 'DisplayElement' },
-    wrapperStyles: { default: () => ({ height: '100%' }) },
-    mins: { default: () => ({ x: 0, y: 0 }) },
-  },
-})
-export class DisplayElement extends ReactComponent {}
 
 @Component({
   props: {
@@ -118,33 +82,11 @@ export class GoLiveWindow extends ReactComponent {}
 
 @Component({
   props: {
-    name: { default: 'Grow' },
-    wrapperStyles: { default: () => ({ gridRow: '1 / span 1' }) },
-  },
-})
-export class Grow extends ReactComponent {}
-
-@Component({
-  props: {
     name: { default: 'GuestCamProperties' },
     wrapperStyles: { default: () => ({ height: '100%' }) },
   },
 })
 export class GuestCamProperties extends ReactComponent {}
-
-@Component({
-  props: {
-    name: { default: 'Highlighter' },
-    componentProps: { default: () => ({}) },
-  },
-})
-export class Highlighter extends ReactComponent {}
-
-@Component({ props: { name: { default: 'LayoutEditor' } } })
-export class LayoutEditor extends ReactComponent {}
-
-@Component({ props: { name: { default: 'Loader' } } })
-export class Loader extends ReactComponent {}
 
 @Component({
   props: {
@@ -162,15 +104,25 @@ export class IconLibraryProperties extends ReactComponent {}
 })
 export class InstalledApps extends ReactComponent {}
 
+@Component({ props: { name: { default: 'Loader' } } })
+export class Loader extends ReactComponent {}
+
 @Component({
   props: {
-    name: { default: 'LegacyEvents' },
+    name: { default: 'Main' },
     wrapperStyles: { default: () => ({ height: '100%' }) },
-    componentProps: { default: () => ({ onPopout: () => {} }) },
-    mins: { default: () => ({ x: 360, y: 150 }) },
   },
 })
-export class LegacyEvents extends ReactComponent {}
+export class Main extends ReactComponent {}
+
+@Component({
+  props: {
+    name: { default: 'LiveDock' },
+    wrapperStyles: { default: () => ({ height: '100%' }) },
+    componentProps: { default: () => ({ onLeft: false }) },
+  },
+})
+export class LiveDock extends ReactComponent {}
 
 @Component({
   props: {
@@ -182,29 +134,19 @@ export class ManageSceneCollections extends ReactComponent {}
 
 @Component({
   props: {
+    name: { default: 'MarketingModal' },
+    wrapperStyles: { default: () => ({ height: '100%' }) },
+  },
+})
+export class MarketingModal extends ReactComponent {}
+
+@Component({
+  props: {
     name: { default: 'MediaGallery' },
     wrapperStyles: { default: () => ({ height: '100%' }) },
   },
 })
 export class MediaGallery extends ReactComponent {}
-
-@Component({
-  props: {
-    name: { default: 'MiniFeed' },
-    wrapperStyles: { default: () => ({ height: '100%' }) },
-    mins: { default: () => ({ x: 330, y: 90 }) },
-  },
-})
-export class MiniFeed extends ReactComponent {}
-
-@Component({
-  props: {
-    name: { default: 'Mixer' },
-    wrapperStyles: { default: () => ({ height: '100%' }) },
-    mins: { default: () => ({ x: 150, y: 120 }) },
-  },
-})
-export class Mixer extends ReactComponent {}
 
 @Component({
   props: {
@@ -221,10 +163,6 @@ export class NameFolder extends ReactComponent {}
   },
 })
 export class NameScene extends ReactComponent {}
-
-@Component({ props: { name: { default: 'NotificationsArea' } } })
-export class NotificationsArea extends ReactComponent {}
-
 @Component({
   props: {
     name: { default: 'NotificationsAndNews' },
@@ -232,24 +170,6 @@ export class NotificationsArea extends ReactComponent {}
   },
 })
 export class NotificationsAndNews extends ReactComponent {}
-
-@Component({
-  props: {
-    name: { default: 'ObsSettings' },
-    componentProps: { default: () => ({ page: 'General' }) },
-  },
-})
-export class ObsSettings extends ReactComponent {}
-
-@Component({
-  props: {
-    name: { default: 'Onboarding' },
-  },
-})
-export class Onboarding extends ReactComponent {}
-
-@Component({ props: { name: { default: 'PatchNotes' } } })
-export class PatchNotes extends ReactComponent {}
 
 @Component({
   props: {
@@ -316,23 +236,6 @@ export class RecentEventsWindow extends ReactComponent {}
 
 @Component({
   props: {
-    name: { default: 'RecordingHistory' },
-    wrapperStyles: { default: () => ({ height: '100%' }) },
-  },
-})
-export class RecordingHistory extends ReactComponent {}
-
-@Component({
-  props: {
-    name: { default: 'RecordingPreview' },
-    wrapperStyles: { default: () => ({ height: '100%' }) },
-    mins: { default: () => ({ x: 0, y: 0 }) },
-  },
-})
-export class RecordingPreview extends ReactComponent {}
-
-@Component({
-  props: {
     name: { default: 'RenameSource' },
     wrapperStyles: { default: () => ({ height: '100%' }) },
   },
@@ -349,38 +252,11 @@ export class SafeMode extends ReactComponent {}
 
 @Component({
   props: {
-    name: { default: 'StreamPreview' },
-    wrapperStyles: { default: () => ({ height: '100%' }) },
-    mins: { default: () => ({ x: 0, y: 0 }) },
-  },
-})
-export class StreamPreview extends ReactComponent {}
-
-@Component({
-  props: {
-    name: { default: 'SceneSelector' },
-    wrapperStyles: { default: () => ({ height: '100%' }) },
-    mins: { default: () => ({ x: 200, y: 120 }) },
-  },
-})
-export class SceneSelector extends ReactComponent {}
-
-@Component({
-  props: {
-    name: { default: 'SourceSelector' },
-    wrapperStyles: { default: () => ({ height: '100%' }) },
-    mins: { default: () => ({ x: 200, y: 120 }) },
-  },
-})
-export class SourceSelector extends ReactComponent {}
-
-@Component({
-  props: {
-    name: { default: 'SideNav' },
+    name: { default: 'Settings' },
     wrapperStyles: { default: () => ({ height: '100%' }) },
   },
 })
-export class SideNav extends ReactComponent {}
+export class Settings extends ReactComponent {}
 
 @Component({
   props: {
@@ -423,26 +299,6 @@ export class SourceShowcase extends ReactComponent {}
 @Component({ props: { name: { default: 'StartStreamingButton' } } })
 export class StartStreamingButton extends ReactComponent {}
 
-@Component({ props: { name: { default: 'StreamScheduler' } } })
-export class StreamScheduler extends ReactComponent {}
-
-@Component({ props: { name: { default: 'StudioEditor' } } })
-export class StudioEditor extends ReactComponent {}
-
-@Component({
-  props: {
-    name: { default: 'StudioFooter' },
-    wrapperStyles: {
-      default: () => ({
-        'grid-row': '2 / span 1',
-        display: 'flex',
-        'min-width': 0,
-      }),
-    },
-  },
-})
-export class StudioFooter extends ReactComponent {}
-
 @Component({
   props: {
     name: { default: 'TestWidgets' },
@@ -451,9 +307,6 @@ export class StudioFooter extends ReactComponent {}
 })
 export class TestWidgets extends ReactComponent<{ testers: string[] }> {}
 
-@Component({ props: { name: { default: 'ThemeAudit' } } })
-export class ThemeAudit extends ReactComponent {}
-
 @Component({
   props: {
     name: { default: 'TitleBar' },
@@ -461,6 +314,14 @@ export class ThemeAudit extends ReactComponent {}
   },
 })
 export class TitleBar extends ReactComponent {}
+
+@Component({
+  props: {
+    name: { default: 'Troubleshooter' },
+    wrapperStyles: { default: () => ({ height: '100%' }) },
+  },
+})
+export class Troubleshooter extends ReactComponent {}
 
 @Component({
   props: {
@@ -486,13 +347,16 @@ export class WidgetWindow extends ReactComponent {}
 })
 export class CustomCodeWindow extends ReactComponent {}
 
-@Component({ props: { name: { default: 'NewBadge' } } })
-export class NewBadge extends ReactComponent {}
+@Component({ props: { name: { default: 'DismissableBadge' } } })
+export class DismissableBadge extends ReactComponent {}
 @Component({ props: { name: { default: 'UltraIcon' } } })
 export class UltraIcon extends ReactComponent<{
   type?: string;
   className?: string;
 }> {}
+
+@Component({ props: { name: { default: 'AuthModal' } } })
+export class AuthModal extends ReactComponent {}
 
 @Component({
   props: {
@@ -521,3 +385,13 @@ export class Hotkeys extends ReactComponent<{
   },
 })
 export class GLVolmeters extends ReactComponent {}
+
+@Component({
+  props: {
+    name: { default: 'MultistreamChatInfo' },
+    wrapperStyles: {
+      default: () => ({ width: '100%', height: '100%', minWidth: '748px', minHeight: '635px' }),
+    },
+  },
+})
+export class MultistreamChatInfo extends ReactComponent {}

@@ -156,6 +156,7 @@ export default function AddSource() {
           display: 'horizontal',
         },
       );
+      //@ts-ignore typescript upgrade
       source = item?.source;
     }
     if (!source?.video && source?.hasProps()) {
@@ -210,7 +211,6 @@ export default function AddSource() {
                   mode="vertical"
                   selectedKeys={[selectedSourceId]}
                   onClick={({ key }: { key: string }) => {
-                    console.log('firing', key);
                     setSelectedSourceId(key);
                   }}
                   className={styles.menu}

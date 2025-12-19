@@ -16,12 +16,25 @@ import Vue from 'vue';
 import { PerformanceService } from './performance';
 import { jfetch } from 'util/requests';
 import { CacheUploaderService } from './cache-uploader';
-import { AudioService, AudioSource, E_AUDIO_CHANNELS } from './audio';
+import { AudioService } from './audio';
 import { getOS, OS } from 'util/operating-systems';
 import { Source, SourcesService } from './sources';
 import { VideoEncodingOptimizationService } from './video-encoding-optimizations';
-import { RecordingModeService, TransitionsService } from 'app-services';
+import {
+  DualOutputService,
+  RecordingModeService,
+  StreamSettingsService,
+  TransitionsService,
+  VideoSettingsService,
+  VisionService,
+} from 'app-services';
 import * as remote from '@electron/remote';
+import { AppService } from 'services/app';
+import fs from 'fs';
+import path from 'path';
+import { platformList, TPlatform } from './platforms';
+import { TDisplayType } from './settings-v2';
+import { getWmiClass } from 'util/wmi';
 
 interface IStreamDiagnosticInfo {
   startTime: number;
@@ -31,6 +44,11 @@ interface IStreamDiagnosticInfo {
   pctDropped?: number;
   avgFps?: number;
   avgCpu?: number;
+  error?: string;
+  platforms?: string;
+  destinations?: string;
+  type?: string;
+  enhancedBroadcasting?: string;
 }
 
 interface IDiagnosticsServiceState {
@@ -98,6 +116,8 @@ class Section {
         }
       }
 
+      // TODO: index
+      // @ts-ignore
       const value = data[key] as unknown;
 
       if (typeof value === 'object' && value != null) {
@@ -140,6 +160,37 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
   @Inject() videoEncodingOptimizationService: VideoEncodingOptimizationService;
   @Inject() transitionsService: TransitionsService;
   @Inject() recordingModeService: RecordingModeService;
+  @Inject() appService: AppService;
+  @Inject() dualOutputService: DualOutputService;
+  @Inject() streamSettingsService: StreamSettingsService;
+  @Inject() videoSettingsService: VideoSettingsService;
+  @Inject() visionService: VisionService;
+
+  get cacheDir() {
+    return this.appService.appDataDirectory;
+  }
+
+  get hasRecentlyStreamed(): boolean {
+    return this.state.streams.length > 0;
+  }
+
+  get isFrequentUser(): boolean {
+    // At least 5 streams in the last 30 days
+    const numStreams = this.state.streams.reduce((num: number, stream: IStreamDiagnosticInfo) => {
+      const streamDate = new Date(stream.endTime);
+      const today = new Date(Date.now());
+      const numDaysSinceStream = Math.floor(
+        (today.getTime() - streamDate.getTime()) / (1000 * 3600 * 24),
+      );
+
+      if (numDaysSinceStream >= 30) {
+        num = num + 1;
+        return num;
+      }
+    }, 0);
+
+    return numStreams > 4;
+  }
 
   static defaultState: IDiagnosticsServiceState = {
     streams: [],
@@ -166,7 +217,15 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
 
         this.streaming = true;
 
-        this.ADD_STREAM({ startTime: Date.now() });
+        const { platforms, destinations, type, enhancedBroadcasting } = this.formatStreamInfo();
+
+        this.ADD_STREAM({
+          startTime: Date.now(),
+          platforms,
+          destinations,
+          type,
+          enhancedBroadcasting,
+        });
 
         this.accumulators.skipped = new Accumulator();
         this.accumulators.lagged = new Accumulator();
@@ -191,6 +250,11 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
       this.accumulators.dropped.sample(stats.percentageDroppedFrames);
       this.accumulators.cpu.sample(stats.CPU);
       this.accumulators.fps.sample(stats.frameRate);
+    });
+
+    this.streamingService.streamErrorCreated.subscribe((error: string) => {
+      const { platforms, destinations, type } = this.formatStreamInfo();
+      this.UPDATE_STREAM({ error, platforms, destinations, type });
     });
 
     setInterval(() => {
@@ -227,6 +291,9 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     const transitions = this.generateTransitionsSection();
     const streams = this.generateStreamsSection();
     const network = this.generateNetworkSection();
+    const crashes = this.generateCrashesSection();
+    const dualOutput = this.generateDualOutputSection();
+    const vision = this.generateVisionSection();
 
     // Problems section needs to be generated last, because it relies on the
     // problems array that all other sections add to.
@@ -239,13 +306,16 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
       system,
       config,
       streams,
+      crashes,
       video,
       output,
       network,
       audio,
       devices,
+      dualOutput,
       scenes,
       transitions,
+      vision,
     ];
 
     return report.join('');
@@ -266,6 +336,201 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
 
   private logProblem(problem: string) {
     this.problems.push(problem);
+  }
+
+  private formatTargets(arr: TPlatform[] | string[]) {
+    if (!arr.length) return 'None';
+    return JSON.stringify(arr).slice(1, -1);
+  }
+
+  /**
+   * Confirm the platforms array contains the names of the platforms
+   * @remark If the item in a platforms array is a number, it's the index of the platform name
+   * when the platforms object is made iterable. Convert the index to the platform name
+   * for readability.
+   * @param platforms The platforms array to validate
+   * @returns Array of platform names
+   */
+  private validatePlatforms(platforms: string) {
+    const platformNames = platforms.replace(/"/g, '').split(',');
+    if (!platformNames.length) {
+      return 'None';
+    }
+
+    const names = platformNames.map(platform => {
+      if (/^\d+$/.test(platform)) {
+        const index = parseInt(platform, 10);
+        return platformList[index];
+      }
+      return platform;
+    });
+
+    return JSON.stringify(names).slice(1, -1);
+  }
+
+  private formatSimpleOutputInfo() {
+    const settings = this.outputSettingsService.getSettings();
+    const values = this.settingsService.views.values.Output;
+
+    return {
+      Mode: settings.mode,
+      Streaming: {
+        'Video Bitrate': settings.streaming.bitrate,
+        Encoder:
+          settings.streaming.encoder === EEncoderFamily.jim_nvenc
+            ? 'NVENC (New)'
+            : settings.streaming.encoder,
+        'Audio Bitrate': values.ABitrate,
+        'Enable Advanced Encoder Settings': values.UseAdvanced,
+        'Advanced Encoder Settings': {
+          'Enforce Streaming Service Bitrate Limits': values.EnforceBitrate,
+          'Encoder Preset': settings.streaming.preset,
+          'Custom Encoder Settings': values.x264Settings,
+        },
+      },
+      Recording: {
+        'Recording Path': values.RecFilePath,
+        'Generate File Name without Space': values.FileNameWithoutSpace,
+        'Recording Quality': values.RecQuality,
+        'Recording Format': values.RecFormat,
+        'Audio Encoder': values.RecAEncoder,
+        'Custom Muxer Settings': values.MuxerCustom,
+      },
+      ReplayBuffer: {
+        'Enable Replay Buffer': values.RecRB,
+        'Maximum Replay Time (Seconds)': values.RecRBTime,
+      },
+    };
+  }
+
+  private formatAdvancedOutputInfo() {
+    const settings = this.outputSettingsService.getSettings();
+    const values = this.settingsService.views.values.Output;
+
+    return {
+      Mode: settings.mode,
+      Streaming: {
+        'Audio Track': this.settingsService.views.streamTrack + 1,
+        Encoder:
+          settings.streaming.encoder === EEncoderFamily.jim_nvenc
+            ? 'NVENC (New)'
+            : settings.streaming.encoder,
+        'Enforce Streaming Service Encoder Settings': values.ApplyServiceSettings,
+        'Rescale Output': settings.streaming.rescaleOutput,
+        'Rate Control': settings.streaming.rateControl,
+        Bitrate: settings.streaming.bitrate,
+        'Use Custom Buffer Size': values.use_bufsize,
+        'Buffer Size': values.buffer_size,
+        'Keyframe Interval': values.keyint_sec,
+        'CPU Usage Preset': values.preset,
+        Profile: values.profile,
+        Tune: values.tune,
+        'x264 Options': values.x264opts,
+        Other: {
+          'Use Custom Resolution': settings.streaming.hasCustomResolution,
+          'Output Resolution': settings.streaming.outputResolution,
+          'Encoder Preset': settings.streaming.preset,
+          'Encoder Options': settings.streaming.encoderOptions,
+          'VOD Track': this.settingsService.views.vodTrack + 1,
+          'VOD Track Enabled': !!this.settingsService.views.vodTrackEnabled,
+        },
+      },
+      Recording: {
+        Type: values.RecType,
+        'Recording Path': values.RecFilePath,
+        'Generate File Name without Space': values.FileNameWithoutSpace,
+        'Recording Format': values.RecFormat,
+        'Audio Track': values.RecTracks,
+        'Video Encoder': values.RecEncoder,
+        'Audio Encoder': values.RecAEncoder,
+        'Rescale Output': values.RecRescale,
+        'Custom Muxer Settings': values.MuxerCustom,
+        'Automatic File Splitting': values.RecSplitFile,
+        'File Splitting Settings': {
+          'Split By': values.RecSplitFileType,
+          'Split Time in Minutes': values.RecSplitFileTime,
+          'Reset Timestamps at the Beginning of Each Split File':
+            values.RecSplitFileResetTimestamps,
+        },
+        Other: {
+          'Using Stream Encoder': settings.recording.isSameAsStream,
+          Encoder:
+            settings.recording.encoder === EEncoderFamily.jim_nvenc
+              ? 'NVENC (New)'
+              : settings.recording.encoder,
+          'Rate Control': settings.recording.rateControl,
+          Bitrate: settings.recording.bitrate,
+          'Output Resolution': settings.recording.outputResolution,
+          'Audio Tracks': this.settingsService.views.recordingTracks.map(t => t + 1).join(', '),
+        },
+      },
+      Audio: {
+        'Track 1 - Audio Bitrate': values.Track1Bitrate,
+        'Track 1 - Audio Name': values.Track1Name,
+        'Track 2 - Audio Bitrate': values.Track2Bitrate,
+        'Track 2 - Audio Name': values.Track2Name,
+        'Track 3 - Audio Bitrate': values.Track3Bitrate,
+        'Track 3 - Audio Name': values.Track3Name,
+        'Track 4 - Audio Bitrate': values.Track4Bitrate,
+        'Track 4 - Audio Name': values.Track4Name,
+        'Track 5 - Audio Bitrate': values.Track5Bitrate,
+        'Track 5 - Audio Name': values.Track5Name,
+        'Track 6 - Audio Bitrate': values.Track6Bitrate,
+        'Track 6 - Audio Name': values.Track6Name,
+      },
+      ReplayBuffer: {
+        'Enable Replay Buffer': values.RecRB,
+        'Maximum Replay Time (Seconds)': values.RecRBTime,
+      },
+      'Use Optimizaed Encoder Settings': this.videoEncodingOptimizationService.state
+        .useOptimizedProfile,
+    };
+  }
+
+  private formatStreamInfo() {
+    const targets = this.dualOutputService.views.getEnabledTargets();
+
+    const platformList = targets.platforms.horizontal.concat(targets.platforms.vertical);
+    const destinationList = targets.destinations.horizontal.concat(targets.destinations.vertical);
+
+    const platforms = this.formatTargets(platformList);
+    const destinations = this.formatTargets(destinationList);
+    // Note: this tracks if the user streamed with enhanced broadcasting, it does not
+    // indicate if the user had enhanced broadcasting enabled in settings.
+    const enhancedBroadcasting = this.outputSettingsService.getIsEnhancedBroadcasting();
+
+    const info = {
+      platforms,
+      destinations,
+      type: 'Single Output',
+      enhancedBroadcasting,
+    };
+
+    if (this.dualOutputService.views.dualOutputMode) {
+      return {
+        ...info,
+        type: 'Dual Output',
+      };
+    }
+
+    if (
+      this.streamSettingsService.state.goLiveSettings &&
+      this.streamSettingsService.state.goLiveSettings?.streamShift
+    ) {
+      return {
+        ...info,
+        type: 'Stream Shift',
+      };
+    }
+
+    if (platformList.length + destinationList.length > 1) {
+      return {
+        ...info,
+        type: 'Multistream',
+      };
+    }
+
+    return info;
   }
 
   private async generateTopSection() {
@@ -292,6 +557,8 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
         },
         'Connected Platforms': Object.keys(this.userService.views.platforms).map(p => {
           return {
+            // TODO: index
+            // @ts-ignore
             Username: this.userService.views.platforms[p].username,
             Platform: p,
           };
@@ -309,67 +576,85 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
   }
 
   private generateVideoSection() {
-    const settings = this.settingsService.views.values;
-    const fpsObj = { Type: settings.Video.FPSType };
+    const isDualOutputMode = this.dualOutputService.views.dualOutputMode;
+    const displays: TDisplayType[] = isDualOutputMode ? ['horizontal', 'vertical'] : ['horizontal'];
 
-    if (fpsObj.Type === 'Common FPS Values') {
-      fpsObj['Value'] = settings.Video.FPSCommon;
-    } else if (fpsObj.Type === 'Integer FPS Value') {
-      fpsObj['Value'] = settings.Video.FPSInt;
-    } else if (fpsObj.Type === 'Fractional FPS Value') {
-      fpsObj['Numerator'] = settings.Video.FPSNum;
-      fpsObj['Denominator'] = settings.Video.FPSDen;
-    }
+    const settings = { horizontal: {}, vertical: {} };
 
-    const baseRes = this.parseRes(settings.Video.Base);
-    const baseAspect = baseRes.x / baseRes.y;
+    // get settings for all active displays
+    displays.forEach((display: TDisplayType) => {
+      const setting = this.videoSettingsService.formatVideoSettings(display, true);
+      const maxHeight = display === 'horizontal' ? 1080 : 1280;
+      const minHeight = 720;
 
-    if (baseAspect < 16 / 9.1 || baseAspect > 16 / 8.9) {
-      this.logProblem(`Base resolution is not 16:9 aspect ratio: ${baseRes.x}x${baseRes.y}`);
-    }
+      if (!setting) return;
 
-    // Need to pull output res from output settings service, in case
-    // rescale output option is being used on stream encoder
-    const outputRes = this.parseRes(
-      this.outputSettingsService.getSettings().streaming.outputResolution,
-    );
-    const outputAspect = outputRes.x / outputRes.y;
+      const outputRes = this.videoSettingsService.outputResolutions[display];
+      const outputAspect = outputRes.outputWidth / outputRes.outputHeight;
 
-    if (outputAspect < 16 / 9.1 || outputAspect > 16 / 8.9) {
-      this.logProblem(`Output resolution is not 16:9 aspect ratio: ${outputRes.x}x${outputRes.y}`);
-    }
+      if (outputAspect < 16 / 9.1 || outputAspect > 16 / 8.9) {
+        this.logProblem(`Output resolution is not 16:9 aspect ratio: ${setting.outputRes}`);
+      }
 
-    if (baseAspect !== outputAspect) {
-      this.logProblem('Base resolution and Output resolution have different aspect ratio');
-    }
+      const fpsObj = { Type: setting.fpsType.toString() };
 
-    if (outputRes.y > baseRes.y) {
-      this.logProblem('Output resolution is higher than Base resolution (upscaling)');
-    }
+      if (fpsObj.Type === 'Common') {
+        // TODO: index
+        // @ts-ignore
+        fpsObj['Value'] = setting.fpsCom;
+      } else if (fpsObj.Type === 'Integer') {
+        // TODO: index
+        // @ts-ignore
+        fpsObj['Value'] = setting.fpsInt;
+      } else if (fpsObj.Type === 'Fractional') {
+        // TODO: index
+        // @ts-ignore
+        fpsObj['Numerator'] = setting.fpsNum;
+        // TODO: index
+        // @ts-ignore
+        fpsObj['Denominator'] = setting.fpsDen;
+      }
 
-    if (outputRes.y < 720) {
-      this.logProblem(`Low Output resolution: ${outputRes.x}x${outputRes.y}`);
-    }
+      const baseRes = this.videoSettingsService.baseResolutions[display];
+      const baseAspect = baseRes.baseWidth / baseRes.baseHeight;
 
-    if (outputRes.y > 1080) {
-      this.logProblem(`High Output resolution: ${outputRes.x}x${outputRes.y}`);
-    }
+      if (baseAspect < 16 / 9.1 || baseAspect > 16 / 8.9) {
+        this.logProblem(`Base resolution is not 16:9 aspect ratio: ${setting.baseRes}`);
+      }
 
-    if (baseRes.y < 720) {
-      this.logProblem(`Low Base resolution: ${baseRes.x}x${baseRes.y}`);
-    }
+      if (baseAspect !== outputAspect) {
+        this.logProblem('Base resolution and Output resolution have different aspect ratio');
+      }
+
+      if (outputRes.outputHeight > baseRes.baseHeight) {
+        this.logProblem('Output resolution is higher than Base resolution (upscaling)');
+      }
+
+      if (outputRes.outputHeight < minHeight) {
+        this.logProblem(`Low Output resolution: ${setting.outputRes}`);
+      }
+
+      if (outputRes.outputHeight > maxHeight) {
+        this.logProblem(`High Output resolution: ${setting.outputRes}`);
+      }
+
+      if (baseRes.baseHeight < minHeight) {
+        this.logProblem(`Low Base resolution: ${setting.baseRes}`);
+      }
+
+      settings[display] = {
+        'Base Resolution': setting.baseRes,
+        'Output Resolution': setting.outputRes,
+        'Downscale Filter': setting.scaleType,
+        'Frame Rate': fpsObj,
+      };
+    });
 
     return new Section('Video', {
-      'Base Resolution': settings.Video.Base,
-      'Output Resolution': settings.Video.Output,
-      'Downscale Filter': settings.Video.ScaleType,
-      'Frame Rate': fpsObj,
+      'Single Output': settings.horizontal,
+      'Dual Output Horizontal': settings.horizontal,
+      'Dual Output Vertical': settings.vertical ?? 'None',
     });
-  }
-
-  private parseRes(resString: string): IVec2 {
-    const parts = resString.split('x');
-    return { x: parseInt(parts[0], 10), y: parseInt(parts[1], 10) };
   }
 
   private generateOutputSection() {
@@ -383,39 +668,10 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
       this.logProblem(`Low recording bitrate: ${settings.recording.bitrate}`);
     }
 
-    return new Section('Output', {
-      Mode: settings.mode,
-      Streaming: {
-        Encoder:
-          settings.streaming.encoder === EEncoderFamily.jim_nvenc
-            ? 'NVENC (New)'
-            : settings.streaming.encoder,
-        'Rate Control': settings.streaming.rateControl,
-        Bitrate: settings.streaming.bitrate,
-        'Use Custom Resolution': settings.streaming.hasCustomResolution,
-        'Output Resolution': settings.streaming.outputResolution,
-        'Encoder Preset': settings.streaming.preset,
-        'Encoder Options': settings.streaming.encoderOptions,
-        'Rescale Output': settings.streaming.rescaleOutput,
-        'Audio Track': this.settingsService.views.streamTrack + 1,
-        'VOD Track': this.settingsService.views.vodTrack + 1,
-        'VOD Track Enabled': !!this.settingsService.views.vodTrackEnabled,
-        'Keyframe Interval': this.settingsService.views.values.Output.keyint_sec,
-      },
-      Recording: {
-        'Using Stream Encoder': settings.recording.isSameAsStream,
-        Encoder:
-          settings.recording.encoder === EEncoderFamily.jim_nvenc
-            ? 'NVENC (New)'
-            : settings.recording.encoder,
-        'Rate Control': settings.recording.rateControl,
-        Bitrate: settings.recording.bitrate,
-        'Output Resolution': settings.recording.outputResolution,
-        'Audio Tracks': this.settingsService.views.recordingTracks.map(t => t + 1).join(', '),
-      },
-      'Use Optimizaed Encoder Settings': this.videoEncodingOptimizationService.state
-        .useOptimizedProfile,
-    });
+    const outputInfo =
+      settings.mode === 'Simple' ? this.formatSimpleOutputInfo() : this.formatAdvancedOutputInfo();
+
+    return new Section('Output', outputInfo);
   }
 
   private generateSystemSection() {
@@ -424,16 +680,14 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     let isAdmin: string | boolean = 'N/A';
 
     if (getOS() === OS.Windows) {
-      const gpuInfo = this.getWmiClass('Win32_VideoController', [
-        'Name',
-        'DriverVersion',
-        'DriverDate',
-      ]);
+      const gpuInfo = getWmiClass('Win32_VideoController', ['Name', 'DriverVersion', 'DriverDate']);
 
       gpuSection = {};
 
       // Ensures we are working with an array
       [].concat(gpuInfo).forEach((gpu, index) => {
+        // TODO: index
+        // @ts-ignore
         gpuSection[`GPU ${index + 1}`] = {
           Name: gpu.Name,
           'Driver Version': gpu.DriverVersion,
@@ -485,6 +739,101 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     });
   }
 
+  private generateCrashesSection() {
+    // Here we read and parse 'crash-handler' file and parse it to extract information about crashes
+    // As the files' size in total is < 2 MB, it is not resource-intensive operation.
+    // Furthermore, the code is optimized to parse last N entries only.
+    const MAX_CRASHES_COUNT = 5;
+
+    const parseDate = (rawDate: string, rawTime: string): Date => {
+      const year = +rawDate.substring(0, 4);
+      const month = +rawDate.substring(4, 6) - 1; // -1 is used to convert it into month index
+      const day = +rawDate.substring(6, 8);
+
+      const hour = +rawTime.substring(0, 2);
+      const minute = +rawTime.substring(2, 4);
+
+      return new Date(year, month, day, hour, minute);
+    };
+
+    const sectionItems: Array<{ Time: string; Module?: string; Path?: string }> = [];
+
+    const parseCrashLog = (fileName: string): void => {
+      const fullPath = path.join(this.cacheDir, fileName);
+      if (!fs.existsSync(fullPath)) {
+        return;
+      }
+
+      const fileContents = fs.readFileSync(fullPath, 'utf8');
+
+      const crashEntries: Array<any> = [];
+      const lines = fileContents.split('\n');
+
+      // Going backwards to fetch the latest entries first
+      for (let i = lines.length - 1; i >= 0; --i) {
+        const line = lines[i];
+
+        // There can be crashes with and without crash info, so using 2 distinct matches to process them
+        if (line.match(/crashed_module_info/)) {
+          const [, infoBlock] = line.split(': ');
+
+          let [, module] = infoBlock.split(' ');
+          module = module.trim();
+          const pathStartIndex = infoBlock.indexOf('(');
+          const pathEndIndex = infoBlock.indexOf(')');
+          let path = null;
+          if (pathStartIndex !== -1 && pathEndIndex !== -1) {
+            // +1 is to skip the leading '(' symbol
+            path = infoBlock.substring(pathStartIndex + 1, pathEndIndex);
+          }
+
+          // As we are parsing backwards and this message comes after the 'process died', we can just update the last record
+          Object.assign(crashEntries[crashEntries.length - 1], { module, path });
+        } else if (line.match(/process died/)) {
+          const [, , date, time] = line.split(':');
+          crashEntries.push({ timestamp: parseDate(date, time) });
+        }
+
+        if (crashEntries.length >= MAX_CRASHES_COUNT) {
+          break;
+        }
+      }
+
+      for (const entry of crashEntries) {
+        const data = { Time: entry.timestamp.toString() };
+
+        if (entry.module) {
+          // TODO: index
+          // @ts-ignore
+          data['Module'] =
+            entry.module +
+            ' (' +
+            (entry.path && entry.path.length !== 0 ? entry.path : 'unknown path') +
+            ')';
+        } else {
+          // TODO: index
+          // @ts-ignore
+          data['Module'] = '(no data)';
+        }
+
+        sectionItems.push(data);
+
+        if (sectionItems.length >= MAX_CRASHES_COUNT) {
+          break;
+        }
+      }
+    };
+
+    // There is a log rotation feature for crash-handler logs, so it no entries were found in the current log,
+    // we are trying the old one, because it might just be recently rotated.
+    parseCrashLog('crash-handler.log');
+    if (sectionItems.length < MAX_CRASHES_COUNT) {
+      parseCrashLog('crash-handler.log.old');
+    }
+
+    return new Section('Crashes', sectionItems);
+  }
+
   private generateAudioSection() {
     const settings = this.settingsService.views.values;
     const devices = this.hardwareService.devices;
@@ -509,11 +858,15 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
       ];
 
       if (source) {
+        // TODO: index
+        // @ts-ignore
         globalSources[name] = {
           ...audioDeviceObj(settings.Audio[name] as string),
           ...this.generateSourceData(source),
         };
       } else {
+        // TODO: index
+        // @ts-ignore
         globalSources[name] = 'Disabled';
       }
     });
@@ -572,6 +925,8 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     const sceneData = {};
 
     this.scenesService.views.scenes.map(s => {
+      // TODO: index
+      // @ts-ignore
       sceneData[s.name] = s.getItems().map(si => {
         return this.generateSourceData(si.getSource(), si);
       });
@@ -620,8 +975,12 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     };
 
     if (propertiesManagerType === 'widget') {
+      // TODO: index
+      // @ts-ignore
       sourceData['Widget Type'] = widgetLookup[propertiesManagerSettings.widgetType];
     } else if (propertiesManagerType === 'streamlabels') {
+      // TODO: index
+      // @ts-ignore
       sourceData['Streamlabel Type'] = propertiesManagerSettings.statname;
     }
 
@@ -636,7 +995,11 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
         );
       }
 
+      // TODO: index
+      // @ts-ignore
       sourceData['Selected Device Id'] = deviceId;
+      // TODO: index
+      // @ts-ignore
       sourceData['Selected Device Name'] = device?.description ?? '<DEVICE NOT FOUND>';
     }
 
@@ -645,9 +1008,13 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     }
 
     if (sceneItem) {
+      // TODO: index
+      // @ts-ignore
       sourceData['Visible'] = sceneItem.visible;
     }
 
+    // TODO: index
+    // @ts-ignore
     sourceData['Filters'] = this.sourceFiltersService.views
       .filtersBySourceId(source.sourceId)
       .map(f => {
@@ -678,14 +1045,24 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
         return arr;
       }, []);
 
+      // TODO: index
+      // @ts-ignore
       sourceData['Enabled Audio Tracks'] = enabledTracks.join(', ');
     }
 
+    // TODO: index
+    // @ts-ignore
     sourceData['Muted'] = audioSource.muted;
+    // TODO: index
+    // @ts-ignore
     sourceData['Volume'] = audioSource.fader.deflection * 100;
+    // TODO: index
+    // @ts-ignore
     sourceData['Monitoring'] = ['Monitor Off', 'Monitor Only (mute output)', 'Monitor and Output'][
       audioSource.monitoringType
     ];
+    // TODO: index
+    // @ts-ignore
     sourceData['Sync Offset'] = audioSource.syncOffset;
 
     return sourceData;
@@ -695,6 +1072,19 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     return new Section(
       'Streams',
       this.state.streams.map(s => {
+        const platforms = this.validatePlatforms(s?.platforms);
+
+        if (
+          s?.type === 'Single Output' &&
+          platforms.includes('tiktok') &&
+          s?.error &&
+          s?.error.split(' ').at(-1) === '422'
+        ) {
+          this.logProblem(
+            'TikTok user might be blocked from streaming. Refer them to TikTok producer page or support to confirm live access status',
+          );
+        }
+
         return {
           'Start Time': new Date(s.startTime).toString(),
           'End Time': s.endTime ? new Date(s.endTime).toString() : 'Stream did not end cleanly',
@@ -703,9 +1093,75 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
           'Dropped Frames': `${s.pctDropped?.toFixed(2)}%`,
           'Average CPU': `${s.avgCpu?.toFixed(2)}%`,
           'Average FPS': s.avgFps?.toFixed(2),
+          'Stream Error': s?.error ?? 'None',
+          Platforms: platforms,
+          Destinations: s?.destinations,
+          'Stream Type': s?.type,
+          'Enhanced Broadcasting': s?.enhancedBroadcasting ?? 'N/A',
         };
       }),
     );
+  }
+
+  private generateDualOutputSection() {
+    const { platforms, destinations } = this.dualOutputService.views.getEnabledTargets('name');
+    const restreamHorizontal =
+      platforms.horizontal.length + destinations.horizontal.length > 1 ? 'Yes' : 'No';
+    const restreamVertical =
+      platforms.vertical.length + destinations.vertical.length > 1 ? 'Yes' : 'No';
+
+    const numHorizontal = this.dualOutputService.views.horizontalNodeIds?.length;
+    const numVertical = this.dualOutputService.views.verticalNodeIds?.length;
+
+    if (numHorizontal !== numVertical) {
+      this.logProblem(
+        'Active collection has a different number of horizontal and vertical sources.',
+      );
+    }
+
+    return new Section('Dual Output', {
+      'Dual Output Active': this.dualOutputService.views.dualOutputMode,
+      'Dual Output Scene Collection Active': this.dualOutputService.views.hasNodeMap(),
+      Sources: {
+        'Number Horizontal Sources': numHorizontal,
+        'Number Vertical Sources': numVertical,
+      },
+      Targets: {
+        'Horizontal Platforms': this.formatTargets(platforms.horizontal),
+        'Vertical Platforms': this.formatTargets(platforms.vertical),
+        'Horizontal Custom Destinations': this.formatTargets(destinations.horizontal),
+        'Vertical Custom Destinations': this.formatTargets(destinations.vertical),
+        'Platforms Using Extra Outputs': this.dualOutputService.views.platformsDualStreaming,
+      },
+      'Horizontal Uses Multistream': restreamHorizontal,
+      'Vertical Uses Multistream': restreamVertical,
+    });
+  }
+
+  // TODO: add details for stream switch section
+  // private generateStreamSwitchSection() {
+
+  //   return new Section('Stream Switch', {
+  //     'Stream Switch Active': ,
+  //     // 'Stream Switch ID': ,
+  //     // 'Stream Switch Origin Device': ,
+  //     // 'Stream Switch Previous Device': ,
+  //     // 'Stream Switch Type': ,
+  //   });
+  // }
+
+  private generateVisionSection() {
+    return new Section('Vision', {
+      'Installed Version': this.visionService.state.installedVersion,
+      'Is Running': this.visionService.state.isRunning,
+      PID: this.visionService.state.pid,
+      Port: this.visionService.state.port,
+      'Update Failed': this.visionService.state.hasFailedToUpdate,
+      'Available Processes': this.visionService.state.availableProcesses,
+      'Selected Process': this.visionService.state.selectedProcessId,
+      'Available Games': this.visionService.state.availableGames,
+      'Selected Game': this.visionService.state.selectedGame,
+    });
   }
 
   private generateProblemsSection() {
@@ -713,45 +1169,6 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
       'Potential Issues',
       this.problems.length ? this.problems : 'No issues detected',
     );
-  }
-
-  private getWmiClass(wmiClass: string, select: string[]): object {
-    try {
-      const result = JSON.parse(
-        cp
-          .execSync(
-            `Powershell -command "Get-CimInstance -ClassName ${wmiClass} | Select-Object ${select.join(
-              ', ',
-            )} | ConvertTo-JSON"`,
-          )
-          .toString(),
-      );
-
-      if (Array.isArray(result)) {
-        return result.map(o => this.convertWmiValues(o));
-      } else {
-        return this.convertWmiValues(result);
-      }
-    } catch (e: unknown) {
-      console.error(`Error fetching WMI class ${wmiClass} for diagnostics`, e);
-      return [];
-    }
-  }
-
-  private convertWmiValues(wmiObject: object) {
-    Object.keys(wmiObject).forEach(key => {
-      const val = wmiObject[key];
-
-      if (typeof val === 'string') {
-        const match = val.match(/\/Date\((\d+)\)/);
-
-        if (match) {
-          wmiObject[key] = new Date(parseInt(match[1], 10)).toString();
-        }
-      }
-    });
-
-    return wmiObject;
   }
 
   private isRunningAsAdmin() {

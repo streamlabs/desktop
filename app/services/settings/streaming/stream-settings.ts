@@ -8,23 +8,18 @@ import invert from 'lodash/invert';
 import cloneDeep from 'lodash/cloneDeep';
 import { TwitchService } from 'services/platforms/twitch';
 import { PlatformAppsService } from 'services/platform-apps';
-import { IGoLiveSettings, IPlatformFlags } from 'services/streaming';
-import { TDisplayType } from 'services/settings-v2/video';
+import { IGoLiveSettings, IPlatformFlags, StreamingService } from 'services/streaming';
+import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
 import Vue from 'vue';
 import { IVideo } from 'obs-studio-node';
 import { DualOutputService } from 'services/dual-output';
 import { TOutputOrientation } from 'services/restream';
 
-interface ISavedGoLiveSettings {
-  platforms: {
-    twitch?: IPlatformFlags;
-    facebook?: IPlatformFlags;
-    youtube?: IPlatformFlags;
-    trovo?: IPlatformFlags;
-    tiktok?: IPlatformFlags;
-  };
+export interface ISavedGoLiveSettings {
+  platforms: Partial<Record<TPlatform, IPlatformFlags>>;
   customDestinations?: ICustomStreamDestination[];
   advancedMode: boolean;
+  streamShift?: boolean;
 }
 
 export interface ICustomStreamDestination {
@@ -35,6 +30,10 @@ export interface ICustomStreamDestination {
   display?: TDisplayType;
   video?: IVideo;
   mode?: TOutputOrientation;
+  /**
+   * Indicates if this custom destination is the vertical dual stream
+   */
+  dualStream?: boolean;
 }
 
 /**
@@ -66,7 +65,7 @@ interface IStreamSettingsState {
    */
   warnNoVideoSources: boolean;
 
-  goLiveSettings?: ISavedGoLiveSettings;
+  goLiveSettings?: ISavedGoLiveSettings | null;
 }
 
 /**
@@ -77,7 +76,7 @@ interface IStreamSettings extends IStreamSettingsState {
   key: string;
   server: string;
   service: string;
-  streamType: 'rtmp_common' | 'rtmp_custom';
+  streamType: 'rtmp_common' | 'rtmp_custom' | 'whip_custom';
   warnBeforeStartingStream: boolean;
   recordWhenStreaming: boolean;
   replayBufferWhileStreaming: boolean;
@@ -88,6 +87,7 @@ interface IStreamSettings extends IStreamSettingsState {
   delaySec: number;
 }
 
+// TikTok, X (Twitter), and Instagram all map to Custom because they require entering in stream keys
 const platformToServiceNameMap: { [key in TPlatform]: string } = {
   twitch: 'Twitch',
   youtube: 'YouTube / YouTube Gaming',
@@ -95,6 +95,8 @@ const platformToServiceNameMap: { [key in TPlatform]: string } = {
   trovo: 'Trovo',
   tiktok: 'Custom',
   twitter: 'Custom',
+  instagram: 'Custom',
+  kick: 'Custom',
 };
 
 /**
@@ -107,6 +109,8 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
   @Inject() private platformAppsService: PlatformAppsService;
   @Inject() private streamSettingsService: StreamSettingsService;
   @Inject() private dualOutputService: DualOutputService;
+  @Inject() private streamingService: StreamingService;
+  @Inject() private videoSettingsService: VideoSettingsService;
 
   static defaultState: IStreamSettingsState = {
     protectedModeEnabled: true,
@@ -136,6 +140,7 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
    */
   setSettings(patch: Partial<IStreamSettings>, context?: TDisplayType) {
     const streamName = !context || context === 'horizontal' ? 'Stream' : 'StreamSecond';
+
     // save settings to localStorage
     const localStorageSettings: (keyof IStreamSettingsState)[] = [
       'protectedModeEnabled',
@@ -173,7 +178,7 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
 
     // We need to refresh the data in case there are additional fields
     const mustUpdateObsSettings = Object.keys(patch).find(key =>
-      ['platform', 'key', 'server'].includes(key),
+      ['platform', 'key', 'server', 'bearer_token'].includes(key),
     );
 
     if (!mustUpdateObsSettings) return;
@@ -205,15 +210,17 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
     // transform IGoLiveSettings to ISavedGoLiveSettings
     const patch: Partial<ISavedGoLiveSettings> = settingsPatch;
     if (settingsPatch.platforms) {
-      const pickedFields: (keyof IPlatformFlags)[] = ['enabled', 'useCustomFields'];
+      const pickedFields: (keyof IPlatformFlags)[] = ['enabled', 'useCustomFields', 'display'];
       const platforms: Dictionary<IPlatformFlags> = {};
       Object.keys(settingsPatch.platforms).map(platform => {
+        // TODO: index
+        // @ts-ignore
         const platformSettings = pick(settingsPatch.platforms![platform], pickedFields);
 
-        if (this.dualOutputService.views.dualOutputMode) {
-          platformSettings.video = this.dualOutputService.views.getPlatformContext(
-            platform as TPlatform,
-          );
+        if (this.streamingService.views.isDualOutputMode) {
+          this.videoSettingsService.validateVideoContext();
+          const display = this.streamingService.views.getPlatformDisplayType(platform as TPlatform);
+          platformSettings.video = this.videoSettingsService.contexts[display];
         }
         return (platforms[platform] = platformSettings);
       });
@@ -295,7 +302,29 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
       protectedModeMigrationRequired: false,
       key: '',
       streamType: 'rtmp_common',
-      goLiveSettings: undefined,
+      /*
+       * If we pass `undefined` to `goLiveSettings`, for some reason the worker process gets
+       * the update correctly, but the main process receives a sequence of updates like this:
+       *
+       * ```
+       * {protectedModeEnabled: true}
+       * {protectedModeMigrationRequired: false}
+       * {}
+       * ```
+       *
+       * When set to `null` we can see the following output instead:
+       *
+       * ```
+       * {protectedModeEnabled: true}
+       * {protectedModeMigrationRequired: false}
+       * {goLiveSettings: null}
+       * ```
+       *
+       * I've only suspicions about why this happens, but as a result of failing to update on main,
+       * a user logging out of one account and logging back in to a different account (or the same account)
+       * will have the Go Live settings from the old account until the app restarts.
+       */
+      goLiveSettings: null,
     });
   }
 
@@ -353,6 +382,8 @@ export class StreamSettingsService extends PersistentStatefulService<IStreamSett
   @mutation()
   private SET_LOCAL_STORAGE_SETTINGS(settings: Partial<IStreamSettingsState>) {
     Object.keys(settings).forEach(prop => {
+      // TODO: index
+      // @ts-ignore
       Vue.set(this.state, prop, settings[prop]);
     });
   }

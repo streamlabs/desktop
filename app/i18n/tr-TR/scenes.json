@@ -3,6 +3,7 @@
   "The scene name is required": "Sahne ismi gerekli",
   "Please enter the name of the scene": "Lütfen bir sahne ismi girin",
   "Manage Scene Collections": "Sahne Koleksiyonlarını Düzenle",
+  "Create Scene Collection": "Sahne Koleksiyonu Oluştur",
   "There needs to be at least one scene.": "En az bir sahneniz olması gerekir.",
   "Projector:": "Projektör:",
   "Projector: Output": "Projektör: Çıkış",
@@ -56,5 +57,13 @@
   "Arrange sources here for a vertical scene layout.": "Dikey sahne düzeni için kaynakları buraya ekleyin.",
   "Arrange sources here for a horizontal scene layout.": "Yatay sahne düzeni için kaynakları buraya ekleyin.",
   "Toggle Dual Output Mode.": "Dual Output Modunu Değiştir.",
-  "Cannot hide dual output toggles in dual output mode.": "Dual Output modundayken Dual Output değişiklileri gizlenemez."
+  "Cannot hide dual output toggles in dual output mode.": "Dual Output modundayken Dual Output değişiklileri gizlenemez.",
+  "Choose a template from our overlay library": "Katman kütüphanemizden bir şablon seçin",
+  "Log in to choose a template from our overlay library": "Katman kütüphanemizden bir şablon seçmek için giriş yapın",
+  "Loading scene...": "Sahne yükleniyor...",
+  "Import from OBS": "OBS’den Aktar",
+  "Import from Twitch": "Twitch'ten içe aktarın",
+  "Import from Twitch Studio": "Twitch Studio'dan içe aktarın",
+  "Load existing scenes from Twitch Studio": "Twitch Studio'dan mevcut sahneleri yükleyin",
+  "Start Fresh": "Taze Başlangıç"
 }

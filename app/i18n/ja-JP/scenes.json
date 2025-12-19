@@ -3,6 +3,7 @@
   "The scene name is required": "シーン名は必須です",
   "Please enter the name of the scene": "シーンの名前を入力してください",
   "Manage Scene Collections": "シーンコレクションの管理",
+  "Create Scene Collection": "シーンコレクションを作成",
   "There needs to be at least one scene.": "少なくとも 1 つのシーンが必要です。",
   "Projector:": "プロジェクター：",
   "Projector: Output": "プロジェクター：出力",
@@ -56,5 +57,13 @@
   "Arrange sources here for a vertical scene layout.": "縦方向シーンレイアウト用のソースをここに配置します。",
   "Arrange sources here for a horizontal scene layout.": "横方向シーンレイアウト用のソースをここに配置します。",
   "Toggle Dual Output Mode.": "Dual Output モードを切り替えます。",
-  "Cannot hide dual output toggles in dual output mode.": "Dual Output モードでは Dual Output トグルを非表示にできません。"
+  "Cannot hide dual output toggles in dual output mode.": "Dual Output モードでは Dual Output トグルを非表示にできません。",
+  "Choose a template from our overlay library": "オーバーレイライブラリからテンプレートを選択する",
+  "Log in to choose a template from our overlay library": "ログインしてオーバーレイライブラリからテンプレートを選択する",
+  "Loading scene...": "シーンをロード中...",
+  "Import from OBS": "OBS からインポート",
+  "Import from Twitch": "Twitchからインポート",
+  "Import from Twitch Studio": "Twitch Studioからインポート",
+  "Load existing scenes from Twitch Studio": "Twitch Studioから既存のシーンを読み込む",
+  "Start Fresh": "やり直す"
 }

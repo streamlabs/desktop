@@ -8,6 +8,7 @@
       "es2017"
     ],
     "module": "commonjs",
+    "moduleResolution": "node",
     "sourceMap": true,
     "allowJs": true,
     "noImplicitAny": true,
@@ -15,8 +16,9 @@
     "experimentalDecorators": true,
     "noImplicitThis": true,
     "removeComments": true,
-    "suppressImplicitAnyIndexErrors": true,
     "strictNullChecks": false,
+    // webdriverio bug in their type files
+    "skipLibCheck": true,
     "emitDecoratorMetadata": true,
     "baseUrl": "../app",
     "jsx": "preserve",

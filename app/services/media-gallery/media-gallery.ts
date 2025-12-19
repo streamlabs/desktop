@@ -32,7 +32,7 @@ interface IMediaGalleryProps {
   filter: 'audio' | 'image';
 }
 
-const fileTypeMap = {
+const fileTypeMap: Dictionary<string> = {
   mp3: 'audio',
   wav: 'audio',
   ogg: 'audio',
@@ -42,10 +42,11 @@ const fileTypeMap = {
   jpeg: 'image',
   webm: 'image',
   svg: 'image',
+  mp4: 'video',
 };
 
 const DEFAULT_MAX_USAGE = 1024 * Math.pow(1024, 2);
-const DEFAULT_MAX_FILE_SIZE = 25 * Math.pow(1024, 2);
+const DEFAULT_MAX_FILE_SIZE = 50 * Math.pow(1024, 2);
 
 export class MediaGalleryService extends Service {
   @Inject() private userService: UserService;
@@ -143,7 +144,7 @@ export class MediaGalleryService extends Service {
     audios: Array<IMediaGalleryFile>;
     images: Array<IMediaGalleryFile>;
   }> {
-    const req = this.formRequest('api/v5/slobs/widget/alertbox/stock-media');
+    const req = this.formRequest('api/v5/slobs/widget/alertbox/stock-media?alerts_panels=true');
     return jfetch(req);
   }
 
@@ -154,7 +155,7 @@ export class MediaGalleryService extends Service {
     const uploads = files.map(item => {
       const filename = decodeURIComponent(item.href.split(/[\\/]/).pop());
       const ext = filename.toLowerCase().split('.').pop();
-      const type = fileTypeMap[ext];
+      const type = fileTypeMap[ext] === 'video' ? 'image' : fileTypeMap[ext];
       const size = item.size || 0;
 
       return { ...item, filename, type, size, isStock: false };

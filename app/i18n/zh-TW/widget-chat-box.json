@@ -26,5 +26,7 @@
   "Disable Message Animations": "停用訊息動畫",
   "Hide Characters": "隱藏字元",
   "Hide Common Chat Bots": "隱藏常見聊天機器人",
-  "Hide commands starting with `!`": "隱藏以「！」開頭的指令"
+  "Hide commands starting with `!`": "隱藏以「！」開頭的指令",
+  "Chat Notifications": "聊天室通知",
+  "Trigger a sound to notify you when there is new chat activity": "當有新的聊天活動時，觸發聲音通知您"
 }

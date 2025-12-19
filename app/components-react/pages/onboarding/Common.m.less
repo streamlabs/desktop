@@ -1,14 +1,21 @@
 .title-container {
   width: 100%;
   text-align: center;
-  font-size: 32px;
+  font-size: 52px;
 
   h1 {
     display: inline-block;
-    font-size: 32px;
+    font-size: 52px;
   }
 
   margin-bottom: 40px;
+  margin-top: 144px;
+}
+
+.subtitle-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 35px;
 }
 
 .option-card {
@@ -34,15 +41,20 @@
     margin-bottom: 0;
   }
 
-  svg {
+  svg,
+  i {
     position: absolute;
     bottom: -50%;
     right: 0;
     opacity: 0.25;
   }
+
+  i {
+    color: #000;
+  }
 }
 
 .onboarding-button {
-  padding: 12px !important;
+  padding: 12px 24px !important;
   line-height: normal !important;
 }

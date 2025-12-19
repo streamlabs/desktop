@@ -392,7 +392,7 @@ export class GuestCamService extends StatefulService<IGuestCamServiceState> {
         this.dismissablesService.dismiss(EDismissable.CollabCamRollout);
       } else if (
         this.incrementalRolloutService.views.featureIsEnabled(
-          EAvailableFeatures.guestCaProduction,
+          EAvailableFeatures.guestCamProduction,
         ) &&
         this.dismissablesService.views.shouldShow(EDismissable.CollabCamRollout)
       ) {
@@ -449,7 +449,7 @@ export class GuestCamService extends StatefulService<IGuestCamServiceState> {
       !this.state.videoSourceId ||
       !this.sourcesService.views.getSource(this.state.videoSourceId)
     ) {
-      const sourceType = byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'av_capture_input' });
+      const sourceType = byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'macos_avcapture' });
       const videoSource = this.sourcesService.views.sources.find(s => s.type === sourceType);
 
       if (videoSource) this.SET_VIDEO_SOURCE(videoSource.sourceId);
@@ -937,7 +937,11 @@ export class GuestCamService extends StatefulService<IGuestCamServiceState> {
   sendWebRTCRequest(data: Object) {
     return new Promise(resolve => {
       this.socket.emit('webrtc', data, (result: Object) => {
+        // TODO: index
+        // @ts-ignore
         if (result && result['error']) {
+          // TODO: index
+          // @ts-ignore
           this.error(`Got error response from request ${data['type']}`);
         }
 
@@ -1093,6 +1097,8 @@ export class GuestCamService extends StatefulService<IGuestCamServiceState> {
   private UPDATE_GUEST(streamId: string, patch: Partial<IGuest>) {
     const guest = this.state.guests.find(g => g.remoteProducer.streamId === streamId);
     Object.keys(patch).forEach(key => {
+      // TODO: index
+      // @ts-ignore
       Vue.set(guest, key, patch[key]);
     });
   }

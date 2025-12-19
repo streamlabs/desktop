@@ -1,0 +1,40 @@
+.do-toggle {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.do-checkbox {
+  margin-right: 10px;
+  color: var(--title);
+  font-size: 14px;
+
+  :global(.ant-checkbox-wrapper) {
+    margin: 0px;
+  }
+}
+
+.dual-output-toggle {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  font-size: 14px;
+  color: var(--title);
+
+  :global(.ant-tooltip-placement-bottom) {
+    left: 10px !important;
+  }
+}
+
+.do-tooltip {
+  :global(.ant-tooltip-placement-bottom .ant-tooltip-arrow) {
+    left: 170px !important;
+  }
+}
+
+.so-tooltip {
+  :global(.ant-tooltip-placement-bottom .ant-tooltip-arrow) {
+    left: 158px !important;
+  }
+}

@@ -6,7 +6,7 @@ import { waitForWidgetSettingsSync } from '../../helpers/widget-helpers';
 
 useWebdriver();
 
-testGoal('Donation Goal');
+testGoal('Tip Goal');
 testGoal('Follower Goal');
 testGoal('Bit Goal');
 

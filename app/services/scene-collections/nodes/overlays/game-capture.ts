@@ -4,7 +4,7 @@ import uniqueId from 'lodash/uniqueId';
 import path from 'path';
 import fs from 'fs';
 import { Inject } from 'services/core';
-import { VideoService } from 'services/video';
+import { VideoSettingsService } from 'services/settings-v2/video';
 
 interface ISchema {
   placeholderFile: string;
@@ -20,7 +20,7 @@ interface IContext {
 export class GameCaptureNode extends Node<ISchema, IContext> {
   schemaVersion = 2;
 
-  @Inject() videoService: VideoService;
+  @Inject() videoSettingsService: VideoSettingsService;
 
   async save(context: IContext) {
     let placeholderFile: string;
@@ -34,10 +34,12 @@ export class GameCaptureNode extends Node<ISchema, IContext> {
       fs.writeFileSync(destination, fs.readFileSync(settings.user_placeholder_image));
     }
 
-    const width = this.videoService.baseResolutions[context.sceneItem.display ?? 'horizontal']
-      .baseWidth;
-    const height = this.videoService.baseResolutions[context.sceneItem.display ?? 'vertical']
-      .baseHeight;
+    const width = this.videoSettingsService.baseResolutions[
+      context.sceneItem.display ?? 'horizontal'
+    ].baseWidth;
+    const height = this.videoSettingsService.baseResolutions[
+      context.sceneItem.display ?? 'vertical'
+    ].baseHeight;
 
     this.data = {
       placeholderFile,
@@ -48,12 +50,15 @@ export class GameCaptureNode extends Node<ISchema, IContext> {
 
   async load(context: IContext) {
     // A custom placeholder is not always provided
-    if (!this.data.placeholderFile) return;
+    if (!this.data.placeholderFile) {
+      return;
+    }
 
     const filePath = path.join(context.assetsPath, this.data.placeholderFile);
-    context.sceneItem
-      .getObsInput()
-      .update({ user_placeholder_image: filePath, user_placeholder_use: true });
+    context.sceneItem.getObsInput().update({
+      user_placeholder_image: filePath,
+      user_placeholder_use: true,
+    });
 
     // This is a bit of a hack to force us to immediately back up
     // the media upon overlay install.

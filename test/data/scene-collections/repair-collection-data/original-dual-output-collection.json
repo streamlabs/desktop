@@ -1,0 +1,3257 @@
+{
+  "schemaVersion": 4,
+  "nodeType": "RootNode",
+  "sources": {
+    "schemaVersion": 4,
+    "nodeType": "SourcesNode",
+    "items": [
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "game_capture_4c11d906-a758-4a3c-928f-d210d61f027e",
+        "name": "Game Capture",
+        "type": "game_capture",
+        "settings": {
+          "allow_transparency": false,
+          "anti_cheat_hook": true,
+          "auto_capture_rules_path": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\game_capture_list.json",
+          "auto_placeholder_image": "C:\\Users\\testuser\\Documents\\GitHub\\desktop\\shared-resources\\capture-placeholder.png",
+          "auto_placeholder_message": "Looking for a game to capture",
+          "capture_cursor": true,
+          "capture_mode": "auto",
+          "capture_overlays": false,
+          "default_height": 1080,
+          "default_width": 1920,
+          "hook_rate": 1,
+          "limit_framerate": false,
+          "priority": 2,
+          "rgb10a2_space": "srgb",
+          "sli_compatibility": false,
+          "user_placeholder_image": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\57.jpg",
+          "user_placeholder_use": true
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "ad8abbbf-1092-49bf-b868-216064682aed",
+            "serverId": 973954311,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\57.jpg"
+          }
+        }
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "dshow_input_06d8c864-895e-4660-8ca3-6acaf71362b8",
+        "name": "Webcam",
+        "type": "dshow_input",
+        "settings": {
+          "active": true,
+          "audio_output_mode": 0,
+          "autorotation": true,
+          "color_range": "default",
+          "color_space": "default",
+          "frame_interval": -1,
+          "hw_decode": false,
+          "last_video_device_id": "USB2.0 HD UVC WebCam:\\\\?\\usb#vid_13d3&pid_56eb&mi_00#6&5308fd4&0&0000#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\\global",
+          "res_type": 1,
+          "resolution": "160x120",
+          "video_device_id": "USB2.0 HD UVC WebCam:\\\\?\\usb#vid_13d3&pid_56eb&mi_00#6&5308fd4&0&0000#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\\global",
+          "video_format": 0
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {}
+        },
+        "forceMono": false,
+        "syncOffset": {
+          "sec": 0,
+          "nsec": 0
+        },
+        "audioMixers": 255,
+        "monitoringType": 0,
+        "mixerHidden": false
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "image_source_ed368a8e-9749-4b58-8162-ca5de556fc16",
+        "name": "Webcam Frame",
+        "type": "image_source",
+        "settings": {
+          "file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\58.png",
+          "linear_alpha": false,
+          "unload": false
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "36853a2a-37c0-4b7a-86fe-69a49d4625f8",
+            "serverId": 973954312,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\58.png"
+          }
+        }
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "browser_source_ac771324-54de-443e-a7bb-221b0a7bdde0",
+        "name": "Alertbox",
+        "type": "browser_source",
+        "settings": {
+          "css": "body { background-color: rgba(0, 0, 0, 0); margin: 0px auto; overflow: hidden; }",
+          "fps": 30,
+          "fps_custom": false,
+          "height": 600,
+          "is_media_flag": false,
+          "reroute_audio": false,
+          "restart_when_active": false,
+          "shutdown": true,
+          "url": "https://streamlabs.com/alert-box/v3/6971367386EF24A28551D63E02CD87AF2757C8D1A1860AF43A98164DCE2FD95D65659E99E80552E5978544B923F2AA2FD2774683D7979A14125DF83D3187F775A96870325074AE1C85523AEB8734EEA58F15BA7B82E603143BD78711C37AEE77033D58509E752A777AA7FF1132BCC4E60981CB76FDED0D888503342DA5",
+          "webpage_control_level": 0,
+          "width": 800
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "widget",
+        "propertiesManagerSettings": {
+          "widgetType": 0
+        },
+        "forceMono": false,
+        "syncOffset": {
+          "sec": 0,
+          "nsec": 0
+        },
+        "audioMixers": 255,
+        "monitoringType": 1,
+        "mixerHidden": false
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "ffmpeg_source_c233f391-31a9-4136-a2c4-e0b5e8e2a0cb",
+        "name": "Starting Soon (French)",
+        "type": "ffmpeg_source",
+        "settings": {
+          "buffering_mb": 2,
+          "caching": false,
+          "clear_on_media_end": true,
+          "hw_decode": false,
+          "is_local_file": true,
+          "linear_alpha": false,
+          "local_file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\59.mp4",
+          "looping": true,
+          "reconnect_delay_sec": 10,
+          "restart_on_activate": true,
+          "speed_percent": 100,
+          "volume": 100
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "66811b22-7c75-44d0-9e92-1beda6ee2615",
+            "serverId": 973954331,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\59.mp4"
+          }
+        },
+        "forceMono": false,
+        "syncOffset": {
+          "sec": 0,
+          "nsec": 0
+        },
+        "audioMixers": 255,
+        "monitoringType": 0,
+        "mixerHidden": false
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "ffmpeg_source_e30929e0-1519-426c-9c9d-da8a1c3d1a3a",
+        "name": "Starting Soon",
+        "type": "ffmpeg_source",
+        "settings": {
+          "buffering_mb": 2,
+          "caching": true,
+          "clear_on_media_end": true,
+          "hw_decode": false,
+          "is_local_file": true,
+          "linear_alpha": false,
+          "local_file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\60.mp4",
+          "looping": true,
+          "reconnect_delay_sec": 10,
+          "restart_on_activate": true,
+          "speed_percent": 100,
+          "volume": 100
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "29f5505e-6455-44d8-b52e-8cc340ed98ea",
+            "serverId": 973954326,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\60.mp4"
+          }
+        },
+        "forceMono": false,
+        "syncOffset": {
+          "sec": 0,
+          "nsec": 0
+        },
+        "audioMixers": 255,
+        "monitoringType": 0,
+        "mixerHidden": false
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "game_capture_1517feee-13aa-4929-908f-6e9d3216a7e8",
+        "name": "Game Capture",
+        "type": "game_capture",
+        "settings": {
+          "allow_transparency": false,
+          "anti_cheat_hook": true,
+          "auto_capture_rules_path": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\game_capture_list.json",
+          "auto_placeholder_image": "C:\\Users\\testuser\\Documents\\GitHub\\desktop\\shared-resources\\capture-placeholder.png",
+          "auto_placeholder_message": "Looking for a game to capture",
+          "capture_cursor": true,
+          "capture_mode": "auto",
+          "capture_overlays": false,
+          "default_height": 1080,
+          "default_width": 1920,
+          "hook_rate": 1,
+          "limit_framerate": false,
+          "priority": 2,
+          "rgb10a2_space": "srgb",
+          "sli_compatibility": false,
+          "user_placeholder_image": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\61.jpg",
+          "user_placeholder_use": true
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "733276cf-f81e-4d88-963a-505472dab376",
+            "serverId": 973954314,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\61.jpg"
+          }
+        }
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "image_source_08fa2ca1-00cb-40a2-8a22-3e67ee329dd5",
+        "name": "Intermission",
+        "type": "image_source",
+        "settings": {
+          "file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\62.png",
+          "linear_alpha": false,
+          "unload": false
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "a3730ed3-63e0-47bd-9786-be976e303890",
+            "serverId": 973954322,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\62.png"
+          }
+        }
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "browser_source_58b08c64-e140-4276-bb83-6c138547bfe9",
+        "name": "Chatbox",
+        "type": "browser_source",
+        "settings": {
+          "css": "body { background-color: rgba(0, 0, 0, 0); margin: 0px auto; overflow: hidden; }",
+          "fps": 30,
+          "fps_custom": false,
+          "height": 800,
+          "is_media_flag": false,
+          "reroute_audio": false,
+          "restart_when_active": false,
+          "shutdown": true,
+          "url": "https://streamlabs.com/widgets/chat-box/v1/6971367386EF24A28551D63E02CD87AF2757C8D1A1860AF43A98164DCE2FD95D65659E99E80552E5978544B923F2AA2FD2774683D7979A14125DF83D3187F775A96870325074AE1C85523AEB8734EEA58F15BA7B82E603143BD78711C37AEE77033D58509E752A777AA7FF1132BCC4E60981CB76FDED0D888503342DA5",
+          "webpage_control_level": 0,
+          "width": 350
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "widget",
+        "propertiesManagerSettings": {
+          "widgetType": 6
+        },
+        "forceMono": false,
+        "syncOffset": {
+          "sec": 0,
+          "nsec": 0
+        },
+        "audioMixers": 255,
+        "monitoringType": 1,
+        "mixerHidden": false
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "ffmpeg_source_7fed46be-d4dc-4530-b2ab-4ade8a40fee3",
+        "name": "Be Right Back (French)",
+        "type": "ffmpeg_source",
+        "settings": {
+          "buffering_mb": 2,
+          "caching": false,
+          "clear_on_media_end": true,
+          "hw_decode": false,
+          "is_local_file": true,
+          "linear_alpha": false,
+          "local_file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\63.mp4",
+          "looping": true,
+          "reconnect_delay_sec": 10,
+          "restart_on_activate": true,
+          "speed_percent": 100,
+          "volume": 100
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "700da9da-fe92-4dcd-b351-e682f4a074f7",
+            "serverId": 973954330,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\63.mp4"
+          }
+        },
+        "forceMono": false,
+        "syncOffset": {
+          "sec": 0,
+          "nsec": 0
+        },
+        "audioMixers": 255,
+        "monitoringType": 0,
+        "mixerHidden": false
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "ffmpeg_source_e9fddaea-0d35-43cb-97cd-8e3deac5be31",
+        "name": "Be Right Back",
+        "type": "ffmpeg_source",
+        "settings": {
+          "buffering_mb": 2,
+          "caching": false,
+          "clear_on_media_end": true,
+          "hw_decode": false,
+          "is_local_file": true,
+          "linear_alpha": false,
+          "local_file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\64.mp4",
+          "looping": true,
+          "reconnect_delay_sec": 10,
+          "restart_on_activate": true,
+          "speed_percent": 100,
+          "volume": 100
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "8b881bbe-0da5-4398-8c85-b4987a253ecf",
+            "serverId": 973954328,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\64.mp4"
+          }
+        },
+        "forceMono": false,
+        "syncOffset": {
+          "sec": 0,
+          "nsec": 0
+        },
+        "audioMixers": 255,
+        "monitoringType": 0,
+        "mixerHidden": false
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "ffmpeg_source_3011d260-ac24-4419-8e7a-5103eedca49a",
+        "name": "Ending Soon (French)",
+        "type": "ffmpeg_source",
+        "settings": {
+          "buffering_mb": 2,
+          "caching": false,
+          "clear_on_media_end": true,
+          "hw_decode": false,
+          "is_local_file": true,
+          "linear_alpha": false,
+          "local_file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\65.mp4",
+          "looping": true,
+          "reconnect_delay_sec": 10,
+          "restart_on_activate": true,
+          "speed_percent": 100,
+          "volume": 100
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "8f5ce168-f4b0-4d9a-b6a1-2914201f483c",
+            "serverId": 973954329,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\65.mp4"
+          }
+        },
+        "forceMono": false,
+        "syncOffset": {
+          "sec": 0,
+          "nsec": 0
+        },
+        "audioMixers": 255,
+        "monitoringType": 0,
+        "mixerHidden": false
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "ffmpeg_source_4ff56e59-364c-4220-baac-4cff3bde8f19",
+        "name": "Ending Soon",
+        "type": "ffmpeg_source",
+        "settings": {
+          "buffering_mb": 2,
+          "caching": true,
+          "clear_on_media_end": true,
+          "hw_decode": false,
+          "is_local_file": true,
+          "linear_alpha": false,
+          "local_file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\66.mp4",
+          "looping": true,
+          "reconnect_delay_sec": 10,
+          "restart_on_activate": true,
+          "speed_percent": 100,
+          "volume": 100
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "8f0abe24-e4dc-4956-9022-b8aab8db6c96",
+            "serverId": 973954327,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\66.mp4"
+          }
+        },
+        "forceMono": false,
+        "syncOffset": {
+          "sec": 0,
+          "nsec": 0
+        },
+        "audioMixers": 255,
+        "monitoringType": 0,
+        "mixerHidden": false
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "ffmpeg_source_54f52d27-cd33-4cd8-aed8-6f9d84cc7f5d",
+        "name": "5 Minute Countdow",
+        "type": "ffmpeg_source",
+        "settings": {
+          "buffering_mb": 2,
+          "caching": false,
+          "clear_on_media_end": true,
+          "hw_decode": false,
+          "is_local_file": true,
+          "linear_alpha": false,
+          "local_file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\67.webm",
+          "looping": true,
+          "reconnect_delay_sec": 10,
+          "restart_on_activate": true,
+          "speed_percent": 100,
+          "volume": 100
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "dff5f957-18ea-4d3c-8b54-68e987a4631b",
+            "serverId": 973954317,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\67.webm"
+          }
+        },
+        "forceMono": false,
+        "syncOffset": {
+          "sec": 0,
+          "nsec": 0
+        },
+        "audioMixers": 255,
+        "monitoringType": 0,
+        "mixerHidden": false
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "ffmpeg_source_e6b9dad7-5698-4fdb-8575-4c79fb160391",
+        "name": "1 Minute Countdown",
+        "type": "ffmpeg_source",
+        "settings": {
+          "buffering_mb": 2,
+          "caching": false,
+          "clear_on_media_end": true,
+          "hw_decode": false,
+          "is_local_file": true,
+          "linear_alpha": false,
+          "local_file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\68.webm",
+          "looping": true,
+          "reconnect_delay_sec": 10,
+          "restart_on_activate": true,
+          "speed_percent": 100,
+          "volume": 100
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "6132a789-586b-4b24-8da4-d0d78d3e0bc2",
+            "serverId": 973954307,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\68.webm"
+          }
+        },
+        "forceMono": false,
+        "syncOffset": {
+          "sec": 0,
+          "nsec": 0
+        },
+        "audioMixers": 255,
+        "monitoringType": 0,
+        "mixerHidden": false
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "ffmpeg_source_aa863abb-b4fc-486f-98ef-24cca00496bf",
+        "name": "10 Minute Countdown",
+        "type": "ffmpeg_source",
+        "settings": {
+          "buffering_mb": 2,
+          "caching": true,
+          "clear_on_media_end": true,
+          "hw_decode": false,
+          "is_local_file": true,
+          "linear_alpha": false,
+          "local_file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\69.webm",
+          "looping": true,
+          "reconnect_delay_sec": 10,
+          "restart_on_activate": true,
+          "speed_percent": 100,
+          "volume": 100
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "4ae86d94-7734-4197-893b-0f546bf289af",
+            "serverId": 973954319,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\69.webm"
+          }
+        },
+        "forceMono": false,
+        "syncOffset": {
+          "sec": 0,
+          "nsec": 0
+        },
+        "audioMixers": 255,
+        "monitoringType": 0,
+        "mixerHidden": false
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "image_source_4b38617a-6235-496c-abe0-3a6c0e58acd5",
+        "name": "willow",
+        "type": "image_source",
+        "settings": {
+          "file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\70.png",
+          "linear_alpha": false,
+          "unload": false
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "5cee79eb-2007-4653-a370-c480f799bfca",
+            "serverId": 973954300,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\70.png"
+          }
+        }
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "image_source_092a503a-3335-4e75-98bc-1db92214f8c8",
+        "name": "tipping",
+        "type": "image_source",
+        "settings": {
+          "file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\71.png",
+          "linear_alpha": false,
+          "unload": false
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "e468299d-c0b6-42b8-b027-dc1744d40ca4",
+            "serverId": 973954303,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\71.png"
+          }
+        }
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "image_source_ba1a81bb-9f64-4581-b027-186c7916fbcf",
+        "name": "crossclip",
+        "type": "image_source",
+        "settings": {
+          "file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\72.png",
+          "linear_alpha": false,
+          "unload": false
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "d0146001-9a54-4d43-9a7f-f686b504d470",
+            "serverId": 973954298,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\72.png"
+          }
+        }
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "image_source_02a45120-3192-4744-ba1f-ebe0af1ac902",
+        "name": "facebook",
+        "type": "image_source",
+        "settings": {
+          "file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\73.png",
+          "linear_alpha": false,
+          "unload": false
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "0c4c5324-fff1-4a36-bdfc-971ed7708236",
+            "serverId": 973954299,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\73.png"
+          }
+        }
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "image_source_ee4eceb2-8cee-4134-8c7a-8fca5312f5e5",
+        "name": "tiktok",
+        "type": "image_source",
+        "settings": {
+          "file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\74.png",
+          "linear_alpha": false,
+          "unload": false
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "82162dd6-b8cc-41da-b5b1-5e2ce8757189",
+            "serverId": 973954304,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\74.png"
+          }
+        }
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "image_source_b44b9d03-87db-4899-9fcf-d61b36507161",
+        "name": "empty",
+        "type": "image_source",
+        "settings": {
+          "file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\75.png",
+          "linear_alpha": false,
+          "unload": false
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "843ccfad-5909-4b21-8ae3-2aef579342d7",
+            "serverId": 973954310,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\75.png"
+          }
+        }
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "image_source_ad69f330-136b-427b-845e-799ff00595bc",
+        "name": "twitter",
+        "type": "image_source",
+        "settings": {
+          "file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\76.png",
+          "linear_alpha": false,
+          "unload": false
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "d6f9bb01-b6fe-436e-8246-aa7a09edcf9d",
+            "serverId": 973954306,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\76.png"
+          }
+        }
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "image_source_bd42c892-5dda-4997-99e3-b805f19e4296",
+        "name": "instagram",
+        "type": "image_source",
+        "settings": {
+          "file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\77.png",
+          "linear_alpha": false,
+          "unload": false
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "6d1b00c1-203e-4f6d-8bf5-61a643b90c3a",
+            "serverId": 973954308,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\77.png"
+          }
+        }
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "image_source_88efeed2-91f9-4694-bab9-7b1cc72685c3",
+        "name": "youtube",
+        "type": "image_source",
+        "settings": {
+          "file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\78.png",
+          "linear_alpha": false,
+          "unload": false
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "7d2e7132-bd07-42e1-a9a5-ff0d3b0ebeef",
+            "serverId": 973954302,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\78.png"
+          }
+        }
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "image_source_fe647a78-93cb-4b00-9b7b-023c41bf800d",
+        "name": "discord",
+        "type": "image_source",
+        "settings": {
+          "file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\79.png",
+          "linear_alpha": false,
+          "unload": false
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "2a652ae1-c160-4cde-9c5d-38f24f3688aa",
+            "serverId": 973954305,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\79.png"
+          }
+        }
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "image_source_0594c509-20d0-4ffa-be0d-08b9f2433c97",
+        "name": "snapchat",
+        "type": "image_source",
+        "settings": {
+          "file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\80.png",
+          "linear_alpha": false,
+          "unload": false
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "dae0d721-5603-4aab-81f2-d9a7bbc9f58c",
+            "serverId": 973954301,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\80.png"
+          }
+        }
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "image_source_b68ade4e-7f84-4ea0-b4cc-5a0837485218",
+        "name": "Twitch",
+        "type": "image_source",
+        "settings": {
+          "file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\81.png",
+          "linear_alpha": false,
+          "unload": false
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "68b9c3a7-9fb1-49fa-8eb8-a442e9d8fa75",
+            "serverId": 973954309,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\81.png"
+          }
+        }
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "image_source_b368fe96-6076-4375-baf2-a050d6cf2ce1",
+        "name": "Offline (French)",
+        "type": "image_source",
+        "settings": {
+          "file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\82.jpg",
+          "linear_alpha": false,
+          "unload": false
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "f55e873a-5c57-4649-8f0f-597773e2f32a",
+            "serverId": 973954313,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\82.jpg"
+          }
+        }
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "image_source_1beeb2af-e651-444a-9d38-e5973faf0208",
+        "name": "Offline",
+        "type": "image_source",
+        "settings": {
+          "file": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\83.jpg",
+          "linear_alpha": false,
+          "unload": false
+        },
+        "volume": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "4d9d60f0-97f6-4735-aed5-45282fc3e557",
+            "serverId": 973954316,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\83.jpg"
+          }
+        }
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "wasapi_output_capture_850c2664-e78b-4b48-8a81-40c54760d3ae",
+        "name": "Desktop Audio",
+        "type": "wasapi_output_capture",
+        "settings": {
+          "device_id": "default",
+          "use_device_timing": true
+        },
+        "volume": 1,
+        "channel": 1,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {}
+        },
+        "forceMono": false,
+        "syncOffset": {
+          "sec": 0,
+          "nsec": 0
+        },
+        "audioMixers": 255,
+        "monitoringType": 0,
+        "mixerHidden": false
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "id": "wasapi_input_capture_cc0dc687-8711-41c1-8c53-db839d8b0687",
+        "name": "Mic/Aux",
+        "type": "wasapi_input_capture",
+        "settings": {
+          "device_id": "default",
+          "use_device_timing": false
+        },
+        "volume": 1,
+        "channel": 3,
+        "muted": false,
+        "deinterlaceMode": 0,
+        "deinterlaceFieldOrder": 0,
+        "filters": {
+          "items": []
+        },
+        "propertiesManager": "default",
+        "propertiesManagerSettings": {
+          "mediaBackup": {}
+        },
+        "forceMono": false,
+        "syncOffset": {
+          "sec": 0,
+          "nsec": 0
+        },
+        "audioMixers": 255,
+        "monitoringType": 0,
+        "mixerHidden": false
+      }
+    ]
+  },
+  "scenes": {
+    "schemaVersion": 1,
+    "nodeType": "ScenesNode",
+    "items": [
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "filters": {
+          "schemaVersion": 1,
+          "nodeType": "SceneFiltersNode",
+          "items": []
+        },
+        "sceneItems": {
+          "schemaVersion": 1,
+          "nodeType": "SceneItemsNode",
+          "items": [
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "7da8aff3-e326-4e49-b304-26a62f6db99e",
+              "sourceId": "game_capture_4c11d906-a758-4a3c-928f-d210d61f027e",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "195c08f4-803b-4180-b036-c552745bfe37",
+              "sourceId": "dshow_input_06d8c864-895e-4660-8ca3-6acaf71362b8",
+              "x": 49.68119588505772,
+              "y": 541.5300151279557,
+              "scaleX": 0,
+              "scaleY": 0,
+              "visible": true,
+              "crop": {
+                "top": null,
+                "bottom": null,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "4f97be89-6f06-402d-9a39-1e3568d072ec",
+              "sourceId": "image_source_ed368a8e-9749-4b58-8162-ca5de556fc16",
+              "x": -107.83756186444248,
+              "y": 485.46534653465346,
+              "scaleX": 0.5215415436424691,
+              "scaleY": 0.5215415436424691,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "id": "249d3877-0605-4eec-a657-c284b0f08fc7",
+              "name": "Webcam",
+              "sceneNodeType": "folder",
+              "sceneId": "scene_a8e7c0f5-7aa6-4187-9195-c3f29a5b856f",
+              "parentId": "",
+              "display": "horizontal",
+              "childrenIds": [
+                "4f97be89-6f06-402d-9a39-1e3568d072ec",
+                "195c08f4-803b-4180-b036-c552745bfe37"
+              ]
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "1b8f9575-e384-41df-99f9-6648f341677a",
+              "sourceId": "browser_source_ac771324-54de-443e-a7bb-221b0a7bdde0",
+              "x": 560,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "2583feef-a4ec-4ac7-9c89-d593a95c7187",
+              "sourceId": "game_capture_4c11d906-a758-4a3c-928f-d210d61f027e",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "2135a1c8-244e-433e-a2a7-4f083ca6ede7",
+              "sourceId": "dshow_input_06d8c864-895e-4660-8ca3-6acaf71362b8",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "0c55e880-8933-49be-b231-335329950bd8",
+              "sourceId": "image_source_ed368a8e-9749-4b58-8162-ca5de556fc16",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            },
+            {
+              "id": "45c72caf-ce29-4a55-b6f4-c25e5ac0f944",
+              "name": "Webcam",
+              "sceneNodeType": "folder",
+              "sceneId": "scene_a8e7c0f5-7aa6-4187-9195-c3f29a5b856f",
+              "parentId": "",
+              "display": "vertical",
+              "childrenIds": [
+                "0c55e880-8933-49be-b231-335329950bd8",
+                "2135a1c8-244e-433e-a2a7-4f083ca6ede7"
+              ]
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "55b706d4-f686-41b4-8105-6d9bddae0949",
+              "sourceId": "browser_source_ac771324-54de-443e-a7bb-221b0a7bdde0",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            }
+          ]
+        },
+        "id": "scene_a8e7c0f5-7aa6-4187-9195-c3f29a5b856f",
+        "name": "Live Scene",
+        "active": false
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "filters": {
+          "schemaVersion": 1,
+          "nodeType": "SceneFiltersNode",
+          "items": []
+        },
+        "sceneItems": {
+          "schemaVersion": 1,
+          "nodeType": "SceneItemsNode",
+          "items": [
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "0b11ddc0-4631-4617-88ef-a7d98687e370",
+              "sourceId": "ffmpeg_source_c233f391-31a9-4136-a2c4-e0b5e8e2a0cb",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "6ca1cd08-e6dd-4e11-97e1-0ba096bfbcfb",
+              "sourceId": "ffmpeg_source_e30929e0-1519-426c-9c9d-da8a1c3d1a3a",
+              "x": 0,
+              "y": 1.1368683772161603e-13,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "f2d913af-ac36-43b0-8de7-791d6489c5e3",
+              "sourceId": "browser_source_ac771324-54de-443e-a7bb-221b0a7bdde0",
+              "x": 560,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "07c7ac95-5a1f-4ec9-8c2b-b65bdd5496e1",
+              "sourceId": "ffmpeg_source_c233f391-31a9-4136-a2c4-e0b5e8e2a0cb",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "d1ad77d8-e53c-464f-a79d-add31fd2aa32",
+              "sourceId": "ffmpeg_source_e30929e0-1519-426c-9c9d-da8a1c3d1a3a",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "69d3fa78-917f-43a6-8776-84faf6dd29cd",
+              "sourceId": "browser_source_ac771324-54de-443e-a7bb-221b0a7bdde0",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            }
+          ]
+        },
+        "id": "scene_4caaaa07-2b11-495f-9b40-0c041a320d71",
+        "name": "Starting Soon",
+        "active": false
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "filters": {
+          "schemaVersion": 1,
+          "nodeType": "SceneFiltersNode",
+          "items": []
+        },
+        "sceneItems": {
+          "schemaVersion": 1,
+          "nodeType": "SceneItemsNode",
+          "items": [
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "9af7b81f-99ac-4c15-b5da-54c8519f4a16",
+              "sourceId": "game_capture_1517feee-13aa-4929-908f-6e9d3216a7e8",
+              "x": 227.15709969788531,
+              "y": 49.5448856279674,
+              "scaleX": 0.8549848942598186,
+              "scaleY": 0.8549848942598186,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "541a270e-7d3d-4ad8-b60b-f3d920f6cdc4",
+              "sourceId": "dshow_input_06d8c864-895e-4660-8ca3-6acaf71362b8",
+              "x": 10.638247369823148,
+              "y": 720.7128712871287,
+              "scaleX": 0,
+              "scaleY": 0,
+              "visible": true,
+              "crop": {
+                "top": null,
+                "bottom": null,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "a5e350ff-fff1-40a9-a982-3a802517a07d",
+              "sourceId": "image_source_08fa2ca1-00cb-40a2-8a22-3e67ee329dd5",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "a1772f9a-7c9d-4b51-a7da-c5cd44c1d42c",
+              "sourceId": "browser_source_58b08c64-e140-4276-bb83-6c138547bfe9",
+              "x": 1516.3298967806663,
+              "y": 132.97733389688244,
+              "scaleX": 0.964289820800615,
+              "scaleY": 0.964289820800615,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "9edcf6d8-5712-4cee-bcd6-377a6481c495",
+              "sourceId": "browser_source_ac771324-54de-443e-a7bb-221b0a7bdde0",
+              "x": 779.1603875134555,
+              "y": 22.671755725190792,
+              "scaleX": 0.8087190527448865,
+              "scaleY": 0.8087190527448865,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            }
+          ]
+        },
+        "id": "scene_05a15b87-cb19-41ee-84fe-14590d02606d",
+        "name": "Intermission Screen",
+        "active": false
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "filters": {
+          "schemaVersion": 1,
+          "nodeType": "SceneFiltersNode",
+          "items": []
+        },
+        "sceneItems": {
+          "schemaVersion": 1,
+          "nodeType": "SceneItemsNode",
+          "items": [
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "7d373da4-36a2-4034-a7b1-b289afcba805",
+              "sourceId": "ffmpeg_source_7fed46be-d4dc-4530-b2ab-4ade8a40fee3",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "899bab0e-a2b0-463e-a800-dc7a42c878af",
+              "sourceId": "ffmpeg_source_e9fddaea-0d35-43cb-97cd-8e3deac5be31",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "25f918e4-5e1d-43bb-99ea-a194e419f920",
+              "sourceId": "browser_source_ac771324-54de-443e-a7bb-221b0a7bdde0",
+              "x": 560,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            }
+          ]
+        },
+        "id": "scene_7972043c-b13a-416c-8895-0ef8f89e500a",
+        "name": "Be Right Back",
+        "active": false
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "filters": {
+          "schemaVersion": 1,
+          "nodeType": "SceneFiltersNode",
+          "items": []
+        },
+        "sceneItems": {
+          "schemaVersion": 1,
+          "nodeType": "SceneItemsNode",
+          "items": [
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "f4b134ba-24c8-4d0c-9cf3-214e33e7c7b3",
+              "sourceId": "ffmpeg_source_3011d260-ac24-4419-8e7a-5103eedca49a",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "127f7445-fc7b-4899-9bbe-9160d6b1a49a",
+              "sourceId": "ffmpeg_source_4ff56e59-364c-4220-baac-4cff3bde8f19",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "f085f8c2-a3b5-4ae2-94bc-8d18e956964d",
+              "sourceId": "browser_source_ac771324-54de-443e-a7bb-221b0a7bdde0",
+              "x": 560,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            }
+          ]
+        },
+        "id": "scene_6fb7801c-d8ec-4016-83d4-bfbbcda45576",
+        "name": "Ending Soon",
+        "active": false
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "filters": {
+          "schemaVersion": 1,
+          "nodeType": "SceneFiltersNode",
+          "items": []
+        },
+        "sceneItems": {
+          "schemaVersion": 1,
+          "nodeType": "SceneItemsNode",
+          "items": [
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "7cace484-7d8c-45ac-9f2f-e5053488713f",
+              "sourceId": "ffmpeg_source_54f52d27-cd33-4cd8-aed8-6f9d84cc7f5d",
+              "x": 0,
+              "y": 342.13740458015275,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "bd9108b6-82f7-45f1-88a0-0d20b5dfdee0",
+              "sourceId": "ffmpeg_source_e6b9dad7-5698-4fdb-8575-4c79fb160391",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "db74ba6a-369b-4ac6-b24a-5daf1600ae68",
+              "sourceId": "ffmpeg_source_aa863abb-b4fc-486f-98ef-24cca00496bf",
+              "x": 0,
+              "y": 647.1302147100631,
+              "scaleX": 0.9817007534983856,
+              "scaleY": 0.9817007534983855,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "id": "6a3226dc-d12f-4a96-96d8-c629d506f565",
+              "name": "Countdowns",
+              "sceneNodeType": "folder",
+              "sceneId": "scene_ef37e143-5a63-4199-8520-f150a8be9a4d",
+              "parentId": "",
+              "display": "horizontal",
+              "childrenIds": [
+                "db74ba6a-369b-4ac6-b24a-5daf1600ae68",
+                "bd9108b6-82f7-45f1-88a0-0d20b5dfdee0",
+                "7cace484-7d8c-45ac-9f2f-e5053488713f"
+              ]
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "b4cc999c-a793-4908-8b00-f3d74ab9639e",
+              "sourceId": "image_source_4b38617a-6235-496c-abe0-3a6c0e58acd5",
+              "x": 1535.665165282547,
+              "y": 43.282442748091626,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "9e2821c7-a2f8-4c46-9564-647b35582ddb",
+              "sourceId": "image_source_092a503a-3335-4e75-98bc-1db92214f8c8",
+              "x": 1205.464949997294,
+              "y": 243.22137404580153,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "157a29e2-069d-48db-87f3-1be3b7483a1c",
+              "sourceId": "image_source_ba1a81bb-9f64-4581-b027-186c7916fbcf",
+              "x": 1205.7319037109646,
+              "y": 143.22137404580153,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "6ac089c3-e678-4821-953c-d0c7a9000460",
+              "sourceId": "image_source_02a45120-3192-4744-ba1f-ebe0af1ac902",
+              "x": 1205.665165282547,
+              "y": 43.221374045801525,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "3eeffdb4-b52b-4a5a-bd97-579b140bb118",
+              "sourceId": "image_source_ee4eceb2-8cee-4134-8c7a-8fca5312f5e5",
+              "x": 1535.5984268541292,
+              "y": 743.2824427480916,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "3fcf7759-48c0-483d-97f9-b90dfebbb6e3",
+              "sourceId": "image_source_b44b9d03-87db-4899-9fcf-d61b36507161",
+              "x": 1535.5316884257115,
+              "y": 643.2824427480916,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "f6f22025-f6f5-4492-9049-0ca4f7279dfd",
+              "sourceId": "image_source_ad69f330-136b-427b-845e-799ff00595bc",
+              "x": 1535.9977809983702,
+              "y": 543.2824427480916,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "49e75c42-5adf-4388-be96-1d626fdcf1ab",
+              "sourceId": "image_source_bd42c892-5dda-4997-99e3-b805f19e4296",
+              "x": 1535.3982115688764,
+              "y": 443.2824427480916,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "0c49628a-02c4-4316-960d-deba0e50943f",
+              "sourceId": "image_source_88efeed2-91f9-4694-bab9-7b1cc72685c3",
+              "x": 1535.665165282547,
+              "y": 343.2824427480916,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "894ba171-250f-46a2-a8aa-df8d0e65d568",
+              "sourceId": "image_source_fe647a78-93cb-4b00-9b7b-023c41bf800d",
+              "x": 1535.464949997294,
+              "y": 243.28244274809163,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "99e0108d-36d9-4d22-baae-cf128c57a35e",
+              "sourceId": "image_source_0594c509-20d0-4ffa-be0d-08b9f2433c97",
+              "x": 1535.7319037109646,
+              "y": 143.28244274809163,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "d37d3daa-7f94-46db-a8e8-9bad6081a41e",
+              "sourceId": "image_source_b68ade4e-7f84-4ea0-b4cc-5a0837485218",
+              "x": 1205.581005586592,
+              "y": 340.22137404580155,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "id": "c099da76-5adf-4678-9276-17da941d113f",
+              "name": "Panels",
+              "sceneNodeType": "folder",
+              "sceneId": "scene_ef37e143-5a63-4199-8520-f150a8be9a4d",
+              "parentId": "",
+              "display": "horizontal",
+              "childrenIds": [
+                "d37d3daa-7f94-46db-a8e8-9bad6081a41e",
+                "99e0108d-36d9-4d22-baae-cf128c57a35e",
+                "894ba171-250f-46a2-a8aa-df8d0e65d568",
+                "0c49628a-02c4-4316-960d-deba0e50943f",
+                "49e75c42-5adf-4388-be96-1d626fdcf1ab",
+                "f6f22025-f6f5-4492-9049-0ca4f7279dfd",
+                "3fcf7759-48c0-483d-97f9-b90dfebbb6e3",
+                "3eeffdb4-b52b-4a5a-bd97-579b140bb118",
+                "6ac089c3-e678-4821-953c-d0c7a9000460",
+                "157a29e2-069d-48db-87f3-1be3b7483a1c",
+                "9e2821c7-a2f8-4c46-9564-647b35582ddb",
+                "b4cc999c-a793-4908-8b00-f3d74ab9639e"
+              ]
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "70d16615-64c7-4168-9599-7aaf1f887c33",
+              "sourceId": "ffmpeg_source_54f52d27-cd33-4cd8-aed8-6f9d84cc7f5d",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "6e05b11f-1181-41a4-b10c-86e7d10fc2b7",
+              "sourceId": "ffmpeg_source_e6b9dad7-5698-4fdb-8575-4c79fb160391",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "8f2a4a0c-12b4-4f82-a50a-d3cce1835900",
+              "sourceId": "ffmpeg_source_aa863abb-b4fc-486f-98ef-24cca00496bf",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            },
+            {
+              "id": "277798ea-f232-451d-8759-d850e725ede5",
+              "name": "Countdowns",
+              "sceneNodeType": "folder",
+              "sceneId": "scene_ef37e143-5a63-4199-8520-f150a8be9a4d",
+              "parentId": "",
+              "display": "vertical",
+              "childrenIds": [
+                "8f2a4a0c-12b4-4f82-a50a-d3cce1835900",
+                "6e05b11f-1181-41a4-b10c-86e7d10fc2b7",
+                "70d16615-64c7-4168-9599-7aaf1f887c33"
+              ]
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "6c558c18-bb91-47ab-9165-801c2923d100",
+              "sourceId": "image_source_4b38617a-6235-496c-abe0-3a6c0e58acd5",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "bc5b4a83-31a9-4570-9c78-2f8bdf0f6518",
+              "sourceId": "image_source_092a503a-3335-4e75-98bc-1db92214f8c8",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "07cc6654-c4f9-466e-87dc-151dcca6b01f",
+              "sourceId": "image_source_ba1a81bb-9f64-4581-b027-186c7916fbcf",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "2c341d68-8ccb-4847-a77e-3292a0fd319a",
+              "sourceId": "image_source_02a45120-3192-4744-ba1f-ebe0af1ac902",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "ab2affc4-5de0-4d82-b91e-aefa26601b57",
+              "sourceId": "image_source_ee4eceb2-8cee-4134-8c7a-8fca5312f5e5",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "a23b1599-da3a-40a8-8e19-2ec694a59892",
+              "sourceId": "image_source_b44b9d03-87db-4899-9fcf-d61b36507161",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "a1f903b1-05e4-4318-80cf-bd1f9c9a4f58",
+              "sourceId": "image_source_ad69f330-136b-427b-845e-799ff00595bc",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "a8a3dde5-3a03-42d1-944a-9d804f1b2302",
+              "sourceId": "image_source_bd42c892-5dda-4997-99e3-b805f19e4296",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "0e06d733-024f-4809-9295-908b9a0275d4",
+              "sourceId": "image_source_88efeed2-91f9-4694-bab9-7b1cc72685c3",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "2c2e939b-5228-4a26-9f56-1b86a7857f9c",
+              "sourceId": "image_source_fe647a78-93cb-4b00-9b7b-023c41bf800d",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "90c9df7e-8386-46e6-8c6d-daae48e37b6e",
+              "sourceId": "image_source_0594c509-20d0-4ffa-be0d-08b9f2433c97",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "665c4975-bf0f-4430-9421-aedd07a56e44",
+              "sourceId": "image_source_b68ade4e-7f84-4ea0-b4cc-5a0837485218",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            },
+            {
+              "id": "0938c59b-d5eb-48e9-b6d2-81982cc2394b",
+              "name": "Panels",
+              "sceneNodeType": "folder",
+              "sceneId": "scene_ef37e143-5a63-4199-8520-f150a8be9a4d",
+              "parentId": "",
+              "display": "vertical",
+              "childrenIds": [
+                "665c4975-bf0f-4430-9421-aedd07a56e44",
+                "90c9df7e-8386-46e6-8c6d-daae48e37b6e",
+                "2c2e939b-5228-4a26-9f56-1b86a7857f9c",
+                "0e06d733-024f-4809-9295-908b9a0275d4",
+                "a8a3dde5-3a03-42d1-944a-9d804f1b2302",
+                "a1f903b1-05e4-4318-80cf-bd1f9c9a4f58",
+                "a23b1599-da3a-40a8-8e19-2ec694a59892",
+                "ab2affc4-5de0-4d82-b91e-aefa26601b57",
+                "2c341d68-8ccb-4847-a77e-3292a0fd319a",
+                "07cc6654-c4f9-466e-87dc-151dcca6b01f",
+                "bc5b4a83-31a9-4570-9c78-2f8bdf0f6518",
+                "6c558c18-bb91-47ab-9165-801c2923d100"
+              ]
+            }
+          ]
+        },
+        "id": "scene_ef37e143-5a63-4199-8520-f150a8be9a4d",
+        "name": "Additional Assets",
+        "active": false
+      },
+      {
+        "hotkeys": {
+          "schemaVersion": 2,
+          "nodeType": "HotkeysNode",
+          "items": []
+        },
+        "filters": {
+          "schemaVersion": 1,
+          "nodeType": "SceneFiltersNode",
+          "items": []
+        },
+        "sceneItems": {
+          "schemaVersion": 1,
+          "nodeType": "SceneItemsNode",
+          "items": [
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "7fb754fa-4d0f-4810-89cd-99d3145abaf8",
+              "sourceId": "image_source_b368fe96-6076-4375-baf2-a050d6cf2ce1",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "a39f4e06-648b-4997-af53-b2a421a4394d",
+              "sourceId": "image_source_1beeb2af-e651-444a-9d38-e5973faf0208",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "horizontal"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "5f7aee00-9a27-4ec3-be26-f7b7ee3ec55b",
+              "sourceId": "image_source_b368fe96-6076-4375-baf2-a050d6cf2ce1",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            },
+            {
+              "hotkeys": {
+                "schemaVersion": 2,
+                "nodeType": "HotkeysNode",
+                "items": []
+              },
+              "id": "585ec390-4041-4454-a45b-1b1345690151",
+              "sourceId": "image_source_1beeb2af-e651-444a-9d38-e5973faf0208",
+              "x": 0,
+              "y": 0,
+              "scaleX": 1,
+              "scaleY": 1,
+              "visible": true,
+              "crop": {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0
+              },
+              "locked": false,
+              "rotation": 0,
+              "streamVisible": true,
+              "recordingVisible": true,
+              "scaleFilter": 0,
+              "blendingMode": 0,
+              "blendingMethod": 0,
+              "sceneNodeType": "item",
+              "display": "vertical"
+            }
+          ]
+        },
+        "id": "scene_4b0856cc-5c21-497b-8423-693ccec63ad8",
+        "name": "Offline",
+        "active": true
+      }
+    ]
+  },
+  "transitions": {
+    "schemaVersion": 2,
+    "nodeType": "TransitionsNode",
+    "transitions": [
+      {
+        "id": "9c3bc0d0-94db-4cfe-babc-813806b5c6a2",
+        "name": "Global Transition",
+        "type": "obs_stinger_transition",
+        "duration": 300,
+        "settings": {
+          "audio_fade_style": 0,
+          "audio_monitoring": 0,
+          "hw_decode": true,
+          "invert_matte": false,
+          "path": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\84.webm",
+          "tp_type": 1,
+          "track_matte_enabled": false,
+          "track_matte_layout": 0,
+          "track_matte_path": "",
+          "transition_point": 13,
+          "volume": 100
+        },
+        "propertiesManagerSettings": {
+          "mediaBackup": {
+            "localId": "c169556d-c074-4422-b845-232cc1e717e3",
+            "serverId": 973954320,
+            "originalPath": "C:\\Users\\testuser\\AppData\\Roaming\\slobs-client\\Overlays\\05019e8b-e4ad-4b99-b509-8259f577a483\\84.webm"
+          }
+        }
+      }
+    ],
+    "connections": [],
+    "defaultTransitionId": "9c3bc0d0-94db-4cfe-babc-813806b5c6a2"
+  },
+  "hotkeys": {
+    "schemaVersion": 2,
+    "nodeType": "HotkeysNode",
+    "items": []
+  },
+  "guestCam": {
+    "schemaVersion": 1,
+    "nodeType": "GuestCamNode",
+    "audioSourceId": "wasapi_input_capture_cc0dc687-8711-41c1-8c53-db839d8b0687",
+    "videoSourceId": "dshow_input_06d8c864-895e-4660-8ca3-6acaf71362b8"
+  },
+  "nodeMap": {
+    "schemaVersion": 1,
+    "nodeType": "NodeMapNode",
+    "sceneNodeMaps": {
+      "scene_a8e7c0f5-7aa6-4187-9195-c3f29a5b856f": {
+        "1b8f9575-e384-41df-99f9-6648f341677a": "55b706d4-f686-41b4-8105-6d9bddae0949",
+        "249d3877-0605-4eec-a657-c284b0f08fc7": "45c72caf-ce29-4a55-b6f4-c25e5ac0f944",
+        "4f97be89-6f06-402d-9a39-1e3568d072ec": "0c55e880-8933-49be-b231-335329950bd8",
+        "195c08f4-803b-4180-b036-c552745bfe37": "2135a1c8-244e-433e-a2a7-4f083ca6ede7",
+        "7da8aff3-e326-4e49-b304-26a62f6db99e": "2583feef-a4ec-4ac7-9c89-d593a95c7187"
+      },
+      "scene_4caaaa07-2b11-495f-9b40-0c041a320d71": {
+        "f2d913af-ac36-43b0-8de7-791d6489c5e3": "69d3fa78-917f-43a6-8776-84faf6dd29cd",
+        "6ca1cd08-e6dd-4e11-97e1-0ba096bfbcfb": "d1ad77d8-e53c-464f-a79d-add31fd2aa32",
+        "0b11ddc0-4631-4617-88ef-a7d98687e370": "07c7ac95-5a1f-4ec9-8c2b-b65bdd5496e1"
+      },
+      "scene_ef37e143-5a63-4199-8520-f150a8be9a4d": {
+        "c099da76-5adf-4678-9276-17da941d113f": "0938c59b-d5eb-48e9-b6d2-81982cc2394b",
+        "d37d3daa-7f94-46db-a8e8-9bad6081a41e": "665c4975-bf0f-4430-9421-aedd07a56e44",
+        "99e0108d-36d9-4d22-baae-cf128c57a35e": "90c9df7e-8386-46e6-8c6d-daae48e37b6e",
+        "894ba171-250f-46a2-a8aa-df8d0e65d568": "2c2e939b-5228-4a26-9f56-1b86a7857f9c",
+        "0c49628a-02c4-4316-960d-deba0e50943f": "0e06d733-024f-4809-9295-908b9a0275d4",
+        "49e75c42-5adf-4388-be96-1d626fdcf1ab": "a8a3dde5-3a03-42d1-944a-9d804f1b2302",
+        "f6f22025-f6f5-4492-9049-0ca4f7279dfd": "a1f903b1-05e4-4318-80cf-bd1f9c9a4f58",
+        "3fcf7759-48c0-483d-97f9-b90dfebbb6e3": "a23b1599-da3a-40a8-8e19-2ec694a59892",
+        "3eeffdb4-b52b-4a5a-bd97-579b140bb118": "ab2affc4-5de0-4d82-b91e-aefa26601b57",
+        "6ac089c3-e678-4821-953c-d0c7a9000460": "2c341d68-8ccb-4847-a77e-3292a0fd319a",
+        "157a29e2-069d-48db-87f3-1be3b7483a1c": "07cc6654-c4f9-466e-87dc-151dcca6b01f",
+        "9e2821c7-a2f8-4c46-9564-647b35582ddb": "bc5b4a83-31a9-4570-9c78-2f8bdf0f6518",
+        "b4cc999c-a793-4908-8b00-f3d74ab9639e": "6c558c18-bb91-47ab-9165-801c2923d100",
+        "6a3226dc-d12f-4a96-96d8-c629d506f565": "277798ea-f232-451d-8759-d850e725ede5",
+        "db74ba6a-369b-4ac6-b24a-5daf1600ae68": "8f2a4a0c-12b4-4f82-a50a-d3cce1835900",
+        "bd9108b6-82f7-45f1-88a0-0d20b5dfdee0": "6e05b11f-1181-41a4-b10c-86e7d10fc2b7",
+        "7cace484-7d8c-45ac-9f2f-e5053488713f": "70d16615-64c7-4168-9599-7aaf1f887c33"
+      },
+      "scene_4b0856cc-5c21-497b-8423-693ccec63ad8": {
+        "a39f4e06-648b-4997-af53-b2a421a4394d": "585ec390-4041-4454-a45b-1b1345690151",
+        "7fb754fa-4d0f-4810-89cd-99d3145abaf8": "5f7aee00-9a27-4ec3-be26-f7b7ee3ec55b"
+      }
+    }
+  },
+  "baseResolution": {
+    "baseWidth": 1920,
+    "baseHeight": 1080
+  },
+  "baseResolutions": {
+    "horizontal": {
+      "baseWidth": 1920,
+      "baseHeight": 1080
+    },
+    "vertical": {
+      "baseWidth": 720,
+      "baseHeight": 1280
+    }
+  },
+  "selectiveRecording": false,
+  "dualOutputMode": true,
+  "operatingSystem": "win32"
+}

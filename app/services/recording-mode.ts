@@ -8,7 +8,7 @@ import { ELayout, ELayoutElement, LayoutService } from './layout';
 import { ScenesService } from './scenes';
 import { EObsSimpleEncoder, SettingsService } from './settings';
 import { AnchorPoint, ScalableRectangle } from 'util/ScalableRectangle';
-import { VideoService } from './video';
+import { TDisplayType, VideoSettingsService } from './settings-v2/video';
 import { ENotificationType, NotificationsService } from 'services/notifications';
 import { DefaultHardwareService } from './hardware';
 import { RunInLoadingMode } from './app/app-decorators';
@@ -18,8 +18,7 @@ import { NavigationService, UsageStatisticsService, SharedStorageService } from 
 import { getPlatformService } from 'services/platforms';
 import { IYoutubeUploadResponse } from 'services/platforms/youtube/uploader';
 import { YoutubeService } from 'services/platforms/youtube';
-
-interface IRecordingEntry {
+export interface IRecordingEntry {
   timestamp: string;
   filename: string;
 }
@@ -58,7 +57,7 @@ export class RecordingModeService extends PersistentStatefulService<IRecordingMo
   @Inject() private scenesService: ScenesService;
   @Inject() private settingsService: SettingsService;
   @Inject() private sourcesService: SourcesService;
-  @Inject() private videoService: VideoService;
+  @Inject() private videoSettingsService: VideoSettingsService;
   @Inject() private defaultHardwareService: DefaultHardwareService;
   @Inject() private notificationsService: NotificationsService;
   @Inject() private jsonrpcService: JsonrpcService;
@@ -143,7 +142,7 @@ export class RecordingModeService extends PersistentStatefulService<IRecordingMo
 
     const item = this.scenesService.views.activeScene.createAndAddSource(
       'Webcam',
-      byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'av_capture_input' }),
+      byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'macos_avcapture' }),
     );
 
     let sub = this.sourcesService.sourceUpdated.subscribe(s => {
@@ -155,7 +154,7 @@ export class RecordingModeService extends PersistentStatefulService<IRecordingMo
         const rect = new ScalableRectangle({ x: 0, y: 0, width: s.width, height: s.height });
 
         // Scale width to approximately 25% of canvas width
-        rect.scaleX = (this.videoService.baseWidth / rect.width) * 0.25;
+        rect.scaleX = (this.videoSettingsService.baseWidth / rect.width) * 0.25;
 
         // Scale height to match
         rect.scaleY = rect.scaleX;
@@ -163,7 +162,7 @@ export class RecordingModeService extends PersistentStatefulService<IRecordingMo
         // Move to just near bottom left corner
         rect.withAnchor(AnchorPoint.SouthWest, () => {
           rect.x = 20;
-          rect.y = this.videoService.baseHeight - 20;
+          rect.y = this.videoSettingsService.baseHeight - 20;
         });
 
         item.setTransform({
@@ -180,12 +179,26 @@ export class RecordingModeService extends PersistentStatefulService<IRecordingMo
     }, 10 * 1000);
   }
 
-  addRecordingEntry(filename: string) {
+  /**
+   * Add entry to recording history and show notification
+   * @param filename - name of file to show in recording history
+   * @param display - primarily used when recording in dual output mode to show the display type
+   */
+  addRecordingEntry(filename: string, display?: TDisplayType) {
     const timestamp = moment().format();
     this.ADD_RECORDING_ENTRY(timestamp, filename);
+    let message = $t('A new Recording has been completed. Click for more info');
+
+    if (display) {
+      message =
+        display === 'horizontal'
+          ? $t('horizontalRecordingMessage')
+          : $t('verticalRecordingMessage');
+    }
+
     this.notificationsService.actions.push({
       type: ENotificationType.SUCCESS,
-      message: $t('A new Recording has been completed. Click for more info'),
+      message,
       action: this.jsonrpcService.createRequest(
         Service.getResourceId(this),
         'showRecordingHistory',
@@ -193,12 +206,18 @@ export class RecordingModeService extends PersistentStatefulService<IRecordingMo
     });
   }
 
+  removeRecordingEntry(timestamp: string) {
+    this.REMOVE_RECORDING_ENTRY(timestamp);
+  }
+
   pruneRecordingEntries() {
     if (Object.keys(this.state.recordingHistory).length < 30) return;
     const oneMonthAgo = moment().subtract(30, 'days');
-    const prunedEntries = {};
+    const prunedEntries: Dictionary<IRecordingEntry> = {};
     Object.keys(this.state.recordingHistory).forEach(timestamp => {
       if (moment(timestamp).isAfter(oneMonthAgo)) {
+        // TODO: index
+        // @ts-ignore
         prunedEntries[timestamp] = this.state.recordingHistory[timestamp];
       }
     });
@@ -337,6 +356,11 @@ export class RecordingModeService extends PersistentStatefulService<IRecordingMo
   @mutation()
   private ADD_RECORDING_ENTRY(timestamp: string, filename: string) {
     Vue.set(this.state.recordingHistory, timestamp, { timestamp, filename });
+  }
+
+  @mutation()
+  private REMOVE_RECORDING_ENTRY(timestamp: string) {
+    Vue.delete(this.state.recordingHistory, timestamp);
   }
 
   @mutation()

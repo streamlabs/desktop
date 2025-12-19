@@ -73,7 +73,7 @@ export default () => {
   return (
     <ModalLayout fixedChild={<PreviewImage />} onOk={() => WindowsService.closeChildWindow()}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        {CustomizationService.views.designerMode && (
+        {CustomizationService.state.designerMode && (
           <FileInput
             onChange={selectFolder}
             value={folderPath}

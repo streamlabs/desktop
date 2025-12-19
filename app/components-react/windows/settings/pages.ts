@@ -1,17 +1,20 @@
 export * from './General';
 export * from './Multistreaming';
 export * from './Stream';
-// 'Output',
+export * from './Output';
 export * from './Audio';
 export * from './Video';
-// 'Hotkeys',
+export * from './Hotkeys';
+export * from './InstalledApps';
 export * from './Advanced';
-// 'SceneCollections',
-// 'Notifications',
+export * from './SceneCollections';
+export * from './Developer';
+export * from './Notifications';
 export * from './Appearance';
-export * from './RemoteControl';
-// 'VirtualWebcam',
+export * from './Mobile';
+export * from './VirtualWebcam';
 export * from './GameOverlay';
 export * from './Support';
 export * from './Experimental';
 export * from './Ultra';
+export * from './AISettings';

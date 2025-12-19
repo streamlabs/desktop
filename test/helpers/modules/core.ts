@@ -2,10 +2,10 @@
  * The core module provides methods for the most frequent actions
  */
 
-import { getContext } from '../webdriver';
+import { getContext } from '../webdriver/index';
 import { getApiClient } from '../api-client';
 import { WindowsService } from '../../../app/services/windows';
-import { ClickOptions, WaitForOptions } from 'webdriverio';
+import type { ClickOptions, WaitForOptions } from 'webdriverio';
 
 export type TSelectorOrEl = string | WebdriverIO.Element;
 
@@ -28,7 +28,7 @@ export async function select(selectorOrEl: TSelectorOrEl): Promise<WebdriverIO.E
 /**
  * A shortcut for client.$$()
  */
-export async function selectElements(selector: string): Promise<WebdriverIO.Element[]> {
+export async function selectElements(selector: string): Promise<WebdriverIO.ElementArray> {
   return getClient().$$(selector);
 }
 
@@ -50,6 +50,11 @@ export async function clickIfDisplayed(selectorOrEl: TSelectorOrEl) {
   }
 }
 
+export async function clickWhenDisplayed(selectorOrEl: TSelectorOrEl, options?: WaitForOptions) {
+  await waitForDisplayed(selectorOrEl, options);
+  await click(selectorOrEl);
+}
+
 export async function clickText(text: string) {
   await (await select(`*=${text}`)).click();
 }
@@ -66,6 +71,19 @@ export async function clickTab(tabText: string) {
 export async function clickCheckbox(dataName: string) {
   const $checkbox = await select(`input[data-name="${dataName}"]`);
   await $checkbox.click();
+}
+
+export async function clickToggle(dataName: string) {
+  const $toggle = await select(`button[data-name="${dataName}"]`);
+  await $toggle.click();
+}
+
+export async function selectAsyncAlert(title: string) {
+  await (await getClient().$('span.ant-modal-confirm-title')).waitForExist();
+  const alert = await select('span.ant-modal-confirm-title');
+  if ((await alert.getText()) === title) {
+    return alert;
+  }
 }
 
 // OTHER SHORTCUTS
@@ -104,6 +122,23 @@ export function waitForText(text: string) {
 
 export async function waitForEnabled(selectorOrEl: TSelectorOrEl, options?: WaitForOptions) {
   await (await select(selectorOrEl)).waitForEnabled(options);
+}
+
+/**
+ * Get number of elements displayed
+ * @remark This is needed because arrays of WebdriverIO.Element cannot use array methods and properties
+ */
+export async function getNumElements(selector: string): Promise<number> {
+  const elements = (await selectElements(selector)).values();
+  let numElements = 0;
+
+  if (elements) {
+    for await (const element of elements) {
+      numElements++;
+    }
+  }
+
+  return numElements;
 }
 
 // WINDOW FOCUS
@@ -179,9 +214,11 @@ export async function useChildWindow<TCallbackResult>(cb: () => Promise<TCallbac
 }
 
 export async function waitForLoader() {
-  await (await select('.main-loading')).waitForExist({
+  await (await select('[data-name="main-loading"]')).waitForExist({
     interval: 100, // we need a smaller interval to run tests faster
-    timeout: 20000,
+    timeout: 30000,
     reverse: true,
   });
+  // Wait for titlebar to show up since there is some lag in loading react components into vue
+  await (await select('[data-name="title-bar"]')).waitForExist({ timeout: 10000 });
 }

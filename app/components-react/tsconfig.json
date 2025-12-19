@@ -8,5 +8,5 @@
     ]
   },
   "include": ["./**/*", "../index.d.ts"],
-  "exclude": []
+  "exclude": ["**/node_modules/@realm/fetch/dist/types/types.d.ts"]
 }

@@ -1,13 +1,12 @@
 import React, { ReactNode, CSSProperties } from 'react';
-import { useVuex } from '../hooks';
 import { Services } from '../service-provider';
 import { getOS, OS } from '../../util/operating-systems';
 import cx from 'classnames';
 import { $t } from '../../services/i18n';
-import css from './ModalLayout.m.less';
 import { Button } from 'antd';
 import { ModalProps } from 'antd/lib/modal';
 import Scrollable from './Scrollable';
+import { useRealmObject } from 'components-react/hooks/realm';
 
 // use props of Modal from the antd lib
 type TProps = {
@@ -17,6 +16,7 @@ type TProps = {
   scrollable?: boolean;
   wrapperStyle?: React.CSSProperties;
   className?: string;
+  bodyClassName?: string;
 } & Pick<ModalProps, 'footer' | 'onOk' | 'okText' | 'bodyStyle' | 'confirmLoading' | 'onCancel'>;
 
 // calculate OS dependent styles
@@ -48,8 +48,7 @@ export function ModalLayout(p: TProps) {
   // inject services
   const { WindowsService, CustomizationService } = Services;
 
-  // define a vuex state
-  const v = useVuex(() => ({ currentTheme: CustomizationService.currentTheme }), false);
+  const currentTheme = useRealmObject(CustomizationService.state).theme;
 
   // define a close method for the modal
   function close() {
@@ -79,7 +78,7 @@ export function ModalLayout(p: TProps) {
 
   return (
     <div
-      className={cx('ant-modal-content', v.currentTheme, p.className)}
+      className={cx('ant-modal-content', currentTheme, p.className)}
       style={{ ...wrapperStyles, ...p.wrapperStyle }}
     >
       {p.fixedChild && <div style={fixedStyles}>{p.fixedChild}</div>}
@@ -87,11 +86,11 @@ export function ModalLayout(p: TProps) {
       {p.scrollable ? (
         <div style={bodyStyles}>
           <Scrollable isResizable={false} style={{ height: '100%' }}>
-            <div className="ant-modal-body">{p.children}</div>
+            <div className={cx('ant-modal-body', p.bodyClassName)}>{p.children}</div>
           </Scrollable>
         </div>
       ) : (
-        <div className="ant-modal-body" style={bodyStyles}>
+        <div className={cx('ant-modal-body', p.bodyClassName)} style={bodyStyles}>
           {p.children}
         </div>
       )}

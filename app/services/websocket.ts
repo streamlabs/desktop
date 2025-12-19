@@ -8,6 +8,7 @@ import { AppService } from 'services/app';
 import { IRecentEvent, ISafeModeServerSettings } from 'services/recent-events';
 import { importSocketIOClient } from '../util/slow-imports';
 import { SceneCollectionsService } from 'services/scene-collections';
+import { TPlatform } from './platforms';
 
 export type TSocketEvent =
   | IStreamlabelsSocketEvent
@@ -22,7 +23,15 @@ export type TSocketEvent =
   | IPrimeSubEvent
   | ISafeModeEnabledSocketEvent
   | ISafeModeDisabledSocketEvent
-  | ISLIDMerged;
+  | ISLIDMerged
+  | IUserAccountMerged
+  | IUserAccountUnlinked
+  | IUserAccountMergeError
+  | IAccountPermissionsRequired
+  | IStreamShiftRequested
+  | IStreamShiftActionCompleted
+  | IVisionSocketEvent
+  | IUserStateSocketEvent;
 
 interface IStreamlabelsSocketEvent {
   type: 'streamlabels';
@@ -52,7 +61,10 @@ export interface IEventSocketEvent {
     | 'tiltifydonation'
     | 'donordrivedonation'
     | 'justgivingdonation'
-    | 'treat';
+    | 'treat'
+    | 'account_permissions_required'
+    | 'visionEvent'
+    | 'userStateUpdated';
   for: string;
   message: IRecentEvent[];
 }
@@ -119,6 +131,61 @@ interface ISafeModeDisabledSocketEvent {
 interface ISLIDMerged {
   type: 'slid.force_logout';
   for: string;
+}
+
+interface IUserAccountMerged {
+  type: 'account_merged';
+  for: string;
+}
+interface IUserAccountUnlinked {
+  type: 'account_unlinked';
+  for: string;
+}
+interface IUserAccountMergeError {
+  type: 'account_merge_error';
+  for: string;
+  platform: TPlatform;
+  message: string;
+  code: number;
+}
+
+interface IAccountPermissionsRequired {
+  type: 'account_permissions_required';
+  for: string;
+  message: {
+    platform: string;
+    url: any;
+  }[];
+}
+
+export interface IStreamShiftRequested {
+  type: 'streamSwitchRequest';
+  for: string;
+  data: {
+    identifier: string;
+  };
+  event_id: string;
+}
+
+export interface IStreamShiftActionCompleted {
+  type: 'switchActionComplete';
+  for: string;
+  data: {
+    identifier: string;
+  };
+  event_id: string;
+}
+interface IVisionSocketEvent {
+  type: 'visionEvent';
+  message: {};
+}
+
+interface IUserStateSocketEvent {
+  type: 'userStateUpdated';
+  message: {
+    updated_states: any;
+    updated_states_tree: any;
+  };
 }
 
 export class WebsocketService extends Service {

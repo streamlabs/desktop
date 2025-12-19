@@ -1,52 +1,234 @@
-@import "../../../styles/index.less";
+@import '../../../styles/index.less';
+@import '../../../styles/mixins.less';
 
-.platform-logo-twitch { font-size: 40px; }
-.platform-logo-youtube { font-size: 35px; margin-top: 5px }
-.platform-logo-facebook { font-size: 40px; }
-.platform-logo-tiktok { font-size: 40px; margin-left: 5px }
+.destination-logo {
+  font-size: 34px;
+}
+.platform-logo-twitch {
+  font-size: 34px;
+}
+.platform-logo-youtube {
+  font-size: 31px;
+  margin-top: 9px;
+  width: 34px;
+  height: 34px;
+}
+.platform-logo-facebook {
+  font-size: 34px;
+}
+.platform-logo-tiktok {
+  font-size: 34px;
+  margin-left: 5px;
+  width: 34px;
+  height: 34px;
+}
+.platform-logo-instagram {
+  font-size: 34px;
+  width: 34px;
+  height: 34px;
+}
+.platform-logo-twitter {
+  width: 32px;
+  height: 32px;
+}
+.platform-logo-kick {
+  width: 34px;
+  height: 34px;
+}
+.platform-logo-trovo {
+  width: 34px;
+  height: 34px;
+}
+
+.platform-logo {
+  align-self: center;
+  display: flex;
+  margin-right: 10px;
+  min-width: 36px;
+}
 
 .platform-switcher {
   .radius();
-  .margin-bottom();
-  .padding();
 
   display: flex;
-  height: 60px;
-  background: var(--dropdown-bg);
+  height: 54px;
+  background: var(--card) !important;
   transition: transform 0.05s;
   cursor: pointer;
+  margin-bottom: 15px;
+  padding: 8px 10px;
 
   .col-input {
-    padding-top: 5px;
+    padding-top: 3px;
     padding-right: 16px;
     width: 52px;
   }
+
   .col-primary {
     color: var(--teal);
     text-align: center;
   }
-  .col-logo {}
+
   .col-account {
     white-space: nowrap;
-    max-width: 130px;
     text-overflow: ellipsis;
     overflow: hidden;
+    align-self: center;
+    flex: 1;
   }
 
   .platform-name {
     color: var(--title);
   }
+}
 
-  &:hover .col-account {
-    color: var(--title);
-  }
+.switch-wrapper {
+  padding: 0px 15px;
+}
+
+.platform-switcher:last-child {
+  margin-bottom: 0px;
 }
 
 .platform-disabled {
-  opacity: .7;
-  background: rgba(#2b383f, 0.3);
+  background: var(--card-disabled) !important;
 }
 
-.destination-logo {
-  font-size: 39px;
+.platform-enabled {
+  transition: 0.3 ease-in-out;
+  background: var(--card-active) !important;
+}
+
+.platform-name {
+  font-size: 14px;
+}
+
+.platform-handle {
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.display-selector-wrapper {
+  align-self: center;
+}
+
+.dual-output-display-selector {
+  margin-bottom: 0px !important;
+  display: flex;
+  align-self: flex-end;
+  flex: 1;
+
+  :global(.ant-form-item-control-input-content) {
+    min-width: 100px;
+    text-align: right;
+  }
+
+  :global(.ant-form-item-label) {
+    display: none;
+  }
+
+  :global(.ant-radio-wrapper:last-child::after) {
+    display: none;
+  }
+}
+
+.action-modal-logo {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+  margin-right: 8px;
+  vertical-align: super;
+  color: var(--title);
+}
+
+.connect-button {
+  align-self: center;
+}
+
+.info-alert {
+  color: #72d5ff;
+  width: 600px;
+  border-radius: 4px;
+  margin: 0 auto;
+  text-align: left !important;
+
+  :global(.ant-form-item-control-input-content) {
+    min-width: 100px;
+    text-align: right;
+  }
+
+  :global(.ant-message-info) {
+    display: flex;
+    align-items: center;
+  }
+
+  :global(.ant-message-info .anticon) {
+    color: #72d5ff;
+    margin-right: 10px;
+  }
+}
+
+.alert-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.switcher-tooltip {
+  :global(.ant-tooltip-arrow-content) {
+    width: 12px;
+    height: 12px;
+    z-index: 2;
+  }
+
+  &:global(.ant-tooltip-placement-right .ant-tooltip-arrow) {
+    left: -2px !important;
+  }
+
+  :global(div.ant-tooltip-inner) {
+    box-shadow: 0 2px 16px -4px rgba(211, 211, 211, 0.274), 0 2px 15px 0 rgba(211, 211, 211, 0.32),
+      0 2px 28px 6px rgba(211, 211, 211, 0.2) !important;
+  }
+  :global(.ant-radio-wrapper:last-child::after) {
+    display: none;
+  }
+}
+
+.action-modal-logo {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+  margin-right: 8px;
+  vertical-align: super;
+  color: var(--title);
+}
+
+.connect-button {
+  align-self: center;
+}
+
+.info-alert {
+  color: #72d5ff;
+  width: 600px;
+  border-radius: 4px;
+  margin: 0 auto;
+  text-align: left !important;
+
+  :global(.ant-message-info) {
+    display: flex;
+    align-items: center;
+  }
+
+  :global(.ant-message-info .anticon) {
+    color: #72d5ff;
+    margin-right: 10px;
+  }
+}
+
+.alert-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 }

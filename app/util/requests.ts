@@ -143,7 +143,7 @@ export function jfetch<TResponse = unknown>(
       if (isJson || options.forceJson) {
         return response.json() as Promise<TResponse>;
       } else {
-        console.warn('jfetch: Got non-JSON response');
+        console.warn(`jfetch: Got non-JSON response ${response.status} from ${response.url}`);
         return (response.text() as unknown) as Promise<TResponse>;
       }
     } else if (isJson) {

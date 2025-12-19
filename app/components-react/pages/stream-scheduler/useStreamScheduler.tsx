@@ -163,7 +163,9 @@ export class StreamSchedulerController {
   private async loadEvents() {
     this.reset();
     // load fb and yt events simultaneously
+    // @ts-ignore typescript upgrade
     const [fbEvents, ytEvents] = await Promise.all([this.fetchFbEvents(), this.fetchYTBEvents()]);
+    // @ts-ignore typescript upgrade
     this.setEvents([...fbEvents, ...ytEvents]);
   }
 
@@ -221,7 +223,7 @@ export class StreamSchedulerController {
   }
 
   get primaryPlatform() {
-    return getDefined(Services.UserService.platform).type;
+    return getDefined(Services.UserService.views.platform).type;
   }
 
   getPlatformDisplayName = this.streamingView.getPlatformDisplayName;
@@ -331,6 +333,11 @@ export class StreamSchedulerController {
         return;
       }
       this.setEvent(video.id, convertFBLiveVideoToEvent({ ...video, ...fbOptions }));
+      Services.UsageStatisticsService.actions.recordAnalyticsEvent('ScheduleStream', {
+        type: 'EditStream',
+        platform: selectedPlatform,
+        streamId: video.id,
+      });
     }
     this.closeModal();
   }
@@ -348,7 +355,17 @@ export class StreamSchedulerController {
     try {
       video = await service.scheduleStream(time, streamSettings);
     } catch (e: unknown) {
-      this.handleError(e as IStreamError);
+      const message = (e as any)?.error
+        ? (e as any)?.error.replace(/^Error: /, '')
+        : $t('Connection Failed');
+
+      const error = {
+        ...(e as IStreamError),
+        message,
+        status: (e as IStreamError)?.status ?? 423,
+      };
+
+      this.handleError(error);
       return;
     }
     let event: IStreamEvent;
@@ -365,6 +382,11 @@ export class StreamSchedulerController {
       } as IFacebookLiveVideoExtended);
     }
     this.addEvent(event);
+    Services.UsageStatisticsService.actions.recordAnalyticsEvent('ScheduleStream', {
+      type: 'NewStream',
+      platform: selectedPlatform,
+      streamId: event.id,
+    });
     this.closeModal();
   }
 
@@ -372,11 +394,18 @@ export class StreamSchedulerController {
    * Handles errors from the platform's API
    */
   private handleError(err: IStreamError) {
+    console.error('Stream Scheduler Error: ', err);
+
     if (this.store.selectedPlatform === 'facebook') {
       message.error({
         content: $t(
           'Please schedule no further than 7 days in advance and no sooner than 10 minutes in advance.',
         ),
+        className: styles.schedulerError,
+      });
+    } else if (err?.status === 423) {
+      message.error({
+        content: `${'Authentication Error'}: ${err.message}`,
         className: styles.schedulerError,
       });
     } else {
@@ -385,6 +414,7 @@ export class StreamSchedulerController {
         className: styles.schedulerError,
       });
     }
+
     this.hideLoader();
   }
 
@@ -447,6 +477,7 @@ export class StreamSchedulerController {
 
   updatePlatform<T extends TPlatform>(platform: T, patch: ISchedulerPlatformSettings[T]) {
     this.store.setState(s => {
+      //@ts-ignore typescript upgrade
       Object.assign(s.platformSettings[platform], patch);
     });
   }

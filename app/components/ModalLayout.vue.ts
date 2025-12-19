@@ -72,7 +72,13 @@ export default class ModalLayout extends TsxComponent<{
   @Prop({ default: true })
   hasTitleBar: boolean;
 
+  unbind: () => void;
+
   created() {
+    this.unbind = this.customizationService.state.bindProps(this, {
+      theme: 'theme',
+    });
+
     const contentStyle = {
       padding: '16px',
     };
@@ -87,9 +93,15 @@ export default class ModalLayout extends TsxComponent<{
     this.fixedStyle = fixedStyle;
   }
 
+  destroyed() {
+    this.unbind();
+  }
+
+  theme = 'night-theme';
+
   get wrapperClassNames() {
     return {
-      [this.customizationService.currentTheme]: true,
+      [this.theme]: true,
       'has-titlebar': this.hasTitleBar,
       'modal-layout-mac': getOS() === OS.Mac,
     };

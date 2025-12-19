@@ -30,6 +30,8 @@ export function RunInLoadingMode(options: IRunInLoadingModeOptions = {}): any {
 export function SyncWithValue() {
   return createDecorator((options, key) => {
     // create watchers and props.value if don't exist
+    // TODO: index
+    // @ts-ignore
     (options.props || (options.props = {}))['value'] = null;
     if (!options.watch) options.watch = {};
 
@@ -42,12 +44,20 @@ export function SyncWithValue() {
       immediate: true, // immediate call will setup the initial local value
       handler(newVal) {
         // update the local value
+        // TODO: index
+        // @ts-ignore
         this[key] = cloneDeep(newVal);
         // changing the prop should not trigger the `input` event
         // only changes of local value inside component should trigger this event
+        // TODO: index
+        // @ts-ignore
         if (!this['_isNotInitialCall']) {
+          // TODO: index
+          // @ts-ignore
           this['_isNotInitialCall'] = true;
         } else {
+          // TODO: index
+          // @ts-ignore
           this['_shouldSkipNextWatcher'] = true;
         }
       },
@@ -57,9 +67,15 @@ export function SyncWithValue() {
     options.watch[key] = {
       deep: true,
       handler(newVal) {
+        // TODO: index
+        // @ts-ignore
         if (!this['_shouldSkipNextWatcher']) {
+          // TODO: index
+          // @ts-ignore
           this['$emit']('input', cloneDeep(newVal));
         }
+        // TODO: index
+        // @ts-ignore
         this['_shouldSkipNextWatcher'] = false;
       },
     };

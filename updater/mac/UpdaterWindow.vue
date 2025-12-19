@@ -14,21 +14,18 @@
 
     <div class="UpdaterWindow-issues" v-if="installing">
       This may take a few minutes. If you are having issues updating, please
-      <span class="UpdaterWindow-link" @click="download">
-        download a fresh installer.
-      </span>
+      <span class="UpdaterWindow-link" @click="download"> download a fresh installer. </span>
     </div>
     <div class="UpdaterWindow-issues" v-if="error">
       There was an error updating. Please
-      <span class="UpdaterWindow-link" @click="download">
-        download a fresh installer.
-      </span>
+      <span class="UpdaterWindow-link" @click="download"> download a fresh installer. </span>
     </div>
   </div>
 </template>
 
 <script>
-const { remote, ipcRenderer } = window.require('electron');
+const { ipcRenderer } = window.require('electron');
+const remote = window.require('@electron/remote/main');
 export default {
   data() {
     return {

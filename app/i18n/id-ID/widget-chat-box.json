@@ -26,5 +26,7 @@
   "Disable Message Animations": "Nonaktifkan Animasi Pesan",
   "Hide Characters": "Sembunyikan Karakter",
   "Hide Common Chat Bots": "Sembunyikan Chat Bots Umum",
-  "Hide commands starting with `!`": "Sembunyikan perintah yang dimulai dengan ‘!’"
+  "Hide commands starting with `!`": "Sembunyikan perintah yang dimulai dengan ‘!’",
+  "Chat Notifications": "Pemberitahuan Obrolan",
+  "Trigger a sound to notify you when there is new chat activity": "Memicu suara untuk memberi tahu Anda ketika ada aktivitas obrolan baru"
 }

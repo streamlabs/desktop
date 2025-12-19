@@ -1,26 +1,37 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { $t } from '../../../services/i18n';
 import { ICustomStreamDestination } from '../../../services/settings/streaming';
 import { EStreamingState } from '../../../services/streaming';
-import { getPlatformService, TPlatform } from '../../../services/platforms';
+import {
+  EPlatformCallResult,
+  externalAuthPlatforms,
+  getPlatformService,
+  TPlatform,
+} from '../../../services/platforms';
 import cloneDeep from 'lodash/cloneDeep';
 import namingHelpers from '../../../util/NamingHelpers';
 import { Services } from '../../service-provider';
 import { ObsGenericSettingsForm } from './ObsSettings';
-import css from './Stream.m.less';
+import styles from './Stream.m.less';
 import cx from 'classnames';
 import { Button, message, Tooltip } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import PlatformLogo from '../../shared/PlatformLogo';
-import Form, { useForm } from '../../shared/inputs/Form';
-import { TextInput } from '../../shared/inputs';
-import { ButtonGroup } from '../../shared/ButtonGroup';
-import { FormInstance } from 'antd/lib/form';
-import { injectFormBinding, injectState, mutation, useModule } from 'slap';
+import { injectState, mutation, useModule } from 'slap';
 import UltraIcon from 'components-react/shared/UltraIcon';
 import ButtonHighlighted from 'components-react/shared/ButtonHighlighted';
 import { useVuex } from 'components-react/hooks';
 import Translate from 'components-react/shared/Translate';
 import * as remote from '@electron/remote';
+import { InstagramEditStreamInfo } from '../go-live/platforms/InstagramEditStreamInfo';
+import { IInstagramStartStreamOptions } from 'services/platforms/instagram';
+import { metadata } from 'components-react/shared/inputs/metadata';
+import FormFactory, { TInputValue } from 'components-react/shared/inputs/FormFactory';
+import { alertAsync } from '../../modals';
+import { EAuthProcessState } from '../../../services/user';
+import { useSubscription } from 'components-react/hooks/useSubscription';
+
+const PlusIcon = PlusOutlined as Function;
 
 function censorWord(str: string) {
   if (str.length < 3) return str;
@@ -36,7 +47,7 @@ function censorEmail(str: string) {
  * A Redux module for components in the StreamSetting window
  */
 class StreamSettingsModule {
-  constructor(private form: FormInstance) {}
+  constructor() {}
 
   // DEFINE A STATE
   state = injectState({
@@ -54,36 +65,16 @@ class StreamSettingsModule {
     } as ICustomStreamDestination,
   });
 
-  bind = injectFormBinding(
-    () => this.state.customDestForm,
-    patch => this.updateCustomDestForm(patch),
-  );
-
   // INJECT SERVICES
 
   private get streamSettingsService() {
     return Services.StreamSettingsService;
-  }
-  private get userService() {
-    return Services.UserService;
-  }
-  private get navigationService() {
-    return Services.NavigationService;
-  }
-  private get windowsService() {
-    return Services.WindowsService;
   }
   private get streamingService() {
     return Services.StreamingService;
   }
   private get magicLinkService() {
     return Services.MagicLinkService;
-  }
-  private get customizationService() {
-    return Services.CustomizationService;
-  }
-  private get dualOutputService() {
-    return Services.DualOutputService;
   }
 
   // DEFINE MUTATIONS
@@ -139,75 +130,23 @@ class StreamSettingsModule {
 
   // DEFINE ACTIONS AND GETTERS
 
-  get platforms() {
-    return this.streamingView.allPlatforms.filter(platform => {
-      // Only show tiktok if it's already linked
-      if (platform === 'tiktok') {
-        return !!this.userService.views.auth?.platforms?.tiktok;
-      }
-
-      return true;
-    });
-  }
-
-  get isPrime() {
-    return this.userService.isPrime;
-  }
-
-  disableProtectedMode() {
-    this.streamSettingsService.actions.setSettings({ protectedModeEnabled: false });
-  }
-
-  enableProtectedMode() {
-    this.streamSettingsService.actions.setSettings({
-      protectedModeEnabled: true,
-      key: '',
-      streamType: 'rtmp_common',
-    });
-  }
-
-  get protectedModeEnabled(): boolean {
-    return this.streamSettingsService.protectedModeEnabled;
+  get formValues() {
+    return {
+      url: this.state.customDestForm.url,
+      streamKey: this.state.customDestForm.streamKey || '',
+      name: this.state.customDestForm.name,
+    };
   }
 
   get streamingView() {
     return this.streamingService.views;
   }
 
-  get needToShowWarning() {
-    return this.userService.isLoggedIn && !this.protectedModeEnabled;
-  }
-
-  get canEditSettings() {
-    return this.streamingService.state.streamingStatus === EStreamingState.Offline;
-  }
-
   get customDestinations() {
     return this.streamingView.savedSettings.customDestinations;
   }
 
-  get isDarkTheme() {
-    return this.customizationService.isDarkTheme;
-  }
-
-  platformMerge(platform: TPlatform) {
-    this.navigationService.navigate('PlatformMerge', { platform });
-    this.windowsService.actions.closeChildWindow();
-  }
-
-  platformUnlink(platform: TPlatform) {
-    getPlatformService(platform).unlink();
-  }
-
   async saveCustomDest() {
-    // validate form
-    try {
-      await this.form.validateFields();
-    } catch (e: unknown) {
-      message.error($t('Invalid settings. Please check the form'));
-      return;
-    }
-
     if (!this.state.customDestForm.url.includes('?')) {
       // if the url contains parameters, don't add a trailing /
       this.fixUrl();
@@ -245,36 +184,110 @@ function useStreamSettings() {
  * A root component for StreamSettings
  */
 export function StreamSettings() {
-  const form = useForm();
-  const {
-    platforms,
-    protectedModeEnabled,
-    canEditSettings,
-    disableProtectedMode,
-    needToShowWarning,
-    enableProtectedMode,
-  } = useModule(StreamSettingsModule, [form]);
+  const { StreamingService, StreamSettingsService, UserService, DualOutputService } = Services;
+
+  const { canEditSettings, protectedModeEnabled, needToShowWarning, platforms, isPrime } = useVuex(
+    () => ({
+      canEditSettings: Services.StreamingService.state.streamingStatus === EStreamingState.Offline,
+      protectedModeEnabled: Services.StreamSettingsService.protectedModeEnabled,
+      needToShowWarning: UserService.isLoggedIn && !StreamSettingsService.protectedModeEnabled,
+      platforms: StreamingService.views.allPlatforms,
+      isPrime: UserService.views.isPrime,
+    }),
+  );
+
+  // Show a message when the user has unlinked/linked their account on web
+  useSubscription(
+    UserService.refreshedLinkedAccounts,
+    (res: { success: boolean; message: string }) => {
+      const doShowMessage = () => {
+        message.config({
+          duration: 6,
+          maxCount: 1,
+        });
+
+        if (res.success) {
+          message.success(res.message);
+        } else {
+          message.error(res.message);
+        }
+      };
+
+      /*
+       * Since the settings window pops out anyways (presumably because of
+       * using `message` make sure it is at least on the right page, as opposed
+       * to in an infinite loading blank window state.
+       */
+      doShowMessage();
+    },
+  );
+
+  function disableProtectedMode() {
+    StreamSettingsService.actions.setSettings({ protectedModeEnabled: false });
+    if (DualOutputService.views.dualOutputMode) {
+      DualOutputService.actions.setDualOutputModeIfPossible(false, true);
+    }
+  }
+
+  function enableProtectedMode() {
+    StreamSettingsService.actions.setSettings({
+      protectedModeEnabled: true,
+      key: '',
+      streamType: 'rtmp_common',
+    });
+  }
+
+  async function openPlatformSettings() {
+    try {
+      const link = await Services.MagicLinkService.getDashboardMagicLink(
+        'settings/account-settings/platforms',
+      );
+      remote.shell.openExternal(link);
+    } catch (e: unknown) {
+      console.error('Error generating platform settings magic link', e);
+    }
+  }
 
   return (
-    <div>
+    <div className={styles.section}>
       {/* account info */}
       {protectedModeEnabled && (
-        <div>
+        <div className={styles.protectedMode}>
           <h2>{$t('Streamlabs ID')}</h2>
           <SLIDBlock />
-          <h2>{$t('Stream Destinations')}</h2>
+          <div className={styles.streamHeaderWrapper}>
+            <h2 style={{ flex: 1 }}>{$t('Stream Destinations')}</h2>
+            <div
+              className={styles.addMore}
+              onClick={openPlatformSettings}
+              style={{ color: 'var(--primary)', fontSize: '15px' }}
+            >
+              <PlusIcon style={{ paddingRight: '5px', color: 'var(--primary)' }} />
+              {$t('Add More')}
+            </div>
+          </div>
+          {!isPrime && (
+            <div className={styles.ultraText}>
+              <UltraIcon type="badge" style={{ marginRight: '5px' }} />
+              <div onClick={() => Services.MagicLinkService.linkToPrime('slobs-stream-settings')}>
+                {$t('Upgrade to Ultra to stream to multiple platforms simultaneously!')}
+              </div>
+            </div>
+          )}
           {platforms.map(platform => (
             <Platform key={platform} platform={platform} />
           ))}
 
-          <CustomDestinationList />
-
           {canEditSettings && (
-            <p>
-              <br />
-              <a onClick={disableProtectedMode}>{$t('Stream to custom ingest')}</a>
-            </p>
+            <a
+              className={styles.customDest}
+              onClick={disableProtectedMode}
+              style={{ marginBottom: '10px' }}
+            >
+              {$t('Stream to custom ingest')}
+            </a>
           )}
+          <CustomDestinationList />
         </div>
       )}
 
@@ -302,15 +315,13 @@ export function StreamSettings() {
       )}
 
       {/* OBS settings */}
-      {!protectedModeEnabled && canEditSettings && <ObsGenericSettingsForm />}
+      {!protectedModeEnabled && canEditSettings && <ObsGenericSettingsForm page="Stream" />}
     </div>
   );
 }
 
-StreamSettings.page = 'Stream';
-
 function SLIDBlock() {
-  const { UserService } = Services;
+  const { UserService, SettingsService } = Services;
   const { hasSLID, username } = useVuex(() => ({
     hasSLID: UserService.views.hasSLID,
     username: UserService.views.auth?.slid?.username,
@@ -324,46 +335,42 @@ function SLIDBlock() {
     remote.shell.openExternal('https://id.streamlabs.com/security/tfa?companyId=streamlabs');
   }
 
+  async function mergeSLID() {
+    const resp = await UserService.actions.return.startSLMerge();
+    if (resp !== EPlatformCallResult.Success) return;
+    SettingsService.actions.showSettings('Stream');
+  }
+
   return (
-    <div className="section">
-      <div className="flex">
-        <div className="margin-right--20" style={{ width: '50px' }}>
-          <PlatformLogo className={css.platformLogo} size="medium" platform="streamlabs" />
-        </div>
-        <div>
-          {hasSLID ? (
-            <div>
-              Streamlabs <br />
-              {username && <b>{censorEmail(username)}</b>}
-            </div>
-          ) : (
-            <Translate message={$t('slidConnectMessage')} />
-          )}
-        </div>
-        {!hasSLID && (
-          <Button type="primary" onClick={() => UserService.actions.startSLMerge()}>
+    <div className={cx('section flex', styles.targetCard, styles.section)}>
+      <PlatformLogo className={styles.targetLogo} size="medium" platform="streamlabs" />
+
+      <div className={styles.targetData}>
+        {hasSLID && username ? (
+          <b>{censorEmail(username)}</b>
+        ) : (
+          <Translate message={$t('slidConnectMessage')} />
+        )}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        {hasSLID ? (
+          <>
+            <a
+              style={{ fontWeight: 400, marginRight: 10, textDecoration: 'underline' }}
+              onClick={openPasswordLink}
+            >
+              {$t('Update Password')}
+            </a>
+            <a style={{ fontWeight: 400, textDecoration: 'underline' }} onClick={openTwoFactorLink}>
+              {$t('Update Two-factor Auth')}
+            </a>
+          </>
+        ) : (
+          <Button type="primary" onClick={mergeSLID}>
             {$t('Setup')}
           </Button>
         )}
       </div>
-      {hasSLID && (
-        <div
-          style={{ margin: '10px -16px', height: 2, backgroundColor: 'var(--background)' }}
-        ></div>
-      )}
-      {hasSLID && (
-        <div style={{ display: 'flex', justifyContent: 'right' }}>
-          <a
-            style={{ fontWeight: 400, marginRight: 10, textDecoration: 'underline' }}
-            onClick={openPasswordLink}
-          >
-            {$t('Update Password')}
-          </a>
-          <a style={{ fontWeight: 400, textDecoration: 'underline' }} onClick={openTwoFactorLink}>
-            {$t('Update Two-factor Auth')}
-          </a>
-        </div>
-      )}
     </div>
   );
 }
@@ -373,58 +380,170 @@ function SLIDBlock() {
  */
 function Platform(p: { platform: TPlatform }) {
   const platform = p.platform;
-  const { UserService, StreamingService } = Services;
-  const { canEditSettings, platformMerge, platformUnlink } = useStreamSettings();
+  const { UserService, StreamingService, InstagramService } = Services;
+
+  const { isLoading, authInProgress, instagramSettings, canEditSettings } = useVuex(() => ({
+    isLoading: UserService.state.authProcessState === EAuthProcessState.Loading,
+    authInProgress: UserService.state.authProcessState === EAuthProcessState.InProgress,
+    instagramSettings: InstagramService.state.settings,
+    canEditSettings: StreamingService.state.streamingStatus === EStreamingState.Offline,
+  }));
+
   const isMerged = StreamingService.views.isPlatformLinked(platform);
-  const username = UserService.state.auth!.platforms[platform]?.username;
+  const platformObj = UserService.state.auth!.platforms[platform];
+  const username = platformObj?.username;
   const platformName = useMemo(() => getPlatformService(platform).displayName, []);
   const isPrimary = StreamingService.views.isPrimaryPlatform(platform);
   const shouldShowPrimaryBtn = isPrimary;
   const shouldShowConnectBtn = !isMerged && canEditSettings;
   const shouldShowUnlinkBtn = !isPrimary && isMerged && canEditSettings;
 
+  function platformUnlink(platform: TPlatform) {
+    getPlatformService(platform).unlink();
+  }
+
+  async function platformMergeInline(platform: TPlatform) {
+    const mode = externalAuthPlatforms.includes(platform) ? 'external' : 'internal';
+
+    await Services.UserService.actions.return.startAuth(platform, mode, true).then(res => {
+      Services.WindowsService.actions.setWindowOnTop('child');
+      if (res === EPlatformCallResult.Error) {
+        alertAsync(
+          $t(
+            'This account is already linked to another Streamlabs Account. Please use a different account.',
+          ),
+        );
+        return;
+      }
+
+      Services.StreamSettingsService.actions.setSettings({ protectedModeEnabled: true });
+    });
+  }
+
+  /*
+   * TODO: don't really see much value in having Instagram text boxes here, since
+   * user needs to re-enter stream key every time they go live anyways, makes code brittle,
+   * but since we're adding it, might as well make other small changes to make it look better
+   */
+  const isInstagram = platform === 'instagram';
+  const [showInstagramFields, setShowInstagramFields] = useState(isInstagram && isMerged);
+  const shouldShowUsername = !isInstagram;
+
+  const usernameOrBlank = shouldShowUsername ? (
+    <>
+      <br />
+      {username}
+      <br />
+    </>
+  ) : (
+    ''
+  );
+
+  const instagramConnect = async () => {
+    const success = await UserService.actions.return.startAuth(platform, 'internal', true);
+    if (!success) return;
+    setShowInstagramFields(true);
+  };
+
+  const instagramUnlink = () => {
+    // 1. reset stream key and url after unlinking if the user chooses to re-link immediately
+    updateInstagramSettings({ title: '', streamKey: '', streamUrl: '' });
+    // 2. hide extra fields
+    setShowInstagramFields(false);
+    // 3. unlink platform
+    platformUnlink(platform);
+  };
+
+  const ConnectButton = () => (
+    <span>
+      <Button
+        onClick={isInstagram ? instagramConnect : () => platformMergeInline(platform)}
+        className={cx({ [styles.tiktokConnectBtn]: platform === 'tiktok' })}
+        disabled={isLoading || authInProgress}
+        style={{
+          backgroundColor: `var(--${platform})`,
+          borderColor: 'transparent',
+          color: ['trovo', 'instagram', 'kick'].includes(platform) ? 'black' : 'inherit',
+        }}
+      >
+        {$t('Connect')}
+      </Button>
+    </span>
+  );
+
+  const updateInstagramSettings = (newSettings: IInstagramStartStreamOptions) => {
+    InstagramService.actions.updateSettings(newSettings);
+  };
+
+  const ExtraFieldsSection = () => {
+    if (isInstagram && showInstagramFields) {
+      return (
+        <div className={cx(styles.extraFieldsSection)}>
+          <InstagramEditStreamInfo
+            onChange={updateInstagramSettings}
+            value={instagramSettings}
+            layoutMode="singlePlatform"
+            isStreamSettingsWindow
+          />
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <div className="section flex" style={{ marginBottom: 16 }}>
-      <div className="margin-right--20" style={{ width: '50px' }}>
-        <PlatformLogo className={css.platformLogo} size="medium" platform={platform} />
-      </div>
-      <div>
-        {platformName} <br />
-        {isMerged ? username : <span style={{ opacity: '0.5' }}>{$t('unlinked')}</span>} <br />
+    <div className={cx('section', styles.section)}>
+      <div className={styles.targetCard}>
+        <PlatformLogo
+          className={cx(styles.targetLogo, {
+            [styles.youtube]: platform === 'youtube',
+            [styles.twitter]: platform === 'twitter',
+          })}
+          size={36}
+          platform={platform}
+        />
+
+        <div className={styles.targetData}>
+          <span className={styles.targetType}>{platformName}</span>
+          {isMerged ? (
+            <span className={styles.targetName}>{usernameOrBlank}</span>
+          ) : (
+            <>
+              <br />
+              <span className={styles.targetName} style={{ opacity: '0.5' }}>
+                {$t('unlinked')}
+              </span>
+              <br />
+            </>
+          )}
+        </div>
+
+        <div style={{ marginLeft: 'auto' }}>
+          {shouldShowConnectBtn && <ConnectButton />}
+          {shouldShowUnlinkBtn && (
+            <Button
+              data-name={`${platform}Unlink`}
+              danger
+              onClick={() => (isInstagram ? instagramUnlink() : platformUnlink(platform))}
+            >
+              {$t('Unlink')}
+            </Button>
+          )}
+          {shouldShowPrimaryBtn && (
+            <Tooltip
+              title={$t(
+                'You cannot unlink the platform you used to sign in to Streamlabs Desktop. If you want to unlink this platform, please sign in with a different platform.',
+              )}
+            >
+              <Button disabled={true} type="primary">
+                {$t('Logged in')}
+              </Button>
+            </Tooltip>
+          )}
+        </div>
       </div>
 
-      <div style={{ marginLeft: 'auto' }}>
-        {shouldShowConnectBtn && (
-          <span>
-            <Button
-              onClick={() => platformMerge(platform)}
-              style={{
-                backgroundColor: `var(--${platform})`,
-                borderColor: 'transparent',
-                color: platform === 'trovo' ? 'black' : 'inherit',
-              }}
-            >
-              {$t('Connect')}
-            </Button>
-          </span>
-        )}
-        {shouldShowUnlinkBtn && (
-          <Button danger onClick={() => platformUnlink(platform)}>
-            {$t('Unlink')}
-          </Button>
-        )}
-        {shouldShowPrimaryBtn && (
-          <Tooltip
-            title={$t(
-              'You cannot unlink the platform you used to sign in to Streamlabs Desktop. If you want to unlink this platform, please sign in with a different platform.',
-            )}
-          >
-            <Button disabled={true} type="primary">
-              {$t('Logged in')}
-            </Button>
-          </Tooltip>
-        )}
-      </div>
+      <ExtraFieldsSection />
     </div>
   );
 }
@@ -433,22 +552,28 @@ function Platform(p: { platform: TPlatform }) {
  * Renders a custom destinations list
  */
 function CustomDestinationList() {
-  const { isPrime, customDestinations, editCustomDestMode, addCustomDest } = useStreamSettings();
+  const { customDestinations, editCustomDestMode, addCustomDest } = useStreamSettings();
+
+  const { isPrime } = useVuex(() => ({
+    isPrime: Services.UserService.isPrime,
+  }));
 
   const destinations = customDestinations;
   const isEditMode = editCustomDestMode !== false;
   const shouldShowAddForm = editCustomDestMode === true;
-  const canAddMoreDestinations = destinations.length < 2;
+  const canAddMoreDestinations = destinations.length < 5;
   const shouldShowPrimeLabel = !isPrime && destinations.length > 0;
 
   return (
-    <div>
-      {destinations.map((dest, ind) => (
-        <CustomDestination key={ind} ind={ind} destination={dest} />
-      ))}
+    <div className={styles.customDestinations}>
+      <div className={styles.targetCardsWrapper}>
+        {destinations.map((dest, ind) => (
+          <CustomDestination key={ind} ind={ind} destination={dest} />
+        ))}
+      </div>
       {!isEditMode && canAddMoreDestinations && (
-        <a className={css.addDestinationBtn} onClick={() => addCustomDest(shouldShowPrimeLabel)}>
-          <i className={cx('fa fa-plus', css.plus)} />
+        <a className={styles.addDestinationBtn} onClick={() => addCustomDest(shouldShowPrimeLabel)}>
+          <i className={cx('fa fa-plus', styles.plus)} />
           <span>{$t('Add Destination')}</span>
 
           {shouldShowPrimeLabel ? (
@@ -459,16 +584,12 @@ function CustomDestinationList() {
               icon={<UltraIcon type="simple" />}
             />
           ) : (
-            <div className={css.prime} />
+            <div className={styles.ultra} />
           )}
         </a>
       )}
       {!canAddMoreDestinations && <p>{$t('Maximum custom destinations has been added')}</p>}
-      {shouldShowAddForm && (
-        <div className="section">
-          <CustomDestForm />
-        </div>
-      )}
+      {shouldShowAddForm && <CustomDestForm />}
     </div>
   );
 }
@@ -480,14 +601,13 @@ function CustomDestination(p: { destination: ICustomStreamDestination; ind: numb
   const { editCustomDestMode, removeCustomDest, editCustomDest } = useStreamSettings();
   const isEditMode = editCustomDestMode === p.ind;
   return (
-    <div className="section">
-      <div className="flex">
-        <div className="margin-right--20" style={{ width: '50px' }}>
-          <i className={cx(css.destinationLogo, 'fa fa-globe')} />
-        </div>
-        <div className={css.destinationName}>
-          <span>{p.destination.name}</span> <br />
-          {p.destination.url}
+    <div className={cx('section', 'flex--column', styles.section)}>
+      <div className={styles.targetCard}>
+        <i className={cx(styles.targetLogo, 'fa fa-globe')} />
+
+        <div className={cx({ [styles.targetData]: isEditMode })}>
+          <span className={styles.targetType}>{p.destination.name}</span> <br />
+          <span className={styles.targetName}>{p.destination.url}</span>
           <br />
         </div>
 
@@ -495,11 +615,11 @@ function CustomDestination(p: { destination: ICustomStreamDestination; ind: numb
           {!isEditMode && (
             <div>
               <i
-                className={cx('fa fa-trash', css.actionIcon)}
+                className={cx('fa fa-trash', styles.actionIcon)}
                 onClick={() => removeCustomDest(p.ind)}
               />
               <i
-                className={cx('fa fa-pen', css.actionIcon)}
+                className={cx('fa fa-pen', styles.actionIcon)}
                 onClick={() => editCustomDest(p.ind)}
               />
             </div>
@@ -515,19 +635,39 @@ function CustomDestination(p: { destination: ICustomStreamDestination; ind: numb
  * Renders an ADD/EDIT form for the custom destination
  */
 function CustomDestForm() {
-  const { saveCustomDest, stopEditing, bind } = useStreamSettings();
+  const { saveCustomDest, stopEditing, formValues, updateCustomDestForm } = useStreamSettings();
+
+  const urlValidator = {
+    message: $t(
+      'Please connect platforms directly from Streamlabs Desktop instead of adding Streamlabs Multistream as a custom destination',
+    ),
+    pattern: /^(?!.*streamlabs\.com).*/,
+  };
+
+  const meta = {
+    name: metadata.text({ label: $t('Name'), required: true }),
+    url: metadata.text({
+      label: 'URL',
+      rules: [urlValidator, { required: true }],
+    }),
+    streamKey: metadata.text({ label: $t('Stream Key'), isPassword: true }),
+  };
+
+  function editField(key: string) {
+    return (value: TInputValue) => {
+      console.log(key, value, /^(?!.*streamlabs\.com).*/.test(value as string));
+      updateCustomDestForm({ [key]: value });
+    };
+  }
 
   return (
-    <Form name="customDestForm">
-      <TextInput label={$t('Name')} required {...bind.name} />
-      <TextInput label={'URL'} required {...bind.url} />
-      <TextInput label={$t('Stream Key')} {...bind.streamKey} isPassword />
-      <ButtonGroup>
-        <Button onClick={stopEditing}>{$t('Cancel')}</Button>
-        <Button type="primary" onClick={saveCustomDest}>
-          {$t('Save')}
-        </Button>
-      </ButtonGroup>
-    </Form>
+    <FormFactory
+      metadata={meta}
+      values={formValues}
+      name="customDestForm"
+      onChange={editField}
+      onSubmit={saveCustomDest}
+      onCancel={stopEditing}
+    />
   );
 }

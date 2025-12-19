@@ -24,5 +24,11 @@
   "Previous Slide": "Slide Sebelumnya",
   "Toggle Performance Mode": "Toggle Mode Performance",
   "Skip Alert": "Lewati Peringatan",
-  "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop.": "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop."
+  "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop.": "Untuk menggunakan tombol pintas di Mac, buka Pengaturan Sistem > Keamanan > Aksesibilitas dan aktifkan Streamlabs Desktop.",
+  "Start Virtual Camera": "Mulai Kamera Virtual",
+  "Stop Virtual Camera": "Hentikan Kamera Virtual",
+  "This scene has not been converted to Dual Output. Please make the scene active to add vertical sources.": "Adegan ini belum dikonversi ke Dual Output. Harap aktifkan adegan untuk menambahkan sumber vertikal.",
+  "Learn more here": "Pelajari lebih lanjut di sini",
+  "<color>Pro tip:</color> set Markers in Hotkeys settings to timestamp your recordings. <link>Set up here</link>": "<color>Saran profesional:</color> tetapkan Penanda dalam pengaturan Tombol Pintas untuk memberi cap waktu pada rekaman Anda. <link>Siapkan di sini</link>",
+  "Markers": "Spidol"
 }

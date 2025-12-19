@@ -11,8 +11,9 @@ import { DualOutputService } from './dual-output';
 import { byOS, OS, getOS } from 'util/operating-systems';
 import * as remote from '@electron/remote';
 import { onUnload } from 'util/unload';
-import { ScenesService } from './api/external-api/resources';
 import { ISelectionState, SelectionService } from 'services/selection';
+import { SourcesService } from 'services/sources';
+import { ScenesService } from 'services/scenes';
 import { TDisplayType, VideoSettingsService } from './settings-v2';
 
 // TODO: There are no typings for nwr
@@ -175,7 +176,8 @@ export class Display {
       }
     };
 
-    this.trackingFun();
+    // Allow a browser paint before trying to set initional position
+    window.setTimeout(() => this.trackingFun(), 0);
     this.trackingInterval = window.setInterval(this.trackingFun, DISPLAY_ELEMENT_POLLING_INTERVAL);
   }
 
@@ -210,11 +212,13 @@ export class Display {
 
   existingWindow = false;
 
-  resize(width: number, height: number) {
+  async resize(width: number, height: number) {
+    if (getOS() === OS.Mac && (width === 0 || height === 0 || this.displayDestroyed)) {
+      return; // obs gs_draw_sprite() does not render zero sized sprites (so do not call resizeOBSDisplay)
+    }
     this.currentPosition.width = width;
     this.currentPosition.height = height;
     this.videoService.actions.resizeOBSDisplay(this.name, width, height);
-    if (this.outputRegionCallbacks.length) this.refreshOutputRegion();
 
     // On mac, resizing the display is not enough, we also have to
     // recreate the window and IOSurface for the new size
@@ -224,13 +228,23 @@ export class Display {
         nwr.destroyIOSurface(this.name);
       }
 
-      const surface = this.videoService.createOBSIOSurface(this.name);
-      nwr.createWindow(
-        this.name,
-        remote.BrowserWindow.fromId(this.electronWindowId).getNativeWindowHandle(),
-      );
-      nwr.connectIOSurface(this.name, surface);
-      this.existingWindow = true;
+      try {
+        const surface = this.videoService.createOBSIOSurface(this.name);
+        nwr.createWindow(
+          this.name,
+          remote.BrowserWindow.fromId(this.electronWindowId).getNativeWindowHandle(),
+        );
+        this.existingWindow = true;
+        nwr.connectIOSurface(this.name, surface);
+
+        if (this.outputRegionCallbacks.length) {
+          await this.refreshOutputRegion();
+        }
+      } catch (ex: unknown) {
+        console.log(`Error encountered creating iosurface: ${ex}`);
+      }
+    } else if (this.outputRegionCallbacks.length) {
+      await this.refreshOutputRegion();
     }
   }
 
@@ -306,6 +320,7 @@ export class VideoService extends Service {
   @Inject() scenesService: ScenesService;
   @Inject() videoSettingsService: VideoSettingsService;
   @Inject() dualOutputService: DualOutputService;
+  @Inject() sourcesService: SourcesService;
 
   init() {
     this.settingsService.loadSettingsIntoStore();
@@ -332,21 +347,6 @@ export class VideoService extends Service {
         baseWidth: baseResolutions.vertical.baseWidth,
         baseHeight: baseResolutions.vertical.baseHeight,
       },
-    };
-  }
-
-  get baseWidth() {
-    return this.videoSettingsService.baseResolutions.horizontal.baseWidth;
-  }
-
-  get baseHeight() {
-    return this.videoSettingsService.baseResolutions.horizontal.baseHeight;
-  }
-
-  get baseResolution() {
-    return {
-      baseWidth: this.baseWidth,
-      baseHeight: this.baseHeight,
     };
   }
 

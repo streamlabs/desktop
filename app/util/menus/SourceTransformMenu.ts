@@ -87,7 +87,7 @@ export class SourceTransformMenu extends Menu {
     this.append({ type: 'separator' });
 
     this.append({
-      label: 'Flip Vertical',
+      label: $t('Flip Vertical'),
       click: () =>
         this.editorCommandsService.executeCommand(
           'FlipItemsCommand',
@@ -97,7 +97,7 @@ export class SourceTransformMenu extends Menu {
     });
 
     this.append({
-      label: 'Flip Horizontal',
+      label: $t('Flip Horizontal'),
       click: () =>
         this.editorCommandsService.executeCommand(
           'FlipItemsCommand',

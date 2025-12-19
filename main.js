@@ -30,6 +30,7 @@ const {
   dialog,
   webContents,
   desktopCapturer,
+  MessageChannelMain,
 } = require('electron');
 const path = require('path');
 const remote = require('@electron/remote/main');
@@ -205,6 +206,15 @@ console.log(`Free: ${humanFileSize(os.freemem(), false)}`);
 console.log('=================================');
 
 app.on('ready', () => {
+  /* Load React DevTools in dev mode */
+  if (process.env.NODE_ENV === 'development') {
+    const reactDevToolsPath = path.join(__dirname, 'vendor', 'react-devtools');
+    session.defaultSession
+      .loadExtension(reactDevToolsPath, { allowFileAccess: true })
+      .then(() => console.log('Installed React DevTools'))
+      .catch(err => console.log('Error installing React DevTools', err));
+  }
+
   // Detect when running from an unwritable location like a DMG image (will break updater)
   if (process.platform === 'darwin') {
     try {
@@ -251,9 +261,9 @@ let appShutdownTimeout;
 global.indexUrl = `file://${__dirname}/index.html`;
 
 function openDevTools() {
-  childWindow.webContents.openDevTools({ mode: 'undocked' });
-  mainWindow.webContents.openDevTools({ mode: 'undocked' });
-  workerWindow.webContents.openDevTools({ mode: 'undocked' });
+  childWindow.webContents.openDevTools({ mode: 'detach' });
+  mainWindow.webContents.openDevTools({ mode: 'detach' });
+  workerWindow.webContents.openDevTools({ mode: 'detach' });
 }
 
 // TODO: Clean this up
@@ -342,11 +352,22 @@ async function startApp() {
   workerWindow.loadURL(`${global.indexUrl}?windowId=worker`);
   // }, 10 * 1000);
 
+  if (process.env.SLOBS_PRODUCTION_DEBUG) {
+    workerWindow.webContents.once('dom-ready', () => {
+      workerWindow.webContents.openDevTools({ mode: 'detach' });
+    });
+  }
+
   // All renderers should use ipcRenderer.sendTo to send to communicate with
   // the worker.  This still gets proxied via the main process, but eventually
   // we will refactor this to not use electron IPC, which will make it much
   // more efficient.
   ipcMain.on('getWorkerWindowId', event => {
+    if (workerWindow.isDestroyed()) {
+      // prevent potential race-condition issues on app close
+      // https://github.com/streamlabs/desktop/pull/4239
+      return;
+    }
     event.returnValue = workerWindow.webContents.id;
   });
 
@@ -379,6 +400,12 @@ async function startApp() {
   // setTimeout(() => {
   mainWindow.loadURL(`${global.indexUrl}?windowId=main`);
   // }, 5 * 1000)
+
+  if (process.env.SLOBS_PRODUCTION_DEBUG) {
+    mainWindow.webContents.once('dom-ready', () => {
+      mainWindow.webContents.openDevTools({ mode: 'detach' });
+    });
+  }
 
   mainWindowState.manage(mainWindow);
 
@@ -454,6 +481,12 @@ async function startApp() {
 
   childWindow.loadURL(`${global.indexUrl}?windowId=child`);
 
+  if (process.env.SLOBS_PRODUCTION_DEBUG) {
+    childWindow.webContents.once('dom-ready', () => {
+      childWindow.webContents.openDevTools({ mode: 'detach' });
+    });
+  }
+
   // The child window is never closed, it just hides in the
   // background until it is needed.
   childWindow.on('close', e => {
@@ -464,8 +497,6 @@ async function startApp() {
       e.preventDefault();
     }
   });
-
-  if (process.env.SLOBS_PRODUCTION_DEBUG) openDevTools();
 
   // simple messaging system for services between windows
   // WARNING! renderer windows use synchronous requests and will be frozen
@@ -808,3 +839,20 @@ function measure(msg, time) {
 }
 
 ipcMain.handle('DESKTOP_CAPTURER_GET_SOURCES', (event, opts) => desktopCapturer.getSources(opts));
+
+// Message channel handling
+const channels = {};
+
+ipcMain.handle('create-message-channel', () => {
+  const id = uuid();
+  channels[id] = new MessageChannelMain();
+  return id;
+});
+
+ipcMain.on('request-message-channel-in', (e, id) => {
+  e.senderFrame.postMessage(`port-${id}`, null, [channels[id].port1]);
+});
+
+ipcMain.on('request-message-channel-out', (e, id) => {
+  e.senderFrame.postMessage(`port-${id}`, null, [channels[id].port2]);
+});

@@ -64,7 +64,7 @@ export class StreamBossService extends BaseGoalService<IStreamBossData, IStreamB
       dataFetchUrl: `https://${this.getHost()}/api/v5/slobs/widget/streamboss/settings`,
       settingsSaveUrl: `https://${this.getHost()}/api/v5/slobs/widget/streamboss/settings`,
       goalUrl: `https://${this.getHost()}/api/v5/slobs/widget/streamboss`,
-      testers: ['Follow', 'Subscription', 'Donation', 'Bits', 'Host'],
+      testers: ['Follow', 'Subscription', 'Donation', 'Bits'],
       customCodeAllowed: true,
       customFieldsAllowed: true,
     };
@@ -167,7 +167,10 @@ export class StreamBossService extends BaseGoalService<IStreamBossData, IStreamB
   }
 
   multipliersByPlatform(): { key: string; title: string; isInteger: boolean }[] {
-    const platform = this.userService.platform.type as Exclude<TPlatform, 'tiktok' | 'twitter'>;
+    const platform = this.userService.platform.type as Exclude<
+      TPlatform,
+      'tiktok' | 'twitter' | 'instagram' | 'kick'
+    >;
     return {
       twitch: [
         { key: 'bit_multiplier', title: $t('Damage Per Bit'), isInteger: true },

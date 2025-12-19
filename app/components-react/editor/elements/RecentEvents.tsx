@@ -8,6 +8,7 @@ import styles from './RecentEvents.m.less';
 import Scrollable from 'components-react/shared/Scrollable';
 import PlatformLogo from 'components-react/shared/PlatformLogo';
 import { Services } from 'components-react/service-provider';
+import { Tooltip } from 'antd';
 
 export default function RecentEvents(p: { isOverlay?: boolean }) {
   const { RecentEventsService } = Services;
@@ -33,68 +34,98 @@ export default function RecentEvents(p: { isOverlay?: boolean }) {
 function Toolbar() {
   const { RecentEventsService, UserService, SpinWheelService } = Services;
 
-  const { muted, queuePaused, mediaShareEnabled, safeModeEnabled, spinWheelExists } = useVuex(
-    () => ({
-      muted: RecentEventsService.state.muted,
-      queuePaused: RecentEventsService.state.queuePaused,
-      safeModeEnabled: RecentEventsService.state.safeMode.enabled,
-      mediaShareEnabled: RecentEventsService.state.mediaShareEnabled,
-      spinWheelExists: RecentEventsService.views.spinWheelExists,
-    }),
-  );
+  const {
+    muted,
+    enableChatNotifs,
+    queuePaused,
+    mediaShareEnabled,
+    safeModeEnabled,
+    spinWheelExists,
+  } = useVuex(() => ({
+    muted: RecentEventsService.state.muted,
+    enableChatNotifs: RecentEventsService.state.enableChatNotifs,
+    queuePaused: RecentEventsService.state.queuePaused,
+    safeModeEnabled: RecentEventsService.state.safeMode.enabled,
+    mediaShareEnabled: RecentEventsService.state.mediaShareEnabled,
+    spinWheelExists: RecentEventsService.views.spinWheelExists,
+  }));
 
   const pauseTooltip = queuePaused ? $t('Unpause Alert Queue') : $t('Pause Alert Queue');
+
   return (
     <div className={styles.topBar}>
       <h2 className="studio-controls__label">{$t('Mini Feed')}</h2>
       {spinWheelExists && (
-        <i
-          className="fas fa-chart-pie action-icon"
-          onClick={() => SpinWheelService.actions.spinWheel()}
-          v-tooltip={{ content: $t('Spin Wheel'), placement: 'bottom' }}
-        />
+        <Tooltip title={$t('Spin Wheel')} placement="bottom">
+          <i
+            className="fas fa-chart-pie action-icon"
+            onClick={() => SpinWheelService.actions.spinWheel()}
+          />
+        </Tooltip>
       )}
       {UserService.views.isTwitchAuthed && (
-        <i
-          className={cx('fa fa-shield-alt action-icon', {
-            [styles.teal]: safeModeEnabled,
-          })}
-          onClick={() => RecentEventsService.actions.showSafeModeWindow()}
-          v-tooltip={{ content: $t('Safe Mode'), placement: 'bottom' }}
-        />
+        <Tooltip title={$t('Safe Mode')} placement="bottom">
+          <i
+            className={cx('fa fa-shield-alt action-icon', {
+              [styles.teal]: safeModeEnabled,
+            })}
+            onClick={() => RecentEventsService.actions.showSafeModeWindow()}
+          />
+        </Tooltip>
       )}
-      <i
-        className="icon-filter action-icon"
-        onClick={() => RecentEventsService.actions.showFilterMenu()}
-        v-tooltip={{ content: $t('Popout Event Filtering Options'), placement: 'bottom' }}
-      />
+      <Tooltip title={$t('Popout Event Filtering Options')} placement="bottom">
+        <i
+          className="icon-filter action-icon"
+          onClick={() => RecentEventsService.actions.showFilterMenu()}
+        />
+      </Tooltip>
       {mediaShareEnabled && (
-        <i
-          className="icon-music action-icon"
-          onClick={() => RecentEventsService.actions.openRecentEventsWindow(true)}
-          v-tooltip={{ content: $t('Popout Media Share Controls'), placement: 'bottom' }}
-        />
+        <Tooltip title={$t('Popout Media Share Controls')} placement="bottom">
+          <i
+            className="icon-music action-icon"
+            onClick={() => RecentEventsService.actions.openRecentEventsWindow(true)}
+          />
+        </Tooltip>
       )}
-      <i
-        className={`${queuePaused ? 'icon-media-share-2' : 'icon-pause'} action-icon`}
-        onClick={() => RecentEventsService.actions.toggleQueue()}
-        v-tooltip={{ content: pauseTooltip, placement: 'left' }}
-      />
-      <i
-        className="icon-skip action-icon"
-        onClick={() => RecentEventsService.actions.skipAlert()}
-        v-tooltip={{ content: $t('Skip Alert'), placement: 'left' }}
-      />
-      <i
-        className={cx('action-icon', {
-          [styles.red]: muted,
-          fa: !muted,
-          'fa-volume-up': !muted,
-          'icon-mute': muted,
-        })}
-        onClick={() => RecentEventsService.actions.toggleMuteEvents()}
-        v-tooltip={{ content: $t('Mute Event Sounds'), placement: 'left' }}
-      />
+      <Tooltip title={pauseTooltip} placement="left">
+        <i
+          className={`${queuePaused ? 'icon-media-share-2' : 'icon-pause'} action-icon`}
+          onClick={() => RecentEventsService.actions.toggleQueue()}
+        />
+      </Tooltip>
+      <Tooltip title={$t('Skip Alert')} placement="left">
+        <i
+          className="icon-skip action-icon"
+          onClick={() => RecentEventsService.actions.skipAlert()}
+        />
+      </Tooltip>
+      <Tooltip
+        title={
+          enableChatNotifs
+            ? $t('Disable Chat Box Notifications')
+            : $t('Enable Chat Box Notifications')
+        }
+        placement="left"
+      >
+        <i
+          className={cx('action-icon', {
+            'icon-notifications': enableChatNotifs,
+            'icon-notifications-off': !enableChatNotifs,
+          })}
+          onClick={() => RecentEventsService.actions.toggleMuteChatNotifs()}
+        />
+      </Tooltip>
+      <Tooltip title={$t('Mute Event Sounds')} placement="left">
+        <i
+          className={cx('action-icon', {
+            [styles.red]: muted,
+            fa: !muted,
+            'fa-volume-up': !muted,
+            'icon-mute': muted,
+          })}
+          onClick={() => RecentEventsService.actions.toggleMuteEvents()}
+        />
+      </Tooltip>
     </div>
   );
 }
@@ -120,7 +151,7 @@ function EventCell(p: { event: IRecentEvent }) {
     const platform = p.event.platform;
     return {
       twitch_account: <PlatformLogo platform="twitch" />,
-      youtube_account: <PlatformLogo platform="youtube" />,
+      youtube_account: <PlatformLogo platform="youtube" size={16} />,
       facebook_account: <PlatformLogo platform="facebook" />,
       trovo_account: <PlatformLogo platform="trovo" size={16} />,
       streamlabs: <PlatformLogo platform="streamlabs" size={16} />,

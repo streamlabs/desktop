@@ -8,5 +8,19 @@
   "Unlink Twitter": "Putuskan tautan Twitter",
   "Tweet & Go Live": "Tweet & Go Live",
   "Could not connect to Twitter": "Tidak bisa terhubung ke Twitter",
-  "Use Streamlabs URL": "Gunakan URL Streamlabs"
+  "Use Streamlabs URL": "Gunakan URL Streamlabs",
+  "X (Twitter) Chat Type": "Jenis Obrolan X (Twitter)",
+  "Disabled": "Dinonaktifkan",
+  "Chat will be disabled": "Obrolan akan dinonaktifkan",
+  "Everyone": "Semua orang",
+  "All viewers will be able to chat": "Semua pemirsa akan dapat mengobrol",
+  "Verified Only": "Hanya Yang Terverifikasi",
+  "Only verified viewers will be able to chat": "Hanya pemirsa yang terverifikasi yang dapat mengobrol",
+  "Followed Only": "Hanya Diikuti",
+  "Only accounts you follow will be able to chat": "Hanya akun yang Anda ikuti yang dapat mengobrol",
+  "Subscriber Only": "Hanya untuk Pelanggan",
+  "Only viewers that subscribe to you will be able to chat": "Hanya pemirsa yang berlangganan kepada Anda yang dapat mengobrol",
+  "You need X premium account to go live on X.": "Anda memerlukan akun premium X untuk menyiarkan langsung di X.",
+  "You need X premium account to go live on X. Click to learn more": "Anda memerlukan akun premium X untuk menyiarkan langsung di X. Klik untuk mempelajari lebih lanjut",
+  "Stream Shift Error: Twitter is not live": "Stream Shift Error: Twitter is not live"
 }

@@ -1,0 +1,48 @@
+@import "../../../styles/index";
+@import '../../../styles/badges';
+
+.container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.content-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+  z-index: 1; // so SVG background doesn't show on top of text in small windows
+}
+
+.title {
+  font-size: 48px;
+}
+
+.option-container {
+  display: flex;
+  justify-content: space-between;
+  width: 900px;
+}
+
+.footer {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  height: 100%;
+  width: 100%;
+
+  svg {
+    fill: var(--section-alt);
+  }
+
+  img {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+  }
+}

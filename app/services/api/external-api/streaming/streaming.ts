@@ -23,6 +23,7 @@ enum ERecordingState {
   Starting = 'starting',
   Recording = 'recording',
   Stopping = 'stopping',
+  Start = 'start',
   Wrote = 'wrote',
 }
 
@@ -34,6 +35,7 @@ enum EReplayBufferState {
   Stopping = 'stopping',
   Offline = 'offline',
   Saving = 'saving',
+  Wrote = 'wrote',
 }
 
 /**
@@ -42,11 +44,16 @@ enum EReplayBufferState {
  */
 interface IStreamingState {
   streamingStatus: EStreamingState;
+  verticalStreamingStatus?: EStreamingState;
   streamingStatusTime: string;
+  verticalStreamingStatusTime?: string;
   recordingStatus: ERecordingState;
+  verticalRecordingStatus?: ERecordingState;
   recordingStatusTime: string;
+  verticalRecordingStatusTime?: string;
   replayBufferStatus: EReplayBufferState;
   replayBufferStatusTime: string;
+  streamErrorCreated?: string;
 }
 
 /**
@@ -91,6 +98,14 @@ export class StreamingService implements ISerializable {
    */
   get replayBufferStatusChange(): Observable<EReplayBufferState> {
     return this.streamingService.replayBufferStatusChange;
+  }
+
+  /**
+   * Observable event that is triggered whenever a stream error occurs when
+   * attempting to go live.
+   */
+  get streamErrorCreated(): Observable<string> {
+    return this.streamingService.streamErrorCreated;
   }
 
   /**

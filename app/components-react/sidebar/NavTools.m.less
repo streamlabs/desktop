@@ -111,7 +111,7 @@
 .login {
   padding-top: 10px !important;
   :global(.ant-menu-item.ant-menu-item-only-child) {
-    margin-bottom: 10px;
+    margin: 2px 0px 10px 0px;
   }
 
   &::before {
@@ -131,7 +131,7 @@
   }
 
   .platform-logo {
-    margin-right: 10px;
+    margin: 2px 10px 0px 0px;
 
     &-twitch {
       color: var(--twitch) !important;
@@ -148,12 +148,25 @@
     }
     &-tiktok {
       color: var(--tiktok) !important;
+      width: 15px;
+      height: 15px;
+      align-self: center;
+    }
+    &-twitter {
+      width: 13px;
+      height: 13px;
+    }
+    &-kick {
+      width: 15px;
+      height: 15px;
     }
     &-streamlabs {
       color: var(--teal) !important;
     }
     &-default {
       color: var(--logged-in) !important;
+      width: 15px;
+      height: 15px;
     }
   }
 
@@ -218,5 +231,13 @@
     button:not(:last-child) {
       margin-right: 5px;
     }
+  }
+}
+
+.vision {
+  color: var(--nav-active) !important;
+
+  i {
+    color: var(--nav-active) !important;
   }
 }

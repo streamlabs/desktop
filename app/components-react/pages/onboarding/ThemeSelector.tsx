@@ -1,5 +1,6 @@
+import * as remote from '@electron/remote';
 import { Services } from 'components-react/service-provider';
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { $t } from 'services/i18n';
 import { IThemeMetadata } from 'services/onboarding';
 import commonStyles from './Common.m.less';
@@ -9,6 +10,11 @@ import { useModule } from 'slap';
 import { OnboardingModule } from './Onboarding';
 import AutoProgressBar from 'components-react/shared/AutoProgressBar';
 import { usePromise } from 'components-react/hooks';
+import sortBy from 'lodash/sortBy';
+import { Button } from 'antd';
+import Translate from 'components-react/shared/Translate';
+
+const MAX_SIDEBAR_THEMES = 5;
 
 export function ThemeSelector() {
   const { OnboardingService, SceneCollectionsService, UserService } = Services;
@@ -18,18 +24,22 @@ export function ThemeSelector() {
   const [showDetail, setShowDetail] = useState<number | null>(null);
   const [bigPreview, setBigPreview] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
-  const detailIndex = themesMetadata.findIndex(theme => theme.data.id === showDetail);
-  const detailTheme = themesMetadata[detailIndex];
   const { setProcessing, next } = useModule(OnboardingModule);
 
   function getFilteredMetadata() {
-    if (!showDetail) return themesMetadata;
-    if ([2, 5].includes(detailIndex)) {
-      return [themesMetadata[0], themesMetadata[3]];
-    } else {
-      return [themesMetadata[2], themesMetadata[5]];
+    if (!showDetail) {
+      return themesMetadata;
     }
+
+    return sortBy(
+      themesMetadata.filter(theme => theme.data.id !== showDetail),
+      ['data', 'id'],
+    ).slice(0, MAX_SIDEBAR_THEMES);
   }
+
+  const detailTheme = useMemo(() => {
+    return themesMetadata.find(theme => theme.data.id === showDetail);
+  }, [showDetail]);
 
   function previewImages(theme: IThemeMetadata) {
     if (!theme?.data) return [];
@@ -52,6 +62,9 @@ export function ThemeSelector() {
 
   async function installTheme(event: React.MouseEvent) {
     event.stopPropagation();
+    if (!detailTheme) {
+      return;
+    }
     const url = OnboardingService.themeUrl(detailTheme.data.id);
     setInstalling(true);
     setProcessing(true);
@@ -67,72 +80,118 @@ export function ThemeSelector() {
 
   usePromise(
     () => OnboardingService.actions.return.fetchThemes(),
-    p => p.then(themes => setThemesMetadata(themes)),
+    // @ts-ignore typescript upgrade
+    p =>
+      p.then(themes => {
+        setThemesMetadata(themes);
+      }),
   );
+
+  useEffect(() => {
+    const filteredThemes = themesMetadata;
+    // Hardcoding IDs is bad, but faster to have backend return a `preferred`
+    // or `featured` boolean, so we at least fallback to the first theme if
+    // not found.
+    // Waves (Animated)
+    // TODO: can free users install this theme?
+    const wavesTheme = filteredThemes.find(theme => theme.data.id === 2183);
+
+    const featuredTheme = wavesTheme || filteredThemes[0];
+
+    if (featuredTheme) {
+      focusTheme(featuredTheme);
+    }
+  }, [themesMetadata]);
 
   return (
     <div style={{ width: '100%' }}>
-      <h1 className={commonStyles.titleContainer}>{$t('Add a Theme')}</h1>
+      <h1 className={commonStyles.titleContainer}>{$t('Add your first theme')}</h1>
 
-      {isPrime && (
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          {$t(
-            'You unlocked hundreds of Ultra themes! Choose from the ones below or navigate to the Themes tab later to personalize your scenes.',
-          )}
-        </div>
-      )}
+      <div className={commonStyles.subtitleContainer}>
+        {$t('Try your first theme now, browse hundreds of more themes later on.')}
+      </div>
 
       <div>
         {!installing ? (
           <div className={styles.container}>
-            {getFilteredMetadata().map(theme => (
-              <div className={styles.cell} onClick={() => focusTheme(theme)} key={theme.data.name}>
-                <img className={styles.thumbnail} src={thumbnail(theme)} />
-                <div className={styles.title}>{theme.data.name}</div>
-              </div>
-            ))}
-            {showDetail && bigPreview && (
-              <div
-                className={cx(
-                  styles.detailPanel,
-                  [2, 5].includes(detailIndex) ? styles.right : styles.left,
-                )}
-                onClick={() => focusTheme(null)}
-              >
-                <div className={styles.detailHeader}>
-                  <h1>{detailTheme.data.name}</h1>
-                  <button
-                    className={cx('button button--action', commonStyles.onboardingButton)}
-                    onClick={e => installTheme(e)}
-                  >
-                    {$t('Install')}
-                  </button>
-                  <i className="icon-close" />
+            {bigPreview && detailTheme && (
+              <>
+                <div className={styles.themesSidebar}>
+                  <h1>{$t('Other Themes')}</h1>
+
+                  {getFilteredMetadata().map(theme => (
+                    <div
+                      className={styles.cell}
+                      onClick={() => focusTheme(theme)}
+                      key={theme.data.name}
+                    >
+                      <img className={styles.thumbnail} src={thumbnail(theme)} />
+                      <div className={styles.title}>{theme.data.name}</div>
+                    </div>
+                  ))}
                 </div>
-                <div className={styles.previewGrid}>
-                  <ThemePreview
-                    src={bigPreview}
-                    className={styles.bigPreview}
-                    focusPreview={() => {}}
-                  />
-                  {previewImages(detailTheme).map(src => {
-                    return (
-                      <ThemePreview
-                        key={src}
-                        src={src}
-                        className={cx(styles.preview, { [styles.active]: src === bigPreview })}
-                        focusPreview={() => setBigPreview(src)}
-                      />
-                    );
-                  })}
+                <div className={cx(styles.detailPanel, styles.right)}>
+                  <div className={styles.detailHeader}>
+                    {detailTheme.data.designer && (
+                      <img className={styles.designerLogo} src={detailTheme.data.designer.avatar} />
+                    )}
+                    <div className={styles.themeDetails}>
+                      <h1>{detailTheme.data.name}</h1>
+                      {detailTheme.data.designer && (
+                        <Translate
+                          message={$t('by <designer>%{designerName}</designer>', {
+                            designerName: detailTheme.data.designer.name,
+                          })}
+                        >
+                          <span
+                            slot="designer"
+                            className={cx(styles.designerName, {
+                              ['has-link']: !!detailTheme.data.designer.website,
+                            })}
+                            onClick={() => {
+                              if (detailTheme.data.designer?.website) {
+                                remote.shell.openExternal(detailTheme.data.designer.website);
+                              }
+                            }}
+                          />
+                        </Translate>
+                      )}
+                    </div>
+                    <Button
+                      shape="round"
+                      size="large"
+                      type="primary"
+                      onClick={e => installTheme(e)}
+                      disabled={installing}
+                    >
+                      {$t('Install')}
+                    </Button>
+                  </div>
+                  <div className={styles.previewGrid}>
+                    <ThemePreview
+                      src={bigPreview}
+                      className={styles.bigPreview}
+                      focusPreview={() => {}}
+                    />
+                    {previewImages(detailTheme).map(src => {
+                      return (
+                        <ThemePreview
+                          key={src}
+                          src={src}
+                          className={cx(styles.preview, { [styles.active]: src === bigPreview })}
+                          focusPreview={() => setBigPreview(src)}
+                        />
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
         ) : (
           <div style={{ margin: 'auto', marginTop: 24, width: '80%' }}>
             <AutoProgressBar percent={progress} timeTarget={60 * 1000} />
-            <p>{$t('Installing theme...')}</p>
+            <p>{$t('Installing overlay...')}</p>
           </div>
         )}
       </div>

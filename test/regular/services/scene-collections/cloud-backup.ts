@@ -4,11 +4,13 @@ import { getApiClient } from '../../../helpers/api-client';
 import { logIn, loginWithAuthInfo } from '../../../helpers/webdriver/user';
 import { SceneCollectionsService } from '../../../../app/services/api/external-api/scene-collections';
 
+// not a react hook
+// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver({ noSync: false });
 
 test('Scene-collections cloud-backup', async t => {
   // log-in and save the credentials
-  const authInfo = await logIn(t);
+  const authInfo = await logIn(t, 'twitch', {}, true, true);
 
   // create an new empty collection
   const api = await getApiClient();

@@ -13,6 +13,7 @@
   --accent: @purple-light;
   --blue: @blue-light;
   --warning: @red-light;
+  --warning-semi: fade(@red-light, 8%);
   --warning-hover: lighten(@red-light, 4%);
   --warning-bg: fade(@red-light, 28%);
   --warning-button-bg: fade(@red-light, 36%);
@@ -44,6 +45,7 @@
   --dark-background: @light-2;
   --section: @light-3;
   --section-alt: @light-3;
+  --section-wrapper: @dark-1;
   --titlebar: @dark-4;
   --title: @dark-2;
   --titlebar-title: @light-5;
@@ -72,6 +74,16 @@
   --logged-in: @lavender-light;
   --prime-button: @dark-2;
   --tooltip-hover: @light-4;
+  --modal-footer: @dark-2;
+  --icon-toggle: @light-5;
+  --icon-toggle-active: @dark-2;
+  --switch-active: @teal-light;
+  --secondary-bg: @light-3;
+  --secondary-checkbox: @dark-2;
+  --bg-column: @light-2;
+  --card: @light-3;
+  --card-active: @light-1;
+  --card-disabled: @light-3;
 
   // 3rd Party Colors
   --twitch: @twitch;
@@ -82,13 +94,18 @@
   --youtube: @youtube;
   --youtube-transparent: fade(@youtube, 50%);
   --youtube-hover: lighten(@youtube, 4%);
-  --tiktok: @black;
-  --tiktok-inverse: @white;
+  --tiktok: @white;
+  --tiktok-inverse: @black;
   --tiktok-hover: lighten(@black, 4%);
+  --tiktok-btn: @cyan;
   --twitter: @twitter;
   --twitter-hover: lighten(@twitter, 4%);
+  --instagram: @instagram;
+  --instagram-hover: lighten(@instagram, 4%);
   --trovo: @trovo;
   --trovo-hover: lighten(@trovo, 4%);
+  --kick: @kick;
+  --kick-hover: lighten(@black, 4%);
 }
 
 .night-theme {
@@ -122,6 +139,7 @@
   --dark-background: @dark-2;
   --section: @dark-2;
   --section-alt: @dark-4;
+  --section-wrapper: @dark-1;
   --titlebar: @dark-1;
   --titlebar-title: @light-5;
   --title: @light-1;
@@ -148,11 +166,23 @@
   --studio-tabs: @dark-2;
   --logged-in: @lavender-dark;
   --prime-button: @dark-2;
-  --tooltip-hover: @dark-4;
+  --tooltip-hover: @dark-5;
+  --modal-footer: @dark-2;
+  --icon-toggle: @light-5;
+  --icon-toggle-active: @light-1;
+  --switch-active: @light-1;
+  --secondary-bg: @dark-2;
+  --secondary-checkbox: @light-1;
+  --bg-column: @dark-2;
+  --card: @dark-4;
+  --card-active: @dark-3;
+  --card-disabled: @dark-4;
 
-  --tiktok: @white;
-  --tiktok-inverse: @black;
+  // 3rd Party Colors
+  --tiktok: @black;
+  --tiktok-inverse: @white;
   --tiktok-hover: darken(@white, 4%);
+  --tiktok-btn: @cyan;
 }
 
 .prime-dark {
@@ -186,6 +216,7 @@
   --dark-background: @primedark-2;
   --section: @primedark-2;
   --section-alt: @primedark-4;
+  --section-wrapper: @dark-1;
   --titlebar: @primedark-1;
   --titlebar-title: @primelight-1;
   --title: @primelight-1;
@@ -213,10 +244,22 @@
   --logged-in: @lavender-dark;
   --prime-button: @dark-2;
   --tooltip-hover: @primedark-4;
+  --modal-footer: @primedark-2;
+  --icon-toggle: @light-5;
+  --icon-toggle-active: @primelight-3;
+  --switch-active: @prime-dark;
+  --secondary-bg: @black;
+  --secondary-checkbox: @light-1;
+  --bg-column: @primedark-2;
+  --card: @primedark-1;
+  --card-active: @primedark-4;
+  --card-disabled: @primedark-1;
 
-  --tiktok: @white;
-  --tiktok-inverse: @black;
+  // 3rd Party Colors
+  --tiktok: @black;
+  --tiktok-inverse: @white;
   --tiktok-hover: darken(@white, 4%);
+  --tiktok-btn: @cyan;
 }
 
 .prime-light {
@@ -250,6 +293,7 @@
   --dark-background: @primelight-2;
   --section: @primelight-2;
   --section-alt: @primelight-4;
+  --section-wrapper: @dark-1;
   --titlebar: @primedark-4;
   --title: @primedark-2;
   --titlebar-title: @primelight-1;
@@ -278,4 +322,18 @@
   --logged-in: @lavender-light;
   --prime-button: @dark-2;
   --tooltip-hover: @primelight-4;
+  --modal-footer: @primedark-2;
+  --icon-toggle: @light-5;
+  --icon-toggle-active: @dark-2;
+  --switch-active: @prime-light;
+  --secondary-bg: @primelight-1;
+  --secondary-checkbox: @dark-2;
+  --bg-column: @primelight-1;
+  --card: @primelight-3;
+  --card-active: @primelight-2;
+  --card-disabled: @primelight-2;
+
+  // 3rd Party Colors
+  --tiktok-inverse: @black;
+  --tiktok-btn: @cyan;
 }

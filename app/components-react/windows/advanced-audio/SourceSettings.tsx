@@ -197,9 +197,11 @@ function PanelForm(p: { source: AudioSource }) {
         'wasapi_input_capture',
         'coreaudio_input_capture',
         'dshow_input',
-        'av_capture_input',
+        'macos_avcapture',
       ].includes(source.type)
     : false;
+
+  const isProcessCapture = source?.type === 'wasapi_process_output_capture';
 
   const { EditorCommandsService } = Services;
 
@@ -245,13 +247,13 @@ function PanelForm(p: { source: AudioSource }) {
         max={5000}
         uncontrolled={false}
       />
-      <SwitchInput
+      {!isProcessCapture && <SwitchInput
         label={$t('Downmix to Mono')}
         value={forceMono}
         name="forceMono"
         onChange={value => handleSettingsChange('forceMono', value)}
         tooltip={$t('Route audio to the central channel instead of left or right stereo channels')}
-      />
+      />}
       <ListInput
         label={$t('Audio Monitoring')}
         options={p.source.monitoringOptions}
@@ -317,11 +319,11 @@ function DeviceInputs(p: { source: Source }) {
   return (
     <>
       {input}
-      <SwitchInput
+      {p.source.type !== 'wasapi_process_output_capture' && <SwitchInput
         label={$t('Use Device Timestamps')}
         value={statefulSettings.use_device_timing}
         onChange={value => handleInput('use_device_timing', value)}
-      />
+      />}
     </>
   );
 }

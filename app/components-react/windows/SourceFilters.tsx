@@ -264,6 +264,7 @@ function CreateFilterForm(p: { sourceId: string; onSubmit: (filterName: string) 
   }
 
   function submit() {
+    //@ts-ignore typescript upgrade
     EditorCommandsService.actions.return
       .executeCommand('AddFilterCommand', p.sourceId, type, name)
       // @ts-ignore

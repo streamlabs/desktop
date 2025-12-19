@@ -1,10 +1,18 @@
 {
   "Show details": "Tampilkan detail",
   "Hide details": "Sembunyikan detail",
-  "API token": "Token API",
+  "API Token": "Token API",
   "Generate new": "Buat baru",
   "Port": "Port",
-  "IP addresses": "Alamat IP",
+  "IP Addresses": "Alamat IP",
   "Click to show": "Klik untuk menampilkan",
-  "The free Streamlabs Controller app allows you to control Streamlabs Desktop from your iOS or Android device. Scan the QR code below to begin.": "Aplikasi gratis Streamlabs Controller memungkinkan Anda untuk mengontrol Streamlabs Desktop dari perangkat iOS atau Android Anda. Pindai kode QR di bawah ini untuk memulainya."
+  "The free Streamlabs Controller app allows you to control Streamlabs Desktop from your iOS or Android device. You must be logged in to use this feature.": "Aplikasi gratis Streamlabs Controller memungkinkan Anda untuk mengontrol Streamlabs Desktop dari perangkat iOS atau Android Anda. Anda harus masuk untuk menggunakan fitur ini.",
+  "Allow Controller app connections": "Mengizinkan koneksi aplikasi Pengontrol",
+  "Connected Devices": "Perangkat yang Terhubung",
+  "Disconnect": "Memutuskan Koneksi",
+  "No devices connected": "Tidak ada perangkat yang terhubung",
+  "Some third party applications connect to Streamlabs Desktop via websockets connection. Toggle this to allow such connections and display connection info.": "Beberapa aplikasi pihak ketiga terhubung ke Streamlabs Desktop melalui koneksi websockets. Alihkan ini untuk mengizinkan koneksi tersebut dan menampilkan info koneksi.",
+  "Warning: Displaying this portion on stream may leak sensitive information.": "Peringatan: Menampilkan bagian ini dalam streaming dapat membocorkan informasi sensitif.",
+  "Allow third party connections": "Mengizinkan koneksi pihak ketiga",
+  "Host": "Penyelenggara"
 }

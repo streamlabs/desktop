@@ -24,5 +24,11 @@
   "Previous Slide": "Előző dia",
   "Toggle Performance Mode": "Teljesítmény mód bekapcsolása",
   "Skip Alert": "Értesítés átugrása",
-  "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop.": "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop."
+  "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop.": "To use hotkeys on Mac, go to System Settings > Security > Accessibility and toggle on for Streamlabs Desktop.",
+  "Start Virtual Camera": "Start Virtual Camera",
+  "Stop Virtual Camera": "Stop Virtual Camera",
+  "This scene has not been converted to Dual Output. Please make the scene active to add vertical sources.": "This scene has not been converted to Dual Output. Please make the scene active to add vertical sources.",
+  "Learn more here": "Learn more here",
+  "<color>Pro tip:</color> set Markers in Hotkeys settings to timestamp your recordings. <link>Set up here</link>": "<color>Pro tip:</color> set Markers in Hotkeys settings to timestamp your recordings. <link>Set up here</link>",
+  "Markers": "Markers"
 }

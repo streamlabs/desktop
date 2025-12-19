@@ -20,10 +20,7 @@ import moment from 'moment';
 import Translate from '../../../shared/Translate';
 import { IListOption } from '../../../shared/inputs/ListInput';
 import MessageLayout from '../MessageLayout';
-import PlatformSettingsLayout, {
-  IPlatformComponentParams,
-  TLayoutMode,
-} from './PlatformSettingsLayout';
+import PlatformSettingsLayout, { IPlatformComponentParams } from './PlatformSettingsLayout';
 import { assertIsDefined } from '../../../../util/properties-type-guards';
 import * as remote from '@electron/remote';
 import { $t } from 'services/i18n';
@@ -41,7 +38,6 @@ class FacebookEditStreamInfoModule {
 
   fbState = this.fbService.state;
   canStreamToTimeline = this.fbState.grantedPermissions.includes('publish_video');
-  canStreamToGroup = this.fbState.grantedPermissions.includes('publish_to_groups');
   pages = this.fbState.facebookPages;
   groups = this.fbState.facebookGroups;
   isPrimary = this.streamingService.views.isPrimaryPlatform('facebook');
@@ -76,6 +72,10 @@ class FacebookEditStreamInfoModule {
     return this.props.layoutMode;
   }
 
+  get layout() {
+    return this.props.layout;
+  }
+
   get isUpdateMode() {
     return this.props.isUpdateMode;
   }
@@ -85,10 +85,11 @@ class FacebookEditStreamInfoModule {
   }
 
   get shouldShowPermissionWarn() {
-    return (
-      (!this.canStreamToTimeline || !this.canStreamToGroup) &&
-      this.dismissables.views.shouldShow(EDismissable.FacebookNeedPermissionsTip)
-    );
+    /*
+     * With new Facebook requirements (60 day old account, 100 followers) and error handling
+     * while going live, we're removing the notification resulting from this boolean as it's confusing users.
+     */
+    return false;
   }
 
   get shouldShowDestinationType() {
@@ -112,7 +113,9 @@ class FacebookEditStreamInfoModule {
   }
 
   get shouldShowGame() {
-    return !this.isUpdateMode && !this.props.isScheduleMode;
+    // this is currently broken in the fb api
+    return false;
+    // return !this.isUpdateMode && !this.props.isScheduleMode;
   }
 
   get shouldShowPrivacy() {
@@ -128,6 +131,7 @@ class FacebookEditStreamInfoModule {
   }
 
   getDestinationOptions(): IListOption<TDestinationType>[] {
+    // not sure if the best idea, but we decided to always show "Timeline" option
     const options: IListOption<TDestinationType>[] = [
       {
         value: 'me' as TDestinationType,
@@ -139,16 +143,7 @@ class FacebookEditStreamInfoModule {
         label: $t('Share to a Page You Manage'),
         image: 'https://slobs-cdn.streamlabs.com/media/fb-page.png',
       },
-      {
-        value: 'group' as TDestinationType,
-        label: $t('Share in a Group'),
-        image: 'https://slobs-cdn.streamlabs.com/media/fb-group.png',
-      },
-    ].filter(opt => {
-      if (opt.value === 'me' && !this.canStreamToTimeline) return false;
-      if (opt.value === 'group' && !this.canStreamToGroup) return false;
-      return true;
-    });
+    ];
     return options;
   }
 
@@ -272,7 +267,7 @@ export default function FacebookEditStreamInfo(p: IPlatformComponentParams<'face
 }
 
 function CommonFields() {
-  const { settings, updateSettings, layoutMode } = useFacebook();
+  const { settings, updateSettings, layoutMode, layout } = useFacebook();
 
   return (
     <CommonPlatformFields
@@ -281,6 +276,7 @@ function CommonFields() {
       layoutMode={layoutMode}
       value={settings}
       onChange={updateSettings}
+      layout={layout}
     />
   );
 }
@@ -295,6 +291,7 @@ function RequiredFields() {
     groups,
     shouldShowGroups,
     pictures,
+    layout,
     loadPictures,
     getDestinationOptions,
     verifyGroup,
@@ -311,6 +308,8 @@ function RequiredFields() {
               hasImage
               imageSize={{ width: 35, height: 35 }}
               options={getDestinationOptions()}
+              layout={layout}
+              size="large"
             />
           )}
           {shouldShowPages && (
@@ -326,6 +325,8 @@ function RequiredFields() {
                 label: `${page.name} | ${page.category}`,
                 image: pictures[page.id],
               }))}
+              layout={layout}
+              size="large"
             />
           )}
           {shouldShowGroups && (
@@ -349,6 +350,8 @@ function RequiredFields() {
                     <a onClick={verifyGroup}> {$t('Click here to verify.')}</a>
                   </p>
                 }
+                layout={layout}
+                size="large"
               />
             </>
           )}
@@ -369,6 +372,7 @@ function OptionalFields() {
     shouldShowGamingWarning,
     bind,
     fbService,
+    layout,
   } = useFacebook();
   return (
     <div key="optional">
@@ -395,6 +399,8 @@ function OptionalFields() {
               </Translate>
             )
           }
+          layout={layout}
+          size="large"
         />
       )}
 
@@ -422,6 +428,7 @@ function Events() {
     onEventChange,
     scheduledVideosLoaded,
     scheduledVideos,
+    layout,
   } = useFacebook();
   return (
     <div key="events">
@@ -443,6 +450,8 @@ function Events() {
               value: v.id,
             })),
           ]}
+          layout={layout}
+          size="large"
         />
       )}
     </div>

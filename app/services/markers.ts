@@ -17,6 +17,8 @@ interface IMarkersServiceState {
 class MarkersServiceViews extends ViewHandler<IMarkersServiceState> {
   getLabel(id: string) {
     if (!this.state) return id;
+    // TODO: index
+    // @ts-ignore
     return this.state[id];
   }
 }
@@ -112,6 +114,8 @@ export class MarkersService extends PersistentStatefulService<IMarkersServiceSta
 
   @mutation()
   private SET_MARKER_NAME(marker: string, value: string) {
+    // TODO: index
+    // @ts-ignore
     this.state[marker] = value;
   }
 }

@@ -1,0 +1,80 @@
+// TODO: these are duplicated from NavTools.m.less, consider refactoring out if not needed there
+.platform-logo {
+  margin-right: 10px;
+
+  &-twitch {
+    color: var(--twitch) !important;
+  }
+  &-youtube {
+    color: var(--youtube) !important;
+  }
+  &-facebook {
+    color: var(--facebook) !important;
+  }
+  &-trovo,
+  &-twitter,
+  &-tiktok,
+  &-instagram,
+  &-youtube,
+  &-kick {
+    width: 15px;
+    height: 15px;
+  }
+  &-tiktok {
+    color: var(--tiktok) !important;
+  }
+  &-streamlabs {
+    color: var(--teal) !important;
+  }
+  &-default {
+    color: var(--logged-in) !important;
+  }
+}
+
+.username {
+  margin-bottom: 0px;
+  flex-grow: 1;
+  line-height: 20px;
+  margin: 2px 0 0 0;
+}
+
+.login-arrow {
+  justify-self: flex-end;
+  margin-left: 5px;
+  transform: scaleX(-1);
+  -moz-transform: scaleX(-1);
+  -webkit-transform: scaleX(-1);
+  -ms-transform: scaleX(-1);
+  transition: all 0.2s ease-in-out;
+}
+
+.platform-icons {
+  display: flex;
+  flex-direction: row;
+  gap: 1px;
+  align-items: center;
+  justify-content: center;
+
+  // Override the zooming effect applied to sidebar icons
+  i {
+    &,
+    &:hover {
+      transform: none !important;
+      transition: none !important;
+    }
+  }
+
+  // Custom destination icon
+  :global(.fa-globe) {
+    margin-right: 10px;
+  }
+
+  :global(.fa-globe) {
+    &,
+    &:hover,
+    &:focus,
+    &:active {
+      color: var(--icon) !important;
+    }
+  }
+}

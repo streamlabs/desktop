@@ -53,7 +53,7 @@ export class SpinWheelService extends WidgetSettingsService<ISpinWheelData> {
       previewUrl: `https://${this.getHost()}/widgets/wheel?token=${this.getWidgetToken()}`,
       dataFetchUrl: `https://${this.getHost()}/api/v5/slobs/widget/wheel`,
       settingsSaveUrl: `https://${this.getHost()}/api/v5/slobs/widget/wheel`,
-      settingsUpdateEvent: 'spinwheelSettingsUpdate',
+      settingsUpdateEvent: 'WheelSettingsUpdate',
       customCodeAllowed: true,
       customFieldsAllowed: true,
     };
@@ -95,9 +95,7 @@ export class SpinWheelService extends WidgetSettingsService<ISpinWheelData> {
 
   async spinWheel() {
     // eslint-disable-next-line
-    const url = `https://${
-      this.getHost()
-    }/api/v5/slobs/widget/wheel/spin/${this.getWidgetToken()}`;
+    const url = `https://${this.getHost()}/api/v5/slobs/widget/wheel/spin/${this.getWidgetToken()}`;
     const headers = authorizedHeaders(this.userService.apiToken);
     const request = new Request(url, { headers, method: 'POST' });
     const response = await fetch(request);

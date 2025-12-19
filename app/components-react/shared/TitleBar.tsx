@@ -10,15 +10,16 @@ import KevinSvg from './KevinSvg';
 import styles from './TitleBar.m.less';
 import * as remote from '@electron/remote';
 import Banner from 'components-react/root/Banner';
+import { useRealmObject } from 'components-react/hooks/realm';
 
-export default function TitleBar(props: { windowId: string }) {
+export default function TitleBar(props: { windowId: string; className?: string }) {
   const { CustomizationService, StreamingService, WindowsService } = Services;
 
   const isMaximizable = remote.getCurrentWindow().isMaximizable() !== false;
   const isMac = byOS({ [OS.Windows]: false, [OS.Mac]: true });
-  const v = useVuex(
+  const theme = useRealmObject(CustomizationService.state).theme;
+  const { title } = useVuex(
     () => ({
-      theme: CustomizationService.views.currentTheme,
       title: WindowsService.state[props.windowId]?.title,
     }),
     false,
@@ -26,7 +27,7 @@ export default function TitleBar(props: { windowId: string }) {
 
   const isDev = useMemo(() => Utils.isDevMode(), []);
 
-  const primeTheme = /prime/.test(v.theme);
+  const primeTheme = /prime/.test(theme);
   const [errorState, setErrorState] = useState(false);
 
   useEffect(lifecycle, []);
@@ -62,17 +63,18 @@ export default function TitleBar(props: { windowId: string }) {
   return (
     <>
       <div
-        className={cx(styles.titlebar, v.theme, {
+        className={cx(styles.titlebar, theme, {
           [styles['titlebar-mac']]: isMac,
           [styles.titlebarError]: errorState,
         })}
+        data-name="title-bar"
       >
         {!primeTheme && !isMac && (
           <img className={styles.titlebarIcon} src={require('../../../media/images/icon.ico')} />
         )}
         {primeTheme && !isMac && <KevinSvg className={styles.titlebarIcon} />}
         <div className={styles.titlebarTitle} onDoubleClick={maximize}>
-          {v.title}
+          {title}
         </div>
         {!isMac && (
           <div className={styles.titlebarActions}>

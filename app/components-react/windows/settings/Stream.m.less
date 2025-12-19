@@ -1,13 +1,95 @@
 @import '../../../styles/index.less';
+.stream-header-wrapper {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
 
-.platform-button {
-  min-width: 100px;
+  h2 {
+    margin-bottom: 0px;
+  }
 }
 
-.prime {
+.target-cards-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.target-card {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  width: 100%;
+}
+
+.target-data {
+  flex: 1;
+}
+
+.target-logo {
+  margin-right: 10px;
+  align-self: center;
+  font-size: 36px;
+
+  &.youtube {
+    align-self: flex-end;
+  }
+
+  &.twitter {
+    width: 30px !important;
+    height: 30px !important;
+  }
+}
+
+.target-type {
+  font-weight: 600;
+  color: var(--link-active);
+}
+
+.target-name {
+  font-size: 13px;
+}
+
+.ultra {
   margin-right: 16px;
   font-style: italic;
   color: var(--prime-hover);
+}
+
+.ultra-text {
+  display: flex;
+  align-items: center;
+  margin: 0px 0px 15px 0px;
+  font-size: 14px;
+  font-weight: 500;
+
+  white-space: normal;
+  background-image: linear-gradient(123.53deg, #2de8b0 0%, #cbe953 45%, #ffab48 65%, #ff5151 100%);
+  background-clip: text;
+  color: transparent;
+
+  &:hover {
+    background-image: linear-gradient(
+      123.53deg,
+      #6effd2 0%,
+      #f6ff9a 45%,
+      #ffd48a 65%,
+      #ff8a8a 100%
+    );
+    cursor: pointer;
+  }
+}
+
+.add-more {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: unset;
+  color: var(--primary) !important;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--link-active);
+  }
 }
 
 .action-icon {
@@ -29,10 +111,6 @@
   white-space: nowrap;
 }
 
-.destination-logo {
-  font-size: 40px;
-}
-
 .add-destination-btn {
   width: 100%;
   border: 1px dashed var(--border);
@@ -52,4 +130,41 @@
     margin: 18px;
     font-size: 18px;
   }
+}
+
+.tiktok-connect-btn {
+  background-color: (var(--tiktok-btn)) !important;
+  color: (var(--black)) !important;
+}
+
+.extra-fields-section {
+  margin-top: 10px;
+  // HACK: fixes the margin of the Instagram component using 8 columns or so
+  margin-left: -128px;
+
+  // Fix password input adding vertical height
+  :global(.ant-input-affix-wrapper) {
+    padding: 0 11px;
+  }
+
+  :global(input[type='password']) {
+    height: 30px;
+    // FIXME: this input has a hover effect but the stream URL one doesn't.
+    // can't right click on devtools to inspect since last electron update
+  }
+}
+
+.section {
+  margin-bottom: 15px !important;
+}
+
+.custom-destinations {
+  margin: 15px 0px;
+  padding-bottom: 15px;
+}
+
+a.custom-dest {
+  font-size: 15px;
+  text-decoration: underline;
+  margin: 10px 0px;
 }

@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import cx from 'classnames';
 import { EMenuItemKey, ESubMenuItemKey } from 'services/side-nav';
@@ -11,15 +11,75 @@ import styles from './SideNav.m.less';
 import { Layout, Button } from 'antd';
 import Scrollable from 'components-react/shared/Scrollable';
 import HelpTip from 'components-react/shared/HelpTip';
-import NewBadge from 'components-react/shared/NewBadge';
 import FeaturesNav from './FeaturesNav';
+import { useRealmObject } from 'components-react/hooks/realm';
 
 const { Sider } = Layout;
 
-export default function SideNav() {
-  const { CustomizationService, SideNavService, WindowsService, DismissablesService } = Services;
+export default function SideNav(p: { isVisionRunning: boolean }) {
+  const { CustomizationService, SideNavService, WindowsService } = Services;
 
-  function updateSubMenu() {
+  const {
+    currentMenuItem,
+    setCurrentMenuItem,
+    isOpen,
+    toggleMenuStatus,
+    updateStyleBlockers,
+    hideStyleBlockers,
+  } = useVuex(() => ({
+    currentMenuItem: SideNavService.views.currentMenuItem,
+    setCurrentMenuItem: SideNavService.actions.setCurrentMenuItem,
+    isOpen: SideNavService.views.isOpen,
+    toggleMenuStatus: SideNavService.actions.toggleMenuStatus,
+    updateStyleBlockers: WindowsService.actions.updateStyleBlockers,
+    hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
+  }));
+
+  const sider = useRef<HTMLDivElement | null>(null);
+  const isMounted = useRef(false);
+
+  const leftDock = useRealmObject(CustomizationService.state).leftDock;
+
+  const siderMinWidth: number = 50;
+  const siderMaxWidth: number = 200;
+
+  // We need to ignore resizeObserver entries for vertical resizing
+  let lastHeight = 0;
+
+  const resizeObserver = new ResizeObserver((entries: ResizeObserverEntry[]) => {
+    entries.forEach((entry: ResizeObserverEntry) => {
+      const width = Math.floor(entry?.contentRect?.width);
+      const height = Math.floor(entry?.contentRect?.height);
+
+      if (lastHeight === height && (width === siderMinWidth || width === siderMaxWidth)) {
+        updateStyleBlockers('main', false);
+      }
+      lastHeight = height;
+    });
+  });
+
+  useEffect(() => {
+    isMounted.current = true;
+    if (!sider || !sider.current) return;
+
+    if (sider && sider?.current) {
+      resizeObserver.observe(sider?.current);
+
+      if (hideStyleBlockers) {
+        updateStyleBlockers('main', false);
+      }
+    }
+
+    return () => {
+      if (sider && sider?.current) {
+        resizeObserver.disconnect();
+      }
+
+      isMounted.current = false;
+    };
+  }, [sider]);
+
+  const updateSubMenu = useCallback(() => {
     // when opening/closing the navbar swap the submenu current menu item
     // to correctly display selected color
     const subMenuItems = {
@@ -29,52 +89,11 @@ export default function SideNav() {
       [ESubMenuItemKey.AppsStoreHome]: EMenuItemKey.AppStore,
     };
     if (Object.keys(subMenuItems).includes(currentMenuItem as EMenuItemKey)) {
+      // TODO: index
+      // @ts-ignore
       setCurrentMenuItem(subMenuItems[currentMenuItem]);
     }
-  }
-
-  const {
-    currentMenuItem,
-    setCurrentMenuItem,
-    leftDock,
-    isOpen,
-    toggleMenuStatus,
-    updateStyleBlockers,
-    dismiss,
-    showNewBadge,
-  } = useVuex(() => ({
-    currentMenuItem: SideNavService.views.currentMenuItem,
-    setCurrentMenuItem: SideNavService.actions.setCurrentMenuItem,
-    leftDock: CustomizationService.state.leftDock,
-    isOpen: SideNavService.views.isOpen,
-    toggleMenuStatus: SideNavService.actions.toggleMenuStatus,
-    updateStyleBlockers: WindowsService.actions.updateStyleBlockers,
-    dismiss: DismissablesService.actions.dismiss,
-    showNewBadge:
-      DismissablesService.views.shouldShow(EDismissable.NewSideNav) &&
-      SideNavService.views.hasLegacyMenu,
-  }));
-
-  const sider = useRef<HTMLDivElement | null>(null);
-
-  const siderMinWidth: number = 50;
-  const siderMaxWidth: number = 200;
-
-  const resizeObserver = new ResizeObserver((entries: ResizeObserverEntry[]) => {
-    entries.forEach((entry: ResizeObserverEntry) => {
-      const width = Math.floor(entry?.contentRect?.width);
-
-      if (width === siderMinWidth || width === siderMaxWidth) {
-        updateStyleBlockers('main', false);
-      }
-    });
-  });
-
-  useLayoutEffect(() => {
-    if (sider && sider?.current) {
-      resizeObserver.observe(sider?.current);
-    }
-  }, [sider]);
+  }, [currentMenuItem]);
 
   return (
     <Layout hasSider className="side-nav">
@@ -94,7 +113,7 @@ export default function SideNav() {
           <FeaturesNav />
 
           {/* bottom navigation menu */}
-          <NavTools />
+          <NavTools isVisionRunning={p.isVisionRunning} />
         </Scrollable>
 
         <LoginHelpTip />
@@ -110,7 +129,6 @@ export default function SideNav() {
           leftDock && styles.leftDock,
         )}
         onClick={() => {
-          showNewBadge && dismiss(EDismissable.NewSideNav);
           updateSubMenu();
           toggleMenuStatus();
           updateStyleBlockers('main', true); // hide style blockers
@@ -118,14 +136,6 @@ export default function SideNav() {
       >
         <i className="icon-back" />
       </Button>
-
-      {/* if it's a legacy menu, show new badge */}
-      <NewBadge
-        dismissableKey={EDismissable.NewSideNav}
-        size="small"
-        absolute
-        style={{ left: 'calc(100% / 20px)', top: 'calc(100% / 2)' }}
-      />
     </Layout>
   );
 }

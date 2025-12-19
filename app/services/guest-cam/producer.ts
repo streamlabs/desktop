@@ -75,6 +75,8 @@ export class Producer extends MediasoupEntity {
       if (!this.transportId) {
         const turnConfig = await this.guestCamService.getTurnConfig();
 
+        // TODO: index
+        // @ts-ignore
         result['iceServers'] = [turnConfig];
 
         this.makeObsRequest('func_create_send_transport', result);
@@ -196,7 +198,7 @@ export class Producer extends MediasoupEntity {
     }
 
     if (type === 'video') {
-      if (['dshow_input', 'av_capture_input'].includes(source.type)) {
+      if (['dshow_input', 'macos_avcapture'].includes(source.type)) {
         filterType = 'mediasoupconnector_vfilter';
       } else {
         filterType = 'mediasoupconnector_vsfilter';

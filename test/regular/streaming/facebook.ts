@@ -18,7 +18,7 @@ test.skip('Streaming to a Facebook Page', async t => {
   await logIn('facebook', { multistream: false });
   await goLive({
     title: 'SLOBS Test Stream',
-    facebookGame: 'Fortnite',
+    // facebookGame: 'Fortnite',
     description: 'SLOBS Test Stream Description',
   });
   t.true(await chatIsVisible(), 'Chat should be visible');
@@ -78,7 +78,7 @@ test.skip('Streaming to a Facebook User`s group', async t => {
   await logIn('facebook', { hasFBGroup: true });
   await goLive({
     title: 'SLOBS Test Stream',
-    facebookGame: 'DOOM',
+    // facebookGame: 'DOOM',
     description: 'SLOBS Test Stream Description',
     destinationType: 'group',
   });
@@ -91,7 +91,7 @@ test.skip('Streaming to a Facebook User`s timeline', async t => {
   await logIn('facebook', { allowStreamingToFBTimeline: true });
   await goLive({
     title: 'SLOBS Test Stream',
-    facebookGame: 'DOOM',
+    // facebookGame: 'DOOM',
     description: 'SLOBS Test Stream Description',
     destinationType: 'me',
   });

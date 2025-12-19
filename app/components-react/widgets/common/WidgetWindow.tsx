@@ -22,7 +22,7 @@ import { EmoteWall, EmoteWallModule } from '../EmoteWall';
 // MediaShare
 // Poll
 // SpinWheel
-// SponsorBanner
+import { SponsorBanner, SponsorBannerModule } from '../SponsorBanner';
 // StreamBoss
 // TipJar
 import { GameWidget, GameWidgetModule } from '../GameWidget';
@@ -50,7 +50,7 @@ export const components = {
   // MediaShare
   // Poll
   // SpinWheel
-  // SponsorBanner
+  SponsorBanner: [SponsorBanner, SponsorBannerModule],
   // StreamBoss
   // TipJar
   ViewerCount: [ViewerCount, ViewerCountModule],
@@ -67,6 +67,8 @@ export function WidgetWindow() {
 
   // take the source id and widget's component from the window's params
   const { Module, WidgetSettingsComponent } = useOnCreate(() => {
+    // TODO: index
+    // @ts-ignore
     const [WidgetSettingsComponent, Module] = components[widgetType];
     return { sourceId, Module, WidgetSettingsComponent };
   });

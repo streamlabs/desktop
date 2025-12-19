@@ -154,5 +154,6 @@
   "This applies to all alerts. If enabled all alerts need to be approved manually.": "This applies to all alerts. If enabled all alerts need to be approved manually.",
   "Use unlimited delay": "Use unlimited delay",
   "When enabled new alerts will interrupt the on screen alert": "When enabled new alerts will interrupt the on screen alert",
-  "Text Highlight Color": "Text Highlight Color"
+  "Text Highlight Color": "Text Highlight Color",
+  "Platforms: Twitch, YouTube, Facebook, Trovo & integrations": "Platforms: Twitch, YouTube, Facebook, Trovo & integrations"
 }

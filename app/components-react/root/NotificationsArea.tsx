@@ -37,6 +37,12 @@ class NotificationsModule {
 
   playNotif(notif: INotification) {
     if (!this.settings.enabled) return;
+
+    // Do not replay read notifications when switching scene collections
+    if (notif.unread === false) {
+      return;
+    }
+
     this.currentNotif = notif;
     if (this.settings.playSound) this.audio.play();
 

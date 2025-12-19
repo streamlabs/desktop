@@ -3,7 +3,7 @@ import { Tooltip as AntdTooltip } from 'antd';
 import styles from './Tooltip.m.less';
 import cx from 'classnames';
 
-type TTipPosition =
+export type TTipPosition =
   | 'topLeft'
   | 'top'
   | 'topRight'
@@ -18,7 +18,7 @@ type TTipPosition =
   | 'rightBottom';
 
 interface ITooltipTipProps {
-  title: string;
+  title: React.ReactNode;
   id?: string;
   className?: HTMLAttributes<HTMLElement> | string;
   wrapperStyle?: CSSProperties;
@@ -26,7 +26,11 @@ interface ITooltipTipProps {
   lightShadow?: boolean;
   placement?: TTipPosition;
   content?: HTMLElement | boolean;
+  styleContent?: boolean;
   disabled?: boolean;
+  autoAdjustOverflow?: boolean;
+  visible?: boolean;
+  onClick?: () => void;
 }
 
 export default function Tooltip(props: PropsWithChildren<ITooltipTipProps>) {
@@ -39,14 +43,19 @@ export default function Tooltip(props: PropsWithChildren<ITooltipTipProps>) {
     lightShadow,
     placement = 'bottom',
     content,
+    styleContent = true,
     disabled = false,
+    autoAdjustOverflow = true,
+    visible,
+    onClick,
   } = props;
 
   return (
     <div
       id={id}
-      className={className ? cx(className, styles.tooltipWrapper) : styles.tooltipWrapper}
+      className={cx(className, styles.tooltipWrapper)}
       style={wrapperStyle}
+      onClick={onClick}
     >
       {disabled ? (
         <>
@@ -55,13 +64,18 @@ export default function Tooltip(props: PropsWithChildren<ITooltipTipProps>) {
         </>
       ) : (
         <AntdTooltip
-          className={cx(styles.tooltipArrow, { [styles.lightShadow]: lightShadow })}
+          className={cx({
+            [styles.tooltipContent]: styleContent,
+            [styles.lightShadow]: lightShadow,
+          })}
           placement={placement}
           title={title}
           style={style}
           getPopupContainer={triggerNode => triggerNode}
           mouseLeaveDelay={0.1}
           trigger={['hover', 'focus', 'click']}
+          autoAdjustOverflow={autoAdjustOverflow}
+          visible={visible}
         >
           {content}
           {{ ...props }.children}

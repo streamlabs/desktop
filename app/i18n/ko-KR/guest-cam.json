@@ -1,7 +1,7 @@
 {
   "Source: %{sourceName}": "소스: %{sourceName}",
   "Collab Cam": "Collab Cam",
-  "Invite a guest to join your stream from a web browser.": "웹 브라우저에서 스트리밍 게스트를 초대하세요.",
+  "Invite guests to join your stream from a web browser or their Streamlabs Desktop. Stream games or IRL broadcasts together, use as additional camera angles and more.": "웹 브라우저나 Streamlabs Desktop에서 스트림에 참여하도록 게스트를 초대하십시오. 게임이나 IRL 방송을 함께 스트리밍하고, 추가 카메라 앵글로 사용하는 등의 작업을 할 수 있습니다.",
   "Guest Cam is currently listening for connecting guests, but is not broadcasting your microphone and webcam to your guests yet.": "Guest Cam은 현재 게스트 연결을 위해 듣기 기능만 있으며, 내 마이크 및 웹캠을 게스트에게 방송하는 기능은 없습니다.",
   "No microphone source is selected. Your guest will not be able to hear you.": "선택된 마이크 소스가 없습니다. 게스트가 내 말을 들을 수 없습니다.",
   "No webcam source is selected. Your guest will not be able to see you.": "선택된 웹캠 소스가 없습니다. 게스트가 내 모습을 볼 수 없습니다.",
@@ -47,5 +47,5 @@
   "Collab Cam requires a source": "Collab Cam에 소스 필요",
   "At least one Collab Cam source is required to use Collab Cam. Would you like to add one now?": "Collab Cam을 사용하려면 하나 이상의 Collab Cam 소스가 필요합니다. 지금 하나를 추가할까요?",
   "You now have access to Collab Cam!": "이제 Collab Cam을 이용할 수 있습니다!",
-  "You must be logged in to use Collab Cam.": "You must be logged in to use Collab Cam."
+  "You must be logged in to use Collab Cam.": "Collab Cam을 사용하려면 로그인해야 합니다."
 }

@@ -25,7 +25,7 @@ import { SourcesService } from 'app-services';
 
 export function enableBTTVEmotesScript(isDarkTheme: boolean) {
   /*eslint-disable */
-return `
+  return `
 localStorage.setItem('bttv_clickTwitchEmotes', true);
 localStorage.setItem('bttv_darkenedMode', ${
   isDarkTheme ? 'true' : 'false'
@@ -368,7 +368,7 @@ export class ChatService extends Service {
     });
   }
 
-  private handleSettingsChanged(changed: Partial<ICustomizationServiceState>) {
+  private handleSettingsChanged(changed: DeepPartial<ICustomizationServiceState>) {
     if (!this.chatView) return;
     if (changed.chatZoomFactor) {
       this.chatView.webContents.setZoomFactor(changed.chatZoomFactor);
@@ -377,5 +377,23 @@ export class ChatService extends Service {
     if (changed.enableBTTVEmotes != null || changed.enableFFZEmotes != null) {
       this.refreshChat();
     }
+  }
+
+  showMultistreamChatWindow() {
+    // We use a generated window Id to prevent somebody popping out the
+    // same winow multiple times.
+    this.windowsService.createOneOffWindow(
+      {
+        componentName: 'MultistreamChatInfo',
+        title: $t('Multichat Platform Support'),
+        size: {
+          width: 748,
+          height: 635,
+          minWidth: 748,
+          minHeight: 635,
+        },
+      },
+      'MultistreamChatInfo',
+    );
   }
 }

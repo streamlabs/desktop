@@ -15,7 +15,7 @@ class ObsResolutionInput extends ObsInput<IObsListInput<TObsValue>> {
   @Prop()
   value: IObsListInput<string>;
 
-  @Prop({ default: 'Select Option' })
+  @Prop({ default: () => $t('Select Option') })
   placeholder: string;
 
   @Prop({ default: false })

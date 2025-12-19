@@ -9,7 +9,7 @@ import { GuestApiHandler } from 'util/guest-api-handler';
 import { IDownloadProgress } from 'util/requests';
 import { Services } from 'components-react/service-provider';
 
-export default function AlertboxLibrary(p: { params: { id?: string } }) {
+export default function AlertboxLibrary(p: { params: { id?: string }; className?: string }) {
   const {
     NotificationsService,
     JsonrpcService,
@@ -73,7 +73,7 @@ export default function AlertboxLibrary(p: { params: { id?: string } }) {
       lifeTime: 8000,
       showTime: false,
       message: $t(
-        'Alertbox Theme installed & activated. Click here to manage your Widget Profiles.',
+        'Alert Box Theme installed & activated. Click here to manage your Widget Profiles.',
       ),
       action: JsonrpcService.createRequest(
         Service.getResourceId(MagicLinkService),
@@ -85,6 +85,7 @@ export default function AlertboxLibrary(p: { params: { id?: string } }) {
   if (!libraryUrl) return <></>;
   return (
     <BrowserView
+      className={p.className}
       style={{ position: 'absolute', top: '0', left: '0', right: '0', bottom: '0' }}
       src={libraryUrl}
       enableGuestApi

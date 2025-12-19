@@ -3,7 +3,7 @@
  */
 import React, { useEffect, useContext, ChangeEvent, FocusEvent, useCallback, useRef } from 'react';
 import { FormContext } from './Form';
-import { useDebounce } from '../../hooks';
+import { useDebounce, useThrottle } from '../../hooks';
 import { useOnCreate, useForceUpdate, createFormBinding } from 'slap';
 import uuid from 'uuid';
 import { FormItemProps } from 'antd/lib/form';
@@ -33,7 +33,11 @@ export type TInputType =
   | 'image'
   | 'time'
   | 'file'
-  | 'checkboxGroup';
+  | 'checkboxGroup'
+  | 'radio'
+  | 'imagepicker'
+  | 'animation'
+  | 'duration';
 
 export type TInputLayout = 'horizontal' | 'vertical' | 'inline';
 
@@ -50,6 +54,7 @@ export interface IInputCommonProps<TValue> {
   disabled?: boolean;
   readOnly?: boolean;
   debounce?: number;
+  throttle?: number;
   /**
    * true if the input is in the uncontrolled mode
    * all input components except text inputs are controlled by default
@@ -178,6 +183,7 @@ export function useInput<
     inputPropsRef.current.onChange && inputPropsRef.current.onChange(newVal);
   }
   const emitChangeDebounced = useDebounce(inputProps.debounce, emitChange);
+  const emitChangeThrottled = useThrottle(inputProps.throttle, emitChange);
 
   // create onChange handler
   const onChange = useCallback((newVal: TValue) => {
@@ -196,6 +202,8 @@ export function useInput<
     if (!props.onChange) return;
     if (props.debounce) {
       emitChangeDebounced(newVal);
+    } else if (props.throttle) {
+      emitChangeThrottled(newVal);
     } else {
       emitChange(newVal);
     }
@@ -325,6 +333,7 @@ export function useTextInput<
 }
 
 /**
+ * @deprecated use bindFormState instead
  * 2-way binding util for inputs
  *
  * @example
@@ -349,6 +358,37 @@ export function createBinding<TState extends object, TExtraProps extends object 
   extraPropsGenerator?: (fieldName: keyof TState) => TExtraProps,
 ) {
   return createFormBinding(stateGetter, stateSetter, extraPropsGenerator).proxy;
+}
+
+type TFormBindings<TState, TExtraProps = {}> = {
+  [K in keyof TState]: {
+    name: K;
+    value: TState[K];
+    onChange: (newVal: TState[K]) => unknown;
+  };
+} &
+  TExtraProps;
+
+export function bindFormState<TFormState, TExtraProps = {}>(
+  getFormState: () => TFormState,
+  updateFormState: (statePatch: Partial<TFormState>) => unknown,
+  extraProps?: TExtraProps,
+) {
+  const formState = getFormState();
+  const result = {} as any;
+  for (const fieldName in formState) {
+    result[fieldName] = {
+      name: fieldName,
+      value: formState[fieldName],
+      onChange: (value: any) => {
+        updateFormState({ [fieldName]: value } as Partial<TFormState>);
+      },
+    };
+  }
+
+  extraProps ?? Object.assign(result, extraProps);
+
+  return result as TFormBindings<TFormState, TExtraProps>;
 }
 
 function createValidationRules(type: TInputType, inputProps: IInputCommonProps<unknown>) {
@@ -393,5 +433,7 @@ export function getInputComponentByType(
   const name = Object.keys(InputComponents).find(componentName => {
     return componentName.split('Input')[0].toLowerCase() === type;
   });
+  // TODO: index
+  // @ts-ignore
   return name ? InputComponents[name] : null;
 }

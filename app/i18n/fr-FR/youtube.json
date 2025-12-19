@@ -40,5 +40,13 @@
   "Auto-start is disabled for your broadcast. You should manually publish your stream from Youtube Studio": "Le démarrage automatique est désactivé pour votre diffusion. Vous devriez publier manuellement votre stream depuis YouTube Studio",
   "Made for kids": "Conçu pour les enfants",
   "Features like personalized ads and live chat won't be available on live streams made for kids.": "Les fonctionnalités comme les publicités personnalisées et le chat en direct ne seront pas disponibles pour les streams conçus pour les enfants.",
-  "Try our new thumbnail editor": "Essayez notre nouvel éditeur de miniatures"
+  "YouTube token has expired, re-login or re-merge YouTube account": "Le jeton YouTube a expiré, reconnecte-toi ou fusionne à nouveau ton compte YouTube.",
+  "Thumbnail image content is invalid.": "Le contenu de l’image de la miniature n’est pas valide.",
+  "Thumbnail file does not include image content.": "Le fichier de miniature ne contient pas d’image.",
+  "Permission missing to upload thumbnails.": "Autorisation de mise en ligne des miniatures manquante.",
+  "Video does not exist. Thumbnail upload failed.": "La vidéo n’existe pas. Le téléchargement de la miniature a échoué.",
+  "Exceeded thumbnail upload quota. Please try again later.": "Le quota de téléchargement de miniatures a été dépassé. Réessaie plus tard.",
+  "YouTube thumbnail image is too large. Maximum size is 2MB.": "L’image de miniature YouTube est trop grande. La taille maximum est de 2 Mo.",
+  "Please upload thumbnail manually on YouTube.": "Mets en ligne la miniature manuellement sur YouTube.",
+  "Stream Shift Error: YouTube is not live": "Stream Shift Error: YouTube is not live"
 }

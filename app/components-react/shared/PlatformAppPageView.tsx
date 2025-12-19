@@ -10,6 +10,7 @@ import styles from './PlatformAppPageView.m.less';
 export default function PlatformAppPageView(p: {
   appId: string;
   pageSlot: EAppPageSlot;
+  className?: string;
   style?: React.CSSProperties;
 }) {
   const { PlatformAppsService, WindowsService } = Services;
@@ -108,6 +109,7 @@ export default function PlatformAppPageView(p: {
           width: '100%',
           ...p.style,
         }}
+        className={p.className}
         ref={appContainer}
       />
     </>

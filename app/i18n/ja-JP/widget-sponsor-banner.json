@@ -3,8 +3,7 @@
   "Ad Layout": "広告レイアウト",
   "Placement": "配置",
   "Image Layout": "画像レイアウト",
-  "Image Duration": "画像の期間",
-  "Seconds": "秒",
+  "Image Duration (seconds)": "Image Duration (seconds)",
   "Add Image": "画像を追加",
   "Widget Hide Duration": "ウィジェット非表示期間",
   "Widget Show Duration": "ウィジェット表示期間",
@@ -19,7 +18,10 @@
   "The amount of time the widget will appear.": "ウィジェットが表示される時間の量。",
   "These are the animations that are used to show your banner.": "これらは、バナーの表示に使用されるアニメーションです。",
   "Visual Settings": "ビジュアル設定",
-  "Image Set ": "画像セット",
+  "Image Set %{number}": "Image Set %{number}",
+  "Placement %{number} Images": "Placement %{number} Images",
   "No Image": "画像なし",
-  "Set up a sponsor banner to be able to edit (add, remove, update) rotating sponsor logos on streamer channel.": "スポンサーバナーを編集できるように設定します（追加、削除、更新）。スポンサーのロゴをストリーマーチャネル上で回転します。"
+  "Set up a sponsor banner to be able to edit (add, remove, update) rotating sponsor logos on streamer channel.": "スポンサーバナーを編集できるように設定します（追加、削除、更新）。スポンサーのロゴをストリーマーチャネル上で回転します。",
+  "Show off rotating media to display your socials, sponsorships, CTAs or just cute animations.": "ソーシャルメディア、スポンサーシップ、CTA、またはかわいいアニメーションを表示するための回転するメディアを表示します。",
+  "The duration must be in the format [minutes]:[seconds] (i.e. 02:05)": "The duration must be in the format [minutes]:[seconds] (i.e. 02:05)"
 }

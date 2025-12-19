@@ -4,23 +4,33 @@ import {
   IPlatformRequest,
   IPlatformService,
   IPlatformState,
+  TLiveDockFeature,
   TPlatformCapability,
 } from '.';
 import { HostsService } from 'services/hosts';
 import { Inject } from 'services/core/injector';
 import { authorizedHeaders, jfetch } from 'util/requests';
 import { UserService } from 'services/user';
+import { SettingsService } from 'services/settings';
 import { TTwitchOAuthScope, TwitchTagsService } from './twitch/index';
 import { platformAuthorizedRequest } from './utils';
 import { CustomizationService } from 'services/customization';
-import { IGoLiveSettings } from 'services/streaming';
-import { InheritMutations, mutation } from 'services/core';
-import { throwStreamError, TStreamErrorType } from 'services/streaming/stream-error';
+import { IGoLiveSettings, TDisplayOutput } from 'services/streaming';
+import { InheritMutations, mutation, ViewHandler } from 'services/core';
+import { StreamError, throwStreamError, TStreamErrorType } from 'services/streaming/stream-error';
 import { BasePlatformService } from './base-platform';
 import Utils from '../utils';
 import { IVideo } from 'obs-studio-node';
 import { TDisplayType } from 'services/settings-v2';
 import { TOutputOrientation } from 'services/restream';
+import {
+  ITwitchContentClassificationLabelsRootResponse,
+  TwitchContentClassificationService,
+} from './twitch/content-classification';
+import { ENotificationType, NotificationsService } from '../notifications';
+import { $t } from '../i18n';
+import { IncrementalRolloutService } from 'app-services';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export interface ITwitchStartStreamOptions {
   title: string;
@@ -28,6 +38,10 @@ export interface ITwitchStartStreamOptions {
   video?: IVideo;
   tags: string[];
   mode?: TOutputOrientation;
+  display?: TDisplayOutput;
+  contentClassificationLabels: string[];
+  isBrandedContent: boolean;
+  isEnhancedBroadcasting: boolean;
 }
 
 export interface ITwitchChannelInfo extends ITwitchStartStreamOptions {
@@ -58,10 +72,32 @@ interface ITwitchOAuthValidateResponse {
 interface ITwitchServiceState extends IPlatformState {
   hasUpdateTagsPermission: boolean;
   hasPollsPermission: boolean;
+  hasChatWritePermission: boolean;
   settings: ITwitchStartStreamOptions;
 }
 
 const UNLISTED_GAME_CATEGORY = { id: '0', name: 'Unlisted', box_art_url: '' };
+
+class TwitchServiceViews extends ViewHandler<ITwitchServiceState> {
+  get incrementalRolloutServiceView() {
+    return this.getServiceViews(IncrementalRolloutService);
+  }
+
+  /**
+   * TODO: This variable currently needs to be different for preview vs live releases
+   * while twitch is in closed beta for this feature, meaning we need to change it
+   * every time we release to production and then change it back
+   *
+   * Preview releases: "twitchDualStreamPreview"
+   * Production releases: "twitchDualStream"
+   */
+  get hasTwitchDualStreamAccess() {
+    const featureName = Utils.env.SLOBS_PREVIEW
+      ? EAvailableFeatures.twitchDualStreamPreview
+      : EAvailableFeatures.twitchDualStream;
+    return this.incrementalRolloutServiceView.featureIsEnabled(featureName);
+  }
+}
 
 @InheritMutations()
 export class TwitchService
@@ -71,17 +107,25 @@ export class TwitchService
   @Inject() userService: UserService;
   @Inject() customizationService: CustomizationService;
   @Inject() twitchTagsService: TwitchTagsService;
+  @Inject() twitchContentClassificationService: TwitchContentClassificationService;
+  @Inject() notificationsService: NotificationsService;
+  @Inject() settingsService: SettingsService;
+  @Inject() incrementalRolloutService: IncrementalRolloutService;
 
   static initialState: ITwitchServiceState = {
     ...BasePlatformService.initialState,
     hasUpdateTagsPermission: false,
     hasPollsPermission: false,
+    hasChatWritePermission: false,
     settings: {
       title: '',
       game: '',
       video: undefined,
       mode: undefined,
       tags: [],
+      contentClassificationLabels: [],
+      isBrandedContent: false,
+      isEnhancedBroadcasting: false,
     },
   };
 
@@ -100,7 +144,10 @@ export class TwitchService
     'streamlabels',
     'themes',
     'viewerCount',
+    'dualStream',
   ]);
+
+  readonly liveDockFeatures = new Set<TLiveDockFeature>(['chat-offline', 'refresh-chat']);
 
   authWindowOptions: Electron.BrowserWindowConstructorOptions = {
     width: 600,
@@ -122,8 +169,14 @@ export class TwitchService
         this.validatePollsScope();
         // Check for updated tags scopes
         this.validateTagsScope();
+        // Check for chat write scope
+        this.validateChatWriteScope();
       }
     });
+  }
+
+  get views() {
+    return new TwitchServiceViews(this.state);
   }
 
   get authUrl() {
@@ -133,6 +186,7 @@ export class TwitchService
       'channel_editor',
       'user:edit:broadcast',
       'channel:manage:broadcast',
+      'user:write:chat',
     ];
 
     const query =
@@ -167,6 +221,16 @@ export class TwitchService
   }
 
   async beforeGoLive(goLiveSettings?: IGoLiveSettings, context?: TDisplayType) {
+    // If the stream has switched from another device, a new broadcast does not need to be created
+    if (
+      goLiveSettings &&
+      goLiveSettings.streamShift &&
+      this.streamingService.views.shouldSwitchStreams
+    ) {
+      await this.setupStreamShiftStream(goLiveSettings);
+      return;
+    }
+
     if (
       this.streamSettingsService.protectedModeEnabled &&
       this.streamSettingsService.isSafeToModifyStreamKey()
@@ -192,23 +256,48 @@ export class TwitchService
 
     if (goLiveSettings) {
       const channelInfo = goLiveSettings?.platforms.twitch;
-      if (channelInfo) await this.putChannelInfo(channelInfo);
+
+      if (channelInfo) {
+        if (channelInfo?.display === 'both') {
+          try {
+            await this.setupDualStream(goLiveSettings);
+          } catch (e: unknown) {
+            console.error('Error setting up dual stream:', e);
+          }
+        } else {
+          // Update enhanced broadcasting setting based on go live settings
+          this.settingsService.setEnhancedBroadcasting(channelInfo.isEnhancedBroadcasting);
+        }
+
+        await this.putChannelInfo(channelInfo);
+      }
+    } else if (this.streamingService.views.isTwitchDualStreaming) {
+      // Failsafe to guarantee that enhanced broadcasting is enabled if dual streaming is active
+      try {
+        await this.setupDualStream(goLiveSettings);
+      } catch (e: unknown) {
+        console.error('Error setting up dual stream:', e);
+      }
     }
 
     this.setPlatformContext('twitch');
   }
 
-  async validatePlatform() {
-    const hasScopeCheck = this.hasScope('channel_read')
-      .then(result => {
-        if (!result) return EPlatformCallResult.TwitchScopeMissing;
-        return EPlatformCallResult.Success;
-      })
-      .catch(e => {
-        console.error('Error checking Twitch OAuth scopes', e);
-        return EPlatformCallResult.Error;
-      });
+  async afterStopStream(): Promise<void> {
+    // Restore enhanced broadcasting state
+    this.settingsService.setEnhancedBroadcasting(this.state.settings.isEnhancedBroadcasting);
+  }
 
+  async setupDualStream(goLiveSettings?: IGoLiveSettings) {
+    if (!this.streamingService.views.isTwitchDualStreaming) {
+      return;
+    }
+
+    // Enhanced broadcasting is required for dual streaming
+    this.settingsService.setEnhancedBroadcasting(true);
+  }
+
+  async validatePlatform() {
     const twitchTwoFactorCheck = this.fetchStreamKey()
       .then(key => {
         return EPlatformCallResult.Success;
@@ -223,7 +312,7 @@ export class TwitchService
         return EPlatformCallResult.Error;
       });
 
-    const results = await Promise.all([hasScopeCheck, twitchTwoFactorCheck]);
+    const results = await Promise.all([twitchTwoFactorCheck]);
     const failedResults = results.filter(result => result !== EPlatformCallResult.Success);
     if (failedResults.length) return failedResults[0];
     return EPlatformCallResult.Success;
@@ -234,10 +323,9 @@ export class TwitchService
     const url = `https://${host}/api/v5/slobs/twitch/refresh`;
     const headers = authorizedHeaders(this.userService.apiToken!);
     const request = new Request(url, { headers });
-
-    return jfetch<{ access_token: string }>(request).then(response =>
-      this.userService.updatePlatformToken('twitch', response.access_token),
-    );
+    return jfetch<{ access_token: string }>(request).then(response => {
+      this.userService.updatePlatformToken('twitch', response.access_token);
+    });
   }
 
   /**
@@ -247,11 +335,14 @@ export class TwitchService
     try {
       return await platformAuthorizedRequest<T>('twitch', reqInfo);
     } catch (e: unknown) {
-      const details = (e as any).result
-        ? `${(e as any).result.status} ${(e as any).result.error} ${(e as any).result.message}`
+      console.error(`Failed ${this.displayName} API Request:`, reqInfo);
+
+      const error = e as any;
+      const details = error.result
+        ? `${error.result.status} ${error.result.error} ${error.result.message}`
         : 'Connection failed';
       let errorType: TStreamErrorType;
-      switch ((e as any).result?.message) {
+      switch (error.result?.message) {
         case 'missing required oauth scope':
           errorType = 'TWITCH_MISSED_OAUTH_SCOPE';
           break;
@@ -261,7 +352,7 @@ export class TwitchService
         default:
           errorType = 'PLATFORM_REQUEST_FAILED';
       }
-      throwStreamError(errorType, e as any, details);
+      throwStreamError(errorType, { ...error, platform: 'twitch' }, details);
     }
   }
 
@@ -276,19 +367,41 @@ export class TwitchService
    */
   async prepopulateInfo(): Promise<void> {
     const [channelInfo] = await Promise.all([
-      this.requestTwitch<{ data: { title: string; game_name: string }[] }>(
-        `${this.apiBase}/helix/channels?broadcaster_id=${this.twitchId}`,
-      ).then(json => ({
-        title: json.data[0].title,
-        game: json.data[0].game_name,
-      })),
+      this.requestTwitch<{
+        data: {
+          title: string;
+          game_name: string;
+          is_branded_content: boolean;
+          content_classification_labels: string[];
+        }[];
+      }>(`${this.apiBase}/helix/channels?broadcaster_id=${this.twitchId}`).then(json => {
+        return {
+          title: json.data[0].title,
+          game: json.data[0].game_name,
+          is_branded_content: json.data[0].is_branded_content,
+          content_classification_labels: json.data[0].content_classification_labels,
+        };
+      }),
+      this.requestTwitch<ITwitchContentClassificationLabelsRootResponse>(
+        `${this.apiBase}/helix/content_classification_labels`,
+      ).then(json => this.twitchContentClassificationService.setLabels(json)),
     ]);
 
     const tags: string[] = this.twitchTagsService.views.hasTags
       ? this.twitchTagsService.views.tags
       : [];
+
+    this.SET_STREAM_SETTINGS({
+      tags,
+      title: channelInfo.title,
+      game: channelInfo.game,
+      isBrandedContent: channelInfo.is_branded_content,
+      isEnhancedBroadcasting:
+        this.state.settings.isEnhancedBroadcasting || this.settingsService.isEnhancedBroadcasting(),
+      contentClassificationLabels: channelInfo.content_classification_labels,
+    });
+
     this.SET_PREPOPULATED(true);
-    this.SET_STREAM_SETTINGS({ tags, title: channelInfo.title, game: channelInfo.game });
   }
 
   fetchUserInfo() {
@@ -305,13 +418,69 @@ export class TwitchService
     ).then(json => json.data[0]?.viewer_count ?? 0);
   }
 
+  async setupStreamShiftStream(goLiveSettings?: IGoLiveSettings) {
+    const settings = goLiveSettings?.streamShiftSettings;
+
+    if (settings && !settings.is_live) {
+      console.error('Stream Shift Error: Twitch is not live');
+      this.postNotification('Stream Shift Error: Twitch is not live');
+      return;
+    }
+
+    const [channelInfo] = await Promise.all([
+      this.requestTwitch<{
+        data: {
+          title: string;
+          game_name: string;
+          is_branded_content: boolean;
+          content_classification_labels: string[];
+        }[];
+      }>(`${this.apiBase}/helix/channels?broadcaster_id=${this.twitchId}`).then(json => {
+        return {
+          title: settings?.stream_title ?? json.data[0].title,
+          game: json.data[0].game_name,
+          is_branded_content: json.data[0].is_branded_content,
+          content_classification_labels: json.data[0].content_classification_labels,
+        };
+      }),
+      this.requestTwitch<ITwitchContentClassificationLabelsRootResponse>(
+        `${this.apiBase}/helix/content_classification_labels`,
+      ).then(json => this.twitchContentClassificationService.setLabels(json)),
+    ]);
+
+    const title = settings?.stream_title ?? channelInfo.title;
+    const game = settings?.game_name ?? channelInfo.game;
+
+    const tags: string[] = this.twitchTagsService.views.hasTags
+      ? this.twitchTagsService.views.tags
+      : [];
+
+    this.SET_STREAM_SETTINGS({
+      tags,
+      title,
+      game,
+      isBrandedContent: channelInfo.is_branded_content,
+      isEnhancedBroadcasting: this.settingsService.isEnhancedBroadcasting(),
+      contentClassificationLabels: channelInfo.content_classification_labels,
+    });
+
+    this.setPlatformContext('twitch');
+  }
+
   fetchFollowers(): Promise<number> {
     return this.requestTwitch<{ total: number }>({
       url: `${this.apiBase}/helix/users/follows?to_id=${this.twitchId}`,
     }).then(json => json.total);
   }
 
-  async putChannelInfo({ title, game, tags = [] }: ITwitchStartStreamOptions): Promise<void> {
+  async putChannelInfo({
+    title,
+    game,
+    tags = [],
+    contentClassificationLabels = [],
+    isBrandedContent = false,
+    isEnhancedBroadcasting = false,
+  }: ITwitchStartStreamOptions): Promise<void> {
     let gameId = '';
     const isUnlisted = game === UNLISTED_GAME_CATEGORY.name;
     if (isUnlisted) gameId = '0';
@@ -323,14 +492,74 @@ export class TwitchService
     this.twitchTagsService.actions.setTags(tags);
     const hasPermission = await this.hasScope('channel:manage:broadcast');
     const scopedTags = hasPermission ? tags : undefined;
-    await Promise.all([
+
+    // Twitch seems to require you to add a label with disabled to remove it
+    const labels = this.twitchContentClassificationService.options.map(option => ({
+      id: option.value,
+      is_enabled: contentClassificationLabels.includes(option.value),
+    }));
+
+    const updateInfo = async (tags: ITwitchStartStreamOptions['tags'] | undefined) =>
       this.requestTwitch({
         url: `${this.apiBase}/helix/channels?broadcaster_id=${this.twitchId}`,
         method: 'PATCH',
-        body: JSON.stringify({ game_id: gameId, title, tags: scopedTags }),
-      }),
-    ]);
-    this.SET_STREAM_SETTINGS({ title, game, tags });
+        body: JSON.stringify({
+          tags,
+          title,
+          game_id: gameId,
+          is_branded_content: isBrandedContent,
+          content_classification_labels: labels,
+        }),
+      });
+
+    // TODO: I would like to extract fn on all this, but the early return makes it tricky, will revisit eventually
+    try {
+      await updateInfo(scopedTags);
+    } catch (e: unknown) {
+      // Full error message from Twitch:
+      // "400 Bad Request One or more tags were not applied because they failed a moderation check: [noob, Twitch]"
+      if (e instanceof StreamError && e.details?.includes('One or more tags were not applied')) {
+        // Remove offending tags by finding the **not-valid JSON** array of tags returned from the response
+        const offendingTagsStr = e.details.match(/moderation check: \[(.+)]$/)?.[1];
+
+        // If they ever change their response format let it blow as before, we can't handle without code updates
+        if (!offendingTagsStr) {
+          throw e;
+        }
+
+        const offendingTags = offendingTagsStr.split(', ').map(str => str.toLowerCase());
+        const newTags = tags.filter(tag => !offendingTags.includes(tag.toLowerCase()));
+
+        // If we fail the second time we're throwing our hands up and let it blow up as before
+        await updateInfo(newTags);
+
+        // Remove the offending tags from their list, they can't use them anyways
+        this.twitchTagsService.actions.setTags(newTags);
+        this.SET_STREAM_SETTINGS({ title, game, tags: newTags });
+
+        // Notify the user of the tags that were removed
+        // TODO: I don't personally like calling Notification code from here
+        this.notificationsService.push({
+          message: $t(
+            'While updating your Twitch channel info, some tags were removed due to moderation rules: %{tags}',
+            { tags: offendingTags.join(', ') },
+          ),
+          playSound: false,
+          type: ENotificationType.WARNING,
+        });
+
+        return;
+      }
+
+      throw e;
+    }
+
+    this.SET_STREAM_SETTINGS({
+      title,
+      game,
+      tags,
+      isEnhancedBroadcasting,
+    });
   }
 
   async searchGames(searchString: string): Promise<IGame[]> {
@@ -385,6 +614,27 @@ export class TwitchService
     this.SET_HAS_POLLS_PERMISSION(hasPollsPermission);
   }
 
+  async validateChatWriteScope() {
+    const hasChatWritePermission = await this.hasScope('user:write:chat');
+    this.SET_HAS_CHAT_WRITE_PERMISSION(hasChatWritePermission);
+  }
+
+  async sendChatMessage(msg: string) {
+    this.requestTwitch({
+      url: `${this.apiBase}/helix/chat/messages`,
+      method: 'POST',
+      body: JSON.stringify({
+        broadcaster_id: this.twitchId,
+        sender_id: this.twitchId,
+        message: msg,
+      }),
+    });
+  }
+
+  setEnhancedBroadcasting(status: boolean) {
+    this.SET_ENHANCED_BROADCASTING(status);
+  }
+
   hasScope(scope: TTwitchOAuthScope): Promise<boolean> {
     // prettier-ignore
     return platformAuthorizedRequest('twitch', 'https://id.twitch.tv/oauth2/validate').then(
@@ -416,5 +666,15 @@ export class TwitchService
   @mutation()
   private SET_HAS_TAGS_PERMISSION(hasUpdateTagsPermission: boolean) {
     this.state.hasUpdateTagsPermission = hasUpdateTagsPermission;
+  }
+
+  @mutation()
+  private SET_HAS_CHAT_WRITE_PERMISSION(hasChatWritePermission: boolean) {
+    this.state.hasChatWritePermission = hasChatWritePermission;
+  }
+
+  @mutation()
+  private SET_ENHANCED_BROADCASTING(status: boolean) {
+    this.state.settings.isEnhancedBroadcasting = status;
   }
 }

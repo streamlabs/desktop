@@ -3,8 +3,7 @@
   "Ad Layout": "广告布局",
   "Placement": "放置",
   "Image Layout": "图片布局",
-  "Image Duration": "图片持续时间",
-  "Seconds": "秒",
+  "Image Duration (seconds)": "Image Duration (seconds)",
   "Add Image": "添加图片",
   "Widget Hide Duration": "小工具隐藏持续时间",
   "Widget Show Duration": "小工具显示持续时间",
@@ -19,7 +18,10 @@
   "The amount of time the widget will appear.": "小工具显示的时间。",
   "These are the animations that are used to show your banner.": "这些是用来显示横幅的动画。",
   "Visual Settings": "视觉设置",
-  "Image Set ": "图片集",
+  "Image Set %{number}": "Image Set %{number}",
+  "Placement %{number} Images": "Placement %{number} Images",
   "No Image": "无图片",
-  "Set up a sponsor banner to be able to edit (add, remove, update) rotating sponsor logos on streamer channel.": "设置赞助商横幅，以便能够编辑（添加、删除、更新）流媒体频道上的旋转赞助商徽标。"
+  "Set up a sponsor banner to be able to edit (add, remove, update) rotating sponsor logos on streamer channel.": "设置赞助商横幅，以便能够编辑（添加、删除、更新）流媒体频道上的旋转赞助商徽标。",
+  "Show off rotating media to display your socials, sponsorships, CTAs or just cute animations.": "展示旋转媒体，以显示您的社交媒体内容、赞助信息、CTA 或可爱的动画效果。",
+  "The duration must be in the format [minutes]:[seconds] (i.e. 02:05)": "The duration must be in the format [minutes]:[seconds] (i.e. 02:05)"
 }

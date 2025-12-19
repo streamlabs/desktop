@@ -1,21 +1,17 @@
 import { Subject } from 'rxjs';
-import { PersistentStatefulService } from 'services/core/persistent-stateful-service';
-import { mutation, ViewHandler } from 'services/core/stateful-service';
-import {
-  IObsInput,
-  IObsListInput,
-  IObsNumberInputValue,
-  TObsFormData,
-} from 'components/obs/inputs/ObsInput';
-import Utils from 'services/utils';
 import { $t } from 'services/i18n';
-import { Inject } from 'services/core';
+import { Inject, Service } from 'services/core';
 import { UserService } from 'services/user';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import fs from 'fs-extra';
 import path from 'path';
 import { AppService } from './app';
 import * as obs from '../../obs-api';
+import { RealmObject } from './realm';
+import { ObjectSchema } from 'realm';
+import { Theme } from 'styles/antd';
+
+export type TApplicationTheme = 'night-theme' | 'day-theme' | 'prime-dark' | 'prime-light';
 
 // Maps to --background
 const THEME_BACKGROUNDS = {
@@ -50,7 +46,7 @@ export interface IPinnedStatistics {
 
 export interface ICustomizationServiceState {
   nightMode?: string;
-  theme: string;
+  theme: TApplicationTheme;
   updateStreamInfoOnLive: boolean;
   livePreviewEnabled: boolean;
   leftDock: boolean;
@@ -77,93 +73,117 @@ export interface ICustomizationServiceState {
   enableAnnouncements: boolean;
 }
 
-class CustomizationViews extends ViewHandler<ICustomizationServiceState> {
-  get experimentalSettingsFormData(): TObsFormData {
-    return [];
-  }
+class PinnedStatistics extends RealmObject implements IPinnedStatistics {
+  cpu: boolean;
+  fps: boolean;
+  droppedFrames: boolean;
+  bandwidth: boolean;
 
-  get pinnedStatistics() {
-    return this.state.pinnedStatistics;
-  }
+  static schema: ObjectSchema = {
+    name: 'PinnedStatistics',
+    embedded: true,
+    properties: {
+      cpu: { type: 'bool', default: false },
+      fps: { type: 'bool', default: false },
+      droppedFrames: { type: 'bool', default: false },
+      bandwidth: { type: 'bool', default: false },
+    },
+  };
+}
 
-  get displayBackground() {
-    return DISPLAY_BACKGROUNDS[this.state.theme];
-  }
+PinnedStatistics.register({ persist: true });
 
-  get currentTheme() {
-    return this.state.theme;
+export class CustomizationState extends RealmObject {
+  theme: TApplicationTheme;
+  updateStreamInfoOnLive: boolean;
+  livePreviewEnabled: boolean;
+  leftDock: boolean;
+  hideViewerCount: boolean;
+  folderSelection: boolean;
+  legacyAlertbox: boolean | null;
+  livedockCollapsed: boolean;
+  livedockSize: number;
+  eventsSize: number;
+  controlsSize: number;
+  performanceMode: boolean;
+  chatZoomFactor: number;
+  enableBTTVEmotes: boolean;
+  enableFFZEmotes: boolean;
+  mediaBackupOptOut: boolean;
+  navigateToLiveOnStreamStart: boolean;
+  designerMode: boolean;
+  legacyEvents: boolean;
+  pinnedStatistics: PinnedStatistics;
+  enableCrashDumps: boolean;
+  enableAnnouncements: boolean;
+
+  static schema: ObjectSchema = {
+    name: 'CustomizationState',
+    properties: {
+      theme: { type: 'string', default: 'night-theme' },
+      updateStreamInfoOnLive: { type: 'bool', default: true },
+      livePreviewEnabled: { type: 'bool', default: true },
+      leftDock: { type: 'bool', default: false },
+      hideViewerCount: { type: 'bool', default: false },
+      folderSelection: { type: 'bool', default: false },
+      legacyAlertbox: { type: 'bool', default: false },
+      livedockCollapsed: { type: 'bool', default: true },
+      livedockSize: { type: 'double', default: 0 },
+      eventsSize: { type: 'double', default: 156 },
+      controlsSize: { type: 'double', default: 240 },
+      performanceMode: { type: 'bool', default: false },
+      chatZoomFactor: { type: 'double', default: 1 },
+      enableBTTVEmotes: { type: 'bool', default: false },
+      enableFFZEmotes: { type: 'bool', default: false },
+      mediaBackupOptOut: { type: 'bool', default: false },
+      navigateToLiveOnStreamStart: { type: 'bool', default: true },
+      legacyEvents: { type: 'bool', default: false },
+      designerMode: { type: 'bool', default: false },
+      pinnedStatistics: { type: 'object', objectType: 'PinnedStatistics', default: {} },
+      enableCrashDumps: { type: 'bool', default: true },
+      enableAnnouncements: { type: 'bool', default: true },
+    },
+  };
+
+  protected onCreated(): void {
+    const data = localStorage.getItem('PersistentStatefulService-CustomizationService');
+
+    if (data) {
+      const parsed = JSON.parse(data);
+      this.db.write(() => {
+        Object.assign(this, parsed);
+      });
+    }
   }
 
   get isDarkTheme() {
-    return ['night-theme', 'prime-dark'].includes(this.currentTheme);
+    return ['night-theme', 'prime-dark'].includes(this.theme);
   }
 
-  get designerMode() {
-    return this.state.designerMode;
+  get displayBackground() {
+    // TODO: index
+    // @ts-ignore
+    return DISPLAY_BACKGROUNDS[this.theme];
   }
 }
+
+CustomizationState.register({ persist: true });
 
 /**
  * This class is used to store general UI behavior flags
  * that are sticky across application runtimes.
  */
-export class CustomizationService extends PersistentStatefulService<ICustomizationServiceState> {
+export class CustomizationService extends Service {
   @Inject() userService: UserService;
   @Inject() usageStatisticsService: UsageStatisticsService;
   @Inject() appService: AppService;
 
-  static get migrations() {
-    return [
-      {
-        oldKey: 'nightMode',
-        newKey: 'theme',
-        transform: (val: boolean) => (val ? 'night-theme' : 'day-theme'),
-      },
-    ];
-  }
+  settingsChanged = new Subject<DeepPartial<CustomizationState>>();
 
-  static defaultState: ICustomizationServiceState = {
-    theme: 'night-theme',
-    updateStreamInfoOnLive: true,
-    livePreviewEnabled: true,
-    leftDock: false,
-    hideViewerCount: false,
-    livedockCollapsed: true,
-    livedockSize: 0,
-    eventsSize: 156,
-    controlsSize: 240,
-    performanceMode: false,
-    chatZoomFactor: 1,
-    enableBTTVEmotes: false,
-    enableFFZEmotes: false,
-    mediaBackupOptOut: false,
-    folderSelection: false,
-    navigateToLiveOnStreamStart: true,
-    legacyEvents: false,
-    designerMode: false,
-    pinnedStatistics: {
-      cpu: false,
-      fps: false,
-      droppedFrames: false,
-      bandwidth: false,
-    },
-    legacyAlertbox: null,
-    experimental: {
-      // put experimental features here
-    },
-    enableCrashDumps: true,
-    enableAnnouncements: true,
-  };
-
-  settingsChanged = new Subject<Partial<ICustomizationServiceState>>();
-
-  get views() {
-    return new CustomizationViews(this.state);
-  }
+  state = CustomizationState.inject();
 
   init() {
     super.init();
-    this.setSettings(this.runMigrations(this.state, CustomizationService.migrations));
     this.setLiveDockCollapsed(true); // livedock is always collapsed on app start
     this.ensureCrashDumpFolder();
     this.setObsTheme();
@@ -191,20 +211,22 @@ export class CustomizationService extends PersistentStatefulService<ICustomizati
     }
   }
 
-  setSettings(settingsPatch: Partial<ICustomizationServiceState>) {
-    const changedSettings = Utils.getChangedParams(this.state, settingsPatch);
-    this.SET_SETTINGS(changedSettings);
+  setSettings(settingsPatch: DeepPartial<CustomizationState>) {
+    this.state.db.write(() => {
+      this.state.deepPatch(settingsPatch);
+    });
 
-    if (changedSettings.enableCrashDumps != null) this.ensureCrashDumpFolder();
+    if (settingsPatch.enableCrashDumps != null) this.ensureCrashDumpFolder();
 
-    this.settingsChanged.next(changedSettings);
+    this.settingsChanged.next(settingsPatch);
   }
 
-  get currentTheme() {
-    return this.state.theme;
+  get currentTheme(): Theme {
+    // TODO: one level deeper is Realm, keep string for now
+    return this.state.theme as Theme;
   }
 
-  setTheme(theme: string) {
+  setTheme(theme: TApplicationTheme) {
     obs.NodeObs.OBS_content_setDayTheme(['day-theme', 'prime-light'].includes(theme));
     return this.setSettings({ theme });
   }
@@ -218,7 +240,7 @@ export class CustomizationService extends PersistentStatefulService<ICustomizati
   }
 
   get isDarkTheme() {
-    return ['night-theme', 'prime-dark'].includes(this.currentTheme);
+    return this.state.isDarkTheme;
   }
 
   setUpdateStreamInfoOnLive(update: boolean) {
@@ -245,10 +267,6 @@ export class CustomizationService extends PersistentStatefulService<ICustomizati
     this.setSettings({ mediaBackupOptOut: optOut });
   }
 
-  setPinnedStatistics(pinned: IPinnedStatistics) {
-    this.setSettings({ pinnedStatistics: pinned });
-  }
-
   togglePerformanceMode() {
     this.setSettings({ performanceMode: !this.state.performanceMode });
   }
@@ -273,7 +291,7 @@ export class CustomizationService extends PersistentStatefulService<ICustomizati
   }
 
   restoreDefaults() {
-    this.setSettings(CustomizationService.defaultState);
+    this.state.reset();
   }
 
   /**
@@ -288,10 +306,5 @@ export class CustomizationService extends PersistentStatefulService<ICustomizati
     } else {
       fs.remove(crashDumpDirectory);
     }
-  }
-
-  @mutation()
-  private SET_SETTINGS(settingsPatch: Partial<ICustomizationServiceState>) {
-    Object.assign(this.state, settingsPatch);
   }
 }

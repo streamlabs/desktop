@@ -1,0 +1,146 @@
+@import '../../styles/index';
+
+.live-dock {
+  position: relative;
+  z-index: 1000;
+  width: 100%;
+  box-sizing: border-box;
+  height: 100%;
+
+  &.can-animate {
+    transition: width 300ms;
+  }
+
+  &.live-dock--left {
+    background-color: var(--section);
+  }
+
+  @media (max-width: 1070px) {
+    display: none;
+  }
+}
+
+.live-dock-end-stream {
+  margin-left: 10px;
+}
+
+.live-dock-header {
+  .margin-bottom();
+
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.live-dock-text {
+  .weight(@medium);
+
+  margin: 0 2px 0 4px;
+}
+
+.live-dock-expanded-contents {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+}
+
+.live-dock-info {
+  .margin-bottom();
+
+  display: flex;
+  justify-content: space-between;
+
+  .live-dock-platform-tools {
+    a,
+    i {
+      padding: 0 8px;
+    }
+  }
+}
+
+.live-dock-viewer-count {
+  .flex();
+  .flex--center();
+
+  i {
+    .margin-right();
+  }
+
+  .live-dock-viewer-count-toggle {
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  &:hover {
+    cursor: pointer;
+
+    .live-dock-viewer-count-toggle {
+      opacity: 1;
+    }
+  }
+}
+
+.live-dock-viewer-count__count {
+  padding-right: 3px;
+}
+
+.live-dock-chat {
+  .flex();
+  .flex--column();
+  .flex--grow();
+}
+
+.live-dock-chat--offline {
+  height: 100%;
+}
+
+.live-dock-chat__img--offline {
+  .flex();
+  .flex--center();
+  .flex--column();
+
+  width: 60%;
+  margin-bottom: 16px;
+}
+
+.live-dock-pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--warning);
+  margin: 0 8px;
+  box-shadow: 0 0 0 rgba(252, 62, 63, 0.4);
+
+  &.live-dock-offline {
+    background: var(--icon);
+    animation: none;
+  }
+}
+
+.live-dock-platform-tools {
+  .flex();
+  gap: 16px;
+}
+
+.live-dock-chat-tabs__icons {
+  display: flex;
+  flex-grow: 1;
+  width: 100%;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 8px 0 8px 8px;
+}
+
+.live-dock-chat-tabs__popout {
+  cursor: pointer;
+}
+
+.live-dock-chat-tabs__info {
+  cursor: pointer;
+}
+
+.live-dock-platform-app-webview {
+  .flex--grow();
+}

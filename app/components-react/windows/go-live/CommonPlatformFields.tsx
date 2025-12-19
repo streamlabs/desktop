@@ -1,12 +1,19 @@
 import { TPlatform } from '../../../services/platforms';
 import { $t } from '../../../services/i18n';
-import React from 'react';
-import { CheckboxInput, InputComponent, TextAreaInput, TextInput } from '../../shared/inputs';
+import React, { useMemo } from 'react';
+import {
+  CheckboxInput,
+  InputComponent,
+  TextAreaInput,
+  TextInput,
+  TInputLayout,
+} from '../../shared/inputs';
 import { assertIsDefined } from '../../../util/properties-type-guards';
 import InputWrapper from '../../shared/inputs/InputWrapper';
 import Animate from 'rc-animate';
 import { TLayoutMode } from './platforms/PlatformSettingsLayout';
 import { Services } from '../../service-provider';
+import { Tooltip } from 'antd';
 
 interface ICommonPlatformSettings {
   title: string;
@@ -22,6 +29,8 @@ interface IProps {
   layoutMode?: TLayoutMode;
   value: ICommonPlatformSettings;
   descriptionIsRequired?: boolean;
+  enabledPlatforms?: TPlatform[];
+  layout?: TInputLayout;
   onChange: (newValue: ICommonPlatformSettings) => unknown;
 }
 
@@ -35,6 +44,8 @@ type TCustomFieldName = 'title' | 'description';
 export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
   const defaultProps = { layoutMode: 'singlePlatform' as TLayoutMode };
   const p: IProps = { ...defaultProps, ...rawProps };
+
+  const { HighlighterService } = Services;
 
   function updatePlatform(patch: Partial<ICommonPlatformSettings>) {
     const platformSettings = p.value;
@@ -62,9 +73,6 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
       ? p.descriptionIsRequired
       : p.platform === 'facebook';
 
-  const user = Services.UserService.views;
-  const platform = user.auth?.platform?.type;
-
   const hasDescription = p.platform
     ? view.supports('description', [p.platform as TPlatform])
     : view.supports('description');
@@ -76,11 +84,32 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
     ? $t('Use different title and description')
     : $t('Use different title');
 
+  // determine max character length for title by enabled platform limitation
+  let maxCharacters = 120;
+  const enabledPlatforms = view.enabledPlatforms;
+  if (enabledPlatforms.includes('youtube')) {
+    maxCharacters = 100;
+  } else if (enabledPlatforms.includes('twitch')) {
+    maxCharacters = 140;
+  }
+
+  if (!enabledPlatforms.includes('twitch') && HighlighterService.views.useAiHighlighter) {
+    HighlighterService.actions.setAiHighlighter(false);
+  }
+
+  const titleTooltip = useMemo(() => {
+    if (enabledPlatforms.includes('tiktok')) {
+      return $t('Only 32 characters of your title will display on TikTok');
+    }
+
+    return undefined;
+  }, [enabledPlatforms]);
+
   return (
     <div>
       {/* USE CUSTOM CHECKBOX */}
       {hasCustomCheckbox && (
-        <InputWrapper>
+        <InputWrapper layout={p.layout}>
           <CheckboxInput
             name="customEnabled"
             value={p.value.useCustomFields}
@@ -98,9 +127,20 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
               value={fields['title']}
               name="title"
               onChange={val => updateCommonField('title', val)}
-              label={$t('Title')}
-              required={platform && platform?.toLowerCase() !== 'tiktok' ? true : false}
-              max={p.platform === 'twitch' ? 140 : 120}
+              label={
+                titleTooltip ? (
+                  <Tooltip title={titleTooltip} placement="right">
+                    {$t('Title')}
+                    <i className="icon-information" style={{ marginLeft: '5px' }} />
+                  </Tooltip>
+                ) : (
+                  $t('Title')
+                )
+              }
+              required={true}
+              max={maxCharacters}
+              layout={p.layout}
+              size="large"
             />
 
             {/*DESCRIPTION*/}
@@ -111,8 +151,15 @@ export const CommonPlatformFields = InputComponent((rawProps: IProps) => {
                 name="description"
                 label={$t('Description')}
                 required={descriptionIsRequired}
+                layout={p.layout}
               />
             )}
+
+            {/* {aiHighlighterFeatureEnabled &&
+              enabledPlatforms &&
+              !enabledPlatforms.includes('twitch') && (
+                <AiHighlighterToggle game={undefined} cardIsExpanded={false} />
+              )} */}
           </div>
         )}
       </Animate>

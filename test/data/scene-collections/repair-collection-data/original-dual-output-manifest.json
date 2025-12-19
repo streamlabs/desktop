@@ -1,0 +1,52 @@
+{
+  "activeId": "5d38cba8-88ca-4ad9-953a-e01e07884212",
+  "collections": [
+    {
+      "id": "5d38cba8-88ca-4ad9-953a-e01e07884212",
+      "name": "Logitech Blackout Overlay",
+      "modified": "2023-11-07T01:59:44.698Z",
+      "auto": false,
+      "operatingSystem": "win32",
+      "deleted": false,
+      "needsRename": false,
+      "serverId": 81976984,
+      "sceneNodeMaps": {
+        "scene_a8e7c0f5-7aa6-4187-9195-c3f29a5b856f": {
+          "1b8f9575-e384-41df-99f9-6648f341677a": "55b706d4-f686-41b4-8105-6d9bddae0949",
+          "249d3877-0605-4eec-a657-c284b0f08fc7": "45c72caf-ce29-4a55-b6f4-c25e5ac0f944",
+          "4f97be89-6f06-402d-9a39-1e3568d072ec": "0c55e880-8933-49be-b231-335329950bd8",
+          "195c08f4-803b-4180-b036-c552745bfe37": "2135a1c8-244e-433e-a2a7-4f083ca6ede7",
+          "7da8aff3-e326-4e49-b304-26a62f6db99e": "2583feef-a4ec-4ac7-9c89-d593a95c7187"
+        },
+        "scene_4caaaa07-2b11-495f-9b40-0c041a320d71": {
+          "f2d913af-ac36-43b0-8de7-791d6489c5e3": "69d3fa78-917f-43a6-8776-84faf6dd29cd",
+          "6ca1cd08-e6dd-4e11-97e1-0ba096bfbcfb": "d1ad77d8-e53c-464f-a79d-add31fd2aa32",
+          "0b11ddc0-4631-4617-88ef-a7d98687e370": "07c7ac95-5a1f-4ec9-8c2b-b65bdd5496e1"
+        },
+        "scene_ef37e143-5a63-4199-8520-f150a8be9a4d": {
+          "c099da76-5adf-4678-9276-17da941d113f": "0938c59b-d5eb-48e9-b6d2-81982cc2394b",
+          "d37d3daa-7f94-46db-a8e8-9bad6081a41e": "665c4975-bf0f-4430-9421-aedd07a56e44",
+          "99e0108d-36d9-4d22-baae-cf128c57a35e": "90c9df7e-8386-46e6-8c6d-daae48e37b6e",
+          "894ba171-250f-46a2-a8aa-df8d0e65d568": "2c2e939b-5228-4a26-9f56-1b86a7857f9c",
+          "0c49628a-02c4-4316-960d-deba0e50943f": "0e06d733-024f-4809-9295-908b9a0275d4",
+          "49e75c42-5adf-4388-be96-1d626fdcf1ab": "a8a3dde5-3a03-42d1-944a-9d804f1b2302",
+          "f6f22025-f6f5-4492-9049-0ca4f7279dfd": "a1f903b1-05e4-4318-80cf-bd1f9c9a4f58",
+          "3fcf7759-48c0-483d-97f9-b90dfebbb6e3": "a23b1599-da3a-40a8-8e19-2ec694a59892",
+          "3eeffdb4-b52b-4a5a-bd97-579b140bb118": "ab2affc4-5de0-4d82-b91e-aefa26601b57",
+          "6ac089c3-e678-4821-953c-d0c7a9000460": "2c341d68-8ccb-4847-a77e-3292a0fd319a",
+          "157a29e2-069d-48db-87f3-1be3b7483a1c": "07cc6654-c4f9-466e-87dc-151dcca6b01f",
+          "9e2821c7-a2f8-4c46-9564-647b35582ddb": "bc5b4a83-31a9-4570-9c78-2f8bdf0f6518",
+          "b4cc999c-a793-4908-8b00-f3d74ab9639e": "6c558c18-bb91-47ab-9165-801c2923d100",
+          "6a3226dc-d12f-4a96-96d8-c629d506f565": "277798ea-f232-451d-8759-d850e725ede5",
+          "db74ba6a-369b-4ac6-b24a-5daf1600ae68": "8f2a4a0c-12b4-4f82-a50a-d3cce1835900",
+          "bd9108b6-82f7-45f1-88a0-0d20b5dfdee0": "6e05b11f-1181-41a4-b10c-86e7d10fc2b7",
+          "7cace484-7d8c-45ac-9f2f-e5053488713f": "70d16615-64c7-4168-9599-7aaf1f887c33"
+        },
+        "scene_4b0856cc-5c21-497b-8423-693ccec63ad8": {
+          "a39f4e06-648b-4997-af53-b2a421a4394d": "585ec390-4041-4454-a45b-1b1345690151",
+          "7fb754fa-4d0f-4810-89cd-99d3145abaf8": "5f7aee00-9a27-4ec3-be26-f7b7ee3ec55b"
+        }
+      }
+    }
+  ]
+}

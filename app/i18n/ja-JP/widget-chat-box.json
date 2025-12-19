@@ -26,5 +26,7 @@
   "Disable Message Animations": "メッセージアニメーションを無効化",
   "Hide Characters": "文字を非表示にする",
   "Hide Common Chat Bots": "チャットボットを非表示にする",
-  "Hide commands starting with `!`": "「!」で始まるコマンドを非表示にする"
+  "Hide commands starting with `!`": "「!」で始まるコマンドを非表示にする",
+  "Chat Notifications": "チャット通知",
+  "Trigger a sound to notify you when there is new chat activity": "新しいチャットアクティビティを通知するサウンドをトリガーします。"
 }

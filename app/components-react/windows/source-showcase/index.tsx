@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Layout, Menu } from 'antd';
+import { Layout, Menu, Input } from 'antd';
+import { SearchOutlined } from '@ant-design/icons';
 import { ModalLayout } from 'components-react/shared/ModalLayout';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
@@ -16,6 +17,8 @@ import styles from './SourceShowcase.m.less';
 import SourceGrid from './SourceGrid';
 import Scrollable from 'components-react/shared/Scrollable';
 import pick from 'lodash/pick';
+import * as remote from '@electron/remote';
+import { useRealmObject } from 'components-react/hooks/realm';
 
 const { Content, Sider } = Layout;
 
@@ -29,11 +32,9 @@ export default function SourcesShowcase() {
 }
 
 function SourcesShowcaseModal() {
-  const { selectInspectedSource, availableAppSources, store } = useSourceShowcaseSettings();
-
-  const inspectedSource = store.useState(s => s.inspectedSource);
-
+  const { selectInspectedSource, availableAppSources } = useSourceShowcaseSettings();
   const [activeTab, setActiveTab] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   return (
     <ModalLayout
@@ -43,18 +44,31 @@ function SourcesShowcaseModal() {
     >
       <Layout style={{ height: '100%' }}>
         <Content style={{ paddingRight: 0, paddingLeft: 0 }}>
-          <Menu
-            onClick={e => setActiveTab(e.key)}
-            selectedKeys={[activeTab]}
-            mode="horizontal"
-            style={{ marginBottom: '16px' }}
-          >
-            <Menu.Item key="all">{$t('All')}</Menu.Item>
-            <Menu.Item key="general">{$t('General')}</Menu.Item>
-            <Menu.Item key="widgets">{$t('Widgets')}</Menu.Item>
-            {availableAppSources.length > 0 && <Menu.Item key="apps">{$t('Apps')}</Menu.Item>}
-          </Menu>
-          <SourceGrid activeTab={activeTab} />
+          <div className={styles.header}>
+            <Menu
+              onClick={e => setActiveTab(e.key)}
+              selectedKeys={[activeTab]}
+              mode="horizontal"
+              style={{ borderBottom: 0 }}
+            >
+              <Menu.Item key="all">{$t('All Sources')}</Menu.Item>
+              <Menu.Item key="general">{$t('Media Categories')}</Menu.Item>
+              <Menu.Item key="widgets">{$t('Widgets')}</Menu.Item>
+              {availableAppSources.length > 0 && <Menu.Item key="apps">{$t('Apps')}</Menu.Item>}
+            </Menu>
+            {activeTab !== 'apps' && (
+              <Input
+                type="search"
+                className={styles.search}
+                allowClear
+                placeholder={$t('Search...')}
+                prefix={<SearchOutlined />}
+                onChange={ev => setSearchTerm(ev.target.value)}
+                value={searchTerm}
+              />
+            )}
+          </div>
+          <SourceGrid activeTab={activeTab} searchTerm={searchTerm} />
         </Content>
         <SideBar />
       </Layout>
@@ -67,10 +81,11 @@ function SideBar() {
   const { store } = useSourceShowcaseSettings();
   const { inspectedSource, inspectedAppId, inspectedAppSourceId } = store.useState();
 
-  const { demoMode, platform } = useVuex(() => ({
-    demoMode: CustomizationService.views.isDarkTheme ? 'night' : 'day',
+  const { platform } = useVuex(() => ({
     platform: UserService.views.platform?.type,
   }));
+
+  const demoMode = useRealmObject(CustomizationService.state).isDarkTheme ? 'night' : 'day';
 
   const appData = useMemo(() => {
     if (!inspectedAppId) return;
@@ -83,12 +98,20 @@ function SideBar() {
         demoFilename: source.about.bannerImage,
         demoVideo: false,
         name: source.name,
+        link: null,
+        linkText: null,
       };
     }
   }, [inspectedAppId]);
 
   function widgetData(type: string | WidgetType) {
+    // TODO: index
+    // @ts-ignore
     return WidgetDisplayData(platform)[WidgetType[type]];
+  }
+
+  function openLink(url: string) {
+    remote.shell.openExternal(url);
   }
 
   const displayData =
@@ -128,6 +151,11 @@ function SideBar() {
               <li key={support}>{support}</li>
             ))}
           </ul>
+          {displayData?.link && displayData?.linkText && (
+            <span className={styles.infoLink} onClick={() => openLink(displayData.link!)}>
+              {displayData?.linkText}
+            </span>
+          )}
         </Scrollable>
       </div>
     </Sider>

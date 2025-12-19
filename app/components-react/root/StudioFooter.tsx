@@ -4,7 +4,7 @@ import { EStreamQuality } from '../../services/performance';
 import { EStreamingState, EReplayBufferState, ERecordingState } from '../../services/streaming';
 import { Services } from '../service-provider';
 import { $t } from '../../services/i18n';
-import { useVuex } from '../hooks';
+import { useDebounce, useVuex } from '../hooks';
 import styles from './StudioFooter.m.less';
 import PerformanceMetrics from '../shared/PerformanceMetrics';
 import TestWidgets from './TestWidgets';
@@ -12,7 +12,6 @@ import StartStreamingButton from './StartStreamingButton';
 import NotificationsArea from './NotificationsArea';
 import { Tooltip } from 'antd';
 import { confirmAsync } from 'components-react/modals';
-import { useModule } from 'slap';
 
 export default function StudioFooterComponent() {
   const {
@@ -21,19 +20,34 @@ export default function StudioFooterComponent() {
     UsageStatisticsService,
     NavigationService,
     RecordingModeService,
+    PerformanceService,
+    SettingsService,
+    UserService,
   } = Services;
 
   const {
     streamingStatus,
-    streamQuality,
     isLoggedIn,
     canSchedule,
+    streamQuality,
     replayBufferOffline,
     replayBufferStopping,
     replayBufferSaving,
     recordingModeEnabled,
     replayBufferEnabled,
-  } = useModule(FooterModule);
+  } = useVuex(() => ({
+    streamingStatus: StreamingService.views.streamingStatus,
+    isLoggedIn: UserService.views.isLoggedIn,
+    canSchedule:
+      StreamingService.views.supports('stream-schedule') &&
+      !RecordingModeService.views.isRecordingModeEnabled,
+    streamQuality: PerformanceService.views.streamQuality,
+    replayBufferOffline: StreamingService.state.replayBufferStatus === EReplayBufferState.Offline,
+    replayBufferStopping: StreamingService.state.replayBufferStatus === EReplayBufferState.Stopping,
+    replayBufferSaving: StreamingService.state.replayBufferStatus === EReplayBufferState.Saving,
+    recordingModeEnabled: RecordingModeService.views.isRecordingModeEnabled,
+    replayBufferEnabled: SettingsService.views.values.Output.RecRB,
+  }));
 
   function performanceIconClassName() {
     if (!streamingStatus || streamingStatus === EStreamingState.Offline) {
@@ -200,7 +214,7 @@ function RecordingButton() {
         >
           <button
             className={cx(styles.recordButton, 'record-button', { active: isRecording })}
-            onClick={toggleRecording}
+            onClick={useDebounce(200, toggleRecording)}
           >
             <span>
               {recordingStatus === ERecordingState.Stopping ? (
@@ -238,47 +252,4 @@ function RecordingTimer() {
 
   if (!isRecording) return <></>;
   return <div className={cx(styles.navItem, styles.recordTime)}>{recordingTime}</div>;
-}
-
-class FooterModule {
-  state = {};
-
-  get replayBufferEnabled() {
-    return Services.SettingsService.views.values.Output.RecRB;
-  }
-
-  get streamingStatus() {
-    return Services.StreamingService.views.streamingStatus;
-  }
-
-  get streamQuality() {
-    return Services.PerformanceService.views.streamQuality;
-  }
-
-  get isLoggedIn() {
-    return Services.UserService.views.isLoggedIn;
-  }
-
-  get canSchedule() {
-    return (
-      Services.StreamingService.views.supports('stream-schedule') &&
-      !Services.RecordingModeService.views.isRecordingModeEnabled
-    );
-  }
-
-  get replayBufferOffline() {
-    return Services.StreamingService.state.replayBufferStatus === EReplayBufferState.Offline;
-  }
-
-  get replayBufferStopping() {
-    return Services.StreamingService.state.replayBufferStatus === EReplayBufferState.Stopping;
-  }
-
-  get replayBufferSaving() {
-    return Services.StreamingService.state.replayBufferStatus === EReplayBufferState.Saving;
-  }
-
-  get recordingModeEnabled() {
-    return Services.RecordingModeService.views.isRecordingModeEnabled;
-  }
 }

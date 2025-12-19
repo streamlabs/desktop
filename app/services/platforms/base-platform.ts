@@ -6,6 +6,7 @@ import {
   TPlatformCapability,
   TStartStreamOptions,
   TPlatformCapabilityMap,
+  TLiveDockFeature,
 } from './index';
 import { StreamingService } from 'services/streaming';
 import { UserService } from 'services/user';
@@ -15,6 +16,8 @@ import { IFacebookStartStreamOptions } from './facebook';
 import { StreamSettingsService } from '../settings/streaming';
 import * as remote from '@electron/remote';
 import { VideoSettingsService } from 'services/settings-v2/video';
+import { ENotificationType, NotificationsService } from 'services/notifications';
+import { IJsonRpcRequest } from 'services/api/jsonrpc';
 
 const VIEWER_COUNT_UPDATE_INTERVAL = 60 * 1000;
 
@@ -36,14 +39,22 @@ export abstract class BasePlatformService<T extends IPlatformState> extends Stat
   @Inject() protected streamSettingsService: StreamSettingsService;
   @Inject() protected dualOutputService: DualOutputService;
   @Inject() protected videoSettingsService: VideoSettingsService;
+  @Inject() protected notificationsService: NotificationsService;
 
   abstract readonly platform: TPlatform;
 
   abstract capabilities: Set<TPlatformCapability>;
 
+  abstract liveDockFeatures: Set<TLiveDockFeature>;
+
   @ExecuteInCurrentWindow()
   hasCapability<T extends TPlatformCapability>(capability: T): this is TPlatformCapabilityMap[T] {
     return this.capabilities.has(capability);
+  }
+
+  @ExecuteInCurrentWindow()
+  hasLiveDockFeature(feature: TLiveDockFeature) {
+    return this.liveDockFeatures.has(feature);
   }
 
   get mergeUrl() {
@@ -92,7 +103,7 @@ export abstract class BasePlatformService<T extends IPlatformState> extends Stat
     //   .then(_ => this.userService.updateLinkedPlatforms());
 
     remote.shell.openExternal(
-      `https://${this.hostsService.streamlabs}/dashboard#/settings/account-settings`,
+      `https://${this.hostsService.streamlabs}/dashboard#/settings/account-settings/platforms`,
     );
   }
 
@@ -115,13 +126,27 @@ export abstract class BasePlatformService<T extends IPlatformState> extends Stat
     return EPlatformCallResult.Success;
   }
 
+  postNotification(
+    message: string,
+    type: ENotificationType = ENotificationType.WARNING,
+    action?: IJsonRpcRequest,
+  ) {
+    this.notificationsService.actions.push({
+      message,
+      type,
+      lifeTime: 5000,
+      action,
+    });
+  }
+
   fetchUserInfo() {
     return Promise.resolve({});
   }
 
   setPlatformContext(platform: TPlatform) {
-    if (this.dualOutputService.views.dualOutputMode) {
-      const mode = this.dualOutputService.views.getPlatformContextName(platform);
+    if (this.streamingService.views.isDualOutputMode) {
+      const display = this.streamingService.views.getPlatformDisplayType(platform);
+      const mode = display === 'vertical' ? 'portrait' : 'landscape';
 
       this.UPDATE_STREAM_SETTINGS({
         mode,

@@ -16,22 +16,10 @@ import { ScenesService } from 'services/scenes';
 import defaultTo from 'lodash/defaultTo';
 import { byOS, OS } from 'util/operating-systems';
 import { UsageStatisticsService } from 'services/usage-statistics';
-import {
-  EFilterDisplayType,
-  SourceFiltersService,
-  TSourceFilterType,
-} from 'services/source-filters';
+import { EFilterDisplayType, ISourceFilter, SourceFiltersService } from 'services/source-filters';
 
 interface ISchema {
   items: ISourceInfo[];
-}
-
-interface IFilterInfo {
-  name: string;
-  type: TSourceFilterType;
-  settings: obs.ISettings;
-  enabled?: boolean;
-  displayType?: EFilterDisplayType;
 }
 
 export interface ISourceInfo {
@@ -51,7 +39,7 @@ export interface ISourceInfo {
   deinterlaceFieldOrder?: EDeinterlaceFieldOrder;
 
   filters: {
-    items: IFilterInfo[];
+    items: ISourceFilter[];
   };
   hotkeys?: HotkeysNode;
   channel?: number;
@@ -62,7 +50,7 @@ export interface ISourceInfo {
 }
 
 export class SourcesNode extends Node<ISchema, {}> {
-  schemaVersion = 4;
+  schemaVersion = 5;
 
   @Inject() private sourcesService: SourcesService;
   @Inject() private audioService: AudioService;
@@ -115,6 +103,7 @@ export class SourcesNode extends Node<ISchema, {}> {
                 type: f.type,
                 settings: filterInput.settings,
                 enabled: f.visible,
+                visible: f.visible,
                 displayType: f.displayType,
               };
             });
@@ -194,12 +183,27 @@ export class SourcesNode extends Node<ISchema, {}> {
   }
 
   /**
-   * Returns true if this scene collection only contains sources
-   * supported by the current operating system.
+   * Remove unsupported sources.
    */
-  isAllSupported() {
+  removeUnsupported(): boolean {
     const supportedSources = byOS({ [OS.Windows]: windowsSources, [OS.Mac]: macSources });
-    return this.data.items.every(source => supportedSources.includes(source.type));
+    const itemsCopy = this.data.items.slice();
+    this.data.items = [];
+    let removed = false;
+    itemsCopy.forEach(source => {
+      if (supportedSources.includes(source.type)) {
+        this.data.items.push(source);
+      } else {
+        console.log(
+          "Removed the source with id: '%s', name: '%s', and type: '%s' from the scene because it is not suppported",
+          source.id,
+          source.name,
+          source.type,
+        );
+        removed = true;
+      }
+    });
+    return removed;
   }
 
   load(context: {}): Promise<void> {
@@ -216,12 +220,80 @@ export class SourcesNode extends Node<ISchema, {}> {
       opt => opt.value,
     );
 
+    // In the `createSources` call to the backend, if an input is not created correctly
+    // it will not be returned. This potentially means that the array returned by this
+    // call will be a different length than the `supportedSources` and `sourceCreateData`
+    // arrays. Because the array index is not a reliable unique identifier between, these
+    // three arrays, create an object to reference the item data
+    const sourceData: Dictionary<ISourceInfo> = {};
+
     // This shit is complicated, IPC sucks
     const sourceCreateData = supportedSources.map(source => {
       // Universally disabled for security reasons
       if (source.settings.is_media_flag) {
         source.settings.is_media_flag = false;
       }
+
+      const filters = source.filters.items
+        .filter(filter => {
+          if (filter.type === 'face_mask_filter') {
+            return false;
+          }
+
+          // Work around an issue where we accidentaly had invalid filters
+          // in scene collections.
+          if (
+            filter.name === '__PRESET' &&
+            !supportedPresets.includes(
+              this.sourceFiltersService.views.parsePresetValue(
+                filter.settings.image_path as string,
+              ),
+            )
+          ) {
+            return false;
+          }
+
+          return true;
+        })
+        .map(filter => {
+          if (filter.type === 'vst_filter') {
+            this.usageStatisticsService.recordFeatureUsage('VST');
+          }
+
+          let displayType = filter.displayType;
+
+          // Migrate scene collections that don't have displayType saved
+          if (displayType == null) {
+            if (filter.name === '__PRESET') {
+              displayType = EFilterDisplayType.Preset;
+            } else {
+              displayType = EFilterDisplayType.Normal;
+            }
+          }
+
+          return {
+            name: filter.name,
+            type: filter.type,
+            settings: filter.settings,
+            visible: filter.enabled === void 0 ? true : filter.enabled,
+            enabled: filter.enabled === void 0 ? true : filter.enabled,
+            displayType,
+          };
+        });
+
+      const sourceDataFilters = filters.map((f: ISourceFilter) => {
+        return {
+          name: f.name,
+          type: f.type,
+          visible: f.visible,
+          enabled: f.visible,
+          settings: f.settings,
+          displayType: f.displayType,
+        };
+      });
+
+      // add data to the reference object
+      sourceData[source.id] = { ...source, filters: { items: sourceDataFilters } };
 
       return {
         name: source.id,
@@ -232,49 +304,7 @@ export class SourcesNode extends Node<ISchema, {}> {
         syncOffset: source.syncOffset,
         deinterlaceMode: source.deinterlaceMode || EDeinterlaceMode.Disable,
         deinterlaceFieldOrder: source.deinterlaceFieldOrder || EDeinterlaceFieldOrder.Top,
-        filters: source.filters.items
-          .filter(filter => {
-            if (filter.type === 'face_mask_filter') {
-              return false;
-            }
-
-            // Work around an issue where we accidentaly had invalid filters
-            // in scene collections.
-            if (
-              filter.name === '__PRESET' &&
-              !supportedPresets.includes(
-                this.sourceFiltersService.views.parsePresetValue(filter.settings.image_path),
-              )
-            ) {
-              return false;
-            }
-
-            return true;
-          })
-          .map(filter => {
-            if (filter.type === 'vst_filter') {
-              this.usageStatisticsService.recordFeatureUsage('VST');
-            }
-
-            let displayType = filter.displayType;
-
-            // Migrate scene collections that don't have displayType saved
-            if (displayType == null) {
-              if (filter.name === '__PRESET') {
-                displayType = EFilterDisplayType.Preset;
-              } else {
-                displayType = EFilterDisplayType.Normal;
-              }
-            }
-
-            return {
-              name: filter.name,
-              type: filter.type,
-              settings: filter.settings,
-              enabled: filter.enabled === void 0 ? true : filter.enabled,
-              displayType,
-            };
-          }),
+        filters,
       };
     });
 
@@ -284,11 +314,28 @@ export class SourcesNode extends Node<ISchema, {}> {
 
     const sources = obs.createSources(sourceCreateData);
     const promises: Promise<void>[] = [];
+    let sourcesNotCreatedNames: string[] = [];
 
-    sources.forEach((source, index) => {
-      const sourceInfo = supportedSources[index];
+    if (sourceCreateData.length !== sources.length) {
+      const sourcesNotCreated = sourceCreateData.filter(
+        source => !sources.some(s => s.name === source.name),
+      );
 
-      this.sourcesService.addSource(source, supportedSources[index].name, {
+      sourcesNotCreatedNames = sourcesNotCreated.map(source => source.name);
+      console.error(
+        'Error during sources creation when loading scene collection.',
+        JSON.stringify(sourcesNotCreatedNames.join(', ')),
+      );
+
+      this.sourcesService.missingInputs = sourcesNotCreated.map(
+        source => this.sourcesService.sourceDisplayData[source.type]?.name,
+      );
+    }
+
+    sources.forEach(async source => {
+      const sourceInfo = sourceData[source.name];
+
+      this.sourcesService.addSource(source, sourceInfo.name, {
         channel: sourceInfo.channel,
         propertiesManager: sourceInfo.propertiesManager,
         propertiesManagerSettings: sourceInfo.propertiesManagerSettings || {},
@@ -297,42 +344,36 @@ export class SourcesNode extends Node<ISchema, {}> {
       });
 
       if (source.audioMixers) {
-        this.audioService.views
-          .getSource(sourceInfo.id)
-          .setMul(sourceInfo.volume != null ? sourceInfo.volume : 1);
+        const audioSource = this.audioService.views.getSource(sourceInfo.id);
+        if (audioSource) {
+          audioSource.setMul(sourceInfo.volume != null ? sourceInfo.volume : 1);
 
-        const defaultMonitoring =
-          (source.id as TSourceType) === 'browser_source'
-            ? obs.EMonitoringType.MonitoringOnly
-            : obs.EMonitoringType.None;
+          const defaultMonitoring =
+            (source.id as TSourceType) === 'browser_source'
+              ? obs.EMonitoringType.MonitoringOnly
+              : obs.EMonitoringType.None;
 
-        this.audioService.views.getSource(sourceInfo.id).setSettings({
-          forceMono: defaultTo(sourceInfo.forceMono, false),
-          syncOffset: AudioService.timeSpecToMs(
-            defaultTo(sourceInfo.syncOffset, { sec: 0, nsec: 0 }),
-          ),
-          audioMixers: defaultTo(sourceInfo.audioMixers, 255),
-          monitoringType: defaultTo(sourceInfo.monitoringType, defaultMonitoring),
-        });
-        this.audioService.views.getSource(sourceInfo.id).setHidden(!!sourceInfo.mixerHidden);
+          audioSource.setSettings({
+            forceMono: defaultTo(sourceInfo.forceMono, false),
+            syncOffset: AudioService.timeSpecToMs(
+              defaultTo(sourceInfo.syncOffset, { sec: 0, nsec: 0 }),
+            ),
+            audioMixers: defaultTo(sourceInfo.audioMixers, 255),
+            monitoringType: defaultTo(sourceInfo.monitoringType, defaultMonitoring),
+          });
+          audioSource.setHidden(!!sourceInfo.mixerHidden);
+        }
       }
 
       if (sourceInfo.hotkeys) {
-        promises.push(supportedSources[index].hotkeys.load({ sourceId: sourceInfo.id }));
+        if (sourcesNotCreatedNames.length > 0 && sourcesNotCreatedNames.includes(sourceInfo.id)) {
+          console.error('Attempting to load hotkey for not created source:', sourceInfo.id);
+        }
+
+        promises.push(sourceInfo.hotkeys.load({ sourceId: sourceInfo.id }));
       }
 
-      this.sourceFiltersService.loadFilterData(
-        sourceInfo.id,
-        sourceCreateData[index].filters.map(f => {
-          return {
-            name: f.name,
-            type: f.type,
-            visible: f.enabled,
-            settings: f.settings,
-            displayType: f.displayType,
-          };
-        }),
-      );
+      this.sourceFiltersService.loadFilterData(sourceInfo.id, sourceInfo.filters.items);
     });
 
     return new Promise(resolve => {
@@ -369,6 +410,13 @@ export class SourcesNode extends Node<ISchema, {}> {
       this.data.items.forEach(source => {
         if (source.type === 'ffmpeg_source') {
           source.settings.hw_decode = false;
+        }
+      });
+    }
+    if (version < 5) {
+      this.data.items.forEach(source => {
+        if (source.type === 'av_capture_input') {
+          source.type = 'macos_avcapture';
         }
       });
     }

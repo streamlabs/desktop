@@ -3,8 +3,7 @@
   "Ad Layout": "Rozložení reklamy",
   "Placement": "Umístění",
   "Image Layout": "Rozložení obrázku",
-  "Image Duration": "Délka zobrazení obrázku",
-  "Seconds": "Sekundy",
+  "Image Duration (seconds)": "Image Duration (seconds)",
   "Add Image": "Přidat obrázek",
   "Widget Hide Duration": "Doba do skrytí widgetu",
   "Widget Show Duration": "Doba pro zobrazení widgetu",
@@ -19,7 +18,10 @@
   "The amount of time the widget will appear.": "Doba, po kterou bude widget zobrazen.",
   "These are the animations that are used to show your banner.": "Toto jsou animace, které se používají k zobrazení vašeho banneru.",
   "Visual Settings": "Vizuální nastavení",
-  "Image Set ": "Obrázek nastaven ",
+  "Image Set %{number}": "Image Set %{number}",
+  "Placement %{number} Images": "Placement %{number} Images",
   "No Image": "Žádný obrázek",
-  "Set up a sponsor banner to be able to edit (add, remove, update) rotating sponsor logos on streamer channel.": "Nastavení banneru se sponzorem umožňující upravit (přidávat, odebírat, aktualizovat) rotující loga sponzorů na kanálu streamera."
+  "Set up a sponsor banner to be able to edit (add, remove, update) rotating sponsor logos on streamer channel.": "Nastavení banneru se sponzorem umožňující upravit (přidávat, odebírat, aktualizovat) rotující loga sponzorů na kanálu streamera.",
+  "Show off rotating media to display your socials, sponsorships, CTAs or just cute animations.": "Použijte automatické střídání médií a prezentujte své sociální sítě, sponzorství, výzvy k akci nebo jen roztomilé animace.",
+  "The duration must be in the format [minutes]:[seconds] (i.e. 02:05)": "The duration must be in the format [minutes]:[seconds] (i.e. 02:05)"
 }

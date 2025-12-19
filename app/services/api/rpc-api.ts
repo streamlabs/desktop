@@ -11,6 +11,7 @@ import {
   JsonrpcService,
 } from 'services/api/jsonrpc';
 import { ServicesManager } from '../../services-manager';
+import { RealmObject } from 'services/realm';
 
 export interface ISerializable {
   // really wish to have something like
@@ -226,6 +227,15 @@ export abstract class RpcApi extends Service {
       });
     }
 
+    if (responsePayload instanceof RealmObject) {
+      return this.jsonrpc.createResponse(request.id, {
+        _type: 'REALM_OBJECT',
+        resourceId: responsePayload.idString,
+        realmType: responsePayload.schema.name,
+        // TODO: Compact mode?
+      });
+    }
+
     // payload may contain arrays or objects that may have ServiceHelper objects inside
     // so we have to try to find these ServiceHelpers and serialize them too
     traverse(responsePayload).forEach((item: any) => {
@@ -235,6 +245,15 @@ export abstract class RpcApi extends Service {
           _type: 'HELPER',
           resourceId: helper._resourceId,
           ...(!request.params.compactMode ? this.getResourceModel(helper) : {}),
+        };
+      }
+
+      if (item && item instanceof RealmObject) {
+        return {
+          _type: 'REALM_OBJECT',
+          resourceId: responsePayload.idString,
+          realmType: responsePayload.schema.name,
+          // TODO: Compact mode?
         };
       }
     });
@@ -261,7 +280,7 @@ export abstract class RpcApi extends Service {
       this.requestErrors.push(`Resource not found: ${resourceId}`);
       return null;
     }
-    const resourceScheme = {};
+    const resourceScheme: Dictionary<string> = {};
 
     // collect resource keys from the whole prototype chain
     const keys: string[] = [];
@@ -279,8 +298,8 @@ export abstract class RpcApi extends Service {
   }
 
   private getResourceModel(helper: Object): Object {
-    if (helper['getModel'] && typeof helper['getModel'] === 'function') {
-      return helper['getModel']();
+    if ('getModel' in helper && typeof helper.getModel === 'function') {
+      return helper.getModel();
     }
     return {};
   }

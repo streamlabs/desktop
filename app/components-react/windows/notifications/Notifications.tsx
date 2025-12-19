@@ -37,27 +37,35 @@ export default function Notifications() {
 
       {Object.keys(notificationGroups).map((groupName: string) => (
         <div key={groupName}>
-          {notificationGroups[groupName].length > 0 && (
-            <h4>{groupName === 'unread' ? $t('New Notifications') : $t('Log')}</h4>
-          )}
-          {notificationGroups[groupName].map((notify: INotification) => (
-            <div
-              key={notify.id}
-              onClick={() => onNotificationClickHandler(notify.id)}
-              className={cx(styles.notification, {
-                [styles.unread]: notify.unread,
-                [styles.hasAction]: notify.action,
-              })}
-              data-name={notify.action && 'hasAction'}
-            >
-              <div className="icon">
-                {notify.type === 'INFO' && <span className="fa fa-info-circle" />}
-                {notify.type === 'WARNING' && <span className="fa fa-warning" />}
+          {
+            // TODO: index
+            // @ts-ignore
+            notificationGroups[groupName].length > 0 && (
+              <h4>{groupName === 'unread' ? $t('New Notifications') : $t('Log')}</h4>
+            )
+          }
+          {
+            // TODO: index
+            // @ts-ignore
+            notificationGroups[groupName].map((notify: INotification) => (
+              <div
+                key={notify.id}
+                onClick={() => onNotificationClickHandler(notify.id)}
+                className={cx(styles.notification, {
+                  [styles.unread]: notify.unread,
+                  [styles.hasAction]: notify.action,
+                })}
+                data-name={notify.action && 'hasAction'}
+              >
+                <div className="icon">
+                  {notify.type === 'INFO' && <span className="fa fa-info-circle" />}
+                  {notify.type === 'WARNING' && <span className="fa fa-warning" />}
+                </div>
+                <div className="message">{notify.message}</div>
+                <div className={styles.date}>{momentize(notify.date)}</div>
               </div>
-              <div className="message">{notify.message}</div>
-              <div className={styles.date}>{momentize(notify.date)}</div>
-            </div>
-          ))}
+            ))
+          }
         </div>
       ))}
     </Scrollable>

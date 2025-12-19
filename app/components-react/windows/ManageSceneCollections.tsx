@@ -26,6 +26,7 @@ export default function ManageSceneCollections() {
     WindowsService,
     SceneCollectionsService,
     ObsImporterService,
+    TwitchStudioImporterService,
     MagicLinkService,
     NavigationService,
     UsageStatisticsService,
@@ -54,6 +55,10 @@ export default function ManageSceneCollections() {
 
   function importFromObs() {
     ObsImporterService.actions.import();
+  }
+
+  function importFromTwitch() {
+    TwitchStudioImporterService.actions.import();
   }
 
   function filteredCollections() {
@@ -105,40 +110,33 @@ export default function ManageSceneCollections() {
             ))}
           </Scrollable>
         </Sider>
-        <Content style={{ paddingLeft: '24px' }}>
+        <Content style={{ paddingLeft: '16px' }}>
           <div>{$t('Add New Scene Collection:')}</div>
           <div className={styles.buttonContainer}>
             <button onClick={create} className={cx('button', styles.button)}>
-              <i className="icon-stream-labels" />
-              <strong>{$t('New')}</strong>
+              <i className="fa fa-solid fa-file" />
+              <strong>{$t('Start Fresh')}</strong>
               <p>{$t('Start fresh and build from scratch')}</p>
-            </button>
-            <button onClick={importFromObs} className={cx('button', styles.button)}>
-              <i className="icon-cloud-backup" />
-              <strong>{$t('Import')}</strong>
-              <p>{$t('Load existing scenes from OBS')}</p>
             </button>
             <button
               disabled={!isLoggedIn}
               onClick={goToThemes}
-              className={cx('button', styles.button, styles.lg)}
+              className={cx('button', styles.button)}
             >
-              <div>
-                <strong>{$t('Template')}</strong>
-                {isLoggedIn ? (
-                  <p>{$t('Choose a template from our theme library')}</p>
-                ) : (
-                  <p>{$t('Log in to choose a template from our theme library')}</p>
-                )}
-              </div>
-              <img src={$i('images/prime-themes.png')} />
+              <i className="fa fa-solid fa-brush" />
+              <strong>{$t('Overlays')}</strong>
+              <p>
+                {isLoggedIn
+                  ? $t('Choose a template from our overlay library')
+                  : $t('Log in to choose a template from our overlay library')}
+              </p>
             </button>
             {!isPrime && (
               <div onClick={upgradeToPrime} className={cx('button', styles.button, styles.lg)}>
                 <div className={styles.ultra}>
                   <strong>{$t('Ultra')}</strong>
                   <p>
-                    <Translate message="Upgrade your stream with premium themes with <ultra>Streamlabs Ultra</ultra>.">
+                    <Translate message="Upgrade your stream with premium overlays with <ultra>Streamlabs Ultra</ultra>.">
                       <u slot="ultra" />
                     </Translate>
                   </p>
@@ -161,6 +159,26 @@ export default function ManageSceneCollections() {
                 </div>
               </div>
             )}
+            {/* If we're displaying the Ultra button, both import options are on the same row */}
+            <button
+              onClick={importFromObs}
+              className={cx('button', styles.button, { [styles.lg]: isPrime })}
+            >
+              <i className="icon-cloud-backup" />
+              <strong>{$t('Import from OBS')}</strong>
+              <p>{$t('Load existing scenes from OBS')}</p>
+            </button>
+            <button
+              onClick={importFromTwitch}
+              className={cx('button', styles.button, { [styles.lg]: isPrime })}
+            >
+              <i className="icon-cloud-backup" />
+              {/* Since the Ultra button takes an entire row, make text shorter here */}
+              <strong>
+                {isPrime ? $t('Import from Twitch Studio') : $t('Import from Twitch')}
+              </strong>
+              <p>{$t('Load existing scenes from Twitch Studio')}</p>
+            </button>
           </div>
         </Content>
       </Layout>
@@ -214,7 +232,7 @@ function CollectionNode(p: {
     );
     if (deleteConfirmed) SceneCollectionsService.actions.delete(p.collection.id);
   }
-  
+
   return (
     <div
       onDoubleClick={makeActive}

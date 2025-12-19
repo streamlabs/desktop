@@ -1,7 +1,6 @@
 import Vue from 'vue';
 import path from 'path';
 import util from 'util';
-import mkdirpModule from 'mkdirp';
 import { tmpdir } from 'os';
 import { mutation } from '../core/stateful-service';
 import { PersistentStatefulService } from '../core/persistent-stateful-service';
@@ -14,7 +13,6 @@ import { AppService } from 'services/app';
 import url from 'url';
 import fs from 'fs-extra';
 
-const mkdirp = util.promisify(mkdirpModule);
 const mkdtemp = util.promisify(fs.mkdtemp);
 const copyFile = util.promisify(fs.copyFile);
 
@@ -204,12 +202,10 @@ export class PlatformAppAssetsService extends PersistentStatefulService<AssetsSe
    * @param app App instance
    * @returns Assets directory path for this app
    */
-  async ensureAssetsDir(app: ILoadedApp): Promise<string> {
+  ensureAssetsDir(app: ILoadedApp): Promise<string> {
     const appAssetsDir = path.join(this.appService.appDataDirectory, 'Media', 'Apps', app.id);
 
-    await mkdirp(appAssetsDir);
-
-    return appAssetsDir;
+    return fs.ensureDir(appAssetsDir).then(() => appAssetsDir);
   }
 
   /**

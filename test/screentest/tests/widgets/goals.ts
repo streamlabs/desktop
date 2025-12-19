@@ -8,7 +8,7 @@ import { closeWindow } from '../../../helpers/modules/core';
 useWebdriver({ restartAppAfterEachTest: false });
 useScreentest();
 
-testGoal('Donation Goal', EWidgetType.DonationGoal);
+testGoal('Tip Goal', EWidgetType.DonationGoal);
 testGoal('Follower Goal', EWidgetType.FollowerGoal);
 testGoal('Bit Goal', EWidgetType.BitGoal);
 

@@ -4,13 +4,16 @@ import KevinSvg from 'components-react/shared/KevinSvg';
 import React from 'react';
 import { $t } from 'services/i18n';
 import { $i } from 'services/utils';
-import styles from './ChooseYourAdventure.m.less';
+import styles from './FreshOrImport.m.less';
 import commonStyles from './Common.m.less';
 import ObsSvg from './ObsSvg';
 import { OnboardingModule } from './Onboarding';
+import PlatformLogo from 'components-react/shared/PlatformLogo';
+import { Services } from 'components-react/service-provider';
 
 export function FreshOrImport() {
-  const { setImportFromObs, next } = useModule(OnboardingModule);
+  const { setImportFromObs, next, setImportFromTwitch } = useModule(OnboardingModule);
+  const { TwitchStudioImporterService } = Services;
 
   const optionsMetadata = [
     {
@@ -26,6 +29,16 @@ export function FreshOrImport() {
       },
     },
     {
+      title: $t('Import from Twitch Studio'),
+      color: '--twitch',
+      description: $t('Import your scenes and sources from Twitch Studio.'),
+      image: <PlatformLogo platform="twitch" size={150} />,
+      onClick: async () => {
+        setImportFromTwitch();
+        next();
+      },
+    },
+    {
       title: $t('Start Fresh'),
       color: '--teal',
       description: $t(
@@ -37,31 +50,33 @@ export function FreshOrImport() {
   ];
 
   return (
-    <div>
+    <div className={styles.container}>
       <div className={styles.footer}>
         <SvgBackground />
         <img src={$i('images/onboarding/splash.png')} />
       </div>
-      <h1 className={styles.title}>{$t('1-Click Import from OBS')}</h1>
-      <div className={styles.optionContainer}>
-        {optionsMetadata.map(data => (
-          <Tooltip title={data.description} placement="bottom" key={data.title}>
-            <div
-              className={commonStyles.optionCard}
-              onClick={() => data.onClick()}
-              style={{ background: `var(${data.color})` }}
-            >
-              {data.image}
-              <h2
-                style={{
-                  color: data.color === '--teal' ? 'var(--action-button-text)' : undefined,
-                }}
+      <div className={styles.contentContainer}>
+        <h1 className={styles.title}>{$t('1-Click Import')}</h1>
+        <div className={styles.optionContainer}>
+          {optionsMetadata.map(data => (
+            <Tooltip title={data.description} placement="bottom" key={data.title}>
+              <div
+                className={commonStyles.optionCard}
+                onClick={() => data.onClick()}
+                style={{ background: `var(${data.color})` }}
               >
-                {data.title}
-              </h2>
-            </div>
-          </Tooltip>
-        ))}
+                {data.image}
+                <h2
+                  style={{
+                    color: data.color === '--teal' ? 'var(--action-button-text)' : undefined,
+                  }}
+                >
+                  {data.title}
+                </h2>
+              </div>
+            </Tooltip>
+          ))}
+        </div>
       </div>
     </div>
   );

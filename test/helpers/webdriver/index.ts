@@ -1,6 +1,6 @@
 /// <reference path="../../../app/index.d.ts" />
 /// <reference path="../../../app/jsx.d.ts" />
-import avaTest, { afterEach, ExecutionContext } from 'ava';
+import { ExecutionContext } from 'ava';
 import { getApiClient } from '../api-client';
 import { DismissablesService } from 'services/dismissables';
 import { getUser, logOut } from './user';
@@ -333,6 +333,7 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
   async function checkErrorsInLogFile(t: TExecutionContext) {
     await sleep(1000); // electron-log needs some time to write down logs
     const logs: string = await readLogs();
+    if (!logs) return;
     lastLogs = logs;
     let ignoringErrors = false;
     const errors = logs
@@ -342,6 +343,11 @@ export function useWebdriver(options: ITestRunnerOptions = {}) {
         // This error is outside our control and can be ignored.
         // See: https://stackoverflow.com/questions/49384120/resizeobserver-loop-limit-exceeded
         if (record.match(/ResizeObserver loop limit exceeded/)) {
+          return false;
+        }
+        // Another ResizeObserver issue that appears outside of our control
+        // See: https://trackjs.com/javascript-errors/resizeobserver-loop-completed-with-undelivered-notifications/
+        if (record.match(/ResizeObserver loop completed with undelivered notifications/)) {
           return false;
         }
 

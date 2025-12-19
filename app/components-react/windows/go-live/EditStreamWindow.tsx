@@ -8,33 +8,32 @@ import { $t } from '../../../services/i18n';
 import GoLiveChecklist from './GoLiveChecklist';
 import Form from '../../shared/inputs/Form';
 import Animation from 'rc-animate';
-import { SwitchInput } from '../../shared/inputs';
 import { useGoLiveSettingsRoot } from './useGoLiveSettings';
 import PlatformSettings from './PlatformSettings';
 import Scrollable from '../../shared/Scrollable';
 import Spinner from '../../shared/Spinner';
 import GoLiveError from './GoLiveError';
+import PrimaryChatSwitcher from './PrimaryChatSwitcher';
 
 export default function EditStreamWindow() {
   const { StreamingService, WindowsService } = Services;
   const {
     error,
     lifecycle,
-    isMultiplatformMode,
-    isDualOutputMode,
     updateStream,
-    isAdvancedMode,
-    switchAdvancedMode,
     prepopulate,
     isLoading,
     form,
+    enabledPlatforms,
+    hasMultiplePlatforms,
+    primaryChat,
+    setPrimaryChat,
   } = useGoLiveSettingsRoot({ isUpdateMode: true });
 
   const shouldShowChecklist = lifecycle === 'runChecklist';
   const shouldShowSettings = !shouldShowChecklist;
   const shouldShowUpdateButton = lifecycle !== 'runChecklist';
   const shouldShowGoBackButton = !shouldShowUpdateButton && error;
-  const shouldShowAdvancedSwitch = isMultiplatformMode || isDualOutputMode;
 
   useOnCreate(() => {
     // the streamingService still may keep a error from GoLive flow like a "Post a Tweet" error
@@ -54,17 +53,6 @@ export default function EditStreamWindow() {
   function renderFooter() {
     return (
       <Form layout={'inline'}>
-        {shouldShowAdvancedSwitch && (
-          <SwitchInput
-            label={$t('Show Advanced Settings')}
-            name="advancedMode"
-            onChange={switchAdvancedMode}
-            value={isAdvancedMode}
-            debounce={300}
-            disabled={isLoading}
-          />
-        )}
-
         {/* CLOSE BUTTON */}
         <Button onClick={close}>{$t('Close')}</Button>
 
@@ -83,6 +71,8 @@ export default function EditStreamWindow() {
     );
   }
 
+  const shouldShowPrimaryChatSwitcher = hasMultiplePlatforms;
+
   return (
     <ModalLayout footer={renderFooter()}>
       <Form
@@ -98,6 +88,14 @@ export default function EditStreamWindow() {
             <Scrollable key={'settings'} style={{ height: '100%' }} snapToWindowEdge>
               <GoLiveError />
               <PlatformSettings />
+              {shouldShowPrimaryChatSwitcher && (
+                <PrimaryChatSwitcher
+                  layout="horizontal"
+                  enabledPlatforms={enabledPlatforms}
+                  primaryChat={primaryChat}
+                  onSetPrimaryChat={setPrimaryChat}
+                />
+              )}
             </Scrollable>
           )}
 

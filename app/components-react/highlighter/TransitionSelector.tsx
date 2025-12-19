@@ -3,7 +3,10 @@ import { Services } from 'components-react/service-provider';
 import InputWrapper from 'components-react/shared/inputs/InputWrapper';
 import SvgContainer from 'components-react/shared/SvgContainer';
 import React from 'react';
-import { TTransitionType, IAvailableTransition } from 'services/highlighter';
+import {
+  TTransitionType,
+  IAvailableTransition,
+} from 'services/highlighter/models/rendering.models';
 
 export default function TransitionSelector() {
   const { HighlighterService } = Services;

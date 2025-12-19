@@ -9,7 +9,7 @@
   "Show Twitch Prime Badges": "Afficher les badges Twitch Prime",
   "Show Bits Badges": "Afficher les badges Bits",
   "Show Top Coin Holder Badges": "Afficher les badges de plus gros détenteur de pièces",
-  "Enable BetterTTV Emotes": "Activer les emotes BetterTTV",
+  "Enable BetterTTV Emotes": "Activer les émoticônes BetterTTV",
   "Enable FrankerFaceZ Emotes": "Activer les emotes FrankerFaceZ",
   "Enable 7TV Emotes": "Activer les emotes 7TV",
   "Text Color": "Couleur du texte",
@@ -26,5 +26,7 @@
   "Disable Message Animations": "Désactiver les animations de messages",
   "Hide Characters": "Masquer les caractères",
   "Hide Common Chat Bots": "Masquer les bots les plus communs",
-  "Hide commands starting with `!`": "Masquer les commandes commençant par `!`"
+  "Hide commands starting with `!`": "Masquer les commandes commençant par `!`",
+  "Chat Notifications": "Notifications de chat",
+  "Trigger a sound to notify you when there is new chat activity": "Déclenche un son pour te prévenir en cas de nouvelle activité sur le chat."
 }

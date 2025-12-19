@@ -1,0 +1,71 @@
+@import '../../styles/index';
+
+.clips-view-root {
+  position: relative;
+  width: 100%;
+  display: flex;
+
+  :global(.ant-modal-wrap),
+  :global(.ant-modal-mask) {
+    position: absolute;
+  }
+  :global(.os-content-glue) {
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
+.container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  padding: 20px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  cursor: pointer;
+}
+
+.backButton {
+  padding-top: 2px;
+  border: none;
+  background: none;
+}
+
+.title {
+  margin: 0;
+}
+
+.clips-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0 20px 2px;
+  padding-top: 16px;
+}
+
+.clips-container {
+  flex-grow: 1;
+  padding: 20px;
+}
+
+.clip-loading-indicator {
+  width: 100%;
+  font-size: 16px;
+  margin: auto;
+  display: grid;
+  place-content: center;
+}
+
+.clip-item {
+  border-radius: 18px;
+  margin: 10px 20px 10px 0;
+  display: inline-block;
+  background-color: #111111;
+  border-radius: 16px;
+}

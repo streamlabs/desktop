@@ -52,6 +52,8 @@ interface ISceneItem extends INode {
   scaleFiler: EScaleType;
   blendingMode: EBlendingMode;
   blendingMethod: EBlendingMethod;
+  display?: TDisplayType;
+  output?: IVideo;
 }
 
 interface ISceneItemFolder extends INode {
@@ -88,6 +90,17 @@ export class ScenesModule extends Module {
     this.scenesService.sceneRemoved.subscribe(sceneData => {
       this.sceneRemoved.next(sceneData.id);
     });
+    this.scenesService.itemAdded.subscribe(itemData => {
+      const item = this.scenesService.views.getSceneItem(itemData.sceneItemId);
+      this.sceneItemAdded.next(this.serializeNode(item));
+    });
+    this.scenesService.itemUpdated.subscribe(itemData => {
+      const item = this.scenesService.views.getSceneItem(itemData.sceneItemId);
+      this.sceneItemUpdated.next(this.serializeNode(item));
+    });
+    this.scenesService.itemRemoved.subscribe(itemData => {
+      this.sceneItemRemoved.next(itemData.sceneItemId);
+    });
   }
 
   @apiEvent()
@@ -98,6 +111,15 @@ export class ScenesModule extends Module {
 
   @apiEvent()
   sceneRemoved = new Subject<string>();
+
+  @apiEvent()
+  sceneItemAdded = new Subject<ISceneItem | ISceneItemFolder>();
+
+  @apiEvent()
+  sceneItemUpdated = new Subject<ISceneItem | ISceneItemFolder>();
+
+  @apiEvent()
+  sceneItemRemoved = new Subject<string>();
 
   // TODO Events for scene items
 
@@ -214,6 +236,7 @@ export class ScenesModule extends Module {
         type: ESceneNodeType.Folder,
         name: node.name,
         childrenIds: node.childrenIds,
+        display: node?.display,
       } as ISceneItemFolder;
     }
     if (node.isItem()) {
@@ -224,6 +247,7 @@ export class ScenesModule extends Module {
         visible: node.visible,
         locked: node.locked,
         transform: node.transform,
+        display: node?.display,
       } as ISceneItem;
     }
   }

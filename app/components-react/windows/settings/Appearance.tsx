@@ -5,8 +5,6 @@ import { Row, Col, Select } from 'antd';
 import { CheckboxInput, ListInput, SliderInput, SwitchInput } from '../../shared/inputs';
 import { getDefined } from '../../../util/properties-type-guards';
 import { ObsSettingsSection } from './ObsSettings';
-import * as remote from '@electron/remote';
-import { injectFormBinding, useModule } from 'slap';
 import { ENavName, EMenuItemKey, IAppMenuItem, menuTitles } from 'services/side-nav';
 import { useVuex } from 'components-react/hooks';
 import styles from './Appearance.m.less';
@@ -14,6 +12,9 @@ import cx from 'classnames';
 import { EAppPageSlot } from 'services/platform-apps';
 import Scrollable from 'components-react/shared/Scrollable';
 import UltraIcon from 'components-react/shared/UltraIcon';
+import { CustomizationState } from 'services/customization';
+import { useRealmObject } from 'components-react/hooks/realm';
+import { bindFormState } from 'components-react/shared/inputs';
 
 const { Option } = Select;
 
@@ -28,17 +29,13 @@ export function AppearanceSettings() {
     LayoutService,
   } = Services;
 
-  const { bind } = useModule(() => {
-    function getSettings() {
-      return CustomizationService.state;
-    }
+  // Hooks up reactivity for Customization state
+  useRealmObject(CustomizationService.state);
 
-    function setSettings(newSettings: typeof CustomizationService.state) {
-      CustomizationService.actions.setSettings(newSettings);
-    }
-
-    return { bind: injectFormBinding(getSettings, setSettings) };
-  });
+  const bind = bindFormState(
+    () => CustomizationService.state.toObject() as CustomizationState,
+    (newSettings: CustomizationState) => CustomizationService.setSettings(newSettings as any),
+  );
 
   const {
     compactView,
@@ -112,6 +109,8 @@ export function AppearanceSettings() {
             id: app.id,
             name: app.manifest?.name,
             icon: app.manifest?.icon,
+            // TODO: index
+            // @ts-ignore
             isActive: displayedAppsStatus[app.id] ?? false,
           });
         }
@@ -188,7 +187,11 @@ export function AppearanceSettings() {
               label={menuTitles(EMenuItemKey.Editor)}
               layout="horizontal"
               onChange={() => toggleMenuItem(ENavName.TopNav, EMenuItemKey.Editor)}
-              value={menuItemStatus[EMenuItemKey.Editor]}
+              value={
+                // TODO: index
+                // @ts-ignore
+                menuItemStatus[EMenuItemKey.Editor]
+              }
               disabled={!isLoggedIn || compactView || currentTab === 'default'}
             />
             <SwitchInput
@@ -204,35 +207,55 @@ export function AppearanceSettings() {
               label={menuTitles(EMenuItemKey.StudioMode)}
               layout="horizontal"
               onChange={() => toggleMenuItem(ENavName.TopNav, EMenuItemKey.StudioMode)}
-              value={menuItemStatus[EMenuItemKey.StudioMode]}
+              value={
+                // TODO: index
+                // @ts-ignore
+                menuItemStatus[EMenuItemKey.StudioMode]
+              }
               disabled={!isLoggedIn || compactView}
             />
             <SwitchInput
               label={menuTitles(EMenuItemKey.LayoutEditor)}
               layout="horizontal"
               onChange={() => toggleMenuItem(ENavName.TopNav, EMenuItemKey.LayoutEditor)}
-              value={menuItemStatus[EMenuItemKey.LayoutEditor]}
+              value={
+                // TODO: index
+                // @ts-ignore
+                menuItemStatus[EMenuItemKey.LayoutEditor]
+              }
               disabled={!isLoggedIn || compactView}
             />
             <SwitchInput
               label={menuTitles(EMenuItemKey.Themes)}
               layout="horizontal"
               onChange={() => toggleMenuItem(ENavName.TopNav, EMenuItemKey.Themes)}
-              value={menuItemStatus[EMenuItemKey.Themes]}
+              value={
+                // TODO: index
+                // @ts-ignore
+                menuItemStatus[EMenuItemKey.Themes]
+              }
               disabled={!isLoggedIn || compactView}
             />
             <SwitchInput
               label={menuTitles(EMenuItemKey.Highlighter)}
               layout="horizontal"
               onChange={() => toggleMenuItem(ENavName.TopNav, EMenuItemKey.Highlighter)}
-              value={menuItemStatus[EMenuItemKey.Highlighter]}
+              value={
+                // TODO:
+                // @ts-ignore
+                menuItemStatus[EMenuItemKey.Highlighter]
+              }
               disabled={!isLoggedIn || compactView}
             />
             <SwitchInput
               label={menuTitles(EMenuItemKey.RecordingHistory)}
               layout="horizontal"
               onChange={() => toggleMenuItem(ENavName.TopNav, EMenuItemKey.RecordingHistory)}
-              value={menuItemStatus[EMenuItemKey.RecordingHistory]}
+              value={
+                // TODO:
+                // @ts-ignore
+                menuItemStatus[EMenuItemKey.RecordingHistory]
+              }
               disabled={!isLoggedIn || compactView}
             />
           </Col>
@@ -244,7 +267,11 @@ export function AppearanceSettings() {
                 label={menuTitles(EMenuItemKey.AppStore)}
                 layout="horizontal"
                 onChange={() => toggleMenuItem(ENavName.TopNav, EMenuItemKey.AppStore)}
-                value={menuItemStatus[EMenuItemKey.AppStore]}
+                value={
+                  // TODO:
+                  // @ts-ignore
+                  menuItemStatus[EMenuItemKey.AppStore]
+                }
                 disabled={!isLoggedIn || compactView}
               />
 
@@ -314,5 +341,3 @@ export function AppearanceSettings() {
     </div>
   );
 }
-
-AppearanceSettings.page = 'Appearance';

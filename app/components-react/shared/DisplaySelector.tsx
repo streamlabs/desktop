@@ -1,68 +1,118 @@
 import React, { CSSProperties, useMemo } from 'react';
 import { $t } from 'services/i18n';
-import { useVuex } from 'components-react/hooks';
-import { Services } from 'components-react/service-provider';
 import { RadioInput } from './inputs';
-import { displayLabels } from 'services/dual-output';
 import { TDisplayType } from 'services/settings-v2';
-import { TPlatform, platformLabels } from 'services/platforms';
+import { platformLabels, TPlatform } from 'services/platforms';
 import { useGoLiveSettings } from 'components-react/windows/go-live/useGoLiveSettings';
-import { ICustomStreamDestination } from 'services/settings/streaming';
+import { TDisplayOutput } from 'services/streaming';
+import { IRadioMetadata } from './inputs/metadata';
+import { ICustomRadioOption } from './inputs/RadioInput';
 
 interface IDisplaySelectorProps {
   title: string;
   index: number;
   platform: TPlatform | null;
-  nolabel?: boolean;
-  nomargin?: boolean;
   className?: string;
   style?: CSSProperties;
+  nolabel?: boolean;
 }
 
 export default function DisplaySelector(p: IDisplaySelectorProps) {
-  const { DualOutputService, StreamingService } = Services;
+  const {
+    display,
+    canDualStream,
+    updateCustomDestinationDisplayAndSaveSettings,
+    updatePlatformDisplayAndSaveSettings,
+  } = useGoLiveSettings().extend(module => ({
+    get canDualStream() {
+      if (!p.platform) return false;
+      return module.getCanDualStream(p.platform);
+    },
+    get display(): TDisplayOutput {
+      const defaultDisplay = p.platform
+        ? module.settings.platforms[p.platform]?.display
+        : module.settings.customDestinations[p.index]?.display;
 
-  const { customDestinations, updateCustomDestinationDisplay } = useGoLiveSettings();
+      if (defaultDisplay === 'both' && !this.canDualStream) {
+        return 'horizontal';
+      }
 
-  const v = useVuex(() => ({
-    updatePlatformSetting: DualOutputService.actions.updatePlatformSetting,
-    platformSettings: DualOutputService.views.platformSettings,
-    isMidstreamMode: StreamingService.views.isMidStreamMode,
+      return defaultDisplay ?? 'horizontal';
+    },
   }));
 
-  const setting = p.platform ? v.platformSettings[p.platform] : customDestinations[p.index];
-  const label = p.platform
-    ? platformLabels(p.platform)
-    : (setting as ICustomStreamDestination).name;
+  const displays: ICustomRadioOption[] = useMemo(() => {
+    const defaultDisplays = [
+      {
+        label: $t('Horizontal'),
+        value: 'horizontal',
+        icon: 'icon-desktop',
+      },
+      {
+        label: $t('Vertical'),
+        value: 'vertical',
+        icon: 'icon-phone-case',
+      },
+    ];
 
-  const displays = [
-    {
-      label: displayLabels('horizontal') ?? $t('Horizontal'),
-      value: 'horizontal',
-    },
-    {
-      label: displayLabels('vertical') ?? $t('Vertical'),
-      value: 'vertical',
-    },
-  ];
+    if (canDualStream) {
+      const tooltip = p?.platform
+        ? $t('Stream both horizontally and vertically to %{platform}', {
+            platform: platformLabels(p.platform),
+          })
+        : undefined;
+
+      return [
+        ...defaultDisplays,
+        {
+          label: $t('Both'),
+          value: 'both' as TDisplayType,
+          icon: 'icon-dual-output',
+          tooltip,
+        },
+      ];
+    }
+
+    return defaultDisplays;
+  }, [canDualStream]);
+
+  const onChange = (val: TDisplayOutput) => {
+    if (p.platform) {
+      updatePlatformDisplayAndSaveSettings(p.platform, val);
+    } else {
+      if (val === 'both') {
+        // There's no UI that would allow for this, but just in case
+        throw new Error('Attempted to update custom display for dual stream, this is impossible');
+      }
+      updateCustomDestinationDisplayAndSaveSettings(p.index, val as TDisplayType);
+    }
+  };
+
+  // Convert displays array to Dictionary<TInputValue>
+  const displayDict = useMemo(() => {
+    return displays.reduce((acc: Dictionary<IRadioMetadata>, curr) => {
+      acc[curr.value] = curr;
+      return acc;
+    }, {} as Dictionary<IRadioMetadata>);
+  }, [displays]);
+
+  const name = `${p.platform || `destination${p.index}`}Display`;
+  const value = displayDict[display]?.value || 'horizontal';
 
   return (
     <RadioInput
-      className={p?.className}
-      style={p?.style}
-      label={label}
-      direction="horizontal"
-      nolabel={p?.nolabel ?? undefined}
-      nomargin={p?.nomargin ?? undefined}
+      nolabel={p?.nolabel}
+      label={p?.nolabel ? undefined : p.title}
+      name={name}
+      value={value}
       defaultValue="horizontal"
       options={displays}
-      onChange={(val: TDisplayType) =>
-        p.platform
-          ? v.updatePlatformSetting(p.platform, val)
-          : updateCustomDestinationDisplay(p.index, val)
-      }
-      value={setting?.display ?? 'horizontal'}
-      disabled={v.isMidstreamMode}
+      onChange={onChange}
+      icons={true}
+      className={p?.className}
+      style={p?.style}
+      direction="horizontal"
+      gapsize={0}
     />
   );
 }

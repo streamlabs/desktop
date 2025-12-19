@@ -4,6 +4,9 @@ import { Services } from '../service-provider';
 import { Display as OBSDisplay } from '../../services/video';
 import { TDisplayType } from 'services/settings-v2/video';
 import uuid from 'uuid/v4';
+import { useRealmObject } from 'components-react/hooks/realm';
+import Utils from 'services/utils';
+
 interface DisplayProps {
   id?: string;
   sourceId?: string;
@@ -17,7 +20,8 @@ interface DisplayProps {
 }
 
 export default function Display(props: DisplayProps) {
-  const { CustomizationService, VideoSettingsService } = Services;
+  const { CustomizationService, VideoSettingsService, WindowsService } = Services;
+  const windowId = Utils.getWindowId();
 
   const p = {
     paddingSize: 0,
@@ -32,20 +36,37 @@ export default function Display(props: DisplayProps) {
     const videoSettings = VideoSettingsService.baseResolutions[p.type];
 
     return {
-      paddingColor: CustomizationService.views.displayBackground,
       baseResolution: `${videoSettings?.baseWidth}x${videoSettings?.baseHeight}`,
+      hideDisplay: WindowsService.state[windowId]?.hideStyleBlockers,
     };
   }, false);
+
+  const paddingColor = useRealmObject(CustomizationService.state).displayBackground;
 
   const obsDisplay = useRef<OBSDisplay | null>(null);
   const displayEl = useRef<HTMLDivElement>(null);
 
-  useEffect(updateDisplay, [p.sourceId, v.paddingColor]);
-  useEffect(refreshOutputRegion, [v.baseResolution]);
+  useEffect(updateDisplay, [p.sourceId, paddingColor]);
+  useEffect(handleResize, [v.baseResolution]);
+  useEffect(handleHideDisplay, [v.hideDisplay]);
 
-  function refreshOutputRegion() {
+  function handleHideDisplay() {
+    if (v.hideDisplay) {
+      destroyDisplay();
+    } else {
+      if (!obsDisplay.current) {
+        createDisplay();
+      }
+      if (obsDisplay.current) {
+        obsDisplay.current.refreshOutputRegion();
+      }
+    }
+  }
+
+  function handleResize() {
     if (!obsDisplay.current) return;
-    obsDisplay.current.refreshOutputRegion();
+    const [width, height] = v.baseResolution.split('x');
+    obsDisplay.current.resize(Number(width), Number(height));
   }
 
   function onClickHandler(event: React.MouseEvent) {
@@ -57,7 +78,7 @@ export default function Display(props: DisplayProps) {
     obsDisplay.current = new OBSDisplay(displayId, {
       sourceId: p.sourceId,
       paddingSize: p.paddingSize,
-      paddingColor: v.paddingColor,
+      paddingColor,
       renderingMode: p.renderingMode,
       type: p.type,
     });
@@ -73,7 +94,9 @@ export default function Display(props: DisplayProps) {
 
   function updateDisplay() {
     destroyDisplay();
-    createDisplay();
+    if (!v.hideDisplay) {
+      createDisplay();
+    }
 
     return function cleanup() {
       destroyDisplay();

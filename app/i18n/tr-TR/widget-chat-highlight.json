@@ -12,6 +12,7 @@
   "Name Text Color": "Metin Rengi Adı",
   "Name Background Color": "Ad Arka Plan Rengi",
   "Highlight chat messages from your viewers on your stream.": "İzleyicilerinizden gelen sohbet mesajlarını akışınızda vurgulayın.",
+  "Pin and highlight chat messages from your viewers on your stream.": "İzleyicilerinizden gelen sohbet mesajlarını yayınınızda sabitleyin ve vurgulayın.",
   "A duration of 0 is indefinite": "0 süresi sınırsızdır",
   "Use this widget by hovering over the right side of a chat message to see a thumbtack icon. Clicking the icon will pin the message to the widget for its duration, or until you click the unpin button.": "Sohbet mesajının sağ kısmının üzerine gelerek bir raptiye simgesi görmek için bu görsel bileşeni kullanın. Simgeye tıklamak, belirlenen süre boyunca veya sabitlemeyi kaldır düğmesine basana kadar mesajı sabitleyecektir."
 }

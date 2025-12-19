@@ -1,22 +1,21 @@
 import Vue from 'vue';
-import { Subject, Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import electron from 'electron';
 import * as obs from '../../obs-api';
-import { StatefulService, mutation, Service, Inject } from 'services';
+import { Service, Inject, ViewHandler, StatefulService, mutation } from 'services';
 import { throttle } from 'lodash-decorators';
 import {
   NotificationsService,
   ENotificationType,
   ENotificationSubType,
 } from 'services/notifications';
-import { ServicesManager } from '../services-manager';
 import { JsonrpcService } from './api/jsonrpc';
 import { TroubleshooterService, TIssueCode } from 'services/troubleshooter';
 import { $t } from 'services/i18n';
 import { StreamingService, EStreamingState } from 'services/streaming';
 import { VideoSettingsService } from 'services/settings-v2/video';
+import { DualOutputService } from 'services/dual-output';
 import { UsageStatisticsService } from './usage-statistics';
-import { ViewHandler } from './core';
 
 interface IPerformanceState {
   CPU: number;
@@ -32,6 +31,12 @@ interface IPerformanceState {
   frameRate: number;
 }
 
+export enum EStreamQuality {
+  GOOD = 'GOOD',
+  FAIR = 'FAIR',
+  POOR = 'POOR',
+}
+
 interface INextStats {
   framesSkipped: number;
   framesEncoded: number;
@@ -40,12 +45,7 @@ interface INextStats {
   framesRendered: number;
   laggedFactor: number;
   droppedFramesFactor: number;
-}
-
-export enum EStreamQuality {
-  GOOD = 'GOOD',
-  FAIR = 'FAIR',
-  POOR = 'POOR',
+  cpu: number;
 }
 
 // How frequently parformance stats should be updated
@@ -56,6 +56,8 @@ const NOTIFICATION_THROTTLE_INTERVAL = 2 * 60 * 1000;
 const SAMPLING_DURATION = 2 * 60 * 1000;
 // How many samples we should take
 const NUMBER_OF_SAMPLES = Math.round(SAMPLING_DURATION / STATS_UPDATE_INTERVAL);
+// Limit on interval between CPU usage notifications
+const CPU_NOTIFICATION_THROTTLE_INTERVAL = 10 * 60 * 1000;
 
 interface IMonitorState {
   framesLagged: number;
@@ -112,6 +114,7 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
   @Inject() private streamingService: StreamingService;
   @Inject() private usageStatisticsService: UsageStatisticsService;
   @Inject() private videoSettingsService: VideoSettingsService;
+  @Inject() private dualOutputService: DualOutputService;
 
   static initialState: IPerformanceState = {
     CPU: 0,
@@ -130,6 +133,7 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
   private historicalDroppedFrames: number[] = [];
   private historicalSkippedFrames: number[] = [];
   private historicalLaggedFrames: number[] = [];
+  private historicalCPU: number[] = [];
   private shutdown = false;
   private statsRequestInProgress = false;
 
@@ -144,7 +148,7 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
 
   @mutation()
   private SET_PERFORMANCE_STATS(stats: Partial<IPerformanceState>) {
-    Object.keys(stats).forEach(stat => {
+    Object.keys(stats).forEach((stat: keyof Partial<IPerformanceState>) => {
       Vue.set(this.state, stat, stats[stat]);
     });
   }
@@ -203,6 +207,7 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
     this.streamStartRenderedFrames = obs.Global.totalFrames;
     this.streamStartEncodedFrames = this.videoSettingsService.contexts.horizontal.encodedFrames;
     this.streamStartTime = new Date();
+    this.historicalCPU = [];
   }
 
   stopStreamQualityMonitoring() {
@@ -217,13 +222,20 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
           this.streamStartEncodedFrames)) *
       100;
     const streamDropped = this.state.percentageDroppedFrames;
-    const streamDuration = new Date().getTime() - this.streamStartTime.getTime();
+    const streamDuration =
+      this.streamStartTime !== undefined
+        ? new Date().getTime() - this.streamStartTime.getTime()
+        : 0;
+    const averageCPU = this.averageFactor(this.historicalCPU);
+    const streamType = this.dualOutputService.views.dualOutputMode ? 'dual' : 'single';
 
     this.usageStatisticsService.recordAnalyticsEvent('StreamPerformance', {
       streamLagged,
       streamSkipped,
       streamDropped,
       streamDuration,
+      averageCPU,
+      streamType,
     });
   }
 
@@ -244,6 +256,14 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
     this.addSample(this.historicalDroppedFrames, nextStats.droppedFramesFactor);
     this.addSample(this.historicalSkippedFrames, nextStats.skippedFactor);
     this.addSample(this.historicalLaggedFrames, nextStats.laggedFactor);
+
+    // only track CPU when live in dual output mode
+    if (
+      this.dualOutputService.views.dualOutputMode &&
+      this.streamingService.views.isMidStreamMode
+    ) {
+      this.addSample(this.historicalCPU, nextStats.cpu);
+    }
 
     this.sendNotifications(currentStats, nextStats);
 
@@ -268,6 +288,8 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
 
     const droppedFramesFactor = this.state.percentageDroppedFrames / 100;
 
+    const cpu = this.state.CPU;
+
     return {
       framesSkipped,
       framesEncoded,
@@ -276,6 +298,7 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
       framesRendered,
       laggedFactor,
       droppedFramesFactor,
+      cpu,
     };
   }
 
@@ -291,13 +314,12 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
   }
 
   checkNotification(target: number, record: number[]) {
-    if (record.length < NUMBER_OF_SAMPLES) return false;
     return this.averageFactor(record) >= target;
   }
 
   // Check if any notification thresholds are met and send applicable notification
   sendNotifications(currentStats: IMonitorState, nextStats: INextStats) {
-    const troubleshooterSettings = this.troubleshooterService.getSettings();
+    const troubleshooterSettings = this.troubleshooterService.views.settings;
 
     // Check if skipped frames exceed notification threshold
     if (
@@ -326,20 +348,37 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
     ) {
       this.pushDroppedFramesNotify(this.averageFactor(this.historicalDroppedFrames));
     }
+
+    // only show CPU usage notifications when live in dual output mode
+    if (
+      this.dualOutputService.views.dualOutputMode &&
+      this.streamingService.views.isMidStreamMode &&
+      troubleshooterSettings.dualOutputCpuEnabled &&
+      this.state.CPU > troubleshooterSettings.dualOutputCpuThreshold * 100
+    ) {
+      this.pushDualOutputHighCPUNotify(this.state.CPU);
+    }
   }
 
-  @throttle(NOTIFICATION_THROTTLE_INTERVAL)
-  private pushSkippedFramesNotify(factor: number) {
-    const code: TIssueCode = 'FRAMES_SKIPPED';
+  @throttle(CPU_NOTIFICATION_THROTTLE_INTERVAL)
+  private pushDualOutputHighCPUNotify(factor: number) {
+    const code: TIssueCode = 'HIGH_CPU_USAGE';
+
+    const message =
+      factor > 50
+        ? $t('High CPU Usage: Detected')
+        : $t('High CPU Usage: %{percentage}% used', {
+            percentage: factor.toFixed(1),
+          });
+
     this.notificationsService.push({
       code,
       type: ENotificationType.WARNING,
       data: factor,
       lifeTime: 2 * 60 * 1000,
       showTime: true,
-      subType: ENotificationSubType.SKIPPED,
-      // tslint:disable-next-line:prefer-template
-      message: $t('Skipped frames detected:') + Math.round(factor * 100) + '% over last 2 minutes',
+      subType: ENotificationSubType.CPU,
+      message,
       action: this.jsonrpcService.createRequest(
         Service.getResourceId(this.troubleshooterService),
         'showTroubleshooter',
@@ -386,8 +425,27 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
     });
   }
 
+  @throttle(NOTIFICATION_THROTTLE_INTERVAL)
+  private pushSkippedFramesNotify(factor: number) {
+    const code: TIssueCode = 'FRAMES_SKIPPED';
+    this.notificationsService.push({
+      code,
+      type: ENotificationType.WARNING,
+      data: factor,
+      lifeTime: 2 * 60 * 1000,
+      showTime: true,
+      subType: ENotificationSubType.SKIPPED,
+      // tslint:disable-next-line:prefer-template
+      message: $t('Skipped frames detected:') + Math.round(factor * 100) + '% over last 2 minutes',
+      action: this.jsonrpcService.createRequest(
+        Service.getResourceId(this.troubleshooterService),
+        'showTroubleshooter',
+        code,
+      ),
+    });
+  }
+
   stop() {
     this.shutdown = true;
-    this.SET_PERFORMANCE_STATS(PerformanceService.initialState);
   }
 }

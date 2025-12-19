@@ -1,0 +1,35 @@
+{
+  "activeId": "ed1904b6-be14-413c-bf18-886de5246c68",
+  "collections": [
+    {
+      "id": "ed1904b6-be14-413c-bf18-886de5246c68",
+      "name": "Shock",
+      "modified": "2023-11-07T01:40:09.552Z",
+      "auto": false,
+      "operatingSystem": "win32",
+      "deleted": false,
+      "needsRename": false,
+      "serverId": 81976775,
+      "sceneNodeMaps": {
+        "5f3b0e4f-4ad9-464b-a46e-57c0ed2e8a9e": {
+          "c6ae4582-16b6-44ee-9b86-198087675852": "21a964be-867e-48b4-8ee4-51f58a538c8b",
+          "c809e6f2-75c0-46b7-9515-1c4a9c1eea18": "d905b2bf-c291-448a-8445-0fdf303f72ee",
+          "e5b0f97f-52b3-4975-be88-5f8595e26bbc": "1e7237db-2a40-40a8-b0a1-cc6f5bab0c52",
+          "ddeab691-6170-42da-9df1-0a1c1bfe64a6": "61aedb12-29ef-460a-9aeb-866a25aea1e4",
+          "4fe5d036-b193-474a-9421-5c697b8280bc": "bad91feb-dcea-4a1e-ab67-a7f7d5b569ff",
+          "0c801c94-a7c1-42a6-a71d-b2f657fa76ed": "54e53098-1193-4845-8bb5-6eb527ae2341",
+          "8cfc05a9-f818-436f-a1cc-a0e55d86747c": "05e5f45b-8946-4a9a-a937-5d7686652749",
+          "ec5634c9-9de9-4558-9276-018c176ff9f0": "3b5142d3-d52e-4b0e-862d-2d87ff59440b",
+          "568cbe14-93bb-4a93-bce1-f0d05ae24aa0": "ebc48910-9d2d-48f3-b0f3-56590043bda2",
+          "4706ffc1-1dc3-47f7-b3ec-e1a191e10e89": "a4572369-fe78-4d03-b7c6-46341e8b1cae",
+          "e977d082-ffe6-42ad-a14b-c0a9cede148a": "83b28b51-0d3b-4b8b-9c6f-d40e824d3477",
+          "fbb31079-e003-4cf0-afea-ea2f815f4404": "6920b33a-0900-45dd-a6c5-5cbd9432fdd5",
+          "cd469034-fcae-4be8-844b-2314b941c3cf": "e280246c-2890-4c3c-be6e-b79e678d0778",
+          "7d37f8c4-4297-4a04-b199-a92de724e997": "17aa9736-6139-45ef-a976-28f3f50b0bd3",
+          "4e39ba4f-0602-46fe-8c40-b0476f78c4d8": "0da527df-c241-4ae7-b1b5-aa13f23bb44a",
+          "4fe51230-9628-498d-b11b-7555bc844975": "10fc576c-40c3-47d7-a0a7-fb1e2e17d61c"
+        }
+      }
+    }
+  ]
+}

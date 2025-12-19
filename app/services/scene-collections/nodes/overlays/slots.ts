@@ -1,24 +1,25 @@
-import { ArrayNode } from '../array-node';
-import { SceneItem, Scene, TSceneNode, ScenesService } from 'services/scenes';
-import { VideoService } from 'services/video';
-import { SourcesService, TSourceType } from 'services/sources';
-import { SourceFiltersService, TSourceFilterType } from 'services/source-filters';
-import { Inject } from 'services/core/injector';
-import { ImageNode } from './image';
-import { TextNode } from './text';
-import { WebcamNode } from './webcam';
-import { VideoNode } from './video';
-import { StreamlabelNode } from './streamlabel';
-import { IconLibraryNode } from './icon-library';
-import { WidgetNode } from './widget';
-import { SceneSourceNode } from './scene';
 import { AudioService } from 'services/audio';
+import { Inject } from 'services/core/injector';
+import { Scene, SceneItem, ScenesService, TSceneNode } from 'services/scenes';
+import { TDisplayType } from 'services/settings-v2';
+import { VideoSettingsService } from 'services/settings-v2/video';
+import { SourceFiltersService, TSourceFilterType } from 'services/source-filters';
+import { SourcesService, TSourceType } from 'services/sources';
+import { byOS, getOS, OS } from 'util/operating-systems';
 import * as obs from '../../../../../obs-api';
 import { WidgetType } from '../../../widgets';
-import { byOS, OS, getOS } from 'util/operating-systems';
-import { GameCaptureNode } from './game-capture';
+import { ArrayNode } from '../array-node';
 import { Node } from '../node';
-import { TDisplayType } from 'services/settings-v2';
+import { GameCaptureNode } from './game-capture';
+import { IconLibraryNode } from './icon-library';
+import { ImageNode } from './image';
+import { SceneSourceNode } from './scene';
+import { SmartBrowserNode } from './smartBrowserSource';
+import { StreamlabelNode } from './streamlabel';
+import { TextNode } from './text';
+import { VideoNode } from './video';
+import { WebcamNode } from './webcam';
+import { WidgetNode } from './widget';
 
 type TContent =
   | ImageNode
@@ -29,7 +30,8 @@ type TContent =
   | WidgetNode
   | SceneSourceNode
   | GameCaptureNode
-  | IconLibraryNode;
+  | IconLibraryNode
+  | SmartBrowserNode;
 
 interface IFilterInfo {
   name: string;
@@ -59,6 +61,7 @@ interface IItemSchema {
 
   visible?: boolean;
   display?: TDisplayType;
+  locked: boolean;
 }
 
 export interface IFolderSchema {
@@ -80,7 +83,7 @@ interface IContext {
 export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
   schemaVersion = 1;
 
-  @Inject() videoService: VideoService;
+  @Inject() videoSettingsService: VideoSettingsService;
   @Inject() sourceFiltersService: SourceFiltersService;
   @Inject() sourcesService: SourcesService;
   @Inject() scenesService: ScenesService;
@@ -97,6 +100,7 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
         sceneNodeType: 'folder',
         name: sceneNode.name,
         childrenIds: sceneNode.childrenIds || [],
+        display: sceneNode?.display,
       };
     }
 
@@ -104,10 +108,10 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
       id: sceneNode.id,
       sceneNodeType: 'item',
       name: sceneNode.name,
-      x: sceneNode.transform.position.x / this.videoService.baseWidth,
-      y: sceneNode.transform.position.y / this.videoService.baseHeight,
-      scaleX: sceneNode.transform.scale.x / this.videoService.baseWidth,
-      scaleY: sceneNode.transform.scale.y / this.videoService.baseHeight,
+      x: sceneNode.transform.position.x / this.videoSettingsService.baseWidth,
+      y: sceneNode.transform.position.y / this.videoSettingsService.baseHeight,
+      scaleX: sceneNode.transform.scale.x / this.videoSettingsService.baseWidth,
+      scaleY: sceneNode.transform.scale.y / this.videoSettingsService.baseHeight,
       crop: sceneNode.transform.crop,
       rotation: sceneNode.transform.rotation,
       visible: sceneNode.visible,
@@ -121,6 +125,7 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
           settings: filter.settings,
         };
       }),
+      locked: sceneNode.locked,
     };
 
     if (sceneNode.getObsInput().audioMixers) {
@@ -128,6 +133,11 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
     }
 
     const manager = sceneNode.source.getPropertiesManagerType();
+    if (manager === 'smartBrowserSource') {
+      const content = new SmartBrowserNode();
+      await content.save({ sceneItem: sceneNode, assetsPath: context.assetsPath });
+      return { ...details, content } as IItemSchema;
+    }
 
     if (manager === 'streamlabels') {
       const content = new StreamlabelNode();
@@ -212,7 +222,7 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
 
     const webcamSourceType = byOS<TSourceType>({
       [OS.Windows]: 'dshow_input',
-      [OS.Mac]: 'av_capture_input',
+      [OS.Mac]: 'macos_avcapture',
     });
 
     if (obj.content instanceof WebcamNode) {
@@ -269,8 +279,8 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
 
         // Adjust scales by the ratio of the exported base resolution to
         // the users current base resolution
-        obj.scaleX *= obj.content.data.width / this.videoService.baseWidth;
-        obj.scaleY *= obj.content.data.height / this.videoService.baseHeight;
+        obj.scaleX *= obj.content.data.width / this.videoSettingsService.baseWidth;
+        obj.scaleY *= obj.content.data.height / this.videoSettingsService.baseHeight;
       } else {
         // We will not load this source at all on mac
         return;
@@ -332,11 +342,25 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
 
       // Adjust scales by the ratio of the exported base resolution to
       // the users current base resolution
-      obj.scaleX *= obj.content.data.width / this.videoService.baseWidth;
-      obj.scaleY *= obj.content.data.height / this.videoService.baseHeight;
+      obj.scaleX *= obj.content.data.width / this.videoSettingsService.baseWidth;
+      obj.scaleY *= obj.content.data.height / this.videoSettingsService.baseHeight;
+    } else if (obj.content instanceof SmartBrowserNode) {
+      sceneItem = context.scene.createAndAddSource(
+        obj.name,
+        'browser_source',
+        {},
+        {
+          id,
+          select: false,
+          sourceAddOptions: { propertiesManager: 'smartBrowserSource' },
+          display,
+        },
+      );
     }
 
     this.adjustTransform(sceneItem, obj);
+    this.setExtraSettings(sceneItem, obj);
+
     if (!existing) {
       await obj.content.load({
         sceneItem,
@@ -362,17 +386,41 @@ export class SlotsNode extends ArrayNode<TSlotSchema, IContext, TSceneNode> {
   }
 
   adjustTransform(item: SceneItem, obj: IItemSchema) {
-    item.setTransform({
-      position: {
-        x: obj.x * this.videoService.baseWidth,
-        y: obj.y * this.videoService.baseHeight,
-      },
-      scale: {
-        x: obj.scaleX * this.videoService.baseWidth,
-        y: obj.scaleY * this.videoService.baseHeight,
-      },
-      crop: obj.crop,
-      rotation: obj.rotation,
+    // special handling for game capture to show same dimensions on the vertical display as the horizontal
+
+    if (item.type === 'game_capture') {
+      item.setTransform({
+        position: {
+          x: obj.x * this.videoSettingsService.baseWidth,
+          y: obj.y * this.videoSettingsService.baseHeight,
+        },
+        crop: obj.crop,
+        rotation: obj.rotation,
+      });
+    } else {
+      item.setTransform({
+        position: {
+          x: obj.x * this.videoSettingsService.baseWidth,
+          y: obj.y * this.videoSettingsService.baseHeight,
+        },
+        scale: {
+          x: obj.scaleX * this.videoSettingsService.baseWidth,
+          y: obj.scaleY * this.videoSettingsService.baseHeight,
+        },
+        crop: obj.crop,
+        rotation: obj.rotation,
+      });
+    }
+  }
+
+  /*
+   * TODO: this is probably better than doing it individually on every source type
+   * branch, but might impact performance.
+   */
+  setExtraSettings(item: SceneItem, obj: IItemSchema) {
+    item.setSettings({
+      visible: obj.visible ?? true,
+      locked: obj.locked ?? false,
     });
   }
 }

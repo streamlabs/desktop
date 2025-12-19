@@ -43,6 +43,9 @@ import { SettingsService } from '../settings';
 import { DualOutputService } from 'services/dual-output';
 import { OS, getOS } from 'util/operating-systems';
 import * as remote from '@electron/remote';
+import { RealmService } from 'services/realm';
+import { StreamAvatarService } from 'services/stream-avatar/stream-avatar-service';
+import { NavigationService } from 'services/navigation';
 
 interface IAppState {
   loading: boolean;
@@ -94,6 +97,9 @@ export class AppService extends StatefulService<IAppState> {
   @Inject() private usageStatisticsService: UsageStatisticsService;
   @Inject() private videoSettingsService: VideoSettingsService;
   @Inject() private dualOutputService: DualOutputService;
+  @Inject() private realmService: RealmService;
+  @Inject() private streamAvatarService: StreamAvatarService;
+  @Inject() private navigationService: NavigationService;
 
   static initialState: IAppState = {
     loading: true,
@@ -118,6 +124,8 @@ export class AppService extends StatefulService<IAppState> {
         this.SET_ERROR_ALERT(true);
       });
     }
+
+    this.realmService.connect();
 
     // perform several concurrent http requests
     await Promise.all([
@@ -171,7 +179,20 @@ export class AppService extends StatefulService<IAppState> {
     }
 
     ipcRenderer.send('AppInitFinished');
-    this.metricsService.recordMetric('sceneCollectionLoadingTime');
+    const sceneCollectionLoadingTime = Date.now();
+    this.metricsService.recordMetric('sceneCollectionLoadingTime', sceneCollectionLoadingTime);
+
+    // Log startup times
+    const metrics = this.metricsService.getMetrics();
+    if (metrics?.appStartTime) {
+      console.log(
+        '=================================\n',
+        'Time to load scene collection: ',
+        (sceneCollectionLoadingTime - metrics.appStartTime) / 1000,
+        'seconds',
+        '\n=================================',
+      );
+    }
   }
 
   shutdownStarted = new Subject();
@@ -181,9 +202,9 @@ export class AppService extends StatefulService<IAppState> {
     this.START_LOADING();
     this.loadingChanged.next(true);
     this.tcpServerService.stopListening();
-
     window.setTimeout(async () => {
       obs.NodeObs.InitShutdownSequence();
+      this.streamAvatarService.stopAvatarProcess();
       this.crashReporterService.beginShutdown();
       this.shutdownStarted.next();
       this.keyListenerService.shutdown();
@@ -199,6 +220,8 @@ export class AppService extends StatefulService<IAppState> {
       await this.gameOverlayService.destroy();
       await this.fileManagerService.flushAll();
       obs.NodeObs.RemoveSourceCallback();
+      obs.NodeObs.RemoveTransitionCallback();
+      obs.NodeObs.RemoveVolmeterCallback();
       obs.NodeObs.OBS_service_removeCallback();
       obs.IPC.disconnect();
       this.crashReporterService.endShutdown();
@@ -220,9 +243,18 @@ export class AppService extends StatefulService<IAppState> {
       this.START_LOADING();
       this.loadingChanged.next(true);
 
-      // The scene collections window is the only one we don't close when
-      // switching scene collections, because it results in poor UX.
-      if (this.windowsService.state.child.componentName !== 'ManageSceneCollections') {
+      // There are two exceptions that do not close the child window during this process
+      // 1. ManageSceneCollections - accesses loading mode often and often performs
+      // multiple loading operations during the window's lifecycle
+      // 2. Stream Settings - enabling custom rtmp here disables dual output which
+      // triggers loading mode, but they will want to configure settings here
+      // immediately after doing so
+      const childWindow = this.windowsService.state.child;
+      const isManageSceneCollections = childWindow.componentName === 'ManageSceneCollections';
+      const isStreamSettings =
+        childWindow.componentName === 'Settings' &&
+        this.navigationService.state.currentSettingsTab === 'Stream';
+      if (!isManageSceneCollections && !isStreamSettings) {
         this.windowsService.closeChildWindow();
       }
 

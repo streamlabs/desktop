@@ -1,6 +1,7 @@
-import { Services } from 'components-react/service-provider';
 import React, { useEffect, useState } from 'react';
 import execa from 'execa';
+import cx from 'classnames';
+import { Services } from 'components-react/service-provider';
 import { FFPROBE_EXE } from 'services/highlighter/constants';
 import { pmap } from 'util/pmap';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
@@ -10,6 +11,7 @@ import groupBy from 'lodash/groupBy';
 import { Tabs, Modal } from 'antd';
 import Display from 'components-react/shared/Display';
 import { useVuex } from 'components-react/hooks';
+import { useRealmObject } from 'components-react/hooks/realm';
 
 class MediaFileReader {
   constructor(public readonly filePath: string) {}
@@ -76,7 +78,7 @@ async function readMediaInfo(): Promise<IMediaSourceInfo[]> {
 
 type TWarningLevel = 'OK' | 'WARN' | 'CRITICAL';
 
-export default function ThemeAudit() {
+export default function ThemeAudit(p: { className?: string }) {
   const {
     SceneCollectionsService,
     ScenesService,
@@ -90,7 +92,6 @@ export default function ThemeAudit() {
   const v = useVuex(() => ({
     cpu: PerformanceService.views.cpuPercent,
   }));
-
   useEffect(() => {
     readMediaInfo().then(info => setMediaInfo(info));
   }, []);
@@ -151,7 +152,10 @@ export default function ThemeAudit() {
   }
 
   return (
-    <div style={{ width: '100%', display: 'flex' }} className={styles.themeAuditRoot}>
+    <div
+      style={{ width: '100%', display: 'flex' }}
+      className={cx(styles.themeAuditRoot, p.className)}
+    >
       <Scrollable style={{ flexGrow: 1, padding: 20 }}>
         <h1>Theme Audit: {SceneCollectionsService.activeCollection?.name}</h1>
 

@@ -1,0 +1,42 @@
+.platform-icon {
+  padding-right: 32px;
+}
+
+.platform-button {
+  padding-top: 14px;
+  padding-bottom: 14px;
+
+  background: var(--midtone);
+  color: var(--button);
+
+  &--streamlabs {
+    &, &:hover, &:focus, &:active {
+      background: white !important;
+      color: black !important;
+    }
+  }
+}
+
+.platform-icon-button {
+  :global('.fab.fa-trovo') {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+:global(.ant-btn-icon-only) {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+:global(.ant-btn-icon-only .fab.fa-trovo), :global(.ant-btn-icon-only img) {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+}
+
+
+.arrow-icon {
+  padding-left: 32px;
+}

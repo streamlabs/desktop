@@ -23,6 +23,7 @@ import {
 } from './menu-data';
 
 interface ISideNavServiceState {
+  version: string;
   isOpen: boolean;
   showCustomEditor: boolean;
   hasLegacyMenu: boolean;
@@ -87,7 +88,6 @@ class SideNavViews extends ViewHandler<ISideNavServiceState> {
   }
 }
 
-@InitAfter('UserService')
 @InitAfter('PlatformAppsService')
 export class SideNavService extends PersistentStatefulService<ISideNavServiceState> {
   @Inject() userService: UserService;
@@ -96,7 +96,12 @@ export class SideNavService extends PersistentStatefulService<ISideNavServiceSta
   @Inject() layoutService: LayoutService;
   @Inject() platformAppsService: PlatformAppsService;
 
+  // Since this service persists menu items, for now please change this version
+  // when changes are made to navbar
+  version = '4';
+
   static defaultState: ISideNavServiceState = {
+    version: '0',
     isOpen: false,
     showCustomEditor: true,
     hasLegacyMenu: true,
@@ -109,16 +114,16 @@ export class SideNavService extends PersistentStatefulService<ISideNavServiceSta
 
   init() {
     super.init();
+
+    if (this.state.version !== this.version) {
+      this.UPDATE_MENU_ITEMS(ENavName.TopNav, SideBarTopNavData().menuItems);
+      this.UPDATE_MENU_ITEMS(ENavName.BottomNav, SideBarBottomNavData().menuItems);
+      this.SET_VERSION(this.version);
+    }
+
     this.userService.userLoginFinished.subscribe(() => this.handleUserLogin());
 
     this.handleDismissables();
-
-    const allAppsLoaded = this.platformAppsService.allAppsLoaded.subscribe(
-      (loadedApps: ILoadedApp[]) => {
-        this.updateAllApps(loadedApps);
-        allAppsLoaded.unsubscribe();
-      },
-    );
 
     /**
      * Determine if the user has the recording history menu item
@@ -287,6 +292,8 @@ export class SideNavService extends PersistentStatefulService<ISideNavServiceSta
         menuItems: this.state[ENavName.BottomNav].menuItems.map((menuItem: IMenuItem) => {
           if (menuItem.key === EMenuItemKey.Dashboard) {
             return {
+              // TODO: index
+              // @ts-ignore
               ...this.state[ENavName.BottomNav].menuItems[EMenuItemKey.Dashboard],
               isExpanded: true,
             };
@@ -411,5 +418,10 @@ export class SideNavService extends PersistentStatefulService<ISideNavServiceSta
       name: navName,
       menuItems: [...menuItems],
     };
+  }
+
+  @mutation()
+  private SET_VERSION(version: string) {
+    this.state.version = version;
   }
 }

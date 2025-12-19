@@ -4,8 +4,7 @@ import { chatIsVisible, goLive, stopStream } from '../../helpers/modules/streami
 
 useWebdriver();
 
-// TODO add testing accounts for Trovo
-test.skip('Streaming to Trovo', async t => {
+test('Streaming to Trovo', async t => {
   await logIn('trovo');
   await goLive({
     title: 'Test',
