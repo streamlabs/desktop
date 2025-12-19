@@ -88,7 +88,6 @@ class SideNavViews extends ViewHandler<ISideNavServiceState> {
   }
 }
 
-@InitAfter('UserService')
 @InitAfter('PlatformAppsService')
 export class SideNavService extends PersistentStatefulService<ISideNavServiceState> {
   @Inject() userService: UserService;
@@ -99,7 +98,7 @@ export class SideNavService extends PersistentStatefulService<ISideNavServiceSta
 
   // Since this service persists menu items, for now please change this version
   // when changes are made to navbar
-  version = '3';
+  version = '4';
 
   static defaultState: ISideNavServiceState = {
     version: '0',

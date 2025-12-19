@@ -21,5 +21,6 @@
   "Subscriber Only": "구독자만",
   "Only viewers that subscribe to you will be able to chat": "나를 구독하는 시청자만 채팅할 수 있습니다",
   "You need X premium account to go live on X.": "X에서 라이브를 시작하려면 X 프리미엄 계정이 필요합니다.",
-  "You need X premium account to go live on X. Click to learn more": "X에서 라이브를 시작하려면 X 프리미엄 계정이 필요합니다. 자세히 알아보려면 클릭하십시오."
+  "You need X premium account to go live on X. Click to learn more": "X에서 라이브를 시작하려면 X 프리미엄 계정이 필요합니다. 자세히 알아보려면 클릭하십시오.",
+  "Stream Shift Error: Twitter is not live": "Stream Shift Error: Twitter is not live"
 }

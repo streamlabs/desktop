@@ -149,7 +149,7 @@
   "An error has occured while uninstalling the virtual camera": "Při odinstalování virtuální kamery došlo k chybě.",
   "Streamlabs Desktop cannot install the virtual camera if it's not in Applications. Please move Streamlabs Desktop to the Applications directory.": "Streamlabs Desktop nemůže nainstalovat virtuální kameru, pokud není v Aplikacích. Přesuňte Streamlabs Desktop do adresáře Aplikace.",
   "The installation of the virtual camera will complete after a system reboot.": "Instalace virtuální kamery bude dokončena po restartování systému.",
-  "Streamlabs Virtual Webcam feature requires macOS 13 or later.": "Streamlabs Virtual Webcam feature requires macOS 13 or later.",
+  "Streamlabs Virtual Webcam feature requires macOS 13 or later.": "Funkce Streamlabs Virtual Webcam vyžaduje systém macOS 13 nebo novější.",
   "Output Type": "Typ výstupu",
   "Output Selection": "Výběr výstupu",
   "Output Source": "Zdroj výstupu",
@@ -279,9 +279,9 @@
   "Apply Primary": "Použít primární",
   "Output Resolution": "Rozlišení výstupu",
   "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "Nelze spustit Dual Output, aktualizujte nastavení streamu na „Použít doporučené nastavení“.",
-  "Mobile": "Mobile",
-  "Mobile Streaming": "Mobile Streaming",
-  "Remote Controller": "Remote Controller",
-  "Third Party Connections": "Third Party Connections",
-  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "Stream your phone camera or mobile game on the go with Streamlabs Mobile App."
+  "Mobile": "Mobilní zařízení",
+  "Mobile Streaming": "Mobilní streamování",
+  "Remote Controller": "Dálkový ovladač",
+  "Third Party Connections": "Připojení třetích stran",
+  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "Streamujte obraz z kamery vašeho telefonu nebo mobilních her na cestách pomocí aplikace Streamlabs Mobile."
 }
