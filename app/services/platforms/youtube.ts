@@ -37,7 +37,14 @@ interface IYoutubeServiceState extends IPlatformState {
   broadcastStatus: TBroadcastLifecycleStatus | '';
   settings: IYoutubeStartStreamOptions;
   categories: IYoutubeCategory[];
-}
+  backupStreamSettings?: IBackUpStreamSettings;}
+
+interface IBackUpStreamSettings  {
+      key: string;
+      server: string;
+      streamType: 'rtmp_common' | 'rtmp_custom' | 'whip_custom';
+      context: TDisplayType;
+  }
 
 export interface IYoutubeStartStreamOptions extends IExtraBroadcastSettings {
   title: string;
@@ -537,6 +544,18 @@ export class YoutubeService
     // setup key and platform type in the OBS settings
     const streamKey = stream.cdn.ingestionInfo.streamName;
 
+    console.log('MLH beforeGoLive save current stream settings');
+
+    //MLH save user's current rtmp_common settings to restore after Go Live since they are overwritten here
+    const currentSettings = this.streamSettingsService.settings;
+    if (!this.state.backupStreamSettings) {
+      this.state.backupStreamSettings = {} as IBackUpStreamSettings;
+    }
+    this.state.backupStreamSettings.key = currentSettings.key;
+    this.state.backupStreamSettings.server = currentSettings.server;
+    this.state.backupStreamSettings.streamType = currentSettings.streamType;
+    this.state.backupStreamSettings.context = context ? context : 'horizontal';
+
     if (!this.streamingService.views.isMultiplatformMode) {
       this.streamSettingsService.setSettings(
         {
@@ -598,6 +617,18 @@ export class YoutubeService
     this.SET_VERTICAL_BROADCAST({} as IYoutubeLiveBroadcast);
     this.SET_VERTICAL_STREAM_KEY('');
     this.streamSettingsService.setGoLiveSettings({ customDestinations: destinations });
+
+    //MLH restore user's previous settings in case they were overwritten on Go Live
+    console.log('MLH youtube.ts afterStopStream restore previous stream settings: ', this.state.backupStreamSettings);
+    this.streamSettingsService.setSettings(
+      {
+        platform: 'youtube',
+        key: this.state.backupStreamSettings.key,
+        streamType: this.state.backupStreamSettings.streamType,
+        server: this.state.backupStreamSettings.server,
+      },
+      this.state.backupStreamSettings.context,
+    );
   }
 
   /**
