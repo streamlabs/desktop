@@ -40,8 +40,7 @@ export default function Onboarding() {
   const showOnboarding = useRealmObject(OnboardingV2Service.state).showOnboarding;
 
   useEffect(() => {
-    // OnboardingV2Service.actions.showOnboardingIfNecessary();
-    OnboardingV2Service.actions.showOnboarding();
+    OnboardingV2Service.actions.showOnboardingIfNecessary();
   }, []);
 
   function closeModal() {
