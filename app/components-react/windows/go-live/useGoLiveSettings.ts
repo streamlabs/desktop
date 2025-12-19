@@ -12,6 +12,7 @@ import { getDefined } from '../../../util/properties-type-guards';
 import isEqual from 'lodash/isEqual';
 import { TDisplayType } from 'services/settings-v2';
 import partition from 'lodash/partition';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 type TCommonFieldName = 'title' | 'description';
 
@@ -65,6 +66,9 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
   }
 
   getCanDualStream(platform: TPlatform) {
+    if (platform === 'twitch') {
+      return Services.TwitchService.views.hasTwitchDualStreamAccess;
+    }
     return Services.StreamingService.views.supports('dualStream', [platform]);
   }
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, forwardRef, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import cx from 'classnames';
 import { EStreamingState } from 'services/streaming';
 import { EGlobalSyncStatus } from 'services/media-backup';
@@ -7,8 +7,8 @@ import { useVuex } from '../hooks';
 import { Services } from '../service-provider';
 import * as remote from '@electron/remote';
 import { TStreamShiftStatus } from 'services/restream';
-import { alertAsync, promptAction } from 'components-react/modals';
-import { EAvailableFeatures } from 'services/incremental-rollout';
+import { promptAction } from 'components-react/modals';
+import { IStreamShiftRequested, IStreamShiftActionCompleted } from 'services/websocket';
 
 export default function StartStreamingButton(p: { disabled?: boolean }) {
   const {
@@ -70,58 +70,69 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
 
   useEffect(() => {
     if (!isDualOutputMode && isPrime && streamingStatus === EStreamingState.Offline) {
-      fetchStreamShiftStatus();
+      fetchStreamShiftStatus().catch((e: unknown) => {
+        console.error('Error fetching stream shift status:', e);
+      });
     }
 
-    const streamShiftEvent = StreamingService.streamShiftEvent.subscribe(event => {
-      const { streamShiftStreamId, streamShiftForceGoLive } = RestreamService.state;
-      const isMobileRemote = streamShiftStreamId ? /[A-Z]/.test(streamShiftStreamId) : false;
-      const remoteDeviceType = isMobileRemote ? 'mobile' : 'desktop';
+    const streamShiftEvent = StreamingService.streamShiftEvent.subscribe(
+      (event: IStreamShiftRequested | IStreamShiftActionCompleted) => {
+        const { streamShiftStreamId } = RestreamService.state;
+        console.debug('Event ID: ' + event.data.identifier, '\n Stream ID: ' + streamShiftStreamId);
+        const isFromOtherDevice =
+          streamShiftStreamId && event.data.identifier !== streamShiftStreamId;
 
-      if (event.type === 'streamSwitchRequest') {
-        console.debug('Event stream id: ' + event.data.identifier);
-        if (event.data.identifier === streamShiftStreamId) {
-          RestreamService.confirmStreamShift('approved');
+        const isMobileRemote = isFromOtherDevice ? /[A-Z]/.test(event.data.identifier) : false;
+        const remoteDeviceType = isMobileRemote ? 'mobile' : 'desktop';
+
+        // Note: because the event's stream id is from the device that requested the switch,
+        // it is not possible to know what type of device the stream will be switching from.
+        // We can only identify the type of device the stream is switching to.
+        const switchType = `desktop-${remoteDeviceType}`;
+
+        if (event.type === 'streamSwitchRequest') {
+          if (!isFromOtherDevice) {
+            // Don't record the request from this device because the other device will record it
+            RestreamService.actions.confirmStreamShift('approved');
+          } else {
+            UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
+              stream: switchType,
+              action: 'request',
+            });
+          }
         }
 
-        UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
-          stream: `desktop-${remoteDeviceType}`,
-        });
-      }
+        if (event.type === 'switchActionComplete') {
+          // End the stream on this device if switching the stream to another device
+          // Only record analytics if the stream was switched from this device to a different one
+          if (isFromOtherDevice) {
+            Services.RestreamService.actions.endStreamShiftStream(event.data.identifier);
 
-      if (event.type === 'switchActionComplete') {
-        console.debug('Event stream id: ' + event.data.identifier);
+            UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
+              stream: switchType,
+              action: 'complete',
+            });
+          }
 
-        const remoteStreamId = event.data.identifier;
-        const isFromOtherDevice = remoteStreamId !== streamShiftStreamId;
+          // Notify the user
+          const message = isFromOtherDevice
+            ? $t(
+                'Your stream has been successfully switched to Streamlabs Desktop. Enjoy your stream!',
+              )
+            : $t(
+                'Your stream has been switched to Streamlabs Desktop from another device. Enjoy your stream!',
+              );
 
-        // End the stream on this device if switching the stream to another device
-        if (isFromOtherDevice) {
-          Services.RestreamService.actions.endStreamShiftStream(remoteStreamId);
+          promptAction({
+            title: $t('Stream successfully switched'),
+            message,
+            btnText: $t('Close'),
+            btnType: 'default',
+            cancelBtnPosition: 'none',
+          });
         }
-
-        UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
-          stream: `desktop-${remoteDeviceType}`,
-        });
-
-        // Notify the user
-        const message = isFromOtherDevice
-          ? $t(
-              'Your stream has been successfully switched to Streamlabs Desktop. Enjoy your stream!',
-            )
-          : $t(
-              'Your stream has been switched to Streamlabs Desktop from another device. Enjoy your stream!',
-            );
-
-        promptAction({
-          title: $t('Stream successfully switched'),
-          message,
-          btnText: $t('Close'),
-          btnType: 'default',
-          cancelBtnPosition: 'none',
-        });
-      }
-    });
+      },
+    );
 
     return () => {
       streamShiftEvent.unsubscribe();
@@ -176,40 +187,47 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
 
       // Only check for Stream Shift for ultra users
       if (isLoggedIn && isPrime) {
-        setIsLoading(true);
-        const isLive = await fetchStreamShiftStatus();
-        setIsLoading(false);
+        try {
+          setIsLoading(true);
+          const isLive = await fetchStreamShiftStatus();
+          setIsLoading(false);
 
-        const message = isDualOutputMode
-          ? $t(
-              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. Dual Output will be disabled since not supported in this mode. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
-            )
-          : $t(
-              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
-            );
+          const message = isDualOutputMode
+            ? $t(
+                'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. Dual Output will be disabled since not supported in this mode. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
+              )
+            : $t(
+                'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
+              );
 
-        if (isLive) {
-          const { streamShiftForceGoLive } = RestreamService.state;
-          let shouldForceGoLive = streamShiftForceGoLive;
+          if (isLive) {
+            const { streamShiftForceGoLive } = RestreamService.state;
+            let shouldForceGoLive = streamShiftForceGoLive;
 
-          await promptAction({
-            title: $t('Another stream detected'),
-            message,
-            btnText: $t('Switch to Streamlabs Desktop'),
-            fn: startStreamShift,
-            cancelBtnText: $t('Cancel'),
-            cancelBtnPosition: 'left',
-            secondaryActionText: $t('Force Start'),
-            secondaryActionFn: async () => {
-              // FIXME: this should actually do something server-side
-              RestreamService.actions.return.forceStreamShiftGoLive(true);
-              shouldForceGoLive = true;
-            },
-          });
+            await promptAction({
+              title: $t('Another stream detected'),
+              message,
+              btnText: $t('Switch to Streamlabs Desktop'),
+              fn: startStreamShift,
+              cancelBtnText: $t('Cancel'),
+              cancelBtnPosition: 'left',
+              secondaryActionText: $t('Force Start'),
+              secondaryActionFn: async () => {
+                // FIXME: this should actually do something server-side
+                RestreamService.actions.return.forceStreamShiftGoLive(true);
+                shouldForceGoLive = true;
+              },
+            });
 
-          if (!shouldForceGoLive) {
-            return;
+            if (!shouldForceGoLive) {
+              return;
+            }
           }
+        } catch (e: unknown) {
+          console.error('Error checking stream switcher status when toggle streaming:', e);
+          setIsLoading(false);
+
+          return;
         }
       }
 
@@ -234,13 +252,25 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
 
   const fetchStreamShiftStatus = useCallback(async () => {
     try {
-      const isLive = await RestreamService.checkIsLive();
+      const isLive = await RestreamService.actions.return.checkIsLive();
       return isLive;
     } catch (e: unknown) {
-      console.error('Error checking stream shift status', e);
+      console.log('Error checking stream shift status', e);
       setIsLoading(false);
       return false;
     }
+    // return await new Promise<boolean>(async (resolve, reject) => {
+    //   try {
+    //     const isLive = await RestreamService.actions.return.checkIsLive();
+    //     resolve(isLive);
+    //   } catch (e: unknown) {
+    //     console.log('Error checking stream shift status', e);
+    //     setIsLoading(false);
+    //     resolve(false);
+    //   }
+
+    //   reject(false);
+    // });
   }, []);
 
   const startStreamShift = useCallback(() => {

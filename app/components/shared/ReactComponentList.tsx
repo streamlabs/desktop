@@ -173,14 +173,6 @@ export class NotificationsAndNews extends ReactComponent {}
 
 @Component({
   props: {
-    name: { default: 'ObsSettings' },
-    componentProps: { default: () => ({ page: 'General' }) },
-  },
-})
-export class ObsSettings extends ReactComponent {}
-
-@Component({
-  props: {
     name: { default: 'PerformanceMetrics' },
     componentProps: { default: () => ({ mode: 'limited' }) },
   },
@@ -260,6 +252,14 @@ export class SafeMode extends ReactComponent {}
 
 @Component({
   props: {
+    name: { default: 'Settings' },
+    wrapperStyles: { default: () => ({ height: '100%' }) },
+  },
+})
+export class Settings extends ReactComponent {}
+
+@Component({
+  props: {
     name: { default: 'SourceProperties' },
     wrapperStyles: { default: () => ({ height: '100%' }) },
   },
@@ -314,6 +314,14 @@ export class TestWidgets extends ReactComponent<{ testers: string[] }> {}
   },
 })
 export class TitleBar extends ReactComponent {}
+
+@Component({
+  props: {
+    name: { default: 'Troubleshooter' },
+    wrapperStyles: { default: () => ({ height: '100%' }) },
+  },
+})
+export class Troubleshooter extends ReactComponent {}
 
 @Component({
   props: {

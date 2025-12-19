@@ -7,11 +7,12 @@ import cx from 'classnames';
 import { $t } from 'services/i18n';
 
 interface INewButtonProps {
-  content: string | React.ReactElement;
+  content?: string | React.ReactElement;
   dismissableKey?: EDismissable;
   size?: 'standard' | 'small';
   absolute?: boolean;
   style?: CSSProperties;
+  className?: string;
 }
 
 export default function DismissableBadge({
@@ -20,6 +21,7 @@ export default function DismissableBadge({
   size = 'standard',
   absolute = false,
   style,
+  className,
 }: INewButtonProps) {
   const { DismissablesService } = Services;
 
@@ -32,10 +34,11 @@ export default function DismissableBadge({
   return (
     <div
       className={cx(
+        className,
         styles.badge,
         styles.dismissableBadge,
-        absolute && styles.absolute,
-        size === 'small' && styles.small,
+        { [styles.absolute]: absolute },
+        { [styles.small]: size === 'small' },
       )}
       style={style}
     >

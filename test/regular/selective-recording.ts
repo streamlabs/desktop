@@ -6,6 +6,8 @@ import {
   setTemporaryRecordingPath,
 } from '../helpers/modules/settings/settings';
 import { focusMain } from '../helpers/modules/core';
+import { sleep } from '../helpers/sleep';
+import { startRecording, stopRecording } from '../helpers/modules/streaming';
 
 useWebdriver();
 
@@ -44,14 +46,10 @@ test('Selective Recording', async t => {
   await (await client.$('[data-role=source] .icon-studio')).waitForExist();
 
   // Start recording and wait
-  await (await client.$('.record-button')).click();
-
-  // Ensure recording indicator is active
-  await (await client.$('.record-button.active')).waitForDisplayed({ timeout: 15000 });
-
-  // Stop recording
-  await (await client.$('.record-button')).click();
-  await (await client.$('.record-button:not(.active)')).waitForDisplayed({ timeout: 40000 }); // stopping recording takes too much time on CI
+  await startRecording();
+  // Record for 2s to prevent the recording from accidentally having the same key
+  await sleep(2000);
+  await stopRecording();
 
   // Check that file exists
   const files = await readdir(tmpDir);

@@ -10,7 +10,6 @@ import { Subject } from 'rxjs';
 import { throttle } from 'lodash-decorators';
 import * as remote from '@electron/remote';
 
-import Settings from 'components/windows/settings/Settings.vue';
 import FFZSettings from 'components/windows/FFZSettings.vue';
 import SceneTransitions from 'components/windows/SceneTransitions.vue';
 import {
@@ -44,10 +43,11 @@ import {
   Main,
   MultistreamChatInfo,
   MarketingModal,
+  Settings,
+  Troubleshooter,
 } from 'components/shared/ReactComponentList';
 
 import SourcePropertiesDeprecated from 'components/windows/SourceProperties.vue';
-import Troubleshooter from 'components/windows/Troubleshooter.vue';
 import GameOverlayEventFeed from 'components/windows/GameOverlayEventFeed';
 import EventFilterMenu from 'components/windows/EventFilterMenu';
 import OverlayPlaceholder from 'components/windows/OverlayPlaceholder';

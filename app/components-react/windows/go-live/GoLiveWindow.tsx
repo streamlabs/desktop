@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styles from './GoLive.m.less';
-import { WindowsService, DualOutputService, IncrementalRolloutService } from 'app-services';
+import { WindowsService } from 'app-services';
 import { ModalLayout } from '../../shared/ModalLayout';
 import { Button, message } from 'antd';
 import { Services } from '../../service-provider';
@@ -13,7 +13,6 @@ import { useGoLiveSettings, useGoLiveSettingsRoot } from './useGoLiveSettings';
 import { inject } from 'slap';
 import RecordingSwitcher from './RecordingSwitcher';
 import { promptAction } from 'components-react/modals';
-import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export default function GoLiveWindow() {
   const { lifecycle, form } = useGoLiveSettingsRoot().extend(module => ({
@@ -82,7 +81,7 @@ function ModalFooter() {
     if (isPrime) {
       try {
         setIsFetchingStreamStatus(true);
-        const isLive = await Services.RestreamService.checkIsLive();
+        const isLive = await Services.RestreamService.actions.return.checkIsLive();
         setIsFetchingStreamStatus(false);
 
         // Prompt to confirm stream switch if the stream exists
@@ -98,7 +97,7 @@ function ModalFooter() {
             ),
             btnText: $t('Switch to Streamlabs Desktop'),
             fn: () => {
-              Services.StreamingService.actions.goLive();
+              goLive();
               close();
             },
             cancelBtnText: $t('Cancel'),
@@ -110,9 +109,7 @@ function ModalFooter() {
             },
           });
 
-          if (!shouldForceGoLive) {
-            return;
-          }
+          if (!shouldForceGoLive) return;
         }
       } catch (e: unknown) {
         console.error('Error checking stream switcher status:', e);
@@ -167,7 +164,7 @@ function ModalFooter() {
           {isFetchingStreamStatus ? (
             <i className="fa fa-spinner fa-pulse" />
           ) : (
-            <>{$t('Confirm & Go Live')}</>
+            $t('Confirm & Go Live')
           )}
         </Button>
       )}

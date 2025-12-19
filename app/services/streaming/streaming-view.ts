@@ -11,13 +11,12 @@ import { UserService } from '../user';
 import { RestreamService, TStreamShiftStatus } from '../restream';
 import { DualOutputService, TDisplayPlatforms, TDisplayDestinations } from '../dual-output';
 import { getPlatformService, TPlatform, TPlatformCapability, platformList } from '../platforms';
-import { TwitterService } from '../../app-services';
+import { TwitchService, TwitterService } from '../../app-services';
 import cloneDeep from 'lodash/cloneDeep';
 import difference from 'lodash/difference';
 import { Services } from '../../components-react/service-provider';
 import { getDefined } from '../../util/properties-type-guards';
 import { TDisplayType } from 'services/settings-v2';
-import { EAvailableFeatures, IncrementalRolloutService } from 'services/incremental-rollout';
 
 /**
  * The stream info view is responsible for keeping
@@ -46,12 +45,12 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return this.getServiceViews(TwitterService);
   }
 
-  private get dualOutputView() {
-    return this.getServiceViews(DualOutputService);
+  private get twitchView() {
+    return this.getServiceViews(TwitchService);
   }
 
-  private get incrementalRolloutView() {
-    return this.getServiceViews(IncrementalRolloutService);
+  private get dualOutputView() {
+    return this.getServiceViews(DualOutputService);
   }
 
   private get streamingState() {
@@ -170,6 +169,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Primarily used for custom UI handling for Twitch dual stream
    */
   get isTwitchDualStreaming() {
+    if (!this.twitchView.hasTwitchDualStreamAccess) {
+      return false;
+    }
+
     return this.settings.platforms?.twitch && this.settings.platforms?.twitch.display === 'both';
   }
 
@@ -396,6 +399,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return (
       this.enabledPlatforms.length === 1 && this.activeDisplayPlatforms.vertical.includes('twitch')
     );
+  }
+
+  getIsEnhancedBroadcasting(): boolean {
+    return Services.SettingsService.isEnhancedBroadcasting();
   }
 
   /**

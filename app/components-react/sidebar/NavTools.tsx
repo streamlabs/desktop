@@ -15,11 +15,10 @@ import MenuItem from 'components-react/shared/MenuItem';
 import UltraIcon from 'components-react/shared/UltraIcon';
 import PlatformIndicator from './PlatformIndicator';
 import { AuthModal } from 'components-react/shared/AuthModal';
-import { useRealmObject } from 'components-react/hooks/realm';
-import { ESettingsCategory } from 'services/settings';
+import { ESettingsCategory, TCategoryName } from 'services/settings';
 import { getOS, OS } from 'util/operating-systems';
 
-export default function SideNav() {
+export default function NavTools(p: { isVisionRunning: boolean }) {
   const {
     UserService,
     SettingsService,
@@ -28,10 +27,7 @@ export default function SideNav() {
     SideNavService,
     WindowsService,
     UrlService,
-    VisionService,
   } = Services;
-
-  const visionState = useRealmObject(VisionService.state);
 
   const isDevMode = useMemo(() => Utils.isDevMode(), []);
 
@@ -63,7 +59,7 @@ export default function SideNav() {
   const [dashboardOpening, setDashboardOpening] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
-  function openSettingsWindow(category?: string) {
+  function openSettingsWindow(category?: TCategoryName) {
     SettingsService.actions.showSettings(category);
   }
 
@@ -196,7 +192,7 @@ export default function SideNav() {
               <NavToolsItem
                 key={menuItem.key}
                 menuItem={menuItem}
-                className={visionState.isRunning ? styles.vision : undefined}
+                className={cx({ [styles.vision]: p.isVisionRunning })}
                 onClick={() => openSettingsWindow(ESettingsCategory.AI)}
               />
             );
@@ -256,13 +252,13 @@ function NavToolsItem(p: {
 function DashboardSubMenu(p: {
   subMenuItems: IMenuItem[];
   throttledOpenDashboard: (type?: string) => void;
-  openSettingsWindow: (type: string, category: string) => void;
+  openSettingsWindow: (category?: TCategoryName) => void;
 }) {
   const { subMenuItems, throttledOpenDashboard, openSettingsWindow } = p;
 
   function handleNavigation(type?: string) {
     if (type === 'multistream') {
-      openSettingsWindow(type, 'Multistreaming');
+      openSettingsWindow('Multistreaming');
     } else {
       throttledOpenDashboard(type);
     }

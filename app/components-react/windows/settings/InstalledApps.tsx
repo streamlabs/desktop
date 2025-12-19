@@ -7,7 +7,7 @@ import { $t } from 'services/i18n';
 import styles from './InstalledApps.m.less';
 import { useVuex } from 'components-react/hooks';
 
-export default function InstalledApps() {
+export function InstalledApps() {
   const { PlatformAppsService, HighlighterService } = Services;
 
   const { installedApps, highlighterVersion } = useVuex(() => ({
