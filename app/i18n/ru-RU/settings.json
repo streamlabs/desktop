@@ -149,7 +149,7 @@
   "An error has occured while uninstalling the virtual camera": "При удалении виртуальной камеры произошла ошибка",
   "Streamlabs Desktop cannot install the virtual camera if it's not in Applications. Please move Streamlabs Desktop to the Applications directory.": "Streamlabs Desktop не может установить виртуальную камеру, если она не находится в каталоге «Приложения». Переместите Streamlabs Desktop в каталог «Приложения».",
   "The installation of the virtual camera will complete after a system reboot.": "Установка виртуальной камеры завершится после перезагрузки системы.",
-  "Streamlabs Virtual Webcam feature requires macOS 13 or later.": "Streamlabs Virtual Webcam feature requires macOS 13 or later.",
+  "Streamlabs Virtual Webcam feature requires macOS 13 or later.": "Для работы функции Streamlabs Virtual Webcam требуется macOS 13 или более поздняя версия.",
   "Output Type": "Тип выхода",
   "Output Selection": "Выбор выхода",
   "Output Source": "Источник выходного сигнала",
@@ -279,9 +279,9 @@
   "Apply Primary": "Применить первичный",
   "Output Resolution": "Выходное разрешение",
   "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "Невозможно запустить Dual Output. Обновите настройки потока на «Использовать рекомендуемые настройки».",
-  "Mobile": "Mobile",
+  "Mobile": "Мобильные устройства",
   "Mobile Streaming": "Mobile Streaming",
-  "Remote Controller": "Remote Controller",
-  "Third Party Connections": "Third Party Connections",
-  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "Stream your phone camera or mobile game on the go with Streamlabs Mobile App."
+  "Remote Controller": "Пульт дистанционного управления",
+  "Third Party Connections": "Сторонние подключения",
+  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "Транслируйте изображение с камеры телефона или мобильной игры, где бы вы ни находились, с помощью приложения Streamlabs Mobile."
 }

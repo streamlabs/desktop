@@ -1,36 +1,41 @@
 import * as remote from '@electron/remote';
-import React, { useEffect, useRef, useCallback, useMemo, memo } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Services } from '../service-provider';
 import styles from './Chat.m.less';
 import { OS, getOS } from '../../util/operating-systems';
 import { onUnload } from 'util/unload';
-import { useRealmObject } from 'components-react/hooks/realm';
+import { debounce } from 'lodash';
 
-function Chat(props: { restream: boolean; visibleChat: string; setChat: (key: string) => void }) {
-  const { ChatService, RestreamService, CustomizationService } = Services;
+export default function Chat(props: {
+  restream: boolean;
+  visibleChat: string;
+  setChat: (key: string) => void;
+}) {
+  const { ChatService, RestreamService } = Services;
 
-  const dockWidth = useRealmObject(CustomizationService.state).livedockSize;
   const chatEl = useRef<HTMLDivElement>(null);
 
-  const currentPosition = useRef<IVec2 | null>(null);
-  const currentSize = useRef<IVec2 | null>(null);
-  const mountedRef = useRef<boolean>(true);
-  const service = useMemo(() => (props.restream ? RestreamService : ChatService), [props.restream]);
-  const windowId = useMemo(() => remote.getCurrentWindow().id, []);
+  let currentPosition: IVec2 | null;
+  let currentSize: IVec2 | null;
 
-  const leaveFullScreenTrigger = useCallback(() => {
-    setTimeout(() => {
-      setupChat();
-      checkResize();
-    }, 1000);
-  }, []);
+  let leaveFullScreenTrigger: Function;
 
   useEffect(() => {
+    const service = props.restream ? RestreamService : ChatService;
     const cancelUnload = onUnload(() => service.actions.unmountChat(remote.getCurrentWindow().id));
+
+    window.addEventListener('resize', debounce(checkResize, 100));
 
     // Work around an electron bug on mac where chat is not interactable
     // after leaving fullscreen until chat is remounted.
     if (getOS() === OS.Mac) {
+      leaveFullScreenTrigger = () => {
+        setTimeout(() => {
+          setupChat();
+          checkResize();
+        }, 1000);
+      };
+
       remote.getCurrentWindow().on('leave-full-screen', leaveFullScreenTrigger);
     }
 
@@ -39,58 +44,52 @@ function Chat(props: { restream: boolean; visibleChat: string; setChat: (key: st
     setTimeout(checkResize, 100);
 
     return () => {
+      window.removeEventListener('resize', debounce(checkResize, 100));
+
       if (getOS() === OS.Mac) {
         remote.getCurrentWindow().removeListener('leave-full-screen', leaveFullScreenTrigger);
       }
 
       service.actions.unmountChat(remote.getCurrentWindow().id);
       cancelUnload();
-
-      mountedRef.current = false;
     };
-  }, []);
+  }, [props.restream]);
 
-  const checkResize = useCallback(() => {
-    if (!chatEl.current || !mountedRef.current) return;
+  function setupChat() {
+    const service = props.restream ? RestreamService : ChatService;
+    const windowId = remote.getCurrentWindow().id;
 
-    const rect = chatEl.current.getBoundingClientRect();
-
-    if (currentPosition.current == null || currentSize == null || rectChanged(rect)) {
-      currentPosition.current = { x: rect.left, y: rect.top };
-      currentSize.current = { x: rect.width, y: rect.height };
-
-      service.actions.setChatBounds(currentPosition.current, currentSize.current);
-    }
-  }, [service]);
-
-  const rectChanged = useCallback((rect: DOMRect) => {
-    if (!currentPosition.current || !currentSize.current) return;
-    return (
-      rect.left !== currentPosition.current?.x ||
-      rect.top !== currentPosition.current?.y ||
-      rect.width !== currentSize.current?.x ||
-      rect.height !== currentSize.current?.y
-    );
-  }, []);
-
-  // Handle chat component resize by updating the chat bounds when dock width changes
-  // Use the chat element's bounding rect for the actual size and position for accuracy
-  useEffect(() => {
-    if (mountedRef.current) {
-      checkResize();
-    }
-  }, [dockWidth]);
-
-  const setupChat = useCallback(() => {
     ChatService.actions.unmountChat();
     RestreamService.actions.unmountChat(windowId);
 
     service.actions.mountChat(windowId);
-    currentPosition.current = null;
-    currentSize.current = null;
-  }, [service, windowId]);
+    currentPosition = null;
+    currentSize = null;
+  }
+
+  function checkResize() {
+    const service = props.restream ? RestreamService : ChatService;
+
+    if (!chatEl.current) return;
+
+    const rect = chatEl.current.getBoundingClientRect();
+
+    if (currentPosition == null || currentSize == null || rectChanged(rect)) {
+      currentPosition = { x: rect.left, y: rect.top };
+      currentSize = { x: rect.width, y: rect.height };
+
+      service.actions.setChatBounds(currentPosition, currentSize);
+    }
+  }
+
+  function rectChanged(rect: ClientRect) {
+    return (
+      rect.left !== currentPosition?.x ||
+      rect.top !== currentPosition?.y ||
+      rect.width !== currentSize?.x ||
+      rect.height !== currentSize?.y
+    );
+  }
 
   return <div className={styles.chat} ref={chatEl} />;
 }
-
-export default memo(Chat);

@@ -1,4 +1,5 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
+import ResizeObserver from 'resize-observer-polyfill';
 import cx from 'classnames';
 import { EMenuItemKey, ESubMenuItemKey } from 'services/side-nav';
 import { EDismissable } from 'services/dismissables';
@@ -15,11 +16,7 @@ import { useRealmObject } from 'components-react/hooks/realm';
 
 const { Sider } = Layout;
 
-export default function SideNav(p: {
-  showLoginModal: boolean;
-  setShowLoginModal: (show: boolean) => void;
-  isVisionRunning: boolean;
-}) {
+export default function SideNav(p: { isVisionRunning: boolean }) {
   const { CustomizationService, SideNavService, WindowsService } = Services;
 
   const {
@@ -28,15 +25,59 @@ export default function SideNav(p: {
     isOpen,
     toggleMenuStatus,
     updateStyleBlockers,
+    hideStyleBlockers,
   } = useVuex(() => ({
     currentMenuItem: SideNavService.views.currentMenuItem,
     setCurrentMenuItem: SideNavService.actions.setCurrentMenuItem,
     isOpen: SideNavService.views.isOpen,
     toggleMenuStatus: SideNavService.actions.toggleMenuStatus,
     updateStyleBlockers: WindowsService.actions.updateStyleBlockers,
+    hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
   }));
 
+  const sider = useRef<HTMLDivElement | null>(null);
+  const isMounted = useRef(false);
+
   const leftDock = useRealmObject(CustomizationService.state).leftDock;
+
+  const siderMinWidth: number = 50;
+  const siderMaxWidth: number = 200;
+
+  // We need to ignore resizeObserver entries for vertical resizing
+  let lastHeight = 0;
+
+  const resizeObserver = new ResizeObserver((entries: ResizeObserverEntry[]) => {
+    entries.forEach((entry: ResizeObserverEntry) => {
+      const width = Math.floor(entry?.contentRect?.width);
+      const height = Math.floor(entry?.contentRect?.height);
+
+      if (lastHeight === height && (width === siderMinWidth || width === siderMaxWidth)) {
+        updateStyleBlockers('main', false);
+      }
+      lastHeight = height;
+    });
+  });
+
+  useEffect(() => {
+    isMounted.current = true;
+    if (!sider || !sider.current) return;
+
+    if (sider && sider?.current) {
+      resizeObserver.observe(sider?.current);
+
+      if (hideStyleBlockers) {
+        updateStyleBlockers('main', false);
+      }
+    }
+
+    return () => {
+      if (sider && sider?.current) {
+        resizeObserver.disconnect();
+      }
+
+      isMounted.current = false;
+    };
+  }, [sider]);
 
   const updateSubMenu = useCallback(() => {
     // when opening/closing the navbar swap the submenu current menu item
@@ -54,35 +95,25 @@ export default function SideNav(p: {
     }
   }, [currentMenuItem]);
 
-  const toggleSideNav = useCallback(() => {
-    updateStyleBlockers('main', true);
-    updateSubMenu();
-    toggleMenuStatus();
-  }, [isOpen, toggleMenuStatus, updateStyleBlockers, updateSubMenu]);
-
   return (
     <Layout hasSider className="side-nav">
       <Sider
         collapsible
         collapsed={!isOpen}
         trigger={null}
-        collapsedWidth={50}
         className={cx(
           styles.sidenavSider,
-          { [styles.siderClosed]: !isOpen },
-          { [styles.noLeftDock]: !leftDock },
+          !isOpen && styles.siderClosed,
+          !leftDock && styles.noLeftDock,
         )}
+        ref={sider}
       >
         <Scrollable className={cx(styles.sidenavScroll)}>
           {/* top navigation menu */}
           <FeaturesNav />
 
           {/* bottom navigation menu */}
-          <NavTools
-            showLoginModal={p.showLoginModal}
-            setShowLoginModal={p.setShowLoginModal}
-            isVisionRunning={p.isVisionRunning}
-          />
+          <NavTools isVisionRunning={p.isVisionRunning} />
         </Scrollable>
 
         <LoginHelpTip />
@@ -97,8 +128,11 @@ export default function SideNav(p: {
           isOpen && styles.siderOpen,
           leftDock && styles.leftDock,
         )}
-        onClick={toggleSideNav}
-        onTransitionEnd={() => updateStyleBlockers('main', false)}
+        onClick={() => {
+          updateSubMenu();
+          toggleMenuStatus();
+          updateStyleBlockers('main', true); // hide style blockers
+        }}
       >
         <i className="icon-back" />
       </Button>

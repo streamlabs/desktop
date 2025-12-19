@@ -3,8 +3,7 @@
   "Ad Layout": "Advertentielay-out",
   "Placement": "Plaatsing",
   "Image Layout": "Afbeeldingslay-out",
-  "Image Duration": "Afbeeldingsduur",
-  "Seconds": "Seconden",
+  "Image Duration (seconds)": "Image Duration (seconds)",
   "Add Image": "Afbeelding toevoegen",
   "Widget Hide Duration": "Duur widget verbergen",
   "Widget Show Duration": "Duur widget weergeven",
@@ -19,8 +18,10 @@
   "The amount of time the widget will appear.": "De hoeveelheid tijd dat de widget wordt weergegeven.",
   "These are the animations that are used to show your banner.": "Dit zijn de animaties die worden gebruikt om uw banner weer te geven.",
   "Visual Settings": "Visuele instellingen",
-  "Image Set ": "Afbeeldingsset ",
+  "Image Set %{number}": "Image Set %{number}",
+  "Placement %{number} Images": "Placement %{number} Images",
   "No Image": "Geen afbeelding",
   "Set up a sponsor banner to be able to edit (add, remove, update) rotating sponsor logos on streamer channel.": "Stel een sponsorbanner in om roterende sponsorlogo's op het streamerkanaal te bewerken (toevoegen, verwijderen, bijwerken).",
-  "Show off rotating media to display your socials, sponsorships, CTAs or just cute animations.": "Laat draaiende media zien om je sociale media, sponsors, CTA's of gewoon leuke animaties te laten zien."
+  "Show off rotating media to display your socials, sponsorships, CTAs or just cute animations.": "Laat draaiende media zien om je sociale media, sponsors, CTA's of gewoon leuke animaties te laten zien.",
+  "The duration must be in the format [minutes]:[seconds] (i.e. 02:05)": "The duration must be in the format [minutes]:[seconds] (i.e. 02:05)"
 }

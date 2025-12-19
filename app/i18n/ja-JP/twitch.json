@@ -13,5 +13,6 @@
   "Import from Twitch Studio": "Twitch Studioからインポート",
   "Import your scenes and sources from Twitch Studio.": "Twitch Studioからシーンとソースをインポートします。",
   "Importing Your Existing Settings From Twitch Studio": "Twitch Studioから既存の設定をインポート",
-  "Importing from Twitch Studio is an experimental feature under active development. Some source types are unable to be imported, and not all settings will be carried over.": "「Twitch Studioからインポート」は、現在開発中の実験的機能です。ソースの種類によってはインポートできないものもあり、すべての設定が引き継がれるわけではありません。"
+  "Importing from Twitch Studio is an experimental feature under active development. Some source types are unable to be imported, and not all settings will be carried over.": "「Twitch Studioからインポート」は、現在開発中の実験的機能です。ソースの種類によってはインポートできないものもあり、すべての設定が引き継がれるわけではありません。",
+  "Stream Shift Error: Twitch is not live": "Stream Shift Error: Twitch is not live"
 }

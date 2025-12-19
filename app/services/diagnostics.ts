@@ -579,7 +579,7 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
     const isDualOutputMode = this.dualOutputService.views.dualOutputMode;
     const displays: TDisplayType[] = isDualOutputMode ? ['horizontal', 'vertical'] : ['horizontal'];
 
-    let settings = { horizontal: {}, vertical: {} };
+    const settings = { horizontal: {}, vertical: {} };
 
     // get settings for all active displays
     displays.forEach((display: TDisplayType) => {
@@ -642,14 +642,11 @@ export class DiagnosticsService extends PersistentStatefulService<IDiagnosticsSe
         this.logProblem(`Low Base resolution: ${setting.baseRes}`);
       }
 
-      settings = {
-        ...settings,
-        [display]: {
-          'Base Resolution': setting.baseRes,
-          'Output Resolution': setting.outputRes,
-          'Downscale Filter': setting.scaleType,
-          'Frame Rate': fpsObj,
-        },
+      settings[display] = {
+        'Base Resolution': setting.baseRes,
+        'Output Resolution': setting.outputRes,
+        'Downscale Filter': setting.scaleType,
+        'Frame Rate': fpsObj,
       };
     });
 

@@ -149,7 +149,7 @@
   "An error has occured while uninstalling the virtual camera": "バーチャルカメラのアンインストール中にエラーが発生しました",
   "Streamlabs Desktop cannot install the virtual camera if it's not in Applications. Please move Streamlabs Desktop to the Applications directory.": "バーチャルカメラがアプリケーション内にない場合、Streamlabs Desktop をインストールできません。Streamlabs Desktop をアプリケーションディレクトリに移動してください。",
   "The installation of the virtual camera will complete after a system reboot.": "バーチャルカメラのインストールは、システムの再起動後に完了します。",
-  "Streamlabs Virtual Webcam feature requires macOS 13 or later.": "Streamlabs Virtual Webcam feature requires macOS 13 or later.",
+  "Streamlabs Virtual Webcam feature requires macOS 13 or later.": "Streamlabs 仮想ウェブカメラ機能には、macOS 13 以降が必要です。",
   "Output Type": "出力タイプ",
   "Output Selection": "出力先の選択",
   "Output Source": "出力ソース",
@@ -279,9 +279,9 @@
   "Apply Primary": "プライマリーを適用",
   "Output Resolution": "出力解像度",
   "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "Dual Output を開始できない場合は、ストリーム設定を [推奨設定を使用] に更新してください。",
-  "Mobile": "Mobile",
-  "Mobile Streaming": "Mobile Streaming",
-  "Remote Controller": "Remote Controller",
-  "Third Party Connections": "Third Party Connections",
-  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "Stream your phone camera or mobile game on the go with Streamlabs Mobile App."
+  "Mobile": "モバイル",
+  "Mobile Streaming": "モバイル ストリーミング",
+  "Remote Controller": "リモートコントローラー",
+  "Third Party Connections": "サードパーティの接続",
+  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "Streamlabs Mobile アプリを使えば、携帯電話のカメラやモバイルゲームを外出先で配信可能。"
 }

@@ -18,7 +18,8 @@ interface IMultiPlatformIndicatorProps {
 }
 
 export default function PlatformIndicator({ platform }: IPlatformIndicatorProps) {
-  const { StreamSettingsService } = Services;
+  const { StreamSettingsService, RestreamService } = Services;
+  const restreamEnabled = RestreamService.views.canEnableRestream;
   const { platforms, customDestinations } = useVuex(() => ({
     platforms: StreamSettingsService.views.settings.goLiveSettings?.platforms,
     customDestinations: StreamSettingsService.views.settings.goLiveSettings?.customDestinations,

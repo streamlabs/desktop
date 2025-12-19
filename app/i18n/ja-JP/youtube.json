@@ -39,5 +39,14 @@
   "DVR controls enable the viewer to control the video playback experience by pausing, rewinding, or fast forwarding content": "DVR コントロールによって、視聴者は、動画再生をコントロールできます（コンテンツの一時停止、巻き戻し、または早送りなど）",
   "Auto-start is disabled for your broadcast. You should manually publish your stream from Youtube Studio": "ブロードキャストでは自動開始は無効になっています。YouTube Studio から手動でストリームを公開する必要があります",
   "Made for kids": "子供向けストリーム",
-  "Features like personalized ads and live chat won't be available on live streams made for kids.": "パーソナライズされた広告やライブチャットなどの機能は、子供向けに作られたライブストリームでは利用できません。"
+  "Features like personalized ads and live chat won't be available on live streams made for kids.": "パーソナライズされた広告やライブチャットなどの機能は、子供向けに作られたライブストリームでは利用できません。",
+  "YouTube token has expired, re-login or re-merge YouTube account": "YouTube トークンの有効期限が切れたため、再ログインまたは YouTube アカウントを再連携してください",
+  "Thumbnail image content is invalid.": "サムネイル画像コンテンツが無効です。",
+  "Thumbnail file does not include image content.": "サムネイルファイルには画像コンテンツは含まれません。",
+  "Permission missing to upload thumbnails.": "サムネイルをアップロードする権限がありません。",
+  "Video does not exist. Thumbnail upload failed.": "ビデオが存在しません。サムネイルのアップロードに失敗しました。",
+  "Exceeded thumbnail upload quota. Please try again later.": "サムネイルのアップロード枠を超えました。後で再度お試しください。",
+  "YouTube thumbnail image is too large. Maximum size is 2MB.": "YouTube のサムネイルの画像サイズが大きすぎます。最大サイズは2MB です。",
+  "Please upload thumbnail manually on YouTube.": "サムネイルを手動で YouTube にアップロードしてください。",
+  "Stream Shift Error: YouTube is not live": "Stream Shift Error: YouTube is not live"
 }
