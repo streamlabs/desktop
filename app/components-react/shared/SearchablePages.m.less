@@ -1,0 +1,30 @@
+
+// a mixin for highlighting
+.highlight() {
+  border: 1px solid var(--prime);
+  box-shadow: 0 0 10px var(--prime);
+}
+
+.searchable-pages {
+  // text
+  :global(mark) {
+    border-radius: 2px;
+    background: var(--prime);
+  }
+
+  :global(.search-highlight) {
+    // inputs
+    input { .highlight(); }
+
+    // checkboxes
+    :global(.checkbox) input:checked ~ label::before,
+    :global(.checkbox) label::before {
+      .highlight();
+    }
+  }
+
+  // buttons
+  button:global(.search-highlight) {
+    .highlight();
+  }
+}

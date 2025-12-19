@@ -8,16 +8,10 @@ import {
 } from './streaming-api';
 import { StreamSettingsService, ICustomStreamDestination } from '../settings/streaming';
 import { UserService } from '../user';
-import { RestreamService, TOutputOrientation } from '../restream';
+import { RestreamService, TStreamShiftStatus } from '../restream';
 import { DualOutputService, TDisplayPlatforms, TDisplayDestinations } from '../dual-output';
-import {
-  getPlatformService,
-  TPlatform,
-  TPlatformCapability,
-  platformList,
-  EPlatform,
-} from '../platforms';
-import { TwitterService } from '../../app-services';
+import { getPlatformService, TPlatform, TPlatformCapability, platformList } from '../platforms';
+import { TwitchService, TwitterService } from '../../app-services';
 import cloneDeep from 'lodash/cloneDeep';
 import difference from 'lodash/difference';
 import { Services } from '../../components-react/service-provider';
@@ -49,6 +43,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
   private get twitterView() {
     return this.getServiceViews(TwitterService);
+  }
+
+  private get twitchView() {
+    return this.getServiceViews(TwitchService);
   }
 
   private get dualOutputView() {
@@ -129,6 +127,12 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns a list of enabled for streaming platforms
    */
   get enabledPlatforms(): TPlatform[] {
+    // Twitch dual streaming is only available if Twitch is the only enabled platform for performance reasons.
+    // Checking for Twitch dual streaming instead of toggling all other platforms off preserves the enabled platforms state.
+    if (this.isTwitchDualStreaming) {
+      return ['twitch'];
+    }
+
     return this.getEnabledPlatforms(this.settings.platforms);
   }
 
@@ -147,14 +151,29 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns a list of platforms that should always be enabled in single output mode
    */
   get alwaysEnabledPlatforms(): TPlatform[] {
-    return ['tiktok'];
+    return [
+      ...(this.userView.isPrime || this.restreamView.state.tiktokGrandfathered
+        ? ['tiktok' as const]
+        : []),
+    ];
   }
 
   /*
    * Primary used to get all platforms that should always show the destination switcher in the Go Live window
    */
   get alwaysShownPlatforms(): TPlatform[] {
-    return ['kick'];
+    return [];
+  }
+
+  /**
+   * Primarily used for custom UI handling for Twitch dual stream
+   */
+  get isTwitchDualStreaming() {
+    if (!this.twitchView.hasTwitchDualStreamAccess) {
+      return false;
+    }
+
+    return this.settings.platforms?.twitch && this.settings.platforms?.twitch.display === 'both';
   }
 
   /**
@@ -182,7 +201,12 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns if the user can or should use the restream service
    */
   get isMultiplatformMode(): boolean {
+    if (this.isStreamShiftMode) return true;
     if (this.isDualOutputMode) return false;
+    return this.hasMultipleTargetsEnabled;
+  }
+
+  get hasMultipleTargetsEnabled(): boolean {
     return (
       this.protectedModeEnabled &&
       (this.enabledPlatforms.length > 1 ||
@@ -191,9 +215,40 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   /**
+   * Returns if stream switching is enabled
+   * @remark If a user has switch stream enabled, restream even if only one platform is enabled as the only target.
+   * Currently, switch stream cannot be used with only custom destinations. One platform must be enabled.
+   */
+  get isStreamShiftMode(): boolean {
+    return (
+      (this.userView.isPrime && this.settings.streamShift && this.enabledPlatforms.length > 0) ||
+      false
+    );
+  }
+
+  get isStreamShiftMultistream(): boolean {
+    return this.isStreamShiftMode && this.enabledPlatforms.length > 1;
+  }
+
+  get streamShiftStatus(): TStreamShiftStatus {
+    return this.restreamView.streamShiftStatus ?? 'inactive';
+  }
+
+  get shouldSwitchStreams(): boolean {
+    return this.restreamView.hasStreamShiftTargets;
+  }
+
+  get isSwitchingStream(): boolean {
+    return this.restreamView.streamShiftStatus === 'active';
+  }
+
+  /**
    * Returns if the restream service should be set up when going live
    */
   get shouldSetupRestream(): boolean {
+    // The stream switcher uses the restream service
+    if (this.isStreamShiftMode) return true;
+
     // In dual output mode, if a display has more than one target that display uses the restream service
     const restreamDualOutputMode =
       this.isDualOutputMode && (this.horizontalStream.length > 1 || this.verticalStream.length > 1);
@@ -332,10 +387,22 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     const verticalHasDestinations =
       platformDisplays.vertical.length > 0 || destinationDisplays.vertical.length > 0;
 
-    console.log('horizontalHasDestinations', horizontalHasDestinations);
-    console.log('verticalHasDestinations', verticalHasDestinations);
-
     return horizontalHasDestinations && verticalHasDestinations;
+  }
+
+  /**
+   * Checks if the vertical stream is the Twitch dual stream vertical target
+   * @remark Twitch dual stream uses only the horizontal stream to go live
+   * because the backend sends both the horizontal and vertical streams in a single request.
+   */
+  get isVerticalTwitchDualStream() {
+    return (
+      this.enabledPlatforms.length === 1 && this.activeDisplayPlatforms.vertical.includes('twitch')
+    );
+  }
+
+  getIsEnhancedBroadcasting(): boolean {
+    return Services.SettingsService.isEnhancedBroadcasting();
   }
 
   /**
@@ -356,7 +423,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       this.enabledPlatforms.length + this.customDestinations.filter(dest => dest.enabled).length;
 
     // In single output mode, if the user can only have one of the always enabled platforms and one additional target
-    // Currently, this is only TikTok
+    // Currently, this is only TikTok for grandfathered users
     return (
       !this.isDualOutputMode &&
       this.enabledPlatforms.some(platform => {
@@ -440,11 +507,19 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       optimizedProfile: undefined,
       customDestinations: savedGoLiveSettings?.customDestinations || [],
       recording: this.dualOutputView.recording || [],
+      streamShift: savedGoLiveSettings?.streamShift || false,
     };
   }
 
   get isAdvancedMode(): boolean {
     return (this.isMultiplatformMode || this.isDualOutputMode) && this.settings.advancedMode;
+  }
+
+  get canShowAdvancedMode() {
+    if (this.isStreamShiftMode) {
+      return this.enabledPlatforms.length > 1;
+    }
+    return this.isMultiplatformMode || this.isDualOutputMode;
   }
 
   /**

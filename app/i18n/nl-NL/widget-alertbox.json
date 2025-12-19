@@ -154,5 +154,6 @@
   "This applies to all alerts. If enabled all alerts need to be approved manually.": "Dit geldt voor alle meldingen. Indien ingeschakeld, moeten alle meldingen handmatig worden goedgekeurd.",
   "Use unlimited delay": "Onbeperkte vertraging gebruiken",
   "When enabled new alerts will interrupt the on screen alert": "Indien ingeschakeld, worden nieuwe meldingen onderbroken bij de schermmelding",
-  "Text Highlight Color": "Kleur tekstmarkering"
+  "Text Highlight Color": "Kleur tekstmarkering",
+  "Platforms: Twitch, YouTube, Facebook, Trovo & integrations": "Platforms: Twitch, YouTube, Facebook, Trovo en integraties"
 }

@@ -35,7 +35,8 @@
   "Do not change privacy settings": "Mijn privacy-instellingen niet wijzigen",
   "Install %{overlayName}": "%{overlayName} installeren",
   "Please note that while you can schedule streams to Facebook, some will not appear on this calendar due to API limitations": "Let op: u kunt uw streams naar Facebook plannen, maar sommige zullen niet op deze kalender verschijnen vanwege API-beperkingen",
-  "Your account is not eligible to stream on Facebook. Click to learn more.": "Your account is not eligible to stream on Facebook. Click to learn more",
-  "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers": "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers",
-  "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers. Click the notification to learn more.": "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers. Click the notification to learn more."
+  "Your account is not eligible to stream on Facebook. Click to learn more.": "Je account kan niet streamen op Facebook. Klik voor meer informatie",
+  "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers": "Je kunt nog niet live gaan. Je profiel moet minstens 60 dagen oud zijn en je pagina moet minstens 100 volgers hebben.",
+  "You're not eligible to Go Live, your profile needs to be at least 60 days old and your page needs to have at least 100 followers. Click the notification to learn more.": "Je kunt nog niet live gaan. Je profiel moet minstens 60 dagen oud zijn en je pagina moet minstens 100 volgers hebben. Klik op de melding voor meer info.",
+  "Stream Shift Error: Facebook is not live": "Stream Shift Error: Facebook is not live"
 }

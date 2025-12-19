@@ -27,7 +27,11 @@ export type TSocketEvent =
   | IUserAccountMerged
   | IUserAccountUnlinked
   | IUserAccountMergeError
-  | IAccountPermissionsRequired;
+  | IAccountPermissionsRequired
+  | IStreamShiftRequested
+  | IStreamShiftActionCompleted
+  | IVisionSocketEvent
+  | IUserStateSocketEvent;
 
 interface IStreamlabelsSocketEvent {
   type: 'streamlabels';
@@ -58,7 +62,9 @@ export interface IEventSocketEvent {
     | 'donordrivedonation'
     | 'justgivingdonation'
     | 'treat'
-    | 'account_permissions_required';
+    | 'account_permissions_required'
+    | 'visionEvent'
+    | 'userStateUpdated';
   for: string;
   message: IRecentEvent[];
 }
@@ -152,6 +158,36 @@ interface IAccountPermissionsRequired {
   }[];
 }
 
+export interface IStreamShiftRequested {
+  type: 'streamSwitchRequest';
+  for: string;
+  data: {
+    identifier: string;
+  };
+  event_id: string;
+}
+
+export interface IStreamShiftActionCompleted {
+  type: 'switchActionComplete';
+  for: string;
+  data: {
+    identifier: string;
+  };
+  event_id: string;
+}
+interface IVisionSocketEvent {
+  type: 'visionEvent';
+  message: {};
+}
+
+interface IUserStateSocketEvent {
+  type: 'userStateUpdated';
+  message: {
+    updated_states: any;
+    updated_states_tree: any;
+  };
+}
+
 export class WebsocketService extends Service {
   @Inject() private userService: UserService;
   @Inject() private hostsService: HostsService;
@@ -161,7 +197,6 @@ export class WebsocketService extends Service {
   socket: SocketIOClient.Socket;
 
   socketEvent = new Subject<TSocketEvent>();
-  ultraSubscription = new Subject<boolean>();
   io: SocketIOClientStatic;
 
   init() {

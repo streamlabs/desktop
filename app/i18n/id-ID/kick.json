@@ -1,0 +1,15 @@
+{
+  "Edit your stream title on Kick after going live.": "Edit judul streaming Anda di Kick setelah siaran langsung.",
+  "Kick Category": "Kategori Kick",
+  "Failed to update Kick account. Please unlink and reconnect your Kick account.": "Gagal memperbarui akun Kick. Harap putuskan tautan dan hubungkan kembali akun Kick Anda.",
+  "Failed to start Kick stream. Please check permissions with Kick and try again": "Gagal memulai streaming Kick. Silakan periksa izin dengan Kick dan coba lagi",
+  "Kick request most likely failed due to incorrect or missing permissions. Unlink and re-merge Kick account, then restart Desktop. If that fails, refer to Kick support": "Permintaan Kick kemungkinan besar gagal karena izin yang salah atau tidak ada. Putuskan tautan dan gabungkan kembali akun Kick, lalu mulai ulang Desktop. Jika gagal, lihat dukungan Kick",
+  "Kick stream key failed to generate due to missing permissions": "Kunci streaming Kick gagal dibuat karena izin tidak ada",
+  "confirm that a stream key has been generated with 2FA on Kick for use with Streamlabs Desktop and if not ask the user to manually generate one": "konfirmasikan bahwa kunci streaming telah dibuat dengan 2FA di Kick untuk digunakan dengan Streamlabs Desktop dan, jika tidak, minta pengguna untuk membuatnya secara manual",
+  "Login to Kick": "Masuk ke Kick",
+  "Go to: <link></link>": "Kunjungi: <link></link>",
+  "Click on the \"eye\" icon to see your stream key": "Klik ikon \"mata\" untuk melihat kunci streaming Anda",
+  "Put in 2FA": "Masukkan 2FA",
+  "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "Setelah 2FA, kunci streaming telah dibuat dan akan tersedia untuk Streamlabs Desktop untuk saluran tersebut. Sekarang Anda seharusnya sudah dapat melakukan siaran langsung di Kick.",
+  "Stream Shift Error: Kick is not live": "Stream Shift Error: Kick is not live"
+}

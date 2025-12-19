@@ -12,6 +12,7 @@ import { ITwitterStartStreamOptions } from 'services/platforms/twitter';
 import { IInstagramStartStreamOptions } from 'services/platforms/instagram';
 import { IVideo } from 'obs-studio-node';
 import { TDisplayType } from 'services/settings-v2';
+import { ITargetLiveData } from 'services/restream';
 
 export enum EStreamingState {
   Offline = 'offline',
@@ -82,6 +83,7 @@ export interface IStreamSettings {
   customDestinations: ICustomStreamDestination[];
   advancedMode: boolean;
   recording: TDisplayType[];
+  streamShift?: boolean;
 }
 
 export interface IGoLiveSettings extends IStreamSettings {
@@ -91,6 +93,7 @@ export interface IGoLiveSettings extends IStreamSettings {
     youtube?: Partial<IYoutubeStartStreamOptions>;
     facebook?: Partial<IFacebookStartStreamOptions>;
   };
+  streamShiftSettings?: ITargetLiveData;
 }
 
 export interface IPlatformFlags {
@@ -122,6 +125,7 @@ export interface IStreamingServiceState {
   replayBufferStatusTime: string;
   selectiveRecording: boolean;
   dualOutputMode: boolean;
+  enhancedBroadcasting: boolean;
   info: IStreamInfo;
 }
 

@@ -6,6 +6,7 @@ import { Services } from 'components-react/service-provider';
 export class LayoutProps {
   onTotalWidth: (slots: IVec2Array, isColumns: boolean) => void = () => {};
   childrenMins: Dictionary<IVec2>;
+  className?: string;
 }
 
 export interface IResizeMins {

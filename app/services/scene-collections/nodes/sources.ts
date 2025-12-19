@@ -50,7 +50,7 @@ export interface ISourceInfo {
 }
 
 export class SourcesNode extends Node<ISchema, {}> {
-  schemaVersion = 4;
+  schemaVersion = 5;
 
   @Inject() private sourcesService: SourcesService;
   @Inject() private audioService: AudioService;
@@ -344,24 +344,25 @@ export class SourcesNode extends Node<ISchema, {}> {
       });
 
       if (source.audioMixers) {
-        this.audioService.views
-          .getSource(sourceInfo.id)
-          .setMul(sourceInfo.volume != null ? sourceInfo.volume : 1);
+        const audioSource = this.audioService.views.getSource(sourceInfo.id);
+        if (audioSource) {
+          audioSource.setMul(sourceInfo.volume != null ? sourceInfo.volume : 1);
 
-        const defaultMonitoring =
-          (source.id as TSourceType) === 'browser_source'
-            ? obs.EMonitoringType.MonitoringOnly
-            : obs.EMonitoringType.None;
+          const defaultMonitoring =
+            (source.id as TSourceType) === 'browser_source'
+              ? obs.EMonitoringType.MonitoringOnly
+              : obs.EMonitoringType.None;
 
-        this.audioService.views.getSource(sourceInfo.id).setSettings({
-          forceMono: defaultTo(sourceInfo.forceMono, false),
-          syncOffset: AudioService.timeSpecToMs(
-            defaultTo(sourceInfo.syncOffset, { sec: 0, nsec: 0 }),
-          ),
-          audioMixers: defaultTo(sourceInfo.audioMixers, 255),
-          monitoringType: defaultTo(sourceInfo.monitoringType, defaultMonitoring),
-        });
-        this.audioService.views.getSource(sourceInfo.id).setHidden(!!sourceInfo.mixerHidden);
+          audioSource.setSettings({
+            forceMono: defaultTo(sourceInfo.forceMono, false),
+            syncOffset: AudioService.timeSpecToMs(
+              defaultTo(sourceInfo.syncOffset, { sec: 0, nsec: 0 }),
+            ),
+            audioMixers: defaultTo(sourceInfo.audioMixers, 255),
+            monitoringType: defaultTo(sourceInfo.monitoringType, defaultMonitoring),
+          });
+          audioSource.setHidden(!!sourceInfo.mixerHidden);
+        }
       }
 
       if (sourceInfo.hotkeys) {
@@ -409,6 +410,13 @@ export class SourcesNode extends Node<ISchema, {}> {
       this.data.items.forEach(source => {
         if (source.type === 'ffmpeg_source') {
           source.settings.hw_decode = false;
+        }
+      });
+    }
+    if (version < 5) {
+      this.data.items.forEach(source => {
+        if (source.type === 'av_capture_input') {
+          source.type = 'macos_avcapture';
         }
       });
     }

@@ -154,6 +154,7 @@
   "Instagram": "Instagram",
   "Instagram Live": "Instagram Live",
   "X (Twitter)": "X (Twitter)",
+  "Kick": "Kick",
   "Facebook Profiles": "Perfiles de Facebook",
   "Facebook Pages": "Páginas de Facebook",
   "Alert Box": "Cuadro de alertas",
@@ -168,5 +169,6 @@
   "Dashboard Home": "Inicio de panel",
   "Alert Box Library": "Biblioteca de cuadro de alertas",
   "Alert Box Settings": "Ajustes de cuadro de alertas",
-  "Alerts and Widgets": "Alertas y widgets"
+  "Alerts and Widgets": "Alertas y widgets",
+  "AI": "IA"
 }

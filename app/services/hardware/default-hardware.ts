@@ -11,6 +11,10 @@ interface IDefaultHardwareServiceState {
   defaultVideoDevice: string;
   defaultAudioDevice: string;
   presetFilter: string;
+  // TODO: This is probably more appropriate in the audio settings service once
+  // that gets moved to the new API and we store FE settings but this is the closest
+  // PersistentStatefulService I could find
+  enableMuteNotifications: boolean;
 }
 
 export class DefaultHardwareService extends PersistentStatefulService<IDefaultHardwareServiceState> {
@@ -18,6 +22,7 @@ export class DefaultHardwareService extends PersistentStatefulService<IDefaultHa
     defaultVideoDevice: null,
     defaultAudioDevice: 'default',
     presetFilter: '',
+    enableMuteNotifications: true,
   };
 
   @Inject() private hardwareService: HardwareService;
@@ -50,7 +55,7 @@ export class DefaultHardwareService extends PersistentStatefulService<IDefaultHa
       if (!device.id) return;
       this.sourcesService.createSource(
         device.id,
-        byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'av_capture_input' }),
+        byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'macos_avcapture' }),
         byOS({ [OS.Windows]: { video_device_id: device.id }, [OS.Mac]: { device: device.id } }),
         {
           isTemporary: true,
@@ -68,7 +73,7 @@ export class DefaultHardwareService extends PersistentStatefulService<IDefaultHa
     return this.sourcesService.views.sources
       .filter(
         source =>
-          source.type === byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'av_capture_input' }) &&
+          source.type === byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'macos_avcapture' }) &&
           this.videoDevices.find(device => device.id === source.getSettings()[deviceProperty]),
       )
       .map(source => ({
@@ -82,14 +87,14 @@ export class DefaultHardwareService extends PersistentStatefulService<IDefaultHa
 
     let found = this.sourcesService.views.sources.find(
       source =>
-        source.type === byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'av_capture_input' }) &&
+        source.type === byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'macos_avcapture' }) &&
         source.getSettings()[deviceProperty] === deviceId,
     );
 
     if (!found) {
       found = this.sourcesService.views.temporarySources.find(
         source =>
-          source.type === byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'av_capture_input' }) &&
+          source.type === byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'macos_avcapture' }) &&
           source.getSettings()[deviceProperty] === deviceId,
       );
     }
@@ -167,6 +172,10 @@ export class DefaultHardwareService extends PersistentStatefulService<IDefaultHa
     }
   }
 
+  toggleMuteNotifications() {
+    this.SET_ENABLE_MUTE_NOTIFICATIONS(!this.state.enableMuteNotifications);
+  }
+
   @mutation()
   private SET_DEVICE(type: string, id: string) {
     if (type === 'video') {
@@ -179,5 +188,10 @@ export class DefaultHardwareService extends PersistentStatefulService<IDefaultHa
   @mutation()
   private SET_PRESET_FILTER(filter: string) {
     this.state.presetFilter = filter;
+  }
+
+  @mutation()
+  private SET_ENABLE_MUTE_NOTIFICATIONS(val: boolean) {
+    this.state.enableMuteNotifications = val;
   }
 }

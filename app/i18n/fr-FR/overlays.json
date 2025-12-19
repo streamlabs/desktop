@@ -18,12 +18,12 @@
   "Manage Dual Output Scene": "Gérer la scène Dual Output",
   "Unable to convert dual output collection.": "Impossible de convertir la collection Dual Output.",
   "One or more scene items were removed because they are not supported": "Un ou plusieurs éléments de la scène ont été supprimés parce qu’ils ne sont pas pris en charge",
-  "Scene items were removed because there was an error loading them: %{inputs}.\n\nPlease accept or reject permissions to view the Streamlabs Editor panel": "Scene items were removed because there was an error loading them: %{inputs}.\n\nPlease accept or reject permissions to view the Streamlabs Editor panel",
+  "Scene items were removed because there was an error loading them: %{inputs}.\n\nPlease accept or reject permissions to view the Streamlabs Editor panel": "Les éléments de la scène ont été supprimés parce qu’il y a eu une erreur de chargement : %{inputs}.\n\nMerci d’accepter ou de refuser les autorisations d’afficher le panneau de l’éditeur Streamlabs.",
   "default_width": "default_width",
   "default_height": "default_height",
   "GameCapture.WindowInternalMode": "GameCapture.WindowInternalMode",
-  "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.",
-  "Show Components Library": "Show Components Library",
-  "Convert Dual Output Scene Collection": "Convert Dual Output Scene Collection",
-  "Repair Scene Collection": "Repair Scene Collection"
+  "The below will create a copy of the active scene collection, set the copy as the active collection, and then remove all vertical sources.": "Cela crée une copie de la collection de scènes active, définit la copie comme collection active, puis supprime toutes les sources verticales.",
+  "Show Components Library": "Afficher la bibliothèque des composants",
+  "Convert Dual Output Scene Collection": "Convertir la collection de scènes Dual Output",
+  "Repair Scene Collection": "Réparer la collection de scènes"
 }

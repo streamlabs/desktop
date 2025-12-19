@@ -154,6 +154,7 @@
   "Instagram": "Instagram",
   "Instagram Live": "Instagram Live",
   "X (Twitter)": "X (Twitter)",
+  "Kick": "Kick",
   "Facebook Profiles": "Профили Facebook",
   "Facebook Pages": "Страницы Facebook",
   "Alert Box": "Оповещения",
@@ -168,5 +169,6 @@
   "Dashboard Home": "Панель управления (домашняя страница)",
   "Alert Box Library": "Библиотека оповещений",
   "Alert Box Settings": "Настройки оповещений",
-  "Alerts and Widgets": "Оповещения и виджеты"
+  "Alerts and Widgets": "Оповещения и виджеты",
+  "AI": "ИИ"
 }

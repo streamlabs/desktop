@@ -1,5 +1,5 @@
 import { IGoLiveSettings, StreamInfoView, TDisplayOutput } from '../../../services/streaming';
-import { TPlatform } from '../../../services/platforms';
+import { platformList, TPlatform } from '../../../services/platforms';
 import { ICustomStreamDestination } from 'services/settings/streaming';
 import { Services } from '../../service-provider';
 import cloneDeep from 'lodash/cloneDeep';
@@ -11,6 +11,8 @@ import { useForm } from '../../shared/inputs/Form';
 import { getDefined } from '../../../util/properties-type-guards';
 import isEqual from 'lodash/isEqual';
 import { TDisplayType } from 'services/settings-v2';
+import partition from 'lodash/partition';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 type TCommonFieldName = 'title' | 'description';
 
@@ -37,12 +39,6 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
    * Update top level settings
    */
   updateSettings(patch: Partial<IGoLiveSettingsState>) {
-    if (patch.platforms?.twitch) {
-      Services.SettingsService.actions.setEnhancedBroadcasting(
-        patch.platforms.twitch.isEnhancedBroadcasting,
-      );
-    }
-
     const newSettings = { ...this.state, ...patch };
     // we should re-calculate common fields before applying new settings
     const platforms = this.getViewFromState(newSettings).applyCommonFields(newSettings.platforms);
@@ -59,10 +55,20 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
         [platform]: { ...this.state.platforms[platform], ...patch },
       },
     };
+
+    // In order for the enhanced broadcasting setting value to persist in the go live window when switching between
+    // single output and dual output modes, explicitly set enhanced broadcasting setting
+    if (platform === 'twitch' && patch && patch.hasOwnProperty('isEnhancedBroadcasting')) {
+      Services.TwitchService.actions.setEnhancedBroadcasting((patch as any).isEnhancedBroadcasting);
+    }
+
     this.updateSettings(updated);
   }
 
   getCanDualStream(platform: TPlatform) {
+    if (platform === 'twitch') {
+      return Services.TwitchService.views.hasTwitchDualStreamAccess;
+    }
     return Services.StreamingService.views.supports('dualStream', [platform]);
   }
 
@@ -129,6 +135,13 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
     } else {
       this.updateSettings({ recording: [...this.state.recording, display] });
     }
+  }
+
+  /**
+   * Enable/Disable Stream Shift mode
+   */
+  toggleStreamShift(status: boolean) {
+    this.updateSettings({ streamShift: status });
   }
 
   /**
@@ -233,12 +246,19 @@ export class GoLiveSettingsModule {
       });
     }
 
+    /**
+     * If the user is in dual output mode, we need to ensure the stream switcher is disabled
+     */
+    const { dualOutputMode } = DualOutputService.state;
+    if (dualOutputMode && settings.streamShift) {
+      settings.streamShift = false;
+    }
+
     this.state.updateSettings(settings);
 
     /* If the user was in dual output before but doesn't have restream
      * we should disable one of the platforms if they have two enabled
      */
-    const { dualOutputMode } = DualOutputService.state;
     const { canEnableRestream } = RestreamService.views;
 
     // Tiktok and Kick can stay active
@@ -344,6 +364,18 @@ export class GoLiveSettingsModule {
       [],
     );
   }
+
+  get unlinkedPlatforms() {
+    const platforms = (platformList as TPlatform[]).filter(
+      p => !this.state.linkedPlatforms.includes(p),
+    );
+
+    const [alwaysShown, unlinked] = partition(platforms, p =>
+      this.state.alwaysShownPlatforms.includes(p),
+    );
+    return [...alwaysShown, ...unlinked];
+  }
+
   get primaryChat() {
     const primaryPlatform = Services.UserService.views.platform!;
     // this is migration-like code for users with old primary platform deselected (i.e me)
@@ -356,6 +388,11 @@ export class GoLiveSettingsModule {
 
   setPrimaryChat(platform: TPlatform) {
     Services.UserService.actions.setPrimaryPlatform(platform);
+  }
+
+  setStreamShift(status: boolean) {
+    this.state.toggleStreamShift(status);
+    this.save(this.state.settings);
   }
 
   /**

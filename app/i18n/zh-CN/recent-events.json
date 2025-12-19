@@ -80,5 +80,7 @@
   "has resubscribed": "已重新订阅",
   "has gifted a sub to": "已将订阅赠送给",
   "has resubscribed for %{streak} months in a row! (%{months} total)": "已重新订阅连续 %{streak} 个月！（总计 %{months}）",
-  "has resubscribed for %{months} months": "已重新订阅 %{months} 个月"
+  "has resubscribed for %{months} months": "已重新订阅 %{months} 个月",
+  "Disable Chat Box Notifications": "禁用聊天框通知",
+  "Enable Chat Box Notifications": "启用聊天框通知"
 }

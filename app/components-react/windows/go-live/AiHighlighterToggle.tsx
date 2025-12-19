@@ -1,17 +1,13 @@
 import { SwitchInput } from 'components-react/shared/inputs/SwitchInput';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './AiHighlighterToggle.m.less';
-
 import { Services } from 'components-react/service-provider';
-import Highlighter from 'components-react/pages/Highlighter';
-import { useVuex } from 'components-react/hooks';
-import { DownOutlined, UpOutlined } from '@ant-design/icons';
-import { Button, Carousel } from 'antd';
+import { useDebounce, useVuex } from 'components-react/hooks';
 import EducationCarousel from 'components-react/highlighter/EducationCarousel';
+import { DownOutlined, UpOutlined } from '@ant-design/icons';
+import { Button } from 'antd';
 import { getConfigByGame, isGameSupported } from 'services/highlighter/models/game-config.models';
 import { $t } from 'services/i18n';
-import { set } from 'lodash';
-import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import {
   DiscordLogo,
   InstagramLogo,
@@ -63,13 +59,15 @@ export default function AiHighlighterToggle({
   const initialExpandedState = getInitialExpandedState();
   const [isExpanded, setIsExpanded] = useState(initialExpandedState);
 
+  const toggleHighlighter = useDebounce(300, HighlighterService.actions.toggleAiHighlighter);
+
   return (
     <div>
       {gameIsSupported ? (
         <div
           key={'aiSelector'}
           style={{
-            marginBottom: '16px',
+            marginBottom: '24px',
             display: 'flex',
             justifyContent: 'flex-end',
             flexFlow: 'rowWrap',
@@ -101,7 +99,7 @@ export default function AiHighlighterToggle({
                       style={{ width: '80px', margin: 0, marginTop: '-2px' }}
                       value={useHighlighter}
                       label=""
-                      onChange={() => HighlighterService.actions.toggleAiHighlighter()}
+                      onChange={toggleHighlighter}
                     />
                   ) : (
                     <Button
@@ -159,14 +157,14 @@ export default function AiHighlighterToggle({
 
                           <div
                             className={styles.plattformIcon}
-                            style={{ top: '85px', left: '250px' }}
+                            style={{ top: '85px', left: '283px' }}
                           >
                             <TikTokLogo />
                           </div>
 
                           <div
                             className={styles.plattformIcon}
-                            style={{ top: '177px', left: '153px' }}
+                            style={{ top: '177px', left: '187px' }}
                           >
                             <InstagramLogo />
                           </div>
@@ -210,12 +208,31 @@ export default function AiHighlighterToggle({
                     </div>
                   ) : (
                     <div className={styles.educationSection}>
-                      ⚠️{$t('Game language must be English')} <br /> ⚠️
-                      {$t('Game must be fullscreen')} <br /> ⚠️
-                      {$t('Game mode must be supported')}
-                      <span style={{ fontSize: '12px', marginLeft: '27px', marginTop: '-3px' }}>
-                        {gameConfig?.gameModes && `(${gameConfig?.gameModes})`}
-                      </span>
+                      <div>
+                        <span>⚠️</span>
+                        <span> {$t('Game language must be English')}</span>
+                      </div>{' '}
+                      <div>
+                        {' '}
+                        <span>⚠️</span>
+                        <span> {$t('Game must be fullscreen')}</span>{' '}
+                      </div>
+                      <div>
+                        {' '}
+                        <span>⚠️</span>
+                        <span> {$t('Game mode must be supported')}</span>
+                      </div>
+                      <div
+                        style={{
+                          marginTop: '-10px',
+                          marginLeft: '20px',
+                          fontWeight: 400,
+                        }}
+                      >
+                        <span style={{ fontSize: '12px' }}>
+                          {gameConfig?.gameModes && `(${gameConfig?.gameModes})`}
+                        </span>
+                      </div>
                       {/* <EducationCarousel game={game!} /> */}
                     </div>
                   )}

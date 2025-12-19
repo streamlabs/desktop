@@ -6,7 +6,6 @@ import { HostsService } from './hosts';
 import Utils from 'services/utils';
 import { InitAfter } from './core';
 import { AppService } from './app';
-import { getOS, OS } from 'util/operating-systems';
 
 export enum EAvailableFeatures {
   platform = 'slobs--platform',
@@ -22,6 +21,9 @@ export enum EAvailableFeatures {
   reactWidgets = 'slobs--react-widgets',
   sharedStorage = 'slobs--shared-storage',
   dualOutputRecording = 'slobs--dual-output-recording',
+  streamShift = 'slobs--stream-shift',
+  twitchDualStream = 'slobs--twitch-dual-stream',
+  twitchDualStreamPreview = 'slobs--twitch-dual-stream-preview',
 
   /**
    * There are two flags because one is used for beta access and

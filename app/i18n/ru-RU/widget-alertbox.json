@@ -154,5 +154,6 @@
   "This applies to all alerts. If enabled all alerts need to be approved manually.": "Применяется для всех оповещений. Если включено, все оповещения требуют утверждения вручную.",
   "Use unlimited delay": "Использовать неограниченную задержку",
   "When enabled new alerts will interrupt the on screen alert": "При включении этого параметра новые оповещения будут прерывать оповещение, отображаемое на экране",
-  "Text Highlight Color": "Цвет выделения текста"
+  "Text Highlight Color": "Цвет выделения текста",
+  "Platforms: Twitch, YouTube, Facebook, Trovo & integrations": "Платформы: Twitch, YouTube, Facebook, Trovo и интеграции"
 }

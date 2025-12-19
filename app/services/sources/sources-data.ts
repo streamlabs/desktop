@@ -1,5 +1,5 @@
-import { ISourceDisplayData } from './index';
 import { $t } from 'services/i18n';
+import { ISourceDisplayData } from './index';
 
 const imageSupport = ['png', 'jpg', 'jpeg', 'gif', 'tga', 'bmp'];
 const mediaSupport = [
@@ -240,7 +240,7 @@ export const SourceDisplayData = (): { [key: string]: ISourceDisplayData } => ({
     icon: 'icon-audio',
     group: 'av',
   },
-  av_capture_input: {
+  macos_avcapture: {
     name: $t('Video Capture'),
     shortDesc: $t('Camera / Capture Card'),
     description: $t('Display video from webcams, capture cards, and other devices.'),
@@ -349,5 +349,17 @@ export const SourceDisplayData = (): { [key: string]: ISourceDisplayData } => ({
     link: 'https://streamlabs.com/content-hub/post/vtuber-support-on-streamlabs-desktop',
     linkText: $t('Learn how to set it up'),
     group: 'capture',
+  },
+  smart_browser_source: {
+    name: 'Reactive Source',
+    demoVideo: true,
+    demoFilename: 'reactive-overlay-webm.webm',
+    shortDesc: $t('Dynamic game animation'),
+    description: $t(
+      "Dynamic real time animation based on your game events, powered by Streamlabs AI. Install Reactive Overlays from our Library to see what it's capable of!",
+    ),
+    supportList: [$t('Kills & Eliminations'), $t('Health changes'), $t('Victory & Defeat')],
+    group: 'capture',
+    icon: 'icon-ai',
   },
 });

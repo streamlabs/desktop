@@ -80,5 +80,7 @@
   "has resubscribed": "subscreveu novamente",
   "has gifted a sub to": "ofereceu uma subscrição a",
   "has resubscribed for %{streak} months in a row! (%{months} total)": "subscreveu novamente durante %{streak} meses seguidos! (total de %{months})",
-  "has resubscribed for %{months} months": "subscreveu novamente durante %{months} meses"
+  "has resubscribed for %{months} months": "subscreveu novamente durante %{months} meses",
+  "Disable Chat Box Notifications": "Desativar as notificações da caixa de chat",
+  "Enable Chat Box Notifications": "Ativar as notificações da caixa de chat"
 }

@@ -32,14 +32,14 @@ const commentLineInFile = (assistedInstallerPath, lineToComment, commentString =
 
     const fileContent = fs.readFileSync(fd, 'utf-8');
     const modifiedContent = fileContent
-      .split('\n')
+      .split(/\r?\n/)
       .map((line) => {
         if (line.includes(lineToComment) && !line.trim().startsWith(';')) {
           return `${commentString}${line}`; // Add commentString to the target line
         }
         return line; // Leave all other lines unchanged
       })
-      .join('\n'); // Rejoin the lines back together into a single string
+      .join('\r\n'); // Rejoin the lines back together into a single string
 
     fs.ftruncateSync(fd); // Truncate the file to ensure old content is removed
     fs.writeSync(fd, modifiedContent);

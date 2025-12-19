@@ -10,8 +10,6 @@ import { Subject } from 'rxjs';
 import { throttle } from 'lodash-decorators';
 import * as remote from '@electron/remote';
 
-import Main from 'components/windows/Main.vue';
-import Settings from 'components/windows/settings/Settings.vue';
 import FFZSettings from 'components/windows/FFZSettings.vue';
 import SceneTransitions from 'components/windows/SceneTransitions.vue';
 import {
@@ -40,14 +38,16 @@ import {
   NotificationsAndNews,
   PlatformAppPopOut,
   RecentEventsWindow,
-  RecordingHistory,
   EditTransform,
   Blank,
+  Main,
   MultistreamChatInfo,
+  MarketingModal,
+  Settings,
+  Troubleshooter,
 } from 'components/shared/ReactComponentList';
 
 import SourcePropertiesDeprecated from 'components/windows/SourceProperties.vue';
-import Troubleshooter from 'components/windows/Troubleshooter.vue';
 import GameOverlayEventFeed from 'components/windows/GameOverlayEventFeed';
 import EventFilterMenu from 'components/windows/EventFilterMenu';
 import OverlayPlaceholder from 'components/windows/OverlayPlaceholder';
@@ -65,7 +65,6 @@ import StreamBoss from 'components/widgets/StreamBoss.vue';
 import Credits from 'components/widgets/Credits.vue';
 import EventList from 'components/widgets/EventList.vue';
 import TipJar from 'components/widgets/TipJar.vue';
-import SponsorBanner from 'components/widgets/SponsorBanner.vue';
 import MediaShare from 'components/widgets/MediaShare';
 import AlertBox from 'components/widgets/AlertBox.vue';
 import SpinWheel from 'components/widgets/SpinWheel.vue';
@@ -126,7 +125,6 @@ export function getComponents() {
     Credits,
     EventList,
     TipJar,
-    SponsorBanner,
     StreamBoss,
     SubGoal,
     MediaShare,
@@ -144,7 +142,7 @@ export function getComponents() {
     WidgetWindow,
     CustomCodeWindow,
     SourceShowcase,
-    RecordingHistory,
+    MarketingModal,
   };
 }
 
@@ -295,6 +293,10 @@ export class WindowsService extends StatefulService<IWindowsState> {
 
   getElectronWindowIdFromWindowId(windowId: string) {
     return this.windows[windowId].id;
+  }
+
+  getIsChildWindowShown(componentName: string): boolean {
+    return this.state.child.isShown && this.state.child.componentName === componentName;
   }
 
   showWindow(options: Partial<IWindowOptions>) {

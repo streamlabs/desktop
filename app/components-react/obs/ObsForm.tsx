@@ -285,8 +285,8 @@ const ObsInput = forwardRef<{}, IObsInputProps>((p, ref) => {
             <Button
               key={`flag-${index}`}
               onClick={() => {
-                const newFlags = Array(flagsVal.size).fill(0);
-                newFlags.splice(index, 1, 1);
+                const newFlags = [...flags];
+                newFlags[index] = flag === 0 ? 1 : 0;
                 inputProps.onChange(Utils.binnaryArrayToNumber(newFlags.reverse()));
               }}
               style={{
@@ -298,7 +298,7 @@ const ObsInput = forwardRef<{}, IObsInputProps>((p, ref) => {
                 lineHeight: 0.75,
               }}
             >
-              {index}
+              {index + 1}
             </Button>
           ))}
         </InputWrapper>
@@ -338,7 +338,6 @@ const ObsInput = forwardRef<{}, IObsInputProps>((p, ref) => {
 });
 
 interface IObsFormGroupProps {
-  categoryName?: string;
   value: ISettingsSubCategory[];
   onChange: (newValue: ISettingsSubCategory[]) => unknown;
   type?: IObsFormType;

@@ -154,6 +154,7 @@
   "Instagram": "Instagram",
   "Instagram Live": "Instagram Live",
   "X (Twitter)": "X (Twitter)",
+  "Kick": "Kick",
   "Facebook Profiles": "Facebook 个人资料",
   "Facebook Pages": "Facebook 页面",
   "Alert Box": "提醒框",
@@ -168,5 +169,6 @@
   "Dashboard Home": "仪表板首页",
   "Alert Box Library": "提醒框库",
   "Alert Box Settings": "提醒框设置",
-  "Alerts and Widgets": "提醒和小工具"
+  "Alerts and Widgets": "提醒和小工具",
+  "AI": "AI"
 }

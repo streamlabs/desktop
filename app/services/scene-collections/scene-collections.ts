@@ -363,7 +363,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
 
     if (!newCollectionId) return;
 
-    this.dualOutputService.setDualOutputMode(false);
+    this.dualOutputService.setDualOutputModeIfPossible(false);
 
     await this.load(newCollectionId);
 
@@ -549,9 +549,6 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   private async readCollectionDataAndLoadIntoApplicationState(id: string): Promise<void> {
     const exists = await this.stateService.collectionFileExists(id);
 
-    // necessary for validating a dual output scene collection
-    this.dualOutputService.setIsLoading(true);
-
     if (exists) {
       let data: string;
 
@@ -588,6 +585,11 @@ export class SceneCollectionsService extends Service implements ISceneCollection
             'Error while loading backup collection:',
             backupError instanceof Error ? backupError.message : backupError,
           );
+
+          // If there is an error loading the backup, create an empty scene collection
+          // otherwise the app will fail to load
+          await this.handleCollectionLoadError();
+          await this.create({ auto: true });
           return; // Prevent further execution by returning early
         }
       }
@@ -1217,7 +1219,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     // add webcam source
     const type = byOS({
       [OS.Windows]: 'dshow_input',
-      [OS.Mac]: 'av_capture_input',
+      [OS.Mac]: 'macos_avcapture',
     }) as TSourceType;
 
     const defaultSource = this.defaultHardwareService.state.defaultVideoDevice;

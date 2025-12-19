@@ -22,7 +22,10 @@ import {
 import * as moment from 'moment';
 import { useForm } from '../../helpers/modules/forms';
 import { ListInputController } from '../../helpers/modules/forms/list';
+import { sleep } from '../../helpers/sleep';
 
+// not a react hook
+// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
 
 test('Streaming to Youtube', async t => {
@@ -37,7 +40,6 @@ test('Streaming to Youtube', async t => {
   t.true(await chatIsVisible(), 'Chat should be visible');
   await stopStream();
 });
-
 
 // TODO flaky
 test.skip('Streaming to the scheduled event on Youtube', async t => {
@@ -107,6 +109,7 @@ test('Start stream twice to the same YT event', async t => {
 test('Youtube streaming is disabled', async t => {
   skipCheckingErrorsInLog();
   await logIn('youtube', { streamingIsDisabled: true, notStreamable: true });
+  // await sleep(300000);
   t.true(
     await isDisplayed('span=YouTube account not enabled for live streaming'),
     'The streaming-disabled message should be visible',

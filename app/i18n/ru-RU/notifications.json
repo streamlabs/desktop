@@ -21,6 +21,8 @@
   "News": "Новости",
   "Notifications": "Уведомления",
   "A new Recording has been completed. Click for more info": "Новая запись завершена. Нажмите сюда для получения дополнительной информации",
+  "horizontalRecordingMessage": " Новая горизонтальная запись выполнена. Нажмите сюда для получения дополнительной информации",
+  "verticalRecordingMessage": "Новая вертикальная запись выполнена. Нажмите сюда для получения дополнительной информации",
   "Recording History": "История записей",
   "Show in folder": "Показать в папке",
   "Recordings": "Записи",

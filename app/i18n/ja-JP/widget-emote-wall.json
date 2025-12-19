@@ -1,6 +1,7 @@
 {
   "Emote Wall": "Emote Wall",
   "Display and animate emotes that are seen in chat, improving chat participation via positive feedback.": "チャットに表示される emote を表示およびアニメーション表示し、良いフィードバックを送ってチャット参加を改善しましょう。",
+  "Display and animate emotes from chat, improving chat participation.": "チャットからのエモートを表示してアニメーション化させ、チャットへの参加を促します。",
   "Wall Settings": "Wall の設定",
   "Emote Scale": "emote のスケール",
   "Combo Required": "コンボが必須です",

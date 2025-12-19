@@ -99,9 +99,15 @@ export class RealmObject {
   bindProps(target: Object, bindings: Dictionary<string>) {
     const setProps = () => {
       Object.keys(bindings).forEach(key => {
-        // TODO: index
         // @ts-ignore
-        target[key] = this[bindings[key]];
+        // this means the realm object is a complex shape like a dictionary
+        if (typeof this[bindings[key]] === 'object') {
+          // @ts-ignore
+          target[key] = this[bindings[key]].toJSON();
+        } else {
+          // @ts-ignore
+          target[key] = this[bindings[key]];
+        }
       });
     };
 
@@ -188,7 +194,8 @@ export class RealmObject {
             // Realm type can be either a string or a nested object with a `type` property or an `objectType`
             // property in the case of referential schemas
             let type = typeof dataType === 'string' ? dataType : dataType.type;
-            if (dataType.objectType) type = dataType.objectType;
+            // dictionaries are not referential schemas although they still have an objectType
+            if (dataType.objectType && type !== 'dictionary') type = dataType.objectType;
             const klass = RealmService.registeredClasses[type];
             return klass.fromRealmModel(val);
           }
@@ -324,7 +331,7 @@ interface IRealmOptions {
 
 // WARNING: When you increment this number, you are responsible for
 // implementing a migration that handles the data change!
-const REALM_SCHEMA_VERSION = 2;
+const REALM_SCHEMA_VERSION = 3;
 
 export class RealmService extends Service {
   persistentDb: Realm;

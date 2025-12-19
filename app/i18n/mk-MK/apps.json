@@ -4,5 +4,8 @@
   "Unpacked vers loaded": "Unpacked vers loaded",
   "You must unload unpacked version before enabling this app.": "You must unload unpacked version before enabling this app.",
   "Pop Out": "Pop Out",
-  "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here."
+  "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.": "The developer has ended support for this app. The app may continue to work, but it won't recieve any updates. If you wish to uninstall, please follow the directions here.",
+  "Uninstall": "Uninstall",
+  "Other installed apps:": "Other installed apps:",
+  "Open": "Open"
 }

@@ -42,5 +42,7 @@
   "Desktop Audio Device 2": "Perangkat Audio Desktop 2",
   "Mic/Auxiliary Device 1": "Perangkat Mic/Bantu 1",
   "Mic/Auxiliary Device 2": "Perangkat Mic/Bantu 2",
-  "Mic/Auxiliary Device 3": "Perangkat Mic/Bantu 3"
+  "Mic/Auxiliary Device 3": "Perangkat Mic/Bantu 3",
+  "Recording Audio Encoder": "Merekam Encoder Audio",
+  "Enable Muted Notifications": "Mengaktifkan Pemberitahuan yang Dibisukan"
 }

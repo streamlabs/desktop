@@ -21,6 +21,9 @@ const ANT_SELECT_FEATURES = [
   'defaultActiveFirstOption',
   'listHeight',
   'filterOption',
+  'suffixIcon',
+  'size',
+  'dropdownMatchSelectWidth',
 ] as const;
 
 // define custom props
@@ -33,6 +36,7 @@ export interface ICustomListProps<TValue> {
   options?: IListOption<TValue>[];
   description?: string;
   nolabel?: boolean;
+  filter?: string;
 }
 
 // define a type for the component's props
@@ -117,6 +121,7 @@ export const ListInput = InputComponent(<T extends any>(p: TListInputProps<T>) =
           // @ts-ignore
           !!inputAttrs['loading']
         }
+        dropdownMatchSelectWidth={p.dropdownMatchSelectWidth}
       >
         {options && options.map((opt, ind) => renderOption(opt, ind, p))}
       </Select>

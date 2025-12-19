@@ -1,0 +1,15 @@
+{
+  "Edit your stream title on Kick after going live.": "Modifica il titolo dello streaming su Kick dopo aver iniziato la diretta.",
+  "Kick Category": "Categoria Kick",
+  "Failed to update Kick account. Please unlink and reconnect your Kick account.": "Non è stato possibile aggiornare l’account Kick. Prova a scollegare e ricollegare il tuo account Kick.",
+  "Failed to start Kick stream. Please check permissions with Kick and try again": "Non è stato possibile avviare lo streaming Kick. Controlla le autorizzazioni con Kick e riprova",
+  "Kick request most likely failed due to incorrect or missing permissions. Unlink and re-merge Kick account, then restart Desktop. If that fails, refer to Kick support": "Probabilmente la richiesta di Kick non è andata a buon fine a causa di autorizzazioni errate o mancanti. Disconnetti e riconnetti l’account Kick, quindi riavvia Desktop. Se non funziona, prova a contattare l’assistenza Kick",
+  "Kick stream key failed to generate due to missing permissions": "Impossibile generare la chiave di streaming Kick a causa delle autorizzazioni mancanti",
+  "confirm that a stream key has been generated with 2FA on Kick for use with Streamlabs Desktop and if not ask the user to manually generate one": "controlla che sia stata creata una chiave di streaming con l’autenticazione a due fattori su Kick da usare con Streamlabs Desktop e, in caso contrario, chiedi all’utente di generarne uno manualmente",
+  "Login to Kick": "Accedi a Kick",
+  "Go to: <link></link>": "Vai a: <link></link>",
+  "Click on the \"eye\" icon to see your stream key": "Fai clic sull’icona a forma di “occhio” per vedere la tua chiave di streaming",
+  "Put in 2FA": "Attiva l’autenticazione a due fattori (2FA)",
+  "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "Dopo la 2FA, la chiave di streaming verrà creata e sarà disponibile su Streamlabs Desktop per quel canale. Ora dovresti essere in grado di avviare la diretta su Kick.",
+  "Stream Shift Error: Kick is not live": "Stream Shift Error: Kick is not live"
+}

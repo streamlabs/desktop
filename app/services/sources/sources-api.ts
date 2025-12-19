@@ -136,12 +136,14 @@ export type TSourceType =
   | 'coreaudio_input_capture'
   | 'coreaudio_output_capture'
   | 'av_capture_input'
+  | 'macos_avcapture'
   | 'display_capture'
   | 'audio_line'
   | 'syphon-input'
   | 'soundtrack_source'
   | 'mediasoupconnector'
   | 'wasapi_process_output_capture'
+  | 'smart_browser_source'
   | 'spout_capture';
 
 // Register new properties managers here
@@ -151,7 +153,8 @@ export type TPropertiesManager =
   | 'streamlabels'
   | 'platformApp'
   | 'replay'
-  | 'iconLibrary';
+  | 'iconLibrary'
+  | 'smartBrowserSource';
 
 export interface ISourcesState {
   sources: Dictionary<ISource>;
