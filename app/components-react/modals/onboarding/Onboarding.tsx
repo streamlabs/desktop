@@ -40,8 +40,7 @@ export default function Onboarding() {
   const showOnboarding = useRealmObject(OnboardingV2Service.state).showOnboarding;
 
   useEffect(() => {
-    // OnboardingV2Service.actions.showOnboardingIfNecessary();
-    OnboardingV2Service.actions.showOnboarding();
+    OnboardingV2Service.actions.showOnboardingIfNecessary();
   }, []);
 
   function closeModal() {
@@ -115,7 +114,7 @@ export function ImageCard(p: {
   metadata: { img: string; title: string; description: string; isUltra?: boolean };
 }) {
   return (
-    <div style={{ textAlign: 'left' }}>
+    <div style={{ textAlign: 'left', padding: 16 }}>
       <img style={{ height: 160, width: 'auto', marginBottom: 16 }} src={p.metadata.img} />
       <h4>
         {p.metadata.isUltra && <UltraIcon style={{ marginRight: 4 }} />}

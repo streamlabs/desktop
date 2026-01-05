@@ -214,14 +214,19 @@ export class OnboardingV2Service extends Service {
 
   takeStep(skipped?: boolean) {
     this.recordOnboardingNavEvent(skipped ? 'skip' : 'continue');
-    this.determineSteps();
-    const nextStep = this.path.takeNextStep();
+    let nextStep = this.path.takeNextStep();
+    // the nextStep will already exist if the user has backtracked
     if (!nextStep) {
-      this.completeOnboarding();
-    } else {
-      this.setCurrentStep(nextStep);
-      this.setIndex(this.path.index);
+      // if there is no next step we determine if the path has additional steps
+      this.determineSteps();
+      nextStep = this.path.takeNextStep();
+      if (!nextStep) {
+        // if there are no additional steps we've reached the end of the path
+        this.completeOnboarding();
+      }
     }
+    this.setCurrentStep(nextStep);
+    this.setIndex(this.path.index);
   }
 
   stepBack() {
@@ -297,7 +302,7 @@ export class OnboardingV2Service extends Service {
           isClosable: true,
         });
       }
-      if (true || (this.userService.views.isLoggedIn && !this.userService.views.isPrime)) {
+      if (this.userService.views.isLoggedIn && !this.userService.views.isPrime) {
         this.path.append({ name: EOnboardingSteps.Ultra, isSkippable: true, isClosable: true });
       }
       this.path.append({ name: EOnboardingSteps.Devices, isSkippable: true, isClosable: true });
@@ -339,7 +344,8 @@ export class OnboardingV2Service extends Service {
     });
   }
 
-  private setCurrentStep(step: IOnboardingStep) {
+  private setCurrentStep(step: IOnboardingStep | false) {
+    if (!step) return;
     this.state.db.write(() => {
       this.state.currentStep = { isSkippable: false, isClosable: false, ...step };
     });
