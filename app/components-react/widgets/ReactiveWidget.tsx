@@ -17,8 +17,7 @@ export function ReactiveWidget() {
     selectedTab,
     setSelectedTab,
     playReactiveAlert,
-    triggerGroups,
-    groupMeta,
+    sections,
     toggleTrigger,
     deleteTrigger,
     tabKind,
@@ -69,8 +68,7 @@ export function ReactiveWidget() {
         footerSlots={<ManageOnWebButton />}
       >
         <ReactiveWidgetMenu
-          menuItems={triggerGroups}
-          groupMeta={groupMeta}
+          sections={sections}
           activeKey={selectedTab}
           onChange={setSelectedTab}
           playAlert={onPlayAlert}
@@ -89,7 +87,7 @@ function AddTriggerTab() {
     gameEvents,
     globalEvents,
     games,
-    data,
+    widgetData,
     createTrigger,
   } = useReactiveWidget();
 
@@ -105,20 +103,20 @@ function AddTriggerTab() {
       gameEvents={gameEvents}
       globalEvents={globalEvents}
       gameOptions={gameOptions}
-      data={data}
+      data={widgetData}
       onSubmit={createTrigger}
     />
   );
 };
 
 function GameSettingsTab() {
-  const { groupOptions, setGroupEnabled, enableAllGroups, disableAllGroups } = useReactiveWidget();
+  const { groupOptions, toggleScope, enableAllGroups, disableAllGroups } = useReactiveWidget();
 
   return (
     <div>
       <ReactiveWidgetGameSettings
-        options={groupOptions}
-        onChangeGroupEnabled={setGroupEnabled}
+        scopes={groupOptions}
+        onToggleScope={toggleScope}
         onEnableAll={enableAllGroups}
         onDisableAll={disableAllGroups}
       />
@@ -150,24 +148,24 @@ function ManageTriggersTab() {
     disableAllTriggers(selectedGame);
   }
 
-  const rawTriggers =
+  const triggers =
     selectedGame === 'global'
       ? settings?.global?.triggers
       : settings?.games?.[selectedGame]?.triggers;
 
   const options = useMemo(() => {
-    return (rawTriggers || [])
+    return (triggers || [])
       .filter((t) => t.id !== null) 
       .map((t) => ({
         id: t.id as string, 
         name: t.name,
         enabled: t.enabled,
       }));
-  }, [rawTriggers]);
+  }, [triggers]);
   return (
     <ReactiveWidgetGameSettings
-      options={options}
-      onChangeGroupEnabled={onToggleGame}
+      scopes={options}
+      onToggleScope={onToggleGame}
       onEnableAll={onEnableAll}
       onDisableAll={onDisableAll}
     />
@@ -213,6 +211,30 @@ function ManageOnWebButton() {
     <Button type="ghost" onClick={handleClick}>
       <i className="icon-pop-out-2" style={{ marginRight: 8 }} />
       {$t('Manage on Web')}
+    </Button>
+  );
+}
+
+function ResetSettingsButton() {
+  const { resetSettings } = useReactiveWidget();
+
+  const handleClick = () => {
+    remote.dialog
+      .showMessageBox(remote.getCurrentWindow(), {
+        title: 'Streamlabs Desktop',
+        message: $t('Are you sure you want to reset all settings to default?'),
+        buttons: [$t('Cancel'), $t('OK')],
+      })
+      .then(({ response }) => {
+        if (!response) return;
+        resetSettings();
+      });
+  };
+
+  return (
+    <Button type="ghost" onClick={handleClick} danger>
+      <i className="icon-reset" style={{ marginRight: 8 }} />
+      {$t('Reset Settings')}
     </Button>
   );
 }

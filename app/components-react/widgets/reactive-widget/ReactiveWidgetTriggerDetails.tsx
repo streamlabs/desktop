@@ -19,13 +19,14 @@ import { Collapse } from 'antd';
 import { $t } from 'services/i18n';
 import { LayoutInput } from '../common/LayoutInput';
 import css from './ReactiveWidgetTriggerDetails.m.less';
-import { ReactiveTrigger, flattenAnimationOptions } from './ReactiveWidget.helpers';
+import { AnimationOptionConfig, ReactiveStaticConfig, ReactiveTrigger, SelectOption } from './ReactiveWidget.helpers';
 
 interface ReactiveWidgetTriggerDetailsProps {
   trigger: ReactiveTrigger;
-  staticConfig?: any;
+  staticConfig?: ReactiveStaticConfig;
   onUpdate?: (updatedTrigger: ReactiveTrigger) => void;
 }
+type LevelRangeType = 'minimum' | 'maximum' | 'between';
 
 /**
  * Custom hook to handle deep object binding.
@@ -36,7 +37,7 @@ function useTriggerBinding(
 ) {
   return useCallback(
     (path: string, defaultValue?: any) => ({
-      value: get(trigger, path) ?? defaultValue ?? '',
+      value: get(trigger, path) ?? defaultValue,
       onChange: (nextVal: any) => {
         if (!onUpdate) return;
         const updated = cloneDeep(trigger);
@@ -46,6 +47,21 @@ function useTriggerBinding(
     }),
     [trigger, onUpdate],
   );
+}
+
+function flattenAnimationOptions(
+  options: AnimationOptionConfig | AnimationOptionConfig[] | undefined | null
+): SelectOption[] {
+  if (!options) return [];
+  const arr = Array.isArray(options) ? options : [options];
+
+  return arr.flatMap((opt) => {
+    if (!opt) return [];
+    if (opt.list && Array.isArray(opt.list)) {
+      return opt.list.map((sub) => ({ label: sub.value, value: sub.key }));
+    }
+    return [{ label: opt.value, value: opt.key }];
+  });
 }
 
 export function ReactiveWidgetTriggerDetails({
@@ -77,11 +93,20 @@ export function ReactiveWidgetTriggerDetails({
   }, [staticConfig]);
 
   const { showAnimationOptions, hideAnimationOptions, textAnimationOptions } = useMemo(() => {
-    const anims = staticConfig?.data?.animations ?? {};
+    const anims = staticConfig?.data?.animations;
+    if (!anims) {
+      return {
+        showAnimationOptions: [],
+        hideAnimationOptions: [],
+        textAnimationOptions: [],
+      };
+    }
+
+    // TODO: $chris: fix typings in staticConfig to match actual data structure.
     return {
-      showAnimationOptions: flattenAnimationOptions(anims.show_animations),
-      hideAnimationOptions: flattenAnimationOptions(anims.hide_animations),
-      textAnimationOptions: flattenAnimationOptions(anims.text_animations),
+      showAnimationOptions: flattenAnimationOptions(anims.show_animations as any),
+      hideAnimationOptions: flattenAnimationOptions(anims.hide_animations as any),
+      textAnimationOptions: flattenAnimationOptions(anims.text_animations as any),
     };
   }, [staticConfig]);
 
@@ -89,11 +114,11 @@ export function ReactiveWidgetTriggerDetails({
   const isStreak = eventType === 'streak';
   const isTotal = eventType === 'total';
   const isLevel = eventType === 'level';
-  type LevelRangeType = 'minimum' | 'maximum' | 'between';
 
   function hasValue(n: any) {
     return n !== null && n !== undefined;
   }
+
   function deriveLevelRangeType(trigger: ReactiveTrigger): LevelRangeType {
     const hasMin = hasValue(trigger.amount_minimum);
     const hasMax = hasValue(trigger.amount_maximum);
@@ -102,6 +127,7 @@ export function ReactiveWidgetTriggerDetails({
     if (hasMax) return 'maximum';
     return 'minimum';
   }
+
   function applyLevelRangeType(trigger: ReactiveTrigger, nextType: LevelRangeType) {
     switch (nextType) {
       case 'minimum': {
@@ -120,11 +146,11 @@ export function ReactiveWidgetTriggerDetails({
       }
     }
   }
+
   const currentLevelRangeType = useMemo<LevelRangeType | null>(() => {
     if (!isLevel) return null;
     return deriveLevelRangeType(trigger);
   }, [isLevel, trigger.amount_minimum, trigger.amount_maximum]);
-
   const handleLevelRangeChange = useCallback(
     (newType: LevelRangeType) => {
       if (!onUpdate) return;
@@ -134,10 +160,8 @@ export function ReactiveWidgetTriggerDetails({
     },
     [trigger, onUpdate],
   );
-
   const showMin = currentLevelRangeType === 'minimum' || currentLevelRangeType === 'between';
   const showMax = currentLevelRangeType === 'maximum' || currentLevelRangeType === 'between';
-
   const messageTemplateTooltip = $t(
     'When a trigger fires, this will be the format of the message. Available tokens: number',
   );
@@ -153,7 +177,6 @@ export function ReactiveWidgetTriggerDetails({
             label={trigger.enabled ? $t('Enabled') : $t('Disabled')}
             labelAlign="left"
             layout="horizontal"
-            uncontrolled
             checkmark
           />
         </div>
@@ -274,8 +297,8 @@ export function ReactiveWidgetTriggerDetails({
           />
           <SliderInput
             label={$t('Text Delay')}
-            max={20000}
             {...bind('text_settings.text_delay_ms')}
+            max={20000}
             tipFormatter={(ms: number) => `${(ms / 1000).toFixed(1)}s`}
           />
         </Collapse.Panel>

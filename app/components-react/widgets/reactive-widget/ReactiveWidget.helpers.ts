@@ -108,6 +108,7 @@ export interface ReactiveWidgetOptions {
   global_events: Record<string, string>;
   streak_time_periods: Record<string, string>;
   available_game_events: Record<string, string[]>;
+  event_time_periods: Record<string, string>;
 }
 
 export interface AnimationListItem {
@@ -121,9 +122,9 @@ export interface AnimationGroup {
 }
 
 export interface ReactiveWidgetAnimations {
-  text_animations: AnimationGroup; // JSON shows this is an object
-  show_animations: AnimationGroup[]; // JSON shows this is an array
-  hide_animations: AnimationGroup[]; // JSON shows this is an array
+  text_animations: AnimationGroup;
+  show_animations: AnimationGroup;
+  hide_animations: AnimationGroup;
 }
 
 export interface ReactiveStaticData {
@@ -159,6 +160,40 @@ export interface AnimationOptionConfig {
   value: string;
   list?: AnimationOptionConfig[];
 }
+
+const DEFAULT_TRIGGER_SETTINGS = {
+  media_settings: {
+    image_href: 'https://cdn.streamlabs.com/library/giflibrary/jumpy-kevin.webm',
+    sound_href: 'https://cdn.streamlabs.com/static/sounds/bits.ogg',
+    sound_volume: 50,
+    show_animation: 'fadeIn',
+    hide_animation: 'fadeOut',
+  },
+  text_settings: {
+    font: 'Open Sans',
+    font_color: '#FFFFFF',
+    font_color2: '#80F5D2',
+    font_size: 24,
+    font_weight: 400,
+    message_template: '{number} kill streak!',
+    text_animation: 'bounce',
+    text_delay_ms: 0,
+  },
+  tts_settings: {
+    enabled: false,
+    include_message_template: true,
+    language: 'Salli',
+    repetition_block_length: 1,
+    security: 0,
+    volume: 50,
+  },
+  alert_duration_ms: 5000,
+  enabled: true,
+  game_event: 'kill', // Is this always 'kill' by default?
+  id: '',
+  name: '',
+  layout: 'above' as const,
+};
 
 export function flattenAnimationOptions(
   options: AnimationOptionConfig | AnimationOptionConfig[] | undefined | null
@@ -263,74 +298,41 @@ export function defaultEventPeriod(triggerType: ReactiveTriggerType): ReactiveEv
 
 /** default trigger settings, used as a template for new triggers */
 export function generateTriggerSettings(event_type: ReactiveTriggerType): ReactiveTrigger {
-  const commonSettings = {
-    media_settings: {
-      image_href: 'https://cdn.streamlabs.com/library/giflibrary/jumpy-kevin.webm',
-      sound_href: 'https://cdn.streamlabs.com/static/sounds/bits.ogg',
-      sound_volume: 50,
-      show_animation: 'fadeIn',
-      hide_animation: 'fadeOut',
-    },
-    text_settings: {
-      font: 'Open Sans',
-      font_color: '#FFFFFF',
-      font_color2: '#80F5D2',
-      font_size: 24,
-      font_weight: 400,
-      message_template: '{number} kill streak!',
-      text_animation: 'bounce',
-      text_delay_ms: 0,
-    },
-    tts_settings: {
-      enabled: false,
-      include_message_template: true,
-      language: 'Salli',
-      repetition_block_length: 1,
-      security: 0,
-      volume: 50,
-    },
-    alert_duration_ms: 5000,
-    enabled: true,
-    game_event: 'kill',
-    id: '',
-    name: '',
-    layout: 'above' as const,
-  };
-  if (event_type === 'streak') {
-    return {
-      ...commonSettings,
-      event_type: 'streak',
-      amount_minimum: 1,
-      amount_maximum: null,
-      streak_period: 'session',
-      event_period: 'round',
-    };
-  }
+  switch (event_type) {
+    case 'streak':
+      return {
+        ...DEFAULT_TRIGGER_SETTINGS,
+        event_type,
+        amount_minimum: 1,
+        amount_maximum: null,
+        streak_period: 'session',
+        event_period: 'round',
+      };
 
-  if (event_type === 'total') {
-    return {
-      ...commonSettings,
-      amount_minimum: 1,
-      amount_maximum: null,
-      event_type,
-      event_period: 'today',
-    }
-  }
+    case 'total':
+      return {
+        ...DEFAULT_TRIGGER_SETTINGS,
+        event_type,
+        amount_minimum: 1,
+        amount_maximum: null,
+        event_period: 'today',
+      };
 
-  if (event_type === 'achievement') {
-    return {
-      ...commonSettings,
-      event_type: 'achievement',
-      amount_minimum: null,
-      amount_maximum: null,
-      event_period: null,
-    };
-  }
+    case 'achievement':
+      return {
+        ...DEFAULT_TRIGGER_SETTINGS,
+        event_type,
+        amount_minimum: null,
+        amount_maximum: null,
+        event_period: null,
+      };
 
-  return {
-    event_type,
-    ...commonSettings,
-  } as ReactiveTrigger;
+    default:
+      return {
+        ...DEFAULT_TRIGGER_SETTINGS,
+        event_type,
+      } as ReactiveTrigger;
+  }
 }
 
 export function buildNewTrigger(params: {

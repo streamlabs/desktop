@@ -10,9 +10,14 @@ function GameIcon() {
   return <i className={`icon-console ant-menu-item-icon ${css.gameIcon}`} />;
 }
 
+interface ReactiveSection {
+  id: string; // The game key (e.g. 'global', 'csgo')
+  title: string; // The display title
+  triggers: ReactiveTrigger[];
+}
+
 export function ReactiveWidgetMenu(props: {
-  menuItems: Record<string, ReactiveTriggerGroup>;
-  groupMeta: Record<string, { title: string }>;
+  sections: ReactiveSection[];
   activeKey: string;
   onChange: (params: string) => void;
   playAlert: (game: string, type: ReactiveTrigger) => void;
@@ -20,9 +25,8 @@ export function ReactiveWidgetMenu(props: {
   deleteTrigger: (triggerId: string) => void;
 }) {
   const {
-    menuItems,
+    sections,
     activeKey,
-    groupMeta,
     onChange,
     playAlert,
     toggleTrigger,
@@ -73,22 +77,22 @@ export function ReactiveWidgetMenu(props: {
         {$t('Game Settings')}
       </Menu.Item>
 
-      {Object.entries(menuItems).map(([groupKey, group]) => (
+      {sections.map((section) => (
         <Menu.SubMenu
-          key={groupKey}
+          key={section.id}
           icon={<GameIcon />}
-          title={groupMeta[groupKey]?.title || groupKey}
+          title={section.title}
         >
-          {(group as ReactiveTriggerGroup).triggers?.map((trigger: ReactiveTrigger, index: number) => (
+          {section.triggers?.map((trigger, index) => (
             <Menu.Item
-              key={ReactiveTabUtils.generateTriggerId(groupKey, trigger.id)}
+              key={ReactiveTabUtils.generateTriggerId(section.id, trigger.id)}
               className={css.menuItem}
             >
               <div className={css.triggerRow}>
                 <div onClick={e => e.stopPropagation()}>
                   <CheckboxInput
                     value={trigger.enabled}
-                    onChange={enabled => toggleTrigger(groupKey, trigger.id, enabled)}
+                    onChange={enabled => toggleTrigger(section.id, trigger.id, enabled)}
                     className={css.triggerCheckbox}
                   />
                 </div>
@@ -106,7 +110,7 @@ export function ReactiveWidgetMenu(props: {
                     </Tooltip>
                     <Tooltip title={$t('Play Alert')} placement="top" mouseLeaveDelay={0}>
                       <Button
-                        onClick={e => onPlayAlert(e, groupKey, trigger)}
+                        onClick={e => onPlayAlert(e, section.id, trigger)}
                         type="text"
                         icon={<CaretRightOutlined className={css.playIcon} />}
                       />
@@ -117,7 +121,7 @@ export function ReactiveWidgetMenu(props: {
             </Menu.Item>
           ))}
           <Menu.Item
-            key={ReactiveTabUtils.generateManageGameId(groupKey)}
+            key={ReactiveTabUtils.generateManageGameId(section.id)}
             icon={<SettingOutlined />}
           >
             {$t('Manage Triggers')}

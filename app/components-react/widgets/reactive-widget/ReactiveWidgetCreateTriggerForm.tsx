@@ -12,7 +12,7 @@ import css from './ReactiveWidgetCreateTriggerForm.m.less';
 
 interface TriggerFormProps {
   trigger: { game?: string; event_type?: string; name?: string };
-  onSubmit: (data: { eventType: string; game: string; name: string; triggerType: string }) => void;
+  onSubmit: (data: { eventType: string; game: string; name: string; triggerType: string }) => Promise<void> | void;
   availableGameEvents: Record<string, string[]>;
   gameEvents: Record<string, ReactiveEventMeta>;
   globalEvents?: Record<string, string>;
@@ -31,6 +31,7 @@ export function ReactiveWidgetCreateTriggerForm(props: TriggerFormProps) {
     gameOptions = [],
   } = props;
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [values, setValues] = useState({
     game: trigger.game || gameOptions[0]?.value || '',
     event_type: trigger.event_type || '',
@@ -124,6 +125,27 @@ export function ReactiveWidgetCreateTriggerForm(props: TriggerFormProps) {
     [handleGameChange, handleEventChange, handleNameChange],
   );
 
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+
+    try {
+      await onSubmit({
+        eventType: values.event_type as string,
+        game: values.game as string,
+        name: values.name as string,
+        triggerType: values.trigger_type as string,
+      });
+      // We do NOT set isSubmitting(false) here on success,
+      // because usually the parent will unmount this form or navigate away.
+      // Keeping it true prevents clicking again during that transition.
+    } catch (error) {
+      console.error(error);
+      setIsSubmitting(false);
+    }
+  };
+
   const metadata = useMemo(() => {
     const meta: any = {
       game: {
@@ -169,17 +191,11 @@ export function ReactiveWidgetCreateTriggerForm(props: TriggerFormProps) {
       />
       <Button
         className={css.submitBtn}
-        disabled={!isValid}
+        disabled={!isValid || isSubmitting}
+        loading={isSubmitting}
         type="primary"
         size="large"
-        onClick={() =>
-          onSubmit({
-            eventType: values.event_type as string,
-            game: values.game as string,
-            name: values.name as string,
-            triggerType: values.trigger_type as string,
-          })
-        }
+        onClick={handleSubmit}
       >
         {$t('Add')}
       </Button>
