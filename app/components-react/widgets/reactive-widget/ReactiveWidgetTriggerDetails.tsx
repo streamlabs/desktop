@@ -71,15 +71,10 @@ export function ReactiveWidgetTriggerDetails({
 }: ReactiveWidgetTriggerDetailsProps) {
   const bind = useTriggerBinding(trigger, onUpdate);
 
-  const { streakOptions, totalPeriodOptions, levelRangeOptions } = useMemo(() => {
-    const streakPeriods = staticConfig?.data?.options?.streak_time_periods ?? {};
+  const { totalPeriodOptions, levelRangeOptions } = useMemo(() => {
     const totalPeriods = staticConfig?.data?.options?.event_time_periods ?? {};
 
     return {
-      streakOptions: Object.entries(streakPeriods).map(([key, value]) => ({
-        label: String(value),
-        value: key,
-      })),
       totalPeriodOptions: Object.entries(totalPeriods).map(([key, value]) => ({
         label: String(value),
         value: key,
@@ -166,6 +161,13 @@ export function ReactiveWidgetTriggerDetails({
     'When a trigger fires, this will be the format of the message. Available tokens: number',
   );
 
+  console.log({
+    isTotal,
+    isStreak,
+    isLevel,
+    eventType,
+  })
+
   return (
     <div>
       <div className={css.headerRow}>
@@ -189,14 +191,6 @@ export function ReactiveWidgetTriggerDetails({
           label={isStreak ? $t('Amount Minimum') : $t('Total Amount')}
           {...bind('amount_minimum')}
           min={0}
-        />
-      )}
-
-      {isStreak && (
-        <ListInput
-          label={$t('Streak Time Period')}
-          {...bind('streak_period')}
-          options={streakOptions}
         />
       )}
 

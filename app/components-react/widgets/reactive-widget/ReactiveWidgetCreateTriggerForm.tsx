@@ -137,9 +137,7 @@ export function ReactiveWidgetCreateTriggerForm(props: TriggerFormProps) {
         name: values.name as string,
         triggerType: values.trigger_type as string,
       });
-      // We do NOT set isSubmitting(false) here on success,
-      // because usually the parent will unmount this form or navigate away.
-      // Keeping it true prevents clicking again during that transition.
+
     } catch (error) {
       console.error(error);
       setIsSubmitting(false);
