@@ -14245,9 +14245,9 @@ __metadata:
   linkType: hard
 
 "safe-buffer@npm:~5.1.0, safe-buffer@npm:~5.1.1":
-  version: 5.1.1
-  resolution: "safe-buffer@npm:5.1.1"
-  checksum: 7f117b604554c9daca713be76cecc6c52932ed1dd6303638274f21319038bfd760fbfd353e526cc83f11894935bc4beb71f5b7b9478c11bf9718c0e0d94c51cb
+  version: 5.1.2
+  resolution: "safe-buffer@npm:5.1.2"
+  checksum: f2f1f7943ca44a594893a852894055cf619c1fbcb611237fc39e461ae751187e7baf4dc391a72125e0ac4fb2d8c5c0b3c71529622e6a58f46b960211e704903c
   languageName: node
   linkType: hard
 
