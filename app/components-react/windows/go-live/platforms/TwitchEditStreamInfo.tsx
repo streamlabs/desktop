@@ -46,8 +46,14 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
   const enhancedBroadcastingEnabled = useMemo(() => {
     if (isDualStream) return true;
     if (multiplePlatformEnabled) return false;
+    if (p.isStreamShiftMode) return false;
     return twSettings?.isEnhancedBroadcasting;
-  }, [isDualStream, multiplePlatformEnabled, twSettings?.isEnhancedBroadcasting]);
+  }, [
+    isDualStream,
+    multiplePlatformEnabled,
+    twSettings?.isEnhancedBroadcasting,
+    p.isStreamShiftMode,
+  ]);
 
   const optionalFields = (
     <div key="optional">
@@ -69,7 +75,7 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
             label={$t('Enhanced broadcasting')}
             tooltip={enhancedBroadcastingTooltipText}
             {...bind.isEnhancedBroadcasting}
-            disabled={isDualStream || multiplePlatformEnabled}
+            disabled={isDualStream || multiplePlatformEnabled || p.isStreamShiftMode}
             value={enhancedBroadcastingEnabled}
           />
           <Badge

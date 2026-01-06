@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import styles from './GoLive.m.less';
-import { WindowsService } from 'app-services';
+import { WindowsService } from 'services/windows';
+import { SettingsService } from 'services/settings';
+import { RestreamService } from 'services/restream';
 import { ModalLayout } from '../../shared/ModalLayout';
 import { Button, message } from 'antd';
 import { Services } from '../../service-provider';
@@ -59,8 +61,17 @@ function ModalFooter() {
     isLoading,
     isDualOutputMode,
     isPrime,
+    isStreamShiftMode,
+    hasIncompatibleCodec,
+    streamShiftForceGoLive,
+    checkIsLive,
+    forceStreamShiftGoLive,
+    goLiveWithDefaultCodec,
+    showSettings,
   } = useGoLiveSettings().extend(module => ({
     windowsService: inject(WindowsService),
+    settingsService: inject(SettingsService),
+    restreamService: inject(RestreamService),
 
     close() {
       this.windowsService.actions.closeChildWindow();
@@ -68,6 +79,34 @@ function ModalFooter() {
 
     goBackToSettings() {
       module.prepopulate();
+    },
+
+    get streamShiftForceGoLive() {
+      return this.restreamService.state.streamShiftForceGoLive;
+    },
+
+    async checkIsLive() {
+      return this.restreamService.actions.return.checkIsLive();
+    },
+
+    async forceStreamShiftGoLive() {
+      this.restreamService.actions.forceStreamShiftGoLive(true);
+    },
+
+    get hasIncompatibleCodec() {
+      const codec = this.settingsService.views.values.Output.Encoder;
+      return (
+        codec && ['ffmpeg_aom_av1', 'ffmpeg_svt_av1'].includes(codec) && module.shouldSetupRestream
+      );
+    },
+
+    goLiveWithDefaultCodec() {
+      this.settingsService.actions.setDefaultVideoEncoder();
+      module.goLive();
+    },
+
+    showSettings() {
+      this.settingsService.actions.showSettings('Output');
     },
   }));
 
@@ -77,47 +116,37 @@ function ModalFooter() {
   const shouldShowGoBackButton =
     lifecycle === 'runChecklist' && error && checklist.startVideoTransmission !== 'done';
 
-  async function handleGoLive() {
-    if (isPrime) {
-      try {
-        setIsFetchingStreamStatus(true);
-        const isLive = await Services.RestreamService.actions.return.checkIsLive();
-        setIsFetchingStreamStatus(false);
+  const promptUseDefaultCodec = useCallback(async () => {
+    // If the user is not live but has an incompatible codec, prompt to change codec
+    let message = $t(
+      'AV1 codec is not supported for Multistream. Would you like to proceed with the H.264 codec or select another codec?',
+    );
 
-        // Prompt to confirm stream switch if the stream exists
-        // TODO: unify with start streaming button prompt
-        const { streamShiftForceGoLive } = Services.RestreamService.state;
-        if (isLive && !streamShiftForceGoLive) {
-          let shouldForceGoLive = false;
-
-          await promptAction({
-            title: $t('Another stream detected'),
-            message: $t(
-              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
-            ),
-            btnText: $t('Switch to Streamlabs Desktop'),
-            fn: () => {
-              goLive();
-              close();
-            },
-            cancelBtnText: $t('Cancel'),
-            cancelBtnPosition: 'left',
-            secondaryActionText: $t('Force Start'),
-            secondaryActionFn: async () => {
-              Services.RestreamService.actions.forceStreamShiftGoLive(true);
-              shouldForceGoLive = true;
-            },
-          });
-
-          if (!shouldForceGoLive) return;
-        }
-      } catch (e: unknown) {
-        console.error('Error checking stream switcher status:', e);
-
-        setIsFetchingStreamStatus(false);
-      }
+    if (isStreamShiftMode) {
+      message = $t(
+        'AV1 codec is not supported for Stream Shift. Would you like to proceed with the H.264 codec or select another codec?',
+      );
     }
 
+    if (isDualOutputMode) {
+      message = $t(
+        'AV1 codec is not supported for Dual Output streaming to more than two destinations. Would you like to proceed with the H.264 codec or select another codec?',
+      );
+    }
+
+    await promptAction({
+      title: $t('Incompatible Codec Detected'),
+      message,
+      btnText: $t('Use H.264 Codec'),
+      fn: goLiveWithDefaultCodec,
+      cancelBtnText: $t('Cancel'),
+      cancelBtnPosition: 'left',
+      secondaryActionText: $t('Select Codec'),
+      secondaryActionFn: showSettings,
+    });
+  }, [hasIncompatibleCodec, isStreamShiftMode, isDualOutputMode]);
+
+  const handleGoLive = useCallback(async () => {
     if (isDualOutputMode && !getCanStreamDualOutput()) {
       message.error({
         key: 'dual-output-error',
@@ -135,11 +164,62 @@ function ModalFooter() {
         ),
         onClick: () => message.destroy('dual-output-error'),
       });
+
       return;
     }
 
+    if (isPrime) {
+      try {
+        setIsFetchingStreamStatus(true);
+        const isLive = await checkIsLive();
+        setIsFetchingStreamStatus(false);
+
+        // Prompt to confirm stream switch if the stream exists
+        // TODO: unify with start streaming button prompt
+        if (isLive && !streamShiftForceGoLive) {
+          let shouldForceGoLive = false;
+
+          await promptAction({
+            title: $t('Another stream detected'),
+            message: $t(
+              'A stream on another device has been detected. Would you like to switch your stream to Streamlabs Desktop? If you do not wish to continue this stream, please end it from the current streaming source. If you\'re sure you\'re not live and it has been incorrectly detected, choose "Force Start" below.',
+            ),
+            btnText: $t('Switch to Streamlabs Desktop'),
+            fn: () => {
+              // If the user is live and has an incompatible codec, prompt to change codec
+              // or the stream will not go live
+              if (hasIncompatibleCodec) {
+                promptUseDefaultCodec();
+              } else {
+                goLive();
+                close();
+              }
+            },
+            cancelBtnText: $t('Cancel'),
+            cancelBtnPosition: 'left',
+            secondaryActionText: $t('Force Start'),
+            secondaryActionFn: async () => {
+              forceStreamShiftGoLive();
+              shouldForceGoLive = true;
+            },
+          });
+
+          if (!shouldForceGoLive) return;
+        } else if (!isLive && hasIncompatibleCodec) {
+          console.log('Incompatible codec detected, prompting user to change codec');
+          // If the user is not live but has an incompatible codec, prompt to change codec
+          await promptUseDefaultCodec();
+          return;
+        }
+      } catch (e: unknown) {
+        console.error('Error checking stream switcher status:', e);
+
+        setIsFetchingStreamStatus(false);
+      }
+    }
+
     goLive();
-  }
+  }, [isDualOutputMode, isPrime, streamShiftForceGoLive, hasIncompatibleCodec]);
 
   return (
     <Form layout={'inline'}>
