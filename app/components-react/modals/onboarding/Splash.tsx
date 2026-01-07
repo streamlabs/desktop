@@ -19,6 +19,8 @@ export function Splash(p: IOnboardingStepProps) {
   const { SLIDLogin } = useAuth();
 
   function login() {
+    // To account for backtracking
+    RecordingModeService.actions.setRecordingMode(false);
     OnboardingV2Service.actions.takeStep();
   }
 
