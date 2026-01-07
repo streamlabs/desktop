@@ -35,6 +35,15 @@ interface IOnboardingInitialization {
   isSingleton?: boolean;
 }
 
+type TNavigationModifier =
+  | 'recordingMode'
+  | 'loggedIn'
+  | 'isUltra'
+  | 'obsInstalled'
+  | 'lessThanTwoPlatforms'
+  | 'hasSceneCollections';
+type TModifiers = Record<TNavigationModifier, boolean>;
+
 type TOnboardingNavigationEvent = 'skip' | 'continue' | 'backtrack' | 'completed' | 'closed';
 type TOnboardingInteractionEvent = 'connectPlatform' | 'installTheme' | 'browseThemes';
 
@@ -73,7 +82,7 @@ class OnboardingPath {
 
   // Adds a node to the end of the list
   append(config: IOnboardingStep) {
-    const step = new OnboardingStep(config);
+    const step = new OnboardingStep({ isSkippable: true, isClosable: true, ...config });
     if (!this.head) {
       this.head = step;
       this.current = step;
@@ -86,7 +95,9 @@ class OnboardingPath {
   }
 
   // Returns false if at end of list, marking the end of the flow and no more steps
-  takeNextStep() {
+  takeNextStep(modifiers?: Record<TNavigationModifier, boolean>) {
+    const nextStep = this.determineNextStep(modifiers);
+    if (nextStep) this.append(nextStep);
     if (!this.current.next) return false;
     this.current = this.current.next;
     this.currentIndex += 1;
@@ -96,6 +107,8 @@ class OnboardingPath {
   // Returns false if at beginning of list and cannot go back further
   takePrevStep() {
     if (!this.current.prev) return false;
+    // Backtracking means we don't know what state they'll be in until they take another step
+    this.current.next = null;
     this.current = this.current.prev;
     this.currentIndex -= 1;
     return this.current.config;
@@ -112,6 +125,48 @@ class OnboardingPath {
 
   private getFinalNode(startingNode: OnboardingStep): OnboardingStep {
     return startingNode.next ? this.getFinalNode(startingNode.next) : startingNode;
+  }
+
+  private determineNextStep(
+    modifiers?: Record<TNavigationModifier, boolean>,
+  ): IOnboardingStep | void {
+    const fromCurrentStep = {
+      [EOnboardingSteps.Splash]: () => {
+        if (modifiers.recordingMode) return { name: EOnboardingSteps.RecordingLogin };
+        return { name: EOnboardingSteps.Login };
+      },
+      [EOnboardingSteps.RecordingLogin]: () => {
+        if (modifiers.obsInstalled) return { name: EOnboardingSteps.OBSImport };
+      },
+      // TODO: This is gross since there are 3 optional steps after Login but before Devices
+      // and each one can lead to either of the others in line, there's gotta be a better way
+      [EOnboardingSteps.Login]: () => {
+        if (modifiers.loggedIn && modifiers.lessThanTwoPlatforms) {
+          return { name: EOnboardingSteps.ConnectMore };
+        }
+        if (modifiers.obsInstalled) return { name: EOnboardingSteps.OBSImport };
+        if (modifiers.loggedIn && !modifiers.isUltra) return { name: EOnboardingSteps.Ultra };
+        return { name: EOnboardingSteps.Devices };
+      },
+      [EOnboardingSteps.ConnectMore]: () => {
+        if (modifiers.obsInstalled) return { name: EOnboardingSteps.OBSImport };
+        if (modifiers.loggedIn && !modifiers.isUltra) return { name: EOnboardingSteps.Ultra };
+        return { name: EOnboardingSteps.Devices };
+      },
+      [EOnboardingSteps.OBSImport]: () => {
+        if (modifiers.loggedIn && !modifiers.isUltra) return { name: EOnboardingSteps.Ultra };
+        return { name: EOnboardingSteps.Devices };
+      },
+      [EOnboardingSteps.Ultra]: () => ({ name: EOnboardingSteps.Devices }),
+      [EOnboardingSteps.Devices]: () => {
+        if (modifiers.loggedIn && !modifiers.hasSceneCollections) {
+          return { name: EOnboardingSteps.Themes };
+        }
+      },
+      [EOnboardingSteps.Themes]: () => {},
+    };
+
+    return fromCurrentStep[this.current.config.name]();
   }
 }
 
@@ -182,6 +237,17 @@ export class OnboardingV2Service extends Service {
     return this.state.currentStep.name;
   }
 
+  get modifiers(): TModifiers {
+    return {
+      loggedIn: this.userService.views.isLoggedIn,
+      isUltra: this.userService.views.isPrime,
+      recordingMode: this.recordingModeService.views.isRecordingModeEnabled,
+      obsInstalled: this.obsImporterService.views.isOBSinstalled(),
+      lessThanTwoPlatforms: this.userService.views.linkedPlatforms.length < 2,
+      hasSceneCollections: !!this.hasExistingSceneCollections,
+    };
+  }
+
   showOnboardingIfNecessary() {
     if (Utils.env.SLD_FORCE_ONBOARDING_STEP) this.showOnboarding();
     if (
@@ -195,36 +261,31 @@ export class OnboardingV2Service extends Service {
   }
 
   showOnboarding() {
-    this.initalizeView({ startingStep: { name: EOnboardingSteps.Splash }, isSingleton: false });
+    this.initalizeView({
+      startingStep: { name: EOnboardingSteps.Splash, isSkippable: false, isClosable: false },
+      isSingleton: false,
+    });
   }
 
   showLogin() {
     this.initalizeView({
-      startingStep: { name: EOnboardingSteps.Login, isClosable: true },
+      startingStep: { name: EOnboardingSteps.Login, isSkippable: false },
       isSingleton: true,
     });
   }
 
   showObsImport() {
     this.initalizeView({
-      startingStep: { name: EOnboardingSteps.OBSImport, isClosable: true },
+      startingStep: { name: EOnboardingSteps.OBSImport, isSkippable: false },
       isSingleton: true,
     });
   }
 
   takeStep(skipped?: boolean) {
     this.recordOnboardingNavEvent(skipped ? 'skip' : 'continue');
-    let nextStep = this.path.takeNextStep();
-    // the nextStep will already exist if the user has backtracked
-    if (!nextStep) {
-      // if there is no next step we determine if the path has additional steps
-      this.determineSteps();
-      nextStep = this.path.takeNextStep();
-      if (!nextStep) {
-        // if there are no additional steps we've reached the end of the path
-        this.completeOnboarding();
-      }
-    }
+    const nextStep = this.path.takeNextStep(this.modifiers);
+    // if there are no additional steps we've reached the end of the path
+    if (!nextStep) this.completeOnboarding();
     this.setCurrentStep(nextStep);
     this.setIndex(this.path.index);
   }
@@ -260,61 +321,6 @@ export class OnboardingV2Service extends Service {
     this.setCurrentStep(config.startingStep);
     this.setIndex(0);
     this.setShowOnboarding(true);
-  }
-
-  private determineSteps() {
-    // Singleton paths dont have other steps
-    if (this.singletonPath) return;
-    // User is on the first step
-    if (EOnboardingSteps.Splash === this.currentStepName) {
-      // Entire recording mode path is determined here
-      if (this.recordingModeService.views.isRecordingModeEnabled) {
-        this.path.append({
-          name: EOnboardingSteps.RecordingLogin,
-          isSkippable: true,
-          isClosable: true,
-        });
-        if (this.obsImporterService.views.isOBSinstalled()) {
-          this.path.append({
-            name: EOnboardingSteps.OBSImport,
-            isSkippable: true,
-            isClosable: true,
-          });
-        }
-      } else {
-        // Streaming mode path begins here
-        this.path.append({ name: EOnboardingSteps.Login, isSkippable: true });
-      }
-    }
-    // User has logged into streaming path, where the rest of the steps can be derived
-    if (EOnboardingSteps.Login === this.currentStepName) {
-      if (this.userService.views.isLoggedIn && this.userService.views.linkedPlatforms.length < 2) {
-        this.path.append({
-          name: EOnboardingSteps.ConnectMore,
-          isSkippable: true,
-          isClosable: true,
-        });
-      }
-      if (this.obsImporterService.views.isOBSinstalled()) {
-        this.path.append({
-          name: EOnboardingSteps.OBSImport,
-          isSkippable: true,
-          isClosable: true,
-        });
-      }
-      if (this.userService.views.isLoggedIn && !this.userService.views.isPrime) {
-        this.path.append({ name: EOnboardingSteps.Ultra, isSkippable: true, isClosable: true });
-      }
-      this.path.append({ name: EOnboardingSteps.Devices, isSkippable: true, isClosable: true });
-      if (this.userService.views.isLoggedIn && !this.hasExistingSceneCollections) {
-        this.path.append({ name: EOnboardingSteps.Themes, isSkippable: true, isClosable: true });
-      }
-    }
-
-    // Finally update the path length if necessary
-    if (this.state.pathLength !== this.path.length) {
-      this.setPathLength(this.path.length);
-    }
   }
 
   private completeOnboarding(closedEarly?: boolean) {
