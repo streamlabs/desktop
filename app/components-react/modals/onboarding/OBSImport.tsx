@@ -8,6 +8,7 @@ import { $i } from 'services/utils';
 import { Services } from 'components-react/service-provider';
 import { ListInput } from 'components-react/shared/inputs';
 import AutoProgressBar from 'components-react/shared/AutoProgressBar';
+import Form from 'components-react/shared/inputs/Form';
 
 export function OBSImport(p: IOnboardingStepProps) {
   const { ObsImporterService, OnboardingV2Service } = Services;
@@ -56,7 +57,7 @@ export function OBSImport(p: IOnboardingStepProps) {
         />
       </div>
       {!importing && (
-        <>
+        <Form>
           <ListInput
             options={profiles.map(p => ({ label: p, value: p }))}
             onChange={setSelectedProfile}
@@ -72,7 +73,7 @@ export function OBSImport(p: IOnboardingStepProps) {
           >
             {$t('Start Import')}
           </Button>
-        </>
+        </Form>
       )}
       {importing && (
         <div className={styles.progressBar}>

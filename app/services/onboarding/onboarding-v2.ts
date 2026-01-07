@@ -367,10 +367,6 @@ export class OnboardingV2Service extends Service {
     this.state.db.write(() => (this.state.showOnboarding = val));
   }
 
-  private setPathLength(length: number) {
-    this.state.db.write(() => (this.state.pathLength = length));
-  }
-
   private setIndex(val: number) {
     this.state.db.write(() => (this.state.currentIndex = val));
   }
