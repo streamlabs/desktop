@@ -40,6 +40,7 @@ interface IYoutubeServiceState extends IPlatformState {
   backupStreamSettings?: IBackUpStreamSettings;}
 
 interface IBackUpStreamSettings  {
+      service: string;
       key: string;
       server: string;
       streamType: 'rtmp_common' | 'rtmp_custom' | 'whip_custom';
@@ -551,12 +552,14 @@ export class YoutubeService
     if (!this.state.backupStreamSettings) {
       this.state.backupStreamSettings = {} as IBackUpStreamSettings;
     }
+    this.state.backupStreamSettings.service = currentSettings.service;
     this.state.backupStreamSettings.key = currentSettings.key;
     this.state.backupStreamSettings.server = currentSettings.server;
     this.state.backupStreamSettings.streamType = currentSettings.streamType;
     this.state.backupStreamSettings.context = context ? context : 'horizontal';
 
     if (!this.streamingService.views.isMultiplatformMode) {
+      console.log('MLH in beforeGoLive set with current and adding service name');
       this.streamSettingsService.setSettings(
         {
           platform: 'youtube',
@@ -619,10 +622,10 @@ export class YoutubeService
     this.streamSettingsService.setGoLiveSettings({ customDestinations: destinations });
 
     //MLH restore user's previous settings in case they were overwritten on Go Live
-    console.log('MLH youtube.ts afterStopStream restore previous stream settings: ', this.state.backupStreamSettings);
     this.streamSettingsService.setSettings(
       {
         platform: 'youtube',
+        service: this.state.backupStreamSettings.service,
         key: this.state.backupStreamSettings.key,
         streamType: this.state.backupStreamSettings.streamType,
         server: this.state.backupStreamSettings.server,
