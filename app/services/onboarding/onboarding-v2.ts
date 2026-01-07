@@ -62,6 +62,11 @@ class OnboardingPath {
   private current: OnboardingStep | null = null;
   private size = 0;
   private currentIndex = 0;
+  private singletonPath = false;
+
+  constructor(singletonPath?: boolean) {
+    this.singletonPath = singletonPath;
+  }
 
   // Extracted to getters to prevent external mutation
   get length() {
@@ -127,9 +132,22 @@ class OnboardingPath {
     return startingNode.next ? this.getFinalNode(startingNode.next) : startingNode;
   }
 
+  /**
+   * flows
+   *
+   * Free User
+   * Login Splash -> Login Select -> Connect More Platforms (if <2 platforms) -> OBS Import (if obs installed) -> Ultra Upsell -> Setup Devices -> Themes
+   *
+   * Ultra User
+   * Login Splash -> Login Select -> Connect More Platforms (if <2 platforms) -> OBS Import (if obs installed) -> Setup Devices -> Themes
+   *
+   * Recording Mode
+   * Login Splash -> Recording Mode Login -> OBS Import (if obs installed)
+   */
   private determineNextStep(
     modifiers?: Record<TNavigationModifier, boolean>,
   ): IOnboardingStep | void {
+    if (this.singletonPath) return;
     const fromCurrentStep = {
       [EOnboardingSteps.Splash]: () => {
         if (modifiers.recordingMode) return { name: EOnboardingSteps.RecordingLogin };
@@ -216,18 +234,6 @@ export class OnboardingV2Service extends Service {
   @Inject() private windowsService: WindowsService;
 
   state = OnboardingServiceState.inject();
-  /**
-   * flows
-   *
-   * Free User
-   * Login Splash -> Login Select -> Connect More Platforms (if <2 platforms) -> OBS Import (if obs installed) -> Ultra Upsell -> Setup Devices -> Themes
-   *
-   * Ultra User
-   * Login Splash -> Login Select -> Connect More Platforms (if <2 platforms) -> OBS Import (if obs installed) -> Setup Devices -> Themes
-   *
-   * Recording Mode
-   * Login Splash -> Recording Mode Login -> OBS Import (if obs installed)
-   */
 
   path: OnboardingPath = null;
   singletonPath = false;
@@ -316,7 +322,7 @@ export class OnboardingV2Service extends Service {
   private initalizeView(config: IOnboardingInitialization) {
     this.windowsService.updateStyleBlockers('main', true);
     this.singletonPath = config.isSingleton;
-    this.path = new OnboardingPath();
+    this.path = new OnboardingPath(config.isSingleton);
     this.path.append(config.startingStep);
     this.setCurrentStep(config.startingStep);
     this.setIndex(0);
