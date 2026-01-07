@@ -48,9 +48,9 @@ export default function Onboarding() {
     OnboardingV2Service.actions.closeOnboarding();
   }
 
-  function takeStep() {
+  function takeStep(skipped?: boolean) {
     if (processing) return;
-    OnboardingV2Service.actions.takeStep();
+    OnboardingV2Service.actions.takeStep(skipped);
   }
 
   function stepBack() {
@@ -81,12 +81,12 @@ export default function Onboarding() {
             </Button>
           )}
           {currentStep.isSkippable && (
-            <Button type="link" style={{ marginLeft: 'auto' }} onClick={takeStep}>
+            <Button type="link" style={{ marginLeft: 'auto' }} onClick={() => takeStep(true)}>
               {$t('Skip')}
             </Button>
           )}
           {!NO_BUTTON_STEPS.has(currentStep.name) && (
-            <Button type="primary" onClick={takeStep}>
+            <Button type="primary" onClick={() => takeStep()}>
               {$t('Continue')}
             </Button>
           )}
