@@ -112,9 +112,9 @@ class OnboardingPath {
   // Returns false if at beginning of list and cannot go back further
   takePrevStep() {
     if (!this.current.prev) return false;
+    this.current = this.current.prev;
     // Backtracking means we don't know what state they'll be in until they take another step
     this.current.next = null;
-    this.current = this.current.prev;
     this.currentIndex -= 1;
     return this.current.config;
   }
