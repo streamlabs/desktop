@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { Button, Modal } from 'antd';
 import * as remote from '@electron/remote';
 import * as steps from './steps';
@@ -31,13 +31,22 @@ const STEPS_MAP = {
 };
 
 export default function Onboarding() {
-  const { OnboardingV2Service } = Services;
+  const { OnboardingV2Service, RecordingModeService } = Services;
 
   const [processing, setProcessing] = useState(false);
 
   const currentStep = useRealmObject(OnboardingV2Service.state).currentStep;
   const currentIndex = useRealmObject(OnboardingV2Service.state).currentIndex;
   const showOnboarding = useRealmObject(OnboardingV2Service.state).showOnboarding;
+
+  const continueFuncs: PartialRec<EOnboardingSteps, () => void> = useMemo(
+    () => ({
+      [EOnboardingSteps.Devices]: () => {
+        RecordingModeService.actions.addRecordingWebcam();
+      },
+    }),
+    [],
+  );
 
   useEffect(() => {
     OnboardingV2Service.actions.showOnboarding();
@@ -46,6 +55,13 @@ export default function Onboarding() {
   function closeModal() {
     if (processing) return;
     OnboardingV2Service.actions.closeOnboarding();
+  }
+
+  function cont() {
+    if (continueFuncs[currentStep.name]) {
+      continueFuncs[currentStep.name]!();
+    }
+    takeStep();
   }
 
   function takeStep(skipped?: boolean) {
@@ -86,7 +102,7 @@ export default function Onboarding() {
             </Button>
           )}
           {!NO_BUTTON_STEPS.has(currentStep.name) && (
-            <Button type="primary" onClick={() => takeStep()}>
+            <Button type="primary" onClick={cont}>
               {$t('Continue')}
             </Button>
           )}
