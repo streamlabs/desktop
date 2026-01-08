@@ -3,7 +3,7 @@ import { Button } from 'antd';
 import { $t } from 'services/i18n';
 import { SwitchInput } from 'components-react/shared/inputs';
 import css from './ReactiveWidgetGameSettings.m.less';
-import { IReactiveGroupOption } from './ReactiveWidget.helpers';
+import { IReactiveGroupOption } from './ReactiveWidget.types';
 
 interface ReactiveWidgetGameSettingsProps {
   scopes: IReactiveGroupOption[] | null | undefined;

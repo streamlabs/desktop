@@ -4,7 +4,8 @@ import { PlusOutlined, SettingOutlined, CaretRightOutlined } from '@ant-design/i
 import { CheckboxInput } from 'components-react/shared/inputs';
 import { $t } from 'services/i18n';
 import css from './ReactiveWidgetMenu.m.less';
-import { ReactiveTabUtils, ReactiveTriggerGroup, ReactiveTrigger } from './ReactiveWidget.helpers';
+import { ReactiveTabUtils } from './ReactiveWidget.helpers';
+import { ReactiveTrigger } from './ReactiveWidget.types';
 
 function GameIcon() {
   return <i className={`icon-console ant-menu-item-icon ${css.gameIcon}`} />;

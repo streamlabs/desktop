@@ -1,165 +1,4 @@
-import cloneDeep from 'lodash/cloneDeep';
-
-export type ReactiveLayout = 'above' | 'banner' | 'side';
-export type ReactiveStreakPeriod = 'session' | 'today' | 'round';
-export type ReactiveTriggerType = 'streak' | 'achievement' | 'level' | 'total';
-export type ReactiveEventPeriod = 'round' | 'today' | null;
-
-export interface ReactiveMediaSettings {
-  image_href: string;
-  sound_href: string;
-  sound_volume: number;
-  show_animation: string;
-  hide_animation: string;
-}
-
-export interface ReactiveTextSettings {
-  message_template: string;
-  font: string;
-  font_size: number;
-  font_color: string;
-  font_color2: string;
-  font_weight: number;
-  text_delay_ms: number;
-  text_animation: string;
-}
-
-export interface ReactiveTtsSettings {
-  enabled: boolean;
-  language: string;
-  security: number;
-  repetition_block_length: number;
-  volume: number;
-  include_message_template: boolean;
-}
-
-export interface ReactiveBaseTrigger {
-  id: string;
-  enabled: boolean;
-  name: string;
-  game_event: string;
-  layout: ReactiveLayout;
-  alert_duration_ms: number;
-  media_settings: ReactiveMediaSettings;
-  text_settings: ReactiveTextSettings;
-  tts_settings: ReactiveTtsSettings;
-  event_period: ReactiveEventPeriod;
-}
-
-export interface ReactiveStreakTrigger extends ReactiveBaseTrigger {
-  event_type: 'streak';
-  streak_period: ReactiveStreakPeriod;
-  amount_minimum: number;
-  amount_maximum?: number | null;
-}
-
-export interface ReactiveAchievementTrigger extends ReactiveBaseTrigger {
-  event_type: 'achievement';
-  amount_minimum: number | null;
-  amount_maximum: number | null;
-}
-
-export interface ReactiveLevelTrigger extends ReactiveBaseTrigger {
-  event_type: 'level';
-  amount_minimum?: number | null;
-  amount_maximum?: number | null;
-}
-
-export interface ReactiveTotalTrigger extends ReactiveBaseTrigger {
-  event_type: 'total';
-  amount_minimum: number;
-  amount_maximum?: number | null;
-}
-
-export type ReactiveTrigger = 
-  | ReactiveStreakTrigger 
-  | ReactiveAchievementTrigger 
-  | ReactiveLevelTrigger
-  | ReactiveTotalTrigger;
-
-export interface ReactiveTriggerGroup {
-  enabled: boolean;
-  triggers: ReactiveTrigger[];
-}
-
-export interface ReactiveGameSettingsUI extends ReactiveTriggerGroup {
-  gameId: string;
-}
-
-export type ReactiveGamesMap = Record<string, ReactiveTriggerGroup | null | undefined>;
-
-export interface ReactiveWidgetSettings {
-  background_color: string;
-  interrupt_mode: boolean;
-  is_muted: boolean;
-  global: ReactiveTriggerGroup;
-  games: ReactiveGamesMap;
-}
-
-export interface IReactiveGroupOption {
-  id: string;
-  name: string;
-  enabled: boolean;
-}
-
-export interface ReactiveWidgetOptions {
-  games: Record<string, ReactiveGameMeta>;
-  game_events: Record<string, ReactiveEventMeta>;
-  global_events: Record<string, string>;
-  streak_time_periods: Record<string, string>;
-  available_game_events: Record<string, string[]>;
-  event_time_periods: Record<string, string>;
-}
-
-export interface AnimationListItem {
-  key: string;
-  value: string;
-}
-
-export interface AnimationGroup {
-  group: string;
-  list: AnimationListItem[];
-}
-
-export interface ReactiveWidgetAnimations {
-  text_animations: AnimationGroup;
-  show_animations: AnimationGroup;
-  hide_animations: AnimationGroup;
-}
-
-export interface ReactiveStaticData {
-  widget_type: string;
-  title: string;
-  options: ReactiveWidgetOptions;
-  animations: ReactiveWidgetAnimations;
-}
-
-export interface ReactiveStaticConfig {
-  success: boolean;
-  message: string;
-  data: ReactiveStaticData;
-}
-
-export interface ReactiveGameMeta {
-  title: string;
-  camel: string;
-}
-
-export interface ReactiveEventMeta {
-  title: string;
-  trigger_types: ReactiveTriggerType[];
-}
-
-export interface SelectOption {
-  label: string;
-  value: string;
-}
-
-export interface AnimationOptionConfig {
-  key: string;
-  value: string;
-  list?: AnimationOptionConfig[];
-}
+import { AnimationOptionConfig, ActiveTabContext, SelectOption, TabKind, ReactiveTrigger, ReactiveTriggerType, ReactiveEventPeriod } from './ReactiveWidget.types';
 
 const DEFAULT_TRIGGER_SETTINGS = {
   media_settings: {
@@ -210,22 +49,7 @@ export function flattenAnimationOptions(
   });
 }
 
-// ============================================================================
-// TAB CONSTANTS & UTILS
-// ============================================================================
 
-export enum TabKind {
-  AddTrigger = 'add-trigger',
-  General = 'general',
-  GameManage = 'game-manage-trigger',
-  TriggerDetail = 'trigger-detail',
-}
-
-export interface ActiveTabContext {
-  kind: TabKind;
-  gameId?: string;
-  triggerId?: string;
-}
 
 /**
  * Centralized util for managing the "Tab ID" strings used in the Reactive Widget.
@@ -298,76 +122,41 @@ export function defaultEventPeriod(triggerType: ReactiveTriggerType): ReactiveEv
 
 /** default trigger settings, used as a template for new triggers */
 export function generateTriggerSettings(event_type: ReactiveTriggerType): ReactiveTrigger {
-  const commonSettings = {
-    media_settings: {
-      image_href: 'https://cdn.streamlabs.com/library/giflibrary/jumpy-kevin.webm',
-      sound_href: 'https://cdn.streamlabs.com/static/sounds/bits.ogg',
-      sound_volume: 50,
-      show_animation: 'fadeIn',
-      hide_animation: 'fadeOut',
-    },
-    text_settings: {
-      font: 'Open Sans',
-      font_color: '#FFFFFF',
-      font_color2: '#80F5D2',
-      font_size: 24,
-      font_weight: 400,
-      message_template: '{number} kill streak!',
-      text_animation: 'bounce',
-      text_delay_ms: 0,
-    },
-    tts_settings: {
-      enabled: false,
-      include_message_template: true,
-      language: 'Salli',
-      repetition_block_length: 1,
-      security: 0,
-      volume: 50,
-    },
-    alert_duration_ms: 5000,
-    enabled: true,
-    game_event: 'kill',
-    id: '',
-    name: '',
-    layout: 'above' as const,
-  };
+  switch (event_type) {
+    case 'streak':
+      return {
+        ...DEFAULT_TRIGGER_SETTINGS,
+        event_type,
+        amount_minimum: 1,
+        amount_maximum: null,
+        streak_period: 'session',
+        event_period: 'round',
+      };
 
+    case 'total':
+      return {
+        ...DEFAULT_TRIGGER_SETTINGS,
+        event_type,
+        amount_minimum: 1,
+        amount_maximum: null,
+        event_period: 'today',
+      };
 
-  if (event_type === 'streak') {
-    return {
-      ...commonSettings,
-      event_type: 'streak',
-      amount_minimum: 1,
-      amount_maximum: null,
-      streak_period: 'session',
-      event_period: 'round',
-    };
+    case 'achievement':
+      return {
+        ...DEFAULT_TRIGGER_SETTINGS,
+        event_type,
+        amount_minimum: null,
+        amount_maximum: null,
+        event_period: null,
+      };
+
+    default:
+      return {
+        ...DEFAULT_TRIGGER_SETTINGS,
+        event_type,
+      } as ReactiveTrigger;
   }
-
-  if (event_type === 'total') {
-    return {
-      ...commonSettings,
-      amount_minimum: 1,
-      amount_maximum: null,
-      event_type,
-      event_period: 'today',
-    }
-  }
-
-  if (event_type === 'achievement') {
-    return {
-      ...commonSettings,
-      event_type: 'achievement',
-      amount_minimum: null,
-      amount_maximum: null,
-      event_period: null,
-    };
-  }
-
-  return {
-    event_type,
-    ...commonSettings,
-  } as ReactiveTrigger;
 }
 
 export function buildNewTrigger(params: {
@@ -395,12 +184,11 @@ export function buildNewTrigger(params: {
 }
 
 export function sanitizeTrigger(raw: ReactiveTrigger): ReactiveTrigger {
-  const trigger = cloneDeep(raw) as any; // use 'any' to allow deletion of properties
+  const trigger = structuredClone(raw) as any; // use 'any' to allow deletion of properties
 
   if (trigger.event_type !== 'streak') {
     // the server might send them anyway, so we yeet them just in case.
     delete trigger.streak_period;
-    // TODO: $chris: remove amount min/max? see if they cause issues with other event
     delete trigger.amount_minimum;
     delete trigger.amount_maximum;
   }

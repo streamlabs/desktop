@@ -7,7 +7,7 @@ import {
   ReactiveTrigger,
   SelectOption,
   ReactiveEventMeta,
-} from './ReactiveWidget.helpers';
+} from './ReactiveWidget.types';
 import css from './ReactiveWidgetCreateTriggerForm.m.less';
 
 interface TriggerFormProps {

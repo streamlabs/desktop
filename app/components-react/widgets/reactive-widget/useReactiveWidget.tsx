@@ -1,24 +1,23 @@
-import { IWidgetCommonState, useWidget, WidgetModule } from '../common/useWidget';
+import { useWidget, WidgetModule } from '../common/useWidget';
+import {
+  ReactiveTabUtils,
+  buildNewTrigger,
+} from './ReactiveWidget.helpers';
+
 import {
   ReactiveWidgetSettings,
   ReactiveTrigger,
   IReactiveGroupOption,
   TabKind,
   ActiveTabContext,
-  ReactiveTabUtils,
-  buildNewTrigger,
   ReactiveTriggerType,
-  ReactiveGameSettingsUI,
   ReactiveStaticConfig,
   ReactiveGameMeta,
   ReactiveEventMeta,
   ReactiveTriggerGroup,
-} from './ReactiveWidget.helpers';
+  IReactiveWidgetState,
+} from './ReactiveWidget.types';
 
-interface IReactiveWidgetState extends IWidgetCommonState {
-  data: { settings: ReactiveWidgetSettings };
-  staticConfig: ReactiveStaticConfig;
-}
 
 /**
  * Reactive widget module for Game Pulse triggers.
@@ -411,7 +410,6 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
    * @param name        Display name for the trigger (already made unique per game by the form).
    * @param triggerType The trigger type (e.g. `'streak'`, `'achievement'`, `'level'`).
    */
-  // TODO:$chris: add typing for params
   public async createTrigger({
     eventType,
     game,

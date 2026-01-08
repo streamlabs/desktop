@@ -1,5 +1,4 @@
 import React, { useMemo, useCallback } from 'react';
-import cloneDeep from 'lodash/cloneDeep';
 import set from 'lodash/set';
 import get from 'lodash/get';
 
@@ -19,7 +18,7 @@ import { Collapse } from 'antd';
 import { $t } from 'services/i18n';
 import { LayoutInput } from '../common/LayoutInput';
 import css from './ReactiveWidgetTriggerDetails.m.less';
-import { AnimationOptionConfig, ReactiveStaticConfig, ReactiveTrigger, SelectOption } from './ReactiveWidget.helpers';
+import { AnimationOptionConfig, ReactiveStaticConfig, ReactiveTrigger, SelectOption } from './ReactiveWidget.types';
 
 interface ReactiveWidgetTriggerDetailsProps {
   trigger: ReactiveTrigger;
@@ -29,7 +28,7 @@ interface ReactiveWidgetTriggerDetailsProps {
 type LevelRangeType = 'minimum' | 'maximum' | 'between';
 
 /**
- * Custom hook to handle deep object binding.
+ * hook to handle deep object binding.
  */
 function useTriggerBinding(
   trigger: ReactiveTrigger,
@@ -40,7 +39,7 @@ function useTriggerBinding(
       value: get(trigger, path) ?? defaultValue,
       onChange: (nextVal: any) => {
         if (!onUpdate) return;
-        const updated = cloneDeep(trigger);
+        const updated = structuredClone(trigger);
         set(updated, path, nextVal);
         onUpdate(updated);
       },
@@ -149,7 +148,7 @@ export function ReactiveWidgetTriggerDetails({
   const handleLevelRangeChange = useCallback(
     (newType: LevelRangeType) => {
       if (!onUpdate) return;
-      const updated = cloneDeep(trigger);
+      const updated = structuredClone(trigger);
       applyLevelRangeType(updated, newType);
       onUpdate(updated);
     },
@@ -160,13 +159,6 @@ export function ReactiveWidgetTriggerDetails({
   const messageTemplateTooltip = $t(
     'When a trigger fires, this will be the format of the message. Available tokens: number',
   );
-
-  console.log({
-    isTotal,
-    isStreak,
-    isLevel,
-    eventType,
-  })
 
   return (
     <div>
