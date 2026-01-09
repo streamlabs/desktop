@@ -23,6 +23,7 @@ export enum EAvailableFeatures {
   dualOutputRecording = 'slobs--dual-output-recording',
   streamShift = 'slobs--stream-shift',
   twitchDualStream = 'slobs--twitch-dual-stream',
+  twitchDualStreamPreview = 'slobs--twitch-dual-stream-preview',
 
   /**
    * There are two flags because one is used for beta access and

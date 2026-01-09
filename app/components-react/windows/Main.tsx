@@ -9,7 +9,7 @@ import * as appPages from 'components-react/pages';
 import TitleBar from 'components-react/shared/TitleBar';
 import ModalWrapper from 'components-react/shared/modals/ModalWrapper';
 import { Services } from 'components-react/service-provider';
-import { WindowsService as WindowsServiceClass } from 'app-services';
+import { VisionService, WindowsService as WindowsServiceClass } from 'app-services';
 import SideNav from 'components-react/sidebar/SideNav';
 import LiveDock from 'components-react/root/LiveDock';
 import StudioFooter from 'components-react/root/StudioFooter';

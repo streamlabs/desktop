@@ -209,7 +209,7 @@ export class TikTokService
 
     if (settings && !settings.is_live) {
       console.error('Stream Shift Error: TikTok is not live');
-      this.postError('Stream Shift Error: TikTok is not live');
+      this.postNotification('Stream Shift Error: TikTok is not live');
       return;
     }
 
@@ -325,11 +325,14 @@ export class TikTokService
     try {
       return await platformAuthorizedRequest<T>('tiktok', reqInfo);
     } catch (e: unknown) {
-      const code = (e as any).result?.error?.code;
+      console.error(`Failed ${this.displayName} API Request:`, reqInfo);
+
+      const error = e as any;
+      const code = error.result?.error?.code;
 
       if (
-        (e as any)?.status === 405 ||
-        (e as any)?.status === 401 ||
+        error?.status === 405 ||
+        error?.status === 401 ||
         !code ||
         code === ETikTokErrorTypes.ACCESS_TOKEN_INVALID
       ) {
@@ -373,15 +376,15 @@ export class TikTokService
         }),
       );
 
-      const details = (e as any).result?.error
-        ? `${(e as any).result.error.type} ${(e as any).result.error.message}`
+      const details = error.result?.error
+        ? `${error.result.error.type} ${error.result.error.message}`
         : 'Connection failed';
 
       if (notApproved) {
         this.SET_LIVE_SCOPE('relog');
       } else if (hasStream) {
         // show error stream exists
-        throwStreamError('TIKTOK_STREAM_ACTIVE', { ...(e as any), platform: 'tiktok' }, details);
+        throwStreamError('TIKTOK_STREAM_ACTIVE', { ...error, platform: 'tiktok' }, details);
       }
 
       return Promise.reject(e);
@@ -417,6 +420,8 @@ export class TikTokService
 
     return jfetch<ITikTokStartStreamResponse>(request).catch((e: unknown) => {
       if (e instanceof StreamError) {
+        console.error(`Failed ${this.displayName} API Request:`, { ...opts, url });
+
         throwStreamError('TIKTOK_GENERATE_CREDENTIALS_FAILED', {
           ...(e as any),
           platform: 'tiktok',
@@ -640,11 +645,11 @@ export class TikTokService
    * @remark This is a temporary solution until we can show replays in the app
    */
   showReplaysNotification() {
-    this.notificationsService.actions.push({
-      type: ENotificationType.SUCCESS,
-      message: $t('Click to view TikTok Replay in your browser.'),
-      action: this.jsonrpcService.createRequest(Service.getResourceId(this), 'openReplaysLink'),
-    });
+    this.postNotification(
+      $t('Click to view TikTok Replay in your browser.'),
+      ENotificationType.SUCCESS,
+      this.jsonrpcService.createRequest(Service.getResourceId(this), 'openReplaysLink'),
+    );
   }
 
   openReplaysLink() {
@@ -758,15 +763,11 @@ export class TikTokService
       ? $t('You may be eligible for TikTok Live Access. Apply here.')
       : $t('Reapply for TikTok Live Permission. Reapply here.');
 
-    this.notificationsService.actions.push({
-      type: ENotificationType.SUCCESS,
-      lifeTime: 10000,
+    this.postNotification(
       message,
-      action: this.jsonrpcService.createRequest(
-        Service.getResourceId(this),
-        'pushApplyNotification',
-      ),
-    });
+      ENotificationType.SUCCESS,
+      this.jsonrpcService.createRequest(Service.getResourceId(this), 'pushApplyNotification'),
+    );
   }
 
   pushApplyNotification() {
