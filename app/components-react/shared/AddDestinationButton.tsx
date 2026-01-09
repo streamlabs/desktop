@@ -13,7 +13,7 @@ import { useRealmObject } from 'components-react/hooks/realm';
 
 const PlusIcon = PlusOutlined as Function;
 interface IAddDestinationButtonProps {
-  type?: 'default' | 'ultra' | 'banner' | 'small';
+  type?: 'default' | 'ultra' | 'small' | 'banner' | 'header';
   text?: string;
   className?: string;
   style?: CSSProperties;
@@ -57,6 +57,7 @@ export default function AddDestinationButton(p: IAddDestinationButtonProps) {
         [styles.ultraBtnGroup]: type === 'ultra',
         [styles.infoBannerGroup]: type === 'banner',
         [styles.smallBtnGroup]: type === 'small',
+        [styles.headerBtnGroup]: type === 'header',
       })}
       align="center"
       direction="vertical"
@@ -87,6 +88,10 @@ export default function AddDestinationButton(p: IAddDestinationButtonProps) {
 
       {type === 'banner' && (
         <AddDestinationBanner className={p?.className} onClick={p?.onClick ?? addDestination} />
+      )}
+
+      {type === 'header' && (
+        <AddDestinationHeader className={p?.className} onClick={p?.onClick ?? addDestination} />
       )}
     </ButtonGroup>
   );
@@ -155,12 +160,42 @@ function AddDestinationBanner(p: { className?: string; onClick: () => void }) {
 
   return (
     <ButtonHighlighted
+      data-name="banner-add-destination"
       faded
       className={cx(styles.infoBanner, { [styles.night]: isDarkTheme }, p?.className)}
       onClick={p.onClick}
     >
       <UltraIcon type="badge" className={styles.ultraIcon} />
-      <div className={styles.bannerText}>{text}</div>
+      <div className={styles.ultraText}>{text}</div>
+    </ButtonHighlighted>
+  );
+}
+
+function AddDestinationHeader(p: { className?: string; onClick: () => void }) {
+  const isDarkTheme = useRealmObject(Services.CustomizationService.state).isDarkTheme;
+
+  const text = $t(
+    'Grow your audience faster with unlimited Multistream. Our servers do the work so your PC can stream smoothly.',
+  );
+
+  return (
+    <ButtonHighlighted
+      data-name="header-add-destination"
+      faded
+      noMargin
+      className={cx(styles.addDestinationHeader, { [styles.night]: isDarkTheme }, p?.className)}
+      onClick={p.onClick}
+    >
+      <UltraIcon type="badge" className={styles.ultraIconLg} />
+      <div className={styles.ultraWrapper}>
+        <div className={styles.ultraText}>{text}</div>
+        <div className={styles.ultraPrompt}>
+          {$t('Upgrade')}
+          <div className={styles.ultraArrow}>
+            <i className="icon-back-alt" />
+          </div>
+        </div>
+      </div>
     </ButtonHighlighted>
   );
 }

@@ -65,29 +65,103 @@ button.info-banner {
   border-radius: 6px;
   border-width: 1px;
 
-  .banner-text {
-    font-size: 13px;
-    font-weight: 400;
-    width: 90%;
-    text-align: left;
-    margin-left: 8px;
-    white-space: normal;
-    background-image: linear-gradient(
-      123.53deg,
-      #2de8b0 0%,
-      #cbe953 48.8%,
-      #ffab48 75.86%,
-      #ff5151 100%
-    );
-    background-clip: text;
-    color: transparent;
-  }
-
   .ultra-icon {
     margin-top: 4px;
     height: 12px;
     width: 12px;
   }
+}
+
+.headerBtnGroup {
+  padding: 0px;
+  margin: 0px 0px 10px 0px;
+}
+
+button.add-destination-header {
+  height: unset;
+  padding: 10px !important;
+
+  &::after {
+    margin: 0px;
+  }
+
+  &:hover {
+    border: 1px solid transparent;
+  }
+
+  .ultra-icon-lg {
+    height: 50px;
+    width: 50px;
+    margin-right: 5px;
+  }
+}
+
+.ultra-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.ultra-text-styling {
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  margin-left: 8px;
+  white-space: normal;
+  background: linear-gradient(
+    123.53deg,
+    #2de8b0 29.56%,
+    #cbe953 60.27%,
+    #ffab48 96.52%,
+    #ff5151 100%
+  );
+
+  background-clip: text;
+  color: transparent;
+}
+
+.ultra-text:extend(.ultra-text-styling) {
+  flex: 1;
+  width: 100%;
+}
+
+.ultra-prompt:extend(.ultra-text-styling) {
+  flex: 0;
+  text-align: right;
+  font-size: 17px;
+  font-weight: 600;
+  display: flex;
+  margin-right: 12px;
+  margin-left: 23px;
+  background: linear-gradient(
+    123.53deg,
+    #2de8b0 25.56%,
+    #cbe953 60.27%,
+    #ffab48 79.52%,
+    #ff5151 96.69%
+  );
+
+  background-clip: text;
+  color: transparent;
+}
+
+.ultra-arrow:extend(.ultra-text-styling) {
+  transform: scaleX(-1);
+  -moz-transform: scaleX(-1);
+  -webkit-transform: scaleX(-1);
+  -ms-transform: scaleX(-1);
+  font-size: 20px;
+  margin-left: 5px;
+  background: linear-gradient(
+    123.53deg,
+    #2de8b0 25.56%,
+    #cbe953 60.27%,
+    #ffab48 79.52%,
+    #ff5151 96.69%
+  );
+
+  background-clip: text;
+  color: transparent;
 }
 
 .default-output-btn:extend(button.add-destination-btn) {
