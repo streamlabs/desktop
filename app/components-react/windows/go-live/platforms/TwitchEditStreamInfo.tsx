@@ -22,10 +22,6 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
     p.onChange({ ...twSettings, ...patch });
   }
 
-  const isDualStream = useMemo(() => {
-    return twSettings?.display === 'both' && p.isDualOutputMode;
-  }, [p.isDualOutputMode, twSettings?.display]);
-
   const bind = createBinding(twSettings, updatedSettings => updateSettings(updatedSettings));
 
   const optionalFields = (
@@ -38,10 +34,50 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
       >
         <CheckboxInput label={$t('Stream features branded content')} {...bind.isBrandedContent} />
       </InputWrapper>
+    </div>
+  );
+
+  return (
+    <Form name="twitch-settings">
+      <PlatformSettingsLayout
+        layoutMode={p.layoutMode}
+        commonFields={
+          <CommonPlatformFields
+            key="common"
+            platform="twitch"
+            layoutMode={p.layoutMode}
+            value={twSettings}
+            onChange={updateSettings}
+            layout={p.layout}
+          />
+        }
+        requiredFields={<TwitchRequiredFields {...p} />}
+        optionalFields={optionalFields}
+      />
+    </Form>
+  );
+}
+
+function TwitchRequiredFields(p: IPlatformComponentParams<'twitch'>) {
+  const twSettings = p.value;
+  const bind = createBinding(p.value, updatedSettings =>
+    p.onChange({ ...p.value, ...updatedSettings }),
+  );
+
+  const isDualStream = useMemo(() => {
+    return twSettings?.display === 'both' && p.isDualOutputMode;
+  }, [p.isDualOutputMode, twSettings?.display]);
+
+  return (
+    <React.Fragment key="required-fields">
+      <GameSelector key="required" platform={'twitch'} {...bind.game} layout={p.layout} />
+      {p.isAiHighlighterEnabled && (
+        <AiHighlighterToggle key="ai-toggle" game={bind.game?.value} cardIsExpanded={false} />
+      )}
       {process.platform !== 'darwin' && (
         <InputWrapper
           layout={p.layout}
-          className={cx(styles.twitchCheckbox, { [styles.hideLabel]: p.layout === 'vertical' })}
+          className={cx({ [styles.hideLabel]: p.layout === 'vertical' })}
         >
           <CheckboxInput
             style={{ display: 'inline-block' }}
@@ -60,33 +96,6 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
           />
         </InputWrapper>
       )}
-    </div>
-  );
-
-  return (
-    <Form name="twitch-settings">
-      <PlatformSettingsLayout
-        layoutMode={p.layoutMode}
-        commonFields={
-          <CommonPlatformFields
-            key="common"
-            platform="twitch"
-            layoutMode={p.layoutMode}
-            value={twSettings}
-            onChange={updateSettings}
-            layout={p.layout}
-          />
-        }
-        requiredFields={
-          <React.Fragment key="required-fields">
-            <GameSelector key="required" platform={'twitch'} {...bind.game} layout={p.layout} />
-            {p.isAiHighlighterEnabled && (
-              <AiHighlighterToggle key="ai-toggle" game={bind.game?.value} cardIsExpanded={false} />
-            )}
-          </React.Fragment>
-        }
-        optionalFields={optionalFields}
-      />
-    </Form>
+    </React.Fragment>
   );
 }
