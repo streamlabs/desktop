@@ -43,7 +43,7 @@ interface IBackUpStreamSettings  {
       service: string;
       key: string;
       server: string;
-      streamType: 'rtmp_common' | 'rtmp_custom' | 'whip_custom';
+      streamType: 'rtmp_common' | 'rtmp_custom';
       context: TDisplayType;
   }
 
