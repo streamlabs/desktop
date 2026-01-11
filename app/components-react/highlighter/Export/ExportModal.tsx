@@ -4,6 +4,7 @@ import {
   TFPS,
   TResolution,
   TPreset,
+  ISubtitleStyle,
 } from 'services/highlighter/models/rendering.models';
 import { Services } from 'components-react/service-provider';
 import { FileInput, TextInput, ListInput } from 'components-react/shared/inputs';
@@ -25,15 +26,53 @@ import { getCombinedClipsDuration } from '../utils';
 import { formatSecondsToHMS } from '../ClipPreview';
 import PlatformSelect from './Platform';
 import cx from 'classnames';
+import { SubtitleStyles } from 'services/highlighter/subtitles/subtitle-styles';
+import Utils from 'services/utils';
+import { isDeepEqual } from 'slap';
 import { getVideoResolution } from 'services/highlighter/cut-highlight-clips';
 
 type TSetting = { name: string; fps: TFPS; resolution: TResolution; preset: TPreset };
+
+interface ISubtitleItem {
+  name: string;
+  enabled: boolean;
+  style?: ISubtitleStyle;
+}
 const settings: TSetting[] = [
   { name: 'Standard', fps: 30, resolution: 1080, preset: 'medium' },
   { name: 'Best', fps: 60, resolution: 1080, preset: 'slow' },
   { name: 'Fast', fps: 30, resolution: 720, preset: 'fast' },
   { name: 'Custom', fps: 30, resolution: 720, preset: 'medium' },
 ];
+
+const subtitleItems: ISubtitleItem[] = [
+  {
+    name: 'No subtitles',
+    enabled: false,
+    style: undefined,
+  },
+  {
+    name: 'Basic',
+    enabled: true,
+    style: SubtitleStyles.basic,
+  },
+  {
+    name: 'Thick',
+    enabled: true,
+    style: SubtitleStyles.thick,
+  },
+  {
+    name: 'FlashyA',
+    enabled: true,
+    style: SubtitleStyles.flashyA,
+  },
+  {
+    name: 'FlashyB',
+    enabled: true,
+    style: SubtitleStyles.yellow,
+  },
+];
+
 class ExportController {
   get service() {
     return Services.HighlighterService;
@@ -86,6 +125,14 @@ class ExportController {
     this.service.actions.setPreset(value as TPreset);
   }
 
+  setSubtitles(subtitleItem: ISubtitleItem) {
+    this.service.actions.setSubtitleStyle(subtitleItem.style);
+  }
+
+  getSubtitleStyle() {
+    return this.service.views.exportInfo.subtitleStyle;
+  }
+
   setExport(exportFile: string) {
     this.service.actions.setExportFile(exportFile);
   }
@@ -107,6 +154,9 @@ class ExportController {
 
   async fileExists(exportFile: string) {
     return await fileExists(exportFile);
+  }
+  isHighlighterAfterVersion(version: string) {
+    return this.service.isHighlighterVersionAfter(version);
   }
 }
 
@@ -145,6 +195,7 @@ function ExportModal({ close, streamId }: { close: () => void; streamId: string 
     return (
       <ExportFlow
         isExporting={exportInfo.exporting}
+        isTranscribing={exportInfo.transcriptionInProgress}
         close={close}
         streamId={streamId}
         videoName={videoName}
@@ -158,12 +209,14 @@ function ExportModal({ close, streamId }: { close: () => void; streamId: string 
 function ExportFlow({
   close,
   isExporting,
+  isTranscribing,
   streamId,
   videoName,
   onVideoNameChange,
 }: {
   close: () => void;
   isExporting: boolean;
+  isTranscribing: boolean;
   streamId: string | undefined;
   videoName: string;
   onVideoNameChange: (name: string) => void;
@@ -176,12 +229,15 @@ function ExportFlow({
     setResolution,
     setFps,
     setPreset,
+    setSubtitles,
+    getSubtitleStyle,
     fileExists,
     setExport,
     exportCurrentFile,
     getStreamTitle,
     getClips,
     getDuration,
+    isHighlighterAfterVersion,
     getClipResolution,
   } = useController(ExportModalCtx);
 
@@ -196,6 +252,8 @@ function ExportFlow({
       thumbnail: clips.find(clip => clip.enabled)?.scrubSprite,
     };
   }, [streamId]);
+
+  const showSubtitleSettings = useMemo(() => isHighlighterAfterVersion('0.0.53'), []);
 
   function settingMatcher(initialSetting: TSetting) {
     const matchingSetting = settings.find(
@@ -214,6 +272,10 @@ function ExportFlow({
       preset: initialSetting.preset,
     };
   }
+
+  const [currentSubtitleItem, setSubtitleItem] = useState<ISubtitleItem>(
+    findSubtitleItem(getSubtitleStyle()) || subtitleItems[0],
+  );
 
   const [currentSetting, setSetting] = useState<TSetting | null>(null);
   const [isLoadingResolution, setIsLoadingResolution] = useState(true);
@@ -261,6 +323,15 @@ function ExportFlow({
 
   // Video name and export file are kept in sync
   const [exportFile, setExportFile] = useState<string>(getExportFileFromVideoName(videoName));
+
+  function findSubtitleItem(subtitleStyle: ISubtitleStyle | null) {
+    if (!subtitleStyle) return subtitleItems[0];
+
+    for (const item of subtitleItems) {
+      const isMatching = isDeepEqual(item.style, subtitleStyle, 0, 2);
+      if (isMatching) return item;
+    }
+  }
 
   function getExportFileFromVideoName(videoName: string) {
     const parsed = path.parse(exportInfo.file);
@@ -359,24 +430,43 @@ function ExportFlow({
                   : { aspectRatio: '9/16' }
               }
             >
-              {isExporting && (
-                <div className={styles.progressItem}>
-                  <h1>
-                    {Math.round((exportInfo.currentFrame / exportInfo.totalFrames) * 100) || 0}%
-                  </h1>
-                  <p>
-                    {exportInfo.cancelRequested ? (
-                      <span>{$t('Canceling...')}</span>
-                    ) : (
-                      <span>{$t('Exporting video...')}</span>
-                    )}
-                  </p>
-                  <Progress
-                    style={{ width: '100%' }}
-                    percent={Math.round((exportInfo.currentFrame / exportInfo.totalFrames) * 100)}
-                    trailColor="var(--section)"
-                    status={exportInfo.cancelRequested ? 'exception' : 'normal'}
-                    showInfo={false}
+              {isExporting &&
+                (isTranscribing ? (
+                  <div className={styles.progressItem}>
+                    <div className={styles.loadingSpinner}>
+                      <i className="fa fa-spinner fa-spin" style={{ fontSize: '24px' }} />
+                    </div>
+                    <p>
+                      <span>{$t('Generating subtitles...')} </span>
+                    </p>
+                  </div>
+                ) : (
+                  <div className={styles.progressItem}>
+                    <h1>
+                      {Math.round((exportInfo.currentFrame / exportInfo.totalFrames) * 100) || 0}%
+                    </h1>
+                    <p>
+                      {exportInfo.cancelRequested ? (
+                        <span>{$t('Canceling...')}</span>
+                      ) : (
+                        <span>{$t('Exporting video...')}</span>
+                      )}
+                    </p>
+                    <Progress
+                      style={{ width: '100%' }}
+                      percent={Math.round((exportInfo.currentFrame / exportInfo.totalFrames) * 100)}
+                      trailColor="var(--section)"
+                      status={exportInfo.cancelRequested ? 'exception' : 'normal'}
+                      showInfo={false}
+                    />
+                  </div>
+                ))}
+              {currentSubtitleItem?.style && (
+                <div className={styles.subtitlePreview}>
+                  <SubtitlePreview
+                    svgStyle={currentSubtitleItem.style}
+                    orientation={currentFormat}
+                    inPreview={true}
                   />
                 </div>
               )}
@@ -406,11 +496,24 @@ function ExportFlow({
                   {duration} | {$t('%{clipsAmount} clips', { clipsAmount: amount })}
                 </p>
               </div>
-              <OrientationToggle
-                initialState={currentFormat}
-                disabled={isExporting}
-                emitState={format => setCurrentFormat(format)}
-              />
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {showSubtitleSettings && (
+                  <SubtitleDropdownWrapper
+                    initialSetting={currentSubtitleItem}
+                    disabled={isExporting}
+                    emitSettings={setting => {
+                      setSubtitleItem(setting);
+                      setSubtitles(setting);
+                    }}
+                  />
+                )}
+
+                <OrientationToggle
+                  initialState={currentFormat}
+                  disabled={isExporting}
+                  emitState={format => setCurrentFormat(format)}
+                />
+              </div>
             </div>
             <div
               style={{
@@ -522,6 +625,70 @@ function ExportFlow({
   );
 }
 
+function SubtitleDropdownWrapper({
+  initialSetting: initialItem,
+  disabled,
+  emitSettings,
+}: {
+  initialSetting: ISubtitleItem;
+  disabled: boolean;
+  emitSettings: (item: ISubtitleItem) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentSetting, setSetting] = useState<ISubtitleItem>(initialItem);
+
+  return (
+    <div style={{ width: '72px' }} className={`${disabled ? styles.isDisabled : ''}`}>
+      <Dropdown
+        overlay={
+          <div className={styles.innerItemWrapper} style={{ width: 'fit-content' }}>
+            {subtitleItems.map(item => {
+              return (
+                <div
+                  className={`${styles.innerDropdownItem} ${
+                    item.name === currentSetting.name ? styles.active : ''
+                  }`}
+                  style={{ display: 'flex', justifyContent: 'center' }}
+                  onClick={() => {
+                    setSetting(item);
+                    emitSettings(item);
+                    setIsOpen(false);
+                  }}
+                  key={item.name}
+                >
+                  {item.enabled === false ? (
+                    <div className={styles.dropdownText}>{item.name}</div>
+                  ) : (
+                    item.style && <SubtitlePreview svgStyle={item.style} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        }
+        trigger={['click']}
+        visible={isOpen}
+        onVisibleChange={setIsOpen}
+        placement="bottomCenter"
+      >
+        <div
+          className={styles.innerDropdownWrapper}
+          style={{ paddingLeft: '4px' }}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <div
+            className={styles.dropdownText}
+            style={{ opacity: currentSetting.enabled ? 1 : 0.3 }}
+          >
+            <SubtitleIcon />
+          </div>
+          <i className="icon-down" style={{ opacity: 0.7 }}></i>
+        </div>
+      </Dropdown>
+    </div>
+  );
+}
+
 function CustomDropdownWrapper({
   initialSetting,
   disabled,
@@ -579,7 +746,7 @@ function CustomDropdownWrapper({
               </>
             )}
           </div>
-          <i className="icon-down"></i>
+          <i className="icon-down" style={{ opacity: 0.7 }}></i>
         </div>
       </Dropdown>
     </div>
@@ -622,3 +789,118 @@ function OrientationToggle({
     </div>
   );
 }
+
+function SubtitlePreview({
+  svgStyle,
+  inPreview,
+  orientation,
+}: {
+  svgStyle: ISubtitleStyle;
+  inPreview?: boolean;
+  orientation?: TOrientation;
+}) {
+  const WIDTH = 250;
+  const HEIGHT = 60;
+  const formattedFontSize = orientation === 'horizontal' ? 22 : 14;
+  const fontSize = inPreview ? formattedFontSize : 24;
+
+  return (
+    <div>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={WIDTH}
+        height={HEIGHT}
+        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+      >
+        {/* <rect width="100%" height="100%" fill="#FF5733" /> */}
+        <text
+          fontFamily={svgStyle.fontFamily}
+          fontStyle={svgStyle.isItalic ? 'italic' : 'normal'}
+          fontWeight={svgStyle.isBold ? 'bold' : 'normal'}
+          fill={svgStyle.fontColor}
+          fontSize={fontSize}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          paintOrder="stroke fill"
+          strokeWidth={svgStyle.strokeWidth ?? 0}
+          stroke={svgStyle.strokeColor || 'none'}
+          strokeOpacity={svgStyle.strokeColor ? 1 : 0}
+          x={WIDTH / 2}
+          y={HEIGHT / 2}
+        >
+          Auto subtitles
+        </text>
+      </svg>
+    </div>
+  );
+}
+
+export const SubtitleIcon = () => (
+  <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="7" y="7" width="18" height="18" rx="2" stroke="white" strokeWidth="2" />
+    <g filter="url(#filter0_d_3248_34353)">
+      <path d="M14 21H18" stroke="white" strokeWidth="2" strokeLinecap="round" />
+    </g>
+    <g filter="url(#filter1_d_3248_34353)">
+      <path d="M12 17H20" stroke="white" strokeWidth="2" strokeLinecap="round" />
+    </g>
+    <defs>
+      <filter
+        id="filter0_d_3248_34353"
+        x="9"
+        y="20"
+        width="14"
+        height="10"
+        filterUnits="userSpaceOnUse"
+        colorInterpolationFilters="sRGB"
+      >
+        <feFlood floodOpacity="0" result="BackgroundImageFix" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
+        <feOffset dy="4" />
+        <feGaussianBlur stdDeviation="2" />
+        <feComposite in2="hardAlpha" operator="out" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
+        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_3248_34353" />
+        <feBlend
+          mode="normal"
+          in="SourceGraphic"
+          in2="effect1_dropShadow_3248_34353"
+          result="shape"
+        />
+      </filter>
+      <filter
+        id="filter1_d_3248_34353"
+        x="7"
+        y="16"
+        width="18"
+        height="10"
+        filterUnits="userSpaceOnUse"
+        colorInterpolationFilters="sRGB"
+      >
+        <feFlood floodOpacity="0" result="BackgroundImageFix" />
+        <feColorMatrix
+          in="SourceAlpha"
+          type="matrix"
+          values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+          result="hardAlpha"
+        />
+        <feOffset dy="4" />
+        <feGaussianBlur stdDeviation="2" />
+        <feComposite in2="hardAlpha" operator="out" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
+        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_3248_34353" />
+        <feBlend
+          mode="normal"
+          in="SourceGraphic"
+          in2="effect1_dropShadow_3248_34353"
+          result="shape"
+        />
+      </filter>
+    </defs>
+  </svg>
+);

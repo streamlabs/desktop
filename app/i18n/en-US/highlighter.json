@@ -52,6 +52,7 @@
   "Rendering Frames: %{currentFrame}/%{totalFrames}": "Rendering Frames: %{currentFrame}/%{totalFrames}",
   "Mixing Audio:": "Mixing Audio:",
   "Canceling...": "Canceling...",
+  "Generating subtitles...": "Generating subtitles...",
   "Render Preview": "Render Preview",
   "The render preview shows a low-quality preview of the final rendered video. The final exported video will be higher resolution, framerate, and quality.": "The render preview shows a low-quality preview of the final rendered video. The final exported video will be higher resolution, framerate, and quality.",
   "Title": "Title",

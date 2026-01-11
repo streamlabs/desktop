@@ -2,6 +2,9 @@ import execa from 'execa';
 import { IExportOptions } from '../models/rendering.models';
 import { FADE_OUT_DURATION, FFMPEG_EXE } from '../constants';
 import { FrameWriteError } from './errors';
+import fs from 'fs-extra';
+import path from 'path';
+import { SUBTITLE_PER_SECOND } from './render-subtitle';
 
 export class FrameWriter {
   constructor(
@@ -9,13 +12,14 @@ export class FrameWriter {
     public readonly audioInput: string,
     public readonly duration: number,
     public readonly options: IExportOptions,
+    public readonly subtitleDirectory: string | null,
   ) {}
 
   private ffmpeg: execa.ExecaChildProcess<Buffer | string>;
 
   exitPromise: Promise<void>;
 
-  private startFfmpeg() {
+  private async startFfmpeg() {
     /* eslint-disable */
     const args = [
       // Video Input
@@ -33,24 +37,16 @@ export class FrameWriter {
       '-',
 
       // Audio Input
-      '-i',
-      this.audioInput,
 
       // Input Mapping
-      '-map',
-      '0:v:0',
-      '-map',
-      '1:a:0',
-
-      // Filters
-      '-af',
-      `afade=type=out:duration=${FADE_OUT_DURATION}:start_time=${Math.max(
-        this.duration - (FADE_OUT_DURATION + 0.2),
-        0,
-      )}`,
+      // '-map',
+      // '0:v:0',
     ];
-
-    this.addVideoFilters(args);
+    if (this.options.subtitleStyle && this.subtitleDirectory) {
+      await this.addSubtitleInput(args, this.subtitleDirectory);
+    }
+    this.addAudioFilters(args, !!this.options.subtitleStyle);
+    this.addVideoFilters(args, !!this.options.subtitleStyle);
 
     const crf = this.options.preset === 'slow' ? '18' : '21';
 
@@ -103,21 +99,60 @@ export class FrameWriter {
       console.log('ffmpeg:', data.toString());
     });
   }
+  private addVideoFilters(args: string[], subtitlesEnabled = false) {
+    const webcamEnabled = !!this.options.complexFilter;
 
-  private addVideoFilters(args: string[]) {
+    const firstInput = webcamEnabled ? '[final]' : '[0:v]';
+    const output = subtitlesEnabled ? '[subtitled]' : '[final]';
+
     const fadeFilter = `format=yuv420p,fade=type=out:duration=${FADE_OUT_DURATION}:start_time=${Math.max(
       this.duration - (FADE_OUT_DURATION + 0.2),
       0,
     )}`;
-    if (this.options.complexFilter) {
-      args.push('-vf', this.options.complexFilter + `[final]${fadeFilter}`);
-    } else {
-      args.push('-vf', fadeFilter);
+    args.push('-filter_complex');
+
+    if (!webcamEnabled && !subtitlesEnabled) {
+      args.push(fadeFilter);
+      return;
     }
+
+    let combinedFilter = '';
+    if (webcamEnabled) {
+      combinedFilter += this.options.complexFilter;
+    }
+
+    if (subtitlesEnabled) {
+      combinedFilter += `${firstInput}[1:v]overlay=0:0[subtitled];`;
+    }
+
+    combinedFilter += output + fadeFilter;
+    args.push(combinedFilter);
+  }
+
+  private addAudioFilters(args: string[], subtitlesEnabled = false) {
+    args.push(
+      '-i',
+      this.audioInput,
+      '-map',
+      subtitlesEnabled ? '2:a:0' : '1:a:0',
+      '-af',
+      `afade=type=out:duration=${FADE_OUT_DURATION}:start_time=${Math.max(
+        this.duration - (FADE_OUT_DURATION + 0.2),
+        0,
+      )}`,
+    );
+  }
+  private async addSubtitleInput(args: string[], subtitleDirectory: string) {
+    args.push(
+      '-framerate',
+      String(SUBTITLE_PER_SECOND),
+      '-i',
+      `${subtitleDirectory}\\subtitles_%04d.png`,
+    );
   }
 
   async writeNextFrame(frameBuffer: Buffer) {
-    if (!this.ffmpeg) this.startFfmpeg();
+    if (!this.ffmpeg) await this.startFfmpeg();
 
     try {
       await new Promise<void>((resolve, reject) => {
