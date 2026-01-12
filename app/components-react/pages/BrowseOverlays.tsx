@@ -270,9 +270,10 @@ export default function BrowseOverlays(p: {
     overlayUrl: string,
     overlayName: string,
     widgetUrls: string[],
+    progressCallback?: (progress: IDownloadProgress) => void,
   ) {
     try {
-      await installOverlayBase(overlayUrl, overlayName);
+      await installOverlayBase(overlayUrl, overlayName, progressCallback);
       await installWidgetsBase(widgetUrls);
       NavigationService.actions.navigate('Studio');
     } catch (e: unknown) {
