@@ -236,17 +236,6 @@ export function StreamSettings() {
     });
   }
 
-  async function openPlatformSettings() {
-    try {
-      const link = await Services.MagicLinkService.getDashboardMagicLink(
-        'settings/account-settings/platforms',
-      );
-      remote.shell.openExternal(link);
-    } catch (e: unknown) {
-      console.error('Error generating platform settings magic link', e);
-    }
-  }
-
   return (
     <div className={styles.section}>
       {/* account info */}

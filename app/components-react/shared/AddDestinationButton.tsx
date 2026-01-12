@@ -154,9 +154,7 @@ function UltraAddDestinationButton(p: {
 function AddDestinationBanner(p: { className?: string; onClick: () => void }) {
   const isDarkTheme = useRealmObject(Services.CustomizationService.state).isDarkTheme;
 
-  const text = $t(
-    'You can stream to any 2 destinations for free with Dual Output. Multistream and switch seamlessly between streams with Ultra',
-  );
+  const text = $t('Unlock unlimited multistreaming with Ultra and grow your audience faster');
 
   return (
     <ButtonHighlighted
@@ -166,7 +164,12 @@ function AddDestinationBanner(p: { className?: string; onClick: () => void }) {
       onClick={p.onClick}
     >
       <UltraIcon type="badge" className={styles.ultraIcon} />
-      <div className={styles.ultraText}>{text}</div>
+      <div className={styles.ultraText}>
+        {text}
+        <div className={cx(styles.ultraArrow, styles.smallArrow)}>
+          <i className="icon-back-alt" />
+        </div>
+      </div>
     </ButtonHighlighted>
   );
 }

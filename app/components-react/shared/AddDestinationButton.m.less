@@ -52,23 +52,24 @@ button.add-destination-btn {
 }
 
 .info-banner-group {
-  margin-bottom: 0px !important;
   padding-bottom: 0px !important;
 }
 
 button.info-banner {
   width: unset !important;
   padding: 5px !important;
-  margin: 0px 16px;
+  margin: 0px 15px 12px;
   height: fit-content;
   align-items: flex-start;
   border-radius: 6px;
   border-width: 1px;
 
+  &:hover {
+    border: 1px solid transparent !important;
+  }
+
   .ultra-icon {
-    margin-top: 4px;
-    height: 12px;
-    width: 12px;
+    margin: 4px 0px 0px 4px;
   }
 }
 
@@ -162,6 +163,15 @@ button.add-destination-header {
 
   background-clip: text;
   color: transparent;
+
+  &.small-arrow {
+    font-size: 12px;
+    width: 12px;
+    height: 14px;
+    float: inline-end;
+    margin-right: 60px;
+    margin-top: 3px;
+  }
 }
 
 .default-output-btn:extend(button.add-destination-btn) {

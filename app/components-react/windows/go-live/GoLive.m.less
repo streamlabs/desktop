@@ -406,7 +406,7 @@ i.destination-logo {
   flex-direction: row;
   flex: 1;
   width: 100%;
-  padding: 15px;
+  padding: 0px 15px;
 
   :global(.ant-form-item) {
     margin-bottom: 0px;
@@ -525,4 +525,43 @@ i.destination-logo {
   &.shiftEnabled {
     min-height: 50px;
   }
+}
+
+.dual-output-alert {
+  transform: translateY(-100px);
+  transition: transform 0.3s, visibility 0.3s;
+  // transition: transform 0.3s, visibility 0.3s, background-color 0.3s, color 0.1s;
+  font-size: 13px;
+  border-radius: 6px;
+  padding: 8px;
+  margin: 15px;
+  background-color: rgba(23, 36, 45, 0);
+  color: rgba(23, 36, 45, 0);
+  visibility: hidden;
+
+  &.error {
+    background-color: #ff6f5b14;
+    color: #ff6f5b;
+    transform: translateY(0px);
+    visibility: visible;
+  }
+}
+
+.column-content {
+  transition: transform 0.3s;
+  height: 58%;
+
+  &.alert-closed {
+    transform: translateY(-70px);
+    z-index: -1;
+  }
+
+  &.alert-open {
+    transform: translateY(0px);
+    z-index: 0;
+  }
+}
+
+.switcher-wrapper {
+  height: 100%;
 }
