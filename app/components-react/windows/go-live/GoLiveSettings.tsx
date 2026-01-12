@@ -138,7 +138,9 @@ export default function GoLiveSettings() {
               [styles.alertOpen]: isDualOutputMode && !canStreamDualOutput,
             })}
           >
-            <div className={styles.columnHeader}>{headerText}</div>
+            <div className={cx(styles.columnHeader, { [styles.ultraColumnHeader]: isPrime })}>
+              {headerText}
+            </div>
             {!isPrime && <AddDestinationButton type="banner" className={styles.addDestination} />}
 
             <Scrollable
