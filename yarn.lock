@@ -9629,15 +9629,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"js-yaml@npm:3.13.1":
-  version: 3.13.1
-  resolution: "js-yaml@npm:3.13.1"
+"js-yaml@npm:4.1.1":
+  version: 4.1.1
+  resolution: "js-yaml@npm:4.1.1"
   dependencies:
-    argparse: ^1.0.7
-    esprima: ^4.0.0
+    argparse: ^2.0.1
   bin:
     js-yaml: bin/js-yaml.js
-  checksum: 7511b764abb66d8aa963379f7d2a404f078457d106552d05a7b556d204f7932384e8477513c124749fa2de52eb328961834562bd09924902c6432e40daa408bc
+  checksum: ea2339c6930fe048ec31b007b3c90be2714ab3e7defcc2c27ebf30c74fd940358f29070b4345af0019ef151875bf3bc3f8644bea1bab0372652b5044813ac02d
   languageName: node
   linkType: hard
 
@@ -14293,7 +14292,7 @@ __metadata:
     game_overlay: "https://obs-studio-deployment.s3-us-west-2.amazonaws.com/game-overlay-v0.0.0.tar.gz"
     gl-transitions: 1.43.0
     humps: 2.0.1
-    js-yaml: 3.13.1
+    js-yaml: 4.1.1
     less: 4.1.0
     less-loader: 7.2.1
     lodash: 4.17.21
