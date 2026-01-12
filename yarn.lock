@@ -2788,6 +2788,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@streamlabs-core/streamlabs-vision-sdk@npm:0.0.3":
+  version: 0.0.3
+  resolution: "@streamlabs-core/streamlabs-vision-sdk@npm:0.0.3"
+  dependencies:
+    eventsource: ^4.1.0
+    typed-emitter: ^2.1.0
+  checksum: 192eee1fe1ffe7a91bf235bf368c5311104545dc79233a0c0bcc9d3c0b9382be85561807ccbbe858baa64c54818187c063a97e8ae018eba4c1ad5f46fa655880
+  languageName: node
+  linkType: hard
+
 "@szmarczak/http-timer@npm:^4.0.5":
   version: 4.0.5
   resolution: "@szmarczak/http-timer@npm:4.0.5"
@@ -7604,10 +7614,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eventsource-parser@npm:^3.0.1":
+  version: 3.0.6
+  resolution: "eventsource-parser@npm:3.0.6"
+  checksum: b90ec27f8d992afa7df171db202faaedb1782214f64e50690cbf78bc2629f7751575aa27a72d8ae447e5a7094938406b1a3ea1d89e5f0f2d6916cc8a694b6587
+  languageName: node
+  linkType: hard
+
 "eventsource@npm:^2.0.2":
   version: 2.0.2
   resolution: "eventsource@npm:2.0.2"
   checksum: c0072d972753e10c705d9b2285b559184bf29d011bc208973dde9c8b6b8b7b6fdad4ef0846cecb249f7b1585e860fdf324cbd2ac854a76bc53649e797496e99a
+  languageName: node
+  linkType: hard
+
+"eventsource@npm:^4.1.0":
+  version: 4.1.0
+  resolution: "eventsource@npm:4.1.0"
+  dependencies:
+    eventsource-parser: ^3.0.1
+  checksum: 0d68ae2aefdd726166c981602fa3038ecf2db8e290217a8c05e7a0cd90b90d7620c9995710a7cc009a0f5890313fff56fe76f8279c4fee9dedb7b3f3ab1ca54d
   languageName: node
   linkType: hard
 
@@ -13705,6 +13731,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"rxjs@npm:*":
+  version: 7.8.2
+  resolution: "rxjs@npm:7.8.2"
+  dependencies:
+    tslib: ^2.1.0
+  checksum: 2f233d7c832a6c255dabe0759014d7d9b1c9f1cb2f2f0d59690fd11c883c9826ea35a51740c06ab45b6ade0d9087bde9192f165cba20b6730d344b831ef80744
+  languageName: node
+  linkType: hard
+
 "rxjs@npm:6.3.3":
   version: 6.3.3
   resolution: "rxjs@npm:6.3.3"
@@ -14224,6 +14259,7 @@ __metadata:
     "@octokit/rest": 20.0.1
     "@sentry/browser": 5.21.4
     "@sentry/integrations": 5.21.4
+    "@streamlabs-core/streamlabs-vision-sdk": 0.0.3
     "@types/archiver": 2.1.3
     "@types/classnames": 2.2.11
     "@types/codemirror": 5.60.10
@@ -15489,7 +15525,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:^2.4.0":
+"tslib@npm:^2.1.0, tslib@npm:^2.4.0":
   version: 2.8.1
   resolution: "tslib@npm:2.8.1"
   checksum: e4aba30e632b8c8902b47587fd13345e2827fa639e7c3121074d5ee0880723282411a8838f830b55100cbe4517672f84a2472667d355b81e8af165a55dc6203a
@@ -15571,6 +15607,18 @@ __metadata:
   version: 4.41.0
   resolution: "type-fest@npm:4.41.0"
   checksum: 7055c0e3eb188425d07403f1d5dc175ca4c4f093556f26871fe22041bc93d137d54bef5851afa320638ca1379106c594f5aa153caa654ac1a7f22c71588a4e80
+  languageName: node
+  linkType: hard
+
+"typed-emitter@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "typed-emitter@npm:2.1.0"
+  dependencies:
+    rxjs: "*"
+  dependenciesMeta:
+    rxjs:
+      optional: true
+  checksum: 95821a9e05784b972cc9d152891fd12a56cb4b1a7c57e768c02bea6a8984da7aff8f19404a7b69eea11fae2a3b6c0c510a4c510f575f50162c759ae9059f2520
   languageName: node
   linkType: hard
 

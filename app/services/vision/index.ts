@@ -1,17 +1,17 @@
 import { InitAfter, Inject, Service } from 'services';
 import * as remote from '@electron/remote';
-import path from 'path';
 import { authorizedHeaders, jfetch } from 'util/requests';
 import { HostsService, SettingsService, UserService } from 'app-services';
 import { RealmObject } from 'services/realm';
 import { ObjectSchema } from 'realm';
 import uuid from 'uuid/v4';
-import { VisionRunner, VisionRunnerStartOptions } from './vision-runner';
-import { VisionUpdater } from './vision-updater';
+import { VisionRunnerStartOptions } from './vision-runner';
 import _ from 'lodash';
 import pMemoize from 'p-memoize';
 import { ESettingsCategory } from 'services/settings';
 import { Subject } from 'rxjs';
+
+import { GameEvent, StreamlabsVision } from '@streamlabs-core/streamlabs-vision-sdk';
 
 export class VisionProcess extends RealmObject {
   game: string;
@@ -93,14 +93,11 @@ export class VisionState extends RealmObject {
 
 VisionState.register();
 
+const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
+
 @InitAfter('UserService')
 export class VisionService extends Service {
-  private visionRunner = new VisionRunner();
-  private visionUpdater = new VisionUpdater(
-    path.join(remote.app.getPath('userData'), '..', 'streamlabs-vision'),
-  );
-  private eventSource: EventSource;
-
+  private vision = new StreamlabsVision({ debug: true, environment: 'staging' });
   public sourceStateKeyInterest: Map<string, Set<string>> = new Map();
 
   // update prompt
@@ -123,57 +120,75 @@ export class VisionService extends Service {
   init() {
     window.addEventListener('beforeunload', () => this.stop());
 
-    this.visionRunner.on('exit', () => {
-      this.writeState({
-        pid: 0,
-        port: 0,
-        isRunning: false,
-      });
+    this.vision.on('stateChange', state => {
+      this.log('[State changed]', state);
     });
 
-    // useful for testing robustness
-    // setInterval(() => this.ensureRunning(), 30_000);
+    this.vision.on('gameEvent', event => {
+      this.log('[Game Event]', event.name, event.data);
+
+      // don't forward game_process_detected events to the API
+      if (event.name === 'game_process_detected') {
+        return;
+      }
+
+      const { timestamp, game, ...rest } = event;
+      const events = [rest];
+      const vision_event_id = uuid();
+
+      void this.forwardEventToApi({ timestamp, game, vision_event_id, events });
+    });
+  }
+
+  async getDisplayFrameUrl() {
+    return await this.vision.getDisplayFrameLink();
+  }
+
+  async openDisplayFrame() {
+    remote.shell.openExternal(await this.getDisplayFrameUrl());
   }
 
   ensureUpdated = pMemoize(
     async ({ startAfterUpdate = true }: { startAfterUpdate?: boolean } = {}) => {
       this.log('ensureUpdated()');
 
-      this.writeState({ hasFailedToUpdate: false });
+      this.writeState({
+        hasFailedToUpdate: false,
+        isCurrentlyUpdating: true,
+        percentDownloaded: 0,
+      });
 
-      const { needsUpdate, latestManifest } = await this.visionUpdater.checkNeedsUpdate();
+      // Fake progress that auto-cleans up when install completes
+      let progress = 0;
+      const progressInterval = setInterval(() => {
+        // Ease out - progress slows as it approaches 0.9
+        progress += (0.9 - progress) * 0.15;
+        this.writeState({ percentDownloaded: Math.min(progress, 0.9) });
+      }, 500);
 
-      if (needsUpdate) {
-        this.writeState({ isCurrentlyUpdating: true });
+      try {
+        await this.vision.install();
+        clearInterval(progressInterval);
+        this.writeState({ percentDownloaded: 1 });
 
-        // make sure vision is stopped
-        await this.visionRunner.stop();
+        this.writeState({
+          // installedVersion: versionInfo.current_version,
+          needsUpdate: false,
+          isCurrentlyUpdating: false,
+        });
 
-        try {
-          await this.visionUpdater.downloadAndInstall(latestManifest, progress => {
-            this.writeState({ percentDownloaded: progress.percent });
-          });
-
-          this.writeState({
-            installedVersion: latestManifest?.version || '',
-            needsUpdate: false,
-            isCurrentlyUpdating: false,
-            percentDownloaded: 0,
-          });
-
-          if (startAfterUpdate) {
-            return this.ensureRunning();
-          }
-        } catch (err: unknown) {
-          this.writeState({
-            needsUpdate: true,
-            hasFailedToUpdate: true,
-            isCurrentlyUpdating: false,
-            percentDownloaded: 0,
-          });
-
-          this.log('Error during downloadAndInstall: ', err);
+        if (startAfterUpdate) {
+          return this.ensureRunning();
         }
+      } catch (err: unknown) {
+        clearInterval(progressInterval);
+        this.writeState({
+          hasFailedToUpdate: true,
+          needsUpdate: true,
+          isCurrentlyUpdating: false,
+        });
+
+        this.log('Error during Vision install: ', err);
       }
     },
     { cache: false },
@@ -185,92 +200,44 @@ export class VisionService extends Service {
 
       this.writeState({ isStarting: true });
 
-      try {
-        const {
-          needsUpdate,
-          installedManifest,
-          latestManifest,
-        } = await this.visionUpdater.checkNeedsUpdate();
+      const isInstalled = await this.vision.isInstalled();
 
-        this.writeState({
-          needsUpdate,
-          installedVersion: installedManifest?.version ?? '',
-        });
+      if (!isInstalled) {
+        this.writeState({ needsUpdate: true, installedVersion: '' });
 
-        if (needsUpdate) {
-          if (installedManifest) {
-            this.log(
-              `vision needs update: ${installedManifest.version} -> ${latestManifest.version}`,
-            );
-            // silently update in the background
-            await this.ensureUpdated({ startAfterUpdate: false });
-          } else {
-            const v = latestManifest.version ?? 'unknown';
-            const now = Date.now();
-            const newVersion = this.lastPromptVersion !== v;
-            const cooledDown = now - this.lastPromptAt > this.promptCooldownMs;
+        const v = 'unknown';
+        const now = Date.now();
+        const newVersion = this.lastPromptVersion !== v;
+        const cooledDown = now - this.lastPromptAt > this.promptCooldownMs;
 
-            if (newVersion || cooledDown) {
-              this.lastPromptVersion = v;
-              this.lastPromptAt = now;
-              await this.settingsService.showSettings(ESettingsCategory.AI);
-            }
-
-            return { started: false, reason: 'needs-update' as const };
-          }
+        if (newVersion || cooledDown) {
+          this.lastPromptVersion = v;
+          this.lastPromptAt = now;
+          await this.settingsService.showSettings(ESettingsCategory.AI);
         }
 
-        const { pid, port } = await this.visionRunner.ensureStarted({ debugMode });
-        this.writeState({ pid, port, isRunning: true });
-        this.subscribeToEvents(port);
-        await this.requestAvailableProcesses();
-        await this.requestActiveProcess();
-
-        return { started: true as const, pid, port };
-      } finally {
-        // once we're done, we're no longer starting up
-        this.writeState({ isStarting: false });
+        return { started: false, reason: 'needs-update' as const };
       }
+
+      this.log('start()');
+      await this.vision.start();
+      this.log('start() DONE');
+
+      this.log('getVersionInfo()');
+      const versionInfo = await this.vision.getVersionInfo();
+      this.log({ versionInfo });
+      this.log('getVersionInfo() DONE');
+
+      this.writeState({ installedVersion: versionInfo.current_version });
+
+      await this.requestAvailableProcesses();
+      await this.requestActiveProcess();
+      this.writeState({ isRunning: true });
+
+      return { started: true as const };
     },
     { cache: false },
   );
-
-  private subscribeToEvents(port: number) {
-    this.log('subscribeToEvents()');
-
-    this.eventSource?.close();
-
-    const eventSource = new EventSource(`http://localhost:${port}/events`);
-
-    this.eventSource = eventSource;
-
-    eventSource.onopen = () => this.log('EventSource opened');
-
-    // EventSource auto-reconnects; we just log
-    eventSource.onerror = e => this.log('EventSource error:', e, 'state=', eventSource.readyState);
-
-    eventSource.onmessage = e => {
-      this.log('EventSource message', e.data);
-
-      try {
-        const parsed = JSON.parse(e.data);
-
-        if (
-          Array.isArray(parsed.events) &&
-          parsed.events.some((x: any) => x.name === 'game_process_detected')
-        ) {
-          return;
-        }
-
-        parsed.vision_event_id = uuid();
-
-        // todo: queue these incase of network failure?
-        void this.forwardEventToApi(parsed);
-      } catch (err: unknown) {
-        this.log('Bad event', err);
-      }
-    };
-  }
 
   private notifyOfStateChange() {
     this.onState.next({
@@ -297,25 +264,21 @@ export class VisionService extends Service {
   }
 
   async stop() {
-    this.closeEventSource();
-    await this.visionRunner.stop();
+    this.vision.disconnect();
   }
 
   private log(...args: any[]) {
     console.log('[VisionService]', ...args);
   }
 
-  private closeEventSource() {
-    try {
-      this.eventSource?.close();
-    } catch {
-      /* ignore */
-    }
+  private async forwardEventToApi(payload: {
+    timestamp: number;
+    game: string;
+    vision_event_id: string;
+    events: Omit<GameEvent, 'timestamp' | 'game'>[];
+  }) {
+    this.log('forwardEventToApi', { payload });
 
-    this.eventSource = undefined;
-  }
-
-  private async forwardEventToApi(payload: unknown) {
     return await this.authPostWithTimeout(
       `https://${this.hostsService.streamlabs}/api/v5/vision/desktop/event`,
       payload,
@@ -346,17 +309,15 @@ export class VisionService extends Service {
     this.notifyOfStateChange();
   }
 
-  requestFrame() {
-    const url = `http://localhost:${this.state.port}/query/vision_frame`;
+  async requestFrame() {
+    const url = await this.getDisplayFrameUrl();
     const headers = new Headers({ 'Content-Type': 'application/json' });
 
     return jfetch(url, { headers, method: 'GET' });
   }
 
   async requestActiveProcess() {
-    const url = `http://localhost:${this.state.port}/processes/active`;
-    const headers = new Headers({ 'Content-Type': 'application/json' });
-    const response: VisionProcess | undefined = await jfetch(url, { headers, method: 'GET' });
+    const response = (await this.vision.getActiveProcess()) as VisionProcess | undefined;
 
     if (response?.pid !== undefined) {
       this.writeState({ selectedProcessId: response.pid });
@@ -366,9 +327,7 @@ export class VisionService extends Service {
   }
 
   async requestAvailableProcesses() {
-    const url = `http://localhost:${this.state.port}/processes`;
-    const headers = new Headers({ 'Content-Type': 'application/json' });
-    const response = await jfetch<VisionProcess[]>(url, { headers, method: 'GET' });
+    const response = (await this.vision.getProcesses()) as VisionProcess[];
 
     if (response) {
       this.writeState({ availableProcesses: _.sortBy(response, 'title') });
@@ -378,9 +337,6 @@ export class VisionService extends Service {
   }
 
   async activateProcess(pid: number, gameHint: string = 'fortnite') {
-    const url = `http://localhost:${this.state.port}/processes/${pid}/activate?game_hint=${gameHint}`;
-    const headers = new Headers({ 'Content-Type': 'application/json' });
-
     const activeProcess = this.state.availableProcesses.find(p => p.pid === pid);
     this.log('Activating process', pid, 'with game hint', gameHint, 'process=', activeProcess);
     if (activeProcess.type === 'capture_device' || activeProcess.executable_name === 'vlc.exe') {
@@ -389,14 +345,11 @@ export class VisionService extends Service {
       this.writeState({ selectedProcessId: pid });
     }
 
-    return jfetch(url, { headers, method: 'POST' });
+    return await this.vision.activateProcess(pid, gameHint);
   }
 
   async resetState() {
-    const url = `http://localhost:${this.state.port}/reset_state`;
-    const headers = new Headers({ 'Content-Type': 'application/json' });
-
-    return jfetch(url, { headers, method: 'POST' });
+    return await this.vision.resetState();
   }
 
   async testEvent(type: string) {

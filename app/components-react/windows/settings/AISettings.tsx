@@ -8,7 +8,6 @@ import * as remote from '@electron/remote';
 import { VisionRunnerStartOptions } from 'services/vision/vision-runner';
 import { $t } from 'services/i18n/index';
 import { VisionProcess, VisionState } from 'services/vision';
-import { ESettingsCategory } from 'services/settings';
 
 type VisionStatus = 'running' | 'starting' | 'updating' | 'stopped';
 
@@ -17,11 +16,6 @@ function getStatusText(state: VisionState): VisionStatus {
   if (state.isCurrentlyUpdating) return 'updating';
   if (state.isStarting) return 'starting';
   return 'stopped';
-}
-
-function buildLocalUrl(port?: number, path: string = ''): string | undefined {
-  if (!port || port <= 0) return undefined;
-  return `http://localhost:${port}${path}`;
 }
 
 function VisionInstalling(props: { percent: number; isUpdate: boolean }) {
@@ -44,8 +38,6 @@ type VisionInfoProps = {
   status: VisionStatus;
   needsUpdate: boolean;
   installedVersion: string;
-  pid?: number;
-  port?: number;
   availableProcesses: VisionProcess[];
   activeProcessId: number;
   availableGames: Dictionary<string>;
@@ -55,29 +47,25 @@ type VisionInfoProps = {
   startProcess: (opts?: VisionRunnerStartOptions) => void;
   ensureUpdated: () => void;
   stopProcess: () => void;
-  openExternal: (url: string) => void;
+  openDisplayFrame: () => void;
 };
 
 function VisionInfo({
   status,
   needsUpdate,
   installedVersion,
-  pid,
-  port,
   startProcess,
   stopProcess,
   ensureUpdated,
-  openExternal,
   activeProcessId,
   availableProcesses,
   requestAvailableProcesses,
   activateProcess,
   availableGames,
   selectedGame,
+  openDisplayFrame,
 }: VisionInfoProps) {
   const activeProcess = availableProcesses?.find(p => p.pid === activeProcessId);
-  const eventsUrl = useMemo(() => buildLocalUrl(port, '/events'), [port]);
-  const frameUrl = useMemo(() => buildLocalUrl(port, '/display_frame'), [port]);
   const isQaBundle = useMemo(
     () =>
       remote.process.argv.includes('--bundle-qa') && activeProcess?.executable_name === 'vlc.exe',
@@ -91,9 +79,6 @@ function VisionInfo({
           {installedVersion ? ` (${installedVersion})` : ''}
         </div>
         <div>Status: {status}</div>
-
-        {status === 'running' && !!pid && <div>PID: {pid}</div>}
-        {status === 'running' && !!port && <div>Port: {port}</div>}
 
         {status === 'stopped' && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
@@ -116,20 +101,12 @@ function VisionInfo({
 
         {status === 'running' && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
-            {eventsUrl && (
-              <button className="button button--action" onClick={() => openExternal(eventsUrl)}>
-                Open Events Log
-              </button>
-            )}
+            <button className="button button--action" onClick={() => openDisplayFrame()}>
+              Open Display Frame
+            </button>
 
-            {frameUrl && (
-              <button className="button button--action" onClick={() => openExternal(frameUrl)}>
-                Open Display Frame
-              </button>
-            )}
-
-            <button className="button button--warn" onClick={stopProcess}>
-              Stop Streamlabs AI
+            <button className="button button--warn" onClick={() => stopProcess()}>
+              Disable Streamlabs AI
             </button>
           </div>
         )}
@@ -243,10 +220,7 @@ export function AISettings() {
         status={getStatusText(state)}
         needsUpdate={state.needsUpdate}
         installedVersion={state.installedVersion}
-        pid={state.pid}
-        port={state.port}
         stopProcess={() => actions.stop()}
-        openExternal={openLink}
         startProcess={(options: VisionRunnerStartOptions) => actions.ensureRunning(options)}
         ensureUpdated={() => actions.ensureUpdated()}
         availableProcesses={state.availableProcesses}
@@ -255,6 +229,7 @@ export function AISettings() {
         activateProcess={(pid, gameHint) => actions.activateProcess(pid, gameHint)}
         availableGames={state.availableGames}
         selectedGame={state.selectedGame}
+        openDisplayFrame={() => actions.openDisplayFrame()}
       />
 
       {state.isCurrentlyUpdating && (

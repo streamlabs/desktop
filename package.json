@@ -74,6 +74,7 @@
     "@electron/remote": "2.1.2",
     "@google-cloud/vision": "^4.3.2",
     "@inworld/nodejs-sdk": "1.16.1-beta.0",
+    "@streamlabs-core/streamlabs-vision-sdk": "0.0.3",
     "abort-controller": "^3.0.0",
     "archiver": "2.1.1",
     "aws-sdk": "^2.814.0",
