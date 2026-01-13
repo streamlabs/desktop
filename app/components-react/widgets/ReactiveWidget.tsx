@@ -48,7 +48,7 @@ export function ReactiveWidget() {
     playReactiveAlert(cleanTrigger);
   }
 
-  function onDelete(triggerId: string) {
+  function onDelete(triggerId: string, scopeId: string) {
     remote.dialog
       .showMessageBox(remote.getCurrentWindow(), {
         title: 'Streamlabs Desktop',
@@ -57,7 +57,7 @@ export function ReactiveWidget() {
       })
       .then(({ response }) => {
         if (!response) return;
-        deleteTrigger(triggerId);
+        deleteTrigger(triggerId, scopeId);
       });
   }
 

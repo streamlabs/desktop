@@ -23,7 +23,7 @@ export function ReactiveWidgetMenu(props: {
   onChange: (params: string) => void;
   playAlert: (game: string, type: ReactiveTrigger) => void;
   toggleTrigger: (group: string, triggerId: string, enabled: boolean) => void;
-  deleteTrigger: (triggerId: string) => void;
+  deleteTrigger: (triggerId: string, scopeId: string) => void;
 }) {
   const {
     sections,
@@ -36,9 +36,9 @@ export function ReactiveWidgetMenu(props: {
 
   const [openKeys, setOpenKeys] = useState<string[]>(['global']);
 
-  function onDelete(event: React.MouseEvent, triggerId: string) {
+  function onDelete(event: React.MouseEvent, triggerId: string, scopeId: string) {
     event.stopPropagation();
-    deleteTrigger(triggerId);
+    deleteTrigger(triggerId, scopeId);
   }
 
   function onPlayAlert(event: React.MouseEvent, gameKey: string, trigger: ReactiveTrigger) {
@@ -102,7 +102,7 @@ export function ReactiveWidgetMenu(props: {
                   <div className={css.triggerActions}>
                     <Tooltip title={$t('Delete Trigger')} placement="top" mouseLeaveDelay={0}>
                       <Button
-                        onClick={e => onDelete(e, trigger.id)}
+                        onClick={e => onDelete(e, trigger.id, section.id)}
                         type="text"
                         className={css.deleteButton}
                       >

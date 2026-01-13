@@ -1,9 +1,59 @@
 import { IWidgetCommonState } from 'components-react/widgets/common/useWidget';
 
+export enum TabKind {
+  AddTrigger = 'add-trigger',
+  General = 'general',
+  GameManage = 'game-manage-trigger',
+  TriggerDetail = 'trigger-detail',
+}
+
+export enum ScopeId {
+  Global = 'global',
+}
+
+export enum TriggerType {
+  Streak = 'streak',
+  Achievement = 'achievement',
+  Level = 'level',
+  Total = 'total',
+}
+
+export enum ApiEndpoints {
+  ResetSettings = 'widgets/desktop/game-pulse/reset-settings',
+  DeleteTrigger = 'widgets/desktop/game-pulse/trigger',
+}
+
 export type ReactiveLayout = 'above' | 'banner' | 'side';
 export type ReactiveStreakPeriod = 'session' | 'today' | 'round';
 export type ReactiveTriggerType = 'streak' | 'achievement' | 'level' | 'total';
 export type ReactiveEventPeriod = 'round' | 'today' | null;
+
+export interface SelectOption {
+  label: string;
+  value: string;
+}
+
+export interface IReactiveGroupOption {
+  id: string;
+  name: string;
+  enabled: boolean;
+}
+
+export interface AnimationListItem {
+  key: string;
+  value: string;
+}
+
+export interface AnimationGroup {
+  group: string;
+  list: AnimationListItem[];
+}
+
+export interface AnimationOptionConfig {
+  key: string;
+  value: string;
+  list?: AnimationOptionConfig[];
+}
 
 export interface ReactiveMediaSettings {
   image_href: string;
@@ -82,10 +132,6 @@ export interface ReactiveTriggerGroup {
   triggers: ReactiveTrigger[];
 }
 
-export interface ReactiveGameSettingsUI extends ReactiveTriggerGroup {
-  gameId: string;
-}
-
 export type ReactiveGamesMap = Record<string, ReactiveTriggerGroup | null | undefined>;
 
 export interface ReactiveWidgetSettings {
@@ -96,10 +142,20 @@ export interface ReactiveWidgetSettings {
   games: ReactiveGamesMap;
 }
 
-export interface IReactiveGroupOption {
-  id: string;
-  name: string;
-  enabled: boolean;
+export interface ReactiveGameMeta {
+  title: string;
+  camel: string;
+}
+
+export interface ReactiveEventMeta {
+  title: string;
+  trigger_types: ReactiveTriggerType[];
+}
+
+export interface ReactiveWidgetAnimations {
+  text_animations: AnimationGroup;
+  show_animations: AnimationGroup;
+  hide_animations: AnimationGroup;
 }
 
 export interface ReactiveWidgetOptions {
@@ -109,22 +165,6 @@ export interface ReactiveWidgetOptions {
   streak_time_periods: Record<string, string>;
   available_game_events: Record<string, string[]>;
   event_time_periods: Record<string, string>;
-}
-
-export interface AnimationListItem {
-  key: string;
-  value: string;
-}
-
-export interface AnimationGroup {
-  group: string;
-  list: AnimationListItem[];
-}
-
-export interface ReactiveWidgetAnimations {
-  text_animations: AnimationGroup;
-  show_animations: AnimationGroup;
-  hide_animations: AnimationGroup;
 }
 
 export interface ReactiveStaticData {
@@ -140,36 +180,8 @@ export interface ReactiveStaticConfig {
   data: ReactiveStaticData;
 }
 
-export interface ReactiveGameMeta {
-  title: string;
-  camel: string;
-}
-
-export interface ReactiveEventMeta {
-  title: string;
-  trigger_types: ReactiveTriggerType[];
-}
-
-export interface SelectOption {
-  label: string;
-  value: string;
-}
-
-export interface AnimationOptionConfig {
-  key: string;
-  value: string;
-  list?: AnimationOptionConfig[];
-}
-
-// ============================================================================
-// TAB CONSTANTS & UTILS
-// ============================================================================
-
-export enum TabKind {
-  AddTrigger = 'add-trigger',
-  General = 'general',
-  GameManage = 'game-manage-trigger',
-  TriggerDetail = 'trigger-detail',
+export interface ReactiveGameSettingsUI extends ReactiveTriggerGroup {
+  gameId: string;
 }
 
 export interface ActiveTabContext {
@@ -178,7 +190,6 @@ export interface ActiveTabContext {
   triggerId?: string;
 }
 
-// ============================================================================
 export interface IReactiveWidgetState extends IWidgetCommonState {
   data: { settings: ReactiveWidgetSettings };
   staticConfig: ReactiveStaticConfig;
