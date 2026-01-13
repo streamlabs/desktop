@@ -1,5 +1,5 @@
 const appStartTime = Date.now();
-let lastEventTime = 0;
+let lastEventTime = 1;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Set Up Environment Variables
