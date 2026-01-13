@@ -39,5 +39,14 @@
   "DVR controls enable the viewer to control the video playback experience by pausing, rewinding, or fast forwarding content": "Os controles de DVR permitem que o visualizador controle a experiência de reprodução de vídeo pausando, retrocedendo ou avançando rapidamente o conteúdo",
   "Auto-start is disabled for your broadcast. You should manually publish your stream from Youtube Studio": "O início automático está desativado para a sua transmissão. Você deve publicar manualmente seu stream do YouTube Studio",
   "Made for kids": "Feito para crianças",
-  "Features like personalized ads and live chat won't be available on live streams made for kids.": "Recursos como anúncios personalizados e bate-papo ao vivo não estarão disponíveis em transmissões ao vivo destinadas a crianças."
+  "Features like personalized ads and live chat won't be available on live streams made for kids.": "Recursos como anúncios personalizados e bate-papo ao vivo não estarão disponíveis em transmissões ao vivo destinadas a crianças.",
+  "YouTube token has expired, re-login or re-merge YouTube account": "O token do YouTube expirou. Faça login de novo ou vincule novamente a conta do YouTube.",
+  "Thumbnail image content is invalid.": "O conteúdo da imagem em miniatura é inválido.",
+  "Thumbnail file does not include image content.": "O arquivo da miniatura não inclui conteúdo de imagem.",
+  "Permission missing to upload thumbnails.": "Não há permissão para carregar miniaturas.",
+  "Video does not exist. Thumbnail upload failed.": "O vídeo não existe. Falha ao carregar a miniatura.",
+  "Exceeded thumbnail upload quota. Please try again later.": "A cota de upload de miniaturas foi ultrapassada. Tente novamente mais tarde.",
+  "YouTube thumbnail image is too large. Maximum size is 2MB.": "A imagem em miniatura do YouTube está muito grande. O tamanho máximo é de 2 MB.",
+  "Please upload thumbnail manually on YouTube.": "Carregue a miniatura manualmente no YouTube.",
+  "Stream Shift Error: YouTube is not live": "Stream Shift Error: YouTube is not live"
 }

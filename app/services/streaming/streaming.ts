@@ -153,6 +153,7 @@ export class StreamingService
     replayBufferStatusTime: new Date().toISOString(),
     selectiveRecording: false,
     dualOutputMode: false,
+    enhancedBroadcasting: false,
     info: {
       settings: null,
       lifecycle: 'empty',
@@ -300,6 +301,14 @@ export class StreamingService
    * Make a transition to Live
    */
   async goLive(newSettings?: IGoLiveSettings) {
+    // To ensure that the correct chat renders if dual streaming Twitch, make sure that Twitch is the primary platform
+    if (
+      this.userService.state.auth?.primaryPlatform !== 'twitch' &&
+      this.views.isTwitchDualStreaming
+    ) {
+      this.userService.setPrimaryPlatform('twitch');
+    }
+
     // don't interact with API in logged out mode and when protected mode is disabled
     if (
       !this.userService.isLoggedIn ||
@@ -456,16 +465,12 @@ export class StreamingService
           await Promise.resolve();
         });
       } catch (e: unknown) {
-        // Handle rendering a prompt for enabling permissions to generate a stream key for Kick
-        if (this.state.info.error?.type === 'KICK_STREAM_KEY_MISSING') return;
-
-        const error = this.handleTypedStreamError(
+        const errorType = this.handleTypedStreamError(
           e,
           'DUAL_OUTPUT_SETUP_FAILED',
           'Failed to setup dual output',
         );
-        this.setError(error);
-        return;
+        throwStreamError(errorType);
       }
 
       // record dual output usage
@@ -550,7 +555,14 @@ export class StreamingService
       if (!ready) {
         console.error('Restream service is not available');
         this.setError(errorType);
-        return;
+        throwStreamError(errorType);
+      }
+
+      // Handle allowing users to bypass platform setup errors and still multistream
+      if (this.state.info.error !== null) {
+        console.error('Setup platform error, prompting user to bypass');
+        this.setError(errorType);
+        throwStreamError(errorType);
       }
 
       // update restream settings
@@ -562,17 +574,10 @@ export class StreamingService
           await this.restreamService.beforeGoLive();
         });
       } catch (e: unknown) {
-        // Handle rendering a prompt for enabling permissions to generate a stream key for Kick
-        if (this.state.info.error?.type === 'KICK_STREAM_KEY_MISSING') return;
-
-        const error = this.handleTypedStreamError(e, failureType, 'Failed to setup restream');
-        this.setError(error);
-        return;
+        const errorType = this.handleTypedStreamError(e, failureType, 'Failed to setup restream');
+        throwStreamError(errorType);
       }
     }
-
-    // Handle rendering a prompt for enabling permissions to generate a stream key for Kick
-    if (this.state.info.error?.type === 'KICK_STREAM_KEY_MISSING') return;
 
     // apply optimized settings
     const optimizer = this.videoEncodingOptimizationService;
@@ -589,6 +594,7 @@ export class StreamingService
     try {
       await this.runCheck('startVideoTransmission', () => this.finishStartStreaming());
     } catch (e: unknown) {
+      console.error('Error starting video transmission: ', e);
       return;
     }
 
@@ -636,11 +642,24 @@ export class StreamingService
           ? undefined
           : settings;
 
+      // Note: Enhanced broadcasting setting persist in two places during the go live flow:
+      // in the Twitch service and in osn. The setting in the Twitch service is persisted
+      // between streams in order to restore the user's preferences for when they go live with
+      // Twitch dual stream, which requires enhanced broadcasting to be enabled. The setting
+      // in osn is what actually determines if the stream will use enhanced broadcasting.
+      if (platform === 'twitch') {
+        const isEnhancedBroadcasting =
+          (settings.platforms.twitch && settings.platforms.twitch.isEnhancedBroadcasting) ||
+          this.views.getIsEnhancedBroadcasting();
+
+        this.SET_ENHANCED_BROADCASTING(isEnhancedBroadcasting);
+      }
+
       // don't update settings for twitch in unattendedMode
       await this.runCheck(platform, () => service.beforeGoLive(settingsForPlatform, display));
     } catch (e: unknown) {
       console.error('Error setting platform settings', e);
-      this.handleSetupPlatformError(e, platform);
+      const errorType = this.handleSetupPlatformError(e, platform);
 
       // if TikTok is the only platform going live and the user is banned, prevent the stream from attempting to start
       if (
@@ -650,11 +669,24 @@ export class StreamingService
       ) {
         throwStreamError('TIKTOK_USER_BANNED', { ...e, platform: 'tiktok' });
       }
+
+      // Handle rendering a prompt for enabling permissions to generate a stream key for Kick
+      if (errorType === 'KICK_STREAM_KEY_MISSING') {
+        throwStreamError('KICK_STREAM_KEY_MISSING', { platform: 'kick' });
+      }
+
+      // To prevent users from being blocked by livestreaming from a single platform failing to
+      // set up. Users can elect to bypass the error and go live anyways. To prevent the go live
+      // checklist from being stopped too soon, only stop if no displays are multistreaming.
+      if (!this.views.shouldSetupRestream) {
+        throwStreamError(errorType);
+      }
     }
   }
 
-  handleSetupPlatformError(e: unknown, platform: TPlatform) {
+  handleSetupPlatformError(e: unknown, platform: TPlatform): TStreamErrorType {
     console.error(`Error running beforeGoLive for platform ${platform}\n`, e);
+    let type = 'SETTINGS_UPDATE_FAILED' as TStreamErrorType;
 
     // cast all PLATFORM_REQUEST_FAILED errors to SETTINGS_UPDATE_FAILED
     if (e instanceof StreamError) {
@@ -662,13 +694,15 @@ export class StreamingService
         (e.type as TStreamErrorType) === 'PLATFORM_REQUEST_FAILED'
           ? 'SETTINGS_UPDATE_FAILED'
           : e.type || 'UNKNOWN_ERROR';
+      type = e.type;
       this.setError(e, platform);
     } else {
-      this.setError('SETTINGS_UPDATE_FAILED', platform);
+      this.setError(type, platform);
     }
 
-    console.error('Error setting up platform', platform, e);
-    return;
+    console.error('Error setting up platform', platform, type, e);
+
+    return type;
   }
 
   private recordAfterStreamStartAnalytics(settings: IGoLiveSettings) {
@@ -758,7 +792,8 @@ export class StreamingService
       try {
         await this.runCheck(platform, () => service.putChannelInfo(newSettings));
       } catch (e: unknown) {
-        return this.handleUpdatePlatformError(e, platform);
+        this.handleUpdatePlatformError(e, platform);
+        return false;
       }
     }
 
@@ -777,23 +812,22 @@ export class StreamingService
         (e.type as TStreamErrorType) === 'PLATFORM_REQUEST_FAILED'
           ? 'SETTINGS_UPDATE_FAILED'
           : e.type || 'UNKNOWN_ERROR';
-      const error = this.handleTypedStreamError(e, type, message);
-      this.setError(error, platform);
+      return this.handleTypedStreamError(e, type, message, platform);
     } else {
-      const error = this.handleTypedStreamError(e, 'SETTINGS_UPDATE_FAILED', message);
-      this.setError(error, platform);
+      return this.handleTypedStreamError(e, 'SETTINGS_UPDATE_FAILED', message, platform);
     }
-    return false;
   }
 
   handleTypedStreamError(
     e: StreamError | unknown,
     type: TStreamErrorType,
     message: string,
-  ): StreamError | TStreamErrorType {
+    platform?: TPlatform,
+  ): TStreamErrorType {
     // restream errors returns an object with key value pairs for error details
     const messages: string[] = [message];
     const details: string[] = [];
+    let errorType = type;
 
     const defaultMessage =
       this.state.info.error?.message ??
@@ -816,14 +850,23 @@ export class StreamingService
 
       const status = this.state.info.error?.status ?? 400;
 
-      return createStreamError(
+      const streamError = createStreamError(
         type,
-        { status, statusText: messages.join('. ') },
+        { status, statusText: messages.join('. '), platform },
         details.join('\n'),
       );
+      errorType = streamError.type;
+      this.setError(streamError);
     }
 
-    return e instanceof StreamError ? { ...e, type } : type;
+    if (e instanceof StreamError) {
+      errorType = e.type;
+      this.setError(e);
+    } else {
+      this.setError(type);
+    }
+
+    return errorType;
   }
 
   /**
@@ -866,7 +909,10 @@ export class StreamingService
   /**
    * Set the error state for the GoLive window
    */
-  private setError(errorTypeOrError?: TStreamErrorType | StreamError, platform?: TPlatform) {
+  private setError(
+    errorTypeOrError?: TStreamErrorType | StreamError,
+    platform?: TPlatform,
+  ): IStreamError {
     const target = platform
       ? this.views.getPlatformDisplayName(platform)
       : $t('Custom Destination');
@@ -893,6 +939,7 @@ export class StreamingService
 
     // add follow-up action to report if there is an action
     this.streamErrorCreated.next(this.streamErrorReportMessage);
+    return error;
   }
 
   resetInfo() {
@@ -1017,23 +1064,36 @@ export class StreamingService
       NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
       NodeObs.OBS_service_setVideoInfo(verticalContext, 'vertical');
 
-      const signalChanged = this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
-        if (signalInfo.service === 'default') {
-          if (signalInfo.code !== 0) {
-            NodeObs.OBS_service_stopStreaming(true, 'horizontal');
-            NodeObs.OBS_service_stopStreaming(true, 'vertical');
-          }
+      // Twitch dual stream's vertical display is handled by the backend
+      // so when Twitch is the only target for dual stream, only start the
+      // horizontal stream
+      if (this.views.isTwitchDualStreaming) {
+        console.log('Start Twitch Dual Stream');
+        NodeObs.OBS_service_startStreaming('both');
+      } else {
+        NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
+        NodeObs.OBS_service_setVideoInfo(verticalContext, 'vertical');
 
-          if (signalInfo.signal === EOBSOutputSignal.Start) {
-            NodeObs.OBS_service_startStreaming('vertical');
-            signalChanged.unsubscribe();
-          }
-        }
-      });
+        const signalChanged = this.signalInfoChanged.subscribe(
+          (signalInfo: IOBSOutputSignalInfo) => {
+            if (signalInfo.service === 'default') {
+              if (signalInfo.code !== 0) {
+                NodeObs.OBS_service_stopStreaming(true, 'horizontal');
+                NodeObs.OBS_service_stopStreaming(true, 'vertical');
+              }
 
-      NodeObs.OBS_service_startStreaming('horizontal');
-      // sleep for 1 second to allow the first stream to start
-      await new Promise(resolve => setTimeout(resolve, 1000));
+              if (signalInfo.signal === EOBSOutputSignal.Start) {
+                NodeObs.OBS_service_startStreaming('vertical');
+                signalChanged.unsubscribe();
+              }
+            }
+          },
+        );
+
+        NodeObs.OBS_service_startStreaming('horizontal');
+        // sleep for 1 second to allow the first stream to start
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     } else {
       // start single output
       const horizontalContext = this.videoSettingsService.contexts.horizontal;
@@ -1181,6 +1241,11 @@ export class StreamingService
 
       if (this.views.isStreamShiftMode) {
         this.restreamService.resetStreamShift();
+      }
+
+      // Reset enhanced broadcasting after streaming stops to prevent it from being accidentally enabled for the next stream
+      if (this.state.enhancedBroadcasting) {
+        this.SET_ENHANCED_BROADCASTING(false);
       }
 
       this.UPDATE_STREAM_INFO({ lifecycle: 'empty' });
@@ -1385,9 +1450,21 @@ export class StreamingService
 
   private handleOBSOutputSignal(info: IOBSOutputSignalInfo) {
     console.debug('OBS Output signal: ', info);
+    console.log('info', JSON.stringify(info, null, 2));
 
+    // Starting the stream should resolve:
+    // 1. Single Output: In single output mode after the stream start signal has been received
+    // 2. Dual Output: In dual output mode after the stream start signal has been received
+    //    for the vertical display
+    // 3. Dual Output, Dual Stream with Twitch: In dual output mode with Twitch as the only target
+    //    for dual stream, resolve after the stream start signal has been received for the
+    //    horizontal display
     const shouldResolve =
-      !this.views.isDualOutputMode || (this.views.isDualOutputMode && info.service === 'vertical');
+      !this.views.isDualOutputMode ||
+      (this.views.isDualOutputMode && info.service === 'vertical') ||
+      (this.views.isDualOutputMode &&
+        info.service === 'default' &&
+        this.views.isTwitchDualStreaming);
 
     const time = new Date().toISOString();
 
@@ -1544,6 +1621,46 @@ export class StreamingService
     this.handleOBSOutputError(info);
   }
 
+  private async handleRetryStartStreaming(info: IOBSOutputSignalInfo) {
+    console.log('RETRYING START STREAMING WITH RECORDING/REPLAY BUFFER OFF');
+    // Toggle off recording and replay buffer when starting the stream
+    const recordWhenStreaming = this.streamSettingsService.settings.recordWhenStreaming;
+    if (recordWhenStreaming) {
+      this.settingsService.setSettingValue('General', 'RecordWhenStreaming', false);
+    }
+
+    if (recordWhenStreaming && this.state.recordingStatus === ERecordingState.Offline) {
+      this.toggleRecording();
+    }
+
+    const replayWhenStreaming = this.streamSettingsService.settings.replayBufferWhileStreaming;
+    if (replayWhenStreaming) {
+      this.settingsService.setSettingValue('General', 'ReplayBufferWhileStreaming', false);
+    }
+
+    // Notify the user that recording/replay buffer was toggled off
+    this.notificationsService.actions.push({
+      type: ENotificationType.WARNING,
+      message: $t(
+        'Recording and/or Replay Buffer failed to start and was automatically turned off when starting the stream.',
+      ),
+      lifeTime: 3000,
+    });
+
+    const errorText = $t(
+      'Recording and/or Replay Buffer failed to start and was automatically turned off when starting the stream.',
+    );
+
+    remote.dialog.showMessageBox(Utils.getMainWindow(), {
+      buttons: [$t('OK')],
+      title: $t('Streaming Started Without Recording/Replay Buffer'),
+      type: 'error',
+      message: errorText,
+    });
+
+    this.streamErrorCreated.next(errorText);
+  }
+
   private handleOBSOutputError(info: IOBSOutputSignalInfo) {
     if (!info.code) return;
     if ((info.code as EOutputCode) === EOutputCode.Success) return;
@@ -1617,6 +1734,15 @@ export class StreamingService
 
         showNativeErrorMessage = details !== '';
       } else {
+        // Only retry in dual output and if recording or replay buffer failes to start and the error is unknown
+        if (
+          this.views.isDualOutputMode &&
+          info.type !== EOBSOutputType.Streaming &&
+          info.code === -4
+        ) {
+          this.handleRetryStartStreaming(info);
+          return;
+        }
         if (
           !info.error ||
           (info.error && typeof info.error !== 'string') ||
@@ -1832,5 +1958,10 @@ export class StreamingService
   @mutation()
   private SET_GO_LIVE_SETTINGS(settings: IGoLiveSettings) {
     this.state.info.settings = settings;
+  }
+
+  @mutation()
+  private SET_ENHANCED_BROADCASTING(enabled: boolean) {
+    this.state.enhancedBroadcasting = enabled;
   }
 }

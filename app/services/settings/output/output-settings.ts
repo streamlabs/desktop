@@ -949,7 +949,6 @@ export class OutputSettingsService extends Service {
   getIsEnhancedBroadcasting() {
     try {
       const enhancedBroadcasting = this.settingsService.isEnhancedBroadcasting();
-
       return enhancedBroadcasting ? 'Enabled' : 'Disabled';
     } catch (e: unknown) {
       console.error('Error getting enhanced broadcasting setting:', e);

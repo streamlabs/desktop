@@ -149,7 +149,7 @@
   "An error has occured while uninstalling the virtual camera": "卸载虚拟摄像头时发生错误",
   "Streamlabs Desktop cannot install the virtual camera if it's not in Applications. Please move Streamlabs Desktop to the Applications directory.": "如果虚拟摄像头不在应用程序中，Streamlabs Desktop 则无法安装。请将 Streamlabs Desktop 移动至应用程序目录。",
   "The installation of the virtual camera will complete after a system reboot.": "虚拟摄像头的安装将在系统重启后完成。",
-  "Streamlabs Virtual Webcam feature requires macOS 13 or later.": "Streamlabs Virtual Webcam feature requires macOS 13 or later.",
+  "Streamlabs Virtual Webcam feature requires macOS 13 or later.": "Streamlabs 虚拟网络摄像头功能需要 macOS 13 或更高版本的操作系统。",
   "Output Type": "输出类型",
   "Output Selection": "输出选择",
   "Output Source": "输出源",
@@ -279,9 +279,9 @@
   "Apply Primary": "主要应用",
   "Output Resolution": "输出分辨率",
   "Unable to start Dual Output, update your Stream Settings to \"Use Recommended Settings\"": "无法启动 Dual Output，请将直播设置更新为“使用推荐设置”。",
-  "Mobile": "Mobile",
-  "Mobile Streaming": "Mobile Streaming",
-  "Remote Controller": "Remote Controller",
-  "Third Party Connections": "Third Party Connections",
-  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "Stream your phone camera or mobile game on the go with Streamlabs Mobile App."
+  "Mobile": "移动设备",
+  "Mobile Streaming": "移动直播",
+  "Remote Controller": "遥控器",
+  "Third Party Connections": "第三方连接",
+  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "使用 Streamlabs Mobile 应用程序随时随地直播手机摄像头或手机游戏内容。"
 }

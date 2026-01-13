@@ -11,13 +11,12 @@ import { UserService } from '../user';
 import { RestreamService, TStreamShiftStatus } from '../restream';
 import { DualOutputService, TDisplayPlatforms, TDisplayDestinations } from '../dual-output';
 import { getPlatformService, TPlatform, TPlatformCapability, platformList } from '../platforms';
-import { TwitterService } from '../../app-services';
+import { TwitchService, TwitterService } from '../../app-services';
 import cloneDeep from 'lodash/cloneDeep';
 import difference from 'lodash/difference';
 import { Services } from '../../components-react/service-provider';
 import { getDefined } from '../../util/properties-type-guards';
 import { TDisplayType } from 'services/settings-v2';
-import { EAvailableFeatures, IncrementalRolloutService } from 'services/incremental-rollout';
 
 /**
  * The stream info view is responsible for keeping
@@ -46,12 +45,12 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return this.getServiceViews(TwitterService);
   }
 
-  private get dualOutputView() {
-    return this.getServiceViews(DualOutputService);
+  private get twitchView() {
+    return this.getServiceViews(TwitchService);
   }
 
-  private get incrementalRolloutView() {
-    return this.getServiceViews(IncrementalRolloutService);
+  private get dualOutputView() {
+    return this.getServiceViews(DualOutputService);
   }
 
   private get streamingState() {
@@ -128,6 +127,12 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns a list of enabled for streaming platforms
    */
   get enabledPlatforms(): TPlatform[] {
+    // Twitch dual streaming is only available if Twitch is the only enabled platform for performance reasons.
+    // Checking for Twitch dual streaming instead of toggling all other platforms off preserves the enabled platforms state.
+    if (this.isTwitchDualStreaming) {
+      return ['twitch'];
+    }
+
     return this.getEnabledPlatforms(this.settings.platforms);
   }
 
@@ -158,6 +163,17 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    */
   get alwaysShownPlatforms(): TPlatform[] {
     return [];
+  }
+
+  /**
+   * Primarily used for custom UI handling for Twitch dual stream
+   */
+  get isTwitchDualStreaming() {
+    if (!this.twitchView.hasTwitchDualStreamAccess) {
+      return false;
+    }
+
+    return this.settings.platforms?.twitch && this.settings.platforms?.twitch.display === 'both';
   }
 
   /**
@@ -372,6 +388,21 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       platformDisplays.vertical.length > 0 || destinationDisplays.vertical.length > 0;
 
     return horizontalHasDestinations && verticalHasDestinations;
+  }
+
+  /**
+   * Checks if the vertical stream is the Twitch dual stream vertical target
+   * @remark Twitch dual stream uses only the horizontal stream to go live
+   * because the backend sends both the horizontal and vertical streams in a single request.
+   */
+  get isVerticalTwitchDualStream() {
+    return (
+      this.enabledPlatforms.length === 1 && this.activeDisplayPlatforms.vertical.includes('twitch')
+    );
+  }
+
+  getIsEnhancedBroadcasting(): boolean {
+    return Services.SettingsService.isEnhancedBroadcasting();
   }
 
   /**

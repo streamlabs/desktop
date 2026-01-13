@@ -197,7 +197,7 @@ function PanelForm(p: { source: AudioSource }) {
         'wasapi_input_capture',
         'coreaudio_input_capture',
         'dshow_input',
-        'av_capture_input',
+        'macos_avcapture',
       ].includes(source.type)
     : false;
 
@@ -298,28 +298,30 @@ function DeviceInputs(p: { source: Source }) {
     });
     setStatefulSettings({ ...statefulSettings, [name]: value });
   }
+  const isOutputCapture: boolean = p.source.type === 'wasapi_process_output_capture';
+  const settingId = isOutputCapture ? statefulSettings.window : statefulSettings.device_id;
+  const inputField = isOutputCapture ? 'window' : 'device_id';
+  const inputLabel = isOutputCapture ? 'Window' : 'Device';
+  const foundDevice: boolean = deviceOptions.some(option => option.value === settingId);
 
-  const input =
-    p.source.type === 'wasapi_process_output_capture' ? (
-      <ListInput
-        label={$t('Window')}
-        options={deviceOptions}
-        value={statefulSettings.window}
-        onChange={value => handleInput('window', value)}
-      />
-    ) : (
-      <ListInput
-        label={$t('Device')}
-        options={deviceOptions}
-        value={statefulSettings.device_id}
-        onChange={value => handleInput('device_id', value)}
-      />
-    );
+  // Ensure the input is still valid. If not, reset to Default device which should be at index 0.
+  const inputId =
+    foundDevice || deviceOptions.length === 0 ? settingId : deviceOptions[0].value;
+  if (!foundDevice && deviceOptions.length > 0) {
+    handleInput(inputField, deviceOptions[0].value);
+  }
 
   return (
     <>
-      {input}
-      {p.source.type !== 'wasapi_process_output_capture' && <SwitchInput
+      {
+        <ListInput
+          label={inputLabel}
+          options={deviceOptions}
+          value={inputId}
+          onChange={value => handleInput(inputField, value)}
+        />
+      }
+      {!isOutputCapture && <SwitchInput
         label={$t('Use Device Timestamps')}
         value={statefulSettings.use_device_timing}
         onChange={value => handleInput('use_device_timing', value)}

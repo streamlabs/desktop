@@ -18,5 +18,6 @@
   "Unknown error, please contact support": "Error desconocido, ponte en contacto con el servicio de asistencia",
   "Custom Destination": "Destino personalizado",
   "This app is currently popped out in another window.": "Esta aplicación está actualmente abierta en otra ventana.",
-  "Error granting chat permissions.": "No se han podido conceder los permisos del chat."
+  "Error granting chat permissions.": "No se han podido conceder los permisos del chat.",
+  "Authentication Error": "Error de autenticación"
 }

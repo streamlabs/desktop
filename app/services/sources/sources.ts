@@ -115,7 +115,7 @@ export const macSources: TSourceType[] = [
   'scene',
   'coreaudio_input_capture',
   'coreaudio_output_capture',
-  'av_capture_input',
+  'macos_avcapture',
   'display_capture',
   'audio_line',
   'ndi_source',
@@ -606,7 +606,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
     }
 
     if (
-      type === 'av_capture_input' &&
+      type === 'macos_avcapture' &&
       resolvedSettings.device === void 0 &&
       this.defaultHardwareService.state.defaultVideoDevice
     ) {
@@ -642,7 +642,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
       { description: 'VLC Source', value: 'vlc_source' },
       { description: 'Audio Input Capture', value: 'coreaudio_input_capture' },
       { description: 'Audio Output Capture', value: 'coreaudio_output_capture' },
-      { description: 'Video Capture Device', value: 'av_capture_input' },
+      { description: 'Video Capture Device', value: 'macos_avcapture' },
       { description: 'Display Capture', value: 'display_capture' },
       { description: 'Soundtrack source', value: 'soundtrack_source' },
       { description: 'Collab Cam', value: 'mediasoupconnector' },
@@ -776,7 +776,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
       // 'vlc_source',
       // 'coreaudio_input_capture',
       // 'coreaudio_output_capture',
-      // 'av_capture_input',
+      // 'macos_avcapture',
       // 'display_capture',
       // 'audio_line',
       // 'syphon-input',
