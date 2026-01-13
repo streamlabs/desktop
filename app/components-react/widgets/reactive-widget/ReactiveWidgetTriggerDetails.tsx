@@ -327,9 +327,8 @@ export function ReactiveWidgetTriggerDetails({
             </div>
           }
         >
-
           <GroupedListInput
-            label={$t('TTS Language/Voice')}
+            label={$t('Voice')}
             {...bind('tts_settings.language')}
             options={voiceOptions}
             showSearch
@@ -337,7 +336,7 @@ export function ReactiveWidgetTriggerDetails({
           />
 
           <SliderInput
-            label={$t('TTS Volume')}
+            label={$t('Volume')}
             debounce={500}
             {...bind('tts_settings.volume')}
             tipFormatter={(n: number) => `${n}%`}
