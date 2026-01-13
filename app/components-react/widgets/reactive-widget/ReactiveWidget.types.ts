@@ -18,15 +18,22 @@ export enum TriggerType {
   Total = 'total',
 }
 
+
 export enum ApiEndpoints {
   ResetSettings = 'widgets/desktop/game-pulse/reset-settings',
   DeleteTrigger = 'widgets/desktop/game-pulse/trigger',
+  TTSLanguages = 'tts/static/available-languages',
 }
 
 export type ReactiveLayout = 'above' | 'banner' | 'side';
 export type ReactiveStreakPeriod = 'session' | 'today' | 'round';
 export type ReactiveTriggerType = 'streak' | 'achievement' | 'level' | 'total';
 export type ReactiveEventPeriod = 'round' | 'today' | null;
+
+export interface ReactiveVoiceGroup {
+  group: string;
+  list: { key: string; value: string }[];
+}
 
 export interface SelectOption {
   label: string;
@@ -165,6 +172,7 @@ export interface ReactiveWidgetOptions {
   streak_time_periods: Record<string, string>;
   available_game_events: Record<string, string[]>;
   event_time_periods: Record<string, string>;
+  tts_voices?: Record<string, ReactiveVoiceGroup>;
 }
 
 export interface ReactiveStaticData {

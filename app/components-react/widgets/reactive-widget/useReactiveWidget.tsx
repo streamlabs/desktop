@@ -489,6 +489,28 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     if (!scope) return null;
     return scope.triggers.find(t => t.id === triggerId) ?? null;
   }
+
+  // override fetchData to include tts voices
+  protected async fetchData() {
+    const voicesUrl = `https://${this.hostsService.streamlabs}/api/v5/${ApiEndpoints.TTSLanguages}`;
+    const [data, voicesRes] = await Promise.all([
+      super.fetchData(),
+      this.widgetsService.request({ url: voicesUrl, method: 'GET' })
+    ]);
+
+    try {
+      if (voicesRes.success && this.state.staticConfig) {
+        const currentConfig = structuredClone(this.state.staticConfig) as ReactiveStaticConfig;
+        if (!currentConfig.data.options) currentConfig.data.options = {} as any;
+        currentConfig.data.options.tts_voices = voicesRes.data || voicesRes;
+        this.state.setStaticConfig(currentConfig);
+      }
+    } catch (err) {
+      console.error('[ReactiveWidget] Failed to merge voice data:', err);
+    }
+
+    return data;
+  }
 }
 
 export function useReactiveWidget() {

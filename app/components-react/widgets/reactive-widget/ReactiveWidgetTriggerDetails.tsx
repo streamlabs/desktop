@@ -13,12 +13,14 @@ import {
   ColorInput,
   FontWeightInput,
   ListInput,
+  GroupedListInput
 } from 'components-react/shared/inputs';
 import { Collapse } from 'antd';
 import { $t } from 'services/i18n';
 import { LayoutInput } from '../common/LayoutInput';
 import css from './ReactiveWidgetTriggerDetails.m.less';
 import { AnimationOptionConfig, ReactiveStaticConfig, ReactiveTrigger, SelectOption } from './ReactiveWidget.types';
+import { IListGroup } from 'components-react/shared/inputs/GroupedListInput';
 
 interface ReactiveWidgetTriggerDetailsProps {
   trigger: ReactiveTrigger;
@@ -27,6 +29,11 @@ interface ReactiveWidgetTriggerDetailsProps {
 }
 type LevelRangeType = 'minimum' | 'maximum' | 'between';
 
+enum TriggerPanelKeys {
+  FontSettings = 'font-settings',
+  AnimationSettings = 'animation-settings',
+  TTSSettings = 'tts-settings',
+}
 /**
  * hook to handle deep object binding.
  */
@@ -104,6 +111,18 @@ export function ReactiveWidgetTriggerDetails({
     };
   }, [staticConfig]);
 
+  const voiceOptions = useMemo<IListGroup<string>[]>(() => {
+    const rawVoices = staticConfig?.data?.options?.tts_voices || {};
+
+    return Object.values(rawVoices).map((group: any) => ({
+      label: group.group,
+      options: group.list.map((item: any) => ({
+        label: item.value,
+        value: item.key,
+      })),
+    }));
+  }, []);
+
   const eventType = trigger?.event_type;
   const isStreak = eventType === 'streak';
   const isTotal = eventType === 'total';
@@ -145,6 +164,7 @@ export function ReactiveWidgetTriggerDetails({
     if (!isLevel) return null;
     return deriveLevelRangeType(trigger);
   }, [isLevel, trigger.amount_minimum, trigger.amount_maximum]);
+
   const handleLevelRangeChange = useCallback(
     (newType: LevelRangeType) => {
       if (!onUpdate) return;
@@ -244,8 +264,8 @@ export function ReactiveWidgetTriggerDetails({
         tipFormatter={(ms: number) => `${(ms / 1000).toFixed(1)}s`}
       />
 
-      <Collapse bordered={false}>
-        <Collapse.Panel header={$t('Font Settings')} key="font-settings">
+      <Collapse bordered={false} defaultActiveKey={[TriggerPanelKeys.FontSettings]}>
+        <Collapse.Panel header={$t('Font Settings')} key={TriggerPanelKeys.FontSettings}>
           <FontFamilyInput label={$t('Font Family')} {...bind('text_settings.font')} />
           <SliderInput
             min={8}
@@ -260,8 +280,8 @@ export function ReactiveWidgetTriggerDetails({
         </Collapse.Panel>
       </Collapse>
 
-      <Collapse bordered={false}>
-        <Collapse.Panel header={$t('Animation Settings')} key="animation-settings">
+      <Collapse bordered={false} defaultActiveKey={[TriggerPanelKeys.AnimationSettings]}>
+        <Collapse.Panel header={$t('Animation Settings')} key={TriggerPanelKeys.AnimationSettings}>
           <div className={css.animationRow}>
             <span className={css.animationLabel}>{$t('Animation')}</span>
             <div className={css.selectInputGroup}>
@@ -286,6 +306,41 @@ export function ReactiveWidgetTriggerDetails({
             {...bind('text_settings.text_delay_ms')}
             max={20000}
             tipFormatter={(ms: number) => `${(ms / 1000).toFixed(1)}s`}
+          />
+        </Collapse.Panel>
+      </Collapse>
+
+      <Collapse bordered={false} defaultActiveKey={[TriggerPanelKeys.TTSSettings]}>
+        <Collapse.Panel
+          header={$t('Text To Speech')}
+          key={TriggerPanelKeys.TTSSettings}
+          extra={
+            <div onClick={e => e.stopPropagation()}>
+              <SwitchInput
+                name={`tts-enabled-${trigger.id}`}
+                {...bind('tts_settings.enabled')}
+                label={trigger.tts_settings.enabled ? $t('Enabled') : $t('Disabled')}
+                labelAlign="left"
+                layout="horizontal"
+                checkmark
+              />
+            </div>
+          }
+        >
+
+          <GroupedListInput
+            label={$t('TTS Language/Voice')}
+            {...bind('tts_settings.language')}
+            options={voiceOptions}
+            showSearch
+            placeholder={$t('Select a voice...')}
+          />
+
+          <SliderInput
+            label={$t('TTS Volume')}
+            debounce={500}
+            {...bind('tts_settings.volume')}
+            tipFormatter={(n: number) => `${n}%`}
           />
         </Collapse.Panel>
       </Collapse>

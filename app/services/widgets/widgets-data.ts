@@ -539,7 +539,7 @@ export const WidgetDefinitions: { [x: number]: IWidget } = {
     },
   },
   [WidgetType.ReactiveWidget]: {
-    name: 'Reactive Widget',
+    name: 'Game Pulse',
     humanType: 'game_pulse',
     width: 400,
     height: 750,
@@ -829,7 +829,7 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
     group: 'flair',
   },
   [WidgetType.ReactiveWidget]: {
-    name: $t('Reactive Widget'),
+    name: $t('Game Pulse'),
     description: $t(
       'Real time alerts reacting to your in game events.',
     ),
