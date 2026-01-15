@@ -750,6 +750,16 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     this.setSettings('Output', this.state.Output.formData);
   }
 
+  setDefaultVideoEncoder() {
+    const mode: string = this.findSettingValue(this.state.Output.formData, 'Untitled', 'Mode');
+
+    if (mode === 'Advanced') {
+      this.setSettingValue('Output', 'Encoder', 'obs_x264');
+    } else {
+      this.setSettingValue('Output', 'StreamEncoder', 'x264');
+    }
+  }
+  
   /**
    * List all settings by category to the console
    * @remark For debugging purposes only
@@ -767,6 +777,10 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
         {},
       );
     }
+  }
+
+  isValidEncoder(streamType: 'Stream' | 'StreamSecond' | 'Both') {
+    return obs.NodeObs.OBS_settings_isValidEncoder(streamType);
   }
 
   isEnhancedBroadcasting() {

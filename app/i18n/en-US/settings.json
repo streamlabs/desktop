@@ -283,5 +283,10 @@
   "Mobile Streaming": "Mobile Streaming",
   "Remote Controller": "Remote Controller",
   "Third Party Connections": "Third Party Connections",
-  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "Stream your phone camera or mobile game on the go with Streamlabs Mobile App."
+  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.",
+  "The currently configured encoder is not supported for the selected Dual Output destinations. Would you like to reset the stream encoder to Software (x264) or select a different encoder in settings?": "The currently configured encoder is not supported for the selected Dual Output destinations. Would you like to reset the stream encoder to Software (x264) or select a different encoder in settings?",
+  "The currently configured encoder is not supported for the selected Dual Output destinations. Please reset the stream encoder to Software (x264) or select a different encoder in settings.": "The currently configured encoder is not supported for the selected Dual Output destinations. Please reset the stream encoder to Software (x264) or select a different encoder in settings.",
+  "Cancel": "Cancel",
+  "Open Settings": "Open Settings",
+  "Use x264": "Use x264"
 }
