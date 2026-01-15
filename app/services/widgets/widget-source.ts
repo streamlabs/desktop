@@ -80,7 +80,6 @@ export class WidgetSource implements IWidgetSource {
   }
 
   destroyPreviewSource() {
-    console.log('Destroyed preview source for widget', { previewSourceId: this.previewSourceId });
     this.widgetsService.stopSyncPreviewSource(this.previewSourceId);
     this.sourcesService.views.getSource(this.previewSourceId)?.remove();
     this.SET_PREVIEW_SOURCE_ID('');

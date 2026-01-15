@@ -276,7 +276,6 @@ export class WidgetsService
         const previewSource = widget.getPreviewSource();
         previewSource.updateSettings(newPreviewSettings);
         previewSource.refresh();
-        console.log("synced preview source", { previewSourceId, newPreviewSettings })
       },
     );
   }

@@ -19,7 +19,7 @@ import { Collapse } from 'antd';
 import { $t } from 'services/i18n';
 import { LayoutInput } from '../common/LayoutInput';
 import css from './ReactiveWidgetTriggerDetails.m.less';
-import { AnimationOptionConfig, ReactiveStaticConfig, ReactiveTrigger, SelectOption } from './ReactiveWidget.types';
+import { AnimationGroup, ReactiveStaticConfig, ReactiveTrigger } from './ReactiveWidget.types';
 import { IListGroup } from 'components-react/shared/inputs/GroupedListInput';
 
 interface ReactiveWidgetTriggerDetailsProps {
@@ -58,20 +58,18 @@ function useTriggerBinding(
   );
 }
 
+// map backend animation groups to UI GroupedList options
+function mapAnimationGroups(groups?: AnimationGroup | AnimationGroup[]): IListGroup<string>[] {
+  if (!groups) return [];
+  const arr = Array.isArray(groups) ? groups : [groups];
 
-function flattenAnimationOptions(
-  options: AnimationOptionConfig | AnimationOptionConfig[] | undefined | null
-): SelectOption[] {
-  if (!options) return [];
-  const arr = Array.isArray(options) ? options : [options];
-
-  return arr.flatMap((opt) => {
-    if (!opt) return [];
-    if (opt.list && Array.isArray(opt.list)) {
-      return opt.list.map((sub) => ({ label: sub.value, value: sub.key }));
-    }
-    return [{ label: opt.value, value: opt.key }];
-  });
+  return arr.map(g => ({
+      label: g.group,
+      options: (g.list || []).map(item => ({
+          label: item.value,
+          value: item.key
+      }))
+  }));
 }
 
 export function ReactiveWidgetTriggerDetails({
@@ -108,18 +106,18 @@ export function ReactiveWidgetTriggerDetails({
     }
 
     return {
-      showAnimationOptions: flattenAnimationOptions(anims.show_animations?.list),
-      hideAnimationOptions: flattenAnimationOptions(anims.hide_animations?.list),
-      textAnimationOptions: flattenAnimationOptions(anims.text_animations?.list),
+      showAnimationOptions: mapAnimationGroups(anims.show_animations),
+      hideAnimationOptions: mapAnimationGroups(anims.hide_animations),
+      textAnimationOptions: mapAnimationGroups(anims.text_animations),
     };
   }, [staticConfig]);
 
   const voiceOptions = useMemo<IListGroup<string>[]>(() => {
-    const rawVoices = staticConfig?.data?.options?.tts_voices || {};
+    const voices = staticConfig?.data?.options?.tts_voices || {};
 
-    return Object.values(rawVoices).map((group: any) => ({
-      label: group.group,
-      options: group.list.map((item: any) => ({
+    return Object.entries(voices).map(([key, group]: [string, { list: { key: string; value: string }[] }]) => ({
+      label: key,
+      options: group.list.map((item: { key: string; value: string }) => ({
         label: item.value,
         value: item.key,
       })),
@@ -288,21 +286,24 @@ export function ReactiveWidgetTriggerDetails({
           <div className={css.animationRow}>
             <span className={css.animationLabel}>{$t('Animation')}</span>
             <div className={css.selectInputGroup}>
-              <ListInput
+              <GroupedListInput
                 {...bind('media_settings.show_animation')}
                 options={showAnimationOptions}
+                showSearch
               />
-              <ListInput
+              <GroupedListInput
                 {...bind('media_settings.hide_animation')}
                 options={hideAnimationOptions}
+                showSearch
               />
             </div>
           </div>
 
-          <ListInput
+          <GroupedListInput
             label={$t('Text Animation')}
             {...bind('text_settings.text_animation')}
             options={textAnimationOptions}
+            showSearch
           />
           <SliderInput
             label={$t('Text Delay')}

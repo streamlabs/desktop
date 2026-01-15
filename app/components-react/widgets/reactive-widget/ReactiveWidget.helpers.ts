@@ -34,23 +34,6 @@ const DEFAULT_TRIGGER_SETTINGS = {
   layout: 'above' as const,
 };
 
-export function flattenAnimationOptions(
-  options: AnimationOptionConfig | AnimationOptionConfig[] | undefined | null
-): SelectOption[] {
-  if (!options) return [];
-  const arr = Array.isArray(options) ? options : [options];
-
-  return arr.flatMap((opt) => {
-    if (!opt) return [];
-    if (opt.list && Array.isArray(opt.list)) {
-      return opt.list.map((sub) => ({ label: sub.value, value: sub.key }));
-    }
-    return [{ label: opt.value, value: opt.key }];
-  });
-}
-
-
-
 /**
  * Centralized util for managing the "Tab ID" strings used in the Reactive Widget.
  *
