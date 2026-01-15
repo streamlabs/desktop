@@ -1,3 +1,4 @@
+import { Throttle, Bind } from 'lodash-decorators';
 import { useWidget, WidgetModule } from '../common/useWidget';
 import {
   ReactiveTabUtils,
@@ -353,6 +354,20 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     };
 
     this.updateSettings(newSettings);
+  }
+
+  @Bind()
+  @Throttle(1000)
+  public async playReactiveAlert(trigger: ReactiveTrigger) {
+    const url = `https://${this.hostsService.streamlabs}/api/v5/${ApiEndpoints.PreviewTrigger}`;
+
+    const res = await this.widgetsService.request({
+      url,
+      method: 'POST',
+      body: trigger,
+    });
+
+    return res;
   }
 
   public async resetSettings() {

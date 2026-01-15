@@ -257,10 +257,6 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
     this.actions.playAlert(type);
   }
 
-  public playReactiveAlert(trigger: any) {
-    this.actions.playReactiveAlert(trigger);
-  }
-
   /**
    * Update settings and save on the server
    */

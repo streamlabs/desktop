@@ -18,10 +18,10 @@ export enum TriggerType {
   Total = 'total',
 }
 
-
 export enum ApiEndpoints {
   ResetSettings = 'widgets/desktop/game-pulse/reset-settings',
   DeleteTrigger = 'widgets/desktop/game-pulse/trigger',
+  PreviewTrigger = 'widgets/desktop/game-pulse/preview/trigger',
   TTSLanguages = 'tts/static/available-languages',
 }
 

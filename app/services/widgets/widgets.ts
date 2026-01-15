@@ -233,24 +233,6 @@ export class WidgetsService
     );
   }
 
-  @Throttle(1000)
-  playReactiveAlert(trigger: any) {
-    const host = this.hostsService.streamlabs;
-    const headers = authorizedHeaders(this.userService.apiToken);
-    headers.append('Content-Type', 'application/json');
-    headers.append('Accept', 'application/json');
-    const request = new Request(`https://${host}/api/v5/widgets/desktop/game-pulse/preview/trigger`, {
-      headers,
-      method: 'POST',
-      body: JSON.stringify(trigger),
-    });
-    return fetch(request)
-      .then(res => {
-        return Promise.resolve(res);
-      })
-      .then(handleResponse);
-  }
-
   private previewSourceWatchers: Dictionary<Subscription> = {};
 
   /**
