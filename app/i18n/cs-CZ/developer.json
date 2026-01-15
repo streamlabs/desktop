@@ -1,9 +1,9 @@
 {
-  "App Platform": "App Platform",
-  "Unpacked App Path": "Unpacked App Path",
-  "This is the path to your unpacked app. It should be a folder containing a valid manifest.json": "This is the path to your unpacked app. It should be a folder containing a valid manifest.json",
-  "App Token": "App Token",
-  "This token allows you app to authenticate with the Streamlabs API. Visit platform.streamlabs.com to create a developer account and get a test app token.": "This token allows you app to authenticate with the Streamlabs API. Visit platform.streamlabs.com to create a developer account and get a test app token.",
-  "Load App": "Load App",
-  "There was an error loading this app, please try again or contact the Streamlabs development team for assistance.": "There was an error loading this app, please try again or contact the Streamlabs development team for assistance."
+  "App Platform": "Aplikační platforma",
+  "Unpacked App Path": "Cesta k extrahované aplikaci",
+  "This is the path to your unpacked app. It should be a folder containing a valid manifest.json": "Toto je cesta k vaší extrahované aplikaci. Mělo by se jednat o složku obsahující platný soubor manifest.json",
+  "App Token": "Token aplikace",
+  "This token allows you app to authenticate with the Streamlabs API. Visit platform.streamlabs.com to create a developer account and get a test app token.": "Tento token umožňuje ověření vaší aplikace v rozhraní Streamlabs API. Na stránce platform.streamlabs.com si můžete vytvořit vývojářský účet a získat testovací token aplikace.",
+  "Load App": "Načíst aplikaci",
+  "There was an error loading this app, please try again or contact the Streamlabs development team for assistance.": "Při načítání této aplikace došlo k chybě. Zkuste to znovu nebo se obraťte na vývojový tým Streamlabs."
 }

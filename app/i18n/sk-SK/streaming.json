@@ -321,7 +321,10 @@
   "Stream switcher cannot be used in dual output mode.": "Stream switcher cannot be used in dual output mode.",
   "Cannot toggle dual output in Studio Mode.": "Cannot toggle dual output in Studio Mode.",
   "Dual Output will be disabled since not supported in this mode.": "Dual Output will be disabled since not supported in this mode.",
+  "Please confirm %{platforms} in the Horizontal stream.": "Please confirm %{platforms} in the Horizontal stream.",
+  "Please confirm %{platforms} in the Vertical stream.": "Please confirm %{platforms} in the Vertical stream.",
   "Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays in Twitch": "Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays in Twitch",
   "Disable Twitch dual stream to add another platform": "Disable Twitch dual stream to add another platform",
-  "Dual streaming to Twitch only available with Twitch as the only platform": "Dual streaming to Twitch only available with Twitch as the only platform"
+  "Dual streaming to Twitch only available with Twitch as the only platform": "Dual streaming to Twitch only available with Twitch as the only platform",
+  "Recording and/or Replay Buffer failed to start and was automatically turned off when starting the stream.": "Error: Recording and/or Replay Buffer failed to start and was automatically turned off when starting the stream."
 }
