@@ -55,7 +55,7 @@ export function Devices(p: IOnboardingStepProps) {
           width: '100%',
         }}
       >
-        <DisplaySection />
+        <DisplaySection key={`${selectedVideoDevice}${selectedAudioDevice}`} />
         <div className={styles.darkBox} style={{ width: 360, height: 240, padding: 32 }}>
           <Form layout="vertical">
             <ListInput
