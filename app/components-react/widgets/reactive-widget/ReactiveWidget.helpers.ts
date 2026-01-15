@@ -92,15 +92,18 @@ export const ReactiveTabUtils = {
   },
 };
 
+const EVENT_MEDIA_MAP: Record<string, string> = {
+  death: 'https://cdn.streamlabs.com/library/animations/default-death.webm',
+  defeat: 'https://cdn.streamlabs.com/library/animations/default-defeat.webm',
+  victory: 'https://cdn.streamlabs.com/library/animations/default-victory.webm',
+  elimination: 'https://cdn.streamlabs.com/library/animations/elimination.webm',
+};
+
+const DEFAULT_MEDIA = 'https://cdn.streamlabs.com/library/giflibrary/jumpy-kevin.webm';
+
 /** default trigger settings, used as a template for new triggers */
 export function defaultMediaForEvent(eventKey: string): string {
-  switch (eventKey) {
-    case 'death': return 'https://cdn.streamlabs.com/library/animations/default-death.webm';
-    case 'defeat': return 'https://cdn.streamlabs.com/library/animations/default-defeat.webm';
-    case 'victory': return 'https://cdn.streamlabs.com/library/animations/default-victory.webm';
-    case 'elimination': return 'https://cdn.streamlabs.com/library/animations/elimination.webm';
-    default: return 'https://cdn.streamlabs.com/library/giflibrary/jumpy-kevin.webm';
-  }
+  return EVENT_MEDIA_MAP[eventKey] ?? DEFAULT_MEDIA;
 }
 
 export function defaultMessageTemplate(

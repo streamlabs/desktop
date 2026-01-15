@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useRef } from 'react';
 import set from 'lodash/set';
 import get from 'lodash/get';
 
@@ -41,19 +41,23 @@ function useTriggerBinding(
   trigger: ReactiveTrigger,
   onUpdate: ((t: ReactiveTrigger) => void) | undefined,
 ) {
+  const triggerRef = useRef(trigger);
+  triggerRef.current = trigger;
+
   return useCallback(
     (path: string, defaultValue?: any) => ({
-      value: get(trigger, path) ?? defaultValue,
+      value: get(triggerRef.current, path) ?? defaultValue,
       onChange: (nextVal: any) => {
         if (!onUpdate) return;
-        const updated = structuredClone(trigger);
+        const updated = structuredClone(triggerRef.current);
         set(updated, path, nextVal);
         onUpdate(updated);
       },
     }),
-    [trigger, onUpdate],
+    [onUpdate],
   );
 }
+
 
 function flattenAnimationOptions(
   options: AnimationOptionConfig | AnimationOptionConfig[] | undefined | null
@@ -103,11 +107,10 @@ export function ReactiveWidgetTriggerDetails({
       };
     }
 
-    // TODO: $chris: fix typings in staticConfig to match actual data structure.
     return {
-      showAnimationOptions: flattenAnimationOptions(anims.show_animations as any),
-      hideAnimationOptions: flattenAnimationOptions(anims.hide_animations as any),
-      textAnimationOptions: flattenAnimationOptions(anims.text_animations as any),
+      showAnimationOptions: flattenAnimationOptions(anims.show_animations?.list),
+      hideAnimationOptions: flattenAnimationOptions(anims.hide_animations?.list),
+      textAnimationOptions: flattenAnimationOptions(anims.text_animations?.list),
     };
   }, [staticConfig]);
 
@@ -121,7 +124,7 @@ export function ReactiveWidgetTriggerDetails({
         value: item.key,
       })),
     }));
-  }, []);
+  }, [staticConfig]);
 
   const eventType = trigger?.event_type;
   const isStreak = eventType === 'streak';
