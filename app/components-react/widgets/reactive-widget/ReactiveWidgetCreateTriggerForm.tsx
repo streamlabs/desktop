@@ -151,12 +151,14 @@ export function ReactiveWidgetCreateTriggerForm(props: TriggerFormProps) {
         label: $t('Game'),
         placeholder: $t('Select a Game'),
         options: gameOptions,
+        showSearch: true,
       },
       event_type: {
         type: 'list',
         label: $t('Event Type'),
         placeholder: $t('Select an Event'),
         options: eventOptions,
+        showSearch: true,
       },
       name: {
         type: 'text',

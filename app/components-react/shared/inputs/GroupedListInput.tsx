@@ -98,6 +98,8 @@ export const GroupedListInput = InputComponent(<T extends any>(p: TGroupedListIn
     return undefined;
   }, [options, p.value]);
 
+  const selectProps = useMemo(() => omit(inputAttrs, 'onChange'), [inputAttrs]);
+
   return (
     <InputWrapper
       {...wrapperAttrs}
@@ -106,7 +108,7 @@ export const GroupedListInput = InputComponent(<T extends any>(p: TGroupedListIn
     >
       <div ref={$containerRef} style={{ width: '100%' }}>
         <Select
-          {...omit(inputAttrs, 'onChange')}
+          {...selectProps}
           value={inputAttrs.value as string}
           optionFilterProp="label"
           optionLabelProp="labelrender"

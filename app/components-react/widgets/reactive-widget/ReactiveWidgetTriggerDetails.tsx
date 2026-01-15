@@ -1,7 +1,9 @@
-import React, { useMemo, useCallback, useRef } from 'react';
+import React, { useMemo, useCallback, memo } from 'react';
 import set from 'lodash/set';
 import get from 'lodash/get';
-
+import cloneDeep from 'lodash/cloneDeep';
+import { Collapse } from 'antd';
+import { $t } from 'services/i18n';
 import {
   MediaUrlInput,
   NumberInput,
@@ -13,176 +15,115 @@ import {
   ColorInput,
   FontWeightInput,
   ListInput,
-  GroupedListInput
+  GroupedListInput,
 } from 'components-react/shared/inputs';
-import { Collapse } from 'antd';
-import { $t } from 'services/i18n';
+import { IListGroup } from 'components-react/shared/inputs/GroupedListInput';
 import { LayoutInput } from '../common/LayoutInput';
 import css from './ReactiveWidgetTriggerDetails.m.less';
 import { AnimationGroup, ReactiveStaticConfig, ReactiveTrigger } from './ReactiveWidget.types';
-import { IListGroup } from 'components-react/shared/inputs/GroupedListInput';
 
 interface ReactiveWidgetTriggerDetailsProps {
   trigger: ReactiveTrigger;
   staticConfig?: ReactiveStaticConfig;
   onUpdate?: (updatedTrigger: ReactiveTrigger) => void;
 }
-type LevelRangeType = 'minimum' | 'maximum' | 'between';
 
-enum TriggerPanelKeys {
-  FontSettings = 'font-settings',
-  AnimationSettings = 'animation-settings',
-  TTSSettings = 'tts-settings',
-}
 /**
- * hook to handle deep object binding.
+ * Trigger Details Form
  */
-function useTriggerBinding(
-  trigger: ReactiveTrigger,
-  onUpdate: ((t: ReactiveTrigger) => void) | undefined,
-) {
-  const triggerRef = useRef(trigger);
-  triggerRef.current = trigger;
-
-  return useCallback(
-    (path: string, defaultValue?: any) => ({
-      value: get(triggerRef.current, path) ?? defaultValue,
-      onChange: (nextVal: any) => {
-        if (!onUpdate) return;
-        const updated = structuredClone(triggerRef.current);
-        set(updated, path, nextVal);
-        onUpdate(updated);
-      },
-    }),
-    [onUpdate],
-  );
-}
-
-// map backend animation groups to UI GroupedList options
-function mapAnimationGroups(groups?: AnimationGroup | AnimationGroup[]): IListGroup<string>[] {
-  if (!groups) return [];
-  const arr = Array.isArray(groups) ? groups : [groups];
-
-  return arr.map(g => ({
-      label: g.group,
-      options: (g.list || []).map(item => ({
-          label: item.value,
-          value: item.key
-      }))
-  }));
-}
-
-export function ReactiveWidgetTriggerDetails({
+export const ReactiveWidgetTriggerDetails = memo(function ReactiveWidgetTriggerDetails({
   trigger,
   onUpdate,
   staticConfig,
 }: ReactiveWidgetTriggerDetailsProps) {
-  const bind = useTriggerBinding(trigger, onUpdate);
-
-  const { totalPeriodOptions, levelRangeOptions } = useMemo(() => {
+  const { totalPeriodOptions, levelRangeOptions, voiceOptions, animationOptions } = useMemo(() => {
     const totalPeriods = staticConfig?.data?.options?.event_time_periods ?? {};
+    const totalPeriodOptions = Object.entries(totalPeriods).map(([key, value]) => ({
+      label: String(value),
+      value: key,
+    }));
 
-    return {
-      totalPeriodOptions: Object.entries(totalPeriods).map(([key, value]) => ({
-        label: String(value),
-        value: key,
-      })),
-      levelRangeOptions: [
-        { value: 'minimum', label: $t('Minimum') },
-        { value: 'maximum', label: $t('Maximum') },
-        { value: 'between', label: $t('Between') },
-      ],
-    };
-  }, [staticConfig]);
+    const levelRangeOptions = [
+      { value: 'minimum', label: $t('Minimum') },
+      { value: 'maximum', label: $t('Maximum') },
+      { value: 'between', label: $t('Between') },
+    ];
 
-  const { showAnimationOptions, hideAnimationOptions, textAnimationOptions } = useMemo(() => {
-    const anims = staticConfig?.data?.animations;
-    if (!anims) {
-      return {
-        showAnimationOptions: [],
-        hideAnimationOptions: [],
-        textAnimationOptions: [],
-      };
-    }
-
-    return {
-      showAnimationOptions: mapAnimationGroups(anims.show_animations),
-      hideAnimationOptions: mapAnimationGroups(anims.hide_animations),
-      textAnimationOptions: mapAnimationGroups(anims.text_animations),
-    };
-  }, [staticConfig]);
-
-  const voiceOptions = useMemo<IListGroup<string>[]>(() => {
     const voices = staticConfig?.data?.options?.tts_voices || {};
-
-    return Object.entries(voices).map(([key, group]: [string, { list: { key: string; value: string }[] }]) => ({
+    const voiceOptions: IListGroup<string>[] = Object.entries(voices).map(([key, group]: [string, { list: { key: string; value: string }[] }]) => ({
       label: key,
       options: group.list.map((item: { key: string; value: string }) => ({
         label: item.value,
         value: item.key,
       })),
     }));
+
+    const anims = staticConfig?.data?.animations;
+    const animationOptions = {
+      showAnimationOptions: anims ? mapAnimationGroups(anims.show_animations) : [],
+      hideAnimationOptions: anims ? mapAnimationGroups(anims.hide_animations) : [],
+      textAnimationOptions: anims ? mapAnimationGroups(anims.text_animations) : [],
+    };
+
+    return {
+      totalPeriodOptions,
+      levelRangeOptions,
+      voiceOptions,
+      animationOptions,
+    };
   }, [staticConfig]);
 
-  const eventType = trigger?.event_type;
-  const isStreak = eventType === 'streak';
-  const isTotal = eventType === 'total';
-  const isLevel = eventType === 'level';
+  const { showAnimationOptions, hideAnimationOptions, textAnimationOptions } = animationOptions;
 
-  function hasValue(n: any) {
-    return n !== null && n !== undefined;
-  }
-
-  function deriveLevelRangeType(trigger: ReactiveTrigger): LevelRangeType {
-    const hasMin = hasValue(trigger.amount_minimum);
-    const hasMax = hasValue(trigger.amount_maximum);
-
-    if (hasMin && hasMax) return 'between';
-    if (hasMax) return 'maximum';
-    return 'minimum';
-  }
-
-  function applyLevelRangeType(trigger: ReactiveTrigger, nextType: LevelRangeType) {
-    switch (nextType) {
-      case 'minimum': {
-        trigger.amount_maximum = null;
-        return;
-      }
-      case 'maximum': {
-        trigger.amount_minimum = null;
-        if (!hasValue(trigger.amount_maximum)) trigger.amount_maximum = 10;
-        return;
-      }
-      case 'between': {
-        if (!hasValue(trigger.amount_minimum)) trigger.amount_minimum = 1;
-        if (!hasValue(trigger.amount_maximum)) trigger.amount_maximum = 10;
-        return;
-      }
-    }
-  }
-
-  const currentLevelRangeType = useMemo<LevelRangeType | null>(() => {
-    if (!isLevel) return null;
-    return deriveLevelRangeType(trigger);
-  }, [isLevel, trigger.amount_minimum, trigger.amount_maximum]);
-
-  const handleLevelRangeChange = useCallback(
-    (newType: LevelRangeType) => {
+  const handleFieldChange = useCallback(
+    (path: string, value: any) => {
       if (!onUpdate) return;
-      const updated = structuredClone(trigger);
-      applyLevelRangeType(updated, newType);
-      onUpdate(updated);
+      if (get(trigger, path) === value) return;
+      const nextTrigger = cloneDeep(trigger);
+      set(nextTrigger, path, value);
+      onUpdate(nextTrigger);
     },
     [trigger, onUpdate],
   );
+
+  const bind = (path: string, defaultValue?: any) => ({
+    value: get(trigger, path) ?? defaultValue,
+    onChange: (val: any) => handleFieldChange(path, val),
+  });
+
+  const currentLevelRangeType = getLevelRangeType(trigger);
   const showMin = currentLevelRangeType === 'minimum' || currentLevelRangeType === 'between';
   const showMax = currentLevelRangeType === 'maximum' || currentLevelRangeType === 'between';
-  const messageTemplateTooltip = $t(
-    'When a trigger fires, this will be the format of the message. Available tokens: number',
+
+  const handleLevelRangeChange = useCallback(
+    (newType: 'minimum' | 'maximum' | 'between') => {
+      if (!onUpdate) return;
+      if (newType === getLevelRangeType(trigger)) return;
+      const nextTrigger = cloneDeep(trigger);
+
+      if (newType === 'minimum') {
+        nextTrigger.amount_maximum = null;
+      } else if (newType === 'maximum') {
+        nextTrigger.amount_minimum = null;
+        if (nextTrigger.amount_maximum == null) nextTrigger.amount_maximum = 10;
+      } else if (newType === 'between') {
+        if (nextTrigger.amount_minimum == null) nextTrigger.amount_minimum = 1;
+        if (nextTrigger.amount_maximum == null) nextTrigger.amount_maximum = 10;
+      }
+
+      onUpdate(nextTrigger);
+    },
+    [trigger, onUpdate],
   );
+
+  const messageTemplateTooltip = $t('When a trigger fires, this will be the format of the message. Available tokens: {number}');
+  const isStreak = trigger.event_type === 'streak';
+  const isTotal = trigger.event_type === 'total';
+  const isLevel = trigger.event_type === 'level';
 
   return (
     <div>
+      {/* Header */}
       <div className={css.headerRow}>
         <h3 className={css.title}>{$t('Trigger Details')}</h3>
         <div className={trigger.enabled ? css.switchEnabled : css.switchDisabled}>
@@ -215,6 +156,7 @@ export function ReactiveWidgetTriggerDetails({
         />
       )}
 
+      {/* Level Logic */}
       {isLevel && (
         <>
           <ListInput
@@ -223,7 +165,6 @@ export function ReactiveWidgetTriggerDetails({
             onChange={handleLevelRangeChange}
             options={levelRangeOptions}
           />
-
           {showMin && (
             <NumberInput
               label={$t('Amount Minimum')}
@@ -232,7 +173,6 @@ export function ReactiveWidgetTriggerDetails({
               max={trigger.amount_maximum ?? undefined}
             />
           )}
-
           {showMax && (
             <NumberInput label={$t('Amount Maximum')} {...bind('amount_maximum')} min={0} />
           )}
@@ -244,17 +184,20 @@ export function ReactiveWidgetTriggerDetails({
       <MediaUrlInput label={$t('Media')} {...bind('media_settings.image_href')} />
       <LayoutInput label={$t('Layout')} {...bind('layout')} />
       <AudioUrlInput label={$t('Sound')} {...bind('media_settings.sound_href')} />
+
       <SliderInput
         label={$t('Sound Volume')}
         debounce={500}
         {...bind('media_settings.sound_volume')}
         tipFormatter={(n: number) => `${n}%`}
       />
+
       <TextInput
         label={$t('Message Template')}
         tooltip={messageTemplateTooltip}
         {...bind('text_settings.message_template')}
       />
+
       <SliderInput
         label={$t('Duration')}
         min={2000}
@@ -265,8 +208,9 @@ export function ReactiveWidgetTriggerDetails({
         tipFormatter={(ms: number) => `${(ms / 1000).toFixed(1)}s`}
       />
 
-      <Collapse bordered={false} defaultActiveKey={[TriggerPanelKeys.FontSettings]}>
-        <Collapse.Panel header={$t('Font Settings')} key={TriggerPanelKeys.FontSettings}>
+      {/* Font Settings */}
+      <Collapse bordered={false} defaultActiveKey={['font-settings']}>
+        <Collapse.Panel header={$t('Font Settings')} key="font-settings">
           <FontFamilyInput label={$t('Font Family')} {...bind('text_settings.font')} />
           <SliderInput
             min={8}
@@ -281,8 +225,9 @@ export function ReactiveWidgetTriggerDetails({
         </Collapse.Panel>
       </Collapse>
 
-      <Collapse bordered={false} defaultActiveKey={[TriggerPanelKeys.AnimationSettings]}>
-        <Collapse.Panel header={$t('Animation Settings')} key={TriggerPanelKeys.AnimationSettings}>
+      {/* Animations */}
+      <Collapse bordered={false} defaultActiveKey={['animation-settings']}>
+        <Collapse.Panel header={$t('Animation Settings')} key="animation-settings">
           <div className={css.animationRow}>
             <span className={css.animationLabel}>{$t('Animation')}</span>
             <div className={css.selectInputGroup}>
@@ -298,7 +243,6 @@ export function ReactiveWidgetTriggerDetails({
               />
             </div>
           </div>
-
           <GroupedListInput
             label={$t('Text Animation')}
             {...bind('text_settings.text_animation')}
@@ -307,17 +251,18 @@ export function ReactiveWidgetTriggerDetails({
           />
           <SliderInput
             label={$t('Text Delay')}
-            {...bind('text_settings.text_delay_ms')}
+            {...bind('text_settings.text_delay_ms', 0)}
             max={20000}
             tipFormatter={(ms: number) => `${(ms / 1000).toFixed(1)}s`}
           />
         </Collapse.Panel>
       </Collapse>
 
-      <Collapse bordered={false} defaultActiveKey={[TriggerPanelKeys.TTSSettings]}>
+      {/* TTS */}
+      <Collapse bordered={false} defaultActiveKey={['tts-settings']}>
         <Collapse.Panel
           header={$t('Text To Speech')}
-          key={TriggerPanelKeys.TTSSettings}
+          key="tts-settings"
           extra={
             <div onClick={e => e.stopPropagation()}>
               <SwitchInput
@@ -338,7 +283,6 @@ export function ReactiveWidgetTriggerDetails({
             showSearch
             placeholder={$t('Select a voice...')}
           />
-
           <SliderInput
             label={$t('Volume')}
             debounce={500}
@@ -349,4 +293,24 @@ export function ReactiveWidgetTriggerDetails({
       </Collapse>
     </div>
   );
+});
+
+function getLevelRangeType(trigger: ReactiveTrigger): 'minimum' | 'maximum' | 'between' {
+  if (trigger.amount_minimum != null && trigger.amount_maximum != null) return 'between';
+  if (trigger.amount_maximum != null) return 'maximum';
+  return 'minimum';
+}
+
+// map backend animation groups to UI GroupedList options
+function mapAnimationGroups(groups?: AnimationGroup | AnimationGroup[]): IListGroup<string>[] {
+  if (!groups) return [];
+  const arr = Array.isArray(groups) ? groups : [groups];
+
+  return arr.map(g => ({
+    label: g.group,
+    options: (g.list || []).map(item => ({
+      label: item.value,
+      value: item.key,
+    })),
+  }));
 }
