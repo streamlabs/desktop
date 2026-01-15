@@ -5,8 +5,6 @@ import InputWrapper from './InputWrapper';
 import { RefSelectProps, SelectProps } from 'antd/lib/select';
 import { useDebounce } from '../../hooks';
 import omit from 'lodash/omit';
-import { getDefined } from '../../../util/properties-type-guards';
-import { findDOMNode } from 'react-dom';
 
 const ANT_SELECT_FEATURES = [
   'showSearch',
@@ -47,7 +45,7 @@ export interface IGroupedListProps<TValue> {
   labelRender?: (opt: IListOption<TValue>) => ReactNode;
   onBeforeSearch?: (searchStr: string) => unknown;
   // STRICTLY enforce Groups here
-  options?: IListGroup<TValue>[]; 
+  options?: IListGroup<TValue>[];
   description?: string;
   nolabel?: boolean;
   filter?: string;
@@ -67,7 +65,8 @@ export const GroupedListInput = InputComponent(<T extends any>(p: TGroupedListIn
 
   const options = p.options;
   const debouncedSearch = useDebounce(p.debounce, startSearch);
-  const $inputRef = useRef<RefSelectProps>(null);
+
+  const $containerRef = useRef<HTMLDivElement>(null);
 
   function startSearch(searchStr: string) {
     p.onSearch && p.onSearch(searchStr);
@@ -84,14 +83,16 @@ export const GroupedListInput = InputComponent(<T extends any>(p: TGroupedListIn
   }
 
   function getPopupContainer() {
-    const $el: Element = getDefined(findDOMNode($inputRef.current));
-    return $el.closest('.os-content, body')! as HTMLElement;
+    const el = $containerRef.current;
+    if (!el) return document.body;
+
+    return (el.closest('.os-content, body') as HTMLElement) || document.body;
   }
 
   const selectedOption = useMemo(() => {
     if (!options) return undefined;
     for (const group of options) {
-      const found = group.options.find((opt) => opt.value === p.value);
+      const found = group.options.find(opt => opt.value === p.value);
       if (found) return found;
     }
     return undefined;
@@ -103,32 +104,31 @@ export const GroupedListInput = InputComponent(<T extends any>(p: TGroupedListIn
       extra={p?.description ?? selectedOption?.description}
       nolabel={p?.nolabel}
     >
-      <Select
-        ref={$inputRef}
-        {...omit(inputAttrs, 'onChange')}
-        value={inputAttrs.value as string}
-        optionFilterProp="label"
-        optionLabelProp="labelrender"
-        onSearch={p.showSearch ? onSearchHandler : undefined}
-        onChange={(val) => p.onChange && p.onChange(val as T)}
-        onSelect={p.onSelect}
-        defaultValue={p.defaultValue as string}
-        getPopupContainer={getPopupContainer}
-        data-value={inputAttrs.value}
-        data-selected-option-label={selectedOption?.label}
-        data-show-search={!!p.showSearch}
-        data-loading={!!p.loading}
-        dropdownMatchSelectWidth={p.dropdownMatchSelectWidth}
-      >
-        {options &&
-          options.map((group) => (
-            <Select.OptGroup key={group.label} label={group.label}>
-              {group.options.map((opt, ind) =>
-                renderOption(opt, ind, p)
-              )}
-            </Select.OptGroup>
-          ))}
-      </Select>
+      <div ref={$containerRef} style={{ width: '100%' }}>
+        <Select
+          {...omit(inputAttrs, 'onChange')}
+          value={inputAttrs.value as string}
+          optionFilterProp="label"
+          optionLabelProp="labelrender"
+          onSearch={p.showSearch ? onSearchHandler : undefined}
+          onChange={val => p.onChange && p.onChange(val as T)}
+          onSelect={p.onSelect}
+          defaultValue={p.defaultValue as string}
+          getPopupContainer={getPopupContainer}
+          data-value={inputAttrs.value}
+          data-selected-option-label={selectedOption?.label}
+          data-show-search={!!p.showSearch}
+          data-loading={!!p.loading}
+          dropdownMatchSelectWidth={p.dropdownMatchSelectWidth}
+        >
+          {options &&
+            options.map(group => (
+              <Select.OptGroup key={group.label} label={group.label}>
+                {group.options.map((opt, ind) => renderOption(opt, ind, p))}
+              </Select.OptGroup>
+            ))}
+        </Select>
+      </div>
     </InputWrapper>
   );
 });
@@ -136,7 +136,7 @@ export const GroupedListInput = InputComponent(<T extends any>(p: TGroupedListIn
 function renderOption<T>(
   opt: IListOption<T>,
   ind: number,
-  inputProps: IGroupedListProps<T> & { name?: string }
+  inputProps: IGroupedListProps<T> & { name?: string },
 ) {
   const attrs = {
     'data-option-list': inputProps.name,

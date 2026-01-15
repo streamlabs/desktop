@@ -1,9 +1,17 @@
 import { AnimationOptionConfig, ActiveTabContext, SelectOption, TabKind, ReactiveTrigger, ReactiveTriggerType, ReactiveEventPeriod } from './ReactiveWidget.types';
+const EVENT_MEDIA_MAP: Record<string, string> = {
+  death: 'https://cdn.streamlabs.com/library/animations/default-death.webm',
+  defeat: 'https://cdn.streamlabs.com/library/animations/default-defeat.webm',
+  victory: 'https://cdn.streamlabs.com/library/animations/default-victory.webm',
+  elimination: 'https://cdn.streamlabs.com/library/animations/elimination.webm',
+};
+const DEFAULT_MEDIA = 'https://cdn.streamlabs.com/library/giflibrary/jumpy-kevin.webm';
+const DEFAULT_SOUND = 'https://cdn.streamlabs.com/static/sounds/bits.ogg';
 
 const DEFAULT_TRIGGER_SETTINGS = {
   media_settings: {
-    image_href: 'https://cdn.streamlabs.com/library/giflibrary/jumpy-kevin.webm',
-    sound_href: 'https://cdn.streamlabs.com/static/sounds/bits.ogg',
+    image_href: DEFAULT_MEDIA,
+    sound_href: DEFAULT_SOUND,
     sound_volume: 50,
     show_animation: 'fadeIn',
     hide_animation: 'fadeOut',
@@ -34,6 +42,8 @@ const DEFAULT_TRIGGER_SETTINGS = {
   layout: 'above' as const,
 };
 
+const SEPARATOR = '::';
+
 /**
  * Centralized util for managing the "Tab ID" strings used in the Reactive Widget.
  *
@@ -49,40 +59,36 @@ const DEFAULT_TRIGGER_SETTINGS = {
 export const ReactiveTabUtils = {
   ID_ADD_TRIGGER: TabKind.AddTrigger,
   ID_GENERAL: TabKind.General,
-  generateManageGameId: (gameId: string) => `${gameId}-manage-trigger`,
-  generateTriggerId: (gameId: string, triggerId: string | null) => `${gameId}-trigger-${triggerId}`,
+  generateManageGameId: (gameId: string) => `${gameId}${SEPARATOR}manage`,
+  generateTriggerId: (gameId: string, triggerId: string | null) => `${gameId}${SEPARATOR}trigger${SEPARATOR}${triggerId}`,
   parse: (tabId: string | undefined | null): ActiveTabContext => {
     if (!tabId || typeof tabId !== 'string') return { kind: TabKind.General };
 
     if (tabId === TabKind.AddTrigger) return { kind: TabKind.AddTrigger };
     if (tabId === TabKind.General) return { kind: TabKind.General };
 
-    if (tabId.includes('-trigger-')) {
-      const parts = tabId.split('-trigger-');
-      if (parts.length >= 2) {
-        return { kind: TabKind.TriggerDetail, gameId: parts[0], triggerId: parts[1] };
-      }
+    if (tabId.endsWith(`${SEPARATOR}manage`)) {
+      const gameId = tabId.replace(`${SEPARATOR}manage`, '');
+      return { kind: TabKind.GameManage, gameId };
     }
 
-    if (tabId.endsWith('-manage-trigger')) {
-      return {
-        kind: TabKind.GameManage,
-        gameId: tabId.replace('-manage-trigger', ''),
-      };
+    if (tabId.includes(`${SEPARATOR}trigger${SEPARATOR}`)) {
+      const splitSequence = `${SEPARATOR}trigger${SEPARATOR}`;
+      const lastIndex = tabId.lastIndexOf(splitSequence);
+
+      if (lastIndex !== -1) {
+        const gameId = tabId.substring(0, lastIndex);
+        const triggerId = tabId.substring(lastIndex + splitSequence.length);
+
+        if (gameId && triggerId) {
+          return { kind: TabKind.TriggerDetail, gameId, triggerId };
+        }
+      }
     }
 
     return { kind: TabKind.General };
   },
 };
-
-const EVENT_MEDIA_MAP: Record<string, string> = {
-  death: 'https://cdn.streamlabs.com/library/animations/default-death.webm',
-  defeat: 'https://cdn.streamlabs.com/library/animations/default-defeat.webm',
-  victory: 'https://cdn.streamlabs.com/library/animations/default-victory.webm',
-  elimination: 'https://cdn.streamlabs.com/library/animations/elimination.webm',
-};
-
-const DEFAULT_MEDIA = 'https://cdn.streamlabs.com/library/giflibrary/jumpy-kevin.webm';
 
 /** default trigger settings, used as a template for new triggers */
 export function defaultMediaForEvent(eventKey: string): string {
