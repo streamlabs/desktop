@@ -62,14 +62,14 @@ export function Devices(p: IOnboardingStepProps) {
               label={$t('Webcam')}
               options={videoDevices}
               value={selectedVideoDevice}
-              onInput={setDevice('video')}
+              onChange={setDevice('video')}
               style={{ width: 200 }}
             />
             <ListInput
               label={$t('Microphone')}
               options={audioDevices}
               value={selectedAudioDevice}
-              onInput={setDevice('audio')}
+              onChange={setDevice('audio')}
               style={{ width: 200 }}
             />
           </Form>
