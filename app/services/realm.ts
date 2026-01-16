@@ -70,6 +70,8 @@ export class RealmObject {
             this._realmModel = this.db.create(this.schema.name, {});
           });
         } catch (e: unknown) {
+          // We want to surface legit errors in db/schema config
+          console.log(e);
           this._realmModel = this.db.create(this.schema.name, {});
         }
 

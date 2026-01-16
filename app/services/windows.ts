@@ -4,7 +4,7 @@
 import cloneDeep from 'lodash/cloneDeep';
 import { mutation, StatefulService } from 'services/core/stateful-service';
 import electron from 'electron';
-import Vue, { Component } from 'vue';
+import Vue from 'vue';
 import Utils from 'services/utils';
 import { Subject } from 'rxjs';
 import { throttle } from 'lodash-decorators';

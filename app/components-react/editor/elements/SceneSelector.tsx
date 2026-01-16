@@ -206,6 +206,7 @@ function SceneSelector() {
         title={$t('Scene Collections')}
         dismissableKey={EDismissable.SceneCollectionsHelpTip}
         position={{ top: '-8px', left: '102px' }}
+        style={{ position: 'absolute' }}
       >
         <div>
           {$t(

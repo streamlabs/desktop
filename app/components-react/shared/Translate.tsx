@@ -17,6 +17,7 @@ import keyBy from 'lodash/keyBy';
 export default function Translate(p: {
   message: string;
   children?: ReactElement[] | ReactElement;
+  style?: React.CSSProperties;
 
   /**
    * Optional: pass individual render functions for each slot
@@ -56,7 +57,7 @@ export default function Translate(p: {
   }, [p.message]);
 
   function render() {
-    return <span>{s.xmlNodes.map(renderXmlNode)}</span>;
+    return <span style={p.style}>{s.xmlNodes.map(renderXmlNode)}</span>;
   }
 
   function renderXmlNode(xmlNode: ChildNode & { tagName: string }, ind: number) {
