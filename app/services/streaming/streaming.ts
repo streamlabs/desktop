@@ -403,16 +403,16 @@ export class StreamingService
         const choice = remote.dialog.showMessageBoxSync(this.windowsService.windows.child, {
           type: 'error',
           message:
-            'The currently configured encoder is not supported for the selected Dual Output destinations. Would you like to reset the stream encoder to Software (x264) or select a different encoder in settings?',
+            $t('The currently configured encoder is not supported for the selected Dual Output destinations. Would you like to reset the stream encoder to Software (x264) or select a different encoder in settings?'),
           defaultId: 2,
           cancelId: 0,
-          buttons: ['Cancel', 'Open Settings', 'Use x264'],
+          buttons: [$t('Cancel'), $t('Open Settings'), $t('Use x264')],
           noLink: true,
         });
         if (choice === 0) {
           const newError = createStreamError('DUAL_OUTPUT_SETUP_FAILED');
           newError.details =
-            'The currently configured encoder is not supported for the selected Dual Output destinations. Please reset the stream encoder to Software (x264) or select a different encoder in settings.';
+            $t('The currently configured encoder is not supported for the selected Dual Output destinations. Please reset the stream encoder to Software (x264) or select a different encoder in settings.');
           this.setError(newError);
           return;
         }
