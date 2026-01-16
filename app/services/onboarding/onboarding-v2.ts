@@ -255,14 +255,13 @@ export class OnboardingV2Service extends Service {
   }
 
   showOnboardingIfNecessary() {
-    if (Utils.env.SLD_FORCE_ONBOARDING_STEP) this.showOnboarding();
     if (
-      this.appService.state.onboarded ||
-      this.userService.isAlphaGroup ||
-      localStorage.getItem(this.localStorageKey)
+      !Utils.env.SLD_FORCE_ONBOARDING_STEP &&
+      (this.userService.isAlphaGroup || localStorage.getItem(this.localStorageKey))
     ) {
       return;
     }
+    this.appService.setOnboarded(true);
     this.showOnboarding();
   }
 
@@ -335,7 +334,6 @@ export class OnboardingV2Service extends Service {
       remote.session.defaultSession.flushStorageData();
       console.log('Set onboarding key successful.');
       this.recordOnboardingNavEvent(closedEarly ? 'closed' : 'completed');
-      this.appService.actions.setOnboarded(true);
     }
     this.setShowOnboarding(false);
     this.windowsService.updateStyleBlockers('main', false);
