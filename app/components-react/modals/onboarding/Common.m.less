@@ -84,3 +84,36 @@
     }
   }
 }
+
+.platforms-container {
+  display: flex;
+  justify-content: space-evenly;
+  width: 800px;
+  flex-wrap: wrap;
+}
+
+.platform-card {
+  width: 240px;
+  height: 140px;
+  border-radius: 16px;
+  background: var(--section);
+  overflow: hidden;
+  margin-top: 16px;
+  padding-top: 16px;
+
+  &:hover {
+    cursor: pointer;
+  }
+
+  .platform-card-button {
+    background: var(--button);
+    width: 100%;
+    padding: 8px;
+    position: relative;
+    bottom: -12px;
+  }
+
+  :global(.ant-col-16) {
+    max-width: 100%;
+  }
+}

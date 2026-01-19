@@ -1,4 +1,5 @@
 import React from 'react';
+import cx from 'classnames';
 import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
 import { $t } from 'services/i18n';
@@ -7,6 +8,7 @@ import PlatformLogo from 'components-react/shared/PlatformLogo';
 import { ListInput } from 'components-react/shared/inputs';
 import { platformLabels, TPlatform } from 'services/platforms';
 import { Header, IOnboardingStepProps, useAuth } from './Onboarding';
+import Form from 'components-react/shared/inputs/Form';
 
 export function ConnectMore(p: IOnboardingStepProps) {
   const { UserService } = Services;
@@ -29,21 +31,24 @@ export function ConnectMore(p: IOnboardingStepProps) {
   return (
     <div className={styles.centered}>
       <Header title={$t('Connect Platforms')} description={subtitle} />
-      <div style={{ display: 'flex' }}>
+      <div className={styles.platformsContainer}>
         {platformCards.map(platform => (
           <PlatformCard platform={platform} />
         ))}
-        <div className={styles.centered}>
-          <i className="icon-platforms" />
+        <div className={cx(styles.centered, styles.platformCard)}>
+          <i className="icon-platforms" style={{ fontSize: 32, padding: 8 }} />
           <span>{$t('Select another platform')}</span>
-          <ListInput
-            options={listedPlatforms.map(platform => ({
-              label: platformLabels(platform),
-              value: platform,
-            }))}
-            onInput={mergePlatform}
-            nowrap
-          />
+          <Form style={{ width: '100%', padding: '0 16px' }}>
+            <ListInput
+              options={listedPlatforms.map(platform => ({
+                label: platformLabels(platform),
+                value: platform,
+              }))}
+              onInput={mergePlatform}
+              nolabel
+              style={{ marginTop: 16 }}
+            />
+          </Form>
         </div>
       </div>
     </div>
@@ -54,10 +59,13 @@ function PlatformCard(p: { platform: TPlatform }) {
   const { mergePlatform } = useAuth();
 
   return (
-    <div onClick={() => mergePlatform(p.platform)}>
-      <PlatformLogo platform={p.platform} />
+    <div
+      className={cx(styles.centered, styles.platformCard)}
+      onClick={() => mergePlatform(p.platform)}
+    >
+      <PlatformLogo platform={p.platform} size="medium" />
       {platformLabels(p.platform)}
-      <div>{$t('Connect')}</div>
+      <div className={styles.platformCardButton}>{$t('Connect')}</div>
     </div>
   );
 }
