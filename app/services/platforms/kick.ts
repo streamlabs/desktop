@@ -144,7 +144,7 @@ export class KickService
 
     if (settings && !settings.is_live) {
       console.error('Stream Shift Error: Kick is not live');
-      this.postError('Stream Shift Error: Kick is not live');
+      this.postNotification('Stream Shift Error: Kick is not live');
       return;
     }
 
@@ -236,13 +236,16 @@ export class KickService
     try {
       return await platformAuthorizedRequest<T>('kick', reqInfo);
     } catch (e: unknown) {
-      const code = (e as any).result?.error?.code;
+      console.error(`Failed ${this.displayName} API Request:`, reqInfo);
 
-      const details = (e as any).result?.error
-        ? `${(e as any).result.error.type} ${(e as any).result.error.message}`
+      const error = e as any;
+      const code = error.result?.error?.code;
+
+      const details = error.result?.error
+        ? `${error.result.error.type} ${error.result.error.message}`
         : 'Connection failed';
 
-      console.error('Error fetching Kick API: ', details, code);
+      console.error('Kick API Error: ', JSON.stringify({ details, code }));
 
       return Promise.reject(e);
     }
