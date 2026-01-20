@@ -2,24 +2,24 @@ import React from 'react';
 import { Button } from 'antd';
 import { $t } from 'services/i18n';
 import { SwitchInput } from 'components-react/shared/inputs';
-import css from './ReactiveWidgetGameSettings.m.less';
-import { IReactiveGroupOption } from './ReactiveWidget.types';
+import css from './GamePulseGameSettings.m.less';
+import { IGamePulseGroupOption } from './GamePulse.types';
 
-interface ReactiveWidgetGameSettingsProps {
-  scopes: IReactiveGroupOption[] | null | undefined;
+interface GamePulseGameSettingsProps {
+  scopes: IGamePulseGroupOption[] | null | undefined;
   onToggleScope: (gameId: string, enabled: boolean) => void;
   onEnableAll: () => void;
   onDisableAll: () => void;
   title?: string;
 }
 
-export function ReactiveWidgetGameSettings({
+export function GamePulseGameSettings({
   scopes,
   onToggleScope,
   title,
   onEnableAll,
   onDisableAll,
-}: ReactiveWidgetGameSettingsProps) {
+}: GamePulseGameSettingsProps) {
   if (!scopes || scopes.length === 0) {
     return <div>{$t('No triggers available.')}</div>;
   }

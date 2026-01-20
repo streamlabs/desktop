@@ -3,24 +3,24 @@ import FormFactory, { TInputValue } from 'components-react/shared/inputs/FormFac
 import { Button } from 'antd';
 import { $t } from 'services/i18n/i18n';
 import {
-  ReactiveWidgetSettings,
-  ReactiveTrigger,
+  GamePulseWidgetSettings,
+  GamePulseTrigger,
   SelectOption,
-  ReactiveEventMeta,
-} from './ReactiveWidget.types';
-import css from './ReactiveWidgetCreateTriggerForm.m.less';
+  GamePulseEventMeta,
+} from './GamePulse.types';
+import css from './GamePulseCreateTriggerForm.m.less';
 
 interface TriggerFormProps {
   trigger: { game?: string; event_type?: string; name?: string };
   onSubmit: (data: { eventType: string; game: string; name: string; triggerType: string }) => Promise<void> | void;
   availableGameEvents: Record<string, string[]>;
-  gameEvents: Record<string, ReactiveEventMeta>;
+  gameEvents: Record<string, GamePulseEventMeta>;
   globalEvents?: Record<string, string>;
   gameOptions?: SelectOption[];
-  data: { settings: ReactiveWidgetSettings };
+  data: { settings: GamePulseWidgetSettings };
 }
 
-export function ReactiveWidgetCreateTriggerForm(props: TriggerFormProps) {
+export function GamePulseCreateTriggerForm(props: TriggerFormProps) {
   const {
     trigger,
     data,
@@ -204,9 +204,9 @@ export function ReactiveWidgetCreateTriggerForm(props: TriggerFormProps) {
 }
 
 function getTriggersForGame(
-  data: { settings: ReactiveWidgetSettings },
+  data: { settings: GamePulseWidgetSettings },
   gameKey: string,
-): ReactiveTrigger[] {
+): GamePulseTrigger[] {
   const settings = data?.settings;
   if (!settings) return [];
 
@@ -217,7 +217,7 @@ function getTriggersForGame(
 }
 
 function generateUniqueName(
-  data: { settings: ReactiveWidgetSettings },
+  data: { settings: GamePulseWidgetSettings },
   gameKey: string,
   baseLabel: string,
 ): string {

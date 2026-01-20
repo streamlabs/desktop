@@ -1,4 +1,10 @@
-import { AnimationOptionConfig, ActiveTabContext, SelectOption, TabKind, ReactiveTrigger, ReactiveTriggerType, ReactiveEventPeriod } from './ReactiveWidget.types';
+import {
+  ActiveTabContext,
+  TabKind,
+  GamePulseTrigger,
+  GamePulseTriggerType,
+  GamePulseEventPeriod,
+} from './GamePulse.types';
 const EVENT_MEDIA_MAP: Record<string, string> = {
   death: 'https://cdn.streamlabs.com/library/animations/default-death.webm',
   defeat: 'https://cdn.streamlabs.com/library/animations/default-defeat.webm',
@@ -45,22 +51,23 @@ const DEFAULT_TRIGGER_SETTINGS = {
 const SEPARATOR = '::';
 
 /**
- * Centralized util for managing the "Tab ID" strings used in the Reactive Widget.
+ * Centralized util for managing the "Tab ID" strings used in the GamePulse Widget.
  *
  * We use a flat string (e.g., "valorant-trigger-123") to represent deep navigation states.
  *
  * @example
  * UI: Generating a key for a menu item
- * <Menu.Item key={ReactiveTabUtils.generateTriggerId('valorant', '123')} />
+ * <Menu.Item key={GamePulseTabUtils.generateTriggerId('valorant', '123')} />
  *
  * Logic: determining what to render based on the selected tab string
- * const { kind, gameId } = ReactiveTabUtils.parse(selectedTab);
+ * const { kind, gameId } = GamePulseTabUtils.parse(selectedTab);
  */
-export const ReactiveTabUtils = {
+export const GamePulseTabUtils = {
   ID_ADD_TRIGGER: TabKind.AddTrigger,
   ID_GENERAL: TabKind.General,
   generateManageGameId: (gameId: string) => `${gameId}${SEPARATOR}manage`,
-  generateTriggerId: (gameId: string, triggerId: string | null) => `${gameId}${SEPARATOR}trigger${SEPARATOR}${triggerId}`,
+  generateTriggerId: (gameId: string, triggerId: string | null) =>
+    `${gameId}${SEPARATOR}trigger${SEPARATOR}${triggerId}`,
   parse: (tabId: string | undefined | null): ActiveTabContext => {
     if (!tabId || typeof tabId !== 'string') return { kind: TabKind.General };
 
@@ -96,7 +103,7 @@ export function defaultMediaForEvent(eventKey: string): string {
 }
 
 export function defaultMessageTemplate(
-  triggerType: ReactiveTriggerType,
+  triggerType: GamePulseTriggerType,
   eventKey: string,
 ): string {
   const token = '{number}';
@@ -106,14 +113,14 @@ export function defaultMessageTemplate(
   return eventKey;
 }
 
-export function defaultEventPeriod(triggerType: ReactiveTriggerType): ReactiveEventPeriod {
+export function defaultEventPeriod(triggerType: GamePulseTriggerType): GamePulseEventPeriod {
   if (triggerType === 'total') return 'today';
   if (triggerType === 'streak') return 'round';
   return null;
 }
 
 /** default trigger settings, used as a template for new triggers */
-export function generateTriggerSettings(event_type: ReactiveTriggerType): ReactiveTrigger {
+export function generateTriggerSettings(event_type: GamePulseTriggerType): GamePulseTrigger {
   switch (event_type) {
     case 'streak':
       return {
@@ -147,15 +154,15 @@ export function generateTriggerSettings(event_type: ReactiveTriggerType): Reacti
       return {
         ...DEFAULT_TRIGGER_SETTINGS,
         event_type,
-      } as ReactiveTrigger;
+      } as GamePulseTrigger;
   }
 }
 
 export function buildNewTrigger(params: {
-  triggerType: ReactiveTriggerType;
+  triggerType: GamePulseTriggerType;
   eventKey: string;
   name: string;
-}): ReactiveTrigger {
+}): GamePulseTrigger {
   const { triggerType, eventKey, name } = params;
   const base = generateTriggerSettings(triggerType);
 
@@ -175,7 +182,7 @@ export function buildNewTrigger(params: {
   };
 }
 
-export function sanitizeTrigger(raw: ReactiveTrigger): ReactiveTrigger {
+export function sanitizeTrigger(raw: GamePulseTrigger): GamePulseTrigger {
   const trigger = structuredClone(raw) as any; // use 'any' to allow deletion of properties
 
   if (trigger.event_type !== 'streak') {
@@ -185,5 +192,5 @@ export function sanitizeTrigger(raw: ReactiveTrigger): ReactiveTrigger {
     delete trigger.amount_maximum;
   }
 
-  return trigger as ReactiveTrigger;
+  return trigger as GamePulseTrigger;
 }

@@ -3,9 +3,9 @@ import { Button, Menu, Tooltip } from 'antd';
 import { PlusOutlined, SettingOutlined, CaretRightOutlined } from '@ant-design/icons';
 import { CheckboxInput } from 'components-react/shared/inputs';
 import { $t } from 'services/i18n';
-import css from './ReactiveWidgetMenu.m.less';
-import { ReactiveTabUtils } from './ReactiveWidget.helpers';
-import { ReactiveTrigger } from './ReactiveWidget.types';
+import css from './GamePulseMenu.m.less';
+import { GamePulseTabUtils } from './GamePulse.helpers';
+import { GamePulseTrigger } from './GamePulse.types';
 
 function GameIcon() {
   return <i className={`icon-console ant-menu-item-icon ${css.gameIcon}`} />;
@@ -14,14 +14,14 @@ function GameIcon() {
 interface ReactiveSection {
   id: string; // The game key (e.g. 'global', 'csgo')
   title: string; // The display title
-  triggers: ReactiveTrigger[];
+  triggers: GamePulseTrigger[];
 }
 
-export function ReactiveWidgetMenu(props: {
+export function GamePulseMenu(props: {
   sections: ReactiveSection[];
   activeKey: string;
   onChange: (params: string) => void;
-  playAlert: (game: string, type: ReactiveTrigger) => void;
+  playAlert: (game: string, type: GamePulseTrigger) => void;
   toggleTrigger: (group: string, triggerId: string, enabled: boolean) => void;
   deleteTrigger: (triggerId: string, scopeId: string) => void;
 }) {
@@ -41,13 +41,13 @@ export function ReactiveWidgetMenu(props: {
     deleteTrigger(triggerId, scopeId);
   }
 
-  function onPlayAlert(event: React.MouseEvent, gameKey: string, trigger: ReactiveTrigger) {
+  function onPlayAlert(event: React.MouseEvent, gameKey: string, trigger: GamePulseTrigger) {
     event.stopPropagation();
     playAlert(gameKey, trigger);
   }
 
   useEffect(() => {
-    const { gameId } = ReactiveTabUtils.parse(activeKey);
+    const { gameId } = GamePulseTabUtils.parse(activeKey);
 
     if (gameId) {
       setOpenKeys(prev => {
@@ -67,14 +67,14 @@ export function ReactiveWidgetMenu(props: {
       onClick={({ key }) => onChange(key)}
     >
       <Menu.Item
-        key={ReactiveTabUtils.ID_ADD_TRIGGER}
+        key={GamePulseTabUtils.ID_ADD_TRIGGER}
         icon={<PlusOutlined />}
         className={css.menuItem}
       >
         {$t('Add a new trigger')}
       </Menu.Item>
 
-      <Menu.Item key={ReactiveTabUtils.ID_GENERAL} className={css.menuItem}>
+      <Menu.Item key={GamePulseTabUtils.ID_GENERAL} className={css.menuItem}>
         {$t('Game Settings')}
       </Menu.Item>
 
@@ -86,7 +86,7 @@ export function ReactiveWidgetMenu(props: {
         >
           {section.triggers?.map((trigger, index) => (
             <Menu.Item
-              key={ReactiveTabUtils.generateTriggerId(section.id, trigger.id)}
+              key={GamePulseTabUtils.generateTriggerId(section.id, trigger.id)}
               className={css.menuItem}
             >
               <div className={css.triggerRow}>
@@ -122,7 +122,7 @@ export function ReactiveWidgetMenu(props: {
             </Menu.Item>
           ))}
           <Menu.Item
-            key={ReactiveTabUtils.generateManageGameId(section.id)}
+            key={GamePulseTabUtils.generateManageGameId(section.id)}
             icon={<SettingOutlined />}
           >
             {$t('Manage Triggers')}

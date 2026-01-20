@@ -1,19 +1,19 @@
 import React, { useMemo, useCallback } from 'react';
 import * as remote from '@electron/remote';
 import { WidgetLayout } from './common/WidgetLayout';
-import { useReactiveWidget } from './reactive-widget/useReactiveWidget';
-import { ReactiveTabUtils, sanitizeTrigger } from './reactive-widget/ReactiveWidget.helpers';
-import { TabKind, ReactiveTrigger } from './reactive-widget/ReactiveWidget.types';
-import { ReactiveWidgetMenu } from './reactive-widget/ReactiveWidgetMenu';
-import { ReactiveWidgetCreateTriggerForm } from './reactive-widget/ReactiveWidgetCreateTriggerForm';
-import { ReactiveWidgetGameSettings } from './reactive-widget/ReactiveWidgetGameSettings';
-import { ReactiveWidgetTriggerDetails } from './reactive-widget/ReactiveWidgetTriggerDetails';
-import css from './reactive-widget/ReactiveWidget.m.less';
+import { useGamePulseWidget } from './game-pulse/useGamePulseWidget';
+import { GamePulseTabUtils, sanitizeTrigger } from './game-pulse/GamePulse.helpers';
+import { TabKind, GamePulseTrigger } from './game-pulse/GamePulse.types';
+import { GamePulseMenu } from './game-pulse/GamePulseMenu';
+import { GamePulseCreateTriggerForm } from './game-pulse/GamePulseCreateTriggerForm';
+import { GamePulseGameSettings } from './game-pulse/GamePulseGameSettings';
+import { GamePulseTriggerDetails } from './game-pulse/GamePulseTriggerDetails';
+import css from './game-pulse/GamePulse.m.less';
 import { useForceUpdate } from 'slap';
 import { $t } from 'services/i18n/i18n';
 import { Button } from 'antd';
 
-export function ReactiveWidget() {
+export function GamePulseWidget() {
   const {
     selectedTab,
     setSelectedTab,
@@ -22,7 +22,7 @@ export function ReactiveWidget() {
     toggleTrigger,
     deleteTrigger,
     tabKind,
-  } = useReactiveWidget();
+  } = useGamePulseWidget();
 
   const TAB_COMPONENTS: Record<TabKind, React.FC> = {
     [TabKind.AddTrigger]: AddTriggerTab,
@@ -35,10 +35,10 @@ export function ReactiveWidget() {
 
   const showDisplay = tabKind !== TabKind.General && tabKind !== TabKind.GameManage;
 
-  function onPlayAlert(gameKey: string = 'global', trigger: ReactiveTrigger) {
+  function onPlayAlert(gameKey: string = 'global', trigger: GamePulseTrigger) {
     if (!trigger?.id) return;
 
-    const targetTab = ReactiveTabUtils.generateTriggerId(gameKey, trigger.id);
+    const targetTab = GamePulseTabUtils.generateTriggerId(gameKey, trigger.id);
 
     if (selectedTab !== targetTab) {
       setSelectedTab(targetTab);
@@ -62,13 +62,13 @@ export function ReactiveWidget() {
   }
 
   return (
-    <div className={css.reactiveWidget}>
+    <div className={css.gamePulseWidget}>
       <WidgetLayout
         layout="long-menu"
         showDisplay={showDisplay}
         footerSlots={<ManageOnWebButton />}
       >
-        <ReactiveWidgetMenu
+        <GamePulseMenu
           sections={sections}
           activeKey={selectedTab}
           onChange={setSelectedTab}
@@ -90,7 +90,7 @@ function AddTriggerTab() {
     games,
     widgetData,
     createTrigger,
-  } = useReactiveWidget();
+  } = useGamePulseWidget();
 
   const gameOptions = [
     { label: 'Global', value: 'global' },
@@ -98,7 +98,7 @@ function AddTriggerTab() {
   ];
 
   return (
-    <ReactiveWidgetCreateTriggerForm
+    <GamePulseCreateTriggerForm
       trigger={{ game: '', event_type: '', name: '' }}
       availableGameEvents={availableGameEvents}
       gameEvents={gameEvents}
@@ -111,11 +111,11 @@ function AddTriggerTab() {
 };
 
 function GameSettingsTab() {
-  const { groupOptions, toggleScope, enableAllGroups, disableAllGroups } = useReactiveWidget();
+  const { groupOptions, toggleScope, enableAllGroups, disableAllGroups } = useGamePulseWidget();
 
   return (
     <div>
-      <ReactiveWidgetGameSettings
+      <GamePulseGameSettings
         scopes={groupOptions}
         onToggleScope={toggleScope}
         onEnableAll={enableAllGroups}
@@ -133,7 +133,7 @@ function ManageTriggersTab() {
     enableAllTriggers,
     disableAllTriggers,
     toggleTrigger,
-  } = useReactiveWidget();
+  } = useGamePulseWidget();
 
   const selectedGame = activeTabContext.gameId || 'global';
 
@@ -164,7 +164,7 @@ function ManageTriggersTab() {
       }));
   }, [triggers]);
   return (
-    <ReactiveWidgetGameSettings
+    <GamePulseGameSettings
       scopes={options}
       onToggleScope={onToggleGame}
       onEnableAll={onEnableAll}
@@ -174,7 +174,7 @@ function ManageTriggersTab() {
 };
 
 function TriggerDetailsTab() {
-  const { activeTabContext, staticConfig, createTriggerBinding } = useReactiveWidget();
+  const { activeTabContext, staticConfig, createTriggerBinding } = useGamePulseWidget();
   const { gameId: selectedGame, triggerId: selectedTriggerId } = activeTabContext;
 
   const forceUpdate = useForceUpdate();
@@ -184,7 +184,7 @@ function TriggerDetailsTab() {
     return createTriggerBinding(selectedGame, selectedTriggerId, forceUpdate);
   }, [createTriggerBinding, selectedGame, selectedTriggerId, forceUpdate]);
   const handleUpdate = useCallback(
-    (trigger: ReactiveTrigger) => {
+    (trigger: GamePulseTrigger) => {
       binding?.updateTrigger(trigger);
     },
     [binding],
@@ -195,7 +195,7 @@ function TriggerDetailsTab() {
   }
 
   return (
-    <ReactiveWidgetTriggerDetails
+    <GamePulseTriggerDetails
       key={trigger.id}
       trigger={trigger}
       onUpdate={handleUpdate}
@@ -206,7 +206,7 @@ function TriggerDetailsTab() {
 
 function ManageOnWebButton() {
   const handleClick = () => {
-    remote.shell.openExternal('https://streamlabs.com/dashboard#/widgets/reactive-widget');
+    remote.shell.openExternal('https://streamlabs.com/dashboard#/widgets/game-pulse');
   };
   return (
     <Button type="ghost" onClick={handleClick}>
@@ -217,7 +217,7 @@ function ManageOnWebButton() {
 }
 
 function ResetSettingsButton() {
-  const { resetSettings } = useReactiveWidget();
+  const { resetSettings } = useGamePulseWidget();
 
   const handleClick = () => {
     remote.dialog

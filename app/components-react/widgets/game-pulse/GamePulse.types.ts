@@ -25,12 +25,12 @@ export enum ApiEndpoints {
   TTSLanguages = 'tts/static/available-languages',
 }
 
-export type ReactiveLayout = 'above' | 'banner' | 'side';
-export type ReactiveStreakPeriod = 'session' | 'today' | 'round';
-export type ReactiveTriggerType = 'streak' | 'achievement' | 'level' | 'total';
-export type ReactiveEventPeriod = 'round' | 'today' | null;
+export type GamePulseLayout = 'above' | 'banner' | 'side';
+export type GamePulseStreakPeriod = 'session' | 'today' | 'round';
+export type GamePulseTriggerType = 'streak' | 'achievement' | 'level' | 'total';
+export type GamePulseEventPeriod = 'round' | 'today' | null;
 
-export interface ReactiveVoiceGroup {
+export interface GamePulseVoiceGroup {
   group: string;
   list: { key: string; value: string }[];
 }
@@ -40,7 +40,7 @@ export interface SelectOption {
   value: string;
 }
 
-export interface IReactiveGroupOption {
+export interface IGamePulseGroupOption {
   id: string;
   name: string;
   enabled: boolean;
@@ -62,7 +62,7 @@ export interface AnimationOptionConfig {
   list?: AnimationOptionConfig[];
 }
 
-export interface ReactiveMediaSettings {
+export interface GamePulseMediaSettings {
   image_href: string;
   sound_href: string;
   sound_volume: number;
@@ -70,7 +70,7 @@ export interface ReactiveMediaSettings {
   hide_animation: string;
 }
 
-export interface ReactiveTextSettings {
+export interface GamePulseTextSettings {
   message_template: string;
   font: string;
   font_size: number;
@@ -81,7 +81,7 @@ export interface ReactiveTextSettings {
   text_animation: string;
 }
 
-export interface ReactiveTtsSettings {
+export interface GamePulseTtsSettings {
   enabled: boolean;
   language: string;
   security: number;
@@ -90,105 +90,105 @@ export interface ReactiveTtsSettings {
   include_message_template: boolean;
 }
 
-export interface ReactiveBaseTrigger {
+export interface GamePulseBaseTrigger {
   id: string;
   enabled: boolean;
   name: string;
   game_event: string;
-  layout: ReactiveLayout;
+  layout: GamePulseLayout;
   alert_duration_ms: number;
-  media_settings: ReactiveMediaSettings;
-  text_settings: ReactiveTextSettings;
-  tts_settings: ReactiveTtsSettings;
-  event_period: ReactiveEventPeriod;
+  media_settings: GamePulseMediaSettings;
+  text_settings: GamePulseTextSettings;
+  tts_settings: GamePulseTtsSettings;
+  event_period: GamePulseEventPeriod;
 }
 
-export interface ReactiveStreakTrigger extends ReactiveBaseTrigger {
+export interface GamePulseStreakTrigger extends GamePulseBaseTrigger {
   event_type: 'streak';
-  streak_period: ReactiveStreakPeriod;
+  streak_period: GamePulseStreakPeriod;
   amount_minimum: number;
   amount_maximum?: number | null;
 }
 
-export interface ReactiveAchievementTrigger extends ReactiveBaseTrigger {
+export interface GamePulseAchievementTrigger extends GamePulseBaseTrigger {
   event_type: 'achievement';
   amount_minimum: number | null;
   amount_maximum: number | null;
 }
 
-export interface ReactiveLevelTrigger extends ReactiveBaseTrigger {
+export interface GamePulseLevelTrigger extends GamePulseBaseTrigger {
   event_type: 'level';
   amount_minimum?: number | null;
   amount_maximum?: number | null;
 }
 
-export interface ReactiveTotalTrigger extends ReactiveBaseTrigger {
+export interface GamePulseTotalTrigger extends GamePulseBaseTrigger {
   event_type: 'total';
   amount_minimum: number;
   amount_maximum?: number | null;
 }
 
-export type ReactiveTrigger = 
-  | ReactiveStreakTrigger 
-  | ReactiveAchievementTrigger 
-  | ReactiveLevelTrigger
-  | ReactiveTotalTrigger;
+export type GamePulseTrigger = 
+  | GamePulseStreakTrigger 
+  | GamePulseAchievementTrigger 
+  | GamePulseLevelTrigger
+  | GamePulseTotalTrigger;
 
-export interface ReactiveTriggerGroup {
+export interface GamePulseTriggerGroup {
   enabled: boolean;
-  triggers: ReactiveTrigger[];
+  triggers: GamePulseTrigger[];
 }
 
-export type ReactiveGamesMap = Record<string, ReactiveTriggerGroup | null | undefined>;
+export type GamePulseGamesMap = Record<string, GamePulseTriggerGroup | null | undefined>;
 
-export interface ReactiveWidgetSettings {
+export interface GamePulseWidgetSettings {
   background_color: string;
   interrupt_mode: boolean;
   is_muted: boolean;
-  global: ReactiveTriggerGroup;
-  games: ReactiveGamesMap;
+  global: GamePulseTriggerGroup;
+  games: GamePulseGamesMap;
 }
 
-export interface ReactiveGameMeta {
+export interface GamePulseGameMeta {
   title: string;
   camel: string;
 }
 
-export interface ReactiveEventMeta {
+export interface GamePulseEventMeta {
   title: string;
-  trigger_types: ReactiveTriggerType[];
+  trigger_types: GamePulseTriggerType[];
 }
 
-export interface ReactiveWidgetAnimations {
+export interface GamePulseWidgetAnimations {
   text_animations: AnimationGroup;
   show_animations: AnimationGroup;
   hide_animations: AnimationGroup;
 }
 
-export interface ReactiveWidgetOptions {
-  games: Record<string, ReactiveGameMeta>;
-  game_events: Record<string, ReactiveEventMeta>;
+export interface GamePulseWidgetOptions {
+  games: Record<string, GamePulseGameMeta>;
+  game_events: Record<string, GamePulseEventMeta>;
   global_events: Record<string, string>;
   streak_time_periods: Record<string, string>;
   available_game_events: Record<string, string[]>;
   event_time_periods: Record<string, string>;
-  tts_voices?: Record<string, ReactiveVoiceGroup>;
+  tts_voices?: Record<string, GamePulseVoiceGroup>;
 }
 
-export interface ReactiveStaticData {
+export interface GamePulseStaticData {
   widget_type: string;
   title: string;
-  options: ReactiveWidgetOptions;
-  animations: ReactiveWidgetAnimations;
+  options: GamePulseWidgetOptions;
+  animations: GamePulseWidgetAnimations;
 }
 
-export interface ReactiveStaticConfig {
+export interface GamePulseStaticConfig {
   success: boolean;
   message: string;
-  data: ReactiveStaticData;
+  data: GamePulseStaticData;
 }
 
-export interface ReactiveGameSettingsUI extends ReactiveTriggerGroup {
+export interface GamePulseGameSettingsUI extends GamePulseTriggerGroup {
   gameId: string;
 }
 
@@ -198,7 +198,7 @@ export interface ActiveTabContext {
   triggerId?: string;
 }
 
-export interface IReactiveWidgetState extends IWidgetCommonState {
-  data: { settings: ReactiveWidgetSettings };
-  staticConfig: ReactiveStaticConfig;
+export interface IGamePulseWidgetState extends IWidgetCommonState {
+  data: { settings: GamePulseWidgetSettings };
+  staticConfig: GamePulseStaticConfig;
 }

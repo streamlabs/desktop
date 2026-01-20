@@ -19,23 +19,23 @@ import {
 } from 'components-react/shared/inputs';
 import { IListGroup } from 'components-react/shared/inputs/GroupedListInput';
 import { LayoutInput } from '../common/LayoutInput';
-import css from './ReactiveWidgetTriggerDetails.m.less';
-import { AnimationGroup, ReactiveStaticConfig, ReactiveTrigger } from './ReactiveWidget.types';
+import css from './GamePulseTriggerDetails.m.less';
+import { AnimationGroup, GamePulseStaticConfig, GamePulseTrigger } from './GamePulse.types';
 
-interface ReactiveWidgetTriggerDetailsProps {
-  trigger: ReactiveTrigger;
-  staticConfig?: ReactiveStaticConfig;
-  onUpdate?: (updatedTrigger: ReactiveTrigger) => void;
+interface GamePulseTriggerDetailsProps {
+  trigger: GamePulseTrigger;
+  staticConfig?: GamePulseStaticConfig;
+  onUpdate?: (updatedTrigger: GamePulseTrigger) => void;
 }
 
 /**
  * Trigger Details Form
  */
-export const ReactiveWidgetTriggerDetails = memo(function ReactiveWidgetTriggerDetails({
+export const GamePulseTriggerDetails = memo(function GamePulseTriggerDetails({
   trigger,
   onUpdate,
   staticConfig,
-}: ReactiveWidgetTriggerDetailsProps) {
+}: GamePulseTriggerDetailsProps) {
   const { totalPeriodOptions, levelRangeOptions, voiceOptions, animationOptions } = useMemo(() => {
     const totalPeriods = staticConfig?.data?.options?.event_time_periods ?? {};
     const totalPeriodOptions = Object.entries(totalPeriods).map(([key, value]) => ({
@@ -295,7 +295,7 @@ export const ReactiveWidgetTriggerDetails = memo(function ReactiveWidgetTriggerD
   );
 });
 
-function getLevelRangeType(trigger: ReactiveTrigger): 'minimum' | 'maximum' | 'between' {
+function getLevelRangeType(trigger: GamePulseTrigger): 'minimum' | 'maximum' | 'between' {
   if (trigger.amount_minimum != null && trigger.amount_maximum != null) return 'between';
   if (trigger.amount_maximum != null) return 'maximum';
   return 'minimum';

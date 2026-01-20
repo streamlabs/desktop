@@ -1,30 +1,29 @@
 import { Throttle, Bind } from 'lodash-decorators';
 import { useWidget, WidgetModule } from '../common/useWidget';
 import {
-  ReactiveTabUtils,
+  GamePulseTabUtils,
   buildNewTrigger,
-} from './ReactiveWidget.helpers';
+} from './GamePulse.helpers';
 
 import {
   ScopeId,
   ApiEndpoints,
-  ReactiveWidgetSettings,
-  ReactiveTrigger,
-  IReactiveGroupOption,
+  GamePulseWidgetSettings,
+  GamePulseTrigger,
+  IGamePulseGroupOption,
   TabKind,
   ActiveTabContext,
-  ReactiveTriggerType,
   TriggerType,
-  ReactiveStaticConfig,
-  ReactiveGameMeta,
-  ReactiveEventMeta,
-  ReactiveTriggerGroup,
-  IReactiveWidgetState,
-} from './ReactiveWidget.types';
+  GamePulseStaticConfig,
+  GamePulseGameMeta,
+  GamePulseEventMeta,
+  GamePulseTriggerGroup,
+  IGamePulseWidgetState,
+} from './GamePulse.types';
 
 
 /**
- * Reactive widget module for Game Pulse triggers.
+ * Game Pulse widget module for Game Pulse triggers.
  *
  * Concepts:
  * - "scope": either 'global' or a specific game id
@@ -35,16 +34,16 @@ import {
  * - exposes group/trigger metadata for the UI
  * - manages trigger CRUD and enable/disable state
  */
-export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
+export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
   private get hostsService() {
     return this.widgetsService.hostsService;
   }
 
-  get staticConfig(): ReactiveStaticConfig | undefined {
-    return this.state?.staticConfig as ReactiveStaticConfig | undefined;
+  get staticConfig(): GamePulseStaticConfig | undefined {
+    return this.state?.staticConfig as GamePulseStaticConfig | undefined;
   }
 
-  get games(): Record<string, ReactiveGameMeta> {
+  get games(): Record<string, GamePulseGameMeta> {
     return this.staticConfig?.data?.options?.games || {};
   }
 
@@ -52,7 +51,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     return this.staticConfig?.data?.options?.available_game_events || {};
   }
 
-  get gameEvents(): Record<string, ReactiveEventMeta> {
+  get gameEvents(): Record<string, GamePulseEventMeta> {
     return this.staticConfig?.data?.options?.game_events || {};
   }
 
@@ -60,18 +59,18 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     return this.staticConfig?.data?.options?.global_events || {};
   }
 
-  get groupOptions(): IReactiveGroupOption[] {
+  get groupOptions(): IGamePulseGroupOption[] {
     const gamesMeta = this.games;
 
     const games = Object.entries(this.settings.games || {}).map(
-      ([gameId, gameData]: [string, ReactiveTriggerGroup]) => ({
+      ([gameId, gameData]: [string, GamePulseTriggerGroup]) => ({
         id: gameId,
         name: gamesMeta?.[gameId]?.title || gameId,
         enabled: !!gameData?.enabled,
       }),
     );
 
-    const global: IReactiveGroupOption = {
+    const global: IGamePulseGroupOption = {
       id: ScopeId.Global,
       name: 'Global',
       enabled: !!this.settings.global?.enabled,
@@ -80,7 +79,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     return [global, ...games];
   }
 
-  get sections(): { id: string; title: string; triggers: ReactiveTrigger[] }[] {
+  get sections(): { id: string; title: string; triggers: GamePulseTrigger[] }[] {
     const globalSection = {
       id: ScopeId.Global,
       title: 'Global',
@@ -98,7 +97,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
 
   get activeTabContext(): ActiveTabContext {
     const tab = this.state?.selectedTab;
-    const context = ReactiveTabUtils.parse(tab);
+    const context = GamePulseTabUtils.parse(tab);
 
     // ensure we check for the existence of tab
     if (context.kind === TabKind.General  && !tab) {
@@ -115,7 +114,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     return this.activeTabContext.kind;
   }
 
-  protected patchBeforeSend(settings: ReactiveWidgetSettings) {
+  protected patchBeforeSend(settings: GamePulseWidgetSettings) {
     return settings;
   }
 
@@ -151,7 +150,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
    * @param scopeId The owning group (`'global'` or a game id).
    * @param updater A function that receives a trigger and returns the updated trigger.
    */
-  private updateTriggers(scopeId: string, updater: (trigger: ReactiveTrigger) => ReactiveTrigger) {
+  private updateTriggers(scopeId: string, updater: (trigger: GamePulseTrigger) => GamePulseTrigger) {
     const isGlobal = scopeId === ScopeId.Global;
     const groupSettings = this.getScope(scopeId) || { enabled: true, triggers: [] };
     const updatedGroupSettings = {
@@ -159,7 +158,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
       triggers: (groupSettings.triggers || []).map(updater),
     };
 
-    const newSettings: ReactiveWidgetSettings = {
+    const newSettings: GamePulseWidgetSettings = {
       ...this.settings,
       ...(isGlobal
         ? { global: updatedGroupSettings }
@@ -196,11 +195,11 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     const module = this;
 
     return {
-      get trigger(): ReactiveTrigger | null {
+      get trigger(): GamePulseTrigger | null {
         return module.getTrigger(scopeId, triggerId);
       },
 
-      updateTrigger(updated: ReactiveTrigger) {
+      updateTrigger(updated: GamePulseTrigger) {
         const settings = structuredClone(module.settings);
         const defaultGroup = { enabled: true, triggers: [] };
         const group =
@@ -208,7 +207,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
             ? (settings.global = settings.global || defaultGroup)
             : (settings.games[scopeId] = settings.games?.[scopeId] || defaultGroup);
 
-        group.triggers = (group.triggers || []).map((t: ReactiveTrigger) =>
+        group.triggers = (group.triggers || []).map((t: GamePulseTrigger) =>
           t.id === updated.id ? updated : t,
         );
 
@@ -253,7 +252,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
    * Enable/disable a single trigger within a group.
    *
    * If `enabled` is provided, the trigger's `enabled` flag is set to that value
-   * (e.g. from the checkbox in `ReactiveWidgetMenu`). If `enabled` is omitted,
+   * (e.g. from the checkbox in `GamePulseWidgetMenu`). If `enabled` is omitted,
    * the current `enabled` state is toggled.
    *
    * @param scopeId   Group that owns the trigger (`'global'` or a game id).
@@ -285,7 +284,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
    * @param enabled Whether the scope should be enabled (true) or disabled (false).
    */
   public toggleScope(scopeId: string, enabled: boolean) {
-    const newSettings: ReactiveWidgetSettings = structuredClone(this.settings) as ReactiveWidgetSettings;
+    const newSettings: GamePulseWidgetSettings = structuredClone(this.settings) as GamePulseWidgetSettings;
     const group = this.getScope(scopeId, newSettings) || { triggers: [] };
 
     if (scopeId === 'global') {
@@ -309,7 +308,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
   /** Enable all trigger groups at once. */
   public enableAllGroups() {
     const games = this.settings.games || {};
-    const newGames: Record<string, ReactiveTriggerGroup> = {};
+    const newGames: Record<string, GamePulseTriggerGroup> = {};
 
     Object.keys(games).forEach(gameId => {
       newGames[gameId] = {
@@ -319,7 +318,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
       };
     });
 
-    const newSettings: ReactiveWidgetSettings = {
+    const newSettings: GamePulseWidgetSettings = {
       ...this.settings,
       global: {
         ...(this.settings.global || {}),
@@ -334,7 +333,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
   /** Disable all trigger groups at once. */
   public disableAllGroups() {
     const games = this.settings.games || {};
-    const newGames: Record<string, ReactiveTriggerGroup> = {};
+    const newGames: Record<string, GamePulseTriggerGroup> = {};
 
     Object.keys(games).forEach(gameId => {
       newGames[gameId] = {
@@ -344,7 +343,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
       };
     });
 
-    const newSettings: ReactiveWidgetSettings = {
+    const newSettings: GamePulseWidgetSettings = {
       ...this.settings,
       global: {
         ...(this.settings.global || {}),
@@ -358,7 +357,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
 
   @Bind()
   @Throttle(1000)
-  public async playReactiveAlert(trigger: ReactiveTrigger) {
+  public async playReactiveAlert(trigger: GamePulseTrigger) {
     const url = `https://${this.hostsService.streamlabs}/api/v5/${ApiEndpoints.PreviewTrigger}`;
 
     const res = await this.widgetsService.request({
@@ -388,7 +387,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
       throw new Error(`Failed to delete trigger: ${res.message}`);
     }
 
-    const newSettings = structuredClone(this.settings) as ReactiveWidgetSettings;
+    const newSettings = structuredClone(this.settings) as GamePulseWidgetSettings;
     if (scopeId === ScopeId.Global) {
       newSettings.global = newSettings.global || { enabled: true, triggers: [] };
       newSettings.global.triggers = (newSettings.global.triggers || []).filter(
@@ -396,7 +395,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
       );
     } else {
       newSettings.games = newSettings.games || {};
-      const group = newSettings.games[scopeId] as ReactiveTriggerGroup;
+      const group = newSettings.games[scopeId] as GamePulseTriggerGroup;
       if (group) {
         group.triggers = (group.triggers || []).filter(t => t.id !== triggerId);
       }
@@ -408,7 +407,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     const { activeTabContext } = this;
     const { triggerId: selectedTriggerId, kind } = activeTabContext;
     if (kind === TabKind.TriggerDetail && selectedTriggerId === triggerId) {
-      this.state.setSelectedTab(ReactiveTabUtils.ID_GENERAL);
+      this.state.setSelectedTab(GamePulseTabUtils.ID_GENERAL);
     }
   }
 
@@ -450,17 +449,17 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
 
     const triggerId = this.getTriggers(game)?.at(-1)?.id;
     if (triggerId) {
-      this.state.setSelectedTab(ReactiveTabUtils.generateTriggerId(game, triggerId));
+      this.state.setSelectedTab(GamePulseTabUtils.generateTriggerId(game, triggerId));
     }
   }
 
   /** Helper to append a new trigger to the correct group in settings. */
   private appendTriggerToSettings(
-    settings: ReactiveWidgetSettings,
+    settings: GamePulseWidgetSettings,
     scopeId: string,
-    trigger: ReactiveTrigger,
-  ): ReactiveWidgetSettings {
-    const nextSettings = structuredClone(settings) as ReactiveWidgetSettings;
+    trigger: GamePulseTrigger,
+  ): GamePulseWidgetSettings {
+    const nextSettings = structuredClone(settings) as GamePulseWidgetSettings;
 
     if (scopeId === ScopeId.Global) {
       const global = nextSettings.global || { enabled: true, triggers: [] };
@@ -472,7 +471,7 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
     }
 
     const games = nextSettings.games || {};
-    const group = (games[scopeId] as ReactiveTriggerGroup) || {
+    const group = (games[scopeId] as GamePulseTriggerGroup) || {
       enabled: true,
       triggers: [],
     };
@@ -493,13 +492,13 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
   }
 
   /** Get all triggers for a specific group. */
-  public getTriggers(scopeId: string): ReactiveTrigger[] {
+  public getTriggers(scopeId: string): GamePulseTrigger[] {
     const scope = this.getScope(scopeId);
     return scope?.triggers ?? [];
   }
 
   /** Get a specific trigger by ID within a group. Returns null if not found. */
-  public getTrigger(scopeId: string, triggerId: string): ReactiveTrigger | null {
+  public getTrigger(scopeId: string, triggerId: string): GamePulseTrigger | null {
     const scope = this.getScope(scopeId);
     if (!scope) return null;
     return scope.triggers.find(t => t.id === triggerId) ?? null;
@@ -515,19 +514,19 @@ export class ReactiveWidgetModule extends WidgetModule<IReactiveWidgetState> {
 
     try {
       if (voicesRes.success && this.state.staticConfig) {
-        const currentConfig = structuredClone(this.state.staticConfig) as ReactiveStaticConfig;
+        const currentConfig = structuredClone(this.state.staticConfig) as GamePulseStaticConfig;
         if (!currentConfig.data.options) currentConfig.data.options = {} as any;
         currentConfig.data.options.tts_voices = voicesRes.data || voicesRes;
         this.state.setStaticConfig(currentConfig);
       }
     } catch (err) {
-      console.error('[ReactiveWidget] Failed to merge voice data:', err);
+      console.error('[GamePulseWidget] Failed to merge voice data:', err);
     }
 
     return data;
   }
 }
 
-export function useReactiveWidget() {
-  return useWidget<ReactiveWidgetModule>();
+export function useGamePulseWidget() {
+  return useWidget<GamePulseModule>();
 }
