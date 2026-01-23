@@ -8,7 +8,6 @@ import { Services } from '../service-provider';
 import { ENotificationType, INotification } from 'services/notifications';
 import { $t } from 'services/i18n';
 import styles from './NotificationsArea.m.less';
-import { useVuex } from 'components-react/hooks';
 const notificationAudio = require('../../../media/sound/ding.wav');
 
 class NotificationsModule {
@@ -194,7 +193,7 @@ export default function NotificationsArea() {
         <Tooltip placement="right" title={showNotificationsTooltip}>
           <div className={styles.notificationsCounter} onClick={showNotifications}>
             <Badge dot={unreadNotifs.length > 0}>
-              <i className="icon-notifications" />
+              <i className={cx('icon-notifications', styles.notificationIcon)} />
             </Badge>
           </div>
         </Tooltip>
