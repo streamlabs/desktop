@@ -1,7 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import styles from './GoLive.m.less';
 import { WindowsService } from 'services/windows';
-import { SettingsService } from 'services/settings';
+import {
+  SettingsService,
+  EIncompatibleRestreamCodec,
+  incompatibleRestreamCodecs,
+} from 'services/settings';
 import { RestreamService } from 'services/restream';
 import { ModalLayout } from '../../shared/ModalLayout';
 import { Button, message } from 'antd';
@@ -64,6 +68,7 @@ function ModalFooter() {
     isStreamShiftMode,
     hasIncompatibleCodec,
     streamShiftForceGoLive,
+    codec,
     checkIsLive,
     forceStreamShiftGoLive,
     goLiveWithDefaultCodec,
@@ -94,9 +99,12 @@ function ModalFooter() {
     },
 
     get hasIncompatibleCodec() {
-      const codec = this.settingsService.views.values.Output.Encoder;
       return (
-        codec && ['ffmpeg_aom_av1', 'ffmpeg_svt_av1'].includes(codec) && module.shouldSetupRestream
+        module.codec &&
+        Object.values(EIncompatibleRestreamCodec).includes(
+          module.codec as EIncompatibleRestreamCodec,
+        ) &&
+        module.shouldSetupRestream
       );
     },
 
@@ -119,18 +127,21 @@ function ModalFooter() {
   const promptUseDefaultCodec = useCallback(async () => {
     // If the user is not live but has an incompatible codec, prompt to change codec
     let message = $t(
-      'AV1 codec is not supported for Multistream. Would you like to proceed with the H.264 codec or select another codec?',
+      '%{videoCodec} codec is not supported for Multistream. Would you like to proceed with the H.264 codec or select another codec?',
+      { videoCodec: incompatibleRestreamCodecs(codec as EIncompatibleRestreamCodec) },
     );
 
     if (isStreamShiftMode) {
       message = $t(
-        'AV1 codec is not supported for Stream Shift. Would you like to proceed with the H.264 codec or select another codec?',
+        '%{videoCodec} codec is not supported for Stream Shift. Would you like to proceed with the H.264 codec or select another codec?',
+        { videoCodec: incompatibleRestreamCodecs(codec as EIncompatibleRestreamCodec) },
       );
     }
 
     if (isDualOutputMode) {
       message = $t(
-        'AV1 codec is not supported for Dual Output streaming to more than two destinations. Would you like to proceed with the H.264 codec or select another codec?',
+        '%{videoCodec} codec is not supported for Dual Output streaming to more than two destinations. Would you like to proceed with the H.264 codec or select another codec?',
+        { videoCodec: incompatibleRestreamCodecs(codec as EIncompatibleRestreamCodec) },
       );
     }
 
@@ -144,7 +155,7 @@ function ModalFooter() {
       secondaryActionText: $t('Select Codec'),
       secondaryActionFn: showSettings,
     });
-  }, [hasIncompatibleCodec, isStreamShiftMode, isDualOutputMode]);
+  }, [hasIncompatibleCodec, isStreamShiftMode, isDualOutputMode, codec]);
 
   const handleGoLive = useCallback(async () => {
     if (isDualOutputMode && !getCanStreamDualOutput()) {

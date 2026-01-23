@@ -12,7 +12,6 @@ import { getDefined } from '../../../util/properties-type-guards';
 import isEqual from 'lodash/isEqual';
 import { TDisplayType } from 'services/settings-v2';
 import partition from 'lodash/partition';
-import { EAvailableFeatures } from 'services/incremental-rollout';
 
 type TCommonFieldName = 'title' | 'description';
 
@@ -492,6 +491,10 @@ export class GoLiveSettingsModule {
 
   get recommendedColorSpaceWarnings() {
     return Services.SettingsService.views.recommendedColorSpaceWarnings;
+  }
+
+  get codec() {
+    return Services.SettingsService.views.values.Output.Encoder;
   }
 }
 
