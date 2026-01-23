@@ -134,6 +134,7 @@ export default function GoLiveSettings() {
           )}
           <div
             className={cx(styles.columnContent, {
+              [styles.dualOutput]: isDualOutputMode,
               [styles.alertClosed]: isDualOutputMode,
               [styles.alertOpen]: isDualOutputMode && !canStreamDualOutput,
             })}
@@ -143,14 +144,7 @@ export default function GoLiveSettings() {
             </div>
             {!isPrime && <AddDestinationButton type="banner" className={styles.addDestination} />}
 
-            <Scrollable
-              className={cx(styles.switcherWrapper, {
-                [styles.ultraHeight]: isPrime,
-                [styles.nonUltraHeight]: !isPrime,
-                [styles.ultraAlertOpen]: isPrime && isDualOutputMode && !canStreamDualOutput,
-                [styles.nonUltraAlertOpen]: !isPrime && isDualOutputMode && !canStreamDualOutput,
-              })}
-            >
+            <Scrollable className={styles.switcherWrapper}>
               <DestinationSwitchers />
             </Scrollable>
           </div>

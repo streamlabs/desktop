@@ -533,7 +533,7 @@ i.destination-logo {
 
 .dual-output-alert {
   transform: translateY(-100px);
-  transition: transform 0.3s, visibility 0.3s;
+  transition: transform 0.3s, visibility 0.3s, opacity 0.3s;
   font-size: 13px;
   border-radius: 6px;
   padding: 8px;
@@ -541,18 +541,20 @@ i.destination-logo {
   background-color: rgba(23, 36, 45, 0);
   color: rgba(23, 36, 45, 0);
   visibility: hidden;
+  opacity: 0;
 
   &.error {
     background-color: #ff6f5b14;
     color: #ff6f5b;
     transform: translateY(0px);
     visibility: visible;
+    opacity: 1;
   }
 }
 
 .column-content {
   transition: transform 0.3s;
-  height: 58%;
+  height: 69%;
 
   &.alert-closed {
     transform: translateY(-70px);
@@ -562,6 +564,10 @@ i.destination-logo {
   &.alert-open {
     transform: translateY(0px);
     z-index: 0;
+  }
+
+  &.dual-output {
+    height: 58% !important;
   }
 }
 
