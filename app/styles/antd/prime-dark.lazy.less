@@ -2,7 +2,6 @@
 @import '../colors';
 @import './antd.less';
 
-
 // ANTD COLOR MAPPING
 @primary-color: @prime-dark; // var(--teal)
 @info-color: @prime-dark; // var(--info)
@@ -28,7 +27,6 @@
 @icon-color-hover: @prime-dark; // var(--icon)
 @heading-color: @primelight-1; // var(--title)
 
-
 @component-background: @primedark-3; // var(--background)
 @popover-background: @primedark-3; // var(--background)
 @background-color-light: @primedark-3; // var(--background)
@@ -41,7 +39,7 @@
 @link-hover-color: @primelight-1; // var(--title)
 @link-active-color: @primelight-1; // var(--title)
 
-@border-color-base:   @primelight-5; // var(--button)
+@border-color-base: @primelight-5; // var(--button)
 @border-color-split: @primedark-4; // var(--border)
 @border-color-inverse: @primedark-4; // var(--border)
 
@@ -182,6 +180,10 @@
   background-color: @primedark-2; // var(--section)
 }
 
+.ant-checkbox-inner {
+  background-color: unset;
+}
+
 .ant-checkbox-checked .ant-checkbox-inner::after {
   border: 2px solid @primedark-1;
   border-top: 0;
@@ -198,4 +200,3 @@
 #mainWrapper .ant-select-selector input {
   color: @primelight-4; // var(--paragraph)
 }
-
