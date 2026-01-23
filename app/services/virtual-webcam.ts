@@ -89,7 +89,7 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
           this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
             if (
               signalInfo.type === EOBSOutputType.VirtualCam &&
-              signalInfo.signal === EOBSOutputSignal.Start
+              signalInfo.signal === EOBSOutputSignal.Activate // EOBSOutputSignal.Activate indicates mac-virtualcam is initialized
             ) {
               console.log(`virtual cam init signalInfo: ${signalInfo.signal}`);
               this.setInstallStatus();
@@ -222,7 +222,7 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
           this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
             if (
               signalInfo.type === EOBSOutputType.VirtualCam &&
-              signalInfo.signal === EOBSOutputSignal.Start
+              signalInfo.signal === EOBSOutputSignal.Activate // EOBSOutputSignal.Activate indicates mac-virtualcam is initialized
             ) {
               console.log(`virtual cam install signalInfo: ${signalInfo.signal}`);
               this.setInstallStatus();

@@ -22,6 +22,8 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
     p.onChange({ ...twSettings, ...patch });
   }
 
+  const bind = createBinding(twSettings, updatedSettings => updateSettings(updatedSettings));
+
   const isDualStream = useMemo(() => {
     return twSettings?.display === 'both' && p.isDualOutputMode;
   }, [p.isDualOutputMode, twSettings?.display]);
@@ -30,8 +32,6 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
     if (!p.enabledPlatformsCount) return false;
     return p.enabledPlatformsCount > 1;
   }, [p.enabledPlatformsCount, isDualStream]);
-
-  const bind = createBinding(twSettings, updatedSettings => updateSettings(updatedSettings));
 
   const enhancedBroadcastingTooltipText = useMemo(() => {
     return p.isDualOutputMode

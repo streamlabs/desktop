@@ -17,6 +17,7 @@ import { StreamSettingsService } from '../settings/streaming';
 import * as remote from '@electron/remote';
 import { VideoSettingsService } from 'services/settings-v2/video';
 import { ENotificationType, NotificationsService } from 'services/notifications';
+import { IJsonRpcRequest } from 'services/api/jsonrpc';
 
 const VIEWER_COUNT_UPDATE_INTERVAL = 60 * 1000;
 
@@ -125,11 +126,16 @@ export abstract class BasePlatformService<T extends IPlatformState> extends Stat
     return EPlatformCallResult.Success;
   }
 
-  postError(message: string) {
+  postNotification(
+    message: string,
+    type: ENotificationType = ENotificationType.WARNING,
+    action?: IJsonRpcRequest,
+  ) {
     this.notificationsService.actions.push({
       message,
-      type: ENotificationType.WARNING,
+      type,
       lifeTime: 5000,
+      action,
     });
   }
 
