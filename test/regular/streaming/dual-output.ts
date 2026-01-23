@@ -347,9 +347,11 @@ test(
       await waitForSettingsWindowLoaded();
       await fillForm({
         trovo: true,
-        trovoDisplay: 'horizontal',
       });
       await waitForSettingsWindowLoaded();
+      await fillForm({
+        trovoDisplay: 'horizontal',
+      });
       await submit();
 
       // Cannot go live in dual output mode with all targets assigned to one display
