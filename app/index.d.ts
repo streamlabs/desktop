@@ -58,6 +58,13 @@ interface Response {
   json(): Promise<unknown>;
 }
 
+/**
+ * Expands and flattens a type for better readability in IDE tooltips.
+ * Instead of showing complex intersection types or Pick/Omit compositions,
+ * this displays the final resolved object shape with all properties.
+ */
+type Prettify<T> = { [K in keyof T]: T[K] } & {};
+
 // list of modules without type definitions
 declare module 'raven-js/*';
 declare module 'v-tooltip';

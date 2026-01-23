@@ -44,6 +44,7 @@ import Main from './windows/Main';
 import Loader from './pages/Loader';
 import StartStreamingButton from './root/StartStreamingButton';
 import TestWidgets from './root/TestWidgets';
+import ReactiveDataEditorWindow from './windows/reactive-data-editor/ReactiveDataEditorWindow';
 import { PlatformMerge, PlatformAppStore, PlatformAppMainPage } from './pages';
 import Settings from './windows/Settings';
 import Troubleshooter from './windows/Troubleshooter';
@@ -98,6 +99,7 @@ export const components = {
   Loader,
   StartStreamingButton,
   TestWidgets,
+  ReactiveDataEditorWindow,
   Settings: createRoot(Settings),
   Troubleshooter,
 };
