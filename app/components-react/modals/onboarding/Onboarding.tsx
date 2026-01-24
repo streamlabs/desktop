@@ -10,7 +10,7 @@ import { EPlatformCallResult, externalAuthPlatforms, TPlatform } from 'services/
 import UltraIcon from 'components-react/shared/UltraIcon';
 import KevinSvg from 'components-react/shared/KevinSvg';
 import styles from './Common.m.less';
-import { $i } from 'services/utils';
+import Utils, { $i } from 'services/utils';
 
 const NO_BUTTON_STEPS = new Set([EOnboardingSteps.Splash, EOnboardingSteps.Login]);
 
@@ -74,7 +74,7 @@ export default function Onboarding() {
     OnboardingV2Service.actions.stepBack();
   }
 
-  if (!currentStep) return <></>;
+  if (!currentStep || Utils.env.CI) return <></>;
 
   const Component = STEPS_MAP[currentStep.name];
 
