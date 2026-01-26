@@ -74,7 +74,7 @@ export default function Onboarding() {
     OnboardingV2Service.actions.stepBack();
   }
 
-  if (!currentStep) return <></>;
+  if (!currentStep || !showOnboarding) return <></>;
 
   const Component = STEPS_MAP[currentStep.name];
 
