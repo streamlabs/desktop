@@ -1,6 +1,9 @@
 import { test, useWebdriver } from '../helpers/webdriver';
-import { setTemporaryRecordingPath } from '../helpers/modules/settings/settings';
-import { click, clickButton, focusMain, select, waitForDisplayed } from '../helpers/modules/core';
+import {
+  setTemporaryRecordingPath,
+  showSettingsWindow,
+} from '../helpers/modules/settings/settings';
+import { clickButton, focusMain, waitForDisplayed } from '../helpers/modules/core';
 import { showPage } from '../helpers/modules/navigation';
 import {
   prepareToGoLive,
@@ -10,15 +13,20 @@ import {
 } from '../helpers/modules/streaming';
 import { logIn } from '../helpers/modules/user';
 import { saveReplayBuffer } from '../helpers/modules/replay-buffer';
-import { fillForm } from '../helpers/modules/forms';
+import { assertFormContains, fillForm } from '../helpers/modules/forms';
 const path = require('path');
 const fs = require('fs');
 
+// not a react hook
+// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
 
 test('Highlighter save and export', async t => {
   await logIn();
   const recordingDir = await setTemporaryRecordingPath();
+  await showSettingsWindow('Output', async () => {
+    await assertFormContains({ RecFormat: 'mp4', FilePath: recordingDir });
+  });
 
   await showPage('Highlighter');
   await clickButton('Configure');
