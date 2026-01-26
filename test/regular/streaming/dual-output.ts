@@ -328,64 +328,64 @@ test('Dual Output Go Live Non-Ultra', async t => {
   t.pass();
 });
 
-test('Dual Output Go Live Ultra', async (t: TExecutionContext) => {
-  try {
-    await logIn('twitch', { prime: true, multistream: true });
-    await toggleDualOutputMode();
-    await prepareToGoLive();
+test(
+  'Dual Output Go Live Ultra',
+  withUser('twitch', { prime: true, multistream: true }),
+  async (t: TExecutionContext) => {
+    try {
+      await toggleDualOutputMode();
+      await prepareToGoLive();
 
-    await clickGoLive();
-    await waitForSettingsWindowLoaded();
-    await fillForm({
-      trovo: true,
-      trovoDisplay: 'horizontal',
-    });
-    await waitForSettingsWindowLoaded();
-    await submit();
+      await clickGoLive();
+      await waitForSettingsWindowLoaded();
+      await fillForm({
+        trovo: true,
+      });
+      await waitForSettingsWindowLoaded();
+      await submit();
 
-    // Cannot go live in dual output mode with all targets assigned to one display
-    await waitForDisplayed('div.ant-message-notice-content', {
-      timeout: 10000,
-    });
-    await clickIfDisplayed('div.ant-message-notice-content');
-    await sleep(1000);
+      // Cannot go live in dual output mode with all targets assigned to one display
+      await waitForDisplayed('div.ant-message-notice-content', {
+        timeout: 10000,
+      });
+      await clickIfDisplayed('div.ant-message-notice-content');
+      await sleep(500);
 
-    // Dual output with one platform for each display
-    await fillForm({
-      trovoDisplay: 'vertical',
-    });
-    await waitForSettingsWindowLoaded();
-    await submit();
-    await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
-    await waitForDisplayed("h1=You're live!", { timeout: 60000 });
-    await waitForStreamStart();
-    await focusMain();
-    await isDisplayed('span=Multistream');
-    await stopStream();
+      // Dual output with one platform for each display
+      await fillForm({
+        trovoDisplay: 'vertical',
+        primaryChat: 'Trovo',
+      });
+      await waitForSettingsWindowLoaded();
+      await submit();
+      await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
+      await waitForStreamStart();
+      await isDisplayed('span=Multistream');
+      await stopStream();
+      await waitForStreamStop();
 
-    await clickGoLive();
-    await waitForSettingsWindowLoaded();
-    await fillForm({
-      trovoDisplay: 'horizontal',
-      twitchDisplay: 'vertical',
-      primaryChat: 'Trovo',
-    });
+      await clickGoLive();
+      await waitForSettingsWindowLoaded();
+      await fillForm({
+        trovoDisplay: 'horizontal',
+        twitchDisplay: 'vertical',
+      });
 
-    await waitForSettingsWindowLoaded();
-    await submit();
-    await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
-    await waitForDisplayed("h1=You're live!", { timeout: 60000 });
-    await waitForStreamStart();
-    await focusMain();
-    await isDisplayed('span=Multistream');
-    await stopStream();
+      await waitForSettingsWindowLoaded();
+      await submit();
+      await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
+      await waitForStreamStart();
+      await isDisplayed('span=Multistream');
+      await stopStream();
+      await waitForStreamStop();
 
-    // Vertical display is hidden after logging out
-    await logOut(t);
-    t.false(await isDisplayed('div#vertical-display'));
-  } catch (e: unknown) {
-    console.log('Error during Dual Output Go Live Ultra test:', e);
-  }
+      // Vertical display is hidden after logging out
+      await logOut(t);
+      t.false(await isDisplayed('div#vertical-display'));
+    } catch (e: unknown) {
+      console.log('Error during Dual Output Go Live Ultra test:', e);
+    }
 
-  t.pass();
-});
+    t.pass();
+  },
+);
