@@ -88,7 +88,6 @@ export default function Onboarding() {
       bodyStyle={{ padding: 32, height: '100%' }}
       className={styles.modalWrapper}
       visible={showOnboarding}
-      style={Utils.env.CI ? { display: 'none' } : {}}
       getContainer={false}
       footer={
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
