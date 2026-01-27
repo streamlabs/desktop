@@ -12,7 +12,6 @@ import { getDefined } from '../../../util/properties-type-guards';
 import isEqual from 'lodash/isEqual';
 import { TDisplayType } from 'services/settings-v2';
 import partition from 'lodash/partition';
-import { EAvailableFeatures } from 'services/incremental-rollout';
 
 type TCommonFieldName = 'title' | 'description';
 
@@ -124,17 +123,8 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
    * @param display - Display to toggle
    * @param radioBtn - If true, the display will be the only one selected for recording
    */
-  toggleRecordingDisplay(display: TDisplayType, radioBtn: boolean = false) {
-    if (radioBtn) {
-      this.updateSettings({ recording: [display] });
-      return;
-    }
-
-    if (this.state.recording.includes(display)) {
-      this.updateSettings({ recording: this.state.recording.filter(d => d !== display) });
-    } else {
-      this.updateSettings({ recording: [...this.state.recording, display] });
-    }
+  toggleRecordingDisplay(output: TDisplayOutput) {
+    this.updateSettings({ recording: output });
   }
 
   /**
@@ -352,6 +342,11 @@ export class GoLiveSettingsModule {
 
   updateCustomDestinationDisplayAndSaveSettings(destId: number, display: TDisplayType) {
     this.state.updateCustomDestinationDisplay(destId, display);
+    this.save(this.state.settings);
+  }
+
+  updateRecordingDisplayAndSaveSettings(display: TDisplayOutput) {
+    this.state.toggleRecordingDisplay(display);
     this.save(this.state.settings);
   }
 

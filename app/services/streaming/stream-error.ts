@@ -396,6 +396,7 @@ export function formatUnknownErrorMessage(
   info: IOBSOutputSignalInfo | string,
   userMessage: string,
   reportMessage: string,
+  target?: TPlatform | string,
 ): IErrorMessages {
   console.debug(
     'Formatting unknown streaming error: ',
@@ -440,7 +441,7 @@ export function formatUnknownErrorMessage(
         // TODO: we wanna refactor this, at least extract, and we should definitely fix types in the future
         // ref: IOBSOutputSignalInfo
         let error;
-        let platform;
+        let platform = target;
 
         if (typeof info.error === 'string' && info.error !== '') {
           /*
