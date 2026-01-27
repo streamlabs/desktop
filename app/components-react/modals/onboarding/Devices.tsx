@@ -9,7 +9,7 @@ import { Services } from 'components-react/service-provider';
 import Form from 'components-react/shared/inputs/Form';
 
 export function Devices(p: IOnboardingStepProps) {
-  const { DefaultHardwareService } = Services;
+  const { DefaultHardwareService, WindowsService } = Services;
 
   const { videoDevices, audioDevices, selectedAudioDevice, selectedVideoDevice } = useVuex(() => ({
     videoDevices: DefaultHardwareService.videoDevices.map(device => ({
@@ -27,12 +27,16 @@ export function Devices(p: IOnboardingStepProps) {
   // Set up temporary sources
   useEffect(() => {
     DefaultHardwareService.createTemporarySources();
+    WindowsService.actions.updateStyleBlockers('main', false);
 
     if (!selectedVideoDevice && videoDevices.length) {
       DefaultHardwareService.actions.setDefault('video', videoDevices[0].value);
     }
 
-    return () => DefaultHardwareService.actions.clearTemporarySources();
+    return () => {
+      DefaultHardwareService.actions.clearTemporarySources();
+      WindowsService.actions.updateStyleBlockers('main', true);
+    };
   }, []);
 
   function setDevice(type: 'video' | 'audio') {
@@ -55,21 +59,21 @@ export function Devices(p: IOnboardingStepProps) {
           width: '100%',
         }}
       >
-        <DisplaySection key={`${selectedVideoDevice}${selectedAudioDevice}`} />
+        <DisplaySection />
         <div className={styles.darkBox} style={{ width: 360, height: 240, padding: 32 }}>
           <Form layout="vertical">
             <ListInput
               label={$t('Webcam')}
               options={videoDevices}
               value={selectedVideoDevice}
-              onInput={setDevice('video')}
+              onChange={setDevice('video')}
               style={{ width: 200 }}
             />
             <ListInput
               label={$t('Microphone')}
               options={audioDevices}
               value={selectedAudioDevice}
-              onInput={setDevice('audio')}
+              onChange={setDevice('audio')}
               style={{ width: 200 }}
             />
           </Form>
