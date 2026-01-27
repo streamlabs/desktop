@@ -30,9 +30,6 @@ import uuid from 'uuid';
 import { EMenuItemKey } from 'services/side-nav';
 import { AiHighlighterUpdater } from './ai-highlighter-updater';
 import { IDownloadProgress } from 'util/requests';
-import { IncrementalRolloutService } from 'app-services';
-
-import { EAvailableFeatures } from 'services/incremental-rollout';
 import {
   EUploadPlatform,
   IAiClip,
@@ -90,7 +87,6 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   @Inject() jsonrpcService: JsonrpcService;
   @Inject() navigationService: NavigationService;
   @Inject() sharedStorageService: SharedStorageService;
-  @Inject() incrementalRolloutService: IncrementalRolloutService;
 
   static defaultState: IHighlighterState = {
     clips: {},
@@ -695,6 +691,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         });
         return;
       } else {
+        const display = this.streamingService.views.getOutputDisplayType();
+
         this.ADD_CLIP({
           path: clipData.path,
           loaded: false,
@@ -703,6 +701,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           endTrim: 0,
           deleted: false,
           source,
+          display,
 
           // Manual clips always get prepended to be visible after adding them
           // ReplayBuffers will appended to have them in the correct order.
@@ -954,7 +953,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       }
 
       this.renderingClips[clip.path] =
-        this.renderingClips[clip.path] ?? new RenderingClip(clip.path);
+        this.renderingClips[clip.path] ?? new RenderingClip(clip.path, clip.display);
     }
 
     //TODO M: tracking type not correct
