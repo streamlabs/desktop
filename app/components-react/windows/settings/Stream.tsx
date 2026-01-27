@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { $t } from '../../../services/i18n';
 import { ICustomStreamDestination } from '../../../services/settings/streaming';
 import { EStreamingState } from '../../../services/streaming';
@@ -14,8 +14,7 @@ import { Services } from '../../service-provider';
 import { ObsGenericSettingsForm } from './ObsSettings';
 import styles from './Stream.m.less';
 import cx from 'classnames';
-import { Button, message, Tooltip } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Button, message } from 'antd';
 import PlatformLogo from '../../shared/PlatformLogo';
 import { injectState, mutation, useModule } from 'slap';
 import UltraIcon from 'components-react/shared/UltraIcon';
@@ -30,8 +29,8 @@ import FormFactory, { TInputValue } from 'components-react/shared/inputs/FormFac
 import { alertAsync } from '../../modals';
 import { EAuthProcessState } from '../../../services/user';
 import { useSubscription } from 'components-react/hooks/useSubscription';
-
-const PlusIcon = PlusOutlined as Function;
+import AddDestinationButton from 'components-react/shared/AddDestinationButton';
+import Tooltip from 'components-react/shared/Tooltip';
 
 function censorWord(str: string) {
   if (str.length < 3) return str;
@@ -237,57 +236,44 @@ export function StreamSettings() {
     });
   }
 
-  async function openPlatformSettings() {
-    try {
-      const link = await Services.MagicLinkService.getDashboardMagicLink(
-        'settings/account-settings/platforms',
-      );
-      remote.shell.openExternal(link);
-    } catch (e: unknown) {
-      console.error('Error generating platform settings magic link', e);
-    }
-  }
-
   return (
     <div className={styles.section}>
       {/* account info */}
       {protectedModeEnabled && (
         <div className={styles.protectedMode}>
+          {!isPrime && (
+            <AddDestinationButton
+              type="header"
+              onClick={() => Services.MagicLinkService.linkToPrime('slobs-stream-settings')}
+            />
+          )}
           <h2>{$t('Streamlabs ID')}</h2>
           <SLIDBlock />
           <div className={styles.streamHeaderWrapper}>
             <h2 style={{ flex: 1 }}>{$t('Stream Destinations')}</h2>
-            <div
-              className={styles.addMore}
-              onClick={openPlatformSettings}
-              style={{ color: 'var(--primary)', fontSize: '15px' }}
-            >
-              <PlusIcon style={{ paddingRight: '5px', color: 'var(--primary)' }} />
-              {$t('Add More')}
-            </div>
           </div>
-          {!isPrime && (
-            <div className={styles.ultraText}>
-              <UltraIcon type="badge" style={{ marginRight: '5px' }} />
-              <div onClick={() => Services.MagicLinkService.linkToPrime('slobs-stream-settings')}>
-                {$t('Upgrade to Ultra to stream to multiple platforms simultaneously!')}
-              </div>
-            </div>
-          )}
           {platforms.map(platform => (
             <Platform key={platform} platform={platform} />
           ))}
 
-          {canEditSettings && (
-            <a
-              className={styles.customDest}
-              onClick={disableProtectedMode}
-              style={{ marginBottom: '10px' }}
-            >
-              {$t('Stream to custom ingest')}
-            </a>
-          )}
           <CustomDestinationList />
+
+          {canEditSettings && (
+            <Tooltip
+              title="Stream to a single custom ingest without any linked platforms. Add a custom destination to multistream to a custom RTMP."
+              lightShadow
+              placement="rightBottom"
+            >
+              <a
+                className={styles.customDest}
+                onClick={disableProtectedMode}
+                style={{ marginBottom: '10px' }}
+              >
+                {$t('Stream to custom ingest')}
+              </a>
+              <i className="icon-information" style={{ marginLeft: '7px', fontWeight: 'unset' }} />
+            </Tooltip>
+          )}
         </div>
       )}
 
@@ -298,18 +284,16 @@ export function StreamSettings() {
         </div>
       )}
       {needToShowWarning && (
-        <div className="section section--warning">
+        <div className="section section--info">
           <b>{$t('Warning')}: </b>
           {$t(
-            'Streaming to a custom ingest is advanced functionality. Some features may stop working as expected',
+            'Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination.',
           )}
           <br />
           <br />
 
           {canEditSettings && (
-            <button className="button button--warn" onClick={enableProtectedMode}>
-              {$t('Use recommended settings')}
-            </button>
+            <Button onClick={enableProtectedMode}>{$t('Use recommended settings')}</Button>
           )}
         </div>
       )}
@@ -531,6 +515,7 @@ function Platform(p: { platform: TPlatform }) {
           )}
           {shouldShowPrimaryBtn && (
             <Tooltip
+              lightShadow
               title={$t(
                 'You cannot unlink the platform you used to sign in to Streamlabs Desktop. If you want to unlink this platform, please sign in with a different platform.',
               )}
@@ -574,7 +559,7 @@ function CustomDestinationList() {
       {!isEditMode && canAddMoreDestinations && (
         <a className={styles.addDestinationBtn} onClick={() => addCustomDest(shouldShowPrimeLabel)}>
           <i className={cx('fa fa-plus', styles.plus)} />
-          <span>{$t('Add Destination')}</span>
+          <span>{$t('Add Custom Destination')}</span>
 
           {shouldShowPrimeLabel ? (
             <ButtonHighlighted

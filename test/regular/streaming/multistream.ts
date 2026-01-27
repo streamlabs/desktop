@@ -202,7 +202,7 @@ test('Custom stream destinations', async t => {
   try {
     // add new destination
     await showSettingsWindow('Stream');
-    await click('span=Add Destination');
+    await click('span=Add Custom Destination');
 
     const { fillForm } = useForm();
     await fillForm({
@@ -222,7 +222,7 @@ test('Custom stream destinations', async t => {
 
     t.true(await isDisplayed('span=MyCustomDestUpdated'), 'Destination should be updated');
 
-    await click('span=Add Destination');
+    await click('span=Add Custom Destination');
     await fillForm({
       name: 'MyCustomDest',
       url: 'rtmp://live.twitch.tv/app/',
@@ -232,7 +232,7 @@ test('Custom stream destinations', async t => {
 
     // add 3 more destinations (up to 5)
     for (let i = 0; i < 3; i++) {
-      await click('span=Add Destination');
+      await click('span=Add Custom Destination');
       await fillForm({
         name: `MyCustomDest${i}`,
         url: 'rtmp://live.twitch.tv/app/',
@@ -241,7 +241,10 @@ test('Custom stream destinations', async t => {
       await clickButton('Save');
     }
 
-    t.false(await isDisplayed('span=Add Destination'), 'Do not allow more than 5 custom dest');
+    t.false(
+      await isDisplayed('span=Add Custom Destination'),
+      'Do not allow more than 5 custom dest',
+    );
 
     // open the GoLiveWindow and check destinations
     await prepareToGoLive();
