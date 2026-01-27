@@ -545,9 +545,7 @@ export class YoutubeService
     // setup key and platform type in the OBS settings
     const streamKey = stream.cdn.ingestionInfo.streamName;
 
-    console.log('MLH beforeGoLive save current stream settings');
-
-    //MLH save user's current rtmp_common settings to restore after Go Live since they are overwritten here
+    //save user's current rtmp_common settings to restore after Go Live since they are overwritten here
     const currentSettings = this.streamSettingsService.settings;
     if (!this.state.backupStreamSettings) {
       this.state.backupStreamSettings = {} as IBackUpStreamSettings;
@@ -559,7 +557,6 @@ export class YoutubeService
     this.state.backupStreamSettings.context = context ? context : 'horizontal';
 
     if (!this.streamingService.views.isMultiplatformMode) {
-      console.log('MLH in beforeGoLive set with current and adding service name');
       this.streamSettingsService.setSettings(
         {
           platform: 'youtube',
@@ -621,7 +618,7 @@ export class YoutubeService
     this.SET_VERTICAL_STREAM_KEY('');
     this.streamSettingsService.setGoLiveSettings({ customDestinations: destinations });
 
-    //MLH restore user's previous settings in case they were overwritten on Go Live
+    //restore user's previous settings in case they were overwritten on Go Live
     this.streamSettingsService.setSettings(
       {
         platform: 'youtube',
