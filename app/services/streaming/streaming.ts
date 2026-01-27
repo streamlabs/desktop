@@ -1912,7 +1912,7 @@ export class StreamingService
    */
   showGoLiveWindow(prepopulateOptions?: IGoLiveSettings['prepopulateOptions']) {
     const height = 750;
-    const width = 900;
+    const width = 800;
 
     this.windowsService.showWindow({
       componentName: 'GoLiveWindow',
@@ -1927,7 +1927,7 @@ export class StreamingService
 
   showEditStream() {
     const height = 750;
-    const width = 900;
+    const width = 800;
 
     this.windowsService.showWindow({
       componentName: 'EditStreamWindow',

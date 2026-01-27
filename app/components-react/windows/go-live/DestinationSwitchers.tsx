@@ -20,7 +20,6 @@ export function DestinationSwitchers() {
   const {
     linkedPlatforms,
     enabledPlatforms,
-    unlinkedPlatforms,
     customDestinations,
     enabledDestinations,
     switchPlatforms,
@@ -183,19 +182,6 @@ export function DestinationSwitchers() {
             disableCustomDestinationSwitchers || (!dest.enabled && disableNonUltraSwitchers)
           }
           isDualOutputMode={isDualOutputMode}
-          index={ind}
-        />
-      ))}
-
-      {unlinkedPlatforms.map((platform: TPlatform, ind) => (
-        <DestinationSwitcher
-          key={platform}
-          destination={platform}
-          enabled={false}
-          onChange={() => {}}
-          switchDisabled={true}
-          isDualOutputMode={isDualOutputMode}
-          isUnlinked={true}
           index={ind}
         />
       ))}

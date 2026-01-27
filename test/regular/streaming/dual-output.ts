@@ -347,7 +347,6 @@ test(
       await waitForSettingsWindowLoaded();
       await fillForm({
         trovo: true,
-        trovoDisplay: 'horizontal',
       });
       await waitForSettingsWindowLoaded();
       await submit();
@@ -362,6 +361,7 @@ test(
       // Dual output with one platform for each display
       await fillForm({
         trovoDisplay: 'vertical',
+        primaryChat: 'Trovo',
       });
       await waitForSettingsWindowLoaded();
       await submit();
@@ -376,7 +376,6 @@ test(
       await fillForm({
         trovoDisplay: 'horizontal',
         twitchDisplay: 'vertical',
-        primaryChat: 'Trovo',
       });
 
       await waitForSettingsWindowLoaded();
