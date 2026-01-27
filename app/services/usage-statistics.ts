@@ -53,7 +53,8 @@ export type TAnalyticsEvent =
   | 'TikTokApplyPrompt'
   | 'ScheduleStream'
   | 'StreamShift'
-  | 'Ultra';
+  | 'Ultra'
+  | 'Onboarding';
 
 // Refls are used as uuids for ultra components and should be updated for new ulta components.
 export type TUltraRefl =
@@ -83,6 +84,7 @@ interface IAnalyticsEvent {
   uuid?: string;
   saveUser?: boolean;
   userId?: number;
+  testGroup: 'A' | 'B';
 }
 
 interface ISystemInfo {
@@ -237,6 +239,7 @@ export class UsageStatisticsService extends Service {
       count: 1,
       uuid: this.userService.getLocalUserId(),
       time: new Date(),
+      testGroup: this.userService.isAlphaGroup ? 'A' : 'B',
     };
 
     if (this.userService.state.userId) analyticsEvent.userId = this.userService.state.userId;
