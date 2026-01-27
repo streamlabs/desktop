@@ -432,6 +432,8 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
    */
   refreshedLinkedAccounts = new Subject();
 
+  subscribedToPrime = new Subject();
+
   /**
    * Used by child and 1-off windows to update their sentry contexts
    */
@@ -915,6 +917,8 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   // Technically not an exact 50% chance but over a large scale of users
   // should be close enough to 50% for the purposes of testing features
   get isAlphaGroup() {
+    // CI should have a consistent experience
+    if (Utils.env.CI || Utils.env.NODE_ENV === 'test') return true;
     const localId = this.getLocalUserId();
     return Number(localId.search(/\d/)) % 2 === 0;
   }
@@ -973,6 +977,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   onSocketEvent(e: TSocketEvent) {
     if (e.type !== 'streamlabs_prime_subscribe') return;
     this.SET_PRIME(true);
+    this.subscribedToPrime.next();
     if (this.navigationService.state.currentPage === 'Onboarding') return;
     const theme = this.customizationService.isDarkTheme ? 'prime-dark' : 'prime-light';
     this.customizationService.setTheme(theme);
