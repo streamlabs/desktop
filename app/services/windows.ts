@@ -175,6 +175,9 @@ export interface IWindowOptions extends Electron.BrowserWindowConstructorOptions
   // the display of elements we cannot draw over. During this time such elements, for example
   // BrowserViews and the OBS Display, will be hidden until the operation is complete.
   hideStyleBlockers: boolean;
+  // Occassionally a modal will be rendered over a window and need its own style blocker commands to
+  // display style blocking elements in the modal while hiding them in the window
+  modalOptions?: { hideStyleBlockers: boolean };
 }
 
 interface IWindowsState {
@@ -207,6 +210,7 @@ export class WindowsService extends StatefulService<IWindowsState> {
       isShown: true,
       hideStyleBlockers: true,
       title: `Streamlabs Desktop - ${Utils.env.SLOBS_VERSION}`,
+      modalOptions: { hideStyleBlockers: false },
     },
     child: {
       componentName: '',
@@ -589,6 +593,11 @@ export class WindowsService extends StatefulService<IWindowsState> {
     this.styleBlockersUpdated.next({ windowId, hideStyleBlockers });
   }
 
+  updateModalStyleBlockers(windowId: string, hideStyleBlockers: boolean) {
+    this.UPDATE_MODAL_STYLE_BLOCKERS(windowId, hideStyleBlockers);
+    this.styleBlockersUpdated.next({ windowId, hideStyleBlockers });
+  }
+
   updateChildWindowOptions(optionsPatch: Partial<IWindowOptions>) {
     const newOptions: IWindowOptions = {
       ...DEFAULT_WINDOW_OPTIONS,
@@ -636,6 +645,15 @@ export class WindowsService extends StatefulService<IWindowsState> {
   @mutation()
   private UPDATE_HIDE_STYLE_BLOCKERS(windowId: string, hideStyleBlockers: boolean) {
     this.state[windowId].hideStyleBlockers = hideStyleBlockers;
+  }
+
+  @mutation()
+  private UPDATE_MODAL_STYLE_BLOCKERS(windowId: string, hideStyleBlockers: boolean) {
+    if (this.state[windowId].modalOptions) {
+      this.state[windowId].modalOptions.hideStyleBlockers = hideStyleBlockers;
+    } else {
+      this.state[windowId].modalOptions = { hideStyleBlockers };
+    }
   }
 
   @mutation()
