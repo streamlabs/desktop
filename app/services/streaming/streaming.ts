@@ -745,15 +745,25 @@ export class StreamingService
       });
     }
 
+    // send analytics for Instagram
     if (settings.platforms.instagram?.enabled) {
       this.usageStatisticsService.recordFeatureUsage('StreamToInstagram');
     }
 
-    /* YouTube is currently the only platform that can dual stream
-    / *so we're making a special case for it for tracking dual streaming usage.
-     */
+    // send analytics for YouTube
     if (settings.platforms.youtube?.enabled && settings.platforms.youtube.display === 'both') {
       this.usageStatisticsService.recordFeatureUsage('StreamToYouTubeBothOutputs');
+    }
+
+    // send analytics for Twitch
+    if (settings.platforms.twitch?.enabled) {
+      if (settings.platforms.twitch.display === 'both') {
+        this.usageStatisticsService.recordFeatureUsage('StreamToTwitchBothOutputs');
+      } else if (this.state.enhancedBroadcasting) {
+        // Note: use the service state because the Twitch settings stores the user's enhanced broadcasting setting
+        // when not multistreaming or dual streaming.
+        this.usageStatisticsService.recordFeatureUsage('StreamToTwitchEnhancedBroadcasting');
+      }
     }
 
     // Record Stream Shift
