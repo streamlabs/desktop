@@ -173,7 +173,11 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       return false;
     }
 
-    return this.settings.platforms?.twitch && this.settings.platforms?.twitch.display === 'both';
+    return (
+      this.settings &&
+      this.settings.platforms?.twitch &&
+      this.settings.platforms?.twitch.display === 'both'
+    );
   }
 
   /**
