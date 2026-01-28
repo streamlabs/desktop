@@ -1,4 +1,4 @@
-import { StreamingService as InternalStreamingService } from 'services/streaming';
+import { StreamingService as InternalStreamingService, IOutputStatus } from 'services/streaming';
 import { Inject } from 'services/core/injector';
 import { Fallback, Singleton } from 'services/api/external-api';
 import { Observable } from 'rxjs';
@@ -24,6 +24,7 @@ enum ERecordingState {
   Recording = 'recording',
   Stopping = 'stopping',
   Start = 'start',
+  Writing = 'writing',
   Wrote = 'wrote',
 }
 
@@ -44,14 +45,11 @@ enum EReplayBufferState {
  * streaming, recording and replay buffer state representation.
  */
 interface IStreamingState {
+  status: { [display: string]: IOutputStatus };
   streamingStatus: EStreamingState;
-  verticalStreamingStatus?: EStreamingState;
   streamingStatusTime: string;
-  verticalStreamingStatusTime?: string;
   recordingStatus: ERecordingState;
-  verticalRecordingStatus?: ERecordingState;
   recordingStatusTime: string;
-  verticalRecordingStatusTime?: string;
   replayBufferStatus: EReplayBufferState;
   replayBufferStatusTime: string;
   streamErrorCreated?: string;
