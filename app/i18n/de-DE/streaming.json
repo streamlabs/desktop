@@ -130,6 +130,7 @@
   "Post a tweet": "Tweet posten",
   "You could try reducing the number of your destinations to one for direct streaming.": "Sie können versuchen, die Anzahl Ihrer Ziele für das direkte Streaming auf 1 zu reduzieren.",
   "Add Destination": "Ziel hinzufügen",
+  "Add Custom Destination": "Add Custom Destination",
   "Extras": "Extras",
   "Go back to settings": "Zurück zu Einstellungen",
   "Select at least one destination": "Wählen Sie mindestens ein Ziel aus",
@@ -326,5 +327,9 @@
   "Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays in Twitch": "Erweitertes Broadcasting im Dual Output-Modus ist nur verfügbar, wenn du sowohl horizontal als auch vertikal in Twitch streamst.",
   "Disable Twitch dual stream to add another platform": "Deaktiviere Twitch Dual Stream, um eine andere Plattform hinzuzufügen",
   "Dual streaming to Twitch only available with Twitch as the only platform": "Dual-Streaming zu Twitch ist nur möglich, wenn Twitch die einzige Plattform ist",
-  "Recording and/or Replay Buffer failed to start and was automatically turned off when starting the stream.": "Error: Recording and/or Replay Buffer failed to start and was automatically turned off when starting the stream."
+  "Recording and/or Replay Buffer failed to start and was automatically turned off when starting the stream.": "Error: Recording and/or Replay Buffer failed to start and was automatically turned off when starting the stream.",
+  "Grow your audience faster with unlimited Multistream. Our servers do the work so your PC can stream smoothly.": "Grow your audience faster with unlimited Multistream. Our servers do the work so your PC can stream smoothly.",
+  "Unlock unlimited multistreaming with Ultra and grow your audience faster": "Unlock unlimited multistreaming with Ultra and grow your audience faster",
+  "<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform": "<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform",
+  "Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination.": "Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination."
 }
