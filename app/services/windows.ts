@@ -598,14 +598,16 @@ export class WindowsService extends StatefulService<IWindowsState> {
     this.styleBlockersUpdated.next({ windowId, hideStyleBlockers });
   }
 
-  showModal(windowId: string) {
+  showModalLayer(windowId: string) {
     this.UPDATE_HIDE_STYLE_BLOCKERS(windowId, true);
     this.UPDATE_MODAL_SETTINGS(windowId, { visible: true, hideStyleBlockers: false });
+    this.styleBlockersUpdated.next({ windowId, hideStyleBlockers: true });
   }
 
-  hideModal(windowId: string) {
+  hideModalLayer(windowId: string) {
     this.UPDATE_HIDE_STYLE_BLOCKERS(windowId, false);
     this.UPDATE_MODAL_SETTINGS(windowId, { visible: false, hideStyleBlockers: false });
+    this.styleBlockersUpdated.next({ windowId, hideStyleBlockers: false });
   }
 
   updateChildWindowOptions(optionsPatch: Partial<IWindowOptions>) {
