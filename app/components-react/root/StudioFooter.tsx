@@ -187,14 +187,6 @@ export default function StudioFooterComponent() {
             <StartStreamingButton />
           </div>
         )}
-        <button
-          onClick={async () => {
-            const targets = await Services.RestreamService.actions.return.fetchTargets();
-            console.log('Fetched Restream targets:', targets);
-          }}
-        >
-          {'FETCH TARGETS'}
-        </button>
         {recordingModeEnabled && <RecordingButton />}
       </div>
     </div>

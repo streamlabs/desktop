@@ -83,7 +83,7 @@ import { RecordingModeService } from 'services/recording-mode';
 import { MarkersService } from 'services/markers';
 import { byOS, OS } from 'util/operating-systems';
 import { DualOutputService } from 'services/dual-output';
-import { capitalize } from 'lodash';
+import { capitalize, xor } from 'lodash';
 import { YoutubeService } from 'app-services';
 import { EOBSOutputType, EOBSOutputSignal, IOBSOutputSignalInfo } from 'services/core/signals';
 import { SignalsService } from 'services/signals-manager';
@@ -767,7 +767,10 @@ export class StreamingService
   /**
    * Update stream stetting while being live
    */
-  async updateStreamSettings(settings: IGoLiveSettings): Promise<boolean> {
+  async updateStreamSettings(
+    settings: IGoLiveSettings,
+    activeTargets?: TPlatform[],
+  ): Promise<boolean> {
     const lifecycle = this.state.info.lifecycle;
 
     // save current settings in store so we can re-use them if something will go wrong
@@ -778,6 +781,19 @@ export class StreamingService
 
     // call putChannelInfo for each platform
     const platforms = this.views.getEnabledPlatforms(settings.platforms);
+
+    // @@@ TODO: custom destinations as targets
+    // @@@ TODO: single platform to multiple platforms
+    // @@@ TODO: dual output single platform to multiple platforms
+    // @@@ TODO: youtube to create stream and attach to broadcast (like stream shift)
+    // @@@ TODO: stream shift confirm
+    if (activeTargets && xor(platforms, activeTargets).length > 0) {
+      // @@@ TODO need to run beforeGoLive for newly added platforms
+      //     for (const platform of platforms) {
+      //   await this.setPlatformSettings(platform, settings, unattendedMode);
+      // }
+      this.restreamService.updateTargets(platforms);
+    }
 
     platforms.forEach(platform => {
       this.UPDATE_STREAM_INFO({
@@ -795,6 +811,7 @@ export class StreamingService
         return false;
       }
     }
+    // @@@ TODO: maybe update restream targets here
 
     // save updated settings locally
     this.streamSettingsService.setSettings({ goLiveSettings: settings });

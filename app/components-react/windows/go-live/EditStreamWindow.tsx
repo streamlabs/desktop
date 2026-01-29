@@ -8,7 +8,7 @@ import { $t } from '../../../services/i18n';
 import GoLiveChecklist from './GoLiveChecklist';
 import Form from '../../shared/inputs/Form';
 import Animation from 'rc-animate';
-import { useGoLiveSettingsRoot } from './useGoLiveSettings';
+import { useGoLiveSettings, useGoLiveSettingsRoot } from './useGoLiveSettings';
 import PlatformSettings from './PlatformSettings';
 import Scrollable from '../../shared/Scrollable';
 import Spinner from '../../shared/Spinner';
@@ -84,6 +84,11 @@ export default function EditStreamWindow() {
                       logo={false}
                       border={false}
                       disabled={!shouldShowPrimaryChatSwitcher}
+                      tooltip={
+                        !shouldShowPrimaryChatSwitcher
+                          ? $t('Enable multiple platforms to set primary chat.')
+                          : undefined
+                      }
                     />
                   </div>
                 </Col>
@@ -111,7 +116,7 @@ export default function EditStreamWindow() {
 
 const EditStreamFooter = memo(function EditStreamFooter() {
   const { WindowsService, StreamingService } = Services;
-  const { error, lifecycle, updateStream, isLoading } = useGoLiveSettingsRoot();
+  const { error, lifecycle, updateStream, isLoading } = useGoLiveSettings();
 
   const close = useCallback(() => {
     WindowsService.actions.closeChildWindow();

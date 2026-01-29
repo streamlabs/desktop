@@ -12,7 +12,6 @@ import { getDefined } from '../../../util/properties-type-guards';
 import isEqual from 'lodash/isEqual';
 import { TDisplayType } from 'services/settings-v2';
 import partition from 'lodash/partition';
-import { EAvailableFeatures } from 'services/incremental-rollout';
 
 type TCommonFieldName = 'title' | 'description';
 
@@ -187,8 +186,11 @@ export class GoLiveSettingsModule {
   // define initial state
   state = injectState(GoLiveSettingsState);
 
-  constructor(public form: FormInstance, public isUpdateMode: boolean) {}
-
+  constructor(
+    public form: FormInstance,
+    public isUpdateMode: boolean,
+    public activeTargets?: TPlatform[],
+  ) {}
   // initial setup
   async init() {
     // take prefill options from the windows' `queryParams`
@@ -473,7 +475,10 @@ export class GoLiveSettingsModule {
   async updateStream() {
     if (
       (await this.validate()) &&
-      (await Services.StreamingService.actions.return.updateStreamSettings(this.state.settings))
+      (await Services.StreamingService.actions.return.updateStreamSettings(
+        this.state.settings,
+        this.activeTargets,
+      ))
     ) {
       message.success($t('Successfully updated'));
     }
@@ -506,6 +511,14 @@ export function useGoLiveSettings() {
 export function useGoLiveSettingsRoot(params?: { isUpdateMode: boolean }) {
   const form = useForm();
 
-  const useModuleResult = useModule(GoLiveSettingsModule, [form, !!params?.isUpdateMode]);
+  const activeTargets = params?.isUpdateMode
+    ? Services.StreamingService.views.enabledPlatforms
+    : undefined;
+
+  const useModuleResult = useModule(GoLiveSettingsModule, [
+    form,
+    !!params?.isUpdateMode,
+    activeTargets,
+  ]);
   return useModuleResult;
 }
