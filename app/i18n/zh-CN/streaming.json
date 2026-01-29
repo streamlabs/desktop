@@ -130,6 +130,7 @@
   "Post a tweet": "发一条推文",
   "You could try reducing the number of your destinations to one for direct streaming.": "您可以尝试将目的地数量减少到一个以直接直播。",
   "Add Destination": "添加目的地",
+  "Add Custom Destination": "Add Custom Destination",
   "Extras": "附加功能",
   "Go back to settings": "返回设置",
   "Select at least one destination": "至少选择一个目的地",
@@ -326,5 +327,9 @@
   "Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays in Twitch": "仅当同时向 Twitch 推送横屏和竖屏两种直播画面时，才会在 Dual Output 模式下提供增强广播功能",
   "Disable Twitch dual stream to add another platform": "禁用 Twitch 双路直播以添加另一个平台",
   "Dual streaming to Twitch only available with Twitch as the only platform": "只有在 Twitch 作为唯一平台的情况下，才能实现向 Twitch 双路直播",
-  "Recording and/or Replay Buffer failed to start and was automatically turned off when starting the stream.": "Error: Recording and/or Replay Buffer failed to start and was automatically turned off when starting the stream."
+  "Recording and/or Replay Buffer failed to start and was automatically turned off when starting the stream.": "Error: Recording and/or Replay Buffer failed to start and was automatically turned off when starting the stream.",
+  "Grow your audience faster with unlimited Multistream. Our servers do the work so your PC can stream smoothly.": "Grow your audience faster with unlimited Multistream. Our servers do the work so your PC can stream smoothly.",
+  "Unlock unlimited multistreaming with Ultra and grow your audience faster": "Unlock unlimited multistreaming with Ultra and grow your audience faster",
+  "<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform": "<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform",
+  "Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination.": "Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination."
 }

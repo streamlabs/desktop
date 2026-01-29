@@ -130,6 +130,7 @@
   "Post a tweet": "ツイートを投稿",
   "You could try reducing the number of your destinations to one for direct streaming.": "ダイレクトストリーミングの行き先数を 1 つに減らしてみることができます。",
   "Add Destination": "行き先を追加",
+  "Add Custom Destination": "Add Custom Destination",
   "Extras": "エクストラ",
   "Go back to settings": "設定に戻る",
   "Select at least one destination": "行き先を最低 1 つ選択",
@@ -326,5 +327,9 @@
   "Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays in Twitch": "デュアル出力モードの強化された配信機能は、Twitch で横向きと縦向きの両方の画面にストリームする場合にのみ利用できます",
   "Disable Twitch dual stream to add another platform": "他のプラットフォームを追加するには、Twitch のデュアルストリーミングを無効にします",
   "Dual streaming to Twitch only available with Twitch as the only platform": "Twitch へのデュアルストリーミングは、Twitch が唯一のプラットフォームである場合にのみ利用できます",
-  "Recording and/or Replay Buffer failed to start and was automatically turned off when starting the stream.": "Error: Recording and/or Replay Buffer failed to start and was automatically turned off when starting the stream."
+  "Recording and/or Replay Buffer failed to start and was automatically turned off when starting the stream.": "Error: Recording and/or Replay Buffer failed to start and was automatically turned off when starting the stream.",
+  "Grow your audience faster with unlimited Multistream. Our servers do the work so your PC can stream smoothly.": "Grow your audience faster with unlimited Multistream. Our servers do the work so your PC can stream smoothly.",
+  "Unlock unlimited multistreaming with Ultra and grow your audience faster": "Unlock unlimited multistreaming with Ultra and grow your audience faster",
+  "<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform": "<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform",
+  "Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination.": "Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination."
 }
