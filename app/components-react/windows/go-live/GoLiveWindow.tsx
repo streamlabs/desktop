@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import styles from './GoLive.m.less';
-import { WindowsService } from 'app-services';
+import { RestreamService, WindowsService } from 'app-services';
 import { ModalLayout } from '../../shared/ModalLayout';
 import { Button, message } from 'antd';
 import { Services } from '../../service-provider';
@@ -28,7 +28,7 @@ export default function GoLiveWindow() {
   const shouldShowChecklist = ['runChecklist', 'live'].includes(lifecycle);
 
   return (
-    <ModalLayout footer={<ModalFooter />} className={styles.dualOutputGoLive}>
+    <ModalLayout footer={<ModalFooter />} className={styles.goLive}>
       <Form
         form={form!}
         style={{ position: 'relative', height: '100%' }}
@@ -47,7 +47,7 @@ export default function GoLiveWindow() {
   );
 }
 
-function ModalFooter() {
+const ModalFooter = memo(function ModalFooter() {
   const {
     error,
     lifecycle,
@@ -61,6 +61,7 @@ function ModalFooter() {
     isPrime,
   } = useGoLiveSettings().extend(module => ({
     windowsService: inject(WindowsService),
+    restreamService: inject(RestreamService),
 
     close() {
       this.windowsService.actions.closeChildWindow();
@@ -77,7 +78,7 @@ function ModalFooter() {
   const shouldShowGoBackButton =
     lifecycle === 'runChecklist' && error && checklist.startVideoTransmission !== 'done';
 
-  async function handleGoLive() {
+  const handleGoLive = useCallback(async () => {
     if (isPrime) {
       try {
         setIsFetchingStreamStatus(true);
@@ -131,7 +132,7 @@ function ModalFooter() {
     }
 
     goLive();
-  }
+  }, [isDualOutputMode, isPrime, getCanStreamDualOutput]);
 
   return (
     <Form layout={'inline'}>
@@ -162,4 +163,4 @@ function ModalFooter() {
       )}
     </Form>
   );
-}
+});

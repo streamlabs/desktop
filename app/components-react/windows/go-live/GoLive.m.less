@@ -203,7 +203,7 @@ i.destination-logo {
   width: calc(100% - 30px);
 }
 
-.dual-output-go-live {
+.go-live {
   height: 100%;
 
   &:global(a) {
@@ -555,6 +555,10 @@ i.destination-logo {
 .column-content {
   transition: transform 0.3s;
   height: 69%;
+
+  &.update-mode {
+    height: 80% !important;
+  }
 
   &.alert-closed {
     transform: translateY(-70px);

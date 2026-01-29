@@ -1,9 +1,9 @@
 import styles from './GoLive.m.less';
 import { ModalLayout } from '../../shared/ModalLayout';
-import { Button } from 'antd';
+import { Button, Col, Row } from 'antd';
 import { useOnCreate } from 'slap';
 import { Services } from '../../service-provider';
-import React from 'react';
+import React, { useCallback, memo } from 'react';
 import { $t } from '../../../services/i18n';
 import GoLiveChecklist from './GoLiveChecklist';
 import Form from '../../shared/inputs/Form';
@@ -14,13 +14,14 @@ import Scrollable from '../../shared/Scrollable';
 import Spinner from '../../shared/Spinner';
 import GoLiveError from './GoLiveError';
 import PrimaryChatSwitcher from './PrimaryChatSwitcher';
+import { DestinationSwitchers } from './DestinationSwitchers';
+import cx from 'classnames';
+import { CaretDownOutlined } from '@ant-design/icons';
 
 export default function EditStreamWindow() {
-  const { StreamingService, WindowsService } = Services;
+  const { StreamingService } = Services;
   const {
-    error,
     lifecycle,
-    updateStream,
     prepopulate,
     isLoading,
     form,
@@ -28,12 +29,14 @@ export default function EditStreamWindow() {
     hasMultiplePlatforms,
     primaryChat,
     setPrimaryChat,
+    isDualOutputMode,
+    protectedModeEnabled,
   } = useGoLiveSettingsRoot({ isUpdateMode: true });
 
   const shouldShowChecklist = lifecycle === 'runChecklist';
   const shouldShowSettings = !shouldShowChecklist;
-  const shouldShowUpdateButton = lifecycle !== 'runChecklist';
-  const shouldShowGoBackButton = !shouldShowUpdateButton && error;
+
+  const shouldShowLeftCol = isDualOutputMode ? true : protectedModeEnabled;
 
   useOnCreate(() => {
     // the streamingService still may keep a error from GoLive flow like a "Post a Tweet" error
@@ -42,39 +45,10 @@ export default function EditStreamWindow() {
     prepopulate();
   });
 
-  function close() {
-    WindowsService.actions.closeChildWindow();
-  }
-
-  function goBackToSettings() {
-    StreamingService.actions.showEditStream();
-  }
-
-  function renderFooter() {
-    return (
-      <Form layout={'inline'}>
-        {/* CLOSE BUTTON */}
-        <Button onClick={close}>{$t('Close')}</Button>
-
-        {/* GO BACK BUTTON */}
-        {shouldShowGoBackButton && (
-          <Button onClick={goBackToSettings}>{$t('Go back to settings')}</Button>
-        )}
-
-        {/* UPDATE BUTTON */}
-        {shouldShowUpdateButton && (
-          <Button type="primary" onClick={updateStream} disabled={isLoading}>
-            {$t('Update')}
-          </Button>
-        )}
-      </Form>
-    );
-  }
-
   const shouldShowPrimaryChatSwitcher = hasMultiplePlatforms;
 
   return (
-    <ModalLayout footer={renderFooter()}>
+    <ModalLayout footer={<EditStreamFooter />} className={styles.goLive}>
       <Form
         form={form}
         style={{ position: 'relative', height: '100%' }}
@@ -82,21 +56,49 @@ export default function EditStreamWindow() {
         name="editStreamForm"
       >
         <Spinner visible={isLoading} />
-        <Animation transitionName="fade">
+        <Animation transitionName="fade" key="editStreamSettings">
           {/* STEP 1 - FILL OUT THE SETTINGS FORM */}
           {shouldShowSettings && (
-            <Scrollable key={'settings'} style={{ height: '100%' }} snapToWindowEdge>
-              <GoLiveError />
-              <PlatformSettings />
-              {shouldShowPrimaryChatSwitcher && (
-                <PrimaryChatSwitcher
-                  layout="horizontal"
-                  enabledPlatforms={enabledPlatforms}
-                  primaryChat={primaryChat}
-                  onSetPrimaryChat={setPrimaryChat}
-                />
+            <Row gutter={16} className={styles.settingsRow} key={'platforms'}>
+              {/*LEFT COLUMN*/}
+              {shouldShowLeftCol && (
+                <Col span={9} className={styles.leftColumn}>
+                  <div className={cx(styles.columnHeader)}>
+                    {$t('Update Destinations & Outputs:')}
+                  </div>
+                  <div className={cx(styles.columnContent, styles.updateMode)}>
+                    <Scrollable className={styles.switcherWrapper}>
+                      <DestinationSwitchers />
+                    </Scrollable>
+                  </div>
+                  <div className={styles.leftFooter}>
+                    <PrimaryChatSwitcher
+                      className={cx(styles.primaryChat, {
+                        [styles.disabled]: !shouldShowPrimaryChatSwitcher,
+                      })}
+                      enabledPlatforms={enabledPlatforms}
+                      onSetPrimaryChat={setPrimaryChat}
+                      primaryChat={primaryChat}
+                      suffixIcon={<CaretDownOutlined />}
+                      layout="horizontal"
+                      logo={false}
+                      border={false}
+                      disabled={!shouldShowPrimaryChatSwitcher}
+                    />
+                  </div>
+                </Col>
               )}
-            </Scrollable>
+              <Col
+                span={shouldShowLeftCol ? 15 : 24}
+                className={cx(styles.rightColumn, !shouldShowLeftCol && styles.destinationMode)}
+              >
+                <Spinner visible={isLoading} />
+                <Scrollable key={'settings'} style={{ height: '100%' }} snapToWindowEdge>
+                  <GoLiveError />
+                  <PlatformSettings />
+                </Scrollable>
+              </Col>
+            </Row>
           )}
 
           {/* STEP 2 - RUN THE CHECKLIST */}
@@ -106,3 +108,38 @@ export default function EditStreamWindow() {
     </ModalLayout>
   );
 }
+
+const EditStreamFooter = memo(function EditStreamFooter() {
+  const { WindowsService, StreamingService } = Services;
+  const { error, lifecycle, updateStream, isLoading } = useGoLiveSettingsRoot();
+
+  const close = useCallback(() => {
+    WindowsService.actions.closeChildWindow();
+  }, []);
+
+  const goBackToSettings = useCallback(() => {
+    StreamingService.actions.showEditStream();
+  }, []);
+
+  const shouldShowUpdateButton = lifecycle !== 'runChecklist';
+  const shouldShowGoBackButton = !shouldShowUpdateButton && error;
+
+  return (
+    <Form layout={'inline'}>
+      {/* CLOSE BUTTON */}
+      <Button onClick={close}>{$t('Close')}</Button>
+
+      {/* GO BACK BUTTON */}
+      {shouldShowGoBackButton && (
+        <Button onClick={goBackToSettings}>{$t('Go back to settings')}</Button>
+      )}
+
+      {/* UPDATE BUTTON */}
+      {shouldShowUpdateButton && (
+        <Button type="primary" onClick={updateStream} disabled={isLoading}>
+          {$t('Update')}
+        </Button>
+      )}
+    </Form>
+  );
+});

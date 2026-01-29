@@ -1,7 +1,7 @@
 import { CommonPlatformFields } from './CommonPlatformFields';
 import { useGoLiveSettings } from './useGoLiveSettings';
 import { $t } from '../../../services/i18n';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { TPlatform } from '../../../services/platforms';
 import { TwitchEditStreamInfo } from './platforms/TwitchEditStreamInfo';
 import { Section } from './Section';
@@ -70,12 +70,15 @@ export default function PlatformSettings() {
 
   const shouldShowSettings = !error && !isLoading;
 
-  let layoutMode: TLayoutMode;
-  if (canShowAdvancedMode) {
-    layoutMode = isAdvancedMode ? 'multiplatformAdvanced' : 'multiplatformSimple';
-  } else {
-    layoutMode = 'singlePlatform';
-  }
+  const layoutMode: TLayoutMode = useMemo(() => {
+    if (canShowAdvancedMode) {
+      return isAdvancedMode ? 'multiplatformAdvanced' : 'multiplatformSimple';
+    } else {
+      return 'singlePlatform';
+    }
+  }, [canShowAdvancedMode, isAdvancedMode]);
+
+  const message = isUpdateMode ? $t('Update Stream Information:') : $t('Stream Information:');
 
   function createPlatformBinding<T extends TPlatform>(platform: T): IPlatformComponentParams<T> {
     return {
@@ -107,7 +110,7 @@ export default function PlatformSettings() {
               fontSize: '16px',
             }}
           >
-            <div>{$t('Stream Information:')}</div>
+            <div>{message}</div>
             <AdvancedSettingsSwitch />
           </div>
 
