@@ -177,7 +177,7 @@ export interface IWindowOptions extends Electron.BrowserWindowConstructorOptions
   hideStyleBlockers: boolean;
   // Occassionally a modal will be rendered over a window and need its own style blocker commands to
   // display style blocking elements in the modal while hiding them in the window
-  modalOptions?: { hideStyleBlockers: boolean };
+  modalOptions?: { hideStyleBlockers: boolean; visible: boolean };
 }
 
 interface IWindowsState {
@@ -210,7 +210,7 @@ export class WindowsService extends StatefulService<IWindowsState> {
       isShown: true,
       hideStyleBlockers: true,
       title: `Streamlabs Desktop - ${Utils.env.SLOBS_VERSION}`,
-      modalOptions: { hideStyleBlockers: false },
+      modalOptions: { hideStyleBlockers: false, visible: false },
     },
     child: {
       componentName: '',
@@ -589,13 +589,23 @@ export class WindowsService extends StatefulService<IWindowsState> {
   }
 
   updateStyleBlockers(windowId: string, hideStyleBlockers: boolean) {
-    this.UPDATE_HIDE_STYLE_BLOCKERS(windowId, hideStyleBlockers);
+    // While a modal is dispalyed in the window we only want to affect its styleBlockers
+    if (this.state[windowId].modalOptions?.visible) {
+      this.UPDATE_MODAL_SETTINGS(windowId, { hideStyleBlockers });
+    } else {
+      this.UPDATE_HIDE_STYLE_BLOCKERS(windowId, hideStyleBlockers);
+    }
     this.styleBlockersUpdated.next({ windowId, hideStyleBlockers });
   }
 
-  updateModalStyleBlockers(windowId: string, hideStyleBlockers: boolean) {
-    this.UPDATE_MODAL_STYLE_BLOCKERS(windowId, hideStyleBlockers);
-    this.styleBlockersUpdated.next({ windowId, hideStyleBlockers });
+  showModal(windowId: string) {
+    this.UPDATE_HIDE_STYLE_BLOCKERS(windowId, true);
+    this.UPDATE_MODAL_SETTINGS(windowId, { visible: true, hideStyleBlockers: false });
+  }
+
+  hideModal(windowId: string) {
+    this.UPDATE_HIDE_STYLE_BLOCKERS(windowId, false);
+    this.UPDATE_MODAL_SETTINGS(windowId, { visible: false, hideStyleBlockers: false });
   }
 
   updateChildWindowOptions(optionsPatch: Partial<IWindowOptions>) {
@@ -648,11 +658,18 @@ export class WindowsService extends StatefulService<IWindowsState> {
   }
 
   @mutation()
-  private UPDATE_MODAL_STYLE_BLOCKERS(windowId: string, hideStyleBlockers: boolean) {
+  private UPDATE_MODAL_SETTINGS(
+    windowId: string,
+    modalOptions: Partial<IWindowOptions['modalOptions']>,
+  ) {
     if (this.state[windowId].modalOptions) {
-      this.state[windowId].modalOptions.hideStyleBlockers = hideStyleBlockers;
+      this.state[windowId].modalOptions = { ...this.state[windowId].modalOptions, ...modalOptions };
     } else {
-      this.state[windowId].modalOptions = { hideStyleBlockers };
+      this.state[windowId].modalOptions = {
+        visible: false,
+        hideStyleBlockers: false,
+        ...modalOptions,
+      };
     }
   }
 

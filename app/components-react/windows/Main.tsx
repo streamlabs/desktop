@@ -122,11 +122,7 @@ export default function Main() {
 
   const updateStyleBlockers = useCallback(
     (val: boolean) => {
-      if (showOnboarding) {
-        WindowsService.actions.updateModalStyleBlockers('main', val);
-      } else {
-        WindowsService.actions.updateStyleBlockers('main', val);
-      }
+      WindowsService.actions.updateStyleBlockers('main', val);
     },
     [showOnboarding],
   );

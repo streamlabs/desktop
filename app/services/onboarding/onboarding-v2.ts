@@ -319,7 +319,7 @@ export class OnboardingV2Service extends Service {
   }
 
   private initalizeView(config: IOnboardingInitialization) {
-    this.windowsService.updateStyleBlockers('main', true);
+    this.windowsService.actions.showModal('main');
     this.singletonPath = config.isSingleton;
     this.path = new OnboardingPath(config.isSingleton);
     this.path.append(config.startingStep);
@@ -336,7 +336,7 @@ export class OnboardingV2Service extends Service {
       this.recordOnboardingNavEvent(closedEarly ? 'closed' : 'completed');
     }
     this.setShowOnboarding(false);
-    this.windowsService.updateStyleBlockers('main', false);
+    this.windowsService.actions.hideModal('main');
     this.setCurrentStep(null);
     this.path = null;
   }
