@@ -17,37 +17,32 @@ import cx from 'classnames';
 
 export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
   const twSettings = p.value;
+  // We always pass this into TwitchEditStreamInfo
+  const enabledPlatformsCount = p.enabledPlatformsCount!;
 
   function updateSettings(patch: Partial<ITwitchStartStreamOptions>) {
     p.onChange({ ...twSettings, ...patch });
   }
-
-  const isDualStream = useMemo(() => {
-    return twSettings?.display === 'both' && p.isDualOutputMode;
-  }, [p.isDualOutputMode, twSettings?.display]);
-
-  const multiplePlatformEnabled = useMemo(() => {
-    if (!p.enabledPlatformsCount) return false;
-    return p.enabledPlatformsCount > 1;
-  }, [p.enabledPlatformsCount, isDualStream]);
-
-  const bind = createBinding(twSettings, updatedSettings => updateSettings(updatedSettings));
-
-  const enhancedBroadcastingTooltipText = useMemo(() => {
-    return p.isDualOutputMode
-      ? $t(
-          'Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays in Twitch',
-        )
-      : $t(
-          'Enhanced broadcasting automatically optimizes your settings to encode and send multiple video qualities to Twitch. Selecting this option will send basic information about your computer and software setup.',
-        );
-  }, [p.isDualOutputMode]);
-
   const enhancedBroadcastingEnabled = useMemo(() => {
-    if (isDualStream) return true;
-    if (multiplePlatformEnabled) return false;
+    if (twSettings?.display === 'both') {
+      return true;
+    }
+
+    if (enabledPlatformsCount > 1) {
+      return false;
+    }
+
     return twSettings?.isEnhancedBroadcasting;
-  }, [isDualStream, multiplePlatformEnabled, twSettings?.isEnhancedBroadcasting]);
+  }, [twSettings, enabledPlatformsCount]);
+
+  const enhancedBroadcastingTooltipText = p.isDualOutputMode
+    ? $t(
+        'Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays in Twitch',
+      )
+    : $t(
+        'Enhanced broadcasting automatically optimizes your settings to encode and send multiple video qualities to Twitch. Selecting this option will send basic information about your computer and software setup.',
+      );
+  const bind = createBinding(twSettings, updatedSettings => updateSettings(updatedSettings));
 
   const optionalFields = (
     <div key="optional">
@@ -70,7 +65,7 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
             label={$t('Enhanced broadcasting')}
             tooltip={enhancedBroadcastingTooltipText}
             {...bind.isEnhancedBroadcasting}
-            disabled={isDualStream || multiplePlatformEnabled}
+            disabled={twSettings?.display === 'both' || enabledPlatformsCount > 1}
             value={enhancedBroadcastingEnabled}
           />
           <Badge

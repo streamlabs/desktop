@@ -1,4 +1,4 @@
-import React, { LegacyRef, RefObject, forwardRef, useMemo, useRef, useState } from 'react';
+import React, { LegacyRef, RefObject, forwardRef, useRef, useState } from 'react';
 import { ISettingsSubCategory } from '../../services/settings';
 import {
   IObsInput,
