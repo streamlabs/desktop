@@ -171,7 +171,7 @@ export default function Main() {
     let constrainedWidth = Math.max(minDockWidth, dockWidth);
     constrainedWidth = Math.min(maxDockWidth, dockWidth);
 
-    if (dockWidth !== constrainedWidth) setDockWidth(dockWidth);
+    if (dockWidth !== constrainedWidth) setDockWidth(constrainedWidth);
   }, []);
 
   const setCollapsed = useCallback((livedockCollapsed: boolean) => {
