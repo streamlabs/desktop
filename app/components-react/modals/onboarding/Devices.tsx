@@ -27,7 +27,6 @@ export function Devices(p: IOnboardingStepProps) {
   // Set up temporary sources
   useEffect(() => {
     DefaultHardwareService.createTemporarySources();
-    WindowsService.actions.updateStyleBlockers('main', false);
 
     if (!selectedVideoDevice && videoDevices.length) {
       DefaultHardwareService.actions.setDefault('video', videoDevices[0].value);
@@ -35,7 +34,6 @@ export function Devices(p: IOnboardingStepProps) {
 
     return () => {
       DefaultHardwareService.actions.clearTemporarySources();
-      WindowsService.actions.updateStyleBlockers('main', true);
     };
   }, []);
 

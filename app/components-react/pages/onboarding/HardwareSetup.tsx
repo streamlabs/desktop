@@ -146,6 +146,7 @@ export function DisplaySection() {
         <Display
           sourceId={v.selectedVideoSource.sourceId}
           renderingMode={ERenderingMode.OBS_MAIN_RENDERING}
+          isModal
         />
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
           <canvas ref={canvasRef} style={{ backgroundColor: 'var(--border)', width: '100%' }} />
