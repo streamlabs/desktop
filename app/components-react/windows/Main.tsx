@@ -182,7 +182,7 @@ export default function Main() {
     updateStyleBlockers(true);
     CustomizationService.actions.setSettings({ livedockCollapsed });
     setTimeout(() => {
-      () => updateStyleBlockers(false);
+      updateStyleBlockers(false);
     }, 300);
   }, []);
 
