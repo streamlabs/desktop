@@ -181,7 +181,7 @@ export class EventListModule extends WidgetModule<IEventListState> {
     return {
       theme: metadata.list({
         label: $t('Theme'),
-        options: Object.entries(this.widgetData.themes).map(([theme, val]) => ({
+        options: Object.entries(this.widgetData?.themes || []).map(([theme, val]) => ({
           label: val.label,
           value: theme,
         })),
