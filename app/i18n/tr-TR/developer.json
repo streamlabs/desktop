@@ -1,9 +1,9 @@
 {
-  "App Platform": "App Platform",
-  "Unpacked App Path": "Unpacked App Path",
-  "This is the path to your unpacked app. It should be a folder containing a valid manifest.json": "This is the path to your unpacked app. It should be a folder containing a valid manifest.json",
-  "App Token": "App Token",
-  "This token allows you app to authenticate with the Streamlabs API. Visit platform.streamlabs.com to create a developer account and get a test app token.": "This token allows you app to authenticate with the Streamlabs API. Visit platform.streamlabs.com to create a developer account and get a test app token.",
-  "Load App": "Load App",
-  "There was an error loading this app, please try again or contact the Streamlabs development team for assistance.": "There was an error loading this app, please try again or contact the Streamlabs development team for assistance."
+  "App Platform": "Uygulama Platformu",
+  "Unpacked App Path": "Paketlenmemiş Uygulama Yolu",
+  "This is the path to your unpacked app. It should be a folder containing a valid manifest.json": "Bu, paketi açılmış uygulamanın yoludur. Geçerli bir manifest.json dosyası içeren bir klasör olmalıdır",
+  "App Token": "Uygulama Belirteci",
+  "This token allows you app to authenticate with the Streamlabs API. Visit platform.streamlabs.com to create a developer account and get a test app token.": "Bu belirteç, uygulamanızın Streamlabs API ile kimlik doğrulaması yapmasını sağlar. Bir geliştirici hesabı oluşturmak ve bir test uygulaması belirteci almak için platform.streamlabs.com adresini ziyaret edin.",
+  "Load App": "Uygulama Yükle",
+  "There was an error loading this app, please try again or contact the Streamlabs development team for assistance.": "Bu uygulamayı yüklerken bir hata oluştu, lütfen tekrar deneyin veya yardım için Streamlabs geliştirme ekibiyle iletişime geçin."
 }

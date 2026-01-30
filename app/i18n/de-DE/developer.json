@@ -1,9 +1,9 @@
 {
-  "App Platform": "App Platform",
-  "Unpacked App Path": "Unpacked App Path",
-  "This is the path to your unpacked app. It should be a folder containing a valid manifest.json": "This is the path to your unpacked app. It should be a folder containing a valid manifest.json",
-  "App Token": "App Token",
-  "This token allows you app to authenticate with the Streamlabs API. Visit platform.streamlabs.com to create a developer account and get a test app token.": "This token allows you app to authenticate with the Streamlabs API. Visit platform.streamlabs.com to create a developer account and get a test app token.",
-  "Load App": "Load App",
-  "There was an error loading this app, please try again or contact the Streamlabs development team for assistance.": "There was an error loading this app, please try again or contact the Streamlabs development team for assistance."
+  "App Platform": "App-Plattform",
+  "Unpacked App Path": "Entpackter App-Pfad",
+  "This is the path to your unpacked app. It should be a folder containing a valid manifest.json": "Das ist der Pfad zu deiner entpackten App. Es sollte ein Ordner mit einer gültigen manifest.json-Datei sein.",
+  "App Token": "App-Token",
+  "This token allows you app to authenticate with the Streamlabs API. Visit platform.streamlabs.com to create a developer account and get a test app token.": "Mit diesem Token kannst du deine App bei der Streamlabs-API anmelden. Gehe zu platform.streamlabs.com, um ein Entwicklerkonto zu erstellen und einen Test-App-Token zu erhalten.",
+  "Load App": "App laden",
+  "There was an error loading this app, please try again or contact the Streamlabs development team for assistance.": "Beim Laden dieser App ist ein Fehler ausgetreten. Versuche es nochmal oder wende dich zwecks Hilfe an das Streamlabs-Entwicklerteam."
 }

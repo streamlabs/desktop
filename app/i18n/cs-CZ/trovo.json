@@ -8,5 +8,5 @@
   "Plays an alert for new Trovo subscriptions": "Přehraje upozornění na nové předplatné Trovo",
   "Trovo Resubs": "Prodloužení předplatného Trovo",
   "Trovo Subs": "Předplatné Trovo",
-  "Stream Shift Error: Trovo is not live": "Stream Shift Error: Trovo is not live"
+  "Stream Shift Error: Trovo is not live": "Chyba funkce Stream Shift: Ve službě Trovo nelze vysílat živě"
 }
