@@ -165,7 +165,7 @@ export class EventListModule extends WidgetModule<IEventListState> {
         label: $t('Text Color'),
         tooltip: $t('A hex code for the base text color.'),
       }),
-      font_family: { label: $t('Font') },
+      font_family: metadata.fontFamily({ label: $t('Font') }),
       text_size: metadata.fontSize({
         label: $t('Font Size'),
         min: 10,
@@ -192,16 +192,8 @@ export class EventListModule extends WidgetModule<IEventListState> {
           'A hex code for the widget background. This is for preview purposes only. It will not be shown in your stream.',
         ),
       }),
-      show_animation: {
-        type: 'animation',
-        label: $t('Show Animation'),
-        filter: 'eventIn',
-      },
-      hide_animation: {
-        type: 'animation',
-        label: $t('Hide Animation'),
-        filter: 'eventOut',
-      },
+      show_animation: metadata.animation({ label: $t('Show Animation'), filter: 'eventIn' }),
+      hide_animation: metadata.animation({ label: $t('Hide Animation'), filter: 'eventOut' }),
       animation_speed: metadata.slider({
         label: $t('Animation Speed'),
         min: 250,
