@@ -14,8 +14,11 @@ import Badge from 'components-react/shared/DismissableBadge';
 import { EDismissable } from 'services/dismissables';
 import styles from './TwitchEditStreamInfo.m.less';
 import cx from 'classnames';
+import { Services } from 'components-react/service-provider';
 
 export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
+  const { StreamingService } = Services;
+  const isMidStreamMode = StreamingService.views.isMidStreamMode;
   const twSettings = p.value;
   // We always pass this into TwitchEditStreamInfo
   const enabledPlatformsCount = p.enabledPlatformsCount!;
@@ -64,7 +67,9 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
             label={$t('Enhanced broadcasting')}
             tooltip={enhancedBroadcastingTooltipText}
             {...bind.isEnhancedBroadcasting}
-            disabled={twSettings?.display === 'both' || enabledPlatformsCount > 1}
+            disabled={
+              twSettings?.display === 'both' || enabledPlatformsCount > 1 || isMidStreamMode
+            }
             value={enhancedBroadcastingEnabled}
           />
           <Badge
