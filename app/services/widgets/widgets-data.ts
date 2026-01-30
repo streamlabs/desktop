@@ -92,7 +92,7 @@ export const makeWidgetTesters = (host: string): IWidgetTester[] => {
     },
     {
       name: 'Membership',
-      url: testUrl('fanfunding'),
+      url: testUrl('sponsor'),
       platforms: ['youtube'],
     },
     {

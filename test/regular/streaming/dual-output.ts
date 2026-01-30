@@ -310,7 +310,6 @@ test('Dual Output Go Live Non-Ultra', async t => {
     await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
     await focusMain();
     await waitForDisplayed('div=Refresh Chat', { timeout: 60000 });
-
     await waitForStreamStop();
   } catch (e: unknown) {
     console.log('Error during Dual Output Go Live Non-Ultra test:', e);
