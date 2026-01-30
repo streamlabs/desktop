@@ -819,7 +819,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
       // Credits
       'DonationTicker',
       'EmoteWall',
-      // EventList
+      'EventList',
       // MediaShare
       // Poll
       // SpinWheel
