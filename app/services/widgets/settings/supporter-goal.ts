@@ -8,13 +8,15 @@ export class SupporterGoalService extends GenericGoalService {
   static initialState = WIDGET_INITIAL_STATE;
 
   getApiSettings() {
+    const host = this.getHost();
     return {
       type: WidgetType.SupporterGoal,
-      url: WidgetDefinitions[WidgetType.SupporterGoal].url(this.getHost(), this.getWidgetToken()),
-      previewUrl: `https://${this.getHost()}/widgets/supporter-goal?token=${this.getWidgetToken()}`,
-      dataFetchUrl: `https://${this.getHost()}/api/v5/slobs/widget/supportergoal/settings`,
-      settingsSaveUrl: `https://${this.getHost()}/api/v5/slobs/widget/supportergoal/settings`,
-      goalUrl: `https://${this.getHost()}/api/v5/slobs/widget/supportergoal`,
+      url: WidgetDefinitions[WidgetType.SupporterGoal].url(host, this.getWidgetToken()),
+      previewUrl: `https://${host}/widgets/supporter-goal?token=${this.getWidgetToken()}`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/sub-goal`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/supportergoal/settings`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/supportergoal/settings`,
+      goalUrl: `https://${host}/api/v5/slobs/widget/supportergoal`,
       settingsUpdateEvent: 'supporterGoalSettingsUpdate',
       goalCreateEvent: 'supporterGoalStart',
       goalResetEvent: 'supporterGoalEnd',

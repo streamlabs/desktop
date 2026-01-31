@@ -109,15 +109,21 @@ function ModalContent(p: { children: ReactNode }) {
 }
 
 function ModalFooter() {
-  const { canRevert, revertChanges, close } = useWidget();
+  const { canRevert, revertChanges, openWebSettings, close } = useWidget();
   return (
-    <div className="ant-modal-footer">
-      {canRevert && (
-        <Button onClick={revertChanges} type="ghost" style={{ position: 'absolute', left: '16px' }}>
-          <RollbackOutlined />
-          {$t('Revert Changes')}
+    <div className="ant-modal-footer" style={{ display: 'flex', alignItems: 'stretch', gap: '16px' }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'stretch', justifyContent: 'flex-start', gap: '16px' }}>
+        <Button onClick={openWebSettings} type="ghost">
+          <i className="icon-pop-out-2" style={{ marginRight: '8px' }} />
+          {$t('Manage on Web')}
         </Button>
-      )}
+        {canRevert && (
+          <Button onClick={revertChanges} type="ghost">
+            <RollbackOutlined />
+            {$t('Revert Changes')}
+          </Button>
+        )}
+      </div>
       <Button onClick={close}>{$t('Close')}</Button>
     </div>
   );
@@ -133,7 +139,7 @@ function ModalDisplay() {
 }
 
 /**
- * Renders a collapsable section with browser source settings for the widget
+ * Renders a collapsible section with browser source settings for the widget
  */
 function BrowserSourceSettings() {
   const { browserSourceProps, updateBrowserSourceProps } = useWidget();

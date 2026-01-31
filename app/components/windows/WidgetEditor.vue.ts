@@ -1,3 +1,4 @@
+import * as remote from '@electron/remote';
 import { Component, Watch } from 'vue-property-decorator';
 import { Inject } from 'services/core/injector';
 import { $t } from 'services/i18n';
@@ -63,7 +64,7 @@ export default class WidgetEditor extends TsxComponent<WidgetEditorProps> {
   @Inject() private projectorService: ProjectorService;
   @Inject() private incrementalRolloutService: IncrementalRolloutService;
 
-  $refs: { content: HTMLElement; sidebar: HTMLElement; code: HTMLElement };
+  $refs: { modal: ModalLayout; content: HTMLElement; sidebar: HTMLElement; code: HTMLElement };
 
   sourceId = this.windowsService.getChildWindowOptions().queryParams.sourceId;
   widget = this.widgetsService.getWidgetSource(this.sourceId);
@@ -155,6 +156,11 @@ export default class WidgetEditor extends TsxComponent<WidgetEditorProps> {
 
   get topProperties() {
     return this.properties.slice(1, 4);
+  }
+
+  openWebSettings() {
+    remote.shell.openExternal(this.apiSettings.webSettingsUrl);
+    this.windowsService.actions.closeChildWindow();
   }
 
   createProjector() {
