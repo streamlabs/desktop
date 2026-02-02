@@ -25,6 +25,7 @@ import { VideoEncodingOptimizationService } from 'services/video-encoding-optimi
 import { MagicLinkService } from 'services/magic-link';
 import { SettingsService } from 'services/settings';
 import Translate from 'components-react/shared/Translate';
+import { maxNumPlatforms } from 'services/platforms';
 
 /**
  * Renders settings for starting the stream
@@ -63,7 +64,7 @@ export default function GoLiveSettings() {
       get canAddDestinations() {
         const linkedPlatforms = module.state.linkedPlatforms;
         const customDestinations = module.state.customDestinations;
-        return linkedPlatforms.length + customDestinations.length < 8;
+        return linkedPlatforms.length + customDestinations.length < maxNumPlatforms + 5;
       },
 
       showSelector: !module.isPrime && module.isDualOutputMode,
