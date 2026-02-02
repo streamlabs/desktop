@@ -329,3 +329,5 @@ export interface IPlatformRequest extends RequestInit {
 }
 
 export const externalAuthPlatforms = ['youtube', 'twitch', 'twitter', 'tiktok', 'kick'];
+
+export const maxNumPlatforms = platformList.length;
