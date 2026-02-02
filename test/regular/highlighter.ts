@@ -10,7 +10,7 @@ import {
 } from '../helpers/modules/streaming';
 import { logIn } from '../helpers/modules/user';
 import { saveReplayBuffer } from '../helpers/modules/replay-buffer';
-import { fillForm } from '../helpers/modules/forms';
+import { assertFormContains, fillForm } from '../helpers/modules/forms';
 const path = require('path');
 const fs = require('fs');
 
@@ -37,6 +37,7 @@ test('Highlighter save and export', async t => {
   await clickButton('Export');
   const fileName = 'MyTestVideo.mp4';
   const exportLocation = path.resolve(recordingDir, fileName);
+  console.log('Export location:', exportLocation);
   await fillForm({ exportLocation });
   await clickButton('Export Horizontal');
   await waitForDisplayed('h2=Publish to', { timeout: 60000 });

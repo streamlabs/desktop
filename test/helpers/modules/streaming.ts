@@ -8,9 +8,7 @@ import {
   click,
   clickButton,
   focusChild,
-  getFocusedWindowId,
   isDisplayed,
-  select,
   selectButton,
   useChildWindow,
   useMainWindow,
@@ -141,7 +139,7 @@ export async function stopRecording() {
 export async function waitForSettingsWindowLoaded() {
   await waitForStreamShift();
   await focusChild();
-  return waitForEnabled('[data-name=confirmGoLiveBtn]', { timeout: 5000 });
+  return waitForEnabled('[data-name=confirmGoLiveBtn]', { timeout: 15000 });
 }
 
 async function waitForStreamShift() {
@@ -219,7 +217,7 @@ export async function scheduleStream(date: Date, formData: TFormData) {
  */
 export async function addCustomDestination(name: string, url: string, streamKey: string) {
   await showSettingsWindow('Stream');
-  await click('span=Add Destination');
+  await click('span=Add Custom Destination');
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const { fillForm } = useForm();

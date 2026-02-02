@@ -65,6 +65,9 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
   }
 
   getCanDualStream(platform: TPlatform) {
+    if (platform === 'twitch') {
+      return Services.TwitchService.views.hasTwitchDualStreamAccess;
+    }
     return Services.StreamingService.views.supports('dualStream', [platform]);
   }
 
@@ -372,6 +375,10 @@ export class GoLiveSettingsModule {
     return [...alwaysShown, ...unlinked];
   }
 
+  get primaryPlatform() {
+    return Services.UserService.views.platform?.type;
+  }
+
   get primaryChat() {
     const primaryPlatform = Services.UserService.views.platform!;
     // this is migration-like code for users with old primary platform deselected (i.e me)
@@ -394,7 +401,7 @@ export class GoLiveSettingsModule {
   /**
    * Determine if all dual output go live requirements are fulfilled
    */
-  getCanStreamDualOutput() {
+  get canStreamDualOutput() {
     return this.state.getCanStreamDualOutput(this.state);
   }
 
@@ -488,6 +495,10 @@ export class GoLiveSettingsModule {
 
   get recommendedColorSpaceWarnings() {
     return Services.SettingsService.views.recommendedColorSpaceWarnings;
+  }
+
+  get codec() {
+    return Services.SettingsService.views.values.Output.Encoder;
   }
 }
 

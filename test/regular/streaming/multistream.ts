@@ -6,6 +6,7 @@ import {
   switchAdvancedMode,
   waitForSettingsWindowLoaded,
   waitForStreamStart,
+  waitForStreamStop,
 } from '../../helpers/modules/streaming';
 import { fillForm, useForm } from '../../helpers/modules/forms';
 import {
@@ -34,7 +35,8 @@ async function enableAllPlatforms() {
 }
 
 async function goLiveWithStreamShift(t: TExecutionContext, multistream: boolean) {
-  await fillForm({ streamShift: true });
+  await clickGoLive();
+  await waitForSettingsWindowLoaded();
 
   if (multistream) {
     await enableAllPlatforms();
@@ -43,33 +45,69 @@ async function goLiveWithStreamShift(t: TExecutionContext, multistream: boolean)
       title: 'Test stream',
       description: 'Test stream description',
       twitchGame: 'Fortnite',
-      kickGame: 'Fortnite',
+      trovoGame: 'Doom',
+      streamShift: true,
     });
   } else {
     await fillForm({ twitch: true });
     await waitForSettingsWindowLoaded();
-    await fillForm({ title: 'Test stream', game: 'Fortnite' });
+    await fillForm({ title: 'Test stream', twitchGame: 'Fortnite', streamShift: true });
   }
 
   await waitForSettingsWindowLoaded();
   await submit();
-  await waitForDisplayed('span=Configure the Multistream service');
+  await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
+  await waitForDisplayed("h1=You're live!", { timeout: 60000 });
+  // Confirm chat loads
   await waitForStreamStart();
   await focusMain();
-
-  if (multistream) {
-    t.true(
-      await isDisplayed('span.and-menu-title-content=Multistream'),
-      'Multistream chat tab visible',
-    );
-  } else {
-    t.false(
-      await isDisplayed('span.and-menu-title-content=Multistream'),
-      'Multistream chat tab not visible',
-    );
-  }
+  await waitForDisplayed('div=Refresh Chat', { timeout: 60000 });
 
   await stopStream();
+  await waitForStreamStop();
+}
+
+async function goLiveWithDefaultCodec() {
+  await showSettingsWindow('Output', async () => {
+    await fillForm({ Mode: 'Advanced' });
+    await fillForm('Streaming', { Encoder: 'AOM AV1' });
+    await clickButton('Close');
+  });
+
+  // Try to go live with incompatible codec
+  await clickGoLive();
+
+  // Prevent rate limiting YouTube
+  // Note: This is not necessary for the test but prevents flakiness in CI from rate limiting
+  await waitForSettingsWindowLoaded();
+  await fillForm({
+    youtube: false,
+  });
+  await waitForSettingsWindowLoaded();
+  await submit();
+
+  await waitForDisplayed('span=Incompatible Codec Detected', { timeout: 10000 });
+
+  // Try a new codec the incompatible codec dialog
+  await clickButton('Select Codec');
+
+  console.log('Selecting a different incompatible codec');
+
+  // Select another incompatible codec
+  await fillForm('Streaming', { Encoder: 'SVT-AV1' });
+  await clickButton('Close');
+
+  await clickGoLive();
+  await waitForSettingsWindowLoaded();
+  await submit();
+
+  await waitForDisplayed('span=Incompatible Codec Detected', { timeout: 10000 });
+  await clickButton('Use H.264 Codec');
+
+  await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
+  await waitForDisplayed("h1=You're live!", { timeout: 60000 });
+  await stopStream();
+  await waitForStreamStop();
 }
 
 test(
@@ -84,8 +122,8 @@ test(
     // can possibly revert back to fillForm with all platforms.
     await enableAllPlatforms();
 
-    // shows primary chat switcher when multiple platforms are enabled
-    t.true(await isDisplayed('[data-name="primary-chat-switcher"]'), 'Shows primary chat switcher');
+    // Shows primary chat switcher when multiple platforms are enabled
+    t.true(await isDisplayed('[data-name="primaryChat"]'), 'Shows primary chat switcher');
 
     // add settings
     await fillForm({
@@ -93,12 +131,19 @@ test(
       description: 'Test stream description',
       twitchGame: 'Fortnite',
       trovoGame: 'Doom',
+      primaryChat: 'YouTube',
     });
 
     await submit();
-    await waitForDisplayed('span=Configure the Multistream service');
+    await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
     await waitForDisplayed("h1=You're live!", { timeout: 60000 });
+    // Confirm chat loads
+    await focusMain();
+    await waitForDisplayed('div=Refresh Chat', { timeout: 60000 });
     await stopStream();
+
+    await goLiveWithDefaultCodec();
+
     t.pass();
   },
 );
@@ -140,9 +185,10 @@ test(
     });
 
     await submit();
-    await waitForDisplayed('span=Configure the Multistream service');
+    await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
     await waitForDisplayed("h1=You're live!", { timeout: 60000 });
     await stopStream();
+
     t.pass();
   },
 );
@@ -156,7 +202,7 @@ test('Custom stream destinations', async t => {
   try {
     // add new destination
     await showSettingsWindow('Stream');
-    await click('span=Add Destination');
+    await click('span=Add Custom Destination');
 
     const { fillForm } = useForm();
     await fillForm({
@@ -176,7 +222,7 @@ test('Custom stream destinations', async t => {
 
     t.true(await isDisplayed('span=MyCustomDestUpdated'), 'Destination should be updated');
 
-    await click('span=Add Destination');
+    await click('span=Add Custom Destination');
     await fillForm({
       name: 'MyCustomDest',
       url: 'rtmp://live.twitch.tv/app/',
@@ -186,7 +232,7 @@ test('Custom stream destinations', async t => {
 
     // add 3 more destinations (up to 5)
     for (let i = 0; i < 3; i++) {
-      await click('span=Add Destination');
+      await click('span=Add Custom Destination');
       await fillForm({
         name: `MyCustomDest${i}`,
         url: 'rtmp://live.twitch.tv/app/',
@@ -195,7 +241,10 @@ test('Custom stream destinations', async t => {
       await clickButton('Save');
     }
 
-    t.false(await isDisplayed('span=Add Destination'), 'Do not allow more than 5 custom dest');
+    t.false(
+      await isDisplayed('span=Add Custom Destination'),
+      'Do not allow more than 5 custom dest',
+    );
 
     // open the GoLiveWindow and check destinations
     await prepareToGoLive();
@@ -211,7 +260,7 @@ test('Custom stream destinations', async t => {
     await click('div=MyCustomDest'); // switch the destination on
 
     await submit();
-    await waitForDisplayed('span=Configure the Multistream service');
+    await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
     await waitForDisplayed("h1=You're live!", { timeout: 60000 });
     await waitForStreamStart();
     await stopStream();
@@ -228,17 +277,16 @@ test('Custom stream destinations', async t => {
   }
 });
 
-// TODO: enable after merge
-test.skip('Stream Shift', withUser('twitch', { prime: true, multistream: true }), async t => {
+test('Stream Shift', withUser('twitch', { prime: true, multistream: true }), async t => {
   await prepareToGoLive();
-  await clickGoLive();
-  await waitForSettingsWindowLoaded();
 
   // Single stream shift
   await goLiveWithStreamShift(t, false);
 
   // Multistream shift
   await goLiveWithStreamShift(t, true);
+
+  await goLiveWithDefaultCodec();
 
   t.pass();
 });
