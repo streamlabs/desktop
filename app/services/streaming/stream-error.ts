@@ -46,6 +46,11 @@ export const errorTypes = {
       return $t('Failed to configure the Multistream server');
     },
   },
+  RESTREAM_UPDATE_FAILED: {
+    get message() {
+      return $t('Failed to update Multistream platforms and destinations while live');
+    },
+  },
   DUAL_OUTPUT_RESTREAM_DISABLED: {
     get message() {
       return $t('The Multistream server is temporarily unavailable for Dual Output');

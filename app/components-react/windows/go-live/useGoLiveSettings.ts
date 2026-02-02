@@ -189,7 +189,8 @@ export class GoLiveSettingsModule {
   constructor(
     public form: FormInstance,
     public isUpdateMode: boolean,
-    public activeTargets?: TPlatform[],
+    public activePlatforms?: TPlatform[],
+    public activeDestinations?: ICustomStreamDestination[],
   ) {}
   // initial setup
   async init() {
@@ -477,7 +478,8 @@ export class GoLiveSettingsModule {
       (await this.validate()) &&
       (await Services.StreamingService.actions.return.updateStreamSettings(
         this.state.settings,
-        this.activeTargets,
+        this.activePlatforms,
+        this.activeDestinations,
       ))
     ) {
       message.success($t('Successfully updated'));
@@ -511,14 +513,19 @@ export function useGoLiveSettings() {
 export function useGoLiveSettingsRoot(params?: { isUpdateMode: boolean }) {
   const form = useForm();
 
-  const activeTargets = params?.isUpdateMode
+  const activePlatforms = params?.isUpdateMode
     ? Services.StreamingService.views.enabledPlatforms
+    : undefined;
+
+  const activeDestinations = params?.isUpdateMode
+    ? Services.StreamingService.views.customDestinations
     : undefined;
 
   const useModuleResult = useModule(GoLiveSettingsModule, [
     form,
     !!params?.isUpdateMode,
-    activeTargets,
+    activePlatforms,
+    activeDestinations,
   ]);
   return useModuleResult;
 }

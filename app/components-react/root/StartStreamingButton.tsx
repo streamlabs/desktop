@@ -33,6 +33,8 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     primaryPlatform,
     isMultiplatformMode,
     updateStreamInfoOnLive,
+    streamShiftForceGoLive,
+    hasStreamShiftTargets,
   } = useVuex(() => ({
     streamingStatus: StreamingService.state.streamingStatus,
     delayEnabled: StreamingService.views.delayEnabled,
@@ -44,6 +46,8 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     primaryPlatform: UserService.state.auth?.primaryPlatform,
     isMultiplatformMode: StreamingService.views.isMultiplatformMode,
     updateStreamInfoOnLive: CustomizationService.state.updateStreamInfoOnLive,
+    streamShiftForceGoLive: RestreamService.views.streamShiftForceGoLive,
+    hasStreamShiftTargets: RestreamService.views.hasStreamShiftTargets,
   }));
 
   const [delaySecondsRemaining, setDelayTick] = useState(delaySeconds);
@@ -139,6 +143,39 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     };
   }, []);
 
+  const shouldShowGoLiveWindow = useMemo(() => {
+    if (!isLoggedIn) return false;
+    if (!primaryPlatform) return false;
+    if (streamShiftForceGoLive) return true;
+    if (isDualOutputMode) return true;
+
+    if (
+      !!UserService.state.auth?.platforms &&
+      isMultiplatformMode &&
+      Object.keys(UserService.state.auth?.platforms).length > 1
+    ) {
+      return true;
+    }
+
+    if (primaryPlatform === 'twitch') {
+      // For Twitch, we can show the Go Live window even with protected mode off
+      // This is mainly for legacy reasons.
+      return isMultiplatformMode || updateStreamInfoOnLive;
+    } else {
+      return (
+        StreamSettingsService.state.protectedModeEnabled &&
+        StreamSettingsService.isSafeToModifyStreamKey()
+      );
+    }
+  }, [
+    isLoggedIn,
+    primaryPlatform,
+    isDualOutputMode,
+    isMultiplatformMode,
+    updateStreamInfoOnLive,
+    streamShiftForceGoLive,
+  ]);
+
   const toggleStreaming = useCallback(async () => {
     if (StreamingService.isStreaming) {
       StreamingService.toggleStreaming();
@@ -201,9 +238,6 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
               );
 
           if (isLive) {
-            const { streamShiftForceGoLive } = RestreamService.state;
-            let shouldForceGoLive = streamShiftForceGoLive;
-
             await promptAction({
               title: $t('Another stream detected'),
               message,
@@ -213,15 +247,9 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
               cancelBtnPosition: 'left',
               secondaryActionText: $t('Force Start'),
               secondaryActionFn: async () => {
-                // FIXME: this should actually do something server-side
-                RestreamService.actions.return.forceStreamShiftGoLive(true);
-                shouldForceGoLive = true;
+                RestreamService.actions.return.forceStreamShiftGoLive();
               },
             });
-
-            if (!shouldForceGoLive) {
-              return;
-            }
           }
         } catch (e: unknown) {
           console.error('Error checking stream switcher status when toggle streaming:', e);
@@ -231,11 +259,15 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
         }
       }
 
-      if (shouldShowGoLiveWindow()) {
+      if (shouldShowGoLiveWindow) {
         if (!StreamingService.views.hasPendingChecks()) {
           StreamingService.actions.resetInfo();
         }
         StreamingService.actions.showGoLiveWindow();
+      } else if (!streamShiftForceGoLive && hasStreamShiftTargets) {
+        // This indicates that the user is going live with stream shift via a stream started by another device
+        // so don't need to show the go live window.
+        console.info('Going live with Stream Shift from another device');
       } else {
         StreamingService.actions.goLive();
       }
@@ -259,18 +291,6 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
       setIsLoading(false);
       return false;
     }
-    // return await new Promise<boolean>(async (resolve, reject) => {
-    //   try {
-    //     const isLive = await RestreamService.actions.return.checkIsLive();
-    //     resolve(isLive);
-    //   } catch (e: unknown) {
-    //     console.log('Error checking stream shift status', e);
-    //     setIsLoading(false);
-    //     resolve(false);
-    //   }
-
-    //   reject(false);
-    // });
   }, []);
 
   const startStreamShift = useCallback(() => {
@@ -280,37 +300,6 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
 
     StreamingService.actions.goLive();
   }, [isDualOutputMode]);
-
-  const shouldShowGoLiveWindow = useCallback(() => {
-    if (!UserService.isLoggedIn) return false;
-    const primaryPlatform = UserService.state.auth?.primaryPlatform;
-    const updateStreamInfoOnLive = CustomizationService.state.updateStreamInfoOnLive;
-
-    if (!primaryPlatform) return false;
-
-    if (StreamingService.views.isDualOutputMode) {
-      return true;
-    }
-
-    if (
-      !!UserService.state.auth?.platforms &&
-      StreamingService.views.isMultiplatformMode &&
-      Object.keys(UserService.state.auth?.platforms).length > 1
-    ) {
-      return true;
-    }
-
-    if (primaryPlatform === 'twitch') {
-      // For Twitch, we can show the Go Live window even with protected mode off
-      // This is mainly for legacy reasons.
-      return StreamingService.views.isMultiplatformMode || updateStreamInfoOnLive;
-    } else {
-      return (
-        StreamSettingsService.state.protectedModeEnabled &&
-        StreamSettingsService.isSafeToModifyStreamKey()
-      );
-    }
-  }, [primaryPlatform, isMultiplatformMode, updateStreamInfoOnLive]);
 
   return (
     <button

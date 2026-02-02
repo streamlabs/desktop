@@ -47,6 +47,7 @@ import { $t } from 'services/i18n';
 import {
   getPlatformService,
   platformLabels,
+  platformList,
   TPlatform,
   TStartStreamOptions,
 } from 'services/platforms';
@@ -59,7 +60,7 @@ import {
 } from 'services/notifications';
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
-import { StreamSettingsService } from '../settings/streaming';
+import { ICustomStreamDestination, StreamSettingsService } from '../settings/streaming';
 import { IStreamShiftTarget, RestreamService } from 'services/restream';
 import Utils from 'services/utils';
 import cloneDeep from 'lodash/cloneDeep';
@@ -83,7 +84,7 @@ import { RecordingModeService } from 'services/recording-mode';
 import { MarkersService } from 'services/markers';
 import { byOS, OS } from 'util/operating-systems';
 import { DualOutputService } from 'services/dual-output';
-import { capitalize, xor } from 'lodash';
+import { capitalize, difference, intersection, xor } from 'lodash';
 import { YoutubeService } from 'app-services';
 import { EOBSOutputType, EOBSOutputSignal, IOBSOutputSignalInfo } from 'services/core/signals';
 import { SignalsService } from 'services/signals-manager';
@@ -654,6 +655,10 @@ export class StreamingService
         this.SET_ENHANCED_BROADCASTING(isEnhancedBroadcasting);
       }
 
+      if (platform === 'kick') {
+        console.log('Kick settings');
+      }
+
       // don't update settings for twitch in unattendedMode
       await this.runCheck(platform, () => service.beforeGoLive(settingsForPlatform, display));
     } catch (e: unknown) {
@@ -769,15 +774,13 @@ export class StreamingService
    */
   async updateStreamSettings(
     settings: IGoLiveSettings,
-    activeTargets?: TPlatform[],
+    activePlatforms?: TPlatform[],
+    activeDestinations?: ICustomStreamDestination[],
   ): Promise<boolean> {
     const lifecycle = this.state.info.lifecycle;
 
     // save current settings in store so we can re-use them if something will go wrong
     this.SET_GO_LIVE_SETTINGS(settings);
-
-    // run checklist
-    this.UPDATE_STREAM_INFO({ lifecycle: 'runChecklist' });
 
     // call putChannelInfo for each platform
     const platforms = this.views.getEnabledPlatforms(settings.platforms);
@@ -787,37 +790,149 @@ export class StreamingService
     // @@@ TODO: dual output single platform to multiple platforms
     // @@@ TODO: youtube to create stream and attach to broadcast (like stream shift)
     // @@@ TODO: stream shift confirm
-    if (activeTargets && xor(platforms, activeTargets).length > 0) {
-      // @@@ TODO need to run beforeGoLive for newly added platforms
-      //     for (const platform of platforms) {
-      //   await this.setPlatformSettings(platform, settings, unattendedMode);
-      // }
-      this.restreamService.updateTargets(platforms);
-    }
+    if (this.userService.isPrime && activePlatforms && xor(platforms, activePlatforms).length > 0) {
+      const stopPlatforms = difference(activePlatforms, platforms);
+      const startPlatforms = difference(platforms, activePlatforms);
+      const continuePlatforms = intersection(platforms, activePlatforms);
 
-    platforms.forEach(platform => {
-      this.UPDATE_STREAM_INFO({
-        checklist: { ...this.state.info.checklist, [platform]: 'not-started' },
+      console.log('UPDATE startPlatforms', JSON.stringify(startPlatforms, null, 2));
+      console.log('UPDATE continuePlatforms', JSON.stringify(continuePlatforms, null, 2));
+
+      stopPlatforms.forEach(platform => {
+        this.UPDATE_STREAM_INFO({
+          checklist: { ...this.state.info.checklist, [platform]: 'not-started' },
+        });
       });
-    });
 
-    for (const platform of platforms) {
-      const service = getPlatformService(platform);
-      const newSettings = getDefined(settings.platforms[platform]);
-      try {
-        await this.runCheck(platform, () => service.putChannelInfo(newSettings));
-      } catch (e: unknown) {
-        this.handleUpdatePlatformError(e, platform);
-        return false;
+      startPlatforms.forEach(platform => {
+        this.UPDATE_STREAM_INFO({
+          checklist: { ...this.state.info.checklist, [platform]: 'not-started' },
+        });
+      });
+
+      continuePlatforms.forEach(platform => {
+        this.UPDATE_STREAM_INFO({
+          checklist: { ...this.state.info.checklist, [platform]: 'not-started' },
+        });
+      });
+
+      if (startPlatforms.length > 0 || stopPlatforms.length > 0) {
+        this.UPDATE_STREAM_INFO({
+          checklist: { ...this.state.info.checklist, ['setupMultistream']: 'not-started' },
+        });
+      }
+
+      // run checklist
+      this.UPDATE_STREAM_INFO({ lifecycle: 'runChecklist' });
+
+      const enabledDestinations = this.views.customDestinations.filter(dest => dest.enabled);
+      const stopDestinations = difference(activeDestinations, enabledDestinations);
+
+      console.log('UPDATE activeDestinations', JSON.stringify(activeDestinations, null, 2));
+      console.log('UPDATE enabledDestinations', JSON.stringify(enabledDestinations, null, 2));
+
+      console.log('UPDATE stopPlatforms', JSON.stringify(stopPlatforms, null, 2));
+      console.log('UPDATE stopDestinations', JSON.stringify(stopDestinations, null, 2));
+
+      if (stopPlatforms.length > 0 || stopDestinations.length > 0) {
+        // Run checklist for removing targets
+        try {
+          // Remove targets from restream in a single request
+
+          console.log(
+            'REMOVING stopPlatforms, stopDestinations',
+            JSON.stringify(stopPlatforms, null, 2),
+            JSON.stringify(stopDestinations, null, 2),
+          );
+          await this.restreamService.removeTargets(stopPlatforms, stopDestinations);
+
+          // Confirm target removal from restream for each platform
+          for (const platform of stopPlatforms) {
+            await this.runCheck(platform, async () => {
+              // Delay for UI animation
+              await new Promise(resolve => setTimeout(resolve, 300));
+            });
+          }
+        } catch (e: unknown) {
+          const errorType = this.handleTypedStreamError(
+            e,
+            'RESTREAM_UPDATE_FAILED',
+            'Failed to remove restream targets while live',
+          );
+
+          throwStreamError(errorType);
+        }
+      }
+
+      // Run `beforeGoLive` to set up the new platforms
+      for (const platform of startPlatforms) {
+        await this.setPlatformSettings(platform, settings, false);
+      }
+
+      /**
+       * Saved any settings updated during the `beforeGoLive` process for the platforms.
+       * This is important for dual streaming and multistreaming.
+       */
+      this.SET_GO_LIVE_SETTINGS(this.views.savedSettings);
+
+      // Update settings for the persisted targets
+      for (const platform of continuePlatforms) {
+        await this.updatePlatformSettings(platform, settings);
+      }
+
+      const startDestinations = difference(enabledDestinations, activeDestinations);
+      if (startPlatforms.length > 0 || startDestinations.length > 0) {
+        // Add new targets on restream
+        console.log(
+          'ADDING startPlatforms, startDestinations',
+          JSON.stringify(startPlatforms, null, 2),
+          JSON.stringify(startDestinations, null, 2),
+        );
+
+        try {
+          await this.runCheck('setupMultistream', async () => {
+            await this.restreamService.addTargets(startPlatforms, startDestinations);
+          });
+        } catch (e: unknown) {
+          const errorType = this.handleTypedStreamError(
+            e,
+            'RESTREAM_UPDATE_FAILED',
+            'Failed to add restream targets while live',
+          );
+          throwStreamError(errorType);
+        }
+      }
+    } else {
+      platforms.forEach(platform => {
+        this.UPDATE_STREAM_INFO({
+          checklist: { ...this.state.info.checklist, [platform]: 'not-started' },
+        });
+      });
+
+      // run checklist
+      this.UPDATE_STREAM_INFO({ lifecycle: 'runChecklist' });
+
+      for (const platform of platforms) {
+        await this.updatePlatformSettings(platform, settings);
       }
     }
-    // @@@ TODO: maybe update restream targets here
 
     // save updated settings locally
     this.streamSettingsService.setSettings({ goLiveSettings: settings });
     // finish the 'runChecklist' step
     this.UPDATE_STREAM_INFO({ lifecycle });
     return true;
+  }
+
+  async updatePlatformSettings(platform: TPlatform, settings: IGoLiveSettings): Promise<boolean> {
+    const service = getPlatformService(platform);
+    const newSettings = getDefined(settings.platforms[platform]);
+    try {
+      await this.runCheck(platform, () => service.putChannelInfo(newSettings));
+    } catch (e: unknown) {
+      this.handleUpdatePlatformError(e, platform);
+      return false;
+    }
   }
 
   handleUpdatePlatformError(e: unknown, platform: TPlatform) {

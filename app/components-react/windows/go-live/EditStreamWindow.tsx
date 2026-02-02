@@ -31,12 +31,15 @@ export default function EditStreamWindow() {
     setPrimaryChat,
     isDualOutputMode,
     protectedModeEnabled,
+    isMidStreamMode,
   } = useGoLiveSettingsRoot({ isUpdateMode: true });
 
   const shouldShowChecklist = lifecycle === 'runChecklist';
   const shouldShowSettings = !shouldShowChecklist;
 
-  const shouldShowLeftCol = isDualOutputMode ? true : protectedModeEnabled;
+  const shouldShowLeftCol = isDualOutputMode
+    ? isMidStreamMode
+    : protectedModeEnabled && isMidStreamMode;
 
   useOnCreate(() => {
     // the streamingService still may keep a error from GoLive flow like a "Post a Tweet" error

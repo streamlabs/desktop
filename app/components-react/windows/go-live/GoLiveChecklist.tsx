@@ -1,6 +1,6 @@
 import { useGoLiveSettings } from './useGoLiveSettings';
 import css from './GoLiveChecklist.m.less';
-import React, { HTMLAttributes, useEffect } from 'react';
+import React, { HTMLAttributes, useEffect, useMemo } from 'react';
 import { Services } from '../../service-provider';
 import { $t } from '../../../services/i18n';
 import { TGoLiveChecklistItemState } from '../../../services/streaming';
@@ -10,6 +10,7 @@ import MessageLayout from './MessageLayout';
 import { Timeline } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import Utils from '../../../services/utils';
+import { difference, intersection } from 'lodash';
 
 /**
  * Shows transition to live progress and helps troubleshoot related problems
@@ -27,13 +28,44 @@ export default function GoLiveChecklist(p: HTMLAttributes<unknown>) {
     getPlatformDisplayName,
     isUpdateMode,
     shouldShowOptimizedProfile,
+    stopTargets,
+    startTargets,
+    continueTargets,
   } = useGoLiveSettings().extend(module => ({
     get shouldShowOptimizedProfile() {
       return VideoEncodingOptimizationService.state.useOptimizedProfile && !module.isUpdateMode;
     },
+
+    get stopTargets() {
+      return module.activePlatforms
+        ? difference(module.activePlatforms, module.enabledPlatforms)
+        : [];
+    },
+
+    get startTargets() {
+      return module.activePlatforms
+        ? difference(module.enabledPlatforms, module.activePlatforms)
+        : [];
+    },
+
+    get continueTargets() {
+      return module.activePlatforms
+        ? intersection(module.enabledPlatforms, module.activePlatforms)
+        : [];
+    },
   }));
 
   const success = lifecycle === 'live';
+
+  const shouldRenderMultistreamItem = useMemo(() => {
+    if (!isUpdateMode && isMultiplatformMode && !isDualOutputMode) {
+      return true;
+    }
+
+    if (isUpdateMode && (stopTargets.length > 0 || startTargets.length > 0)) {
+      return true;
+    }
+  }, [isUpdateMode, isMultiplatformMode, isDualOutputMode, stopTargets, startTargets]);
 
   // close this window in 1s after start streaming
   useEffect(() => {
@@ -53,19 +85,48 @@ export default function GoLiveChecklist(p: HTMLAttributes<unknown>) {
 
         <Timeline>
           {/* PLATFORMS UPDATE */}
-          {enabledPlatforms.map(platform =>
-            renderCheck(
-              $t('Update settings for %{platform}', {
-                platform: getPlatformDisplayName(platform),
-              }),
-              checklist[platform],
-            ),
-          )}
+          {!isUpdateMode &&
+            enabledPlatforms.map(platform =>
+              renderCheck(
+                $t('Update settings for %{platform}', {
+                  platform: getPlatformDisplayName(platform),
+                }),
+                checklist[platform],
+              ),
+            )}
+
+          {isUpdateMode &&
+            stopTargets.map(platform =>
+              renderCheck(
+                $t('Stop streaming to %{platform}', {
+                  platform: getPlatformDisplayName(platform),
+                }),
+                checklist[platform],
+              ),
+            )}
+
+          {isUpdateMode &&
+            startTargets.map(platform =>
+              renderCheck(
+                $t('Start streaming to %{platform}', {
+                  platform: getPlatformDisplayName(platform),
+                }),
+                checklist[platform],
+              ),
+            )}
+
+          {isUpdateMode &&
+            continueTargets.map(platform =>
+              renderCheck(
+                $t('Update settings for %{platform}', {
+                  platform: getPlatformDisplayName(platform),
+                }),
+                checklist[platform],
+              ),
+            )}
 
           {/* RESTREAM */}
-          {!isUpdateMode &&
-            isMultiplatformMode &&
-            !isDualOutputMode &&
+          {shouldRenderMultistreamItem &&
             renderCheck($t('Configure the Multistream service'), checklist.setupMultistream)}
 
           {/* DUAL OUTPUT */}
