@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useEffect, useState } from 'react';
 import * as remote from '@electron/remote';
 import { WidgetLayout } from './common/WidgetLayout';
 import { useGamePulseWidget } from './game-pulse/useGamePulseWidget';
@@ -15,14 +15,16 @@ import { Button, Tooltip } from 'antd';
 
 export function GamePulseWidget() {
   const {
-    selectedTab,
+    currentTabId,
     setSelectedTab,
     playReactiveAlert,
     sections,
     toggleTrigger,
     deleteTrigger,
     tabKind,
+    widgetData,
   } = useGamePulseWidget();
+  const { showTutorial } = widgetData;
 
   const TAB_COMPONENTS: Record<TabKind, React.FC> = {
     [TabKind.AddTrigger]: AddTriggerTab,
@@ -31,7 +33,9 @@ export function GamePulseWidget() {
     [TabKind.TriggerDetail]: TriggerDetailsTab,
   };
 
-  const ActiveTab = TAB_COMPONENTS[tabKind] || GameSettingsTab;
+  console.log({ tabKind });
+
+  const ActiveTab = TAB_COMPONENTS[tabKind] || GamePulseTabUtils.generateManageGameId(ScopeId.Global);
 
   const showDisplay = tabKind !== TabKind.General && tabKind !== TabKind.GameManage;
 
@@ -40,7 +44,7 @@ export function GamePulseWidget() {
 
     const targetTab = GamePulseTabUtils.generateTriggerId(gameKey, trigger.id);
 
-    if (selectedTab !== targetTab) {
+    if (currentTabId !== targetTab) {
       setSelectedTab(targetTab);
     }
 
@@ -61,6 +65,20 @@ export function GamePulseWidget() {
       });
   }
 
+  const [tutorialVisible, setTutorialVisible] = useState(false);
+
+  useEffect(() => {
+    if (showTutorial) {
+      setTutorialVisible(true);
+    }
+  }, [showTutorial]);
+
+  useEffect(() => {
+    if (!currentTabId || currentTabId === TabKind.General) {
+      setSelectedTab(GamePulseTabUtils.generateManageGameId(ScopeId.Global));
+    }
+  }, []);
+
   return (
     <div className={css.gamePulseWidget}>
       <WidgetLayout
@@ -68,18 +86,43 @@ export function GamePulseWidget() {
         showDisplay={showDisplay}
         footerSlots={<ManageOnWebButton />}
       >
-
-        <GamePulseMenu
-          sections={sections}
-          activeKey={selectedTab}
-          onChange={setSelectedTab}
-          playAlert={onPlayAlert}
-          toggleTrigger={toggleTrigger}
-          deleteTrigger={onDelete}
-          />
-        <Tooltip title={$t('test estest esttestest est.')} placement='topRight' defaultVisible={true} trigger={'click'}>
-          <ActiveTab />
+        <Tooltip
+          visible={tutorialVisible}
+          placement="rightTop"
+          trigger={[]}
+          align={{ offset: [0, 255] }}
+          zIndex={9999}
+          title={
+            <div>
+              <div>
+                {$t("Triggers are setup and ready to go! Feel free to uncheck the ones you don't want.")}
+              </div>
+              <Button
+                type="text"
+                style={{
+                  padding: 0,
+                }}
+                onClick={() => setTutorialVisible(false)}
+              >
+                <span style={{ textDecoration: 'underline' }}>
+                  {$t('Dismiss')}
+                </span>
+              </Button>
+            </div>
+          }
+        >
+          <div>
+            <GamePulseMenu
+              sections={sections}
+              activeKey={currentTabId}
+              onChange={setSelectedTab}
+              playAlert={onPlayAlert}
+              toggleTrigger={toggleTrigger}
+              deleteTrigger={onDelete}
+            />
+          </div>
         </Tooltip>
+          <ActiveTab />
       </WidgetLayout>
     </div>
   );
@@ -111,7 +154,7 @@ function AddTriggerTab() {
       onSubmit={createTrigger}
     />
   );
-};
+}
 
 function GameSettingsTab() {
   const { groupOptions, toggleScope, enableAllGroups, disableAllGroups } = useGamePulseWidget();
@@ -159,9 +202,9 @@ function ManageTriggersTab() {
 
   const options = useMemo(() => {
     return (triggers || [])
-      .filter((t) => t.id !== null) 
-      .map((t) => ({
-        id: t.id as string, 
+      .filter(t => t.id !== null)
+      .map(t => ({
+        id: t.id as string,
         name: t.name,
         enabled: t.enabled,
       }));
@@ -174,7 +217,7 @@ function ManageTriggersTab() {
       onDisableAll={onDisableAll}
     />
   );
-};
+}
 
 function TriggerDetailsTab() {
   const { activeTabContext, staticConfig, createTriggerBinding } = useGamePulseWidget();
@@ -205,7 +248,7 @@ function TriggerDetailsTab() {
       staticConfig={staticConfig}
     />
   );
-};
+}
 
 function ManageOnWebButton() {
   const handleClick = () => {

@@ -201,6 +201,6 @@ export interface ActiveTabContext {
 }
 
 export interface IGamePulseWidgetState extends IWidgetCommonState {
-  data: { settings: GamePulseWidgetSettings };
+  data: { settings: GamePulseWidgetSettings, showOnboarding?: boolean, showTutorial?: boolean };
   staticConfig: GamePulseStaticConfig;
 }

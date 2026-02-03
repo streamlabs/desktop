@@ -99,23 +99,29 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
     return [globalSection, ...gameSections];
   }
 
+  get currentTabId(): string {
+    return this.state?.selectedTab || GamePulseTabUtils.generateManageGameId(ScopeId.Global);
+  }
+
   get activeTabContext(): ActiveTabContext {
-    const tab = this.state?.selectedTab;
-    const context = GamePulseTabUtils.parse(tab);
-
-    // ensure we check for the existence of tab
-    if (context.kind === TabKind.General  && !tab) {
-      const firstGameId = Object.keys(this.widgetData?.settings?.games || {})[0];
-      return firstGameId
-        ? { kind: TabKind.GameManage, gameId: firstGameId }
-        : { kind: TabKind.General };
-    }
-
-    return context;
+    return GamePulseTabUtils.parse(this.currentTabId);
   }
 
   get tabKind(): TabKind {
     return this.activeTabContext.kind;
+  }
+
+  get hasTriggers(): boolean {
+    return this.hasTriggersFn(this.settings);
+  }
+
+  hasTriggersFn(settings: GamePulseWidgetSettings): boolean {
+    const globalTriggers = settings?.global?.triggers || [];
+    const gameTriggers = Object.values(settings?.games || {}).flatMap(
+      (group) => group?.triggers || [],
+    );
+
+    return globalTriggers.length + gameTriggers.length > 0;
   }
 
   protected patchBeforeSend(settings: GamePulseWidgetSettings) {
@@ -375,7 +381,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
 
   public async resetSettings() {
     const url = `https://${this.hostsService.streamlabs}/api/v5/${ApiEndpoints.ResetSettings}`;
-    const res = await this.widgetsService.request({
+    await this.widgetsService.request({
       url,
       method: 'POST',
     });
@@ -515,11 +521,25 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
       this.widgetsService.request({ url: `https://${this.hostsService.streamlabs}/api/v5/${ApiEndpoints.TTSLanguages}`, method: 'GET' }),
     ]);
 
-    // TODO: @chris: handle onboarding state
-    const { showOnboarding, showTutorial } = data as any;
-    if (showOnboarding) {
-      // TODO: @chris: handle default onboarding state
-      console.log("handle onboarding "); // --- IGNORE ---
+    const { showTutorial } = data;
+    const hasExistingTriggers = this.hasTriggersFn(data.settings);
+
+    if (showTutorial && !hasExistingTriggers) {
+      try {
+        const defaults = await this.widgetsService.request({
+          url: `https://${this.hostsService.streamlabs}/api/v5/${ApiEndpoints.DefaultSettings}`,
+          method: 'POST',
+          body: {
+            game_events: ['elimination', 'victory', 'death', 'assist', 'knockout'],
+          },
+        });
+        console.log({ defaults });
+        if (defaults.settings || defaults.data?.settings) {
+          (data as any).settings = defaults.settings || defaults.data?.settings;
+        }
+      } catch (err) {
+        console.error('[GamePulse] Failed to create default settings', err);
+      }
     }
 
     try {
