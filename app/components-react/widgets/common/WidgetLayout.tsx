@@ -1,5 +1,6 @@
 import { Button, Col, Collapse, Layout, Row, Spin } from 'antd';
 import React, { ReactNode } from 'react';
+import cx from 'classnames';
 import { useWidget } from './useWidget';
 import Display from '../../shared/Display';
 import css from './WidgetLayout.m.less';
@@ -111,8 +112,8 @@ function ModalContent(p: { children: ReactNode }) {
 function ModalFooter() {
   const { canRevert, revertChanges, openWebSettings, close } = useWidget();
   return (
-    <div className="ant-modal-footer">
-      <div className="ant-modal-footer-extra">
+    <div className={cx('ant-modal-footer', css.modalFooter)}>
+      <div className={css.modalFooterExtra}>
         <Button onClick={openWebSettings} type="ghost">
           <i className="icon-pop-out-2" style={{ marginRight: '8px' }} />
           {$t('Manage on Web')}
