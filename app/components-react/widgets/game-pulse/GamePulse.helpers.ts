@@ -5,6 +5,7 @@ import {
   GamePulseTriggerType,
   GamePulseEventPeriod,
 } from './GamePulse.types';
+
 const EVENT_MEDIA_MAP: Record<string, string> = {
   death: 'https://cdn.streamlabs.com/library/animations/default-death.webm',
   defeat: 'https://cdn.streamlabs.com/library/animations/default-defeat.webm',

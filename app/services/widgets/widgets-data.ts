@@ -47,7 +47,7 @@ export enum WidgetType {
   SuperchatGoal = 22,
   GameWidget = 23,
   CustomWidget = 24,
-  ReactiveWidget = 25,
+  GamePulseWidget = 25,
 }
 
 // TODO: there's some duplication between this and `WidgetsService.playAlert`
@@ -538,7 +538,7 @@ export const WidgetDefinitions: { [x: number]: IWidget } = {
       return `https://${host}/widgets/custom-widget?token=${token}`;
     },
   },
-  [WidgetType.ReactiveWidget]: {
+  [WidgetType.GamePulseWidget]: {
     name: 'Game Pulse',
     humanType: 'game_pulse',
     width: 400,
@@ -547,7 +547,7 @@ export const WidgetDefinitions: { [x: number]: IWidget } = {
     y: 0,
     anchor: AnchorPoint.North,
     url(host, token) {
-      return `https://${host}/widgets/game-pulse/v1/${token}`;
+      return `https://${host}/widgets/game-pulse/v1/${token}?simulate=1`; // todo: ask about risks of simulate=1 here
     },
   },
 };
@@ -828,7 +828,7 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
     icon: 'icon-developer',
     group: 'flair',
   },
-  [WidgetType.ReactiveWidget]: {
+  [WidgetType.GamePulseWidget]: {
     name: $t('Game Pulse'),
     description: $t(
       'Real time alerts reacting to your in game events.',

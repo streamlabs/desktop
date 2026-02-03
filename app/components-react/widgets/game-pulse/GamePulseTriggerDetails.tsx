@@ -50,13 +50,30 @@ export const GamePulseTriggerDetails = memo(function GamePulseTriggerDetails({
     ];
 
     const voices = staticConfig?.data?.options?.tts_voices || {};
-    const voiceOptions: IListGroup<string>[] = Object.entries(voices).map(([key, group]: [string, { list: { key: string; value: string }[] }]) => ({
+    const mappedVoices: IListGroup<string>[] = Object.entries(voices).map(([key, group]: [string, any]) => ({
       label: key,
       options: group.list.map((item: { key: string; value: string }) => ({
         label: item.value,
         value: item.key,
       })),
     }));
+
+    // sort voices to prioritize English ones at the top
+    const voiceOptions = mappedVoices.sort((a, b) => {
+      const aLabel = a.label;
+      const bLabel = b.label;
+
+      if (aLabel === 'English (US)') return -1;
+      if (bLabel === 'English (US)') return 1;
+
+      const aIsEnglish = aLabel.toLowerCase().includes('english');
+      const bIsEnglish = bLabel.toLowerCase().includes('english');
+
+      if (aIsEnglish && !bIsEnglish) return -1;
+      if (!aIsEnglish && bIsEnglish) return 1;
+
+      return aLabel.localeCompare(bLabel);
+    });
 
     const anims = staticConfig?.data?.animations;
     const animationOptions = {
@@ -281,7 +298,6 @@ export const GamePulseTriggerDetails = memo(function GamePulseTriggerDetails({
             {...bind('tts_settings.language')}
             options={voiceOptions}
             showSearch
-            placeholder={$t('Select a voice...')}
           />
           <SliderInput
             label={$t('Volume')}

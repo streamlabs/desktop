@@ -195,5 +195,21 @@
   "Interactive": "Interactive",
   "Goals": "Goals",
   "Flair": "Flair",
-  "Charity": "Charity"
+  "Charity": "Charity",
+  "Game Pulse": "Game Pulse",
+  "Are you sure you want to delete this trigger?": "Are you sure you want to delete this trigger?",
+  "When a trigger fires, this will be the format of the message. Available tokens: {number}": "When a trigger fires, this will be the format of the message. Available tokens: {number}",
+  "Trigger Details": "Trigger Details",
+  "Amount Minimum": "Amount Minimum",
+  "Amount Maximum": "Amount Maximum",
+  "Event Time Period": "Event Time Period",
+  "Add a new trigger": "Add a new trigger",
+  "Delete Trigger": "Delete Trigger",
+  "Manage Triggers": "Manage Triggers",
+  "Game Settings": "Game Settings",
+  "Select a Game": "Select a Game",
+  "Select an Event": "Select an Event",
+  "Trigger Type": "Trigger Type",
+  "Trigger Name": "Trigger Name",
+  "Select a Trigger Type": "Select a Trigger Type"
 }

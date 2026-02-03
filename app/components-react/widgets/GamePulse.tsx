@@ -3,7 +3,7 @@ import * as remote from '@electron/remote';
 import { WidgetLayout } from './common/WidgetLayout';
 import { useGamePulseWidget } from './game-pulse/useGamePulseWidget';
 import { GamePulseTabUtils, sanitizeTrigger } from './game-pulse/GamePulse.helpers';
-import { TabKind, GamePulseTrigger } from './game-pulse/GamePulse.types';
+import { TabKind, GamePulseTrigger, ScopeId } from './game-pulse/GamePulse.types';
 import { GamePulseMenu } from './game-pulse/GamePulseMenu';
 import { GamePulseCreateTriggerForm } from './game-pulse/GamePulseCreateTriggerForm';
 import { GamePulseGameSettings } from './game-pulse/GamePulseGameSettings';
@@ -11,7 +11,7 @@ import { GamePulseTriggerDetails } from './game-pulse/GamePulseTriggerDetails';
 import css from './game-pulse/GamePulse.m.less';
 import { useForceUpdate } from 'slap';
 import { $t } from 'services/i18n/i18n';
-import { Button } from 'antd';
+import { Button, Tooltip } from 'antd';
 
 export function GamePulseWidget() {
   const {
@@ -35,7 +35,7 @@ export function GamePulseWidget() {
 
   const showDisplay = tabKind !== TabKind.General && tabKind !== TabKind.GameManage;
 
-  function onPlayAlert(gameKey: string = 'global', trigger: GamePulseTrigger) {
+  function onPlayAlert(gameKey: string = ScopeId.Global, trigger: GamePulseTrigger) {
     if (!trigger?.id) return;
 
     const targetTab = GamePulseTabUtils.generateTriggerId(gameKey, trigger.id);
@@ -68,6 +68,7 @@ export function GamePulseWidget() {
         showDisplay={showDisplay}
         footerSlots={<ManageOnWebButton />}
       >
+
         <GamePulseMenu
           sections={sections}
           activeKey={selectedTab}
@@ -75,8 +76,10 @@ export function GamePulseWidget() {
           playAlert={onPlayAlert}
           toggleTrigger={toggleTrigger}
           deleteTrigger={onDelete}
-        />
-        <ActiveTab />
+          />
+        <Tooltip title={$t('test estest esttestest est.')} placement='topRight' defaultVisible={true} trigger={'click'}>
+          <ActiveTab />
+        </Tooltip>
       </WidgetLayout>
     </div>
   );
@@ -93,7 +96,7 @@ function AddTriggerTab() {
   } = useGamePulseWidget();
 
   const gameOptions = [
-    { label: 'Global', value: 'global' },
+    { label: 'Global', value: ScopeId.Global },
     ...Object.entries(games).map(([key, value]) => ({ label: value.title, value: key })),
   ];
 
@@ -135,7 +138,7 @@ function ManageTriggersTab() {
     toggleTrigger,
   } = useGamePulseWidget();
 
-  const selectedGame = activeTabContext.gameId || 'global';
+  const selectedGame = activeTabContext.gameId || ScopeId.Global;
 
   function onToggleGame(triggerId: string, enabled: boolean) {
     toggleTrigger(selectedGame, triggerId, enabled);
@@ -150,7 +153,7 @@ function ManageTriggersTab() {
   }
 
   const triggers =
-    selectedGame === 'global'
+    selectedGame === ScopeId.Global
       ? settings?.global?.triggers
       : settings?.games?.[selectedGame]?.triggers;
 
@@ -212,30 +215,6 @@ function ManageOnWebButton() {
     <Button type="ghost" onClick={handleClick}>
       <i className="icon-pop-out-2" style={{ marginRight: 8 }} />
       {$t('Manage on Web')}
-    </Button>
-  );
-}
-
-function ResetSettingsButton() {
-  const { resetSettings } = useGamePulseWidget();
-
-  const handleClick = () => {
-    remote.dialog
-      .showMessageBox(remote.getCurrentWindow(), {
-        title: 'Streamlabs Desktop',
-        message: $t('Are you sure you want to reset all settings to default?'),
-        buttons: [$t('Cancel'), $t('OK')],
-      })
-      .then(({ response }) => {
-        if (!response) return;
-        resetSettings();
-      });
-  };
-
-  return (
-    <Button type="ghost" onClick={handleClick} danger>
-      <i className="icon-reset" style={{ marginRight: 8 }} />
-      {$t('Reset Settings')}
     </Button>
   );
 }

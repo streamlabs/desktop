@@ -11,7 +11,7 @@ export type TWidgetType =
   | WidgetType.CustomWidget
   | WidgetType.ChatBox
   | WidgetType.SponsorBanner
-  | WidgetType.ReactiveWidget;
+  | WidgetType.GamePulseWidget;
 
 export interface IWidgetConfig {
   type: TWidgetType;
@@ -329,8 +329,8 @@ export function getWidgetsConfig(
       customFieldsAllowed: true,
     },
 
-    [WidgetType.ReactiveWidget]: {
-      type: WidgetType.ReactiveWidget,
+    [WidgetType.GamePulseWidget]: {
+      type: WidgetType.GamePulseWidget,
 
       defaultTransform: {
         width: 600,

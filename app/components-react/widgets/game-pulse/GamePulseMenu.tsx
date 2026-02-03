@@ -74,10 +74,6 @@ export function GamePulseMenu(props: {
         {$t('Add a new trigger')}
       </Menu.Item>
 
-      <Menu.Item key={GamePulseTabUtils.ID_GENERAL} className={css.menuItem}>
-        {$t('Game Settings')}
-      </Menu.Item>
-
       {sections.map((section) => (
         <Menu.SubMenu
           key={section.id}
@@ -129,6 +125,10 @@ export function GamePulseMenu(props: {
           </Menu.Item>
         </Menu.SubMenu>
       ))}
+      <Menu.Item key={GamePulseTabUtils.ID_GENERAL} className={css.menuItem}>
+        {$t('Game Settings')}
+      </Menu.Item>
+
     </Menu>
   );
 }

@@ -145,7 +145,7 @@ export function GamePulseCreateTriggerForm(props: TriggerFormProps) {
   };
 
   const metadata = useMemo(() => {
-    const meta: any = {
+    return {
       game: {
         type: 'list',
         label: $t('Game'),
@@ -160,24 +160,21 @@ export function GamePulseCreateTriggerForm(props: TriggerFormProps) {
         options: eventOptions,
         showSearch: true,
       },
+      ...(triggerTypeOptions.length > 1 && {
+        trigger_type: {
+          type: 'list',
+          label: $t('Trigger Type'),
+          description: values.trigger_type === 'streak' ? $t('Triggered when a player achieves a consecutive number of events without interruption.') : $t('Triggered when a player reaches a cumulative total number of events.'),
+          options: triggerTypeOptions,
+        },
+      }),
       name: {
         type: 'text',
-        label: $t('Name'),
-        placeholder: 'Trigger Name',
+        label: $t('Trigger Name'),
+        placeholder: $t('Trigger Name'),
       },
     };
-
-    if (triggerTypeOptions.length > 1) {
-      meta.trigger_type = {
-        type: 'list',
-        label: $t('Trigger Type'),
-        placeholder: $t('Select a Trigger Type'),
-        options: triggerTypeOptions,
-      };
-    }
-
-    return meta;
-  }, [gameOptions, eventOptions, triggerTypeOptions]);
+  }, [gameOptions, eventOptions, triggerTypeOptions, values.trigger_type]);
 
   const isValid = values.game && values.event_type && values.name;
 

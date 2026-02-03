@@ -86,11 +86,15 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
       triggers: this.settings?.global?.triggers || []
     };
 
-    const gameSections = Object.entries(this.games).map(([gameKey, gameMeta]) => ({
-      id: gameKey,
-      title: gameMeta.title,
-      triggers: this.settings?.games?.[gameKey]?.triggers || []
-    }));
+    const gameSections = Object.entries(this.games).flatMap(([gameKey, gameMeta]) => {
+      const triggers = this.settings?.games?.[gameKey]?.triggers || [];
+      if (triggers.length === 0) return [];
+      return [{
+        id: gameKey,
+        title: gameMeta.title,
+        triggers
+      }];
+    });
 
     return [globalSection, ...gameSections];
   }
@@ -124,7 +128,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
    */
   protected patchAfterFetch(raw: any) {
     const settings = raw.settings ?? raw.data?.settings ?? {};
-    return { settings };
+    return { settings, showOnboarding: raw.data?.show_onboarding ?? false, showTutorial: raw.data?.show_tutorial ?? false };
   }
 
   /**
@@ -506,11 +510,17 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
 
   // override fetchData to include tts voices
   protected async fetchData() {
-    const voicesUrl = `https://${this.hostsService.streamlabs}/api/v5/${ApiEndpoints.TTSLanguages}`;
     const [data, voicesRes] = await Promise.all([
       super.fetchData(),
-      this.widgetsService.request({ url: voicesUrl, method: 'GET' })
+      this.widgetsService.request({ url: `https://${this.hostsService.streamlabs}/api/v5/${ApiEndpoints.TTSLanguages}`, method: 'GET' }),
     ]);
+
+    // TODO: @chris: handle onboarding state
+    const { showOnboarding, showTutorial } = data as any;
+    if (showOnboarding) {
+      // TODO: @chris: handle default onboarding state
+      console.log("handle onboarding "); // --- IGNORE ---
+    }
 
     try {
       if (voicesRes.success && this.state.staticConfig) {

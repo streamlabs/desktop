@@ -18,11 +18,13 @@ export enum TriggerType {
   Total = 'total',
 }
 
+// TODO: @chris: move to const file? use { url, method } format
 export enum ApiEndpoints {
-  ResetSettings = 'widgets/desktop/game-pulse/reset-settings',
-  DeleteTrigger = 'widgets/desktop/game-pulse/trigger',
-  PreviewTrigger = 'widgets/desktop/game-pulse/preview/trigger',
-  TTSLanguages = 'tts/static/available-languages',
+  ResetSettings = 'widgets/desktop/game-pulse/reset-settings', // GET
+  DeleteTrigger = 'widgets/desktop/game-pulse/trigger', // GET
+  PreviewTrigger = 'widgets/desktop/game-pulse/preview/trigger', // GET
+  TTSLanguages = 'tts/static/available-languages', // GET
+  DefaultSettings = 'widgets/desktop/game-pulse/trigger/defaults' // POST,
 }
 
 export type GamePulseLayout = 'above' | 'banner' | 'side';

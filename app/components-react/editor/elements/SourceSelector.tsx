@@ -81,7 +81,7 @@ class SourceSelectorController {
         if (sceneNode.isFolder) {
           children = getTreeNodes(nodeData.filter(n => n.parentId === sceneNode.id));
         }
-
+        console.log('meow',{ sceneNode });
         return {
           title: (
             <TreeNode

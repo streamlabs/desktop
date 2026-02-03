@@ -58,7 +58,7 @@ export const components = {
   ViewerCount: [ViewerCount, ViewerCountModule],
   GameWidget: [GameWidget, GameWidgetModule],
   CustomWidget: [CustomWidget, CustomWidgetModule],
-  ReactiveWidget: [GamePulseWidget, GamePulseModule],
+  GamePulseWidget: [GamePulseWidget, GamePulseModule],
 };
 
 /**
@@ -73,6 +73,7 @@ export function WidgetWindow() {
     // TODO: index
     // @ts-ignore
     const [WidgetSettingsComponent, Module] = components[widgetType];
+    console.log({ sourceId, Module, WidgetSettingsComponent });
     return { sourceId, Module, WidgetSettingsComponent };
   });
 
