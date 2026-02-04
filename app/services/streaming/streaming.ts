@@ -84,7 +84,7 @@ import { RecordingModeService } from 'services/recording-mode';
 import { MarkersService } from 'services/markers';
 import { byOS, OS } from 'util/operating-systems';
 import { DualOutputService } from 'services/dual-output';
-import { capitalize, difference, intersection, xor } from 'lodash';
+import { capitalize } from 'lodash';
 import { YoutubeService } from 'app-services';
 import { EOBSOutputType, EOBSOutputSignal, IOBSOutputSignalInfo } from 'services/core/signals';
 import { SignalsService } from 'services/signals-manager';
@@ -774,8 +774,8 @@ export class StreamingService
    */
   async updateStreamSettings(
     settings: IGoLiveSettings,
-    activePlatforms?: TPlatform[],
-    activeDestinations?: ICustomStreamDestination[],
+    activePlatforms: TPlatform[] = [],
+    activeDestinations: ICustomStreamDestination[] = [],
   ): Promise<boolean> {
     const lifecycle = this.state.info.lifecycle;
     console.log('UPDATE activePlatforms', JSON.stringify(activePlatforms, null, 2));
@@ -786,92 +786,64 @@ export class StreamingService
 
     // call putChannelInfo for each platform
     const platforms = this.views.getEnabledPlatforms(settings.platforms);
+    const updatePlatforms = this.parseUpdatePlatforms(platforms, activePlatforms);
 
     // Compare active custom destinations by URL+streamKey to uniquely identify them
-    const enabledCustomDestinations = settings.customDestinations
-      .filter(dest => dest.enabled)
-      .map(d => `${d.url}${d.streamKey}`);
-    const activeCustomDestinations = (activeDestinations || []).map(d => `${d.url}${d.streamKey}`);
+    const updateDestinations = this.parseUpdateCustomDestinations(
+      settings.customDestinations.filter(dest => dest.enabled),
+      activeDestinations,
+    );
+    console.log('UPDATE updatePlatforms', JSON.stringify(updatePlatforms, null, 2));
+    console.log('UPDATE updateDestinations', JSON.stringify(updateDestinations, null, 2));
 
-    // @@@ TODO: custom destinations as targets
     // @@@ TODO: single platform to multiple platforms
     // @@@ TODO: dual output single platform to multiple platforms
     // @@@ TODO: youtube to create stream and attach to broadcast (like stream shift)
     // @@@ TODO: stream shift confirm
+
     // If there is a difference in the active platforms/destinations vs the ones in the go live window,
     // update the restream targets
-    if (
-      this.userService.isPrime &&
-      ((activePlatforms && xor(platforms, activePlatforms).length > 0) ||
-        (activeDestinations && xor(enabledCustomDestinations, activeCustomDestinations).length > 0))
-    ) {
-      const stopPlatforms = difference(activePlatforms, platforms);
-      const startPlatforms = difference(platforms, activePlatforms);
-      const continuePlatforms = intersection(platforms, activePlatforms);
+    const shouldUpdateRestream =
+      updatePlatforms.start.length > 0 ||
+      updatePlatforms.stop.length > 0 ||
+      updateDestinations.start.length > 0 ||
+      updateDestinations.stop.length > 0;
 
-      console.log('UPDATE stopPlatforms', JSON.stringify(stopPlatforms, null, 2));
-      console.log('UPDATE startPlatforms', JSON.stringify(startPlatforms, null, 2));
-      console.log('UPDATE continuePlatforms', JSON.stringify(continuePlatforms, null, 2));
-
-      stopPlatforms.forEach(platform => {
+    if (this.userService.isPrime && shouldUpdateRestream) {
+      updatePlatforms.stop.forEach(platform => {
         this.UPDATE_STREAM_INFO({
           checklist: { ...this.state.info.checklist, [platform]: 'not-started' },
         });
       });
 
-      startPlatforms.forEach(platform => {
+      updatePlatforms.start.forEach(platform => {
         this.UPDATE_STREAM_INFO({
           checklist: { ...this.state.info.checklist, [platform]: 'not-started' },
         });
       });
 
-      continuePlatforms.forEach(platform => {
+      updatePlatforms.continue.forEach(platform => {
         this.UPDATE_STREAM_INFO({
           checklist: { ...this.state.info.checklist, [platform]: 'not-started' },
         });
       });
 
-      if (startPlatforms.length > 0 || stopPlatforms.length > 0) {
+      if (shouldUpdateRestream) {
         this.UPDATE_STREAM_INFO({
           checklist: { ...this.state.info.checklist, ['setupMultistream']: 'not-started' },
         });
       }
 
-      // run checklist
+      // Run checklist
       this.UPDATE_STREAM_INFO({ lifecycle: 'runChecklist' });
 
-      const stopDestinations = difference(activeCustomDestinations, enabledCustomDestinations);
-      const startDestinations = difference(enabledCustomDestinations, activeCustomDestinations);
-      // const stopDestinations = difference(customDestinations, activeDestinations);
-      // const startDestinations = difference(activeDestinations, customDestinations);
-
-      console.log('UPDATE stopDestinations', JSON.stringify(stopDestinations, null, 2));
-      console.log('UPDATE activeDestinations', JSON.stringify(activeDestinations, null, 2));
-      console.log(
-        'UPDATE continueDestinations',
-        JSON.stringify(intersection(enabledCustomDestinations, activeCustomDestinations), null, 2),
-      );
-
-      if (stopPlatforms.length > 0 || stopDestinations.length > 0) {
-        // Run checklist for removing targets
+      // Remove targets from restream in a single request
+      if (updatePlatforms.stop.length > 0 || updateDestinations.stop.length > 0) {
         try {
-          // Remove targets from restream in a single request
+          await this.restreamService.removeTargets(updatePlatforms.stop, updateDestinations.stop);
 
-          console.log(
-            'UPDATE REMOVING stopPlatforms, stopDestinations',
-            JSON.stringify(stopPlatforms, null, 2),
-            JSON.stringify(stopDestinations, null, 2),
-          );
-          const customDestinations =
-            stopDestinations.length > 0
-              ? activeDestinations.filter(dest =>
-                  stopDestinations.includes(`${dest.url}${dest.streamKey}`),
-                )
-              : [];
-          await this.restreamService.removeTargets(stopPlatforms, customDestinations);
-
-          // Confirm target removal from restream for each platform
-          for (const platform of stopPlatforms) {
+          // Update checklist for stopped platforms
+          for (const platform of updatePlatforms.stop) {
             await this.runCheck(platform, async () => {
               // Delay for UI animation
               await new Promise(resolve => setTimeout(resolve, 300));
@@ -888,8 +860,8 @@ export class StreamingService
         }
       }
 
-      // Run `beforeGoLive` to set up the new platforms
-      for (const platform of startPlatforms) {
+      // Update checklist for added platforms and run `beforeGoLive` to set up the new platforms
+      for (const platform of updatePlatforms.start) {
         await this.setPlatformSettings(platform, settings, false);
       }
 
@@ -898,28 +870,15 @@ export class StreamingService
       this.SET_GO_LIVE_SETTINGS(this.views.savedSettings);
 
       // Update settings for the persisted targets
-      for (const platform of continuePlatforms) {
+      for (const platform of updatePlatforms.continue) {
         await this.updatePlatformSettings(platform, settings);
       }
 
-      if (startPlatforms.length > 0 || startDestinations.length > 0) {
-        // Add new targets on restream
-        console.log(
-          'UPDATE ADDING startPlatforms, startDestinations',
-          JSON.stringify(startPlatforms, null, 2),
-          JSON.stringify(startDestinations, null, 2),
-        );
-
-        const customDestinations =
-          startDestinations.length > 0
-            ? activeDestinations.filter(dest =>
-                startDestinations.includes(`${dest.url}${dest.streamKey}`),
-              )
-            : [];
-
+      // Add targets to restream in a single request
+      if (updatePlatforms.start.length > 0 || updateDestinations.start.length > 0) {
         try {
           await this.runCheck('setupMultistream', async () => {
-            await this.restreamService.addTargets(startPlatforms, customDestinations);
+            await this.restreamService.addTargets(updatePlatforms.start, updateDestinations.start);
           });
         } catch (e: unknown) {
           const errorType = this.handleTypedStreamError(
@@ -931,25 +890,113 @@ export class StreamingService
         }
       }
     } else {
+      // If not a prime user or not adding/removing targets, just update settings for enabled platforms
       platforms.forEach(platform => {
         this.UPDATE_STREAM_INFO({
           checklist: { ...this.state.info.checklist, [platform]: 'not-started' },
         });
       });
 
-      // run checklist
+      // Run checklist
       this.UPDATE_STREAM_INFO({ lifecycle: 'runChecklist' });
 
+      // Update settings for all enabled platforms
       for (const platform of platforms) {
         await this.updatePlatformSettings(platform, settings);
       }
     }
 
-    // save updated settings locally
+    // Save updated settings locally
     this.streamSettingsService.setSettings({ goLiveSettings: settings });
-    // finish the 'runChecklist' step
+    // Finish the 'runChecklist' step
     this.UPDATE_STREAM_INFO({ lifecycle });
     return true;
+  }
+
+  /**
+   * Compare enabled and active platforms
+   * @remark Primarily used to update platforms while live
+   * @param enabledPlatforms
+   * @param activePlatforms
+   * @returns Platforms to continue, stop, and start
+   */
+  parseUpdatePlatforms(
+    enabledPlatforms: TPlatform[],
+    activePlatforms: TPlatform[],
+  ): {
+    continue: TPlatform[];
+    stop: TPlatform[];
+    start: TPlatform[];
+  } {
+    const active = new Set(activePlatforms);
+    const enabled = new Set(enabledPlatforms);
+
+    const platforms = enabledPlatforms.reduce(
+      (acc, platform) => {
+        if (active.has(platform)) {
+          acc.continue.push(platform);
+        } else {
+          acc.start.push(platform);
+        }
+        return acc;
+      },
+      {
+        continue: [],
+        stop: [],
+        start: [],
+      },
+    );
+
+    platforms.stop = activePlatforms.reduce((acc, platform) => {
+      if (!enabled.has(platform)) {
+        acc.push(platform);
+      }
+      return acc;
+    }, []);
+
+    return platforms;
+  }
+
+  /**
+   * Compare enabled and active custom destinations
+   * @remark Primarily used to update custom destinations while live
+   * @param enabledDestinations - Custom destinations enabled in the Go Live window
+   * @param activeDestinations - Custom destinations that are currently live
+   * @returns Custom destinations to continue, stop, and start
+   */
+  parseUpdateCustomDestinations(
+    enabledDestinations: ICustomStreamDestination[],
+    activeDestinations: ICustomStreamDestination[],
+  ) {
+    const active = new Set(activeDestinations.map(dest => `${dest.url}${dest.streamKey}`));
+    const enabled = new Set(enabledDestinations.map(dest => `${dest.url}${dest.streamKey}`));
+
+    const destinations = enabledDestinations.reduce(
+      (acc, dest) => {
+        const url = `${dest.url}${dest.streamKey}`;
+        if (active.has(url)) {
+          acc.continue.push(dest);
+        } else {
+          acc.start.push(dest);
+        }
+        return acc;
+      },
+      {
+        continue: [],
+        stop: [],
+        start: [],
+      },
+    );
+
+    destinations.stop = activeDestinations.reduce((acc, dest) => {
+      const url = `${dest.url}${dest.streamKey}`;
+      if (!enabled.has(url)) {
+        acc.push(dest);
+      }
+      return acc;
+    }, []);
+
+    return destinations;
   }
 
   async updatePlatformSettings(platform: TPlatform, settings: IGoLiveSettings): Promise<boolean> {
