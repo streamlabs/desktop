@@ -778,6 +778,8 @@ export class StreamingService
     activeDestinations?: ICustomStreamDestination[],
   ): Promise<boolean> {
     const lifecycle = this.state.info.lifecycle;
+    console.log('UPDATE activePlatforms', JSON.stringify(activePlatforms, null, 2));
+    console.log('UPDATE activeDestinations', JSON.stringify(activeDestinations, null, 2));
 
     // save current settings in store so we can re-use them if something will go wrong
     this.SET_GO_LIVE_SETTINGS(settings);
@@ -785,16 +787,29 @@ export class StreamingService
     // call putChannelInfo for each platform
     const platforms = this.views.getEnabledPlatforms(settings.platforms);
 
+    // Compare active custom destinations by URL+streamKey to uniquely identify them
+    const enabledCustomDestinations = settings.customDestinations
+      .filter(dest => dest.enabled)
+      .map(d => `${d.url}${d.streamKey}`);
+    const activeCustomDestinations = (activeDestinations || []).map(d => `${d.url}${d.streamKey}`);
+
     // @@@ TODO: custom destinations as targets
     // @@@ TODO: single platform to multiple platforms
     // @@@ TODO: dual output single platform to multiple platforms
     // @@@ TODO: youtube to create stream and attach to broadcast (like stream shift)
     // @@@ TODO: stream shift confirm
-    if (this.userService.isPrime && activePlatforms && xor(platforms, activePlatforms).length > 0) {
+    // If there is a difference in the active platforms/destinations vs the ones in the go live window,
+    // update the restream targets
+    if (
+      this.userService.isPrime &&
+      ((activePlatforms && xor(platforms, activePlatforms).length > 0) ||
+        (activeDestinations && xor(enabledCustomDestinations, activeCustomDestinations).length > 0))
+    ) {
       const stopPlatforms = difference(activePlatforms, platforms);
       const startPlatforms = difference(platforms, activePlatforms);
       const continuePlatforms = intersection(platforms, activePlatforms);
 
+      console.log('UPDATE stopPlatforms', JSON.stringify(stopPlatforms, null, 2));
       console.log('UPDATE startPlatforms', JSON.stringify(startPlatforms, null, 2));
       console.log('UPDATE continuePlatforms', JSON.stringify(continuePlatforms, null, 2));
 
@@ -825,14 +840,17 @@ export class StreamingService
       // run checklist
       this.UPDATE_STREAM_INFO({ lifecycle: 'runChecklist' });
 
-      const enabledDestinations = this.views.customDestinations.filter(dest => dest.enabled);
-      const stopDestinations = difference(activeDestinations, enabledDestinations);
+      const stopDestinations = difference(activeCustomDestinations, enabledCustomDestinations);
+      const startDestinations = difference(enabledCustomDestinations, activeCustomDestinations);
+      // const stopDestinations = difference(customDestinations, activeDestinations);
+      // const startDestinations = difference(activeDestinations, customDestinations);
 
-      console.log('UPDATE activeDestinations', JSON.stringify(activeDestinations, null, 2));
-      console.log('UPDATE enabledDestinations', JSON.stringify(enabledDestinations, null, 2));
-
-      console.log('UPDATE stopPlatforms', JSON.stringify(stopPlatforms, null, 2));
       console.log('UPDATE stopDestinations', JSON.stringify(stopDestinations, null, 2));
+      console.log('UPDATE activeDestinations', JSON.stringify(activeDestinations, null, 2));
+      console.log(
+        'UPDATE continueDestinations',
+        JSON.stringify(intersection(enabledCustomDestinations, activeCustomDestinations), null, 2),
+      );
 
       if (stopPlatforms.length > 0 || stopDestinations.length > 0) {
         // Run checklist for removing targets
@@ -840,11 +858,17 @@ export class StreamingService
           // Remove targets from restream in a single request
 
           console.log(
-            'REMOVING stopPlatforms, stopDestinations',
+            'UPDATE REMOVING stopPlatforms, stopDestinations',
             JSON.stringify(stopPlatforms, null, 2),
             JSON.stringify(stopDestinations, null, 2),
           );
-          await this.restreamService.removeTargets(stopPlatforms, stopDestinations);
+          const customDestinations =
+            stopDestinations.length > 0
+              ? activeDestinations.filter(dest =>
+                  stopDestinations.includes(`${dest.url}${dest.streamKey}`),
+                )
+              : [];
+          await this.restreamService.removeTargets(stopPlatforms, customDestinations);
 
           // Confirm target removal from restream for each platform
           for (const platform of stopPlatforms) {
@@ -869,10 +893,8 @@ export class StreamingService
         await this.setPlatformSettings(platform, settings, false);
       }
 
-      /**
-       * Saved any settings updated during the `beforeGoLive` process for the platforms.
-       * This is important for dual streaming and multistreaming.
-       */
+      // Save any settings updated during the `beforeGoLive` process for the platforms.
+      // This is important for dual streaming and multistreaming.
       this.SET_GO_LIVE_SETTINGS(this.views.savedSettings);
 
       // Update settings for the persisted targets
@@ -880,18 +902,24 @@ export class StreamingService
         await this.updatePlatformSettings(platform, settings);
       }
 
-      const startDestinations = difference(enabledDestinations, activeDestinations);
       if (startPlatforms.length > 0 || startDestinations.length > 0) {
         // Add new targets on restream
         console.log(
-          'ADDING startPlatforms, startDestinations',
+          'UPDATE ADDING startPlatforms, startDestinations',
           JSON.stringify(startPlatforms, null, 2),
           JSON.stringify(startDestinations, null, 2),
         );
 
+        const customDestinations =
+          startDestinations.length > 0
+            ? activeDestinations.filter(dest =>
+                startDestinations.includes(`${dest.url}${dest.streamKey}`),
+              )
+            : [];
+
         try {
           await this.runCheck('setupMultistream', async () => {
-            await this.restreamService.addTargets(startPlatforms, startDestinations);
+            await this.restreamService.addTargets(startPlatforms, customDestinations);
           });
         } catch (e: unknown) {
           const errorType = this.handleTypedStreamError(

@@ -50,6 +50,10 @@ export interface ITargetLiveData extends IStreamShiftTarget {
   game_name?: string;
 }
 
+interface IRestreamResponse {
+  status: 'success' | 'error';
+}
+
 export type TStreamShiftStatus = 'pending' | 'inactive' | 'active';
 export type TStreamShiftAction = 'approved' | 'rejected';
 
@@ -322,7 +326,19 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
     console.log('=======> ADD startTargets', JSON.stringify(startTargets, null, 2));
 
-    await this.addRuntimeTargets(streamKey, startTargets);
+    try {
+      const res = await this.addRuntimeTargets(streamKey, startTargets);
+
+      console.log('=======> ADD res', res);
+      // Confirm targets were added successfully
+      if (res) {
+        const currentTargets: IRestreamTarget[] = await this.fetchTargets();
+        console.log('currentTargets', JSON.stringify(currentTargets, null, 2));
+      }
+    } catch (e: unknown) {
+      console.log('Error adding restream targets', e);
+      throwStreamError('RESTREAM_UPDATE_FAILED');
+    }
   }
 
   async removeTargets(
@@ -332,6 +348,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
   ) {
     const streamKey = await this.fetchUserSettings().then(s => s.streamKey);
     const remoteTargets: IRestreamTarget[] = await this.fetchTargets();
+    console.log('=======> REMOVE remoteTargets', JSON.stringify(remoteTargets, null, 2));
 
     if (!streamKey || !remoteTargets.length) {
       console.debug('No active restream targets or stream key missing.');
@@ -340,7 +357,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
     if (removeAll) {
       const stopTargets = remoteTargets.map(t => ({ id: t.id }));
-      console.log('=======> REMOVE stopTargets', JSON.stringify(stopTargets, null, 2));
+      console.log('=======> REMOVE ALL stopTargets', JSON.stringify(stopTargets, null, 2));
       await this.removeRuntimeTargets(streamKey, stopTargets);
     } else {
       const targetsToRemove = [
@@ -356,7 +373,19 @@ export class RestreamService extends StatefulService<IRestreamState> {
       }, []);
 
       console.log('=======> REMOVE stopTargets', JSON.stringify(stopTargets, null, 2));
-      await this.removeRuntimeTargets(streamKey, stopTargets);
+      try {
+        const res = await this.removeRuntimeTargets(streamKey, stopTargets);
+        console.log('=======> REMOVE res', res);
+
+        // Confirm targets were added successfully
+        if (res) {
+          const currentTargets: IRestreamTarget[] = await this.fetchTargets();
+          console.log('currentTargets', JSON.stringify(currentTargets, null, 2));
+        }
+      } catch (e: unknown) {
+        console.log('Error removing restream targets', e);
+        throwStreamError('RESTREAM_UPDATE_FAILED');
+      }
     }
   }
 
@@ -364,7 +393,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return platformList.includes(target as EPlatform);
   }
 
-  addRuntimeTargets(
+  async addRuntimeTargets(
     streamKey: string,
     targets: {
       platform: TPlatform | 'relay';
@@ -388,10 +417,14 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
     console.log('postTargets BODY', JSON.stringify({ streamKey, targets }, null, 2));
 
-    return fetch(request);
+    return jfetch(request);
+    // .then(res => res)
+    // .catch(e => {
+    //   console.error('Error adding runtime targets:', e);
+    // });
   }
 
-  removeRuntimeTargets(streamKey: string, targets: { id: number }[]) {
+  async removeRuntimeTargets(streamKey: string, targets: { id: number }[]) {
     const headers = authorizedHeaders(
       this.userService.apiToken,
       new Headers({ 'Content-Type': 'application/json' }),
@@ -403,7 +436,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
       method: 'DELETE',
     });
 
-    return fetch(request);
+    return jfetch(request);
   }
 
   fetchIngest(): Promise<{ server: string }> {

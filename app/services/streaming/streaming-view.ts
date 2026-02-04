@@ -88,6 +88,8 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   get game() {
     return (
       (this.platforms.twitch?.enabled && this.platforms.twitch.game) ||
+      (this.platforms.tiktok?.enabled && this.platforms.tiktok.game) ||
+      (this.platforms.kick?.enabled && this.platforms.kick.game) ||
       (this.platforms.facebook?.enabled && this.platforms.facebook.game) ||
       (this.platforms.trovo?.enabled && this.platforms.trovo.game) ||
       ''

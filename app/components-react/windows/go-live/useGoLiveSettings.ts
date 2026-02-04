@@ -483,6 +483,21 @@ export class GoLiveSettingsModule {
       ))
     ) {
       message.success($t('Successfully updated'));
+
+      // Handle add/remove targets when updating a stream while live
+      if (this.isUpdateMode) {
+        const view = this.state.getView();
+        this.activePlatforms = view.enabledPlatforms;
+        this.activeDestinations = view.customDestinations.filter(dest => dest.enabled);
+        console.log(
+          'AFTER UPDATE this.activePlatforms',
+          JSON.stringify(this.activePlatforms, null, 2),
+        );
+        console.log(
+          'AFTER UPDATE this.activeDestinations',
+          JSON.stringify(this.activeDestinations, null, 2),
+        );
+      }
     }
   }
 
@@ -518,7 +533,7 @@ export function useGoLiveSettingsRoot(params?: { isUpdateMode: boolean }) {
     : undefined;
 
   const activeDestinations = params?.isUpdateMode
-    ? Services.StreamingService.views.customDestinations
+    ? Services.StreamingService.views.customDestinations.filter(dest => dest.enabled)
     : undefined;
 
   const useModuleResult = useModule(GoLiveSettingsModule, [
