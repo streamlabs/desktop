@@ -23,6 +23,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     canDualStream,
     updateCustomDestinationDisplayAndSaveSettings,
     updatePlatformDisplayAndSaveSettings,
+    isUpdateMode,
   } = useGoLiveSettings().extend(module => ({
     get canDualStream() {
       if (!p.platform) return false;
@@ -69,12 +70,13 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
           value: 'both' as TDisplayType,
           icon: 'icon-dual-output',
           tooltip,
+          disabled: isUpdateMode,
         },
       ];
     }
 
     return defaultDisplays;
-  }, [canDualStream]);
+  }, [canDualStream, isUpdateMode]);
 
   const onChange = (val: TDisplayOutput) => {
     if (p.platform) {

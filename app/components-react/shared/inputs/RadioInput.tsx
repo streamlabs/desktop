@@ -13,6 +13,7 @@ export interface ICustomRadioOption {
   defaultValue?: string;
   icon?: string;
   tooltip?: string;
+  disabled?: boolean;
 }
 
 interface ICustomRadioGroupProps {
@@ -74,7 +75,7 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
               <Radio
                 key={option.value}
                 value={option.value}
-                disabled={p.disabled}
+                disabled={option.disabled ?? p.disabled}
                 children={
                   option?.tooltip ? (
                     <Tooltip title={option?.tooltip} placement="topRight">
