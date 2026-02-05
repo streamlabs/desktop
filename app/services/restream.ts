@@ -27,7 +27,7 @@ import { $t } from './i18n';
 export type TOutputOrientation = 'landscape' | 'portrait';
 interface IRestreamTarget {
   id: number;
-  platform: TPlatform;
+  platform: TPlatform | 'relay';
   streamKey: string;
   mode?: TOutputOrientation;
   label?: string;
@@ -49,6 +49,20 @@ export interface ITargetLiveData extends IStreamShiftTarget {
   game_id?: string;
   game_name?: string;
 }
+
+interface IRestreamTargetData {
+  platform: TPlatform | 'relay';
+  streamKey: string;
+  label?: string;
+  mode: TOutputOrientation;
+}
+
+interface IRestreamRuntimeTarget extends IRestreamTargetData {
+  enabled: boolean;
+  dcProtection: boolean;
+}
+
+type TRestreamTarget = IRestreamTarget | IRestreamTargetData | IRestreamRuntimeTarget;
 
 interface IRestreamResponse {
   status: 'success' | 'error';
@@ -309,7 +323,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
       throwStreamError('RESTREAM_UPDATE_FAILED');
     }
 
-    const startTargets = [
+    const startTargets: IRestreamRuntimeTarget[] = [
       ...platforms.map(platform => ({
         ...this.formatPlatformData(platform),
         enabled: true,
@@ -324,22 +338,51 @@ export class RestreamService extends StatefulService<IRestreamState> {
       })),
     ];
 
-    console.log('=======> ADD startTargets', JSON.stringify(startTargets, null, 2));
+    // console.log('=======> ADD startTargets', JSON.stringify(startTargets, null, 2));
 
-    try {
-      const res = await this.addRuntimeTargets(streamKey, startTargets);
+    await this.updateTargets(startTargets, streamKey);
 
-      console.log('=======> ADD res', res);
-      // Confirm targets were added successfully
-      if (res) {
-        const currentTargets: IRestreamTarget[] = await this.fetchTargets();
-        console.log('currentTargets', JSON.stringify(currentTargets, null, 2));
-      }
-    } catch (e: unknown) {
-      console.log('Error adding restream targets', e);
-      throwStreamError('RESTREAM_UPDATE_FAILED');
-    }
+    // if (this.streamInfo.isDualOutputMode) {
+    //   const targetsByMode = this.filterTargetsByMode(startTargets);
+
+    //   await this.addTargetsAndValidate(
+    //     targetsByMode.landscape as IRestreamRuntimeTarget[],
+    //     streamKey,
+    //     'landscape',
+    //   );
+
+    //   await this.addTargetsAndValidate(
+    //     targetsByMode.portrait as IRestreamRuntimeTarget[],
+    //     streamKey,
+    //     'portrait',
+    //   );
+    // } else {
+    //   await this.addTargetsAndValidate(startTargets, streamKey);
+    // }
   }
+
+  // async addTargetsAndValidate(
+  //   targets: IRestreamRuntimeTarget[],
+  //   streamKey: string,
+  //   orientation: TOutputOrientation = 'landscape',
+  // ) {
+  //   if (!targets.length) return;
+
+  //   try {
+  //     const key =
+  //       orientation === 'landscape' ? streamKey : streamKey.replace(/_[^_]*$/, '_portrait');
+  //     const res = await this.addRuntimeTargets(key, targets);
+
+  //     console.log('=======> ADD res', res);
+  //     // Confirm targets were added successfully
+  //     if (res) {
+  //       await this.validateRuntimeTargets(targets, orientation);
+  //     }
+  //   } catch (e: unknown) {
+  //     console.log('Error adding restream targets', e);
+  //     throwStreamError('RESTREAM_UPDATE_FAILED');
+  //   }
+  // }
 
   async removeTargets(
     platforms: TPlatform[],
@@ -348,7 +391,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
   ) {
     const streamKey = await this.fetchUserSettings().then(s => s.streamKey);
     const remoteTargets: IRestreamTarget[] = await this.fetchTargets();
-    console.log('=======> REMOVE remoteTargets', JSON.stringify(remoteTargets, null, 2));
+    // console.log('=======> REMOVE remoteTargets', JSON.stringify(remoteTargets, null, 2));
 
     if (!streamKey || !remoteTargets.length) {
       console.debug('No active restream targets or stream key missing.');
@@ -357,53 +400,206 @@ export class RestreamService extends StatefulService<IRestreamState> {
 
     if (removeAll) {
       const stopTargets = remoteTargets.map(t => ({ id: t.id }));
-      console.log('=======> REMOVE ALL stopTargets', JSON.stringify(stopTargets, null, 2));
+      // console.log('=======> REMOVE ALL stopTargets', JSON.stringify(stopTargets, null, 2));
       await this.removeRuntimeTargets(streamKey, stopTargets);
     } else {
-      const targetsToRemove = [
-        ...platforms.map(target => this.formatPlatformData(target).streamKey),
-        ...customDestinations.map(dest => this.formatCustomDestinationData(dest).streamKey),
+      const targetsToRemove: IRestreamTargetData[] = [
+        ...platforms.map(target => this.formatPlatformData(target)),
+        ...customDestinations.map(dest => this.formatCustomDestinationData(dest)),
       ];
 
-      const stopTargets = remoteTargets.reduce((ids: { id: number }[], t) => {
-        if (targetsToRemove.includes(t.streamKey)) {
-          ids.push({ id: t.id });
-        }
-        return ids;
-      }, []);
+      console.log('DELETE targetsToRemove', JSON.stringify(targetsToRemove, null, 2));
 
-      console.log('=======> REMOVE stopTargets', JSON.stringify(stopTargets, null, 2));
-      try {
-        const res = await this.removeRuntimeTargets(streamKey, stopTargets);
-        console.log('=======> REMOVE res', res);
+      const remoteTargetIds = remoteTargets.reduce(
+        (acc: { [streamKey: string]: number }, target) => {
+          acc[target.streamKey] = target.id;
+          return acc;
+        },
+        {},
+      );
 
-        // Confirm targets were added successfully
-        if (res) {
-          const currentTargets: IRestreamTarget[] = await this.fetchTargets();
-          console.log('currentTargets', JSON.stringify(currentTargets, null, 2));
-        }
-      } catch (e: unknown) {
-        console.log('Error removing restream targets', e);
-        throwStreamError('RESTREAM_UPDATE_FAILED');
-      }
+      await this.updateTargets(targetsToRemove, streamKey, remoteTargetIds);
+
+      // if (this.streamInfo.isDualOutputMode) {
+      //   const targetsByMode = this.filterTargetsByMode(targetsToRemove);
+
+      //   await this.updateTargetsAndValidate(
+      //     targetsByMode.landscape,
+      //     streamKey,
+      //     'landscape',
+      //     remoteTargetIds,
+      //   );
+
+      //   await this.updateTargetsAndValidate(
+      //     targetsByMode.portrait,
+      //     streamKey,
+      //     'portrait',
+      //     remoteTargetIds,
+      //   );
+      // } else {
+      //   await this.updateTargetsAndValidate(
+      //     targetsToRemove,
+      //     streamKey,
+      //     'landscape',
+      //     remoteTargetIds,
+      //   );
+      // }
+
+      // if (this.streamInfo.isDualOutputMode) {
+      //   const targetsByMode = this.filterTargetsByMode(targetsToRemove);
+
+      //   await this.removeTargetsAndValidate(
+      //     targetsByMode.landscape as IRestreamTargetData[],
+      //     remoteTargetIds,
+      //     streamKey,
+      //     'landscape',
+      //   );
+
+      //   await this.removeTargetsAndValidate(
+      //     targetsByMode.portrait as IRestreamTargetData[],
+      //     remoteTargetIds,
+      //     streamKey,
+      //     'portrait',
+      //   );
+      // } else {
+      //   await this.removeTargetsAndValidate(targetsToRemove, remoteTargetIds, streamKey);
+      // }
     }
+  }
+
+  async updateTargets(
+    targets: TRestreamTarget[],
+    streamKey: string,
+    remoteTargetIds?: { [streamKey: string]: number },
+  ) {
+    if (this.streamInfo.isDualOutputMode) {
+      const targetsByMode = this.filterTargetsByMode(targets);
+
+      await this.updateTargetsAndValidate(
+        targetsByMode.landscape,
+        streamKey,
+        'landscape',
+        remoteTargetIds,
+      );
+
+      await this.updateTargetsAndValidate(
+        targetsByMode.portrait,
+        streamKey,
+        'portrait',
+        remoteTargetIds,
+      );
+    } else {
+      await this.updateTargetsAndValidate(targets, streamKey, 'landscape', remoteTargetIds);
+    }
+  }
+
+  async updateTargetsAndValidate(
+    targets: TRestreamTarget[],
+    streamKey: string,
+    orientation: TOutputOrientation = 'landscape',
+    remoteTargetIds?: { [streamKey: string]: number },
+  ) {
+    if (!targets.length) return;
+
+    try {
+      const key =
+        orientation === 'landscape' ? streamKey : streamKey.replace(/_[^_]*$/, '_portrait');
+
+      // If remoteTargetIds is provided, this is a call to remove the targets
+      if (remoteTargetIds) {
+        const stopTargets = targets.map(t => ({ id: remoteTargetIds[t.streamKey] }));
+
+        await this.removeRuntimeTargets(key, stopTargets);
+      } else {
+        await this.addRuntimeTargets(key, targets as IRestreamRuntimeTarget[]);
+      }
+
+      // await this.validateRuntimeTargets(targets, orientation, remoteTargetIds);
+    } catch (e: unknown) {
+      console.error('Restream Error: Error updating restream targets', e);
+      throwStreamError('RESTREAM_UPDATE_FAILED');
+    }
+  }
+
+  // async removeTargetsAndValidate(
+  //   targets: IRestreamTargetData[],
+  //   remoteTargetIds: { [streamKey: string]: number },
+  //   streamKey: string,
+  //   orientation: TOutputOrientation = 'landscape',
+  // ) {
+  //   if (!targets.length) return;
+
+  //   const stopTargets = targets.map(t => ({ id: remoteTargetIds[t.streamKey] }));
+
+  //   try {
+  //     const key =
+  //       orientation === 'landscape' ? streamKey : streamKey.replace(/_[^_]*$/, '_portrait');
+  //     const res = await this.removeRuntimeTargets(key, stopTargets);
+  //     console.log('=======> REMOVE res', res);
+
+  //     // Confirm targets were added successfully
+  //     if (res) {
+  //       await this.validateRuntimeTargets(targets, orientation);
+  //     }
+  //   } catch (e: unknown) {
+  //     console.error('Restream Error: Error removing restream targets', e);
+  //     throwStreamError('RESTREAM_UPDATE_FAILED');
+  //   }
+  // }
+
+  filterTargetsByMode(targets: TRestreamTarget[]) {
+    return targets.reduce(
+      (acc, target) => {
+        if (target.mode === 'landscape') {
+          acc.landscape.push(target);
+        } else if (target.mode === 'portrait') {
+          acc.portrait.push(target);
+        }
+        return acc;
+      },
+      {
+        landscape: [] as TRestreamTarget[],
+        portrait: [] as TRestreamTarget[],
+      },
+    );
   }
 
   isPlatformTarget(target: TPlatform | string): target is TPlatform {
     return platformList.includes(target as EPlatform);
   }
 
-  async addRuntimeTargets(
-    streamKey: string,
-    targets: {
-      platform: TPlatform | 'relay';
-      streamKey: string;
-      enabled: boolean;
-      dcProtection: boolean;
-      label: string;
-      mode: TOutputOrientation;
-    }[],
-  ) {
+  // async validateRuntimeTargets(
+  //   targets: TRestreamTarget[],
+  //   orientation: TOutputOrientation = 'landscape',
+  //   remoteTargetIds: { [streamKey: string]: number } | null = null,
+  // ) {
+  //   console.log('remoteTargetIds', remoteTargetIds);
+  //   const currentTargets: IRestreamTarget[] = await this.fetchTargets();
+  //   const currentTargetKeys = this.streamInfo.isDualOutputMode
+  //     ? currentTargets.filter(t => t.mode === orientation).map(t => t.streamKey)
+  //     : currentTargets.map(t => t.streamKey);
+  //   const currentTargetSet = new Set(currentTargetKeys);
+  //   console.log('targets', JSON.stringify(targets, null, 2));
+  //   console.log('currentTargets', JSON.stringify(currentTargets, null, 2));
+
+  //   targets.forEach(target => {
+  //     console.log('checking ', target);
+
+  //     const validationCondition =
+  //       remoteTargetIds === null
+  //         ? !currentTargetSet.has(target.streamKey)
+  //         : currentTargetSet.has(target.streamKey);
+
+  //     if (validationCondition) {
+  //       const message =
+  //         remoteTargetIds === null ? 'not found after adding' : 'found after removing';
+  //       console.error(`Restream Error: Target ${message} runtime targets`);
+  //       throwStreamError('RESTREAM_UPDATE_FAILED');
+  //     }
+  //   });
+  // }
+
+  async addRuntimeTargets(streamKey: string, targets: IRestreamRuntimeTarget[]) {
     const headers = authorizedHeaders(
       this.userService.apiToken,
       new Headers({ 'Content-Type': 'application/json' }),
@@ -418,10 +614,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
     console.log('postTargets BODY', JSON.stringify({ streamKey, targets }, null, 2));
 
     return jfetch(request);
-    // .then(res => res)
-    // .catch(e => {
-    //   console.error('Error adding runtime targets:', e);
-    // });
   }
 
   async removeRuntimeTargets(streamKey: string, targets: { id: number }[]) {
@@ -435,6 +627,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
       body: JSON.stringify({ streamKey, targets }),
       method: 'DELETE',
     });
+
+    console.log('deleteTargets BODY', JSON.stringify({ streamKey, targets }, null, 2));
 
     return jfetch(request);
   }
@@ -600,7 +794,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
    * @param platform - Platform to restream
    * @returns Formatted platform data
    */
-  formatPlatformData(platform: TPlatform) {
+  formatPlatformData(platform: TPlatform): IRestreamTargetData {
     const isDualOutputMode = this.streamingService.views.isDualOutputMode;
 
     switch (platform) {
@@ -646,7 +840,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     }
   }
 
-  formatCustomDestinationData(destination: ICustomStreamDestination) {
+  formatCustomDestinationData(destination: ICustomStreamDestination): IRestreamTargetData {
     return {
       platform: 'relay' as 'relay',
       streamKey: `${this.formatUrl(destination.url)}${destination.streamKey}`,
@@ -728,7 +922,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
         this.SET_STREAM_SWITCHER_TARGETS(targets);
       })
       .catch((e: unknown) => {
-        console.error('Error fetching stream shift target data:', e);
+        console.error('Restream Error: Cannot fetch stream shift target data:', e);
         return null as any;
       });
   }
@@ -864,8 +1058,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
       this.SET_STREAM_SWITCHER_STATUS('active');
       await this.streamingService.toggleStreaming();
       this.SET_STREAM_SWITCHER_STREAM_ID(remoteStreamId);
-    } catch (error: unknown) {
-      console.error('Error ending stream:', error);
+    } catch (e: unknown) {
+      console.error('Restream Error: Error ending stream shift stream:', e);
 
       this.SET_STREAM_SWITCHER_STATUS('inactive');
       remote.dialog.showMessageBox(Utils.getMainWindow(), {
@@ -885,7 +1079,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     try {
       await this.removeTargets([], [], true);
     } catch (e: unknown) {
-      console.error('Error forcing stream shift go live:', e);
+      console.error('Restream Error: Error forcing stream shift go live:', e);
     }
 
     this.SET_STREAM_SWITCHER_FORCE_GO_LIVE(true);
