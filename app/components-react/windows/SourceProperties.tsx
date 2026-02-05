@@ -26,9 +26,9 @@ const SUPPORTED_WEBCAMS: Set<string> = new Set([
   '0x046d-0x091b',
   '0x046d-0x091c',
 ]);
-const SUPPORTED_MICS: Set<string> = new Set(['0x046d-0x0afc']);
 
-function parseId(id?: string) {
+// Returns the vid and pid from a logitech device id
+export function parseId(id?: string) {
   if (!id) return '';
   //Id strings have a lot of elements but we want to pull the vid and pid
   const match = id.match(/vid_([\w\d]+)&pid_([\w\d]+)/);
@@ -85,19 +85,10 @@ export default function SourceProperties() {
     source &&
     ['dshow_input', 'macos_avcapture'].includes(source.type) &&
     source.getSettings().video_device_id;
-  const audioDevice =
-    source &&
-    ['wasapi_input_capture', 'coreaudio_input_capture'].includes(source.type) &&
-    source.getSettings().audio_device_id;
   const isSupportedWebcam = SUPPORTED_WEBCAMS.has(parseId(videoDevice));
-  const isSupportedMic = SUPPORTED_MICS.has(parseId(audioDevice));
 
   function configureInGHub() {
-    if (isSupportedWebcam) {
-      shell.openExternal(`lghubapp://devices/${parseId(videoDevice)}/default`);
-    } else if (isSupportedMic) {
-      shell.openExternal(`lghubapp://devices/${parseId(audioDevice)}/default`);
-    }
+    shell.openExternal(`lghubapp://devices/${parseId(videoDevice)}/default`);
   }
 
   // make the URL field debounced for the browser_source
@@ -117,7 +108,7 @@ export default function SourceProperties() {
         extraProps={extraProps}
         layout="horizontal"
       />
-      {(isSupportedWebcam || isSupportedMic) && (
+      {isSupportedWebcam && (
         <a onClick={configureInGHub} style={{ marginLeft: 184 }}>
           {$t('Configure on G HUB')}
         </a>
