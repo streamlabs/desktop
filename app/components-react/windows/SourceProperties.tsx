@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { shell } from '@electron/remote';
 import { Services } from '../service-provider';
 import { IObsFormProps, ObsForm } from '../obs/ObsForm';
 import { TObsFormData } from '../../components/obs/inputs/ObsInput';
@@ -6,10 +7,35 @@ import { ModalLayout } from '../shared/ModalLayout';
 import Display from '../shared/Display';
 import { assertIsDefined } from '../../util/properties-type-guards';
 import { useSubscription } from '../hooks/useSubscription';
-import { useVuex } from '../hooks';
+import { $t } from 'services/i18n';
 
-const SUPPORTED_WEBCAMS: string[] = [];
-const SUPPORTED_MICS: string[] = [];
+const SUPPORTED_WEBCAMS: Set<string> = new Set([
+  '0x046d-0x0943',
+  '0x046d-0x0946',
+  '0x046d-0x0919',
+  '0x046d-0x0944',
+  '0x046d-0x091d',
+  '0x046d-0x085e',
+  '0x046d-0x086b',
+  '0x046d-0x082d',
+  '0x046d-0x0892',
+  '0x046d-0x08e5',
+  '0x046d-0x085c',
+  '0x046d-0x0883',
+  '0x046d-0x0894',
+  '0x046d-0x091b',
+  '0x046d-0x091c',
+]);
+const SUPPORTED_MICS: Set<string> = new Set(['0x046d-0x0afc']);
+
+function parseId(id?: string) {
+  if (!id) return '';
+  //Id strings have a lot of elements but we want to pull the vid and pid
+  const match = id.match(/vid_([\w\d]+)&pid_([\w\d]+)/);
+  if (!match) return '';
+  const [_, vid, pid] = [...match];
+  return `0x${vid}-0x${pid}`;
+}
 
 export default function SourceProperties() {
   const {
@@ -55,16 +81,25 @@ export default function SourceProperties() {
     ]);
   }
 
+  const videoDevice = source?.type === 'dshow_input' && source?.getSettings().video_device_id;
+  const audioDevice =
+    source?.type === 'wasapi_input_capture' && source?.getSettings().audio_device_id;
+  const isSupportedWebcam = SUPPORTED_WEBCAMS.has(parseId(videoDevice));
+  const isSupportedMic = SUPPORTED_MICS.has(parseId(audioDevice));
+
+  function configureInGHub() {
+    if (isSupportedWebcam) {
+      shell.openExternal(`lghubapp://devices/${parseId(videoDevice)}/default`);
+    } else if (isSupportedMic) {
+      shell.openExternal(`lghubapp://devices/${parseId(audioDevice)}/default`);
+    }
+  }
+
   // make the URL field debounced for the browser_source
   const extraProps: IObsFormProps['extraProps'] = {};
   if (source && source.type === 'browser_source') {
     extraProps['url'] = { debounce: 1000 };
   }
-
-  const isSupportedWebcam =
-    source?.type === 'dshow_input' && SUPPORTED_WEBCAMS.includes(source?.sourceId);
-  const isSupportedMic =
-    source?.type === 'wasapi_input_capture' && SUPPORTED_MICS.includes(source?.sourceId);
 
   return (
     <ModalLayout
@@ -77,6 +112,11 @@ export default function SourceProperties() {
         extraProps={extraProps}
         layout="horizontal"
       />
+      {(isSupportedWebcam || isSupportedMic) && (
+        <a onClick={configureInGHub} style={{ marginLeft: 184 }}>
+          {$t('Configure on G HUB')}
+        </a>
+      )}
     </ModalLayout>
   );
 }
