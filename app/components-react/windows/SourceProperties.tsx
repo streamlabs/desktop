@@ -81,9 +81,14 @@ export default function SourceProperties() {
     ]);
   }
 
-  const videoDevice = source?.type === 'dshow_input' && source?.getSettings().video_device_id;
+  const videoDevice =
+    source &&
+    ['dshow_input', 'macos_avcapture'].includes(source.type) &&
+    source.getSettings().video_device_id;
   const audioDevice =
-    source?.type === 'wasapi_input_capture' && source?.getSettings().audio_device_id;
+    source &&
+    ['wasapi_input_capture', 'coreaudio_input_capture'].includes(source.type) &&
+    source.getSettings().audio_device_id;
   const isSupportedWebcam = SUPPORTED_WEBCAMS.has(parseId(videoDevice));
   const isSupportedMic = SUPPORTED_MICS.has(parseId(audioDevice));
 
