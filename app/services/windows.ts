@@ -63,7 +63,6 @@ import FollowerGoal from 'components/widgets/goal/FollowerGoal';
 import CharityGoal from 'components/widgets/goal/CharityGoal';
 import StreamBoss from 'components/widgets/StreamBoss.vue';
 import Credits from 'components/widgets/Credits.vue';
-import EventList from 'components/widgets/EventList.vue';
 import TipJar from 'components/widgets/TipJar.vue';
 import MediaShare from 'components/widgets/MediaShare';
 import AlertBox from 'components/widgets/AlertBox.vue';
@@ -123,7 +122,6 @@ export function getComponents() {
     MultistreamChatInfo,
     CharityGoal,
     Credits,
-    EventList,
     TipJar,
     StreamBoss,
     SubGoal,

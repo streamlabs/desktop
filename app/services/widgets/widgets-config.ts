@@ -10,7 +10,8 @@ export type TWidgetType =
   | WidgetType.DonationTicker
   | WidgetType.CustomWidget
   | WidgetType.ChatBox
-  | WidgetType.SponsorBanner;
+  | WidgetType.SponsorBanner
+  | WidgetType.EventList;
 
 export interface IWidgetConfig {
   type: TWidgetType;
@@ -252,9 +253,31 @@ export function getWidgetsConfig(
       customFieldsAllowed: true,
     },
 
-    // EventList: {
-    //
-    // },
+    [WidgetType.EventList]: {
+      type: WidgetType.EventList,
+
+      defaultTransform: {
+        width: 600,
+        height: 600,
+        x: 1,
+        y: 0,
+        anchor: AnchorPoint.NorthEast,
+      },
+
+      settingsWindowSize: {
+        width: 850,
+        height: 700,
+      },
+
+      url: `https://${host}/widgets/event-list/v1/${token}`,
+      previewUrl: `https://${host}/widgets/event-list/v1/${token}?simulate=1`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/eventlist`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/eventlist`,
+      settingsUpdateEvent: 'eventListSettingsUpdate',
+      customCodeAllowed: true,
+      customFieldsAllowed: true,
+      testers: ['follow', 'sub', 'donation', 'bits'],
+    },
 
     // MediaShare: {
     //
