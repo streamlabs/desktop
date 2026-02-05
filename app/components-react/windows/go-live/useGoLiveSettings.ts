@@ -12,6 +12,8 @@ import { getDefined } from '../../../util/properties-type-guards';
 import isEqual from 'lodash/isEqual';
 import { TDisplayType } from 'services/settings-v2';
 import partition from 'lodash/partition';
+import xorWith from 'lodash/xorWith';
+import { Subject } from 'rxjs';
 
 type TCommonFieldName = 'title' | 'description';
 
@@ -185,6 +187,8 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
 export class GoLiveSettingsModule {
   // define initial state
   state = injectState(GoLiveSettingsState);
+
+  cooldownTimer = new Subject<boolean>();
 
   constructor(
     public form: FormInstance,
@@ -487,6 +491,18 @@ export class GoLiveSettingsModule {
       // Handle add/remove targets when updating a stream while live
       if (this.isUpdateMode) {
         const view = this.state.getView();
+
+        if (
+          xorWith(this.activePlatforms, view.enabledPlatforms, isEqual).length > 0 ||
+          xorWith(
+            this.activeDestinations?.map(dest => dest.streamKey),
+            view.customDestinations.filter(dest => dest.enabled).map(dest => dest.streamKey),
+            isEqual,
+          ).length > 0
+        ) {
+          this.cooldownTimer.next(true);
+        }
+
         this.activePlatforms = view.enabledPlatforms;
         this.activeDestinations = view.customDestinations.filter(dest => dest.enabled);
         console.log(

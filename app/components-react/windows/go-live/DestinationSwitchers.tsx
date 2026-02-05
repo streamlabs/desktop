@@ -16,7 +16,7 @@ import { message, Tooltip } from 'antd';
 /**
  * Allows enabling/disabling platforms and custom destinations for the stream
  */
-export function DestinationSwitchers() {
+export function DestinationSwitchers(p: { disabled?: boolean }) {
   const {
     linkedPlatforms,
     enabledPlatforms,
@@ -52,18 +52,32 @@ export function DestinationSwitchers() {
       : linkedPlatforms;
   }, [linkedPlatforms, enabledPlatformsRef.current, isDualOutputMode, isPrime]);
 
-  // Disable custom destination switchers when restream is not available
-  // or for a non-ultra user is in single output mode. The one exception
-  // for a non-ultra user in single output mode is if TikTok is the only enabled platform
-  const disableCustomDestinationSwitchers =
-    !isRestreamEnabled &&
-    !isDualOutputMode &&
-    !isEnabled('tiktok') &&
-    enabledPlatformsRef.current.length > 1;
-  const disableNonUltraSwitchers =
-    isDualOutputMode &&
-    !isPrime &&
-    enabledPlatformsRef.current.length + enabledDestRef.current.length >= 2;
+  // In single output mode, disable custom destination switchers when restream is not available
+  // or for a non-ultra user. The one exception for a non-ultra user in single output mode
+  // is if TikTok is the only enabled platform.
+  const disableCustomDestinationSwitchers = useMemo(() => {
+    if (p?.disabled) return true;
+
+    return (
+      !isRestreamEnabled &&
+      !isDualOutputMode &&
+      !isEnabled('tiktok') &&
+      enabledPlatformsRef.current.length > 1
+    );
+  }, [isRestreamEnabled, isDualOutputMode, isPrime, enabledPlatformsRef.current]);
+
+  // In dual output mode, non-ultra users can only enable 2 platforms,
+  // or 1 platform and 1 custom destination.
+  const disableNonUltraSwitchers = useMemo(() => {
+    if (p?.disabled) return true;
+
+    return (
+      isDualOutputMode &&
+      !isPrime &&
+      enabledPlatformsRef.current.length + enabledDestRef.current.length >= 2
+    );
+  }, [isDualOutputMode, isPrime, enabledPlatformsRef.current, enabledDestRef.current]);
+
   const disablePlatformSwitchers = isDualOutputMode && isTwitchDualStreaming;
 
   const emitSwitch = useDebounce(500, (ind?: number, enabled?: boolean) => {

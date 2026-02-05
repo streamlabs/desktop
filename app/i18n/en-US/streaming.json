@@ -337,5 +337,6 @@
   "Failed to update Multistream platforms and destinations while live": "Failed to update Multistream platforms and destinations while live",
   "Update Stream Information:": "Update Stream Information:",
   "Update Destinations & Outputs:": "Update Destinations & Outputs:",
-  "Enable multiple platforms to set primary chat.": "Enable multiple platforms to set primary chat."
+  "Enable multiple platforms to set primary chat.": "Enable multiple platforms to set primary chat.",
+  "Add/Remove platforms in %{timer} seconds": "Add/Remove platforms in %{timer} seconds"
 }
