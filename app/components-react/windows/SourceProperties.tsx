@@ -8,6 +8,9 @@ import { assertIsDefined } from '../../util/properties-type-guards';
 import { useSubscription } from '../hooks/useSubscription';
 import { useVuex } from '../hooks';
 
+const SUPPORTED_WEBCAMS: string[] = [];
+const SUPPORTED_MICS: string[] = [];
+
 export default function SourceProperties() {
   const {
     WindowsService,
@@ -57,6 +60,11 @@ export default function SourceProperties() {
   if (source && source.type === 'browser_source') {
     extraProps['url'] = { debounce: 1000 };
   }
+
+  const isSupportedWebcam =
+    source?.type === 'dshow_input' && SUPPORTED_WEBCAMS.includes(source?.sourceId);
+  const isSupportedMic =
+    source?.type === 'wasapi_input_capture' && SUPPORTED_MICS.includes(source?.sourceId);
 
   return (
     <ModalLayout
