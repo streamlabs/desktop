@@ -258,82 +258,74 @@ test(
  * Dual Output Go Live
  */
 
-test(
-  'Dual Output Go Live Non-Ultra',
-  // non-ultra user
-  withUser('twitch', { prime: false }),
-  async t => {
-    await toggleDualOutputMode();
-    await prepareToGoLive();
+test('Dual Output Go Live Non-Ultra', async t => {
+  await logIn('twitch', { prime: false });
+  await toggleDualOutputMode();
+  await prepareToGoLive();
 
+  await clickGoLive();
+  await waitForSettingsWindowLoaded();
+  await submit();
+
+  // Cannot go live in dual output mode with only one target linked
+  await waitForDisplayed('div.ant-message-notice-content', {
+    timeout: 10000,
+  });
+  await clickIfDisplayed('div.ant-message-notice-content');
+  await sleep(1000);
+
+  await closeWindow('child');
+  const dummy = await addDummyAccount('instagram');
+
+  try {
     await clickGoLive();
-    await focusChild();
     await waitForSettingsWindowLoaded();
     await submit();
 
-    // Cannot go live in dual output mode with only one target linked
+    // Cannot go live in dual output mode with all targets assigned to one display
     await waitForDisplayed('div.ant-message-notice-content', {
-      timeout: 10000,
+      timeout: 5000,
     });
     await clickIfDisplayed('div.ant-message-notice-content');
-    await sleep(500);
+    await sleep(1000);
 
-    await closeWindow('child');
-    const dummy = await addDummyAccount('instagram');
-
-    try {
-      await clickGoLive();
-      await focusChild();
-      await waitForSettingsWindowLoaded();
-      await submit();
-
-      // Cannot go live in dual output mode with all targets assigned to one display
-      await waitForDisplayed('div.ant-message-notice-content', {
-        timeout: 10000,
-      });
-      await clickIfDisplayed('div.ant-message-notice-content');
-      await sleep(500);
-
-      await fillForm({
-        instagram: true,
-        instagramDisplay: 'vertical',
-      });
-
-      await waitForDisplayed('div[data-name="instagram-settings"]');
-      await waitForSettingsWindowLoaded();
-
-      await fillForm({
-        title: 'Test stream',
-        twitchGame: 'Fortnite',
-        streamUrl: dummy.streamUrl,
-        streamKey: dummy.streamKey,
-      });
-
-      await waitForSettingsWindowLoaded();
-      // Dummy account will cause the stream to not go live
-      skipCheckingErrorsInLog();
-      await submit();
-      await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
-      await focusMain();
-      await waitForDisplayed('div=Refresh Chat', { timeout: 60000 });
-
-      await waitForStreamStop();
-    } catch (e: unknown) {
-      console.log('Error during Dual Output Go Live Non-Ultra test:', e);
-    }
-
-    // Clean up the dummy account
-    await showSettingsWindow('Stream', async () => {
-      await waitForDisplayed('h2=Stream Destinations');
-      await clickWhenDisplayed('[data-name="instagramUnlink"]');
+    await fillForm({
+      instagram: true,
+      instagramDisplay: 'vertical',
     });
 
-    // Vertical display is hidden after logging out
-    await logOut(t);
-    t.false(await isDisplayed('div#vertical-display'));
-    t.pass();
-  },
-);
+    await waitForSettingsWindowLoaded();
+
+    await fillForm({
+      title: 'Test stream',
+      twitchGame: 'Fortnite',
+      streamUrl: dummy.streamUrl,
+      streamKey: dummy.streamKey,
+    });
+
+    await waitForSettingsWindowLoaded();
+    // Dummy account will cause the stream to not go live
+    skipCheckingErrorsInLog();
+    await submit();
+    await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
+    await focusMain();
+    await waitForDisplayed('div=Refresh Chat', { timeout: 60000 });
+    await waitForStreamStop();
+  } catch (e: unknown) {
+    console.log('Error during Dual Output Go Live Non-Ultra test:', e);
+  }
+
+  // Clean up the dummy account
+  await showSettingsWindow('Stream', async () => {
+    await waitForDisplayed('h2=Stream Destinations');
+    await clickWhenDisplayed('[data-name="instagramUnlink"]');
+  });
+
+  // Vertical display is hidden after logging out
+  await logOut(t);
+  t.false(await isDisplayed('div#vertical-display'));
+  t.pass();
+});
 
 test(
   'Dual Output Go Live Ultra',

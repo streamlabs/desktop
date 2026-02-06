@@ -17,15 +17,11 @@ interface DisplayProps {
   clickHandler?: (event: React.MouseEvent) => void;
   style?: React.CSSProperties;
   type?: TDisplayType;
+  isModal?: boolean;
 }
 
 export default function Display(props: DisplayProps) {
-  const {
-    CustomizationService,
-    VideoSettingsService,
-    WindowsService,
-    OnboardingV2Service,
-  } = Services;
+  const { CustomizationService, VideoSettingsService, WindowsService } = Services;
   const windowId = Utils.getWindowId();
 
   const p = {
@@ -37,14 +33,14 @@ export default function Display(props: DisplayProps) {
     ...props,
   };
 
-  const showOnboarding = useRealmObject(OnboardingV2Service.state).showOnboarding;
-
   const v = useVuex(() => {
     const videoSettings = VideoSettingsService.baseResolutions[p.type];
 
     return {
       baseResolution: `${videoSettings?.baseWidth}x${videoSettings?.baseHeight}`,
-      hideDisplay: WindowsService.state[windowId]?.hideStyleBlockers,
+      hideDisplay: p.isModal
+        ? WindowsService.state[windowId]?.modalOptions?.hideStyleBlockers
+        : WindowsService.state[windowId]?.hideStyleBlockers,
     };
   }, false);
 
@@ -56,10 +52,6 @@ export default function Display(props: DisplayProps) {
   useEffect(updateDisplay, [p.sourceId, paddingColor]);
   useEffect(handleResize, [v.baseResolution]);
   useEffect(handleHideDisplay, [v.hideDisplay]);
-
-  // If modal onboarding is occuring the only display we want to show is during
-  // the configure hardware step which has a source tied to it
-  if (showOnboarding && !props.sourceId) return <></>;
 
   function handleHideDisplay() {
     if (v.hideDisplay) {

@@ -306,9 +306,8 @@ export class AppService extends StatefulService<IAppState> {
     this.FINISH_LOADING();
     this.loadingChanged.next(false);
     // Set timeout to allow transition animation to play
-    // Some onboarding actions are required in loading mode
-    if (opts.hideStyleBlockers && !this.state.onboarded) {
-      setTimeout(() => this.windowsService.updateStyleBlockers('main', false), 500);
+    if (opts.hideStyleBlockers) {
+      setTimeout(() => this.windowsService.actions.updateStyleBlockers('main', false), 500);
     }
     if (error) throw error;
     return returningValue;

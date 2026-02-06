@@ -57,12 +57,14 @@ export class CreditsService extends WidgetSettingsService<ICreditsData> {
   static initialState = WIDGET_INITIAL_STATE;
 
   getApiSettings() {
+    const host = this.getHost();
     return {
       type: WidgetType.Credits,
-      url: WidgetDefinitions[WidgetType.Credits].url(this.getHost(), this.getWidgetToken()),
-      previewUrl: `https://${this.getHost()}/widgets/end-credits?token=${this.getWidgetToken()}&simulate=1`,
-      dataFetchUrl: `https://${this.getHost()}/api/v5/slobs/widget/endcredits`,
-      settingsSaveUrl: `https://${this.getHost()}/api/v5/slobs/widget/endcredits`,
+      url: WidgetDefinitions[WidgetType.Credits].url(host, this.getWidgetToken()),
+      previewUrl: `https://${host}/widgets/end-credits?token=${this.getWidgetToken()}&simulate=1`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/credits`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/endcredits`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/endcredits`,
       settingsUpdateEvent: 'endCreditsSettingsUpdate',
       customCodeAllowed: true,
       customFieldsAllowed: true,

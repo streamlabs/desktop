@@ -492,6 +492,10 @@ export class GoLiveSettingsModule {
   get recommendedColorSpaceWarnings() {
     return Services.SettingsService.views.recommendedColorSpaceWarnings;
   }
+
+  get codec() {
+    return Services.SettingsService.views.values.Output.Encoder;
+  }
 }
 
 export function useGoLiveSettings() {

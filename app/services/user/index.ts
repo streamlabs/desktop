@@ -41,6 +41,7 @@ import { TikTokService } from 'services/platforms/tiktok';
 import { TTikTokLiveScopeTypes } from 'services/platforms/tiktok/api';
 import { UsageStatisticsService } from 'app-services';
 import { debounce } from 'lodash-decorators';
+import { getOS, OS } from 'util/operating-systems';
 
 export enum EAuthProcessState {
   Idle = 'idle',
@@ -917,8 +918,8 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   // Technically not an exact 50% chance but over a large scale of users
   // should be close enough to 50% for the purposes of testing features
   get isAlphaGroup() {
-    // CI should have a consistent experience
-    if (Utils.env.CI || Utils.env.NODE_ENV === 'test') return true;
+    // CI should have a consistent experience, Mac shouldnt have it yet
+    if (Utils.env.CI || Utils.env.NODE_ENV === 'test' || getOS() === OS.Mac) return true;
     const localId = this.getLocalUserId();
     return Number(localId.search(/\d/)) % 2 === 0;
   }

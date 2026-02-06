@@ -144,6 +144,22 @@ export interface IFramerateSettings {
   fracDen: number;
 }
 
+export enum EIncompatibleRestreamCodec {
+  ffmpeg_aom_av1 = 'ffmpeg_aom_av1',
+  ffmpeg_svt_av1 = 'ffmpeg_svt_av1',
+  obs_nvenc_av1_tex = 'obs_nvenc_av1_tex',
+  obs_nvenc_hevc_tex = 'obs_nvenc_hevc_tex',
+}
+
+export const incompatibleRestreamCodecs = (codec: EIncompatibleRestreamCodec) => {
+  return {
+    [EIncompatibleRestreamCodec.ffmpeg_aom_av1]: 'AV1',
+    [EIncompatibleRestreamCodec.ffmpeg_svt_av1]: 'AV1',
+    [EIncompatibleRestreamCodec.obs_nvenc_av1_tex]: 'NVIDIA AV1',
+    [EIncompatibleRestreamCodec.obs_nvenc_hevc_tex]: 'NVIDIA HEVC',
+  }[codec];
+};
+
 type TOutputSettingsMode = 'Simple' | 'Advanced';
 
 const simpleEncoderToAnvancedEncoderMap: Dictionary<EObsAdvancedEncoder> = {

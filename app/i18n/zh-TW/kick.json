@@ -11,5 +11,5 @@
   "Click on the \"eye\" icon to see your stream key": "按一下「眼睛」圖示以查看您的直播金鑰",
   "Put in 2FA": "輸入雙因子驗證",
   "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "完成雙因子驗證後，系統將產生直播金鑰，並且可用於該頻道的 Streamlabs Desktop。您現在應該可以在 Kick 上開始直播了。",
-  "Stream Shift Error: Kick is not live": "Stream Shift Error: Kick is not live"
+  "Stream Shift Error: Kick is not live": "Stream Shift 錯誤：Kick 未開播"
 }

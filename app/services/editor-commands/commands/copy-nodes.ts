@@ -254,7 +254,7 @@ export class CopyNodesCommand extends Command {
       if (node) node.remove();
 
       if (this.dualOutputService.views.hasNodeMap(scene.id)) {
-        this.sceneCollectionsService.removeNodeMapEntry(nodeId, scene.id);
+        this.sceneCollectionsService.removeNodeMapEntry(scene.id, nodeId);
       }
     });
   }
