@@ -17,6 +17,8 @@ import PrimaryChatSwitcher from './PrimaryChatSwitcher';
 import { DestinationSwitchers } from './DestinationSwitchers';
 import cx from 'classnames';
 import { CaretDownOutlined } from '@ant-design/icons';
+import Tooltip from 'components-react/shared/Tooltip';
+import AutoProgressBar from 'components-react/shared/AutoProgressBar';
 
 export default function EditStreamWindow() {
   const { StreamingService } = Services;
@@ -54,7 +56,7 @@ export default function EditStreamWindow() {
 
   useEffect(() => {
     const subscription = cooldownTimer.subscribe(() => {
-      setTimerSeconds(5);
+      setTimerSeconds(3);
     });
 
     return () => {
@@ -78,7 +80,7 @@ export default function EditStreamWindow() {
   const shouldShowPrimaryChatSwitcher = hasMultiplePlatforms;
 
   return (
-    <ModalLayout footer={<EditStreamFooter />} className={styles.goLive}>
+    <ModalLayout footer={<EditStreamFooter timer={timerSeconds} />} className={styles.goLive}>
       <Form
         form={form}
         style={{ position: 'relative', height: '100%' }}
@@ -93,28 +95,16 @@ export default function EditStreamWindow() {
               {/*LEFT COLUMN*/}
               {shouldShowLeftCol && (
                 <Col span={9} className={styles.leftColumn}>
-                  <div
-                    key="timer"
-                    className={cx(styles.dualOutputAlert, {
-                      [styles.error]: timerSeconds !== null,
-                    })}
-                  >
-                    {$t('Add/Remove platforms in %{timer} seconds', { timer: timerSeconds })}
+                  <div className={cx(styles.columnHeader)}>
+                    {$t('Update Destinations & Outputs:')}
                   </div>
 
-                  <div
-                    className={cx(styles.columnContent, styles.updateMode, {
-                      [styles.alertClosed]: true,
-                      [styles.alertOpen]: timerSeconds !== null,
-                    })}
-                  >
-                    <div className={cx(styles.columnHeader)}>
-                      {$t('Update Destinations & Outputs:')}
-                    </div>
+                  <div className={cx(styles.columnContent, styles.updateMode)}>
                     <Scrollable className={styles.switcherWrapper}>
                       <DestinationSwitchers disabled={timerSeconds !== null} />
                     </Scrollable>
                   </div>
+
                   <div className={styles.leftFooter}>
                     <PrimaryChatSwitcher
                       className={cx(styles.primaryChat, {
@@ -158,7 +148,7 @@ export default function EditStreamWindow() {
   );
 }
 
-const EditStreamFooter = memo(function EditStreamFooter() {
+const EditStreamFooter = memo(function EditStreamFooter(p: { timer: number | null }) {
   const { WindowsService, StreamingService } = Services;
   const { error, lifecycle, updateStream, isLoading } = useGoLiveSettings();
 
@@ -185,9 +175,27 @@ const EditStreamFooter = memo(function EditStreamFooter() {
 
       {/* UPDATE BUTTON */}
       {shouldShowUpdateButton && (
-        <Button type="primary" onClick={updateStream} disabled={isLoading}>
-          {$t('Update')}
-        </Button>
+        <Tooltip
+          title={$t('Add/Remove platforms in %{timer} seconds', { timer: p.timer })}
+          placement="topRight"
+          lightShadow={true}
+          disabled={p?.timer === null}
+          className={styles.updateTooltip}
+        >
+          <Button type="primary" onClick={updateStream} disabled={isLoading || p?.timer !== null}>
+            {$t('Update')}
+          </Button>
+          {/* COOLDOWN TIMER ANIMATION */}
+          {p?.timer !== null && (
+            <AutoProgressBar
+              className={styles.updateProgress}
+              percent={(3 - p?.timer) * 100}
+              timeTarget={5 * 1000}
+              showInfo={false}
+              small
+            />
+          )}
+        </Tooltip>
       )}
     </Form>
   );

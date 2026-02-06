@@ -129,7 +129,7 @@ export function promptAction(p: {
   btnType?: 'default' | 'primary';
   cancelBtnPosition?: 'left' | 'right' | 'none';
   cancelBtnText?: string;
-  fn?(): void | ((props: any) => unknown | void);
+  fn?(): void | ((props: any) => unknown | void) | Promise<void>;
   cancelFn?: void | ((props?: any) => unknown | void);
   icon?: React.ReactNode;
   secondaryActionText?: string;

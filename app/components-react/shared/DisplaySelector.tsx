@@ -7,6 +7,7 @@ import { useGoLiveSettings } from 'components-react/windows/go-live/useGoLiveSet
 import { TDisplayOutput } from 'services/streaming';
 import { IRadioMetadata } from './inputs/metadata';
 import { ICustomRadioOption } from './inputs/RadioInput';
+import Tooltip from './Tooltip';
 
 interface IDisplaySelectorProps {
   title: string;
@@ -24,6 +25,7 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
     updateCustomDestinationDisplayAndSaveSettings,
     updatePlatformDisplayAndSaveSettings,
     isUpdateMode,
+    isLive,
   } = useGoLiveSettings().extend(module => ({
     get canDualStream() {
       if (!p.platform) return false;
@@ -41,6 +43,11 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       return defaultDisplay ?? 'horizontal';
     },
   }));
+
+  const disabled = useMemo(() => {
+    if (!isUpdateMode) return false;
+    return p.platform !== null ? isLive(p.platform) : isLive(p.index);
+  }, [p.platform, isUpdateMode, isLive]);
 
   const displays: ICustomRadioOption[] = useMemo(() => {
     const defaultDisplays = [
@@ -69,8 +76,8 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
           label: $t('Both'),
           value: 'both' as TDisplayType,
           icon: 'icon-dual-output',
-          tooltip,
-          disabled: isUpdateMode,
+          tooltip: disabled ? undefined : tooltip,
+          isUpdateMode,
         },
       ];
     }
@@ -102,19 +109,22 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
   const value = displayDict[display]?.value || 'horizontal';
 
   return (
-    <RadioInput
-      nolabel={p?.nolabel}
-      label={p?.nolabel ? undefined : p.title}
-      name={name}
-      value={value}
-      defaultValue="horizontal"
-      options={displays}
-      onChange={onChange}
-      icons={true}
-      className={p?.className}
-      style={p?.style}
-      direction="horizontal"
-      gapsize={0}
-    />
+    <Tooltip title={$t('Display orientation cannot be changed while live.')} disabled={!disabled}>
+      <RadioInput
+        nolabel={p?.nolabel}
+        label={p?.nolabel ? undefined : p.title}
+        name={name}
+        value={value}
+        defaultValue="horizontal"
+        options={displays}
+        onChange={onChange}
+        icons={true}
+        className={p?.className}
+        style={p?.style}
+        direction="horizontal"
+        disabled={disabled}
+        gapsize={0}
+      />
+    </Tooltip>
   );
 }

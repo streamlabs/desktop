@@ -338,5 +338,7 @@
   "Update Stream Information:": "Update Stream Information:",
   "Update Destinations & Outputs:": "Update Destinations & Outputs:",
   "Enable multiple platforms to set primary chat.": "Enable multiple platforms to set primary chat.",
-  "Add/Remove platforms in %{timer} seconds": "Add/Remove platforms in %{timer} seconds"
+  "Add/Remove platforms in %{timer} seconds": "Add/Remove platforms in %{timer} seconds",
+  "Display orientation cannot be changed while live.": "Display orientation cannot be changed while live.",
+  "Cannot toggle off only enabled platform for this display orientation.": "Cannot toggle off only enabled platform for this display orientation."
 }

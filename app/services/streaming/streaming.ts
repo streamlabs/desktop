@@ -152,6 +152,8 @@ export class StreamingService
   streamingStateChange = new Subject<void>();
 
   powerSaveId: number;
+  isUpdatingStreamTarget: boolean = false;
+  isUpdatingStreamSecondTarget: boolean = false;
 
   private resolveStartStreaming: Function = () => {};
   private rejectStartStreaming: Function = () => {};
@@ -874,25 +876,7 @@ export class StreamingService
 
       // Remove targets from restream in a single request
       if (updatePlatforms.stop.length > 0 || updateDestinations.stop.length > 0) {
-        try {
-          await this.restreamService.removeTargets(updatePlatforms.stop, updateDestinations.stop);
-
-          // Update checklist for stopped platforms
-          for (const platform of updatePlatforms.stop) {
-            await this.runCheck(platform, async () => {
-              // Delay for UI animation
-              await new Promise(resolve => setTimeout(resolve, 300));
-            });
-          }
-        } catch (e: unknown) {
-          const errorType = this.handleTypedStreamError(
-            e,
-            'RESTREAM_UPDATE_FAILED',
-            'Failed to remove restream targets while live',
-          );
-
-          throwStreamError(errorType);
-        }
+        await this.removeTargetsFromStream(updatePlatforms.stop, updateDestinations.stop);
       }
 
       // Update checklist for added platforms and run `beforeGoLive` to set up the new platforms
@@ -911,18 +895,7 @@ export class StreamingService
 
       // Add targets to restream in a single request
       if (updatePlatforms.start.length > 0 || updateDestinations.start.length > 0) {
-        try {
-          await this.runCheck('setupMultistream', async () => {
-            await this.restreamService.addTargets(updatePlatforms.start, updateDestinations.start);
-          });
-        } catch (e: unknown) {
-          const errorType = this.handleTypedStreamError(
-            e,
-            'RESTREAM_UPDATE_FAILED',
-            'Failed to add restream targets while live',
-          );
-          throwStreamError(errorType);
-        }
+        await this.addTargetsToStream(updatePlatforms.start, updateDestinations.start);
       }
     } else {
       // If not a prime user or not adding/removing targets, just update settings for enabled platforms
@@ -946,6 +919,144 @@ export class StreamingService
     // Finish the 'runChecklist' step
     this.UPDATE_STREAM_INFO({ lifecycle });
     return true;
+  }
+
+  async addTargetsToStream(platforms: TPlatform[], destinations: ICustomStreamDestination[]) {
+    console.log('Removing targets from stream', platforms, destinations);
+    console.log(
+      'this.settingsService.views.values.Stream',
+      this.settingsService.views.values.Stream,
+    );
+    console.log(
+      'this.settingsService.views.values.StreamSecond',
+      this.settingsService.views.values.StreamSecond,
+    );
+
+    // If the platforms are live as sole target via old API, stop old API streams
+    const streamTarget =
+      platforms.find(platform => platform === this.settingsService.views.values.Stream.service) ??
+      destinations.find(
+        dest =>
+          `${dest.url}${dest.streamKey}` ===
+          `${this.settingsService.views.values.Stream.server}${this.settingsService.views.values.Stream.key}`,
+      );
+    const streamSecondTarget =
+      platforms.find(
+        platform => platform === this.settingsService.views.values.StreamSecond.service,
+      ) ??
+      destinations.find(
+        dest =>
+          `${dest.url}${dest.streamKey}` ===
+          `${this.settingsService.views.values.StreamSecond.server}${this.settingsService.views.values.StreamSecond.key}`,
+      );
+
+    console.log('streamTarget', streamTarget);
+    console.log('streamSecondTarget', streamSecondTarget);
+
+    if (streamTarget && !this.contexts.stream.streaming) {
+      // this.createStreaming('horizontal');
+    }
+
+    if (streamSecondTarget && !this.contexts.streamSecond.streaming) {
+      // this.createStreaming('vertical');
+    }
+
+    // Remove other targets via restream service
+    const startPlatforms = platforms.filter(p => p !== streamTarget && p !== streamSecondTarget);
+    const startDestinations = destinations.filter(
+      d =>
+        `${d.url}${d.streamKey}` !== streamTarget &&
+        `${d.url}${d.streamKey}` !== streamSecondTarget,
+    );
+
+    // Regular multistreaming via restream service
+    try {
+      await this.runCheck('setupMultistream', async () => {
+        await this.restreamService.addTargets(startPlatforms, startDestinations);
+      });
+    } catch (e: unknown) {
+      const errorType = this.handleTypedStreamError(
+        e,
+        'RESTREAM_UPDATE_FAILED',
+        'Failed to add restream targets while live',
+      );
+      throwStreamError(errorType);
+    }
+  }
+
+  async removeTargetsFromStream(platforms: TPlatform[], destinations: ICustomStreamDestination[]) {
+    if (!this.restreamService.state.enabled) {
+      console.error('Restream service is not enabled, cannot remove targets from stream');
+      return;
+    }
+
+    console.log('Removing targets from stream', platforms, destinations);
+    console.log(
+      'this.settingsService.views.values.Stream',
+      this.settingsService.views.values.Stream,
+    );
+    console.log(
+      'this.settingsService.views.values.StreamSecond',
+      this.settingsService.views.values.StreamSecond,
+    );
+
+    // If the platforms are live as sole target via old API, stop old API streams
+    const streamTarget =
+      platforms.find(platform => platform === this.settingsService.views.values.Stream.service) ??
+      destinations.find(
+        dest =>
+          `${dest.url}${dest.streamKey}` ===
+          `${this.settingsService.views.values.Stream.server}${this.settingsService.views.values.Stream.key}`,
+      );
+    const streamSecondTarget =
+      platforms.find(
+        platform => platform === this.settingsService.views.values.StreamSecond.service,
+      ) ??
+      destinations.find(
+        dest =>
+          `${dest.url}${dest.streamKey}` ===
+          `${this.settingsService.views.values.StreamSecond.server}${this.settingsService.views.values.StreamSecond.key}`,
+      );
+
+    if (streamTarget) {
+      // stop old API horizontal stream
+      this.isUpdatingStreamTarget = true;
+      NodeObs.OBS_service_stopStreaming('horizontal');
+    }
+
+    if (streamSecondTarget) {
+      // stop old API vertical stream
+      this.isUpdatingStreamSecondTarget = true;
+      NodeObs.OBS_service_stopStreaming('vertical');
+    }
+
+    // Remove other targets via restream service
+    const stopPlatforms = platforms.filter(p => p !== streamTarget && p !== streamSecondTarget);
+    const stopDestinations = destinations.filter(
+      d =>
+        `${d.url}${d.streamKey}` !== streamTarget &&
+        `${d.url}${d.streamKey}` !== streamSecondTarget,
+    );
+
+    try {
+      await this.restreamService.removeTargets(stopPlatforms, stopDestinations);
+
+      // Update checklist for stopped platforms
+      for (const platform of platforms) {
+        await this.runCheck(platform, async () => {
+          // Delay for UI animation
+          await new Promise(resolve => setTimeout(resolve, 300));
+        });
+      }
+    } catch (e: unknown) {
+      const errorType = this.handleTypedStreamError(
+        e,
+        'RESTREAM_UPDATE_FAILED',
+        'Failed to remove restream targets while live',
+      );
+
+      throwStreamError(errorType);
+    }
   }
 
   /**
@@ -1301,6 +1412,15 @@ export class StreamingService
     if (this.views.isDualOutputMode) {
       const horizontalContext = this.videoSettingsService.contexts.horizontal;
       const verticalContext = this.videoSettingsService.contexts.vertical;
+
+      console.log(
+        'this.settingsService.views.values.Stream',
+        this.settingsService.views.values.Stream,
+      );
+      console.log(
+        'this.settingsService.views.values.StreamSecond',
+        this.settingsService.views.values.StreamSecond,
+      );
 
       NodeObs.OBS_service_setVideoInfo(horizontalContext, 'horizontal');
       NodeObs.OBS_service_setVideoInfo(verticalContext, 'vertical');
@@ -2133,6 +2253,14 @@ export class StreamingService
 
         this.stopAllOutputContexts();
 
+        if (this.isUpdatingStreamTarget && info.service === 'default') {
+          this.isUpdatingStreamTarget = false;
+        }
+
+        if (this.isUpdatingStreamSecondTarget && info.service === 'vertical') {
+          this.isUpdatingStreamSecondTarget = false;
+        }
+
         this.RESET_STREAM_INFO();
         this.rejectStartStreaming();
         this.streamingStatusChange.next(EStreamingState.Offline);
@@ -2141,6 +2269,10 @@ export class StreamingService
           status: EStreamingState.Offline,
         });
       } else if (info.signal === EOBSOutputSignal.Stopping) {
+        // TODO: remove when Factory API implemented
+        // Ignore stopping signals when removing a platform when updating the platform
+        if (this.isUpdatingStreamTarget || this.isUpdatingStreamSecondTarget) return;
+
         this.sendStreamEndEvent();
         this.SET_STREAMING_STATUS(EStreamingState.Ending, time);
         this.streamingStatusChange.next(EStreamingState.Ending);

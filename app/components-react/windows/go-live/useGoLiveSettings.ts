@@ -397,6 +397,34 @@ export class GoLiveSettingsModule {
     return Services.UserService.views.platform!.type;
   }
 
+  get isUpdatingTargets() {
+    // TODO maybe should be const view = this.state.getView();
+    return (
+      xorWith(this.activePlatforms, this.state.enabledPlatforms, isEqual).length > 0 ||
+      xorWith(
+        this.activeDestinations?.map(dest => dest.streamKey),
+        this.state.customDestinations.filter(dest => dest.enabled).map(dest => dest.streamKey),
+        isEqual,
+      ).length > 0
+    );
+  }
+
+  /**
+   * Get platform/destination live status
+   * @param target - platform or index of custom destination
+   * @returns - whether the target is currently live
+   */
+  isLive(target: TPlatform | number) {
+    if (typeof target === 'number') {
+      const dest = this.state.customDestinations[target];
+      return this.activeDestinations?.some(
+        d => `{${d.url}${d.streamKey}` === `{${dest.url}${dest.streamKey}`,
+      );
+    } else {
+      return this.activePlatforms?.includes(target);
+    }
+  }
+
   setPrimaryChat(platform: TPlatform) {
     Services.UserService.actions.setPrimaryPlatform(platform);
   }
@@ -492,19 +520,23 @@ export class GoLiveSettingsModule {
       if (this.isUpdateMode) {
         const view = this.state.getView();
 
-        if (
-          xorWith(this.activePlatforms, view.enabledPlatforms, isEqual).length > 0 ||
-          xorWith(
-            this.activeDestinations?.map(dest => dest.streamKey),
-            view.customDestinations.filter(dest => dest.enabled).map(dest => dest.streamKey),
-            isEqual,
-          ).length > 0
-        ) {
+        if (this.isUpdatingTargets) {
           this.cooldownTimer.next(true);
         }
 
-        this.activePlatforms = view.enabledPlatforms;
-        this.activeDestinations = view.customDestinations.filter(dest => dest.enabled);
+        console.log(
+          'BEFORE UPDATE this.activePlatforms',
+          JSON.stringify(this.activePlatforms, null, 2),
+        );
+        console.log(
+          'BEFORE UPDATE this.activeDestinations',
+          JSON.stringify(this.activeDestinations, null, 2),
+        );
+        this.activePlatforms = this.state.enabledPlatforms;
+        this.activeDestinations = this.state.customDestinations.filter(dest => dest.enabled);
+        // maybe should be view
+        // this.activePlatforms = view.enabledPlatforms;
+        // this.activeDestinations = view.customDestinations.filter(dest => dest.enabled);
         console.log(
           'AFTER UPDATE this.activePlatforms',
           JSON.stringify(this.activePlatforms, null, 2),

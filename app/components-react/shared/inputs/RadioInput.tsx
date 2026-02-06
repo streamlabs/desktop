@@ -79,10 +79,18 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
                 children={
                   option?.tooltip ? (
                     <Tooltip title={option?.tooltip} placement="topRight">
-                      <i className={cx(option.icon, styles.iconToggle)} />
+                      <i
+                        className={cx(option.icon, styles.iconToggle, {
+                          [styles.disabled]: option.disabled ?? p.disabled,
+                        })}
+                      />
                     </Tooltip>
                   ) : (
-                    <i className={cx(option.icon, styles.iconToggle)} />
+                    <i
+                      className={cx(option.icon, styles.iconToggle, {
+                        [styles.disabled]: option.disabled ?? p.disabled,
+                      })}
+                    />
                   )
                 }
               />

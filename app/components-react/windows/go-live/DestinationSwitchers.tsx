@@ -32,6 +32,8 @@ export function DestinationSwitchers(p: { disabled?: boolean }) {
     alwaysEnabledPlatforms,
     alwaysShownPlatforms,
     isTwitchDualStreaming,
+    activeDisplayPlatforms,
+    isUpdateMode,
   } = useGoLiveSettings();
 
   // use these references to apply debounce
@@ -78,7 +80,24 @@ export function DestinationSwitchers(p: { disabled?: boolean }) {
     );
   }, [isDualOutputMode, isPrime, enabledPlatformsRef.current, enabledDestRef.current]);
 
-  const disablePlatformSwitchers = isDualOutputMode && isTwitchDualStreaming;
+  // @@@ TODO: handle disabling the switcher in the edit stream window for the last enabled horizontal platform
+  const disabledHorizontalUltraSwitcher = useMemo(() => {
+    return isDualOutputMode &&
+      isPrime &&
+      isUpdateMode &&
+      activeDisplayPlatforms.horizontal.length < 2
+      ? activeDisplayPlatforms.horizontal[0]
+      : null;
+  }, [isDualOutputMode, isPrime, isUpdateMode, activeDisplayPlatforms]);
+
+  // @@@ TODO: handle disabling the switcher in the edit stream window for the last enabled vertical platform
+  const disabledVerticalUltraSwitcher = useMemo(() => {
+    return isDualOutputMode && isPrime && isUpdateMode && activeDisplayPlatforms.vertical.length < 2
+      ? activeDisplayPlatforms.vertical[0]
+      : null;
+  }, [isDualOutputMode, isPrime, isUpdateMode, activeDisplayPlatforms]);
+
+  const disableNonTwitchSwitcher = isDualOutputMode && isTwitchDualStreaming; // In Twitch dual streaming mode, only allow Twitch to be enabled
 
   const emitSwitch = useDebounce(500, (ind?: number, enabled?: boolean) => {
     if (ind !== undefined && enabled !== undefined) {
@@ -97,6 +116,13 @@ export function DestinationSwitchers(p: { disabled?: boolean }) {
   }
 
   function togglePlatform(platform: TPlatform, enabled: boolean) {
+    if (
+      disabledHorizontalUltraSwitcher === platform ||
+      disabledVerticalUltraSwitcher === platform
+    ) {
+      enabledPlatformsRef.current.push(platform);
+      return;
+    }
     // In dual output mode, only allow non-ultra users to have 2 platforms, or 1 platform and 1 custom destination enabled
     if (!isPrime) {
       if (isDualOutputMode) {
@@ -183,10 +209,15 @@ export function DestinationSwitchers(p: { disabled?: boolean }) {
           }
           onChange={enabled => togglePlatform(platform, enabled)}
           switchDisabled={
-            (disablePlatformSwitchers && platform !== 'twitch') || // Disable non-Twitch platforms if Twitch dual streaming is on
+            p?.disabled ||
+            (disableNonTwitchSwitcher && platform !== 'twitch') || // Disable non-Twitch platforms if Twitch dual streaming is on
             (!isEnabled(platform) && disableNonUltraSwitchers) // Handle non-ultra user restrictions
           }
-          showTwitchTooltip={disablePlatformSwitchers && platform !== 'twitch'}
+          showTwitchTooltip={disableNonTwitchSwitcher && platform !== 'twitch'}
+          showDisabledAlert={
+            disabledHorizontalUltraSwitcher === platform ||
+            disabledVerticalUltraSwitcher === platform
+          }
           isDualOutputMode={isDualOutputMode}
           index={ind}
         />
@@ -199,7 +230,9 @@ export function DestinationSwitchers(p: { disabled?: boolean }) {
           enabled={dest.enabled && !disableCustomDestinationSwitchers}
           onChange={enabled => toggleDestination(ind, enabled)}
           switchDisabled={
-            disableCustomDestinationSwitchers || (!dest.enabled && disableNonUltraSwitchers)
+            p?.disabled ||
+            disableCustomDestinationSwitchers ||
+            (!dest.enabled && disableNonUltraSwitchers)
           }
           isDualOutputMode={isDualOutputMode}
           index={ind}
@@ -218,6 +251,7 @@ interface IDestinationSwitcherProps {
   isDualOutputMode: boolean;
   isUnlinked?: boolean;
   showTwitchTooltip?: boolean;
+  showDisabledAlert?: boolean;
 }
 
 /**
@@ -237,7 +271,7 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
 
   function onClickHandler(ev: MouseEvent) {
     // If we're disabling the switch we shouldn't be emitting anything past below
-    if (disabled) {
+    if (disabled || p.showDisabledAlert) {
       if (!Services.UserService.state.isPrime) {
         message.info({
           key: 'switcher-info-alert',
@@ -256,6 +290,24 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
           onClick: () => message.destroy('switcher-info-alert'),
         });
       }
+
+      if (p.showDisabledAlert) {
+        message.info({
+          key: 'switcher-info-alert',
+          content: (
+            <div className={styles.alertContent}>
+              <div>
+                {$t('Cannot toggle off only enabled platform for this display orientation.')}
+              </div>
+
+              <i className="icon-close" />
+            </div>
+          ),
+          className: styles.infoAlert,
+          onClick: () => message.destroy('switcher-info-alert'),
+        });
+      }
+
       return;
     }
 

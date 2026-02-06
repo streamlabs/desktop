@@ -7,8 +7,15 @@ import React, { useEffect, useState } from 'react';
  * @param p.percent current percent of the progress bar
  * @param p.timeTarget the time it takes to reach 100% in ms
  */
-export default function AutoProgressBar(p: { percent: number; timeTarget: number }) {
+export default function AutoProgressBar(p: {
+  percent: number;
+  timeTarget: number;
+  showInfo?: boolean;
+  className?: string;
+  small?: boolean;
+}) {
   const [renderedPercent, setRenderedPercent] = useState(0);
+  const showInfo = p.showInfo ?? true;
 
   useEffect(() => {
     let currentPercent = p.percent;
@@ -22,5 +29,14 @@ export default function AutoProgressBar(p: { percent: number; timeTarget: number
     return () => clearInterval(interval);
   }, [p.percent]);
 
-  return <Progress percent={renderedPercent} status="active" format={p => `${p?.toFixed(0)}%`} />;
+  return (
+    <Progress
+      percent={renderedPercent}
+      status="active"
+      format={p => `${p?.toFixed(0)}%`}
+      showInfo={showInfo}
+      className={p?.className}
+      size={p?.small ? 'small' : 'default'}
+    />
+  );
 }
