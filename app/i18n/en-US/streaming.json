@@ -146,6 +146,8 @@
   "Failed to update platform settings": "Failed to update platform settings",
   "The Multistream server is temporarily unavailable": "The Multistream server is temporarily unavailable",
   "Failed to configure the Multistream server": "Failed to configure the Multistream server",
+  "Failed to configure the Multistream server for Enhanced Broadcasting": "Failed to configure the Multistream server for Enhanced Broadcasting",
+  "disable Enhanced Broadcasting for Twitch and try again": "disable Enhanced Broadcasting for Twitch and try again",
   "Failed to configure the Dual Output service": "Failed to configure the Dual Output service",
   "The Multistream server is temporarily unavailable for Dual Output": "The Multistream server is temporarily unavailable for Dual Output",
   "Your YouTube account is not enabled for live streaming": "Your YouTube account is not enabled for live streaming",
