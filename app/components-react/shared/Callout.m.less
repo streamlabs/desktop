@@ -1,0 +1,62 @@
+@import '../../styles/index';
+
+.callout {
+  position: relative;
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  font-style: normal;
+  border: 1px solid;
+  border-radius: 8px;
+  color: var(--title);
+
+  .icon {
+    margin-right: 0.4em;
+  }
+
+  .title {
+    display: block;
+    margin-bottom: 0.8em;
+  }
+
+  .close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+  }
+
+  .message {
+    flex: 1;
+    overflow: visible;
+    text-wrap: wrap;
+    line-break: auto;
+    line-height: normal;
+  }
+
+  &.info {
+    border-color: var(--callout-border);
+    background-color: var(--callout-semi);
+
+    .title {
+      color: var(--callout);
+    }
+  }
+
+  &.warning {
+    border-color: var(--info-border);
+    background-color: var(--info-semi);
+
+    .title {
+      color: var(--info);
+    }
+  }
+
+  &.error {
+    border-color: var(--warning-border);
+    background-color: var(--warning-semi);
+
+    .title {
+      color: var(--warning);
+    }
+  }
+}
