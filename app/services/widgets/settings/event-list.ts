@@ -66,7 +66,7 @@ export class EventListService extends WidgetSettingsService<IEventListData> {
       type: WidgetType.EventList,
       url: WidgetDefinitions[WidgetType.EventList].url(host, this.getWidgetToken()),
       previewUrl: `https://${host}/widgets/event-list/v1/${this.getWidgetToken()}?simulate=1`,
-      webSettingsUrl: `https://${host}/dashboard#/widgets/event-list`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/eventlist`,
       dataFetchUrl: `https://${host}/api/v5/slobs/widget/eventlist`,
       settingsSaveUrl: `https://${host}/api/v5/slobs/widget/eventlist`,
       settingsUpdateEvent: 'eventListSettingsUpdate',

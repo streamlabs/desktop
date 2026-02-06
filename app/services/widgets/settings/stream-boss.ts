@@ -59,7 +59,7 @@ export class StreamBossService extends BaseGoalService<IStreamBossData, IStreamB
       type: WidgetType.StreamBoss,
       url: WidgetDefinitions[WidgetType.StreamBoss].url(host, this.getWidgetToken()),
       previewUrl: `https://${host}/widgets/streamboss?token=${this.getWidgetToken()}`,
-      webSettingsUrl: `https://${host}/dashboard#/widgets/stream-boss`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/streamboss`,
       settingsUpdateEvent: 'streambossSettingsUpdate',
       goalCreateEvent: 'newStreamboss',
       goalResetEvent: 'streambossEnd',

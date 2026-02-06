@@ -13,7 +13,7 @@ export class SupporterGoalService extends GenericGoalService {
       type: WidgetType.SupporterGoal,
       url: WidgetDefinitions[WidgetType.SupporterGoal].url(host, this.getWidgetToken()),
       previewUrl: `https://${host}/widgets/supporter-goal?token=${this.getWidgetToken()}`,
-      webSettingsUrl: `https://${host}/dashboard#/widgets/sub-goal`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/supportergoal`,
       dataFetchUrl: `https://${host}/api/v5/slobs/widget/supportergoal/settings`,
       settingsSaveUrl: `https://${host}/api/v5/slobs/widget/supportergoal/settings`,
       goalUrl: `https://${host}/api/v5/slobs/widget/supportergoal`,
