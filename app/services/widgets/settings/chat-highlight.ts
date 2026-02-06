@@ -56,12 +56,14 @@ export class ChatHighlightService extends WidgetSettingsService<IChatHighlightDa
   hasPinnedMessage = new Subject<boolean>();
 
   getApiSettings() {
+    const host = this.getHost();
     return {
       type: WidgetType.ChatHighlight,
-      url: WidgetDefinitions[WidgetType.ChatHighlight].url(this.getHost(), this.getWidgetToken()),
-      previewUrl: `https://${this.getHost()}/widgets/chat-highlight?token=${this.getWidgetToken()}`,
-      dataFetchUrl: `https://${this.getHost()}/api/v5/slobs/widget/chat-highlight`,
-      settingsSaveUrl: `https://${this.getHost()}/api/v5/slobs/widget/chat-highlight`,
+      url: WidgetDefinitions[WidgetType.ChatHighlight].url(host, this.getWidgetToken()),
+      previewUrl: `https://${host}/widgets/chat-highlight?token=${this.getWidgetToken()}`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/chat-highlight`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/chat-highlight`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/chat-highlight`,
       settingsUpdateEvent: 'chatHighlightSettingsUpdate',
       customCodeAllowed: false,
       customFieldsAllowed: false,
