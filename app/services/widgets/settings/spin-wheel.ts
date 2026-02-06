@@ -52,7 +52,7 @@ export class SpinWheelService extends WidgetSettingsService<ISpinWheelData> {
       type: WidgetType.SpinWheel,
       url: WidgetDefinitions[WidgetType.SpinWheel].url(host, this.getWidgetToken()),
       previewUrl: `https://${host}/widgets/wheel?token=${this.getWidgetToken()}`,
-      webSettingsUrl: `https://${host}/dashboard#/widgets/spin-wheel`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/wheel`,
       dataFetchUrl: `https://${host}/api/v5/slobs/widget/wheel`,
       settingsSaveUrl: `https://${host}/api/v5/slobs/widget/wheel`,
       settingsUpdateEvent: 'WheelSettingsUpdate',

@@ -100,7 +100,7 @@ export function getWidgetsConfig(
 
       url: `https://${host}/widgets/viewer-count?token=${token}`,
       previewUrl: `https://${host}/widgets/viewer-count?token=${token}&simulate=1`,
-      webSettingsUrl: `https://${host}/dashboard#/widgets/viewer-count`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/viewercount`,
       dataFetchUrl: `https://${host}/api/v5/slobs/widget/viewercount`,
       settingsSaveUrl: `https://${host}/api/v5/slobs/widget/viewercount`,
       settingsUpdateEvent: 'viewerCountSettingsUpdate',
@@ -251,7 +251,7 @@ export function getWidgetsConfig(
 
       url: `https://${host}/widgets/donation-ticker?token=${token}`,
       previewUrl: `https://${host}/widgets/donation-ticker?token=${token}&simulate=1`,
-      webSettingsUrl: `https://${host}/dashboard#/widgets/tip-ticker`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/tipticker`,
       dataFetchUrl: `https://${host}/api/v5/slobs/widget/ticker`,
       settingsSaveUrl: `https://${host}/api/v5/slobs/widget/ticker`,
       settingsUpdateEvent: 'donationTickerSettingsUpdate',
@@ -295,7 +295,7 @@ export function getWidgetsConfig(
 
       url: `https://${host}/widgets/sponsor-banner?token=${token}`,
       previewUrl: `https://${host}/widgets/sponsor-banner?token=${token}`,
-      webSettingsUrl: `https://${host}/dashboard#/widgets/sponsor-banner`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/sponsorbanner`,
       dataFetchUrl: `https://${host}/api/v5/slobs/widget/sponsorbanner`,
       settingsSaveUrl: `https://${host}/api/v5/slobs/widget/sponsorbanner`,
       settingsUpdateEvent: 'sponsorBannerSettingsUpdate',
@@ -329,7 +329,7 @@ export function getWidgetsConfig(
 
       url: `https://${host}/widgets/custom-widget?token=${token}`,
       previewUrl: `https://${host}/widgets/custom-widget?token=${token}`,
-      webSettingsUrl: `https://${host}/dashboard#/widgets/custom-widget`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/customwidget`,
       dataFetchUrl: `https://${host}/api/v5/slobs/widget/customwidget`,
       settingsSaveUrl: `https://${host}/api/v5/slobs/widget/customwidget`,
       settingsUpdateEvent: 'customWidgetSettingsUpdate',

@@ -14,7 +14,7 @@ export class BitGoalService extends GenericGoalService {
       url: WidgetDefinitions[WidgetType.BitGoal].url(host, this.getWidgetToken()),
       dataFetchUrl: `https://${host}/api/v5/slobs/widget/bitgoal/settings`,
       previewUrl: `https://${host}/widgets/bit-goal?token=${this.getWidgetToken()}`,
-      webSettingsUrl: `https://${host}/dashboard#/widgets/bit-goal`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/bitgoal`,
       settingsSaveUrl: `https://${host}/api/v5/slobs/widget/bitgoal/settings`,
       goalUrl: `https://${host}/api/v5/slobs/widget/bitgoal`,
       settingsUpdateEvent: 'bitGoalSettingsUpdate',
