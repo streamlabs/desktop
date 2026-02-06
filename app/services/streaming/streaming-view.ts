@@ -5,6 +5,7 @@ import {
   EStreamingState,
   ERecordingState,
   EReplayBufferState,
+  TDisplayOutput,
 } from './streaming-api';
 import { StreamSettingsService, ICustomStreamDestination } from '../settings/streaming';
 import { UserService } from '../user';
@@ -283,7 +284,11 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     return display === 'both' ? 'horizontal' : display;
   }
 
-  getOutputDisplayType(): TDisplayType {
+  getOutputDisplayType(output?: TDisplayOutput): TDisplayType {
+    if (output) {
+      return output === 'both' ? 'horizontal' : output;
+    }
+
     return this.settings.recording === 'both' ? 'horizontal' : this.settings.recording;
   }
 
