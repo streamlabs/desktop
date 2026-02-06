@@ -1473,7 +1473,9 @@ export class StreamingService
     this.createStreamingInstance(contextName, mode, isEnhancedBroadcasting);
 
     if (this.isAdvancedStreaming(this.contexts[contextName].streaming)) {
-      const stream = this.migrateSettings('streaming', display) as IAdvancedStreaming;
+      const stream = this.migrateSettings('streaming', display) as
+        | IAdvancedStreaming
+        | IEnhancedBroadcastingAdvancedStreaming;
 
       const resolution = this.videoSettingsService.outputResolutions[display];
       stream.outputWidth = resolution.outputWidth;
@@ -1490,12 +1492,18 @@ export class StreamingService
         this.createAudioTrack(stream.twitchTrack);
       }
 
-      this.contexts[contextName].streaming = stream as IAdvancedStreaming;
+      this.contexts[contextName].streaming = stream as
+        | IAdvancedStreaming
+        | IEnhancedBroadcastingAdvancedStreaming;
     } else if (this.isSimpleStreaming(this.contexts[contextName].streaming)) {
-      const stream = this.migrateSettings('streaming', display) as ISimpleStreaming;
+      const stream = this.migrateSettings('streaming', display) as
+        | ISimpleStreaming
+        | IEnhancedBroadcastingSimpleStreaming;
 
       stream.audioEncoder = AudioEncoderFactory.create();
-      this.contexts[contextName].streaming = stream as ISimpleStreaming;
+      this.contexts[contextName].streaming = stream as
+        | ISimpleStreaming
+        | IEnhancedBroadcastingSimpleStreaming;
     } else {
       throwStreamError(
         'UNKNOWN_STREAMING_ERROR_WITH_MESSAGE',
@@ -1957,8 +1965,9 @@ export class StreamingService
 
     const instance = this.contexts[contextName][type];
 
-    Object.keys(settings).forEach(key => {
-      if ((settings as any)[key] === undefined) return;
+    Object.entries(settings).forEach(([key, value]) => {
+      console.log('[key,value]', [key, value]);
+      if (value === undefined) return;
 
       // share the video encoder with the recording instance if it exists
       if (key === 'videoEncoder') {
@@ -1976,7 +1985,8 @@ export class StreamingService
           throw new Error(instance.videoEncoder.lastError);
         }
       } else {
-        (instance as any)[key] = (settings as any)[key];
+        console.log('Migrating setting', key, value);
+        (instance as any)[key] = value;
       }
     });
 

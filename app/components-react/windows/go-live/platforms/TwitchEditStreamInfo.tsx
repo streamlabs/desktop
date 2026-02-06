@@ -28,11 +28,6 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
     return twSettings?.display === 'both' && p.isDualOutputMode;
   }, [p.isDualOutputMode, twSettings?.display]);
 
-  const multiplePlatformEnabled = useMemo(() => {
-    if (!p.enabledPlatformsCount) return false;
-    return p.enabledPlatformsCount > 1;
-  }, [p.enabledPlatformsCount, isDualStream]);
-
   const enhancedBroadcastingTooltipText = useMemo(() => {
     return p.isDualOutputMode
       ? $t(
@@ -45,15 +40,9 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
 
   const enhancedBroadcastingEnabled = useMemo(() => {
     if (isDualStream) return true;
-    if (multiplePlatformEnabled) return false;
     if (p.isStreamShiftMode) return false;
     return twSettings?.isEnhancedBroadcasting;
-  }, [
-    isDualStream,
-    multiplePlatformEnabled,
-    twSettings?.isEnhancedBroadcasting,
-    p.isStreamShiftMode,
-  ]);
+  }, [isDualStream, twSettings?.isEnhancedBroadcasting, p.isStreamShiftMode]);
 
   const optionalFields = (
     <div key="optional">
@@ -75,7 +64,7 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
             label={$t('Enhanced broadcasting')}
             tooltip={enhancedBroadcastingTooltipText}
             {...bind.isEnhancedBroadcasting}
-            disabled={isDualStream || multiplePlatformEnabled || p.isStreamShiftMode}
+            disabled={isDualStream || p.isStreamShiftMode}
             value={enhancedBroadcastingEnabled}
           />
           <Badge
@@ -119,6 +108,12 @@ function TwitchRequiredFields(p: IPlatformComponentParams<'twitch'>) {
     return twSettings?.display === 'both' && p.isDualOutputMode;
   }, [p.isDualOutputMode, twSettings?.display]);
 
+  const enhancedBroadcastingEnabled = useMemo(() => {
+    if (isDualStream) return true;
+    if (p.isStreamShiftMode) return false;
+    return twSettings?.isEnhancedBroadcasting;
+  }, [isDualStream, twSettings?.isEnhancedBroadcasting, p.isStreamShiftMode]);
+
   return (
     <React.Fragment key="required-fields">
       <GameSelector key="required" platform={'twitch'} {...bind.game} layout={p.layout} />
@@ -137,8 +132,8 @@ function TwitchRequiredFields(p: IPlatformComponentParams<'twitch'>) {
               'Enhanced broadcasting automatically optimizes your settings to encode and send multiple video qualities to Twitch. Selecting this option will send basic information about your computer and software setup.',
             )}
             {...bind.isEnhancedBroadcasting}
-            disabled={isDualStream}
-            value={isDualStream ? true : twSettings?.isEnhancedBroadcasting}
+            disabled={isDualStream || p.isStreamShiftMode}
+            value={enhancedBroadcastingEnabled}
           />
           <Badge
             style={{ display: 'inline-block' }}
