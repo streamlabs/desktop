@@ -37,15 +37,16 @@ interface IYoutubeServiceState extends IPlatformState {
   broadcastStatus: TBroadcastLifecycleStatus | '';
   settings: IYoutubeStartStreamOptions;
   categories: IYoutubeCategory[];
-  backupStreamSettings?: IBackUpStreamSettings;}
+  backupStreamSettings?: IBackUpStreamSettings;
+}
 
-interface IBackUpStreamSettings  {
-      service: string;
-      key: string;
-      server: string;
-      streamType: 'rtmp_common' | 'rtmp_custom' | 'whip_custom';
-      context: TDisplayType;
-  }
+interface IBackUpStreamSettings {
+  service: string;
+  key: string;
+  server: string;
+  streamType: 'rtmp_common' | 'rtmp_custom' | 'whip_custom';
+  context: TDisplayType;
+}
 
 export interface IYoutubeStartStreamOptions extends IExtraBroadcastSettings {
   title: string;
@@ -554,7 +555,7 @@ export class YoutubeService
     this.state.backupStreamSettings.key = currentSettings.key;
     this.state.backupStreamSettings.server = currentSettings.server;
     this.state.backupStreamSettings.streamType = currentSettings.streamType;
-    this.state.backupStreamSettings.context = context ? context : 'horizontal';
+    this.state.backupStreamSettings.context = !context ? 'horizontal' : context;
 
     if (!this.streamingService.views.isMultiplatformMode) {
       this.streamSettingsService.setSettings(
