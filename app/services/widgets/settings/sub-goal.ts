@@ -14,7 +14,7 @@ export class SubGoalService extends GenericGoalService {
       url: WidgetDefinitions[WidgetType.SubGoal].url(host, this.getWidgetToken()),
       dataFetchUrl: `https://${host}/api/v5/slobs/widget/subgoal/settings`,
       previewUrl: `https://${host}/widgets/sub-goal?token=${this.getWidgetToken()}`,
-      webSettingsUrl: `https://${host}/dashboard#/widgets/sub-goal`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/subgoal`,
       settingsSaveUrl: `https://${host}/api/v5/slobs/widget/subgoal/settings`,
       goalUrl: `https://${host}/api/v5/slobs/widget/subgoal`,
       settingsUpdateEvent: 'subGoalSettingsUpdate',

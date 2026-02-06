@@ -61,7 +61,7 @@ export class MediaShareService extends WidgetSettingsService<IMediaShareData> {
       type: WidgetType.MediaShare,
       url: WidgetDefinitions[WidgetType.MediaShare].url(host, this.getWidgetToken()),
       previewUrl: `https://${host}/widgets/media/v1/${this.getWidgetToken()}`,
-      webSettingsUrl: `https://${host}/dashboard#/widgets/media-share`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/mediashare`,
       settingsUpdateEvent: 'mediaSharingSettingsUpdate',
       goalCreateEvent: 'newmediaShare',
       goalResetEvent: 'mediaShareEnd',
