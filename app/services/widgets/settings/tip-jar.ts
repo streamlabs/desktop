@@ -49,7 +49,7 @@ export class TipJarService extends WidgetSettingsService<ITipJarData> {
       type: WidgetType.TipJar,
       url: WidgetDefinitions[WidgetType.TipJar].url(host, this.getWidgetToken()),
       previewUrl: `https://${host}/widgets/tip-jar/v1/${this.getWidgetToken()}?simulate=1`,
-      webSettingsUrl: `https://${host}/dashboard#/widgets/the-jar`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/jar`,
       dataFetchUrl: `https://${host}/api/v5/slobs/widget/tipjar`,
       settingsSaveUrl: `https://${host}/api/v5/slobs/widget/tipjar`,
       settingsUpdateEvent: 'tipJarSettingsUpdate',
