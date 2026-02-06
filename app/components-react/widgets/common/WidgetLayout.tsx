@@ -1,5 +1,6 @@
 import { Button, Col, Collapse, Layout, Row, Spin } from 'antd';
 import React, { ReactNode } from 'react';
+import cx from 'classnames';
 import { useWidget } from './useWidget';
 import Display from '../../shared/Display';
 import css from './WidgetLayout.m.less';
@@ -109,15 +110,21 @@ function ModalContent(p: { children: ReactNode }) {
 }
 
 function ModalFooter() {
-  const { canRevert, revertChanges, close } = useWidget();
+  const { canRevert, revertChanges, openWebSettings, close } = useWidget();
   return (
-    <div className="ant-modal-footer">
-      {canRevert && (
-        <Button onClick={revertChanges} type="ghost" style={{ position: 'absolute', left: '16px' }}>
-          <RollbackOutlined />
-          {$t('Revert Changes')}
+    <div className={cx('ant-modal-footer', css.modalFooter)}>
+      <div className={css.modalFooterExtra}>
+        <Button onClick={openWebSettings} type="ghost">
+          <i className="icon-pop-out-2" style={{ marginRight: '8px' }} />
+          {$t('Manage on Web')}
         </Button>
-      )}
+        {canRevert && (
+          <Button onClick={revertChanges} type="ghost">
+            <RollbackOutlined />
+            {$t('Revert Changes')}
+          </Button>
+        )}
+      </div>
       <Button onClick={close}>{$t('Close')}</Button>
     </div>
   );
@@ -133,7 +140,7 @@ function ModalDisplay() {
 }
 
 /**
- * Renders a collapsable section with browser source settings for the widget
+ * Renders a collapsible section with browser source settings for the widget
  */
 function BrowserSourceSettings() {
   const { browserSourceProps, updateBrowserSourceProps } = useWidget();

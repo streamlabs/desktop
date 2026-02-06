@@ -8,13 +8,15 @@ export class SuperchatGoalService extends GenericGoalService {
   static initialState = WIDGET_INITIAL_STATE;
 
   getApiSettings() {
+    const host = this.getHost();
     return {
       type: WidgetType.SuperchatGoal,
-      url: WidgetDefinitions[WidgetType.SuperchatGoal].url(this.getHost(), this.getWidgetToken()),
-      previewUrl: `https://${this.getHost()}/widgets/super-chat-goal?token=${this.getWidgetToken()}`,
-      dataFetchUrl: `https://${this.getHost()}/api/v5/slobs/widget/superchatgoal/settings`,
-      settingsSaveUrl: `https://${this.getHost()}/api/v5/slobs/widget/superchatgoal/settings`,
-      goalUrl: `https://${this.getHost()}/api/v5/slobs/widget/superchatgoal`,
+      url: WidgetDefinitions[WidgetType.SuperchatGoal].url(host, this.getWidgetToken()),
+      previewUrl: `https://${host}/widgets/super-chat-goal?token=${this.getWidgetToken()}`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/super-chat-goal`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/superchatgoal/settings`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/superchatgoal/settings`,
+      goalUrl: `https://${host}/api/v5/slobs/widget/superchatgoal`,
       settingsUpdateEvent: 'superChatGoalSettingsUpdate',
       goalCreateEvent: 'superChatGoalStart',
       goalResetEvent: 'superChatGoalEnd',

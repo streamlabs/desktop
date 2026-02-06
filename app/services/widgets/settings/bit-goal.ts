@@ -8,13 +8,15 @@ export class BitGoalService extends GenericGoalService {
   static initialState = WIDGET_INITIAL_STATE;
 
   getApiSettings() {
+    const host = this.getHost();
     return {
       type: WidgetType.BitGoal,
-      url: WidgetDefinitions[WidgetType.BitGoal].url(this.getHost(), this.getWidgetToken()),
-      dataFetchUrl: `https://${this.getHost()}/api/v5/slobs/widget/bitgoal/settings`,
-      previewUrl: `https://${this.getHost()}/widgets/bit-goal?token=${this.getWidgetToken()}`,
-      settingsSaveUrl: `https://${this.getHost()}/api/v5/slobs/widget/bitgoal/settings`,
-      goalUrl: `https://${this.getHost()}/api/v5/slobs/widget/bitgoal`,
+      url: WidgetDefinitions[WidgetType.BitGoal].url(host, this.getWidgetToken()),
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/bitgoal/settings`,
+      previewUrl: `https://${host}/widgets/bit-goal?token=${this.getWidgetToken()}`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/bit-goal`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/bitgoal/settings`,
+      goalUrl: `https://${host}/api/v5/slobs/widget/bitgoal`,
       settingsUpdateEvent: 'bitGoalSettingsUpdate',
       goalCreateEvent: 'bitGoalStart',
       goalResetEvent: 'bitGoalEnd',
