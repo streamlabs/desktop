@@ -760,7 +760,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
       this.setSettingValue('Output', 'StreamEncoder', 'x264');
     }
   }
-  
+
   /**
    * List all settings by category to the console
    * @remark For debugging purposes only
