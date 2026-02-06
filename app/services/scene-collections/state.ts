@@ -211,8 +211,8 @@ export class SceneCollectionsStateService extends StatefulService<ISceneCollecti
    * @param horizontalNodeId - The horizontal node's id, to be used as the key
    * @param sceneId - The scene's id, to locate the correct node map in the scene collection
    */
-  removeNodeMapEntry(horizontalNodeId: string, sceneId: string) {
-    this.REMOVE_NODE_MAP_ENTRY(horizontalNodeId, sceneId);
+  removeNodeMapEntry(sceneId: string, horizontalNodeId: string) {
+    this.REMOVE_NODE_MAP_ENTRY(sceneId, horizontalNodeId);
   }
 
   /**
@@ -316,14 +316,13 @@ export class SceneCollectionsStateService extends StatefulService<ISceneCollecti
     if (!coll.sceneNodeMaps) coll.sceneNodeMaps = {};
     if (!coll.sceneNodeMaps[sceneId]) coll.sceneNodeMaps[sceneId] = {};
 
-    coll.sceneNodeMaps[sceneId] = {
-      ...coll.sceneNodeMaps[sceneId],
-      [horizontalNodeId]: verticalNodeId,
-    };
+    const updatedNodeMap = { ...coll.sceneNodeMaps[sceneId], [horizontalNodeId]: verticalNodeId };
+
+    coll.sceneNodeMaps[sceneId] = updatedNodeMap;
   }
 
   @mutation()
-  REMOVE_NODE_MAP_ENTRY(horizontalNodeId: string, sceneId: string) {
+  REMOVE_NODE_MAP_ENTRY(sceneId: string, horizontalNodeId: string) {
     const activeId = this.state.activeId;
     const coll = this.state.collections.find(coll => coll.id === activeId);
 

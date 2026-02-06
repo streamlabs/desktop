@@ -21,6 +21,7 @@ import {
   IGamePulseWidgetState,
 } from './GamePulse.types';
 
+const EVENT_SORT_ORDER = ['elimination', 'victory', 'death', 'player_knocked'];
 
 /**
  * Game Pulse widget module for Game Pulse triggers.
@@ -39,6 +40,17 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
     return this.widgetsService.hostsService;
   }
 
+  private sortEventKeys(a: string, b: string): number {
+    const indexA = EVENT_SORT_ORDER.indexOf(a);
+    const indexB = EVENT_SORT_ORDER.indexOf(b);
+
+    if (indexA >= 0 && indexB >= 0) return indexA - indexB;
+    if (indexA >= 0) return -1;
+    if (indexB >= 0) return 1;
+
+    return a.localeCompare(b);
+  }
+
   get staticConfig(): GamePulseStaticConfig | undefined {
     return this.state?.staticConfig as GamePulseStaticConfig | undefined;
   }
@@ -48,7 +60,11 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
   }
 
   get availableGameEvents(): Record<string, string[]> {
-    return this.staticConfig?.data?.options?.available_game_events || {};
+    const raw = this.staticConfig?.data?.options?.available_game_events || {};
+    return Object.keys(raw).reduce((acc, gameKey) => {
+      acc[gameKey] = [...raw[gameKey]].sort(this.sortEventKeys);
+      return acc;
+    }, {} as Record<string, string[]>);
   }
 
   get gameEvents(): Record<string, GamePulseEventMeta> {
@@ -56,7 +72,13 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
   }
 
   get globalEvents(): { [key: string]: string } {
-    return this.staticConfig?.data?.options?.global_events || {};
+    const rawGlobal = this.staticConfig?.data?.options?.global_events || {};
+    const sortedKeys = Object.keys(rawGlobal).sort(this.sortEventKeys);
+
+    return sortedKeys.reduce((acc, key) => {
+      acc[key] = rawGlobal[key];
+      return acc;
+    }, {} as Record<string, string>);
   }
 
   get groupOptions(): IGamePulseGroupOption[] {

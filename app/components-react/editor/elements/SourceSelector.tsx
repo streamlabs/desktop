@@ -81,7 +81,7 @@ class SourceSelectorController {
         if (sceneNode.isFolder) {
           children = getTreeNodes(nodeData.filter(n => n.parentId === sceneNode.id));
         }
-        console.log('meow',{ sceneNode });
+
         return {
           title: (
             <TreeNode
@@ -224,10 +224,15 @@ class SourceSelectorController {
         const parent = this.selectionService.views.globalSelection.getClosestParent();
         if (parent) parentId = parent.id;
       }
+
+      const sceneId =
+        this.scenesService.views.activeScene.id ??
+        this.selectionService.views.globalSelection.sceneId;
+
       this.scenesService.actions.showNameFolder({
         itemsToGroup,
         parentId,
-        sceneId: this.scenesService.views.activeScene.id,
+        sceneId,
       });
     }
   }
@@ -788,6 +793,7 @@ function StudioControls() {
 
       <Tooltip title={ctrl.dualOutputTitle} placement="bottomRight">
         <i
+          data-name="dual-output-toggle"
           className={cx('icon-dual-output icon-button icon-button--lg', {
             active: ctrl.isDualOutputActive,
           })}
@@ -918,7 +924,7 @@ const TreeNode = React.forwardRef(
           <>
             {p.isGuestCamActive && <i className="fa fa-signal" />}
             {p.isDualOutputActive && p.hasNodeMap && (
-              <DualOutputSourceSelector nodeId={p.id} sceneId={p?.sceneId} />
+              <DualOutputSourceSelector nodeId={p.id} sceneId={p?.sceneId} sourceName={p.title} />
             )}
             {p.selectiveRecordingEnabled && (
               <Tooltip title={selectiveRecordingMetadata().tooltip} placement="left">

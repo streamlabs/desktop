@@ -187,7 +187,7 @@ export function sanitizeTrigger(raw: GamePulseTrigger): GamePulseTrigger {
   const trigger = structuredClone(raw) as any; // use 'any' to allow deletion of properties
 
   if (trigger.event_type !== 'streak') {
-    // the server might send them anyway, so we yeet them just in case.
+    // the server might send these anyway, so we yeet them just in case.
     delete trigger.streak_period;
     delete trigger.amount_minimum;
     delete trigger.amount_maximum;

@@ -304,11 +304,12 @@ export const platformLabels = (platform: TPlatform | string) =>
     [EPlatform.Facebook]: $t('Facebook'),
     [EPlatform.TikTok]: $t('TikTok'),
     [EPlatform.Trovo]: $t('Trovo'),
-    // TODO: translate
-    [EPlatform.Twitter]: 'Twitter',
+    [EPlatform.Twitter]: 'X',
     [EPlatform.Instagram]: $t('Instagram'),
     [EPlatform.Kick]: $t('Kick'),
-  }[platform]);
+    dlive: 'dlive',
+    nimotv: 'NimoTV',
+  }[platform] || '');
 
 export function getPlatformService(platform: TPlatform): IPlatformService {
   return {
@@ -328,3 +329,5 @@ export interface IPlatformRequest extends RequestInit {
 }
 
 export const externalAuthPlatforms = ['youtube', 'twitch', 'twitter', 'tiktok', 'kick'];
+
+export const maxNumPlatforms = platformList.length;

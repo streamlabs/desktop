@@ -173,7 +173,6 @@ export const GamePulseTriggerDetails = memo(function GamePulseTriggerDetails({
         />
       )}
 
-      {/* Level Logic */}
       {isLevel && (
         <>
           <ListInput
@@ -276,7 +275,7 @@ export const GamePulseTriggerDetails = memo(function GamePulseTriggerDetails({
       </Collapse>
 
       {/* TTS */}
-      <Collapse bordered={false} defaultActiveKey={['tts-settings']}>
+      <Collapse bordered={false} defaultActiveKey={['tts-settings']} className={css.collapseOverrides}>
         <Collapse.Panel
           header={$t('Text To Speech')}
           key="tts-settings"

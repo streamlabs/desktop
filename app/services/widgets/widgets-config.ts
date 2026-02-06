@@ -333,11 +333,11 @@ export function getWidgetsConfig(
       type: WidgetType.GamePulseWidget,
 
       defaultTransform: {
-        width: 600,
-        height: 400,
-        x: 0.5,
-        y: 0.5,
-        anchor: AnchorPoint.Center,
+        width: 1920,
+        height: 1080,
+        x: 0,
+        y: 0,
+        anchor: AnchorPoint.NorthWest,
       },
 
       settingsWindowSize: {

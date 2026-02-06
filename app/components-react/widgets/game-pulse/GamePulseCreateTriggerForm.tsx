@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import FormFactory, { TInputValue } from 'components-react/shared/inputs/FormFactory';
 import { Button } from 'antd';
 import { $t } from 'services/i18n/i18n';
@@ -124,6 +124,15 @@ export function GamePulseCreateTriggerForm(props: TriggerFormProps) {
     },
     [handleGameChange, handleEventChange, handleNameChange],
   );
+
+  useEffect(() => {
+    // Only set a default if event_type is currently empty AND options exist
+    if (!values.event_type && eventOptions.length > 0) {
+      const defaultEvent = eventOptions[0].value;
+      handleEventChange(defaultEvent);
+    }
+  }, [eventOptions, values.event_type, handleEventChange]);
+
 
   const handleSubmit = async () => {
     if (isSubmitting) return;

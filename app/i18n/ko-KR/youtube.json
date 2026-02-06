@@ -48,5 +48,5 @@
   "Exceeded thumbnail upload quota. Please try again later.": "썸네일 업로드 할당량을 초과했습니다. 나중에 다시 시도하세요.",
   "YouTube thumbnail image is too large. Maximum size is 2MB.": "YouTube 썸네일 이미지가 너무 큽니다. 최대 크기는 2MB입니다.",
   "Please upload thumbnail manually on YouTube.": "수동으로 YouTube에 썸네일을 업로드하세요.",
-  "Stream Shift Error: YouTube is not live": "Stream Shift Error: YouTube is not live"
+  "Stream Shift Error: YouTube is not live": "Stream Shift 오류: YouTube가 라이브 상태가 아님"
 }

@@ -13,6 +13,7 @@ interface ISceneBuilderNode {
   type: 'item' | 'folder';
   sourceType?: TSourceType;
   id?: string;
+  display?: string;
   children?: ISceneBuilderNode[];
 }
 
@@ -141,11 +142,11 @@ export class SceneBuilder {
     return this.buildNodes(nodes);
   }
 
-  isEqualTo(sketch: string): boolean {
+  isEqualTo(sketch: string, addDisplay: boolean = false): boolean {
     // normalize sketch
     // tslint:disable-next-line:no-parameter-reassignment TODO
-    sketch = this.getSketch(this.parse(sketch));
-    const sceneSketch = this.getSceneScketch();
+    sketch = this.getSketch(this.parse(sketch), addDisplay);
+    const sceneSketch = this.getSceneScketch(addDisplay);
     if (sketch === sceneSketch) return true;
     console.log(`Scene sketch:  \n\n${sceneSketch} \n is not equal to \n\n${sketch}`);
     return false;
@@ -160,6 +161,7 @@ export class SceneBuilder {
           name: sceneNode.name,
           id: sceneNode.id,
           type: 'folder' as TSceneNodeType,
+          display: sceneNode.display,
           children: this.getSceneSchema(sceneNode.id),
         };
       }
@@ -168,19 +170,23 @@ export class SceneBuilder {
           name: sceneNode.name,
           id: sceneNode.id,
           type: 'item' as TSceneNodeType,
-          sourceType: (
-            sceneNode as SceneItem
-          ).getSource().type,
+          display: sceneNode.display,
+          sourceType: (sceneNode as SceneItem).getSource().type,
         };
       }
     });
   }
 
-  getSceneScketch(): string {
-    return this.getSketch(this.getSceneSchema());
+  getSceneScketch(addDisplay: boolean = false): string {
+    return this.getSketch(this.getSceneSchema(), addDisplay);
   }
 
-  getSketch(nodes: ISceneBuilderNode[], sketch?: string, level?: number): string {
+  getSketch(
+    nodes: ISceneBuilderNode[],
+    addDisplay: boolean = false,
+    sketch?: string,
+    level?: number,
+  ): string {
     // tslint:disable-next-line:no-parameter-reassignment TODO
     sketch = sketch || '';
 
@@ -193,12 +199,17 @@ export class SceneBuilder {
 
       if (node.type === 'item') {
         // tslint:disable-next-line:no-parameter-reassignment TODO
-        sketch += `${node.name}: ${node.sourceType}\n`;
+        const name =
+          addDisplay && node.display
+            ? `${node.name}: ${node.sourceType}, [${node.display}]`
+            : `${node.name}: ${node.sourceType}`;
+        sketch += `${name}\n`;
       } else if (node.type === 'folder') {
         // tslint:disable-next-line:no-parameter-reassignment TODO
-        sketch += `${node.name}\n`;
+        const name = addDisplay && node.display ? `${node.name} , [${node.display}]` : node.name;
+        sketch += `${name}\n`;
         // tslint:disable-next-line:no-parameter-reassignment TODO
-        sketch = this.getSketch(node.children, sketch, level + 1);
+        sketch = this.getSketch(node.children, addDisplay, sketch, level + 1);
       }
     });
 
@@ -213,9 +224,7 @@ export class SceneBuilder {
         sceneNode = this.scene.createAndAddSource(node.name, node.sourceType);
 
         if (node.sourceType === 'color_source') {
-          this.scene.getItem(sceneNode.id)
-            .getSource()
-            .updateSettings({ width: 400, height: 400 });
+          this.scene.getItem(sceneNode.id).getSource().updateSettings({ width: 400, height: 400 });
         }
       } else {
         sceneNode = this.scene.createFolder(node.name);

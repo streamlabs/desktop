@@ -277,7 +277,9 @@ export class EditMenu extends Menu {
         label: $t('Rename'),
         click: () =>
           this.scenesService.showNameFolder({
-            sceneId: this.scenesService.views.activeSceneId,
+            sceneId:
+              this.scenesService.views.activeSceneId ??
+              this.selectionService.views.globalSelection.sceneId,
             renameId: this.selectionService.views.globalSelection.getFolders()[0].id,
           }),
       });

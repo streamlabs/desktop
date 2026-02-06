@@ -65,6 +65,7 @@ export function GamePulseMenu(props: {
       openKeys={openKeys}
       onOpenChange={keys => setOpenKeys(keys as string[])}
       onClick={({ key }) => onChange(key)}
+      className={css.gamePulseMenu}
     >
       <Menu.Item
         key={GamePulseTabUtils.ID_ADD_TRIGGER}
@@ -94,7 +95,7 @@ export function GamePulseMenu(props: {
                   />
                 </div>
                 <div className={css.triggerMain}>
-                  <div className={css.triggerTitle}>{trigger.name || `Trigger ${index + 1}`}</div>
+                  <div className={css.triggerTitle}>{trigger.name}</div>
                   <div className={css.triggerActions}>
                     <Tooltip title={$t('Delete Trigger')} placement="top" mouseLeaveDelay={0}>
                       <Button
