@@ -58,4 +58,5 @@ export interface IPlatformComponentParams<T extends TPlatform> {
   enabledPlatformsCount?: number;
   isDualOutputMode?: boolean;
   isAiHighlighterEnabled?: boolean;
+  isStreamShiftMode?: boolean;
 }

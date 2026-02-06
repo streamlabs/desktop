@@ -288,5 +288,11 @@
   "The currently configured encoder is not supported for the selected Dual Output destinations. Please reset the stream encoder to Software (x264) or select a different encoder in settings.": "The currently configured encoder is not supported for the selected Dual Output destinations. Please reset the stream encoder to Software (x264) or select a different encoder in settings.",
   "Cancel": "Cancel",
   "Open Settings": "Open Settings",
-  "Use x264": "Use x264"
+  "Use x264": "Use x264",
+  "Incompatible Codec Detected": "Incompatible Codec Detected",
+  "Use H.264 Codec": "Use H.264 Codec",
+  "Select Codec": "Select Codec",
+  "%{videoCodec} codec is not supported for Multistream. Would you like to proceed with the H.264 codec or select another codec?": "%{videoCodec} codec is not supported for Multistream. Would you like to proceed with the H.264 codec or select another codec?",
+  "%{videoCodec} codec is not supported for Stream Shift. Would you like to proceed with the H.264 codec or select another codec?": "%{videoCodec} codec is not supported for Stream Shift. Would you like to proceed with the H.264 codec or select another codec?",
+  "%{videoCodec} codec is not supported for Dual Output. Would you like to proceed with the H.264 codec or select another codec?": "%{videoCodec} codec is not supported for Dual Output. Would you like to proceed with the H.264 codec or select another codec?"
 }

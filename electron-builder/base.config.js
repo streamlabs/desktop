@@ -69,7 +69,9 @@ const base = {
     },
   },
   mac: {
-    identity: (process.env.APPLE_SLD_IDENTITY) ? process.env.APPLE_SLD_IDENTITY : 'Streamlabs LLC (UT675MBB9Q)',
+    identity: process.env.SLOBS_NO_SIGN
+      ? null
+      : process.env.APPLE_SLD_IDENTITY || 'Streamlabs LLC (UT675MBB9Q)',
     extraFiles: [
       'shared-resources/**/*',
       '!shared-resources/README',

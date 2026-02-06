@@ -54,16 +54,18 @@ export class StreamBossService extends BaseGoalService<IStreamBossData, IStreamB
   static initialState = WIDGET_INITIAL_STATE;
 
   getApiSettings() {
+    const host = this.getHost();
     return {
       type: WidgetType.StreamBoss,
-      url: WidgetDefinitions[WidgetType.StreamBoss].url(this.getHost(), this.getWidgetToken()),
-      previewUrl: `https://${this.getHost()}/widgets/streamboss?token=${this.getWidgetToken()}`,
+      url: WidgetDefinitions[WidgetType.StreamBoss].url(host, this.getWidgetToken()),
+      previewUrl: `https://${host}/widgets/streamboss?token=${this.getWidgetToken()}`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/stream-boss`,
       settingsUpdateEvent: 'streambossSettingsUpdate',
       goalCreateEvent: 'newStreamboss',
       goalResetEvent: 'streambossEnd',
-      dataFetchUrl: `https://${this.getHost()}/api/v5/slobs/widget/streamboss/settings`,
-      settingsSaveUrl: `https://${this.getHost()}/api/v5/slobs/widget/streamboss/settings`,
-      goalUrl: `https://${this.getHost()}/api/v5/slobs/widget/streamboss`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/streamboss/settings`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/streamboss/settings`,
+      goalUrl: `https://${host}/api/v5/slobs/widget/streamboss`,
       testers: ['Follow', 'Subscription', 'Donation', 'Bits'],
       customCodeAllowed: true,
       customFieldsAllowed: true,

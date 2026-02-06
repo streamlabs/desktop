@@ -12,7 +12,6 @@ import { getDefined } from '../../../util/properties-type-guards';
 import isEqual from 'lodash/isEqual';
 import { TDisplayType } from 'services/settings-v2';
 import partition from 'lodash/partition';
-import { EAvailableFeatures } from 'services/incremental-rollout';
 
 type TCommonFieldName = 'title' | 'description';
 
@@ -376,6 +375,10 @@ export class GoLiveSettingsModule {
     return [...alwaysShown, ...unlinked];
   }
 
+  get primaryPlatform() {
+    return Services.UserService.views.platform?.type;
+  }
+
   get primaryChat() {
     const primaryPlatform = Services.UserService.views.platform!;
     // this is migration-like code for users with old primary platform deselected (i.e me)
@@ -398,7 +401,7 @@ export class GoLiveSettingsModule {
   /**
    * Determine if all dual output go live requirements are fulfilled
    */
-  getCanStreamDualOutput() {
+  get canStreamDualOutput() {
     return this.state.getCanStreamDualOutput(this.state);
   }
 
@@ -492,6 +495,10 @@ export class GoLiveSettingsModule {
 
   get recommendedColorSpaceWarnings() {
     return Services.SettingsService.views.recommendedColorSpaceWarnings;
+  }
+
+  get codec() {
+    return Services.SettingsService.views.values.Output.Encoder;
   }
 }
 

@@ -283,5 +283,11 @@
   "Mobile Streaming": "Streaming z komórki",
   "Remote Controller": "Kontroler zdalnego sterowania",
   "Third Party Connections": "Połączenia zewnętrzne",
-  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "Dzięki aplikacji Streamlabs Mobile możesz przesyłać strumieniowo treści z kamery telefonu lub gry mobilnej w trakcie podróży."
+  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "Dzięki aplikacji Streamlabs Mobile możesz przesyłać strumieniowo treści z kamery telefonu lub gry mobilnej w trakcie podróży.",
+  "Incompatible Codec Detected": "Incompatible Codec Detected",
+  "Use H.264 Codec": "Use H.264 Codec",
+  "Select Codec": "Select Codec",
+  "%{videoCodec} codec is not supported for Multistream. Would you like to proceed with the H.264 codec or select another codec?": "%{videoCodec} codec is not supported for Multistream. Would you like to proceed with the H.264 codec or select another codec?",
+  "%{videoCodec} codec is not supported for Stream Shift. Would you like to proceed with the H.264 codec or select another codec?": "%{videoCodec} codec is not supported for Stream Shift. Would you like to proceed with the H.264 codec or select another codec?",
+  "%{videoCodec} codec is not supported for Dual Output. Would you like to proceed with the H.264 codec or select another codec?": "%{videoCodec} codec is not supported for Dual Output. Would you like to proceed with the H.264 codec or select another codec?"
 }

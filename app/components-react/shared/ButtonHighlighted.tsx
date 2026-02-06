@@ -11,6 +11,7 @@ interface IButtonHighlighted extends ButtonProps {
   filled?: boolean;
   faded?: boolean;
   text?: string;
+  noMargin?: boolean;
   onClick?: () => void;
 }
 
@@ -20,8 +21,9 @@ export default function ButtonHighlighted(p: IButtonHighlighted) {
       className={cx(
         styles.highlighted,
         p.className,
-        p.filled && styles.filled,
-        p.faded && styles.faded,
+        { [styles.filled]: p.filled },
+        { [styles.faded]: p.faded },
+        { [styles.noMargin]: p.noMargin },
       )}
       style={p.style}
       onClick={p.onClick}

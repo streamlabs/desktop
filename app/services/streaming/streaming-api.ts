@@ -53,11 +53,11 @@ export interface IStreamInfo {
     applyOptimizedSettings: TGoLiveChecklistItemState;
     twitch: TGoLiveChecklistItemState;
     youtube: TGoLiveChecklistItemState;
-    facebook: TGoLiveChecklistItemState;
     tiktok: TGoLiveChecklistItemState;
-    trovo: TGoLiveChecklistItemState;
     kick: TGoLiveChecklistItemState;
+    facebook: TGoLiveChecklistItemState;
     twitter: TGoLiveChecklistItemState;
+    trovo: TGoLiveChecklistItemState;
     instagram: TGoLiveChecklistItemState;
     setupMultistream: TGoLiveChecklistItemState;
     setupDualOutput: TGoLiveChecklistItemState;
@@ -73,11 +73,11 @@ export interface IStreamSettings {
   platforms: {
     twitch?: IPlatformFlags & ITwitchStartStreamOptions;
     youtube?: IPlatformFlags & IYoutubeStartStreamOptions;
-    facebook?: IPlatformFlags & IFacebookStartStreamOptions;
     tiktok?: IPlatformFlags & ITikTokStartStreamOptions;
-    trovo?: IPlatformFlags & ITrovoStartStreamOptions;
     kick?: IPlatformFlags & IKickStartStreamOptions;
+    facebook?: IPlatformFlags & IFacebookStartStreamOptions;
     twitter?: IPlatformFlags & ITwitterStartStreamOptions;
+    trovo?: IPlatformFlags & ITrovoStartStreamOptions;
     instagram?: IPlatformFlags & IInstagramStartStreamOptions;
   };
   customDestinations: ICustomStreamDestination[];

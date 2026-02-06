@@ -163,11 +163,11 @@ export class StreamingService
         applyOptimizedSettings: 'not-started',
         twitch: 'not-started',
         youtube: 'not-started',
-        facebook: 'not-started',
         tiktok: 'not-started',
-        trovo: 'not-started',
         kick: 'not-started',
+        facebook: 'not-started',
         twitter: 'not-started',
+        trovo: 'not-started',
         instagram: 'not-started',
         setupMultistream: 'not-started',
         setupDualOutput: 'not-started',
@@ -785,15 +785,25 @@ export class StreamingService
       });
     }
 
+    // send analytics for Instagram
     if (settings.platforms.instagram?.enabled) {
       this.usageStatisticsService.recordFeatureUsage('StreamToInstagram');
     }
 
-    /* YouTube is currently the only platform that can dual stream
-    / *so we're making a special case for it for tracking dual streaming usage.
-     */
+    // send analytics for YouTube
     if (settings.platforms.youtube?.enabled && settings.platforms.youtube.display === 'both') {
       this.usageStatisticsService.recordFeatureUsage('StreamToYouTubeBothOutputs');
+    }
+
+    // send analytics for Twitch
+    if (settings.platforms.twitch?.enabled) {
+      if (settings.platforms.twitch.display === 'both') {
+        this.usageStatisticsService.recordFeatureUsage('StreamToTwitchBothOutputs');
+      } else if (this.state.enhancedBroadcasting) {
+        // Note: use the service state because the Twitch settings stores the user's enhanced broadcasting setting
+        // when not multistreaming or dual streaming.
+        this.usageStatisticsService.recordFeatureUsage('StreamToTwitchEnhancedBroadcasting');
+      }
     }
 
     // Record Stream Shift
@@ -1369,7 +1379,7 @@ export class StreamingService
    */
   showGoLiveWindow(prepopulateOptions?: IGoLiveSettings['prepopulateOptions']) {
     const height = 750;
-    const width = 900;
+    const width = 800;
 
     this.windowsService.showWindow({
       componentName: 'GoLiveWindow',
@@ -1384,7 +1394,7 @@ export class StreamingService
 
   showEditStream() {
     const height = 750;
-    const width = 900;
+    const width = 800;
 
     this.windowsService.showWindow({
       componentName: 'EditStreamWindow',

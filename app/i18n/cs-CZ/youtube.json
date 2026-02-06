@@ -48,5 +48,5 @@
   "Exceeded thumbnail upload quota. Please try again later.": "Překročen limit pro nahrávání miniatur. Zkuste to znovu později.",
   "YouTube thumbnail image is too large. Maximum size is 2MB.": "Obrázek miniatury YouTube je příliš velký. Maximální velikost je 2 MB.",
   "Please upload thumbnail manually on YouTube.": "Nahrajte miniaturu na YouTube manuálně.",
-  "Stream Shift Error: YouTube is not live": "Stream Shift Error: YouTube is not live"
+  "Stream Shift Error: YouTube is not live": "Chyba funkce Stream Shift: Ve službě YouTube nelze vysílat živě"
 }
