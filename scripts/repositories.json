@@ -12,7 +12,7 @@
       "name": "node-libuiohook",
       "url": "https://slobs-node-libuiohook.s3-us-west-2.amazonaws.com/",
       "archive": "node-libuiohook-[VERSION]-[OS][ARCH].tar.gz",
-      "version": "1.1.17",
+      "version": "1.1.18",
       "win64": true,
       "osx": true
     },
