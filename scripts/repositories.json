@@ -60,7 +60,7 @@
       "name": "color-picker",
       "url": "https://obs-studio-deployment.s3-us-west-2.amazonaws.com/",
       "archive": "color-picker-[VERSION]-[OS].tar.gz",
-      "version": "1.3.11",
+      "version": "1.3.12",
       "win64": true,
       "osx": false
     }
