@@ -386,6 +386,46 @@ export class StreamingService
     // save current settings in store so we can re-use them if something will go wrong
     this.SET_GO_LIVE_SETTINGS(settings);
 
+    //if !streamShift, !multistream, and dual output mode is enabled, check for valid encoder and prompt user to change if necessary
+    if (!settings.streamShift && !this.views.isMultiplatformMode && this.views.isDualOutputMode) {
+      let streamToCheck = 'Both';
+
+      //special case for YouTube dual streaming because it doesn't use Stream/StreamSecond, just uses the main stream
+      const ytSettings = getDefined(settings.platforms.youtube);
+      if (ytSettings?.display === 'both') {
+        streamToCheck = 'Stream';
+      }
+
+      const validEncoder = this.settingsService.isValidEncoder(
+        streamToCheck as 'Stream' | 'StreamSecond' | 'Both',
+      );
+      if (!validEncoder) {
+        const choice = remote.dialog.showMessageBoxSync(this.windowsService.windows.child, {
+          type: 'error',
+          message: $t(
+            'The currently configured encoder is not supported for the selected Dual Output destinations. Would you like to reset the stream encoder to Software (x264) or select a different encoder in settings?',
+          ),
+          defaultId: 2,
+          cancelId: 0,
+          buttons: [$t('Cancel'), $t('Open Settings'), $t('Use x264')],
+          noLink: true,
+        });
+        if (choice === 0) {
+          const newError = createStreamError('DUAL_OUTPUT_SETUP_FAILED');
+          newError.details = $t(
+            'The currently configured encoder is not supported for the selected Dual Output destinations. Please reset the stream encoder to Software (x264) or select a different encoder in settings.',
+          );
+          this.setError(newError);
+          return;
+        } else if (choice === 1) {
+          this.settingsService.actions.showSettings('Output');
+          return;
+        } else {
+          this.settingsService.actions.setDefaultVideoEncoder();
+        }
+      }
+    }
+
     // show the GoLive checklist
     this.UPDATE_STREAM_INFO({ lifecycle: 'runChecklist' });
 
