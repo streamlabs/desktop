@@ -416,6 +416,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
   async setupTargets() {
     // delete existing targets
     const targets = await this.fetchTargets();
+    console.log('RESTREAM deleting targets', JSON.stringify(targets, null, 2));
+
     const promises = targets.map(t => this.deleteTarget(t.id));
     await Promise.all(promises);
 
@@ -498,6 +500,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
     );
 
     return this.streamInfo.customDestinations.reduce((dests, dest) => {
+      if (!dest.enabled) return dests;
+
       const targetInfo = {
         platform: 'relay' as 'relay',
         streamKey: `${this.formatUrl(dest.url)}${dest.streamKey}`,
@@ -634,6 +638,8 @@ export class RestreamService extends StatefulService<IRestreamState> {
         };
       }),
     );
+
+    console.log('creating targets', JSON.stringify(targets, null, 2));
 
     const request = new Request(url, { headers, body, method: 'POST' });
     const res = await fetch(request);

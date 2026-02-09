@@ -91,7 +91,7 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
             layout={p.layout}
           />
         }
-        requiredFields={<TwitchRequiredFields {...p} />}
+        requiredFields={<TwitchRequiredFields {...p} key="required" />}
         optionalFields={optionalFields}
       />
     </Form>
@@ -115,19 +115,19 @@ function TwitchRequiredFields(p: IPlatformComponentParams<'twitch'>) {
   }, [isDualStream, twSettings?.isEnhancedBroadcasting, p.isStreamShiftMode]);
 
   return (
-    <React.Fragment key="required-fields">
+    <>
       <GameSelector key="twitch-game" platform={'twitch'} {...bind.game} layout={p.layout} />
       {p.isAiHighlighterEnabled && (
         <AiHighlighterToggle key="ai-toggle" game={bind.game?.value} cardIsExpanded={false} />
       )}
       {process.platform !== 'darwin' && (
         <InputWrapper
-          key="enhanced-broadcasting"
+          // key="enhanced-broadcasting"
           layout={p.layout}
           className={cx({ [styles.hideLabel]: p.layout === 'vertical' })}
         >
           <CheckboxInput
-            key="enhanced-broadcasting-toggle"
+            // key="enhanced-broadcasting-toggle"
             style={{ display: 'inline-block' }}
             label={$t('Enhanced broadcasting')}
             tooltip={$t(
@@ -138,13 +138,13 @@ function TwitchRequiredFields(p: IPlatformComponentParams<'twitch'>) {
             value={enhancedBroadcastingEnabled}
           />
           <Badge
-            key="enhanced-broadcasting-badge"
+            // key="enhanced-broadcasting-badge"
             style={{ display: 'inline-block' }}
             dismissableKey={EDismissable.EnhancedBroadcasting}
             content={'Beta'}
           />
         </InputWrapper>
       )}
-    </React.Fragment>
+    </>
   );
 }
