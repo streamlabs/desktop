@@ -1,5 +1,6 @@
 import { Button, Col, Collapse, Layout, Row, Spin } from 'antd';
 import React, { ReactNode } from 'react';
+import cx from 'classnames';
 import { useWidget } from './useWidget';
 import Display from '../../shared/Display';
 import css from './WidgetLayout.m.less';
@@ -23,17 +24,17 @@ const PREVIEW_HEIGHT = 250;
  * If "basic" layout selected then display 1 column or 2 columns depending
  * on how many children have been provided to props
  */
-export function WidgetLayout(p: { layout?: TWidgetLayoutType; children: TLayoutChildren, showDisplay?: boolean; footerSlots?: ReactNode }) {
+export function WidgetLayout(p: { layout?: TWidgetLayoutType; children: TLayoutChildren; showDisplay?: boolean }) {
   const layout = p.layout || 'basic';
   switch (layout) {
     case 'basic':
-      return <BasicLayout showDisplay={p.showDisplay} footerSlots={p.footerSlots}>{p.children}</BasicLayout>;
+      return <BasicLayout showDisplay={p.showDisplay}>{p.children}</BasicLayout>;
     case 'long-menu':
-      return <LongMenuLayout showDisplay={p.showDisplay} footerSlots={p.footerSlots}>{p.children}</LongMenuLayout>;
+      return <LongMenuLayout showDisplay={p.showDisplay}>{p.children}</LongMenuLayout>;
   }
 }
 
-function BasicLayout(p: { children: TLayoutChildren, showDisplay?: boolean, footerSlots?: ReactNode }) {
+function BasicLayout(p: { children: TLayoutChildren; showDisplay?: boolean }) {
   const { isLoading } = useWidget();
   const { MenuPanel, ContentPanel } = getLayoutPanels(p.children);
   const hasDisplay = p.showDisplay !== false;
@@ -52,27 +53,24 @@ function BasicLayout(p: { children: TLayoutChildren, showDisplay?: boolean, foot
           </Col>
         </Row>
       </Content>
-      <ModalFooter footerSlots={p.footerSlots} />
+      <ModalFooter />
     </Layout>
   );
 }
 
-function LongMenuLayout(p: { children: TLayoutChildren, showDisplay?: boolean, footerSlots?: ReactNode }) {
+function LongMenuLayout(p: { children: TLayoutChildren; showDisplay?: boolean }) {
   const { isLoading } = useWidget();
   const { MenuPanel, ContentPanel } = getLayoutPanels(p.children);
   const wrapperStyle = {
     height: p.showDisplay !== false ? `calc(100% - ${PREVIEW_HEIGHT}px)` : '100%',
     borderTop: '1px solid var(--border)',
   };
-  const siderStyle = {
-    marginRight: '1px', // offset gap from display component for border display fix
-  }
   assertIsDefined(MenuPanel);
 
   return (
     <Layout className={css.widgetLayout}>
       <Layout>
-        <Sider className={css.menuWrapper} width={MENU_WIDTH} style={siderStyle}>
+        <Sider className={css.menuWrapper} width={MENU_WIDTH}>
           {!isLoading && MenuPanel}
         </Sider>
         <Content>
@@ -82,7 +80,7 @@ function LongMenuLayout(p: { children: TLayoutChildren, showDisplay?: boolean, f
           </div>
         </Content>
       </Layout>
-      <ModalFooter footerSlots={p.footerSlots} />
+      <ModalFooter />
     </Layout>
   );
 }
@@ -114,12 +112,15 @@ function ModalContent(p: { children: ReactNode }) {
   );
 }
 
-function ModalFooter({ footerSlots }: { footerSlots?: ReactNode }) {
-  const { canRevert, revertChanges, close } = useWidget();
+function ModalFooter() {
+  const { canRevert, revertChanges, openWebSettings, close } = useWidget();
   return (
-    <div className="ant-modal-footer" style={{ display: 'flex', justifyContent: 'space-between' }}>
-      <div>
-        {footerSlots}
+    <div className={cx('ant-modal-footer', css.modalFooter)}>
+      <div className={css.modalFooterExtra}>
+        <Button onClick={openWebSettings} type="ghost">
+          <i className="icon-pop-out-2" style={{ marginRight: '8px' }} />
+          {$t('Manage on Web')}
+        </Button>
         {canRevert && (
           <Button onClick={revertChanges} type="ghost">
             <RollbackOutlined />
@@ -134,7 +135,6 @@ function ModalFooter({ footerSlots }: { footerSlots?: ReactNode }) {
 
 function ModalDisplay() {
   const { previewSourceId, isLoading } = useWidget();
-
   return (
     <div style={{ height: `${PREVIEW_HEIGHT}px`, backgroundColor: 'var(--section)' }}>
       {!isLoading && <Display sourceId={previewSourceId} />}
@@ -143,7 +143,7 @@ function ModalDisplay() {
 }
 
 /**
- * Renders a collapsable section with browser source settings for the widget
+ * Renders a collapsible section with browser source settings for the widget
  */
 function BrowserSourceSettings() {
   const { browserSourceProps, updateBrowserSourceProps } = useWidget();

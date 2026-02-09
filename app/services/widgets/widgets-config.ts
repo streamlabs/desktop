@@ -37,6 +37,7 @@ export interface IWidgetConfig {
   dataFetchUrl: string;
   settingsSaveUrl: string;
   previewUrl: string;
+  webSettingsUrl: string;
   settingsUpdateEvent: string;
   testers?: TAlertType[];
   customCodeAllowed?: boolean;
@@ -74,6 +75,7 @@ export function getWidgetsConfig(
 
       url: `https://${host}/alert-box/v3/${token}`,
       previewUrl: `https://${host}/alert-box/v3/${token}`,
+      webSettingsUrl: `https://${host}/dashboard#/alertbox`,
       dataFetchUrl: `https://${host}/api/v5/slobs/widget/alertbox?include_linked_integrations_only=true&primary_only=false`,
       settingsSaveUrl: `https://${host}/api/v5/slobs/widget/alertbox`,
       settingsUpdateEvent: 'filteredAlertBoxSettingsUpdate',
@@ -99,6 +101,7 @@ export function getWidgetsConfig(
 
       url: `https://${host}/widgets/viewer-count?token=${token}`,
       previewUrl: `https://${host}/widgets/viewer-count?token=${token}&simulate=1`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/viewercount`,
       dataFetchUrl: `https://${host}/api/v5/slobs/widget/viewercount`,
       settingsSaveUrl: `https://${host}/api/v5/slobs/widget/viewercount`,
       settingsUpdateEvent: 'viewerCountSettingsUpdate',
@@ -124,6 +127,7 @@ export function getWidgetsConfig(
 
       url: `https://${host}/widgets/game-widget?token=${token}`,
       previewUrl: `https://${host}/widgets/game-widget?token=${token}&simulate=1`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/game-widget`,
       dataFetchUrl: `https://${host}/api/v5/slobs/widget/game-widget`,
       settingsSaveUrl: `https://${host}/api/v5/slobs/widget/game-widget`,
       settingsUpdateEvent: 'gameWidgetSettingsUpdate',
@@ -149,6 +153,7 @@ export function getWidgetsConfig(
 
       url: `https://${host}/widgets/emote-wall?token=${token}`,
       previewUrl: `https://${host}/widgets/emote-wall?token=${token}&simulate=1`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/emote-wall`,
       dataFetchUrl: `https://${host}/api/v5/slobs/widget/emote-wall`,
       settingsSaveUrl: `https://${host}/api/v5/slobs/widget/emote-wall`,
       settingsUpdateEvent: 'emoteWallSettingsUpdate',
@@ -206,6 +211,7 @@ export function getWidgetsConfig(
       customFieldsAllowed: true,
       url: `https://${host}/widgets/chat-box/v1/${token}`,
       previewUrl: `https://${host}/widgets/chat-box/v1/${token}?simulate=1`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/chat-box`,
 
       ...(widgetsWithNewAPI.includes(WidgetType.ChatBox)
         ? {
@@ -246,6 +252,7 @@ export function getWidgetsConfig(
 
       url: `https://${host}/widgets/donation-ticker?token=${token}`,
       previewUrl: `https://${host}/widgets/donation-ticker?token=${token}&simulate=1`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/tipticker`,
       dataFetchUrl: `https://${host}/api/v5/slobs/widget/ticker`,
       settingsSaveUrl: `https://${host}/api/v5/slobs/widget/ticker`,
       settingsUpdateEvent: 'donationTickerSettingsUpdate',
@@ -289,6 +296,7 @@ export function getWidgetsConfig(
 
       url: `https://${host}/widgets/sponsor-banner?token=${token}`,
       previewUrl: `https://${host}/widgets/sponsor-banner?token=${token}`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/sponsorbanner`,
       dataFetchUrl: `https://${host}/api/v5/slobs/widget/sponsorbanner`,
       settingsSaveUrl: `https://${host}/api/v5/slobs/widget/sponsorbanner`,
       settingsUpdateEvent: 'sponsorBannerSettingsUpdate',
@@ -322,6 +330,7 @@ export function getWidgetsConfig(
 
       url: `https://${host}/widgets/custom-widget?token=${token}`,
       previewUrl: `https://${host}/widgets/custom-widget?token=${token}`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/customwidget`,
       dataFetchUrl: `https://${host}/api/v5/slobs/widget/customwidget`,
       settingsSaveUrl: `https://${host}/api/v5/slobs/widget/customwidget`,
       settingsUpdateEvent: 'customWidgetSettingsUpdate',
@@ -347,6 +356,7 @@ export function getWidgetsConfig(
       useNewWidgetAPI: true,
       url: `https://${host}/api/v5/widgets/desktop/game-pulse`,
       previewUrl: `https://${host}/widgets/preview/game-pulse/${token}?simulate=1`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/game-pulse`,
       dataFetchUrl: `https://${host}/api/v5/widgets/desktop/game-pulse`,
       settingsSaveUrl: `https://${host}/api/v5/widgets/desktop/game-pulse`,
       settingsUpdateEvent: 'gamePulseSettingsUpdate',

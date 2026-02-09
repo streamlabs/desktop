@@ -33,8 +33,6 @@ export function GamePulseWidget() {
     [TabKind.TriggerDetail]: TriggerDetailsTab,
   };
 
-  console.log({ tabKind });
-
   const ActiveTab = TAB_COMPONENTS[tabKind] || GamePulseTabUtils.generateManageGameId(ScopeId.Global);
 
   const showDisplay = tabKind !== TabKind.General && tabKind !== TabKind.GameManage;
@@ -84,7 +82,6 @@ export function GamePulseWidget() {
       <WidgetLayout
         layout="long-menu"
         showDisplay={showDisplay}
-        footerSlots={<ManageOnWebButton />}
       >
         <Tooltip
           visible={tutorialVisible}
@@ -247,17 +244,5 @@ function TriggerDetailsTab() {
       onUpdate={handleUpdate}
       staticConfig={staticConfig}
     />
-  );
-}
-
-function ManageOnWebButton() {
-  const handleClick = () => {
-    remote.shell.openExternal('https://streamlabs.com/dashboard#/widgets/game-pulse');
-  };
-  return (
-    <Button type="ghost" onClick={handleClick}>
-      <i className="icon-pop-out-2" style={{ marginRight: 8 }} />
-      {$t('Manage on Web')}
-    </Button>
   );
 }

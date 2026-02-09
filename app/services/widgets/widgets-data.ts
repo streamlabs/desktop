@@ -547,7 +547,7 @@ export const WidgetDefinitions: { [x: number]: IWidget } = {
     y: 0,
     anchor: AnchorPoint.North,
     url(host, token) {
-      return `https://${host}/widgets/game-pulse/v1/${token}?simulate=1`; // todo: ask about risks of simulate=1 here
+      return `https://${host}/widgets/game-pulse/v1/${token}`;
     },
   },
 };

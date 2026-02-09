@@ -32,12 +32,14 @@ export class DonationTickerService extends WidgetSettingsService<IDonationTicker
   static initialState = WIDGET_INITIAL_STATE;
 
   getApiSettings() {
+    const host = this.getHost();
     return {
       type: WidgetType.DonationTicker,
-      url: WidgetDefinitions[WidgetType.DonationTicker].url(this.getHost(), this.getWidgetToken()),
-      previewUrl: `https://${this.getHost()}/widgets/donation-ticker?token=${this.getWidgetToken()}&simulate=1`,
-      dataFetchUrl: `https://${this.getHost()}/api/v5/slobs/widget/ticker`,
-      settingsSaveUrl: `https://${this.getHost()}/api/v5/slobs/widget/ticker`,
+      url: WidgetDefinitions[WidgetType.DonationTicker].url(host, this.getWidgetToken()),
+      previewUrl: `https://${host}/widgets/donation-ticker?token=${this.getWidgetToken()}&simulate=1`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/tipticker`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/ticker`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/ticker`,
       settingsUpdateEvent: 'donationTickerSettingsUpdate',
       customCodeAllowed: true,
       customFieldsAllowed: true,
