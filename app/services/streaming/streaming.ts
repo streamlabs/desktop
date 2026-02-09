@@ -643,23 +643,6 @@ export class StreamingService
         const errorType = this.handleTypedStreamError(e, failureType, 'Failed to setup restream');
         throwStreamError(errorType);
       }
-
-      // Setup restream context if enhanced broadcasting is enabled for Twitch
-      if (this.state.enhancedBroadcasting) {
-        try {
-          await this.createEnhancedBroadcastMultistream();
-        } catch (e: unknown) {
-          console.error('Error setting up restream context for enhanced broadcasting:', e);
-
-          const error = this.handleTypedStreamError(
-            e,
-            'RESTREAM_ENHANCED_BROADCASTING_FAILED',
-            'Failed to setup restream for enhanced broadcasting',
-          );
-          this.setError(error);
-          return;
-        }
-      }
     }
 
     // apply optimized settings
@@ -1054,7 +1037,13 @@ export class StreamingService
     return error;
   }
 
-  resetInfo() {
+  async resetInfo(destroyContexts: boolean = false) {
+    if (destroyContexts) {
+      await new Promise(async resolve => {
+        await this.handleCleanupStreamingInstances(true);
+        resolve(true);
+      });
+    }
     this.RESET_STREAM_INFO();
   }
 
@@ -1171,7 +1160,7 @@ export class StreamingService
     // start dual output
     if (this.views.isDualOutputMode) {
       if (this.views.isTwitchDualStreaming) {
-        await this.createStreaming('both', 3, true, 'enhancedBroadcasting');
+        await this.createStreaming('both', 1, true, 'horizontal', true);
       } else if (this.state.enhancedBroadcasting) {
         // Figure out which display Twitch is streaming to and create the enhanced broadcasting instance with that display.
         // For enhanced broadcasting while multistreaming one of the displays, the horizontal and vertical streaming instances will be handled in `handleStreamingSignal`.
@@ -1181,16 +1170,25 @@ export class StreamingService
         const contextName = this.views.shouldSetupRestream ? 'enhancedBroadcasting' : display;
         await this.createStreaming(display, 3, true, contextName, true);
       } else {
-        // For dual streaming without enhanced broadcasting, the vertical stream instance will be created and started after the horizontal stream.
-        this.createStreaming('horizontal', 2, true, 'horizontal');
+        // For dual output without enhanced broadcasting, the vertical stream instance will be created and started after the horizontal stream.
+        this.createStreaming('horizontal', 1, true, 'horizontal', false);
       }
     } else {
       // When multistreaming Twitch enhanced broadcasting, the horizontal streaming instance will be handled in `handleStreamingSignal`
-      if (this.state.enhancedBroadcasting && this.views.shouldSetupRestream) {
-        await this.createStreaming('horizontal', 3, true, 'enhancedBroadcasting', true);
-      } else {
-        await this.createStreaming('horizontal', 2, true, 'horizontal');
-      }
+
+      const contextName =
+        this.state.enhancedBroadcasting && this.views.shouldSetupRestream
+          ? 'enhancedBroadcasting'
+          : 'horizontal';
+      const audioTrack = this.state.enhancedBroadcasting && this.views.shouldSetupRestream ? 3 : 1;
+
+      await this.createStreaming(
+        'horizontal',
+        audioTrack,
+        true,
+        contextName,
+        this.state.enhancedBroadcasting,
+      );
     }
 
     startStreamingPromise
@@ -1379,6 +1377,85 @@ export class StreamingService
     this.usageStatisticsService.recordFeatureUsage('Streaming');
   }
 
+  private async handleStartDualOutputStream(
+    code: EOBSOutputSignal,
+    context: TOutputContext,
+    nextState: EStreamingState,
+    time: string,
+  ) {
+    // Handle dual output mode
+
+    // Maybe not necessary, but just in case add a small delay to stagger creating/resolving the next streaming instance
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Handle enhanced broadcasting multistream in dual output mode
+    if (context === 'enhancedBroadcasting') {
+      await this.validateOrCreateOutputInstance('horizontal', 'streaming', 1, 'horizontal');
+      // Return early because the horizontal stream needs to start and the vertical streaming instance needs to be created.
+      // The start streaming promise will be resolved when the vertical stream starts
+      return;
+    }
+
+    // In dual output mode, create the vertical streaming instance after the horizontal stream has started. The start streaming promise
+    // resolves when the vertical stream starts because the vertical stream is the last streaming instance created
+    if (context === 'horizontal') {
+      await this.validateOrCreateOutputInstance('vertical', 'streaming', 2, 'vertical', true);
+    }
+
+    if (context === 'vertical') {
+      await this.handleStartStreaming(code);
+    }
+
+    if (this.isDisplayContext(context)) {
+      this.SET_STREAMING_STATUS(nextState, context, time);
+      this.streamingStatusChange.next(nextState);
+    }
+  }
+
+  private async handleStartSingleOutputStream(
+    code: EOBSOutputSignal,
+    context: TOutputContext,
+    nextState: EStreamingState,
+    time: string,
+  ) {
+    // Handle single output mode
+    if (context === 'enhancedBroadcasting') {
+      await this.createStreaming('horizontal', 1, true, 'horizontal', false);
+    }
+
+    if (context === 'horizontal') {
+      await this.handleStartStreaming(code);
+    }
+
+    if (context === 'vertical') {
+      // This should not happen because the vertical stream is only created in dual output mode so reject the promise
+      await this.handleCleanupStreamingInstances(false, true);
+
+      this.SET_STREAMING_STATUS(EStreamingState.Offline, context, time);
+      this.streamingStatusChange.next(EStreamingState.Offline);
+
+      this.RESET_STREAM_INFO();
+      this.rejectStartStreaming();
+
+      this.createOBSError(
+        EOBSOutputType.Streaming,
+        'vertical',
+        EOBSOutputSignal.Start,
+        EOutputCode.Error,
+        $t(
+          'Vertical stream accidentally started in single output mode. Please report this to support.',
+        ),
+      );
+
+      return;
+    }
+
+    if (this.isDisplayContext(context)) {
+      this.SET_STREAMING_STATUS(nextState, context, time);
+      this.streamingStatusChange.next(nextState);
+    }
+  }
+
   /**
    * Handle stopping the stream
    * @remark Allows for consistency when handling stopping the stream in
@@ -1408,6 +1485,7 @@ export class StreamingService
     isEnhancedBroadcasting: boolean = false,
   ) {
     if (isEnhancedBroadcasting || contextName === 'enhancedBroadcasting') {
+      console.log('Creating enhanced broadcasting streaming instance');
       this.contexts[contextName].streaming =
         mode === 'Advanced'
           ? (EnhancedBroadcastingAdvancedStreamingFactory.create() as IAdvancedStreaming)
@@ -1420,38 +1498,6 @@ export class StreamingService
     }
   }
 
-  private async createEnhancedBroadcastMultistream(
-    start: boolean = false,
-    contextName: TOutputContext = 'stream',
-  ) {
-    const display = this.settingsService.views.values.Stream.server.includes('streamlabs')
-      ? 'horizontal'
-      : 'vertical';
-
-    const outputSettings =
-      display === 'horizontal'
-        ? this.settingsService.views.values.Stream
-        : this.settingsService.views.values.StreamSecond;
-
-    this.videoSettingsService.validateVideoContext(display);
-
-    // Restore Twitch stream for the display that is being restreamed
-    const twitchService = getPlatformService('twitch') as TwitchService;
-    const streamKey = twitchService.state.streamKey || (await twitchService.fetchStreamKey());
-
-    this.streamSettingsService.setSettings(
-      {
-        key: streamKey,
-        platform: 'twitch',
-        streamType: 'rtmp_common',
-        server: 'auto',
-      },
-      display,
-    );
-
-    // await this.createStreaming(display as TDisplayType, 3, start, contextName, outputSettings);
-  }
-
   /**
    * Create a streaming instance for the given display
    * @param display - The display to create the streaming for
@@ -1461,11 +1507,19 @@ export class StreamingService
   private async createStreaming(
     output: TDisplayOutput,
     index: number,
-    start?: boolean,
-    context?: TOutputContext,
+    start: boolean = true,
+    context: TOutputContext = 'horizontal',
     isEnhancedBroadcasting: boolean = false,
     // outputSettings?: IStreamOutputSettings,
   ) {
+    console.log(
+      'output',
+      output,
+      'context',
+      context,
+      'isEnhancedBroadcasting',
+      isEnhancedBroadcasting,
+    );
     const display = this.views.getOutputDisplayType(output);
     const contextName = context || display;
     const mode = this.outputSettingsService.getSettings().mode;
@@ -1473,7 +1527,7 @@ export class StreamingService
     this.createStreamingInstance(contextName, mode, isEnhancedBroadcasting);
 
     if (this.isAdvancedStreaming(this.contexts[contextName].streaming)) {
-      const stream = this.migrateSettings('streaming', display) as
+      const stream = this.migrateSettings('streaming', contextName, isEnhancedBroadcasting) as
         | IAdvancedStreaming
         | IEnhancedBroadcastingAdvancedStreaming;
 
@@ -1496,7 +1550,7 @@ export class StreamingService
         | IAdvancedStreaming
         | IEnhancedBroadcastingAdvancedStreaming;
     } else if (this.isSimpleStreaming(this.contexts[contextName].streaming)) {
-      const stream = this.migrateSettings('streaming', display) as
+      const stream = this.migrateSettings('streaming', contextName, isEnhancedBroadcasting) as
         | ISimpleStreaming
         | IEnhancedBroadcastingSimpleStreaming;
 
@@ -1512,7 +1566,7 @@ export class StreamingService
       );
     }
 
-    if (contextName === 'enhancedBroadcasting' && output === 'both') {
+    if (this.views.isTwitchDualStreaming && output === 'both') {
       this.contexts[contextName].streaming.video = this.videoSettingsService.contexts.horizontal;
       (this.contexts[contextName].streaming as
         | IEnhancedBroadcastingSimpleStreaming
@@ -1615,15 +1669,13 @@ export class StreamingService
           ? e.message
           : $t('An unknown Recording error occurred. Please try again.');
 
-      const error = {
-        type: EOBSOutputType.Recording,
-        signal: EOBSOutputSignal.Stop,
-        code: EOutputCode.Error,
-        error: message,
-        service: display,
-      };
-
-      this.handleOBSOutputError(error);
+      this.createOBSError(
+        EOBSOutputType.Recording,
+        display,
+        EOBSOutputSignal.Stop,
+        EOutputCode.Error,
+        message,
+      );
 
       // Destroy any existing recording instance and reset the recording state
       // Do not return or throw an error afterwards to allow for the stream and replay buffer to still be toggled
@@ -1956,7 +2008,11 @@ export class StreamingService
   //   return Promise.resolve(this.contexts[contextName].streaming);
   // }
 
-  private migrateSettings(type: 'streaming' | 'recording', contextName: TOutputContext) {
+  private migrateSettings(
+    type: 'streaming' | 'recording',
+    contextName: TOutputContext,
+    isEnhancedBroadcastingContext: boolean = false,
+  ) {
     const settings =
       type === 'streaming'
         ? // ? this.outputSettingsService.getStreamingSettings()
@@ -1965,12 +2021,17 @@ export class StreamingService
 
     const instance = this.contexts[contextName][type];
 
+    console.log('instance', instance);
+
     Object.entries(settings).forEach(([key, value]) => {
       console.log('[key,value]', [key, value]);
       if (value === undefined) return;
 
       // share the video encoder with the recording instance if it exists
-      if (key === 'videoEncoder') {
+      if (
+        key === 'videoEncoder' &&
+        (contextName !== 'enhancedBroadcasting' || isEnhancedBroadcastingContext)
+      ) {
         instance.videoEncoder = VideoEncoderFactory.create(
           settings.videoEncoder,
           `video-encoder-${type}-${contextName}`,
@@ -2053,47 +2114,19 @@ export class StreamingService
     const time = new Date().toISOString();
 
     if (info.signal === EOBSOutputSignal.Start) {
-      // Handle enhanced broadcasting streaming instance
-      if (this.state.enhancedBroadcasting && context === 'enhancedBroadcasting') {
-        // In single output mode, create the horizontal stream for all targets except for Twitch
-        // When multistreaming in dual output mode with enhanced broadcasting, create and start the horizontal stream.
-        // The vertical stream will be created and started in the `handleStreamingSignal` after the horizontal stream has started
-        if (
-          !this.views.isDualOutputMode ||
-          (this.views.isDualOutputMode && this.views.shouldSetupRestream)
-        ) {
-          // Maybe not necessary, but just in case add a small delay to stagger creating the horizontal streaming instance
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          await this.createStreaming('horizontal', 1, true);
-        }
+      if (this.views.isDualOutputMode) {
+        await this.handleStartDualOutputStream(info.signal, context, nextState, time);
+      } else {
+        await this.handleStartSingleOutputStream(info.signal, context, nextState, time);
       }
-
-      // Handle dual output streaming instance
-      if (this.views.isDualOutputMode && context === 'horizontal') {
-        // Create and start the vertical streaming instance if in dual output mode.
-        // Note: in order to stream in dual output mode, we need to create both a horizontal and vertical
-        // streaming instance. To prevent errors, the vertical instance should only be created after the
-        // horizontal instance has been created and started. In dual output mode, the start streaming promise
-        // should be resolved after the vertical instance has been created and started.
-
-        // Maybe not necessary, but just in case add a small delay to stagger destroying the streaming instances
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        await this.validateOrCreateOutputInstance('vertical', 'streaming', 1, 'vertical', true);
-
-        // Update the streaming status for the horizontal instance
-        this.SET_STREAMING_STATUS(nextState, 'horizontal', time);
-
-        // Return early because resolving the promise for starting the stream will be handled by signals from the
-        // vertical instance.
-        return;
-      }
+      // Updating state for the UI is handled in the above functions
+      return;
     } else if (info.signal === EOBSOutputSignal.Activate) {
       // Currently, do nothing on `activate` because the `starting` signal has handled settings the starting
       // streaming status. The `activate` signal is sent after the `starting` signal and is used to indicate that
-      // the stream has successfully been created and is ready to start.
-      if (context === 'horizontal') {
-        this.handleStartStreaming(info.signal);
-      }
+      // the stream has successfully been created and is ready to start. The `start` signal is sent after the
+      // `activate` signal and is used to indicate that the stream has started. The start streaming promise will
+      // be resolved on the `start` signal.
     } else if (info.signal === EOBSOutputSignal.Starting) {
       // In dual output mode, do nothing on the `starting` signal for the horizontal stream context because
       // the vertical stream context still needs to be created. To prevent errors, the vertical stream context
@@ -2110,12 +2143,15 @@ export class StreamingService
         this.sendStreamEndEvent();
       }
     } else if (info.signal === EOBSOutputSignal.Stop) {
-      if (context === 'horizontal') {
-        // It is possible that one of the contexts has gone live while the others one has failed to start
-        // so to prevent orphaned streaming instances, all streaming instances should be stopped when the
-        // horizontal instance stops
-        this.handleCleanupStreamingInstances(true);
+      if (info.code !== EOutputCode.Success) {
+        this.createOBSError(EOBSOutputType.Streaming, context, info.signal, info.code, info.error);
 
+        // It is possible that one of the contexts has gone live while the others one has failed to start
+        // so to prevent orphaned streaming instances, all streaming instances should be stopped on error
+        await this.handleCleanupStreamingInstances(false, true);
+      }
+
+      if (context === 'horizontal') {
         this.RESET_STREAM_INFO();
         this.rejectStartStreaming();
         this.usageStatisticsService.recordAnalyticsEvent('StreamingStatus', {
@@ -2160,19 +2196,7 @@ export class StreamingService
         // The horizontal context always goes live regardless of the streaming mode
         // so when the horizontal context has deactivated, any instances created for
         // `stream` and `streamSecond` should be destroyed to prevent memory leaks.
-        for (const [contextName, instance] of Object.entries(this.contexts)) {
-          if (
-            contextName === 'horizontal' ||
-            instance.streaming === undefined ||
-            instance.streaming === null
-          ) {
-            continue;
-          }
-
-          instance.streaming.stop(true);
-          // Maybe not necessary, but just in case add a small delay to stagger destroying the streaming instances
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
+        await this.handleCleanupStreamingInstances(true, false);
 
         await this.handleDestroyOutputContexts(context);
       }
@@ -2373,15 +2397,13 @@ export class StreamingService
           ? e.message
           : $t('An unknown Replay Buffer error occurred. Please try again.');
 
-      const error = {
-        type: EOBSOutputType.ReplayBuffer,
-        signal: EOBSOutputSignal.Stop,
-        code: EOutputCode.Error,
-        error: message,
-        service: display,
-      };
-
-      this.handleOBSOutputError(error);
+      this.createOBSError(
+        EOBSOutputType.ReplayBuffer,
+        display,
+        EOBSOutputSignal.Stop,
+        EOutputCode.Error,
+        message,
+      );
 
       // Destroy any existing replay buffer instances and reset the replay buffer state
       // Do not return or throw an error afterwards to allow for the stream and recording to still be toggled
@@ -3036,6 +3058,25 @@ export class StreamingService
     }
   }
 
+  private createOBSError(
+    type: EOBSOutputType,
+    context: TOutputContext,
+    signal: EOBSOutputSignal,
+    code: EOutputCode,
+    message: string,
+  ) {
+    const error: IOBSOutputSignalInfo = {
+      type,
+      signal,
+      code,
+      error: message,
+      service: context,
+    };
+
+    console.error('Streaming error: started vertical stream in single output mode', error);
+    this.handleOBSOutputError(error);
+  }
+
   private sendStreamEndEvent() {
     const data: Dictionary<any> = {};
     data.viewerCounts = {};
@@ -3124,12 +3165,22 @@ export class StreamingService
     });
   }
 
-  private handleCleanupStreamingInstances(force: boolean = false) {
-    for (const context of Object.values(this.contexts)) {
-      if (context.streaming === undefined || context.streaming === null) {
+  private async handleCleanupStreamingInstances(
+    skipHorizontal: boolean = false,
+    force: boolean = false,
+  ) {
+    for (const [contextName, instance] of Object.entries(this.contexts)) {
+      if (
+        (contextName === 'horizontal' && skipHorizontal) ||
+        instance.streaming === undefined ||
+        instance.streaming === null
+      ) {
         continue;
       }
-      context.streaming.stop(force);
+
+      instance.streaming.stop(true);
+      // Maybe not necessary, but just in case add a small delay to stagger destroying the streaming instances
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
 

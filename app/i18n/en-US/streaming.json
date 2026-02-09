@@ -340,5 +340,6 @@
   "Vertical Recording Active": "Vertical Recording Active",
   "Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?": "Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?",
   "Vertical Replay Buffer Active": "Vertical Replay Buffer Active",
-  "Vertical replay buffer is in-progress. Would you like to stop the replay buffer to enable AI Highlighter?": "Vertical replay buffer is in-progress. Would you like to stop the replay buffer to enable AI Highlighter?"
+  "Vertical replay buffer is in-progress. Would you like to stop the replay buffer to enable AI Highlighter?": "Vertical replay buffer is in-progress. Would you like to stop the replay buffer to enable AI Highlighter?",
+  "Vertical stream accidentally started in single output mode. Please report this to support.": "Vertical stream accidentally started in single output mode. Please report this to support."
 }
