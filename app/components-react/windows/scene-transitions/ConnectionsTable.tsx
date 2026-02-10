@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Button, Table } from 'antd';
 import cx from 'classnames';
 import { Services } from 'components-react/service-provider';

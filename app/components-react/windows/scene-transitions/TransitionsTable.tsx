@@ -74,7 +74,14 @@ export default function TransitionsTable(p:
     {
       title: $t('Default'),
       dataIndex: 'default',
-      render: (_, { id }) => <i onClick={() => makeDefault(id)} className={cx('fas fa-circle', defaultId === id && styles.transitionDefault)} />
+      render: (_, { id }) => (
+        <div className={styles.transitionDefaultSelector}>
+          <i
+            onClick={() => makeDefault(id)}
+            className={cx(defaultId === id ? 'fas' : 'far', 'fa-circle', defaultId === id && styles.transitionDefault)}
+          />
+        </div>
+      ),
     },
     {
       title: $t('Name'),
