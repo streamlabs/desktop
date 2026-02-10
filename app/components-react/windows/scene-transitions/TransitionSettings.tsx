@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Services } from 'components-react/service-provider';
 import { metadata } from 'components-react/shared/inputs/metadata';
 import { $t } from 'services/i18n';
 import { useVuex } from 'components-react/hooks';
 import FormFactory from 'components-react/shared/inputs/FormFactory';
+import { ObsForm } from 'components-react/obs/ObsForm';
+import isEqual from 'lodash/isEqual';
+import { IObsInput, TObsValue } from 'components/obs/inputs/ObsInput';
 
 export default function TransitionSettings(p: { transitionId: string }) {
   const { TransitionsService, EditorCommandsService } = Services;
@@ -12,6 +15,11 @@ export default function TransitionSettings(p: { transitionId: string }) {
     values: TransitionsService.views.getPropertiesForTransition(p.transitionId),
     typeOptions: TransitionsService.views.getTypes(),
   }));
+
+  const [propertiesUpdated, setPropertiesUpdated] = useState(0);
+  const obsProperties = useMemo(() => {
+    return TransitionsService.getPropertiesFormData(p.transitionId)
+  }, [propertiesUpdated]);
 
   const meta = {
     name: metadata.text({ label: $t('Name') }),
@@ -30,9 +38,16 @@ export default function TransitionSettings(p: { transitionId: string }) {
     }
   }
 
+  function handleObsChange(formData: IObsInput<TObsValue>[]) {
+    if (isEqual(formData, obsProperties)) return;
+    EditorCommandsService.actions.executeCommand('EditTransitionCommand', p.transitionId, { formData });
+    setPropertiesUpdated(propertiesUpdated + 1);
+  }
+
   return (
     <>
       <FormFactory metadata={meta} values={values} onChange={handleChange} />
+      <ObsForm value={obsProperties} onChange={handleObsChange} />
     </>
   );
 }
