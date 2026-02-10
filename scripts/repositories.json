@@ -36,7 +36,7 @@
       "name": "crash-handler",
       "url": "https://slobs-crash-handler.s3-us-west-2.amazonaws.com/",
       "archive": "crash-handler-[VERSION]-[OS][ARCH].tar.gz",
-      "version": "1.2.25",
+      "version": "1.2.27",
       "win64": true,
       "osx": true
     },
