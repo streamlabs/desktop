@@ -2,10 +2,8 @@ import { mutation, StatefulService, ViewHandler } from 'services/core/stateful-s
 import * as obs from '../../obs-api';
 import { Inject } from 'services/core/injector';
 import { TObsValue, TObsFormData } from 'components/obs/inputs/ObsInput';
-import { IListOption } from 'components-react/shared/inputs/ListInput';
 import { WindowsService } from 'services/windows';
 import { ScenesService } from 'services/scenes';
-import { Scene } from 'services/scenes/scene';
 import uuid from 'uuid/v4';
 import { SceneCollectionsService } from 'services/scene-collections';
 import { $t } from 'services/i18n';
@@ -40,7 +38,7 @@ interface ITransitionsState {
   studioMode: boolean;
 }
 
-interface ITransition {
+export interface ITransition {
   id: string;
   name: string;
   type: ETransitionType;
@@ -67,7 +65,7 @@ export interface ITransitionCreateOptions {
 }
 
 class TransitionsViews extends ViewHandler<ITransitionsState> {
-  getTypes(): IListOption<ETransitionType>[] {
+  getTypes(): { label: string; value: ETransitionType }[] {
     const types = [
       { label: $t('Cut'), value: ETransitionType.Cut },
       { label: $t('Fade'), value: ETransitionType.Fade },
@@ -108,6 +106,10 @@ class TransitionsViews extends ViewHandler<ITransitionsState> {
 
   getConnection(id: string) {
     return this.state.connections.find(conn => conn.id === id);
+  }
+
+  getTransition(id: string) {
+    return this.state.transitions.find(tran => tran.id === id);
   }
 
   get studioMode() {

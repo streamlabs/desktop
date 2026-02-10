@@ -16,11 +16,6 @@ export default function TransitionSettings(p: { transitionId: string }) {
     typeOptions: TransitionsService.views.getTypes(),
   }));
 
-  const [propertiesUpdated, setPropertiesUpdated] = useState(0);
-  const obsProperties = useMemo(() => {
-    return TransitionsService.getPropertiesFormData(p.transitionId)
-  }, [propertiesUpdated]);
-
   const meta = {
     name: metadata.text({ label: $t('Name') }),
     type: metadata.list({
@@ -38,16 +33,5 @@ export default function TransitionSettings(p: { transitionId: string }) {
     }
   }
 
-  function handleObsChange(formData: IObsInput<TObsValue>[]) {
-    if (isEqual(formData, obsProperties)) return;
-    EditorCommandsService.actions.executeCommand('EditTransitionCommand', p.transitionId, { formData });
-    setPropertiesUpdated(propertiesUpdated + 1);
-  }
-
-  return (
-    <>
-      <FormFactory metadata={meta} values={values} onChange={handleChange} />
-      <ObsForm value={obsProperties} onChange={handleObsChange} />
-    </>
-  );
+  return <FormFactory metadata={meta} values={values} onChange={handleChange} />;
 }
