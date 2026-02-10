@@ -10,12 +10,12 @@ export default function ConnectionSettings(p: { connectionId: string }) {
 
   const { sceneOptions, transitionOptions, connection } = useVuex(() => ({
     sceneOptions: [
-          { label: $t('All'), value: 'ALL' },
-          ...ScenesService.views.scenes.map(scene => ({
-            label: scene.name,
-            value: scene.id,
-          })),
-        ],
+      { label: $t('All'), value: 'ALL' },
+      ...ScenesService.views.scenes.map(scene => ({
+        label: scene.name,
+        value: scene.id,
+      })),
+    ],
     transitionOptions: TransitionsService.state.transitions.map(transition => ({
       label: transition.name,
       value: transition.id,
@@ -43,5 +43,5 @@ export default function ConnectionSettings(p: { connectionId: string }) {
     });
   }
 
-  return <FormFactory metadata={meta} values={values} onChange={handleChange} />
+  return <FormFactory formOptions={{ layout: 'horizontal' }} metadata={meta} values={values} onChange={handleChange} />
 }

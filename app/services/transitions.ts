@@ -2,7 +2,7 @@ import { mutation, StatefulService, ViewHandler } from 'services/core/stateful-s
 import * as obs from '../../obs-api';
 import { Inject } from 'services/core/injector';
 import { TObsValue, TObsFormData } from 'components/obs/inputs/ObsInput';
-import { IListOption } from 'components/shared/inputs';
+import { IListOption } from 'components-react/shared/inputs/ListInput';
 import { WindowsService } from 'services/windows';
 import { ScenesService } from 'services/scenes';
 import { Scene } from 'services/scenes/scene';
@@ -69,21 +69,26 @@ export interface ITransitionCreateOptions {
 class TransitionsViews extends ViewHandler<ITransitionsState> {
   getTypes(): IListOption<ETransitionType>[] {
     const types = [
-      { title: $t('Cut'), value: ETransitionType.Cut },
-      { title: $t('Fade'), value: ETransitionType.Fade },
-      { title: $t('Swipe'), value: ETransitionType.Swipe },
-      { title: $t('Slide'), value: ETransitionType.Slide },
-      { title: $t('Fade to Color'), value: ETransitionType.FadeToColor },
-      { title: $t('Luma Wipe'), value: ETransitionType.LumaWipe },
-      { title: $t('Stinger'), value: ETransitionType.Stinger },
+      { label: $t('Cut'), value: ETransitionType.Cut },
+      { label: $t('Fade'), value: ETransitionType.Fade },
+      { label: $t('Swipe'), value: ETransitionType.Swipe },
+      { label: $t('Slide'), value: ETransitionType.Slide },
+      { label: $t('Fade to Color'), value: ETransitionType.FadeToColor },
+      { label: $t('Luma Wipe'), value: ETransitionType.LumaWipe },
+      { label: $t('Stinger'), value: ETransitionType.Stinger },
     ];
 
     if (getOS() === OS.Windows) {
-      types.push({ title: $t('Motion'), value: ETransitionType.Motion });
-      types.push({ title: $t('Shuffle'), value: ETransitionType.Shuffle });
+      types.push({ label: $t('Motion'), value: ETransitionType.Motion });
+      types.push({ label: $t('Shuffle'), value: ETransitionType.Shuffle });
     }
 
     return types;
+  }
+
+  getPropertiesForTransition(transitionId: string): Partial<{ type: string; duration: number; name: string }> {
+    const found = this.state.transitions.find(tran => tran.id === transitionId);
+    return found || {};
   }
 
   /**
