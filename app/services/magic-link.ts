@@ -51,7 +51,10 @@ export class MagicLinkService extends Service {
    * open the prime onboarding in the browser
    * @param refl a referral tag for analytics
    */
-  async linkToPrime(refl: TUltraRefl, config?: { redirectToCheckout?: boolean, event?: TAnalyticsEvent }) {
+  async linkToPrime(
+    refl: TUltraRefl,
+    config?: { redirectToCheckout?: boolean; event?: TAnalyticsEvent },
+  ) {
     // TODO: this is only here to accommodate ultra checkout A/B test requiring OS
     // remove this and the parameter from {getDashboardMagicLink} after.
     const os = byOS({ [OS.Windows]: 'windows', [OS.Mac]: 'mac' });
