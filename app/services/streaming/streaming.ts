@@ -721,11 +721,6 @@ export class StreamingService
         this.SET_ENHANCED_BROADCASTING(isEnhancedBroadcasting);
       }
 
-      console.log(
-        'settings.platforms[platform]',
-        JSON.stringify(settings.platforms[platform], null, 2),
-      );
-
       // Note: Enhanced broadcasting setting persist in two places during the go live flow:
       // in the Twitch service and in osn. The setting in the Twitch service is persisted
       // between streams in order to restore the user's preferences for when they go live with
@@ -736,7 +731,6 @@ export class StreamingService
           (settings.platforms.twitch && settings.platforms.twitch.isEnhancedBroadcasting) ||
           this.views.getIsEnhancedBroadcasting();
 
-        console.log('Enabling enhanced broadcasting');
         this.SET_ENHANCED_BROADCASTING(isEnhancedBroadcasting);
       }
 
@@ -1168,7 +1162,7 @@ export class StreamingService
         await this.createEnhancedBroadcastDualOutput();
       } else {
         // For dual output without enhanced broadcasting, the vertical stream instance will be created and started after the horizontal stream.
-        this.createStreaming('horizontal', 1, true, 'horizontal', false);
+        this.createStreaming('vertical', 2, true, 'vertical', false);
       }
     } else {
       // When multistreaming Twitch enhanced broadcasting, the horizontal streaming instance will be handled in `handleStreamingSignal`
@@ -1410,10 +1404,10 @@ export class StreamingService
         // Start the horizontal stream. The start streaming promise will be resolved when the horizontal stream starts
         // If the vertical stream is not an enhanced broadcasting stream, then the horizontal stream should be created
         // as the enhanced broadcasting stream.
-        const isVerticalEnhancedBroadcasting = this.isEnhancedBroadcastingStreaming(
-          this.contexts.vertical.streaming,
-        );
-        console.log('isVerticalEnhancedBroadcasting', isVerticalEnhancedBroadcasting);
+        const horizontalEnhancedBroadcasting =
+          this.contexts.enhancedBroadcasting.streaming === null &&
+          this.state.enhancedBroadcasting &&
+          !this.isEnhancedBroadcastingStreaming(this.contexts.vertical.streaming);
 
         await this.validateOrCreateOutputInstance(
           'horizontal',
@@ -1421,7 +1415,7 @@ export class StreamingService
           1,
           'horizontal',
           true,
-          !isVerticalEnhancedBroadcasting,
+          horizontalEnhancedBroadcasting,
         );
       }
 
@@ -1522,12 +1516,46 @@ export class StreamingService
       this.stopReplayBuffer();
     }
 
+    // Stop the vertical stream only if the horizontal stream does not exist or is not live. If horizontal stream exists
+    // or is live, the vertical stream will be stopped when the horizontal stream receives the `Stop` signal in `handleStreamingSignal`.
+    // If for some reason the vertical stream instance exists but the horizontal stream instance does not, stop and destroy
+    // the vertical stream instance to prevent orphaned streaming instances. Technically, this should only happen if there is an error,
+    // log it as an error for visibility.
+    if (
+      this.contexts.vertical.streaming &&
+      (!this.contexts.horizontal.streaming ||
+        this.state.status.horizontal.streaming !== EStreamingState.Live)
+    ) {
+      console.error(
+        'Vertical streaming instance exists without a horizontal streaming instance. This should not happen and indicates an error in the streaming lifecycle.',
+      );
+      if (this.state.status.vertical.streaming === EStreamingState.Live) {
+        this.handleCleanupStreamingInstances(false, true);
+      } else {
+        for (const contextName of Object.keys(this.contexts) as TOutputContext[]) {
+          this.handleDestroyOutputContexts(contextName);
+        }
+      }
+
+      this.createOBSError(
+        EOBSOutputType.Streaming,
+        'vertical',
+        EOBSOutputSignal.Stop,
+        EOutputCode.Error,
+        $t(
+          'Dual Output horizontal stream failed to start. Please try again or go live in single output mode.',
+        ),
+      );
+    }
+
     // Stop the horizontal stream. On the `Stop` signal in `handleStreamingSignal`, all other streaming
-    // instances will be stopped and destroyed
+    // instances will be stopped and destroyed. Otherwise, just cleanup all of the streaming instances.
     if (this.contexts.horizontal.streaming) {
-      this.contexts.horizontal.streaming.stop(force);
-    } else if (this.contexts.vertical.streaming) {
-      this.contexts.vertical.streaming.stop(force);
+      if (this.state.status.horizontal.streaming === EStreamingState.Live) {
+        this.contexts.horizontal.streaming.stop(force);
+      } else {
+        this.handleCleanupStreamingInstances(false, force);
+      }
     }
   }
   private async createEnhancedBroadcastMultistream() {
@@ -1608,7 +1636,6 @@ export class StreamingService
     isEnhancedBroadcasting: boolean = false,
   ) {
     if (isEnhancedBroadcasting || contextName === 'enhancedBroadcasting') {
-      console.log('Creating enhanced broadcasting streaming instance');
       this.contexts[contextName].streaming =
         mode === 'Advanced'
           ? (EnhancedBroadcastingAdvancedStreamingFactory.create() as IAdvancedStreaming)
@@ -1626,7 +1653,6 @@ export class StreamingService
    * @param display - The display to create the streaming for
    * @param index - The index of the audio track
    */
-  // @@@ TODO Add platform name for error handling for streaming creation errors
   private async createStreaming(
     output: TDisplayOutput,
     index: number,
@@ -1638,14 +1664,6 @@ export class StreamingService
       | (Partial<IStreamOutputSettings> & { platform: string }),
     // outputSettings?: Partial<IStreamOutputSettings> & { platform: string },
   ) {
-    console.log(
-      'output',
-      output,
-      'context',
-      context,
-      'isEnhancedBroadcasting',
-      isEnhancedBroadcasting,
-    );
     const display = this.views.getOutputDisplayType(output);
     const contextName = context || display;
     const mode = this.outputSettingsService.getSettings().mode;
@@ -1656,8 +1674,6 @@ export class StreamingService
       const stream = this.migrateSettings('streaming', contextName, isEnhancedBroadcasting) as
         | IAdvancedStreaming
         | IEnhancedBroadcastingAdvancedStreaming;
-
-      console.log('ADVNACED Migrated streaming settings', stream);
 
       const resolution = this.videoSettingsService.outputResolutions[display];
       stream.outputWidth = resolution.outputWidth;
@@ -1682,18 +1698,10 @@ export class StreamingService
         | ISimpleStreaming
         | IEnhancedBroadcastingSimpleStreaming;
 
-      console.log('SIMPLE Migrated streaming settings', stream);
-      console.log(
-        'this.contexts[contextName].streaming before migration',
-        this.contexts[contextName].streaming,
-      );
-
       stream.audioEncoder = AudioEncoderFactory.create();
-      console.log('Created audio encoder for streaming instance', stream.audioEncoder);
       this.contexts[contextName].streaming = stream as
         | ISimpleStreaming
         | IEnhancedBroadcastingSimpleStreaming;
-      console.log('assigned');
     } else {
       throwStreamError(
         'UNKNOWN_STREAMING_ERROR_WITH_MESSAGE',
@@ -1701,11 +1709,6 @@ export class StreamingService
         'Unable to create streaming instance',
       );
     }
-
-    console.log(
-      'this.contexts[contextName].streaming after migration',
-      this.contexts[contextName].streaming,
-    );
 
     if (this.views.isTwitchDualStreaming && output === 'both') {
       this.contexts[contextName].streaming.video = this.videoSettingsService.contexts.horizontal;
@@ -1724,36 +1727,14 @@ export class StreamingService
       display === 'horizontal'
         ? this.settingsService.views.values.Stream
         : this.settingsService.views.values.StreamSecond;
-    console.log('streamSettings for streaming instance', streamSettings);
+
+    console.log(
+      `${contextName} ${display} streamSettings: `,
+      JSON.stringify(streamSettings, null, 2),
+    );
 
     // If output settings
-    if (contextName === 'enhancedBroadcasting' && outputSettings) {
-      console.log(
-        'Creating enhanced broadcasting streaming instance with output settings',
-        outputSettings,
-        'streamSettings',
-        streamSettings,
-      );
-      // Restore Twitch stream for the display that is being restreamed
-      // const twitchService = getPlatformService('twitch') as TwitchService;
-      // const streamKey = twitchService.state.streamKey || (await twitchService.fetchStreamKey());
-
-      // const twSettings = {
-      //   key: streamKey,
-      //   platform: 'twitch',
-      //   streamType: 'rtmp_common',
-      //   server: 'auto',
-      // };
-      // this.contexts[contextName].streaming.service = ServiceFactory.legacySettings;
-      // this.contexts[contextName].streaming.service.update(twSettings);
-
-      console.log('ServiceFactory.legacySettings ', ServiceFactory.legacySettings);
-
-      // this.contexts[contextName].streaming.service = ServiceFactory.legacySettings;
-      // this.contexts[contextName].streaming.service.update({
-      //   ...outputSettings,
-      //   platform: 'twitch',
-      // });
+    if (contextName === 'enhancedBroadcasting') {
       // Create a designated service instance for enhanced broadcasting with the default service settings.
       this.contexts[contextName].streaming.service = ServiceFactory.create(
         ServiceFactory.legacySettings.settings.streamType,
@@ -1763,46 +1744,79 @@ export class StreamingService
 
       // TODO: is this needed for enhanced broadcasting with the vertical display?
       // this.contexts[contextName].streaming.service.update(streamSettings);
+      console.log('Created enhanced broadcasting streaming service with settings: ', {
+        name: this.contexts[contextName].streaming.service.name,
+        properties: this.contexts[contextName].streaming.service.properties,
+        settings: this.contexts[contextName].streaming.service.settings,
+      });
     } else if (streamSettings.streamType === 'rtmp_common') {
-      // this.contexts[contextName].streaming.service = ServiceFactory.legacySettings;
-      console.log(
-        // 'Creating streaming service with legacy settings',
-        // ServiceFactory.legacySettings,
-        'Creating streamSettings',
-        streamSettings,
-      );
-
-      // this.contexts[contextName].streaming.service = ServiceFactory.create(
-      //   streamSettings.streamType,
-      //   `${contextName}-service`,
-      //   ServiceFactory.legacySettings.settings,
-      // );
-      // // TODO: is this needed for enhanced broadcasting with the vertical display?
-      // this.contexts[contextName].streaming.service.update(streamSettings);
-
+      this.contexts[display].streaming.service = ServiceFactory.legacySettings;
+      this.contexts[display].streaming.service.update(streamSettings);
+    } else {
       this.contexts[contextName].streaming.service = ServiceFactory.create(
         streamSettings.streamType,
         `${contextName}-service`,
-        streamSettings,
+        ServiceFactory.legacySettings.settings,
+        // streamSettings,
       );
+
+      this.contexts[contextName].streaming.service.update(streamSettings);
+
       console.log(
-        'Created streaming service with streamSettings',
-        this.contexts[contextName].streaming.service,
-      );
-    } else {
-      this.contexts[contextName].streaming.service = ServiceFactory.create(
-        'rtmp_custom',
-        `${contextName}-service`,
-        streamSettings,
+        `Created ${contextName} ${display} ${streamSettings.streamType} streaming service with settings: `,
+        {
+          name: this.contexts[contextName].streaming.service.name,
+          properties: {
+            status: this.contexts[contextName].streaming.service.properties.status,
+            count: this.contexts[contextName].streaming.service.properties.count(),
+            first: this.contexts[contextName].streaming.service.properties.first(),
+          },
+          settings: this.contexts[contextName].streaming.service.settings,
+        },
       );
     }
+    // } else if (streamSettings.streamType === 'rtmp_common') {
+    //   // this.contexts[contextName].streaming.service = ServiceFactory.legacySettings;
+
+    //   // this.contexts[contextName].streaming.service = ServiceFactory.create(
+    //   //   streamSettings.streamType,
+    //   //   `${contextName}-service`,
+    //   //   ServiceFactory.legacySettings.settings,
+    //   // );
+    //   // // TODO: is this needed for enhanced broadcasting with the vertical display?
+    //   // this.contexts[contextName].streaming.service.update(streamSettings);
+
+    //   this.contexts[contextName].streaming.service = ServiceFactory.create(
+    //     streamSettings.streamType,
+    //     `${contextName}-service`,
+    //     streamSettings,
+    //   );
+
+    //   console.log(
+    //     `Created ${contextName} streaming service with settings: `,
+    //     JSON.stringify(this.contexts[contextName].streaming.service, null, 2),
+    //   );
+    // } else {
+    //   this.contexts[contextName].streaming.service = ServiceFactory.create(
+    //     'rtmp_custom',
+    //     `${contextName}-service`,
+    //     streamSettings,
+    //   );
+
+    //   console.log(
+    //     `Created ${contextName} streaming service with settings: `,
+    //     JSON.stringify(this.contexts[contextName].streaming.service, null, 2),
+    //   );
+    // }
 
     // this.contexts[contextName].streaming.service.update(streamSettings);
     this.contexts[contextName].streaming.delay = DelayFactory.create();
     this.contexts[contextName].streaming.reconnect = ReconnectFactory.create();
     this.contexts[contextName].streaming.network = NetworkFactory.create();
 
+    this.logContexts(contextName, 'createStreaming');
     if (start) {
+      console.log('Starting streaming instance for context: ', contextName);
       this.contexts[contextName].streaming.start();
     }
 
@@ -2089,10 +2103,7 @@ export class StreamingService
 
     const instance = this.contexts[contextName][type];
 
-    console.log('instance', instance);
-
     Object.entries(settings).forEach(([key, value]) => {
-      console.log('[key,value]', [key, value]);
       if (value === undefined) return;
 
       // share the video encoder with the recording instance if it exists
@@ -2114,7 +2125,6 @@ export class StreamingService
           throw new Error(instance.videoEncoder.lastError);
         }
       } else {
-        console.log('Migrating setting', key, value);
         (instance as any)[key] = value;
       }
     });
@@ -2157,7 +2167,6 @@ export class StreamingService
     }
   }
 
-  // @@@ TODO MIGRATE
   private async handleStreamingSignal(info: EOutputSignal, context: TOutputContext) {
     console.log('Streaming Signal:', JSON.stringify(info, null, 2), context);
 
@@ -2605,7 +2614,6 @@ export class StreamingService
   ) {
     const context = contextName || display;
     const mode = this.outputSettingsService.getSettings().mode;
-    // TODO: Remove for factory api migration
     const validOutput = this.validateOutputInstance(mode, context, type);
 
     // If the instance matches the mode, return to validate it
@@ -3418,24 +3426,35 @@ export class StreamingService
    * Log the current state of the streaming contexts
    * @remark Used for debugging purposes
    */
-  private logContexts(display: TDisplayType, label?: string) {
-    console.log(
-      display,
-      [label, 'this.contexts[display].recording'].join(' '),
-      this.isAdvancedRecording(this.contexts[display].recording)
-        ? (this.contexts[display].recording as IAdvancedRecording)
-        : (this.contexts[display].recording as ISimpleRecording),
-    );
-    console.log(
-      display,
-      [label, 'this.contexts[display].streaming'].join(' '),
-      this.contexts[display].streaming,
-    );
-    console.log(
-      display,
-      [label, 'this.contexts[display].replayBuffer'].join(' '),
-      this.contexts[display].replayBuffer,
-    );
+  private logContexts(context: TOutputContext, label?: string) {
+    if (!Utils.isDevMode()) return;
+
+    if (this.isDisplayContext(context)) {
+      console.log(
+        context,
+        [label, 'this.contexts[context].recording'].join(' '),
+        this.isAdvancedRecording(this.contexts[context].recording)
+          ? (this.contexts[context].recording as IAdvancedRecording)
+          : (this.contexts[context].recording as ISimpleRecording),
+      );
+      console.log(
+        context,
+        [label, 'this.contexts[context].streaming'].join(' '),
+        this.contexts[context].streaming,
+      );
+      console.log(
+        context,
+        [label, 'this.contexts[context].replayBuffer'].join(' '),
+        this.contexts[context].replayBuffer,
+      );
+    } else {
+      for (const [contextName, instance] of Object.entries(this.contexts) as [
+        TOutputContext,
+        IOutputContext | Partial<IOutputContext>,
+      ][]) {
+        console.log(contextName, [label, 'streaming'].join(' '), instance.streaming);
+      }
+    }
   }
 
   /**
