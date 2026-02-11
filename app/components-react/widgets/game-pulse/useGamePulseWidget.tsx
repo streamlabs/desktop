@@ -396,6 +396,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
       url,
       method: 'POST',
       body: trigger,
+      headers: { 'X-Force-Test': 'true' },
     });
 
     return res;
