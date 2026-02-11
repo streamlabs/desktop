@@ -1584,21 +1584,7 @@ export class StreamingService
       display,
     );
 
-    await this.createStreaming(
-      display as TDisplayType,
-      3,
-      true,
-      'enhancedBroadcasting',
-      true,
-      outputSettings,
-      // );
-      // {
-      //   key: streamKey,
-      //   platform: 'twitch',
-      //   streamType: 'rtmp_common',
-      //   server: 'auto',
-      // },
-    );
+    await this.createStreaming(display as TDisplayType, 3, true, 'enhancedBroadcasting', true);
 
     this.streamSettingsService.setSettings(
       {
@@ -1659,10 +1645,6 @@ export class StreamingService
     start: boolean = true,
     context: TOutputContext = 'horizontal',
     isEnhancedBroadcasting: boolean = false,
-    outputSettings?:
-      | IStreamOutputSettings
-      | (Partial<IStreamOutputSettings> & { platform: string }),
-    // outputSettings?: Partial<IStreamOutputSettings> & { platform: string },
   ) {
     const display = this.views.getOutputDisplayType(output);
     const contextName = context || display;
@@ -1710,7 +1692,10 @@ export class StreamingService
       );
     }
 
-    if (this.views.isTwitchDualStreaming && output === 'both') {
+    if (
+      this.views.isTwitchDualStreaming ||
+      (contextName === 'enhancedBroadcasting' && this.views.isTwitchDualStreamEnabled)
+    ) {
       this.contexts[contextName].streaming.video = this.videoSettingsService.contexts.horizontal;
       (this.contexts[contextName].streaming as
         | IEnhancedBroadcastingSimpleStreaming
