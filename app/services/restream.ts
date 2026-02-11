@@ -416,7 +416,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
   async setupTargets() {
     // delete existing targets
     const targets = await this.fetchTargets();
-    console.log('RESTREAM deleting targets', JSON.stringify(targets, null, 2));
 
     const promises = targets.map(t => this.deleteTarget(t.id));
     await Promise.all(promises);
@@ -424,13 +423,11 @@ export class RestreamService extends StatefulService<IRestreamState> {
     // setup new targets
     const newTargets = [...this.setupPlatforms(), ...this.setupCustomDestinations()];
 
-    console.log('RESTREAM Creating restream targets:', newTargets);
     await this.createTargets(newTargets);
   }
 
   setupPlatforms() {
     const isEnhancedBroadcasting = this.settingsService.isEnhancedBroadcasting();
-    console.log('RESTREAM Enhanced broadcasting multistream:', isEnhancedBroadcasting);
     const isDualOutputMode = this.streamingService.views.isDualOutputMode;
     const modesToRestream = this.streamInfo.displaysToRestream.map(display =>
       this.getMode(display),
@@ -439,9 +436,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
     return this.streamInfo.enabledPlatforms.reduce((platforms, platform) => {
       // Enhanced broacasting when multistreaming uses its own video context and stream
       // so skip setting up Twitch as a target here
-      console.log('RESTREAM setupPlatforms checking platform:', platform);
       if (isEnhancedBroadcasting && platform === 'twitch') {
-        console.log('skipping Twitch');
         return platforms;
       }
 
@@ -639,7 +634,7 @@ export class RestreamService extends StatefulService<IRestreamState> {
       }),
     );
 
-    console.log('creating targets', JSON.stringify(targets, null, 2));
+    console.log('RESTREAM creating targets', JSON.stringify(targets, null, 2));
 
     const request = new Request(url, { headers, body, method: 'POST' });
     const res = await fetch(request);

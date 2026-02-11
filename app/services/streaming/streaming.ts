@@ -1713,11 +1713,6 @@ export class StreamingService
         ? this.settingsService.views.values.Stream
         : this.settingsService.views.values.StreamSecond;
 
-    console.log(
-      `${contextName} ${display} streamSettings: `,
-      JSON.stringify(streamSettings, null, 2),
-    );
-
     // If output settings
     if (contextName === 'enhancedBroadcasting') {
       // Create a designated service instance for enhanced broadcasting with the default service settings.
@@ -1726,14 +1721,6 @@ export class StreamingService
         'enhanced-broadcasting-service',
         ServiceFactory.legacySettings.settings,
       );
-
-      // TODO: is this needed for enhanced broadcasting with the vertical display?
-      // this.contexts[contextName].streaming.service.update(streamSettings);
-      console.log('Created enhanced broadcasting streaming service with settings: ', {
-        name: this.contexts[contextName].streaming.service.name,
-        properties: this.contexts[contextName].streaming.service.properties,
-        settings: this.contexts[contextName].streaming.service.settings,
-      });
     } else if (streamSettings.streamType === 'rtmp_common') {
       this.contexts[display].streaming.service = ServiceFactory.legacySettings;
       this.contexts[display].streaming.service.update(streamSettings);
@@ -1746,62 +1733,13 @@ export class StreamingService
       );
 
       this.contexts[contextName].streaming.service.update(streamSettings);
-
-      console.log(
-        `Created ${contextName} ${display} ${streamSettings.streamType} streaming service with settings: `,
-        {
-          name: this.contexts[contextName].streaming.service.name,
-          properties: {
-            status: this.contexts[contextName].streaming.service.properties.status,
-            count: this.contexts[contextName].streaming.service.properties.count(),
-            first: this.contexts[contextName].streaming.service.properties.first(),
-          },
-          settings: this.contexts[contextName].streaming.service.settings,
-        },
-      );
     }
-    // } else if (streamSettings.streamType === 'rtmp_common') {
-    //   // this.contexts[contextName].streaming.service = ServiceFactory.legacySettings;
-
-    //   // this.contexts[contextName].streaming.service = ServiceFactory.create(
-    //   //   streamSettings.streamType,
-    //   //   `${contextName}-service`,
-    //   //   ServiceFactory.legacySettings.settings,
-    //   // );
-    //   // // TODO: is this needed for enhanced broadcasting with the vertical display?
-    //   // this.contexts[contextName].streaming.service.update(streamSettings);
-
-    //   this.contexts[contextName].streaming.service = ServiceFactory.create(
-    //     streamSettings.streamType,
-    //     `${contextName}-service`,
-    //     streamSettings,
-    //   );
-
-    //   console.log(
-    //     `Created ${contextName} streaming service with settings: `,
-    //     JSON.stringify(this.contexts[contextName].streaming.service, null, 2),
-    //   );
-    // } else {
-    //   this.contexts[contextName].streaming.service = ServiceFactory.create(
-    //     'rtmp_custom',
-    //     `${contextName}-service`,
-    //     streamSettings,
-    //   );
-
-    //   console.log(
-    //     `Created ${contextName} streaming service with settings: `,
-    //     JSON.stringify(this.contexts[contextName].streaming.service, null, 2),
-    //   );
-    // }
-
-    // this.contexts[contextName].streaming.service.update(streamSettings);
     this.contexts[contextName].streaming.delay = DelayFactory.create();
     this.contexts[contextName].streaming.reconnect = ReconnectFactory.create();
     this.contexts[contextName].streaming.network = NetworkFactory.create();
 
     this.logContexts(contextName, 'createStreaming');
     if (start) {
-      console.log('Starting streaming instance for context: ', contextName);
       this.contexts[contextName].streaming.start();
     }
 
@@ -2884,7 +2822,6 @@ export class StreamingService
   }
 
   private async handleRetryStartStreaming(info: IOBSOutputSignalInfo) {
-    console.log('RETRYING START STREAMING WITH RECORDING/REPLAY BUFFER OFF');
     // Toggle off recording and replay buffer when starting the stream
     const recordWhenStreaming = this.streamSettingsService.settings.recordWhenStreaming;
     if (recordWhenStreaming) {
@@ -3141,8 +3078,6 @@ export class StreamingService
     code: EOutputCode,
     message: string,
   ) {
-    console.log('create obs error');
-
     const error: IOBSOutputSignalInfo = {
       type,
       signal,
@@ -3250,13 +3185,6 @@ export class StreamingService
     skipHorizontal: boolean = false,
     force: boolean = false,
   ) {
-    console.log(
-      'Cleaning up streaming instances. Skip horizontal:',
-      skipHorizontal,
-      'Force:',
-      force,
-      this.contexts,
-    );
     for (const [contextName, instance] of Object.entries(this.contexts) as [
       TOutputContext,
       IOutputContext | Partial<IOutputContext>,
