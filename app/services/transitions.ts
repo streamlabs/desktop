@@ -85,7 +85,7 @@ class TransitionsViews extends ViewHandler<ITransitionsState> {
   }
 
   getPropertiesForTransition(
-    transitionId: string
+    transitionId: string,
   ): Partial<{ type: string; duration: number; name: string }> {
     const found = this.state.transitions.find(tran => tran.id === transitionId);
     return found || {};
