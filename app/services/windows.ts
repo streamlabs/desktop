@@ -44,7 +44,7 @@ import {
   MarketingModal,
   Settings,
   Troubleshooter,
-  SceneTransitions
+  SceneTransitions,
 } from 'components/shared/ReactComponentList';
 
 import SourcePropertiesDeprecated from 'components/windows/SourceProperties.vue';
