@@ -1652,6 +1652,15 @@ export class StreamingService
 
     this.createStreamingInstance(contextName, mode, isEnhancedBroadcasting);
 
+    // TODO: Handle this a different way?
+    if (!this.contexts[contextName].streaming) {
+      throwStreamError(
+        'UNKNOWN_STREAMING_ERROR_WITH_MESSAGE',
+        {},
+        'Failed to create streaming instance',
+      );
+    }
+
     if (this.isAdvancedStreaming(this.contexts[contextName].streaming)) {
       const stream = this.migrateSettings('streaming', contextName, isEnhancedBroadcasting) as
         | IAdvancedStreaming
@@ -2025,6 +2034,15 @@ export class StreamingService
         : this.outputSettingsService.getRecordingSettings();
 
     const instance = this.contexts[contextName][type];
+
+    // TODO: Address error a different way?
+    if (!instance) {
+      throwStreamError(
+        'UNKNOWN_STREAMING_ERROR_WITH_MESSAGE',
+        {},
+        `No instance found for context ${contextName} and type ${type} when migrating settings`,
+      );
+    }
 
     Object.entries(settings).forEach(([key, value]) => {
       if (value === undefined) return;
@@ -2564,7 +2582,7 @@ export class StreamingService
     contextName: TOutputContext,
     type: 'streaming' | 'recording',
   ) {
-    if (!this.contexts[contextName].streaming) return false;
+    if (!this.contexts[contextName][type]) return false;
 
     const isAdvancedOutput =
       type === 'streaming'
