@@ -252,6 +252,14 @@ export class SafeMode extends ReactComponent {}
 
 @Component({
   props: {
+    name: { default: 'SceneTransitions' },
+    wrapperStyles: { default: () => ({ height: '100%' }) },
+  },
+})
+export class SceneTransitions extends ReactComponent {}
+
+@Component({
+  props: {
     name: { default: 'Settings' },
     wrapperStyles: { default: () => ({ height: '100%' }) },
   },
