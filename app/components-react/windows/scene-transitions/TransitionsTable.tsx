@@ -109,7 +109,7 @@ export default function TransitionsTable(p:
   return (
     <>
       <Button className="button button--action" onClick={addTransition}>{$t('Add Transition')}</Button>
-      <Table columns={columns} dataSource={transitions} />
+      <Table columns={columns} dataSource={transitions} rowKey={(record) => record.id} />
     </>
   );
 }

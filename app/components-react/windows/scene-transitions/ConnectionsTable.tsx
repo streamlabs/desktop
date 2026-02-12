@@ -93,7 +93,7 @@ export default function ConnectionsTable(p: { setInspectedConnection: (id: strin
   return (
     <>
       <Button className="button button--action" onClick={addConnection}>{$t('Add Connection')}</Button>
-      <Table columns={columns} dataSource={connections} />
+      <Table columns={columns} dataSource={connections} rowKey={(record) => record.id} />
     </>
   );
 }
