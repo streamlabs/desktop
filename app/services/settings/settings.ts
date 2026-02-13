@@ -20,7 +20,7 @@ import { encoderFieldsMap, obsEncoderToEncoderFamily } from './output';
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
 import { EDeviceType, HardwareService } from 'services/hardware';
 import { StreamingService } from 'services/streaming';
-import { byOS, getOS, OS } from 'util/operating-systems';
+import { byOS, OS } from 'util/operating-systems';
 import { UsageStatisticsService } from 'services/usage-statistics';
 import { SceneCollectionsService } from 'services/scene-collections';
 import { NavigationService } from 'services/navigation';
@@ -32,7 +32,6 @@ import { Services } from 'components-react/service-provider';
 import { UserService } from 'app-services';
 
 export enum ESettingsCategory {
-  AI = 'AI',
   SceneCollections = 'Scene Collections',
   Advanced = 'Advanced',
   Audio = 'Audio',
@@ -413,12 +412,6 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     }
 
     categories.push(ESettingsCategory.GetSupport);
-
-    // TODO: Lock behind admin?
-    // Show AI settings for Windows, or for Mac in development. Do not show to Mac users in production.
-    if (getOS() === OS.Windows || (getOS() === OS.Mac && Utils.isDevMode())) {
-      categories.push(ESettingsCategory.AI);
-    }
 
     // dual output mode returns additional categories for each context
     // so hide these from the settings list

@@ -107,6 +107,8 @@ export default function FeaturesNav() {
         loggedOutMenuItemKeys.includes(menuItem.key as EMenuItemKey),
       );
     }
+    console.log('QWOP menu', menu.menuItems);
+    debugger;
     return !compactView
       ? menu.menuItems
       : menu.menuItems.filter((menuItem: IMenuItem) => {

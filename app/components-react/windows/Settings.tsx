@@ -4,7 +4,6 @@ import { MenuInfo } from 'rc-menu/lib/interface';
 import * as pages from './settings/pages';
 import { ESettingsCategory, TCategoryName } from 'services/settings';
 import { EDismissable } from 'services/dismissables';
-import { getOS, OS } from 'util/operating-systems';
 import { Services } from 'components-react/service-provider';
 import { useRealmObject } from 'components-react/hooks/realm';
 import { useVuex } from 'components-react/hooks';
@@ -17,7 +16,6 @@ import { TextInput } from 'components-react/shared/inputs';
 import PlatformLogo from 'components-react/shared/PlatformLogo';
 import DismissableBadge from 'components-react/shared/DismissableBadge';
 import SearchablePages from 'components-react/shared/SearchablePages';
-import Utils from 'services/utils';
 
 export interface ISettingsProps {
   globalSearchStr: string;
@@ -65,13 +63,6 @@ export const SETTINGS_CONFIG: Record<ESettingsCategory, ISettingsConfig> = {
   [ESettingsCategory.Experimental]: { icon: 'fas fa-flask', component: pages.ExperimentalSettings },
   [ESettingsCategory.InstalledApps]: { icon: 'icon-store', component: pages.InstalledApps },
   [ESettingsCategory.GetSupport]: { icon: 'icon-question', component: pages.Support },
-  [ESettingsCategory.AI]: {
-    icon: 'icon-ai',
-    component: pages.AISettings,
-    shouldShow: () => {
-      return getOS() === OS.Windows || (getOS() === OS.Mac && Utils.isDevMode());
-    },
-  },
   [ESettingsCategory.Ultra]: { icon: 'icon-ultra', component: pages.Ultra },
 };
 

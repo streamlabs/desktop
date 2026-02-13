@@ -187,15 +187,6 @@ export default function NavTools(p: { isVisionRunning: boolean }) {
                 onClick={() => openHelp()}
               />
             );
-          } else if (showAiTab && menuItem.key === EMenuItemKey.AI) {
-            return (
-              <NavToolsItem
-                key={menuItem.key}
-                menuItem={menuItem}
-                className={cx({ [styles.vision]: p.isVisionRunning })}
-                onClick={() => openSettingsWindow(ESettingsCategory.AI)}
-              />
-            );
           } else if (menuItem.key === EMenuItemKey.Settings) {
             return (
               <NavToolsItem

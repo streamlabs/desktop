@@ -2,13 +2,12 @@ import { useRealmObject } from 'components-react/hooks/realm';
 import { Services } from 'components-react/service-provider';
 import React, { useEffect, useMemo } from 'react';
 import { message, Progress, Select } from 'antd';
-import { ObsSettingsSection } from './ObsSettings';
+import { ObsSettingsSection } from '../windows/settings/ObsSettings';
 import { confirmAsync } from 'components-react/modals';
 import * as remote from '@electron/remote';
 import { VisionRunnerStartOptions } from 'services/vision/vision-runner';
 import { $t } from 'services/i18n/index';
 import { VisionProcess, VisionState } from 'services/vision';
-import { ESettingsCategory } from 'services/settings';
 
 type VisionStatus = 'running' | 'starting' | 'updating' | 'stopped';
 
@@ -190,7 +189,7 @@ function openLink(url: string) {
   remote.shell.openExternal(url);
 }
 
-export function AISettings() {
+export default function AISettings() {
   const { VisionService } = Services;
   const state = useRealmObject(VisionService.state);
   const actions = VisionService.actions;

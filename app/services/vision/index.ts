@@ -2,7 +2,13 @@ import { InitAfter, Inject, Service } from 'services';
 import * as remote from '@electron/remote';
 import path from 'path';
 import { authorizedHeaders, jfetch } from 'util/requests';
-import { HostsService, SourcesService, SettingsService, UserService } from 'app-services';
+import {
+  HostsService,
+  SourcesService,
+  SettingsService,
+  UserService,
+  NavigationService,
+} from 'app-services';
 import { RealmObject } from 'services/realm';
 import { ObjectSchema } from 'realm';
 import uuid from 'uuid/v4';
@@ -12,8 +18,8 @@ import { VisionRunner, VisionRunnerStartOptions } from './vision-runner';
 import { VisionUpdater } from './vision-updater';
 import _ from 'lodash';
 import pMemoize from 'p-memoize';
-import { ESettingsCategory } from 'services/settings';
 import { Subject } from 'rxjs';
+import { EMenuItemKey } from 'services/side-nav';
 
 export class VisionProcess extends RealmObject {
   game: string;
@@ -118,6 +124,7 @@ export class VisionService extends Service {
   @Inject() hostsService: HostsService;
   @Inject() private sourcesService: SourcesService;
   @Inject() settingsService: SettingsService;
+  @Inject() navigationService: NavigationService;
 
   state = VisionState.inject();
 
@@ -240,7 +247,7 @@ export class VisionService extends Service {
             if (newVersion || cooledDown) {
               this.lastPromptVersion = v;
               this.lastPromptAt = now;
-              await this.settingsService.showSettings(ESettingsCategory.AI);
+              this.navigationService.actions.navigate('AISettings', {}, EMenuItemKey.AI);
             }
 
             return { started: false, reason: 'needs-update' as const };
