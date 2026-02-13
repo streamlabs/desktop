@@ -728,7 +728,7 @@ export class StreamingService
       // in osn is what actually determines if the stream will use enhanced broadcasting.
       if (platform === 'twitch') {
         const isEnhancedBroadcasting =
-          settings.platforms.twitch && settings.platforms.twitch.isEnhancedBroadcasting;
+          (settings.platforms.twitch && settings.platforms.twitch.isEnhancedBroadcasting) ?? false;
 
         this.SET_ENHANCED_BROADCASTING(isEnhancedBroadcasting);
       }
@@ -1746,7 +1746,7 @@ export class StreamingService
     this.contexts[contextName].streaming.reconnect = ReconnectFactory.create();
     this.contexts[contextName].streaming.network = NetworkFactory.create();
 
-    this.logContexts(contextName, 'createStreaming');
+    this.logContexts(contextName, `${mode} createStreaming`);
     if (start) {
       this.contexts[contextName].streaming.start();
     }
@@ -2028,8 +2028,7 @@ export class StreamingService
   ) {
     const settings =
       type === 'streaming'
-        ? // ? this.outputSettingsService.getStreamingSettings()
-          this.outputSettingsService.getFactoryAPIStreamingSettings()
+        ? this.outputSettingsService.getStreamingSettings()
         : this.outputSettingsService.getRecordingSettings();
 
     const instance = this.contexts[contextName][type];
@@ -3103,7 +3102,6 @@ export class StreamingService
       service: context,
     };
 
-    console.error('Streaming error: started vertical stream in single output mode', error);
     this.handleOBSOutputError(error);
   }
 
