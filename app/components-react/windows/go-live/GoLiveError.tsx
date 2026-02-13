@@ -224,7 +224,7 @@ export default function GoLiveError() {
     // a little janky, but this is to prevent duplicate notifications for the same error on rerender
     if (!lastNotification || !lastNotification.message.startsWith($t('Multistream Error'))) {
       NotificationsService.actions.push({
-        message: `${$t('Multistream Error')}: ${error.details}`,
+        message: `${$t('Multistream Error')}: ${[error.message, error.details].join('. ')}`,
         type: ENotificationType.WARNING,
         lifeTime: 5000,
       });
@@ -255,7 +255,7 @@ export default function GoLiveError() {
         },
       );
 
-      StreamingService.actions.resetInfo();
+      StreamingService.actions.resetInfo(true);
 
       await goLive();
     }

@@ -21,6 +21,7 @@ import { YoutubeService } from 'services/platforms/youtube';
 export interface IRecordingEntry {
   timestamp: string;
   filename: string;
+  display?: TDisplayType;
 }
 
 export interface IUploadInfo {
@@ -186,7 +187,7 @@ export class RecordingModeService extends PersistentStatefulService<IRecordingMo
    */
   addRecordingEntry(filename: string, display?: TDisplayType) {
     const timestamp = moment().format();
-    this.ADD_RECORDING_ENTRY(timestamp, filename);
+    this.ADD_RECORDING_ENTRY(timestamp, filename, display);
     let message = $t('A new Recording has been completed. Click for more info');
 
     if (display) {
@@ -354,8 +355,8 @@ export class RecordingModeService extends PersistentStatefulService<IRecordingMo
   }
 
   @mutation()
-  private ADD_RECORDING_ENTRY(timestamp: string, filename: string) {
-    Vue.set(this.state.recordingHistory, timestamp, { timestamp, filename });
+  private ADD_RECORDING_ENTRY(timestamp: string, filename: string, display: TDisplayType) {
+    Vue.set(this.state.recordingHistory, timestamp, { timestamp, filename, display });
   }
 
   @mutation()
