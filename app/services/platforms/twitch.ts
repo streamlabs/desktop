@@ -394,13 +394,21 @@ export class TwitchService
       ? this.twitchTagsService.views.tags
       : [];
 
+    // To prevent the enhanced broadcasting state from resetting the state every time the user
+    // changes a setting in the Go Live window that requires the window to repopulate, confirm
+    // that one of the required settings is prepopulated before populating enhanced broadcasting
+    const isEnhancedBroadcasting =
+      this.state.settings.title !== '' || this.state.settings.game !== ''
+        ? this.state.settings.isEnhancedBroadcasting
+        : this.state.settings.isEnhancedBroadcasting ||
+          this.settingsService.isEnhancedBroadcasting();
+
     this.SET_STREAM_SETTINGS({
       tags,
       title: channelInfo.title,
       game: channelInfo.game,
       isBrandedContent: channelInfo.is_branded_content,
-      isEnhancedBroadcasting:
-        this.state.settings.isEnhancedBroadcasting || this.settingsService.isEnhancedBroadcasting(),
+      isEnhancedBroadcasting,
       contentClassificationLabels: channelInfo.content_classification_labels,
     });
 

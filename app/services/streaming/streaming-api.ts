@@ -85,6 +85,7 @@ export interface IStreamSettings {
   advancedMode: boolean;
   recording: TDisplayOutput;
   streamShift?: boolean;
+  enhancedBroadcasting?: boolean;
 }
 
 export interface IGoLiveSettings extends IStreamSettings {

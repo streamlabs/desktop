@@ -728,8 +728,7 @@ export class StreamingService
       // in osn is what actually determines if the stream will use enhanced broadcasting.
       if (platform === 'twitch') {
         const isEnhancedBroadcasting =
-          (settings.platforms.twitch && settings.platforms.twitch.isEnhancedBroadcasting) ||
-          this.views.getIsEnhancedBroadcasting();
+          settings.platforms.twitch && settings.platforms.twitch.isEnhancedBroadcasting;
 
         this.SET_ENHANCED_BROADCASTING(isEnhancedBroadcasting);
       }

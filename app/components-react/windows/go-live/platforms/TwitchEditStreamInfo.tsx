@@ -24,26 +24,6 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
 
   const bind = createBinding(twSettings, updatedSettings => updateSettings(updatedSettings));
 
-  const isDualStream = useMemo(() => {
-    return twSettings?.display === 'both' && p.isDualOutputMode;
-  }, [p.isDualOutputMode, twSettings?.display]);
-
-  const enhancedBroadcastingTooltipText = useMemo(() => {
-    return p.isDualOutputMode
-      ? $t(
-          'Enhanced broadcasting in dual output mode is only available when streaming to both the horizontal and vertical displays in Twitch',
-        )
-      : $t(
-          'Enhanced broadcasting automatically optimizes your settings to encode and send multiple video qualities to Twitch. Selecting this option will send basic information about your computer and software setup.',
-        );
-  }, [p.isDualOutputMode]);
-
-  const enhancedBroadcastingEnabled = useMemo(() => {
-    if (isDualStream) return true;
-    if (p.isStreamShiftMode) return false;
-    return twSettings?.isEnhancedBroadcasting;
-  }, [isDualStream, twSettings?.isEnhancedBroadcasting, p.isStreamShiftMode]);
-
   const optionalFields = (
     <div key="optional">
       <TwitchTagsInput label={$t('Twitch Tags')} {...bind.tags} layout={p.layout} />
@@ -54,26 +34,6 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
       >
         <CheckboxInput label={$t('Stream features branded content')} {...bind.isBrandedContent} />
       </InputWrapper>
-      {process.platform !== 'darwin' && (
-        <InputWrapper
-          layout={p.layout}
-          className={cx(styles.twitchCheckbox, { [styles.hideLabel]: p.layout === 'vertical' })}
-        >
-          <CheckboxInput
-            style={{ display: 'inline-block' }}
-            label={$t('Enhanced broadcasting')}
-            tooltip={enhancedBroadcastingTooltipText}
-            {...bind.isEnhancedBroadcasting}
-            disabled={isDualStream || p.isStreamShiftMode}
-            value={enhancedBroadcastingEnabled}
-          />
-          <Badge
-            style={{ display: 'inline-block' }}
-            dismissableKey={EDismissable.EnhancedBroadcasting}
-            content={'Beta'}
-          />
-        </InputWrapper>
-      )}
     </div>
   );
 
@@ -99,15 +59,17 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
 }
 
 function TwitchRequiredFields(p: IPlatformComponentParams<'twitch'>) {
+  const { isUpdateMode } = p;
   const twSettings = p.value;
-  const bind = createBinding(p.value, updatedSettings =>
-    p.onChange({ ...p.value, ...updatedSettings }),
+  const bind = createBinding(twSettings, updatedSettings =>
+    p.onChange({ ...twSettings, ...updatedSettings }),
   );
 
   const isDualStream = useMemo(() => {
     return twSettings?.display === 'both' && p.isDualOutputMode;
   }, [p.isDualOutputMode, twSettings?.display]);
 
+  // Note: once a stream goes live with enhanced broadcasting, it cannot be toggled off while live
   const enhancedBroadcastingEnabled = useMemo(() => {
     if (isDualStream) return true;
     if (p.isStreamShiftMode) return false;
@@ -120,14 +82,12 @@ function TwitchRequiredFields(p: IPlatformComponentParams<'twitch'>) {
       {p.isAiHighlighterEnabled && (
         <AiHighlighterToggle key="ai-toggle" game={bind.game?.value} cardIsExpanded={false} />
       )}
-      {process.platform !== 'darwin' && (
+      {process.platform !== 'darwin' && !isUpdateMode && (
         <InputWrapper
-          // key="enhanced-broadcasting"
           layout={p.layout}
           className={cx({ [styles.hideLabel]: p.layout === 'vertical' })}
         >
           <CheckboxInput
-            // key="enhanced-broadcasting-toggle"
             style={{ display: 'inline-block' }}
             label={$t('Enhanced broadcasting')}
             tooltip={$t(
@@ -138,7 +98,6 @@ function TwitchRequiredFields(p: IPlatformComponentParams<'twitch'>) {
             value={enhancedBroadcastingEnabled}
           />
           <Badge
-            // key="enhanced-broadcasting-badge"
             style={{ display: 'inline-block' }}
             dismissableKey={EDismissable.EnhancedBroadcasting}
             content={'Beta'}
