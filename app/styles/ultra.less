@@ -1,0 +1,77 @@
+// Variables for use
+@ultra: linear-gradient(
+  123.53deg,
+  #2de8b0 0%,
+  #cbe953 48.80%,
+  #ffab48 75.86%,
+  #ff5151 100%
+);
+@ultra-light: linear-gradient(
+  123.53deg,
+  mix(#2de8b0, #000000, 75%) 25.56%,
+  mix(#cbe953, #000000, 75%) 60.27%,
+  mix(#ffab48, #000000, 75%) 79.52%,
+  mix(#ff5151, #000000, 75%) 96.69%
+);
+@ultra-no-red: linear-gradient(
+  123.53deg,
+  #2de8b0 48.80%,
+  #cbe953 96.69%
+);
+@ultra-no-red-light: linear-gradient(
+  123.53deg,
+  mix(#2de8b0, #000000, 75%) 48.80%,
+  mix(#cbe953, #000000, 75%) 96.69%,
+);
+@ultra-translucent: linear-gradient(
+  123.53deg,
+  #2de8b020 25.56%,
+  #cbe95320 60.27%,
+  #ffab4820 79.52%,
+  #ff515120 96.69%
+);
+
+/**
+ * An element with a:
+ * - Dim ultra background
+ * - Bright ultra border
+ * - Extra dim "bloom" border
+ */
+.ultra-card(@borderWidth: 1px, @borderRadius: 4px, @bloomWidth: 4px, @bgColor: transparent) {
+  .mix-gradient(@base) {
+    @mix: if(
+      @bgColor = transparent,
+      linear-gradient(
+        123.53deg,
+        mix(#2de8b0, @base, 8%) 25.56%,
+        mix(#cbe953, @base, 8%) 60.27%,
+        mix(#ffab48, @base, 8%) 79.52%,
+        mix(#ff5151, @base, 8%) 96.69%
+      ),
+      linear-gradient(to right, @bgColor, @bgColor)
+    );
+  }
+
+  padding: @borderWidth;
+  border: @bloomWidth solid transparent;
+  border-radius: if((@borderRadius = none), 0px, @borderRadius + @bloomWidth + @borderWidth);
+  background:
+    .mix-gradient(@light-2)[@mix] content-box,
+    @ultra-light padding-box,
+    @ultra-translucent border-box;
+
+  .night-theme &,
+  .prime-dark & {
+    background:
+      .mix-gradient(@light-1)[@mix] content-box,
+      @ultra padding-box,
+      @ultra-translucent border-box;
+  }
+}
+
+.ultra-text(@temperature: 'cool') {
+  background: if((@temperature = 'cool'), var(--ultra-no-red), var(--ultra));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
