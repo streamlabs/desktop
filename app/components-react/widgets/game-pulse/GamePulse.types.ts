@@ -22,7 +22,8 @@ export enum TriggerType {
 export enum ApiEndpoints {
   ResetSettings = 'widgets/desktop/game-pulse/reset-settings', // GET
   DeleteTrigger = 'widgets/desktop/game-pulse/trigger', // GET
-  PreviewTrigger = 'widgets/desktop/game-pulse/preview/trigger', // GET
+  PreviewTrigger = 'widgets/desktop/game-pulse/preview/trigger', // POST
+  TestTrigger = 'widgets/desktop/game-pulse/test/trigger', // POST
   TTSLanguages = 'tts/static/available-languages', // GET
   DefaultSettings = 'widgets/desktop/game-pulse/trigger/defaults' // POST,
 }

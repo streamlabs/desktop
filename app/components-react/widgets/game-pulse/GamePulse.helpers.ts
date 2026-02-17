@@ -198,3 +198,15 @@ export function sanitizeTrigger(raw: GamePulseTrigger): GamePulseTrigger {
 
   return sanitized as GamePulseTrigger;
 }
+
+const EVENT_SORT_ORDER = ['elimination', 'victory', 'death', 'player_knocked'];
+export function sortEventKeys(a: string, b: string): number {
+  const indexA = EVENT_SORT_ORDER.indexOf(a);
+  const indexB = EVENT_SORT_ORDER.indexOf(b);
+
+  if (indexA >= 0 && indexB >= 0) return indexA - indexB;
+  if (indexA >= 0) return -1;
+  if (indexB >= 0) return 1;
+
+  return a.localeCompare(b);
+}

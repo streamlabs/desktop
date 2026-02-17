@@ -23,6 +23,8 @@ export function GamePulseWidget() {
     deleteTrigger,
     tabKind,
     widgetData,
+    hasTriggers,
+    initDefaults,
   } = useGamePulseWidget();
   const { showTutorial } = widgetData;
 
@@ -64,6 +66,12 @@ export function GamePulseWidget() {
   }
 
   const [tutorialVisible, setTutorialVisible] = useState(false);
+
+  useEffect(() => {
+    if (showTutorial && !hasTriggers) {
+      initDefaults();
+    }
+  }, [showTutorial, hasTriggers]);
 
   useEffect(() => {
     if (showTutorial) {
