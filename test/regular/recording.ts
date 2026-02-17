@@ -1,5 +1,5 @@
 import { readdir } from 'fs-extra';
-import { test, TExecutionContext, useWebdriver } from '../helpers/webdriver';
+import { test, useWebdriver } from '../helpers/webdriver';
 import { sleep } from '../helpers/sleep';
 import {
   clickGoLive,
@@ -22,13 +22,13 @@ import {
   clickToggle,
   clickWhenDisplayed,
   focusMain,
-  getNumElements,
   waitForDisplayed,
 } from '../helpers/modules/core';
 import { logIn } from '../helpers/webdriver/user';
 import { toggleDualOutputMode } from '../helpers/modules/dual-output';
 import { showPage } from '../helpers/modules/navigation';
 import { useForm, fillForm } from '../helpers/modules/forms';
+import { validateRecordingFiles, testRecordingQualities } from '../helpers/modules/recording';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -78,35 +78,6 @@ async function createRecordingFiles(advanced: boolean = false): Promise<number> 
 }
 
 /**
- * Confirm correct number of files were created and that they are displayed in the recording history.
- * @param t - AVA test context
- * @param tmpDir - temporary directory where recordings are saved
- * @param numFormats - number of formats used to record
- */
-async function validateRecordingFiles(
-  t: TExecutionContext,
-  tmpDir: string,
-  numFormats: number,
-  advanced: boolean = false,
-) {
-  // Check that every file was created
-  const files = await readdir(tmpDir);
-
-  // M3U8 creates multiple TS files in addition to the catalog itself.
-  // The additional TS files created by M3U8 in advanced mode are not displayed in the recording history
-  const numFiles = advanced ? files.length - 1 : files.length;
-
-  t.true(numFiles >= numFormats, `Files that were created:\n${files.join('\n')}`);
-
-  // Check that the recordings are displayed in the recording history
-  await showPage('Recordings');
-  waitForDisplayed('h1=Recordings');
-
-  const numRecordings = await getNumElements('[data-test=filename]');
-  t.is(numRecordings, numFiles, 'All recordings show in history matches number of files recorded');
-}
-
-/**
  * Recording with one context active (horizontal, simple)
  */
 test('Recording', async t => {
@@ -115,13 +86,19 @@ test('Recording', async t => {
 
   // Simple Recording
   const tmpDir = await setTemporaryRecordingPath();
+  const numRecordingQualities = await testRecordingQualities(t, tmpDir);
   const numSimpleFormats = await createRecordingFiles();
-  await validateRecordingFiles(t, tmpDir, numSimpleFormats);
+  await validateRecordingFiles(t, tmpDir, numRecordingQualities + numSimpleFormats);
 
   // Advanced Recording
   await setTemporaryRecordingPath(true, tmpDir);
   const numAdvancedFormats = await createRecordingFiles(true);
-  await validateRecordingFiles(t, tmpDir, numSimpleFormats + numAdvancedFormats, true);
+  await validateRecordingFiles(
+    t,
+    tmpDir,
+    numRecordingQualities + numSimpleFormats + numAdvancedFormats,
+    true,
+  );
 
   // Switches between Advanced and Simple Recording
   // Note: The recording path for Simple Recording should have persisted from before
@@ -137,7 +114,12 @@ test('Recording', async t => {
   await sleep(2000);
   await stopRecording();
   await clickWhenDisplayed('span=A new Recording has been completed. Click for more info');
-  await validateRecordingFiles(t, tmpDir, numSimpleFormats + numAdvancedFormats + 1, true);
+  await validateRecordingFiles(
+    t,
+    tmpDir,
+    numRecordingQualities + numSimpleFormats + numAdvancedFormats + 1,
+    true,
+  );
 
   t.pass();
 });
@@ -184,3 +166,248 @@ test('Recording from Go Live window', async t => {
   const files = await readdir(tmpDir);
   t.is(files.length, 1, `Files that were created:\n${files.join('\n')}`);
 });
+
+// test('Recording with Streaming and Replay Buffer', async t => {
+//   const user = await logIn(t);
+//   await setOutputResolution('100x100');
+//   const tmpDir = await setTemporaryRecordingPath();
+//   let expectedFileCount = 0;
+
+//   // Helper function to enable/disable replay buffer
+//   const toggleReplayBuffer = async (enabled: boolean) => {
+//     await showSettingsWindow('Output', async () => {
+//       const { setCheckboxValue } = useForm('ReplayBuffer');
+//       await setCheckboxValue('ReplayBuffer', enabled);
+//       await clickButton('Close');
+//     });
+//     await focusMain();
+//   };
+
+//   // Helper function to save replay buffer
+//   const saveReplayBuffer = async () => {
+//     // Simulate hotkey or UI action to save replay buffer
+//     await clickButton('Save Replay');
+//     await sleep(500);
+//   };
+
+//   // Case 1: Start stream with recording
+//   await prepareToGoLive();
+//   await clickGoLive();
+//   await waitForSettingsWindowLoaded();
+
+//   if (user.type === 'twitch') {
+//     await fillForm({
+//       twitchGame: 'Fortnite',
+//     });
+//   }
+
+//   await clickToggle('recording-toggle');
+//   await submit();
+//   await waitForStreamStart();
+//   await focusMain();
+//   await sleep(2000); // Record for 2s
+//   await stopRecording();
+//   await stopStream();
+//   expectedFileCount++;
+
+//   // Case 2: Start stream with recording and replay buffer
+//   await toggleReplayBuffer(true);
+//   await prepareToGoLive();
+//   await clickGoLive();
+//   await waitForSettingsWindowLoaded();
+
+//   if (user.type === 'twitch') {
+//     await fillForm({
+//       twitchGame: 'Fortnite',
+//     });
+//   }
+
+//   await clickToggle('recording-toggle');
+//   await submit();
+//   await waitForStreamStart();
+//   await focusMain();
+//   await sleep(2000);
+//   await saveReplayBuffer(); // Save a replay clip
+//   expectedFileCount++;
+//   await stopRecording();
+//   await stopStream();
+//   expectedFileCount++;
+
+//   // Case 3: Continue recording after stream end
+//   await prepareToGoLive();
+//   await clickGoLive();
+//   await waitForSettingsWindowLoaded();
+
+//   if (user.type === 'twitch') {
+//     await fillForm({
+//       twitchGame: 'Fortnite',
+//     });
+//   }
+
+//   await clickToggle('recording-toggle');
+//   await submit();
+//   await waitForStreamStart();
+//   await focusMain();
+//   await sleep(1000);
+//   await stopStream(); // Stop stream but keep recording
+//   await sleep(2000); // Continue recording for 2 more seconds
+//   await stopRecording();
+//   expectedFileCount++;
+
+//   // Case 4: Continue replay buffer after stream end
+//   await prepareToGoLive();
+//   await clickGoLive();
+//   await waitForSettingsWindowLoaded();
+
+//   if (user.type === 'twitch') {
+//     await fillForm({
+//       twitchGame: 'Fortnite',
+//     });
+//   }
+
+//   await submit();
+//   await waitForStreamStart();
+//   await focusMain();
+//   await sleep(1000);
+//   await stopStream(); // Stop stream but keep replay buffer
+//   await sleep(1000);
+//   await saveReplayBuffer(); // Save replay after stream ends
+//   expectedFileCount++;
+
+//   // Case 5: Toggle on recording while streaming
+//   await prepareToGoLive();
+//   await clickGoLive();
+//   await waitForSettingsWindowLoaded();
+
+//   if (user.type === 'twitch') {
+//     await fillForm({
+//       twitchGame: 'Fortnite',
+//     });
+//   }
+
+//   await submit();
+//   await waitForStreamStart();
+//   await focusMain();
+//   await sleep(1000);
+//   await startRecording(); // Start recording after stream started
+//   await sleep(2000);
+//   await stopRecording();
+//   await stopStream();
+//   expectedFileCount++;
+
+//   // Case 6: Toggle on recording while replay buffer active
+//   await toggleReplayBuffer(true);
+//   await focusMain();
+//   await sleep(1000); // Let replay buffer start
+//   await startRecording(); // Start recording with replay buffer active
+//   await sleep(2000);
+//   await saveReplayBuffer(); // Save replay while recording
+//   expectedFileCount++;
+//   await stopRecording();
+//   expectedFileCount++;
+
+//   // Case 7: Single output mode (already tested above, but let's be explicit)
+//   await toggleReplayBuffer(false);
+//   await showSettingsWindow('Output', async () => {
+//     const { setDropdownInputValue } = useForm('Mode');
+//     await setDropdownInputValue('Mode', 'Simple');
+//     await clickButton('Close');
+//   });
+
+//   await prepareToGoLive();
+//   await clickGoLive();
+//   await waitForSettingsWindowLoaded();
+
+//   if (user.type === 'twitch') {
+//     await fillForm({
+//       twitchGame: 'Fortnite',
+//     });
+//   }
+
+//   await clickToggle('recording-toggle');
+//   await submit();
+//   await waitForStreamStart();
+//   await focusMain();
+//   await sleep(2000);
+//   await stopRecording();
+//   await stopStream();
+//   expectedFileCount++;
+
+//   // Case 8: Dual output mode
+//   await toggleDualOutputMode();
+//   await toggleReplayBuffer(true);
+
+//   await prepareToGoLive();
+//   await clickGoLive();
+//   await waitForSettingsWindowLoaded();
+
+//   if (user.type === 'twitch') {
+//     await fillForm({
+//       twitchGame: 'Fortnite',
+//     });
+//   }
+
+//   await clickToggle('recording-toggle');
+//   await submit();
+//   await waitForStreamStart();
+//   await focusMain();
+//   await sleep(2000);
+//   await saveReplayBuffer();
+//   expectedFileCount++;
+//   await stopRecording();
+//   await stopStream();
+//   expectedFileCount++;
+
+//   // Additional case: Start replay buffer while recording
+//   await toggleDualOutputMode(); // Return to single output
+//   await startRecording();
+//   await sleep(1000);
+//   await toggleReplayBuffer(true);
+//   await sleep(1000);
+//   await saveReplayBuffer();
+//   expectedFileCount++;
+//   await stopRecording();
+//   expectedFileCount++;
+
+//   // Additional case: Start replay buffer while streaming
+//   await toggleReplayBuffer(false);
+//   await prepareToGoLive();
+//   await clickGoLive();
+//   await waitForSettingsWindowLoaded();
+
+//   if (user.type === 'twitch') {
+//     await fillForm({
+//       twitchGame: 'Fortnite',
+//     });
+//   }
+
+//   await submit();
+//   await waitForStreamStart();
+//   await focusMain();
+//   await sleep(1000);
+//   await toggleReplayBuffer(true);
+//   await sleep(1000);
+//   await saveReplayBuffer();
+//   expectedFileCount++;
+//   await stopStream();
+
+//   // Additional case: Multiple replay saves during one session
+//   await toggleReplayBuffer(true);
+//   await startRecording();
+//   await sleep(1000);
+//   await saveReplayBuffer(); // First replay save
+//   expectedFileCount++;
+//   await sleep(1000);
+//   await saveReplayBuffer(); // Second replay save
+//   expectedFileCount++;
+//   await stopRecording();
+//   expectedFileCount++;
+
+//   // Validate all files were created
+//   await validateRecordingFiles(t, tmpDir, expectedFileCount, true);
+
+//   // Clean up - disable replay buffer
+//   await toggleReplayBuffer(false);
+
+//   t.pass();
+// });

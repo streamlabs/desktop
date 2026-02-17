@@ -8,8 +8,10 @@ import {
 } from '../../helpers/modules/streaming';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
 import { click } from '../../helpers/modules/core';
-import { assertFormContains, readFields, useForm } from '../../helpers/modules/forms';
+import { assertFormContains, readFields } from '../../helpers/modules/forms';
 
+// not a react hook
+// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
 
 test('Populates stream settings after go live', async t => {

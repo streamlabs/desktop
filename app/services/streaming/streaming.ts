@@ -17,6 +17,7 @@ import {
   IAdvancedReplayBuffer,
   ISimpleRecording,
   ISimpleReplayBuffer,
+  ERecordingQuality,
 } from '../../../obs-api';
 import { Inject } from 'services/core/injector';
 import moment from 'moment';
@@ -1460,7 +1461,13 @@ export class StreamingService
 
   private handleOBSOutputSignal(info: IOBSOutputSignalInfo) {
     console.debug('OBS Output signal: ', info);
-    console.log('info', JSON.stringify(info, null, 2));
+    // console.log('info', JSON.stringify(info, null, 2)); TODO: comment back in after debugging.
+    console.log(
+      'Quality ',
+      this.settingsService.views.values.Output.RecQuality,
+      ' info ',
+      JSON.stringify(info, null, 2),
+    );
 
     // Starting the stream should resolve:
     // 1. Single Output: In single output mode after the stream start signal has been received
@@ -1585,12 +1592,21 @@ export class StreamingService
         });
       }
 
+      if (
+        info.signal === EOBSOutputSignal.Stop &&
+        this.settingsService.views.values.Output.RecQuality === 'Lossless'
+      ) {
+        const filename = NodeObs.OBS_service_getLastRecording();
+        console.log('Lossless Recording saved to: ', filename);
+      }
+
       if (info.signal === EOBSOutputSignal.Wrote) {
         this.usageStatisticsService.recordAnalyticsEvent('RecordingStatus', {
           status: nextState,
           code: info.code,
         });
         const filename = NodeObs.OBS_service_getLastRecording();
+        console.log('Recording saved to: ', filename);
         const parsedFilename = byOS({
           [OS.Mac]: filename,
           [OS.Windows]: filename.replace(/\//, '\\'),

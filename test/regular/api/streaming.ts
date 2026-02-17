@@ -7,8 +7,10 @@ import {
   EReplayBufferState,
 } from '../../../app/services/streaming/streaming-api';
 import { SettingsService } from '../../../app/services/settings';
-import { releaseUserInPool, reserveUserFromPool, withPoolUser } from '../../helpers/webdriver/user';
+import { reserveUserFromPool, withPoolUser } from '../../helpers/webdriver/user';
 
+// not a react hook
+// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver({ restartAppAfterEachTest: true });
 
 test('Streaming to Twitch via API', async t => {
@@ -82,8 +84,7 @@ test('Recording via API', async (t: TExecutionContext) => {
   t.is(recordingStatus, ERecordingState.Offline);
 });
 
-// TODO: Fix this test
-test.skip('Recording and Replay Buffer', async (t: TExecutionContext) => {
+test('Streaming with Recording and Replay Buffer', async (t: TExecutionContext) => {
   const user = await reserveUserFromPool(t, 'twitch');
 
   await withPoolUser(user, async () => {
@@ -95,8 +96,10 @@ test.skip('Recording and Replay Buffer', async (t: TExecutionContext) => {
     const streamSettings = settingsService.state.Stream.formData;
     streamSettings.forEach(subcategory => {
       subcategory.parameters.forEach(setting => {
-        if (setting.name === 'service') setting.value = 'Twitch';
+        if (setting.name === 'service') setting.value = 'twitch';
         if (setting.name === 'key') setting.value = streamKey;
+        if (setting.name === 'streamType') setting.value = 'rtmp_common';
+        if (setting.name === 'server') setting.value = 'rtmp://live.twitch.tv/app/';
       });
     });
     settingsService.setSettings('Stream', streamSettings);
