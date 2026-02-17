@@ -836,7 +836,7 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
     demoVideo: false,
     demoFilename: '',
     supportList: [],
-    icon: 'icon-reactive-widgets',
+    icon: 'icon-game-pulse',
     group: 'flair',
   },
 });
