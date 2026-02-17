@@ -184,14 +184,17 @@ export function buildNewTrigger(params: {
 }
 
 export function sanitizeTrigger(raw: GamePulseTrigger): GamePulseTrigger {
-  const trigger = structuredClone(raw) as any; // use 'any' to allow deletion of properties
-
-  if (trigger.event_type !== 'streak') {
-    // the server might send these anyway, so we yeet them just in case.
-    delete trigger.streak_period;
-    delete trigger.amount_minimum;
-    delete trigger.amount_maximum;
+  if (raw.event_type === 'streak') {
+    return { ...raw };
   }
 
-  return trigger as GamePulseTrigger;
+  // Cast to 'any' to allow extracting keys that don't exist on all trigger types
+  const { 
+    streak_period, 
+    amount_minimum, 
+    amount_maximum, 
+    ...sanitized 
+  } = raw as any;
+
+  return sanitized as GamePulseTrigger;
 }

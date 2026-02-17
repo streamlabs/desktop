@@ -190,6 +190,12 @@ export interface GamePulseStaticConfig {
   data: GamePulseStaticData;
 }
 
+export interface TTSLanguagesResponse {
+  success: boolean;
+  data: Record<string, GamePulseVoiceGroup>;
+  message?: string;
+}
+
 export interface GamePulseGameSettingsUI extends GamePulseTriggerGroup {
   gameId: string;
 }
