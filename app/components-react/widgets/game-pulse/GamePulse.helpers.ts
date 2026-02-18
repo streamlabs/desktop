@@ -183,22 +183,6 @@ export function buildNewTrigger(params: {
   };
 }
 
-export function sanitizeTrigger(raw: GamePulseTrigger): GamePulseTrigger {
-  if (raw.event_type === 'streak') {
-    return { ...raw };
-  }
-
-  // Cast to 'any' to allow extracting keys that don't exist on all trigger types
-  const { 
-    streak_period, 
-    amount_minimum, 
-    amount_maximum, 
-    ...sanitized 
-  } = raw as any;
-
-  return sanitized as GamePulseTrigger;
-}
-
 const EVENT_SORT_ORDER = ['elimination', 'victory', 'death', 'player_knocked'];
 export function sortEventKeys(a: string, b: string): number {
   const indexA = EVENT_SORT_ORDER.indexOf(a);

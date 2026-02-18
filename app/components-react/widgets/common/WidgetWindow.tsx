@@ -73,7 +73,6 @@ export function WidgetWindow() {
     // TODO: index
     // @ts-ignore
     const [WidgetSettingsComponent, Module] = components[widgetType];
-    console.log({ sourceId, Module, WidgetSettingsComponent });
     return { sourceId, Module, WidgetSettingsComponent };
   });
 

@@ -406,13 +406,13 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
 
   @Bind()
   @Throttle(1000)
-  public async playReactiveAlert(trigger: GamePulseTrigger) {
-    const url = `https://${this.hostsService.streamlabs}/api/v5/${ApiEndpoints.PreviewTrigger}`;
+  public async testGamePulseTrigger(triggerId: string) {
+    const url = `https://${this.hostsService.streamlabs}/api/v5/${ApiEndpoints.TestTrigger}`;
 
     const res = await this.widgetsService.request({
       url,
       method: 'POST',
-      body: trigger,
+      body: { ulid: triggerId },
       headers: { 'X-Force-Test': 'true' },
     });
 

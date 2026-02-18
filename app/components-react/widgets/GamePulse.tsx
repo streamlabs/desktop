@@ -2,7 +2,7 @@ import React, { useMemo, useCallback, useEffect, useState } from 'react';
 import * as remote from '@electron/remote';
 import { WidgetLayout } from './common/WidgetLayout';
 import { useGamePulseWidget } from './game-pulse/useGamePulseWidget';
-import { GamePulseTabUtils, sanitizeTrigger } from './game-pulse/GamePulse.helpers';
+import { GamePulseTabUtils } from './game-pulse/GamePulse.helpers';
 import { TabKind, GamePulseTrigger, ScopeId } from './game-pulse/GamePulse.types';
 import { GamePulseMenu } from './game-pulse/GamePulseMenu';
 import { GamePulseCreateTriggerForm } from './game-pulse/GamePulseCreateTriggerForm';
@@ -17,7 +17,7 @@ export function GamePulseWidget() {
   const {
     currentTabId,
     setSelectedTab,
-    playReactiveAlert,
+    testGamePulseTrigger,
     sections,
     toggleTrigger,
     deleteTrigger,
@@ -48,8 +48,7 @@ export function GamePulseWidget() {
       setSelectedTab(targetTab);
     }
 
-    const cleanTrigger = sanitizeTrigger(trigger);
-    playReactiveAlert(cleanTrigger);
+    testGamePulseTrigger(trigger.id);
   }
 
   function onDelete(triggerId: string, scopeId: string) {

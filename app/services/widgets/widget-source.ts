@@ -43,11 +43,7 @@ export class WidgetSource implements IWidgetSource {
    */
   createPreviewSource(): Source {
     if (this.previewSourceId) {
-      // TODO$chris: question. why not just call destroyPreviewSource instead?
-      // throwing an error here breaks the child window if you reload on dev
-      // throw new Error('Only one preview source is allowed for widget');
-      console.warn('Only one preview source is allowed for widget');
-      this.destroyPreviewSource();
+      throw new Error('Only one preview source is allowed for widget');
     }
 
     // TODO: index
