@@ -137,9 +137,12 @@ export class AnnouncementsService extends Service {
     });
 
     // Open product updates modal once loading is finished
-    this.appService.loadingChanged.subscribe(() => {
+    const sub = this.appService.loadingChanged.subscribe(() => {
       if (this.appService.state.loading || !this.userService.isLoggedIn) return;
       this.getProductUpdates();
+      // NOTE: this is generally not a good pattern for subscriptions but we don't have a better
+      // way to detect when the app first finishes loading
+      sub.unsubscribe();
     });
   }
 
