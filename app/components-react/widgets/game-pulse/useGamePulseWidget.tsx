@@ -1,10 +1,7 @@
 import { Throttle, Bind } from 'lodash-decorators';
+import cloneDeep from 'lodash/cloneDeep';
 import { useWidget, WidgetModule } from '../common/useWidget';
-import {
-  GamePulseTabUtils,
-  buildNewTrigger,
-  sortEventKeys,
-} from './GamePulse.helpers';
+import { GamePulseTabUtils, buildNewTrigger, sortEventKeys, delay } from './GamePulse.helpers';
 import { GAME_PULSE_API } from './GamePulse.consts';
 
 import {
@@ -21,7 +18,6 @@ import {
   GamePulseTriggerGroup,
   IGamePulseWidgetState,
 } from './GamePulse.types';
-import cloneDeep from 'lodash/cloneDeep';
 
 /**
  * Game Pulse widget module for Game Pulse triggers.
@@ -36,6 +32,8 @@ import cloneDeep from 'lodash/cloneDeep';
  * - manages trigger CRUD and enable/disable state
  */
 export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
+  /** Tracks the last save operation to ensure sequential updates */
+  private _lastSavePromise: Promise<any> = Promise.resolve();
   private get hostsService() {
     return this.widgetsService.hostsService;
   }
@@ -73,13 +71,11 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
   get groupOptions(): IGamePulseGroupOption[] {
     const gamesMeta = this.games;
 
-    const games = Object.entries(this.settings.games || {}).map(
-      ([gameId, gameData]) => ({
-        id: gameId,
-        name: gamesMeta?.[gameId]?.title || gameId,
-        enabled: !!gameData?.enabled,
-      }),
-    );
+    const games = Object.entries(this.settings.games || {}).map(([gameId, gameData]) => ({
+      id: gameId,
+      name: gamesMeta?.[gameId]?.title || gameId,
+      enabled: !!gameData?.enabled,
+    }));
 
     const global: IGamePulseGroupOption = {
       id: ScopeId.Global,
@@ -94,17 +90,19 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
     const globalSection = {
       id: ScopeId.Global,
       title: 'Global',
-      triggers: this.settings?.global?.triggers || []
+      triggers: this.settings?.global?.triggers || [],
     };
 
     const gameSections = Object.entries(this.games).flatMap(([gameKey, gameMeta]) => {
       const triggers = this.settings?.games?.[gameKey]?.triggers || [];
       if (triggers.length === 0) return [];
-      return [{
-        id: gameKey,
-        title: gameMeta.title,
-        triggers
-      }];
+      return [
+        {
+          id: gameKey,
+          title: gameMeta.title,
+          triggers,
+        },
+      ];
     });
 
     return [globalSection, ...gameSections];
@@ -129,7 +127,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
   hasTriggersFn(settings: GamePulseWidgetSettings): boolean {
     const globalTriggers = settings?.global?.triggers || [];
     const gameTriggers = Object.values(settings?.games || {}).flatMap(
-      (group) => group?.triggers || [],
+      group => group?.triggers || [],
     );
 
     return globalTriggers.length + gameTriggers.length > 0;
@@ -145,7 +143,11 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
    */
   protected patchAfterFetch(raw: any) {
     const settings = raw.settings ?? raw.data?.settings ?? {};
-    return { settings, showOnboarding: raw.data?.show_onboarding ?? false, showTutorial: raw.data?.show_tutorial ?? false };
+    return {
+      settings,
+      showOnboarding: raw.data?.show_onboarding ?? false,
+      showTutorial: raw.data?.show_tutorial ?? false,
+    };
   }
 
   /**
@@ -171,7 +173,10 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
    * @param scopeId The owning group (`'global'` or a game id).
    * @param updater A function that receives a trigger and returns the updated trigger.
    */
-  private updateTriggers(scopeId: string, updater: (trigger: GamePulseTrigger) => GamePulseTrigger) {
+  private updateTriggers(
+    scopeId: string,
+    updater: (trigger: GamePulseTrigger) => GamePulseTrigger,
+  ) {
     const isGlobal = scopeId === ScopeId.Global;
     const groupSettings = this.getScope(scopeId) || { enabled: true, triggers: [] };
     const updatedGroupSettings = {
@@ -191,7 +196,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
           }),
     };
 
-    this.updateSettings(newSettings);
+    this._lastSavePromise = this.updateSettings(newSettings);
   }
 
   /**
@@ -221,9 +226,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
       },
 
       updateTrigger(updated: GamePulseTrigger) {
-        module.updateTriggers(scopeId, (t) =>
-          t.id === updated.id ? updated : t
-        );
+        module.updateTriggers(scopeId, t => (t.id === updated.id ? updated : t));
         forceUpdate();
       },
     };
@@ -295,7 +298,9 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
    * @param enabled Whether the scope should be enabled (true) or disabled (false).
    */
   public toggleScope(scopeId: string, enabled: boolean) {
-    const newSettings: GamePulseWidgetSettings = cloneDeep(this.settings) as GamePulseWidgetSettings;
+    const newSettings: GamePulseWidgetSettings = cloneDeep(
+      this.settings,
+    ) as GamePulseWidgetSettings;
     const group = this.getScope(scopeId, newSettings) || { triggers: [] };
 
     if (scopeId === 'global') {
@@ -313,7 +318,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
       };
     }
 
-    this.updateSettings(newSettings);
+    this._lastSavePromise = this.updateSettings(newSettings);
   }
 
   /** Enable all trigger groups at once. */
@@ -338,7 +343,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
       games: newGames,
     };
 
-    this.updateSettings(newSettings);
+    this._lastSavePromise = this.updateSettings(newSettings);
   }
 
   /** Disable all trigger groups at once. */
@@ -363,12 +368,12 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
       games: newGames,
     };
 
-    this.updateSettings(newSettings);
+    this._lastSavePromise = this.updateSettings(newSettings);
   }
 
   private async requestEndpoint(
     endpoint: typeof GAME_PULSE_API[keyof typeof GAME_PULSE_API],
-    params?: { body?: any; headers?: any; query?: string }
+    params?: { body?: any; headers?: any; query?: string },
   ) {
     const { path, method } = endpoint;
     const baseUrl = `https://${this.hostsService.streamlabs}/api/v5`;
@@ -386,18 +391,37 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
   @Bind()
   @Throttle(1000)
   public async testGamePulseTrigger(trigger: GamePulseTrigger) {
+    if (!this.settings.is_muted) {
+      /**
+       * Ensure settings are muted before testing so that the user doesn't
+       * get multiple/simultaneous audio alerts on the preview and main canvas
+       */
+      const newSettings = { ...this.settings, is_muted: true };
+      this._lastSavePromise = this.updateSettings(newSettings);
+    }
+    try {
+      if (this._lastSavePromise) {
+        await this._lastSavePromise;
+        // add a small buffer to ensure trigger changes have processed before testing
+        await delay(750);
+      }
+    } catch (e) {
+      console.warn('[GamePulseWidget] Pending save failed, proceeding with test anyway', e);
+    }
+
     return this.requestEndpoint(GAME_PULSE_API.TestTrigger, {
       body: { ulid: trigger.id },
       headers: { 'X-Force-Test': 'true' },
     });
   }
+
   public async resetSettings() {
     await this.requestEndpoint(GAME_PULSE_API.ResetSettings);
   }
 
   public async deleteTrigger(triggerId: string, scopeId: string) {
     const res = await this.requestEndpoint(GAME_PULSE_API.DeleteTrigger, {
-      query: `ulid=${triggerId}`
+      query: `ulid=${triggerId}`,
     });
     if (!res.success) {
       throw new Error(`Failed to delete trigger: ${res.message}`);
@@ -546,10 +570,12 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
    * Initialize default settings for the GamePulse widget. For example, when a user first adds the widget
    * and has no triggers configured + the showTutorial flag is set, we want to populate some default triggers to help them get started.
    */
-  public async initDefaults(gameEvents: string[] = ['elimination', 'victory', 'death', 'assist', 'knockout']) {
+  public async initDefaults(
+    gameEvents: string[] = ['elimination', 'victory', 'death', 'assist', 'knockout'],
+  ) {
     try {
       const defaults = await this.requestEndpoint(GAME_PULSE_API.DefaultSettings, {
-        body: { game_events: gameEvents }
+        body: { game_events: gameEvents },
       });
       if (defaults.settings || defaults.data?.settings) {
         const newSettings = defaults.settings || defaults.data?.settings;

@@ -146,3 +146,5 @@ export function sortEventKeys(a: string, b: string): number {
 
   return a.localeCompare(b);
 }
+
+export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
