@@ -18,7 +18,7 @@ import {
   GroupedListInput,
 } from 'components-react/shared/inputs';
 import { IListGroup } from 'components-react/shared/inputs/GroupedListInput';
-import { LayoutInput } from '../common/LayoutInput';
+import { LayoutInput } from 'components-react/widgets/common/LayoutInput';
 import css from './GamePulseTriggerDetails.m.less';
 import { AnimationGroup, GamePulseStaticConfig, GamePulseTrigger } from './GamePulse.types';
 

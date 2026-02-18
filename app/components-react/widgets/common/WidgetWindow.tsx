@@ -28,8 +28,8 @@ import { SponsorBanner, SponsorBannerModule } from '../SponsorBanner';
 import { GameWidget, GameWidgetModule } from '../GameWidget';
 import { ViewerCount, ViewerCountModule } from '../ViewerCount';
 import { CustomWidget, CustomWidgetModule } from '../CustomWidget';
-import { GamePulseWidget } from '../GamePulse';
-import { GamePulseModule } from '../game-pulse/useGamePulseWidget';
+import { GamePulseWidget } from 'components-react/widgets/GamePulse';
+import { GamePulseModule } from 'components-react/widgets/game-pulse/useGamePulseWidget';
 import { useSubscription } from '../../hooks/useSubscription';
 import { useChildWindowParams } from 'components-react/hooks';
 

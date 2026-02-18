@@ -1,6 +1,6 @@
 import { Throttle, Bind } from 'lodash-decorators';
 import cloneDeep from 'lodash/cloneDeep';
-import { useWidget, WidgetModule } from '../common/useWidget';
+import { useWidget, WidgetModule } from 'components-react/widgets/common/useWidget';
 import { GamePulseTabUtils, buildNewTrigger, sortEventKeys, delay } from './GamePulse.helpers';
 import { GAME_PULSE_API } from './GamePulse.consts';
 
