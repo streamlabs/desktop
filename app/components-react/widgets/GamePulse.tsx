@@ -35,7 +35,8 @@ export function GamePulseWidget() {
     [TabKind.TriggerDetail]: TriggerDetailsTab,
   };
 
-  const ActiveTab = TAB_COMPONENTS[tabKind] || GamePulseTabUtils.generateManageGameId(ScopeId.Global);
+  const ActiveTab =
+    TAB_COMPONENTS[tabKind] || GamePulseTabUtils.generateManageGameId(ScopeId.Global);
 
   const showDisplay = tabKind !== TabKind.General && tabKind !== TabKind.GameManage;
 
@@ -48,7 +49,7 @@ export function GamePulseWidget() {
       setSelectedTab(targetTab);
     }
 
-    testGamePulseTrigger(trigger.id);
+    testGamePulseTrigger(trigger);
   }
 
   function onDelete(triggerId: string, scopeId: string) {
@@ -86,10 +87,7 @@ export function GamePulseWidget() {
 
   return (
     <div className={css.gamePulseWidget}>
-      <WidgetLayout
-        layout="long-menu"
-        showDisplay={showDisplay}
-      >
+      <WidgetLayout layout="long-menu" showDisplay={showDisplay}>
         <Tooltip
           visible={tutorialVisible}
           placement="rightTop"
@@ -99,7 +97,9 @@ export function GamePulseWidget() {
           title={
             <div>
               <div>
-                {$t("Triggers are setup and ready to go! Feel free to uncheck the ones you don't want.")}
+                {$t(
+                  "Triggers are setup and ready to go! Feel free to uncheck the ones you don't want.",
+                )}
               </div>
               <Button
                 type="text"
@@ -108,9 +108,7 @@ export function GamePulseWidget() {
                 }}
                 onClick={() => setTutorialVisible(false)}
               >
-                <span style={{ textDecoration: 'underline' }}>
-                  {$t('Dismiss')}
-                </span>
+                <span style={{ textDecoration: 'underline' }}>{$t('Dismiss')}</span>
               </Button>
             </div>
           }
@@ -126,7 +124,7 @@ export function GamePulseWidget() {
             />
           </div>
         </Tooltip>
-          <ActiveTab />
+        <ActiveTab />
       </WidgetLayout>
     </div>
   );
@@ -174,7 +172,7 @@ function GameSettingsTab() {
       <hr style={{ margin: '24px 0', opacity: 0.2 }} />
     </div>
   );
-};
+}
 
 function ManageTriggersTab() {
   const {

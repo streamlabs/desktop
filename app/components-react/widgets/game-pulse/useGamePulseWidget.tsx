@@ -5,10 +5,10 @@ import {
   buildNewTrigger,
   sortEventKeys,
 } from './GamePulse.helpers';
+import { GAME_PULSE_API } from './GamePulse.consts';
 
 import {
   ScopeId,
-  ApiEndpoints,
   GamePulseWidgetSettings,
   GamePulseTrigger,
   IGamePulseGroupOption,
@@ -20,11 +20,8 @@ import {
   GamePulseEventMeta,
   GamePulseTriggerGroup,
   IGamePulseWidgetState,
-  TTSLanguagesResponse,
 } from './GamePulse.types';
 import cloneDeep from 'lodash/cloneDeep';
-
-const EVENT_SORT_ORDER = ['elimination', 'victory', 'death', 'player_knocked'];
 
 /**
  * Game Pulse widget module for Game Pulse triggers.
@@ -39,11 +36,6 @@ const EVENT_SORT_ORDER = ['elimination', 'victory', 'death', 'player_knocked'];
  * - manages trigger CRUD and enable/disable state
  */
 export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
-  private _memoAvailableGameEvents: { input: any; result: Record<string, string[]> } | null = null;
-  private _memoGlobalEvents: { input: any; result: Record<string, string> } | null = null;
-  private _memoGroupOptions: { input: any; result: IGamePulseGroupOption[] } | null = null;
-  private _memoSections: { input: any; result: { id: string; title: string; triggers: GamePulseTrigger[] }[] } | null = null;
-
   private get hostsService() {
     return this.widgetsService.hostsService;
   }
@@ -57,19 +49,11 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
   }
 
   get availableGameEvents(): Record<string, string[]> {
-    const raw = this.staticConfig?.data?.options?.available_game_events;
-
-    if (this._memoAvailableGameEvents && this._memoAvailableGameEvents.input === raw) {
-      return this._memoAvailableGameEvents.result;
-    }
-
-    const result = Object.keys(raw || {}).reduce((acc, gameKey) => {
-      acc[gameKey] = [...(raw?.[gameKey] || [])].sort(sortEventKeys);
+    const raw = this.staticConfig?.data?.options?.available_game_events || {};
+    return Object.keys(raw).reduce((acc, gameKey) => {
+      acc[gameKey] = [...raw[gameKey]].sort(sortEventKeys);
       return acc;
     }, {} as Record<string, string[]>);
-
-    this._memoAvailableGameEvents = { input: raw, result };
-    return result;
   }
 
   get gameEvents(): Record<string, GamePulseEventMeta> {
@@ -77,31 +61,19 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
   }
 
   get globalEvents(): { [key: string]: string } {
-    const rawGlobal = this.staticConfig?.data?.options?.global_events;
+    const rawGlobal = this.staticConfig?.data?.options?.global_events || {};
+    const sortedKeys = Object.keys(rawGlobal).sort(sortEventKeys);
 
-    if (this._memoGlobalEvents && this._memoGlobalEvents.input === rawGlobal) {
-      return this._memoGlobalEvents.result;
-    }
-
-    const sortedKeys = Object.keys(rawGlobal || {}).sort(sortEventKeys);
-    const result = sortedKeys.reduce((acc, key) => {
-      acc[key] = rawGlobal![key];
+    return sortedKeys.reduce((acc, key) => {
+      acc[key] = rawGlobal[key];
       return acc;
     }, {} as Record<string, string>);
-
-    this._memoGlobalEvents = { input: rawGlobal, result };
-    return result;
   }
 
   get groupOptions(): IGamePulseGroupOption[] {
-    const settings = this.settings;
-
-    if (this._memoGroupOptions && this._memoGroupOptions.input === settings) {
-      return this._memoGroupOptions.result;
-    }
-
     const gamesMeta = this.games;
-    const games = Object.entries(settings.games || {}).map(
+
+    const games = Object.entries(this.settings.games || {}).map(
       ([gameId, gameData]) => ({
         id: gameId,
         name: gamesMeta?.[gameId]?.title || gameId,
@@ -112,29 +84,21 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
     const global: IGamePulseGroupOption = {
       id: ScopeId.Global,
       name: 'Global',
-      enabled: !!settings.global?.enabled,
+      enabled: !!this.settings.global?.enabled,
     };
 
-    const result = [global, ...games];
-    this._memoGroupOptions = { input: settings, result };
-    return result;
+    return [global, ...games];
   }
 
   get sections(): { id: string; title: string; triggers: GamePulseTrigger[] }[] {
-    const settings = this.settings;
-
-    if (this._memoSections && this._memoSections.input === settings) {
-      return this._memoSections.result;
-    }
-
     const globalSection = {
       id: ScopeId.Global,
       title: 'Global',
-      triggers: settings?.global?.triggers || []
+      triggers: this.settings?.global?.triggers || []
     };
 
     const gameSections = Object.entries(this.games).flatMap(([gameKey, gameMeta]) => {
-      const triggers = settings?.games?.[gameKey]?.triggers || [];
+      const triggers = this.settings?.games?.[gameKey]?.triggers || [];
       if (triggers.length === 0) return [];
       return [{
         id: gameKey,
@@ -143,9 +107,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
       }];
     });
 
-    const result = [globalSection, ...gameSections];
-    this._memoSections = { input: settings, result };
-    return result;
+    return [globalSection, ...gameSections];
   }
 
   get currentTabId(): string {
@@ -259,7 +221,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
       },
 
       updateTrigger(updated: GamePulseTrigger) {
-        module.updateTriggers(scopeId, (t) => 
+        module.updateTriggers(scopeId, (t) =>
           t.id === updated.id ? updated : t
         );
         forceUpdate();
@@ -404,34 +366,38 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
     this.updateSettings(newSettings);
   }
 
-  @Bind()
-  @Throttle(1000)
-  public async testGamePulseTrigger(triggerId: string) {
-    const url = `https://${this.hostsService.streamlabs}/api/v5/${ApiEndpoints.TestTrigger}`;
+  private async requestEndpoint(
+    endpoint: typeof GAME_PULSE_API[keyof typeof GAME_PULSE_API],
+    params?: { body?: any; headers?: any; query?: string }
+  ) {
+    const { path, method } = endpoint;
+    const baseUrl = `https://${this.hostsService.streamlabs}/api/v5`;
+    const queryString = params?.query ? `?${params.query}` : '';
+    const url = `${baseUrl}/${path}${queryString}`;
 
-    const res = await this.widgetsService.request({
+    return this.widgetsService.request({
       url,
-      method: 'POST',
-      body: { ulid: triggerId },
-      headers: { 'X-Force-Test': 'true' },
+      method,
+      body: params?.body,
+      headers: params?.headers,
     });
-
-    return res;
   }
 
-  public async resetSettings() {
-    const url = `https://${this.hostsService.streamlabs}/api/v5/${ApiEndpoints.ResetSettings}`;
-    await this.widgetsService.request({
-      url,
-      method: 'POST',
+  @Bind()
+  @Throttle(1000)
+  public async testGamePulseTrigger(trigger: GamePulseTrigger) {
+    return this.requestEndpoint(GAME_PULSE_API.TestTrigger, {
+      body: { ulid: trigger.id },
+      headers: { 'X-Force-Test': 'true' },
     });
+  }
+  public async resetSettings() {
+    await this.requestEndpoint(GAME_PULSE_API.ResetSettings);
   }
 
   public async deleteTrigger(triggerId: string, scopeId: string) {
-    const url = `https://${this.hostsService.streamlabs}/api/v5/${ApiEndpoints.DeleteTrigger}?ulid=${triggerId}`;
-    const res = await this.widgetsService.request({
-      url,
-      method: 'DELETE',
+    const res = await this.requestEndpoint(GAME_PULSE_API.DeleteTrigger, {
+      query: `ulid=${triggerId}`
     });
     if (!res.success) {
       throw new Error(`Failed to delete trigger: ${res.message}`);
@@ -537,6 +503,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
     return nextSettings;
   }
 
+  /** Helper to resolve a trigger group (global or game-specific) from settings. */
   private getScope(scopeId: string, settings = this.settings) {
     return scopeId === ScopeId.Global ? settings.global : settings.games?.[scopeId];
   }
@@ -554,11 +521,11 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
     return scope.triggers.find(t => t.id === triggerId) ?? null;
   }
 
-  // override fetchData to include tts voices
+  /** Override fetchData to include TTS voices */
   protected async fetchData() {
     const [data, voicesRes] = await Promise.all([
       super.fetchData(),
-      this.widgetsService.request({ url: `https://${this.hostsService.streamlabs}/api/v5/${ApiEndpoints.TTSLanguages}`, method: 'GET' }),
+      this.requestEndpoint(GAME_PULSE_API.TTSLanguages),
     ]);
 
     try {
@@ -575,17 +542,18 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
     return data;
   }
 
+  /**
+   * Initialize default settings for the GamePulse widget. For example, when a user first adds the widget
+   * and has no triggers configured + the showTutorial flag is set, we want to populate some default triggers to help them get started.
+   */
   public async initDefaults(gameEvents: string[] = ['elimination', 'victory', 'death', 'assist', 'knockout']) {
     try {
-      const defaults = await this.widgetsService.request({
-        url: `https://${this.hostsService.streamlabs}/api/v5/${ApiEndpoints.DefaultSettings}`,
-        method: 'POST',
-        body: { game_events: gameEvents },
+      const defaults = await this.requestEndpoint(GAME_PULSE_API.DefaultSettings, {
+        body: { game_events: gameEvents }
       });
-
       if (defaults.settings || defaults.data?.settings) {
         const newSettings = defaults.settings || defaults.data?.settings;
-        
+
         this.updateSettings(newSettings);
       }
     } catch (err) {
