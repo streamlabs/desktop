@@ -36,18 +36,16 @@ export function GamePulseGameSettings({
         <div className={css.triggerButtonRow}>
           <Button
             onClick={onEnableAll}
-            className={`${css.triggerButton} ${css.triggerButtonEnabled}`}
+            className={`${css.triggerButton} ${css.triggerButtonEnabled} ${allEnabled ? css.disabledOpacity : ''}`}
             type="text"
-            style={{ opacity: allEnabled ? 0.5 : 1 }}
             disabled={allEnabled}
           >
             {$t('Enable All')}
           </Button>
           <Button
             onClick={onDisableAll}
-            className={`${css.triggerButton} ${css.triggerButtonDisabled}`}
+            className={`${css.triggerButton} ${css.triggerButtonDisabled} ${allDisabled ? css.disabledOpacity : ''}`}
             type="text"
-            style={{ opacity: allDisabled ? 0.5 : 1 }}
             disabled={allDisabled}
           >
             {$t('Disable All')}

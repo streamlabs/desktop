@@ -7,10 +7,6 @@ import css from './GamePulseMenu.m.less';
 import { GamePulseTabUtils } from './GamePulse.helpers';
 import { GamePulseTrigger } from './GamePulse.types';
 
-function GameIcon() {
-  return <i className={`icon-console ant-menu-item-icon ${css.gameIcon}`} />;
-}
-
 interface ReactiveSection {
   id: string; // The game key (e.g. 'global', 'csgo')
   title: string; // The display title
@@ -78,10 +74,10 @@ export function GamePulseMenu(props: {
       {sections.map((section) => (
         <Menu.SubMenu
           key={section.id}
-          icon={<GameIcon />}
+          icon={<i className={`icon-console ant-menu-item-icon ${css.gameIcon}`} />}
           title={section.title}
         >
-          {section.triggers?.map((trigger, index) => (
+          {section.triggers?.map((trigger) => (
             <Menu.Item
               key={GamePulseTabUtils.generateTriggerId(section.id, trigger.id)}
               className={css.menuItem}
