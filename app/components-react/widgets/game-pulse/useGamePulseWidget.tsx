@@ -562,7 +562,7 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
     } catch (err) {
       console.error('[GamePulseWidget] Failed to merge voice data:', err);
     }
-
+    data.showTutorial = true;
     return data;
   }
 

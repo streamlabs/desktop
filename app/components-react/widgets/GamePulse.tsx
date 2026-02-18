@@ -74,16 +74,18 @@ export function GamePulseWidget() {
   }, [showTutorial, hasTriggers]);
 
   useEffect(() => {
-    if (showTutorial) {
-      setTutorialVisible(true);
-    }
+    setTutorialVisible(!!showTutorial); 
   }, [showTutorial]);
 
   useEffect(() => {
+    // set a default tab on initial load if not already set
     if (!currentTabId || currentTabId === TabKind.General) {
       setSelectedTab(GamePulseTabUtils.generateManageGameId(ScopeId.Global));
     }
   }, []);
+
+  // offset from top, past the preview source
+  const tooltipOffset = [0, 255];
 
   return (
     <div className={css.gamePulseWidget}>
@@ -92,7 +94,7 @@ export function GamePulseWidget() {
           visible={tutorialVisible}
           placement="rightTop"
           trigger={[]}
-          align={{ offset: [0, 255] }}
+          align={{ offset: tooltipOffset }}
           zIndex={9999}
           title={
             <div>
@@ -103,12 +105,10 @@ export function GamePulseWidget() {
               </div>
               <Button
                 type="text"
-                style={{
-                  padding: 0,
-                }}
+                className={css.dismissButton}
                 onClick={() => setTutorialVisible(false)}
               >
-                <span style={{ textDecoration: 'underline' }}>{$t('Dismiss')}</span>
+                <span>{$t('Dismiss')}</span>
               </Button>
             </div>
           }
@@ -169,7 +169,6 @@ function GameSettingsTab() {
         onEnableAll={enableAllGroups}
         onDisableAll={disableAllGroups}
       />
-      <hr style={{ margin: '24px 0', opacity: 0.2 }} />
     </div>
   );
 }
