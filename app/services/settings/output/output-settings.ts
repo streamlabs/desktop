@@ -298,19 +298,41 @@ export class OutputSettingsService extends Service {
         break;
     }
 
-    const encoder = obsEncoderToEncoderFamily(
-      this.settingsService.findSettingValue(output, 'Streaming', 'Encoder') ||
-        this.settingsService.findSettingValue(output, 'Streaming', 'StreamEncoder'),
-    ) as EEncoderFamily;
+    // const encoder = obsEncoderToEncoderFamily(
+    //   this.settingsService.findSettingValue(output, 'Streaming', 'Encoder') ||
+    //     this.settingsService.findSettingValue(output, 'Streaming', 'StreamEncoder'),
+    // ) as EEncoderFamily;
 
-    const convertedEncoderName:
-      | EObsSimpleEncoder
-      | EObsAdvancedEncoder = this.convertEncoderToNewAPI(encoder);
+    // const convertedEncoderName:
+    //   | EObsSimpleEncoder
+    //   | EObsAdvancedEncoder = this.convertEncoderToNewAPI(encoder);
 
+    // const videoEncoder: EObsAdvancedEncoder =
+    //   convertedEncoderName === EObsSimpleEncoder.x264_lowcpu
+    //     ? EObsAdvancedEncoder.obs_x264
+    //     : convertedEncoderName;
+
+    const field = mode === 'Advanced' ? 'Encoder' : 'StreamEncoder';
+
+    const useStream =
+      mode === 'Simple'
+        ? quality === ERecordingQuality.Stream
+        : this.settingsService.findSettingValue(output, 'Recording', 'RecEncoder') === 'none';
+
+    const encoder = useStream
+      ? this.settingsService.findSettingValue(output, 'Streaming', field)
+      : this.settingsService.findSettingValue(output, 'Recording', 'RecEncoder');
+
+    //TODO remove these 2 conversions after encoder updates and use 'encoder' in the lowCPU line below
+    const convertedEncoderName = this.convertEncoderToNewAPI(obsEncoderToEncoderFamily(encoder));
     const videoEncoder: EObsAdvancedEncoder =
       convertedEncoderName === EObsSimpleEncoder.x264_lowcpu
         ? EObsAdvancedEncoder.obs_x264
         : convertedEncoderName;
+
+    console.log(
+      `MLH getRecordingSettings encoder name to convert: ${encoder} converted name: ${convertedEncoderName} final value to use: ${videoEncoder}`,
+    );
 
     const lowCPU: boolean = convertedEncoderName === EObsSimpleEncoder.x264_lowcpu;
 
@@ -488,6 +510,14 @@ export class OutputSettingsService extends Service {
       convertedEncoderName === EObsSimpleEncoder.x264_lowcpu
         ? EObsAdvancedEncoder.obs_x264
         : convertedEncoderName;
+
+    //TODO use this when ditching conversions after encoder updates
+    // const videoEncoder =
+    //   mode === 'Advanced'
+    //     ? this.settingsService.findSettingValue(output, 'Streaming', 'Encoder')
+    //     : this.settingsService.findSettingValue(output, 'Streaming', 'StreamEncoder');
+
+    // console.log('MLH getStreamingSettings encoder in settings: ', videoEncoder);
 
     const enforceBitrateKey = mode === 'Advanced' ? 'ApplyServiceSettings' : 'EnforceBitrate';
     const enforceServiceBitrate = this.settingsService.findSettingValue(
