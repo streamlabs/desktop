@@ -11,7 +11,6 @@ import { throttle } from 'lodash-decorators';
 import * as remote from '@electron/remote';
 
 import FFZSettings from 'components/windows/FFZSettings.vue';
-import SceneTransitions from 'components/windows/SceneTransitions.vue';
 import {
   NameFolder,
   NameScene,
@@ -45,6 +44,7 @@ import {
   MarketingModal,
   Settings,
   Troubleshooter,
+  SceneTransitions,
 } from 'components/shared/ReactComponentList';
 
 import SourcePropertiesDeprecated from 'components/windows/SourceProperties.vue';
