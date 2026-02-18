@@ -159,7 +159,7 @@ export class WidgetsService
       rect.x = widgetTransform.x * this.videoSettingsService.baseResolutions.horizontal.baseWidth;
       rect.y = widgetTransform.y * this.videoSettingsService.baseResolutions.horizontal.baseHeight;
     });
-    console.log("Creating item with url: ", widget.url);
+
     const item = this.editorCommandsService.executeCommand(
       'CreateNewItemCommand',
       this.scenesService.views.activeSceneId,

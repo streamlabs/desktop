@@ -7,12 +7,13 @@ import {
   GamePulseTrigger,
   SelectOption,
   GamePulseEventMeta,
+  TriggerType,
 } from './GamePulse.types';
 import css from './GamePulseCreateTriggerForm.m.less';
 
 interface TriggerFormProps {
   trigger: { game?: string; event_type?: string; name?: string };
-  onSubmit: (data: { eventType: string; game: string; name: string; triggerType: string }) => Promise<void> | void;
+  onSubmit: (data: { eventType: string; game: string; name: string; triggerType: TriggerType }) => Promise<void> | void;
   availableGameEvents: Record<string, string[]>;
   gameEvents: Record<string, GamePulseEventMeta>;
   globalEvents?: Record<string, string>;
@@ -36,7 +37,7 @@ export function GamePulseCreateTriggerForm(props: TriggerFormProps) {
     game: trigger.game || gameOptions[0]?.value || '',
     event_type: trigger.event_type || '',
     name: trigger.name || '',
-    trigger_type: '',
+    trigger_type: '' as TriggerType,
   });
 
   const eventOptions = useMemo(() => {
@@ -87,7 +88,7 @@ export function GamePulseCreateTriggerForm(props: TriggerFormProps) {
       game: newGame,
       event_type: '',
       name: '',
-      trigger_type: '',
+      trigger_type: '' as TriggerType,
     });
   }, []);
 
@@ -103,7 +104,7 @@ export function GamePulseCreateTriggerForm(props: TriggerFormProps) {
         ...prev,
         name: uniqueName,
         event_type: newEvent,
-        trigger_type: defaultTriggerType,
+        trigger_type: defaultTriggerType as TriggerType,
       }));
     },
     [data, values.game, eventOptions, gameEvents],
@@ -119,7 +120,7 @@ export function GamePulseCreateTriggerForm(props: TriggerFormProps) {
       else if (key === 'event_type') handleEventChange(value as string);
       else if (key === 'name') handleNameChange(value as string);
       else if (key === 'trigger_type') {
-        setValues(prev => ({ ...prev, trigger_type: value as string }));
+        setValues(prev => ({ ...prev, trigger_type: value as TriggerType }));
       }
     },
     [handleGameChange, handleEventChange, handleNameChange],
@@ -141,10 +142,10 @@ export function GamePulseCreateTriggerForm(props: TriggerFormProps) {
 
     try {
       await onSubmit({
-        eventType: values.event_type as string,
-        game: values.game as string,
-        name: values.name as string,
-        triggerType: values.trigger_type as string,
+        eventType: values.event_type,
+        game: values.game,
+        name: values.name,
+        triggerType: values.trigger_type,
       });
 
     } catch (error) {

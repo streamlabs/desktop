@@ -213,5 +213,6 @@
   "Trigger Type": "Trigger Type",
   "Trigger Name": "Trigger Name",
   "Select a Trigger Type": "Select a Trigger Type",
-  "Triggers are setup and ready to go! Feel free to uncheck the ones you don't want.": "Triggers are setup and ready to go! Feel free to uncheck the ones you don't want."
+  "Triggers are setup and ready to go! Feel free to uncheck the ones you don't want.": "Triggers are setup and ready to go! Feel free to uncheck the ones you don't want.",
+  "Global": "Global"
 }

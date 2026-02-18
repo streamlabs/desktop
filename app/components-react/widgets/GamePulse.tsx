@@ -141,7 +141,7 @@ function AddTriggerTab() {
   } = useGamePulseWidget();
 
   const gameOptions = [
-    { label: 'Global', value: ScopeId.Global },
+    { label: $t('Global'), value: ScopeId.Global },
     ...Object.entries(games).map(([key, value]) => ({ label: value.title, value: key })),
   ];
 
