@@ -5,7 +5,7 @@ interface ApiEndpoint {
   method: 'GET' | 'POST' | 'DELETE';
 }
 
-export const GAME_PULSE_API: Record<string, ApiEndpoint> = {
+export const GAME_PULSE_API = {
   ResetSettings: {
     path: 'widgets/desktop/game-pulse/reset-settings',
     method: 'POST',
@@ -30,7 +30,7 @@ export const GAME_PULSE_API: Record<string, ApiEndpoint> = {
     path: 'widgets/desktop/game-pulse/trigger/defaults',
     method: 'POST',
   },
-} as const;
+} as const satisfies Record<string, ApiEndpoint>;
 
 export const EVENT_MEDIA_MAP: Record<string, string> = {
   death: 'https://cdn.streamlabs.com/library/animations/default-death.webm',
