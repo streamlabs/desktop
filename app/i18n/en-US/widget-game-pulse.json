@@ -15,7 +15,7 @@
   "Trigger Type": "Trigger Type",
   "Trigger Name": "Trigger Name",
   "Select a Trigger Type": "Select a Trigger Type",
-  "Triggers are setup and ready to go! Feel free to uncheck the ones you don't want.": "Triggers are setup and ready to go! Feel free to uncheck the ones you don't want.",
+  "Triggers are set up and ready to go! Feel free to uncheck the ones you don't want.": "Triggers are set up and ready to go! Feel free to uncheck the ones you don't want.",
   "Global": "Global",
   "Triggered when a player reaches a cumulative total number of events.": "Triggered when a player reaches a cumulative total number of events.",
   "Triggered when a player achieves a consecutive number of events without interruption.": "Triggered when a player achieves a consecutive number of events without interruption.",

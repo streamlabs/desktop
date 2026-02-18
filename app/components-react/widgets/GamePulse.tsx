@@ -100,7 +100,7 @@ export function GamePulseWidget() {
             <div>
               <div>
                 {$t(
-                  "Triggers are setup and ready to go! Feel free to uncheck the ones you don't want.",
+                  "Triggers are set up and ready to go! Feel free to uncheck the ones you don't want.",
                 )}
               </div>
               <Button
