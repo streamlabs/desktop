@@ -551,13 +551,21 @@ export class YoutubeService
     }
 
     if (this.streamingService.views.isDualOutputMode && ytSettings.display === 'both') {
-      // Prevent rate limit errors by delaying the dual stream setup by 1 second
-      await new Promise<void>(resolve => {
-        setTimeout(async () => {
-          await this.setupDualStream(goLiveSettings);
-          resolve();
-        }, 1000);
-      });
+      try {
+        // Prevent rate limit errors by delaying the dual stream setup by 1 second
+        await new Promise<void>(resolve => {
+          setTimeout(async () => {
+            await this.setupDualStream(goLiveSettings);
+            resolve();
+          }, 1000);
+        });
+      } catch (e: unknown) {
+        console.error('Error setting up YouTube dual stream', e);
+
+        // Catch error to prevent blocking the horizontal stream starting if there is an issue
+        // setting up the vertical stream
+        this.postError('Error setting up YouTube dual stream. Vertical stream not started.');
+      }
     }
 
     // Updating the thumbnail in the stream settings happens when creating the broadcast.
