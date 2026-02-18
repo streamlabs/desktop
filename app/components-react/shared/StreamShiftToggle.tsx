@@ -46,7 +46,7 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
                 onClick={() => {
                   Services.MagicLinkService.actions.linkToPrime(
                     'slobs-streamswitcher',
-                    'StreamShift',
+                    { event: 'StreamShift' },
                   );
                 }}
               >
