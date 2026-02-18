@@ -1,25 +1,17 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import {
-  EExportStep,
-  TFPS,
-  TResolution,
-  TPreset,
-} from 'services/highlighter/models/rendering.models';
+import React, { useState, useEffect, useMemo } from 'react';
+import { TFPS, TResolution, TPreset } from 'services/highlighter/models/rendering.models';
 import { Services } from 'components-react/service-provider';
-import { FileInput, TextInput, ListInput } from 'components-react/shared/inputs';
+import { FileInput } from 'components-react/shared/inputs';
 import Form from 'components-react/shared/inputs/Form';
 import path from 'path';
 import { Button, Progress, Alert, Dropdown } from 'antd';
-import YoutubeUpload from './YoutubeUpload';
 import { RadioInput } from 'components-react/shared/inputs/RadioInput';
 import { confirmAsync } from 'components-react/modals';
 import { $t } from 'services/i18n';
-import StorageUpload from './StorageUpload';
-import { useVuex } from 'components-react/hooks';
 import { initStore, useController } from '../../hooks/zustand';
 import { EOrientation, TOrientation } from 'services/highlighter/models/ai-highlighter.models';
 import { fileExists } from 'services/highlighter/file-utils';
-import { SCRUB_HEIGHT, SCRUB_WIDTH, SCRUB_FRAMES } from 'services/highlighter/constants';
+import { SCRUB_WIDTH, SCRUB_WIDTH_VERTICAL } from 'services/highlighter/constants';
 import styles from './ExportModal.m.less';
 import { getCombinedClipsDuration } from '../utils';
 import { formatSecondsToHMS } from '../ClipPreview';
@@ -385,7 +377,7 @@ function ExportFlow({
                 style={
                   currentFormat === EOrientation.HORIZONTAL
                     ? { objectPosition: 'left' }
-                    : { objectPosition: `-${(SCRUB_WIDTH * 1.32) / 3 + 4}px` }
+                    : { objectPosition: `-${(SCRUB_WIDTH_VERTICAL * 1.32) / 3 + 4}px` } // @@@ TODO CONFIRM
                 }
               />
             </div>

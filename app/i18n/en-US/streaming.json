@@ -146,6 +146,8 @@
   "Failed to update platform settings": "Failed to update platform settings",
   "The Multistream server is temporarily unavailable": "The Multistream server is temporarily unavailable",
   "Failed to configure the Multistream server": "Failed to configure the Multistream server",
+  "Failed to configure the Multistream server for Enhanced Broadcasting": "Failed to configure the Multistream server for Enhanced Broadcasting",
+  "disable Enhanced Broadcasting for Twitch and try again": "disable Enhanced Broadcasting for Twitch and try again",
   "Failed to configure the Dual Output service": "Failed to configure the Dual Output service",
   "The Multistream server is temporarily unavailable for Dual Output": "The Multistream server is temporarily unavailable for Dual Output",
   "Your YouTube account is not enabled for live streaming": "Your YouTube account is not enabled for live streaming",
@@ -338,5 +340,14 @@
   "Grow your audience faster with unlimited Multistream. Our servers do the work so your PC can stream smoothly.": "Grow your audience faster with unlimited Multistream. Our servers do the work so your PC can stream smoothly.",
   "Unlock unlimited multistreaming with Ultra and grow your audience faster": "Unlock unlimited multistreaming with Ultra and grow your audience faster",
   "<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform": "<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform",
-  "Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination.": "Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination."
+  "Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination.": "Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination.",
+  "An unknown Recording error occurred. Please try again.": "An unknown Recording error occurred. Please try again.",
+  "An unknown Replay Buffer error occurred. Please try again.": "An unknown Replay Buffer error occurred. Please try again.",
+  "Recording in progress. Stop recording to change the recording display.": "Recording in progress. Stop recording to change the recording display.",
+  "Vertical Recording Active": "Vertical Recording Active",
+  "Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?": "Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?",
+  "Vertical Replay Buffer Active": "Vertical Replay Buffer Active",
+  "Vertical replay buffer is in-progress. Would you like to stop the replay buffer to enable AI Highlighter?": "Vertical replay buffer is in-progress. Would you like to stop the replay buffer to enable AI Highlighter?",
+  "Vertical stream accidentally started in single output mode. Please report this to support.": "Vertical stream accidentally started in single output mode. Please report this to support.",
+  "Dual Output horizontal stream failed to start. Please try again or go live in single output mode.": "Dual Output horizontal stream failed to start. Please try again or go live in single output mode."
 }

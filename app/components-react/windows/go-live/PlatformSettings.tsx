@@ -38,7 +38,6 @@ export default function PlatformSettings() {
     isDualOutputMode,
     isAiHighlighterEnabled,
     isStreamShiftMode,
-    enabledPlatformsCount,
   } = useGoLiveSettings().extend(settings => ({
     highlighterService: inject(HighlighterService),
 
@@ -59,10 +58,6 @@ export default function PlatformSettings() {
     get isAiHighlighterEnabled() {
       return this.highlighterService.aiHighlighterFeatureEnabled;
     },
-
-    get enabledPlatformsCount() {
-      return settings.enabledPlatforms.length;
-    },
   }));
 
   const shouldShowSettings = !error && !isLoading;
@@ -81,7 +76,6 @@ export default function PlatformSettings() {
       isDualOutputMode,
       isStreamShiftMode,
       isAiHighlighterEnabled,
-      enabledPlatformsCount,
       get value() {
         return getDefined(settings.platforms[platform]);
       },

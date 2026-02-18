@@ -53,6 +53,8 @@ export type TAnalyticsEvent =
   | 'TikTokApplyPrompt'
   | 'ScheduleStream'
   | 'StreamShift'
+  | 'DualOutputRecording' // @@ TODO add analytics for DualOutputRecording
+  | 'VerticalRecording' // @@ TODO add analytics for VerticalRecording
   | 'Ultra'
   | 'Onboarding';
 
