@@ -592,7 +592,17 @@ export class StreamingService
 
     // start video transmission
     try {
-      await this.runCheck('startVideoTransmission', () => this.finishStartStreaming());
+      await this.runCheck('startVideoTransmission', async () => {
+        if (this.views.shouldSetupRestream) {
+          const timeout = new Promise((resolve, reject) => {
+            setTimeout(() => reject(throwStreamError('RESTREAM_SETUP_FAILED')), 30000);
+          });
+
+          await Promise.race([this.finishStartStreaming(), timeout]);
+        } else {
+          this.finishStartStreaming();
+        }
+      });
     } catch (e: unknown) {
       console.error('Error starting video transmission: ', e);
       return;
