@@ -10,7 +10,8 @@ export type TWidgetType =
   | WidgetType.DonationTicker
   | WidgetType.CustomWidget
   | WidgetType.ChatBox
-  | WidgetType.SponsorBanner;
+  | WidgetType.SponsorBanner
+  | WidgetType.GamePulseWidget;
 
 export interface IWidgetConfig {
   type: TWidgetType;
@@ -335,6 +336,32 @@ export function getWidgetsConfig(
       settingsUpdateEvent: 'customWidgetSettingsUpdate',
       customCodeAllowed: true,
       customFieldsAllowed: true,
+    },
+
+    [WidgetType.GamePulseWidget]: {
+      type: WidgetType.GamePulseWidget,
+
+      defaultTransform: {
+        width: 1920,
+        height: 1080,
+        x: 0,
+        y: 0,
+        anchor: AnchorPoint.NorthWest,
+      },
+
+      settingsWindowSize: {
+        width: 800,
+        height: 800,
+      },
+      useNewWidgetAPI: true,
+      url: `https://${host}/api/v5/widgets/desktop/game-pulse`,
+      previewUrl: `https://${host}/widgets/preview/game-pulse/${token}?simulate=1`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/game-pulse`,
+      dataFetchUrl: `https://${host}/api/v5/widgets/desktop/game-pulse`,
+      settingsSaveUrl: `https://${host}/api/v5/widgets/desktop/game-pulse`,
+      settingsUpdateEvent: 'gamePulseSettingsUpdate',
+      customCodeAllowed: false,
+      customFieldsAllowed: false,
     },
   };
 }

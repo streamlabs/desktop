@@ -434,11 +434,11 @@ export class VisionService extends Service {
     return jfetch(url, { headers, method: 'POST' });
   }
 
-  async testEvent(type: string) {
+  async testEvent(type: string, game: string = 'fortnite') {
     return await this.authPostWithTimeout(
       `https://${this.hostsService.streamlabs}/api/v5/vision/desktop/test-event`,
       {
-        game: 'fortnite', // default to fortnite for now
+        game,
         events: [{ name: type }],
       },
       8_000,
