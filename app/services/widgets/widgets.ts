@@ -492,7 +492,12 @@ export class WidgetsService
   }
 
   // make a request to widgets API
-  async request(req: { url: string; method?: THttpMethod; body?: any, headers?: Record<string, string> }): Promise<any> {
+  async request(req: {
+    url: string;
+    method?: THttpMethod;
+    body?: any;
+    headers?: Record<string, string>;
+  }): Promise<any> {
     const method = req.method || 'GET';
     const headers = authorizedHeaders(this.userService.apiToken);
     headers.append('Content-Type', 'application/json');

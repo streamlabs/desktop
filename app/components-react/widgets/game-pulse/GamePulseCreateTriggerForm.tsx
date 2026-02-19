@@ -150,6 +150,7 @@ export function GamePulseCreateTriggerForm(props: TriggerFormProps) {
 
     } catch (error) {
       console.error(error);
+    } finally {
       setIsSubmitting(false);
     }
   };

@@ -1,4 +1,10 @@
-import { EVENT_SORT_ORDER, DEFAULT_TRIGGER_SETTINGS, EVENT_MEDIA_MAP, DEFAULTS, GAME_PULSE_TABS_SEPARATOR } from './GamePulse.consts';
+import {
+  EVENT_SORT_ORDER,
+  DEFAULT_TRIGGER_SETTINGS,
+  EVENT_MEDIA_MAP,
+  DEFAULTS,
+  GAME_PULSE_TABS_SEPARATOR,
+} from './GamePulse.consts';
 import {
   ActiveTabContext,
   TabKind,
@@ -6,7 +12,6 @@ import {
   GamePulseTriggerType,
   GamePulseEventPeriod,
 } from './GamePulse.types';
-
 
 /**
  * Centralized util for managing the "Tab ID" strings used in the GamePulse Widget.

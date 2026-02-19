@@ -830,9 +830,7 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
   },
   [WidgetType.GamePulseWidget]: {
     name: $t('Game Pulse'),
-    description: $t(
-      'Real time alerts reacting to your in game events.',
-    ),
+    description: $t('Real time alerts reacting to your in game events.'),
     demoVideo: false,
     demoFilename: '',
     supportList: [],

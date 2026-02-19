@@ -37,7 +37,7 @@ export type TInputType =
   | 'radio'
   | 'imagepicker'
   | 'animation'
-  | 'duration'
+  | 'duration';
 
 export type TInputLayout = 'horizontal' | 'vertical' | 'inline';
 

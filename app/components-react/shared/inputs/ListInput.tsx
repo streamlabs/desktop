@@ -161,7 +161,7 @@ export const ListInput = InputComponent(<T extends any>(p: TListInputInternalPro
         {hasGroups &&
           (options as IListGroup<T>[]).map(group => (
             <Select.OptGroup key={group.label} label={group.label}>
-               {group.options.map((opt, ind) => renderOption(opt, ind, p))}
+              {group.options.map((opt, ind) => renderOption(opt, ind, p))}
             </Select.OptGroup>
           ))}
 

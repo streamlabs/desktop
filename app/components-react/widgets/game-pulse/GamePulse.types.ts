@@ -121,9 +121,9 @@ export interface GamePulseTotalTrigger extends GamePulseBaseTrigger {
   amount_maximum?: number | null;
 }
 
-export type GamePulseTrigger = 
-  | GamePulseStreakTrigger 
-  | GamePulseAchievementTrigger 
+export type GamePulseTrigger =
+  | GamePulseStreakTrigger
+  | GamePulseAchievementTrigger
   | GamePulseLevelTrigger
   | GamePulseTotalTrigger;
 
@@ -198,6 +198,6 @@ export interface ActiveTabContext {
 }
 
 export interface IGamePulseWidgetState extends IWidgetCommonState {
-  data: { settings: GamePulseWidgetSettings, showOnboarding?: boolean, showTutorial?: boolean };
+  data: { settings: GamePulseWidgetSettings; showOnboarding?: boolean; showTutorial?: boolean };
   staticConfig: GamePulseStaticConfig;
 }
