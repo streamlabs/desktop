@@ -38,7 +38,6 @@ export type TInputType =
   | 'imagepicker'
   | 'animation'
   | 'duration'
-  | 'groupedlist';
 
 export type TInputLayout = 'horizontal' | 'vertical' | 'inline';
 

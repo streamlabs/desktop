@@ -15,9 +15,8 @@ import {
   ColorInput,
   FontWeightInput,
   ListInput,
-  GroupedListInput,
 } from 'components-react/shared/inputs';
-import { IListGroup } from 'components-react/shared/inputs/GroupedListInput';
+import { IListGroup } from 'components-react/shared/inputs/ListInput';
 import { LayoutInput } from 'components-react/widgets/common/LayoutInput';
 import css from './GamePulseTriggerDetails.m.less';
 import { AnimationGroup, GamePulseStaticConfig, GamePulseTrigger } from './GamePulse.types';
@@ -247,19 +246,19 @@ export const GamePulseTriggerDetails = memo(function GamePulseTriggerDetails({
           <div className={css.animationRow}>
             <span className={css.animationLabel}>{$t('Animation')}</span>
             <div className={css.selectInputGroup}>
-              <GroupedListInput
+              <ListInput
                 {...bind('media_settings.show_animation')}
                 options={showAnimationOptions}
                 showSearch
               />
-              <GroupedListInput
+              <ListInput
                 {...bind('media_settings.hide_animation')}
                 options={hideAnimationOptions}
                 showSearch
               />
             </div>
           </div>
-          <GroupedListInput
+          <ListInput
             label={$t('Text Animation')}
             {...bind('text_settings.text_animation')}
             options={textAnimationOptions}
@@ -292,7 +291,7 @@ export const GamePulseTriggerDetails = memo(function GamePulseTriggerDetails({
             </div>
           }
         >
-          <GroupedListInput
+          <ListInput
             label={$t('Voice')}
             {...bind('tts_settings.language')}
             options={voiceOptions}
@@ -316,7 +315,7 @@ function getLevelRangeType(trigger: GamePulseTrigger): 'minimum' | 'maximum' | '
   return 'minimum';
 }
 
-// map backend animation groups to UI GroupedList options
+// map backend animation groups to IListGroup format for ListInput
 function mapAnimationGroups(groups?: AnimationGroup | AnimationGroup[]): IListGroup<string>[] {
   if (!groups) return [];
   const arr = Array.isArray(groups) ? groups : [groups];

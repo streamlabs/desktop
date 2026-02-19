@@ -25,4 +25,3 @@ export { CheckboxGroup } from './CheckboxGroup';
 export { ImagePickerInput } from './ImagePickerInput';
 export { AnimationInput } from './AnimationInput';
 export { DurationInput } from './DurationInput';
-export { GroupedListInput } from './GroupedListInput';
