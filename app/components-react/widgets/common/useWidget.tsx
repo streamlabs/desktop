@@ -493,8 +493,8 @@ export function useWidgetRoot<T extends typeof WidgetModule>(Module: T, params: 
 /**
  * Returns the widget's module from the existing context and selects requested fields
  */
-export function useWidget<TModule extends WidgetModule>() {
-  return useModule('WidgetModule') as GetUseModuleResult<TModule>;
+export function useWidget<TModule extends WidgetModule>(params?: WidgetParams) {
+  return useModule('WidgetModule', params ? [params] : false) as GetUseModuleResult<TModule>;
 }
 
 /**

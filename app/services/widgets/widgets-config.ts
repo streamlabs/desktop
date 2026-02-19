@@ -37,6 +37,8 @@ export interface IWidgetConfig {
   settingsSaveUrl: string;
   previewUrl: string;
   webSettingsUrl: string;
+  // used specifically for goal widgets
+  goalUrl?: string;
   settingsUpdateEvent: string;
   testers?: TAlertType[];
   customCodeAllowed?: boolean;
