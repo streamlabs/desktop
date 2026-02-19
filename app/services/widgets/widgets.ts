@@ -477,7 +477,6 @@ export class WidgetsService
     if (this.incrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.newChatBox)) {
       widgetsWithNewAPI.push(WidgetType.ChatBox);
     }
-    widgetsWithNewAPI.push(WidgetType.GamePulseWidget);
 
     return getWidgetsConfig(
       this.hostsService.streamlabs,

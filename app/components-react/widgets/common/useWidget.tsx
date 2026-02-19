@@ -80,7 +80,6 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
   // create shortcuts for widgetsConfig and eventsInfo
   public widgetsConfig = this.widgetsService.widgetsConfig;
   public eventsConfig = this.widgetsService.alertsConfig;
-  public streamlabsHost = this.widgetsService.hostsService.streamlabs;
 
   bind = injectFormBinding(
     () => this.settings,
@@ -223,7 +222,11 @@ export class WidgetModule<TWidgetState extends IWidgetState = IWidgetState> {
     );
   }
 
-  protected get widgetsService() {
+  get streamlabsHost() {
+    return Services.HostsService.streamlabs;
+  }
+
+  private get widgetsService() {
     return Services.WidgetsService;
   }
 

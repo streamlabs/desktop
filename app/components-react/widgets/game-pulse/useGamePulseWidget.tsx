@@ -3,6 +3,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import { useWidget, WidgetModule } from 'components-react/widgets/common/useWidget';
 import { GamePulseTabUtils, buildNewTrigger, sortEventKeys, delay } from './GamePulse.helpers';
 import { GAME_PULSE_API } from './GamePulse.consts';
+import { Services } from 'components-react/service-provider';
 
 import {
   ScopeId,
@@ -34,9 +35,6 @@ import {
 export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
   /** Tracks the last save operation to ensure sequential updates */
   private _lastSavePromise: Promise<any> = Promise.resolve();
-  private get hostsService() {
-    return this.widgetsService.hostsService;
-  }
 
   get staticConfig(): GamePulseStaticConfig | undefined {
     return this.state?.staticConfig as GamePulseStaticConfig | undefined;
@@ -376,11 +374,11 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
     params?: { body?: any; headers?: any; query?: string },
   ) {
     const { path, method } = endpoint;
-    const baseUrl = `https://${this.hostsService.streamlabs}/api/v5`;
+    const baseUrl = `https://${this.streamlabsHost}/api/v5`;
     const queryString = params?.query ? `?${params.query}` : '';
     const url = `${baseUrl}/${path}${queryString}`;
 
-    return this.widgetsService.request({
+    return Services.WidgetsService.request({
       url,
       method,
       body: params?.body,

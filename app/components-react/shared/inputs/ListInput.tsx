@@ -71,7 +71,7 @@ export interface IListOption<TValue> {
 }
 
 // checks if data is a list of Groups
-function isGroupList<T>(data: any[]): data is IListGroup<T>[] {
+function isGroupList<T>(data: IListOption<T>[] | IListGroup<T>[]): data is IListGroup<T>[] {
   return data.length > 0 && 'options' in data[0] && Array.isArray(data[0].options);
 }
 
