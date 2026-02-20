@@ -160,7 +160,7 @@
     "css-element-queries": "1.2.3",
     "css-loader": "2.1.1",
     "dotenv": "8.2.0",
-    "electron": "29.3.1",
+    "electron": "35.7.5",
     "electron-builder": "22.14.5",
     "electron-chromedriver": "29.3.3",
     "electron-devtools-installer": "3.1.1",
