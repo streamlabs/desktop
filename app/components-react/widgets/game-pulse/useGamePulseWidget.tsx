@@ -1,10 +1,14 @@
 import { Throttle, Bind } from 'lodash-decorators';
 import cloneDeep from 'lodash/cloneDeep';
 import { useWidget, WidgetModule } from 'components-react/widgets/common/useWidget';
-import { GamePulseTabUtils, buildNewTrigger, sortEventKeys, delay } from './GamePulse.helpers';
-import { GAME_PULSE_API } from './GamePulse.consts';
+import {
+  GamePulseTabUtils,
+  buildNewTrigger,
+  sortEventKeys,
+  delay,
+  GAME_PULSE_API,
+} from './GamePulse.models';
 import { Services } from 'components-react/service-provider';
-
 import {
   ScopeId,
   GamePulseWidgetSettings,
@@ -18,7 +22,7 @@ import {
   GamePulseEventMeta,
   GamePulseTriggerGroup,
   IGamePulseWidgetState,
-} from './GamePulse.types';
+} from './GamePulse.models';
 
 /**
  * Game Pulse widget module for Game Pulse triggers.

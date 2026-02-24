@@ -2,8 +2,12 @@ import React, { useMemo, useCallback, useEffect, useState } from 'react';
 import * as remote from '@electron/remote';
 import { WidgetLayout } from './common/WidgetLayout';
 import { useGamePulseWidget } from './game-pulse/useGamePulseWidget';
-import { GamePulseTabUtils } from './game-pulse/GamePulse.helpers';
-import { TabKind, GamePulseTrigger, ScopeId } from './game-pulse/GamePulse.types';
+import {
+  GamePulseTabUtils,
+  TabKind,
+  GamePulseTrigger,
+  ScopeId,
+} from './game-pulse/GamePulse.models';
 import { GamePulseMenu } from './game-pulse/GamePulseMenu';
 import { GamePulseCreateTriggerForm } from './game-pulse/GamePulseCreateTriggerForm';
 import { GamePulseGameSettings } from './game-pulse/GamePulseGameSettings';
@@ -74,7 +78,7 @@ export function GamePulseWidget() {
   }, [showTutorial, hasTriggers]);
 
   useEffect(() => {
-    setTutorialVisible(!!showTutorial); 
+    setTutorialVisible(!!showTutorial);
   }, [showTutorial]);
 
   useEffect(() => {

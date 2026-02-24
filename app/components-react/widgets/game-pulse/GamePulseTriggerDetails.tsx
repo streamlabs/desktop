@@ -19,7 +19,7 @@ import {
 import { IListGroup } from 'components-react/shared/inputs/ListInput';
 import { LayoutInput } from 'components-react/widgets/common/LayoutInput';
 import css from './GamePulseTriggerDetails.m.less';
-import { AnimationGroup, GamePulseStaticConfig, GamePulseTrigger } from './GamePulse.types';
+import { AnimationGroup, GamePulseStaticConfig, GamePulseTrigger } from './GamePulse.models';
 
 interface GamePulseTriggerDetailsProps {
   trigger: GamePulseTrigger;
@@ -49,13 +49,15 @@ export const GamePulseTriggerDetails = memo(function GamePulseTriggerDetails({
     ];
 
     const voices = staticConfig?.data?.options?.tts_voices || {};
-    const mappedVoices: IListGroup<string>[] = Object.entries(voices).map(([key, group]: [string, any]) => ({
-      label: key,
-      options: group.list.map((item: { key: string; value: string }) => ({
-        label: item.value,
-        value: item.key,
-      })),
-    }));
+    const mappedVoices: IListGroup<string>[] = Object.entries(voices).map(
+      ([key, group]: [string, any]) => ({
+        label: key,
+        options: group.list.map((item: { key: string; value: string }) => ({
+          label: item.value,
+          value: item.key,
+        })),
+      }),
+    );
 
     // sort voices to prioritize English ones at the top
     const voiceOptions = mappedVoices.sort((a, b) => {
@@ -132,7 +134,9 @@ export const GamePulseTriggerDetails = memo(function GamePulseTriggerDetails({
     [trigger, onUpdate],
   );
 
-  const messageTemplateTooltip = $t('When a trigger fires, this will be the format of the message. Available tokens: {number}');
+  const messageTemplateTooltip = $t(
+    'When a trigger fires, this will be the format of the message. Available tokens: {number}',
+  );
   const isStreak = trigger.event_type === 'streak';
   const isTotal = trigger.event_type === 'total';
   const isLevel = trigger.event_type === 'level';
@@ -274,7 +278,11 @@ export const GamePulseTriggerDetails = memo(function GamePulseTriggerDetails({
       </Collapse>
 
       {/* TTS */}
-      <Collapse bordered={false} defaultActiveKey={['tts-settings']} className={css.collapseOverrides}>
+      <Collapse
+        bordered={false}
+        defaultActiveKey={['tts-settings']}
+        className={css.collapseOverrides}
+      >
         <Collapse.Panel
           header={$t('Text To Speech')}
           key="tts-settings"

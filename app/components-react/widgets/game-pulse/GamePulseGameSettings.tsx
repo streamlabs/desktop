@@ -3,7 +3,7 @@ import { Button } from 'antd';
 import { $t } from 'services/i18n';
 import { SwitchInput } from 'components-react/shared/inputs';
 import css from './GamePulseGameSettings.m.less';
-import { IGamePulseGroupOption } from './GamePulse.types';
+import { IGamePulseGroupOption } from './GamePulse.models';
 
 interface GamePulseGameSettingsProps {
   scopes: IGamePulseGroupOption[] | null | undefined;
@@ -27,7 +27,7 @@ export function GamePulseGameSettings({
   const computedTitle = title || $t('General Game Settings');
   const allEnabled = scopes.every(s => s.enabled);
   const allDisabled = scopes.every(s => !s.enabled);
-  
+
   return (
     <div className={css.containerGameSettings}>
       <h3 className={css.title}>{computedTitle}</h3>
@@ -36,7 +36,9 @@ export function GamePulseGameSettings({
         <div className={css.triggerButtonRow}>
           <Button
             onClick={onEnableAll}
-            className={`${css.triggerButton} ${css.triggerButtonEnabled} ${allEnabled ? css.disabledOpacity : ''}`}
+            className={`${css.triggerButton} ${css.triggerButtonEnabled} ${
+              allEnabled ? css.disabledOpacity : ''
+            }`}
             type="text"
             disabled={allEnabled}
           >
@@ -44,7 +46,9 @@ export function GamePulseGameSettings({
           </Button>
           <Button
             onClick={onDisableAll}
-            className={`${css.triggerButton} ${css.triggerButtonDisabled} ${allDisabled ? css.disabledOpacity : ''}`}
+            className={`${css.triggerButton} ${css.triggerButtonDisabled} ${
+              allDisabled ? css.disabledOpacity : ''
+            }`}
             type="text"
             disabled={allDisabled}
           >
@@ -54,17 +58,11 @@ export function GamePulseGameSettings({
       </div>
       <ul className={css.list}>
         {scopes.map(scope => {
-        const statusClass = scope.enabled ? css.switchEnabled : css.switchDisabled;
+          const statusClass = scope.enabled ? css.switchEnabled : css.switchDisabled;
           return (
             <li key={scope.id} className={css.listRow}>
-              <span
-                className={`${css.switchText} ${statusClass}`}
-              >
-                {scope.name}
-              </span>
-              <div
-                className={`${css.row} ${css.switch} ${statusClass}`}
-              >
+              <span className={`${css.switchText} ${statusClass}`}>{scope.name}</span>
+              <div className={`${css.row} ${css.switch} ${statusClass}`}>
                 <SwitchInput
                   name={`toggle-${scope.id}`}
                   value={scope.enabled}

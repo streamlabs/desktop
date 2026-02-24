@@ -4,8 +4,7 @@ import { PlusOutlined, SettingOutlined, CaretRightOutlined } from '@ant-design/i
 import { CheckboxInput } from 'components-react/shared/inputs';
 import { $t } from 'services/i18n';
 import css from './GamePulseMenu.m.less';
-import { GamePulseTabUtils } from './GamePulse.helpers';
-import { GamePulseTrigger } from './GamePulse.types';
+import { GamePulseTabUtils, GamePulseTrigger } from './GamePulse.models';
 
 interface ReactiveSection {
   id: string; // The game key (e.g. 'global', 'csgo')
@@ -21,14 +20,7 @@ export function GamePulseMenu(props: {
   toggleTrigger: (group: string, triggerId: string, enabled: boolean) => void;
   deleteTrigger: (triggerId: string, scopeId: string) => void;
 }) {
-  const {
-    sections,
-    activeKey,
-    onChange,
-    playAlert,
-    toggleTrigger,
-    deleteTrigger,
-  } = props;
+  const { sections, activeKey, onChange, playAlert, toggleTrigger, deleteTrigger } = props;
 
   const [openKeys, setOpenKeys] = useState<string[]>(['global']);
 
@@ -71,13 +63,13 @@ export function GamePulseMenu(props: {
         {$t('Add a new trigger')}
       </Menu.Item>
 
-      {sections.map((section) => (
+      {sections.map(section => (
         <Menu.SubMenu
           key={section.id}
           icon={<i className={`icon-console ant-menu-item-icon ${css.gameIcon}`} />}
           title={section.title}
         >
-          {section.triggers?.map((trigger) => (
+          {section.triggers?.map(trigger => (
             <Menu.Item
               key={GamePulseTabUtils.generateTriggerId(section.id, trigger.id)}
               className={css.menuItem}
@@ -125,7 +117,6 @@ export function GamePulseMenu(props: {
       <Menu.Item key={GamePulseTabUtils.ID_GENERAL} className={css.menuItem}>
         {$t('Game Settings')}
       </Menu.Item>
-
     </Menu>
   );
 }

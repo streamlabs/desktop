@@ -8,12 +8,17 @@ import {
   SelectOption,
   GamePulseEventMeta,
   TriggerType,
-} from './GamePulse.types';
+} from './GamePulse.models';
 import css from './GamePulseCreateTriggerForm.m.less';
 
 interface TriggerFormProps {
   trigger: { game?: string; event_type?: string; name?: string };
-  onSubmit: (data: { eventType: string; game: string; name: string; triggerType: TriggerType }) => Promise<void> | void;
+  onSubmit: (data: {
+    eventType: string;
+    game: string;
+    name: string;
+    triggerType: TriggerType;
+  }) => Promise<void> | void;
   availableGameEvents: Record<string, string[]>;
   gameEvents: Record<string, GamePulseEventMeta>;
   globalEvents?: Record<string, string>;
@@ -134,7 +139,6 @@ export function GamePulseCreateTriggerForm(props: TriggerFormProps) {
     }
   }, [eventOptions, values.event_type, handleEventChange]);
 
-
   const handleSubmit = async () => {
     if (isSubmitting) return;
 
@@ -147,7 +151,6 @@ export function GamePulseCreateTriggerForm(props: TriggerFormProps) {
         name: values.name,
         triggerType: values.trigger_type,
       });
-
     } catch (error) {
       console.error(error);
     } finally {
@@ -175,7 +178,12 @@ export function GamePulseCreateTriggerForm(props: TriggerFormProps) {
         trigger_type: {
           type: 'list',
           label: $t('Trigger Type'),
-          description: values.trigger_type === 'streak' ? $t('Triggered when a player achieves a consecutive number of events without interruption.') : $t('Triggered when a player reaches a cumulative total number of events.'),
+          description:
+            values.trigger_type === 'streak'
+              ? $t(
+                  'Triggered when a player achieves a consecutive number of events without interruption.',
+                )
+              : $t('Triggered when a player reaches a cumulative total number of events.'),
           options: triggerTypeOptions,
         },
       }),
