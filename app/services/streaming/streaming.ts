@@ -1688,7 +1688,10 @@ export class StreamingService
         | ISimpleStreaming
         | IEnhancedBroadcastingSimpleStreaming;
 
-      stream.audioEncoder = AudioEncoderFactory.create();
+      stream.audioEncoder = AudioEncoderFactory.create(
+        this.outputSettingsService.getRecordingAudioEncoderSettings(), // TODO: Is there a different setting for streaming audio encoder?
+        `audio-encoder-streaming-${display}`,
+      );
       this.contexts[contextName].streaming = stream as
         | ISimpleStreaming
         | IEnhancedBroadcastingSimpleStreaming;
@@ -1964,10 +1967,8 @@ export class StreamingService
         : (SimpleRecordingFactory.create() as ISimpleRecording);
 
     // assign settings to the recording instance
-
     if (this.isAdvancedRecording(this.contexts[display].recording)) {
-      // cast the recording instance to advanced recording to be able to set
-      // the values correctly
+      // cast the recording instance to advanced recording to be able to set the values correctly
       const recording = this.migrateSettings('recording', display) as IAdvancedRecording;
       // output resolutions
       const resolution = this.videoSettingsService.outputResolutions[display];
@@ -1977,15 +1978,13 @@ export class StreamingService
       // to prevent reference errors, cast the recording instance
       this.contexts[display].recording = recording as IAdvancedRecording;
     } else {
-      // cast the recording instance to simple recording to be able to set
-      // the values correctly
+      // cast the recording instance to simple recording to be able to set the values correctly
       const recording = this.migrateSettings('recording', display) as ISimpleRecording;
-      recording.audioEncoder = AudioEncoderFactory.create();
-      // recording.audioEncoder = AudioEncoderFactory
-      //   .create
-      //   // 'ffmpeg_aac',
-      //   // `audio-encoder-recording-${display}`,
-      //   ();
+
+      recording.audioEncoder = AudioEncoderFactory.create(
+        this.outputSettingsService.getRecordingAudioEncoderSettings(),
+        `audio-encoder-recording-${display}`,
+      );
 
       // to prevent reference errors, cast the recording instance
       this.contexts[display].recording = recording as ISimpleRecording;
@@ -2014,6 +2013,8 @@ export class StreamingService
       await this.handleSignal(signal, display);
     };
 
+    this.logContexts(display, `${mode} createRecording`);
+
     if (start) {
       this.contexts[display].recording.start();
     }
@@ -2026,10 +2027,12 @@ export class StreamingService
     contextName: TOutputContext,
     isEnhancedBroadcastingContext: boolean = false,
   ) {
+    const mode = this.outputSettingsService.getSettings().mode;
+    const display = this.isDisplayContext(contextName) ? contextName : 'horizontal';
     const settings =
       type === 'streaming'
-        ? this.outputSettingsService.getStreamingSettings()
-        : this.outputSettingsService.getRecordingSettings();
+        ? this.outputSettingsService.getStreamingSettings(display)
+        : this.outputSettingsService.getRecordingSettings(display);
 
     const instance = this.contexts[contextName][type];
 
@@ -2050,6 +2053,33 @@ export class StreamingService
         key === 'videoEncoder' &&
         (contextName !== 'enhancedBroadcasting' || isEnhancedBroadcastingContext)
       ) {
+        // TODO: when selective recording in simple mode with use stream encoder, the settings on the video encoder object are an empty object
+        // not sure if this is intentional. The below is an attempt to correct this.
+        // const shouldApplyStreamEncoderSettings =
+        //   mode === 'Simple' &&
+        //   type === 'recording' &&
+        //   (settings as any).useStreamEncoders &&
+        //   this.state.selectiveRecording;
+
+        // if (type === 'recording' && shouldApplyStreamEncoderSettings) {
+        //   // TODO: Attempt force latest settings to load
+        //   // this.settingsService.loadSettingsIntoStore();
+
+        //   const streamingVideoEncoder = this.outputSettingsService.getStreamingVideoEncoderSettings();
+        //   console.log('streamingVideoEncoder', JSON.stringify(streamingVideoEncoder, null, 2));
+
+        //   instance.videoEncoder = VideoEncoderFactory.create(
+        //     settings.videoEncoder,
+        //     `video-encoder-${type}-${contextName}`,
+        //     streamingVideoEncoder, // TEST: Force apply some settings to the recording video encoder because they are showing as an empty object in this case
+        //   );
+        // } else {
+        //   instance.videoEncoder = VideoEncoderFactory.create(
+        //     settings.videoEncoder,
+        //     `video-encoder-${type}-${contextName}`,
+        //   );
+        // }
+
         instance.videoEncoder = VideoEncoderFactory.create(
           settings.videoEncoder,
           `video-encoder-${type}-${contextName}`,
