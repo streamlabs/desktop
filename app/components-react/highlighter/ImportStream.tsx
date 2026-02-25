@@ -1,4 +1,4 @@
-import { Button, Form, Select } from 'antd';
+import { Button, Form, Progress } from 'antd';
 import cx from 'classnames';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
@@ -12,10 +12,11 @@ import {
 } from 'services/highlighter/models/highlighter.models';
 import { $t } from 'services/i18n';
 import uuid from 'uuid';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './StreamView.m.less';
 import { getConfigByGame, getSupportedGames } from 'services/highlighter/models/game-config.models';
 import path from 'path';
+import { HighlighterQuotaApi, IHighlighterQuota } from '../../services/highlighter/highlighter-quota-api';
 
 export function ImportStreamModal({
   close,
@@ -31,18 +32,68 @@ export function ImportStreamModal({
   streamInfo?: IStreamInfoForAiHighlighter;
 }) {
   const { HighlighterService, UsageStatisticsService } = Services;
-  const { isPrime } = useVuex(() => ({ isPrime: Services.UserService.views.isPrime }));
+  const { isPrime, apiToken } = useVuex(() => ({
+    isPrime: Services.UserService.views.isPrime,
+    apiToken: Services.UserService.state.auth?.apiToken,
+  }));
   const [inputValue, setInputValue] = useState<string>(streamInfo?.title || '');
   const [filePath, setFilePath] = useState<string | undefined>(videoPath);
   const [draggingOver, setDraggingOver] = useState<boolean>(false);
+  const [quota, setQuota] = useState<IHighlighterQuota | null>(null);
+  const [isQuotaLoading, setIsQuotaLoading] = useState(false);
   const [game, setGame] = useState<EGame | undefined>(
     (streamInfo?.game !== EGame.UNSET ? streamInfo?.game : selectedGame) ||
     selectedGame ||
     undefined,
   );
-  console.log(isPrime, 'isPrime');
   const gameOptions = getSupportedGames(isPrime);
   const gameConfig = getConfigByGame(game);
+  const isJustChattingSelected = game === EGame.JUST_CHATTING;
+  const isQuotaReached = isJustChattingSelected && !!quota && quota.remaining <= 0;
+  const isImportDisabled = !game || (isJustChattingSelected && (isQuotaLoading || isQuotaReached));
+
+  function formatSecondsToHoursAndMinutes(seconds: number) {
+    const totalMinutes = Math.max(0, Math.floor(seconds / 60));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return `${hours}h ${minutes}m`;
+  }
+
+  useEffect(() => {
+    let canceled = false;
+
+    async function fetchAudioAnalysisQuota() {
+      if (!isJustChattingSelected || !apiToken) {
+        setQuota(null);
+        setIsQuotaLoading(false);
+        return;
+      }
+
+      setIsQuotaLoading(true);
+      try {
+        const quotaApi = new HighlighterQuotaApi();
+        const nextQuota = await quotaApi.getAudioAnalysisQuota(apiToken);
+        if (!canceled) {
+          setQuota(nextQuota);
+        }
+      } catch (error: unknown) {
+        if (!canceled) {
+          setQuota(null);
+        }
+        console.error('Failed to fetch Just Chatting quota', error);
+      } finally {
+        if (!canceled) {
+          setIsQuotaLoading(false);
+        }
+      }
+    }
+
+    fetchAudioAnalysisQuota();
+
+    return () => {
+      canceled = true;
+    };
+  }, [isJustChattingSelected, apiToken]);
 
   function handleInputChange(value: string) {
     setInputValue(value);
@@ -349,6 +400,32 @@ export function ImportStreamModal({
             />
           </Form>
 
+          {isJustChattingSelected && (
+            <div>
+              <p style={{ marginBottom: '8px' }}>
+                {isQuotaLoading && $t('Checking your available highlight time...')}
+                {!isQuotaLoading &&
+                  quota &&
+                  `${$t('Highlight time remaining')}: ${formatSecondsToHoursAndMinutes(
+                    quota.remaining,
+                  )} ${$t('of')} ${formatSecondsToHoursAndMinutes(quota.limit)}`}
+              </p>
+              {quota && (
+                <Progress
+                  percent={quota.limit > 0 ? Math.min(100, (quota.used / quota.limit) * 100) : 100}
+                  showInfo={false}
+                  status={isQuotaReached ? 'exception' : 'active'}
+                  strokeColor={gameConfig?.importModalConfig?.accentColor}
+                />
+              )}
+              {isQuotaReached && (
+                <p style={{ marginTop: '8px', marginBottom: 0, color: 'var(--red)' }}>
+                  {$t('You have reached your highlight time limit for now.')}
+                </p>
+              )}
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: '8px' }}>
             {openedFrom === 'after-stream' && (
               <Button
@@ -362,7 +439,7 @@ export function ImportStreamModal({
             )}
 
             <Button
-              disabled={!game}
+              disabled={isImportDisabled}
               size="large"
               style={{
                 width: '100%',
