@@ -68,6 +68,7 @@ export function getHighlightClips(
   milestoneUpdate?: (milestone: IHighlighterMilestone) => void,
   game?: EGame,
   token?: string,
+  endSeconds?: number,
 ): Promise<IHighlight[]> {
   return new Promise((resolve, reject) => {
     console.log(`Get highlight clips for ${videoUri}`);
@@ -81,6 +82,7 @@ export function getHighlightClips(
       milestonesPath,
       game,
       token,
+      endSeconds,
     );
     const messageBuffer = new MessageBufferHandler();
 

@@ -16,7 +16,10 @@ import React, { useEffect, useState } from 'react';
 import styles from './StreamView.m.less';
 import { getConfigByGame, getSupportedGames } from 'services/highlighter/models/game-config.models';
 import path from 'path';
-import { HighlighterQuotaApi, IHighlighterQuota } from '../../services/highlighter/highlighter-quota-api';
+import {
+  HighlighterQuotaApi,
+  IHighlighterQuota,
+} from '../../services/highlighter/highlighter-quota-api';
 
 export function ImportStreamModal({
   close,
@@ -43,14 +46,15 @@ export function ImportStreamModal({
   const [isQuotaLoading, setIsQuotaLoading] = useState(false);
   const [game, setGame] = useState<EGame | undefined>(
     (streamInfo?.game !== EGame.UNSET ? streamInfo?.game : selectedGame) ||
-    selectedGame ||
-    undefined,
+      selectedGame ||
+      undefined,
   );
   const gameOptions = getSupportedGames(isPrime);
   const gameConfig = getConfigByGame(game);
-  const isJustChattingSelected = game === EGame.JUST_CHATTING;
-  const isQuotaReached = isJustChattingSelected && !!quota && quota.remaining <= 0;
-  const isImportDisabled = !game || (isJustChattingSelected && (isQuotaLoading || isQuotaReached));
+  const hasQuota = !!gameConfig?.hasQuota;
+  const MIN_REQUIRED_QUOTA_SECONDS = 120;
+  const isQuotaReached = hasQuota && !!quota && quota.remaining < MIN_REQUIRED_QUOTA_SECONDS;
+  const isImportDisabled = !game || (hasQuota && (isQuotaLoading || isQuotaReached));
 
   function formatRemainingVideoProcessingTime(seconds: number) {
     const totalMinutes = Math.max(0, Math.floor(seconds / 60));
@@ -66,7 +70,7 @@ export function ImportStreamModal({
     let canceled = false;
 
     async function fetchAudioAnalysisQuota() {
-      if (!isJustChattingSelected || !apiToken) {
+      if (!hasQuota || !apiToken) {
         setQuota(null);
         setIsQuotaLoading(false);
         return;
@@ -83,7 +87,7 @@ export function ImportStreamModal({
         if (!canceled) {
           setQuota(null);
         }
-        console.error('Failed to fetch Just Chatting quota', error);
+        console.error('Failed to fetch game quota', error);
       } finally {
         if (!canceled) {
           setIsQuotaLoading(false);
@@ -96,7 +100,7 @@ export function ImportStreamModal({
     return () => {
       canceled = true;
     };
-  }, [isJustChattingSelected, apiToken]);
+  }, [hasQuota, apiToken]);
 
   function handleInputChange(value: string) {
     setInputValue(value);
@@ -139,10 +143,16 @@ export function ImportStreamModal({
     filePath: string[] | undefined,
     id?: string,
   ) {
+    const duration =
+      getConfigByGame(game)?.hasQuota && quota
+        ? Math.max(0, Math.floor(quota.remaining))
+        : undefined;
+
     const streamInfo: IStreamInfoForAiHighlighter = {
       id: id ?? 'manual_' + uuid(),
       title: title.replace(/[\\/:"*?<>|]+/g, ''),
       game,
+      duration,
     };
 
     try {
@@ -348,7 +358,7 @@ export function ImportStreamModal({
               <video src={filePath} controls></video>
             ) : (
               <div
-                onDrop={(e: React.DragEvent<HTMLDivElement>) => { }}
+                onDrop={(e: React.DragEvent<HTMLDivElement>) => {}}
                 style={{ display: 'grid', placeItems: 'center' }}
               >
                 <i
@@ -403,7 +413,7 @@ export function ImportStreamModal({
             />
           </Form>
 
-          {isJustChattingSelected && (
+          {hasQuota && (
             <div>
               <p
                 style={{
@@ -413,12 +423,15 @@ export function ImportStreamModal({
                   gap: '6px',
                 }}
               >
-                {isQuotaLoading && $t('Checking your available highlight time...')}
                 {!isQuotaLoading &&
                   quota &&
-                  `Video processing remaining: ${formatRemainingVideoProcessingTime(
-                    quota.remaining,
-                  )}`}
+                  (isQuotaReached
+                    ? $t('Video processing limit reached. Will reset next month.')
+                    : $t(
+                        `Video processing remaining: ${formatRemainingVideoProcessingTime(
+                          quota.remaining,
+                        )}`,
+                      ))}
                 {!isQuotaLoading && (
                   <span style={{ marginLeft: 'auto', display: 'inline-flex' }}>
                     <Tooltip title={$t('Resets every month')}>
@@ -434,11 +447,6 @@ export function ImportStreamModal({
                   status={isQuotaReached ? 'exception' : 'active'}
                   strokeColor={gameConfig?.importModalConfig?.accentColor}
                 />
-              )}
-              {isQuotaReached && (
-                <p style={{ marginTop: '8px', marginBottom: 0, color: 'var(--red)' }}>
-                  {$t('You have reached your highlight time limit for now.')}
-                </p>
               )}
             </div>
           )}

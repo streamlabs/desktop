@@ -88,6 +88,7 @@ export interface IStreamInfoForAiHighlighter {
   game: EGame;
   title?: string;
   milestonesPath?: string;
+  duration?: number;
 }
 
 export interface IStreamMilestones {

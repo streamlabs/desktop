@@ -469,6 +469,7 @@ const JUST_CHATTING: IGameConfig = {
   gameModes: '',
   thumbnail: `${thumbnailPath}${EGame.JUST_CHATTING}.png`,
   state: EGameState.LIVE,
+  hasQuota: true,
   inputTypeMap: {
     ...COMMON_TYPES,
   },
@@ -546,6 +547,11 @@ export function getConfigByGame(game: EGame | undefined): IGameConfig | undefine
   const lowercaseGame = game.toLowerCase() as EGame;
   return GAME_CONFIGS[lowercaseGame] || UNSET_CONFIG;
 }
+
+export function gameHasQuota(game: EGame | undefined): boolean {
+  return !!getConfigByGame(game)?.hasQuota;
+}
+
 export function getContextEventTypes(game: EGame): string[] {
   const gameConfig = getConfigByGame(game);
   const contextTypes: string[] = [];

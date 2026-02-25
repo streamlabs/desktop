@@ -23,6 +23,7 @@ export interface IGameConfig {
   gameModes: string;
   thumbnail: string;
   state: EGameState;
+  hasQuota?: boolean;
   inputTypeMap: Record<string, IEventInfo | IDefaultEventInfo>;
   importModalConfig: undefined | IImportModalConfig;
 }

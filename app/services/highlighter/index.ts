@@ -76,7 +76,7 @@ import { cutHighlightClips, getVideoDuration } from './cut-highlight-clips';
 import { reduce } from 'lodash';
 import { extractDateTimeFromPath, fileExists } from './file-utils';
 import { addVerticalFilterToExportOptions } from './vertical-export';
-import { isGameSupported } from './models/game-config.models';
+import { getConfigByGame, isGameSupported } from './models/game-config.models';
 import Utils from 'services/utils';
 import { getOS, OS } from '../../util/operating-systems';
 
@@ -1455,8 +1455,22 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         timeStamp: Date.now(),
         game: setStreamInfo.game,
       });
+
+      let endSeconds: number | undefined;
+      if (typeof streamInfo.duration === 'number' && streamInfo.duration > 0) {
+        try {
+          const videoDurationSeconds = Math.floor(await getVideoDuration(filePath));
+          const requestedDuration = Math.floor(streamInfo.duration);
+          if (videoDurationSeconds > requestedDuration) {
+            endSeconds = requestedDuration;
+          }
+        } catch (error: unknown) {
+          console.warn('Failed to determine video duration for quota limit check', error);
+        }
+      }
+
       const streamlabsAuthToken =
-        streamInfo.game === EGame.JUST_CHATTING ? this.userService.apiToken : undefined;
+        getConfigByGame(streamInfo.game)?.hasQuota ? this.userService.apiToken : undefined;
       const highlighterResponse = await getHighlightClips(
         filePath,
         this.userService.getLocalUserId(),
@@ -1478,6 +1492,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         },
         streamInfo.game === 'unset' ? undefined : streamInfo.game,
         streamlabsAuthToken,
+        endSeconds,
       );
 
       this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
