@@ -102,22 +102,30 @@ export class ReactiveDataService extends Service {
   init() {
     obs.NodeObs.RegisterSourceMessageCallback(this.onSourceMessageCallback);
 
-    this.fetchSchema().then(schema => {
-      this.log('Fetched user state schema:', JSON.stringify(schema).slice(0, 100) + '...');
-      const schemaFlat = toDotNotation(
-        schema,
-        (v): v is TSchemaTreeLeaf => typeof v === 'object' && v !== null && 'name' in v,
-      );
-      this.state.invalidateSchemaCache();
-      this.writeState({ schemaFlatJson: JSON.stringify(schemaFlat) });
+    this.userService.userLogin.subscribe(() => {
+      this.fetchSchema().then(schema => {
+        this.log('Fetched user state schema:', JSON.stringify(schema).slice(0, 100) + '...');
+        const schemaFlat = toDotNotation(
+          schema,
+          (v): v is TSchemaTreeLeaf => typeof v === 'object' && v !== null && 'name' in v,
+        );
+        this.state.invalidateSchemaCache();
+        this.writeState({ schemaFlatJson: JSON.stringify(schemaFlat) });
+      });
+
+      // load everything into our initial state
+      this.fetchFullState().then(res => {
+        this.log('Fetched full user state:', JSON.stringify(res).slice(0, 100) + '...');
+        const stateFlat = toDotNotation(res);
+        this.state.invalidateStateCache();
+        this.writeState({ stateFlatJson: JSON.stringify(stateFlat) });
+      });
     });
 
-    // load everything into our initial state
-    this.fetchFullState().then(res => {
-      this.log('Fetched full user state:', JSON.stringify(res).slice(0, 100) + '...');
-      const stateFlat = toDotNotation(res);
+    this.userService.userLogout.subscribe(() => {
+      this.writeState({ schemaFlatJson: null, stateFlatJson: null });
+      this.state.invalidateSchemaCache();
       this.state.invalidateStateCache();
-      this.writeState({ stateFlatJson: JSON.stringify(stateFlat) });
     });
 
     // subscribe to websocket events to keep state updated
