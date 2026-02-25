@@ -104,7 +104,18 @@ export async function openRenameWindow(sourceName: string) {
   await focusChild();
 }
 
-export async function sourceIsExisting(sourceName: string) {
+export async function sourceIsExisting(sourceName: string, dualOutput: boolean = false) {
+  if (dualOutput) {
+    await isDisplayed(`[data-name="${sourceName}-horizontal"]`, {
+      timeout: 1000,
+      timeoutMsg: `Horizontal source ${sourceName} not found`,
+    });
+    await isDisplayed(`[data-name="${sourceName}-vertical"]`, {
+      timeout: 1000,
+      timeoutMsg: `Vertical source ${sourceName} not found`,
+    });
+  }
+
   return await isDisplayed(`[data-name="${sourceName}"]`);
 }
 

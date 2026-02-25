@@ -60,6 +60,10 @@ export enum EGame {
   OVERWATCH_2 = 'overwatch_2',
   LEAGUE_OF_LEGENDS = 'league_of_legends',
   BATTLEFIELD_6 = 'battlefield_6',
+  ARC_RAIDERS = 'arc_raiders',
+  ROCKET_LEAGUE = 'rocket_league',
+  DOTA_2 = 'dota_2',
+  DEAD_BY_DAYLIGHT = 'dead_by_daylight',
   UNSET = 'unset',
 }
 

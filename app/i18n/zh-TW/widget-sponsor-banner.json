@@ -3,7 +3,7 @@
   "Ad Layout": "廣告版面",
   "Placement": "放置位置",
   "Image Layout": "影像版面",
-  "Image Duration (seconds)": "Image Duration (seconds)",
+  "Image Duration (seconds)": "影像持續時間 (秒)",
   "Add Image": "新增影像",
   "Widget Hide Duration": "小程式隱藏持續時間",
   "Widget Show Duration": "小程式顯示持續時間",
@@ -18,10 +18,10 @@
   "The amount of time the widget will appear.": "顯示小程式的時間長度。",
   "These are the animations that are used to show your banner.": "這些是用來顯示橫幅的動畫。",
   "Visual Settings": "視覺設定",
-  "Image Set %{number}": "Image Set %{number}",
-  "Placement %{number} Images": "Placement %{number} Images",
+  "Image Set %{number}": "影像集 %{number}",
+  "Placement %{number} Images": "%{number} 號位置影像",
   "No Image": "沒有影像",
   "Set up a sponsor banner to be able to edit (add, remove, update) rotating sponsor logos on streamer channel.": "設定在直播主頻道顯示之輪換贊助商標至的可編輯 (新增、移除、更新) 贊助商橫幅。",
   "Show off rotating media to display your socials, sponsorships, CTAs or just cute animations.": "輪播媒體素材，用於展示社群連結、贊助資訊、CTA 或可愛動畫。",
-  "The duration must be in the format [minutes]:[seconds] (i.e. 02:05)": "The duration must be in the format [minutes]:[seconds] (i.e. 02:05)"
+  "The duration must be in the format [minutes]:[seconds] (i.e. 02:05)": "持續時間必須為 [分鐘]:[秒] 的格式 (例如 02:05)"
 }

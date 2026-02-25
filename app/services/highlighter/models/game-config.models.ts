@@ -338,6 +338,70 @@ const BATTLEFIELD_6: IGameConfig = {
   },
 };
 
+const ARC_RAIDERS: IGameConfig = {
+  name: EGame.ARC_RAIDERS,
+  label: 'ARC Raiders',
+  gameModes: '',
+  thumbnail: `${thumbnailPath}${EGame.ARC_RAIDERS}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#D04122',
+    artwork: `${heroPath}${EGame.ARC_RAIDERS}.png`,
+    backgroundColor: '#190A40',
+  },
+};
+
+const ROCKET_LEAGUE: IGameConfig = {
+  name: EGame.ROCKET_LEAGUE,
+  label: 'Rocket League',
+  gameModes: '',
+  thumbnail: `${thumbnailPath}${EGame.ROCKET_LEAGUE}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#5470EF',
+    artwork: `${heroPath}${EGame.ROCKET_LEAGUE}.png`,
+    backgroundColor: '#161D2B',
+  },
+};
+
+const DOTA_2: IGameConfig = {
+  name: EGame.DOTA_2,
+  label: 'Dota 2',
+  gameModes: '',
+  thumbnail: `${thumbnailPath}${EGame.DOTA_2}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#FED047',
+    artwork: `${heroPath}${EGame.DOTA_2}.png`,
+    backgroundColor: '#D04122',
+  },
+};
+
+const DEAD_BY_DAYLIGHT: IGameConfig = {
+  name: EGame.DEAD_BY_DAYLIGHT,
+  label: 'Dead by Daylight',
+  gameModes: '',
+  thumbnail: `${thumbnailPath}${EGame.DEAD_BY_DAYLIGHT}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#8088A9',
+    artwork: `${heroPath}${EGame.DEAD_BY_DAYLIGHT}.png`,
+    backgroundColor: '#172D3B',
+  },
+};
+
 const UNSET_CONFIG: IGameConfig = {
   name: EGame.UNSET,
   label: 'unset',
@@ -365,6 +429,10 @@ const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.OVERWATCH_2]: OVERWATCH_2,
   [EGame.LEAGUE_OF_LEGENDS]: LEAGUE_OF_LEGENDS, // ✅
   [EGame.BATTLEFIELD_6]: BATTLEFIELD_6, // ✅
+  [EGame.ARC_RAIDERS]: ARC_RAIDERS,
+  [EGame.ROCKET_LEAGUE]: ROCKET_LEAGUE,
+  [EGame.DOTA_2]: DOTA_2,
+  [EGame.DEAD_BY_DAYLIGHT]: DEAD_BY_DAYLIGHT,
   [EGame.UNSET]: UNSET_CONFIG,
 };
 

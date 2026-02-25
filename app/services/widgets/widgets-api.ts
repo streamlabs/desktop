@@ -54,6 +54,7 @@ export interface IWidgetApiSettings {
   dataFetchUrl: string;
   settingsSaveUrl: string;
   previewUrl: string;
+  webSettingsUrl: string;
   settingsUpdateEvent: string;
   testers?: string[];
   customCodeAllowed?: boolean;

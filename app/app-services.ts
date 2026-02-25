@@ -64,7 +64,7 @@ export { SettingsManagerService } from 'services/settings-manager';
 export { MarkersService } from 'services/markers';
 export { RealmService } from 'services/realm';
 export { StreamAvatarService } from 'services/stream-avatar/stream-avatar-service';
-import { VirtualWebcamService } from 'services/virtual-webcam';
+export { OnboardingV2Service } from 'services/onboarding/onboarding-v2';
 
 // ONLINE SERVICES
 export { UserService } from './services/user';
@@ -220,6 +220,8 @@ import { VisionService } from 'services/vision';
 import { ReactiveDataService } from 'services/reactive-data';
 import { SignalsService } from 'services/signals-manager';
 import { TroubleshooterService } from 'services/troubleshooter';
+import { OnboardingV2Service } from 'services/onboarding/onboarding-v2';
+import { VirtualWebcamService } from 'services/virtual-webcam';
 
 export const AppServices = {
   AppService,
@@ -307,4 +309,5 @@ export const AppServices = {
   VisionService,
   ReactiveDataService,
   TroubleshooterService,
+  OnboardingV2Service,
 };

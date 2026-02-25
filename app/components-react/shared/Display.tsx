@@ -17,6 +17,7 @@ interface DisplayProps {
   clickHandler?: (event: React.MouseEvent) => void;
   style?: React.CSSProperties;
   type?: TDisplayType;
+  isModal?: boolean;
 }
 
 export default function Display(props: DisplayProps) {
@@ -37,7 +38,9 @@ export default function Display(props: DisplayProps) {
 
     return {
       baseResolution: `${videoSettings?.baseWidth}x${videoSettings?.baseHeight}`,
-      hideDisplay: WindowsService.state[windowId]?.hideStyleBlockers,
+      hideDisplay: p.isModal
+        ? WindowsService.state[windowId]?.modalOptions?.hideStyleBlockers
+        : WindowsService.state[windowId]?.hideStyleBlockers,
     };
   }, false);
 

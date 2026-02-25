@@ -1,7 +1,6 @@
 import React from 'react';
 import styles from './GoLive.m.less';
 import Scrollable from 'components-react/shared/Scrollable';
-import { Services } from 'components-react/service-provider';
 import { useGoLiveSettings } from './useGoLiveSettings';
 import { $t } from 'services/i18n';
 import { Row, Col } from 'antd';
@@ -20,7 +19,13 @@ import cx from 'classnames';
 import StreamShiftToggle from 'components-react/shared/StreamShiftToggle';
 import { CaretDownOutlined } from '@ant-design/icons';
 import Tooltip from 'components-react/shared/Tooltip';
-import { EAvailableFeatures } from 'services/incremental-rollout';
+import * as remote from '@electron/remote';
+import { inject } from 'slap';
+import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
+import { MagicLinkService } from 'services/magic-link';
+import { SettingsService } from 'services/settings';
+import Translate from 'components-react/shared/Translate';
+import { maxNumPlatforms } from 'services/platforms';
 
 /**
  * Renders settings for starting the stream
@@ -47,47 +52,61 @@ export default function GoLiveSettings() {
     isStreamShiftMode,
     isStreamShiftDisabled,
     isDualOutputSwitchDisabled,
+    canStreamDualOutput,
     setPrimaryChat,
+    openPlatformSettings,
   } = useGoLiveSettings().extend(module => {
-    const {
-      UserService,
-      VideoEncodingOptimizationService,
-      SettingsService,
-      IncrementalRolloutService,
-    } = Services;
-
     return {
+      videoEncodingOptimizationService: inject(VideoEncodingOptimizationService),
+      settingsService: inject(SettingsService),
+      magicLinkService: inject(MagicLinkService),
+
       get canAddDestinations() {
         const linkedPlatforms = module.state.linkedPlatforms;
         const customDestinations = module.state.customDestinations;
-        return linkedPlatforms.length + customDestinations.length < 8;
+        return linkedPlatforms.length + customDestinations.length < maxNumPlatforms + 5;
       },
 
-      showSelector: !UserService.views.isPrime && module.isDualOutputMode,
+      showSelector: !module.isPrime && module.isDualOutputMode,
 
       hasMultiplePlatformsLinked: module.state.linkedPlatforms.length > 1,
 
-      isPrime: UserService.views.isPrime,
+      isPrime: module.isPrime,
 
-      showTweet: UserService.views.auth?.primaryPlatform !== 'twitter',
+      showTweet: module.primaryPlatform && module.primaryPlatform !== 'twitter',
 
       isStreamShiftDisabled: module.isDualOutputMode,
 
       isDualOutputSwitchDisabled: module.isStreamShiftMode && !module.isDualOutputMode,
 
       addDestination() {
-        SettingsService.actions.showSettings('Stream');
+        this.settingsService.actions.showSettings('Stream');
       },
 
       // temporarily hide the checkbox until streaming and output settings
       // are migrated to the new API
-      canUseOptimizedProfile: !module.isDualOutputMode
-        ? VideoEncodingOptimizationService.state.canSeeOptimizedProfile ||
-          VideoEncodingOptimizationService.state.useOptimizedProfile
-        : false,
-      // canUseOptimizedProfile:
-      //   VideoEncodingOptimizationService.state.canSeeOptimizedProfile ||
-      //   VideoEncodingOptimizationService.state.useOptimizedProfile,
+      get canUseOptimizedProfile() {
+        if (module.isDualOutputMode) return false;
+        return (
+          this.videoEncodingOptimizationService.state.canSeeOptimizedProfile ||
+          this.videoEncodingOptimizationService.state.useOptimizedProfile
+        );
+
+        // canUseOptimizedProfile:
+        //   VideoEncodingOptimizationService.state.canSeeOptimizedProfile ||
+        //   VideoEncodingOptimizationService.state.useOptimizedProfile,
+      },
+
+      async openPlatformSettings() {
+        try {
+          const link = await this.magicLinkService.getDashboardMagicLink(
+            'settings/account-settings/platforms',
+          );
+          remote.shell.openExternal(link);
+        } catch (e: unknown) {
+          console.error('Error generating platform settings magic link', e);
+        }
+      },
     };
   });
 
@@ -100,7 +119,6 @@ export default function GoLiveSettings() {
 
   const headerText = isDualOutputMode ? $t('Destinations & Outputs:') : $t('Destinations:');
 
-  const height = isPrime ? '61%' : '50%';
   const featureCheckboxWidth = isPrime ? 140 : 155;
 
   return (
@@ -108,20 +126,35 @@ export default function GoLiveSettings() {
       {/*LEFT COLUMN*/}
       {shouldShowLeftCol && (
         <Col span={9} className={styles.leftColumn}>
-          {!isPrime && <AddDestinationButton type="banner" className={styles.addDestination} />}
-          <div className={styles.columnHeader} style={{ paddingTop: '15px' }}>
-            {headerText}
-          </div>
+          {isDualOutputMode && (
+            <div className={cx(styles.dualOutputAlert, { [styles.error]: !canStreamDualOutput })}>
+              <Translate message="<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform">
+                <u slot="dualoutput" />
+              </Translate>
+            </div>
+          )}
+          <div
+            className={cx(styles.columnContent, {
+              [styles.dualOutput]: isDualOutputMode,
+              [styles.alertClosed]: isDualOutputMode,
+              [styles.alertOpen]: isDualOutputMode && !canStreamDualOutput,
+            })}
+          >
+            <div className={cx(styles.columnHeader, { [styles.ultraColumnHeader]: isPrime })}>
+              {headerText}
+            </div>
+            {!isPrime && <AddDestinationButton type="banner" className={styles.addDestination} />}
 
-          <Scrollable style={{ height }}>
-            <DestinationSwitchers />
-          </Scrollable>
+            <Scrollable className={styles.switcherWrapper}>
+              <DestinationSwitchers />
+            </Scrollable>
+          </div>
 
           {shouldShowAddDestButton && (
             <AddDestinationButton
               type="small"
               className={styles.columnPadding}
-              onClick={() => Services.SettingsService.actions.showSettings('Stream')}
+              onClick={openPlatformSettings}
             />
           )}
 
@@ -185,7 +218,7 @@ export default function GoLiveSettings() {
         span={shouldShowLeftCol ? 15 : 24}
         className={cx(styles.rightColumn, !shouldShowLeftCol && styles.destinationMode)}
       >
-        <Spinner visible={isLoading} relative />
+        <Spinner visible={isLoading} />
         <GoLiveError />
         {shouldShowSettings && (
           <>

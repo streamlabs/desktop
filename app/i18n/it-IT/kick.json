@@ -11,5 +11,5 @@
   "Click on the \"eye\" icon to see your stream key": "Fai clic sull’icona a forma di “occhio” per vedere la tua chiave di streaming",
   "Put in 2FA": "Attiva l’autenticazione a due fattori (2FA)",
   "After 2FA, the stream key has been generated and will be available for Streamlabs Desktop for that channel. You should now be able to go live on Kick.": "Dopo la 2FA, la chiave di streaming verrà creata e sarà disponibile su Streamlabs Desktop per quel canale. Ora dovresti essere in grado di avviare la diretta su Kick.",
-  "Stream Shift Error: Kick is not live": "Stream Shift Error: Kick is not live"
+  "Stream Shift Error: Kick is not live": "Errore Stream Shift: Kick non è attivo"
 }

@@ -67,6 +67,7 @@ export class WidgetSource implements IWidgetSource {
     this.SET_PREVIEW_SOURCE_ID(previewSource.sourceId);
 
     this.widgetsService.syncPreviewSource(this.sourceId, this.previewSourceId);
+
     return previewSource;
   }
 

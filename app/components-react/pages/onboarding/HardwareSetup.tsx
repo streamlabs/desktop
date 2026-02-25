@@ -122,7 +122,7 @@ export function HardwareSetup() {
   );
 }
 
-function DisplaySection() {
+export function DisplaySection() {
   const { DefaultHardwareService } = Services;
   const v = useVuex(() => ({
     videoDevices: DefaultHardwareService.videoDevices,
@@ -146,6 +146,7 @@ function DisplaySection() {
         <Display
           sourceId={v.selectedVideoSource.sourceId}
           renderingMode={ERenderingMode.OBS_MAIN_RENDERING}
+          isModal
         />
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
           <canvas ref={canvasRef} style={{ backgroundColor: 'var(--border)', width: '100%' }} />

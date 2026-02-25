@@ -299,6 +299,14 @@ function DeviceInputs(p: { source: Source }) {
     setStatefulSettings({ ...statefulSettings, [name]: value });
   }
   const isOutputCapture: boolean = p.source.type === 'wasapi_process_output_capture';
+  let windowMatchPriorityOptions = null;
+  if (isOutputCapture) {
+    const priorityProperty = sourceProperties.find(prop => prop.name === 'priority');
+    windowMatchPriorityOptions = (priorityProperty as IObsListInput<TObsValue> | undefined)?.options.map(option => ({
+      label: option.description,
+      value: option.value,
+    }));
+  }
   const settingId = isOutputCapture ? statefulSettings.window : statefulSettings.device_id;
   const inputField = isOutputCapture ? 'window' : 'device_id';
   const inputLabel = isOutputCapture ? 'Window' : 'Device';
@@ -320,6 +328,16 @@ function DeviceInputs(p: { source: Source }) {
           value={inputId}
           onChange={value => handleInput(inputField, value)}
         />
+      }
+      {
+        windowMatchPriorityOptions && (
+          <ListInput
+            label={$t('Window Match Priority')}
+            options={windowMatchPriorityOptions}
+            value={statefulSettings.priority}
+            onChange={value => handleInput('priority', value)}
+          />
+        )
       }
       {!isOutputCapture && <SwitchInput
         label={$t('Use Device Timestamps')}

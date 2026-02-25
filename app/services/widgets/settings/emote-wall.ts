@@ -29,12 +29,14 @@ export class EmoteWallService extends WidgetSettingsService<IEmoteWallData> {
   static initialState = WIDGET_INITIAL_STATE;
 
   getApiSettings() {
+    const host = this.getHost();
     return {
       type: WidgetType.EmoteWall,
-      url: WidgetDefinitions[WidgetType.EmoteWall].url(this.getHost(), this.getWidgetToken()),
-      previewUrl: `https://${this.getHost()}/widgets/emote-wall?token=${this.getWidgetToken()}&simulate=1`,
-      dataFetchUrl: `https://${this.getHost()}/api/v5/slobs/widget/emote-wall`,
-      settingsSaveUrl: `https://${this.getHost()}/api/v5/slobs/widget/emote-wall`,
+      url: WidgetDefinitions[WidgetType.EmoteWall].url(host, this.getWidgetToken()),
+      previewUrl: `https://${host}/widgets/emote-wall?token=${this.getWidgetToken()}&simulate=1`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/emote-wall`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/emote-wall`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/emote-wall`,
       settingsUpdateEvent: 'emoteWallSettingsUpdate',
       customCodeAllowed: false,
       customFieldsAllowed: false,

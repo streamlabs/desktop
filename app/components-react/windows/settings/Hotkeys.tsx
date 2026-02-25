@@ -3,7 +3,9 @@ import { Services } from '../../service-provider';
 import { IHotkeysSet, IHotkey } from 'services/hotkeys';
 import HotkeyGroup from './HotkeyGroup';
 import { $t } from '../../../services/i18n';
+import isEmpty from 'lodash/isEmpty';
 import mapValues from 'lodash/mapValues';
+import omitBy from 'lodash/omitBy';
 import Fuse from 'fuse.js';
 import type { Scene, Source } from 'app-services';
 import Tooltip from 'components-react/shared/Tooltip';
@@ -101,12 +103,14 @@ export function Hotkeys(props: ISettingsProps) {
     }
 
     const filterHotkeys = mkFilterHotkeys(searchString);
+    const filterHotkeySet = (set: Dictionary<IAugmentedHotkey[]>) =>
+      omitBy(mapValues(set, filterHotkeys), isEmpty) as Dictionary<IAugmentedHotkey[]>;
 
     const filteredHotkeySet: IAugmentedHotkeySet = searchString
       ? {
           general: filterHotkeys(augmentedHotkeySet.general),
-          sources: mapValues(augmentedHotkeySet.sources, filterHotkeys),
-          scenes: mapValues(augmentedHotkeySet.scenes, filterHotkeys),
+          sources: filterHotkeySet(augmentedHotkeySet.sources),
+          scenes: filterHotkeySet(augmentedHotkeySet.scenes),
           markers: filterHotkeys(augmentedHotkeySet.markers),
         }
       : augmentedHotkeySet;

@@ -56,15 +56,17 @@ export class MediaShareService extends WidgetSettingsService<IMediaShareData> {
   static initialState = WIDGET_INITIAL_STATE;
 
   getApiSettings() {
+    const host = this.getHost();
     return {
       type: WidgetType.MediaShare,
-      url: WidgetDefinitions[WidgetType.MediaShare].url(this.getHost(), this.getWidgetToken()),
-      previewUrl: `https://${this.getHost()}/widgets/media/v1/${this.getWidgetToken()}`,
+      url: WidgetDefinitions[WidgetType.MediaShare].url(host, this.getWidgetToken()),
+      previewUrl: `https://${host}/widgets/media/v1/${this.getWidgetToken()}`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/mediashare`,
       settingsUpdateEvent: 'mediaSharingSettingsUpdate',
       goalCreateEvent: 'newmediaShare',
       goalResetEvent: 'mediaShareEnd',
-      dataFetchUrl: `https://${this.getHost()}/api/v5/slobs/widget/media`,
-      settingsSaveUrl: `https://${this.getHost()}/api/v5/slobs/widget/media`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/media`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/media`,
       testers: ['Follow', 'Subscription', 'Donation', 'Bits'],
       customCodeAllowed: false,
       customFieldsAllowed: false,

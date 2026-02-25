@@ -8,13 +8,15 @@ export class FollowerGoalService extends GenericGoalService {
   static initialState = WIDGET_INITIAL_STATE;
 
   getApiSettings() {
+    const host = this.getHost();
     return {
       type: WidgetType.FollowerGoal,
-      url: WidgetDefinitions[WidgetType.FollowerGoal].url(this.getHost(), this.getWidgetToken()),
-      previewUrl: `https://${this.getHost()}/widgets/follower-goal?token=${this.getWidgetToken()}`,
-      dataFetchUrl: `https://${this.getHost()}/api/v5/slobs/widget/followergoal/settings`,
-      settingsSaveUrl: `https://${this.getHost()}/api/v5/slobs/widget/followergoal/settings`,
-      goalUrl: `https://${this.getHost()}/api/v5/slobs/widget/followergoal`,
+      url: WidgetDefinitions[WidgetType.FollowerGoal].url(host, this.getWidgetToken()),
+      previewUrl: `https://${host}/widgets/follower-goal?token=${this.getWidgetToken()}`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/followergoal`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/followergoal/settings`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/followergoal/settings`,
+      goalUrl: `https://${host}/api/v5/slobs/widget/followergoal`,
       settingsUpdateEvent: 'followerGoalSettingsUpdate',
       goalCreateEvent: 'followerGoalStart',
       goalResetEvent: 'followerGoalEnd',
