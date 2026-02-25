@@ -856,7 +856,7 @@ export class OutputSettingsService extends Service {
     }
   }
 
-  //send encoder as is and BE will handle the conversion and setting the right fields - need to test this
+  //send encoder as is and BE will handle the conversion and setting the right fields
   private setStreamingEncoderSettings(
     currentSettings: IOutputSettings,
     settingsPatch: Partial<IStreamingEncoderSettings>,
