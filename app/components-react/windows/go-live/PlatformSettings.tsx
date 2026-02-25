@@ -37,6 +37,7 @@ export default function PlatformSettings() {
     layout,
     isDualOutputMode,
     isAiHighlighterEnabled,
+    isStreamShiftMode,
     enabledPlatformsCount,
   } = useGoLiveSettings().extend(settings => ({
     highlighterService: inject(HighlighterService),
@@ -53,10 +54,6 @@ export default function PlatformSettings() {
 
     get layout(): TInputLayout {
       return settings.isAdvancedMode ? 'horizontal' : 'vertical';
-    },
-
-    get isDualOutputMode() {
-      return settings.isDualOutputMode;
     },
 
     get isAiHighlighterEnabled() {
@@ -82,6 +79,7 @@ export default function PlatformSettings() {
       isUpdateMode,
       layoutMode,
       isDualOutputMode,
+      isStreamShiftMode,
       isAiHighlighterEnabled,
       enabledPlatformsCount,
       get value() {

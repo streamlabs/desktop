@@ -80,7 +80,7 @@ export default function Onboarding() {
 
   return (
     <Modal
-      closable={currentStep.isClosable}
+      closable={false}
       onCancel={closeModal}
       maskClosable={false}
       destroyOnClose

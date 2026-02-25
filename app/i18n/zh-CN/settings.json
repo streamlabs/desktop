@@ -283,5 +283,11 @@
   "Mobile Streaming": "移动直播",
   "Remote Controller": "遥控器",
   "Third Party Connections": "第三方连接",
-  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "使用 Streamlabs Mobile 应用程序随时随地直播手机摄像头或手机游戏内容。"
+  "Stream your phone camera or mobile game on the go with Streamlabs Mobile App.": "使用 Streamlabs Mobile 应用程序随时随地直播手机摄像头或手机游戏内容。",
+  "Incompatible Codec Detected": "Incompatible Codec Detected",
+  "Use H.264 Codec": "Use H.264 Codec",
+  "Select Codec": "Select Codec",
+  "%{videoCodec} codec is not supported for Multistream. Would you like to proceed with the H.264 codec or select another codec?": "%{videoCodec} codec is not supported for Multistream. Would you like to proceed with the H.264 codec or select another codec?",
+  "%{videoCodec} codec is not supported for Stream Shift. Would you like to proceed with the H.264 codec or select another codec?": "%{videoCodec} codec is not supported for Stream Shift. Would you like to proceed with the H.264 codec or select another codec?",
+  "%{videoCodec} codec is not supported for Dual Output. Would you like to proceed with the H.264 codec or select another codec?": "%{videoCodec} codec is not supported for Dual Output. Would you like to proceed with the H.264 codec or select another codec?"
 }

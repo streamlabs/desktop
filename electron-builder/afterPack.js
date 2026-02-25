@@ -4,7 +4,41 @@ const path = require('path');
 const os = require('os');
 const virtualCameraPacker = require('./build-mac-virtualcam');
 
-function signAndCheck(identity, filePath) {
+function getMacBinaryArch(path) {
+  const output = cp.execFileSync('file', ['-b', path], { encoding: 'utf8' }).toLowerCase();
+
+  if (output.includes('universal binary')) {
+    return 'universal';
+  }
+
+  if (output.includes('arm64')) {
+    return 'arm64';
+  }
+
+  if (output.includes('x86_64')) {
+    return 'x86_64';
+  }
+
+  return null;
+}
+
+function normalizeArch(arch) {
+  switch (arch) {
+    case 'x64':
+    case 'amd64':
+    case 'x86_64':
+      return 'x86_64';
+
+    case 'arm64':
+    case 'aarch64':
+      return 'arm64';
+
+    default:
+      return arch;
+  }
+}
+
+function signAndCheck(identity, filePath, fileExtension) {
   console.log(`Signing: ${filePath}`);
 
   cp.execSync(`codesign -fs "Developer ID Application: ${identity}" "${filePath}"`);
@@ -15,6 +49,17 @@ function signAndCheck(identity, filePath) {
     fs.accessSync(filePath, fs.constants.W_OK);
   } catch {
     throw new Error(`File ${filePath} is not writable!`);
+  }
+
+  if (fileExtension !== '.so') {
+    // Verify the binary matches the architecture
+    const arch = normalizeArch(process.env.ARCH || os.arch());
+    const binaryArch = getMacBinaryArch(filePath);
+
+    // 'null' is bypassed since some files (like .js) may not report architecture
+    if (binaryArch !== null && binaryArch !== 'universal' && binaryArch !== arch) {
+      throw new Error(`File ${filePath} is not ${arch} architecture! Detected: ${binaryArch}`);
+    }
   }
 }
 
