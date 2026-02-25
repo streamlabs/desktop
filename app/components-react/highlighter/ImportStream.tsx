@@ -1,4 +1,4 @@
-import { Button, Form, Progress } from 'antd';
+import { Button, Form, Progress, Tooltip } from 'antd';
 import cx from 'classnames';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
@@ -52,11 +52,14 @@ export function ImportStreamModal({
   const isQuotaReached = isJustChattingSelected && !!quota && quota.remaining <= 0;
   const isImportDisabled = !game || (isJustChattingSelected && (isQuotaLoading || isQuotaReached));
 
-  function formatSecondsToHoursAndMinutes(seconds: number) {
+  function formatRemainingVideoProcessingTime(seconds: number) {
     const totalMinutes = Math.max(0, Math.floor(seconds / 60));
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    return `${hours}h ${minutes}m`;
+    if (totalMinutes < 60) {
+      return `${totalMinutes} minutes`;
+    }
+
+    const hours = (seconds / 3600).toFixed(1).replace(/\.0$/, '');
+    return `${hours} hours`;
   }
 
   useEffect(() => {
@@ -402,13 +405,27 @@ export function ImportStreamModal({
 
           {isJustChattingSelected && (
             <div>
-              <p style={{ marginBottom: '8px' }}>
+              <p
+                style={{
+                  marginBottom: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
                 {isQuotaLoading && $t('Checking your available highlight time...')}
                 {!isQuotaLoading &&
                   quota &&
-                  `${$t('Highlight time remaining')}: ${formatSecondsToHoursAndMinutes(
+                  `Video processing remaining: ${formatRemainingVideoProcessingTime(
                     quota.remaining,
-                  )} ${$t('of')} ${formatSecondsToHoursAndMinutes(quota.limit)}`}
+                  )}`}
+                {!isQuotaLoading && (
+                  <span style={{ marginLeft: 'auto', display: 'inline-flex' }}>
+                    <Tooltip title={$t('Resets every month')}>
+                      <i className="icon-information" style={{ fontSize: '14px' }} />
+                    </Tooltip>
+                  </span>
+                )}
               </p>
               {quota && (
                 <Progress
