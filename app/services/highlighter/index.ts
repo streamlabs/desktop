@@ -1188,11 +1188,11 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     const exportOptions: IExportOptions = preview
       ? { width: 1280 / 4, height: 720 / 4, fps: 30, preset: 'ultrafast' }
       : {
-          width: this.views.exportInfo.resolution === 720 ? 1280 : 1920,
-          height: this.views.exportInfo.resolution === 720 ? 720 : 1080,
-          fps: this.views.exportInfo.fps,
-          preset: this.views.exportInfo.preset,
-        };
+        width: this.views.exportInfo.resolution === 720 ? 1280 : 1920,
+        height: this.views.exportInfo.resolution === 720 ? 720 : 1080,
+        fps: this.views.exportInfo.fps,
+        preset: this.views.exportInfo.preset,
+      };
 
     if (orientation === 'vertical') {
       // adds complex filter and flips width and height
@@ -1455,6 +1455,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         timeStamp: Date.now(),
         game: setStreamInfo.game,
       });
+      const streamlabsAuthToken =
+        streamInfo.game === EGame.JUST_CHATTING ? this.userService.apiToken : undefined;
       const highlighterResponse = await getHighlightClips(
         filePath,
         this.userService.getLocalUserId(),
@@ -1475,6 +1477,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           });
         },
         streamInfo.game === 'unset' ? undefined : streamInfo.game,
+        streamlabsAuthToken,
       );
 
       this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {

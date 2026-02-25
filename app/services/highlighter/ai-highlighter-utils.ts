@@ -67,6 +67,7 @@ export function getHighlightClips(
   milestonesPath?: string,
   milestoneUpdate?: (milestone: IHighlighterMilestone) => void,
   game?: EGame,
+  token?: string,
 ): Promise<IHighlight[]> {
   return new Promise((resolve, reject) => {
     console.log(`Get highlight clips for ${videoUri}`);
@@ -79,6 +80,7 @@ export function getHighlightClips(
       userId,
       milestonesPath,
       game,
+      token,
     );
     const messageBuffer = new MessageBufferHandler();
 
@@ -178,7 +180,7 @@ export class ProgressTracker {
   preInterval: NodeJS.Timeout;
   postInterval: NodeJS.Timeout;
   postStarted = false;
-  constructor(onChange = (progress: number) => {}) {
+  constructor(onChange = (progress: number) => { }) {
     this.startPreTimer();
     this.onChangeCallback = onChange;
   }

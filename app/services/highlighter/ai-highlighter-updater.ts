@@ -59,6 +59,7 @@ export class AiHighlighterUpdater {
     userId: string,
     milestonesPath?: string,
     game?: string,
+    token?: string,
   ) {
     const runHighlighterFromRepository = Utils.getHighlighterEnvironment() === 'local';
 
@@ -70,6 +71,7 @@ export class AiHighlighterUpdater {
         userId,
         milestonesPath,
         game,
+        token,
       );
     }
 
@@ -88,6 +90,10 @@ export class AiHighlighterUpdater {
       command.push('--game');
       command.push(game);
     }
+    if (token) {
+      command.push('--token');
+      command.push(`Bearer ${token}`);
+    }
     command.push('--use_sentry');
     command.push('--user_id', userId);
 
@@ -99,6 +105,7 @@ export class AiHighlighterUpdater {
     userId: string,
     milestonesPath?: string,
     game?: string,
+    token?: string,
   ) {
     const rootPath = '../highlighter-api/';
     const command = [
@@ -122,6 +129,11 @@ export class AiHighlighterUpdater {
     if (game) {
       command.push('--game');
       command.push(game);
+    }
+
+    if (token) {
+      command.push('--token');
+      command.push(`Bearer ${token}`);
     }
 
     return spawn('poetry', command, {
