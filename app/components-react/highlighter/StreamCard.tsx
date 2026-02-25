@@ -15,7 +15,6 @@ import { EAiDetectionState } from 'services/highlighter/models/ai-highlighter.mo
 import * as remote from '@electron/remote';
 import StreamCardInfo from './StreamCardInfo';
 import StreamCardModal, { TModalStreamCard } from './StreamCardModal';
-import { supportedGames } from 'services/highlighter/models/game-config.models';
 
 export default function StreamCard({
   streamId,

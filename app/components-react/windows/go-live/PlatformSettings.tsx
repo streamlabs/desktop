@@ -57,7 +57,9 @@ export default function PlatformSettings() {
     },
 
     get isAiHighlighterEnabled() {
-      return this.highlighterService.aiHighlighterFeatureEnabled;
+      return (
+        this.highlighterService.aiHighlighterFeatureEnabled
+      );
     },
 
     get enabledPlatformsCount() {

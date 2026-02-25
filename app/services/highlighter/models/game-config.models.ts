@@ -1,7 +1,5 @@
-import { Ide } from 'aws-sdk/clients/codecatalyst';
 import {
   IGameConfig,
-  EHighlighterInputTypes,
   EGame,
   IEventInfo,
   IDefaultEventInfo,
@@ -402,6 +400,22 @@ const DEAD_BY_DAYLIGHT: IGameConfig = {
   },
 };
 
+const JUST_CHATTING: IGameConfig = {
+  name: EGame.JUST_CHATTING,
+  label: 'Just Chatting',
+  gameModes: '',
+  thumbnail: `${thumbnailPath}${EGame.JUST_CHATTING}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#8088A9',
+    artwork: `${heroPath}${EGame.JUST_CHATTING}.png`,
+    backgroundColor: '#172D3B',
+  },
+};
+
 const UNSET_CONFIG: IGameConfig = {
   name: EGame.UNSET,
   label: 'unset',
@@ -433,10 +447,11 @@ const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.ROCKET_LEAGUE]: ROCKET_LEAGUE,
   [EGame.DOTA_2]: DOTA_2,
   [EGame.DEAD_BY_DAYLIGHT]: DEAD_BY_DAYLIGHT,
+  [EGame.JUST_CHATTING]: JUST_CHATTING,
   [EGame.UNSET]: UNSET_CONFIG,
 };
 
-export const supportedGames = Object.entries(GAME_CONFIGS)
+const supportedGames = Object.entries(GAME_CONFIGS)
   .filter(([gameKey]) => gameKey !== EGame.UNSET)
   .filter(([gameKey, gameConfig]) => {
     if (Utils.getHighlighterEnvironment() === 'production') {
@@ -453,6 +468,13 @@ export const supportedGames = Object.entries(GAME_CONFIGS)
       image: gameConfig.thumbnail,
     };
   });
+
+export function getSupportedGames(isPrime: boolean) {
+  return supportedGames.filter(game => {
+    if (isPrime) return true;
+    return game.value !== EGame.JUST_CHATTING;
+  });
+}
 
 export function getConfigByGame(game: EGame | undefined): IGameConfig | undefined {
   if (!game) {
@@ -506,8 +528,8 @@ export function getEventConfig(game: EGame, eventType: string): IEventInfo | IDe
   };
 }
 
-export function isGameSupported(game: string | undefined) {
-  const gameValue = supportedGames.find(
+export function isGameSupported(game: string | undefined, isPrime = false) {
+  const gameValue = getSupportedGames(isPrime).find(
     supportedGame => supportedGame.label.toLowerCase() === game?.toLowerCase(),
   )?.value;
   if (game && gameValue) {

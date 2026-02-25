@@ -64,6 +64,7 @@ export enum EGame {
   ROCKET_LEAGUE = 'rocket_league',
   DOTA_2 = 'dota_2',
   DEAD_BY_DAYLIGHT = 'dead_by_daylight',
+  JUST_CHATTING = 'just_chatting',
   UNSET = 'unset',
 }
 

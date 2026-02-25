@@ -1,8 +1,10 @@
 import React from 'react';
 import styles from './SupportedGames.m.less';
-import { supportedGames } from 'services/highlighter/models/game-config.models';
+import { getSupportedGames } from 'services/highlighter/models/game-config.models';
 import { Tooltip } from 'antd';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
+import { Services } from 'components-react/service-provider';
+import { useVuex } from 'components-react/hooks';
 
 export default function SupportedGames({
   gamesVisible,
@@ -11,6 +13,7 @@ export default function SupportedGames({
   gamesVisible?: number;
   emitClick?: (game: EGame) => void;
 }) {
+  const { isPrime } = useVuex(() => ({ isPrime: Services.UserService.views.isPrime }));
   const rotation = [
     '4.654deg',
     '-3.9deg',
@@ -22,10 +25,8 @@ export default function SupportedGames({
     '-2.58deg',
   ];
   gamesVisible = gamesVisible ?? 4;
-  const games = [...supportedGames];
-  const gamesSortedAlphabetical = [...supportedGames].sort((a, b) =>
-    a.label.localeCompare(b.label),
-  );
+  const games = getSupportedGames(isPrime);
+  const gamesSortedAlphabetical = [...games].sort((a, b) => a.label.localeCompare(b.label));
   return (
     <div style={{ display: 'flex' }}>
       {games.slice(0, gamesVisible).map((game, index) => (

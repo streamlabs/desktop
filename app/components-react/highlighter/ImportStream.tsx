@@ -1,6 +1,7 @@
 import { Button, Form, Select } from 'antd';
 import cx from 'classnames';
 import { Services } from 'components-react/service-provider';
+import { useVuex } from 'components-react/hooks';
 import { ListInput, TextInput } from 'components-react/shared/inputs';
 import * as remote from '@electron/remote';
 import { SUPPORTED_FILE_TYPES } from 'services/highlighter/constants';
@@ -13,7 +14,7 @@ import { $t } from 'services/i18n';
 import uuid from 'uuid';
 import React, { useEffect, useRef, useState } from 'react';
 import styles from './StreamView.m.less';
-import { getConfigByGame, supportedGames } from 'services/highlighter/models/game-config.models';
+import { getConfigByGame, getSupportedGames } from 'services/highlighter/models/game-config.models';
 import path from 'path';
 
 export function ImportStreamModal({
@@ -30,15 +31,17 @@ export function ImportStreamModal({
   streamInfo?: IStreamInfoForAiHighlighter;
 }) {
   const { HighlighterService, UsageStatisticsService } = Services;
+  const { isPrime } = useVuex(() => ({ isPrime: Services.UserService.views.isPrime }));
   const [inputValue, setInputValue] = useState<string>(streamInfo?.title || '');
   const [filePath, setFilePath] = useState<string | undefined>(videoPath);
   const [draggingOver, setDraggingOver] = useState<boolean>(false);
   const [game, setGame] = useState<EGame | undefined>(
     (streamInfo?.game !== EGame.UNSET ? streamInfo?.game : selectedGame) ||
-      selectedGame ||
-      undefined,
+    selectedGame ||
+    undefined,
   );
-  const gameOptions = supportedGames;
+  console.log(isPrime, 'isPrime');
+  const gameOptions = getSupportedGames(isPrime);
   const gameConfig = getConfigByGame(game);
 
   function handleInputChange(value: string) {
@@ -291,7 +294,7 @@ export function ImportStreamModal({
               <video src={filePath} controls></video>
             ) : (
               <div
-                onDrop={(e: React.DragEvent<HTMLDivElement>) => {}}
+                onDrop={(e: React.DragEvent<HTMLDivElement>) => { }}
                 style={{ display: 'grid', placeItems: 'center' }}
               >
                 <i

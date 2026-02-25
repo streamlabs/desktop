@@ -442,12 +442,15 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
           game: this.streamingService.views.game,
         });
 
-        if (!isGameSupported(this.streamingService.views.game)) {
+        if (!isGameSupported(this.streamingService.views.game, this.userService.views.isPrime)) {
           return;
         }
 
         let game;
-        const normalizedGameName = isGameSupported(this.streamingService.views.game);
+        const normalizedGameName = isGameSupported(
+          this.streamingService.views.game,
+          this.userService.views.isPrime,
+        );
         if (normalizedGameName) {
           game = normalizedGameName as EGame;
         } else {

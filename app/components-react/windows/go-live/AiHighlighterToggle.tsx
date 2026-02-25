@@ -23,11 +23,12 @@ export default function AiHighlighterToggle({
   cardIsExpanded: boolean;
 }) {
   //TODO M: Probably good way to integrate the highlighter in to GoLiveSettings
-  const { HighlighterService } = Services;
-  const { useHighlighter, highlighterVersion } = useVuex(() => {
+  const { HighlighterService, UserService } = Services;
+  const { useHighlighter, highlighterVersion, isPrime } = useVuex(() => {
     return {
       useHighlighter: HighlighterService.views.useAiHighlighter,
       highlighterVersion: HighlighterService.views.highlighterVersion,
+      isPrime: UserService.views.isPrime,
     };
   });
 
@@ -35,7 +36,7 @@ export default function AiHighlighterToggle({
   const [gameConfig, setGameConfig] = useState<any>(null);
 
   useEffect(() => {
-    const supportedGame = isGameSupported(game);
+    const supportedGame = isGameSupported(game, isPrime);
     setGameIsSupported(!!supportedGame);
     if (supportedGame) {
       setIsExpanded(true);
@@ -43,7 +44,7 @@ export default function AiHighlighterToggle({
     } else {
       setGameConfig(null);
     }
-  }, [game]);
+  }, [game, isPrime]);
 
   function getInitialExpandedState() {
     if (gameIsSupported) {
@@ -140,7 +141,7 @@ export default function AiHighlighterToggle({
                   {!useHighlighter ? (
                     <div style={{ paddingTop: '88px', width: '100%', display: 'flex' }}>
                       {gameConfig?.importModalConfig?.horizontalExampleVideo &&
-                      gameConfig?.importModalConfig?.verticalExampleVideo ? (
+                        gameConfig?.importModalConfig?.verticalExampleVideo ? (
                         <>
                           <div
                             className={styles.plattformIcon}
