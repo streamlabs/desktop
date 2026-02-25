@@ -691,13 +691,17 @@ export class OutputSettingsService extends Service {
      *
      * P.S. Settings needs a refactor... badly
      */
-    const encoder = obsEncoderToEncoderFamily(
-      this.settingsService.findSettingValue(output, 'Streaming', 'Encoder') ||
-        this.settingsService.findSettingValue(output, 'Streaming', 'StreamEncoder'),
-    ) as EEncoderFamily;
+    const mode = this.settingsService.findSettingValue(output, 'Streaming', 'Mode');
+    const encoder =
+      mode === 'Advanced'
+        ? this.settingsService.findSettingValue(output, 'Streaming', 'Encoder')
+        : this.settingsService.findSettingValue(output, 'Streaming', 'StreamEncoder');
+
+    //TODO get this from BE so we don't have a list in 2 places? BE has presets tied to encoders that we can use
+    const encoderFamily = obsEncoderToEncoderFamily(encoder) as EEncoderFamily;
     let preset: string;
 
-    if (encoder === 'amd') {
+    if (encoderFamily === 'amd') {
       // The settings for AMD also have a Preset field but it's not what we need
       preset = [
         this.settingsService.findValidListValue(output, 'Streaming', 'QualityPreset'),
@@ -763,7 +767,8 @@ export class OutputSettingsService extends Service {
     ) as EFileFormat;
 
     const recEncoder = this.settingsService.findSettingValue(output, 'Recording', 'RecEncoder');
-    let encoder = obsEncoderToEncoderFamily(recEncoder) as EEncoderFamily;
+    //let BE handle encoder conversions and just use the configured value
+    let encoder = recEncoder;
 
     const outputResolution: string =
       this.settingsService.findSettingValue(output, 'Recording', 'RecRescaleRes') ||
@@ -851,23 +856,16 @@ export class OutputSettingsService extends Service {
     }
   }
 
+  //send encoder as is and BE will handle the conversion and setting the right fields - need to test this
   private setStreamingEncoderSettings(
     currentSettings: IOutputSettings,
     settingsPatch: Partial<IStreamingEncoderSettings>,
   ) {
     if (settingsPatch.encoder) {
       if (currentSettings.mode === 'Advanced') {
-        this.settingsService.setSettingValue(
-          'Output',
-          'Encoder',
-          simpleEncoderToAdvancedEncoder(settingsPatch.encoder),
-        );
+        this.settingsService.setSettingValue('Output', 'Encoder', settingsPatch.encoder);
       } else {
-        this.settingsService.setSettingValue(
-          'Output',
-          'StreamEncoder',
-          simpleEncoderToAdvancedEncoder(settingsPatch.encoder),
-        );
+        this.settingsService.setSettingValue('Output', 'StreamEncoder', settingsPatch.encoder);
       }
     }
 
