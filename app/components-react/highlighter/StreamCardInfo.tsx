@@ -47,7 +47,7 @@ export default function StreamCardInfo({
     });
   });
 
-  if (uniqueRounds.size > 0) {
+  if (game !== EGame.JUST_CHATTING && uniqueRounds.size > 0) {
     eventTypeCounts['round'] = uniqueRounds.size;
   }
 

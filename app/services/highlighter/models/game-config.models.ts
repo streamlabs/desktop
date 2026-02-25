@@ -18,6 +18,13 @@ export const TERMS = {
   ROUND: { singular: 'round', plural: 'rounds' },
   STORM: { singular: 'storm event', plural: 'storm events' },
   MANUAL: { singular: 'manual clip', plural: 'manual clips' },
+  INTRO: { singular: 'intro', plural: 'intros' },
+  IRL_ACTION: { singular: 'IRL action', plural: 'IRL actions' },
+  GAMEPLAY_ACTION: { singular: 'gameplay action', plural: 'gameplay actions' },
+  CHAT_INTERACTION: { singular: 'chat interaction', plural: 'chat interactions' },
+  FUNNY_MOMENT: { singular: 'funny moment', plural: 'funny moments' },
+  EMOTIONAL_REACTION: { singular: 'reaction', plural: 'reactions' },
+  DISCUSSION: { singular: 'discussion', plural: 'discussions' },
 };
 
 export const EMOJI = {
@@ -33,6 +40,13 @@ export const EMOJI = {
   STORM: '⛈️',
   ROBOT: '🤖',
   MANUAL: '🎬',
+  INTRO: '🎤',
+  IRL_ACTION: '🏃‍♂️',
+  GAMEPLAY_ACTION: '🎮',
+  CHAT_INTERACTION: '💬',
+  FUNNY_MOMENT: '😂',
+  EMOTIONAL_REACTION: '👀',
+  DISCUSSION: '🗣️',
   FIRECRACKER: '🧨', // used for config fallback. ⚡ used in components as fallback
 };
 
@@ -98,6 +112,55 @@ const COMMON_TYPES: Record<string, IDefaultEventInfo> = {
     includeInDropdown: true,
     contextEvent: true,
     aliases: ['win'],
+  },
+  ['intro']: {
+    emoji: EMOJI.INTRO,
+    description: TERMS.INTRO,
+    orderPriority: 6,
+    includeInDropdown: true,
+    contextEvent: false,
+  },
+  ['irl_action']: {
+    emoji: EMOJI.IRL_ACTION,
+    description: TERMS.IRL_ACTION,
+    orderPriority: 7,
+    includeInDropdown: true,
+    contextEvent: false,
+  },
+  ['gameplay_action']: {
+    emoji: EMOJI.GAMEPLAY_ACTION,
+    description: TERMS.GAMEPLAY_ACTION,
+    orderPriority: 8,
+    includeInDropdown: true,
+    contextEvent: false,
+  },
+  ['chat_interaction']: {
+    emoji: EMOJI.CHAT_INTERACTION,
+    description: TERMS.CHAT_INTERACTION,
+    orderPriority: 9,
+    includeInDropdown: true,
+    contextEvent: false,
+  },
+  ['funny_moment']: {
+    emoji: EMOJI.FUNNY_MOMENT,
+    description: TERMS.FUNNY_MOMENT,
+    orderPriority: 10,
+    includeInDropdown: true,
+    contextEvent: false,
+  },
+  ['emotional_reaction']: {
+    emoji: EMOJI.EMOTIONAL_REACTION,
+    description: TERMS.EMOTIONAL_REACTION,
+    orderPriority: 11,
+    includeInDropdown: true,
+    contextEvent: false,
+  },
+  ['discussion']: {
+    emoji: EMOJI.DISCUSSION,
+    description: TERMS.DISCUSSION,
+    orderPriority: 12,
+    includeInDropdown: true,
+    contextEvent: false,
   },
 };
 
