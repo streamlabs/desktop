@@ -1,4 +1,4 @@
-import { Button, Form, Progress, Tooltip } from 'antd';
+import { Badge, Button, Form, Progress, Tooltip } from 'antd';
 import cx from 'classnames';
 import { Services } from 'components-react/service-provider';
 import { useVuex } from 'components-react/hooks';
@@ -47,8 +47,8 @@ export function ImportStreamModal({
   const [isQuotaLoading, setIsQuotaLoading] = useState(false);
   const [game, setGame] = useState<EGame | undefined>(
     (streamInfo?.game !== EGame.UNSET ? streamInfo?.game : selectedGame) ||
-    selectedGame ||
-    undefined,
+      selectedGame ||
+      undefined,
   );
   const gameOptions = getSupportedGames(isPrime);
   const gameConfig = getConfigByGame(game);
@@ -359,7 +359,7 @@ export function ImportStreamModal({
               <video src={filePath} controls></video>
             ) : (
               <div
-                onDrop={(e: React.DragEvent<HTMLDivElement>) => { }}
+                onDrop={(e: React.DragEvent<HTMLDivElement>) => {}}
                 style={{ display: 'grid', placeItems: 'center' }}
               >
                 <i
@@ -408,7 +408,24 @@ export function ImportStreamModal({
                   <span>{option.label}</span>
                   <span style={{ fontSize: '12px', opacity: '0.5' }}>{option.description}</span>
                   {!!getConfigByGame(option.value as EGame)?.hasQuota && (
-                    <UltraIcon type="badge" style={{ marginLeft: 'auto' }} />
+                    <span
+                      style={{
+                        marginLeft: 'auto',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <Badge
+                        count={$t('Beta')}
+                        style={{
+                          backgroundColor: 'var(--button)',
+                          color: 'var(--paragraph)',
+                          boxShadow: 'none',
+                        }}
+                      />
+                      <UltraIcon type="badge" />
+                    </span>
                   )}
                 </div>
               )}
@@ -432,10 +449,10 @@ export function ImportStreamModal({
                   (isQuotaReached
                     ? $t('Video processing limit reached. Will reset next month.')
                     : $t(
-                      `Video processing remaining: ${formatRemainingVideoProcessingTime(
-                        quota.remaining,
-                      )}`,
-                    ))}
+                        `Video processing remaining: ${formatRemainingVideoProcessingTime(
+                          quota.remaining,
+                        )}`,
+                      ))}
                 {!isQuotaLoading && (
                   <span style={{ marginLeft: 'auto', display: 'inline-flex' }}>
                     <Tooltip title={$t('Resets every month')}>
