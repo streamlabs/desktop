@@ -474,9 +474,9 @@ const JUST_CHATTING: IGameConfig = {
     ...COMMON_TYPES,
   },
   importModalConfig: {
-    accentColor: '#8088A9',
+    accentColor: '#9EF2D4',
     artwork: `${heroPath}${EGame.JUST_CHATTING}.png`,
-    backgroundColor: '#172D3B',
+    backgroundColor: '#19222A',
   },
 };
 
