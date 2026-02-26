@@ -12,9 +12,10 @@ import {
 } from 'services/highlighter/models/highlighter.models';
 import { $t } from 'services/i18n';
 import uuid from 'uuid';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import styles from './StreamView.m.less';
 import { getConfigByGame, getSupportedGames } from 'services/highlighter/models/game-config.models';
+import UltraIcon from 'components-react/shared/UltraIcon';
 import path from 'path';
 import {
   HighlighterQuotaApi,
@@ -46,8 +47,8 @@ export function ImportStreamModal({
   const [isQuotaLoading, setIsQuotaLoading] = useState(false);
   const [game, setGame] = useState<EGame | undefined>(
     (streamInfo?.game !== EGame.UNSET ? streamInfo?.game : selectedGame) ||
-      selectedGame ||
-      undefined,
+    selectedGame ||
+    undefined,
   );
   const gameOptions = getSupportedGames(isPrime);
   const gameConfig = getConfigByGame(game);
@@ -358,7 +359,7 @@ export function ImportStreamModal({
               <video src={filePath} controls></video>
             ) : (
               <div
-                onDrop={(e: React.DragEvent<HTMLDivElement>) => {}}
+                onDrop={(e: React.DragEvent<HTMLDivElement>) => { }}
                 style={{ display: 'grid', placeItems: 'center' }}
               >
                 <i
@@ -396,7 +397,7 @@ export function ImportStreamModal({
               defaultValue={game}
               showSearch
               optionRender={option => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
                   {option.image && (
                     <img
                       src={typeof option.image === 'string' ? option.image : undefined}
@@ -406,6 +407,9 @@ export function ImportStreamModal({
                   )}
                   <span>{option.label}</span>
                   <span style={{ fontSize: '12px', opacity: '0.5' }}>{option.description}</span>
+                  {!!getConfigByGame(option.value as EGame)?.hasQuota && (
+                    <UltraIcon type="badge" style={{ marginLeft: 'auto' }} />
+                  )}
                 </div>
               )}
               debounce={500}
@@ -428,10 +432,10 @@ export function ImportStreamModal({
                   (isQuotaReached
                     ? $t('Video processing limit reached. Will reset next month.')
                     : $t(
-                        `Video processing remaining: ${formatRemainingVideoProcessingTime(
-                          quota.remaining,
-                        )}`,
-                      ))}
+                      `Video processing remaining: ${formatRemainingVideoProcessingTime(
+                        quota.remaining,
+                      )}`,
+                    ))}
                 {!isQuotaLoading && (
                   <span style={{ marginLeft: 'auto', display: 'inline-flex' }}>
                     <Tooltip title={$t('Resets every month')}>

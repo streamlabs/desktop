@@ -494,6 +494,7 @@ const UNSET_CONFIG: IGameConfig = {
 
 // Each game must have a config like and the config must be added here.
 const GAME_CONFIGS: Record<EGame, IGameConfig> = {
+  [EGame.JUST_CHATTING]: JUST_CHATTING,
   [EGame.FORTNITE]: FORTNITE_CONFIG, // ✅
   [EGame.WARZONE]: WARZONE_CONFIG, // ✅
   [EGame.BLACK_OPS_6]: BLACK_OPS_6_CONFIG, // ✅
@@ -511,7 +512,6 @@ const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.ROCKET_LEAGUE]: ROCKET_LEAGUE,
   [EGame.DOTA_2]: DOTA_2,
   [EGame.DEAD_BY_DAYLIGHT]: DEAD_BY_DAYLIGHT,
-  [EGame.JUST_CHATTING]: JUST_CHATTING,
   [EGame.UNSET]: UNSET_CONFIG,
 };
 
