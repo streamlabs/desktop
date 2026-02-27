@@ -50,6 +50,9 @@ export class SmartBrowserSourceManager extends PropertiesManager {
   normalizeUrl() {
     const url = this.obsSource.settings.url;
 
+    // If the source is new, there might not be a url yet because the user hasn't input it
+    if (!url) return;
+
     const { hostname, origin } = new URL(url);
 
     if (matchesHostnamePattern(hostname) && origin !== REACTIVE_SOURCES_ORIGIN) {
