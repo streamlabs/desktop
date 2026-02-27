@@ -395,7 +395,7 @@ export class AnnouncementsService extends Service {
       componentName: 'MarketingModal',
       title: $t("What's New"),
       size: {
-        width: 900,
+        width: 650,
         height: 800,
       },
     });
