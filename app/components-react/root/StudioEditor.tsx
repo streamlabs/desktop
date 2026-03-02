@@ -1,5 +1,5 @@
 import { useVuex } from 'components-react/hooks';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styles from './StudioEditor.m.less';
 import { Services } from 'components-react/service-provider';
 import cx from 'classnames';
@@ -411,15 +411,23 @@ function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
     );
   }, [p.isRecording]);
 
+  const toggleDisplay = useCallback(
+    (display: TDisplayType) => {
+      // Prevent the user from toggling off both displays
+      if (display === 'horizontal' && !showVertical) return;
+      if (display === 'vertical' && !showHorizontal) return;
+
+      v.toggleDisplay(display === 'horizontal' ? !showHorizontal : !showVertical, display);
+    },
+    [showVertical, showHorizontal],
+  );
+
   return (
     <div
       id="dual-output-header"
       className={cx(styles.dualOutputHeader, { [styles.stacked]: p.stacked })}
     >
-      <div
-        className={styles.toggleWrapper}
-        onClick={() => v.toggleDisplay(!showHorizontal, 'horizontal')}
-      >
+      <div className={styles.toggleWrapper} onClick={() => toggleDisplay('horizontal')}>
         {showRecordingIcons && <DualOutputIcons display="horizontal" />}
         {showHorizontal ? (
           <i className={cx('icon-view', styles.displayVisible)} />
@@ -432,10 +440,7 @@ function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
         {showRecordingIcons && <DualOutputIcons display="horizontal" />}
       </div>
 
-      <div
-        className={styles.toggleWrapper}
-        onClick={() => v.toggleDisplay(!showVertical, 'vertical')}
-      >
+      <div className={styles.toggleWrapper} onClick={() => toggleDisplay('vertical')}>
         {showRecordingIcons && <DualOutputIcons display="vertical" />}
         {showVertical ? (
           <i className={cx('icon-view', styles.displayVisible)} />

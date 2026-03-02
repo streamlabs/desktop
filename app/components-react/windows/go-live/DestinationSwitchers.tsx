@@ -333,6 +333,7 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
             </div>
             <div className={styles.platformHandle}>{description}</div>
             {/* DISPLAY TOGGLES */}
+
             <div
               className={cx(styles.displaySelectorWrapper, {
                 [styles.hidden]: p.isStreamShiftMode,

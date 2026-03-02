@@ -127,8 +127,13 @@
   transition: visibility 0.3s, opacity 0.3s;
 
   &.hidden {
+    display: none;
     visibility: hidden;
     opacity: 0;
+  }
+
+  &.disabled {
+    color: var(--teal-dark);
   }
 }
 
