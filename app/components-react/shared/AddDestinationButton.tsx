@@ -119,8 +119,10 @@ function SmallAddDestinationButton(p: { className?: string; onClick: () => void 
       onClick={p.onClick}
       block
     >
-      <PlusIcon style={{ paddingLeft: '17px', fontSize: '24px' }} />
-      <span style={{ flex: 1 }}>{$t('Add Destination')}</span>
+      <div style={{ flex: 1 }}>
+        <PlusIcon />
+        {$t('Add Destination')}
+      </div>
     </Button>
   );
 }

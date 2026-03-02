@@ -19,6 +19,7 @@ interface ICustomRadioGroupProps {
   label?: string;
   nolabel?: boolean;
   nowrap?: boolean;
+  nomargin?: boolean;
   options: ICustomRadioOption[];
   buttons?: boolean;
   icons?: boolean;
@@ -28,6 +29,8 @@ interface ICustomRadioGroupProps {
   disabled?: boolean;
   className?: string;
   gapsize?: number;
+  alignIcons?: 'left' | 'center' | 'right';
+  iconsBg?: boolean;
 }
 
 type TRadioInputProps = TSlobsInputProps<ICustomRadioGroupProps, string, {}>;
@@ -41,7 +44,18 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
   };
 
   return (
-    <InputWrapper {...wrapperAttrs} data-title={p.label}>
+    <InputWrapper
+      {...wrapperAttrs}
+      data-title={p.label}
+      nolabel={p.nolabel}
+      className={cx({
+        [styles.iconsLeft]: p.alignIcons === 'left',
+        [styles.iconsCenter]: p.alignIcons === 'center',
+        [styles.iconsRight]: p.alignIcons === 'right',
+        [styles.iconsBg]: p.iconsBg,
+        [styles.nomargin]: p.nomargin,
+      })}
+    >
       {p.buttons && (
         <Radio.Group
           {...inputProps}

@@ -2,66 +2,84 @@
 @import '../../../styles/mixins.less';
 
 .destination-logo {
-  font-size: 34px;
+  font-size: 16px;
+  margin-top: 4px;
 }
 .platform-logo-twitch {
-  font-size: 34px;
+  font-size: 16px;
+  margin-top: 5px;
 }
 .platform-logo-youtube {
-  font-size: 31px;
-  margin-top: 9px;
-  width: 34px;
-  height: 34px;
+  font-size: 15px;
+  margin-top: 2px;
+  width: 16px;
+  height: 16px;
 }
 .platform-logo-facebook {
-  font-size: 34px;
+  font-size: 16px;
 }
 .platform-logo-tiktok {
-  font-size: 34px;
-  margin-left: 5px;
-  width: 34px;
-  height: 34px;
+  font-size: 16px;
+  margin-left: 1px;
+  width: 16px;
+  height: 16px;
 }
 .platform-logo-instagram {
-  font-size: 34px;
-  width: 34px;
-  height: 34px;
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
 }
 .platform-logo-twitter {
-  width: 32px;
-  height: 32px;
+  width: 15px;
+  height: 15px;
 }
 .platform-logo-kick {
-  width: 34px;
-  height: 34px;
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
 }
 .platform-logo-trovo {
-  width: 34px;
-  height: 34px;
+  width: 16px;
+  height: 16px;
+  margin-top: 5px;
 }
 
 .platform-logo {
-  align-self: center;
-  display: flex;
-  margin-right: 10px;
-  min-width: 36px;
+  margin: 0px 10px 0px 0px;
 }
 
 .platform-switcher {
   .radius();
 
   display: flex;
-  height: 54px;
+  flex-direction: column;
   background: var(--card) !important;
   transition: transform 0.05s;
   cursor: pointer;
   margin-bottom: 15px;
   padding: 8px 10px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+
+  .destination-info {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .col-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .col-account {
+    display: flex;
+    align-items: flex-start;
+  }
 
   .col-input {
-    padding-top: 3px;
     padding-right: 16px;
-    width: 52px;
   }
 
   .col-primary {
@@ -69,16 +87,9 @@
     text-align: center;
   }
 
-  .col-account {
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    align-self: center;
-    flex: 1;
-  }
-
   .platform-name {
     color: var(--title);
+    font-weight: 500;
   }
 }
 
@@ -113,10 +124,15 @@
 }
 
 .display-selector-wrapper {
-  align-self: center;
+  transition: visibility 0.3s, opacity 0.3s;
+
+  &.hidden {
+    visibility: hidden;
+    opacity: 0;
+  }
 }
 
-.dual-output-display-selector {
+.display-selector {
   margin-bottom: 0px !important;
   display: flex;
   align-self: flex-end;

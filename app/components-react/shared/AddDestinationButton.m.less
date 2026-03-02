@@ -202,23 +202,29 @@ button.add-destination-header {
 
 .small-btn-group {
   padding: 0px !important;
+  margin: 0px !important;
 }
 
 .small-btn:extend(button.add-destination-btn) {
   height: 40px !important;
-  font-weight: 500;
-  color: var(--title) !important;
-  text-align: left !important;
+  font-weight: 600;
+  color: var(--title);
   font-size: 14px;
   border: 0px !important;
-  background-color: var(--section-alt) !important;
-  margin: 0px 15px !important;
   width: calc(100% - 30px) !important;
+  margin: 0px 15px 15px 15px !important;
+  text-align: left;
 
   :global(.anticon.anticon-plus) {
-    font-size: 14px !important;
-    color: var(--title) !important;
-    padding-left: 65px !important;
+    font-size: 16px;
+    color: var(--title);
+    margin-right: 10px;
+  }
+
+  .small-btn-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
   &:hover {

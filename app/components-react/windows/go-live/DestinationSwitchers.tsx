@@ -10,7 +10,6 @@ import PlatformLogo from '../../shared/PlatformLogo';
 import { useDebounce } from '../../hooks';
 import { useGoLiveSettings } from './useGoLiveSettings';
 import DisplaySelector from 'components-react/shared/DisplaySelector';
-import ConnectButton from 'components-react/shared/ConnectButton';
 import { message, Tooltip } from 'antd';
 
 /**
@@ -27,22 +26,20 @@ export function DestinationSwitchers() {
     isPlatformLinked,
     isPrimaryPlatform,
     isRestreamEnabled,
-    isDualOutputMode,
+    isStreamShiftMode,
     isPrime,
     alwaysEnabledPlatforms,
     alwaysShownPlatforms,
     isTwitchDualStreaming,
   } = useGoLiveSettings();
 
-  // use these references to apply debounce
-  // for error handling and switch animation
+  // Use these references to apply debounce for error handling and switch animation
   const enabledPlatformsRef = useRef(enabledPlatforms);
   enabledPlatformsRef.current = enabledPlatforms;
   const enabledDestRef = useRef(enabledDestinations);
   enabledDestRef.current = enabledDestinations;
 
-  // some platforms are always shown, even if not linked
-  // add them to the list of platforms to display
+  // Some platforms are always shown, even if not linked so add them to the list of platforms to display
   const platforms = useMemo(() => {
     const unlinkedAlwaysShownPlatforms = alwaysShownPlatforms.filter(
       platform => !isPlatformLinked(platform),
@@ -50,21 +47,15 @@ export function DestinationSwitchers() {
     return unlinkedAlwaysShownPlatforms.length
       ? linkedPlatforms.concat(unlinkedAlwaysShownPlatforms)
       : linkedPlatforms;
-  }, [linkedPlatforms, enabledPlatformsRef.current, isDualOutputMode, isPrime]);
+  }, [linkedPlatforms, enabledPlatformsRef.current]);
 
-  // Disable custom destination switchers when restream is not available
-  // or for a non-ultra user is in single output mode. The one exception
-  // for a non-ultra user in single output mode is if TikTok is the only enabled platform
+  // Disable custom destination switchers when restream is not available, such as for a non-ultra user.
+  // The one exception for a non-ultra user in single output mode is if TikTok is the only enabled platform
   const disableCustomDestinationSwitchers =
-    !isRestreamEnabled &&
-    !isDualOutputMode &&
-    !isEnabled('tiktok') &&
-    enabledPlatformsRef.current.length > 1;
+    !isRestreamEnabled && !isEnabled('tiktok') && enabledPlatformsRef.current.length > 1;
   const disableNonUltraSwitchers =
-    isDualOutputMode &&
-    !isPrime &&
-    enabledPlatformsRef.current.length + enabledDestRef.current.length >= 2;
-  const disablePlatformSwitchers = isDualOutputMode && isTwitchDualStreaming;
+    !isPrime && enabledPlatformsRef.current.length + enabledDestRef.current.length >= 2;
+  const disablePlatformSwitchers = isTwitchDualStreaming;
 
   const emitSwitch = useDebounce(500, (ind?: number, enabled?: boolean) => {
     if (ind !== undefined && enabled !== undefined) {
@@ -83,25 +74,17 @@ export function DestinationSwitchers() {
   }
 
   function togglePlatform(platform: TPlatform, enabled: boolean) {
-    // In dual output mode, only allow non-ultra users to have 2 platforms, or 1 platform and 1 custom destination enabled
+    // Only allow non-ultra users to have 2 platforms, or 1 platform and 1 custom destination enabled
     if (!isPrime) {
-      if (isDualOutputMode) {
-        if (enabledPlatformsRef.current.length + enabledDestRef.current.length <= 2) {
-          enabledPlatformsRef.current.push(platform);
-        } else {
-          enabledPlatformsRef.current = enabledPlatformsRef.current.filter(p => p !== platform);
-        }
+      if (enabled && alwaysEnabledPlatforms.includes(platform)) {
+        enabledPlatformsRef.current.push(platform);
+      } else if (enabled) {
+        enabledPlatformsRef.current = enabledPlatformsRef.current.filter(p =>
+          alwaysEnabledPlatforms.includes(p),
+        );
+        enabledPlatformsRef.current.push(platform);
       } else {
-        if (enabled && alwaysEnabledPlatforms.includes(platform)) {
-          enabledPlatformsRef.current.push(platform);
-        } else if (enabled) {
-          enabledPlatformsRef.current = enabledPlatformsRef.current.filter(p =>
-            alwaysEnabledPlatforms.includes(p),
-          );
-          enabledPlatformsRef.current.push(platform);
-        } else {
-          enabledPlatformsRef.current = enabledPlatformsRef.current.filter(p => p !== platform);
-        }
+        enabledPlatformsRef.current = enabledPlatformsRef.current.filter(p => p !== platform);
       }
 
       if (!enabledPlatformsRef.current.length) {
@@ -137,7 +120,7 @@ export function DestinationSwitchers() {
 
   function toggleDestination(index: number, enabled: boolean) {
     // In dual output mode, only allow non-ultra users to have 2 platforms, or 1 platform and 1 custom destination enabled
-    if (isDualOutputMode && !isPrime) {
+    if (!isPrime) {
       if (enabledPlatformsRef.current.length + enabledDestRef.current.length < 2) {
         enabledDestRef.current.push(index);
       } else {
@@ -156,6 +139,13 @@ export function DestinationSwitchers() {
     emitSwitch(index, enabled);
   }
 
+  console.log(
+    'rendering switchers with platforms',
+    platforms,
+    'and custom destinations',
+    customDestinations,
+  );
+
   return (
     <div className={cx(styles.switchWrapper, styles.columnPadding)}>
       {platforms.map((platform, ind) => (
@@ -163,7 +153,7 @@ export function DestinationSwitchers() {
           key={platform}
           destination={platform}
           enabled={
-            isPrime || isDualOutputMode
+            isPrime
               ? isEnabled(platform)
               : isEnabled(platform) && (isPrimaryPlatform(platform) || platform === 'tiktok')
           }
@@ -173,7 +163,7 @@ export function DestinationSwitchers() {
             (!isEnabled(platform) && disableNonUltraSwitchers) // Handle non-ultra user restrictions
           }
           showTwitchTooltip={disablePlatformSwitchers && platform !== 'twitch'}
-          isDualOutputMode={isDualOutputMode}
+          isStreamShiftMode={isStreamShiftMode}
           index={ind}
         />
       ))}
@@ -187,7 +177,7 @@ export function DestinationSwitchers() {
           switchDisabled={
             disableCustomDestinationSwitchers || (!dest.enabled && disableNonUltraSwitchers)
           }
-          isDualOutputMode={isDualOutputMode}
+          isStreamShiftMode={isStreamShiftMode}
           index={ind}
         />
       ))}
@@ -201,8 +191,7 @@ interface IDestinationSwitcherProps {
   onChange: (enabled: boolean) => unknown;
   switchDisabled?: boolean;
   index: number;
-  isDualOutputMode: boolean;
-  isUnlinked?: boolean;
+  isStreamShiftMode: boolean;
   showTwitchTooltip?: boolean;
 }
 
@@ -220,6 +209,8 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
   const label = platform
     ? $t('Toggle %{platform}', { platform: platformLabels(platform) })
     : $t('Toggle Destination');
+
+  console.log('p', JSON.stringify(p, null, 2));
 
   function onClickHandler(ev: MouseEvent) {
     // If we're disabling the switch we shouldn't be emitting anything past below
@@ -278,7 +269,7 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
             nolabel
             className="platform-switch"
             color="secondary"
-            size="default"
+            size="small"
             skipWrapperAttrs={true}
           />
         ),
@@ -319,44 +310,46 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
       <div
         ref={containerRef}
         className={cx('single-output-card', styles.platformSwitcher, {
-          [styles.platformDisabled]: !p.enabled && !p?.isUnlinked,
+          [styles.platformDisabled]: !p.enabled,
           [styles.platformEnabled]: p.enabled,
         })}
         onClick={onClickHandler}
       >
-        {/* SWITCH */}
-        <div className={cx(styles.colInput)}>
-          <Controller />
-        </div>
-
-        {/* PLATFORM LOGO */}
-        <div className={cx('logo', styles.platformLogo)}>
-          <Logo />
-        </div>
-
-        {/* PLATFORM TITLE AND ACCOUNT/URL */}
-        <div className={styles.colAccount}>
-          <div className={styles.platformName}>{title}</div>
-          <div className={styles.platformHandle}>{description}</div>
-        </div>
-
-        {/* DISPLAY TOGGLES */}
-        {p.isDualOutputMode && !p?.isUnlinked && (
-          <div className={styles.displaySelectorWrapper} onClick={e => e.stopPropagation()}>
-            <DisplaySelector
-              title={title}
-              nolabel
-              className={styles.dualOutputDisplaySelector}
-              platform={platform}
-              index={p.index}
-            />
+        <div className={styles.destinationInfo}>
+          {/* SWITCH */}
+          <div className={cx(styles.colInput)}>
+            <Controller />
           </div>
-        )}
 
-        {/* CONNECT BUTTON */}
-        {p?.isUnlinked && platform && (
-          <ConnectButton platform={platform} className={styles.connectButton} />
-        )}
+          <div className={styles.colInfo}>
+            {/* PLATFORM TITLE AND ACCOUNT/URL */}
+            <div className={styles.colAccount}>
+              {/* PLATFORM LOGO AND NAME*/}
+              <div className={cx('logo', styles.platformLogo)}>
+                <Logo />
+              </div>
+              {/* PLATFORM HANDLE */}
+              <div className={styles.platformName}>{title}</div>
+            </div>
+            <div className={styles.platformHandle}>{description}</div>
+            {/* DISPLAY TOGGLES */}
+            <div
+              className={cx(styles.displaySelectorWrapper, {
+                [styles.hidden]: p.isStreamShiftMode,
+              })}
+              onClick={e => e.stopPropagation()}
+            >
+              <DisplaySelector
+                title={title}
+                nolabel
+                className={styles.displaySelector}
+                platform={platform}
+                index={p.index}
+                alignIcons="left"
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </Tooltip>
   );

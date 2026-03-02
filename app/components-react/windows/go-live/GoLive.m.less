@@ -160,10 +160,6 @@ i.selector-icon {
   color: var(--section) !important;
 }
 
-.platform-logo {
-  margin: 5px 5px 0 0;
-}
-
 i.destination-logo {
   margin: 5px 5px 0 0;
   font-size: 30px;
@@ -183,6 +179,11 @@ i.destination-logo {
 
 .column-padding {
   padding: 0px 15px 15px 15px;
+  margin: 0px 15px 0px 0px;
+
+  &.bottom-add-destination {
+    margin: 15px 15px 0px 15px !important;
+  }
 }
 
 .left-column {
@@ -200,6 +201,9 @@ i.destination-logo {
   padding-top: 5px;
   margin: 0px 15px;
   width: calc(100% - 30px);
+  position: sticky;
+  bottom: 0px;
+  background-color: var(--bg-column);
 }
 
 .dual-output-go-live {
@@ -393,9 +397,10 @@ i.destination-logo {
   font-size: 16px;
   display: flex;
   flex-direction: row;
-  flex: 1;
   width: 100%;
   padding: 15px 0px 15px 15px;
+  font-weight: 500;
+  color: var(--title);
 
   :global(.ant-form-item) {
     margin-bottom: 0px;
@@ -403,10 +408,6 @@ i.destination-logo {
 
   :global(.ant-row) {
     align-items: center;
-  }
-
-  &.ultra-column-header {
-    padding: 15px;
   }
 }
 
@@ -511,5 +512,9 @@ i.destination-logo {
 }
 
 .column-content {
-  height: 79%;
+  height: 89%;
+}
+
+.switcher-wrapper {
+  height: 100%;
 }

@@ -36,7 +36,6 @@ export default function GoLiveSettings() {
     protectedModeEnabled,
     error,
     isLoading,
-    canAddDestinations,
     canUseOptimizedProfile,
     showTweet,
     hasMultiplePlatforms,
@@ -45,6 +44,8 @@ export default function GoLiveSettings() {
     recommendedColorSpaceWarnings,
     isPrime,
     isStreamShiftMode,
+    showTopAddDestination,
+    showBottomAddDestination,
     setPrimaryChat,
     openPlatformSettings,
   } = useGoLiveSettings().extend(module => {
@@ -57,6 +58,14 @@ export default function GoLiveSettings() {
         const linkedPlatforms = module.state.linkedPlatforms;
         const customDestinations = module.state.customDestinations;
         return linkedPlatforms.length + customDestinations.length < maxNumPlatforms + 5;
+      },
+
+      get showTopAddDestination() {
+        return this.canAddDestinations && module.state.linkedPlatforms.length > 1;
+      },
+
+      get showBottomAddDestination() {
+        return module.state.linkedPlatforms.length < 2;
       },
 
       showTweet: module.primaryPlatform && module.primaryPlatform !== 'twitter',
@@ -93,7 +102,6 @@ export default function GoLiveSettings() {
 
   const shouldShowSettings = !error && !isLoading;
   const shouldShowLeftCol = isStreamShiftMode ? true : protectedModeEnabled;
-  const shouldShowAddDestButton = canAddDestinations;
 
   const shouldShowPrimaryChatSwitcher = hasMultiplePlatforms;
 
@@ -113,37 +121,42 @@ export default function GoLiveSettings() {
             {!isPrime && <AddDestinationButton type="banner" className={styles.addDestination} />}
 
             <Scrollable className={styles.switcherWrapper}>
+              {showTopAddDestination && (
+                <AddDestinationButton
+                  type="small"
+                  className={styles.columnPadding}
+                  onClick={openPlatformSettings}
+                />
+              )}
               <DestinationSwitchers />
+              {showBottomAddDestination && (
+                <AddDestinationButton
+                  type="small"
+                  className={cx(styles.columnPadding, styles.bottomAddDestination)}
+                  onClick={openPlatformSettings}
+                />
+              )}
+              <div className={styles.leftFooter}>
+                <PrimaryChatSwitcher
+                  className={cx(styles.primaryChat, {
+                    [styles.disabled]: !shouldShowPrimaryChatSwitcher,
+                  })}
+                  enabledPlatforms={enabledPlatforms}
+                  onSetPrimaryChat={setPrimaryChat}
+                  primaryChat={primaryChat}
+                  suffixIcon={<CaretDownOutlined />}
+                  layout="horizontal"
+                  logo={false}
+                  border={false}
+                  disabled={!shouldShowPrimaryChatSwitcher}
+                />
+
+                <StreamShiftToggle
+                  checkboxClassname={styles.featureCheckbox}
+                  style={{ width: featureCheckboxWidth }}
+                />
+              </div>
             </Scrollable>
-          </div>
-
-          {shouldShowAddDestButton && (
-            <AddDestinationButton
-              type="small"
-              className={styles.columnPadding}
-              onClick={openPlatformSettings}
-            />
-          )}
-
-          <div className={styles.leftFooter}>
-            <PrimaryChatSwitcher
-              className={cx(styles.primaryChat, {
-                [styles.disabled]: !shouldShowPrimaryChatSwitcher,
-              })}
-              enabledPlatforms={enabledPlatforms}
-              onSetPrimaryChat={setPrimaryChat}
-              primaryChat={primaryChat}
-              suffixIcon={<CaretDownOutlined />}
-              layout="horizontal"
-              logo={false}
-              border={false}
-              disabled={!shouldShowPrimaryChatSwitcher}
-            />
-
-            <StreamShiftToggle
-              checkboxClassname={styles.featureCheckbox}
-              style={{ width: featureCheckboxWidth }}
-            />
           </div>
         </Col>
       )}
