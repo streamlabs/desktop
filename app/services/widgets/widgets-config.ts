@@ -186,6 +186,11 @@ export function getWidgetsConfig(
         anchor: AnchorPoint.SouthWest,
       },
 
+      settingsWindowSize: {
+        width: 700,
+        height: 800,
+      },
+
       url: `https://${host}/widgets/donation-goal?token=${token}`,
       previewUrl: `https://${host}/widgets/donation-goal?token=${token}`,
       webSettingsUrl: `https://${host}/dashboard#/widgets/tip-goal`,
@@ -210,6 +215,11 @@ export function getWidgetsConfig(
         anchor: AnchorPoint.SouthWest,
       },
 
+      settingsWindowSize: {
+        width: 700,
+        height: 800,
+      },
+
       url: `https://${host}/widgets/follower-goal?token=${token}`,
       previewUrl: `https://${host}/widgets/follower-goal?token=${token}`,
       webSettingsUrl: `https://${host}/dashboard#/widgets/followergoal`,
@@ -232,6 +242,11 @@ export function getWidgetsConfig(
         x: 0,
         y: 1,
         anchor: AnchorPoint.SouthWest,
+      },
+
+      settingsWindowSize: {
+        width: 700,
+        height: 800,
       },
 
       // This is for YT Subscribers which is a type of Follower
@@ -259,6 +274,11 @@ export function getWidgetsConfig(
         anchor: AnchorPoint.SouthWest,
       },
 
+      settingsWindowSize: {
+        width: 700,
+        height: 800,
+      },
+
       url: `https://${host}/widgets/sub-goal?token=${token}`,
       dataFetchUrl: `https://${host}/api/v5/slobs/widget/subgoal/settings`,
       previewUrl: `https://${host}/widgets/sub-goal?token=${token}`,
@@ -281,6 +301,11 @@ export function getWidgetsConfig(
         x: 0,
         y: 1,
         anchor: AnchorPoint.SouthWest,
+      },
+
+      settingsWindowSize: {
+        width: 700,
+        height: 800,
       },
 
       url: `https://${host}/widgets/bit-goal?token=${token}`,
@@ -307,6 +332,11 @@ export function getWidgetsConfig(
         anchor: AnchorPoint.SouthWest,
       },
 
+      settingsWindowSize: {
+        width: 700,
+        height: 800,
+      },
+
       url: `https://${host}/widgets/stars-goal?token=${token}`,
       previewUrl: `https://${host}/widgets/stars-goal?token=${token}`,
       webSettingsUrl: `https://${host}/dashboard#/widgets/starsgoal`,
@@ -329,6 +359,11 @@ export function getWidgetsConfig(
         x: 0,
         y: 1,
         anchor: AnchorPoint.SouthWest,
+      },
+
+      settingsWindowSize: {
+        width: 700,
+        height: 800,
       },
 
       url: `https://${host}/widgets/supporter-goal?token=${token}`,
@@ -355,6 +390,11 @@ export function getWidgetsConfig(
         anchor: AnchorPoint.SouthWest,
       },
 
+      settingsWindowSize: {
+        width: 700,
+        height: 800,
+      },
+
       url: `https://${host}/widgets/super-chat-goal?token=${token}`,
       previewUrl: `https://${host}/widgets/super-chat-goal?token=${token}`,
       webSettingsUrl: `https://${host}/dashboard#/widgets/super-chat-goal`,
@@ -377,6 +417,11 @@ export function getWidgetsConfig(
         x: 0,
         y: 1,
         anchor: AnchorPoint.SouthWest,
+      },
+
+      settingsWindowSize: {
+        width: 700,
+        height: 800,
       },
 
       url: `https://${host}/widgets/streamlabs-charity-donation-goal?token=${token}`,

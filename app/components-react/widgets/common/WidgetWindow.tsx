@@ -6,7 +6,7 @@ import { AlertBox } from '../AlertBox';
 import { AlertBoxModule } from '../useAlertBox';
 import { useWidgetRoot, WidgetModule } from './useWidget';
 // TODO: import other widgets here to avoid merge conflicts
-import { GenericGoal, GenericGoalModule } from '../goals/GenericGoal';
+import { GenericGoal, GenericGoalModule } from '../GenericGoal';
 import { ChatBox, ChatBoxModule } from '../ChatBox';
 // ChatHighlight
 // Credits

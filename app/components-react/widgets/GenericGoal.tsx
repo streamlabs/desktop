@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Button, Menu } from 'antd';
 import { $t } from 'services/i18n';
-import { IWidgetCommonState, useWidget, WidgetModule, WidgetParams } from '../common/useWidget';
-import { WidgetLayout } from '../common/WidgetLayout';
+import { IWidgetCommonState, useWidget, WidgetModule, WidgetParams } from './common/useWidget';
+import { WidgetLayout } from './common/WidgetLayout';
 import FormFactory, { TInputValue } from 'components-react/shared/inputs/FormFactory';
 import Form from 'components-react/shared/inputs/Form';
-import { metadata } from '../../shared/inputs/metadata';
+import { metadata } from '../shared/inputs/metadata';
 import { WidgetType } from 'services/widgets';
 import { authorizedHeaders, jfetch } from 'util/requests';
 import { Services } from 'components-react/service-provider';
@@ -54,7 +54,7 @@ export function GenericGoal() {
     selectedTab,
     saveGoal,
     type
-  } = useGenericGoal({ selectedTab: 'visual' });
+  } = useGenericGoal();
 
   const isCharity = type === WidgetType.CharityGoal;
 
@@ -76,20 +76,20 @@ export function GenericGoal() {
   return (
     <WidgetLayout>
       <Menu onClick={e => setSelectedTab(e.key)} selectedKeys={[selectedTab]}>
-        <Menu.Item key="visual">{$t('Visual Settings')}</Menu.Item>
-        {!isCharity && <Menu.Item key="general">{$t('Goal Settings')}</Menu.Item>}
+        <Menu.Item key="general">{$t('Visual Settings')}</Menu.Item>
+        {!isCharity && <Menu.Item key="goal">{$t('Goal Settings')}</Menu.Item>}
       </Menu>
       <Form>
-        {!isLoading && selectedTab === 'general' && !hasGoal && (
+        {!isLoading && selectedTab === 'goal' && !hasGoal && (
           <>
             <FormFactory metadata={createGoalMeta} values={goalCreateValues} onChange={updateGoalCreate} />
             <Button className="button button--action" onClick={() => saveGoal(goalCreateValues)}>{$t('Save Goal')}</Button>
           </>
         )}
-        {!isLoading && selectedTab === 'general' && hasGoal && (
+        {!isLoading && selectedTab === 'goal' && hasGoal && (
           <DisplayGoal goal={goalSettings} />
         )}
-        {!isLoading && selectedTab === 'visual' && (
+        {!isLoading && selectedTab === 'general' && (
           <FormFactory metadata={visualMeta} values={settings} onChange={updateSetting} />
         )}
       </Form>
@@ -172,12 +172,11 @@ export class GenericGoalModule extends WidgetModule<IGoalState> {
           { label: $t('Standard'), value: 'standard' },
           { label: $t('Condensed'), value: 'condensed' },
         ],
-        children: {
-          include_resubs: metadata.bool({
-            label: $t('Include resubs?'),
-            displayed: this.state.type === WidgetType.SubGoal,
-          })
-        }
+        // children: this.state.type === WidgetType.SubGoal ? {
+        //   include_resubs: metadata.bool({
+        //     label: $t('Include resubs?'),
+        //   })
+        // } : undefined,
       }),
       background_color: metadata.color({ label: $t('Background Color') }),
       bar_color: metadata.color({ label: $t('Bar Color') }),
@@ -219,6 +218,6 @@ export class GenericGoalModule extends WidgetModule<IGoalState> {
   }
 }
 
-function useGenericGoal(params?: WidgetParams) {
-  return useWidget<GenericGoalModule>(params);
+function useGenericGoal() {
+  return useWidget<GenericGoalModule>();
 }
