@@ -12,19 +12,16 @@ import Spinner from 'components-react/shared/Spinner';
 import GoLiveError from './GoLiveError';
 import PrimaryChatSwitcher from './PrimaryChatSwitcher';
 import ColorSpaceWarnings from './ColorSpaceWarnings';
-import DualOutputToggle from 'components-react/shared/DualOutputToggle';
 import { DestinationSwitchers } from './DestinationSwitchers';
 import AddDestinationButton from 'components-react/shared/AddDestinationButton';
 import cx from 'classnames';
 import StreamShiftToggle from 'components-react/shared/StreamShiftToggle';
 import { CaretDownOutlined } from '@ant-design/icons';
-import Tooltip from 'components-react/shared/Tooltip';
 import * as remote from '@electron/remote';
 import { inject } from 'slap';
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
 import { MagicLinkService } from 'services/magic-link';
 import { SettingsService } from 'services/settings';
-import Translate from 'components-react/shared/Translate';
 import { maxNumPlatforms } from 'services/platforms';
 
 /**
@@ -39,20 +36,15 @@ export default function GoLiveSettings() {
     protectedModeEnabled,
     error,
     isLoading,
-    isDualOutputMode,
     canAddDestinations,
     canUseOptimizedProfile,
     showTweet,
     hasMultiplePlatforms,
-    hasMultiplePlatformsLinked,
     enabledPlatforms,
     primaryChat,
     recommendedColorSpaceWarnings,
     isPrime,
     isStreamShiftMode,
-    isStreamShiftDisabled,
-    isDualOutputSwitchDisabled,
-    canStreamDualOutput,
     setPrimaryChat,
     openPlatformSettings,
   } = useGoLiveSettings().extend(module => {
@@ -67,17 +59,7 @@ export default function GoLiveSettings() {
         return linkedPlatforms.length + customDestinations.length < maxNumPlatforms + 5;
       },
 
-      showSelector: !module.isPrime && module.isDualOutputMode,
-
-      hasMultiplePlatformsLinked: module.state.linkedPlatforms.length > 1,
-
-      isPrime: module.isPrime,
-
       showTweet: module.primaryPlatform && module.primaryPlatform !== 'twitter',
-
-      isStreamShiftDisabled: module.isDualOutputMode,
-
-      isDualOutputSwitchDisabled: module.isStreamShiftMode && !module.isDualOutputMode,
 
       addDestination() {
         this.settingsService.actions.showSettings('Stream');
@@ -86,7 +68,6 @@ export default function GoLiveSettings() {
       // temporarily hide the checkbox until streaming and output settings
       // are migrated to the new API
       get canUseOptimizedProfile() {
-        if (module.isDualOutputMode) return false;
         return (
           this.videoEncodingOptimizationService.state.canSeeOptimizedProfile ||
           this.videoEncodingOptimizationService.state.useOptimizedProfile
@@ -111,13 +92,12 @@ export default function GoLiveSettings() {
   });
 
   const shouldShowSettings = !error && !isLoading;
-  const shouldShowLeftCol = isDualOutputMode ? true : protectedModeEnabled;
+  const shouldShowLeftCol = isStreamShiftMode ? true : protectedModeEnabled;
   const shouldShowAddDestButton = canAddDestinations;
 
-  const shouldShowPrimaryChatSwitcher =
-    hasMultiplePlatforms || (isDualOutputMode && hasMultiplePlatformsLinked);
+  const shouldShowPrimaryChatSwitcher = hasMultiplePlatforms;
 
-  const headerText = isDualOutputMode ? $t('Destinations & Outputs:') : $t('Destinations:');
+  const headerText = $t('Destinations');
 
   const featureCheckboxWidth = isPrime ? 140 : 155;
 
@@ -126,20 +106,7 @@ export default function GoLiveSettings() {
       {/*LEFT COLUMN*/}
       {shouldShowLeftCol && (
         <Col span={9} className={styles.leftColumn}>
-          {isDualOutputMode && (
-            <div className={cx(styles.dualOutputAlert, { [styles.error]: !canStreamDualOutput })}>
-              <Translate message="<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform">
-                <u slot="dualoutput" />
-              </Translate>
-            </div>
-          )}
-          <div
-            className={cx(styles.columnContent, {
-              [styles.dualOutput]: isDualOutputMode,
-              [styles.alertClosed]: isDualOutputMode,
-              [styles.alertOpen]: isDualOutputMode && !canStreamDualOutput,
-            })}
-          >
+          <div className={styles.columnContent}>
             <div className={cx(styles.columnHeader, { [styles.ultraColumnHeader]: isPrime })}>
               {headerText}
             </div>
@@ -173,42 +140,10 @@ export default function GoLiveSettings() {
               disabled={!shouldShowPrimaryChatSwitcher}
             />
 
-            <div className={cx(styles.toggleWrapper, { [styles.shiftEnabled]: isStreamShiftMode })}>
-              <Tooltip
-                title={$t('Dual Output cannot be used with Stream Shift')}
-                placement="top"
-                lightShadow={true}
-                disabled={isDualOutputSwitchDisabled || !isPrime}
-              >
-                <DualOutputToggle
-                  className={styles.featureToggle}
-                  checkboxClassname={styles.featureCheckbox}
-                  style={{ paddingBottom: '10px', width: featureCheckboxWidth }}
-                  disabled={isStreamShiftMode}
-                  tooltipDisabled={isStreamShiftMode}
-                  label={$t('Dual Output')}
-                  type="single"
-                  lightShadow
-                />
-              </Tooltip>
-              <Tooltip
-                title={
-                  isPrime
-                    ? $t('Stream Shift cannot be used with Dual Output')
-                    : $t('Upgrade to Ultra to switch streams between devices.')
-                }
-                placement="top"
-                lightShadow={true}
-                disabled={isPrime && !isStreamShiftDisabled}
-              >
-                <StreamShiftToggle
-                  className={styles.featureToggle}
-                  checkboxClassname={styles.featureCheckbox}
-                  style={{ width: featureCheckboxWidth }}
-                  disabled={isStreamShiftDisabled || !isPrime}
-                />
-              </Tooltip>
-            </div>
+            <StreamShiftToggle
+              checkboxClassname={styles.featureCheckbox}
+              style={{ width: featureCheckboxWidth }}
+            />
           </div>
         </Col>
       )}

@@ -44,10 +44,9 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
               <div
                 className={styles.labelUltraBadge}
                 onClick={() => {
-                  Services.MagicLinkService.actions.linkToPrime(
-                    'slobs-streamswitcher',
-                    { event: 'StreamShift' },
-                  );
+                  Services.MagicLinkService.actions.linkToPrime('slobs-streamswitcher', {
+                    event: 'StreamShift',
+                  });
                 }}
               >
                 <UltraIcon type="badge" style={{ marginRight: '5px' }} />
@@ -70,12 +69,16 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
 
         <Tooltip
           title={
-            <span onClick={handleTooltipClick}>
-              {$t(
-                'Stay uninterrupted by switching between devices mid stream. Works between Desktop and Mobile App.',
-              )}
-              <a style={{ marginLeft: 4 }}>{$t('Learn More')}</a>
-            </span>
+            isPrime ? (
+              <span onClick={handleTooltipClick}>
+                {$t(
+                  'Stay uninterrupted by switching between devices mid stream. Works between Desktop and Mobile App.',
+                )}
+                <a style={{ marginLeft: 4 }}>{$t('Learn More')}</a>
+              </span>
+            ) : (
+              $t('Upgrade to Ultra to switch streams between devices.')
+            )
           }
           placement="top"
           lightShadow={true}
