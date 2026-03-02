@@ -1,3 +1,4 @@
+import FollowerGoal from 'components/widgets/goal/FollowerGoal';
 import { AnchorPoint } from '../../util/ScalableRectangle';
 import { TAlertType } from './alerts-config';
 import { WidgetType } from './widgets-data';
@@ -10,7 +11,16 @@ export type TWidgetType =
   | WidgetType.DonationTicker
   | WidgetType.CustomWidget
   | WidgetType.ChatBox
-  | WidgetType.SponsorBanner;
+  | WidgetType.SponsorBanner
+  | WidgetType.DonationGoal
+  | WidgetType.FollowerGoal
+  | WidgetType.SubscriberGoal
+  | WidgetType.SubGoal
+  | WidgetType.BitGoal
+  | WidgetType.StarsGoal
+  | WidgetType.SupporterGoal
+  | WidgetType.SuperchatGoal
+  | WidgetType.CharityGoal;
 
 export interface IWidgetConfig {
   type: TWidgetType;
@@ -39,6 +49,9 @@ export interface IWidgetConfig {
   webSettingsUrl: string;
   // used specifically for goal widgets
   goalUrl?: string;
+  goalCreateEvent?: string;
+  goalResetEvent?: string;
+
   settingsUpdateEvent: string;
   testers?: TAlertType[];
   customCodeAllowed?: boolean;
@@ -162,34 +175,220 @@ export function getWidgetsConfig(
       customFieldsAllowed: false,
     },
 
-    // TODO:
-    // BitGoal: {
-    //
-    // },
+    [WidgetType.DonationGoal]: {
+      type: WidgetType.DonationGoal,
 
-    // DonationGoal: {
-    //
-    // },
+      defaultTransform: {
+        width: 600,
+        height: 200,
+        x: 0,
+        y: 1,
+        anchor: AnchorPoint.SouthWest,
+      },
 
-    // CharityGoal: {
-    //
-    // },
+      url: `https://${host}/widgets/donation-goal?token=${token}`,
+      previewUrl: `https://${host}/widgets/donation-goal?token=${token}`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/tip-goal`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/donationgoal/settings/new`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/donationgoal/settings/new`,
+      goalUrl: `https://${host}/api/v5/slobs/widget/donationgoal/new`,
+      settingsUpdateEvent: 'donationGoalSettingsUpdate',
+      goalCreateEvent: 'donationGoalStart',
+      goalResetEvent: 'donationGoalEnd',
+      customCodeAllowed: true,
+      customFieldsAllowed: true,
+    },
 
-    // FollowerGoal: {
-    //
-    // },
+    [WidgetType.FollowerGoal]: {
+      type: WidgetType.FollowerGoal,
 
-    // StarsGoal: {
-    //
-    // },
+      defaultTransform: {
+        width: 600,
+        height: 200,
+        x: 0,
+        y: 1,
+        anchor: AnchorPoint.SouthWest,
+      },
 
-    // SubGoal: {
-    //
-    // },
+      url: `https://${host}/widgets/follower-goal?token=${token}`,
+      previewUrl: `https://${host}/widgets/follower-goal?token=${token}`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/followergoal`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/followergoal/settings`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/followergoal/settings`,
+      goalUrl: `https://${host}/api/v5/slobs/widget/followergoal`,
+      settingsUpdateEvent: 'followerGoalSettingsUpdate',
+      goalCreateEvent: 'followerGoalStart',
+      goalResetEvent: 'followerGoalEnd',
+      customCodeAllowed: true,
+      customFieldsAllowed: true,
+    },
 
-    // SubscriberGoal: {
-    //
-    // },
+    [WidgetType.SubscriberGoal]: {
+      type: WidgetType.SubscriberGoal,
+
+      defaultTransform: {
+        width: 600,
+        height: 200,
+        x: 0,
+        y: 1,
+        anchor: AnchorPoint.SouthWest,
+      },
+
+      // This is for YT Subscribers which is a type of Follower
+      url: `https://${host}/widgets/follower-goal?token=${token}`,
+      previewUrl: `https://${host}/widgets/follower-goal?token=${token}`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/followergoal`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/followergoal/settings`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/followergoal/settings`,
+      goalUrl: `https://${host}/api/v5/slobs/widget/followergoal`,
+      settingsUpdateEvent: 'followerGoalSettingsUpdate',
+      goalCreateEvent: 'followerGoalStart',
+      goalResetEvent: 'followerGoalEnd',
+      customCodeAllowed: true,
+      customFieldsAllowed: true,
+    },
+
+    [WidgetType.SubGoal]: {
+      type: WidgetType.SubGoal,
+
+      defaultTransform: {
+        width: 600,
+        height: 200,
+        x: 0,
+        y: 1,
+        anchor: AnchorPoint.SouthWest,
+      },
+
+      url: `https://${host}/widgets/sub-goal?token=${token}`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/subgoal/settings`,
+      previewUrl: `https://${host}/widgets/sub-goal?token=${token}`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/subgoal`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/subgoal/settings`,
+      goalUrl: `https://${host}/api/v5/slobs/widget/subgoal`,
+      settingsUpdateEvent: 'subGoalSettingsUpdate',
+      goalCreateEvent: 'subGoalStart',
+      goalResetEvent: 'subGoalEnd',
+      customCodeAllowed: true,
+      customFieldsAllowed: true,
+    },
+
+    [WidgetType.BitGoal]: {
+      type: WidgetType.BitGoal,
+
+      defaultTransform: {
+        width: 600,
+        height: 200,
+        x: 0,
+        y: 1,
+        anchor: AnchorPoint.SouthWest,
+      },
+
+      url: `https://${host}/widgets/bit-goal?token=${token}`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/bitgoal/settings`,
+      previewUrl: `https://${host}/widgets/bit-goal?token=${token}`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/bitgoal`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/bitgoal/settings`,
+      goalUrl: `https://${host}/api/v5/slobs/widget/bitgoal`,
+      settingsUpdateEvent: 'bitGoalSettingsUpdate',
+      goalCreateEvent: 'bitGoalStart',
+      goalResetEvent: 'bitGoalEnd',
+      customCodeAllowed: true,
+      customFieldsAllowed: true,
+    },
+
+    [WidgetType.StarsGoal]: {
+      type: WidgetType.StarsGoal,
+
+      defaultTransform: {
+        width: 600,
+        height: 200,
+        x: 0,
+        y: 1,
+        anchor: AnchorPoint.SouthWest,
+      },
+
+      url: `https://${host}/widgets/stars-goal?token=${token}`,
+      previewUrl: `https://${host}/widgets/stars-goal?token=${token}`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/starsgoal`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/starsgoal/settings`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/starsgoal/settings`,
+      goalUrl: `https://${host}/api/v5/slobs/widget/starsgoal`,
+      settingsUpdateEvent: 'starsGoalSettingsUpdate',
+      goalCreateEvent: 'starsGoalStart',
+      goalResetEvent: 'starsGoalEnd',
+      customCodeAllowed: true,
+      customFieldsAllowed: true,
+    },
+
+    [WidgetType.SupporterGoal]: {
+      type: WidgetType.SupporterGoal,
+
+      defaultTransform: {
+        width: 600,
+        height: 200,
+        x: 0,
+        y: 1,
+        anchor: AnchorPoint.SouthWest,
+      },
+
+      url: `https://${host}/widgets/supporter-goal?token=${token}`,
+      previewUrl: `https://${host}/widgets/supporter-goal?token=${token}`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/supportergoal`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/supportergoal/settings`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/supportergoal/settings`,
+      goalUrl: `https://${host}/api/v5/slobs/widget/supportergoal`,
+      settingsUpdateEvent: 'supporterGoalSettingsUpdate',
+      goalCreateEvent: 'supporterGoalStart',
+      goalResetEvent: 'supporterGoalEnd',
+      customCodeAllowed: true,
+      customFieldsAllowed: true,
+    },
+
+    [WidgetType.SuperchatGoal]: {
+      type: WidgetType.SuperchatGoal,
+
+      defaultTransform: {
+        width: 600,
+        height: 200,
+        x: 0,
+        y: 1,
+        anchor: AnchorPoint.SouthWest,
+      },
+
+      url: `https://${host}/widgets/super-chat-goal?token=${token}`,
+      previewUrl: `https://${host}/widgets/super-chat-goal?token=${token}`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/super-chat-goal`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/superchatgoal/settings`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/superchatgoal/settings`,
+      goalUrl: `https://${host}/api/v5/slobs/widget/superchatgoal`,
+      settingsUpdateEvent: 'superChatGoalSettingsUpdate',
+      goalCreateEvent: 'superChatGoalStart',
+      goalResetEvent: 'superChatGoalEnd',
+      customCodeAllowed: true,
+      customFieldsAllowed: true,
+    },
+
+    [WidgetType.CharityGoal]: {
+      type: WidgetType.CharityGoal,
+
+      defaultTransform: {
+        width: 600,
+        height: 200,
+        x: 0,
+        y: 1,
+        anchor: AnchorPoint.SouthWest,
+      },
+
+      url: `https://${host}/widgets/streamlabs-charity-donation-goal?token=${token}`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/streamlabscharitydonationgoal/settings`,
+      previewUrl: `https://${host}/widgets/streamlabs-charity-donation-goal?token=${token}`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/streamlabs-charity-donation-goal`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/streamlabscharitydonationgoal/settings`,
+      goalUrl: `https://${host}/api/v5/slobs/widget/streamlabscharitydonationgoal`,
+      settingsUpdateEvent: 'streamlabsCharityDonationGoalSettingsUpdate',
+      customCodeAllowed: true,
+      customFieldsAllowed: true,
+    },
 
     [WidgetType.ChatBox]: {
       type: WidgetType.ChatBox,

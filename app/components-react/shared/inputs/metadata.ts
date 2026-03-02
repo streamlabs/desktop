@@ -70,6 +70,7 @@ interface ITextMetadata extends IBaseMetadata {
   value?: string;
   isPassword?: boolean;
   placeholder?: string;
+  max?: number;
 }
 
 export interface ICheckboxGroupMetadata extends IBaseMetadata {

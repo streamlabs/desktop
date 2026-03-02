@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button, Menu } from 'antd';
 import { $t } from 'services/i18n';
 import { IWidgetCommonState, useWidget, WidgetModule, WidgetParams } from '../common/useWidget';
@@ -42,9 +42,7 @@ interface IGoalState extends IWidgetCommonState {
   };
 }
 
-export default function GenericGoal(p: { type: 'charity' | 'sub' | undefined }) {
-  const isCharity = p.type === 'charity';
-
+export function GenericGoal() {
   const {
     isLoading,
     settings,
@@ -55,43 +53,40 @@ export default function GenericGoal(p: { type: 'charity' | 'sub' | undefined }) 
     setSelectedTab,
     selectedTab,
     saveGoal,
-  } = useGenericGoal({ selectedTab: isCharity ? 'visual' : 'goal' });
+    type
+  } = useGenericGoal({ selectedTab: 'visual' });
 
+  const isCharity = type === WidgetType.CharityGoal;
 
-  const goalCreateOptions: Dictionary<TInputValue> = {
+  const hasGoal = !!goalSettings;
+
+  const [goalCreateValues, setGoalCreateValues] = useState<Dictionary<TInputValue>>({
     title: '',
     goal_amount: 100,
     manual_goal_amount: 0,
     ends_at: '',
-  };
+  });
 
-  const hasGoal = !!goalSettings;
-
-  // async saveGoal() {
-  //   if (await this.$refs.form.validateAndGetErrorsCount()) return;
-  //   this.requestState = 'pending';
-  //   try {
-  //     await this.service.saveGoal(this.goalCreateOptions);
-  //     this.requestState = 'success';
-  //   } catch (e: unknown) {
-  //     // TODO: index
-  //     // @ts-ignore
-  //     this.failHandler(e['message']);
-  //     this.requestState = 'fail';
-  //   }
-  // }
+  function updateGoalCreate(key: string) {
+    return (val: TInputValue) => {
+      setGoalCreateValues({ ...goalCreateValues, [key]: val });
+    }
+  }
 
   return (
     <WidgetLayout>
       <Menu onClick={e => setSelectedTab(e.key)} selectedKeys={[selectedTab]}>
-        {!isCharity && <Menu.Item key="goal">{$t('Goal Settings')}</Menu.Item>}
         <Menu.Item key="visual">{$t('Visual Settings')}</Menu.Item>
+        {!isCharity && <Menu.Item key="general">{$t('Goal Settings')}</Menu.Item>}
       </Menu>
       <Form>
-        {!isLoading && selectedTab === 'goal' && !hasGoal && (
-          <FormFactory metadata={createGoalMeta} values={goalCreateOptions} onChange={updateSetting} />
+        {!isLoading && selectedTab === 'general' && !hasGoal && (
+          <>
+            <FormFactory metadata={createGoalMeta} values={goalCreateValues} onChange={updateGoalCreate} />
+            <Button className="button button--action" onClick={() => saveGoal(goalCreateValues)}>{$t('Save Goal')}</Button>
+          </>
         )}
-        {!isLoading && selectedTab === 'goal' && hasGoal && (
+        {!isLoading && selectedTab === 'general' && hasGoal && (
           <DisplayGoal goal={goalSettings} />
         )}
         {!isLoading && selectedTab === 'visual' && (
@@ -145,7 +140,7 @@ export class GenericGoalModule extends WidgetModule<IGoalState> {
       title: metadata.text({
         label: $t('Title'),
         required: true,
-        // max: 60,
+        max: 60,
       }),
       goal_amount: metadata.number({
         label: $t('Goal Amount'),
