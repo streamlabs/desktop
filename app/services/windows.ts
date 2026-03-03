@@ -55,7 +55,6 @@ import BrowserSourceInteraction from 'components/windows/BrowserSourceInteractio
 
 import StreamBoss from 'components/widgets/StreamBoss.vue';
 import Credits from 'components/widgets/Credits.vue';
-import EventList from 'components/widgets/EventList.vue';
 import TipJar from 'components/widgets/TipJar.vue';
 import MediaShare from 'components/widgets/MediaShare';
 import AlertBox from 'components/widgets/AlertBox.vue';
@@ -106,7 +105,6 @@ export function getComponents() {
     AdvancedStatistics,
     MultistreamChatInfo,
     Credits,
-    EventList,
     TipJar,
     StreamBoss,
     MediaShare,

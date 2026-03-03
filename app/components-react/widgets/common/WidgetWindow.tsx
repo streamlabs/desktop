@@ -12,7 +12,7 @@ import { ChatBox, ChatBoxModule } from '../ChatBox';
 // Credits
 import { DonationTicker, DonationTickerModule } from '../DonationTicker';
 import { EmoteWall, EmoteWallModule } from '../EmoteWall';
-// EventList
+import { EventList, EventListModule } from '../EventList';
 // MediaShare
 // Poll
 // SpinWheel
@@ -42,7 +42,7 @@ export const components = {
   // Credits
   DonationTicker: [DonationTicker, DonationTickerModule],
   EmoteWall: [EmoteWall, EmoteWallModule],
-  // EventList
+  EventList: [EventList, EventListModule],
   // MediaShare
   // Poll
   // SpinWheel

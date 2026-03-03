@@ -114,15 +114,12 @@ export { SseService } from 'services/server-sent-events';
 // WIDGETS
 export { WidgetSource, WidgetsService } from './services/widgets';
 export { StreamBossService } from 'services/widgets/settings/stream-boss';
-export { DonationTickerService } from 'services/widgets/settings/donation-ticker';
 export { CreditsService } from 'services/widgets/settings/credits';
-export { EventListService } from 'services/widgets/settings/event-list';
 export { TipJarService } from 'services/widgets/settings/tip-jar';
 export { MediaShareService } from 'services/widgets/settings/media-share';
 export { AlertBoxService } from 'services/widgets/settings/alert-box';
 export { SpinWheelService } from 'services/widgets/settings/spin-wheel';
 export { PollService } from 'services/widgets/settings/poll';
-export { EmoteWallService } from 'services/widgets/settings/emote-wall';
 export { ChatHighlightService } from 'services/widgets/settings/chat-highlight';
 
 import { AppService } from './services/app';
