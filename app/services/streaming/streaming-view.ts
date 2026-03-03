@@ -604,7 +604,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * We no longer put primary platform on top since we're allowing it to be switched
    */
   getSortedPlatforms(platforms: TPlatform[]): TPlatform[] {
-    platforms = platforms.sort();
     return [
       ...platforms.filter(p => this.isPlatformLinked(p)),
       ...platforms.filter(p => !this.isPlatformLinked(p)),

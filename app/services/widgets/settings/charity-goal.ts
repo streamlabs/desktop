@@ -8,13 +8,15 @@ export class CharityGoalService extends GenericGoalService {
   static initialState = WIDGET_INITIAL_STATE;
 
   getApiSettings() {
+    const host = this.getHost();
     return {
       type: WidgetType.BitGoal,
-      url: WidgetDefinitions[WidgetType.BitGoal].url(this.getHost(), this.getWidgetToken()),
-      dataFetchUrl: `https://${this.getHost()}/api/v5/slobs/widget/streamlabscharitydonationgoal/settings`,
-      previewUrl: `https://${this.getHost()}/widgets/streamlabs-charity-donation-goal?token=${this.getWidgetToken()}`,
-      settingsSaveUrl: `https://${this.getHost()}/api/v5/slobs/widget/streamlabscharitydonationgoal/settings`,
-      goalUrl: `https://${this.getHost()}/api/v5/slobs/widget/streamlabscharitydonationgoal`,
+      url: WidgetDefinitions[WidgetType.BitGoal].url(host, this.getWidgetToken()),
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/streamlabscharitydonationgoal/settings`,
+      previewUrl: `https://${host}/widgets/streamlabs-charity-donation-goal?token=${this.getWidgetToken()}`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/streamlabs-charity-donation-goal`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/streamlabscharitydonationgoal/settings`,
+      goalUrl: `https://${host}/api/v5/slobs/widget/streamlabscharitydonationgoal`,
       settingsUpdateEvent: 'streamlabsCharityDonationGoalSettingsUpdate',
       hasTestButtons: true,
       customCodeAllowed: true,

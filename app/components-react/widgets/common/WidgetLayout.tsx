@@ -1,5 +1,6 @@
 import { Button, Col, Collapse, Layout, Row, Spin } from 'antd';
 import React, { ReactNode } from 'react';
+import cx from 'classnames';
 import { useWidget } from './useWidget';
 import Display from '../../shared/Display';
 import css from './WidgetLayout.m.less';
@@ -23,24 +24,27 @@ const PREVIEW_HEIGHT = 250;
  * If "basic" layout selected then display 1 column or 2 columns depending
  * on how many children have been provided to props
  */
-export function WidgetLayout(p: { layout?: TWidgetLayoutType; children: TLayoutChildren }) {
+export function WidgetLayout(p: { layout?: TWidgetLayoutType; children: TLayoutChildren; showDisplay?: boolean }) {
   const layout = p.layout || 'basic';
   switch (layout) {
     case 'basic':
-      return <BasicLayout>{p.children}</BasicLayout>;
+      return <BasicLayout showDisplay={p.showDisplay}>{p.children}</BasicLayout>;
     case 'long-menu':
-      return <LongMenuLayout>{p.children}</LongMenuLayout>;
+      return <LongMenuLayout showDisplay={p.showDisplay}>{p.children}</LongMenuLayout>;
   }
 }
 
-function BasicLayout(p: { children: TLayoutChildren }) {
+function BasicLayout(p: { children: TLayoutChildren; showDisplay?: boolean }) {
   const { isLoading } = useWidget();
   const { MenuPanel, ContentPanel } = getLayoutPanels(p.children);
+  const hasDisplay = p.showDisplay !== false;
   return (
     <Layout className={css.widgetLayout}>
-      <Header style={{ padding: 0, height: `${PREVIEW_HEIGHT}px` }}>
-        <ModalDisplay />
-      </Header>
+      {hasDisplay && (
+        <Header style={{ padding: 0, height: `${PREVIEW_HEIGHT}px` }}>
+          <ModalDisplay />
+        </Header>
+      )}
       <Content>
         <Row style={{ height: '100%', borderTop: '1px solid var(--border)' }}>
           {MenuPanel && <Col className={css.menuWrapper}>{!isLoading && MenuPanel}</Col>}
@@ -54,11 +58,11 @@ function BasicLayout(p: { children: TLayoutChildren }) {
   );
 }
 
-function LongMenuLayout(p: { children: TLayoutChildren }) {
+function LongMenuLayout(p: { children: TLayoutChildren; showDisplay?: boolean }) {
   const { isLoading } = useWidget();
   const { MenuPanel, ContentPanel } = getLayoutPanels(p.children);
   const wrapperStyle = {
-    height: `calc(100% - ${PREVIEW_HEIGHT}px)`,
+    height: p.showDisplay !== false ? `calc(100% - ${PREVIEW_HEIGHT}px)` : '100%',
     borderTop: '1px solid var(--border)',
   };
   assertIsDefined(MenuPanel);
@@ -70,7 +74,7 @@ function LongMenuLayout(p: { children: TLayoutChildren }) {
           {!isLoading && MenuPanel}
         </Sider>
         <Content>
-          <ModalDisplay />
+          {p.showDisplay !== false && <ModalDisplay />}
           <div className={css.contentWrapper} style={wrapperStyle}>
             <ModalContent>{ContentPanel}</ModalContent>
           </div>
@@ -109,15 +113,21 @@ function ModalContent(p: { children: ReactNode }) {
 }
 
 function ModalFooter() {
-  const { canRevert, revertChanges, close } = useWidget();
+  const { canRevert, revertChanges, openWebSettings, close } = useWidget();
   return (
-    <div className="ant-modal-footer">
-      {canRevert && (
-        <Button onClick={revertChanges} type="ghost" style={{ position: 'absolute', left: '16px' }}>
-          <RollbackOutlined />
-          {$t('Revert Changes')}
+    <div className={cx('ant-modal-footer', css.modalFooter)}>
+      <div className={css.modalFooterExtra}>
+        <Button onClick={openWebSettings} type="ghost">
+          <i className="icon-pop-out-2" style={{ marginRight: '8px' }} />
+          {$t('Manage on Web')}
         </Button>
-      )}
+        {canRevert && (
+          <Button onClick={revertChanges} type="ghost">
+            <RollbackOutlined />
+            {$t('Revert Changes')}
+          </Button>
+        )}
+      </div>
       <Button onClick={close}>{$t('Close')}</Button>
     </div>
   );
@@ -133,7 +143,7 @@ function ModalDisplay() {
 }
 
 /**
- * Renders a collapsable section with browser source settings for the widget
+ * Renders a collapsible section with browser source settings for the widget
  */
 function BrowserSourceSettings() {
   const { browserSourceProps, updateBrowserSourceProps } = useWidget();

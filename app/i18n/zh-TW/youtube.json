@@ -48,5 +48,5 @@
   "Exceeded thumbnail upload quota. Please try again later.": "已超過縮圖上傳配額。請稍後再試一次。",
   "YouTube thumbnail image is too large. Maximum size is 2MB.": "YouTube 縮圖影像過大。大小上限為 2 MB。",
   "Please upload thumbnail manually on YouTube.": "請在 YouTube 手動上傳縮圖。",
-  "Stream Shift Error: YouTube is not live": "Stream Shift Error: YouTube is not live"
+  "Stream Shift Error: YouTube is not live": "Stream Shift 錯誤：YouTube 未開播"
 }

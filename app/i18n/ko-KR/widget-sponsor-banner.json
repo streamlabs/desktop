@@ -3,7 +3,7 @@
   "Ad Layout": "광고 레이아웃",
   "Placement": "배치",
   "Image Layout": "이미지 레이아웃",
-  "Image Duration (seconds)": "Image Duration (seconds)",
+  "Image Duration (seconds)": "이미지 지속 시간(초)",
   "Add Image": "이미지 추가",
   "Widget Hide Duration": "위젯 숨김 지속 시간",
   "Widget Show Duration": "위젯 표시 지속 시간",
@@ -18,10 +18,10 @@
   "The amount of time the widget will appear.": "위젯이 표시되는 시간입니다.",
   "These are the animations that are used to show your banner.": "배너를 표시하는 데 사용되는 애니메이션입니다.",
   "Visual Settings": "비주얼 설정",
-  "Image Set %{number}": "Image Set %{number}",
-  "Placement %{number} Images": "Placement %{number} Images",
+  "Image Set %{number}": "이미지 세트 %{number}",
+  "Placement %{number} Images": "%{number} 이미지 배치 위치",
   "No Image": "이미지 없음",
   "Set up a sponsor banner to be able to edit (add, remove, update) rotating sponsor logos on streamer channel.": "스트리밍 채널에서 회전하는 스폰서 로고를 편집(추가, 제거, 업데이트)할 수 있도록 스폰서 배너를 설정합니다.",
   "Show off rotating media to display your socials, sponsorships, CTAs or just cute animations.": "회전식 미디어로 소셜 미디어, 스폰서십, CTA 또는 귀여운 애니메이션을 표시할 수 있습니다.",
-  "The duration must be in the format [minutes]:[seconds] (i.e. 02:05)": "The duration must be in the format [minutes]:[seconds] (i.e. 02:05)"
+  "The duration must be in the format [minutes]:[seconds] (i.e. 02:05)": "지속 시간은 [분]:[초] 형식이어야 합니다(예: 02:05)."
 }

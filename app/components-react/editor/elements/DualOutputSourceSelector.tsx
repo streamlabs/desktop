@@ -8,6 +8,7 @@ import { useController } from 'components-react/hooks/zustand';
 
 interface IDualOutputSourceSelector {
   nodeId: string;
+  sourceName: string;
   sceneId?: string;
 }
 export function DualOutputSourceSelector(p: IDualOutputSourceSelector) {
@@ -48,6 +49,7 @@ export function DualOutputSourceSelector(p: IDualOutputSourceSelector) {
           visible={['icon-desktop', 'icon-desktop-hide'].includes(hoveredIcon)}
         >
           <i
+            data-name={`${p.sourceName}-horizontal`}
             onClick={() => {
               toggleVisibility(p.nodeId);
               makeActive(p.nodeId);
@@ -69,6 +71,7 @@ export function DualOutputSourceSelector(p: IDualOutputSourceSelector) {
           visible={['icon-phone-case', 'icon-phone-case-hide'].includes(hoveredIcon)}
         >
           <i
+            data-name={`${p.sourceName}-vertical`}
             onClick={() => {
               toggleVisibility(v.verticalNodeId);
               makeActive(v.verticalNodeId);
