@@ -23,6 +23,7 @@ export const metadata = {
     ...options,
     type: 'slider',
   }),
+  fontFamily: (options: IListMetadata<string>) => ({ ...options, type: 'fontFamily' }),
   autocomplete: <T>(options: IListMetadata<T>) => ({
     ...options,
     type: 'autocomplete',
@@ -42,6 +43,7 @@ export const metadata = {
     ...options,
     type: 'radio',
   }),
+  animation: (options: IAnimationMetadata) => ({ ...options, type: 'animation' }),
 };
 
 export type TInputMetadata<T = string> =
@@ -115,6 +117,10 @@ interface IFileMetadata extends IBaseMetadata {
   filters?: Electron.FileFilter[];
   save?: boolean;
   buttonContent?: React.ReactNode;
+}
+
+interface IAnimationMetadata extends IListMetadata {
+  filter?: 'in' | 'out' | 'text' | 'eventIn' | 'eventOut';
 }
 
 export interface IListMetadata<T = string> extends IBaseMetadata {
