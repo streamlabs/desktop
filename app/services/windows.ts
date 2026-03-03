@@ -53,14 +53,6 @@ import EventFilterMenu from 'components/windows/EventFilterMenu';
 import OverlayPlaceholder from 'components/windows/OverlayPlaceholder';
 import BrowserSourceInteraction from 'components/windows/BrowserSourceInteraction';
 
-import BitGoal from 'components/widgets/goal/BitGoal';
-import DonationGoal from 'components/widgets/goal/DonationGoal';
-import SubGoal from 'components/widgets/goal/SubGoal';
-import StarsGoal from 'components/widgets/goal/StarsGoal';
-import SupporterGoal from 'components/widgets/goal/SupporterGoal';
-import SubscriberGoal from 'components/widgets/goal/SubscriberGoal';
-import FollowerGoal from 'components/widgets/goal/FollowerGoal';
-import CharityGoal from 'components/widgets/goal/CharityGoal';
 import StreamBoss from 'components/widgets/StreamBoss.vue';
 import Credits from 'components/widgets/Credits.vue';
 import EventList from 'components/widgets/EventList.vue';
@@ -70,7 +62,6 @@ import AlertBox from 'components/widgets/AlertBox.vue';
 import SpinWheel from 'components/widgets/SpinWheel.vue';
 import Poll from 'components/widgets/Poll';
 import ChatHighlight from 'components/widgets/ChatHighlight';
-import SuperchatGoal from 'components/widgets/goal/SuperchatGoal';
 
 import { byOS, OS } from 'util/operating-systems';
 import { UsageStatisticsService } from './usage-statistics';
@@ -113,20 +104,11 @@ export function getComponents() {
     EventFilterMenu,
     GameOverlayEventFeed,
     AdvancedStatistics,
-    BitGoal,
-    DonationGoal,
-    FollowerGoal,
-    StarsGoal,
-    SupporterGoal,
-    SubscriberGoal,
-    SuperchatGoal,
     MultistreamChatInfo,
-    CharityGoal,
     Credits,
     EventList,
     TipJar,
     StreamBoss,
-    SubGoal,
     MediaShare,
     AlertBox,
     SpinWheel,
