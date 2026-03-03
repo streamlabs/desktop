@@ -32,6 +32,7 @@ const componentTable: {
   time: inputs.TimeInput,
   animation: inputs.AnimationInput,
   duration: inputs.DurationInput,
+  fontFamily: inputs.FontFamilyInput,
 };
 
 interface IFormMetadata {
@@ -101,7 +102,8 @@ function FormInput(p: {
   if (!type) return <></>;
 
   const Input = componentTable[type as TInputType];
-  if (!Input) return <></>;
+  if (!Input) throw new Error(`No component found for Input Type ${type}`);
+
   let handleChange = p.onChange(p.id);
   if (type === 'checkboxGroup') handleChange = p.onChange;
   if (p.metadata.onChange) handleChange = p.metadata.onChange;
