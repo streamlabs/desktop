@@ -121,16 +121,13 @@ export { SupporterGoalService } from 'services/widgets/settings/supporter-goal';
 export { SubscriberGoalService } from 'services/widgets/settings/subscriber-goal';
 export { CharityGoalService } from 'services/widgets/settings/charity-goal';
 export { StreamBossService } from 'services/widgets/settings/stream-boss';
-export { DonationTickerService } from 'services/widgets/settings/donation-ticker';
 export { CreditsService } from 'services/widgets/settings/credits';
-export { EventListService } from 'services/widgets/settings/event-list';
 export { TipJarService } from 'services/widgets/settings/tip-jar';
 export { SubGoalService } from 'services/widgets/settings/sub-goal';
 export { MediaShareService } from 'services/widgets/settings/media-share';
 export { AlertBoxService } from 'services/widgets/settings/alert-box';
 export { SpinWheelService } from 'services/widgets/settings/spin-wheel';
 export { PollService } from 'services/widgets/settings/poll';
-export { EmoteWallService } from 'services/widgets/settings/emote-wall';
 export { ChatHighlightService } from 'services/widgets/settings/chat-highlight';
 export { SuperchatGoalService } from 'services/widgets/settings/superchat-goal';
 
