@@ -1,4 +1,3 @@
-import FollowerGoal from 'components/widgets/goal/FollowerGoal';
 import { AnchorPoint } from '../../util/ScalableRectangle';
 import { TAlertType } from './alerts-config';
 import { WidgetType } from './widgets-data';
@@ -20,7 +19,8 @@ export type TWidgetType =
   | WidgetType.StarsGoal
   | WidgetType.SupporterGoal
   | WidgetType.SuperchatGoal
-  | WidgetType.CharityGoal;
+  | WidgetType.CharityGoal
+  | WidgetType.GamePulseWidget;
 
 export interface IWidgetConfig {
   type: TWidgetType;
@@ -581,6 +581,32 @@ export function getWidgetsConfig(
       settingsUpdateEvent: 'customWidgetSettingsUpdate',
       customCodeAllowed: true,
       customFieldsAllowed: true,
+    },
+
+    [WidgetType.GamePulseWidget]: {
+      type: WidgetType.GamePulseWidget,
+
+      defaultTransform: {
+        width: 1920,
+        height: 1080,
+        x: 0,
+        y: 0,
+        anchor: AnchorPoint.NorthWest,
+      },
+
+      settingsWindowSize: {
+        width: 800,
+        height: 800,
+      },
+      useNewWidgetAPI: true,
+      url: `https://${host}/api/v5/widgets/desktop/game-pulse`,
+      previewUrl: `https://${host}/widgets/preview/game-pulse/${token}?simulate=1`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/game-pulse`,
+      dataFetchUrl: `https://${host}/api/v5/widgets/desktop/game-pulse`,
+      settingsSaveUrl: `https://${host}/api/v5/widgets/desktop/game-pulse`,
+      settingsUpdateEvent: 'gamePulseSettingsUpdate',
+      customCodeAllowed: false,
+      customFieldsAllowed: false,
     },
   };
 }
