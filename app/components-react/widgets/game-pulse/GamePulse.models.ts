@@ -1,7 +1,10 @@
 import { IWidgetCommonState } from 'components-react/widgets/common/useWidget';
 import { Services } from 'components-react/service-provider';
 
-export type TGamePulseAnalyticsEvent = 'trigger-added' | 'trigger-deleted' | 'onboarding_impression'
+export type TGamePulseAnalyticsEvent =
+  | 'trigger-added'
+  | 'trigger-deleted'
+  | 'onboarding_impression';
 export interface IGamePulseAnalyticsPayload {
   action: TGamePulseAnalyticsEvent;
   [key: string]: any;
@@ -441,7 +444,7 @@ export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, 
 export const GamePulseAnalytics = {
   track: (
     action: TGamePulseAnalyticsEvent,
-    payload?: Omit<IGamePulseAnalyticsPayload, 'action'>
+    payload?: Omit<IGamePulseAnalyticsPayload, 'action'>,
   ) => {
     const fullPayload: IGamePulseAnalyticsPayload = {
       action,
@@ -461,5 +464,5 @@ export const GamePulseAnalytics = {
 
   trackOnboardingImpression: () => {
     GamePulseAnalytics.track('onboarding_impression');
-  }
+  },
 };
