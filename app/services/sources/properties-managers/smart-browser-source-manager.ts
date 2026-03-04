@@ -3,6 +3,7 @@ import { Inject } from 'services/core/injector';
 import { WebsocketService } from 'services/websocket';
 import { Subscription } from 'rxjs';
 import { VisionService } from 'services/vision';
+import { TObsFormData } from 'components/obs/inputs/ObsInput';
 
 /**
  * Target origin for all reactive sources.
@@ -47,8 +48,9 @@ export class SmartBrowserSourceManager extends PropertiesManager {
   @Inject() visionService: VisionService;
   private socketSub!: Subscription;
 
-  normalizeUrl() {
-    const url = this.obsSource.settings.url;
+  normalizeUrl(formUrl?: string): string | undefined {
+    const hasSourceUrl = this.obsSource.settings.url && this.obsSource.settings.url !== '';
+    const url = hasSourceUrl ? this.obsSource.settings.url : formUrl;
 
     // If the source is new, there might not be a url yet because the user hasn't input it
     if (!url) return;
@@ -56,18 +58,25 @@ export class SmartBrowserSourceManager extends PropertiesManager {
     const { hostname, origin } = new URL(url);
 
     if (matchesHostnamePattern(hostname) && origin !== REACTIVE_SOURCES_ORIGIN) {
-      this.obsSource.update({
-        ...this.settings,
-        url: url.replace(origin, REACTIVE_SOURCES_ORIGIN),
-      });
+      const updatedUrl = url.replace(origin, REACTIVE_SOURCES_ORIGIN);
 
-      this.obsSource.save();
+      // Update source if it exists
+      if (hasSourceUrl) {
+        this.obsSource.update({
+          ...this.settings,
+          url: updatedUrl,
+        });
+
+        this.obsSource.save();
+      }
+
+      return updatedUrl;
     }
+
+    return url;
   }
 
   init() {
-    this.normalizeUrl();
-
     // todo: switch over to consume from ReactiveDataService
     this.socketSub = this.websocketService.socketEvent.subscribe(e => {
       // send all visionEvents and userStateUpdated to smart sources
@@ -77,6 +86,23 @@ export class SmartBrowserSourceManager extends PropertiesManager {
     });
 
     this.visionService.ensureRunning();
+    this.normalizeUrl();
+  }
+
+  setPropertiesFormData(properties: TObsFormData): void {
+    const isLocalFile =
+      (super.getPropertiesFormData().find(prop => prop.name === 'is_local_file')
+        ?.value as boolean) || false;
+
+    // If the source is not a local file, normalize the URL to prevent errors loading the source
+    // in various reactive source versions
+    const updatedProperties = !isLocalFile
+      ? properties.map(prop =>
+          prop.name === 'url' ? { ...prop, value: this.normalizeUrl(prop.value as string) } : prop,
+        )
+      : properties;
+
+    super.setPropertiesFormData(updatedProperties);
   }
 
   destroy() {
