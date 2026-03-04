@@ -7,6 +7,7 @@ import {
   TabKind,
   GamePulseTrigger,
   ScopeId,
+  GamePulseAnalytics,
 } from './game-pulse/GamePulse.models';
 import { GamePulseMenu } from './game-pulse/GamePulseMenu';
 import { GamePulseCreateTriggerForm } from './game-pulse/GamePulseCreateTriggerForm';
@@ -73,6 +74,7 @@ export function GamePulseWidget() {
 
   useEffect(() => {
     if (showTutorial && !hasTriggers) {
+      GamePulseAnalytics.trackOnboardingImpression();
       initDefaults();
     }
   }, [showTutorial, hasTriggers]);
