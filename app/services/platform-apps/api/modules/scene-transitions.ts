@@ -324,7 +324,7 @@ export class SceneTransitionsModule extends Module {
       },
       settings: {
         ...settings,
-        track_matte_enabled: options.matteLayout ? true : false,
+        track_matte_enabled: Boolean(options.matteLayout),
         path: options.url,
       },
     };
