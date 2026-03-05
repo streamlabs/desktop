@@ -119,19 +119,6 @@ function CacheSettings() {
     await remote.shell.openPath(AppService.appDataDirectory);
   }
 
-  async function deleteCacheDir() {
-    if (
-      await confirmAsync(
-        $t(
-          'WARNING! You will lose all stream and encoder settings. If you are logged in, your scenes and sources will be restored from the cloud. This cannot be undone.',
-        ),
-      )
-    ) {
-      remote.app.relaunch({ args: ['--clearCacheDir'] });
-      remote.app.quit();
-    }
-  }
-
   function uploadCacheDir() {
     if (cacheUploading) return;
     setCacheUploading(true);
@@ -158,12 +145,6 @@ function CacheSettings() {
       <div className="input-container">
         <a className="link" onClick={showCacheDir}>
           <i className="icon-view" /> <span>{$t('Show Cache Directory')}</span>
-        </a>
-      </div>
-      <div className="input-container">
-        <a className="link" onClick={deleteCacheDir}>
-          <i className="icon-trash" />
-          <span>{$t('Delete Cache and Restart')}</span>
         </a>
       </div>
       <div className="input-container">

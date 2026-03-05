@@ -28,6 +28,7 @@ import { DualOutputService } from 'services/dual-output';
 import { TDisplayType, VideoSettingsService } from 'services/settings-v2';
 import { IncrementalRolloutService } from 'app-services';
 import { EAvailableFeatures } from 'services/incremental-rollout';
+import { UsageStatisticsService } from 'services/usage-statistics';
 
 export interface IWidgetSourcesState {
   widgetSources: Dictionary<IWidgetSource>;
@@ -86,6 +87,7 @@ export class WidgetsService
   @Inject() dualOutputService: DualOutputService;
   @Inject() videoSettingsService: VideoSettingsService;
   @Inject() incrementalRolloutService: IncrementalRolloutService;
+  @Inject() private usageStatisticsService: UsageStatisticsService;
 
   widgetDisplayData = WidgetDisplayData(); // cache widget display data
 
@@ -190,6 +192,10 @@ export class WidgetsService
         display: 'horizontal',
       },
     );
+
+    this.usageStatisticsService.recordAnalyticsEvent('WidgetAdded', {
+      type: WidgetType[type],
+    });
 
     return item;
   }

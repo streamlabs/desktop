@@ -7,6 +7,7 @@ import {
   sortEventKeys,
   delay,
   GAME_PULSE_API,
+  GamePulseAnalytics,
 } from './GamePulse.models';
 import { Services } from 'components-react/service-provider';
 import {
@@ -445,6 +446,8 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
 
     await this.replaceSettings(newSettings);
 
+    GamePulseAnalytics.trackTriggerDeleted(scopeId);
+
     // if the deleted trigger was selected, switch to General tab
     const { activeTabContext } = this;
     const { triggerId: selectedTriggerId, kind } = activeTabContext;
@@ -488,6 +491,8 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
     const newSettings = this.appendTriggerToSettings(this.settings, game, newTrigger);
     await this.updateSettings(newSettings);
     this.setData(await this.fetchData());
+
+    GamePulseAnalytics.trackTriggerAdded(game, triggerType);
 
     const triggerId = this.getTriggers(game)?.at(-1)?.id;
     if (triggerId) {
