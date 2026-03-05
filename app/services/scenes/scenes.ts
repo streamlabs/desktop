@@ -325,8 +325,6 @@ class ScenesViews extends ViewHandler<IScenesState> {
     const node: TSceneNode | null = this.getSceneNode(sceneNodeId);
     if (!node) return;
 
-    console.log('Toggling visibility for node', node.getModel());
-
     // Handle node visibility
     if (node instanceof SceneItem) {
       const partnerSceneItem = this.getDualOutputPartnerItem(sceneNodeId);
