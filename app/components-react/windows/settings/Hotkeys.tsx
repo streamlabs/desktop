@@ -48,7 +48,7 @@ const setCategoryNameFrom = (srcOrScene: Source | Scene | null) => (hotkey: IAug
 
 export function Hotkeys(props: ISettingsProps) {
   const { globalSearchStr: searchString } = props;
-  const { HotkeysService, SourcesService, ScenesService, DualOutputService } = Services;
+  const { HotkeysService, SourcesService, ScenesService } = Services;
   const [hotkeySet, setHotkeysSet] = useState<IHotkeysSet | null>(null);
 
   useEffect(() => {
@@ -122,7 +122,6 @@ export function Hotkeys(props: ISettingsProps) {
     return <div />;
   }
   const isSearch = !!searchString;
-  const isDualOutputMode = DualOutputService.views.dualOutputMode;
 
   const generalHotkeys = filteredHotkeySet.general;
   const hasGeneralHotkeys = !!generalHotkeys.length;
@@ -149,7 +148,6 @@ export function Hotkeys(props: ISettingsProps) {
         hotkeys={hotkeys}
         isSearch={isSearch}
         hasSceneHotkeys={hasSceneHotkeys}
-        isDualOutputMode={isDualOutputMode}
         isDualOutputScene={isDualOutputScene}
       />
     );
@@ -195,12 +193,7 @@ export function Hotkeys(props: ISettingsProps) {
               </Tooltip>
             </div>
           )}
-          <HotkeyGroup
-            hotkeys={generalHotkeys}
-            isSearch={isSearch}
-            title={null}
-            isDualOutputMode={isDualOutputMode}
-          />
+          <HotkeyGroup hotkeys={generalHotkeys} isSearch={isSearch} title={null} />
         </>
       )}
       {hasSceneHotkeys && (
@@ -230,12 +223,7 @@ export function Hotkeys(props: ISettingsProps) {
               {$t('Learn more here')}
             </a>
           </div>
-          <HotkeyGroup
-            hotkeys={markerHotkeys}
-            isSearch={isSearch}
-            title={null}
-            isDualOutputMode={isDualOutputMode}
-          />
+          <HotkeyGroup hotkeys={markerHotkeys} isSearch={isSearch} title={null} />
         </>
       )}
     </div>
