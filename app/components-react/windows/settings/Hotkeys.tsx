@@ -148,6 +148,7 @@ export function Hotkeys(props: ISettingsProps) {
         hotkeys={hotkeys}
         isSearch={isSearch}
         hasSceneHotkeys={hasSceneHotkeys}
+        hasSourceHotkeys={hasSourceHotkeys}
         isDualOutputScene={isDualOutputScene}
       />
     );

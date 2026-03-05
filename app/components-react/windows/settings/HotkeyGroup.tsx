@@ -15,6 +15,7 @@ interface HotkeyGroupProps extends CommonProps {
   isSearch: boolean;
   isDualOutputScene?: boolean;
   hasSceneHotkeys?: boolean;
+  hasSourceHotkeys?: boolean;
 }
 
 interface HeaderProps extends CommonProps {}
@@ -37,7 +38,7 @@ function Header({ title }: HeaderProps) {
 }
 
 export default function HotkeyGroup(props: HotkeyGroupProps) {
-  const { hotkeys, title, isSearch, isDualOutputScene, hasSceneHotkeys } = props;
+  const { hotkeys, title, isSearch, isDualOutputScene, hasSceneHotkeys, hasSourceHotkeys } = props;
   const isCollapsible = !!(title && !isSearch);
 
   const headerProps = { title };
@@ -49,7 +50,7 @@ export default function HotkeyGroup(props: HotkeyGroupProps) {
 
   const renderedHotKeys = useMemo(() => {
     // only filter hotkeys related to scene items
-    if (!hasSceneHotkeys) return hotkeys;
+    if (!hasSceneHotkeys || hasSourceHotkeys) return hotkeys;
 
     // Once a scene collection has been converted to a dual output scene collection,
     // the vertical scene items can be bound to hot keys. After this, when using single output mode
@@ -79,6 +80,9 @@ export default function HotkeyGroup(props: HotkeyGroupProps) {
     ),
     [renderedHotKeys, display],
   );
+
+  // console.log('renderedHotKeys ', renderedHotKeys);
+  // console.log('hotKeyContent ', hotkeyContent);
 
   return (
     <div className="section">
