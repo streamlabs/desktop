@@ -70,12 +70,7 @@ export class CreateFolderCommand extends Command {
       );
 
       // place vertical folder correctly in node list
-      const numHorizontalNodes = scene
-        .getModel()
-        .nodes.filter(node => node.display === 'horizontal').length;
-      const verticalFolderSelection = scene.getSelection(this.verticalFolderId);
-      verticalFolderSelection.freeze();
-      verticalFolderSelection.placeAfter(scene.getNodesIds()[numHorizontalNodes]);
+      scene.placeDualOutputNode(this.verticalFolderId);
     }
 
     if (this.items) {

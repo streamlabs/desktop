@@ -162,11 +162,15 @@ class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
   }
 
   get showHorizontalDisplay() {
-    return !this.state.dualOutputMode || (this.activeDisplays.horizontal && !this.state.isLoading);
+    return this.activeDisplays.horizontal && !this.state.isLoading;
   }
 
   get showVerticalDisplay() {
-    return this.state.dualOutputMode && this.activeDisplays.vertical && !this.state.isLoading;
+    return this.activeDisplays.vertical && !this.state.isLoading;
+  }
+
+  get showBothDisplays() {
+    return this.activeDisplays.horizontal && this.activeDisplays.vertical;
   }
 
   get onlyVerticalDisplayActive() {
@@ -843,6 +847,13 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
    * @param display - Name of display
    */
   toggleDisplay(status: boolean, display: TDisplayType) {
+    // When hiding a display, remove nodes from the selection to prevent them
+    // from accidentally being moved
+    if (this.views.showBothDisplays && status === false) {
+      const otherDisplay = display === 'horizontal' ? 'vertical' : 'horizontal';
+      this.selectionService.associateSelectionWithDisplay(otherDisplay, true);
+    }
+
     this.SET_DISPLAY_ACTIVE(status, display);
   }
 

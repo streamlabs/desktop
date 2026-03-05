@@ -107,12 +107,7 @@ export default function HotkeyGroup(props: HotkeyGroupProps) {
           )}
         >
           <Panel header={header} key="1">
-            {isDualOutputScene && showTabs && <Tabs onChange={setDisplay} />}
-            {isDualOutputMode &&
-              !showTabs &&
-              $t(
-                'This scene has not been converted for Dual Output. Please make the scene active to add vertical sources.',
-              )}
+            <Tabs onChange={setDisplay} />
             {hotkeyContent}
           </Panel>
         </Collapse>

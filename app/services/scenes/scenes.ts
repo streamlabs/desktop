@@ -14,7 +14,7 @@ import namingHelpers from 'util/NamingHelpers';
 import uuid from 'uuid/v4';
 import { DualOutputService } from 'services/dual-output';
 import { SceneCollectionsService } from 'services/scene-collections';
-import { TDisplayType } from 'services/settings-v2/video';
+import { TDisplayType, VideoSettingsService } from 'services/settings-v2/video';
 import { InitAfter, ViewHandler } from 'services/core';
 
 export type TSceneNodeModel = ISceneItem | ISceneItemFolder;
@@ -171,6 +171,8 @@ export interface ISceneItemFolder extends ISceneItemNode {
 
 class ScenesViews extends ViewHandler<IScenesState> {
   @Inject() private scenesService: ScenesService;
+  @Inject() private sceneCollectionsService: SceneCollectionsService;
+  @Inject() private dualOutputService: DualOutputService;
 
   getScene(sceneId: string): Scene | null {
     const sceneModel = this.state.scenes[sceneId];
@@ -192,6 +194,14 @@ class ScenesViews extends ViewHandler<IScenesState> {
     if (this.activeSceneId) return this.getScene(this.activeSceneId);
 
     return null;
+  }
+
+  get sceneNodeMaps(): Dictionary<Dictionary<string>> {
+    return this.sceneCollectionsService?.sceneNodeMaps || {};
+  }
+
+  get activeSceneNodeMap(): Dictionary<string> {
+    return this.sceneNodeMaps[this.state.activeSceneId] || {};
   }
 
   get scenes(): Scene[] {
@@ -264,12 +274,87 @@ class ScenesViews extends ViewHandler<IScenesState> {
     if (!scene) return false;
     return scene.getItemsForNode(sceneNodeId).some(i => i.visible);
   }
+
+  getNodeDisplay(nodeId: string, sceneId: string) {
+    const sceneNodeMap = sceneId ? this.sceneNodeMaps[sceneId] : this.activeSceneNodeMap;
+
+    if (sceneNodeMap && Object.values(sceneNodeMap).includes(nodeId)) {
+      return 'vertical';
+    }
+
+    // return horizontal by default because if the sceneNodeMap doesn't exist
+    // dual output has never been toggled on with this scene active
+    return 'horizontal';
+  }
+
+  getHorizontalNodeId(verticalNodeId: string, sceneId?: string) {
+    const sceneNodeMap = sceneId ? this.sceneNodeMaps[sceneId] : this.activeSceneNodeMap;
+    if (!sceneNodeMap) return;
+
+    return Object.keys(sceneNodeMap).find(
+      (horizontalNodeId: string) => sceneNodeMap[horizontalNodeId] === verticalNodeId,
+    );
+  }
+
+  getVerticalNodeId(horizontalNodeId: string, sceneId?: string): string {
+    const sceneNodeMap = sceneId ? this.sceneNodeMaps[sceneId] : this.activeSceneNodeMap;
+    if (!sceneNodeMap) return;
+
+    return Object.values(sceneNodeMap).find(
+      (verticalNodeId: string) => sceneNodeMap[horizontalNodeId] === verticalNodeId,
+    );
+  }
+
+  getDualOutputPartnerId(sceneNodeId: string): string | null {
+    const partnerId = this.getHorizontalNodeId(sceneNodeId) ?? this.getVerticalNodeId(sceneNodeId);
+    return partnerId;
+  }
+
+  getDualOutputPartnerItem(sceneNodeId: string): SceneItem | null {
+    const partnerId = this.getDualOutputPartnerId(sceneNodeId);
+    if (!partnerId) return null;
+    return this.getSceneItem(partnerId);
+  }
+
+  getDualOutputPartnerNode(sceneNodeId: string): TSceneNode | null {
+    const partnerId = this.getDualOutputPartnerId(sceneNodeId);
+    if (!partnerId) return null;
+    return this.getSceneNode(partnerId);
+  }
+
+  toggleNodeVisibility(sceneNodeId: string, visibility?: boolean) {
+    const nodeModel: TSceneNode | null = this.getSceneNode(sceneNodeId);
+    if (!nodeModel) return;
+
+    if (nodeModel instanceof SceneItem) {
+      nodeModel.setVisibility(visibility ?? !nodeModel.visible);
+    } else {
+      // to toggle a folder's visibility, toggle the visibility of the child nodes
+      const items = nodeModel?.getItems() ?? [];
+      const isFolderVisible = items.some(i => i.visible);
+      items.forEach(i => {
+        i.setVisibility(visibility ?? !isFolderVisible);
+      });
+    }
+
+    // Handle dual output nodes when toggling visibility of a node when both displays are active
+    if (this.dualOutputService.views.showBothDisplays) {
+      const partnerNode = this.getDualOutputPartnerNode(sceneNodeId);
+      if (!partnerNode) {
+        console.error('Could not find dual output partner node for node with id', sceneNodeId);
+        return;
+      }
+
+      this.toggleNodeVisibility(partnerNode.id, visibility);
+    }
+  }
 }
 
 @InitAfter('DualOutputService')
 export class ScenesService extends StatefulService<IScenesState> {
   @Inject() private dualOutputService: DualOutputService;
   @Inject() private sceneCollectionsService: SceneCollectionsService;
+  @Inject() private videoSettingsService: VideoSettingsService;
 
   static initialState: IScenesState = {
     activeSceneId: '',
@@ -340,17 +425,10 @@ export class ScenesService extends StatefulService<IScenesState> {
         .slice()
         .reverse()
         .forEach(item => {
-          const display = item?.display ?? this.dualOutputService.views.getNodeDisplay(item.id, id);
+          const display = item?.display ?? 'horizontal';
 
           const newItem = newScene.addSource(item.sourceId, { display });
-
-          /**
-           * when creating the scene in dual output mode
-           * also create scene items for the vertical display
-           */
-          if (this.dualOutputService.views.dualOutputMode) {
-            this.dualOutputService.actions.createOrAssignOutputNode(newItem, 'vertical', false, id);
-          }
+          this.createDualOutputNode(newItem, display, id);
         });
     }
 
@@ -455,15 +533,57 @@ export class ScenesService extends StatefulService<IScenesState> {
 
     const sceneItem = scene.createAndAddSource(sourceName, sourceType, settings);
 
-    if (this.dualOutputService.views.hasSceneNodeMaps) {
-      this.dualOutputService.createPartnerNode(sceneItem);
-      /* For some reason dragging items after enabling dual output makes them
-       * duplicate, associate selection on switch to mitigate this issue
-       */
-      this.selectionService.associateSelectionWithDisplay('vertical');
+    const dualOutputNode = this.createDualOutputNode(sceneItem, sceneItem.display, sceneId);
+    /* For some reason dragging items after enabling dual output makes them
+     * duplicate, associate selection on switch to mitigate this issue
+     */
+    if (!this.dualOutputService.views.showBothDisplays) {
+      this.selectionService.associateSelectionWithDisplay(dualOutputNode.display, true);
     }
 
     return sceneItem.sceneItemId;
+  }
+
+  /**
+   * Copy node or assign node context
+   * @remark Currently, only the widget service needs to confirm the display,
+   * all other function calls are to copy the horizontal node to a vertical node
+   * @param sceneItem - the scene item to copy or assign context
+   * @param display - the name of the context, which is also the display name
+   * @param isHorizontalDisplay - whether this is the horizontal or vertical display
+   * @param sceneId - the scene id where a copied node should be added, default is the active scene id
+   * @returns
+   */
+  createDualOutputNode(
+    sceneItem: SceneItem,
+    display: TDisplayType,
+    sceneId?: string,
+  ): SceneItem | null {
+    const dualOutputNodeDisplay = display === 'horizontal' ? 'vertical' : 'horizontal';
+    const scene = this.views.getScene(sceneId ?? this.views.activeSceneId);
+    const copiedSceneItem = scene.addSource(sceneItem.sourceId, { display: dualOutputNodeDisplay });
+
+    if (!copiedSceneItem) return null;
+
+    // Vertical nodes are after all of the horizontal nodes. So place the vertical node at the correct position.
+    if (dualOutputNodeDisplay === 'vertical') {
+      scene.placeDualOutputNode(copiedSceneItem.id);
+      this.sceneCollectionsService.createNodeMapEntry(sceneId, sceneItem.id, copiedSceneItem.id);
+    } else {
+      this.sceneCollectionsService.createNodeMapEntry(sceneId, copiedSceneItem.id, sceneItem.id);
+    }
+    return copiedSceneItem;
+  }
+
+  assignNodeContext(node: TSceneNode, display: TDisplayType) {
+    this.videoSettingsService.validateVideoContext(display);
+    const nodes = node.isItem() ? [node] : node.getItems();
+
+    nodes.forEach(n => {
+      n.setSettings({ output: this.videoSettingsService.contexts[display], display });
+    });
+
+    return node.id;
   }
 
   // TODO: Remove all of this in favor of the new "views" methods

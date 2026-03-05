@@ -429,6 +429,20 @@ export class Scene {
     this.reconcileNodeOrderWithObs();
   }
 
+  /**
+   * Place the vertical node in the correct position in the scene
+   * @remark The vertical nodes should be placed after all of the horizontal nodes in the scene.
+   * @remark Primarily used when creating nodes
+   * @param verticalNodeId - Vertical Node Id
+   */
+  placeDualOutputNode(verticalNodeId: string) {
+    const numHorizontalNodes = this.getModel().nodes.filter(node => node.display === 'horizontal')
+      .length;
+    const verticalFolderSelection = this.getSelection(verticalNodeId);
+    verticalFolderSelection.freeze();
+    verticalFolderSelection.placeAfter(this.getNodesIds()[numHorizontalNodes]);
+  }
+
   setNodesOrder(order: string[]) {
     this.SET_NODES_ORDER(order);
     this.reconcileNodeOrderWithObs();
