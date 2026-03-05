@@ -81,9 +81,6 @@ export default function HotkeyGroup(props: HotkeyGroupProps) {
     [renderedHotKeys, display],
   );
 
-  // console.log('renderedHotKeys ', renderedHotKeys);
-  // console.log('hotKeyContent ', hotkeyContent);
-
   return (
     <div className="section">
       {!isCollapsible ? (

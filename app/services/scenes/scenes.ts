@@ -186,11 +186,11 @@ class ScenesViews extends ViewHandler<IScenesState> {
   }
 
   get sceneNodeMaps() {
-    return this.sceneCollectionsService.sceneNodeMaps;
+    return this.sceneCollectionsService.sceneNodeMaps || {};
   }
 
   get activeSceneNodeMap() {
-    return this.sceneNodeMaps[this.activeSceneId];
+    return this.sceneNodeMaps[this.activeSceneId] || {};
   }
 
   get activeSceneId() {
@@ -274,7 +274,7 @@ class ScenesViews extends ViewHandler<IScenesState> {
     return scene.getItemsForNode(sceneNodeId).some(i => i.visible);
   }
 
-  getNodeDisplay(nodeId: string, sceneId: string) {
+  getNodeDisplay(nodeId: string, sceneId: string): TDisplayType {
     const sceneNodeMap = sceneId ? this.sceneNodeMaps[sceneId] : this.activeSceneNodeMap;
 
     if (sceneNodeMap && Object.values(sceneNodeMap).includes(nodeId)) {
@@ -286,7 +286,7 @@ class ScenesViews extends ViewHandler<IScenesState> {
     return 'horizontal';
   }
 
-  getHorizontalNodeId(verticalNodeId: string, sceneId?: string) {
+  getHorizontalNodeId(verticalNodeId: string, sceneId?: string): string | undefined {
     const sceneNodeMap = sceneId ? this.sceneNodeMaps[sceneId] : this.activeSceneNodeMap;
     if (!sceneNodeMap) return;
 
@@ -295,7 +295,7 @@ class ScenesViews extends ViewHandler<IScenesState> {
     );
   }
 
-  getVerticalNodeId(horizontalNodeId: string, sceneId?: string): string {
+  getVerticalNodeId(horizontalNodeId: string, sceneId?: string): string | undefined {
     const sceneNodeMap = sceneId ? this.sceneNodeMaps[sceneId] : this.activeSceneNodeMap;
     if (!sceneNodeMap) return;
 
@@ -304,7 +304,7 @@ class ScenesViews extends ViewHandler<IScenesState> {
     );
   }
 
-  getDualOutputPartnerId(sceneNodeId: string): string | null {
+  getDualOutputPartnerId(sceneNodeId: string): string | undefined {
     const partnerId = this.getHorizontalNodeId(sceneNodeId) ?? this.getVerticalNodeId(sceneNodeId);
     return partnerId;
   }
@@ -365,15 +365,6 @@ class ScenesViews extends ViewHandler<IScenesState> {
       });
     }
   }
-
-  /**
-   * Sync source status between dual output nodes
-   * @remark When showing/hiding sources with video or audio, there are cases that need to be handled so that the sources
-   * function as expected:
-   * - Show: video and audio playback need to start at the same time
-   * - Hide: audio needs to be muted in the source, otherwise the audio will continue to play from the visible scene item in the opposite display
-   */
-  toggleDualOutputSceneItem(sceneItemId: string, visible: boolean) {}
 }
 
 @InitAfter('DualOutputService')
