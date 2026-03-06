@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo, Ref, RefObject } from 'react';
 import pick from 'lodash/pick';
-import { Tooltip, Tree } from 'antd';
+import { message, Tooltip, Tree } from 'antd';
 import { DataNode } from 'rc-tree/lib/interface';
 import { TreeProps } from 'rc-tree/lib/Tree';
 import cx from 'classnames';
@@ -19,6 +19,9 @@ import { DualOutputSourceSelector } from './DualOutputSourceSelector';
 import { Services } from 'components-react/service-provider';
 import { initStore, useController } from 'components-react/hooks/zustand';
 import { useVuex } from 'components-react/hooks';
+import * as remote from '@electron/remote';
+import { AuthModal } from 'components-react/shared/AuthModal';
+import Utils from 'services/utils';
 
 interface ISourceMetadata {
   id: string;
@@ -49,9 +52,12 @@ class SourceSelectorController {
   private audioService = Services.AudioService;
   private guestCamService = Services.GuestCamService;
   private dualOutputService = Services.DualOutputService;
+  private userService = Services.UserService;
+  private tiktokService = Services.TikTokService;
 
   store = initStore({
     expandedFoldersIds: [] as string[],
+    showModal: false,
   });
 
   nodeRefs: Dictionary<Ref<HTMLDivElement>> = {};
@@ -601,6 +607,23 @@ class SourceSelectorController {
     this.streamingService.actions.setSelectiveRecording(
       !this.streamingService.state.selectiveRecording,
     );
+    if (this.isDualOutputActive) {
+      // selective recording only works with the horizontal display
+      // so toggle the vertical display to hide it
+      this.dualOutputService.actions.toggleDisplay(this.selectiveRecordingEnabled, 'vertical');
+      this.selectionService.views.globalSelection.filterDualOutputNodes();
+
+      // if the vertical display is hidden because of selective recording
+      // show an alert to the user notifying them that the vertical display is disabled
+      if (!this.selectiveRecordingEnabled) {
+        remote.dialog.showMessageBox({
+          title: 'Vertical Display Disabled',
+          message: $t(
+            'Dual Output can’t be displayed - Selective Recording only works with horizontal sources and disables editing the vertical output scene. Please disable selective recording from Sources to set up Dual Output.',
+          ),
+        });
+      }
+    }
   }
 
   cycleSelectiveRecording(sceneNodeId: string) {
@@ -639,6 +662,73 @@ class SourceSelectorController {
     return this.scene.getSelection(sceneNodeId);
   }
 
+  toggleDualOutput() {
+    if (this.userService.isLoggedIn) {
+      if (Services.StreamingService.views.isMidStreamMode) {
+        message.error({
+          content: $t('Cannot toggle Dual Output while live.'),
+          className: styles.toggleError,
+        });
+      } else if (Services.TransitionsService.views.studioMode) {
+        message.error({
+          content: $t('Cannot toggle Dual Output while in Studio Mode.'),
+          className: styles.toggleError,
+        });
+      } else {
+        // only open video settings when toggling on dual output
+        const skipShowVideoSettings = this.dualOutputService.views.dualOutputMode === true;
+
+        this.dualOutputService.actions.setDualOutputModeIfPossible(
+          !this.dualOutputService.views.dualOutputMode,
+          skipShowVideoSettings,
+        );
+        Services.UsageStatisticsService.recordFeatureUsage('DualOutput');
+        Services.UsageStatisticsService.recordAnalyticsEvent('DualOutput', {
+          type: 'ToggleOnDualOutput',
+          source: 'SourceSelector',
+          isPrime: this.userService.isPrime,
+          platforms: this.streamingService.views.linkedPlatforms,
+          tiktokStatus: this.tiktokService.scope,
+        });
+
+        if (!this.dualOutputService.views.dualOutputMode && this.selectiveRecordingEnabled) {
+          // show warning message if selective recording is active
+          remote.dialog
+            .showMessageBox(Utils.getChildWindow(), {
+              title: 'Vertical Display Disabled',
+              message: $t(
+                'Dual Output can’t be displayed - Selective Recording only works with horizontal sources and disables editing the vertical output scene. Please disable selective recording from Sources to set up Dual Output.',
+              ),
+              buttons: [$t('OK')],
+            })
+            .catch(() => {});
+        }
+      }
+    } else {
+      this.handleShowModal(true);
+    }
+  }
+
+  handleShowModal(status: boolean) {
+    Services.WindowsService.actions.updateStyleBlockers('main', status);
+    this.store.update('showModal', status);
+  }
+
+  handleAuth() {
+    this.userService.actions.showLogin();
+    const onboardingCompleted = Services.OnboardingService.onboardingCompleted.subscribe(() => {
+      Services.DualOutputService.actions.setDualOutputModeIfPossible();
+      Services.SettingsService.actions.showSettings('Video');
+      onboardingCompleted.unsubscribe();
+    });
+  }
+
+  get dualOutputTitle() {
+    return !this.isDualOutputActive || !this.userService.isLoggedIn
+      ? $t('Enable Dual Output to stream to horizontal & vertical platforms simultaneously')
+      : $t('Disable Dual Output');
+  }
+
   get scene() {
     const scene = getDefined(this.scenesService.views.activeScene);
     return scene;
@@ -647,6 +737,7 @@ class SourceSelectorController {
 
 function SourceSelector() {
   const ctrl = useController(SourceSelectorCtx);
+  const showModal = ctrl.store.useState(s => s.showModal);
   return (
     <>
       <StudioControls />
@@ -666,6 +757,12 @@ function SourceSelector() {
           </Translate>
         </HelpTip>
       )}
+      <AuthModal
+        prompt={$t('Please log in to enable dual output. Would you like to log in now?')}
+        showModal={showModal}
+        handleShowModal={ctrl.handleShowModal}
+        handleAuth={ctrl.handleAuth}
+      />
     </>
   );
 }
@@ -691,6 +788,17 @@ function StudioControls() {
         <i
           className="icon-add-circle icon-button icon-button--lg"
           onClick={() => ctrl.addSource()}
+        />
+      </Tooltip>
+
+      <Tooltip title={ctrl.dualOutputTitle} placement="bottomRight">
+        <i
+          data-name="dual-output-toggle"
+          className={cx('icon-dual-output icon-button icon-button--lg', {
+            active: ctrl.isDualOutputActive,
+          })}
+          onClick={() => ctrl.toggleDualOutput()}
+          data-testid={ctrl.isDualOutputActive ? 'dual-output-active' : 'dual-output-inactive'}
         />
       </Tooltip>
 
