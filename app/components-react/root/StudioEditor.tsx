@@ -38,6 +38,7 @@ export default function StudioEditor() {
     isRecording: StreamingService.views.isRecording,
     activeSceneId: ScenesService.views.activeSceneId,
     isLoading: DualOutputService.views.isLoading,
+    dualOutputMode: DualOutputService.views.dualOutputMode,
   }));
   const displayEnabled = !performanceMode && !v.isLoading;
   const placeholderRef = useRef<HTMLDivElement>(null);
@@ -242,7 +243,9 @@ export default function StudioEditor() {
       {displayEnabled && (
         <div className={cx(styles.studioModeContainer, { [styles.stacked]: studioModeStacked })}>
           {v.studioMode && <StudioModeControls stacked={studioModeStacked} />}
-          <DualOutputControls stacked={studioModeStacked} isRecording={v.isRecording} />
+          {v.dualOutputMode && (
+            <DualOutputControls stacked={studioModeStacked} isRecording={v.isRecording} />
+          )}
           <div
             className={cx(styles.studioDisplayContainer, { [styles.stacked]: studioModeStacked })}
           >
