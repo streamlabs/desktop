@@ -172,5 +172,8 @@
   "Alerts and Widgets": "Оповещения и виджеты",
   "AI": "ИИ",
   "Between": "Between",
-  "Upgrade": "Обновить"
+  "Upgrade": "Обновить",
+  "Edit Data": "Edit Data",
+  "Edit Reactive Data": "Edit Reactive Data",
+  "Reactive Data Editor": "Reactive Data Editor"
 }
