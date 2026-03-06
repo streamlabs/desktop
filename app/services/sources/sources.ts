@@ -806,26 +806,26 @@ export class SourcesService extends StatefulService<ISourcesState> {
     // React widgets are in the WidgetsWindow component
     let reactWidgets = [
       'AlertBox',
-      // TODO:
-      // BitGoal
-      // DonationGoal
-      // CharityGoal
-      // FollowerGoal
-      // StarsGoal
-      // SubGoal
-      // SubscriberGoal
+      'BitGoal',
+      'DonationGoal',
+      'CharityGoal',
+      'FollowerGoal',
+      'StarsGoal',
+      'SubGoal',
+      'SubscriberGoal',
       'ChatBox',
-      // ChatHighlight
-      // Credits
+      // TODO:
+      // 'ChatHighlight',
+      // 'Credits',
       'DonationTicker',
       'EmoteWall',
       'EventList',
-      // MediaShare
-      // Poll
-      // SpinWheel
+      // 'MediaShare',
+      // 'Poll',
+      // 'SpinWheel',
       'SponsorBanner',
-      // StreamBoss
-      // TipJar
+      // 'StreamBoss',
+      // 'TipJar',
       'ViewerCount',
       'GameWidget',
       'CustomWidget',
