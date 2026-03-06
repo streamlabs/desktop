@@ -130,6 +130,7 @@ export interface ISettingsValues extends Record<TCategoryName, Dictionary<TObsVa
     tune?: string;
     x264opts?: string;
     x264Settings?: string;
+    rate_control?: string;
   };
   Video: {
     // default video context
@@ -152,6 +153,7 @@ export interface ISettingsValues extends Record<TCategoryName, Dictionary<TObsVa
     DynamicBitrate: boolean;
     NewSocketLoopEnable: boolean;
     LowLatencyEnable: boolean;
+    FilenameFormatting: string;
   };
 }
 export interface ISettingsSubCategory {
@@ -445,6 +447,15 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     });
     // These settings are not displayed in the menu but are still needed for dual output
     settingsFormData.StreamSecond = this.fetchSettingsFromObs('StreamSecond');
+
+    // TODO: comment in for logging
+    // for (const category in settingsFormData) {
+    //   settingsFormData[category].formData.forEach((subCategory: ISettingsSubCategory) => {
+    //     subCategory.parameters.forEach(param => {
+    //       console.log(category, subCategory.nameSubCategory, param.name, param.value);
+    //     });
+    //   });
+    // }
 
     this.SET_SETTINGS(settingsFormData);
   }

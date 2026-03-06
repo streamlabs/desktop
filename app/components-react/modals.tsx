@@ -125,12 +125,13 @@ export function promptAsync(
 export function promptAction(p: {
   title: string;
   message: string;
-  btnText: string;
+  btns?: { text: string; fn?: () => void }[];
+  btnText?: string;
   btnType?: 'default' | 'primary';
   cancelBtnPosition?: 'left' | 'right' | 'none';
   cancelBtnText?: string;
   fn?(): void | ((props: any) => unknown | void);
-  cancelFn?: void | ((props?: any) => unknown | void);
+  cancelFn?(): void | ((props?: any) => unknown | void);
   icon?: React.ReactNode;
   secondaryActionText?: string;
   secondaryActionFn?: () => unknown;

@@ -41,7 +41,6 @@ interface IDualOutputServiceState {
   dualOutputMode: boolean;
   videoSettings: IDisplayVideoSettings;
   isLoading: boolean;
-  recording: TDisplayType[];
 }
 
 enum EOutputDisplayType {
@@ -151,10 +150,6 @@ class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
 
   get videoSettings() {
     return this.state.videoSettings;
-  }
-
-  get recording() {
-    return this.state.recording;
   }
 
   get activeDisplays() {
@@ -303,7 +298,6 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
         vertical: false,
       },
     },
-    recording: ['horizontal'],
     isLoading: false,
   };
 

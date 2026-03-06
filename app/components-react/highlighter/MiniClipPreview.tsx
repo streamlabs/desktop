@@ -5,7 +5,7 @@ import { Services } from 'components-react/service-provider';
 import { BoolButtonInput, CheckboxInput } from 'components-react/shared/inputs';
 import { SwitchInput } from 'components-react/shared/inputs/SwitchInput';
 import React from 'react';
-import { SCRUB_HEIGHT, SCRUB_WIDTH } from 'services/highlighter/constants';
+import { SCRUB_HEIGHT, SCRUB_WIDTH, SCRUB_WIDTH_VERTICAL } from 'services/highlighter/constants';
 import { TClip } from 'services/highlighter/models/highlighter.models';
 import styles from './MiniClipPreview.m.less';
 
@@ -24,6 +24,7 @@ export default function MiniClipPreview({
 }) {
   const { HighlighterService } = Services;
   const clip = useVuex(() => HighlighterService.views.clipsDictionary[clipId] as TClip);
+  const width = clip.display === 'vertical' ? SCRUB_WIDTH_VERTICAL : SCRUB_WIDTH;
 
   return (
     <div
@@ -49,7 +50,7 @@ export default function MiniClipPreview({
         className={styles.thumbnailSpecs}
         style={{
           opacity: !clip.enabled ? '0.3' : '1',
-          width: `${SCRUB_WIDTH / 6}px`,
+          width: `${width / 6}px`,
           height: `${SCRUB_HEIGHT / 6}px`,
         }}
       ></img>

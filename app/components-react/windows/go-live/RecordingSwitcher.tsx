@@ -1,7 +1,7 @@
-import React, { CSSProperties } from 'react';
+import React, { CSSProperties, useMemo } from 'react';
 import styles from './RecordingSwitcher.m.less';
 import { Services } from 'components-react/service-provider';
-import { TDisplayType } from 'services/settings-v2';
+import { TDisplayOutput } from 'services/streaming';
 import { $t } from 'services/i18n';
 import { useVuex } from 'components-react/hooks';
 import { useGoLiveSettings } from './useGoLiveSettings';
@@ -12,64 +12,128 @@ import cx from 'classnames';
 import { EAvailableFeatures } from 'services/incremental-rollout';
 
 interface IRecordingSettingsProps {
+  showRecordingToggle?: boolean;
+  showTooltip?: boolean;
   style?: CSSProperties;
+  label?: string;
   className?: string | undefined;
 }
-export default function RecordingSwitcher(p: IRecordingSettingsProps) {
-  const { recording, toggleRecordingDisplay } = useGoLiveSettings();
 
-  const canRecordVertical = Services.IncrementalRolloutService.views.featureIsEnabled(
-    EAvailableFeatures.dualOutputRecording,
-  );
+export default function RecordingSwitcher(p: IRecordingSettingsProps) {
+  const { updateRecordingDisplayAndSaveSettings } = useGoLiveSettings();
+  const {
+    DualOutputService,
+    StreamSettingsService,
+    HighlighterService,
+    StreamingService,
+    SettingsService,
+    IncrementalRolloutService,
+  } = Services;
 
   const v = useVuex(() => ({
-    isDualOutputMode: Services.DualOutputService.views.dualOutputMode,
-    recordWhenStreaming: Services.StreamSettingsService.views.settings.recordWhenStreaming,
-    useAiHighlighter: Services.HighlighterService.views.useAiHighlighter,
+    isDualOutputMode: DualOutputService.views.dualOutputMode,
+    recordWhenStreaming: StreamSettingsService.views.settings.recordWhenStreaming,
+    useAiHighlighter: HighlighterService.views.useAiHighlighter,
+    isRecording: StreamingService.views.isRecording,
+    isReplayBufferActive: StreamingService.views.isReplayBufferActive,
+    recordingDisplay:
+      StreamSettingsService.views.settings?.goLiveSettings?.recording ?? 'horizontal',
   }));
 
-  const recordWhenStartStream = v.recordWhenStreaming || v.useAiHighlighter;
+  const canRecordVertical = useMemo(
+    () => IncrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.verticalRecording),
+    [],
+  );
+  const canRecordDualOutput = false;
+  // Dual output recording is WIP. To enable testing for dual output recording, modify the logic here.
+  // const canRecordDualOutput =
+  //   IncrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.dualOutputRecording) &&
+  //   !Utils.isDevMode();
+
+  const recordWhenStartStream = useMemo(() => v.recordWhenStreaming || v.useAiHighlighter, [
+    v.recordWhenStreaming,
+    v.useAiHighlighter,
+  ]);
+
+  const showRecordingToggle = useMemo(() => p?.showRecordingToggle ?? false, [
+    p?.showRecordingToggle,
+  ]);
+
+  const showRecordingIcons = useMemo(
+    () => v.isDualOutputMode && (canRecordVertical || canRecordDualOutput),
+    [v.isDualOutputMode, canRecordVertical, canRecordDualOutput],
+  );
+
+  const disableToggle = useMemo(() => v.useAiHighlighter || v.isRecording, [
+    v.useAiHighlighter,
+    v.isRecording,
+  ]);
+
+  const disableIcons = useMemo(
+    () => v.useAiHighlighter || v.isRecording || v.isReplayBufferActive,
+    [v.useAiHighlighter, v.isRecording, v.isReplayBufferActive],
+  );
+
+  const options = useMemo(() => {
+    const opts = [
+      { value: 'horizontal', label: $t('Horizontal'), icon: 'icon-desktop' },
+      { value: 'vertical', label: $t('Vertical'), icon: 'icon-phone-case' },
+    ];
+
+    if (canRecordDualOutput) {
+      opts.push({ value: 'both', label: $t('Both'), icon: 'icon-dual-output' });
+    }
+    return opts;
+  }, [canRecordDualOutput]);
+
+  const message = useMemo(
+    () =>
+      v.isRecording
+        ? $t('Recording in progress. Stop recording to change the recording display.')
+        : $t('AI Highlighter is enabled. Recording will start when stream starts.'),
+    [v.isRecording],
+  );
 
   return (
     <div style={p?.style} className={cx(p?.className, styles.recordingSwitcher)}>
       <Tooltip
-        title={$t('AI Highlighter is enabled. Recording will start when stream starts.')}
-        disabled={!v.useAiHighlighter}
+        title={message}
+        disabled={!disableToggle && !p?.showTooltip}
         placement="topRight"
         lightShadow
         className={styles.recordingTooltip}
       >
-        <SwitchInput
-          name="recording-toggle"
-          value={recordWhenStartStream}
-          onChange={val => {
-            Services.SettingsService.actions.setSettingValue('General', 'RecordWhenStreaming', val);
-          }}
-          uncontrolled
-          style={{ marginRight: '10px' }}
-          label={v.isDualOutputMode ? $t('Record Stream in') : $t('Record Stream')}
-          layout="horizontal"
-          checkmark
-          disabled={v.useAiHighlighter}
-        />
-        {v.isDualOutputMode && canRecordVertical && (
+        {showRecordingToggle && (
+          <SwitchInput
+            name="recording-toggle"
+            value={recordWhenStartStream}
+            onChange={val => {
+              SettingsService.actions.setSettingValue('General', 'RecordWhenStreaming', val);
+            }}
+            uncontrolled
+            label={v.isDualOutputMode ? $t('Record Stream in') : $t('Record Stream')}
+            layout="horizontal"
+            checkmark
+            disabled={disableToggle}
+          />
+        )}
+        {showRecordingIcons && (
           <>
             <RadioInput
               name="recording-display"
-              value={recording[0]}
-              options={[
-                { value: 'horizontal', label: $t('Horizontal'), icon: 'icon-desktop' },
-                { value: 'vertical', label: $t('Vertical'), icon: 'icon-phone-case' },
-              ]}
-              onChange={(display: TDisplayType) => toggleRecordingDisplay(display, true)}
+              defaultValue="horizontal"
+              value={v.recordingDisplay}
+              label={p?.label}
+              options={options}
+              onChange={(display: TDisplayOutput) => updateRecordingDisplayAndSaveSettings(display)}
               icons={true}
               className={styles.recordingDisplay}
-              disabled={v.useAiHighlighter}
+              disabled={v.isRecording || disableIcons}
             />
-            {$t('format')}
+            {showRecordingToggle && <> {$t('format')} </>}
           </>
         )}
-        {v.useAiHighlighter && <i className={cx(styles.info, 'icon-information')} />}
+        {disableToggle && <i className={cx(styles.info, 'icon-information')} />}
       </Tooltip>
     </div>
   );

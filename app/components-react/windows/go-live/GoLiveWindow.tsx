@@ -123,6 +123,9 @@ function ModalFooter() {
   const shouldShowConfirm = ['prepopulate', 'waitForNewSettings'].includes(lifecycle);
   const shouldShowGoBackButton =
     lifecycle === 'runChecklist' && error && checklist.startVideoTransmission !== 'done';
+  const shouldShowRecordingSwitcher = ['empty', 'prepopulate', 'waitForNewSettings'].includes(
+    lifecycle,
+  );
 
   const promptUseDefaultCodec = useCallback(async () => {
     // If the user is not live but has an incompatible codec, prompt to change codec
@@ -234,7 +237,10 @@ function ModalFooter() {
 
   return (
     <Form layout={'inline'}>
-      {!isDualOutputMode && shouldShowConfirm && <RecordingSwitcher />}
+      {shouldShowRecordingSwitcher && shouldShowConfirm && (
+        <RecordingSwitcher showRecordingToggle={true} />
+      )}
+
       {/* CLOSE BUTTON */}
       <Button onClick={close}>{$t('Close')}</Button>
 
