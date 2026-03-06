@@ -139,7 +139,7 @@ export function Hotkeys(props: ISettingsProps) {
     id: string,
     hotkeys: any,
     title: string,
-    isDualOutputScene: boolean = false,
+    isSceneHotkey: boolean = false,
   ) {
     return (
       <HotkeyGroup
@@ -147,9 +147,7 @@ export function Hotkeys(props: ISettingsProps) {
         title={title}
         hotkeys={hotkeys}
         isSearch={isSearch}
-        hasSceneHotkeys={hasSceneHotkeys}
-        hasSourceHotkeys={hasSourceHotkeys}
-        isDualOutputScene={isDualOutputScene}
+        isSceneHotkey={isSceneHotkey}
       />
     );
   }
@@ -157,9 +155,9 @@ export function Hotkeys(props: ISettingsProps) {
   function renderScenesHotkeyGroup(sceneId: string) {
     const sceneHotkeys = filteredHotkeySet.scenes[sceneId];
     const scene = ScenesService.views.getScene(sceneId);
-    const isDualOutputScene = scene?.getIsDualOutputScene();
+    const isSceneHotkey = scene?.getIsDualOutputScene();
 
-    return scene ? renderHotkeyGroup(sceneId, sceneHotkeys, scene.name, isDualOutputScene) : null;
+    return scene ? renderHotkeyGroup(sceneId, sceneHotkeys, scene.name, isSceneHotkey) : null;
   }
 
   function renderSourcesHotkeyGroup(sourceId: string) {

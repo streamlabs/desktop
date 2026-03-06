@@ -13,9 +13,7 @@ interface CommonProps {
 interface HotkeyGroupProps extends CommonProps {
   hotkeys: IHotkey[];
   isSearch: boolean;
-  isDualOutputScene?: boolean;
-  hasSceneHotkeys?: boolean;
-  hasSourceHotkeys?: boolean;
+  isSceneHotkey?: boolean;
 }
 
 interface HeaderProps extends CommonProps {}
@@ -38,7 +36,7 @@ function Header({ title }: HeaderProps) {
 }
 
 export default function HotkeyGroup(props: HotkeyGroupProps) {
-  const { hotkeys, title, isSearch, isDualOutputScene, hasSceneHotkeys, hasSourceHotkeys } = props;
+  const { hotkeys, title, isSearch, isSceneHotkey } = props;
   const isCollapsible = !!(title && !isSearch);
 
   const headerProps = { title };
@@ -46,23 +44,22 @@ export default function HotkeyGroup(props: HotkeyGroupProps) {
   const [display, setDisplay] = useState<TDisplayType>('horizontal');
   const [expanded, setExpanded] = useState<boolean>(false);
 
-  const showTabs = hasSceneHotkeys && isDualOutputScene && expanded;
+  const showTabs = isSceneHotkey && expanded;
 
   const renderedHotKeys = useMemo(() => {
     // only filter hotkeys related to scene items
-    if (!hasSceneHotkeys || hasSourceHotkeys) return hotkeys;
+    if (!isSceneHotkey) return hotkeys;
 
     // Once a scene collection has been converted to a dual output scene collection,
-    // the vertical scene items can be bound to hot keys. After this, when using single output mode
-    // with dual output scene collection, filter out the vertical scene items.
-    if (hasSceneHotkeys && expanded) {
+    // the vertical scene items can be bound to hot keys.
+    if (expanded) {
       return hotkeys
         .filter(hotkey => hotkey?.display === display || hotkey?.actionName === 'SWITCH_TO_SCENE')
         .map(hotkey => hotkey);
     } else {
       return hotkeys;
     }
-  }, [hotkeys, hasSceneHotkeys, display, expanded]);
+  }, [hotkeys, display, expanded]);
 
   const header = <Header {...headerProps} />;
   const hotkeyContent = useMemo(
@@ -71,7 +68,7 @@ export default function HotkeyGroup(props: HotkeyGroupProps) {
         {renderedHotKeys.map(hotkey => (
           <div
             key={getHotkeyUniqueId(hotkey)}
-            className={hasSceneHotkeys ? 'scene-hotkey' : undefined}
+            className={isSceneHotkey ? 'scene-hotkey' : undefined}
           >
             <Hotkey hotkey={hotkey} />
           </div>
@@ -98,7 +95,7 @@ export default function HotkeyGroup(props: HotkeyGroupProps) {
           )}
         >
           <Panel header={header} key="1">
-            {isDualOutputScene && showTabs && <Tabs onChange={setDisplay} />}
+            {isSceneHotkey && showTabs && <Tabs onChange={setDisplay} />}
             {hotkeyContent}
           </Panel>
         </Collapse>

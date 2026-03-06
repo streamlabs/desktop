@@ -132,11 +132,7 @@ const HotkeyLabel = memo(function HotkeyLabel(p: { hotkey: IHotkey; showLabel: b
   }));
 
   const showDualOutputLabel = useMemo(() => {
-    return (
-      v.dualOutputMode &&
-      p.hotkey.actionName !== 'SWITCH_TO_SCENE' &&
-      p.hotkey.sceneItemId !== undefined
-    );
+    return p.hotkey.actionName !== 'SWITCH_TO_SCENE' && p.hotkey.sceneItemId !== undefined;
   }, [p.hotkey, v.dualOutputMode]);
 
   const handleLabel = useCallback(
