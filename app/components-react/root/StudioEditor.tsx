@@ -18,6 +18,7 @@ import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export default function StudioEditor() {
   const {
+    WindowsService,
     CustomizationService,
     EditorService,
     TransitionsService,
@@ -33,8 +34,10 @@ export default function StudioEditor() {
   const v = useVuex(() => ({
     cursor: EditorService.state.cursor,
     studioMode: TransitionsService.state.studioMode,
+    dualOutputMode: DualOutputService.views.dualOutputMode,
     showHorizontalDisplay: DualOutputService.views.showHorizontalDisplay,
-    showVerticalDisplay: DualOutputService.views.showVerticalDisplay,
+    showVerticalDisplay:
+      DualOutputService.views.showVerticalDisplay && !StreamingService.state.selectiveRecording,
     isRecording: StreamingService.views.isRecording,
     activeSceneId: ScenesService.views.activeSceneId,
     isLoading: DualOutputService.views.isLoading,
@@ -242,7 +245,9 @@ export default function StudioEditor() {
       {displayEnabled && (
         <div className={cx(styles.studioModeContainer, { [styles.stacked]: studioModeStacked })}>
           {v.studioMode && <StudioModeControls stacked={studioModeStacked} />}
-          <DualOutputControls stacked={studioModeStacked} isRecording={v.isRecording} />
+          {v.dualOutputMode && (
+            <DualOutputControls stacked={studioModeStacked} isRecording={v.isRecording} />
+          )}
           <div
             className={cx(styles.studioDisplayContainer, { [styles.stacked]: studioModeStacked })}
           >
@@ -397,10 +402,14 @@ function StudioModeControls(p: { stacked: boolean }) {
 }
 
 function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
-  const showHorizontal = Services.DualOutputService.views.showHorizontalDisplay;
-  const showVertical = Services.DualOutputService.views.showVerticalDisplay;
+  function openSettingsWindow() {
+    Services.SettingsService.actions.showSettings('Video');
+  }
 
-  const v = useVuex(() => ({ toggleDisplay: Services.DualOutputService.actions.toggleDisplay }));
+  const showHorizontal = Services.DualOutputService.views.showHorizontalDisplay;
+  const showVertical =
+    Services.DualOutputService.views.showVerticalDisplay &&
+    !Services.StreamingService.state.selectiveRecording;
 
   const showRecordingIcons = useMemo(() => {
     return (
@@ -416,35 +425,23 @@ function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
       id="dual-output-header"
       className={cx(styles.dualOutputHeader, { [styles.stacked]: p.stacked })}
     >
-      <div
-        className={styles.toggleWrapper}
-        onClick={() => v.toggleDisplay(!showHorizontal, 'horizontal')}
-      >
-        {showRecordingIcons && <DualOutputIcons display="horizontal" />}
-        {showHorizontal ? (
-          <i className={cx('icon-view', styles.displayVisible)} />
-        ) : (
-          <i className="icon-hide" />
-        )}
-        <span className={cx({ [styles.displayVisible]: showHorizontal })}>
-          {$t('Horizontal canvas')}
-        </span>
-        {showRecordingIcons && <DualOutputIcons display="horizontal" />}
-      </div>
+      {showHorizontal && (
+        <div className={styles.horizontalHeader}>
+          <i className="icon-desktop" />
+          <span>{$t('Horizontal Output')}</span>
+          {showRecordingIcons && <DualOutputIcons display="horizontal" />}
+        </div>
+      )}
 
-      <div
-        className={styles.toggleWrapper}
-        onClick={() => v.toggleDisplay(!showVertical, 'vertical')}
-      >
-        {showRecordingIcons && <DualOutputIcons display="vertical" />}
-        {showVertical ? (
-          <i className={cx('icon-view', styles.displayVisible)} />
-        ) : (
-          <i className="icon-hide" />
-        )}
-        <span className={cx({ [styles.displayVisible]: showVertical })}>
-          {$t('Vertical canvas')}
-        </span>
+      {showVertical && (
+        <div className={styles.verticalHeader}>
+          <i className="icon-phone-case" />
+          <span>{$t('Vertical Output')}</span>
+          {showRecordingIcons && <DualOutputIcons display="vertical" />}
+        </div>
+      )}
+      <div className={styles.manageLink}>
+        <a onClick={openSettingsWindow}>{$t('Manage Dual Output')}</a>
       </div>
     </div>
   );
