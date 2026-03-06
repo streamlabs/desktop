@@ -1,10 +1,11 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo, memo, useCallback } from 'react';
 import { IBinding, IHotkey } from 'services/hotkeys';
 import { TextInput } from 'components-react/shared/inputs';
 import { byOS, OS } from 'util/operating-systems';
 import Form from './inputs/Form';
 import { Input } from 'antd';
 import { Services } from 'components-react/service-provider';
+import { useVuex } from 'components-react/hooks';
 
 /**
  * Turns a binding into a string representation
@@ -68,16 +69,8 @@ export default function HotkeyBinding(p: {
   style?: React.CSSProperties;
   showLabel?: boolean;
 }) {
-  const { MarkersService, DualOutputService } = Services;
-
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<Input>(null);
-
-  const hotKeyLabel = p.showLabel !== false ? <HotkeyLabel /> : <></>;
-  const showDualOutputLabel =
-    DualOutputService.views.dualOutputMode &&
-    p?.hotkey.actionName !== 'SWITCH_TO_SCENE' &&
-    p.hotkey?.sceneItemId;
 
   function handlePress(event: React.KeyboardEvent<HTMLInputElement>) {
     // We don't allow binding a modifier by instelf
@@ -112,49 +105,12 @@ export default function HotkeyBinding(p: {
     if (inputRef.current) inputRef.current.blur();
   }
 
-  function handleLabel(value: string) {
-    MarkersService.actions.setMarkerName(p.hotkey.actionName, value);
-  }
-
-  function HotkeyLabel() {
-    if (!p.hotkey.isMarker) return <>{p.hotkey.description || ''}</>;
-    return (
-      <TextInput
-        value={MarkersService.views.getLabel(p.hotkey.actionName)}
-        onChange={handleLabel}
-        nowrap
-      />
-    );
-  }
-
-  function DualOutputHotkeyLabel() {
-    const icon = p.hotkey?.display === 'vertical' ? 'icon-phone-case' : 'icon-desktop';
-    if (!p.hotkey.isMarker) {
-      return (
-        <>
-          <i className={icon} style={{ margin: '5px', opacity: 0.6 }} />
-          {p.hotkey.description || ''}
-        </>
-      );
-    }
-    return (
-      <>
-        <i className={icon} style={{ margin: '5px', opacity: 0.6 }} />
-        <TextInput
-          value={MarkersService.views.getLabel(p.hotkey.actionName)}
-          onChange={handleLabel}
-          nowrap
-        />
-      </>
-    );
-  }
-
   return (
     <Form layout="inline">
       <TextInput
         name="binding"
         style={{ width: 400, ...p.style }}
-        label={showDualOutputLabel ? <DualOutputHotkeyLabel /> : hotKeyLabel}
+        label={<HotkeyLabel showLabel={p.showLabel ?? true} hotkey={p.hotkey} />}
         value={getHotkeyString(p.binding, focused)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
@@ -165,3 +121,46 @@ export default function HotkeyBinding(p: {
     </Form>
   );
 }
+
+const HotkeyLabel = memo(function HotkeyLabel(p: { hotkey: IHotkey; showLabel: boolean }) {
+  const { MarkersService, DualOutputService } = Services;
+
+  const v = useVuex(() => ({
+    dualOutputMode: DualOutputService.views.dualOutputMode,
+    setMarkerName: MarkersService.actions.setMarkerName,
+    getLabel: MarkersService.views.getLabel,
+  }));
+
+  const showDualOutputLabel = useMemo(() => {
+    return p.hotkey.actionName !== 'SWITCH_TO_SCENE' && p.hotkey.sceneItemId !== undefined;
+  }, [p.hotkey, v.dualOutputMode]);
+
+  const handleLabel = useCallback(
+    (value: string) => {
+      v.setMarkerName(p.hotkey.actionName, value);
+    },
+    [p.hotkey.actionName, v.setMarkerName],
+  );
+
+  const label = useMemo(() => v.getLabel(p.hotkey.actionName), [p.hotkey.actionName, v.getLabel]);
+
+  const icon = useMemo(
+    () => (p.hotkey?.display === 'vertical' ? 'icon-phone-case' : 'icon-desktop'),
+    [p.hotkey?.display],
+  );
+
+  return (
+    <>
+      {p.showLabel && (
+        <>
+          {showDualOutputLabel && <i className={icon} style={{ margin: '5px', opacity: 0.6 }} />}
+          {p.hotkey.isMarker ? (
+            <TextInput value={label} onChange={handleLabel} nowrap />
+          ) : (
+            p.hotkey.description || ''
+          )}
+        </>
+      )}
+    </>
+  );
+});

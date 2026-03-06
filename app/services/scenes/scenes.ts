@@ -170,7 +170,8 @@ export interface ISceneItemFolder extends ISceneItemNode {
 }
 
 class ScenesViews extends ViewHandler<IScenesState> {
-  @Inject() private scenesService: ScenesService;
+  @Inject() private sourcesService: SourcesService;
+  @Inject() private sceneCollectionsService: SceneCollectionsService;
 
   getScene(sceneId: string): Scene | null {
     const sceneModel = this.state.scenes[sceneId];
@@ -182,6 +183,14 @@ class ScenesViews extends ViewHandler<IScenesState> {
     const scene = this.getScene(sceneId);
     if (!scene) return [];
     return scene.getItems().filter(sceneItem => sceneItem.type === 'scene');
+  }
+
+  get sceneNodeMaps() {
+    return this.sceneCollectionsService.sceneNodeMaps || {};
+  }
+
+  get activeSceneNodeMap() {
+    return this.sceneNodeMaps[this.activeSceneId] || {};
   }
 
   get activeSceneId() {
@@ -264,12 +273,101 @@ class ScenesViews extends ViewHandler<IScenesState> {
     if (!scene) return false;
     return scene.getItemsForNode(sceneNodeId).some(i => i.visible);
   }
+
+  getNodeDisplay(nodeId: string, sceneId: string): TDisplayType {
+    const sceneNodeMap = sceneId ? this.sceneNodeMaps[sceneId] : this.activeSceneNodeMap;
+
+    if (sceneNodeMap && Object.values(sceneNodeMap).includes(nodeId)) {
+      return 'vertical';
+    }
+
+    // return horizontal by default because if the sceneNodeMap doesn't exist
+    // dual output has never been toggled on with this scene active
+    return 'horizontal';
+  }
+
+  getHorizontalNodeId(verticalNodeId: string, sceneId?: string): string | undefined {
+    const sceneNodeMap = sceneId ? this.sceneNodeMaps[sceneId] : this.activeSceneNodeMap;
+    if (!sceneNodeMap) return;
+
+    return Object.keys(sceneNodeMap).find(
+      (horizontalNodeId: string) => sceneNodeMap[horizontalNodeId] === verticalNodeId,
+    );
+  }
+
+  getVerticalNodeId(horizontalNodeId: string, sceneId?: string): string | undefined {
+    const sceneNodeMap = sceneId ? this.sceneNodeMaps[sceneId] : this.activeSceneNodeMap;
+    if (!sceneNodeMap) return;
+
+    return Object.values(sceneNodeMap).find(
+      (verticalNodeId: string) => sceneNodeMap[horizontalNodeId] === verticalNodeId,
+    );
+  }
+
+  getDualOutputPartnerId(sceneNodeId: string): string | undefined {
+    const partnerId = this.getHorizontalNodeId(sceneNodeId) ?? this.getVerticalNodeId(sceneNodeId);
+    return partnerId;
+  }
+
+  getDualOutputPartnerItem(sceneNodeId: string): SceneItem | null {
+    const partnerId = this.getDualOutputPartnerId(sceneNodeId);
+    if (!partnerId) return null;
+    return this.getSceneItem(partnerId);
+  }
+
+  getDualOutputPartnerNode(sceneNodeId: string): TSceneNode | null {
+    const partnerId = this.getDualOutputPartnerId(sceneNodeId);
+    if (!partnerId) return null;
+    return this.getSceneNode(partnerId);
+  }
+
+  async toggleNodeVisibility(sceneNodeId: string, visible?: boolean) {
+    const node: TSceneNode | null = this.getSceneNode(sceneNodeId);
+    if (!node) return;
+
+    // Handle node visibility
+    if (node instanceof SceneItem) {
+      const partnerSceneItem = this.getDualOutputPartnerItem(sceneNodeId);
+      if (!partnerSceneItem) {
+        console.error(
+          'Could not find dual output partner scene item for scene item with id',
+          sceneNodeId,
+        );
+        return;
+      }
+
+      const toggleVisible = visible ?? !node.visible;
+      if (toggleVisible && partnerSceneItem.visible) {
+        // Trigger state change for a visible partner node so that sources with video will sync
+        partnerSceneItem.setVisibility(false);
+        await new Promise(resolve => setTimeout(resolve, 50));
+        node.setVisibility(true);
+        partnerSceneItem.setVisibility(true);
+      } else {
+        node.setVisibility(toggleVisible);
+      }
+
+      // Sync audio for dual output scene item. This is mostly important when hiding a source so that audio
+      // will not continue to play from the source in the opposite display.
+      if (node.getModel().audio) {
+        this.sourcesService.setMuted(partnerSceneItem.sourceId, !toggleVisible);
+      }
+    } else {
+      // To toggle a folder's visibility, toggle the visibility of the child nodes
+      const items = node?.getItems() ?? [];
+      const isFolderVisible = items.some(i => i.visible);
+      items.forEach(i => {
+        const visibility = visible ?? !isFolderVisible;
+        i.setVisibility(visibility);
+        this.toggleNodeVisibility(i.id, visibility);
+      });
+    }
+  }
 }
 
 @InitAfter('DualOutputService')
 export class ScenesService extends StatefulService<IScenesState> {
   @Inject() private dualOutputService: DualOutputService;
-  @Inject() private sceneCollectionsService: SceneCollectionsService;
 
   static initialState: IScenesState = {
     activeSceneId: '',
@@ -340,7 +438,7 @@ export class ScenesService extends StatefulService<IScenesState> {
         .slice()
         .reverse()
         .forEach(item => {
-          const display = item?.display ?? this.dualOutputService.views.getNodeDisplay(item.id, id);
+          const display = item?.display ?? this.views.getNodeDisplay(item.id, id);
 
           const newItem = newScene.addSource(item.sourceId, { display });
 

@@ -169,6 +169,10 @@ class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
     return this.state.dualOutputMode && this.activeDisplays.vertical && !this.state.isLoading;
   }
 
+  get showBothDisplays() {
+    return this.showHorizontalDisplay && this.showVerticalDisplay;
+  }
+
   get onlyVerticalDisplayActive() {
     return this.activeDisplays.vertical && !this.activeDisplays.horizontal;
   }
