@@ -780,6 +780,10 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     }
   }
 
+  isValidEncoder(streamType: 'Stream' | 'StreamSecond' | 'Both') {
+    return obs.NodeObs.OBS_settings_isValidEncoder(streamType);
+  }
+
   isEnhancedBroadcasting() {
     return obs.NodeObs.OBS_settings_isEnhancedBroadcasting();
   }
