@@ -65,7 +65,8 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
       >
         <CheckboxInput label={$t('Stream features branded content')} {...bind.isBrandedContent} />
       </InputWrapper>
-      {process.platform !== 'darwin' && (
+      {(process.platform !== 'darwin' ||
+        (process.platform === 'darwin' && process.arch === 'arm64')) && (
         <InputWrapper
           layout={p.layout}
           className={cx(styles.twitchCheckbox, { [styles.hideLabel]: p.layout === 'vertical' })}
