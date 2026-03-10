@@ -19,6 +19,7 @@ import { useGoLiveSettings, useGoLiveSettingsRoot } from './useGoLiveSettings';
 import { inject } from 'slap';
 import RecordingSwitcher from './RecordingSwitcher';
 import { promptAction } from 'components-react/modals';
+import TwitterInput from './Twitter';
 
 export default function GoLiveWindow() {
   const { lifecycle, form } = useGoLiveSettingsRoot().extend(module => ({
@@ -69,6 +70,7 @@ function ModalFooter() {
     hasIncompatibleCodec,
     streamShiftForceGoLive,
     codec,
+    showTweet,
     checkIsLive,
     forceStreamShiftGoLive,
     goLiveWithDefaultCodec,
@@ -116,6 +118,8 @@ function ModalFooter() {
     showSettings() {
       this.settingsService.actions.showSettings('Output');
     },
+
+    showTweet: module.primaryPlatform && module.primaryPlatform !== 'twitter',
   }));
 
   const [isFetchingStreamStatus, setIsFetchingStreamStatus] = useState(false);
@@ -234,7 +238,10 @@ function ModalFooter() {
 
   return (
     <Form layout={'inline'}>
-      {!isDualOutputMode && shouldShowConfirm && <RecordingSwitcher />}
+      <div className={styles.footerContent}>
+        {showTweet && <TwitterInput />}
+        {!isDualOutputMode && shouldShowConfirm && <RecordingSwitcher />}
+      </div>
       {/* CLOSE BUTTON */}
       <Button onClick={close}>{$t('Close')}</Button>
 

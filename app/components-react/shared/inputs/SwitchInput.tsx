@@ -17,6 +17,7 @@ export type TSwitchInputProps = TSlobsInputProps<
     size?: 'small' | 'default';
     color?: 'primary' | 'secondary';
     nolabel?: boolean;
+    noLabelMargin?: boolean;
     checkmark?: boolean;
     skipWrapperAttrs?: boolean;
   },
@@ -42,7 +43,7 @@ export const SwitchInput = InputComponent((p: TSwitchInputProps) => {
     <InputWrapper {...attrs}>
       <Form.Item colon={false} aria-label={p.label} style={p.style}>
         {!p.nolabel && labelAlign === 'left' && (
-          <span style={{ marginRight: '10px' }}>{p.label}</span>
+          <span className={cx({ [styles.leftLabel]: !p.noLabelMargin })}>{p.label}</span>
         )}
         <Switch
           checked={inputAttrs.value}
@@ -53,11 +54,12 @@ export const SwitchInput = InputComponent((p: TSwitchInputProps) => {
             [styles.checkmark]: p?.checkmark,
             [styles.secondarySwitch]: p?.color === 'secondary',
             [styles.noLabel]: p?.nolabel,
+            [styles.noLabelMargin]: p?.noLabelMargin,
           })}
           checkedChildren={p?.checkmark ? <i className="icon-check-mark" /> : undefined}
         />
         {!p.nolabel && labelAlign === 'right' && (
-          <span style={{ marginLeft: '10px' }}>{p.label}</span>
+          <span className={cx({ [styles.rightLabel]: !p.noLabelMargin })}>{p.label}</span>
         )}
       </Form.Item>
     </InputWrapper>

@@ -309,10 +309,7 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
     >
       <div
         ref={containerRef}
-        className={cx('single-output-card', styles.platformSwitcher, {
-          [styles.platformDisabled]: !p.enabled,
-          [styles.platformEnabled]: p.enabled,
-        })}
+        className={cx('single-output-card', styles.platformSwitcher)}
         onClick={onClickHandler}
       >
         <div className={styles.destinationInfo}>

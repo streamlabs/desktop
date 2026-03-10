@@ -48,6 +48,7 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
           uncontrolled
           style={{ marginRight: '10px' }}
           label={v.isDualOutputMode ? $t('Record Stream in') : $t('Record Stream')}
+          noLabelMargin
           layout="horizontal"
           checkmark
           disabled={v.useAiHighlighter}

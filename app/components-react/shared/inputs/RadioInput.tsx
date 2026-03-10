@@ -30,7 +30,7 @@ interface ICustomRadioGroupProps {
   className?: string;
   gapsize?: number;
   alignIcons?: 'left' | 'center' | 'right';
-  iconsBg?: boolean;
+  buttonStyle?: 'solid' | 'outline';
 }
 
 type TRadioInputProps = TSlobsInputProps<ICustomRadioGroupProps, string, {}>;
@@ -52,7 +52,6 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
         [styles.iconsLeft]: p.alignIcons === 'left',
         [styles.iconsCenter]: p.alignIcons === 'center',
         [styles.iconsRight]: p.alignIcons === 'right',
-        [styles.iconsBg]: p.iconsBg,
         [styles.nomargin]: p.nomargin,
       })}
     >
@@ -65,7 +64,7 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           onChange={e => p.onChange && p.onChange(e.target.value)}
           options={p.options}
           optionType="button"
-          buttonStyle="solid"
+          buttonStyle={p.buttonStyle}
           disabled={p.disabled}
           className={p.className}
           style={p?.style}
@@ -79,9 +78,12 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           value={p.value}
           defaultValue={p.defaultValue}
           onChange={e => p.onChange && p.onChange(e.target.value)}
-          className={cx(p.className, styles.iconRadio)}
+          className={cx(p.className, styles.iconRadio, {
+            [styles.iconsBg]: p.buttonStyle === 'solid',
+          })}
           style={p?.style}
           disabled={p.disabled}
+          buttonStyle={p.buttonStyle}
         >
           {p.options.map((option: ICustomRadioOption) => {
             return (
@@ -113,6 +115,7 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           onChange={e => p.onChange && p.onChange(e.target.value)}
           className={p.className}
           style={p?.style}
+          buttonStyle={p.buttonStyle}
         >
           <Space size={p?.gapsize ?? undefined} direction={p?.direction ?? 'vertical'}>
             {p.options.map(option => {

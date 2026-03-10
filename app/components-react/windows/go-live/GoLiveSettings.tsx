@@ -6,7 +6,6 @@ import { $t } from 'services/i18n';
 import { Row, Col } from 'antd';
 import { Section } from './Section';
 import PlatformSettings from './PlatformSettings';
-import TwitterInput from './Twitter';
 import OptimizedProfileSwitcher from './OptimizedProfileSwitcher';
 import Spinner from 'components-react/shared/Spinner';
 import GoLiveError from './GoLiveError';
@@ -37,7 +36,6 @@ export default function GoLiveSettings() {
     error,
     isLoading,
     canUseOptimizedProfile,
-    showTweet,
     hasMultiplePlatforms,
     enabledPlatforms,
     primaryChat,
@@ -67,8 +65,6 @@ export default function GoLiveSettings() {
       get showBottomAddDestination() {
         return module.state.linkedPlatforms.length < 2;
       },
-
-      showTweet: module.primaryPlatform && module.primaryPlatform !== 'twitter',
 
       addDestination() {
         this.settingsService.actions.showSettings('Stream');
@@ -118,7 +114,9 @@ export default function GoLiveSettings() {
             <div className={cx(styles.columnHeader, { [styles.ultraColumnHeader]: isPrime })}>
               {headerText}
             </div>
-            {!isPrime && <AddDestinationButton type="banner" className={styles.addDestination} />}
+            {!isPrime && (
+              <AddDestinationButton type="banner" className={styles.addDestinationBanner} />
+            )}
 
             <Scrollable className={styles.switcherWrapper}>
               {showTopAddDestination && (
@@ -132,7 +130,7 @@ export default function GoLiveSettings() {
               {showBottomAddDestination && (
                 <AddDestinationButton
                   type="small"
-                  className={cx(styles.columnPadding, styles.bottomAddDestination)}
+                  className={cx(styles.columnPadding, styles.bottom)}
                   onClick={openPlatformSettings}
                 />
               )}
@@ -188,7 +186,6 @@ export default function GoLiveSettings() {
               {/* Spacer is as  scrollable padding-bottom */}
               <div className={styles.spacer} />
             </Scrollable>
-            {showTweet && <TwitterInput />}
           </>
         )}
       </Col>

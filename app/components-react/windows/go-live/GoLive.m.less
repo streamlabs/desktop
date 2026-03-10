@@ -180,20 +180,15 @@ i.destination-logo {
 .column-padding {
   padding: 0px 15px 15px 15px;
   margin: 0px 15px 0px 0px;
-
-  &.bottom-add-destination {
-    margin: 15px 15px 0px 15px !important;
-  }
 }
 
 .left-column {
   height: 100%;
   width: 100%;
-  border-right: 1px solid var(--border);
   padding: 0px !important;
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-column);
+  background-color: var(--background);
   justify-content: space-between;
 }
 
@@ -203,7 +198,6 @@ i.destination-logo {
   width: calc(100% - 30px);
   position: sticky;
   bottom: 0px;
-  background-color: var(--bg-column);
 }
 
 .dual-output-go-live {
@@ -268,27 +262,25 @@ i.destination-logo {
   }
 }
 
-.add-destination {
+.add-destination-banner {
   margin: 0px;
 }
 
-.add-destination-btn {
-  width: 100%;
-  border: 1px dashed var(--border);
-  border-radius: 4px;
-  min-height: 58px;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  text-align: center;
-  position: relative;
-  transition: border 0.3s, box-shadow 0.3s;
+// .add-destination {
+//   background-color: var(--button);
+//   transition: box-shadow 0.3s;
 
-  &:hover {
-    border-color: (var(--button));
-    box-shadow: 0 0 50px rgba(255, 255, 255, 0.1) inset;
-  }
+//   &:hover {
+//     box-shadow: 0 0 50px rgba(255, 255, 255, 0.1) inset;
+//   }
+
+//   &.bottom {
+//     margin: 15px 15px 0px 15px !important;
+//   }
+// }
+
+button.bottom {
+  margin: 15px 15px 0px 15px !important;
 }
 
 .right-text {
@@ -345,7 +337,6 @@ i.destination-logo {
   border: 0px;
   padding-bottom: 5px;
   font-weight: 500;
-  color: var(--secondary-bg);
 
   :global(.ant-select:not(.ant-select-customize-input) .ant-select-selector) {
     border: 0px !important;
@@ -517,4 +508,12 @@ i.destination-logo {
 
 .switcher-wrapper {
   height: 100%;
+}
+
+.footer-content {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  flex: 1;
 }
