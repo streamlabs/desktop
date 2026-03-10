@@ -420,6 +420,22 @@ const DEAD_BY_DAYLIGHT: IGameConfig = {
   },
 };
 
+const MARATHON: IGameConfig = {
+  name: EGame.MARATHON,
+  label: 'Marathon',
+  gameModes: '',
+  thumbnail: `${thumbnailPath}${EGame.MARATHON}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#cffb54',
+    artwork: `${heroPath}${EGame.MARATHON}.png`,
+    backgroundColor: '#000000',
+  },
+};
+
 const UNSET_CONFIG: IGameConfig = {
   name: EGame.UNSET,
   label: 'unset',
@@ -452,6 +468,7 @@ const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.ROCKET_LEAGUE]: ROCKET_LEAGUE,
   [EGame.DOTA_2]: DOTA_2,
   [EGame.DEAD_BY_DAYLIGHT]: DEAD_BY_DAYLIGHT,
+  [EGame.MARATHON]: MARATHON,
   [EGame.UNSET]: UNSET_CONFIG,
 };
 
