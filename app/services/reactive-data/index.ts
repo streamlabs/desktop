@@ -116,12 +116,7 @@ export class ReactiveDataService extends Service {
       });
 
       // load everything into our initial state
-      this.fetchFullState().then(res => {
-        this.log('Fetched full user state:', JSON.stringify(res).slice(0, 100) + '...');
-        const stateFlat = toDotNotation(res);
-        this.state.invalidateStateCache();
-        this.writeState({ stateFlatJson: JSON.stringify(stateFlat) });
-      });
+      this.fetchAndApplyFullState();
     });
 
     this.userService.userLogout.subscribe(() => {
@@ -139,15 +134,7 @@ export class ReactiveDataService extends Service {
 
       if (!this.userService.isLoggedIn) return;
 
-      this.fetchFullState().then(res => {
-        this.log(
-          'Re-fetched user state after collection switch:',
-          JSON.stringify(res).slice(0, 100) + '...',
-        );
-        const stateFlat = toDotNotation(res);
-        this.state.invalidateStateCache();
-        this.writeState({ stateFlatJson: JSON.stringify(stateFlat) });
-      });
+      this.fetchAndApplyFullState();
     });
 
     // subscribe to websocket events to keep state updated
@@ -293,6 +280,37 @@ export class ReactiveDataService extends Service {
 
   getStateKeysForSource(sourceId: string): string[] {
     return Array.from(this.sourceStateKeyInterest.get(sourceId) ?? []);
+  }
+
+  private async fetchAndApplyFullState() {
+    const res = await this.fetchFullState();
+    this.log('Fetched full user state:', JSON.stringify(res).slice(0, 100) + '...');
+    const stateFlat = toDotNotation(res);
+    this.state.invalidateStateCache();
+    this.writeState({ stateFlatJson: JSON.stringify(stateFlat) });
+    this.pushStateToSources();
+  }
+
+  private pushStateToSources() {
+    for (const [sourceId, keys] of this.sourceStateKeyInterest.entries()) {
+      const sourceView = this.sourcesService.views.getSource(sourceId);
+      const source = sourceView?.getObsInput();
+      if (!source) continue;
+
+      const keysArr = Array.from(keys);
+      const s = Object.fromEntries(
+        Object.entries(this.state.stateFlat ?? {}).filter(([k]) => keysArr.includes(k)),
+      );
+
+      const payload = JSON.stringify({
+        type: 'state.update',
+        message: toDotNotation(s),
+        key: keysArr.join(','),
+        event_id: uuid(),
+      });
+
+      source.sendMessage({ message: payload });
+    }
   }
 
   private writeState(patch: Partial<{ schemaFlatJson: string; stateFlatJson: string }>) {
