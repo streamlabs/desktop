@@ -6,6 +6,7 @@ import {
   UserService,
   WebsocketService,
 } from 'app-services';
+import { SceneCollectionsService } from 'services/scene-collections';
 import { authorizedHeaders, jfetch } from 'util/requests';
 import { Subscription } from 'rxjs';
 import * as obs from '../../../obs-api';
@@ -89,6 +90,7 @@ export class ReactiveDataService extends Service {
   @Inject() urlService: UrlService;
   @Inject() websocketService: WebsocketService;
   @Inject() sourcesService: SourcesService;
+  @Inject() sceneCollectionsService: SceneCollectionsService;
 
   state = ReactiveDataState.inject();
 
@@ -126,6 +128,26 @@ export class ReactiveDataService extends Service {
       this.writeState({ schemaFlatJson: null, stateFlatJson: null });
       this.state.invalidateSchemaCache();
       this.state.invalidateStateCache();
+    });
+
+    this.sceneCollectionsService.collectionWillSwitch.subscribe(() => {
+      this.sourceStateKeyInterest.clear();
+    });
+
+    this.sceneCollectionsService.collectionSwitched.subscribe(() => {
+      this.sourceStateKeyInterest.clear();
+
+      if (!this.userService.isLoggedIn) return;
+
+      this.fetchFullState().then(res => {
+        this.log(
+          'Re-fetched user state after collection switch:',
+          JSON.stringify(res).slice(0, 100) + '...',
+        );
+        const stateFlat = toDotNotation(res);
+        this.state.invalidateStateCache();
+        this.writeState({ stateFlatJson: JSON.stringify(stateFlat) });
+      });
     });
 
     // subscribe to websocket events to keep state updated
@@ -212,7 +234,7 @@ export class ReactiveDataService extends Service {
 
             if (!s) {
               this.log('No state available yet, skipping response to source');
-              return;
+              continue;
             }
 
             const message = toDotNotation(s);
@@ -225,7 +247,7 @@ export class ReactiveDataService extends Service {
             });
 
             source.sendMessage({ message: payload });
-            return;
+            continue;
           }
         }
       }
