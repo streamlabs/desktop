@@ -1,5 +1,5 @@
 import { Select, Row, Col } from 'antd';
-import React, { ReactNode, useRef } from 'react';
+import React, { ReactNode, useRef, useMemo } from 'react';
 import { InputComponent, TSlobsInputProps, useInput, ValuesOf } from './inputs';
 import InputWrapper from './InputWrapper';
 import { RefSelectProps, SelectProps } from 'antd/lib/select';
@@ -26,6 +26,11 @@ const ANT_SELECT_FEATURES = [
   'dropdownMatchSelectWidth',
 ] as const;
 
+export interface IListGroup<TValue> {
+  label: string;
+  options: IListOption<TValue>[];
+}
+
 // define custom props
 export interface ICustomListProps<TValue> {
   hasImage?: boolean;
@@ -33,19 +38,25 @@ export interface ICustomListProps<TValue> {
   optionRender?: (opt: IListOption<TValue>) => ReactNode;
   labelRender?: (opt: IListOption<TValue>) => ReactNode;
   onBeforeSearch?: (searchStr: string) => unknown;
-  options?: IListOption<TValue>[];
+  options?: IListOption<TValue>[] | IListGroup<TValue>[];
   description?: string;
   nolabel?: boolean;
   filter?: string;
 }
 
-// define a type for the component's props
-export type TListInputProps<TValue> = TSlobsInputProps<
+/**
+ * enable options to be either a flat list or grouped list
+ */
+type TListInputInternalProps<TValue> = TSlobsInputProps<
   ICustomListProps<TValue>,
   TValue,
   SelectProps<string>,
   ValuesOf<typeof ANT_SELECT_FEATURES>
 >;
+
+export type TListInputProps<TValue> = Omit<TListInputInternalProps<TValue>, 'options'> & {
+  options?: IListOption<TValue>[];
+};
 
 /**
  * data for a single option
@@ -59,7 +70,12 @@ export interface IListOption<TValue> {
   image?: string | ReactNode;
 }
 
-export const ListInput = InputComponent(<T extends any>(p: TListInputProps<T>) => {
+// checks if data is a list of Groups
+function isGroupList<T>(data: IListOption<T>[] | IListGroup<T>[]): data is IListGroup<T>[] {
+  return data.length > 0 && 'options' in data[0] && Array.isArray(data[0].options);
+}
+
+export const ListInput = InputComponent(<T extends any>(p: TListInputInternalProps<T>) => {
   const { inputAttrs, wrapperAttrs, form } = useInput('list', p, ANT_SELECT_FEATURES);
 
   // TODO: allow to use this component outside a Form
@@ -89,7 +105,25 @@ export const ListInput = InputComponent(<T extends any>(p: TListInputProps<T>) =
     return $el.closest('.os-content, body')! as HTMLElement;
   }
 
-  const selectedOption = options?.find(opt => opt.value === p.value);
+  const hasGroups = useMemo(() => {
+    return options && isGroupList<T>(options);
+  }, [options]);
+
+  const selectedOption = useMemo(() => {
+    if (!options || options.length === 0) return undefined;
+
+    if (hasGroups) {
+      const groups = options as IListGroup<T>[];
+      for (const group of groups) {
+        const found = group.options.find(opt => opt.value === p.value);
+        if (found) return found;
+      }
+    } else {
+      const flatOptions = options as IListOption<T>[];
+      return flatOptions.find(opt => opt.value === p.value);
+    }
+    return undefined;
+  }, [options, hasGroups, p.value]);
 
   return (
     <InputWrapper
@@ -123,7 +157,18 @@ export const ListInput = InputComponent(<T extends any>(p: TListInputProps<T>) =
         }
         dropdownMatchSelectWidth={p.dropdownMatchSelectWidth}
       >
-        {options && options.map((opt, ind) => renderOption(opt, ind, p))}
+        {/* render groups */}
+        {hasGroups &&
+          (options as IListGroup<T>[]).map(group => (
+            <Select.OptGroup key={group.label} label={group.label}>
+              {group.options.map((opt, ind) => renderOption(opt, ind, p))}
+            </Select.OptGroup>
+          ))}
+
+        {/* render flat options */}
+        {!hasGroups &&
+          options &&
+          (options as IListOption<T>[]).map((opt, ind) => renderOption(opt, ind, p))}
       </Select>
     </InputWrapper>
   );

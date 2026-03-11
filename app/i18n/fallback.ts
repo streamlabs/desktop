@@ -56,6 +56,7 @@ const fallbackDictionary = {
   ...require('./en-US/widget-poll.json'),
   ...require('./en-US/widget-emote-wall.json'),
   ...require('./en-US/widget-chat-highlight.json'),
+  ...require('./en-US/widget-game-pulse.json'),
   ...require('./en-US/widgets.json'),
   ...require('./en-US/youtube.json'),
   ...require('./en-US/grow.json'),

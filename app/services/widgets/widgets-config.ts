@@ -10,7 +10,9 @@ export type TWidgetType =
   | WidgetType.DonationTicker
   | WidgetType.CustomWidget
   | WidgetType.ChatBox
-  | WidgetType.SponsorBanner;
+  | WidgetType.SponsorBanner
+  | WidgetType.EventList
+  | WidgetType.GamePulseWidget;
 
 export interface IWidgetConfig {
   type: TWidgetType;
@@ -259,9 +261,32 @@ export function getWidgetsConfig(
       customFieldsAllowed: true,
     },
 
-    // EventList: {
-    //
-    // },
+    [WidgetType.EventList]: {
+      type: WidgetType.EventList,
+
+      defaultTransform: {
+        width: 600,
+        height: 600,
+        x: 1,
+        y: 0,
+        anchor: AnchorPoint.NorthEast,
+      },
+
+      settingsWindowSize: {
+        width: 850,
+        height: 700,
+      },
+
+      url: `https://${host}/widgets/event-list/v1/${token}`,
+      previewUrl: `https://${host}/widgets/event-list/v1/${token}?simulate=1`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/eventlist`,
+      dataFetchUrl: `https://${host}/api/v5/slobs/widget/eventlist`,
+      settingsSaveUrl: `https://${host}/api/v5/slobs/widget/eventlist`,
+      settingsUpdateEvent: 'eventListSettingsUpdate',
+      customCodeAllowed: true,
+      customFieldsAllowed: true,
+      testers: ['follow', 'sub', 'donation', 'bits'],
+    },
 
     // MediaShare: {
     //
@@ -335,6 +360,32 @@ export function getWidgetsConfig(
       settingsUpdateEvent: 'customWidgetSettingsUpdate',
       customCodeAllowed: true,
       customFieldsAllowed: true,
+    },
+
+    [WidgetType.GamePulseWidget]: {
+      type: WidgetType.GamePulseWidget,
+
+      defaultTransform: {
+        width: 1920,
+        height: 1080,
+        x: 0,
+        y: 0,
+        anchor: AnchorPoint.NorthWest,
+      },
+
+      settingsWindowSize: {
+        width: 800,
+        height: 800,
+      },
+      useNewWidgetAPI: true,
+      url: `https://${host}/api/v5/widgets/desktop/game-pulse`,
+      previewUrl: `https://${host}/widgets/preview/game-pulse/${token}?simulate=1`,
+      webSettingsUrl: `https://${host}/dashboard#/widgets/game-pulse`,
+      dataFetchUrl: `https://${host}/api/v5/widgets/desktop/game-pulse`,
+      settingsSaveUrl: `https://${host}/api/v5/widgets/desktop/game-pulse`,
+      settingsUpdateEvent: 'gamePulseSettingsUpdate',
+      customCodeAllowed: false,
+      customFieldsAllowed: false,
     },
   };
 }

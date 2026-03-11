@@ -56,7 +56,9 @@ export type TAnalyticsEvent =
   | 'DualOutputRecording' // @@ TODO add analytics for DualOutputRecording
   | 'VerticalRecording' // @@ TODO add analytics for VerticalRecording
   | 'Ultra'
-  | 'Onboarding';
+  | 'Onboarding'
+  | 'WidgetAdded'
+  | 'GamePulse';
 
 // Refls are used as uuids for ultra components and should be updated for new ulta components.
 export type TUltraRefl =
