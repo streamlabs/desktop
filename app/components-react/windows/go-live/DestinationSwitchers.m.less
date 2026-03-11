@@ -66,6 +66,10 @@
     display: flex;
     flex-direction: row;
     width: 100%;
+
+    :global(.ant-form-item) {
+      margin-bottom: 0px;
+    }
   }
 
   .col-info {
@@ -112,19 +116,12 @@
 .platform-handle {
   font-size: 12px;
   line-height: 18px;
+  margin-top: 5px;
 }
 
 .display-selector-wrapper {
-  transition: visibility 0.3s, opacity 0.3s;
-
   &.hidden {
     display: none;
-    visibility: hidden;
-    opacity: 0;
-  }
-
-  &.disabled {
-    color: var(--teal-dark);
   }
 
   :global(.ant-form-item) {
@@ -133,6 +130,7 @@
 }
 
 .display-selector {
+  margin-top: 6px;
   margin-bottom: 0px !important;
   display: flex;
   align-self: flex-end;

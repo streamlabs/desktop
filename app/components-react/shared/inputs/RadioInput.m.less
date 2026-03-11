@@ -1,21 +1,12 @@
 @import '../../../styles/index.less';
 
 .icon-radio {
-  flex: 1;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-
   i.icon-toggle {
     padding: 0px 1px;
   }
 
   :global(.ant-row.ant-form-item) {
     margin-right: 0px !important;
-  }
-
-  :global(.ant-radio-wrapper::after) {
-    width: inherit;
   }
 
   :global(.ant-radio-wrapper) {
@@ -37,14 +28,50 @@
   }
 
   :global(.ant-radio) {
-    position: absolute;
-    left: -9999px;
-    overflow: hidden;
+    display: none;
+    //   position: absolute;
+    //   left: -9999px;
+    //   overflow: hidden;
   }
 
-  :global(.ant-radio) + * {
-    padding: 0px;
-    overflow: hidden;
+  // :global(.ant-radio) + * {
+  //   padding: 0px;
+  //   overflow: hidden;
+  // }
+}
+
+.icon-default:extend(.icon-radio) {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.icon-button:extend(.icon-radio) {
+  background-color: var(--dark-background);
+  border-radius: 4px;
+  padding: 4px;
+
+  :global(.ant-radio-wrapper) {
+    margin: 0px !important;
+    padding: 4px 0px;
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+  }
+
+  :global(.ant-radio-wrapper):last-child {
+    border-top-left-radius: unset;
+    border-bottom-left-radius: unset;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+  }
+
+  :global(.ant-radio-wrapper-checked) {
+    background-color: var(--button);
+
+    i {
+      transition: unset;
+    }
   }
 }
 

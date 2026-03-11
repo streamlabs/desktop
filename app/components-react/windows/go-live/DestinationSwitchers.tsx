@@ -333,7 +333,7 @@ const DestinationSwitcher = React.forwardRef<{}, IDestinationSwitcherProps>((p, 
 
             <div
               className={cx(styles.displaySelectorWrapper, {
-                [styles.hidden]: p.isStreamShiftMode,
+                [styles.hidden]: p.isStreamShiftMode || !p.enabled,
               })}
               onClick={e => e.stopPropagation()}
             >

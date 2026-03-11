@@ -21,7 +21,6 @@ interface ICustomRadioGroupProps {
   nowrap?: boolean;
   nomargin?: boolean;
   options: ICustomRadioOption[];
-  buttons?: boolean;
   icons?: boolean;
   style?: CSSProperties;
   value?: string;
@@ -30,7 +29,7 @@ interface ICustomRadioGroupProps {
   className?: string;
   gapsize?: number;
   alignIcons?: 'left' | 'center' | 'right';
-  buttonStyle?: 'solid' | 'outline';
+  optionType?: 'default' | 'button';
 }
 
 type TRadioInputProps = TSlobsInputProps<ICustomRadioGroupProps, string, {}>;
@@ -42,6 +41,8 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
     ...inputAttrs,
     ...pick(p, 'name'),
   };
+
+  const optionType = p.optionType ?? 'default';
 
   return (
     <InputWrapper
@@ -55,7 +56,7 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
         [styles.nomargin]: p.nomargin,
       })}
     >
-      {p.buttons && (
+      {optionType === 'button' && !p.icons && (
         <Radio.Group
           {...inputProps}
           data-title={p.label}
@@ -64,7 +65,6 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           onChange={e => p.onChange && p.onChange(e.target.value)}
           options={p.options}
           optionType="button"
-          buttonStyle={p.buttonStyle}
           disabled={p.disabled}
           className={p.className}
           style={p?.style}
@@ -79,11 +79,12 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           defaultValue={p.defaultValue}
           onChange={e => p.onChange && p.onChange(e.target.value)}
           className={cx(p.className, styles.iconRadio, {
-            [styles.iconsBg]: p.buttonStyle === 'solid',
+            [styles.iconDefault]: optionType === 'default',
+            [styles.iconButton]: optionType === 'button',
           })}
           style={p?.style}
           disabled={p.disabled}
-          buttonStyle={p.buttonStyle}
+          optionType={p.optionType}
         >
           {p.options.map((option: ICustomRadioOption) => {
             return (
@@ -105,7 +106,7 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           })}
         </Radio.Group>
       )}
-      {!p.icons && !p.buttons && (
+      {!p.icons && optionType === 'default' && (
         <Radio.Group
           {...inputProps}
           data-title={p.label}
@@ -115,7 +116,6 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           onChange={e => p.onChange && p.onChange(e.target.value)}
           className={p.className}
           style={p?.style}
-          buttonStyle={p.buttonStyle}
         >
           <Space size={p?.gapsize ?? undefined} direction={p?.direction ?? 'vertical'}>
             {p.options.map(option => {

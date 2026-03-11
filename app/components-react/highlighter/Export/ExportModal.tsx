@@ -450,7 +450,7 @@ function ExportFlow({
                       { value: '1080', label: '1080p' },
                     ]}
                     onChange={setResolution}
-                    buttons={true}
+                    optionType="button"
                   />
                 </div>
 
@@ -464,7 +464,7 @@ function ExportFlow({
                       { value: '60', label: '60 FPS' },
                     ]}
                     onChange={setFps}
-                    buttons={true}
+                    optionType="button"
                   />
                 </div>
 
@@ -479,7 +479,7 @@ function ExportFlow({
                       { value: 'slow', label: $t('Smaller File') },
                     ]}
                     onChange={setPreset}
-                    buttons={true}
+                    optionType="button"
                   />
                 </div>
               </div>
