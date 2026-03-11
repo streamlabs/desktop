@@ -104,11 +104,11 @@ export default function Settings() {
   }, []);
 
   function setCurrentTab(value: TCategoryName) {
+    if (!value) return;
     NavigationService.actions.setSettingsNavigation(value);
   }
 
   function handleMenuNavigation(event: MenuInfo) {
-    if (!event.key) return;
     setCurrentTab(event.key as TCategoryName);
   }
 
@@ -148,7 +148,6 @@ export default function Settings() {
     const filteredPages = includeUltra(searchStr)
       ? foundPages
       : foundPages.filter(page => page !== 'Ultra');
-    if (filteredPages.length === 0) return;
     setCurrentTab(filteredPages[0]);
   }
 
