@@ -108,6 +108,7 @@ export default function Settings() {
   }
 
   function handleMenuNavigation(event: MenuInfo) {
+    if (!event.key) return;
     setCurrentTab(event.key as TCategoryName);
   }
 
