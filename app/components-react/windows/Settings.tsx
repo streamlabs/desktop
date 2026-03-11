@@ -148,6 +148,7 @@ export default function Settings() {
     const filteredPages = includeUltra(searchStr)
       ? foundPages
       : foundPages.filter(page => page !== 'Ultra');
+    if (filteredPages.length === 0) return;
     setCurrentTab(filteredPages[0]);
   }
 
