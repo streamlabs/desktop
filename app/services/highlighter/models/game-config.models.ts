@@ -436,6 +436,22 @@ const MARATHON: IGameConfig = {
   },
 };
 
+const F1_25: IGameConfig = {
+  name: EGame.F1_25,
+  label: 'F1® 25',
+  gameModes: '',
+  thumbnail: `${thumbnailPath}${EGame.F1_25}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#d35459',
+    artwork: `${heroPath}${EGame.F1_25}.png`,
+    backgroundColor: '#151616',
+  },
+};
+
 const UNSET_CONFIG: IGameConfig = {
   name: EGame.UNSET,
   label: 'unset',
@@ -469,6 +485,7 @@ const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.DOTA_2]: DOTA_2,
   [EGame.DEAD_BY_DAYLIGHT]: DEAD_BY_DAYLIGHT,
   [EGame.MARATHON]: MARATHON,
+  [EGame.F1_25]: F1_25,
   [EGame.UNSET]: UNSET_CONFIG,
 };
 
