@@ -262,6 +262,8 @@ export class WidgetsService
         newPreviewSettings.url =
           config?.previewUrl || widget.getSettingsService().getApiSettings().previewUrl;
         const previewSource = widget.getPreviewSource();
+        // If there's no longer a preview source (ie window is closed) do nothing
+        if (!previewSource) return;
         previewSource.updateSettings(newPreviewSettings);
         previewSource.refresh();
       },
