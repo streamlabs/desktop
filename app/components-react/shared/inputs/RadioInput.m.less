@@ -60,3 +60,36 @@
     padding: 0px 1px;
   }
 }
+
+.full-width {
+  :global(.ant-form-item-control-input-content) {
+    flex: 1;
+  }
+
+  :global(.ant-radio-button-wrapper:first-child) {
+    flex: 1;
+  }
+
+  :global(.ant-radio-button-wrapper) {
+    background-color: var(--section-alt);
+    border-color: var(--section-alt);
+    color: var(--radio-button-text);
+  }
+
+  :global(.ant-radio-button-wrapper-checked) {
+    background-color: var(--button) !important;
+    border-color: var(--button) !important;
+    color: var(--title) !important;
+    font-weight: 400;
+    letter-spacing: 0.3px;
+  }
+
+  // :global(div.ant-radio-group-solid
+  //     > label.ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled)) {
+  //   color: var(--title);
+  // }
+
+  :global(.ant-radio-button-wrapper:focus-within) {
+    box-shadow: none;
+  }
+}

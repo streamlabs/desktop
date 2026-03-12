@@ -42,6 +42,7 @@ export interface ICustomListProps<TValue> {
   description?: string;
   nolabel?: boolean;
   filter?: string;
+  labelAlign?: 'left' | 'right';
 }
 
 /**
@@ -130,6 +131,7 @@ export const ListInput = InputComponent(<T extends any>(p: TListInputInternalPro
       {...wrapperAttrs}
       extra={p?.description ?? selectedOption?.description}
       nolabel={p?.nolabel}
+      labelAlign={p?.labelAlign}
     >
       <Select
         ref={$inputRef}

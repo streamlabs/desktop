@@ -2,7 +2,7 @@ import React, { CSSProperties } from 'react';
 import { InputComponent, TSlobsInputProps, useInput } from './inputs';
 import InputWrapper from './InputWrapper';
 import styles from './RadioInput.m.less';
-import { Radio, Space, Tooltip } from 'antd';
+import { Radio, Space, Tooltip, RadioGroupProps } from 'antd';
 import cx from 'classnames';
 import { pick } from 'lodash';
 
@@ -13,6 +13,7 @@ export interface ICustomRadioOption {
   defaultValue?: string;
   icon?: string;
   tooltip?: string;
+  content?: React.ReactElement;
 }
 
 interface ICustomRadioGroupProps {
@@ -28,9 +29,12 @@ interface ICustomRadioGroupProps {
   disabled?: boolean;
   className?: string;
   gapsize?: number;
+  wrapperStyle?: CSSProperties;
+  fullWidth?: boolean;
+  buttonStyle?: 'solid' | 'outline';
 }
 
-type TRadioInputProps = TSlobsInputProps<ICustomRadioGroupProps, string, {}>;
+type TRadioInputProps = TSlobsInputProps<ICustomRadioGroupProps, string, RadioGroupProps>;
 
 export const RadioInput = InputComponent((p: TRadioInputProps) => {
   const { inputAttrs, wrapperAttrs } = useInput('radio', p);
@@ -41,7 +45,7 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
   };
 
   return (
-    <InputWrapper {...wrapperAttrs} data-title={p.label}>
+    <InputWrapper {...wrapperAttrs} data-title={p.label} nolabel style={p.wrapperStyle}>
       {p.buttons && (
         <Radio.Group
           {...inputProps}
@@ -53,7 +57,7 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           optionType="button"
           buttonStyle="solid"
           disabled={p.disabled}
-          className={p.className}
+          className={cx(p.className, styles.fullWidth)}
           style={p?.style}
         />
       )}
@@ -97,6 +101,7 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
           value={p.value}
           defaultValue={p.defaultValue}
           onChange={e => p.onChange && p.onChange(e.target.value)}
+          buttonStyle={p.buttonStyle}
           className={p.className}
           style={p?.style}
         >
@@ -112,6 +117,7 @@ export const RadioInput = InputComponent((p: TRadioInputProps) => {
                   {option.label}
                   {option.description && <br />}
                   {option.description && <span style={{ fontSize: 12 }}>{option.description}</span>}
+                  {option.content && option.content}
                 </Radio>
               );
             })}

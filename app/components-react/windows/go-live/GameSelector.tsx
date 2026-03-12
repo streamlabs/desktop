@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, ReactNode } from 'react';
 import {
   getPlatformService,
   IGame,
@@ -11,7 +11,10 @@ import { IListOption } from '../../shared/inputs/ListInput';
 import { Services } from '../../service-provider';
 import { injectState, useModule } from 'slap';
 
-type TProps = TSlobsInputProps<{ platform: TPlatform; layout?: TInputLayout }, string>;
+type TProps = TSlobsInputProps<
+  { platform: TPlatform; layout?: TInputLayout; label?: ReactNode; labelAlign?: 'left' | 'right' },
+  string
+>;
 
 export default function GameSelector(p: TProps) {
   const { platform } = p;
@@ -125,7 +128,16 @@ export default function GameSelector(p: TProps) {
 
   return (
     <ListInput
-      label={label}
+      label={
+        p.label ? (
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            {label}
+            {p.label}
+          </div>
+        ) : (
+          label
+        )
+      }
       name={`${p.platform}Game`}
       value={selectedGameId}
       extra={p.extra}
@@ -147,6 +159,7 @@ export default function GameSelector(p: TProps) {
       notFoundContent={isSearching ? $t('Searching...') : $t('No matching game(s) found.')}
       allowClear
       layout={p.layout}
+      labelAlign={p.labelAlign}
       size="large"
     />
   );

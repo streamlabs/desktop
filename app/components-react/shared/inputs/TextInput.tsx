@@ -23,6 +23,7 @@ export type TTextInputProps = TSlobsInputProps<
     onMouseDown?: React.MouseEventHandler<HTMLInputElement>;
     inputRef?: React.Ref<Input>;
     isPassword?: boolean;
+    labelAlign?: 'left' | 'right';
   },
   string,
   InputProps,
@@ -40,7 +41,7 @@ export const TextInput = InputComponent((p: TTextInputProps) => {
     prefix: p.prefix,
   };
   return (
-    <InputWrapper {...wrapperAttrs}>
+    <InputWrapper {...wrapperAttrs} labelAlign={p.labelAlign}>
       {p.isPassword && <Input.Password {...textInputAttrs} />}
       {!p.isPassword && <Input {...textInputAttrs} />}
     </InputWrapper>

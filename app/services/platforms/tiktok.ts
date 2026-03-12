@@ -65,6 +65,7 @@ interface ITikTokStartStreamSettings {
   audienceType?: string;
   video?: IVideo;
   mode?: TOutputOrientation;
+  useStreamKey?: boolean | null;
 }
 
 interface ITikTokAudienceControls {
@@ -101,6 +102,7 @@ export class TikTokService
       streamKey: '',
       display: 'vertical',
       game: '',
+      useStreamKey: null,
     },
     broadcastId: '',
     username: '',
@@ -177,6 +179,10 @@ export class TikTokService
 
   get defaultGame(): IGame {
     return { id: 'tiktok-other', name: 'Other' };
+  }
+
+  get useStreamKey(): boolean {
+    return this.state.settings.useStreamKey;
   }
 
   /**
@@ -535,6 +541,7 @@ export class TikTokService
     } catch (e: unknown) {
       console.warn(this.getErrorMessage(e));
       this.SET_LIVE_SCOPE('relog');
+
       return EPlatformCallResult.TikTokScopeOutdated;
     }
   }
