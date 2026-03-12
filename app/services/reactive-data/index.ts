@@ -6,6 +6,7 @@ import {
   UserService,
   WebsocketService,
 } from 'app-services';
+import { SceneCollectionsService } from 'services/scene-collections';
 import { authorizedHeaders, jfetch } from 'util/requests';
 import { Subscription } from 'rxjs';
 import * as obs from '../../../obs-api';
@@ -89,6 +90,7 @@ export class ReactiveDataService extends Service {
   @Inject() urlService: UrlService;
   @Inject() websocketService: WebsocketService;
   @Inject() sourcesService: SourcesService;
+  @Inject() sceneCollectionsService: SceneCollectionsService;
 
   state = ReactiveDataState.inject();
 
@@ -114,18 +116,25 @@ export class ReactiveDataService extends Service {
       });
 
       // load everything into our initial state
-      this.fetchFullState().then(res => {
-        this.log('Fetched full user state:', JSON.stringify(res).slice(0, 100) + '...');
-        const stateFlat = toDotNotation(res);
-        this.state.invalidateStateCache();
-        this.writeState({ stateFlatJson: JSON.stringify(stateFlat) });
-      });
+      this.fetchAndApplyFullState();
     });
 
     this.userService.userLogout.subscribe(() => {
       this.writeState({ schemaFlatJson: null, stateFlatJson: null });
       this.state.invalidateSchemaCache();
       this.state.invalidateStateCache();
+    });
+
+    this.sceneCollectionsService.collectionWillSwitch.subscribe(() => {
+      this.sourceStateKeyInterest.clear();
+    });
+
+    this.sceneCollectionsService.collectionSwitched.subscribe(() => {
+      this.sourceStateKeyInterest.clear();
+
+      if (!this.userService.isLoggedIn) return;
+
+      this.fetchAndApplyFullState();
     });
 
     // subscribe to websocket events to keep state updated
@@ -212,7 +221,7 @@ export class ReactiveDataService extends Service {
 
             if (!s) {
               this.log('No state available yet, skipping response to source');
-              return;
+              continue;
             }
 
             const message = toDotNotation(s);
@@ -225,7 +234,7 @@ export class ReactiveDataService extends Service {
             });
 
             source.sendMessage({ message: payload });
-            return;
+            continue;
           }
         }
       }
@@ -271,6 +280,37 @@ export class ReactiveDataService extends Service {
 
   getStateKeysForSource(sourceId: string): string[] {
     return Array.from(this.sourceStateKeyInterest.get(sourceId) ?? []);
+  }
+
+  private async fetchAndApplyFullState() {
+    const res = await this.fetchFullState();
+    this.log('Fetched full user state:', JSON.stringify(res).slice(0, 100) + '...');
+    const stateFlat = toDotNotation(res);
+    this.state.invalidateStateCache();
+    this.writeState({ stateFlatJson: JSON.stringify(stateFlat) });
+    this.pushStateToSources();
+  }
+
+  private pushStateToSources() {
+    for (const [sourceId, keys] of this.sourceStateKeyInterest.entries()) {
+      const sourceView = this.sourcesService.views.getSource(sourceId);
+      const source = sourceView?.getObsInput();
+      if (!source) continue;
+
+      const keysArr = Array.from(keys);
+      const s = Object.fromEntries(
+        Object.entries(this.state.stateFlat ?? {}).filter(([k]) => keysArr.includes(k)),
+      );
+
+      const payload = JSON.stringify({
+        type: 'state.update',
+        message: toDotNotation(s),
+        key: keysArr.join(','),
+        event_id: uuid(),
+      });
+
+      source.sendMessage({ message: payload });
+    }
   }
 
   private writeState(patch: Partial<{ schemaFlatJson: string; stateFlatJson: string }>) {
