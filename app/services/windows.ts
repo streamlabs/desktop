@@ -43,6 +43,7 @@ import {
   Main,
   MultistreamChatInfo,
   MarketingModal,
+  ReactiveDataEditorWindow,
   Settings,
   Troubleshooter,
 } from 'components/shared/ReactComponentList';
@@ -123,6 +124,7 @@ export function getComponents() {
     CustomCodeWindow,
     SourceShowcase,
     MarketingModal,
+    ReactiveDataEditorWindow,
   };
 }
 

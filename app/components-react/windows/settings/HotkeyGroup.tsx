@@ -5,7 +5,6 @@ import { IHotkey } from 'services/hotkeys';
 import Hotkey from './Hotkey';
 import { TDisplayType } from 'services/settings-v2';
 import Tabs from 'components-react/shared/Tabs';
-import { $t } from 'services/i18n';
 
 interface CommonProps {
   title: string | null;
@@ -14,9 +13,7 @@ interface CommonProps {
 interface HotkeyGroupProps extends CommonProps {
   hotkeys: IHotkey[];
   isSearch: boolean;
-  isDualOutputMode: boolean;
-  isDualOutputScene?: boolean;
-  hasSceneHotkeys?: boolean;
+  isSceneHotkey?: boolean;
 }
 
 interface HeaderProps extends CommonProps {}
@@ -39,7 +36,7 @@ function Header({ title }: HeaderProps) {
 }
 
 export default function HotkeyGroup(props: HotkeyGroupProps) {
-  const { hotkeys, title, isSearch, isDualOutputMode, isDualOutputScene, hasSceneHotkeys } = props;
+  const { hotkeys, title, isSearch, isSceneHotkey } = props;
   const isCollapsible = !!(title && !isSearch);
 
   const headerProps = { title };
@@ -47,31 +44,22 @@ export default function HotkeyGroup(props: HotkeyGroupProps) {
   const [display, setDisplay] = useState<TDisplayType>('horizontal');
   const [expanded, setExpanded] = useState<boolean>(false);
 
-  const showTabs = hasSceneHotkeys && isDualOutputMode && isDualOutputScene && expanded;
+  const showTabs = isSceneHotkey && expanded;
 
   const renderedHotKeys = useMemo(() => {
     // only filter hotkeys related to scene items
-    if (!hasSceneHotkeys) return hotkeys;
+    if (!isSceneHotkey) return hotkeys;
 
     // Once a scene collection has been converted to a dual output scene collection,
-    // the vertical scene items can be bound to hot keys. After this, when using single output mode
-    // with dual output scene collection, filter out the vertical scene items.
-    if (isDualOutputMode && hasSceneHotkeys && expanded) {
+    // the vertical scene items can be bound to hot keys.
+    if (expanded) {
       return hotkeys
         .filter(hotkey => hotkey?.display === display || hotkey?.actionName === 'SWITCH_TO_SCENE')
         .map(hotkey => hotkey);
-    } else if (isDualOutputMode) {
-      return hotkeys;
     } else {
-      return hotkeys
-        .filter(hotkey => {
-          if (!hotkey?.display || (hotkey?.display && hotkey.display === 'horizontal')) {
-            return hotkey;
-          }
-        })
-        .map(hotkey => hotkey);
+      return hotkeys;
     }
-  }, [hotkeys, hasSceneHotkeys, isDualOutputMode, display, expanded]);
+  }, [hotkeys, display, expanded]);
 
   const header = <Header {...headerProps} />;
   const hotkeyContent = useMemo(
@@ -80,7 +68,7 @@ export default function HotkeyGroup(props: HotkeyGroupProps) {
         {renderedHotKeys.map(hotkey => (
           <div
             key={getHotkeyUniqueId(hotkey)}
-            className={hasSceneHotkeys ? 'scene-hotkey' : undefined}
+            className={isSceneHotkey ? 'scene-hotkey' : undefined}
           >
             <Hotkey hotkey={hotkey} />
           </div>
@@ -107,12 +95,7 @@ export default function HotkeyGroup(props: HotkeyGroupProps) {
           )}
         >
           <Panel header={header} key="1">
-            {isDualOutputScene && showTabs && <Tabs onChange={setDisplay} />}
-            {isDualOutputMode &&
-              !showTabs &&
-              $t(
-                'This scene has not been converted for Dual Output. Please make the scene active to add vertical sources.',
-              )}
+            {isSceneHotkey && showTabs && <Tabs onChange={setDisplay} />}
             {hotkeyContent}
           </Panel>
         </Collapse>

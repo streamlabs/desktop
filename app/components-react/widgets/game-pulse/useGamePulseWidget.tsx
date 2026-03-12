@@ -7,6 +7,7 @@ import {
   sortEventKeys,
   delay,
   GAME_PULSE_API,
+  GamePulseAnalytics,
 } from './GamePulse.models';
 import { Services } from 'components-react/service-provider';
 import {
@@ -442,6 +443,8 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
         group.triggers = (group.triggers || []).filter(t => t.id !== triggerId);
       }
     }
+    const eventType = this.getTrigger(scopeId, triggerId)?.game_event || 'unknown';
+    GamePulseAnalytics.trackTriggerDeleted(scopeId, eventType);
 
     await this.replaceSettings(newSettings);
 
@@ -488,6 +491,8 @@ export class GamePulseModule extends WidgetModule<IGamePulseWidgetState> {
     const newSettings = this.appendTriggerToSettings(this.settings, game, newTrigger);
     await this.updateSettings(newSettings);
     this.setData(await this.fetchData());
+
+    GamePulseAnalytics.trackTriggerAdded({ game, triggerType, eventType });
 
     const triggerId = this.getTriggers(game)?.at(-1)?.id;
     if (triggerId) {

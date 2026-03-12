@@ -109,6 +109,7 @@ export { GrowService } from 'services/grow/grow';
 export { GuestCamService } from 'services/guest-cam';
 export { DualOutputService } from 'services/dual-output';
 export { VisionService } from 'services/vision';
+export { ReactiveDataService } from 'services/reactive-data';
 export { SseService } from 'services/server-sent-events';
 
 // WIDGETS
@@ -204,6 +205,7 @@ import { UrlService } from 'services/hosts';
 import { KickService } from 'services/platforms/kick';
 import { SseService } from './services/server-sent-events';
 import { VisionService } from 'services/vision';
+import { ReactiveDataService } from 'services/reactive-data';
 import { SignalsService } from 'services/signals-manager';
 import { TroubleshooterService } from 'services/troubleshooter';
 import { OnboardingV2Service } from 'services/onboarding/onboarding-v2';
@@ -293,6 +295,7 @@ export const AppServices = {
   VirtualWebcamService,
   SseService,
   VisionService,
+  ReactiveDataService,
   TroubleshooterService,
   OnboardingV2Service,
 };

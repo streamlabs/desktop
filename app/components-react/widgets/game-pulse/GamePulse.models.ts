@@ -1,4 +1,14 @@
 import { IWidgetCommonState } from 'components-react/widgets/common/useWidget';
+import { Services } from 'components-react/service-provider';
+
+export type TGamePulseAnalyticsEvent =
+  | 'trigger-added'
+  | 'trigger-deleted'
+  | 'onboarding_impression';
+export interface IGamePulseAnalyticsPayload {
+  action: TGamePulseAnalyticsEvent;
+  [key: string]: any;
+}
 
 export enum TabKind {
   AddTrigger = 'add-trigger',
@@ -430,3 +440,33 @@ export function sortEventKeys(a: string, b: string): number {
 }
 
 export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+export const GamePulseAnalytics = {
+  track: (
+    action: TGamePulseAnalyticsEvent,
+    payload?: Omit<IGamePulseAnalyticsPayload, 'action'>,
+  ) => {
+    const fullPayload: IGamePulseAnalyticsPayload = {
+      action,
+      ...payload,
+    };
+
+    Services.UsageStatisticsService.recordAnalyticsEvent('GamePulse', fullPayload);
+  },
+
+  trackTriggerAdded: (payload: {
+    game: string;
+    triggerType: GamePulseTriggerType;
+    eventType: string;
+  }) => {
+    GamePulseAnalytics.track('trigger-added', payload);
+  },
+
+  trackTriggerDeleted: (game: string, eventType: string) => {
+    GamePulseAnalytics.track('trigger-deleted', { game, eventType });
+  },
+
+  trackOnboardingImpression: () => {
+    GamePulseAnalytics.track('onboarding_impression');
+  },
+};
