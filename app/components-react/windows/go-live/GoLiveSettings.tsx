@@ -178,7 +178,7 @@ export default function GoLiveSettings() {
               {isAdvancedMode && <div className={styles.spacer} />}
               {/*EXTRAS*/}
               {!!canUseOptimizedProfile && (
-                <Section isSimpleMode={!isAdvancedMode} title={$t('Extras')}>
+                <Section isSimpleMode={false} title={$t('Extras')}>
                   <OptimizedProfileSwitcher />
                 </Section>
               )}

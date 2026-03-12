@@ -17,17 +17,13 @@ export function Section(p: ISectionProps & HTMLAttributes<unknown>) {
   // render header and section wrapper in advanced mode
   if (!p.isSimpleMode) {
     return (
-      <div className={cx({ section: true, [styles.sectionWithoutTitle]: !title })}>
-        {title && (
-          <InputWrapper>
-            <h2 style={{ marginBottom: 0 }}>{title}</h2>
-          </InputWrapper>
-        )}
+      <div className={styles.section}>
+        {title && <h2 style={{ marginBottom: 0 }}>{title}</h2>}
         <div>{p.children}</div>
       </div>
     );
   }
 
   // render content only in simple mode
-  return <div>{p.children}</div>;
+  return <div className={p.className}>{p.children}</div>;
 }

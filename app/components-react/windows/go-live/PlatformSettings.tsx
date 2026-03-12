@@ -14,17 +14,15 @@ import { TrovoEditStreamInfo } from './platforms/TrovoEditStreamInfo';
 import { TwitterEditStreamInfo } from './platforms/TwitterEditStreamInfo';
 import { InstagramEditStreamInfo } from './platforms/InstagramEditStreamInfo';
 import { KickEditStreamInfo } from './platforms/KickEditStreamInfo';
-import AdvancedSettingsSwitch from './AdvancedSettingsSwitch';
 import { TInputLayout } from 'components-react/shared/inputs';
 import { inject } from 'slap';
 import { HighlighterService } from 'app-services';
+import styles from './GoLive.m.less';
 
 export default function PlatformSettings() {
   const {
-    canShowAdvancedMode,
     settings,
     error,
-    isAdvancedMode,
     enabledPlatforms,
     getPlatformDisplayName,
     isLoading,
@@ -67,12 +65,14 @@ export default function PlatformSettings() {
 
   const shouldShowSettings = !error && !isLoading;
 
-  let layoutMode: TLayoutMode;
-  if (canShowAdvancedMode) {
-    layoutMode = isAdvancedMode ? 'multiplatformAdvanced' : 'multiplatformSimple';
-  } else {
-    layoutMode = 'singlePlatform';
-  }
+  // let layoutMode: TLayoutMode;
+  // if (canShowAdvancedMode) {
+  //   layoutMode = isAdvancedMode ? 'multiplatformAdvanced' : 'multiplatformSimple';
+  // } else {
+  //   layoutMode = 'singlePlatform';
+  // }
+
+  const layoutMode = 'multiplatformAdvanced';
 
   function createPlatformBinding<T extends TPlatform>(platform: T): IPlatformComponentParams<T> {
     return {
@@ -103,31 +103,33 @@ export default function PlatformSettings() {
               justifyContent: 'space-between',
               marginBottom: '10px',
               fontSize: '16px',
+              fontWeight: 400,
+              letterSpacing: '0.3px',
+              color: 'var(--title)',
             }}
           >
-            <div>{$t('Stream Information:')}</div>
-            <AdvancedSettingsSwitch />
+            {$t('Channel Settings')}
           </div>
 
           {/*COMMON FIELDS*/}
-          {canShowAdvancedMode && (
-            <Section isSimpleMode={!isAdvancedMode} title={$t('Common Stream Settings')}>
-              <CommonPlatformFields
-                descriptionIsRequired={descriptionIsRequired}
-                value={commonFields}
-                onChange={updateCommonFields}
-                enabledPlatforms={enabledPlatforms}
-                layout={layout}
-              />
-            </Section>
-          )}
+
+          <Section isSimpleMode={false} className={styles.settings}>
+            <CommonPlatformFields
+              descriptionIsRequired={descriptionIsRequired}
+              value={commonFields}
+              onChange={updateCommonFields}
+              enabledPlatforms={enabledPlatforms}
+              layout={layout}
+            />
+          </Section>
 
           {/*SETTINGS FOR EACH ENABLED PLATFORM*/}
           {enabledPlatforms.map((platform: TPlatform) => (
             <Section
               title={$t('%{platform} Settings', { platform: getPlatformDisplayName(platform) })}
-              isSimpleMode={!isAdvancedMode}
+              isSimpleMode={false}
               key={platform}
+              // className={styles.settings}
             >
               {platform === 'twitch' && (
                 <TwitchEditStreamInfo {...createPlatformBinding('twitch')} layout={layout} />

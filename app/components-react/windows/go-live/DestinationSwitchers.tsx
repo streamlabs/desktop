@@ -139,13 +139,6 @@ export function DestinationSwitchers() {
     emitSwitch(index, enabled);
   }
 
-  console.log(
-    'rendering switchers with platforms',
-    platforms,
-    'and custom destinations',
-    customDestinations,
-  );
-
   return (
     <div className={cx(styles.switchWrapper, styles.columnPadding)}>
       {platforms.map((platform, ind) => (

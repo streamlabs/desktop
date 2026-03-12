@@ -12,7 +12,7 @@ import { RadioInput, TextInput, createBinding } from 'components-react/shared/in
 import InfoBanner from 'components-react/shared/InfoBanner';
 import GameSelector from '../GameSelector';
 import { EDismissable } from 'services/dismissables';
-import styles from './TikTokEditStreamInfo.m.less';
+import styles from '../GoLive.m.less';
 import cx from 'classnames';
 
 /**
@@ -32,7 +32,7 @@ export function TikTokEditStreamInfo(p: IPlatformComponentParams<'tiktok'>) {
   const bind = createBinding(ttSettings, updatedSettings => updateSettings(updatedSettings));
 
   return (
-    <Form name="tiktok-settings">
+    <Form name="tiktok-settings" title={$t('TikTok Settings')}>
       <PlatformSettingsLayout
         layoutMode={p.layoutMode}
         commonFields={
@@ -108,7 +108,7 @@ export function TikTokEnterCredentialsFormInfo(
           </div>
         }
         layout={p.layout}
-        className={cx({ [styles.hideLabel]: p.layout === 'vertical' })}
+        className={cx({ [styles.tiktokHideLabel]: p.layout === 'vertical' })}
       >
         <TikTokButtons denied={p.denied} />
       </InputWrapper>
