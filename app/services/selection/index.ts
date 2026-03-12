@@ -96,22 +96,30 @@ export class SelectionService extends StatefulService<ISelectionState> {
     });
   }
 
-  associateSelectionWithDisplay(display: TDisplayType) {
-    if (this.dualOutputService.views.dualOutputMode) {
-      // check if there are nodes selected in the other display
-      const selectedItems = this.state.selectedIds.map(id =>
-        this.scenesService.views.getSceneItem(id),
-      );
-      const requireFilter = selectedItems.some(item => item?.display !== display);
+  associateSelectionWithDisplay(display: TDisplayType, filterAll: boolean = false) {
+    if (filterAll) {
+      this.state.selectedIds.forEach(id => {
+        const sceneItem = this.scenesService.views.getSceneItem(id);
+        if (sceneItem?.display !== display) {
+          this.views.globalSelection.deselect(id);
+        }
+      });
+      return;
+    }
 
-      // If nodes in both displays are selected, alter selection to only include
-      // items in the last display selected
-      if (requireFilter) {
-        const filteredIds = selectedItems
-          .filter(item => item?.display === display)
-          .map(item => item.id);
-        this.select(filteredIds);
-      }
+    // check if there are nodes selected in the other display
+    const selectedItems = this.state.selectedIds.map(id =>
+      this.scenesService.views.getSceneItem(id),
+    );
+    const requireFilter = selectedItems.some(item => item?.display !== display);
+
+    // If nodes in both displays are selected, alter selection to only include
+    // items in the last display selected
+    if (requireFilter) {
+      const filteredIds = selectedItems
+        .filter(item => item?.display === display)
+        .map(item => item.id);
+      this.select(filteredIds);
     }
   }
 

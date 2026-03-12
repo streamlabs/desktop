@@ -20,6 +20,8 @@ import { sleep } from '../../helpers/sleep';
 import { HotkeysService, ScenesService } from 'app-services';
 import { IHotkey } from 'services/hotkeys';
 
+// not a react hook
+// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
 
 test('Populates essential hotkeys for them to be bound', async t => {
@@ -126,8 +128,11 @@ test('Shows and filters scene item hotkeys', async t => {
   let numHorizontalIcons = (await selectElements('i.icon-desktop')).values.length;
   let numVerticalIcons = (await selectElements('i.icon-phone-case')).values.length;
 
-  t.true(numHorizontalIcons === 0, 'single output mode should have no hori icons');
-  t.true(numVerticalIcons === 0, 'single output mode should have no vert icons');
+  t.true(
+    numHorizontalIcons === 0,
+    'Single output scene collection should have no horizontal icons',
+  );
+  t.true(numVerticalIcons === 0, 'Single output scene collection should have no vertical icons');
 
   // confirm dual output scene collection scene item hotkeys
   await toggleDualOutputMode(false);
@@ -160,20 +165,26 @@ test('Shows and filters scene item hotkeys', async t => {
   numHorizontalIcons = (await getNumElements('.icon-desktop')) - 1;
   numVerticalIcons = (await getNumElements('.icon-phone-case')) - 2;
 
-  t.true(
-    numHorizontalIcons === numHorizontalHotkeys,
-    'horizontal icons should equal horizontal hotkeys',
+  // confirm only horizontal icons show in the horizontal tab
+  t.is(
+    numHorizontalIcons,
+    numHorizontalHotkeys,
+    'Dual output scene collection horizontal icons should equal horizontal hotkeys',
   );
-  t.true(numVerticalIcons === 0, 'no vertical icons');
+  t.is(numVerticalIcons, 0, 'Dual output scene collection hides vertical icons in horizontal tab');
 
   // confirm only vertical icons show in the vertical tab
   await clickTab('Vertical');
   numHorizontalIcons = (await getNumElements('.icon-desktop')) - 1;
   numVerticalIcons = (await getNumElements('.icon-phone-case')) - 2;
-  t.true(numVerticalIcons === numVerticalHotkeys, 'vertical icons should equal vertical hotkeys');
-  t.true(numHorizontalIcons === 0, 'no horizontal icons');
+  t.is(
+    numVerticalIcons,
+    numVerticalHotkeys,
+    'Dual output scene collection vertical icons should equal vertical hotkeys',
+  );
+  t.is(numHorizontalIcons, 0, 'Dual output scene collection hides horizontal icon in vertical tab');
 
-  // confirm only horizontal scene items show when dual output is toggled off
+  // confirm horizontal and vertical scene items show when dual output is toggled off
   // on a dual output scene collection
   await click('[data-name="settings-nav-item"]=Video');
   await clickCheckbox('dual-output-checkbox');
@@ -182,15 +193,34 @@ test('Shows and filters scene item hotkeys', async t => {
   await waitForDisplayed('div.section-content--opened');
 
   // subtract 1 because the SWITCH_TO_SCENE hotkey is not a scene item but is a scenes hotkey
-  const numHotKeyElements = (await getNumElements('.scene-hotkey')) - 1;
-  numHorizontalIcons = await getNumElements('.icon-desktop');
-  numVerticalIcons = (await getNumElements('.icon-phone-case')) - 1;
+  numHorizontalIcons = (await getNumElements('.icon-desktop')) - 1;
+  numVerticalIcons = (await getNumElements('.icon-phone-case')) - 2;
 
-  // no display icons shown
-  t.true(numHorizontalIcons === 0, 'single output mode should have no hori icons');
-  t.true(numVerticalIcons === 0, 'single output mode should have no vert icons');
-  t.true(
-    numHotKeyElements === numHorizontalHotkeys,
-    'hotkeys should be the same number as horizontal',
+  // confirm only horizontal icons show in the horizontal tab
+  t.is(
+    numHorizontalIcons,
+    numHorizontalHotkeys,
+    'Dual output scene collection in single output mode shows horizontal hotkeys in horizontal tab',
+  );
+  t.is(
+    numVerticalIcons,
+    0,
+    'Dual output scene collection hides vertical hotkeys in horizontal tab',
+  );
+
+  await clickTab('Vertical');
+  numHorizontalIcons = (await getNumElements('.icon-desktop')) - 1;
+  numVerticalIcons = (await getNumElements('.icon-phone-case')) - 2;
+
+  // confirm only vertical icons show in the vertical tab
+  t.is(
+    numHorizontalIcons,
+    0,
+    'Dual output scene collection hides horizontal hotkeys in vertical tab',
+  );
+  t.is(
+    numVerticalIcons,
+    numVerticalHotkeys,
+    'Dual output scene collection shows vertical hotkeys in vertical tab',
   );
 });
