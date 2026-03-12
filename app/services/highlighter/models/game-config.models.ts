@@ -156,6 +156,7 @@ const WARZONE_CONFIG: IGameConfig = {
     verticalExampleVideo: `${exampleVideoPath}${EGame.WARZONE}-vertical.mp4`,
   },
 };
+
 const BLACK_OPS_6_CONFIG: IGameConfig = {
   name: EGame.BLACK_OPS_6,
   label: 'Call of Duty: Black Ops 6',
@@ -171,6 +172,23 @@ const BLACK_OPS_6_CONFIG: IGameConfig = {
     backgroundColor: '#151B1A',
     horizontalExampleVideo: `${exampleVideoPath}${EGame.BLACK_OPS_6}-horizontal.mp4`,
     verticalExampleVideo: `${exampleVideoPath}${EGame.BLACK_OPS_6}-vertical.mp4`,
+  },
+};
+
+const BLACK_OPS_7_CONFIG: IGameConfig = {
+  // use the same config as black ops 6 for now since the games are identical
+  name: EGame.BLACK_OPS_7,
+  label: 'Call of Duty: Black Ops 7',
+  gameModes: '',
+  thumbnail: `${thumbnailPath}${EGame.BLACK_OPS_7}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#F96800',
+    artwork: `${heroPath}${EGame.BLACK_OPS_7}.png`,
+    backgroundColor: '#000000',
   },
 };
 
@@ -402,6 +420,22 @@ const DEAD_BY_DAYLIGHT: IGameConfig = {
   },
 };
 
+const MARATHON: IGameConfig = {
+  name: EGame.MARATHON,
+  label: 'Marathon',
+  gameModes: '',
+  thumbnail: `${thumbnailPath}${EGame.MARATHON}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#cffb54',
+    artwork: `${heroPath}${EGame.MARATHON}.png`,
+    backgroundColor: '#000000',
+  },
+};
+
 const UNSET_CONFIG: IGameConfig = {
   name: EGame.UNSET,
   label: 'unset',
@@ -419,6 +453,7 @@ const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.FORTNITE]: FORTNITE_CONFIG, // ✅
   [EGame.WARZONE]: WARZONE_CONFIG, // ✅
   [EGame.BLACK_OPS_6]: BLACK_OPS_6_CONFIG, // ✅
+  [EGame.BLACK_OPS_7]: BLACK_OPS_7_CONFIG,
   [EGame.MARVEL_RIVALS]: MARVEL_RIVALS_CONFIG, // ✅
   [EGame.WAR_THUNDER]: WAR_THUNDER_CONFIG, // ✅
   [EGame.VALORANT]: VALORANT_CONFIG, // ✅
@@ -433,6 +468,7 @@ const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.ROCKET_LEAGUE]: ROCKET_LEAGUE,
   [EGame.DOTA_2]: DOTA_2,
   [EGame.DEAD_BY_DAYLIGHT]: DEAD_BY_DAYLIGHT,
+  [EGame.MARATHON]: MARATHON,
   [EGame.UNSET]: UNSET_CONFIG,
 };
 
