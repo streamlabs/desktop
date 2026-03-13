@@ -780,8 +780,6 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
       'Recording',
       'RecEncoder',
     ) as EEncoderFamily;
-    console.log('recordingFileFormat ', recordingFormat);
-    console.log('recordingEncoder ', recordingEncoder);
 
     // If the user selects a file format that is incompatible with the selected recording encoder,
     // change the recording encoder to x264 by defaults

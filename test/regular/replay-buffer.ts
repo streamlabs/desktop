@@ -33,6 +33,7 @@ async function recordHighlight(
 ) {
   // record a fragment
   await startReplayBuffer();
+  await sleep(500);
   await saveReplayBuffer();
   await stopReplayBuffer();
 

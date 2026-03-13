@@ -2176,6 +2176,7 @@ export class StreamingService
       // the stream has successfully been created and is ready to start. The `start` signal is sent after the
       // `activate` signal and is used to indicate that the stream has started. The start streaming promise will
       // be resolved on the `start` signal.
+      return;
     } else if (info.signal === EOBSOutputSignal.Starting) {
       // In dual output mode, do nothing on the `starting` signal for the horizontal stream context because
       // the vertical stream context still needs to be created. To prevent errors, the vertical stream context
@@ -2248,6 +2249,7 @@ export class StreamingService
         await this.handleCleanupStreamingInstances(true, false);
       }
 
+      // Ensure instances for the recording and replay buffer are destroyed
       await this.handleDestroyOutputContexts(context);
     } else if (info.signal === EOBSOutputSignal.Reconnect) {
       this.sendReconnectingNotification();
@@ -2330,6 +2332,9 @@ export class StreamingService
 
       this.latestRecordingPath.next(fileName);
 
+      // Don't update status before destroying the recording instance
+      // because the recording status should have been set to `offline`
+      // with the `stop` signal
       await this.handleDestroyOutputContexts(display);
 
       this.recordingStatusChange.next(nextState);
@@ -2394,7 +2399,14 @@ export class StreamingService
         this.contexts.vertical.replayBuffer.stop();
       }
 
+      // Update status before destroying the replay buffer instance so that
+      // the contexts will destroy correctly
+      const time = new Date().toISOString();
+      this.SET_REPLAY_BUFFER_STATUS(nextState, display, time);
       await this.handleDestroyOutputContexts(display);
+      this.replayBufferStatusChange.next(nextState);
+
+      return;
     }
 
     const time = new Date().toISOString();
@@ -2536,8 +2548,8 @@ export class StreamingService
       this.contexts[display].replayBuffer &&
       this.state.status[display].replayBuffer === EReplayBufferState.Offline
     ) {
-      console.error(
-        'Replay buffer instance exists but the status is offline. Destroying instance.',
+      console.debug(
+        'Replay buffer instance exists and the status is offline. Destroying instance.',
       );
       this.handleDestroyOutputContexts(display);
       return;
@@ -3271,12 +3283,17 @@ export class StreamingService
       await this.destroyOutputContextIfExists(context, 'streaming');
       return;
     }
+    console.log(
+      'DESTROYING this.state.status[context]',
+      JSON.stringify(this.state.status[context], null, 2),
+    );
 
     // For the horizontal and vertical contexts, only destroy instances if all outputs are offline
     const offline =
       this.state.status[context].replayBuffer === EReplayBufferState.Offline &&
       this.state.status[context].recording === ERecordingState.Offline &&
       this.state.status[context].streaming === EStreamingState.Offline;
+    console.log('', JSON.stringify(this.state.status[context], null, 2));
 
     if (offline) {
       await this.destroyOutputContextIfExists(context, 'replayBuffer');
@@ -3303,7 +3320,6 @@ export class StreamingService
     if (!this.contexts[contextName] || !this.contexts[contextName][contextType]) return;
     // recording and replay buffer can only use the horizontal and vertical contexts
     if (contextType !== 'streaming' && !this.isDisplayContext(contextName)) {
-      return;
     }
 
     try {
