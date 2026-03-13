@@ -3242,12 +3242,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/qrcode.react@npm:1.0.2":
-  version: 1.0.2
-  resolution: "@types/qrcode.react@npm:1.0.2"
+"@types/qrcode.react@npm:1.0.5":
+  version: 1.0.5
+  resolution: "@types/qrcode.react@npm:1.0.5"
   dependencies:
     "@types/react": "*"
-  checksum: be256f0192366b4c0822da43c732bf3e29beb954c89d739aa770f09e5160842a3ca4d6814cb57bbcbbf8997cf7af0b998de318dab957f0820f267bb746c9a329
+  checksum: eea7526180988a1bc4937f12c0b82951a9be9a68817a01ab10cfae68796f9a4629cdbf3a47d24b87cb10a9ca55ebd3d0690516d33637f95767a46e1961eb6b9d
   languageName: node
   linkType: hard
 
@@ -14236,7 +14236,7 @@ __metadata:
     "@types/node": 20.12.7
     "@types/node-fetch": 2.5.10
     "@types/overlayscrollbars": 1.12.0
-    "@types/qrcode.react": 1.0.2
+    "@types/qrcode.react": 1.0.5
     "@types/react": 17.0.8
     "@types/react-resizable": 3.0.6
     "@types/request": 2.48.5
