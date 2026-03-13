@@ -66,6 +66,8 @@ export enum EGame {
   DOTA_2 = 'dota_2',
   DEAD_BY_DAYLIGHT = 'dead_by_daylight',
   MARATHON = 'marathon',
+  F1_25 = 'f1_25',
+  EA_SPORTS_FC_26 = 'ea_sports_fc_26',
   UNSET = 'unset',
 }
 
