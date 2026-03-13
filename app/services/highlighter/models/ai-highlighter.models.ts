@@ -50,6 +50,7 @@ export enum EGame {
   FORTNITE = 'fortnite',
   WARZONE = 'warzone',
   BLACK_OPS_6 = 'black_ops_6',
+  BLACK_OPS_7 = 'black_ops_7',
   MARVEL_RIVALS = 'marvel_rivals',
   WAR_THUNDER = 'war_thunder',
   VALORANT = 'valorant',
@@ -64,6 +65,7 @@ export enum EGame {
   ROCKET_LEAGUE = 'rocket_league',
   DOTA_2 = 'dota_2',
   DEAD_BY_DAYLIGHT = 'dead_by_daylight',
+  MARATHON = 'marathon',
   UNSET = 'unset',
 }
 
