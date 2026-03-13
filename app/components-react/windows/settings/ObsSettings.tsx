@@ -23,6 +23,12 @@ export function useObsSettings(page?: TCategoryName) {
   }, [page, category]);
 
   function saveSettings(newSettings: ISettingsSubCategory[]) {
+    // TODO: Remove when backend handles validating recording format and recording encoder
+    if (memoizedPage === ('Output' as TCategoryName)) {
+      SettingsService.actions.setSettings(memoizedPage, newSettings, 'Output');
+      return;
+    }
+
     SettingsService.actions.setSettings(memoizedPage, newSettings);
   }
 

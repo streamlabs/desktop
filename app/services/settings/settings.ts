@@ -16,7 +16,7 @@ import { WindowsService } from 'services/windows';
 import Utils from '../utils';
 import { AppService } from 'services/app';
 import { $t } from 'services/i18n';
-import { encoderFieldsMap, obsEncoderToEncoderFamily } from './output';
+import { encoderFieldsMap, obsEncoderToEncoderFamily, EFileFormat, EEncoderFamily } from './output';
 import { VideoEncodingOptimizationService } from 'services/video-encoding-optimizations';
 import { EDeviceType, HardwareService } from 'services/hardware';
 import { StreamingService } from 'services/streaming';
@@ -130,6 +130,7 @@ export interface ISettingsValues extends Record<TCategoryName, Dictionary<TObsVa
     tune?: string;
     x264opts?: string;
     x264Settings?: string;
+    rate_control?: string;
   };
   Video: {
     // default video context
@@ -152,6 +153,7 @@ export interface ISettingsValues extends Record<TCategoryName, Dictionary<TObsVa
     DynamicBitrate: boolean;
     NewSocketLoopEnable: boolean;
     LowLatencyEnable: boolean;
+    FilenameFormatting: string;
   };
 }
 export interface ISettingsSubCategory {
@@ -446,6 +448,15 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     // These settings are not displayed in the menu but are still needed for dual output
     settingsFormData.StreamSecond = this.fetchSettingsFromObs('StreamSecond');
 
+    // TODO: comment in for logging
+    // for (const category in settingsFormData) {
+    //   settingsFormData[category].formData.forEach((subCategory: ISettingsSubCategory) => {
+    //     subCategory.parameters.forEach(param => {
+    //       console.log(category, subCategory.nameSubCategory, param.name, param.value);
+    //     });
+    //   });
+    // }
+
     this.SET_SETTINGS(settingsFormData);
   }
 
@@ -636,6 +647,16 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     if (categoryName === 'Audio') this.setAudioSettings([settingsData.pop()]);
     if (categoryName === 'Video' && forceApplyCategory && forceApplyCategory !== 'Video') return;
 
+    // This is a temporary solution to prevent errors when saving the recording format
+    // in advanced mode. It ensures that the recording encoder is always valid for the format.
+    // TODO: This should be removed once the backend completely handles invalid combinations
+    // of recording format and encoder.
+    if (categoryName === 'Output' && forceApplyCategory && forceApplyCategory === 'Output') {
+      // The below will call set settings again but with a validated recording encoder
+      this.ensureValidRecordingEncoder(settingsData);
+      return;
+    }
+
     const dataToSave = [];
 
     for (const subGroup of settingsData) {
@@ -747,8 +768,39 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     }
   }
 
-  private ensureValidRecordingEncoder() {
-    this.setSettings('Output', this.state.Output.formData);
+  private ensureValidRecordingEncoder(settingsData?: ISettingsSubCategory[]) {
+    const outputSettings = settingsData ?? this.state.Output.formData;
+    const recordingFormat = this.findSettingValue(
+      outputSettings,
+      'Recording',
+      'RecFormat',
+    ) as EFileFormat;
+    const recordingEncoder = this.findSettingValue(
+      outputSettings,
+      'Recording',
+      'RecEncoder',
+    ) as EEncoderFamily;
+
+    // If the user selects a file format that is incompatible with the selected recording encoder,
+    // change the recording encoder to x264 by defaults
+    if (
+      [EFileFormat.flv, EFileFormat.mov, EFileFormat.mpegts, EFileFormat.hls].some(
+        f => f === recordingFormat,
+      ) &&
+      [
+        EEncoderFamily.ffmpeg_aom_av1,
+        EEncoderFamily.ffmpeg_svt_av1,
+        EEncoderFamily.obs_nvenc_av1_tex,
+        EEncoderFamily.obs_nvenc_hevc_tex,
+      ].some(e => e === recordingEncoder)
+    ) {
+      const patchedSettings = this.patchSetting(outputSettings, 'RecEncoder', {
+        value: 'obs_x264',
+      });
+      this.setSettings('Output', patchedSettings);
+    } else {
+      this.setSettings('Output', outputSettings);
+    }
   }
 
   setDefaultVideoEncoder() {

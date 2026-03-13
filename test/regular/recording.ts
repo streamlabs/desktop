@@ -25,7 +25,7 @@ import {
   getNumElements,
   waitForDisplayed,
 } from '../helpers/modules/core';
-import { logIn } from '../helpers/webdriver/user';
+import { logIn, logOut } from '../helpers/webdriver/user';
 import { toggleDualOutputMode } from '../helpers/modules/dual-output';
 import { showPage } from '../helpers/modules/navigation';
 import { useForm, fillForm } from '../helpers/modules/forms';
@@ -60,11 +60,7 @@ async function createRecordingFiles(advanced: boolean = false): Promise<number> 
     await startRecording();
     await sleep(500);
     await stopRecording();
-
-    // in advanced mode, it may take a little longer to save the recording
-    if (advanced) {
-      await sleep(1000);
-    }
+    await sleep(2000);
 
     // Confirm notification has been shown and navigate to the recording history
     await focusMain();
@@ -94,7 +90,7 @@ async function validateRecordingFiles(
 
   // M3U8 creates multiple TS files in addition to the catalog itself.
   // The additional TS files created by M3U8 in advanced mode are not displayed in the recording history
-  const numFiles = advanced ? files.length - 1 : files.length;
+  const numFiles = files.length;
 
   t.true(numFiles >= numFormats, `Files that were created:\n${files.join('\n')}`);
 
@@ -156,6 +152,8 @@ test('Recording with two contexts active', async t => {
 
   const numFiles = await createRecordingFiles(true);
   await validateRecordingFiles(t, tmpDir, numFiles, true);
+
+  await logOut(t, true);
 });
 
 test('Recording from Go Live window', async t => {
