@@ -443,6 +443,9 @@ export class StreamingService
       destination.video = this.videoSettingsService.contexts[display];
       destination.mode = display === 'horizontal' ? 'landscape' : 'portrait';
     });
+    // Disable "Rescale Output" for dual output mode to prevent issues with scaling vertical/horizontal views.
+    this.dualOutputService.disableGlobalRescaleIfNeeded();
+
     // save enabled platforms to reuse setting with the next app start
     this.streamSettingsService.setSettings({ goLiveSettings: settings });
 

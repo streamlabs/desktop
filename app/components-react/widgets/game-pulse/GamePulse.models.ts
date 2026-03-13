@@ -454,12 +454,16 @@ export const GamePulseAnalytics = {
     Services.UsageStatisticsService.recordAnalyticsEvent('GamePulse', fullPayload);
   },
 
-  trackTriggerAdded: (game: string, triggerType: GamePulseTriggerType) => {
-    GamePulseAnalytics.track('trigger-added', { game, triggerType });
+  trackTriggerAdded: (payload: {
+    game: string;
+    triggerType: GamePulseTriggerType;
+    eventType: string;
+  }) => {
+    GamePulseAnalytics.track('trigger-added', payload);
   },
 
-  trackTriggerDeleted: (game: string) => {
-    GamePulseAnalytics.track('trigger-deleted', { game });
+  trackTriggerDeleted: (game: string, eventType: string) => {
+    GamePulseAnalytics.track('trigger-deleted', { game, eventType });
   },
 
   trackOnboardingImpression: () => {

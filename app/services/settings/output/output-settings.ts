@@ -26,6 +26,10 @@ enum EObsAdvancedEncoder {
   amd_amf_h264 = 'amd_amf_h264',
   obs_qsv11 = 'obs_qsv11',
   jim_nvenc = 'jim_nvenc',
+  ffmpeg_aom_av1 = 'ffmpeg_aom_av1',
+  ffmpeg_svt_av1 = 'ffmpeg_svt_av1',
+  obs_nvenc_av1_tex = 'obs_nvenc_av1_tex',
+  obs_nvenc_hevc_tex = 'obs_nvenc_hevc_tex',
 }
 
 /**
@@ -38,9 +42,13 @@ export enum EEncoderFamily {
   nvenc = 'nvenc',
   jim_nvenc = 'jim_nvenc',
   amd = 'amd',
+  ffmpeg_aom_av1 = 'ffmpeg_aom_av1',
+  ffmpeg_svt_av1 = 'ffmpeg_svt_av1',
+  obs_nvenc_av1_tex = 'obs_nvenc_av1_tex',
+  obs_nvenc_hevc_tex = 'obs_nvenc_hevc_tex',
 }
 
-enum EFileFormat {
+export enum EFileFormat {
   flv = 'flv',
   mp4 = 'mp4',
   mov = 'mov',
@@ -225,6 +233,10 @@ export const encoderFieldsMap = {
   [EEncoderFamily.jim_nvenc]: { preset: 'preset' },
   [EEncoderFamily.qsv]: { preset: 'target_usage' },
   [EEncoderFamily.amd]: { preset: 'QualityPreset' },
+  [EEncoderFamily.ffmpeg_aom_av1]: { preset: 'preset' },
+  [EEncoderFamily.ffmpeg_svt_av1]: { preset: 'preset' },
+  [EEncoderFamily.obs_nvenc_av1_tex]: { preset: 'preset' },
+  [EEncoderFamily.obs_nvenc_hevc_tex]: { preset: 'preset' },
 };
 
 export function simpleEncoderToAdvancedEncoder(encoder: EEncoderFamily) {
@@ -937,7 +949,7 @@ export class OutputSettingsService extends Service {
     }
   }
 
-  convertEncoderToNewAPI(
+  private convertEncoderToNewAPI(
     encoder: EObsSimpleEncoder | string,
   ): EObsSimpleEncoder.x264_lowcpu | EObsAdvancedEncoder {
     switch (encoder) {

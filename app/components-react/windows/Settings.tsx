@@ -104,6 +104,7 @@ export default function Settings() {
   }, []);
 
   function setCurrentTab(value: TCategoryName) {
+    if (!value) return;
     NavigationService.actions.setSettingsNavigation(value);
   }
 

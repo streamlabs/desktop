@@ -4,7 +4,7 @@
   "description": "Streamlabs streaming software",
   "author": "General Workings, Inc.",
   "license": "GPL-3.0",
-  "version": "1.20.9",
+  "version": "1.21.0-preview.0",
   "main": "main.js",
   "macVirtualCamUrl": "https://obs-studio-deployment.s3.us-west-2.amazonaws.com/slobs-vcam-installer-1.0.16-release-osx-[ARCH].tar.gz",
   "scripts": {
@@ -179,7 +179,7 @@
     "js-yaml": "3.13.1",
     "less": "4.1.0",
     "less-loader": "7.2.1",
-    "lodash": "4.17.21",
+    "lodash": "4.17.23",
     "lodash-decorators": "4.5.0",
     "mark.js": "8.11.1",
     "mime": "2.4.3",
