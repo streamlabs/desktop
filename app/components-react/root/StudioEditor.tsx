@@ -420,6 +420,7 @@ function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
       className={cx(styles.dualOutputHeader, { [styles.stacked]: p.stacked })}
     >
       <div
+        id="horizontal-display-toggle"
         className={styles.toggleWrapper}
         onClick={() => v.toggleDisplay(!showHorizontal, 'horizontal')}
       >
@@ -436,6 +437,7 @@ function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
       </div>
 
       <div
+        id="vertical-display-toggle"
         className={styles.toggleWrapper}
         onClick={() => v.toggleDisplay(!showVertical, 'vertical')}
       >
