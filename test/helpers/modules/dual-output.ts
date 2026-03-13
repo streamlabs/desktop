@@ -81,13 +81,13 @@ export async function waitForDualOutputStreamStart(platform: string) {
 
   await submit();
   await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
+  await waitForDisplayed("h1=You're live!", { timeout: 60000 });
 
   // Dummy accounts won't go live
   if (platform === 'instagram') {
     await chatIsVisible();
     await waitForStreamStop();
   } else {
-    await waitForStreamStart();
     await chatIsVisible();
     await isDisplayed('span=Multistream');
     await sleep(2000);

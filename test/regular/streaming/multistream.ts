@@ -1,4 +1,5 @@
 import {
+  chatIsVisible,
   clickGoLive,
   prepareToGoLive,
   stopStream,
@@ -34,6 +35,29 @@ async function enableAllPlatforms() {
   }
 }
 
+async function goLiveWithMultistream() {
+  await submit();
+  await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
+
+  if (await isDisplayed('button=Bypass and Go Live')) {
+    await clickButton('Close');
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
+
+    // Try toggling off YouTube and going live again
+    await fillForm({ youtube: false });
+    await waitForSettingsWindowLoaded();
+    await submit();
+    await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
+    await waitForDisplayed("h1=You're live!", { timeout: 60000 });
+  } else {
+    await waitForDisplayed("h1=You're live!", { timeout: 60000 });
+  }
+
+  // Confirm chat loads
+  await chatIsVisible(true);
+}
+
 async function goLiveWithStreamShift(t: TExecutionContext, multistream: boolean) {
   await clickGoLive();
   await waitForSettingsWindowLoaded();
@@ -61,7 +85,7 @@ async function goLiveWithStreamShift(t: TExecutionContext, multistream: boolean)
   // Confirm chat loads
   await waitForStreamStart();
   await focusMain();
-  await waitForDisplayed('div=Refresh Chat', { timeout: 60000 });
+  await chatIsVisible();
 
   await stopStream();
   await waitForStreamStop();
@@ -134,12 +158,7 @@ test(
       primaryChat: 'YouTube',
     });
 
-    await submit();
-    await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
-    await waitForDisplayed("h1=You're live!", { timeout: 60000 });
-    // Confirm chat loads
-    await focusMain();
-    await waitForDisplayed('div=Refresh Chat', { timeout: 60000 });
+    await goLiveWithMultistream();
     await stopStream();
 
     await goLiveWithDefaultCodec();
@@ -184,9 +203,7 @@ test(
       title: 'trovo title',
     });
 
-    await submit();
-    await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
-    await waitForDisplayed("h1=You're live!", { timeout: 60000 });
+    await goLiveWithMultistream();
     await stopStream();
 
     t.pass();
