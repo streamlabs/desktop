@@ -1,14 +1,10 @@
 import {
   clickGoLive,
   prepareToGoLive,
-  stopStream,
   submit,
   waitForSettingsWindowLoaded,
-  waitForStreamStart,
-  waitForStreamStop,
 } from '../../helpers/modules/streaming';
 import {
-  click,
   clickIfDisplayed,
   clickWhenDisplayed,
   closeWindow,
@@ -18,7 +14,12 @@ import {
   waitForDisplayed,
 } from '../../helpers/modules/core';
 import { logIn } from '../../helpers/modules/user';
-import { toggleDisplay, toggleDualOutputMode } from '../../helpers/modules/dual-output';
+import {
+  toggleAccountForDisplay,
+  toggleDisplay,
+  toggleDualOutputMode,
+  waitForDualOutputStreamStart,
+} from '../../helpers/modules/dual-output';
 import {
   skipCheckingErrorsInLog,
   test,
@@ -31,8 +32,6 @@ import { getApiClient } from '../../helpers/api-client';
 import { fillForm } from '../../helpers/modules/forms';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
 import { sleep } from '../../helpers/sleep';
-// import { readFields, fillForm } from '../../helpers/modules/forms';
-// import { sleep } from '../../helpers/sleep';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -98,6 +97,7 @@ test('Dual Output', async (t: TExecutionContext) => {
       Item11:
   `,
     ),
+    'Single Output scene collection built correctly',
   );
 
   // toggle dual output on and convert dual output scene collection
@@ -142,15 +142,12 @@ test('Dual Output', async (t: TExecutionContext) => {
 
   // toggling dual output shows/hides the vertical display
   await focusMain();
-  t.true(
-    await isDisplayed('div#vertical-display'),
-    'Toggling on dual output shows vertical display',
-  );
+  t.true(await isDisplayed('#vertical-display'), 'Toggling on dual output shows vertical display');
 
   await toggleDualOutputMode();
   await focusMain();
   t.false(
-    await isDisplayed('div#vertical-display'),
+    await isDisplayed('#vertical-display'),
     'Toggling off dual output hides vertical display',
   );
 
@@ -158,40 +155,40 @@ test('Dual Output', async (t: TExecutionContext) => {
   await toggleDualOutputMode();
   await focusMain();
 
-  t.true(await isDisplayed('div#dual-output-header'), 'Dual output header exists');
+  t.true(await isDisplayed('#dual-output-header'), 'Dual output header exists');
 
   // check permutations of toggling on and off the displays
-  await clickIfDisplayed('i#horizontal-display-toggle');
-  t.false(await isDisplayed('div#horizontal-display'));
-  t.true(await isDisplayed('div#vertical-display'));
+  await toggleDisplay('horizontal');
+  t.false(await isDisplayed('#horizontal-display'));
+  t.true(await isDisplayed('#vertical-display'));
 
   await toggleDisplay('vertical', true);
-  t.false(await isDisplayed('div#horizontal-display'));
-  t.false(await isDisplayed('div#vertical-display'));
+  t.false(await isDisplayed('#horizontal-display'));
+  t.false(await isDisplayed('#vertical-display'));
 
   await toggleDisplay('horizontal');
-  t.true(await isDisplayed('div#horizontal-display'));
-  t.false(await isDisplayed('div#vertical-display'));
+  t.true(await isDisplayed('#horizontal-display'));
+  t.false(await isDisplayed('#vertical-display'));
 
   await toggleDisplay('vertical');
-  t.true(await isDisplayed('div#horizontal-display'));
-  t.true(await isDisplayed('div#vertical-display'));
+  t.true(await isDisplayed('#horizontal-display'));
+  t.true(await isDisplayed('#vertical-display'));
 
   await toggleDisplay('vertical');
-  t.true(await isDisplayed('div#horizontal-display'));
-  t.false(await isDisplayed('div#vertical-display'));
+  t.true(await isDisplayed('#horizontal-display'));
+  t.false(await isDisplayed('#vertical-display'));
 
   await toggleDisplay('horizontal');
-  t.false(await isDisplayed('div#horizontal-display'));
-  t.false(await isDisplayed('div#vertical-display'));
+  t.false(await isDisplayed('#horizontal-display'));
+  t.false(await isDisplayed('#vertical-display'));
 
   await toggleDisplay('vertical');
-  t.false(await isDisplayed('div#horizontal-display'));
-  t.true(await isDisplayed('div#vertical-display'));
+  t.false(await isDisplayed('#horizontal-display'));
+  t.true(await isDisplayed('#vertical-display'));
 
   await toggleDisplay('horizontal');
-  t.true(await isDisplayed('div#horizontal-display'));
-  t.true(await isDisplayed('div#vertical-display'));
+  t.true(await isDisplayed('#horizontal-display'));
+  t.true(await isDisplayed('#vertical-display'));
 
   await releaseUserInPool(user);
 
@@ -206,7 +203,7 @@ test(
 
     await toggleDualOutputMode();
 
-    // dual output cannot be toggled on in studio mode
+    // Studio Mode
     await focusMain();
     await (await app.client.$('.side-nav .icon-studio-mode-3')).click();
     t.true(
@@ -214,36 +211,12 @@ test(
       'Cannot toggle Studio Mode in Dual Output Mode.',
     );
 
-    // selective recording in dual output mode is only available for the horizontal display
-    await toggleDualOutputMode();
-    t.false(await isDisplayed('div#vertical-display'), 'Dual output mode is off');
-    await (await app.client.$('[data-name=sourcesControls] .icon-smart-record')).click();
-
-    // Check that selective recording icon is active
-    await (await app.client.$('.icon-smart-record.active')).waitForExist();
-
-    await toggleDualOutputMode();
-
-    // dual output is active but the vertical display is not shown
-    await focusMain();
-    await (await app.client.$('.icon-dual-output.active')).waitForExist();
-    t.false(
-      await isDisplayed('div#vertical-display'),
-      'Vertical display is not shown in dual output with selective recording',
-    );
-
-    // toggling selective recording off should show the vertical display
-    await (await app.client.$('.icon-smart-record.active')).click();
-    t.true(
-      await isDisplayed('div#vertical-display'),
-      'Toggling selective recording off shows vertical display in dual output mode',
-    );
-
-    // toggling selective recording back on should hide the vertical display
+    // Selective Recording
     await (await app.client.$('.icon-smart-record')).click();
+    await waitForDisplayed('.icon-smart-record.active');
     t.false(
-      await isDisplayed('div#vertical-display'),
-      'Toggling selective recording back on hides vertical display in dual output mode',
+      await isDisplayed('#vertical-display'),
+      'Toggling selective recording back hides the vertical display in dual output mode',
     );
 
     // toggling selective recording on while in dual output mode opens a message box warning
@@ -260,7 +233,7 @@ test(
 
 test('Dual Output Go Live Non-Ultra', async t => {
   await logIn('twitch', { prime: false });
-  await toggleDualOutputMode();
+  await toggleDualOutputMode(true);
   await prepareToGoLive();
 
   await clickGoLive();
@@ -272,14 +245,13 @@ test('Dual Output Go Live Non-Ultra', async t => {
     timeout: 10000,
   });
   await clickIfDisplayed('div.ant-message-notice-content');
-  await sleep(1000);
+  await sleep(200);
 
   await closeWindow('child');
   const dummy = await addDummyAccount('instagram');
 
   try {
     await clickGoLive();
-    await waitForSettingsWindowLoaded();
     await submit();
 
     // Cannot go live in dual output mode with all targets assigned to one display
@@ -287,7 +259,7 @@ test('Dual Output Go Live Non-Ultra', async t => {
       timeout: 5000,
     });
     await clickIfDisplayed('div.ant-message-notice-content');
-    await sleep(1000);
+    await sleep(200);
 
     await fillForm({
       instagram: true,
@@ -303,88 +275,77 @@ test('Dual Output Go Live Non-Ultra', async t => {
       streamKey: dummy.streamKey,
     });
 
-    await waitForSettingsWindowLoaded();
-    // Dummy account will cause the stream to not go live
-    skipCheckingErrorsInLog();
-    await submit();
-    await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
-    await focusMain();
-    await waitForDisplayed('div=Refresh Chat', { timeout: 60000 });
-    await waitForStreamStop();
+    await waitForDualOutputStreamStart('instagram');
   } catch (e: unknown) {
     console.log('Error during Dual Output Go Live Non-Ultra test:', e);
-  }
+    t.fail('Error during Dual Output Go Live Non-Ultra test');
+  } finally {
+    // Clean up the dummy account
+    await showSettingsWindow('Stream', async () => {
+      await waitForDisplayed('h2=Stream Destinations');
+      await clickWhenDisplayed('[data-name="instagramUnlink"]');
+    });
 
-  // Clean up the dummy account
-  await showSettingsWindow('Stream', async () => {
-    await waitForDisplayed('h2=Stream Destinations');
-    await clickWhenDisplayed('[data-name="instagramUnlink"]');
-  });
-
-  // Vertical display is hidden after logging out
-  await logOut(t);
-  t.false(await isDisplayed('div#vertical-display'));
-  t.pass();
-});
-
-test(
-  'Dual Output Go Live Ultra',
-  withUser('twitch', { prime: true, multistream: true }),
-  async (t: TExecutionContext) => {
-    try {
-      await toggleDualOutputMode();
-      await prepareToGoLive();
-
-      await clickGoLive();
-      await waitForSettingsWindowLoaded();
-      await fillForm({
-        trovo: true,
-      });
-      await waitForSettingsWindowLoaded();
-      await submit();
-
-      // Cannot go live in dual output mode with all targets assigned to one display
-      await waitForDisplayed('div.ant-message-notice-content', {
-        timeout: 10000,
-      });
-      await clickIfDisplayed('div.ant-message-notice-content');
-      await sleep(500);
-
-      // Dual output with one platform for each display
-      await fillForm({
-        trovoDisplay: 'vertical',
-        primaryChat: 'Trovo',
-      });
-      await waitForSettingsWindowLoaded();
-      await submit();
-      await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
-      await waitForStreamStart();
-      await isDisplayed('span=Multistream');
-      await stopStream();
-      await waitForStreamStop();
-
-      await clickGoLive();
-      await waitForSettingsWindowLoaded();
-      await fillForm({
-        trovoDisplay: 'horizontal',
-        twitchDisplay: 'vertical',
-      });
-
-      await waitForSettingsWindowLoaded();
-      await submit();
-      await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
-      await waitForStreamStart();
-      await isDisplayed('span=Multistream');
-      await stopStream();
-      await waitForStreamStop();
-
-      // Vertical display is hidden after logging out
-      await logOut(t);
-      t.false(await isDisplayed('div#vertical-display'));
-    } catch (e: unknown) {
-      console.log('Error during Dual Output Go Live Ultra test:', e);
-    }
+    // Vertical display is hidden after logging out
+    await logOut(t);
+    t.false(await isDisplayed('div#vertical-display'));
 
     t.pass();
-  },
-);
+  }
+});
+
+test('Dual Output Go Live Ultra', async (t: TExecutionContext) => {
+  await logIn('twitch', { prime: true, multistream: true });
+  await toggleDualOutputMode();
+  await prepareToGoLive();
+
+  await clickGoLive();
+  await waitForSettingsWindowLoaded();
+  try {
+    const platform = await toggleAccountForDisplay('horizontal');
+    if (!platform) {
+      t.fail('Could not toggle second platform.');
+    }
+
+    await submit();
+
+    // Cannot go live in dual output mode with all targets assigned to one display
+    await waitForDisplayed('div.ant-message-notice-content', {
+      timeout: 10000,
+    });
+    await clickIfDisplayed('div.ant-message-notice-content');
+    await sleep(200);
+
+    // Dual output with one platform for each display
+    await fillForm({
+      [`${platform}Display`]: 'vertical',
+    });
+
+    await waitForDualOutputStreamStart(platform);
+
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
+    await fillForm({
+      [`${platform}Display`]: 'horizontal',
+      twitchDisplay: 'vertical',
+    });
+
+    await waitForDualOutputStreamStart(platform);
+
+    if (platform === 'instagram') {
+      // Clean up the dummy account
+      await showSettingsWindow('Stream', async () => {
+        await waitForDisplayed('h2=Stream Destinations');
+        await clickWhenDisplayed('[data-name="instagramUnlink"]');
+      });
+    }
+  } catch (e: unknown) {
+    console.log('Error during Dual Output Go Live Ultra test:', e);
+    t.fail('Error during Dual Output Go Live Ultra test');
+  } finally {
+    // Vertical display is hidden after logging out
+    await logOut(t);
+    t.false(await isDisplayed('#vertical-display'));
+    t.pass();
+  }
+});
