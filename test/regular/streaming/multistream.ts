@@ -39,21 +39,22 @@ async function goLiveWithMultistream() {
   await submit();
   await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
 
-  if (await isDisplayed('button=Bypass and Go Live')) {
+  // YouTube accounts fail for reasons unrelated to the tests. Check for the bypass prompt, which is
+  // shown when setting up a multistream fails, including for errors from YouTube
+  // Try toggling off YouTube and going live again
+  const bypassPrompted = await isDisplayed('button=Bypass and Go Live', { timeout: 2000 });
+
+  if (bypassPrompted) {
     await clickButton('Close');
     await clickGoLive();
     await waitForSettingsWindowLoaded();
-
-    // Try toggling off YouTube and going live again
     await fillForm({ youtube: false });
     await waitForSettingsWindowLoaded();
     await submit();
     await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
-    await waitForDisplayed("h1=You're live!", { timeout: 60000 });
-  } else {
-    await waitForDisplayed("h1=You're live!", { timeout: 60000 });
   }
 
+  await waitForDisplayed("h1=You're live!", { timeout: 60000 });
   // Confirm chat loads
   await chatIsVisible(true);
 }
