@@ -1791,18 +1791,38 @@ export class StreamingService
       ) {
         await this.handleStartRecording();
       } else if (
-        this.state.status.horizontal.recording === ERecordingState.Stopping ||
-        this.state.status.vertical.recording === ERecordingState.Stopping
+        this.state.status.horizontal.recording === ERecordingState.Writing ||
+        this.state.status.vertical.recording === ERecordingState.Writing
       ) {
-        if (this.contexts.horizontal.recording !== null) {
-          console.warn('Force stopping horizontal recording');
-          this.contexts.horizontal.recording.stop(true);
-        }
+        console.error(
+          'Recording is currently writing, prompt user for confirmation to force stop recording',
+        );
 
-        if (this.contexts.vertical.recording !== null) {
-          console.warn('Force stopping vertical recording');
-          this.contexts.vertical.recording.stop(true);
-        }
+        this.outputErrorOpen = true;
+        remote.dialog
+          .showMessageBox(Utils.getMainWindow(), {
+            buttons: ['Cancel', 'Ok'],
+            title: $t('Recording in Progress'),
+            type: 'warning',
+            message: $t(
+              'Recording is currently saving to disk. Do you want to force stop the recording?',
+            ),
+          })
+          .then(({ response }) => {
+            if (response === 1) {
+              if (this.contexts.horizontal.recording !== null) {
+                this.contexts.horizontal.recording.stop(true);
+              }
+
+              if (this.contexts.vertical.recording !== null) {
+                this.contexts.vertical.recording.stop(true);
+              }
+            }
+            this.outputErrorOpen = false;
+          })
+          .catch(() => {
+            this.outputErrorOpen = false;
+          });
       } else {
         console.warn(
           'Recording in-progress, cannot toggle recording in state ',

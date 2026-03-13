@@ -76,7 +76,7 @@ test('Recording via API', async (t: TExecutionContext) => {
   streamingService.toggleRecording();
 
   recordingStatus = (await client.fetchNextEvent()).data;
-  t.is(recordingStatus, ERecordingState.Stopping);
+  t.is(recordingStatus, ERecordingState.Writing);
 
   recordingStatus = (await client.fetchNextEvent()).data;
   t.is(recordingStatus, ERecordingState.Offline);
