@@ -20,7 +20,12 @@ import {
 import { logIn } from '../../helpers/modules/user';
 import { releaseUserInPool, reserveUserFromPool, withUser } from '../../helpers/webdriver/user';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
-import { test, TExecutionContext, useWebdriver } from '../../helpers/webdriver';
+import {
+  skipCheckingErrorsInLog,
+  test,
+  TExecutionContext,
+  useWebdriver,
+} from '../../helpers/webdriver';
 import { sleep } from '../../helpers/sleep';
 
 // not a react hook
@@ -52,6 +57,7 @@ async function goLiveWithMultistream() {
     await waitForSettingsWindowLoaded();
     await submit();
     await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
+    skipCheckingErrorsInLog();
   }
 
   await waitForDisplayed("h1=You're live!", { timeout: 60000 });

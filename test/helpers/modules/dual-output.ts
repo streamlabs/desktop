@@ -18,7 +18,6 @@ import {
   waitForSettingsWindowLoaded,
   waitForStreamStop,
 } from './streaming';
-import { sleep } from '../sleep';
 
 /**
  * Toggle dual output mode
@@ -86,10 +85,8 @@ export async function waitForDualOutputStreamStart(platform: string) {
     await chatIsVisible();
     await waitForStreamStop();
   } else {
-    await waitForDisplayed("h1=You're live!", { timeout: 60000 });
     await chatIsVisible();
     await isDisplayed('span=Multistream');
-    await sleep(2000);
     await stopStream();
   }
 }

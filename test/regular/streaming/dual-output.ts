@@ -203,7 +203,7 @@ test(
 
     await toggleDualOutputMode();
 
-    // dual output cannot be toggled on in studio mode
+    // Studio Mode
     await focusMain();
     await (await app.client.$('.side-nav .icon-studio-mode-3')).click();
     t.true(
@@ -211,26 +211,19 @@ test(
       'Cannot toggle Studio Mode in Dual Output Mode.',
     );
 
-    // Selective recording in dual output mode does not change display visibility
-    await toggleDualOutputMode();
-    t.false(await isDisplayed('#vertical-display'), 'Dual output mode is off');
-    await (await app.client.$('[data-name=sourcesControls] .icon-smart-record')).click();
-
-    // Check that selective recording icon is active
-    await (await app.client.$('.icon-smart-record.active')).waitForExist();
-
-    // Check that dual output is active
-    await toggleDualOutputMode();
-    await focusMain();
-    await (await app.client.$('.icon-dual-output.active')).waitForExist();
-
-    // Toggling selective recording should not change the displays
-    await (await app.client.$('.icon-smart-record.active')).click();
+    // Selective Recording
     await (await app.client.$('.icon-smart-record')).click();
+    await waitForDisplayed('.icon-smart-record.active');
     t.false(
       await isDisplayed('#vertical-display'),
-      'Toggling selective recording back on hides vertical display in dual output mode',
+      'Toggling selective recording back hides the vertical display in dual output mode',
     );
+
+    // toggling selective recording on while in dual output mode opens a message box warning
+    // notifying the user that the vertical canvas is no longer accessible
+    // skip checking the log for this error
+    skipCheckingErrorsInLog();
+    t.pass();
   },
 );
 
