@@ -211,7 +211,7 @@ test(
       'Cannot toggle Studio Mode in Dual Output Mode.',
     );
 
-    // selective recording in dual output mode is only available for the horizontal display
+    // Selective recording in dual output mode does not change display visibility
     await toggleDualOutputMode();
     t.false(await isDisplayed('#vertical-display'), 'Dual output mode is off');
     await (await app.client.$('[data-name=sourcesControls] .icon-smart-record')).click();
@@ -219,35 +219,18 @@ test(
     // Check that selective recording icon is active
     await (await app.client.$('.icon-smart-record.active')).waitForExist();
 
+    // Check that dual output is active
     await toggleDualOutputMode();
-
-    // dual output is active but the vertical display is not shown
     await focusMain();
     await (await app.client.$('.icon-dual-output.active')).waitForExist();
-    t.false(
-      await isDisplayed('#vertical-display'),
-      'Vertical display is not shown in dual output with selective recording',
-    );
 
-    // toggling selective recording off should show the vertical display
+    // Toggling selective recording should not change the displays
     await (await app.client.$('.icon-smart-record.active')).click();
-    t.true(
-      await isDisplayed('#vertical-display'),
-      'Toggling selective recording off shows vertical display in dual output mode',
-    );
-
-    // toggling selective recording back on should hide the vertical display
     await (await app.client.$('.icon-smart-record')).click();
     t.false(
       await isDisplayed('#vertical-display'),
       'Toggling selective recording back on hides vertical display in dual output mode',
     );
-
-    // toggling selective recording on while in dual output mode opens a message box warning
-    // notifying the user that the vertical canvas is no longer accessible
-    // skip checking the log for this error
-    skipCheckingErrorsInLog();
-    t.pass();
   },
 );
 
@@ -255,7 +238,8 @@ test(
  * Dual Output Go Live
  */
 
-test('Dual Output Go Live Non-Ultra', withUser('twitch', { prime: false }), async t => {
+test('Dual Output Go Live Non-Ultra', async t => {
+  await logIn('twitch', { prime: false });
   await toggleDualOutputMode(true);
   await prepareToGoLive();
 
@@ -317,62 +301,58 @@ test('Dual Output Go Live Non-Ultra', withUser('twitch', { prime: false }), asyn
   }
 });
 
-test(
-  'Dual Output Go Live Ultra',
-  withUser('twitch', { prime: true, multistream: true }),
-  async (t: TExecutionContext) => {
-    try {
-      await toggleDualOutputMode();
-      await prepareToGoLive();
+test('Dual Output Go Live Ultra', async (t: TExecutionContext) => {
+  await logIn('twitch', { prime: true, multistream: true });
+  await toggleDualOutputMode();
+  await prepareToGoLive();
 
-      await clickGoLive();
-      await waitForSettingsWindowLoaded();
-
-      const platform = await toggleAccountForDisplay('horizontal');
-      if (!platform) {
-        t.fail('Could not toggle second platform.');
-      }
-
-      await submit();
-
-      // Cannot go live in dual output mode with all targets assigned to one display
-      await waitForDisplayed('div.ant-message-notice-content', {
-        timeout: 10000,
-      });
-      await clickIfDisplayed('div.ant-message-notice-content');
-      await sleep(200);
-
-      // Dual output with one platform for each display
-      await fillForm({
-        [`${platform}Display`]: 'vertical',
-      });
-
-      await waitForDualOutputStreamStart(platform);
-
-      await clickGoLive();
-      await waitForSettingsWindowLoaded();
-      await fillForm({
-        [`${platform}Display`]: 'horizontal',
-        twitchDisplay: 'vertical',
-      });
-
-      await waitForDualOutputStreamStart(platform);
-
-      if (platform === 'instagram') {
-        // Clean up the dummy account
-        await showSettingsWindow('Stream', async () => {
-          await waitForDisplayed('h2=Stream Destinations');
-          await clickWhenDisplayed('[data-name="instagramUnlink"]');
-        });
-      }
-    } catch (e: unknown) {
-      console.log('Error during Dual Output Go Live Ultra test:', e);
-      t.fail('Error during Dual Output Go Live Ultra test');
-    } finally {
-      // Vertical display is hidden after logging out
-      await logOut(t);
-      t.false(await isDisplayed('#vertical-display'));
-      t.pass();
+  await clickGoLive();
+  await waitForSettingsWindowLoaded();
+  try {
+    const platform = await toggleAccountForDisplay('horizontal');
+    if (!platform) {
+      t.fail('Could not toggle second platform.');
     }
-  },
-);
+
+    await submit();
+
+    // Cannot go live in dual output mode with all targets assigned to one display
+    await waitForDisplayed('div.ant-message-notice-content', {
+      timeout: 10000,
+    });
+    await clickIfDisplayed('div.ant-message-notice-content');
+    await sleep(200);
+
+    // Dual output with one platform for each display
+    await fillForm({
+      [`${platform}Display`]: 'vertical',
+    });
+
+    await waitForDualOutputStreamStart(platform);
+
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
+    await fillForm({
+      [`${platform}Display`]: 'horizontal',
+      twitchDisplay: 'vertical',
+    });
+
+    await waitForDualOutputStreamStart(platform);
+
+    if (platform === 'instagram') {
+      // Clean up the dummy account
+      await showSettingsWindow('Stream', async () => {
+        await waitForDisplayed('h2=Stream Destinations');
+        await clickWhenDisplayed('[data-name="instagramUnlink"]');
+      });
+    }
+  } catch (e: unknown) {
+    console.log('Error during Dual Output Go Live Ultra test:', e);
+    t.fail('Error during Dual Output Go Live Ultra test');
+  } finally {
+    // Vertical display is hidden after logging out
+    await logOut(t);
+    t.false(await isDisplayed('#vertical-display'));
+    t.pass();
+  }
+});
