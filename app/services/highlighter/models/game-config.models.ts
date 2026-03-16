@@ -13,6 +13,14 @@ export const TERMS = {
   ELIMINATION: { singular: 'elimination', plural: 'eliminations' },
   KNOCKED: { singular: 'knocked', plural: 'knocks' },
   KNOCKOUT: { singular: 'got knocked', plural: 'got knocked' },
+  GOAL: { singular: 'goal', plural: 'goals' },
+  SET_PIECE: { singular: 'set piece', plural: 'set pieces' },
+  TEAM_SCORED: { singular: 'team goal', plural: 'team goals' },
+  OPPONENT_SCORED: { singular: 'opponent goal', plural: 'opponent goals' },
+  LAP_CHANGE: { singular: 'lap change', plural: 'lap changes' },
+  POSITION_CHANGE: { singular: 'position change', plural: 'position changes' },
+  GAME_END: { singular: 'game end', plural: 'game ends' },
+  GAME_START: { singular: 'game start', plural: 'game starts' },
   DEATH: { singular: 'death', plural: 'deaths' },
   DEFEAT: { singular: 'defeat', plural: 'defeats' },
   WIN: { singular: 'win', plural: 'wins' },
@@ -25,6 +33,12 @@ export const TERMS = {
 export const EMOJI = {
   GUN: '🔫',
   BOXING_GLOVES: '🥊',
+  BALL: '⚽',
+  RED_FLAG: '🚩',
+  BULLSEYE: '🎯',
+  REFRESH: '🔄',
+  SHUFFLE: '🔀',
+  TRAFFIC_LIGHT: '🚦',
   DEATH: '🪦',
   DEFEAT: '☠️',
   TROPHY: '🏆',
@@ -76,6 +90,62 @@ const COMMON_TYPES: Record<string, IDefaultEventInfo> = {
     description: TERMS.KNOCKOUT,
     orderPriority: 5,
     includeInDropdown: false,
+    contextEvent: false,
+  },
+  ['goal']: {
+    emoji: EMOJI.BALL,
+    description: TERMS.GOAL,
+    orderPriority: 4,
+    includeInDropdown: true,
+    contextEvent: false,
+  },
+  ['set_piece']: {
+    emoji: EMOJI.RED_FLAG,
+    description: TERMS.SET_PIECE,
+    orderPriority: 4,
+    includeInDropdown: true,
+    contextEvent: false,
+  },
+  ['team_scored']: {
+    emoji: EMOJI.BALL,
+    description: TERMS.TEAM_SCORED,
+    orderPriority: 4,
+    includeInDropdown: true,
+    contextEvent: false,
+  },
+  ['opponent_scored']: {
+    emoji: EMOJI.BULLSEYE,
+    description: TERMS.OPPONENT_SCORED,
+    orderPriority: 4,
+    includeInDropdown: true,
+    contextEvent: false,
+  },
+  ['lap_change']: {
+    emoji: EMOJI.REFRESH,
+    description: TERMS.LAP_CHANGE,
+    orderPriority: 4,
+    includeInDropdown: true,
+    contextEvent: false,
+  },
+  ['position_change']: {
+    emoji: EMOJI.SHUFFLE,
+    description: TERMS.POSITION_CHANGE,
+    orderPriority: 4,
+    includeInDropdown: true,
+    contextEvent: false,
+  },
+  ['game_end']: {
+    emoji: EMOJI.ROUND,
+    description: TERMS.GAME_END,
+    orderPriority: 4,
+    includeInDropdown: true,
+    contextEvent: false,
+  },
+  ['game_start']: {
+    emoji: EMOJI.TRAFFIC_LIGHT,
+    description: TERMS.GAME_START,
+    orderPriority: 4,
+    includeInDropdown: true,
     contextEvent: false,
   },
   ['death']: {
@@ -436,6 +506,38 @@ const MARATHON: IGameConfig = {
   },
 };
 
+const F1_25: IGameConfig = {
+  name: EGame.F1_25,
+  label: 'F1® 25',
+  gameModes: '',
+  thumbnail: `${thumbnailPath}${EGame.F1_25}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#d35459',
+    artwork: `${heroPath}${EGame.F1_25}.png`,
+    backgroundColor: '#151616',
+  },
+};
+
+const EA_SPORTS_FC_26: IGameConfig = {
+  name: EGame.EA_SPORTS_FC_26,
+  label: 'EA Sports FC™ 26',
+  gameModes: '',
+  thumbnail: `${thumbnailPath}${EGame.EA_SPORTS_FC_26}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#81f07b',
+    artwork: `${heroPath}${EGame.EA_SPORTS_FC_26}.png`,
+    backgroundColor: '#151616',
+  },
+};
+
 const UNSET_CONFIG: IGameConfig = {
   name: EGame.UNSET,
   label: 'unset',
@@ -469,6 +571,8 @@ const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.DOTA_2]: DOTA_2,
   [EGame.DEAD_BY_DAYLIGHT]: DEAD_BY_DAYLIGHT,
   [EGame.MARATHON]: MARATHON,
+  [EGame.F1_25]: F1_25,
+  [EGame.EA_SPORTS_FC_26]: EA_SPORTS_FC_26,
   [EGame.UNSET]: UNSET_CONFIG,
 };
 
