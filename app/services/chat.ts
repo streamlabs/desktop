@@ -351,7 +351,7 @@ export class ChatService extends Service {
               `
                 document.querySelector('html').style = 'overflow-y: hidden !important;';
                 const iframe = document.querySelector('iframe');
-                if (!iframe) return;
+                if (!iframe || !iframe.contentDocument) return;
                 var chatContainer = iframe.contentDocument.querySelector('body > div > div > div');
                 chatContainer.style.marginLeft = '0';
                 chatContainer.style.marginRight = '0';
