@@ -27,9 +27,7 @@ export function enableBTTVEmotesScript(isDarkTheme: boolean) {
   /*eslint-disable */
   return `
 localStorage.setItem('bttv_clickTwitchEmotes', true);
-localStorage.setItem('bttv_darkenedMode', ${
-  isDarkTheme ? 'true' : 'false'
-});
+localStorage.setItem('bttv_darkenedMode', ${isDarkTheme ? 'true' : 'false'});
 
 var bttvscript = document.createElement('script');
 bttvscript.setAttribute('src','https://cdn.betterttv.net/betterttv.js');
@@ -48,7 +46,7 @@ function loadLazyEmotes() {
 
 loadLazyEmotes();
 0;
-`
+`;
   /*eslint-enable */
 }
 
@@ -352,8 +350,9 @@ export class ChatService extends Service {
             .executeJavaScript(
               `
                 document.querySelector('html').style = 'overflow-y: hidden !important;';
-
-                var chatContainer = document.querySelector('iframe').contentDocument.querySelector('body > div > div > div');
+                const iframe = document.querySelector('iframe');
+                if (!iframe) return;
+                var chatContainer = iframe.contentDocument.querySelector('body > div > div > div');
                 chatContainer.style.marginLeft = '0';
                 chatContainer.style.marginRight = '0';
                 chatContainer.style.maxWidth = 'none';
