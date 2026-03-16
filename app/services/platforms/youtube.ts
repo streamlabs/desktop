@@ -620,16 +620,18 @@ export class YoutubeService
     this.streamSettingsService.setGoLiveSettings({ customDestinations: destinations });
 
     //restore user's previous settings in case they were overwritten on Go Live
-    this.streamSettingsService.setSettings(
-      {
-        platform: 'youtube',
-        service: this.state.backupStreamSettings.service,
-        key: this.state.backupStreamSettings.key,
-        streamType: this.state.backupStreamSettings.streamType,
-        server: this.state.backupStreamSettings.server,
-      },
-      this.state.backupStreamSettings.context,
-    );
+    if (this.state.backupStreamSettings) {
+      this.streamSettingsService.setSettings(
+        {
+          platform: 'youtube',
+          service: this.state.backupStreamSettings.service,
+          key: this.state.backupStreamSettings.key,
+          streamType: this.state.backupStreamSettings.streamType,
+          server: this.state.backupStreamSettings.server,
+        },
+        this.state.backupStreamSettings.context,
+      );
+    }
   }
 
   /**
