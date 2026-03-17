@@ -327,31 +327,29 @@ class ScenesViews extends ViewHandler<IScenesState> {
 
     // Handle node visibility
     if (node instanceof SceneItem) {
-      const partnerSceneItem = this.getDualOutputPartnerItem(sceneNodeId);
-      if (!partnerSceneItem) {
-        console.error(
-          'Could not find dual output partner scene item for scene item with id',
-          sceneNodeId,
-        );
-        return;
-      }
-
       const toggleVisible = visible ?? !node.visible;
-      if (toggleVisible && partnerSceneItem.visible) {
-        // Trigger state change for a visible partner node so that sources with video will sync
-        partnerSceneItem.setVisibility(false);
-        await new Promise(resolve => setTimeout(resolve, 50));
-        node.setVisibility(true);
-        partnerSceneItem.setVisibility(true);
-      } else {
-        node.setVisibility(toggleVisible);
+      const partnerSceneItem = this.getDualOutputPartnerItem(sceneNodeId);
+
+      if (partnerSceneItem) {
+        if (toggleVisible && !partnerSceneItem.visible) {
+          // When making nodes visible for dual output scene collections, set visibility to false for the partner node
+          // to trigger state change so that sources with video will sync
+          partnerSceneItem.setVisibility(false);
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+
+        // Set visibility for partner node
+        partnerSceneItem.setVisibility(toggleVisible);
+
+        // Sync audio for dual output scene items. This is mostly important when hiding a source so that audio
+        // will not continue to play from the source in the opposite display.
+        if (node.getModel().audio) {
+          this.sourcesService.setMuted(partnerSceneItem.sourceId, !toggleVisible);
+        }
       }
 
-      // Sync audio for dual output scene item. This is mostly important when hiding a source so that audio
-      // will not continue to play from the source in the opposite display.
-      if (node.getModel().audio) {
-        this.sourcesService.setMuted(partnerSceneItem.sourceId, !toggleVisible);
-      }
+      // Finally, set visibility for the node that was toggled
+      node.setVisibility(toggleVisible);
     } else {
       // To toggle a folder's visibility, toggle the visibility of the child nodes
       const items = node?.getItems() ?? [];
