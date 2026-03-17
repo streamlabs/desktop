@@ -72,7 +72,7 @@ export class EditMenu extends Menu {
   }
 
   private appendEditMenuItems() {
-    if (this.source.propertiesManagerType === 'smartBrowserSource') {
+    if (this.source && this.source.propertiesManagerType === 'smartBrowserSource') {
       this.append({
         label: $t('Edit Reactive Data'),
         click: () => this.sourcesService.actions.showReactiveDataEditorWindow(this.source.sourceId),

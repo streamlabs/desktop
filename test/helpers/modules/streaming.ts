@@ -119,9 +119,13 @@ export async function waitForStreamStop() {
   });
 }
 
-export async function chatIsVisible() {
+export async function chatIsVisible(multistream: boolean = false) {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   return await useMainWindow(async () => {
+    if (multistream) {
+      return await isDisplayed('span=Multistream');
+    }
+
     return await isDisplayed('a=Refresh Chat');
   });
 }

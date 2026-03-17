@@ -115,6 +115,10 @@ export class WidgetsService
 
     this.sourcesService.sourceRemoved.subscribe(sourceModel => {
       if (!this.state.widgetSources[sourceModel.sourceId]) return;
+      const widgetType = this.state.widgetSources[sourceModel.sourceId].type;
+      this.usageStatisticsService.recordAnalyticsEvent('WidgetRemoved', {
+        type: WidgetType[widgetType],
+      });
       this.unregister(sourceModel.sourceId);
     });
   }
