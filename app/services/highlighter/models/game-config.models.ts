@@ -538,6 +538,22 @@ const EA_SPORTS_FC_26: IGameConfig = {
   },
 };
 
+const NBA_2K26: IGameConfig = {
+  name: EGame.NBA_2K26,
+  label: 'NBA 2K26',
+  gameModes: '',
+  thumbnail: `${thumbnailPath}${EGame.NBA_2K26}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#fa0000',
+    artwork: `${heroPath}${EGame.NBA_2K26}.png`,
+    backgroundColor: '#111111',
+  },
+};
+
 const UNSET_CONFIG: IGameConfig = {
   name: EGame.UNSET,
   label: 'unset',
@@ -573,6 +589,7 @@ const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.MARATHON]: MARATHON,
   [EGame.F1_25]: F1_25,
   [EGame.EA_SPORTS_FC_26]: EA_SPORTS_FC_26,
+  [EGame.NBA_2K26]: NBA_2K26,
   [EGame.UNSET]: UNSET_CONFIG,
 };
 
