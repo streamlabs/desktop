@@ -109,7 +109,7 @@ export default function GoLiveSettings() {
     <Row gutter={16} className={styles.settingsRow}>
       {/*LEFT COLUMN*/}
       {shouldShowLeftCol && (
-        <Col span={9} className={styles.leftColumn}>
+        <Col span={8} className={styles.leftColumn}>
           <div className={styles.columnContent}>
             <div className={cx(styles.columnHeader, { [styles.ultraColumnHeader]: isPrime })}>
               {headerText}
@@ -161,7 +161,7 @@ export default function GoLiveSettings() {
 
       {/*RIGHT COLUMN*/}
       <Col
-        span={shouldShowLeftCol ? 15 : 24}
+        span={shouldShowLeftCol ? 16 : 24}
         className={cx(styles.rightColumn, !shouldShowLeftCol && styles.destinationMode)}
       >
         <Spinner visible={isLoading} />

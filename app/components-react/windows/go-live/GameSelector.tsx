@@ -10,6 +10,7 @@ import { $t } from '../../../services/i18n';
 import { IListOption } from '../../shared/inputs/ListInput';
 import { Services } from '../../service-provider';
 import { injectState, useModule } from 'slap';
+import { CaretDownOutlined, SearchOutlined } from '@ant-design/icons';
 
 type TProps = TSlobsInputProps<{ platform: TPlatform; layout?: TInputLayout }, string>;
 
@@ -148,6 +149,7 @@ export default function GameSelector(p: TProps) {
       allowClear
       layout={p.layout}
       size="large"
+      suffixIcon={isSearching ? <SearchOutlined /> : <CaretDownOutlined />}
     />
   );
 }
