@@ -120,7 +120,7 @@ export class ReactiveDataService extends Service {
     });
 
     this.userService.userLogout.subscribe(() => {
-      this.writeState({ schemaFlatJson: null, stateFlatJson: null });
+      this.writeState({ schemaFlatJson: '', stateFlatJson: '' });
       this.state.invalidateSchemaCache();
       this.state.invalidateStateCache();
     });
