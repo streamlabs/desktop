@@ -68,6 +68,7 @@ export enum EGame {
   MARATHON = 'marathon',
   F1_25 = 'f1_25',
   EA_SPORTS_FC_26 = 'ea_sports_fc_26',
+  NBA_2K26 = 'nba_2k26',
   UNSET = 'unset',
 }
 
