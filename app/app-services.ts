@@ -109,6 +109,7 @@ export { GrowService } from 'services/grow/grow';
 export { GuestCamService } from 'services/guest-cam';
 export { DualOutputService } from 'services/dual-output';
 export { VisionService } from 'services/vision';
+export { ReactiveDataService } from 'services/reactive-data';
 export { SseService } from 'services/server-sent-events';
 
 // WIDGETS
@@ -121,16 +122,13 @@ export { SupporterGoalService } from 'services/widgets/settings/supporter-goal';
 export { SubscriberGoalService } from 'services/widgets/settings/subscriber-goal';
 export { CharityGoalService } from 'services/widgets/settings/charity-goal';
 export { StreamBossService } from 'services/widgets/settings/stream-boss';
-export { DonationTickerService } from 'services/widgets/settings/donation-ticker';
 export { CreditsService } from 'services/widgets/settings/credits';
-export { EventListService } from 'services/widgets/settings/event-list';
 export { TipJarService } from 'services/widgets/settings/tip-jar';
 export { SubGoalService } from 'services/widgets/settings/sub-goal';
 export { MediaShareService } from 'services/widgets/settings/media-share';
 export { AlertBoxService } from 'services/widgets/settings/alert-box';
 export { SpinWheelService } from 'services/widgets/settings/spin-wheel';
 export { PollService } from 'services/widgets/settings/poll';
-export { EmoteWallService } from 'services/widgets/settings/emote-wall';
 export { ChatHighlightService } from 'services/widgets/settings/chat-highlight';
 export { SuperchatGoalService } from 'services/widgets/settings/superchat-goal';
 
@@ -216,6 +214,7 @@ import { UrlService } from 'services/hosts';
 import { KickService } from 'services/platforms/kick';
 import { SseService } from './services/server-sent-events';
 import { VisionService } from 'services/vision';
+import { ReactiveDataService } from 'services/reactive-data';
 import { SignalsService } from 'services/signals-manager';
 import { TroubleshooterService } from 'services/troubleshooter';
 import { OnboardingV2Service } from 'services/onboarding/onboarding-v2';
@@ -305,6 +304,7 @@ export const AppServices = {
   VirtualWebcamService,
   SseService,
   VisionService,
+  ReactiveDataService,
   TroubleshooterService,
   OnboardingV2Service,
 };

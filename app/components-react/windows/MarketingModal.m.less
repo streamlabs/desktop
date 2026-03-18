@@ -1,5 +1,17 @@
-@import "../../styles/index.less";
+@import '../../styles/index.less';
 
+.marketing-modal {
+  display: flex;
+  flex-direction: column;
+
+  h2 {
+    margin-bottom: 0px;
+  }
+
+  .update-header {
+    margin-bottom: 10px;
+  }
+}
 .cell {
   background: var(--section);
   border-radius: 8px;
@@ -11,40 +23,67 @@
   width: 49%;
 
   .image-container {
-    width: 100%;
-    height: 150px;
+    width: 50%;
+    object-fit: contain;
     overflow: hidden;
-    flex-shrink: 0;
+    flex-shrink: 1;
     position: relative;
   }
 
   .image {
     width: 100%;
     height: auto;
-
-    .center();
   }
 
   .info {
     padding: 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .info-scroll {
+    flex: 1;
+    margin-bottom: 8px !important;
+  }
+
+  .sub-info {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .sub-info-text {
+    flex: 1;
+  }
+
+  &.sub-update-cell {
+    width: 100%;
+    margin: 0 8px;
+
+    &:first-child {
+      margin-left: 0px;
+    }
+
+    &:last-child {
+      margin-right: 0px;
+    }
   }
 }
 
 .cell.main {
   flex-direction: row;
   width: 100%;
-  height: 200px;
-
-  .image-container {
-    height: 100%;
-    width: 50%;
-  }
+  height: 185px;
 
   .image {
     height: 100%;
     width: auto;
+  }
 
-    .center();
+  .info {
+    padding: 16px 16px 12px 16px;
   }
 }
 
@@ -58,5 +97,20 @@
 .sub-updates {
   display: flex;
   justify-content: space-between;
-  height: 50%;
+  flex: 1;
+}
+
+.updates-scroll {
+  width: 100%;
+}
+
+.sub-updates-scroll {
+  height: 100%;
+  width: 100%;
+}
+
+.updates-button {
+  align-self: flex-end;
+  overflow: hidden;
+  width: 100%;
 }

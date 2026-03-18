@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import * as remote from '@electron/remote';
 import { useVuex } from '../../hooks';
 import { Services } from '../../service-provider';
-import { alertAsync, confirmAsync } from '../../modals';
+import { alertAsync } from '../../modals';
 import { $t } from '../../../services/i18n';
 import { ObsSettingsSection } from './ObsSettings';
 import { CheckboxInput, TextInput } from '../../shared/inputs';
@@ -13,7 +13,7 @@ import { CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icon
 
 export function Support() {
   return (
-    <div>
+    <div style={{ paddingBottom: '10px' }}>
       <SupportLinks />
       <DiagnosticReport />
       <CacheSettings />
@@ -97,9 +97,11 @@ function DiagnosticReport() {
 
   return (
     <ObsSettingsSection title={$t('Diagnostic Report')}>
-      {$t(
-        'The diagnostic report is an automatically generated report that contains information about your system and configuration. Clicking the upload button below will generate and securely transmit a diagnostic report to the Streamlabs team.',
-      )}
+      <div>
+        {$t(
+          'The diagnostic report is an automatically generated report that contains information about your system and configuration. Clicking the upload button below will generate and securely transmit a diagnostic report to the Streamlabs team.',
+        )}
+      </div>
       <Button style={{ margin: '20px 0' }} onClick={uploadReport} disabled={uploading}>
         <i
           className={cx('fa', { 'fa-upload': !uploading, 'fa-spinner fa-pulse': uploading })}
@@ -117,19 +119,6 @@ function CacheSettings() {
 
   async function showCacheDir() {
     await remote.shell.openPath(AppService.appDataDirectory);
-  }
-
-  async function deleteCacheDir() {
-    if (
-      await confirmAsync(
-        $t(
-          'WARNING! You will lose all stream and encoder settings. If you are logged in, your scenes and sources will be restored from the cloud. This cannot be undone.',
-        ),
-      )
-    ) {
-      remote.app.relaunch({ args: ['--clearCacheDir'] });
-      remote.app.quit();
-    }
   }
 
   function uploadCacheDir() {
@@ -158,12 +147,6 @@ function CacheSettings() {
       <div className="input-container">
         <a className="link" onClick={showCacheDir}>
           <i className="icon-view" /> <span>{$t('Show Cache Directory')}</span>
-        </a>
-      </div>
-      <div className="input-container">
-        <a className="link" onClick={deleteCacheDir}>
-          <i className="icon-trash" />
-          <span>{$t('Delete Cache and Restart')}</span>
         </a>
       </div>
       <div className="input-container">

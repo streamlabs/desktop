@@ -28,6 +28,7 @@ import { DualOutputService } from 'services/dual-output';
 import { TDisplayType, VideoSettingsService } from 'services/settings-v2';
 import { IncrementalRolloutService } from 'app-services';
 import { EAvailableFeatures } from 'services/incremental-rollout';
+import { UsageStatisticsService } from 'services/usage-statistics';
 
 export interface IWidgetSourcesState {
   widgetSources: Dictionary<IWidgetSource>;
@@ -86,6 +87,7 @@ export class WidgetsService
   @Inject() dualOutputService: DualOutputService;
   @Inject() videoSettingsService: VideoSettingsService;
   @Inject() incrementalRolloutService: IncrementalRolloutService;
+  @Inject() private usageStatisticsService: UsageStatisticsService;
 
   widgetDisplayData = WidgetDisplayData(); // cache widget display data
 
@@ -113,6 +115,10 @@ export class WidgetsService
 
     this.sourcesService.sourceRemoved.subscribe(sourceModel => {
       if (!this.state.widgetSources[sourceModel.sourceId]) return;
+      const widgetType = this.state.widgetSources[sourceModel.sourceId].type;
+      this.usageStatisticsService.recordAnalyticsEvent('WidgetRemoved', {
+        type: WidgetType[widgetType],
+      });
       this.unregister(sourceModel.sourceId);
     });
   }
@@ -191,6 +197,10 @@ export class WidgetsService
       },
     );
 
+    this.usageStatisticsService.recordAnalyticsEvent('WidgetAdded', {
+      type: WidgetType[type],
+    });
+
     return item;
   }
 
@@ -256,6 +266,8 @@ export class WidgetsService
         newPreviewSettings.url =
           config?.previewUrl || widget.getSettingsService().getApiSettings().previewUrl;
         const previewSource = widget.getPreviewSource();
+        // If there's no longer a preview source (ie window is closed) do nothing
+        if (!previewSource) return;
         previewSource.updateSettings(newPreviewSettings);
         previewSource.refresh();
       },
@@ -491,10 +503,21 @@ export class WidgetsService
   }
 
   // make a request to widgets API
-  async request(req: { url: string; method?: THttpMethod; body?: any }): Promise<any> {
+  async request(req: {
+    url: string;
+    method?: THttpMethod;
+    body?: any;
+    headers?: Record<string, string>;
+  }): Promise<any> {
     const method = req.method || 'GET';
     const headers = authorizedHeaders(this.userService.apiToken);
     headers.append('Content-Type', 'application/json');
+
+    if (req.headers) {
+      for (const [key, value] of Object.entries(req.headers)) {
+        headers.set(key, value);
+      }
+    }
 
     const request = new Request(req.url, {
       headers,
