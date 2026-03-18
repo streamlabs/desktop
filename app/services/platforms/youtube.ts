@@ -1145,11 +1145,6 @@ export class YoutubeService
   }
 
   async uploadThumbnail(base64url: string | 'default', videoId: string) {
-    return throwStreamError(
-      'YOUTUBE_THUMBNAIL_UPLOAD_FAILED',
-      { platform: 'youtube' },
-      $t('Thumbnail image content is invalid.'),
-    );
     // if `default` passed as url then upload default url
     // otherwise convert the passed base64url to blob
     const url =
