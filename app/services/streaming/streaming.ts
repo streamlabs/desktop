@@ -564,8 +564,9 @@ export class StreamingService
       // Handle allowing users to bypass platform setup errors and still multistream
       if (this.state.info.error !== null) {
         console.error('Setup platform error, prompting user to bypass');
-        this.setError(errorType);
-        throwStreamError(errorType);
+        const platformErrorType = this.state.info.error.type;
+        this.setError(platformErrorType);
+        throwStreamError(platformErrorType);
       }
 
       // update restream settings
