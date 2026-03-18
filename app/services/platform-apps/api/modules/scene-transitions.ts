@@ -17,6 +17,15 @@ enum ObsAudioFadeStyle {
   CrossFade = 1,
 }
 
+type MatteLayout = 'horizontal' | 'vertical' | 'file' | 'mask';
+
+enum ObsMatteLayout {
+  MATTE_LAYOUT_HORIZONTAL = 0,
+  MATTE_LAYOUT_VERTICAL = 1,
+  MATTE_LAYOUT_SEPARATE_FILE = 2,
+  MATTE_LAYOUT_MASK = 3,
+}
+
 type TransitionPointType = 'time' | 'frame';
 
 enum ETransitionPointType {
@@ -58,6 +67,8 @@ interface StingerTransitionOptions {
   transitionPoint?: number;
   /** Type of transition point, frame or time **/
   transitionPointType?: TransitionPointType;
+  /** The layout of the matte **/
+  matteLayout?: MatteLayout;
 }
 
 // this makes it clear this is going to be a sum type
@@ -260,6 +271,7 @@ export class SceneTransitionsModule extends Module {
       shouldMonitorAudio: 'audio_monitoring',
       transitionPoint: 'transition_point',
       url: 'path',
+      matteLayout: 'track_matte_layout',
     };
 
     const obsValueMapping = {
@@ -273,6 +285,20 @@ export class SceneTransitionsModule extends Module {
       shouldMonitorAudio: (shouldMonitor: boolean) => (shouldMonitor ? 1 : 0),
       transitionPointType: (transitionPoint: TransitionPointType): ETransitionPointType =>
         transitionPoint === 'time' ? ETransitionPointType.Time : ETransitionPointType.Frame,
+      matteLayout: (layout: MatteLayout): ObsMatteLayout => {
+        switch (layout) {
+          case 'horizontal':
+            return ObsMatteLayout.MATTE_LAYOUT_HORIZONTAL;
+          case 'vertical':
+            return ObsMatteLayout.MATTE_LAYOUT_VERTICAL;
+          case 'file':
+            return ObsMatteLayout.MATTE_LAYOUT_SEPARATE_FILE;
+          case 'mask':
+            return ObsMatteLayout.MATTE_LAYOUT_MASK;
+          default:
+            return undefined;
+        }
+      },
     };
 
     const settings = {};
@@ -298,6 +324,7 @@ export class SceneTransitionsModule extends Module {
       },
       settings: {
         ...settings,
+        track_matte_enabled: Boolean(options.matteLayout),
         path: options.url,
       },
     };

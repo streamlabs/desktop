@@ -380,6 +380,9 @@ export class StreamingService
       destination.video = this.videoSettingsService.contexts[display];
       destination.mode = display === 'horizontal' ? 'landscape' : 'portrait';
     });
+    // Disable "Rescale Output" for dual output mode to prevent issues with scaling vertical/horizontal views.
+    this.dualOutputService.disableGlobalRescaleIfNeeded();
+
     // save enabled platforms to reuse setting with the next app start
     this.streamSettingsService.setSettings({ goLiveSettings: settings });
 
@@ -561,8 +564,9 @@ export class StreamingService
       // Handle allowing users to bypass platform setup errors and still multistream
       if (this.state.info.error !== null) {
         console.error('Setup platform error, prompting user to bypass');
-        this.setError(errorType);
-        throwStreamError(errorType);
+        const platformErrorType = this.state.info.error.type;
+        this.setError(platformErrorType);
+        throwStreamError(platformErrorType);
       }
 
       // update restream settings

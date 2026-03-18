@@ -54,7 +54,10 @@ export type TAnalyticsEvent =
   | 'ScheduleStream'
   | 'StreamShift'
   | 'Ultra'
-  | 'Onboarding';
+  | 'Onboarding'
+  | 'WidgetAdded'
+  | 'WidgetRemoved'
+  | 'GamePulse';
 
 // Refls are used as uuids for ultra components and should be updated for new ulta components.
 export type TUltraRefl =

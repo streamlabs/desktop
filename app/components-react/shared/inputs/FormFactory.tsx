@@ -32,6 +32,7 @@ const componentTable: {
   time: inputs.TimeInput,
   animation: inputs.AnimationInput,
   duration: inputs.DurationInput,
+  fontFamily: inputs.FontFamilyInput,
 };
 
 interface IFormMetadata {
