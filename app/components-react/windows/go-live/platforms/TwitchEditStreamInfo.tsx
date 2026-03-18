@@ -55,6 +55,10 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
     p.isStreamShiftMode,
   ]);
 
+  // Twitch enhanced broadcasting is only available on Windows and Apple Silicon Macs due to hardware encoding requirements
+  const isEnhancedBroadcastingVisible =
+    process.platform !== 'darwin' || (process.platform === 'darwin' && process.arch === 'arm64');
+
   const optionalFields = (
     <div key="optional">
       <TwitchTagsInput label={$t('Twitch Tags')} {...bind.tags} layout={p.layout} />
@@ -65,8 +69,7 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
       >
         <CheckboxInput label={$t('Stream features branded content')} {...bind.isBrandedContent} />
       </InputWrapper>
-      {(process.platform !== 'darwin' ||
-        (process.platform === 'darwin' && process.arch === 'arm64')) && (
+      {isEnhancedBroadcastingVisible && (
         <InputWrapper
           layout={p.layout}
           className={cx(styles.twitchCheckbox, { [styles.hideLabel]: p.layout === 'vertical' })}
