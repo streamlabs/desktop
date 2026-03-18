@@ -30,6 +30,7 @@ enum EObsAdvancedEncoder {
   ffmpeg_svt_av1 = 'ffmpeg_svt_av1',
   obs_nvenc_av1_tex = 'obs_nvenc_av1_tex',
   obs_nvenc_hevc_tex = 'obs_nvenc_hevc_tex',
+  obs_nvenc_h264_tex = 'obs_nvenc_h264_tex',
 }
 
 /**
@@ -46,6 +47,7 @@ export enum EEncoderFamily {
   ffmpeg_svt_av1 = 'ffmpeg_svt_av1',
   obs_nvenc_av1_tex = 'obs_nvenc_av1_tex',
   obs_nvenc_hevc_tex = 'obs_nvenc_hevc_tex',
+  obs_nvenc_h264_tex = 'obs_nvenc_h264_tex',
 }
 
 export enum EFileFormat {
@@ -237,6 +239,7 @@ export const encoderFieldsMap = {
   [EEncoderFamily.ffmpeg_svt_av1]: { preset: 'preset' },
   [EEncoderFamily.obs_nvenc_av1_tex]: { preset: 'preset' },
   [EEncoderFamily.obs_nvenc_hevc_tex]: { preset: 'preset' },
+  [EEncoderFamily.obs_nvenc_h264_tex]: { preset: 'preset' },
 };
 
 export function simpleEncoderToAdvancedEncoder(encoder: EEncoderFamily) {
@@ -262,6 +265,12 @@ export function obsEncoderToEncoderFamily(
     case EObsSimpleEncoder.amd:
     case EObsAdvancedEncoder.amd_amf_h264:
       return EEncoderFamily.amd;
+    case EObsAdvancedEncoder.obs_nvenc_av1_tex:
+      return EEncoderFamily.obs_nvenc_av1_tex;
+    case EObsAdvancedEncoder.obs_nvenc_hevc_tex:
+      return EEncoderFamily.obs_nvenc_hevc_tex;
+    case EObsAdvancedEncoder.obs_nvenc_h264_tex:
+      return EEncoderFamily.obs_nvenc_h264_tex;
   }
 }
 
@@ -358,20 +367,6 @@ export class OutputSettingsService extends Service {
         quality = ERecordingQuality.Stream;
         break;
     }
-
-    // const encoder = obsEncoderToEncoderFamily(
-    //   this.settingsService.findSettingValue(output, 'Streaming', 'Encoder') ||
-    //     this.settingsService.findSettingValue(output, 'Streaming', 'StreamEncoder'),
-    // ) as EEncoderFamily;
-
-    // const convertedEncoderName:
-    //   | EObsSimpleEncoder
-    //   | EObsAdvancedEncoder = this.convertEncoderToNewAPI(encoder);
-
-    // const videoEncoder: EObsAdvancedEncoder =
-    //   convertedEncoderName === EObsSimpleEncoder.x264_lowcpu
-    //     ? EObsAdvancedEncoder.obs_x264
-    //     : convertedEncoderName;
 
     const field = mode === 'Advanced' ? 'Encoder' : 'StreamEncoder';
 
@@ -965,6 +960,12 @@ export class OutputSettingsService extends Service {
         return EObsAdvancedEncoder.jim_nvenc;
       case EObsSimpleEncoder.x264_lowcpu:
         return EObsSimpleEncoder.x264_lowcpu;
+      case EObsAdvancedEncoder.obs_nvenc_h264_tex:
+        return EObsAdvancedEncoder.obs_nvenc_h264_tex;
+      case EObsAdvancedEncoder.obs_nvenc_hevc_tex:
+        return EObsAdvancedEncoder.obs_nvenc_hevc_tex;
+      case EObsAdvancedEncoder.obs_nvenc_av1_tex:
+        return EObsAdvancedEncoder.obs_nvenc_av1_tex;
     }
   }
 
