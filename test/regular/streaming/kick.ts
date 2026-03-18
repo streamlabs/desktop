@@ -12,7 +12,7 @@ import { waitForDisplayed } from '../../helpers/modules/core';
 // eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
 
-test('Streaming to Kick', withUser('twitch', { multistream: true }), async t => {
+test('Streaming to Kick', withUser('twitch', { prime: true }), async t => {
   await addDummyAccount('kick');
 
   await prepareToGoLive();

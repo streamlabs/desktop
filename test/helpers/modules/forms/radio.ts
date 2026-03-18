@@ -3,20 +3,17 @@ import { BaseInputController } from './base';
 export class RadioInputController extends BaseInputController<string> {
   async setValue(value: string) {
     const $el = await this.getElement();
-    const $inputs = await $el.$$('.ant-radio-input');
+    const $labels = await $el.$$('label.ant-radio-wrapper');
 
-    for (const $input of $inputs) {
+    for (const $label of $labels) {
+      const $input = await $label.$('input[type="radio"]');
       const inputVal = await $input.getValue();
-      const $parent = await $input.parentElement();
-      const $parentparent = await $parent.parentElement();
 
       if (inputVal === value) {
-        await $parentparent.waitForEnabled();
-        await $parentparent.click();
+        await $label.click();
+        return;
       }
     }
-
-    $el.setValue(value);
   }
 
   async getValue() {

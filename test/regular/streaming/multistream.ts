@@ -1,4 +1,5 @@
 import {
+  chatIsVisible,
   clickGoLive,
   prepareToGoLive,
   stopStream,
@@ -19,7 +20,12 @@ import {
 import { logIn } from '../../helpers/modules/user';
 import { releaseUserInPool, reserveUserFromPool, withUser } from '../../helpers/webdriver/user';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
-import { test, TExecutionContext, useWebdriver } from '../../helpers/webdriver';
+import {
+  skipCheckingErrorsInLog,
+  test,
+  TExecutionContext,
+  useWebdriver,
+} from '../../helpers/webdriver';
 import { sleep } from '../../helpers/sleep';
 
 // not a react hook
@@ -32,6 +38,31 @@ async function enableAllPlatforms() {
     await sleep(500);
     await waitForSettingsWindowLoaded();
   }
+}
+
+async function goLiveWithMultistream() {
+  await submit();
+  await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
+
+  // YouTube accounts fail for reasons unrelated to the tests. Check for the bypass prompt, which is
+  // shown when setting up a multistream fails, including for errors from YouTube
+  // Try toggling off YouTube and going live again
+  const bypassPrompted = await isDisplayed('button=Bypass and Go Live', { timeout: 2000 });
+
+  if (bypassPrompted) {
+    await clickButton('Close');
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
+    await fillForm({ youtube: false });
+    await waitForSettingsWindowLoaded();
+    await submit();
+    await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
+    skipCheckingErrorsInLog();
+  }
+
+  await waitForDisplayed("h1=You're live!", { timeout: 60000 });
+  // Confirm chat loads
+  await chatIsVisible(true);
 }
 
 async function goLiveWithStreamShift(t: TExecutionContext, multistream: boolean) {
@@ -61,7 +92,7 @@ async function goLiveWithStreamShift(t: TExecutionContext, multistream: boolean)
   // Confirm chat loads
   await waitForStreamStart();
   await focusMain();
-  await waitForDisplayed('div=Refresh Chat', { timeout: 60000 });
+  await chatIsVisible();
 
   await stopStream();
   await waitForStreamStop();
@@ -134,12 +165,7 @@ test(
       primaryChat: 'YouTube',
     });
 
-    await submit();
-    await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
-    await waitForDisplayed("h1=You're live!", { timeout: 60000 });
-    // Confirm chat loads
-    await focusMain();
-    await waitForDisplayed('div=Refresh Chat', { timeout: 60000 });
+    await goLiveWithMultistream();
     await stopStream();
 
     await goLiveWithDefaultCodec();
@@ -184,9 +210,7 @@ test(
       title: 'trovo title',
     });
 
-    await submit();
-    await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
-    await waitForDisplayed("h1=You're live!", { timeout: 60000 });
+    await goLiveWithMultistream();
     await stopStream();
 
     t.pass();

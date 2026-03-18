@@ -340,8 +340,8 @@ const SCENE_ITEM_ACTIONS: HotkeyGroup = {
       return $t('Push to Show %{sourcename}', { sourcename: sceneItem?.source.name });
     },
     shouldApply: sceneItemId => !!getScenesService().views.getSceneItem(sceneItemId)?.video,
-    up: sceneItemId => getScenesService().views.getSceneItem(sceneItemId)?.setVisibility(false),
-    down: sceneItemId => getScenesService().views.getSceneItem(sceneItemId)?.setVisibility(true),
+    up: sceneItemId => getScenesService().views.toggleNodeVisibility(sceneItemId, false),
+    down: sceneItemId => getScenesService().views.toggleNodeVisibility(sceneItemId, true),
   },
   PUSH_TO_SOURCE_HIDE: {
     name: 'PUSH_TO_SOURCE_HIDE',
@@ -350,8 +350,8 @@ const SCENE_ITEM_ACTIONS: HotkeyGroup = {
       return $t('Push to Hide %{sourcename}', { sourcename: sceneItem?.source.name });
     },
     shouldApply: sceneItemId => !!getScenesService().views.getSceneItem(sceneItemId)?.video,
-    up: sceneItemId => getScenesService().views.getSceneItem(sceneItemId)?.setVisibility(true),
-    down: sceneItemId => getScenesService().views.getSceneItem(sceneItemId)?.setVisibility(false),
+    up: sceneItemId => getScenesService().views.toggleNodeVisibility(sceneItemId, true),
+    down: sceneItemId => getScenesService().views.toggleNodeVisibility(sceneItemId, false),
   },
 };
 
