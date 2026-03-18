@@ -862,9 +862,10 @@ export class StreamingService
 
     // Format the error message for restream errors to show the details to the user in the bypass error modal
     if (e && typeof e === 'object' && type.split('_').includes('RESTREAM')) {
+      const errorPlatform = platform || this.state.info.error?.platform;
       // If the error has a platform associated with it, specify the platform in the error message
-      if (platform || this.state.info.error?.platform) {
-        const platformLabel = `${platformLabels(platform)} Error.`;
+      if (errorPlatform) {
+        const platformLabel = `${platformLabels(errorPlatform)} Error.`;
         details.push(platformLabel + message);
       } else {
         details.push(defaultMessage);
