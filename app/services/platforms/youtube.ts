@@ -853,8 +853,6 @@ export class YoutubeService
       url: `${this.apiBase}/${endpoint}`,
     });
 
-    await this.uploadThumbnail('', broadcast.id);
-
     // upload thumbnail
     if (params.thumbnail && params.thumbnail !== 'default') {
       try {
