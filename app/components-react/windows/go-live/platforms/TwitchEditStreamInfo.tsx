@@ -76,13 +76,17 @@ function TwitchRequiredFields(p: IPlatformComponentParams<'twitch'>) {
     return twSettings?.isEnhancedBroadcasting;
   }, [isDualStream, twSettings?.isEnhancedBroadcasting, p.isStreamShiftMode]);
 
+  // Twitch enhanced broadcasting is only available on Windows and Apple Silicon Macs due to hardware encoding requirements
+  const isEnhancedBroadcastingVisible =
+    process.platform !== 'darwin' || (process.platform === 'darwin' && process.arch === 'arm64');
+
   return (
     <>
       <GameSelector key="twitch-game" platform={'twitch'} {...bind.game} layout={p.layout} />
       {p.isAiHighlighterEnabled && (
         <AiHighlighterToggle key="ai-toggle" game={bind.game?.value} cardIsExpanded={false} />
       )}
-      {process.platform !== 'darwin' && !isUpdateMode && (
+      {isEnhancedBroadcastingVisible && !isUpdateMode && (
         <InputWrapper
           layout={p.layout}
           className={cx({ [styles.hideLabel]: p.layout === 'vertical' })}
