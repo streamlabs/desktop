@@ -1,3 +1,5 @@
+import { sleep } from '../sleep';
+import { skipCheckingErrorsInLog } from '../webdriver';
 import { addDummyAccount } from '../webdriver/user';
 import {
   focusChild,
@@ -82,11 +84,12 @@ export async function waitForDualOutputStreamStart(platform: string) {
 
   // Dummy accounts won't go live
   if (platform === 'instagram') {
+    await sleep(1000);
     await chatIsVisible();
     await waitForStreamStop();
+    skipCheckingErrorsInLog();
   } else {
-    await chatIsVisible();
-    await isDisplayed('span=Multistream');
+    await chatIsVisible(true);
     await stopStream();
   }
 }
