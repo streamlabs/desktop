@@ -338,5 +338,6 @@
   "Grow your audience faster with unlimited Multistream. Our servers do the work so your PC can stream smoothly.": "無制限のマルチストリームで、より迅速に視聴者を増やしましょう。PC でスムーズにストリーミングできるよう、当社のサーバーが支えます。",
   "Unlock unlimited multistreaming with Ultra and grow your audience faster": "Ultra で無制限のマルチストリーミングを利用して、より迅速に視聴者を増やしましょう。",
   "<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform": "<dualoutput>Dual Output</dualoutput> が有効です - 1つの水平プラットフォームと 1つの垂直プラットフォームにストリームする必要があります。",
-  "Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination.": "カスタムインジェストへのストリーミングは、高度な機能です。カスタムインジェストへのストリーミング中はマルチストリーミングが無効になり、一部の機能が予期したように動作しなくなる可能性があります。カスタム RTMP 配信先にマルチストリームするための推奨設定に切り替えてください。"
+  "Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination.": "カスタムインジェストへのストリーミングは、高度な機能です。カスタムインジェストへのストリーミング中はマルチストリーミングが無効になり、一部の機能が予期したように動作しなくなる可能性があります。カスタム RTMP 配信先にマルチストリームするための推奨設定に切り替えてください。",
+  "%{platform} Error": "%{platform} Error"
 }
