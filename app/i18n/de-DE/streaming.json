@@ -339,5 +339,5 @@
   "Unlock unlimited multistreaming with Ultra and grow your audience faster": "Hol dir mit Ultra unbegrenztes Multistreaming und vergrößere deine Reichweite noch schneller",
   "<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform": "<dualoutput>Dual Output</dualoutput> ist aktiviert – du musst auf eine horizontale und eine vertikale Plattform streamen.",
   "Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination.": "Das Streamen zu einem benutzerdefinierten Ingest ist eine erweiterte Funktion. Multistreaming ist beim Streamen zu einem benutzerdefinierten Ingest deaktiviert, und einige Funktionen funktionieren vielleicht nicht mehr wie erwartet. Wechsle zu den empfohlenen Einstellungen, um an ein benutzerdefiniertes RTMP-Ziel zu multistreamen.",
-  "Multistream Error:": "Multistream Error:"
+  "%{platform} Error": "%{platform} Error"
 }
