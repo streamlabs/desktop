@@ -339,5 +339,5 @@
   "Unlock unlimited multistreaming with Ultra and grow your audience faster": "Desbloqueie as multitransmissões ilimitadas com o Ultra e aumente seu público mais rapidamente",
   "<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform": "O <dualoutput>Dual Output</dualoutput> está ativado - você deve transmitir para uma plataforma horizontal e uma vertical.",
   "Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination.": "A transmissão para uma ingestão personalizada é uma funcionalidade avançada. A multitransmissão fica desativada durante a transmissão para uma ingestão personalizada e alguns recursos podem parar de funcionar como esperado. Mude para as configurações recomendadas para fazer multitransmissões para um destino RTMP personalizado.",
-  "Multistream Error:": "Multistream Error:"
+  "%{platform} Error": "%{platform} Error"
 }
