@@ -674,7 +674,7 @@ export class StreamingService
     }
 
     // all done
-    if (this.state.streamingStatus === EStreamingState.Live) {
+    if (this.getIsStreamingStatus(EStreamingState.Live)) {
       this.UPDATE_STREAM_INFO({ lifecycle: 'live' });
       this.createGameAssociation(this.views.game);
       this.recordAfterStreamStartAnalytics(settings);
@@ -1079,15 +1079,45 @@ export class StreamingService
   }
 
   get isStreaming() {
-    return this.state.streamingStatus !== EStreamingState.Offline;
+    return (
+      this.state.status.horizontal.streaming !== EStreamingState.Offline ||
+      this.state.status.vertical.streaming !== EStreamingState.Offline
+    );
   }
 
   get isRecording() {
-    return this.state.recordingStatus !== ERecordingState.Offline;
+    return (
+      this.state.status.horizontal.recording !== ERecordingState.Offline ||
+      this.state.status.vertical.recording !== ERecordingState.Offline
+    );
   }
 
   get isReplayBufferActive() {
-    return this.state.replayBufferStatus !== EReplayBufferState.Offline;
+    return (
+      this.state.status.horizontal.replayBuffer !== EReplayBufferState.Offline ||
+      this.state.status.vertical.replayBuffer !== EReplayBufferState.Offline
+    );
+  }
+
+  getIsStreamingStatus(status: EStreamingState) {
+    return (
+      this.state.status.horizontal.streaming === status ||
+      this.state.status.vertical.streaming === status
+    );
+  }
+
+  getIsRecordingStatus(status: ERecordingState) {
+    return (
+      this.state.status.horizontal.recording === status ||
+      this.state.status.vertical.recording === status
+    );
+  }
+
+  getIsReplayBufferStatus(status: EReplayBufferState) {
+    return (
+      this.state.status.horizontal.replayBuffer === status ||
+      this.state.status.vertical.replayBuffer === status
+    );
   }
 
   get isIdle(): boolean {
@@ -1096,7 +1126,9 @@ export class StreamingService
 
   setSelectiveRecording(enabled: boolean) {
     // Selective recording cannot be toggled while live
-    if (this.state.streamingStatus !== EStreamingState.Offline) return;
+    if (this.isStreaming) {
+      return;
+    }
 
     if (enabled) this.usageStatisticsService.recordFeatureUsage('SelectiveRecording');
 
@@ -1106,7 +1138,7 @@ export class StreamingService
 
   setDualOutputMode(enabled: boolean) {
     // Dual output cannot be toggled while live
-    if (this.state.streamingStatus !== EStreamingState.Offline) return;
+    if (this.isStreaming) return;
 
     if (enabled) {
       this.dualOutputService.actions.setDualOutputModeIfPossible(true, true);
@@ -1228,7 +1260,10 @@ export class StreamingService
       return;
     }
 
-    if (this.state.streamingStatus === EStreamingState.Offline) {
+    if (
+      this.state.status.horizontal.streaming === EStreamingState.Offline &&
+      this.state.status.vertical.streaming === EStreamingState.Offline
+    ) {
       if (this.recordingModeService.views.isRecordingModeEnabled) return;
 
       // in the "force" mode just try to start streaming without updating channel info
@@ -1245,9 +1280,9 @@ export class StreamingService
     }
 
     if (
-      this.state.streamingStatus === EStreamingState.Starting ||
-      this.state.streamingStatus === EStreamingState.Live ||
-      this.state.streamingStatus === EStreamingState.Reconnecting
+      this.getIsStreamingStatus(EStreamingState.Starting) ||
+      this.getIsStreamingStatus(EStreamingState.Live) ||
+      this.getIsStreamingStatus(EStreamingState.Reconnecting)
     ) {
       const shouldConfirm = this.streamSettingsService.settings.warnBeforeStoppingStream;
 
@@ -1267,8 +1302,8 @@ export class StreamingService
       }
 
       this.handleStopStreaming(
-        this.state.streamingStatus === EStreamingState.Live ||
-          this.state.streamingStatus === EStreamingState.Reconnecting,
+        this.getIsStreamingStatus(EStreamingState.Live) ||
+          this.getIsStreamingStatus(EStreamingState.Reconnecting),
       );
 
       this.windowsService.closeChildWindow();
@@ -1287,7 +1322,7 @@ export class StreamingService
       return Promise.resolve();
     }
 
-    if (this.state.streamingStatus === EStreamingState.Ending) {
+    if (this.getIsStreamingStatus(EStreamingState.Ending)) {
       this.contexts.horizontal.streaming.stop(true);
       this.restreamService.resetStreamShift();
 
@@ -1510,12 +1545,12 @@ export class StreamingService
     // Recording must be stopped before stopping the replay buffer
     // for the correct order of destruction of the context instances
     const keepRecording = this.streamSettingsService.settings.keepRecordingWhenStreamStops;
-    if (!keepRecording && this.state.recordingStatus === ERecordingState.Recording) {
+    if (!keepRecording && this.getIsRecordingStatus(ERecordingState.Recording)) {
       this.toggleRecording();
     }
 
     const keepReplaying = this.streamSettingsService.settings.keepReplayBufferStreamStops;
-    if (!keepReplaying && this.state.replayBufferStatus === EReplayBufferState.Running) {
+    if (!keepReplaying && this.getIsReplayBufferStatus(EReplayBufferState.Running)) {
       this.stopReplayBuffer();
     }
 
@@ -1781,20 +1816,11 @@ export class StreamingService
 
   async toggleRecording() {
     try {
-      if (
-        this.state.status.horizontal.recording === ERecordingState.Recording ||
-        this.state.status.vertical.recording === ERecordingState.Recording
-      ) {
+      if (this.getIsRecordingStatus(ERecordingState.Recording)) {
         await this.handleStopRecording();
-      } else if (
-        this.state.status.horizontal.recording === ERecordingState.Offline ||
-        this.state.status.vertical.recording === ERecordingState.Offline
-      ) {
+      } else if (this.getIsRecordingStatus(ERecordingState.Offline)) {
         await this.handleStartRecording();
-      } else if (
-        this.state.status.horizontal.recording === ERecordingState.Writing ||
-        this.state.status.vertical.recording === ERecordingState.Writing
-      ) {
+      } else if (this.getIsRecordingStatus(ERecordingState.Writing)) {
         console.error(
           'Recording is currently writing, prompt user for confirmation to force stop recording',
         );
@@ -2237,19 +2263,14 @@ export class StreamingService
       // contexts only because the other contexts cannot use recording or replay buffer
       if (this.isDisplayContext(context)) {
         const keepReplaying = this.streamSettingsService.settings.keepReplayBufferStreamStops;
-        const isReplayBufferRunning =
-          this.state.status.horizontal.replayBuffer === EReplayBufferState.Running ||
-          this.state.status.vertical.replayBuffer === EReplayBufferState.Running;
+        const isReplayBufferRunning = this.getIsReplayBufferStatus(EReplayBufferState.Running);
         if (!keepReplaying && isReplayBufferRunning) {
           this.stopReplayBuffer();
-          // this.stopReplayBuffer(context);
         }
 
         // handle recording
         const keepRecording = this.streamSettingsService.settings.keepRecordingWhenStreamStops;
-        const isRecording =
-          this.state.status.horizontal.recording === ERecordingState.Recording ||
-          this.state.status.vertical.recording === ERecordingState.Recording;
+        const isRecording = this.getIsRecordingStatus(ERecordingState.Recording);
         if (!keepRecording && isRecording) {
           await this.toggleRecording();
         }
@@ -2552,19 +2573,20 @@ export class StreamingService
         ? this.views.getOutputDisplayType()
         : 'horizontal';
 
-    // To prevent errors, if the replay buffer instance does not exist and the status is not offline, log an error
-    // and reset the replay buffer status to offline.
-    if (
-      !this.contexts[display].replayBuffer &&
-      this.state.status[display].replayBuffer !== EReplayBufferState.Offline
-    ) {
-      console.error(
-        'No replay buffer instance found to stop but status is not offline. Setting status to offline.',
-      );
-      this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Offline, display);
+    // Only attempt to stop the replay buffer instance if the replay buffer instance exists
+    if (!this.contexts[display].replayBuffer) {
+      // To prevent errors, if the replay buffer instance does not exist and the status is not offline, log an error
+      // and reset the replay buffer status to offline.
+      if (this.state.status[display].replayBuffer !== EReplayBufferState.Offline) {
+        console.error(
+          'No replay buffer instance found to stop but status is not offline. Setting status to offline.',
+        );
+        this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Offline, display);
+      }
       return;
     }
 
+    // Handle destroying the replay buffer instance if the instance exists but the status is offline to prevent orphan instances
     if (
       this.contexts[display].replayBuffer &&
       this.state.status[display].replayBuffer === EReplayBufferState.Offline
@@ -2823,8 +2845,8 @@ export class StreamingService
     if (!this.delayEnabled) return 0;
 
     if (
-      this.state.streamingStatus === EStreamingState.Starting ||
-      this.state.streamingStatus === EStreamingState.Ending
+      this.getIsStreamingStatus(EStreamingState.Starting) ||
+      this.getIsStreamingStatus(EStreamingState.Ending)
     ) {
       const elapsedTime = moment().unix() - this.streamingStateChangeTime.unix();
       return Math.max(this.delaySeconds - elapsedTime, 0);
@@ -2864,7 +2886,11 @@ export class StreamingService
   }
 
   get streamingStateChangeTime() {
-    return moment(this.state.streamingStatusTime);
+    const time =
+      this.state.status.horizontal.streaming !== EStreamingState.Offline
+        ? this.state.status.horizontal.streamingTime
+        : this.state.status.vertical.streamingTime;
+    return moment(time);
   }
 
   private sendReconnectingNotification() {
@@ -2910,7 +2936,7 @@ export class StreamingService
       this.settingsService.setSettingValue('General', 'RecordWhenStreaming', false);
     }
 
-    if (recordWhenStreaming && this.state.recordingStatus === ERecordingState.Offline) {
+    if (recordWhenStreaming && this.getIsRecordingStatus(ERecordingState.Offline)) {
       this.toggleRecording();
     }
 
@@ -3304,17 +3330,12 @@ export class StreamingService
       await this.destroyOutputContextIfExists(context, 'streaming');
       return;
     }
-    console.log(
-      'DESTROYING this.state.status[context]',
-      JSON.stringify(this.state.status[context], null, 2),
-    );
 
     // For the horizontal and vertical contexts, only destroy instances if all outputs are offline
     const offline =
       this.state.status[context].replayBuffer === EReplayBufferState.Offline &&
       this.state.status[context].recording === ERecordingState.Offline &&
       this.state.status[context].streaming === EStreamingState.Offline;
-    console.log('', JSON.stringify(this.state.status[context], null, 2));
 
     if (offline) {
       await this.destroyOutputContextIfExists(context, 'replayBuffer');
@@ -3472,6 +3493,7 @@ export class StreamingService
 
   @mutation()
   private SET_RECORDING_STATUS(status: ERecordingState, display: TDisplayType, time: string) {
+    console.log('Setting recording status', { status, display, time });
     this.state.status[display].recording = status;
     this.state.status[display].recordingTime = time;
     this.state.recordingStatus = status;
@@ -3484,6 +3506,7 @@ export class StreamingService
     display: TDisplayType,
     time?: string,
   ) {
+    console.log('Setting replay buffer status', { status, display, time });
     this.state.status[display].replayBuffer = status;
     this.state.replayBufferStatus = status;
 

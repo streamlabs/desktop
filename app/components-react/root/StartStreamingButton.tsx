@@ -34,7 +34,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     isMultiplatformMode,
     updateStreamInfoOnLive,
   } = useVuex(() => ({
-    streamingStatus: StreamingService.state.streamingStatus,
+    streamingStatus: StreamingService.views.streamingStatus,
     delayEnabled: StreamingService.views.delayEnabled,
     delaySeconds: StreamingService.views.delaySeconds,
     streamShiftStatus: RestreamService.state.streamShiftStatus,

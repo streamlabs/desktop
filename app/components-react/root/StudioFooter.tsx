@@ -45,7 +45,7 @@ export default function StudioFooterComponent() {
     streamQuality: PerformanceService.views.streamQuality,
     recordingModeEnabled: RecordingModeService.views.isRecordingModeEnabled,
     replayBufferEnabled: SettingsService.views.values.Output.RecRB,
-    replayBufferStatus: StreamingService.state.replayBufferStatus,
+    replayBufferStatus: StreamingService.views.replayBufferStatus,
     isReplayBufferActive: StreamingService.views.isReplayBufferActive,
   }));
 
@@ -107,7 +107,9 @@ export default function StudioFooterComponent() {
   }, [replayBufferStatus]);
 
   const saveReplay = useCallback(() => {
-    if (replayBufferSaving || replayBufferStopping) return;
+    if (replayBufferSaving || replayBufferStopping) {
+      return;
+    }
     StreamingService.actions.saveReplay();
   }, [replayBufferSaving, replayBufferStopping]);
 
@@ -232,7 +234,10 @@ function RecordingButton() {
   }, []);
 
   const showLoadingSpinner = useMemo(
-    () => [ERecordingState.Starting, ERecordingState.Stopping].includes(recordingStatus),
+    () =>
+      [ERecordingState.Starting, ERecordingState.Stopping, ERecordingState.Writing].includes(
+        recordingStatus,
+      ),
     [recordingStatus],
   );
 
