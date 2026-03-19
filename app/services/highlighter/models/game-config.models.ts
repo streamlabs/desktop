@@ -173,6 +173,7 @@ const COMMON_TYPES: Record<string, IDefaultEventInfo> = {
   },
 };
 
+const titlePath = 'https://cdn.streamlabs.com/static/imgs/game-titles/';
 const thumbnailPath = 'https://cdn.streamlabs.com/static/imgs/game-thumbnails/';
 const heroPath = 'https://cdn.streamlabs.com/static/imgs/hero-images/';
 const exampleVideoPath = 'https://slobs-cdn.streamlabs.com/media/example-videos/';
@@ -181,6 +182,7 @@ export const FORTNITE_CONFIG: IGameConfig = {
   name: EGame.FORTNITE,
   label: 'Fortnite',
   gameModes: 'Battle Royale, Zero Build, Reload, OG',
+  titleIcon: `${titlePath}${EGame.FORTNITE}.svg`,
   thumbnail: `${thumbnailPath}${EGame.FORTNITE}.png`,
   state: EGameState.LIVE,
   importModalConfig: {
@@ -213,6 +215,7 @@ const WARZONE_CONFIG: IGameConfig = {
   name: EGame.WARZONE,
   label: 'Call of Duty: Warzone',
   gameModes: '',
+  titleIcon: `${titlePath}${EGame.WARZONE}.svg`,
   thumbnail: `${thumbnailPath}${EGame.WARZONE}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -231,6 +234,7 @@ const BLACK_OPS_6_CONFIG: IGameConfig = {
   name: EGame.BLACK_OPS_6,
   label: 'Call of Duty: Black Ops 6',
   gameModes: '',
+  titleIcon: 'unset',
   thumbnail: `${thumbnailPath}call-of-duty-black-ops-6.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -250,6 +254,7 @@ const BLACK_OPS_7_CONFIG: IGameConfig = {
   name: EGame.BLACK_OPS_7,
   label: 'Call of Duty: Black Ops 7',
   gameModes: '',
+  titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.BLACK_OPS_7}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -266,6 +271,7 @@ const MARVEL_RIVALS_CONFIG: IGameConfig = {
   name: EGame.MARVEL_RIVALS,
   label: 'Marvel Rivals',
   gameModes: '',
+  titleIcon: `${titlePath}${EGame.MARVEL_RIVALS}.svg`,
   thumbnail: `${thumbnailPath}marvel-rivals.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -284,6 +290,7 @@ const WAR_THUNDER_CONFIG: IGameConfig = {
   name: EGame.WAR_THUNDER,
   label: 'War Thunder',
   gameModes: '',
+  titleIcon: 'unset',
   thumbnail: `${thumbnailPath}war-thunder.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -302,6 +309,7 @@ const VALORANT_CONFIG: IGameConfig = {
   name: EGame.VALORANT,
   label: 'VALORANT',
   gameModes: '',
+  titleIcon: `${titlePath}${EGame.VALORANT}.svg`,
   thumbnail: `${thumbnailPath}${EGame.VALORANT}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -318,6 +326,7 @@ const COUNTER_STRIKE_2_CONFIG: IGameConfig = {
   name: EGame.COUNTER_STRIKE_2,
   label: 'Counter-Strike',
   gameModes: '',
+  titleIcon: `${titlePath}${EGame.COUNTER_STRIKE_2}.svg`,
   thumbnail: `${thumbnailPath}${EGame.COUNTER_STRIKE_2}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -334,6 +343,7 @@ const APEX_LEGENDS_CONFIG: IGameConfig = {
   name: EGame.APEX_LEGENDS,
   label: 'Apex Legends',
   gameModes: '',
+  titleIcon: `${titlePath}${EGame.APEX_LEGENDS}.svg`,
   thumbnail: `${thumbnailPath}${EGame.APEX_LEGENDS}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -350,6 +360,7 @@ const PUBG_CONFIG: IGameConfig = {
   name: EGame.PUBG,
   label: 'PUBG: BATTLEGROUNDS',
   gameModes: '',
+  titleIcon: `${titlePath}${EGame.PUBG}.svg`,
   thumbnail: `${thumbnailPath}${EGame.PUBG}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -366,6 +377,7 @@ const RAINBOW_SIX_SIEGE: IGameConfig = {
   name: EGame.RAINBOW_SIX_SIEGE,
   label: "Tom Clancy's Rainbow Six Siege X",
   gameModes: '',
+  titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.RAINBOW_SIX_SIEGE}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -382,6 +394,7 @@ const OVERWATCH_2: IGameConfig = {
   name: EGame.OVERWATCH_2,
   label: 'Overwatch 2',
   gameModes: '',
+  titleIcon: `${titlePath}${EGame.OVERWATCH_2}.svg`,
   thumbnail: `${thumbnailPath}${EGame.OVERWATCH_2}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -398,6 +411,7 @@ const LEAGUE_OF_LEGENDS: IGameConfig = {
   name: EGame.LEAGUE_OF_LEGENDS,
   label: 'League of Legends',
   gameModes: '',
+  titleIcon: `${titlePath}${EGame.LEAGUE_OF_LEGENDS}.svg`,
   thumbnail: `${thumbnailPath}${EGame.LEAGUE_OF_LEGENDS}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -414,6 +428,7 @@ const BATTLEFIELD_6: IGameConfig = {
   name: EGame.BATTLEFIELD_6,
   label: 'Battlefield 6',
   gameModes: '',
+  titleIcon: `${titlePath}${EGame.BATTLEFIELD_6}.svg`,
   thumbnail: `${thumbnailPath}${EGame.BATTLEFIELD_6}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -430,6 +445,7 @@ const ARC_RAIDERS: IGameConfig = {
   name: EGame.ARC_RAIDERS,
   label: 'ARC Raiders',
   gameModes: '',
+  titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.ARC_RAIDERS}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -446,6 +462,7 @@ const ROCKET_LEAGUE: IGameConfig = {
   name: EGame.ROCKET_LEAGUE,
   label: 'Rocket League',
   gameModes: '',
+  titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.ROCKET_LEAGUE}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -462,6 +479,7 @@ const DOTA_2: IGameConfig = {
   name: EGame.DOTA_2,
   label: 'Dota 2',
   gameModes: '',
+  titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.DOTA_2}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -478,6 +496,7 @@ const DEAD_BY_DAYLIGHT: IGameConfig = {
   name: EGame.DEAD_BY_DAYLIGHT,
   label: 'Dead by Daylight',
   gameModes: '',
+  titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.DEAD_BY_DAYLIGHT}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -494,6 +513,7 @@ const MARATHON: IGameConfig = {
   name: EGame.MARATHON,
   label: 'Marathon',
   gameModes: '',
+  titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.MARATHON}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -510,6 +530,7 @@ const F1_25: IGameConfig = {
   name: EGame.F1_25,
   label: 'F1® 25',
   gameModes: '',
+  titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.F1_25}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -526,6 +547,7 @@ const EA_SPORTS_FC_26: IGameConfig = {
   name: EGame.EA_SPORTS_FC_26,
   label: 'EA Sports FC™ 26',
   gameModes: '',
+  titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.EA_SPORTS_FC_26}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -542,6 +564,7 @@ const NBA_2K26: IGameConfig = {
   name: EGame.NBA_2K26,
   label: 'NBA 2K26',
   gameModes: '',
+  titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.NBA_2K26}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -558,6 +581,7 @@ const UNSET_CONFIG: IGameConfig = {
   name: EGame.UNSET,
   label: 'unset',
   gameModes: 'unset',
+  titleIcon: 'unset',
   thumbnail: 'unset',
   state: EGameState.INTERNAL,
   inputTypeMap: {
@@ -595,7 +619,7 @@ const GAME_CONFIGS: Record<EGame, IGameConfig> = {
 
 export const supportedGames = Object.entries(GAME_CONFIGS)
   .filter(([gameKey]) => gameKey !== EGame.UNSET)
-  .filter(([gameKey, gameConfig]) => {
+  .filter(([_, gameConfig]) => {
     if (Utils.getHighlighterEnvironment() === 'production') {
       return gameConfig.state !== EGameState.INTERNAL;
     } else {
@@ -611,6 +635,8 @@ export const supportedGames = Object.entries(GAME_CONFIGS)
     };
   });
 
+export function getConfigByGame(game: EGame): IGameConfig;
+export function getConfigByGame(game?: EGame): IGameConfig | undefined;
 export function getConfigByGame(game: EGame | undefined): IGameConfig | undefined {
   if (!game) {
     return undefined;

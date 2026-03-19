@@ -1,0 +1,150 @@
+@import "../../styles/colors";
+@import "../../styles/ultra";
+@import "../../styles/index";
+
+.ai-landing {
+  &-root {
+    position: relative;
+    width: 100%;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    :global(.ant-modal-wrap),
+    :global(.ant-modal-mask) {
+      position: absolute;
+    }
+
+    :global(.os-content-glue) {
+      width: 100% !important;
+      height: 100% !important;
+    }
+  }
+
+  &-scrollable {
+    flex-grow: 1;
+    width: 100%;
+  }
+
+  &-contents {
+    min-height: 100%;
+    padding: 4 * @spacing;
+    background-color: var(--section);
+    text-align: center;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4 * @spacing;
+  }
+}
+
+.header {
+  font-size: 32px;
+  font-weight: @medium;
+  margin: 0;
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  justify-content: center;
+  column-gap: 0.3em;
+
+  &-ultra {
+    .ultra-text('warm');
+
+    &-text {
+      .ultra-text();
+    }
+  }
+}
+
+.ai-toggle {
+  @borderWidth: 2px;
+  @borderRadius: 4px;
+  @bloomWidth: 4px;
+
+  // Match padding/border padding of .ultra-card().
+  padding: @bloomWidth;
+  border: @borderWidth solid transparent;
+
+  &:hover {
+    cursor: pointer;
+  }
+
+  &&-emphasis {
+    .ultra-card(@borderWidth, @borderRadius, @bloomWidth, var(--background));
+  }
+
+  :global(.ant-form-item) {
+    margin: 0px;
+    padding: 4px 10px;
+    border-radius: @borderRadius;
+    background-color: var(--background);
+
+    label:hover {
+      cursor: pointer;
+    }
+  }
+}
+
+.feature-list {
+  flex: 1;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &-inner {
+    max-width: min(1400px, 100%);
+    display: grid;
+    gap: 2 * @spacing;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+}
+
+.ai-feature {
+  border: 1px solid transparent;
+  border-radius: 2 * @radius;
+  padding: 2 * @spacing;
+  text-align: center;
+  background-color: var(--background);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: @spacing;
+
+  &-image {
+    flex: 1;
+
+    img {
+      width: 100%;
+      height: auto;
+    }
+  }
+
+  &-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: @spacing;
+
+    & > * {
+      flex: 1;
+    }
+  }
+}
+
+.supported-games {
+  h3 {
+    color: var(--midtone);
+  }
+
+  .supported-game-list {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 2 * @spacing;
+  }
+}

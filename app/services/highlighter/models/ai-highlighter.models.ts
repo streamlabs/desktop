@@ -21,6 +21,7 @@ export interface IGameConfig {
   name: EGame;
   label: string; // Must be same as twitch
   gameModes: string;
+  titleIcon: string;
   thumbnail: string;
   state: EGameState;
   inputTypeMap: Record<string, IEventInfo | IDefaultEventInfo>;

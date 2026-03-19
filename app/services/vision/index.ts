@@ -12,6 +12,8 @@ import _ from 'lodash';
 import pMemoize from 'p-memoize';
 import { ESettingsCategory } from 'services/settings';
 import { Subject } from 'rxjs';
+import { getOS, OS } from 'util/operating-systems';
+import Utils from 'services/utils';
 
 export class VisionProcess extends RealmObject {
   game: string;
@@ -35,6 +37,19 @@ export class VisionProcess extends RealmObject {
 }
 
 VisionProcess.register();
+
+export class VisionEnabledState extends RealmObject {
+  isEnabled: boolean;
+
+  static schema: ObjectSchema = {
+    name: 'VisionEnabledState',
+    properties: {
+      isEnabled: { type: 'bool', default: false },
+    },
+  };
+}
+
+VisionEnabledState.register({ persist: true });
 
 export class VisionState extends RealmObject {
   installedVersion: string;
@@ -95,6 +110,8 @@ VisionState.register();
 
 @InitAfter('UserService')
 export class VisionService extends Service {
+  static readonly DependencyKey = 'VisionService' as const;
+
   private visionRunner = new VisionRunner();
   private visionUpdater = new VisionUpdater(
     path.join(remote.app.getPath('userData'), '..', 'streamlabs-vision'),
@@ -106,18 +123,19 @@ export class VisionService extends Service {
   // update prompt
   private lastPromptAt = 0;
   private lastPromptVersion?: string;
-  private promptCooldownMs = 500; // 500ms
-
-  onState = new Subject<{ isRunning: boolean; isStarting: boolean; isInstalling: boolean }>();
-  onGame = new Subject<{
-    activeProcess: VisionProcess;
-    selectedGame: string;
-    availableProcesses: VisionProcess[];
-  }>();
+  private promptCooldownMs = 500;
+  onState = new Subject<
+    Pick<VisionEnabledState, 'isEnabled'> &
+      Pick<VisionState, 'isRunning' | 'isStarting' | 'isInstalling'>
+  >();
+  onGame = new Subject<
+    { activeProcess: VisionProcess } & Pick<VisionState, 'selectedGame' | 'availableProcesses'>
+  >();
   @Inject() userService: UserService;
   @Inject() hostsService: HostsService;
   @Inject() settingsService: SettingsService;
 
+  enabledState = VisionEnabledState.inject();
   state = VisionState.inject();
 
   init() {
@@ -133,6 +151,21 @@ export class VisionService extends Service {
 
     // useful for testing robustness
     // setInterval(() => this.ensureRunning(), 30_000);
+  }
+
+  isSupportedForOs() {
+    return getOS() === OS.Windows || (getOS() === OS.Mac && Utils.isDevMode());
+  }
+
+  async setIsEnabled(isEnabled?: boolean) {
+    const newIsEnabled = isEnabled !== false;
+    if (this.enabledState.isEnabled === newIsEnabled) return;
+
+    this.writeEnabledState(newIsEnabled);
+
+    if (newIsEnabled === false) {
+      return this.stop();
+    }
   }
 
   ensureUpdated = pMemoize(
@@ -181,7 +214,10 @@ export class VisionService extends Service {
 
   ensureRunning = pMemoize(
     async ({ debugMode = false }: VisionRunnerStartOptions = {}) => {
-      this.log('ensureRunning(): { debugMode=', debugMode, ' }');
+      const { isEnabled } = this.enabledState;
+
+      this.log('ensureRunning(): ' + JSON.stringify({ isEnabled, debugMode }));
+      if (!isEnabled) return;
 
       this.writeState({ isStarting: true });
 
@@ -213,7 +249,7 @@ export class VisionService extends Service {
             if (newVersion || cooledDown) {
               this.lastPromptVersion = v;
               this.lastPromptAt = now;
-              await this.settingsService.showSettings(ESettingsCategory.AI);
+              this.settingsService.showSettings(ESettingsCategory.AI);
             }
 
             return { started: false, reason: 'needs-update' as const };
@@ -274,6 +310,7 @@ export class VisionService extends Service {
 
   private notifyOfStateChange() {
     this.onState.next({
+      isEnabled: this.enabledState.isEnabled,
       isRunning: this.state.isRunning,
       isStarting: this.state.isStarting,
       isInstalling: this.state.isInstalling,
@@ -340,9 +377,13 @@ export class VisionService extends Service {
     }
   }
 
+  private writeEnabledState(isEnabled: VisionEnabledState['isEnabled']) {
+    this.enabledState.db.write(() => Object.assign(this.enabledState, { isEnabled }));
+    this.notifyOfStateChange();
+  }
+
   private writeState(patch: Partial<VisionState>) {
     this.state.db.write(() => Object.assign(this.state, patch));
-
     this.notifyOfStateChange();
   }
 
