@@ -79,20 +79,20 @@ async function goLiveWithStreamShift(t: TExecutionContext, multistream: boolean)
       trovoGame: 'Doom',
       streamShift: true,
     });
+    await goLiveWithMultistream();
   } else {
     await fillForm({ twitch: true });
     await waitForSettingsWindowLoaded();
     await fillForm({ title: 'Test stream', twitchGame: 'Fortnite', streamShift: true });
+    await waitForSettingsWindowLoaded();
+    await submit();
+    await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
+    await waitForDisplayed("h1=You're live!", { timeout: 60000 });
+    // Confirm chat loads
+    await waitForStreamStart();
+    await focusMain();
+    await chatIsVisible();
   }
-
-  await waitForSettingsWindowLoaded();
-  await submit();
-  await waitForDisplayed('span=Configure the Multistream service', { timeout: 10000 });
-  await waitForDisplayed("h1=You're live!", { timeout: 60000 });
-  // Confirm chat loads
-  await waitForStreamStart();
-  await focusMain();
-  await chatIsVisible();
 
   await stopStream();
   await waitForStreamStop();
@@ -122,11 +122,11 @@ async function goLiveWithDefaultCodec() {
   // Try a new codec the incompatible codec dialog
   await clickButton('Select Codec');
 
-  console.log('Selecting a different incompatible codec');
-
   // Select another incompatible codec
   await fillForm('Streaming', { Encoder: 'SVT-AV1' });
   await clickButton('Close');
+
+  await sleep(1000); // Wait for the settings to apply
 
   await clickGoLive();
   await waitForSettingsWindowLoaded();
