@@ -425,14 +425,48 @@ export class StreamingService
           // because they may have been updated in the beforeGoLive platform hooks
           const currentCustomDestinations = this.views.settings.customDestinations;
 
+          const horizontalCustomDestinations = this.views.settings.customDestinations.filter(
+            d => d.enabled && d.display === 'horizontal',
+          );
+
+          if (horizontalCustomDestinations.length) {
+            // If the horizontal display only has one target and it is a custom destination,
+            // the horizontal stream should be migrated to custom ingest mode.
+            if (horizontalCustomDestinations.length === 1) {
+              this.streamSettingsService.setSettings(
+                {
+                  streamType: 'rtmp_custom',
+                },
+                'horizontal' as TDisplayType,
+              );
+
+              currentCustomDestinations.forEach(destination => {
+                if (!destination.enabled || destination.display !== 'horizontal') return;
+
+                this.streamSettingsService.setSettings(
+                  {
+                    key: destination.streamKey,
+                    server: destination.url,
+                  },
+                  'horizontal' as TDisplayType,
+                );
+
+                destination.video = this.videoSettingsService.contexts.horizontal;
+              });
+            }
+
+            const updatedSettings = { ...settings, currentCustomDestinations };
+            this.streamSettingsService.setSettings({ goLiveSettings: updatedSettings });
+          }
+
           // If the vertical display only has one target and it is a custom destination,
-          // the vertical display should be migrated to custom ingest mode.
+          // the vertical stream should be migrated to custom ingest mode.
           const isVerticalCustomDestination =
             this.views.activeDisplayDestinations.vertical.length === 1 &&
             this.views.activeDisplayPlatforms.vertical.length === 0;
 
           // Alternatively, if the vertical display only has one target and it is for a dual stream
-          // the vertical display should be migrated to custom ingest mode.
+          // the vertical stream should be migrated to custom ingest mode.
           const isVerticalDualStreamDestination =
             this.views.hasDualStream &&
             this.views.activeDisplayPlatforms.vertical.length === 1 &&
@@ -852,7 +886,6 @@ export class StreamingService
     // restream errors returns an object with key value pairs for error details
     const messages: string[] = [message];
     const details: string[] = [];
-    let errorType = type;
 
     const defaultMessage =
       this.state.info.error?.message ??
@@ -865,8 +898,8 @@ export class StreamingService
       const errorPlatform = platform || this.state.info.error?.platform;
       // If the error has a platform associated with it, specify the platform in the error message
       if (errorPlatform) {
-        const platformLabel = `${platformLabels(errorPlatform)} Error.`;
-        details.push(platformLabel + message);
+        const platformLabel = $t(`%{platform} Error`, { platform: errorPlatform });
+        details.push([platformLabel, message].join('. '));
       } else {
         details.push(defaultMessage);
       }
@@ -885,22 +918,21 @@ export class StreamingService
 
       const streamError = createStreamError(
         type,
-        { status, statusText: $t('Multistream Error:') + messages.join('. '), platform },
+        { status, statusText: $t('Multistream Error') + ': ' + messages.join('. '), platform },
         details.join('\n'),
       );
-      errorType = streamError.type;
 
       this.setError(streamError);
+      return streamError.type;
     }
 
     if (e instanceof StreamError) {
-      errorType = e.type;
       this.setError({ ...e, type });
-    } else {
-      this.setError(type);
+      return e.type;
     }
 
-    return errorType;
+    this.setError(type);
+    return type;
   }
 
   /**
@@ -1805,18 +1837,26 @@ export class StreamingService
 
     // Add display information for dual output mode
     if (this.views.isDualOutputMode) {
-      const platforms =
-        info.service === 'vertical'
-          ? this.views.verticalStream.map(p => platformLabels(p))
-          : this.views.horizontalStream.map(p => platformLabels(p));
+      const display = info.service === 'vertical' ? 'vertical' : 'horizontal';
+      const targets = [];
+      if (this.views.activeDisplayDestinations[display].length) {
+        targets.push($t('Custom Destination'));
+      }
+
+      this.views.activeDisplayPlatforms[display].forEach(p => {
+        const label = platformLabels(p);
+        if (label) {
+          targets.push(label);
+        }
+      });
 
       const stream =
-        info.service === 'vertical'
+        display === 'vertical'
           ? $t('Please confirm %{platforms} in the Vertical stream.', {
-              platforms,
+              platforms: targets.join(', '),
             })
           : $t('Please confirm %{platforms} in the Horizontal stream.', {
-              platforms,
+              platforms: targets.join(', '),
             });
       errorText = [errorText, stream].join('\n\n');
     }
