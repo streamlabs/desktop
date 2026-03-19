@@ -329,71 +329,6 @@ export class OutputSettingsService extends Service {
    * settings based on the current mode.
    * @returns settings for the recording
    */
-  getStreamingSettings() {
-    const output = this.settingsService.state.Output.formData;
-
-    const mode: TOutputSettingsMode = this.settingsService.findSettingValue(
-      output,
-      'Untitled',
-      'Mode',
-    );
-
-    const videoEncoder =
-      mode === 'Advanced'
-        ? this.settingsService.findSettingValue(output, 'Streaming', 'Encoder')
-        : this.settingsService.findSettingValue(output, 'Streaming', 'StreamEncoder');
-
-    const enforceBitrateKey = mode === 'Advanced' ? 'ApplyServiceSettings' : 'EnforceBitrate';
-    const enforceServiceBitrate = this.settingsService.findSettingValue(
-      output,
-      'Streaming',
-      enforceBitrateKey,
-    );
-
-    const enableTwitchVOD = this.settingsService.findSettingValue(
-      output,
-      'Streaming',
-      'VodTrackEnabled',
-    );
-
-    const useAdvanced = this.settingsService.findSettingValue(output, 'Streaming', 'UseAdvanced');
-
-    const customEncSettings = this.settingsService.findSettingValue(
-      output,
-      'Streaming',
-      'x264Settings',
-    );
-
-    const rescaling = this.settingsService.findSettingValue(output, 'Recording', 'RecRescale');
-
-    if (mode === 'Advanced') {
-      const twitchTrack = 3; // 3 in the tests, 2 in the description
-
-      return {
-        videoEncoder,
-        enforceServiceBitrate,
-        enableTwitchVOD,
-        twitchTrack,
-        rescaling,
-      };
-    } else {
-      return {
-        videoEncoder,
-        enforceServiceBitrate,
-        enableTwitchVOD,
-        useAdvanced,
-        customEncSettings,
-      };
-    }
-  }
-
-  /**
-   * Get recording settings
-   * @remark Primarily used for setting up the recording output context,
-   * this function will automatically return either the simple or advanced
-   * settings based on the current mode.
-   * @returns settings for the recording
-   */
   getRecordingSettings(
     display: TDisplayType,
   ): ISimpleRecordingOutputSettings | IAdvancedRecordingOutputSettings {
@@ -444,7 +379,7 @@ export class OutputSettingsService extends Service {
       ? this.settingsService.findSettingValue(output, 'Streaming', field)
       : this.settingsService.findSettingValue(output, 'Recording', 'RecEncoder');
 
-    // TODO remove these 2 conversions after encoder updates and use 'encoder' in the lowCPU line below
+    // START TODO: remove these 2 conversions after encoder updates and use 'encoder' in the lowCPU line below
     const convertedEncoderName = this.convertEncoderToNewAPI(obsEncoderToEncoderFamily(encoder));
     const videoEncoder: EObsAdvancedEncoder =
       convertedEncoderName === EObsSimpleEncoder.x264_lowcpu
@@ -454,6 +389,7 @@ export class OutputSettingsService extends Service {
     console.log(
       `MLH getRecordingSettings encoder name to convert: ${encoder} converted name: ${convertedEncoderName} final value to use: ${videoEncoder}`,
     );
+    // END TODO: remove these 2 conversions after encoder updates and use 'encoder' in the lowCPU line below
 
     const lowCPU: boolean = convertedEncoderName === EObsSimpleEncoder.x264_lowcpu;
 
@@ -642,6 +578,7 @@ export class OutputSettingsService extends Service {
       'Mode',
     );
 
+    // START TODO: remove this when ditching conversions after encoder updates
     const encoder = obsEncoderToEncoderFamily(
       this.settingsService.findSettingValue(output, 'Streaming', 'Encoder') ||
         this.settingsService.findSettingValue(output, 'Streaming', 'StreamEncoder'),
@@ -655,14 +592,15 @@ export class OutputSettingsService extends Service {
       convertedEncoderName === EObsSimpleEncoder.x264_lowcpu
         ? EObsAdvancedEncoder.obs_x264
         : convertedEncoderName;
+    // END TODO: remove this when ditching conversions after encoder updates
 
-    //TODO use this when ditching conversions after encoder updates
+    // START TODO: use this when ditching conversions after encoder updates
     // const videoEncoder =
     //   mode === 'Advanced'
     //     ? this.settingsService.findSettingValue(output, 'Streaming', 'Encoder')
     //     : this.settingsService.findSettingValue(output, 'Streaming', 'StreamEncoder');
 
-    // console.log('MLH getStreamingSettings encoder in settings: ', videoEncoder);
+    // END TODO: use this when ditching conversions after encoder updates
 
     const enforceBitrateKey = mode === 'Advanced' ? 'ApplyServiceSettings' : 'EnforceBitrate';
     const enforceServiceBitrate = this.settingsService.findSettingValue(
