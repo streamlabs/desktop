@@ -898,7 +898,7 @@ export class StreamingService
       const errorPlatform = platform || this.state.info.error?.platform;
       // If the error has a platform associated with it, specify the platform in the error message
       if (errorPlatform) {
-        const platformLabel = $t(`%{platform} Error`, { platform: errorPlatform });
+        const platformLabel = $t('%{platform} Error', { platform: errorPlatform });
         details.push([platformLabel, message].join('. '));
       } else {
         details.push(defaultMessage);
