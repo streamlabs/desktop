@@ -338,5 +338,6 @@
   "Grow your audience faster with unlimited Multistream. Our servers do the work so your PC can stream smoothly.": "透過不限次數的 Multistream，更快擴大您的觀眾群。由我們的伺服器處理，讓您的電腦能順暢串流。",
   "Unlock unlimited multistreaming with Ultra and grow your audience faster": "透過 Ultra 解鎖不限次數的多平台直播，讓您更快成長觀眾群",
   "<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform": "<dualoutput>Dual Output</dualoutput> 已啟用 - 您必須直播到一個水平和一個垂直平台",
-  "Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination.": "「直播到自訂攝取」是進階功能。直播到自訂攝取時會停用多平台直播，且部分功能可能無法如預期運作。切換至建議設定，以便多平台直播到自訂 RTMP 目的地。"
+  "Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination.": "「直播到自訂攝取」是進階功能。直播到自訂攝取時會停用多平台直播，且部分功能可能無法如預期運作。切換至建議設定，以便多平台直播到自訂 RTMP 目的地。",
+  "Multistream Error:": "Multistream Error:"
 }
