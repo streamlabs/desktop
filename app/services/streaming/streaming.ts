@@ -629,10 +629,16 @@ export class StreamingService
 
       // Handle allowing users to bypass platform setup errors and still multistream
       if (this.state.info.error !== null) {
-        console.error('Setup platform error, prompting user to bypass');
-        const platformErrorType = this.state.info.error.type;
-        this.setError(platformErrorType);
-        throwStreamError(platformErrorType);
+        console.error('Setup platform error, prompting user to bypass', this.state.info.error);
+
+        const error = this.handleTypedStreamError(
+          this.state.info.error,
+          errorType,
+          this.state.info.error.message,
+          this.state.info.error.platform,
+        );
+
+        throwStreamError(error);
       }
 
       // update restream settings
@@ -644,7 +650,12 @@ export class StreamingService
           await this.restreamService.beforeGoLive();
         });
       } catch (e: unknown) {
-        const errorType = this.handleTypedStreamError(e, failureType, 'Failed to setup restream');
+        const errorType = this.handleTypedStreamError(
+          e,
+          failureType,
+          $t('Failed to setup restream'),
+        );
+
         throwStreamError(errorType);
       }
     }
@@ -927,12 +938,20 @@ export class StreamingService
         'One of destinations might have incomplete permissions. Reconnect the destinations in settings and try again.',
       );
 
+    // Format the error message for restream errors to show the details to the user in the bypass error modal
     if (e && typeof e === 'object' && type.split('_').includes('RESTREAM')) {
-      details.push(defaultMessage);
+      const errorPlatform = platform || this.state.info.error?.platform;
+      // If the error has a platform associated with it, specify the platform in the error message
+      if (errorPlatform) {
+        const platformLabel = `${platformLabels(errorPlatform)} Error.`;
+        details.push(platformLabel + message);
+      } else {
+        details.push(defaultMessage);
+      }
 
       Object.entries(e).forEach(([key, value]: [string, string]) => {
         const name = capitalize(key.replace(/([A-Z])/g, ' $1'));
-        // only show the error message for the stream key and server url to the user for security purposes
+        // Never show the actual stream key and server url to the user for security purposes
         if (['streamKey', 'serverUrl'].includes(key)) {
           messages.push($t('Missing server url or stream key'));
         } else {
@@ -944,16 +963,17 @@ export class StreamingService
 
       const streamError = createStreamError(
         type,
-        { status, statusText: messages.join('. '), platform },
+        { status, statusText: $t('Multistream Error:') + messages.join('. '), platform },
         details.join('\n'),
       );
       errorType = streamError.type;
+
       this.setError(streamError);
     }
 
     if (e instanceof StreamError) {
       errorType = e.type;
-      this.setError(e);
+      this.setError({ ...e, type });
     } else {
       this.setError(type);
     }
