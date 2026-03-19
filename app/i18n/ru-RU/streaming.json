@@ -339,5 +339,5 @@
   "Unlock unlimited multistreaming with Ultra and grow your audience faster": "Получите доступ к неограниченной многопоточной трансляции в подписке Ultra и расширяйте аудиторию быстрее",
   "<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform": "Функция <dualoutput>Dual Output</dualoutput> включена — транслируйте на одну платформу с горизонтальной ориентацией и на одну с вертикальной ориентацией",
   "Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination.": "Транслирование на пользовательскую платформу — это функция для продвинутых пользователей. Многопоточная трансляция на пользовательскую платформу отключена, поэтому некоторые функции могут перестать работать должным образом. Чтобы вести многопоточную трансляцию на пользовательскую платформу RTMP, включите рекомендуемые настройки.",
-  "Multistream Error:": "Multistream Error:"
+  "%{platform} Error": "%{platform} Error"
 }
