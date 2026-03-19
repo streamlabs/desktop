@@ -222,7 +222,11 @@ export function StreamSettings() {
   );
 
   function disableProtectedMode() {
-    StreamSettingsService.actions.setSettings({ protectedModeEnabled: false });
+    StreamSettingsService.actions.setSettings({
+      protectedModeEnabled: false,
+      streamType: 'rtmp_common',
+    });
+
     if (DualOutputService.views.dualOutputMode) {
       DualOutputService.actions.setDualOutputModeIfPossible(false, true);
     }
@@ -232,7 +236,7 @@ export function StreamSettings() {
     StreamSettingsService.actions.setSettings({
       protectedModeEnabled: true,
       key: '',
-      streamType: 'rtmp_common',
+      streamType: 'rtmp_custom',
     });
   }
 

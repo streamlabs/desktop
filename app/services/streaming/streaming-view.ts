@@ -324,9 +324,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns the enabled destinations according to their assigned display
    */
   get activeDisplayDestinations(): TDisplayDestinations {
-    const destinations = this.customDestinations;
-
-    return destinations.reduce(
+    return this.customDestinations.reduce(
       (displayDestinations: TDisplayDestinations, destination: ICustomStreamDestination) => {
         if (destination.enabled && !destination.dualStream) {
           displayDestinations[destination.display ?? 'horizontal'].push(destination.url);
@@ -348,7 +346,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     const verticalDestinations = this.customDestinations.reduce(
       (displayDestinations: string[], destination: ICustomStreamDestination) => {
         // skip destinations created for dual stream because they are already included in activeDisplayPlatforms
-        if (destination.enabled && !destination.dualStream) {
+        if (!destination.dualStream && destination.display === 'vertical' && destination.enabled) {
           displayDestinations.push(destination.url);
         }
 
