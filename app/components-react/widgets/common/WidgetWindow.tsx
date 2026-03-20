@@ -6,13 +6,7 @@ import { AlertBox } from '../AlertBox';
 import { AlertBoxModule } from '../useAlertBox';
 import { useWidgetRoot, WidgetModule } from './useWidget';
 // TODO: import other widgets here to avoid merge conflicts
-// BitGoal
-// DonationGoal
-// CharityGoal
-// FollowerGoal
-// StarsGoal
-// SubGoal
-// SubscriberGoal
+import { GenericGoal, GenericGoalModule } from '../GenericGoal';
 import { ChatBox, ChatBoxModule } from '../ChatBox';
 // ChatHighlight
 // Credits
@@ -36,13 +30,13 @@ import { useChildWindowParams } from 'components-react/hooks';
 // define list of Widget components and modules
 export const components = {
   AlertBox: [AlertBox, AlertBoxModule],
-  // BitGoal
-  // DonationGoal
-  // CharityGoal
-  // FollowerGoal
-  // StarsGoal
-  // SubGoal
-  // SubscriberGoal
+  BitGoal: [GenericGoal, GenericGoalModule],
+  DonationGoal: [GenericGoal, GenericGoalModule],
+  CharityGoal: [GenericGoal, GenericGoalModule],
+  FollowerGoal: [GenericGoal, GenericGoalModule],
+  StarsGoal: [GenericGoal, GenericGoalModule],
+  SubGoal: [GenericGoal, GenericGoalModule],
+  SubscriberGoal: [GenericGoal, GenericGoalModule],
   ChatBox: [ChatBox, ChatBoxModule],
   // ChatHighlight
   // Credits
