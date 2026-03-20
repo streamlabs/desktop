@@ -93,7 +93,6 @@ import { EOBSOutputType, EOBSOutputSignal, IOBSOutputSignalInfo } from 'services
 import { SignalsService } from 'services/signals-manager';
 import { TSocketEvent } from 'services/websocket';
 import { HighlighterService } from 'services/highlighter';
-import { IncrementalRolloutService, EAvailableFeatures } from 'services/incremental-rollout';
 
 type TOBSOutputType = 'streaming' | 'recording' | 'replayBuffer';
 type TOutputContext = TDisplayType | 'enhancedBroadcasting' | 'stream' | 'streamSecond';
@@ -172,7 +171,6 @@ export class StreamingService
   @Inject() private settingsService: SettingsService;
   @Inject() private signalsService: SignalsService;
   @Inject() private highlighterService: HighlighterService;
-  @Inject() private incrementalRolloutService: IncrementalRolloutService;
 
   streamingStatusChange = new Subject<EStreamingState>();
   recordingStatusChange = new Subject<ERecordingState>();
@@ -2485,11 +2483,9 @@ export class StreamingService
 
       // In dual output mode, each confirmation should be labelled for each display
       if (
-        (this.views.isDualOutputMode &&
-          this.incrementalRolloutService.views.featureIsEnabled(
-            EAvailableFeatures.dualOutputRecording,
-          )) ||
-        this.incrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.verticalRecording)
+        this.views.isDualOutputMode &&
+        (this.dualOutputService.views.canRecordDualOutput ||
+          this.dualOutputService.views.canRecordVertical)
       ) {
         this.recordingModeService.addRecordingEntry(parsedName, display);
       } else {

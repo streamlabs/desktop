@@ -18,8 +18,6 @@ import difference from 'lodash/difference';
 import { Services } from '../../components-react/service-provider';
 import { getDefined } from '../../util/properties-type-guards';
 import { TDisplayType } from 'services/settings-v2';
-import { EAvailableFeatures } from 'services/incremental-rollout';
-import Utils from 'services/utils';
 
 /**
  * The stream info view is responsible for keeping
@@ -809,16 +807,14 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get isVerticalRecording() {
-    return this.streamingState.status.vertical.recording !== ERecordingState.Offline;
+    return (
+      this.streamingState.status.vertical.recording !== ERecordingState.Offline &&
+      this.dualOutputView.canRecordVertical
+    );
   }
 
   get isDualOutputRecording() {
-    const canRecordDualOutput =
-      Services.IncrementalRolloutService.views.featureIsEnabled(
-        EAvailableFeatures.dualOutputRecording,
-      ) && !Utils.isDevMode();
-
-    if (!canRecordDualOutput) return false;
+    if (!this.dualOutputView.canRecordDualOutput) return false;
     return this.isDualOutputMode && this.settings.recording === 'both';
   }
 

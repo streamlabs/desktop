@@ -9,8 +9,6 @@ import Tooltip from 'components-react/shared/Tooltip';
 import { SwitchInput } from 'components-react/shared/inputs';
 import { RadioInput } from 'components-react/shared/inputs/RadioInput';
 import cx from 'classnames';
-import { EAvailableFeatures } from 'services/incremental-rollout';
-import Utils from 'services/utils';
 
 interface IRecordingSettingsProps {
   showRecordingToggle?: boolean;
@@ -28,7 +26,6 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
     HighlighterService,
     StreamingService,
     SettingsService,
-    IncrementalRolloutService,
   } = Services;
 
   const v = useVuex(() => ({
@@ -39,16 +36,9 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
     isReplayBufferActive: StreamingService.views.isReplayBufferActive,
     recordingDisplay:
       StreamSettingsService.views.settings?.goLiveSettings?.recording ?? 'horizontal',
+    canRecordVertical: DualOutputService.views.canRecordVertical,
+    canRecordDualOutput: DualOutputService.views.canRecordDualOutput,
   }));
-
-  const canRecordVertical = useMemo(
-    () => IncrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.verticalRecording),
-    [],
-  );
-
-  const canRecordDualOutput =
-    IncrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.dualOutputRecording) &&
-    !Utils.isDevMode();
 
   const recordWhenStartStream = useMemo(() => v.recordWhenStreaming || v.useAiHighlighter, [
     v.recordWhenStreaming,
@@ -60,8 +50,8 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
   ]);
 
   const showRecordingIcons = useMemo(
-    () => v.isDualOutputMode && (canRecordVertical || canRecordDualOutput),
-    [v.isDualOutputMode, canRecordVertical, canRecordDualOutput],
+    () => v.isDualOutputMode && (v.canRecordVertical || v.canRecordDualOutput),
+    [v.isDualOutputMode, v.canRecordVertical, v.canRecordDualOutput],
   );
 
   const disableToggle = useMemo(() => v.useAiHighlighter || v.isRecording, [
@@ -80,11 +70,11 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
       { value: 'vertical', label: $t('Vertical'), icon: 'icon-phone-case' },
     ];
 
-    if (canRecordDualOutput) {
+    if (v.canRecordDualOutput) {
       opts.push({ value: 'both', label: $t('Both'), icon: 'icon-dual-output' });
     }
     return opts;
-  }, [canRecordDualOutput]);
+  }, [v.canRecordDualOutput]);
 
   const message = useMemo(
     () =>
