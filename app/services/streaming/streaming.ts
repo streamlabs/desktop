@@ -1908,7 +1908,6 @@ export class StreamingService
     this.contexts[contextName].streaming.reconnect = ReconnectFactory.create();
     this.contexts[contextName].streaming.network = NetworkFactory.create();
 
-    this.logContexts(contextName, `${mode} createStreaming`);
     if (settings.start) {
       this.contexts[contextName].streaming.start();
     }
