@@ -32,6 +32,7 @@ export default function StudioFooterComponent() {
     supportsScheduling,
     isRecordingModeEnabled,
     streamQuality,
+    recordingStatus,
     recordingModeEnabled,
     replayBufferEnabled,
     replayBufferStatus,
@@ -42,11 +43,25 @@ export default function StudioFooterComponent() {
     supportsScheduling: StreamingService.views.supports('stream-schedule'),
     isRecordingModeEnabled: RecordingModeService.views.isRecordingModeEnabled,
     streamQuality: PerformanceService.views.streamQuality,
+    recordingStatus: StreamingService.views.recordingStatus,
     recordingModeEnabled: RecordingModeService.views.isRecordingModeEnabled,
     replayBufferEnabled: SettingsService.views.values.Output.RecRB,
     replayBufferStatus: StreamingService.views.replayBufferStatus,
     isReplayBufferActive: StreamingService.views.isReplayBufferActive,
   }));
+
+  useEffect(() => {
+    return () => {
+      if (replayBufferStatus !== EReplayBufferState.Offline) {
+        StreamingService.actions.stopReplayBuffer();
+        return;
+      }
+
+      if (recordingStatus !== ERecordingState.Offline) {
+        StreamingService.actions.handleStopRecording(true);
+      }
+    };
+  }, []);
 
   const canSchedule = useMemo(() => {
     return supportsScheduling && isRecordingModeEnabled;
@@ -227,6 +242,17 @@ function RecordingButton() {
     useAiHighlighter: HighlighterService.views.useAiHighlighter,
   }));
   const isRecording = isHorizontalRecording || isVerticalRecording;
+
+  useEffect(() => {
+    return () => {
+      if (
+        recordingStatus !== ERecordingState.Offline &&
+        recordingStatus !== ERecordingState.Writing
+      ) {
+        StreamingService.actions.handleStopRecording(true);
+      }
+    };
+  }, []);
 
   const toggleRecording = useCallback(() => {
     StreamingService.actions.toggleRecording();

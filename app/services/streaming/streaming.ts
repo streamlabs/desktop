@@ -1645,7 +1645,7 @@ export class StreamingService
    * @remark Signals and state changes are handled by the streaming signal handler
    * @param force - boolean, whether to force stop the stream
    */
-  private async handleStopStreaming(force?: boolean) {
+  async handleStopStreaming(force?: boolean) {
     // Recording must be stopped before stopping the replay buffer
     // for the correct order of destruction of the context instances
     const keepRecording = this.streamSettingsService.settings.keepRecordingWhenStreamStops;
@@ -2089,7 +2089,7 @@ export class StreamingService
     }
   }
 
-  private async handleStopRecording() {
+  async handleStopRecording(force?: boolean) {
     if (this.views.isDualOutputMode && !this.highlighterService.views.useAiHighlighter) {
       // Stop dual output recording
       if (
@@ -2099,7 +2099,7 @@ export class StreamingService
         this.state.status.vertical.recording === ERecordingState.Recording &&
         this.state.status.horizontal.recording === ERecordingState.Recording
       ) {
-        this.contexts.horizontal.recording.stop();
+        this.contexts.horizontal.recording.stop(force);
 
         // When recording both displays in dual output mode, sleep for 2 seconds to allow a different time stamp to be generated
         // because the recording history uses the time stamp as keys. If the same time stamp is used, the entry will be replaced
@@ -2107,7 +2107,7 @@ export class StreamingService
         // because each recording instance shuts down independently without referencing any other recording instance.
         await new Promise(resolve => setTimeout(resolve, 2000));
 
-        this.contexts.vertical.recording.stop();
+        this.contexts.vertical.recording.stop(force);
         return;
       }
 
@@ -2138,7 +2138,7 @@ export class StreamingService
         this.contexts.horizontal.recording !== null &&
         this.state.status.horizontal.recording === ERecordingState.Recording
       ) {
-        this.contexts.horizontal.recording.stop();
+        this.contexts.horizontal.recording.stop(force);
       }
     }
   }

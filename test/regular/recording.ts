@@ -92,10 +92,6 @@ async function validateRecordingFiles(
   // Check that every file was created
   const files = await readdir(tmpDir);
 
-  console.log(
-    `Files created in ${advanced ? 'advanced' : 'simple'} recording:\n${files.join('\n')}`,
-  );
-
   // M3U8 creates multiple TS files in addition to the catalog itself.
   // The additional TS files created by M3U8 in advanced mode are not displayed in the recording history
   const numFiles = advanced ? files.length - 1 : files.length;

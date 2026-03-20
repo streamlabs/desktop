@@ -50,6 +50,16 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    return () => {
+      if (streamingStatus !== EStreamingState.Offline) {
+        StreamingService.actions.handleStopStreaming(true);
+      }
+
+      setIsLoading(false);
+    };
+  }, []);
+
+  useEffect(() => {
     setDelayTick(delaySeconds);
   }, [streamingStatus]);
 
