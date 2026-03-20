@@ -1800,8 +1800,10 @@ export class StreamingService
     const display = this.views.getOutputDisplayType(settings.output);
     const contextName = settings.context || display;
     const audioTrack = settings.audioTrack;
-    const start = settings.start || true;
+    const start = settings.start || false;
     const isEnhancedBroadcasting = settings.isEnhancedBroadcasting || false;
+
+    this.videoSettingsService.validateVideoContext(display);
 
     const mode = this.outputSettingsService.getSettings().mode;
 
@@ -1826,15 +1828,15 @@ export class StreamingService
       stream.outputWidth = resolution.outputWidth;
       stream.outputHeight = resolution.outputHeight;
       // stream audio track
-      this.createAudioTrack(audioTrack);
+      this.validateOrCreateAudioTrack(audioTrack);
       stream.audioTrack = audioTrack;
       // Twitch VOD audio track
       if (stream.enableTwitchVOD && stream.twitchTrack) {
-        this.createAudioTrack(stream.twitchTrack);
+        this.validateOrCreateAudioTrack(stream.twitchTrack);
       } else if (stream.enableTwitchVOD) {
         // do not use the same audio track for the VOD as the stream
         stream.twitchTrack = !isEnhancedBroadcasting ? audioTrack : audioTrack + 1;
-        this.createAudioTrack(stream.twitchTrack);
+        this.validateOrCreateAudioTrack(stream.twitchTrack);
       }
 
       this.contexts[contextName].streaming = stream as
@@ -2027,7 +2029,12 @@ export class StreamingService
         });
       }
 
-      if (this.views.isDualOutputRecording || this.views.settings.recording === 'vertical') {
+      if (
+        (this.dualOutputService.views.canRecordDualOutput &&
+          this.views.settings.recording === 'both') ||
+        (this.dualOutputService.views.canRecordVertical &&
+          this.views.settings.recording === 'vertical')
+      ) {
         // Add analytics for dual output recording
         this.usageStatisticsService.recordFeatureUsage('DualOutputRecording');
 
@@ -2142,11 +2149,12 @@ export class StreamingService
    * @param audioTrack - The index of the audio track
    */
   private async createRecording(
-    settings: IRecordingContextSettings = { display: 'horizontal', audioTrack: 1, start: false },
+    settings: IRecordingContextSettings,
   ): Promise<IAdvancedRecording | ISimpleRecording> {
     const mode = this.outputSettingsService.getSettings().mode;
     const display = settings.display;
     const audioTrack = settings.audioTrack;
+    const start = settings.start || false;
 
     // recordings must have a streaming instance
     await this.validateOrCreateOutputInstance({ display, type: 'streaming', audioTrack });
@@ -2203,7 +2211,7 @@ export class StreamingService
       await this.handleSignal(signal, display);
     };
 
-    if (settings.start) {
+    if (start) {
       this.contexts[display].recording.start();
     }
 
@@ -2412,6 +2420,7 @@ export class StreamingService
     }
 
     if (this.isDisplayContext(context)) {
+      console.log('settings streaming status to', nextState, context);
       this.SET_STREAMING_STATUS(nextState, context, time);
       this.streamingStatusChange.next(nextState);
     }
@@ -2636,9 +2645,7 @@ export class StreamingService
    * Currently there are no cases where a replay buffer is not started immediately after creation.
    * @param display - The display to create the replay buffer for
    */
-  private async createReplayBuffer(
-    settings: IReplayBufferContextSettings = { display: 'horizontal', audioTrack: 1 },
-  ) {
+  private async createReplayBuffer(settings: IReplayBufferContextSettings) {
     const mode = this.outputSettingsService.getSettings().mode;
     const rbSettings = this.outputSettingsService.getReplayBufferSettings();
     const display: TDisplayType = settings.display;
@@ -2837,6 +2844,7 @@ export class StreamingService
    * @param audioTrack - index of the audio track to create
    */
   private createAudioTrack(audioTrack: number) {
+    console.log('Creating audio track at index', audioTrack);
     const trackName = `track${audioTrack}`;
     const track = AudioTrackFactory.create(160, trackName);
     AudioTrackFactory.setAtIndex(track, audioTrack);

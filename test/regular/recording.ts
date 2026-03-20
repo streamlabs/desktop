@@ -41,9 +41,7 @@ useWebdriver();
  */
 async function createRecordingFiles(advanced: boolean = false): Promise<number> {
   const formats = advanced
-    ? // ? ['flv', 'mp4', 'mov', 'mkv']
-      // : // TODO: Test advanced 'mpegts', 'hls' with new osn version
-      ['flv', 'mp4', 'mov', 'mkv', 'mpegts', 'hls']
+    ? ['flv', 'mp4', 'mov', 'mkv', 'mpegts', 'hls']
     : ['flv', 'mp4', 'mov', 'mkv', 'mpegts'];
 
   // Record 0.5s video in every format
