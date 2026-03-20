@@ -21,6 +21,7 @@ export enum EAvailableFeatures {
   reactWidgets = 'slobs--react-widgets',
   sharedStorage = 'slobs--shared-storage',
   dualOutputRecording = 'slobs--dual-output-recording',
+  verticalRecording = 'slobs--vertical-recording',
   streamShift = 'slobs--stream-shift',
   twitchDualStream = 'slobs--twitch-dual-stream',
   twitchDualStreamPreview = 'slobs--twitch-dual-stream-preview',

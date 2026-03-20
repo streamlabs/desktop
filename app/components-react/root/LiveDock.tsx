@@ -40,7 +40,7 @@ class LiveDockController {
   }
 
   get streamingStatus() {
-    return this.streamingService.state.streamingStatus;
+    return this.streamingService.views.streamingStatus;
   }
 
   get isStreaming() {

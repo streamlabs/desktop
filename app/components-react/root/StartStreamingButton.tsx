@@ -34,7 +34,7 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     isMultiplatformMode,
     updateStreamInfoOnLive,
   } = useVuex(() => ({
-    streamingStatus: StreamingService.state.streamingStatus,
+    streamingStatus: StreamingService.views.streamingStatus,
     delayEnabled: StreamingService.views.delayEnabled,
     delaySeconds: StreamingService.views.delaySeconds,
     streamShiftStatus: RestreamService.state.streamShiftStatus,
@@ -48,6 +48,16 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
 
   const [delaySecondsRemaining, setDelayTick] = useState(delaySeconds);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (streamingStatus !== EStreamingState.Offline) {
+        StreamingService.actions.handleStopStreaming(true);
+      }
+
+      setIsLoading(false);
+    };
+  }, []);
 
   useEffect(() => {
     setDelayTick(delaySeconds);

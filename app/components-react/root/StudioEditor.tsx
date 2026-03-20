@@ -14,11 +14,9 @@ import { useRealmObject } from 'components-react/hooks/realm';
 import { ENotificationType } from 'services/notifications';
 import { Service } from 'services/core/service';
 import { AudioNotificationType } from 'services/audio/audio';
-import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export default function StudioEditor() {
   const {
-    WindowsService,
     CustomizationService,
     EditorService,
     TransitionsService,
@@ -414,9 +412,8 @@ function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
   const showRecordingIcons = useMemo(() => {
     return (
       p.isRecording &&
-      Services.IncrementalRolloutService.views.featureIsEnabled(
-        EAvailableFeatures.dualOutputRecording,
-      )
+      (Services.DualOutputService.views.canRecordVertical ||
+        Services.DualOutputService.views.canRecordDualOutput)
     );
   }, [p.isRecording]);
 

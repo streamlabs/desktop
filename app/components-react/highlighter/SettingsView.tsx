@@ -12,8 +12,8 @@ import Scrollable from 'components-react/shared/Scrollable';
 import styles from './SettingsView.m.less';
 import { $t } from 'services/i18n';
 import { EHighlighterView, IViewState } from 'services/highlighter/models/highlighter.models';
-import { EAvailableFeatures } from 'services/incremental-rollout';
 import SupportedGames from './supportedGames/SupportedGames';
+import { promptAction } from 'components-react/modals';
 
 export default function SettingsView({
   emitSetView,
@@ -22,13 +22,7 @@ export default function SettingsView({
   emitSetView: (data: IViewState) => void;
   close: () => void;
 }) {
-  const {
-    HotkeysService,
-    SettingsService,
-    StreamingService,
-    HighlighterService,
-    IncrementalRolloutService,
-  } = Services;
+  const { HotkeysService, SettingsService, StreamingService, HighlighterService } = Services;
   const aiHighlighterFeatureEnabled = HighlighterService.aiHighlighterFeatureEnabled;
   const [hotkey, setHotkey] = useState<IHotkey | null>(null);
   const hotkeyRef = useRef<IHotkey | null>(null);
@@ -38,7 +32,13 @@ export default function SettingsView({
     isStreaming: StreamingService.isStreaming,
     useAiHighlighter: HighlighterService.views.useAiHighlighter,
     highlighterVersion: HighlighterService.views.highlighterVersion,
+    isVerticalRecording: StreamingService.views.isVerticalRecording,
+    isVerticalReplayBuffer: StreamingService.views.isVerticalReplayBuffer,
+    outputDisplay: StreamingService.views.outputDisplay,
   }));
+
+  const disableAIHighlighter =
+    (v.isVerticalRecording || v.isVerticalReplayBuffer) && v.outputDisplay === 'vertical';
 
   const correctlyConfigured =
     v.settingsValues.Output.RecRB &&
@@ -112,6 +112,44 @@ export default function SettingsView({
     HighlighterService.actions.toggleAiHighlighter();
   }
 
+  function handleToggleHighlighter() {
+    if (disableAIHighlighter) {
+      const title = v.isVerticalRecording
+        ? $t('Vertical Recording Active')
+        : $t('Vertical Replay Buffer Active');
+
+      const message = v.isVerticalRecording
+        ? $t(
+            'Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?',
+          )
+        : $t(
+            'Vertical replay buffer is active. Would you like to stop the replay buffer to enable AI Highlighter?',
+          );
+
+      const btnText = v.isVerticalRecording ? $t('Stop Recording') : $t('Stop Replay Buffer');
+
+      promptAction({
+        title,
+        message,
+        btnText,
+        fn: () => {
+          if (v.isVerticalRecording) {
+            StreamingService.actions.toggleRecording();
+          } else {
+            StreamingService.actions.stopReplayBuffer();
+          }
+          toggleUseAiHighlighter();
+        },
+        cancelBtnPosition: 'left',
+        cancelBtnText: $t('Cancel'),
+      });
+
+      return;
+    }
+
+    toggleUseAiHighlighter();
+  }
+
   return (
     <div className={styles.settingsViewRoot}>
       <div style={{ display: 'flex', padding: 20 }}>
@@ -175,8 +213,8 @@ export default function SettingsView({
                   <SwitchInput
                     style={{ margin: 0, marginLeft: '-10px' }}
                     size="default"
-                    value={v.useAiHighlighter}
-                    onChange={toggleUseAiHighlighter}
+                    value={disableAIHighlighter ? false : v.useAiHighlighter}
+                    onChange={handleToggleHighlighter}
                   />
                 ) : (
                   <Button

@@ -124,7 +124,7 @@ export class TouchBarService extends Service {
     });
 
     window.setInterval(() => {
-      if (this.streamingService.state.streamingStatus === EStreamingState.Live) {
+      if (this.streamingService.views.streamingStatus === EStreamingState.Live) {
         this.liveTimer.label = this.streamingService.formattedDurationInCurrentStreamingState;
       } else {
         this.liveTimer.label = '';

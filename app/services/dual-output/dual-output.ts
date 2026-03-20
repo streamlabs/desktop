@@ -27,7 +27,9 @@ import invert from 'lodash/invert';
 import forEachRight from 'lodash/forEachRight';
 import { NotificationsService, ENotificationType } from 'services/notifications';
 import { $t } from 'services/i18n';
-import { JsonrpcService } from 'app-services';
+import { IncrementalRolloutService, JsonrpcService } from 'app-services';
+import Utils from 'services/utils';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 interface IDisplayVideoSettings {
   horizontal: IVideoInfo;
@@ -41,7 +43,6 @@ interface IDualOutputServiceState {
   dualOutputMode: boolean;
   videoSettings: IDisplayVideoSettings;
   isLoading: boolean;
-  recording: TDisplayType[];
 }
 
 enum EOutputDisplayType {
@@ -61,6 +62,7 @@ class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
   @Inject() private scenesService: ScenesService;
   @Inject() private sceneCollectionsService: SceneCollectionsService;
   @Inject() private streamingService: StreamingService;
+  @Inject() private incrementalRolloutService: IncrementalRolloutService;
 
   get isLoading(): boolean {
     return this.state.isLoading;
@@ -151,10 +153,6 @@ class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
 
   get videoSettings() {
     return this.state.videoSettings;
-  }
-
-  get recording() {
-    return this.state.recording;
   }
 
   get activeDisplays() {
@@ -282,6 +280,26 @@ class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
     const nodeMap = sceneId ? this.sceneNodeMaps[sceneId] : this.activeSceneNodeMap;
     return !!nodeMap && Object.keys(nodeMap).length > 0;
   }
+
+  get canRecordVertical() {
+    return (
+      (this.incrementalRolloutService.views.featureIsEnabled(
+        EAvailableFeatures.verticalRecording,
+      ) &&
+        Utils.isPreview()) ||
+      false
+    );
+  }
+
+  get canRecordDualOutput() {
+    return (
+      (this.incrementalRolloutService.views.featureIsEnabled(
+        EAvailableFeatures.dualOutputRecording,
+      ) &&
+        Utils.isPreview()) ||
+      false
+    );
+  }
 }
 
 @InitAfter('ScenesService')
@@ -307,7 +325,6 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
         vertical: false,
       },
     },
-    recording: ['horizontal'],
     isLoading: false,
   };
 

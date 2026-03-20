@@ -5,6 +5,7 @@ import {
   EStreamingState,
   ERecordingState,
   EReplayBufferState,
+  TDisplayOutput,
 } from './streaming-api';
 import { StreamSettingsService, ICustomStreamDestination } from '../settings/streaming';
 import { UserService } from '../user';
@@ -58,7 +59,12 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get streamingStatus() {
-    return this.streamingState.streamingStatus;
+    if (!this.isDualOutputMode) {
+      return this.streamingState.status.horizontal.streaming;
+    }
+
+    const display = this.getOutputDisplayType();
+    return this.streamingState.status[display].streaming;
   }
 
   get info() {
@@ -127,12 +133,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Returns a list of enabled for streaming platforms
    */
   get enabledPlatforms(): TPlatform[] {
-    // Twitch dual streaming is only available if Twitch is the only enabled platform for performance reasons.
-    // Checking for Twitch dual streaming instead of toggling all other platforms off preserves the enabled platforms state.
-    if (this.isTwitchDualStreaming) {
-      return ['twitch'];
-    }
-
     return this.getEnabledPlatforms(this.settings.platforms);
   }
 
@@ -169,14 +169,18 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
    * Primarily used for custom UI handling for Twitch dual stream
    */
   get isTwitchDualStreaming() {
+    return this.isTwitchDualStreamEnabled && this.enabledPlatforms.length === 1;
+  }
+
+  get isTwitchDualStreamEnabled() {
     if (!this.twitchView.hasTwitchDualStreamAccess) {
       return false;
     }
 
     return (
-      this.settings &&
       this.settings.platforms?.twitch &&
-      this.settings.platforms?.twitch.display === 'both'
+      this.settings.platforms?.twitch.display === 'both' &&
+      this.isDualOutputMode
     );
   }
 
@@ -281,6 +285,18 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   getPlatformDisplayType(platform: TPlatform): TDisplayType {
     const display = this.settings.platforms[platform]?.display ?? 'horizontal';
     return display === 'both' ? 'horizontal' : display;
+  }
+
+  getOutputDisplayType(output?: TDisplayOutput): TDisplayType {
+    if (output) {
+      return output === 'both' ? 'horizontal' : output;
+    }
+
+    return this.settings.recording === 'both' ? 'horizontal' : this.settings.recording;
+  }
+
+  get outputDisplay(): TDisplayType {
+    return this.settings.recording === 'both' ? 'horizontal' : this.settings.recording;
   }
 
   /**
@@ -408,6 +424,30 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   /**
+   * Check for multistreaming with Twitch enhanced broadcasting
+   */
+  isEnhancedBroadcastingMultistream(): boolean {
+    // As a failsafe, ensure Twitch is one of the enabled platforms
+    if (!this.enabledPlatforms.includes('twitch')) return false;
+
+    if (!Services.SettingsService.isEnhancedBroadcasting()) return false;
+
+    // In dual output mode, only create the extra video context if Twitch is being multistreamed
+    // by one of the displays
+    if (this.isDualOutputMode) {
+      const isHorizontalMultistreamingTwitch =
+        this.horizontalStream.length > 1 && this.horizontalStream.includes('twitch');
+      const isVerticalMultistreamingTwitch =
+        this.verticalStream.length > 1 && this.verticalStream.includes('twitch');
+
+      return isHorizontalMultistreamingTwitch || isVerticalMultistreamingTwitch;
+    }
+
+    // In single output mode, check if the stream is a multistream
+    return this.hasMultipleTargetsEnabled;
+  }
+
+  /**
    * Return restream service access status
    * @remark Non-ultra users cannot use the restream service except for:
    *  - Grandfathered users
@@ -435,7 +475,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get isMidStreamMode(): boolean {
-    return this.streamingState.streamingStatus !== 'offline';
+    return this.isHorizontalStreaming || this.isVerticalStreaming;
   }
 
   /**
@@ -508,7 +548,7 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
       advancedMode: !!this.streamSettingsView.state.goLiveSettings?.advancedMode,
       optimizedProfile: undefined,
       customDestinations: savedGoLiveSettings?.customDestinations || [],
-      recording: this.dualOutputView.recording || [],
+      recording: savedGoLiveSettings?.recording || 'horizontal',
       streamShift: savedGoLiveSettings?.streamShift || false,
     };
   }
@@ -734,39 +774,78 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get isStreaming() {
-    return this.streamingState.streamingStatus !== EStreamingState.Offline;
+    return (
+      this.streamingState.status.horizontal.streaming !== EStreamingState.Offline ||
+      this.streamingState.status.vertical.streaming !== EStreamingState.Offline
+    );
   }
 
   get isRecording() {
-    return this.streamingState.recordingStatus !== ERecordingState.Offline;
+    return (
+      this.streamingState.status.horizontal.recording !== ERecordingState.Offline ||
+      this.streamingState.status.vertical.recording !== ERecordingState.Offline
+    );
   }
 
   get isReplayBufferActive() {
-    return this.streamingState.replayBufferStatus !== EReplayBufferState.Offline;
+    return (
+      this.streamingState.status.horizontal.replayBuffer !== EReplayBufferState.Offline ||
+      this.streamingState.status.vertical.replayBuffer !== EReplayBufferState.Offline
+    );
   }
 
   get isHorizontalStreaming() {
-    return this.isStreaming;
+    return this.streamingState.status.horizontal.streaming !== EStreamingState.Offline;
   }
 
   get isVerticalStreaming() {
-    return this.isStreaming;
+    return this.streamingState.status.vertical.streaming !== EStreamingState.Offline;
   }
 
   get isHorizontalRecording() {
-    return this.isRecording;
+    return this.streamingState.status.horizontal.recording !== ERecordingState.Offline;
   }
 
   get isVerticalRecording() {
-    return this.isRecording;
+    return (
+      this.streamingState.status.vertical.recording !== ERecordingState.Offline &&
+      this.dualOutputView.canRecordVertical
+    );
+  }
+
+  get isDualOutputRecording() {
+    if (!this.dualOutputView.canRecordDualOutput) return false;
+    return this.isDualOutputMode && this.settings.recording === 'both';
+  }
+
+  get isHorizontalReplayBuffer() {
+    return this.streamingState.status.horizontal.replayBuffer !== EReplayBufferState.Offline;
+  }
+
+  get isVerticalReplayBuffer() {
+    return this.streamingState.status.vertical.replayBuffer !== EReplayBufferState.Offline;
   }
 
   get isIdle(): boolean {
     return !this.isStreaming && !this.isRecording;
   }
 
+  get recordingStatus() {
+    if (!this.isDualOutputMode) {
+      return this.streamingState.status.horizontal.recording;
+    }
+
+    const display = this.getOutputDisplayType();
+    return this.streamingState.status[display].recording;
+  }
+
   get replayBufferStatus() {
-    return this.streamingState.replayBufferStatus;
+    if (!this.isDualOutputMode) {
+      return this.streamingState.status.horizontal.replayBuffer;
+    }
+
+    const display = this.getOutputDisplayType();
+    return this.streamingState.status[display].replayBuffer;
   }
 
   // TODO: consolidate between this and GoLiveSettings
