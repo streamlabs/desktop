@@ -45,6 +45,11 @@ enum EReplayBufferState {
  * streaming, recording and replay buffer state representation.
  */
 interface IStreamingState {
+  /**
+   * The status of all outputs. This allows distinguishing the status by display for dual output.
+   * This differs from the existing status properties in that those track all status updates
+   * regardless of display.
+   */
   status: { [display: string]: IOutputStatus };
   streamingStatus: EStreamingState;
   streamingStatusTime: string;

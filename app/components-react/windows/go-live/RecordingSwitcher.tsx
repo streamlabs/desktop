@@ -10,6 +10,7 @@ import { SwitchInput } from 'components-react/shared/inputs';
 import { RadioInput } from 'components-react/shared/inputs/RadioInput';
 import cx from 'classnames';
 import { EAvailableFeatures } from 'services/incremental-rollout';
+import Utils from 'services/utils';
 
 interface IRecordingSettingsProps {
   showRecordingToggle?: boolean;
@@ -44,11 +45,10 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
     () => IncrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.verticalRecording),
     [],
   );
-  const canRecordDualOutput = false;
-  // Dual output recording is WIP. To enable testing for dual output recording, modify the logic here.
-  // const canRecordDualOutput =
-  //   IncrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.dualOutputRecording) &&
-  //   !Utils.isDevMode();
+
+  const canRecordDualOutput =
+    IncrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.dualOutputRecording) &&
+    !Utils.isDevMode();
 
   const recordWhenStartStream = useMemo(() => v.recordWhenStreaming || v.useAiHighlighter, [
     v.recordWhenStreaming,

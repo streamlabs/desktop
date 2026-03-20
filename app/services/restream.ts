@@ -634,8 +634,6 @@ export class RestreamService extends StatefulService<IRestreamState> {
       }),
     );
 
-    console.log('RESTREAM creating targets', JSON.stringify(targets, null, 2));
-
     const request = new Request(url, { headers, body, method: 'POST' });
     const res = await fetch(request);
     if (!res.ok) throw await res.json();
