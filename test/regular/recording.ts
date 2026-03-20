@@ -70,8 +70,6 @@ async function createRecordingFiles(advanced: boolean = false): Promise<number> 
     await waitForDisplayed('h1=Recordings', { timeout: 1000 });
     await sleep(500);
     await showPage('Editor');
-
-    console.log('Recorded in format:', format);
   }
 
   return Promise.resolve(formats.length);

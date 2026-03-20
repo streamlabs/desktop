@@ -2431,8 +2431,8 @@ export class StreamingService
     const nextState: ERecordingState = ({
       [EOBSOutputSignal.Starting]: ERecordingState.Starting,
       [EOBSOutputSignal.Start]: ERecordingState.Recording,
-      [EOBSOutputSignal.Stop]: ERecordingState.Offline,
-      [EOBSOutputSignal.Stopping]: ERecordingState.Writing,
+      [EOBSOutputSignal.Stop]: ERecordingState.Writing,
+      [EOBSOutputSignal.Stopping]: ERecordingState.Stopping,
       [EOBSOutputSignal.Wrote]: ERecordingState.Offline,
     } as Dictionary<ERecordingState>)[info.signal];
 
@@ -2456,7 +2456,7 @@ export class StreamingService
     }
 
     if (info.signal === EOBSOutputSignal.Stop) {
-      // Note: The `stop` signal will set the recording status to `stopping` to allow the recording to
+      // Note: The `stop` signal will set the recording status to `writing` to allow the recording to
       // finish writing the last file before setting the status to `offline`. The `wrote` signal will
       // set the recording status to `offline` after the last file has been written.
       // Handle stopping the vertical recording instance in dual output mode dual output recording
@@ -2494,14 +2494,13 @@ export class StreamingService
       this.recordingModeService.addRecordingEntry(parsedName);
       await this.markersService.exportCsv(parsedName);
 
-      this.latestRecordingPath.next(fileName);
-
       // Don't update status before destroying the recording instance
       // because the recording status should have been set to `offline`
       // with the `stop` signal
       await this.handleDestroyOutputContexts(display);
 
       this.recordingStatusChange.next(nextState);
+      this.latestRecordingPath.next(fileName);
       return;
     }
 
