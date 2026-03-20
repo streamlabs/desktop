@@ -1,7 +1,9 @@
-import { EApiPermissions, IApiContext, Module, apiMethod } from './module';
+import { EApiPermissions, IApiContext, Module, apiMethod, apiEvent } from './module';
 import { IDownloadProgress } from 'util/requests';
 import { Inject } from 'services';
 import { StreamAvatarService } from 'services/stream-avatar/stream-avatar-service';
+import { UserService } from 'app-services';
+import { Subject } from 'rxjs';
 
 export type OutputStreamHandler = (type: 'stdout' | 'stderr', data: string) => void;
 
@@ -12,6 +14,17 @@ export class NativeComponentsModule extends Module {
   requiresHighlyPrivileged = true;
 
   @Inject() streamAvatarService: StreamAvatarService;
+  @Inject() userService: UserService;
+
+  constructor() {
+    super();
+    this.userService.subscribedToPrime.subscribe(() => {
+      this.ultraSubscribed.next();
+    });
+  }
+
+  @apiEvent()
+  ultraSubscribed = new Subject();
 
   @apiMethod()
   async isAvatarUpdateAvailable() {

@@ -425,14 +425,48 @@ export class StreamingService
           // because they may have been updated in the beforeGoLive platform hooks
           const currentCustomDestinations = this.views.settings.customDestinations;
 
+          const horizontalCustomDestinations = this.views.settings.customDestinations.filter(
+            d => d.enabled && d.display === 'horizontal',
+          );
+
+          if (horizontalCustomDestinations.length) {
+            // If the horizontal display only has one target and it is a custom destination,
+            // the horizontal stream should be migrated to custom ingest mode.
+            if (horizontalCustomDestinations.length === 1) {
+              this.streamSettingsService.setSettings(
+                {
+                  streamType: 'rtmp_custom',
+                },
+                'horizontal' as TDisplayType,
+              );
+
+              currentCustomDestinations.forEach(destination => {
+                if (!destination.enabled || destination.display !== 'horizontal') return;
+
+                this.streamSettingsService.setSettings(
+                  {
+                    key: destination.streamKey,
+                    server: destination.url,
+                  },
+                  'horizontal' as TDisplayType,
+                );
+
+                destination.video = this.videoSettingsService.contexts.horizontal;
+              });
+            }
+
+            const updatedSettings = { ...settings, currentCustomDestinations };
+            this.streamSettingsService.setSettings({ goLiveSettings: updatedSettings });
+          }
+
           // If the vertical display only has one target and it is a custom destination,
-          // the vertical display should be migrated to custom ingest mode.
+          // the vertical stream should be migrated to custom ingest mode.
           const isVerticalCustomDestination =
             this.views.activeDisplayDestinations.vertical.length === 1 &&
             this.views.activeDisplayPlatforms.vertical.length === 0;
 
           // Alternatively, if the vertical display only has one target and it is for a dual stream
-          // the vertical display should be migrated to custom ingest mode.
+          // the vertical stream should be migrated to custom ingest mode.
           const isVerticalDualStreamDestination =
             this.views.hasDualStream &&
             this.views.activeDisplayPlatforms.vertical.length === 1 &&
@@ -563,10 +597,16 @@ export class StreamingService
 
       // Handle allowing users to bypass platform setup errors and still multistream
       if (this.state.info.error !== null) {
-        console.error('Setup platform error, prompting user to bypass');
-        const platformErrorType = this.state.info.error.type;
-        this.setError(platformErrorType);
-        throwStreamError(platformErrorType);
+        console.error('Setup platform error, prompting user to bypass', this.state.info.error);
+
+        const error = this.handleTypedStreamError(
+          this.state.info.error,
+          errorType,
+          this.state.info.error.message,
+          this.state.info.error.platform,
+        );
+
+        throwStreamError(error);
       }
 
       // update restream settings
@@ -578,7 +618,12 @@ export class StreamingService
           await this.restreamService.beforeGoLive();
         });
       } catch (e: unknown) {
-        const errorType = this.handleTypedStreamError(e, failureType, 'Failed to setup restream');
+        const errorType = this.handleTypedStreamError(
+          e,
+          failureType,
+          $t('Failed to setup restream'),
+        );
+
         throwStreamError(errorType);
       }
     }
@@ -841,7 +886,6 @@ export class StreamingService
     // restream errors returns an object with key value pairs for error details
     const messages: string[] = [message];
     const details: string[] = [];
-    let errorType = type;
 
     const defaultMessage =
       this.state.info.error?.message ??
@@ -849,12 +893,20 @@ export class StreamingService
         'One of destinations might have incomplete permissions. Reconnect the destinations in settings and try again.',
       );
 
+    // Format the error message for restream errors to show the details to the user in the bypass error modal
     if (e && typeof e === 'object' && type.split('_').includes('RESTREAM')) {
-      details.push(defaultMessage);
+      const errorPlatform = platform || this.state.info.error?.platform;
+      // If the error has a platform associated with it, specify the platform in the error message
+      if (errorPlatform) {
+        const platformLabel = $t('%{platform} Error', { platform: errorPlatform });
+        details.push([platformLabel, message].join('. '));
+      } else {
+        details.push(defaultMessage);
+      }
 
       Object.entries(e).forEach(([key, value]: [string, string]) => {
         const name = capitalize(key.replace(/([A-Z])/g, ' $1'));
-        // only show the error message for the stream key and server url to the user for security purposes
+        // Never show the actual stream key and server url to the user for security purposes
         if (['streamKey', 'serverUrl'].includes(key)) {
           messages.push($t('Missing server url or stream key'));
         } else {
@@ -866,21 +918,21 @@ export class StreamingService
 
       const streamError = createStreamError(
         type,
-        { status, statusText: messages.join('. '), platform },
+        { status, statusText: $t('Multistream Error') + ': ' + messages.join('. '), platform },
         details.join('\n'),
       );
-      errorType = streamError.type;
+
       this.setError(streamError);
+      return streamError.type;
     }
 
     if (e instanceof StreamError) {
-      errorType = e.type;
-      this.setError(e);
-    } else {
-      this.setError(type);
+      this.setError({ ...e, type });
+      return e.type;
     }
 
-    return errorType;
+    this.setError(type);
+    return type;
   }
 
   /**
@@ -1636,7 +1688,6 @@ export class StreamingService
   }
 
   private async handleRetryStartStreaming(info: IOBSOutputSignalInfo) {
-    console.log('RETRYING START STREAMING WITH RECORDING/REPLAY BUFFER OFF');
     // Toggle off recording and replay buffer when starting the stream
     const recordWhenStreaming = this.streamSettingsService.settings.recordWhenStreaming;
     if (recordWhenStreaming) {
@@ -1786,18 +1837,26 @@ export class StreamingService
 
     // Add display information for dual output mode
     if (this.views.isDualOutputMode) {
-      const platforms =
-        info.service === 'vertical'
-          ? this.views.verticalStream.map(p => platformLabels(p))
-          : this.views.horizontalStream.map(p => platformLabels(p));
+      const display = info.service === 'vertical' ? 'vertical' : 'horizontal';
+      const targets = [];
+      if (this.views.activeDisplayDestinations[display].length) {
+        targets.push($t('Custom Destination'));
+      }
+
+      this.views.activeDisplayPlatforms[display].forEach(p => {
+        const label = platformLabels(p);
+        if (label) {
+          targets.push(label);
+        }
+      });
 
       const stream =
-        info.service === 'vertical'
+        display === 'vertical'
           ? $t('Please confirm %{platforms} in the Vertical stream.', {
-              platforms,
+              platforms: targets.join(', '),
             })
           : $t('Please confirm %{platforms} in the Horizontal stream.', {
-              platforms,
+              platforms: targets.join(', '),
             });
       errorText = [errorText, stream].join('\n\n');
     }
