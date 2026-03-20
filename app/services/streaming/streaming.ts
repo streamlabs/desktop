@@ -1515,7 +1515,7 @@ export class StreamingService
         await this.validateOrCreateOutputInstance({
           display: 'vertical',
           type: 'streaming',
-          audioTrack: 1,
+          audioTrack: 2,
           context: 'vertical',
           start: true,
         });
@@ -1790,19 +1790,22 @@ export class StreamingService
    * @param audioTrack - The index of the audio track
    */
   private async createStreaming(
-    settings: IStreamingContextSettings = {
-      output: 'horizontal',
-      audioTrack: 1,
-      start: true,
-      context: 'horizontal',
-      isEnhancedBroadcasting: false,
-    },
-  ) {
+    settings: IStreamingContextSettings,
+  ): Promise<
+    | ISimpleStreaming
+    | IAdvancedStreaming
+    | IEnhancedBroadcastingSimpleStreaming
+    | IEnhancedBroadcastingAdvancedStreaming
+  > {
     const display = this.views.getOutputDisplayType(settings.output);
     const contextName = settings.context || display;
+    const audioTrack = settings.audioTrack;
+    const start = settings.start || true;
+    const isEnhancedBroadcasting = settings.isEnhancedBroadcasting || false;
+
     const mode = this.outputSettingsService.getSettings().mode;
 
-    this.createStreamingInstance(contextName, mode, settings.isEnhancedBroadcasting);
+    this.createStreamingInstance(contextName, mode, isEnhancedBroadcasting);
 
     // TODO: Confirm error handling flow after merging the backend encoder changes
     // in case we want to surface encoder errors to prompt the user to try a different encoder
@@ -1815,26 +1818,22 @@ export class StreamingService
     }
 
     if (this.isAdvancedStreaming(this.contexts[contextName].streaming)) {
-      const stream = this.migrateSettings(
-        'streaming',
-        contextName,
-        settings.isEnhancedBroadcasting,
-      ) as IAdvancedStreaming | IEnhancedBroadcastingAdvancedStreaming;
+      const stream = this.migrateSettings('streaming', contextName, isEnhancedBroadcasting) as
+        | IAdvancedStreaming
+        | IEnhancedBroadcastingAdvancedStreaming;
 
       const resolution = this.videoSettingsService.outputResolutions[display];
       stream.outputWidth = resolution.outputWidth;
       stream.outputHeight = resolution.outputHeight;
       // stream audio track
-      this.createAudioTrack(settings.audioTrack);
-      stream.audioTrack = settings.audioTrack;
+      this.createAudioTrack(audioTrack);
+      stream.audioTrack = audioTrack;
       // Twitch VOD audio track
       if (stream.enableTwitchVOD && stream.twitchTrack) {
         this.createAudioTrack(stream.twitchTrack);
       } else if (stream.enableTwitchVOD) {
         // do not use the same audio track for the VOD as the stream
-        stream.twitchTrack = !settings.isEnhancedBroadcasting
-          ? settings.audioTrack
-          : settings.audioTrack + 1;
+        stream.twitchTrack = !isEnhancedBroadcasting ? audioTrack : audioTrack + 1;
         this.createAudioTrack(stream.twitchTrack);
       }
 
@@ -1842,11 +1841,9 @@ export class StreamingService
         | IAdvancedStreaming
         | IEnhancedBroadcastingAdvancedStreaming;
     } else if (this.isSimpleStreaming(this.contexts[contextName].streaming)) {
-      const stream = this.migrateSettings(
-        'streaming',
-        contextName,
-        settings.isEnhancedBroadcasting,
-      ) as ISimpleStreaming | IEnhancedBroadcastingSimpleStreaming;
+      const stream = this.migrateSettings('streaming', contextName, isEnhancedBroadcasting) as
+        | ISimpleStreaming
+        | IEnhancedBroadcastingSimpleStreaming;
 
       stream.audioEncoder = AudioEncoderFactory.create(
         this.outputSettingsService.getRecordingAudioEncoderSettings(),
@@ -1892,9 +1889,6 @@ export class StreamingService
         'enhanced-broadcasting-service',
         ServiceFactory.legacySettings.settings,
       );
-    } else if (streamSettings.streamType === 'rtmp_common') {
-      this.contexts[display].streaming.service = ServiceFactory.legacySettings;
-      this.contexts[display].streaming.service.update(streamSettings);
     } else {
       this.contexts[contextName].streaming.service = ServiceFactory.create(
         streamSettings.streamType,
@@ -1908,7 +1902,7 @@ export class StreamingService
     this.contexts[contextName].streaming.reconnect = ReconnectFactory.create();
     this.contexts[contextName].streaming.network = NetworkFactory.create();
 
-    if (settings.start) {
+    if (start) {
       this.contexts[contextName].streaming.start();
     }
 
