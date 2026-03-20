@@ -3311,10 +3311,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/semver@npm:6.2.1":
-  version: 6.2.1
-  resolution: "@types/semver@npm:6.2.1"
-  checksum: ae1f6354da33941af26cd745c09b5691e4d2debfa378402615fec2081a6452e07aed28ff5fb8e2a8ee255f9a79ab871ec4bc7615c3c7342c53ef4bb3ad55092a
+"@types/semver@npm:6.2.7":
+  version: 6.2.7
+  resolution: "@types/semver@npm:6.2.7"
+  checksum: 341e701d9bf07a9f26ddbf15f9c9ec4243f4e2d3f59d4b9a4d551999eea28bd4f81a37160505044c2a6292fa50226a8df493e06f44f966b0a881fbb0b1725ea0
   languageName: node
   linkType: hard
 
@@ -14240,7 +14240,7 @@ __metadata:
     "@types/react": 17.0.8
     "@types/react-resizable": 3.0.6
     "@types/request": 2.48.5
-    "@types/semver": 6.2.1
+    "@types/semver": 6.2.7
     "@types/socket.io-client": 1.4.32
     "@types/sortablejs": 1.10.6
     "@types/tapable": 0.2.5
