@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, memo } from 'react';
 import * as remote from '@electron/remote';
 import cx from 'classnames';
 import { Menu } from 'antd';
@@ -268,7 +268,7 @@ export default function LiveDockWithContext() {
   );
 }
 
-function LiveDock() {
+const LiveDock = memo(() => {
   const ctrl = useController(LiveDockCtx);
 
   const [visibleChat, setVisibleChat] = useState('default');
@@ -454,9 +454,9 @@ function LiveDock() {
       </div>
     </div>
   );
-}
+});
 
-function ChatTabs(p: { visibleChat: string; setChat: (key: string) => void }) {
+const ChatTabs = memo((p: { visibleChat: string; setChat: (key: string) => void }) => {
   const ctrl = useController(LiveDockCtx);
   return (
     <div className="flex">
@@ -490,4 +490,4 @@ function ChatTabs(p: { visibleChat: string; setChat: (key: string) => void }) {
       </div>
     </div>
   );
-}
+});

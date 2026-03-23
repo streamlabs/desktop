@@ -752,6 +752,7 @@ export class StreamingService
       this.UPDATE_STREAM_INFO({ lifecycle: 'live' });
       this.createGameAssociation(this.views.game);
       this.recordAfterStreamStartAnalytics(settings);
+      this.RESET_ERROR();
     }
   }
 
@@ -1646,18 +1647,6 @@ export class StreamingService
    * @param force - boolean, whether to force stop the stream
    */
   async handleStopStreaming(force?: boolean) {
-    // Recording must be stopped before stopping the replay buffer
-    // for the correct order of destruction of the context instances
-    const keepRecording = this.streamSettingsService.settings.keepRecordingWhenStreamStops;
-    if (!keepRecording && this.getIsRecordingStatus(ERecordingState.Recording)) {
-      this.toggleRecording();
-    }
-
-    const keepReplaying = this.streamSettingsService.settings.keepReplayBufferStreamStops;
-    if (!keepReplaying && this.getIsReplayBufferStatus(EReplayBufferState.Running)) {
-      this.stopReplayBuffer();
-    }
-
     // Stop the vertical stream only if the horizontal stream does not exist or is not live. If horizontal stream exists
     // or is live, the vertical stream will be stopped when the horizontal stream receives the `Stop` signal in `handleStreamingSignal`.
     // If for some reason the vertical stream instance exists but the horizontal stream instance does not, stop and destroy
@@ -2231,7 +2220,7 @@ export class StreamingService
 
     const instance = this.contexts[contextName][type];
 
-    // TODO: Address error a different way?
+    // TODO: Confirm error handling flow after merging the backend encoder changes in case it should be surfaced
     if (!instance) {
       throwStreamError(
         'UNKNOWN_STREAMING_ERROR_WITH_MESSAGE',
@@ -2307,7 +2296,7 @@ export class StreamingService
   }
 
   private async handleStreamingSignal(info: EOutputSignal, context: TOutputContext) {
-    console.log('Streaming Signal:', JSON.stringify(info, null, 2), context);
+    console.info('Streaming Signal:', info, context);
 
     // map signals to status
     const nextState: EStreamingState = ({
@@ -2376,23 +2365,28 @@ export class StreamingService
 
         this.createOBSError(EOBSOutputType.Streaming, context, info.signal, info.code, info.error);
       }
+      // The `deactivate` signal will handle updating the streaming status to offline and cleaning up the streaming instances
+      // because it is sent after the `stop`
+      return;
     } else if (info.signal === EOBSOutputSignal.Deactivate) {
       // The `deactivate` signal is sent after the `stop` signal
 
       // Handle continuing the replay buffer and recording instances for the horizontal and vertical
       // contexts only because the other contexts cannot use recording or replay buffer
       if (this.isDisplayContext(context)) {
-        const keepReplaying = this.streamSettingsService.settings.keepReplayBufferStreamStops;
-        const isReplayBufferRunning = this.getIsReplayBufferStatus(EReplayBufferState.Running);
-        if (!keepReplaying && isReplayBufferRunning) {
-          this.stopReplayBuffer();
-        }
-
-        // handle recording
+        // Recording must be stopped before stopping the replay buffer
+        // for the correct order of destruction of the context instances
         const keepRecording = this.streamSettingsService.settings.keepRecordingWhenStreamStops;
         const isRecording = this.getIsRecordingStatus(ERecordingState.Recording);
         if (!keepRecording && isRecording) {
           await this.toggleRecording();
+        }
+
+        const keepReplaying = this.streamSettingsService.settings.keepReplayBufferStreamStops;
+        const isReplayBufferRunning = this.getIsReplayBufferStatus(EReplayBufferState.Running);
+        if (!keepReplaying && isReplayBufferRunning) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+          this.stopReplayBuffer();
         }
       }
 
@@ -2413,6 +2407,7 @@ export class StreamingService
 
       // Ensure instances for the recording and replay buffer are destroyed
       await this.handleDestroyOutputContexts(context);
+      this.resetError();
     } else if (info.signal === EOBSOutputSignal.Reconnect) {
       this.sendReconnectingNotification();
     } else if (info.signal === EOBSOutputSignal.ReconnectSuccess) {
@@ -2420,7 +2415,6 @@ export class StreamingService
     }
 
     if (this.isDisplayContext(context)) {
-      console.log('settings streaming status to', nextState, context);
       this.SET_STREAMING_STATUS(nextState, context, time);
       this.streamingStatusChange.next(nextState);
     }
@@ -2474,40 +2468,62 @@ export class StreamingService
     }
 
     if (info.signal === EOBSOutputSignal.Wrote) {
+      // Set the recording status to offline on the `wrote` signal so that the recording instance
+      // is correctly destroyed
       this.SET_RECORDING_STATUS(nextState, display, new Date().toISOString());
 
-      const fileName = this.contexts[display].recording.lastFile();
-
-      const parsedName = byOS({
-        [OS.Mac]: fileName,
-        [OS.Windows]: fileName.replace(/\//, '\\'),
-      });
-
-      // In dual output mode, each confirmation should be labelled for each display
-      if (
-        this.views.isDualOutputMode &&
-        (this.dualOutputService.views.canRecordDualOutput ||
-          this.dualOutputService.views.canRecordVertical)
-      ) {
-        this.recordingModeService.addRecordingEntry(parsedName, display);
+      let fileName = '';
+      if (this.contexts[display].recording) {
+        fileName = this.contexts[display].recording.lastFile();
       } else {
-        this.recordingModeService.addRecordingEntry(parsedName);
-      }
-      this.recordingModeService.addRecordingEntry(parsedName);
-      await this.markersService.exportCsv(parsedName);
+        console.error(
+          'Recording instance does not exist when handling wrote signal, getting file name from the factory as a backup.',
+        );
 
-      // Don't update status before destroying the recording instance
-      // because the recording status should have been set to `offline`
-      // with the `stop` signal
-      await this.handleDestroyOutputContexts(display);
+        fileName =
+          this.outputSettingsService.getSettings().mode === 'Advanced'
+            ? AdvancedRecordingFactory.legacySettings.lastFile()
+            : SimpleRecordingFactory.legacySettings.lastFile();
+      }
+
+      if (fileName !== '') {
+        const parsedName = byOS({
+          [OS.Mac]: fileName,
+          [OS.Windows]: fileName.replace(/\//, '\\'),
+        });
+
+        // In dual output mode, each confirmation should be labelled for each display
+        if (
+          this.views.isDualOutputMode &&
+          (this.dualOutputService.views.canRecordDualOutput ||
+            this.dualOutputService.views.canRecordVertical)
+        ) {
+          this.recordingModeService.addRecordingEntry(parsedName, display);
+        } else {
+          this.recordingModeService.addRecordingEntry(parsedName);
+        }
+
+        // Destroy recording instance before setting status to offline and before other recording history updates
+        // to prevent race conditions
+        await this.handleDestroyOutputContexts(display);
+
+        await this.markersService.exportCsv(parsedName);
+        this.latestRecordingPath.next(fileName);
+      } else {
+        console.error(
+          'File name is empty when handling wrote signal, skipping adding to recording history.',
+        );
+
+        await this.handleDestroyOutputContexts(display);
+      }
 
       this.recordingStatusChange.next(nextState);
-      this.latestRecordingPath.next(fileName);
+
+      // Return early because the recording status has already been set to offline
       return;
     }
 
     const time = new Date().toISOString();
-
     this.SET_RECORDING_STATUS(nextState, display, time);
     this.recordingStatusChange.next(nextState);
   }
@@ -2568,9 +2584,20 @@ export class StreamingService
       // the contexts will destroy correctly
       const time = new Date().toISOString();
       this.SET_REPLAY_BUFFER_STATUS(nextState, display, time);
+
+      // Destroy replay buffer instance
       await this.handleDestroyOutputContexts(display);
+
+      // Update the subscription after the contexts are destroyed to prevent race conditions
       this.replayBufferStatusChange.next(nextState);
 
+      return;
+    }
+
+    if (info.signal === EOBSOutputSignal.Stopping) {
+      // The `stopping` state was set with `stopReplayBuffer` to trigger the animation in the UI
+      // so only update the subscription and return early to prevent setting the state to `stopping` twice.
+      this.replayBufferStatusChange.next(nextState);
       return;
     }
 
@@ -2725,11 +2752,12 @@ export class StreamingService
 
     if (this.state.status[display].replayBuffer === EReplayBufferState.Running) {
       this.contexts[display].replayBuffer.stop(false);
-      // change the replay buffer status for the loading animation
+      // Update the status here for the UI
       this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Stopping, display, new Date().toISOString());
     } else if (this.state.status[display].replayBuffer === EReplayBufferState.Stopping) {
       // If the replay buffer is hanging, we can try to stop it again
       this.contexts[display].replayBuffer.stop(true);
+      // Update the status here for the UI
       this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Stopping, display, new Date().toISOString());
     }
 
@@ -2795,6 +2823,7 @@ export class StreamingService
         audioTrack: settings.audioTrack,
         start,
         context,
+        isEnhancedBroadcasting,
       });
     }
   }
@@ -2844,7 +2873,6 @@ export class StreamingService
    * @param audioTrack - index of the audio track to create
    */
   private createAudioTrack(audioTrack: number) {
-    console.log('Creating audio track at index', audioTrack);
     const trackName = `track${audioTrack}`;
     const track = AudioTrackFactory.create(160, trackName);
     AudioTrackFactory.setAtIndex(track, audioTrack);
@@ -3543,9 +3571,9 @@ export class StreamingService
               );
               break;
           }
+        } else {
+          this.streamingStatusChange.next(EStreamingState.Offline);
         }
-
-        this.streamingStatusChange.next(EStreamingState.Offline);
       }
     } catch (e: unknown) {
       console.error(
@@ -3619,6 +3647,18 @@ export class StreamingService
         console.log(contextName, [label, 'streaming'].join(' '), instance.streaming);
       }
     }
+  }
+
+  validateContextsDestroyed() {
+    if (!Utils.isTestMode()) return;
+
+    Object.keys(this.contexts).forEach((context: TOutputContext) => {
+      if (context !== null) {
+        return false;
+      }
+    });
+
+    return true;
   }
 
   /**

@@ -1,10 +1,9 @@
-import React, { CSSProperties, useMemo } from 'react';
+import React, { CSSProperties, useCallback, useMemo } from 'react';
 import styles from './RecordingSwitcher.m.less';
 import { Services } from 'components-react/service-provider';
 import { TDisplayOutput } from 'services/streaming';
 import { $t } from 'services/i18n';
 import { useVuex } from 'components-react/hooks';
-import { useGoLiveSettings } from './useGoLiveSettings';
 import Tooltip from 'components-react/shared/Tooltip';
 import { SwitchInput } from 'components-react/shared/inputs';
 import { RadioInput } from 'components-react/shared/inputs/RadioInput';
@@ -19,7 +18,6 @@ interface IRecordingSettingsProps {
 }
 
 export default function RecordingSwitcher(p: IRecordingSettingsProps) {
-  const { updateRecordingDisplayAndSaveSettings } = useGoLiveSettings();
   const {
     DualOutputService,
     StreamSettingsService,
@@ -83,6 +81,11 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
         : $t('AI Highlighter is enabled. Recording will start when stream starts.'),
     [v.isRecording],
   );
+
+  const updateRecordingDisplayAndSaveSettings = useCallback((display: TDisplayOutput) => {
+    const currentSettings = StreamSettingsService.views.settings?.goLiveSettings || {};
+    StreamSettingsService.actions.setGoLiveSettings({ ...currentSettings, recording: display });
+  }, []);
 
   return (
     <div style={p?.style} className={cx(p?.className, styles.recordingSwitcher)}>

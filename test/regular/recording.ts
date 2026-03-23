@@ -32,7 +32,7 @@ import { useForm, fillForm } from '../helpers/modules/forms';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
-useWebdriver();
+useWebdriver({ skipOnboarding: true });
 
 /**
  * Iterate over all formats and record a 0.5s video in each.
@@ -70,7 +70,7 @@ async function createRecordingFiles(advanced: boolean = false): Promise<number> 
     await showPage('Editor');
   }
 
-  return Promise.resolve(formats.length);
+  return formats.length;
 }
 
 /**
@@ -92,14 +92,23 @@ async function validateRecordingFiles(
   // The additional TS files created by M3U8 in advanced mode are not displayed in the recording history
   const numFiles = advanced ? files.length - 1 : files.length;
 
-  t.true(numFiles >= numFormats, `Files that were created:\n${files.join('\n')}`);
+  t.true(
+    numFiles >= numFormats,
+    `Created ${numFiles} files but expected at least ${numFormats}. \n\nFiles:\n${files.join(
+      '\n',
+    )}`,
+  );
 
   // Check that the recordings are displayed in the recording history
   await showPage('Recordings');
   waitForDisplayed('h1=Recordings');
 
   const numRecordings = await getNumElements('[data-test=filename]');
-  t.is(numRecordings, numFiles, 'All recordings show in history matches number of files recorded');
+  t.is(
+    numRecordings,
+    numFiles,
+    'All recordings shown in history should match number of files recorded',
+  );
 }
 
 /**

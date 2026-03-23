@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, memo } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import cx from 'classnames';
 import { EMenuItemKey, ESubMenuItemKey } from 'services/side-nav';
@@ -16,22 +16,12 @@ import { useRealmObject } from 'components-react/hooks/realm';
 
 const { Sider } = Layout;
 
-export default function SideNav(p: { isVisionRunning: boolean }) {
+function SideNav(p: { isVisionRunning: boolean }) {
   const { CustomizationService, SideNavService, WindowsService } = Services;
 
-  const {
-    currentMenuItem,
-    setCurrentMenuItem,
-    isOpen,
-    toggleMenuStatus,
-    updateStyleBlockers,
-    hideStyleBlockers,
-  } = useVuex(() => ({
+  const { currentMenuItem, isOpen, hideStyleBlockers } = useVuex(() => ({
     currentMenuItem: SideNavService.views.currentMenuItem,
-    setCurrentMenuItem: SideNavService.actions.setCurrentMenuItem,
     isOpen: SideNavService.views.isOpen,
-    toggleMenuStatus: SideNavService.actions.toggleMenuStatus,
-    updateStyleBlockers: WindowsService.actions.updateStyleBlockers,
     hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
   }));
 
@@ -52,7 +42,7 @@ export default function SideNav(p: { isVisionRunning: boolean }) {
       const height = Math.floor(entry?.contentRect?.height);
 
       if (lastHeight === height && (width === siderMinWidth || width === siderMaxWidth)) {
-        updateStyleBlockers('main', false);
+        updateStyleBlockers(false);
       }
       lastHeight = height;
     });
@@ -66,7 +56,7 @@ export default function SideNav(p: { isVisionRunning: boolean }) {
       resizeObserver.observe(sider?.current);
 
       if (hideStyleBlockers) {
-        updateStyleBlockers('main', false);
+        updateStyleBlockers(false);
       }
     }
 
@@ -94,6 +84,18 @@ export default function SideNav(p: { isVisionRunning: boolean }) {
       setCurrentMenuItem(subMenuItems[currentMenuItem]);
     }
   }, [currentMenuItem]);
+
+  const setCurrentMenuItem = useCallback((key: EMenuItemKey) => {
+    SideNavService.actions.setCurrentMenuItem(key);
+  }, []);
+
+  const updateStyleBlockers = useCallback((status: boolean) => {
+    WindowsService.actions.updateStyleBlockers('main', status);
+  }, []);
+
+  const toggleMenuStatus = useCallback(() => {
+    SideNavService.actions.toggleMenuStatus();
+  }, []);
 
   return (
     <Layout hasSider className="side-nav">
@@ -131,7 +133,7 @@ export default function SideNav(p: { isVisionRunning: boolean }) {
         onClick={() => {
           updateSubMenu();
           toggleMenuStatus();
-          updateStyleBlockers('main', true); // hide style blockers
+          updateStyleBlockers(true);
         }}
       >
         <i className="icon-back" />
@@ -139,6 +141,8 @@ export default function SideNav(p: { isVisionRunning: boolean }) {
     </Layout>
   );
 }
+
+export default memo(SideNav);
 
 function LoginHelpTip() {
   return (

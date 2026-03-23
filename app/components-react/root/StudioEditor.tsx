@@ -1,5 +1,5 @@
 import { useVuex } from 'components-react/hooks';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, memo } from 'react';
 import styles from './StudioEditor.m.less';
 import { Services } from 'components-react/service-provider';
 import cx from 'classnames';
@@ -377,7 +377,7 @@ export default function StudioEditor() {
   );
 }
 
-function StudioModeControls(p: { stacked: boolean }) {
+const StudioModeControls = memo((p: { stacked: boolean }) => {
   const { TransitionsService } = Services;
 
   return (
@@ -397,9 +397,9 @@ function StudioModeControls(p: { stacked: boolean }) {
       <span className={styles.studioModeControl}>{$t('Live')}</span>
     </div>
   );
-}
+});
 
-function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
+const DualOutputControls = memo((p: { stacked: boolean; isRecording: boolean }) => {
   function openSettingsWindow() {
     Services.SettingsService.actions.showSettings('Video');
   }
@@ -442,7 +442,7 @@ function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
       </div>
     </div>
   );
-}
+});
 
 /**
  * Note for the streaming and recording icons:
@@ -452,7 +452,7 @@ function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
  * swap the icons shown conditionally so that when only recording, the recording icon shows next to
  * the header text.
  */
-function DualOutputIcons(p: { display: TDisplayType }) {
+const DualOutputIcons = memo((p: { display: TDisplayType }) => {
   const { StreamingService } = Services;
 
   const { showStreaming, showRecording } = useVuex(() => ({
@@ -470,7 +470,7 @@ function DualOutputIcons(p: { display: TDisplayType }) {
       <i className={cx('icon-record', styles.recordIcon, { [styles.hidden]: !showRecording })} />
     </>
   );
-}
+});
 
 function DualOutputProgressBar(p: { sceneId: string }) {
   const { DualOutputService, ScenesService } = Services;

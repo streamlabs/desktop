@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, memo } from 'react';
 import cx from 'classnames';
 import { EStreamingState } from 'services/streaming';
 import { EGlobalSyncStatus } from 'services/media-backup';
@@ -9,8 +9,9 @@ import * as remote from '@electron/remote';
 import { TStreamShiftStatus } from 'services/restream';
 import { promptAction } from 'components-react/modals';
 import { IStreamShiftRequested, IStreamShiftActionCompleted } from 'services/websocket';
+import { useRealmObject } from 'components-react/hooks/realm';
 
-export default function StartStreamingButton(p: { disabled?: boolean }) {
+function StartStreamingButton(p: { disabled?: boolean }) {
   const {
     StreamingService,
     StreamSettingsService,
@@ -32,32 +33,25 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     isPrime,
     primaryPlatform,
     isMultiplatformMode,
-    updateStreamInfoOnLive,
-  } = useVuex(() => ({
-    streamingStatus: StreamingService.views.streamingStatus,
-    delayEnabled: StreamingService.views.delayEnabled,
-    delaySeconds: StreamingService.views.delaySeconds,
-    streamShiftStatus: RestreamService.state.streamShiftStatus,
-    isDualOutputMode: StreamingService.views.isDualOutputMode,
-    isLoggedIn: UserService.isLoggedIn,
-    isPrime: UserService.state.isPrime,
-    primaryPlatform: UserService.state.auth?.primaryPlatform,
-    isMultiplatformMode: StreamingService.views.isMultiplatformMode,
-    updateStreamInfoOnLive: CustomizationService.state.updateStreamInfoOnLive,
-  }));
+  } = useVuex(
+    () => ({
+      streamingStatus: StreamingService.views.streamingStatus,
+      delayEnabled: StreamingService.views.delayEnabled,
+      delaySeconds: StreamingService.views.delaySeconds,
+      streamShiftStatus: RestreamService.state.streamShiftStatus,
+      isDualOutputMode: StreamingService.views.isDualOutputMode,
+      isLoggedIn: UserService.isLoggedIn,
+      isPrime: UserService.state.isPrime,
+      primaryPlatform: UserService.state.auth?.primaryPlatform,
+      isMultiplatformMode: StreamingService.views.isMultiplatformMode,
+    }),
+    false,
+  );
+
+  const updateStreamInfoOnLive = useRealmObject(CustomizationService.state).updateStreamInfoOnLive;
 
   const [delaySecondsRemaining, setDelayTick] = useState(delaySeconds);
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    return () => {
-      if (streamingStatus !== EStreamingState.Offline) {
-        StreamingService.actions.handleStopStreaming(true);
-      }
-
-      setIsLoading(false);
-    };
-  }, []);
 
   useEffect(() => {
     setDelayTick(delaySeconds);
@@ -344,31 +338,35 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
   );
 }
 
-function StreamButtonLabel(p: {
-  streamingStatus: EStreamingState;
-  streamShiftStatus: TStreamShiftStatus;
-  delaySecondsRemaining: number;
-  delayEnabled: boolean;
-}) {
-  const label = useMemo(() => {
-    if (p.streamShiftStatus === 'pending') {
-      return $t('Claim Stream');
-    }
+const StreamButtonLabel = memo(
+  (p: {
+    streamingStatus: EStreamingState;
+    streamShiftStatus: TStreamShiftStatus;
+    delaySecondsRemaining: number;
+    delayEnabled: boolean;
+  }) => {
+    const label = useMemo(() => {
+      if (p.streamShiftStatus === 'pending') {
+        return $t('Claim Stream');
+      }
 
-    switch (p.streamingStatus) {
-      case EStreamingState.Live:
-        return $t('End Stream');
-      case EStreamingState.Starting:
-        return p.delayEnabled ? `Starting ${p.delaySecondsRemaining}s` : $t('Starting');
-      case EStreamingState.Ending:
-        return p.delayEnabled ? `Discard ${p.delaySecondsRemaining}s` : $t('Ending');
-      case EStreamingState.Reconnecting:
-        return $t('Reconnecting');
-      case EStreamingState.Offline:
-      default:
-        return $t('Go Live');
-    }
-  }, [p.streamShiftStatus, p.streamingStatus, p.delayEnabled, p.delaySecondsRemaining]);
+      switch (p.streamingStatus) {
+        case EStreamingState.Live:
+          return $t('End Stream');
+        case EStreamingState.Starting:
+          return p.delayEnabled ? `Starting ${p.delaySecondsRemaining}s` : $t('Starting');
+        case EStreamingState.Ending:
+          return p.delayEnabled ? `Discard ${p.delaySecondsRemaining}s` : $t('Ending');
+        case EStreamingState.Reconnecting:
+          return $t('Reconnecting');
+        case EStreamingState.Offline:
+        default:
+          return $t('Go Live');
+      }
+    }, [p.streamShiftStatus, p.streamingStatus, p.delayEnabled, p.delaySecondsRemaining]);
 
-  return <>{label}</>;
-}
+    return <>{label}</>;
+  },
+);
+
+export default memo(StartStreamingButton);
