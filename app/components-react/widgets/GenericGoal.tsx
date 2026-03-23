@@ -53,7 +53,7 @@ export function GenericGoal() {
     setSelectedTab,
     selectedTab,
     saveGoal,
-    type
+    type,
   } = useGenericGoal();
 
   const isCharity = type === WidgetType.CharityGoal;
@@ -70,7 +70,7 @@ export function GenericGoal() {
   function updateGoalCreate(key: string) {
     return (val: TInputValue) => {
       setGoalCreateValues({ ...goalCreateValues, [key]: val });
-    }
+    };
   }
 
   return (
@@ -82,26 +82,30 @@ export function GenericGoal() {
       <Form>
         {!isLoading && selectedTab === 'goal' && !hasGoal && (
           <>
-            <FormFactory metadata={createGoalMeta} values={goalCreateValues} onChange={updateGoalCreate} />
-            <Button className="button button--action" onClick={() => saveGoal(goalCreateValues)}>{$t('Save Goal')}</Button>
+            <FormFactory
+              metadata={createGoalMeta}
+              values={goalCreateValues}
+              onChange={updateGoalCreate}
+            />
+            <Button className="button button--action" onClick={() => saveGoal(goalCreateValues)}>
+              {$t('Save Goal')}
+            </Button>
           </>
         )}
-        {!isLoading && selectedTab === 'goal' && hasGoal && (
-          <DisplayGoal goal={goalSettings} />
-        )}
+        {!isLoading && selectedTab === 'goal' && hasGoal && <DisplayGoal goal={goalSettings} />}
         {!isLoading && selectedTab === 'general' && (
           <FormFactory metadata={visualMeta} values={settings} onChange={updateSetting} />
         )}
       </Form>
     </WidgetLayout>
-  )
+  );
 }
 
 function DisplayGoal(p: { goal: IGoalState['data']['goal'] }) {
   const { resetGoal } = useGenericGoal();
 
   if (!p.goal) return <></>;
-  return (        
+  return (
     <div className="section__body">
       <div className="goal-row">
         <span>{$t('Title')}</span>
@@ -132,7 +136,7 @@ export class GenericGoalModule extends WidgetModule<IGoalState> {
       // regex from https://stackoverflow.com/questions/2520633/what-is-the-mm-dd-yyyy-regular-expression-and-how-do-i-use-it-in-php
       pattern: /^(0[1-9]|1[012])[/](0[1-9]|[12][0-9]|3[01])[/](19|20)\d\d$/,
       message: $t('Must be in MM/DD/YYYY format.'),
-    }
+    };
   }
 
   get createGoalMeta() {
@@ -155,7 +159,7 @@ export class GenericGoalModule extends WidgetModule<IGoalState> {
         label: $t('End After'),
         required: true,
         placeholder: 'MM/DD/YYYY',
-        rules: [this.dateValidator]
+        rules: [this.dateValidator],
       }),
     };
   }
@@ -165,27 +169,30 @@ export class GenericGoalModule extends WidgetModule<IGoalState> {
   }
 
   get visualMeta() {
-    return {
+    const meta = {
       layout: metadata.list({
         label: $t('Layout'),
         options: [
           { label: $t('Standard'), value: 'standard' },
           { label: $t('Condensed'), value: 'condensed' },
         ],
-        // children: this.state.type === WidgetType.SubGoal ? {
-        //   include_resubs: metadata.bool({
-        //     label: $t('Include resubs?'),
-        //   })
-        // } : undefined,
       }),
       background_color: metadata.color({ label: $t('Background Color') }),
       bar_color: metadata.color({ label: $t('Bar Color') }),
       bar_bg_color: metadata.color({ label: $t('Bar Background Color') }),
-      text_color: metadata.color({ label: $t('Text Color'), tooltip: $t('A hex code for the base text color.') }),
+      text_color: metadata.color({
+        label: $t('Text Color'),
+        tooltip: $t('A hex code for the base text color.'),
+      }),
       bar_text_color: metadata.color({ label: $t('Bar Text Color') }),
       bar_thickness: metadata.slider({ label: $t('Bar Thickness'), min: 32, max: 128, step: 4 }),
       font: { type: 'fontFamily', label: $t('Font Family') },
     };
+
+    if (this.state.type === WidgetType.SubGoal) {
+      return { include_resubs: metadata.switch({ label: $t('Include Resubs') }), ...meta };
+    }
+    return meta;
   }
 
   get headers() {
@@ -204,11 +211,13 @@ export class GenericGoalModule extends WidgetModule<IGoalState> {
   saveGoal(options: Dictionary<TInputValue>) {
     const url = this.config.goalUrl;
     if (!url) return;
-    jfetch(new Request(url, {
-      method: 'POST',
-      headers: this.headers,
-      body: JSON.stringify(options),
-    }));
+    jfetch(
+      new Request(url, {
+        method: 'POST',
+        headers: this.headers,
+        body: JSON.stringify(options),
+      }),
+    );
   }
 
   patchAfterFetch(data: IGoalState['data']): IGoalState['data'] {
