@@ -1797,7 +1797,7 @@ export class StreamingService
 
     this.createStreamingInstance(contextName, mode, isEnhancedBroadcasting);
 
-    // TODO: Handle this a different way?
+    // TODO: Revisit after merge to see if this should be surfaced to the user
     if (!this.contexts[contextName].streaming) {
       throwStreamError(
         'UNKNOWN_STREAMING_ERROR_WITH_MESSAGE',
@@ -1835,7 +1835,7 @@ export class StreamingService
         | IEnhancedBroadcastingSimpleStreaming;
 
       stream.audioEncoder = AudioEncoderFactory.create(
-        this.outputSettingsService.getRecordingAudioEncoderSettings(), // TODO: Is there a different setting for streaming audio encoder?
+        this.outputSettingsService.getRecordingAudioEncoderSettings(),
         `audio-encoder-streaming-${display}`,
       );
       this.contexts[contextName].streaming = stream as
@@ -1870,14 +1870,16 @@ export class StreamingService
         ? this.settingsService.views.values.Stream
         : this.settingsService.views.values.StreamSecond;
 
-    // If output settings
+    // Create a designated service instance for enhanced broadcasting with the default service settings.
     if (contextName === 'enhancedBroadcasting') {
-      // Create a designated service instance for enhanced broadcasting with the default service settings.
       this.contexts[contextName].streaming.service = ServiceFactory.create(
         ServiceFactory.legacySettings.settings.streamType,
         'enhanced-broadcasting-service',
         ServiceFactory.legacySettings.settings,
       );
+    } else if (streamSettings.streamType === 'rtmp_common' || !this.views.protectedModeEnabled) {
+      this.contexts[display].streaming.service = ServiceFactory.legacySettings;
+      this.contexts[display].streaming.service.update(streamSettings);
     } else {
       this.contexts[contextName].streaming.service = ServiceFactory.create(
         streamSettings.streamType,
@@ -2020,7 +2022,7 @@ export class StreamingService
         // Add analytics for dual output recording
         this.usageStatisticsService.recordFeatureUsage('DualOutputRecording');
 
-        // TODO Fix: There is a bug with creating the vertical recording without having created a horizontal
+        // TODO Fix after merge: There is a bug with creating the vertical recording without having created a horizontal
         // recording instance first in the app's current session. A band-aid solution is to always create the
         // horizontal recording instance and then destroy it since we won't be using it.
         if (this.contexts.horizontal.recording === null) {
@@ -2054,9 +2056,9 @@ export class StreamingService
    * horizontal recording instance and then destroy it since we won't be using it.
    */
   private async createTemporaryHorizontalRecording() {
-    // TODO Fix: There is a bug with creating the vertical recording without having created a horizontal
-    // recording instance first in the app's current session. A band-aid solution is to always create the
-    // horizontal recording instance and then destroy it since we won't be using it.
+    // TODO: Revisit after merge video encoder backend changes. There is a bug with creating the vertical recording
+    // without having created a horizontal recording instance first in the app's current session. A band-aid solution
+    // is to always create the horizontal recording instance and then destroy it since we won't be using it.
     if (this.contexts.horizontal.recording === null) {
       await this.validateOrCreateOutputInstance({
         display: 'horizontal',
@@ -2218,7 +2220,7 @@ export class StreamingService
 
     const instance = this.contexts[contextName][type];
 
-    // TODO: Address error a different way?
+    // TODO: Revisit after merge video encoder backend changes to see if this should be surfaced to the user
     if (!instance) {
       throwStreamError(
         'UNKNOWN_STREAMING_ERROR_WITH_MESSAGE',
@@ -2292,7 +2294,7 @@ export class StreamingService
   }
 
   private async handleStreamingSignal(info: EOutputSignal, context: TOutputContext) {
-    console.log('Streaming Signal:', JSON.stringify(info, null, 2), context);
+    console.info('Streaming Signal:', JSON.stringify(info, null, 2), context);
 
     // map signals to status
     const nextState: EStreamingState = ({
@@ -2411,7 +2413,7 @@ export class StreamingService
   }
 
   private async handleRecordingSignal(info: EOutputSignal, display: TDisplayType) {
-    console.log('Recording Signal:', info, display);
+    console.info('Recording Signal:', info, display);
 
     // map signals to status
     const nextState: ERecordingState = ({
@@ -2468,7 +2470,7 @@ export class StreamingService
       });
 
       // In dual output mode, each confirmation should be labelled for each display
-      // TODO: comment in
+      // TODO: comment in for recording in dual output mode
       // if (this.views.isDualOutputMode) {
       //   this.recordingModeService.addRecordingEntry(parsedName, display);
       // } else {
@@ -2495,7 +2497,7 @@ export class StreamingService
   }
 
   private async handleReplayBufferSignal(info: EOutputSignal, display: TDisplayType) {
-    console.log('Replay Buffer Signal:', info, display);
+    console.info('Replay Buffer Signal:', info, display);
     // map signals to status
     const nextState: EReplayBufferState = ({
       [EOBSOutputSignal.Start]: EReplayBufferState.Running,
@@ -2698,7 +2700,6 @@ export class StreamingService
       this.contexts[display].replayBuffer &&
       this.state.status[display].replayBuffer === EReplayBufferState.Offline
     ) {
-      console.log('Replay buffer instance exists and the status is offline. Destroying instance.');
       this.handleDestroyOutputContexts(display);
       return;
     }
@@ -2808,7 +2809,7 @@ export class StreamingService
       if (existingTrack) return;
     } catch (e: unknown) {
       // continue to create track if the audio track does not exist
-      console.log('Audio track does not exist, creating new track at index', index);
+      console.info('Audio track does not exist, creating new track at index', index);
     }
 
     this.createAudioTrack(index);
@@ -3090,7 +3091,7 @@ export class StreamingService
   private handleOBSOutputError(info: IOBSOutputSignalInfo, platform?: string) {
     console.log('OBS Output Error signal: ', info);
 
-    // Signals should always have a code but to prevent errors
+    // Signals should always have a 1code but to prevent errors
     // we will set it to an unknown if the code doesn't exist
     if (info.code === undefined || info.code === null) {
       info.code = EOutputCode.Error;
