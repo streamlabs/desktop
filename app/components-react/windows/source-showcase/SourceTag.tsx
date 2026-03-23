@@ -61,9 +61,7 @@ export default function SourceTag(p: {
           <div className={styles.iconWrapper}>
             {displayData?.icon && <i className={displayData?.icon} />}
           </div>
-          <div className={styles.displayName}>
-            {displayData?.name || p.name}
-          </div>
+          <div className={styles.displayName}>{displayData?.name || p.name}</div>
         </div>
         {displayData?.shortDesc && !p.hideShortDescription && (
           <div
