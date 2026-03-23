@@ -840,6 +840,6 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
     icon: 'icon-game-pulse',
     group: 'essential',
     badge: $t('New'),
-    supportedOS: [OS.Windows]
+    supportedOS: [OS.Windows],
   },
 });
