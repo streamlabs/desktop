@@ -258,7 +258,7 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
       .sort(customOrder(essentialSourcesOrder, s => s.value));
 
     const essentialWidgets = iterableWidgetTypes.filter(type =>
-      [WidgetType.AlertBox, WidgetType.ChatBox, 'streamlabel'].includes(
+      [WidgetType.AlertBox, WidgetType.ChatBox, WidgetType.GamePulseWidget, 'streamlabel'].includes(
         // TODO: index
         // @ts-ignore
         type === 'streamlabel' ? type : WidgetType[type],
@@ -602,7 +602,7 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
   }, [p.activeTab, availableAppSources, appsList, widgetList]);
 
   return (
-    <Scrollable style={{ height: 'calc(100% - 64px)' }} className={styles.sourceGrid}>
+    <Scrollable style={{ height: 'calc(100% - 46px)' }} className={styles.sourceGrid}>
       <Row gutter={[8, 8]} style={{ marginLeft: '8px', marginRight: '8px', paddingBottom: '24px' }}>
         {p.activeTab === 'all' ? (
           <>
