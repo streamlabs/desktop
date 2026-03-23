@@ -1514,7 +1514,7 @@ export class StreamingService
         await this.validateOrCreateOutputInstance({
           display: 'vertical',
           type: 'streaming',
-          audioTrack: 1,
+          audioTrack: 2,
           context: 'vertical',
           start: true,
         });
@@ -1815,15 +1815,15 @@ export class StreamingService
       stream.outputWidth = resolution.outputWidth;
       stream.outputHeight = resolution.outputHeight;
       // stream audio track
-      this.createAudioTrack(index);
+      this.validateOrCreateAudioTrack(index);
       stream.audioTrack = index;
       // Twitch VOD audio track
       if (stream.enableTwitchVOD && stream.twitchTrack) {
-        this.createAudioTrack(stream.twitchTrack);
+        this.validateOrCreateAudioTrack(stream.twitchTrack);
       } else if (stream.enableTwitchVOD) {
         // do not use the same audio track for the VOD as the stream
         stream.twitchTrack = !isEnhancedBroadcasting ? index : index + 1;
-        this.createAudioTrack(stream.twitchTrack);
+        this.validateOrCreateAudioTrack(stream.twitchTrack);
       }
 
       this.contexts[contextName].streaming = stream as
@@ -2291,7 +2291,7 @@ export class StreamingService
   }
 
   private async handleStreamingSignal(info: EOutputSignal, context: TOutputContext) {
-    console.info('Streaming Signal:', JSON.stringify(info, null, 2), context);
+    console.debug('Streaming Signal:', JSON.stringify(info, null, 2), context);
 
     // map signals to status
     const nextState: EStreamingState = ({
@@ -2410,7 +2410,7 @@ export class StreamingService
   }
 
   private async handleRecordingSignal(info: EOutputSignal, display: TDisplayType) {
-    console.info('Recording Signal:', info, display);
+    console.debug('Recording Signal:', info, display);
 
     // map signals to status
     const nextState: ERecordingState = ({
@@ -2494,7 +2494,7 @@ export class StreamingService
   }
 
   private async handleReplayBufferSignal(info: EOutputSignal, display: TDisplayType) {
-    console.info('Replay Buffer Signal:', info, display);
+    console.debug('Replay Buffer Signal:', info, display);
     // map signals to status
     const nextState: EReplayBufferState = ({
       [EOBSOutputSignal.Start]: EReplayBufferState.Running,

@@ -68,8 +68,6 @@ async function createRecordingFiles(advanced: boolean = false): Promise<number> 
     await waitForDisplayed('h1=Recordings', { timeout: 1000 });
     await sleep(500);
     await showPage('Editor');
-
-    console.log('Recorded in format:', format);
   }
 
   return Promise.resolve(formats.length);
@@ -92,7 +90,7 @@ async function validateRecordingFiles(
 
   // M3U8 creates multiple TS files in addition to the catalog itself.
   // The additional TS files created by M3U8 in advanced mode are not displayed in the recording history
-  const numFiles = files.length;
+  const numFiles = advanced ? files.length - 1 : files.length;
 
   t.true(numFiles >= numFormats, `Files that were created:\n${files.join('\n')}`);
 
