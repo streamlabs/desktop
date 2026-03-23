@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import cx from 'classnames';
 import { EStreamQuality } from '../../services/performance';
 import { EStreamingState, EReplayBufferState, ERecordingState } from '../../services/streaming';
@@ -14,7 +14,7 @@ import { Tooltip } from 'antd';
 import { confirmAsync } from 'components-react/modals';
 import RecordingSwitcher from 'components-react/windows/go-live/RecordingSwitcher';
 
-export default function StudioFooterComponent() {
+function StudioFooterComponent() {
   const {
     StreamingService,
     WindowsService,
@@ -30,27 +30,30 @@ export default function StudioFooterComponent() {
     streamingStatus,
     isLoggedIn,
     supportsScheduling,
-    isRecordingModeEnabled,
     streamQuality,
+    recordingStatus,
     recordingModeEnabled,
     replayBufferEnabled,
     replayBufferStatus,
     isReplayBufferActive,
-  } = useVuex(() => ({
-    streamingStatus: StreamingService.views.streamingStatus,
-    isLoggedIn: UserService.views.isLoggedIn,
-    supportsScheduling: StreamingService.views.supports('stream-schedule'),
-    isRecordingModeEnabled: RecordingModeService.views.isRecordingModeEnabled,
-    streamQuality: PerformanceService.views.streamQuality,
-    recordingModeEnabled: RecordingModeService.views.isRecordingModeEnabled,
-    replayBufferEnabled: SettingsService.views.values.Output.RecRB,
-    replayBufferStatus: StreamingService.views.replayBufferStatus,
-    isReplayBufferActive: StreamingService.views.isReplayBufferActive,
-  }));
+  } = useVuex(
+    () => ({
+      streamingStatus: StreamingService.views.streamingStatus,
+      isLoggedIn: UserService.views.isLoggedIn,
+      supportsScheduling: StreamingService.views.supports('stream-schedule'),
+      streamQuality: PerformanceService.views.streamQuality,
+      recordingStatus: StreamingService.views.recordingStatus,
+      recordingModeEnabled: RecordingModeService.views.isRecordingModeEnabled,
+      replayBufferEnabled: SettingsService.views.values.Output.RecRB,
+      replayBufferStatus: StreamingService.views.replayBufferStatus,
+      isReplayBufferActive: StreamingService.views.isReplayBufferActive,
+    }),
+    false,
+  );
 
   const canSchedule = useMemo(() => {
-    return supportsScheduling && isRecordingModeEnabled;
-  }, [supportsScheduling, isRecordingModeEnabled]);
+    return supportsScheduling && recordingModeEnabled;
+  }, [supportsScheduling, recordingModeEnabled]);
 
   const replayBufferOffline = useMemo(() => {
     return replayBufferStatus === EReplayBufferState.Offline;
@@ -210,23 +213,14 @@ export default function StudioFooterComponent() {
   );
 }
 
-function RecordingButton() {
+const RecordingButton = memo(() => {
   const { StreamingService, DualOutputService, HighlighterService } = Services;
 
-  const {
-    isHorizontalRecording,
-    isVerticalRecording,
-    recordingStatus,
-    isDualOutputMode,
-    useAiHighlighter,
-  } = useVuex(() => ({
-    isHorizontalRecording: StreamingService.views.isHorizontalRecording,
-    isVerticalRecording: StreamingService.views.isVerticalRecording,
+  const { recordingStatus, isDualOutputMode, useAiHighlighter } = useVuex(() => ({
     recordingStatus: StreamingService.views.recordingStatus,
     isDualOutputMode: DualOutputService.views.dualOutputMode,
     useAiHighlighter: HighlighterService.views.useAiHighlighter,
   }));
-  const isRecording = isHorizontalRecording || isVerticalRecording;
 
   const toggleRecording = useCallback(() => {
     StreamingService.actions.toggleRecording();
@@ -239,6 +233,10 @@ function RecordingButton() {
       ),
     [recordingStatus],
   );
+
+  const isRecording = useMemo(() => recordingStatus === ERecordingState.Recording, [
+    recordingStatus,
+  ]);
 
   return (
     <>
@@ -266,11 +264,11 @@ function RecordingButton() {
       </div>
     </>
   );
-}
+});
 
-function RecordingTimer(p: { isRecording: boolean }) {
+const RecordingTimer = memo((p: { isRecording: boolean }) => {
   const { StreamingService } = Services;
-  const [recordingTime, setRecordingTime] = useState('');
+  const [recordingTime, setRecordingTime] = useState('00:00:00');
 
   useEffect(() => {
     let recordingTimeout: number | undefined;
@@ -278,44 +276,44 @@ function RecordingTimer(p: { isRecording: boolean }) {
       recordingTimeout = window.setTimeout(() => {
         setRecordingTime(StreamingService.formattedDurationInCurrentRecordingState);
       }, 1000);
-    } else if (recordingTime !== '') {
-      setRecordingTime('');
+    } else if (recordingTime !== '00:00:00') {
+      setRecordingTime('00:00:00');
     }
     return () => clearTimeout(recordingTimeout);
   }, [p.isRecording, recordingTime]);
 
   if (!p.isRecording) return <></>;
   return <div className={cx(styles.navItem, styles.recordTime)}>{recordingTime}</div>;
-}
+});
 
-function RecordingTooltipTitle(p: {
-  isRecording: boolean;
-  isDualOutputMode: boolean;
-  useAiHighlighter: boolean;
-}) {
-  const tooltipText = useMemo(() => {
-    if (p.useAiHighlighter && !p.isRecording) {
-      return $t('AI Highlighter is enabled. Recording will start when stream starts.');
-    }
-    if (p.useAiHighlighter && p.isRecording) {
+const RecordingTooltipTitle = memo(
+  (p: { isRecording: boolean; isDualOutputMode: boolean; useAiHighlighter: boolean }) => {
+    const tooltipText = useMemo(() => {
+      if (p.useAiHighlighter && !p.isRecording) {
+        return $t('AI Highlighter is enabled. Recording will start when stream starts.');
+      }
+      if (p.useAiHighlighter && p.isRecording) {
+        return $t('Stop Recording');
+      }
+      if (p.isDualOutputMode && !p.isRecording && !p.useAiHighlighter) {
+        return $t('Start Recording');
+      }
+      if (p.isDualOutputMode && p.isRecording && !p.useAiHighlighter) {
+        return $t('Stop Recording');
+      }
+      if (!p.isDualOutputMode && !p.useAiHighlighter && !p.isRecording) {
+        return $t('Start Recording');
+      }
+
       return $t('Stop Recording');
-    }
-    if (p.isDualOutputMode && !p.isRecording && !p.useAiHighlighter) {
-      return $t('Start Recording');
-    }
-    if (p.isDualOutputMode && p.isRecording && !p.useAiHighlighter) {
-      return $t('Stop Recording');
-    }
-    if (!p.isDualOutputMode && !p.useAiHighlighter && !p.isRecording) {
-      return $t('Start Recording');
-    }
+    }, [p.isRecording, p.isDualOutputMode, p.useAiHighlighter]);
 
-    return $t('Stop Recording');
-  }, [p.isRecording, p.isDualOutputMode, p.useAiHighlighter]);
+    return p.isDualOutputMode && !p.isRecording && !p.useAiHighlighter ? (
+      <RecordingSwitcher label={tooltipText} />
+    ) : (
+      <span>{tooltipText}</span>
+    );
+  },
+);
 
-  return p.isDualOutputMode && !p.isRecording && !p.useAiHighlighter ? (
-    <RecordingSwitcher label={tooltipText} />
-  ) : (
-    <span>{tooltipText}</span>
-  );
-}
+export default memo(StudioFooterComponent);
