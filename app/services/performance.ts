@@ -202,10 +202,10 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
    * Capture some analytics for the entire duration of a stream
    */
   startStreamQualityMonitoring() {
-    this.streamStartSkippedFrames = this.videoSettingsService.contexts.horizontal.skippedFrames;
+    this.streamStartSkippedFrames = this.videoSettingsService.skippedFrames;
     this.streamStartLaggedFrames = obs.Global.laggedFrames;
     this.streamStartRenderedFrames = obs.Global.totalFrames;
-    this.streamStartEncodedFrames = this.videoSettingsService.contexts.horizontal.encodedFrames;
+    this.streamStartEncodedFrames = this.videoSettingsService.encodedFrames;
     this.streamStartTime = new Date();
     this.historicalCPU = [];
   }
@@ -216,10 +216,8 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
         (obs.Global.totalFrames - this.streamStartRenderedFrames)) *
       100;
     const streamSkipped =
-      ((this.videoSettingsService.contexts.horizontal.skippedFrames -
-        this.streamStartSkippedFrames) /
-        (this.videoSettingsService.contexts.horizontal.encodedFrames -
-          this.streamStartEncodedFrames)) *
+      ((this.videoSettingsService.skippedFrames - this.streamStartSkippedFrames) /
+        (this.videoSettingsService.encodedFrames - this.streamStartEncodedFrames)) *
       100;
     const streamDropped = this.state.percentageDroppedFrames;
     const streamDuration =
@@ -247,8 +245,8 @@ export class PerformanceService extends StatefulService<IPerformanceState> {
     const currentStats: IMonitorState = {
       framesLagged: obs.Global.laggedFrames,
       framesRendered: obs.Global.totalFrames,
-      framesSkipped: this.videoSettingsService.contexts.horizontal.skippedFrames,
-      framesEncoded: this.videoSettingsService.contexts.horizontal.encodedFrames,
+      framesSkipped: this.videoSettingsService.skippedFrames,
+      framesEncoded: this.videoSettingsService.encodedFrames,
     };
 
     const nextStats = this.nextStats(currentStats);
