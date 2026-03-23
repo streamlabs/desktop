@@ -175,16 +175,6 @@ export class VideoSettingsService extends StatefulService<IVideoSetting> {
     };
   }
 
-  get skippedFrames() {
-    const context = this.contexts.horizontal ?? Video;
-    return context.skippedFrames;
-  }
-
-  get encodedFrames() {
-    const context = this.contexts.horizontal ?? Video;
-    return context.encodedFrames;
-  }
-
   /**
    * Format video settings for the video settings form
    *

@@ -120,7 +120,7 @@ interface IRecordingOutputSettings {
 
 interface ISimpleRecordingOutputSettings extends IRecordingOutputSettings {
   quality: ERecordingQuality;
-  videoEncoder: EObsAdvancedEncoder; // TODO: Revisit typing after encoder BE changes are merged
+  videoEncoder: EObsAdvancedEncoder; // TODO: should this be `EObsSimpleEncoder`?
   lowCPU: boolean;
   /**
    * `useStreamEncoders` is not a property for the Simple Recording Factory instance but is used
@@ -531,6 +531,7 @@ export class OutputSettingsService extends Service {
 
     if (mode === 'Advanced') {
       const mixer = this.settingsService.findSettingValue(output, 'Recording', 'RecTracks');
+      const fileFormat = '%CCYY-%MM-%DD %hh-%mm-%ss'; // TODO: confirm if this is a setting that should be updated
 
       // advanced settings
       return {
@@ -817,6 +818,11 @@ export class OutputSettingsService extends Service {
     const keyintSec = this.settingsService.findSettingValue(output, 'Streaming', 'keyint_sec');
     const x264opts = this.settingsService.findSettingValue(output, 'Streaming', 'x264opts');
 
+    console.log(
+      'getStreamingVideoEncoderSettings',
+      JSON.stringify({ rateControl, bitrate, keyintSec, x264opts }, null, 2),
+    );
+
     return {
       rate_control: rateControl,
       bitrate,
@@ -974,10 +980,11 @@ export class OutputSettingsService extends Service {
         return ERecordingFormat.MOV;
       case EFileFormat.mkv:
         return ERecordingFormat.MKV;
-      case EFileFormat.mpegts:
-        return ERecordingFormat.MPEGTS;
-      case EFileFormat.hls:
-        return ERecordingFormat.HLS;
+      // Deprecated: old api
+      // case EFileFormat.mpegts:
+      //   return ERecordingFormat.MPEGTS;
+      // case EFileFormat.hls:
+      //   return ERecordingFormat.HLS;
     }
   }
 

@@ -448,6 +448,15 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     // These settings are not displayed in the menu but are still needed for dual output
     settingsFormData.StreamSecond = this.fetchSettingsFromObs('StreamSecond');
 
+    // TODO: comment in for logging
+    // for (const category in settingsFormData) {
+    //   settingsFormData[category].formData.forEach((subCategory: ISettingsSubCategory) => {
+    //     subCategory.parameters.forEach(param => {
+    //       console.log(category, subCategory.nameSubCategory, param.name, param.value);
+    //     });
+    //   });
+    // }
+
     this.SET_SETTINGS(settingsFormData);
   }
 

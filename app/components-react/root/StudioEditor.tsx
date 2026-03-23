@@ -1,5 +1,5 @@
 import { useVuex } from 'components-react/hooks';
-import React, { useEffect, useMemo, useRef, useState, memo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import styles from './StudioEditor.m.less';
 import { Services } from 'components-react/service-provider';
 import cx from 'classnames';
@@ -14,9 +14,11 @@ import { useRealmObject } from 'components-react/hooks/realm';
 import { ENotificationType } from 'services/notifications';
 import { Service } from 'services/core/service';
 import { AudioNotificationType } from 'services/audio/audio';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export default function StudioEditor() {
   const {
+    WindowsService,
     CustomizationService,
     EditorService,
     TransitionsService,
@@ -377,7 +379,7 @@ export default function StudioEditor() {
   );
 }
 
-const StudioModeControls = memo((p: { stacked: boolean }) => {
+function StudioModeControls(p: { stacked: boolean }) {
   const { TransitionsService } = Services;
 
   return (
@@ -397,9 +399,9 @@ const StudioModeControls = memo((p: { stacked: boolean }) => {
       <span className={styles.studioModeControl}>{$t('Live')}</span>
     </div>
   );
-});
+}
 
-const DualOutputControls = memo((p: { stacked: boolean; isRecording: boolean }) => {
+function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
   function openSettingsWindow() {
     Services.SettingsService.actions.showSettings('Video');
   }
@@ -412,8 +414,9 @@ const DualOutputControls = memo((p: { stacked: boolean; isRecording: boolean }) 
   const showRecordingIcons = useMemo(() => {
     return (
       p.isRecording &&
-      (Services.DualOutputService.views.canRecordVertical ||
-        Services.DualOutputService.views.canRecordDualOutput)
+      Services.IncrementalRolloutService.views.featureIsEnabled(
+        EAvailableFeatures.dualOutputRecording,
+      )
     );
   }, [p.isRecording]);
 
@@ -442,7 +445,7 @@ const DualOutputControls = memo((p: { stacked: boolean; isRecording: boolean }) 
       </div>
     </div>
   );
-});
+}
 
 /**
  * Note for the streaming and recording icons:
@@ -452,7 +455,7 @@ const DualOutputControls = memo((p: { stacked: boolean; isRecording: boolean }) 
  * swap the icons shown conditionally so that when only recording, the recording icon shows next to
  * the header text.
  */
-const DualOutputIcons = memo((p: { display: TDisplayType }) => {
+function DualOutputIcons(p: { display: TDisplayType }) {
   const { StreamingService } = Services;
 
   const { showStreaming, showRecording } = useVuex(() => ({
@@ -470,7 +473,7 @@ const DualOutputIcons = memo((p: { display: TDisplayType }) => {
       <i className={cx('icon-record', styles.recordIcon, { [styles.hidden]: !showRecording })} />
     </>
   );
-});
+}
 
 function DualOutputProgressBar(p: { sceneId: string }) {
   const { DualOutputService, ScenesService } = Services;

@@ -32,7 +32,7 @@ import { useForm, fillForm } from '../helpers/modules/forms';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
-useWebdriver({ skipOnboarding: true });
+useWebdriver();
 
 /**
  * Iterate over all formats and record a 0.5s video in each.
@@ -41,8 +41,10 @@ useWebdriver({ skipOnboarding: true });
  */
 async function createRecordingFiles(advanced: boolean = false): Promise<number> {
   const formats = advanced
-    ? ['flv', 'mp4', 'mov', 'mkv', 'mpegts', 'hls']
-    : ['flv', 'mp4', 'mov', 'mkv', 'mpegts'];
+    ? ['flv', 'mp4', 'mov', 'mkv']
+    : // TODO: Test advanced 'mpegts', 'hls' with new osn version
+      // ? ['flv', 'mp4', 'mov', 'mkv', 'mpegts', 'hls']
+      ['flv', 'mp4', 'mov', 'mkv', 'mpegts'];
 
   // Record 0.5s video in every format
   for (const format of formats) {
@@ -68,9 +70,11 @@ async function createRecordingFiles(advanced: boolean = false): Promise<number> 
     await waitForDisplayed('h1=Recordings', { timeout: 1000 });
     await sleep(500);
     await showPage('Editor');
+
+    console.log('Recorded in format:', format);
   }
 
-  return formats.length;
+  return Promise.resolve(formats.length);
 }
 
 /**
@@ -90,25 +94,16 @@ async function validateRecordingFiles(
 
   // M3U8 creates multiple TS files in addition to the catalog itself.
   // The additional TS files created by M3U8 in advanced mode are not displayed in the recording history
-  const numFiles = advanced ? files.length - 1 : files.length;
+  const numFiles = files.length;
 
-  t.true(
-    numFiles >= numFormats,
-    `Created ${numFiles} files but expected at least ${numFormats}. \n\nFiles:\n${files.join(
-      '\n',
-    )}`,
-  );
+  t.true(numFiles >= numFormats, `Files that were created:\n${files.join('\n')}`);
 
   // Check that the recordings are displayed in the recording history
   await showPage('Recordings');
   waitForDisplayed('h1=Recordings');
 
   const numRecordings = await getNumElements('[data-test=filename]');
-  t.is(
-    numRecordings,
-    numFiles,
-    'All recordings shown in history should match number of files recorded',
-  );
+  t.is(numRecordings, numFiles, 'All recordings show in history matches number of files recorded');
 }
 
 /**

@@ -1,13 +1,15 @@
-import React, { CSSProperties, useCallback, useMemo } from 'react';
+import React, { CSSProperties, useMemo } from 'react';
 import styles from './RecordingSwitcher.m.less';
 import { Services } from 'components-react/service-provider';
 import { TDisplayOutput } from 'services/streaming';
 import { $t } from 'services/i18n';
 import { useVuex } from 'components-react/hooks';
+import { useGoLiveSettings } from './useGoLiveSettings';
 import Tooltip from 'components-react/shared/Tooltip';
 import { SwitchInput } from 'components-react/shared/inputs';
 import { RadioInput } from 'components-react/shared/inputs/RadioInput';
 import cx from 'classnames';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 interface IRecordingSettingsProps {
   showRecordingToggle?: boolean;
@@ -18,12 +20,14 @@ interface IRecordingSettingsProps {
 }
 
 export default function RecordingSwitcher(p: IRecordingSettingsProps) {
+  const { updateRecordingDisplayAndSaveSettings } = useGoLiveSettings();
   const {
     DualOutputService,
     StreamSettingsService,
     HighlighterService,
     StreamingService,
     SettingsService,
+    IncrementalRolloutService,
   } = Services;
 
   const v = useVuex(() => ({
@@ -34,9 +38,17 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
     isReplayBufferActive: StreamingService.views.isReplayBufferActive,
     recordingDisplay:
       StreamSettingsService.views.settings?.goLiveSettings?.recording ?? 'horizontal',
-    canRecordVertical: DualOutputService.views.canRecordVertical,
-    canRecordDualOutput: DualOutputService.views.canRecordDualOutput,
   }));
+
+  const canRecordVertical = useMemo(
+    () => IncrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.verticalRecording),
+    [],
+  );
+  const canRecordDualOutput = false;
+  // Dual output recording is WIP. To enable testing for dual output recording, modify the logic here.
+  // const canRecordDualOutput =
+  //   IncrementalRolloutService.views.featureIsEnabled(EAvailableFeatures.dualOutputRecording) &&
+  //   !Utils.isDevMode();
 
   const recordWhenStartStream = useMemo(() => v.recordWhenStreaming || v.useAiHighlighter, [
     v.recordWhenStreaming,
@@ -48,8 +60,8 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
   ]);
 
   const showRecordingIcons = useMemo(
-    () => v.isDualOutputMode && (v.canRecordVertical || v.canRecordDualOutput),
-    [v.isDualOutputMode, v.canRecordVertical, v.canRecordDualOutput],
+    () => v.isDualOutputMode && (canRecordVertical || canRecordDualOutput),
+    [v.isDualOutputMode, canRecordVertical, canRecordDualOutput],
   );
 
   const disableToggle = useMemo(() => v.useAiHighlighter || v.isRecording, [
@@ -68,11 +80,11 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
       { value: 'vertical', label: $t('Vertical'), icon: 'icon-phone-case' },
     ];
 
-    if (v.canRecordDualOutput) {
+    if (canRecordDualOutput) {
       opts.push({ value: 'both', label: $t('Both'), icon: 'icon-dual-output' });
     }
     return opts;
-  }, [v.canRecordDualOutput]);
+  }, [canRecordDualOutput]);
 
   const message = useMemo(
     () =>
@@ -81,11 +93,6 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
         : $t('AI Highlighter is enabled. Recording will start when stream starts.'),
     [v.isRecording],
   );
-
-  const updateRecordingDisplayAndSaveSettings = useCallback((display: TDisplayOutput) => {
-    const currentSettings = StreamSettingsService.views.settings?.goLiveSettings || {};
-    StreamSettingsService.actions.setGoLiveSettings({ ...currentSettings, recording: display });
-  }, []);
 
   return (
     <div style={p?.style} className={cx(p?.className, styles.recordingSwitcher)}>

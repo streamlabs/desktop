@@ -107,34 +107,6 @@ interface IOutputContext {
   replayBuffer: ISimpleReplayBuffer | IAdvancedReplayBuffer;
 }
 
-interface IStreamingContextSettings {
-  output: TDisplayOutput;
-  audioTrack: number;
-  start?: boolean;
-  context?: TOutputContext;
-  isEnhancedBroadcasting?: boolean;
-}
-
-interface IRecordingContextSettings {
-  display: TDisplayType;
-  audioTrack: number;
-  start?: boolean;
-}
-
-interface IReplayBufferContextSettings {
-  display: TDisplayType;
-  audioTrack: number;
-}
-
-interface IValidateOutputSettings {
-  display: TDisplayType;
-  type: 'streaming' | 'recording';
-  audioTrack: number;
-  context?: TOutputContext;
-  start?: boolean;
-  isEnhancedBroadcasting?: boolean;
-}
-
 interface IStreamOutputSettings {
   key: string;
   streamType: string;
@@ -171,7 +143,6 @@ export class StreamingService
   @Inject() private settingsService: SettingsService;
   @Inject() private signalsService: SignalsService;
   @Inject() private highlighterService: HighlighterService;
-
   streamingStatusChange = new Subject<EStreamingState>();
   recordingStatusChange = new Subject<ERecordingState>();
   replayBufferStatusChange = new Subject<EReplayBufferState>();
@@ -752,7 +723,6 @@ export class StreamingService
       this.UPDATE_STREAM_INFO({ lifecycle: 'live' });
       this.createGameAssociation(this.views.game);
       this.recordAfterStreamStartAnalytics(settings);
-      this.RESET_ERROR();
     }
   }
 
@@ -1271,13 +1241,7 @@ export class StreamingService
     // start dual output
     if (this.views.isDualOutputMode) {
       if (this.views.isTwitchDualStreaming) {
-        await this.createStreaming({
-          output: 'both',
-          audioTrack: 1,
-          start: true,
-          context: 'horizontal',
-          isEnhancedBroadcasting: true,
-        });
+        await this.createStreaming('both', 1, true, 'horizontal', true);
       } else if (this.state.enhancedBroadcasting) {
         // Figure out which display Twitch is streaming to and create the enhanced broadcasting instance with that display.
         // For enhanced broadcasting while multistreaming one of the displays, the horizontal and vertical streaming instances will be handled in `handleStreamingSignal`.
@@ -1285,26 +1249,20 @@ export class StreamingService
         await this.createEnhancedBroadcastDualOutput();
       } else {
         // For dual output without enhanced broadcasting, the vertical stream instance will be created and started after the horizontal stream.
-        this.createStreaming({
-          output: 'vertical',
-          audioTrack: 2,
-          start: true,
-          context: 'vertical',
-          isEnhancedBroadcasting: false,
-        });
+        this.createStreaming('vertical', 2, true, 'vertical', false);
       }
     } else {
       // When multistreaming Twitch enhanced broadcasting, the horizontal streaming instance will be handled in `handleStreamingSignal`
       if (this.state.enhancedBroadcasting && this.views.shouldSetupRestream) {
         await this.createEnhancedBroadcastMultistream();
       } else {
-        await this.createStreaming({
-          output: 'horizontal',
-          audioTrack: 1,
-          start: true,
-          context: 'horizontal',
-          isEnhancedBroadcasting: this.state.enhancedBroadcasting,
-        });
+        await this.createStreaming(
+          'horizontal',
+          1,
+          true,
+          'horizontal',
+          this.state.enhancedBroadcasting,
+        );
       }
     }
 
@@ -1499,6 +1457,19 @@ export class StreamingService
     this.usageStatisticsService.recordFeatureUsage('Streaming');
   }
 
+  // TODO:
+  // - H: EB MS. V: SS
+  // - H: EB MS. V: MS
+  // - H: EB YDS. V: YDS SS
+  // - H: YDS SS. V: EB YDS
+  // - H: MS. V: EB MS
+  // - H: TDS SS. V: MS
+  // - H: MS. V: TDS SS
+  // - H: TDS MS. V: TDS MS
+  // - H: TDS YDS. V: TDS YDS
+  // - H: TDS YDS MS. V: TDS YDS MS
+  // - H: EB YDS. V: YDS SS
+  // - H: YDS SS. V: EB YDS
   private async handleStartDualOutputStream(
     code: EOBSOutputSignal,
     context: TOutputContext,
@@ -1513,13 +1484,7 @@ export class StreamingService
     if (this.state.enhancedBroadcasting) {
       // Handle enhanced broadcasting multistream in dual output mode
       if (context === 'enhancedBroadcasting') {
-        await this.validateOrCreateOutputInstance({
-          display: 'vertical',
-          type: 'streaming',
-          audioTrack: 2,
-          context: 'vertical',
-          start: true,
-        });
+        await this.validateOrCreateOutputInstance('vertical', 'streaming', 1, 'vertical', true);
         // Return early because the vertical stream needs to start and the horizontal streaming instance needs to be created.
         // The start streaming promise will be resolved when the horizontal stream starts
         return;
@@ -1534,14 +1499,14 @@ export class StreamingService
           this.state.enhancedBroadcasting &&
           !this.isEnhancedBroadcastingStreaming(this.contexts.vertical.streaming);
 
-        await this.validateOrCreateOutputInstance({
-          display: 'horizontal',
-          type: 'streaming',
-          audioTrack: 1,
-          context: 'horizontal',
-          start: true,
-          isEnhancedBroadcasting: horizontalEnhancedBroadcasting,
-        });
+        await this.validateOrCreateOutputInstance(
+          'horizontal',
+          'streaming',
+          1,
+          'horizontal',
+          true,
+          horizontalEnhancedBroadcasting,
+        );
       }
 
       // Resolve the start streaming promise when the horizontal stream starts because all other streaming instances will
@@ -1552,13 +1517,7 @@ export class StreamingService
           this.state.status.vertical &&
           this.state.status.vertical.streaming !== EStreamingState.Live
         ) {
-          await this.validateOrCreateOutputInstance({
-            display: 'vertical',
-            type: 'streaming',
-            audioTrack: 2,
-            context: 'vertical',
-            start: true,
-          });
+          await this.validateOrCreateOutputInstance('vertical', 'streaming', 2, 'vertical', true);
         } else {
           // Finally, all conditions should be met to resolve the start streaming promise
           await this.handleStartStreaming(code);
@@ -1569,13 +1528,7 @@ export class StreamingService
       // has started. The start streaming promise resolves when the vertical stream starts because the vertical stream is the
       // last streaming instance created
       if (context === 'vertical') {
-        await this.validateOrCreateOutputInstance({
-          display: 'horizontal',
-          type: 'streaming',
-          audioTrack: 1,
-          context: 'horizontal',
-          start: true,
-        });
+        await this.validateOrCreateOutputInstance('horizontal', 'streaming', 1, 'horizontal', true);
       }
 
       if (context === 'horizontal') {
@@ -1597,13 +1550,7 @@ export class StreamingService
   ) {
     // Handle single output mode
     if (context === 'enhancedBroadcasting') {
-      await this.createStreaming({
-        output: 'horizontal',
-        audioTrack: 1,
-        start: true,
-        context: 'horizontal' as TOutputContext,
-        isEnhancedBroadcasting: false,
-      });
+      await this.createStreaming('horizontal', 1, true, 'horizontal', false);
     }
 
     if (context === 'horizontal') {
@@ -1646,7 +1593,19 @@ export class StreamingService
    * @remark Signals and state changes are handled by the streaming signal handler
    * @param force - boolean, whether to force stop the stream
    */
-  async handleStopStreaming(force?: boolean) {
+  private async handleStopStreaming(force?: boolean) {
+    // Recording must be stopped before stopping the replay buffer
+    // for the correct order of destruction of the context instances
+    const keepRecording = this.streamSettingsService.settings.keepRecordingWhenStreamStops;
+    if (!keepRecording && this.getIsRecordingStatus(ERecordingState.Recording)) {
+      this.toggleRecording();
+    }
+
+    const keepReplaying = this.streamSettingsService.settings.keepReplayBufferStreamStops;
+    if (!keepReplaying && this.getIsReplayBufferStatus(EReplayBufferState.Running)) {
+      this.stopReplayBuffer();
+    }
+
     // Stop the vertical stream only if the horizontal stream does not exist or is not live. If horizontal stream exists
     // or is live, the vertical stream will be stopped when the horizontal stream receives the `Stop` signal in `handleStreamingSignal`.
     // If for some reason the vertical stream instance exists but the horizontal stream instance does not, stop and destroy
@@ -1690,9 +1649,7 @@ export class StreamingService
     }
   }
   private async createEnhancedBroadcastMultistream() {
-    const display: TDisplayType = this.settingsService.views.values.Stream.server.includes(
-      'streamlabs',
-    )
+    const display = this.settingsService.views.values.Stream.server.includes('streamlabs')
       ? 'horizontal'
       : 'vertical';
 
@@ -1717,13 +1674,7 @@ export class StreamingService
       display,
     );
 
-    await this.createStreaming({
-      output: display,
-      audioTrack: 3,
-      start: true,
-      context: 'enhancedBroadcasting',
-      isEnhancedBroadcasting: true,
-    });
+    await this.createStreaming(display as TDisplayType, 3, true, 'enhancedBroadcasting', true);
 
     this.streamSettingsService.setSettings(
       {
@@ -1744,14 +1695,14 @@ export class StreamingService
     } else {
       const display = this.views.getPlatformDisplayType('twitch');
       const audioTrack = display === 'horizontal' ? 1 : 2;
-      await this.validateOrCreateOutputInstance({
+      await this.validateOrCreateOutputInstance(
         display,
-        type: 'streaming',
+        'streaming',
         audioTrack,
-        context: display,
-        start: true,
-        isEnhancedBroadcasting: true,
-      });
+        display,
+        true,
+        true,
+      );
     }
   }
 
@@ -1774,32 +1725,24 @@ export class StreamingService
   }
 
   /**
-   * Create a streaming instance for the given output
-   * @param output - The output to create the streaming for
-   * @param audioTrack - The index of the audio track
+   * Create a streaming instance for the given display
+   * @param display - The display to create the streaming for
+   * @param index - The index of the audio track
    */
   private async createStreaming(
-    settings: IStreamingContextSettings,
-  ): Promise<
-    | ISimpleStreaming
-    | IAdvancedStreaming
-    | IEnhancedBroadcastingSimpleStreaming
-    | IEnhancedBroadcastingAdvancedStreaming
-  > {
-    const display = this.views.getOutputDisplayType(settings.output);
-    const contextName = settings.context || display;
-    const audioTrack = settings.audioTrack;
-    const start = settings.start || false;
-    const isEnhancedBroadcasting = settings.isEnhancedBroadcasting || false;
-
-    this.videoSettingsService.validateVideoContext(display);
-
+    output: TDisplayOutput,
+    index: number,
+    start: boolean = true,
+    context: TOutputContext = 'horizontal',
+    isEnhancedBroadcasting: boolean = false,
+  ) {
+    const display = this.views.getOutputDisplayType(output);
+    const contextName = context || display;
     const mode = this.outputSettingsService.getSettings().mode;
 
     this.createStreamingInstance(contextName, mode, isEnhancedBroadcasting);
 
-    // TODO: Confirm error handling flow after merging the backend encoder changes
-    // in case we want to surface encoder errors to prompt the user to try a different encoder
+    // TODO: Handle this a different way?
     if (!this.contexts[contextName].streaming) {
       throwStreamError(
         'UNKNOWN_STREAMING_ERROR_WITH_MESSAGE',
@@ -1817,15 +1760,15 @@ export class StreamingService
       stream.outputWidth = resolution.outputWidth;
       stream.outputHeight = resolution.outputHeight;
       // stream audio track
-      this.validateOrCreateAudioTrack(audioTrack);
-      stream.audioTrack = audioTrack;
+      this.createAudioTrack(index);
+      stream.audioTrack = index;
       // Twitch VOD audio track
       if (stream.enableTwitchVOD && stream.twitchTrack) {
-        this.validateOrCreateAudioTrack(stream.twitchTrack);
+        this.createAudioTrack(stream.twitchTrack);
       } else if (stream.enableTwitchVOD) {
         // do not use the same audio track for the VOD as the stream
-        stream.twitchTrack = !isEnhancedBroadcasting ? audioTrack : audioTrack + 1;
-        this.validateOrCreateAudioTrack(stream.twitchTrack);
+        stream.twitchTrack = !isEnhancedBroadcasting ? index : index + 1;
+        this.createAudioTrack(stream.twitchTrack);
       }
 
       this.contexts[contextName].streaming = stream as
@@ -1837,7 +1780,7 @@ export class StreamingService
         | IEnhancedBroadcastingSimpleStreaming;
 
       stream.audioEncoder = AudioEncoderFactory.create(
-        this.outputSettingsService.getRecordingAudioEncoderSettings(),
+        this.outputSettingsService.getRecordingAudioEncoderSettings(), // TODO: Is there a different setting for streaming audio encoder?
         `audio-encoder-streaming-${display}`,
       );
       this.contexts[contextName].streaming = stream as
@@ -1880,11 +1823,15 @@ export class StreamingService
         'enhanced-broadcasting-service',
         ServiceFactory.legacySettings.settings,
       );
+    } else if (streamSettings.streamType === 'rtmp_common') {
+      this.contexts[display].streaming.service = ServiceFactory.legacySettings;
+      this.contexts[display].streaming.service.update(streamSettings);
     } else {
       this.contexts[contextName].streaming.service = ServiceFactory.create(
         streamSettings.streamType,
         `${contextName}-service`,
         ServiceFactory.legacySettings.settings,
+        // streamSettings,
       );
 
       this.contexts[contextName].streaming.service.update(streamSettings);
@@ -1893,6 +1840,7 @@ export class StreamingService
     this.contexts[contextName].streaming.reconnect = ReconnectFactory.create();
     this.contexts[contextName].streaming.network = NetworkFactory.create();
 
+    this.logContexts(contextName, `${mode} createStreaming`);
     if (start) {
       this.contexts[contextName].streaming.start();
     }
@@ -2009,21 +1957,10 @@ export class StreamingService
 
     if (this.views.isDualOutputMode && !this.highlighterService.views.useAiHighlighter) {
       if (this.views.isDualOutputRecording || this.views.settings.recording === 'horizontal') {
-        await this.validateOrCreateOutputInstance({
-          display: 'horizontal',
-          type: 'recording',
-          audioTrack: 1,
-          context: 'horizontal',
-          start: true,
-        });
+        await this.validateOrCreateOutputInstance('horizontal', 'recording', 1, 'horizontal', true);
       }
 
-      if (
-        (this.dualOutputService.views.canRecordDualOutput &&
-          this.views.settings.recording === 'both') ||
-        (this.dualOutputService.views.canRecordVertical &&
-          this.views.settings.recording === 'vertical')
-      ) {
+      if (this.views.isDualOutputRecording || this.views.settings.recording === 'vertical') {
         // Add analytics for dual output recording
         this.usageStatisticsService.recordFeatureUsage('DualOutputRecording');
 
@@ -2034,23 +1971,11 @@ export class StreamingService
           await this.createTemporaryHorizontalRecording();
         }
 
-        await this.validateOrCreateOutputInstance({
-          display: 'vertical',
-          type: 'recording',
-          audioTrack: 2,
-          context: 'vertical',
-          start: true,
-        });
+        await this.validateOrCreateOutputInstance('vertical', 'recording', 2, 'vertical', true);
       }
     } else {
       // In single output mode, only record using the horizontal display
-      await this.validateOrCreateOutputInstance({
-        display: 'horizontal',
-        type: 'recording',
-        audioTrack: 1,
-        context: 'horizontal',
-        start: true,
-      });
+      await this.validateOrCreateOutputInstance('horizontal', 'recording', 1, 'horizontal', true);
     }
   }
 
@@ -2065,20 +1990,15 @@ export class StreamingService
     // recording instance first in the app's current session. A band-aid solution is to always create the
     // horizontal recording instance and then destroy it since we won't be using it.
     if (this.contexts.horizontal.recording === null) {
-      await this.validateOrCreateOutputInstance({
-        display: 'horizontal',
-        type: 'recording',
-        audioTrack: 1,
-        context: 'horizontal',
-        start: false,
-      });
+      await this.validateOrCreateOutputInstance('horizontal', 'recording', 1, 'horizontal', false);
       Utils.sleep(500).then(async () => {
         await this.destroyOutputContextIfExists('horizontal', 'recording');
       });
     }
   }
 
-  async handleStopRecording(force?: boolean) {
+  private async handleStopRecording() {
+    const mode = this.views.isDualOutputMode ? 'Dual Output: ' : 'Single Output: ';
     if (this.views.isDualOutputMode && !this.highlighterService.views.useAiHighlighter) {
       // Stop dual output recording
       if (
@@ -2088,7 +2008,7 @@ export class StreamingService
         this.state.status.vertical.recording === ERecordingState.Recording &&
         this.state.status.horizontal.recording === ERecordingState.Recording
       ) {
-        this.contexts.horizontal.recording.stop(force);
+        this.contexts.horizontal.recording.stop();
 
         // When recording both displays in dual output mode, sleep for 2 seconds to allow a different time stamp to be generated
         // because the recording history uses the time stamp as keys. If the same time stamp is used, the entry will be replaced
@@ -2096,7 +2016,7 @@ export class StreamingService
         // because each recording instance shuts down independently without referencing any other recording instance.
         await new Promise(resolve => setTimeout(resolve, 2000));
 
-        this.contexts.vertical.recording.stop(force);
+        this.contexts.vertical.recording.stop();
         return;
       }
 
@@ -2127,7 +2047,7 @@ export class StreamingService
         this.contexts.horizontal.recording !== null &&
         this.state.status.horizontal.recording === ERecordingState.Recording
       ) {
-        this.contexts.horizontal.recording.stop(force);
+        this.contexts.horizontal.recording.stop();
       }
     }
   }
@@ -2135,18 +2055,13 @@ export class StreamingService
   /**
    * Create a recording instance for the given display
    * @param display - The display to create the recording for
-   * @param audioTrack - The index of the audio track
+   * @param index - The index of the audio track
    */
-  private async createRecording(
-    settings: IRecordingContextSettings,
-  ): Promise<IAdvancedRecording | ISimpleRecording> {
+  private async createRecording(display: TDisplayType, index: number, start: boolean = false) {
     const mode = this.outputSettingsService.getSettings().mode;
-    const display = settings.display;
-    const audioTrack = settings.audioTrack;
-    const start = settings.start || false;
 
     // recordings must have a streaming instance
-    await this.validateOrCreateOutputInstance({ display, type: 'streaming', audioTrack });
+    await this.validateOrCreateOutputInstance(display, 'streaming', index);
 
     this.contexts[display].recording =
       mode === 'Advanced'
@@ -2200,11 +2115,13 @@ export class StreamingService
       await this.handleSignal(signal, display);
     };
 
+    this.logContexts(display, `${mode} createRecording`);
+
     if (start) {
       this.contexts[display].recording.start();
     }
 
-    return this.contexts[display].recording;
+    return Promise.resolve(this.contexts[display].recording);
   }
 
   private migrateSettings(
@@ -2212,6 +2129,7 @@ export class StreamingService
     contextName: TOutputContext,
     isEnhancedBroadcastingContext: boolean = false,
   ) {
+    const mode = this.outputSettingsService.getSettings().mode;
     const display = this.isDisplayContext(contextName) ? contextName : 'horizontal';
     const settings =
       type === 'streaming'
@@ -2220,14 +2138,12 @@ export class StreamingService
 
     const instance = this.contexts[contextName][type];
 
-    // TODO: Confirm error handling flow after merging the backend encoder changes in case it should be surfaced
+    // TODO: Address error a different way?
     if (!instance) {
       throwStreamError(
         'UNKNOWN_STREAMING_ERROR_WITH_MESSAGE',
         {},
-        `No instance found for context ${contextName}, type ${type}, mode, ${
-          this.outputSettingsService.getSettings().mode
-        } when migrating settings`,
+        `No instance found for context ${contextName} and type ${type} when migrating settings`,
       );
     }
 
@@ -2239,6 +2155,33 @@ export class StreamingService
         key === 'videoEncoder' &&
         (contextName !== 'enhancedBroadcasting' || isEnhancedBroadcastingContext)
       ) {
+        // TODO: when selective recording in simple mode with use stream encoder, the settings on the video encoder object are an empty object
+        // not sure if this is intentional. The below is an attempt to correct this.
+        // const shouldApplyStreamEncoderSettings =
+        //   mode === 'Simple' &&
+        //   type === 'recording' &&
+        //   (settings as any).useStreamEncoders &&
+        //   this.state.selectiveRecording;
+
+        // if (type === 'recording' && shouldApplyStreamEncoderSettings) {
+        //   // TODO: Attempt force latest settings to load
+        //   // this.settingsService.loadSettingsIntoStore();
+
+        //   const streamingVideoEncoder = this.outputSettingsService.getStreamingVideoEncoderSettings();
+        //   console.log('streamingVideoEncoder', JSON.stringify(streamingVideoEncoder, null, 2));
+
+        //   instance.videoEncoder = VideoEncoderFactory.create(
+        //     settings.videoEncoder,
+        //     `video-encoder-${type}-${contextName}`,
+        //     streamingVideoEncoder, // TEST: Force apply some settings to the recording video encoder because they are showing as an empty object in this case
+        //   );
+        // } else {
+        //   instance.videoEncoder = VideoEncoderFactory.create(
+        //     settings.videoEncoder,
+        //     `video-encoder-${type}-${contextName}`,
+        //   );
+        // }
+
         instance.videoEncoder = VideoEncoderFactory.create(
           settings.videoEncoder,
           `video-encoder-${type}-${contextName}`,
@@ -2296,7 +2239,7 @@ export class StreamingService
   }
 
   private async handleStreamingSignal(info: EOutputSignal, context: TOutputContext) {
-    console.info('Streaming Signal:', info, context);
+    console.log('Streaming Signal:', JSON.stringify(info, null, 2), context);
 
     // map signals to status
     const nextState: EStreamingState = ({
@@ -2365,28 +2308,23 @@ export class StreamingService
 
         this.createOBSError(EOBSOutputType.Streaming, context, info.signal, info.code, info.error);
       }
-      // The `deactivate` signal will handle updating the streaming status to offline and cleaning up the streaming instances
-      // because it is sent after the `stop`
-      return;
     } else if (info.signal === EOBSOutputSignal.Deactivate) {
       // The `deactivate` signal is sent after the `stop` signal
 
       // Handle continuing the replay buffer and recording instances for the horizontal and vertical
       // contexts only because the other contexts cannot use recording or replay buffer
       if (this.isDisplayContext(context)) {
-        // Recording must be stopped before stopping the replay buffer
-        // for the correct order of destruction of the context instances
+        const keepReplaying = this.streamSettingsService.settings.keepReplayBufferStreamStops;
+        const isReplayBufferRunning = this.getIsReplayBufferStatus(EReplayBufferState.Running);
+        if (!keepReplaying && isReplayBufferRunning) {
+          this.stopReplayBuffer();
+        }
+
+        // handle recording
         const keepRecording = this.streamSettingsService.settings.keepRecordingWhenStreamStops;
         const isRecording = this.getIsRecordingStatus(ERecordingState.Recording);
         if (!keepRecording && isRecording) {
           await this.toggleRecording();
-        }
-
-        const keepReplaying = this.streamSettingsService.settings.keepReplayBufferStreamStops;
-        const isReplayBufferRunning = this.getIsReplayBufferStatus(EReplayBufferState.Running);
-        if (!keepReplaying && isReplayBufferRunning) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-          this.stopReplayBuffer();
         }
       }
 
@@ -2407,7 +2345,6 @@ export class StreamingService
 
       // Ensure instances for the recording and replay buffer are destroyed
       await this.handleDestroyOutputContexts(context);
-      this.resetError();
     } else if (info.signal === EOBSOutputSignal.Reconnect) {
       this.sendReconnectingNotification();
     } else if (info.signal === EOBSOutputSignal.ReconnectSuccess) {
@@ -2427,8 +2364,8 @@ export class StreamingService
     const nextState: ERecordingState = ({
       [EOBSOutputSignal.Starting]: ERecordingState.Starting,
       [EOBSOutputSignal.Start]: ERecordingState.Recording,
-      [EOBSOutputSignal.Stop]: ERecordingState.Writing,
-      [EOBSOutputSignal.Stopping]: ERecordingState.Stopping,
+      [EOBSOutputSignal.Stop]: ERecordingState.Offline,
+      [EOBSOutputSignal.Stopping]: ERecordingState.Writing,
       [EOBSOutputSignal.Wrote]: ERecordingState.Offline,
     } as Dictionary<ERecordingState>)[info.signal];
 
@@ -2452,7 +2389,7 @@ export class StreamingService
     }
 
     if (info.signal === EOBSOutputSignal.Stop) {
-      // Note: The `stop` signal will set the recording status to `writing` to allow the recording to
+      // Note: The `stop` signal will set the recording status to `stopping` to allow the recording to
       // finish writing the last file before setting the status to `offline`. The `wrote` signal will
       // set the recording status to `offline` after the last file has been written.
       // Handle stopping the vertical recording instance in dual output mode dual output recording
@@ -2468,62 +2405,38 @@ export class StreamingService
     }
 
     if (info.signal === EOBSOutputSignal.Wrote) {
-      // Set the recording status to offline on the `wrote` signal so that the recording instance
-      // is correctly destroyed
       this.SET_RECORDING_STATUS(nextState, display, new Date().toISOString());
 
-      let fileName = '';
-      if (this.contexts[display].recording) {
-        fileName = this.contexts[display].recording.lastFile();
-      } else {
-        console.error(
-          'Recording instance does not exist when handling wrote signal, getting file name from the factory as a backup.',
-        );
+      const fileName = this.contexts[display].recording.lastFile();
 
-        fileName =
-          this.outputSettingsService.getSettings().mode === 'Advanced'
-            ? AdvancedRecordingFactory.legacySettings.lastFile()
-            : SimpleRecordingFactory.legacySettings.lastFile();
-      }
+      const parsedName = byOS({
+        [OS.Mac]: fileName,
+        [OS.Windows]: fileName.replace(/\//, '\\'),
+      });
 
-      if (fileName !== '') {
-        const parsedName = byOS({
-          [OS.Mac]: fileName,
-          [OS.Windows]: fileName.replace(/\//, '\\'),
-        });
+      // In dual output mode, each confirmation should be labelled for each display
+      // TODO: comment in
+      // if (this.views.isDualOutputMode) {
+      //   this.recordingModeService.addRecordingEntry(parsedName, display);
+      // } else {
+      //   this.recordingModeService.addRecordingEntry(parsedName);
+      // }
+      this.recordingModeService.addRecordingEntry(parsedName);
+      await this.markersService.exportCsv(parsedName);
 
-        // In dual output mode, each confirmation should be labelled for each display
-        if (
-          this.views.isDualOutputMode &&
-          (this.dualOutputService.views.canRecordDualOutput ||
-            this.dualOutputService.views.canRecordVertical)
-        ) {
-          this.recordingModeService.addRecordingEntry(parsedName, display);
-        } else {
-          this.recordingModeService.addRecordingEntry(parsedName);
-        }
+      this.latestRecordingPath.next(fileName);
 
-        // Destroy recording instance before setting status to offline and before other recording history updates
-        // to prevent race conditions
-        await this.handleDestroyOutputContexts(display);
-
-        await this.markersService.exportCsv(parsedName);
-        this.latestRecordingPath.next(fileName);
-      } else {
-        console.error(
-          'File name is empty when handling wrote signal, skipping adding to recording history.',
-        );
-
-        await this.handleDestroyOutputContexts(display);
-      }
+      // Don't update status before destroying the recording instance
+      // because the recording status should have been set to `offline`
+      // with the `stop` signal
+      await this.handleDestroyOutputContexts(display);
 
       this.recordingStatusChange.next(nextState);
-
-      // Return early because the recording status has already been set to offline
       return;
     }
 
     const time = new Date().toISOString();
+
     this.SET_RECORDING_STATUS(nextState, display, time);
     this.recordingStatusChange.next(nextState);
   }
@@ -2552,7 +2465,7 @@ export class StreamingService
       // In dual output mode for dual output replay buffer, the horizontal instance is created and started first
       // and the vertical instance is created and started after the horizontal instance has started.
       if (isDualOutputReplayBuffer && display === 'horizontal') {
-        this.createReplayBuffer({ display: 'vertical', audioTrack: 2 });
+        this.createReplayBuffer('vertical', 2);
         return;
       }
     }
@@ -2584,20 +2497,9 @@ export class StreamingService
       // the contexts will destroy correctly
       const time = new Date().toISOString();
       this.SET_REPLAY_BUFFER_STATUS(nextState, display, time);
-
-      // Destroy replay buffer instance
       await this.handleDestroyOutputContexts(display);
-
-      // Update the subscription after the contexts are destroyed to prevent race conditions
       this.replayBufferStatusChange.next(nextState);
 
-      return;
-    }
-
-    if (info.signal === EOBSOutputSignal.Stopping) {
-      // The `stopping` state was set with `stopReplayBuffer` to trigger the animation in the UI
-      // so only update the subscription and return early to prevent setting the state to `stopping` twice.
-      this.replayBufferStatusChange.next(nextState);
       return;
     }
 
@@ -2640,8 +2542,8 @@ export class StreamingService
       }
 
       this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Running, display);
-      const audioTrack = display === 'horizontal' ? 1 : 2;
-      this.createReplayBuffer({ display, audioTrack });
+      const audioTrackIndex = display === 'horizontal' ? 1 : 2;
+      this.createReplayBuffer(display, audioTrackIndex);
     } catch (e: unknown) {
       console.error('Error toggling replay buffer:', e);
 
@@ -2672,14 +2574,12 @@ export class StreamingService
    * Currently there are no cases where a replay buffer is not started immediately after creation.
    * @param display - The display to create the replay buffer for
    */
-  private async createReplayBuffer(settings: IReplayBufferContextSettings) {
+  private async createReplayBuffer(display: TDisplayType = 'horizontal', index: number) {
     const mode = this.outputSettingsService.getSettings().mode;
-    const rbSettings = this.outputSettingsService.getReplayBufferSettings();
-    const display: TDisplayType = settings.display;
-    const audioTrack = settings.audioTrack;
+    const settings = this.outputSettingsService.getReplayBufferSettings();
 
-    await this.validateOrCreateOutputInstance({ display, type: 'streaming', audioTrack });
-    await this.validateOrCreateOutputInstance({ display, type: 'recording', audioTrack });
+    await this.validateOrCreateOutputInstance(display, 'streaming', index);
+    await this.validateOrCreateOutputInstance(display, 'recording', index);
 
     const replayBuffer =
       mode === 'Advanced'
@@ -2687,9 +2587,9 @@ export class StreamingService
         : (SimpleReplayBufferFactory.create() as ISimpleReplayBuffer);
 
     // assign settings
-    Object.keys(rbSettings).forEach(key => {
-      if ((rbSettings as any)[key] === undefined) return;
-      (replayBuffer as any)[key] = (rbSettings as any)[key];
+    Object.keys(settings).forEach(key => {
+      if ((settings as any)[key] === undefined) return;
+      (replayBuffer as any)[key] = (settings as any)[key];
     });
 
     if (this.isAdvancedReplayBuffer(replayBuffer)) {
@@ -2752,12 +2652,11 @@ export class StreamingService
 
     if (this.state.status[display].replayBuffer === EReplayBufferState.Running) {
       this.contexts[display].replayBuffer.stop(false);
-      // Update the status here for the UI
+      // change the replay buffer status for the loading animation
       this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Stopping, display, new Date().toISOString());
     } else if (this.state.status[display].replayBuffer === EReplayBufferState.Stopping) {
       // If the replay buffer is hanging, we can try to stop it again
       this.contexts[display].replayBuffer.stop(true);
-      // Update the status here for the UI
       this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Stopping, display, new Date().toISOString());
     }
 
@@ -2784,12 +2683,16 @@ export class StreamingService
     }
   }
 
-  private async validateOrCreateOutputInstance(settings: IValidateOutputSettings) {
-    const context: TOutputContext = settings.context || settings.display;
+  private async validateOrCreateOutputInstance(
+    display: TDisplayType,
+    type: 'streaming' | 'recording',
+    index: number,
+    contextName?: TOutputContext,
+    start: boolean = false,
+    isEnhancedBroadcastingContext: boolean = false,
+  ) {
+    const context = contextName || display;
     const mode = this.outputSettingsService.getSettings().mode;
-    const type = settings.type;
-    const start = settings.start || false;
-    const isEnhancedBroadcasting = settings.isEnhancedBroadcasting || false;
     const validOutput = this.validateOutputInstance(mode, context, type);
 
     // If the instance matches the mode, return to validate it
@@ -2803,28 +2706,12 @@ export class StreamingService
 
     if (this.isDisplayContext(context)) {
       if (type === 'streaming') {
-        await this.createStreaming({
-          output: settings.display,
-          audioTrack: settings.audioTrack,
-          start,
-          context,
-          isEnhancedBroadcasting,
-        });
+        await this.createStreaming(display, index, start, context, isEnhancedBroadcastingContext);
       } else {
-        await this.createRecording({
-          display: settings.display,
-          audioTrack: settings.audioTrack,
-          start,
-        });
+        await this.createRecording(display, index, start);
       }
     } else {
-      await this.createStreaming({
-        output: settings.display,
-        audioTrack: settings.audioTrack,
-        start,
-        context,
-        isEnhancedBroadcasting,
-      });
+      await this.createStreaming(display, index, start, context);
     }
   }
 
@@ -2854,28 +2741,28 @@ export class StreamingService
    * which will result in any existing streaming, recording, or replay buffer instances having an
    * incorrect reference to the audio track. All instances for the same context should use the same
    * audio track.
-   * @param audioTrack - The index of the audio track
+   * @param index - The index of the audio track
    */
-  async validateOrCreateAudioTrack(audioTrack: number) {
+  async validateOrCreateAudioTrack(index: number) {
     try {
-      const existingTrack = AudioTrackFactory.getAtIndex(audioTrack);
+      const existingTrack = AudioTrackFactory.getAtIndex(index);
       if (existingTrack) return;
     } catch (e: unknown) {
       // continue to create track if the audio track does not exist
-      console.debug('Audio track does not exist, creating new track at index', audioTrack);
+      console.debug('Audio track does not exist, creating new track at index', index);
     }
 
-    this.createAudioTrack(audioTrack);
+    this.createAudioTrack(index);
   }
 
   /**
    * Create an audio track
-   * @param audioTrack - index of the audio track to create
+   * @param index - index of the audio track to create
    */
-  private createAudioTrack(audioTrack: number) {
-    const trackName = `track${audioTrack}`;
+  private createAudioTrack(index: number) {
+    const trackName = `track${index}`;
     const track = AudioTrackFactory.create(160, trackName);
-    AudioTrackFactory.setAtIndex(track, audioTrack);
+    AudioTrackFactory.setAtIndex(track, index);
   }
 
   private isDisplayContext(context: TOutputContext): context is TDisplayType {
@@ -3571,9 +3458,9 @@ export class StreamingService
               );
               break;
           }
-        } else {
-          this.streamingStatusChange.next(EStreamingState.Offline);
         }
+
+        this.streamingStatusChange.next(EStreamingState.Offline);
       }
     } catch (e: unknown) {
       console.error(
@@ -3649,18 +3536,6 @@ export class StreamingService
     }
   }
 
-  validateContextsDestroyed() {
-    if (!Utils.isTestMode()) return;
-
-    Object.keys(this.contexts).forEach((context: TOutputContext) => {
-      if (context !== null) {
-        return false;
-      }
-    });
-
-    return true;
-  }
-
   /**
    * MUTATIONS
    */
@@ -3678,6 +3553,7 @@ export class StreamingService
 
   @mutation()
   private SET_RECORDING_STATUS(status: ERecordingState, display: TDisplayType, time: string) {
+    console.log('Setting recording status', { status, display, time });
     this.state.status[display].recording = status;
     this.state.status[display].recordingTime = time;
     this.state.recordingStatus = status;
@@ -3690,6 +3566,7 @@ export class StreamingService
     display: TDisplayType,
     time?: string,
   ) {
+    console.log('Setting replay buffer status', { status, display, time });
     this.state.status[display].replayBuffer = status;
     this.state.replayBufferStatus = status;
 

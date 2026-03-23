@@ -23,7 +23,7 @@ import { useForm } from '../helpers/modules/forms';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
-useWebdriver({ skipOnboarding: true });
+useWebdriver();
 
 async function recordHighlight(
   t: ExecutionContext<ITestContext>,
@@ -61,8 +61,8 @@ async function toggleReplayBuffer(advanced: boolean = false) {
 }
 
 test('Replay Buffer', async t => {
-  await setOutputResolution('100x100');
   const tmpDir = await setTemporaryRecordingPath();
+  await setOutputResolution('100x100');
 
   // Simple Replay Buffer
   await recordHighlight(t, tmpDir, 1, 'Simple Replay Buffer recorded highlight');

@@ -807,15 +807,20 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get isVerticalRecording() {
-    return (
-      this.streamingState.status.vertical.recording !== ERecordingState.Offline &&
-      this.dualOutputView.canRecordVertical
-    );
+    return this.streamingState.status.vertical.recording !== ERecordingState.Offline;
   }
 
   get isDualOutputRecording() {
-    if (!this.dualOutputView.canRecordDualOutput) return false;
-    return this.isDualOutputMode && this.settings.recording === 'both';
+    return false;
+
+    // Dual output recording is WIP. To enable testing for dual output recording, modify the logic here.
+    // const canRecordDualOutput =
+    //   Services.IncrementalRolloutService.views.featureIsEnabled(
+    //     EAvailableFeatures.dualOutputRecording,
+    //   ) && !Utils.isDevMode();
+
+    // if (!canRecordDualOutput) return false;
+    // return this.isDualOutputMode && this.settings.recording === 'both';
   }
 
   get isHorizontalReplayBuffer() {
