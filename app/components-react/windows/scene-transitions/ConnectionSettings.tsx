@@ -38,7 +38,7 @@ export default function ConnectionSettings(p: { connectionId: string }) {
   }
 
   function handleChange(key: string) {
-    return (val: string) => EditorCommandsService.executeCommand('EditConnectionCommand', p.connectionId, {
+    return (val: string) => EditorCommandsService.actions.executeCommand('EditConnectionCommand', p.connectionId, {
       [key]: val,
     });
   }
