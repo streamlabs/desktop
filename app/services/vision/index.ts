@@ -110,8 +110,6 @@ VisionState.register();
 
 @InitAfter('UserService')
 export class VisionService extends Service {
-  static readonly DependencyKey = 'VisionService' as const;
-
   private visionRunner = new VisionRunner();
   private visionUpdater = new VisionUpdater(
     path.join(remote.app.getPath('userData'), '..', 'streamlabs-vision'),

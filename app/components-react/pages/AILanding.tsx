@@ -9,7 +9,7 @@ import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import { getConfigByGame } from 'services/highlighter/models/game-config.models';
 import { $t } from 'services/i18n/index';
 import { EMenuItemKey } from 'services/side-nav';
-import { OverlayCollectionParams, OverlayType } from 'services/user';
+import { IOverlayCollectionParams, TOverlayType } from 'services/user';
 import { $i } from 'services/utils';
 import { getOS, OS } from 'util/operating-systems';
 import styles from './AILanding.m.less';
@@ -87,16 +87,16 @@ export default function AILanding() {
 
   function onBrowseOverlaysClick() {
     trackEvent('browse-overlays');
-    const type: OverlayType = 'overlays';
-    const params: OverlayCollectionParams = { collection: 'reactive-overlays' };
+    const type: TOverlayType = 'overlays';
+    const params: IOverlayCollectionParams = { collection: 'reactive-overlays' };
     NavigationService.actions.navigate('BrowseOverlays', { type, ...params });
     SideNavService.actions.setCurrentMenuItem(EMenuItemKey.Themes);
   }
 
   function onBrowseWidgetsClick() {
     trackEvent('browse-widgets');
-    const type: OverlayType = 'widget-themes';
-    const params: OverlayCollectionParams = { collection: 'game-pulse-themes' };
+    const type: TOverlayType = 'widget-themes';
+    const params: IOverlayCollectionParams = { collection: 'game-pulse-themes' };
     NavigationService.actions.navigate('BrowseOverlays', { type, ...params });
     SideNavService.actions.setCurrentMenuItem(EMenuItemKey.Themes);
   }

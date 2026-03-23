@@ -67,8 +67,8 @@ export type TExternalLinkType =
   | 'multistream';
 
 /**
- * Add custom side item targets here. This is for menu items that don't fit the standard target/type
- * model, such as Studio Mode which toggles a mode rather than navigating to a page or external link.
+ * Add custom side item targets here. This is for menu items that don't fit
+ * the standard target/type model.
  */
 export type TCustomSideItem = never;
 

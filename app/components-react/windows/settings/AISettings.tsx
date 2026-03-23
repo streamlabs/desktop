@@ -6,7 +6,7 @@ import { Services } from 'components-react/service-provider';
 import { SwitchInput } from 'components-react/shared/inputs';
 import React, { useEffect, useMemo } from 'react';
 import { $t } from 'services/i18n/index';
-import { VisionProcess, VisionState } from 'services/vision';
+import { VisionProcess, VisionService, VisionState } from 'services/vision';
 import { ObsSettingsSection } from './ObsSettings';
 
 type VisionStatus = 'running' | 'starting' | 'updating' | 'stopped';
@@ -51,12 +51,12 @@ type VisionInfoProps = {
   activeProcessId: number;
   availableGames: Dictionary<string>;
   selectedGame: string;
-  setIsEnabled: typeof Services.VisionService.actions.setIsEnabled;
-  requestAvailableProcesses: typeof Services.VisionService.actions.requestActiveProcess;
-  activateProcess: typeof Services.VisionService.actions.activateProcess;
-  startProcess: typeof Services.VisionService.actions.ensureRunning;
-  ensureUpdated: typeof Services.VisionService.actions.ensureUpdated;
-  stopProcess: typeof Services.VisionService.actions.stop;
+  setIsEnabled: VisionService['setIsEnabled'];
+  requestAvailableProcesses: VisionService['requestActiveProcess'];
+  activateProcess: VisionService['activateProcess'];
+  startProcess: VisionService['ensureRunning'];
+  ensureUpdated: VisionService['ensureUpdated'];
+  stopProcess: VisionService['stop'];
   openExternal: (url: string) => void;
 };
 

@@ -282,16 +282,16 @@ class UserViews extends ViewHandler<IUserServiceState> {
   }
 }
 
-export type OverlayType = 'overlays' | 'widget-themes' | 'site-themes' | 'collectibles';
-export interface OverlayIdParams {
+export type TOverlayType = 'overlays' | 'widget-themes' | 'site-themes' | 'collectibles';
+export interface IOverlayIdParams {
   id: string;
   install?: string;
 }
-export interface OverlayCollectionParams {
+export interface IOverlayCollectionParams {
   collection?: string;
 }
 
-export type OverlayParams = OverlayIdParams | OverlayCollectionParams;
+export type TOverlayParams = IOverlayIdParams | IOverlayCollectionParams;
 
 export class UserService extends PersistentStatefulService<IUserServiceState> {
   @Inject() private hostsService: HostsService;
@@ -1028,12 +1028,11 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     return await this.magicLinkService.actions.return.getMagicSessionUrl(url);
   }
 
-  async overlaysUrl(type?: OverlayType, params?: OverlayParams) {
+  async overlaysUrl(type?: TOverlayType, params?: TOverlayParams) {
     const uiTheme = this.customizationService.isDarkTheme ? 'night' : 'day';
 
     let url = `https://${this.hostsService.streamlabs}/library`;
     const modeQuery = `mode=${uiTheme}&slobs`;
-
 
     if (type && params) {
       if ('id' in params) {

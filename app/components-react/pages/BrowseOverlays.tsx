@@ -11,10 +11,15 @@ import { downloadFile, IDownloadProgress } from 'util/requests';
 import * as remote from '@electron/remote';
 import omit from 'lodash/omit';
 import { Services } from 'components-react/service-provider';
-import { OverlayCollectionParams, OverlayIdParams, OverlayParams, OverlayType } from 'services/user';
+import {
+  IOverlayCollectionParams,
+  IOverlayIdParams,
+  TOverlayParams,
+  TOverlayType,
+} from 'services/user';
 
 export default function BrowseOverlays(p: {
-  params: { type: OverlayType } & OverlayParams;
+  params: { type: TOverlayType } & TOverlayParams;
   className?: string;
 }) {
   const {
@@ -35,7 +40,10 @@ export default function BrowseOverlays(p: {
 
   useEffect(() => {
     async function getOverlaysUrl() {
-      const url = await UserService.actions.return.overlaysUrl(p.params.type, p.params ? omit(p.params, 'type') : undefined);
+      const url = await UserService.actions.return.overlaysUrl(
+        p.params.type,
+        p.params ? omit(p.params, 'type') : undefined,
+      );
       if (!url) return;
       setOverlaysUrl(url);
     }
@@ -43,9 +51,9 @@ export default function BrowseOverlays(p: {
     getOverlaysUrl();
   }, [
     p.params.type,
-    (p.params as OverlayIdParams)?.id,
-    (p.params as OverlayIdParams)?.install,
-    (p.params as OverlayCollectionParams)?.collection
+    (p.params as IOverlayIdParams)?.id,
+    (p.params as IOverlayIdParams)?.install,
+    (p.params as IOverlayCollectionParams)?.collection,
   ]);
 
   function onBrowserViewReady(view: Electron.BrowserView) {
