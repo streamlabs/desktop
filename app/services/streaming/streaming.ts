@@ -107,6 +107,34 @@ interface IOutputContext {
   replayBuffer: ISimpleReplayBuffer | IAdvancedReplayBuffer;
 }
 
+interface IStreamingContextSettings {
+  output: TDisplayOutput;
+  audioTrack: number;
+  start?: boolean;
+  context?: TOutputContext;
+  isEnhancedBroadcasting?: boolean;
+}
+
+interface IRecordingContextSettings {
+  display: TDisplayType;
+  audioTrack: number;
+  start?: boolean;
+}
+
+interface IReplayBufferContextSettings {
+  display: TDisplayType;
+  audioTrack: number;
+}
+
+interface IValidateOutputSettings {
+  display: TDisplayType;
+  type: 'streaming' | 'recording';
+  audioTrack: number;
+  context?: TOutputContext;
+  start?: boolean;
+  isEnhancedBroadcasting?: boolean;
+}
+
 interface IStreamOutputSettings {
   key: string;
   streamType: string;
@@ -1241,7 +1269,13 @@ export class StreamingService
     // start dual output
     if (this.views.isDualOutputMode) {
       if (this.views.isTwitchDualStreaming) {
-        await this.createStreaming('both', 1, true, 'horizontal', true);
+        await this.createStreaming({
+          output: 'both',
+          audioTrack: 1,
+          start: true,
+          context: 'horizontal',
+          isEnhancedBroadcasting: true,
+        });
       } else if (this.state.enhancedBroadcasting) {
         // Figure out which display Twitch is streaming to and create the enhanced broadcasting instance with that display.
         // For enhanced broadcasting while multistreaming one of the displays, the horizontal and vertical streaming instances will be handled in `handleStreamingSignal`.
@@ -1249,20 +1283,26 @@ export class StreamingService
         await this.createEnhancedBroadcastDualOutput();
       } else {
         // For dual output without enhanced broadcasting, the vertical stream instance will be created and started after the horizontal stream.
-        this.createStreaming('vertical', 2, true, 'vertical', false);
+        this.createStreaming({
+          output: 'vertical',
+          audioTrack: 2,
+          start: true,
+          context: 'vertical',
+          isEnhancedBroadcasting: false,
+        });
       }
     } else {
       // When multistreaming Twitch enhanced broadcasting, the horizontal streaming instance will be handled in `handleStreamingSignal`
       if (this.state.enhancedBroadcasting && this.views.shouldSetupRestream) {
         await this.createEnhancedBroadcastMultistream();
       } else {
-        await this.createStreaming(
-          'horizontal',
-          1,
-          true,
-          'horizontal',
-          this.state.enhancedBroadcasting,
-        );
+        await this.createStreaming({
+          output: 'horizontal',
+          audioTrack: 1,
+          start: true,
+          context: 'horizontal',
+          isEnhancedBroadcasting: this.state.enhancedBroadcasting,
+        });
       }
     }
 
@@ -1457,19 +1497,6 @@ export class StreamingService
     this.usageStatisticsService.recordFeatureUsage('Streaming');
   }
 
-  // TODO:
-  // - H: EB MS. V: SS
-  // - H: EB MS. V: MS
-  // - H: EB YDS. V: YDS SS
-  // - H: YDS SS. V: EB YDS
-  // - H: MS. V: EB MS
-  // - H: TDS SS. V: MS
-  // - H: MS. V: TDS SS
-  // - H: TDS MS. V: TDS MS
-  // - H: TDS YDS. V: TDS YDS
-  // - H: TDS YDS MS. V: TDS YDS MS
-  // - H: EB YDS. V: YDS SS
-  // - H: YDS SS. V: EB YDS
   private async handleStartDualOutputStream(
     code: EOBSOutputSignal,
     context: TOutputContext,
@@ -1484,7 +1511,13 @@ export class StreamingService
     if (this.state.enhancedBroadcasting) {
       // Handle enhanced broadcasting multistream in dual output mode
       if (context === 'enhancedBroadcasting') {
-        await this.validateOrCreateOutputInstance('vertical', 'streaming', 1, 'vertical', true);
+        await this.validateOrCreateOutputInstance({
+          display: 'vertical',
+          type: 'streaming',
+          audioTrack: 1,
+          context: 'vertical',
+          start: true,
+        });
         // Return early because the vertical stream needs to start and the horizontal streaming instance needs to be created.
         // The start streaming promise will be resolved when the horizontal stream starts
         return;
@@ -1499,14 +1532,14 @@ export class StreamingService
           this.state.enhancedBroadcasting &&
           !this.isEnhancedBroadcastingStreaming(this.contexts.vertical.streaming);
 
-        await this.validateOrCreateOutputInstance(
-          'horizontal',
-          'streaming',
-          1,
-          'horizontal',
-          true,
-          horizontalEnhancedBroadcasting,
-        );
+        await this.validateOrCreateOutputInstance({
+          display: 'horizontal',
+          type: 'streaming',
+          audioTrack: 1,
+          context: 'horizontal',
+          start: true,
+          isEnhancedBroadcasting: horizontalEnhancedBroadcasting,
+        });
       }
 
       // Resolve the start streaming promise when the horizontal stream starts because all other streaming instances will
@@ -1517,7 +1550,13 @@ export class StreamingService
           this.state.status.vertical &&
           this.state.status.vertical.streaming !== EStreamingState.Live
         ) {
-          await this.validateOrCreateOutputInstance('vertical', 'streaming', 2, 'vertical', true);
+          await this.validateOrCreateOutputInstance({
+            display: 'vertical',
+            type: 'streaming',
+            audioTrack: 2,
+            context: 'vertical',
+            start: true,
+          });
         } else {
           // Finally, all conditions should be met to resolve the start streaming promise
           await this.handleStartStreaming(code);
@@ -1528,7 +1567,13 @@ export class StreamingService
       // has started. The start streaming promise resolves when the vertical stream starts because the vertical stream is the
       // last streaming instance created
       if (context === 'vertical') {
-        await this.validateOrCreateOutputInstance('horizontal', 'streaming', 1, 'horizontal', true);
+        await this.validateOrCreateOutputInstance({
+          display: 'horizontal',
+          type: 'streaming',
+          audioTrack: 1,
+          context: 'horizontal',
+          start: true,
+        });
       }
 
       if (context === 'horizontal') {
@@ -1550,7 +1595,13 @@ export class StreamingService
   ) {
     // Handle single output mode
     if (context === 'enhancedBroadcasting') {
-      await this.createStreaming('horizontal', 1, true, 'horizontal', false);
+      await this.createStreaming({
+        output: 'horizontal',
+        audioTrack: 1,
+        start: true,
+        context: 'horizontal',
+        isEnhancedBroadcasting: false,
+      });
     }
 
     if (context === 'horizontal') {
@@ -1674,7 +1725,13 @@ export class StreamingService
       display,
     );
 
-    await this.createStreaming(display as TDisplayType, 3, true, 'enhancedBroadcasting', true);
+    await this.createStreaming({
+      output: display,
+      audioTrack: 3,
+      start: true,
+      context: 'enhancedBroadcasting',
+      isEnhancedBroadcasting: true,
+    });
 
     this.streamSettingsService.setSettings(
       {
@@ -1695,14 +1752,14 @@ export class StreamingService
     } else {
       const display = this.views.getPlatformDisplayType('twitch');
       const audioTrack = display === 'horizontal' ? 1 : 2;
-      await this.validateOrCreateOutputInstance(
+      await this.validateOrCreateOutputInstance({
         display,
-        'streaming',
+        type: 'streaming',
         audioTrack,
-        display,
-        true,
-        true,
-      );
+        context: display,
+        start: true,
+        isEnhancedBroadcasting: true,
+      });
     }
   }
 
@@ -1729,15 +1786,13 @@ export class StreamingService
    * @param display - The display to create the streaming for
    * @param index - The index of the audio track
    */
-  private async createStreaming(
-    output: TDisplayOutput,
-    index: number,
-    start: boolean = true,
-    context: TOutputContext = 'horizontal',
-    isEnhancedBroadcasting: boolean = false,
-  ) {
-    const display = this.views.getOutputDisplayType(output);
-    const contextName = context || display;
+  private async createStreaming(settings: IStreamingContextSettings) {
+    const display = this.views.getOutputDisplayType(settings.output);
+    const contextName = settings.context || display;
+    const start = settings.start || true;
+    const index = settings.audioTrack;
+    const isEnhancedBroadcasting = settings.isEnhancedBroadcasting || false;
+
     const mode = this.outputSettingsService.getSettings().mode;
 
     this.createStreamingInstance(contextName, mode, isEnhancedBroadcasting);
@@ -1840,7 +1895,6 @@ export class StreamingService
     this.contexts[contextName].streaming.reconnect = ReconnectFactory.create();
     this.contexts[contextName].streaming.network = NetworkFactory.create();
 
-    this.logContexts(contextName, `${mode} createStreaming`);
     if (start) {
       this.contexts[contextName].streaming.start();
     }
@@ -1957,7 +2011,13 @@ export class StreamingService
 
     if (this.views.isDualOutputMode && !this.highlighterService.views.useAiHighlighter) {
       if (this.views.isDualOutputRecording || this.views.settings.recording === 'horizontal') {
-        await this.validateOrCreateOutputInstance('horizontal', 'recording', 1, 'horizontal', true);
+        await this.validateOrCreateOutputInstance({
+          display: 'horizontal',
+          type: 'recording',
+          audioTrack: 1,
+          context: 'horizontal',
+          start: true,
+        });
       }
 
       if (this.views.isDualOutputRecording || this.views.settings.recording === 'vertical') {
@@ -1971,11 +2031,23 @@ export class StreamingService
           await this.createTemporaryHorizontalRecording();
         }
 
-        await this.validateOrCreateOutputInstance('vertical', 'recording', 2, 'vertical', true);
+        await this.validateOrCreateOutputInstance({
+          display: 'vertical',
+          type: 'recording',
+          audioTrack: 2,
+          context: 'vertical',
+          start: true,
+        });
       }
     } else {
       // In single output mode, only record using the horizontal display
-      await this.validateOrCreateOutputInstance('horizontal', 'recording', 1, 'horizontal', true);
+      await this.validateOrCreateOutputInstance({
+        display: 'horizontal',
+        type: 'recording',
+        audioTrack: 1,
+        context: 'horizontal',
+        start: true,
+      });
     }
   }
 
@@ -1990,7 +2062,13 @@ export class StreamingService
     // recording instance first in the app's current session. A band-aid solution is to always create the
     // horizontal recording instance and then destroy it since we won't be using it.
     if (this.contexts.horizontal.recording === null) {
-      await this.validateOrCreateOutputInstance('horizontal', 'recording', 1, 'horizontal', false);
+      await this.validateOrCreateOutputInstance({
+        display: 'horizontal',
+        type: 'recording',
+        audioTrack: 1,
+        context: 'horizontal',
+        start: false,
+      });
       Utils.sleep(500).then(async () => {
         await this.destroyOutputContextIfExists('horizontal', 'recording');
       });
@@ -2057,11 +2135,14 @@ export class StreamingService
    * @param display - The display to create the recording for
    * @param index - The index of the audio track
    */
-  private async createRecording(display: TDisplayType, index: number, start: boolean = false) {
+  private async createRecording(settings: IRecordingContextSettings) {
+    const display = settings.display;
+    const index = settings.audioTrack;
+    const start = settings.start || false;
     const mode = this.outputSettingsService.getSettings().mode;
 
     // recordings must have a streaming instance
-    await this.validateOrCreateOutputInstance(display, 'streaming', index);
+    await this.validateOrCreateOutputInstance({ display, type: 'streaming', audioTrack: index });
 
     this.contexts[display].recording =
       mode === 'Advanced'
@@ -2115,8 +2196,6 @@ export class StreamingService
       await this.handleSignal(signal, display);
     };
 
-    this.logContexts(display, `${mode} createRecording`);
-
     if (start) {
       this.contexts[display].recording.start();
     }
@@ -2155,33 +2234,6 @@ export class StreamingService
         key === 'videoEncoder' &&
         (contextName !== 'enhancedBroadcasting' || isEnhancedBroadcastingContext)
       ) {
-        // TODO: when selective recording in simple mode with use stream encoder, the settings on the video encoder object are an empty object
-        // not sure if this is intentional. The below is an attempt to correct this.
-        // const shouldApplyStreamEncoderSettings =
-        //   mode === 'Simple' &&
-        //   type === 'recording' &&
-        //   (settings as any).useStreamEncoders &&
-        //   this.state.selectiveRecording;
-
-        // if (type === 'recording' && shouldApplyStreamEncoderSettings) {
-        //   // TODO: Attempt force latest settings to load
-        //   // this.settingsService.loadSettingsIntoStore();
-
-        //   const streamingVideoEncoder = this.outputSettingsService.getStreamingVideoEncoderSettings();
-        //   console.log('streamingVideoEncoder', JSON.stringify(streamingVideoEncoder, null, 2));
-
-        //   instance.videoEncoder = VideoEncoderFactory.create(
-        //     settings.videoEncoder,
-        //     `video-encoder-${type}-${contextName}`,
-        //     streamingVideoEncoder, // TEST: Force apply some settings to the recording video encoder because they are showing as an empty object in this case
-        //   );
-        // } else {
-        //   instance.videoEncoder = VideoEncoderFactory.create(
-        //     settings.videoEncoder,
-        //     `video-encoder-${type}-${contextName}`,
-        //   );
-        // }
-
         instance.videoEncoder = VideoEncoderFactory.create(
           settings.videoEncoder,
           `video-encoder-${type}-${contextName}`,
@@ -2239,7 +2291,7 @@ export class StreamingService
   }
 
   private async handleStreamingSignal(info: EOutputSignal, context: TOutputContext) {
-    console.log('Streaming Signal:', JSON.stringify(info, null, 2), context);
+    console.info('Streaming Signal:', JSON.stringify(info, null, 2), context);
 
     // map signals to status
     const nextState: EStreamingState = ({
@@ -2465,7 +2517,7 @@ export class StreamingService
       // In dual output mode for dual output replay buffer, the horizontal instance is created and started first
       // and the vertical instance is created and started after the horizontal instance has started.
       if (isDualOutputReplayBuffer && display === 'horizontal') {
-        this.createReplayBuffer('vertical', 2);
+        this.createReplayBuffer({ display: 'vertical', audioTrack: 2 });
         return;
       }
     }
@@ -2542,8 +2594,8 @@ export class StreamingService
       }
 
       this.SET_REPLAY_BUFFER_STATUS(EReplayBufferState.Running, display);
-      const audioTrackIndex = display === 'horizontal' ? 1 : 2;
-      this.createReplayBuffer(display, audioTrackIndex);
+      const audioTrack = display === 'horizontal' ? 1 : 2;
+      this.createReplayBuffer({ display, audioTrack });
     } catch (e: unknown) {
       console.error('Error toggling replay buffer:', e);
 
@@ -2574,12 +2626,14 @@ export class StreamingService
    * Currently there are no cases where a replay buffer is not started immediately after creation.
    * @param display - The display to create the replay buffer for
    */
-  private async createReplayBuffer(display: TDisplayType = 'horizontal', index: number) {
+  private async createReplayBuffer(rbSettings: IReplayBufferContextSettings) {
+    const display = rbSettings.display;
+    const index = rbSettings.audioTrack;
     const mode = this.outputSettingsService.getSettings().mode;
     const settings = this.outputSettingsService.getReplayBufferSettings();
 
-    await this.validateOrCreateOutputInstance(display, 'streaming', index);
-    await this.validateOrCreateOutputInstance(display, 'recording', index);
+    await this.validateOrCreateOutputInstance({ display, type: 'streaming', audioTrack: index });
+    await this.validateOrCreateOutputInstance({ display, type: 'recording', audioTrack: index });
 
     const replayBuffer =
       mode === 'Advanced'
@@ -2683,14 +2737,14 @@ export class StreamingService
     }
   }
 
-  private async validateOrCreateOutputInstance(
-    display: TDisplayType,
-    type: 'streaming' | 'recording',
-    index: number,
-    contextName?: TOutputContext,
-    start: boolean = false,
-    isEnhancedBroadcastingContext: boolean = false,
-  ) {
+  private async validateOrCreateOutputInstance(settings: IValidateOutputSettings) {
+    const display = settings.display;
+    const type = settings.type;
+    const index = settings.audioTrack;
+    const contextName = settings.context;
+    const start = settings.start || false;
+    const isEnhancedBroadcastingContext = settings.isEnhancedBroadcasting || false;
+
     const context = contextName || display;
     const mode = this.outputSettingsService.getSettings().mode;
     const validOutput = this.validateOutputInstance(mode, context, type);
@@ -2706,12 +2760,18 @@ export class StreamingService
 
     if (this.isDisplayContext(context)) {
       if (type === 'streaming') {
-        await this.createStreaming(display, index, start, context, isEnhancedBroadcastingContext);
+        await this.createStreaming({
+          output: display,
+          audioTrack: index,
+          start,
+          context,
+          isEnhancedBroadcasting: isEnhancedBroadcastingContext,
+        });
       } else {
-        await this.createRecording(display, index, start);
+        await this.createRecording({ display, audioTrack: index, start });
       }
     } else {
-      await this.createStreaming(display, index, start, context);
+      await this.createStreaming({ output: display, audioTrack: index, start, context });
     }
   }
 
@@ -3553,7 +3613,6 @@ export class StreamingService
 
   @mutation()
   private SET_RECORDING_STATUS(status: ERecordingState, display: TDisplayType, time: string) {
-    console.log('Setting recording status', { status, display, time });
     this.state.status[display].recording = status;
     this.state.status[display].recordingTime = time;
     this.state.recordingStatus = status;
@@ -3566,7 +3625,6 @@ export class StreamingService
     display: TDisplayType,
     time?: string,
   ) {
-    console.log('Setting replay buffer status', { status, display, time });
     this.state.status[display].replayBuffer = status;
     this.state.replayBufferStatus = status;
 
