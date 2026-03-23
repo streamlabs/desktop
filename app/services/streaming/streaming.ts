@@ -1789,7 +1789,7 @@ export class StreamingService
   private async createStreaming(settings: IStreamingContextSettings) {
     const display = this.views.getOutputDisplayType(settings.output);
     const contextName = settings.context || display;
-    const start = settings.start || true;
+    const start = settings.start || false;
     const index = settings.audioTrack;
     const isEnhancedBroadcasting = settings.isEnhancedBroadcasting || false;
 
@@ -1878,15 +1878,11 @@ export class StreamingService
         'enhanced-broadcasting-service',
         ServiceFactory.legacySettings.settings,
       );
-    } else if (streamSettings.streamType === 'rtmp_common') {
-      this.contexts[display].streaming.service = ServiceFactory.legacySettings;
-      this.contexts[display].streaming.service.update(streamSettings);
     } else {
       this.contexts[contextName].streaming.service = ServiceFactory.create(
         streamSettings.streamType,
         `${contextName}-service`,
         ServiceFactory.legacySettings.settings,
-        // streamSettings,
       );
 
       this.contexts[contextName].streaming.service.update(streamSettings);
@@ -2142,7 +2138,12 @@ export class StreamingService
     const mode = this.outputSettingsService.getSettings().mode;
 
     // recordings must have a streaming instance
-    await this.validateOrCreateOutputInstance({ display, type: 'streaming', audioTrack: index });
+    await this.validateOrCreateOutputInstance({
+      display,
+      type: 'streaming',
+      audioTrack: index,
+      start: false,
+    });
 
     this.contexts[display].recording =
       mode === 'Advanced'
@@ -2280,7 +2281,7 @@ export class StreamingService
       } else if (info.type === EOBSOutputType.ReplayBuffer && this.isDisplayContext(context)) {
         await this.handleReplayBufferSignal(info, context);
       } else {
-        console.debug('Unknown Output Signal or Error:', context, info);
+        console.log('Unknown Output Signal or Error:', context, info);
       }
     } catch (e: unknown) {
       console.error('Error handling output signal:', e);
@@ -2291,7 +2292,7 @@ export class StreamingService
   }
 
   private async handleStreamingSignal(info: EOutputSignal, context: TOutputContext) {
-    console.debug('Streaming Signal:', JSON.stringify(info, null, 2), context);
+    console.log('Streaming Signal:', JSON.stringify(info, null, 2), context);
 
     // map signals to status
     const nextState: EStreamingState = ({
@@ -2410,14 +2411,14 @@ export class StreamingService
   }
 
   private async handleRecordingSignal(info: EOutputSignal, display: TDisplayType) {
-    console.debug('Recording Signal:', info, display);
+    console.log('Recording Signal:', info, display);
 
     // map signals to status
     const nextState: ERecordingState = ({
       [EOBSOutputSignal.Starting]: ERecordingState.Starting,
       [EOBSOutputSignal.Start]: ERecordingState.Recording,
-      [EOBSOutputSignal.Stop]: ERecordingState.Offline,
-      [EOBSOutputSignal.Stopping]: ERecordingState.Writing,
+      [EOBSOutputSignal.Stop]: ERecordingState.Writing,
+      [EOBSOutputSignal.Stopping]: ERecordingState.Stopping,
       [EOBSOutputSignal.Wrote]: ERecordingState.Offline,
     } as Dictionary<ERecordingState>)[info.signal];
 
@@ -2441,7 +2442,7 @@ export class StreamingService
     }
 
     if (info.signal === EOBSOutputSignal.Stop) {
-      // Note: The `stop` signal will set the recording status to `stopping` to allow the recording to
+      // Note: The `stop` signal will set the recording status to `writing` to allow the recording to
       // finish writing the last file before setting the status to `offline`. The `wrote` signal will
       // set the recording status to `offline` after the last file has been written.
       // Handle stopping the vertical recording instance in dual output mode dual output recording
@@ -2494,7 +2495,7 @@ export class StreamingService
   }
 
   private async handleReplayBufferSignal(info: EOutputSignal, display: TDisplayType) {
-    console.debug('Replay Buffer Signal:', info, display);
+    console.log('Replay Buffer Signal:', info, display);
     // map signals to status
     const nextState: EReplayBufferState = ({
       [EOBSOutputSignal.Start]: EReplayBufferState.Running,
@@ -2697,9 +2698,7 @@ export class StreamingService
       this.contexts[display].replayBuffer &&
       this.state.status[display].replayBuffer === EReplayBufferState.Offline
     ) {
-      console.debug(
-        'Replay buffer instance exists and the status is offline. Destroying instance.',
-      );
+      console.log('Replay buffer instance exists and the status is offline. Destroying instance.');
       this.handleDestroyOutputContexts(display);
       return;
     }
@@ -2809,7 +2808,7 @@ export class StreamingService
       if (existingTrack) return;
     } catch (e: unknown) {
       // continue to create track if the audio track does not exist
-      console.debug('Audio track does not exist, creating new track at index', index);
+      console.log('Audio track does not exist, creating new track at index', index);
     }
 
     this.createAudioTrack(index);
@@ -3089,7 +3088,7 @@ export class StreamingService
   private streamErrorReportMessage = '';
 
   private handleOBSOutputError(info: IOBSOutputSignalInfo, platform?: string) {
-    console.debug('OBS Output Error signal: ', info);
+    console.log('OBS Output Error signal: ', info);
 
     // Signals should always have a code but to prevent errors
     // we will set it to an unknown if the code doesn't exist
@@ -3097,7 +3096,7 @@ export class StreamingService
       info.code = EOutputCode.Error;
     }
     if ((info.code as EOutputCode) === EOutputCode.Success) {
-      console.debug('Ignoring success output code in output error handler.');
+      console.log('Ignoring success output code in output error handler.');
       return;
     }
 

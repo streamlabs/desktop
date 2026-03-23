@@ -36,18 +36,18 @@ test('Streaming to Twitch via API', async t => {
   streamingService.toggleStreaming();
 
   streamingStatus = (await client.fetchNextEvent()).data;
-  t.is(streamingStatus, EStreamingState.Starting);
+  t.is(streamingStatus, EStreamingState.Starting, 'Streaming status should be Starting');
 
   streamingStatus = (await client.fetchNextEvent()).data;
-  t.is(streamingStatus, EStreamingState.Live);
+  t.is(streamingStatus, EStreamingState.Live, 'Streaming status should be Live');
 
   streamingService.toggleStreaming();
 
   streamingStatus = (await client.fetchNextEvent()).data;
-  t.is(streamingStatus, EStreamingState.Ending);
+  t.is(streamingStatus, EStreamingState.Ending, 'Streaming status should be Ending');
 
   streamingStatus = (await client.fetchNextEvent()).data;
-  t.is(streamingStatus, EStreamingState.Offline);
+  t.is(streamingStatus, EStreamingState.Offline, 'Streaming status should be Offline');
 });
 
 test('Recording via API', async (t: TExecutionContext) => {
@@ -67,20 +67,23 @@ test('Recording via API', async (t: TExecutionContext) => {
 
   streamingService.recordingStatusChange.subscribe(() => void 0);
 
-  t.is(recordingStatus, ERecordingState.Offline);
+  t.is(recordingStatus, ERecordingState.Offline, 'Recording status should be Offline');
 
   streamingService.toggleRecording();
 
   recordingStatus = (await client.fetchNextEvent()).data;
-  t.is(recordingStatus, ERecordingState.Recording);
+  t.is(recordingStatus, ERecordingState.Recording, 'Recording status should be Recording');
 
   streamingService.toggleRecording();
 
   recordingStatus = (await client.fetchNextEvent()).data;
-  t.is(recordingStatus, ERecordingState.Writing);
+  t.is(recordingStatus, ERecordingState.Stopping, 'Recording status should be Stopping');
 
   recordingStatus = (await client.fetchNextEvent()).data;
-  t.is(recordingStatus, ERecordingState.Offline);
+  t.is(recordingStatus, ERecordingState.Writing, 'Recording status should be Writing');
+
+  recordingStatus = (await client.fetchNextEvent()).data;
+  t.is(recordingStatus, ERecordingState.Offline, 'Recording status should be Offline');
 });
 
 // TODO: Fix this test
