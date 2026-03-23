@@ -19,7 +19,10 @@ import { StreamSettingsService } from '../../../app/services/settings/streaming'
 import { assertFormContains, fillForm } from '../../helpers/modules/forms';
 import { setInputValue } from '../../helpers/modules/forms/base';
 import { logIn } from '../../helpers/modules/user';
+import { dismissModal } from '../../helpers/webdriver/modals';
 
+// not a react hook
+// eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
 
 test('Streaming to Twitch', async t => {
@@ -64,7 +67,6 @@ test('Migrate the twitch account to the protected mode', async t => {
   streamSettings.setSettings({ key: 'fake key', protectedModeMigrationRequired: true });
 
   await restartApp(t); // restarting the app should call migration again
-  await prepareToGoLive();
 
   // go live
   await tryToGoLive({
@@ -72,6 +74,7 @@ test('Migrate the twitch account to the protected mode', async t => {
     twitchGame: 'Fortnite',
   });
   await waitForStreamStop(); // can't go live with a fake key
+  await dismissModal(t);
 
   // check that settings have been switched to the Custom Ingest mode
   await showSettingsWindow('Stream');
@@ -86,7 +89,6 @@ test('Migrate the twitch account to the protected mode', async t => {
   });
 
   await restartApp(t); // restarting the app should call migration again
-  await prepareToGoLive();
   await tryToGoLive({
     title: 'SLOBS Test Stream',
     twitchGame: 'Fortnite',
