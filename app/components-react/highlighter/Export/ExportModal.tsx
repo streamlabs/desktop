@@ -377,7 +377,7 @@ function ExportFlow({
                 style={
                   currentFormat === EOrientation.HORIZONTAL
                     ? { objectPosition: 'left' }
-                    : { objectPosition: `-${(SCRUB_WIDTH_VERTICAL * 1.32) / 3 + 4}px` } // @@@ TODO CONFIRM
+                    : { objectPosition: `-${(SCRUB_WIDTH_VERTICAL * 1.32) / 3 + 4}px` }
                 }
               />
             </div>

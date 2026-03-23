@@ -1,187 +1,159 @@
-import { TExecutionContext, useWebdriver, test } from '../../helpers/webdriver';
-import { getApiClient } from '../../helpers/api-client';
-import {
-  IStreamingServiceApi,
-  EStreamingState,
-  ERecordingState,
-  EReplayBufferState,
-} from '../../../app/services/streaming/streaming-api';
-import { SettingsService } from '../../../app/services/settings';
-import { releaseUserInPool, reserveUserFromPool, withPoolUser } from '../../helpers/webdriver/user';
+import { StreamingService as InternalStreamingService, IOutputStatus } from 'services/streaming';
+import { Inject } from 'services/core/injector';
+import { Fallback, Singleton } from 'services/api/external-api';
+import { Observable } from 'rxjs';
+import { ISerializable } from 'services/api/rpc-api';
 
-useWebdriver({ restartAppAfterEachTest: true });
+/**
+ * Possible streaming states.
+ */
+enum EStreamingState {
+  Offline = 'offline',
+  Starting = 'starting',
+  Live = 'live',
+  Ending = 'ending',
+  Reconnecting = 'reconnecting',
+}
 
-test('Streaming to Twitch via API', async t => {
-  const streamKey = (await reserveUserFromPool(t, 'twitch')).streamKey;
-  const client = await getApiClient();
-  const streamingService = client.getResource<IStreamingServiceApi>('StreamingService');
-  const settingsService = client.getResource<SettingsService>('SettingsService');
+/**
+ * Possible recording states.
+ */
+enum ERecordingState {
+  Offline = 'offline',
+  Starting = 'starting',
+  Recording = 'recording',
+  Stopping = 'stopping',
+  Start = 'start',
+  Writing = 'writing',
+  Wrote = 'wrote',
+}
 
-  const streamSettings = settingsService.state.Stream.formData;
-  streamSettings.forEach(subcategory => {
-    subcategory.parameters.forEach(setting => {
-      if (setting.name === 'service') setting.value = 'Twitch';
-      if (setting.name === 'key') setting.value = streamKey;
-    });
-  });
-  settingsService.setSettings('Stream', streamSettings);
+/**
+ * Possible replay buffer states.
+ */
+enum EReplayBufferState {
+  Running = 'running',
+  Stopping = 'stopping',
+  Offline = 'offline',
+  Saving = 'saving',
+  Writing = 'writing',
+  Wrote = 'wrote',
+}
 
-  let streamingStatus = streamingService.getModel().streamingStatus;
+/**
+ * Serialized representation of {@link StreamingService}. Includes
+ * streaming, recording and replay buffer state representation.
+ */
+interface IStreamingState {
+  /**
+   * The status of all outputs. This allows distinguishing the status by display for dual output.
+   * This differs from the existing status properties in that those track all status updates
+   * regardless of display.
+   */
+  status: { [display: string]: IOutputStatus };
+  streamingStatus: EStreamingState;
+  streamingStatusTime: string;
+  recordingStatus: ERecordingState;
+  recordingStatusTime: string;
+  replayBufferStatus: EReplayBufferState;
+  replayBufferStatusTime: string;
+  streamErrorCreated?: string;
+}
 
-  streamingService.streamingStatusChange.subscribe(() => void 0);
+/**
+ * API for streaming, recording and replay buffer management. Provides
+ * operations like starting and stopping streaming and recording and allows
+ * watching for streaming status.
+ */
+@Singleton()
+export class StreamingService implements ISerializable {
+  @Fallback()
+  @Inject()
+  protected streamingService: InternalStreamingService;
 
-  t.is(streamingStatus, EStreamingState.Offline);
+  /**
+   * Observable event that is triggered whenever the the streaming state changes.
+   * The observed value determines the current streaming state and is represented
+   * by {@link EStreamingState}.
+   *
+   * @see EStreamingState
+   */
+  get streamingStatusChange(): Observable<EStreamingState> {
+    return this.streamingService.streamingStatusChange;
+  }
 
-  streamingService.toggleStreaming();
+  /**
+   * Observable event that is triggered whenever the the recording state changes.
+   * The observed value determines the current recording state and is represented
+   * by {@link ERecordingState}.
+   *
+   * @see ERecordingState
+   */
+  get recordingStatusChange(): Observable<ERecordingState> {
+    return this.streamingService.recordingStatusChange;
+  }
 
-  streamingStatus = (await client.fetchNextEvent()).data;
-  t.is(streamingStatus, EStreamingState.Starting);
+  /**
+   * Observable event that is triggered whenever the the replay buffer state
+   * changes. The observed value determines the current replay buffer state and
+   * is represented by {@link EReplayBufferState}.
+   *
+   * @see EReplayBufferState
+   */
+  get replayBufferStatusChange(): Observable<EReplayBufferState> {
+    return this.streamingService.replayBufferStatusChange;
+  }
 
-  streamingStatus = (await client.fetchNextEvent()).data;
-  t.is(streamingStatus, EStreamingState.Live);
+  /**
+   * Observable event that is triggered whenever a stream error occurs when
+   * attempting to go live.
+   */
+  get streamErrorCreated(): Observable<string> {
+    return this.streamingService.streamErrorCreated;
+  }
 
-  streamingService.toggleStreaming();
+  /**
+   * Returns The current streaming, recording and replay buffer state
+   * represented.
+   *
+   * @returns A serialized representation of {@link StreamingService}
+   */
+  getModel(): IStreamingState {
+    return this.streamingService.getModel();
+  }
 
-  streamingStatus = (await client.fetchNextEvent()).data;
-  t.is(streamingStatus, EStreamingState.Ending);
+  /**
+   * Toggles recording.
+   */
+  toggleRecording(): Promise<never> | Promise<void> {
+    return this.streamingService.toggleRecording();
+  }
 
-  streamingStatus = (await client.fetchNextEvent()).data;
-  t.is(streamingStatus, EStreamingState.Offline);
-});
+  /**
+   * Toggles streaming.
+   */
+  toggleStreaming(): Promise<never> | Promise<void> {
+    return this.streamingService.toggleStreaming();
+  }
 
-test('Recording via API', async (t: TExecutionContext) => {
-  const client = await getApiClient();
-  const streamingService = client.getResource<IStreamingServiceApi>('StreamingService');
-  const settingsService = client.getResource<SettingsService>('SettingsService');
+  /**
+   * Starts replay buffer.
+   */
+  startReplayBuffer(): void {
+    return this.streamingService.startReplayBuffer();
+  }
 
-  const outputSettings = settingsService.state.Output.formData;
-  outputSettings.forEach(subcategory => {
-    subcategory.parameters.forEach(setting => {
-      if (setting.name === 'FilePath') setting.value = t.context.cacheDir;
-    });
-  });
-  settingsService.setSettings('Output', outputSettings);
+  /**
+   * Stops replay buffer.
+   */
+  stopReplayBuffer(): void {
+    return this.streamingService.stopReplayBuffer();
+  }
 
-  let recordingStatus = streamingService.getModel().recordingStatus;
-
-  streamingService.recordingStatusChange.subscribe(() => void 0);
-
-  t.is(recordingStatus, ERecordingState.Offline);
-
-  streamingService.toggleRecording();
-
-  recordingStatus = (await client.fetchNextEvent()).data;
-  t.is(recordingStatus, ERecordingState.Recording);
-
-  streamingService.toggleRecording();
-
-  recordingStatus = (await client.fetchNextEvent()).data;
-  t.is(recordingStatus, ERecordingState.Writing);
-
-  recordingStatus = (await client.fetchNextEvent()).data;
-  t.is(recordingStatus, ERecordingState.Offline);
-});
-
-// TODO: Fix this test
-test.skip('Recording and Replay Buffer', async (t: TExecutionContext) => {
-  const user = await reserveUserFromPool(t, 'twitch');
-
-  await withPoolUser(user, async () => {
-    const streamKey = user.streamKey;
-    const client = await getApiClient();
-    const streamingService = client.getResource<IStreamingServiceApi>('StreamingService');
-    const settingsService = client.getResource<SettingsService>('SettingsService');
-
-    const streamSettings = settingsService.state.Stream.formData;
-    streamSettings.forEach(subcategory => {
-      subcategory.parameters.forEach(setting => {
-        if (setting.name === 'service') setting.value = 'Twitch';
-        if (setting.name === 'key') setting.value = streamKey;
-      });
-    });
-    settingsService.setSettings('Stream', streamSettings);
-
-    const outputSettings = settingsService.state.Output.formData;
-    outputSettings.forEach(subcategory => {
-      subcategory.parameters.forEach(setting => {
-        if (setting.name === 'FilePath') setting.value = t.context.cacheDir;
-      });
-    });
-    settingsService.setSettings('Output', outputSettings);
-
-    const generalSettings = settingsService.state.General.formData;
-    generalSettings.forEach(subcategory => {
-      subcategory.parameters.forEach(setting => {
-        if (
-          [
-            'KeepRecordingWhenStreamStops',
-            'RecordWhenStreaming',
-            // 'ReplayBufferWhileStreaming',
-            // 'KeepReplayBufferStreamStops',
-          ].includes(setting.name)
-        ) {
-          setting.value = true;
-        }
-      });
-    });
-    settingsService.setSettings('General', generalSettings);
-
-    let streamingStatus = streamingService.getModel().streamingStatus;
-    let recordingStatus = streamingService.getModel().recordingStatus;
-    // let replayBufferStatus = streamingService.getModel().replayBufferStatus;
-
-    streamingService.streamingStatusChange.subscribe(() => void 0);
-    streamingService.recordingStatusChange.subscribe(() => void 0);
-    // streamingService.replayBufferStatusChange.subscribe(() => void 0);
-
-    t.is(streamingStatus, EStreamingState.Offline);
-    t.is(recordingStatus, ERecordingState.Offline);
-    // t.is(replayBufferStatus, EReplayBufferState.Offline);
-
-    // toggle on streaming
-    streamingService.toggleStreaming();
-
-    streamingStatus = (await client.fetchNextEvent()).data;
-    t.is(streamingStatus, EStreamingState.Starting);
-
-    // confirm automatic toggle on recording
-
-    recordingStatus = (await client.fetchNextEvent()).data;
-    t.is(recordingStatus, ERecordingState.Recording);
-
-    // replayBufferStatus = (await client.fetchNextEvent()).data;
-    // t.is(replayBufferStatus, EReplayBufferState.Running);
-
-    streamingStatus = (await client.fetchNextEvent()).data;
-    t.is(streamingStatus, EStreamingState.Live);
-
-    // toggle off streaming
-    streamingService.toggleStreaming();
-
-    streamingStatus = (await client.fetchNextEvent()).data;
-    t.is(streamingStatus, EStreamingState.Ending);
-
-    streamingStatus = (await client.fetchNextEvent()).data;
-    t.is(streamingStatus, EStreamingState.Offline);
-
-    // toggle off recording
-    streamingService.toggleRecording();
-
-    recordingStatus = (await client.fetchNextEvent()).data;
-    t.is(recordingStatus, ERecordingState.Stopping);
-
-    recordingStatus = (await client.fetchNextEvent()).data;
-    t.is(recordingStatus, ERecordingState.Offline);
-
-    // toggle off replay buffering
-    // streamingService.stopReplayBuffer();
-
-    // replayBufferStatus = (await client.fetchNextEvent()).data;
-    // t.is(replayBufferStatus, EReplayBufferState.Stopping);
-
-    // replayBufferStatus = (await client.fetchNextEvent()).data;
-    // t.is(replayBufferStatus, EReplayBufferState.Offline);
-
-    t.pass();
-  });
-});
+  /**
+   * Saves replay.
+   */
+  saveReplay(): void {
+    return this.streamingService.saveReplay();
+  }
+}
