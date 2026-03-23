@@ -64,6 +64,7 @@ test('Migrate the twitch account to the protected mode', async t => {
   streamSettings.setSettings({ key: 'fake key', protectedModeMigrationRequired: true });
 
   await restartApp(t); // restarting the app should call migration again
+  await prepareToGoLive();
 
   // go live
   await tryToGoLive({
@@ -85,6 +86,7 @@ test('Migrate the twitch account to the protected mode', async t => {
   });
 
   await restartApp(t); // restarting the app should call migration again
+  await prepareToGoLive();
   await tryToGoLive({
     title: 'SLOBS Test Stream',
     twitchGame: 'Fortnite',

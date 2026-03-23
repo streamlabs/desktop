@@ -3479,9 +3479,13 @@ export class StreamingService
     contextType: keyof IOutputContext,
   ): Promise<void> {
     // if the context does not exist there is nothing to destroy
-    if (!this.contexts[contextName] || !this.contexts[contextName][contextType]) return;
+    if (!this.contexts[contextName] || !this.contexts[contextName][contextType]) {
+      return Promise.resolve();
+    }
+
     // recording and replay buffer can only use the horizontal and vertical contexts
     if (contextType !== 'streaming' && !this.isDisplayContext(contextName)) {
+      return Promise.resolve();
     }
 
     try {
