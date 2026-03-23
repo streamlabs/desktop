@@ -3,6 +3,7 @@ import { AnchorPoint } from 'util/ScalableRectangle';
 import { $t } from 'services/i18n';
 import { TAlertType } from './alerts-config';
 import { TPlatform } from '../platforms';
+import { OS } from 'util/operating-systems';
 
 export interface IWidgetDisplayData {
   name: string;
@@ -17,6 +18,7 @@ export interface IWidgetDisplayData {
   linkText?: string;
   group: TWidgetGroup;
   badge?: string;
+  supportedOS?: OS[];
 }
 
 export type TWidgetGroup = 'essential' | 'interactive' | 'goals' | 'flair' | 'charity';
@@ -838,5 +840,6 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
     icon: 'icon-game-pulse',
     group: 'essential',
     badge: $t('New'),
+    supportedOS: [OS.Windows]
   },
 });

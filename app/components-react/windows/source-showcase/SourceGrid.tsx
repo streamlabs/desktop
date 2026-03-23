@@ -75,6 +75,19 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
     const filtered = Object.keys(WidgetType)
       .filter((type: string) => isNaN(Number(type)) && type !== 'SubscriberGoal')
       .filter((type: string) => {
+        // @ts-ignore
+        const displayData = WidgetDisplayData(primaryPlatform)[WidgetType[type]];
+
+        if (displayData?.supportedOS) {
+          return byOS({
+            [OS.Windows]: displayData.supportedOS.includes(OS.Windows),
+            [OS.Mac]: displayData.supportedOS.includes(OS.Mac),
+          });
+        }
+
+        return true;
+      })
+      .filter((type: string) => {
         // TODO: index
         // @ts-ignore
         const widgetPlatforms = WidgetDisplayData(primaryPlatform)[WidgetType[type]]?.platforms;
