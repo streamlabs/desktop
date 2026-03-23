@@ -42,6 +42,7 @@
   min-height: 56px;
   display: flex;
   flex-direction: column;
+  position: relative;
 
   i {
     margin-right: 8px;
@@ -75,4 +76,18 @@
   &:hover {
     cursor: pointer;
   }
+}
+
+.badge-container {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 1;
+  line-height: 1;
+}
+
+.name-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 }

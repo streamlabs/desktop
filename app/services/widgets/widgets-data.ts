@@ -16,6 +16,7 @@ export interface IWidgetDisplayData {
   link?: string;
   linkText?: string;
   group: TWidgetGroup;
+  badge?: string;
 }
 
 export type TWidgetGroup = 'essential' | 'interactive' | 'goals' | 'flair' | 'charity';
@@ -835,6 +836,7 @@ export const WidgetDisplayData = (platform?: string): { [x: number]: IWidgetDisp
     demoFilename: '',
     supportList: [],
     icon: 'icon-game-pulse',
-    group: 'flair',
+    group: 'essential',
+    badge: 'New',
   },
 });

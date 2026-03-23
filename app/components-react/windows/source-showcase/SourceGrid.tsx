@@ -234,6 +234,7 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
   const essentialWidgetsOrder = [
     WidgetType.AlertBox,
     WidgetType.ChatBox,
+    WidgetType.GamePulseWidget,
     WidgetType.EventList,
     WidgetType.ViewerCount,
     'streamlabel',
