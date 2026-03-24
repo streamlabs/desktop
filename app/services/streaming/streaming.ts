@@ -1877,7 +1877,7 @@ export class StreamingService
         'enhanced-broadcasting-service',
         ServiceFactory.legacySettings.settings,
       );
-    } else if (streamSettings.streamType === 'rtmp_common' || !this.views.protectedModeEnabled) {
+    } else if (!this.views.protectedModeEnabled) {
       this.contexts[display].streaming.service = ServiceFactory.legacySettings;
       this.contexts[display].streaming.service.update(streamSettings);
     } else {
@@ -2332,12 +2332,11 @@ export class StreamingService
       // be resolved on the `start` signal.
       return;
     } else if (info.signal === EOBSOutputSignal.Starting) {
-      // In dual output mode, do nothing on the `starting` signal for the horizontal stream context because
-      // the vertical stream context still needs to be created. To prevent errors, the vertical stream context
-      // is created after the horizontal `start` signal. Finishing streaming should not resolve
-      // until after the final stream context is created and started. In dual output mode this is the vertical
-      // stream while in single output mode this is the horizontal stream.
-      if (this.views.isDualOutputMode && context !== 'vertical') {
+      // In dual output mode, do nothing on the `starting` signal for the vertical stream context because
+      // the horizontal stream context still needs to be created. To prevent errors, the horizontal stream context
+      // is created after the vertical `start` signal. Finishing streaming should not resolve
+      // until after the final stream context is created and started.
+      if (this.views.isDualOutputMode && context !== 'horizontal') {
         return;
       }
     } else if (info.signal === EOBSOutputSignal.Stopping) {
@@ -3393,9 +3392,11 @@ export class StreamingService
    *
    * @remark Each streaming/recording/replay buffer context must be destroyed
    * on app shutdown to prevent errors.
+   * Note: Wait for promises to be all settled to ensure that all contexts attempt to be destroyed
+   * even if one fails. This prevents orphan contexts that can leave phantom processes or create errors on next startup.
    */
   async shutdown() {
-    await Promise.all(
+    await Promise.allSettled(
       Object.keys(this.contexts).map(async (context: TOutputContext) => {
         if (this.isDisplayContext(context)) {
           for (const type of ['streaming', 'recording', 'replayBuffer'] as const) {

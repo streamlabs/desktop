@@ -12,7 +12,7 @@ import {
 } from '../../helpers/modules/streaming';
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
 import { clickButton, focusChild, isDisplayed, waitForDisplayed } from '../../helpers/modules/core';
-import { restartApp, test, useWebdriver } from '../../helpers/webdriver';
+import { restartApp, skipCheckingErrorsInLog, test, useWebdriver } from '../../helpers/webdriver';
 import { reserveUserFromPool } from '../../helpers/webdriver/user';
 import { getApiClient } from '../../helpers/api-client';
 import { StreamSettingsService } from '../../../app/services/settings/streaming';
@@ -74,6 +74,11 @@ test('Migrate the twitch account to the protected mode', async t => {
     twitchGame: 'Fortnite',
   });
   await waitForStreamStop(); // can't go live with a fake key
+
+  // This prevents the test from failing due to the fake key, which logs an error.
+  // Dismissing the error modal should act as confirmation that the stream failed to start,
+  // which is the expected behavior.
+  skipCheckingErrorsInLog();
   await dismissModal(t);
 
   // check that settings have been switched to the Custom Ingest mode
