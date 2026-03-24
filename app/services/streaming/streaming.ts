@@ -2203,7 +2203,7 @@ export class StreamingService
       this.contexts[display].recording.start();
     }
 
-    return Promise.resolve(this.contexts[display].recording);
+    return this.contexts[display].recording;
   }
 
   private migrateSettings(
@@ -2412,7 +2412,7 @@ export class StreamingService
   }
 
   private async handleRecordingSignal(info: EOutputSignal, display: TDisplayType) {
-    console.info('Recording Signal:', info, display);
+    console.info('Recording Signal:', JSON.stringify(info, null, 2), display);
 
     // map signals to status
     const nextState: ERecordingState = ({
@@ -2496,7 +2496,7 @@ export class StreamingService
   }
 
   private async handleReplayBufferSignal(info: EOutputSignal, display: TDisplayType) {
-    console.info('Replay Buffer Signal:', info, display);
+    console.info('Replay Buffer Signal:', JSON.stringify(info, null, 2), display);
     // map signals to status
     const nextState: EReplayBufferState = ({
       [EOBSOutputSignal.Start]: EReplayBufferState.Running,
@@ -3096,7 +3096,6 @@ export class StreamingService
       info.code = EOutputCode.Error;
     }
     if ((info.code as EOutputCode) === EOutputCode.Success) {
-      console.log('Ignoring success output code in output error handler.');
       return;
     }
 
