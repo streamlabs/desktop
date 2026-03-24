@@ -130,6 +130,7 @@ export interface ISettingsValues extends Record<TCategoryName, Dictionary<TObsVa
     tune?: string;
     x264opts?: string;
     x264Settings?: string;
+    rate_control?: string;
   };
   Video: {
     // default video context
@@ -152,6 +153,7 @@ export interface ISettingsValues extends Record<TCategoryName, Dictionary<TObsVa
     DynamicBitrate: boolean;
     NewSocketLoopEnable: boolean;
     LowLatencyEnable: boolean;
+    FilenameFormatting: string;
   };
 }
 export interface ISettingsSubCategory {
@@ -769,8 +771,6 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
       'Recording',
       'RecEncoder',
     ) as EEncoderFamily;
-    console.log('recordingFileFormat ', recordingFormat);
-    console.log('recordingEncoder ', recordingEncoder);
 
     // If the user selects a file format that is incompatible with the selected recording encoder,
     // change the recording encoder to x264 by defaults
