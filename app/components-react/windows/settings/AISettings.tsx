@@ -51,12 +51,12 @@ type VisionInfoProps = {
   activeProcessId: number;
   availableGames: Dictionary<string>;
   selectedGame: string;
-  setIsEnabled: VisionService['setIsEnabled'];
-  requestAvailableProcesses: VisionService['requestActiveProcess'];
-  activateProcess: VisionService['activateProcess'];
-  startProcess: VisionService['ensureRunning'];
-  ensureUpdated: VisionService['ensureUpdated'];
-  stopProcess: VisionService['stop'];
+  setIsEnabled: VisionService['actions']['setIsEnabled'];
+  requestAvailableProcesses: VisionService['actions']['requestActiveProcess'];
+  activateProcess: VisionService['actions']['activateProcess'];
+  startProcess: VisionService['actions']['ensureRunning'];
+  ensureUpdated: VisionService['actions']['ensureUpdated'];
+  stopProcess: VisionService['actions']['stop'];
   openExternal: (url: string) => void;
 };
 
