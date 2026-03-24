@@ -374,7 +374,7 @@ function Platform(p: { platform: TPlatform }) {
     isLoading: UserService.state.authProcessState === EAuthProcessState.Loading,
     authInProgress: UserService.state.authProcessState === EAuthProcessState.InProgress,
     instagramSettings: InstagramService.state.settings,
-    canEditSettings: StreamingService.state.streamingStatus === EStreamingState.Offline,
+    canEditSettings: StreamingService.views.streamingStatus === EStreamingState.Offline,
   }));
 
   const isMerged = StreamingService.views.isPlatformLinked(platform);

@@ -92,7 +92,7 @@ export default function Main() {
     errorAlert: AppService.state.errorAlert,
     applicationLoading: AppService.state.loading,
     hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
-    streamingStatus: StreamingService.state.streamingStatus,
+    streamingStatus: StreamingService.views.streamingStatus,
     isLoggedIn: UserService.views.isLoggedIn,
     platform: UserService.views.platform,
     activeSceneId: ScenesService.views.activeSceneId,

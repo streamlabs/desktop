@@ -353,13 +353,13 @@ test(
       // Dual output with one platform for each display
       await fillForm({
         trovoDisplay: 'vertical',
-        primaryChat: 'Trovo',
       });
       await waitForSettingsWindowLoaded();
       await submit();
       await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
-      await waitForStreamStart();
+      await waitForDisplayed("h1=You're live!", { timeout: 60000 });
       await isDisplayed('span=Multistream');
+      await waitForStreamStart();
       await stopStream();
       await waitForStreamStop();
 
@@ -368,11 +368,13 @@ test(
       await fillForm({
         trovoDisplay: 'horizontal',
         twitchDisplay: 'vertical',
+        primaryChat: 'Trovo',
       });
 
       await waitForSettingsWindowLoaded();
       await submit();
       await waitForDisplayed('span=Configure the Dual Output service', { timeout: 60000 });
+      await waitForDisplayed("h1=You're live!", { timeout: 60000 });
       await waitForStreamStart();
       await isDisplayed('span=Multistream');
       await stopStream();

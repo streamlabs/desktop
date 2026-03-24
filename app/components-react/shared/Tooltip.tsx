@@ -1,4 +1,4 @@
-import React, { CSSProperties, PropsWithChildren, HTMLAttributes } from 'react';
+import React, { CSSProperties, PropsWithChildren, HTMLAttributes, ReactNode } from 'react';
 import { Tooltip as AntdTooltip } from 'antd';
 import styles from './Tooltip.m.less';
 import cx from 'classnames';
@@ -18,14 +18,14 @@ export type TTipPosition =
   | 'rightBottom';
 
 interface ITooltipTipProps {
-  title: React.ReactNode;
+  title: string | ReactNode;
   id?: string;
   className?: HTMLAttributes<HTMLElement> | string;
   wrapperStyle?: CSSProperties;
   style?: CSSProperties;
   lightShadow?: boolean;
   placement?: TTipPosition;
-  content?: HTMLElement | boolean;
+  content?: ReactNode | HTMLElement | boolean;
   styleContent?: boolean;
   disabled?: boolean;
   autoAdjustOverflow?: boolean;

@@ -8,7 +8,12 @@ import invert from 'lodash/invert';
 import cloneDeep from 'lodash/cloneDeep';
 import { TwitchService } from 'services/platforms/twitch';
 import { PlatformAppsService } from 'services/platform-apps';
-import { IGoLiveSettings, IPlatformFlags, StreamingService } from 'services/streaming';
+import {
+  IGoLiveSettings,
+  IPlatformFlags,
+  StreamingService,
+  TDisplayOutput,
+} from 'services/streaming';
 import { VideoSettingsService, TDisplayType } from 'services/settings-v2/video';
 import Vue from 'vue';
 import { IVideo } from 'obs-studio-node';
@@ -19,6 +24,7 @@ export interface ISavedGoLiveSettings {
   platforms: Partial<Record<TPlatform, IPlatformFlags>>;
   customDestinations?: ICustomStreamDestination[];
   advancedMode: boolean;
+  recording?: TDisplayOutput;
   streamShift?: boolean;
 }
 
