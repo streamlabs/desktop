@@ -55,6 +55,7 @@ function testGoal(goalType: string) {
       bar_text_color: '#FF0000',
       font: 'Roboto',
     };
+    await (await client.$('Visual Settings')).click();
 
     await waitForWidgetSettingsSync(t);
     await fillForm(testSet1);
