@@ -146,6 +146,8 @@
   "Failed to update platform settings": "Aktualizace nastavení platformy se nezdařila",
   "The Multistream server is temporarily unavailable": "Server MultiStream je dočasně nedostupný",
   "Failed to configure the Multistream server": "Konfigurace serveru MultiStream se nezdařila",
+  "Failed to configure the Multistream server for Enhanced Broadcasting": "Failed to configure the Multistream server for Enhanced Broadcasting",
+  "disable Enhanced Broadcasting for Twitch and try again": "disable Enhanced Broadcasting for Twitch and try again",
   "Failed to configure the Dual Output service": "Nepodařilo se nakonfigurovat službu Dual Output",
   "The Multistream server is temporarily unavailable for Dual Output": "Server Multistream je dočasně nedostupný pro Dual Output.",
   "Your YouTube account is not enabled for live streaming": "U vašeho účtu YouTube není povoleno živé streamování",
@@ -339,5 +341,16 @@
   "Unlock unlimited multistreaming with Ultra and grow your audience faster": "Odemkněte neomezený multistreaming s plánem Ultra a rychleji oslovte širší publikum",
   "<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform": "Je povolen režim <dualoutput>Dual Output</dualoutput> – musíte streamovat na jednu horizontální a jednu vertikální platformu.",
   "Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination.": "Streamování na vlastní kanál představuje pokročilou funkci. Při streamování na vlastní cílový server (ingest) je multistreaming deaktivován a některé funkce nemusí fungovat podle očekávání. Přepněte na doporučená nastavení pro multistreaming na vlastní cíl RTMP.",
-  "%{platform} Error": "%{platform} Error"
+  "%{platform} Error": "%{platform} Error",
+  "An unknown Recording error occurred. Please try again.": "An unknown Recording error occurred. Please try again.",
+  "An unknown Replay Buffer error occurred. Please try again.": "An unknown Replay Buffer error occurred. Please try again.",
+  "Recording in progress. Stop recording to change the recording display.": "Recording in progress. Stop recording to change the recording display.",
+  "Vertical Recording Active": "Vertical Recording Active",
+  "Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?": "Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?",
+  "Vertical Replay Buffer Active": "Vertical Replay Buffer Active",
+  "Vertical replay buffer is in-progress. Would you like to stop the replay buffer to enable AI Highlighter?": "Vertical replay buffer is in-progress. Would you like to stop the replay buffer to enable AI Highlighter?",
+  "Vertical stream accidentally started in single output mode. Please report this to support.": "Vertical stream accidentally started in single output mode. Please report this to support.",
+  "Dual Output horizontal stream failed to start. Please try again or go live in single output mode.": "Dual Output horizontal stream failed to start. Please try again or go live in single output mode.",
+  "Recording in Progress": "Recording in Progress",
+  "Recording is currently saving to disk. Do you want to force stop the recording?": "Recording is currently saving to disk. Do you want to force stop the recording?"
 }
