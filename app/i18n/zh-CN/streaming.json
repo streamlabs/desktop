@@ -146,6 +146,8 @@
   "Failed to update platform settings": "无法更新平台设置",
   "The Multistream server is temporarily unavailable": "多重直播服务器暂时不可用",
   "Failed to configure the Multistream server": "配置多重直播服务器失败",
+  "Failed to configure the Multistream server for Enhanced Broadcasting": "Failed to configure the Multistream server for Enhanced Broadcasting",
+  "disable Enhanced Broadcasting for Twitch and try again": "disable Enhanced Broadcasting for Twitch and try again",
   "Failed to configure the Dual Output service": "无法配置 Dual Output 服务",
   "The Multistream server is temporarily unavailable for Dual Output": "多重直播服务器暂时不可用于 Dual Output",
   "Your YouTube account is not enabled for live streaming": "您的 YouTube 帐户未启用直播功能",
@@ -339,5 +341,16 @@
   "Unlock unlimited multistreaming with Ultra and grow your audience faster": "使用 Ultra 解锁无限制的多平台直播功能，更快地发展您的观众群体。",
   "<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform": "<dualoutput>Dual Output</dualoutput> 已启用 - 您必须直播至一个横屏平台和一个竖屏平台",
   "Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination.": "直播到自定义摄取是高级功能。在直播到自定义摄取时，多平台直播功能将被禁用，某些功能可能无法按预期运行。切换为推荐设置，向自定义 RTMP 目标平台进行多平台直播。",
-  "%{platform} Error": "%{platform} Error"
+  "%{platform} Error": "%{platform} Error",
+  "An unknown Recording error occurred. Please try again.": "An unknown Recording error occurred. Please try again.",
+  "An unknown Replay Buffer error occurred. Please try again.": "An unknown Replay Buffer error occurred. Please try again.",
+  "Recording in progress. Stop recording to change the recording display.": "Recording in progress. Stop recording to change the recording display.",
+  "Vertical Recording Active": "Vertical Recording Active",
+  "Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?": "Vertical recording is in-progress. Would you like to stop the recording to enable AI Highlighter?",
+  "Vertical Replay Buffer Active": "Vertical Replay Buffer Active",
+  "Vertical replay buffer is in-progress. Would you like to stop the replay buffer to enable AI Highlighter?": "Vertical replay buffer is in-progress. Would you like to stop the replay buffer to enable AI Highlighter?",
+  "Vertical stream accidentally started in single output mode. Please report this to support.": "Vertical stream accidentally started in single output mode. Please report this to support.",
+  "Dual Output horizontal stream failed to start. Please try again or go live in single output mode.": "Dual Output horizontal stream failed to start. Please try again or go live in single output mode.",
+  "Recording in Progress": "Recording in Progress",
+  "Recording is currently saving to disk. Do you want to force stop the recording?": "Recording is currently saving to disk. Do you want to force stop the recording?"
 }
