@@ -47,7 +47,7 @@ function testGoal(goalType: string) {
     await addSource(goalType, goalType, false);
 
     const testSet1 = {
-      layout: 'standard',
+      layout: 'Standard',
       background_color: '#FF0000',
       bar_color: '#FF0000',
       bar_bg_color: '#FF0000',
@@ -62,7 +62,7 @@ function testGoal(goalType: string) {
     await assertFormContains(testSet1);
 
     const testSet2 = {
-      layout: 'condensed',
+      layout: 'Condensed',
       background_color: '#7ED321',
       bar_color: '#AB14CE',
       bar_bg_color: '#DDDDDD',
