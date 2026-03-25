@@ -56,6 +56,7 @@ function testGoal(goalType: string) {
       font: 'Roboto',
     };
 
+    await waitForWidgetSettingsSync(t);
     await fillForm(testSet1);
     await waitForWidgetSettingsSync(t);
     await assertFormContains(testSet1);
@@ -70,6 +71,7 @@ function testGoal(goalType: string) {
       font: 'Open Sans',
     };
 
+    await waitForWidgetSettingsSync(t);
     await fillForm(testSet2);
     await waitForWidgetSettingsSync(t);
     await assertFormContains(testSet2);
