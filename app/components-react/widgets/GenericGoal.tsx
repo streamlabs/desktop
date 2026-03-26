@@ -94,7 +94,12 @@ export function GenericGoal() {
         )}
         {!isLoading && selectedTab === 'goal' && hasGoal && <DisplayGoal goal={goalSettings} />}
         {!isLoading && selectedTab === 'general' && (
-          <FormFactory metadata={visualMeta} values={settings} onChange={updateSetting} />
+          <FormFactory
+            metadata={visualMeta}
+            values={settings}
+            onChange={updateSetting}
+            name="visualSettingsForm"
+          />
         )}
       </Form>
     </WidgetLayout>

@@ -2,7 +2,7 @@ import { test, useWebdriver } from '../../helpers/webdriver';
 import { addSource } from '../../helpers/modules/sources';
 import { logIn } from '../../helpers/webdriver/user';
 import { waitForWidgetSettingsSync } from '../../helpers/widget-helpers';
-import { assertFormContains, fillForm } from '../../helpers/modules/forms';
+import { assertFormContains, fillForm, useForm } from '../../helpers/modules/forms';
 
 useWebdriver();
 
@@ -57,7 +57,7 @@ function testGoal(goalType: string) {
       font: 'Roboto',
     };
 
-    await fillForm(testSet1);
+    await fillForm('visualSettingsForm', testSet1);
     await waitForWidgetSettingsSync(t);
     await assertFormContains(testSet1);
 
@@ -71,7 +71,7 @@ function testGoal(goalType: string) {
       font: 'Open Sans',
     };
 
-    await fillForm(testSet2);
+    await fillForm('visualSettingsForm', testSet2);
     await waitForWidgetSettingsSync(t);
     await assertFormContains(testSet2);
 
