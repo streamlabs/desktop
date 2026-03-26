@@ -1,10 +1,9 @@
 import cx from 'classnames';
-import { useVuex } from 'components-react/hooks';
 import { useRealmObject } from 'components-react/hooks/realm';
 import { Services } from 'components-react/service-provider';
 import { SwitchInput } from 'components-react/shared/inputs';
 import Scrollable from 'components-react/shared/Scrollable';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import { getConfigByGame } from 'services/highlighter/models/game-config.models';
 import { $t } from 'services/i18n/index';
@@ -28,6 +27,7 @@ interface FeatureProps {
   actions?: FeatureAction | FeatureAction[];
 }
 
+const AGENT_APP_STORE_ID = '7643';
 const AGENT_APP_ID = '93125d1c33';
 
 function AIFeature(props: FeatureProps) {
@@ -43,7 +43,12 @@ function AIFeature(props: FeatureProps) {
       {actions.length > 0 && (
         <div className={styles.aiFeatureActions}>
           {actions.map(({ text, disabled, onClick }) => (
-            <button key={text} className="button" disabled={props.disabled || disabled} onClick={onClick}>
+            <button
+              key={text}
+              className="button"
+              disabled={props.disabled || disabled}
+              onClick={onClick}
+            >
               {text}
             </button>
           ))}
@@ -67,9 +72,31 @@ export default function AILanding() {
   const visionEnabledState = useRealmObject(VisionService.enabledState);
   const enabled = visionEnabledState.isEnabled;
 
-  const installedApps = useVuex(() => PlatformAppsService.views.productionApps);
-  const streamingAgentApp = installedApps.find(app => app.id === AGENT_APP_ID);
-  const canInstallAgentApp = !streamingAgentApp && getOS() === OS.Windows;
+  const [isAgentAppInstalled, setIsAgentAppInstalled] = useState(false);
+  useEffect(() => {
+    let active = true;
+    let processing = false;
+    void loadProductionApps();
+    return () => {
+      active = false;
+    };
+
+    async function loadProductionApps() {
+      if (processing) return;
+      processing = true;
+      setIsAgentAppInstalled(false);
+
+      if (getOS() !== OS.Windows) return;
+      await PlatformAppsService.actions.return.loadProductionApps();
+
+      // Bail early if the component unmounted while we were loading.
+      if (!active) return;
+
+      const installed = PlatformAppsService.views.productionApps.some(a => a.id === AGENT_APP_ID);
+      setIsAgentAppInstalled(installed);
+      processing = false;
+    }
+  }, []);
 
   function trackEvent(type: string, data?: Record<string, any>) {
     UsageStatisticsService.actions.recordAnalyticsEvent('AiFeature', {
@@ -101,16 +128,18 @@ export default function AILanding() {
     SideNavService.actions.setCurrentMenuItem(EMenuItemKey.Themes);
   }
 
-  function onInstallAgentClick() {
+  async function onInstallAgentClick() {
     trackEvent('install-agent');
-    NavigationService.actions.navigate('PlatformAppMainPage', { appId: AGENT_APP_ID });
-    SideNavService.actions.setCurrentMenuItem(`sub-${AGENT_APP_ID}`);
+    await PlatformAppsService.actions.return.refreshProductionApps();
+    NavigationService.actions.navigate('PlatformAppStore', { appId: AGENT_APP_STORE_ID });
+    SideNavService.actions.setCurrentMenuItem(EMenuItemKey.AppStore);
   }
 
-  function onLaunchAgentClick() {
+  async function onLaunchAgentClick() {
     trackEvent('launch-agent');
-    NavigationService.actions.navigate('PlatformAppStore', { appId: AGENT_APP_ID });
-    SideNavService.actions.setCurrentMenuItem(EMenuItemKey.AppStore);
+    await PlatformAppsService.actions.return.refreshProductionApps();
+    NavigationService.actions.navigate('PlatformAppMainPage', { appId: AGENT_APP_ID });
+    SideNavService.actions.setCurrentMenuItem(`sub-${AGENT_APP_ID}`);
   }
 
   return (
@@ -160,11 +189,10 @@ export default function AILanding() {
                 img={$i('images/ai/ai-streaming-agent.png')}
                 disabled={!enabled}
                 actions={
-                  streamingAgentApp
+                  isAgentAppInstalled
                     ? { text: $t('Launch App'), onClick: onLaunchAgentClick }
                     : {
                         text: $t('Install Intelligent Streaming Agent'),
-                        disabled: !canInstallAgentApp,
                         onClick: onInstallAgentClick,
                       }
                 }
