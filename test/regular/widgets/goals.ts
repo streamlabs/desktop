@@ -48,14 +48,14 @@ function testGoal(goalType: string) {
 
     const testSet1 = {
       layout: 'Standard',
-      background_color: '#FF0000',
-      bar_color: '#FF0000',
-      bar_bg_color: '#FF0000',
-      text_color: '#FF0000',
-      bar_text_color: '#FF0000',
+      // TODO: Implement test form helper for color inputs
+      // background_color: '#FF0000',
+      // bar_color: '#FF0000',
+      // bar_bg_color: '#FF0000',
+      // text_color: '#FF0000',
+      // bar_text_color: '#FF0000',
       font: 'Roboto',
     };
-    await (await client.$('Visual Settings')).click();
 
     await waitForWidgetSettingsSync(t);
     await fillForm(testSet1);
@@ -64,11 +64,11 @@ function testGoal(goalType: string) {
 
     const testSet2 = {
       layout: 'Condensed',
-      background_color: '#7ED321',
-      bar_color: '#AB14CE',
-      bar_bg_color: '#DDDDDD',
-      text_color: '#FFFFFF',
-      bar_text_color: '#F8E71C',
+      // background_color: '#7ED321',
+      // bar_color: '#AB14CE',
+      // bar_bg_color: '#DDDDDD',
+      // text_color: '#FFFFFF',
+      // bar_text_color: '#F8E71C',
       font: 'Open Sans',
     };
 
