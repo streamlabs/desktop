@@ -60,7 +60,7 @@ function testGoal(goalType: string) {
     await waitForWidgetSettingsSync(t);
     await fillForm(testSet1);
     await waitForWidgetSettingsSync(t);
-    await assertFormContains(testSet1);
+    t.true(await assertFormContains(testSet1));
 
     const testSet2 = {
       layout: 'Condensed',
@@ -75,6 +75,6 @@ function testGoal(goalType: string) {
     await waitForWidgetSettingsSync(t);
     await fillForm(testSet2);
     await waitForWidgetSettingsSync(t);
-    await assertFormContains(testSet2);
+    t.true(await assertFormContains(testSet2));
   });
 }
