@@ -57,10 +57,9 @@ function testGoal(goalType: string) {
       font: 'Roboto',
     };
 
-    await waitForWidgetSettingsSync(t);
     await fillForm(testSet1);
     await waitForWidgetSettingsSync(t);
-    t.true(await assertFormContains(testSet1));
+    await assertFormContains(testSet1);
 
     const testSet2 = {
       layout: 'Condensed',
@@ -72,9 +71,10 @@ function testGoal(goalType: string) {
       font: 'Open Sans',
     };
 
-    await waitForWidgetSettingsSync(t);
     await fillForm(testSet2);
     await waitForWidgetSettingsSync(t);
-    t.true(await assertFormContains(testSet2));
+    await assertFormContains(testSet2);
+
+    t.pass();
   });
 }
