@@ -1,4 +1,5 @@
-.ultra-box, .free-box {
+.ultra-box,
+.free-box {
   text-align: left;
   width: 100%;
 
@@ -15,15 +16,21 @@
   }
 }
 
+.ultra-box-container {
+  background: transparent !important;
+  padding: 16px !important;
+}
+
 .free-box {
   border-radius: 8px;
   margin-top: 16px;
-  border: 1px solid var(--button);
+  border: 2px solid var(--title);
   background: var(--section-alt);
   display: flex;
   justify-content: space-between;
   padding: 16px;
   align-items: center;
+  position: relative;
 
   &:hover {
     cursor: pointer;
@@ -34,3 +41,17 @@
   }
 }
 
+.selected-badge {
+  border-radius: 4px;
+  background-color: var(--teal-semi);
+  color: var(--teal);
+  padding: 4px;
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 88px;
+
+  i {
+    margin-right: 4px;
+  }
+}
