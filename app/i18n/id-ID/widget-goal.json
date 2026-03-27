@@ -7,7 +7,6 @@
   "End Goal": "Tujuan Akhir",
   "Starting Amount": "Jumlah Awal",
   "End After": "Akhiri Setelah",
-  "Include resubs?": "Sertakan langganan ulang?",
   "Layout": "Tata Letak",
   "Background Color": "Warna Latar Belakang",
   "Bar Color": "Warna Bilah",
@@ -24,5 +23,8 @@
   "Member Goal": "Tujuan Anggota",
   "Streamlabs Charity Goal": "Tujuan Amal Streamlabs",
   "Streamlabs Charity Donations": "Donasi Amal Streamlabs",
-  "Charity donations": "Donasi Amal"
+  "Charity donations": "Donasi Amal",
+  "Goal Settings": "Goal Settings",
+  "Must be in MM/DD/YYYY format.": "Must be in MM/DD/YYYY format.",
+  "Condensed": "Condensed"
 }
