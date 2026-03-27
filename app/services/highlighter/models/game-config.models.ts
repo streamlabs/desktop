@@ -554,6 +554,22 @@ const NBA_2K26: IGameConfig = {
   },
 };
 
+const DEADLOCK: IGameConfig = {
+  name: EGame.DEADLOCK,
+  label: 'Deadlock',
+  gameModes: '',
+  thumbnail: `${thumbnailPath}${EGame.DEADLOCK}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#c26239',
+    artwork: `${heroPath}${EGame.DEADLOCK}.png`,
+    backgroundColor: '#131313',
+  },
+};
+
 const UNSET_CONFIG: IGameConfig = {
   name: EGame.UNSET,
   label: 'unset',
@@ -590,6 +606,7 @@ const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.F1_25]: F1_25,
   [EGame.EA_SPORTS_FC_26]: EA_SPORTS_FC_26,
   [EGame.NBA_2K26]: NBA_2K26,
+  [EGame.DEADLOCK]: DEADLOCK,
   [EGame.UNSET]: UNSET_CONFIG,
 };
 
