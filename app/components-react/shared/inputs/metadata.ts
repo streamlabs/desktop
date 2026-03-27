@@ -1,14 +1,13 @@
 import { Rule } from 'antd/lib/form';
 import { TInputValue } from './FormFactory';
 import { IListOption } from './ListInput';
-import { TInputType } from './inputs';
 
 /**
  * Metadata generator for inputs
  * Provides some presets and helps with typechecking
  */
 export const metadata = {
-  any: (options: IAnyMetadata) => options,
+  any: (options: IAnyMetadata & Record<string, any>) => options,
   text: (options: ITextMetadata) => ({ ...options, type: 'text' }),
   textarea: (options: ITextMetadata) => ({ ...options, type: 'textarea' }),
   number: (options: INumberMetadata) => ({ ...options, type: 'number' }),
@@ -47,29 +46,20 @@ export const metadata = {
   animation: (options: IAnimationMetadata) => ({ ...options, type: 'animation' }),
 };
 
-export type TInputMetadata<T = string> =
-  | ITextMetadata
-  | INumberMetadata
-  | ISliderMetadata
-  | ITextBoolMetadata
-  | ICheckboxGroupMetadata
-  | IRadioGroupMetadata
-  | IListMetadata<T>;
-
-interface IBaseMetadata {
+export interface IBaseMetadata {
   label?: string;
   tooltip?: string;
   required?: boolean;
   type?: string;
   rules?: Rule[];
   onChange?: (value: unknown) => void;
-  children?: Dictionary<TInputMetadata<unknown>>;
+  children?: Dictionary<IBaseMetadata>;
   displayed?: boolean;
   disabled?: boolean;
   name?: string;
 }
 
-interface ITextMetadata extends IBaseMetadata {
+export interface ITextMetadata extends IBaseMetadata {
   value?: string;
   isPassword?: boolean;
   placeholder?: string;

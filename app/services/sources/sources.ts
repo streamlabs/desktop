@@ -820,7 +820,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
       'ChatBox',
       // TODO:
       // 'ChatHighlight',
-      // 'Credits',
+      'Credits',
       'DonationTicker',
       'EmoteWall',
       'EventList',

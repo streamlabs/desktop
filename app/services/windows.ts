@@ -55,7 +55,6 @@ import OverlayPlaceholder from 'components/windows/OverlayPlaceholder';
 import BrowserSourceInteraction from 'components/windows/BrowserSourceInteraction';
 
 import StreamBoss from 'components/widgets/StreamBoss.vue';
-import Credits from 'components/widgets/Credits.vue';
 import TipJar from 'components/widgets/TipJar.vue';
 import MediaShare from 'components/widgets/MediaShare';
 import AlertBox from 'components/widgets/AlertBox.vue';
@@ -105,7 +104,6 @@ export function getComponents() {
     GameOverlayEventFeed,
     AdvancedStatistics,
     MultistreamChatInfo,
-    Credits,
     TipJar,
     StreamBoss,
     MediaShare,
