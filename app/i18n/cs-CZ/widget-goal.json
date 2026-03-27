@@ -7,7 +7,6 @@
   "End Goal": "Ukončit cíl",
   "Starting Amount": "Počáteční částka",
   "End After": "Ukončit po",
-  "Include resubs?": "Zahrnout prodloužení předplatného?",
   "Layout": "Rozložení",
   "Background Color": "Barva pozadí",
   "Bar Color": "Barva pruhu",
@@ -24,5 +23,8 @@
   "Member Goal": "Cílový počet členů",
   "Streamlabs Charity Goal": "Cíl charity Streamlabs",
   "Streamlabs Charity Donations": "Dary na charitu Streamlabs",
-  "Charity donations": "Charitativní dary"
+  "Charity donations": "Charitativní dary",
+  "Goal Settings": "Goal Settings",
+  "Must be in MM/DD/YYYY format.": "Must be in MM/DD/YYYY format.",
+  "Condensed": "Condensed"
 }

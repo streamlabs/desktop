@@ -7,7 +7,6 @@
   "End Goal": "Cel końcowy",
   "Starting Amount": "Suma początkowa",
   "End After": "Zakończ po",
-  "Include resubs?": "Uwzględnić ponowne subskrypcje?",
   "Layout": "Układ",
   "Background Color": "Kolor tła",
   "Bar Color": "Kolor paska",
@@ -24,5 +23,8 @@
   "Member Goal": "Cel członka",
   "Streamlabs Charity Goal": "Cel charytatywny Streamlabs",
   "Streamlabs Charity Donations": "Donacje charytatywne Streamlabs",
-  "Charity donations": "Dotacje na cele charytatywne"
+  "Charity donations": "Dotacje na cele charytatywne",
+  "Goal Settings": "Goal Settings",
+  "Must be in MM/DD/YYYY format.": "Must be in MM/DD/YYYY format.",
+  "Condensed": "Condensed"
 }

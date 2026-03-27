@@ -7,7 +7,6 @@
   "End Goal": "終了目標",
   "Starting Amount": "開始金額",
   "End After": "に終了",
-  "Include resubs?": "リサブを含めますか?",
   "Layout": "レイアウト",
   "Background Color": "背景色",
   "Bar Color": "バーの色",
@@ -24,5 +23,8 @@
   "Member Goal": "メンバー目標",
   "Streamlabs Charity Goal": "Streamlabs チャリティ目標",
   "Streamlabs Charity Donations": "Streamlabs チャリティドネーション",
-  "Charity donations": "チャリティドネーション"
+  "Charity donations": "チャリティドネーション",
+  "Goal Settings": "Goal Settings",
+  "Must be in MM/DD/YYYY format.": "Must be in MM/DD/YYYY format.",
+  "Condensed": "Condensed"
 }
