@@ -9,3 +9,4 @@ export { BoolButtonInputController } from './bool-button';
 export { SliderInputController } from './slider';
 export { FileInputController } from './file';
 export { RadioInputController } from './radio';
+export { ColorInputController } from './color';
