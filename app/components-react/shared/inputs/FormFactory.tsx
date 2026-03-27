@@ -101,9 +101,9 @@ function FormInput(p: {
 
   if (!type) return <></>;
 
-  // TODO: index
-  // @ts-ignore
-  const Input = componentTable[type];
+  const Input = componentTable[type as TInputType];
+  if (!Input) throw new Error(`No component found for Input Type ${type}`);
+
   let handleChange = p.onChange(p.id);
   if (type === 'checkboxGroup') handleChange = p.onChange;
   if (p.metadata.onChange) handleChange = p.metadata.onChange;
@@ -114,6 +114,7 @@ function FormInput(p: {
         {...p.metadata}
         name={p.id}
         value={p.values[p.id]}
+        //@ts-ignore
         values={type === 'checkboxGroup' && p.values}
         onChange={handleChange}
       />
