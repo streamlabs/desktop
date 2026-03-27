@@ -15,10 +15,9 @@ import MenuItem from 'components-react/shared/MenuItem';
 import UltraIcon from 'components-react/shared/UltraIcon';
 import PlatformIndicator from './PlatformIndicator';
 import { AuthModal } from 'components-react/shared/AuthModal';
-import { ESettingsCategory, TCategoryName } from 'services/settings';
-import { getOS, OS } from 'util/operating-systems';
+import { TCategoryName } from 'services/settings';
 
-export default function NavTools(p: { isVisionRunning: boolean }) {
+export default function NavTools() {
   const {
     UserService,
     SettingsService,
@@ -30,10 +29,6 @@ export default function NavTools(p: { isVisionRunning: boolean }) {
   } = Services;
 
   const isDevMode = useMemo(() => Utils.isDevMode(), []);
-
-  const showAiTab = useMemo(() => {
-    return getOS() === OS.Windows || (getOS() === OS.Mac && isDevMode);
-  }, [isDevMode]);
 
   const {
     isLoggedIn,
@@ -185,15 +180,6 @@ export default function NavTools(p: { isVisionRunning: boolean }) {
                   </div>
                 }
                 onClick={() => openHelp()}
-              />
-            );
-          } else if (showAiTab && menuItem.key === EMenuItemKey.AI) {
-            return (
-              <NavToolsItem
-                key={menuItem.key}
-                menuItem={menuItem}
-                className={cx({ [styles.vision]: p.isVisionRunning })}
-                onClick={() => openSettingsWindow(ESettingsCategory.AI)}
               />
             );
           } else if (menuItem.key === EMenuItemKey.Settings) {

@@ -170,7 +170,7 @@ class PlatformAppsViews extends ViewHandler<IPlatformAppServiceState> {
   }
 
   getDelisted(appId: string) {
-    return this.getApp(appId).delisted;
+    return this.getApp(appId)?.delisted ?? false;
   }
 
   isAppHighlyPrivileged(appId: string) {

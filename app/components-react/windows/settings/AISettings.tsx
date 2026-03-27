@@ -1,14 +1,13 @@
-import { useRealmObject } from 'components-react/hooks/realm';
-import { Services } from 'components-react/service-provider';
-import React, { useEffect, useMemo } from 'react';
-import { message, Progress, Select } from 'antd';
-import { ObsSettingsSection } from './ObsSettings';
-import { confirmAsync } from 'components-react/modals';
 import * as remote from '@electron/remote';
-import { VisionRunnerStartOptions } from 'services/vision/vision-runner';
+import { message, Progress, Select } from 'antd';
+import { useRealmObject } from 'components-react/hooks/realm';
+import { confirmAsync } from 'components-react/modals';
+import { Services } from 'components-react/service-provider';
+import { SwitchInput } from 'components-react/shared/inputs';
+import React, { useEffect, useMemo } from 'react';
 import { $t } from 'services/i18n/index';
-import { VisionProcess, VisionState } from 'services/vision';
-import { ESettingsCategory } from 'services/settings';
+import { VisionProcess, VisionService, VisionState } from 'services/vision';
+import { ObsSettingsSection } from './ObsSettings';
 
 type VisionStatus = 'running' | 'starting' | 'updating' | 'stopped';
 
@@ -42,6 +41,8 @@ function VisionInstalling(props: { percent: number; isUpdate: boolean }) {
 
 type VisionInfoProps = {
   status: VisionStatus;
+  enabled: boolean;
+  starting: boolean;
   needsUpdate: boolean;
   installedVersion: string;
   pid?: number;
@@ -50,20 +51,24 @@ type VisionInfoProps = {
   activeProcessId: number;
   availableGames: Dictionary<string>;
   selectedGame: string;
-  requestAvailableProcesses: () => void;
-  activateProcess: (pid: number, gameHint?: string) => void;
-  startProcess: (opts?: VisionRunnerStartOptions) => void;
-  ensureUpdated: () => void;
-  stopProcess: () => void;
+  setIsEnabled: VisionService['actions']['setIsEnabled'];
+  requestAvailableProcesses: VisionService['actions']['requestActiveProcess'];
+  activateProcess: VisionService['actions']['activateProcess'];
+  startProcess: VisionService['actions']['ensureRunning'];
+  ensureUpdated: VisionService['actions']['ensureUpdated'];
+  stopProcess: VisionService['actions']['stop'];
   openExternal: (url: string) => void;
 };
 
 function VisionInfo({
   status,
+  enabled,
+  starting,
   needsUpdate,
   installedVersion,
   pid,
   port,
+  setIsEnabled,
   startProcess,
   stopProcess,
   ensureUpdated,
@@ -86,6 +91,12 @@ function VisionInfo({
   return (
     <ObsSettingsSection title="Streamlabs AI">
       <div style={{ marginBottom: 16 }}>
+        <SwitchInput
+          label={$t('Turn On AI')}
+          disabled={starting}
+          value={enabled}
+          onChange={() => setIsEnabled(!enabled)}
+        />
         <div>
           Installed: {installedVersion ? $t('Yes') : $t('No')}
           {installedVersion ? ` (${installedVersion})` : ''}
@@ -106,6 +117,7 @@ function VisionInfo({
             {!needsUpdate && (
               <button
                 className="button button--action"
+                disabled={!enabled}
                 onClick={e => startProcess({ debugMode: e.ctrlKey })}
               >
                 Start Streamlabs AI
@@ -191,10 +203,22 @@ function openLink(url: string) {
 }
 
 export function AISettings() {
-  const { VisionService } = Services;
-  const state = useRealmObject(VisionService.state);
+  const { UsageStatisticsService, VisionService } = Services;
   const actions = VisionService.actions;
+  const state = useRealmObject(VisionService.state);
+
+  const visionEnabledState = useRealmObject(VisionService.enabledState);
+  const enabled = visionEnabledState.isEnabled;
+
   const promptOpen = React.useRef(false);
+
+  function trackEvent(type: string, data?: Record<string, any>) {
+    UsageStatisticsService.actions.recordAnalyticsEvent('AiFeature', {
+      type,
+      source: 'AiSettings',
+      ...(data ?? {}),
+    });
+  }
 
   useEffect(() => {
     // make sure we don't keep opening confirm dialogs
@@ -237,22 +261,31 @@ export function AISettings() {
     }
   }, [state.isRunning]);
 
+  function onToggleAiClick(isEnabled?: boolean) {
+    const newIsEnabled = isEnabled ?? !enabled;
+    trackEvent('enabled', { enabled: String(newIsEnabled) });
+    actions.setIsEnabled(newIsEnabled);
+  }
+
   return (
     <div>
       <VisionInfo
         status={getStatusText(state)}
+        enabled={enabled}
+        starting={state.isStarting}
         needsUpdate={state.needsUpdate}
         installedVersion={state.installedVersion}
         pid={state.pid}
         port={state.port}
-        stopProcess={() => actions.stop()}
+        stopProcess={actions.stop}
         openExternal={openLink}
-        startProcess={(options: VisionRunnerStartOptions) => actions.ensureRunning(options)}
-        ensureUpdated={() => actions.ensureUpdated()}
+        setIsEnabled={onToggleAiClick}
+        startProcess={actions.ensureRunning}
+        ensureUpdated={actions.ensureUpdated}
         availableProcesses={state.availableProcesses}
         activeProcessId={state.selectedProcessId}
-        requestAvailableProcesses={() => actions.requestAvailableProcesses()}
-        activateProcess={(pid, gameHint) => actions.activateProcess(pid, gameHint)}
+        requestAvailableProcesses={actions.requestAvailableProcesses}
+        activateProcess={actions.activateProcess}
         availableGames={state.availableGames}
         selectedGame={state.selectedGame}
       />
