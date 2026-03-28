@@ -61,13 +61,17 @@ export function Ultra(p: IOnboardingStepProps) {
   return (
     <div className={styles.centered}>
       <Header title={$t('Choose Your Plan')} />
-      <UltraBox bodyClassName={cx(ultraS.ultraBox, styles.centered)}>
+      <UltraBox
+        className={ultraS.ultraBoxContainer}
+        bodyClassName={cx(ultraS.ultraBox, styles.centered)}
+      >
         <h3 style={{ width: '100%' }}>
           <UltraIcon style={{ marginRight: 4 }} />
           {$t('Streamlabs Ultra')}
         </h3>
-        <div style={{ width: '100%' }}>
+        <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between' }}>
           {$t('Unlock powerful tools to help you grow faster and stand out from the crowd.')}
+          <div style={{ marginRight: 16 }}>{$t('From $27/mo')}</div>
         </div>
         <div style={{ display: 'flex', width: '100%', justifyContent: 'space-evenly' }}>
           {promoMetadata.map(data => (
@@ -75,7 +79,7 @@ export function Ultra(p: IOnboardingStepProps) {
           ))}
         </div>
         <ButtonHighlighted onClick={clickUltraLink} className={styles.bigButton}>
-          {$t('Join Ultra for $27/mo or $189/yr')}
+          {$t('Join Ultra')}
         </ButtonHighlighted>
         <a style={{ fontSize: 12 }} onClick={clickInfo}>
           {$t('Or explore dozens more Ultra benefits')}
@@ -91,7 +95,11 @@ export function Ultra(p: IOnboardingStepProps) {
             {$t('Everything you need to stream for free. You can upgrade to Ultra at any time.')}
           </span>
         </div>
-        <h4>{$t('Free, forever.')}</h4>
+        <h4 style={{ marginTop: '40px' }}>{$t('Free, forever.')}</h4>
+        <div className={ultraS.selectedBadge}>
+          <i className="icon-check" />
+          {$t('Selected')}
+        </div>
       </div>
     </div>
   );
