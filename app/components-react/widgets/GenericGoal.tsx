@@ -92,7 +92,7 @@ export function GenericGoal() {
               onClick={() => saveGoal(goalCreateValues)}
               style={{ marginBottom: 16 }}
             >
-              {$t('Save Goal')}
+              {$t('Start Goal')}
             </Button>
           </>
         )}
