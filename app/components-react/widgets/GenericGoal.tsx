@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Menu } from 'antd';
+import React, { useEffect, useRef, useState } from 'react';
+import { Button, Menu, message } from 'antd';
 import { $t } from 'services/i18n';
 import { IWidgetCommonState, useWidget, WidgetModule, WidgetParams } from './common/useWidget';
 import { WidgetLayout } from './common/WidgetLayout';
@@ -69,6 +69,10 @@ export function GenericGoal() {
     manual_goal_amount: 0,
     ends_at: '',
   });
+
+  useEffect(() => {
+    message.config({ top: 270 });
+  }, []);
 
   function updateGoalCreate(key: string) {
     return (val: TInputValue) => {
@@ -228,14 +232,22 @@ export class GenericGoalModule extends WidgetModule<IGoalState> {
   async saveGoal(options: Dictionary<TInputValue>) {
     const url = this.config.goalUrl;
     if (!url) return;
-    const resp: IGoalState['data'] = await jfetch(
-      new Request(url, {
-        method: 'POST',
-        headers: this.headers,
-        body: JSON.stringify(options),
-      }),
-    );
-    this.setGoalData(resp.goal);
+    try {
+      const resp: IGoalState['data'] = await jfetch(
+        new Request(url, {
+          method: 'POST',
+          headers: this.headers,
+          body: JSON.stringify(options),
+        }),
+      );
+      this.setGoalData(resp.goal);
+    } catch (e: unknown) {
+      message.error({
+        content: (e as any).result.message,
+        duration: 500000,
+        style: { top: '250px', right: 0 },
+      });
+    }
   }
 
   private setGoalData(goal: IGoalState['data']['goal']) {
