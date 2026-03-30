@@ -10,6 +10,7 @@ import { WidgetType } from 'services/widgets';
 import { authorizedHeaders, jfetch } from 'util/requests';
 import { Services } from 'components-react/service-provider';
 import styles from './GenericGoal.m.less';
+import { assertIsDefined } from 'util/properties-type-guards';
 
 interface IGoalState extends IWidgetCommonState {
   data: {
@@ -60,16 +61,7 @@ export function GenericGoal() {
 
   const isCharity = type === WidgetType.CharityGoal;
 
-  const [hasGoal, setHasGoal] = useState(false);
-
-  useEffect(() => {
-    // Not reactive due to useModule issue
-    if (goalSettings) {
-      setHasGoal(true);
-    } else {
-      setHasGoal(false);
-    }
-  }, []);
+  const hasGoal = !!goalSettings;
 
   const [goalCreateValues, setGoalCreateValues] = useState<Dictionary<TInputValue>>({
     title: '',
@@ -82,16 +74,6 @@ export function GenericGoal() {
     return (val: TInputValue) => {
       setGoalCreateValues({ ...goalCreateValues, [key]: val });
     };
-  }
-
-  function updateGoal(save?: boolean) {
-    if (save) {
-      saveGoal(goalCreateValues);
-      setHasGoal(true);
-    } else {
-      resetGoal();
-      setHasGoal(false);
-    }
   }
 
   return (
@@ -110,7 +92,7 @@ export function GenericGoal() {
             />
             <Button
               className="button button--action"
-              onClick={() => updateGoal(true)}
+              onClick={() => saveGoal(goalCreateValues)}
               style={{ marginBottom: 16 }}
             >
               {$t('Start Goal')}
@@ -118,7 +100,7 @@ export function GenericGoal() {
           </>
         )}
         {!isLoading && selectedTab === 'goal' && hasGoal && (
-          <DisplayGoal goal={goalSettings} resetGoal={() => updateGoal()} />
+          <DisplayGoal goal={goalSettings} resetGoal={resetGoal} />
         )}
         {!isLoading && selectedTab === 'general' && (
           <FormFactory
@@ -240,18 +222,27 @@ export class GenericGoalModule extends WidgetModule<IGoalState> {
     const url = this.config.goalUrl;
     if (!url) return;
     jfetch(new Request(url, { method: 'DELETE', headers: this.headers }));
+    this.setGoalData(null);
   }
 
-  saveGoal(options: Dictionary<TInputValue>) {
+  async saveGoal(options: Dictionary<TInputValue>) {
     const url = this.config.goalUrl;
     if (!url) return;
-    jfetch(
+    const resp: IGoalState['data'] = await jfetch(
       new Request(url, {
         method: 'POST',
         headers: this.headers,
         body: JSON.stringify(options),
       }),
     );
+    this.setGoalData(resp.goal);
+  }
+
+  private setGoalData(goal: IGoalState['data']['goal']) {
+    assertIsDefined(this.state.widgetData.data);
+    this.state.mutate(state => {
+      state.widgetData.data.goal = goal;
+    });
   }
 
   patchAfterFetch(data: IGoalState['data']): IGoalState['data'] {
