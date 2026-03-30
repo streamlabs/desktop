@@ -242,11 +242,7 @@ export class GenericGoalModule extends WidgetModule<IGoalState> {
       );
       this.setGoalData(resp.goal);
     } catch (e: unknown) {
-      message.error({
-        content: (e as any).result.message,
-        duration: 500000,
-        style: { top: '250px', right: 0 },
-      });
+      message.error({ content: (e as any).result.message, duration: 2 });
     }
   }
 
