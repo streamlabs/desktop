@@ -160,8 +160,22 @@ export function requestUtilsServer(path: string, method = 'get', body?: unknown)
 }
 
 async function getElectronInstances() {
-  const tasks = await tasklist();
-  return tasks.filter((task: any) => task.imageName === 'electron.exe');
+  if (process.platform === 'win32') {
+    const tasks = await tasklist();
+    return tasks.filter((task: any) => task.imageName === 'electron.exe');
+  }
+
+  // Returns an object { pid: number, comm: string } for each process, where comm is the command that launched the process
+  const { execSync } = require('child_process');
+  const output = execSync('ps -eo pid,comm').toString();
+  return output
+    .split('\n')
+    .slice(1)
+    .map((line: string) => {
+      const [pid, ...commParts] = line.trim().split(/\s+/);
+      return { pid: parseInt(pid, 10), comm: commParts.join(' ') };
+    })
+    .filter((proc: any) => proc.comm && proc.comm.includes('electron'));
 }
 
 export async function killElectronInstances() {

@@ -250,6 +250,8 @@
     "zustand": "^4.4.1"
   },
   "optionalDependencies": {
+    "deasync": "0.1.31",
+    "node-gyp": "12.2.0",
     "node-win32-np": "1.0.6"
   },
   "resolutions": {
