@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Menu } from 'antd';
 import { $t } from 'services/i18n';
 import { IWidgetCommonState, useWidget, WidgetModule, WidgetParams } from './common/useWidget';
@@ -53,12 +53,22 @@ export function GenericGoal() {
     setSelectedTab,
     selectedTab,
     saveGoal,
+    resetGoal,
     type,
   } = useGenericGoal();
 
   const isCharity = type === WidgetType.CharityGoal;
 
-  const hasGoal = !!goalSettings;
+  const [hasGoal, setHasGoal] = useState(false);
+
+  useEffect(() => {
+    // Not reactive due to useModule issue
+    if (goalSettings) {
+      setHasGoal(true);
+    } else {
+      setHasGoal(false);
+    }
+  }, []);
 
   const [goalCreateValues, setGoalCreateValues] = useState<Dictionary<TInputValue>>({
     title: '',
@@ -71,6 +81,16 @@ export function GenericGoal() {
     return (val: TInputValue) => {
       setGoalCreateValues({ ...goalCreateValues, [key]: val });
     };
+  }
+
+  function updateGoal(save?: boolean) {
+    if (save) {
+      saveGoal(goalCreateValues);
+      setHasGoal(true);
+    } else {
+      resetGoal();
+      setHasGoal(false);
+    }
   }
 
   return (
@@ -89,14 +109,16 @@ export function GenericGoal() {
             />
             <Button
               className="button button--action"
-              onClick={() => saveGoal(goalCreateValues)}
+              onClick={() => updateGoal(true)}
               style={{ marginBottom: 16 }}
             >
               {$t('Start Goal')}
             </Button>
           </>
         )}
-        {!isLoading && selectedTab === 'goal' && hasGoal && <DisplayGoal goal={goalSettings} />}
+        {!isLoading && selectedTab === 'goal' && hasGoal && (
+          <DisplayGoal goal={goalSettings} resetGoal={() => updateGoal()} />
+        )}
         {!isLoading && selectedTab === 'general' && (
           <FormFactory
             metadata={visualMeta}
@@ -110,9 +132,7 @@ export function GenericGoal() {
   );
 }
 
-function DisplayGoal(p: { goal: IGoalState['data']['goal'] }) {
-  const { resetGoal } = useGenericGoal();
-
+function DisplayGoal(p: { goal: IGoalState['data']['goal']; resetGoal: () => void }) {
   if (!p.goal) return <></>;
   return (
     <div className="section__body">
@@ -132,7 +152,11 @@ function DisplayGoal(p: { goal: IGoalState['data']['goal'] }) {
         <span>{$t('Days Remaining')}</span>
         <span>{p.goal.to_go}</span>
       </div>
-      <Button className="button button--soft-warning" onClick={resetGoal}>
+      <Button
+        className="button button--soft-warning"
+        onClick={p.resetGoal}
+        style={{ marginBottom: 16 }}
+      >
         {$t('End Goal')}
       </Button>
     </div>
