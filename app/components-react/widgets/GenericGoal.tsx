@@ -87,7 +87,11 @@ export function GenericGoal() {
               values={goalCreateValues}
               onChange={updateGoalCreate}
             />
-            <Button className="button button--action" onClick={() => saveGoal(goalCreateValues)}>
+            <Button
+              className="button button--action"
+              onClick={() => saveGoal(goalCreateValues)}
+              style={{ marginBottom: 16 }}
+            >
               {$t('Save Goal')}
             </Button>
           </>
