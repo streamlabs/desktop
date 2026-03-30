@@ -9,6 +9,7 @@ import { metadata } from '../shared/inputs/metadata';
 import { WidgetType } from 'services/widgets';
 import { authorizedHeaders, jfetch } from 'util/requests';
 import { Services } from 'components-react/service-provider';
+import styles from './GenericGoal.m.less';
 
 interface IGoalState extends IWidgetCommonState {
   data: {
@@ -136,19 +137,19 @@ function DisplayGoal(p: { goal: IGoalState['data']['goal']; resetGoal: () => voi
   if (!p.goal) return <></>;
   return (
     <div className="section__body">
-      <div className="goal-row">
+      <div className={styles.goalRow}>
         <span>{$t('Title')}</span>
         <span>{p.goal.title}</span>
       </div>
-      <div className="goal-row">
+      <div className={styles.goalRow}>
         <span>{$t('Goal Amount')}</span>
         <span>{p.goal.goal_amount}</span>
       </div>
-      <div className="goal-row">
+      <div className={styles.goalRow}>
         <span>{$t('Current Amount')}</span>
         <span>{p.goal.current_amount}</span>
       </div>
-      <div className="goal-row">
+      <div className={styles.goalRow}>
         <span>{$t('Days Remaining')}</span>
         <span>{p.goal.to_go}</span>
       </div>
