@@ -48,11 +48,11 @@ function testGoal(goalType: string) {
 
     const testSet1 = {
       layout: 'Standard',
-      background_color: '#ff0000',
-      bar_color: '#ff0000',
-      bar_bg_color: '#ff0000',
-      text_color: '#ff0000',
-      bar_text_color: '#ff0000',
+      // background_color: '#ff0000',
+      // bar_color: '#ff0000',
+      // bar_bg_color: '#ff0000',
+      // text_color: '#ff0000',
+      // bar_text_color: '#ff0000',
       font: 'Roboto',
     };
 
@@ -62,11 +62,11 @@ function testGoal(goalType: string) {
 
     const testSet2 = {
       layout: 'Condensed',
-      background_color: '#7ed321',
-      bar_color: '#ab14ce',
-      bar_bg_color: '#dddddd',
-      text_color: '#ffffff',
-      bar_text_color: '#f8e71c',
+      // background_color: '#7ed321',
+      // bar_color: '#ab14ce',
+      // bar_bg_color: '#dddddd',
+      // text_color: '#ffffff',
+      // bar_text_color: '#f8e71c',
       font: 'Open Sans',
     };
 

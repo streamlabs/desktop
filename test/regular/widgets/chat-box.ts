@@ -22,9 +22,9 @@ test.skip('Chatbox Settings', async t => {
     show_coin_icons: false,
     show_bttv_emotes: false,
     show_franker_emotes: false,
-    background_color: '#ffffff',
+    // background_color: '#ffffff',
     message_hide_delay: 10,
-    text_color: '#ff0000',
+    // text_color: '#ff0000',
     text_size: 20,
   };
   await fillForm(testSet1);
@@ -48,9 +48,9 @@ test.skip('Chatbox Settings', async t => {
     show_coin_icons: true,
     show_bttv_emotes: true,
     show_franker_emotes: true,
-    background_color: '#000000',
+    // background_color: '#000000',
     message_hide_delay: 60,
-    text_color: '#f8e71c',
+    // text_color: '#f8e71c',
     text_size: 15,
   };
   await fillForm(testSet2);
