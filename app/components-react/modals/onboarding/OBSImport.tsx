@@ -61,12 +61,13 @@ export function OBSImport(p: IOnboardingStepProps) {
       {!importing && (
         <Form>
           <ListInput
+            label={$t('Select Profile')}
             options={profiles.map(p => ({ label: p, value: p }))}
             onChange={setSelectedProfile}
             value={selectedProfile}
             defaultValue={profiles[0]}
             allowClear={false}
-            style={{ width: '240px', margin: 16, marginLeft: 6 }}
+            style={{ width: '300px', margin: 16, marginLeft: 6 }}
           />
           <Button
             className={cx(styles.bigButton, styles.white)}

@@ -241,7 +241,7 @@ export class OnboardingV2Service extends Service {
 
   init() {
     super.init();
-    this.initalizeView({ startingStep: { name: EOnboardingSteps.Ultra }, isSingleton: true });
+    this.initalizeView({ startingStep: { name: EOnboardingSteps.OBSImport }, isSingleton: true });
   }
 
   get currentStepName() {

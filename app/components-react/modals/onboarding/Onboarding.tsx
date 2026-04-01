@@ -77,6 +77,8 @@ export default function Onboarding() {
   if (!currentStep || !showOnboarding) return <></>;
 
   const Component = STEPS_MAP[currentStep.name];
+  const continueText =
+    currentStep.name === EOnboardingSteps.Ultra ? $t('Continue with Free') : $t('Continue');
 
   return (
     <Modal
@@ -103,7 +105,7 @@ export default function Onboarding() {
           )}
           {!NO_BUTTON_STEPS.has(currentStep.name) && (
             <Button type="primary" onClick={cont}>
-              {$t('Continue')}
+              {continueText}
             </Button>
           )}
         </div>
