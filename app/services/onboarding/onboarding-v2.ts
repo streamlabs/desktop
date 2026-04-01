@@ -239,6 +239,11 @@ export class OnboardingV2Service extends Service {
   singletonPath = false;
   localStorageKey = 'UserHasBeenOnboarded';
 
+  init() {
+    super.init();
+    this.initalizeView({ startingStep: { name: EOnboardingSteps.Ultra }, isSingleton: true });
+  }
+
   get currentStepName() {
     return this.state.currentStep.name;
   }

@@ -74,7 +74,7 @@ export function Ultra(p: IOnboardingStepProps) {
             <ImageCard metadata={data} key={data.title} />
           ))}
         </div>
-        <ButtonHighlighted onClick={clickUltraLink} className={styles.bigButton}>
+        <ButtonHighlighted onClick={clickUltraLink} className={styles.bigButton} filledDark>
           {$t('Join Ultra for $27/mo or $189/yr')}
         </ButtonHighlighted>
         <a style={{ fontSize: 12 }} onClick={clickInfo}>

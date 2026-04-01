@@ -44,6 +44,7 @@ export function OBSImport(p: IOnboardingStepProps) {
               'Stream in horizontal and vertical formats simultaneously to 2 destinations for free with Dual Output. Go Ultra to stream to unlimited destinations in both formats, and let our servers do the work so your PC can stream smoothly.',
             ),
             img: $i('images/onboarding/dual-output.png'),
+            count: 2,
           }}
         />
         <ImageCard
@@ -53,6 +54,7 @@ export function OBSImport(p: IOnboardingStepProps) {
               'Exclusive Streamlabs AI powered overlays that update in real time in response to game events',
             ),
             img: $i('images/onboarding/reactive-overlays.png'),
+            count: 2,
           }}
         />
       </div>
