@@ -242,7 +242,7 @@ export class OnboardingV2Service extends Service {
   // Uncomment to debug/style a specific step
   // init() {
   //   super.init();
-  //   this.initalizeView({ startingStep: { name: EOnboardingSteps. }, isSingleton: true });
+  //   this.initalizeView({ startingStep: { name: EOnboardingSteps.Ultra }, isSingleton: true });
   // }
 
   get currentStepName() {

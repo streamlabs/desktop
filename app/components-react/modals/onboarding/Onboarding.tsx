@@ -122,7 +122,7 @@ export function Header(p: { title: string; description?: string }) {
       <div className={styles.kevinBox}>
         <KevinSvg style={{ height: 32, width: 36, fill: 'var(--background)' }} />
       </div>
-      <h1>{p.title}</h1>
+      <h1 style={{ marginBottom: !p.description ? 16 : undefined }}>{p.title}</h1>
       {p.description && <span style={{ marginBottom: 16 }}>{p.description}</span>}
     </>
   );
@@ -136,7 +136,7 @@ export function ImageCard(p: {
       style={{
         textAlign: 'left',
         padding: 16,
-        maxWidth: `${Math.floor(100 / (p.metadata.count || 3))}%`,
+        maxWidth: `${Math.floor(900 / (p.metadata.count || 3))}px`,
       }}
     >
       <img style={{ width: '100%', height: 'auto', marginBottom: 16 }} src={p.metadata.img} />
