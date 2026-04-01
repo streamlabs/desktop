@@ -7,6 +7,7 @@ import { useSourceShowcaseSettings } from './useSourceShowcase';
 import styles from './SourceShowcase.m.less';
 import { useVuex } from 'components-react/hooks';
 import { Services } from '../../service-provider';
+import Badge from 'components-react/shared/DismissableBadge';
 
 export default function SourceTag(p: {
   name?: string;
@@ -51,7 +52,12 @@ export default function SourceTag(p: {
         onDoubleClick={() => selectInspectedSource()}
         data-name={displayData?.name || p.name}
       >
-        <div style={{ display: 'flex', flexDirection: 'row' }}>
+        {displayData?.badge && (
+          <span className={styles.badgeContainer}>
+            <Badge content={displayData.badge} />
+          </span>
+        )}
+        <div className={styles.nameRow}>
           <div className={styles.iconWrapper}>
             {displayData?.icon && <i className={displayData?.icon} />}
           </div>

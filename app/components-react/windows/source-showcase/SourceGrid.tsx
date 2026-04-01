@@ -75,6 +75,19 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
     const filtered = Object.keys(WidgetType)
       .filter((type: string) => isNaN(Number(type)) && type !== 'SubscriberGoal')
       .filter((type: string) => {
+        // @ts-ignore
+        const displayData = WidgetDisplayData(primaryPlatform)[WidgetType[type]];
+
+        if (displayData?.supportedOS) {
+          return byOS({
+            [OS.Windows]: displayData.supportedOS.includes(OS.Windows),
+            [OS.Mac]: displayData.supportedOS.includes(OS.Mac),
+          });
+        }
+
+        return true;
+      })
+      .filter((type: string) => {
         // TODO: index
         // @ts-ignore
         const widgetPlatforms = WidgetDisplayData(primaryPlatform)[WidgetType[type]]?.platforms;
@@ -234,6 +247,7 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
   const essentialWidgetsOrder = [
     WidgetType.AlertBox,
     WidgetType.ChatBox,
+    WidgetType.GamePulseWidget,
     WidgetType.EventList,
     WidgetType.ViewerCount,
     'streamlabel',
@@ -257,7 +271,7 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
       .sort(customOrder(essentialSourcesOrder, s => s.value));
 
     const essentialWidgets = iterableWidgetTypes.filter(type =>
-      [WidgetType.AlertBox, WidgetType.ChatBox, 'streamlabel'].includes(
+      [WidgetType.AlertBox, WidgetType.ChatBox, WidgetType.GamePulseWidget, 'streamlabel'].includes(
         // TODO: index
         // @ts-ignore
         type === 'streamlabel' ? type : WidgetType[type],
@@ -601,7 +615,7 @@ export default function SourceGrid(p: { activeTab: string; searchTerm: string })
   }, [p.activeTab, availableAppSources, appsList, widgetList]);
 
   return (
-    <Scrollable style={{ height: 'calc(100% - 64px)' }} className={styles.sourceGrid}>
+    <Scrollable style={{ height: 'calc(100% - 46px)' }} className={styles.sourceGrid}>
       <Row gutter={[8, 8]} style={{ marginLeft: '8px', marginRight: '8px', paddingBottom: '24px' }}>
         {p.activeTab === 'all' ? (
           <>
