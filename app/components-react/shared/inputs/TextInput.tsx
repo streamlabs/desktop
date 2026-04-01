@@ -12,6 +12,7 @@ export const ANT_INPUT_FEATURES = [
   'autoFocus',
   'prefix',
   'size',
+  'placeholder',
 ] as const;
 
 export type TTextInputProps = TSlobsInputProps<

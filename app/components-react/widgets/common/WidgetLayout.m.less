@@ -1,10 +1,9 @@
-@import "../../../styles/index.less";
+@import '../../../styles/index.less';
 
 // TODO: This is also used by the new filters window
 // We should probably make these menu styles global
 // across the entire app.
 .widget-layout {
-
   height: 100%;
 
   // collapse
@@ -19,7 +18,7 @@
   }
 
   :global(.ant-collapse-content),
-  :global(.ant-collapse-item){
+  :global(.ant-collapse-item) {
     background-color: var(--section-alt);
   }
 
@@ -33,6 +32,7 @@
     width: 270px;
     border-right: 1px solid var(--border);
     background-color: var(--section);
+    height: 100%;
   }
 
   :global(.ant-collapse-content-box .ant-menu-root) {
@@ -55,7 +55,7 @@
   :global(.ant-menu-item .anticon-question-circle) {
     visibility: hidden;
   }
-  :global(.ant-menu-item-selected .anticon-question-circle){
+  :global(.ant-menu-item-selected .anticon-question-circle) {
     visibility: visible;
   }
 
@@ -107,5 +107,9 @@
     padding-top: 32px;
     height: 100%;
     overflow: auto;
+  }
+
+  :global(.ant-row) {
+    flex-flow: nowrap;
   }
 }

@@ -114,23 +114,14 @@ export { SseService } from 'services/server-sent-events';
 
 // WIDGETS
 export { WidgetSource, WidgetsService } from './services/widgets';
-export { BitGoalService } from 'services/widgets/settings/bit-goal';
-export { DonationGoalService } from 'services/widgets/settings/donation-goal';
-export { FollowerGoalService } from 'services/widgets/settings/follower-goal';
-export { StarsGoalService } from 'services/widgets/settings/stars-goal';
-export { SupporterGoalService } from 'services/widgets/settings/supporter-goal';
-export { SubscriberGoalService } from 'services/widgets/settings/subscriber-goal';
-export { CharityGoalService } from 'services/widgets/settings/charity-goal';
 export { StreamBossService } from 'services/widgets/settings/stream-boss';
 export { CreditsService } from 'services/widgets/settings/credits';
 export { TipJarService } from 'services/widgets/settings/tip-jar';
-export { SubGoalService } from 'services/widgets/settings/sub-goal';
 export { MediaShareService } from 'services/widgets/settings/media-share';
 export { AlertBoxService } from 'services/widgets/settings/alert-box';
 export { SpinWheelService } from 'services/widgets/settings/spin-wheel';
 export { PollService } from 'services/widgets/settings/poll';
 export { ChatHighlightService } from 'services/widgets/settings/chat-highlight';
-export { SuperchatGoalService } from 'services/widgets/settings/superchat-goal';
 
 import { AppService } from './services/app';
 import { WindowsService } from './services/windows';

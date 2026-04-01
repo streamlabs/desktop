@@ -24,7 +24,11 @@ const PREVIEW_HEIGHT = 250;
  * If "basic" layout selected then display 1 column or 2 columns depending
  * on how many children have been provided to props
  */
-export function WidgetLayout(p: { layout?: TWidgetLayoutType; children: TLayoutChildren; showDisplay?: boolean }) {
+export function WidgetLayout(p: {
+  layout?: TWidgetLayoutType;
+  children: TLayoutChildren;
+  showDisplay?: boolean;
+}) {
   const layout = p.layout || 'basic';
   switch (layout) {
     case 'basic':

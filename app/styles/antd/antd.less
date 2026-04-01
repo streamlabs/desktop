@@ -13,11 +13,12 @@ body {
   margin: 0;
   padding: 0;
   background-color: var(--background);
+  position: relative;
 }
 
 #mainWrapper .react {
   // justify all inputs of form to the right in the modal footer
-  .ant-modal-footer  .ant-form-inline {
+  .ant-modal-footer .ant-form-inline {
     justify-content: flex-end;
   }
 
@@ -76,7 +77,7 @@ body {
 
   // disable unnecessary animation in checkboxes
   .ant-checkbox-inner,
-  .ant-checkbox-inner::after, {
+  .ant-checkbox-inner::after {
     transition: none;
   }
   .ant-checkbox-checked::after {
@@ -97,10 +98,9 @@ body {
 }
 
 // set a "text-style" cursor for file inputs instead of "disabled"
-.ant-input.ant-input-disabled[data-type="file"] {
+.ant-input.ant-input-disabled[data-type='file'] {
   cursor: text;
 }
-
 
 // fix list input label wrapping with long names
 .ant-select-selection-item {
