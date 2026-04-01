@@ -775,9 +775,14 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     // If the user selects a file format that is incompatible with the selected recording encoder,
     // change the recording encoder to x264 by defaults
     if (
-      [EFileFormat.flv, EFileFormat.mov, EFileFormat.mpegts, EFileFormat.hls].some(
-        f => f === recordingFormat,
-      ) &&
+      [
+        EFileFormat.flv,
+        EFileFormat.mov,
+        EFileFormat.mpegts,
+        EFileFormat.ts,
+        EFileFormat.hls,
+        EFileFormat.m3u8,
+      ].some(f => f === recordingFormat) &&
       [
         EEncoderFamily.ffmpeg_aom_av1,
         EEncoderFamily.ffmpeg_svt_av1,

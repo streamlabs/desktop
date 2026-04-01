@@ -55,8 +55,8 @@ export enum EFileFormat {
   mp4 = 'mp4',
   mov = 'mov',
   mkv = 'mkv',
-  // ts = 'ts', // Deprecated: old api
-  // m3u8 = 'm3u8', // Deprecated: old api
+  ts = 'ts', // Deprecated: old api
+  m3u8 = 'm3u8', // Deprecated: old api
   mpegts = 'mpegts',
   hls = 'hls',
 }
@@ -975,8 +975,10 @@ export class OutputSettingsService extends Service {
       case EFileFormat.mkv:
         return ERecordingFormat.MKV;
       case EFileFormat.mpegts:
+      case EFileFormat.ts:
         return ERecordingFormat.MPEGTS;
       case EFileFormat.hls:
+      case EFileFormat.m3u8:
         return ERecordingFormat.HLS;
     }
   }

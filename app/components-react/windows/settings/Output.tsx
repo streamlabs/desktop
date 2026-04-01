@@ -15,14 +15,20 @@ export function OutputSettings() {
 
   const type = settingsFormData[0].parameters[0].currentValue === 'Simple' ? 'collapsible' : 'tabs';
 
-  function onChange(formData: TObsFormData, ind: number) {
-    const newVal = cloneDeep(settingsFormData);
-    newVal[ind].parameters = formData;
-    saveSettings(newVal);
-  }
   const sections = settingsFormData.filter(
     section => section.parameters.filter(p => p.visible).length,
   );
+
+  function onChange(formData: TObsFormData, ind: number) {
+    const newVal = cloneDeep(settingsFormData);
+
+    const section = sections[ind];
+    const originalIndex = settingsFormData.findIndex(
+      s => s.nameSubCategory === section.nameSubCategory,
+    );
+    newVal[originalIndex].parameters = formData;
+    saveSettings(newVal);
+  }
 
   return (
     <div className="form-groups" style={{ paddingBottom: '12px' }}>
