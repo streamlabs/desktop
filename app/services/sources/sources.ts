@@ -816,6 +816,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
       'StarsGoal',
       'SubGoal',
       'SubscriberGoal',
+      'SuperchatGoal',
       'ChatBox',
       // TODO:
       // 'ChatHighlight',

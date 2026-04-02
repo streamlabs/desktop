@@ -1,6 +1,7 @@
 @import '../../styles/index';
 @import '../../styles/mixins';
 @import '../../styles/badges';
+@import '../../styles/ultra';
 
 .sidenav-sider {
   position: relative;
@@ -238,6 +239,16 @@ button.sidenav-button {
 
   svg {
     fill: var(--nav-active) !important;
+  }
+}
+
+.ultra {
+  &:not(.active) {
+    .ultra-text() !important;
+
+    i {
+      .ultra-text('warm') !important;
+    }
   }
 }
 

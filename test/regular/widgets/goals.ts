@@ -48,12 +48,11 @@ function testGoal(goalType: string) {
 
     const testSet1 = {
       layout: 'Standard',
-      // TODO: Implement test form helper for color inputs
-      // background_color: '#FF0000',
-      // bar_color: '#FF0000',
-      // bar_bg_color: '#FF0000',
-      // text_color: '#FF0000',
-      // bar_text_color: '#FF0000',
+      // background_color: '#ff0000',
+      // bar_color: '#ff0000',
+      // bar_bg_color: '#ff0000',
+      // text_color: '#ff0000',
+      // bar_text_color: '#ff0000',
       font: 'Roboto',
     };
 
@@ -63,11 +62,11 @@ function testGoal(goalType: string) {
 
     const testSet2 = {
       layout: 'Condensed',
-      // background_color: '#7ED321',
-      // bar_color: '#AB14CE',
-      // bar_bg_color: '#DDDDDD',
-      // text_color: '#FFFFFF',
-      // bar_text_color: '#F8E71C',
+      // background_color: '#7ed321',
+      // bar_color: '#ab14ce',
+      // bar_bg_color: '#dddddd',
+      // text_color: '#ffffff',
+      // bar_text_color: '#f8e71c',
       font: 'Open Sans',
     };
 

@@ -11,6 +11,7 @@
  */
 
 const fallbackDictionary = {
+  ...require('./en-US/ai.json'),
   ...require('./en-US/advanced-statistics.json'),
   ...require('./en-US/app.json'),
   ...require('./en-US/apps.json'),

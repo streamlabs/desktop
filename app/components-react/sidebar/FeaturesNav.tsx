@@ -7,6 +7,7 @@ import {
   TExternalLinkType,
   menuTitles,
   compactMenuItemKeys,
+  ESubMenuItemKey,
 } from 'services/side-nav';
 import { $t } from 'services/i18n';
 import { EAvailableFeatures } from 'services/incremental-rollout';
@@ -21,6 +22,7 @@ import AppsNav from './AppsNav';
 import EditorTabs from './EditorTabs';
 import cx from 'classnames';
 import Utils from 'services/utils';
+import { useRealmObject } from 'components-react/hooks/realm';
 
 export default function FeaturesNav() {
   function toggleStudioMode() {
@@ -61,14 +63,23 @@ export default function FeaturesNav() {
     }
     setCurrentMenuItem(key ?? menuItem.key);
   }
+
+  function isParentMenuItem(menuItem: IMenuItem): menuItem is IParentMenuItem {
+    return menuItem.hasOwnProperty('subMenuItems');
+  }
+
   const {
-    NavigationService,
-    UserService,
     IncrementalRolloutService,
-    UsageStatisticsService,
+    HighlighterService,
+    NavigationService,
     SideNavService,
     TransitionsService,
+    UsageStatisticsService,
+    UserService,
+    VisionService,
   } = Services;
+
+  const isVisionRunning = useRealmObject(VisionService.state).isRunning;
 
   const {
     featureIsEnabled,
@@ -101,20 +112,54 @@ export default function FeaturesNav() {
     loggedOutMenuItemTargets: SideNavService.views.loggedOutMenuItemTargets,
   }));
 
-  const menuItems = useMemo(() => {
-    if (!loggedIn) {
-      return menu.menuItems.filter(menuItem =>
-        loggedOutMenuItemKeys.includes(menuItem.key as EMenuItemKey),
-      );
-    }
-    return !compactView
-      ? menu.menuItems
-      : menu.menuItems.filter((menuItem: IMenuItem) => {
-          if (compactMenuItemKeys.includes(menuItem.key as EMenuItemKey)) {
-            return menuItem;
-          }
-        });
-  }, [compactView, menu, loggedIn]);
+  /**
+   * Theme audit will only ever be enabled on individual accounts,
+   * or enabled via command line flag. Not for general use.
+   */
+  const themeAuditEnabled = featureIsEnabled(EAvailableFeatures.themeAudit);
+
+  const menuItems = useMemo(
+    () =>
+      menu.menuItems.filter(menuItem => {
+        if (!menuItem.isActive && menuItem.key !== EMenuItemKey.Editor) {
+          return false;
+        }
+        if (!loggedIn && !loggedOutMenuItemKeys.has(menuItem.key)) {
+          return false;
+        }
+        if (menuItem.key === EMenuItemKey.AI && !VisionService.isSupportedForOs()) {
+          return false;
+        }
+        if (menuItem.key === EMenuItemKey.ThemeAudit && !themeAuditEnabled) {
+          return false;
+        }
+        if (compactView && !compactMenuItemKeys.has(menuItem.key)) {
+          return false;
+        }
+        return true;
+      }),
+    [menu, loggedIn, compactView],
+  );
+
+  const menuBadges = useMemo(
+    (): Partial<Record<EMenuItemKey | ESubMenuItemKey, string | undefined>> => ({
+      [EMenuItemKey.Highlighter]: (() => {
+        if (HighlighterService.aiHighlighterFeatureEnabled) {
+          const env = Utils.getHighlighterEnvironment();
+          return env === 'production' ? 'beta' : env;
+        }
+      })(),
+    }),
+    [],
+  );
+
+  const menuStyles = useMemo(
+    (): Partial<Record<EMenuItemKey | ESubMenuItemKey, any>> => ({
+      [EMenuItemKey.AI]: isVisionRunning && styles.ultra,
+      [EMenuItemKey.StudioMode]: studioMode && styles.active,
+    }),
+    [isVisionRunning, studioMode],
+  );
 
   const layoutEditorItem = useMemo(() => {
     return menu.menuItems.find(menuItem => menuItem.key === EMenuItemKey.LayoutEditor);
@@ -123,12 +168,6 @@ export default function FeaturesNav() {
   const studioModeItem = useMemo(() => {
     return menu.menuItems.find(menuItem => menuItem.key === EMenuItemKey.StudioMode);
   }, []);
-
-  /*
-   * Theme audit will only ever be enabled on individual accounts or enabled
-   * via command line flag. Not for general use.
-   */
-  const themeAuditEnabled = featureIsEnabled(EAvailableFeatures.themeAudit);
 
   return (
     <Menu
@@ -144,16 +183,8 @@ export default function FeaturesNav() {
       defaultSelectedKeys={[EMenuItemKey.Editor]}
       getPopupContainer={triggerNode => triggerNode}
     >
-      {menuItems.map((menuItem: IParentMenuItem) => {
-        if (
-          (menuItem.key !== EMenuItemKey.Editor && !menuItem?.isActive) ||
-          (menuItem.key === EMenuItemKey.ThemeAudit && !themeAuditEnabled)
-        ) {
-          // skip inactive menu items
-          // skip legacy menu items for new users
-          // skip Theme Audit if not enabled
-          return null;
-        } else if (menuItem.key === EMenuItemKey.Editor && loggedIn) {
+      {menuItems.map(menuItem => {
+        if (menuItem.key === EMenuItemKey.Editor && loggedIn) {
           // if there are multiple editor screens and the menu is closed, show them in the sidebar
           // if there are multiple editor screens and the menu is open, show them in a submenu
           if (showCustomEditor && !isOpen && !compactView) {
@@ -190,14 +221,13 @@ export default function FeaturesNav() {
                     isSubMenuItem={true}
                     menuItem={studioModeItem}
                     handleNavigation={handleNavigation}
-                    className={studioMode && styles.active}
+                    className={cx(menuStyles[studioModeItem.key])}
                   />
                 )}
               </SubMenu>
             );
           }
-        } else if (menuItem.hasOwnProperty('subMenuItems')) {
-          // display submenu if there are submenu items
+        } else if (isParentMenuItem(menuItem)) {
           return (
             <SubMenu
               key={menuItem.key}
@@ -219,6 +249,8 @@ export default function FeaturesNav() {
                   key={subMenuItem.key}
                   isSubMenuItem={true}
                   menuItem={subMenuItem}
+                  badge={menuBadges[subMenuItem.key]}
+                  className={cx(menuStyles[subMenuItem.key])}
                   handleNavigation={handleNavigation}
                 />
               ))}
@@ -240,6 +272,8 @@ export default function FeaturesNav() {
               <FeaturesNavItem
                 key={menuItem.key}
                 menuItem={menuItem}
+                badge={menuBadges[menuItem.key]}
+                className={cx(menuStyles[menuItem.key])}
                 handleNavigation={handleNavigation}
               />
             )
@@ -259,11 +293,11 @@ function FeaturesNavItem(p: {
   isSubMenuItem?: boolean;
   menuItem: IMenuItem | IParentMenuItem;
   handleNavigation: (menuItem: IMenuItem, key?: string) => void;
+  badge?: string;
   className?: string;
 }) {
-  const { SideNavService, TransitionsService, DualOutputService, HighlighterService } = Services;
-  const aiHighlighterFeatureEnabled = HighlighterService.aiHighlighterFeatureEnabled;
-  const { isSubMenuItem, menuItem, handleNavigation, className } = p;
+  const { SideNavService, TransitionsService, DualOutputService } = Services;
+  const { isSubMenuItem, menuItem, badge, handleNavigation, className } = p;
 
   const { currentMenuItem, isOpen, studioMode, dualOutputMode } = useVuex(() => ({
     currentMenuItem: SideNavService.views.currentMenuItem,
@@ -280,9 +314,7 @@ function FeaturesNavItem(p: {
     }
   }
 
-  const title = useMemo(() => {
-    return menuTitles(menuItem.key);
-  }, [menuItem]);
+  const title = useMemo(() => menuTitles(menuItem.key), [menuItem]);
 
   const disabled = dualOutputMode && menuItem.key === EMenuItemKey.StudioMode;
 
@@ -292,7 +324,6 @@ function FeaturesNavItem(p: {
       className: styles.toggleError,
     });
   }
-  const highlighterEnvironment = useMemo(Utils.getHighlighterEnvironment, []);
 
   return (
     <MenuItem
@@ -317,11 +348,9 @@ function FeaturesNavItem(p: {
     >
       <div style={{ display: 'flex', alignItems: 'center' }}>
         {title}
-        {menuItem.key === EMenuItemKey.Highlighter && aiHighlighterFeatureEnabled && (
+        {badge && (
           <div className={styles.betaTag}>
-            <p style={{ margin: 0 }}>
-              {highlighterEnvironment === 'production' ? 'beta' : highlighterEnvironment}
-            </p>
+            <p style={{ margin: 0 }}>{badge}</p>
           </div>
         )}
       </div>

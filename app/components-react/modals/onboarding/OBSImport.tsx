@@ -44,6 +44,7 @@ export function OBSImport(p: IOnboardingStepProps) {
               'Stream in horizontal and vertical formats simultaneously to 2 destinations for free with Dual Output. Go Ultra to stream to unlimited destinations in both formats, and let our servers do the work so your PC can stream smoothly.',
             ),
             img: $i('images/onboarding/dual-output.png'),
+            count: 2,
           }}
         />
         <ImageCard
@@ -53,18 +54,20 @@ export function OBSImport(p: IOnboardingStepProps) {
               'Exclusive Streamlabs AI powered overlays that update in real time in response to game events',
             ),
             img: $i('images/onboarding/reactive-overlays.png'),
+            count: 2,
           }}
         />
       </div>
       {!importing && (
         <Form>
           <ListInput
+            label={$t('Select Profile')}
             options={profiles.map(p => ({ label: p, value: p }))}
             onChange={setSelectedProfile}
             value={selectedProfile}
             defaultValue={profiles[0]}
             allowClear={false}
-            style={{ width: '240px', margin: 16, marginLeft: 6 }}
+            style={{ width: '300px', margin: 16, marginLeft: 6 }}
           />
           <Button
             className={cx(styles.bigButton, styles.white)}

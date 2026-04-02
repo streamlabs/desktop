@@ -42,6 +42,7 @@ import { TTikTokLiveScopeTypes } from 'services/platforms/tiktok/api';
 import { UsageStatisticsService } from 'app-services';
 import { debounce } from 'lodash-decorators';
 import { getOS, OS } from 'util/operating-systems';
+import { URLSearchParams } from 'url';
 
 export enum EAuthProcessState {
   Idle = 'idle',
@@ -280,6 +281,17 @@ class UserViews extends ViewHandler<IUserServiceState> {
     this.userService.setPrimaryPlatform(platform);
   }
 }
+
+export type TOverlayType = 'overlays' | 'widget-themes' | 'site-themes' | 'collectibles';
+export interface IOverlayIdParams {
+  id: string;
+  install?: string;
+}
+export interface IOverlayCollectionParams {
+  collection?: string;
+}
+
+export type TOverlayParams = IOverlayIdParams | IOverlayCollectionParams;
 
 export class UserService extends PersistentStatefulService<IUserServiceState> {
   @Inject() private hostsService: HostsService;
@@ -1016,30 +1028,30 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     return await this.magicLinkService.actions.return.getMagicSessionUrl(url);
   }
 
-  async overlaysUrl(
-    type?: 'overlay' | 'widget-themes' | 'site-themes' | 'collectibles',
-    id?: string,
-    install?: string,
-  ) {
+  async overlaysUrl(type?: TOverlayType, params?: TOverlayParams) {
     const uiTheme = this.customizationService.isDarkTheme ? 'night' : 'day';
 
     let url = `https://${this.hostsService.streamlabs}/library`;
+    const modeQuery = `mode=${uiTheme}&slobs`;
 
-    if (type && !id) {
-      url += `/${type}`;
+    if (type && params) {
+      if ('id' in params) {
+        const urlSubParams = new URLSearchParams({ type, id: params.id });
+        if (params.install) {
+          urlSubParams.append('install', params.install);
+        }
+        url += `/${type}?${modeQuery}#/?${urlSubParams}`;
+      } else if ('collection' in params && params.collection) {
+        url += `/c/${params.collection}?${modeQuery}`;
+      }
+    } else {
+      if (type) {
+        url += `/${type}`;
+      }
+      url += `?${modeQuery}`;
     }
 
-    url += `?mode=${uiTheme}&slobs`;
-
-    if (type && id) {
-      url += `#/?type=${type}&id=${id}`;
-    }
-
-    if (install) {
-      url += `&install=${install}`;
-    }
-
-    return await this.magicLinkService.actions.return.getMagicSessionUrl(url);
+    return this.magicLinkService.actions.return.getMagicSessionUrl(url);
   }
 
   getDonationSettings() {

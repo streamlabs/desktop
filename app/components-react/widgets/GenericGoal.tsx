@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Button, Menu } from 'antd';
+import React, { useEffect, useRef, useState } from 'react';
+import { Button, Menu, message } from 'antd';
 import { $t } from 'services/i18n';
 import { IWidgetCommonState, useWidget, WidgetModule, WidgetParams } from './common/useWidget';
 import { WidgetLayout } from './common/WidgetLayout';
@@ -9,6 +9,8 @@ import { metadata } from '../shared/inputs/metadata';
 import { WidgetType } from 'services/widgets';
 import { authorizedHeaders, jfetch } from 'util/requests';
 import { Services } from 'components-react/service-provider';
+import styles from './GenericGoal.m.less';
+import { assertIsDefined } from 'util/properties-type-guards';
 
 interface IGoalState extends IWidgetCommonState {
   data: {
@@ -53,6 +55,7 @@ export function GenericGoal() {
     setSelectedTab,
     selectedTab,
     saveGoal,
+    resetGoal,
     type,
   } = useGenericGoal();
 
@@ -66,6 +69,10 @@ export function GenericGoal() {
     manual_goal_amount: 0,
     ends_at: '',
   });
+
+  useEffect(() => {
+    message.config({ top: 270 });
+  }, []);
 
   function updateGoalCreate(key: string) {
     return (val: TInputValue) => {
@@ -87,12 +94,18 @@ export function GenericGoal() {
               values={goalCreateValues}
               onChange={updateGoalCreate}
             />
-            <Button className="button button--action" onClick={() => saveGoal(goalCreateValues)}>
-              {$t('Save Goal')}
+            <Button
+              className="button button--action"
+              onClick={() => saveGoal(goalCreateValues)}
+              style={{ marginBottom: 16 }}
+            >
+              {$t('Start Goal')}
             </Button>
           </>
         )}
-        {!isLoading && selectedTab === 'goal' && hasGoal && <DisplayGoal goal={goalSettings} />}
+        {!isLoading && selectedTab === 'goal' && hasGoal && (
+          <DisplayGoal goal={goalSettings} resetGoal={resetGoal} />
+        )}
         {!isLoading && selectedTab === 'general' && (
           <FormFactory
             metadata={visualMeta}
@@ -106,29 +119,31 @@ export function GenericGoal() {
   );
 }
 
-function DisplayGoal(p: { goal: IGoalState['data']['goal'] }) {
-  const { resetGoal } = useGenericGoal();
-
+function DisplayGoal(p: { goal: IGoalState['data']['goal']; resetGoal: () => void }) {
   if (!p.goal) return <></>;
   return (
     <div className="section__body">
-      <div className="goal-row">
+      <div className={styles.goalRow}>
         <span>{$t('Title')}</span>
         <span>{p.goal.title}</span>
       </div>
-      <div className="goal-row">
+      <div className={styles.goalRow}>
         <span>{$t('Goal Amount')}</span>
         <span>{p.goal.goal_amount}</span>
       </div>
-      <div className="goal-row">
+      <div className={styles.goalRow}>
         <span>{$t('Current Amount')}</span>
         <span>{p.goal.current_amount}</span>
       </div>
-      <div className="goal-row">
+      <div className={styles.goalRow}>
         <span>{$t('Days Remaining')}</span>
         <span>{p.goal.to_go}</span>
       </div>
-      <Button className="button button--soft-warning" onClick={resetGoal}>
+      <Button
+        className="button button--soft-warning"
+        onClick={p.resetGoal}
+        style={{ marginBottom: 16 }}
+      >
         {$t('End Goal')}
       </Button>
     </div>
@@ -211,18 +226,31 @@ export class GenericGoalModule extends WidgetModule<IGoalState> {
     const url = this.config.goalUrl;
     if (!url) return;
     jfetch(new Request(url, { method: 'DELETE', headers: this.headers }));
+    this.setGoalData(null);
   }
 
-  saveGoal(options: Dictionary<TInputValue>) {
+  async saveGoal(options: Dictionary<TInputValue>) {
     const url = this.config.goalUrl;
     if (!url) return;
-    jfetch(
-      new Request(url, {
-        method: 'POST',
-        headers: this.headers,
-        body: JSON.stringify(options),
-      }),
-    );
+    try {
+      const resp: IGoalState['data'] = await jfetch(
+        new Request(url, {
+          method: 'POST',
+          headers: this.headers,
+          body: JSON.stringify(options),
+        }),
+      );
+      this.setGoalData(resp.goal);
+    } catch (e: unknown) {
+      message.error({ content: (e as any).result.message, duration: 2 });
+    }
+  }
+
+  private setGoalData(goal: IGoalState['data']['goal']) {
+    assertIsDefined(this.state.widgetData.data);
+    this.state.mutate(state => {
+      state.widgetData.data.goal = goal;
+    });
   }
 
   patchAfterFetch(data: IGoalState['data']): IGoalState['data'] {

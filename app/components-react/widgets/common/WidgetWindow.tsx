@@ -37,6 +37,7 @@ export const components = {
   StarsGoal: [GenericGoal, GenericGoalModule],
   SubGoal: [GenericGoal, GenericGoalModule],
   SubscriberGoal: [GenericGoal, GenericGoalModule],
+  SuperchatGoal: [GenericGoal, GenericGoalModule],
   ChatBox: [ChatBox, ChatBoxModule],
   // ChatHighlight
   // Credits

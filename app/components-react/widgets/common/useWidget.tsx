@@ -37,6 +37,7 @@ export interface IWidgetCommonState {
 export interface IWidgetState {
   data: {
     settings: any;
+    goal?: any;
   };
 }
 
