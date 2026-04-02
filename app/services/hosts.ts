@@ -13,6 +13,8 @@ export class HostsService extends Service {
       return 'streamlabs.site';
     } else if (Util.shouldUseBeta()) {
       return 'beta.streamlabs.com';
+    } else if (Util.shouldUseStage8Host()) {
+      return 'stage8.streamlabs.com';
     }
 
     return 'streamlabs.com';
@@ -31,6 +33,8 @@ export class HostsService extends Service {
       return 'http://io.streamlabs.site:4567';
     } else if (Util.shouldUseBeta()) {
       return 'https://beta.streamlabs.com';
+    } else if (Util.shouldUseStage8Host()) {
+      return 'stage8.streamlabs.com';
     }
 
     return 'https://aws-io.streamlabs.com';
