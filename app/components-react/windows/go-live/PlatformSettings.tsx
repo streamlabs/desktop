@@ -105,7 +105,7 @@ export default function PlatformSettings() {
                   {!isPrime && <UltraIcon type="badge" style={{ marginLeft: '5px' }} />}
                 </>
               }
-              name="live-output"
+              name="liveOutput"
               description={$t('Manage output destinations mid-stream.')}
               icon="icon-output"
               disabled={!isPrime}
@@ -119,7 +119,7 @@ export default function PlatformSettings() {
                   {!isPrime && <UltraIcon type="badge" style={{ marginLeft: '5px' }} />}
                 </>
               }
-              name="stream-shift"
+              name="streamShift"
               description={$t('Switch between devices while live.')}
               icon="icon-repeat-2"
               disabled={!isPrime}

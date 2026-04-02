@@ -50,10 +50,10 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
                 }}
               >
                 <UltraIcon type="badge" style={{ marginRight: '5px' }} />
-                {label}
+                <span>{label}</span>
               </div>
             ) : (
-              <>{label}</>
+              <span>{label}</span>
             )
           }
           name="streamShift"
