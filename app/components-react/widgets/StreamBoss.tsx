@@ -1,10 +1,14 @@
 import React from 'react';
 import { inject } from 'slap';
+import { Menu } from 'antd';
 import { useWidget, WidgetModule } from './common/useWidget';
 import { metadata, TInputMetadata } from 'components-react/shared/inputs/metadata';
 import { $t } from 'services/i18n';
 import { UserService } from 'app-services';
 import { TPlatform } from 'services/platforms';
+import { WidgetLayout } from './common/WidgetLayout';
+import FormFactory from 'components-react/shared/inputs/FormFactory';
+import Form from 'components-react/shared/inputs/Form';
 
 interface IStreamBossData {
   goal: {
@@ -39,7 +43,39 @@ interface IStreamBossData {
   };
 }
 
-export function Streamboss() {}
+export function Streamboss() {
+  const {
+    setSelectedTab,
+    selectedTab,
+    isLoading,
+    settings,
+    updateSetting,
+    visualMeta,
+    goalMeta,
+    battleMeta,
+  } = useStreamboss();
+
+  return (
+    <WidgetLayout>
+      <Menu onClick={e => setSelectedTab(e.key)} selectedKeys={[selectedTab]}>
+        <Menu.Item key="goal">{$t('Goal')}</Menu.Item>
+        <Menu.Item key="battle">{$t('Manage Battle')}</Menu.Item>
+        <Menu.Item key="visual">{$t('Visual Settings')}</Menu.Item>
+      </Menu>
+      <Form>
+        {!isLoading && selectedTab === 'goal' && (
+          <FormFactory metadata={goalMeta} values={settings} onChange={updateSetting} />
+        )}
+        {!isLoading && selectedTab === 'battle' && (
+          <FormFactory metadata={battleMeta} values={settings} onChange={updateSetting} />
+        )}
+        {!isLoading && selectedTab === 'visual' && (
+          <FormFactory metadata={visualMeta} values={settings} onChange={updateSetting} />
+        )}
+      </Form>
+    </WidgetLayout>
+  );
+}
 
 class StreambossModule extends WidgetModule {
   userService = inject(UserService);
@@ -80,7 +116,7 @@ class StreambossModule extends WidgetModule {
     };
   }
 
-  get goalmeta() {
+  get goalMeta() {
     return {
       total_health: metadata.number({ label: $t('Starting Health'), required: true, min: 0 }),
       mode: metadata.list({
