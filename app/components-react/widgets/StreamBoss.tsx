@@ -11,35 +11,37 @@ import FormFactory from 'components-react/shared/inputs/FormFactory';
 import Form from 'components-react/shared/inputs/Form';
 
 interface IStreamBossData {
-  goal: {
-    boss_img: string;
-    boss_name: string;
-    current_health: number;
-    mode: string;
-    multiplier: 1;
-    percent: number;
-    total_health: number;
-  };
-  settings: {
-    background_color: string;
-    bar_bg_color: string;
-    bar_color: string;
-    bar_text_color: string;
-    bg_transparent: boolean;
-    bit_multiplier: number;
-    boss_heal: boolean;
-    donation_multiplier: boolean;
-    fade_time: number;
-    follow_multiplier: boolean;
-    font: string;
-    incr_amount: string;
-    kill_animation: string;
-    overkill_min: number;
-    overkill_multiplier: number;
-    skin: string;
-    sub_multiplier: number;
-    superchat_multiplier: number;
-    text_color: string;
+  data: {
+    goal: {
+      boss_img: string;
+      boss_name: string;
+      current_health: number;
+      mode: string;
+      multiplier: 1;
+      percent: number;
+      total_health: number;
+    };
+    settings: {
+      background_color: string;
+      bar_bg_color: string;
+      bar_color: string;
+      bar_text_color: string;
+      bg_transparent: boolean;
+      bit_multiplier: number;
+      boss_heal: boolean;
+      donation_multiplier: boolean;
+      fade_time: number;
+      follow_multiplier: boolean;
+      font: string;
+      incr_amount: string;
+      kill_animation: string;
+      overkill_min: number;
+      overkill_multiplier: number;
+      skin: string;
+      sub_multiplier: number;
+      superchat_multiplier: number;
+      text_color: string;
+    };
   };
 }
 
@@ -77,7 +79,7 @@ export function Streamboss() {
   );
 }
 
-class StreambossModule extends WidgetModule {
+class StreambossModule extends WidgetModule<IStreamBossData> {
   userService = inject(UserService);
 
   get visualMeta() {
