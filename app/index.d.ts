@@ -65,6 +65,50 @@ interface Response {
  */
 type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
+/**
+ * Joins two keys into a single string key.
+ * Useful for mapping between nested and flattened object structures.
+ */
+type JoinKeys<
+  K1 extends string | number | symbol,
+  K2 extends string | number | symbol = '',
+  D extends string = '.'
+> = K1 extends ''
+  ? K2 extends ''
+    ? never
+    : K2 extends string | number
+    ? `${K2}`
+    : '[symbol]'
+  : K1 extends string | number
+  ? K2 extends ''
+    ? `${K1}`
+    : K2 extends string | number
+    ? `${K1}${D}${K2}`
+    : `${K1}${D}[symbol]`
+  : K2 extends ''
+  ? '[symbol]'
+  : K2 extends string | number
+  ? `[symbol]${D}${K2}`
+  : `[symbol]${D}[symbol]`;
+
+/**
+ * Flattens a nested object by one level, joining the keys.
+ * Useful for mapping between nested and flattened object structures.
+ * Set the last param to true to make all properties non-nullable, which
+ * can be helpful when flattening types that may have optional properties.
+ */
+type Flatten<
+  T extends object,
+  K extends keyof T,
+  P extends string | number | symbol = '',
+  D extends string = '.',
+  N extends boolean = false
+> = {
+  [S in keyof T[K] as JoinKeys<P, JoinKeys<K, S, D>, D>]: N extends true
+    ? NonNullable<T[K][S]>
+    : T[K][S];
+};
+
 // list of modules without type definitions
 declare module 'raven-js/*';
 declare module 'v-tooltip';

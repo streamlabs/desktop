@@ -7,7 +7,6 @@ import { $t } from '../../services/i18n';
 import { metadata } from '../shared/inputs/metadata';
 import FormFactory from 'components-react/shared/inputs/FormFactory';
 import { $i } from 'services/utils';
-import InputWrapper from 'components-react/shared/inputs/InputWrapper';
 import { MediaUrlInput, NumberInput } from 'components-react/shared/inputs';
 import Form from 'components-react/shared/inputs/Form';
 
@@ -157,8 +156,7 @@ export class SponsorBannerModule extends WidgetModule<ISponsorBannerState> {
           { label: $t('Double'), value: 'double' },
         ],
         children: {
-          layout: metadata.any({
-            type: 'imagepicker',
+          layout: metadata.imagepicker({
             label: $t('Image Layout'),
             displayed: this.settings?.placement_options === 'double',
             options: [
@@ -231,7 +229,7 @@ export class SponsorBannerModule extends WidgetModule<ISponsorBannerState> {
           data.settings.hide_duration_secs + data.settings.hide_duration * 60,
         show_duration_in_seconds:
           data.settings.show_duration_secs + data.settings.show_duration * 60,
-        // make data structure interable and type-predictable
+        // make data structure iterable and type-predictable
         placement_1_images: data.settings.image_1_href.map((href: string, i: number) => {
           const subbedHref =
             href === '/imgs/streamlabs.png'
