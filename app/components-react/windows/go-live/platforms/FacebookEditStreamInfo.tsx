@@ -25,6 +25,7 @@ import { assertIsDefined } from '../../../../util/properties-type-guards';
 import * as remote from '@electron/remote';
 import { $t } from 'services/i18n';
 import { Services } from '../../../service-provider';
+import { CustomFieldsCheckbox } from '../CustomFieldsCheckbox';
 
 class FacebookEditStreamInfoModule {
   fbService = inject(FacebookService);
@@ -257,10 +258,10 @@ export default function FacebookEditStreamInfo(p: IPlatformComponentParams<'face
 
       <PlatformSettingsLayout
         layoutMode={p.layoutMode}
-        commonFields={<CommonFields key="common" />}
-        requiredFields={<RequiredFields key="required" />}
-        optionalFields={<OptionalFields key="optional" />}
-        essentialOptionalFields={<Events key="events" />}
+        commonFields={<CommonFields key="facebook-common" />}
+        requiredFields={<RequiredFields key="facebook-required" />}
+        optionalFields={<OptionalFields key="facebook-optional" />}
+        essentialOptionalFields={<Events key="facebook-events" {...p} />}
       />
     </Form>
   );
@@ -271,7 +272,6 @@ function CommonFields() {
 
   return (
     <CommonPlatformFields
-      key="common"
       platform="facebook"
       layoutMode={layoutMode}
       value={settings}
@@ -298,7 +298,7 @@ function RequiredFields() {
   } = useFacebook();
 
   return (
-    <div key="required">
+    <div>
       {!isUpdateMode && (
         <>
           {shouldShowDestinationType && (
@@ -421,7 +421,7 @@ function OptionalFields() {
   );
 }
 
-function Events() {
+function Events(p: IPlatformComponentParams<'facebook'>) {
   const {
     bind,
     shouldShowEvents,
@@ -454,6 +454,7 @@ function Events() {
           size="large"
         />
       )}
+      <CustomFieldsCheckbox {...p} platform="facebook" />
     </div>
   );
 }

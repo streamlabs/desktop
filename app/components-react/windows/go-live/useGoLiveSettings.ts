@@ -449,6 +449,14 @@ export class GoLiveSettingsModule {
       return;
     }
 
+    // Disable AI Highlighter if Twitch is not enabled, because it's a Twitch-only feature
+    if (
+      Services.HighlighterService.aiHighlighterFeatureEnabled &&
+      !this.state.isEnabled('twitch')
+    ) {
+      Services.HighlighterService.actions.setAiHighlighter(false);
+    }
+
     try {
       await getDefined(this.form).validateFields();
       return true;

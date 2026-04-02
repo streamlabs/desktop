@@ -1,18 +1,12 @@
 .stream-shift-wrapper {
   display: inline-flex;
   align-items: center;
+  width: 100%;
 }
 
 .stream-shift-toggle {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  font-size: 14px;
-  color: var(--title);
-
-  :global(.ant-checkbox-wrapper) {
-    align-items: flex-start;
-  }
+  color: var(--title) !important;
 }
 
 .label-ultra-badge {
@@ -20,6 +14,16 @@
   align-items: center;
 }
 
+.label-checkbox {
+  width: 100%;
+  text-wrap: nowrap;
+}
+
+.tooltip {
+  display: flex;
+  align-items: center;
+}
+
 .beta-badge {
-  margin: 1px 0 0 8px !important;
+  margin-left: 10px;
 }

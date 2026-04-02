@@ -44,17 +44,16 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
               <div
                 className={styles.labelUltraBadge}
                 onClick={() => {
-                  Services.MagicLinkService.actions.linkToPrime(
-                    'slobs-streamswitcher',
-                    { event: 'StreamShift' },
-                  );
+                  Services.MagicLinkService.actions.linkToPrime('slobs-streamswitcher', {
+                    event: 'StreamShift',
+                  });
                 }}
               >
                 <UltraIcon type="badge" style={{ marginRight: '5px' }} />
-                {label}
+                <div className={styles.labelCheckbox}>{label}</div>
               </div>
             ) : (
-              <>{label}</>
+              <div className={styles.labelCheckbox}>{label}</div>
             )
           }
           name="streamShift"
@@ -80,8 +79,9 @@ export default function StreamShiftToggle(p: IStreamShiftToggle) {
           placement="top"
           lightShadow={true}
           disabled={p?.disabled}
+          className={styles.tooltip}
         >
-          <i className="icon-information" style={{ marginLeft: '10px' }} />
+          <i className="icon-information" />
         </Tooltip>
       </div>
       <Badge className={styles.betaBadge} content={'Beta'} />

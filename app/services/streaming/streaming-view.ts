@@ -11,12 +11,13 @@ import { UserService } from '../user';
 import { RestreamService, TStreamShiftStatus } from '../restream';
 import { DualOutputService, TDisplayPlatforms, TDisplayDestinations } from '../dual-output';
 import { getPlatformService, TPlatform, TPlatformCapability, platformList } from '../platforms';
-import { TwitchService, TwitterService } from '../../app-services';
+import { IncrementalRolloutService, TwitchService, TwitterService } from '../../app-services';
 import cloneDeep from 'lodash/cloneDeep';
 import difference from 'lodash/difference';
 import { Services } from '../../components-react/service-provider';
 import { getDefined } from '../../util/properties-type-guards';
 import { TDisplayType } from 'services/settings-v2';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 /**
  * The stream info view is responsible for keeping
@@ -51,6 +52,10 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
   private get dualOutputView() {
     return this.getServiceViews(DualOutputService);
+  }
+
+  private get incrementalRolloutView() {
+    return this.getServiceViews(IncrementalRolloutService);
   }
 
   private get streamingState() {
@@ -513,17 +518,6 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
     };
   }
 
-  get isAdvancedMode(): boolean {
-    return (this.isMultiplatformMode || this.isDualOutputMode) && this.settings.advancedMode;
-  }
-
-  get canShowAdvancedMode() {
-    if (this.isStreamShiftMode) {
-      return this.enabledPlatforms.length > 1;
-    }
-    return this.isMultiplatformMode || this.isDualOutputMode;
-  }
-
   /**
    * Returns common fields for the stream such as title, description, game
    */
@@ -776,5 +770,9 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
 
   get selectiveRecording() {
     return this.streamingState.selectiveRecording;
+  }
+
+  get canEditLiveOutputs() {
+    return this.incrementalRolloutView.featureIsEnabled(EAvailableFeatures.liveOutputEditing);
   }
 }

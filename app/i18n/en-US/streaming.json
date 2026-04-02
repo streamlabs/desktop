@@ -339,5 +339,8 @@
   "Unlock unlimited multistreaming with Ultra and grow your audience faster": "Unlock unlimited multistreaming with Ultra and grow your audience faster",
   "<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform": "<dualoutput>Dual Output</dualoutput> is enabled - you must stream to one horizontal and one vertical platform",
   "Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination.": "Streaming to a custom ingest is advanced functionality. Multistreaming is disabled while streaming to a custom ingest and some features may stop working as expected. Switch to recommended settings to multistream to a custom RTMP destination.",
-  "%{platform} Error": "%{platform} Error"
+  "%{platform} Error": "%{platform} Error",
+  "Manage output destinations mid-stream.": "Manage output destinations mid-stream.",
+  "Switch between devices while live.": "Switch between devices while live.",
+  "Live output editing": "Live output editing"
 }

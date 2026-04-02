@@ -28,7 +28,6 @@ button.add-destination-btn {
   position: relative;
   margin: auto;
   margin-bottom: 15px;
-  background-color: var(--background);
 
   &:hover {
     transition: 0.3s !important;
@@ -59,7 +58,7 @@ button.add-destination-btn {
 button.info-banner {
   width: unset !important;
   padding: 5px !important;
-  margin: 0px 15px 12px;
+  margin: 0px 15px;
   height: fit-content;
   align-items: flex-start;
   border-radius: 6px;
@@ -170,7 +169,7 @@ button.add-destination-header {
     width: 12px;
     height: 14px;
     float: inline-end;
-    margin-right: 50px;
+    margin-right: 10px;
     margin-top: 1px;
   }
 }
@@ -192,6 +191,7 @@ button.add-destination-header {
 .ultra-btn:extend(button.add-destination-btn) {
   margin: 0px 15px !important;
   width: calc(100% - 30px) !important;
+  background-color: var(--background);
   font-weight: 500;
 
   .ultra-icon {
@@ -201,29 +201,19 @@ button.add-destination-header {
 }
 
 .small-btn-group {
-  padding: 0px !important;
+  margin: 0px !important;
 }
 
-.small-btn:extend(button.add-destination-btn) {
-  height: 40px !important;
-  font-weight: 500;
+button.small-btn {
   color: var(--title) !important;
-  text-align: left !important;
-  font-size: 14px;
-  border: 0px !important;
-  background-color: var(--section-alt) !important;
-  margin: 0px 15px !important;
-  width: calc(100% - 30px) !important;
 
-  :global(.anticon.anticon-plus) {
-    font-size: 14px !important;
+  span.anticon.anticon-plus {
     color: var(--title) !important;
-    padding-left: 65px !important;
   }
 
   &:hover {
     transition: 0.3s;
-    background-color: var(--button);
+    background-color: var(--button) !important;
   }
 }
 

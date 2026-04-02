@@ -1,5 +1,5 @@
 import { CommonPlatformFields } from '../CommonPlatformFields';
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { $t } from '../../../../services/i18n';
 import { TwitchTagsInput } from './TwitchTagsInput';
 import GameSelector from '../GameSelector';
@@ -12,12 +12,57 @@ import TwitchContentClassificationInput from './TwitchContentClassificationInput
 import AiHighlighterToggle from '../AiHighlighterToggle';
 import Badge from 'components-react/shared/DismissableBadge';
 import { EDismissable } from 'services/dismissables';
-import styles from './TwitchEditStreamInfo.m.less';
-import cx from 'classnames';
+import { CustomFieldsCheckbox } from '../CustomFieldsCheckbox';
+import Utils from 'services/utils';
 
 export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
   const twSettings = p.value;
 
+  function updateSettings(patch: Partial<ITwitchStartStreamOptions>) {
+    p.onChange({ ...twSettings, ...patch });
+  }
+
+  return (
+    <Form name="twitch-settings">
+      <PlatformSettingsLayout
+        layoutMode={p.layoutMode}
+        commonFields={
+          <CommonPlatformFields
+            key="twitch-common"
+            platform="twitch"
+            layoutMode={p.layoutMode}
+            value={twSettings}
+            onChange={updateSettings}
+            layout={p.layout}
+          />
+        }
+        requiredFields={<TwitchRequiredFields key="twitch-required" {...p} />}
+        optionalFields={<TwitchOptionalFields key="twitch-optional" {...p} />}
+      />
+    </Form>
+  );
+}
+
+const TwitchRequiredFields = memo((p: IPlatformComponentParams<'twitch'>) => {
+  const bind = createBinding(p.value, updatedSettings =>
+    p.onChange({ ...p.value, ...updatedSettings }),
+  );
+
+  return (
+    <>
+      <div className="flex__horizontal margin">
+        <GameSelector platform={'twitch'} {...bind.game} layout="vertical" />
+        <TwitchTagsInput label={$t('Twitch Tags')} {...bind.tags} layout="vertical" />
+      </div>
+      {p.isAiHighlighterEnabled && (
+        <AiHighlighterToggle key="ai-toggle" game={bind.game?.value} banner={true} />
+      )}
+    </>
+  );
+});
+
+const TwitchOptionalFields = memo((p: IPlatformComponentParams<'twitch'>) => {
+  const twSettings = p.value;
   function updateSettings(patch: Partial<ITwitchStartStreamOptions>) {
     p.onChange({ ...twSettings, ...patch });
   }
@@ -45,6 +90,7 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
 
   const enhancedBroadcastingEnabled = useMemo(() => {
     if (isDualStream) return true;
+    if (Utils.isPreview()) return true;
     if (multiplePlatformEnabled) return false;
     if (p.isStreamShiftMode) return false;
     return twSettings?.isEnhancedBroadcasting;
@@ -55,63 +101,38 @@ export function TwitchEditStreamInfo(p: IPlatformComponentParams<'twitch'>) {
     p.isStreamShiftMode,
   ]);
 
-  const optionalFields = (
-    <div key="optional">
-      <TwitchTagsInput label={$t('Twitch Tags')} {...bind.tags} layout={p.layout} />
-      <TwitchContentClassificationInput {...bind.contentClassificationLabels} layout={p.layout} />
-      <InputWrapper
-        layout={p.layout}
-        className={cx(styles.twitchCheckbox, { [styles.hideLabel]: p.layout === 'vertical' })}
-      >
-        <CheckboxInput label={$t('Stream features branded content')} {...bind.isBrandedContent} />
-      </InputWrapper>
-      {process.platform !== 'darwin' && (
-        <InputWrapper
-          layout={p.layout}
-          className={cx(styles.twitchCheckbox, { [styles.hideLabel]: p.layout === 'vertical' })}
-        >
-          <CheckboxInput
-            style={{ display: 'inline-block' }}
-            label={$t('Enhanced broadcasting')}
-            tooltip={enhancedBroadcastingTooltipText}
-            {...bind.isEnhancedBroadcasting}
-            disabled={isDualStream || multiplePlatformEnabled || p.isStreamShiftMode}
-            value={enhancedBroadcastingEnabled}
-          />
-          <Badge
-            style={{ display: 'inline-block' }}
-            dismissableKey={EDismissable.EnhancedBroadcasting}
-            content={'Beta'}
-          />
-        </InputWrapper>
-      )}
-    </div>
-  );
-
   return (
-    <Form name="twitch-settings">
-      <PlatformSettingsLayout
-        layoutMode={p.layoutMode}
-        commonFields={
-          <CommonPlatformFields
-            key="common"
-            platform="twitch"
-            layoutMode={p.layoutMode}
-            value={twSettings}
-            onChange={updateSettings}
-            layout={p.layout}
-          />
-        }
-        requiredFields={
-          <React.Fragment key="required-fields">
-            <GameSelector key="required" platform={'twitch'} {...bind.game} layout={p.layout} />
-            {p.isAiHighlighterEnabled && (
-              <AiHighlighterToggle key="ai-toggle" game={bind.game?.value} cardIsExpanded={false} />
-            )}
-          </React.Fragment>
-        }
-        optionalFields={optionalFields}
-      />
-    </Form>
+    <>
+      <TwitchContentClassificationInput {...bind.contentClassificationLabels} layout={p.layout} />
+      <div className="flex__horizontal">
+        <InputWrapper layout="vertical" nolabel>
+          <CheckboxInput label={$t('Stream features branded content')} {...bind.isBrandedContent} />
+        </InputWrapper>
+        <CustomFieldsCheckbox {...p} platform="twitch" />
+        {process.platform !== 'darwin' && (
+          <InputWrapper layout="vertical" nolabel>
+            <CheckboxInput
+              style={{ display: 'inline-block' }}
+              label={$t('Enhanced broadcasting')}
+              tooltip={enhancedBroadcastingTooltipText}
+              {...bind.isEnhancedBroadcasting}
+              disabled={isDualStream || multiplePlatformEnabled || p.isStreamShiftMode}
+              value={enhancedBroadcastingEnabled}
+              tooltipIcon={
+                <i
+                  className="icon-information"
+                  style={{ marginLeft: '4px', verticalAlign: 'middle' }}
+                />
+              }
+            />
+            <Badge
+              style={{ display: 'inline-block', margin: '1px 0 0 0px' }}
+              dismissableKey={EDismissable.EnhancedBroadcasting}
+              content={'Beta'}
+            />
+          </InputWrapper>
+        )}
+      </div>
+    </>
   );
-}
+});

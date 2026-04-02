@@ -46,9 +46,9 @@ export default function RecordingSwitcher(p: IRecordingSettingsProps) {
             Services.SettingsService.actions.setSettingValue('General', 'RecordWhenStreaming', val);
           }}
           uncontrolled
-          style={{ marginRight: '10px' }}
           label={v.isDualOutputMode ? $t('Record Stream in') : $t('Record Stream')}
           layout="horizontal"
+          nomargin
           checkmark
           disabled={v.useAiHighlighter}
         />

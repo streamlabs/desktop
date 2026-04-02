@@ -318,7 +318,7 @@ test('Dual Output Go Live Non-Ultra', async t => {
   // Clean up the dummy account
   await showSettingsWindow('Stream', async () => {
     await waitForDisplayed('h2=Stream Destinations');
-    await clickWhenDisplayed('[data-name="instagramUnlink"]');
+    await clickWhenDisplayed('[data-name="instagramUnlink"]', { timeout: 3000 });
   });
 
   // Vertical display is hidden after logging out

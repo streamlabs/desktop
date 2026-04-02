@@ -5,6 +5,7 @@ import { createBinding, InputComponent } from '../../../shared/inputs';
 import PlatformSettingsLayout, { IPlatformComponentParams } from './PlatformSettingsLayout';
 import { IKickStartStreamOptions } from '../../../../services/platforms/kick';
 import GameSelector from '../GameSelector';
+import { CustomFieldsCheckbox } from '../CustomFieldsCheckbox';
 
 /***
  * Stream Settings for Kick
@@ -23,7 +24,7 @@ export const KickEditStreamInfo = InputComponent((p: IPlatformComponentParams<'k
         layoutMode={p.layoutMode}
         commonFields={
           <CommonPlatformFields
-            key="common"
+            key="kick-common"
             platform="kick"
             layoutMode={p.layoutMode}
             value={kickSettings}
@@ -32,7 +33,10 @@ export const KickEditStreamInfo = InputComponent((p: IPlatformComponentParams<'k
           />
         }
         requiredFields={
-          <GameSelector key="required" platform={'kick'} {...bind.game} layout={p.layout} />
+          <div key="kick-required">
+            <GameSelector key="required" platform={'kick'} {...bind.game} layout={p.layout} />
+            <CustomFieldsCheckbox {...p} platform="kick" />
+          </div>
         }
       />
     </Form>

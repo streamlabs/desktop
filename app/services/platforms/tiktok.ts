@@ -118,7 +118,7 @@ export class TikTokService
   readonly apiBase = 'https://open.tiktokapis.com/v2';
   readonly platform = 'tiktok';
   readonly displayName = 'TikTok';
-  readonly capabilities = new Set<TPlatformCapability>(['title', 'game', 'viewerCount']);
+  readonly capabilities = new Set<TPlatformCapability>(['title', 'game', 'viewerCount', 'chat']);
   readonly liveDockFeatures = new Set<TLiveDockFeature>([
     'view-stream',
     'dashboard',

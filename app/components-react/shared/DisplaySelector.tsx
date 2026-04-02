@@ -15,6 +15,8 @@ interface IDisplaySelectorProps {
   className?: string;
   style?: CSSProperties;
   nolabel?: boolean;
+  alignIcons?: 'left' | 'center' | 'right';
+  visible?: boolean;
 }
 
 export default function DisplaySelector(p: IDisplaySelectorProps) {
@@ -107,12 +109,14 @@ export default function DisplaySelector(p: IDisplaySelectorProps) {
       value={value}
       defaultValue="horizontal"
       options={displays}
+      alignIcons={p?.alignIcons}
       onChange={onChange}
       icons={true}
       className={p?.className}
       style={p?.style}
       direction="horizontal"
       gapsize={0}
+      optionType="button"
     />
   );
 }

@@ -1394,8 +1394,8 @@ export class StreamingService
    * Prefill fields with data if `prepopulateOptions` provided
    */
   showGoLiveWindow(prepopulateOptions?: IGoLiveSettings['prepopulateOptions']) {
-    const height = 750;
-    const width = 800;
+    const height = 800;
+    const width = 910;
 
     this.windowsService.showWindow({
       componentName: 'GoLiveWindow',

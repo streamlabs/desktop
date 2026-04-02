@@ -147,7 +147,11 @@ export class TwitchService
     'dualStream',
   ]);
 
-  readonly liveDockFeatures = new Set<TLiveDockFeature>(['chat-offline', 'refresh-chat']);
+  readonly liveDockFeatures = new Set<TLiveDockFeature>([
+    'chat-offline',
+    'refresh-chat',
+    'chat-streaming',
+  ]);
 
   authWindowOptions: Electron.BrowserWindowConstructorOptions = {
     width: 600,

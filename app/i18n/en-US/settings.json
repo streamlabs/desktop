@@ -289,5 +289,7 @@
   "Select Codec": "Select Codec",
   "%{videoCodec} codec is not supported for Multistream. Would you like to proceed with the H.264 codec or select another codec?": "%{videoCodec} codec is not supported for Multistream. Would you like to proceed with the H.264 codec or select another codec?",
   "%{videoCodec} codec is not supported for Stream Shift. Would you like to proceed with the H.264 codec or select another codec?": "%{videoCodec} codec is not supported for Stream Shift. Would you like to proceed with the H.264 codec or select another codec?",
-  "%{videoCodec} codec is not supported for Dual Output. Would you like to proceed with the H.264 codec or select another codec?": "%{videoCodec} codec is not supported for Dual Output. Would you like to proceed with the H.264 codec or select another codec?"
+  "%{videoCodec} codec is not supported for Dual Output. Would you like to proceed with the H.264 codec or select another codec?": "%{videoCodec} codec is not supported for Dual Output. Would you like to proceed with the H.264 codec or select another codec?",
+  "Live Settings": "Live Settings",
+  "Channel Settings": "Channel Settings"
 }

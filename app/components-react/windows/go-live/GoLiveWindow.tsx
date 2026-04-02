@@ -19,6 +19,7 @@ import { useGoLiveSettings, useGoLiveSettingsRoot } from './useGoLiveSettings';
 import { inject } from 'slap';
 import RecordingSwitcher from './RecordingSwitcher';
 import { promptAction } from 'components-react/modals';
+import TwitterInput from './Twitter';
 
 export default function GoLiveWindow() {
   const { lifecycle, form } = useGoLiveSettingsRoot().extend(module => ({
@@ -34,7 +35,7 @@ export default function GoLiveWindow() {
   const shouldShowChecklist = ['runChecklist', 'live'].includes(lifecycle);
 
   return (
-    <ModalLayout footer={<ModalFooter />} className={styles.dualOutputGoLive}>
+    <ModalLayout footer={<ModalFooter />} className={styles.goLiveSettings}>
       <Form
         form={form!}
         style={{ position: 'relative', height: '100%' }}
@@ -234,7 +235,10 @@ function ModalFooter() {
 
   return (
     <Form layout={'inline'}>
-      {!isDualOutputMode && shouldShowConfirm && <RecordingSwitcher />}
+      <div className={styles.goLiveFooter}>
+        <TwitterInput />
+        {!isDualOutputMode && shouldShowConfirm && <RecordingSwitcher />}
+      </div>
       {/* CLOSE BUTTON */}
       <Button onClick={close}>{$t('Close')}</Button>
 
