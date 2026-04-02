@@ -8,7 +8,7 @@
   "Show Text": "Show Text",
   "Text Color": "Text Color",
   "Font Size": "Font Size",
-  "Tips over": "Tips over",
+  "Tips over": "Tips over {amount}",
   "Tips & Donations": "Tips & Donations",
   "Twitch Subs": "Twitch Subs",
   "Twitch Resubs": "Twitch Resubs",
@@ -19,5 +19,7 @@
   "Picarto Follows": "Picarto Follows",
   "Picarto Subscriptions": "Picarto Subscriptions",
   "Facebook Support Gifters": "Facebook Support Gifters",
+  "Kick Follows": "Kick Follows",
+  "Kick Subscriptions": "Kick Subscriptions",
   "Manage Jar": "Manage Jar"
 }
