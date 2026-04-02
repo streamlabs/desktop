@@ -7,7 +7,10 @@ import PlatformLogo from 'components-react/shared/PlatformLogo';
 import Tooltip from 'components-react/shared/Tooltip';
 import { $t } from 'services/i18n';
 import { Services } from 'components-react/service-provider';
+import { IListOption } from 'components-react/shared/inputs/ListInput';
 import UltraIcon from 'components-react/shared/UltraIcon';
+import styles from './GoLive.m.less';
+import cx from 'classnames';
 
 interface IPrimaryChatSwitcherProps {
   enabledPlatforms: TPlatform[];
@@ -40,51 +43,64 @@ export default function PrimaryChatSwitcher({
 }: IPrimaryChatSwitcherProps) {
   const primaryChatOptions = useMemo(
     () =>
-      enabledPlatforms.map(platform => {
-        const service = getPlatformService(platform);
-        return {
+      enabledPlatforms.reduce((platforms: IListOption<TPlatform>[], p) => {
+        const service = getPlatformService(p);
+
+        if (
+          !service.hasLiveDockFeature('chat-streaming') &&
+          !service.hasLiveDockFeature('chat-offline')
+        ) {
+          return platforms;
+        }
+        platforms.push({
           label: service.displayName,
-          value: platform,
-        };
-      }),
+          value: p,
+        });
+        return platforms;
+      }, []),
     [enabledPlatforms],
   );
 
+  const switcherDisabled = useMemo(() => {
+    if (disabled) return false;
+    return primaryChatOptions.length === 1;
+  }, [disabled, primaryChatOptions]);
+
   return (
-    <div data-name="primaryChat" style={style} className={className}>
-      {border && <Divider style={{ marginBottom: '8px' }} />}
-      <Form layout={layout}>
-        <ListInput
-          name="primaryChat"
-          label={
-            tooltip ? (
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                {`${$t('Primary Chat')}:`}
-                {!Services.UserService.views.isPrime &&
-                !Services.DualOutputService.views.dualOutputMode ? (
-                  <UltraIcon type="badge" style={{ marginLeft: '10px' }} />
-                ) : (
-                  <Tooltip title={tooltip} placement="top" lightShadow={true}>
-                    <i className="icon-information" style={{ marginLeft: '10px' }} />
-                  </Tooltip>
-                )}
-              </div>
-            ) : (
-              `${$t('Primary Chat')}:`
-            )
-          }
-          options={primaryChatOptions}
-          labelRender={opt => renderPrimaryChatOption(opt, logo)}
-          optionRender={opt => renderPrimaryChatOption(opt, logo)}
-          value={primaryChat}
-          onChange={onSetPrimaryChat}
-          suffixIcon={suffixIcon}
-          size={size}
-          disabled={disabled}
-          dropdownMatchSelectWidth={false}
-        />
-      </Form>
-    </div>
+    <Form layout={layout}>
+      <ListInput
+        name="primaryChat"
+        style={style}
+        className={cx(className, { [styles.disabled]: switcherDisabled })}
+        label={
+          tooltip ? (
+            <div style={{ display: 'flex', alignItems: 'center', width: 'fit-content' }}>
+              {`${$t('Primary Chat')}:`}
+              {!Services.UserService.views.isPrime &&
+              !Services.DualOutputService.views.dualOutputMode ? (
+                <UltraIcon type="badge" style={{ marginLeft: '10px' }} />
+              ) : (
+                <Tooltip title={tooltip} placement="top" lightShadow={true}>
+                  <i className="icon-information" style={{ marginLeft: '10px' }} />
+                </Tooltip>
+              )}
+            </div>
+          ) : (
+            `${$t('Primary Chat')}:`
+          )
+        }
+        options={primaryChatOptions}
+        labelRender={opt => renderPrimaryChatOption(opt, logo)}
+        optionRender={opt => renderPrimaryChatOption(opt, logo)}
+        value={primaryChat}
+        onChange={onSetPrimaryChat}
+        suffixIcon={suffixIcon}
+        size={size}
+        disabled={switcherDisabled}
+        dropdownMatchSelectWidth={false}
+        bordered={border}
+      />
+    </Form>
   );
 }
 

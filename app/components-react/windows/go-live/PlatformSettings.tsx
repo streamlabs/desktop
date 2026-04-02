@@ -8,26 +8,24 @@ import { Section } from './Section';
 import { YoutubeEditStreamInfo } from './platforms/YoutubeEditStreamInfo';
 import { TikTokEditStreamInfo } from './platforms/TiktokEditStreamInfo';
 import FacebookEditStreamInfo from './platforms/FacebookEditStreamInfo';
-import { IPlatformComponentParams, TLayoutMode } from './platforms/PlatformSettingsLayout';
+import { IPlatformComponentParams } from './platforms/PlatformSettingsLayout';
 import { getDefined } from '../../../util/properties-type-guards';
 import { TrovoEditStreamInfo } from './platforms/TrovoEditStreamInfo';
 import { TwitterEditStreamInfo } from './platforms/TwitterEditStreamInfo';
 import { InstagramEditStreamInfo } from './platforms/InstagramEditStreamInfo';
 import { KickEditStreamInfo } from './platforms/KickEditStreamInfo';
-import AdvancedSettingsSwitch from './AdvancedSettingsSwitch';
 import { TInputLayout } from 'components-react/shared/inputs';
 import { inject } from 'slap';
 import { HighlighterService } from 'app-services';
+import { SwitcherCard } from './SwitcherCard';
+import UltraIcon from 'components-react/shared/UltraIcon';
+import Utils from 'services/utils';
 
 export default function PlatformSettings() {
   const {
-    canShowAdvancedMode,
     settings,
-    error,
-    isAdvancedMode,
     enabledPlatforms,
     getPlatformDisplayName,
-    isLoading,
     updatePlatform,
     commonFields,
     updateCommonFields,
@@ -39,6 +37,10 @@ export default function PlatformSettings() {
     isAiHighlighterEnabled,
     isStreamShiftMode,
     enabledPlatformsCount,
+    isMidStreamMode,
+    isPrime,
+    setStreamShift,
+    canEditLiveOutputs,
   } = useGoLiveSettings().extend(settings => ({
     highlighterService: inject(HighlighterService),
 
@@ -49,11 +51,11 @@ export default function PlatformSettings() {
     },
 
     get isTikTokConnected() {
-      return settings.state.isPlatformLinked('tiktok');
+      return settings.isPlatformLinked('tiktok');
     },
 
     get layout(): TInputLayout {
-      return settings.isAdvancedMode ? 'horizontal' : 'vertical';
+      return 'vertical';
     },
 
     get isAiHighlighterEnabled() {
@@ -65,14 +67,9 @@ export default function PlatformSettings() {
     },
   }));
 
-  const shouldShowSettings = !error && !isLoading;
+  const layoutMode = 'multiplatformAdvanced';
 
-  let layoutMode: TLayoutMode;
-  if (canShowAdvancedMode) {
-    layoutMode = isAdvancedMode ? 'multiplatformAdvanced' : 'multiplatformSimple';
-  } else {
-    layoutMode = 'singlePlatform';
-  }
+  const showLiveSettings = canEditLiveOutputs && Utils.isPreview();
 
   function createPlatformBinding<T extends TPlatform>(platform: T): IPlatformComponentParams<T> {
     return {
@@ -81,6 +78,7 @@ export default function PlatformSettings() {
       isDualOutputMode,
       isStreamShiftMode,
       isAiHighlighterEnabled,
+      isMidStreamMode,
       enabledPlatformsCount,
       get value() {
         return getDefined(settings.platforms[platform]);
@@ -93,70 +91,88 @@ export default function PlatformSettings() {
 
   return (
     // minHeight is required for the loading spinner
-    <div style={{ minHeight: '150px', flex: 1 }}>
-      {shouldShowSettings && (
-        <div style={{ width: '100%' }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '10px',
-              fontSize: '16px',
-            }}
-          >
-            <div>{$t('Stream Information:')}</div>
-            <AdvancedSettingsSwitch />
+    <div style={{ minHeight: '150px', height: '100%', flex: 1 }}>
+      {showLiveSettings && (
+        <>
+          <h2>{$t('Live Settings')}</h2>
+          <div className="flex__horizontal margin">
+            <SwitcherCard
+              onClick={() => setStreamShift(!isStreamShiftMode)}
+              value={isStreamShiftMode}
+              title={
+                <>
+                  {$t('Live output editing')}
+                  {!isPrime && <UltraIcon type="badge" style={{ marginLeft: '5px' }} />}
+                </>
+              }
+              name="live-output"
+              description={$t('Manage output destinations mid-stream.')}
+              icon="icon-output"
+              disabled={!isPrime}
+            />
+            <SwitcherCard
+              onClick={() => setStreamShift(!isStreamShiftMode)}
+              value={isStreamShiftMode}
+              title={
+                <>
+                  {$t('Stream Shift')}
+                  {!isPrime && <UltraIcon type="badge" style={{ marginLeft: '5px' }} />}
+                </>
+              }
+              name="stream-shift"
+              description={$t('Switch between devices while live.')}
+              icon="icon-repeat-2"
+              disabled={!isPrime}
+            />
           </div>
-
-          {/*COMMON FIELDS*/}
-          {canShowAdvancedMode && (
-            <Section isSimpleMode={!isAdvancedMode} title={$t('Common Stream Settings')}>
-              <CommonPlatformFields
-                descriptionIsRequired={descriptionIsRequired}
-                value={commonFields}
-                onChange={updateCommonFields}
-                enabledPlatforms={enabledPlatforms}
-                layout={layout}
-              />
-            </Section>
-          )}
-
-          {/*SETTINGS FOR EACH ENABLED PLATFORM*/}
-          {enabledPlatforms.map((platform: TPlatform) => (
-            <Section
-              title={$t('%{platform} Settings', { platform: getPlatformDisplayName(platform) })}
-              isSimpleMode={!isAdvancedMode}
-              key={platform}
-            >
-              {platform === 'twitch' && (
-                <TwitchEditStreamInfo {...createPlatformBinding('twitch')} layout={layout} />
-              )}
-              {platform === 'facebook' && (
-                <FacebookEditStreamInfo {...createPlatformBinding('facebook')} layout={layout} />
-              )}
-              {platform === 'youtube' && (
-                <YoutubeEditStreamInfo {...createPlatformBinding('youtube')} layout={layout} />
-              )}
-              {platform === 'tiktok' && isTikTokConnected && (
-                <TikTokEditStreamInfo {...createPlatformBinding('tiktok')} layout={layout} />
-              )}
-              {platform === 'kick' && (
-                <KickEditStreamInfo {...createPlatformBinding('kick')} layout={layout} />
-              )}
-              {platform === 'trovo' && (
-                <TrovoEditStreamInfo {...createPlatformBinding('trovo')} layout={layout} />
-              )}
-              {platform === 'twitter' && (
-                <TwitterEditStreamInfo {...createPlatformBinding('twitter')} layout={layout} />
-              )}
-              {platform === 'instagram' && (
-                <InstagramEditStreamInfo {...createPlatformBinding('instagram')} layout={layout} />
-              )}
-            </Section>
-          ))}
-        </div>
+        </>
       )}
+
+      <h2>{$t('Channel Settings')}</h2>
+
+      {/*COMMON FIELDS*/}
+      <Section>
+        <CommonPlatformFields
+          descriptionIsRequired={descriptionIsRequired}
+          value={commonFields}
+          onChange={updateCommonFields}
+          enabledPlatforms={enabledPlatforms}
+          layout={layout}
+        />
+      </Section>
+
+      {/*SETTINGS FOR EACH ENABLED PLATFORM*/}
+      {enabledPlatforms.map((platform: TPlatform) => (
+        <Section
+          title={$t('%{platform} Settings', { platform: getPlatformDisplayName(platform) })}
+          key={platform}
+        >
+          {platform === 'twitch' && (
+            <TwitchEditStreamInfo {...createPlatformBinding('twitch')} layout={layout} />
+          )}
+          {platform === 'facebook' && (
+            <FacebookEditStreamInfo {...createPlatformBinding('facebook')} layout={layout} />
+          )}
+          {platform === 'youtube' && (
+            <YoutubeEditStreamInfo {...createPlatformBinding('youtube')} layout={layout} />
+          )}
+          {platform === 'tiktok' && isTikTokConnected && (
+            <TikTokEditStreamInfo {...createPlatformBinding('tiktok')} layout={layout} />
+          )}
+          {platform === 'kick' && (
+            <KickEditStreamInfo {...createPlatformBinding('kick')} layout={layout} />
+          )}
+          {platform === 'trovo' && (
+            <TrovoEditStreamInfo {...createPlatformBinding('trovo')} layout={layout} />
+          )}
+          {platform === 'twitter' && (
+            <TwitterEditStreamInfo {...createPlatformBinding('twitter')} layout={layout} />
+          )}
+          {platform === 'instagram' && (
+            <InstagramEditStreamInfo {...createPlatformBinding('instagram')} layout={layout} />
+          )}
+        </Section>
+      ))}
     </div>
   );
 }

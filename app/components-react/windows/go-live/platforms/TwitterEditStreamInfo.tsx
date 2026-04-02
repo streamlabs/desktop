@@ -8,6 +8,7 @@ import { ListInput, createBinding } from '../../../shared/inputs';
 import Form from '../../../shared/inputs/Form';
 import { CommonPlatformFields } from '../CommonPlatformFields';
 import { $t } from 'services/i18n';
+import { CustomFieldsCheckbox } from '../CustomFieldsCheckbox';
 
 export function TwitterEditStreamInfo(p: IPlatformComponentParams<'twitter'>) {
   const twSettings = p.value;
@@ -24,7 +25,7 @@ export function TwitterEditStreamInfo(p: IPlatformComponentParams<'twitter'>) {
         layoutMode={p.layoutMode}
         commonFields={
           <CommonPlatformFields
-            key="common"
+            key="twitter-common"
             platform="twitter"
             layoutMode={p.layoutMode}
             value={twSettings}
@@ -33,7 +34,7 @@ export function TwitterEditStreamInfo(p: IPlatformComponentParams<'twitter'>) {
           />
         }
         requiredFields={
-          <div key="required">
+          <div key="twitter-required">
             <ListInput
               {...bind.chatType}
               label={$t('X (Twitter) Chat Type')}
@@ -67,6 +68,7 @@ export function TwitterEditStreamInfo(p: IPlatformComponentParams<'twitter'>) {
               layout={p.layout}
               size="large"
             />
+            <CustomFieldsCheckbox {...p} platform="twitter" />
           </div>
         }
       />

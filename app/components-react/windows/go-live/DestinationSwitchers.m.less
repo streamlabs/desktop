@@ -2,66 +2,91 @@
 @import '../../../styles/mixins.less';
 
 .destination-logo {
-  font-size: 34px;
+  font-size: 16px !important;
+  margin-top: 4px;
 }
 .platform-logo-twitch {
-  font-size: 34px;
+  font-size: 16px !important;
+  margin-top: 5px;
 }
 .platform-logo-youtube {
-  font-size: 31px;
-  margin-top: 9px;
-  width: 34px;
-  height: 34px;
+  font-size: 15px !important;
+  margin-top: 4px !important;
+  width: 16px !important;
+  height: 16px !important;
 }
 .platform-logo-facebook {
-  font-size: 34px;
+  font-size: 16px !important;
 }
 .platform-logo-tiktok {
-  font-size: 34px;
-  margin-left: 5px;
-  width: 34px;
-  height: 34px;
+  font-size: 16px !important;
+  margin-left: 1px;
+  width: 16px !important;
+  height: 16px !important;
 }
 .platform-logo-instagram {
-  font-size: 34px;
-  width: 34px;
-  height: 34px;
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
 }
 .platform-logo-twitter {
-  width: 32px;
-  height: 32px;
+  width: 15px !important;
+  height: 15px !important;
 }
 .platform-logo-kick {
-  width: 34px;
-  height: 34px;
+  width: 16px !important;
+  height: 16px !important;
+  margin-top: 3px;
 }
 .platform-logo-trovo {
-  width: 34px;
-  height: 34px;
+  width: 16px !important;
+  height: 16px !important;
+  margin-top: 5px;
 }
 
 .platform-logo {
-  align-self: center;
-  display: flex;
-  margin-right: 10px;
-  min-width: 36px;
+  margin: 0px 10px 0px 0px;
 }
 
 .platform-switcher {
-  .radius();
-
   display: flex;
-  height: 54px;
-  background: var(--card) !important;
+  flex-direction: column;
+  border-radius: 8px;
+  background: var(--card-target);
   transition: transform 0.05s;
   cursor: pointer;
   margin-bottom: 15px;
   padding: 8px 10px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+
+  .destination-info {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+
+    :global(.ant-form-item) {
+      margin: 0px;
+    }
+
+    :global(.ant-form-item-control-input) {
+      align-items: flex-start;
+    }
+  }
+
+  .col-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .col-account {
+    display: flex;
+    align-items: center;
+  }
 
   .col-input {
-    padding-top: 3px;
     padding-right: 16px;
-    width: 52px;
   }
 
   .col-primary {
@@ -69,21 +94,12 @@
     text-align: center;
   }
 
-  .col-account {
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    align-self: center;
-    flex: 1;
-  }
-
   .platform-name {
     color: var(--title);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
   }
-}
-
-.switch-wrapper {
-  padding: 0px 15px;
 }
 
 .switch-wrapper:last-child {
@@ -94,29 +110,20 @@
   margin-bottom: 0px;
 }
 
-.platform-disabled {
-  background: var(--card-disabled) !important;
-}
-
-.platform-enabled {
-  transition: 0.3 ease-in-out;
-  background: var(--card-active) !important;
-}
-
-.platform-name {
-  font-size: 14px;
-}
-
 .platform-handle {
   font-size: 12px;
   line-height: 18px;
+  margin: 5px 0px 3px 0px;
 }
 
 .display-selector-wrapper {
-  align-self: center;
+  :global(.ant-form-item) {
+    margin-bottom: 0px;
+  }
 }
 
-.dual-output-display-selector {
+.display-selector {
+  margin-top: 6px;
   margin-bottom: 0px !important;
   display: flex;
   align-self: flex-end;

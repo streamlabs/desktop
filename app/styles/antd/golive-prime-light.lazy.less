@@ -1,6 +1,7 @@
 @import '~antd/dist/antd.less';
 @import '../colors';
 @import './antd.less';
+@import '../go-live.less';
 
 // ANTD COLOR MAPPING
 @primary-color: @prime-light;
@@ -64,6 +65,13 @@
 
 @select-multiple-item-disabled-color: @primedark-4;
 @select-item-selected-color: @white;
+@select-dropdown-bg: @primelight-2;
+@select-item-active-bg: @primelight-3;
+@select-item-selected-bg: fade(@prime-light, 12%);
+@select-background: @primelight-1;
+@select-clear-background: @primelight-1;
+@select-selection-item-bg: @primelight-3;
+@select-selection-item-border-color: @primelight-4;
 
 @slider-rail-background-color: @prime-light;
 @slider-rail-background-color-hover: @prime-light;
@@ -82,37 +90,20 @@
 @input-icon-hover-color: @prime-light;
 @input-disabled-color: @disabled-color;
 
-@layout-body-background: @primelight-1;
-@layout-header-background: @primelight-1;
-@layout-trigger-background: @primelight-1;
+@layout-body-background: @primelight-3;
+@layout-header-background: @primelight-3;
+@layout-trigger-background: @primelight-3;
 @layout-trigger-color: @primedark-4;
-@layout-sider-background-light: @primelight-1;
-@layout-trigger-background-light: @primelight-1;
+@layout-sider-background-light: @primelight-3;
+@layout-trigger-background-light: @primelight-3;
 
 @divider-color: @primelight-4;
 
 @tooltip-color: @primedark-4;
-@tooltip-bg: @primelight-2;
+@tooltip-bg: @primelight-1;
 @tooltip-arrow-width: 4px;
 
 @modal-mask-bg: rgba(0, 0, 0, 0.5);
-
-@menu-item-active-danger-bg: @red-light;
-@menu-dark-arrow-color: @primedark-2;
-@menu-dark-inline-submenu-bg: @primelight-2;
-@menu-dark-highlight-color: @primedark-2;
-
-@table-selected-row-hover-bg: @primary-5;
-@table-expanded-row-bg: @primelight-2;
-@table-header-filter-active-bg: @primelight-2;
-
-@picker-basic-cell-hover-with-range-color: lighten(@prime-light, 4%);
-@picker-date-hover-range-border-color: lighten(@prime-light, 4%);
-
-@comment-author-time-color: @primedark-4;
-@comment-action-hover-color: @primelight-1;
-
-@back-top-color: @primedark-2;
 
 @alert-success-border-color: @prime-light;
 @alert-success-bg-color: fade(@prime-light, 8%);
@@ -133,16 +124,3 @@
 
 @border-radius-base: 4px;
 @font-family: 'Roboto', sans-serif;
-
-// Menu
-@menu-item-height: 48px;
-@menu-highlight-color: @primedark-2;
-@menu-item-active-bg: fade(@primary-1, 25%);
-@menu-item-active-border-width: 3px;
-@menu-item-vertical-margin: 0;
-@menu-item-boundary-margin: 0;
-
-// dark theme menu
-@menu-dark-bg: @light-2;
-@menu-dark-item-active-bg: fade(@primary-1, 25%);
-@menu-dark-item-hover-bg: darken(@light-4, 4%);

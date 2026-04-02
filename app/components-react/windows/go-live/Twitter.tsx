@@ -43,11 +43,7 @@ export default function TwitterInput() {
     );
 
   return (
-    <InputWrapper
-      label={$t('Share Your Stream')}
-      nolabel={true}
-      style={{ marginTop: '15px', marginBottom: '0px', borderTop: '1px solid var(--border)' }}
-    >
+    <InputWrapper label={$t('Share Your Stream')} nolabel={true}>
       <PlatformLogo platform="twitter" size={16} style={{ marginRight: '8px' }} />
       <a onClick={openTweetIntent} style={{ fontWeight: 400 }}>
         {$t('Share your stream!')}
