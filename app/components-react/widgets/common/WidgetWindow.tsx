@@ -26,6 +26,7 @@ import { GamePulseWidget } from 'components-react/widgets/GamePulse';
 import { GamePulseModule } from 'components-react/widgets/game-pulse/useGamePulseWidget';
 import { useSubscription } from '../../hooks/useSubscription';
 import { useChildWindowParams } from 'components-react/hooks';
+import { Streamboss, StreambossModule } from '../StreamBoss';
 
 // define list of Widget components and modules
 export const components = {
@@ -48,7 +49,7 @@ export const components = {
   // Poll
   // SpinWheel
   SponsorBanner: [SponsorBanner, SponsorBannerModule],
-  // StreamBoss
+  StreamBoss: [Streamboss, StreambossModule],
   // TipJar
   ViewerCount: [ViewerCount, ViewerCountModule],
   GameWidget: [GameWidget, GameWidgetModule],

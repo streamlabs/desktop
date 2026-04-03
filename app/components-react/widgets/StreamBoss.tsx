@@ -152,7 +152,7 @@ function DisplayGoal(p: { goal: IStreamBossState['data']['goal']; resetGoal: () 
   );
 }
 
-class StreambossModule extends WidgetModule<IStreamBossState> {
+export class StreambossModule extends WidgetModule<IStreamBossState> {
   userService = inject(UserService);
 
   get visualMeta() {
