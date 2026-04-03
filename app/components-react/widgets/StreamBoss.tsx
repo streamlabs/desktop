@@ -1,26 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { inject } from 'slap';
-import { Menu } from 'antd';
+import { Menu, Button, message } from 'antd';
 import { useWidget, WidgetModule } from './common/useWidget';
 import { metadata, TInputMetadata } from 'components-react/shared/inputs/metadata';
 import { $t } from 'services/i18n';
 import { UserService } from 'app-services';
 import { TPlatform } from 'services/platforms';
 import { WidgetLayout } from './common/WidgetLayout';
-import FormFactory from 'components-react/shared/inputs/FormFactory';
+import FormFactory, { TInputValue } from 'components-react/shared/inputs/FormFactory';
 import Form from 'components-react/shared/inputs/Form';
+import { authorizedHeaders, jfetch } from 'util/requests';
+import { assertIsDefined } from 'util/properties-type-guards';
+import styles from './GenericGoal.m.less';
 
-interface IStreamBossData {
+interface IStreamBossState {
   data: {
     goal: {
       boss_img: string;
       boss_name: string;
       current_health: number;
-      mode: string;
-      multiplier: 1;
+      mode: 'fixed' | 'overkill' | 'increment';
+      multiplier: number;
       percent: number;
       total_health: number;
-    };
+    } | null;
     settings: {
       background_color: string;
       bar_bg_color: string;
@@ -51,11 +54,34 @@ export function Streamboss() {
     selectedTab,
     isLoading,
     settings,
+    goalSettings,
     updateSetting,
+    resetGoal,
+    saveGoal,
     visualMeta,
     goalMeta,
     battleMeta,
   } = useStreamboss();
+
+  const hasGoal = !!goalSettings;
+
+  const [goalCreateValues, setGoalCreateValues] = useState<Dictionary<TInputValue>>({
+    total_health: 0,
+    mode: 'fixed',
+    overkill_multiplier: 0,
+    overkill_min: 0,
+    incr_amount: 0,
+  });
+
+  useEffect(() => {
+    message.config({ top: 270 });
+  }, []);
+
+  function updateGoalCreate(key: string) {
+    return (val: TInputValue) => {
+      setGoalCreateValues({ ...goalCreateValues, [key]: val });
+    };
+  }
 
   return (
     <WidgetLayout>
@@ -65,8 +91,24 @@ export function Streamboss() {
         <Menu.Item key="visual">{$t('Visual Settings')}</Menu.Item>
       </Menu>
       <Form>
-        {!isLoading && selectedTab === 'goal' && (
-          <FormFactory metadata={goalMeta} values={settings} onChange={updateSetting} />
+        {!isLoading && selectedTab === 'goal' && !hasGoal && (
+          <>
+            <FormFactory
+              metadata={goalMeta}
+              values={goalCreateValues}
+              onChange={updateGoalCreate}
+            />
+            <Button
+              className="button button--action"
+              onClick={() => saveGoal(goalCreateValues)}
+              style={{ marginBottom: 16 }}
+            >
+              {$t('Set Stream Boss Health')}
+            </Button>
+          </>
+        )}
+        {!isLoading && selectedTab === 'goal' && hasGoal && (
+          <DisplayGoal goal={goalSettings} resetGoal={resetGoal} />
         )}
         {!isLoading && selectedTab === 'battle' && (
           <FormFactory metadata={battleMeta} values={settings} onChange={updateSetting} />
@@ -79,7 +121,38 @@ export function Streamboss() {
   );
 }
 
-class StreambossModule extends WidgetModule<IStreamBossData> {
+function DisplayGoal(p: { goal: IStreamBossState['data']['goal']; resetGoal: () => void }) {
+  if (!p.goal) return <></>;
+  return (
+    <div className="section__body">
+      <div className={styles.goalRow}>
+        <span>{$t('Current Boss Name')}</span>
+        <span>{p.goal.boss_name}</span>
+      </div>
+      <div className={styles.goalRow}>
+        <span>{$t('Total Health')}</span>
+        <span>{p.goal.total_health}</span>
+      </div>
+      <div className={styles.goalRow}>
+        <span>{$t('Current Health')}</span>
+        <span>{p.goal.current_health}</span>
+      </div>
+      <div className={styles.goalRow}>
+        <span>{$t('Mode')}</span>
+        <span>{p.goal.mode}</span>
+      </div>
+      <Button
+        className="button button--soft-warning"
+        onClick={p.resetGoal}
+        style={{ marginBottom: 16 }}
+      >
+        {$t('Reset Boss')}
+      </Button>
+    </div>
+  );
+}
+
+class StreambossModule extends WidgetModule<IStreamBossState> {
   userService = inject(UserService);
 
   get visualMeta() {
@@ -144,10 +217,21 @@ class StreambossModule extends WidgetModule<IStreamBossData> {
             ),
           },
         ],
+        children: {
+          overkill_multiplier: metadata.number({
+            label: $t('Overkill Multiplier'),
+            displayed: this.widgetData.goal?.mode === 'overkill',
+          }),
+          overkill_min: metadata.number({
+            label: $t('Overkill Min Health'),
+            displayed: this.widgetData.goal?.mode === 'overkill',
+          }),
+          incr_amount: metadata.number({
+            label: $t('Increment Amount'),
+            displayed: this.widgetData.goal?.mode === 'increment',
+          }),
+        },
       }),
-      incr_amount: metadata.number({ label: $t('Increment Amount') }),
-      overkill_multiplier: metadata.number({ label: $t('Overkill Multiplier') }),
-      overkill_min: metadata.number({ label: $t('Overkill Min Health') }),
     };
   }
 
@@ -176,6 +260,48 @@ class StreambossModule extends WidgetModule<IStreamBossData> {
         follow_multiplier: metadata.number({ label: $t('Damage Per Follower') }),
       },
     }[platform];
+  }
+
+  get goalSettings() {
+    return this.widgetData.goal;
+  }
+
+  get headers() {
+    return authorizedHeaders(
+      this.userService.apiToken,
+      new Headers({ 'Content-Type': 'application/json' }),
+    );
+  }
+
+  resetGoal() {
+    const url = this.config.goalUrl;
+    if (!url) return;
+    jfetch(new Request(url, { method: 'DELETE', headers: this.headers }));
+    this.setGoalData(null);
+  }
+
+  async saveGoal(options: Dictionary<TInputValue>) {
+    const url = this.config.goalUrl;
+    if (!url) return;
+    try {
+      const resp: IStreamBossState['data'] = await jfetch(
+        new Request(url, {
+          method: 'POST',
+          headers: this.headers,
+          body: JSON.stringify(options),
+        }),
+      );
+      this.setGoalData(resp.goal);
+    } catch (e: unknown) {
+      message.error({ content: (e as any).result.message, duration: 2 });
+    }
+  }
+
+  private setGoalData(goal: IStreamBossState['data']['goal']) {
+    assertIsDefined(this.state.widgetData.data);
+    this.state.mutate(state => {
+      state.widgetData.data.goal = goal;
+    });
   }
 }
 
