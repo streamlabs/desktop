@@ -165,6 +165,7 @@ test('Dual Output', async (t: TExecutionContext) => {
   await toggleDisplay('vertical', true);
   t.false(await isDisplayed('#horizontal-display'));
   t.false(await isDisplayed('#vertical-display'));
+  t.true(await isDisplayed('div=Disable Performance Mode'));
 
   await toggleDisplay('horizontal');
   t.true(await isDisplayed('#horizontal-display'));
@@ -181,12 +182,19 @@ test('Dual Output', async (t: TExecutionContext) => {
   await toggleDisplay('horizontal');
   t.false(await isDisplayed('#horizontal-display'));
   t.false(await isDisplayed('#vertical-display'));
+  t.true(await isDisplayed('div=Disable Performance Mode'));
 
   await toggleDisplay('vertical');
   t.false(await isDisplayed('#horizontal-display'));
   t.true(await isDisplayed('#vertical-display'));
 
   await toggleDisplay('horizontal');
+  t.true(await isDisplayed('#horizontal-display'));
+  t.true(await isDisplayed('#vertical-display'));
+
+  await toggleDisplay('horizontal');
+  await toggleDisplay('vertical');
+  await clickWhenDisplayed('div=Disable Performance Mode');
   t.true(await isDisplayed('#horizontal-display'));
   t.true(await isDisplayed('#vertical-display'));
 
