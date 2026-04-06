@@ -861,8 +861,8 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
    */
 
   confirmDestinationDisplays() {
-    const customDestinations =
-      this.streamSettingsService.settings.goLiveSettings?.customDestinations;
+    const customDestinations = this.streamSettingsService.settings.goLiveSettings
+      ?.customDestinations;
     if (!customDestinations) return;
 
     customDestinations.forEach((destination: ICustomStreamDestination, index: number) => {
