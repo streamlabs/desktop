@@ -70,6 +70,7 @@ const fallbackDictionary = {
   ...require('./en-US/kick.json'),
   ...require('./en-US/stream-shift.json'),
   ...require('./en-US/developer.json'),
+  ...require('./en-US/dual-output.json'),
 };
 
 export default fallbackDictionary;

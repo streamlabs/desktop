@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback, memo } from 'react';
 import {
   ENavName,
   EMenuItemKey,
@@ -25,33 +25,36 @@ import Utils from 'services/utils';
 import { useRealmObject } from 'components-react/hooks/realm';
 
 export default function FeaturesNav() {
-  function toggleStudioMode() {
+  const toggleStudioMode = useCallback(() => {
     UsageStatisticsService.actions.recordClick('NavTools', 'studio-mode');
     if (TransitionsService.views.studioMode) {
       TransitionsService.actions.disableStudioMode();
     } else {
       TransitionsService.actions.enableStudioMode();
     }
-  }
+  }, []);
 
-  function navigate(page: TAppPage, trackingTarget?: string, type?: TExternalLinkType | string) {
-    if (!UserService.views.isLoggedIn && !loggedOutMenuItemTargets.includes(page)) return;
+  const navigate = useCallback(
+    (page: TAppPage, trackingTarget?: string, type?: TExternalLinkType | string) => {
+      if (!UserService.views.isLoggedIn && !loggedOutMenuItemTargets.includes(page)) return;
 
-    if (trackingTarget) {
-      // NOTE: For themes, the submenu items are tracked instead of the menu item
-      // to distinguish between theme feature usage
-      const target = trackingTarget === 'themes' && type ? type : trackingTarget;
-      UsageStatisticsService.actions.recordClick('SideNav2', target);
-    }
+      if (trackingTarget) {
+        // NOTE: For themes, the submenu items are tracked instead of the menu item
+        // to distinguish between theme feature usage
+        const target = trackingTarget === 'themes' && type ? type : trackingTarget;
+        UsageStatisticsService.actions.recordClick('SideNav2', target);
+      }
 
-    if (type) {
-      NavigationService.actions.navigate(page, { type });
-    } else {
-      NavigationService.actions.navigate(page);
-    }
-  }
+      if (type) {
+        NavigationService.actions.navigate(page, { type });
+      } else {
+        NavigationService.actions.navigate(page);
+      }
+    },
+    [],
+  );
 
-  function handleNavigation(menuItem: IMenuItem, key?: string) {
+  const handleNavigation = useCallback((menuItem: IMenuItem, key?: string) => {
     if (menuItem.key === EMenuItemKey.StudioMode) {
       // if studio mode, toggle studio mode
       toggleStudioMode();
@@ -62,11 +65,11 @@ export default function FeaturesNav() {
       navigate(menuItem?.target as TAppPage, menuItem?.trackingTarget);
     }
     setCurrentMenuItem(key ?? menuItem.key);
-  }
+  }, []);
 
-  function isParentMenuItem(menuItem: IMenuItem): menuItem is IParentMenuItem {
+  const isParentMenuItem = useCallback((menuItem: IMenuItem): menuItem is IParentMenuItem => {
     return menuItem.hasOwnProperty('subMenuItems');
-  }
+  }, []);
 
   const {
     IncrementalRolloutService,
@@ -289,113 +292,71 @@ export default function FeaturesNav() {
   );
 }
 
-function FeaturesNavItem(p: {
-  isSubMenuItem?: boolean;
-  menuItem: IMenuItem | IParentMenuItem;
-  handleNavigation: (menuItem: IMenuItem, key?: string) => void;
-  badge?: string;
-  className?: string;
-}) {
-  const { SideNavService, TransitionsService, DualOutputService } = Services;
-  const { isSubMenuItem, menuItem, badge, handleNavigation, className } = p;
+const FeaturesNavItem = memo(
+  (p: {
+    isSubMenuItem?: boolean;
+    menuItem: IMenuItem | IParentMenuItem;
+    handleNavigation: (menuItem: IMenuItem, key?: string) => void;
+    badge?: string;
+    className?: string;
+  }) => {
+    const { SideNavService, TransitionsService, DualOutputService } = Services;
+    const { isSubMenuItem, menuItem, badge, handleNavigation, className } = p;
 
-  const { currentMenuItem, isOpen, studioMode, dualOutputMode } = useVuex(() => ({
-    currentMenuItem: SideNavService.views.currentMenuItem,
-    isOpen: SideNavService.views.isOpen,
-    studioMode: TransitionsService.views.studioMode,
-    dualOutputMode: DualOutputService.views.dualOutputMode,
-  }));
+    const { currentMenuItem, isOpen, studioMode, dualOutputMode, showBothDisplays } = useVuex(
+      () => ({
+        currentMenuItem: SideNavService.views.currentMenuItem,
+        isOpen: SideNavService.views.isOpen,
+        studioMode: TransitionsService.views.studioMode,
+        dualOutputMode: DualOutputService.views.dualOutputMode,
+        showBothDisplays: DualOutputService.views.showBothDisplays,
+      }),
+    );
 
-  function setIcon() {
-    if (menuItem.key === EMenuItemKey.Highlighter) {
-      return <HighlighterIcon />;
-    } else if (menuItem?.icon) {
-      return <i className={menuItem?.icon} />;
-    }
-  }
+    const title = useMemo(() => menuTitles(menuItem.key), [menuItem]);
 
-  const title = useMemo(() => menuTitles(menuItem.key), [menuItem]);
+    const disabled = useMemo(() => {
+      return (
+        (menuItem.key === EMenuItemKey.StudioMode && dualOutputMode) ||
+        (menuItem.key === EMenuItemKey.StudioMode && showBothDisplays)
+      );
+    }, [menuItem, dualOutputMode, showBothDisplays]);
 
-  const disabled = dualOutputMode && menuItem.key === EMenuItemKey.StudioMode;
+    const handleClick = useCallback(() => {
+      if (disabled) {
+        message.error({
+          content: $t('Cannot toggle Studio Mode in Dual Output Mode.'),
+          className: styles.toggleError,
+        });
+      } else {
+        handleNavigation(menuItem);
+      }
+    }, [disabled, handleNavigation, menuItem]);
 
-  function showErrorMessage() {
-    message.error({
-      content: $t('Cannot toggle Studio Mode in Dual Output Mode.'),
-      className: styles.toggleError,
-    });
-  }
-
-  return (
-    <MenuItem
-      className={cx(
-        className,
-        !isSubMenuItem && !isOpen && styles.closed,
-        !isSubMenuItem &&
-          menuItem.key === EMenuItemKey.StudioMode &&
-          studioMode &&
-          styles.studioMode,
-        currentMenuItem === menuItem.key && styles.active,
-      )}
-      title={title}
-      icon={setIcon()}
-      onClick={() => {
-        if (disabled) {
-          showErrorMessage();
-        } else {
-          handleNavigation(menuItem);
-        }
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        {title}
-        {badge && (
-          <div className={styles.betaTag}>
-            <p style={{ margin: 0 }}>{badge}</p>
-          </div>
+    return (
+      <MenuItem
+        className={cx(
+          className,
+          !isSubMenuItem && !isOpen && styles.closed,
+          !isSubMenuItem &&
+            menuItem.key === EMenuItemKey.StudioMode &&
+            studioMode &&
+            styles.studioMode,
+          currentMenuItem === menuItem.key && styles.active,
         )}
-      </div>
-    </MenuItem>
-  );
-}
-
-// TODO: Replace with font icon once updated font is merged
-const HighlighterIcon = () => (
-  <svg
-    width="12px"
-    height="12px"
-    viewBox="0 0 18 18"
-    xmlns="http://www.w3.org/2000/svg"
-    className="highlighter"
-    style={{ fill: 'var(--paragraph)' }}
-  >
-    <g clipPath="url(#clip0)">
-      <path d="M0.736816 10.4971V16.1241C0.736816 17.1587 1.57862 17.9997 2.61248 17.9997H16.1173C17.152 17.9997 17.993 17.1587 17.993 16.1241V10.4971H0.736816V10.4971Z" />
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M5.30361 2.56988L8.88907 1.71484L11.4745 5.15035L7.64504 6.01543L7.64807 6.01989L4.51906 6.75186L2.27539 3.28364L5.30125 2.56641L5.30361 2.56988Z"
-      />
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M17.3426 0.851841L17.9811 3.27371C18.0066 3.37275 17.9916 3.47709 17.9391 3.5641C17.8865 3.65111 17.801 3.71339 17.7012 3.7359L14.3855 4.42042L12.2759 4.96974L9.68604 1.52675L10.6496 1.34058L15.9974 0.028045C16.5924 -0.107742 17.1956 0.262868 17.3426 0.851841Z"
-      />
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M8.26681 6.75197L8.26877 6.74707H11.2121L10.0116 9.74741H7.06836L7.06862 9.74676H3.31689L4.51918 6.75212L8.26681 6.75197Z"
-      />
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M10.8198 9.74741L12.0203 6.74707H15.7717H16.5H17.6181C17.8259 6.74707 17.9932 6.91437 17.9933 7.12218V9.74815H14.5713L14.5716 9.74741H10.8198Z"
-      />
-      <path d="M1.49516 3.4707L0.883682 3.61549C0.585836 3.68302 0.333746 3.86382 0.173938 4.12344C0.014131 4.3838 -0.033136 4.68991 0.0411407 4.98624L0.736641 7.73522V9.74745H2.50877L3.63491 6.87594L1.49516 3.4707Z" />
-    </g>
-    <defs>
-      <clipPath id="clip0">
-        <rect width="18" height="18" fill="white" />
-      </clipPath>
-    </defs>
-  </svg>
+        title={title}
+        icon={menuItem?.icon ? <i className={menuItem?.icon} /> : undefined}
+        onClick={handleClick}
+      >
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          {title}
+          {badge && (
+            <div className={styles.betaTag}>
+              <p style={{ margin: 0 }}>{badge}</p>
+            </div>
+          )}
+        </div>
+      </MenuItem>
+    );
+  },
 );
