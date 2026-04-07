@@ -809,11 +809,12 @@ export class OutputSettingsService extends Service {
   getStreamingVideoEncoderSettings(): ISettings {
     const output = this.settingsService.state.Output.formData;
 
-    const bitrate = this.settingsService.findSettingValue(output, 'Streaming', 'VBitrate');
+    const bitrate =
+      this.settingsService.findSettingValue(output, 'Streaming', 'bitrate') ??
+      this.settingsService.findSettingValue(output, 'Streaming', 'VBitrate');
 
     // TODO: these are only being fetched in advanced mode
     const rateControl = this.settingsService.findSettingValue(output, 'Streaming', 'rate_control');
-    // const bitrate = this.settingsService.findSettingValue(output, 'Streaming', 'bitrate');
     const keyintSec = this.settingsService.findSettingValue(output, 'Streaming', 'keyint_sec');
     const x264opts = this.settingsService.findSettingValue(output, 'Streaming', 'x264opts');
 
