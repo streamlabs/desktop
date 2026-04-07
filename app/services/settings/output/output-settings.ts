@@ -274,6 +274,25 @@ export function obsEncoderToEncoderFamily(
   }
 }
 
+export function convertFileFormatToRecordingFormat(format: EFileFormat): ERecordingFormat {
+  switch (format) {
+    case EFileFormat.mp4:
+      return ERecordingFormat.MP4;
+    case EFileFormat.flv:
+      return ERecordingFormat.FLV;
+    case EFileFormat.mov:
+      return ERecordingFormat.MOV;
+    case EFileFormat.mkv:
+      return ERecordingFormat.MKV;
+    case EFileFormat.mpegts:
+    case EFileFormat.ts:
+      return ERecordingFormat.MPEGTS;
+    case EFileFormat.hls:
+    case EFileFormat.m3u8:
+      return ERecordingFormat.HLS;
+  }
+}
+
 export class OutputSettingsService extends Service {
   @Inject() private settingsService: SettingsService;
   @Inject() private videoSettingsService: VideoSettingsService;
@@ -965,22 +984,7 @@ export class OutputSettingsService extends Service {
   }
 
   convertFileFormatToRecordingFormat(format: EFileFormat): ERecordingFormat {
-    switch (format) {
-      case EFileFormat.mp4:
-        return ERecordingFormat.MP4;
-      case EFileFormat.flv:
-        return ERecordingFormat.FLV;
-      case EFileFormat.mov:
-        return ERecordingFormat.MOV;
-      case EFileFormat.mkv:
-        return ERecordingFormat.MKV;
-      case EFileFormat.mpegts:
-      case EFileFormat.ts:
-        return ERecordingFormat.MPEGTS;
-      case EFileFormat.hls:
-      case EFileFormat.m3u8:
-        return ERecordingFormat.HLS;
-    }
+    return convertFileFormatToRecordingFormat(format);
   }
 
   /**
