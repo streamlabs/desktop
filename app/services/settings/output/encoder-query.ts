@@ -35,7 +35,7 @@ export class EncoderQueryService extends Service {
       if (mode === 'Simple') {
         const instance = SimpleStreamingFactory.create();
         try {
-          const encoders = (instance as unknown as IWithAvailableEncoders).getAvailableEncoders();
+          const encoders = ((instance as unknown) as IWithAvailableEncoders).getAvailableEncoders();
           return mapEncoders(encoders);
         } finally {
           SimpleStreamingFactory.destroy(instance);
@@ -43,7 +43,7 @@ export class EncoderQueryService extends Service {
       } else {
         const instance = AdvancedStreamingFactory.create();
         try {
-          const encoders = (instance as unknown as IWithAvailableEncoders).getAvailableEncoders();
+          const encoders = ((instance as unknown) as IWithAvailableEncoders).getAvailableEncoders();
           return mapEncoders(encoders);
         } finally {
           AdvancedStreamingFactory.destroy(instance);
@@ -64,7 +64,7 @@ export class EncoderQueryService extends Service {
         const instance = SimpleRecordingFactory.create();
         try {
           instance.format = format;
-          const encoders = (instance as unknown as IWithAvailableEncoders).getAvailableEncoders();
+          const encoders = ((instance as unknown) as IWithAvailableEncoders).getAvailableEncoders();
           return mapEncoders(encoders);
         } finally {
           SimpleRecordingFactory.destroy(instance);
@@ -73,7 +73,7 @@ export class EncoderQueryService extends Service {
         const instance = AdvancedRecordingFactory.create();
         try {
           instance.format = format;
-          const encoders = (instance as unknown as IWithAvailableEncoders).getAvailableEncoders();
+          const encoders = ((instance as unknown) as IWithAvailableEncoders).getAvailableEncoders();
           return mapEncoders(encoders);
         } finally {
           AdvancedRecordingFactory.destroy(instance);
