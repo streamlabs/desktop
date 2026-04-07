@@ -66,6 +66,14 @@ export default function AILanding() {
     UsageStatisticsService,
     VisionService,
   } = Services;
+  function trackEvent(type: string, data?: Record<string, any>) {
+    UsageStatisticsService.actions.recordAnalyticsEvent('AiFeature', {
+      type,
+      source: 'AiLanding',
+      ...(data ?? {}),
+    });
+  }
+
   const visionActions = VisionService.actions;
   const visionState = useRealmObject(VisionService.state);
 
@@ -76,17 +84,20 @@ export default function AILanding() {
   useEffect(() => {
     let active = true;
     let processing = false;
+
     void loadProductionApps();
+    trackEvent('impression');
+
     return () => {
       active = false;
     };
 
     async function loadProductionApps() {
+      if (getOS() !== OS.Windows) return;
       if (processing) return;
+
       processing = true;
       setIsAgentAppInstalled(false);
-
-      if (getOS() !== OS.Windows) return;
       await PlatformAppsService.actions.return.loadProductionApps();
 
       // Bail early if the component unmounted while we were loading.
@@ -97,14 +108,6 @@ export default function AILanding() {
       processing = false;
     }
   }, []);
-
-  function trackEvent(type: string, data?: Record<string, any>) {
-    UsageStatisticsService.actions.recordAnalyticsEvent('AiFeature', {
-      type,
-      source: 'AiLanding',
-      ...(data ?? {}),
-    });
-  }
 
   function onToggleAiClick(isEnabled?: boolean) {
     const newIsEnabled = isEnabled ?? !enabled;
