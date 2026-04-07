@@ -99,7 +99,13 @@ async function validateRecordingFiles(
   waitForDisplayed('h1=Recordings');
 
   const numRecordings = await getNumElements('[data-test=filename]');
-  t.is(numRecordings, numFiles, 'All recordings show in history matches number of files recorded');
+  t.is(
+    numRecordings,
+    numFiles,
+    `All recordings from ${
+      advanced ? 'Advanced' : 'Simple'
+    } mode in history matches number of files recorded`,
+  );
 }
 
 /**

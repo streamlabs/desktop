@@ -647,10 +647,10 @@ export class OutputSettingsService extends Service {
           'VodTrackIndex',
         );
 
-        return { ...advancedStreamSettings, twitchTrack };
+        return { ...advancedStreamSettings, twitchTrack } as IAdvancedStreamingOutputSettings;
       }
 
-      return advancedStreamSettings;
+      return advancedStreamSettings as IAdvancedStreamingOutputSettings;
     } else {
       return {
         videoEncoder,
@@ -658,7 +658,7 @@ export class OutputSettingsService extends Service {
         useAdvanced,
         customEncSettings,
         enableTwitchVOD,
-      };
+      } as ISimpleStreamingOutputSettings;
     }
   }
 
@@ -806,12 +806,16 @@ export class OutputSettingsService extends Service {
     return this.settingsService.findSettingValue(output, 'Recording', 'RecAAudio') ?? 'ffmpeg_aac';
   }
 
-  getStreamingVideoEncoderSettings(): ISettings {
+  getStreamingVideoEncoderSettings(mode: TOutputSettingsMode): ISettings {
     const output = this.settingsService.state.Output.formData;
 
     const bitrate =
       this.settingsService.findSettingValue(output, 'Streaming', 'bitrate') ??
       this.settingsService.findSettingValue(output, 'Streaming', 'VBitrate');
+
+    if (mode === 'Simple') {
+      return { bitrate };
+    }
 
     // TODO: these are only being fetched in advanced mode
     const rateControl = this.settingsService.findSettingValue(output, 'Streaming', 'rate_control');

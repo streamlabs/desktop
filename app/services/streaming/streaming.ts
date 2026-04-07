@@ -2239,14 +2239,21 @@ export class StreamingService
       ) {
         const encoderSettings =
           type === 'streaming'
-            ? this.outputSettingsService.getStreamingVideoEncoderSettings()
+            ? this.outputSettingsService.getStreamingVideoEncoderSettings(mode)
             : undefined;
 
-        instance.videoEncoder = VideoEncoderFactory.create(
-          settings.videoEncoder,
-          `video-encoder-${type}-${contextName}`,
-          encoderSettings,
-        );
+        if (encoderSettings) {
+          instance.videoEncoder = VideoEncoderFactory.create(
+            settings.videoEncoder,
+            `video-encoder-${type}-${contextName}`,
+            encoderSettings,
+          );
+        } else {
+          instance.videoEncoder = VideoEncoderFactory.create(
+            settings.videoEncoder,
+            `video-encoder-${type}-${contextName}`,
+          );
+        }
 
         if (instance.videoEncoder.lastError) {
           console.error(
