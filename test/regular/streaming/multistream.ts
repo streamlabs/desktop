@@ -310,7 +310,8 @@ test('Stream Shift', withUser('twitch', { prime: true, multistream: true }), asy
   // Multistream shift
   await goLiveWithStreamShift(t, true);
 
-  await goLiveWithDefaultCodec();
+  // Skip testing UI for incompatible codecs until backend changes are merged
+  // await goLiveWithDefaultCodec();
 
   t.pass();
 });

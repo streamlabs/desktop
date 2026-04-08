@@ -13,13 +13,14 @@ import {
 import { showSettingsWindow } from '../../helpers/modules/settings/settings';
 import { clickButton, focusChild, isDisplayed, waitForDisplayed } from '../../helpers/modules/core';
 import { restartApp, skipCheckingErrorsInLog, test, useWebdriver } from '../../helpers/webdriver';
-import { reserveUserFromPool } from '../../helpers/webdriver/user';
+import { reserveUserFromPool, withUser } from '../../helpers/webdriver/user';
 import { getApiClient } from '../../helpers/api-client';
 import { StreamSettingsService } from '../../../app/services/settings/streaming';
 import { assertFormContains, fillForm } from '../../helpers/modules/forms';
 import { setInputValue } from '../../helpers/modules/forms/base';
 import { logIn } from '../../helpers/modules/user';
 import { dismissModal } from '../../helpers/webdriver/modals';
+import { sleep } from '../../helpers/sleep';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -140,5 +141,35 @@ test('Streaming to Twitch unlisted category', async t => {
     title: 'SLOBS Test unlisted Stream',
     twitchGame: 'Unlisted',
   });
+  t.pass();
+});
+
+test('Twitch Enhanced Broadcasting', withUser('twitch', { multistream: true }), async t => {
+  await prepareToGoLive();
+  await clickGoLive();
+  await waitForSettingsWindowLoaded();
+
+  await fillForm({
+    title: 'Test Stream',
+    twitchGame: 'Fortnite',
+    isEnhancedBroadcasting: true,
+  });
+
+  await submit();
+  await waitForStreamStart();
+  await stopStream();
+
+  await clickGoLive();
+  await waitForSettingsWindowLoaded();
+
+  await fillForm({
+    trovo: true,
+    trovoGame: 'Doom',
+  });
+
+  await submit();
+  await waitForStreamStart();
+  await stopStream();
+
   t.pass();
 });
