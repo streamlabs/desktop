@@ -1829,8 +1829,18 @@ export class StreamingService
       if (stream.enableTwitchVOD && stream.twitchTrack) {
         this.validateOrCreateAudioTrack(stream.twitchTrack);
       } else if (stream.enableTwitchVOD) {
-        stream.twitchTrack = 6;
-        this.validateOrCreateAudioTrack(stream.twitchTrack);
+        console.error('Twitch VOD is enabled but no Twitch audio track is set.');
+        this.rejectStartStreaming();
+        this.setError(
+          createStreamError(
+            'UNKNOWN_STREAMING_ERROR_WITH_MESSAGE',
+            {},
+            'Twitch VOD is enabled but no Twitch audio track is set. Please select a Twitch audio track in the output settings and try again.',
+          ),
+        );
+        this.handleDestroyOutputContexts(contextName);
+
+        return;
       }
 
       this.contexts[contextName].streaming = stream as

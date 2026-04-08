@@ -20,7 +20,14 @@ import { assertFormContains, fillForm } from '../../helpers/modules/forms';
 import { setInputValue } from '../../helpers/modules/forms/base';
 import { logIn } from '../../helpers/modules/user';
 import { dismissModal } from '../../helpers/webdriver/modals';
-import { sleep } from '../../helpers/sleep';
+
+async function enableTwitchVOD() {
+  await showSettingsWindow('Output', async () => {
+    await fillForm({ Mode: 'Advanced' });
+    await fillForm('Streaming', { VodTrackEnabled: true, VodTrackIndex: 3 });
+    await clickButton('Close');
+  });
+}
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -28,6 +35,7 @@ useWebdriver();
 
 test('Streaming to Twitch', async t => {
   await logIn('twitch', { multistream: false });
+
   await goLive({
     title: 'SLOBS Test Stream',
     twitchGame: 'Warcraft III',
@@ -38,6 +46,15 @@ test('Streaming to Twitch', async t => {
   await showSettingsWindow('Stream');
   await waitForDisplayed("div=You can not change these settings when you're live");
   await stopStream();
+
+  // Twitch VOD Track
+  await enableTwitchVOD();
+  await clickGoLive();
+  await waitForSettingsWindowLoaded();
+  await submit();
+  await waitForStreamStart();
+  await stopStream();
+
   t.pass();
 });
 
@@ -146,6 +163,8 @@ test('Streaming to Twitch unlisted category', async t => {
 
 test('Twitch Enhanced Broadcasting', withUser('twitch', { multistream: true }), async t => {
   await prepareToGoLive();
+
+  // Single Output Single Stream
   await clickGoLive();
   await waitForSettingsWindowLoaded();
 
@@ -159,17 +178,29 @@ test('Twitch Enhanced Broadcasting', withUser('twitch', { multistream: true }), 
   await waitForStreamStart();
   await stopStream();
 
+  // Single Output Single Stream with Twitch VOD enabled
+  await enableTwitchVOD();
+  await goLive();
+  await stopStream();
+
+  // Single Output Multistream
   await clickGoLive();
   await waitForSettingsWindowLoaded();
 
   await fillForm({
     trovo: true,
-    trovoGame: 'Doom',
   });
 
+  await waitForSettingsWindowLoaded();
   await submit();
   await waitForStreamStart();
   await stopStream();
+
+  // Twitch VOD not available with multistream
+  await showSettingsWindow('Output', async () => {
+    const vodTrackDisplayed = await isDisplayed('input[name="VodTrackEnabled"]');
+    t.false(vodTrackDisplayed, 'Twitch VOD option is not displayed when multistream is enabled');
+  });
 
   t.pass();
 });
