@@ -26,11 +26,10 @@ export function Mixer() {
   }, []);
 
   const performanceMode = useRealmObject(CustomizationService.state).performanceMode;
-  const { audioSourceIds, hideStyleBlockers } = useVuex(() => ({
+  const { audioSourceIds } = useVuex(() => ({
     audioSourceIds: AudioService.views.sourcesForCurrentScene
       .filter(source => !source.mixerHidden && source.isControlledViaObs)
       .map(source => source.sourceId),
-    hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
   }));
 
   function showAdvancedSettings() {

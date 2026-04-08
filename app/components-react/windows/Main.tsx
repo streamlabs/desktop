@@ -85,7 +85,7 @@ export default function Main() {
     hideStyleBlockers,
     streamingStatus,
     isLoggedIn,
-    platform,
+    platformType,
     activeSceneId,
   } = useVuex(() => ({
     errorAlert: AppService.state.errorAlert,
@@ -93,7 +93,7 @@ export default function Main() {
     hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
     streamingStatus: StreamingService.state.streamingStatus,
     isLoggedIn: UserService.views.isLoggedIn,
-    platform: UserService.views.platform,
+    platformType: UserService.views.platform?.type,
     activeSceneId: ScenesService.views.activeSceneId,
   }));
 
@@ -110,10 +110,10 @@ export default function Main() {
       !isOnboarding &&
       hasLiveDock &&
       !showLoadingSpinner &&
-      platform &&
-      getPlatformService(platform.type).liveDockEnabled
+      platformType &&
+      getPlatformService(platformType).liveDockEnabled
     );
-  }, [isLoggedIn, isOnboarding, hasLiveDock, showLoadingSpinner, platform?.type]);
+  }, [isLoggedIn, isOnboarding, hasLiveDock, showLoadingSpinner, platformType]);
 
   const theme = useMemo(() => {
     return !bulkLoadFinished ? loadedTheme() || 'night-theme' : realmTheme;

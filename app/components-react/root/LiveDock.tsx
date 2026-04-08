@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, memo } from 'react';
 import * as remote from '@electron/remote';
 import cx from 'classnames';
 import { Menu } from 'antd';
@@ -259,7 +259,7 @@ class LiveDockController {
   }
 }
 
-export default function LiveDockWithContext() {
+function LiveDockWithContext() {
   const controller = useMemo(() => new LiveDockController(), []);
   return (
     <LiveDockCtx.Provider value={controller}>
@@ -285,19 +285,21 @@ function LiveDock() {
     pageSlot,
     liveText,
     streamingStatus,
-  } = useVuex(() =>
-    pick(ctrl, [
-      'isStreaming',
-      'isRestreaming',
-      'hasChatTabs',
-      'applicationLoading',
-      'hideStyleBlockers',
-      'pageSlot',
-      'currentViewers',
-      'liveText',
-      'hasLiveDockFeature',
-      'streamingStatus',
-    ]),
+  } = useVuex(
+    () =>
+      pick(ctrl, [
+        'isStreaming',
+        'isRestreaming',
+        'hasChatTabs',
+        'applicationLoading',
+        'hideStyleBlockers',
+        'pageSlot',
+        'currentViewers',
+        'liveText',
+        'hasLiveDockFeature',
+        'streamingStatus',
+      ]),
+    false,
   );
 
   const collapsed = useRealmObject(Services.CustomizationService.state).livedockCollapsed;
@@ -456,7 +458,9 @@ function LiveDock() {
   );
 }
 
-function ChatTabs(p: { visibleChat: string; setChat: (key: string) => void }) {
+export default memo(LiveDockWithContext);
+
+const ChatTabs = memo((p: { visibleChat: string; setChat: (key: string) => void }) => {
   const ctrl = useController(LiveDockCtx);
   return (
     <div className="flex">
@@ -490,4 +494,4 @@ function ChatTabs(p: { visibleChat: string; setChat: (key: string) => void }) {
       </div>
     </div>
   );
-}
+});

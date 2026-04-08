@@ -1,5 +1,5 @@
 import { useVuex } from 'components-react/hooks';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import styles from './StudioEditor.m.less';
 import { Services } from 'components-react/service-provider';
 import cx from 'classnames';
@@ -377,7 +377,7 @@ export default function StudioEditor() {
   );
 }
 
-function StudioModeControls(p: { stacked: boolean }) {
+const StudioModeControls = memo((p: { stacked: boolean }) => {
   const { TransitionsService } = Services;
 
   return (
@@ -397,9 +397,9 @@ function StudioModeControls(p: { stacked: boolean }) {
       <span className={styles.studioModeControl}>{$t('Live')}</span>
     </div>
   );
-}
+});
 
-function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
+const DualOutputControls = memo((p: { stacked: boolean; isRecording: boolean }) => {
   const showHorizontal = Services.DualOutputService.views.showHorizontalDisplay;
   const showVertical = Services.DualOutputService.views.showVerticalDisplay;
 
@@ -453,7 +453,7 @@ function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
       </div>
     </div>
   );
-}
+});
 
 /**
  * Note for the streaming and recording icons:

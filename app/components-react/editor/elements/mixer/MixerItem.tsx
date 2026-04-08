@@ -16,7 +16,6 @@ export default function MixerItem(p: { audioSourceId: string; volmetersEnabled?:
   const performanceMode = useRealmObject(CustomizationService.state).performanceMode;
 
   const { sourceName, muted, deflection, db } = useVuex(() => ({
-    performanceMode: CustomizationService.state.performanceMode,
     sourceName: SourcesService.state.sources[p.audioSourceId]?.name,
     muted: AudioService.views.getSource(p.audioSourceId)?.muted,
     deflection: AudioService.views.getSource(p.audioSourceId)?.fader.deflection,

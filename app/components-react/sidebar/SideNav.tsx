@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, memo } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import cx from 'classnames';
 import { EMenuItemKey, ESubMenuItemKey } from 'services/side-nav';
@@ -16,7 +16,7 @@ import { useRealmObject } from 'components-react/hooks/realm';
 
 const { Sider } = Layout;
 
-export default function SideNav() {
+function SideNav() {
   const { CustomizationService, SideNavService, WindowsService } = Services;
 
   const {
@@ -26,14 +26,17 @@ export default function SideNav() {
     toggleMenuStatus,
     updateStyleBlockers,
     hideStyleBlockers,
-  } = useVuex(() => ({
-    currentMenuItem: SideNavService.views.currentMenuItem,
-    setCurrentMenuItem: SideNavService.actions.setCurrentMenuItem,
-    isOpen: SideNavService.views.isOpen,
-    toggleMenuStatus: SideNavService.actions.toggleMenuStatus,
-    updateStyleBlockers: WindowsService.actions.updateStyleBlockers,
-    hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
-  }));
+  } = useVuex(
+    () => ({
+      currentMenuItem: SideNavService.views.currentMenuItem,
+      setCurrentMenuItem: SideNavService.actions.setCurrentMenuItem,
+      isOpen: SideNavService.views.isOpen,
+      toggleMenuStatus: SideNavService.actions.toggleMenuStatus,
+      updateStyleBlockers: WindowsService.actions.updateStyleBlockers,
+      hideStyleBlockers: WindowsService.state.main.hideStyleBlockers,
+    }),
+    false,
+  );
 
   const sider = useRef<HTMLDivElement | null>(null);
   const isMounted = useRef(false);
@@ -140,7 +143,9 @@ export default function SideNav() {
   );
 }
 
-function LoginHelpTip() {
+export default memo(SideNav);
+
+const LoginHelpTip = memo(() => {
   return (
     <HelpTip
       title={$t('Login')}
@@ -156,4 +161,4 @@ function LoginHelpTip() {
       </div>
     </HelpTip>
   );
-}
+});

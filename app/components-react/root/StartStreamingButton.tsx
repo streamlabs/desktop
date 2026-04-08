@@ -9,6 +9,7 @@ import * as remote from '@electron/remote';
 import { TStreamShiftStatus } from 'services/restream';
 import { promptAction } from 'components-react/modals';
 import { IStreamShiftRequested, IStreamShiftActionCompleted } from 'services/websocket';
+import { useRealmObject } from 'components-react/hooks/realm';
 
 export default function StartStreamingButton(p: { disabled?: boolean }) {
   const {
@@ -32,7 +33,6 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     isPrime,
     primaryPlatform,
     isMultiplatformMode,
-    updateStreamInfoOnLive,
   } = useVuex(() => ({
     streamingStatus: StreamingService.state.streamingStatus,
     delayEnabled: StreamingService.views.delayEnabled,
@@ -43,11 +43,12 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
     isPrime: UserService.state.isPrime,
     primaryPlatform: UserService.state.auth?.primaryPlatform,
     isMultiplatformMode: StreamingService.views.isMultiplatformMode,
-    updateStreamInfoOnLive: CustomizationService.state.updateStreamInfoOnLive,
   }));
 
   const [delaySecondsRemaining, setDelayTick] = useState(delaySeconds);
   const [isLoading, setIsLoading] = useState(false);
+
+  const updateStreamInfoOnLive = useRealmObject(CustomizationService.state).updateStreamInfoOnLive;
 
   useEffect(() => {
     setDelayTick(delaySeconds);
@@ -284,7 +285,6 @@ export default function StartStreamingButton(p: { disabled?: boolean }) {
   const shouldShowGoLiveWindow = useCallback(() => {
     if (!UserService.isLoggedIn) return false;
     const primaryPlatform = UserService.state.auth?.primaryPlatform;
-    const updateStreamInfoOnLive = CustomizationService.state.updateStreamInfoOnLive;
 
     if (!primaryPlatform) return false;
 
