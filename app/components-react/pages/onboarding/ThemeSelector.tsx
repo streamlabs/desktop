@@ -43,7 +43,12 @@ export function ThemeSelector() {
 
   function previewImages(theme: IThemeMetadata) {
     if (!theme?.data) return [];
-    return Object.values(theme.data.custom_images).slice(0, 3);
+    const customImages = Object.values(theme.data.custom_images).slice(0, 3);
+    if (customImages.length > 0) {
+      return customImages;
+    } else {
+      return theme.data.preview_images;
+    }
   }
 
   function focusTheme(theme: IThemeMetadata | null) {
