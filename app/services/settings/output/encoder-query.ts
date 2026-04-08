@@ -30,6 +30,10 @@ function mapEncoders(encoders: IEncoderOption[]): IObsListOption<string>[] {
   return encoders.map(e => ({ description: e.title, value: e.name }));
 }
 
+function hasGetAvailableEncoders(instance: any): instance is IWithAvailableEncoders {
+  return typeof instance?.getAvailableEncoders === 'function';
+}
+
 const platformServiceConfig: Record<TPlatform, { streamType: string; service?: string }> = {
   twitch: { streamType: 'rtmp_common', service: 'Twitch' },
   youtube: { streamType: 'rtmp_common', service: 'YouTube - RTMPS' },
@@ -51,9 +55,9 @@ export class EncoderQueryService extends Service {
     try {
       // Try to use an existing streaming instance first
       const existing = this.streamingService.getStreamingInstance();
-      if (existing) {
+      if (existing && hasGetAvailableEncoders(existing)) {
         console.log('[EncoderQueryService] streaming: using existing instance');
-        const encoders = ((existing as unknown) as IWithAvailableEncoders).getAvailableEncoders();
+        const encoders = existing.getAvailableEncoders();
         console.log(`[EncoderQueryService] streaming: result=${JSON.stringify(mapEncoders(encoders))}`);
         return mapEncoders(encoders);
       }
@@ -64,7 +68,11 @@ export class EncoderQueryService extends Service {
         const instance = SimpleStreamingFactory.create();
         try {
           this.setupTempStreamingService(instance);
-          const encoders = ((instance as unknown) as IWithAvailableEncoders).getAvailableEncoders();
+          if (!hasGetAvailableEncoders(instance)) {
+            console.log('[EncoderQueryService] streaming: temp Simple instance has no getAvailableEncoders');
+            return [];
+          }
+          const encoders = instance.getAvailableEncoders();
           console.log(`[EncoderQueryService] streaming: temp Simple result=${JSON.stringify(mapEncoders(encoders))}`);
           return mapEncoders(encoders);
         } finally {
@@ -74,7 +82,11 @@ export class EncoderQueryService extends Service {
         const instance = AdvancedStreamingFactory.create();
         try {
           this.setupTempStreamingService(instance);
-          const encoders = ((instance as unknown) as IWithAvailableEncoders).getAvailableEncoders();
+          if (!hasGetAvailableEncoders(instance)) {
+            console.log('[EncoderQueryService] streaming: temp Advanced instance has no getAvailableEncoders');
+            return [];
+          }
+          const encoders = instance.getAvailableEncoders();
           console.log(`[EncoderQueryService] streaming: temp Advanced result=${JSON.stringify(mapEncoders(encoders))}`);
           return mapEncoders(encoders);
         } finally {
@@ -94,9 +106,9 @@ export class EncoderQueryService extends Service {
     try {
       // Try to use an existing recording instance first
       const existing = this.streamingService.getRecordingInstance();
-      if (existing) {
+      if (existing && hasGetAvailableEncoders(existing)) {
         console.log('[EncoderQueryService] recording: using existing instance');
-        const encoders = ((existing as unknown) as IWithAvailableEncoders).getAvailableEncoders();
+        const encoders = existing.getAvailableEncoders();
         console.log(`[EncoderQueryService] recording: result=${JSON.stringify(mapEncoders(encoders))}`);
         return mapEncoders(encoders);
       }
@@ -107,7 +119,11 @@ export class EncoderQueryService extends Service {
         const instance = SimpleRecordingFactory.create();
         try {
           instance.format = format;
-          const encoders = ((instance as unknown) as IWithAvailableEncoders).getAvailableEncoders();
+          if (!hasGetAvailableEncoders(instance)) {
+            console.log('[EncoderQueryService] recording: temp Simple instance has no getAvailableEncoders');
+            return [];
+          }
+          const encoders = instance.getAvailableEncoders();
           console.log(`[EncoderQueryService] recording: temp Simple format=${format} result=${JSON.stringify(mapEncoders(encoders))}`);
           return mapEncoders(encoders);
         } finally {
@@ -117,7 +133,11 @@ export class EncoderQueryService extends Service {
         const instance = AdvancedRecordingFactory.create();
         try {
           instance.format = format;
-          const encoders = ((instance as unknown) as IWithAvailableEncoders).getAvailableEncoders();
+          if (!hasGetAvailableEncoders(instance)) {
+            console.log('[EncoderQueryService] recording: temp Advanced instance has no getAvailableEncoders');
+            return [];
+          }
+          const encoders = instance.getAvailableEncoders();
           console.log(`[EncoderQueryService] recording: temp Advanced format=${format} result=${JSON.stringify(mapEncoders(encoders))}`);
           return mapEncoders(encoders);
         } finally {
