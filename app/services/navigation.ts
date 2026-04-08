@@ -7,21 +7,22 @@ import { RealmObject } from './realm';
 import { TCategoryName } from './settings';
 
 export type TAppPage =
-  | 'Studio'
-  | 'Onboarding'
+  | 'AILanding'
+  | 'AlertboxLibrary'
   | 'BrowseOverlays'
+  | 'Grow'
+  | 'Highlighter'
+  | 'LayoutEditor'
+  | 'Onboarding'
   | 'PatchNotes'
   | 'PlatformAppMainPage'
   | 'PlatformAppStore'
   | 'PlatformMerge'
-  | 'LayoutEditor'
   | 'PrimeExpiration'
-  | 'AlertboxLibrary'
+  | 'RecordingHistory'
   | 'StreamScheduler'
-  | 'Highlighter'
-  | 'Grow'
-  | 'ThemeAudit'
-  | 'RecordingHistory';
+  | 'Studio'
+  | 'ThemeAudit';
 
 interface INavigationState {
   currentPage: TAppPage;

@@ -25,11 +25,15 @@ export function MultistreamingSettings() {
   }
 
   function learnMoreUltra() {
-    MagicLinkService.actions.linkToPrime('slobs-multistream-settings', { redirectToCheckout: false });
+    MagicLinkService.actions.linkToPrime('slobs-multistream-settings', {
+      redirectToCheckout: false,
+    });
   }
 
   function learnMoreMultistreaming() {
-    remote.shell.openExternal(`https://${Services.HostsService.streamlabs}/content-hub/post/what-makes-streamlabs-multistreaming-different`);
+    remote.shell.openExternal(
+      `https://${Services.HostsService.streamlabs}/content-hub/post/what-makes-streamlabs-multistreaming-different`,
+    );
   }
 
   function renderFree() {
@@ -40,7 +44,11 @@ export function MultistreamingSettings() {
             <UltraIcon style={{ marginRight: '10px' }} />
             {$t('Multistream')}
           </h1>
-          <p>{$t('Grow faster and reach a wider audience by streaming to multiple destinations at once, including Twitch, YouTube, TikTok, Kick, and more. Get unlimited multistreaming with Streamlabs Ultra.')}</p>
+          <p>
+            {$t(
+              'Grow faster and reach a wider audience by streaming to multiple destinations at once, including Twitch, YouTube, TikTok, Kick, and more. Get unlimited multistreaming with Streamlabs Ultra.',
+            )}
+          </p>
           <img src={$i('images/multistreaming.png')} className={styles.multistreamImage} />
           <ButtonHighlighted
             text={$t('Upgrade to Ultra')}
@@ -55,15 +63,31 @@ export function MultistreamingSettings() {
           <Callout
             icon="icon-question"
             title={$t('Why Streamlabs Multistream?')}
-            message={<>
-              <p>{$t('While other providers rely on your bandwidth and PC, Streamlabs Multistream servers do the heavy lifting so you maintain your stream quality.')}</p>
-              <p>
-                <span style={{ fontWeight: 500 }}>{$t('New creators who multistream regularly* are 2x as likely to attract 5+ concurrent viewers.')}</span>
-                <br />
-                <span className={styles.calloutFootnote}>{$t('* new users who have been streaming up to six months and who have multistreamed 7+ times')}</span>
-              </p>
-              <Button type="link" onClick={learnMoreMultistreaming}>{$t('Learn more about Streamlabs Multistream')}</Button>
-            </>}
+            message={
+              <>
+                <p>
+                  {$t(
+                    'While other providers rely on your bandwidth and PC, Streamlabs Multistream servers do the heavy lifting so you maintain your stream quality.',
+                  )}
+                </p>
+                <p>
+                  <span style={{ fontWeight: 500 }}>
+                    {$t(
+                      'New creators who multistream regularly* are 2x as likely to attract 5+ concurrent viewers.',
+                    )}
+                  </span>
+                  <br />
+                  <span className={styles.calloutFootnote}>
+                    {$t(
+                      '* new users who have been streaming up to six months and who have multistreamed 7+ times',
+                    )}
+                  </span>
+                </p>
+                <Button type="link" onClick={learnMoreMultistreaming}>
+                  {$t('Learn more about Streamlabs Multistream')}
+                </Button>
+              </>
+            }
             className={styles.callout}
           />
         </section>
@@ -106,7 +130,5 @@ export function MultistreamingSettings() {
     );
   }
 
-  return (v.isLoggedIn && !v.isPrime)
-    ? renderFree()
-    : renderUltra();
+  return v.isLoggedIn && !v.isPrime ? renderFree() : renderUltra();
 }

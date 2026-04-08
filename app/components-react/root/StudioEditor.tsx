@@ -18,7 +18,6 @@ import { EAvailableFeatures } from 'services/incremental-rollout';
 
 export default function StudioEditor() {
   const {
-    WindowsService,
     CustomizationService,
     EditorService,
     TransitionsService,
@@ -34,13 +33,12 @@ export default function StudioEditor() {
   const v = useVuex(() => ({
     cursor: EditorService.state.cursor,
     studioMode: TransitionsService.state.studioMode,
-    dualOutputMode: DualOutputService.views.dualOutputMode,
     showHorizontalDisplay: DualOutputService.views.showHorizontalDisplay,
-    showVerticalDisplay:
-      DualOutputService.views.showVerticalDisplay && !StreamingService.state.selectiveRecording,
+    showVerticalDisplay: DualOutputService.views.showVerticalDisplay,
     isRecording: StreamingService.views.isRecording,
     activeSceneId: ScenesService.views.activeSceneId,
     isLoading: DualOutputService.views.isLoading,
+    dualOutputMode: DualOutputService.views.dualOutputMode,
   }));
   const displayEnabled = !performanceMode && !v.isLoading;
   const placeholderRef = useRef<HTMLDivElement>(null);
@@ -402,14 +400,10 @@ function StudioModeControls(p: { stacked: boolean }) {
 }
 
 function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
-  function openSettingsWindow() {
-    Services.SettingsService.actions.showSettings('Video');
-  }
-
   const showHorizontal = Services.DualOutputService.views.showHorizontalDisplay;
-  const showVertical =
-    Services.DualOutputService.views.showVerticalDisplay &&
-    !Services.StreamingService.state.selectiveRecording;
+  const showVertical = Services.DualOutputService.views.showVerticalDisplay;
+
+  const v = useVuex(() => ({ toggleDisplay: Services.DualOutputService.actions.toggleDisplay }));
 
   const showRecordingIcons = useMemo(() => {
     return (
@@ -425,23 +419,37 @@ function DualOutputControls(p: { stacked: boolean; isRecording: boolean }) {
       id="dual-output-header"
       className={cx(styles.dualOutputHeader, { [styles.stacked]: p.stacked })}
     >
-      {showHorizontal && (
-        <div className={styles.horizontalHeader}>
-          <i className="icon-desktop" />
-          <span>{$t('Horizontal Output')}</span>
-          {showRecordingIcons && <DualOutputIcons display="horizontal" />}
-        </div>
-      )}
+      <div
+        id="horizontal-display-toggle"
+        className={styles.toggleWrapper}
+        onClick={() => v.toggleDisplay(!showHorizontal, 'horizontal')}
+      >
+        {showRecordingIcons && <DualOutputIcons display="horizontal" />}
+        {showHorizontal ? (
+          <i className={cx('icon-view', styles.displayVisible)} />
+        ) : (
+          <i className="icon-hide" />
+        )}
+        <span className={cx({ [styles.displayVisible]: showHorizontal })}>
+          {$t('Horizontal canvas')}
+        </span>
+        {showRecordingIcons && <DualOutputIcons display="horizontal" />}
+      </div>
 
-      {showVertical && (
-        <div className={styles.verticalHeader}>
-          <i className="icon-phone-case" />
-          <span>{$t('Vertical Output')}</span>
-          {showRecordingIcons && <DualOutputIcons display="vertical" />}
-        </div>
-      )}
-      <div className={styles.manageLink}>
-        <a onClick={openSettingsWindow}>{$t('Manage Dual Output')}</a>
+      <div
+        id="vertical-display-toggle"
+        className={styles.toggleWrapper}
+        onClick={() => v.toggleDisplay(!showVertical, 'vertical')}
+      >
+        {showRecordingIcons && <DualOutputIcons display="vertical" />}
+        {showVertical ? (
+          <i className={cx('icon-view', styles.displayVisible)} />
+        ) : (
+          <i className="icon-hide" />
+        )}
+        <span className={cx({ [styles.displayVisible]: showVertical })}>
+          {$t('Vertical canvas')}
+        </span>
       </div>
     </div>
   );

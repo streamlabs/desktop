@@ -11,6 +11,7 @@
  */
 
 const fallbackDictionary = {
+  ...require('./en-US/ai.json'),
   ...require('./en-US/advanced-statistics.json'),
   ...require('./en-US/app.json'),
   ...require('./en-US/apps.json'),
@@ -69,6 +70,7 @@ const fallbackDictionary = {
   ...require('./en-US/kick.json'),
   ...require('./en-US/stream-shift.json'),
   ...require('./en-US/developer.json'),
+  ...require('./en-US/dual-output.json'),
 };
 
 export default fallbackDictionary;

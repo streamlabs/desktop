@@ -27,7 +27,8 @@ import invert from 'lodash/invert';
 import forEachRight from 'lodash/forEachRight';
 import { NotificationsService, ENotificationType } from 'services/notifications';
 import { $t } from 'services/i18n';
-import { JsonrpcService } from 'app-services';
+import { JsonrpcService } from 'services/api/jsonrpc';
+import { CustomizationService, CustomizationState } from 'services/customization';
 
 interface IDisplayVideoSettings {
   horizontal: IVideoInfo;
@@ -173,6 +174,10 @@ class DualOutputViews extends ViewHandler<IDualOutputServiceState> {
     return this.showHorizontalDisplay && this.showVerticalDisplay;
   }
 
+  get hideBothDisplays() {
+    return !this.showHorizontalDisplay && !this.showVerticalDisplay;
+  }
+
   get onlyVerticalDisplayActive() {
     return this.activeDisplays.vertical && !this.activeDisplays.horizontal;
   }
@@ -296,6 +301,7 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
   @Inject() private settingsService: SettingsService;
   @Inject() private notificationsService: NotificationsService;
   @Inject() private jsonrpcService: JsonrpcService;
+  @Inject() private customizationService: CustomizationService;
 
   static defaultState: IDualOutputServiceState = {
     dualOutputMode: false,
@@ -314,6 +320,7 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
   sceneNodeHandled = new Subject<number>();
   collectionHandled = new Subject<{ [sceneId: string]: Dictionary<string> } | null>();
   dualOutputModeChanged = new Subject<boolean>();
+  displayToggled = new Subject();
 
   get views() {
     return new DualOutputViews(this.state);
@@ -327,6 +334,31 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
 
     // Disable global Rescale Output
     this.disableGlobalRescaleIfNeeded();
+
+    /**
+     * Handles enabling/disabling performance mode when toggling displays
+     */
+    this.displayToggled.subscribe(() => {
+      if (this.views.hideBothDisplays && !this.customizationService.performanceMode) {
+        this.customizationService.actions.togglePerformanceMode();
+      }
+    });
+
+    /**
+     * In dual output mode, when toggling off performance mode show both displays
+     */
+    this.customizationService.settingsChanged.subscribe(
+      (settingsPatch: DeepPartial<CustomizationState>) => {
+        if (
+          settingsPatch.performanceMode !== null &&
+          settingsPatch.performanceMode === false &&
+          this.views.dualOutputMode
+        ) {
+          this.toggleDisplay(true, 'horizontal');
+          this.toggleDisplay(true, 'vertical');
+        }
+      },
+    );
 
     /**
      * Ensures that scene collection loads correctly for dual output
@@ -462,6 +494,10 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
    * @remark Primarily a wrapper for the mutation to toggle dual output mode
    */
   toggleDualOutputMode(status: boolean) {
+    if (this.views.hideBothDisplays && !this.customizationService.performanceMode) {
+      this.customizationService.actions.togglePerformanceMode();
+    }
+
     this.SET_SHOW_DUAL_OUTPUT(status);
   }
 
@@ -848,6 +884,8 @@ export class DualOutputService extends PersistentStatefulService<IDualOutputServ
    */
   toggleDisplay(status: boolean, display: TDisplayType) {
     this.SET_DISPLAY_ACTIVE(status, display);
+
+    this.displayToggled.next();
   }
 
   /**

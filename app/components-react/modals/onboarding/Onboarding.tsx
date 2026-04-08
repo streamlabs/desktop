@@ -77,6 +77,8 @@ export default function Onboarding() {
   if (!currentStep || !showOnboarding) return <></>;
 
   const Component = STEPS_MAP[currentStep.name];
+  const continueText =
+    currentStep.name === EOnboardingSteps.Ultra ? $t('Continue with Free') : $t('Continue');
 
   return (
     <Modal
@@ -103,7 +105,7 @@ export default function Onboarding() {
           )}
           {!NO_BUTTON_STEPS.has(currentStep.name) && (
             <Button type="primary" onClick={cont}>
-              {$t('Continue')}
+              {continueText}
             </Button>
           )}
         </div>
@@ -120,23 +122,29 @@ export function Header(p: { title: string; description?: string }) {
       <div className={styles.kevinBox}>
         <KevinSvg style={{ height: 32, width: 36, fill: 'var(--background)' }} />
       </div>
-      <h1>{p.title}</h1>
+      <h1 style={{ marginBottom: !p.description ? 16 : undefined }}>{p.title}</h1>
       {p.description && <span style={{ marginBottom: 16 }}>{p.description}</span>}
     </>
   );
 }
 
 export function ImageCard(p: {
-  metadata: { img: string; title: string; description: string; isUltra?: boolean };
+  metadata: { img: string; title: string; description: string; isUltra?: boolean; count?: number };
 }) {
   return (
-    <div style={{ textAlign: 'left', padding: 16, maxWidth: '50%' }}>
-      <img style={{ height: 160, width: 'auto', marginBottom: 16 }} src={p.metadata.img} />
+    <div
+      style={{
+        textAlign: 'left',
+        padding: 16,
+        maxWidth: `${Math.floor(900 / (p.metadata.count || 3))}px`,
+      }}
+    >
+      <img style={{ width: '100%', height: 'auto', marginBottom: 16 }} src={p.metadata.img} />
       <h4>
         {p.metadata.isUltra && <UltraIcon style={{ marginRight: 4 }} />}
         {p.metadata.title}
       </h4>
-      <span>{p.metadata.description}</span>
+      <span style={{ width: '100%' }}>{p.metadata.description}</span>
     </div>
   );
 }
