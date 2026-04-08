@@ -48,10 +48,7 @@ const platformServiceConfig: Record<TPlatform, { streamType: string; service?: s
 interface ICacheEntry {
   key: string;
   value: IObsListOption<string>[];
-  timestamp: number;
 }
-
-const CACHE_TTL_MS = 2000;
 
 export class EncoderQueryService extends Service {
   @Inject() private streamingService: StreamingService;
@@ -65,13 +62,8 @@ export class EncoderQueryService extends Service {
   ): IObsListOption<string>[] {
     const platform = this.getPrimaryPlatform();
     const cacheKey = `${mode}:${platform || 'none'}`;
-    const now = Date.now();
 
-    if (
-      this.streamingEncoderCache &&
-      this.streamingEncoderCache.key === cacheKey &&
-      now - this.streamingEncoderCache.timestamp < CACHE_TTL_MS
-    ) {
+    if (this.streamingEncoderCache?.key === cacheKey) {
       return this.streamingEncoderCache.value;
     }
 
@@ -81,7 +73,7 @@ export class EncoderQueryService extends Service {
       if (existing && hasGetAvailableEncoders(existing)) {
         console.log('[EncoderQueryService] streaming: using existing instance');
         const result = mapEncoders(existing.getAvailableEncoders());
-        this.streamingEncoderCache = { key: cacheKey, value: result, timestamp: now };
+        this.streamingEncoderCache = { key: cacheKey, value: result };
         return result;
       }
 
@@ -96,7 +88,7 @@ export class EncoderQueryService extends Service {
             return [];
           }
           const result = mapEncoders(instance.getAvailableEncoders());
-          this.streamingEncoderCache = { key: cacheKey, value: result, timestamp: now };
+          this.streamingEncoderCache = { key: cacheKey, value: result };
           return result;
         } finally {
           SimpleStreamingFactory.destroy(instance);
@@ -111,7 +103,7 @@ export class EncoderQueryService extends Service {
             return [];
           }
           const result = mapEncoders(instance.getAvailableEncoders());
-          this.streamingEncoderCache = { key: cacheKey, value: result, timestamp: now };
+          this.streamingEncoderCache = { key: cacheKey, value: result };
           return result;
         } finally {
           AdvancedStreamingFactory.destroy(instance);
@@ -129,13 +121,8 @@ export class EncoderQueryService extends Service {
     format: ERecordingFormat,
   ): IObsListOption<string>[] {
     const cacheKey = `${mode}:${format}`;
-    const now = Date.now();
 
-    if (
-      this.recordingEncoderCache &&
-      this.recordingEncoderCache.key === cacheKey &&
-      now - this.recordingEncoderCache.timestamp < CACHE_TTL_MS
-    ) {
+    if (this.recordingEncoderCache?.key === cacheKey) {
       return this.recordingEncoderCache.value;
     }
 
@@ -145,7 +132,7 @@ export class EncoderQueryService extends Service {
       if (existing && hasGetAvailableEncoders(existing)) {
         console.log('[EncoderQueryService] recording: using existing instance');
         const result = mapEncoders(existing.getAvailableEncoders());
-        this.recordingEncoderCache = { key: cacheKey, value: result, timestamp: now };
+        this.recordingEncoderCache = { key: cacheKey, value: result };
         return result;
       }
 
@@ -159,7 +146,7 @@ export class EncoderQueryService extends Service {
             return [];
           }
           const result = mapEncoders(instance.getAvailableEncoders());
-          this.recordingEncoderCache = { key: cacheKey, value: result, timestamp: now };
+          this.recordingEncoderCache = { key: cacheKey, value: result };
           return result;
         } finally {
           SimpleRecordingFactory.destroy(instance);
@@ -172,7 +159,7 @@ export class EncoderQueryService extends Service {
             return [];
           }
           const result = mapEncoders(instance.getAvailableEncoders());
-          this.recordingEncoderCache = { key: cacheKey, value: result, timestamp: now };
+          this.recordingEncoderCache = { key: cacheKey, value: result };
           return result;
         } finally {
           AdvancedRecordingFactory.destroy(instance);
