@@ -109,7 +109,7 @@ interface IOutputContext {
 
 interface IStreamingContextSettings {
   output: TDisplayOutput;
-  audioTrack: number;
+  audioTrack?: number;
   start?: boolean;
   context?: TOutputContext;
   isEnhancedBroadcasting?: boolean;
@@ -1595,13 +1595,17 @@ export class StreamingService
   ) {
     // Handle single output mode
     if (context === 'enhancedBroadcasting') {
-      await this.createStreaming({
-        output: 'horizontal',
-        audioTrack: 1,
-        start: true,
-        context: 'horizontal',
-        isEnhancedBroadcasting: false,
-      });
+      if (this.views.shouldSetupRestream) {
+        await this.createStreaming({
+          output: 'horizontal',
+          audioTrack: 1,
+          start: true,
+          context: 'horizontal',
+          isEnhancedBroadcasting: false,
+        });
+      } else {
+        await this.handleStartStreaming(code);
+      }
     }
 
     if (context === 'horizontal') {
@@ -1727,7 +1731,6 @@ export class StreamingService
 
     await this.createStreaming({
       output: display,
-      audioTrack: 3,
       start: true,
       context: 'enhancedBroadcasting',
       isEnhancedBroadcasting: true,
@@ -1814,15 +1817,18 @@ export class StreamingService
       const resolution = this.videoSettingsService.outputResolutions[display];
       stream.outputWidth = resolution.outputWidth;
       stream.outputHeight = resolution.outputHeight;
-      // stream audio track
-      this.validateOrCreateAudioTrack(index);
-      stream.audioTrack = index;
+
+      if (!isEnhancedBroadcasting) {
+        // stream audio track
+        this.validateOrCreateAudioTrack(index);
+        stream.audioTrack = index;
+      }
+
       // Twitch VOD audio track
       if (stream.enableTwitchVOD && stream.twitchTrack) {
         this.validateOrCreateAudioTrack(stream.twitchTrack);
       } else if (stream.enableTwitchVOD) {
-        // do not use the same audio track for the VOD as the stream
-        stream.twitchTrack = !isEnhancedBroadcasting ? index : index + 1;
+        stream.twitchTrack = 6;
         this.validateOrCreateAudioTrack(stream.twitchTrack);
       }
 
