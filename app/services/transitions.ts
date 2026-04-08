@@ -114,6 +114,18 @@ class TransitionsViews extends ViewHandler<ITransitionsState> {
     return this.state.transitions.find(tran => tran.id === id);
   }
 
+  get transitions() {
+    return this.state.transitions;
+  }
+
+  get defaultTransitionId() {
+    return this.state.defaultTransitionId;
+  }
+
+  get connections() {
+    return this.state.connections;
+  }
+
   get studioMode() {
     return this.state.studioMode;
   }
@@ -604,12 +616,15 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
 
   @mutation()
   private ADD_TRANSITION(id: string, name: string, type: ETransitionType, duration: number) {
-    this.state.transitions.push({
-      id,
-      name,
-      type,
-      duration,
-    });
+    this.state.transitions = [
+      ...this.state.transitions,
+      {
+        id,
+        name,
+        type,
+        duration,
+      },
+    ];
   }
 
   @mutation()
@@ -645,7 +660,7 @@ export class TransitionsService extends StatefulService<ITransitionsState> {
 
   @mutation()
   private ADD_CONNECTION(connection: ITransitionConnection) {
-    this.state.connections.push(connection);
+    this.state.connections = [...this.state.connections, connection];
   }
 
   @mutation()

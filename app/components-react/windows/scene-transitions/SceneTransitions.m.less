@@ -1,6 +1,5 @@
 @import '../../../styles/index';
 
-
 .transition-blank {
   text-align: center;
   padding: 50px;
@@ -19,6 +18,17 @@
       color: var(--white);
     }
   }
+}
+
+.table-container {
+  :global(.ant-table-thead) > tr > th {
+    background: none;
+    border-bottom: none;
+  }
+}
+
+.table-controls {
+  display: flex;
 }
 
 .transition-control {

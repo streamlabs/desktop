@@ -90,7 +90,7 @@ test('Changing connections', async t => {
   await clickSceneTransitions();
   await focusChild();
 
-  await (await app.client.$('button=Connections')).click();
+  await (await app.client.$('div=Connections')).click();
   await (await app.client.$('.icon-edit')).click();
 
   t.true(
@@ -113,12 +113,12 @@ test('Showing redudant connection warning', async t => {
   await focusChild();
   await (await app.client.$('button=Add Transition')).click();
   await dismissModal(t);
-  await (await app.client.$('button=Connections')).click();
+  await (await app.client.$('span=Connections')).click();
   await (await app.client.$('button=Add Connection')).click();
   await dismissModal(t);
   await (await app.client.$('button=Add Connection')).click();
   await dismissModal(t);
 
-  await (await app.client.$('.transition-redundant')).waitForDisplayed();
+  await (await app.client.$('.icon-information')).waitForDisplayed();
   t.pass();
 });

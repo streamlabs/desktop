@@ -9,12 +9,15 @@ import { ColumnsType } from 'antd/lib/table';
 import styles from './SceneTransitions.m.less';
 import Tooltip from 'components-react/shared/Tooltip';
 
-export default function ConnectionsTable(p: { setInspectedConnection: (id: string) => void; setShowConnectionModal: (val: boolean) => void; }) {
+export default function ConnectionsTable(p: {
+  setInspectedConnection: (id: string) => void;
+  setShowConnectionModal: (val: boolean) => void;
+}) {
   const { TransitionsService, EditorCommandsService, ScenesService } = Services;
 
   const { transitions, connections } = useVuex(() => ({
-    transitions: TransitionsService.state.transitions,
-    connections: TransitionsService.state.connections,
+    transitions: TransitionsService.views.transitions,
+    connections: TransitionsService.views.connections,
   }));
 
   async function addConnection() {
@@ -36,6 +39,7 @@ export default function ConnectionsTable(p: { setInspectedConnection: (id: strin
 
   function deleteConnection(id: string) {
     EditorCommandsService.actions.executeCommand('RemoveConnectionCommand', id);
+    p.setInspectedConnection('');
   }
 
   function getTransitionName(id: string) {
@@ -78,22 +82,40 @@ export default function ConnectionsTable(p: { setInspectedConnection: (id: strin
       dataIndex: 'controls',
       render: (_, { id }) => (
         <span className={styles.tableControls}>
-          {isConnectionRedundant(id) && <Tooltip title={$t(
-            'This connection is redundant because another connection already connects these scenes.',
-          )} placement='left'>
-            <i className={cx('icon-information', styles.transitionRedundant)} />
-          </Tooltip>}
-          <i onClick={() => editConnection(id)} className={cx('icon-edit', styles.transitionControl)} />
-          <i onClick={() => deleteConnection(id)} className={cx('icon-trash', styles.transitionControl)} />
+          {isConnectionRedundant(id) && (
+            <Tooltip
+              title={$t(
+                'This connection is redundant because another connection already connects these scenes.',
+              )}
+              placement="left"
+            >
+              <i className={cx('icon-information', styles.transitionRedundant)} />
+            </Tooltip>
+          )}
+          <i
+            onClick={() => editConnection(id)}
+            className={cx('icon-edit', styles.transitionControl)}
+          />
+          <i
+            onClick={() => deleteConnection(id)}
+            className={cx('icon-trash', styles.transitionControl)}
+          />
         </span>
       ),
-    }
+    },
   ];
 
   return (
     <>
-      <Button className="button button--action" onClick={addConnection}>{$t('Add Connection')}</Button>
-      <Table columns={columns} dataSource={connections} rowKey={(record) => record.id} />
+      <Button className="button button--action" style={{ margin: 16 }} onClick={addConnection}>
+        {$t('Add Connection')}
+      </Button>
+      <Table
+        columns={columns}
+        dataSource={connections}
+        rowKey={record => record.id}
+        pagination={false}
+      />
     </>
   );
 }

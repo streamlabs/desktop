@@ -38,23 +38,34 @@ export default function SceneTransitions() {
       )}
       {transitionsEnabled && (
         <>
-          <Menu mode="horizontal" selectedKeys={[activeTab]} onClick={(e) => setActiveTab(e.key)}>
+          <Menu mode="horizontal" selectedKeys={[activeTab]} onClick={e => setActiveTab(e.key)}>
             <Menu.Item key="transitions">{$t('Transitions')}</Menu.Item>
             <Menu.Item key="connections">{$t('Connections')}</Menu.Item>
           </Menu>
-          <Scrollable style={{ height: 'calc(100% - 46px)' }} snapToWindowEdge>
+          <Scrollable
+            className={styles.tableContainer}
+            style={{ height: 'calc(100% - 46px)' }}
+            snapToWindowEdge
+          >
             {activeTab === 'transitions' && (
-              <TransitionsTable setInspectedTransition={setInspectedTransition} setShowTransitionModal={setShowTransitionModal} />
+              <TransitionsTable
+                setInspectedTransition={setInspectedTransition}
+                setShowTransitionModal={setShowTransitionModal}
+              />
             )}
             {activeTab === 'connections' && (
-              <ConnectionsTable setInspectedConnection={setInspectedConnection} setShowConnectionModal={setShowConnectionModal} />
+              <ConnectionsTable
+                setInspectedConnection={setInspectedConnection}
+                setShowConnectionModal={setShowConnectionModal}
+              />
             )}
           </Scrollable>
           <Modal
             visible={showConnectionModal || showTransitionModal}
             getContainer="#scene-transitions"
-            bodyStyle={{ padding: 32, height: '100%' }}
+            bodyStyle={{ padding: 48, height: '100%' }}
             onCancel={dismissModal}
+            onOk={dismissModal}
           >
             {showConnectionModal && <ConnectionSettings connectionId={inspectedConnection} />}
             {showTransitionModal && <TransitionSettings transitionId={inspectedTransition} />}

@@ -10,14 +10,15 @@ import { ColumnsType } from 'antd/lib/table';
 import styles from './SceneTransitions.m.less';
 import Tooltip from 'components-react/shared/Tooltip';
 
-export default function TransitionsTable(p:
-  { setInspectedTransition: (id: string) => void, setShowTransitionModal: (val: boolean) => void; }
-) {
+export default function TransitionsTable(p: {
+  setInspectedTransition: (id: string) => void;
+  setShowTransitionModal: (val: boolean) => void;
+}) {
   const { TransitionsService, EditorCommandsService } = Services;
 
   const { transitions, defaultId } = useVuex(() => ({
-    transitions: TransitionsService.state.transitions,
-    defaultId: TransitionsService.state.defaultTransitionId,
+    transitions: TransitionsService.views.transitions,
+    defaultId: TransitionsService.views.defaultTransitionId,
   }));
 
   //  * Scene transitions created from apps should not be editable
@@ -26,7 +27,7 @@ export default function TransitionsTable(p:
   const lockStates = useMemo(() => TransitionsService.getLockedStates(), []);
   function canEdit(id: string) {
     return !lockStates[id];
-  };
+  }
 
   function getEditableMessage(id: string) {
     if (canEdit(id)) return;
@@ -34,11 +35,11 @@ export default function TransitionsTable(p:
   }
 
   async function addTransition() {
-    const transition = await EditorCommandsService.actions.return.executeCommand(
+    const transition = (await EditorCommandsService.actions.return.executeCommand(
       'CreateTransitionCommand',
       ETransitionType.Cut,
       'New Transition',
-    ) as ITransition;
+    )) as ITransition;
 
     if (!transition) return;
     editTransition(transition.id);
@@ -60,6 +61,7 @@ export default function TransitionsTable(p:
     }
 
     EditorCommandsService.actions.executeCommand('RemoveTransitionCommand', id);
+    p.setInspectedTransition('');
   }
 
   function makeDefault(id: string) {
@@ -78,7 +80,11 @@ export default function TransitionsTable(p:
         <div className={styles.transitionDefaultSelector}>
           <i
             onClick={() => makeDefault(id)}
-            className={cx(defaultId === id ? 'fas' : 'far', 'fa-circle', defaultId === id && styles.transitionDefault)}
+            className={cx(
+              defaultId === id ? 'fas' : 'far',
+              'fa-circle',
+              defaultId === id && styles.transitionDefault,
+            )}
           />
         </div>
       ),
@@ -97,19 +103,35 @@ export default function TransitionsTable(p:
       dataIndex: 'controls',
       render: (_, { id }) => (
         <span className={styles.tableControls}>
-          <Tooltip title={getEditableMessage(id)} placement='left'>
-            <i onClick={() => editTransition(id)} className={cx(styles.transitionControl, canEdit(id) ? 'icon-edit' : 'disabled icon-lock')} />
+          <Tooltip title={getEditableMessage(id)} placement="left">
+            <i
+              onClick={() => editTransition(id)}
+              className={cx(
+                styles.transitionControl,
+                canEdit(id) ? 'icon-edit' : 'disabled icon-lock',
+              )}
+            />
           </Tooltip>
-          <i onClick={() => deleteTransition(id)} className={cx('icon-trash', styles.transitionControl)} />
+          <i
+            onClick={() => deleteTransition(id)}
+            className={cx('icon-trash', styles.transitionControl)}
+          />
         </span>
       ),
-    }
+    },
   ];
 
   return (
     <>
-      <Button className="button button--action" onClick={addTransition}>{$t('Add Transition')}</Button>
-      <Table columns={columns} dataSource={transitions} rowKey={(record) => record.id} />
+      <Button className="button button--action" style={{ margin: 16 }} onClick={addTransition}>
+        {$t('Add Transition')}
+      </Button>
+      <Table
+        columns={columns}
+        dataSource={transitions}
+        rowKey={record => record.id}
+        pagination={false}
+      />
     </>
   );
 }
