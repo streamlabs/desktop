@@ -77,7 +77,7 @@ test('Changing connections', async t => {
   await focusChild();
   await (await app.client.$('button=Add Transition')).click();
   await dismissModal(t);
-  await (await app.client.$('button=Connections')).click();
+  await (await app.client.$('span=Connections')).click();
   await (await app.client.$('button=Add Connection')).click();
   const form = new FormMonkey(t);
   await form.fillByTitles({
@@ -90,7 +90,7 @@ test('Changing connections', async t => {
   await clickSceneTransitions();
   await focusChild();
 
-  await (await app.client.$('div=Connections')).click();
+  await (await app.client.$('span=Connections')).click();
   await (await app.client.$('.icon-edit')).click();
 
   t.true(
