@@ -45,52 +45,77 @@ const platformServiceConfig: Record<TPlatform, { streamType: string; service?: s
   kick: { streamType: 'rtmp_custom' },
 };
 
+interface ICacheEntry {
+  key: string;
+  value: IObsListOption<string>[];
+  timestamp: number;
+}
+
+const CACHE_TTL_MS = 2000;
+
 export class EncoderQueryService extends Service {
   @Inject() private streamingService: StreamingService;
+
+  private streamingEncoderCache: ICacheEntry | null = null;
+  private recordingEncoderCache: ICacheEntry | null = null;
 
   getAvailableStreamingEncoders(
     mode: 'Simple' | 'Advanced',
     streamSettings?: Record<string, any>,
   ): IObsListOption<string>[] {
+    const platform = this.getPrimaryPlatform();
+    const cacheKey = `${mode}:${platform || 'none'}`;
+    const now = Date.now();
+
+    if (
+      this.streamingEncoderCache &&
+      this.streamingEncoderCache.key === cacheKey &&
+      now - this.streamingEncoderCache.timestamp < CACHE_TTL_MS
+    ) {
+      return this.streamingEncoderCache.value;
+    }
+
     try {
       // Try to use an existing streaming instance first
       const existing = this.streamingService.getStreamingInstance();
       if (existing && hasGetAvailableEncoders(existing)) {
         console.log('[EncoderQueryService] streaming: using existing instance');
-        const encoders = existing.getAvailableEncoders();
-        console.log(`[EncoderQueryService] streaming: result=${JSON.stringify(mapEncoders(encoders))}`);
-        return mapEncoders(encoders);
+        const result = mapEncoders(existing.getAvailableEncoders());
+        this.streamingEncoderCache = { key: cacheKey, value: result, timestamp: now };
+        return result;
       }
 
       // Fallback: create a temporary instance with service configured
-      console.log('[EncoderQueryService] streaming: no existing instance, creating temporary');
+      console.log('[EncoderQueryService] streaming: creating temporary instance');
       if (mode === 'Simple') {
         const instance = SimpleStreamingFactory.create();
+        let service: any = null;
         try {
-          this.setupTempStreamingService(instance);
+          service = this.setupTempStreamingService(instance);
           if (!hasGetAvailableEncoders(instance)) {
-            console.log('[EncoderQueryService] streaming: temp Simple instance has no getAvailableEncoders');
             return [];
           }
-          const encoders = instance.getAvailableEncoders();
-          console.log(`[EncoderQueryService] streaming: temp Simple result=${JSON.stringify(mapEncoders(encoders))}`);
-          return mapEncoders(encoders);
+          const result = mapEncoders(instance.getAvailableEncoders());
+          this.streamingEncoderCache = { key: cacheKey, value: result, timestamp: now };
+          return result;
         } finally {
           SimpleStreamingFactory.destroy(instance);
+          if (service) ServiceFactory.destroy(service);
         }
       } else {
         const instance = AdvancedStreamingFactory.create();
+        let service: any = null;
         try {
-          this.setupTempStreamingService(instance);
+          service = this.setupTempStreamingService(instance);
           if (!hasGetAvailableEncoders(instance)) {
-            console.log('[EncoderQueryService] streaming: temp Advanced instance has no getAvailableEncoders');
             return [];
           }
-          const encoders = instance.getAvailableEncoders();
-          console.log(`[EncoderQueryService] streaming: temp Advanced result=${JSON.stringify(mapEncoders(encoders))}`);
-          return mapEncoders(encoders);
+          const result = mapEncoders(instance.getAvailableEncoders());
+          this.streamingEncoderCache = { key: cacheKey, value: result, timestamp: now };
+          return result;
         } finally {
           AdvancedStreamingFactory.destroy(instance);
+          if (service) ServiceFactory.destroy(service);
         }
       }
     } catch (e: unknown) {
@@ -103,29 +128,39 @@ export class EncoderQueryService extends Service {
     mode: 'Simple' | 'Advanced',
     format: ERecordingFormat,
   ): IObsListOption<string>[] {
+    const cacheKey = `${mode}:${format}`;
+    const now = Date.now();
+
+    if (
+      this.recordingEncoderCache &&
+      this.recordingEncoderCache.key === cacheKey &&
+      now - this.recordingEncoderCache.timestamp < CACHE_TTL_MS
+    ) {
+      return this.recordingEncoderCache.value;
+    }
+
     try {
       // Try to use an existing recording instance first
       const existing = this.streamingService.getRecordingInstance();
       if (existing && hasGetAvailableEncoders(existing)) {
         console.log('[EncoderQueryService] recording: using existing instance');
-        const encoders = existing.getAvailableEncoders();
-        console.log(`[EncoderQueryService] recording: result=${JSON.stringify(mapEncoders(encoders))}`);
-        return mapEncoders(encoders);
+        const result = mapEncoders(existing.getAvailableEncoders());
+        this.recordingEncoderCache = { key: cacheKey, value: result, timestamp: now };
+        return result;
       }
 
       // Fallback: create a temporary instance
-      console.log('[EncoderQueryService] recording: no existing instance, creating temporary');
+      console.log('[EncoderQueryService] recording: creating temporary instance');
       if (mode === 'Simple') {
         const instance = SimpleRecordingFactory.create();
         try {
           instance.format = format;
           if (!hasGetAvailableEncoders(instance)) {
-            console.log('[EncoderQueryService] recording: temp Simple instance has no getAvailableEncoders');
             return [];
           }
-          const encoders = instance.getAvailableEncoders();
-          console.log(`[EncoderQueryService] recording: temp Simple format=${format} result=${JSON.stringify(mapEncoders(encoders))}`);
-          return mapEncoders(encoders);
+          const result = mapEncoders(instance.getAvailableEncoders());
+          this.recordingEncoderCache = { key: cacheKey, value: result, timestamp: now };
+          return result;
         } finally {
           SimpleRecordingFactory.destroy(instance);
         }
@@ -134,12 +169,11 @@ export class EncoderQueryService extends Service {
         try {
           instance.format = format;
           if (!hasGetAvailableEncoders(instance)) {
-            console.log('[EncoderQueryService] recording: temp Advanced instance has no getAvailableEncoders');
             return [];
           }
-          const encoders = instance.getAvailableEncoders();
-          console.log(`[EncoderQueryService] recording: temp Advanced format=${format} result=${JSON.stringify(mapEncoders(encoders))}`);
-          return mapEncoders(encoders);
+          const result = mapEncoders(instance.getAvailableEncoders());
+          this.recordingEncoderCache = { key: cacheKey, value: result, timestamp: now };
+          return result;
         } finally {
           AdvancedRecordingFactory.destroy(instance);
         }
@@ -150,29 +184,35 @@ export class EncoderQueryService extends Service {
     }
   }
 
-  private setupTempStreamingService(instance: any): void {
+  /**
+   * Creates a temp OBS service and assigns it to the streaming instance.
+   * Returns the created service so the caller can destroy it after use.
+   */
+  private setupTempStreamingService(instance: any): any {
     try {
       const platform = this.getPrimaryPlatform();
       const legacySettings = ServiceFactory.legacySettings;
 
       if (platform) {
         const config = platformServiceConfig[platform];
-        const serviceName = config.service || legacySettings.settings?.service;
+        const serviceName = config.service || legacySettings?.settings?.service;
         console.log(`[EncoderQueryService] setupTempService: platform=${platform}, streamType=${config.streamType}, service=${serviceName}`);
 
         const service = ServiceFactory.create(
           config.streamType,
           'encoder-query-temp-service',
-          { ...legacySettings.settings, service: serviceName },
+          { ...legacySettings?.settings, service: serviceName },
         );
         instance.service = service;
+        return service;
       } else {
         // No enabled platform — fall back to legacySettings
-        console.log(`[EncoderQueryService] setupTempService: no enabled platform, using legacySettings=${JSON.stringify(legacySettings?.settings)}`);
         instance.service = legacySettings;
+        return null; // don't destroy legacySettings, it's shared
       }
     } catch (e: unknown) {
       console.error('[EncoderQueryService] setupTempService failed, proceeding without service', e);
+      return null;
     }
   }
 
@@ -180,7 +220,6 @@ export class EncoderQueryService extends Service {
     try {
       const enabledPlatforms = this.streamingService.views.enabledPlatforms;
       if (!enabledPlatforms.length) return null;
-      console.log(`[EncoderQueryService] enabledPlatforms=${JSON.stringify(enabledPlatforms)}`);
       return enabledPlatforms[0];
     } catch (e: unknown) {
       console.error('[EncoderQueryService] failed to get enabled platforms', e);
