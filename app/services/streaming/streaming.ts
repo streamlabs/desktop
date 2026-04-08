@@ -1820,8 +1820,9 @@ export class StreamingService
 
       if (!isEnhancedBroadcasting) {
         // stream audio track
-        this.validateOrCreateAudioTrack(index);
-        stream.audioTrack = index;
+        const defaultAudioTrack = display === 'horizontal' ? 1 : 2;
+        this.validateOrCreateAudioTrack(index ?? defaultAudioTrack);
+        stream.audioTrack = index ?? defaultAudioTrack;
       }
 
       // Twitch VOD audio track
