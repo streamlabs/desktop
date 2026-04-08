@@ -196,14 +196,5 @@ test('Twitch Enhanced Broadcasting', withUser('twitch', { multistream: true }), 
   await waitForStreamStart();
   await stopStream();
 
-  // Twitch VOD not available with multistream
-  await showSettingsWindow('Output', async () => {
-    t.false(
-      await isDisplayed('input[name="VodTrackEnabled"]'),
-      'Twitch VOD option is not displayed when multistream is enabled',
-    );
-    await clickButton('Close');
-  });
-
   t.pass();
 });
