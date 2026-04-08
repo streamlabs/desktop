@@ -26,6 +26,7 @@ import EducationCarousel from './EducationCarousel';
 import { EGame } from 'services/highlighter/models/ai-highlighter.models';
 import { ImportStreamModal } from './ImportStream';
 import SupportedGames from './supportedGames/SupportedGames';
+import MigrationNotice from './MigrationNotice';
 
 type TModalStreamView = {
   type: 'upload';
@@ -169,6 +170,11 @@ export default function StreamView({ emitSetView }: { emitSetView: (data: IViewS
       </div>
 
       <Scrollable style={{ flexGrow: 1, padding: '20px 0 20px 20px' }}>
+        <MigrationNotice
+          onShowAllClips={() => {
+            emitSetView({ view: EHighlighterView.CLIPS, id: undefined });
+          }}
+        />
         {highlightedStreams.length === 0 ? (
           <>No highlight clips created from streams</> // TODO: Add empty state
         ) : (

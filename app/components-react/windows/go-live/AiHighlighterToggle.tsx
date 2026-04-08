@@ -9,11 +9,11 @@ import { Button } from 'antd';
 import { getConfigByGame, isGameSupported } from 'services/highlighter/models/game-config.models';
 import { $t } from 'services/i18n';
 import {
-  DiscordLogo,
-  InstagramLogo,
-  TikTokLogo,
   YouTubeLogo,
-} from 'components-react/highlighter/ImportStream';
+  DiscordLogo,
+  TikTokLogo,
+  InstagramLogo,
+} from 'components-react/highlighter/HypeWrapper';
 
 export default function AiHighlighterToggle({
   game,

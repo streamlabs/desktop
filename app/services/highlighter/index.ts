@@ -12,7 +12,12 @@ import {
 } from 'services/platforms/youtube/uploader';
 import { YoutubeService } from 'services/platforms/youtube';
 import os from 'os';
-import { SCRUB_SPRITE_DIRECTORY, SUPPORTED_FILE_TYPES } from './constants';
+import {
+  SCRUB_SPRITE_DIRECTORY,
+  SUPPORTED_FILE_TYPES,
+  REPLAY_SETUP_URL_STAGING,
+  REPLAY_SETUP_URL_PRODUCTION,
+} from './constants';
 import { pmap } from 'util/pmap';
 import { RenderingClip } from './rendering/rendering-clip';
 import { throttle } from 'lodash-decorators';
@@ -29,7 +34,7 @@ import moment from 'moment';
 import uuid from 'uuid';
 import { EMenuItemKey } from 'services/side-nav';
 import { AiHighlighterUpdater } from './ai-highlighter-updater';
-import { IDownloadProgress } from 'util/requests';
+import { IDownloadProgress, downloadFile } from 'util/requests';
 import { IncrementalRolloutService } from 'app-services';
 
 import { EAvailableFeatures } from 'services/incremental-rollout';
@@ -47,6 +52,8 @@ import {
   TStreamInfo,
   EHighlighterView,
   ITempRecordingInfo,
+  IReplayInstallState,
+  EReplayInstallStep,
 } from './models/highlighter.models';
 import {
   EExportStep,
@@ -79,6 +86,10 @@ import { addVerticalFilterToExportOptions } from './vertical-export';
 import { isGameSupported } from './models/game-config.models';
 import Utils from 'services/utils';
 import { getOS, OS } from '../../util/operating-systems';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 @InitAfter('StreamingService')
 export class HighlighterService extends PersistentStatefulService<IHighlighterState> {
@@ -131,6 +142,11 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     isUpdaterRunning: false,
     highlighterVersion: '',
     tempRecordingInfo: {},
+    replayInstall: {
+      step: 'idle',
+      progress: 0,
+      error: null,
+    },
   };
 
   aiHighlighterUpdater: AiHighlighterUpdater;
@@ -295,6 +311,248 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   SET_TEMP_RECORDING_INFO(tempRecordingInfo: ITempRecordingInfo) {
     this.state.tempRecordingInfo = tempRecordingInfo;
   }
+
+  @mutation()
+  SET_REPLAY_INSTALL(installState: Partial<IReplayInstallState>) {
+    this.state.replayInstall = {
+      ...this.state.replayInstall,
+      ...installState,
+    };
+  }
+
+  // =================================================================================================
+  // STREAMLABS REPLAY MIGRATION logic
+  // =================================================================================================
+
+  /**
+   * Checks if Streamlabs Replay is installed by verifying the Windows deeplink protocol registration
+   * @returns Promise<boolean> - true if the ghub-replay:// protocol is registered, false otherwise
+   */
+  async isStreamlabsReplayInstalled(): Promise<boolean> {
+    // Only check on Windows
+    if (getOS() !== OS.Windows) {
+      return false;
+    }
+
+    try {
+      // Query the Windows Registry for the protocol handler command
+      const { stdout, stderr } = await execAsync(
+        'reg query "HKEY_CLASSES_ROOT\\ghub-replay\\shell\\open\\command" /ve',
+        {
+          timeout: 5000,
+        },
+      );
+
+      // Check if stderr is empty and stdout contains meaningful data
+      if (stderr) {
+        console.log('Registry query returned error:', stderr);
+        return false;
+      }
+
+      // Check if the output contains an actual executable path, not just "URL:ghub-replay"
+      const hasValidCommand = stdout.includes('.exe') && !stdout.includes('URL:ghub-replay');
+
+      console.log(
+        'Streamlabs Replay protocol check:',
+        hasValidCommand ? 'found with valid executable' : 'not found or invalid',
+      );
+
+      if (!hasValidCommand) {
+        console.log('Registry entry exists but points to invalid path:', stdout);
+      }
+
+      return hasValidCommand;
+    } catch (error: unknown) {
+      // If the registry key doesn't exist, reg query will throw an error
+      console.log('Streamlabs Replay deeplink not found in registry');
+      return false;
+    }
+  }
+
+  /**
+   * Deletes the Streamlabs Replay registry entry (dev only)
+   * @returns Promise<boolean> - true if deletion was successful, false otherwise
+   */
+  async deleteStreamlabsReplayRegistry(): Promise<boolean> {
+    // Only works on Windows
+    if (getOS() !== OS.Windows) {
+      console.warn('Registry deletion only available on Windows');
+      return false;
+    }
+
+    // Only allow in dev mode
+    if (!Utils.isDevMode()) {
+      console.warn('Registry deletion only available in dev mode');
+      return false;
+    }
+
+    try {
+      await execAsync('reg delete "HKEY_CLASSES_ROOT\\ghub-replay" /f', { timeout: 5000 });
+      console.log('Successfully deleted Streamlabs Replay registry entry');
+      return true;
+    } catch (error: unknown) {
+      console.error('Failed to delete registry entry:', error);
+      return false;
+    }
+  }
+
+  // =================================================================================================
+  // STREAMLABS REPLAY INSTALLATION logic
+  // =================================================================================================
+
+  private getReplaySetupUrl(): string {
+    if (Utils.isProduction) {
+      return REPLAY_SETUP_URL_PRODUCTION;
+    }
+    return REPLAY_SETUP_URL_STAGING;
+  }
+
+  /**
+   * Downloads and installs Streamlabs Replay.
+   * Fakes progress increments during the download/install phases,
+   * verifies the deeplink registry after install, and auto-launches the app.
+   */
+  private replayInstallAbortController: AbortController | null = null;
+
+  async installStreamlabsReplay(): Promise<boolean> {
+    if (getOS() !== OS.Windows) {
+      this.SET_REPLAY_INSTALL({
+        step: 'error',
+        error: 'Installation is only supported on Windows',
+      });
+      return false;
+    }
+
+    // Abort any previous in-flight install
+    this.replayInstallAbortController?.abort();
+    this.replayInstallAbortController = new AbortController();
+    const { signal } = this.replayInstallAbortController;
+
+    let progressInterval: NodeJS.Timeout | null = null;
+
+    const clearProgress = () => {
+      if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+      }
+    };
+
+    try {
+      // --- Downloading phase ---
+      this.SET_REPLAY_INSTALL({ step: 'downloading', progress: 0, error: null });
+
+      // Fake progress that increments during download
+      progressInterval = setInterval(() => {
+        const current = this.state.replayInstall.progress;
+        if (current < 90) {
+          // Slow down as we approach 90%
+          const increment = Math.max(0.5, (90 - current) * 0.04);
+          this.SET_REPLAY_INSTALL({ progress: Math.min(90, current + increment) });
+        }
+      }, 300);
+
+      const setupUrl = this.getReplaySetupUrl();
+
+      // Download the setup exe to temp directory
+      const tempDir = os.tmpdir();
+      const setupPath = path.join(tempDir, 'G HUB Replay-Setup.exe');
+
+      await downloadFile(
+        setupUrl,
+        setupPath,
+        (progress: IDownloadProgress) => {
+          // Map download progress to 0-70%
+          const downloadPercent = progress.percent * 70;
+          const current = this.state.replayInstall.progress;
+          if (downloadPercent > current) {
+            this.SET_REPLAY_INSTALL({ progress: downloadPercent });
+          }
+        },
+        signal,
+      );
+
+      clearProgress();
+
+      if (signal.aborted) return false;
+
+      this.SET_REPLAY_INSTALL({ progress: 70 });
+
+      // --- Installing phase ---
+      this.SET_REPLAY_INSTALL({ step: 'installing', progress: 75 });
+
+      // Fake progress for install phase
+      progressInterval = setInterval(() => {
+        const current = this.state.replayInstall.progress;
+        if (current < 95) {
+          const increment = Math.max(0.3, (95 - current) * 0.03);
+          this.SET_REPLAY_INSTALL({ progress: Math.min(95, current + increment) });
+        }
+      }, 500);
+
+      // Run the installer silently
+      await execAsync(`"${setupPath}"`, { timeout: 120000 });
+
+      clearProgress();
+
+      if (signal.aborted) return false;
+
+      this.SET_REPLAY_INSTALL({ progress: 95 });
+
+      // --- Verifying phase ---
+      this.SET_REPLAY_INSTALL({ step: 'verifying', progress: 96 });
+
+      // Wait a moment for registry to propagate
+      await this.wait(2000);
+
+      if (signal.aborted) return false;
+
+      const isInstalled = await this.isStreamlabsReplayInstalled();
+      if (!isInstalled) {
+        throw new Error(
+          'Installation could not be verified. The deeplink protocol was not registered.',
+        );
+      }
+
+      this.SET_REPLAY_INSTALL({ step: 'done', progress: 100 });
+
+      // Auto-launch Streamlabs Replay
+      try {
+        remote.shell.openExternal('ghub-replay://open');
+      } catch (launchError: unknown) {
+        console.error('Failed to auto-launch Streamlabs Replay:', launchError);
+      }
+
+      // Clean up setup file
+      try {
+        await fs.remove(setupPath);
+      } catch {
+        // Non-critical cleanup
+      }
+
+      return true;
+    } catch (error: unknown) {
+      clearProgress();
+      if (signal.aborted) return false;
+      const errorMessage = error instanceof Error ? error.message : 'Unknown installation error';
+      console.error('Streamlabs Replay installation failed:', errorMessage);
+      this.SET_REPLAY_INSTALL({ step: 'error', progress: 0, error: errorMessage });
+      return false;
+    } finally {
+      if (this.replayInstallAbortController?.signal === signal) {
+        this.replayInstallAbortController = null;
+      }
+    }
+  }
+
+  cancelReplayInstall() {
+    this.replayInstallAbortController?.abort();
+    this.replayInstallAbortController = null;
+    this.SET_REPLAY_INSTALL({ step: 'idle', progress: 0, error: null });
+  }
+
+  // =================================================================================================
+  //Legacy highlighter support
+  // =================================================================================================
 
   get views() {
     return new HighlighterViews(this.state);

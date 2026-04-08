@@ -55,9 +55,10 @@ export async function downloadFile(
   srcUrl: string,
   dstPath: string,
   progressCallback?: (progress: IDownloadProgress) => void,
+  signal?: AbortSignal,
 ): Promise<void> {
   return new Promise<void>((resolve, reject) => {
-    return fetch(srcUrl)
+    return fetch(srcUrl, signal ? { signal } : undefined)
       .then(resp => (resp.ok ? Promise.resolve(resp) : Promise.reject(resp)))
       .then(response => {
         const contentLength = response.headers.get('content-length');
@@ -66,7 +67,17 @@ export async function downloadFile(
         const fileStream = fs.createWriteStream(dstPath);
         let bytesWritten = 0;
 
+        if (signal) {
+          signal.addEventListener('abort', () => {
+            reader.cancel();
+            fileStream.destroy();
+            reject(new DOMException('Download aborted', 'AbortError'));
+          });
+        }
+
         const readStream = ({ done, value }: { done: boolean; value?: Uint8Array }) => {
+          if (signal?.aborted) return;
+
           if (done) {
             fileStream.end((err: Error) => {
               if (err) {

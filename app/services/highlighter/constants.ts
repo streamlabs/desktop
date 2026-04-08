@@ -30,3 +30,9 @@ export const AI_HIGHLIGHTER_BUILDS_URL_STAGING =
 
 export const AI_HIGHLIGHTER_BUILDS_URL_PRODUCTION =
   'https://cdn-highlighter-builds.streamlabs.com/production/manifest_win_x86_64.json';
+
+export const REPLAY_SETUP_URL_STAGING =
+  'https://cdn-highlighter-desktop.streamlabs.com/staging/win32/x64/G%20HUB%20Replay-Setup.exe';
+
+export const REPLAY_SETUP_URL_PRODUCTION =
+  'https://cdn-highlighter-desktop.streamlabs.com/production/win32/x64/G%20HUB%20Replay-Setup.exe';
