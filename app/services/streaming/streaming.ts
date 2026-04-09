@@ -1497,12 +1497,7 @@ export class StreamingService
     this.usageStatisticsService.recordFeatureUsage('Streaming');
   }
 
-  private async handleStartDualOutputStream(
-    code: EOBSOutputSignal,
-    context: TOutputContext,
-    nextState: EStreamingState,
-    time: string,
-  ) {
+  private async handleStartDualOutputStream(code: EOBSOutputSignal, context: TOutputContext) {
     // Handle dual output mode
 
     // Maybe not necessary, but just in case add a small delay to stagger creating/resolving the next streaming instance
@@ -1558,7 +1553,9 @@ export class StreamingService
             start: true,
           });
         } else {
-          // Finally, all conditions should be met to resolve the start streaming promise
+          // Finally, all conditions should be met to resolve the start streaming promise in dual output mode with enhanced broadcasting.
+          // Only resolve the start streaming promise after the horizontal stream has started to prevent unintended side effects of
+          // duplicate actions taken after starting the stream
           await this.handleStartStreaming(code);
         }
       }
@@ -1577,13 +1574,11 @@ export class StreamingService
       }
 
       if (context === 'horizontal') {
+        // Finally, all conditions should be met to resolve the start streaming promise in dual output mode without enhanced broadcasting.
+        // Only resolve the start streaming promise after the horizontal stream has started to prevent unintended side effects of duplicate
+        // actions taken after starting the stream
         await this.handleStartStreaming(code);
       }
-    }
-
-    if (this.isDisplayContext(context)) {
-      this.SET_STREAMING_STATUS(nextState, context, time);
-      this.streamingStatusChange.next(nextState);
     }
   }
 
@@ -2318,7 +2313,7 @@ export class StreamingService
 
     if (info.signal === EOBSOutputSignal.Start) {
       if (this.views.isDualOutputMode) {
-        await this.handleStartDualOutputStream(info.signal, context, nextState, time);
+        await this.handleStartDualOutputStream(info.signal, context);
       } else {
         await this.handleStartSingleOutputStream(info.signal, context, nextState, time);
       }
@@ -3606,6 +3601,7 @@ export class StreamingService
 
   @mutation()
   private SET_STREAMING_STATUS(status: EStreamingState, display: TDisplayType, time?: string) {
+    console.log('set streaming status', status, display, time);
     this.state.streamingStatus = status;
     this.state.status[display].streaming = status;
 
