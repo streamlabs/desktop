@@ -63,7 +63,7 @@ export default function SceneTransitions() {
           <Modal
             visible={showConnectionModal || showTransitionModal}
             getContainer="#scene-transitions"
-            bodyStyle={{ padding: 48, height: '100%' }}
+            bodyStyle={{ padding: 48, height: 300 }}
             onCancel={dismissModal}
             onOk={dismissModal}
           >
