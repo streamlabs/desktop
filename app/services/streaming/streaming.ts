@@ -2841,18 +2841,18 @@ export class StreamingService
   }
 
   getStreamingInstance(): ISimpleStreaming | IAdvancedStreaming | null {
-    return this.contexts.horizontal?.streaming
-      ?? this.contexts.vertical?.streaming
-      ?? this.contexts.stream?.streaming
-      ?? this.contexts.streamSecond?.streaming
-      ?? this.contexts.enhancedBroadcasting?.streaming
-      ?? null;
+    return (
+      this.contexts.horizontal?.streaming ??
+      this.contexts.vertical?.streaming ??
+      this.contexts.stream?.streaming ??
+      this.contexts.streamSecond?.streaming ??
+      this.contexts.enhancedBroadcasting?.streaming ??
+      null
+    );
   }
 
   getRecordingInstance(): ISimpleRecording | IAdvancedRecording | null {
-    return this.contexts.horizontal?.recording
-      ?? this.contexts.vertical?.recording
-      ?? null;
+    return this.contexts.horizontal?.recording ?? this.contexts.vertical?.recording ?? null;
   }
 
   private isAdvancedStreaming(

@@ -764,7 +764,11 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     // processes categories in order and Stream may come after Output).
     const streamSettings = this.state.Stream ? this.views.values.Stream : undefined;
 
-    console.log(`[replaceEncoderOptions] mode=${mode}, streamSettings=${streamSettings ? 'available' : 'NOT loaded yet'}`);
+    console.log(
+      `[replaceEncoderOptions] mode=${mode}, streamSettings=${
+        streamSettings ? 'available' : 'NOT loaded yet'
+      }`,
+    );
 
     try {
       // Replace streaming encoder options (skip if stream settings aren't available yet)
@@ -773,7 +777,11 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
         ? (this.findSetting(settings, 'Streaming', streamEncoderField) as IObsListInput<string>)
         : undefined;
 
-      console.log(`[replaceEncoderOptions] streaming: field=${streamEncoderField}, settingFound=${!!streamEncoderSetting}, currentValue=${streamEncoderSetting?.value}, originalOptions=${JSON.stringify(streamEncoderSetting?.options)}`);
+      console.log(
+        `[replaceEncoderOptions] streaming: field=${streamEncoderField}, settingFound=${!!streamEncoderSetting}, currentValue=${
+          streamEncoderSetting?.value
+        }, originalOptions=${JSON.stringify(streamEncoderSetting?.options)}`,
+      );
 
       if (streamEncoderSetting) {
         const streamEncoderOptions = this.encoderQueryService.getAvailableStreamingEncoders(
@@ -781,24 +789,32 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
           streamSettings,
         );
 
-        console.log(`[replaceEncoderOptions] streaming: fetchedOptions=${JSON.stringify(streamEncoderOptions)}`);
+        console.log(
+          `[replaceEncoderOptions] streaming: fetchedOptions=${JSON.stringify(
+            streamEncoderOptions,
+          )}`,
+        );
 
         if (streamEncoderOptions.length > 0) {
           // Only update options if values actually differ to avoid triggering re-renders
           const oldValues = (streamEncoderSetting.options || []).map((o: any) => o.value).join(',');
           const newValues = streamEncoderOptions.map(o => o.value).join(',');
           if (oldValues !== newValues) {
-            console.log(`[replaceEncoderOptions] streaming: options changed, updating`);
+            console.log('[replaceEncoderOptions] streaming: options changed, updating');
             streamEncoderSetting.options = streamEncoderOptions;
           }
 
           // Validate current value is still in the new options
           if (!streamEncoderOptions.some(opt => opt.value === streamEncoderSetting.value)) {
-            console.log(`[replaceEncoderOptions] streaming: current value "${streamEncoderSetting.value}" not in new options, resetting to "${streamEncoderOptions[0].value}"`);
+            console.log(
+              `[replaceEncoderOptions] streaming: current value "${streamEncoderSetting.value}" not in new options, resetting to "${streamEncoderOptions[0].value}"`,
+            );
             streamEncoderSetting.value = streamEncoderOptions[0].value;
           }
         } else {
-          console.log('[replaceEncoderOptions] streaming: fetchedOptions is EMPTY, keeping original options');
+          console.log(
+            '[replaceEncoderOptions] streaming: fetchedOptions is EMPTY, keeping original options',
+          );
         }
       }
     } catch (e: unknown) {
@@ -813,13 +829,19 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
         'RecEncoder',
       ) as IObsListInput<string>;
 
-      console.log(`[replaceEncoderOptions] recording: settingFound=${!!recEncoderSetting}, currentValue=${recEncoderSetting?.value}, originalOptions=${JSON.stringify(recEncoderSetting?.options)}`);
+      console.log(
+        `[replaceEncoderOptions] recording: settingFound=${!!recEncoderSetting}, currentValue=${
+          recEncoderSetting?.value
+        }, originalOptions=${JSON.stringify(recEncoderSetting?.options)}`,
+      );
 
       if (recEncoderSetting) {
         const recFormat = this.findSettingValue(settings, 'Recording', 'RecFormat') as EFileFormat;
         const recordingFormat = convertFileFormatToRecordingFormat(recFormat);
 
-        console.log(`[replaceEncoderOptions] recording: recFormat=${recFormat}, recordingFormat=${recordingFormat}`);
+        console.log(
+          `[replaceEncoderOptions] recording: recFormat=${recFormat}, recordingFormat=${recordingFormat}`,
+        );
 
         if (recordingFormat !== undefined) {
           const recEncoderOptions = this.encoderQueryService.getAvailableRecordingEncoders(
@@ -827,34 +849,42 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
             recordingFormat,
           );
 
-          console.log(`[replaceEncoderOptions] recording: fetchedOptions=${JSON.stringify(recEncoderOptions)}`);
+          console.log(
+            `[replaceEncoderOptions] recording: fetchedOptions=${JSON.stringify(
+              recEncoderOptions,
+            )}`,
+          );
 
           if (recEncoderOptions.length > 0) {
             // Preserve the "Use stream encoder" (none) pseudo-option from OBS
             const origOptions = recEncoderSetting.options || [];
             const noneOpt = origOptions.find((o: any) => o.value === 'none');
-            const fullRecOptions = noneOpt
-              ? [noneOpt, ...recEncoderOptions]
-              : recEncoderOptions;
+            const fullRecOptions = noneOpt ? [noneOpt, ...recEncoderOptions] : recEncoderOptions;
 
             // Only update options if values actually differ to avoid triggering re-renders
             const oldRecValues = origOptions.map((o: any) => o.value).join(',');
             const newRecValues = fullRecOptions.map(o => o.value).join(',');
             if (oldRecValues !== newRecValues) {
-              console.log(`[replaceEncoderOptions] recording: options changed, updating`);
+              console.log('[replaceEncoderOptions] recording: options changed, updating');
               recEncoderSetting.options = fullRecOptions;
             }
 
             // Validate current value is still in the new options
             if (!fullRecOptions.some(opt => opt.value === recEncoderSetting.value)) {
-              console.log(`[replaceEncoderOptions] recording: current value "${recEncoderSetting.value}" not in new options, resetting to "${fullRecOptions[0].value}"`);
+              console.log(
+                `[replaceEncoderOptions] recording: current value "${recEncoderSetting.value}" not in new options, resetting to "${fullRecOptions[0].value}"`,
+              );
               recEncoderSetting.value = fullRecOptions[0].value;
             }
           } else {
-            console.log('[replaceEncoderOptions] recording: fetchedOptions is EMPTY, keeping original options');
+            console.log(
+              '[replaceEncoderOptions] recording: fetchedOptions is EMPTY, keeping original options',
+            );
           }
         } else {
-          console.log(`[replaceEncoderOptions] recording: recordingFormat is undefined (unknown recFormat "${recFormat}"), skipping`);
+          console.log(
+            `[replaceEncoderOptions] recording: recordingFormat is undefined (unknown recFormat "${recFormat}"), skipping`,
+          );
         }
       }
     } catch (e: unknown) {

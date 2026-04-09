@@ -183,13 +183,14 @@ export class EncoderQueryService extends Service {
       if (platform) {
         const config = platformServiceConfig[platform];
         const serviceName = config.service || legacySettings?.settings?.service;
-        console.log(`[EncoderQueryService] setupTempService: platform=${platform}, streamType=${config.streamType}, service=${serviceName}`);
-
-        const service = ServiceFactory.create(
-          config.streamType,
-          'encoder-query-temp-service',
-          { ...legacySettings?.settings, service: serviceName },
+        console.log(
+          `[EncoderQueryService] setupTempService: platform=${platform}, streamType=${config.streamType}, service=${serviceName}`,
         );
+
+        const service = ServiceFactory.create(config.streamType, 'encoder-query-temp-service', {
+          ...legacySettings?.settings,
+          service: serviceName,
+        });
         instance.service = service;
         return service;
       } else {
