@@ -176,6 +176,7 @@ test('Recording from Go Live window', async t => {
   await submit();
   await waitForStreamStart();
   await focusMain();
+  await sleep(2000);
   await stopRecording();
   await stopStream();
 

@@ -3601,7 +3601,6 @@ export class StreamingService
 
   @mutation()
   private SET_STREAMING_STATUS(status: EStreamingState, display: TDisplayType, time?: string) {
-    console.log('set streaming status', status, display, time);
     this.state.streamingStatus = status;
     this.state.status[display].streaming = status;
 
