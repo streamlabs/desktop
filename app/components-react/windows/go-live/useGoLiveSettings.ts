@@ -207,6 +207,10 @@ export class GoLiveSettingsModule {
     // TODO investigate mutation order issue
     await new Promise(r => setTimeout(r, 100));
 
+    // After async operations the Go Live window may have been closed,
+    // destroying the state controller. Bail out if the module no longer exists.
+    if (!this.state.getMetadata?.()) return;
+
     const prepopulateOptions = this.state.prepopulateOptions;
     const view = new StreamInfoView({});
     const settings: IGoLiveSettingsState = {

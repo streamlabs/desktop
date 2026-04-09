@@ -55,8 +55,8 @@ export enum EFileFormat {
   mp4 = 'mp4',
   mov = 'mov',
   mkv = 'mkv',
-  // ts = 'ts', // Deprecated: old api
-  // m3u8 = 'm3u8', // Deprecated: old api
+  ts = 'ts', // Deprecated: old api
+  m3u8 = 'm3u8', // Deprecated: old api
   mpegts = 'mpegts',
   hls = 'hls',
 }
@@ -271,6 +271,25 @@ export function obsEncoderToEncoderFamily(
       return EEncoderFamily.obs_nvenc_hevc_tex;
     case EObsAdvancedEncoder.obs_nvenc_h264_tex:
       return EEncoderFamily.obs_nvenc_h264_tex;
+  }
+}
+
+export function convertFileFormatToRecordingFormat(format: EFileFormat): ERecordingFormat {
+  switch (format) {
+    case EFileFormat.mp4:
+      return ERecordingFormat.MP4;
+    case EFileFormat.flv:
+      return ERecordingFormat.FLV;
+    case EFileFormat.mov:
+      return ERecordingFormat.MOV;
+    case EFileFormat.mkv:
+      return ERecordingFormat.MKV;
+    case EFileFormat.mpegts:
+    case EFileFormat.ts:
+      return ERecordingFormat.MPEGTS;
+    case EFileFormat.hls:
+    case EFileFormat.m3u8:
+      return ERecordingFormat.HLS;
   }
 }
 
@@ -965,20 +984,7 @@ export class OutputSettingsService extends Service {
   }
 
   convertFileFormatToRecordingFormat(format: EFileFormat): ERecordingFormat {
-    switch (format) {
-      case EFileFormat.mp4:
-        return ERecordingFormat.MP4;
-      case EFileFormat.flv:
-        return ERecordingFormat.FLV;
-      case EFileFormat.mov:
-        return ERecordingFormat.MOV;
-      case EFileFormat.mkv:
-        return ERecordingFormat.MKV;
-      case EFileFormat.mpegts:
-        return ERecordingFormat.MPEGTS;
-      case EFileFormat.hls:
-        return ERecordingFormat.HLS;
-    }
+    return convertFileFormatToRecordingFormat(format);
   }
 
   /**

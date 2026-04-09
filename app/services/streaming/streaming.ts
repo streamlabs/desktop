@@ -2840,6 +2840,21 @@ export class StreamingService
     return 'additionalVideo' in instance;
   }
 
+  getStreamingInstance(): ISimpleStreaming | IAdvancedStreaming | null {
+    return (
+      this.contexts.horizontal?.streaming ??
+      this.contexts.vertical?.streaming ??
+      this.contexts.stream?.streaming ??
+      this.contexts.streamSecond?.streaming ??
+      this.contexts.enhancedBroadcasting?.streaming ??
+      null
+    );
+  }
+
+  getRecordingInstance(): ISimpleRecording | IAdvancedRecording | null {
+    return this.contexts.horizontal?.recording ?? this.contexts.vertical?.recording ?? null;
+  }
+
   private isAdvancedStreaming(
     instance: ISimpleStreaming | IAdvancedStreaming | null,
   ): instance is IAdvancedStreaming {
