@@ -754,7 +754,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
               'Your stream encoder has been reset to Software (x264). This can be caused by out of date graphics drivers. Please update your graphics drivers to continue using hardware encoding.',
             )
           : $t(
-              'Your stream encoder has been reset to Software (obs_x264). This can be caused by an invalid encoder setting.',
+              'Your stream encoder has been reset to Software (x264). This can be caused by an invalid encoder setting.',
             );
       if (mode === 'Advanced') {
         this.setSettingValue('Output', 'Encoder', 'obs_x264');
