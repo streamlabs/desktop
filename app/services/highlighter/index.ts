@@ -402,9 +402,9 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   // =================================================================================================
 
   private getReplaySetupUrl(): string {
-    if (Utils.isProduction) {
-      return REPLAY_SETUP_URL_PRODUCTION;
-    }
+    // if (Utils.isProduction) {
+    //   return REPLAY_SETUP_URL_PRODUCTION;
+    // }
     return REPLAY_SETUP_URL_STAGING;
   }
 
@@ -448,14 +448,14 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       this.SET_REPLAY_INSTALL({ step: 'downloading', progress: 0, error: null });
 
       // Fake progress that increments during download
-      progressInterval = setInterval(() => {
-        const current = this.state.replayInstall.progress;
-        if (current < 90) {
-          // Slow down as we approach 90%
-          const increment = Math.max(0.5, (90 - current) * 0.04);
-          this.SET_REPLAY_INSTALL({ progress: Math.min(90, current + increment) });
-        }
-      }, 300);
+      // progressInterval = setInterval(() => {
+      //   const current = this.state.replayInstall.progress;
+      //   if (current < 75) {
+      //     // Slow down as we approach 75%
+      //     const increment = Math.max(0.5, (75 - current) * 0.04);
+      //     this.SET_REPLAY_INSTALL({ progress: Math.min(75, current + increment) });
+      //   }
+      // }, 300);
 
       const setupUrl = this.getReplaySetupUrl();
 
@@ -467,8 +467,8 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         setupUrl,
         setupPath,
         (progress: IDownloadProgress) => {
-          // Map download progress to 0-70%
-          const downloadPercent = progress.percent * 70;
+          // Map download progress to 0-75%
+          const downloadPercent = progress.percent * 75;
           const current = this.state.replayInstall.progress;
           if (downloadPercent > current) {
             this.SET_REPLAY_INSTALL({ progress: downloadPercent });
@@ -487,7 +487,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         return false;
       }
 
-      this.SET_REPLAY_INSTALL({ progress: 70 });
+      this.SET_REPLAY_INSTALL({ progress: 75 });
 
       // --- Installing phase ---
       this.SET_REPLAY_INSTALL({ step: 'installing', progress: 75 });
