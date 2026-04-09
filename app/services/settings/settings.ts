@@ -822,18 +822,25 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
           console.log(`[replaceEncoderOptions] recording: fetchedOptions=${JSON.stringify(recEncoderOptions)}`);
 
           if (recEncoderOptions.length > 0) {
+            // Preserve the "Use stream encoder" (none) pseudo-option from OBS
+            const origOptions = recEncoderSetting.options || [];
+            const noneOpt = origOptions.find((o: any) => o.value === 'none');
+            const fullRecOptions = noneOpt
+              ? [noneOpt, ...recEncoderOptions]
+              : recEncoderOptions;
+
             // Only update options if values actually differ to avoid triggering re-renders
-            const oldRecValues = (recEncoderSetting.options || []).map((o: any) => o.value).join(',');
-            const newRecValues = recEncoderOptions.map(o => o.value).join(',');
+            const oldRecValues = origOptions.map((o: any) => o.value).join(',');
+            const newRecValues = fullRecOptions.map(o => o.value).join(',');
             if (oldRecValues !== newRecValues) {
               console.log(`[replaceEncoderOptions] recording: options changed, updating`);
-              recEncoderSetting.options = recEncoderOptions;
+              recEncoderSetting.options = fullRecOptions;
             }
 
             // Validate current value is still in the new options
-            if (!recEncoderOptions.some(opt => opt.value === recEncoderSetting.value)) {
-              console.log(`[replaceEncoderOptions] recording: current value "${recEncoderSetting.value}" not in new options, resetting to "${recEncoderOptions[0].value}"`);
-              recEncoderSetting.value = recEncoderOptions[0].value;
+            if (!fullRecOptions.some(opt => opt.value === recEncoderSetting.value)) {
+              console.log(`[replaceEncoderOptions] recording: current value "${recEncoderSetting.value}" not in new options, resetting to "${fullRecOptions[0].value}"`);
+              recEncoderSetting.value = fullRecOptions[0].value;
             }
           } else {
             console.log('[replaceEncoderOptions] recording: fetchedOptions is EMPTY, keeping original options');
