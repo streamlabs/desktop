@@ -68,25 +68,19 @@ export class EncoderQueryService extends Service {
     }
 
     try {
-      // Try to use an existing streaming instance first
       const existing = this.streamingService.getStreamingInstance();
       if (existing && hasGetAvailableEncoders(existing)) {
-        console.log('[EncoderQueryService] streaming: using existing instance');
         const result = mapEncoders(existing.getAvailableEncoders());
         this.streamingEncoderCache = { key: cacheKey, value: result };
         return result;
       }
 
-      // Fallback: create a temporary instance with service configured
-      console.log('[EncoderQueryService] streaming: creating temporary instance');
       if (mode === 'Simple') {
         const instance = SimpleStreamingFactory.create();
         let service: any = null;
         try {
           service = this.setupTempStreamingService(instance);
-          if (!hasGetAvailableEncoders(instance)) {
-            return [];
-          }
+          if (!hasGetAvailableEncoders(instance)) return [];
           const result = mapEncoders(instance.getAvailableEncoders());
           this.streamingEncoderCache = { key: cacheKey, value: result };
           return result;
@@ -99,9 +93,7 @@ export class EncoderQueryService extends Service {
         let service: any = null;
         try {
           service = this.setupTempStreamingService(instance);
-          if (!hasGetAvailableEncoders(instance)) {
-            return [];
-          }
+          if (!hasGetAvailableEncoders(instance)) return [];
           const result = mapEncoders(instance.getAvailableEncoders());
           this.streamingEncoderCache = { key: cacheKey, value: result };
           return result;
@@ -127,24 +119,18 @@ export class EncoderQueryService extends Service {
     }
 
     try {
-      // Try to use an existing recording instance first
       const existing = this.streamingService.getRecordingInstance();
       if (existing && hasGetAvailableEncoders(existing)) {
-        console.log('[EncoderQueryService] recording: using existing instance');
         const result = mapEncoders(existing.getAvailableEncoders());
         this.recordingEncoderCache = { key: cacheKey, value: result };
         return result;
       }
 
-      // Fallback: create a temporary instance
-      console.log('[EncoderQueryService] recording: creating temporary instance');
       if (mode === 'Simple') {
         const instance = SimpleRecordingFactory.create();
         try {
           instance.format = format;
-          if (!hasGetAvailableEncoders(instance)) {
-            return [];
-          }
+          if (!hasGetAvailableEncoders(instance)) return [];
           const result = mapEncoders(instance.getAvailableEncoders());
           this.recordingEncoderCache = { key: cacheKey, value: result };
           return result;
@@ -155,9 +141,7 @@ export class EncoderQueryService extends Service {
         const instance = AdvancedRecordingFactory.create();
         try {
           instance.format = format;
-          if (!hasGetAvailableEncoders(instance)) {
-            return [];
-          }
+          if (!hasGetAvailableEncoders(instance)) return [];
           const result = mapEncoders(instance.getAvailableEncoders());
           this.recordingEncoderCache = { key: cacheKey, value: result };
           return result;
@@ -183,9 +167,6 @@ export class EncoderQueryService extends Service {
       if (platform) {
         const config = platformServiceConfig[platform];
         const serviceName = config.service || legacySettings?.settings?.service;
-        console.log(
-          `[EncoderQueryService] setupTempService: platform=${platform}, streamType=${config.streamType}, service=${serviceName}`,
-        );
 
         const service = ServiceFactory.create(config.streamType, 'encoder-query-temp-service', {
           ...legacySettings?.settings,
@@ -196,7 +177,7 @@ export class EncoderQueryService extends Service {
       } else {
         // No enabled platform — fall back to legacySettings
         instance.service = legacySettings;
-        return null; // don't destroy legacySettings, it's shared
+        return null;
       }
     } catch (e: unknown) {
       console.error('[EncoderQueryService] setupTempService failed, proceeding without service', e);
@@ -210,7 +191,6 @@ export class EncoderQueryService extends Service {
       if (!enabledPlatforms.length) return null;
       return enabledPlatforms[0];
     } catch (e: unknown) {
-      console.error('[EncoderQueryService] failed to get enabled platforms', e);
       return null;
     }
   }
