@@ -66,6 +66,7 @@ export default function SceneTransitions() {
             bodyStyle={{ padding: 48, height: 300 }}
             onCancel={dismissModal}
             onOk={dismissModal}
+            destroyOnClose
           >
             {showConnectionModal && <ConnectionSettings connectionId={inspectedConnection} />}
             {showTransitionModal && <TransitionSettings transitionId={inspectedTransition} />}

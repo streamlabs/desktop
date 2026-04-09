@@ -16,13 +16,11 @@ export default function ConnectionSettings(p: { connectionId: string }) {
         value: scene.id,
       })),
     ],
-    transitionOptions: TransitionsService.state.transitions.map(transition => ({
+    transitionOptions: TransitionsService.views.transitions.map(transition => ({
       label: transition.name,
       value: transition.id,
     })),
-    connection: TransitionsService.state.connections.find(
-      conn => conn.id === p.connectionId,
-    )
+    connection: TransitionsService.views.connections.find(conn => conn.id === p.connectionId),
   }));
 
   const meta = {
@@ -35,13 +33,21 @@ export default function ConnectionSettings(p: { connectionId: string }) {
     from: connection?.fromSceneId || '',
     transition: connection?.transitionId || '',
     to: connection?.toSceneId || '',
-  }
+  };
 
   function handleChange(key: string) {
-    return (val: string) => EditorCommandsService.actions.executeCommand('EditConnectionCommand', p.connectionId, {
-      [key]: val,
-    });
+    return (val: string) =>
+      EditorCommandsService.actions.executeCommand('EditConnectionCommand', p.connectionId, {
+        [key]: val,
+      });
   }
 
-  return <FormFactory formOptions={{ layout: 'horizontal' }} metadata={meta} values={values} onChange={handleChange} />
+  return (
+    <FormFactory
+      formOptions={{ layout: 'horizontal' }}
+      metadata={meta}
+      values={values}
+      onChange={handleChange}
+    />
+  );
 }
