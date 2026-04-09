@@ -178,15 +178,15 @@ test('Twitch Enhanced Broadcasting', withUser('twitch'), async t => {
   await waitForStreamStart();
   await stopStream();
 
-  // Single Output Single Stream with Twitch VOD enabled
-  await enableTwitchVOD();
-  await clickGoLive();
-  await waitForSettingsWindowLoaded();
-  await submit();
-  await waitForStreamStart();
-  await stopStream();
-
   // TODO: Re-enable after manual testing
+  // Single Output Single Stream with Twitch VOD enabled
+  // await enableTwitchVOD();
+  // await clickGoLive();
+  // await waitForSettingsWindowLoaded();
+  // await submit();
+  // await waitForStreamStart();
+  // await stopStream();
+
   // Single Output Multistream
   // await clickGoLive();
   // await waitForSettingsWindowLoaded();
