@@ -146,7 +146,7 @@ function DisplayGoal(p: { goal: IStreamBossState['data']['goal']; resetGoal: () 
         onClick={p.resetGoal}
         style={{ marginBottom: 16 }}
       >
-        {$t('Reset Boss')}
+        {$t('Reset Stream Boss')}
       </Button>
     </div>
   );
@@ -240,7 +240,7 @@ export class StreambossModule extends WidgetModule<IStreamBossState> {
       TPlatform,
       'tiktok' | 'twitter' | 'instagram' | 'kick'
     >;
-    return {
+    const multipliers = {
       twitch: {
         bit_multiplier: metadata.number({ label: $t('Damage Per Bit') }),
         sub_multiplier: metadata.number({ label: $t('Damage Per Subscriber') }),
@@ -259,7 +259,12 @@ export class StreambossModule extends WidgetModule<IStreamBossState> {
         sub_multiplier: metadata.number({ label: $t('Damage Per Subscriber') }),
         follow_multiplier: metadata.number({ label: $t('Damage Per Follower') }),
       },
-    }[platform];
+    };
+
+    return {
+      ...multipliers[platform],
+      donation_multiplier: metadata.number({ label: $t('Damage Per Dollar Donation') }),
+    };
   }
 
   get goalSettings() {
