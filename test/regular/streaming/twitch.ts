@@ -180,7 +180,10 @@ test('Twitch Enhanced Broadcasting', withUser('twitch', { multistream: true }), 
 
   // Single Output Single Stream with Twitch VOD enabled
   await enableTwitchVOD();
-  await goLive();
+  await clickGoLive();
+  await waitForSettingsWindowLoaded();
+  await submit();
+  await waitForStreamStart();
   await stopStream();
 
   // Single Output Multistream
