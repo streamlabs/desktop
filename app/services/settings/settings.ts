@@ -313,6 +313,8 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
 
   @Inject() private encoderQueryService: EncoderQueryService;
 
+  private isSaving = false;
+
   audioRefreshed = new Subject();
   settingsUpdated = new Subject<DeepPartial<ISettingsValues>>();
 
@@ -387,8 +389,9 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
       }
     }
 
-    // Replace encoder dropdown options with results from getAvailableEncoders()
-    if (categoryName === 'Output') {
+    // Replace encoder dropdown options with results from getAvailableEncoders().
+    // Skip during save-triggered reloads to avoid blocking the worker on every keystroke.
+    if (categoryName === 'Output' && !this.isSaving) {
       settings = this.replaceEncoderOptions(settings);
     }
 
@@ -682,7 +685,12 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     }
 
     obs.NodeObs.OBS_settings_saveSettings(categoryName, dataToSave);
-    this.loadSettingsIntoStore();
+    this.isSaving = true;
+    try {
+      this.loadSettingsIntoStore();
+    } finally {
+      this.isSaving = false;
+    }
   }
 
   setSettingsPatch(patch: DeepPartial<ISettingsValues>) {
