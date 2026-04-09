@@ -324,7 +324,7 @@ function SLIDBlock() {
   }
 
   async function mergeSLID() {
-    const resp = await UserService.actions.return.startSLMerge();
+    const resp = await UserService.actions.return.startSLMerge('slid');
     if (resp !== EPlatformCallResult.Success) return;
     SettingsService.actions.showSettings('Stream');
   }

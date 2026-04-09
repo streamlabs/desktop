@@ -10,16 +10,23 @@ import * as remote from '@electron/remote';
 import crypto from 'crypto';
 import { Inject } from 'services/core';
 import { HostsService } from 'app-services';
-import { jfetch } from 'util/requests';
+import { authorizedHeaders, jfetch } from 'util/requests';
 
 interface IPkceAuthResponse {
+  success: boolean;
   data: {
-    oauth_token: string;
     platform: TPlatform | 'slid';
     platform_id: string;
     platform_token: string;
     platform_username: string;
     token: string;
+    first_time_user: boolean;
+    api_token: {
+      token_type: string;
+      expires_in: number;
+      access_token: string;
+      refresh_token: string;
+    };
   };
 }
 
@@ -39,6 +46,7 @@ export class AuthModule {
     authUrl: string,
     onWindowShow: () => void,
     onWindowClose: () => void = () => {},
+    platform: TPlatform | 'slid' = 'slid',
     merge = false,
     external = true,
     windowOptions: electron.BrowserWindowConstructorOptions = {},
@@ -54,12 +62,21 @@ export class AuthModule {
       .replace(/\+/g, '-')
       .replace(/\//g, '_');
 
+    const loginUrl =
+      `https://${this.hostsService.streamlabs}/client/login` +
+      `?_=${Date.now()}` +
+      '&skip_splash=true' +
+      '&external=electron' +
+      `&${platform}` +
+      '&force_verify' +
+      '&origin=slobs';
+
     const partition = `persist:${uuid()}`;
 
     let code = '';
 
     if (external) {
-      code = await this.externalLogin(authUrl, codeChallenge, merge, onWindowShow);
+      code = await this.externalLogin(loginUrl, codeChallenge, merge, onWindowShow);
     } else {
       code = await this.internalLogin(
         authUrl,
@@ -74,14 +91,33 @@ export class AuthModule {
 
     try {
       const host = this.hostsService.streamlabs;
-      const url = `https://${host}/api/v5/slobs/auth/data?code_verifier=${codeVerifier}&code=${code}`;
+      const url = `https://${host}/api/v5/auth/data?code_verifier=${codeVerifier}&code=${code}`;
 
       const resp = await jfetch<IPkceAuthResponse>(url);
 
+      if (!resp.success) {
+        console.error('Authentication failed, please relogin to resolve the issue.');
+        return null;
+      }
+
+      const valid = await this.testToken(resp.data.api_token.access_token);
+
+      if (!valid) {
+        console.error('Invalid token, please relogin to resolve the issue.');
+        return null;
+      }
+
+      const data = {
+        widgetToken: resp.data.token,
+        apiToken: resp.data.api_token.access_token,
+        refreshToken: resp.data.api_token.refresh_token,
+        newUser: resp.data.first_time_user,
+        refreshExpires: Date.now() + resp.data.api_token.expires_in * 1000,
+      };
+
       if (resp.data.platform === 'slid') {
         return {
-          widgetToken: resp.data.token,
-          apiToken: resp.data.oauth_token,
+          ...data,
           primaryPlatform: null,
           platforms: {},
           slid: {
@@ -93,8 +129,7 @@ export class AuthModule {
       }
 
       return {
-        widgetToken: resp.data.token,
-        apiToken: resp.data.oauth_token,
+        ...data,
         primaryPlatform: resp.data.platform,
         platforms: {
           [resp.data.platform]: {
@@ -107,8 +142,8 @@ export class AuthModule {
         partition,
         hasRelogged: true,
       };
-    } catch (error: unknown) {
-      console.error('Authentication Error: ', error);
+    } catch (e: unknown) {
+      console.error('Authentication Error: ', e);
 
       return;
     }
@@ -187,6 +222,26 @@ export class AuthModule {
     return code;
   }
 
+  private async testToken(token: string) {
+    const host = this.hostsService.streamlabs;
+    const url = `https://${host}/api/v5/oauth/test`;
+    const headers = authorizedHeaders(token, new Headers({ 'Content-Type': 'application/json' }));
+
+    try {
+      const resp = await jfetch<any>(url, { method: 'GET', headers });
+
+      if (!resp.message || !resp.message.toLowerCase().includes('authenticated')) {
+        console.error('Invalid token: ', resp);
+        return false;
+      }
+
+      return true;
+    } catch (e: unknown) {
+      console.error('Error testing token: ', e);
+      return false;
+    }
+  }
+
   private async internalLogin(
     authUrl: string,
     codeChallenge: string,
@@ -233,5 +288,98 @@ export class AuthModule {
       authWindow.removeMenu();
       authWindow.loadURL(url);
     });
+  }
+
+  async refreshToken(token: string) {
+    try {
+      const host = this.hostsService.streamlabs;
+      const headers = authorizedHeaders(token, new Headers({ 'Content-Type': 'application/json' }));
+      const clientId = await jfetch<{
+        success: boolean;
+        data: { client_id: string };
+        message: string;
+      }>(`https://${host}/api/v5/oauth/client-id/desktop`, { method: 'GET', headers }).then(
+        resp => resp.data.client_id,
+      );
+
+      const body = JSON.stringify({
+        grant_type: 'refresh_token',
+        refresh_token: token,
+        client_id: clientId,
+      });
+
+      const url = `https://${host}/api/v5/oauth/token`;
+      const resp = await jfetch<any>(url, { method: 'POST', headers, body });
+
+      console.log('Refresh token response: ', resp);
+
+      if (!resp) {
+        throw new Error('Failed to refresh token');
+      }
+
+      return {
+        apiToken: resp.access_token,
+        refreshToken: resp.refresh_token,
+        refreshExpires: Date.now() + resp.expires_in * 1000,
+      };
+    } catch (e: unknown) {
+      console.log('Error refreshing token: ', e);
+    }
+  }
+
+  async revokeToken(token: string) {
+    try {
+      const host = this.hostsService.streamlabs;
+      const headers = authorizedHeaders(token, new Headers({ 'Content-Type': 'application/json' }));
+      const url = `https://${host}/api/v5/oauth/token/revoke`;
+
+      const resp = await jfetch<Partial<IPkceAuthResponse>>(url, { method: 'POST', headers });
+
+      if (!resp.success) {
+        throw new Error('Failed to revoke refresh token');
+      }
+    } catch (e: unknown) {
+      console.log('Error revoking refresh token: ', e);
+    }
+  }
+
+  async exchangeToken(auth: IUserAuth, retries = 3): Promise<IUserAuth> {
+    if (!auth.apiToken) {
+      console.error('No API token found for user, cannot exchange token');
+      return null;
+    }
+
+    try {
+      const host = this.hostsService.streamlabs;
+      const headers = authorizedHeaders(
+        auth.apiToken,
+        new Headers({ 'Content-Type': 'application/json' }),
+      );
+      const body = JSON.stringify({
+        origin: 'desktop',
+      });
+      const url = `https://${host}/api/v5/oauth/token/exchange`;
+      const request = new Request(url, { headers, body, method: 'POST' });
+      const resp = await jfetch<any>(request);
+
+      if (!resp.success) {
+        throw new Error('Failed to exchange token');
+      }
+
+      return {
+        ...auth,
+        apiToken: resp.data.api_token.access_token,
+        refreshToken: resp.data.api_token.refresh_token,
+        refreshExpires: Date.now() + resp.data.api_token.expires_in * 1000,
+      };
+    } catch (e: unknown) {
+      console.error('Error exchanging token: ', e);
+
+      // Retry a few times in case of unexpected errors
+      if (retries > 0) {
+        console.error(`Retrying token exchange, attempts left: ${retries - 1}`);
+        return this.exchangeToken(auth, retries - 1);
+      }
+    }
   }
 }

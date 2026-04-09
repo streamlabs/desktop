@@ -243,5 +243,7 @@
   "Free, forever.": "Free, forever.",
   "From $27/mo": "From $27/mo",
   "Continue with Free": "Continue with Free",
-  "Select Profile": "Select Profile"
+  "Select Profile": "Select Profile",
+  "'Your login session could not be refreshed. Please log in again to continue using Streamlabs Desktop.": "'Your login session could not be refreshed. Please log in again to continue using Streamlabs Desktop.",
+  "Log in again": "Log in again"
 }

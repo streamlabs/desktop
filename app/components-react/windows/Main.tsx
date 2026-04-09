@@ -288,7 +288,10 @@ export default function Main() {
           />
         )}
         <div
-          className={cx(styles.mainMiddle, { [styles.mainMiddleCompact]: compactView })}
+          className={cx(styles.mainMiddle, {
+            [styles.mainMiddleCompact]: compactView,
+            [styles.mainMiddleOnboarding]: page === 'Onboarding',
+          })}
           ref={mainMiddleEl}
         >
           {!showLoadingSpinner && (

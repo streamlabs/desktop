@@ -21,6 +21,7 @@ export interface ITestUser {
   id: string; // platform userId
   token: string; // platform token
   apiToken: string; // Streamlabs API token
+  refreshToken: string; // Streamlabs API refresh token
   widgetToken: string; // needs for widgets showing
   channelId?: string; // for the Mixer and Facebook only
   features?: ITestUserFeatures; // user-specific features
@@ -170,6 +171,7 @@ export async function loginWithAuthInfo(
   const authInfo = {
     widgetToken: user.widgetToken,
     apiToken: user.apiToken,
+    refreshToken: user.refreshToken,
     primaryPlatform: user.type,
     platforms: {
       [user.type]: {
@@ -281,12 +283,14 @@ export async function reserveUserFromPool(
       if (features) {
         // create a filter using mongoDB syntax
         const filter: Dictionary<boolean | null> = {};
-        Object.keys(features).forEach((feature: keyof typeof features) => {
-          const enabled = features[feature];
-          // convert false to null, since DB doesn't have `false` as a value for features
-          const filterValue = enabled ? true : null;
-          filter[feature] = filterValue;
-        });
+        (Object.keys(features) as (keyof ITestUserFeatures)[]).forEach(
+          (feature: keyof ITestUserFeatures) => {
+            const enabled = features[feature];
+            // convert false to null, since DB doesn't have `false` as a value for features
+            const filterValue = enabled ? true : null;
+            filter[feature] = filterValue;
+          },
+        );
         getParams.push(`filter=${JSON.stringify(filter)}`);
       }
 

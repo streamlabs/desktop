@@ -57,7 +57,8 @@ interface IStreamlabsID {
 
 export interface IUserAuth {
   widgetToken: string;
-  apiToken: string; // Streamlabs API Token
+  apiToken: string;
+  refreshToken: string;
 
   /**
    * Old key from when SLOBS only supported a single platform account
@@ -91,6 +92,16 @@ export interface IUserAuth {
    * will be present on the user auth.
    */
   slid?: IStreamlabsID;
+
+  /**
+   * If the user is new, this will be true on first login
+   */
+  newUser: boolean;
+
+  /**
+   * Tracks when the user's token will expire
+   */
+  refreshExpires: number;
 }
 
 // Eventually we will support authing multiple platforms at once
@@ -119,6 +130,7 @@ interface ILinkedPlatformsResponse {
   tiktok_account?: ILinkedPlatform;
   trovo_account?: ILinkedPlatform;
   kick_account?: ILinkedPlatform;
+  patreon_account?: ILinkedPlatform;
   streamlabs_account?: ILinkedPlatform;
   twitter_account?: ILinkedPlatform;
   user_id: number;
@@ -388,6 +400,21 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   }
 
   @mutation()
+  private SET_TOKEN(apiToken: string) {
+    Vue.set(this.state, 'apiToken', apiToken);
+  }
+
+  @mutation()
+  private SET_REFRESH(refreshToken: string) {
+    Vue.set(this.state, 'refreshToken', refreshToken);
+  }
+
+  @mutation()
+  private SET_REFRESH_EXPIRES(refreshExpires: number) {
+    Vue.set(this.state, 'refreshExpires', refreshExpires);
+  }
+
+  @mutation()
   private SET_PRIMARY_PLATFORM(primary: string) {
     Vue.set(this.state.auth, 'primaryPlatform', primary);
   }
@@ -526,6 +553,46 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     });
   }
 
+  /**
+   * Handle token refresh
+   */
+  private refreshTimer: NodeJS.Timeout | null = null;
+
+  private scheduleTokenRefresh(fetchedAuth?: Partial<IUserAuth>) {
+    this.clearTokenRefresh();
+
+    const auth = fetchedAuth || this.state.auth;
+
+    if (!auth || !auth.refreshExpires) return;
+
+    const delay = Math.max(auth.refreshExpires - Date.now() - 30 * 60 * 1000, 0);
+    this.refreshTimer = setTimeout(async () => {
+      const result = await this.authModule.refreshToken(auth.refreshToken);
+      if (result) {
+        this.updateToken(result);
+        this.scheduleTokenRefresh(result);
+      }
+    }, delay);
+  }
+
+  private clearTokenRefresh() {
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
+      this.refreshTimer = null;
+    }
+  }
+
+  private updateToken(refreshData: {
+    apiToken: string;
+    refreshToken: string;
+    refreshExpires: number;
+  }) {
+    this.SET_TOKEN(refreshData.apiToken);
+    this.SET_REFRESH(refreshData.refreshToken);
+    this.SET_REFRESH_EXPIRES(refreshData.refreshExpires);
+    this.scheduleTokenRefresh(refreshData);
+  }
+
   /*
    * Since we're displaying the child window in all cases, it might've
    * been closed when we get this event, so no component was rendered into
@@ -612,7 +679,15 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   async autoLogin() {
     if (!this.state.auth) return;
 
-    if (!this.state.auth.hasRelogged) {
+    // Login expires if the user has been inactive for 3 months
+    const lastActiveTime = this.state.auth.refreshExpires || Date.now();
+    const hasLoginExpired = Date.now() - lastActiveTime > 3 * 30 * 24 * 60 * 60 * 1000;
+
+    if (!this.state.auth.refreshToken) {
+      // If there is no refresh expiration, the account is using an invalid token, so relogin is required
+      const service = getPlatformService(this.state.auth.primaryPlatform);
+      await this.login(service, this.state.auth, true);
+    } else if (hasLoginExpired || !this.state.auth.hasRelogged) {
       await remote.session.defaultSession.clearCache();
       await remote.session.defaultSession.clearStorageData({
         storages: ['cookies', 'cachestorage', 'filesystem'],
@@ -897,6 +972,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
    */
   flushUserSession(): Promise<void> {
     if (this.isLoggedIn && this.state.auth.partition) {
+      this.clearTokenRefresh();
       const session = remote.session.fromPartition(this.state.auth.partition);
       session.flushStorageData();
       return session.cookies.flushStore();
@@ -1102,9 +1178,48 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   @RunInLoadingMode()
   private async login(service: IPlatformService, auth?: IUserAuth, isOnStartup = false) {
     if (!auth) auth = this.state.auth;
+
+    if (!auth.refreshToken) {
+      auth = await this.authModule.exchangeToken(auth);
+
+      if (!auth || !auth.refreshToken) {
+        // If the token fails to exchange, prompt the user to log in again.
+        this.reauthenticate(true, {
+          type: 'warning',
+          title: 'Login Error',
+          message: $t(
+            $t(
+              'Your login session could not be refreshed. Please log in again to continue using Streamlabs Desktop.',
+            ),
+          ),
+          buttons: [$t('Log in again')],
+        });
+
+        return;
+      }
+
+      this.updateToken({
+        apiToken: auth.apiToken,
+        refreshToken: auth.refreshToken,
+        refreshExpires: auth.refreshExpires,
+      });
+    } else if (isOnStartup) {
+      // need to get a new token on app startup to get a valid session
+      const result = await this.authModule.refreshToken(auth.refreshToken);
+
+      if (result) {
+        auth.apiToken = result.apiToken;
+        auth.refreshToken = result.refreshToken;
+        auth.refreshExpires = result.refreshExpires;
+      }
+
+      this.scheduleTokenRefresh(auth);
+    }
+
     this.LOGIN(auth);
     this.VALIDATE_LOGIN(true);
     this.setSentryContext();
+
     this.userLogin.next(auth);
 
     const forceRelogin = await this.updateLinkedPlatforms();
@@ -1173,6 +1288,9 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       ? remote.session.fromPartition(this.state.auth.partition)
       : remote.session.defaultSession;
 
+    // await this.authModule.revokeToken(this.state.auth.apiToken);
+    this.clearTokenRefresh();
+
     session.clearStorageData({ storages: ['cookies'] });
     this.settingsService.setSettingValue('Stream', 'key', '');
 
@@ -1213,6 +1331,13 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
 
     this.LOGOUT();
     this.LOGIN(auth);
+
+    // Set refresh
+    this.updateToken({
+      apiToken: auth.apiToken,
+      refreshToken: auth.refreshToken,
+      refreshExpires: auth.refreshExpires,
+    });
 
     // We need to fetch prime status to skip onboarding step for
     // picking a primary platform if the user has Ultra, as we'll
@@ -1259,7 +1384,7 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     return result;
   }
 
-  async startSLMerge(): Promise<EPlatformCallResult> {
+  async startSLMerge(platform?: TPlatform | 'slid'): Promise<EPlatformCallResult> {
     const authUrl = `https://${this.hostsService.streamlabs}/slobs/merge/${this.apiToken}/streamlabs_account`;
 
     if (!this.isLoggedIn) {
@@ -1274,7 +1399,13 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     const onWindowShow = () => this.SET_AUTH_STATE(EAuthProcessState.Idle);
 
     try {
-      const auth = await this.authModule.startPkceAuth(authUrl, onWindowShow, () => {}, true);
+      const auth = await this.authModule.startPkceAuth(
+        authUrl,
+        onWindowShow,
+        () => {},
+        platform,
+        true,
+      );
       this.SET_AUTH_STATE(EAuthProcessState.Loading);
       this.SET_IS_RELOG(false);
       this.SET_SLID(auth.slid);
@@ -1359,10 +1490,36 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
       authUrl,
       onWindowShow,
       onWindowClose,
+      platform,
       merge,
       mode === 'external',
       service.authWindowOptions,
     );
+
+    if (!auth) {
+      this.SET_AUTH_STATE(EAuthProcessState.Idle);
+      // If the token fails to exchange, prompt the user to log in again.
+      this.reauthenticate(true, {
+        type: 'warning',
+        title: $t('Login Error'),
+        message: $t(
+          $t(
+            'Your login session could not be refreshed. Please log in again to continue using Streamlabs Desktop.',
+          ),
+        ),
+        buttons: [$t('Log in again')],
+      });
+
+      return EPlatformCallResult.Error;
+    } else {
+      this.updateToken({
+        apiToken: auth.apiToken,
+        refreshToken: auth.refreshToken,
+        refreshExpires: auth.refreshExpires,
+      });
+
+      this.scheduleTokenRefresh(auth);
+    }
 
     this.SET_AUTH_STATE(EAuthProcessState.Loading);
     this.SET_IS_RELOG(false);
