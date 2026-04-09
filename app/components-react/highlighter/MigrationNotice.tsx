@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import styles from './MigrationNotice.m.less';
 import cx from 'classnames';
 import { Services } from 'components-react/service-provider';
-import * as remote from '@electron/remote';
 import Utils from 'services/utils';
 import InstallationFlow from './InstallationFlow';
 import { useVuex } from 'components-react/hooks';
@@ -51,27 +50,10 @@ export default function MigrationNotice(props: IMigrationNoticeProps) {
     }
   }
 
-  function handleOpenReplay() {
+  async function handleOpenReplay() {
+    // Use the service method to handle opening/installing Replay
+    const isReplayInstalled = await HighlighterService.openReplay(variant);
     console.log('Opening Streamlabs Replay, isInstalled:', isReplayInstalled);
-
-    if (isReplayInstalled) {
-      // Open Streamlabs Replay via deeplink
-      try {
-        console.log('Attempting to open ghub-replay:// protocol');
-        remote.shell.openExternal('ghub-replay://open');
-      } catch (error: unknown) {
-        console.error('Failed to open Streamlabs Replay:', error);
-        try {
-          remote.shell.openExternal('ghub-replay:');
-        } catch (fallbackError: unknown) {
-          console.error('Failed to open Streamlabs Replay with fallback:', fallbackError);
-          setIsReplayInstalled(false);
-        }
-      }
-    } else {
-      // Start installation flow for Streamlabs Replay
-      HighlighterService.installStreamlabsReplay();
-    }
 
     if (props.onOpenReplay) {
       props.onOpenReplay();

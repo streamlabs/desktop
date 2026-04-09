@@ -93,12 +93,6 @@ export function ImportStreamModal({
     }
     close();
   }
-  function openReplayImport(videoPath: string, game: EGame) {
-    const deeplink = `ghub-replay://import?path=${encodeURIComponent(
-      videoPath,
-    )}&game=${encodeURIComponent(game)}`;
-    remote.shell.openExternal(deeplink);
-  }
 
   async function startImport(game: EGame, filePath: string[] | undefined, id?: string) {
     try {
@@ -115,26 +109,14 @@ export function ImportStreamModal({
       }
 
       if (game && filePath && filePath.length > 0) {
-        openReplayImport(filePath[0], game);
-        UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
-          type: 'DetectionInModalStarted',
-          openedFrom,
-          streamId: id,
-          game,
-        });
+        HighlighterService.openReplayImport(filePath[0], game, openedFrom, id, inputValue);
         closeModal(false);
         return;
       }
 
       filePath = await importStreamFromDevice();
       if (filePath && filePath.length > 0) {
-        openReplayImport(filePath[0], game);
-        UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
-          type: 'DetectionInModalStarted',
-          openedFrom,
-          streamId: id,
-          game,
-        });
+        HighlighterService.openReplayImport(filePath[0], game, openedFrom, id, inputValue);
         closeModal(false);
       }
     } catch (error: unknown) {
@@ -169,13 +151,13 @@ export function ImportStreamModal({
 
           // If there's a pending import, execute it now
           if (pendingImport) {
-            openReplayImport(pendingImport.filePath, pendingImport.game);
-            UsageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
-              type: 'DetectionInModalStarted',
+            HighlighterService.openReplayImport(
+              pendingImport.filePath,
+              pendingImport.game,
               openedFrom,
-              streamId: pendingImport.streamId,
-              game: pendingImport.game,
-            });
+              pendingImport.streamId,
+              inputValue,
+            );
             setPendingImport(null);
             closeModal(false);
           }

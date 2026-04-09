@@ -54,6 +54,7 @@ import {
   ITempRecordingInfo,
   IReplayInstallState,
   EReplayInstallStep,
+  TOpenedFrom,
 } from './models/highlighter.models';
 import {
   EExportStep,
@@ -428,6 +429,11 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
     this.replayInstallAbortController = new AbortController();
     const { signal } = this.replayInstallAbortController;
 
+    // Track installation started
+    this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+      type: 'ReplayInstallationStarted',
+    });
+
     let progressInterval: NodeJS.Timeout | null = null;
 
     const clearProgress = () => {
@@ -473,7 +479,13 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
       clearProgress();
 
-      if (signal.aborted) return false;
+      if (signal.aborted) {
+        this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+          type: 'ReplayInstallationCancelled',
+          phase: 'downloading',
+        });
+        return false;
+      }
 
       this.SET_REPLAY_INSTALL({ progress: 70 });
 
@@ -494,7 +506,13 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
       clearProgress();
 
-      if (signal.aborted) return false;
+      if (signal.aborted) {
+        this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+          type: 'ReplayInstallationCancelled',
+          phase: 'installing',
+        });
+        return false;
+      }
 
       this.SET_REPLAY_INSTALL({ progress: 95 });
 
@@ -504,7 +522,13 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
       // Wait a moment for registry to propagate
       await this.wait(2000);
 
-      if (signal.aborted) return false;
+      if (signal.aborted) {
+        this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+          type: 'ReplayInstallationCancelled',
+          phase: 'verifying',
+        });
+        return false;
+      }
 
       const isInstalled = await this.isStreamlabsReplayInstalled();
       if (!isInstalled) {
@@ -529,13 +553,31 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
         // Non-critical cleanup
       }
 
+      // Track installation finished successfully
+      this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+        type: 'ReplayInstallationFinished',
+      });
+
       return true;
     } catch (error: unknown) {
       clearProgress();
-      if (signal.aborted) return false;
+      if (signal.aborted) {
+        this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+          type: 'ReplayInstallationCancelled',
+          phase: 'error',
+        });
+        return false;
+      }
       const errorMessage = error instanceof Error ? error.message : 'Unknown installation error';
       console.error('Streamlabs Replay installation failed:', errorMessage);
       this.SET_REPLAY_INSTALL({ step: 'error', progress: 0, error: errorMessage });
+
+      // Track installation failed
+      this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+        type: 'ReplayInstallationFailed',
+        error: errorMessage,
+      });
+
       return false;
     } finally {
       if (this.replayInstallAbortController?.signal === signal) {
@@ -545,9 +587,99 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
   }
 
   cancelReplayInstall() {
+    const wasInstalling =
+      this.state.replayInstall.step !== 'idle' &&
+      this.state.replayInstall.step !== 'done' &&
+      this.state.replayInstall.step !== 'error';
+
     this.replayInstallAbortController?.abort();
     this.replayInstallAbortController = null;
     this.SET_REPLAY_INSTALL({ step: 'idle', progress: 0, error: null });
+
+    // Track cancellation if an installation was in progress
+    if (wasInstalling) {
+      this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+        type: 'ReplayInstallationCancelled',
+        phase: this.state.replayInstall.step,
+      });
+    }
+  }
+
+  /**
+   * Opens Streamlabs Replay or starts installation if not installed
+   * @param source - Where the action was initiated from ('page' or 'modal')
+   * @param onInstallationStatusChange - Callback when installation status changes (e.g., after failed deeplink)
+   * @returns Promise<boolean> - true if Replay was opened, false if installation was started
+   */
+  async openReplay(source: 'page' | 'modal'): Promise<boolean> {
+    const isInstalled = await this.isStreamlabsReplayInstalled();
+
+    if (isInstalled) {
+      // Track opening Replay
+      this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+        type: 'ReplayOpen',
+        source,
+      });
+
+      // Open Streamlabs Replay via deeplink
+      try {
+        console.log('Attempting to open ghub-replay:// protocol');
+        remote.shell.openExternal('ghub-replay://open');
+        return true;
+      } catch (error: unknown) {
+        console.error('Failed to open Streamlabs Replay:', error);
+        try {
+          remote.shell.openExternal('ghub-replay:');
+          return true;
+        } catch (fallbackError: unknown) {
+          console.error('Failed to open Streamlabs Replay with fallback:', fallbackError);
+          return false;
+        }
+      }
+    } else {
+      // Track installation click
+      this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+        type: 'ReplayInstallationClick',
+        source,
+      });
+
+      // Start installation flow for Streamlabs Replay (don't await so UI can update)
+      this.installStreamlabsReplay();
+      return false;
+    }
+  }
+
+  /**
+   * Opens Streamlabs Replay with an import deeplink
+   * @param videoPath - Path to the video file to import
+   * @param game - The game type for the video
+   * @param openedFrom - Where the import was initiated from
+   * @param streamId - Optional stream ID for tracking
+   * @param title - Optional title for the recording
+   */
+  openReplayImport(
+    videoPath: string,
+    game: string,
+    openedFrom: TOpenedFrom,
+    streamId?: string,
+    title?: string,
+  ): void {
+    let deeplink = `ghub-replay://import?path=${encodeURIComponent(
+      videoPath,
+    )}&game=${encodeURIComponent(game)}`;
+
+    if (title) {
+      deeplink += `&title=${encodeURIComponent(title)}`;
+    }
+
+    remote.shell.openExternal(deeplink);
+
+    this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
+      type: 'ReplayImport',
+      openedFrom,
+      streamId,
+      game,
+    });
   }
 
   // =================================================================================================
