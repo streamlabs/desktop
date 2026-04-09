@@ -776,14 +776,18 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
         console.log(`[replaceEncoderOptions] streaming: fetchedOptions=${JSON.stringify(streamEncoderOptions)}`);
 
         if (streamEncoderOptions.length > 0) {
-          streamEncoderSetting.options = streamEncoderOptions;
+          // Only update options if values actually differ to avoid triggering re-renders
+          const oldValues = (streamEncoderSetting.options || []).map((o: any) => o.value).join(',');
+          const newValues = streamEncoderOptions.map(o => o.value).join(',');
+          if (oldValues !== newValues) {
+            console.log(`[replaceEncoderOptions] streaming: options changed, updating`);
+            streamEncoderSetting.options = streamEncoderOptions;
+          }
 
           // Validate current value is still in the new options
           if (!streamEncoderOptions.some(opt => opt.value === streamEncoderSetting.value)) {
             console.log(`[replaceEncoderOptions] streaming: current value "${streamEncoderSetting.value}" not in new options, resetting to "${streamEncoderOptions[0].value}"`);
             streamEncoderSetting.value = streamEncoderOptions[0].value;
-          } else {
-            console.log(`[replaceEncoderOptions] streaming: current value "${streamEncoderSetting.value}" is valid in new options`);
           }
         } else {
           console.log('[replaceEncoderOptions] streaming: fetchedOptions is EMPTY, keeping original options');
@@ -818,14 +822,18 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
           console.log(`[replaceEncoderOptions] recording: fetchedOptions=${JSON.stringify(recEncoderOptions)}`);
 
           if (recEncoderOptions.length > 0) {
-            recEncoderSetting.options = recEncoderOptions;
+            // Only update options if values actually differ to avoid triggering re-renders
+            const oldRecValues = (recEncoderSetting.options || []).map((o: any) => o.value).join(',');
+            const newRecValues = recEncoderOptions.map(o => o.value).join(',');
+            if (oldRecValues !== newRecValues) {
+              console.log(`[replaceEncoderOptions] recording: options changed, updating`);
+              recEncoderSetting.options = recEncoderOptions;
+            }
 
             // Validate current value is still in the new options
             if (!recEncoderOptions.some(opt => opt.value === recEncoderSetting.value)) {
               console.log(`[replaceEncoderOptions] recording: current value "${recEncoderSetting.value}" not in new options, resetting to "${recEncoderOptions[0].value}"`);
               recEncoderSetting.value = recEncoderOptions[0].value;
-            } else {
-              console.log(`[replaceEncoderOptions] recording: current value "${recEncoderSetting.value}" is valid in new options`);
             }
           } else {
             console.log('[replaceEncoderOptions] recording: fetchedOptions is EMPTY, keeping original options');
