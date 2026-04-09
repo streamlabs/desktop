@@ -16,6 +16,7 @@ export enum EAvailableFeatures {
   tiktok = 'slobs--tiktok',
   highlighter = 'slobs--highlighter',
   aiHighlighter = 'slobs--ai-highlighter',
+  replayMigration = 'slobs--replay-migration',
   growTab = 'slobs--grow-tab',
   themeAudit = 'slobs--theme-audit',
   reactWidgets = 'slobs--react-widgets',

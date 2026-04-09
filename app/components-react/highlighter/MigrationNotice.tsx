@@ -5,6 +5,7 @@ import { Services } from 'components-react/service-provider';
 import Utils from 'services/utils';
 import InstallationFlow from './InstallationFlow';
 import { useVuex } from 'components-react/hooks';
+import { EAvailableFeatures } from 'services/incremental-rollout';
 
 interface IMigrationNoticeProps {
   variant?: 'page' | 'modal';
@@ -15,13 +16,19 @@ interface IMigrationNoticeProps {
 }
 
 export default function MigrationNotice(props: IMigrationNoticeProps) {
-  const { HighlighterService } = Services;
+  const { HighlighterService, IncrementalRolloutService } = Services;
   const [isReplayInstalled, setIsReplayInstalled] = useState<boolean | null>(null);
   const isDevMode = Utils.isDevMode();
   const variant = props.variant || 'page';
+  const isModal = variant === 'modal';
 
   const installStep = useVuex(() => HighlighterService.state.replayInstall.step);
   const isInstalling = installStep !== 'idle' && installStep !== 'done';
+
+  // Check if migration notice feature is enabled
+  const isMigrationEnabled = IncrementalRolloutService.views.featureIsEnabled(
+    EAvailableFeatures.replayMigration,
+  );
 
   useEffect(() => {
     checkReplayInstallation();
@@ -66,12 +73,15 @@ export default function MigrationNotice(props: IMigrationNoticeProps) {
     }
   }
 
+  // If feature is not enabled, don't render anything (dev mode is handled in featureIsEnabled)
+  if (!isMigrationEnabled) {
+    return null;
+  }
+
   // Show installation flow when installing
   if (isInstalling) {
     return <InstallationFlow onCancel={handleInstallCancel} />;
   }
-
-  const isModal = variant === 'modal';
 
   return (
     <div className={cx(styles.migrationNotice, isModal && styles.migrationNoticeModal)}>
