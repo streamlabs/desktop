@@ -743,18 +743,32 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     if (encoderSetting.value === 'obs_x264') return;
 
     if (!encoderIsValid) {
+      console.warn(
+        `The selected encoder ${encoderSetting.value} is not valid for the current configuration. Resetting to a valid encoder.`,
+      );
       const mode: string = this.findSettingValue(this.state.Output.formData, 'Untitled', 'Mode');
 
+      const encoderMessage =
+        getOS() === OS.Windows
+          ? $t(
+              'Your stream encoder has been reset to Software (x264). This can be caused by out of date graphics drivers. Please update your graphics drivers to continue using hardware encoding.',
+            )
+          : $t(
+              'Your stream encoder has been reset to Software (obs_x264). This can be caused by an invalid encoder setting.',
+            );
       if (mode === 'Advanced') {
         this.setSettingValue('Output', 'Encoder', 'obs_x264');
       } else {
-        this.setSettingValue('Output', 'StreamEncoder', 'x264');
+        if (getOS() === OS.Mac) {
+          this.setSettingValue('Output', 'StreamEncoder', 'obs_x264'); // obs_x264 is the default encoder for MacOS in simple mode
+        } else {
+          this.setSettingValue('Output', 'StreamEncoder', 'x264');
+        }
       }
 
       remote.dialog.showMessageBox(this.windowsService.windows.main, {
         type: 'error',
-        message:
-          'Your stream encoder has been reset to Software (x264). This can be caused by out of date graphics drivers. Please update your graphics drivers to continue using hardware encoding.',
+        message: encoderMessage,
       });
     }
   }
@@ -800,7 +814,7 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
     if (mode === 'Advanced') {
       this.setSettingValue('Output', 'Encoder', 'obs_x264');
     } else {
-      this.setSettingValue('Output', 'StreamEncoder', 'x264');
+      this.setSettingValue('Output', 'StreamEncoder', getOS() === OS.Windows ? 'x264' : 'obs_x264');
     }
   }
 
