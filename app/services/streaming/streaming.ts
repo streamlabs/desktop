@@ -1114,13 +1114,7 @@ export class StreamingService
     return error;
   }
 
-  async resetInfo(destroyContexts: boolean = false, skipDestroyHorizontalContext: boolean = false) {
-    if (destroyContexts) {
-      await new Promise(async resolve => {
-        await this.handleCleanupStreamingInstances(skipDestroyHorizontalContext);
-        resolve(true);
-      });
-    }
+  async resetInfo() {
     this.RESET_STREAM_INFO();
   }
 
@@ -1394,7 +1388,7 @@ export class StreamingService
       }
 
       this.handleStopStreaming(
-        this.getIsStreamingStatus(EStreamingState.Live) ||
+        this.getIsStreamingStatus(EStreamingState.Starting) ||
           this.getIsStreamingStatus(EStreamingState.Reconnecting),
       );
 
@@ -1506,6 +1500,7 @@ export class StreamingService
     if (this.state.enhancedBroadcasting) {
       // Handle enhanced broadcasting multistream in dual output mode
       if (context === 'enhancedBroadcasting') {
+        // Start the vertical stream. The start streaming promise will be resolved when the horizontal stream starts
         await this.validateOrCreateOutputInstance({
           display: 'vertical',
           type: 'streaming',
@@ -1513,19 +1508,13 @@ export class StreamingService
           context: 'vertical',
           start: true,
         });
-        // Return early because the vertical stream needs to start and the horizontal streaming instance needs to be created.
-        // The start streaming promise will be resolved when the horizontal stream starts
-        return;
       }
 
       if (context === 'vertical') {
         // Start the horizontal stream. The start streaming promise will be resolved when the horizontal stream starts
         // If the vertical stream is not an enhanced broadcasting stream, then the horizontal stream should be created
         // as the enhanced broadcasting stream.
-        const horizontalEnhancedBroadcasting =
-          this.contexts.enhancedBroadcasting.streaming === null &&
-          this.state.enhancedBroadcasting &&
-          !this.isEnhancedBroadcastingStreaming(this.contexts.vertical.streaming);
+        const twitchDisplay = this.views.getPlatformDisplayType('twitch');
 
         await this.validateOrCreateOutputInstance({
           display: 'horizontal',
@@ -1533,7 +1522,7 @@ export class StreamingService
           audioTrack: 1,
           context: 'horizontal',
           start: true,
-          isEnhancedBroadcasting: horizontalEnhancedBroadcasting,
+          isEnhancedBroadcasting: twitchDisplay === 'horizontal',
         });
       }
 
@@ -1545,13 +1534,20 @@ export class StreamingService
           this.state.status.vertical &&
           this.state.status.vertical.streaming !== EStreamingState.Live
         ) {
-          await this.validateOrCreateOutputInstance({
-            display: 'vertical',
-            type: 'streaming',
-            audioTrack: 2,
-            context: 'vertical',
-            start: true,
-          });
+          if (this.contexts.vertical.streaming) {
+            this.contexts.vertical.streaming.start();
+          } else {
+            const twitchDisplay = this.views.getPlatformDisplayType('twitch');
+
+            await this.validateOrCreateOutputInstance({
+              display: 'vertical',
+              type: 'streaming',
+              audioTrack: 2,
+              context: 'vertical',
+              start: true,
+              isEnhancedBroadcasting: twitchDisplay === 'vertical',
+            });
+          }
         } else {
           // Finally, all conditions should be met to resolve the start streaming promise in dual output mode with enhanced broadcasting.
           // Only resolve the start streaming promise after the horizontal stream has started to prevent unintended side effects of
@@ -1609,7 +1605,7 @@ export class StreamingService
 
     if (context === 'vertical') {
       // This should not happen because the vertical stream is only created in dual output mode so reject the promise
-      await this.handleCleanupStreamingInstances(false, true);
+      this.handleCleanupStreamingInstances({ skipHorizontal: false });
 
       this.SET_STREAMING_STATUS(EStreamingState.Offline, context, time);
       this.streamingStatusChange.next(EStreamingState.Offline);
@@ -1670,7 +1666,7 @@ export class StreamingService
         'Vertical streaming instance exists without a horizontal streaming instance. This should not happen and indicates an error in the streaming lifecycle.',
       );
       if (this.state.status.vertical.streaming === EStreamingState.Live) {
-        this.handleCleanupStreamingInstances(false, true);
+        this.handleCleanupStreamingInstances({ skipHorizontal: false });
       } else {
         for (const contextName of Object.keys(this.contexts) as TOutputContext[]) {
           this.handleDestroyOutputContexts(contextName);
@@ -1691,13 +1687,24 @@ export class StreamingService
     // Stop the horizontal stream. On the `Stop` signal in `handleStreamingSignal`, all other streaming
     // instances will be stopped and destroyed. Otherwise, just cleanup all of the streaming instances.
     if (this.contexts.horizontal.streaming) {
-      if (this.state.status.horizontal.streaming === EStreamingState.Live) {
-        this.contexts.horizontal.streaming.stop(force);
-      } else {
-        this.handleCleanupStreamingInstances(false, force);
-      }
+      this.contexts.horizontal.streaming.stop(force);
     }
   }
+
+  private async createEnhancedBroadcastSingleStream() {
+    const twitchDisplay = this.views.getPlatformDisplayType('twitch');
+
+    // Always create the vertical stream first because the start streaming promise resolves with the horizontal stream
+    await this.validateOrCreateOutputInstance({
+      display: 'vertical',
+      type: 'streaming',
+      audioTrack: 2,
+      context: 'vertical',
+      start: true,
+      isEnhancedBroadcasting: twitchDisplay === 'vertical',
+    });
+  }
+
   private async createEnhancedBroadcastMultistream() {
     const display = this.settingsService.views.values.Stream.server.includes('streamlabs')
       ? 'horizontal'
@@ -1748,16 +1755,7 @@ export class StreamingService
     if (this.views.shouldSetupRestream && this.views.isEnhancedBroadcastingMultistream()) {
       await this.createEnhancedBroadcastMultistream();
     } else {
-      const display = this.views.getPlatformDisplayType('twitch');
-      const audioTrack = display === 'horizontal' ? 1 : 2;
-      await this.validateOrCreateOutputInstance({
-        display,
-        type: 'streaming',
-        audioTrack,
-        context: display,
-        start: true,
-        isEnhancedBroadcasting: true,
-      });
+      await this.createEnhancedBroadcastSingleStream();
     }
   }
 
@@ -2371,22 +2369,9 @@ export class StreamingService
         this.sendStreamEndEvent();
       }
     } else if (info.signal === EOBSOutputSignal.Stop) {
-      if (info.code !== EOutputCode.Success) {
-        // Handle stopping the stream when we receive the `deactivate` signal, which is sent after the `stop` signal
-        // to allow the stream to finish stopping before cleaning up the streaming instances and contexts.
-        // On the stop signal, only handle errors. It is possible that one of the contexts has gone live while the
-        // others one has failed to start so to prevent orphaned streaming instances, all streaming instances should
-        // be stopped on error
-        await this.resetInfo(true, false);
-        this.rejectStartStreaming();
-
-        this.usageStatisticsService.recordAnalyticsEvent('StreamingStatus', {
-          code: info.code,
-          status: EStreamingState.Offline,
-        });
-
-        this.createOBSError(EOBSOutputType.Streaming, context, info.signal, info.code, info.error);
-      }
+      // Do nothing except change the signal
+      // Note: The `stop` signal will be sent before the `deactivate` signal.
+      // Error handling with a stop signal is handled in the `signalHandler`
     } else if (info.signal === EOBSOutputSignal.Deactivate) {
       // The `deactivate` signal is sent after the `stop` signal
 
@@ -2419,7 +2404,7 @@ export class StreamingService
         // The horizontal context always goes live regardless of the streaming mode
         // so when the horizontal context has deactivated, any instances created for
         // `stream` and `streamSecond` should be destroyed to prevent memory leaks.
-        await this.handleCleanupStreamingInstances(true, false);
+        await this.handleCleanupStreamingInstances({ skipHorizontal: true });
       }
 
       // Ensure instances for the recording and replay buffer are destroyed
@@ -2795,7 +2780,13 @@ export class StreamingService
         await this.createRecording({ display, audioTrack: index, start });
       }
     } else {
-      await this.createStreaming({ output: display, audioTrack: index, start, context });
+      await this.createStreaming({
+        output: display,
+        audioTrack: index,
+        start,
+        context,
+        isEnhancedBroadcasting: isEnhancedBroadcastingContext,
+      });
     }
   }
 
@@ -2923,23 +2914,22 @@ export class StreamingService
   }
 
   private async handleFactoryOutputError(info: EOutputSignal, context: TOutputContext) {
-    const legacyInfo = {
-      type: info.type as EOBSOutputType,
-      signal: info.signal as EOBSOutputSignal,
-      code: info.code as EOutputCode,
-      error: info.error,
-      service: context as string,
-    } as IOBSOutputSignalInfo;
+    this.createOBSError(
+      EOBSOutputType.Streaming,
+      context,
+      info.signal as EOBSOutputSignal,
+      info.code,
+      info.error,
+    );
 
     if (this.isDisplayContext(context)) {
       await this.destroyOutputContextIfExists(context, 'replayBuffer');
       await this.destroyOutputContextIfExists(context, 'recording');
     }
-    await this.destroyOutputContextIfExists(context, 'streaming');
 
-    this.handleOBSOutputError(legacyInfo);
+    await this.handleCleanupStreamingInstances({ skipHorizontal: false });
 
-    this.RESET_STREAM_INFO();
+    await this.resetInfo();
     this.rejectStartStreaming();
   }
 
@@ -3436,7 +3426,7 @@ export class StreamingService
    */
   async shutdown() {
     await Promise.allSettled(
-      Object.keys(this.contexts).map(async (context: TOutputContext) => {
+      (Object.keys(this.contexts) as TOutputContext[]).map(async (context: TOutputContext) => {
         if (this.isDisplayContext(context)) {
           for (const type of ['streaming', 'recording', 'replayBuffer'] as const) {
             await this.destroyOutputContextIfExists(context, type);
@@ -3448,18 +3438,13 @@ export class StreamingService
     );
   }
 
-  private async handleCleanupStreamingInstances(
-    skipHorizontal: boolean = false,
-    force: boolean = false,
-  ) {
-    for (const [contextName, instance] of Object.entries(this.contexts) as [
-      TOutputContext,
-      IOutputContext | Partial<IOutputContext>,
-    ][]) {
+  private handleCleanupStreamingInstances({ skipHorizontal = false }) {
+    console.log('Cleaning up streaming instances. Skip horizontal:', skipHorizontal);
+    for (const contextName of Object.keys(this.contexts) as TOutputContext[]) {
       if (
         (contextName === 'horizontal' && skipHorizontal) ||
-        instance.streaming === undefined ||
-        instance.streaming === null
+        this.contexts[contextName].streaming === undefined ||
+        this.contexts[contextName].streaming === null
       ) {
         continue;
       }
@@ -3472,9 +3457,7 @@ export class StreamingService
         return;
       }
 
-      instance.streaming.stop(force);
-      // Maybe not necessary, but just in case add a small delay to stagger destroying the streaming instances
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      this.contexts[contextName].streaming?.stop(true);
     }
   }
 
@@ -3482,7 +3465,7 @@ export class StreamingService
    * Destroy all factory API instances
    * @remark Primarily used for cleanup.
    */
-  private async handleDestroyOutputContexts(context: TOutputContext) {
+  private async handleDestroyOutputContexts(context: TOutputContext, force?: boolean) {
     // Recording and replay buffer instances are only created for the horizontal and vertical contexts.
     // Because there is nothing relying on the stream and streamSecond` instances, they can be destroyed
     // immediately when requested.
@@ -3497,7 +3480,7 @@ export class StreamingService
       this.state.status[context].recording === ERecordingState.Offline &&
       this.state.status[context].streaming === EStreamingState.Offline;
 
-    if (offline) {
+    if (offline || force) {
       await this.destroyOutputContextIfExists(context, 'replayBuffer');
       await this.destroyOutputContextIfExists(context, 'recording');
       await this.destroyOutputContextIfExists(context, 'streaming');
@@ -3562,9 +3545,9 @@ export class StreamingService
               );
               break;
           }
-        }
 
-        this.streamingStatusChange.next(EStreamingState.Offline);
+          this.streamingStatusChange.next(EStreamingState.Offline);
+        }
       }
     } catch (e: unknown) {
       console.error(
@@ -3575,23 +3558,50 @@ export class StreamingService
       const instance = this.contexts[contextName][contextType];
 
       // Identify the output's factory in order to destroy the context
-      if (instance && this.outputSettingsService.getSettings().mode === 'Advanced') {
-        switch (contextType) {
-          case 'streaming':
-            this.isAdvancedStreaming(instance as ISimpleStreaming | IAdvancedStreaming)
-              ? AdvancedStreamingFactory.destroy(instance as IAdvancedStreaming)
-              : SimpleStreamingFactory.destroy(instance as ISimpleStreaming);
-            break;
-          case 'recording':
-            this.isAdvancedRecording(instance as ISimpleRecording | IAdvancedRecording)
-              ? AdvancedRecordingFactory.destroy(instance as IAdvancedRecording)
-              : SimpleRecordingFactory.destroy(instance as ISimpleRecording);
-            break;
-          case 'replayBuffer':
-            this.isAdvancedReplayBuffer(instance as ISimpleReplayBuffer | IAdvancedReplayBuffer)
-              ? AdvancedReplayBufferFactory.destroy(instance as IAdvancedReplayBuffer)
-              : SimpleReplayBufferFactory.destroy(instance as ISimpleReplayBuffer);
-            break;
+      if (instance) {
+        if (
+          contextType === 'streaming' &&
+          this.isEnhancedBroadcastingStreaming(
+            instance as
+              | ISimpleStreaming
+              | IAdvancedStreaming
+              | IEnhancedBroadcastingSimpleStreaming
+              | IEnhancedBroadcastingAdvancedStreaming,
+          )
+        ) {
+          if (
+            this.isAdvancedStreaming(
+              instance as
+                | IEnhancedBroadcastingSimpleStreaming
+                | IEnhancedBroadcastingAdvancedStreaming,
+            )
+          ) {
+            EnhancedBroadcastingAdvancedStreamingFactory.destroy(
+              instance as IEnhancedBroadcastingAdvancedStreaming,
+            );
+          } else {
+            EnhancedBroadcastingSimpleStreamingFactory.destroy(
+              instance as IEnhancedBroadcastingSimpleStreaming,
+            );
+          }
+        } else {
+          switch (contextType) {
+            case 'streaming':
+              this.isAdvancedStreaming(instance as ISimpleStreaming | IAdvancedStreaming)
+                ? AdvancedStreamingFactory.destroy(instance as IAdvancedStreaming)
+                : SimpleStreamingFactory.destroy(instance as ISimpleStreaming);
+              break;
+            case 'recording':
+              this.isAdvancedRecording(instance as ISimpleRecording | IAdvancedRecording)
+                ? AdvancedRecordingFactory.destroy(instance as IAdvancedRecording)
+                : SimpleRecordingFactory.destroy(instance as ISimpleRecording);
+              break;
+            case 'replayBuffer':
+              this.isAdvancedReplayBuffer(instance as ISimpleReplayBuffer | IAdvancedReplayBuffer)
+                ? AdvancedReplayBufferFactory.destroy(instance as IAdvancedReplayBuffer)
+                : SimpleReplayBufferFactory.destroy(instance as ISimpleReplayBuffer);
+              break;
+          }
         }
       }
 
