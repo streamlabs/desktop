@@ -161,8 +161,7 @@ test('Streaming to Twitch unlisted category', async t => {
   t.pass();
 });
 
-// This test has been skipped because of an error likely caused by Selenium and Chromium version mismatch
-test.skip('Twitch Enhanced Broadcasting', withUser('twitch'), async t => {
+test('Twitch Enhanced Broadcasting', withUser('twitch'), async t => {
   await prepareToGoLive();
 
   // Single Output Single Stream
