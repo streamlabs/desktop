@@ -108,6 +108,5 @@ export async function goLiveWithDualOutput(platform: string) {
     await waitForStreamStart();
     await isDisplayed('span=Multistream');
     await stopStream();
-    await waitForStreamStop();
   }
 }
