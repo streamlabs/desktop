@@ -255,7 +255,7 @@ export default function GoLiveError() {
         },
       );
 
-      StreamingService.actions.resetInfo(true);
+      StreamingService.actions.resetInfo();
 
       await goLive();
     }
