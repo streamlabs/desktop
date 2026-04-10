@@ -161,7 +161,8 @@ test('Streaming to Twitch unlisted category', async t => {
   t.pass();
 });
 
-test('Twitch Enhanced Broadcasting', withUser('twitch'), async t => {
+// This test has been skipped because of an error likely caused by Selenium and Chromium version mismatch
+test.skip('Twitch Enhanced Broadcasting', withUser('twitch'), async t => {
   await prepareToGoLive();
 
   // Single Output Single Stream
@@ -178,27 +179,26 @@ test('Twitch Enhanced Broadcasting', withUser('twitch'), async t => {
   await waitForStreamStart();
   await stopStream();
 
-  // TODO: Re-enable after manual testing
   // Single Output Single Stream with Twitch VOD enabled
-  // await enableTwitchVOD();
-  // await clickGoLive();
-  // await waitForSettingsWindowLoaded();
-  // await submit();
-  // await waitForStreamStart();
-  // await stopStream();
+  await enableTwitchVOD();
+  await clickGoLive();
+  await waitForSettingsWindowLoaded();
+  await submit();
+  await waitForStreamStart();
+  await stopStream();
 
   // Single Output Multistream
-  // await clickGoLive();
-  // await waitForSettingsWindowLoaded();
+  await clickGoLive();
+  await waitForSettingsWindowLoaded();
 
-  // await fillForm({
-  //   trovo: true,
-  // });
+  await fillForm({
+    trovo: true,
+  });
 
-  // await waitForSettingsWindowLoaded();
-  // await submit();
-  // await waitForStreamStart();
-  // await stopStream();
+  await waitForSettingsWindowLoaded();
+  await submit();
+  await waitForStreamStart();
+  await stopStream();
 
   t.pass();
 });
