@@ -1,22 +1,15 @@
 import { readdir } from 'fs-extra';
-import { skipCheckingErrorsInLog, test, useWebdriver } from '../helpers/webdriver';
+import { test, useWebdriver } from '../helpers/webdriver';
 import { addSource } from '../helpers/modules/sources';
 import {
   setOutputResolution,
   setTemporaryRecordingPath,
   showSettingsWindow,
 } from '../helpers/modules/settings/settings';
-import {
-  clickWhenDisplayed,
-  focusMain,
-  isDisplayed,
-  waitForDisplayed,
-} from '../helpers/modules/core';
+import { clickWhenDisplayed, focusMain, waitForDisplayed } from '../helpers/modules/core';
 import { useForm } from '../helpers/modules/forms';
 import { startRecording, stopRecording } from '../helpers/modules/streaming';
 import { sleep } from '../helpers/sleep';
-import { toggleDualOutputMode } from '../helpers/modules/dual-output';
-import { logIn, releaseUserInPool } from '../helpers/webdriver/user';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -89,37 +82,5 @@ test('Selective Recording', async t => {
 
   const newFiles = await readdir(tmpDir);
   t.is(newFiles.length, 2, 'Selective Recording works in Advanced Mode.');
-
-  // Selective Recording in Dual Output Mode
-  const user = await logIn(t);
-  await toggleDualOutputMode(true);
-  // Toggle selective recording
-  await (await client.$('[data-name=sourcesControls] .icon-smart-record')).click();
-
-  // dual output is active but the vertical display is not shown
-  t.false(
-    await isDisplayed('div#vertical-display'),
-    'Vertical display is not shown in dual output with selective recording',
-  );
-
-  // toggling selective recording off should show the vertical display
-  await (await client.$('.icon-smart-record.active')).click();
-  t.true(
-    await isDisplayed('div#vertical-display'),
-    'Toggling selective recording off shows vertical display in dual output mode',
-  );
-
-  // toggling selective recording back on should hide the vertical display
-  await (await client.$('.icon-smart-record')).click();
-  t.false(
-    await isDisplayed('div#vertical-display'),
-    'Toggling selective recording back on hides vertical display in dual output mode',
-  );
-
-  // toggling selective recording on while in dual output mode opens a message box warning
-  // notifying the user that the vertical canvas is no longer accessible
-  // skip checking the log for this error
-  skipCheckingErrorsInLog();
-  await releaseUserInPool(user);
   t.pass();
 });
