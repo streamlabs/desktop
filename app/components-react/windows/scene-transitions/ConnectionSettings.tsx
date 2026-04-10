@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { metadata } from 'components-react/shared/inputs/metadata';
-import FormFactory from 'components-react/shared/inputs/FormFactory';
+import FormFactory, { TInputValue } from 'components-react/shared/inputs/FormFactory';
 import { useVuex } from 'components-react/hooks';
 import { Services } from 'components-react/service-provider';
 import { $t } from 'services/i18n';
@@ -29,14 +29,17 @@ export default function ConnectionSettings(p: { connectionId: string }) {
     to: metadata.list({ label: $t('Ending Scene'), options: sceneOptions }),
   };
 
-  const values = {
-    from: connection?.fromSceneId || '',
-    transition: connection?.transitionId || '',
-    to: connection?.toSceneId || '',
-  };
+  const values = useMemo(
+    () => ({
+      from: connection?.fromSceneId || '',
+      transition: connection?.transitionId || '',
+      to: connection?.toSceneId || '',
+    }),
+    [connection?.fromSceneId, connection?.transitionId, connection?.toSceneId],
+  );
 
   function handleChange(key: string) {
-    return (val: string) =>
+    return (val: TInputValue) =>
       EditorCommandsService.actions.executeCommand('EditConnectionCommand', p.connectionId, {
         [key]: val,
       });
