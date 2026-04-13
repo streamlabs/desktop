@@ -8,7 +8,7 @@ import { Services } from '../service-provider';
 import * as remote from '@electron/remote';
 import { TStreamShiftStatus } from 'services/restream';
 import { promptAction } from 'components-react/modals';
-import { IStreamShiftRequested, IStreamShiftActionCompleted } from 'services/websocket';
+import { TSocketEvent } from 'services/websocket';
 import { useRealmObject } from 'components-react/hooks/realm';
 
 function StartStreamingButton(p: { disabled?: boolean }) {
@@ -79,64 +79,66 @@ function StartStreamingButton(p: { disabled?: boolean }) {
       });
     }
 
-    const streamShiftEvent = StreamingService.streamShiftEvent.subscribe(
-      (event: IStreamShiftRequested | IStreamShiftActionCompleted) => {
-        const { streamShiftStreamId } = RestreamService.state;
-        console.debug('Event ID: ' + event.data.identifier, '\n Stream ID: ' + streamShiftStreamId);
-        const isFromOtherDevice =
-          streamShiftStreamId && event.data.identifier !== streamShiftStreamId;
+    const streamShiftEvent = StreamingService.streamShiftEvent.subscribe((event: TSocketEvent) => {
+      if (event.type !== 'streamSwitchRequest' && event.type !== 'switchActionComplete') {
+        return;
+      }
 
-        const isMobileRemote = isFromOtherDevice ? /[A-Z]/.test(event.data.identifier) : false;
-        const remoteDeviceType = isMobileRemote ? 'mobile' : 'desktop';
+      const { streamShiftStreamId } = RestreamService.state;
+      console.debug('Event ID: ' + event.data.identifier, '\n Stream ID: ' + streamShiftStreamId);
+      const isFromOtherDevice =
+        streamShiftStreamId && event.data.identifier !== streamShiftStreamId;
 
-        // Note: because the event's stream id is from the device that requested the switch,
-        // it is not possible to know what type of device the stream will be switching from.
-        // We can only identify the type of device the stream is switching to.
-        const switchType = `desktop-${remoteDeviceType}`;
+      const isMobileRemote = isFromOtherDevice ? /[A-Z]/.test(event.data.identifier) : false;
+      const remoteDeviceType = isMobileRemote ? 'mobile' : 'desktop';
 
-        if (event.type === 'streamSwitchRequest') {
-          if (!isFromOtherDevice) {
-            // Don't record the request from this device because the other device will record it
-            RestreamService.actions.confirmStreamShift('approved');
-          } else {
-            UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
-              stream: switchType,
-              action: 'request',
-            });
-          }
-        }
+      // Note: because the event's stream id is from the device that requested the switch,
+      // it is not possible to know what type of device the stream will be switching from.
+      // We can only identify the type of device the stream is switching to.
+      const switchType = `desktop-${remoteDeviceType}`;
 
-        if (event.type === 'switchActionComplete') {
-          // End the stream on this device if switching the stream to another device
-          // Only record analytics if the stream was switched from this device to a different one
-          if (isFromOtherDevice) {
-            Services.RestreamService.actions.endStreamShiftStream(event.data.identifier);
-
-            UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
-              stream: switchType,
-              action: 'complete',
-            });
-          }
-
-          // Notify the user
-          const message = isFromOtherDevice
-            ? $t(
-                'Your stream has been successfully switched to Streamlabs Desktop. Enjoy your stream!',
-              )
-            : $t(
-                'Your stream has been switched to Streamlabs Desktop from another device. Enjoy your stream!',
-              );
-
-          promptAction({
-            title: $t('Stream successfully switched'),
-            message,
-            btnText: $t('Close'),
-            btnType: 'default',
-            cancelBtnPosition: 'none',
+      if (event.type === 'streamSwitchRequest') {
+        if (!isFromOtherDevice) {
+          // Don't record the request from this device because the other device will record it
+          RestreamService.actions.confirmStreamShift('approved');
+        } else {
+          UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
+            stream: switchType,
+            action: 'request',
           });
         }
-      },
-    );
+      }
+
+      if (event.type === 'switchActionComplete') {
+        // End the stream on this device if switching the stream to another device
+        // Only record analytics if the stream was switched from this device to a different one
+        if (isFromOtherDevice) {
+          Services.RestreamService.actions.endStreamShiftStream(event.data.identifier);
+
+          UsageStatisticsService.recordAnalyticsEvent('StreamShift', {
+            stream: switchType,
+            action: 'complete',
+          });
+        }
+
+        // Notify the user
+        const message = isFromOtherDevice
+          ? $t(
+              'Your stream has been successfully switched to Streamlabs Desktop. Enjoy your stream!',
+            )
+          : $t(
+              'Your stream has been switched to Streamlabs Desktop from another device. Enjoy your stream!',
+            );
+
+        promptAction({
+          title: $t('Stream successfully switched'),
+          message,
+          btnText: $t('Close'),
+          btnType: 'default',
+          cancelBtnPosition: 'none',
+        });
+      }
+    });
 
     return () => {
       streamShiftEvent.unsubscribe();
@@ -244,15 +246,19 @@ function StartStreamingButton(p: { disabled?: boolean }) {
         StreamingService.actions.goLive();
       }
     }
-  }, []);
+  }, [streamingStatus, streamShiftStatus, isDualOutputMode, isLoggedIn, isPrime]);
 
-  const getIsRedButton =
-    streamingStatus !== EStreamingState.Offline && streamShiftStatus !== 'pending';
+  const getIsRedButton = useMemo(() => {
+    return streamingStatus !== EStreamingState.Offline && streamShiftStatus !== 'pending';
+  }, [streamingStatus, streamShiftStatus]);
 
-  const isDisabled =
-    p.disabled ||
-    (streamingStatus === EStreamingState.Starting && delaySecondsRemaining === 0) ||
-    (streamingStatus === EStreamingState.Ending && delaySecondsRemaining === 0);
+  const isDisabled = useMemo(() => {
+    return (
+      p.disabled ||
+      (streamingStatus === EStreamingState.Starting && delaySecondsRemaining === 0) ||
+      (streamingStatus === EStreamingState.Ending && delaySecondsRemaining === 0)
+    );
+  }, [p.disabled, streamingStatus, delaySecondsRemaining]);
 
   const fetchStreamShiftStatus = useCallback(async () => {
     try {
@@ -316,9 +322,9 @@ function StartStreamingButton(p: { disabled?: boolean }) {
         <i className="fa fa-spinner fa-pulse" />
       ) : (
         <StreamButtonLabel
+          delaySecondsRemaining={delaySecondsRemaining}
           streamingStatus={streamingStatus}
           delayEnabled={delayEnabled}
-          delaySecondsRemaining={delaySecondsRemaining}
           streamShiftStatus={streamShiftStatus}
         />
       )}
@@ -326,35 +332,35 @@ function StartStreamingButton(p: { disabled?: boolean }) {
   );
 }
 
-const StreamButtonLabel = memo(
-  (p: {
-    streamingStatus: EStreamingState;
-    streamShiftStatus: TStreamShiftStatus;
-    delaySecondsRemaining: number;
-    delayEnabled: boolean;
-  }) => {
-    const label = useMemo(() => {
-      if (p.streamShiftStatus === 'pending') {
-        return $t('Claim Stream');
-      }
+type TStreamButtonLabelProps = {
+  delaySecondsRemaining: number;
+  streamingStatus: EStreamingState;
+  delayEnabled: boolean;
+  streamShiftStatus: TStreamShiftStatus;
+};
 
-      switch (p.streamingStatus) {
-        case EStreamingState.Live:
-          return $t('End Stream');
-        case EStreamingState.Starting:
-          return p.delayEnabled ? `Starting ${p.delaySecondsRemaining}s` : $t('Starting');
-        case EStreamingState.Ending:
-          return p.delayEnabled ? `Discard ${p.delaySecondsRemaining}s` : $t('Ending');
-        case EStreamingState.Reconnecting:
-          return $t('Reconnecting');
-        case EStreamingState.Offline:
-        default:
-          return $t('Go Live');
-      }
-    }, [p.streamShiftStatus, p.streamingStatus, p.delayEnabled, p.delaySecondsRemaining]);
+const StreamButtonLabel = memo((p: TStreamButtonLabelProps) => {
+  const label = useMemo(() => {
+    if (p.streamShiftStatus === 'pending') {
+      return $t('Claim Stream');
+    }
 
-    return <>{label}</>;
-  },
-);
+    switch (p.streamingStatus) {
+      case EStreamingState.Live:
+        return $t('End Stream');
+      case EStreamingState.Starting:
+        return p.delayEnabled ? `Starting ${p.delaySecondsRemaining}s` : $t('Starting');
+      case EStreamingState.Ending:
+        return p.delayEnabled ? `Discard ${p.delaySecondsRemaining}s` : $t('Ending');
+      case EStreamingState.Reconnecting:
+        return $t('Reconnecting');
+      case EStreamingState.Offline:
+      default:
+        return $t('Go Live');
+    }
+  }, [p.streamShiftStatus, p.streamingStatus, p.delayEnabled, p.delaySecondsRemaining]);
+
+  return <>{label}</>;
+});
 
 export default memo(StartStreamingButton);

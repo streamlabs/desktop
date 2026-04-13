@@ -59,12 +59,17 @@ export class StreamInfoView<T extends Object> extends ViewHandler<T> {
   }
 
   get streamingStatus() {
-    if (!this.isDualOutputMode) {
-      return this.streamingState.status.horizontal.streaming;
+    if (this.isDualOutputMode) {
+      // In dual output mode, check for the horizontal status first since that's the primary stream
+      if (this.streamingState.status.horizontal.streaming !== EStreamingState.Offline) {
+        return this.streamingState.status.horizontal.streaming;
+      }
+
+      return this.streamingState.status.vertical.streaming;
     }
 
-    const display = this.getOutputDisplayType();
-    return this.streamingState.status[display].streaming;
+    // The horizontal stream is always the default stream
+    return this.streamingState.status.horizontal.streaming;
   }
 
   get info() {

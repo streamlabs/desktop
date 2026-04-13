@@ -1409,7 +1409,7 @@ export class StreamingService
     }
 
     if (this.getIsStreamingStatus(EStreamingState.Ending)) {
-      this.contexts.horizontal.streaming.stop(true);
+      this.handleCleanupStreamingInstances({ skipHorizontal: false });
       this.restreamService.resetStreamShift();
 
       return Promise.resolve();
@@ -1437,8 +1437,14 @@ export class StreamingService
       this.startReplayBuffer();
     }
 
-    // Resolve the promise for starting the stream.
-    this.SET_STREAMING_STATUS(EStreamingState.Live, 'horizontal', new Date().toISOString());
+    // Resolve the promise for starting the stream
+    // Only use the vertical context if the horizontal context does not exist
+    const display =
+      this.views.isDualOutputMode && this.contexts.horizontal.streaming === null
+        ? 'vertical'
+        : 'horizontal';
+
+    this.SET_STREAMING_STATUS(EStreamingState.Live, display, new Date().toISOString());
     this.resolveStartStreaming();
 
     let streamEncoderInfo: Partial<IOutputSettings> = {};
@@ -1501,59 +1507,21 @@ export class StreamingService
       // Handle enhanced broadcasting multistream in dual output mode
       if (context === 'enhancedBroadcasting') {
         // Start the vertical stream. The start streaming promise will be resolved when the horizontal stream starts
-        await this.validateOrCreateOutputInstance({
-          display: 'vertical',
-          type: 'streaming',
-          audioTrack: 2,
-          context: 'vertical',
-          start: true,
-        });
-      }
-
-      if (context === 'vertical') {
-        // Start the horizontal stream. The start streaming promise will be resolved when the horizontal stream starts
-        // If the vertical stream is not an enhanced broadcasting stream, then the horizontal stream should be created
-        // as the enhanced broadcasting stream.
         const twitchDisplay = this.views.getPlatformDisplayType('twitch');
+        const otherDisplay = twitchDisplay === 'horizontal' ? 'vertical' : 'horizontal';
+        const audioTrack = otherDisplay === 'horizontal' ? 1 : 2;
 
         await this.validateOrCreateOutputInstance({
-          display: 'horizontal',
+          display: otherDisplay,
           type: 'streaming',
-          audioTrack: 1,
-          context: 'horizontal',
+          audioTrack,
+          context: otherDisplay,
           start: true,
-          isEnhancedBroadcasting: twitchDisplay === 'horizontal',
+          isEnhancedBroadcasting: false,
         });
-      }
-
-      // Resolve the start streaming promise when the horizontal stream starts because all other streaming instances will
-      // be created and started
-      if (context === 'horizontal') {
-        // One final check: validate that the vertical streaming instance is created and started before resolving the start streaming promise
-        if (
-          this.state.status.vertical &&
-          this.state.status.vertical.streaming !== EStreamingState.Live
-        ) {
-          if (this.contexts.vertical.streaming) {
-            this.contexts.vertical.streaming.start();
-          } else {
-            const twitchDisplay = this.views.getPlatformDisplayType('twitch');
-
-            await this.validateOrCreateOutputInstance({
-              display: 'vertical',
-              type: 'streaming',
-              audioTrack: 2,
-              context: 'vertical',
-              start: true,
-              isEnhancedBroadcasting: twitchDisplay === 'vertical',
-            });
-          }
-        } else {
-          // Finally, all conditions should be met to resolve the start streaming promise in dual output mode with enhanced broadcasting.
-          // Only resolve the start streaming promise after the horizontal stream has started to prevent unintended side effects of
-          // duplicate actions taken after starting the stream
-          await this.handleStartStreaming(code);
-        }
+      } else {
+        // Resolve the start streaming promise after the non-enhanced-broadcasting stream starts
+        await this.handleStartStreaming(code);
       }
     } else {
       // In dual output mode without enhanced broadcasting, create the horizontal streaming instance after the vertical stream
@@ -1652,56 +1620,55 @@ export class StreamingService
       this.stopReplayBuffer();
     }
 
-    // Stop the vertical stream only if the horizontal stream does not exist or is not live. If horizontal stream exists
-    // or is live, the vertical stream will be stopped when the horizontal stream receives the `Stop` signal in `handleStreamingSignal`.
-    // If for some reason the vertical stream instance exists but the horizontal stream instance does not, stop and destroy
-    // the vertical stream instance to prevent orphaned streaming instances. Technically, this should only happen if there is an error,
-    // log it as an error for visibility.
-    if (
-      this.contexts.vertical.streaming &&
-      (!this.contexts.horizontal.streaming ||
-        this.state.status.horizontal.streaming !== EStreamingState.Live)
-    ) {
-      console.error(
-        'Vertical streaming instance exists without a horizontal streaming instance. This should not happen and indicates an error in the streaming lifecycle.',
-      );
-      if (this.state.status.vertical.streaming === EStreamingState.Live) {
-        this.handleCleanupStreamingInstances({ skipHorizontal: false });
-      } else {
-        for (const contextName of Object.keys(this.contexts) as TOutputContext[]) {
-          this.handleDestroyOutputContexts(contextName);
-        }
-      }
-
-      this.createOBSError(
-        EOBSOutputType.Streaming,
-        'vertical',
-        EOBSOutputSignal.Stop,
-        EOutputCode.Error,
-        $t(
-          'Dual Output horizontal stream failed to start. Please try again or go live in single output mode.',
-        ),
-      );
-    }
-
     // Stop the horizontal stream. On the `Stop` signal in `handleStreamingSignal`, all other streaming
     // instances will be stopped and destroyed. Otherwise, just cleanup all of the streaming instances.
     if (this.contexts.horizontal.streaming) {
       this.contexts.horizontal.streaming.stop(force);
+
+      // Return because in dual output mode, the vertical stream will be stopped in the `handleStreamingSignal`
+      return;
+    }
+
+    // Stop the vertical stream first because in dual output mode, the horizontal stream will always be
+    // stopped in the `handleStreamingSignal`
+    if (this.contexts.vertical.streaming) {
+      this.contexts.vertical.streaming.stop(force);
+    }
+
+    // If there are no display streaming instances, something has gone wrong.
+    // Clean up the streaming instances to prevent orphaned instances and
+    // alert the user.
+    if (!this.contexts.horizontal.streaming && !this.contexts.vertical.streaming) {
+      this.handleCleanupStreamingInstances({ skipHorizontal: true });
+
+      const context = Object.keys(this.contexts).find(
+        key =>
+          this.contexts[key as TOutputContext].streaming !== null &&
+          this.contexts[key as TOutputContext].streaming !== undefined,
+      ) as TOutputContext;
+
+      this.createOBSError(
+        EOBSOutputType.Streaming,
+        context,
+        EOBSOutputSignal.Stop,
+        EOutputCode.Error,
+        $t('Error stopping stream: default streams do not exist.'),
+      );
     }
   }
 
   private async createEnhancedBroadcastSingleStream() {
     const twitchDisplay = this.views.getPlatformDisplayType('twitch');
+    const audioTrack = twitchDisplay === 'horizontal' ? 1 : 2;
 
-    // Always create the vertical stream first because the start streaming promise resolves with the horizontal stream
+    // Always create the enhanced broadcasting streaming instance first
     await this.validateOrCreateOutputInstance({
-      display: 'vertical',
+      display: twitchDisplay,
       type: 'streaming',
-      audioTrack: 2,
-      context: 'vertical',
+      audioTrack,
+      context: 'enhancedBroadcasting',
       start: true,
-      isEnhancedBroadcasting: twitchDisplay === 'vertical',
+      isEnhancedBroadcasting: true,
     });
   }
 
@@ -1753,8 +1720,10 @@ export class StreamingService
 
   private async createEnhancedBroadcastDualOutput() {
     if (this.views.shouldSetupRestream && this.views.isEnhancedBroadcastingMultistream()) {
+      // TODO: confirm can swap displays
       await this.createEnhancedBroadcastMultistream();
     } else {
+      // TODO: confirm can swap displays
       await this.createEnhancedBroadcastSingleStream();
     }
   }
@@ -1790,6 +1759,7 @@ export class StreamingService
     const isEnhancedBroadcasting = settings.isEnhancedBroadcasting || false;
 
     const mode = this.outputSettingsService.getSettings().mode;
+    this.videoSettingsService.validateVideoContext(display);
 
     this.createStreamingInstance(contextName, mode, isEnhancedBroadcasting);
 
@@ -2355,17 +2325,16 @@ export class StreamingService
       // be resolved on the `start` signal.
       return;
     } else if (info.signal === EOBSOutputSignal.Starting) {
-      // In dual output mode, do nothing on the `starting` signal for the vertical stream context because
-      // the horizontal stream context still needs to be created. To prevent errors, the horizontal stream context
-      // is created after the vertical `start` signal. Finishing streaming should not resolve
-      // until after the final stream context is created and started.
-      if (this.views.isDualOutputMode && context !== 'horizontal') {
-        return;
-      }
+      // Do nothing on the `starting` signal except for updating the streaming status to `starting` for the UI,
+      // which happens below
     } else if (info.signal === EOBSOutputSignal.Stopping) {
-      // Only signal that the stream is ending when the horizontal streaming instance stops because the horizontal
-      // streaming instance is the default
-      if (context === 'horizontal') {
+      const isEnhancedBroadcastDualOutputStopping =
+        this.views.isDualOutputMode &&
+        this.state.enhancedBroadcasting &&
+        context === 'vertical' &&
+        !this.contexts.horizontal.streaming;
+
+      if (context === 'horizontal' || isEnhancedBroadcastDualOutputStopping) {
         this.sendStreamEndEvent();
       }
     } else if (info.signal === EOBSOutputSignal.Stop) {
@@ -2375,39 +2344,17 @@ export class StreamingService
     } else if (info.signal === EOBSOutputSignal.Deactivate) {
       // The `deactivate` signal is sent after the `stop` signal
 
-      // Handle continuing the replay buffer and recording instances for the horizontal and vertical
-      // contexts only because the other contexts cannot use recording or replay buffer
-      if (this.isDisplayContext(context)) {
-        const keepReplaying = this.streamSettingsService.settings.keepReplayBufferStreamStops;
-        const isReplayBufferRunning = this.getIsReplayBufferStatus(EReplayBufferState.Running);
-        if (!keepReplaying && isReplayBufferRunning) {
-          this.stopReplayBuffer();
-        }
-
-        // handle recording
-        const keepRecording = this.streamSettingsService.settings.keepRecordingWhenStreamStops;
-        const isRecording = this.getIsRecordingStatus(ERecordingState.Recording);
-        if (!keepRecording && isRecording) {
-          await this.toggleRecording();
-        }
-      }
-
+      // For the UI, set the streaming status to offline on the `deactivate` signal
       if (
         context === 'horizontal' ||
-        (context === 'vertical' && this.contexts.horizontal.streaming === null)
+        (context === 'vertical' && !this.contexts.horizontal.streaming)
       ) {
-        this.usageStatisticsService.recordAnalyticsEvent('StreamingStatus', {
-          code: info.code,
-          status: EStreamingState.Offline,
-        });
-
-        // The horizontal context always goes live regardless of the streaming mode
-        // so when the horizontal context has deactivated, any instances created for
-        // `stream` and `streamSecond` should be destroyed to prevent memory leaks.
-        await this.handleCleanupStreamingInstances({ skipHorizontal: true });
+        // The vertical stream will only exist in dual output mode and is destroyed before the vertical stream
+        // The horizontal stream is destroyed as a part of the cleanup of streaming instances
+        this.handleCleanupStreamingInstances({ skipHorizontal: context === 'horizontal' });
       }
 
-      // Ensure instances for the recording and replay buffer are destroyed
+      // Ensure instances for the recording and replay buffer are destroyed for the display context
       await this.handleDestroyOutputContexts(context);
     } else if (info.signal === EOBSOutputSignal.Reconnect) {
       this.sendReconnectingNotification();
@@ -3439,7 +3386,6 @@ export class StreamingService
   }
 
   private handleCleanupStreamingInstances({ skipHorizontal = false }) {
-    console.log('Cleaning up streaming instances. Skip horizontal:', skipHorizontal);
     for (const contextName of Object.keys(this.contexts) as TOutputContext[]) {
       if (
         (contextName === 'horizontal' && skipHorizontal) ||
@@ -3529,6 +3475,7 @@ export class StreamingService
                 contextName as TDisplayType,
                 new Date().toISOString(),
               );
+              this.streamingStatusChange.next(EStreamingState.Offline);
               break;
             case 'recording':
               this.SET_RECORDING_STATUS(
@@ -3536,6 +3483,7 @@ export class StreamingService
                 contextName as TDisplayType,
                 new Date().toISOString(),
               );
+              this.recordingStatusChange.next(ERecordingState.Offline);
               break;
             case 'replayBuffer':
               this.SET_REPLAY_BUFFER_STATUS(
@@ -3543,10 +3491,9 @@ export class StreamingService
                 contextName as TDisplayType,
                 new Date().toISOString(),
               );
+              this.replayBufferStatusChange.next(EReplayBufferState.Offline);
               break;
           }
-
-          this.streamingStatusChange.next(EStreamingState.Offline);
         }
       }
     } catch (e: unknown) {
