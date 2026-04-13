@@ -3,7 +3,7 @@ import { Services } from 'components-react/service-provider';
 import { metadata } from 'components-react/shared/inputs/metadata';
 import { $t } from 'services/i18n';
 import { useVuex } from 'components-react/hooks';
-import FormFactory from 'components-react/shared/inputs/FormFactory';
+import FormFactory, { TInputValue } from 'components-react/shared/inputs/FormFactory';
 import { ObsForm } from 'components-react/obs/ObsForm';
 import { TObsFormData } from 'components/obs/inputs/ObsInput';
 import Scrollable from 'components-react/shared/Scrollable';
@@ -39,7 +39,7 @@ export default function TransitionSettings(p: { transitionId: string }) {
   }
 
   function handleChange(key: string) {
-    return (val: string | number) => {
+    return (val: TInputValue) => {
       EditorCommandsService.actions.executeCommand('EditTransitionCommand', p.transitionId, {
         [key]: val,
       });

@@ -63,9 +63,13 @@ export default function SceneTransitions() {
           <Modal
             visible={showConnectionModal || showTransitionModal}
             getContainer="#scene-transitions"
-            bodyStyle={{ padding: 48, height: 300 }}
+            bodyStyle={{ padding: 48, height: showTransitionModal ? 360 : 240 }}
+            footer={
+              <button className="button button--action" onClick={dismissModal}>
+                {$t('Done')}
+              </button>
+            }
             onCancel={dismissModal}
-            onOk={dismissModal}
             destroyOnClose
           >
             {showConnectionModal && <ConnectionSettings connectionId={inspectedConnection} />}

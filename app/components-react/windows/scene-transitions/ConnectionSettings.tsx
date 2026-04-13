@@ -24,16 +24,16 @@ export default function ConnectionSettings(p: { connectionId: string }) {
   }));
 
   const meta = {
-    from: metadata.list({ label: $t('Beginning Scene'), options: sceneOptions }),
-    transition: metadata.list({ label: $t('Scene Transition'), options: transitionOptions }),
-    to: metadata.list({ label: $t('Ending Scene'), options: sceneOptions }),
+    fromSceneId: metadata.list({ label: $t('Beginning Scene'), options: sceneOptions }),
+    transitionId: metadata.list({ label: $t('Scene Transition'), options: transitionOptions }),
+    toSceneId: metadata.list({ label: $t('Ending Scene'), options: sceneOptions }),
   };
 
   const values = useMemo(
     () => ({
-      from: connection?.fromSceneId || '',
-      transition: connection?.transitionId || '',
-      to: connection?.toSceneId || '',
+      fromSceneId: connection?.fromSceneId || '',
+      transitionId: connection?.transitionId || '',
+      toSceneId: connection?.toSceneId || '',
     }),
     [connection?.fromSceneId, connection?.transitionId, connection?.toSceneId],
   );

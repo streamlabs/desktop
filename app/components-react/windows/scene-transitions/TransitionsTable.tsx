@@ -123,9 +123,9 @@ export default function TransitionsTable(p: {
 
   return (
     <>
-      <Button className="button button--action" style={{ margin: 16 }} onClick={addTransition}>
+      <button className="button button--action" style={{ margin: 16 }} onClick={addTransition}>
         {$t('Add Transition')}
-      </Button>
+      </button>
       <Table
         columns={columns}
         dataSource={transitions}

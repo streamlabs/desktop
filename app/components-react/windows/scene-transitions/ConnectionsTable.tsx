@@ -21,12 +21,12 @@ export default function ConnectionsTable(p: {
   }));
 
   async function addConnection() {
-    const connection = EditorCommandsService.actions.return.executeCommand(
+    const connection = (await EditorCommandsService.actions.return.executeCommand(
       'CreateConnectionCommand',
       ScenesService.views.scenes[0].id,
       ScenesService.views.scenes[1].id,
       transitions[0].id,
-    ) as ITransitionConnection;
+    )) as ITransitionConnection;
 
     if (!connection) return;
     editConnection(connection.id);
@@ -107,9 +107,9 @@ export default function ConnectionsTable(p: {
 
   return (
     <>
-      <Button className="button button--action" style={{ margin: 16 }} onClick={addConnection}>
+      <button className="button button--action" style={{ margin: 16 }} onClick={addConnection}>
         {$t('Add Connection')}
-      </Button>
+      </button>
       <Table
         columns={columns}
         dataSource={connections}
