@@ -142,7 +142,7 @@ export class RecordingModeService extends PersistentStatefulService<IRecordingMo
 
     const item = this.scenesService.views.activeScene.createAndAddSource(
       'Webcam',
-      byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'av_capture_input' }),
+      byOS({ [OS.Windows]: 'dshow_input', [OS.Mac]: 'macos_avcapture' }),
     );
 
     let sub = this.sourcesService.sourceUpdated.subscribe(s => {

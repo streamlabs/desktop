@@ -17,6 +17,7 @@ import { JsonrpcService } from 'services/api/jsonrpc/jsonrpc';
 import { WindowsService } from 'services/windows';
 import { RealmObject } from './realm';
 import { ObjectSchema } from 'realm';
+import Utils from './utils';
 
 export interface IAnnouncementsInfo {
   id: number;
@@ -137,9 +138,12 @@ export class AnnouncementsService extends Service {
     });
 
     // Open product updates modal once loading is finished
-    this.appService.loadingChanged.subscribe(() => {
+    const sub = this.appService.loadingChanged.subscribe(() => {
       if (this.appService.state.loading || !this.userService.isLoggedIn) return;
       this.getProductUpdates();
+      // NOTE: this is generally not a good pattern for subscriptions but we don't have a better
+      // way to detect when the app first finishes loading
+      sub.unsubscribe();
     });
   }
 
@@ -156,11 +160,33 @@ export class AnnouncementsService extends Service {
     this.setBanner(await this.fetchBanner());
   }
 
+  /**
+   * Get product updates
+   * @remark To show the marketing modal on app start for development and testing purposes,
+   * set the environment variable PRODUCT_UPDATES to true
+   */
   async getProductUpdates() {
+    // Handle forcing the marketing modal to show show for development purposes
+    if (Utils.showProductUpdates()) {
+      const resp = await this.fetchProductUpdates(true);
+      this.showProductUpdates(resp);
+      return;
+    }
+
+    // Handle the normal flow for showing the marketing modal on app start
     const resp = await this.fetchProductUpdates();
+
     if (!resp || !resp.lastUpdatedAt || resp.lastUpdatedAt <= this.state.lastReadProductUpdate) {
       return;
     }
+
+    this.showProductUpdates(resp);
+  }
+
+  /**
+   * Handle showing the marketing modal on app start
+   */
+  showProductUpdates(resp: { updates?: IAnnouncementsInfo[]; lastUpdatedAt: number }) {
     this.setLastReadProductUpdate(resp.lastUpdatedAt);
     this.setProductUpdates(resp.updates);
     this.openProductUpdates();
@@ -243,8 +269,6 @@ export class AnnouncementsService extends Service {
     try {
       const newState = await jfetch<IAnnouncementsInfo[]>(req);
 
-      console.log(newState);
-
       // splits out params for local links eg PlatformAppStore?appId=<app-id>
       newState.forEach(item => {
         const queryString = item.link.split('?')[1];
@@ -267,30 +291,38 @@ export class AnnouncementsService extends Service {
   private async fetchBanner() {
     const recentlyInstalled = await this.recentlyInstalled();
 
-    if (recentlyInstalled || !this.customizationService.state.enableAnnouncements) {
-      return null;
-    }
+    if (
+      !recentlyInstalled ||
+      this.customizationService.state.enableAnnouncements ||
+      Utils.showProductUpdates()
+    ) {
+      const endpoint = `api/v5/slobs/announcement/get?clientId=${this.userService.getLocalUserId()}&locale=${
+        this.i18nService.state.locale
+      }`;
+      const req = this.formRequest(endpoint);
 
-    const endpoint = `api/v5/slobs/announcement/get?clientId=${this.userService.getLocalUserId()}&locale=${
-      this.i18nService.state.locale
-    }`;
-    const req = this.formRequest(endpoint);
-
-    try {
-      const newState = await jfetch<IAnnouncementsInfo>(req);
-      return newState.id ? newState : null;
-    } catch (e: unknown) {
-      return null;
+      try {
+        const newState = await jfetch<IAnnouncementsInfo>(req);
+        return newState.id ? newState : null;
+      } catch (e: unknown) {
+        return null;
+      }
     }
   }
 
-  async fetchProductUpdates(): Promise<{
+  async fetchProductUpdates(
+    showProductUpdates?: boolean,
+  ): Promise<{
     updates?: IAnnouncementsInfo[];
     lastUpdatedAt: number | null;
   }> {
     const recentlyInstalled = await this.recentlyInstalled();
 
-    if (recentlyInstalled || !this.customizationService.state.enableAnnouncements) {
+    const forceShowMarketingModal = showProductUpdates !== undefined && showProductUpdates;
+    if (
+      !forceShowMarketingModal &&
+      (recentlyInstalled || !this.customizationService.state.enableAnnouncements)
+    ) {
       return null;
     }
 
@@ -364,7 +396,7 @@ export class AnnouncementsService extends Service {
       title: $t("What's New"),
       size: {
         width: 650,
-        height: 700,
+        height: 800,
       },
     });
   }

@@ -72,6 +72,13 @@ export class EditMenu extends Menu {
   }
 
   private appendEditMenuItems() {
+    if (this.source && this.source.propertiesManagerType === 'smartBrowserSource') {
+      this.append({
+        label: $t('Edit Reactive Data'),
+        click: () => this.sourcesService.actions.showReactiveDataEditorWindow(this.source.sourceId),
+      });
+    }
+
     if (this.scene) {
       this.append({
         label: $t('Paste (Reference)'),
@@ -277,7 +284,9 @@ export class EditMenu extends Menu {
         label: $t('Rename'),
         click: () =>
           this.scenesService.showNameFolder({
-            sceneId: this.scenesService.views.activeSceneId,
+            sceneId:
+              this.scenesService.views.activeSceneId ??
+              this.selectionService.views.globalSelection.sceneId,
             renameId: this.selectionService.views.globalSelection.getFolders()[0].id,
           }),
       });

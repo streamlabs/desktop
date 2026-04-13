@@ -1,4 +1,6 @@
 import { RealmObject } from 'services/realm';
+import { ObjectChangeSet } from 'realm';
+import { DefaultObject } from 'realm/dist/public-types/schema';
 import Vue from 'vue';
 
 /**
@@ -11,14 +13,16 @@ import Vue from 'vue';
 export function realmReactive<T extends typeof RealmObject>(klass: T) {
   const obj = new klass(klass.schema);
 
-  let listener: () => void;
+  let listener: (_o: DefaultObject, changes: ObjectChangeSet<DefaultObject>) => void;
 
   return {
     mounted() {
       // @ts-ignore: typings incorrect
       const vue: Vue = this;
       if (!listener) {
-        listener = function () {
+        listener = function (_o: DefaultObject, changes: ObjectChangeSet<DefaultObject>) {
+          // Nothing has changed
+          if (!changes.deleted && changes.changedProperties?.length === 0) return;
           vue.$forceUpdate();
         };
       }

@@ -144,6 +144,22 @@ export interface IFramerateSettings {
   fracDen: number;
 }
 
+export enum EIncompatibleRestreamCodec {
+  ffmpeg_aom_av1 = 'ffmpeg_aom_av1',
+  ffmpeg_svt_av1 = 'ffmpeg_svt_av1',
+  obs_nvenc_av1_tex = 'obs_nvenc_av1_tex',
+  obs_nvenc_hevc_tex = 'obs_nvenc_hevc_tex',
+}
+
+export const incompatibleRestreamCodecs = (codec: EIncompatibleRestreamCodec) => {
+  return {
+    [EIncompatibleRestreamCodec.ffmpeg_aom_av1]: 'AV1',
+    [EIncompatibleRestreamCodec.ffmpeg_svt_av1]: 'AV1',
+    [EIncompatibleRestreamCodec.obs_nvenc_av1_tex]: 'NVIDIA AV1',
+    [EIncompatibleRestreamCodec.obs_nvenc_hevc_tex]: 'NVIDIA HEVC',
+  }[codec];
+};
+
 type TOutputSettingsMode = 'Simple' | 'Advanced';
 
 const simpleEncoderToAnvancedEncoderMap: Dictionary<EObsAdvancedEncoder> = {
@@ -258,14 +274,10 @@ export class OutputSettingsService extends Service {
       'Mode',
     );
 
-    const convertedEncoderName:
-      | EObsSimpleEncoder.x264_lowcpu
-      | EObsAdvancedEncoder = this.convertEncoderToNewAPI(this.getSettings().streaming.encoder);
-
-    const videoEncoder: EObsAdvancedEncoder =
-      convertedEncoderName === EObsSimpleEncoder.x264_lowcpu
-        ? EObsAdvancedEncoder.obs_x264
-        : convertedEncoderName;
+    const videoEncoder =
+      mode === 'Advanced'
+        ? this.settingsService.findSettingValue(output, 'Streaming', 'Encoder')
+        : this.settingsService.findSettingValue(output, 'Streaming', 'StreamEncoder');
 
     const enforceBitrateKey = mode === 'Advanced' ? 'ApplyServiceSettings' : 'EnforceBitrate';
     const enforceServiceBitrate = this.settingsService.findSettingValue(
@@ -353,16 +365,18 @@ export class OutputSettingsService extends Service {
         break;
     }
 
-    const convertedEncoderName:
-      | EObsSimpleEncoder.x264_lowcpu
-      | EObsAdvancedEncoder = this.convertEncoderToNewAPI(this.getSettings().recording.encoder);
+    const field = mode === 'Advanced' ? 'Encoder' : 'StreamEncoder';
 
-    const videoEncoder: EObsAdvancedEncoder =
-      convertedEncoderName === EObsSimpleEncoder.x264_lowcpu
-        ? EObsAdvancedEncoder.obs_x264
-        : convertedEncoderName;
+    const useStream =
+      mode === 'Simple'
+        ? quality === ERecordingQuality.Stream
+        : this.settingsService.findSettingValue(output, 'Recording', 'RecEncoder') === 'none';
 
-    const lowCPU: boolean = convertedEncoderName === EObsSimpleEncoder.x264_lowcpu;
+    const videoEncoder = useStream
+      ? this.settingsService.findSettingValue(output, 'Streaming', field)
+      : this.settingsService.findSettingValue(output, 'Recording', 'RecEncoder');
+
+    const lowCPU: boolean = videoEncoder === EObsSimpleEncoder.x264_lowcpu;
 
     const overwrite: boolean = this.settingsService.findSettingValue(
       advanced,
@@ -675,13 +689,17 @@ export class OutputSettingsService extends Service {
      *
      * P.S. Settings needs a refactor... badly
      */
-    const encoder = obsEncoderToEncoderFamily(
-      this.settingsService.findSettingValue(output, 'Streaming', 'Encoder') ||
-        this.settingsService.findSettingValue(output, 'Streaming', 'StreamEncoder'),
-    ) as EEncoderFamily;
+    const mode = this.settingsService.findSettingValue(output, 'Streaming', 'Mode');
+    const encoder =
+      mode === 'Advanced'
+        ? this.settingsService.findSettingValue(output, 'Streaming', 'Encoder')
+        : this.settingsService.findSettingValue(output, 'Streaming', 'StreamEncoder');
+
+    //TODO get this from BE so we don't have a list in 2 places? BE has presets tied to encoders that we can use
+    const encoderFamily = obsEncoderToEncoderFamily(encoder) as EEncoderFamily;
     let preset: string;
 
-    if (encoder === 'amd') {
+    if (encoderFamily === 'amd') {
       // The settings for AMD also have a Preset field but it's not what we need
       preset = [
         this.settingsService.findValidListValue(output, 'Streaming', 'QualityPreset'),
@@ -747,7 +765,8 @@ export class OutputSettingsService extends Service {
     ) as EFileFormat;
 
     const recEncoder = this.settingsService.findSettingValue(output, 'Recording', 'RecEncoder');
-    let encoder = obsEncoderToEncoderFamily(recEncoder) as EEncoderFamily;
+    //let BE handle encoder conversions and just use the configured value
+    let encoder = recEncoder;
 
     const outputResolution: string =
       this.settingsService.findSettingValue(output, 'Recording', 'RecRescaleRes') ||
@@ -835,23 +854,16 @@ export class OutputSettingsService extends Service {
     }
   }
 
+  //send encoder as is and BE will handle the conversion and setting the right fields
   private setStreamingEncoderSettings(
     currentSettings: IOutputSettings,
     settingsPatch: Partial<IStreamingEncoderSettings>,
   ) {
     if (settingsPatch.encoder) {
       if (currentSettings.mode === 'Advanced') {
-        this.settingsService.setSettingValue(
-          'Output',
-          'Encoder',
-          simpleEncoderToAdvancedEncoder(settingsPatch.encoder),
-        );
+        this.settingsService.setSettingValue('Output', 'Encoder', settingsPatch.encoder);
       } else {
-        this.settingsService.setSettingValue(
-          'Output',
-          'StreamEncoder',
-          simpleEncoderToAdvancedEncoder(settingsPatch.encoder),
-        );
+        this.settingsService.setSettingValue('Output', 'StreamEncoder', settingsPatch.encoder);
       }
     }
 
@@ -949,7 +961,6 @@ export class OutputSettingsService extends Service {
   getIsEnhancedBroadcasting() {
     try {
       const enhancedBroadcasting = this.settingsService.isEnhancedBroadcasting();
-
       return enhancedBroadcasting ? 'Enabled' : 'Disabled';
     } catch (e: unknown) {
       console.error('Error getting enhanced broadcasting setting:', e);

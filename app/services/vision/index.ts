@@ -2,18 +2,18 @@ import { InitAfter, Inject, Service } from 'services';
 import * as remote from '@electron/remote';
 import path from 'path';
 import { authorizedHeaders, jfetch } from 'util/requests';
-import { HostsService, SourcesService, SettingsService, UserService } from 'app-services';
+import { HostsService, SettingsService, UserService } from 'app-services';
 import { RealmObject } from 'services/realm';
 import { ObjectSchema } from 'realm';
 import uuid from 'uuid/v4';
-import * as obs from '../../../obs-api';
-import { convertDotNotationToTree } from 'util/dot-tree';
 import { VisionRunner, VisionRunnerStartOptions } from './vision-runner';
 import { VisionUpdater } from './vision-updater';
 import _ from 'lodash';
 import pMemoize from 'p-memoize';
 import { ESettingsCategory } from 'services/settings';
 import { Subject } from 'rxjs';
+import { getOS, OS } from 'util/operating-systems';
+import Utils from 'services/utils';
 
 export class VisionProcess extends RealmObject {
   game: string;
@@ -37,6 +37,19 @@ export class VisionProcess extends RealmObject {
 }
 
 VisionProcess.register();
+
+export class VisionEnabledState extends RealmObject {
+  isEnabled: boolean;
+
+  static schema: ObjectSchema = {
+    name: 'VisionEnabledState',
+    properties: {
+      isEnabled: { type: 'bool', default: false },
+    },
+  };
+}
+
+VisionEnabledState.register({ persist: true });
 
 export class VisionState extends RealmObject {
   installedVersion: string;
@@ -103,27 +116,27 @@ export class VisionService extends Service {
   );
   private eventSource: EventSource;
 
+  public sourceStateKeyInterest: Map<string, Set<string>> = new Map();
+
   // update prompt
   private lastPromptAt = 0;
   private lastPromptVersion?: string;
-  private promptCooldownMs = 500; // 500ms
-
-  onState = new Subject<{ isRunning: boolean; isStarting: boolean; isInstalling: boolean }>();
-  onGame = new Subject<{
-    activeProcess: VisionProcess;
-    selectedGame: string;
-    availableProcesses: VisionProcess[];
-  }>();
+  private promptCooldownMs = 500;
+  onState = new Subject<
+    Pick<VisionEnabledState, 'isEnabled'> &
+      Pick<VisionState, 'isRunning' | 'isStarting' | 'isInstalling'>
+  >();
+  onGame = new Subject<
+    { activeProcess: VisionProcess } & Pick<VisionState, 'selectedGame' | 'availableProcesses'>
+  >();
   @Inject() userService: UserService;
   @Inject() hostsService: HostsService;
-  @Inject() private sourcesService: SourcesService;
   @Inject() settingsService: SettingsService;
 
+  enabledState = VisionEnabledState.inject();
   state = VisionState.inject();
 
   init() {
-    obs.NodeObs.RegisterSourceMessageCallback(this.onSourceMessageCallback);
-
     window.addEventListener('beforeunload', () => this.stop());
 
     this.visionRunner.on('exit', () => {
@@ -138,29 +151,20 @@ export class VisionService extends Service {
     // setInterval(() => this.ensureRunning(), 30_000);
   }
 
-  private onSourceMessageCallback = async (evt: { sourceName: string; message: any }[]) => {
-    for (const { sourceName, message } of evt) {
-      const source = this.sourcesService.views.getSource(sourceName)?.getObsInput();
+  isSupportedForOs() {
+    return getOS() === OS.Windows || (getOS() === OS.Mac && Utils.isDevMode());
+  }
 
-      if (!source) {
-        continue;
-      }
+  async setIsEnabled(isEnabled?: boolean) {
+    const newIsEnabled = isEnabled !== false;
+    if (this.enabledState.isEnabled === newIsEnabled) return;
 
-      const keys = JSON.parse(message).keys;
-      const tree = convertDotNotationToTree(keys);
-      const res = await this.requestState({ query: tree });
-      const payload = JSON.stringify({
-        type: 'state.update',
-        message: res,
-        key: keys?.join(','),
-        event_id: uuid(),
-      });
+    this.writeEnabledState(newIsEnabled);
 
-      source.sendMessage({
-        message: payload,
-      });
+    if (newIsEnabled === false) {
+      return this.stop();
     }
-  };
+  }
 
   ensureUpdated = pMemoize(
     async ({ startAfterUpdate = true }: { startAfterUpdate?: boolean } = {}) => {
@@ -208,7 +212,10 @@ export class VisionService extends Service {
 
   ensureRunning = pMemoize(
     async ({ debugMode = false }: VisionRunnerStartOptions = {}) => {
-      this.log('ensureRunning(): { debugMode=', debugMode, ' }');
+      const { isEnabled } = this.enabledState;
+
+      this.log('ensureRunning(): ' + JSON.stringify({ isEnabled, debugMode }));
+      if (!isEnabled) return;
 
       this.writeState({ isStarting: true });
 
@@ -240,7 +247,7 @@ export class VisionService extends Service {
             if (newVersion || cooledDown) {
               this.lastPromptVersion = v;
               this.lastPromptAt = now;
-              await this.settingsService.showSettings(ESettingsCategory.AI);
+              this.settingsService.showSettings(ESettingsCategory.AI);
             }
 
             return { started: false, reason: 'needs-update' as const };
@@ -301,6 +308,7 @@ export class VisionService extends Service {
 
   private notifyOfStateChange() {
     this.onState.next({
+      isEnabled: this.enabledState.isEnabled,
       isRunning: this.state.isRunning,
       isStarting: this.state.isStarting,
       isInstalling: this.state.isInstalling,
@@ -350,14 +358,6 @@ export class VisionService extends Service {
     );
   }
 
-  private async requestState(params: unknown) {
-    return await this.authPostWithTimeout(
-      `https://${this.hostsService.streamlabs}/api/v5/user-state/desktop/query`,
-      params,
-      8_000,
-    );
-  }
-
   private async authPostWithTimeout(url: string, payload: unknown, timeoutMs = 8_000) {
     const headers = authorizedHeaders(
       this.userService.apiToken,
@@ -375,9 +375,13 @@ export class VisionService extends Service {
     }
   }
 
+  private writeEnabledState(isEnabled: VisionEnabledState['isEnabled']) {
+    this.enabledState.db.write(() => Object.assign(this.enabledState, { isEnabled }));
+    this.notifyOfStateChange();
+  }
+
   private writeState(patch: Partial<VisionState>) {
     this.state.db.write(() => Object.assign(this.state, patch));
-
     this.notifyOfStateChange();
   }
 
@@ -417,7 +421,7 @@ export class VisionService extends Service {
     const headers = new Headers({ 'Content-Type': 'application/json' });
 
     const activeProcess = this.state.availableProcesses.find(p => p.pid === pid);
-    console.log('Activating process', pid, 'with game hint', gameHint, 'process=', activeProcess);
+    this.log('Activating process', pid, 'with game hint', gameHint, 'process=', activeProcess);
     if (activeProcess.type === 'capture_device' || activeProcess.executable_name === 'vlc.exe') {
       this.writeState({ selectedProcessId: pid, selectedGame: gameHint });
     } else {
@@ -434,11 +438,11 @@ export class VisionService extends Service {
     return jfetch(url, { headers, method: 'POST' });
   }
 
-  async testEvent(type: string) {
+  async testEvent(type: string, game: string = 'fortnite') {
     return await this.authPostWithTimeout(
       `https://${this.hostsService.streamlabs}/api/v5/vision/desktop/test-event`,
       {
-        game: 'fortnite', // default to fortnite for now
+        game,
         events: [{ name: type }],
       },
       8_000,

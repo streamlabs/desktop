@@ -1,6 +1,7 @@
 import { Rule } from 'antd/lib/form';
 import { TInputValue } from './FormFactory';
 import { IListOption } from './ListInput';
+import { TInputType } from './inputs';
 
 /**
  * Metadata generator for inputs
@@ -23,6 +24,7 @@ export const metadata = {
     ...options,
     type: 'slider',
   }),
+  fontFamily: (options: IListMetadata<string>) => ({ ...options, type: 'fontFamily' }),
   autocomplete: <T>(options: IListMetadata<T>) => ({
     ...options,
     type: 'autocomplete',
@@ -42,6 +44,7 @@ export const metadata = {
     ...options,
     type: 'radio',
   }),
+  animation: (options: IAnimationMetadata) => ({ ...options, type: 'animation' }),
 };
 
 export type TInputMetadata<T = string> =
@@ -69,6 +72,8 @@ interface IBaseMetadata {
 interface ITextMetadata extends IBaseMetadata {
   value?: string;
   isPassword?: boolean;
+  placeholder?: string;
+  max?: number;
 }
 
 export interface ICheckboxGroupMetadata extends IBaseMetadata {
@@ -115,6 +120,10 @@ interface IFileMetadata extends IBaseMetadata {
   filters?: Electron.FileFilter[];
   save?: boolean;
   buttonContent?: React.ReactNode;
+}
+
+interface IAnimationMetadata extends IListMetadata {
+  filter?: 'in' | 'out' | 'text' | 'eventIn' | 'eventOut';
 }
 
 export interface IListMetadata<T = string> extends IBaseMetadata {

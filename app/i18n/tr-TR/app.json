@@ -18,5 +18,6 @@
   "Unknown error, please contact support": "Bilinmeyen hata, lütfen destek ile iletişime geçin",
   "Custom Destination": "Özel Hedef",
   "This app is currently popped out in another window.": "Bu uygulama şu anda başka bir pencerede açık.",
-  "Error granting chat permissions.": "Sohbet izinleri verilirken hata oluştu."
+  "Error granting chat permissions.": "Sohbet izinleri verilirken hata oluştu.",
+  "Authentication Error": "Kimlik Doğrulama Hatası"
 }

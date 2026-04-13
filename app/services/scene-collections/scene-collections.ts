@@ -549,9 +549,6 @@ export class SceneCollectionsService extends Service implements ISceneCollection
   private async readCollectionDataAndLoadIntoApplicationState(id: string): Promise<void> {
     const exists = await this.stateService.collectionFileExists(id);
 
-    // necessary for validating a dual output scene collection
-    this.dualOutputService.setIsLoading(true);
-
     if (exists) {
       let data: string;
 
@@ -588,6 +585,11 @@ export class SceneCollectionsService extends Service implements ISceneCollection
             'Error while loading backup collection:',
             backupError instanceof Error ? backupError.message : backupError,
           );
+
+          // If there is an error loading the backup, create an empty scene collection
+          // otherwise the app will fail to load
+          await this.handleCollectionLoadError();
+          await this.create({ auto: true });
           return; // Prevent further execution by returning early
         }
       }
@@ -1217,7 +1219,7 @@ export class SceneCollectionsService extends Service implements ISceneCollection
     // add webcam source
     const type = byOS({
       [OS.Windows]: 'dshow_input',
-      [OS.Mac]: 'av_capture_input',
+      [OS.Mac]: 'macos_avcapture',
     }) as TSourceType;
 
     const defaultSource = this.defaultHardwareService.state.defaultVideoDevice;
@@ -1293,20 +1295,6 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    */
 
   createNodeMapEntry(sceneId: string, horizontalNodeId: string, verticalNodeId: string) {
-    if (!this.activeCollection) return;
-    if (!this.activeCollection.hasOwnProperty('sceneNodeMaps')) {
-      this.activeCollection.sceneNodeMaps = {};
-    }
-    if (
-      this.activeCollection.sceneNodeMaps &&
-      !this.activeCollection?.sceneNodeMaps.hasOwnProperty(sceneId)
-    ) {
-      this.activeCollection.sceneNodeMaps = {
-        ...this.activeCollection.sceneNodeMaps,
-        [sceneId]: {},
-      };
-    }
-
     this.stateService.createNodeMapEntry(sceneId, horizontalNodeId, verticalNodeId);
   }
 
@@ -1316,20 +1304,8 @@ export class SceneCollectionsService extends Service implements ISceneCollection
    * @param horizontalNodeId - The horizontal node id, used as the key to find the vertical node id
    * @param sceneId - The scene id
    */
-  removeNodeMapEntry(horizontalNodeId: string, sceneId: string) {
-    if (
-      !this.activeCollection ||
-      !this.activeCollection?.sceneNodeMaps ||
-      !this.activeCollection?.sceneNodeMaps.hasOwnProperty(sceneId)
-    ) {
-      return;
-    }
-
-    const nodeMap = this.activeCollection?.sceneNodeMaps[sceneId];
-    delete nodeMap[horizontalNodeId];
-
-    this.activeCollection.sceneNodeMaps[sceneId] = { ...nodeMap };
-    this.stateService.removeNodeMapEntry(horizontalNodeId, sceneId);
+  removeNodeMapEntry(sceneId: string, horizontalNodeId: string) {
+    this.stateService.removeNodeMapEntry(sceneId, horizontalNodeId);
   }
 
   /**

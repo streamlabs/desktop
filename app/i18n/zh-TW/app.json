@@ -18,5 +18,6 @@
   "Unknown error, please contact support": "未知錯誤，請聯繫支援人員",
   "Custom Destination": "自訂目的地",
   "This app is currently popped out in another window.": "此應用程式目前在另一個視窗中彈出。",
-  "Error granting chat permissions.": "授予聊天室權限時發生錯誤。"
+  "Error granting chat permissions.": "授予聊天室權限時發生錯誤。",
+  "Authentication Error": "驗證錯誤"
 }

@@ -18,5 +18,6 @@
   "Unknown error, please contact support": "Kesalahan yang tidak diketahui, silakan hubungi dukungan",
   "Custom Destination": "Tujuan Kustom",
   "This app is currently popped out in another window.": "Aplikasi ini saat ini muncul di jendela lain.",
-  "Error granting chat permissions.": "Kesalahan pemberian izin obrolan."
+  "Error granting chat permissions.": "Kesalahan pemberian izin obrolan.",
+  "Authentication Error": "Kesalahan Autentikasi"
 }

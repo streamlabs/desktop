@@ -50,7 +50,7 @@ export interface ISourceInfo {
 }
 
 export class SourcesNode extends Node<ISchema, {}> {
-  schemaVersion = 4;
+  schemaVersion = 5;
 
   @Inject() private sourcesService: SourcesService;
   @Inject() private audioService: AudioService;
@@ -410,6 +410,13 @@ export class SourcesNode extends Node<ISchema, {}> {
       this.data.items.forEach(source => {
         if (source.type === 'ffmpeg_source') {
           source.settings.hw_decode = false;
+        }
+      });
+    }
+    if (version < 5) {
+      this.data.items.forEach(source => {
+        if (source.type === 'av_capture_input') {
+          source.type = 'macos_avcapture';
         }
       });
     }

@@ -434,10 +434,12 @@
   "Virtual camera output type": "虛擬攝影機輸出類型",
   "Unmute your Microphone source in Mixer": "在 Mixer 中將麥克風來源取消靜音",
   "Your Microphone is unmuted but has no signal": "您的麥克風已取消靜音，但沒有訊號",
-  "Victory & Defeat": "Victory & Defeat",
-  "Dynamic game animation": "Dynamic game animation",
-  "Dynamic real time animation based on your game & widget events.  Streamlabs Vision powered events include:": "Dynamic real time animation based on your game & widget events.  Streamlabs Vision powered events include:",
-  "Kills & Eliminations": "Kills & Eliminations",
-  "Health changes": "Health changes",
-  "Search...": "搜尋..."
+  "Victory & Defeat": "勝利與失敗",
+  "Dynamic game animation": "動態遊戲動畫",
+  "Dynamic real time animation based on your game events, powered by Streamlabs AI. Install Reactive Overlays from our Library to see what it's capable of!": "由 Streamlabs AI 提供技術，根據遊戲事件即時變化的動態動畫。從我們的資料庫安裝反應疊層，看看它真正的實力！",
+  "Kills & Eliminations": "擊殺與淘汰",
+  "Health changes": "生命值變化",
+  "Search...": "搜尋...",
+  "Virtual Cam": "虛擬攝影機",
+  "Virtual Cam Error": "虛擬攝影機錯誤"
 }

@@ -30,14 +30,16 @@ export default function NameFolder() {
 
   // get window options on component create
   const options = useOnCreate(() => {
-    const options = (WindowsService.state.child.queryParams as unknown) as IWindowOptions;
-    const scene = ScenesService.views.getScene(options.sceneId);
+    const windowOptions = (WindowsService.state.child.queryParams as unknown) as IWindowOptions;
+    const scene = ScenesService.views.getScene(
+      windowOptions.sceneId ?? ScenesService.views.activeSceneId,
+    );
     assertIsDefined(scene);
-    const name = options.renameId
-      ? scene.getFolder(options.renameId)!.name
+    const name = windowOptions.renameId
+      ? scene.getFolder(windowOptions.renameId)!.name
       : ScenesService.suggestName('New Folder');
     setName(name);
-    return options;
+    return windowOptions;
   });
 
   // define a submit method

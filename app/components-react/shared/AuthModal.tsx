@@ -29,7 +29,7 @@ export function AuthModal(p: AuthModalProps) {
       footer={null}
       visible={p.showModal}
       onCancel={() => p.handleShowModal(false)}
-      getContainer={false}
+      getContainer="#mainWrapper"
       className={cx(styles.authModalWrapper, p?.className)}
     >
       <Form id={p?.id} className={styles.authModal}>

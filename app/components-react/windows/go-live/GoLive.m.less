@@ -406,7 +406,7 @@ i.destination-logo {
   flex-direction: row;
   flex: 1;
   width: 100%;
-  padding: 15px;
+  padding: 15px 0px 15px 15px;
 
   :global(.ant-form-item) {
     margin-bottom: 0px;
@@ -414,6 +414,10 @@ i.destination-logo {
 
   :global(.ant-row) {
     align-items: center;
+  }
+
+  &.ultra-column-header {
+    padding: 15px;
   }
 }
 
@@ -525,4 +529,48 @@ i.destination-logo {
   &.shiftEnabled {
     min-height: 50px;
   }
+}
+
+.dual-output-alert {
+  transform: translateY(-100px);
+  transition: transform 0.3s, visibility 0.3s, opacity 0.3s;
+  font-size: 13px;
+  border-radius: 6px;
+  padding: 8px;
+  margin: 15px 15px 0px 15px;
+  background-color: rgba(23, 36, 45, 0);
+  color: rgba(23, 36, 45, 0);
+  visibility: hidden;
+  opacity: 0;
+
+  &.error {
+    background-color: #ff6f5b14;
+    color: #ff6f5b;
+    transform: translateY(0px);
+    visibility: visible;
+    opacity: 1;
+  }
+}
+
+.column-content {
+  transition: transform 0.3s;
+  height: 69%;
+
+  &.alert-closed {
+    transform: translateY(-70px);
+    z-index: -1;
+  }
+
+  &.alert-open {
+    transform: translateY(0px);
+    z-index: 0;
+  }
+
+  &.dual-output {
+    height: 58% !important;
+  }
+}
+
+.switcher-wrapper {
+  height: 100%;
 }

@@ -38,12 +38,6 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
    * Update top level settings
    */
   updateSettings(patch: Partial<IGoLiveSettingsState>) {
-    if (patch.platforms?.twitch) {
-      Services.SettingsService.actions.setEnhancedBroadcasting(
-        patch.platforms.twitch.isEnhancedBroadcasting,
-      );
-    }
-
     const newSettings = { ...this.state, ...patch };
     // we should re-calculate common fields before applying new settings
     const platforms = this.getViewFromState(newSettings).applyCommonFields(newSettings.platforms);
@@ -60,10 +54,20 @@ class GoLiveSettingsState extends StreamInfoView<IGoLiveSettingsState> {
         [platform]: { ...this.state.platforms[platform], ...patch },
       },
     };
+
+    // In order for the enhanced broadcasting setting value to persist in the go live window when switching between
+    // single output and dual output modes, explicitly set enhanced broadcasting setting
+    if (platform === 'twitch' && patch && patch.hasOwnProperty('isEnhancedBroadcasting')) {
+      Services.TwitchService.actions.setEnhancedBroadcasting((patch as any).isEnhancedBroadcasting);
+    }
+
     this.updateSettings(updated);
   }
 
   getCanDualStream(platform: TPlatform) {
+    if (platform === 'twitch') {
+      return Services.TwitchService.views.hasTwitchDualStreamAccess;
+    }
     return Services.StreamingService.views.supports('dualStream', [platform]);
   }
 
@@ -371,6 +375,10 @@ export class GoLiveSettingsModule {
     return [...alwaysShown, ...unlinked];
   }
 
+  get primaryPlatform() {
+    return Services.UserService.views.platform?.type;
+  }
+
   get primaryChat() {
     const primaryPlatform = Services.UserService.views.platform!;
     // this is migration-like code for users with old primary platform deselected (i.e me)
@@ -393,7 +401,7 @@ export class GoLiveSettingsModule {
   /**
    * Determine if all dual output go live requirements are fulfilled
    */
-  getCanStreamDualOutput() {
+  get canStreamDualOutput() {
     return this.state.getCanStreamDualOutput(this.state);
   }
 
@@ -487,6 +495,10 @@ export class GoLiveSettingsModule {
 
   get recommendedColorSpaceWarnings() {
     return Services.SettingsService.views.recommendedColorSpaceWarnings;
+  }
+
+  get codec() {
+    return Services.SettingsService.views.values.Output.Encoder;
   }
 }
 

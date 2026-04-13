@@ -13,6 +13,14 @@ export const TERMS = {
   ELIMINATION: { singular: 'elimination', plural: 'eliminations' },
   KNOCKED: { singular: 'knocked', plural: 'knocks' },
   KNOCKOUT: { singular: 'got knocked', plural: 'got knocked' },
+  GOAL: { singular: 'goal', plural: 'goals' },
+  SET_PIECE: { singular: 'set piece', plural: 'set pieces' },
+  TEAM_SCORED: { singular: 'team goal', plural: 'team goals' },
+  OPPONENT_SCORED: { singular: 'opponent goal', plural: 'opponent goals' },
+  LAP_CHANGE: { singular: 'lap change', plural: 'lap changes' },
+  POSITION_CHANGE: { singular: 'position change', plural: 'position changes' },
+  GAME_END: { singular: 'game end', plural: 'game ends' },
+  GAME_START: { singular: 'game start', plural: 'game starts' },
   DEATH: { singular: 'death', plural: 'deaths' },
   DEFEAT: { singular: 'defeat', plural: 'defeats' },
   WIN: { singular: 'win', plural: 'wins' },
@@ -25,6 +33,12 @@ export const TERMS = {
 export const EMOJI = {
   GUN: '🔫',
   BOXING_GLOVES: '🥊',
+  BALL: '⚽',
+  RED_FLAG: '🚩',
+  BULLSEYE: '🎯',
+  REFRESH: '🔄',
+  SHUFFLE: '🔀',
+  TRAFFIC_LIGHT: '🚦',
   DEATH: '🪦',
   DEFEAT: '☠️',
   TROPHY: '🏆',
@@ -78,6 +92,62 @@ const COMMON_TYPES: Record<string, IDefaultEventInfo> = {
     includeInDropdown: false,
     contextEvent: false,
   },
+  ['goal']: {
+    emoji: EMOJI.BALL,
+    description: TERMS.GOAL,
+    orderPriority: 4,
+    includeInDropdown: true,
+    contextEvent: false,
+  },
+  ['set_piece']: {
+    emoji: EMOJI.RED_FLAG,
+    description: TERMS.SET_PIECE,
+    orderPriority: 4,
+    includeInDropdown: true,
+    contextEvent: false,
+  },
+  ['team_scored']: {
+    emoji: EMOJI.BALL,
+    description: TERMS.TEAM_SCORED,
+    orderPriority: 4,
+    includeInDropdown: true,
+    contextEvent: false,
+  },
+  ['opponent_scored']: {
+    emoji: EMOJI.BULLSEYE,
+    description: TERMS.OPPONENT_SCORED,
+    orderPriority: 4,
+    includeInDropdown: true,
+    contextEvent: false,
+  },
+  ['lap_change']: {
+    emoji: EMOJI.REFRESH,
+    description: TERMS.LAP_CHANGE,
+    orderPriority: 4,
+    includeInDropdown: true,
+    contextEvent: false,
+  },
+  ['position_change']: {
+    emoji: EMOJI.SHUFFLE,
+    description: TERMS.POSITION_CHANGE,
+    orderPriority: 4,
+    includeInDropdown: true,
+    contextEvent: false,
+  },
+  ['game_end']: {
+    emoji: EMOJI.ROUND,
+    description: TERMS.GAME_END,
+    orderPriority: 4,
+    includeInDropdown: true,
+    contextEvent: false,
+  },
+  ['game_start']: {
+    emoji: EMOJI.TRAFFIC_LIGHT,
+    description: TERMS.GAME_START,
+    orderPriority: 4,
+    includeInDropdown: true,
+    contextEvent: false,
+  },
   ['death']: {
     emoji: EMOJI.DEATH,
     description: TERMS.DEATH,
@@ -103,6 +173,7 @@ const COMMON_TYPES: Record<string, IDefaultEventInfo> = {
   },
 };
 
+const titlePath = 'https://cdn.streamlabs.com/static/imgs/game-titles/';
 const thumbnailPath = 'https://cdn.streamlabs.com/static/imgs/game-thumbnails/';
 const heroPath = 'https://cdn.streamlabs.com/static/imgs/hero-images/';
 const exampleVideoPath = 'https://slobs-cdn.streamlabs.com/media/example-videos/';
@@ -111,6 +182,7 @@ export const FORTNITE_CONFIG: IGameConfig = {
   name: EGame.FORTNITE,
   label: 'Fortnite',
   gameModes: 'Battle Royale, Zero Build, Reload, OG',
+  titleIcon: `${titlePath}${EGame.FORTNITE}.svg`,
   thumbnail: `${thumbnailPath}${EGame.FORTNITE}.png`,
   state: EGameState.LIVE,
   importModalConfig: {
@@ -143,6 +215,7 @@ const WARZONE_CONFIG: IGameConfig = {
   name: EGame.WARZONE,
   label: 'Call of Duty: Warzone',
   gameModes: '',
+  titleIcon: `${titlePath}${EGame.WARZONE}.svg`,
   thumbnail: `${thumbnailPath}${EGame.WARZONE}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -156,10 +229,12 @@ const WARZONE_CONFIG: IGameConfig = {
     verticalExampleVideo: `${exampleVideoPath}${EGame.WARZONE}-vertical.mp4`,
   },
 };
+
 const BLACK_OPS_6_CONFIG: IGameConfig = {
   name: EGame.BLACK_OPS_6,
   label: 'Call of Duty: Black Ops 6',
   gameModes: '',
+  titleIcon: 'unset',
   thumbnail: `${thumbnailPath}call-of-duty-black-ops-6.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -174,10 +249,29 @@ const BLACK_OPS_6_CONFIG: IGameConfig = {
   },
 };
 
+const BLACK_OPS_7_CONFIG: IGameConfig = {
+  // use the same config as black ops 6 for now since the games are identical
+  name: EGame.BLACK_OPS_7,
+  label: 'Call of Duty: Black Ops 7',
+  gameModes: '',
+  titleIcon: 'unset',
+  thumbnail: `${thumbnailPath}${EGame.BLACK_OPS_7}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#F96800',
+    artwork: `${heroPath}${EGame.BLACK_OPS_7}.png`,
+    backgroundColor: '#000000',
+  },
+};
+
 const MARVEL_RIVALS_CONFIG: IGameConfig = {
   name: EGame.MARVEL_RIVALS,
   label: 'Marvel Rivals',
   gameModes: '',
+  titleIcon: `${titlePath}${EGame.MARVEL_RIVALS}.svg`,
   thumbnail: `${thumbnailPath}marvel-rivals.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -196,6 +290,7 @@ const WAR_THUNDER_CONFIG: IGameConfig = {
   name: EGame.WAR_THUNDER,
   label: 'War Thunder',
   gameModes: '',
+  titleIcon: 'unset',
   thumbnail: `${thumbnailPath}war-thunder.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -214,6 +309,7 @@ const VALORANT_CONFIG: IGameConfig = {
   name: EGame.VALORANT,
   label: 'VALORANT',
   gameModes: '',
+  titleIcon: `${titlePath}${EGame.VALORANT}.svg`,
   thumbnail: `${thumbnailPath}${EGame.VALORANT}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -230,6 +326,7 @@ const COUNTER_STRIKE_2_CONFIG: IGameConfig = {
   name: EGame.COUNTER_STRIKE_2,
   label: 'Counter-Strike',
   gameModes: '',
+  titleIcon: `${titlePath}${EGame.COUNTER_STRIKE_2}.svg`,
   thumbnail: `${thumbnailPath}${EGame.COUNTER_STRIKE_2}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -246,6 +343,7 @@ const APEX_LEGENDS_CONFIG: IGameConfig = {
   name: EGame.APEX_LEGENDS,
   label: 'Apex Legends',
   gameModes: '',
+  titleIcon: `${titlePath}${EGame.APEX_LEGENDS}.svg`,
   thumbnail: `${thumbnailPath}${EGame.APEX_LEGENDS}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -262,6 +360,7 @@ const PUBG_CONFIG: IGameConfig = {
   name: EGame.PUBG,
   label: 'PUBG: BATTLEGROUNDS',
   gameModes: '',
+  titleIcon: `${titlePath}${EGame.PUBG}.svg`,
   thumbnail: `${thumbnailPath}${EGame.PUBG}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -278,6 +377,7 @@ const RAINBOW_SIX_SIEGE: IGameConfig = {
   name: EGame.RAINBOW_SIX_SIEGE,
   label: "Tom Clancy's Rainbow Six Siege X",
   gameModes: '',
+  titleIcon: 'unset',
   thumbnail: `${thumbnailPath}${EGame.RAINBOW_SIX_SIEGE}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -294,6 +394,7 @@ const OVERWATCH_2: IGameConfig = {
   name: EGame.OVERWATCH_2,
   label: 'Overwatch 2',
   gameModes: '',
+  titleIcon: `${titlePath}${EGame.OVERWATCH_2}.svg`,
   thumbnail: `${thumbnailPath}${EGame.OVERWATCH_2}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -310,6 +411,7 @@ const LEAGUE_OF_LEGENDS: IGameConfig = {
   name: EGame.LEAGUE_OF_LEGENDS,
   label: 'League of Legends',
   gameModes: '',
+  titleIcon: `${titlePath}${EGame.LEAGUE_OF_LEGENDS}.svg`,
   thumbnail: `${thumbnailPath}${EGame.LEAGUE_OF_LEGENDS}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -326,6 +428,7 @@ const BATTLEFIELD_6: IGameConfig = {
   name: EGame.BATTLEFIELD_6,
   label: 'Battlefield 6',
   gameModes: '',
+  titleIcon: `${titlePath}${EGame.BATTLEFIELD_6}.svg`,
   thumbnail: `${thumbnailPath}${EGame.BATTLEFIELD_6}.png`,
   state: EGameState.LIVE,
   inputTypeMap: {
@@ -338,10 +441,164 @@ const BATTLEFIELD_6: IGameConfig = {
   },
 };
 
+const ARC_RAIDERS: IGameConfig = {
+  name: EGame.ARC_RAIDERS,
+  label: 'ARC Raiders',
+  gameModes: '',
+  titleIcon: 'unset',
+  thumbnail: `${thumbnailPath}${EGame.ARC_RAIDERS}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#D04122',
+    artwork: `${heroPath}${EGame.ARC_RAIDERS}.png`,
+    backgroundColor: '#190A40',
+  },
+};
+
+const ROCKET_LEAGUE: IGameConfig = {
+  name: EGame.ROCKET_LEAGUE,
+  label: 'Rocket League',
+  gameModes: '',
+  titleIcon: 'unset',
+  thumbnail: `${thumbnailPath}${EGame.ROCKET_LEAGUE}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#5470EF',
+    artwork: `${heroPath}${EGame.ROCKET_LEAGUE}.png`,
+    backgroundColor: '#161D2B',
+  },
+};
+
+const DOTA_2: IGameConfig = {
+  name: EGame.DOTA_2,
+  label: 'Dota 2',
+  gameModes: '',
+  titleIcon: 'unset',
+  thumbnail: `${thumbnailPath}${EGame.DOTA_2}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#FED047',
+    artwork: `${heroPath}${EGame.DOTA_2}.png`,
+    backgroundColor: '#D04122',
+  },
+};
+
+const DEAD_BY_DAYLIGHT: IGameConfig = {
+  name: EGame.DEAD_BY_DAYLIGHT,
+  label: 'Dead by Daylight',
+  gameModes: '',
+  titleIcon: 'unset',
+  thumbnail: `${thumbnailPath}${EGame.DEAD_BY_DAYLIGHT}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#8088A9',
+    artwork: `${heroPath}${EGame.DEAD_BY_DAYLIGHT}.png`,
+    backgroundColor: '#172D3B',
+  },
+};
+
+const MARATHON: IGameConfig = {
+  name: EGame.MARATHON,
+  label: 'Marathon',
+  gameModes: '',
+  titleIcon: 'unset',
+  thumbnail: `${thumbnailPath}${EGame.MARATHON}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#cffb54',
+    artwork: `${heroPath}${EGame.MARATHON}.png`,
+    backgroundColor: '#000000',
+  },
+};
+
+const F1_25: IGameConfig = {
+  name: EGame.F1_25,
+  label: 'F1® 25',
+  gameModes: '',
+  titleIcon: 'unset',
+  thumbnail: `${thumbnailPath}${EGame.F1_25}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#d35459',
+    artwork: `${heroPath}${EGame.F1_25}.png`,
+    backgroundColor: '#151616',
+  },
+};
+
+const EA_SPORTS_FC_26: IGameConfig = {
+  name: EGame.EA_SPORTS_FC_26,
+  label: 'EA Sports FC™ 26',
+  gameModes: '',
+  titleIcon: 'unset',
+  thumbnail: `${thumbnailPath}${EGame.EA_SPORTS_FC_26}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#81f07b',
+    artwork: `${heroPath}${EGame.EA_SPORTS_FC_26}.png`,
+    backgroundColor: '#151616',
+  },
+};
+
+const NBA_2K26: IGameConfig = {
+  name: EGame.NBA_2K26,
+  label: 'NBA 2K26',
+  gameModes: '',
+  titleIcon: 'unset',
+  thumbnail: `${thumbnailPath}${EGame.NBA_2K26}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#fa0000',
+    artwork: `${heroPath}${EGame.NBA_2K26}.png`,
+    backgroundColor: '#111111',
+  },
+};
+
+const DEADLOCK: IGameConfig = {
+  name: EGame.DEADLOCK,
+  label: 'Deadlock',
+  gameModes: '',
+  titleIcon: 'unset',
+  thumbnail: `${thumbnailPath}${EGame.DEADLOCK}.png`,
+  state: EGameState.LIVE,
+  inputTypeMap: {
+    ...COMMON_TYPES,
+  },
+  importModalConfig: {
+    accentColor: '#c26239',
+    artwork: `${heroPath}${EGame.DEADLOCK}.png`,
+    backgroundColor: '#131313',
+  },
+};
+
 const UNSET_CONFIG: IGameConfig = {
   name: EGame.UNSET,
   label: 'unset',
   gameModes: 'unset',
+  titleIcon: 'unset',
   thumbnail: 'unset',
   state: EGameState.INTERNAL,
   inputTypeMap: {
@@ -355,6 +612,7 @@ const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.FORTNITE]: FORTNITE_CONFIG, // ✅
   [EGame.WARZONE]: WARZONE_CONFIG, // ✅
   [EGame.BLACK_OPS_6]: BLACK_OPS_6_CONFIG, // ✅
+  [EGame.BLACK_OPS_7]: BLACK_OPS_7_CONFIG,
   [EGame.MARVEL_RIVALS]: MARVEL_RIVALS_CONFIG, // ✅
   [EGame.WAR_THUNDER]: WAR_THUNDER_CONFIG, // ✅
   [EGame.VALORANT]: VALORANT_CONFIG, // ✅
@@ -365,12 +623,21 @@ const GAME_CONFIGS: Record<EGame, IGameConfig> = {
   [EGame.OVERWATCH_2]: OVERWATCH_2,
   [EGame.LEAGUE_OF_LEGENDS]: LEAGUE_OF_LEGENDS, // ✅
   [EGame.BATTLEFIELD_6]: BATTLEFIELD_6, // ✅
+  [EGame.ARC_RAIDERS]: ARC_RAIDERS,
+  [EGame.ROCKET_LEAGUE]: ROCKET_LEAGUE,
+  [EGame.DOTA_2]: DOTA_2,
+  [EGame.DEAD_BY_DAYLIGHT]: DEAD_BY_DAYLIGHT,
+  [EGame.MARATHON]: MARATHON,
+  [EGame.F1_25]: F1_25,
+  [EGame.EA_SPORTS_FC_26]: EA_SPORTS_FC_26,
+  [EGame.NBA_2K26]: NBA_2K26,
+  [EGame.DEADLOCK]: DEADLOCK,
   [EGame.UNSET]: UNSET_CONFIG,
 };
 
 export const supportedGames = Object.entries(GAME_CONFIGS)
   .filter(([gameKey]) => gameKey !== EGame.UNSET)
-  .filter(([gameKey, gameConfig]) => {
+  .filter(([_, gameConfig]) => {
     if (Utils.getHighlighterEnvironment() === 'production') {
       return gameConfig.state !== EGameState.INTERNAL;
     } else {
@@ -386,6 +653,8 @@ export const supportedGames = Object.entries(GAME_CONFIGS)
     };
   });
 
+export function getConfigByGame(game: EGame): IGameConfig;
+export function getConfigByGame(game?: EGame): IGameConfig | undefined;
 export function getConfigByGame(game: EGame | undefined): IGameConfig | undefined {
   if (!game) {
     return undefined;

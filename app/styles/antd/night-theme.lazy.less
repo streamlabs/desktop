@@ -27,7 +27,6 @@
 @icon-color-hover: @light-5; // var(--icon)
 @heading-color: @light-1; // var(--title)
 
-
 @component-background: @dark-3; // var(--background)
 @popover-background: @dark-3; // var(--background)
 @background-color-light: @dark-3; // var(--background)
@@ -41,7 +40,7 @@
 @link-hover-color: @light-1; // var(--title)
 @link-active-color: @light-1; // var(--title)
 
-@border-color-base:  @dark-5; // var(--button)
+@border-color-base: @dark-5; // var(--button)
 @border-color-split: @dark-4; // var(--border)
 @border-color-inverse: @dark-4; // var(--border)
 
@@ -78,7 +77,6 @@
 @slider-handle-color-focus-shadow: rgba(1, 2, 2, 0.16); // var(--shadow)
 @slider-handle-color-tooltip-open: @light-5; // var(--icon)
 @slider-dot-border-color-active: @dark-4; // var(--border)
-
 
 // FORM
 @label-color: @primelight-4; // var(--paragraph)
@@ -139,7 +137,6 @@
 @border-radius-base: 4px;
 @font-family: 'Roboto', sans-serif;
 
-
 // Menu
 // ---
 //@menu-inline-toplevel-item-height: 40px;
@@ -189,6 +186,11 @@
 .ant-switch-handle::before {
   background-color: @dark-2;
 }
+
+.ant-checkbox-inner {
+  background-color: unset;
+}
+
 .ant-checkbox-checked .ant-checkbox-inner::after {
   border: 2px solid @dark-2;
   border-top: 0;

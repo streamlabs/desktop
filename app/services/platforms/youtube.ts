@@ -37,6 +37,15 @@ interface IYoutubeServiceState extends IPlatformState {
   broadcastStatus: TBroadcastLifecycleStatus | '';
   settings: IYoutubeStartStreamOptions;
   categories: IYoutubeCategory[];
+  backupStreamSettings?: IBackUpStreamSettings;
+}
+
+interface IBackUpStreamSettings {
+  service: string;
+  key: string;
+  server: string;
+  streamType: 'rtmp_common' | 'rtmp_custom' | 'whip_custom';
+  context: TDisplayType;
 }
 
 export interface IYoutubeStartStreamOptions extends IExtraBroadcastSettings {
@@ -304,12 +313,13 @@ export class YoutubeService
     try {
       return await platformAuthorizedRequest<T>('youtube', reqInfo);
     } catch (e: unknown) {
-      console.error('Failed Youtube API request', e);
+      console.error(`Failed ${this.displayName} API Request:`, reqInfo);
+
       const error = e as any;
 
       // Log specific Youtube API errors if they exist
-      if ((e as any)?.result && (e as any).result?.error) {
-        console.log('Youtube API Error: ', JSON.stringify((e as any).result.error, null, 2));
+      if (error?.result && error.result?.error) {
+        console.log('Youtube API Error: ', JSON.stringify(error.result.error, null, 2));
       }
 
       let details = $t('Connection Failed');
@@ -339,7 +349,7 @@ export class YoutubeService
         errorType = 'YOUTUBE_TOKEN_EXPIRED';
       }
 
-      throw throwStreamError(errorType, { ...error, platform: 'youtube' }, details);
+      return throwStreamError(errorType, { ...error, platform: 'youtube' }, details);
     }
   }
 
@@ -354,7 +364,7 @@ export class YoutubeService
 
     if (settings && settings.broadcast_id !== null && !settings.is_live) {
       console.error('Stream Shift Error: YouTube is not live');
-      this.postError('Stream Shift Error: YouTube is not live');
+      this.postNotification('Stream Shift Error: YouTube is not live');
       return;
     }
 
@@ -369,7 +379,7 @@ export class YoutubeService
       // Try to find an upcoming broadcast if there are no active broadcasts
       if (!broadcast) {
         console.debug('No active YouTube broadcasts found');
-        this.postError(
+        this.postNotification(
           $t(
             'Auto-start is disabled for your broadcast. You should manually publish your stream from Youtube Studio',
           ),
@@ -561,6 +571,17 @@ export class YoutubeService
     // setup key and platform type in the OBS settings
     const streamKey = stream.cdn.ingestionInfo.streamName;
 
+    //save user's current rtmp_common settings to restore after Go Live since they are overwritten here
+    const currentSettings = this.streamSettingsService.settings;
+    if (!this.state.backupStreamSettings) {
+      this.state.backupStreamSettings = {} as IBackUpStreamSettings;
+    }
+    this.state.backupStreamSettings.service = currentSettings.service;
+    this.state.backupStreamSettings.key = currentSettings.key;
+    this.state.backupStreamSettings.server = currentSettings.server;
+    this.state.backupStreamSettings.streamType = currentSettings.streamType;
+    this.state.backupStreamSettings.context = !context ? 'horizontal' : context;
+
     if (!this.streamingService.views.isMultiplatformMode) {
       this.streamSettingsService.setSettings(
         {
@@ -574,16 +595,24 @@ export class YoutubeService
     }
 
     if (this.streamingService.views.isDualOutputMode && ytSettings.display === 'both') {
-      // Prevent rate limit errors by delaying the dual stream setup by 1 second
-      await new Promise<void>(resolve => {
-        setTimeout(async () => {
-          await this.setupDualStream(goLiveSettings);
-          resolve();
-        }, 1000);
-      });
+      try {
+        // Prevent rate limit errors by delaying the dual stream setup by 1 second
+        await new Promise<void>(resolve => {
+          setTimeout(async () => {
+            await this.setupDualStream(goLiveSettings);
+            resolve();
+          }, 1000);
+        });
+      } catch (e: unknown) {
+        console.error('Error setting up YouTube dual stream', e);
+
+        // Catch error to prevent blocking the horizontal stream starting if there is an issue
+        // setting up the vertical stream
+        this.postNotification('Error setting up YouTube dual stream. Vertical stream not started.');
+      }
     }
 
-    // Updating the thumbnail in the stream settings happends when creating the broadcast.
+    // Updating the thumbnail in the stream settings happens when creating the broadcast.
     // This is because the user can still go live even if the thumbnail upload fails,
     // and we want to avoid setting an invalid thumbnail in state.
     if (ytSettings.thumbnail && ytSettings.thumbnail !== 'default') {
@@ -622,6 +651,20 @@ export class YoutubeService
     this.SET_VERTICAL_BROADCAST({} as IYoutubeLiveBroadcast);
     this.SET_VERTICAL_STREAM_KEY('');
     this.streamSettingsService.setGoLiveSettings({ customDestinations: destinations });
+
+    //restore user's previous settings in case they were overwritten on Go Live
+    if (this.state.backupStreamSettings) {
+      this.streamSettingsService.setSettings(
+        {
+          platform: 'youtube',
+          service: this.state.backupStreamSettings.service,
+          key: this.state.backupStreamSettings.key,
+          streamType: this.state.backupStreamSettings.streamType,
+          server: this.state.backupStreamSettings.server,
+        },
+        this.state.backupStreamSettings.context,
+      );
+    }
   }
 
   /**
@@ -754,11 +797,22 @@ export class YoutubeService
     // If the user's token has expired, refresh it and try again
     if (status === EPlatformCallResult.TokenExpired) {
       await this.fetchNewToken();
-      await this.validatePlatform();
+      const status = await this.validatePlatform();
+
+      if (status === EPlatformCallResult.TokenExpired || status === EPlatformCallResult.Error) {
+        throwStreamError('YOUTUBE_TOKEN_EXPIRED', { platform: 'youtube' });
+      }
     }
 
-    if (!this.state.liveStreamingEnabled) {
-      throw throwStreamError('YOUTUBE_STREAMING_DISABLED', { platform: 'youtube' });
+    if (status === EPlatformCallResult.Error) {
+      throwStreamError('PLATFORM_REQUEST_FAILED', { platform: 'youtube' });
+    }
+
+    if (
+      !this.state.liveStreamingEnabled ||
+      status === EPlatformCallResult.YoutubeStreamingDisabled
+    ) {
+      throwStreamError('YOUTUBE_STREAMING_DISABLED', { platform: 'youtube' });
     }
     const settings = this.state.settings;
     this.UPDATE_STREAM_SETTINGS({
@@ -1198,12 +1252,11 @@ export class YoutubeService
 
     const body = await fetch(url).then(res => res.blob());
 
-    try {
-      await jfetch(
-        `https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=${videoId}`,
-        { method: 'POST', body, headers: { Authorization: `Bearer ${this.oauthToken}` } },
-      );
-    } catch (e: unknown) {
+    await jfetch(`https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=${videoId}`, {
+      method: 'POST',
+      body,
+      headers: { Authorization: `Bearer ${this.oauthToken}` },
+    }).catch(e => {
       console.error('Failed to upload thumbnail', e);
       const errorType = 'YOUTUBE_THUMBNAIL_UPLOAD_FAILED';
       const error = e as any;
@@ -1238,8 +1291,8 @@ export class YoutubeService
         }
       }
 
-      throw throwStreamError(errorType, { ...error, platform: 'youtube' }, details);
-    }
+      return throwStreamError(errorType, { ...error, platform: 'youtube' }, details);
+    });
   }
 
   async stopBroadcast(broadcastId: string) {

@@ -1,13 +1,72 @@
 @import '../../../styles/index.less';
 @import '../../../styles/mixins';
 
-.multistreaming-wrapper .section {
-  margin-top: 16px;
-}
-.wrapper {
-  margin-bottom: 16px;
+.multistream-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.prime {
-  color: var(--prime);
+.multistream-ultra {
+  max-width: 800px;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+
+  & > h1,
+  & > p {
+    margin-bottom: 0;
+  }
+
+  p {
+    line-height: 1.5em;
+  }
+
+  .multistream-image {
+    margin-right: -16px;
+  }
+
+  .callout {
+    font-size: 14px;
+    margin-top: 16px;
+  }
+
+  .callout-footnote {
+    margin-top: 2px;
+    font-size: 12px;
+    color: var(--paragraph);
+  }
+
+  :global(.ant-btn-link) {
+    color: var(--paragraph) !important;
+    border: none !important;
+    padding: 0 !important;
+    height: unset !important;
+
+    &:hover,
+    &:active,
+    &:focus {
+      color: var(--title) !important;
+    }
+
+    span {
+      text-decoration: underline;
+    }
+  }
+}
+
+.big-button {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  border-radius: 32px !important;
+  width: 240px;
+  height: 64px !important;
+  display: flex;
+  align-items: center;
+
+  i {
+    margin-right: 4px;
+  }
 }

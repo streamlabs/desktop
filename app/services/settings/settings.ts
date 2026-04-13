@@ -85,6 +85,7 @@ export interface ISettingsValues extends Record<TCategoryName, Dictionary<TObsVa
   };
   Output: {
     Mode: string;
+    Encoder: string;
     RecRB?: boolean;
     RecRBTime?: number;
     RecFormat: string;
@@ -748,6 +749,16 @@ export class SettingsService extends StatefulService<ISettingsServiceState> {
 
   private ensureValidRecordingEncoder() {
     this.setSettings('Output', this.state.Output.formData);
+  }
+
+  setDefaultVideoEncoder() {
+    const mode: string = this.findSettingValue(this.state.Output.formData, 'Untitled', 'Mode');
+
+    if (mode === 'Advanced') {
+      this.setSettingValue('Output', 'Encoder', 'obs_x264');
+    } else {
+      this.setSettingValue('Output', 'StreamEncoder', 'x264');
+    }
   }
 
   /**

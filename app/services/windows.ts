@@ -4,7 +4,7 @@
 import cloneDeep from 'lodash/cloneDeep';
 import { mutation, StatefulService } from 'services/core/stateful-service';
 import electron from 'electron';
-import Vue, { Component } from 'vue';
+import Vue from 'vue';
 import Utils from 'services/utils';
 import { Subject } from 'rxjs';
 import { throttle } from 'lodash-decorators';
@@ -43,6 +43,7 @@ import {
   Main,
   MultistreamChatInfo,
   MarketingModal,
+  ReactiveDataEditorWindow,
   Settings,
   Troubleshooter,
 } from 'components/shared/ReactComponentList';
@@ -53,24 +54,14 @@ import EventFilterMenu from 'components/windows/EventFilterMenu';
 import OverlayPlaceholder from 'components/windows/OverlayPlaceholder';
 import BrowserSourceInteraction from 'components/windows/BrowserSourceInteraction';
 
-import BitGoal from 'components/widgets/goal/BitGoal';
-import DonationGoal from 'components/widgets/goal/DonationGoal';
-import SubGoal from 'components/widgets/goal/SubGoal';
-import StarsGoal from 'components/widgets/goal/StarsGoal';
-import SupporterGoal from 'components/widgets/goal/SupporterGoal';
-import SubscriberGoal from 'components/widgets/goal/SubscriberGoal';
-import FollowerGoal from 'components/widgets/goal/FollowerGoal';
-import CharityGoal from 'components/widgets/goal/CharityGoal';
 import StreamBoss from 'components/widgets/StreamBoss.vue';
 import Credits from 'components/widgets/Credits.vue';
-import EventList from 'components/widgets/EventList.vue';
 import TipJar from 'components/widgets/TipJar.vue';
 import MediaShare from 'components/widgets/MediaShare';
 import AlertBox from 'components/widgets/AlertBox.vue';
 import SpinWheel from 'components/widgets/SpinWheel.vue';
 import Poll from 'components/widgets/Poll';
 import ChatHighlight from 'components/widgets/ChatHighlight';
-import SuperchatGoal from 'components/widgets/goal/SuperchatGoal';
 
 import { byOS, OS } from 'util/operating-systems';
 import { UsageStatisticsService } from './usage-statistics';
@@ -113,20 +104,10 @@ export function getComponents() {
     EventFilterMenu,
     GameOverlayEventFeed,
     AdvancedStatistics,
-    BitGoal,
-    DonationGoal,
-    FollowerGoal,
-    StarsGoal,
-    SupporterGoal,
-    SubscriberGoal,
-    SuperchatGoal,
     MultistreamChatInfo,
-    CharityGoal,
     Credits,
-    EventList,
     TipJar,
     StreamBoss,
-    SubGoal,
     MediaShare,
     AlertBox,
     SpinWheel,
@@ -143,6 +124,7 @@ export function getComponents() {
     CustomCodeWindow,
     SourceShowcase,
     MarketingModal,
+    ReactiveDataEditorWindow,
   };
 }
 
@@ -175,6 +157,9 @@ export interface IWindowOptions extends Electron.BrowserWindowConstructorOptions
   // the display of elements we cannot draw over. During this time such elements, for example
   // BrowserViews and the OBS Display, will be hidden until the operation is complete.
   hideStyleBlockers: boolean;
+  // Occassionally a modal will be rendered over a window and need its own style blocker commands to
+  // display style blocking elements in the modal while hiding them in the window
+  modalOptions?: { hideStyleBlockers: boolean; visible: boolean };
 }
 
 interface IWindowsState {
@@ -207,6 +192,7 @@ export class WindowsService extends StatefulService<IWindowsState> {
       isShown: true,
       hideStyleBlockers: true,
       title: `Streamlabs Desktop - ${Utils.env.SLOBS_VERSION}`,
+      modalOptions: { hideStyleBlockers: false, visible: false },
     },
     child: {
       componentName: '',
@@ -585,8 +571,25 @@ export class WindowsService extends StatefulService<IWindowsState> {
   }
 
   updateStyleBlockers(windowId: string, hideStyleBlockers: boolean) {
-    this.UPDATE_HIDE_STYLE_BLOCKERS(windowId, hideStyleBlockers);
+    // While a modal is dispalyed in the window we only want to affect its styleBlockers
+    if (this.state[windowId].modalOptions?.visible) {
+      this.UPDATE_MODAL_SETTINGS(windowId, { hideStyleBlockers });
+    } else {
+      this.UPDATE_HIDE_STYLE_BLOCKERS(windowId, hideStyleBlockers);
+    }
     this.styleBlockersUpdated.next({ windowId, hideStyleBlockers });
+  }
+
+  showModalLayer(windowId: string) {
+    this.UPDATE_HIDE_STYLE_BLOCKERS(windowId, true);
+    this.UPDATE_MODAL_SETTINGS(windowId, { visible: true, hideStyleBlockers: false });
+    this.styleBlockersUpdated.next({ windowId, hideStyleBlockers: true });
+  }
+
+  hideModalLayer(windowId: string) {
+    this.UPDATE_HIDE_STYLE_BLOCKERS(windowId, false);
+    this.UPDATE_MODAL_SETTINGS(windowId, { visible: false, hideStyleBlockers: false });
+    this.styleBlockersUpdated.next({ windowId, hideStyleBlockers: false });
   }
 
   updateChildWindowOptions(optionsPatch: Partial<IWindowOptions>) {
@@ -636,6 +639,22 @@ export class WindowsService extends StatefulService<IWindowsState> {
   @mutation()
   private UPDATE_HIDE_STYLE_BLOCKERS(windowId: string, hideStyleBlockers: boolean) {
     this.state[windowId].hideStyleBlockers = hideStyleBlockers;
+  }
+
+  @mutation()
+  private UPDATE_MODAL_SETTINGS(
+    windowId: string,
+    modalOptions: Partial<IWindowOptions['modalOptions']>,
+  ) {
+    if (this.state[windowId].modalOptions) {
+      this.state[windowId].modalOptions = { ...this.state[windowId].modalOptions, ...modalOptions };
+    } else {
+      this.state[windowId].modalOptions = {
+        visible: false,
+        hideStyleBlockers: false,
+        ...modalOptions,
+      };
+    }
   }
 
   @mutation()

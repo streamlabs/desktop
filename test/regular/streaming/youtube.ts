@@ -1,5 +1,10 @@
 import { logIn } from '../../helpers/modules/user';
-import { skipCheckingErrorsInLog, test, useWebdriver } from '../../helpers/webdriver';
+import {
+  skipCheckingErrorsInLog,
+  test,
+  TExecutionContext,
+  useWebdriver,
+} from '../../helpers/webdriver';
 import {
   chatIsVisible,
   clickGoLive,
@@ -13,6 +18,7 @@ import {
 
 import {
   click,
+  closeWindow,
   focusChild,
   focusMain,
   isDisplayed,
@@ -22,14 +28,42 @@ import {
 import * as moment from 'moment';
 import { useForm } from '../../helpers/modules/forms';
 import { ListInputController } from '../../helpers/modules/forms/list';
-import { sleep } from '../../helpers/sleep';
+import { logOut } from '../../helpers/webdriver/user';
 
 // not a react hook
 // eslint-disable-next-line react-hooks/rules-of-hooks
 useWebdriver();
 
+// Some accounts in the user pool may not be enabled for live streaming or need to be reauthed
+async function logInYouTubeEnabledAccount(
+  t: TExecutionContext,
+  retries: number = 3,
+): Promise<void> {
+  // only exclude multistream accounts on the first attempt to expand the user pool on later attempts
+  const multistream = retries === 3 ? false : undefined;
+  if (retries === 0) {
+    t.fail(
+      'No YouTube accounts with live streaming enabled are currently available in the user pool',
+    );
+    return;
+  }
+
+  await logIn('youtube', { multistream, streamingIsDisabled: false, notStreamable: false });
+  await prepareToGoLive();
+  await clickGoLive();
+
+  const isEnabled = await isDisplayed('div[data-name="youtube-settings"]', { timeout: 5000 });
+  if (!isEnabled) {
+    await logOut(t);
+    // try again to get an account that has streaming enabled
+    return await logInYouTubeEnabledAccount(t, retries - 1);
+  }
+
+  await closeWindow('child');
+}
+
 test('Streaming to Youtube', async t => {
-  await logIn('youtube', { multistream: false });
+  await logInYouTubeEnabledAccount(t);
   t.false(await chatIsVisible(), 'Chat should not be visible for YT before stream starts');
 
   await goLive({
@@ -43,7 +77,7 @@ test('Streaming to Youtube', async t => {
 
 // TODO flaky
 test.skip('Streaming to the scheduled event on Youtube', async t => {
-  await logIn('youtube', { multistream: false });
+  await logInYouTubeEnabledAccount(t);
   const tomorrow = moment().add(1, 'day').toDate();
   await scheduleStream(tomorrow, { platform: 'YouTube', title: 'Test YT Scheduler' });
   await prepareToGoLive();
@@ -63,7 +97,7 @@ test.skip('Streaming to the scheduled event on Youtube', async t => {
 
 // TODO flaky
 test.skip('GoLive from StreamScheduler', async t => {
-  await logIn('youtube', { multistream: false });
+  await logInYouTubeEnabledAccount(t);
   await prepareToGoLive();
 
   // schedule stream
@@ -87,7 +121,7 @@ test.skip('GoLive from StreamScheduler', async t => {
 });
 
 test('Start stream twice to the same YT event', async t => {
-  await logIn('youtube', { multistream: false });
+  await logInYouTubeEnabledAccount(t);
 
   // create event via scheduling form
   const now = Date.now();
@@ -109,7 +143,7 @@ test('Start stream twice to the same YT event', async t => {
 test('Youtube streaming is disabled', async t => {
   skipCheckingErrorsInLog();
   await logIn('youtube', { streamingIsDisabled: true, notStreamable: true });
-  // await sleep(300000);
+
   t.true(
     await isDisplayed('span=YouTube account not enabled for live streaming'),
     'The streaming-disabled message should be visible',

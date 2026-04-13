@@ -1,5 +1,6 @@
 import { Service } from 'services';
-import Realm, { PropertyTypeName } from 'realm';
+import Realm, { ObjectChangeSet, PropertyTypeName } from 'realm';
+import { DefaultObject } from 'realm/dist/public-types/schema';
 import path from 'path';
 import * as remote from '@electron/remote';
 import { ExecuteInCurrentWindow } from './core';
@@ -70,6 +71,8 @@ export class RealmObject {
             this._realmModel = this.db.create(this.schema.name, {});
           });
         } catch (e: unknown) {
+          // We want to surface legit errors in db/schema config
+          console.log(e);
           this._realmModel = this.db.create(this.schema.name, {});
         }
 
@@ -97,7 +100,10 @@ export class RealmObject {
    * come up with something better.
    */
   bindProps(target: Object, bindings: Dictionary<string>) {
-    const setProps = () => {
+    const setProps = (_o?: DefaultObject, changes?: ObjectChangeSet<DefaultObject>) => {
+      // Nothing has changed
+      if (changes && !changes.deleted && changes.changedProperties?.length === 0) return;
+
       Object.keys(bindings).forEach(key => {
         // @ts-ignore
         // this means the realm object is a complex shape like a dictionary

@@ -12,6 +12,18 @@
   flex-direction: column;
   position: relative;
   height: 100%;
+
+  :global(.ant-modal-wrap) {
+    // Display above help tips
+    z-index: 1003;
+  }
+
+  // Don't obscure the title bar
+  :global(.ant-modal-mask), :global(.ant-modal-wrap) {
+    position: absolute;
+    height: calc(100% - 30px);
+    top: 30px;
+  }
 }
 
 .main-contents {
@@ -141,7 +153,7 @@
   top: 0;
   left: 0;
   cursor: pointer;
-  z-index: 2000;
+  z-index: 1003;
 
   i {
     .center();

@@ -1471,7 +1471,7 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
             game: setStreamInfo.game,
           });
         },
-        streamInfo.game === 'unset' ? undefined : streamInfo.game,
+        this.extractGameFromStream(streamInfo),
       );
 
       this.usageStatisticsService.recordAnalyticsEvent('AIHighlighter', {
@@ -1510,6 +1510,15 @@ export class HighlighterService extends PersistentStatefulService<IHighlighterSt
 
     return;
   }
+  private extractGameFromStream(streamInfo: IStreamInfoForAiHighlighter): EGame | undefined {
+    if (!streamInfo.game || streamInfo.game === 'unset') return undefined;
+    // black ops 7 configs are identical to black ops 6
+    if (streamInfo.game === EGame.BLACK_OPS_7) {
+      return EGame.BLACK_OPS_6;
+    }
+    return streamInfo.game;
+  }
+
   getRoundDetails(
     clips: TClip[],
   ): { round: number; inputs: IInput[]; duration: number; hypeScore: number }[] {

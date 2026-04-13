@@ -7,6 +7,7 @@ import {
 } from '../../../helpers/webdriver';
 import { logIn } from '../../../helpers/webdriver/user';
 import { toggleDualOutputMode } from '../../../helpers/modules/dual-output';
+import { sleep } from '../../../helpers/sleep';
 
 const fs = require('fs');
 const path = require('path');
@@ -98,6 +99,7 @@ test('Loading single & dual output scene collections', async (t: TExecutionConte
   // confirm no scene node map for single output collection
   confirmIsCollectionType(t, 'manifest.json', 'sceneNodeMaps');
   confirmIsCollectionType(t, '3c6cf522-6b85-4d64-a152-236939c63686.json', 'nodeMap');
+  await sleep(500);
 
   // confirm save/load single output collection
   await stopApp(t, false);
@@ -106,10 +108,16 @@ test('Loading single & dual output scene collections', async (t: TExecutionConte
   confirmIsCollectionType(t, '3c6cf522-6b85-4d64-a152-236939c63686.json', 'nodeMap');
 
   // confirm save/load dual output collection
+  await sleep(500);
   await logIn(t);
   await toggleDualOutputMode();
+  await sleep(500);
   await stopApp(t, false);
   await startApp(t, true);
   confirmIsCollectionType(t, 'manifest.json', 'sceneNodeMaps', true);
   confirmIsCollectionType(t, '3c6cf522-6b85-4d64-a152-236939c63686.json', 'nodeMap', true);
+
+  // await logOut(t);
+  await stopApp(t, false);
+  t.pass();
 });

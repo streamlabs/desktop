@@ -43,6 +43,8 @@ import { SmartBrowserSourceManager } from './properties-managers/smart-browser-s
 import { StreamlabelsManager } from './properties-managers/streamlabels-manager';
 import { WidgetManager } from './properties-managers/widget-manager';
 import { SourceDisplayData } from './sources-data';
+import { ReactiveDataService } from 'app-services';
+import { IReactiveDataEditorProps } from 'components-react/windows/reactive-data-editor/types';
 
 export { EDeinterlaceFieldOrder, EDeinterlaceMode } from '../../../obs-api';
 
@@ -113,7 +115,7 @@ export const macSources: TSourceType[] = [
   'scene',
   'coreaudio_input_capture',
   'coreaudio_output_capture',
-  'av_capture_input',
+  'macos_avcapture',
   'display_capture',
   'audio_line',
   'ndi_source',
@@ -197,6 +199,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
   @Inject() private customizationService: CustomizationService;
   @Inject() private incrementalRolloutService: IncrementalRolloutService;
   @Inject() private guestCamService: GuestCamService;
+  @Inject() private reactiveDataService: ReactiveDataService;
 
   sourceDisplayData = SourceDisplayData(); // cache source display data
 
@@ -603,7 +606,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
     }
 
     if (
-      type === 'av_capture_input' &&
+      type === 'macos_avcapture' &&
       resolvedSettings.device === void 0 &&
       this.defaultHardwareService.state.defaultVideoDevice
     ) {
@@ -639,7 +642,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
       { description: 'VLC Source', value: 'vlc_source' },
       { description: 'Audio Input Capture', value: 'coreaudio_input_capture' },
       { description: 'Audio Output Capture', value: 'coreaudio_output_capture' },
-      { description: 'Video Capture Device', value: 'av_capture_input' },
+      { description: 'Video Capture Device', value: 'macos_avcapture' },
       { description: 'Display Capture', value: 'display_capture' },
       { description: 'Soundtrack source', value: 'soundtrack_source' },
       { description: 'Collab Cam', value: 'mediasoupconnector' },
@@ -773,7 +776,7 @@ export class SourcesService extends StatefulService<ISourcesState> {
       // 'vlc_source',
       // 'coreaudio_input_capture',
       // 'coreaudio_output_capture',
-      // 'av_capture_input',
+      // 'macos_avcapture',
       // 'display_capture',
       // 'audio_line',
       // 'syphon-input',
@@ -806,29 +809,31 @@ export class SourcesService extends StatefulService<ISourcesState> {
     // React widgets are in the WidgetsWindow component
     let reactWidgets = [
       'AlertBox',
-      // TODO:
-      // BitGoal
-      // DonationGoal
-      // CharityGoal
-      // FollowerGoal
-      // StarsGoal
-      // SubGoal
-      // SubscriberGoal
+      'BitGoal',
+      'DonationGoal',
+      'CharityGoal',
+      'FollowerGoal',
+      'StarsGoal',
+      'SubGoal',
+      'SubscriberGoal',
+      'SuperchatGoal',
       'ChatBox',
-      // ChatHighlight
-      // Credits
+      // TODO:
+      // 'ChatHighlight',
+      // 'Credits',
       'DonationTicker',
       'EmoteWall',
-      // EventList
-      // MediaShare
-      // Poll
-      // SpinWheel
+      'EventList',
+      // 'MediaShare',
+      // 'Poll',
+      // 'SpinWheel',
       'SponsorBanner',
-      // StreamBoss
-      // TipJar
+      // 'StreamBoss',
+      // 'TipJar',
       'ViewerCount',
       'GameWidget',
       'CustomWidget',
+      'GamePulseWidget',
     ];
     const isLegacyAlertbox = this.customizationService.state.legacyAlertbox;
     if (isLegacyAlertbox) reactWidgets = reactWidgets.filter(w => w !== 'AlertBox');
@@ -988,6 +993,30 @@ export class SourcesService extends StatefulService<ISourcesState> {
       componentName: 'BrowserSourceInteraction',
       queryParams: { sourceId },
       title: $t('Interact: %{sourceName}', { sourceName: source.name }),
+      size: {
+        width: 800,
+        height: 600,
+      },
+    });
+  }
+
+  showReactiveDataEditorWindow(sourceId?: string) {
+    if (!sourceId) return; // for now, require a source id
+
+    const source = this.views.getSource(sourceId);
+
+    if (!source) return;
+
+    if (source.propertiesManagerType !== 'smartBrowserSource') {
+      return;
+    }
+
+    const stateKeys = this.reactiveDataService.getStateKeysForSource(source.sourceId);
+
+    this.windowsService.showWindow({
+      componentName: 'ReactiveDataEditorWindow',
+      queryParams: { stateKeysOfInterest: stateKeys } as IReactiveDataEditorProps,
+      title: $t('Reactive Data Editor'),
       size: {
         width: 800,
         height: 600,

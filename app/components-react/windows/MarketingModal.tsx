@@ -6,18 +6,20 @@ import styles from './MarketingModal.m.less';
 import { $t } from 'services/i18n';
 import { Services } from 'components-react/service-provider';
 import { useRealmObject } from 'components-react/hooks/realm';
+import Scrollable from 'components-react/shared/Scrollable';
 
 export default function MarketingModal() {
   const { AnnouncementsService } = Services;
 
-  const productUpdates = useRealmObject(AnnouncementsService.currentAnnouncements).productUpdates;
+  const productUpdates =
+    useRealmObject(AnnouncementsService.currentAnnouncements).productUpdates || [];
 
   function handleButton(url: string) {
     shell.openExternal(url);
   }
 
   return (
-    <ModalLayout>
+    <ModalLayout bodyClassName={cx(styles.marketingModal)}>
       <h2>{$t('New Updates to Streamlabs Desktop')}</h2>
       <div className={styles.separator} />
       <div className={cx(styles.cell, styles.main)}>
@@ -26,9 +28,11 @@ export default function MarketingModal() {
         </div>
         <div className={styles.info}>
           <h3>{productUpdates[0].header}</h3>
-          <p>{productUpdates[0].subHeader}</p>
+          <Scrollable className={styles.infoScroll} snapToWindowEdge>
+            <p>{productUpdates[0].subHeader}</p>
+          </Scrollable>
           <button
-            className="button button--action"
+            className={cx('button button--action', styles.updatesButton)}
             onClick={() => handleButton(productUpdates[0].link)}
           >
             {productUpdates[0].linkTitle}
@@ -38,15 +42,15 @@ export default function MarketingModal() {
       <div className={styles.separator} />
       <div className={styles.subUpdates}>
         {productUpdates[1] && (
-          <div className={styles.cell}>
-            <div className={styles.imageContainer}>
-              <img className={styles.image} src={productUpdates[1].thumbnail} />
-            </div>
-            <div className={styles.info}>
+          <div className={cx(styles.cell, styles.subUpdateCell)}>
+            <img className={styles.image} src={productUpdates[1].thumbnail} />
+            <div className={styles.subInfo}>
               <h3>{productUpdates[1].header}</h3>
-              <p>{productUpdates[1].subHeader}</p>
+              <Scrollable className={cx(styles.infoScroll, styles.subUpdatesScroll)}>
+                <p className={styles.subInfoText}>{productUpdates[1].subHeader}</p>
+              </Scrollable>
               <button
-                className="button button--default"
+                className={cx('button button--default', styles.updatesButton)}
                 onClick={() => handleButton(productUpdates[1].link)}
               >
                 {productUpdates[1].linkTitle}
@@ -55,15 +59,18 @@ export default function MarketingModal() {
           </div>
         )}
         {productUpdates[2] && (
-          <div className={styles.cell}>
-            <div className={styles.imageContainer}>
-              <img className={styles.image} src={productUpdates[2].thumbnail} />
-            </div>
-            <div className={styles.info}>
+          <div className={cx(styles.cell, styles.subUpdateCell)}>
+            <img className={styles.image} src={productUpdates[2].thumbnail} />
+            <div className={styles.subInfo}>
               <h3>{productUpdates[2].header}</h3>
-              <p>{productUpdates[2].subHeader}</p>
+              <Scrollable
+                className={cx(styles.infoScroll, styles.subUpdatesScroll)}
+                snapToWindowEdge
+              >
+                <p className={styles.subInfoText}>{productUpdates[2].subHeader}</p>
+              </Scrollable>
               <button
-                className="button button--default"
+                className={cx('button button--default', styles.updatesButton)}
                 onClick={() => handleButton(productUpdates[2].link)}
               >
                 {productUpdates[2].linkTitle}

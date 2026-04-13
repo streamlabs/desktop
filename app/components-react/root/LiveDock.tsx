@@ -275,12 +275,10 @@ function LiveDock() {
   const [elapsedStreamTime, setElapsedStreamTime] = useState('');
 
   const {
-    isPlatform,
     hasLiveDockFeature,
     isStreaming,
     isRestreaming,
     hasChatTabs,
-    chatTabs,
     applicationLoading,
     hideStyleBlockers,
     currentViewers,
@@ -289,11 +287,9 @@ function LiveDock() {
     streamingStatus,
   } = useVuex(() =>
     pick(ctrl, [
-      'isPlatform',
       'isStreaming',
       'isRestreaming',
       'hasChatTabs',
-      'chatTabs',
       'applicationLoading',
       'hideStyleBlockers',
       'pageSlot',

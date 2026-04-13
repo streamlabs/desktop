@@ -243,6 +243,10 @@ export class CustomizationService extends Service {
     return this.state.isDarkTheme;
   }
 
+  get performanceMode() {
+    return this.state.performanceMode;
+  }
+
   setUpdateStreamInfoOnLive(update: boolean) {
     this.setSettings({ updateStreamInfoOnLive: update });
   }

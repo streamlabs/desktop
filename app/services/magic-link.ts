@@ -51,14 +51,17 @@ export class MagicLinkService extends Service {
    * open the prime onboarding in the browser
    * @param refl a referral tag for analytics
    */
-  async linkToPrime(refl: TUltraRefl, event?: TAnalyticsEvent) {
-    // TODO: this is only here to acommodate ultra checkout A/B test requiring OS
+  async linkToPrime(
+    refl: TUltraRefl,
+    config?: { redirectToCheckout?: boolean; event?: TAnalyticsEvent },
+  ) {
+    // TODO: this is only here to accommodate ultra checkout A/B test requiring OS
     // remove this and the parameter from {getDashboardMagicLink} after.
     const os = byOS({ [OS.Windows]: 'windows', [OS.Mac]: 'mac' });
 
-    this.usageStatisticsService.recordUltra(refl, event);
+    this.usageStatisticsService.recordUltra(refl, config?.event);
 
-    if (!this.userService.views.isLoggedIn) {
+    if (config?.redirectToCheckout === false || !this.userService.views.isLoggedIn) {
       return remote.shell.openExternal(
         `https://${this.hostsService.streamlabs}/ultra?refl=${refl}&os=${os}`,
       );

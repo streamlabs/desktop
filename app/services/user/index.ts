@@ -41,6 +41,8 @@ import { TikTokService } from 'services/platforms/tiktok';
 import { TTikTokLiveScopeTypes } from 'services/platforms/tiktok/api';
 import { UsageStatisticsService } from 'app-services';
 import { debounce } from 'lodash-decorators';
+import { getOS, OS } from 'util/operating-systems';
+import { URLSearchParams } from 'url';
 
 export enum EAuthProcessState {
   Idle = 'idle',
@@ -280,6 +282,17 @@ class UserViews extends ViewHandler<IUserServiceState> {
   }
 }
 
+export type TOverlayType = 'overlays' | 'widget-themes' | 'site-themes' | 'collectibles';
+export interface IOverlayIdParams {
+  id: string;
+  install?: string;
+}
+export interface IOverlayCollectionParams {
+  collection?: string;
+}
+
+export type TOverlayParams = IOverlayIdParams | IOverlayCollectionParams;
+
 export class UserService extends PersistentStatefulService<IUserServiceState> {
   @Inject() private hostsService: HostsService;
   @Inject() private customizationService: CustomizationService;
@@ -431,6 +444,8 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
    * Primarily used for frontend confirmations
    */
   refreshedLinkedAccounts = new Subject();
+
+  subscribedToPrime = new Subject();
 
   /**
    * Used by child and 1-off windows to update their sentry contexts
@@ -915,6 +930,8 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   // Technically not an exact 50% chance but over a large scale of users
   // should be close enough to 50% for the purposes of testing features
   get isAlphaGroup() {
+    // CI should have a consistent experience, Mac shouldnt have it yet
+    if (Utils.env.CI || Utils.env.NODE_ENV === 'test' || getOS() === OS.Mac) return true;
     const localId = this.getLocalUserId();
     return Number(localId.search(/\d/)) % 2 === 0;
   }
@@ -973,9 +990,8 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
   onSocketEvent(e: TSocketEvent) {
     if (e.type !== 'streamlabs_prime_subscribe') return;
     this.SET_PRIME(true);
+    this.subscribedToPrime.next();
     if (this.navigationService.state.currentPage === 'Onboarding') return;
-    const theme = this.customizationService.isDarkTheme ? 'prime-dark' : 'prime-light';
-    this.customizationService.setTheme(theme);
     this.showPrimeWindow();
   }
 
@@ -1012,30 +1028,30 @@ export class UserService extends PersistentStatefulService<IUserServiceState> {
     return await this.magicLinkService.actions.return.getMagicSessionUrl(url);
   }
 
-  async overlaysUrl(
-    type?: 'overlay' | 'widget-themes' | 'site-themes' | 'collectibles',
-    id?: string,
-    install?: string,
-  ) {
+  async overlaysUrl(type?: TOverlayType, params?: TOverlayParams) {
     const uiTheme = this.customizationService.isDarkTheme ? 'night' : 'day';
 
     let url = `https://${this.hostsService.streamlabs}/library`;
+    const modeQuery = `mode=${uiTheme}&slobs`;
 
-    if (type && !id) {
-      url += `/${type}`;
+    if (type && params) {
+      if ('id' in params) {
+        const urlSubParams = new URLSearchParams({ type, id: params.id });
+        if (params.install) {
+          urlSubParams.append('install', params.install);
+        }
+        url += `/${type}?${modeQuery}#/?${urlSubParams}`;
+      } else if ('collection' in params && params.collection) {
+        url += `/c/${params.collection}?${modeQuery}`;
+      }
+    } else {
+      if (type) {
+        url += `/${type}`;
+      }
+      url += `?${modeQuery}`;
     }
 
-    url += `?mode=${uiTheme}&slobs`;
-
-    if (type && id) {
-      url += `#/?type=${type}&id=${id}`;
-    }
-
-    if (install) {
-      url += `&install=${install}`;
-    }
-
-    return await this.magicLinkService.actions.return.getMagicSessionUrl(url);
+    return this.magicLinkService.actions.return.getMagicSessionUrl(url);
   }
 
   getDonationSettings() {

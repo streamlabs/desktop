@@ -26,6 +26,7 @@ interface ITooltipTipProps {
   lightShadow?: boolean;
   placement?: TTipPosition;
   content?: HTMLElement | boolean;
+  styleContent?: boolean;
   disabled?: boolean;
   autoAdjustOverflow?: boolean;
   visible?: boolean;
@@ -42,6 +43,7 @@ export default function Tooltip(props: PropsWithChildren<ITooltipTipProps>) {
     lightShadow,
     placement = 'bottom',
     content,
+    styleContent = true,
     disabled = false,
     autoAdjustOverflow = true,
     visible,
@@ -62,7 +64,10 @@ export default function Tooltip(props: PropsWithChildren<ITooltipTipProps>) {
         </>
       ) : (
         <AntdTooltip
-          className={cx(styles.tooltipContent, { [styles.lightShadow]: lightShadow })}
+          className={cx({
+            [styles.tooltipContent]: styleContent,
+            [styles.lightShadow]: lightShadow,
+          })}
           placement={placement}
           title={title}
           style={style}

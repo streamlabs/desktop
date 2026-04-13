@@ -9,7 +9,7 @@ import { UsageStatisticsService, SourcesService } from 'app-services';
 import * as remote from '@electron/remote';
 import { Subject } from 'rxjs';
 import { VCamOutputType } from 'obs-studio-node';
-import { IOBSOutputSignalInfo } from './core/signals';
+import { EOBSOutputType, EOBSOutputSignal, IOBSOutputSignalInfo } from './core/signals';
 import os from 'os';
 import { SignalsService } from './signals-manager';
 import { $t } from 'services/i18n';
@@ -87,17 +87,22 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
 
           obs.NodeObs.OBS_service_createVirtualCam();
           this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
-            console.log(`virtual cam init signalInfo: ${signalInfo.signal}`);
-            this.setInstallStatus();
+            if (
+              signalInfo.type === EOBSOutputType.VirtualCam &&
+              signalInfo.signal === EOBSOutputSignal.Activate // EOBSOutputSignal.Activate indicates mac-virtualcam is initialized
+            ) {
+              console.log(`virtual cam init signalInfo: ${signalInfo.signal}`);
+              this.setInstallStatus();
+            }
           });
         }
       },
     });
   }
 
-  protected handleSignalOutput(info: IOBSOutputSignalInfo) {
+  protected handleSignalOutput = (info: IOBSOutputSignalInfo) => {
     this.signalInfoChanged.next(info);
-  }
+  };
 
   get views() {
     return new VirtualWebcamViews(this.state);
@@ -215,9 +220,14 @@ export class VirtualWebcamService extends StatefulService<IVirtualWebcamServiceS
 
         if (this.tryInstallSystemExtension()) {
           this.signalInfoChanged.subscribe((signalInfo: IOBSOutputSignalInfo) => {
-            console.log(`virtual cam install signalInfo: ${signalInfo.signal}`);
-            this.setInstallStatus();
-            obs.NodeObs.OBS_service_createVirtualCam();
+            if (
+              signalInfo.type === EOBSOutputType.VirtualCam &&
+              signalInfo.signal === EOBSOutputSignal.Activate // EOBSOutputSignal.Activate indicates mac-virtualcam is initialized
+            ) {
+              console.log(`virtual cam install signalInfo: ${signalInfo.signal}`);
+              this.setInstallStatus();
+              obs.NodeObs.OBS_service_createVirtualCam();
+            }
           });
         }
       },

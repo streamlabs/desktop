@@ -3,11 +3,13 @@ export interface IThemeMetadata {
     id: number;
     name: string;
     custom_images: Dictionary<string>;
+    preview_images: string[];
     designer?: {
       name: string;
       avatar: string;
       website: string;
     };
+    overlay_type: string;
   };
 }
 
