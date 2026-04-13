@@ -21,10 +21,10 @@ import { setInputValue } from '../../helpers/modules/forms/base';
 import { logIn } from '../../helpers/modules/user';
 import { dismissModal } from '../../helpers/webdriver/modals';
 
-async function enableTwitchVOD() {
+async function enableTwitchVOD(status: boolean = true) {
   await showSettingsWindow('Output', async () => {
     await fillForm({ Mode: 'Advanced' });
-    await fillForm('Streaming', { VodTrackEnabled: true, VodTrackIndex: 3 });
+    await fillForm('Streaming', { VodTrackEnabled: status, VodTrackIndex: 3 });
     await clickButton('Close');
   });
 }
@@ -162,43 +162,47 @@ test('Streaming to Twitch unlisted category', async t => {
 });
 
 // This test has been skipped because of an error likely caused by Selenium and Chromium version mismatch
-test.skip('Twitch Enhanced Broadcasting', withUser('twitch'), async t => {
-  await prepareToGoLive();
+test(
+  'Twitch Enhanced Broadcasting',
+  withUser('twitch', { multistream: true, prime: true }),
+  async t => {
+    await prepareToGoLive();
 
-  // Single Output Single Stream
-  await clickGoLive();
-  await waitForSettingsWindowLoaded();
+    // Single Output Single Stream
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
 
-  await fillForm({
-    title: 'Test Stream',
-    twitchGame: 'Fortnite',
-    isEnhancedBroadcasting: true,
-  });
+    await fillForm({
+      title: 'Test Stream',
+      twitchGame: 'Fortnite',
+      isEnhancedBroadcasting: true,
+    });
 
-  await submit();
-  await waitForStreamStart();
-  await stopStream();
+    await submit();
+    await waitForStreamStart();
+    await stopStream();
 
-  // Single Output Single Stream with Twitch VOD enabled
-  await enableTwitchVOD();
-  await clickGoLive();
-  await waitForSettingsWindowLoaded();
-  await submit();
-  await waitForStreamStart();
-  await stopStream();
+    // Single Output Single Stream with Twitch VOD enabled
+    await enableTwitchVOD();
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
+    await submit();
+    await waitForStreamStart();
+    await stopStream();
 
-  // Single Output Multistream
-  await clickGoLive();
-  await waitForSettingsWindowLoaded();
+    // Single Output Multistream
+    await clickGoLive();
+    await waitForSettingsWindowLoaded();
 
-  await fillForm({
-    trovo: true,
-  });
+    await fillForm({
+      trovo: true,
+    });
 
-  await waitForSettingsWindowLoaded();
-  await submit();
-  await waitForStreamStart();
-  await stopStream();
+    await waitForSettingsWindowLoaded();
+    await submit();
+    await waitForStreamStart();
+    await stopStream();
 
-  t.pass();
-});
+    t.pass();
+  },
+);
